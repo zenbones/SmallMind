@@ -3,7 +3,7 @@
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-  <bean id="hk2ResourceBeanPostProcessor" class="org.smallmind.web.jersey.spring.HK2ResourceBeanPostProcessor"/>
+  <bean id="resourceBeanPostProcessor" class="org.smallmind.web.jersey.spring.ResourceBeanPostProcessor"/>
 
   <bean id="restHttpServer" class="org.smallmind.web.grizzly.GrizzlyInitializingBean">
     <property name="host" value="${grizzly.host}"/>

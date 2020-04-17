@@ -41,13 +41,13 @@ public class JerseyResourceConfig extends ResourceConfig {
   public JerseyResourceConfig (ApplicationContext applicationContext, ResourceConfigExtension[] extensions) {
 
     if (applicationContext == null) {
-      throw new SpringHK2IntegrationException("Spring application context must not be 'null'");
+      throw new SpringIntegrationException("Spring application context must not be 'null'");
     } else {
 
-      HK2ResourceBeanPostProcessor hk2ResourceBeanPostProcessor;
+      ResourceBeanPostProcessor resourceBeanPostProcessor;
 
-      if ((hk2ResourceBeanPostProcessor = applicationContext.getBean(HK2ResourceBeanPostProcessor.class)) == null) {
-        throw new SpringHK2IntegrationException("Spring application context must include the %s", HK2ResourceBeanPostProcessor.class.getSimpleName());
+      if ((resourceBeanPostProcessor = applicationContext.getBean(ResourceBeanPostProcessor.class)) == null) {
+        throw new SpringIntegrationException("Spring application context must include the %s", ResourceBeanPostProcessor.class.getSimpleName());
       }
 
       register(JsonProvider.class);
@@ -58,7 +58,7 @@ public class JerseyResourceConfig extends ResourceConfig {
         }
       }
 
-      hk2ResourceBeanPostProcessor.registerResources(this);
+      resourceBeanPostProcessor.registerResources(this);
     }
   }
 }
