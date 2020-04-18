@@ -50,10 +50,10 @@ public class MeterDynamicMbean implements DynamicMBean {
   private final HashSet<String> attributeNameSet = new HashSet<>();
   private final ConcurrentHashMap<String, Double> valueMap = new ConcurrentHashMap<>();
 
-  public MeterDynamicMbean (String identifier, Tag[] tags, Quantity[] quantities) {
+  public MeterDynamicMbean (String name, Tag[] tags, Quantity[] quantities) {
 
     MBeanAttributeInfo[] attributeInfos = new MBeanAttributeInfo[(quantities == null) ? 0 : quantities.length];
-    StringBuilder descriptionBuilder = new StringBuilder("Meter MBean(identifier=").append(identifier).append(", tags[");
+    StringBuilder descriptionBuilder = new StringBuilder("Meter MBean(name=").append(name).append(", tags[");
 
     if ((tags != null) && (tags.length > 0)) {
 

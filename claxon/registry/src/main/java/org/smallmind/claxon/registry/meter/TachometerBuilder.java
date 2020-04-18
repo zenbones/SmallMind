@@ -30,48 +30,28 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.collector.datadog;
+package org.smallmind.claxon.registry.meter;
 
-import com.timgroup.statsd.NonBlockingStatsDClient;
-import com.timgroup.statsd.StatsDClient;
-import org.smallmind.claxon.registry.PushCollector;
-import org.smallmind.claxon.registry.Quantity;
-import org.smallmind.claxon.registry.Tag;
+import java.util.concurrent.TimeUnit;
+import org.smallmind.claxon.registry.Clock;
+import org.smallmind.nutsnbolts.time.Stint;
 
-public class DataDogCollector extends PushCollector {
+public class TachometerBuilder implements MeterBuilder<Tachometer> {
 
-  private final StatsDClient statsdClient;
+  private static final Stint ONE_SECOND_STINT = new Stint(1, TimeUnit.SECONDS);
 
-  // Normally prefix=null, hostName=localhost, port=8125, tags=null
-  public DataDogCollector (String prefix, String hostName, int port, Tag... constantTags) {
+  private Stint resolutionStint = ONE_SECOND_STINT;
 
-    statsdClient = new NonBlockingStatsDClient(prefix, hostName, port, translateTags(constantTags));
+  public MeterBuilder<Tachometer> resolution (Stint resolutionStint) {
+
+    this.resolutionStint = resolutionStint;
+
+    return this;
   }
 
   @Override
-  public void record (String meterName, Tag[] tags, Quantity[] quantities) {
+  public Tachometer build (Clock clock) {
 
-    String[] translatedTags = translateTags(tags);
-
-    for (Quantity quantity : quantities) {
-      statsdClient.gauge(meterName + '.' + quantity.getName(), quantity.getValue(), translatedTags);
-    }
-  }
-
-  private String[] translateTags (Tag... tags) {
-
-    String[] translatedtags = null;
-
-    if ((tags != null) && (tags.length > 0)) {
-
-      int index = 0;
-
-      translatedtags = new String[tags.length];
-      for (Tag tag : tags) {
-        translatedtags[index++] = tag.getKey() + ':' + tag.getValue();
-      }
-    }
-
-    return translatedtags;
+    return new Tachometer(clock, resolutionStint);
   }
 }

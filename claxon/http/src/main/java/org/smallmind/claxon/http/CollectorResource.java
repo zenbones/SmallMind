@@ -37,7 +37,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 import org.smallmind.claxon.registry.CollectionMethod;
 import org.smallmind.claxon.registry.Collector;
-import org.smallmind.claxon.registry.InvalidCollectionException;
+import org.smallmind.claxon.registry.InvalidCollectorException;
 import org.smallmind.claxon.registry.PullCollector;
 import org.smallmind.claxon.registry.ClaxonRegistry;
 import org.smallmind.claxon.registry.UnknownCollectorException;
@@ -64,14 +64,14 @@ public class CollectorResource {
   @GET
   @Path("/{name}")
   public Response get (String name)
-    throws UnknownCollectorException, InvalidCollectionException {
+    throws UnknownCollectorException, InvalidCollectorException {
 
     Collector collector;
 
     if ((collector = registry.getCollector(name)) == null) {
       throw new UnknownCollectorException(name);
     } else if (!CollectionMethod.PULL.equals(collector.getCollectionMethod())) {
-      throw new InvalidCollectionException("Invalid collection method(%s) for collector(%s)");
+      throw new InvalidCollectorException("Invalid collection method(%s) for collector(%s)");
     } else {
 
       return Response.ok(((PullCollector<?>)collector).emit()).build();

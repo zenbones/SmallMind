@@ -34,5 +34,5 @@ package org.smallmind.claxon.registry;
 
 public enum CollectionMethod {
 
-  PUSH, PULL;
+  PUSH, PULL
 }

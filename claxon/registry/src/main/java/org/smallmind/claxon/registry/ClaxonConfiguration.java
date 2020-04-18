@@ -30,48 +30,58 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.collector.datadog;
+package org.smallmind.claxon.registry;
 
-import com.timgroup.statsd.NonBlockingStatsDClient;
-import com.timgroup.statsd.StatsDClient;
-import org.smallmind.claxon.registry.PushCollector;
-import org.smallmind.claxon.registry.Quantity;
-import org.smallmind.claxon.registry.Tag;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import org.smallmind.nutsnbolts.time.Stint;
+import org.smallmind.nutsnbolts.util.DotNotation;
 
-public class DataDogCollector extends PushCollector {
+public class ClaxonConfiguration {
 
-  private final StatsDClient statsdClient;
+  private Clock clock = SystemClock.instance();
+  private Stint collectionStint = new Stint(1, TimeUnit.SECONDS);
+  private Tag[] registryTags = new Tag[0];
+  private Map<DotNotation, String> prefixMap = new HashMap<>();
 
-  // Normally prefix=null, hostName=localhost, port=8125, tags=null
-  public DataDogCollector (String prefix, String hostName, int port, Tag... constantTags) {
+  public Clock getClock () {
 
-    statsdClient = new NonBlockingStatsDClient(prefix, hostName, port, translateTags(constantTags));
+    return clock;
   }
 
-  @Override
-  public void record (String meterName, Tag[] tags, Quantity[] quantities) {
+  public void setClock (Clock clock) {
 
-    String[] translatedTags = translateTags(tags);
-
-    for (Quantity quantity : quantities) {
-      statsdClient.gauge(meterName + '.' + quantity.getName(), quantity.getValue(), translatedTags);
-    }
+    this.clock = clock;
   }
 
-  private String[] translateTags (Tag... tags) {
+  public Stint getCollectionStint () {
 
-    String[] translatedtags = null;
+    return collectionStint;
+  }
 
-    if ((tags != null) && (tags.length > 0)) {
+  public void setCollectionStint (Stint collectionStint) {
 
-      int index = 0;
+    this.collectionStint = collectionStint;
+  }
 
-      translatedtags = new String[tags.length];
-      for (Tag tag : tags) {
-        translatedtags[index++] = tag.getKey() + ':' + tag.getValue();
-      }
-    }
+  public Tag[] getRegistryTags () {
 
-    return translatedtags;
+    return registryTags;
+  }
+
+  public void setRegistryTags (Tag[] registryTags) {
+
+    this.registryTags = registryTags;
+  }
+
+  public Map<DotNotation, String> getPrefixMap () {
+
+    return prefixMap;
+  }
+
+  public void setPrefixMap (Map<DotNotation, String> prefixMap) {
+
+    this.prefixMap = prefixMap;
   }
 }

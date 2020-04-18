@@ -48,21 +48,28 @@ public class InstrumentedAspect {
   public Object aroundInstrumentedMethod (ProceedingJoinPoint thisJoinPoint, Instrumented instrumented)
     throws Throwable {
 
-    MeterBuilder<?> builder;
-    Tag[] tags = new Tag[instrumented.constants().length + instrumented.parameters().length];
-    int index = 0;
+    if (!instrumented.active()) {
 
-    for (ConstantTag constantTag : instrumented.constants()) {
-      tags[index++] = new Tag(constantTag.key(), constantTag.constant());
+      return thisJoinPoint.proceed();
+    } else {
+
+      MeterBuilder<?> builder;
+      Tag[] tags = new Tag[instrumented.constants().length + instrumented.parameters().length];
+      Class<?> caller = Instrumented.class.equals(instrumented.caller()) ? thisJoinPoint.getStaticPart().getSourceLocation().getWithinType() : instrumented.caller();
+      int index = 0;
+
+      for (ConstantTag constantTag : instrumented.constants()) {
+        tags[index++] = new Tag(constantTag.key(), constantTag.constant());
+      }
+      for (ParameterTag parameterTag : instrumented.parameters()) {
+        tags[index++] = new Tag(parameterTag.key(), AOPUtility.getParameterValue(thisJoinPoint, parameterTag.parameter(), false).toString());
+      }
+
+      builder = new InstrumentedLazyBuilder(instrumented.parser(), instrumented.json());
+
+      return Instrument.with(caller, builder, tags)
+               .as(instrumented.timeUnit())
+               .on((WithResultExecutable<Object>)thisJoinPoint::proceed);
     }
-    for (ParameterTag parameterTag : instrumented.parameters()) {
-      tags[index++] = new Tag(parameterTag.key(), AOPUtility.getParameterValue(thisJoinPoint, parameterTag.parameter(), false).toString());
-    }
-
-    builder = new InstrumentedLazyBuilder(instrumented.parser(), instrumented.json());
-
-    return Instrument.with(instrumented.identifier(), builder, tags)
-             .as(instrumented.timeUnit())
-             .on((WithResultExecutable<Object>)thisJoinPoint::proceed);
   }
 }

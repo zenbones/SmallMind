@@ -30,48 +30,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.collector.datadog;
+package org.smallmind.claxon.registry;
 
-import com.timgroup.statsd.NonBlockingStatsDClient;
-import com.timgroup.statsd.StatsDClient;
-import org.smallmind.claxon.registry.PushCollector;
-import org.smallmind.claxon.registry.Quantity;
-import org.smallmind.claxon.registry.Tag;
+import org.smallmind.nutsnbolts.lang.FormattedException;
 
-public class DataDogCollector extends PushCollector {
+public class InvalidCollectorException extends FormattedException {
 
-  private final StatsDClient statsdClient;
+  public InvalidCollectorException (String message, Object... args) {
 
-  // Normally prefix=null, hostName=localhost, port=8125, tags=null
-  public DataDogCollector (String prefix, String hostName, int port, Tag... constantTags) {
-
-    statsdClient = new NonBlockingStatsDClient(prefix, hostName, port, translateTags(constantTags));
-  }
-
-  @Override
-  public void record (String meterName, Tag[] tags, Quantity[] quantities) {
-
-    String[] translatedTags = translateTags(tags);
-
-    for (Quantity quantity : quantities) {
-      statsdClient.gauge(meterName + '.' + quantity.getName(), quantity.getValue(), translatedTags);
-    }
-  }
-
-  private String[] translateTags (Tag... tags) {
-
-    String[] translatedtags = null;
-
-    if ((tags != null) && (tags.length > 0)) {
-
-      int index = 0;
-
-      translatedtags = new String[tags.length];
-      for (Tag tag : tags) {
-        translatedtags[index++] = tag.getKey() + ':' + tag.getValue();
-      }
-    }
-
-    return translatedtags;
+    super(message, args);
   }
 }

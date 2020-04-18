@@ -32,12 +32,29 @@
  */
 package org.smallmind.claxon.registry;
 
-import org.smallmind.nutsnbolts.lang.FormattedException;
+import org.smallmind.claxon.registry.meter.Meter;
 
-public class InvalidCollectionException extends FormattedException {
+public class NoOpMeter implements Meter {
 
-  public InvalidCollectionException (String message, Object... args) {
+  private static NoOpMeter INSTANCE = new NoOpMeter();
 
-    super(message, args);
+  private NoOpMeter () {
+
+  }
+
+  public static <M extends Meter> M instance () {
+
+    return (M)INSTANCE;
+  }
+
+  @Override
+  public void update (long value) {
+
+  }
+
+  @Override
+  public Quantity[] record () {
+
+    return new Quantity[0];
   }
 }

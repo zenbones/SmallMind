@@ -30,14 +30,28 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.registry;
+package org.smallmind.claxon.registry.json;
 
-import org.smallmind.nutsnbolts.lang.FormattedException;
+import org.smallmind.nutsnbolts.time.Stint;
+import org.smallmind.web.json.dto.DtoGenerator;
+import org.smallmind.web.json.dto.DtoProperty;
+import org.smallmind.web.json.dto.Idiom;
 
-public class AlreadyBoundException extends FormattedException {
+import static org.smallmind.web.json.dto.Visibility.IN;
 
-  public AlreadyBoundException (String message, Object... args) {
+@DtoGenerator
+public class TachometerProperties {
 
-    super(message, args);
+  @DtoProperty(adapter = StintXmlAdapter.class, idioms = @Idiom(visibility = IN))
+  private Stint resolutionStint;
+
+  public Stint getResolutionStint () {
+
+    return resolutionStint;
+  }
+
+  public void setResolutionStint (Stint resolutionStint) {
+
+    this.resolutionStint = resolutionStint;
   }
 }

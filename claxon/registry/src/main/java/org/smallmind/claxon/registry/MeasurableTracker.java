@@ -51,9 +51,9 @@ public class MeasurableTracker {
     this.registry = registry;
   }
 
-  public <T> T track (String identifier, MeterBuilder<?> builder, T measured, Function<T, Long> measurement, Tag... tags) {
+  public <T> T track (Class<?> caller, MeterBuilder<?> builder, T measured, Function<T, Long> measurement, Tag... tags) {
 
-    measurableMap.put(new WeakReference<>(measured, referenceQueue), new Measurable(identifier, builder, measurement, tags));
+    measurableMap.put(new WeakReference<>(measured, referenceQueue), new Measurable(caller, builder, measurement, tags));
 
     return measured;
   }
@@ -67,7 +67,7 @@ public class MeasurableTracker {
       Measurable measurable;
 
       if ((measurable = measurableMap.remove(sweptReference)) != null) {
-        registry.unregister(measurable.getIdentifier(), measurable.getTags());
+        registry.unregister(measurable.getCaller(), measurable.getTags());
       }
     }
 
@@ -76,7 +76,7 @@ public class MeasurableTracker {
       Object measured;
 
       if ((measured = measurableEntry.getKey().get()) != null) {
-        registry.register(measurableEntry.getValue().getIdentifier(), measurableEntry.getValue().getBuilder(), measurableEntry.getValue().getTags()).update(measurableEntry.getValue().getMeasurement().apply(measured));
+        registry.register(measurableEntry.getValue().getCaller(), measurableEntry.getValue().getBuilder(), measurableEntry.getValue().getTags()).update(measurableEntry.getValue().getMeasurement().apply(measured));
       }
     }
   }
@@ -84,21 +84,21 @@ public class MeasurableTracker {
   private static class Measurable {
 
     private MeterBuilder<?> builder;
-    private String identifier;
     private Tag[] tags;
     private Function<Object, Long> measurement;
+    private Class<?> caller;
 
-    public Measurable (String identifier, MeterBuilder<?> builder, Function<?, Long> measurement, Tag... tags) {
+    public Measurable (Class<?> caller, MeterBuilder<?> builder, Function<?, Long> measurement, Tag... tags) {
 
-      this.identifier = identifier;
+      this.caller = caller;
       this.builder = builder;
       this.tags = tags;
       this.measurement = (Function<Object, Long>)measurement;
     }
 
-    public String getIdentifier () {
+    public Class<?> getCaller () {
 
-      return identifier;
+      return caller;
     }
 
     public Tag[] getTags () {

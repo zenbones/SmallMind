@@ -43,6 +43,11 @@ public class LazyBuilder<M extends Meter> implements MeterBuilder<M> {
     this.factory = factory;
   }
 
+  public static <M extends Meter> LazyBuilder<M> instance (BuilderFactory<M> factory) {
+
+    return new LazyBuilder<>(factory);
+  }
+
   @Override
   public M build (Clock clock) {
 

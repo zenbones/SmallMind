@@ -30,48 +30,31 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.collector.datadog;
+package org.smallmind.claxon.registry.meter;
 
-import com.timgroup.statsd.NonBlockingStatsDClient;
-import com.timgroup.statsd.StatsDClient;
-import org.smallmind.claxon.registry.PushCollector;
+import org.smallmind.claxon.registry.Clock;
 import org.smallmind.claxon.registry.Quantity;
-import org.smallmind.claxon.registry.Tag;
+import org.smallmind.claxon.registry.aggregate.Paced;
+import org.smallmind.nutsnbolts.time.Stint;
 
-public class DataDogCollector extends PushCollector {
+public class Tachometer implements Meter {
 
-  private final StatsDClient statsdClient;
+  private final Paced paced;
 
-  // Normally prefix=null, hostName=localhost, port=8125, tags=null
-  public DataDogCollector (String prefix, String hostName, int port, Tag... constantTags) {
+  public Tachometer (Clock clock, Stint windowStint) {
 
-    statsdClient = new NonBlockingStatsDClient(prefix, hostName, port, translateTags(constantTags));
+    paced = new Paced(clock, windowStint);
   }
 
   @Override
-  public void record (String meterName, Tag[] tags, Quantity[] quantities) {
+  public void update (long value) {
 
-    String[] translatedTags = translateTags(tags);
-
-    for (Quantity quantity : quantities) {
-      statsdClient.gauge(meterName + '.' + quantity.getName(), quantity.getValue(), translatedTags);
-    }
+    paced.update(1);
   }
 
-  private String[] translateTags (Tag... tags) {
+  @Override
+  public Quantity[] record () {
 
-    String[] translatedtags = null;
-
-    if ((tags != null) && (tags.length > 0)) {
-
-      int index = 0;
-
-      translatedtags = new String[tags.length];
-      for (Tag tag : tags) {
-        translatedtags[index++] = tag.getKey() + ':' + tag.getValue();
-      }
-    }
-
-    return translatedtags;
+    return new Quantity[] {new Quantity("velocity", paced.getVelocity())};
   }
 }

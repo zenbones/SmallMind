@@ -30,48 +30,28 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.collector.datadog;
+package org.smallmind.claxon.registry.json;
 
-import com.timgroup.statsd.NonBlockingStatsDClient;
-import com.timgroup.statsd.StatsDClient;
-import org.smallmind.claxon.registry.PushCollector;
-import org.smallmind.claxon.registry.Quantity;
-import org.smallmind.claxon.registry.Tag;
+import java.io.IOException;
+import org.smallmind.claxon.registry.aop.InstrumentedParser;
+import org.smallmind.claxon.registry.meter.MeterBuilder;
+import org.smallmind.claxon.registry.meter.Tachometer;
+import org.smallmind.claxon.registry.meter.TachometerBuilder;
+import org.smallmind.web.json.scaffold.util.JsonCodec;
 
-public class DataDogCollector extends PushCollector {
-
-  private final StatsDClient statsdClient;
-
-  // Normally prefix=null, hostName=localhost, port=8125, tags=null
-  public DataDogCollector (String prefix, String hostName, int port, Tag... constantTags) {
-
-    statsdClient = new NonBlockingStatsDClient(prefix, hostName, port, translateTags(constantTags));
-  }
+public class TachometerParser implements InstrumentedParser<Tachometer> {
 
   @Override
-  public void record (String meterName, Tag[] tags, Quantity[] quantities) {
+  public MeterBuilder<Tachometer> parse (String json)
+    throws IOException {
 
-    String[] translatedTags = translateTags(tags);
+    TachometerProperties properties = JsonCodec.read(json, TachometerPropertiesInDto.class).factory();
+    TachometerBuilder builder = new TachometerBuilder();
 
-    for (Quantity quantity : quantities) {
-      statsdClient.gauge(meterName + '.' + quantity.getName(), quantity.getValue(), translatedTags);
-    }
-  }
-
-  private String[] translateTags (Tag... tags) {
-
-    String[] translatedtags = null;
-
-    if ((tags != null) && (tags.length > 0)) {
-
-      int index = 0;
-
-      translatedtags = new String[tags.length];
-      for (Tag tag : tags) {
-        translatedtags[index++] = tag.getKey() + ':' + tag.getValue();
-      }
+    if (properties.getResolutionStint() != null) {
+      builder.resolution(properties.getResolutionStint());
     }
 
-    return translatedtags;
+    return builder;
   }
 }

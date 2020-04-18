@@ -49,13 +49,13 @@ public class ObservableTracker {
     this.registry = registry;
   }
 
-  public <O extends Observable> O track (String identifier, MeterBuilder<?> builder, O observable, Tag... tags) {
+  public <O extends Observable> O track (Class<?> caller, MeterBuilder<?> builder, O observable, Tag... tags) {
 
-    new RegisteredWeakReference<>(observable, referenceQueue, identifier, tags);
+    new RegisteredWeakReference<>(observable, referenceQueue, caller, tags);
 
     observable.addObserver((Observable obs, Object arg) -> {
 
-      Meter meter = registry.register(identifier, builder, tags);
+      Meter meter = registry.register(caller, builder, tags);
 
       if (Number.class.isAssignableFrom(arg.getClass())) {
         meter.update(((Number)arg).longValue());
@@ -75,26 +75,26 @@ public class ObservableTracker {
 
     if ((sweptReference = referenceQueue.poll()) != null) {
 
-      registry.unregister(((RegisteredWeakReference<?>)sweptReference).getIdentifier(), ((RegisteredWeakReference<?>)sweptReference).getTags());
+      registry.unregister(((RegisteredWeakReference<?>)sweptReference).getCaller(), ((RegisteredWeakReference<?>)sweptReference).getTags());
     }
   }
 
   private static class RegisteredWeakReference<O extends Observable> extends WeakReference<O> {
 
-    private String identifier;
     private Tag[] tags;
+    private Class<?> caller;
 
-    public RegisteredWeakReference (O referent, ReferenceQueue<? super O> q, String identifier, Tag... tags) {
+    public RegisteredWeakReference (O referent, ReferenceQueue<? super O> q, Class<?> caller, Tag... tags) {
 
       super(referent, q);
 
-      this.identifier = identifier;
+      this.caller = caller;
       this.tags = tags;
     }
 
-    public String getIdentifier () {
+    public Class<?> getCaller () {
 
-      return identifier;
+      return caller;
     }
 
     public Tag[] getTags () {

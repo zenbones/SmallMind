@@ -42,13 +42,13 @@ public class Instrumentation {
   private ClaxonRegistry registry;
   private MeterBuilder<?> builder;
   private Tag[] tags;
-  private String identifier;
   private TimeUnit timeUnit = TimeUnit.MILLISECONDS;
+  private Class<?> caller;
 
-  public Instrumentation (ClaxonRegistry registry, String identifier, MeterBuilder<?> builder, Tag... tags) {
+  public Instrumentation (ClaxonRegistry registry, Class<?> caller, MeterBuilder<?> builder, Tag... tags) {
 
     this.registry = registry;
-    this.identifier = identifier;
+    this.caller = caller;
     this.builder = builder;
     this.tags = tags;
   }
@@ -62,28 +62,33 @@ public class Instrumentation {
 
   public <O extends Observable> O track (O observable) {
 
-    return registry.track(identifier, builder, observable, tags);
+    return registry.track(caller, builder, observable, tags);
   }
 
   public <T> T track (T measured, Function<T, Long> measurement) {
 
-    return registry.track(identifier, builder, measured, measurement, tags);
+    return registry.track(caller, builder, measured, measurement, tags);
   }
 
   public void update (long value) {
 
-    registry.instrument(registry.register(identifier, builder, tags), value);
+    registry.instrument(registry.register(caller, builder, tags), value);
+  }
+
+  public void update (long value, TimeUnit valueTimeUnit) {
+
+    registry.instrument(registry.register(caller, builder, tags), timeUnit.convert(value, valueTimeUnit));
   }
 
   public void on (SansResultExecutable sansResultExecutable)
     throws Throwable {
 
-    registry.instrument(registry.register(identifier, builder, tags), timeUnit, sansResultExecutable);
+    registry.instrument(registry.register(caller, builder, tags), timeUnit, sansResultExecutable);
   }
 
   public <T> T on (WithResultExecutable<T> withResultExecutable)
     throws Throwable {
 
-    return registry.instrument(registry.register(identifier, builder, tags), timeUnit, withResultExecutable);
+    return registry.instrument(registry.register(caller, builder, tags), timeUnit, withResultExecutable);
   }
 }

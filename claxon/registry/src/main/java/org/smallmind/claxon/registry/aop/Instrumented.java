@@ -42,9 +42,9 @@ import java.util.concurrent.TimeUnit;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Instrumented {
 
-  String identifier ();
+  Class<?> caller () default Instrumented.class;
 
-  Class<? extends InstrumentedParser> parser ();
+  Class<? extends InstrumentedParser<?>> parser ();
 
   String json () default "{}";
 
@@ -53,4 +53,6 @@ public @interface Instrumented {
   ParameterTag[] parameters () default {};
 
   TimeUnit timeUnit () default TimeUnit.MILLISECONDS;
+
+  boolean active () default true;
 }

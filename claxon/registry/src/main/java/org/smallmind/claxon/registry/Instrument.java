@@ -49,7 +49,7 @@ public class Instrument implements PerApplicationDataManager {
     return PerApplicationContext.getPerApplicationData(Instrument.class, ClaxonRegistry.class);
   }
 
-  public static Instrumentation with (String identifier, MeterBuilder<?> builder, Tag... tags) {
+  public static Instrumentation with (Class<?> caller, MeterBuilder<?> builder, Tag... tags) {
 
     ClaxonRegistry registry;
 
@@ -57,6 +57,6 @@ public class Instrument implements PerApplicationDataManager {
       throw new StaticInitializationError("A %s has not been registered for use in code instrumentation", ClaxonRegistry.class.getSimpleName());
     }
 
-    return new Instrumentation(registry, identifier, builder, tags);
+    return new Instrumentation(registry, caller, builder, tags);
   }
 }

@@ -57,7 +57,7 @@ public class JMXCollector extends PushCollector {
   }
 
   @Override
-  public void record (String identifier, Tag[] tags, Quantity[] quantities)
+  public void record (String meterName, Tag[] tags, Quantity[] quantities)
     throws MalformedObjectNameException, NotCompliantMBeanException, MBeanRegistrationException, InstanceAlreadyExistsException, InstanceNotFoundException, ReflectionException {
 
     ObjectName objectName;
@@ -70,12 +70,12 @@ public class JMXCollector extends PushCollector {
       }
     }
 
-    objectName = new ObjectName(identifier, tagTable);
+    objectName = new ObjectName(meterName, tagTable);
 
     if (!server.isRegistered(objectName)) {
       synchronized (server) {
         if (!server.isRegistered(objectName)) {
-          server.registerMBean(new MeterDynamicMbean(identifier, tags, quantities), objectName);
+          server.registerMBean(new MeterDynamicMbean(meterName, tags, quantities), objectName);
         }
       }
     }
