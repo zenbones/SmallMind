@@ -39,11 +39,12 @@ import org.smallmind.claxon.registry.meter.LazyBuilder;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.nutsnbolts.lang.StackTrace;
 import org.smallmind.quorum.pool.ComponentPoolException;
+import org.smallmind.quorum.pool.Pool;
 import org.smallmind.quorum.pool.complex.event.ComponentPoolEventListener;
 import org.smallmind.quorum.pool.complex.event.ErrorReportingComponentPoolEvent;
 import org.smallmind.quorum.pool.complex.event.LeaseTimeReportingComponentPoolEvent;
 
-public class ComponentPool<C> {
+public class ComponentPool<C> extends Pool {
 
   private final ConcurrentLinkedQueue<ComponentPoolEventListener> componentPoolEventListenerQueue = new ConcurrentLinkedQueue<ComponentPoolEventListener>();
   private final ComponentInstanceFactory<C> componentInstanceFactory;

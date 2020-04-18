@@ -36,7 +36,7 @@ import java.util.EventListener;
 
 public interface ComponentPoolEventListener extends EventListener {
 
-  public abstract void reportErrorOccurred (ErrorReportingComponentPoolEvent event);
+  void reportErrorOccurred (ErrorReportingComponentPoolEvent<?> event);
 
-  public abstract void reportLeaseTime (LeaseTimeReportingComponentPoolEvent event);
+  void reportLeaseTime (LeaseTimeReportingComponentPoolEvent<?> event);
 }

@@ -32,7 +32,7 @@
  */
 package org.smallmind.quorum.pool;
 
-public class Pool {
+public abstract class Pool {
 
   public void register () {
 

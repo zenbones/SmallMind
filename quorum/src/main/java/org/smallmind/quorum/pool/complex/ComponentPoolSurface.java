@@ -36,63 +36,63 @@ import org.smallmind.quorum.pool.ComponentPoolException;
 
 public interface ComponentPoolSurface {
 
-  public abstract String getPoolName ();
+  String getPoolName ();
 
-  public abstract void startup ()
+  void startup ()
     throws ComponentPoolException;
 
-  public abstract void shutdown ()
+  void shutdown ()
     throws ComponentPoolException;
 
-  public abstract int getPoolSize ();
+  int getPoolSize ();
 
-  public abstract int getFreeSize ();
+  int getFreeSize ();
 
-  public abstract int getProcessingSize ();
+  int getProcessingSize ();
 
-  public abstract boolean isTestOnCreate ();
+  boolean isTestOnCreate ();
 
-  public abstract void setTestOnCreate (boolean testOnCreate);
+  void setTestOnCreate (boolean testOnCreate);
 
-  public abstract boolean isTestOnAcquire ();
+  boolean isTestOnAcquire ();
 
-  public abstract void setTestOnAcquire (boolean testOnAcquire);
+  void setTestOnAcquire (boolean testOnAcquire);
 
-  public abstract boolean isReportLeaseTimeNanos ();
+  boolean isReportLeaseTimeNanos ();
 
-  public abstract void setReportLeaseTimeNanos (boolean reportLeaseTimeNanos);
+  void setReportLeaseTimeNanos (boolean reportLeaseTimeNanos);
 
-  public abstract boolean isExistentiallyAware ();
+  boolean isExistentiallyAware ();
 
-  public abstract void setExistentiallyAware (boolean existentiallyAware);
+  void setExistentiallyAware (boolean existentiallyAware);
 
-  public abstract long getCreationTimeoutMillis ();
+  long getCreationTimeoutMillis ();
 
-  public abstract void setCreationTimeoutMillis (long creationTimeoutMillis);
+  void setCreationTimeoutMillis (long creationTimeoutMillis);
 
-  public abstract long getAcquireWaitTimeMillis ();
+  long getAcquireWaitTimeMillis ();
 
-  public abstract void setAcquireWaitTimeMillis (long acquireWaitTimeMillis);
+  void setAcquireWaitTimeMillis (long acquireWaitTimeMillis);
 
-  public abstract int getInitialPoolSize ();
+  int getInitialPoolSize ();
 
-  public abstract int getMinPoolSize ();
+  int getMinPoolSize ();
 
-  public abstract void setMinPoolSize (int minPoolSize);
+  void setMinPoolSize (int minPoolSize);
 
-  public abstract int getMaxPoolSize ();
+  int getMaxPoolSize ();
 
-  public abstract void setMaxPoolSize (int maxPoolSize);
+  void setMaxPoolSize (int maxPoolSize);
 
-  public abstract int getMaxLeaseTimeSeconds ();
+  int getMaxLeaseTimeSeconds ();
 
-  public abstract void setMaxLeaseTimeSeconds (int maxLeaseTimeSeconds);
+  void setMaxLeaseTimeSeconds (int maxLeaseTimeSeconds);
 
-  public abstract int getMaxIdleTimeSeconds ();
+  int getMaxIdleTimeSeconds ();
 
-  public abstract void setMaxIdleTimeSeconds (int maxIdleTimeSeconds);
+  void setMaxIdleTimeSeconds (int maxIdleTimeSeconds);
 
-  public abstract int getUnReturnedElementTimeoutSeconds ();
+  int getUnReturnedElementTimeoutSeconds ();
 
-  public abstract void setUnReturnedElementTimeoutSeconds (int unReturnedElementTimeoutSeconds);
+  void setUnReturnedElementTimeoutSeconds (int unReturnedElementTimeoutSeconds);
 }

@@ -36,8 +36,9 @@ import java.util.LinkedList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.smallmind.quorum.pool.ComponentPoolException;
+import org.smallmind.quorum.pool.Pool;
 
-public class ComponentPool<T extends PooledComponent> {
+public class ComponentPool<T extends PooledComponent> extends Pool {
 
   private final CountDownLatch exitLatch = new CountDownLatch(1);
   private final CountDownLatch terminationLatch = new CountDownLatch(1);
