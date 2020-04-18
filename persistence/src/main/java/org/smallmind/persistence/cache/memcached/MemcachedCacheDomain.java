@@ -38,7 +38,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.smallmind.memcached.ProxyMemcachedClient;
 import org.smallmind.persistence.Durable;
-import org.smallmind.persistence.MetricSource;
+import org.smallmind.persistence.EntitySource;
 import org.smallmind.persistence.cache.CacheDomain;
 import org.smallmind.persistence.cache.DurableVector;
 import org.smallmind.persistence.cache.PersistenceCache;
@@ -69,7 +69,7 @@ public class MemcachedCacheDomain<I extends Serializable & Comparable<I>, D exte
   @Override
   public String getMetricSource () {
 
-    return MetricSource.MEMCACHED.getDisplay();
+    return EntitySource.MEMCACHED.getDisplay();
   }
 
   @Override

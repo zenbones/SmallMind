@@ -30,15 +30,15 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.pool.instrument;
+package org.smallmind.persistence;
 
-public enum MetricInteraction {
+public enum EntitySource {
 
-  WAITING("Waiting"), PROCESSING("Processing"), TIMEOUT("Timeout");
+  MYSQL("MySql"), MONGO("MongoDB"), TERRACOTTA("Terracotta"), MEMCACHED("Memcached"), EHCACHE("Ehcache"), CASSANDRA("Cassandra");
 
   private String display;
 
-  private MetricInteraction (String display) {
+  private EntitySource (String display) {
 
     this.display = display;
   }

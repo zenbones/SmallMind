@@ -14,7 +14,7 @@
         <property name="instrumented" value="${orm.statistics}"/>
         <property name="metricDomain">
           <bean class="org.smallmind.instrument.config.PackageMetricDomain">
-            <constructor-arg index="0" value="org.smallmind.persistence.MetricSource"/>
+            <constructor-arg index="0" value="org.smallmind.persistence.EntitySource"/>
           </bean>
         </property>
       </bean>
