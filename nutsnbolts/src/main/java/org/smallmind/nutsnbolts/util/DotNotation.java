@@ -32,6 +32,8 @@
  */
 package org.smallmind.nutsnbolts.util;
 
+import java.util.LinkedList;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class DotNotation {
@@ -52,9 +54,7 @@ public class DotNotation {
   public DotNotation (String notation)
     throws DotNotationException {
 
-    this.notation = notation;
-
-    pattern = Pattern.compile(validateAsRegEx(notation));
+    setNotation(notation);
   }
 
   public static String validateAsRegEx (String notation)
@@ -150,8 +150,62 @@ public class DotNotation {
     return notation;
   }
 
+  public void setNotation (String notation)
+    throws DotNotationException {
+
+    this.notation = notation;
+
+    pattern = Pattern.compile(validateAsRegEx(notation));
+  }
+
   public Pattern getPattern () {
 
     return pattern;
+  }
+
+  public int calculateValue (String name, int initial) {
+
+    Matcher matcher;
+    LinkedList<Integer> dotPositions;
+    int value = initial;
+
+    dotPositions = getDotPositions(name);
+    matcher = pattern.matcher(name);
+
+    if (matcher.matches()) {
+      value += 2;
+      for (int count = 1; count <= matcher.groupCount(); count++) {
+        value += assignValueToMatch(dotPositions, matcher.start(count));
+      }
+    }
+
+    return value;
+  }
+
+  private int assignValueToMatch (LinkedList<Integer> dotPositions, int matchStart) {
+
+    int index = 0;
+
+    for (Integer dotPosition : dotPositions) {
+      if (dotPosition > matchStart) {
+        break;
+      }
+      index++;
+    }
+
+    return (int)Math.pow(2, index);
+  }
+
+  private LinkedList<Integer> getDotPositions (String loggerName) {
+
+    LinkedList<Integer> dotPositionList = new LinkedList<>();
+
+    for (int count = 0; count < loggerName.length(); count++) {
+      if (loggerName.charAt(count) == '.') {
+        dotPositionList.add(count);
+      }
+    }
+
+    return dotPositionList;
   }
 }
