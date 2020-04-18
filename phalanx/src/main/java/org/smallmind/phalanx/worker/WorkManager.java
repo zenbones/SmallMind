@@ -35,10 +35,10 @@ package org.smallmind.phalanx.worker;
 import java.lang.reflect.Array;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import org.smallmind.instrument.ChronometerInstrument;
-import org.smallmind.instrument.InstrumentationManager;
-import org.smallmind.instrument.MetricProperty;
-import org.smallmind.instrument.config.MetricConfiguration;
+import org.smallmind.claxon.registry.Instrument;
+import org.smallmind.claxon.registry.Tag;
+import org.smallmind.claxon.registry.meter.LazyBuilder;
+import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class WorkManager<W extends Worker<T>, T> {
@@ -46,28 +46,21 @@ public class WorkManager<W extends Worker<T>, T> {
   private static enum State {STOPPED, STARTING, STARTED, STOPPING}
 
   private final AtomicReference<State> stateRef = new AtomicReference<>(State.STOPPED);
-  private final MetricConfiguration metricConfiguration;
   private final WorkQueue<T> workQueue;
   private final Class<W> workerClass;
   private final int concurrencyLimit;
   private W[] workers;
 
-  public WorkManager (MetricConfiguration metricConfiguration, Class<W> workerClass, int concurrencyLimit) {
+  public WorkManager (Class<W> workerClass, int concurrencyLimit) {
 
-    this(metricConfiguration, workerClass, concurrencyLimit, new TransferringWorkQueue<>());
+    this(workerClass, concurrencyLimit, new TransferringWorkQueue<>());
   }
 
-  public WorkManager (MetricConfiguration metricConfiguration, Class<W> workerClass, int concurrencyLimit, WorkQueue<T> workQueue) {
+  public WorkManager (Class<W> workerClass, int concurrencyLimit, WorkQueue<T> workQueue) {
 
-    this.metricConfiguration = metricConfiguration;
     this.workerClass = workerClass;
     this.concurrencyLimit = concurrencyLimit;
     this.workQueue = workQueue;
-  }
-
-  public MetricConfiguration getMetricConfiguration () {
-
-    return metricConfiguration;
   }
 
   public int getConcurrencyLimit () {
@@ -83,7 +76,7 @@ public class WorkManager<W extends Worker<T>, T> {
       workers = (W[])Array.newInstance(workerClass, concurrencyLimit);
       for (int index = 0; index < workers.length; index++) {
 
-        Thread workerThread = new Thread(workers[index] = workerFactory.createWorker(metricConfiguration, workQueue));
+        Thread workerThread = new Thread(workers[index] = workerFactory.createWorker(workQueue));
 
         workerThread.setDaemon(true);
         workerThread.start();
@@ -98,24 +91,19 @@ public class WorkManager<W extends Worker<T>, T> {
   }
 
   public void execute (final T work)
-    throws Exception {
+    throws Throwable {
 
     if (!State.STARTED.equals(stateRef.get())) {
       throw new WorkManagerException("%s is not in the 'started' state", WorkManager.class.getSimpleName());
     }
 
-    InstrumentationManager.execute(new ChronometerInstrument(metricConfiguration, new MetricProperty("event", MetricInteraction.ACQUIRE_WORKER.getDisplay())) {
+    Instrument.with(WorkManager.class, LazyBuilder.instance(SpeedometerBuilder::new), new Tag("event", ClaxonTag.ACQUIRE_WORKER.getDisplay())).on(() -> {
 
-      @Override
-      public void withChronometer ()
-        throws InterruptedException {
+      boolean success;
 
-        boolean success;
-
-        do {
-          success = workQueue.offer(work, 1, TimeUnit.SECONDS);
-        } while (!success);
-      }
+      do {
+        success = workQueue.offer(work, 1, TimeUnit.SECONDS);
+      } while (!success);
     });
   }
 

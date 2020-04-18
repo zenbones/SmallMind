@@ -90,7 +90,7 @@ public class JsonSignalCodec implements SignalCodec {
     return JsonCodec.convert(value, clazz);
   }
 
-  private class StringConverter {
+  private static class StringConverter {
 
     private byte[] buffer;
     private int offset;

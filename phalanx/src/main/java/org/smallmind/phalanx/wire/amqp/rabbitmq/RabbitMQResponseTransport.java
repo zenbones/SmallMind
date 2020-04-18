@@ -37,7 +37,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import org.smallmind.instrument.config.MetricConfiguration;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.ResponseTransport;
 import org.smallmind.phalanx.wire.SignalCodec;
@@ -59,10 +58,10 @@ public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, Rab
   private final ResponseMessageRouter[] responseMessageRouters;
   private final String instanceId = SnowflakeId.newInstance().generateDottedString();
 
-  public RabbitMQResponseTransport (MetricConfiguration metricConfiguration, RabbitMQConnector rabbitMQConnector, NameConfiguration nameConfiguration, Class<InvocationWorker> workerClass, SignalCodec signalCodec, String serviceGroup, int clusterSize, int concurrencyLimit, int messageTTLSeconds, boolean autoAcknowledge)
+  public RabbitMQResponseTransport (RabbitMQConnector rabbitMQConnector, NameConfiguration nameConfiguration, Class<InvocationWorker> workerClass, SignalCodec signalCodec, String serviceGroup, int clusterSize, int concurrencyLimit, int messageTTLSeconds, boolean autoAcknowledge)
     throws IOException, InterruptedException, TimeoutException {
 
-    super(metricConfiguration, workerClass, concurrencyLimit);
+    super(workerClass, concurrencyLimit);
 
     int routerIndex = 0;
 
@@ -100,9 +99,9 @@ public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, Rab
   }
 
   @Override
-  public InvocationWorker createWorker (MetricConfiguration metricConfiguration, WorkQueue<RabbitMQMessage> transferQueue) {
+  public InvocationWorker createWorker (WorkQueue<RabbitMQMessage> transferQueue) {
 
-    return new InvocationWorker(metricConfiguration, transferQueue, this, invocationCircuit, signalCodec);
+    return new InvocationWorker(transferQueue, this, invocationCircuit, signalCodec);
   }
 
   @Override

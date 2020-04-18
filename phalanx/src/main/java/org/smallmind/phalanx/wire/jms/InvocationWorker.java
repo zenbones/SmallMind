@@ -33,12 +33,11 @@
 package org.smallmind.phalanx.wire.jms;
 
 import javax.jms.BytesMessage;
-import javax.jms.JMSException;
 import javax.jms.Message;
-import org.smallmind.instrument.ChronometerInstrument;
-import org.smallmind.instrument.InstrumentationManager;
-import org.smallmind.instrument.MetricProperty;
-import org.smallmind.instrument.config.MetricConfiguration;
+import org.smallmind.claxon.registry.Instrument;
+import org.smallmind.claxon.registry.Tag;
+import org.smallmind.claxon.registry.meter.LazyBuilder;
+import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.phalanx.wire.InvocationSignal;
 import org.smallmind.phalanx.wire.ResponseTransport;
 import org.smallmind.phalanx.wire.SignalCodec;
@@ -56,9 +55,9 @@ public class InvocationWorker extends Worker<Message> {
 
   private final byte[] buffer;
 
-  public InvocationWorker (MetricConfiguration metricConfiguration, WorkQueue<Message> workQueue, ResponseTransport responseTransport, WireInvocationCircuit invocationCircuit, SignalCodec signalCodec, int maximumMessageLength) {
+  public InvocationWorker (WorkQueue<Message> workQueue, ResponseTransport responseTransport, WireInvocationCircuit invocationCircuit, SignalCodec signalCodec, int maximumMessageLength) {
 
-    super(metricConfiguration, workQueue);
+    super(workQueue);
 
     this.responseTransport = responseTransport;
     this.invocationCircuit = invocationCircuit;
@@ -69,7 +68,7 @@ public class InvocationWorker extends Worker<Message> {
 
   @Override
   public void engageWork (final Message message)
-    throws Exception {
+    throws Throwable {
 
     if (((BytesMessage)message).getBodyLength() > buffer.length) {
       throw new TransportException("Message length exceeds maximum capacity %d > %d", ((BytesMessage)message).getBodyLength(), buffer.length);
@@ -79,15 +78,10 @@ public class InvocationWorker extends Worker<Message> {
 
       ((BytesMessage)message).readBytes(buffer);
       invocationSignal = signalCodec.decode(buffer, 0, (int)((BytesMessage)message).getBodyLength(), InvocationSignal.class);
-      InstrumentationManager.execute(new ChronometerInstrument(getMetricConfiguration(), new MetricProperty("operation", "invoke"), new MetricProperty("service", invocationSignal.getAddress().getService()), new MetricProperty("method", invocationSignal.getAddress().getFunction().getName())) {
 
-        @Override
-        public void withChronometer ()
-          throws JMSException {
-
-          invocationCircuit.handle(responseTransport, signalCodec, message.getStringProperty(WireProperty.CALLER_ID.getKey()), message.getJMSMessageID(), invocationSignal);
-        }
-      });
+      Instrument.with(InvocationWorker.class, LazyBuilder.instance(SpeedometerBuilder::new), new Tag("operation", "invoke"), new Tag("service", invocationSignal.getAddress().getService()), new Tag("method", invocationSignal.getAddress().getFunction().getName())).on(
+        () -> invocationCircuit.handle(responseTransport, signalCodec, message.getStringProperty(WireProperty.CALLER_ID.getKey()), message.getJMSMessageID(), invocationSignal)
+      );
     }
   }
 

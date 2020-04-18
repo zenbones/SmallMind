@@ -38,9 +38,11 @@ import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageListener;
-import org.smallmind.instrument.InstrumentationManager;
-import org.smallmind.instrument.MetricProperty;
-import org.smallmind.phalanx.wire.MetricInteraction;
+import org.smallmind.claxon.registry.Instrument;
+import org.smallmind.claxon.registry.Tag;
+import org.smallmind.claxon.registry.meter.LazyBuilder;
+import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
+import org.smallmind.phalanx.wire.ClaxonTag;
 import org.smallmind.phalanx.wire.WireProperty;
 import org.smallmind.scribe.pen.LoggerManager;
 
@@ -105,11 +107,11 @@ public class RequestListener implements SessionEmployer, MessageListener {
       long timeInQueue = System.currentTimeMillis() - message.getLongProperty(WireProperty.CLOCK.getKey());
 
       LoggerManager.getLogger(QueueOperator.class).debug("request message received(%s) in %d ms...", message.getJMSMessageID(), timeInQueue);
-      InstrumentationManager.instrumentWithChronometer(jmsResponseTransport.getMetricConfiguration(), (timeInQueue >= 0) ? timeInQueue : 0, TimeUnit.MILLISECONDS, new MetricProperty("queue", MetricInteraction.REQUEST_TRANSIT_TIME.getDisplay()));
+      Instrument.with(RequestListener.class, LazyBuilder.instance(SpeedometerBuilder::new), new Tag("queue", ClaxonTag.REQUEST_TRANSIT_TIME.getDisplay())).update((timeInQueue >= 0) ? timeInQueue : 0, TimeUnit.MILLISECONDS);
 
       jmsResponseTransport.execute(message);
-    } catch (Exception exception) {
-      LoggerManager.getLogger(RequestListener.class).error(exception);
+    } catch (Throwable throwable) {
+      LoggerManager.getLogger(RequestListener.class).error(throwable);
     }
   }
 }

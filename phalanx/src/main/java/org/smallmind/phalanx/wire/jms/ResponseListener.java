@@ -40,10 +40,11 @@ import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageListener;
 import javax.jms.Topic;
-import org.smallmind.instrument.ChronometerInstrument;
-import org.smallmind.instrument.InstrumentationManager;
-import org.smallmind.instrument.MetricProperty;
-import org.smallmind.phalanx.wire.MetricInteraction;
+import org.smallmind.claxon.registry.Instrument;
+import org.smallmind.claxon.registry.Tag;
+import org.smallmind.claxon.registry.meter.LazyBuilder;
+import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
+import org.smallmind.phalanx.wire.ClaxonTag;
 import org.smallmind.phalanx.wire.ResultSignal;
 import org.smallmind.phalanx.wire.SignalCodec;
 import org.smallmind.phalanx.wire.TransportException;
@@ -103,24 +104,19 @@ public class ResponseListener implements SessionEmployer, MessageListener {
       long timeInTopic = System.currentTimeMillis() - message.getLongProperty(WireProperty.CLOCK.getKey());
 
       LoggerManager.getLogger(ResponseListener.class).debug("response message received(%s) in %d ms...", message.getJMSMessageID(), timeInTopic);
-      InstrumentationManager.instrumentWithChronometer(requestTransport.getMetricConfiguration(), (timeInTopic >= 0) ? timeInTopic : 0, TimeUnit.MILLISECONDS, new MetricProperty("queue", MetricInteraction.RESPONSE_TRANSIT_TIME.getDisplay()));
+      Instrument.with(ResponseListener.class, LazyBuilder.instance(SpeedometerBuilder::new), new Tag("queue", ClaxonTag.RESPONSE_TRANSIT_TIME.getDisplay())).update((timeInTopic >= 0) ? timeInTopic : 0, TimeUnit.MILLISECONDS);
 
-      InstrumentationManager.execute(new ChronometerInstrument(requestTransport.getMetricConfiguration(), new MetricProperty("event", MetricInteraction.COMPLETE_CALLBACK.getDisplay())) {
+      Instrument.with(ResponseListener.class, LazyBuilder.instance(SpeedometerBuilder::new), new Tag("event", ClaxonTag.COMPLETE_CALLBACK.getDisplay())).on(() -> {
 
-        @Override
-        public void withChronometer ()
-          throws Exception {
-
-          if (((BytesMessage)message).getBodyLength() > buffer.length) {
-            throw new TransportException("Message length exceeds maximum capacity %d > %d", ((BytesMessage)message).getBodyLength(), buffer.length);
-          }
-
-          ((BytesMessage)message).readBytes(buffer);
-          requestTransport.completeCallback(message.getJMSCorrelationID(), signalCodec.decode(buffer, 0, (int)((BytesMessage)message).getBodyLength(), ResultSignal.class));
+        if (((BytesMessage)message).getBodyLength() > buffer.length) {
+          throw new TransportException("Message length exceeds maximum capacity %d > %d", ((BytesMessage)message).getBodyLength(), buffer.length);
         }
+
+        ((BytesMessage)message).readBytes(buffer);
+        requestTransport.completeCallback(message.getJMSCorrelationID(), signalCodec.decode(buffer, 0, (int)((BytesMessage)message).getBodyLength(), ResultSignal.class));
       });
-    } catch (Exception exception) {
-      LoggerManager.getLogger(ResponseListener.class).error(exception);
+    } catch (Throwable throwable) {
+      LoggerManager.getLogger(ResponseListener.class).error(throwable);
     }
   }
 }

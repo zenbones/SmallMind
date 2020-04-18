@@ -32,9 +32,7 @@
  */
 package org.smallmind.phalanx.worker;
 
-import org.smallmind.instrument.config.MetricConfiguration;
-
 public interface WorkerFactory<W extends Worker<T>, T> {
 
-  public W createWorker (MetricConfiguration metricConfiguration, WorkQueue<T> workQueue);
+  public W createWorker (WorkQueue<T> workQueue);
 }
