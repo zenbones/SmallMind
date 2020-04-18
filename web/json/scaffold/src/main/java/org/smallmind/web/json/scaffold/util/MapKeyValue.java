@@ -32,7 +32,6 @@
  */
 package org.smallmind.web.json.scaffold.util;
 
-import javax.xml.bind.annotation.XmlAnyElement;
 import javax.xml.bind.annotation.XmlElement;
 
 public class MapKeyValue<K, V> {
@@ -51,7 +50,6 @@ public class MapKeyValue<K, V> {
   }
 
   @XmlElement(name = "key")
-  @XmlAnyElement
   public K getKey () {
 
     return key;
@@ -63,7 +61,6 @@ public class MapKeyValue<K, V> {
   }
 
   @XmlElement(name = "value")
-  @XmlAnyElement
   public V getValue () {
 
     return value;

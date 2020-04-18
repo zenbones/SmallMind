@@ -617,9 +617,6 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
       writer.write(propertyInformationEntry.getValue().getAdapter().toString());
       writer.write(".class)");
       writer.newLine();
-    } else if (processingEnv.getTypeUtils().isSameType(usefulTypeMirrors.getObjectTypeMirror(), propertyInformationEntry.getValue().getType()) || processingEnv.getTypeUtils().isSameType(usefulTypeMirrors.getJsonNodeTypeMirror(), propertyInformationEntry.getValue().getType())) {
-      writer.write("  @XmlAnyElement");
-      writer.newLine();
     }
     writer.write("  @XmlElement(name = \"");
     writer.write(propertyInformationEntry.getValue().getName().isEmpty() ? propertyInformationEntry.getKey() : propertyInformationEntry.getValue().getName());

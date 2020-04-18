@@ -36,10 +36,9 @@ import java.io.IOException;
 import java.io.Serializable;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlAnyElement;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
@@ -50,7 +49,7 @@ public class Fault implements Serializable {
   private Fault cause;
   private FaultElement context;
   private FaultElement[] elements;
-  private Object information;
+  private JsonNode information;
   private String throwableType;
   private String message;
   private NativeObject nativeObject;
@@ -183,24 +182,27 @@ public class Fault implements Serializable {
     this.elements = elements;
   }
 
-  @XmlTransient
-  public <T> T getInformationAs (Class<T> clazz) {
+  public <T> T readInformation (Class<T> clazz) {
 
     return (information == null) ? null : JsonCodec.convert(information, clazz);
   }
 
+  public Fault writeInformation (Object obj) {
+
+    information = (obj == null) ? null : JsonCodec.writeAsJsonNode(obj);
+
+    return this;
+  }
+
   @XmlElement(name = "information")
-  @XmlAnyElement
-  public Object getInformation () {
+  public JsonNode getInformation () {
 
     return information;
   }
 
-  public Fault setInformation (Object information) {
+  public void setInformation (JsonNode information) {
 
     this.information = information;
-
-    return this;
   }
 
   @XmlElement(name = "native")
