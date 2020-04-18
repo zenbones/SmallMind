@@ -187,9 +187,11 @@ public class Fault implements Serializable {
     return (information == null) ? null : JsonCodec.convert(information, clazz);
   }
 
-  public void writeInformation (Object obj) {
+  public Fault writeInformation (Object obj) {
 
     information = (obj == null) ? null : JsonCodec.writeAsJsonNode(obj);
+
+    return this;
   }
 
   @XmlElement(name = "information")
@@ -198,11 +200,9 @@ public class Fault implements Serializable {
     return information;
   }
 
-  public Fault setInformation (JsonNode information) {
+  public void setInformation (JsonNode information) {
 
     this.information = information;
-
-    return this;
   }
 
   @XmlElement(name = "native")
