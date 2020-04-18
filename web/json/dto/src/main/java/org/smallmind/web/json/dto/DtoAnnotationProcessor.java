@@ -618,17 +618,10 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
       writer.write(".class)");
       writer.newLine();
     }
-
-    if (processingEnv.getTypeUtils().isSameType(usefulTypeMirrors.getObjectTypeMirror(), propertyInformationEntry.getValue().getType())) {
-      writer.write("  @XmlAnyElement");
-      writer.newLine();
-    } else {
-      writer.write("  @XmlElement(name = \"");
-      writer.write(propertyInformationEntry.getValue().getName().isEmpty() ? propertyInformationEntry.getKey() : propertyInformationEntry.getValue().getName());
-      writer.write(propertyInformationEntry.getValue().isRequired() ? "\", required = true)" : "\")");
-      writer.newLine();
-    }
-
+    writer.write("  @XmlElement(name = \"");
+    writer.write(propertyInformationEntry.getValue().getName().isEmpty() ? propertyInformationEntry.getKey() : propertyInformationEntry.getValue().getName());
+    writer.write(propertyInformationEntry.getValue().isRequired() ? "\", required = true)" : "\")");
+    writer.newLine();
     writer.write("  public ");
     writer.write(DtoNameUtility.processTypeMirror(processingEnv, visibilityTracker, classTracker, purpose, direction, propertyInformationEntry.getValue().getType()));
     writer.write(" ");
