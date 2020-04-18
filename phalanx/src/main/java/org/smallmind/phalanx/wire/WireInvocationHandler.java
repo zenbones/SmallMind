@@ -52,7 +52,7 @@ public class WireInvocationHandler implements InvocationHandler {
   private final ParameterExtractor<String> serviceGroupExtractor;
   private final ParameterExtractor<String> instanceIdExtractor;
   private final ParameterExtractor<Integer> timeoutExtractor;
-  private final Class serviceInterface;
+  private final Class<?> serviceInterface;
   private final String serviceName;
   private final int version;
 

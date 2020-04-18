@@ -1,28 +1,28 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under either, at your discretion...
- * 
+ *
  * 1) The terms of GNU Affero General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or (at
  * your option) any later version.
- * 
+ *
  * ...or...
- * 
+ *
  * 2) The terms of the Apache License, Version 2.0.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License or Apache License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * and the Apache License along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -38,15 +38,14 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.smallmind.instrument.ChronometerInstrumentAndReturn;
-import org.smallmind.instrument.InstrumentationManager;
-import org.smallmind.instrument.MetricProperty;
-import org.smallmind.instrument.config.MetricConfiguration;
+import org.smallmind.claxon.registry.Identifier;
+import org.smallmind.claxon.registry.Instrument;
+import org.smallmind.claxon.registry.meter.LazyBuilder;
+import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.AbstractRequestTransport;
 import org.smallmind.phalanx.wire.Address;
 import org.smallmind.phalanx.wire.ConversationType;
-import org.smallmind.phalanx.wire.MetricInteraction;
 import org.smallmind.phalanx.wire.SignalCodec;
 import org.smallmind.phalanx.wire.TransportException;
 import org.smallmind.phalanx.wire.Voice;
@@ -55,20 +54,18 @@ import org.smallmind.phalanx.wire.WireContext;
 public class RabbitMQRequestTransport extends AbstractRequestTransport {
 
   private final AtomicBoolean closed = new AtomicBoolean(false);
-  private final MetricConfiguration metricConfiguration;
   private final SignalCodec signalCodec;
   private final LinkedBlockingQueue<RequestMessageRouter> routerQueue;
   private final RequestMessageRouter[] requestMessageRouters;
   private final String callerId = SnowflakeId.newInstance().generateDottedString();
 
-  public RabbitMQRequestTransport (MetricConfiguration metricConfiguration, RabbitMQConnector rabbitMQConnector, NameConfiguration nameConfiguration, SignalCodec signalCodec, int clusterSize, int concurrencyLimit, int defaultTimeoutSeconds, int messageTTLSeconds, boolean autoAcknowledge)
+  public RabbitMQRequestTransport (RabbitMQConnector rabbitMQConnector, NameConfiguration nameConfiguration, SignalCodec signalCodec, int clusterSize, int concurrencyLimit, int defaultTimeoutSeconds, int messageTTLSeconds, boolean autoAcknowledge)
     throws IOException, TimeoutException {
 
     super(defaultTimeoutSeconds);
 
     int routerIndex = 0;
 
-    this.metricConfiguration = metricConfiguration;
     this.signalCodec = signalCodec;
 
     requestMessageRouters = new RequestMessageRouter[clusterSize];
@@ -92,13 +89,8 @@ public class RabbitMQRequestTransport extends AbstractRequestTransport {
     return callerId;
   }
 
-  public MetricConfiguration getMetricConfiguration () {
-
-    return metricConfiguration;
-  }
-
   @Override
-  public Object transmit (Voice voice, Address address, Map<String, Object> arguments, WireContext... contexts)
+  public Object transmit (Voice<?, ?> voice, Address address, Map<String, Object> arguments, WireContext... contexts)
     throws Throwable {
 
     final RequestMessageRouter requestMessageRouter = acquireRequestMessageRouter();
@@ -110,15 +102,9 @@ public class RabbitMQRequestTransport extends AbstractRequestTransport {
 
       messageId = requestMessageRouter.publish(inOnly, (String)voice.getServiceGroup(), voice, address, arguments, contexts);
 
-      return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<Object>(metricConfiguration, new MetricProperty("event", MetricInteraction.ACQUIRE_RESULT.getDisplay())) {
-
-        @Override
-        public Object withChronometer ()
-          throws Throwable {
-
-          return acquireResult(signalCodec, address, voice, messageId, inOnly);
-        }
-      });
+      return Instrument.with(Identifier.instance(RabbitMQRequestTransport.class, "result"), LazyBuilder.instance(SpeedometerBuilder::new)).on(
+        () -> acquireResult(signalCodec, address, voice, messageId, inOnly)
+      );
     } finally {
       routerQueue.put(requestMessageRouter);
     }
@@ -127,11 +113,7 @@ public class RabbitMQRequestTransport extends AbstractRequestTransport {
   private RequestMessageRouter acquireRequestMessageRouter ()
     throws Throwable {
 
-    return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<RequestMessageRouter>(metricConfiguration, new MetricProperty("event", MetricInteraction.ACQUIRE_REQUEST_TRANSPORT.getDisplay())) {
-
-      @Override
-      public RequestMessageRouter withChronometer ()
-        throws TransportException, InterruptedException {
+    return Instrument.with(Identifier.instance(RabbitMQRequestTransport.class, "acquire"), LazyBuilder.instance(SpeedometerBuilder::new)).on(() -> {
 
         RequestMessageRouter messageTransmitter;
 
@@ -145,7 +127,7 @@ public class RabbitMQRequestTransport extends AbstractRequestTransport {
 
         return messageTransmitter;
       }
-    });
+    );
   }
 
   @Override

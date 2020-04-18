@@ -40,10 +40,6 @@ import java.util.concurrent.TimeUnit;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
-import org.smallmind.instrument.ChronometerInstrument;
-import org.smallmind.instrument.ChronometerInstrumentAndReturn;
-import org.smallmind.instrument.InstrumentationManager;
-import org.smallmind.instrument.MetricProperty;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.Address;
 import org.smallmind.phalanx.wire.InvocationSignal;
@@ -135,7 +131,7 @@ public class RequestMessageRouter extends MessageRouter {
     });
   }
 
-  public String publish (final boolean inOnly, final String serviceGroup, final Voice voice, final Address address, final Map<String, Object> arguments, final WireContext... contexts)
+  public String publish (final boolean inOnly, final String serviceGroup, final Voice<?,?> voice, final Address address, final Map<String, Object> arguments, final WireContext... contexts)
     throws Throwable {
 
     RabbitMQMessage rabbitMQMessage = constructMessage(inOnly, address, arguments, contexts);

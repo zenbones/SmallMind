@@ -1,28 +1,28 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under either, at your discretion...
- * 
+ *
  * 1) The terms of GNU Affero General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or (at
  * your option) any later version.
- * 
+ *
  * ...or...
- * 
+ *
  * 2) The terms of the Apache License, Version 2.0.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License or Apache License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * and the Apache License along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -49,28 +49,34 @@ public class InstrumentedAspect {
   public Object aroundInstrumentedMethod (ProceedingJoinPoint thisJoinPoint, Instrumented instrumented)
     throws Throwable {
 
-    MeterBuilder<?> builder;
-    Tag[] tags = new Tag[instrumented.constants().length + instrumented.parameters().length];
-    Identifier identifier;
-    int index = 0;
+    if (!instrumented.active()) {
 
-    if (instrumented.id().domain().isEmpty()) {
-      identifier = Identifier.instance(thisJoinPoint.getStaticPart().getSourceLocation().getWithinType().getPackage().getName(), instrumented.id().value());
+      return thisJoinPoint.proceed();
     } else {
-      identifier = Identifier.instance(instrumented.id().domain(), instrumented.id().value());
-    }
 
-    for (ConstantTag constantTag : instrumented.constants()) {
-      tags[index++] = new Tag(constantTag.key(), constantTag.constant());
-    }
-    for (ParameterTag parameterTag : instrumented.parameters()) {
-      tags[index++] = new Tag(parameterTag.key(), AOPUtility.getParameterValue(thisJoinPoint, parameterTag.parameter(), false).toString());
-    }
+      MeterBuilder<?> builder;
+      Tag[] tags = new Tag[instrumented.constants().length + instrumented.parameters().length];
+      Identifier identifier;
+      int index = 0;
 
-    builder = new InstrumentedLazyBuilder(instrumented.parser(), instrumented.json());
+      if (instrumented.id().domain().isEmpty()) {
+        identifier = Identifier.instance(thisJoinPoint.getStaticPart().getSourceLocation().getWithinType(), instrumented.id().value());
+      } else {
+        identifier = Identifier.instance(instrumented.id().domain(), instrumented.id().value());
+      }
 
-    return Instrument.with(identifier, builder, tags)
-             .as(instrumented.timeUnit())
-             .on((WithResultExecutable<Object>)thisJoinPoint::proceed);
+      for (ConstantTag constantTag : instrumented.constants()) {
+        tags[index++] = new Tag(constantTag.key(), constantTag.constant());
+      }
+      for (ParameterTag parameterTag : instrumented.parameters()) {
+        tags[index++] = new Tag(parameterTag.key(), AOPUtility.getParameterValue(thisJoinPoint, parameterTag.parameter(), false).toString());
+      }
+
+      builder = new InstrumentedLazyBuilder(instrumented.parser(), instrumented.json());
+
+      return Instrument.with(identifier, builder, tags)
+               .as(instrumented.timeUnit())
+               .on((WithResultExecutable<Object>)thisJoinPoint::proceed);
+    }
   }
 }
