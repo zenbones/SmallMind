@@ -96,7 +96,7 @@ public class MeasurableTracker {
       this.measurement = (Function<Object, Long>)measurement;
     }
 
-    public String getIdentifier () {
+    public Identifier getIdentifier () {
 
       return identifier;
     }

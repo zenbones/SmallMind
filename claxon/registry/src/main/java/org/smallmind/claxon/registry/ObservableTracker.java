@@ -92,7 +92,7 @@ public class ObservableTracker {
       this.tags = tags;
     }
 
-    public String getIdentifier () {
+    public Identifier getIdentifier () {
 
       return identifier;
     }
