@@ -30,16 +30,28 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.aop;
+package org.smallmind.claxon.registry.json;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import org.smallmind.nutsnbolts.time.Stint;
+import org.smallmind.web.json.dto.DtoGenerator;
+import org.smallmind.web.json.dto.DtoProperty;
+import org.smallmind.web.json.dto.Idiom;
 
-@Target({ElementType.TYPE})
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Timed {
+import static org.smallmind.web.json.dto.Visibility.IN;
 
-  boolean value () default true;
+@DtoGenerator
+public class TachometerProperties {
+
+  @DtoProperty(adapter = StintXmlAdapter.class, idioms = @Idiom(visibility = IN))
+  private Stint resolutionStint;
+
+  public Stint getResolutionStint () {
+
+    return resolutionStint;
+  }
+
+  public void setResolutionStint (Stint resolutionStint) {
+
+    this.resolutionStint = resolutionStint;
+  }
 }

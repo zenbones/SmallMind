@@ -33,20 +33,15 @@
 package org.smallmind.quorum.pool.complex;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
-import javax.management.ObjectName;
-import org.smallmind.instrument.ChronometerInstrumentAndReturn;
-import org.smallmind.instrument.InstrumentationManager;
-import org.smallmind.instrument.MetricProperty;
-import org.smallmind.instrument.MetricRegistry;
-import org.smallmind.instrument.config.MetricConfiguration;
+import org.smallmind.claxon.registry.Instrument;
+import org.smallmind.claxon.registry.Tag;
+import org.smallmind.claxon.registry.meter.LazyBuilder;
+import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.nutsnbolts.lang.StackTrace;
 import org.smallmind.quorum.pool.ComponentPoolException;
-import org.smallmind.quorum.pool.PoolManager;
 import org.smallmind.quorum.pool.complex.event.ComponentPoolEventListener;
 import org.smallmind.quorum.pool.complex.event.ErrorReportingComponentPoolEvent;
 import org.smallmind.quorum.pool.complex.event.LeaseTimeReportingComponentPoolEvent;
-import org.smallmind.quorum.pool.complex.jmx.ComponentPoolMonitor;
-import org.smallmind.quorum.pool.instrument.MetricInteraction;
 
 public class ComponentPool<C> {
 
@@ -56,28 +51,15 @@ public class ComponentPool<C> {
   private final String name;
   private ComplexPoolConfig complexPoolConfig = new ComplexPoolConfig();
 
-  public ComponentPool (String name, ComponentInstanceFactory<C> componentInstanceFactory)
-    throws ComponentPoolException {
-
-    MetricConfiguration metricConfiguration;
-    MetricRegistry metricRegistry;
+  public ComponentPool (String name, ComponentInstanceFactory<C> componentInstanceFactory) {
 
     this.name = name;
     this.componentInstanceFactory = componentInstanceFactory;
 
     componentPinManager = new ComponentPinManager<C>(this);
-
-    if ((PoolManager.getPool() != null) && ((metricConfiguration = PoolManager.getPool().getMetricConfiguration()) != null) && metricConfiguration.isInstrumented() && ((metricRegistry = InstrumentationManager.getMetricRegistry()) != null) && (metricRegistry.getServer() != null)) {
-      try {
-        metricRegistry.getServer().registerMBean(new ComponentPoolMonitor(this), new ObjectName(metricConfiguration.getMetricDomain().getDomain() + ":" + "pool=" + name));
-      } catch (Exception exception) {
-        throw new ComponentPoolException(exception);
-      }
-    }
   }
 
-  public ComponentPool (String name, ComponentInstanceFactory<C> componentInstanceFactory, ComplexPoolConfig complexPoolConfig)
-    throws ComponentPoolException {
+  public ComponentPool (String name, ComponentInstanceFactory<C> componentInstanceFactory, ComplexPoolConfig complexPoolConfig) {
 
     this(name, componentInstanceFactory);
 
@@ -123,7 +105,7 @@ public class ComponentPool<C> {
 
   public void reportErrorOccurred (Exception exception) {
 
-    ErrorReportingComponentPoolEvent poolEvent = new ErrorReportingComponentPoolEvent<C>(this, exception);
+    ErrorReportingComponentPoolEvent<?> poolEvent = new ErrorReportingComponentPoolEvent<C>(this, exception);
 
     for (ComponentPoolEventListener listener : componentPoolEventListenerQueue) {
       listener.reportErrorOccurred(poolEvent);
@@ -132,7 +114,7 @@ public class ComponentPool<C> {
 
   public void reportLeaseTimeNanos (long leaseTimeNanos) {
 
-    LeaseTimeReportingComponentPoolEvent poolEvent = new LeaseTimeReportingComponentPoolEvent<C>(this, leaseTimeNanos);
+    LeaseTimeReportingComponentPoolEvent<?> poolEvent = new LeaseTimeReportingComponentPoolEvent<C>(this, leaseTimeNanos);
 
     for (ComponentPoolEventListener listener : componentPoolEventListenerQueue) {
       listener.reportLeaseTime(poolEvent);
@@ -180,14 +162,9 @@ public class ComponentPool<C> {
 
     try {
 
-      return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<C>(PoolManager.getPool().getMetricConfiguration(), new MetricProperty("pool", getPoolName()), new MetricProperty("event", MetricInteraction.WAITING.getDisplay())) {
-
-        @Override
-        public C withChronometer () throws Exception {
-
-          return componentPinManager.serve().serve();
-        }
-      });
+      return Instrument.with(ComponentPool.class, LazyBuilder.instance(SpeedometerBuilder::new), new Tag("pool", getPoolName()), new Tag("event", ClaxonTag.WAITED.getDisplay())).on(
+        () -> componentPinManager.serve().serve()
+      );
     } catch (Throwable throwable) {
       throw new ComponentPoolException(throwable);
     }

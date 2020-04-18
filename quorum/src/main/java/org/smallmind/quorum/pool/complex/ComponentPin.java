@@ -34,11 +34,10 @@ package org.smallmind.quorum.pool.complex;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.smallmind.instrument.Clocks;
-import org.smallmind.instrument.InstrumentationManager;
-import org.smallmind.instrument.MetricProperty;
-import org.smallmind.quorum.pool.PoolManager;
-import org.smallmind.quorum.pool.instrument.MetricInteraction;
+import org.smallmind.claxon.registry.Instrument;
+import org.smallmind.claxon.registry.Tag;
+import org.smallmind.claxon.registry.meter.LazyBuilder;
+import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 
 public class ComponentPin<C> {
 
@@ -75,19 +74,19 @@ public class ComponentPin<C> {
         deconstructionCoordinator.serve();
       }
 
-      leaseStartNanos = Clocks.EPOCH.getClock().getTimeNanoseconds();
+      leaseStartNanos = System.nanoTime();
     }
   }
 
   protected void free () {
 
-    long leaseTime = Clocks.EPOCH.getClock().getTimeNanoseconds() - leaseStartNanos;
+    long leaseTime = System.nanoTime() - leaseStartNanos;
 
     if (componentPool.getComplexPoolConfig().isReportLeaseTimeNanos()) {
       componentPool.reportLeaseTimeNanos(leaseTime);
     }
 
-    InstrumentationManager.instrumentWithChronometer(PoolManager.getPool().getMetricConfiguration(), leaseTime, TimeUnit.NANOSECONDS, new MetricProperty("pool", componentPool.getPoolName()), new MetricProperty("event", MetricInteraction.PROCESSING.getDisplay()));
+    Instrument.with(ComponentPin.class, LazyBuilder.instance(SpeedometerBuilder::new), new Tag("pool", componentPool.getPoolName()), new Tag("event", ClaxonTag.RELEASED.getDisplay())).update(leaseTime, TimeUnit.NANOSECONDS);
 
     if (deconstructionCoordinator != null) {
       deconstructionCoordinator.free();

@@ -30,16 +30,28 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.aop;
+package org.smallmind.claxon.registry.meter;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.util.concurrent.TimeUnit;
+import org.smallmind.claxon.registry.Clock;
+import org.smallmind.nutsnbolts.time.Stint;
 
-@Target({ElementType.TYPE})
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Timed {
+public class TachometerBuilder implements MeterBuilder<Tachometer> {
 
-  boolean value () default true;
+  private static final Stint ONE_SECOND_STINT = new Stint(1, TimeUnit.SECONDS);
+
+  private Stint resolutionStint = ONE_SECOND_STINT;
+
+  public MeterBuilder<Tachometer> resolution (Stint resolutionStint) {
+
+    this.resolutionStint = resolutionStint;
+
+    return this;
+  }
+
+  @Override
+  public Tachometer build (Clock clock) {
+
+    return new Tachometer(clock, resolutionStint);
+  }
 }

@@ -32,24 +32,10 @@
  */
 package org.smallmind.quorum.pool;
 
-import org.smallmind.instrument.config.MetricConfiguration;
-
 public class Pool {
-
-  private MetricConfiguration metricConfiguration;
-
-  public Pool (MetricConfiguration metricConfiguration) {
-
-    this.metricConfiguration = metricConfiguration;
-  }
 
   public void register () {
 
     PoolManager.register(this);
-  }
-
-  public MetricConfiguration getMetricConfiguration () {
-
-    return metricConfiguration;
   }
 }

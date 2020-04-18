@@ -32,24 +32,12 @@
  */
 package org.smallmind.persistence;
 
-import org.smallmind.instrument.config.MetricConfiguration;
-
 public class Persistence {
-
-  private MetricConfiguration metricConfiguration;
-
-  public Persistence (MetricConfiguration metricConfiguration) {
-
-    this.metricConfiguration = metricConfiguration;
-  }
 
   public void register () {
 
     PersistenceManager.register(this);
   }
-
-  public MetricConfiguration getMetricConfiguration () {
-
-    return metricConfiguration;
-  }
 }
+
+

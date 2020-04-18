@@ -40,13 +40,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import org.smallmind.instrument.InstrumentationManager;
-import org.smallmind.instrument.MetricProperty;
+import org.smallmind.claxon.registry.Instrument;
+import org.smallmind.claxon.registry.Tag;
+import org.smallmind.claxon.registry.meter.LazyBuilder;
+import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
+import org.smallmind.claxon.registry.meter.TachometerBuilder;
 import org.smallmind.nutsnbolts.lang.StackTrace;
 import org.smallmind.quorum.pool.ComponentPoolException;
-import org.smallmind.quorum.pool.PoolManager;
-import org.smallmind.quorum.pool.instrument.MetricInteraction;
-import org.smallmind.quorum.pool.instrument.MetricSize;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class ComponentPinManager<C> {
@@ -366,13 +366,13 @@ public class ComponentPinManager<C> {
 
     int freeSize;
 
-    InstrumentationManager.instrumentWithSpeedometer(PoolManager.getPool().getMetricConfiguration(), freeSize = freeQueue.size(), new MetricProperty("pool", componentPool.getPoolName()), new MetricProperty("size", MetricSize.FREE.getDisplay()));
-    InstrumentationManager.instrumentWithSpeedometer(PoolManager.getPool().getMetricConfiguration(), getPoolSize() - freeSize, new MetricProperty("pool", componentPool.getPoolName()), new MetricProperty("size", MetricSize.PROCESSING.getDisplay()));
+    Instrument.with(ComponentPinManager.class, LazyBuilder.instance(SpeedometerBuilder::new), new Tag("pool", componentPool.getPoolName()), new Tag("size", ClaxonTag.FREE.getDisplay())).update(freeSize = freeQueue.size());
+    Instrument.with(ComponentPinManager.class, LazyBuilder.instance(SpeedometerBuilder::new), new Tag("pool", componentPool.getPoolName()), new Tag("size", ClaxonTag.PROCESSING.getDisplay())).update(getPoolSize() - freeSize);
   }
 
   private void trackTimeout () {
 
-    InstrumentationManager.instrumentWithGauge(PoolManager.getPool().getMetricConfiguration(), new MetricProperty("pool", componentPool.getPoolName()), new MetricProperty("pool", componentPool.getPoolName()), new MetricProperty("event", MetricInteraction.TIMEOUT.getDisplay()));
+    Instrument.with(ComponentPinManager.class, LazyBuilder.instance(TachometerBuilder::new), new Tag("pool", componentPool.getPoolName()), new Tag("event", ClaxonTag.TIMEOUT.getDisplay())).update(1);
   }
 
   public StackTrace[] getExistentialStackTraces () {

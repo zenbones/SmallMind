@@ -87,7 +87,7 @@ public class MockRequestTransport extends AbstractRequestTransport {
   }
 
   @Override
-  public Object transmit (Voice voice, Address address, Map<String, Object> arguments, WireContext... contexts)
+  public Object transmit (Voice<?, ?> voice, Address address, Map<String, Object> arguments, WireContext... contexts)
     throws Throwable {
 
     MockMessage message;

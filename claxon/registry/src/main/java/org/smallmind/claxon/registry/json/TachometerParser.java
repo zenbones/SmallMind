@@ -30,16 +30,28 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.aop;
+package org.smallmind.claxon.registry.json;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.io.IOException;
+import org.smallmind.claxon.registry.aop.InstrumentedParser;
+import org.smallmind.claxon.registry.meter.MeterBuilder;
+import org.smallmind.claxon.registry.meter.Tachometer;
+import org.smallmind.claxon.registry.meter.TachometerBuilder;
+import org.smallmind.web.json.scaffold.util.JsonCodec;
 
-@Target({ElementType.TYPE})
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Timed {
+public class TachometerParser implements InstrumentedParser<Tachometer> {
 
-  boolean value () default true;
+  @Override
+  public MeterBuilder<Tachometer> parse (String json)
+    throws IOException {
+
+    TachometerProperties properties = JsonCodec.read(json, TachometerPropertiesInDto.class).factory();
+    TachometerBuilder builder = new TachometerBuilder();
+
+    if (properties.getResolutionStint() != null) {
+      builder.resolution(properties.getResolutionStint());
+    }
+
+    return builder;
+  }
 }

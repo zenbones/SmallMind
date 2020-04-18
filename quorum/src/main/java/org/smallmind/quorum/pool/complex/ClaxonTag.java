@@ -30,16 +30,23 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.aop;
+package org.smallmind.quorum.pool.complex;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+public enum ClaxonTag {
 
-@Target({ElementType.TYPE})
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Timed {
+  PROCESSING("Processing"), FREE("Free"), TIMEOUT("Timeout"), RELEASED("Released"), WAITED("Waited");
 
-  boolean value () default true;
+  private String display;
+
+  ClaxonTag (String display) {
+
+    this.display = display;
+  }
+
+  public String getDisplay () {
+
+    return display;
+  }
 }
+
+
