@@ -35,17 +35,17 @@ package org.smallmind.web.json.scaffold.fault;
 import java.io.Serializable;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlAnyElement;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 @XmlRootElement(name = "information")
 @XmlAccessorType(XmlAccessType.PROPERTY)
 public class FaultInformation implements Serializable {
 
-  private Object[] arguments;
+  private ArrayNode arguments;
   private String template;
   private int code;
 
@@ -57,7 +57,7 @@ public class FaultInformation implements Serializable {
 
     this.code = code;
     this.template = template;
-    this.arguments = arguments;
+    this.arguments = (ArrayNode)JsonCodec.writeAsJsonNode(arguments);
   }
 
   @XmlElement(name = "code")
@@ -85,14 +85,14 @@ public class FaultInformation implements Serializable {
   @XmlTransient
   public Object[] getArgumentsAs (Class<?>[] classes) {
 
-    if ((arguments == null) || (((classes == null) ? 0 : classes.length) != arguments.length)) {
-      throw new IllegalArgumentException("The number of classes(" + ((classes == null) ? 0 : classes.length) + ") must match the number of arguments(" + ((arguments == null) ? 0 : arguments.length) + ")");
+    if ((arguments == null) || (((classes == null) ? 0 : classes.length) != arguments.size())) {
+      throw new IllegalArgumentException("The number of classes(" + ((classes == null) ? 0 : classes.length) + ") must match the number of arguments(" + ((arguments == null) ? 0 : arguments.size()) + ")");
     }
 
-    Object[] convertedArguments = new Object[arguments.length];
+    Object[] convertedArguments = new Object[arguments.size()];
 
-    for (int index = 0; index < arguments.length; index++) {
-      convertedArguments[index] = JsonCodec.convert(arguments[index], classes[index]);
+    for (int index = 0; index < arguments.size(); index++) {
+      convertedArguments[index] = JsonCodec.convert(arguments.get(index), classes[index]);
     }
 
     return convertedArguments;
@@ -101,21 +101,20 @@ public class FaultInformation implements Serializable {
   @XmlTransient
   public <T> T getArgumentAs (int index, Class<T> clazz) {
 
-    if ((index < 0) || (arguments == null) || (index >= arguments.length)) {
-      throw new IndexOutOfBoundsException(index + ">" + ((arguments == null) ? 0 : arguments.length));
+    if ((index < 0) || (arguments == null) || (index >= arguments.size())) {
+      throw new IndexOutOfBoundsException(index + ">" + ((arguments == null) ? 0 : arguments.size()));
     }
 
-    return JsonCodec.convert(arguments[index], clazz);
+    return JsonCodec.convert(arguments.get(index), clazz);
   }
 
   @XmlElement(name = "arguments")
-  @XmlAnyElement
-  public Object[] getArguments () {
+  public ArrayNode getArguments () {
 
     return arguments;
   }
 
-  public void setArguments (Object[] arguments) {
+  public void setArguments (ArrayNode arguments) {
 
     this.arguments = arguments;
   }
