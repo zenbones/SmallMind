@@ -1,28 +1,28 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under either, at your discretion...
- * 
+ *
  * 1) The terms of GNU Affero General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or (at
  * your option) any later version.
- * 
+ *
  * ...or...
- * 
+ *
  * 2) The terms of the Apache License, Version 2.0.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License or Apache License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * and the Apache License along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -39,11 +39,12 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
-import org.smallmind.instrument.ChronometerInstrumentAndReturn;
-import org.smallmind.instrument.InstrumentationManager;
-import org.smallmind.instrument.MetricProperty;
+import org.smallmind.claxon.registry.Instrument;
+import org.smallmind.claxon.registry.Tag;
+import org.smallmind.claxon.registry.meter.LazyBuilder;
+import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
-import org.smallmind.phalanx.wire.MetricInteraction;
+import org.smallmind.phalanx.wire.ClaxonTag;
 import org.smallmind.phalanx.wire.ResultSignal;
 import org.smallmind.phalanx.wire.SignalCodec;
 import org.smallmind.phalanx.wire.VocalMode;
@@ -144,7 +145,7 @@ public class ResponseMessageRouter extends MessageRouter {
           long timeInQueue = System.currentTimeMillis() - getTimestamp(properties);
 
           LoggerManager.getLogger(QueueOperator.class).debug("request message received(%s) in %d ms...", properties.getMessageId(), timeInQueue);
-          InstrumentationManager.instrumentWithChronometer(responseTransport.getMetricConfiguration(), (timeInQueue >= 0) ? timeInQueue : 0, TimeUnit.MILLISECONDS, new MetricProperty("queue", MetricInteraction.REQUEST_TRANSIT_TIME.getDisplay()));
+          Instrument.with(ResponseMessageRouter.class, LazyBuilder.instance(SpeedometerBuilder::new), new Tag("queue", ClaxonTag.REQUEST_TRANSIT_TIME.getDisplay())).update((timeInQueue >= 0) ? timeInQueue : 0, TimeUnit.MILLISECONDS);
 
           responseTransport.execute(new RabbitMQMessage(properties, body));
         } catch (Exception exception) {
@@ -175,21 +176,16 @@ public class ResponseMessageRouter extends MessageRouter {
   private RabbitMQMessage constructMessage (final String correlationId, final boolean error, final String nativeType, final Object result)
     throws Throwable {
 
-    return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<RabbitMQMessage>(responseTransport.getMetricConfiguration(), new MetricProperty("event", MetricInteraction.CONSTRUCT_MESSAGE.getDisplay())) {
+    return Instrument.with(ResponseMessageRouter.class, LazyBuilder.instance(SpeedometerBuilder::new), new Tag("event", ClaxonTag.CONSTRUCT_MESSAGE.getDisplay())).on(() -> {
 
-      @Override
-      public RabbitMQMessage withChronometer ()
-        throws Exception {
+      AMQP.BasicProperties properties = new AMQP.BasicProperties.Builder()
+                                          .contentType(signalCodec.getContentType())
+                                          .messageId(SnowflakeId.newInstance().generateDottedString())
+                                          .correlationId(correlationId)
+                                          .timestamp(new Date())
+                                          .expiration(String.valueOf(ttlSeconds * 1000 * 3)).build();
 
-        AMQP.BasicProperties properties = new AMQP.BasicProperties.Builder()
-                                            .contentType(signalCodec.getContentType())
-                                            .messageId(SnowflakeId.newInstance().generateDottedString())
-                                            .correlationId(correlationId)
-                                            .timestamp(new Date())
-                                            .expiration(String.valueOf(ttlSeconds * 1000 * 3)).build();
-
-        return new RabbitMQMessage(properties, signalCodec.encode(new ResultSignal(error, nativeType, result)));
-      }
+      return new RabbitMQMessage(properties, signalCodec.encode(new ResultSignal(error, nativeType, result)));
     });
   }
 }

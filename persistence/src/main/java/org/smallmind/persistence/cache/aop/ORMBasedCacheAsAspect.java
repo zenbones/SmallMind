@@ -44,7 +44,6 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
-import org.smallmind.claxon.registry.Identifier;
 import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Tag;
 import org.smallmind.claxon.registry.meter.LazyBuilder;
@@ -93,11 +92,11 @@ public class ORMBasedCacheAsAspect {
 
       if (ormDao.getManagedClass().isAssignableFrom(methodSignature.getReturnType())) {
         if (cacheAs.ordered()) {
-          throw new CacheAutomationError("A method annotated with @CacheAs which does not return an Iterable type can't be ordered", cacheAs.comparator().getClass().getName());
+          throw new CacheAutomationError("A method annotated with @CacheAs which does not return an Iterable type can't be ordered", cacheAs.comparator().getName());
         } else if (cacheAs.max() > 0) {
-          throw new CacheAutomationError("A method annotated with @CacheAs which does not return an Iterable type may not define a maximum size", cacheAs.comparator().getClass().getName());
+          throw new CacheAutomationError("A method annotated with @CacheAs which does not return an Iterable type may not define a maximum size", cacheAs.comparator().getName());
         } else if (!cacheAs.comparator().equals(Comparator.class)) {
-          throw new CacheAutomationError("A method annotated with @CacheAs which does not return an Iterable type can not register a comparator(%s)", cacheAs.comparator().getClass().getName());
+          throw new CacheAutomationError("A method annotated with @CacheAs which does not return an Iterable type can not register a comparator(%s)", cacheAs.comparator().getName());
         }
 
         VectoredDao vectoredDao;
@@ -136,7 +135,7 @@ public class ORMBasedCacheAsAspect {
         }
       } else if (Iterable.class.isAssignableFrom(methodSignature.getReturnType())) {
         if ((!cacheAs.comparator().equals(Comparator.class)) && (!cacheAs.ordered())) {
-          throw new CacheAutomationError("A method annotated with @CacheAs has registered a comparator(%s) but is not ordered", cacheAs.comparator().getClass().getName());
+          throw new CacheAutomationError("A method annotated with @CacheAs has registered a comparator(%s) but is not ordered", cacheAs.comparator().getName());
         }
 
         if ((!((returnType = (executedMethod = methodSignature.getMethod()).getGenericReturnType()) instanceof ParameterizedType)) || (!ormDao.getManagedClass().isAssignableFrom((Class<?>)((ParameterizedType)returnType).getActualTypeArguments()[0]))) {
@@ -193,7 +192,7 @@ public class ORMBasedCacheAsAspect {
           executedMethod = methodSignature.getMethod();
         }
 
-        Instrument.with(Identifier.instance(thisJoinPoint.getStaticPart().getSourceLocation().getWithinType(), "timed"), LazyBuilder.instance(SpeedometerBuilder::new), new Tag("durable", ormDao.getManagedClass().getSimpleName()), new Tag("method", executedMethod.getName()), new Tag("source", ormDao.getMetricSource())).update(stop - start, TimeUnit.NANOSECONDS);
+        Instrument.with(thisJoinPoint.getStaticPart().getSourceLocation().getWithinType(), LazyBuilder.instance(SpeedometerBuilder::new), new Tag("durable", ormDao.getManagedClass().getSimpleName()), new Tag("method", executedMethod.getName()), new Tag("source", metricSource)).update(stop - start, TimeUnit.NANOSECONDS);
       }
     }
   }

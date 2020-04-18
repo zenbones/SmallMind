@@ -14,7 +14,6 @@
     <module>collector</module>
     <module>http</module>
     <module>registry</module>
-    <module>testable</module>
   </modules>
   <build>
     <plugins>

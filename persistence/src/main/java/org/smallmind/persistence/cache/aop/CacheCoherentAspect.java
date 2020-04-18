@@ -41,7 +41,6 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
-import org.smallmind.claxon.registry.Identifier;
 import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Tag;
 import org.smallmind.claxon.registry.meter.LazyBuilder;
@@ -104,7 +103,7 @@ public class CacheCoherentAspect {
 
           IntrinsicRoster<Durable> cacheConsistentElements;
 
-          cacheConsistentElements = new IntrinsicRoster<Durable>();
+          cacheConsistentElements = new IntrinsicRoster<>();
           for (Object element : list) {
             if (element != null) {
               cacheConsistentElements.add(vectoredDao.persist(durableDao.getManagedClass(), (Durable)element, UpdateMode.SOFT));
@@ -149,7 +148,7 @@ public class CacheCoherentAspect {
           executedMethod = ((MethodSignature)thisJoinPoint.getSignature()).getMethod();
         }
 
-        Instrument.with(Identifier.instance(thisJoinPoint.getStaticPart().getSourceLocation().getWithinType(), "timed"), LazyBuilder.instance(SpeedometerBuilder::new), new Tag("durable", durableDao.getManagedClass().getSimpleName()), new Tag("method", executedMethod.getName()), new Tag("source", durableDao.getMetricSource())).update(stop - start, TimeUnit.NANOSECONDS);
+        Instrument.with(thisJoinPoint.getStaticPart().getSourceLocation().getWithinType(), LazyBuilder.instance(SpeedometerBuilder::new), new Tag("durable", durableDao.getManagedClass().getSimpleName()), new Tag("method", executedMethod.getName()), new Tag("source", durableDao.getMetricSource())).update(stop - start, TimeUnit.NANOSECONDS);
       }
     }
   }

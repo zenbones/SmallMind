@@ -30,13 +30,21 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.registry.meter;
+package org.smallmind.phalanx.wire;
 
-import org.smallmind.claxon.registry.Quantity;
+public enum ClaxonTag {
 
-public interface Meter {
+  ACQUIRE_REQUEST_TRANSPORT("Acquire Request Transport"), CONSTRUCT_MESSAGE("Construct Message"), REQUEST_TRANSIT_TIME("Request Transit Time"), RESPONSE_TRANSIT_TIME("Response Transit Time"), COMPLETE_CALLBACK("Complete Callback"), ACQUIRE_RESULT("Acquire Result");
 
-  void update (long value);
+  private String display;
 
-  Quantity[] record ();
+  ClaxonTag (String display) {
+
+    this.display = display;
+  }
+
+  public String getDisplay () {
+
+    return display;
+  }
 }

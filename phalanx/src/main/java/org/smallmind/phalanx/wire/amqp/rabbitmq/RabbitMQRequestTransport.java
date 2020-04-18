@@ -38,13 +38,14 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.smallmind.claxon.registry.Identifier;
 import org.smallmind.claxon.registry.Instrument;
+import org.smallmind.claxon.registry.Tag;
 import org.smallmind.claxon.registry.meter.LazyBuilder;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.AbstractRequestTransport;
 import org.smallmind.phalanx.wire.Address;
+import org.smallmind.phalanx.wire.ClaxonTag;
 import org.smallmind.phalanx.wire.ConversationType;
 import org.smallmind.phalanx.wire.SignalCodec;
 import org.smallmind.phalanx.wire.TransportException;
@@ -102,7 +103,7 @@ public class RabbitMQRequestTransport extends AbstractRequestTransport {
 
       messageId = requestMessageRouter.publish(inOnly, (String)voice.getServiceGroup(), voice, address, arguments, contexts);
 
-      return Instrument.with(Identifier.instance(RabbitMQRequestTransport.class, "result"), LazyBuilder.instance(SpeedometerBuilder::new)).on(
+      return Instrument.with(RabbitMQRequestTransport.class, LazyBuilder.instance(SpeedometerBuilder::new), new Tag("event", ClaxonTag.ACQUIRE_RESULT.getDisplay())).on(
         () -> acquireResult(signalCodec, address, voice, messageId, inOnly)
       );
     } finally {
@@ -113,21 +114,20 @@ public class RabbitMQRequestTransport extends AbstractRequestTransport {
   private RequestMessageRouter acquireRequestMessageRouter ()
     throws Throwable {
 
-    return Instrument.with(Identifier.instance(RabbitMQRequestTransport.class, "acquire"), LazyBuilder.instance(SpeedometerBuilder::new)).on(() -> {
+    return Instrument.with(RabbitMQRequestTransport.class, LazyBuilder.instance(SpeedometerBuilder::new), new Tag("event", ClaxonTag.ACQUIRE_REQUEST_TRANSPORT.getDisplay())).on(() -> {
 
-        RequestMessageRouter messageTransmitter;
+      RequestMessageRouter messageTransmitter;
 
-        do {
-          messageTransmitter = routerQueue.poll(1, TimeUnit.SECONDS);
-        } while ((!closed.get()) && (messageTransmitter == null));
+      do {
+        messageTransmitter = routerQueue.poll(1, TimeUnit.SECONDS);
+      } while ((!closed.get()) && (messageTransmitter == null));
 
-        if (messageTransmitter == null) {
-          throw new TransportException("Message transmission has been closed");
-        }
-
-        return messageTransmitter;
+      if (messageTransmitter == null) {
+        throw new TransportException("Message transmission has been closed");
       }
-    );
+
+      return messageTransmitter;
+    });
   }
 
   @Override
