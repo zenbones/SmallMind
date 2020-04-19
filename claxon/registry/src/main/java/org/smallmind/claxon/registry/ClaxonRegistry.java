@@ -35,6 +35,7 @@ package org.smallmind.claxon.registry;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Observable;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -48,6 +49,7 @@ public class ClaxonRegistry {
 
   private final ConcurrentHashMap<String, Collector> collectorMap = new ConcurrentHashMap<>();
   private final ConcurrentHashMap<RegistryKey, NamedMeter<?>> meterMap = new ConcurrentHashMap<>();
+  private final Set<RegistryKey> noopSet = ConcurrentHashMap.newKeySet();
   private final MeasurableTracker measurableTrcker;
   private final ObservableTracker observableTracker;
   private final CollectionWorker collectionWorker;
@@ -96,45 +98,53 @@ public class ClaxonRegistry {
 
   public <M extends Meter> M register (Class<?> caller, MeterBuilder<M> builder, Tag... tags) {
 
-    RegistryKey key = new RegistryKey(caller, tags);
-    NamedMeter<?> namedMeter;
+    if (configuration.getPrefixMap() == null) {
 
-    if ((namedMeter = meterMap.get(key)) == null) {
-      synchronized (meterMap) {
+      return NoOpMeter.instance();
+    } else {
+
+      RegistryKey key = new RegistryKey(caller, tags);
+
+      if (noopSet.contains(key)) {
+
+        return NoOpMeter.instance();
+      } else {
+
+        NamedMeter<?> namedMeter;
+
         if ((namedMeter = meterMap.get(key)) == null) {
 
           String className = caller.getName();
+          Map.Entry<DotNotation, String> strongestEntry = null;
+          int currentStrength = 0;
 
-          if (configuration.getPrefixMap() == null) {
+          for (Map.Entry<DotNotation, String> prefixEntry : configuration.getPrefixMap().entrySet()) {
+
+            int possibleStrength;
+
+            if ((possibleStrength = prefixEntry.getKey().calculateValue(className, -1)) > currentStrength) {
+              currentStrength = possibleStrength;
+              strongestEntry = prefixEntry;
+            }
+          }
+
+          if (strongestEntry == null) {
+            noopSet.add(key);
 
             return NoOpMeter.instance();
           } else {
 
-            Map.Entry<DotNotation, String> strongestEntry = null;
-            int currentStrength = 0;
+            NamedMeter<?> previousNamedMeter;
 
-            for (Map.Entry<DotNotation, String> prefixEntry : configuration.getPrefixMap().entrySet()) {
-
-              int possibleStrength;
-
-              if ((possibleStrength = prefixEntry.getKey().calculateValue(className, -1)) > currentStrength) {
-                currentStrength = possibleStrength;
-                strongestEntry = prefixEntry;
-              }
-            }
-
-            if (strongestEntry == null) {
-
-              return NoOpMeter.instance();
-            } else {
-              meterMap.put(key, namedMeter = new NamedMeter<M>(strongestEntry.getValue(), builder.build(configuration.getClock())));
+            if ((previousNamedMeter = meterMap.putIfAbsent(key, namedMeter = new NamedMeter<M>(strongestEntry.getValue(), builder.build(configuration.getClock())))) != null) {
+              namedMeter = previousNamedMeter;
             }
           }
         }
+
+        return (M)namedMeter.getMeter();
       }
     }
-
-    return (M)namedMeter.getMeter();
   }
 
   public void unregister (Class<?> clazz, Tag... tags) {
