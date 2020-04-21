@@ -43,20 +43,29 @@ import net.rubyeye.xmemcached.transcoders.Transcoder;
 
 public class KryoXMemcachedTranscoder<T> implements Transcoder<T> {
 
-  private static final Pool<Kryo> KRYO_POOL = new Pool<Kryo>(true, false, 8) {
-
-    protected Kryo create () {
-
-      Kryo kryo = new Kryo();
-
-      kryo.setReferences(true);
-      kryo.setRegistrationRequired(false);
-
-      return kryo;
-    }
-  };
-
   private static final int MAX_SIZE = 1048576;
+  private final Pool<Kryo> kryoPool;
+
+  public KryoXMemcachedTranscoder () {
+
+    this(8);
+  }
+
+  public KryoXMemcachedTranscoder (int concurrencyLevel) {
+
+    kryoPool = new Pool<Kryo>(true, false, concurrencyLevel) {
+
+      protected Kryo create () {
+
+        Kryo kryo = new Kryo();
+
+        kryo.setReferences(true);
+        kryo.setRegistrationRequired(false);
+
+        return kryo;
+      }
+    };
+  }
 
   @Override
   public boolean isPrimitiveAsString () {
@@ -93,13 +102,13 @@ public class KryoXMemcachedTranscoder<T> implements Transcoder<T> {
   @Override
   public CachedData encode (T obj) {
 
-    Kryo kryo = KRYO_POOL.obtain();
+    Kryo kryo = kryoPool.obtain();
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
     try (Output output = new Output(byteArrayOutputStream)) {
       kryo.writeClassAndObject(output, obj);
     } finally {
-      KRYO_POOL.free(kryo);
+      kryoPool.free(kryo);
     }
 
     return new CachedData(1, byteArrayOutputStream.toByteArray(), MAX_SIZE, -1L);
@@ -108,13 +117,13 @@ public class KryoXMemcachedTranscoder<T> implements Transcoder<T> {
   @Override
   public T decode (CachedData cachedData) {
 
-    Kryo kryo = KRYO_POOL.obtain();
+    Kryo kryo = kryoPool.obtain();
 
     try {
 
       return (T)kryo.readClassAndObject(new Input(cachedData.getData()));
     } finally {
-      KRYO_POOL.free(kryo);
+      kryoPool.free(kryo);
     }
   }
 }
