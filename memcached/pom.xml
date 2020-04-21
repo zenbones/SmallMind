@@ -33,6 +33,12 @@
       <scope>compile</scope>
       <optional>true</optional>
     </dependency>
+    <dependency>
+      <groupId>com.esotericsoftware.kryo</groupId>
+      <artifactId>kryo5</artifactId>
+      <scope>compile</scope>
+      <optional>true</optional>
+    </dependency>
   </dependencies>
   <build>
     <plugins>
