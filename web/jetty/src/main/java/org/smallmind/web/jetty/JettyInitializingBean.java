@@ -82,7 +82,6 @@ import org.springframework.context.event.ContextRefreshedEvent;
 public class JettyInitializingBean implements DisposableBean, ApplicationContextAware, ApplicationListener<ContextRefreshedEvent>, BeanPostProcessor {
 
   private Server server;
-  //  private LinkedList<WebSocketExtensionInstaller> webSocketExtensionInstallerList = new LinkedList<>();
   private LinkedList<WebServiceInstaller> webServiceInstallerList = new LinkedList<>();
   private LinkedList<ListenerInstaller> listenerInstallerList = new LinkedList<>();
   private LinkedList<FilterInstaller> filterInstallerList = new LinkedList<>();
@@ -377,7 +376,7 @@ public class JettyInitializingBean implements DisposableBean, ApplicationContext
 
       if (webSocketOption != null) {
         try {
-          WebSocketServerContainerInitializer.configureContext(servletContextHandler);
+          WebSocketServerContainerInitializer.initialize(servletContextHandler).setDefaultMaxSessionIdleTimeout(webSocketOption.getMaxSessionIdleTimeout());
         } catch (ServletException servletException) {
           throw new JettyInitializationException(servletException);
         }

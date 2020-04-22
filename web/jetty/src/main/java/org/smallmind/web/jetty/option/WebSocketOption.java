@@ -34,4 +34,22 @@ package org.smallmind.web.jetty.option;
 
 public class WebSocketOption implements JettyOption {
 
+  private static final long FIVE_MINUTES = 5 * 60 * 1000;
+
+  private long maxSessionIdleTimeout = FIVE_MINUTES;
+
+  public static long getFiveMinutes () {
+
+    return FIVE_MINUTES;
+  }
+
+  public long getMaxSessionIdleTimeout () {
+
+    return maxSessionIdleTimeout;
+  }
+
+  public void setMaxSessionIdleTimeout (long maxSessionIdleTimeout) {
+
+    this.maxSessionIdleTimeout = maxSessionIdleTimeout;
+  }
 }
