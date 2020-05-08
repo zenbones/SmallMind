@@ -96,10 +96,6 @@ public class GenerateWrapperMojo extends AbstractMojo {
   private String jvmMaxMemoryMB;
   @Parameter
   private String runAs;
-  @Parameter
-  private String withPassword;
-  @Parameter
-  private String umask;
   @Parameter(defaultValue = "0")
   private int waitAfterStartup;
   @Parameter(defaultValue = "java")
@@ -229,12 +225,6 @@ public class GenerateWrapperMojo extends AbstractMojo {
       }
       if ((runAs != null) && (!runAs.isEmpty())) {
         freemarkerMap.put("runAs", runAs);
-      }
-      if ((withPassword != null) && (!withPassword.isEmpty())) {
-        freemarkerMap.put("withPassword", withPassword);
-      }
-      if ((umask != null) && (!umask.isEmpty())) {
-        freemarkerMap.put("umask", umask);
       }
 
       freemarkerMap.put("useUpstart", useUpstart);
@@ -373,7 +363,7 @@ public class GenerateWrapperMojo extends AbstractMojo {
 
         switch (osType.getOsStyle()) {
           case UNIX:
-            processFreemarkerTemplate(getWrapperPath("bin", "freemarker.sh.script.in"), binDirectory, applicationName + ".sh", freemarkerMap);
+            processFreemarkerTemplate(getWrapperPath("bin", "freemarker.App.sh.in"), binDirectory, applicationName + ".sh", freemarkerMap);
             break;
           case WINDOWS:
             copyToDestination(getResourceAsStream(getWrapperPath("bin", "AppCommand.bat.in")), binDirectory, applicationName + ".bat");
