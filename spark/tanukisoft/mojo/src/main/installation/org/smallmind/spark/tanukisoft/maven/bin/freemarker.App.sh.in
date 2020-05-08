@@ -12,7 +12,7 @@
 #
 # Java Service Wrapper sh script.  Suitable for starting and stopping
 #  wrapped Java applications on UNIX platforms.
-# Optimized for use with version 3.5.43-st of the Wrapper.
+# Optimized for use with version 3.5.43 of the Wrapper.
 #
 
 #-----------------------------------------------------------------------------
