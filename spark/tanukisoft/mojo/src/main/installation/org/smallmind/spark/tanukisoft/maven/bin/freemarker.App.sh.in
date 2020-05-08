@@ -153,7 +153,9 @@ SU_BIN=su
 # In case the user set in RUN_AS_USER has no bash set, the 'su' command will fail.
 # The workaround for GNU/Linux system is to specify which bash to use with 
 #  the '-s' option.
-#SU_OPTS="-s /bin/bash"
+[#if runAs?exists]
+SU_OPTS="-s /bin/bash"
+[/#if]
 
 # By default we show a detailed usage block.  Uncomment to show brief usage.
 #BRIEF_USAGE=true
