@@ -56,7 +56,7 @@ import org.smallmind.persistence.orm.ORMDao;
 import org.smallmind.persistence.orm.aop.Timed;
 
 @Aspect
-public class ORMBasedCacheAsAspect {
+public class CacheAsAspect {
 
   private static final Random RANDOM = new SecureRandom();
 

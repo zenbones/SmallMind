@@ -47,7 +47,7 @@ import org.smallmind.persistence.cache.VectoredDao;
 import org.smallmind.persistence.orm.ORMDao;
 
 @Aspect
-public class ORMBasedCachedWithAspect {
+public class CachedWithAspect {
 
   private static final ConcurrentHashMap<MethodKey, Method> METHOD_MAP = new ConcurrentHashMap<>();
 
