@@ -136,7 +136,7 @@ public class ClaxonRegistry {
 
             NamedMeter<?> previousNamedMeter;
 
-            if ((previousNamedMeter = meterMap.putIfAbsent(key, namedMeter = new NamedMeter<M>(strongestEntry.getValue(), builder.build(configuration.getClock())))) != null) {
+            if ((previousNamedMeter = meterMap.putIfAbsent(key, namedMeter = new NamedMeter<>(strongestEntry.getValue(), builder.build(configuration.getClock())))) != null) {
               namedMeter = previousNamedMeter;
             }
           }
