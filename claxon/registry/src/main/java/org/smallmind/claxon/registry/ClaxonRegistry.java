@@ -55,11 +55,6 @@ public class ClaxonRegistry {
   private final CollectionWorker collectionWorker;
   private final ClaxonConfiguration configuration;
 
-  public ClaxonRegistry () {
-
-    this(new ClaxonConfiguration());
-  }
-
   public ClaxonRegistry (ClaxonConfiguration configuration) {
 
     Thread workerThread = new Thread(collectionWorker = new CollectionWorker());
