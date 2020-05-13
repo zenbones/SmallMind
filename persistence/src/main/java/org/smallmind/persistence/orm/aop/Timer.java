@@ -36,26 +36,9 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.util.Comparator;
-import org.smallmind.persistence.cache.aop.Time;
-import org.smallmind.persistence.cache.aop.Vector;
 
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Timer {
 
-  // the vector upon which this annotation acts
-  Vector value ();
-
-  // the comparator to be used on an ordered cache entry
-  Class<? extends Comparator> comparator () default Comparator.class;
-
-  // the maximum number of entries to cache (where 0 or or less indicates no limit)
-  int max () default 0;
-
-  // the number of seconds for the cache entry's ttl (where 0 or less will indicates the cache domain's default)
-  Time time () default @Time(0);
-
-  // allows ordering to be applied to the resulting cache entry
-  boolean ordered () default false;
 }
