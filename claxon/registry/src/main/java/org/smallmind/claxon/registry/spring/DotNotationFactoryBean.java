@@ -32,41 +32,19 @@
  */
 package org.smallmind.claxon.registry.spring;
 
-import java.util.Map;
-import org.smallmind.claxon.registry.ClaxonConfiguration;
-import org.smallmind.claxon.registry.Clock;
-import org.smallmind.claxon.registry.Tag;
-import org.smallmind.nutsnbolts.time.Stint;
 import org.smallmind.nutsnbolts.util.DotNotation;
+import org.smallmind.nutsnbolts.util.DotNotationException;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
-public class ClaxonConfigurationFactoryBean implements FactoryBean<ClaxonConfiguration>, InitializingBean {
+public class DotNotationFactoryBean implements FactoryBean<DotNotation>, InitializingBean {
 
-  private ClaxonConfiguration configuration;
-  private Clock clock;
-  private Stint collectionStint;
-  private Tag[] registryTags;
-  private Map<DotNotation, String> prefixMap;
+  private DotNotation dotNotation;
+  private String notation;
 
-  public void setClock (Clock clock) {
+  public void setNotation (String notation) {
 
-    this.clock = clock;
-  }
-
-  public void setCollectionStint (Stint collectionStint) {
-
-    this.collectionStint = collectionStint;
-  }
-
-  public void setRegistryTags (Tag[] registryTags) {
-
-    this.registryTags = registryTags;
-  }
-
-  public void setPrefixMap (Map<DotNotation, String> prefixMap) {
-
-    this.prefixMap = prefixMap;
+    this.notation = notation;
   }
 
   @Override
@@ -78,30 +56,19 @@ public class ClaxonConfigurationFactoryBean implements FactoryBean<ClaxonConfigu
   @Override
   public Class<?> getObjectType () {
 
-    return ClaxonConfiguration.class;
+    return DotNotation.class;
   }
 
   @Override
-  public ClaxonConfiguration getObject () {
+  public DotNotation getObject () {
 
-    return configuration;
+    return dotNotation;
   }
 
   @Override
-  public void afterPropertiesSet () throws Exception {
+  public void afterPropertiesSet ()
+    throws DotNotationException {
 
-    configuration = new ClaxonConfiguration();
-    if (clock != null) {
-      configuration.setClock(clock);
-    }
-    if (collectionStint != null) {
-      configuration.setCollectionStint(collectionStint);
-    }
-    if (registryTags != null) {
-      configuration.setRegistryTags(registryTags);
-    }
-    if (prefixMap != null) {
-      configuration.setPrefixMap(prefixMap);
-    }
+    dotNotation = new DotNotation(notation);
   }
 }
