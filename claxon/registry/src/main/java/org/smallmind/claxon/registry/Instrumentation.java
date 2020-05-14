@@ -35,60 +35,22 @@ package org.smallmind.claxon.registry;
 import java.util.Observable;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import org.smallmind.claxon.registry.meter.MeterBuilder;
 
-public class Instrumentation {
+public interface Instrumentation {
 
-  private final ClaxonRegistry registry;
-  private final MeterBuilder<?> builder;
-  private final Tag[] tags;
-  private final Class<?> caller;
-  private TimeUnit timeUnit = TimeUnit.MILLISECONDS;
+  Instrumentation as (TimeUnit timeUnit);
 
-  public Instrumentation (ClaxonRegistry registry, Class<?> caller, MeterBuilder<?> builder, Tag... tags) {
+  <O extends Observable> O track (O observable);
 
-    this.registry = registry;
-    this.caller = caller;
-    this.builder = builder;
-    this.tags = tags;
-  }
+  <T> T track (T measured, Function<T, Long> measurement);
 
-  public Instrumentation as (TimeUnit timeUnit) {
+  void update (long value);
 
-    this.timeUnit = timeUnit;
+  void update (long value, TimeUnit valueTimeUnit);
 
-    return this;
-  }
+  void on (SansResultExecutable sansResultExecutable)
+    throws Throwable;
 
-  public <O extends Observable> O track (O observable) {
-
-    return registry.track(caller, builder, observable, tags);
-  }
-
-  public <T> T track (T measured, Function<T, Long> measurement) {
-
-    return registry.track(caller, builder, measured, measurement, tags);
-  }
-
-  public void update (long value) {
-
-    registry.instrument(registry.register(caller, builder, tags), value);
-  }
-
-  public void update (long value, TimeUnit valueTimeUnit) {
-
-    registry.instrument(registry.register(caller, builder, tags), timeUnit.convert(value, valueTimeUnit));
-  }
-
-  public void on (SansResultExecutable sansResultExecutable)
-    throws Throwable {
-
-    registry.instrument(registry.register(caller, builder, tags), timeUnit, sansResultExecutable);
-  }
-
-  public <T> T on (WithResultExecutable<T> withResultExecutable)
-    throws Throwable {
-
-    return registry.instrument(registry.register(caller, builder, tags), timeUnit, withResultExecutable);
-  }
+  <T> T on (WithResultExecutable<T> withResultExecutable)
+    throws Throwable;
 }

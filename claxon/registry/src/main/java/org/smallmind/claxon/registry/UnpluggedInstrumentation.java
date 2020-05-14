@@ -32,28 +32,51 @@
  */
 package org.smallmind.claxon.registry;
 
-import org.smallmind.claxon.registry.meter.MeterBuilder;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
-import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
+import java.util.Observable;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
-public class Instrument implements PerApplicationDataManager {
+public class UnpluggedInstrumentation implements Instrumentation {
 
-  private static final UnpluggedInstrumentation UNPLUGGED_INSTRUMENTATION = new UnpluggedInstrumentation();
+  @Override
+  public Instrumentation as (TimeUnit timeUnit) {
 
-  public static void register (ClaxonRegistry registry) {
-
-    PerApplicationContext.setPerApplicationData(Instrument.class, registry);
+    return this;
   }
 
-  public static ClaxonRegistry getRegistry () {
+  @Override
+  public <O extends Observable> O track (O observable) {
 
-    return PerApplicationContext.getPerApplicationData(Instrument.class, ClaxonRegistry.class);
+    return observable;
   }
 
-  public static Instrumentation with (Class<?> caller, MeterBuilder<?> builder, Tag... tags) {
+  @Override
+  public <T> T track (T measured, Function<T, Long> measurement) {
 
-    ClaxonRegistry registry;
+    return measured;
+  }
 
-    return ((registry = getRegistry()) != null) ? new WorkingInstrumentation(registry, caller, builder, tags) : UNPLUGGED_INSTRUMENTATION;
+  @Override
+  public void update (long value) {
+
+  }
+
+  @Override
+  public void update (long value, TimeUnit valueTimeUnit) {
+
+  }
+
+  @Override
+  public void on (SansResultExecutable sansResultExecutable)
+    throws Throwable {
+
+    sansResultExecutable.execute();
+  }
+
+  @Override
+  public <T> T on (WithResultExecutable<T> withResultExecutable)
+    throws Throwable {
+
+    return withResultExecutable.execute();
   }
 }

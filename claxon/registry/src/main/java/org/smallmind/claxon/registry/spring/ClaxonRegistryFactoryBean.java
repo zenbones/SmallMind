@@ -45,14 +45,14 @@ public class ClaxonRegistryFactoryBean implements FactoryBean<ClaxonRegistry>, I
 
   private ClaxonRegistry registry;
   private ClaxonConfiguration configuration = new ClaxonConfiguration();
-  private HashMap<String, Collector> collectorMap = new HashMap<>();
+  private Map<String, Collector> collectorMap = new HashMap<>();
 
   public void setConfiguration (ClaxonConfiguration configuration) {
 
     this.configuration = configuration;
   }
 
-  public void setCollectorMap (HashMap<String, Collector> collectorMap) {
+  public void setCollectorMap (Map<String, Collector> collectorMap) {
 
     this.collectorMap = collectorMap;
   }
