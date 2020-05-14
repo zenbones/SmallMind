@@ -30,52 +30,63 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.collector.datadog;
+package org.smallmind.claxon.collector.datadog.spring;
 
-import com.timgroup.statsd.NonBlockingStatsDClient;
-import com.timgroup.statsd.StatsDClient;
-import org.smallmind.claxon.registry.PushCollector;
-import org.smallmind.claxon.registry.Quantity;
+import org.smallmind.claxon.collector.datadog.DataDogCollector;
 import org.smallmind.claxon.registry.Tag;
+import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.InitializingBean;
 
-public class DataDogCollector extends PushCollector {
+public class DataDogCollectorFactoryBean implements FactoryBean<DataDogCollector>, InitializingBean {
 
-  private final StatsDClient statsdClient;
+  private DataDogCollector collector;
 
-  public DataDogCollector () {
+  private String prefix;
+  private String hostName = "localhost";
+  private int port = 8125;
+  private Tag[] constantTags;
 
-    this(null, "localhost", 8125, null);
+  public void setPrefix (String prefix) {
+
+    this.prefix = prefix;
   }
 
-  public DataDogCollector (String prefix, String hostName, int port, Tag... constantTags) {
+  public void setHostName (String hostName) {
 
-    statsdClient = new NonBlockingStatsDClient(prefix, hostName, port, translateTags(constantTags));
+    this.hostName = hostName;
+  }
+
+  public void setPort (int port) {
+
+    this.port = port;
+  }
+
+  public void setConstantTags (Tag[] constantTags) {
+
+    this.constantTags = constantTags;
   }
 
   @Override
-  public void record (String meterName, Tag[] tags, Quantity[] quantities) {
+  public boolean isSingleton () {
 
-    String[] translatedTags = translateTags(tags);
-
-    for (Quantity quantity : quantities) {
-      statsdClient.gauge(meterName + '.' + quantity.getName(), quantity.getValue(), translatedTags);
-    }
+    return true;
   }
 
-  private String[] translateTags (Tag... tags) {
+  @Override
+  public Class<?> getObjectType () {
 
-    String[] translatedtags = null;
+    return DataDogCollector.class;
+  }
 
-    if ((tags != null) && (tags.length > 0)) {
+  @Override
+  public DataDogCollector getObject () {
 
-      int index = 0;
+    return collector;
+  }
 
-      translatedtags = new String[tags.length];
-      for (Tag tag : tags) {
-        translatedtags[index++] = tag.getKey() + ':' + tag.getValue();
-      }
-    }
+  @Override
+  public void afterPropertiesSet () {
 
-    return translatedtags;
+    collector = new DataDogCollector(prefix, hostName, port, constantTags);
   }
 }
