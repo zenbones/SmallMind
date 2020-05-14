@@ -40,9 +40,9 @@ import org.smallmind.persistence.orm.TransactionPostProcess;
 
 public class DelayedInvocationPostProcess extends TransactionPostProcess {
 
-  private Object delayedTarget;
-  private Method delayedMethod;
-  private Object[] delayedArguments;
+  private final Object delayedTarget;
+  private final Method delayedMethod;
+  private final Object[] delayedArguments;
 
   public DelayedInvocationPostProcess (TransactionEndState endState, ProcessPriority priority, Object delayedTarget, Method delayedMethod, Object... delayedArguments) {
 

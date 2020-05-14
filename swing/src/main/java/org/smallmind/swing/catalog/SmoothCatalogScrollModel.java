@@ -36,8 +36,8 @@ import java.awt.Rectangle;
 
 public class SmoothCatalogScrollModel implements CatalogScrollModel {
 
-  private int unit;
-  private int block;
+  private final int unit;
+  private final int block;
 
   public SmoothCatalogScrollModel (int unit, int block) {
 
@@ -54,5 +54,4 @@ public class SmoothCatalogScrollModel implements CatalogScrollModel {
 
     return block;
   }
-
 }

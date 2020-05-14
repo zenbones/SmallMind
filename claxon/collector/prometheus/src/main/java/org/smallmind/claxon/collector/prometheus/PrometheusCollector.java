@@ -42,7 +42,7 @@ public class PrometheusCollector extends PullCollector<String> {
 
   private enum Letter {UPPER, LOWER, DIGIT, PUNCTUATION, UNKNOWN}
 
-  private ConcurrentLinkedQueue<String> rowQueue = new ConcurrentLinkedQueue<>();
+  private final ConcurrentLinkedQueue<String> rowQueue = new ConcurrentLinkedQueue<>();
   /*
   # HELP metric_name Description of the metric
   # TYPE metric_name type

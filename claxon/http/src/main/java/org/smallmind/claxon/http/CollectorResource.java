@@ -35,11 +35,11 @@ package org.smallmind.claxon.http;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
+import org.smallmind.claxon.registry.ClaxonRegistry;
 import org.smallmind.claxon.registry.CollectionMethod;
 import org.smallmind.claxon.registry.Collector;
 import org.smallmind.claxon.registry.InvalidCollectorException;
 import org.smallmind.claxon.registry.PullCollector;
-import org.smallmind.claxon.registry.ClaxonRegistry;
 import org.smallmind.claxon.registry.UnknownCollectorException;
 
 @Path("/claxon")

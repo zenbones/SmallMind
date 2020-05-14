@@ -34,9 +34,9 @@ package org.smallmind.ansible;
 
 public class VaultCake {
 
-  private byte[] salt;
-  private byte[] hmac;
-  private byte[] encrypted;
+  private final byte[] salt;
+  private final byte[] hmac;
+  private final byte[] encrypted;
 
   public VaultCake (byte[] salt, byte[] hmac, byte[] encrypted) {
 

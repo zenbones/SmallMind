@@ -46,7 +46,7 @@ public class WireInvocationHandler implements InvocationHandler {
   private static final Class[] OBJECT_SIGNATURE = {Object.class};
   private static final String[] NO_NAMES = new String[0];
   private static final String[] SINGLE_OBJECT_NAME = new String[] {"obj"};
-  private static OneWayConversation ONE_WAY_CONVERSATION = new OneWayConversation();
+  private static final OneWayConversation ONE_WAY_CONVERSATION = new OneWayConversation();
   private final RequestTransport transport;
   private final HashMap<Method, String[]> methodMap = new HashMap<>();
   private final ParameterExtractor<String> serviceGroupExtractor;

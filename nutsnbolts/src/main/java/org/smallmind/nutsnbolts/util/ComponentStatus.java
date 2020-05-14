@@ -36,7 +36,7 @@ public enum ComponentStatus {
 
   INITIALIZING(3), INITIALIZED(4), STARTING(7), STARTED(8), STOPPING(6), STOPPED(5), TERMINATING(2), TERMINATED(1), UNKNOWN(0);
 
-  private int priority;
+  private final int priority;
 
   ComponentStatus (int priority) {
 

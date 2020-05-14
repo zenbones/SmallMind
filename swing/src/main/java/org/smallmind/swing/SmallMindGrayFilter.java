@@ -40,16 +40,8 @@ import java.awt.image.RGBImageFilter;
 
 public class SmallMindGrayFilter extends RGBImageFilter {
 
-  private boolean brighter;
-  private int percent;
-
-  public static Image createDisabledImage (Image image) {
-
-    SmallMindGrayFilter filter = new SmallMindGrayFilter(true, 50);
-    ImageProducer prod = new FilteredImageSource(image.getSource(), filter);
-
-    return Toolkit.getDefaultToolkit().createImage(prod);
-  }
+  private final boolean brighter;
+  private final int percent;
 
   /**
    * Constructs a GrayFilter object that filters a color image to a
@@ -72,14 +64,21 @@ public class SmallMindGrayFilter extends RGBImageFilter {
     canFilterIndexColorModel = true;
   }
 
+  public static Image createDisabledImage (Image image) {
+
+    SmallMindGrayFilter filter = new SmallMindGrayFilter(true, 50);
+    ImageProducer prod = new FilteredImageSource(image.getSource(), filter);
+
+    return Toolkit.getDefaultToolkit().createImage(prod);
+  }
+
   public int filterRGB (int x, int y, int rgb) {
 
     int gray = ((((rgb >> 16) & 0xff) + ((rgb >> 8) & 0xff) + (rgb & 0xff)) / 3);
 
     if (brighter) {
       gray = (255 - ((255 - gray) * (100 - percent) / 100));
-    }
-    else {
+    } else {
       gray = (gray * (100 - percent) / 100);
     }
 

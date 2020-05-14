@@ -40,7 +40,7 @@ import org.smallmind.web.websocket.HandshakeListener;
 
 public class ConfiguratorHandshakeListener implements HandshakeListener {
 
-  private ClientEndpointConfig.Configurator configurator;
+  private final ClientEndpointConfig.Configurator configurator;
 
   public ConfiguratorHandshakeListener (ClientEndpointConfig.Configurator configurator) {
 

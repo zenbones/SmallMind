@@ -49,8 +49,8 @@ import org.smallmind.sleuth.runner.event.SuccessSleuthEvent;
 
 public class AnnotationMethodology<A extends Annotation> implements Iterable<Pair<Method, A>> {
 
-  private HashSet<MethodKey> methodSet = new HashSet<>();
-  private LinkedList<Pair<Method, A>> pairList = new LinkedList<>();
+  private final HashSet<MethodKey> methodSet = new HashSet<>();
+  private final LinkedList<Pair<Method, A>> pairList = new LinkedList<>();
 
   public void add (Method method, A annotation) {
 
@@ -94,8 +94,8 @@ public class AnnotationMethodology<A extends Annotation> implements Iterable<Pai
 
   private static class MethodKey {
 
-    private String name;
-    private Class[] parameters;
+    private final String name;
+    private final Class[] parameters;
 
     public MethodKey (String name, Class[] parameters) {
 

@@ -37,8 +37,8 @@ import java.time.ZonedDateTime;
 
 public class TimeArithmetic {
 
-  private ZonedDateTime date;
-  private TimeOperation operation;
+  private final ZonedDateTime date;
+  private final TimeOperation operation;
 
   public TimeArithmetic (ZonedDateTime date, TimeOperation operation) {
 

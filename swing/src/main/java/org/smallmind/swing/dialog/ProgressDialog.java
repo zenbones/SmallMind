@@ -36,16 +36,16 @@ import java.awt.Window;
 
 public class ProgressDialog extends OptionDialog {
 
+  public ProgressDialog (Window parentWindow, String title, ProgressOptionPanel progressOptionPanel) {
+
+    super(parentWindow, title, OptionType.PROGRESS, new OptionButton[] {new OptionButton("Cancel", DialogState.CANCEL)}, progressOptionPanel);
+  }
+
   public static void showProgressDialog (Window parentWindow, String title, ProgressOptionPanel progressOptionPanel) {
 
     ProgressDialog progressDialog = new ProgressDialog(parentWindow, title, progressOptionPanel);
 
     progressDialog.setModal(true);
     progressDialog.setVisible(true);
-  }
-
-  public ProgressDialog (Window parentWindow, String title, ProgressOptionPanel progressOptionPanel) {
-
-    super(parentWindow, title, OptionType.PROGRESS, new OptionButton[] {new OptionButton("Cancel", DialogState.CANCEL)}, progressOptionPanel);
   }
 }

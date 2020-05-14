@@ -37,8 +37,8 @@ import org.eclipse.aether.artifact.Artifact;
 
 public class ArtifactTag {
 
-  private Artifact artifact;
-  private long lastModTime;
+  private final Artifact artifact;
+  private final long lastModTime;
 
   public ArtifactTag (Artifact artifact) {
 

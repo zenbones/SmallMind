@@ -45,7 +45,7 @@ import javax.servlet.http.HttpServletResponse;
 
 public class DynamicWebstartServlet extends HttpServlet {
 
-  private static Pattern JNLP_HREF_PATTERN = Pattern.compile("<jnlp .*href\\s*=\\s*\"([^\"]*)\"\\s*>");
+  private static final Pattern JNLP_HREF_PATTERN = Pattern.compile("<jnlp .*href\\s*=\\s*\"([^\"]*)\"\\s*>");
 
   public void init (ServletConfig config)
     throws ServletException {
@@ -60,8 +60,7 @@ public class DynamicWebstartServlet extends HttpServlet {
 
     if ((jnlpInputStream = getServletContext().getResourceAsStream(req.getRequestURI().substring(req.getContextPath().length()))) == null) {
       res.sendError(HttpServletResponse.SC_NOT_FOUND);
-    }
-    else {
+    } else {
 
       Matcher jnlpHrefMatcher;
       ByteArrayOutputStream jnlpOutputStream;

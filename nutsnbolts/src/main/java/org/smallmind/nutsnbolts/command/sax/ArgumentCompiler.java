@@ -36,5 +36,5 @@ import org.smallmind.nutsnbolts.command.template.Argument;
 
 public interface ArgumentCompiler {
 
-  public Argument getArgument ();
+  Argument getArgument ();
 }

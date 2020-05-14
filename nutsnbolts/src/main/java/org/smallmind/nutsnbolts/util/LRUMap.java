@@ -37,7 +37,7 @@ import java.util.Map;
 
 public class LRUMap<K, V> extends LinkedHashMap<K, V> {
 
-  private int maximumSize;
+  private final int maximumSize;
 
   public LRUMap (int maximumSize) {
 

@@ -37,7 +37,7 @@ import javax.swing.ButtonGroup;
 
 public class GroupedActionEvent extends ActionEvent {
 
-  private ButtonGroup buttonGroup;
+  private final ButtonGroup buttonGroup;
 
   public GroupedActionEvent (ButtonGroup buttonGroup, ActionEvent actionEvent) {
 

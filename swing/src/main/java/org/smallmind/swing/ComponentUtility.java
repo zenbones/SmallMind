@@ -106,5 +106,4 @@ public class ComponentUtility {
 
     component.setMaximumSize(new Dimension((int)component.getMaximumSize().getWidth(), height));
   }
-
 }

@@ -38,8 +38,8 @@ public enum MorphiaAcknowledgment {
 
   ZERO(WriteConcern.UNACKNOWLEDGED, false), ONE(WriteConcern.W1, true), TWO(WriteConcern.W2, true), THREE(WriteConcern.W3, true), MAJORITY(WriteConcern.MAJORITY, true);
 
-  private WriteConcern writeConcern;
-  private boolean journable;
+  private final WriteConcern writeConcern;
+  private final boolean journable;
 
   MorphiaAcknowledgment (WriteConcern writeConcern, boolean journable) {
 

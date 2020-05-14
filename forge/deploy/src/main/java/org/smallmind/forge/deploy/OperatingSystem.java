@@ -57,8 +57,24 @@ public enum OperatingSystem {
   };
 
   private static final Set<PosixFilePermission> PERMISSIONS_755;
-  private String code;
-  private String batchExtension;
+  private final String code;
+  private final String batchExtension;
+
+  static {
+
+    PERMISSIONS_755 = new HashSet<>();
+
+    PERMISSIONS_755.add(PosixFilePermission.OWNER_READ);
+    PERMISSIONS_755.add(PosixFilePermission.OWNER_WRITE);
+    PERMISSIONS_755.add(PosixFilePermission.OWNER_EXECUTE);
+
+    PERMISSIONS_755.add(PosixFilePermission.GROUP_READ);
+    PERMISSIONS_755.add(PosixFilePermission.GROUP_EXECUTE);
+
+    PERMISSIONS_755.add(PosixFilePermission.OTHERS_READ);
+    PERMISSIONS_755.add(PosixFilePermission.OTHERS_EXECUTE);
+  }
+
   OperatingSystem (String code, String batchExtension) {
 
     this.code = code;
@@ -88,20 +104,5 @@ public enum OperatingSystem {
   public String getBatchExtension () {
 
     return batchExtension;
-  }
-
-  static {
-
-    PERMISSIONS_755 = new HashSet<>();
-
-    PERMISSIONS_755.add(PosixFilePermission.OWNER_READ);
-    PERMISSIONS_755.add(PosixFilePermission.OWNER_WRITE);
-    PERMISSIONS_755.add(PosixFilePermission.OWNER_EXECUTE);
-
-    PERMISSIONS_755.add(PosixFilePermission.GROUP_READ);
-    PERMISSIONS_755.add(PosixFilePermission.GROUP_EXECUTE);
-
-    PERMISSIONS_755.add(PosixFilePermission.OTHERS_READ);
-    PERMISSIONS_755.add(PosixFilePermission.OTHERS_EXECUTE);
   }
 }

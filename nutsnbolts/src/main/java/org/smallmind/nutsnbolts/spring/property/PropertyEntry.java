@@ -34,7 +34,7 @@ package org.smallmind.nutsnbolts.spring.property;
 
 public interface PropertyEntry {
 
-  public abstract String getKey ();
+  String getKey ();
 
-  public abstract Object getValue ();
+  Object getValue ();
 }

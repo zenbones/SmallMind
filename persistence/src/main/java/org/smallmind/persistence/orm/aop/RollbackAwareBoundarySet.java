@@ -34,7 +34,7 @@ package org.smallmind.persistence.orm.aop;
 
 public class RollbackAwareBoundarySet<T> extends BoundarySet<T> {
 
-  private boolean rollbackOnly;
+  private final boolean rollbackOnly;
 
   public RollbackAwareBoundarySet (String[] sessionSourceKeys, boolean implicit, boolean rollbackOnly) {
 

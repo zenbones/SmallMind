@@ -34,11 +34,11 @@ package org.smallmind.web.jwt;
 
 public interface JWTToken {
 
-  public abstract String getSub ();
+  String getSub ();
 
-  public abstract void setSub (String sub);
+  void setSub (String sub);
 
-  public abstract long getExp ();
+  long getExp ();
 
-  public abstract void setExp (long exp);
+  void setExp (long exp);
 }

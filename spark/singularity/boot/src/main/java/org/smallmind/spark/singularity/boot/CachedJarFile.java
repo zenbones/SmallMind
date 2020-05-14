@@ -42,8 +42,8 @@ import java.util.jar.JarInputStream;
 
 public class CachedJarFile {
 
-  private HashMap<String, byte[]> entryMap = new HashMap<>();
-  private String entryName;
+  private final HashMap<String, byte[]> entryMap = new HashMap<>();
+  private final String entryName;
 
   public CachedJarFile (String entryName, JarInputStream jarInputStream)
     throws IOException {

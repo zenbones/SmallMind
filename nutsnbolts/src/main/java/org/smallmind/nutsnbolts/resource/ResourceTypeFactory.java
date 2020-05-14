@@ -39,7 +39,7 @@ public class ResourceTypeFactory implements ResourceFactory {
 
   private static final Class[] SIGNATURE = new Class[] {String.class};
 
-  private static ResourceSchemes VALID_SCHEMES;
+  private static final ResourceSchemes VALID_SCHEMES;
 
   static {
 

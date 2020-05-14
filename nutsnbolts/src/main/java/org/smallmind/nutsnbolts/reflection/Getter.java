@@ -40,10 +40,10 @@ public class Getter implements Serializable {
 
   private static final Object[] NO_PARAMETERS = new Object[0];
 
-  private Class attributeClass;
-  private Method method;
-  private String attributeName;
-  private boolean is;
+  private final Class attributeClass;
+  private final Method method;
+  private final String attributeName;
+  private final boolean is;
   private Boolean bob;
 
   public Getter (Method method)

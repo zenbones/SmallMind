@@ -30,19 +30,42 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.json.query;
+package org.smallmind.claxon.registry.spring;
 
-public abstract class WhereFieldTransformer<R, T> {
+import org.smallmind.claxon.registry.ClaxonConfiguration;
+import org.smallmind.claxon.registry.Clock;
+import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.InitializingBean;
 
-  private final WhereFieldTransform<R, T> transform;
+public class ClaxonConfigurationFactoryBean implements FactoryBean<ClaxonConfiguration>, InitializingBean {
 
-  public WhereFieldTransformer (WhereFieldTransform<R, T> transform) {
+  private ClaxonConfiguration configuration;
+  private Clock clock;
 
-    this.transform = transform;
+  @Override
+  public boolean isSingleton () {
+
+    return true;
   }
 
-  public synchronized WherePath<R, T> transform (String entity, String name) {
+  @Override
+  public Class<?> getObjectType () {
 
-    return transform.apply(entity, name);
+    return ClaxonConfiguration.class;
+  }
+
+  @Override
+  public ClaxonConfiguration getObject () {
+
+    return configuration;
+  }
+
+  @Override
+  public void afterPropertiesSet () throws Exception {
+
+    configuration = new ClaxonConfiguration();
+    if (clock != null) {
+      configuration.setClock(clock);
+    }
   }
 }

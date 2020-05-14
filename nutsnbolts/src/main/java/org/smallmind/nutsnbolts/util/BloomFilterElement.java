@@ -34,5 +34,5 @@ package org.smallmind.nutsnbolts.util;
 
 public interface BloomFilterElement {
 
-  public abstract byte[] getBytes ();
+  byte[] getBytes ();
 }

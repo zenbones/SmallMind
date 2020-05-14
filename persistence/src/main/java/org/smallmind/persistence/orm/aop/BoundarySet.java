@@ -37,10 +37,10 @@ import org.smallmind.persistence.orm.ProxySession;
 
 public class BoundarySet<T> extends HashSet<T> {
 
-  private String[] sessionSourceKeys;
-  private boolean implicit;
+  private final String[] sessionSourceKeys;
+  private final boolean implicit;
 
-  public BoundarySet (String sessionSourceKeys[], boolean implicit) {
+  public BoundarySet (String[] sessionSourceKeys, boolean implicit) {
 
     super();
 

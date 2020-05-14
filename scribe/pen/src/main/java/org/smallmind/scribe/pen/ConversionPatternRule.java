@@ -42,14 +42,14 @@ public class ConversionPatternRule implements PatternRule {
     LEFT, RIGHT, NONE
   }
 
-  private String header;
-  private String footer;
-  private String multiLinePrefix;
-  private Padding padding;
-  private boolean prefixFirstLine;
-  private char conversion;
-  private int width;
-  private int precision;
+  private final String header;
+  private final String footer;
+  private final String multiLinePrefix;
+  private final Padding padding;
+  private final boolean prefixFirstLine;
+  private final char conversion;
+  private final int width;
+  private final int precision;
 
   public ConversionPatternRule (String header, String paddingString, String widthString, String precisionString, String firstLineString, String multiLinePrefix, String conversionString, String footer) {
 

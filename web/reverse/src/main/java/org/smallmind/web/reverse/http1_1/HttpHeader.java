@@ -38,8 +38,8 @@ import java.util.List;
 
 public class HttpHeader {
 
-  private String name;
-  private ArrayList<String> valueList = new ArrayList<>(1);
+  private final String name;
+  private final ArrayList<String> valueList = new ArrayList<>(1);
 
   public HttpHeader (String name, String... values) {
 

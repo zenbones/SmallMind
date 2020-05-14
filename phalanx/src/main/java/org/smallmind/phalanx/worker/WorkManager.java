@@ -43,7 +43,7 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class WorkManager<W extends Worker<T>, T> {
 
-  private static enum State {STOPPED, STARTING, STARTED, STOPPING}
+  private enum State {STOPPED, STARTING, STARTED, STOPPING}
 
   private final AtomicReference<State> stateRef = new AtomicReference<>(State.STOPPED);
   private final WorkQueue<T> workQueue;

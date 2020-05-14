@@ -72,5 +72,4 @@ public class MenuModel {
 
     return menuMap.get(menuPath);
   }
-
 }

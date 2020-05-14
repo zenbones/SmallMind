@@ -42,7 +42,7 @@ public enum CannedResponse {
   BAD_GATEWAY(ByteBuffer.wrap("HTTP/1.1 502 Bad Gateway\r\n\r\n".getBytes())),
   GATEWAY_TIMEOUT(ByteBuffer.wrap("HTTP/1.1 504 Gateway Timeout\r\n\r\n".getBytes()));
 
-  private ByteBuffer byteBuffer;
+  private final ByteBuffer byteBuffer;
 
   CannedResponse (ByteBuffer byteBuffer) {
 

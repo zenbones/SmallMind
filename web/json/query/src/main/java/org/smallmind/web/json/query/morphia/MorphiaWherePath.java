@@ -36,7 +36,7 @@ import org.smallmind.web.json.query.WherePath;
 
 public class MorphiaWherePath extends WherePath<Void, Void> {
 
-  private String field;
+  private final String field;
 
   public MorphiaWherePath (String field) {
 

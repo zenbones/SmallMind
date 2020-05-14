@@ -38,7 +38,7 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class HttpResponseFrameReader extends HttpFrameReader {
 
-  private SocketChannel destinationChannel;
+  private final SocketChannel destinationChannel;
 
   public HttpResponseFrameReader (ReverseProxyService reverseProxyService, SocketChannel sourceChannel, SocketChannel destinationChannel) {
 

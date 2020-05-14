@@ -41,9 +41,9 @@ import org.apache.wicket.util.template.PackageTextTemplate;
 
 public class JavaScriptBehavior extends Behavior {
 
-  private Map<String, Object> substitutionMap;
-  private Class scopeClass;
-  private String fileName;
+  private final Map<String, Object> substitutionMap;
+  private final Class scopeClass;
+  private final String fileName;
 
   public JavaScriptBehavior () {
 

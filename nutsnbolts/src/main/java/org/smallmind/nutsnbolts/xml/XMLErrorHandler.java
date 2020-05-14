@@ -38,7 +38,7 @@ import org.xml.sax.SAXParseException;
 
 public class XMLErrorHandler implements ErrorHandler {
 
-  private static XMLErrorHandler ERROR_HANDLER = new XMLErrorHandler();
+  private static final XMLErrorHandler ERROR_HANDLER = new XMLErrorHandler();
 
   public static XMLErrorHandler getInstance () {
 

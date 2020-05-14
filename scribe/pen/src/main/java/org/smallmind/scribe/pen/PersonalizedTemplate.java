@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class PersonalizedTemplate extends Template {
 
-  private AtomicReference<String> loggerNameRef = new AtomicReference<String>();
+  private final AtomicReference<String> loggerNameRef = new AtomicReference<String>();
 
   public PersonalizedTemplate () {
 

@@ -43,7 +43,8 @@ public class DateRangeTableModel implements TableModel {
 
   private static final String[] DAY_CHARS = {"S", "M", "T", "W", "T", "F", "S"};
 
-  private WeakEventListenerList<TableModelListener> eventList;
+  private final WeakEventListenerList<TableModelListener> eventList;
+  private final int totalDays;
   private boolean underunFlag = false;
   private boolean overunFlag = false;
   private int todayRow;
@@ -51,7 +52,6 @@ public class DateRangeTableModel implements TableModel {
   private int anchorYear;
   private int anchorMonth;
   private int anchorDay;
-  private int totalDays;
 
   public DateRangeTableModel (int year, int month, int day, int extentDays) {
 
@@ -174,20 +174,16 @@ public class DateRangeTableModel implements TableModel {
 
     if (calendarDate.getYear() < anchorYear) {
       throw new IndexOutOfBoundsException("Date is before the start of calendar(" + calendarDate + ")");
-    }
-    else if (calendarDate.getYear() > anchorYear) {
+    } else if (calendarDate.getYear() > anchorYear) {
       indexDays += CalendarUtility.getDaysInMonth(anchorYear, anchorMonth) - anchorDay;
       for (int count = anchorMonth + 1; count <= 12; count++) {
         indexDays += CalendarUtility.getDaysInMonth(anchorYear, count);
       }
-    }
-    else if (calendarDate.getMonth() < anchorMonth) {
+    } else if (calendarDate.getMonth() < anchorMonth) {
       throw new IndexOutOfBoundsException("Date is before the start of calendar(" + calendarDate + ")");
-    }
-    else if (calendarDate.getMonth() > anchorMonth) {
+    } else if (calendarDate.getMonth() > anchorMonth) {
       indexDays += CalendarUtility.getDaysInMonth(anchorYear, anchorMonth) - anchorDay;
-    }
-    else if (calendarDate.getDay() < anchorDay) {
+    } else if (calendarDate.getDay() < anchorDay) {
       throw new IndexOutOfBoundsException("Date is before the start of calendar(" + calendarDate + ")");
     }
 
@@ -251,5 +247,4 @@ public class DateRangeTableModel implements TableModel {
   public void setValueAt (Object aValue, int rowIndex, int columnIndex) {
 
   }
-
 }

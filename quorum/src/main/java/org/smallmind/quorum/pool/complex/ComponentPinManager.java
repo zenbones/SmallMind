@@ -51,7 +51,7 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class ComponentPinManager<C> {
 
-  private static enum State {STOPPED, STARTING, STARTED, STOPPING}
+  private enum State {STOPPED, STARTING, STARTED, STOPPING}
 
   private final ComponentPool<C> componentPool;
   private final HashMap<ComponentInstance<C>, ComponentPin<C>> backingMap = new HashMap<>();

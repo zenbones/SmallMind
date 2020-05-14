@@ -34,7 +34,6 @@ package org.smallmind.persistence;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import org.smallmind.persistence.Durable;
 import org.springframework.beans.FatalBeanException;
 
 public class ManagedDaoSupport {

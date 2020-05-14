@@ -109,8 +109,7 @@ public class OptionDialog extends JDialog implements WindowListener {
 
     try {
       optionImage = new ImageIcon(Thread.currentThread().getContextClassLoader().getResource("org/smallmind/swing/dialog/dialog_" + optionType.getImageType() + ".png"));
-    }
-    catch (Exception i) {
+    } catch (Exception i) {
       optionImage = null;
     }
 
@@ -209,8 +208,7 @@ public class OptionDialog extends JDialog implements WindowListener {
 
     if (buttonList == null) {
       placeButton(buttonPanel, "Continue", DialogState.CONTINUE, true, 0);
-    }
-    else {
+    } else {
       for (count = 0; count < buttonList.length; count++) {
         placeButton(buttonPanel, buttonList[count].getName(), buttonList[count].getButtonState(), false, count);
       }
@@ -302,8 +300,7 @@ public class OptionDialog extends JDialog implements WindowListener {
       warningDialog = new WarningDialog(this, validationMessage);
       warningDialog.setModal(true);
       warningDialog.setVisible(true);
-    }
-    else {
+    } else {
       fireDialogEvent();
       setVisible(false);
       dispose();
@@ -332,7 +329,7 @@ public class OptionDialog extends JDialog implements WindowListener {
 
   private class OptionAction extends AbstractAction {
 
-    private DialogState actionState;
+    private final DialogState actionState;
 
     public OptionAction (String name, DialogState actionState) {
 
@@ -347,5 +344,4 @@ public class OptionDialog extends JDialog implements WindowListener {
       windowClosing(null);
     }
   }
-
 }

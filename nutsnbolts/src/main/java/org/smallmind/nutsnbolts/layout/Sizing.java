@@ -34,9 +34,9 @@ package org.smallmind.nutsnbolts.layout;
 
 public class Sizing {
 
-  private Object part;
-  private Bias bias;
-  private TapeMeasure tapeMeasure;
+  private final Object part;
+  private final Bias bias;
+  private final TapeMeasure tapeMeasure;
 
   public Sizing (Object part, Bias bias, TapeMeasure tapeMeasure) {
 

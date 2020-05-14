@@ -47,7 +47,7 @@ import org.smallmind.wicket.skin.SkinManager;
 
 public class Button extends Panel {
 
-  private WebMarkupContainer buttonSkin;
+  private final WebMarkupContainer buttonSkin;
 
   public Button (String id, IModel labelModel, SkinManager skinManager) {
 

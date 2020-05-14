@@ -34,9 +34,9 @@ package org.smallmind.persistence.cache;
 
 public class VectorIndex {
 
-  private String indexField;
-  private String indexAlias;
-  private Object indexValue;
+  private final String indexField;
+  private final String indexAlias;
+  private final Object indexValue;
 
   public VectorIndex (String indexField, Object indexValue, String indexAlias) {
 

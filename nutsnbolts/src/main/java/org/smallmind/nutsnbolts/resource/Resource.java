@@ -36,14 +36,14 @@ import java.io.InputStream;
 
 public interface Resource {
 
-  public String getIdentifier ();
+  String getIdentifier ();
 
-  public String getScheme ();
+  String getScheme ();
 
-  public String getPath ();
+  String getPath ();
 
-  public void setPath (String path);
+  void setPath (String path);
 
-  public abstract InputStream getInputStream ()
+  InputStream getInputStream ()
     throws ResourceException;
 }

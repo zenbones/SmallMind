@@ -34,8 +34,8 @@ package org.smallmind.sleuth.runner.event;
 
 public abstract class SleuthEvent {
 
-  private String className;
-  private String methodName;
+  private final String className;
+  private final String methodName;
 
   public SleuthEvent (String className, String methodName) {
 

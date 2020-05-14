@@ -46,8 +46,8 @@ public class DotNotatedLoggerNameFilter implements Filter {
   private final HashMap<String, DotNotation> patternMap = new HashMap<String, DotNotation>();
   private final ConcurrentLinkedQueue<String> classList = new ConcurrentLinkedQueue<String>();
 
-  private Lock patternReadLock;
-  private Lock patternWriteLock;
+  private final Lock patternReadLock;
+  private final Lock patternWriteLock;
   private Level passThroughLevel;
 
   public DotNotatedLoggerNameFilter ()

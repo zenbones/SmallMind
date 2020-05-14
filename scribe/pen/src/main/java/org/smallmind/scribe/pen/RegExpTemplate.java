@@ -37,7 +37,7 @@ import java.util.regex.Pattern;
 
 public class RegExpTemplate extends Template {
 
-  private AtomicReference<Pattern> loggerPatternRef = new AtomicReference<Pattern>();
+  private final AtomicReference<Pattern> loggerPatternRef = new AtomicReference<Pattern>();
 
   public RegExpTemplate () {
 

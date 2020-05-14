@@ -36,12 +36,12 @@ import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
 
 public class TestLiteral extends AnnotationLiteral<Test> implements Test {
 
-  private String[] executeAfter;
-  private String[] dependsOn;
-  private boolean enabled;
-  private int priority;
+  private final String[] executeAfter;
+  private final String[] dependsOn;
+  private final boolean enabled;
+  private final int priority;
 
-  public TestLiteral (int priority, String executeAfter[], String[] dependsOn, boolean enabled) {
+  public TestLiteral (int priority, String[] executeAfter, String[] dependsOn, boolean enabled) {
 
     this.priority = priority;
     this.executeAfter = executeAfter;

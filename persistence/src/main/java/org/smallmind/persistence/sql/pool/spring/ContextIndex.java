@@ -34,8 +34,8 @@ package org.smallmind.persistence.sql.pool.spring;
 
 public class ContextIndex {
 
-  private String context;
-  private int index;
+  private final String context;
+  private final int index;
 
   public ContextIndex (String context, int index) {
 

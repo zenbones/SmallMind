@@ -42,7 +42,7 @@ import org.smallmind.phalanx.wire.jms.ManagedObjectFactory;
 
 public class JndiManagedObjectFactory implements ManagedObjectFactory {
 
-  private JmsConnectionDetails messageConnectionDetails;
+  private final JmsConnectionDetails messageConnectionDetails;
 
   public JndiManagedObjectFactory (JmsConnectionDetails jmsConnectionDetails) {
 

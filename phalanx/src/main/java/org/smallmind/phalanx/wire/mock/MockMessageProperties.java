@@ -37,7 +37,7 @@ import java.util.HashMap;
 
 public class MockMessageProperties {
 
-  private HashMap<String, Object> headerMap = new HashMap<>();
+  private final HashMap<String, Object> headerMap = new HashMap<>();
   private Date timestamp;
   private String contentType;
   private String expiration;

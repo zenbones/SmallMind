@@ -40,7 +40,7 @@ import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 
 public class LoggingBlueprintFactory {
 
-  private static LoggingBlueprint LOGGING_BLUEPRINT;
+  private static final LoggingBlueprint LOGGING_BLUEPRINT;
 
   static {
 

@@ -36,8 +36,8 @@ public enum HttpProtocol {
 
   HTTP("http", 80), HTTPS("https", 443);
 
-  private String scheme;
-  private int port;
+  private final String scheme;
+  private final int port;
 
   HttpProtocol (String scheme, int port) {
 

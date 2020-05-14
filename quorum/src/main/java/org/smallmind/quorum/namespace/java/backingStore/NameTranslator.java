@@ -41,7 +41,7 @@ import org.smallmind.quorum.namespace.java.JavaName;
 
 public abstract class NameTranslator {
 
-  private ContextCreator contextCreator;
+  private final ContextCreator contextCreator;
 
   public NameTranslator (ContextCreator contextCreator) {
 

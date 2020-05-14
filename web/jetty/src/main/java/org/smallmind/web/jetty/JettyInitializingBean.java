@@ -81,12 +81,11 @@ import org.springframework.context.event.ContextRefreshedEvent;
 
 public class JettyInitializingBean implements DisposableBean, ApplicationContextAware, ApplicationListener<ContextRefreshedEvent>, BeanPostProcessor {
 
+  private final LinkedList<WebServiceInstaller> webServiceInstallerList = new LinkedList<>();
+  private final LinkedList<ListenerInstaller> listenerInstallerList = new LinkedList<>();
+  private final LinkedList<FilterInstaller> filterInstallerList = new LinkedList<>();
+  private final LinkedList<ServletInstaller> servletInstallerList = new LinkedList<>();
   private Server server;
-  private LinkedList<WebServiceInstaller> webServiceInstallerList = new LinkedList<>();
-  private LinkedList<ListenerInstaller> listenerInstallerList = new LinkedList<>();
-  private LinkedList<FilterInstaller> filterInstallerList = new LinkedList<>();
-  private LinkedList<ServletInstaller> servletInstallerList = new LinkedList<>();
-
   private ResourceConfigExtension[] resourceConfigExtensions;
   private ClassLoaderResourceOption classLoaderResourceOption;
   private DocumentRootOption documentRootOption;

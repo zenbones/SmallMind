@@ -49,9 +49,9 @@ public class PooledDataSourceFactory {
     throws SQLException, ComponentPoolException {
 
     if (XADataSource.class.isAssignableFrom(dataSourceFactory.getDataSourceClass())) {
-      return new PooledXADataSource((ComponentPool<XAConnection>)PooledConnectionComponentPoolFactory.<D>constructComponentPool(poolName, dataSourceFactory, validationQuery, maxStatements, poolConfig, connections));
+      return new PooledXADataSource((ComponentPool<XAConnection>)PooledConnectionComponentPoolFactory.constructComponentPool(poolName, dataSourceFactory, validationQuery, maxStatements, poolConfig, connections));
     }
 
-    return new PooledDataSource((ComponentPool<PooledConnection>)PooledConnectionComponentPoolFactory.<D>constructComponentPool(poolName, dataSourceFactory, validationQuery, maxStatements, poolConfig, connections));
+    return new PooledDataSource((ComponentPool<PooledConnection>)PooledConnectionComponentPoolFactory.constructComponentPool(poolName, dataSourceFactory, validationQuery, maxStatements, poolConfig, connections));
   }
 }

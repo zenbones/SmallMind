@@ -36,7 +36,7 @@ import java.nio.channels.SocketChannel;
 
 public abstract class SourceAwareFrameReader implements FrameReader {
 
-  private SocketChannel sourceChannel;
+  private final SocketChannel sourceChannel;
 
   public SourceAwareFrameReader (SocketChannel sourceChannel) {
 

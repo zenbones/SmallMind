@@ -49,15 +49,15 @@ import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public class FaultTranslatingClientResponseFilter implements ClientResponseFilter {
 
-  private int lowerBound;
-  private int upperBound;
+  private final int lowerBound;
+  private final int upperBound;
 
-  public FaultTranslatingClientResponseFilter() {
+  public FaultTranslatingClientResponseFilter () {
 
     this(400, 600);
   }
 
-  public FaultTranslatingClientResponseFilter(int lowerBound, int upperBound) {
+  public FaultTranslatingClientResponseFilter (int lowerBound, int upperBound) {
 
     this.lowerBound = lowerBound;
     this.upperBound = upperBound;

@@ -137,8 +137,8 @@ public abstract class AbstractWrapperListener extends PerApplicationContext impl
 
   private class SignalWorker implements Runnable {
 
-    private CountDownLatch completedLatch;
-    private int startupTimeoutSeconds;
+    private final CountDownLatch completedLatch;
+    private final int startupTimeoutSeconds;
 
     public SignalWorker (CountDownLatch completedLatch, int startupTimeoutSeconds) {
 

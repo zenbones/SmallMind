@@ -60,10 +60,9 @@ public class DirectoryManager extends JPanel {
   private static final Dimension PREFERRED_DIMENSION = new Dimension(300, 500);
   private static final ImageIcon DIRECTORY_ADD = new ImageIcon(ClassLoader.getSystemResource("public/iconexperience/application basics/24x24/plain/folder_add.png"));
   private static final ImageIcon DIRECTORY_REMOVE = new ImageIcon(ClassLoader.getSystemResource("public/iconexperience/application basics/24x24/plain/folder_delete.png"));
-
+  private final JList directoryDisplayList;
+  private final DirectoryManagerListModel listModel;
   private Window parentWindow;
-  private JList directoryDisplayList;
-  private DirectoryManagerListModel listModel;
 
   public DirectoryManager (Window parentWindow, List<File> directoryList) {
 
@@ -99,8 +98,7 @@ public class DirectoryManager extends JPanel {
 
     if (listModel.getSize() == 0) {
       removeDirectoryAction.setEnabled(false);
-    }
-    else {
+    } else {
       directoryDisplayList.setSelectedIndex(0);
     }
 
@@ -137,7 +135,7 @@ public class DirectoryManager extends JPanel {
 
   public class AddDirectoryAction extends AbstractAction {
 
-    private RemoveDirectoryAction removeDirectoryAction;
+    private final RemoveDirectoryAction removeDirectoryAction;
 
     public AddDirectoryAction (RemoveDirectoryAction removeDirectoryAction) {
 
@@ -162,7 +160,6 @@ public class DirectoryManager extends JPanel {
         }
       }
     }
-
   }
 
   public class RemoveDirectoryAction extends AbstractAction {
@@ -186,12 +183,9 @@ public class DirectoryManager extends JPanel {
       }
       if (selectedIndex < listModel.getSize()) {
         directoryDisplayList.setSelectedIndex(selectedIndex);
-      }
-      else {
+      } else {
         directoryDisplayList.setSelectedIndex(listModel.getSize() - 1);
       }
     }
-
   }
-
 }

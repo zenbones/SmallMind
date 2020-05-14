@@ -34,7 +34,7 @@ package org.smallmind.nutsnbolts.lang;
 
 public class StackTrace {
 
-  private StackTraceElement[] stackTraceElements;
+  private final StackTraceElement[] stackTraceElements;
 
   public StackTrace (StackTraceElement[] stackTraceElements) {
 

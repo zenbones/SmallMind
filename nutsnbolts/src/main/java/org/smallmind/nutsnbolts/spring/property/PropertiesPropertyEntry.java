@@ -36,7 +36,7 @@ import java.util.Map;
 
 public class PropertiesPropertyEntry implements PropertyEntry {
 
-  private Map.Entry<Object, Object> entry;
+  private final Map.Entry<Object, Object> entry;
 
   public PropertiesPropertyEntry (Map.Entry<Object, Object> entry) {
 

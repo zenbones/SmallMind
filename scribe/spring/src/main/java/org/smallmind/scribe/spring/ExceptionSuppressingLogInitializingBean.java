@@ -38,7 +38,7 @@ import org.springframework.beans.factory.InitializingBean;
 
 public class ExceptionSuppressingLogInitializingBean implements InitializingBean {
 
-  private LinkedList<Class<? extends Throwable>> suppressedThrowableClassList = new LinkedList<>();
+  private final LinkedList<Class<? extends Throwable>> suppressedThrowableClassList = new LinkedList<>();
 
   public void setSuppressedThrowableClasses (Class[] suppressedThrowableClasses) {
 

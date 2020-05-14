@@ -34,8 +34,8 @@ package org.smallmind.nutsnbolts.retry;
 
 public class RetryWorker implements Runnable {
 
+  private final RetryCall retryCall;
   private Throwable throwable;
-  private RetryCall retryCall;
 
   public RetryWorker (RetryCall retryCall) {
 

@@ -36,7 +36,7 @@ import java.util.Arrays;
 
 public class ResourceSchemes {
 
-  private String[] schemes;
+  private final String[] schemes;
 
   public ResourceSchemes (String[] schemes) {
 

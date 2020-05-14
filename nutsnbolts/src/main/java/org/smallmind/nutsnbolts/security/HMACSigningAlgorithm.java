@@ -44,7 +44,7 @@ public enum HMACSigningAlgorithm implements SecurityAlgorithm, SigningAlgorithm 
 
   HMAC_MD5("HmacMD5"), HMAC_SHA_1("HmacSHA1"), HMAC_SHA_256("HmacSHA256");
 
-  private String algorithmName;
+  private final String algorithmName;
 
   HMACSigningAlgorithm (String algorithmName) {
 

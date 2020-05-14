@@ -96,7 +96,7 @@ public class MavenRepository {
   private final Map<Object, Object> configProps = new HashMap<>();
   private final List<Profile> profileList;
   private final List<RemoteRepository> remoteRepositoryList;
-  private boolean offline;
+  private final boolean offline;
 
   static {
 

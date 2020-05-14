@@ -40,7 +40,7 @@ import org.smallmind.scribe.pen.Record;
 
 public class JDKErrorHandlerAdapter implements ErrorHandler {
 
-  private ErrorManager errorManager;
+  private final ErrorManager errorManager;
 
   public JDKErrorHandlerAdapter (ErrorManager errorManager) {
 

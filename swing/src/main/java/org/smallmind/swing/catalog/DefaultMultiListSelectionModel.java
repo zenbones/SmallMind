@@ -44,7 +44,7 @@ import org.smallmind.swing.MultiListSelectionListener;
 
 public class DefaultMultiListSelectionModel<T extends Comparable<T>> implements MultiListSelectionModel<T> {
 
-  private transient WeakEventListenerList<MultiListSelectionListener<T>> listenerList;
+  private final transient WeakEventListenerList<MultiListSelectionListener<T>> listenerList;
 
   private NaturalDirectionalComparator<T> comparator;
   private TreeMap<T, MultiListDataProvider<T>> dataProviderMap;
@@ -132,14 +132,14 @@ public class DefaultMultiListSelectionModel<T extends Comparable<T>> implements 
     this.selectionMode = selectionMode;
   }
 
-  public synchronized void setValueIsAdjusting (boolean valueIsAdjusting) {
-
-    this.valueIsAdjusting = valueIsAdjusting;
-  }
-
   public synchronized boolean getValueIsAdjusting () {
 
     return valueIsAdjusting;
+  }
+
+  public synchronized void setValueIsAdjusting (boolean valueIsAdjusting) {
+
+    this.valueIsAdjusting = valueIsAdjusting;
   }
 
   public synchronized boolean isSelectionEmpty () {
@@ -275,6 +275,11 @@ public class DefaultMultiListSelectionModel<T extends Comparable<T>> implements 
     this.anchorSelection = anchorSelection;
   }
 
+  public synchronized MultiListSelection<T> getAnchorSelection () {
+
+    return anchorSelection;
+  }
+
   public synchronized void setAnchorSelection (MultiListSelection<T> anchorSelection) {
 
     MultiListSelection<T> oldAnchorSelection = this.anchorSelection;
@@ -287,14 +292,14 @@ public class DefaultMultiListSelectionModel<T extends Comparable<T>> implements 
     fireValueChanged(MultiListSelectionEvent.EventType.CHANGE, new MultiListSelectionRange<T>(oldAnchorSelection, anchorSelection, comparator.getDirection()));
   }
 
-  public synchronized MultiListSelection<T> getAnchorSelection () {
-
-    return anchorSelection;
-  }
-
   public synchronized void setSilentLeadSelection (MultiListSelection<T> leadSelection) {
 
     this.leadSelection = leadSelection;
+  }
+
+  public synchronized MultiListSelection<T> getLeadSelection () {
+
+    return leadSelection;
   }
 
   public synchronized void setLeadSelection (MultiListSelection<T> leadSelection) {
@@ -310,8 +315,7 @@ public class DefaultMultiListSelectionModel<T extends Comparable<T>> implements 
     if (isSelected(anchorSelection)) {
       removeSelectionInterval(anchorSelection, oldLeadSelection);
       addSelectionInterval(anchorSelection, leadSelection);
-    }
-    else {
+    } else {
       addSelectionInterval(anchorSelection, oldLeadSelection);
       removeSelectionInterval(anchorSelection, leadSelection);
     }
@@ -322,11 +326,6 @@ public class DefaultMultiListSelectionModel<T extends Comparable<T>> implements 
 
     this.leadSelection = leadSelection;
     fireValueChanged(MultiListSelectionEvent.EventType.CHANGE, new MultiListSelectionRange<T>(selectionStack.getFirst(), selectionStack.getLast(), comparator.getDirection()));
-  }
-
-  public synchronized MultiListSelection<T> getLeadSelection () {
-
-    return leadSelection;
   }
 
   public synchronized void addSelectionInterval (MultiListSelection<T> selection0, MultiListSelection<T> selection1) {
@@ -439,23 +438,19 @@ public class DefaultMultiListSelectionModel<T extends Comparable<T>> implements 
 
         if (integrated) {
           addRangeList.add(curRange);
-        }
-        else if (addRange.getFirstIndex() < curRange.getFirstIndex()) {
+        } else if (addRange.getFirstIndex() < curRange.getFirstIndex()) {
           if (addRange.getLastIndex() < (curRange.getFirstIndex() - 1)) {
             addRangeList.add(addRange);
             addRangeList.add(curRange);
             integrated = true;
-          }
-          else {
+          } else {
             curRange.setFirstIndex(addRange.getFirstIndex());
             curRange.setLastIndex(Math.max(addRange.getLastIndex(), curRange.getLastIndex()));
             addRange = curRange;
           }
-        }
-        else if (addRange.getFirstIndex() > (curRange.getLastIndex() + 1)) {
+        } else if (addRange.getFirstIndex() > (curRange.getLastIndex() + 1)) {
           addRangeList.add(curRange);
-        }
-        else {
+        } else {
           curRange.setLastIndex(Math.max(addRange.getLastIndex(), curRange.getLastIndex()));
           addRange = curRange;
         }
@@ -468,8 +463,7 @@ public class DefaultMultiListSelectionModel<T extends Comparable<T>> implements 
 
     if (addRangeList.isEmpty()) {
       rangeMap.remove(key);
-    }
-    else {
+    } else {
       rangeMap.put(key, addRangeList);
     }
   }
@@ -535,12 +529,10 @@ public class DefaultMultiListSelectionModel<T extends Comparable<T>> implements 
               curRange.setFirstIndex(delRange.getLastIndex() + 1);
               delRangeList.add(curRange);
             }
-          }
-          else {
+          } else {
             delRangeList.add(curRange);
           }
-        }
-        else if (delRange.getFirstIndex() <= curRange.getLastIndex()) {
+        } else if (delRange.getFirstIndex() <= curRange.getLastIndex()) {
           lastIndex = curRange.getLastIndex();
           curRange.setLastIndex(delRange.getFirstIndex() - 1);
           delRangeList.add(curRange);
@@ -548,8 +540,7 @@ public class DefaultMultiListSelectionModel<T extends Comparable<T>> implements 
           if (delRange.getLastIndex() < lastIndex) {
             delRangeList.add(new Range(delRange.getLastIndex() + 1, lastIndex));
           }
-        }
-        else {
+        } else {
           delRangeList.add(curRange);
         }
       }
@@ -557,8 +548,7 @@ public class DefaultMultiListSelectionModel<T extends Comparable<T>> implements 
 
     if (delRangeList.isEmpty()) {
       rangeMap.remove(key);
-    }
-    else {
+    } else {
       rangeMap.put(key, delRangeList);
     }
   }
@@ -654,7 +644,5 @@ public class DefaultMultiListSelectionModel<T extends Comparable<T>> implements 
 
       return ((index >= firstIndex) && (index <= lastIndex));
     }
-
   }
-
 }

@@ -34,11 +34,11 @@ package org.smallmind.nutsnbolts.layout;
 
 public interface ParaboxPlatform {
 
-  public abstract double getRelatedGap ();
+  double getRelatedGap ();
 
-  public abstract double getUnrelatedGap ();
+  double getUnrelatedGap ();
 
-  public abstract Perimeter getFramePerimeter ();
+  Perimeter getFramePerimeter ();
 
-  public abstract Orientation getOrientation ();
+  Orientation getOrientation ();
 }

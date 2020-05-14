@@ -42,7 +42,7 @@ import org.springframework.beans.factory.InitializingBean;
 
 public class RMIDaemonInitializingBean implements InitializingBean {
 
-  private AtomicBoolean stopped = new AtomicBoolean(false);
+  private final AtomicBoolean stopped = new AtomicBoolean(false);
   private ActivationSystem activationSystem;
   private long retryDelayMilliseconds;
   private int maxAttempts;

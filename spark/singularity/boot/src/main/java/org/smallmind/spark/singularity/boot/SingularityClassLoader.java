@@ -308,7 +308,7 @@ public class SingularityClassLoader extends ClassLoader {
 
   private static class SingleEnumeration<T> implements Enumeration<T> {
 
-    private T value;
+    private final T value;
     private boolean used = false;
 
     private SingleEnumeration (T value) {
@@ -337,7 +337,7 @@ public class SingularityClassLoader extends ClassLoader {
 
   private static class ArrayEnumeration<T> implements Enumeration<T> {
 
-    private T[] values;
+    private final T[] values;
     private int index = 0;
 
     private ArrayEnumeration (T[] values) {

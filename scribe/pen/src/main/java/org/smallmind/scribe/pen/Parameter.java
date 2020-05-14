@@ -36,8 +36,8 @@ import java.io.Serializable;
 
 public class Parameter implements Serializable {
 
-  private String key;
-  private Serializable value;
+  private final String key;
+  private final Serializable value;
 
   public Parameter (String key, Serializable value) {
 

@@ -34,8 +34,8 @@ package org.smallmind.phalanx.wire.mock;
 
 public class MockMessage {
 
-  private MockMessageProperties properties = new MockMessageProperties();
-  private byte[] bytes;
+  private final MockMessageProperties properties = new MockMessageProperties();
+  private final byte[] bytes;
 
   public MockMessage (byte[] bytes) {
 

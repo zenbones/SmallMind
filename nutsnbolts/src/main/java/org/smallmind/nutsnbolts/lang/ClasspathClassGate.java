@@ -51,7 +51,7 @@ public class ClasspathClassGate implements ClassGate {
 
   private final HashMap<String, Path> filePathMap;
 
-  private String[] pathComponents;
+  private final String[] pathComponents;
 
   public ClasspathClassGate () {
 
@@ -223,8 +223,8 @@ public class ClasspathClassGate implements ClassGate {
 
   private class JarLocator {
 
-    private JarFile jarFile;
-    private JarEntry jarEntry;
+    private final JarFile jarFile;
+    private final JarEntry jarEntry;
 
     private JarLocator (JarFile jarFile, JarEntry jarEntry) {
 

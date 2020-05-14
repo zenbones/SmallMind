@@ -36,9 +36,9 @@ public enum HashAlgorithm implements SecurityAlgorithm {
 
   MD5("MD5"), SHA_1("SHA-1"), SHA_256("SHA-256"), SHA_384("SHA-384"), SHA_512("SHA-512"), SHA3_256("SHA3-256"), SHA3_384("SHA3-384"), SHA3_512("SHA3-512");
 
-  private String algorithmName;
+  private final String algorithmName;
 
-  private HashAlgorithm (String algorithmName) {
+  HashAlgorithm (String algorithmName) {
 
     this.algorithmName = algorithmName;
   }

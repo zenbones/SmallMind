@@ -77,8 +77,8 @@ public class ProxyExecutor {
 
   private class ExecutionWorker implements Runnable {
 
-    private AtomicBoolean stopped = new AtomicBoolean(false);
-    private LinkedBlockingQueue<Runnable> runnableQueue = new LinkedBlockingQueue<>();
+    private final AtomicBoolean stopped = new AtomicBoolean(false);
+    private final LinkedBlockingQueue<Runnable> runnableQueue = new LinkedBlockingQueue<>();
 
     private void abort () {
 

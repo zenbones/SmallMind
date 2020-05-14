@@ -39,9 +39,9 @@ import org.smallmind.nutsnbolts.time.Stint;
 
 public class LastModifiedCleanupRule implements CleanupRule<LastModifiedCleanupRule> {
 
+  private final long now = System.currentTimeMillis();
   private Stint stint;
   private long durationAsMilliseconds;
-  private long now = System.currentTimeMillis();
 
   public LastModifiedCleanupRule () {
 

@@ -34,6 +34,6 @@ package org.smallmind.quorum.pool.simple;
 
 public interface ComponentFactory<T extends PooledComponent> {
 
-  public abstract T createComponent ()
+  T createComponent ()
     throws Exception;
 }

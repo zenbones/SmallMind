@@ -49,10 +49,10 @@ public class Log4JRecordSubverter extends LoggingEvent implements RecordWrapper 
 
   private static final Parameter[] NO_PARAMETERS = new Parameter[0];
 
-  private Log4JRecord log4jRecord;
-  private LogicalContext logicalContext;
-  private AtomicReference<LocationInfo> locationInfoReference;
-  private Level level;
+  private final Log4JRecord log4jRecord;
+  private final LogicalContext logicalContext;
+  private final AtomicReference<LocationInfo> locationInfoReference;
+  private final Level level;
 
   public Log4JRecordSubverter (Logger logger, Level level, LogicalContext logicalContext, Throwable throwable, String message, Object... args) {
 
@@ -86,9 +86,9 @@ public class Log4JRecordSubverter extends LoggingEvent implements RecordWrapper 
 
   private class Log4JRecord extends ParameterAwareRecord {
 
-    private LoggingEvent loggingEvent;
-    private long threadId;
-    private long sequenceNumber;
+    private final LoggingEvent loggingEvent;
+    private final long threadId;
+    private final long sequenceNumber;
 
     public Log4JRecord (LoggingEvent loggingEvent) {
 

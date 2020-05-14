@@ -36,8 +36,8 @@ import java.lang.reflect.Method;
 
 public class MethodInvocationException extends Exception {
 
-  private Method method;
-  private long elapsed;
+  private final Method method;
+  private final long elapsed;
 
   public MethodInvocationException (Method method, long elapsed, Throwable cause) {
 

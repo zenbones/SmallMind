@@ -41,7 +41,7 @@ import org.smallmind.persistence.orm.TransactionPostProcessException;
 
 public class JPAProxyTransaction extends ProxyTransaction<JPAProxySession> {
 
-  private EntityTransaction transaction;
+  private final EntityTransaction transaction;
   private boolean rolledBack = false;
 
   public JPAProxyTransaction (JPAProxySession proxySession, EntityTransaction transaction) {

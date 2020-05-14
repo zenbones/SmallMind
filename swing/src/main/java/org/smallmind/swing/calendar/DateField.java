@@ -54,11 +54,11 @@ import org.smallmind.swing.spinner.Spinner;
 
 public class DateField extends JPanel implements ChangeListener, ItemListener {
 
-  private WeakEventListenerList<DateSelectionListener> listenerList;
-  private Spinner yearSpinner;
-  private Spinner monthSpinner;
-  private JComboBox dayInMonthComboBox;
-  private DayInMonthComboBoxModel dayInMonthComboBoxModel;
+  private final WeakEventListenerList<DateSelectionListener> listenerList;
+  private final Spinner yearSpinner;
+  private final Spinner monthSpinner;
+  private final JComboBox dayInMonthComboBox;
+  private final DayInMonthComboBoxModel dayInMonthComboBoxModel;
 
   public DateField () {
 
@@ -158,8 +158,7 @@ public class DateField extends JPanel implements ChangeListener, ItemListener {
 
     if (changeEvent.getSource() == monthSpinner) {
       dayInMonthComboBoxModel.setMonth(((Month)monthSpinner.getValue()).ordinal() + 1);
-    }
-    else if (changeEvent.getSource() == yearSpinner) {
+    } else if (changeEvent.getSource() == yearSpinner) {
       dayInMonthComboBoxModel.setYear((Integer)yearSpinner.getValue());
     }
 
@@ -172,5 +171,4 @@ public class DateField extends JPanel implements ChangeListener, ItemListener {
       fireDateSelected();
     }
   }
-
 }

@@ -42,8 +42,8 @@ import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 public class MonitorHandler implements SOAPHandler<SOAPMessageContext> {
 
-  private PrintStream printStream;
-  private MessageDirection messageDirection;
+  private final PrintStream printStream;
+  private final MessageDirection messageDirection;
 
   public MonitorHandler () {
 

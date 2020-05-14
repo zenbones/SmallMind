@@ -40,7 +40,7 @@ import org.springframework.beans.factory.config.BeanPostProcessor;
 
 public class ResourceBeanPostProcessor implements BeanPostProcessor {
 
-  private LinkedList<Object> resourceList = new LinkedList<>();
+  private final LinkedList<Object> resourceList = new LinkedList<>();
 
   public synchronized void registerResources (ResourceConfig resourceConfig) {
 

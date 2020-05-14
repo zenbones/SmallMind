@@ -38,7 +38,7 @@ import org.smallmind.nutsnbolts.util.EnumUtility;
 
 public abstract class EnumXmlAdapter<E extends Enum<E>> extends XmlAdapter<String, E> {
 
-  private Class<E> enumClass;
+  private final Class<E> enumClass;
 
   public EnumXmlAdapter () {
 

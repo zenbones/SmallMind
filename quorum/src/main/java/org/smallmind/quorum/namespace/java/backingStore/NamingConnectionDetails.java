@@ -34,12 +34,12 @@ package org.smallmind.quorum.namespace.java.backingStore;
 
 public class NamingConnectionDetails {
 
-  private String host;
-  private String rootNamespace;
-  private String userName;
-  private String password;
+  private final String host;
+  private final String rootNamespace;
+  private final String userName;
+  private final String password;
+  private final int port;
   private boolean tls = false;
-  private int port;
 
   public NamingConnectionDetails (String host, int port, boolean tls, String rootNamespace, String userName, String password) {
 

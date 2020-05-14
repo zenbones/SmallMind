@@ -34,7 +34,7 @@ package org.smallmind.nutsnbolts.command.template;
 
 public class ListArgument extends Argument {
 
-  private String description;
+  private final String description;
 
   public ListArgument (String description) {
 

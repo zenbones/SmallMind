@@ -40,7 +40,7 @@ import org.smallmind.persistence.Durable;
 
 public abstract class AbstractCacheDao<I extends Serializable & Comparable<I>, D extends Durable<I>> implements CacheDao<I, D> {
 
-  private CacheDomain<I, D> cacheDomain;
+  private final CacheDomain<I, D> cacheDomain;
 
   public AbstractCacheDao (CacheDomain<I, D> cacheDomain) {
 

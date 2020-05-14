@@ -37,7 +37,7 @@ import java.util.EventObject;
 
 public class FileChoiceEvent extends EventObject {
 
-  private File file;
+  private final File file;
 
   public FileChoiceEvent (Object source, File file) {
 

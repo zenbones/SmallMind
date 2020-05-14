@@ -45,17 +45,17 @@ import org.smallmind.quorum.namespace.java.backingStore.NameTranslator;
 
 public class JavaNamingEnumeration<T> implements NamingEnumeration<T> {
 
-  private static final Class[] SEARCH_RESULT_SIGNATURE = new Class[]{String.class, String.class, Object.class, Attributes.class, Boolean.class};
-  private static final Class[] BINDING_SIGNATURE = new Class[]{String.class, String.class, Object.class, Boolean.class};
-  private static final Class[] NAME_CLASS_PAIR_SIGNATURE = new Class[]{String.class, String.class, Boolean.class};
+  private static final Class[] SEARCH_RESULT_SIGNATURE = new Class[] {String.class, String.class, Object.class, Attributes.class, Boolean.class};
+  private static final Class[] BINDING_SIGNATURE = new Class[] {String.class, String.class, Object.class, Boolean.class};
+  private static final Class[] NAME_CLASS_PAIR_SIGNATURE = new Class[] {String.class, String.class, Boolean.class};
 
-  private NamingEnumeration internalEnumeration;
-  private Class<T> typeClass;
-  private Class internalDirContextClass;
-  private Hashtable<String, Object> environment;
-  private NameTranslator nameTranslator;
-  private JavaNameParser nameParser;
-  private boolean modifiable;
+  private final NamingEnumeration internalEnumeration;
+  private final Class<T> typeClass;
+  private final Class internalDirContextClass;
+  private final Hashtable<String, Object> environment;
+  private final NameTranslator nameTranslator;
+  private final JavaNameParser nameParser;
+  private final boolean modifiable;
 
   public JavaNamingEnumeration (Class<T> typeClass, NamingEnumeration<T> internalEnumeration, Class internalDirContextClass, Hashtable<String, Object> environment, NameTranslator nameTranslator, JavaNameParser nameParser, boolean modifiable) {
 

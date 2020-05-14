@@ -39,11 +39,11 @@ import org.smallmind.claxon.registry.meter.MeterBuilder;
 
 public class Instrumentation {
 
-  private ClaxonRegistry registry;
-  private MeterBuilder<?> builder;
-  private Tag[] tags;
+  private final ClaxonRegistry registry;
+  private final MeterBuilder<?> builder;
+  private final Tag[] tags;
+  private final Class<?> caller;
   private TimeUnit timeUnit = TimeUnit.MILLISECONDS;
-  private Class<?> caller;
 
   public Instrumentation (ClaxonRegistry registry, Class<?> caller, MeterBuilder<?> builder, Tag... tags) {
 

@@ -32,10 +32,9 @@
  */
 package org.smallmind.swing;
 
-public abstract interface Checkable {
+public interface Checkable {
 
-  public abstract boolean isChecked ();
+  boolean isChecked ();
 
-  public abstract void setChecked (boolean check);
-
+  void setChecked (boolean check);
 }

@@ -37,8 +37,8 @@ import org.smallmind.persistence.Durable;
 
 public class DurableKey<I extends Serializable & Comparable<I>, D extends Durable<I>> implements Serializable {
 
-  private Class<D> durableClass;
-  private String key;
+  private final Class<D> durableClass;
+  private final String key;
 
   public DurableKey (Class<D> durableClass, I id) {
 

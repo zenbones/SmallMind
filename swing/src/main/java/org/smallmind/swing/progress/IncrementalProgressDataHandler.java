@@ -34,7 +34,7 @@ package org.smallmind.swing.progress;
 
 public class IncrementalProgressDataHandler implements ProgressDataHandler {
 
-  private long length;
+  private final long length;
   private long index = 0;
 
   public IncrementalProgressDataHandler (int length) {
@@ -56,5 +56,4 @@ public class IncrementalProgressDataHandler implements ProgressDataHandler {
 
     this.index = index;
   }
-
 }

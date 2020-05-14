@@ -48,7 +48,7 @@ public class FilePickListCellRenderer implements ListCellRenderer {
   private static final ImageIcon DOCUMENT_ICON = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/document_16.png"));
   private static final ImageIcon FOLDER_ICON = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/folder_closed_16.png"));
 
-  private AtomicInteger rowHeight = new AtomicInteger(0);
+  private final AtomicInteger rowHeight = new AtomicInteger(0);
 
   @Override
   public Component getListCellRendererComponent (JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {

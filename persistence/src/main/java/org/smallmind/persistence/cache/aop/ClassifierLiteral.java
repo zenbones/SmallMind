@@ -36,8 +36,8 @@ import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
 
 public class ClassifierLiteral extends AnnotationLiteral<Classifier> implements Classifier {
 
-  private String value;
-  private boolean asParameter;
+  private final String value;
+  private final boolean asParameter;
 
   public ClassifierLiteral (String value) {
 

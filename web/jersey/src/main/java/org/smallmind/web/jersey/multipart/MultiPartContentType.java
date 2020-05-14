@@ -36,8 +36,8 @@ public enum MultiPartContentType {
 
   IMAGE_PNG("png", "image/png");
 
-  private String extension;
-  private String contentType;
+  private final String extension;
+  private final String contentType;
 
   MultiPartContentType (String extension, String contentType) {
 

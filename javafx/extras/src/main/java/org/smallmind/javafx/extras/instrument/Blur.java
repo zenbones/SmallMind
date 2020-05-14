@@ -34,10 +34,10 @@ package org.smallmind.javafx.extras.instrument;
 
 public class Blur {
 
-  private double avgVelocity;
-  private double avgVelocity_1;
-  private double avgVelocity_5;
-  private double avgVelocity_15;
+  private final double avgVelocity;
+  private final double avgVelocity_1;
+  private final double avgVelocity_5;
+  private final double avgVelocity_15;
 
   public Blur (double avgVelocity, double avgVelocity_1, double avgVelocity_5, double avgVelocity_15) {
 

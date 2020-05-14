@@ -42,8 +42,8 @@ import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 
 public class DirectoryManagerListModel implements ListModel {
 
-  private WeakEventListenerList<ListDataListener> listenerList;
-  private List<File> directoryList;
+  private final WeakEventListenerList<ListDataListener> listenerList;
+  private final List<File> directoryList;
 
   public DirectoryManagerListModel (List<File> directoryList) {
 
@@ -104,5 +104,4 @@ public class DirectoryManagerListModel implements ListModel {
       listenerIter.next().intervalRemoved(listDataEvent);
     }
   }
-
 }

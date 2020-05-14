@@ -41,9 +41,9 @@ import org.smallmind.swing.label.PlainLabel;
 
 public class SortableHeaderTableCellRenderer<E extends Enum> implements TableCellRenderer {
 
-  private HashMap<Object, SortableHeaderPanel> renderMap;
-  private boolean returnToNeutral;
-  private boolean showOrder;
+  private final HashMap<Object, SortableHeaderPanel> renderMap;
+  private final boolean returnToNeutral;
+  private final boolean showOrder;
 
   public SortableHeaderTableCellRenderer (boolean returnToNeutral, boolean showOrder) {
 
@@ -64,5 +64,4 @@ public class SortableHeaderTableCellRenderer<E extends Enum> implements TableCel
 
     return headerPanel;
   }
-
 }

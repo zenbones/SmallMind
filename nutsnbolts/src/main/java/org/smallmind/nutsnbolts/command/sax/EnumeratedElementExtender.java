@@ -40,7 +40,7 @@ import org.smallmind.nutsnbolts.xml.sax.ElementExtender;
 
 public class EnumeratedElementExtender extends AbstractElementExtender implements ArgumentCompiler {
 
-  private LinkedList<String> valueList = new LinkedList<>();
+  private final LinkedList<String> valueList = new LinkedList<>();
   private EnumeratedArgument enumeratedArgument;
 
   @Override

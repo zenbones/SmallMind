@@ -36,9 +36,9 @@ import java.util.EventListener;
 
 public interface ThumbListener extends EventListener {
 
-  public abstract void thumbAdded (ThumbEvent thumbEvent);
+  void thumbAdded (ThumbEvent thumbEvent);
 
-  public abstract void thumbRemoved (ThumbEvent thumbEvent);
+  void thumbRemoved (ThumbEvent thumbEvent);
 
-  public abstract void thumbMoved (ThumbEvent thumbEvent);
+  void thumbMoved (ThumbEvent thumbEvent);
 }

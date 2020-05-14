@@ -36,9 +36,9 @@ import java.util.EventObject;
 
 public class MemoryUsageEvent extends EventObject {
 
-  private int maximumUsage;
-  private int currentUsage;
-  private String displayUsage;
+  private final int maximumUsage;
+  private final int currentUsage;
+  private final String displayUsage;
 
   public MemoryUsageEvent (Object source, int maximumUsage, int currentUsage, String displayUsage) {
 
@@ -63,5 +63,4 @@ public class MemoryUsageEvent extends EventObject {
 
     return maximumUsage;
   }
-
 }

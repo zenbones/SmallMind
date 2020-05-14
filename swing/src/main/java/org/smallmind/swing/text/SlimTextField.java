@@ -40,7 +40,6 @@ public class SlimTextField extends JTextField {
   public SlimTextField (String text) {
 
     super(text);
-
   }
 
   public Dimension getPreferredSize () {

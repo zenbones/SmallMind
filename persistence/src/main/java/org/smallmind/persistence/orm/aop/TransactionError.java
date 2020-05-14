@@ -36,7 +36,7 @@ import org.smallmind.nutsnbolts.lang.FormattedError;
 
 public abstract class TransactionError extends FormattedError {
 
-  private int closure;
+  private final int closure;
 
   public TransactionError (int closure) {
 

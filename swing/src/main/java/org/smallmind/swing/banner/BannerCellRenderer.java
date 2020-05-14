@@ -36,5 +36,5 @@ import java.awt.Component;
 
 public interface BannerCellRenderer {
 
-  public abstract Component getBannerRendererComponent (Banner banner, Object value, int index, boolean isSelected);
+  Component getBannerRendererComponent (Banner banner, Object value, int index, boolean isSelected);
 }

@@ -26,7 +26,7 @@ import org.smallmind.license.stencil.Stencil;
 @Mojo(name = "generate-notice-headers", defaultPhase = LifecyclePhase.PROCESS_SOURCES, threadSafe = true)
 public class SourceNoticeMojo extends AbstractMojo {
 
-  private static enum NoticeState {
+  private enum NoticeState {
 
     FIRST, LAST, COMPLETED, TERMINATED
   }

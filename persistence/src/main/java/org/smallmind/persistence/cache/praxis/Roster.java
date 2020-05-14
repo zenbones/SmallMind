@@ -37,7 +37,7 @@ import java.util.List;
 
 public interface Roster<T> extends Serializable, List<T> {
 
-  public abstract void addFirst (T element);
+  void addFirst (T element);
 
-  public abstract T removeLast ();
+  T removeLast ();
 }

@@ -34,9 +34,9 @@ package org.smallmind.persistence.orm;
 
 public abstract class ProxySession<F, N> {
 
-  private String dataSourceType;
-  private String sessionSourceKey;
-  private boolean boundaryEnforced;
+  private final String dataSourceType;
+  private final String sessionSourceKey;
+  private final boolean boundaryEnforced;
   private final ThreadLocal<Boolean> boundaryEnforcedThreadLocal = new ThreadLocal<Boolean>() {
 
     protected Boolean initialValue () {
@@ -44,7 +44,7 @@ public abstract class ProxySession<F, N> {
       return boundaryEnforced;
     }
   };
-  private boolean cacheEnabled;
+  private final boolean cacheEnabled;
   private final ThreadLocal<Boolean> cacheEnabledThreadLocal = new ThreadLocal<Boolean>() {
 
     protected Boolean initialValue () {

@@ -46,7 +46,7 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class Juggler<P, R> implements BlackList<R> {
 
-  private static enum State {DECONSTRUCTED, INITIALIZED, STARTED, STOPPED}
+  private enum State {DECONSTRUCTED, INITIALIZED, STARTED, STOPPED}
 
   private final SecureRandom random = new SecureRandom();
   private final JugglingPinFactory<P, R> jugglingPinFactory;
@@ -270,9 +270,9 @@ public class Juggler<P, R> implements BlackList<R> {
 
   private class ProviderRecoveryWorker implements Runnable {
 
-    private CountDownLatch terminationLatch;
-    private CountDownLatch exitLatch;
-    private long recoveryCheckMillis;
+    private final CountDownLatch terminationLatch;
+    private final CountDownLatch exitLatch;
+    private final long recoveryCheckMillis;
 
     public ProviderRecoveryWorker (int recoveryCheckSeconds) {
 

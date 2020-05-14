@@ -43,6 +43,11 @@ import org.smallmind.quorum.namespace.java.backingStore.NamingConnectionDetails;
 
 public class LdapContextCreator extends ContextCreator {
 
+  public LdapContextCreator (NamingConnectionDetails connectionDetails) {
+
+    super(connectionDetails);
+  }
+
   public static void insureContext (DirContext dirContext, String namingPath)
     throws NamingException {
 
@@ -62,11 +67,6 @@ public class LdapContextCreator extends ContextCreator {
         dirContext.createSubcontext(pathSoFar.toString());
       }
     }
-  }
-
-  public LdapContextCreator (NamingConnectionDetails connectionDetails) {
-
-    super(connectionDetails);
   }
 
   public String getRoot () {

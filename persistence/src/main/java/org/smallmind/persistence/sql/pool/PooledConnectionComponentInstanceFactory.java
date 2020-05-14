@@ -45,7 +45,7 @@ import org.smallmind.quorum.pool.complex.ComponentPool;
 
 public class PooledConnectionComponentInstanceFactory<P extends PooledConnection> implements ComponentInstanceFactory<P> {
 
-  private Juggler<ConnectionPoolDataSource, P> pooledConnectionJuggler;
+  private final Juggler<ConnectionPoolDataSource, P> pooledConnectionJuggler;
   private String validationQuery = "select 1";
 
   public PooledConnectionComponentInstanceFactory (Class<P> pooledConnectionClass, ConnectionPoolDataSource... dataSources) {

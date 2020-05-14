@@ -62,7 +62,7 @@ public class PolymorphicClassCache {
             if ((baseClassXmlRootElementAnnotation = baseClass.getAnnotation(XmlRootElement.class)) != null) {
               polymorphicKeyMap.put(baseClassXmlRootElementAnnotation.name(), baseClass);
             }
-            
+
             for (Class<?> polymorphicSubClass : xmlPolymorphicSubClassesAnnotation.value()) {
 
               XmlRootElement subClassXmlRootElementAnnotation;

@@ -38,7 +38,7 @@ import org.smallmind.scribe.pen.Record;
 
 public class JDKFilterAdapter implements Filter {
 
-  private java.util.logging.Filter filter;
+  private final java.util.logging.Filter filter;
 
   public JDKFilterAdapter (java.util.logging.Filter filter) {
 

@@ -39,7 +39,7 @@ import org.smallmind.scribe.pen.Record;
 
 public class JDKFormatterAdapter implements org.smallmind.scribe.pen.Formatter {
 
-  private Formatter formatter;
+  private final Formatter formatter;
 
   public JDKFormatterAdapter (Formatter formatter) {
 

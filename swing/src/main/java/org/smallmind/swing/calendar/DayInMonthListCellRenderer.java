@@ -49,10 +49,10 @@ import org.smallmind.swing.ComponentUtility;
 
 public class DayInMonthListCellRenderer implements ListCellRenderer {
 
+  private final JPanel renderPanel;
+  private final JLabel dayOfWeekLabel;
+  private final JLabel dayLabel;
   DayInMonthComboBoxModel model;
-  private JPanel renderPanel;
-  private JLabel dayOfWeekLabel;
-  private JLabel dayLabel;
 
   public DayInMonthListCellRenderer (DayInMonthComboBoxModel model) {
 
@@ -114,5 +114,4 @@ public class DayInMonthListCellRenderer implements ListCellRenderer {
 
     return renderPanel;
   }
-
 }

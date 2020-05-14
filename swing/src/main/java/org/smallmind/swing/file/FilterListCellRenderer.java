@@ -54,8 +54,7 @@ public class FilterListCellRenderer implements ListCellRenderer {
     if (isSelected) {
       cellLabel.setBackground(ColorUtility.HIGHLIGHT_COLOR);
       cellLabel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1), BorderFactory.createMatteBorder(1, 1, 1, 1, ColorUtility.HIGHLIGHT_COLOR)));
-    }
-    else {
+    } else {
       cellLabel.setBackground(list.getBackground());
       cellLabel.setBorder(BorderFactory.createMatteBorder(2, 2, 2, 2, list.getBackground()));
     }

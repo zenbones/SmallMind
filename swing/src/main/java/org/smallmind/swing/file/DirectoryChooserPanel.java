@@ -63,11 +63,11 @@ public class DirectoryChooserPanel extends JPanel implements ActionListener, Ite
   private static final GridBagLayout GRID_BAG_LAYOUT = new GridBagLayout();
   private static final Dimension PREFERRED_DIMENSION = new Dimension(300, 500);
 
-  private WeakEventListenerList<DirectoryChoiceListener> listenerList = new WeakEventListenerList<DirectoryChoiceListener>();
-  private JTree directoryTree;
-  private JTextField directoryTextField;
-  private JButton cancelButton;
-  private JButton selectButton;
+  private final WeakEventListenerList<DirectoryChoiceListener> listenerList = new WeakEventListenerList<DirectoryChoiceListener>();
+  private final JTree directoryTree;
+  private final JTextField directoryTextField;
+  private final JButton cancelButton;
+  private final JButton selectButton;
 
   public DirectoryChooserPanel () {
 
@@ -121,16 +121,16 @@ public class DirectoryChooserPanel extends JPanel implements ActionListener, Ite
     layout.setAutoCreateContainerGaps(true);
 
     layout.setHorizontalGroup(layout.createParallelGroup(GroupLayout.Alignment.TRAILING)
-      .addGroup(layout.createSequentialGroup().addComponent(rootLabel).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(rootComboBox))
-      .addComponent(directoryTreeScrollPane)
-      .addGroup(layout.createSequentialGroup().addComponent(directoryLabel).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(directoryTextField))
-      .addGroup(layout.createSequentialGroup().addComponent(selectButton).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(cancelButton)));
+                                .addGroup(layout.createSequentialGroup().addComponent(rootLabel).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(rootComboBox))
+                                .addComponent(directoryTreeScrollPane)
+                                .addGroup(layout.createSequentialGroup().addComponent(directoryLabel).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(directoryTextField))
+                                .addGroup(layout.createSequentialGroup().addComponent(selectButton).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(cancelButton)));
 
     layout.setVerticalGroup(layout.createSequentialGroup()
-      .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(rootLabel).addComponent(rootComboBox, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE))
-      .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addComponent(directoryTreeScrollPane).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-      .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(directoryLabel).addComponent(directoryTextField, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE))
-      .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addGroup(layout.createParallelGroup().addComponent(selectButton).addComponent(cancelButton)));
+                              .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(rootLabel).addComponent(rootComboBox, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE))
+                              .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addComponent(directoryTreeScrollPane).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                              .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(directoryLabel).addComponent(directoryTextField, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE))
+                              .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addGroup(layout.createParallelGroup().addComponent(selectButton).addComponent(cancelButton)));
 
     rootComboBox.addItemListener(this);
     directoryTextField.getDocument().addDocumentListener(this);
@@ -171,12 +171,10 @@ public class DirectoryChooserPanel extends JPanel implements ActionListener, Ite
     if (actionEvent.getSource() == selectButton) {
       if ((directoryTextField.getText() != null) && (directoryTextField.getText().trim().length() > 0)) {
         fireDirectoryChosen(new DirectoryChoiceEvent(this, new File(directoryTextField.getText().trim())));
-      }
-      else {
+      } else {
         fireDirectoryChosen(new DirectoryChoiceEvent(this, null));
       }
-    }
-    else if (actionEvent.getSource() == cancelButton) {
+    } else if (actionEvent.getSource() == cancelButton) {
       fireDirectoryChosen(new DirectoryChoiceEvent(this, null));
     }
   }

@@ -37,9 +37,9 @@ import java.util.Date;
 
 public class CalendarDate implements Comparable<CalendarDate> {
 
-  private int year;
-  private int month;
-  private int day;
+  private final int year;
+  private final int month;
+  private final int day;
 
   public CalendarDate (int year, int month, int day) {
 
@@ -108,11 +108,9 @@ public class CalendarDate implements Comparable<CalendarDate> {
 
     if (this.before(calendarDate)) {
       return -1;
-    }
-    else if (this.after(calendarDate)) {
+    } else if (this.after(calendarDate)) {
       return 1;
-    }
-    else {
+    } else {
       return 0;
     }
   }
@@ -135,5 +133,4 @@ public class CalendarDate implements Comparable<CalendarDate> {
 
     return false;
   }
-
 }

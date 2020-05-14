@@ -46,8 +46,8 @@ public abstract class DropHandler implements DropTargetListener {
   private static final AtomicBoolean DROP_PERMISSION = new AtomicBoolean(false);
   private static final AtomicInteger DROP_ACTIONS = new AtomicInteger(0);
 
-  private DropTarget dropTarget;
-  private int actions;
+  private final DropTarget dropTarget;
+  private final int actions;
 
   public DropHandler (Component component, int actions) {
 
@@ -113,8 +113,7 @@ public abstract class DropHandler implements DropTargetListener {
     if ((dropTargetDropEvent.getDropAction() & actions) != 0) {
       dropTargetDropEvent.acceptDrop(dropTargetDropEvent.getDropAction());
       dropTargetDropEvent.getDropTargetContext().dropComplete(dropComplete(dropTargetDropEvent));
-    }
-    else {
+    } else {
       dropTargetDropEvent.rejectDrop();
     }
   }

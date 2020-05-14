@@ -40,7 +40,7 @@ import org.apache.wicket.request.resource.JavaScriptResourceReference;
 
 public class JavaScriptNamespaceBehavior extends Behavior {
 
-  private String namespace;
+  private final String namespace;
 
   public JavaScriptNamespaceBehavior () {
 

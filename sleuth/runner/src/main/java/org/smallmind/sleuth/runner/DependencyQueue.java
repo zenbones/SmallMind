@@ -40,10 +40,10 @@ import java.util.LinkedList;
 
 public class DependencyQueue<A extends Annotation, T> {
 
-  private LinkedList<Dependency<A, T>> dependencyList;
-  private HashMap<String, Dependency<A, T>> dependencyMap = new HashMap<>();
-  private HashSet<String> completedSet = new HashSet<>();
-  private int size;
+  private final LinkedList<Dependency<A, T>> dependencyList;
+  private final HashMap<String, Dependency<A, T>> dependencyMap = new HashMap<>();
+  private final HashSet<String> completedSet = new HashSet<>();
+  private final int size;
 
   public DependencyQueue (LinkedList<Dependency<A, T>> dependencyList) {
 

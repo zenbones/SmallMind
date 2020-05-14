@@ -34,8 +34,8 @@ package org.smallmind.nutsnbolts.spring.property;
 
 public class YamlPropertyEntry implements PropertyEntry {
 
-  private String key;
-  private Object value;
+  private final String key;
+  private final Object value;
 
   public YamlPropertyEntry (String key, Object value) {
 

@@ -34,7 +34,7 @@ package org.smallmind.web.reverse.http1_1;
 
 public class ProtocolException extends Exception {
 
-  private CannedResponse cannedResponse;
+  private final CannedResponse cannedResponse;
 
   public ProtocolException (CannedResponse cannedResponse) {
 

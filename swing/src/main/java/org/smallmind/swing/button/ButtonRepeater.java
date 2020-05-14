@@ -46,11 +46,11 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class ButtonRepeater implements ChangeListener {
 
-  private WeakEventListenerList<ActionListener> listenerList;
-  private JButton button;
-  private AutoPress autoPress;
+  private final WeakEventListenerList<ActionListener> listenerList;
+  private final JButton button;
+  private final AutoPress autoPress;
+  private final long delayMilliseconds;
   private boolean armed = false;
-  private long delayMilliseconds;
 
   public ButtonRepeater (JButton button, long delayMilliseconds) {
 
@@ -86,8 +86,7 @@ public class ButtonRepeater implements ChangeListener {
         armed = true;
         fireActionPereformed(new ActionEvent(button, 0, button.getActionCommand()));
       }
-    }
-    else if (!button.getModel().isPressed()) {
+    } else if (!button.getModel().isPressed()) {
       armed = false;
     }
   }
@@ -103,8 +102,7 @@ public class ButtonRepeater implements ChangeListener {
 
     try {
       autoPress.finish();
-    }
-    catch (InterruptedException interruptedException) {
+    } catch (InterruptedException interruptedException) {
       LoggerManager.getLogger(ButtonRepeater.class).error(interruptedException);
     }
   }
@@ -119,9 +117,9 @@ public class ButtonRepeater implements ChangeListener {
 
   private class AutoPress implements Runnable {
 
-    private CountDownLatch exitLatch;
-    private CountDownLatch pulseLatch;
-    private AtomicBoolean finished = new AtomicBoolean(false);
+    private final CountDownLatch exitLatch;
+    private final CountDownLatch pulseLatch;
+    private final AtomicBoolean finished = new AtomicBoolean(false);
 
     public AutoPress () {
 
@@ -146,20 +144,17 @@ public class ButtonRepeater implements ChangeListener {
           try {
             if (!armed) {
               pulseLatch.await(100, TimeUnit.MILLISECONDS);
-            }
-            else {
+            } else {
               pulseLatch.await(delayMilliseconds, TimeUnit.MILLISECONDS);
               if (armed) {
                 SwingUtilities.invokeLater(new DoClick());
               }
             }
-          }
-          catch (InterruptedException interruptedException) {
+          } catch (InterruptedException interruptedException) {
             LoggerManager.getLogger(ButtonRepeater.class).error(interruptedException);
           }
         }
-      }
-      finally {
+      } finally {
         exitLatch.countDown();
       }
     }

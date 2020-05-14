@@ -34,9 +34,9 @@ package org.smallmind.web.reverse.http1_1;
 
 public class ProxyDebug {
 
-  private byte[] buffer;
-  private int offset;
-  private int length;
+  private final byte[] buffer;
+  private final int offset;
+  private final int length;
 
   public ProxyDebug (byte[] buffer, int offset, int length) {
 

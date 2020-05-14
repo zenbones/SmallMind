@@ -40,9 +40,9 @@ import javax.lang.model.element.TypeElement;
 
 public class ClassTracker {
 
-  private HashMap<String, Boolean> preCompiledMap = new HashMap<>();
-  private HashMap<TypeElement, PolymorphicInformation> polymorphicInformationMap = new HashMap<>();
-  private HashMap<TypeElement, TypeElement> polymorphicBaseClassMap = new HashMap<>();
+  private final HashMap<String, Boolean> preCompiledMap = new HashMap<>();
+  private final HashMap<TypeElement, PolymorphicInformation> polymorphicInformationMap = new HashMap<>();
+  private final HashMap<TypeElement, TypeElement> polymorphicBaseClassMap = new HashMap<>();
 
   public void addPolymorphic (TypeElement typeElement, PolymorphicInformation polymorphicInformation) {
 

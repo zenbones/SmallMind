@@ -36,16 +36,14 @@ import org.smallmind.nutsnbolts.util.DirectionalComparator;
 
 public class MultiListSelectionRange<T extends Comparable<T>> {
 
-  public static enum Containment {
+  public enum Containment {
 
     SURROUNDS, HEAD, TAIL, WITHIN, OUT
   }
 
-  ;
-
-  private MultiListSelection<T> firstSelection;
-  private MultiListSelection<T> lastSelection;
-  private DirectionalComparator.Direction direction;
+  private final MultiListSelection<T> firstSelection;
+  private final MultiListSelection<T> lastSelection;
+  private final DirectionalComparator.Direction direction;
 
   public MultiListSelectionRange (MultiListSelection<T> selection0, MultiListSelection<T> selection1, DirectionalComparator.Direction direction) {
 
@@ -58,8 +56,7 @@ public class MultiListSelectionRange<T extends Comparable<T>> {
     if (comparison <= 0) {
       firstSelection = selection0;
       lastSelection = selection1;
-    }
-    else {
+    } else {
       firstSelection = selection1;
       lastSelection = selection0;
     }
@@ -90,19 +87,14 @@ public class MultiListSelectionRange<T extends Comparable<T>> {
 
     if ((firstComparison == 0) && (lastComparison == 0)) {
       return Containment.SURROUNDS;
-    }
-    else if (firstComparison == 0) {
+    } else if (firstComparison == 0) {
       return Containment.HEAD;
-    }
-    else if (lastComparison == 0) {
+    } else if (lastComparison == 0) {
       return Containment.TAIL;
-    }
-    else if ((firstComparison < 0) && (lastComparison > 0)) {
+    } else if ((firstComparison < 0) && (lastComparison > 0)) {
       return Containment.WITHIN;
-    }
-    else {
+    } else {
       return Containment.OUT;
     }
   }
-
 }

@@ -38,7 +38,7 @@ import org.smallmind.persistence.cache.WideVectoredDao;
 
 public abstract class AbstractWideVectorAwareManagedDao<W extends Serializable & Comparable<W>, I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractManagedDao<I, D> implements WideVectorAwareDao<W, I, D> {
 
-  private WideVectoredDao<W, I, D> wideVectoredDao;
+  private final WideVectoredDao<W, I, D> wideVectoredDao;
 
   public AbstractWideVectorAwareManagedDao (String metricSource, WideVectoredDao<W, I, D> wideVectoredDao) {
 

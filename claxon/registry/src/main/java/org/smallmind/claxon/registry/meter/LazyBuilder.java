@@ -36,7 +36,7 @@ import org.smallmind.claxon.registry.Clock;
 
 public class LazyBuilder<M extends Meter> implements MeterBuilder<M> {
 
-  private BuilderFactory<M> factory;
+  private final BuilderFactory<M> factory;
 
   public LazyBuilder (BuilderFactory<M> factory) {
 

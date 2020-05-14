@@ -47,13 +47,13 @@ import org.springframework.beans.factory.InitializingBean;
 
 public class SyslogAppender extends AbstractAppender implements InitializingBean {
 
+  private final ConcurrentLinkedQueue<Filter> filterList;
+  private final boolean active = true;
   private SyslogIF syslog;
   private ErrorHandler errorHandler;
-  private ConcurrentLinkedQueue<Filter> filterList;
   private String name;
   private String syslogHost = "localhost";
   private String facility = "LOCAL7";
-  private boolean active = true;
   private boolean base64EncodeStackTraces = false;
   private int syslogPort = 514;
 

@@ -81,8 +81,8 @@ public class ObservableTracker {
 
   private static class RegisteredWeakReference<O extends Observable> extends WeakReference<O> {
 
-    private Tag[] tags;
-    private Class<?> caller;
+    private final Tag[] tags;
+    private final Class<?> caller;
 
     public RegisteredWeakReference (O referent, ReferenceQueue<? super O> q, Class<?> caller, Tag... tags) {
 

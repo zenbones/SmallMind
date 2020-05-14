@@ -36,5 +36,5 @@ import java.util.EventListener;
 
 public interface StenographEventListener extends EventListener {
 
-  public abstract void flush (StenographEvent stenographEvent);
+  void flush (StenographEvent stenographEvent);
 }

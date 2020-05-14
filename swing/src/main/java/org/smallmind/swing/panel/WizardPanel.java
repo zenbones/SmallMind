@@ -37,8 +37,8 @@ import org.smallmind.swing.dialog.WizardDialog;
 
 public class WizardPanel extends TabPanel {
 
+  private final String title;
   private WizardDialog wizardDialog = null;
-  private String title;
 
   public WizardPanel (String title, Component component) {
 

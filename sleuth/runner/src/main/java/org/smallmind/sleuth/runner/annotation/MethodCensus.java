@@ -39,7 +39,7 @@ import java.util.NoSuchElementException;
 
 public class MethodCensus implements Iterable<Method> {
 
-  private Class<?> clazz;
+  private final Class<?> clazz;
 
   public MethodCensus (Class<?> clazz) {
 
@@ -54,7 +54,7 @@ public class MethodCensus implements Iterable<Method> {
 
   private static class MethodCensusIterator implements Iterator<Method> {
 
-    private LinkedList<Class<?>> classList = new LinkedList<>();
+    private final LinkedList<Class<?>> classList = new LinkedList<>();
     private Method[] methods = new Method[0];
     private int methodIndex = 0;
 

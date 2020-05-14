@@ -36,7 +36,7 @@ public enum Repository {
 
   SNAPSHOTS("snapshots"), RELEASES("releases");
 
-  private String code;
+  private final String code;
 
   Repository (String code) {
 

@@ -45,7 +45,7 @@ import org.smallmind.scribe.pen.adapter.RecordWrapper;
 
 public class JDKAppenderWrapper extends Handler {
 
-  private Appender appender;
+  private final Appender appender;
 
   public JDKAppenderWrapper (Appender appender) {
 

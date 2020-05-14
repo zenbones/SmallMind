@@ -37,7 +37,7 @@ import org.smallmind.nutsnbolts.util.StringUtility;
 
 public class EnumStringConverter<E extends Enum<E>> extends StringConverter<E> {
 
-  private Class<E> enumClass;
+  private final Class<E> enumClass;
 
   public EnumStringConverter (Class<E> enumClass) {
 

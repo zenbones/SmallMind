@@ -36,8 +36,7 @@ import java.util.EventListener;
 
 public interface MultiListSelectionListener<T extends Comparable<T>> extends EventListener {
 
-  public abstract T getKey ();
+  T getKey ();
 
-  public abstract void valueChanged (MultiListSelectionEvent selectionEvent);
-
+  void valueChanged (MultiListSelectionEvent selectionEvent);
 }

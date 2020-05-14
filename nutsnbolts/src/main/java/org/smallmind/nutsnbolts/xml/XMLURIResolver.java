@@ -43,7 +43,7 @@ public class XMLURIResolver implements URIResolver {
 
   private static XMLURIResolver URI_RESOLVER;
 
-  private ProtocolResolver protocolResolver;
+  private final ProtocolResolver protocolResolver;
 
   public XMLURIResolver (ProtocolResolver protocolResolver) {
 

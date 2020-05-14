@@ -42,10 +42,10 @@ import org.smallmind.persistence.cache.CacheOperationException;
 
 public class MemcachedCache<V> implements CASSupportingPersistenceCache<String, V> {
 
-  private ProxyMemcachedClient memcachedClient;
-  private Class<V> valueClass;
-  private String discriminator;
-  private int timeToLiveSeconds;
+  private final ProxyMemcachedClient memcachedClient;
+  private final Class<V> valueClass;
+  private final String discriminator;
+  private final int timeToLiveSeconds;
 
   public MemcachedCache (ProxyMemcachedClient memcachedClient, String discriminator, Class<V> valueClass, int timeToLiveSeconds) {
 

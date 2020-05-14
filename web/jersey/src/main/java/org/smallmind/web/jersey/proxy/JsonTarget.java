@@ -318,8 +318,8 @@ public class JsonTarget {
 
   private class RequestDebugCollector {
 
-    private HttpRequest httpRequest;
-    private HttpEntity entity;
+    private final HttpRequest httpRequest;
+    private final HttpEntity entity;
 
     private RequestDebugCollector (HttpRequest httpRequest, HttpEntity entity) {
 
@@ -352,8 +352,8 @@ public class JsonTarget {
 
   private class ResponseDebugCollector {
 
-    private HttpResponse response;
-    private InputStreamHolder entityInputStreamHolder;
+    private final HttpResponse response;
+    private final InputStreamHolder entityInputStreamHolder;
 
     private ResponseDebugCollector (HttpResponse response, InputStreamHolder entityInputStreamHolder) {
 

@@ -36,7 +36,7 @@ import java.util.EventObject;
 
 public class StenographEvent extends EventObject {
 
-  private String output;
+  private final String output;
 
   public StenographEvent (Object source, String output) {
 

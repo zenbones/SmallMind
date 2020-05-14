@@ -37,12 +37,12 @@ import org.xml.sax.SAXException;
 
 public interface DocumentExtender extends SAXExtender {
 
-  public abstract void startDocument ()
+  void startDocument ()
     throws SAXException;
 
-  public abstract void endDocument ()
+  void endDocument ()
     throws SAXException;
 
-  public abstract ElementExtender getElementExtender (SAXExtender parent, String namespaceURI, String localName, String qName, Attributes atts)
+  ElementExtender getElementExtender (SAXExtender parent, String namespaceURI, String localName, String qName, Attributes atts)
     throws Exception;
 }

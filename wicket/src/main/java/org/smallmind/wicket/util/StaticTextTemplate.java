@@ -37,7 +37,7 @@ import org.apache.wicket.util.template.TextTemplate;
 
 public class StaticTextTemplate extends TextTemplate {
 
-  private String text;
+  private final String text;
 
   public StaticTextTemplate (String text) {
 

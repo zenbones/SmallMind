@@ -36,8 +36,8 @@ import org.smallmind.quorum.pool.ComponentPoolException;
 
 public class DefaultContextualPoolNameTranslator implements ContextualPoolNameTranslator {
 
-  private String baseName;
-  private char separator;
+  private final String baseName;
+  private final char separator;
 
   public DefaultContextualPoolNameTranslator (String baseName, char separator) {
 

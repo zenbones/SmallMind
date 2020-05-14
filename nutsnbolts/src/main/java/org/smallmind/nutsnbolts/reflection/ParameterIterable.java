@@ -50,7 +50,7 @@ import java.util.NoSuchElementException;
  */
 public class ParameterIterable implements Iterable<String> {
 
-  private String encrypted;
+  private final String encrypted;
 
   public ParameterIterable (String encrypted) {
 

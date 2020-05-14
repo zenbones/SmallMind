@@ -43,9 +43,9 @@ import org.xml.sax.SAXException;
 
 public class MenuHandler implements ActionListener, MenuActionProvider {
 
-  private JFrame parentFrame;
-  private MenuModel menuModel;
-  private MenuDelegateFactory menuDelegateFactory;
+  private final JFrame parentFrame;
+  private final MenuModel menuModel;
+  private final MenuDelegateFactory menuDelegateFactory;
 
   public MenuHandler (JFrame parentFrame, MenuDelegateFactory menuDelegateFactory, InputSource configSource)
     throws IOException, SAXException, ParserConfigurationException {

@@ -34,7 +34,6 @@ package org.smallmind.web.jetty;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.channels.ReadableByteChannel;
@@ -42,7 +41,7 @@ import org.eclipse.jetty.util.resource.Resource;
 
 public class ByteArrayResource extends Resource {
 
-  private byte[] bytes;
+  private final byte[] bytes;
 
   public ByteArrayResource (byte[] bytes) {
 
@@ -103,7 +102,7 @@ public class ByteArrayResource extends Resource {
   }
 
   @Override
-  public InputStream getInputStream ()  {
+  public InputStream getInputStream () {
 
     return new ByteArrayInputStream(bytes);
   }

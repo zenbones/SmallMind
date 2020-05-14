@@ -38,10 +38,10 @@ import javax.sql.PooledConnection;
 
 public interface DataSourceFactory<D extends CommonDataSource, P extends PooledConnection> {
 
-  public abstract Class<P> getPooledConnectionClass ();
+  Class<P> getPooledConnectionClass ();
 
-  public abstract Class<D> getDataSourceClass ();
+  Class<D> getDataSourceClass ();
 
-  public abstract D constructDataSource (String jdbcUrl, String user, String password)
+  D constructDataSource (String jdbcUrl, String user, String password)
     throws SQLException;
 }

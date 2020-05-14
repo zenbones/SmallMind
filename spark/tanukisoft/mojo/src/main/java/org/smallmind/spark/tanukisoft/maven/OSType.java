@@ -54,11 +54,11 @@ public enum OSType {
   WINDOWS_X86_32(OSStyle.WINDOWS, "wrapper-windows-x86-32.exe", "wrapper-windows-x86-32.dll"),
   WINDOWS_X86_64(OSStyle.WINDOWS, "wrapper-windows-x86-64.exe", "wrapper-windows-x86-64.dll");
 
-  private OSStyle osStyle;
-  private String executable;
-  private String library;
+  private final OSStyle osStyle;
+  private final String executable;
+  private final String library;
 
-  private OSType (OSStyle osStyle, String executable, String library) {
+  OSType (OSStyle osStyle, String executable, String library) {
 
     this.osStyle = osStyle;
     this.executable = executable;

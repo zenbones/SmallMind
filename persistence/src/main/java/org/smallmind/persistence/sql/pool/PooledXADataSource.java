@@ -41,8 +41,8 @@ import org.smallmind.quorum.pool.complex.ComponentPool;
 
 public class PooledXADataSource extends AbstractPooledDataSource<XADataSource, XAConnection> implements XADataSource {
 
-  private ComponentPool<XAConnection> componentPool;
-  private String key;
+  private final ComponentPool<XAConnection> componentPool;
+  private final String key;
 
   public PooledXADataSource (ComponentPool<XAConnection> componentPool) {
 

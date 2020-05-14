@@ -42,8 +42,8 @@ import org.smallmind.quorum.pool.complex.ComponentPool;
 
 public class PooledDataSource extends AbstractPooledDataSource<DataSource, PooledConnection> implements DataSource {
 
-  private ComponentPool<PooledConnection> componentPool;
-  private String key;
+  private final ComponentPool<PooledConnection> componentPool;
+  private final String key;
 
   public PooledDataSource (ComponentPool<PooledConnection> componentPool) {
 

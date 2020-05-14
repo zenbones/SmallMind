@@ -36,8 +36,8 @@ public class CASValue<V> {
 
   private static final CASValue<?> NULL_CAS_VALUE = new CASValue<Object>(null, 0);
 
-  private V value;
-  private long version;
+  private final V value;
+  private final long version;
 
   public CASValue (V value, long version) {
 

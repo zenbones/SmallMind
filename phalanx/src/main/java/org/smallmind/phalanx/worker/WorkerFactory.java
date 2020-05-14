@@ -34,5 +34,5 @@ package org.smallmind.phalanx.worker;
 
 public interface WorkerFactory<W extends Worker<T>, T> {
 
-  public W createWorker (WorkQueue<T> workQueue);
+  W createWorker (WorkQueue<T> workQueue);
 }

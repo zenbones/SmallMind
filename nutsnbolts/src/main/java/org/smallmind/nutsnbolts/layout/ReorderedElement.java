@@ -34,8 +34,8 @@ package org.smallmind.nutsnbolts.layout;
 
 public class ReorderedElement {
 
-  private ParaboxElement<?> reorderedElement;
-  private int originalIndex;
+  private final ParaboxElement<?> reorderedElement;
+  private final int originalIndex;
 
   public ReorderedElement (ParaboxElement<?> reorderedElement, int originalIndex) {
 

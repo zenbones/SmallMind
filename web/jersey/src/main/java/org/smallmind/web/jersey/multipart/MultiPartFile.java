@@ -38,9 +38,9 @@ import java.io.InputStream;
 
 public class MultiPartFile {
 
-  private InputStream inputStream;
-  private String fileName;
-  private String contentType;
+  private final InputStream inputStream;
+  private final String fileName;
+  private final String contentType;
 
   public MultiPartFile (String fileName, String contentType, InputStream inputStream) {
 

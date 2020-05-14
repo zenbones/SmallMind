@@ -38,8 +38,8 @@ import java.util.Map;
 
 public class OptionSet {
 
-  private HashMap<String, LinkedList<String>> optionMap = new HashMap<>();
-  private LinkedList<String> remainingList = new LinkedList<>();
+  private final HashMap<String, LinkedList<String>> optionMap = new HashMap<>();
+  private final LinkedList<String> remainingList = new LinkedList<>();
 
   public synchronized void addOption (String option) {
 

@@ -48,11 +48,11 @@ public class ClipboardManager implements ClipboardOwner, FocusListener {
 
   private static final Clipboard SYSTEM_CLIPBOARD = Toolkit.getDefaultToolkit().getSystemClipboard();
 
-  private Action cutAction;
-  private Action copyAction;
-  private Action pasteAction;
+  private final Action cutAction;
+  private final Action copyAction;
+  private final Action pasteAction;
+  private final HashMap<Component, ClipboardListener> listenerMap;
   private Component selectedComponent;
-  private HashMap<Component, ClipboardListener> listenerMap;
 
   public ClipboardManager () {
 
@@ -111,7 +111,7 @@ public class ClipboardManager implements ClipboardOwner, FocusListener {
 
   public class CutAction extends AbstractAction {
 
-    private ClipboardManager clipboardManager;
+    private final ClipboardManager clipboardManager;
 
     public CutAction (ClipboardManager clipboardManager, String name) {
 
@@ -128,12 +128,11 @@ public class ClipboardManager implements ClipboardOwner, FocusListener {
         (listenerMap.get(selectedComponent)).cutAction(new ClipboardEvent(clipboardManager, selectedComponent));
       }
     }
-
   }
 
   public class CopyAction extends AbstractAction {
 
-    private ClipboardManager clipboardManager;
+    private final ClipboardManager clipboardManager;
 
     public CopyAction (ClipboardManager clipboardManager, String name) {
 
@@ -148,12 +147,11 @@ public class ClipboardManager implements ClipboardOwner, FocusListener {
         (listenerMap.get(selectedComponent)).copyAction(new ClipboardEvent(clipboardManager, selectedComponent));
       }
     }
-
   }
 
   public class PasteAction extends AbstractAction {
 
-    private ClipboardManager clipboardManager;
+    private final ClipboardManager clipboardManager;
 
     public PasteAction (ClipboardManager clipboardManager, String name) {
 
@@ -171,7 +169,5 @@ public class ClipboardManager implements ClipboardOwner, FocusListener {
         (listenerMap.get(selectedComponent)).pasteAction(new ClipboardEvent(clipboardManager, selectedComponent, transferable));
       }
     }
-
   }
-
 }

@@ -36,9 +36,9 @@ import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
 
 public class VectorLiteral extends AnnotationLiteral<Vector> implements Vector {
 
-  private String namespace;
-  private Key[] keys;
-  private Classifier classifier;
+  private final String namespace;
+  private final Key[] keys;
+  private final Classifier classifier;
 
   public VectorLiteral (String namespace, Key[] keys) {
 

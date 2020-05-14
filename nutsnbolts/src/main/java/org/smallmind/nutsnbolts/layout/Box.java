@@ -37,9 +37,9 @@ import java.util.LinkedList;
 
 public abstract class Box<B extends Box<B>> {
 
-  private ParaboxLayout layout;
-  private LinkedList<ParaboxElement<?>> elements = new LinkedList<ParaboxElement<?>>();
-  private Class<B> managedClass;
+  private final ParaboxLayout layout;
+  private final LinkedList<ParaboxElement<?>> elements = new LinkedList<ParaboxElement<?>>();
+  private final Class<B> managedClass;
 
   protected Box (Class<B> managedClass, ParaboxLayout layout) {
 

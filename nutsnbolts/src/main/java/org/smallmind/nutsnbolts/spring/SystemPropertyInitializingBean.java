@@ -45,7 +45,7 @@ import org.springframework.core.PriorityOrdered;
 public class SystemPropertyInitializingBean implements BeanFactoryPostProcessor, PriorityOrdered {
 
   private final TreeMap<String, String> debugMap = new TreeMap<>(new AlphaNumericComparator<String>());
-  private Map<String, String> propertyMap = new HashMap<>();
+  private final Map<String, String> propertyMap = new HashMap<>();
   private KeyDebugger keyDebugger;
   private boolean override = false;
   private int order;

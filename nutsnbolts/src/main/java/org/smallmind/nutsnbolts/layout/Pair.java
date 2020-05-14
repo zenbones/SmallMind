@@ -34,8 +34,8 @@ package org.smallmind.nutsnbolts.layout;
 
 public class Pair {
 
-  private double first;
-  private double second;
+  private final double first;
+  private final double second;
 
   public Pair (double first, double second) {
 

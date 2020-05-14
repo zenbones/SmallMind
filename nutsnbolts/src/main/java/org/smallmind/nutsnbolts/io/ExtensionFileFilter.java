@@ -39,8 +39,8 @@ import javax.swing.filechooser.FileFilter;
 
 public final class ExtensionFileFilter extends FileFilter implements java.io.FileFilter {
 
-  private LinkedList<Pattern> regExpList;
-  private LinkedList<String> extensionList;
+  private final LinkedList<Pattern> regExpList;
+  private final LinkedList<String> extensionList;
   private String description;
 
   public ExtensionFileFilter () {

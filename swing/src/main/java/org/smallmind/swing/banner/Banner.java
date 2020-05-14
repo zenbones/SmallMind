@@ -206,12 +206,10 @@ public class Banner extends JComponent implements Scrollable, Accessible, MouseL
         selectedIndex = listSelectionModel.getLeadSelectionIndex();
         if ((selectedIndex < 0) || (index <= selectedIndex)) {
           ((JViewport)getParent()).setViewPosition(new Point((int)trackingRectangle.getX(), 0));
-        }
-        else {
+        } else {
           ((JViewport)getParent()).setViewPosition(new Point((int)(trackingRectangle.getX() + trackingRectangle.getWidth() - viewRectangle.getWidth()), 0));
         }
       }
-
     }
 
     if (select) {
@@ -258,20 +256,16 @@ public class Banner extends JComponent implements Scrollable, Accessible, MouseL
       if (mouseEvent.isShiftDown()) {
         if ((anchorIndex = listSelectionModel.getAnchorSelectionIndex()) < 0) {
           listSelectionModel.setSelectionInterval(index, index);
-        }
-        else {
+        } else {
           listSelectionModel.setSelectionInterval(anchorIndex, index);
         }
-      }
-      else if (mouseEvent.isControlDown()) {
+      } else if (mouseEvent.isControlDown()) {
         if (listSelectionModel.isSelectedIndex(index)) {
           listSelectionModel.removeSelectionInterval(index, index);
-        }
-        else {
+        } else {
           listSelectionModel.addSelectionInterval(index, index);
         }
-      }
-      else {
+      } else {
         listSelectionModel.setSelectionInterval(index, index);
       }
 
@@ -316,8 +310,7 @@ public class Banner extends JComponent implements Scrollable, Accessible, MouseL
           jiggleJump += getSquashedRectangleAtIndex(index - 1).getWidth();
         }
       }
-    }
-    else if (direction > 0) {
+    } else if (direction > 0) {
       if ((viewRectangle.getX() + viewRectangle.getWidth()) < getPreferredSize().getWidth()) {
         index = getIndexAtPoint(new Point((int)(viewRectangle.getX() + viewRectangle.getWidth()), 0));
         jiggleJump = (int)((getSquashedRectangleAtIndex(index).getX() + getSquashedRectangleAtIndex(index).getWidth()) - (viewRectangle.getX() + viewRectangle.getWidth()));
@@ -339,8 +332,7 @@ public class Banner extends JComponent implements Scrollable, Accessible, MouseL
 
     if (direction < 0) {
       return (int)viewRectangle.getX();
-    }
-    else if (direction > 0) {
+    } else if (direction > 0) {
       preferredSize = getPreferredSize();
 
       return (int)(preferredSize.getWidth() - viewRectangle.getX() + viewRectangle.getWidth());
@@ -414,22 +406,6 @@ public class Banner extends JComponent implements Scrollable, Accessible, MouseL
     }
   }
 
-  public class SelectLeftAction extends AbstractAction {
-
-    public synchronized void actionPerformed (ActionEvent actionEvent) {
-
-      scrollLeft();
-    }
-  }
-
-  public class SelectRightAction extends AbstractAction {
-
-    public synchronized void actionPerformed (ActionEvent actionEvent) {
-
-      scrollRight();
-    }
-  }
-
   public synchronized void addListSelectionListener (ListSelectionListener listSelectionListener) {
 
     listSelectionListenerList.addListener(listSelectionListener);
@@ -448,5 +424,21 @@ public class Banner extends JComponent implements Scrollable, Accessible, MouseL
   public void removeListDataListener (ListDataListener listDataListener) {
 
     listModel.removeListDataListener(listDataListener);
+  }
+
+  public class SelectLeftAction extends AbstractAction {
+
+    public synchronized void actionPerformed (ActionEvent actionEvent) {
+
+      scrollLeft();
+    }
+  }
+
+  public class SelectRightAction extends AbstractAction {
+
+    public synchronized void actionPerformed (ActionEvent actionEvent) {
+
+      scrollRight();
+    }
   }
 }

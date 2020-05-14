@@ -36,7 +36,7 @@ import javax.swing.JTextField;
 
 public class IntegerSpinnerEditor extends DefaultSpinnerEditor {
 
-  private IntegerSpinnerModel model;
+  private final IntegerSpinnerModel model;
 
   public IntegerSpinnerEditor (IntegerSpinnerModel model) {
 
@@ -51,15 +51,13 @@ public class IntegerSpinnerEditor extends DefaultSpinnerEditor {
 
     try {
       value = Integer.parseInt((String)super.getValue());
-    }
-    catch (NumberFormatException numberFormatException) {
+    } catch (NumberFormatException numberFormatException) {
       return false;
     }
 
     if ((model.getMinimumValue() != null) && (value < (Integer)model.getMinimumValue())) {
       return false;
-    }
-    else {
+    } else {
       return !((model.getMaximumValue() != null) && (value > (Integer)model.getMaximumValue()));
     }
   }

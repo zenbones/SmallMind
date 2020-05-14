@@ -40,9 +40,9 @@ import org.smallmind.scribe.pen.Level;
 
 public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationAwareLogger {
 
-  private static enum TranslatorState {CHAR, ESCAPE, VAR}
+  private enum TranslatorState {CHAR, ESCAPE, VAR}
 
-  private org.smallmind.scribe.pen.Logger logger;
+  private final org.smallmind.scribe.pen.Logger logger;
 
   public ScribeLoggerAdapter (org.smallmind.scribe.pen.Logger logger) {
 

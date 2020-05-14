@@ -45,7 +45,7 @@ public class SelfDestructiveMap<K extends Comparable<K>, S extends SelfDestructi
   private final ConcurrentSkipListSet<SelfDestructiveKey<K>> ignitionKeySet = new ConcurrentSkipListSet<>();
   private final Stint defaultTimeoutStint;
   private final Stint pulseTimeStint;
-  private IgnitionWorker ignitionWorker;
+  private final IgnitionWorker ignitionWorker;
 
   public SelfDestructiveMap (Stint defaultTimeoutStint) {
 

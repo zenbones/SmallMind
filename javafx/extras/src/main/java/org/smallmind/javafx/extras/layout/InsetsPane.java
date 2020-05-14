@@ -40,7 +40,7 @@ import org.smallmind.nutsnbolts.layout.Bias;
 
 public class InsetsPane extends Region {
 
-  private Insets insets;
+  private final Insets insets;
 
   public InsetsPane (Insets insets) {
 

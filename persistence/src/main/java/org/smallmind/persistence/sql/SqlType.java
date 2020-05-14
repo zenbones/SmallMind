@@ -37,7 +37,7 @@ import java.util.Date;
 
 public class SqlType {
 
-  private static Class[] KNOWN_TYPES = new Class[] {Long.class, Boolean.class, Integer.class, Double.class, Float.class, Character.class, Short.class, Byte.class, String.class, BigInteger.class, Date.class};
+  private static final Class[] KNOWN_TYPES = new Class[] {Long.class, Boolean.class, Integer.class, Double.class, Float.class, Character.class, Short.class, Byte.class, String.class, BigInteger.class, Date.class};
 
   public static boolean isKnownType (Class aClass) {
 

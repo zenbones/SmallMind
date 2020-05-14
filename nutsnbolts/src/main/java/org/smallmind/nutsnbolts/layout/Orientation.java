@@ -36,8 +36,8 @@ public class Orientation {
 
   private static final Orientation DEFAULT = new Orientation(Bias.HORIZONTAL, Flow.FIRST_TO_LAST);
 
-  private Bias bias;
-  private Flow flow;
+  private final Bias bias;
+  private final Flow flow;
 
   public Orientation (Bias bias, Flow flow) {
 

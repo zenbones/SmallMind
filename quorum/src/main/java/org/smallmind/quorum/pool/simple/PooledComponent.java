@@ -34,5 +34,5 @@ package org.smallmind.quorum.pool.simple;
 
 public interface PooledComponent {
 
-  public abstract void terminate ();
+  void terminate ();
 }

@@ -36,16 +36,16 @@ import java.awt.Window;
 
 public class StopDialog extends OptionDialog {
 
+  public StopDialog (Window parentWindow, String stoptext) {
+
+    super(parentWindow, stoptext, OptionType.STOP);
+  }
+
   public static void showStopDialog (Window parentWindow, String stoptext) {
 
     StopDialog stopDialog = new StopDialog(parentWindow, stoptext);
 
     stopDialog.setModal(true);
     stopDialog.setVisible(true);
-  }
-
-  public StopDialog (Window parentWindow, String stoptext) {
-
-    super(parentWindow, stoptext, OptionType.STOP);
   }
 }

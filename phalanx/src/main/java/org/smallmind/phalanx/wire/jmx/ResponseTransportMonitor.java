@@ -38,7 +38,7 @@ import org.smallmind.phalanx.wire.TransportState;
 
 public class ResponseTransportMonitor extends StandardMBean implements ResponseTransportMXBean {
 
-  private ResponseTransport responseTransport;
+  private final ResponseTransport responseTransport;
 
   public ResponseTransportMonitor (ResponseTransport responseTransport) {
 

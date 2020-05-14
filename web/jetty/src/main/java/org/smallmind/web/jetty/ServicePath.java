@@ -41,5 +41,5 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ServicePath {
 
-  public abstract String value ();
+  String value ();
 }

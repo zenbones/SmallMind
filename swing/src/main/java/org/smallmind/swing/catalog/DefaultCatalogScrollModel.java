@@ -39,7 +39,7 @@ import javax.swing.JViewport;
 
 public class DefaultCatalogScrollModel implements CatalogScrollModel {
 
-  private Catalog catalog;
+  private final Catalog catalog;
 
   public DefaultCatalogScrollModel (Catalog catalog) {
 
@@ -62,8 +62,7 @@ public class DefaultCatalogScrollModel implements CatalogScrollModel {
           jiggleJump += catalog.getSquashedRectangleAtIndex(index - 1).getHeight();
         }
       }
-    }
-    else if (direction > 0) {
+    } else if (direction > 0) {
       if ((viewRectangle.getY() + viewRectangle.getHeight()) < catalog.getPreferredSize().getHeight()) {
         index = catalog.getIndexAtPoint(new Point(0, (int)(viewRectangle.getY() + viewRectangle.getHeight())));
         jiggleJump = (int)((catalog.getSquashedRectangleAtIndex(index).getY() + catalog.getSquashedRectangleAtIndex(index).getHeight()) - (viewRectangle.getY() + viewRectangle.getHeight()));
@@ -85,8 +84,7 @@ public class DefaultCatalogScrollModel implements CatalogScrollModel {
 
     if (direction < 0) {
       return (int)viewRectangle.getY();
-    }
-    else if (direction > 0) {
+    } else if (direction > 0) {
       preferredSize = catalog.getPreferredSize();
 
       return (int)(preferredSize.getHeight() - viewRectangle.getY() + viewRectangle.getHeight());
@@ -94,5 +92,4 @@ public class DefaultCatalogScrollModel implements CatalogScrollModel {
 
     return 0;
   }
-
 }

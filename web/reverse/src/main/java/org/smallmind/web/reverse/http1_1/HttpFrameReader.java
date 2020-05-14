@@ -175,7 +175,7 @@ public abstract class HttpFrameReader extends SourceAwareFrameReader {
 
   private class FlushWorker implements Runnable {
 
-    private byte[] buffer;
+    private final byte[] buffer;
 
     public FlushWorker (byte[] buffer) {
 

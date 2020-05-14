@@ -34,5 +34,5 @@ package org.smallmind.scribe.pen;
 
 public interface Enhancer {
 
-  public abstract void enhance (Record record);
+  void enhance (Record record);
 }

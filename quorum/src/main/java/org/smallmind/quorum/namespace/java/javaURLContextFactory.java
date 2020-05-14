@@ -44,8 +44,8 @@ import org.smallmind.quorum.namespace.java.backingStore.NamingConnectionDetails;
 
 public class javaURLContextFactory implements ObjectFactory {
 
-  private static final Class[] CONTEXT_CREATOR_SIGNATURE = new Class[]{NamingConnectionDetails.class};
-  private static final Class[] NAME_TRANSLATOR_SIGNATURE = new Class[]{ContextCreator.class};
+  private static final Class[] CONTEXT_CREATOR_SIGNATURE = new Class[] {NamingConnectionDetails.class};
+  private static final Class[] NAME_TRANSLATOR_SIGNATURE = new Class[] {ContextCreator.class};
 
   public Object getObjectInstance (Object obj, Name name, Context nameCtx, Hashtable environment)
     throws Exception {
@@ -76,7 +76,7 @@ public class javaURLContextFactory implements ObjectFactory {
 
       contextCreatorClass = Class.forName(ContextCreator.class.getPackage().getName() + '.' + backingStore + '.' + StringUtility.toDisplayCase(backingStore) + ContextCreator.class.getSimpleName());
       contextCreatorConstructor = contextCreatorClass.getConstructor(CONTEXT_CREATOR_SIGNATURE);
-      contextCreator = (ContextCreator)contextCreatorConstructor.newInstance((NamingConnectionDetails)environment.get(JavaContext.CONNECTION_DETAILS));
+      contextCreator = (ContextCreator)contextCreatorConstructor.newInstance(environment.get(JavaContext.CONNECTION_DETAILS));
 
       nameTranslatorClass = Class.forName(NameTranslator.class.getPackage().getName() + '.' + backingStore + '.' + StringUtility.toDisplayCase(backingStore) + NameTranslator.class.getSimpleName());
       nameTranslatorConstructor = nameTranslatorClass.getConstructor(NAME_TRANSLATOR_SIGNATURE);

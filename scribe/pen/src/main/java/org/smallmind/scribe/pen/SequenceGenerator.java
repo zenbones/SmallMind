@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class SequenceGenerator {
 
-  private static AtomicLong count = new AtomicLong(0);
+  private static final AtomicLong count = new AtomicLong(0);
 
   public static long next () {
 

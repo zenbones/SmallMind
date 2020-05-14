@@ -1,11 +1,35 @@
-.gauge-chart .axis-label { -fx-text-fill: #666666; }
+.gauge-chart .axis-label {
+    -fx-text-fill: #666666;
+}
 
-.gauge-chart .default-color0.chart-line-symbol { -fx-background-color: #9933cc, #ffffff; }
-.gauge-chart .default-color1.chart-line-symbol { -fx-background-color: #0000cc, #ffffff; }
-.gauge-chart .default-color2.chart-line-symbol { -fx-background-color: #0066ff, #ffffff; }
-.gauge-chart .default-color3.chart-line-symbol { -fx-background-color: #00ccff, #ffffff; }
+.gauge-chart .default-color0.chart-line-symbol {
+    -fx-background-color: #9933cc, #ffffff;
+}
 
-.gauge-chart .default-color0.chart-series-line { -fx-stroke: #9933cc; }
-.gauge-chart .default-color1.chart-series-line { -fx-stroke: #0000cc; }
-.gauge-chart .default-color2.chart-series-line { -fx-stroke: #0066ff; }
-.gauge-chart .default-color3.chart-series-line { -fx-stroke: #00ccff; }
+.gauge-chart .default-color1.chart-line-symbol {
+    -fx-background-color: #0000cc, #ffffff;
+}
+
+.gauge-chart .default-color2.chart-line-symbol {
+    -fx-background-color: #0066ff, #ffffff;
+}
+
+.gauge-chart .default-color3.chart-line-symbol {
+    -fx-background-color: #00ccff, #ffffff;
+}
+
+.gauge-chart .default-color0.chart-series-line {
+    -fx-stroke: #9933cc;
+}
+
+.gauge-chart .default-color1.chart-series-line {
+    -fx-stroke: #0000cc;
+}
+
+.gauge-chart .default-color2.chart-series-line {
+    -fx-stroke: #0066ff;
+}
+
+.gauge-chart .default-color3.chart-series-line {
+    -fx-stroke: #00ccff;
+}

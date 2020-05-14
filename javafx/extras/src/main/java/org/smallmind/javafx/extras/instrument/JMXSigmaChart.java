@@ -93,8 +93,7 @@ public class JMXSigmaChart extends SigmaChart {
         AttributeList attributeList = mBeanServerConnection.getAttributes(objectName, DISTRIBUTION_ATTRIBUTES);
 
         addDispersion(System.currentTimeMillis(), new Dispersion((Double)((Attribute)attributeList.get(0)).getValue(), (Double)((Attribute)attributeList.get(1)).getValue(), (Double)((Attribute)attributeList.get(2)).getValue(), (Double)((Attribute)attributeList.get(3)).getValue(), (Double)((Attribute)attributeList.get(4)).getValue(), (Double)((Attribute)attributeList.get(5)).getValue()));
-      }
-      catch (final Exception exception) {
+      } catch (final Exception exception) {
         setPaused(true);
 
         Platform.runLater(new Runnable() {

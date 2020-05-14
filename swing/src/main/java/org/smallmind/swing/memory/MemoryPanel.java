@@ -38,7 +38,7 @@ import javax.swing.JProgressBar;
 
 public class MemoryPanel extends JPanel implements MemoryUsageListener {
 
-  private JProgressBar progressBar;
+  private final JProgressBar progressBar;
 
   public MemoryPanel () {
 
@@ -58,5 +58,4 @@ public class MemoryPanel extends JPanel implements MemoryUsageListener {
     progressBar.setValue(memeoryUsageEvent.getCurrentUsage());
     progressBar.setString(memeoryUsageEvent.getDisplayUsage());
   }
-
 }

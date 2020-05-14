@@ -37,8 +37,8 @@ import javax.websocket.Extension;
 
 public class HandshakeResponse {
 
-  private Extension[] extensions;
-  private String protocol;
+  private final Extension[] extensions;
+  private final String protocol;
 
   public HandshakeResponse (String protocol, Extension... extensions) {
 

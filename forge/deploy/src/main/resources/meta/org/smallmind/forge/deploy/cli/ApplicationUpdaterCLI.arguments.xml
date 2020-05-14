@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<options xmlns="http://www.smallmind.org/schema/nutsnbolts/command" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.smallmind.org/schema/nutsnbolts/command http://www.smallmind.org/schema/nutsnbolts/smallmind-command-1.0.xsd">
+<options xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.smallmind.org/schema/nutsnbolts/command"
+         xsi:schemaLocation="http://www.smallmind.org/schema/nutsnbolts/command http://www.smallmind.org/schema/nutsnbolts/smallmind-command-1.0.xsd">
   <option name="os" flag="o">
     <arguments>
       <single>operating system</single>

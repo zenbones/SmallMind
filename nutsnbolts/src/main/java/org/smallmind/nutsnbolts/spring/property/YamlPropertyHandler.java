@@ -40,7 +40,7 @@ import java.util.Map;
 
 public class YamlPropertyHandler implements PropertyHandler<YamlPropertyEntry> {
 
-  private Map<String, Object> yamlMap;
+  private final Map<String, Object> yamlMap;
 
   public YamlPropertyHandler (Map<String, Object> yamlMap) {
 
@@ -55,7 +55,7 @@ public class YamlPropertyHandler implements PropertyHandler<YamlPropertyEntry> {
 
   private static class YamlPropertyEntryIterator implements Iterator<YamlPropertyEntry> {
 
-    private LinkedList<NamedIteration> namedIterationList = new LinkedList<>();
+    private final LinkedList<NamedIteration> namedIterationList = new LinkedList<>();
 
     private YamlPropertyEntryIterator (Map<String, Object> yamlMap) {
 
@@ -128,7 +128,7 @@ public class YamlPropertyHandler implements PropertyHandler<YamlPropertyEntry> {
 
   private static class NamedIteration {
 
-    private Iterator<Map.Entry<String, Object>> iterator;
+    private final Iterator<Map.Entry<String, Object>> iterator;
     private String name;
 
     private NamedIteration (Iterator<Map.Entry<String, Object>> iterator) {

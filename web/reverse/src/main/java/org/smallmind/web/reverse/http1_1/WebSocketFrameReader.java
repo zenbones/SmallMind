@@ -50,12 +50,12 @@ public class WebSocketFrameReader implements FrameReader {
   private final SocketChannel targetChannel;
   private final ByteArrayIOStream byteArrayIOStream = new ByteArrayIOStream();
   private final AtomicBoolean failed = new AtomicBoolean(false);
+  private final byte[] lengthArray = new byte[8];
   private State state = State.ONE_BYTE;
   private boolean opCodeRead = false;
   private long dataLength;
   private long dataBytesRead = 0;
   private int lengthIndex = 0;
-  private byte[] lengthArray = new byte[8];
 
   public WebSocketFrameReader (ReverseProxyService reverseProxyService, SocketChannel sourceChannel, SocketChannel originChannel, SocketChannel targetChannel) {
 
@@ -159,7 +159,7 @@ public class WebSocketFrameReader implements FrameReader {
 
   private class FlushWorker implements Runnable {
 
-    private byte[] buffer;
+    private final byte[] buffer;
 
     public FlushWorker (byte[] buffer) {
 

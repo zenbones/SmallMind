@@ -38,9 +38,9 @@ import java.lang.reflect.Method;
 
 public class FieldAccessor {
 
-  private Method getterMethod;
-  private Method setterMethod;
-  private Field field;
+  private final Method getterMethod;
+  private final Method setterMethod;
+  private final Field field;
 
   public FieldAccessor (Field field, Method getterMethod, Method setterMethod) {
 

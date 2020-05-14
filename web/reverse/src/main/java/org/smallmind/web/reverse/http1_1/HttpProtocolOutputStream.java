@@ -38,7 +38,7 @@ import org.smallmind.nutsnbolts.io.ByteArrayIOStream;
 
 public class HttpProtocolOutputStream extends OutputStream {
 
-  private ByteArrayIOStream.ByteArrayOutputStream byteArrayOutputStream;
+  private final ByteArrayIOStream.ByteArrayOutputStream byteArrayOutputStream;
 
   public HttpProtocolOutputStream (ByteArrayIOStream.ByteArrayOutputStream byteArrayOutputStream) {
 

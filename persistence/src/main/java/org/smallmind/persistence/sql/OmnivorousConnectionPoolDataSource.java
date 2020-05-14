@@ -42,8 +42,8 @@ import javax.sql.PooledConnection;
 
 public class OmnivorousConnectionPoolDataSource<D extends CommonDataSource, P extends PooledConnection> implements ConnectionPoolDataSource {
 
-  private D dataSource;
-  private Class<P> pooledConnectionClass;
+  private final D dataSource;
+  private final Class<P> pooledConnectionClass;
   private int maxStatements = 0;
 
   public OmnivorousConnectionPoolDataSource (D dataSource, Class<P> pooledConnectionClass) {

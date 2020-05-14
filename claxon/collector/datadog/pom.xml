@@ -22,7 +22,7 @@
       <scope>compile</scope>
     </dependency>
   </dependencies>
-    <build>
+  <build>
     <plugins>
       <plugin>
         <groupId>org.smallmind</groupId>

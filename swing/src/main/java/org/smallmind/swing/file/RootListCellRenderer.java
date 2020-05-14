@@ -56,8 +56,7 @@ public class RootListCellRenderer implements ListCellRenderer {
 
     if (isSelected) {
       rootLabel.setBackground(UIManager.getDefaults().getColor("textHighlight"));
-    }
-    else {
+    } else {
       rootLabel.setBackground(UIManager.getDefaults().getColor("control"));
     }
 

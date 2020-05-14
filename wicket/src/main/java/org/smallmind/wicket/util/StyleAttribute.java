@@ -38,7 +38,7 @@ import java.util.Set;
 
 public class StyleAttribute {
 
-  private HashMap<String, String> styleMap = new HashMap<String, String>();
+  private final HashMap<String, String> styleMap = new HashMap<String, String>();
 
   public StyleAttribute () {
 

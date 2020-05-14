@@ -311,7 +311,7 @@ public class BeanReflector {
       case 2:
         return "3rd";
       default:
-        return String.valueOf(index + 1) + "th";
+        return (index + 1) + "th";
     }
   }
 }

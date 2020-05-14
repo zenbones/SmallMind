@@ -47,7 +47,7 @@ import org.smallmind.swing.EditorEvent;
 
 public class DefaultSpinnerEditor extends AbstractSpinnerEditor implements DocumentListener {
 
-  private JTextField editorField;
+  private final JTextField editorField;
 
   public DefaultSpinnerEditor () {
 
@@ -98,8 +98,7 @@ public class DefaultSpinnerEditor extends AbstractSpinnerEditor implements Docum
     if (!isValid()) {
       editorField.setForeground(Color.RED);
       fireEditorStatus(new EditorEvent(this, EditorEvent.State.INVALID));
-    }
-    else {
+    } else {
       editorField.setForeground(SystemColor.textText);
       fireEditorStatus(new EditorEvent(this, EditorEvent.State.VALID));
     }

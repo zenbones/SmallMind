@@ -39,9 +39,9 @@ import org.smallmind.swing.progress.ProgressPanel;
 
 public class ProgressInputStream extends InputStream implements ProgressDataHandler {
 
-  private ProgressPanel progressPanel;
-  private InputStream inputStream;
-  private long length;
+  private final ProgressPanel progressPanel;
+  private final InputStream inputStream;
+  private final long length;
   private long index;
   private long markIndex;
 
@@ -83,7 +83,7 @@ public class ProgressInputStream extends InputStream implements ProgressDataHand
     return readValue;
   }
 
-  public synchronized int read (byte buf[])
+  public synchronized int read (byte[] buf)
     throws IOException {
 
     int readValue;
@@ -95,7 +95,7 @@ public class ProgressInputStream extends InputStream implements ProgressDataHand
     return readValue;
   }
 
-  public synchronized int read (byte buf[], int off, int len)
+  public synchronized int read (byte[] buf, int off, int len)
     throws IOException {
 
     int readValue;
@@ -136,5 +136,4 @@ public class ProgressInputStream extends InputStream implements ProgressDataHand
 
     inputStream.close();
   }
-
 }

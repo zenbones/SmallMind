@@ -42,7 +42,7 @@ import org.smallmind.persistence.orm.TransactionPostProcessException;
 
 public class HibernateProxyTransaction extends ProxyTransaction<HibernateProxySession> {
 
-  private Transaction transaction;
+  private final Transaction transaction;
   private boolean rolledBack = false;
 
   public HibernateProxyTransaction (HibernateProxySession proxySession, Transaction transaction) {

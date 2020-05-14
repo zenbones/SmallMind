@@ -36,10 +36,10 @@ import org.smallmind.quorum.pool.ComponentPoolException;
 
 public interface ContextualPoolNameTranslator {
 
-  public abstract String getBaseName ();
+  String getBaseName ();
 
-  public abstract String getPoolName (String contextualPart);
+  String getPoolName (String contextualPart);
 
-  public abstract String getContextualPartFromPoolName (String poolName)
+  String getContextualPartFromPoolName (String poolName)
     throws ComponentPoolException;
 }

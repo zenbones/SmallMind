@@ -38,7 +38,7 @@ import org.smallmind.nutsnbolts.email.Postman;
 
 public class EmailAppender extends AbstractFormattedAppender {
 
-  private Postman postman;
+  private final Postman postman;
   private String from;
   private String to;
   private String subject;

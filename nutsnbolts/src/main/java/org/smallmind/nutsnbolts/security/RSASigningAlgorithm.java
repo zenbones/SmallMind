@@ -46,7 +46,7 @@ public enum RSASigningAlgorithm implements SecurityAlgorithm, SigningAlgorithm {
 
   SHA_256_WITH_RSA("SHA256withRSA");
 
-  private String algorithmName;
+  private final String algorithmName;
 
   RSASigningAlgorithm (String algorithmName) {
 

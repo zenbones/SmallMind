@@ -40,8 +40,8 @@ import org.smallmind.scribe.pen.adapter.RecordWrapper;
 
 public class IndigenousRecordFilter implements Record, RecordWrapper {
 
-  private Record record;
-  private Level level;
+  private final Record record;
+  private final Level level;
 
   public IndigenousRecordFilter (Record record, Level level) {
 

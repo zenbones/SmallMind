@@ -51,16 +51,16 @@ import org.apache.maven.project.MavenProject;
 @Mojo(name = "install-singularity", defaultPhase = LifecyclePhase.INSTALL, threadSafe = true)
 public class InstallSingularityMojo extends AbstractMojo {
 
-  @Component
-  ArtifactFactory artifactFactory;
-  @Component
-  ArtifactInstaller artifactInstaller;
   @Parameter(readonly = true, property = "project")
   private MavenProject project;
   @Parameter(readonly = true, property = "localRepository")
   private ArtifactRepository localRepository;
   @Parameter(defaultValue = "false")
   private boolean skip;
+  @Component
+  ArtifactFactory artifactFactory;
+  @Component
+  ArtifactInstaller artifactInstaller;
 
   public void execute ()
     throws MojoExecutionException, MojoFailureException {

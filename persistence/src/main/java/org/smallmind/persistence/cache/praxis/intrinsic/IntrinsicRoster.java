@@ -46,7 +46,7 @@ public class IntrinsicRoster<T> implements Roster<T> {
 
   private final ReentrantReadWriteLock lock;
 
-  private IntrinsicRosterStructure<T> structure;
+  private final IntrinsicRosterStructure<T> structure;
 
   public IntrinsicRoster () {
 

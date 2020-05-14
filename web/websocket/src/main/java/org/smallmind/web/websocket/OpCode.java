@@ -35,9 +35,9 @@ package org.smallmind.web.websocket;
 public enum OpCode {
 
   CONTINUATION((byte)0x0), TEXT((byte)0x1), BINARY((byte)0x2), CLOSE((byte)0x8), PING((byte)0x9), PONG((byte)0xA);
-  private byte code;
+  private final byte code;
 
-  private OpCode (byte code) {
+  OpCode (byte code) {
 
     this.code = code;
   }

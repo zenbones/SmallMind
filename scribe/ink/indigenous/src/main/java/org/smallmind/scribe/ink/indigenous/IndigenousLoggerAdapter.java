@@ -45,11 +45,11 @@ import org.smallmind.scribe.pen.adapter.ScribeParameterAdapter;
 
 public class IndigenousLoggerAdapter implements LoggerAdapter {
 
-  private ConcurrentLinkedQueue<Filter> filterList;
-  private ConcurrentLinkedQueue<Appender> appenderList;
-  private ConcurrentLinkedQueue<Enhancer> enhancerList;
+  private final ConcurrentLinkedQueue<Filter> filterList;
+  private final ConcurrentLinkedQueue<Appender> appenderList;
+  private final ConcurrentLinkedQueue<Enhancer> enhancerList;
+  private final String name;
   private Level level = Level.INFO;
-  private String name;
   private boolean autoFillLogicalContext = false;
 
   public IndigenousLoggerAdapter (String name) {

@@ -147,7 +147,7 @@ public class KeyspaceFactoryBean implements FactoryBean<Keyspace>, InitializingB
           if (!first) {
             serverBuilder.append(',');
           }
-          serverBuilder.append(serverPattern.substring(0, poundPos)).append(serverDesignator).append(serverPattern.substring(poundPos + 1));
+          serverBuilder.append(serverPattern, 0, poundPos).append(serverDesignator).append(serverPattern.substring(poundPos + 1));
           first = false;
         }
       }
@@ -197,8 +197,8 @@ public class KeyspaceFactoryBean implements FactoryBean<Keyspace>, InitializingB
 
   private class ConsistencyPair {
 
-    private HConsistencyLevel read;
-    private HConsistencyLevel write;
+    private final HConsistencyLevel read;
+    private final HConsistencyLevel write;
 
     public ConsistencyPair (HConsistencyLevel read, HConsistencyLevel write) {
 

@@ -34,5 +34,5 @@ package org.smallmind.nutsnbolts.security;
 
 public interface SecurityAlgorithm {
 
-  public abstract String getAlgorithmName ();
+  String getAlgorithmName ();
 }

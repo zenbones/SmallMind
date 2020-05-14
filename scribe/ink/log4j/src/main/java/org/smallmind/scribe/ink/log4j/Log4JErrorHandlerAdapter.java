@@ -40,7 +40,7 @@ import org.smallmind.scribe.pen.Record;
 
 public class Log4JErrorHandlerAdapter implements ErrorHandler {
 
-  private org.apache.log4j.spi.ErrorHandler errorHandler;
+  private final org.apache.log4j.spi.ErrorHandler errorHandler;
 
   public Log4JErrorHandlerAdapter (org.apache.log4j.spi.ErrorHandler errorHandler) {
 

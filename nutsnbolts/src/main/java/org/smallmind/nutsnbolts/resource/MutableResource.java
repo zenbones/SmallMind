@@ -36,6 +36,6 @@ import java.io.OutputStream;
 
 public interface MutableResource extends Resource {
 
-  public abstract OutputStream getOutputStream ()
+  OutputStream getOutputStream ()
     throws ResourceException;
 }

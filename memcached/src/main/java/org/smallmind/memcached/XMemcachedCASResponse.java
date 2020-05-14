@@ -36,7 +36,7 @@ import net.rubyeye.xmemcached.GetsResponse;
 
 public class XMemcachedCASResponse<T> implements ProxyCASResponse<T> {
 
-  private GetsResponse<T> getsResponse;
+  private final GetsResponse<T> getsResponse;
 
   public XMemcachedCASResponse (GetsResponse<T> getsResponse) {
 

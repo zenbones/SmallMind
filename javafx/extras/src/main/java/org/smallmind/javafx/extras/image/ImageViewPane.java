@@ -43,7 +43,7 @@ import javafx.scene.layout.Region;
 
 public class ImageViewPane extends Region {
 
-  private ObjectProperty<ImageView> imageViewProperty = new SimpleObjectProperty<>();
+  private final ObjectProperty<ImageView> imageViewProperty = new SimpleObjectProperty<>();
 
   public ImageViewPane (ImageView imageView) {
 

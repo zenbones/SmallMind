@@ -57,7 +57,7 @@ import org.smallmind.persistence.nosql.NoSqlDao;
 
 public abstract class HectorDao<W extends Serializable & Comparable<W>, I extends Serializable & Comparable<I>, D extends HectorDurable<I, D>> extends NoSqlDao<W, I, D> {
 
-  private ColumnFamilyTemplate<Composite, Composite> hectorTemplate;
+  private final ColumnFamilyTemplate<Composite, Composite> hectorTemplate;
 
   public HectorDao (String metricSource, Keyspace keyspace, WideVectoredDao<W, I, D> wideVectoredDao, boolean cacheEnabled) {
 

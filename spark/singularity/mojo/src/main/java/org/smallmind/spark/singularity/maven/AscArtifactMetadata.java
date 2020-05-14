@@ -43,9 +43,9 @@ import org.codehaus.plexus.util.FileUtils;
 
 public class AscArtifactMetadata extends AbstractArtifactMetadata {
 
-  private Artifact artifact;
-  private File file;
-  private String fileName;
+  private final Artifact artifact;
+  private final File file;
+  private final String fileName;
 
   public AscArtifactMetadata (Artifact artifact, File file) {
 

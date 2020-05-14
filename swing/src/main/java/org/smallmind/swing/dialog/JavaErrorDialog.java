@@ -66,18 +66,9 @@ public class JavaErrorDialog extends JDialog implements ActionListener, WindowLi
   private static final int DIALOG_WIDTH = 600;
   private static final int DIALOG_HEIGHT = 300;
 
-  private WeakEventListenerList<ErrorListener> listenerList;
-  private Object source;
-  private Exception exception;
-
-  public static void showJavaErrorDialog (Window parentWindow, Object source, Exception exception) {
-
-    JavaErrorDialog errorDialog = new JavaErrorDialog(parentWindow, source, exception);
-
-    errorDialog.setModal(true);
-    errorDialog.setLocationRelativeTo(parentWindow);
-    errorDialog.setVisible(true);
-  }
+  private final WeakEventListenerList<ErrorListener> listenerList;
+  private final Object source;
+  private final Exception exception;
 
   public JavaErrorDialog (Window parentWindow, Object source, Exception exception) {
 
@@ -168,6 +159,15 @@ public class JavaErrorDialog extends JDialog implements ActionListener, WindowLi
     contentPane.add(dialogPanel);
   }
 
+  public static void showJavaErrorDialog (Window parentWindow, Object source, Exception exception) {
+
+    JavaErrorDialog errorDialog = new JavaErrorDialog(parentWindow, source, exception);
+
+    errorDialog.setModal(true);
+    errorDialog.setLocationRelativeTo(parentWindow);
+    errorDialog.setVisible(true);
+  }
+
   public synchronized void addErrorListener (ErrorListener errorListener) {
 
     listenerList.addListener(errorListener);
@@ -223,5 +223,4 @@ public class JavaErrorDialog extends JDialog implements ActionListener, WindowLi
   public void windowDeactivated (WindowEvent w) {
 
   }
-
 }

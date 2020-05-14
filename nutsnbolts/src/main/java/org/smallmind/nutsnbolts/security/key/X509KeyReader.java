@@ -42,7 +42,7 @@ import org.smallmind.nutsnbolts.http.Base64Codec;
 
 public class X509KeyReader implements KeyReader {
 
-  private KeyFactors keyFactors;
+  private final KeyFactors keyFactors;
 
   public X509KeyReader (String raw)
     throws IOException, KeyParseException {

@@ -36,7 +36,7 @@ public enum EntityGraphHint {
 
   FETCH_GRAPH("javax.persistence.fetchgraph"), LOAD_GRAPH("javax.persistence.loadgraph");
 
-  private String key;
+  private final String key;
 
   EntityGraphHint (String key) {
 

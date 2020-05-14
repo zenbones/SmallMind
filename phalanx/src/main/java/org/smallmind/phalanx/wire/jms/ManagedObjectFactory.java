@@ -38,9 +38,9 @@ import org.smallmind.phalanx.wire.TransportException;
 
 public interface ManagedObjectFactory {
 
-  public abstract Connection createConnection ()
+  Connection createConnection ()
     throws TransportException;
 
-  public abstract Destination getDestination ()
+  Destination getDestination ()
     throws TransportException;
 }

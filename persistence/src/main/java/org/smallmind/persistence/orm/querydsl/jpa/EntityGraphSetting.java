@@ -36,8 +36,8 @@ import org.smallmind.persistence.orm.querydsl.hibernate.EntityGraphHint;
 
 public class EntityGraphSetting {
 
-  private EntityGraphHint hint;
-  private String name;
+  private final EntityGraphHint hint;
+  private final String name;
 
   public EntityGraphSetting (EntityGraphHint hint, String name) {
 

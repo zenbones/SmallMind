@@ -36,8 +36,8 @@ import java.util.Objects;
 
 public abstract class WherePermit {
 
+  private final String name;
   private String entity;
-  private String name;
 
   public WherePermit (String entity, String name) {
 

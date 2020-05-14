@@ -34,8 +34,8 @@ package org.smallmind.javafx.extras.instrument;
 
 public class EndPoints<T> {
 
-  private T low;
-  private T high;
+  private final T low;
+  private final T high;
 
   public EndPoints (T low, T high) {
 

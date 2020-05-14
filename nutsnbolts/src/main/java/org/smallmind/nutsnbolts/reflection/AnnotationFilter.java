@@ -36,8 +36,8 @@ import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 public class AnnotationFilter {
 
+  private final PassType passType;
   private String[] annotationSignatures = null;
-  private PassType passType;
 
   public AnnotationFilter (PassType passType, Class... annotationClasses) {
 

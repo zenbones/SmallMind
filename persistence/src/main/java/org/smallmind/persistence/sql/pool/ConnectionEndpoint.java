@@ -34,9 +34,9 @@ package org.smallmind.persistence.sql.pool;
 
 public class ConnectionEndpoint {
 
-  private String jdbcUrl;
-  private String user;
-  private String password;
+  private final String jdbcUrl;
+  private final String user;
+  private final String password;
 
   public ConnectionEndpoint (String jdbcUrl, String user, String password) {
 

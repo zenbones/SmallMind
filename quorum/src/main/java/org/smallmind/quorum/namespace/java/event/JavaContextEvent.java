@@ -37,7 +37,7 @@ import javax.naming.CommunicationException;
 
 public class JavaContextEvent extends EventObject {
 
-  private CommunicationException communicationException;
+  private final CommunicationException communicationException;
 
   public JavaContextEvent (Object source) {
 

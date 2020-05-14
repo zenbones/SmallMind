@@ -35,7 +35,6 @@ package org.smallmind.web.json.dto.translator;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import javax.annotation.processing.ProcessingEnvironment;
-import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;

@@ -37,11 +37,9 @@ import javax.management.Notification;
 
 public class ComponentLeaseTimeNotification extends Notification {
 
-  public static final String TYPE = "LEASE_TIME";
-
   private static final AtomicLong SEQUNCE_NUMBER = new AtomicLong(0);
-
-  private long leaseTimeNanos;
+  public static final String TYPE = "LEASE_TIME";
+  private final long leaseTimeNanos;
 
   public ComponentLeaseTimeNotification (Object source, long leaseTimeNanos) {
 

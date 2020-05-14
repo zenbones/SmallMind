@@ -36,8 +36,8 @@ import org.HdrHistogram.Histogram;
 
 public class HistogramTime {
 
-  private Histogram histogram;
-  private double timeFactor;
+  private final Histogram histogram;
+  private final double timeFactor;
 
   public HistogramTime (Histogram histogram, double timeFactor) {
 

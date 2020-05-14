@@ -263,7 +263,7 @@ public class FileAppender extends AbstractFormattedAppender {
         logFileName = PathUtility.fileNameAsString(logPath);
 
         if ((dotPos = logFileName.lastIndexOf('.')) >= 0) {
-          rolloverNameBuilder.append(logFileName.substring(0, dotPos));
+          rolloverNameBuilder.append(logFileName, 0, dotPos);
         } else {
           rolloverNameBuilder.append(logFileName);
         }

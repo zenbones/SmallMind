@@ -37,8 +37,8 @@ import org.smallmind.persistence.Durable;
 
 public class WideDurableKey<W extends Serializable & Comparable<W>, D extends Durable<?>> implements Serializable {
 
-  private Class<D> durableClass;
-  private String key;
+  private final Class<D> durableClass;
+  private final String key;
 
   public WideDurableKey (String context, Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass) {
 

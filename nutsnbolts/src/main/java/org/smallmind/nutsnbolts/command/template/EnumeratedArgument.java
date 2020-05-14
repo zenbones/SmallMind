@@ -34,7 +34,7 @@ package org.smallmind.nutsnbolts.command.template;
 
 public class EnumeratedArgument extends Argument {
 
-  private String[] values;
+  private final String[] values;
 
   public EnumeratedArgument (String[] values) {
 

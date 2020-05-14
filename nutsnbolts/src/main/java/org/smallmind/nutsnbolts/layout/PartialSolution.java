@@ -34,9 +34,9 @@ package org.smallmind.nutsnbolts.layout;
 
 public class PartialSolution {
 
-  private Bias bias;
-  private double position;
-  private double measurement;
+  private final Bias bias;
+  private final double position;
+  private final double measurement;
 
   public PartialSolution (Bias bias, double position, double measurement) {
 

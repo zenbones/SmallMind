@@ -46,7 +46,7 @@ import org.smallmind.sleuth.runner.event.SuccessSleuthEvent;
 
 public class SurefireSleuthEventListener implements SleuthEventListener {
 
-  private RunListener runListener;
+  private final RunListener runListener;
   private Throwable throwable;
 
   public SurefireSleuthEventListener (RunListener runListener) {

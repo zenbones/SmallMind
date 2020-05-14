@@ -561,7 +561,6 @@ public abstract class SSLJerseyTest {
     return this.client.getAndSet(client);
   }
 
-
   private Client getClient (ClientConfig clientConfig) {
 
     if (clientConfig == null) {

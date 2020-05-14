@@ -123,10 +123,10 @@ public class WeakEventListenerList<E extends EventListener> implements Iterable<
 
   public static class Scrubber implements Runnable {
 
-    private CountDownLatch exitLatch;
-    private ReferenceQueue<EventListener> referenceQueue;
-    private HashMap<WeakReference<? extends EventListener>, WeakEventListenerList> parentMap;
-    private AtomicBoolean finished = new AtomicBoolean(false);
+    private final CountDownLatch exitLatch;
+    private final ReferenceQueue<EventListener> referenceQueue;
+    private final HashMap<WeakReference<? extends EventListener>, WeakEventListenerList> parentMap;
+    private final AtomicBoolean finished = new AtomicBoolean(false);
 
     public Scrubber () {
 

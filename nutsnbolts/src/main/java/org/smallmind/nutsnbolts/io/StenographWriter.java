@@ -40,7 +40,7 @@ public class StenographWriter extends Writer {
 
   private final WeakEventListenerList<StenographEventListener> listenerList = new WeakEventListenerList<StenographEventListener>();
 
-  private StringBuilder stenographBuilder = new StringBuilder();
+  private final StringBuilder stenographBuilder = new StringBuilder();
 
   @Override
   public synchronized void write (char[] cbuf, int off, int len)

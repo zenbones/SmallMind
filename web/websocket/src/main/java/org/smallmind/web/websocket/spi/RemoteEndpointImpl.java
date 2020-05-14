@@ -185,8 +185,8 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
 
   private static class SendFuture implements Future<Void> {
 
-    private SendRunnable sendRunnable;
-    private Thread sendThread;
+    private final SendRunnable sendRunnable;
+    private final Thread sendThread;
 
     public SendFuture (SendRunnable sendRunnable) {
 
@@ -244,7 +244,7 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
 
   private static class SendRunnable implements Runnable {
 
-    private SendExecutable executable;
+    private final SendExecutable executable;
     private Throwable throwable;
 
     public SendRunnable (SendExecutable executable) {
@@ -270,8 +270,8 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
 
   private static class SendStream extends OutputStream {
 
-    private RemoteEndpointImpl.Basic basicEndpoint;
-    private AtomicReference<ByteArrayOutputStream> partialStreamRef;
+    private final RemoteEndpointImpl.Basic basicEndpoint;
+    private final AtomicReference<ByteArrayOutputStream> partialStreamRef;
 
     public SendStream (Basic basicEndpoint, AtomicReference<ByteArrayOutputStream> partialStreamRef) {
 
@@ -313,8 +313,8 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
 
   private static class SendWriter extends Writer {
 
-    private RemoteEndpointImpl.Basic basicEndpoint;
-    private AtomicReference<StringBuilder> partialBuilderRef;
+    private final RemoteEndpointImpl.Basic basicEndpoint;
+    private final AtomicReference<StringBuilder> partialBuilderRef;
 
     public SendWriter (Basic basicEndpoint, AtomicReference<StringBuilder> partialBuilderRef) {
 
@@ -352,8 +352,8 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
 
   public static class Basic extends RemoteEndpointImpl implements RemoteEndpoint.Basic {
 
-    private AtomicReference<StringBuilder> partialBuilderRef = new AtomicReference<>();
-    private AtomicReference<ByteArrayOutputStream> partialStreamRef = new AtomicReference<>();
+    private final AtomicReference<StringBuilder> partialBuilderRef = new AtomicReference<>();
+    private final AtomicReference<ByteArrayOutputStream> partialStreamRef = new AtomicReference<>();
 
     public Basic (SessionImpl session, WebSocket webSocket, Endpoint endpoint, EndpointConfig endpointConfig) {
 
@@ -491,7 +491,7 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
 
   public static class Async extends RemoteEndpointImpl implements RemoteEndpoint.Async {
 
-    private AtomicLong sendTimeout;
+    private final AtomicLong sendTimeout;
 
     public Async (SessionImpl session, WebSocket webSocket, Endpoint endpoint, EndpointConfig endpointConfig) {
 

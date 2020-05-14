@@ -37,7 +37,7 @@ import java.io.OutputStream;
 
 public class MultiOutputStream extends OutputStream {
 
-  private OutputStream[] streams;
+  private final OutputStream[] streams;
 
   public MultiOutputStream (OutputStream[] streams) {
 
@@ -52,7 +52,7 @@ public class MultiOutputStream extends OutputStream {
     }
   }
 
-  public void write (byte buffer[])
+  public void write (byte[] buffer)
     throws IOException {
 
     for (OutputStream stream : streams) {
@@ -60,7 +60,7 @@ public class MultiOutputStream extends OutputStream {
     }
   }
 
-  public void write (byte buffer[], int off, int len)
+  public void write (byte[] buffer, int off, int len)
     throws IOException {
 
     for (OutputStream stream : streams) {

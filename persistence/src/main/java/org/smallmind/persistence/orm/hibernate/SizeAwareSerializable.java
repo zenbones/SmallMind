@@ -36,5 +36,5 @@ import java.io.Serializable;
 
 public interface SizeAwareSerializable extends Serializable {
 
-  public int approximateSize ();
+  int approximateSize ();
 }

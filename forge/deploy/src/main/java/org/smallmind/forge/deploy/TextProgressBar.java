@@ -34,12 +34,12 @@ package org.smallmind.forge.deploy;
 
 public class TextProgressBar {
 
-  private String measure;
-  private boolean emulateGraphics;
+  private final String measure;
+  private final boolean emulateGraphics;
+  private final double total;
+  private final int segmentPercent;
+  private final int numberOfSegments;
   private boolean done = false;
-  private double total;
-  private int segmentPercent;
-  private int numberOfSegments;
   private int previousSegment = -1;
 
   public TextProgressBar (long total, String measure, int segmentPercent, boolean emulateGraphics) {
@@ -70,16 +70,16 @@ public class TextProgressBar {
     }
 
     double currentPercent = (current / total) * 100;
-    int currentSegment = (int) (currentPercent / segmentPercent);
+    int currentSegment = (int)(currentPercent / segmentPercent);
 
     if ((!done) && (currentSegment != previousSegment)) {
       if (!emulateGraphics) {
-        System.out.print((int) currentPercent);
+        System.out.print((int)currentPercent);
         System.out.print("% (");
 
         System.out.print(current);
         System.out.print(" of ");
-        System.out.print((long) total);
+        System.out.print((long)total);
         System.out.print(" ");
         System.out.print(measure);
         System.out.println(")");
@@ -100,12 +100,12 @@ public class TextProgressBar {
         }
         System.out.print("] ");
 
-        System.out.print((int) currentPercent);
+        System.out.print((int)currentPercent);
         System.out.print("% (");
 
         System.out.print(current);
         System.out.print(" of ");
-        System.out.print((long) total);
+        System.out.print((long)total);
         System.out.print(" ");
         System.out.print(measure);
 

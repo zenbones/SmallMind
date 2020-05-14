@@ -37,8 +37,8 @@ import java.nio.file.Path;
 
 public class CopyTreeConfigurationBuilder {
 
-  private Path source;
-  private Path destination;
+  private final Path source;
+  private final Path destination;
   private PathFilter[] pathFilters;
   private boolean includeSourceDirectory = false;
 

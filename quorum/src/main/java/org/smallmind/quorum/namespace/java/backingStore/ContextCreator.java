@@ -37,7 +37,7 @@ import javax.naming.directory.DirContext;
 
 public abstract class ContextCreator {
 
-  private NamingConnectionDetails connectionDetails;
+  private final NamingConnectionDetails connectionDetails;
 
   public ContextCreator (NamingConnectionDetails connectionDetails) {
 

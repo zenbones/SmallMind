@@ -34,7 +34,7 @@ package org.smallmind.nutsnbolts.util;
 
 public class Some<T> implements Option<T> {
 
-  private T value;
+  private final T value;
 
   protected Some (T value) {
 

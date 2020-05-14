@@ -41,14 +41,14 @@ import org.apache.wicket.util.string.Strings;
 
 public class ExternalLink extends AbstractLink {
 
-  public static enum Target {
+  public enum Target {
 
     BLANK("_blank", null), PARENT("_parent", "window.parent.location"), SELF("_self", "window.location"), TOP("_top", "window.top.location");
 
-    private String attribute;
-    private String window;
+    private final String attribute;
+    private final String window;
 
-    private Target (String attribute, String window) {
+    Target (String attribute, String window) {
 
       this.attribute = attribute;
       this.window = window;
@@ -70,7 +70,7 @@ public class ExternalLink extends AbstractLink {
   }
 
   private final IModel<String> label;
-  private Target target;
+  private final Target target;
 
   public ExternalLink (String id, IModel<String> hrefModel, Target target, IModel<String> labelModel) {
 
@@ -89,8 +89,7 @@ public class ExternalLink extends AbstractLink {
     if (tag.getName().equalsIgnoreCase("a") || tag.getName().equalsIgnoreCase("link") || tag.getName().equalsIgnoreCase("area")) {
       tag.put("href", Strings.replaceAll(getDefaultModelObjectAsString(), "&", "&amp;"));
       tag.put("target", target.asAttribute());
-    }
-    else {
+    } else {
       tag.put("onclick", target.asWindow() + "='" + getDefaultModelObjectAsString() + "';return false;");
     }
   }
@@ -103,8 +102,7 @@ public class ExternalLink extends AbstractLink {
 
     if ((label != null) && (label.getObject() != null)) {
       replaceComponentTagBody(markupStream, openTag, getDefaultModelObjectAsString(label.getObject()));
-    }
-    else {
+    } else {
       super.onComponentTagBody(markupStream, openTag);
     }
 

@@ -52,12 +52,10 @@ public class DefaultCatalogCellRenderer implements CatalogCellRenderer {
 
     if (isSelected) {
       renderPanel.setBorder(BorderFactory.createLineBorder(SystemColor.textHighlight, 2));
-    }
-    else {
+    } else {
       renderPanel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
     }
 
     return renderPanel;
   }
-
 }

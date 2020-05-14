@@ -34,10 +34,10 @@ package org.smallmind.nutsnbolts.layout;
 
 public class Perimeter {
 
-  private double top;
-  private double left;
-  private double bottom;
-  private double right;
+  private final double top;
+  private final double left;
+  private final double bottom;
+  private final double right;
 
   public Perimeter (double top, double left, double bottom, double right) {
 

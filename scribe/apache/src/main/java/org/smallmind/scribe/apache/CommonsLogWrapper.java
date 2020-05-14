@@ -39,7 +39,7 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class CommonsLogWrapper implements Log {
 
-  private String name;
+  private final String name;
 
   static {
 

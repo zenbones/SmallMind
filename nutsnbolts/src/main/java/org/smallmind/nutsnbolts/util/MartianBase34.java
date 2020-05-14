@@ -34,13 +34,13 @@ package org.smallmind.nutsnbolts.util;
 
 public class MartianBase34 {
 
-  public static enum Group {
+  public enum Group {
 
     FIRST(648913), SECOND(247123), THIRD(7294612383675L);
 
-    private long mixConstant;
+    private final long mixConstant;
 
-    private Group (long mixConstant) {
+    Group (long mixConstant) {
 
       this.mixConstant = mixConstant;
     }

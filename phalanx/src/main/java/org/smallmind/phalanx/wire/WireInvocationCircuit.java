@@ -119,8 +119,8 @@ public class WireInvocationCircuit {
 
   private static class ServiceKey {
 
-    private String service;
-    private int version;
+    private final String service;
+    private final int version;
 
     private ServiceKey (int version, String service) {
 

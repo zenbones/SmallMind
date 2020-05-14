@@ -56,13 +56,13 @@ public abstract class AbstractPooledConnection<D extends CommonDataSource> imple
 
   private final PooledPreparedStatementCache statementCache;
 
-  private D dataSource;
-  private Connection actualConnection;
-  private Connection proxyConnection;
-  private ConcurrentLinkedQueue<ConnectionEventListener> connectionEventListenerQueue;
-  private ConcurrentLinkedQueue<StatementEventListener> statementEventListenerQueue;
-  private AtomicBoolean closed = new AtomicBoolean(false);
-  private long creationMilliseconds;
+  private final D dataSource;
+  private final Connection actualConnection;
+  private final Connection proxyConnection;
+  private final ConcurrentLinkedQueue<ConnectionEventListener> connectionEventListenerQueue;
+  private final ConcurrentLinkedQueue<StatementEventListener> statementEventListenerQueue;
+  private final AtomicBoolean closed = new AtomicBoolean(false);
+  private final long creationMilliseconds;
 
   static {
 

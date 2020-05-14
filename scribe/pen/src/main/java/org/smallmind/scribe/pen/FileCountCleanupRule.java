@@ -41,8 +41,8 @@ import java.util.LinkedList;
 
 public class FileCountCleanupRule implements CleanupRule<FileCountCleanupRule> {
 
+  private final LinkedList<Path> pathList = new LinkedList<>();
   private int maximum;
-  private LinkedList<Path> pathList = new LinkedList<>();
 
   public FileCountCleanupRule () {
 
@@ -99,7 +99,7 @@ public class FileCountCleanupRule implements CleanupRule<FileCountCleanupRule> {
 
   private class ModificationTimeComparator implements Comparator<Path> {
 
-    private HashMap<Path, Long> timeMap = new HashMap<>();
+    private final HashMap<Path, Long> timeMap = new HashMap<>();
     private IOException ioException;
 
     public IOException getIoException () {

@@ -40,7 +40,7 @@ import java.io.Serializable;
 
 public class ListLayout implements LayoutManager, Serializable {
 
-  private int gap;
+  private final int gap;
 
   public ListLayout () {
 
@@ -138,5 +138,4 @@ public class ListLayout implements LayoutManager, Serializable {
       }
     }
   }
-
 }

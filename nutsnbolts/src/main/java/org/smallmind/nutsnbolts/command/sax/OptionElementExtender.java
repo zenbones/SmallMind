@@ -33,7 +33,6 @@
 package org.smallmind.nutsnbolts.command.sax;
 
 import java.util.LinkedList;
-import org.smallmind.nutsnbolts.command.CommandLineException;
 import org.smallmind.nutsnbolts.command.template.Option;
 import org.smallmind.nutsnbolts.xml.sax.AbstractElementExtender;
 import org.smallmind.nutsnbolts.xml.sax.ElementExtender;

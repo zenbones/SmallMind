@@ -73,7 +73,7 @@ public class EmailValidator implements ConstraintValidator<Email, String> {
         }
       }
 
-      return isAnEmail(value.substring(lastIndex, value.length()).trim());
+      return isAnEmail(value.substring(lastIndex).trim());
     }
   }
 

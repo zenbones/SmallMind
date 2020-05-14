@@ -44,7 +44,7 @@ public class FilePickListModel implements ListModel {
 
   private static final FileComparator FILE_COMPARATOR = new FileComparator();
 
-  private WeakEventListenerList<ListDataListener> listenerList = new WeakEventListenerList<ListDataListener>();
+  private final WeakEventListenerList<ListDataListener> listenerList = new WeakEventListenerList<ListDataListener>();
   private FileFilter filter;
   private File directory;
   private File[] files;

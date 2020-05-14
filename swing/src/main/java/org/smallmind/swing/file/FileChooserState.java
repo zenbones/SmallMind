@@ -36,9 +36,9 @@ public enum FileChooserState {
 
   OPEN("Open File..."), SAVE("Save File...");
 
-  private String title;
+  private final String title;
 
-  private FileChooserState (String title) {
+  FileChooserState (String title) {
 
     this.title = title;
   }

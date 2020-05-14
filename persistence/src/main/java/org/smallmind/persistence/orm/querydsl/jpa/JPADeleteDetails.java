@@ -37,7 +37,7 @@ import com.querydsl.jpa.impl.JPADeleteClause;
 
 public abstract class JPADeleteDetails<T> {
 
-  private EntityPath<T> entityPath;
+  private final EntityPath<T> entityPath;
 
   public JPADeleteDetails (EntityPath<T> entityPath) {
 

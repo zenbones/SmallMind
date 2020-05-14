@@ -34,9 +34,7 @@ package org.smallmind.swing.dialog;
 
 import java.awt.Component;
 import java.awt.Container;
-import java.awt.Dialog;
 import java.awt.FlowLayout;
-import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -64,7 +62,7 @@ public class WizardDialog extends JDialog implements WindowListener {
   private static final GridBagLayout GRID_BAG_LAYOUT = new GridBagLayout();
   private static final GridLayout GRID_LAYOUT = new GridLayout(1, 0);
   private static final FlowLayout FLOW_LAYOUT = new FlowLayout(FlowLayout.RIGHT);
-
+  private final boolean parentIsFrame;
   private Window parentWindow;
   private Object result;
   private WeakEventListenerList<DialogListener> listenerList;
@@ -72,7 +70,6 @@ public class WizardDialog extends JDialog implements WindowListener {
   private JPanel headerPanel;
   private CancelAction cancelAction;
   private WizardResultValidator validator;
-  private boolean parentIsFrame;
 
   public WizardDialog (Window parentWindow, String title, Object result) {
 
@@ -199,10 +196,9 @@ public class WizardDialog extends JDialog implements WindowListener {
     WarningDialog warningDialog;
 
     if (parentIsFrame) {
-      warningDialog = new WarningDialog((Frame)parentWindow, warningMessage);
-    }
-    else {
-      warningDialog = new WarningDialog((Dialog)parentWindow, warningMessage);
+      warningDialog = new WarningDialog(parentWindow, warningMessage);
+    } else {
+      warningDialog = new WarningDialog(parentWindow, warningMessage);
     }
 
     warningDialog.setModal(true);
@@ -264,14 +260,12 @@ public class WizardDialog extends JDialog implements WindowListener {
 
       if ((validator != null) && ((invalidationMessage = validator.isValid(getResult())) != null)) {
         displayWarning(invalidationMessage);
-      }
-      else {
+      } else {
         setVisible(false);
         dispose();
         fireDialogHandler(DialogState.OK);
       }
     }
-
   }
 
   public class CancelAction extends AbstractAction {
@@ -289,7 +283,6 @@ public class WizardDialog extends JDialog implements WindowListener {
       dispose();
       fireDialogHandler(DialogState.CANCEL);
     }
-
   }
 
   public class ApplyAction extends AbstractAction {
@@ -307,11 +300,9 @@ public class WizardDialog extends JDialog implements WindowListener {
 
       if ((validator != null) && ((invalidationMessage = validator.isValid(getResult())) != null)) {
         displayWarning(invalidationMessage);
-      }
-      else {
+      } else {
         fireDialogHandler(DialogState.APPLY);
       }
     }
   }
-
 }

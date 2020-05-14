@@ -36,7 +36,7 @@ import org.smallmind.quorum.pool.complex.ComponentPool;
 
 public class LeaseTimeReportingComponentPoolEvent<C> extends ComponentPoolEvent<C> {
 
-  private long leaseTimeNanos;
+  private final long leaseTimeNanos;
 
   public LeaseTimeReportingComponentPoolEvent (ComponentPool<C> componentPool, long leaseTimeNanos) {
 

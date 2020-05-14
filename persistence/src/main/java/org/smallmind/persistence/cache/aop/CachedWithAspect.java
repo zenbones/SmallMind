@@ -288,8 +288,8 @@ public class CachedWithAspect {
 
   public class Operand {
 
-    private Class<? extends Durable> managedClass;
-    private Durable durable;
+    private final Class<? extends Durable> managedClass;
+    private final Durable durable;
 
     private Operand (Class<? extends Durable> managedClass, Durable durable) {
 
@@ -310,8 +310,8 @@ public class CachedWithAspect {
 
   public class MethodKey {
 
-    private Class methodClass;
-    private String methodName;
+    private final Class methodClass;
+    private final String methodName;
 
     private MethodKey (Class methodClass, String methodName) {
 

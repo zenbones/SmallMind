@@ -48,9 +48,9 @@ import org.xml.sax.SAXException;
 
 public class ExtensibleSAXParser implements ContentHandler {
 
-  private LinkedList<SAXExtender> extenderStack;
-  private LinkedList<StringBuilder> contentStack;
-  private DocumentExtender documentExtender;
+  private final LinkedList<SAXExtender> extenderStack;
+  private final LinkedList<StringBuilder> contentStack;
+  private final DocumentExtender documentExtender;
   private boolean documentTerminated;
 
   private ExtensibleSAXParser (DocumentExtender documentExtender) {

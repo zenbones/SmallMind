@@ -39,8 +39,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class InMemoryMemcachedClient implements ProxyMemcachedClient {
 
-  private HashMap<String, Holder<?>> internalMap = new HashMap<>();
-  private AtomicLong counter = new AtomicLong(0);
+  private final HashMap<String, Holder<?>> internalMap = new HashMap<>();
+  private final AtomicLong counter = new AtomicLong(0);
 
   public long getOpTimeout () {
 
@@ -190,8 +190,8 @@ public class InMemoryMemcachedClient implements ProxyMemcachedClient {
 
   private class Holder<T> {
 
-    private T value;
-    private long cas;
+    private final T value;
+    private final long cas;
     private long creation;
     private int expiration;
 

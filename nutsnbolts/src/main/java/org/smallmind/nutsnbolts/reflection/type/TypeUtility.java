@@ -34,7 +34,7 @@ package org.smallmind.nutsnbolts.reflection.type;
 
 public class TypeUtility {
 
-  private static Class[] PRIMITIVES = new Class[] {Long.class, Boolean.class, Integer.class, Double.class, Float.class, Character.class, Short.class, Byte.class};
+  private static final Class[] PRIMITIVES = new Class[] {Long.class, Boolean.class, Integer.class, Double.class, Float.class, Character.class, Short.class, Byte.class};
 
   public static boolean isEssentiallyPrimitive (Class aClass) {
 

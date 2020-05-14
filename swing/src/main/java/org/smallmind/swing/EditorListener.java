@@ -36,6 +36,5 @@ import java.util.EventListener;
 
 public interface EditorListener extends EventListener {
 
-  public abstract void editorStatus (EditorEvent editorEvent);
-
+  void editorStatus (EditorEvent editorEvent);
 }

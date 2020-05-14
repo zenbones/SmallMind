@@ -37,7 +37,7 @@ import java.util.HashMap;
 
 public class StaticParameterExtractor<T> implements ParameterExtractor<T> {
 
-  private T parameter;
+  private final T parameter;
 
   public StaticParameterExtractor (T parameter) {
 

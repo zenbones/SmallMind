@@ -34,10 +34,10 @@ package org.smallmind.persistence.nosql.spring.hector;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import org.smallmind.persistence.ManagedDaoSupport;
 import org.smallmind.persistence.NaturalKeys;
 import org.smallmind.persistence.nosql.hector.HectorDao;
 import org.smallmind.persistence.orm.SessionSource;
-import org.smallmind.persistence.ManagedDaoSupport;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.FatalBeanException;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;

@@ -37,7 +37,7 @@ import org.quartz.Scheduler;
 
 public class SchedulerMonitor extends StandardMBean implements SchedulerMXBean {
 
-  private Scheduler scheduler;
+  private final Scheduler scheduler;
 
   public SchedulerMonitor (Scheduler scheduler) {
 

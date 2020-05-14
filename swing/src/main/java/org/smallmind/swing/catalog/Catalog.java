@@ -56,11 +56,11 @@ import org.smallmind.swing.layout.ListLayout;
 
 public class Catalog<T extends Comparable<T>, D> extends JLayeredPane implements Scrollable, CatalogDataListener, HierarchyBoundsListener, ComponentListener, MouseListener, MouseMotionListener {
 
-  private JPanel glassPanel;
-  private JPanel catalogPanel;
-  private CatalogModel<D> model;
+  private final JPanel glassPanel;
+  private final JPanel catalogPanel;
+  private final CatalogModel<D> model;
+  private final CatalogMultiListDataProvider<T> multiListDataProvider;
   private MultiListSelectionModel<T> selectionModel;
-  private CatalogMultiListDataProvider<T> multiListDataProvider;
   private CatalogCellRenderer renderer;
   private CatalogScrollModel scrollModel;
   private Component lastTargetedComponent = null;
@@ -104,6 +104,11 @@ public class Catalog<T extends Comparable<T>, D> extends JLayeredPane implements
     return model;
   }
 
+  public synchronized CatalogCellRenderer getCellRenderer () {
+
+    return renderer;
+  }
+
   public synchronized void setCellRenderer (CatalogCellRenderer renderer) {
 
     this.renderer = renderer;
@@ -116,9 +121,9 @@ public class Catalog<T extends Comparable<T>, D> extends JLayeredPane implements
     catalogPanel.invalidate();
   }
 
-  public synchronized CatalogCellRenderer getCellRenderer () {
+  public synchronized CatalogScrollModel getScrollModel () {
 
-    return renderer;
+    return scrollModel;
   }
 
   public synchronized void setScrollModel (CatalogScrollModel scrollModel) {
@@ -126,9 +131,9 @@ public class Catalog<T extends Comparable<T>, D> extends JLayeredPane implements
     this.scrollModel = scrollModel;
   }
 
-  public synchronized CatalogScrollModel getScrollModel () {
+  public synchronized MultiListSelectionModel<T> getSelectionModel () {
 
-    return scrollModel;
+    return selectionModel;
   }
 
   public synchronized void setSelectionModel (MultiListSelectionModel<T> selectionModel) {
@@ -145,11 +150,6 @@ public class Catalog<T extends Comparable<T>, D> extends JLayeredPane implements
 
       reRenderAllComponents();
     }
-  }
-
-  public synchronized MultiListSelectionModel<T> getSelectionModel () {
-
-    return selectionModel;
   }
 
   public synchronized MultiListSelectionModel.SelctionMode getSelectionMode () {
@@ -207,6 +207,11 @@ public class Catalog<T extends Comparable<T>, D> extends JLayeredPane implements
     return selectionModel.getSelectedIndex(multiListDataProvider.getKey());
   }
 
+  public synchronized void setSelectedIndex (int index) {
+
+    selectionModel.setSelectionInterval(new MultiListSelection<T>(multiListDataProvider.getKey(), index), new MultiListSelection<T>(multiListDataProvider.getKey(), index));
+  }
+
   public synchronized int[] getSelectedIndices () {
 
     ArrayList<Integer> indexList;
@@ -225,6 +230,14 @@ public class Catalog<T extends Comparable<T>, D> extends JLayeredPane implements
     }
 
     return indices;
+  }
+
+  public synchronized void setSelectedIndices (int[] indices) {
+
+    selectionModel.clearSelection();
+    for (int index : indices) {
+      selectionModel.addSelectionInterval(new MultiListSelection<T>(multiListDataProvider.getKey(), index), new MultiListSelection<T>(multiListDataProvider.getKey(), index));
+    }
   }
 
   public synchronized D getSelectedValue () {
@@ -270,19 +283,6 @@ public class Catalog<T extends Comparable<T>, D> extends JLayeredPane implements
   public synchronized void removeSelectionInterval (int startIndex, int endIndex) {
 
     selectionModel.removeSelectionInterval(new MultiListSelection<T>(multiListDataProvider.getKey(), startIndex), new MultiListSelection<T>(multiListDataProvider.getKey(), endIndex));
-  }
-
-  public synchronized void setSelectedIndex (int index) {
-
-    selectionModel.setSelectionInterval(new MultiListSelection<T>(multiListDataProvider.getKey(), index), new MultiListSelection<T>(multiListDataProvider.getKey(), index));
-  }
-
-  public synchronized void setSelectedIndices (int[] indices) {
-
-    selectionModel.clearSelection();
-    for (int index : indices) {
-      selectionModel.addSelectionInterval(new MultiListSelection<T>(multiListDataProvider.getKey(), index), new MultiListSelection<T>(multiListDataProvider.getKey(), index));
-    }
   }
 
   public synchronized void setSelectionInterval (int startIndex, int endIndex) {
@@ -366,8 +366,7 @@ public class Catalog<T extends Comparable<T>, D> extends JLayeredPane implements
     if (getParent() != null) {
       if (getParent() instanceof JViewport) {
         preferredWidth = ((JViewport)getParent()).getViewSize().getWidth();
-      }
-      else {
+      } else {
         preferredWidth = getParent().getWidth();
       }
 
@@ -448,8 +447,7 @@ public class Catalog<T extends Comparable<T>, D> extends JLayeredPane implements
     for (int count = multiListSelectionEvent.getFirstIndex(); count <= multiListSelectionEvent.getLastIndex(); count++) {
       if (count >= catalogPanel.getComponentCount()) {
         break;
-      }
-      else {
+      } else {
         reRenderComponent(count);
       }
     }
@@ -535,20 +533,16 @@ public class Catalog<T extends Comparable<T>, D> extends JLayeredPane implements
       if (mouseEvent.isShiftDown()) {
         if ((anchorSelection = selectionModel.getAnchorSelection()) == null) {
           setSelectedIndex(index);
-        }
-        else {
+        } else {
           selectionModel.setSelectionInterval(anchorSelection, new MultiListSelection<T>(multiListDataProvider.getKey(), index));
         }
-      }
-      else if (mouseEvent.isControlDown()) {
+      } else if (mouseEvent.isControlDown()) {
         if (isSelectedIndex(index)) {
           selectionModel.removeSelectionInterval(new MultiListSelection<T>(multiListDataProvider.getKey(), index), new MultiListSelection<T>(multiListDataProvider.getKey(), index));
-        }
-        else {
+        } else {
           selectionModel.addSelectionInterval(new MultiListSelection<T>(multiListDataProvider.getKey(), index), new MultiListSelection<T>(multiListDataProvider.getKey(), index));
         }
-      }
-      else {
+      } else {
         setSelectedIndex(index);
       }
       requestFocusInWindow();
@@ -580,5 +574,4 @@ public class Catalog<T extends Comparable<T>, D> extends JLayeredPane implements
 
     dispatchGlassMouseEvent(mouseEvent, true);
   }
-
 }

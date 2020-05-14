@@ -44,10 +44,10 @@ public class MemoryTimer implements java.lang.Runnable {
   private static final String[] scalingTitles = {" bytes", "k", "M", "G", "T", "P", "E"};
   private static final long pulseTime = 3000;
 
-  private CountDownLatch exitLatch;
-  private CountDownLatch pulseLatch;
-  private AtomicBoolean finished = new AtomicBoolean(false);
-  private WeakEventListenerList<MemoryUsageListener> listenerList;
+  private final CountDownLatch exitLatch;
+  private final CountDownLatch pulseLatch;
+  private final AtomicBoolean finished = new AtomicBoolean(false);
+  private final WeakEventListenerList<MemoryUsageListener> listenerList;
 
   public MemoryTimer () {
 
@@ -112,17 +112,15 @@ public class MemoryTimer implements java.lang.Runnable {
         maximumUsage = (int)(totalMemory / scalingFactor);
         currentUsage = (int)(usedMemory / scalingFactor);
 
-        fireMemoryUsageUpdate(maximumUsage, currentUsage, Integer.toString(currentUsage) + scalingTitles[scalingUnit] + " of " + Integer.toString(maximumUsage) + scalingTitles[scalingUnit]);
+        fireMemoryUsageUpdate(maximumUsage, currentUsage, currentUsage + scalingTitles[scalingUnit] + " of " + maximumUsage + scalingTitles[scalingUnit]);
 
         try {
           pulseLatch.await(pulseTime, TimeUnit.MILLISECONDS);
-        }
-        catch (InterruptedException interruptedException) {
+        } catch (InterruptedException interruptedException) {
           LoggerManager.getLogger(MemoryTimer.class).error(interruptedException);
         }
       }
-    }
-    finally {
+    } finally {
       exitLatch.countDown();
     }
   }
@@ -137,5 +135,4 @@ public class MemoryTimer implements java.lang.Runnable {
       listenerIter.next().usageUpdate(memoryUsageEvent);
     }
   }
-
 }

@@ -42,9 +42,8 @@ public class Separator extends JComponent {
 
   public static final int HORIZONTAL = SwingConstants.HORIZONTAL;
   public static final int VERTICAL = SwingConstants.VERTICAL;
-
+  private final int length;
   private int orientation;
-  private int length;
 
   public Separator () {
 
@@ -80,8 +79,7 @@ public class Separator extends JComponent {
 
     if (orientation == VERTICAL) {
       return new Dimension(2, length);
-    }
-    else {
+    } else {
       return new Dimension(length, 2);
     }
   }
@@ -90,8 +88,7 @@ public class Separator extends JComponent {
 
     if (orientation == VERTICAL) {
       return new Dimension(2, length);
-    }
-    else {
+    } else {
       return new Dimension(length, 2);
     }
   }
@@ -100,8 +97,7 @@ public class Separator extends JComponent {
 
     if (orientation == VERTICAL) {
       return new Dimension(2, Short.MAX_VALUE);
-    }
-    else {
+    } else {
       return new Dimension(length, Short.MAX_VALUE);
     }
   }
@@ -116,8 +112,7 @@ public class Separator extends JComponent {
 
       graphics.setColor(getBackground());
       graphics.drawLine(1, 0, 1, currentSize.height);
-    }
-    else {
+    } else {
       graphics.setColor(getForeground());
       graphics.drawLine(0, 0, currentSize.width, 0);
 

@@ -37,7 +37,7 @@ import java.util.NoSuchElementException;
 
 public class MultipleIterator<T> implements Iterator<T>, Iterable<T> {
 
-  private Iterator<T>[] iterators;
+  private final Iterator<T>[] iterators;
   private int index = 0;
 
   public MultipleIterator (Iterable<T>... iterables) {

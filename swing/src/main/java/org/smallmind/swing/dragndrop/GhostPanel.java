@@ -41,7 +41,7 @@ import javax.swing.JPanel;
 
 public class GhostPanel extends JPanel {
 
-  private AlphaComposite composite;
+  private final AlphaComposite composite;
   private BufferedImage dragged = null;
   private Point location = null;
 

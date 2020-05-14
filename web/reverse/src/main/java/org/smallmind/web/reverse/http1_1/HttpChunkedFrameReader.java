@@ -43,12 +43,12 @@ public class HttpChunkedFrameReader implements FrameReader {
 
   private static final String LEGAL_HEXADECIMAL = "0123456789ABCDEFabcdef";
   private final HttpFrameReader httpFrameReader;
+  private final byte[] chunkArray = new byte[8];
   private State state = State.CHUNK;
   private boolean last = false;
   private boolean finished = false;
   private int lastChar = 0;
   private int index = 0;
-  private byte[] chunkArray = new byte[8];
 
   public HttpChunkedFrameReader (HttpFrameReader httpFrameReader) {
 

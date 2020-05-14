@@ -36,7 +36,7 @@ import java.util.Comparator;
 
 public class AlphaNumericComparator<T> implements Comparator<T> {
 
-  private AlphaNumericConverter<T> alphaNumConverter;
+  private final AlphaNumericConverter<T> alphaNumConverter;
 
   public AlphaNumericComparator () {
 
@@ -98,8 +98,8 @@ public class AlphaNumericComparator<T> implements Comparator<T> {
           return 1;
         }
       } else {
-        firstValue = (int)Character.toLowerCase(firstChar);
-        secondValue = (int)Character.toLowerCase(secondChar);
+        firstValue = Character.toLowerCase(firstChar);
+        secondValue = Character.toLowerCase(secondChar);
         if (firstValue < secondValue) {
           return -1;
         } else if (firstValue > secondValue) {

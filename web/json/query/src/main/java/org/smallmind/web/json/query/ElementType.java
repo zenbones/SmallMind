@@ -34,5 +34,5 @@ package org.smallmind.web.json.query;
 
 public enum ElementType {
 
-  BOOLEAN, DATE, NULL, NUMBER, STRING;
+  BOOLEAN, DATE, NULL, NUMBER, STRING
 }

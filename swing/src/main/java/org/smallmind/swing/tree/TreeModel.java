@@ -42,7 +42,7 @@ import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 
 public class TreeModel extends Tree implements javax.swing.tree.TreeModel {
 
-  private WeakEventListenerList<TreeModelListener> listenerList;
+  private final WeakEventListenerList<TreeModelListener> listenerList;
 
   public TreeModel (TreeNode root) {
 
@@ -124,8 +124,7 @@ public class TreeModel extends Tree implements javax.swing.tree.TreeModel {
         if (!(getRoot()).equals(pathArray[0])) {
           return false;
         }
-      }
-      else {
+      } else {
         if (((TreeNode)pathArray[count - 1]).getIndex((TreeNode)pathArray[count]) < 0) {
           return false;
         }
@@ -133,5 +132,4 @@ public class TreeModel extends Tree implements javax.swing.tree.TreeModel {
     }
     return true;
   }
-
 }

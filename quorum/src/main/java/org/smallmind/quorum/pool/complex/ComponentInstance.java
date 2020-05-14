@@ -36,11 +36,11 @@ import org.smallmind.nutsnbolts.lang.Existential;
 
 public interface ComponentInstance<C> extends Existential {
 
-  public abstract boolean validate ();
+  boolean validate ();
 
-  public abstract C serve ()
+  C serve ()
     throws Exception;
 
-  public abstract void close ()
+  void close ()
     throws Exception;
 }

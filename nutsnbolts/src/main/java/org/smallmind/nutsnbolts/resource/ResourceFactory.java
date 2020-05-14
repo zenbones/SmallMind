@@ -34,8 +34,8 @@ package org.smallmind.nutsnbolts.resource;
 
 public interface ResourceFactory {
 
-  public abstract ResourceSchemes getValidSchemes ();
+  ResourceSchemes getValidSchemes ();
 
-  public abstract Resource createResource (String scheme, String path)
+  Resource createResource (String scheme, String path)
     throws ResourceException;
 }

@@ -34,10 +34,10 @@ package org.smallmind.javafx.extras.instrument;
 
 public class Measure {
 
-  private double avgRate;
-  private double avgRate_1;
-  private double avgRate_5;
-  private double avgRate_15;
+  private final double avgRate;
+  private final double avgRate_1;
+  private final double avgRate_5;
+  private final double avgRate_15;
 
   public Measure (double avgRate, double avgRate_1, double avgRate_5, double avgRate_15) {
 

@@ -48,9 +48,9 @@ public class PasswordEngine {
   private static final SecureRandom SECURE_RANDOM;
 
   // Changes to these values will alter the resulting encryption
-  private int iterations;
-  private int saltLength;
-  private int desiredKeyLength;
+  private final int iterations;
+  private final int saltLength;
+  private final int desiredKeyLength;
 
   static {
 

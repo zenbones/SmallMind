@@ -45,9 +45,9 @@ public class JDKRecordSubverter extends LogRecord implements RecordWrapper {
 
   private static final Parameter[] NO_PARAMETERS = new Parameter[0];
 
-  private JDKRecord jdkRecord;
-  private LogicalContext logicalContext;
-  private Level level;
+  private final JDKRecord jdkRecord;
+  private final LogicalContext logicalContext;
+  private final Level level;
 
   public JDKRecordSubverter (String loggerName, Level level, LogicalContext logicalContext, Throwable throwable, String message, Object... args) {
 
@@ -88,8 +88,8 @@ public class JDKRecordSubverter extends LogRecord implements RecordWrapper {
 
   private class JDKRecord extends ParameterAwareRecord {
 
-    private LogRecord logRecord;
-    private String threadName;
+    private final LogRecord logRecord;
+    private final String threadName;
 
     public JDKRecord (LogRecord logRecord) {
 

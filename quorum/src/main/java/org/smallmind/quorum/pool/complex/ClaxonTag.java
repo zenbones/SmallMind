@@ -36,7 +36,7 @@ public enum ClaxonTag {
 
   PROCESSING("Processing"), FREE("Free"), TIMEOUT("Timeout"), RELEASED("Released"), WAITED("Waited");
 
-  private String display;
+  private final String display;
 
   ClaxonTag (String display) {
 

@@ -38,8 +38,8 @@ import org.mongodb.morphia.query.MorphiaIterator;
 
 public class AutoCloseMorphiaIterable<T> implements Iterable<T>, AutoCloseable {
 
-  private AtomicBoolean closed = new AtomicBoolean(false);
-  private MorphiaIterator<T, T> morphiaIterator;
+  private final AtomicBoolean closed = new AtomicBoolean(false);
+  private final MorphiaIterator<T, T> morphiaIterator;
 
   public AutoCloseMorphiaIterable (MorphiaIterator<T, T> morphiaIterator) {
 

@@ -37,7 +37,7 @@ import java.util.NoSuchElementException;
 
 public class IntrinsicRosterIterator<T> implements ListIterator<T> {
 
-  private IntrinsicRoster<T> concurrentList;
+  private final IntrinsicRoster<T> concurrentList;
   private IntrinsicRosterNode<T> next;
   private IntrinsicRosterNode<T> prev;
   private IntrinsicRosterNode<T> current;

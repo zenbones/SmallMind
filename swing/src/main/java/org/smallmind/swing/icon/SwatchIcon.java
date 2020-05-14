@@ -39,8 +39,8 @@ import javax.swing.Icon;
 
 public class SwatchIcon implements Icon {
 
-  private Color color;
-  private int size;
+  private final Color color;
+  private final int size;
 
   public SwatchIcon (int size, Color color) {
 

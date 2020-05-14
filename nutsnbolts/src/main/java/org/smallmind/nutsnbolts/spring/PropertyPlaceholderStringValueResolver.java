@@ -43,8 +43,8 @@ import org.springframework.util.StringValueResolver;
 
 public class PropertyPlaceholderStringValueResolver implements StringValueResolver {
 
-  private PropertyExpander propertyExpander;
-  private Map<String, Object> propertyMap;
+  private final PropertyExpander propertyExpander;
+  private final Map<String, Object> propertyMap;
 
   public PropertyPlaceholderStringValueResolver (Map<String, Object> propertyMap, boolean ignoreUnresolvableProperties, SystemPropertyMode systemPropertyMode, boolean searchSystemEnvironment)
     throws BeansException {

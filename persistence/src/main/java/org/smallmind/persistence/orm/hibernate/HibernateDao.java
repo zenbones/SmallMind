@@ -399,7 +399,7 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
 
   public SQLQuery constructSQLQuery (NativeQueryDetails nativeQueryDetails) {
 
-    return nativeQueryDetails.completeNativeQuery((SQLQuery)getSession().getNativeSession().createSQLQuery(nativeQueryDetails.getNativeQueryString()).setCacheable(true));
+    return nativeQueryDetails.completeNativeQuery(getSession().getNativeSession().createSQLQuery(nativeQueryDetails.getNativeQueryString()).setCacheable(true));
   }
 
   public Query constructQuery (QueryDetails queryDetails) {

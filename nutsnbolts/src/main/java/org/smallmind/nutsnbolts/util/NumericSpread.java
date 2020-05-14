@@ -39,8 +39,8 @@ import java.util.regex.Pattern;
 
 public class NumericSpread {
 
-  private static Pattern NUMBER_PATTERN = Pattern.compile("\\d+");
-  private static Pattern SPREAD_PATTERN = Pattern.compile("(\\d+)\\.\\.(\\d+)");
+  private static final Pattern NUMBER_PATTERN = Pattern.compile("\\d+");
+  private static final Pattern SPREAD_PATTERN = Pattern.compile("(\\d+)\\.\\.(\\d+)");
 
   public static int[] calculate (String numbers)
     throws SpreadParserException {

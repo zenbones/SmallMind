@@ -45,7 +45,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.MessageBodyWriter;
-import javax.ws.rs.ext.Provider;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 @Consumes({MediaType.APPLICATION_JSON, "text/json"})

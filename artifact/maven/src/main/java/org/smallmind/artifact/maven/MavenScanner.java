@@ -50,7 +50,7 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class MavenScanner {
 
-  private static enum State {STARTED, STOPPED}
+  private enum State {STARTED, STOPPED}
 
   private final LinkedList<MavenScannerListener> listenerList = new LinkedList<>();
   private final Stint cycleStint;
@@ -181,8 +181,8 @@ public class MavenScanner {
 
   private class ScannerWorker implements Runnable {
 
-    private CountDownLatch finishLatch = new CountDownLatch(1);
-    private CountDownLatch exitLatch = new CountDownLatch(1);
+    private final CountDownLatch finishLatch = new CountDownLatch(1);
+    private final CountDownLatch exitLatch = new CountDownLatch(1);
 
     public void stop ()
       throws InterruptedException {

@@ -38,7 +38,7 @@ import java.util.regex.Pattern;
 
 public class WildcardFileNameFileFilter implements FileFilter {
 
-  private Pattern namePattern;
+  private final Pattern namePattern;
 
   public WildcardFileNameFileFilter (String name) {
 

@@ -43,9 +43,9 @@ import org.apache.wicket.util.template.PackageTextTemplate;
 
 public class CssBehavior extends Behavior {
 
+  private final Class scopeClass;
+  private final String fileName;
   private Map<String, Object> substitutionMap;
-  private Class scopeClass;
-  private String fileName;
 
   public CssBehavior () {
 

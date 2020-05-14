@@ -43,11 +43,11 @@ import org.apache.wicket.model.AbstractReadOnlyModel;
 
 public class Tab extends Panel {
 
-  private TabPanel tabPanel;
-  private ITab tab;
-  private WebMarkupContainer tabSkin;
+  private final TabPanel tabPanel;
+  private final ITab tab;
+  private final WebMarkupContainer tabSkin;
+  private final int index;
   private boolean selected;
-  private int index;
 
   public Tab (String id, TabPanel tabPanel, ITab tab, int index, boolean selected) {
 
@@ -87,16 +87,16 @@ public class Tab extends Panel {
     return tab.getPanel(id);
   }
 
+  public synchronized boolean isSelected () {
+
+    return selected;
+  }
+
   public synchronized Tab setSelected (boolean selected) {
 
     this.selected = selected;
 
     return this;
-  }
-
-  public synchronized boolean isSelected () {
-
-    return selected;
   }
 
   private class TabClassModel extends AbstractReadOnlyModel {

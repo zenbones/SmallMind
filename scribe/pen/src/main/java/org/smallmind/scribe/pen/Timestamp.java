@@ -36,5 +36,5 @@ import java.util.Date;
 
 public interface Timestamp {
 
-  public abstract String getTimestamp (Date date);
+  String getTimestamp (Date date);
 }

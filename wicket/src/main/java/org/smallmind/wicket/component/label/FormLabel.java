@@ -48,9 +48,24 @@ public class FormLabel extends Label {
     add(new AttributeAppender("style", new FormLabelColorModel(formComponent), ";"));
   }
 
+  private class FormLabelColorModel extends AbstractReadOnlyModel<String> {
+
+    private final FormComponent formComponent;
+
+    public FormLabelColorModel (FormComponent formComponent) {
+
+      this.formComponent = formComponent;
+    }
+
+    public String getObject () {
+
+      return (formComponent.isValid()) ? "color: #000000" : "color: #FF0000";
+    }
+  }
+
   private static class FormLabelModel extends AbstractReadOnlyModel<String> {
 
-    private StringResourceModel innerModel;
+    private final StringResourceModel innerModel;
 
     public FormLabelModel (Component parentComponent, String resourceKey) {
 
@@ -61,21 +76,6 @@ public class FormLabel extends Label {
     public String getObject () {
 
       return innerModel.getObject() + ":";
-    }
-  }
-
-  private class FormLabelColorModel extends AbstractReadOnlyModel<String> {
-
-    private FormComponent formComponent;
-
-    public FormLabelColorModel (FormComponent formComponent) {
-
-      this.formComponent = formComponent;
-    }
-
-    public String getObject () {
-
-      return (formComponent.isValid()) ? "color: #000000" : "color: #FF0000";
     }
   }
 }

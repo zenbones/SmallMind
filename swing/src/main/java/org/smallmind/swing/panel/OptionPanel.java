@@ -79,5 +79,4 @@ public abstract class OptionPanel extends JPanel {
   }
 
   public abstract String validateOption (DialogState dialogState);
-
 }

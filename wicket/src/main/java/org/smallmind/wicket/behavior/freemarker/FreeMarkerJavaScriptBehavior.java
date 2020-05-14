@@ -41,9 +41,9 @@ import org.smallmind.wicket.util.FreeMarkerPackageTextTemplate;
 
 public class FreeMarkerJavaScriptBehavior extends Behavior {
 
-  private Map<String, Object> rootModel;
-  private Class<?> scopeClass;
-  private String fileName;
+  private final Map<String, Object> rootModel;
+  private final Class<?> scopeClass;
+  private final String fileName;
 
   public FreeMarkerJavaScriptBehavior (Map<String, Object> rootModel) {
 

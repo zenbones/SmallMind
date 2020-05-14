@@ -38,9 +38,9 @@ import org.eclipse.aether.artifact.Artifact;
 
 public class MavenScannerEvent extends EventObject {
 
-  private ClassLoader classLoader;
-  private Map<Artifact, Artifact> artifactDeltaMap;
-  private Artifact[] artifacts;
+  private final ClassLoader classLoader;
+  private final Map<Artifact, Artifact> artifactDeltaMap;
+  private final Artifact[] artifacts;
 
   public MavenScannerEvent (Object source, Map<Artifact, Artifact> artifactDeltaMap, ArtifactTag[] artifactTags, ClassLoader classLoader) {
 

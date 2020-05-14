@@ -58,8 +58,8 @@ public class EntityValidationException extends javax.validation.ValidationExcept
 
   private static class Violation {
 
-    private Path propertyPath;
-    private String message;
+    private final Path propertyPath;
+    private final String message;
 
     public Violation (ConstraintViolation<?> constraintViolation) {
 

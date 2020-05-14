@@ -36,7 +36,7 @@ import java.lang.annotation.Annotation;
 
 public class ParameterAnnotations {
 
-  private Annotation[] annotations;
+  private final Annotation[] annotations;
 
   public ParameterAnnotations (Annotation[] annotations) {
 

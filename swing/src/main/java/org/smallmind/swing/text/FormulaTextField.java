@@ -56,24 +56,22 @@ import org.smallmind.swing.ComponentUtility;
 
 public class FormulaTextField extends JPanel implements ActionListener, ItemListener, DocumentListener {
 
+  private enum CardState {COLLAPSED, EXPANDED}
   private static final ImageIcon COLLAPSE_ICON = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/navigate_open_16.png"));
   private static final ImageIcon EXPAND_ICON = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/navigate_close_16.png"));
   private static final ImageIcon FORMULA_ICON = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/text_formula_16.png"));
   private static final ImageIcon TEXT_ICON = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/text_16.png"));
-
-  private static enum CardState {COLLAPSED, EXPANDED}
-
   private final WeakEventListenerList<ItemListener> itemListenerList = new WeakEventListenerList<ItemListener>();
   private final WeakEventListenerList<DocumentListener> documentListenerList = new WeakEventListenerList<DocumentListener>();
 
-  private CardLayout cardLayout;
+  private final CardLayout cardLayout;
+  private final JScrollPane expandedScrollPane;
+  private final JTextArea expandedTextArea;
+  private final SlimTextField collapsedTextField;
+  private final JToggleButton expandedFormulaButton;
+  private final JToggleButton collapsedFormulaButton;
+  private final AtomicBoolean documentSensitive = new AtomicBoolean(true);
   private CardState cardState;
-  private JScrollPane expandedScrollPane;
-  private JTextArea expandedTextArea;
-  private SlimTextField collapsedTextField;
-  private JToggleButton expandedFormulaButton;
-  private JToggleButton collapsedFormulaButton;
-  private AtomicBoolean documentSensitive = new AtomicBoolean(true);
 
   public FormulaTextField () {
 
@@ -188,16 +186,6 @@ public class FormulaTextField extends JPanel implements ActionListener, ItemList
     return expandedTextArea.getText();
   }
 
-  public boolean containsDocument (Document document) {
-
-    return (collapsedTextField.getDocument() == document) || (expandedTextArea.getDocument() == document);
-  }
-
-  public boolean containsFormulaButton (JToggleButton toggleButton) {
-
-    return (toggleButton == collapsedFormulaButton) || (toggleButton == expandedFormulaButton);
-  }
-
   public void setText (String text) {
 
     switch (cardState) {
@@ -210,6 +198,16 @@ public class FormulaTextField extends JPanel implements ActionListener, ItemList
       default:
         throw new UnknownSwitchCaseException(cardState.name());
     }
+  }
+
+  public boolean containsDocument (Document document) {
+
+    return (collapsedTextField.getDocument() == document) || (expandedTextArea.getDocument() == document);
+  }
+
+  public boolean containsFormulaButton (JToggleButton toggleButton) {
+
+    return (toggleButton == collapsedFormulaButton) || (toggleButton == expandedFormulaButton);
   }
 
   public boolean isFormula () {
@@ -249,8 +247,7 @@ public class FormulaTextField extends JPanel implements ActionListener, ItemList
 
     if (itemEvent.getSource() == collapsedFormulaButton) {
       expandedFormulaButton.setSelected(collapsedFormulaButton.isSelected());
-    }
-    else {
+    } else {
       collapsedFormulaButton.setSelected(expandedFormulaButton.isSelected());
     }
 
@@ -276,8 +273,7 @@ public class FormulaTextField extends JPanel implements ActionListener, ItemList
           default:
             throw new UnknownSwitchCaseException(cardState.name());
         }
-      }
-      catch (BadLocationException badLocationException) {
+      } catch (BadLocationException badLocationException) {
         throw new RuntimeException(badLocationException);
       }
 
@@ -306,8 +302,7 @@ public class FormulaTextField extends JPanel implements ActionListener, ItemList
           default:
             throw new UnknownSwitchCaseException(cardState.name());
         }
-      }
-      catch (BadLocationException badLocationException) {
+      } catch (BadLocationException badLocationException) {
         throw new RuntimeException(badLocationException);
       }
 

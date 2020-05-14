@@ -41,8 +41,8 @@ import org.smallmind.persistence.cache.aop.VectorCalculator;
 
 public class VectorKey<D extends Durable> implements Serializable {
 
-  private Class<D> elementClass;
-  private String key;
+  private final Class<D> elementClass;
+  private final String key;
 
   public VectorKey (Vector vector, D durable, Class<D> elementClass) {
 

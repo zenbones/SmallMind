@@ -34,7 +34,7 @@ package org.smallmind.nutsnbolts.lang;
 
 public class StringStackTraceAccumulator implements StackTraceAccumulator {
 
-  private StringBuilder traceBuilder;
+  private final StringBuilder traceBuilder;
 
   public StringStackTraceAccumulator () {
 

@@ -47,7 +47,7 @@ import org.smallmind.persistence.cache.praxis.Roster;
 
 public class ByKeyIntrinsicVector<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractDurableVector<I, D> {
 
-  private ByKeyRoster<I, D> roster;
+  private final ByKeyRoster<I, D> roster;
 
   public ByKeyIntrinsicVector (Class<D> durableClass, Iterable<D> durables, Comparator<D> comparator, int maxSize, int timeToLiveSeconds, boolean ordered) {
 

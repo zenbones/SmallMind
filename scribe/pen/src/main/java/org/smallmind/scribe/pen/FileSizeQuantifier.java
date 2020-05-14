@@ -36,9 +36,9 @@ public enum FileSizeQuantifier {
 
   BYTES(1), MEGABYTES(1048576);
 
-  private int multiplier;
+  private final int multiplier;
 
-  private FileSizeQuantifier (int multiplier) {
+  FileSizeQuantifier (int multiplier) {
 
     this.multiplier = multiplier;
   }

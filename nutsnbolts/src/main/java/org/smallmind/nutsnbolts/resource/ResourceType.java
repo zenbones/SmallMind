@@ -35,10 +35,10 @@ package org.smallmind.nutsnbolts.resource;
 public enum ResourceType {
 
   FILE("file", FileResource.class), CLASSPATH("classpath", ClasspathResource.class), URL("url", URLResource.class);
-  private String resourceScheme;
-  private Class<? extends Resource> resourceClass;
+  private final String resourceScheme;
+  private final Class<? extends Resource> resourceClass;
 
-  private ResourceType (String resourceScheme, Class<? extends Resource> resourceClass) {
+  ResourceType (String resourceScheme, Class<? extends Resource> resourceClass) {
 
     this.resourceScheme = resourceScheme;
     this.resourceClass = resourceClass;

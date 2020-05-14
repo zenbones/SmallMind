@@ -53,10 +53,10 @@ public class VaultTumbler {
 
   private static final String AES_ALGORITHM = "AES/CTR/PKCS7Padding";
 
-  private Mac mac = Mac.getInstance("HmacSHA256");
-  private SecretKeySpec aesKey;
-  private byte[] iv = new byte[16];
-  private byte[] salt;
+  private final Mac mac = Mac.getInstance("HmacSHA256");
+  private final SecretKeySpec aesKey;
+  private final byte[] iv = new byte[16];
+  private final byte[] salt;
 
   public VaultTumbler (String password)
     throws NoSuchAlgorithmException, InvalidKeySpecException, InvalidKeyException {

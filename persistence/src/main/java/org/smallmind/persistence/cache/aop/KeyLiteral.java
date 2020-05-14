@@ -36,10 +36,10 @@ import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
 
 public class KeyLiteral extends AnnotationLiteral<Key> implements Key {
 
-  private String value;
-  private String alias;
-  private boolean constant;
-  private boolean nullable;
+  private final String value;
+  private final String alias;
+  private final boolean constant;
+  private final boolean nullable;
 
   public KeyLiteral (String value) {
 

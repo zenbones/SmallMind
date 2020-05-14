@@ -1,11 +1,35 @@
-.velocity-chart .axis-label { -fx-text-fill: #666666; }
+.velocity-chart .axis-label {
+    -fx-text-fill: #666666;
+}
 
-.velocity-chart .default-color0.chart-line-symbol { -fx-background-color: #9933cc, #ffffff; }
-.velocity-chart .default-color1.chart-line-symbol { -fx-background-color: #0000cc, #ffffff; }
-.velocity-chart .default-color2.chart-line-symbol { -fx-background-color: #0066ff, #ffffff; }
-.velocity-chart .default-color3.chart-line-symbol { -fx-background-color: #00ccff, #ffffff; }
+.velocity-chart .default-color0.chart-line-symbol {
+    -fx-background-color: #9933cc, #ffffff;
+}
 
-.velocity-chart .default-color0.chart-series-line { -fx-stroke: #9933cc; }
-.velocity-chart .default-color1.chart-series-line { -fx-stroke: #0000cc; }
-.velocity-chart .default-color2.chart-series-line { -fx-stroke: #0066ff; }
-.velocity-chart .default-color3.chart-series-line { -fx-stroke: #00ccff; }
+.velocity-chart .default-color1.chart-line-symbol {
+    -fx-background-color: #0000cc, #ffffff;
+}
+
+.velocity-chart .default-color2.chart-line-symbol {
+    -fx-background-color: #0066ff, #ffffff;
+}
+
+.velocity-chart .default-color3.chart-line-symbol {
+    -fx-background-color: #00ccff, #ffffff;
+}
+
+.velocity-chart .default-color0.chart-series-line {
+    -fx-stroke: #9933cc;
+}
+
+.velocity-chart .default-color1.chart-series-line {
+    -fx-stroke: #0000cc;
+}
+
+.velocity-chart .default-color2.chart-series-line {
+    -fx-stroke: #0066ff;
+}
+
+.velocity-chart .default-color3.chart-series-line {
+    -fx-stroke: #00ccff;
+}

@@ -36,12 +36,12 @@ import java.util.EventObject;
 
 public class EditorEvent extends EventObject {
 
-  public static enum State {
+  public enum State {
 
     STOPPED, CANCELLED, VALID, INVALID
   }
 
-  private State state;
+  private final State state;
 
   public EditorEvent (Object source, State state) {
 
@@ -54,5 +54,4 @@ public class EditorEvent extends EventObject {
 
     return state;
   }
-
 }

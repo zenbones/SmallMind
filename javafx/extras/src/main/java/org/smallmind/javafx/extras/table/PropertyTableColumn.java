@@ -42,7 +42,7 @@ import javafx.util.StringConverter;
 
 public class PropertyTableColumn<S, T> extends TableColumn<S, T> {
 
-  private String propertyName;
+  private final String propertyName;
 
   public PropertyTableColumn (String text, String propertyName) {
 

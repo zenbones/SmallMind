@@ -75,15 +75,14 @@ import org.springframework.context.event.ContextRefreshedEvent;
 
 public class GrizzlyInitializingBean implements DisposableBean, ApplicationContextAware, ApplicationListener<ContextRefreshedEvent>, BeanPostProcessor {
 
+  private final LinkedList<WebSocketExtensionInstaller> webSocketExtensionInstallerList = new LinkedList<>();
+  private final LinkedList<WebServiceInstaller> webServiceInstallerList = new LinkedList<>();
+  private final LinkedList<ListenerInstaller> listenerInstallerList = new LinkedList<>();
+  private final LinkedList<FilterInstaller> filterInstallerList = new LinkedList<>();
+  private final LinkedList<ServletInstaller> servletInstallerList = new LinkedList<>();
   private HttpServer httpServer;
   private TyrusWebSocketAddOn tyrusWebSocketAddOn;
   private IOStrategy ioStrategy;
-  private LinkedList<WebSocketExtensionInstaller> webSocketExtensionInstallerList = new LinkedList<>();
-  private LinkedList<WebServiceInstaller> webServiceInstallerList = new LinkedList<>();
-  private LinkedList<ListenerInstaller> listenerInstallerList = new LinkedList<>();
-  private LinkedList<FilterInstaller> filterInstallerList = new LinkedList<>();
-  private LinkedList<ServletInstaller> servletInstallerList = new LinkedList<>();
-
   private ResourceConfigExtension[] resourceConfigExtensions;
   private AddOn[] addOns;
   private ClassLoaderResourceOption classLoaderResourceOption;

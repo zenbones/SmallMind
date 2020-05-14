@@ -43,7 +43,7 @@ import org.smallmind.nutsnbolts.reflection.ProxyGenerator;
 public class PolymorphicValueInstantiator extends StdValueInstantiator {
 
   private static final ThreadLocal<Object> polymorphicInstanceThreadLocal = new ThreadLocal<>();
-  private Class<?> polymorphicSubClass;
+  private final Class<?> polymorphicSubClass;
 
   public PolymorphicValueInstantiator (StdValueInstantiator src, Class<?> polymorphicSubClass) {
 

@@ -44,10 +44,10 @@ import javax.sql.StatementEventListener;
 
 public class PooledPreparedStatementCache implements StatementEventListener {
 
-  private TreeMap<TimeKey, String> timeMap;
-  private HashMap<ArgumentKey, LinkedList<String>> argumentMap;
-  private HashMap<String, StatementWrapper> statementMap;
-  private int maxStatements;
+  private final TreeMap<TimeKey, String> timeMap;
+  private final HashMap<ArgumentKey, LinkedList<String>> argumentMap;
+  private final HashMap<String, StatementWrapper> statementMap;
+  private final int maxStatements;
 
   public PooledPreparedStatementCache (int maxStatements) {
 
@@ -188,7 +188,7 @@ public class PooledPreparedStatementCache implements StatementEventListener {
 
   private class ArgumentKey {
 
-    private Object[] args;
+    private final Object[] args;
 
     public ArgumentKey (Object[] args) {
 
@@ -215,9 +215,9 @@ public class PooledPreparedStatementCache implements StatementEventListener {
 
   private class StatementWrapper {
 
-    private TimeKey timeKey;
-    private ArgumentKey argumentKey;
-    private PooledPreparedStatement pooledStatement;
+    private final TimeKey timeKey;
+    private final ArgumentKey argumentKey;
+    private final PooledPreparedStatement pooledStatement;
     private boolean inUse;
 
     public StatementWrapper (TimeKey timeKey, ArgumentKey argumentKey, PooledPreparedStatement pooledStatement) {

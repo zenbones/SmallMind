@@ -38,7 +38,7 @@ public class DotNotationComparator implements Comparator<String> {
 
   private static final AlphaNumericComparator<String> ALPHA_NUMERIC_COMPARATOR = new AlphaNumericComparator<String>();
 
-  private boolean reversed;
+  private final boolean reversed;
 
   public DotNotationComparator () {
 

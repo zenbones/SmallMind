@@ -49,8 +49,8 @@ public class DirectoryTreeCellRenderer implements TreeCellRenderer {
   private static final ImageIcon FOLDER = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/folder_16.png"));
   private static final ImageIcon FOLDERS = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/folders_16.png"));
 
-  private static Border SELECTED_BORDER = BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(UIManager.getDefaults().getColor("textHighlight").darker()), BorderFactory.createEmptyBorder(1, 1, 1, 1));
-  private static Border INVISIBLE_BORDER = BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(ColorUtility.TEXT_COLOR), BorderFactory.createEmptyBorder(1, 1, 1, 1));
+  private static final Border SELECTED_BORDER = BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(UIManager.getDefaults().getColor("textHighlight").darker()), BorderFactory.createEmptyBorder(1, 1, 1, 1));
+  private static final Border INVISIBLE_BORDER = BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(ColorUtility.TEXT_COLOR), BorderFactory.createEmptyBorder(1, 1, 1, 1));
 
   public Component getTreeCellRendererComponent (JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
 
@@ -58,11 +58,9 @@ public class DirectoryTreeCellRenderer implements TreeCellRenderer {
 
     if (row == 0) {
       directoryLabel = new JLabel(((Directory)((DirectoryNode)value).getUserObject()).getAbsolutePath(), DRIVE, SwingConstants.LEFT);
-    }
-    else if (leaf) {
+    } else if (leaf) {
       directoryLabel = new JLabel(((Directory)((DirectoryNode)value).getUserObject()).getName(), FOLDER, SwingConstants.LEFT);
-    }
-    else {
+    } else {
       directoryLabel = new JLabel(((Directory)((DirectoryNode)value).getUserObject()).getName(), FOLDERS, SwingConstants.LEFT);
     }
 
@@ -72,8 +70,7 @@ public class DirectoryTreeCellRenderer implements TreeCellRenderer {
     if (selected) {
       directoryLabel.setBackground(UIManager.getDefaults().getColor("textHighlight"));
       directoryLabel.setBorder(SELECTED_BORDER);
-    }
-    else {
+    } else {
       directoryLabel.setBackground(UIManager.getDefaults().getColor("text"));
       directoryLabel.setBorder(INVISIBLE_BORDER);
     }

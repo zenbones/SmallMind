@@ -39,7 +39,7 @@ import org.smallmind.nutsnbolts.time.TimeArithmetic;
 
 public class TimeFilter implements PathFilter {
 
-  private TimeArithmetic timeArithmetic;
+  private final TimeArithmetic timeArithmetic;
 
   public TimeFilter (TimeArithmetic timeArithmetic) {
 

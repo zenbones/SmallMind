@@ -83,10 +83,10 @@ public class MeasurableTracker {
 
   private static class Measurable {
 
-    private MeterBuilder<?> builder;
-    private Tag[] tags;
-    private Function<Object, Long> measurement;
-    private Class<?> caller;
+    private final MeterBuilder<?> builder;
+    private final Tag[] tags;
+    private final Function<Object, Long> measurement;
+    private final Class<?> caller;
 
     public Measurable (Class<?> caller, MeterBuilder<?> builder, Function<?, Long> measurement, Tag... tags) {
 

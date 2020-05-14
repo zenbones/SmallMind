@@ -49,14 +49,14 @@ import org.smallmind.sleuth.runner.event.SuccessSleuthEvent;
 
 public class TestRunner implements Runnable {
 
-  private SleuthRunner sleuthRunner;
-  private AnnotationProcessor annotationProcessor;
-  private DependencyQueue<Test, Method> testMethodDependencyQueue;
-  private Dependency<Test, Method> testMethodDependency;
-  private CountDownLatch testCompletedLatch;
+  private final SleuthRunner sleuthRunner;
+  private final AnnotationProcessor annotationProcessor;
+  private final DependencyQueue<Test, Method> testMethodDependencyQueue;
+  private final Dependency<Test, Method> testMethodDependency;
+  private final CountDownLatch testCompletedLatch;
+  private final Class<?> clazz;
+  private final Object instance;
   private Culprit culprit;
-  private Class<?> clazz;
-  private Object instance;
 
   public TestRunner (SleuthRunner sleuthRunner, CountDownLatch testCompletedLatch, Culprit culprit, Class<?> clazz, Object instance, Dependency<Test, Method> testMethodDependency, DependencyQueue<Test, Method> testMethodDependencyQueue, AnnotationProcessor annotationProcessor) {
 
@@ -97,8 +97,7 @@ public class TestRunner implements Runnable {
           culprit = new Culprit(clazz.getName(), testMethodDependency.getValue().getName(), invocationTargetException.getCause());
           if (invocationTargetException.getCause() instanceof AssertionError) {
             sleuthRunner.fire(new FailureSleuthEvent(clazz.getName(), testMethodDependency.getValue().getName(), System.currentTimeMillis() - startMilliseconds, invocationTargetException.getCause()));
-          }
-          else {
+          } else {
             sleuthRunner.fire(new ErrorSleuthEvent(clazz.getName(), testMethodDependency.getValue().getName(), System.currentTimeMillis() - startMilliseconds, invocationTargetException.getCause()));
           }
         } catch (Exception exception) {

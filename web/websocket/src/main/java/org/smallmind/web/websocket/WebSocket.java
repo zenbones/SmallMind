@@ -377,9 +377,9 @@ public abstract class WebSocket implements AutoCloseable {
 
   private class MessageWorker implements Runnable {
 
-    private CountDownLatch exitLatch = new CountDownLatch(1);
-    private AtomicBoolean aborted = new AtomicBoolean(false);
-    private LinkedList<Fragment> fragmentList = new LinkedList<>();
+    private final CountDownLatch exitLatch = new CountDownLatch(1);
+    private final AtomicBoolean aborted = new AtomicBoolean(false);
+    private final LinkedList<Fragment> fragmentList = new LinkedList<>();
 
     public void abort ()
       throws InterruptedException {

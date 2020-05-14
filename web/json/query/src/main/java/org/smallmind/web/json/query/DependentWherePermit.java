@@ -34,7 +34,7 @@ package org.smallmind.web.json.query;
 
 public class DependentWherePermit extends WherePermit {
 
-  private TargetWherePermit requirement;
+  private final TargetWherePermit requirement;
 
   public DependentWherePermit (String entity, String name, TargetWherePermit requirement) {
 

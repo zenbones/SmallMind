@@ -43,7 +43,7 @@ import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public class JWKKeyReader implements KeyReader {
 
-  private KeyFactors keyFactors;
+  private final KeyFactors keyFactors;
 
   public JWKKeyReader (String raw)
     throws IOException, KeyParseException {

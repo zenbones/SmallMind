@@ -34,5 +34,5 @@ package org.smallmind.web.jersey.aop;
 
 public interface JsonEntity {
 
-  public <T> T getParameter (String key, Class<T> clazz, ParameterAnnotations parameterAnnotations);
+  <T> T getParameter (String key, Class<T> clazz, ParameterAnnotations parameterAnnotations);
 }

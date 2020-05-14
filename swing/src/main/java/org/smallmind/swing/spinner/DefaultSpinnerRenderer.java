@@ -39,7 +39,7 @@ import javax.swing.JLabel;
 
 public class DefaultSpinnerRenderer implements SpinnerRenderer {
 
-  private JLabel renderLabel;
+  private final JLabel renderLabel;
 
   public DefaultSpinnerRenderer () {
 

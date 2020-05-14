@@ -36,7 +36,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class PerApplicationContext {
 
-  private static InheritableThreadLocal<ConcurrentHashMap<Class<? extends PerApplicationDataManager>, Object>> PER_APPLICATION_MAP_LOCAL = new InheritableThreadLocal<>();
+  private static final InheritableThreadLocal<ConcurrentHashMap<Class<? extends PerApplicationDataManager>, Object>> PER_APPLICATION_MAP_LOCAL = new InheritableThreadLocal<>();
 
   private ConcurrentHashMap<Class<? extends PerApplicationDataManager>, Object> perApplicationMap;
 

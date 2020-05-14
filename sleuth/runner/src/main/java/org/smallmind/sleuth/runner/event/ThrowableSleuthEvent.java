@@ -34,7 +34,7 @@ package org.smallmind.sleuth.runner.event;
 
 public abstract class ThrowableSleuthEvent extends TimedSleuthEvent {
 
-  private Throwable throwable;
+  private final Throwable throwable;
 
   public ThrowableSleuthEvent (String className, String methodName, long elapsed, Throwable throwable) {
 

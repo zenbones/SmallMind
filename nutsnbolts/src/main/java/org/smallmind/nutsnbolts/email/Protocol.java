@@ -40,11 +40,11 @@ public enum Protocol {
 
   SMTP("smtp", "smtp", false), SMTPS("smtps", "smtp", true);
 
-  private String name;
-  private String selector;
-  private boolean secure;
+  private final String name;
+  private final String selector;
+  private final boolean secure;
 
-  private Protocol (String name, String selector, boolean secure) {
+  Protocol (String name, String selector, boolean secure) {
 
     this.name = name;
     this.selector = selector;

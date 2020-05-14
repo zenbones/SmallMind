@@ -44,7 +44,7 @@ public class DefaultMultiThumbModel implements MultiThumbModel {
   private final WeakEventListenerList<ThumbListener> listenerList = new WeakEventListenerList<ThumbListener>();
   private final AdjustingDelayHandler adjustingDelayHandler;
 
-  private LinkedList<Integer> thumbList;
+  private final LinkedList<Integer> thumbList;
   private int minimumValue = 0;
   private int maximumValue = 100;
 
@@ -56,27 +56,27 @@ public class DefaultMultiThumbModel implements MultiThumbModel {
   }
 
   @Override
-  public synchronized void setMinimumValue (int minimumValue) {
-
-    this.minimumValue = minimumValue;
-  }
-
-  @Override
   public synchronized int getMinimumValue () {
 
     return minimumValue;
   }
 
   @Override
-  public synchronized void setMaximumValue (int maximumValue) {
+  public synchronized void setMinimumValue (int minimumValue) {
 
-    this.maximumValue = maximumValue;
+    this.minimumValue = minimumValue;
   }
 
   @Override
   public synchronized int getMaximumValue () {
 
     return maximumValue;
+  }
+
+  @Override
+  public synchronized void setMaximumValue (int maximumValue) {
+
+    this.maximumValue = maximumValue;
   }
 
   @Override
@@ -171,10 +171,10 @@ public class DefaultMultiThumbModel implements MultiThumbModel {
 
   private class AdjustingDelayHandler implements Runnable {
 
-    private DefaultMultiThumbModel model;
-    private CountDownLatch terminationLatch = new CountDownLatch(1);
-    private CountDownLatch exitLatch = new CountDownLatch(1);
-    private AtomicReference<DelayedMove> delayedMoveRef = new AtomicReference<DelayedMove>();
+    private final DefaultMultiThumbModel model;
+    private final CountDownLatch terminationLatch = new CountDownLatch(1);
+    private final CountDownLatch exitLatch = new CountDownLatch(1);
+    private final AtomicReference<DelayedMove> delayedMoveRef = new AtomicReference<DelayedMove>();
 
     public AdjustingDelayHandler (DefaultMultiThumbModel model) {
 
@@ -190,13 +190,11 @@ public class DefaultMultiThumbModel implements MultiThumbModel {
           delayedMove.setAdjustingValue(adjustingValue);
           delayedMove.setTimestamp(System.currentTimeMillis());
           delayedMoveRef.set(delayedMove);
-        }
-        else {
+        } else {
           fireThumbMoved(new ThumbEvent(model, ThumbEvent.EventType.MOVE, delayedMove.getThumbIndex(), delayedMove.getStartingValue(), delayedMove.getAdjustingValue(), false));
           delayedMoveRef.set(new DelayedMove(System.currentTimeMillis(), thumbIndex, startingValue, adjustingValue));
         }
-      }
-      else {
+      } else {
         delayedMoveRef.set(new DelayedMove(System.currentTimeMillis(), thumbIndex, startingValue, adjustingValue));
       }
     }
@@ -231,11 +229,9 @@ public class DefaultMultiThumbModel implements MultiThumbModel {
             }
           }
         }
-      }
-      catch (InterruptedException interruptedException) {
+      } catch (InterruptedException interruptedException) {
         terminationLatch.countDown();
-      }
-      finally {
+      } finally {
         exitLatch.countDown();
       }
     }
@@ -250,9 +246,9 @@ public class DefaultMultiThumbModel implements MultiThumbModel {
 
   private class DelayedMove {
 
+    private final int thumbIndex;
+    private final int startingValue;
     private long timestamp;
-    private int thumbIndex;
-    private int startingValue;
     private int adjustingValue;
 
     private DelayedMove (long timestamp, int thumbIndex, int startingValue, int adjustingValue) {

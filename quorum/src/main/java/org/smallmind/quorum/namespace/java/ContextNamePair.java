@@ -37,8 +37,8 @@ import javax.naming.directory.DirContext;
 
 public class ContextNamePair {
 
-  private DirContext dirContext;
-  private Name name;
+  private final DirContext dirContext;
+  private final Name name;
 
   public ContextNamePair (DirContext dirContext, Name name) {
 

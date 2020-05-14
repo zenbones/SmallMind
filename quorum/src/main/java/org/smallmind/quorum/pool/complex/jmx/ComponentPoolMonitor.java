@@ -45,7 +45,7 @@ import org.smallmind.quorum.pool.complex.event.LeaseTimeReportingComponentPoolEv
 
 public class ComponentPoolMonitor extends NotificationBroadcasterSupport implements ComponentPoolMonitorMXBean, MBeanRegistration, ComponentPoolEventListener {
 
-  private ComponentPool<?> componentPool;
+  private final ComponentPool<?> componentPool;
   private ObjectName objectName;
 
   public ComponentPoolMonitor (ComponentPool<?> componentPool) {

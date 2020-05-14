@@ -58,18 +58,10 @@ public class DirectoryManagerDialog extends JDialog implements WindowListener {
   private static final GridBagLayout GRID_BAG_LAYOUT = new GridBagLayout();
   private static final FlowLayout FLOW_LAYOUT = new FlowLayout(FlowLayout.RIGHT);
 
-  private List<File> internalDirectoryList;
-  private List<File> externalDirectoryList;
+  private final List<File> internalDirectoryList;
+  private final List<File> externalDirectoryList;
   private CancelAction cancelAction;
   boolean initialized = false;
-
-  public static void createShowDialog (Window parentWindow, List<File> externalDirectoryList) {
-
-    DirectoryManagerDialog directoryChooserDialog;
-
-    directoryChooserDialog = new DirectoryManagerDialog(parentWindow, externalDirectoryList);
-    directoryChooserDialog.showDialog();
-  }
 
   public DirectoryManagerDialog (Window parentWindow, List<File> externalDirectoryList) {
 
@@ -79,6 +71,14 @@ public class DirectoryManagerDialog extends JDialog implements WindowListener {
     internalDirectoryList = new ArrayList<File>(externalDirectoryList);
 
     buildDialog(parentWindow, new DirectoryManager(parentWindow, internalDirectoryList));
+  }
+
+  public static void createShowDialog (Window parentWindow, List<File> externalDirectoryList) {
+
+    DirectoryManagerDialog directoryChooserDialog;
+
+    directoryChooserDialog = new DirectoryManagerDialog(parentWindow, externalDirectoryList);
+    directoryChooserDialog.showDialog();
   }
 
   private void buildDialog (Window parentWindow, DirectoryManager directoryManager) {
@@ -183,7 +183,6 @@ public class DirectoryManagerDialog extends JDialog implements WindowListener {
       setVisible(false);
       dispose();
     }
-
   }
 
   public class CancelAction extends AbstractAction {

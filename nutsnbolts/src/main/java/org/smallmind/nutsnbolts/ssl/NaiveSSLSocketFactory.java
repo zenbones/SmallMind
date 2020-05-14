@@ -48,7 +48,7 @@ public class NaiveSSLSocketFactory extends SSLSocketFactory {
 
   private static final NaiveSSLSocketFactory INSTANCE;
 
-  private SSLSocketFactory internalSSLSocketFactory;
+  private final SSLSocketFactory internalSSLSocketFactory;
 
   static {
     try {

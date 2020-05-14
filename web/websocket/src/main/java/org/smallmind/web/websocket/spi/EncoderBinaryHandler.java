@@ -37,7 +37,7 @@ import javax.websocket.Encoder;
 
 public class EncoderBinaryHandler<T> implements EncoderHandler<T> {
 
-  private Encoder.Binary<T> encoder;
+  private final Encoder.Binary<T> encoder;
 
   public EncoderBinaryHandler (Encoder.Binary<T> encoder) {
 

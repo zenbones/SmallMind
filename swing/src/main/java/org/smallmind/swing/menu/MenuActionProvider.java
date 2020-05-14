@@ -37,7 +37,7 @@ import javax.swing.Action;
 
 public interface MenuActionProvider {
 
-  public abstract ActionListener getDefaultActionListener ();
+  ActionListener getDefaultActionListener ();
 
-  public abstract Action getAction (String className);
+  Action getAction (String className);
 }

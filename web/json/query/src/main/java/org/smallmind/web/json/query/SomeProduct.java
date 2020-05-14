@@ -36,8 +36,8 @@ import java.util.Set;
 
 public class SomeProduct<R, T> implements Product<R, T> {
 
-  private Set<R> rootSet;
-  private T value;
+  private final Set<R> rootSet;
+  private final T value;
 
   public SomeProduct (Set<R> rootSet, T value) {
 

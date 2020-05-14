@@ -38,7 +38,7 @@ import java.lang.reflect.Method;
 
 public class OffloadingInvocationHandler implements Serializable, InvocationHandler {
 
-  private Object target;
+  private final Object target;
 
   public OffloadingInvocationHandler (Object target) {
 

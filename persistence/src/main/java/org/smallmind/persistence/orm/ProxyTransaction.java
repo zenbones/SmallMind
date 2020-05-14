@@ -39,9 +39,9 @@ public abstract class ProxyTransaction<S extends ProxySession<?, ?>> {
 
   private static final ProcessPriorityComparator PROCESS_PRIORITY_COMPARATOR = new ProcessPriorityComparator();
 
-  private S proxySession;
+  private final S proxySession;
+  private final String uuid;
   private LinkedList<TransactionPostProcess> postProcessList;
-  private String uuid;
   private boolean rollbackOnly = false;
 
   public ProxyTransaction (S proxySession) {

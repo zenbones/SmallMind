@@ -51,8 +51,8 @@ import sun.security.util.SecurityConstants;
 public class SandboxSecurityPolicy extends Policy {
 
   private static final PermissionCollection ALL_PERMISSION_COLLECTION;
-  private Set<? extends ClassLoader> whiteListedClassLoaderSet;
-  private PermissionCollection basePermissionCollection = new Permissions();
+  private final Set<? extends ClassLoader> whiteListedClassLoaderSet;
+  private final PermissionCollection basePermissionCollection = new Permissions();
 
   static {
 

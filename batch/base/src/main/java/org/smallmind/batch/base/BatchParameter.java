@@ -34,7 +34,7 @@ package org.smallmind.batch.base;
 
 public abstract class BatchParameter<T> {
 
-  private T value;
+  private final T value;
 
   public BatchParameter (T value) {
 

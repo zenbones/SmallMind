@@ -39,7 +39,7 @@ import javax.swing.text.Document;
 
 public class DocumentOutputStream extends OutputStream {
 
-  private Document document;
+  private final Document document;
   private int cursor = 0;
 
   public DocumentOutputStream (Document document) {
@@ -53,21 +53,20 @@ public class DocumentOutputStream extends OutputStream {
     write(new byte[] {(byte)b});
   }
 
-  public void write (byte buffer[])
+  public void write (byte[] buffer)
     throws IOException {
 
     write(buffer, 0, buffer.length);
   }
 
-  public void write (byte buffer[], int off, int len)
+  public void write (byte[] buffer, int off, int len)
     throws IOException {
 
     try {
       document.insertString(cursor, new String(buffer, off, len), null);
       cursor += len - off;
-    }
-    catch (BadLocationException badLocationException) {
-      throw (IOException)new IOException(badLocationException.getMessage()).initCause(badLocationException);
+    } catch (BadLocationException badLocationException) {
+      throw (IOException)new IOException(badLocationException.getMessage(), badLocationException);
     }
   }
 }

@@ -38,8 +38,8 @@ public class Stint {
 
   private static final Stint NONE = new Stint(0, TimeUnit.SECONDS);
 
-  private TimeUnit timeUnit;
-  private long time;
+  private final TimeUnit timeUnit;
+  private final long time;
 
   public Stint (long time, TimeUnit timeUnit) {
 

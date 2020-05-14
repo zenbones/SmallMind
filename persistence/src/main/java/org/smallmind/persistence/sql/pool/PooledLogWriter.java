@@ -39,7 +39,7 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class PooledLogWriter extends Writer {
 
-  private Level level;
+  private final Level level;
 
   public PooledLogWriter () {
 

@@ -36,5 +36,5 @@ import org.smallmind.nutsnbolts.time.Stint;
 
 public interface SelfDestructive {
 
-  public abstract void destroy (Stint timeoutStint);
+  void destroy (Stint timeoutStint);
 }

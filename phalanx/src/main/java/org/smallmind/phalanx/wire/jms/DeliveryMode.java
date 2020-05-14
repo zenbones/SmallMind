@@ -36,9 +36,9 @@ public enum DeliveryMode {
 
   PERSISTENT(javax.jms.DeliveryMode.PERSISTENT), NON_PERSISTENT(javax.jms.DeliveryMode.NON_PERSISTENT);
 
-  private int jmsValue;
+  private final int jmsValue;
 
-  private DeliveryMode (int jmsValue) {
+  DeliveryMode (int jmsValue) {
 
     this.jmsValue = jmsValue;
   }

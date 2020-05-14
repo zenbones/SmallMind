@@ -43,8 +43,8 @@ import org.smallmind.nutsnbolts.freemarker.ClassPathTemplateLoader;
 
 public class FreeMarkerPackageTextTemplate extends TextTemplate {
 
-  private static ConcurrentHashMap<Class<?>, Configuration> CONFIG_MAP = new ConcurrentHashMap<>();
-  private Template freeMarkerTemplate;
+  private static final ConcurrentHashMap<Class<?>, Configuration> CONFIG_MAP = new ConcurrentHashMap<>();
+  private final Template freeMarkerTemplate;
 
   public FreeMarkerPackageTextTemplate (Class<?> scopeClass, String fileName) {
 
@@ -60,8 +60,7 @@ public class FreeMarkerPackageTextTemplate extends TextTemplate {
 
     try {
       freeMarkerTemplate = freemarkerConf.getTemplate((fileName == null) ? scopeClass.getSimpleName() + ".js" : fileName);
-    }
-    catch (IOException ioException) {
+    } catch (IOException ioException) {
       throw new RuntimeException(ioException);
     }
   }
@@ -79,8 +78,7 @@ public class FreeMarkerPackageTextTemplate extends TextTemplate {
 
     try {
       freeMarkerTemplate.process(variables, templateWriter);
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       throw new RuntimeException(exception);
     }
 

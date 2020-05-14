@@ -46,8 +46,8 @@ import java.util.Set;
 
 public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>> {
 
-  private ArrayList<K> keys;
-  private ArrayList<V> values;
+  private final ArrayList<K> keys;
+  private final ArrayList<V> values;
   private int version = 0;
 
   public Tuple () {
@@ -277,7 +277,7 @@ public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>
 
     StringBuilder dataBuilder;
 
-    dataBuilder = new StringBuilder("[" + String.valueOf(size()) + "](");
+    dataBuilder = new StringBuilder("[" + size() + "](");
     for (int count = 0; count < size(); count++) {
       if (count > 0) {
         dataBuilder.append(";");

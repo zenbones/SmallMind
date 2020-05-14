@@ -47,7 +47,7 @@ public class JPAProxySession extends ProxySession<EntityManagerFactory, EntityMa
   private final ThreadLocal<EntityManager> managerThreadLocal = new ThreadLocal<EntityManager>();
   private final ThreadLocal<JPAProxyTransaction> transactionThreadLocal = new ThreadLocal<JPAProxyTransaction>();
 
-  private EntityManagerFactory entityManagerFactory;
+  private final EntityManagerFactory entityManagerFactory;
 
   public JPAProxySession (String dataSourceType, String sessionSourceKey, EntityManagerFactory entityManagerFactory, boolean boundaryEnforced, boolean cacheEnabled) {
 

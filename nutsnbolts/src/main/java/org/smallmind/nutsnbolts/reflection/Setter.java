@@ -38,9 +38,9 @@ import java.lang.reflect.Method;
 
 public class Setter implements Serializable {
 
-  private Class attributeClass;
-  private Method method;
-  private String attributeName;
+  private final Class attributeClass;
+  private final Method method;
+  private final String attributeName;
 
   public Setter (Method method)
     throws ReflectionContractException {

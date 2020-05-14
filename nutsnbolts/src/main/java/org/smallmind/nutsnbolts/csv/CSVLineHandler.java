@@ -34,10 +34,10 @@ package org.smallmind.nutsnbolts.csv;
 
 public interface CSVLineHandler {
 
-  public abstract void startDocument ();
+  void startDocument ();
 
-  public abstract void handleFields (String[] fields)
+  void handleFields (String[] fields)
     throws CSVParseException;
 
-  public abstract void endDocument ();
+  void endDocument ();
 }

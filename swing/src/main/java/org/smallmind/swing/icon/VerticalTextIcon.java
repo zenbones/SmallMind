@@ -41,29 +41,24 @@ import javax.swing.Icon;
 
 public class VerticalTextIcon implements Icon {
 
+  private static final String sDrawsInTopRight = "\u3041\u3043\u3045\u3047\u3049\u3063\u3083\u3085\u3087\u308E" + // hiragana
+                                                   "\u30A1\u30A3\u30A5\u30A7\u30A9\u30C3\u30E3\u30E5\u30E7\u30EE\u30F5\u30F6"; // katakana
+  private static final String sDrawsInFarTopRight = "\u3001\u3002"; // comma, full stop
+  private static final double NINETY_DEGREES = Math.toRadians(90.0);
+  private static final int POSITION_NORMAL = 0;
+  private static final int POSITION_TOP_RIGHT = 1;
+  private static final int POSITION_FAR_TOP_RIGHT = 2;
+  private static final int kBufferSpace = 5;
   public static final int ROTATE_DEFAULT = 0x00;
   public static final int ROTATE_NONE = 0x01;
   public static final int ROTATE_LEFT = 0x02;
   public static final int ROTATE_RIGHT = 0x04;
-
-  private static final String sDrawsInTopRight = "\u3041\u3043\u3045\u3047\u3049\u3063\u3083\u3085\u3087\u308E" + // hiragana
-    "\u30A1\u30A3\u30A5\u30A7\u30A9\u30C3\u30E3\u30E5\u30E7\u30EE\u30F5\u30F6"; // katakana
-  private static final String sDrawsInFarTopRight = "\u3001\u3002"; // comma, full stop
-
-  private static final double NINETY_DEGREES = Math.toRadians(90.0);
-
-  private static final int POSITION_NORMAL = 0;
-  private static final int POSITION_TOP_RIGHT = 1;
-  private static final int POSITION_FAR_TOP_RIGHT = 2;
-
-  private static final int kBufferSpace = 5;
-
-  private FontMetrics fontMetrics;
+  private final FontMetrics fontMetrics;
+  private final int rotation;
   private String text;
   private String[] fCharStrings; // for efficiency, break the text into one-char strings to be passed to drawString
   private int[] fCharWidths; // Roman characters should be centered when not rotated (Japanese fonts are monospaced)
   private int[] fPosition; // Japanese half-height characters need to be shifted when drawn vertically
-  private int rotation;
   private int fWidth, fHeight, fCharHeight, fDescent;
 
   public VerticalTextIcon (FontMetrics fontMetrics, String text, int rotation) {
@@ -98,7 +93,7 @@ public class VerticalTextIcon implements Icon {
     fDescent = fontMetrics.getDescent();
     if (rotation == ROTATE_NONE) {
       int len = text.length();
-      char data[] = new char[len];
+      char[] data = new char[len];
       text.getChars(0, len, data, 0);
       // if not rotated, width is that of the widest char in the string
       fWidth = 0;
@@ -118,18 +113,15 @@ public class VerticalTextIcon implements Icon {
         if (sDrawsInTopRight.indexOf(ch) >= 0) // if ch is in sDrawsInTopRight
         {
           fPosition[i] = POSITION_TOP_RIGHT;
-        }
-        else if (sDrawsInFarTopRight.indexOf(ch) >= 0) {
+        } else if (sDrawsInFarTopRight.indexOf(ch) >= 0) {
           fPosition[i] = POSITION_FAR_TOP_RIGHT;
-        }
-        else {
+        } else {
           fPosition[i] = POSITION_NORMAL;
         }
       }
       // and height is the font height * the char count, + one extra leading at the bottom
       fHeight = fCharHeight * len + fDescent;
-    }
-    else {
+    } else {
       // if rotated, width is the height of the string
       fWidth = fCharHeight;
       // and height is the width, plus some buffer space
@@ -166,15 +158,13 @@ public class VerticalTextIcon implements Icon {
         }
         yPos += fCharHeight;
       }
-    }
-    else if (rotation == ROTATE_LEFT) {
+    } else if (rotation == ROTATE_LEFT) {
       g.translate(x + fWidth, y + fHeight);
       ((Graphics2D)g).rotate(-NINETY_DEGREES);
       g.drawString(text, kBufferSpace, -fDescent);
       ((Graphics2D)g).rotate(NINETY_DEGREES);
       g.translate(-(x + fWidth), -(y + fHeight));
-    }
-    else if (rotation == ROTATE_RIGHT) {
+    } else if (rotation == ROTATE_RIGHT) {
       g.translate(x, y);
       ((Graphics2D)g).rotate(NINETY_DEGREES);
       g.drawString(text, kBufferSpace, -fDescent);

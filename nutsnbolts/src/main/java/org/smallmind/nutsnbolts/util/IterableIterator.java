@@ -36,7 +36,7 @@ import java.util.Iterator;
 
 public class IterableIterator<T> implements Iterator<T>, Iterable<T> {
 
-  private Iterator<T> internalIterator;
+  private final Iterator<T> internalIterator;
 
   public IterableIterator (Iterator<T> internalIterator) {
 

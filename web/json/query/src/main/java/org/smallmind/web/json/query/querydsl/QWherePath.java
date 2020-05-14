@@ -39,9 +39,9 @@ import org.smallmind.web.json.query.WherePath;
 
 public class QWherePath extends WherePath<Path<?>, Path<?>> {
 
-  private Path<?> root;
-  private Path<?> path;
-  private String field;
+  private final Path<?> root;
+  private final Path<?> path;
+  private final String field;
 
   public QWherePath (Path<?> path) {
 

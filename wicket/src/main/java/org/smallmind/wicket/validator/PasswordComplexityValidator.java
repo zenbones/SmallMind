@@ -59,8 +59,7 @@ public class PasswordComplexityValidator extends AbstractValidator {
     for (int count = 0; count < password.length(); count++) {
       if (Character.isDigit(password.charAt(count))) {
         digitCount++;
-      }
-      else if (!Character.isLetter(password.charAt(count))) {
+      } else if (!Character.isLetter(password.charAt(count))) {
         punctuationCount++;
       }
     }
@@ -69,5 +68,4 @@ public class PasswordComplexityValidator extends AbstractValidator {
       error(iValidatable, "error.password.complexity.safety");
     }
   }
-
 }

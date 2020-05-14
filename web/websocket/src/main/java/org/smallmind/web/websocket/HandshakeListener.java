@@ -36,7 +36,7 @@ import org.smallmind.nutsnbolts.util.Tuple;
 
 public interface HandshakeListener {
 
-  public abstract void beforeRequest (Tuple<String, String> headerTuple);
+  void beforeRequest (Tuple<String, String> headerTuple);
 
-  public abstract void afterResponse (Tuple<String, String> headerTuple);
+  void afterResponse (Tuple<String, String> headerTuple);
 }

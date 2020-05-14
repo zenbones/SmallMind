@@ -36,8 +36,8 @@ import javax.websocket.Extension;
 
 public class ExtensionParameter implements Extension.Parameter {
 
-  private String name;
-  private String value;
+  private final String name;
+  private final String value;
 
   public ExtensionParameter (String name, String value) {
 

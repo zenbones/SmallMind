@@ -40,9 +40,9 @@ import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 public class HttpPipe {
 
-  private static enum State {DISCONNECTED, WRITE, READ, TERMINATED}
+  private enum State {DISCONNECTED, WRITE, READ, TERMINATED}
 
-  private HttpURLConnection urlConnection;
+  private final HttpURLConnection urlConnection;
   private OutputStream httpOutput;
   private InputStream httpInput;
   private State state = State.DISCONNECTED;

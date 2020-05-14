@@ -50,8 +50,6 @@ import org.glassfish.grizzly.ssl.SSLUtils;
 
 public class ClientAuthProxyFilter extends BaseFilter {
 
-  protected boolean proxyMode;
-
   //Subject DN
   static public final String SSL_CLIENT_S_DN = "SSL_CLIENT_S_DN";
   //Issuer DN
@@ -60,6 +58,7 @@ public class ClientAuthProxyFilter extends BaseFilter {
   static public final String SSL_CLIENT_VERIFY = "SSL_CLIENT_VERIFY";
   //Field where proxy indicates IP of original client
   static public final String X_FORWARDED_FOR = "X-Forwarded-For";
+  protected boolean proxyMode;
 
   public ClientAuthProxyFilter (boolean proxyMode) {
 

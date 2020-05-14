@@ -45,8 +45,8 @@ public class JavaName implements Name {
 
   private static final AlphaNumericComparator<String> alphaSort = new AlphaNumericComparator<String>();
 
-  private NameTranslator nameTranslator;
-  private ArrayList<String> nameList;
+  private final NameTranslator nameTranslator;
+  private final ArrayList<String> nameList;
 
   public JavaName (JavaName name) {
 

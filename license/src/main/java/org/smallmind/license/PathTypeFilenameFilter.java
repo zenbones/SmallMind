@@ -5,7 +5,7 @@ import java.util.regex.Pattern;
 
 public class PathTypeFilenameFilter implements PathFilter {
 
-  private Pattern namePattern;
+  private final Pattern namePattern;
 
   public PathTypeFilenameFilter (String name) {
 

@@ -56,12 +56,34 @@ public class JavaContext implements DirContext {
   public static final String CONTEXT_MODIFIABLE = "org.smallmind.quorum.namespace.java.modifiable";
   public static final String POOLED_CONNECTION = "org.smallmind.quorum.namespace.java.pooled";
 
-  private Hashtable<String, Object> environment;
-  private DirContext internalContext;
-  private NameTranslator nameTranslator;
-  private JavaNameParser nameParser;
-  private boolean modifiable;
-  private boolean pooled;
+  private final Hashtable<String, Object> environment;
+  private final DirContext internalContext;
+  private final NameTranslator nameTranslator;
+  private final JavaNameParser nameParser;
+  private final boolean modifiable;
+  private final boolean pooled;
+
+  protected JavaContext (NameTranslator nameTranslator, Hashtable<String, Object> environment, boolean modifiable, boolean pooled) {
+
+    this.nameTranslator = nameTranslator;
+    this.environment = environment;
+    this.modifiable = modifiable;
+    this.pooled = pooled;
+
+    internalContext = null;
+    nameParser = new JavaNameParser(nameTranslator);
+  }
+
+  protected JavaContext (Hashtable<String, Object> environment, DirContext internalContext, NameTranslator nameTranslator, JavaNameParser nameParser, boolean modifiable) {
+
+    this.environment = environment;
+    this.internalContext = internalContext;
+    this.nameTranslator = nameTranslator;
+    this.nameParser = nameParser;
+    this.modifiable = modifiable;
+
+    pooled = false;
+  }
 
   public static JavaContext insureContext (JavaContext javaContext, String namingPath)
     throws NamingException {
@@ -85,28 +107,6 @@ public class JavaContext implements DirContext {
     }
 
     return lastContext;
-  }
-
-  protected JavaContext (NameTranslator nameTranslator, Hashtable<String, Object> environment, boolean modifiable, boolean pooled) {
-
-    this.nameTranslator = nameTranslator;
-    this.environment = environment;
-    this.modifiable = modifiable;
-    this.pooled = pooled;
-
-    internalContext = null;
-    nameParser = new JavaNameParser(nameTranslator);
-  }
-
-  protected JavaContext (Hashtable<String, Object> environment, DirContext internalContext, NameTranslator nameTranslator, JavaNameParser nameParser, boolean modifiable) {
-
-    this.environment = environment;
-    this.internalContext = internalContext;
-    this.nameTranslator = nameTranslator;
-    this.nameParser = nameParser;
-    this.modifiable = modifiable;
-
-    pooled = false;
   }
 
   public Object lookup (Name name)

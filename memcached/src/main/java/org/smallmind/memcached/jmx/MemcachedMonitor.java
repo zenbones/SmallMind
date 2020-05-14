@@ -37,7 +37,7 @@ import org.smallmind.memcached.ProxyMemcachedClient;
 
 public class MemcachedMonitor extends StandardMBean implements MemcachedMXBean {
 
-  private ProxyMemcachedClient memcachedClient;
+  private final ProxyMemcachedClient memcachedClient;
 
   public MemcachedMonitor (ProxyMemcachedClient memcachedClient) {
 

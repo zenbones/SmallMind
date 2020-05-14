@@ -36,7 +36,7 @@ import org.smallmind.web.json.query.WherePath;
 
 public class HibernateWherePath extends WherePath<Void, Void> {
 
-  private String field;
+  private final String field;
 
   public HibernateWherePath (String field) {
 

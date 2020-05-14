@@ -34,8 +34,8 @@ package org.smallmind.claxon.registry;
 
 public class Quantity {
 
-  private String name;
-  private double value;
+  private final String name;
+  private final double value;
 
   public Quantity (String name, double value) {
 

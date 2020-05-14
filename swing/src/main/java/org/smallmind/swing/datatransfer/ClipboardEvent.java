@@ -38,8 +38,8 @@ import java.util.EventObject;
 
 public final class ClipboardEvent extends EventObject {
 
-  private Component target;
-  private Transferable transferable;
+  private final Component target;
+  private final Transferable transferable;
 
   public ClipboardEvent (Object source, Component target) {
 
@@ -62,5 +62,4 @@ public final class ClipboardEvent extends EventObject {
 
     return transferable;
   }
-
 }

@@ -36,9 +36,9 @@ public enum EntitySource {
 
   MYSQL("MySql"), MONGO("MongoDB"), TERRACOTTA("Terracotta"), MEMCACHED("Memcached"), EHCACHE("Ehcache"), CASSANDRA("Cassandra");
 
-  private String display;
+  private final String display;
 
-  private EntitySource (String display) {
+  EntitySource (String display) {
 
     this.display = display;
   }

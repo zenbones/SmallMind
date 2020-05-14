@@ -38,7 +38,7 @@ import org.smallmind.persistence.cache.VectoredDao;
 
 public abstract class AbstractVectorAwareManagedDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractManagedDao<I, D> implements VectorAwareDao<I, D> {
 
-  private VectoredDao<I, D> vectoredDao;
+  private final VectoredDao<I, D> vectoredDao;
 
   public AbstractVectorAwareManagedDao (String metricSource, VectoredDao<I, D> vectoredDao) {
 

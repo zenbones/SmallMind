@@ -36,8 +36,8 @@ import java.lang.reflect.Method;
 
 public class Operation {
 
-  private String operationName;
-  private String[] signatureNames;
+  private final String operationName;
+  private final String[] signatureNames;
 
   public Operation (Method method) {
 

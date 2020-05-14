@@ -65,7 +65,7 @@ public class JaxbAnnotationModule extends Module {
    * {@link com.fasterxml.jackson.databind.ObjectMapper#setAnnotationIntrospector}.
    */
   public enum Priority {
-    PRIMARY, SECONDARY;
+    PRIMARY, SECONDARY
   }
 
   /**

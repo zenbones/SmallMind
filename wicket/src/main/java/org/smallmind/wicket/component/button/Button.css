@@ -1,79 +1,79 @@
 div.buttonstandard span.right {
-  background: url('${contextpath}${standard.img.right}') no-repeat top right;
-  color: ${standard.text.color};
-  font: ${standard.text.font};
-  display: block;
-  float: left;
-  height: ${standard.height};
-  padding-right: ${standard.pad.horizontal};
-  cursor: pointer;
-  text-decoration: none;
-  outline: none;
+    background: url('${contextpath}${standard.img.right}') no-repeat top right;
+    color: ${standard.text.color};
+    font: ${standard.text.font};
+    display: block;
+    float: left;
+    height: ${standard.height};
+    padding-right: ${standard.pad.horizontal};
+    cursor: pointer;
+    text-decoration: none;
+    outline: none;
 }
 
 div.buttonstandard span.left {
-  background: url('${contextpath}${standard.img.left}') no-repeat top left;
-  display: block;
-  height: ${standard.height};
-  padding: ${standard.pad.upper} 0 ${standard.pad.lower} ${standard.pad.horizontal};
+    background: url('${contextpath}${standard.img.left}') no-repeat top left;
+    display: block;
+    height: ${standard.height};
+    padding: ${standard.pad.upper} 0 ${standard.pad.lower} ${standard.pad.horizontal};
 }
 
 div.buttonpressed span.right {
-  background: url('${contextpath}${pressed.img.right}') no-repeat top right;
-  color: ${pressed.text.color};
-  font: ${pressed.text.font};
-  display: block;
-  float: left;
-  height: ${pressed.height};
-  padding-right: ${pressed.pad.horizontal};
-  cursor: pointer;
-  text-decoration: none;
-  outline: none;
+    background: url('${contextpath}${pressed.img.right}') no-repeat top right;
+    color: ${pressed.text.color};
+    font: ${pressed.text.font};
+    display: block;
+    float: left;
+    height: ${pressed.height};
+    padding-right: ${pressed.pad.horizontal};
+    cursor: pointer;
+    text-decoration: none;
+    outline: none;
 }
 
 div.buttonpressed span.left {
-  background: url('${contextpath}${pressed.img.left}') no-repeat top left;
-  display: block;
-  height: ${pressed.height};
-  padding: ${pressed.pad.upper} 0 ${pressed.pad.lower} ${pressed.pad.horizontal};
+    background: url('${contextpath}${pressed.img.left}') no-repeat top left;
+    display: block;
+    height: ${pressed.height};
+    padding: ${pressed.pad.upper} 0 ${pressed.pad.lower} ${pressed.pad.horizontal};
 }
 
 div.buttonhighlighted span.right {
-  background: url('${contextpath}${highlighted.img.right}') no-repeat top right;
-  color: ${highlighted.text.color};
-  font: ${highlighted.text.font};
-  display: block;
-  float: left;
-  height: ${highlighted.height};
-  padding-right: ${highlighted.pad.horizontal};
-  cursor: pointer;
-  text-decoration: none;
-  outline: none;
+    background: url('${contextpath}${highlighted.img.right}') no-repeat top right;
+    color: ${highlighted.text.color};
+    font: ${highlighted.text.font};
+    display: block;
+    float: left;
+    height: ${highlighted.height};
+    padding-right: ${highlighted.pad.horizontal};
+    cursor: pointer;
+    text-decoration: none;
+    outline: none;
 }
 
 div.buttonhighlighted span.left {
-  background: url('${contextpath}${highlighted.img.left}') no-repeat top left;
-  display: block;
-  height: ${highlighted.height};
-  padding: ${highlighted.pad.upper} 0 ${highlighted.pad.lower} ${highlighted.pad.horizontal};
+    background: url('${contextpath}${highlighted.img.left}') no-repeat top left;
+    display: block;
+    height: ${highlighted.height};
+    padding: ${highlighted.pad.upper} 0 ${highlighted.pad.lower} ${highlighted.pad.horizontal};
 }
 
 div.buttondisabled span.right {
-  background: url('${contextpath}${disabled.img.right}') no-repeat top right;
-  color: #333333;
-  font: italic 12px arial, sans-serif;
-  display: block;
-  float: left;
-  height: ${disabled.height};
-  padding-right: ${disabled.pad.horizontal};
-  cursor: pointer;
-  text-decoration: none;
-  outline: none;
+    background: url('${contextpath}${disabled.img.right}') no-repeat top right;
+    color: #333333;
+    font: italic 12px arial, sans-serif;
+    display: block;
+    float: left;
+    height: ${disabled.height};
+    padding-right: ${disabled.pad.horizontal};
+    cursor: pointer;
+    text-decoration: none;
+    outline: none;
 }
 
 div.buttondisabled span.left {
-  background: url('${contextpath}${disabled.img.left}') no-repeat top left;
-  display: block;
-  height: ${disabled.height};
-  padding: ${disabled.pad.upper} 0 ${disabled.pad.lower} ${disabled.pad.horizontal};
+    background: url('${contextpath}${disabled.img.left}') no-repeat top left;
+    display: block;
+    height: ${disabled.height};
+    padding: ${disabled.pad.upper} 0 ${disabled.pad.lower} ${disabled.pad.horizontal};
 }

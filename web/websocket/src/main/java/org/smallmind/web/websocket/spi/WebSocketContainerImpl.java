@@ -51,7 +51,7 @@ public class WebSocketContainerImpl implements WebSocketContainer {
   private final AtomicLong defaultMaxSessionIdleTimeout = new AtomicLong(-1);
   private final AtomicInteger defaultMaxTextMessageBufferSize = new AtomicInteger(Integer.MAX_VALUE);
   private final AtomicInteger defaultMaxBinaryMessageBufferSize = new AtomicInteger(Integer.MAX_VALUE);
-  private AtomicLong defaultAsyncSendTimeout = new AtomicLong(-1);
+  private final AtomicLong defaultAsyncSendTimeout = new AtomicLong(-1);
 
   @Override
   public Session connectToServer (Class<?> annotatedEndpointClass, URI path)

@@ -34,7 +34,7 @@ package org.smallmind.swing.table;
 
 public class SortableColumnTracker<E extends Enum> {
 
-  private E enumDataType;
+  private final E enumDataType;
   private SortableDirection direction;
 
   public SortableColumnTracker (E enumDataType, SortableDirection direction) {
@@ -84,5 +84,4 @@ public class SortableColumnTracker<E extends Enum> {
 
     return displayBuilder.toString();
   }
-
 }

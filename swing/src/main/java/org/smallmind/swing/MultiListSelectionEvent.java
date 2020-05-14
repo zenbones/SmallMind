@@ -36,15 +36,15 @@ import java.util.EventObject;
 
 public class MultiListSelectionEvent extends EventObject {
 
-  public static enum EventType {
+  public enum EventType {
 
     INSERT, REMOVE, CHANGE
   }
 
-  private EventType eventType;
-  private boolean valueIsAdjusting;
-  private int firstIndex;
-  private int lastIndex;
+  private final EventType eventType;
+  private final boolean valueIsAdjusting;
+  private final int firstIndex;
+  private final int lastIndex;
 
   public MultiListSelectionEvent (Object source, EventType eventType, int firstIndex, int lastIndex, boolean valueIsAdjusting) {
 
@@ -75,5 +75,4 @@ public class MultiListSelectionEvent extends EventObject {
 
     return lastIndex;
   }
-
 }

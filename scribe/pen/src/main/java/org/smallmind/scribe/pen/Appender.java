@@ -36,34 +36,34 @@ import java.util.List;
 
 public interface Appender {
 
-  public abstract String getName ();
+  String getName ();
 
-  public abstract void setName (String name);
+  void setName (String name);
 
-  public abstract void setFilter (Filter filter);
+  void setFilter (Filter filter);
 
-  public abstract void clearFilters ();
+  void clearFilters ();
 
-  public abstract void addFilter (Filter filter);
+  void addFilter (Filter filter);
 
-  public abstract Filter[] getFilters ();
+  Filter[] getFilters ();
 
-  public abstract void setFilters (List<Filter> filterList);
+  void setFilters (List<Filter> filterList);
 
-  public abstract ErrorHandler getErrorHandler ();
+  ErrorHandler getErrorHandler ();
 
-  public abstract void setErrorHandler (ErrorHandler errorHandler);
+  void setErrorHandler (ErrorHandler errorHandler);
 
-  public abstract Formatter getFormatter ();
+  Formatter getFormatter ();
 
-  public abstract void setFormatter (Formatter formatter);
+  void setFormatter (Formatter formatter);
 
-  public abstract boolean isActive ();
+  boolean isActive ();
 
-  public abstract void setActive (boolean active);
+  void setActive (boolean active);
 
-  public abstract void publish (Record record);
+  void publish (Record record);
 
-  public abstract void close ()
+  void close ()
     throws InterruptedException, LoggerException;
 }

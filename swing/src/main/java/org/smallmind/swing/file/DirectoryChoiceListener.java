@@ -36,7 +36,7 @@ import java.util.EventListener;
 
 public interface DirectoryChoiceListener extends EventListener {
 
-  public abstract void directoryChosen (DirectoryChoiceEvent directoryChoiceEvent);
+  void directoryChosen (DirectoryChoiceEvent directoryChoiceEvent);
 }
 
 

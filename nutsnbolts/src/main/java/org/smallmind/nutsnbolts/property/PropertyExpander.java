@@ -39,11 +39,11 @@ import org.smallmind.nutsnbolts.util.SystemPropertyMode;
 
 public class PropertyExpander {
 
-  private SystemPropertyMode systemPropertyMode;
-  private String prefix;
-  private String suffix;
-  private boolean ignoreUnresolvableProperties;
-  private boolean searchSystemEnvironment;
+  private final SystemPropertyMode systemPropertyMode;
+  private final String prefix;
+  private final String suffix;
+  private final boolean ignoreUnresolvableProperties;
+  private final boolean searchSystemEnvironment;
 
   public PropertyExpander ()
     throws PropertyExpanderException {
@@ -88,7 +88,7 @@ public class PropertyExpander {
   public String expand (String expansion)
     throws PropertyExpanderException {
 
-    return expand(expansion, new StringBuilder(expansion), Collections.<String, Object>emptyMap()).toString();
+    return expand(expansion, new StringBuilder(expansion), Collections.emptyMap()).toString();
   }
 
   public String expand (String expansion, Map<String, Object> expansionMap)

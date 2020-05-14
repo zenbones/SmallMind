@@ -37,16 +37,15 @@ import org.smallmind.swing.EditorListener;
 
 public interface SpinnerEditor {
 
-  public abstract void addEditorListener (EditorListener editorListener);
+  void addEditorListener (EditorListener editorListener);
 
-  public abstract void removeEditorListener (EditorListener editorListener);
+  void removeEditorListener (EditorListener editorListener);
 
-  public abstract boolean isValid ();
+  boolean isValid ();
 
-  public abstract Object getValue ();
+  Object getValue ();
 
-  public abstract void startEditing ();
+  void startEditing ();
 
-  public abstract Component getSpinnerEditorComponent (Spinner spinner, Object value);
-
+  Component getSpinnerEditorComponent (Spinner spinner, Object value);
 }

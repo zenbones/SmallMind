@@ -36,6 +36,5 @@ import java.util.EventListener;
 
 public interface DateSelectionListener extends EventListener {
 
-  public void dateChosen (DateSelectionEvent dateSelectionEvent);
-
+  void dateChosen (DateSelectionEvent dateSelectionEvent);
 }

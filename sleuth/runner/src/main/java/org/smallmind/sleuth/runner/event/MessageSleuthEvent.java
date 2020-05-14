@@ -34,7 +34,7 @@ package org.smallmind.sleuth.runner.event;
 
 public abstract class MessageSleuthEvent extends TimedSleuthEvent {
 
-  private String message;
+  private final String message;
 
   public MessageSleuthEvent (String className, String methodName, long elapsed, String message) {
 

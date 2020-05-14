@@ -34,8 +34,8 @@ package org.smallmind.persistence.orm;
 
 public abstract class TransactionPostProcess {
 
-  private TransactionEndState endState;
-  private ProcessPriority priority;
+  private final TransactionEndState endState;
+  private final ProcessPriority priority;
 
   public TransactionPostProcess (TransactionEndState endState, ProcessPriority priority) {
 

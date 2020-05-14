@@ -36,9 +36,9 @@ public enum StorageType {
 
   LDAP("ldap");
 
-  private String backingStore;
+  private final String backingStore;
 
-  private StorageType (String backingStore) {
+  StorageType (String backingStore) {
 
     this.backingStore = backingStore;
   }

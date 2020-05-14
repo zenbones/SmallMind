@@ -36,7 +36,7 @@ import java.util.EventListener;
 
 public interface FileChoiceListener extends EventListener {
 
-  public abstract void fileChosen (FileChoiceEvent fileChoiceEvent);
+  void fileChosen (FileChoiceEvent fileChoiceEvent);
 }
 
 

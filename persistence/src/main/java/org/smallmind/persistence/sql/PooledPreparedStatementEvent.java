@@ -39,7 +39,7 @@ import javax.sql.StatementEvent;
 
 public class PooledPreparedStatementEvent extends StatementEvent {
 
-  private String statementId;
+  private final String statementId;
 
   public PooledPreparedStatementEvent (PooledConnection connection, PreparedStatement statement, String statementId) {
 

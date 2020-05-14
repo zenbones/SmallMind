@@ -45,14 +45,14 @@ import org.smallmind.quorum.pool.complex.ComponentPool;
 
 public class PooledJavaContextComponentInstanceFactory extends AbstractComponentInstanceFactory<PooledJavaContext> {
 
-  private StorageType storageType;
-  private String contextPath;
-  private String host;
-  private String rootNamespace;
-  private String userContext;
-  private String password;
-  private boolean tls;
-  private int port;
+  private final StorageType storageType;
+  private final String contextPath;
+  private final String host;
+  private final String rootNamespace;
+  private final String userContext;
+  private final String password;
+  private final boolean tls;
+  private final int port;
 
   public PooledJavaContextComponentInstanceFactory (StorageType storageType, String contextPath, String host, int port, boolean tls, String rootNamespace, String userContext, String password) {
 

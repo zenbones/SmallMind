@@ -47,7 +47,7 @@ import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
 
 public abstract class PolymorphicXmlAdapter<T> extends XmlAdapter<JsonNode, T> {
 
-  private Class<?> baseClass;
+  private final Class<?> baseClass;
 
   public PolymorphicXmlAdapter () {
 

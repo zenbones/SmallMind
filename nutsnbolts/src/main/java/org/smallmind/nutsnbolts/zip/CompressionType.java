@@ -93,7 +93,7 @@ public enum CompressionType {
     }
   };
 
-  private String extension;
+  private final String extension;
 
   CompressionType (String extension) {
 

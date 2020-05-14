@@ -39,7 +39,7 @@ import org.springframework.beans.factory.InitializingBean;
 
 public class TemplateInitializingBean implements InitializingBean {
 
-  private LinkedList<Template> initialTemplates;
+  private final LinkedList<Template> initialTemplates;
 
   public TemplateInitializingBean () {
 

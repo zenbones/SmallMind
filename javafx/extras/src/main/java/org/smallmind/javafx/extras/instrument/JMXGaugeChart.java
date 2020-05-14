@@ -78,8 +78,7 @@ public class JMXGaugeChart extends GaugeChart {
       if (rateTimeUnit.endsWith("S")) {
         rateTimeUnit = rateTimeUnit.substring(0, rateTimeUnit.length() - 1);
       }
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       throw new IllegalStateException("Unable to determine the velocity unit of time", exception);
     }
 
@@ -105,8 +104,7 @@ public class JMXGaugeChart extends GaugeChart {
         AttributeList attributeList = mBeanServerConnection.getAttributes(objectName, DISTRIBUTION_ATTRIBUTES);
 
         addMeasure(System.currentTimeMillis(), new Measure((Double)((Attribute)attributeList.get(0)).getValue(), (Double)((Attribute)attributeList.get(1)).getValue(), (Double)((Attribute)attributeList.get(2)).getValue(), (Double)((Attribute)attributeList.get(3)).getValue()));
-      }
-      catch (final Exception exception) {
+      } catch (final Exception exception) {
         setPaused(true);
 
         Platform.runLater(new Runnable() {

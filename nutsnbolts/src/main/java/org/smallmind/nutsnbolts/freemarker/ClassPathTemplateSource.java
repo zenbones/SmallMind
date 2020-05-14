@@ -37,9 +37,9 @@ import java.io.InputStream;
 
 public class ClassPathTemplateSource {
 
-  private InputStream inputStream;
-  private ClassLoader classLoader;
-  private String name;
+  private final InputStream inputStream;
+  private final ClassLoader classLoader;
+  private final String name;
 
   public ClassPathTemplateSource (ClassLoader classLoader, String name) {
 

@@ -95,5 +95,4 @@ public class DirectoryNode extends TreeNode {
 
     super.sortChildren(sort);
   }
-
 }

@@ -34,5 +34,5 @@ package org.smallmind.web.websocket;
 
 public interface CloseListener {
 
-  public abstract void onClose (int code, String reason);
+  void onClose (int code, String reason);
 }

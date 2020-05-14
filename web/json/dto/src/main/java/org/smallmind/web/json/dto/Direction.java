@@ -36,8 +36,8 @@ public enum Direction {
 
   IN("In", Visibility.IN), OUT("Out", Visibility.OUT);
 
-  private Visibility visibility;
-  private String code;
+  private final Visibility visibility;
+  private final String code;
 
   Direction (String code, Visibility visibility) {
 

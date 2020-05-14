@@ -48,9 +48,9 @@ import org.smallmind.scribe.pen.adapter.ScribeParameterAdapter;
 
 public class Log4JLoggerAdapter implements LoggerAdapter {
 
-  private Logger logger;
-  private ConcurrentLinkedQueue<Filter> filterList;
-  private ConcurrentLinkedQueue<Enhancer> enhancerList;
+  private final Logger logger;
+  private final ConcurrentLinkedQueue<Filter> filterList;
+  private final ConcurrentLinkedQueue<Enhancer> enhancerList;
   private boolean autoFillLogicalContext = false;
 
   public Log4JLoggerAdapter (Logger logger) {

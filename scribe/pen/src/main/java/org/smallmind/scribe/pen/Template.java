@@ -45,9 +45,9 @@ public abstract class Template {
 
   public final static int NO_MATCH = -1;
 
-  private LinkedList<Filter> filterList;
-  private LinkedList<Appender> appenderList;
-  private LinkedList<Enhancer> enhancerList;
+  private final LinkedList<Filter> filterList;
+  private final LinkedList<Appender> appenderList;
+  private final LinkedList<Enhancer> enhancerList;
   private Level level = Level.INFO;
   private boolean autoFillLogicalContext = false;
   private boolean registered = false;

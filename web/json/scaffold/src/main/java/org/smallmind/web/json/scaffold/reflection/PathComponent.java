@@ -38,9 +38,9 @@ import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public class PathComponent {
 
+  private final String name;
   private LinkedList<Integer> subscriptList;
   private Object[] arguments;
-  private String name;
 
   public PathComponent (String name) {
 

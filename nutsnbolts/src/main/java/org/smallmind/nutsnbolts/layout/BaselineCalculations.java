@@ -36,8 +36,8 @@ import java.util.List;
 
 public class BaselineCalculations {
 
-  private Pair[] elementAscentsDescents;
-  private double idealizedBaseline;
+  private final Pair[] elementAscentsDescents;
+  private final double idealizedBaseline;
 
   public BaselineCalculations (Bias bias, Double maximumOverrideMeasurement, double containerMeasurement, List<ParaboxElement<?>> elements, LayoutTailor tailor) {
 

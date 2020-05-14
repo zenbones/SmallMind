@@ -45,6 +45,18 @@ public class SHA3 {
     0x8000000000008002L, 0x8000000000000080L, 0x000000000000800AL, 0x800000008000000AL,
     0x8000000080008081L, 0x8000000000008080L, 0x0000000080000001L, 0x8000000080008008L};
   /**
+   * The bitrate
+   */
+  private final int r;
+  /**
+   * The capacity
+   */
+  private final int c;
+  /**
+   * The output size
+   */
+  private final int n;
+  /**
    * Keccak-f round temporary
    */
   private long[] B;
@@ -52,18 +64,6 @@ public class SHA3 {
    * Keccak-f round temporary
    */
   private long[] C;
-  /**
-   * The bitrate
-   */
-  private int r;
-  /**
-   * The capacity
-   */
-  private int c;
-  /**
-   * The output size
-   */
-  private int n;
   /**
    * The state size
    */

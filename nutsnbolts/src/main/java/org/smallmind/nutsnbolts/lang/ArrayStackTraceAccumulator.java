@@ -36,7 +36,7 @@ import java.util.LinkedList;
 
 public class ArrayStackTraceAccumulator implements StackTraceAccumulator {
 
-  private LinkedList<String> traceList;
+  private final LinkedList<String> traceList;
 
   public ArrayStackTraceAccumulator () {
 

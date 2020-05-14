@@ -51,10 +51,10 @@ public class Template {
 
   private static final XMLEntityResolver SMALL_MIND_ENTITY_RESOLVER = new XMLEntityResolver(SmallMindProtocolResolver.getInstance());
 
-  private LinkedList<Option> optionList = new LinkedList<>();
-  private HashSet<Option> optionSet = new HashSet<>();
-  private HashSet<String> nameAndFlagSet = new HashSet<>();
-  private String shortName;
+  private final LinkedList<Option> optionList = new LinkedList<>();
+  private final HashSet<Option> optionSet = new HashSet<>();
+  private final HashSet<String> nameAndFlagSet = new HashSet<>();
+  private final String shortName;
 
   public Template (Class<?> entryClass) {
 

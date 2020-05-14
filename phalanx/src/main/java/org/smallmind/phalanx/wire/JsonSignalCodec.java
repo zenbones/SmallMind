@@ -92,9 +92,9 @@ public class JsonSignalCodec implements SignalCodec {
 
   private static class StringConverter {
 
-    private byte[] buffer;
-    private int offset;
-    private int len;
+    private final byte[] buffer;
+    private final int offset;
+    private final int len;
 
     public StringConverter (byte[] buffer) {
 

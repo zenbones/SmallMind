@@ -39,7 +39,7 @@ import org.smallmind.claxon.registry.Tag;
 
 public class IndigenousCollector extends PushCollector {
 
-  private Consumer<String> output;
+  private final Consumer<String> output;
 
   public IndigenousCollector () {
 

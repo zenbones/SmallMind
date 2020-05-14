@@ -34,18 +34,18 @@ package org.smallmind.quorum.pool.complex;
 
 public interface ComponentInstanceFactory<C> {
 
-  public abstract ComponentInstance<C> createInstance (ComponentPool<C> componentPool)
+  ComponentInstance<C> createInstance (ComponentPool<C> componentPool)
     throws Exception;
 
-  public void initialize ()
+  void initialize ()
     throws Exception;
 
-  public void startup ()
+  void startup ()
     throws Exception;
 
-  public void shutdown ()
+  void shutdown ()
     throws Exception;
 
-  public void deconstruct ()
+  void deconstruct ()
     throws Exception;
 }

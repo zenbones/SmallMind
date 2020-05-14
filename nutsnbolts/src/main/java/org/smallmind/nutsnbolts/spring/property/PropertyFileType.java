@@ -34,7 +34,6 @@ package org.smallmind.nutsnbolts.spring.property;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Map;
 import java.util.Properties;
 import org.yaml.snakeyaml.Yaml;
 
@@ -58,12 +57,12 @@ public enum PropertyFileType {
 
       Yaml yaml = new Yaml();
 
-      return new YamlPropertyHandler((Map<String, Object>)yaml.load(inputStream));
+      return new YamlPropertyHandler(yaml.load(inputStream));
     }
   };
-  private String[] extensions;
+  private final String[] extensions;
 
-  private PropertyFileType (String[] extensions) {
+  PropertyFileType (String[] extensions) {
 
     this.extensions = extensions;
   }

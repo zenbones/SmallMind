@@ -34,7 +34,7 @@ package org.smallmind.swing.dialog;
 
 public class ErrorEvent extends java.util.EventObject {
 
-  private Exception exception;
+  private final Exception exception;
 
   public ErrorEvent (Object source, Exception exception) {
 

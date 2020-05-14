@@ -34,8 +34,8 @@ package org.smallmind.nutsnbolts.util;
 
 public class Flaggable<T> {
 
-  private boolean flagged;
-  private T value;
+  private final boolean flagged;
+  private final T value;
 
   public Flaggable (boolean flag, T value) {
 

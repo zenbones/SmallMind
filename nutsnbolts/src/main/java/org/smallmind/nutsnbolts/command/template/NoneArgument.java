@@ -34,7 +34,7 @@ package org.smallmind.nutsnbolts.command.template;
 
 public class NoneArgument extends Argument {
 
-  private static NoneArgument INSTANCE = new NoneArgument();
+  private static final NoneArgument INSTANCE = new NoneArgument();
 
   private NoneArgument () {
 

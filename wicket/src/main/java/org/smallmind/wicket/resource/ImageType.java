@@ -36,9 +36,9 @@ public enum ImageType {
 
   GIF("gif"), PNG("png"), JPG("jpg");
 
-  private String format;
+  private final String format;
 
-  private ImageType (String format) {
+  ImageType (String format) {
 
     this.format = format;
   }

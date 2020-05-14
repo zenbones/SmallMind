@@ -34,8 +34,8 @@ package org.smallmind.nutsnbolts.layout;
 
 public abstract class ParaboxElement<P> {
 
-  private P part;
-  private Constraint constraint;
+  private final P part;
+  private final Constraint constraint;
 
   public ParaboxElement (P part, Constraint constraint) {
 

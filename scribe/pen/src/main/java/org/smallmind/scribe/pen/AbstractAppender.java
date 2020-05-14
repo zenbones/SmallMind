@@ -37,9 +37,9 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 public abstract class AbstractAppender implements Appender {
 
+  private final ConcurrentLinkedQueue<Filter> filterList;
   private Formatter formatter;
   private ErrorHandler errorHandler;
-  private ConcurrentLinkedQueue<Filter> filterList;
   private String name;
   private boolean active = true;
 

@@ -80,22 +80,22 @@ public class FileChooserPanel extends JPanel implements ComponentListener, Mouse
 
   private final WeakEventListenerList<FileChoiceListener> listenerList = new WeakEventListenerList<FileChoiceListener>();
 
-  private Window parentWindow;
-  private FileChooserState state;
-  private JTable directoryTable;
-  private JList filePickList;
-  private DirectoryTableModel directoryTableModel;
-  private FilePickListModel filePickListModel;
-  private JComboBox filterComboBox;
-  private FilterComboBoxModel filterComboBoxModel;
-  private JButton newFolderButton;
-  private JButton editFolderButton;
-  private JButton chooseButton;
-  private JButton cancelButton;
-  private JScrollPane directoryTableScrollPane;
-  private JTextField fileNameTextField;
+  private final Window parentWindow;
+  private final FileChooserState state;
+  private final JTable directoryTable;
+  private final JList filePickList;
+  private final DirectoryTableModel directoryTableModel;
+  private final FilePickListModel filePickListModel;
+  private final JComboBox filterComboBox;
+  private final FilterComboBoxModel filterComboBoxModel;
+  private final JButton newFolderButton;
+  private final JButton editFolderButton;
+  private final JButton chooseButton;
+  private final JButton cancelButton;
+  private final JScrollPane directoryTableScrollPane;
+  private final JTextField fileNameTextField;
+  private final AtomicBoolean selectionSensitive = new AtomicBoolean(true);
   private File chosenFile;
-  private AtomicBoolean selectionSensitive = new AtomicBoolean(true);
 
   public FileChooserPanel (Window parentWindow, FileChooserState state) {
 
@@ -238,11 +238,9 @@ public class FileChooserPanel extends JPanel implements ComponentListener, Mouse
     if ((chosenFile != null) && (!chosenFile.getName().equals(fileNameTextField.getText().trim()))) {
       if ((fileNameTextField.getText() == null) || (fileNameTextField.getText().length() == 0)) {
         chosenFile = null;
-      }
-      else if (fileNameTextField.getText().contains(System.getProperty("file.separator"))) {
+      } else if (fileNameTextField.getText().contains(System.getProperty("file.separator"))) {
         chosenFile = new File(fileNameTextField.getText());
-      }
-      else {
+      } else {
         chosenFile = new File(chosenFile.getParentFile(), fileNameTextField.getText());
       }
     }
@@ -250,12 +248,10 @@ public class FileChooserPanel extends JPanel implements ComponentListener, Mouse
     if (state.equals(FileChooserState.SAVE) && (chosenFile != null) && chosenFile.exists()) {
       if (YesNoDialog.showYesNoDialog(parentWindow, OptionType.WARNING, chosenFile.getName() + " already exists. Overwrite the file?").equals(DialogState.YES)) {
         fireFileChosen(new FileChoiceEvent(this, chosenFile));
-      }
-      else {
+      } else {
         chosenFile = originallyChosenFile;
       }
-    }
-    else {
+    } else {
       fireFileChosen(new FileChoiceEvent(this, chosenFile));
     }
   }
@@ -288,8 +284,7 @@ public class FileChooserPanel extends JPanel implements ComponentListener, Mouse
       if (!((File)filePickListModel.getElementAt(filePickList.getSelectedIndex())).isDirectory()) {
         chosenFile = (File)filePickListModel.getElementAt(filePickList.getSelectedIndex());
         fileNameTextField.setText(((File)filePickListModel.getElementAt(filePickList.getSelectedIndex())).getName());
-      }
-      else {
+      } else {
         chosenFile = null;
         fileNameTextField.setText("");
       }
@@ -309,8 +304,7 @@ public class FileChooserPanel extends JPanel implements ComponentListener, Mouse
 
       chosenFile = null;
       fileNameTextField.setText("");
-    }
-    else if (actionEvent.getSource() == newFolderButton) {
+    } else if (actionEvent.getSource() == newFolderButton) {
 
       boolean success;
       int count = 0;
@@ -321,8 +315,7 @@ public class FileChooserPanel extends JPanel implements ComponentListener, Mouse
       } while (!success);
 
       filePickListModel.setDirectory(filePickListModel.getDirectory());
-    }
-    else if (actionEvent.getSource() == editFolderButton) {
+    } else if (actionEvent.getSource() == editFolderButton) {
 
       final File selectedFile = (File)filePickList.getSelectedValue();
       final JTextField renameTextField = new JTextField(selectedFile.getName());
@@ -367,11 +360,9 @@ public class FileChooserPanel extends JPanel implements ComponentListener, Mouse
       renameDialog = new OptionDialog(parentWindow, "Rename " + (((File)filePickList.getSelectedValue()).isDirectory() ? "folder" : "document") + "...", OptionType.QUESTION, new OptionButton[] {new OptionButton("Apply", DialogState.APPLY), new OptionButton("Cancel", DialogState.CANCEL)}, renamePanel);
       renameDialog.setModal(true);
       renameDialog.setVisible(true);
-    }
-    else if (actionEvent.getSource() == chooseButton) {
+    } else if (actionEvent.getSource() == chooseButton) {
       finishingTouches();
-    }
-    else if (actionEvent.getSource() == cancelButton) {
+    } else if (actionEvent.getSource() == cancelButton) {
       fireFileChosen(new FileChoiceEvent(this, null));
     }
   }
@@ -397,8 +388,7 @@ public class FileChooserPanel extends JPanel implements ComponentListener, Mouse
 
       if (((vanishingFile = (File)filePickListModel.getElementAt(selectedIndex)).isDirectory()) && (vanishingFile.listFiles().length > 0)) {
         WarningDialog.showWarningDialog(parentWindow, "Directories must be empty before deletion");
-      }
-      else if (vanishingFile.delete()) {
+      } else if (vanishingFile.delete()) {
         fileNameTextField.setText("");
         filePickListModel.setDirectory(filePickListModel.getDirectory());
         if (filePickListModel.getSize() == 0) {
@@ -430,8 +420,7 @@ public class FileChooserPanel extends JPanel implements ComponentListener, Mouse
         directoryTable.createDefaultColumnsFromModel();
         filePickListModel.setDirectory(directory);
       }
-    }
-    else if (mouseEvent.getSource() == filePickList) {
+    } else if (mouseEvent.getSource() == filePickList) {
       if ((mouseEvent.getButton() == MouseEvent.BUTTON1) && (mouseEvent.getClickCount() == 2) && ((selectedValue = filePickList.getSelectedValue()) != null)) {
         selectionSensitive.set(false);
         filePickList.clearSelection();
@@ -444,8 +433,7 @@ public class FileChooserPanel extends JPanel implements ComponentListener, Mouse
           editFolderButton.setEnabled(false);
           chosenFile = null;
           fileNameTextField.setText("");
-        }
-        else {
+        } else {
           finishingTouches();
         }
       }
@@ -477,8 +465,7 @@ public class FileChooserPanel extends JPanel implements ComponentListener, Mouse
 
     if ((componentEvent.getSource() == directoryTable) || (componentEvent.getSource() == directoryTableScrollPane)) {
       directoryTable.scrollRectToVisible(directoryTable.getCellRect(0, directoryTableModel.getColumnCount() - 1, true));
-    }
-    else if (componentEvent.getSource() == filePickList) {
+    } else if (componentEvent.getSource() == filePickList) {
       filePickList.setVisibleRowCount(Math.max(10, (int)(filePickList.getVisibleRect().getHeight() / ((FilePickListCellRenderer)filePickList.getCellRenderer()).getRowHeight())));
     }
   }

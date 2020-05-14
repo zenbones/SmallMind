@@ -43,7 +43,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Argument {
 
-  public abstract String value ();
+  String value ();
 
-  public abstract String type () default "";
+  String type () default "";
 }

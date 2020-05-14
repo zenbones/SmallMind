@@ -78,7 +78,7 @@ public class XmlAdapterParamConverterProvider implements ParamConverterProvider 
 
   private class XmlAdapterParamConverter<T> implements ParamConverter<T> {
 
-    private XmlAdapter<String, T> xmlAdapter;
+    private final XmlAdapter<String, T> xmlAdapter;
 
     public XmlAdapterParamConverter (XmlAdapter<String, T> xmlAdapter) {
 

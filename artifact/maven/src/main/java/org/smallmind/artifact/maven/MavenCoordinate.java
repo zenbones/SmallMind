@@ -152,10 +152,7 @@ public class MavenCoordinate {
     if (!groupId.equals(that.groupId)) {
       return false;
     }
-    if (!version.equals(that.version)) {
-      return false;
-    }
 
-    return true;
+    return version.equals(that.version);
   }
 }

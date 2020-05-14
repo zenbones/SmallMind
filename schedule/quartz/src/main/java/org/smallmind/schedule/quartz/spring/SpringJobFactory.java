@@ -44,7 +44,7 @@ import org.springframework.context.ApplicationContext;
 
 public class SpringJobFactory implements JobFactory {
 
-  private ApplicationContext applicationContext;
+  private final ApplicationContext applicationContext;
 
   public SpringJobFactory (ApplicationContext applicationContext) {
 

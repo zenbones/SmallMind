@@ -36,8 +36,8 @@ import java.nio.channels.SocketChannel;
 
 public class DestinationTicket {
 
-  private ProxyTarget target;
-  private SocketChannel destinationChannel;
+  private final ProxyTarget target;
+  private final SocketChannel destinationChannel;
 
   public DestinationTicket (ProxyTarget target, SocketChannel destinationChannel) {
 

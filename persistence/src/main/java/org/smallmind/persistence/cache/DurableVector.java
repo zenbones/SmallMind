@@ -39,11 +39,11 @@ import org.smallmind.persistence.Durable;
 
 public abstract class DurableVector<I extends Serializable & Comparable<I>, D extends Durable<I>> implements Serializable, Iterable<D> {
 
-  private Comparator<D> comparator;
-  private boolean ordered;
-  private long creationTimeMilliseconds;
-  private int timeToLiveSeconds;
-  private int maxSize;
+  private final Comparator<D> comparator;
+  private final boolean ordered;
+  private final long creationTimeMilliseconds;
+  private final int timeToLiveSeconds;
+  private final int maxSize;
 
   public DurableVector (Comparator<D> comparator, int maxSize, int timeToLiveSeconds, boolean ordered) {
 

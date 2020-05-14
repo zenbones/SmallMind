@@ -38,8 +38,8 @@ import org.smallmind.nutsnbolts.util.DirectionalComparator;
 
 public class MultiListSelectionStack<T extends Comparable<T>> {
 
-  private LinkedList<MultiListSelection<T>> selectionList;
-  private DirectionalComparator.Direction direction;
+  private final LinkedList<MultiListSelection<T>> selectionList;
+  private final DirectionalComparator.Direction direction;
 
   public MultiListSelectionStack (DirectionalComparator.Direction direction) {
 
@@ -58,8 +58,7 @@ public class MultiListSelectionStack<T extends Comparable<T>> {
       while (selectionIter.hasNext()) {
         if (selection.compareTo(selectionIter.next(), direction) < 0) {
           break;
-        }
-        else {
+        } else {
           index++;
         }
       }
@@ -85,5 +84,4 @@ public class MultiListSelectionStack<T extends Comparable<T>> {
 
     return selectionList.getLast();
   }
-
 }

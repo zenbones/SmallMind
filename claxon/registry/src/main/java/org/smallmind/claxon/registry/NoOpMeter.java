@@ -36,7 +36,7 @@ import org.smallmind.claxon.registry.meter.Meter;
 
 public class NoOpMeter implements Meter {
 
-  private static NoOpMeter INSTANCE = new NoOpMeter();
+  private static final NoOpMeter INSTANCE = new NoOpMeter();
 
   private NoOpMeter () {
 

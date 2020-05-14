@@ -37,10 +37,10 @@ import java.io.OutputStream;
 
 public class CSVWriter implements AutoCloseable {
 
-  private static char[] ESCAPED_CHARS = {'"', ',', '\n', '\r', '\f'};
+  private static final char[] ESCAPED_CHARS = {'"', ',', '\n', '\r', '\f'};
 
-  private OutputStream outputStream;
-  private int lineLength;
+  private final OutputStream outputStream;
+  private final int lineLength;
 
   public CSVWriter (OutputStream outputStream, String... headers)
     throws IOException, CSVParseException {

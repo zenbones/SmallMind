@@ -36,16 +36,16 @@ import java.awt.Window;
 
 public class WarningDialog extends OptionDialog {
 
+  public WarningDialog (Window parentWindow, String warningText) {
+
+    super(parentWindow, warningText, OptionType.WARNING);
+  }
+
   public static void showWarningDialog (Window parentWindow, String warningText) {
 
     WarningDialog warningDialog = new WarningDialog(parentWindow, warningText);
 
     warningDialog.setModal(true);
     warningDialog.setVisible(true);
-  }
-
-  public WarningDialog (Window parentWindow, String warningText) {
-
-    super(parentWindow, warningText, OptionType.WARNING);
   }
 }

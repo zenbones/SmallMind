@@ -39,8 +39,8 @@ import java.nio.file.Path;
 
 public class FileSystemTemplateSource {
 
+  private final Path templatePath;
   private InputStream inputStream;
-  private Path templatePath;
 
   public FileSystemTemplateSource (Path templatePath) {
 

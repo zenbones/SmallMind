@@ -39,9 +39,9 @@ public enum HectorType {
 
   BYTE(new ByteTranslator()), SHORT(new ShortTranslator()), INTEGER(new IntegerTranslator()), LONG(new LongTranslator()), FLOAT(new FloatTranslator()), DOUBLE(new DoubleTranslator()), BOOLEAN(new BooleanTranslator()), CHARACTER(new CharacterTranslator()), STRING(new StringTranslator()), DATE(new DateTranslator()), ENUM(new EnumTranslator());
 
-  private HectorTranslator hectorTranslator;
+  private final HectorTranslator hectorTranslator;
 
-  private HectorType (HectorTranslator hectorTranslator) {
+  HectorType (HectorTranslator hectorTranslator) {
 
     this.hectorTranslator = hectorTranslator;
   }

@@ -40,7 +40,7 @@ import javax.transaction.xa.XAResource;
 
 public class XADataSourcePooledConnection extends AbstractPooledConnection<XADataSource> implements XAConnection {
 
-  private XAConnection xaConnection;
+  private final XAConnection xaConnection;
 
   public XADataSourcePooledConnection (XADataSource dataSource, int maxStatements)
     throws SQLException {

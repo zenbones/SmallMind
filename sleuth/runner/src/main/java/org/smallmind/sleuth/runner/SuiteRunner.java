@@ -46,12 +46,12 @@ import org.smallmind.sleuth.runner.event.FatalSleuthEvent;
 
 public class SuiteRunner implements Runnable {
 
-  private SleuthRunner sleuthRunner;
-  private AnnotationProcessor annotationProcessor;
-  private SleuthThreadPool threadPool;
-  private DependencyQueue<Suite, Class<?>> suiteDependencyQueue;
-  private Dependency<Suite, Class<?>> suiteDependency;
-  private CountDownLatch suiteCompletedLatch;
+  private final SleuthRunner sleuthRunner;
+  private final AnnotationProcessor annotationProcessor;
+  private final SleuthThreadPool threadPool;
+  private final DependencyQueue<Suite, Class<?>> suiteDependencyQueue;
+  private final Dependency<Suite, Class<?>> suiteDependency;
+  private final CountDownLatch suiteCompletedLatch;
 
   public SuiteRunner (SleuthRunner sleuthRunner, CountDownLatch suiteCompletedLatch, Dependency<Suite, Class<?>> suiteDependency, DependencyQueue<Suite, Class<?>> suiteDependencyQueue, AnnotationProcessor annotationProcessor, SleuthThreadPool threadPool) {
 

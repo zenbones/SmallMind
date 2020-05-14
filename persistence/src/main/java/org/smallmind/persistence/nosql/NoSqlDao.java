@@ -45,7 +45,7 @@ import org.smallmind.persistence.cache.WideVectoredDao;
 public abstract class NoSqlDao<W extends Serializable & Comparable<W>, I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractWideVectorAwareManagedDao<W, I, D> implements WideDurableDao<W, I, D> {
 
   private final TypeInference parentIdTypeInference = new TypeInference();
-  private boolean cacheEnabled;
+  private final boolean cacheEnabled;
 
   public NoSqlDao (String metricSource, WideVectoredDao<W, I, D> wideVectoredDao, boolean cacheEnabled) {
 

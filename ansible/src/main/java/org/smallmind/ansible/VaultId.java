@@ -36,8 +36,8 @@ import org.smallmind.nutsnbolts.command.CommandLineException;
 
 public class VaultId {
 
-  private String id;
-  private String fileOrPrompt;
+  private final String id;
+  private final String fileOrPrompt;
 
   public VaultId (String spec)
     throws CommandLineException {

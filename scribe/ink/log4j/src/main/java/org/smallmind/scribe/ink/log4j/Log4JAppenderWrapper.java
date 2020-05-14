@@ -42,7 +42,7 @@ import org.smallmind.scribe.pen.adapter.RecordWrapper;
 
 public class Log4JAppenderWrapper implements org.apache.log4j.Appender {
 
-  private Appender appender;
+  private final Appender appender;
 
   public Log4JAppenderWrapper (Appender appender) {
 

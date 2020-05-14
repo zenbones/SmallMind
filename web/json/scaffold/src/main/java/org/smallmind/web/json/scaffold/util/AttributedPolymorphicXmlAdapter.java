@@ -46,7 +46,7 @@ import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
 
 public abstract class AttributedPolymorphicXmlAdapter<T> extends XmlAdapter<ObjectNode, T> {
 
-  private Class<?> baseClass;
+  private final Class<?> baseClass;
 
   public AttributedPolymorphicXmlAdapter () {
 

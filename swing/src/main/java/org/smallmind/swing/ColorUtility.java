@@ -94,21 +94,16 @@ public class ColorUtility {
 
     if (channel >= tintChannel) {
       tingedChannel = channel - (int)Math.floor(step * ((255 - tintChannel) / 255F));
-    }
-    else {
+    } else {
       tingedChannel = channel + (int)Math.floor(step * (tintChannel / 255F));
     }
 
     if (tingedChannel < 0) {
       return 0;
-    }
-    else if (tingedChannel > 255) {
+    } else if (tingedChannel > 255) {
       return 255;
-    }
-    else {
+    } else {
       return tingedChannel;
     }
-
   }
-
 }

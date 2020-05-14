@@ -40,7 +40,7 @@ import org.smallmind.scribe.pen.Record;
 
 public class Log4JFormatterAdapter implements Formatter {
 
-  private Layout layout;
+  private final Layout layout;
 
   public Log4JFormatterAdapter (Layout layout) {
 

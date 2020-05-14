@@ -37,7 +37,7 @@ import com.querydsl.jpa.impl.JPAUpdateClause;
 
 public abstract class JPAUpdateDetails<T> {
 
-  private EntityPath<T> entityPath;
+  private final EntityPath<T> entityPath;
 
   public JPAUpdateDetails (EntityPath<T> entityPath) {
 

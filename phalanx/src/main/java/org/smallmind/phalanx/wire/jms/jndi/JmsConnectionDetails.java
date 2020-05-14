@@ -37,11 +37,11 @@ import org.smallmind.quorum.pool.complex.ComponentPool;
 
 public class JmsConnectionDetails {
 
-  private ComponentPool<Context> contextPool;
-  private String destinationName;
-  private String connectionFactoryName;
-  private String userName;
-  private String password;
+  private final ComponentPool<Context> contextPool;
+  private final String destinationName;
+  private final String connectionFactoryName;
+  private final String userName;
+  private final String password;
 
   public JmsConnectionDetails (ComponentPool<Context> contextPool, String destinationName, String connectionFactoryName, String userName, String password) {
 

@@ -38,8 +38,8 @@ import java.io.InputStream;
 
 public class ClassStreamTicket implements Closeable {
 
-  private InputStream inputStream;
-  private long timeStamp;
+  private final InputStream inputStream;
+  private final long timeStamp;
 
   public ClassStreamTicket (InputStream inputStream, long timeStamp) {
 

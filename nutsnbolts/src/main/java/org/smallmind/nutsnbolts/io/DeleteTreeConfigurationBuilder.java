@@ -37,7 +37,7 @@ import java.nio.file.Path;
 
 public class DeleteTreeConfigurationBuilder {
 
-  private Path target;
+  private final Path target;
   private PathFilter[] pathFilters;
   private boolean includeTargetDirectory = true;
   private boolean throwErrorOnDirectoryNotEmpty = true;

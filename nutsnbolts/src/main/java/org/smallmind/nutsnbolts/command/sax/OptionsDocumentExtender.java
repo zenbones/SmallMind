@@ -43,7 +43,7 @@ import org.xml.sax.SAXException;
 
 public class OptionsDocumentExtender extends AbstractDocumentExtender {
 
-  private Template template;
+  private final Template template;
 
   public OptionsDocumentExtender (Template template) {
 

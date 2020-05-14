@@ -32,10 +32,9 @@
  */
 package org.smallmind.swing;
 
-public abstract interface Vetoable {
+public interface Vetoable {
 
-  public abstract void veto ();
+  void veto ();
 
-  public abstract boolean wasVetoed ();
-
+  boolean wasVetoed ();
 }

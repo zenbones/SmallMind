@@ -36,9 +36,9 @@ import java.util.EventListener;
 
 public interface ClipboardListener extends EventListener {
 
-  public abstract void cutAction (ClipboardEvent clipboardEvent);
+  void cutAction (ClipboardEvent clipboardEvent);
 
-  public abstract void copyAction (ClipboardEvent clipboardEvent);
+  void copyAction (ClipboardEvent clipboardEvent);
 
-  public abstract void pasteAction (ClipboardEvent clipboardEvent);
+  void pasteAction (ClipboardEvent clipboardEvent);
 }

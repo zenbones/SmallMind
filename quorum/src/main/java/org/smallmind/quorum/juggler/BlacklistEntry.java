@@ -34,8 +34,8 @@ package org.smallmind.quorum.juggler;
 
 public class BlacklistEntry<R> {
 
-  private JugglingPin<R> jugglingPin;
-  private Throwable throwable;
+  private final JugglingPin<R> jugglingPin;
+  private final Throwable throwable;
 
   public BlacklistEntry (JugglingPin<R> jugglingPin, Throwable throwable) {
 

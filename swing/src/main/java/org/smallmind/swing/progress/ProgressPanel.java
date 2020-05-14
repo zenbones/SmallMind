@@ -39,9 +39,9 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class ProgressPanel extends JPanel {
 
-  private ProgressTimer progressTimer;
-  private ProgressDataHandler dataHandler;
-  private JProgressBar progressBar;
+  private final ProgressTimer progressTimer;
+  private final ProgressDataHandler dataHandler;
+  private final JProgressBar progressBar;
 
   public ProgressPanel (ProgressDataHandler dataHandler, long pulseTime) {
 
@@ -71,15 +71,14 @@ public class ProgressPanel extends JPanel {
 
     percentageProgress = (dataHandler.getIndex() * 100) / dataHandler.getLength();
     progressBar.setValue((int)percentageProgress);
-    progressBar.setString(String.valueOf(percentageProgress) + "%");
+    progressBar.setString(percentageProgress + "%");
   }
 
   public void finalize () {
 
     try {
       progressTimer.finish();
-    }
-    catch (InterruptedException interruptedException) {
+    } catch (InterruptedException interruptedException) {
       LoggerManager.getLogger(ProgressPanel.class).error(interruptedException);
     }
   }

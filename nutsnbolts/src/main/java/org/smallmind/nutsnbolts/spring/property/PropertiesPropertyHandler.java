@@ -38,7 +38,7 @@ import java.util.Properties;
 
 public class PropertiesPropertyHandler implements PropertyHandler<PropertiesPropertyEntry> {
 
-  private Properties properties;
+  private final Properties properties;
 
   public PropertiesPropertyHandler (Properties properties) {
 
@@ -53,7 +53,7 @@ public class PropertiesPropertyHandler implements PropertyHandler<PropertiesProp
 
   private static class PropertiesPropertyEntryIterator implements Iterator<PropertiesPropertyEntry> {
 
-    private Iterator<Map.Entry<Object, Object>> mapEntryIter;
+    private final Iterator<Map.Entry<Object, Object>> mapEntryIter;
 
     private PropertiesPropertyEntryIterator (Properties properties) {
 

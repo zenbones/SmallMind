@@ -37,7 +37,7 @@ import org.smallmind.nutsnbolts.security.HMACSigningAlgorithm;
 
 public class SymmetricJWTKeyMaster implements JWTKeyMaster {
 
-  private Key key;
+  private final Key key;
 
   public SymmetricJWTKeyMaster (String secret) {
 

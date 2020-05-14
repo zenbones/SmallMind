@@ -37,7 +37,7 @@ import java.util.Iterator;
 
 public class EnumerationIterator<T> implements Iterator<T>, Iterable<T> {
 
-  private Enumeration<T> internalEnumeration;
+  private final Enumeration<T> internalEnumeration;
 
   public EnumerationIterator (Enumeration<T> internalEnumeration) {
 

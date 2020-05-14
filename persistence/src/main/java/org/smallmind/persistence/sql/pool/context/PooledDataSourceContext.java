@@ -36,7 +36,7 @@ import org.smallmind.nutsnbolts.context.Context;
 
 public class PooledDataSourceContext implements Context {
 
-  private String contextualPart;
+  private final String contextualPart;
 
   public PooledDataSourceContext (String contextualPart) {
 

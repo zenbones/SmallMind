@@ -40,7 +40,7 @@ import javax.websocket.Encoder;
 
 public class EncoderTextStreamHandler<T> implements EncoderHandler<T> {
 
-  private Encoder.TextStream<T> encoder;
+  private final Encoder.TextStream<T> encoder;
 
   public EncoderTextStreamHandler (Encoder.TextStream<T> encoder) {
 

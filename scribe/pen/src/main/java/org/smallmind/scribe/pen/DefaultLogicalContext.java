@@ -36,8 +36,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class DefaultLogicalContext implements LogicalContext {
 
+  private final AtomicBoolean filled = new AtomicBoolean(false);
   private StackTraceElement contextElement;
-  private AtomicBoolean filled = new AtomicBoolean(false);
 
   private static boolean willPrime (String className) {
 

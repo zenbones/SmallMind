@@ -34,8 +34,8 @@ package org.smallmind.phalanx.wire;
 
 public class Talking implements Voice<String, Void> {
 
-  private Conversation<?> conversation;
-  private String serviceGroup;
+  private final Conversation<?> conversation;
+  private final String serviceGroup;
 
   public Talking (Conversation<?> conversation, String serviceGroup) {
 

@@ -40,7 +40,7 @@ import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 
 public class EventCoalescingButtonGroup extends ButtonGroup implements ActionListener {
 
-  private WeakEventListenerList<ActionListener> listenerList = new WeakEventListenerList<ActionListener>();
+  private final WeakEventListenerList<ActionListener> listenerList = new WeakEventListenerList<ActionListener>();
 
   @Override
   public void add (AbstractButton button) {

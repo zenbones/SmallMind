@@ -37,7 +37,7 @@ import javax.swing.event.ListDataListener;
 
 public class BannerListModel implements ListModel {
 
-  private Object[] elements;
+  private final Object[] elements;
 
   public BannerListModel (Object[] elements) {
 

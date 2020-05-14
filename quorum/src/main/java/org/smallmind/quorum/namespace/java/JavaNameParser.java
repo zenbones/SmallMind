@@ -39,7 +39,7 @@ import org.smallmind.quorum.namespace.java.backingStore.NameTranslator;
 
 public class JavaNameParser implements NameParser {
 
-  private NameTranslator nameTranslator;
+  private final NameTranslator nameTranslator;
 
   public JavaNameParser (NameTranslator nameTranslator) {
 

@@ -65,5 +65,4 @@ public enum ReadySetGo {
         throw new UnknownSwitchCaseException(this.name());
     }
   }
-
 }

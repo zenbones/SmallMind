@@ -41,7 +41,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface NonTransactional {
 
-  public abstract String[] dataSources () default {};
+  String[] dataSources () default {};
 
-  public abstract boolean implicit () default true;
+  boolean implicit () default true;
 }

@@ -37,7 +37,7 @@ import java.io.InputStream;
 
 public class MarkableInputStream extends InputStream {
 
-  private InputStream inputStream;
+  private final InputStream inputStream;
   private boolean closed = false;
   private byte[] buffer;
   private int readPos = -1;

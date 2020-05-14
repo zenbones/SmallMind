@@ -36,8 +36,8 @@ import javax.xml.bind.annotation.adapters.XmlAdapter;
 
 public class JsonArgument {
 
-  private String name;
-  private XmlAdapter xmlAdapter;
+  private final String name;
+  private final XmlAdapter xmlAdapter;
 
   public JsonArgument (String name, XmlAdapter xmlAdapter) {
 

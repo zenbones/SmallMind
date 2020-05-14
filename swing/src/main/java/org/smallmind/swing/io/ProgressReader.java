@@ -40,10 +40,10 @@ import org.smallmind.swing.progress.ProgressPanel;
 
 public class ProgressReader extends Reader implements ProgressDataHandler {
 
-  private ProgressPanel progressPanel;
-  private Reader reader;
-  private char[] separatorArray;
-  private long length;
+  private final ProgressPanel progressPanel;
+  private final Reader reader;
+  private final char[] separatorArray;
+  private final long length;
   private long index;
   private long markIndex;
 
@@ -90,7 +90,7 @@ public class ProgressReader extends Reader implements ProgressDataHandler {
     return readValue;
   }
 
-  public synchronized int read (char cbuf[])
+  public synchronized int read (char[] cbuf)
     throws IOException {
 
     int readValue;
@@ -106,7 +106,7 @@ public class ProgressReader extends Reader implements ProgressDataHandler {
     return readValue;
   }
 
-  public synchronized int read (char cbuf[], int off, int len)
+  public synchronized int read (char[] cbuf, int off, int len)
     throws IOException {
 
     int readValue;
@@ -212,5 +212,4 @@ public class ProgressReader extends Reader implements ProgressDataHandler {
 
     reader.close();
   }
-
 }

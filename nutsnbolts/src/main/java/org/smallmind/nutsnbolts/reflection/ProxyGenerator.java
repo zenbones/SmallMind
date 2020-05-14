@@ -141,8 +141,8 @@ public class ProxyGenerator {
 
   private static class MethodTracker {
 
-    private String name;
-    private String description;
+    private final String name;
+    private final String description;
 
     private MethodTracker (String name, String description) {
 
@@ -188,13 +188,13 @@ public class ProxyGenerator {
 
   private static class ProxyClassVisitor extends ClassVisitor {
 
-    private ClassVisitor nextClassVisitor;
-    private Class toBeProxiedClass;
-    private Class currentClass;
-    private AnnotationFilter annotationFilter;
-    private HashSet<MethodTracker> methodTrackerSet;
+    private final ClassVisitor nextClassVisitor;
+    private final Class toBeProxiedClass;
+    private final Class currentClass;
+    private final AnnotationFilter annotationFilter;
+    private final HashSet<MethodTracker> methodTrackerSet;
+    private final boolean initialized;
     private boolean constructed = false;
-    private boolean initialized;
 
     public ProxyClassVisitor (ClassVisitor nextClassVisitor, Class toBeProxiedClass, Class currentClass, AnnotationFilter annotationFilter, HashSet<MethodTracker> methodTrackerSet, boolean initialized) {
 
@@ -561,8 +561,8 @@ public class ProxyGenerator {
 
   private static class ProxyMethodVisitor extends MethodVisitor {
 
-    private MethodVisitor nextMethodVisitor;
-    private AnnotationFilter annotationFilter;
+    private final MethodVisitor nextMethodVisitor;
+    private final AnnotationFilter annotationFilter;
 
     public ProxyMethodVisitor (MethodVisitor nextMethodVisitor, AnnotationFilter annotationFilter) {
 

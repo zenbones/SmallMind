@@ -34,7 +34,7 @@ package org.smallmind.nutsnbolts.util;
 
 public class EnumUtility {
 
-  private static enum LetterState {NONE, DIGIT, UPPER_LETTER, LOWER_LETTER, WHITESPACE, OTHER}
+  private enum LetterState {NONE, DIGIT, UPPER_LETTER, LOWER_LETTER, WHITESPACE, OTHER}
 
   public static String toEnumName (String anyCase) {
 

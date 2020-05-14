@@ -34,9 +34,9 @@ package org.smallmind.web.websocket;
 
 public class Fragment {
 
-  private OpCode opCode;
-  private boolean fin;
-  private byte[] message;
+  private final OpCode opCode;
+  private final boolean fin;
+  private final byte[] message;
 
   public Fragment (boolean fin, OpCode opCode, byte[] message) {
 

@@ -36,7 +36,7 @@ import java.security.Key;
 
 public class AsymmetricJWTKeyMaster implements JWTKeyMaster {
 
-  private Key key;
+  private final Key key;
 
   public AsymmetricJWTKeyMaster (Key key) {
 

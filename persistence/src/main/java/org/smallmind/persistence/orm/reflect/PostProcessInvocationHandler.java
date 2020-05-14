@@ -42,10 +42,10 @@ import org.smallmind.persistence.orm.TransactionEndState;
 
 public class PostProcessInvocationHandler implements Serializable, InvocationHandler {
 
-  private ProxyTransaction proxyTransaction;
-  private TransactionEndState endState;
-  private ProcessPriority priority;
-  private Object proxyTarget;
+  private final ProxyTransaction proxyTransaction;
+  private final TransactionEndState endState;
+  private final ProcessPriority priority;
+  private final Object proxyTarget;
 
   public PostProcessInvocationHandler (ProxyTransaction proxyTransaction, Object proxyTarget, TransactionEndState endState, ProcessPriority priority) {
 

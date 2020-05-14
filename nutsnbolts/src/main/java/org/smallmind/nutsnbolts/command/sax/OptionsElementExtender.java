@@ -39,7 +39,7 @@ import org.smallmind.nutsnbolts.xml.sax.ElementExtender;
 
 public class OptionsElementExtender extends AbstractElementExtender {
 
-  private LinkedList<Option> optionList = new LinkedList<>();
+  private final LinkedList<Option> optionList = new LinkedList<>();
 
   public LinkedList<Option> getOptionList () {
 

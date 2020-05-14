@@ -34,12 +34,12 @@ package org.smallmind.javafx.extras.instrument;
 
 public class Dispersion {
 
-  private double median;
-  private double percentile_75;
-  private double percentile_95;
-  private double percentile_98;
-  private double percentile_99;
-  private double percentile_999;
+  private final double median;
+  private final double percentile_75;
+  private final double percentile_95;
+  private final double percentile_98;
+  private final double percentile_99;
+  private final double percentile_999;
 
   public Dispersion (double median, double percentile_75, double percentile_95, double percentile_98, double percentile_99, double percentile_999) {
 

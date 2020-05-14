@@ -36,13 +36,13 @@ import java.util.EventObject;
 
 public class ThumbEvent extends EventObject {
 
-  public static enum EventType {ADD, REMOVE, MOVE}
+  public enum EventType {ADD, REMOVE, MOVE}
 
-  private EventType eventType;
-  private boolean adjusting;
-  private int thumbIndex;
-  private int currentValue;
-  private int adjustedValue;
+  private final EventType eventType;
+  private final boolean adjusting;
+  private final int thumbIndex;
+  private final int currentValue;
+  private final int adjustedValue;
 
   public ThumbEvent (Object source, EventType eventType, int thumbIndex, int currentValue, int adjustedValue, boolean adjusting) {
 

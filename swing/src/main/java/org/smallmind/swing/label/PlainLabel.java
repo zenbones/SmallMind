@@ -83,5 +83,4 @@ public class PlainLabel extends JLabel {
 
     setFont(getFont().deriveFont(size));
   }
-
 }

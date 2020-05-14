@@ -45,11 +45,11 @@ import javax.sql.StatementEventListener;
 
 public class PooledPreparedStatement implements InvocationHandler {
 
-  private AbstractPooledConnection<?> pooledConnection;
-  private PreparedStatement actualStatement;
-  private PreparedStatement proxyStatement;
-  private String statementId;
-  private AtomicBoolean closed = new AtomicBoolean(false);
+  private final AbstractPooledConnection<?> pooledConnection;
+  private final PreparedStatement actualStatement;
+  private final PreparedStatement proxyStatement;
+  private final String statementId;
+  private final AtomicBoolean closed = new AtomicBoolean(false);
 
   public PooledPreparedStatement (AbstractPooledConnection<?> pooledConnection, PreparedStatement actualStatement) {
 

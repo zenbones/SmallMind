@@ -38,7 +38,7 @@ import org.smallmind.scribe.pen.adapter.LoggingBlueprintFactory;
 
 public class Logger {
 
-  private LoggerAdapter loggerAdapter;
+  private final LoggerAdapter loggerAdapter;
 
   public Logger (Class loggableClass) {
 

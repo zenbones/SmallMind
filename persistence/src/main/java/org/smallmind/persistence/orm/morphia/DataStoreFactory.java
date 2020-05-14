@@ -36,7 +36,7 @@ import org.mongodb.morphia.Datastore;
 
 public class DataStoreFactory {
 
-  private Datastore datastore;
+  private final Datastore datastore;
 
   public DataStoreFactory (Datastore datastore) {
 

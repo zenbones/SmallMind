@@ -38,7 +38,7 @@ import java.io.PrintWriter;
 
 public class FaultWrappingException extends IOException {
 
-  private Fault fault;
+  private final Fault fault;
 
   public FaultWrappingException (Fault fault) {
 

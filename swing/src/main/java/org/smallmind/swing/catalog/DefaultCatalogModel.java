@@ -44,8 +44,8 @@ import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 
 public class DefaultCatalogModel<D> implements CatalogModel<D>, Serializable {
 
+  private final List<D> dataList;
   private transient WeakEventListenerList<CatalogDataListener> listenerList;
-  private List<D> dataList;
 
   public DefaultCatalogModel () {
 
@@ -138,8 +138,7 @@ public class DefaultCatalogModel<D> implements CatalogModel<D>, Serializable {
     while (dataIter.hasNext()) {
       if (comparator.compare(item, dataIter.next()) < 0) {
         break;
-      }
-      else {
+      } else {
         index++;
       }
     }
@@ -229,5 +228,4 @@ public class DefaultCatalogModel<D> implements CatalogModel<D>, Serializable {
       listenerIter.next().intervalChanged(catalogDataEvent);
     }
   }
-
 }

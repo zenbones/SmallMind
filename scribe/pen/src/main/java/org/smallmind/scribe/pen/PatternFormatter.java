@@ -145,7 +145,7 @@ public class PatternFormatter implements Formatter {
     }
 
     if (index < format.length()) {
-      ruleList.add(new StaticPatternRule(format.substring(index, format.length())));
+      ruleList.add(new StaticPatternRule(format.substring(index)));
     }
 
     patternRules = new PatternRule[ruleList.size()];

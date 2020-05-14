@@ -42,8 +42,8 @@ import java.util.Map;
 
 public class SingularityIndex implements Serializable {
 
-  private HashMap<String, String> inverseEntryMap = new HashMap<>();
-  private HashSet<String> fileNameSet = new HashSet<>();
+  private final HashMap<String, String> inverseEntryMap = new HashMap<>();
+  private final HashSet<String> fileNameSet = new HashSet<>();
 
   public void addInverseJarEntry (String entryName, String jarName) {
 

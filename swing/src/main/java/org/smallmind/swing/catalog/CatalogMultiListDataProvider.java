@@ -37,8 +37,8 @@ import org.smallmind.swing.MultiListSelectionListener;
 
 public class CatalogMultiListDataProvider<T extends Comparable<T>> implements MultiListDataProvider<T>, MultiListSelectionListener<T> {
 
-  private T key;
-  private Catalog catalog;
+  private final T key;
+  private final Catalog catalog;
 
   public CatalogMultiListDataProvider (T key, Catalog catalog) {
 
@@ -60,5 +60,4 @@ public class CatalogMultiListDataProvider<T extends Comparable<T>> implements Mu
 
     catalog.valueChanged(selectionEvent);
   }
-
 }

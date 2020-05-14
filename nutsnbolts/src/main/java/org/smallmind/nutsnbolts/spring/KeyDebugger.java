@@ -38,7 +38,7 @@ import org.smallmind.nutsnbolts.util.DotNotationException;
 
 public class KeyDebugger {
 
-  private LinkedList<DebugMatcher> matcherList;
+  private final LinkedList<DebugMatcher> matcherList;
   boolean debug = false;
 
   public KeyDebugger (String[] patterns)
@@ -80,7 +80,7 @@ public class KeyDebugger {
 
   private class DebugMatcher {
 
-    private DotNotation dotNotation;
+    private final DotNotation dotNotation;
     private boolean exclusion = false;
 
     public DebugMatcher (String pattern)

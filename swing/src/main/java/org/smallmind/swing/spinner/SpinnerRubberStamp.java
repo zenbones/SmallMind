@@ -39,7 +39,7 @@ import javax.swing.JComponent;
 
 public class SpinnerRubberStamp extends JComponent {
 
-  private Spinner spinner;
+  private final Spinner spinner;
 
   public SpinnerRubberStamp (Spinner spinner) {
 

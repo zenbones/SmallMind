@@ -42,16 +42,16 @@ import org.smallmind.scribe.pen.adapter.RecordWrapper;
 
 public class IndigenousRecord extends ParameterAwareRecord implements RecordWrapper {
 
+  private final Level level;
+  private final Throwable throwable;
+  private final String loggerName;
+  private final String message;
+  private final String threadName;
+  private final Object[] args;
+  private final long millis;
+  private final long threadId;
+  private final long sequenceNumber;
   private LogicalContext logicalContext;
-  private Level level;
-  private Throwable throwable;
-  private String loggerName;
-  private String message;
-  private String threadName;
-  private Object[] args;
-  private long millis;
-  private long threadId;
-  private long sequenceNumber;
 
   public IndigenousRecord (String loggerName, Level level, Throwable throwable, String message, Object... args) {
 

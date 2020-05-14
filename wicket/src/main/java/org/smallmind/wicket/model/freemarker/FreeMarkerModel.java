@@ -47,18 +47,18 @@ public class FreeMarkerModel extends AbstractReadOnlyModel<String> {
   public Template template;
   public Map<String, Object> rootMap;
 
+  static {
+
+    FREEMARKER_CONF = new Configuration();
+    FREEMARKER_CONF.setTagSyntax(freemarker.template.Configuration.SQUARE_BRACKET_TAG_SYNTAX);
+  }
+
   public FreeMarkerModel (String templateText, Map<String, Object> rootMap)
     throws IOException {
 
     this.rootMap = rootMap;
 
     template = new Template(null, new StringReader(templateText), FREEMARKER_CONF);
-  }
-
-  static {
-
-    FREEMARKER_CONF = new Configuration();
-    FREEMARKER_CONF.setTagSyntax(freemarker.template.Configuration.SQUARE_BRACKET_TAG_SYNTAX);
   }
 
   @Override
@@ -68,8 +68,7 @@ public class FreeMarkerModel extends AbstractReadOnlyModel<String> {
 
     try {
       template.process(rootMap, templateWriter);
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       throw new RuntimeException(exception);
     }
 

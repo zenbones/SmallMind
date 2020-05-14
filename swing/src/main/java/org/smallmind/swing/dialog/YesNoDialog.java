@@ -38,6 +38,11 @@ public class YesNoDialog extends OptionDialog {
 
   private static final OptionButton[] yesNoButtons = {new OptionButton("Yes", DialogState.YES), new OptionButton("No", DialogState.NO)};
 
+  public YesNoDialog (Window parentWindow, OptionType optionType, String yesNoText) {
+
+    super(parentWindow, yesNoText, optionType, yesNoButtons);
+  }
+
   public static DialogState showYesNoDialog (Window parentWindow, OptionType optionType, String yesNoText) {
 
     YesNoDialog yesNoDialog = new YesNoDialog(parentWindow, optionType, yesNoText);
@@ -46,10 +51,5 @@ public class YesNoDialog extends OptionDialog {
     yesNoDialog.setVisible(true);
 
     return yesNoDialog.getDialogState();
-  }
-
-  public YesNoDialog (Window parentWindow, OptionType optionType, String yesNoText) {
-
-    super(parentWindow, yesNoText, optionType, yesNoButtons);
   }
 }

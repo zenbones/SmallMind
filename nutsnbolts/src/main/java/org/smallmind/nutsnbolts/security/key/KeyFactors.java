@@ -36,8 +36,8 @@ import java.math.BigInteger;
 
 public class KeyFactors {
 
-  private BigInteger modulus;
-  private BigInteger exponent;
+  private final BigInteger modulus;
+  private final BigInteger exponent;
 
   public KeyFactors (BigInteger modulus, BigInteger exponent) {
 

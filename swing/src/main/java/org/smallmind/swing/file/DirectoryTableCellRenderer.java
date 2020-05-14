@@ -54,8 +54,7 @@ public class DirectoryTableCellRenderer implements TableCellRenderer {
 
     if (((File)value).getParentFile() == null) {
       cellLabel = new JLabel(((File)value).getAbsolutePath(), ROOT_ICON, JLabel.RIGHT);
-    }
-    else {
+    } else {
       cellLabel = new JLabel(((File)value).getName(), TRIANGLE_ICON, JLabel.RIGHT);
     }
 
@@ -66,8 +65,7 @@ public class DirectoryTableCellRenderer implements TableCellRenderer {
     if (isSelected) {
       cellLabel.setBackground(ColorUtility.HIGHLIGHT_COLOR);
       cellLabel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1), BorderFactory.createMatteBorder(1, 1, 3, 1, ColorUtility.HIGHLIGHT_COLOR)));
-    }
-    else {
+    } else {
       cellLabel.setBackground(table.getBackground());
       cellLabel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, table.getBackground()), BorderFactory.createMatteBorder(1, 1, 3, 1, table.getBackground())));
     }

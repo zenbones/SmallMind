@@ -40,10 +40,10 @@ import org.smallmind.swing.EditorListener;
 
 public abstract class AbstractSpinnerEditor implements SpinnerEditor {
 
-  private WeakEventListenerList<EditorListener> listenerList;
+  private final WeakEventListenerList<EditorListener> listenerList;
 
-  private StopEditingAction stopEditingAction;
-  private CancelEditingAction cancelEditingAction;
+  private final StopEditingAction stopEditingAction;
+  private final CancelEditingAction cancelEditingAction;
 
   public AbstractSpinnerEditor () {
 

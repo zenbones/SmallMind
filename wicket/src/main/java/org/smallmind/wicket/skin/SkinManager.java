@@ -66,8 +66,7 @@ public class SkinManager {
 
     try {
       return PropertyFactory.getProperties(webApplication, resourcePath);
-    }
-    catch (PropertyException propertyException) {
+    } catch (PropertyException propertyException) {
       throw new SkinManagementException(propertyException);
     }
   }

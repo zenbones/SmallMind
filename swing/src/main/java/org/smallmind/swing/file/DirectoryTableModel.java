@@ -40,7 +40,7 @@ import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 
 public class DirectoryTableModel implements TableModel {
 
-  private WeakEventListenerList<TableModelListener> listenerList = new WeakEventListenerList<TableModelListener>();
+  private final WeakEventListenerList<TableModelListener> listenerList = new WeakEventListenerList<TableModelListener>();
   private File directory;
   private ArrayList<File> pathList;
 

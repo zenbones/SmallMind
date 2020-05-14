@@ -36,7 +36,7 @@ import java.util.EventObject;
 
 public class DateSelectionEvent extends EventObject {
 
-  private CalendarDate calendarDate;
+  private final CalendarDate calendarDate;
 
   public DateSelectionEvent (Object source, CalendarDate calendarDate) {
 
@@ -49,5 +49,4 @@ public class DateSelectionEvent extends EventObject {
 
     return calendarDate;
   }
-
 }

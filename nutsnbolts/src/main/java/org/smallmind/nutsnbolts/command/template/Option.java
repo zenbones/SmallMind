@@ -36,12 +36,12 @@ import java.util.LinkedList;
 
 public class Option {
 
+  private final String name;
+  private final Character flag;
+  private final boolean required;
   private LinkedList<Option> children;
   private Option parent;
   private Argument argument;
-  private String name;
-  private Character flag;
-  private boolean required;
 
   public Option (String name, Character flag, boolean required, Option... children) {
 

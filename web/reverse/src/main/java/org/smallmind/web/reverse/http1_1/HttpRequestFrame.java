@@ -42,8 +42,8 @@ public class HttpRequestFrame extends HttpFrame {
 
   private static final Pattern REQUEST_LINE_PATTERN = Pattern.compile("([A-Z]+)\\s+(.+)\\s+HTTP/(\\d+\\.\\d+)");
 
-  private HttpMethod method;
-  private String path;
+  private final HttpMethod method;
+  private final String path;
 
   public HttpRequestFrame (HttpProtocolInputStream httpProtocolInputStream)
     throws IOException, ProtocolException {

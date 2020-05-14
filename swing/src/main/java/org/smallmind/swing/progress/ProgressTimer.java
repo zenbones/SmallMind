@@ -39,11 +39,11 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class ProgressTimer implements Runnable {
 
-  private CountDownLatch exitLatch;
-  private CountDownLatch pulseLatch;
-  private AtomicBoolean finished = new AtomicBoolean(false);
-  private ProgressPanel progressPanel;
-  private long pulseTime;
+  private final CountDownLatch exitLatch;
+  private final CountDownLatch pulseLatch;
+  private final AtomicBoolean finished = new AtomicBoolean(false);
+  private final ProgressPanel progressPanel;
+  private final long pulseTime;
 
   public ProgressTimer (ProgressPanel progressPanel, long pulseTime) {
 
@@ -72,13 +72,11 @@ public class ProgressTimer implements Runnable {
 
         try {
           pulseLatch.await(pulseTime, TimeUnit.MILLISECONDS);
-        }
-        catch (InterruptedException interruptedException) {
+        } catch (InterruptedException interruptedException) {
           LoggerManager.getLogger(ProgressTimer.class).error(interruptedException);
         }
       }
-    }
-    finally {
+    } finally {
       exitLatch.countDown();
     }
   }

@@ -41,7 +41,7 @@ import javax.swing.table.TableColumn;
 
 public class SortableTable<E extends Enum> extends JTable implements MouseListener {
 
-  private SortableColumnTrackerStack<E> trackerStack;
+  private final SortableColumnTrackerStack<E> trackerStack;
 
   public SortableTable (SortableTableModel<E> sortableTableModel) {
 
@@ -109,8 +109,7 @@ public class SortableTable<E extends Enum> extends JTable implements MouseListen
 
     if (direction.equals(SortableDirection.NONE)) {
       trackerStack.removeSortableColumnTracker(enumDataType);
-    }
-    else {
+    } else {
       trackerStack.addSortableColumnTracker(new SortableColumnTracker<E>(enumDataType, direction));
     }
 
@@ -173,5 +172,4 @@ public class SortableTable<E extends Enum> extends JTable implements MouseListen
       getTableHeader().repaint();
     }
   }
-
 }

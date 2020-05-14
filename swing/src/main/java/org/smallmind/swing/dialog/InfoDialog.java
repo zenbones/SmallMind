@@ -36,16 +36,16 @@ import java.awt.Window;
 
 public class InfoDialog extends OptionDialog {
 
+  public InfoDialog (Window parentWindow, String infoText) {
+
+    super(parentWindow, infoText, OptionType.INFO);
+  }
+
   public static void showInfoDialog (Window parentWindow, String infoText) {
 
     InfoDialog infoDialog = new InfoDialog(parentWindow, infoText);
 
     infoDialog.setModal(true);
     infoDialog.setVisible(true);
-  }
-
-  public InfoDialog (Window parentWindow, String infoText) {
-
-    super(parentWindow, infoText, OptionType.INFO);
   }
 }

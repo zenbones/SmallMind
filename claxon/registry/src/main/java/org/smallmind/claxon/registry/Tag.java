@@ -34,8 +34,8 @@ package org.smallmind.claxon.registry;
 
 public class Tag {
 
-  private String key;
-  private String value;
+  private final String key;
+  private final String value;
 
   public Tag (String key, String value) {
 

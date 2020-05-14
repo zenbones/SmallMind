@@ -34,7 +34,7 @@ package org.smallmind.swing.dialog;
 
 public class DialogEvent extends java.util.EventObject {
 
-  private DialogState eventState;
+  private final DialogState eventState;
 
   public DialogEvent (Object source, DialogState eventState) {
 
@@ -47,5 +47,4 @@ public class DialogEvent extends java.util.EventObject {
 
     return eventState;
   }
-
 }

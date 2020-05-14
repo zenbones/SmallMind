@@ -33,9 +33,9 @@
 package org.smallmind.memcached.spring;
 
 import java.util.LinkedList;
+import org.smallmind.memcached.MemcachedServer;
 import org.smallmind.nutsnbolts.util.Spread;
 import org.smallmind.nutsnbolts.util.SpreadParserException;
-import org.smallmind.memcached.MemcachedServer;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
@@ -68,17 +68,14 @@ public class MemcachedServerFactoryBean implements FactoryBean<MemcachedServer[]
       if ((poundPos = serverPattern.indexOf('#')) < 0) {
         if (colonPos >= 0) {
           serverList.add(new MemcachedServer(serverPattern.substring(0, colonPos), Integer.parseInt(serverPattern.substring(colonPos + 1))));
-        }
-        else {
+        } else {
           serverList.add(new MemcachedServer(serverPattern, 11211));
         }
-      }
-      else {
+      } else {
         for (String serverDesignator : Spread.calculate(serverSpread)) {
           if (colonPos >= 0) {
             serverList.add(new MemcachedServer(serverPattern.substring(0, poundPos) + serverDesignator + serverPattern.substring(poundPos + 1, colonPos), Integer.parseInt(serverPattern.substring(colonPos + 1))));
-          }
-          else {
+          } else {
             serverList.add(new MemcachedServer(serverPattern.substring(0, poundPos) + serverDesignator + serverPattern.substring(poundPos + 1), 11211));
           }
         }

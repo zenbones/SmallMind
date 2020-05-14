@@ -38,7 +38,7 @@ import org.smallmind.scribe.pen.Record;
 
 public class Log4JFilterAdapter implements Filter {
 
-  private org.apache.log4j.spi.Filter filter;
+  private final org.apache.log4j.spi.Filter filter;
 
   public Log4JFilterAdapter (org.apache.log4j.spi.Filter filter) {
 

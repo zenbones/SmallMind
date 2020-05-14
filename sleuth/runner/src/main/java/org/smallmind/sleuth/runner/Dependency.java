@@ -37,14 +37,14 @@ import java.util.HashSet;
 
 public class Dependency<A extends Annotation, T> {
 
-  private HashSet<Dependency<A, T>> children = new HashSet<>();
+  private final HashSet<Dependency<A, T>> children = new HashSet<>();
+  private final String name;
   private A annotation;
   private T value;
   private Culprit culprit;
   private String[] priorityOn;
   private String[] executeAfter;
   private String[] dependsOn;
-  private String name;
   private boolean temporary;
   private boolean permanent;
   private boolean completed;

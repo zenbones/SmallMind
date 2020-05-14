@@ -119,24 +119,24 @@ public class MultiThumbSlider extends JComponent implements MouseMotionListener,
     this.orientation = orientation;
   }
 
-  public void setMinimumValue (int minimumValue) {
-
-    model.setMaximumValue(minimumValue);
-  }
-
   public int getMinimumValue () {
 
     return model.getMinimumValue();
   }
 
-  public void setMaximumValue (int maximumValue) {
+  public void setMinimumValue (int minimumValue) {
 
-    model.setMaximumValue(maximumValue);
+    model.setMaximumValue(minimumValue);
   }
 
   public int getMaximumValue () {
 
     return model.getMaximumValue();
+  }
+
+  public void setMaximumValue (int maximumValue) {
+
+    model.setMaximumValue(maximumValue);
   }
 
   public synchronized boolean isPaintTrack () {
@@ -238,8 +238,7 @@ public class MultiThumbSlider extends JComponent implements MouseMotionListener,
 
     if (orientation == HORIZONTAL) {
       return new Dimension(0, 16 + ((paintTickMarks) ? 11 : 0) + ((paintLabels) ? getFontMetrics(getFont()).getAscent() + 1 : 0));
-    }
-    else {
+    } else {
       return new Dimension(16 + ((paintTickMarks) ? 11 : 0) + ((paintLabels) ? getMaxLabelWidth() + 4 : 0), 0);
     }
   }
@@ -248,8 +247,7 @@ public class MultiThumbSlider extends JComponent implements MouseMotionListener,
 
     if (orientation == HORIZONTAL) {
       return new Dimension(Short.MAX_VALUE, 16 + ((paintTickMarks) ? 11 : 0) + ((paintLabels) ? getFontMetrics(getFont()).getAscent() + 1 : 0));
-    }
-    else {
+    } else {
       return new Dimension(16 + ((paintTickMarks) ? 11 : 0) + ((paintLabels) ? getMaxLabelWidth() + 4 : 0), Short.MAX_VALUE);
     }
   }
@@ -287,17 +285,14 @@ public class MultiThumbSlider extends JComponent implements MouseMotionListener,
       if ((pressedThumbIndex = getThumbIndexForPosition(mouseEvent.getX())) >= 0) {
         selectedThumbIndex = pressedThumbIndex;
         selectedThumbOffset = mouseEvent.getX() - (getTrackLeftEdge() + positionForValue(model.getThumbValue(selectedThumbIndex)));
-      }
-      else {
+      } else {
         selectedThumbIndex = null;
       }
-    }
-    else if (mouseEvent.getX() < 16) {
+    } else if (mouseEvent.getX() < 16) {
       if ((pressedThumbIndex = getThumbIndexForPosition(mouseEvent.getY())) >= 0) {
         selectedThumbIndex = pressedThumbIndex;
         selectedThumbOffset = (getTrackRightEdge() - positionForValue(model.getThumbValue(selectedThumbIndex))) - mouseEvent.getY();
-      }
-      else {
+      } else {
         selectedThumbIndex = null;
       }
     }
@@ -328,8 +323,7 @@ public class MultiThumbSlider extends JComponent implements MouseMotionListener,
 
       if (orientation == HORIZONTAL) {
         proposedPosition = mouseEvent.getX() - selectedThumbOffset - getTrackLeftEdge();
-      }
-      else {
+      } else {
         proposedPosition = getTrackRightEdge() - mouseEvent.getY() - selectedThumbOffset;
       }
 
@@ -413,8 +407,7 @@ public class MultiThumbSlider extends JComponent implements MouseMotionListener,
 
           return index;
         }
-      }
-      else {
+      } else {
         if ((position >= getTrackRightEdge() - thumbPosition - 7) && (position <= getTrackRightEdge() - thumbPosition + 7)) {
 
           return index;
@@ -429,11 +422,9 @@ public class MultiThumbSlider extends JComponent implements MouseMotionListener,
 
     if (position <= getTrackLeftEdge()) {
       return model.getMinimumValue();
-    }
-    else if (position >= getTrackRightEdge()) {
+    } else if (position >= getTrackRightEdge()) {
       return model.getMaximumValue();
-    }
-    else {
+    } else {
       return (int)((model.getMaximumValue() - model.getMinimumValue()) * (position / ((double)(getTrackRightEdge() - getTrackLeftEdge()))));
     }
   }
@@ -492,8 +483,7 @@ public class MultiThumbSlider extends JComponent implements MouseMotionListener,
     for (int index = 0; index < model.getThumbCount(); index++) {
       if (orientation == HORIZONTAL) {
         g.drawImage(HORIZONTAL_THUMB_ICON.getImage(), getTrackLeftEdge() + positionForValue(model.getThumbValue(index)) - 7, 0, null);
-      }
-      else {
+      } else {
         g.drawImage(VERTICAL_THUMB_ICON.getImage(), 0, getTrackRightEdge() - positionForValue(model.getThumbValue(index)) - 7, null);
       }
     }
@@ -506,8 +496,7 @@ public class MultiThumbSlider extends JComponent implements MouseMotionListener,
       g.drawRect(getTrackLeftEdge(), 5, getTrackRightEdge() - getTrackLeftEdge() - 1, 5);
       g.setColor(SystemColor.controlShadow);
       g.drawLine(getTrackLeftEdge() + 1, 6, getTrackRightEdge() - 2, 6);
-    }
-    else {
+    } else {
       g.setColor(SystemColor.controlDkShadow);
       g.drawRect(5, getTrackLeftEdge(), 5, getTrackRightEdge() - getTrackLeftEdge() - 1);
       g.setColor(SystemColor.controlShadow);
@@ -522,8 +511,7 @@ public class MultiThumbSlider extends JComponent implements MouseMotionListener,
       for (int mark = getMinimumValue(); mark <= getMaximumValue(); mark += minorTickSpacing) {
         if (orientation == HORIZONTAL) {
           g.drawLine(getTrackLeftEdge() + positionForValue(mark), 20, getTrackLeftEdge() + positionForValue(mark), 23);
-        }
-        else {
+        } else {
           g.drawLine(20, getTrackRightEdge() - positionForValue(mark), 23, getTrackRightEdge() - positionForValue(mark));
         }
       }
@@ -533,8 +521,7 @@ public class MultiThumbSlider extends JComponent implements MouseMotionListener,
       for (int mark = getMinimumValue(); mark <= getMaximumValue(); mark += majorTickSpacing) {
         if (orientation == HORIZONTAL) {
           g.drawLine(getTrackLeftEdge() + positionForValue(mark), 20, getTrackLeftEdge() + positionForValue(mark), 26);
-        }
-        else {
+        } else {
           g.drawLine(20, getTrackRightEdge() - positionForValue(mark), 26, getTrackRightEdge() - positionForValue(mark));
         }
       }
@@ -552,8 +539,7 @@ public class MultiThumbSlider extends JComponent implements MouseMotionListener,
         label = (getLabelDictionary() != null) ? getLabelDictionary().get(mark) : String.valueOf(mark);
         if (orientation == HORIZONTAL) {
           g.drawString(label, getTrackLeftEdge() + positionForValue(mark) - (fontMetrics.stringWidth(label) / 2), (paintTickMarks) ? 28 + fontMetrics.getAscent() : 17 + fontMetrics.getAscent());
-        }
-        else {
+        } else {
           g.drawString(label, (paintTickMarks) ? 31 : 20, getTrackRightEdge() - positionForValue(mark) + (fontMetrics.getAscent() / 2));
         }
       }

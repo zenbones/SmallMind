@@ -34,8 +34,7 @@ package org.smallmind.swing.progress;
 
 public interface ProgressDataHandler {
 
-  public abstract long getLength ();
+  long getLength ();
 
-  public abstract long getIndex ();
-
+  long getIndex ();
 }

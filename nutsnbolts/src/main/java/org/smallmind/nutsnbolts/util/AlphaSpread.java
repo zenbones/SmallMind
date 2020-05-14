@@ -39,8 +39,8 @@ import java.util.regex.Pattern;
 
 public class AlphaSpread {
 
-  private static Pattern LETTER_PATTERN = Pattern.compile("[a-z]");
-  private static Pattern SPREAD_PATTERN = Pattern.compile("([a-z])\\.\\.([a-z])");
+  private static final Pattern LETTER_PATTERN = Pattern.compile("[a-z]");
+  private static final Pattern SPREAD_PATTERN = Pattern.compile("([a-z])\\.\\.([a-z])");
 
   public static char[] calculate (String letters)
     throws SpreadParserException {

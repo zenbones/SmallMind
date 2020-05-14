@@ -43,8 +43,8 @@ import org.springframework.beans.factory.InitializingBean;
 
 public class CronJobInitializingBean implements InitializingBean {
 
+  private final HashMap<JobDetail, List<CronTrigger>> jobMap;
   private Scheduler scheduler;
-  private HashMap<JobDetail, List<CronTrigger>> jobMap;
 
   public CronJobInitializingBean () {
 
@@ -71,15 +71,13 @@ public class CronJobInitializingBean implements InitializingBean {
       for (CronTrigger cronTrigger : jobMap.get(jobDetail)) {
         if ((installedJobDetail = scheduler.getJobDetail(jobDetail.getKey())) == null) {
           scheduler.addJob(jobDetail, false);
-        }
-        else if (!isSame(jobDetail, installedJobDetail)) {
+        } else if (!isSame(jobDetail, installedJobDetail)) {
           scheduler.addJob(jobDetail, true);
         }
 
         if ((installedCronTrigger = (CronTrigger)scheduler.getTrigger(cronTrigger.getKey())) == null) {
           scheduler.scheduleJob(cronTrigger);
-        }
-        else if (!cronTrigger.getCronExpression().equals(installedCronTrigger.getCronExpression())) {
+        } else if (!cronTrigger.getCronExpression().equals(installedCronTrigger.getCronExpression())) {
           scheduler.rescheduleJob(installedCronTrigger.getKey(), cronTrigger);
         }
       }
@@ -114,8 +112,7 @@ public class CronJobInitializingBean implements InitializingBean {
     if (detailKeys.length != installedKeys.length) {
 
       return false;
-    }
-    else {
+    } else {
       for (String detailKey : detailKeys) {
         match = false;
         for (String installedKey : installedKeys) {
@@ -127,19 +124,16 @@ public class CronJobInitializingBean implements InitializingBean {
 
         if (!match) {
           return false;
-        }
-        else {
+        } else {
           detailValue = jobDetail.getJobDataMap().get(detailKey);
           installedDetailValue = installedJobDetail.getJobDataMap().get(detailKey);
           if ((detailValue == null) && (installedDetailValue != null)) {
 
             return false;
-          }
-          else if ((detailValue != null) && (installedDetailValue == null)) {
+          } else if ((detailValue != null) && (installedDetailValue == null)) {
 
             return false;
-          }
-          else if ((detailValue != null) && (!detailValue.equals(installedDetailValue))) {
+          } else if ((detailValue != null) && (!detailValue.equals(installedDetailValue))) {
 
             return false;
           }

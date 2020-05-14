@@ -36,7 +36,7 @@ public enum AsymmetricAlgorithm implements SecurityAlgorithm {
 
   DSA("DSA"), RSA("RSA"), EC("EC");
 
-  private String algorithmName;
+  private final String algorithmName;
 
   AsymmetricAlgorithm (String algorithmName) {
 

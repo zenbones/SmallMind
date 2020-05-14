@@ -43,7 +43,7 @@ public class FilterComboBoxModel implements ComboBoxModel {
 
   private final WeakEventListenerList<ListDataListener> listenerList = new WeakEventListenerList<ListDataListener>();
 
-  private LinkedList<FileFilter> filterList = new LinkedList<FileFilter>();
+  private final LinkedList<FileFilter> filterList = new LinkedList<FileFilter>();
   private FileFilter selectedItem;
 
   public FilterComboBoxModel (FileFilter filter) {
@@ -59,8 +59,7 @@ public class FilterComboBoxModel implements ComboBoxModel {
     if (filter != null) {
       if (filterList.size() == 1) {
         filterList.addFirst(selectedItem = filter);
-      }
-      else {
+      } else {
         filterList.set(0, selectedItem = filter);
       }
 
@@ -69,15 +68,15 @@ public class FilterComboBoxModel implements ComboBoxModel {
   }
 
   @Override
-  public void setSelectedItem (Object selectedItem) {
-
-    this.selectedItem = (FileFilter)selectedItem;
-  }
-
-  @Override
   public Object getSelectedItem () {
 
     return selectedItem;
+  }
+
+  @Override
+  public void setSelectedItem (Object selectedItem) {
+
+    this.selectedItem = (FileFilter)selectedItem;
   }
 
   @Override

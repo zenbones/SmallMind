@@ -49,7 +49,7 @@ public class SubmitButton extends Button {
 
   private class FormSubmitActionModel extends AbstractReadOnlyModel {
 
-    private Form form;
+    private final Form form;
 
     public FormSubmitActionModel (Form form) {
 

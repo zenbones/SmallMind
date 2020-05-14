@@ -42,11 +42,11 @@ import org.smallmind.swing.panel.OptionPanel;
 
 public class ProgressOptionPanel extends OptionPanel implements ProgressOperator, DialogListener {
 
-  private JProgressBar progressBar;
+  private final JProgressBar progressBar;
+  private final ProgressRunnable progressRunnable;
+  private final boolean withLabel;
+  private final boolean closeOnComplete;
   private JLabel processLabel;
-  private ProgressRunnable progressRunnable;
-  private boolean withLabel;
-  private boolean closeOnComplete;
 
   public ProgressOptionPanel (ProgressRunnable progressRunnable, int orientation, int min, int max, boolean withLabel, boolean closeOnComplete) {
 
@@ -135,8 +135,7 @@ public class ProgressOptionPanel extends OptionPanel implements ProgressOperator
       if (closeOnComplete) {
         setDialogSate(DialogState.COMPLETE);
         closeParent();
-      }
-      else {
+      } else {
         getOptionDialog().replaceButtons(new OptionButton[] {new OptionButton("Continue", DialogState.CONTINUE)});
       }
     }
@@ -148,5 +147,4 @@ public class ProgressOptionPanel extends OptionPanel implements ProgressOperator
       progressRunnable.terminate();
     }
   }
-
 }

@@ -41,8 +41,8 @@ import org.smallmind.scribe.pen.adapter.RecordWrapper;
 
 public class JDKRecordFilter extends LogRecord implements RecordWrapper {
 
-  private FilterRecord filterRecord;
-  private Level level;
+  private final FilterRecord filterRecord;
+  private final Level level;
 
   public JDKRecordFilter (Record record, Level level) {
 
@@ -78,8 +78,8 @@ public class JDKRecordFilter extends LogRecord implements RecordWrapper {
 
   private class FilterRecord implements Record {
 
-    private Record record;
-    private LogRecord logRecord;
+    private final Record record;
+    private final LogRecord logRecord;
 
     public FilterRecord (Record record, LogRecord logRecord) {
 

@@ -37,11 +37,9 @@ import javax.management.Notification;
 
 public class CreationErrorOccurredNotification extends Notification {
 
-  public static final String TYPE = "ERROR_OCCURRED";
-
   private static final AtomicLong SEQUNCE_NUMBER = new AtomicLong(0);
-
-  private Exception exception;
+  public static final String TYPE = "ERROR_OCCURRED";
+  private final Exception exception;
 
   public CreationErrorOccurredNotification (Object source, Exception exception) {
 

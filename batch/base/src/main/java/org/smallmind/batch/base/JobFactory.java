@@ -39,6 +39,6 @@ public interface JobFactory {
   void create (String logicalName, Map<String, BatchParameter<?>> parameterMap)
     throws Exception;
 
-  public void restart (long executionId)
+  void restart (long executionId)
     throws Exception;
 }

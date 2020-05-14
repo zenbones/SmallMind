@@ -37,7 +37,7 @@ import com.querydsl.jpa.hibernate.HibernateUpdateClause;
 
 public abstract class HibernateUpdateDetails<T> {
 
-  private EntityPath<T> entityPath;
+  private final EntityPath<T> entityPath;
 
   public HibernateUpdateDetails (EntityPath<T> entityPath) {
 

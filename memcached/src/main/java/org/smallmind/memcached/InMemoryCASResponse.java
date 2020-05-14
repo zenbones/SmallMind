@@ -34,8 +34,8 @@ package org.smallmind.memcached;
 
 public class InMemoryCASResponse<T> implements ProxyCASResponse<T> {
 
-  private T value;
-  private long cas;
+  private final T value;
+  private final long cas;
 
   public InMemoryCASResponse (long cas, T value) {
 

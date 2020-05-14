@@ -41,7 +41,7 @@ import org.smallmind.swing.spinner.EdgeAwareSpinnerModel;
 
 public class MonthSpinnerModel implements EdgeAwareSpinnerModel {
 
-  private WeakEventListenerList<ChangeListener> listenerList;
+  private final WeakEventListenerList<ChangeListener> listenerList;
   private Month month;
 
   public MonthSpinnerModel (int month) {
@@ -97,5 +97,4 @@ public class MonthSpinnerModel implements EdgeAwareSpinnerModel {
 
     return CalendarUtility.getMonth((month.ordinal() > 0) ? month.ordinal() : month.ordinal() + 1);
   }
-
 }

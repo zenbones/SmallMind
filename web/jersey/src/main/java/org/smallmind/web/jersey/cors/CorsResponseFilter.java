@@ -38,8 +38,8 @@ import javax.ws.rs.container.ContainerResponseFilter;
 
 public class CorsResponseFilter implements ContainerResponseFilter {
 
-  private String allowedHeaders;
-  private String exposedHeaders;
+  private final String allowedHeaders;
+  private final String exposedHeaders;
 
   public CorsResponseFilter (String allowedHeaders, String exposedHeaders) {
 

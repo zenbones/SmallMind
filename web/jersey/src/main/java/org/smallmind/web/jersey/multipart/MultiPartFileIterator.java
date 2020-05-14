@@ -41,7 +41,7 @@ import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 
 public class MultiPartFileIterator implements Iterator<MultiPartFile> {
 
-  private Iterator<FormDataBodyPart> bodyPartIter;
+  private final Iterator<FormDataBodyPart> bodyPartIter;
 
   public MultiPartFileIterator (FormDataMultiPart formDataMultiPart) {
 

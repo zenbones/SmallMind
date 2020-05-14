@@ -34,8 +34,8 @@ package org.smallmind.web.jersey.aop;
 
 public class Argument {
 
-  private String key;
-  private Object value;
+  private final String key;
+  private final Object value;
 
   public Argument (String key, Object value) {
 

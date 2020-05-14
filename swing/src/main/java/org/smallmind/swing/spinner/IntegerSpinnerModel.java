@@ -38,11 +38,11 @@ import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 
 public class IntegerSpinnerModel implements EdgeAwareSpinnerModel {
 
-  private WeakEventListenerList<ChangeListener> listenerList;
-  private Integer minimumValue;
-  private Integer maximumValue;
+  private final WeakEventListenerList<ChangeListener> listenerList;
+  private final Integer minimumValue;
+  private final Integer maximumValue;
+  private final int increment;
   private int value;
-  private int increment;
 
   public IntegerSpinnerModel (int value, int increment, Integer minimumValue, Integer maximumValue) {
 

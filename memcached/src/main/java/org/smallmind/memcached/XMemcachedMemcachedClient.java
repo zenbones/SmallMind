@@ -42,7 +42,7 @@ import net.rubyeye.xmemcached.exception.MemcachedException;
 
 public class XMemcachedMemcachedClient implements ProxyMemcachedClient {
 
-  private MemcachedClient memcachedClient;
+  private final MemcachedClient memcachedClient;
 
   public XMemcachedMemcachedClient (MemcachedClient memcachedClient) {
 
@@ -81,7 +81,7 @@ public class XMemcachedMemcachedClient implements ProxyMemcachedClient {
 
     GetsResponse<T> getsResponse;
 
-    if ((getsResponse = memcachedClient.<T>gets(key)) == null) {
+    if ((getsResponse = memcachedClient.gets(key)) == null) {
 
       return null;
     }

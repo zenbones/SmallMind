@@ -54,5 +54,4 @@ public enum OptionType {
 
     return imageType;
   }
-
 }

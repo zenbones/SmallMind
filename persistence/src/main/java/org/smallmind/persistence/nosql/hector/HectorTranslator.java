@@ -38,13 +38,13 @@ import me.prettyprint.hector.api.beans.Composite;
 
 public interface HectorTranslator<T, H> {
 
-  public abstract String getHectorType ();
+  String getHectorType ();
 
-  public abstract Serializer<H> getSerializer ();
+  Serializer<H> getSerializer ();
 
-  public abstract H toHectorValue (T value);
+  H toHectorValue (T value);
 
-  public abstract T toEntityValue (Class<?> fieldType, int index, Composite columnName);
+  T toEntityValue (Class<?> fieldType, int index, Composite columnName);
 
-  public abstract T toEntityValue (Class<?> fieldType, Composite columnName, ColumnFamilyResult<Composite, Composite> hectorResult);
+  T toEntityValue (Class<?> fieldType, Composite columnName, ColumnFamilyResult<Composite, Composite> hectorResult);
 }

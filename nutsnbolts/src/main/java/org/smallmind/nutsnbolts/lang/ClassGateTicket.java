@@ -34,8 +34,8 @@ package org.smallmind.nutsnbolts.lang;
 
 public class ClassGateTicket {
 
-  private ClassGate classGate;
-  private long timeStamp;
+  private final ClassGate classGate;
+  private final long timeStamp;
 
   public ClassGateTicket (ClassGate classGate, long timeStamp) {
 

@@ -34,8 +34,8 @@ package org.smallmind.web.reverse.http1_1;
 
 public class ProxyTarget {
 
-  private String host;
-  private int port;
+  private final String host;
+  private final int port;
 
   public ProxyTarget (String host, int port) {
 

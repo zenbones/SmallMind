@@ -41,8 +41,8 @@ import org.springframework.beans.factory.InitializingBean;
 
 public class JobDeletionInitializingBean implements InitializingBean {
 
+  private final LinkedList<JobIdentifier> jobIdentifierList;
   private Scheduler scheduler;
-  private LinkedList<JobIdentifier> jobIdentifierList;
 
   public JobDeletionInitializingBean () {
 

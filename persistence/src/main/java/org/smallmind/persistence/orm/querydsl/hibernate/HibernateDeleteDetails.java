@@ -37,7 +37,7 @@ import com.querydsl.jpa.hibernate.HibernateDeleteClause;
 
 public abstract class HibernateDeleteDetails<T> {
 
-  private EntityPath<T> entityPath;
+  private final EntityPath<T> entityPath;
 
   public HibernateDeleteDetails (EntityPath<T> entityPath) {
 

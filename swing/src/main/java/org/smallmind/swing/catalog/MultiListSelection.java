@@ -36,8 +36,8 @@ import org.smallmind.nutsnbolts.util.DirectionalComparator;
 
 public class MultiListSelection<T extends Comparable<T>> {
 
-  private T comparable;
-  private int index;
+  private final T comparable;
+  private final int index;
 
   public MultiListSelection (T comparable, int index) {
 
@@ -60,22 +60,17 @@ public class MultiListSelection<T extends Comparable<T>> {
     if (getComparable().compareTo(selection.getComparable()) < 0) {
       if (direction.equals(DirectionalComparator.Direction.ASCENDING)) {
         return 1;
-      }
-      else {
+      } else {
         return -1;
       }
-    }
-    else if (getComparable().compareTo(selection.getComparable()) > 0) {
+    } else if (getComparable().compareTo(selection.getComparable()) > 0) {
       if (direction.equals(DirectionalComparator.Direction.ASCENDING)) {
         return -1;
-      }
-      else {
+      } else {
         return 1;
       }
-    }
-    else {
+    } else {
       return getIndex() - selection.getIndex();
     }
   }
-
 }

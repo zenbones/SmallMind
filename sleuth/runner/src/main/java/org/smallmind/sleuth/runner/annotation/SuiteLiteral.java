@@ -36,11 +36,11 @@ import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
 
 public class SuiteLiteral extends AnnotationLiteral<Suite> implements Suite {
 
+  private final String[] dependsOn;
+  private final boolean enabled;
+  private final int priority;
   private String[] executeAfter;
-  private String[] dependsOn;
   private String[] groups;
-  private boolean enabled;
-  private int priority;
 
   public SuiteLiteral () {
 
@@ -59,7 +59,7 @@ public class SuiteLiteral extends AnnotationLiteral<Suite> implements Suite {
   }
 
   @Override
-  public String[] groups() {
+  public String[] groups () {
 
     return groups;
   }

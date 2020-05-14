@@ -89,7 +89,7 @@ public class FeedbackPanel extends Panel {
 
   private class FeedbackDisplayModel extends VisibilityModel {
 
-    private FeedbackMessageListModel feedbackMessageListModel;
+    private final FeedbackMessageListModel feedbackMessageListModel;
 
     public FeedbackDisplayModel (FeedbackMessageListModel feedbackMessageListModel) {
 

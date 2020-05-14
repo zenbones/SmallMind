@@ -36,17 +36,17 @@ import java.io.Serializable;
 
 public interface LogicalContext extends Serializable {
 
-  public abstract boolean isFilled ();
+  boolean isFilled ();
 
-  public abstract void fillIn ();
+  void fillIn ();
 
-  public abstract String getClassName ();
+  String getClassName ();
 
-  public abstract String getMethodName ();
+  String getMethodName ();
 
-  public abstract String getFileName ();
+  String getFileName ();
 
-  public abstract boolean isNativeMethod ();
+  boolean isNativeMethod ();
 
-  public abstract int getLineNumber ();
+  int getLineNumber ();
 }

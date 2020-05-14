@@ -39,8 +39,8 @@ import javax.websocket.Extension;
 
 public class WebSocketExtension implements Extension {
 
-  private String name;
-  private ExtensionParameter[] parameters;
+  private final String name;
+  private final ExtensionParameter[] parameters;
 
   public WebSocketExtension (String name, ExtensionParameter... parameters) {
 
@@ -67,7 +67,7 @@ public class WebSocketExtension implements Extension {
       return Collections.emptyList();
     }
 
-    return Arrays.<Parameter>asList(parameters);
+    return Arrays.asList(parameters);
   }
 
   @Override

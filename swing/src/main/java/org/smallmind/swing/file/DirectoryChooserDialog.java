@@ -42,16 +42,6 @@ public class DirectoryChooserDialog extends JDialog implements DirectoryChoiceLi
 
   private File chosenDirectory;
 
-  public static File showDirectoryChooserDialog (Window parentWindow) {
-
-    DirectoryChooserDialog directoryChooserDialog;
-
-    directoryChooserDialog = new DirectoryChooserDialog(parentWindow);
-    directoryChooserDialog.setVisible(true);
-
-    return directoryChooserDialog.getChosenDirectory();
-  }
-
   public DirectoryChooserDialog (Window parentWindow) {
 
     super(parentWindow, "Choose Folder...", ModalityType.APPLICATION_MODAL);
@@ -66,6 +56,16 @@ public class DirectoryChooserDialog extends JDialog implements DirectoryChoiceLi
 
     setMinimumSize(new Dimension(550, 350));
     setLocationRelativeTo(parentWindow);
+  }
+
+  public static File showDirectoryChooserDialog (Window parentWindow) {
+
+    DirectoryChooserDialog directoryChooserDialog;
+
+    directoryChooserDialog = new DirectoryChooserDialog(parentWindow);
+    directoryChooserDialog.setVisible(true);
+
+    return directoryChooserDialog.getChosenDirectory();
   }
 
   public File getChosenDirectory () {

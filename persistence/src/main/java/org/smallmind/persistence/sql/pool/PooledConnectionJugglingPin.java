@@ -40,8 +40,8 @@ import org.smallmind.quorum.juggler.JugglerResourceException;
 
 public class PooledConnectionJugglingPin<P extends PooledConnection> extends AbstractJugglingPin<P> {
 
-  private ConnectionPoolDataSource dataSource;
-  private Class<P> pooledConnectionClass;
+  private final ConnectionPoolDataSource dataSource;
+  private final Class<P> pooledConnectionClass;
 
   public PooledConnectionJugglingPin (ConnectionPoolDataSource dataSource, Class<P> pooledConnectionClass) {
 

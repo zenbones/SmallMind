@@ -40,8 +40,8 @@ import org.smallmind.nutsnbolts.io.ByteArrayIOStream;
 public class HttpProtocolInputStream extends InputStream {
 
   private final ByteArrayIOStream.ByteArrayInputStream byteArrayInputStream;
+  private final int index = 0;
   BufferedInputStream b;
-  private int index = 0;
 
   public HttpProtocolInputStream (ByteArrayIOStream.ByteArrayInputStream byteArrayInputStream) {
 

@@ -43,7 +43,7 @@ public class XMLEntityResolver implements EntityResolver {
 
   private static XMLEntityResolver ENTITY_RESOLVER;
 
-  private ProtocolResolver protocolResolver;
+  private final ProtocolResolver protocolResolver;
 
   public XMLEntityResolver (ProtocolResolver protocolResolver) {
 

@@ -46,7 +46,7 @@ import javax.lang.model.type.TypeMirror;
 
 public class TypeElementIterable implements Iterable<TypeElement> {
 
-  private LinkedList<TypeElement> typeElementList = new LinkedList<>();
+  private final LinkedList<TypeElement> typeElementList = new LinkedList<>();
 
   public TypeElementIterable (ProcessingEnvironment processingEnvironment, TypeMirror typeMirror) {
 

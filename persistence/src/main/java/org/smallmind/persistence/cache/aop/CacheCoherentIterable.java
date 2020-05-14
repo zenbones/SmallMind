@@ -59,7 +59,7 @@ public class CacheCoherentIterable<I extends Serializable & Comparable<I>, D ext
 
   private class CacheCoherentIterator implements Iterator<D> {
 
-    private Iterator<D> durableIter;
+    private final Iterator<D> durableIter;
 
     public CacheCoherentIterator (Iterator<D> durableIter) {
 

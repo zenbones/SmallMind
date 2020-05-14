@@ -34,8 +34,8 @@ package org.smallmind.swing.dialog;
 
 public class OptionButton {
 
-  private String buttonName;
-  private DialogState buttonState;
+  private final String buttonName;
+  private final DialogState buttonState;
 
   public OptionButton (String buttonName, DialogState buttonState) {
 
@@ -52,5 +52,4 @@ public class OptionButton {
 
     return buttonState;
   }
-
 }

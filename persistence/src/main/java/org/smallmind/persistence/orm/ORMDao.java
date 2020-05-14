@@ -39,7 +39,7 @@ import org.smallmind.persistence.cache.VectoredDao;
 
 public abstract class ORMDao<I extends Serializable & Comparable<I>, D extends Durable<I>, F, N> extends AbstractVectorAwareManagedDao<I, D> implements RelationalDao<I, D, F, N> {
 
-  private ProxySession<F, N> proxySession;
+  private final ProxySession<F, N> proxySession;
 
   public ORMDao (ProxySession<F, N> proxySession, VectoredDao<I, D> vectoredDao) {
 

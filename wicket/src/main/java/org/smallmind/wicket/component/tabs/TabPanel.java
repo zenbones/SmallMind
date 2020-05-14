@@ -47,9 +47,9 @@ import org.smallmind.wicket.skin.SkinManager;
 
 public class TabPanel extends Panel {
 
+  private final LinkedList<Tab> tabList;
+  private final WebMarkupContainer tabContents;
   private SelectionChangedCallback selectionChangedCallback;
-  private LinkedList<Tab> tabList;
-  private WebMarkupContainer tabContents;
   private int selectedIndex = 0;
 
   public TabPanel (String id, SkinManager skinManager) {

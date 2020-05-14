@@ -40,7 +40,7 @@ import org.smallmind.nutsnbolts.http.Base64Codec;
 
 public class PKCS8KeyReader implements KeyReader {
 
-  private KeyFactors keyFactors;
+  private final KeyFactors keyFactors;
 
   public PKCS8KeyReader (String raw)
     throws IOException, KeyParseException {

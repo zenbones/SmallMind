@@ -34,8 +34,8 @@ package org.smallmind.persistence.cache;
 
 public class VectorArtifact {
 
-  private String vectorNamespace;
-  private VectorIndex[] vectorIndices;
+  private final String vectorNamespace;
+  private final VectorIndex[] vectorIndices;
 
   public VectorArtifact (String vectorNamespace, VectorIndex[] vectorIndices) {
 

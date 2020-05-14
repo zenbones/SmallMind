@@ -36,9 +36,9 @@ public enum SymmetricAlgorithm implements SecurityAlgorithm {
 
   AES("AES"), DES("DES"), TRIPLE_DES("DESede"), RC4("ARCFOUR"), BLOWFISH("blowfish");
 
-  private String algorithmName;
+  private final String algorithmName;
 
-  private SymmetricAlgorithm (String algorithmName) {
+  SymmetricAlgorithm (String algorithmName) {
 
     this.algorithmName = algorithmName;
   }

@@ -34,27 +34,27 @@ package org.smallmind.swing.slider;
 
 public interface MultiThumbModel {
 
-  public abstract void setMinimumValue (int minimumValue);
+  int getMinimumValue ();
 
-  public abstract int getMinimumValue ();
+  void setMinimumValue (int minimumValue);
 
-  public abstract void setMaximumValue (int maximumValue);
+  int getMaximumValue ();
 
-  public abstract int getMaximumValue ();
+  void setMaximumValue (int maximumValue);
 
-  public void addThumb (int thumbValue);
+  void addThumb (int thumbValue);
 
-  public void removeThumb (int thumbIndex);
+  void removeThumb (int thumbIndex);
 
-  public abstract int getThumbCount ();
+  int getThumbCount ();
 
-  public abstract int[] getThumbValues ();
+  int[] getThumbValues ();
 
-  public abstract int getThumbValue (int thumbIndex);
+  int getThumbValue (int thumbIndex);
 
-  public abstract boolean moveThumb (int thumbIndex, int thumbValue);
+  boolean moveThumb (int thumbIndex, int thumbValue);
 
-  public abstract void addThumbListener (ThumbListener thumbListener);
+  void addThumbListener (ThumbListener thumbListener);
 
-  public abstract void removeThumbListener (ThumbListener thumbListener);
+  void removeThumbListener (ThumbListener thumbListener);
 }

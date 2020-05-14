@@ -41,9 +41,9 @@ import java.util.TreeMap;
 
 public class DependencyAnalysis<A extends Annotation, T> {
 
-  private HashMap<String, Dependency<A, T>> dependencyMap = new HashMap<>();
-  private TreeMap<Integer, HashSet<Dependency<A, T>>> priorityMap = new TreeMap<>();
-  private Class<A> annotationClass;
+  private final HashMap<String, Dependency<A, T>> dependencyMap = new HashMap<>();
+  private final TreeMap<Integer, HashSet<Dependency<A, T>>> priorityMap = new TreeMap<>();
+  private final Class<A> annotationClass;
 
   public DependencyAnalysis (Class<A> annotationClass) {
 

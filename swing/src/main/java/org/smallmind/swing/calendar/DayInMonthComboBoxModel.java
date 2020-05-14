@@ -40,7 +40,7 @@ import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 
 public class DayInMonthComboBoxModel implements ComboBoxModel {
 
-  private WeakEventListenerList<ListDataListener> listenerList;
+  private final WeakEventListenerList<ListDataListener> listenerList;
   private int year;
   private int month;
   private int selectedDay;
@@ -100,14 +100,14 @@ public class DayInMonthComboBoxModel implements ComboBoxModel {
     return CalendarUtility.getDaysInMonth(year, month);
   }
 
-  public synchronized void setSelectedItem (Object anItem) {
-
-    selectedDay = (Integer)anItem;
-  }
-
   public synchronized Object getSelectedItem () {
 
     return selectedDay;
+  }
+
+  public synchronized void setSelectedItem (Object anItem) {
+
+    selectedDay = (Integer)anItem;
   }
 
   public synchronized Object getElementAt (int index) {
@@ -121,5 +121,4 @@ public class DayInMonthComboBoxModel implements ComboBoxModel {
       listDataListener.contentsChanged(listDataEvent);
     }
   }
-
 }

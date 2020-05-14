@@ -4,7 +4,7 @@ if (typeof SMALLMIND == 'undefined') var SMALLMIND = {};
 if (!SMALLMIND.namespace) SMALLMIND.namespace = {};
 
 SMALLMIND.namespace.manager = {
-  register:function (ns) {
+  register: function (ns) {
     if (ns.length > 0) {
       myBaseNs = ns.substring(0, ns.lastIndexOf('.'));
       this.register(myBaseNs);

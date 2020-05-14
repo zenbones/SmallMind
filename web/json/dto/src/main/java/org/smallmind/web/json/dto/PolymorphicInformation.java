@@ -42,7 +42,7 @@ import org.smallmind.nutsnbolts.apt.AptUtility;
 public class PolymorphicInformation {
 
   private final List<TypeElement> subClassList;
-  private boolean useAttribute;
+  private final boolean useAttribute;
 
   public PolymorphicInformation (ProcessingEnvironment processingEnvironment, AnnotationMirror polymorphicAnnotationMirror) {
 

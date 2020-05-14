@@ -46,7 +46,7 @@ public abstract class AnnotationLiteral<A extends Annotation> implements Annotat
 
   private static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
 
-  private Class<A> annotationType;
+  private final Class<A> annotationType;
 
   protected AnnotationLiteral () {
 

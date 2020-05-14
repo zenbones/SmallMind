@@ -58,16 +58,16 @@ public class Spinner extends JPanel implements EditorListener, ActionListener, C
   private static final ImageIcon SPINNER_UP = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/arrow_right_blue_16.png"));
   private static final ImageIcon SPINNER_DOWN = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/arrow_left_blue_16.png"));
 
-  private WeakEventListenerList<ChangeListener> listenerList;
-  private SpinnerModel spinnerModel;
+  private final WeakEventListenerList<ChangeListener> listenerList;
+  private final SpinnerModel spinnerModel;
+  private final SpinnerRubberStamp rubberStamp;
+  private final JPanel valuePanel;
+  private final JButton spinnerUpButton;
+  private final JButton spinnerDownButton;
+  private final ButtonRepeater spinnerUpButtonRepeater;
+  private final ButtonRepeater spinnerDownButtonRepeater;
   private SpinnerRenderer renderer;
   private SpinnerEditor editor;
-  private SpinnerRubberStamp rubberStamp;
-  private JPanel valuePanel;
-  private JButton spinnerUpButton;
-  private JButton spinnerDownButton;
-  private ButtonRepeater spinnerUpButtonRepeater;
-  private ButtonRepeater spinnerDownButtonRepeater;
   private boolean editing = false;
 
   public Spinner (SpinnerModel spinnerModel, long delayMilliseconds) {
@@ -172,15 +172,13 @@ public class Spinner extends JPanel implements EditorListener, ActionListener, C
       if (spinnerModel instanceof EdgeAwareSpinnerModel) {
         spinnerUpButton.setEnabled(!getValue().equals(((EdgeAwareSpinnerModel)spinnerModel).getMaximumValue()));
         spinnerDownButton.setEnabled(!getValue().equals(((EdgeAwareSpinnerModel)spinnerModel).getMinimumValue()));
-      }
-      else {
+      } else {
         spinnerUpButton.setEnabled(true);
         spinnerDownButton.setEnabled(true);
       }
 
       rubberStamp.repaint();
-    }
-    else {
+    } else {
       cancelEditing(false);
       rubberStamp.repaint();
 
@@ -227,8 +225,7 @@ public class Spinner extends JPanel implements EditorListener, ActionListener, C
       case STOPPED:
         if (editor.isValid()) {
           stopEditing();
-        }
-        else {
+        } else {
           cancelEditing();
         }
 
@@ -255,8 +252,7 @@ public class Spinner extends JPanel implements EditorListener, ActionListener, C
 
     if (actionEvent.getSource() == spinnerUpButton) {
       spinnerModel.setValue(spinnerModel.getNextValue());
-    }
-    else if (actionEvent.getSource() == spinnerDownButton) {
+    } else if (actionEvent.getSource() == spinnerDownButton) {
       spinnerModel.setValue(spinnerModel.getPreviousValue());
     }
   }

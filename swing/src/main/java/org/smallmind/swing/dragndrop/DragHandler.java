@@ -52,12 +52,12 @@ import javax.swing.SwingUtilities;
 
 public abstract class DragHandler implements DragSourceListener, DragSourceMotionListener, DragGestureListener {
 
-  private GhostPanel ghostPanel;
+  private final GhostPanel ghostPanel;
+  private final Component component;
+  private final Point imageOffset = new Point(0, 0);
+  private final Point ghostPoint = new Point(0, 0);
+  private final int actions;
   private CursorPair cursorPair;
-  private Component component;
-  private Point imageOffset = new Point(0, 0);
-  private Point ghostPoint = new Point(0, 0);
-  private int actions;
 
   public DragHandler (GhostPanel ghostPanel, Component component, int actions) {
 
@@ -99,8 +99,7 @@ public abstract class DragHandler implements DragSourceListener, DragSourceMotio
 
       if (((dragIcon = getDragIcon(dragGestureEvent, imageOffset)) != null) && DragSource.isDragImageSupported()) {
         dragGestureEvent.startDrag(cursorPair.getNoDropCursor(), createImageFromIcon(dragIcon), imageOffset, transferable, this);
-      }
-      else {
+      } else {
         if (dragIcon != null) {
           ghostPanel.setImage(createImageFromIcon(dragIcon));
           ghostPanel.setLocation(0, 0);
@@ -156,8 +155,7 @@ public abstract class DragHandler implements DragSourceListener, DragSourceMotio
 
     try {
       dragTerminated(dragSourceDropEvent.getDropAction(), dragSourceDropEvent.getDropSuccess());
-    }
-    finally {
+    } finally {
       ghostPanel.setVisible(false);
       ghostPanel.setImage(null);
       ghostPanel.setImageLocation(null);
@@ -181,16 +179,13 @@ public abstract class DragHandler implements DragSourceListener, DragSourceMotio
       if ((action & DnDConstants.ACTION_LINK) != 0) {
         dropCursor = DragSource.DefaultLinkDrop;
         noDropCursor = DragSource.DefaultLinkNoDrop;
-      }
-      else if ((action & DnDConstants.ACTION_COPY) != 0) {
+      } else if ((action & DnDConstants.ACTION_COPY) != 0) {
         dropCursor = DragSource.DefaultCopyDrop;
         noDropCursor = DragSource.DefaultCopyNoDrop;
-      }
-      else if ((action & DnDConstants.ACTION_MOVE) != 0) {
+      } else if ((action & DnDConstants.ACTION_MOVE) != 0) {
         dropCursor = DragSource.DefaultMoveDrop;
         noDropCursor = DragSource.DefaultMoveNoDrop;
-      }
-      else {
+      } else {
         dropCursor = DragSource.DefaultMoveNoDrop;
         noDropCursor = DragSource.DefaultMoveNoDrop;
       }

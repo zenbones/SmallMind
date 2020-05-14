@@ -41,7 +41,7 @@ import java.util.Set;
 
 public class HashBag<T> implements Bag<T> {
 
-  private HashMap<T, Integer> internalMap;
+  private final HashMap<T, Integer> internalMap;
   private int size;
 
   public HashBag () {
@@ -282,7 +282,7 @@ public class HashBag<T> implements Bag<T> {
 
   private class BagIterator implements Iterator<T> {
 
-    private Iterator<T> keyIter = internalMap.keySet().iterator();
+    private final Iterator<T> keyIter = internalMap.keySet().iterator();
     private T key = null;
     private int count = 0;
 

@@ -46,8 +46,8 @@ import org.springframework.context.event.ContextRefreshedEvent;
 
 public class BatchJobLocator implements ListableJobLocator, ApplicationListener<ContextRefreshedEvent>, BeanFactoryPostProcessor {
 
+  private final HashSet<String> jobNameSet = new HashSet<>();
   private ApplicationContext applicationContext;
-  private HashSet<String> jobNameSet = new HashSet<>();
 
   @Override
   public void onApplicationEvent (ContextRefreshedEvent event) {

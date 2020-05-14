@@ -37,7 +37,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import javax.sql.CommonDataSource;
-import javax.sql.PooledConnection;
 import org.smallmind.nutsnbolts.spring.RuntimeBeansException;
 import org.smallmind.nutsnbolts.spring.SpringPropertyAccessor;
 import org.smallmind.nutsnbolts.spring.SpringPropertyAccessorManager;

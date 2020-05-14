@@ -38,7 +38,7 @@ import org.mongodb.morphia.Datastore;
 
 public class MorphiaIndexer extends StandardMBean implements MorphiaIndexingMXBean {
 
-  private LinkedList<Datastore> dataStoreList = new LinkedList<>();
+  private final LinkedList<Datastore> dataStoreList = new LinkedList<>();
 
   public MorphiaIndexer () {
 

@@ -37,7 +37,7 @@ import java.util.LinkedList;
 
 public class SortableColumnTrackerStack<E extends Enum> implements Iterable<SortableColumnTracker<E>> {
 
-  private LinkedList<SortableColumnTracker<E>> trackerList;
+  private final LinkedList<SortableColumnTracker<E>> trackerList;
 
   public SortableColumnTrackerStack () {
 
@@ -81,5 +81,4 @@ public class SortableColumnTrackerStack<E extends Enum> implements Iterable<Sort
 
     return displayBuilder.toString();
   }
-
 }

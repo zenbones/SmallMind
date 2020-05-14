@@ -41,11 +41,11 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Transactional {
 
-  public abstract String[] dataSources () default {};
+  String[] dataSources () default {};
 
-  public abstract boolean implicit () default true;
+  boolean implicit () default true;
 
-  public abstract boolean rollbackOnly () default false;
+  boolean rollbackOnly () default false;
 
-  public abstract boolean rollbackOnException () default true;
+  boolean rollbackOnException () default true;
 }

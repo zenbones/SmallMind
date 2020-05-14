@@ -41,28 +41,8 @@ import javax.swing.filechooser.FileFilter;
 
 public class FileChooserDialog extends JDialog implements FileChoiceListener {
 
-  private FileChooserPanel fileChooserPanel;
+  private final FileChooserPanel fileChooserPanel;
   private File chosenFile;
-
-  public static File showFileChooserDialog (Window parentWindow, FileChooserState state) {
-
-    return showFileChooserDialog(parentWindow, state, new File(System.getProperty("user.home")));
-  }
-
-  public static File showFileChooserDialog (Window parentWindow, FileChooserState state, File directory) {
-
-    return showFileChooserDialog(parentWindow, state, directory, null);
-  }
-
-  public static File showFileChooserDialog (Window parentWindow, FileChooserState state, File directory, FileFilter filter) {
-
-    FileChooserDialog fileChooserDialog;
-
-    fileChooserDialog = new FileChooserDialog(parentWindow, state, directory, filter);
-    fileChooserDialog.setVisible(true);
-
-    return fileChooserDialog.getChosenFile();
-  }
 
   public FileChooserDialog (Window parentWindow, FileChooserState state) {
 
@@ -86,6 +66,26 @@ public class FileChooserDialog extends JDialog implements FileChoiceListener {
 
     setMinimumSize(new Dimension(550, 350));
     setLocationRelativeTo(parentWindow);
+  }
+
+  public static File showFileChooserDialog (Window parentWindow, FileChooserState state) {
+
+    return showFileChooserDialog(parentWindow, state, new File(System.getProperty("user.home")));
+  }
+
+  public static File showFileChooserDialog (Window parentWindow, FileChooserState state, File directory) {
+
+    return showFileChooserDialog(parentWindow, state, directory, null);
+  }
+
+  public static File showFileChooserDialog (Window parentWindow, FileChooserState state, File directory, FileFilter filter) {
+
+    FileChooserDialog fileChooserDialog;
+
+    fileChooserDialog = new FileChooserDialog(parentWindow, state, directory, filter);
+    fileChooserDialog.setVisible(true);
+
+    return fileChooserDialog.getChosenFile();
   }
 
   public File getChosenFile () {

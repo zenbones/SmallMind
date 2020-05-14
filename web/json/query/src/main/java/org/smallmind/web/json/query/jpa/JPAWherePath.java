@@ -38,9 +38,9 @@ import org.smallmind.web.json.query.WherePath;
 
 public class JPAWherePath extends WherePath<Root<?>, Path<?>> {
 
-  private Root<?> root;
-  private Path<?> path;
-  private String field;
+  private final Root<?> root;
+  private final Path<?> path;
+  private final String field;
 
   public JPAWherePath (Root<?> root, String field) {
 

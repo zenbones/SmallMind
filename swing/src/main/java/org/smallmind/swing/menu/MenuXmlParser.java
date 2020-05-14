@@ -59,9 +59,17 @@ public class MenuXmlParser implements ContentHandler {
   private static final String ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   private static final int[] VK_CODES = {KeyEvent.VK_A, KeyEvent.VK_B, KeyEvent.VK_C, KeyEvent.VK_D, KeyEvent.VK_E, KeyEvent.VK_F, KeyEvent.VK_G, KeyEvent.VK_H, KeyEvent.VK_I, KeyEvent.VK_J, KeyEvent.VK_K, KeyEvent.VK_L, KeyEvent.VK_M, KeyEvent.VK_N, KeyEvent.VK_O, KeyEvent.VK_P, KeyEvent.VK_Q, KeyEvent.VK_R, KeyEvent.VK_S, KeyEvent.VK_T, KeyEvent.VK_U, KeyEvent.VK_V, KeyEvent.VK_W, KeyEvent.VK_X, KeyEvent.VK_Y, KeyEvent.VK_Z};
 
-  private MenuModel menuModel;
-  private MenuActionProvider actionProvider;
-  private LinkedList<JComponent> menuStack;
+  private final MenuModel menuModel;
+  private final MenuActionProvider actionProvider;
+  private final LinkedList<JComponent> menuStack;
+
+  private MenuXmlParser (MenuModel menuModel, MenuActionProvider actionProvider) {
+
+    this.menuModel = menuModel;
+    this.actionProvider = actionProvider;
+
+    menuStack = new LinkedList<JComponent>();
+  }
 
   public static MenuModel parse (InputSource inputSource, MenuActionProvider actionProvider)
     throws IOException, SAXException, ParserConfigurationException {
@@ -88,14 +96,6 @@ public class MenuXmlParser implements ContentHandler {
     return menuModel;
   }
 
-  private MenuXmlParser (MenuModel menuModel, MenuActionProvider actionProvider) {
-
-    this.menuModel = menuModel;
-    this.actionProvider = actionProvider;
-
-    menuStack = new LinkedList<JComponent>();
-  }
-
   public void setDocumentLocator (Locator locator) {
 
   }
@@ -114,8 +114,7 @@ public class MenuXmlParser implements ContentHandler {
 
     if (menuStack.getLast() instanceof JMenuBar) {
       ((JMenuBar)menuStack.getLast()).add((JMenu)menuItem);
-    }
-    else {
+    } else {
       ((JMenu)menuStack.getLast()).add(menuItem);
     }
 
@@ -155,8 +154,7 @@ public class MenuXmlParser implements ContentHandler {
 
     if (qName.equals("menu-bar")) {
       menuStack.add(menuModel.addMenuBar());
-    }
-    else if (qName.equals("menu")) {
+    } else if (qName.equals("menu")) {
       menu = new JMenu(atts.getValue("text"));
       if ((mnemonic = atts.getValue("mnemonic")) != null) {
         menu.setMnemonic(VK_CODES[ALPHABET.indexOf(mnemonic.charAt(0))]);
@@ -166,14 +164,11 @@ public class MenuXmlParser implements ContentHandler {
       }
 
       pushMenuItem(menu);
-    }
-    else if (qName.equals("menu-item")) {
+    } else if (qName.equals("menu-item")) {
       pushMenuItem(new JMenuItem());
-    }
-    else if (qName.equals("separator")) {
+    } else if (qName.equals("separator")) {
       ((JMenu)menuStack.getLast()).addSeparator();
-    }
-    else if (qName.equals("definition")) {
+    } else if (qName.equals("definition")) {
       actionPath = getActionPath() + atts.getValue("text");
 
       menuItem = (JMenuItem)menuStack.getLast();
@@ -190,8 +185,7 @@ public class MenuXmlParser implements ContentHandler {
       menuItem.addActionListener(actionProvider.getDefaultActionListener());
 
       menuModel.addMenuReference(actionPath, menuItem);
-    }
-    else if (qName.equals("action")) {
+    } else if (qName.equals("action")) {
       if ((menuAction = actionProvider.getAction(atts.getValue("class"))) == null) {
         throw new SAXException("No such Action (" + atts.getValue("class") + ")");
       }

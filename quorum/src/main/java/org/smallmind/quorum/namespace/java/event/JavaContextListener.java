@@ -36,7 +36,7 @@ import java.util.EventListener;
 
 public interface JavaContextListener extends EventListener {
 
-  public abstract void contextClosed (JavaContextEvent javaContextEvent);
+  void contextClosed (JavaContextEvent javaContextEvent);
 
-  public abstract void contextAborted (JavaContextEvent javaContextEvent);
+  void contextAborted (JavaContextEvent javaContextEvent);
 }

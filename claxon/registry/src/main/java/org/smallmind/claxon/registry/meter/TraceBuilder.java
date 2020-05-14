@@ -40,7 +40,7 @@ public class TraceBuilder implements MeterBuilder<Trace> {
 
   private static final Window[] DEFAULT_WINDOWS = new Window[] {new Window("m1", 1), new Window("m5", 5), new Window("m15", 15)};
 
-  private TimeUnit windowTimeUnit = TimeUnit.MINUTES;
+  private final TimeUnit windowTimeUnit = TimeUnit.MINUTES;
   private Window[] windows = DEFAULT_WINDOWS;
 
   public MeterBuilder<Trace> windowTimeUnit (TimeUnit windowTimeUnit) {

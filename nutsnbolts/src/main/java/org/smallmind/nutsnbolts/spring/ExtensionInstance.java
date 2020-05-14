@@ -34,7 +34,7 @@ package org.smallmind.nutsnbolts.spring;
 
 public interface ExtensionInstance {
 
-  public abstract String[] getClasspathComponents ();
+  String[] getClasspathComponents ();
 
-  public abstract void setClasspathComponents (String[] classpathComponents);
+  void setClasspathComponents (String[] classpathComponents);
 }

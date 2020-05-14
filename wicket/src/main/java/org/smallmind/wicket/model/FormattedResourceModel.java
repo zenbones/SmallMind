@@ -39,9 +39,9 @@ import org.apache.wicket.model.Model;
 
 public class FormattedResourceModel extends AbstractReadOnlyModel {
 
-  private Component component;
-  private Object[] args;
-  private String key;
+  private final Component component;
+  private final Object[] args;
+  private final String key;
 
   public FormattedResourceModel (Component component, String key, Object... args) {
 
@@ -61,8 +61,7 @@ public class FormattedResourceModel extends AbstractReadOnlyModel {
     for (int count = 0; count < args.length; count++) {
       if (args[count] instanceof Model) {
         unwrappedArgs[count] = ((Model)args[count]).getObject();
-      }
-      else {
+      } else {
         unwrappedArgs[count] = args[count];
       }
     }

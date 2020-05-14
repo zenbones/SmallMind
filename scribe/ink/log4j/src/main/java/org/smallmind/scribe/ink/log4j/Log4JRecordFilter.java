@@ -43,9 +43,9 @@ import org.smallmind.scribe.pen.adapter.RecordWrapper;
 
 public class Log4JRecordFilter extends LoggingEvent implements RecordWrapper {
 
-  private FilterRecord filterRecord;
-  private AtomicReference<LocationInfo> locationInfoReference;
-  private Level level;
+  private final FilterRecord filterRecord;
+  private final AtomicReference<LocationInfo> locationInfoReference;
+  private final Level level;
 
   public Log4JRecordFilter (Record record, Level level) {
 
@@ -82,8 +82,8 @@ public class Log4JRecordFilter extends LoggingEvent implements RecordWrapper {
 
   private class FilterRecord implements Record {
 
-    private Record record;
-    private LoggingEvent loggingEvent;
+    private final Record record;
+    private final LoggingEvent loggingEvent;
 
     public FilterRecord (Record record, LoggingEvent loggingEvent) {
 

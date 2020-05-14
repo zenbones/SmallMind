@@ -41,8 +41,8 @@ public class AsynchronousTransmissionCallback extends TransmissionCallback {
   private final CountDownLatch resultLatch = new CountDownLatch(1);
   private final AtomicReference<Stint> timeoutDurationRef = new AtomicReference<>();
   private final AtomicReference<ResultSignal> resultSignalRef = new AtomicReference<>();
-  private String serviceName;
-  private String functionName;
+  private final String serviceName;
+  private final String functionName;
 
   public AsynchronousTransmissionCallback (String serviceName, String functionName) {
 

@@ -34,7 +34,7 @@ package org.smallmind.scribe.pen;
 
 public class StaticPatternRule implements PatternRule {
 
-  private String staticField;
+  private final String staticField;
 
   public StaticPatternRule (String staticField) {
 

@@ -34,5 +34,5 @@ package org.smallmind.swing.menu;
 
 public interface MenuDelegate {
 
-  public abstract void execute (MenuHandler menuHandler);
+  void execute (MenuHandler menuHandler);
 }

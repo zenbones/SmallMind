@@ -103,16 +103,14 @@ public class ComponentPanel extends JPanel implements Scrollable {
           jiggleJump += getSquashedRectangleAtIndex(index - 1).getHeight();
         }
       }
-    }
-    else if (direction > 0) {
+    } else if (direction > 0) {
       if ((viewRectangle.getY() + viewRectangle.getHeight()) < getPreferredSize().getHeight()) {
         index = getIndexAtPoint(new Point(0, (int)(viewRectangle.getY() + viewRectangle.getHeight())));
         jiggleJump = (int)((getSquashedRectangleAtIndex(index).getY() + getSquashedRectangleAtIndex(index).getHeight()) - (viewRectangle.getY() + viewRectangle.getHeight()));
         if (jiggleJump == 0) {
           if (index >= (getComponentCount() - 1)) {
             jiggleJump = 0;
-          }
-          else {
+          } else {
             jiggleJump += getSquashedRectangleAtIndex(index + 1).getHeight();
           }
         }
@@ -131,8 +129,7 @@ public class ComponentPanel extends JPanel implements Scrollable {
 
     if (direction < 0) {
       return (int)viewRectangle.getY();
-    }
-    else if (direction > 0) {
+    } else if (direction > 0) {
       preferredSize = getPreferredSize();
 
       return (int)(preferredSize.getHeight() - viewRectangle.getY() + viewRectangle.getHeight());
@@ -140,5 +137,4 @@ public class ComponentPanel extends JPanel implements Scrollable {
 
     return 0;
   }
-
 }

@@ -34,9 +34,9 @@ package org.smallmind.sleuth.runner;
 
 public class Culprit {
 
-  private Topmost topmost;
-  private String className;
-  private String methodName;
+  private final Topmost topmost;
+  private final String className;
+  private final String methodName;
 
   public Culprit (String className, String methodName, Throwable throwable) {
 
@@ -80,8 +80,8 @@ public class Culprit {
 
   private class Topmost {
 
-    private Throwable throwable;
-    private StackTraceElement stackTraceElement;
+    private final Throwable throwable;
+    private final StackTraceElement stackTraceElement;
 
     public Topmost (Throwable throwable, StackTraceElement stackTraceElement) {
 

@@ -39,7 +39,7 @@ import javax.swing.JLabel;
 
 public class DefaultBannerRenderer implements BannerCellRenderer {
 
-  private JLabel renderLabel;
+  private final JLabel renderLabel;
 
   public DefaultBannerRenderer () {
 
@@ -56,5 +56,4 @@ public class DefaultBannerRenderer implements BannerCellRenderer {
 
     return renderLabel;
   }
-
 }

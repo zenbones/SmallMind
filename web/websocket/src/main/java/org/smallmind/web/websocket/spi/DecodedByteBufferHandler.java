@@ -40,10 +40,10 @@ import javax.websocket.MessageHandler;
 
 public class DecodedByteBufferHandler<T> implements MessageHandler.Whole<ByteBuffer> {
 
-  private SessionImpl session;
-  private Endpoint endpoint;
-  private Decoder.Binary<T> decoder;
-  private MessageHandler.Whole<T> handler;
+  private final SessionImpl session;
+  private final Endpoint endpoint;
+  private final Decoder.Binary<T> decoder;
+  private final MessageHandler.Whole<T> handler;
 
   public DecodedByteBufferHandler (SessionImpl session, Endpoint endpoint, Decoder.Binary<T> decoder, MessageHandler.Whole<T> handler) {
 

@@ -41,7 +41,7 @@ import java.util.PropertyPermission;
 
 public class MinimalPermissions extends PermissionCollection {
 
-  private Permissions permissions = new Permissions();
+  private final Permissions permissions = new Permissions();
 
   public MinimalPermissions () {
 

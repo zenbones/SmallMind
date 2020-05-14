@@ -41,10 +41,10 @@ import javax.websocket.MessageHandler;
 
 public class DecodedInputStreamHandler<T> implements MessageHandler.Whole<InputStream> {
 
-  private SessionImpl session;
-  private Endpoint endpoint;
-  private Decoder.BinaryStream<T> decoder;
-  private MessageHandler.Whole<T> handler;
+  private final SessionImpl session;
+  private final Endpoint endpoint;
+  private final Decoder.BinaryStream<T> decoder;
+  private final MessageHandler.Whole<T> handler;
 
   public DecodedInputStreamHandler (SessionImpl session, Endpoint endpoint, Decoder.BinaryStream<T> decoder, MessageHandler.Whole<T> handler) {
 

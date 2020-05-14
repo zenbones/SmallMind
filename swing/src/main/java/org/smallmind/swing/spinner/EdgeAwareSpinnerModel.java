@@ -36,8 +36,7 @@ import javax.swing.SpinnerModel;
 
 public interface EdgeAwareSpinnerModel extends SpinnerModel {
 
-  public Object getMinimumValue ();
+  Object getMinimumValue ();
 
-  public Object getMaximumValue ();
-
+  Object getMaximumValue ();
 }

@@ -49,11 +49,11 @@ public class SortableHeaderPanel<E extends Enum> extends JPanel {
   private static final ImageIcon DESCENDING = new ImageIcon(ClassLoader.getSystemResource("public/iconexperience/business and data/16x16/plain/sort_descending.png"));
   private static final ImageIcon ASCENDING = new ImageIcon(ClassLoader.getSystemResource("public/iconexperience/business and data/16x16/plain/sort_ascending.png"));
 
-  private SortableTable<E> sortableTable;
-  private E enumDataType;
-  private PlainLabel sortingLabel;
-  private boolean returnToNeutral;
-  private boolean showOrder;
+  private final SortableTable<E> sortableTable;
+  private final E enumDataType;
+  private final PlainLabel sortingLabel;
+  private final boolean returnToNeutral;
+  private final boolean showOrder;
   private int clickWidth = 0;
 
   public SortableHeaderPanel (SortableTable<E> sortableTable, E enumDataType, JComponent headerComponent, boolean returnToNeutral, boolean showOrder) {
@@ -149,5 +149,4 @@ public class SortableHeaderPanel<E extends Enum> extends JPanel {
 
     sortableTable.sortTableData();
   }
-
 }

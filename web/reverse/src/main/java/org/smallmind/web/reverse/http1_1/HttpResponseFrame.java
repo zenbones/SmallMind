@@ -40,8 +40,8 @@ public class HttpResponseFrame extends HttpFrame {
 
   private static final Pattern RESPONSE_LINE_PATTERN = Pattern.compile("HTTP/(\\d+\\.\\d+)\\s+(\\d+)\\s+(.+)");
 
-  private String reason;
-  private int status;
+  private final String reason;
+  private final int status;
 
   public HttpResponseFrame (HttpProtocolInputStream httpProtocolInputStream)
     throws IOException, ProtocolException {

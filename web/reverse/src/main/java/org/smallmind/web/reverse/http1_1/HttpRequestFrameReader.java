@@ -40,7 +40,7 @@ import org.smallmind.scribe.pen.LoggerManager;
 public class HttpRequestFrameReader extends HttpFrameReader {
 
   private final AtomicReference<DestinationTicket> destinationTicketRef = new AtomicReference<>();
-  private int connectTimeoutMillis;
+  private final int connectTimeoutMillis;
 
   public HttpRequestFrameReader (ReverseProxyService reverseProxyService, SocketChannel sourceChannel, int connectTimeoutMillis) {
 

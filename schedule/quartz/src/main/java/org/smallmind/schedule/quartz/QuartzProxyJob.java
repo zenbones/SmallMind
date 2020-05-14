@@ -43,9 +43,9 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public abstract class QuartzProxyJob implements ProxyJob, InterruptableJob {
 
-  private AtomicReference<Thread> threadRef = new AtomicReference<>();
-  private AtomicReference<SuccessOrFailure> statusRef = new AtomicReference<>(SuccessOrFailure.SUCCESS);
-  private LinkedList<Throwable> throwableList;
+  private final AtomicReference<Thread> threadRef = new AtomicReference<>();
+  private final AtomicReference<SuccessOrFailure> statusRef = new AtomicReference<>(SuccessOrFailure.SUCCESS);
+  private final LinkedList<Throwable> throwableList;
 
   private Date startTime;
   private Date stopTime;

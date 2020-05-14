@@ -42,10 +42,10 @@ import javax.sql.DataSource;
 
 public class DriverManagerDataSource implements DataSource {
 
+  private final String jdbcUrl;
+  private final String user;
+  private final String password;
   private PrintWriter logWriter;
-  private String jdbcUrl;
-  private String user;
-  private String password;
 
   public DriverManagerDataSource (String driverClassName, String jdbcUrl, String user, String password)
     throws SQLException {

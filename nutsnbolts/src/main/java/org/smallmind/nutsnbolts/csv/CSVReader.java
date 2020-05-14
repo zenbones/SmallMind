@@ -41,13 +41,13 @@ import java.util.LinkedList;
 
 public class CSVReader implements AutoCloseable {
 
-  private static enum State {
+  private enum State {
 
     UNQOUTED, QUOTED
   }
 
-  private BufferedReader reader;
-  private StringBuilder fieldBuilder;
+  private final BufferedReader reader;
+  private final StringBuilder fieldBuilder;
   private State state;
   private String[] headers;
   private boolean trimFields;

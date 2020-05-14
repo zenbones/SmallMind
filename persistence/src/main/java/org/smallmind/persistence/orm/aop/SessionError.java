@@ -36,7 +36,7 @@ import org.smallmind.nutsnbolts.lang.FormattedError;
 
 public abstract class SessionError extends FormattedError {
 
-  private int closure;
+  private final int closure;
 
   public SessionError (int closure) {
 

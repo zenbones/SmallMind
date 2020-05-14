@@ -36,7 +36,7 @@ import org.smallmind.quorum.pool.complex.ComponentPool;
 
 public class ErrorReportingComponentPoolEvent<C> extends ComponentPoolEvent<C> {
 
-  private Exception exception;
+  private final Exception exception;
 
   public ErrorReportingComponentPoolEvent (ComponentPool<C> componentPool, Exception exception) {
 

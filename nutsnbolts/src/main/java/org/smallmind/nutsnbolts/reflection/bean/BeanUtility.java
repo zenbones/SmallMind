@@ -307,8 +307,8 @@ public class BeanUtility {
 
   private static class MethodKey {
 
-    private Class methodClass;
-    private String methodName;
+    private final Class methodClass;
+    private final String methodName;
 
     private MethodKey (Class methodClass, String methodName) {
 

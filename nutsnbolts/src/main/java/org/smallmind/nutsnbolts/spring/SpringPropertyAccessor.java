@@ -38,7 +38,7 @@ import org.smallmind.nutsnbolts.util.Option;
 public class SpringPropertyAccessor {
 
   private final Set<String> keySet;
-  private PropertyPlaceholderStringValueResolver stringValueResolver;
+  private final PropertyPlaceholderStringValueResolver stringValueResolver;
 
   public SpringPropertyAccessor (PropertyPlaceholderStringValueResolver stringValueResolver) {
 

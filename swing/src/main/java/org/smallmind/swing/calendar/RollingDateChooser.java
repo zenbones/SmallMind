@@ -62,10 +62,10 @@ public class RollingDateChooser extends JPanel implements ListSelectionListener,
   private static final Dimension PREFERRED_DIMENSION = new Dimension(200, 300);
   private static final String[] MONTHS = {"January", "February", "March", "April", "May", "June", "July", "Auhust", "September", "October", "November", "December"};
 
-  private WeakEventListenerList<DateSelectionListener> listenerList;
-  private HashSet<CalendarDate> markedSet;
-  private JTable rollingMonthTable;
-  private DateRangeTableModel model;
+  private final WeakEventListenerList<DateSelectionListener> listenerList;
+  private final HashSet<CalendarDate> markedSet;
+  private final JTable rollingMonthTable;
+  private final DateRangeTableModel model;
   private int selectedRow = -1;
   private int selectedColumn = -1;
 
@@ -146,8 +146,7 @@ public class RollingDateChooser extends JPanel implements ListSelectionListener,
 
     if (set) {
       markedSet.add(calendarDate);
-    }
-    else {
+    } else {
       markedSet.remove(calendarDate);
     }
 
@@ -229,12 +228,11 @@ public class RollingDateChooser extends JPanel implements ListSelectionListener,
       setBackground(SystemColor.textHighlight);
       setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, SystemColor.textHighlight.brighter()));
     }
-
   }
 
   private class MonthHeaderBar extends JPanel {
 
-    private GridBagConstraints constraint;
+    private final GridBagConstraints constraint;
 
     public MonthHeaderBar (DateRangeTableModel model, int rowHeight) {
 
@@ -252,8 +250,7 @@ public class RollingDateChooser extends JPanel implements ListSelectionListener,
         if (((CalendarDate)model.getValueAt(count, 0)).getDay() < currentDay) {
           if ((count == 1) && model.hasUnderun()) {
             setMonthLabel(0, index++, rowHeight);
-          }
-          else {
+          } else {
             setMonthLabel(month, index++, (count - breakRow) * rowHeight);
           }
 
@@ -294,12 +291,11 @@ public class RollingDateChooser extends JPanel implements ListSelectionListener,
       constraint.weighty = 1;
       add(monthLabel, constraint);
     }
-
   }
 
   private class DayHeaderTableCellRenderer implements TableCellRenderer {
 
-    private JLabel dayLabel;
+    private final JLabel dayLabel;
 
     public DayHeaderTableCellRenderer () {
 
@@ -317,7 +313,5 @@ public class RollingDateChooser extends JPanel implements ListSelectionListener,
 
       return dayLabel;
     }
-
   }
-
 }

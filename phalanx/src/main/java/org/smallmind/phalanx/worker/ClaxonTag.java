@@ -36,7 +36,7 @@ public enum ClaxonTag {
 
   ACQUIRE_WORKER("Acquire Worker"), WORKER_IDLE("Worker Idle");
 
-  private String display;
+  private final String display;
 
   ClaxonTag (String display) {
 

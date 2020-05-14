@@ -36,12 +36,12 @@ import java.util.Comparator;
 
 public abstract class DirectionalComparator<T> implements Comparator<T> {
 
-  public static enum Direction {
+  public enum Direction {
 
     DESCENDING, ASCENDING
   }
 
-  private Direction direction;
+  private final Direction direction;
 
   public DirectionalComparator (Direction direction) {
 

@@ -52,8 +52,8 @@ public class JDKLoggerAdapter implements LoggerAdapter {
 
   private final Logger logger;
 
-  private ConcurrentLinkedQueue<Filter> filterList;
-  private ConcurrentLinkedQueue<Enhancer> enhancerList;
+  private final ConcurrentLinkedQueue<Filter> filterList;
+  private final ConcurrentLinkedQueue<Enhancer> enhancerList;
   private boolean autoFillLogicalContext = false;
 
   public JDKLoggerAdapter (Logger logger) {

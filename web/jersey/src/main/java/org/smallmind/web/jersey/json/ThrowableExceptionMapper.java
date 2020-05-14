@@ -43,8 +43,8 @@ import org.smallmind.web.json.scaffold.fault.FaultWrappingException;
 
 public class ThrowableExceptionMapper implements ExceptionMapper<Throwable> {
 
-  private ExceptionMapper[] mappers;
-  private boolean logUnclassifiedErrors;
+  private final ExceptionMapper[] mappers;
+  private final boolean logUnclassifiedErrors;
 
   public ThrowableExceptionMapper (ExceptionMapper... mappers) {
 
