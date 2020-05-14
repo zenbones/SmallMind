@@ -41,7 +41,7 @@ import org.smallmind.nutsnbolts.util.DotNotation;
 public class ClaxonConfiguration {
 
   private Clock clock = SystemClock.instance();
-  private Stint collectionStint = new Stint(1, TimeUnit.SECONDS);
+  private Stint collectionStint = new Stint(2, TimeUnit.SECONDS);
   private Tag[] registryTags = new Tag[0];
   private Map<DotNotation, String> prefixMap = new HashMap<>();
 
