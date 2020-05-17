@@ -37,13 +37,8 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 public class ClassPathXmlSpringContextWrapperListener extends SpringContextWrapperListener {
 
-  public static Class<? extends SpringContextWrapperListener> getImplementationClass () {
+  public ConfigurableApplicationContext loadApplicationContext (String[] args) {
 
-    return ClassPathXmlSpringContextWrapperListener.class;
-  }
-
-  public ConfigurableApplicationContext[] loadApplicationContexts (String[] args) {
-
-    return new ConfigurableApplicationContext[] {new ClassPathXmlApplicationContext(args)};
+    return new ClassPathXmlApplicationContext(args);
   }
 }
