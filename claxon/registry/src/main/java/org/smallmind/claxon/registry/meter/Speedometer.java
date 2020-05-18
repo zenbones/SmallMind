@@ -59,6 +59,30 @@ public class Speedometer implements Meter {
   @Override
   public Quantity[] record () {
 
-    return new Quantity[] {new Quantity("minimum", bounded.getMinimum()), new Quantity("maximum", bounded.getMaximum()), new Quantity("velocity", paced.getVelocity())};
+    Quantity[] quantities;
+    long minimum = bounded.getMinimum();
+    long maximum = bounded.getMaximum();
+    double velocity = paced.getVelocity();
+    int size = 1;
+    int index = 0;
+
+    if (minimum < Long.MAX_VALUE) {
+      size++;
+    }
+    if (maximum > Long.MIN_VALUE) {
+      size++;
+    }
+
+    quantities = new Quantity[size];
+
+    if (minimum < Long.MAX_VALUE) {
+      quantities[index++] = new Quantity("minimum", minimum);
+    }
+    if (maximum > Long.MIN_VALUE) {
+      quantities[index++] = new Quantity("maximum", maximum);
+    }
+    quantities[index] = new Quantity("velocity", velocity);
+
+    return quantities;
   }
 }

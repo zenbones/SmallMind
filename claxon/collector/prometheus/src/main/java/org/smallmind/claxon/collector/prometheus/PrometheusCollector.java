@@ -33,6 +33,7 @@
 package org.smallmind.claxon.collector.prometheus;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.smallmind.claxon.registry.PullCollector;
 import org.smallmind.claxon.registry.Quantity;
 import org.smallmind.claxon.registry.Tag;
@@ -43,12 +44,28 @@ public class PrometheusCollector extends PullCollector<String> {
   private enum Letter {UPPER, LOWER, DIGIT, PUNCTUATION, UNKNOWN}
 
   private final ConcurrentLinkedQueue<String> rowQueue = new ConcurrentLinkedQueue<>();
+  private final AtomicInteger rowCount = new AtomicInteger(0);
+  private final int maxRows;
   /*
   # HELP metric_name Description of the metric
   # TYPE metric_name type
   # Comment that's not parsed by prometheus
   http_requests_total{method="post",code="400"}  3   1395066363000
   */
+
+  public PrometheusCollector () {
+
+    this(Integer.MAX_VALUE - 1);
+  }
+
+  public PrometheusCollector (int maxRows) {
+
+    if ((maxRows < 1) || (maxRows == Integer.MAX_VALUE)) {
+      this.maxRows = Integer.MAX_VALUE - 1;
+    } else {
+      this.maxRows = maxRows;
+    }
+  }
 
   @Override
   public void record (String meterName, Tag[] tags, Quantity[] quantities) {
@@ -83,6 +100,11 @@ public class PrometheusCollector extends PullCollector<String> {
       }
       rowBuilder.append(' ').append(quantity.getValue()).append(' ').append(nowInSeconds);
 
+      if (rowCount.incrementAndGet() > maxRows) {
+        if (rowQueue.poll() != null) {
+          rowCount.decrementAndGet();
+        }
+      }
       rowQueue.add(rowBuilder.toString());
     }
   }
@@ -99,6 +121,7 @@ public class PrometheusCollector extends PullCollector<String> {
       String row;
 
       while ((row = rowQueue.poll()) != null) {
+        rowCount.decrementAndGet();
         outputBuilder.append(row).append('\n');
       }
 

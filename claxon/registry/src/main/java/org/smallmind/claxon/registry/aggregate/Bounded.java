@@ -32,26 +32,48 @@
  */
 package org.smallmind.claxon.registry.aggregate;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.LongAccumulator;
 
 public class Bounded implements Aggregate {
 
-  private final LongAccumulator maxAccumulator = new LongAccumulator(Long::max, Long.MIN_VALUE);
-  private final LongAccumulator minAccumulator = new LongAccumulator(Long::min, Long.MAX_VALUE);
+  private final LongAccumulator flipMaxAccumulator = new LongAccumulator(Long::max, Long.MIN_VALUE);
+  private final LongAccumulator flipMinAccumulator = new LongAccumulator(Long::min, Long.MAX_VALUE);
+  private final LongAccumulator flopMaxAccumulator = new LongAccumulator(Long::max, Long.MIN_VALUE);
+  private final LongAccumulator flopMinAccumulator = new LongAccumulator(Long::min, Long.MAX_VALUE);
+  private final AtomicBoolean maxFlag = new AtomicBoolean();
+  private final AtomicBoolean minFlag = new AtomicBoolean();
 
   public void update (long value) {
 
-    maxAccumulator.accumulate(value);
-    minAccumulator.accumulate(value);
+    if (!maxFlag.get()) {
+      flipMaxAccumulator.accumulate(value);
+    } else {
+      flopMaxAccumulator.accumulate(value);
+    }
+
+    if (!minFlag.get()) {
+      flipMinAccumulator.accumulate(value);
+    } else {
+      flopMinAccumulator.accumulate(value);
+    }
   }
 
-  public long getMaximum () {
+  public synchronized long getMaximum () {
 
-    return maxAccumulator.getThenReset();
+    boolean currentFlag = maxFlag.get();
+
+    maxFlag.set(!currentFlag);
+
+    return (!currentFlag) ? flipMaxAccumulator.getThenReset() : flopMaxAccumulator.getThenReset();
   }
 
   public long getMinimum () {
 
-    return minAccumulator.getThenReset();
+    boolean currentFlag = minFlag.get();
+
+    minFlag.set(!currentFlag);
+
+    return (!currentFlag) ? flipMinAccumulator.getThenReset() : flopMinAccumulator.getThenReset();
   }
 }
