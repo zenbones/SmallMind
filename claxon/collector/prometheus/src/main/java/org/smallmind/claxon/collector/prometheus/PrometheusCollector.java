@@ -87,7 +87,7 @@ public class PrometheusCollector extends PullCollector<String> {
         mangle(tag.getKey(), labelBuilder).append("=\"").append(tag.getValue()).append('"');
         first = false;
       }
-      labelBuilder.append("} ");
+      labelBuilder.append("}");
     }
 
     for (Quantity quantity : quantities) {
