@@ -40,7 +40,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
-@XmlRootElement(name = "where")
+@XmlRootElement(name = "where", namespace = "http://org.smallmind/web/json/query")
 @XmlAccessorType(XmlAccessType.PROPERTY)
 public class Where implements WherePermissible<Where> {
 

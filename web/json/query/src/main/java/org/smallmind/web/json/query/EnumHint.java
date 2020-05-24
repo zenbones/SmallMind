@@ -37,7 +37,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
-@XmlRootElement(name = "enum")
+@XmlRootElement(name = "enum", namespace = "http://org.smallmind/web/json/query")
 @XmlJavaTypeAdapter(HintPolymorphicXmlAdapter.class)
 public class EnumHint extends Hint {
 

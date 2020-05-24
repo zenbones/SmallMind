@@ -44,7 +44,7 @@ import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.nutsnbolts.time.TimeUtility;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
-@XmlRootElement(name = "array")
+@XmlRootElement(name = "array", namespace = "http://org.smallmind/web/json/query")
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
 public class ArrayWhereOperand extends WhereOperand<Object[]> {
 

@@ -38,7 +38,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
-@XmlRootElement(name = "field")
+@XmlRootElement(name = "field", namespace = "http://org.smallmind/web/json/query")
 @XmlAccessorType(XmlAccessType.PROPERTY)
 public class SortField {
 

@@ -36,7 +36,7 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
-@XmlRootElement(name = "envelope")
+@XmlRootElement(name = "envelope", namespace = "http://org.smallmind/web/jersey/aop")
 @XmlAccessorType(XmlAccessType.PROPERTY)
 public class Envelope extends AbstractNakedMappedJsonEntity {
 

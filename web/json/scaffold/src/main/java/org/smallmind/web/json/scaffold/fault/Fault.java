@@ -42,7 +42,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
-@XmlRootElement(name = "fault")
+@XmlRootElement(name = "fault", namespace = "http://org.smallmind/web/json/scaffold/fault")
 @XmlAccessorType(XmlAccessType.PROPERTY)
 public class Fault implements Serializable {
 

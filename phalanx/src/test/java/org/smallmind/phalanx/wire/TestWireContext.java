@@ -35,7 +35,7 @@ package org.smallmind.phalanx.wire;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
-@XmlRootElement(name = "test")
+@XmlRootElement(name = "test", namespace = "http://org.smallmind/phalanx/wire")
 public class TestWireContext extends WireContext {
 
   private String message;

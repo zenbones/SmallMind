@@ -41,7 +41,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
-@XmlRootElement(name = "sort")
+@XmlRootElement(name = "sort", namespace = "http://org.smallmind/web/json/query")
 @XmlAccessorType(XmlAccessType.PROPERTY)
 public class Sort implements WherePermissible<Sort> {
 
