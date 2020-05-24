@@ -43,7 +43,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import org.smallmind.nutsnbolts.util.Mutation;
 
-@XmlRootElement(name = "page")
+@XmlRootElement(name = "page", namespace = "http://org.smallmind/web/json/scaffold/fault")
 @XmlAccessorType(XmlAccessType.PROPERTY)
 public class Page<T> implements Iterable<T> {
 

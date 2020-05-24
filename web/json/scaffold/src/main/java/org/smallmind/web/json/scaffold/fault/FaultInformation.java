@@ -41,7 +41,7 @@ import javax.xml.bind.annotation.XmlTransient;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
-@XmlRootElement(name = "information")
+@XmlRootElement(name = "information", namespace = "http://org.smallmind/web/json/scaffold/fault")
 @XmlAccessorType(XmlAccessType.PROPERTY)
 public class FaultInformation implements Serializable {
 

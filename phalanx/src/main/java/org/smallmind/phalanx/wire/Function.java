@@ -42,7 +42,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
-@XmlRootElement(name = "function")
+@XmlRootElement(name = "function", namespace = "http://org.smallmind/phalanx/wire")
 @XmlAccessorType(XmlAccessType.PROPERTY)
 public class Function implements Serializable {
 

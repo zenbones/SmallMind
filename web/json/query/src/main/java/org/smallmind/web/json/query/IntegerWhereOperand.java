@@ -37,7 +37,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
-@XmlRootElement(name = "integer")
+@XmlRootElement(name = "integer", namespace = "http://org.smallmind/web/json/query")
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
 public class IntegerWhereOperand extends WhereOperand<Integer> {
 

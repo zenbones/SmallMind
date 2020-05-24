@@ -40,7 +40,7 @@ import javax.xml.bind.annotation.XmlElementRef;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
-@XmlRootElement(name = "invocation")
+@XmlRootElement(name = "invocation", namespace = "http://org.smallmind/phalanx/wire")
 @XmlAccessorType(XmlAccessType.PROPERTY)
 public class InvocationSignal implements Signal {
 

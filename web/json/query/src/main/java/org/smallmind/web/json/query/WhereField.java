@@ -37,7 +37,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
-@XmlRootElement(name = "field")
+@XmlRootElement(name = "field", namespace = "http://org.smallmind/web/json/query")
 @XmlJavaTypeAdapter(WhereCriterionPolymorphicXmlAdapter.class)
 public class WhereField extends WhereCriterion {
 

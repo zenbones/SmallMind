@@ -40,7 +40,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
-@XmlRootElement(name = "binary")
+@XmlRootElement(name = "binary", namespace = "http://org.smallmind/nutsnbolts/json")
 @XmlAccessorType(XmlAccessType.PROPERTY)
 public class BinaryData implements Serializable {
 

@@ -39,7 +39,7 @@ import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.smallmind.nutsnbolts.json.DateXmlAdapter;
 
-@XmlRootElement(name = "date")
+@XmlRootElement(name = "date", namespace = "http://org.smallmind/web/json/query")
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
 public class DateWhereOperand extends WhereOperand<Date> {
 
