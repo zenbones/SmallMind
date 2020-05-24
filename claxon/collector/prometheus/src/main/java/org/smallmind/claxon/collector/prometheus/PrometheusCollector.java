@@ -114,7 +114,7 @@ public class PrometheusCollector extends PullCollector<String> {
 
     if (rowQueue.isEmpty()) {
 
-      return "";
+      return "\n";
     } else {
 
       StringBuilder outputBuilder = new StringBuilder();
@@ -124,8 +124,9 @@ public class PrometheusCollector extends PullCollector<String> {
         rowCount.decrementAndGet();
         outputBuilder.append(row).append('\n');
       }
+      outputBuilder.append('\n');
 
-      return (outputBuilder.length() == 0) ? "" : outputBuilder.toString();
+      return outputBuilder.toString();
     }
   }
 
