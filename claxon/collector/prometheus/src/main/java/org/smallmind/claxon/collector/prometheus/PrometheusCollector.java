@@ -63,15 +63,10 @@ public class PrometheusCollector extends PullCollector<String> {
     if ((tags != null) && (tags.length > 0)) {
 
       labelBuilder = new StringBuilder();
-      boolean first = true;
 
       labelBuilder.append('{');
       for (Tag tag : tags) {
-        if (!first) {
-          labelBuilder.append(',');
-        }
-        mangle(tag.getKey(), labelBuilder, true).append("=\"").append(tag.getValue()).append('"');
-        first = false;
+        mangle(tag.getKey(), labelBuilder, true).append("=\"").append(tag.getValue()).append("\",");
       }
       labelBuilder.append("}");
     }
@@ -105,7 +100,7 @@ public class PrometheusCollector extends PullCollector<String> {
 
     readMap.clear();
 
-    return (outputBuilder.length() == 0) ? "\n" : outputBuilder.toString();
+    return outputBuilder.toString();
   }
 
   // Being Golang, Prometheus can't handle unicode strings like most frameworks, but only a very simple set of characters.

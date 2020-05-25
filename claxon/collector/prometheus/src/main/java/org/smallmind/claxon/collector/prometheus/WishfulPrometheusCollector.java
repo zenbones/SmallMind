@@ -120,7 +120,7 @@ public class WishfulPrometheusCollector extends PullCollector<String> {
       outputBuilder.append(row).append('\n');
     }
 
-    return (outputBuilder.length() == 0) ? "\n" : outputBuilder.toString();
+    return outputBuilder.toString();
   }
 
   // Being Golang, Prometheus can't handle unicode strings like most frameworks, but only a very simple set of characters.
