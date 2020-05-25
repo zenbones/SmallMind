@@ -104,8 +104,9 @@ public class PrometheusCollector extends PullCollector<String> {
     }
 
     readMap.clear();
+    outputBuilder.append('\n');
 
-    return (outputBuilder.length() == 0) ? "\n" : outputBuilder.toString();
+    return outputBuilder.toString();
   }
 
   // Being Golang, Prometheus can't handle unicode strings like most frameworks, but only a very simple set of characters.
