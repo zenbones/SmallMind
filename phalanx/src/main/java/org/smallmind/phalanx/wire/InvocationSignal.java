@@ -44,7 +44,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 @XmlAccessorType(XmlAccessType.PROPERTY)
 public class InvocationSignal implements Signal {
 
-  private Address address;
+  private Route route;
   private Map<String, Object> arguments;
   private WireContext[] contexts;
   private boolean inOnly;
@@ -53,10 +53,10 @@ public class InvocationSignal implements Signal {
 
   }
 
-  public InvocationSignal (boolean inOnly, Address address, Map<String, Object> arguments, WireContext... contexts) {
+  public InvocationSignal (boolean inOnly, Route route, Map<String, Object> arguments, WireContext... contexts) {
 
     this.inOnly = inOnly;
-    this.address = address;
+    this.route = route;
     this.arguments = arguments;
     this.contexts = contexts;
   }
@@ -73,14 +73,14 @@ public class InvocationSignal implements Signal {
   }
 
   @XmlElementRef
-  public Address getAddress () {
+  public Route getRoute () {
 
-    return address;
+    return route;
   }
 
-  public void setAddress (Address address) {
+  public void setRoute (Route route) {
 
-    this.address = address;
+    this.route = route;
   }
 
   @XmlJavaTypeAdapter(WireContextXmlAdapter.class)

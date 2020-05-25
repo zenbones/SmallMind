@@ -192,6 +192,6 @@ public class WireInvocationHandler implements InvocationHandler {
       }
     }
 
-    return transport.transmit(voice, new Address(version, serviceName, new Function(method)), argumentMap, wireContexts);
+    return transport.transmit(voice, new Route(version, serviceName, new Function(method)), argumentMap, wireContexts);
   }
 }

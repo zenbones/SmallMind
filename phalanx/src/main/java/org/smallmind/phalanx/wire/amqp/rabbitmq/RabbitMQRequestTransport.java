@@ -44,9 +44,9 @@ import org.smallmind.claxon.registry.meter.LazyBuilder;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.AbstractRequestTransport;
-import org.smallmind.phalanx.wire.Address;
 import org.smallmind.phalanx.wire.ClaxonTag;
 import org.smallmind.phalanx.wire.ConversationType;
+import org.smallmind.phalanx.wire.Route;
 import org.smallmind.phalanx.wire.SignalCodec;
 import org.smallmind.phalanx.wire.TransportException;
 import org.smallmind.phalanx.wire.Voice;
@@ -91,7 +91,7 @@ public class RabbitMQRequestTransport extends AbstractRequestTransport {
   }
 
   @Override
-  public Object transmit (Voice<?, ?> voice, Address address, Map<String, Object> arguments, WireContext... contexts)
+  public Object transmit (Voice<?, ?> voice, Route route, Map<String, Object> arguments, WireContext... contexts)
     throws Throwable {
 
     final RequestMessageRouter requestMessageRouter = acquireRequestMessageRouter();
@@ -101,10 +101,10 @@ public class RabbitMQRequestTransport extends AbstractRequestTransport {
       String messageId;
       boolean inOnly = voice.getConversation().getConversationType().equals(ConversationType.IN_ONLY);
 
-      messageId = requestMessageRouter.publish(inOnly, (String)voice.getServiceGroup(), voice, address, arguments, contexts);
+      messageId = requestMessageRouter.publish(inOnly, (String)voice.getServiceGroup(), voice, route, arguments, contexts);
 
       return Instrument.with(RabbitMQRequestTransport.class, LazyBuilder.instance(SpeedometerBuilder::new), new Tag("event", ClaxonTag.ACQUIRE_RESULT.getDisplay())).on(
-        () -> acquireResult(signalCodec, address, voice, messageId, inOnly)
+        () -> acquireResult(signalCodec, route, voice, messageId, inOnly)
       );
     } finally {
       routerQueue.put(requestMessageRouter);

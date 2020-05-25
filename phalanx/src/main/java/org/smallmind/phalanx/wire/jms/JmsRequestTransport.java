@@ -47,10 +47,10 @@ import org.smallmind.claxon.registry.meter.LazyBuilder;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.AbstractRequestTransport;
-import org.smallmind.phalanx.wire.Address;
 import org.smallmind.phalanx.wire.ClaxonTag;
 import org.smallmind.phalanx.wire.ConversationType;
 import org.smallmind.phalanx.wire.InvocationSignal;
+import org.smallmind.phalanx.wire.Route;
 import org.smallmind.phalanx.wire.SignalCodec;
 import org.smallmind.phalanx.wire.TransportException;
 import org.smallmind.phalanx.wire.VocalMode;
@@ -116,7 +116,7 @@ public class JmsRequestTransport extends AbstractRequestTransport {
   }
 
   @Override
-  public Object transmit (Voice<?, ?> voice, Address address, Map<String, Object> arguments, WireContext... contexts)
+  public Object transmit (Voice<?, ?> voice, Route route, Map<String, Object> arguments, WireContext... contexts)
     throws Throwable {
 
     LinkedBlockingQueue<MessageHandler> messageQueue = voice.getMode().equals(VocalMode.TALK) ? talkQueue : whisperAndShoutQueue;
@@ -128,11 +128,11 @@ public class JmsRequestTransport extends AbstractRequestTransport {
       Message requestMessage;
       String messageId;
 
-      messageHandler.send(requestMessage = constructMessage(messageHandler, inOnly, (String)voice.getServiceGroup(), voice.getMode().equals(VocalMode.WHISPER) ? (String)voice.getInstanceId() : null, address, arguments, contexts));
+      messageHandler.send(requestMessage = constructMessage(messageHandler, inOnly, (String)voice.getServiceGroup(), voice.getMode().equals(VocalMode.WHISPER) ? (String)voice.getInstanceId() : null, route, arguments, contexts));
       messageId = requestMessage.getJMSMessageID();
 
       return Instrument.with(JmsRequestTransport.class, LazyBuilder.instance(SpeedometerBuilder::new), new Tag("event", ClaxonTag.ACQUIRE_RESULT.getDisplay())).on(
-        () -> acquireResult(signalCodec, address, voice, messageId, inOnly)
+        () -> acquireResult(signalCodec, route, voice, messageId, inOnly)
       );
     } finally {
       messageQueue.put(messageHandler);
@@ -158,7 +158,7 @@ public class JmsRequestTransport extends AbstractRequestTransport {
     });
   }
 
-  private Message constructMessage (final MessageHandler messageHandler, final boolean inOnly, final String serviceGroup, final String instanceId, final Address address, final Map<String, Object> arguments, final WireContext... contexts)
+  private Message constructMessage (final MessageHandler messageHandler, final boolean inOnly, final String serviceGroup, final String instanceId, final Route route, final Map<String, Object> arguments, final WireContext... contexts)
     throws Throwable {
 
     return Instrument.with(JmsRequestTransport.class, LazyBuilder.instance(SpeedometerBuilder::new), new Tag("event", ClaxonTag.CONSTRUCT_MESSAGE.getDisplay())).on(() -> {
@@ -167,7 +167,7 @@ public class JmsRequestTransport extends AbstractRequestTransport {
 
       requestMessage = messageHandler.createMessage();
 
-      requestMessage.writeBytes(signalCodec.encode(new InvocationSignal(inOnly, address, arguments, contexts)));
+      requestMessage.writeBytes(signalCodec.encode(new InvocationSignal(inOnly, route, arguments, contexts)));
 
       if (!inOnly) {
         requestMessage.setStringProperty(WireProperty.CALLER_ID.getKey(), callerId);

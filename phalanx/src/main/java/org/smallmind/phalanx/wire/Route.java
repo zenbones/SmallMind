@@ -41,17 +41,17 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name = "address", namespace = "http://org.smallmind/phalanx/wire")
 @XmlAccessorType(XmlAccessType.PROPERTY)
-public class Address implements Serializable {
+public class Route implements Serializable {
 
   private Function function;
   private String service;
   private int version;
 
-  public Address () {
+  public Route () {
 
   }
 
-  public Address (int version, String service, Function function) {
+  public Route (int version, String service, Function function) {
 
     this.version = version;
     this.service = service;

@@ -79,7 +79,7 @@ public class InvocationWorker extends Worker<Message> {
       ((BytesMessage)message).readBytes(buffer);
       invocationSignal = signalCodec.decode(buffer, 0, (int)((BytesMessage)message).getBodyLength(), InvocationSignal.class);
 
-      Instrument.with(InvocationWorker.class, LazyBuilder.instance(SpeedometerBuilder::new), new Tag("operation", "invoke"), new Tag("service", invocationSignal.getAddress().getService()), new Tag("method", invocationSignal.getAddress().getFunction().getName())).on(
+      Instrument.with(InvocationWorker.class, LazyBuilder.instance(SpeedometerBuilder::new), new Tag("operation", "invoke"), new Tag("service", invocationSignal.getRoute().getService()), new Tag("method", invocationSignal.getRoute().getFunction().getName())).on(
         () -> invocationCircuit.handle(responseTransport, signalCodec, message.getStringProperty(WireProperty.CALLER_ID.getKey()), message.getJMSMessageID(), invocationSignal)
       );
     }
