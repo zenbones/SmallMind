@@ -32,26 +32,40 @@
  */
 package org.smallmind.claxon.collector.prometheus;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.smallmind.claxon.registry.PullCollector;
 import org.smallmind.claxon.registry.Quantity;
 import org.smallmind.claxon.registry.Tag;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
-public class PrometheusCollector extends PullCollector<String> {
+public class WishfulPrometheusCollector extends PullCollector<String> {
 
   private enum Letter {UPPER, LOWER, DIGIT, PUNCTUATION, UNKNOWN}
 
-  private ConcurrentHashMap<String, Trace> readMap = new ConcurrentHashMap<>();
-  private volatile ConcurrentHashMap<String, Trace> writeMap = new ConcurrentHashMap<>();
-
+  private final ConcurrentLinkedQueue<String> rowQueue = new ConcurrentLinkedQueue<>();
+  private final AtomicInteger rowCount = new AtomicInteger(0);
+  private final int maxRows;
   /*
   # HELP metric_name Description of the metric
   # TYPE metric_name type
   # Comment that's not parsed by prometheus
   http_requests_total{method="post",code="400"}  3   1395066363000
   */
+
+  public WishfulPrometheusCollector () {
+
+    this(Integer.MAX_VALUE - 1);
+  }
+
+  public WishfulPrometheusCollector (int maxRows) {
+
+    if ((maxRows < 1) || (maxRows == Integer.MAX_VALUE)) {
+      this.maxRows = Integer.MAX_VALUE - 1;
+    } else {
+      this.maxRows = maxRows;
+    }
+  }
 
   @Override
   public void record (String meterName, Tag[] tags, Quantity[] quantities) {
@@ -84,29 +98,36 @@ public class PrometheusCollector extends PullCollector<String> {
       if (labelBuilder != null) {
         rowBuilder.append(labelBuilder);
       }
+      rowBuilder.append(' ').append(quantity.getValue()).append(' ').append(nowInMilliseconds);
 
-      writeMap.put(rowBuilder.toString(), new Trace(quantity.getValue(), nowInMilliseconds));
+      if (rowCount.incrementAndGet() > maxRows) {
+        if (rowQueue.poll() != null) {
+          rowCount.decrementAndGet();
+        }
+      }
+      rowQueue.add(rowBuilder.toString());
     }
   }
 
   @Override
-  public synchronized String emit () {
+  public String emit () {
 
-    StringBuilder outputBuilder = new StringBuilder();
-    ConcurrentHashMap<String, Trace> tempMap;
+    if (rowQueue.isEmpty()) {
 
-    tempMap = readMap;
-    readMap = writeMap;
-    writeMap = tempMap;
+      return "\n";
+    } else {
 
-    for (Map.Entry<String, Trace> rowEntry : readMap.entrySet()) {
-      outputBuilder.append(rowEntry.getKey()).append(' ').append(rowEntry.getValue().getValue()).append(' ').append(rowEntry.getValue().getTimestamp()).append('\n');
+      StringBuilder outputBuilder = new StringBuilder();
+      String row;
+
+      while ((row = rowQueue.poll()) != null) {
+        rowCount.decrementAndGet();
+        outputBuilder.append(row).append('\n');
+      }
+      outputBuilder.append('\n');
+
+      return outputBuilder.toString();
     }
-
-    readMap.clear();
-    outputBuilder.append('\n');
-
-    return outputBuilder.toString();
   }
 
   // Being Golang, Prometheus can't handle unicode strings like most frameworks, but only a very simple set of characters.
@@ -162,27 +183,5 @@ public class PrometheusCollector extends PullCollector<String> {
     }
 
     return mangledBuilder;
-  }
-
-  private static class Trace {
-
-    private final double value;
-    private final long timestamp;
-
-    public Trace (double value, long timestamp) {
-
-      this.value = value;
-      this.timestamp = timestamp;
-    }
-
-    public double getValue () {
-
-      return value;
-    }
-
-    public long getTimestamp () {
-
-      return timestamp;
-    }
   }
 }
