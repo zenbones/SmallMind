@@ -63,10 +63,15 @@ public class PrometheusCollector extends PullCollector<String> {
     if ((tags != null) && (tags.length > 0)) {
 
       labelBuilder = new StringBuilder();
+      boolean first = true;
 
       labelBuilder.append('{');
       for (Tag tag : tags) {
-        mangle(tag.getKey(), labelBuilder, true).append("=\"").append(tag.getValue()).append("\",");
+        if (!first) {
+          labelBuilder.append(',');
+        }
+        mangle(tag.getKey(), labelBuilder, true).append("=\"").append(tag.getValue()).append('"');
+        first = false;
       }
       labelBuilder.append("}");
     }
