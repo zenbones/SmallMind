@@ -32,6 +32,7 @@
  */
 package org.smallmind.claxon.collector.prometheus;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.smallmind.claxon.registry.PullCollector;
@@ -43,8 +44,8 @@ public class PrometheusCollector extends PullCollector<String> {
 
   private enum Letter {UPPER, LOWER, DIGIT, PUNCTUATION, UNKNOWN}
 
-  private ConcurrentHashMap<String, Trace> readMap = new ConcurrentHashMap<>();
-  private volatile ConcurrentHashMap<String, Trace> writeMap = new ConcurrentHashMap<>();
+  private ConcurrentHashMap<TraceKey, Trace> readMap = new ConcurrentHashMap<>();
+  private volatile ConcurrentHashMap<TraceKey, Trace> writeMap = new ConcurrentHashMap<>();
 
   /*
   # HELP metric_name Description of the metric
@@ -52,40 +53,14 @@ public class PrometheusCollector extends PullCollector<String> {
   # Comment that's not parsed by prometheus
   http_requests_total{method="post",code="400"}  3   1395066363000
   */
-
   @Override
   public void record (String meterName, Tag[] tags, Quantity[] quantities) {
 
-    StringBuilder identityBuilder = mangle(meterName, new StringBuilder(), false);
-    StringBuilder labelBuilder = null;
     long nowInMilliseconds = System.currentTimeMillis();
-
-    if ((tags != null) && (tags.length > 0)) {
-
-      labelBuilder = new StringBuilder();
-      boolean first = true;
-
-      labelBuilder.append('{');
-      for (Tag tag : tags) {
-        if (!first) {
-          labelBuilder.append(',');
-        }
-        mangle(tag.getKey(), labelBuilder, true).append("=\"").append(tag.getValue()).append('"');
-        first = false;
-      }
-      labelBuilder.append("}");
-    }
 
     for (Quantity quantity : quantities) {
 
-      StringBuilder rowBuilder = new StringBuilder(identityBuilder);
-
-      mangle(quantity.getName(), rowBuilder.append('_'), false);
-      if (labelBuilder != null) {
-        rowBuilder.append(labelBuilder);
-      }
-
-      writeMap.put(rowBuilder.toString(), new Trace(quantity.getValue(), nowInMilliseconds));
+      writeMap.put(new TraceKey(meterName, tags, quantity.getName()), new Trace(quantity.getValue(), nowInMilliseconds));
     }
   }
 
@@ -93,23 +68,50 @@ public class PrometheusCollector extends PullCollector<String> {
   public synchronized String emit () {
 
     StringBuilder outputBuilder = new StringBuilder();
-    ConcurrentHashMap<String, Trace> tempMap;
+    ConcurrentHashMap<TraceKey, Trace> tempMap;
 
     tempMap = readMap;
     readMap = writeMap;
     writeMap = tempMap;
 
-    for (Map.Entry<String, Trace> rowEntry : readMap.entrySet()) {
-      outputBuilder.append(rowEntry.getKey()).append(' ').append(rowEntry.getValue().getValue()).append(' ').append(rowEntry.getValue().getTimestamp()).append('\n');
+    for (Map.Entry<TraceKey, Trace> traceEntry : readMap.entrySet()) {
+      format(outputBuilder, traceEntry.getKey()).append(' ').append(traceEntry.getValue().getValue()).append(' ').append(traceEntry.getValue().getTimestamp()).append('\n');
     }
 
+    outputBuilder.append("# EOF\n");
     readMap.clear();
 
     return outputBuilder.toString();
   }
 
+  private StringBuilder format (StringBuilder outputBuilder, TraceKey traceKey) {
+
+    mangle(outputBuilder, traceKey.getMeterName(), false);
+
+    if ((traceKey.getTags() != null) && (traceKey.getTags().length > 0)) {
+
+      boolean first = true;
+
+      outputBuilder.append('{');
+      for (Tag tag : traceKey.getTags()) {
+        if (!first) {
+          outputBuilder.append(',');
+        }
+
+        mangle(outputBuilder, tag.getKey(), true).append("=\"").append(tag.getValue()).append('"');
+        first = false;
+      }
+      outputBuilder.append("}");
+    }
+
+    outputBuilder.append('_');
+    mangle(outputBuilder, traceKey.getQuantityName(), false);
+
+    return outputBuilder;
+  }
+
   // Being Golang, Prometheus can't handle unicode strings like most frameworks, but only a very simple set of characters.
-  private StringBuilder mangle (String original, StringBuilder mangledBuilder, boolean label) {
+  private StringBuilder mangle (StringBuilder outputBuilder, String original, boolean label) {
 
     Letter state = Letter.UNKNOWN;
 
@@ -124,7 +126,7 @@ public class PrometheusCollector extends PullCollector<String> {
         state = Letter.UPPER;
       } else if ((singleChar >= '0') && (singleChar <= '9')) {
         if (index == 0) {
-          mangledBuilder.append('_');
+          outputBuilder.append('_');
         }
         state = Letter.DIGIT;
       } else {
@@ -138,29 +140,70 @@ public class PrometheusCollector extends PullCollector<String> {
 
       switch (state) {
         case PUNCTUATION:
-          mangledBuilder.append(singleChar);
+          outputBuilder.append(singleChar);
           break;
         case UPPER:
           if (Letter.LOWER.equals(priorState)) {
-            mangledBuilder.append('_');
+            outputBuilder.append('_');
           }
-          mangledBuilder.append(singleChar);
+          outputBuilder.append(singleChar);
           break;
         case LOWER:
           if (Letter.UPPER.equals(priorState)) {
-            mangledBuilder.append('_');
+            outputBuilder.append('_');
           }
-          mangledBuilder.append(singleChar);
+          outputBuilder.append(singleChar);
           break;
         case DIGIT:
-          mangledBuilder.append(singleChar);
+          outputBuilder.append(singleChar);
           break;
         default:
           throw new UnknownSwitchCaseException(state.name());
       }
     }
 
-    return mangledBuilder;
+    return outputBuilder;
+  }
+
+  private static class TraceKey {
+
+    private final Tag[] tags;
+    private final String meterName;
+    private final String quantityName;
+
+    public TraceKey (String meterName, Tag[] tags, String quantityName) {
+
+      this.meterName = meterName;
+      this.tags = tags;
+      this.quantityName = quantityName;
+    }
+
+    public String getMeterName () {
+
+      return meterName;
+    }
+
+    public Tag[] getTags () {
+
+      return tags;
+    }
+
+    public String getQuantityName () {
+
+      return quantityName;
+    }
+
+    @Override
+    public int hashCode () {
+
+      return (((meterName.hashCode() * 31) + quantityName.hashCode()) * 31) + ((tags == null) ? 0 : Arrays.hashCode(tags));
+    }
+
+    @Override
+    public boolean equals (Object obj) {
+
+      return (obj instanceof TraceKey) && ((TraceKey)obj).getMeterName().equals(meterName) && ((TraceKey)obj).getQuantityName().equals(quantityName) && Arrays.equals(((TraceKey)obj).getTags(), tags);
+    }
   }
 
   private static class Trace {

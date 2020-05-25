@@ -119,6 +119,7 @@ public class WishfulPrometheusCollector extends PullCollector<String> {
       rowCount.decrementAndGet();
       outputBuilder.append(row).append('\n');
     }
+    outputBuilder.append("# EOF\n");
 
     return outputBuilder.toString();
   }
