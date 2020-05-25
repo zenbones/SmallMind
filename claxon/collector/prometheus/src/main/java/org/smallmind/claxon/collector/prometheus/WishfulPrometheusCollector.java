@@ -70,7 +70,7 @@ public class WishfulPrometheusCollector extends PullCollector<String> {
   @Override
   public void record (String meterName, Tag[] tags, Quantity[] quantities) {
 
-    StringBuilder identityBuilder = mangle(meterName, new StringBuilder(), false);
+    StringBuilder identityBuilder = mangle(new StringBuilder(), meterName, false);
     StringBuilder labelBuilder = null;
     long nowInMilliseconds = System.currentTimeMillis();
 
@@ -84,7 +84,7 @@ public class WishfulPrometheusCollector extends PullCollector<String> {
         if (!first) {
           labelBuilder.append(',');
         }
-        mangle(tag.getKey(), labelBuilder, true).append("=\"").append(tag.getValue()).append('"');
+        mangle(labelBuilder, tag.getKey(), true).append("=\"").append(tag.getValue()).append('"');
         first = false;
       }
       labelBuilder.append("}");
@@ -94,11 +94,11 @@ public class WishfulPrometheusCollector extends PullCollector<String> {
 
       StringBuilder rowBuilder = new StringBuilder(identityBuilder);
 
-      mangle(quantity.getName(), rowBuilder.append('_'), false);
+      mangle(rowBuilder.append('_'), quantity.getName(), false);
       if (labelBuilder != null) {
         rowBuilder.append(labelBuilder);
       }
-      rowBuilder.append(' ').append(quantity.getValue()).append(' ').append(nowInMilliseconds);
+      rowBuilder.append(' ').append(fromDouble(quantity.getValue())).append(' ').append(nowInMilliseconds);
 
       if (rowCount.incrementAndGet() > maxRows) {
         if (rowQueue.poll() != null) {
@@ -106,6 +106,21 @@ public class WishfulPrometheusCollector extends PullCollector<String> {
         }
       }
       rowQueue.add(rowBuilder.toString());
+    }
+  }
+
+  private String fromDouble (double value) {
+
+    if (value == Double.POSITIVE_INFINITY) {
+      return "+Inf";
+    } else if (value == Double.NEGATIVE_INFINITY) {
+      return "-Inf";
+    } else if (Double.isNaN(value)) {
+      return "NaN";
+    } else if (value == 0.0D) {
+      return "0";
+    } else {
+      return Double.toString(value);
     }
   }
 
@@ -125,7 +140,7 @@ public class WishfulPrometheusCollector extends PullCollector<String> {
   }
 
   // Being Golang, Prometheus can't handle unicode strings like most frameworks, but only a very simple set of characters.
-  private StringBuilder mangle (String original, StringBuilder mangledBuilder, boolean label) {
+  private StringBuilder mangle (StringBuilder mangledBuilder, String original, boolean label) {
 
     Letter state = Letter.UNKNOWN;
 

@@ -75,7 +75,7 @@ public class PrometheusCollector extends PullCollector<String> {
     writeMap = tempMap;
 
     for (Map.Entry<TraceKey, Trace> traceEntry : readMap.entrySet()) {
-      format(outputBuilder, traceEntry.getKey()).append(' ').append(traceEntry.getValue().getValue()).append(' ').append(traceEntry.getValue().getTimestamp()).append('\n');
+      format(outputBuilder, traceEntry.getKey()).append(' ').append(fromDouble(traceEntry.getValue().getValue())).append(' ').append(traceEntry.getValue().getTimestamp()).append('\n');
     }
 
     outputBuilder.append("# EOF\n");
@@ -84,9 +84,25 @@ public class PrometheusCollector extends PullCollector<String> {
     return outputBuilder.toString();
   }
 
+  private String fromDouble (double value) {
+
+    if (value == Double.POSITIVE_INFINITY) {
+      return "+Inf";
+    } else if (value == Double.NEGATIVE_INFINITY) {
+      return "-Inf";
+    } else if (Double.isNaN(value)) {
+      return "NaN";
+    } else if (value == 0.0D) {
+      return "0";
+    } else {
+      return Double.toString(value);
+    }
+  }
+
   private StringBuilder format (StringBuilder outputBuilder, TraceKey traceKey) {
 
-    mangle(outputBuilder, traceKey.getMeterName(), false);
+    mangle(outputBuilder, traceKey.getMeterName(), false).append('_');
+    mangle(outputBuilder, traceKey.getQuantityName(), false);
 
     if ((traceKey.getTags() != null) && (traceKey.getTags().length > 0)) {
 
@@ -103,9 +119,6 @@ public class PrometheusCollector extends PullCollector<String> {
       }
       outputBuilder.append("}");
     }
-
-    outputBuilder.append('_');
-    mangle(outputBuilder, traceKey.getQuantityName(), false);
 
     return outputBuilder;
   }
