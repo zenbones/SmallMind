@@ -34,10 +34,10 @@ package org.smallmind.phalanx.wire;
 
 public interface WiredService {
 
-  public abstract int getVersion ();
+  int getVersion ();
 
-  public abstract String getServiceName ();
+  String getServiceName ();
 
-  public abstract void setResponseTransport (ResponseTransport responseTransport)
+  void setResponseTransport (ResponseTransport responseTransport)
     throws Exception;
 }

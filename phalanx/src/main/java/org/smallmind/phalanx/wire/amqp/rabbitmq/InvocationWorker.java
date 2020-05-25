@@ -69,7 +69,7 @@ public class InvocationWorker extends Worker<RabbitMQMessage> {
     final InvocationSignal invocationSignal;
 
     invocationSignal = signalCodec.decode(message.getBody(), 0, message.getBody().length, InvocationSignal.class);
-    InstrumentationManager.execute(new ChronometerInstrument(getMetricConfiguration(), new MetricProperty("operation", "invoke"), new MetricProperty("service", invocationSignal.getAddress().getService()), new MetricProperty("method", invocationSignal.getAddress().getFunction().getName())) {
+    InstrumentationManager.execute(new ChronometerInstrument(getMetricConfiguration(), new MetricProperty("operation", "invoke"), new MetricProperty("service", invocationSignal.getRoute().getService()), new MetricProperty("method", invocationSignal.getRoute().getFunction().getName())) {
 
       @Override
       public void withChronometer () {

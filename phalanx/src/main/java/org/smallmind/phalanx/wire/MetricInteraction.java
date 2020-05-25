@@ -36,7 +36,7 @@ public enum MetricInteraction {
 
   ACQUIRE_REQUEST_TRANSPORT("Acquire Request Transport"), CONSTRUCT_MESSAGE("Construct Message"), REQUEST_TRANSIT_TIME("Request Transit Time"), RESPONSE_TRANSIT_TIME("Response Transit Time"), COMPLETE_CALLBACK("Complete Callback"), ACQUIRE_RESULT("Acquire Result");
 
-  private String display;
+  private final String display;
 
   MetricInteraction (String display) {
 

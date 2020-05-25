@@ -34,9 +34,9 @@ package org.smallmind.phalanx.wire;
 
 public class Whispering implements Voice<String, String> {
 
-  private TwoWayConversation twoWayConversation;
-  private String serviceGroup;
-  private String instanceId;
+  private final TwoWayConversation twoWayConversation;
+  private final String serviceGroup;
+  private final String instanceId;
 
   public Whispering (String serviceGroup, String instanceId) {
 

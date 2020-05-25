@@ -34,8 +34,8 @@ package org.smallmind.phalanx.wire;
 
 public class ArgumentInfo {
 
-  private Class<?> parameterType;
-  private int index;
+  private final Class<?> parameterType;
+  private final int index;
 
   public ArgumentInfo (int index, Class<?> parameterType) {
 

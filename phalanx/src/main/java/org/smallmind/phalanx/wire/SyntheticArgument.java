@@ -34,8 +34,8 @@ package org.smallmind.phalanx.wire;
 
 public class SyntheticArgument {
 
-  private Class<?> parameterType;
-  private String name;
+  private final Class<?> parameterType;
+  private final String name;
 
   public SyntheticArgument (String name, Class<?> parameterType) {
 

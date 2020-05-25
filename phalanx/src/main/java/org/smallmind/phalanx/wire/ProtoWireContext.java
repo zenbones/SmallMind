@@ -34,8 +34,8 @@ package org.smallmind.phalanx.wire;
 
 public class ProtoWireContext extends WireContext {
 
-  private Object guts;
-  private String skin;
+  private final Object guts;
+  private final String skin;
 
   public ProtoWireContext (String skin, Object guts) {
 

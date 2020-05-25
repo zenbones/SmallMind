@@ -45,10 +45,10 @@ import org.smallmind.instrument.ChronometerInstrumentAndReturn;
 import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
-import org.smallmind.phalanx.wire.Address;
 import org.smallmind.phalanx.wire.InvocationSignal;
 import org.smallmind.phalanx.wire.MetricInteraction;
 import org.smallmind.phalanx.wire.ResultSignal;
+import org.smallmind.phalanx.wire.Route;
 import org.smallmind.phalanx.wire.SignalCodec;
 import org.smallmind.phalanx.wire.VocalMode;
 import org.smallmind.phalanx.wire.Voice;
@@ -135,10 +135,10 @@ public class RequestMessageRouter extends MessageRouter {
     });
   }
 
-  public String publish (final boolean inOnly, final String serviceGroup, final Voice voice, final Address address, final Map<String, Object> arguments, final WireContext... contexts)
+  public String publish (final boolean inOnly, final String serviceGroup, final Voice voice, final Route route, final Map<String, Object> arguments, final WireContext... contexts)
     throws Throwable {
 
-    RabbitMQMessage rabbitMQMessage = constructMessage(inOnly, address, arguments, contexts);
+    RabbitMQMessage rabbitMQMessage = constructMessage(inOnly, route, arguments, contexts);
     StringBuilder routingKeyBuilder = new StringBuilder(voice.getMode().getName()).append("-").append(serviceGroup);
 
     if (voice.getMode().equals(VocalMode.WHISPER)) {
@@ -150,7 +150,7 @@ public class RequestMessageRouter extends MessageRouter {
     return rabbitMQMessage.getProperties().getMessageId();
   }
 
-  private RabbitMQMessage constructMessage (final boolean inOnly, final Address address, final Map<String, Object> arguments, final WireContext... contexts)
+  private RabbitMQMessage constructMessage (final boolean inOnly, final Route route, final Map<String, Object> arguments, final WireContext... contexts)
     throws Throwable {
 
     return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<RabbitMQMessage>(requestTransport.getMetricConfiguration(), new MetricProperty("event", MetricInteraction.CONSTRUCT_MESSAGE.getDisplay())) {
@@ -172,7 +172,7 @@ public class RequestMessageRouter extends MessageRouter {
                                             .expiration(String.valueOf(ttlSeconds * 1000))
                                             .headers(headerMap).build();
 
-        return new RabbitMQMessage(properties, signalCodec.encode(new InvocationSignal(inOnly, address, arguments, contexts)));
+        return new RabbitMQMessage(properties, signalCodec.encode(new InvocationSignal(inOnly, route, arguments, contexts)));
       }
     });
   }

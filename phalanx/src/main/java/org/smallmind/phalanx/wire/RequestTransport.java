@@ -38,7 +38,7 @@ public interface RequestTransport {
 
   String getCallerId ();
 
-  Object transmit (Voice voice, Address address, Map<String, Object> arguments, WireContext... contexts)
+  Object transmit (Voice voice, Route route, Map<String, Object> arguments, WireContext... contexts)
     throws Throwable;
 
   void completeCallback (String correlationId, ResultSignal resultSignal);

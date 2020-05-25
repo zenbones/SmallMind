@@ -47,10 +47,10 @@ import org.smallmind.instrument.MetricProperty;
 import org.smallmind.instrument.config.MetricConfiguration;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.AbstractRequestTransport;
-import org.smallmind.phalanx.wire.Address;
 import org.smallmind.phalanx.wire.ConversationType;
 import org.smallmind.phalanx.wire.InvocationSignal;
 import org.smallmind.phalanx.wire.MetricInteraction;
+import org.smallmind.phalanx.wire.Route;
 import org.smallmind.phalanx.wire.SignalCodec;
 import org.smallmind.phalanx.wire.TransportException;
 import org.smallmind.phalanx.wire.VocalMode;
@@ -123,7 +123,7 @@ public class JmsRequestTransport extends AbstractRequestTransport {
   }
 
   @Override
-  public Object transmit (Voice voice, Address address, Map<String, Object> arguments, WireContext... contexts)
+  public Object transmit (Voice voice, Route route, Map<String, Object> arguments, WireContext... contexts)
     throws Throwable {
 
     LinkedBlockingQueue<MessageHandler> messageQueue = voice.getMode().equals(VocalMode.TALK) ? talkQueue : whisperAndShoutQueue;
@@ -135,7 +135,7 @@ public class JmsRequestTransport extends AbstractRequestTransport {
       Message requestMessage;
       String messageId;
 
-      messageHandler.send(requestMessage = constructMessage(messageHandler, inOnly, (String)voice.getServiceGroup(), voice.getMode().equals(VocalMode.WHISPER) ? (String)voice.getInstanceId() : null, address, arguments, contexts));
+      messageHandler.send(requestMessage = constructMessage(messageHandler, inOnly, (String)voice.getServiceGroup(), voice.getMode().equals(VocalMode.WHISPER) ? (String)voice.getInstanceId() : null, route, arguments, contexts));
       messageId = requestMessage.getJMSMessageID();
 
       return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<Object>(metricConfiguration, new MetricProperty("event", MetricInteraction.ACQUIRE_RESULT.getDisplay())) {
@@ -144,7 +144,7 @@ public class JmsRequestTransport extends AbstractRequestTransport {
         public Object withChronometer ()
           throws Throwable {
 
-          return acquireResult(signalCodec, address, voice, messageId, inOnly);
+          return acquireResult(signalCodec, route, voice, messageId, inOnly);
         }
       });
     } finally {
@@ -176,7 +176,7 @@ public class JmsRequestTransport extends AbstractRequestTransport {
     });
   }
 
-  private Message constructMessage (final MessageHandler messageHandler, final boolean inOnly, final String serviceGroup, final String instanceId, final Address address, final Map<String, Object> arguments, final WireContext... contexts)
+  private Message constructMessage (final MessageHandler messageHandler, final boolean inOnly, final String serviceGroup, final String instanceId, final Route route, final Map<String, Object> arguments, final WireContext... contexts)
     throws Throwable {
 
     return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<Message>(metricConfiguration, new MetricProperty("event", MetricInteraction.CONSTRUCT_MESSAGE.getDisplay())) {
@@ -189,7 +189,7 @@ public class JmsRequestTransport extends AbstractRequestTransport {
 
         requestMessage = messageHandler.createMessage();
 
-        requestMessage.writeBytes(signalCodec.encode(new InvocationSignal(inOnly, address, arguments, contexts)));
+        requestMessage.writeBytes(signalCodec.encode(new InvocationSignal(inOnly, route, arguments, contexts)));
 
         if (!inOnly) {
           requestMessage.setStringProperty(WireProperty.CALLER_ID.getKey(), callerId);

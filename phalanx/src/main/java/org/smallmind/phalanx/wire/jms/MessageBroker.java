@@ -38,18 +38,18 @@ import javax.jms.Topic;
 
 public interface MessageBroker {
 
-  public abstract ConnectionFactory lookupConnectionFactory (String path)
+  ConnectionFactory lookupConnectionFactory (String path)
     throws Exception;
 
-  public abstract Queue lookupQueue (String path)
+  Queue lookupQueue (String path)
     throws Exception;
 
-  public abstract Topic lookupTopic (String path)
+  Topic lookupTopic (String path)
     throws Exception;
 
-  public abstract void start ()
+  void start ()
     throws Exception;
 
-  public abstract void stop ()
+  void stop ()
     throws Exception;
 }

@@ -38,9 +38,9 @@ import javax.jms.Message;
 
 public interface MessageHandler {
 
-  public abstract BytesMessage createMessage ()
+  BytesMessage createMessage ()
     throws JMSException;
 
-  public abstract void send (Message message)
+  void send (Message message)
     throws JMSException;
 }

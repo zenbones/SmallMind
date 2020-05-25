@@ -36,10 +36,10 @@ import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
 import org.smallmind.phalanx.wire.AbstractRequestTransport;
-import org.smallmind.phalanx.wire.Address;
 import org.smallmind.phalanx.wire.ConversationType;
 import org.smallmind.phalanx.wire.InvocationSignal;
 import org.smallmind.phalanx.wire.ResultSignal;
+import org.smallmind.phalanx.wire.Route;
 import org.smallmind.phalanx.wire.SignalCodec;
 import org.smallmind.phalanx.wire.VocalMode;
 import org.smallmind.phalanx.wire.Voice;
@@ -87,14 +87,14 @@ public class MockRequestTransport extends AbstractRequestTransport {
   }
 
   @Override
-  public Object transmit (Voice voice, Address address, Map<String, Object> arguments, WireContext... contexts)
+  public Object transmit (Voice voice, Route route, Map<String, Object> arguments, WireContext... contexts)
     throws Throwable {
 
     MockMessage message;
     String messageId = UUID.randomUUID().toString();
     boolean inOnly = voice.getConversation().getConversationType().equals(ConversationType.IN_ONLY);
 
-    message = new MockMessage(signalCodec.encode(new InvocationSignal(inOnly, address, arguments, contexts)));
+    message = new MockMessage(signalCodec.encode(new InvocationSignal(inOnly, route, arguments, contexts)));
 
     if (!inOnly) {
       message.getProperties().setHeader(WireProperty.CALLER_ID.getKey(), callerId);
@@ -113,7 +113,7 @@ public class MockRequestTransport extends AbstractRequestTransport {
       messageRouter.getTalkRequestQueue().send(message);
     }
 
-    return acquireResult(signalCodec, address, voice, messageId, inOnly);
+    return acquireResult(signalCodec, route, voice, messageId, inOnly);
   }
 
   @Override

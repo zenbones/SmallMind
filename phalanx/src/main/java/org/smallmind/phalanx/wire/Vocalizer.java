@@ -36,6 +36,6 @@ import java.util.HashMap;
 
 public interface Vocalizer<V extends Voice> {
 
-  public abstract V getVoice (HashMap<String, Object> argumentMap, WireContext... wireContexts)
+  V getVoice (HashMap<String, Object> argumentMap, WireContext... wireContexts)
     throws MissingInstanceIdException;
 }

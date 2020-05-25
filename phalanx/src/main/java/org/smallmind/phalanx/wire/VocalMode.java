@@ -36,7 +36,7 @@ public enum VocalMode {
 
   WHISPER("whisper"), TALK("talk"), SHOUT("shout");
 
-  private String name;
+  private final String name;
 
   VocalMode (String name) {
 

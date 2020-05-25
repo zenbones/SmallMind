@@ -44,9 +44,9 @@ import org.smallmind.instrument.MetricProperty;
 import org.smallmind.instrument.config.MetricConfiguration;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.AbstractRequestTransport;
-import org.smallmind.phalanx.wire.Address;
 import org.smallmind.phalanx.wire.ConversationType;
 import org.smallmind.phalanx.wire.MetricInteraction;
+import org.smallmind.phalanx.wire.Route;
 import org.smallmind.phalanx.wire.SignalCodec;
 import org.smallmind.phalanx.wire.TransportException;
 import org.smallmind.phalanx.wire.Voice;
@@ -98,7 +98,7 @@ public class RabbitMQRequestTransport extends AbstractRequestTransport {
   }
 
   @Override
-  public Object transmit (Voice voice, Address address, Map<String, Object> arguments, WireContext... contexts)
+  public Object transmit (Voice voice, Route route, Map<String, Object> arguments, WireContext... contexts)
     throws Throwable {
 
     final RequestMessageRouter requestMessageRouter = acquireRequestMessageRouter();
@@ -108,7 +108,7 @@ public class RabbitMQRequestTransport extends AbstractRequestTransport {
       String messageId;
       boolean inOnly = voice.getConversation().getConversationType().equals(ConversationType.IN_ONLY);
 
-      messageId = requestMessageRouter.publish(inOnly, (String)voice.getServiceGroup(), voice, address, arguments, contexts);
+      messageId = requestMessageRouter.publish(inOnly, (String)voice.getServiceGroup(), voice, route, arguments, contexts);
 
       return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<Object>(metricConfiguration, new MetricProperty("event", MetricInteraction.ACQUIRE_RESULT.getDisplay())) {
 
@@ -116,7 +116,7 @@ public class RabbitMQRequestTransport extends AbstractRequestTransport {
         public Object withChronometer ()
           throws Throwable {
 
-          return acquireResult(signalCodec, address, voice, messageId, inOnly);
+          return acquireResult(signalCodec, route, voice, messageId, inOnly);
         }
       });
     } finally {

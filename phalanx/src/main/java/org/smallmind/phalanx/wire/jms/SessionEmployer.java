@@ -36,7 +36,7 @@ import javax.jms.Destination;
 
 public interface SessionEmployer {
 
-  public abstract Destination getDestination ();
+  Destination getDestination ();
 
-  public abstract String getMessageSelector ();
+  String getMessageSelector ();
 }

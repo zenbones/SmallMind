@@ -50,12 +50,12 @@ public abstract class AbstractRequestTransport implements RequestTransport {
     return callbackMap;
   }
 
-  public Object acquireResult (SignalCodec signalCodec, Address address, Voice voice, String messageId, boolean inOnly)
+  public Object acquireResult (SignalCodec signalCodec, Route route, Voice voice, String messageId, boolean inOnly)
     throws Throwable {
 
     if (!inOnly) {
 
-      AsynchronousTransmissionCallback asynchronousCallback = new AsynchronousTransmissionCallback(address.getService(), address.getFunction().getName());
+      AsynchronousTransmissionCallback asynchronousCallback = new AsynchronousTransmissionCallback(route.getService(), route.getFunction().getName());
       SynchronousTransmissionCallback previousCallback;
       Object timeoutObject;
       int timeoutSeconds = (timeoutObject = voice.getConversation().getTimeout()) == null ? 0 : (Integer)timeoutObject;

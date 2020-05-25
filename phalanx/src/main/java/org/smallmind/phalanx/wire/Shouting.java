@@ -34,9 +34,9 @@ package org.smallmind.phalanx.wire;
 
 public class Shouting implements Voice<String, Void> {
 
-  private static OneWayConversation ONE_WAY_CONVERSATION = new OneWayConversation();
+  private static final OneWayConversation ONE_WAY_CONVERSATION = new OneWayConversation();
 
-  private String serviceGroup;
+  private final String serviceGroup;
 
   public Shouting (String serviceGroup) {
 
