@@ -1,28 +1,28 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020 David Berkman
- *
+ * 
  * This file is part of the SmallMind Code Project.
- *
+ * 
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under either, at your discretion...
- *
+ * 
  * 1) The terms of GNU Affero General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or (at
  * your option) any later version.
- *
+ * 
  * ...or...
- *
+ * 
  * 2) The terms of the Apache License, Version 2.0.
- *
+ * 
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License or Apache License for more details.
- *
+ * 
  * You should have received a copy of the GNU Affero General Public License
  * and the Apache License along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
- *
+ * 
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -44,8 +44,8 @@ public class PrometheusCollector extends PullCollector<String> {
 
   private enum Letter {UPPER, LOWER, DIGIT, PUNCTUATION, UNKNOWN}
 
-  private ConcurrentHashMap<TraceKey, Trace> readMap = new ConcurrentHashMap<>();
-  private volatile ConcurrentHashMap<TraceKey, Trace> writeMap = new ConcurrentHashMap<>();
+  private ConcurrentHashMap<PrometheusKey, Double> readMap = new ConcurrentHashMap<>();
+  private volatile ConcurrentHashMap<PrometheusKey, Double> writeMap = new ConcurrentHashMap<>();
 
   /*
   # HELP metric_name Description of the metric
@@ -56,11 +56,8 @@ public class PrometheusCollector extends PullCollector<String> {
   @Override
   public void record (String meterName, Tag[] tags, Quantity[] quantities) {
 
-    long nowInMilliseconds = System.currentTimeMillis();
-
     for (Quantity quantity : quantities) {
-
-      writeMap.put(new TraceKey(meterName, tags, quantity.getName()), new Trace(quantity.getValue(), nowInMilliseconds));
+      writeMap.put(new PrometheusKey(meterName, tags, quantity.getName()), quantity.getValue());
     }
   }
 
@@ -68,14 +65,14 @@ public class PrometheusCollector extends PullCollector<String> {
   public synchronized String emit () {
 
     StringBuilder outputBuilder = new StringBuilder();
-    ConcurrentHashMap<TraceKey, Trace> tempMap;
+    ConcurrentHashMap<PrometheusKey, Double> tempMap;
 
     tempMap = readMap;
     readMap = writeMap;
     writeMap = tempMap;
 
-    for (Map.Entry<TraceKey, Trace> traceEntry : readMap.entrySet()) {
-      format(outputBuilder, traceEntry.getKey()).append(' ').append(fromDouble(traceEntry.getValue().getValue())).append(' ').append(traceEntry.getValue().getTimestamp()).append('\n');
+    for (Map.Entry<PrometheusKey, Double> traceEntry : readMap.entrySet()) {
+      format(outputBuilder, traceEntry.getKey()).append(' ').append(fromDouble(traceEntry.getValue())).append('\n');
     }
 
     outputBuilder.append("# EOF\n");
@@ -99,17 +96,17 @@ public class PrometheusCollector extends PullCollector<String> {
     }
   }
 
-  private StringBuilder format (StringBuilder outputBuilder, TraceKey traceKey) {
+  private StringBuilder format (StringBuilder outputBuilder, PrometheusKey prometheusKey) {
 
-    mangle(outputBuilder, traceKey.getMeterName()).append(':');
-    mangle(outputBuilder, traceKey.getQuantityName());
+    mangle(outputBuilder, prometheusKey.getMeterName()).append(':');
+    mangle(outputBuilder, prometheusKey.getQuantityName());
 
-    if ((traceKey.getTags() != null) && (traceKey.getTags().length > 0)) {
+    if ((prometheusKey.getTags() != null) && (prometheusKey.getTags().length > 0)) {
 
       boolean first = true;
 
       outputBuilder.append('{');
-      for (Tag tag : traceKey.getTags()) {
+      for (Tag tag : prometheusKey.getTags()) {
         if (!first) {
           outputBuilder.append(',');
         }
@@ -174,13 +171,13 @@ public class PrometheusCollector extends PullCollector<String> {
     return outputBuilder;
   }
 
-  private static class TraceKey {
+  private static class PrometheusKey {
 
     private final Tag[] tags;
     private final String meterName;
     private final String quantityName;
 
-    public TraceKey (String meterName, Tag[] tags, String quantityName) {
+    public PrometheusKey (String meterName, Tag[] tags, String quantityName) {
 
       this.meterName = meterName;
       this.tags = tags;
@@ -211,29 +208,7 @@ public class PrometheusCollector extends PullCollector<String> {
     @Override
     public boolean equals (Object obj) {
 
-      return (obj instanceof TraceKey) && ((TraceKey)obj).getMeterName().equals(meterName) && ((TraceKey)obj).getQuantityName().equals(quantityName) && Arrays.equals(((TraceKey)obj).getTags(), tags);
-    }
-  }
-
-  private static class Trace {
-
-    private final double value;
-    private final long timestamp;
-
-    public Trace (double value, long timestamp) {
-
-      this.value = value;
-      this.timestamp = timestamp;
-    }
-
-    public double getValue () {
-
-      return value;
-    }
-
-    public long getTimestamp () {
-
-      return timestamp;
+      return (obj instanceof PrometheusKey) && ((PrometheusKey)obj).getMeterName().equals(meterName) && ((PrometheusKey)obj).getQuantityName().equals(quantityName) && Arrays.equals(((PrometheusKey)obj).getTags(), tags);
     }
   }
 }
