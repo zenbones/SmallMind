@@ -73,7 +73,7 @@ public class ObservableTracker {
 
     Reference<?> sweptReference;
 
-    if ((sweptReference = referenceQueue.poll()) != null) {
+    while ((sweptReference = referenceQueue.poll()) != null) {
 
       registry.unregister(((RegisteredWeakReference<?>)sweptReference).getCaller(), ((RegisteredWeakReference<?>)sweptReference).getTags());
     }

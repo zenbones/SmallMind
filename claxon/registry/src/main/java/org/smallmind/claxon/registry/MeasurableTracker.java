@@ -62,7 +62,7 @@ public class MeasurableTracker {
 
     Reference<?> sweptReference;
 
-    if ((sweptReference = referenceQueue.poll()) != null) {
+    while ((sweptReference = referenceQueue.poll()) != null) {
 
       Measurable measurable;
 
