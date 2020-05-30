@@ -30,31 +30,40 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.registry.spring;
+package org.smallmind.claxon.emitter.datadog.spring;
 
-import java.util.HashMap;
-import java.util.Map;
-import org.smallmind.claxon.registry.ClaxonConfiguration;
-import org.smallmind.claxon.registry.ClaxonRegistry;
-import org.smallmind.claxon.registry.Emitter;
-import org.springframework.beans.factory.DisposableBean;
+import org.smallmind.claxon.emitter.datadog.DataDogEmitter;
+import org.smallmind.claxon.registry.Tag;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
-public class ClaxonRegistryFactoryBean implements FactoryBean<ClaxonRegistry>, InitializingBean, DisposableBean {
+public class DataDogEmitterFactoryBean implements FactoryBean<DataDogEmitter>, InitializingBean {
 
-  private ClaxonRegistry registry;
-  private ClaxonConfiguration configuration = new ClaxonConfiguration();
-  private Map<String, Emitter> emitterMap = new HashMap<>();
+  private DataDogEmitter emitter;
 
-  public void setConfiguration (ClaxonConfiguration configuration) {
+  private String prefix;
+  private String hostName = "localhost";
+  private int port = 8125;
+  private Tag[] constantTags;
 
-    this.configuration = configuration;
+  public void setPrefix (String prefix) {
+
+    this.prefix = prefix;
   }
 
-  public void setEmitterMap (Map<String, Emitter> emitterMap) {
+  public void setHostName (String hostName) {
 
-    this.emitterMap = emitterMap;
+    this.hostName = hostName;
+  }
+
+  public void setPort (int port) {
+
+    this.port = port;
+  }
+
+  public void setConstantTags (Tag[] constantTags) {
+
+    this.constantTags = constantTags;
   }
 
   @Override
@@ -66,33 +75,18 @@ public class ClaxonRegistryFactoryBean implements FactoryBean<ClaxonRegistry>, I
   @Override
   public Class<?> getObjectType () {
 
-    return ClaxonRegistry.class;
+    return DataDogEmitter.class;
   }
 
   @Override
-  public ClaxonRegistry getObject () {
+  public DataDogEmitter getObject () {
 
-    return registry;
-  }
-
-  @Override
-  public void destroy ()
-    throws InterruptedException {
-
-    if (registry != null) {
-      registry.stop();
-    }
+    return emitter;
   }
 
   @Override
   public void afterPropertiesSet () {
 
-    registry = new ClaxonRegistry(configuration);
-
-    for (Map.Entry<String, Emitter> emitterEntry : emitterMap.entrySet()) {
-      registry.bind(emitterEntry.getKey(), emitterEntry.getValue());
-    }
-
-    registry.asInstrumentRegistry();
+    emitter = new DataDogEmitter(prefix, hostName, port, constantTags);
   }
 }

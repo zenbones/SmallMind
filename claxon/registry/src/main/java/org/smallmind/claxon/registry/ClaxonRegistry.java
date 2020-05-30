@@ -47,7 +47,7 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class ClaxonRegistry {
 
-  private final ConcurrentHashMap<String, Collector> collectorMap = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<String, Emitter> emitterMap = new ConcurrentHashMap<>();
   private final ConcurrentHashMap<RegistryKey, NamedMeter<?>> meterMap = new ConcurrentHashMap<>();
   private final Set<RegistryKey> noopSet = ConcurrentHashMap.newKeySet();
   private final MeasurableTracker measurableTrcker;
@@ -79,14 +79,14 @@ public class ClaxonRegistry {
     collectionWorker.stop();
   }
 
-  public Collector getCollector (String name) {
+  public Emitter getEmitter (String name) {
 
-    return collectorMap.get(name);
+    return emitterMap.get(name);
   }
 
-  public ClaxonRegistry bind (String name, Collector collector) {
+  public ClaxonRegistry bind (String name, Emitter emitter) {
 
-    collectorMap.put(name, collector);
+    emitterMap.put(name, emitter);
 
     return this;
   }
@@ -207,9 +207,9 @@ public class ClaxonRegistry {
           System.arraycopy(meterTags, 0, mergedTags, configuration.getRegistryTags().length, meterTags.length);
         }
 
-        for (Collector collector : collectorMap.values()) {
+        for (Emitter emitter : emitterMap.values()) {
           try {
-            collector.record(namedMeterEntry.getValue().getName(), mergedTags, quantities);
+            emitter.record(namedMeterEntry.getValue().getName(), mergedTags, quantities);
           } catch (Exception exception) {
             LoggerManager.getLogger(ClaxonRegistry.class).error(exception);
           }

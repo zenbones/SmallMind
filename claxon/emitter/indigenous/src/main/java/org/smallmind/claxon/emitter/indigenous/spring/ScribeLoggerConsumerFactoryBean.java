@@ -30,31 +30,27 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.registry.spring;
+package org.smallmind.claxon.emitter.indigenous.spring;
 
-import java.util.HashMap;
-import java.util.Map;
-import org.smallmind.claxon.registry.ClaxonConfiguration;
-import org.smallmind.claxon.registry.ClaxonRegistry;
-import org.smallmind.claxon.registry.Emitter;
-import org.springframework.beans.factory.DisposableBean;
+import org.smallmind.claxon.emitter.indigenous.ScribeLoggerConsumer;
+import org.smallmind.scribe.pen.Level;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
-public class ClaxonRegistryFactoryBean implements FactoryBean<ClaxonRegistry>, InitializingBean, DisposableBean {
+public class ScribeLoggerConsumerFactoryBean implements FactoryBean<ScribeLoggerConsumer>, InitializingBean {
 
-  private ClaxonRegistry registry;
-  private ClaxonConfiguration configuration = new ClaxonConfiguration();
-  private Map<String, Emitter> emitterMap = new HashMap<>();
+  private ScribeLoggerConsumer scribeLoggerConsumer;
+  private Class<?> caller;
+  private Level level = Level.DEBUG;
 
-  public void setConfiguration (ClaxonConfiguration configuration) {
+  public void setCaller (Class<?> caller) {
 
-    this.configuration = configuration;
+    this.caller = caller;
   }
 
-  public void setEmitterMap (Map<String, Emitter> emitterMap) {
+  public void setLevel (Level level) {
 
-    this.emitterMap = emitterMap;
+    this.level = level;
   }
 
   @Override
@@ -66,33 +62,18 @@ public class ClaxonRegistryFactoryBean implements FactoryBean<ClaxonRegistry>, I
   @Override
   public Class<?> getObjectType () {
 
-    return ClaxonRegistry.class;
+    return ScribeLoggerConsumer.class;
   }
 
   @Override
-  public ClaxonRegistry getObject () {
+  public ScribeLoggerConsumer getObject () {
 
-    return registry;
-  }
-
-  @Override
-  public void destroy ()
-    throws InterruptedException {
-
-    if (registry != null) {
-      registry.stop();
-    }
+    return scribeLoggerConsumer;
   }
 
   @Override
   public void afterPropertiesSet () {
 
-    registry = new ClaxonRegistry(configuration);
-
-    for (Map.Entry<String, Emitter> emitterEntry : emitterMap.entrySet()) {
-      registry.bind(emitterEntry.getKey(), emitterEntry.getValue());
-    }
-
-    registry.asInstrumentRegistry();
+    scribeLoggerConsumer = new ScribeLoggerConsumer(caller, level);
   }
 }

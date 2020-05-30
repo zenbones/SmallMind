@@ -30,31 +30,21 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.registry.spring;
+package org.smallmind.claxon.emitter.indigenous.spring;
 
-import java.util.HashMap;
-import java.util.Map;
-import org.smallmind.claxon.registry.ClaxonConfiguration;
-import org.smallmind.claxon.registry.ClaxonRegistry;
-import org.smallmind.claxon.registry.Emitter;
-import org.springframework.beans.factory.DisposableBean;
+import java.util.function.Consumer;
+import org.smallmind.claxon.emitter.indigenous.IndigenousEmitter;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
-public class ClaxonRegistryFactoryBean implements FactoryBean<ClaxonRegistry>, InitializingBean, DisposableBean {
+public class IndigenousEmitterFactoryBean implements FactoryBean<IndigenousEmitter>, InitializingBean {
 
-  private ClaxonRegistry registry;
-  private ClaxonConfiguration configuration = new ClaxonConfiguration();
-  private Map<String, Emitter> emitterMap = new HashMap<>();
+  private IndigenousEmitter emitter;
+  private Consumer<String> messageConsumer;
 
-  public void setConfiguration (ClaxonConfiguration configuration) {
+  public void setMessageConsumer (Consumer<String> messageConsumer) {
 
-    this.configuration = configuration;
-  }
-
-  public void setEmitterMap (Map<String, Emitter> emitterMap) {
-
-    this.emitterMap = emitterMap;
+    this.messageConsumer = messageConsumer;
   }
 
   @Override
@@ -66,33 +56,18 @@ public class ClaxonRegistryFactoryBean implements FactoryBean<ClaxonRegistry>, I
   @Override
   public Class<?> getObjectType () {
 
-    return ClaxonRegistry.class;
+    return IndigenousEmitter.class;
   }
 
   @Override
-  public ClaxonRegistry getObject () {
+  public IndigenousEmitter getObject () {
 
-    return registry;
-  }
-
-  @Override
-  public void destroy ()
-    throws InterruptedException {
-
-    if (registry != null) {
-      registry.stop();
-    }
+    return emitter;
   }
 
   @Override
   public void afterPropertiesSet () {
 
-    registry = new ClaxonRegistry(configuration);
-
-    for (Map.Entry<String, Emitter> emitterEntry : emitterMap.entrySet()) {
-      registry.bind(emitterEntry.getKey(), emitterEntry.getValue());
-    }
-
-    registry.asInstrumentRegistry();
+    emitter = new IndigenousEmitter(messageConsumer);
   }
 }

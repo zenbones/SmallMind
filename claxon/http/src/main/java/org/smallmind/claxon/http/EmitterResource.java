@@ -30,69 +30,52 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.registry.spring;
+package org.smallmind.claxon.http;
 
-import java.util.HashMap;
-import java.util.Map;
-import org.smallmind.claxon.registry.ClaxonConfiguration;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.core.Response;
 import org.smallmind.claxon.registry.ClaxonRegistry;
+import org.smallmind.claxon.registry.EmitterMethod;
 import org.smallmind.claxon.registry.Emitter;
-import org.springframework.beans.factory.DisposableBean;
-import org.springframework.beans.factory.FactoryBean;
-import org.springframework.beans.factory.InitializingBean;
+import org.smallmind.claxon.registry.InvalidEmitterException;
+import org.smallmind.claxon.registry.PullEmitter;
+import org.smallmind.claxon.registry.UnknownEmitterException;
 
-public class ClaxonRegistryFactoryBean implements FactoryBean<ClaxonRegistry>, InitializingBean, DisposableBean {
+@Path("/claxon")
+public class EmitterResource {
 
   private ClaxonRegistry registry;
-  private ClaxonConfiguration configuration = new ClaxonConfiguration();
-  private Map<String, Emitter> emitterMap = new HashMap<>();
 
-  public void setConfiguration (ClaxonConfiguration configuration) {
+  public EmitterResource () {
 
-    this.configuration = configuration;
   }
 
-  public void setEmitterMap (Map<String, Emitter> emitterMap) {
+  public EmitterResource (ClaxonRegistry registry) {
 
-    this.emitterMap = emitterMap;
+    this.registry = registry;
   }
 
-  @Override
-  public boolean isSingleton () {
+  public void setRegistry (ClaxonRegistry registry) {
 
-    return true;
+    this.registry = registry;
   }
 
-  @Override
-  public Class<?> getObjectType () {
+  @GET
+  @Path("/{name}")
+  public Response get (@PathParam("name") String name)
+    throws UnknownEmitterException, InvalidEmitterException {
 
-    return ClaxonRegistry.class;
-  }
+    Emitter emitter;
 
-  @Override
-  public ClaxonRegistry getObject () {
+    if ((emitter = registry.getEmitter(name)) == null) {
+      throw new UnknownEmitterException(name);
+    } else if (!EmitterMethod.PULL.equals(emitter.getEmitterMethod())) {
+      throw new InvalidEmitterException("Invalid collection method(%s) for emitter(%s)");
+    } else {
 
-    return registry;
-  }
-
-  @Override
-  public void destroy ()
-    throws InterruptedException {
-
-    if (registry != null) {
-      registry.stop();
+      return Response.ok(((PullEmitter<?>)emitter).emit()).build();
     }
-  }
-
-  @Override
-  public void afterPropertiesSet () {
-
-    registry = new ClaxonRegistry(configuration);
-
-    for (Map.Entry<String, Emitter> emitterEntry : emitterMap.entrySet()) {
-      registry.bind(emitterEntry.getKey(), emitterEntry.getValue());
-    }
-
-    registry.asInstrumentRegistry();
   }
 }
