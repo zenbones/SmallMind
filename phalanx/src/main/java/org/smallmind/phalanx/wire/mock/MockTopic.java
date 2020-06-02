@@ -101,7 +101,7 @@ public class MockTopic {
           }
         } else {
           try {
-            Thread.sleep(500);
+            Thread.sleep(100);
           } catch (InterruptedException interruptedException) {
             LoggerManager.getLogger(MockQueue.class).error(interruptedException);
           }
