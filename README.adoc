@@ -1,0 +1,7 @@
+= Smallmind
+
+== Installation
+All Smallmind modules are pushed to Maven Central under the *org.smallmind* group id. All artifacts which are intended to work together have the same sem version. Explicit module listings can be found in the various sections of this document covering those modules. Wherever possible, dependencies of this project are marked as `<optional>true</optional>`. This does require projects using these libraries to include such dependencies along with the relevant Smallmind modules, but keeps this project from making unwanted decisions. If we've missed any such opportunities, please let us know.
+
+== Configuration
+There is none. IOC projects provide both the base container and configuration. Smallmind provides some occasionally helpful Spring beans, but there's no magic in them. Whatever flavor of dependency injection you prefer should work just as well.
