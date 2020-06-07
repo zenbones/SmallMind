@@ -45,7 +45,7 @@ public class DefaultErrorHandler implements ErrorHandler {
 
   public DefaultErrorHandler (Appender appender) {
 
-    setBackupAppender(appender);
+ this.appender = appender;
   }
 
   public void setBackupAppender (Appender appender) {

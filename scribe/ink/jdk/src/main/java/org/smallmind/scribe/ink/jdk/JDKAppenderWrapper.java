@@ -32,7 +32,6 @@
  */
 package org.smallmind.scribe.ink.jdk;
 
-import java.io.UnsupportedEncodingException;
 import java.util.logging.ErrorManager;
 import java.util.logging.Filter;
 import java.util.logging.Formatter;
@@ -63,7 +62,7 @@ public class JDKAppenderWrapper extends Handler {
   }
 
   public void setEncoding (String encoding)
-    throws SecurityException, UnsupportedEncodingException {
+    throws SecurityException {
 
     throw new UnsupportedOperationException("Unsupported native JDK Logging method");
   }

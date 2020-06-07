@@ -34,7 +34,5 @@ package org.smallmind.scribe.pen;
 
 public interface ErrorHandler {
 
-  void setBackupAppender (Appender appender);
-
   void process (Record record, Exception exception, String errorMessage, Object... args);
 }

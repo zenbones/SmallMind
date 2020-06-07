@@ -36,14 +36,11 @@ import java.util.logging.LogRecord;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LogicalContext;
 import org.smallmind.scribe.pen.MessageTranslator;
-import org.smallmind.scribe.pen.Parameter;
 import org.smallmind.scribe.pen.ParameterAwareRecord;
 import org.smallmind.scribe.pen.Record;
 import org.smallmind.scribe.pen.adapter.RecordWrapper;
 
 public class JDKRecordSubverter extends LogRecord implements RecordWrapper {
-
-  private static final Parameter[] NO_PARAMETERS = new Parameter[0];
 
   private final JDKRecord jdkRecord;
   private final LogicalContext logicalContext;

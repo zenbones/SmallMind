@@ -46,11 +46,6 @@ public class IndigenousLoggingBlueprint extends LoggingBlueprint {
     return new IndigenousLoggerAdapter(name);
   }
 
-  public Record filterRecord (Record record, Level level) {
-
-    return new IndigenousRecordFilter(record, level).getRecord();
-  }
-
   public Record errorRecord (Record record, Throwable throwable, String message, Object... args) {
 
     IndigenousRecord indigenousRecord;

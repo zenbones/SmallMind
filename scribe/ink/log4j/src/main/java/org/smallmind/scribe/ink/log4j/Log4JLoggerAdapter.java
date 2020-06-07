@@ -32,8 +32,9 @@
  */
 package org.smallmind.scribe.ink.log4j;
 
+import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.core.Logger;
 import org.smallmind.scribe.pen.Appender;
 import org.smallmind.scribe.pen.DefaultLogicalContext;
 import org.smallmind.scribe.pen.Enhancer;
@@ -57,7 +58,7 @@ public class Log4JLoggerAdapter implements LoggerAdapter {
 
     this.logger = logger;
 
-    logger.setAdditivity(false);
+    logger.setAdditive(false);
 
     filterList = new ConcurrentLinkedQueue<>();
     enhancerList = new ConcurrentLinkedQueue<>();
@@ -106,14 +107,19 @@ public class Log4JLoggerAdapter implements LoggerAdapter {
 
   public Appender removeAppender (String name) {
 
-    org.apache.log4j.Appender appender;
+    Map<String, org.apache.logging.log4j.core.Appender> appenderMap;
 
-    if ((appender = logger.getAppender(name)) != null) {
-      logger.removeAppender(name);
-      if (appender instanceof Log4JAppenderWrapper) {
-        return ((Log4JAppenderWrapper)appender).getInnerAppender();
-      } else {
-        throw new UnsupportedOperationException("Appender can't be returned via this interface because it's Log4J native");
+    if ((appenderMap = logger.getAppenders()) != null) {
+
+      org.apache.logging.log4j.core.Appender appender;
+
+      if ((appender = appenderMap.get(name)) != null) {
+        logger.removeAppender(appender);
+        if (appender instanceof Log4JAppenderWrapper) {
+          return ((Log4JAppenderWrapper)appender).getInnerAppender();
+        } else {
+          throw new UnsupportedOperationException("Appender can't be returned via this interface because it's Log4J native");
+        }
       }
     }
 
@@ -122,7 +128,9 @@ public class Log4JLoggerAdapter implements LoggerAdapter {
 
   public void clearAppenders () {
 
-    logger.removeAllAppenders();
+    for (org.apache.logging.log4j.core.Appender appender : logger.getAppenders().values()) {
+      logger.removeAppender(appender);
+    }
   }
 
   public void addEnhancer (Enhancer enhancer) {
@@ -152,10 +160,12 @@ public class Log4JLoggerAdapter implements LoggerAdapter {
 
     if ((!level.equals(Level.OFF)) && getLevel().noGreater(level)) {
       if ((logicalContext = willLog(level)) != null) {
-        recordSubverter = new Log4JRecordSubverter(logger, level, logicalContext, throwable, message, args);
+        recordSubverter = new Log4JRecordSubverter(logger.getName(), logger.getClass().getCanonicalName(), level, logicalContext, throwable, message, args);
         enhanceRecord(recordSubverter.getRecord());
         ((ParameterAwareRecord)recordSubverter.getRecord()).setParameters(getParameterAdapter().getParameters());
-        logger.callAppenders(recordSubverter);
+        for (org.apache.logging.log4j.core.Appender appender : logger.getAppenders().values()) {
+          appender.append(recordSubverter);
+        }
       }
     }
   }
@@ -167,10 +177,12 @@ public class Log4JLoggerAdapter implements LoggerAdapter {
 
     if ((!level.equals(Level.OFF)) && getLevel().noGreater(level)) {
       if ((logicalContext = willLog(level)) != null) {
-        recordSubverter = new Log4JRecordSubverter(logger, level, logicalContext, throwable, (object == null) ? null : object.toString());
+        recordSubverter = new Log4JRecordSubverter(logger.getName(), logger.getClass().getCanonicalName(), level, logicalContext, throwable, (object == null) ? null : object.toString());
         enhanceRecord(recordSubverter.getRecord());
         ((ParameterAwareRecord)recordSubverter.getRecord()).setParameters(getParameterAdapter().getParameters());
-        logger.callAppenders(recordSubverter);
+        for (org.apache.logging.log4j.core.Appender appender : logger.getAppenders().values()) {
+          appender.append(recordSubverter);
+        }
       }
     }
   }
@@ -186,7 +198,7 @@ public class Log4JLoggerAdapter implements LoggerAdapter {
     }
 
     if (!filterList.isEmpty()) {
-      filterRecord = new Log4JRecordSubverter(logger, level, logicalContext, null, null).getRecord();
+      filterRecord = new Log4JRecordSubverter(logger.getName(), logger.getClass().getCanonicalName(), level, logicalContext, null, null).getRecord();
       for (Filter filter : filterList) {
         if (!filter.willLog(filterRecord)) {
           return null;

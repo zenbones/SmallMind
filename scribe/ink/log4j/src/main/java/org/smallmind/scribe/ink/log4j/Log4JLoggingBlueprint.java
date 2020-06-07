@@ -32,8 +32,9 @@
  */
 package org.smallmind.scribe.ink.log4j;
 
-import org.apache.log4j.Logger;
-import org.apache.log4j.spi.LoggingEvent;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.core.Logger;
 import org.smallmind.scribe.pen.DefaultLogicalContext;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerManager;
@@ -51,12 +52,7 @@ public class Log4JLoggingBlueprint extends LoggingBlueprint {
 
   public LoggerAdapter getLoggingAdapter (String name) {
 
-    return new Log4JLoggerAdapter(Logger.getLogger(name));
-  }
-
-  public Record filterRecord (Record record, Level level) {
-
-    return new Log4JRecordFilter(record, level).getRecord();
+    return new Log4JLoggerAdapter((Logger)LogManager.getLogger(name));
   }
 
   public Record errorRecord (Record record, Throwable throwable, String message, Object... args) {
@@ -66,6 +62,6 @@ public class Log4JLoggingBlueprint extends LoggingBlueprint {
     logicalContext = new DefaultLogicalContext();
     logicalContext.fillIn();
 
-    return new Log4JRecordSubverter((Logger)((LoggingEvent)record.getNativeLogEntry()).getLogger(), Level.FATAL, logicalContext, throwable, message, args).getRecord();
+    return new Log4JRecordSubverter(((LogEvent)record.getNativeLogEntry()).getLoggerName(), ((LogEvent)record.getNativeLogEntry()).getLoggerFqcn(), Level.FATAL, logicalContext, throwable, message, args).getRecord();
   }
 }

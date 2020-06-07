@@ -43,7 +43,7 @@ public class TemplateInitializingBean implements InitializingBean {
 
   public TemplateInitializingBean () {
 
-    initialTemplates = new LinkedList<Template>();
+    initialTemplates = new LinkedList<>();
   }
 
   public void setInitialTemplates (List<Template> initialTemplates) {
@@ -51,8 +51,7 @@ public class TemplateInitializingBean implements InitializingBean {
     this.initialTemplates.addAll(initialTemplates);
   }
 
-  public void afterPropertiesSet ()
-    throws Exception {
+  public void afterPropertiesSet () {
 
     for (Template template : initialTemplates) {
       template.register();

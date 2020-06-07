@@ -32,6 +32,7 @@
  */
 package org.smallmind.scribe.spring;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import org.smallmind.scribe.pen.ExceptionSuppressingLogFilter;
 import org.springframework.beans.factory.InitializingBean;
@@ -40,11 +41,9 @@ public class ExceptionSuppressingLogInitializingBean implements InitializingBean
 
   private final LinkedList<Class<? extends Throwable>> suppressedThrowableClassList = new LinkedList<>();
 
-  public void setSuppressedThrowableClasses (Class[] suppressedThrowableClasses) {
+  public void setSuppressedThrowableClasses (Class<? extends Throwable>[] suppressedThrowableClasses) {
 
-    for (Class suppressedThrowableClass : suppressedThrowableClasses) {
-      suppressedThrowableClassList.add(suppressedThrowableClass);
-    }
+    suppressedThrowableClassList.addAll(Arrays.asList(suppressedThrowableClasses));
   }
 
   @Override

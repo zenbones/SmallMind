@@ -32,27 +32,27 @@
  */
 package org.smallmind.scribe.ink.log4j;
 
-import org.apache.log4j.spi.LoggingEvent;
+import org.apache.logging.log4j.core.LogEvent;
 import org.smallmind.scribe.pen.Filter;
 import org.smallmind.scribe.pen.Record;
 
 public class Log4JFilterAdapter implements Filter {
 
-  private final org.apache.log4j.spi.Filter filter;
+  private final org.apache.logging.log4j.core.Filter filter;
 
-  public Log4JFilterAdapter (org.apache.log4j.spi.Filter filter) {
+  public Log4JFilterAdapter (org.apache.logging.log4j.core.Filter filter) {
 
     this.filter = filter;
   }
 
-  protected org.apache.log4j.spi.Filter getNativeFilter () {
+  protected org.apache.logging.log4j.core.Filter getNativeFilter () {
 
     return filter;
   }
 
   public boolean willLog (Record record) {
 
-    return filter.decide((LoggingEvent)record.getNativeLogEntry()) != org.apache.log4j.spi.Filter.DENY;
+    return filter.filter((LogEvent)record.getNativeLogEntry()) != org.apache.logging.log4j.core.Filter.Result.DENY;
   }
 
   public int hashCode () {

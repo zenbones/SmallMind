@@ -4,7 +4,7 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
   <!-- Filters -->
-  <bean id="exceptionSuppressingLogFilter" class="org.smallmind.scribe.pen.ExceptionSuppressingLogFiltergFilter"/>
+  <bean id="exceptionSuppressingLogFilter" class="org.smallmind.scribe.pen.ExceptionSuppressingLogFilter"/>
 
   <!-- Logging Templates -->
   <bean id="defaultTemplate" class="org.smallmind.scribe.pen.DefaultTemplate" init-method="register">
@@ -23,7 +23,7 @@
     <property name="level" value="${log.default.level}"/>
   </bean>
 
-  <bean id="dynamicTemplate" class="org.smallmind.scribe.spring.DynamicClassNameTemplateInitializingBeanalizingBean">
+  <bean id="dynamicTemplate" class="org.smallmind.scribe.spring.DynamicClassNameTemplateInitializingBean">
     <property name="autoFillLogicalContext" value="true"/>
     <property name="appenders">
       <list>

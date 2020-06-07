@@ -32,15 +32,13 @@
  */
 package org.smallmind.scribe.ink.log4j;
 
-import org.apache.log4j.Layout;
-import org.apache.log4j.spi.ErrorHandler;
-import org.apache.log4j.spi.Filter;
-import org.apache.log4j.spi.LoggingEvent;
-import org.smallmind.scribe.pen.AbstractFormattedAppender;
+import org.apache.logging.log4j.core.ErrorHandler;
+import org.apache.logging.log4j.core.Layout;
+import org.apache.logging.log4j.core.LogEvent;
 import org.smallmind.scribe.pen.Appender;
 import org.smallmind.scribe.pen.adapter.RecordWrapper;
 
-public class Log4JAppenderWrapper implements org.apache.log4j.Appender {
+public class Log4JAppenderWrapper implements org.apache.logging.log4j.core.Appender {
 
   private final Appender appender;
 
@@ -54,74 +52,84 @@ public class Log4JAppenderWrapper implements org.apache.log4j.Appender {
     return appender;
   }
 
+  @Override
   public String getName () {
 
     return appender.getName();
   }
 
-  public void setName (String name) {
+  @Override
+  public boolean ignoreExceptions () {
 
-    appender.setName(name);
+    return false;
   }
 
-  public void addFilter (Filter filter) {
+  @Override
+  public State getState () {
 
-    appender.addFilter(new Log4JFilterAdapter(filter));
+    return State.STARTED;
   }
 
-  public Filter getFilter () {
+  @Override
+  public void initialize () {
 
-    throw new UnsupportedOperationException("Unsupported native Log4J method");
   }
 
-  public void clearFilters () {
+  @Override
+  public void start () {
 
-    throw new UnsupportedOperationException("Unsupported native Log4J method");
   }
 
-  public void doAppend (LoggingEvent loggingEvent) {
+  @Override
+  public void stop () {
+
+  }
+
+  @Override
+  public boolean isStarted () {
+
+    return true;
+  }
+
+  @Override
+  public boolean isStopped () {
+
+    return false;
+  }
+
+  @Override
+  public void append (LogEvent logEvent) {
 
     if (appender.isActive()) {
-      appender.publish(((RecordWrapper)loggingEvent).getRecord());
+      appender.publish(((RecordWrapper)logEvent).getRecord());
     }
   }
 
-  public void close () {
-
-    // Log4J will close all Appenders when removing them from a Logger, even though under Log4J
-    // Appenders are shared objects. So we can't let Log4J handle the close method> Bad Log4J.
-  }
-
-  public ErrorHandler getErrorHandler () {
+  @Override
+  public ErrorHandler getHandler () {
 
     throw new UnsupportedOperationException("Unsupported native Log4J method");
   }
 
-  public void setErrorHandler (ErrorHandler errorHandler) {
+  @Override
+  public void setHandler (ErrorHandler errorHandler) {
 
     appender.setErrorHandler(new Log4JErrorHandlerAdapter(errorHandler));
   }
 
-  public Layout getLayout () {
+  @Override
+  public Layout<?> getLayout () {
 
     throw new UnsupportedOperationException("Unsupported native Log4J method");
   }
 
-  public void setLayout (Layout layout) {
-
-    appender.setFormatter(new Log4JFormatterAdapter(layout));
-  }
-
-  public boolean requiresLayout () {
-
-    return appender instanceof AbstractFormattedAppender;
-  }
-
+  @Override
   public int hashCode () {
 
     return appender.hashCode();
   }
 
+  @Override
   public boolean equals (Object obj) {
 
     if (obj instanceof Log4JAppenderWrapper) {
@@ -129,10 +137,5 @@ public class Log4JAppenderWrapper implements org.apache.log4j.Appender {
     }
 
     return appender.equals(obj);
-  }
-
-  protected void finalize () {
-
-    close();
   }
 }

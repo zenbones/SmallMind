@@ -32,17 +32,17 @@
  */
 package org.smallmind.scribe.ink.log4j;
 
-import org.apache.log4j.Layout;
-import org.apache.log4j.spi.LoggingEvent;
+import org.apache.logging.log4j.core.Layout;
+import org.apache.logging.log4j.core.LogEvent;
 import org.smallmind.scribe.pen.Filter;
 import org.smallmind.scribe.pen.Formatter;
 import org.smallmind.scribe.pen.Record;
 
 public class Log4JFormatterAdapter implements Formatter {
 
-  private final Layout layout;
+  private final Layout<?> layout;
 
-  public Log4JFormatterAdapter (Layout layout) {
+  public Log4JFormatterAdapter (Layout<?> layout) {
 
     this.layout = layout;
   }
@@ -50,19 +50,19 @@ public class Log4JFormatterAdapter implements Formatter {
   public String format (Record record, Filter[] filters) {
 
     StringBuilder formatBuilder = new StringBuilder();
-    String header;
-    String footer;
+    byte[] header;
+    byte[] footer;
 
     header = layout.getHeader();
     if (header != null) {
-      formatBuilder.append(header);
+      formatBuilder.append(new String(header));
     }
 
-    formatBuilder.append(layout.format((LoggingEvent)record.getNativeLogEntry()));
+    formatBuilder.append(new String(layout.toByteArray((LogEvent)record.getNativeLogEntry())));
 
     footer = layout.getFooter();
     if (footer != null) {
-      formatBuilder.append(footer);
+      formatBuilder.append(new String(footer));
     }
 
     return formatBuilder.toString();

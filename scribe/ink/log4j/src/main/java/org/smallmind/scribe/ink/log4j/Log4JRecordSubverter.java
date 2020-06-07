@@ -32,38 +32,30 @@
  */
 package org.smallmind.scribe.ink.log4j;
 
-import java.util.concurrent.atomic.AtomicReference;
-import org.apache.log4j.Logger;
-import org.apache.log4j.spi.LocationInfo;
-import org.apache.log4j.spi.LoggingEvent;
+import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.core.impl.Log4jLogEvent;
+import org.apache.logging.log4j.message.FormattedMessage;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LogicalContext;
-import org.smallmind.scribe.pen.MessageTranslator;
-import org.smallmind.scribe.pen.Parameter;
 import org.smallmind.scribe.pen.ParameterAwareRecord;
 import org.smallmind.scribe.pen.Record;
 import org.smallmind.scribe.pen.SequenceGenerator;
 import org.smallmind.scribe.pen.adapter.RecordWrapper;
 
-public class Log4JRecordSubverter extends LoggingEvent implements RecordWrapper {
-
-  private static final Parameter[] NO_PARAMETERS = new Parameter[0];
+public class Log4JRecordSubverter extends Log4jLogEvent implements RecordWrapper {
 
   private final Log4JRecord log4jRecord;
   private final LogicalContext logicalContext;
-  private final AtomicReference<LocationInfo> locationInfoReference;
   private final Level level;
 
-  public Log4JRecordSubverter (Logger logger, Level level, LogicalContext logicalContext, Throwable throwable, String message, Object... args) {
+  public Log4JRecordSubverter (String loggerName, String loggerClassName, Level level, LogicalContext logicalContext, Throwable throwable, String message, Object... args) {
 
-    super(logger.getClass().getCanonicalName(), logger, System.currentTimeMillis(), Log4JLevelTranslator.getLog4JLevel(level), MessageTranslator.translateMessage(message, args), throwable);
+    super(loggerName, null, loggerClassName, Log4JLevelTranslator.getLog4JLevel(level), new FormattedMessage(message, args), null, throwable);
 
     this.level = level;
     this.logicalContext = logicalContext;
 
     log4jRecord = new Log4JRecord(this);
-
-    locationInfoReference = new AtomicReference<>();
   }
 
   public Record getRecord () {
@@ -71,28 +63,15 @@ public class Log4JRecordSubverter extends LoggingEvent implements RecordWrapper 
     return log4jRecord;
   }
 
-  public LocationInfo getLocationInformation () {
-
-    if (locationInfoReference.get() == null) {
-      synchronized (this) {
-        if ((locationInfoReference.get() == null) && (logicalContext != null)) {
-          locationInfoReference.set(new LocationInfo(logicalContext.getFileName(), logicalContext.getClassName(), logicalContext.getMethodName(), String.valueOf(logicalContext.getLineNumber())));
-        }
-      }
-    }
-
-    return locationInfoReference.get();
-  }
-
   private class Log4JRecord extends ParameterAwareRecord {
 
-    private final LoggingEvent loggingEvent;
+    private final LogEvent logEvent;
     private final long threadId;
     private final long sequenceNumber;
 
-    public Log4JRecord (LoggingEvent loggingEvent) {
+    public Log4JRecord (LogEvent logEvent) {
 
-      this.loggingEvent = loggingEvent;
+      this.logEvent = logEvent;
 
       threadId = Thread.currentThread().getId();
       sequenceNumber = SequenceGenerator.next();
@@ -101,13 +80,13 @@ public class Log4JRecordSubverter extends LoggingEvent implements RecordWrapper 
     @Override
     public Object getNativeLogEntry () {
 
-      return loggingEvent;
+      return logEvent;
     }
 
     @Override
     public String getLoggerName () {
 
-      return loggingEvent.getLoggerName();
+      return logEvent.getLoggerName();
     }
 
     @Override
@@ -119,13 +98,13 @@ public class Log4JRecordSubverter extends LoggingEvent implements RecordWrapper 
     @Override
     public Throwable getThrown () {
 
-      return (loggingEvent.getThrowableInformation() != null) ? loggingEvent.getThrowableInformation().getThrowable() : null;
+      return logEvent.getThrown();
     }
 
     @Override
     public String getMessage () {
 
-      return loggingEvent.getRenderedMessage();
+      return logEvent.getMessage().getFormattedMessage();
     }
 
     @Override
@@ -143,7 +122,7 @@ public class Log4JRecordSubverter extends LoggingEvent implements RecordWrapper 
     @Override
     public String getThreadName () {
 
-      return loggingEvent.getThreadName();
+      return logEvent.getThreadName();
     }
 
     @Override
@@ -155,7 +134,7 @@ public class Log4JRecordSubverter extends LoggingEvent implements RecordWrapper 
     @Override
     public long getMillis () {
 
-      return loggingEvent.getTimeStamp();
+      return logEvent.getTimeMillis();
     }
   }
 }
