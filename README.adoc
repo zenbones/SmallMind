@@ -5,3 +5,49 @@ All Smallmind modules are pushed to Maven Central under the *org.smallmind* grou
 
 == Configuration
 There is none. IOC projects provide both the base container and configuration. Smallmind provides some occasionally helpful Spring beans, but there's no magic in them. Whatever flavor of dependency injection you prefer should work just as well.
+
+== Modules
+* <<claxon>> - Highly extensible unified monitoring framework with pluggable endpoints (comes with Datadog, JMX, Prometheus).
+
+[[claxon,Claxon]]
+=== Claxon
+[source, xml]
+----
+      <dependency>
+        <groupId>org.smallmind</groupId>
+        <artifactId>claxon-registry</artifactId>
+        <version>LATEST</version>
+      </dependency>
+----
+[source, xml]
+----
+      <dependency>
+        <groupId>org.smallmind</groupId>
+        <artifactId>claxon-emitter-datadog</artifactId>
+        <version>LATEST</version>
+      </dependency>
+      <dependency>
+        <groupId>org.smallmind</groupId>
+        <artifactId>claxon-emitter-jmx</artifactId>
+        <version>LATEST</version>
+      </dependency>
+      <dependency>
+        <groupId>org.smallmind</groupId>
+        <artifactId>claxon-emitter-logging</artifactId>
+        <version>LATEST</version>
+      </dependency>
+----
+[source, xml]
+----
+      <dependency>
+        <groupId>org.smallmind</groupId>
+        <artifactId>claxon-emitter-prometheus</artifactId>
+        <version>LATEST</version>
+      </dependency>
+      <dependency>
+        <groupId>org.smallmind</groupId>
+        <artifactId>claxon-http</artifactId>
+        <version>LATEST</version>
+      </dependency>
+----
+
