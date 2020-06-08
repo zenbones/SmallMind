@@ -86,25 +86,22 @@ public class PatternFormatter implements Formatter {
   The character '\n' will be replaced by the machine specific line separator.
   */
 
-  private static final Pattern CONVERSION_PATTERN = Pattern.compile("%%|(\\{([^{}]+))?%((\\+|-)?(\\d+))?(\\.(\\d+))?(!(\\+|-)([^!]*)!)?([dtnlmTCMNLFsp])(([^{%]+)\\})?");
+  private static final Pattern CONVERSION_PATTERN = Pattern.compile("%%|(\\{([^{}]+))?%(([+\\-])?(\\d+))?(\\.(\\d+))?(!([+\\-])([^!]*)!)?([dtnlmTCMNLFsp])(([^{%]+)})?");
   private static final StaticPatternRule DOUBLE_PERCENT_RULE = new StaticPatternRule("%");
   private PatternRule[] patternRules;
   private Timestamp timestamp;
 
-  public PatternFormatter ()
-    throws LoggerException {
+  public PatternFormatter () {
 
     this(DateFormatTimestamp.getDefaultInstance(), "%d %n %+5l [%T] - %m");
   }
 
-  public PatternFormatter (String format)
-    throws LoggerException {
+  public PatternFormatter (String format) {
 
     this(DateFormatTimestamp.getDefaultInstance(), format);
   }
 
-  public PatternFormatter (Timestamp timestamp, String format)
-    throws LoggerException {
+  public PatternFormatter (Timestamp timestamp, String format) {
 
     this.timestamp = timestamp;
 

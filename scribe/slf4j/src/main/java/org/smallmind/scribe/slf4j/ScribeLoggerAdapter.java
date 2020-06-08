@@ -37,14 +37,15 @@ import org.slf4j.helpers.MarkerIgnoringBase;
 import org.slf4j.spi.LocationAwareLogger;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.scribe.pen.Level;
+import org.smallmind.scribe.pen.Logger;
 
 public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationAwareLogger {
 
   private enum TranslatorState {CHAR, ESCAPE, VAR}
 
-  private final org.smallmind.scribe.pen.Logger logger;
+  private final Logger logger;
 
-  public ScribeLoggerAdapter (org.smallmind.scribe.pen.Logger logger) {
+  public ScribeLoggerAdapter (Logger logger) {
 
     this.logger = logger;
   }
