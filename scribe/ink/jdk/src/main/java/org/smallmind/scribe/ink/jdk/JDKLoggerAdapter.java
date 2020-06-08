@@ -1,28 +1,28 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under either, at your discretion...
- * 
+ *
  * 1) The terms of GNU Affero General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or (at
  * your option) any later version.
- * 
+ *
  * ...or...
- * 
+ *
  * 2) The terms of the Apache License, Version 2.0.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License or Apache License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * and the Apache License along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -33,6 +33,7 @@
 package org.smallmind.scribe.ink.jdk;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.function.Supplier;
 import java.util.logging.Handler;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
@@ -64,6 +65,7 @@ public class JDKLoggerAdapter implements LoggerAdapter {
     enhancerList = new ConcurrentLinkedQueue<>();
   }
 
+  @Override
   public String getName () {
 
     return logger.getName();
@@ -75,16 +77,19 @@ public class JDKLoggerAdapter implements LoggerAdapter {
     return ScribeParameterAdapter.getInstance();
   }
 
+  @Override
   public boolean getAutoFillLogicalContext () {
 
     return autoFillLogicalContext;
   }
 
+  @Override
   public void setAutoFillLogicalContext (boolean autoFillLogicalContext) {
 
     this.autoFillLogicalContext = autoFillLogicalContext;
   }
 
+  @Override
   public synchronized void addFilter (Filter filter) {
 
     synchronized (logger) {
@@ -93,17 +98,20 @@ public class JDKLoggerAdapter implements LoggerAdapter {
     }
   }
 
+  @Override
   public synchronized void clearFilters () {
 
     filterList.clear();
     logger.setFilter(null);
   }
 
+  @Override
   public synchronized void addAppender (Appender appender) {
 
     logger.addHandler(new JDKAppenderWrapper(appender));
   }
 
+  @Override
   public synchronized void clearAppenders () {
 
     for (Handler handler : logger.getHandlers()) {
@@ -111,26 +119,31 @@ public class JDKLoggerAdapter implements LoggerAdapter {
     }
   }
 
+  @Override
   public void addEnhancer (Enhancer enhancer) {
 
     enhancerList.add(enhancer);
   }
 
+  @Override
   public void clearEnhancers () {
 
     enhancerList.clear();
   }
 
+  @Override
   public Level getLevel () {
 
     return (logger.getLevel() == null) ? Level.INFO : JDKLevelTranslator.getLevel(logger.getLevel());
   }
 
+  @Override
   public void setLevel (Level level) {
 
     logger.setLevel(JDKLevelTranslator.getLog4JLevel(level));
   }
 
+  @Override
   public void logMessage (Level level, Throwable throwable, String message, Object... args) {
 
     JDKRecordSubverter recordSubverter;
@@ -139,13 +152,14 @@ public class JDKLoggerAdapter implements LoggerAdapter {
     if ((!level.equals(Level.OFF)) && getLevel().noGreater(level)) {
       if ((logicalContext = willLog(level)) != null) {
         recordSubverter = new JDKRecordSubverter(logger.getName(), level, logicalContext, throwable, message, args);
-        enhanceRecord(recordSubverter.getRecord());
         ((ParameterAwareRecord)recordSubverter.getRecord()).setParameters(getParameterAdapter().getParameters());
+        enhanceRecord(recordSubverter.getRecord());
         logger.log(recordSubverter);
       }
     }
   }
 
+  @Override
   public void logMessage (Level level, Throwable throwable, Object object) {
 
     JDKRecordSubverter recordSubverter;
@@ -154,8 +168,24 @@ public class JDKLoggerAdapter implements LoggerAdapter {
     if ((!level.equals(Level.OFF)) && getLevel().noGreater(level)) {
       if ((logicalContext = willLog(level)) != null) {
         recordSubverter = new JDKRecordSubverter(logger.getName(), level, logicalContext, throwable, (object == null) ? null : object.toString());
-        enhanceRecord(recordSubverter.getRecord());
         ((ParameterAwareRecord)recordSubverter.getRecord()).setParameters(getParameterAdapter().getParameters());
+        enhanceRecord(recordSubverter.getRecord());
+        logger.log(recordSubverter);
+      }
+    }
+  }
+
+  @Override
+  public void logMessage (Level level, Throwable throwable, Supplier<String> supplier) {
+
+    JDKRecordSubverter recordSubverter;
+    LogicalContext logicalContext;
+
+    if ((!level.equals(Level.OFF)) && getLevel().noGreater(level)) {
+      if ((logicalContext = willLog(level)) != null) {
+        recordSubverter = new JDKRecordSubverter(logger.getName(), level, logicalContext, throwable, (supplier == null) ? null : supplier.get());
+        ((ParameterAwareRecord)recordSubverter.getRecord()).setParameters(getParameterAdapter().getParameters());
+        enhanceRecord(recordSubverter.getRecord());
         logger.log(recordSubverter);
       }
     }
