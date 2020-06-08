@@ -1,16 +1,30 @@
 = Smallmind
+:doctype: book
+:toc: left
+A journey through Glue code
 
-== Installation
+[preface]
+A preface
+
+== About
+
+=== Installation
 All Smallmind modules are pushed to Maven Central under the *org.smallmind* group id. All artifacts which are intended to work together have the same sem version. Explicit module listings can be found in the various sections of this document covering those modules. Wherever possible, dependencies of this project are marked as `<optional>true</optional>`. This does require projects using these libraries to include such dependencies along with the relevant Smallmind modules, but keeps this project from making unwanted decisions. If we've missed any such opportunities, please let us know.
 
-== Configuration
+=== Configuration
 There is none. IOC projects provide both the base container and configuration. Smallmind provides some occasionally helpful Spring beans, but there's no magic in them. Whatever flavor of dependency injection you prefer should work just as well.
 
-== Modules
+=== Modules
 * <<claxon>> - Highly extensible unified monitoring framework with pluggable endpoints (comes with Datadog, JMX, Prometheus).
 
 [[claxon,Claxon]]
-=== Claxon
+= Claxon
+
+[partintro]
+Here is
+
+There is
+
 [source, xml]
 ----
       <dependency>
@@ -50,4 +64,21 @@ There is none. IOC projects provide both the base container and configuration. S
         <version>LATEST</version>
       </dependency>
 ----
+
+== Section 1
+
+== Section 2
+
+=== Sub Section
+
+= Scribe
+
+[partintro]
+Here
+
+== Section 1
+
+=== Sub Section
+
+== Section 2
 
