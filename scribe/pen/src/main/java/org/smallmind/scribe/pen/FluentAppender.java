@@ -57,6 +57,11 @@ public class FluentAppender extends AbstractAppender implements InitializingBean
   private int retryAttempts = 3;
   private int batch = 1;
 
+  public FluentAppender (String name) {
+
+    this(name, null);
+  }
+
   public FluentAppender (String name, ErrorHandler errorHandler) {
 
     super(name, errorHandler);
