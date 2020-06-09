@@ -38,28 +38,26 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public abstract class AbstractAppender implements Appender {
 
   private final ConcurrentLinkedQueue<Filter> filterList;
-  private Formatter formatter;
   private ErrorHandler errorHandler;
   private String name;
   private boolean active = true;
 
   public AbstractAppender () {
 
-    this(null, null, null);
+    this(null, null);
   }
 
-  public AbstractAppender (Formatter formatter, ErrorHandler errorHandler) {
+  public AbstractAppender (ErrorHandler errorHandler) {
 
-    this(null, formatter, errorHandler);
+    this(null, errorHandler);
   }
 
-  public AbstractAppender (String name, Formatter formatter, ErrorHandler errorHandler) {
+  public AbstractAppender (String name, ErrorHandler errorHandler) {
 
     this.name = name;
-    this.formatter = formatter;
     this.errorHandler = errorHandler;
 
-    filterList = new ConcurrentLinkedQueue<Filter>();
+    filterList = new ConcurrentLinkedQueue<>();
   }
 
   public abstract void handleOutput (Record record)
@@ -129,18 +127,6 @@ public abstract class AbstractAppender implements Appender {
   public void setErrorHandler (ErrorHandler errorHandler) {
 
     this.errorHandler = errorHandler;
-  }
-
-  @Override
-  public Formatter getFormatter () {
-
-    return formatter;
-  }
-
-  @Override
-  public void setFormatter (Formatter formatter) {
-
-    this.formatter = formatter;
   }
 
   @Override

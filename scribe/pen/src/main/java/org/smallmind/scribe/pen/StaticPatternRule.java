@@ -51,7 +51,7 @@ public class StaticPatternRule implements PatternRule {
     return null;
   }
 
-  public String convert (Record record, Filter[] filters, Timestamp timestamp) {
+  public String convert (Record record, Timestamp timestamp) {
 
     return staticField;
   }

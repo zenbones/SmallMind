@@ -32,49 +32,9 @@
  */
 package org.smallmind.scribe.pen;
 
-public abstract class AbstractFormattedAppender extends AbstractAppender implements FormattedAppender {
+public interface FormattedAppender extends Appender {
 
-  private Formatter formatter;
+  Formatter getFormatter ();
 
-  public AbstractFormattedAppender () {
-
-  }
-
-  public AbstractFormattedAppender (Formatter formatter, ErrorHandler errorHandler) {
-
-    super(errorHandler);
-
-    this.formatter = formatter;
-  }
-
-  public AbstractFormattedAppender (String name, Formatter formatter, ErrorHandler errorHandler) {
-
-    super(name, errorHandler);
-
-    this.formatter = formatter;
-  }
-
-  public Formatter getFormatter () {
-
-    return formatter;
-  }
-
-  public void setFormatter (Formatter formatter) {
-
-    this.formatter = formatter;
-  }
-
-  public abstract void handleOutput (String string)
-    throws Exception;
-
-  @Override
-  public void handleOutput (Record record)
-    throws Exception {
-
-    if (formatter != null) {
-      handleOutput(formatter.format(record));
-    } else {
-      throw new LoggerException("No formatter set for log output on this appender(%s)", this.getClass().getCanonicalName());
-    }
-  }
+  void setFormatter (Formatter formatter);
 }

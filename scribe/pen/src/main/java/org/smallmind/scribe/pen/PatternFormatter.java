@@ -149,7 +149,7 @@ public class PatternFormatter implements Formatter {
     ruleList.toArray(patternRules);
   }
 
-  public String format (Record record, Filter[] filters) {
+  public String format (Record record) {
 
     StringBuilder formatBuilder = new StringBuilder();
     String conversion;
@@ -157,7 +157,7 @@ public class PatternFormatter implements Formatter {
     String footer;
 
     for (PatternRule patternRule : patternRules) {
-      if ((conversion = patternRule.convert(record, filters, timestamp)) != null) {
+      if ((conversion = patternRule.convert(record, timestamp)) != null) {
         if ((header = patternRule.getHeader()) != null) {
           formatBuilder.append(header);
         }

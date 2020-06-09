@@ -706,6 +706,11 @@
         <version>${jackson.version}</version>
       </dependency>
       <dependency>
+        <groupId>org.msgpack</groupId>
+        <artifactId>jackson-dataformat-msgpack</artifactId>
+        <version>0.8.20</version>
+      </dependency>
+      <dependency>
         <groupId>org.glassfish.jersey.core</groupId>
         <artifactId>jersey-server</artifactId>
         <version>${jersey.version}</version>

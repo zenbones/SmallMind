@@ -38,5 +38,5 @@ public interface PatternRule {
 
   String getFooter ();
 
-  String convert (Record record, Filter[] filters, Timestamp timestamp);
+  String convert (Record record, Timestamp timestamp);
 }

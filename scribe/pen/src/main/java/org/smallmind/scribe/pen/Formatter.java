@@ -34,6 +34,6 @@ package org.smallmind.scribe.pen;
 
 public interface Formatter {
 
-  String format (Record record, Filter[] filters)
+  String format (Record record)
     throws Exception;
 }

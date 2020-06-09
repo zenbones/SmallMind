@@ -34,7 +34,6 @@ package org.smallmind.scribe.pen;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import org.productivity.java.syslog4j.Syslog;
 import org.productivity.java.syslog4j.SyslogConfigIF;
 import org.productivity.java.syslog4j.SyslogIF;
@@ -47,33 +46,11 @@ import org.springframework.beans.factory.InitializingBean;
 
 public class SyslogAppender extends AbstractAppender implements InitializingBean {
 
-  private final ConcurrentLinkedQueue<Filter> filterList;
-  private final boolean active = true;
   private SyslogIF syslog;
-  private ErrorHandler errorHandler;
-  private String name;
   private String syslogHost = "localhost";
   private String facility = "LOCAL7";
   private boolean base64EncodeStackTraces = false;
   private int syslogPort = 514;
-
-  public SyslogAppender () {
-
-    filterList = new ConcurrentLinkedQueue<>();
-  }
-
-  @Override
-  public void afterPropertiesSet () {
-
-    SyslogConfigIF config = new UDPNetSyslogConfig();
-
-    config.setHost(syslogHost);
-    config.setPort(syslogPort);
-    config.setUseStructuredData(true);
-    config.setFacility(facility);
-
-    syslog = Syslog.createInstance("logging", config);
-  }
 
   public String getSyslogHost () {
 
@@ -116,9 +93,16 @@ public class SyslogAppender extends AbstractAppender implements InitializingBean
   }
 
   @Override
-  public void setFormatter (Formatter formatter) {
+  public void afterPropertiesSet () {
 
-    throw new LoggerRuntimeException("The %s does not take external Formatters", SyslogAppender.class.getSimpleName());
+    SyslogConfigIF config = new UDPNetSyslogConfig();
+
+    config.setHost(syslogHost);
+    config.setPort(syslogPort);
+    config.setUseStructuredData(true);
+    config.setFacility(facility);
+
+    syslog = Syslog.createInstance("logging", config);
   }
 
   @Override

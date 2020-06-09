@@ -39,6 +39,7 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import org.smallmind.scribe.pen.Appender;
+import org.smallmind.scribe.pen.FormattedAppender;
 import org.smallmind.scribe.pen.LoggerException;
 import org.smallmind.scribe.pen.adapter.RecordWrapper;
 
@@ -80,14 +81,17 @@ public class JDKAppenderWrapper extends Handler {
 
   public Formatter getFormatter () {
 
-    org.smallmind.scribe.pen.Formatter formatter;
+    if (appender instanceof FormattedAppender) {
 
-    if ((formatter = appender.getFormatter()) != null) {
-      if (!(formatter instanceof JDKFormatterAdapter)) {
-        throw new UnsupportedOperationException("Can not return a non-JDK Logging native Formatter(" + formatter.getClass().getCanonicalName() + ")");
+      org.smallmind.scribe.pen.Formatter formatter;
+
+      if ((formatter = ((FormattedAppender)appender).getFormatter()) != null) {
+        if (!(formatter instanceof JDKFormatterAdapter)) {
+          throw new UnsupportedOperationException("Can not return a non-JDK Logging native Formatter(" + formatter.getClass().getCanonicalName() + ")");
+        }
+
+        return ((JDKFormatterAdapter)formatter).getNativeFormatter();
       }
-
-      return ((JDKFormatterAdapter)formatter).getNativeFormatter();
     }
 
     return null;
@@ -95,7 +99,11 @@ public class JDKAppenderWrapper extends Handler {
 
   public void setFormatter (Formatter formatter) {
 
-    appender.setFormatter(new JDKFormatterAdapter(formatter));
+    if (!(appender instanceof FormattedAppender)) {
+      throw new UnsupportedOperationException("Appender (" + appender.getClass().getName() + "is not a FormattedAppender");
+    }
+
+    ((FormattedAppender)appender).setFormatter(new JDKFormatterAdapter(formatter));
   }
 
   public Filter getFilter () {

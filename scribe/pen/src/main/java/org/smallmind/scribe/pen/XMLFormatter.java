@@ -38,7 +38,7 @@ import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 public class XMLFormatter implements Formatter {
 
   private Timestamp timestamp = DateFormatTimestamp.getDefaultInstance();
-  private XMLElement[] xmlElements = XMLElement.values();
+  private RecordElement[] recordElements = RecordElement.values();
   private String newLine = System.getProperty("line.separator");
   private boolean cdata = false;
   private int indent = 3;
@@ -54,9 +54,9 @@ public class XMLFormatter implements Formatter {
     return -1;
   }
 
-  public XMLFormatter setXmlElements (XMLElement[] xmlElements) {
+  public XMLFormatter setRecordElements (RecordElement[] recordElements) {
 
-    this.xmlElements = xmlElements;
+    this.recordElements = recordElements;
 
     return this;
   }
@@ -89,14 +89,14 @@ public class XMLFormatter implements Formatter {
     return this;
   }
 
-  public String format (Record record, Filter[] filters) {
+  public String format (Record record) {
 
     StringBuilder formatBuilder = new StringBuilder();
 
     appendLine(formatBuilder, "<log-record>", 0);
 
-    for (XMLElement xmlElement : xmlElements) {
-      switch (xmlElement) {
+    for (RecordElement recordElement : recordElements) {
+      switch (recordElement) {
         case DATE:
           appendElement(formatBuilder, "date", timestamp.getTimestamp(new Date(record.getMillis())), false, 1);
           break;
@@ -137,7 +137,7 @@ public class XMLFormatter implements Formatter {
           appendStackTrace(formatBuilder, record.getThrown(), 1);
           break;
         default:
-          throw new UnknownSwitchCaseException(xmlElement.name());
+          throw new UnknownSwitchCaseException(recordElement.name());
       }
     }
 

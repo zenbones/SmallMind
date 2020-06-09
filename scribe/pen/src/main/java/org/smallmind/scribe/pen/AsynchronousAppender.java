@@ -44,6 +44,7 @@ public class AsynchronousAppender implements Appender {
   private final Appender internalAppender;
   private final LinkedBlockingQueue<Record> publishQueue;
   private final PublishWorker publishWorker;
+  private final int bufferSize;
 
   public AsynchronousAppender (Appender internalAppender) {
 
@@ -55,6 +56,7 @@ public class AsynchronousAppender implements Appender {
     Thread publishThread;
 
     this.internalAppender = internalAppender;
+    this.bufferSize = bufferSize;
 
     publishQueue = new LinkedBlockingQueue<>(bufferSize);
 
@@ -63,71 +65,73 @@ public class AsynchronousAppender implements Appender {
     publishThread.start();
   }
 
+  @Override
   public String getName () {
 
     return internalAppender.getName();
   }
 
+  @Override
   public void setName (String name) {
 
     internalAppender.setName(name);
   }
 
+  @Override
   public void clearFilters () {
 
     internalAppender.clearFilters();
   }
 
+  @Override
   public synchronized void setFilter (Filter filter) {
 
     internalAppender.setFilter(filter);
   }
 
+  @Override
   public void addFilter (Filter filter) {
 
     internalAppender.addFilter(filter);
   }
 
+  @Override
   public Filter[] getFilters () {
 
     return internalAppender.getFilters();
   }
 
+  @Override
   public void setFilters (List<Filter> filterList) {
 
     internalAppender.setFilters(filterList);
   }
 
+  @Override
   public ErrorHandler getErrorHandler () {
 
     return internalAppender.getErrorHandler();
   }
 
+  @Override
   public void setErrorHandler (ErrorHandler errorHandler) {
 
     internalAppender.setErrorHandler(errorHandler);
   }
 
-  public Formatter getFormatter () {
-
-    return internalAppender.getFormatter();
-  }
-
-  public void setFormatter (Formatter formatter) {
-
-    internalAppender.setFormatter(formatter);
-  }
-
+  @Override
   public boolean isActive () {
 
     return internalAppender.isActive();
   }
 
+  @Override
   public void setActive (boolean active) {
 
     internalAppender.setActive(active);
   }
 
+  @Override
   public void publish (Record record) {
 
     try {
@@ -135,14 +139,14 @@ public class AsynchronousAppender implements Appender {
         throw new LoggerException("%s has been previously closed", this.getClass().getSimpleName());
       }
 
-      publishQueue.put(record);
-    } catch (InterruptedException interruptedException) {
-      // nothing to do here
+      if (!publishQueue.offer(record)) {
+        throw new LoggerException("Buffer exceeded(%d) on %s", bufferSize, AsynchronousAppender.class.getSimpleName());
+      }
     } catch (Exception exception) {
       if (internalAppender.getErrorHandler() == null) {
         exception.printStackTrace();
       } else {
-        internalAppender.getErrorHandler().process(record, exception, "Unable to publish message from appender(%s)", this.getClass().getCanonicalName());
+        internalAppender.getErrorHandler().process(record, exception, "Unable to publish message from appender(%s)", (internalAppender.getName() != null) ? internalAppender.getName() : this.getClass().getCanonicalName());
       }
     }
   }

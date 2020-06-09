@@ -54,10 +54,6 @@ public interface Appender {
 
   void setErrorHandler (ErrorHandler errorHandler);
 
-  Formatter getFormatter ();
-
-  void setFormatter (Formatter formatter);
-
   boolean isActive ();
 
   void setActive (boolean active);

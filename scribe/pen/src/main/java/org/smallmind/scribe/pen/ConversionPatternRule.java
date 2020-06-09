@@ -135,7 +135,7 @@ public class ConversionPatternRule implements PatternRule {
     return strippedBuffer.toString();
   }
 
-  public String convert (Record record, Filter[] filters, Timestamp timestamp) {
+  public String convert (Record record, Timestamp timestamp) {
 
     LogicalContext logicalContext;
     Throwable throwable = record.getThrown();
