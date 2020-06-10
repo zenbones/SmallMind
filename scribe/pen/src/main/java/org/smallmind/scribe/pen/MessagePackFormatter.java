@@ -51,7 +51,7 @@ public class MessagePackFormatter {
     this.newLine = newLine;
   }
 
-  public JsonNode format (Record record) {
+  public ObjectNode format (Record record) {
 
     ObjectNode messageNode = JsonNodeFactory.instance.objectNode();
 

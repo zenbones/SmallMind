@@ -34,6 +34,7 @@ package org.smallmind.scribe.pen;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -50,6 +51,7 @@ public class FluentAppender extends AbstractAppender implements InitializingBean
   private final ObjectMapper objectMapper = new ObjectMapper(new MessagePackFactory());
   private MessagePackFormatter formatter;
   private Socket socket;
+  private Map<String, String> additionalEventData;
   private Timestamp timestamp = DateFormatTimestamp.getDefaultInstance();
   private RecordElement[] recordElements = RecordElement.values();
   private ArrayNode entriesNode;
@@ -94,6 +96,11 @@ public class FluentAppender extends AbstractAppender implements InitializingBean
     this.newLine = newLine;
   }
 
+  public void setAdditionalEventData (Map<String, String> additionalEventData) {
+
+    this.additionalEventData = additionalEventData;
+  }
+
   public void setRetryAttempts (int retryAttempts) {
 
     this.retryAttempts = retryAttempts;
@@ -136,8 +143,15 @@ public class FluentAppender extends AbstractAppender implements InitializingBean
 
       ArrayNode entryNode = JsonNodeFactory.instance.arrayNode();
       ObjectNode messageNode = JsonNodeFactory.instance.objectNode();
+      ObjectNode recordNode = formatter.format(record);
 
-      messageNode.set("message", formatter.format(record));
+      if ((additionalEventData != null) && (!additionalEventData.isEmpty())) {
+        for (Map.Entry<String, String> additionalDataEntry : additionalEventData.entrySet()) {
+          recordNode.put(additionalDataEntry.getKey(), additionalDataEntry.getValue());
+        }
+      }
+
+      messageNode.set("message", recordNode);
       entryNode.add(record.getMillis() / 1000);
       entryNode.add(messageNode);
 
