@@ -35,6 +35,7 @@ package org.smallmind.scribe.pen;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicBoolean;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -45,6 +46,7 @@ import org.springframework.beans.factory.InitializingBean;
 
 public class FluentAppender extends AbstractAppender implements InitializingBean {
 
+  private final AtomicBoolean finished = new AtomicBoolean(false);
   private final ObjectMapper objectMapper = new ObjectMapper(new MessagePackFactory());
   private MessagePackFormatter formatter;
   private Socket socket;
@@ -110,49 +112,79 @@ public class FluentAppender extends AbstractAppender implements InitializingBean
   }
 
   @Override
-  public synchronized void handleOutput (Record record)
-    throws IOException {
+  public synchronized void close ()
+    throws LoggerException {
 
-    ArrayNode entryNode = JsonNodeFactory.instance.arrayNode();
-    ObjectNode messageNode = JsonNodeFactory.instance.objectNode();
-
-    messageNode.set("message", formatter.format(record));
-    entryNode.add(record.getMillis() / 1000);
-    entryNode.add(messageNode);
-
-    if (entriesNode.add(entryNode).size() == batch) {
-
-      ArrayNode eventNode = JsonNodeFactory.instance.arrayNode();
-      ObjectNode optionNode = JsonNodeFactory.instance.objectNode();
-      byte[] chunk = new byte[16];
-      int retry = 0;
-
-      ThreadLocalRandom.current().nextBytes(chunk);
-      optionNode.put("chunk", Base64Codec.encode(chunk));
-      optionNode.put("size", batch);
-
-      eventNode.add(getName());
-      eventNode.add(entriesNode);
-      eventNode.add(optionNode);
-
-      do {
+    if (finished.compareAndSet(false, true)) {
+      if (socket != null) {
         try {
-          if (socket == null) {
-            socket = new Socket(host, port);
-            socket.setTcpNoDelay(true);
-            socket.setSoTimeout(1000);
-          }
-
-          socket.getOutputStream().write(objectMapper.writeValueAsBytes(eventNode));
+          socket.close();
         } catch (IOException ioException) {
-          socket = null;
-          if (++retry > retryAttempts) {
-            throw ioException;
-          }
+          throw new LoggerException(ioException);
         }
-      } while (socket == null);
-
-      entriesNode = JsonNodeFactory.instance.arrayNode(batch);
+      }
     }
   }
+
+  @Override
+  public synchronized void handleOutput (Record record)
+    throws IOException, LoggerException {
+
+    if (finished.get()) {
+      throw new LoggerException("%s has been previously closed", this.getClass().getSimpleName());
+    } else {
+
+      ArrayNode entryNode = JsonNodeFactory.instance.arrayNode();
+      ObjectNode messageNode = JsonNodeFactory.instance.objectNode();
+
+      messageNode.set("message", formatter.format(record));
+      entryNode.add(record.getMillis() / 1000);
+      entryNode.add(messageNode);
+
+      if (entriesNode.add(entryNode).size() == batch) {
+
+        ArrayNode eventNode = JsonNodeFactory.instance.arrayNode();
+        ObjectNode optionNode = JsonNodeFactory.instance.objectNode();
+        byte[] chunk = new byte[16];
+        int retry = 0;
+
+        ThreadLocalRandom.current().nextBytes(chunk);
+        optionNode.put("chunk", Base64Codec.encode(chunk));
+        optionNode.put("size", batch);
+
+        eventNode.add(getName());
+        eventNode.add(entriesNode);
+        eventNode.add(optionNode);
+
+        do {
+          try {
+            if (socket == null) {
+              connect();
+            } else if (socket.isClosed() || (!socket.isConnected())) {
+              socket.close();
+              connect();
+            }
+
+            socket.getOutputStream().write(objectMapper.writeValueAsBytes(eventNode));
+          } catch (IOException ioException) {
+            socket = null;
+            if (++retry > retryAttempts) {
+              throw ioException;
+            }
+          }
+        } while (socket == null);
+
+        entriesNode = JsonNodeFactory.instance.arrayNode(batch);
+      }
+    }
+  }
+
+  private void connect ()
+    throws IOException {
+
+    socket = new Socket(host, port);
+    socket.setTcpNoDelay(true);
+    socket.setSoTimeout(1000);
+  }
 }
+

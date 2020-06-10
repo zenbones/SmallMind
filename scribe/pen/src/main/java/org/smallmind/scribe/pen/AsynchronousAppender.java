@@ -138,7 +138,6 @@ public class AsynchronousAppender implements Appender {
       if (finished.get()) {
         throw new LoggerException("%s has been previously closed", this.getClass().getSimpleName());
       }
-
       if (!publishQueue.offer(record)) {
         throw new LoggerException("Buffer exceeded(%d) on %s", bufferSize, AsynchronousAppender.class.getSimpleName());
       }
