@@ -30,49 +30,33 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.emitter.indigenous;
+package org.smallmind.claxon.emitter.message;
 
 import java.util.function.Consumer;
-import org.smallmind.claxon.registry.PushEmitter;
-import org.smallmind.claxon.registry.Quantity;
-import org.smallmind.claxon.registry.Tag;
+import org.smallmind.scribe.pen.Level;
+import org.smallmind.scribe.pen.Logger;
+import org.smallmind.scribe.pen.LoggerManager;
 
-public class IndigenousEmitter extends PushEmitter {
+public class ScribeLoggerConsumer implements Consumer<String> {
 
-  private final Consumer<String> output;
+  private final Logger logger;
+  private final Level level;
 
-  public IndigenousEmitter () {
+  public ScribeLoggerConsumer (Level level) {
 
-    this(System.out::println);
+    this(null, level);
   }
 
-  public IndigenousEmitter (Consumer<String> output) {
+  public ScribeLoggerConsumer (Class<?> caller, Level level) {
 
-    this.output = output;
+    this.level = level;
+
+    logger = LoggerManager.getLogger((caller == null) ? ScribeLoggerConsumer.class : caller);
   }
 
   @Override
-  public void record (String meterName, Tag[] tags, Quantity[] quantities) {
+  public void accept (String message) {
 
-    StringBuilder recordBuilder = new StringBuilder(meterName);
-
-    recordBuilder.append('[');
-    if ((tags != null) && (tags.length > 0)) {
-
-      boolean first = true;
-
-      for (Tag tag : tags) {
-        if (!first) {
-          recordBuilder.append(", ");
-        }
-        recordBuilder.append(tag.getKey()).append("=").append(tag.getValue());
-        first = false;
-      }
-    }
-    recordBuilder.append("].");
-
-    for (Quantity quantity : quantities) {
-      output.accept(recordBuilder.toString() + quantity.getName() + "=" + quantity.getValue());
-    }
+    logger.log(level, message);
   }
 }

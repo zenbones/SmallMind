@@ -30,9 +30,9 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.emitter.indigenous.spring;
+package org.smallmind.claxon.emitter.message.spring;
 
-import org.smallmind.claxon.emitter.indigenous.ScribeLoggerConsumer;
+import org.smallmind.claxon.emitter.message.ScribeLoggerConsumer;
 import org.smallmind.scribe.pen.Level;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;

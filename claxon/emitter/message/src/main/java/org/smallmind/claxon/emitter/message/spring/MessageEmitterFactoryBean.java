@@ -30,33 +30,44 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.emitter.indigenous;
+package org.smallmind.claxon.emitter.message.spring;
 
 import java.util.function.Consumer;
-import org.smallmind.scribe.pen.Level;
-import org.smallmind.scribe.pen.Logger;
-import org.smallmind.scribe.pen.LoggerManager;
+import org.smallmind.claxon.emitter.message.MessageEmitter;
+import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.InitializingBean;
 
-public class ScribeLoggerConsumer implements Consumer<String> {
+public class MessageEmitterFactoryBean implements FactoryBean<MessageEmitter>, InitializingBean {
 
-  private final Logger logger;
-  private final Level level;
+  private org.smallmind.claxon.emitter.message.MessageEmitter emitter;
+  private Consumer<String> messageConsumer;
 
-  public ScribeLoggerConsumer (Level level) {
+  public void setMessageConsumer (Consumer<String> messageConsumer) {
 
-    this(null, level);
-  }
-
-  public ScribeLoggerConsumer (Class<?> caller, Level level) {
-
-    this.level = level;
-
-    logger = LoggerManager.getLogger((caller == null) ? ScribeLoggerConsumer.class : caller);
+    this.messageConsumer = messageConsumer;
   }
 
   @Override
-  public void accept (String message) {
+  public boolean isSingleton () {
 
-    logger.log(level, message);
+    return true;
+  }
+
+  @Override
+  public Class<?> getObjectType () {
+
+    return org.smallmind.claxon.emitter.message.MessageEmitter.class;
+  }
+
+  @Override
+  public org.smallmind.claxon.emitter.message.MessageEmitter getObject () {
+
+    return emitter;
+  }
+
+  @Override
+  public void afterPropertiesSet () {
+
+    emitter = new org.smallmind.claxon.emitter.message.MessageEmitter(messageConsumer);
   }
 }

@@ -30,44 +30,49 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.emitter.indigenous.spring;
+package org.smallmind.claxon.emitter.message;
 
 import java.util.function.Consumer;
-import org.smallmind.claxon.emitter.indigenous.IndigenousEmitter;
-import org.springframework.beans.factory.FactoryBean;
-import org.springframework.beans.factory.InitializingBean;
+import org.smallmind.claxon.registry.PushEmitter;
+import org.smallmind.claxon.registry.Quantity;
+import org.smallmind.claxon.registry.Tag;
 
-public class IndigenousEmitterFactoryBean implements FactoryBean<IndigenousEmitter>, InitializingBean {
+public class MessageEmitter extends PushEmitter {
 
-  private IndigenousEmitter emitter;
-  private Consumer<String> messageConsumer;
+  private final Consumer<String> output;
 
-  public void setMessageConsumer (Consumer<String> messageConsumer) {
+  public MessageEmitter () {
 
-    this.messageConsumer = messageConsumer;
+    this(System.out::println);
+  }
+
+  public MessageEmitter (Consumer<String> output) {
+
+    this.output = output;
   }
 
   @Override
-  public boolean isSingleton () {
+  public void record (String meterName, Tag[] tags, Quantity[] quantities) {
 
-    return true;
-  }
+    StringBuilder recordBuilder = new StringBuilder(meterName);
 
-  @Override
-  public Class<?> getObjectType () {
+    recordBuilder.append('[');
+    if ((tags != null) && (tags.length > 0)) {
 
-    return IndigenousEmitter.class;
-  }
+      boolean first = true;
 
-  @Override
-  public IndigenousEmitter getObject () {
+      for (Tag tag : tags) {
+        if (!first) {
+          recordBuilder.append(", ");
+        }
+        recordBuilder.append(tag.getKey()).append("=").append(tag.getValue());
+        first = false;
+      }
+    }
+    recordBuilder.append("].");
 
-    return emitter;
-  }
-
-  @Override
-  public void afterPropertiesSet () {
-
-    emitter = new IndigenousEmitter(messageConsumer);
+    for (Quantity quantity : quantities) {
+      output.accept(recordBuilder.toString() + quantity.getName() + "=" + quantity.getValue());
+    }
   }
 }
