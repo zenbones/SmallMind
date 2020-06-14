@@ -45,14 +45,29 @@ public class ClaxonConfiguration {
   private Tag[] registryTags = new Tag[0];
   private Map<DotNotation, String> prefixMap = new HashMap<>();
 
+  public ClaxonConfiguration () {
+
+  }
+
+  public ClaxonConfiguration (Clock clock, Stint collectionStint, Tag[] registryTags, Map<DotNotation, String> prefixMap) {
+
+    if (clock != null) {
+      this.clock = clock;
+    }
+    if (collectionStint != null) {
+      this.collectionStint = collectionStint;
+    }
+    if (registryTags != null) {
+      this.registryTags = registryTags;
+    }
+    if (prefixMap != null) {
+      this.prefixMap = prefixMap;
+    }
+  }
+
   public Clock getClock () {
 
     return clock;
-  }
-
-  public void setClock (Clock clock) {
-
-    this.clock = clock;
   }
 
   public Stint getCollectionStint () {
@@ -60,28 +75,13 @@ public class ClaxonConfiguration {
     return collectionStint;
   }
 
-  public void setCollectionStint (Stint collectionStint) {
-
-    this.collectionStint = collectionStint;
-  }
-
   public Tag[] getRegistryTags () {
 
     return registryTags;
   }
 
-  public void setRegistryTags (Tag[] registryTags) {
-
-    this.registryTags = registryTags;
-  }
-
   public Map<DotNotation, String> getPrefixMap () {
 
     return prefixMap;
-  }
-
-  public void setPrefixMap (Map<DotNotation, String> prefixMap) {
-
-    this.prefixMap = prefixMap;
   }
 }

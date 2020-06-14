@@ -93,6 +93,6 @@ public class ClaxonRegistryFactoryBean implements FactoryBean<ClaxonRegistry>, I
       registry.bind(emitterEntry.getKey(), emitterEntry.getValue());
     }
 
-    registry.asInstrumentRegistry();
+    registry.initializeInstrumentation();
   }
 }

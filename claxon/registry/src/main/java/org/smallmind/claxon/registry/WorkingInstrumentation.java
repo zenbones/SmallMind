@@ -35,6 +35,7 @@ package org.smallmind.claxon.registry;
 import java.util.Observable;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import org.smallmind.claxon.registry.meter.Meter;
 import org.smallmind.claxon.registry.meter.MeterBuilder;
 
 public class WorkingInstrumentation implements Instrumentation {
@@ -72,23 +73,36 @@ public class WorkingInstrumentation implements Instrumentation {
 
   public void update (long value) {
 
-    registry.instrument(registry.register(caller, builder, tags), value);
+    registry.register(caller, builder, tags).update(value);
   }
 
   public void update (long value, TimeUnit valueTimeUnit) {
 
-    registry.instrument(registry.register(caller, builder, tags), timeUnit.convert(value, valueTimeUnit));
+    registry.register(caller, builder, tags).update(timeUnit.convert(value, valueTimeUnit));
   }
 
   public void on (SansResultExecutable sansResultExecutable)
     throws Throwable {
 
-    registry.instrument(registry.register(caller, builder, tags), timeUnit, sansResultExecutable);
+    Meter meter = registry.register(caller, builder, tags);
+    Clock clock = registry.getConfiguration().getClock();
+    long start = clock.monotonicTime();
+
+    sansResultExecutable.execute();
+    meter.update(timeUnit.convert(clock.monotonicTime() - start, TimeUnit.NANOSECONDS));
   }
 
   public <T> T on (WithResultExecutable<T> withResultExecutable)
     throws Throwable {
 
-    return registry.instrument(registry.register(caller, builder, tags), timeUnit, withResultExecutable);
+    T result;
+    Meter meter = registry.register(caller, builder, tags);
+    Clock clock = registry.getConfiguration().getClock();
+    long start = clock.monotonicTime();
+
+    result = withResultExecutable.execute();
+    meter.update(timeUnit.convert(clock.monotonicTime() - start, TimeUnit.NANOSECONDS));
+
+    return result;
   }
 }

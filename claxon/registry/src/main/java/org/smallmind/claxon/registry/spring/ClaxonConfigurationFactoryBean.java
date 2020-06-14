@@ -90,18 +90,6 @@ public class ClaxonConfigurationFactoryBean implements FactoryBean<ClaxonConfigu
   @Override
   public void afterPropertiesSet () throws Exception {
 
-    configuration = new ClaxonConfiguration();
-    if (clock != null) {
-      configuration.setClock(clock);
-    }
-    if (collectionStint != null) {
-      configuration.setCollectionStint(collectionStint);
-    }
-    if (registryTags != null) {
-      configuration.setRegistryTags(registryTags);
-    }
-    if (prefixMap != null) {
-      configuration.setPrefixMap(prefixMap);
-    }
+    configuration = new ClaxonConfiguration(clock, collectionStint, registryTags, prefixMap);
   }
 }

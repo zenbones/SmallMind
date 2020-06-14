@@ -1,7 +1,7 @@
 = Smallmind
 :doctype: book
 :toc: left
-A journey through Glue code
+A journey through glue code
 
 [preface]
 A preface
@@ -15,16 +15,15 @@ All Smallmind modules are pushed to Maven Central under the *org.smallmind* grou
 There is none. IOC projects provide both the base container and configuration. Smallmind provides some occasionally helpful Spring beans, but there's no magic in them. Whatever flavor of dependency injection you prefer should work just as well.
 
 === Modules
-* <<claxon>> - Highly extensible unified monitoring framework with pluggable endpoints (comes with Datadog, JMX, Prometheus).
+* <<claxon>> - A unified monitoring framework with extensible meters and pluggable metric warehousing integrations (comes with Datadog, JMX, Logging and Prometheus).
 
 [[claxon,Claxon]]
 = Claxon
 
 [partintro]
-Here is
+Claxon is a unified code instrumentation and metric gathering framework that abstracts away the underlying metric warehousing systems, allowing new systems to be plugged in and replaced as needed. Libraries can safely provide instrumentation in a warehouse agnostic fashion. New meters can be created without reference to the eventual warehousing system, and new warehouses can be integrated and used with all Claxon meters.
 
-There is
-
+.Claxon Core
 [source, xml]
 ----
       <dependency>
@@ -33,6 +32,7 @@ There is
         <version>LATEST</version>
       </dependency>
 ----
+.Claxon Push-based Integrations
 [source, xml]
 ----
       <dependency>
@@ -51,6 +51,7 @@ There is
         <version>LATEST</version>
       </dependency>
 ----
+.Claxon Pull-based Integrations
 [source, xml]
 ----
       <dependency>
@@ -65,11 +66,36 @@ There is
       </dependency>
 ----
 
-== Section 1
+== Design Choices
+Metric warehousing systems such as StatsD, InfluxDB or Prometheus all store and provide for the querying of time series data. Some systems allow for the calculation of aggregations (minimums, maximums, velocity, histograms, etc.) upon storing data points, or as part of the provided query capabilities, while others do not. Some systems we may want to integrate with, such as JMX, have no notion of a time series at all. A project such as this one might fulfill its goals by fixing its notion of the meters it allows, and then pushing the best implementation of those meter types into the warehouse integrations. This would allow integrations with systems with a built-in notion of aggregations to take advantage of those capabilities. We have instead chosen to ignore these differences between warehousing systems, and separate the implementation of meters from the underlying capabilities of the various warehousing systems. That doesn't mean that you can't choose to build your own meters and warehousing integrations that are more tightly coupled, it just means that the meters provided by this project all aggregate on the client, and are uniformly usable on both the provided warehouse integrations, or with new integrations you may choose to create. It means that this framework does not privilege its provided meters in any way, and all of its capabilities, including AOP instrumentation annotations, are extended to any meters you choose to create. This also means that you can create new warehouse integrations without having to provide implementations for any meters at all, and those integrations will be usable with all meters which fulfill the contracts for this project.
 
-== Section 2
+== Registry
 
-=== Sub Section
+=== Configuration
+
+=== Instrumentation
+
+[NOTE]
+In order to turn on instrumentation features, you need to call `initializeInstrumentation()` on the configured Registry instance (the provided `org.smallmind.claxon.registry.spring.ClaxonRegistryFactoryBean` does this for you if you're using Spring).
+
+==== Observables
+
+==== Lambdas
+
+== Meters
+
+== Emitters
+
+There are essentially 2 different ways that metric warehouses ingest data, via either push (such as over a socket, REST API, or by method call) or pull (such as an HTTP scrape endpoint).
+
+[NOTE]
+Claxon supports both of these systems and provides a generic Jersey REST API endpoint for pull systems such as Prometheus. If you desire, building your own should be simple enough considering the few lines of code it took to implement *org.smallmind.claxon.http.EmitterResource* available in the *claxon-http* artifact.
+
+=== Prometheus
+Beware when using Prometheus that its scrape protocol is limited. You might think it would be easy enough to allow multiple data points for any single time series, within the same scrape Http body, by referencing the timestamp value the protocol allows to be included with each data point, and, where that was either not present or not sufficient, relying on the simple ordering of the values themselves. However, that is not the case and multiple data points for the same series will be lost. Due to this limitation, Claxon's Prometheus integration will only report the last data point received for any series since the last scrape request. It's important, therefore, to have your Prometheus instance scrape the Claxon endpoint at least as often as Claxon is set to report its aggregated values. In practical terms...
+
+[WARNING]
+The Prometheus collection interval must be less than or equal to the Claxon collection interval as defined by `ClaxonConfiguration.getCollectionStint()`, _or you may lose data points_.
 
 = Scribe
 

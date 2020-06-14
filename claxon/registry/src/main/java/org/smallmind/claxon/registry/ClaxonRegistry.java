@@ -38,7 +38,6 @@ import java.util.Observable;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import org.smallmind.claxon.registry.meter.Meter;
 import org.smallmind.claxon.registry.meter.MeterBuilder;
@@ -50,7 +49,7 @@ public class ClaxonRegistry {
   private final ConcurrentHashMap<String, Emitter> emitterMap = new ConcurrentHashMap<>();
   private final ConcurrentHashMap<RegistryKey, NamedMeter<?>> meterMap = new ConcurrentHashMap<>();
   private final Set<RegistryKey> noopSet = ConcurrentHashMap.newKeySet();
-  private final MeasurableTracker measurableTrcker;
+  private final MeasurableTracker measurableTracker;
   private final ObservableTracker observableTracker;
   private final CollectionWorker collectionWorker;
   private final ClaxonConfiguration configuration;
@@ -61,16 +60,21 @@ public class ClaxonRegistry {
 
     this.configuration = configuration;
 
-    measurableTrcker = new MeasurableTracker(this);
+    measurableTracker = new MeasurableTracker(this);
     observableTracker = new ObservableTracker(this);
 
     workerThread.setDaemon(true);
     workerThread.start();
   }
 
-  public void asInstrumentRegistry () {
+  public void initializeInstrumentation () {
 
     Instrument.register(this);
+  }
+
+  public ClaxonConfiguration getConfiguration () {
+
+    return configuration;
   }
 
   public void stop ()
@@ -154,68 +158,7 @@ public class ClaxonRegistry {
 
   public <T> T track (Class<?> caller, MeterBuilder<?> builder, T measured, Function<T, Long> measurement, Tag... tags) {
 
-    return measurableTrcker.track(caller, builder, measured, measurement, tags);
-  }
-
-  public void instrument (Meter meter, long value) {
-
-    meter.update(value);
-  }
-
-  public void instrument (Meter meter, TimeUnit timeUnit, SansResultExecutable sansResultExecutable)
-    throws Throwable {
-
-    long start = configuration.getClock().monotonicTime();
-
-    sansResultExecutable.execute();
-    meter.update(timeUnit.convert(configuration.getClock().monotonicTime() - start, TimeUnit.NANOSECONDS));
-  }
-
-  public <T> T instrument (Meter meter, TimeUnit timeUnit, WithResultExecutable<T> withResultExecutable)
-    throws Throwable {
-
-    T result;
-    long start = configuration.getClock().monotonicTime();
-
-    result = withResultExecutable.execute();
-    meter.update(timeUnit.convert(configuration.getClock().monotonicTime() - start, TimeUnit.NANOSECONDS));
-
-    return result;
-  }
-
-  public void record () {
-
-    measurableTrcker.sweepAndUpdate();
-    observableTracker.sweep();
-
-    for (Map.Entry<RegistryKey, NamedMeter<?>> namedMeterEntry : meterMap.entrySet()) {
-
-      Quantity[] quantities = namedMeterEntry.getValue().getMeter().record();
-
-      if ((quantities != null) && (quantities.length > 0)) {
-
-        Tag[] mergedTags;
-        Tag[] meterTags = namedMeterEntry.getKey().getTags();
-
-        if ((configuration.getRegistryTags() == null) || (configuration.getRegistryTags().length == 0)) {
-          mergedTags = meterTags;
-        } else if ((meterTags == null) || (meterTags.length == 0)) {
-          mergedTags = configuration.getRegistryTags();
-        } else {
-          mergedTags = new Tag[configuration.getRegistryTags().length + meterTags.length];
-          System.arraycopy(configuration.getRegistryTags(), 0, mergedTags, 0, configuration.getRegistryTags().length);
-          System.arraycopy(meterTags, 0, mergedTags, configuration.getRegistryTags().length, meterTags.length);
-        }
-
-        for (Emitter emitter : emitterMap.values()) {
-          try {
-            emitter.record(namedMeterEntry.getValue().getName(), mergedTags, quantities);
-          } catch (Exception exception) {
-            LoggerManager.getLogger(ClaxonRegistry.class).error(exception);
-          }
-        }
-      }
-    }
+    return measurableTracker.track(caller, builder, measured, measurement, tags);
   }
 
   private class CollectionWorker implements Runnable {
@@ -235,7 +178,38 @@ public class ClaxonRegistry {
 
       try {
         while (!finishLatch.await(configuration.getCollectionStint().getTime(), configuration.getCollectionStint().getTimeUnit())) {
-          record();
+
+          measurableTracker.sweepAndUpdate();
+          observableTracker.sweep();
+
+          for (Map.Entry<RegistryKey, NamedMeter<?>> namedMeterEntry : meterMap.entrySet()) {
+
+            Quantity[] quantities = namedMeterEntry.getValue().getMeter().record();
+
+            if ((quantities != null) && (quantities.length > 0)) {
+
+              Tag[] mergedTags;
+              Tag[] meterTags = namedMeterEntry.getKey().getTags();
+
+              if ((configuration.getRegistryTags() == null) || (configuration.getRegistryTags().length == 0)) {
+                mergedTags = meterTags;
+              } else if ((meterTags == null) || (meterTags.length == 0)) {
+                mergedTags = configuration.getRegistryTags();
+              } else {
+                mergedTags = new Tag[configuration.getRegistryTags().length + meterTags.length];
+                System.arraycopy(configuration.getRegistryTags(), 0, mergedTags, 0, configuration.getRegistryTags().length);
+                System.arraycopy(meterTags, 0, mergedTags, configuration.getRegistryTags().length, meterTags.length);
+              }
+
+              for (Emitter emitter : emitterMap.values()) {
+                try {
+                  emitter.record(namedMeterEntry.getValue().getName(), mergedTags, quantities);
+                } catch (Exception exception) {
+                  LoggerManager.getLogger(ClaxonRegistry.class).error(exception);
+                }
+              }
+            }
+          }
         }
       } catch (InterruptedException interruptedException) {
         LoggerManager.getLogger(ClaxonRegistry.class).error(interruptedException);
