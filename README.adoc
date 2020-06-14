@@ -70,6 +70,17 @@ Claxon is a unified code instrumentation and metric gathering framework that abs
 Metric warehousing systems such as StatsD, InfluxDB or Prometheus all store and provide for the querying of time series data. Some systems allow for the calculation of aggregations (minimums, maximums, velocity, histograms, etc.) upon storing data points, or as part of the provided query capabilities, while others do not. Some systems we may want to integrate with, such as JMX, have no notion of a time series at all. A project such as this one might fulfill its goals by fixing its notion of the meters it allows, and then pushing the best implementation of those meter types into the warehouse integrations. This would allow integrations with systems with a built-in notion of aggregations to take advantage of those capabilities. We have instead chosen to ignore these differences between warehousing systems, and separate the implementation of meters from the underlying capabilities of the various warehousing systems. That doesn't mean that you can't choose to build your own meters and warehousing integrations that are more tightly coupled, it just means that the meters provided by this project all aggregate on the client, and are uniformly usable on both the provided warehouse integrations, or with new integrations you may choose to create. It means that this framework does not privilege its provided meters in any way, and all of its capabilities, including AOP instrumentation annotations, are extended to any meters you choose to create. This also means that you can create new warehouse integrations without having to provide implementations for any meters at all, and those integrations will be usable with all meters which fulfill the contracts for this project.
 
 == Registry
+The ClaxonRegistry holds both meters (`org.smallmind.claxon.registry.meter.Meter`) and warehouse integration bindings (`org.smallmind.claxon.registry.Emitter`). Meters should be obtained through the ClaxonRegistry, which accepts the MeterBuilder interface (org.smallmind.claxon.registry.meter.MeterBuilder) through its `register()` method, as opposed to meter implementations directly. MeterBuilder is intended to take only the necessary parameters for constructing instances of Meter, and to be itself lightweight, so that the cost of not building a meter (if already present in the registry) is negligible. If the construction of a meter can't be directly trivialized, this project provides a lazy indirection (`org.smallmind.claxon.registry.meter.LazyBuilder`) which can delay the use of a MeterBuilder until the point of necessity. On the back side, implementations of Emitter are bound by name through the registry's `bind()` method, and called with all aggregated metrics on the configured collection interval. Let's take a closer look at the useful bits...
+
+=== bind()
+
+=== register()
+
+=== unregister()
+
+=== track()
+
+=== track()
 
 === Configuration
 
@@ -90,6 +101,12 @@ There are essentially 2 different ways that metric warehouses ingest data, via e
 
 [NOTE]
 Claxon supports both of these systems and provides a generic Jersey REST API endpoint for pull systems such as Prometheus. If you desire, building your own should be simple enough considering the few lines of code it took to implement *org.smallmind.claxon.http.EmitterResource* available in the *claxon-http* artifact.
+
+=== DataDog
+
+=== JMX
+
+=== Message
 
 === Prometheus
 Beware when using Prometheus that its scrape protocol is limited. You might think it would be easy enough to allow multiple data points for any single time series, within the same scrape Http body, by referencing the timestamp value the protocol allows to be included with each data point, and, where that was either not present or not sufficient, relying on the simple ordering of the values themselves. However, that is not the case and multiple data points for the same series will be lost. Due to this limitation, Claxon's Prometheus integration will only report the last data point received for any series since the last scrape request. It's important, therefore, to have your Prometheus instance scrape the Claxon endpoint at least as often as Claxon is set to report its aggregated values. In practical terms...
