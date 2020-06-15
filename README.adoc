@@ -73,20 +73,31 @@ Metric warehousing systems such as StatsD, InfluxDB or Prometheus all store and 
 The ClaxonRegistry holds both meters (`org.smallmind.claxon.registry.meter.Meter`) and warehouse integration bindings (`org.smallmind.claxon.registry.Emitter`). Meters should be obtained through the ClaxonRegistry, which accepts the MeterBuilder interface (org.smallmind.claxon.registry.meter.MeterBuilder) through its `register()` method, as opposed to meter implementations directly. MeterBuilder is intended to take only the necessary parameters for constructing instances of Meter, and to be itself lightweight, so that the cost of not building a meter (if already present in the registry) is negligible. If the construction of a meter can't be directly trivialized, this project provides a lazy indirection (`org.smallmind.claxon.registry.meter.LazyBuilder`) which can delay the use of a MeterBuilder until the point of necessity. On the back side, implementations of Emitter are bound by name through the registry's `bind()` method, and called with all aggregated metrics on the configured collection interval. Let's take a closer look at the useful bits...
 
 === Bind
-`ClaxonRegistry bind(String name, Emitter emitter)`
+[small]#`ClaxonRegistry bind(String name, Emitter emitter)`#
+
+Installs and binds an emitter to the specified name, which will then start receiving updates. Reusing a name will rebind that name to the new emitter.
 
 === Register
-`<M extends Meter> M register(Class<?> caller, MeterBuilder<M> builder, Tag... tags)`
+[small]#`<M extends Meter> M register(Class<?> caller, MeterBuilder<M> builder, Tag... tags)`#
+
+Creates and registers a meter if it's not already registered, otherwise returns the currently registered meter. A meter's uniqueness is a combination of the caller's class and the tags passed as parameters to this method. Although the calling class is intended to be the direct caller of this method, that's not a requirement. Think of it the same way many logging systems use a class as the log name, which is intended, but not required to be the class doing the logging. In a similar fashion, whether this meter actually outputs any metrics, and the namespace of those metrics (as passed to this registries bound emitters), will depend upon the class of the caller (see <<claxon-configuration>>). Every possible Meter should have a MeterBuilder available. We recommend that a meter of type Foo have a builder in the same package named FooBuilder, and this is the practice followed in this project. This MeterBuilder makes up the second parameter to this method, followed by any tags, where a Tag is a simple key/value pair of strings.
+
+==== Example
+registry.register(MyInstance.class, new GaugeBuilder(), new Tag("event", "update"), new Tag("source", "mysql"))
+
+[TIP]
+Many metric warehouses are capable of storing and querying multi-dimensional data, and it's the tags used in creating a metric which will become the dimensions of the time series formed by the metric's values. Where a warehouse system is not multi-dimensional, the tags will be used to determine the time series data's hierarchical namespace. In either case, it's best to use tags with consistent ordering and limited cardinality (see <<claxon-tags>> for further advice).
 
 === Unregister
-`void unregister(Class<?> caller, Tag... tags)`
+[small]#`void unregister(Class<?> caller, Tag... tags)`#
 
 === Track _Observable_
-`<O extends Observable> O track(Class<?> caller, MeterBuilder<?> builder, O observable, Tag... tags)`
+[small]#`<O extends Observable> O track(Class<?> caller, MeterBuilder<?> builder, O observable, Tag... tags)`#
 
 === Track _Lambda_
-`<T> T track(Class<?> caller, MeterBuilder<?> builder, T measured, Function<T, Long> measurement, Tag... tags)`
+[small]#`<T> T track(Class<?> caller, MeterBuilder<?> builder, T measured, Function<T, Long> measurement, Tag... tags)`#
 
+[[claxon-configuration, Configuration]]
 === Configuration
 
 === Instrumentation
@@ -99,6 +110,9 @@ In order to turn on instrumentation features, you need to call `initializeInstru
 ==== Lambdas
 
 == Meters
+
+[[claxon-tags, Tags]]
+== Tags
 
 == Emitters
 
