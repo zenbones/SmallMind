@@ -146,9 +146,9 @@ public class ClaxonRegistry {
     }
   }
 
-  public void unregister (Class<?> clazz, Tag... tags) {
+  public void unregister (Class<?> caller, Tag... tags) {
 
-    meterMap.remove(new RegistryKey(clazz, tags));
+    meterMap.remove(new RegistryKey(caller, tags));
   }
 
   public <O extends Observable> O track (Class<?> caller, MeterBuilder<?> builder, O observable, Tag... tags) {

@@ -72,15 +72,20 @@ Metric warehousing systems such as StatsD, InfluxDB or Prometheus all store and 
 == Registry
 The ClaxonRegistry holds both meters (`org.smallmind.claxon.registry.meter.Meter`) and warehouse integration bindings (`org.smallmind.claxon.registry.Emitter`). Meters should be obtained through the ClaxonRegistry, which accepts the MeterBuilder interface (org.smallmind.claxon.registry.meter.MeterBuilder) through its `register()` method, as opposed to meter implementations directly. MeterBuilder is intended to take only the necessary parameters for constructing instances of Meter, and to be itself lightweight, so that the cost of not building a meter (if already present in the registry) is negligible. If the construction of a meter can't be directly trivialized, this project provides a lazy indirection (`org.smallmind.claxon.registry.meter.LazyBuilder`) which can delay the use of a MeterBuilder until the point of necessity. On the back side, implementations of Emitter are bound by name through the registry's `bind()` method, and called with all aggregated metrics on the configured collection interval. Let's take a closer look at the useful bits...
 
-=== bind()
+=== Bind
+`ClaxonRegistry bind(String name, Emitter emitter)`
 
-=== register()
+=== Register
+`<M extends Meter> M register(Class<?> caller, MeterBuilder<M> builder, Tag... tags)`
 
-=== unregister()
+=== Unregister
+`void unregister(Class<?> caller, Tag... tags)`
 
-=== track()
+=== Track _Observable_
+`<O extends Observable> O track(Class<?> caller, MeterBuilder<?> builder, O observable, Tag... tags)`
 
-=== track()
+=== Track _Lambda_
+`<T> T track(Class<?> caller, MeterBuilder<?> builder, T measured, Function<T, Long> measurement, Tag... tags)`
 
 === Configuration
 
