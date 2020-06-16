@@ -77,6 +77,7 @@ The ClaxonRegistry holds both meters (`org.smallmind.claxon.registry.meter.Meter
 
 Installs and binds an emitter to the specified name, which will then start receiving updates. Reusing a name will rebind that name to the new emitter.
 
+[[claxon-registry-register, Register]]
 === Register
 [small]#`<M extends Meter> M register(Class<?> caller, MeterBuilder<M> builder, Tag... tags)`#
 
@@ -91,14 +92,34 @@ Many metric warehouses are capable of storing and querying multi-dimensional dat
 === Unregister
 [small]#`void unregister(Class<?> caller, Tag... tags)`#
 
+You should probably avoid unregistering and re-registering a meter, but if you know that a meter will no longer be used, and should be available for garbage collection, you can call this method.
+
 === Track _Observable_
 [small]#`<O extends Observable> O track(Class<?> caller, MeterBuilder<?> builder, O observable, Tag... tags)`#
+
+Registers a meter that will track changes in an Observable. The Observable instance is only weakly referenced by the meter, so that if the meter is the only remaining reference to the Observable instance, the meter will be unregistered and both the Observable instance and the meter will be available for garbage collection.
 
 === Track _Lambda_
 [small]#`<T> T track(Class<?> caller, MeterBuilder<?> builder, T measured, Function<T, Long> measurement, Tag... tags)`#
 
+Registers a meter that will poll the state of a 'measured' instance on the registry's collection interval using the supplied measurement function. Much like the tracking of Observables above, the measured instance is weakly held, such that if the meter is the only remaining reference, the meter will be unregistered and both the measured instance and the meter will be available for garbage collection.
+
 [[claxon-configuration, Configuration]]
 === Configuration
+The configuration for Claxon is simple and, like all SmallMind modules, programmatic. A configuration instance is composed of the following types...
+
+* Clock (_clock_) - A clock can provide both wall time (think milliseconds since the epoch) and monotonic time (think nanoseconds). The default clock should work perfectly well, so you should not normally need to set your own.
+* Stint (_collectionStint_) - The collection interval. The default value represents a 2-second interval.
+* Tag[] (_registryTags_) - A set of default tags which are to be added to every meter. The default value is empty.
+* Map<DotNotation, String> (_prefixMap_) - A mapping from DotNotation instances (see <<claxon-dot-notation>> below) to meter names. When a meter is registered (see <<claxon-registry-register>> above) the name of the `Class<?> caller` parameter (literally the `getName()` method of the Class) is matched against all known DotNotation instances. If a DotNotation can't be found that matches the class name, no meter will be registered, and no metrics will be emitted. If one or more matches are found, the strongest match, which is the one matching the most dot notated segments in the name, will determine the root name for all metric quantities produced by the registered meter. The full name of each quantity is the concatenation of the mapped String value of the winning DotNotation key and the name of the quantity produced by the meter. Exactly how that name is formed is dependent upon the logic of each Emitter (for the specifics see the <<claxon-emitters>> section below).
+[TIP]
+Given a caller of `com.my.metered.MyInstance`, and a winning DotNotation entry with a value of "my.metrics", registering a meter that produces a quantity with the name of "duration", the DataDogEmitter would produce a data point named "my.metrics.duration". Notice how the class name of the caller parameter matters only for determining the matching DotNotation key.
+[TIP]
+If you wanted to emit all metrics with a single root name you could add a single _prefixMap_ entry like `put(new DotNotation("*"), "my.metrics")`. This may seem like a crowded name, but the name of any quantity should serve only to broadly categorize its value. The real namespace comes from the set of registered tags.
+
+[[claxon-dot-notation, DotNotation]]
+==== DotNotation
+[small]#`org.smallmind.nutsnbolts.util.DotNotation`#
 
 === Instrumentation
 
@@ -114,6 +135,9 @@ In order to turn on instrumentation features, you need to call `initializeInstru
 [[claxon-tags, Tags]]
 == Tags
 
+== Aspects
+
+[[claxon-emitters, Emitters]]
 == Emitters
 
 There are essentially 2 different ways that metric warehouses ingest data, via either push (such as over a socket, REST API, or by method call) or pull (such as an HTTP scrape endpoint).
