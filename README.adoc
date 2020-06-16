@@ -121,6 +121,16 @@ If you wanted to emit all metrics with a single root name you could add a single
 ==== DotNotation
 [small]#`org.smallmind.nutsnbolts.util.DotNotation`#
 
+A DotNotation instance represents a pattern match of '.' separated segments, with 2 possible wildcards.
+
+* *?* - Represents any single segment.
+* *** - Represents any number of segments.
+
+The greater the number of segments in the matching pattern, the stronger the match is considered, with an exact match counting slightly more than a wildcard match, which will roughly translate to the longest match, by segments, with the fewest wild cards.
+
+===== Examples
+The pattern "com.my.names' would match only the exact string, "com.my.names", while the pattern "com.my.?.names.*" would match any dot notated string starting with "com.my." followed by any series of characters which was not a '.', followed by at least one (or any greater number) of dot notated segments.
+
 === Instrumentation
 
 [NOTE]

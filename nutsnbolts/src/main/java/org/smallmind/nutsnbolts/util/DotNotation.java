@@ -1,28 +1,28 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under either, at your discretion...
- * 
+ *
  * 1) The terms of GNU Affero General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or (at
  * your option) any later version.
- * 
+ *
  * ...or...
- * 
+ *
  * 2) The terms of the Apache License, Version 2.0.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License or Apache License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * and the Apache License along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -32,8 +32,6 @@
  */
 package org.smallmind.nutsnbolts.util;
 
-import java.util.LinkedList;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class DotNotation {
@@ -50,6 +48,7 @@ public class DotNotation {
 
   private Pattern pattern;
   private String notation;
+  private int value;
 
   public DotNotation (String notation)
     throws DotNotationException {
@@ -57,22 +56,24 @@ public class DotNotation {
     setNotation(notation);
   }
 
-  public static String validateAsRegEx (String notation)
+  private RegexConversion createRegex (String notation)
     throws DotNotationException {
 
     StringBuilder patternBuilder;
     TranslationState translationState;
     WildState wildState;
     char curChar;
-    int count;
+    int index;
+    int segment = 0;
+    int value = 0;
 
     patternBuilder = new StringBuilder();
     patternBuilder.append('^');
     translationState = TranslationState.START;
     wildState = WildState.TAME;
 
-    for (count = 0; count < notation.length(); count++) {
-      curChar = notation.charAt(count);
+    for (index = 0; index < notation.length(); index++) {
+      curChar = notation.charAt(index);
       switch (curChar) {
         case '.':
           if (translationState.equals(TranslationState.POST_DOT)) {
@@ -83,9 +84,10 @@ public class DotNotation {
 
           if (translationState.equals(TranslationState.NORMAL)) {
             patternBuilder.append(')');
+            value += Math.pow(2, ++segment);
           }
 
-          patternBuilder.append("(\\.|$)");
+          patternBuilder.append("(\\.|\\$)");
           translationState = TranslationState.POST_DOT;
 
           break;
@@ -98,9 +100,10 @@ public class DotNotation {
             throw new DotNotationException("Any wildcard followed by '*' is redundant");
           }
 
-          patternBuilder.append("(.+|$)");
+          patternBuilder.append("(.+)");
           translationState = TranslationState.WILD;
           wildState = WildState.STAR;
+          value += Math.pow(2, ++segment) - 1;
 
           break;
         case '?':
@@ -112,9 +115,10 @@ public class DotNotation {
             throw new DotNotationException("Following '*' with '?' is redundant");
           }
 
-          patternBuilder.append("([^.]+|$)");
+          patternBuilder.append("([^.$]+)");
           translationState = TranslationState.WILD;
           wildState = WildState.QUESTION;
+          value += Math.pow(2, ++segment) - 1;
 
           break;
         default:
@@ -138,11 +142,22 @@ public class DotNotation {
       throw new DotNotationException("The pattern can not end with '.'");
     } else if (translationState.equals(TranslationState.NORMAL)) {
       patternBuilder.append(')');
+      value += Math.pow(2, ++segment);
     }
 
     patternBuilder.append('$');
 
-    return patternBuilder.toString();
+    return new RegexConversion(patternBuilder.toString(), value);
+  }
+
+  public Pattern getPattern () {
+
+    return pattern;
+  }
+
+  public int getValue () {
+
+    return value;
   }
 
   public String getNotation () {
@@ -153,59 +168,39 @@ public class DotNotation {
   public void setNotation (String notation)
     throws DotNotationException {
 
+    RegexConversion conversion;
+
     this.notation = notation;
 
-    pattern = Pattern.compile(validateAsRegEx(notation));
-  }
-
-  public Pattern getPattern () {
-
-    return pattern;
+    conversion = createRegex(notation);
+    pattern = Pattern.compile(conversion.getRegex());
+    value = conversion.getValue();
   }
 
   public int calculateValue (String name, int initial) {
 
-    Matcher matcher;
-    LinkedList<Integer> dotPositions;
-    int value = initial;
-
-    dotPositions = getDotPositions(name);
-    matcher = pattern.matcher(name);
-
-    if (matcher.matches()) {
-      value += 2;
-      for (int count = 1; count <= matcher.groupCount(); count++) {
-        value += assignValueToMatch(dotPositions, matcher.start(count));
-      }
-    }
-
-    return value;
+    return pattern.matcher(name).matches() ? value : initial;
   }
 
-  private int assignValueToMatch (LinkedList<Integer> dotPositions, int matchStart) {
+  private static class RegexConversion {
 
-    int index = 0;
+    private final String regex;
+    private final int value;
 
-    for (Integer dotPosition : dotPositions) {
-      if (dotPosition > matchStart) {
-        break;
-      }
-      index++;
+    public RegexConversion (String regex, int value) {
+
+      this.regex = regex;
+      this.value = value;
     }
 
-    return (int)Math.pow(2, index);
-  }
+    public String getRegex () {
 
-  private LinkedList<Integer> getDotPositions (String loggerName) {
-
-    LinkedList<Integer> dotPositionList = new LinkedList<>();
-
-    for (int count = 0; count < loggerName.length(); count++) {
-      if (loggerName.charAt(count) == '.') {
-        dotPositionList.add(count);
-      }
+      return regex;
     }
 
-    return dotPositionList;
+    public int getValue () {
+
+      return value;
+    }
   }
 }
