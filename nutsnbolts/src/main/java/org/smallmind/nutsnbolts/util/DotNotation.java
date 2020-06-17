@@ -49,6 +49,10 @@ public class DotNotation {
   private Pattern pattern;
   private int value;
 
+  public DotNotation () {
+
+  }
+
   public DotNotation (String notation)
     throws DotNotationException {
 
