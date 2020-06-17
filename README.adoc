@@ -1,6 +1,7 @@
 = Smallmind
 :doctype: book
 :toc: left
+:icons: font
 A journey through glue code
 
 [preface]
@@ -86,7 +87,7 @@ Creates and registers a meter if it's not already registered, otherwise returns 
 ==== Example
 registry.register(MyInstance.class, new GaugeBuilder(), new Tag("event", "update"), new Tag("source", "mysql"))
 
-[TIP]
+[NOTE]
 Many metric warehouses are capable of storing and querying multi-dimensional data, and it's the tags used in creating a metric which will become the dimensions of the time series formed by the metric's values. Where a warehouse system is not multi-dimensional, the tags will be used to determine the time series data's hierarchical namespace. In either case, it's best to use tags with consistent ordering and limited cardinality (see <<claxon-tags>> for further advice).
 
 === Unregister
