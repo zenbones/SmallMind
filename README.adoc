@@ -313,8 +313,8 @@ A json parser that accepts a json formatted string and returns an instance of Me
 ====== Example
 The following would register a Histogram (`org.smallmind.claxon.registry.meter.Histogram`) and update that meter with the time `myMethod()` takes to execute (in the default time unit of milliseconds). The tags would have the set "const1", "param1" and "param2", where `param1` and `param2` would take their values from the method parameters (_parameter1_ and _parameter2_). The histogram would be built with 2 significant digits of storage, lowest discernible value of 1, highest of 3600000 and tracking percentiles at 75%, 95% and 99%...
 
-====
 [source,java]
+----
   @Instrumented(
     caller = MyClass.class,
     constants = @ConstantTag(key = "const1", constant = "value"),
@@ -328,7 +328,6 @@ The following would register a Histogram (`org.smallmind.claxon.registry.meter.H
     ...
   }
 ----
-====
 
 ==== Observables
 
