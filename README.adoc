@@ -111,11 +111,10 @@ The configuration for Claxon is simple and, like all SmallMind modules, programm
 * *Clock* (_clock_) - A clock can provide both wall time (think milliseconds since the epoch) and monotonic time (think nanoseconds). The default clock should work perfectly well, so you should not normally need to set your own.
 * *Stint* (_collectionStint_) - The collection interval. The default value represents a 2-second interval.
 * *Tag[]* (_registryTags_) - A set of default tags which are to be added to every meter. The default value is empty.
-* *Map<DotNotation, String>* (_prefixMap_) - A mapping from DotNotation instances (see <<claxon-dot-notation>> below) to meter names. When a meter is registered (see <<claxon-registry-register>> above) the name of the `Class<?> caller` parameter (literally the `getName()` method of the Class) is matched against all known DotNotation instances. If a DotNotation can't be found that matches the class name, no meter will be registered, and no metrics will be emitted. If one or more matches are found, the strongest match, which is the one matching the most dot notated segments in the name, will determine the root name for all metric quantities produced by that meter. The full name of each quantity is the concatenation of the mapped String value of the winning DotNotation key and the name of the quantity produced by the meter. Exactly how that name is formed is dependent upon the logic of each Emitter (for the specifics see the <<claxon-emitters>> section below).
-[NOTE]
-Given a caller of `com.my.metered.MyInstance`, and a winning DotNotation entry with a value of "my.metrics", registering a meter that produces a quantity with the name of "duration", the DataDogEmitter would produce a data point named "my.metrics.duration". Notice how the class name of the caller parameter matters only for determining the matching DotNotation key.
+* *Map<DotNotation, String>* (_prefixMap_) - A mapping from DotNotation instances (see <<claxon-dot-notation>> below) to meter names. When a meter is registered (see <<claxon-registry-register>> above) the class name of the `Class<?> caller` parameter is matched against all known DotNotation instances. If a DotNotation can't be found that matches the class name, no meter will be registered, and no metrics will be emitted. If one or more matches are found, the strongest match, which is the one matching the most dot notated segments in the name, will determine the root name for all metric quantities produced by that meter. The _full_ name of each quantity is the concatenation of the root name (which is the mapped String value of the winning DotNotation key) _plus_ the name of the quantity produced by the meter. Exactly how that name is formed is dependent upon the logic of each Emitter (for the specifics see the <<claxon-emitters>> section below).
++
 [TIP]
-If you wanted to emit all metrics with a single root name you could add a single _prefixMap_ entry like `put(new DotNotation("*"), "my.metrics")`. This may seem like a crowded name, but the name of any quantity should serve only to broadly categorize its value. The real namespace comes from the set of registered tags.
+If you wanted to emit all metrics with a single root name you could add a single _prefixMap_ entry like `put(new DotNotation("*"), "my.metrics")`. This may seem like a crowded name, but the name of any quantity should serve only to broadly categorize its value. The real namespace comes from the set of registered tags. It is, therefore, very important that the set of Tags registered for each meter differentiate it from all other meters with the same root name.
 
 [[claxon-dot-notation, DotNotation]]
 ==== DotNotation
@@ -129,12 +128,50 @@ A DotNotation instance represents a pattern match of '.' separated segments, wit
 The greater the number of segments in the matching pattern, the stronger the match is considered, with an exact match counting slightly more than a wildcard match, which will roughly translate to the longest match, by segments, with the fewest wild cards.
 
 ===== Examples
-The pattern "com.my.names' would match only the exact string, "com.my.names", while the pattern "com.my.?.names.*" would match any dot notated string starting with "com.my." followed by any series of characters which was not a '.', followed by at least one (or any greater number) of dot notated segments.
+The pattern "com.my.names' would match only the exact string, "com.my.names", while the pattern "com.my.?.names.*" would match any dot notated string starting with "com.my." followed by any simgle segment (a series of characters which was not a '.'), followed by at least one (or any greater number) of dot notated segments.
 
 === Instrumentation
+You could, of course, pass around a registry instance and directly call the `register()` method on it as needed, but that would be less than convenient. Instead, it's easier to interact with the registry through the static methods of the Instrument (`org.smallmind.claxon.registry.Instrument`) class. Instrument uses a thread local context to gain access to the underlying registry, while presenting both a direct access interface that mimics the `register()` and `track()` methods, as well as constructs for wrapping blocks of code with timing-based metrics. Turning on this functionality involves two bits of setup.
 
+. Create an instance of PerApplicationContext (`org.smallmind.nutsnbolts.lang.PerApplicationContext`) which will not be subject to garbage collection for the life of the registry. The easiest way to do this is to create it as a _bean_ within the same IOC (inversion of control) context that you use to configure the Claxon registry instance.
++
+[TIP]
+====
+As old fashioned as this may seem, in Spring xml this would be as simple as...
+[source, xml]
+----
+<bean id="perApplicationContext" class="org.smallmind.nutsnbolts.lang.PerApplicationContext"/>
+----
+====
+
+. Call the `initializeInstrumentation()` method of the configured Registry instance.
++
+[TIP]
+The provided `org.smallmind.claxon.registry.spring.ClaxonRegistryFactoryBean` does this for you if you're using Spring.
+
+==== With
+[small]#`Instrumentation with (Class<?> caller, MeterBuilder<?> builder, Tag... tags)`#
+
+The prerequisites taken care of, Instrument functionality is accessed through its `with()` method. This method takes the same caller, builder and tags parameters as the <<claxon-registry-register>> method discussed previously, but returns an instance of the Instrumentation (`org.smallmind.claxon.registry.Instrumentation`) interface. Through this interface you can...
+
+* `track()` to follow either an Obervable object, or any object coupled with a measuring function, as you can with the ClaxonRegistry directly.
+* `update()` the registered meter with a value, either a simple long value in the default time units (milliseconds), or with an explicit TimeUnit.
+* `as()` to set the default time unit of the Instrumentation instance.
+* `on()` to wrap a block of code in timing metrics (passed as a Lambda with or without a return value).
++
 [NOTE]
-In order to turn on instrumentation features, you need to call `initializeInstrumentation()` on the configured Registry instance (the provided `org.smallmind.claxon.registry.spring.ClaxonRegistryFactoryBean` does this for you if you're using Spring).
+====
+[source, java]
+----
+    Instrument.with(MyClass.class, new SpeedometerBuilder(), new Tag("event", "myevent"),new Tag("service", "myservice")).on(() -> {
+      ...
+      instrumented code
+      ...
+    });
+----
+====
+
+==== Aspects
 
 ==== Observables
 
@@ -144,8 +181,6 @@ In order to turn on instrumentation features, you need to call `initializeInstru
 
 [[claxon-tags, Tags]]
 == Tags
-
-== Aspects
 
 [[claxon-emitters, Emitters]]
 == Emitters
