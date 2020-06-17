@@ -225,7 +225,7 @@ The pattern "com.my.names' would match only the exact string, "com.my.names", wh
 
 === Instrumentation
 
-To make use of this project, you could, of course, pass around a registry instance and directly call the `register()` method on it as needed, but that would be less than convenient.
+To make use of this project, you could pass around a registry instance and directly call the `register()` method on it as needed, but that would be less than convenient.
 Instead, it's easier to interact with the registry through the static methods of the Instrument (`org.smallmind.claxon.registry.Instrument`) class.
 Instrument uses a thread local context to gain access to the underlying registry, while presenting both a direct access interface that mimics the `register()` and `track()` methods, as well as constructs for wrapping blocks of code with timing-based metrics.
 Turning on this functionality involves two bits of setup.
@@ -243,7 +243,7 @@ As old fashioned as this may seem, in Spring xml this would be as simple as...
 ----
 ====
 
-. Call the `initializeInstrumentation()` method of the configured Registry instance.
+. Call the `initializeInstrumentation()` method of the configured ClaxonRegistry instance.
 +
 [TIP]
 The provided `org.smallmind.claxon.registry.spring.ClaxonRegistryFactoryBean` does this for you, if you're using Spring.
@@ -253,7 +253,7 @@ The provided `org.smallmind.claxon.registry.spring.ClaxonRegistryFactoryBean` do
 [small]#`Instrumentation with (Class<?> caller, MeterBuilder<?> builder, Tag... tags)`#
 
 The prerequisites taken care of, Instrument functionality is accessed through its `with()` method.
-This method takes the same _caller_, _builder_ and _tags_ parameters as the <<claxon-registry-register>> method discussed previously, but returns an instance of the Instrumentation (`org.smallmind.claxon.registry.Instrumentation`) interface.
+This method takes the same _caller_, _builder_ and _tags_ parameters as the `register()` method discussed previously (see <<claxon-registry-register>> above), but returns an instance of the Instrumentation (`org.smallmind.claxon.registry.Instrumentation`) interface.
 Through this interface you can...
 
 * `track()` to follow either an Obervable object, or any object coupled with a measuring function, as you can with the ClaxonRegistry directly.
@@ -275,7 +275,7 @@ Through this interface you can...
 
 ==== Annotations
 
-Although Instrument/Instrumentation present a fairly simple and fluent interface, Claxon also allows wrapping methods in timing-based metrics via the use of annotations.
+Although Instrument/Instrumentation together present a fairly simple and fluent interface, Claxon also allows wrapping methods in timing-based metrics via the use of annotations.
 You can do this not only with the meters which come built in, but also any you might develop.
 
 ===== @Instrumented
@@ -286,11 +286,11 @@ The root annotation is @Instrumented, which can be applied to both methods and c
 
 * `Class<?> caller () default Instrumented.class` - The caller which will be passed to the meter registration.
 * `ConstantTag[] constants () default {}` - An array of <<claxon-instrumentation-constant-tag>> which defines those tags with constant values that will be passed to the meter registration.
-* `ParameterTag[] parameters () default {}` - An array of <<claxon-instrumentation-parameter-tag>> which defines those tags whose values will be pulled from the parameters to the annotated method, and then passed to the meter registration.
+* `ParameterTag[] parameters () default {}` - An array of <<claxon-instrumentation-parameter-tag>> which defines those tags whose values will be pulled from the parameters of the annotated method, and then passed to the meter registration.
 * `TimeUnit timeUnit () default TimeUnit.MILLISECONDS` - The time units for the `update()` to the registered meter.
 * `boolean active () default true` - Whether this meter is active.
 If this value is false, no timing update will occur.
-* `Class<? extends InstrumentedParser<?>> parser ()` - The class of the <<claxon-instrumentation-instrumented-parser>> which will be used to decode the json string from this annotation, in order to produce a MeterBuilder that will be passed to the meter registration.
+* `Class<? extends InstrumentedParser<?>> parser ()` - The class of the <<claxon-instrumentation-instrumented-parser>> which will be used to decode the json string from this annotation (see the json value next), in order to produce a MeterBuilder that will be passed to the meter registration.
 * `String json () default "{}"` - The json formatted string representing the meter to be regsitered via this annotation.
 
 [[claxon-instrumentation-constant-tag, @ConstantTag]]
@@ -301,12 +301,34 @@ Represents a tag whose keys and values are simple string constants.
 [[claxon-instrumentation-parameter-tag, @ParameterTag]]
 ====== @ParameterTag
 
-Represents a tag whose keys a string constants, but whose values are the names of parameters to the annotated method, and whose values will be pulled from those parameters (via their `toString()` methods).
+Represents a tag whose keys are string constants, but whose values are the names of parameters of the annotated method, and whose values will be pulled from those parameters (via their `toString()` methods).
 
 [[claxon-instrumentation-instrumented-parser, InstrumentedParser]]
 ====== InstrumentedParser
 
 [small]#`org.smallmind.claxon.registry.aop.InstrumentedParser`#
+
+A json parser that accepts a json formatted string and returns an instance of MeterBuilder. Because the parsing of json is a more heavy-weight process that may be repeated many, many times, implementations of this interface will not actually be called unless a new Meter instance is to be constructed, which will only happen if the registry does not already contain an instance matching the caller class and tags. To allow meters you design to be used in @Instrumented annotations, all you need do is create an implementation of this interface and publish its json format and requirements.
+
+====== Example
+The following would register a Histogram (`org.smallmind.claxon.registry.meter.Histogram`) and update that meter with the time `myMethod()` takes to execute (in the default time unit of milliseconds). The tags would have the set "const1", "param1" and "param2", where `param1` and `param2` would take their values from the method parameters (_parameter1_ and _parameter2_). The histogram would be built with 2 significant digits of storage, lowest discernible value of 1, highest of 3600000 and tracking percentiles at 75%, 95% and 99%...
+
+====
+[source,java]
+  @Instrumented(
+    caller = MyClass.class,
+    constants = @ConstantTag(key = "const1", constant = "value"),
+    parameters = {@ParameterTag(key = "param1", parameter = "parameter1"), @ParameterTag(key = "param2", parameter = "parameter2")},
+    parser = HistogramParser.class,
+    json = "{\"numberOfSignificantValueDigits\": 2, \"lowestDiscernibleValue\": 1, \"highestTrackableValue\": 3600000, \"percentiles\": [{\"name\": \"p75\", \"value\": 75.0}, {\"name\": \"p95\", \"value\": 95.0}, {\"name\": \"p99\", \"value\": 99.0}]}"
+  )
+  public SomeClass myMethod (String parameter1, int parameter2) {
+    ...
+    instrumented code
+    ...
+  }
+----
+====
 
 ==== Observables
 
