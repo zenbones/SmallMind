@@ -166,13 +166,13 @@ The default value represents a 2-second interval.
 * *Tag[]* (_registryTags_) - A set of default tags which are to be added to every meter.
 The default value is empty.
 * *NamingStrategy* (_namingStrategy_) - The logic by which the `Class<?> caller` of meter registrations (see <<claxon-registry-register>> above) are turned into the root names of the quantities emitted by those meters (see <<claxon-meters>> below).
-The default value is the ImpliedNamingStrategy (see <<claxon-configuration-implied-naming-strategy>> below)
+The default value is the <<claxon-configuration-implied-naming-strategy>>.
 
 ==== NamingStrategy
 
 The purpose of meters is to emit metrics, or _quantities_ in the parlance of this project (see <<claxon-meters-quantities>> below).
 Every registered meter has a root name, and every quantity emitted by a meter has a name.
-The concatenation of the meter's root name with each quantity's name will form the _full_ name of that quantity passed to each of the registry's bound emitters (see <<claxon-emitters>> below).
+The concatenation of the meter's root name with each quantity's name will form the _full_ name of that quantity passed to each of the registry's bound <<claxon-emitters>>.
 For most types of metric warehouses, the full name of each quantity will form the namespace of the time series created by that quantity's values.
 Because the emitted quantity namespaces will generally have limited cardinality (for the root names of meters and certainly for the quantity names), it's the Tags submitted with the registration which must guarantee the uniqueness of those namespaces.
 The root name of a meter is determined by the `Class<?> caller` parameter passed to the `register()` method (see <<claxon-registry-register>> above) via the NamingStrategy (`org.smallmind.claxon.registry.NamingStrategy`) in the registry's configuration.
@@ -182,7 +182,7 @@ There are two naming strategies included in this project, the *ObviousNamingStra
 
 [small]#`org.smallmind.claxon.registry.ObviousNamingStrategy``#
 
-The ObviousNamingStrategy holds a Set of DotNotation (see <<claxon-dot-notation>> below) instances which it attempts to match against the names of the caller classes submitted with meter registrations.
+The ObviousNamingStrategy holds a Set of <<claxon-dot-notation>> instances which it attempts to match against the names of the caller classes submitted with meter registrations.
 If any match can be found, then the name of the caller class becomes the root name of the registered meter.
 If no match can be found, then no meter will be registered, and no metrics will be emitted.
 
@@ -195,8 +195,8 @@ It's best to generate Tag sets with enough total cardinality to guarantee unique
 
 [small]#`org.smallmind.claxon.registry.ImpliedNamingStrategy`#
 
-The ImpliedNamingStrategy holds a Map of DotNotation (see <<claxon-dot-notation>> below) to String entries.
-This strategy attempts to match the DotNotation keys against the names of the caller classes submitted with meter registrations.
+The ImpliedNamingStrategy holds a Map of _<<claxon-dot-notation>> to String_ entries.
+This strategy attempts to match the dot notated keys against the names of the caller classes submitted with meter registrations.
 If no match can be found, then no meter will be registered, and no metrics will be emitted.
 If one or more matches are found, then the strongest match, which is the one matching the most dot notated segments in the name, will determine the root name for that meter, which will be the String *value* of the winning map entry.
 Although there's no constraint on the values of this strategy's mappings, it's recommended to use dot notated names.
@@ -273,7 +273,40 @@ Through this interface you can...
 ----
 ====
 
-==== Aspects
+==== Annotations
+
+Although Instrument/Instrumentation present a fairly simple and fluent interface, Claxon also allows wrapping methods in timing-based metrics via the use of annotations.
+You can do this not only with the meters which come built in, but also any you might develop.
+
+===== @Instrumented
+
+[small]#`org.smallmind.claxon.registry.aop.Instrumented`#
+
+The root annotation is @Instrumented, which can be applied to both methods and constructors, and takes the following values...
+
+* `Class<?> caller () default Instrumented.class` - The caller which will be passed to the meter registration.
+* `ConstantTag[] constants () default {}` - An array of <<claxon-instrumentation-constant-tag>> which defines those tags with constant values that will be passed to the meter registration.
+* `ParameterTag[] parameters () default {}` - An array of <<claxon-instrumentation-parameter-tag>> which defines those tags whose values will be pulled from the parameters to the annotated method, and then passed to the meter registration.
+* `TimeUnit timeUnit () default TimeUnit.MILLISECONDS` - The time units for the `update()` to the registered meter.
+* `boolean active () default true` - Whether this meter is active.
+If this value is false, no timing update will occur.
+* `Class<? extends InstrumentedParser<?>> parser ()` - The class of the <<claxon-instrumentation-instrumented-parser>> which will be used to decode the json string from this annotation, in order to produce a MeterBuilder that will be passed to the meter registration.
+* `String json () default "{}"` - The json formatted string representing the meter to be regsitered via this annotation.
+
+[[claxon-instrumentation-constant-tag, @ConstantTag]]
+====== @ConstantTag
+
+Represents a tag whose keys and values are simple string constants.
+
+[[claxon-instrumentation-parameter-tag, @ParameterTag]]
+====== @ParameterTag
+
+Represents a tag whose keys a string constants, but whose values are the names of parameters to the annotated method, and whose values will be pulled from those parameters (via their `toString()` methods).
+
+[[claxon-instrumentation-instrumented-parser, InstrumentedParser]]
+====== InstrumentedParser
+
+[small]#`org.smallmind.claxon.registry.aop.InstrumentedParser`#
 
 ==== Observables
 
