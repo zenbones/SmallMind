@@ -32,24 +32,21 @@
  */
 package org.smallmind.claxon.registry;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.smallmind.nutsnbolts.time.Stint;
-import org.smallmind.nutsnbolts.util.DotNotation;
 
 public class ClaxonConfiguration {
 
   private Clock clock = SystemClock.instance();
   private Stint collectionStint = new Stint(2, TimeUnit.SECONDS);
   private Tag[] registryTags = new Tag[0];
-  private Map<DotNotation, String> prefixMap = new HashMap<>();
+  private NamingStrategy namingStrategy = new ImpliedNamingStrategy();
 
   public ClaxonConfiguration () {
 
   }
 
-  public ClaxonConfiguration (Clock clock, Stint collectionStint, Tag[] registryTags, Map<DotNotation, String> prefixMap) {
+  public ClaxonConfiguration (Clock clock, Stint collectionStint, Tag[] registryTags, NamingStrategy namingStrategy) {
 
     if (clock != null) {
       this.clock = clock;
@@ -60,8 +57,8 @@ public class ClaxonConfiguration {
     if (registryTags != null) {
       this.registryTags = registryTags;
     }
-    if (prefixMap != null) {
-      this.prefixMap = prefixMap;
+    if (namingStrategy != null) {
+      this.namingStrategy = namingStrategy;
     }
   }
 
@@ -70,9 +67,19 @@ public class ClaxonConfiguration {
     return clock;
   }
 
+  public void setClock (Clock clock) {
+
+    this.clock = clock;
+  }
+
   public Stint getCollectionStint () {
 
     return collectionStint;
+  }
+
+  public void setCollectionStint (Stint collectionStint) {
+
+    this.collectionStint = collectionStint;
   }
 
   public Tag[] getRegistryTags () {
@@ -80,8 +87,18 @@ public class ClaxonConfiguration {
     return registryTags;
   }
 
-  public Map<DotNotation, String> getPrefixMap () {
+  public void setRegistryTags (Tag[] registryTags) {
 
-    return prefixMap;
+    this.registryTags = registryTags;
+  }
+
+  public NamingStrategy getNamingStrategy () {
+
+    return namingStrategy;
+  }
+
+  public void setNamingStrategy (NamingStrategy namingStrategy) {
+
+    this.namingStrategy = namingStrategy;
   }
 }

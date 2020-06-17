@@ -41,7 +41,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.function.Function;
 import org.smallmind.claxon.registry.meter.Meter;
 import org.smallmind.claxon.registry.meter.MeterBuilder;
-import org.smallmind.nutsnbolts.util.DotNotation;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class ClaxonRegistry {
@@ -97,52 +96,34 @@ public class ClaxonRegistry {
 
   public <M extends Meter> M register (Class<?> caller, MeterBuilder<M> builder, Tag... tags) {
 
-    if (configuration.getPrefixMap() == null) {
+    RegistryKey key = new RegistryKey(caller, tags);
+
+    if (noopSet.contains(key)) {
 
       return NoOpMeter.instance();
     } else {
 
-      RegistryKey key = new RegistryKey(caller, tags);
+      NamedMeter<?> namedMeter;
 
-      if (noopSet.contains(key)) {
+      if ((namedMeter = meterMap.get(key)) == null) {
 
-        return NoOpMeter.instance();
-      } else {
+        String meterName;
 
-        NamedMeter<?> namedMeter;
+        if ((meterName = configuration.getNamingStrategy().from(caller)) == null) {
+          noopSet.add(key);
 
-        if ((namedMeter = meterMap.get(key)) == null) {
+          return NoOpMeter.instance();
+        } else {
 
-          String className = caller.getName();
-          Map.Entry<DotNotation, String> strongestEntry = null;
-          int currentStrength = 0;
+          NamedMeter<?> previousNamedMeter;
 
-          for (Map.Entry<DotNotation, String> prefixEntry : configuration.getPrefixMap().entrySet()) {
-
-            int possibleStrength;
-
-            if ((possibleStrength = prefixEntry.getKey().calculateValue(className, -1)) > currentStrength) {
-              currentStrength = possibleStrength;
-              strongestEntry = prefixEntry;
-            }
-          }
-
-          if (strongestEntry == null) {
-            noopSet.add(key);
-
-            return NoOpMeter.instance();
-          } else {
-
-            NamedMeter<?> previousNamedMeter;
-
-            if ((previousNamedMeter = meterMap.putIfAbsent(key, namedMeter = new NamedMeter<>(strongestEntry.getValue(), builder.build(configuration.getClock())))) != null) {
-              namedMeter = previousNamedMeter;
-            }
+          if ((previousNamedMeter = meterMap.putIfAbsent(key, namedMeter = new NamedMeter<>(meterName, builder.build(configuration.getClock())))) != null) {
+            namedMeter = previousNamedMeter;
           }
         }
-
-        return (M)namedMeter.getMeter();
       }
+
+      return (M)namedMeter.getMeter();
     }
   }
 
