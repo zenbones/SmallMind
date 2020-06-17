@@ -43,6 +43,10 @@ public class Stint {
 
   public Stint (long time, TimeUnit timeUnit) {
 
+    if ((time < 0) || (timeUnit == null)) {
+      throw new IllegalArgumentException("Must represent a positive time duration");
+    }
+
     this.time = time;
     this.timeUnit = timeUnit;
   }

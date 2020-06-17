@@ -39,6 +39,10 @@ public class Tag {
 
   public Tag (String key, String value) {
 
+    if ((key == null) || key.isEmpty() || (value == null) || value.isEmpty()) {
+      throw new IllegalArgumentException("Both key and value must be neither null nor empty");
+    }
+
     this.key = key;
     this.value = value;
   }
@@ -56,7 +60,7 @@ public class Tag {
   @Override
   public String toString () {
 
-    return new StringBuilder(key).append('=').append(value).toString();
+    return key + "=" + value;
   }
 
   @Override
