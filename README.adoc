@@ -11,19 +11,11 @@ A preface
 
 === Installation
 
-All Smallmind modules are pushed to Maven Central under the *org.smallmind* group id.
-All artifacts which are intended to work together have the same sem version.
-Explicit module listings can be found in the various sections of this document covering those modules.
-Wherever possible, dependencies of this project are marked as `<optional>true</optional>`.
-This does require projects using these libraries to include such dependencies along with the relevant Smallmind modules, but keeps this project from making unwanted decisions.
-If we've missed any such opportunities, please let us know.
+All Smallmind modules are pushed to Maven Central under the *org.smallmind* group id. All artifacts which are intended to work together have the same sem version. Explicit module listings can be found in the various sections of this document covering those modules. Wherever possible, dependencies of this project are marked as `<optional>true</optional>`. This does require projects using these libraries to include such dependencies along with the relevant Smallmind modules, but keeps this project from making unwanted decisions. If we've missed any such opportunities, please let us know.
 
 === Configuration
 
-There is none.
-IOC projects provide both the base container and configuration.
-Smallmind provides some occasionally helpful Spring beans, but there's no magic in them.
-Whatever flavor of dependency injection you prefer should work just as well.
+There is none. IOC projects provide both the base container and configuration. Smallmind provides some occasionally helpful Spring beans, but there's no magic in them. Whatever flavor of dependency injection you prefer should work just as well.
 
 === Modules
 
@@ -33,9 +25,7 @@ Whatever flavor of dependency injection you prefer should work just as well.
 = Claxon
 
 [partintro]
-Claxon is a unified code instrumentation and metric gathering framework that abstracts away the underlying metric warehousing systems, allowing new systems to be plugged in and replaced as needed.
-Libraries can safely provide instrumentation in a warehouse agnostic fashion.
-New meters can be created without reference to the eventual warehousing system, and new warehouses can be integrated and used with all Claxon meters.
+Claxon is a unified code instrumentation and metric gathering framework that abstracts away the underlying metric warehousing systems, allowing new systems to be plugged in and replaced as needed. Libraries can safely provide instrumentation in a warehouse agnostic fashion. New meters can be created without reference to the eventual warehousing system, and new warehouses can be integrated and used with all Claxon meters.
 
 .Claxon Core
 [source,xml]
@@ -84,54 +74,31 @@ New meters can be created without reference to the eventual warehousing system, 
 
 == Design Choices
 
-Metric warehousing systems such as StatsD, InfluxDB or Prometheus all store and provide for the querying of time series data.
-Some systems allow for the calculation of aggregations (minimums, maximums, velocity, histograms, etc.) upon storing data points, or as part of the provided query capabilities, while others do not.
-Some systems we may want to integrate with, such as JMX, have no notion of a time series at all.
-A project such as this one might fulfill its goals by fixing its notion of the meters it allows, and then pushing the best implementation of those meter types into the warehouse integrations.
-This would allow integrations with systems with a built-in notion of aggregations to take advantage of those capabilities.
-We have instead chosen to ignore these differences between warehousing systems, and separate the implementation of meters from the underlying capabilities of the various warehousing systems.
-That doesn't mean that you can't choose to build your own meters and warehousing integrations that are more tightly coupled, it just means that the meters provided by this project all aggregate on the client, and are uniformly usable on both the provided warehouse integrations, or with new integrations you may choose to create.
-It means that this framework does not privilege its provided meters in any way, and all of its capabilities, including AOP instrumentation annotations, are extended to any meters you choose to create.
-This also means that you can create new warehouse integrations without having to provide implementations for any meters at all, and those integrations will be usable with all meters which fulfill the contracts for this project.
+Metric warehousing systems such as StatsD, InfluxDB or Prometheus all store and provide for the querying of time series data. Some systems allow for the calculation of aggregations (minimums, maximums, velocity, histograms, etc.) upon storing data points, or as part of the provided query capabilities, while others do not. Some systems we may want to integrate with, such as JMX, have no notion of a time series at all. A project such as this one might fulfill its goals by fixing its notion of the meters it allows, and then pushing the best implementation of those meter types into the warehouse integrations. This would allow integrations with systems with a built-in notion of aggregations to take advantage of those capabilities. We have instead chosen to ignore these differences between warehousing systems, and separate the implementation of meters from the underlying capabilities of the various warehousing systems. That doesn't mean that you can't choose to build your own meters and warehousing integrations that are more tightly coupled, it just means that the meters provided by this project all aggregate on the client, and are uniformly usable on both the provided warehouse integrations, or with new integrations you may choose to create. It means that this framework does not privilege its provided meters in any way, and all of its capabilities, including AOP instrumentation annotations, are extended to any meters you choose to create. This also means that you can create new warehouse integrations without having to provide implementations for any meters at all, and those integrations will be usable with all meters which fulfill the contracts for this project.
 
 == Registry
 
-The ClaxonRegistry holds both meters (`org.smallmind.claxon.registry.meter.Meter`) and warehouse integration bindings (`org.smallmind.claxon.registry.Emitter`).
-Meters should be obtained through the ClaxonRegistry, which accepts the MeterBuilder interface (org.smallmind.claxon.registry.meter.MeterBuilder) through its `register()` method, as opposed to meter implementations directly.
-MeterBuilder is intended to take only the necessary parameters for constructing instances of Meter, and to be itself lightweight, so that the cost of not building a meter (if already present in the registry) is negligible.
-If the construction of a meter can't be directly trivialized, this project provides a lazy indirection (`org.smallmind.claxon.registry.meter.LazyBuilder`) which can delay the use of a MeterBuilder until the point of necessity.
-On the back side, implementations of Emitter are bound by name through the registry's `bind()` method, and called with all aggregated metrics on the configured collection interval.
-Let's take a closer look at the useful bits...
+The ClaxonRegistry holds both meters (`org.smallmind.claxon.registry.meter.Meter`) and warehouse integration bindings (`org.smallmind.claxon.registry.Emitter`). Meters should be obtained through the ClaxonRegistry, which accepts the MeterBuilder interface (org.smallmind.claxon.registry.meter.MeterBuilder) through its `register()` method, as opposed to meter implementations directly. MeterBuilder is intended to take only the necessary parameters for constructing instances of Meter, and to be itself lightweight, so that the cost of not building a meter (if already present in the registry) is negligible. If the construction of a meter can't be directly trivialized, this project provides a lazy indirection (`org.smallmind.claxon.registry.meter.LazyBuilder`) which can delay the use of a MeterBuilder until the point of necessity. On the back side, implementations of Emitter are bound by name through the registry's `bind()` method, and called with all aggregated metrics on the configured collection interval. Let's take a closer look at the useful bits...
 
 === Bind
 
 [small]#`ClaxonRegistry bind(String name, Emitter emitter)`#
 
-Installs and binds an emitter to the specified name, which will then start receiving updates.
-Reusing a name will rebind that name to the new emitter.
+Installs and binds an emitter to the specified name, which will then start receiving updates. Reusing a name will rebind that name to the new emitter.
 
 [[claxon-registry-register, Register]]
 === Register
 
 [small]#`<M extends Meter> M register(Class<?> caller, MeterBuilder<M> builder, Tag... tags)`#
 
-Creates and registers a meter if it's not already registered, otherwise returns the currently registered meter.
-A meter's uniqueness is a combination of the caller's class and the tags passed as parameters to this method.
-Although the calling class is intended to be the direct caller of this method, that's not a requirement.
-Think of it the same way many logging systems use a class as the log name, which is intended, but not required to be the class doing the logging.
-In a similar fashion, whether this meter actually outputs any metrics, and the namespace of those metrics (as passed to this registries bound emitters), will depend upon the class of the caller (see <<claxon-configuration>>).
-Every possible Meter should have a MeterBuilder available.
-We recommend that a meter of type Foo have a builder in the same package named FooBuilder, and this is the practice followed in this project.
-This MeterBuilder makes up the second parameter to this method, followed by any tags, where a Tag is a simple key/value pair of strings.
+Creates and registers a meter if it's not already registered, otherwise returns the currently registered meter. A meter's uniqueness is a combination of the caller's class and the tags passed as parameters to this method. Although the calling class is intended to be the direct caller of this method, that's not a requirement. Think of it the same way many logging systems use a class as the log name, which is intended, but not required to be the class doing the logging. In a similar fashion, whether this meter actually outputs any metrics, and the namespace of those metrics (as passed to this registries bound emitters), will depend upon the class of the caller (see <<claxon-configuration>>). Every possible Meter should have a MeterBuilder available. We recommend that a meter of type Foo have a builder in the same package named FooBuilder, and this is the practice followed in this project. This MeterBuilder makes up the second parameter to this method, followed by any tags, where a Tag is a simple key/value pair of strings.
 
 ==== Example
 
 registry.register(MyInstance.class, new GaugeBuilder(), new Tag("event", "update"), new Tag("source", "mysql"))
 
 [NOTE]
-Many metric warehouses are capable of storing and querying multi-dimensional data, and it's the tags used in creating a metric which will become the dimensions of the time series formed by the metric's values.
-Where a warehouse system is not multi-dimensional, the tags will be used to determine the time series data's hierarchical namespace.
-In either case, it's best to use tags with consistent ordering and limited cardinality (see <<claxon-tags>> for further advice).
+Many metric warehouses are capable of storing and querying multi-dimensional data, and it's the tags used in creating a metric which will become the dimensions of the time series formed by the metric's values. Where a warehouse system is not multi-dimensional, the tags will be used to determine the time series data's hierarchical namespace. In either case, it's best to use tags with consistent ordering and limited cardinality (see <<claxon-tags>> for further advice).
 
 === Unregister
 
@@ -143,70 +110,47 @@ You should probably avoid unregistering and re-registering a meter, but if you k
 
 [small]#`<O extends Observable> O track(Class<?> caller, MeterBuilder<?> builder, O observable, Tag... tags)`#
 
-Registers a meter that will track changes in an Observable.
-The Observable instance is only weakly referenced by the meter, so that if the meter is the only remaining reference to the Observable instance, the meter will be unregistered and both the Observable instance and the meter will be available for garbage collection.
+Registers a meter that will track changes in an Observable. The Observable instance is only weakly referenced by the meter, so that if the meter is the only remaining reference to the Observable instance, the meter will be unregistered and both the Observable instance and the meter will be available for garbage collection.
 
 === Track _Lambda_
 
 [small]#`<T> T track(Class<?> caller, MeterBuilder<?> builder, T measured, Function<T, Long> measurement, Tag... tags)`#
 
-Registers a meter that will poll the state of a 'measured' instance on the registry's collection interval using the supplied measurement function.
-Much like the tracking of Observables above, the measured instance is weakly held, such that if the meter is the only remaining reference, the meter will be unregistered and both the measured instance and the meter will be available for garbage collection.
+Registers a meter that will poll the state of a 'measured' instance on the registry's collection interval using the supplied measurement function. Much like the tracking of Observables above, the measured instance is weakly held, such that if the meter is the only remaining reference, the meter will be unregistered and both the measured instance and the meter will be available for garbage collection.
 
 [[claxon-configuration, Configuration]]
 === Configuration
 
-The configuration for Claxon is simple and, like all SmallMind modules, programmatic.
-A configuration instance is composed of the following types...
+The configuration for Claxon is simple and, like all SmallMind modules, programmatic. A configuration instance is composed of the following types...
 
-* *Clock* (_clock_) - A clock can provide both wall time (think milliseconds since the epoch) and monotonic time (think nanoseconds).
-The default clock should work perfectly well, so you should not normally need to set your own.
-* *Stint* (_collectionStint_) - The collection interval.
-The default value represents a 2-second interval.
-* *Tag[]* (_registryTags_) - A set of default tags which are to be added to every meter.
-The default value is empty.
-* *NamingStrategy* (_namingStrategy_) - The logic by which the `Class<?> caller` of meter registrations (see <<claxon-registry-register>> above) are turned into the root names of the quantities emitted by those meters (see <<claxon-meters>> below).
-The default value is the <<claxon-configuration-implied-naming-strategy>>.
+* *Clock* (_clock_) - A clock can provide both wall time (think milliseconds since the epoch) and monotonic time (think nanoseconds). The default clock should work perfectly well, so you should not normally need to set your own.
+* *Stint* (_collectionStint_) - The collection interval. The default value represents a 2-second interval.
+* *Tag[]* (_registryTags_) - A set of default tags which are to be added to every meter. The default value is empty.
+* *NamingStrategy* (_namingStrategy_) - The logic by which the `Class<?> caller` of meter registrations (see <<claxon-registry-register>> above) are turned into the root names of the quantities emitted by those meters (see <<claxon-meters>> below). The default value is the <<claxon-configuration-implied-naming-strategy>>.
 
 [[claxon-naming-strategy, NamingStrategy]]
 ==== NamingStrategy
 
-The purpose of meters is to emit metrics, or _quantities_ in the parlance of this project (see <<claxon-meters-quantities>> below).
-Every registered meter has a root name, and every quantity emitted by a meter has a name.
-The concatenation of the meter's root name with each quantity's name will form the _full_ name of that quantity passed to each of the registry's bound <<claxon-emitters>>.
-For most types of metric warehouses, the full name of each quantity will form the namespace of the time series created by that quantity's values.
-Because the emitted quantity namespaces will generally have limited cardinality (for the root names of meters and certainly for the quantity names), it's the Tags submitted with the registration which must guarantee the uniqueness of those namespaces.
-The root name of a meter is determined by the `Class<?> caller` parameter passed to the `register()` method (see <<claxon-registry-register>> above) via the NamingStrategy (`org.smallmind.claxon.registry.NamingStrategy`) in the registry's configuration.
-There are two naming strategies included in this project, the *ObviousNamingStrategy* and the *ImpliedNamingStrategy*.
+The purpose of meters is to emit metrics, or _quantities_ in the parlance of this project (see <<claxon-meters-quantities>> below). Every registered meter has a root name, and every quantity emitted by a meter has a name. The concatenation of the meter's root name with each quantity's name will form the _full_ name of that quantity passed to each of the registry's bound <<claxon-emitters>>. For most types of metric warehouses, the full name of each quantity will form the namespace of the time series created by that quantity's values. Because the emitted quantity namespaces will generally have limited cardinality (for the root names of meters and certainly for the quantity names), it's the Tags submitted with the registration which must guarantee the uniqueness of those namespaces. The root name of a meter is determined by the `Class<?> caller` parameter passed to the `register()` method (see <<claxon-registry-register>> above) via the NamingStrategy (`org.smallmind.claxon.registry.NamingStrategy`) in the registry's configuration. There are two naming strategies included in this project, the *ObviousNamingStrategy* and the *ImpliedNamingStrategy*.
 
 ===== ObviousNamingStrategy
 
 [small]#`org.smallmind.claxon.registry.ObviousNamingStrategy``#
 
-The ObviousNamingStrategy holds a Set of <<claxon-dot-notation>> instances which it attempts to match against the names of the caller classes submitted with meter registrations.
-If any match can be found, then the name of the caller class becomes the root name of the registered meter.
-If no match can be found, then no meter will be registered, and no metrics will be emitted.
+The ObviousNamingStrategy holds a Set of <<claxon-dot-notation>> instances which it attempts to match against the names of the caller classes submitted with meter registrations. If any match can be found, then the name of the caller class becomes the root name of the registered meter. If no match can be found, then no meter will be registered, and no metrics will be emitted.
 
 [TIP]
-The diversity of this naming should ease the pressure on submitted Tag sets to guarantee the unique namespaces of warehoused time series, however, creators of libraries using this project should not count on this, as it's the choice of the library consumer.
-It's best to generate Tag sets with enough total cardinality to guarantee unique time series namespaces in their own right.
+The diversity of this naming should ease the pressure on submitted Tag sets to guarantee the unique namespaces of warehoused time series, however, creators of libraries using this project should not count on this, as it's the choice of the library consumer. It's best to generate Tag sets with enough total cardinality to guarantee unique time series namespaces in their own right.
 
 [[claxon-configuration-implied-naming-strategy, ImpliedNamingStrategy]]
 ===== ImpliedNamingStrategy
 
 [small]#`org.smallmind.claxon.registry.ImpliedNamingStrategy`#
 
-The ImpliedNamingStrategy holds a Map of _<<claxon-dot-notation>> to String_ entries.
-This strategy attempts to match the dot notated keys against the names of the caller classes submitted with meter registrations.
-If no match can be found, then no meter will be registered, and no metrics will be emitted.
-If one or more matches are found, then the strongest match, which is the one matching the most dot notated segments in the name, will determine the root name for that meter, which will be the String *value* of the winning map entry.
-Although there's no constraint on the values of this strategy's mappings, it's recommended to use dot notated names.
-This is the default naming strategy for Claxon configurations.
+The ImpliedNamingStrategy holds a Map of _<<claxon-dot-notation>> to String_ entries. This strategy attempts to match the dot notated keys against the names of the caller classes submitted with meter registrations. If no match can be found, then no meter will be registered, and no metrics will be emitted. If one or more matches are found, then the strongest match, which is the one matching the most dot notated segments in the name, will determine the root name for that meter, which will be the String *value* of the winning map entry. Although there's no constraint on the values of this strategy's mappings, it's recommended to use dot notated names. This is the default naming strategy for Claxon configurations.
 
 [TIP]
-If you wanted to emit all metrics with a single root name you could add a single _prefixMap_ entry like `put(new DotNotation("*"), "my.metrics")`.
-Multiple entries can map to the same value, but even if each entry maps to a unique root name, the resulting namespaces are likely to be crowded.
-It is, therefore, very important that the Tag set registered for each meter guarantee the appropriate differentiation.
+If you wanted to emit all metrics with a single root name you could add a single _prefixMap_ entry like `put(new DotNotation("*"), "my.metrics")`. Multiple entries can map to the same value, but even if each entry maps to a unique root name, the resulting namespaces are likely to be crowded. It is, therefore, very important that the Tag set registered for each meter guarantee the appropriate differentiation.
 
 [[claxon-dot-notation, DotNotation]]
 ===== DotNotation
@@ -226,13 +170,9 @@ The pattern "com.my.names' would match only the exact string, "com.my.names", wh
 
 === Instrumentation
 
-To make use of this project, you could pass around a registry instance and directly call the `register()` method on it as needed, but that would be less than convenient.
-Instead, it's easier to interact with the registry through the static methods of the Instrument (`org.smallmind.claxon.registry.Instrument`) class.
-Instrument uses a thread local context to gain access to the underlying registry, while presenting both a direct access interface that mimics the `register()` and `track()` methods, as well as constructs for wrapping blocks of code with timing-based metrics.
-Turning on this functionality involves two bits of setup.
+To make use of this project, you could pass around a registry instance and directly call the `register()` method on it as needed, but that would be less than convenient. Instead, it's easier to interact with the registry through the static methods of the Instrument (`org.smallmind.claxon.registry.Instrument`) class. Instrument uses a thread local context to gain access to the underlying registry, while presenting both a direct access interface that mimics the `register()` and `track()` methods, as well as constructs for wrapping blocks of code with timing-based metrics. Turning on this functionality involves two bits of setup.
 
-. Create an instance of PerApplicationContext (`org.smallmind.nutsnbolts.lang.PerApplicationContext`) which will not be subject to garbage collection for the life of the registry.
-The easiest way to do this is to create it as a _bean_ within the same IOC (inversion of control) context that you use to configure the Claxon registry instance.
+. Create an instance of PerApplicationContext (`org.smallmind.nutsnbolts.lang.PerApplicationContext`) which will not be subject to garbage collection for the life of the registry. The easiest way to do this is to create it as a _bean_ within the same IOC (inversion of control) context that you use to configure the Claxon registry instance.
 +
 [TIP]
 ====
@@ -253,9 +193,7 @@ The provided `org.smallmind.claxon.registry.spring.ClaxonRegistryFactoryBean` do
 
 [small]#`Instrumentation with (Class<?> caller, MeterBuilder<?> builder, Tag... tags)`#
 
-The prerequisites taken care of, Instrument functionality is accessed through its `with()` method.
-This method takes the same _caller_, _builder_ and _tags_ parameters as the `register()` method discussed previously (see <<claxon-registry-register>> above), but returns an instance of the Instrumentation (`org.smallmind.claxon.registry.Instrumentation`) interface.
-Through this interface you can...
+The prerequisites taken care of, Instrument functionality is accessed through its `with()` method. This method takes the same _caller_, _builder_ and _tags_ parameters as the `register()` method discussed previously (see <<claxon-registry-register>> above), but returns an instance of the Instrumentation (`org.smallmind.claxon.registry.Instrumentation`) interface. Through this interface you can...
 
 * `track()` to follow either an Obervable object, or any object coupled with a measuring function, as you can with the ClaxonRegistry directly.
 * `update()` the registered meter with a value, either a simple long value in the default time units (milliseconds), or with an explicit TimeUnit.
@@ -276,8 +214,7 @@ Through this interface you can...
 
 ==== Annotations
 
-Although Instrument/Instrumentation together present a fairly simple and fluent interface, Claxon also allows wrapping methods in timing-based metrics via the use of annotations.
-You can do this not only with the meters which come built in, but also any you might develop.
+Although Instrument/Instrumentation together present a fairly simple and fluent interface, Claxon also allows wrapping methods in timing-based metrics via the use of annotations. You can do this not only with the meters which come built in, but also any you might develop.
 
 ===== @Instrumented
 
@@ -289,8 +226,7 @@ The root annotation is @Instrumented, which can be applied to both methods and c
 * `ConstantTag[] constants () default {}` - An array of <<claxon-instrumentation-constant-tag>> which defines those tags with constant values that will be passed to the meter registration.
 * `ParameterTag[] parameters () default {}` - An array of <<claxon-instrumentation-parameter-tag>> which defines those tags whose values will be pulled from the parameters of the annotated method, and then passed to the meter registration.
 * `TimeUnit timeUnit () default TimeUnit.MILLISECONDS` - The time units for the `update()` to the registered meter.
-* `boolean active () default true` - Whether this meter is active.
-If this value is false, no timing update will occur.
+* `boolean active () default true` - Whether this meter is active. If this value is false, no timing update will occur.
 * `Class<? extends InstrumentedParser<?>> parser ()` - The class of the <<claxon-instrumentation-instrumented-parser>> which will be used to decode the json string from this annotation (see the json value next), in order to produce a MeterBuilder that will be passed to the meter registration.
 * `String json () default "{}"` - The json formatted string representing the meter to be registered via this annotation.
 
@@ -309,15 +245,11 @@ Represents a tag whose keys are string constants, but whose values are the names
 
 [small]#`org.smallmind.claxon.registry.aop.InstrumentedParser`#
 
-A json parser that accepts a json formatted string and returns an instance of MeterBuilder.
-Because the parsing of json is a more heavy-weight process that may be repeated many, many times, implementations of this interface will not actually be called unless a new Meter instance is to be constructed, which will only happen if the registry does not already contain an instance matching the caller class and tags.
-To allow meters you design to be used in @Instrumented annotations, all you need do is create an implementation of this interface and publish its json format and requirements.
+A json parser that accepts a json formatted string and returns an instance of MeterBuilder. Because the parsing of json is a more heavy-weight process that may be repeated many, many times, implementations of this interface will not actually be called unless a new Meter instance is to be constructed, which will only happen if the registry does not already contain an instance matching the caller class and tags. To allow meters you design to be used in @Instrumented annotations, all you need do is create an implementation of this interface and publish its json format and requirements.
 
 ====== Example
 
-The following would register a Histogram (`org.smallmind.claxon.registry.meter.Histogram`) and update that meter with the time `myMethod()` takes to execute (in the default time unit of milliseconds).
-The tags would have the set "const1", "param1" and "param2", where `param1` and `param2` would take their values from the method parameters (_parameter1_ and _parameter2_).
-The histogram would be built with 2 significant digits of storage, lowest discernible value of 1, highest of 3600000 and tracking percentiles at 75%, 95% and 99%...
+The following would register a Histogram (`org.smallmind.claxon.registry.meter.Histogram`) and update that meter with the time `myMethod()` takes to execute (in the default time unit of milliseconds). The tags would have the set "const1", "param1" and "param2", where `param1` and `param2` would take their values from the method parameters (_parameter1_ and _parameter2_). The histogram would be built with 2 significant digits of storage, lowest discernible value of 1, highest of 3600000 and tracking percentiles at 75%, 95% and 99%...
 
 [source,java]
 ----
@@ -342,16 +274,10 @@ The histogram would be built with 2 significant digits of storage, lowest discer
 
 A meter in Claxon is an interface with two methods to implement, `update()` and `record()`.
 
-* `void update (long value)` - This method takes a long value and updates the meter.
-What that means is entirely dependent on the meter, but, generally, the meter will be tracking some series of aggregations over time, to which the updated value will be appended.
+* `void update (long value)` - This method takes a long value and updates the meter. What that means is entirely dependent on the meter, but, generally, the meter will be tracking some series of aggregations over time, to which the updated value will be appended.
 * `Quantity[] record ()` - When this method is called by the registry, on the collection interval, the meter should return an array of Quantity instances holding the names and values of its aggregations (or whatever other quantities the meter is designed to track).
 
-Pretty simple.
-The only complexity is that meters should be multi-thread safe and, as far as possible, lock free and wait free.
-Multiple threads may be calling the `update()` method at any one time, and, while only one thread *should* be calling `record()`, we don't want updates waiting on each other any more than necessary.
-Nor should record calls block update operations, and update calls should definitely *not* block record operations.
-On top of this, a meter must be ready to aggregate its updates in between collection cycles so as not to lose data.
-And because there's no guarantee of the exact timing of collection cycles, reporting of aggregates that are stated per time unit should internally track the time passed since the last collection, in order to be as accurate as possible.
+Pretty simple. The only complexity is that meters should be multi-thread safe and, as far as possible, lock free and wait free. Multiple threads may be calling the `update()` method at any one time, and, while only one thread *should* be calling `record()`, we don't want updates waiting on each other any more than necessary. Nor should record calls block update operations, and update calls should definitely *not* block record operations. On top of this, a meter must be ready to aggregate its updates in between collection cycles so as not to lose data. And because there's no guarantee of the exact timing of collection cycles, reporting of aggregates that are stated per time unit should internally track the time passed since the last collection, in order to be as accurate as possible.
 
 [TIP]
 The Meter implementations in this project use a series of helper classes in the `org.smallmind.claxon.registry.aggregate` package. You may find these helpers useful when designing your own meters as well. You may also want to look at the meter implementations themselves in `org.smallmind.claxon.registry.meter`. Not that the code is any good, but we can always use the help making it better.
@@ -361,11 +287,9 @@ The Meter implementations in this project use a series of helper classes in the 
 
 [small]#`org.smallmind.claxon.registry.Quantity`#
 
-A quantity is a just container for a String name and a double value.
-The name of each quantity will be concatenated with the root name provided by the emitting meter to create a namespace for the value that's passed to each warehouse emitter.
-Exactly how this name is expressed, along with the meter's tags, is up to the logic within each emitter (see <<claxon-emitters>> below).
-We recommend that quantity names by kept simple.
-You can distinguish multi-word names via dot notation, hyphens, camel case, or simply smooshing them all together, but be prepared for the emitters to less sophisticated systems to mess with your naming, so simpler is better. We recommend sticking to dot notated names in most cases.
+A quantity is a just container for a String name and a double value. The name of each quantity will be concatenated with the root name provided by the emitting meter to create a namespace for the value that's passed to each warehouse emitter. Exactly how this name is expressed, along with the meter's tags, is up to the logic within each emitter (see <<claxon-emitters>> below). We recommend that quantity names by kept simple. You can distinguish multi-word names via dot notation, hyphens, camel case, or simply smooshing them all together, but be prepared for the emitters to less sophisticated systems to mess with your naming, so simpler is better. We recommend sticking to dot notated names in most cases.
+
+=== Out Of The Box
 
 [[claxon-tags, Tags]]
 == Tags
@@ -386,8 +310,7 @@ A tag is a String name and value. Emitters for warehouses capable of multi-dimen
 There are essentially 2 different ways that metric warehouses ingest data, via either push (such as over a socket, REST API, or by method call) or pull (such as an HTTP scrape endpoint).
 
 [NOTE]
-Claxon supports both of these systems and provides a generic Jersey REST API endpoint for pull systems such as Prometheus.
-If you desire, building your own should be simple enough considering the few lines of code it took to implement *org.smallmind.claxon.http.EmitterResource* available in the *claxon-http* artifact.
+Claxon supports both of these systems and provides a generic Jersey REST API endpoint for pull systems such as Prometheus. If you desire, building your own should be simple enough considering the few lines of code it took to implement *org.smallmind.claxon.http.EmitterResource* available in the *claxon-http* artifact.
 
 === DataDog
 
@@ -397,16 +320,9 @@ If you desire, building your own should be simple enough considering the few lin
 
 === Prometheus
 
-Beware when using Prometheus that its scrape protocol is limited.
-You might think it would be easy enough to allow multiple data points for any single time series, within the same scrape Http body, by referencing the timestamp value the protocol allows to be included with each data point, and, where that was either not present or not sufficient, relying on the simple ordering of the values themselves.
-However, that is not the case and multiple data points for the same series will be lost.
-Due to this limitation, Claxon's Prometheus integration will only report the last data point received for any series since the last scrape request.
-It's important, therefore, to have your Prometheus instance scrape the Claxon endpoint at least as often as Claxon is set to report its aggregated values.
-In practical terms...
+Beware when using Prometheus that its scrape protocol is limited. You might think it would be easy enough to allow multiple data points for any single time series, within the same scrape Http body, by referencing the timestamp value the protocol allows to be included with each data point, and, where that was either not present or not sufficient, relying on the simple ordering of the values themselves. However, that is not the case and multiple data points for the same series will be lost. Due to this limitation, Claxon's Prometheus integration will only report the last data point received for any series since the last scrape request. It's important, therefore, to have your Prometheus instance scrape the Claxon endpoint at least as often as Claxon is set to report its aggregated values. In practical terms...
 
 [WARNING]
 The Prometheus collection interval must be less than or equal to the Claxon collection interval as defined by `ClaxonConfiguration.getCollectionStint()`, _or you may lose data points_.
 
 = Scribe
-
-
