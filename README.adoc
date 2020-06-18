@@ -292,11 +292,11 @@ A quantity is a just container for a String name and a double value. The name of
 === Out Of The Box
 This project includes a set of Meters in the `org.smallmind.claxon.registry.meter` package.
 
-* *Gauge* - Emits the "minimum", "maximum" and "average" of the updated values.
-* *Histogram* - Emits the "count" of values over the collection cycle, the "velocity" of updates, the "minimum", "maximum", "mean", and a set of specified quantiles.
-* *Speedometer* - Emits the "minimum", "maximum" and "velocity" of the updated values.
-* *Tachometer* - Emits just the "velocity" of the updated values.
-* *Tally* - Emits the running total of all updated values (which can be both positive and negative).
+* *Gauge* - Emits the "minimum", "maximum" and "average" of the updated values over the collection cycle.
+* *Histogram* - Emits the "count" of updates, their "velocity", the "minimum", "maximum", "mean", and a set of specified quantiles over the collection cycle.
+* *Speedometer* - Emits the "minimum", "maximum" and "velocity" of the updated values over the collection cycle.
+* *Tachometer* - Emits just the "velocity" of the updated values over the collection cycle.
+* *Tally* - Emits the running total of all updated values (which can be both positive and negative) over the life of the meter.
 * *Trace* - Emits the exponential decaying average of the updated values over a set of specified time windows.
 
 [[claxon-tags, Tags]]
