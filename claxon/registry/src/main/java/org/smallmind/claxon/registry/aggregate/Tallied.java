@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class Tallied implements Aggregate {
 
-  private final AtomicLong count = new AtomicLong();
+  private final AtomicLong total = new AtomicLong();
 
   public void inc () {
 
@@ -50,7 +50,7 @@ public class Tallied implements Aggregate {
 
   public void add (long delta) {
 
-    count.addAndGet(delta);
+    total.addAndGet(delta);
   }
 
   @Override
@@ -59,8 +59,8 @@ public class Tallied implements Aggregate {
     add(value);
   }
 
-  public long getCount () {
+  public long getTotal () {
 
-    return count.get();
+    return total.get();
   }
 }

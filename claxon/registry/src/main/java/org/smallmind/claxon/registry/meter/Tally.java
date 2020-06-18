@@ -53,6 +53,6 @@ public class Tally implements Meter {
   @Override
   public Quantity[] record () {
 
-    return new Quantity[] {new Quantity("count", tallied.getCount())};
+    return new Quantity[] {new Quantity("total", tallied.getTotal())};
   }
 }

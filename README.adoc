@@ -290,6 +290,14 @@ The Meter implementations in this project use a series of helper classes in the 
 A quantity is a just container for a String name and a double value. The name of each quantity will be concatenated with the root name provided by the emitting meter to create a namespace for the value that's passed to each warehouse emitter. Exactly how this name is expressed, along with the meter's tags, is up to the logic within each emitter (see <<claxon-emitters>> below). We recommend that quantity names by kept simple. You can distinguish multi-word names via dot notation, hyphens, camel case, or simply smooshing them all together, but be prepared for the emitters to less sophisticated systems to mess with your naming, so simpler is better. We recommend sticking to dot notated names in most cases.
 
 === Out Of The Box
+This project includes a set of Meters in the `org.smallmind.claxon.registry.meter` package.
+
+* *Gauge* - Emits the "minimum", "maximum" and "average" of the updated values.
+* *Histogram* - Emits the "count" of values over the collection cycle, the "velocity" of updates, the "minimum", "maximum", "mean", and a set of specified quantiles.
+* *Speedometer* - Emits the "minimum", "maximum" and "velocity" of the updated values.
+* *Tachometer* - Emits just the "velocity" of the updated values.
+* *Tally* - Emits the running total of all updated values (which can be both positive and negative).
+* *Trace* - Emits the exponential decaying average of the updated values over a set of specified time windows.
 
 [[claxon-tags, Tags]]
 == Tags
