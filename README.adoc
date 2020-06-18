@@ -347,13 +347,19 @@ Claxon provides a generic Jersey REST API endpoint for pull-based emitters, such
 
 === Out Of The Box
 
-Claxon current provides emitters for the following systems as part of this project...
+Claxon provides emitters for the following systems as part of this project...
 
 ==== DataDog
 
+This is fairly straightforward. The integration uses DataDog's StatsD capabilities, which, being UDP-based, is very fast, and cares little about the choice of characters in its namespace or tags. It's push capable, allowing aggregations to be forwarded as necessary. DataDog prefers dot notated names, in keeping with the general precedent set by almost every programming language, which lowers the impedance mismatch which might otherwise occur. All quantities are output as gauge values, as all aggregation is assumed to be handled client side. All of this should lead to an experience with few surprises.
+
 ==== JMX
 
+JMX knows nothing about time series, so the resulting management beans will contain only the last known data points. The translation is otherwise pretty direct, with dot notated meter names making up the JMX domain name, tags creating the attendant properties, and quantity names translating to available fields.
+
 ==== Message
+
+A very simple translation to string values handed off to a `Consumer<String>`, intended for easy integration with logging systems.
 
 ==== Prometheus
 
@@ -363,5 +369,6 @@ Beware when using Prometheus that its scrape protocol is limited. You might thin
 The Prometheus collection interval must be less than or equal to the Claxon collection interval as defined by `ClaxonConfiguration.getCollectionStint()`, _or you may lose data points_.
 
 ===== Naming
+Prometheus does not allow dot notated names, nor anything but the most basic ascii characters and numbers. The more natural dot notated names used by Claxon will be translated to underscore separated names. Most everything otherwise inadmissible for prometheus will also end up as underscores. Fortunately, prometheus is muti-dimensional and Claxon's guidelines for tags are in line with those promulgated by Prometheus.
 
 = Scribe
