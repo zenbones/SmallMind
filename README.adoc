@@ -409,12 +409,4 @@ The Prometheus collection interval must be less than or equal to the Claxon coll
 
 = Scribe
 
-[partintro]
-Here
-
-== Section 1
-
-=== Sub Section
-
-== Section 2
 
