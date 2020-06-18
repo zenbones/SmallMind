@@ -168,6 +168,7 @@ The default value is empty.
 * *NamingStrategy* (_namingStrategy_) - The logic by which the `Class<?> caller` of meter registrations (see <<claxon-registry-register>> above) are turned into the root names of the quantities emitted by those meters (see <<claxon-meters>> below).
 The default value is the <<claxon-configuration-implied-naming-strategy>>.
 
+[[claxon-naming-strategy, NamingStrategy]]
 ==== NamingStrategy
 
 The purpose of meters is to emit metrics, or _quantities_ in the parlance of this project (see <<claxon-meters-quantities>> below).
@@ -308,10 +309,15 @@ Represents a tag whose keys are string constants, but whose values are the names
 
 [small]#`org.smallmind.claxon.registry.aop.InstrumentedParser`#
 
-A json parser that accepts a json formatted string and returns an instance of MeterBuilder. Because the parsing of json is a more heavy-weight process that may be repeated many, many times, implementations of this interface will not actually be called unless a new Meter instance is to be constructed, which will only happen if the registry does not already contain an instance matching the caller class and tags. To allow meters you design to be used in @Instrumented annotations, all you need do is create an implementation of this interface and publish its json format and requirements.
+A json parser that accepts a json formatted string and returns an instance of MeterBuilder.
+Because the parsing of json is a more heavy-weight process that may be repeated many, many times, implementations of this interface will not actually be called unless a new Meter instance is to be constructed, which will only happen if the registry does not already contain an instance matching the caller class and tags.
+To allow meters you design to be used in @Instrumented annotations, all you need do is create an implementation of this interface and publish its json format and requirements.
 
 ====== Example
-The following would register a Histogram (`org.smallmind.claxon.registry.meter.Histogram`) and update that meter with the time `myMethod()` takes to execute (in the default time unit of milliseconds). The tags would have the set "const1", "param1" and "param2", where `param1` and `param2` would take their values from the method parameters (_parameter1_ and _parameter2_). The histogram would be built with 2 significant digits of storage, lowest discernible value of 1, highest of 3600000 and tracking percentiles at 75%, 95% and 99%...
+
+The following would register a Histogram (`org.smallmind.claxon.registry.meter.Histogram`) and update that meter with the time `myMethod()` takes to execute (in the default time unit of milliseconds).
+The tags would have the set "const1", "param1" and "param2", where `param1` and `param2` would take their values from the method parameters (_parameter1_ and _parameter2_).
+The histogram would be built with 2 significant digits of storage, lowest discernible value of 1, highest of 3600000 and tracking percentiles at 75%, 95% and 99%...
 
 [source,java]
 ----
@@ -336,10 +342,16 @@ The following would register a Histogram (`org.smallmind.claxon.registry.meter.H
 
 A meter in Claxon is an interface with two methods to implement, `update()` and `record()`.
 
-* `void update (long value)` - This method takes a long value and updates the meter. What that means is entirely dependent on the meter, but, generally, the meter will be tracking some series of aggregations over time, to which the updated value will be appended.
+* `void update (long value)` - This method takes a long value and updates the meter.
+What that means is entirely dependent on the meter, but, generally, the meter will be tracking some series of aggregations over time, to which the updated value will be appended.
 * `Quantity[] record ()` - When this method is called by the registry, on the collection interval, the meter should return an array of Quantity instances holding the names and values of its aggregations (or whatever other quantities the meter is designed to track).
 
-Pretty simple. The only complexity is that meters should be multi-thread safe and, as far as possible, lock free and wait free. Multiple threads may be calling the `update()` method at any one time, and, while only one thread *should* be calling `record()`, we don't want updates waiting on each other any more than necessary. Nor should record calls block update operations, and update calls should definitely *not* block record operations. On top of this, a meter must be ready to aggregate its updates in between collection cycles so as not to lose data. And because there's no guarantee of the exact timing of collection cycles, reporting of aggregates that are stated per time unit should internally track the time passed since the last collection, in order to be as accurate as possible.
+Pretty simple.
+The only complexity is that meters should be multi-thread safe and, as far as possible, lock free and wait free.
+Multiple threads may be calling the `update()` method at any one time, and, while only one thread *should* be calling `record()`, we don't want updates waiting on each other any more than necessary.
+Nor should record calls block update operations, and update calls should definitely *not* block record operations.
+On top of this, a meter must be ready to aggregate its updates in between collection cycles so as not to lose data.
+And because there's no guarantee of the exact timing of collection cycles, reporting of aggregates that are stated per time unit should internally track the time passed since the last collection, in order to be as accurate as possible.
 
 [TIP]
 The Meter implementations in this project use a series of helper classes in the `org.smallmind.claxon.registry.aggregate` package. You may find these helpers useful when designing your own meters as well. You may also want to look at the meter implementations themselves in `org.smallmind.claxon.registry.meter`. Not that the code is any good, but we can always use the help making it better.
@@ -347,11 +359,29 @@ The Meter implementations in this project use a series of helper classes in the 
 [[claxon-meters-quantities, Quantities]]
 === Quantities
 
+[small]#`org.smallmind.claxon.registry.Quantity`#
+
+A quantity is a just container for a String name and a double value.
+The name of each quantity will be concatenated with the root name provided by the emitting meter to create a namespace for the value that's passed to each warehouse emitter.
+Exactly how this name is expressed, along with the meter's tags, is up to the logic within each emitter (see <<claxon-emitters>> below).
+We recommend that quantity names by kept simple.
+You can distinguish multi-word names via dot notation, hyphens, camel case, or simply smooshing them all together, but be prepared for the emitters to less sophisticated systems to mess with your naming, so simpler is better. We recommend sticking to dot notated names in most cases.
+
 [[claxon-tags, Tags]]
 == Tags
 
+[small]#`org.smallmind.claxon.registry.Tag`#
+
+A tag is a String name and value. Emitters for warehouses capable of multi-dimensional indexing can usually pass tags directly through to the underlying system. Emitters that represent warehouses that hold time series data, but are not multi-dimensional, will have to use the tags as part of the hierarchical namespace created for each emitted quantity. Other systems will do what they can to create the best experience possible. You can help this process by trying to stick to a few rules...
+
+* Tag names should be kept simple, and, where multi-word names must be used, dot notating is probably best.
+* Tag values should have low cardinality where possible. It makes the eventual use of the underlying systems easier. Obviously, a cardinality of 1 is probably too low, and should be either omitted or included in the quantity namespace.
+* The Tag set should represent a robust uniqueness, by which we mean that it's unlikely to be duplicated, as a totality, by some other library that happens to be included in the same project. In the end, the client should be able to sort out the proper namespaces given package naming conventions and the available <<claxon-naming-strategy>> implementations. However, each library doing its part will make the whole that much easier to work with.
+
 [[claxon-emitters, Emitters]]
 == Emitters
+
+[small]#`org.smallmind.claxon.registry.Emitter`#
 
 There are essentially 2 different ways that metric warehouses ingest data, via either push (such as over a socket, REST API, or by method call) or pull (such as an HTTP scrape endpoint).
 
