@@ -57,6 +57,7 @@ Claxon is a unified code instrumentation and metric gathering framework that abs
       </dependency>
 ----
 
+[[claxon-maven-pull-based, Pull-based Integrations]]
 .Claxon Pull-based Integrations
 [source,xml]
 ----
@@ -320,22 +321,47 @@ A tag is a String name and value. Emitters for warehouses capable of multi-dimen
 
 [small]#`org.smallmind.claxon.registry.Emitter`#
 
-There are essentially 2 different ways that metric warehouses ingest data, via either push (such as over a socket, REST API, or by method call) or pull (such as an HTTP scrape endpoint).
+There are essentially 2 different ways that metric warehouses ingest data, via either push (such as over a socket, REST API, or by method call) or pull (such as an HTTP scrape endpoint). Although you could implement the Emitter interface directly, we advise extending either the <<claxon-emitters-push-emiiter>> or <<claxon-emitters-pull-emiiter>> abstract classes. In either case, the only requirement is implementing the `record()` method.
 
-[NOTE]
-Claxon supports both of these systems and provides a generic Jersey REST API endpoint for pull systems such as Prometheus. If you desire, building your own should be simple enough considering the few lines of code it took to implement *org.smallmind.claxon.http.EmitterResource* available in the *claxon-http* artifact.
+* `void record (String meterName, Tag[] tags, Quantity[] quantities)` - The record method is called on each collection cycle once for each registered meter. It's passed the root name of the meter (as determined by the <<claxon-naming-strategy>> in force), an array of the tags registered for that meter, and an array of the quantities being emitted. Whatever an emitter chooses to do with this information should be done efficiently and without blocking. It's up to an emitter to handle any long running operations in an asynchronous fashion, sensitive to the fact that record might be called again before the current asynchronous operation is complete.
 
-=== DataDog
+[[claxon-emitters-push-emiiter, PushEmitter]]
+=== PushEmitter
 
-=== JMX
+A PushEmitter can generally take the information in the record call and translate it to the underlying warehouse system, assuming such calls are efficient in their own right.
 
-=== Message
+[small]#`org.smallmind.claxon.registry.PushEmitter`#
 
-=== Prometheus
+[[claxon-emitters-pull-emiiter, PullEmitter]]
+=== PullEmitter
+
+[small]#`org.smallmind.claxon.registry.PullEmitter`#
+
+A PullEmitter will have to store and forward incoming time series data by necessity. Given that Claxon expects meters to aggregate updates between collection intervals, pull-based emitters may be receiving multiple sets of aggregates before being able to pass that data on to the underlying warehouse, depending on the timing of Claxon collection cycles and those of the underlying system. As the methods of aggregation, if any, will vary from meter to meter, a pull-based emitter can't simply squash aggregates together, and should be prepared to send them on as independent values, along with their original timestamps.
+
+==== EmitterResource
+
+[small]#`org.smallmind.claxon.http.EmitterResource`#
+
+Claxon provides a generic Jersey REST API endpoint for pull-based emitters, such as Prometheus, available in the *claxon-http* artifact (see <<claxon-maven-pull-based>> above). If the provided implementation is not appropriate for your project, building your own should be simple enough considering the few lines of code it took to implement ours.
+
+=== Out Of The Box
+
+Claxon current provides emitters for the following systems as part of this project...
+
+==== DataDog
+
+==== JMX
+
+==== Message
+
+==== Prometheus
 
 Beware when using Prometheus that its scrape protocol is limited. You might think it would be easy enough to allow multiple data points for any single time series, within the same scrape Http body, by referencing the timestamp value the protocol allows to be included with each data point, and, where that was either not present or not sufficient, relying on the simple ordering of the values themselves. However, that is not the case and multiple data points for the same series will be lost. Due to this limitation, Claxon's Prometheus integration will only report the last data point received for any series since the last scrape request. It's important, therefore, to have your Prometheus instance scrape the Claxon endpoint at least as often as Claxon is set to report its aggregated values. In practical terms...
 
 [WARNING]
 The Prometheus collection interval must be less than or equal to the Claxon collection interval as defined by `ClaxonConfiguration.getCollectionStint()`, _or you may lose data points_.
+
+===== Naming
 
 = Scribe
