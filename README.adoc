@@ -9,7 +9,7 @@ A preface
 
 == About
 
-=== Installation
+=== Download
 
 All Smallmind modules are pushed to Maven Central under the *org.smallmind* group id. All artifacts which are intended to work together have the same sem version. Explicit module listings can be found in the various sections of this document covering those modules. Wherever possible, dependencies of this project are marked as `<optional>true</optional>`. This does require projects using these libraries to include such dependencies along with the relevant Smallmind modules, but keeps this project from making unwanted decisions. If we've missed any such opportunities, please let us know.
 
@@ -25,9 +25,12 @@ There is none. IOC projects provide both the base container and configuration. S
 = Claxon
 
 [partintro]
-Claxon is a unified code instrumentation and metric gathering framework that abstracts away the underlying metric warehousing systems, allowing new systems to be plugged in and replaced as needed. Libraries can safely provide instrumentation in a warehouse agnostic fashion. New meters can be created without reference to the eventual warehousing system, and new warehouses can be integrated and used with all Claxon meters.
+Claxon is a unified code instrumentation and metric gathering framework that abstracts away the underlying metric warehousing systems, allowing new systems to be plugged in and replaced as needed. It can be safely used as a dependency in libraries to provide instrumentation in a warehouse agnostic fashion, without forcing any particular notion of the underlying metrics storage system on the library adopter. New meters can be created without reference to the eventual warehousing system, and new warehouses can be integrated and used with all Claxon meters.
 
-.Claxon Core
+== Install
+To use Claxon you need the `claxon-registry` dependency, and you may add dependencies for any emitters you're interested in the various `claxon-emitter-*` modules. There's also a simple Http endpoint for scraping pull-based emitters in the `claxon-http` module.
+
+.Claxon Registry
 [source,xml]
 ----
       <dependency>
@@ -371,4 +374,38 @@ The Prometheus collection interval must be less than or equal to the Claxon coll
 ===== Naming
 Prometheus does not allow dot notated names, nor anything but the most basic ascii characters and numbers. The more natural dot notated names used by Claxon will be translated to underscore separated names. Most everything otherwise inadmissible for prometheus will also end up as underscores. Fortunately, prometheus is muti-dimensional and Claxon's guidelines for tags are in line with those promulgated by Prometheus.
 
+[[scribe,Scribe]]
 = Scribe
+
+[partintro]
+Scribe is a logging framework with no specific dependency on a logger endpoint. It can be safely used in libraries without forcing any particular notion of the endpoint logging system on the library adopter. It is programmatically configurable and has no proprietary configuration format. Scribe can consume and integrate both Apache Commons Logging and SLF4J logging. Scribe's adapters for endpoint logging systems are written as services, so, when choosing a logging endpoint in top-level projects, it's enough to include the desired module as a project dependency. Scribe has a notion of thread local context which flows through to the context implementations of endpoint logger adapters. Scribe is fast, efficient, and easy to extend. The implementation requirements for adapters, appenders, filters and formatters are clear and minimal.
+
+== Install
+
+== Acknowledgments
+
+Thanks to SLF4J.
+
+== Design Choices
+There are a few simple reasons for designing yet another logging framework almost no one will ever use...
+
+* Programmatic configuration at its heart. Nothing but dependency injection.
+* Simple implementation of extensions with no priveleged internals and minimal biases.
+* No logging level checks necessary because expensive operations are delayed until the output stage.
+* Where an expensive operation is necessary, it can be defined in a way which allows its execution to be delayed until the output stage.
+* Native message formatting using the _printf_ style from `String.format()`.
+* The last argument in *all* logging methods is the _var args_ for message formatting, and this includes those methods which take an Exception (so you can add an exception without losing formatted messages).
+
+And that last reason is honestly the one which started this project. Hopefully it's not the only one for using it, but, for us, it's enough.
+
+[[spark,Spark]]
+= Spark
+
+[partintro]
+This
+
+[[spark-singularity,Singularity]]
+== Singularity
+Singularity is a Maven packaging format for executable jars *with* all their dependencies. Notably, a Singularity package does not unpack and repack its dependencies. The original jar files are maintained and their namespaces are preserved. In order to speed class resolution and loading, indexes are built on compilation through a bit of Maven plugin magic. There should be nothing special you need to do with your code to create a Singulairty from it, other than defining the packaging and nominating a `public static void main (String... args)` entry point.
+
+=== Install
