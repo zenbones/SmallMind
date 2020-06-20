@@ -5,9 +5,10 @@
 A journey through glue code
 
 [preface]
-A preface
+The SmallMind project is about all the pieces of functionality you need to take care of after you've written your business logic. It's about logging, pooling, monitoring, caching and remoting. It's about doing all this without assumptions or privilege, so that every piece can be dropped, adapted, or extended. This project is opinionated, but we hope those opinions come out of a thoughtful and positive place.
 
 == About
+This is a work in progress, which is to say it's mostly code. We're open to opinions, modifications, questions, and, above all, help, because if there's any point to this project, it's to be helpful.
 
 === Download
 
