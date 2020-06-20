@@ -21,6 +21,7 @@ There is none. IOC projects provide both the base container and configuration. S
 === Modules
 
 * <<claxon>> - A unified monitoring framework with extensible meters and pluggable metric warehousing integrations (comes with Datadog, JMX, Logging and Prometheus).
+* <<spark>> - Maven packaging formats for the construction of self-contained executable build artifacts.
 
 [[claxon,Claxon]]
 = Claxon
@@ -34,47 +35,47 @@ To use Claxon you need the `claxon-registry` dependency, and you may add depende
 .Claxon Registry
 [source,xml]
 ----
-      <dependency>
-        <groupId>org.smallmind</groupId>
-        <artifactId>claxon-registry</artifactId>
-        <version>LATEST</version>
-      </dependency>
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>claxon-registry</artifactId>
+  <version>LATEST</version>
+</dependency>
 ----
 
 .Claxon Push-based Integrations
 [source,xml]
 ----
-      <dependency>
-        <groupId>org.smallmind</groupId>
-        <artifactId>claxon-emitter-datadog</artifactId>
-        <version>LATEST</version>
-      </dependency>
-      <dependency>
-        <groupId>org.smallmind</groupId>
-        <artifactId>claxon-emitter-jmx</artifactId>
-        <version>LATEST</version>
-      </dependency>
-      <dependency>
-        <groupId>org.smallmind</groupId>
-        <artifactId>claxon-emitter-logging</artifactId>
-        <version>LATEST</version>
-      </dependency>
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>claxon-emitter-datadog</artifactId>
+  <version>LATEST</version>
+</dependency>
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>claxon-emitter-jmx</artifactId>
+  <version>LATEST</version>
+</dependency>
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>claxon-emitter-logging</artifactId>
+  <version>LATEST</version>
+</dependency>
 ----
 
 [[claxon-maven-pull-based, Pull-based Integrations]]
 .Claxon Pull-based Integrations
 [source,xml]
 ----
-      <dependency>
-        <groupId>org.smallmind</groupId>
-        <artifactId>claxon-emitter-prometheus</artifactId>
-        <version>LATEST</version>
-      </dependency>
-      <dependency>
-        <groupId>org.smallmind</groupId>
-        <artifactId>claxon-http</artifactId>
-        <version>LATEST</version>
-      </dependency>
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>claxon-emitter-prometheus</artifactId>
+  <version>LATEST</version>
+</dependency>
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>claxon-http</artifactId>
+  <version>LATEST</version>
+</dependency>
 ----
 
 == Acknowledgments
@@ -213,11 +214,11 @@ The prerequisites taken care of, Instrument functionality is accessed through it
 ====
 [source,java]
 ----
-    Instrument.with(MyClass.class, new SpeedometerBuilder(), new Tag("event", "myevent"),new Tag("service", "myservice")).on(() -> {
-      ...
-      instrumented code
-      ...
-    });
+Instrument.with(MyClass.class, new SpeedometerBuilder(), new Tag("event", "myevent"),new Tag("service", "myservice")).on(() -> {
+  ...
+  instrumented code
+  ...
+});
 ----
 ====
 
@@ -262,18 +263,18 @@ The following would register a Histogram (`org.smallmind.claxon.registry.meter.H
 
 [source,java]
 ----
-  @Instrumented(
-    caller = MyClass.class,
-    constants = @ConstantTag(key = "const1", constant = "value"),
-    parameters = {@ParameterTag(key = "param1", parameter = "parameter1"), @ParameterTag(key = "param2", parameter = "parameter2")},
-    parser = HistogramParser.class,
-    json = "{\"numberOfSignificantValueDigits\": 2, \"lowestDiscernibleValue\": 1, \"highestTrackableValue\": 3600000, \"percentiles\": [{\"name\": \"p75\", \"value\": 75.0}, {\"name\": \"p95\", \"value\": 95.0}, {\"name\": \"p99\", \"value\": 99.0}]}"
-  )
-  public SomeClass myMethod (String parameter1, int parameter2) {
-    ...
-    instrumented code
-    ...
-  }
+@Instrumented(
+  caller = MyClass.class,
+  constants = @ConstantTag(key = "const1", constant = "value"),
+  parameters = {@ParameterTag(key = "param1", parameter = "parameter1"), @ParameterTag(key = "param2", parameter = "parameter2")},
+  parser = HistogramParser.class,
+  json = "{\"numberOfSignificantValueDigits\": 2, \"lowestDiscernibleValue\": 1, \"highestTrackableValue\": 3600000, \"percentiles\": [{\"name\": \"p75\", \"value\": 75.0}, {\"name\": \"p95\", \"value\": 95.0}, {\"name\": \"p99\", \"value\": 99.0}]}"
+)
+public SomeClass myMethod (String parameter1, int parameter2) {
+  ...
+  instrumented code
+  ...
+}
 ----
 
 [[claxon-meters, Meters]]
@@ -403,10 +404,35 @@ And that last reason is honestly the one which started this project. Hopefully i
 = Spark
 
 [partintro]
-This
+The Spark project consists of Maven packaging formats for the construction of self-contained executable build artifacts.
 
 [[spark-singularity,Singularity]]
 == Singularity
-Singularity is a Maven packaging format for executable jars *with* all their dependencies. Notably, a Singularity package does not unpack and repack its dependencies. The original jar files are maintained and their namespaces are preserved. In order to speed class resolution and loading, indexes are built on compilation through a bit of Maven plugin magic. There should be nothing special you need to do with your code to create a Singulairty from it, other than defining the packaging and nominating a `public static void main (String... args)` entry point.
+Singularity is a Maven packaging format for executable jars *with* all their dependencies. Notably, a Singularity package does not unpack and repack its dependencies. The original jar files are maintained, and their namespaces are preserved. In order to speed class resolution and loading, indexes are built on compilation through a bit of Maven plugin magic. There should be nothing special you need to do with your code to create a Singulairty from it, other than defining the packaging and nominating a `public static void main (String... args)` entry point.
 
 === Install
+In order to have Maven create a self-contained jar you should declare the packaging as `singularity` and include the `spark-singularity-maven-plugin` as outlined below..
+
+.Singularity Plugin
+[source,xml]
+----
+<project>
+...
+  <packaging>singularity</packaging>
+...
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.smallmind</groupId>
+        <artifactId>spark-singularity-maven-plugin</artifactId>
+        <version>LATEST</version>
+        <extensions>true</extensions>
+        <configuration>
+          <!-- Your entry point class containing a standard main() method -->
+          <mainClass>my.Main</mainClass>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
+----
