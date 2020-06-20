@@ -8,6 +8,7 @@ A journey through glue code
 The SmallMind project is about all the pieces of functionality you need to take care of after you've written your business logic. It's about logging, pooling, monitoring, caching and remoting. It's about doing all this without assumptions or privilege, so that every piece can be dropped, adapted, or extended. This project is opinionated, but we hope those opinions come out of a thoughtful and positive place.
 
 == About
+
 This is a work in progress, which is to say it's mostly code. We're open to opinions, modifications, questions, and, above all, help, because if there's any point to this project, it's to be helpful.
 
 === Download
@@ -30,6 +31,7 @@ There is none. IOC projects provide both the base container and configuration. S
 Claxon is a unified code instrumentation and metric gathering framework that abstracts away the underlying metric warehousing systems, allowing new systems to be plugged in and replaced as needed. It can be safely used as a dependency in libraries to provide instrumentation in a warehouse agnostic fashion, without forcing any particular notion of the underlying metrics storage system on the library adopter. New meters can be created without reference to the eventual warehousing system, and new warehouses can be integrated and used with all Claxon meters.
 
 == Install
+
 To use Claxon you need the `claxon-registry` dependency, and you may add dependencies for any emitters you're interested in the various `claxon-emitter-*` modules. There's also a simple Http endpoint for scraping pull-based emitters in the `claxon-http` module.
 
 .Claxon Registry
@@ -374,6 +376,7 @@ Beware when using Prometheus that its scrape protocol is limited. You might thin
 The Prometheus collection interval must be less than or equal to the Claxon collection interval as defined by `ClaxonConfiguration.getCollectionStint()`, _or you may lose data points_.
 
 ===== Naming
+
 Prometheus does not allow dot notated names, nor anything but the most basic ascii characters and numbers. The more natural dot notated names used by Claxon will be translated to underscore separated names. Most everything otherwise inadmissible for prometheus will also end up as underscores. Fortunately, prometheus is muti-dimensional and Claxon's guidelines for tags are in line with those promulgated by Prometheus.
 
 [[scribe,Scribe]]
@@ -389,6 +392,7 @@ Scribe is a logging framework with no specific dependency on a logger endpoint. 
 Thanks to SLF4J.
 
 == Design Choices
+
 There are a few simple reasons for designing yet another logging framework almost no one will ever use...
 
 * Programmatic configuration at its heart. Nothing but dependency injection.
@@ -408,18 +412,20 @@ The Spark project consists of Maven packaging formats for the construction of se
 
 [[spark-singularity,Singularity]]
 == Singularity
+
 Singularity is a Maven packaging format for executable jars *with* all their dependencies. Notably, a Singularity package does not unpack and repack its dependencies. The original jar files are maintained, and their namespaces are preserved. In order to speed class resolution and loading, indexes are built on compilation through a bit of Maven plugin magic. There should be nothing special you need to do with your code to create a Singulairty from it, other than defining the packaging and nominating a `public static void main (String... args)` entry point.
 
 === Install
+
 In order to have Maven create a self-contained jar you should declare the packaging as `singularity` and include the `spark-singularity-maven-plugin` as outlined below..
 
 .Singularity Plugin
 [source,xml]
 ----
 <project>
-...
+  ...
   <packaging>singularity</packaging>
-...
+  ...
   <build>
     <plugins>
       <plugin>
@@ -428,11 +434,29 @@ In order to have Maven create a self-contained jar you should declare the packag
         <version>LATEST</version>
         <extensions>true</extensions>
         <configuration>
-          <!-- Your entry point class containing a standard main() method -->
-          <mainClass>my.Main</mainClass>
+          <mainClass><!-- entry point class containing a main() method --></mainClass>
         </configuration>
       </plugin>
     </plugins>
   </build>
 </project>
+----
+
+=== Configuration
+
+The following configuration attributes are supported by the plugin...
+
+* *mainClass* (required) - An entry point class containing a standard `public static void main (String... args)` method.
++
+.Example
+[source,xml]
+----
+<mainClass>my.Main</mainClass>
+----
+* *skip* (optional, defaults to _false_) - If this attribute exists and is set `true`, then the plugin will skip its operations and no artifact will be produced.
++
+.Example
+[source,xml]
+----
+<skip>true</skip>
 ----
