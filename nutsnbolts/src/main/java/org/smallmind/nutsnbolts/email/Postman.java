@@ -83,7 +83,7 @@ public class Postman {
   public Postman (String host, int port, Authentication authentication, boolean secure) {
 
     session = (!secure) ? Protocol.SMTP.getSession(host, port, authentication) : Protocol.SMTPS.getSession(host, port, authentication);
-    freemarkerConf = new Configuration();
+    freemarkerConf = new Configuration(Configuration.VERSION_2_3_28);
     freemarkerConf.setTagSyntax(freemarker.template.Configuration.SQUARE_BRACKET_TAG_SYNTAX);
   }
 
