@@ -460,22 +460,77 @@ There are a few simple reasons for designing yet another logging framework almos
 
 And that last reason is honestly the one which started this project. Hopefully it's not the only one for using it, but, for us, it's enough.
 
-== Components
+== Logger
 
-=== Appender
+[small]#`org.smallmind.scribe.pen.Logger`#
 
-==== Out Of The Box
+The mechanism of logging in Scribe is a Logger. A logger has a <<scribe-logger-name>> and a <<scribe-level>> at which it will log, may have a <<scribe-logical-context>>, holds <<scribe-appenders>>, <<scribe-filters>> and <<scribe-enhancer>>, and can decorate logs with <<scribe-parameters>>. The basic function of a Logger is expressed through its `log()` methods....
 
-=== Filter
+* `void log (Level level, String message, Object... args)`
+* `void log (Level level, Throwable throwable)`
+* `void log (Level level, Throwable throwable, String message, Object... args)`
+* `void log (Level level, Object object)`
+* `void log (Level level, Throwable throwable, Object object)`
+* `void log (Level level, Supplier<String> supplier)`
+* `void log (Level level, Throwable throwable, Supplier<String> supplier)`
 
-=== Formatter
+Each log statement has a _<<scribe-level>>_ at which it will be logged, can take a _Throwable_ to provide the stack trace output of an error, and takes one of three forms of message body...
 
-==== Out Of The Box
+* *Formatted* - Formatted messages take a base _String_ message and an optional set of arguments. If any arguments are passed, the message will be interpreted as a formatting template via the `String.format()` method, with the arguments passed as the formatting arguments.
+* *Object* - If a single _Object_ is provided as the log message, the output will be the result of the object's `toString()` method. As message interpolation is delayed until after all filtering, this is one way of guaranteeing that complex or expensive operations to generate a log message will not be performed unless they are needed.
+* *Supplier* - If a single _Supplier<String>_ is provided as the log message, the ouput will be the result of the supplier's `get()` method. As with using a simple _Object_ above, this can be used to delay complex or expensive operations until they are required.
 
+For the sake of clarity and convenience, the above methods are replicated, once for each available log <<scribe-level>> (sans the _Level_ parameter, obviously), as in...
+
+[NOTE]
+====
+.An info level log with a formatted messge
+[source,java]
+----
+void info (String message, Object... args)
+----
+====
+
+...or...
+
+[NOTE]
+====
+.A warn level log with a _Throwable_ and _Supplier_
+[source,java]
+----
+void warn (Throwable throwable, Supplier<String> supplier)
+----
+====
+
+
+
+[[scribe-logger-name, Name]]
+=== Name
+
+[[scribe-level, Level]]
+=== Level
+
+[[scribe-logical-context, Logical Context]]
 === Logical Context
 
-=== Enhancer
+[[scribe-appenders, Appenders]]
+=== Appenders
 
+==== More Filters
+
+==== Formatted Appender
+
+===== Formatter
+
+==== Out Of The Box
+
+[[scribe-filters, Filters]]
+=== Filters
+
+[[scribe-enhancer, Enhancers]]
+=== Enhancers
+
+[[scribe-parameters, Parameters]]
 === Parameters
 
 == Configuration

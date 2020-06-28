@@ -1,28 +1,28 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under either, at your discretion...
- * 
+ *
  * 1) The terms of GNU Affero General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or (at
  * your option) any later version.
- * 
+ *
  * ...or...
- * 
+ *
  * 2) The terms of the Apache License, Version 2.0.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License or Apache License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * and the Apache License along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -33,6 +33,7 @@
 package org.smallmind.scribe.pen;
 
 import java.io.Serializable;
+import java.util.function.Supplier;
 import org.smallmind.scribe.pen.adapter.LoggerAdapter;
 import org.smallmind.scribe.pen.adapter.LoggingBlueprintFactory;
 
@@ -168,9 +169,19 @@ public class Logger {
     log(Level.TRACE, object);
   }
 
+  public void trace (Supplier<String> supplier) {
+
+    log(Level.TRACE, supplier);
+  }
+
   public void trace (Throwable throwable, Object object) {
 
     log(Level.TRACE, throwable, object);
+  }
+
+  public void trace (Throwable throwable, Supplier<String> supplier) {
+
+    log(Level.TRACE, throwable, supplier);
   }
 
   public void debug (Throwable throwable) {
@@ -193,9 +204,19 @@ public class Logger {
     log(Level.DEBUG, object);
   }
 
+  public void debug (Supplier<String> supplier) {
+
+    log(Level.DEBUG, supplier);
+  }
+
   public void debug (Throwable throwable, Object object) {
 
     log(Level.DEBUG, throwable, object);
+  }
+
+  public void debug (Throwable throwable, Supplier<String> supplier) {
+
+    log(Level.DEBUG, throwable, supplier);
   }
 
   public void info (Throwable throwable) {
@@ -218,9 +239,19 @@ public class Logger {
     log(Level.INFO, object);
   }
 
+  public void info (Supplier<String> supplier) {
+
+    log(Level.INFO, supplier);
+  }
+
   public void info (Throwable throwable, Object object) {
 
     log(Level.INFO, throwable, object);
+  }
+
+  public void info (Throwable throwable, Supplier<String> supplier) {
+
+    log(Level.INFO, throwable, supplier);
   }
 
   public void warn (Throwable throwable) {
@@ -243,9 +274,19 @@ public class Logger {
     log(Level.WARN, object);
   }
 
+  public void warn (Supplier<String> supplier) {
+
+    log(Level.WARN, supplier);
+  }
+
   public void warn (Throwable throwable, Object object) {
 
     log(Level.WARN, throwable, object);
+  }
+
+  public void warn (Throwable throwable, Supplier<String> supplier) {
+
+    log(Level.WARN, throwable, supplier);
   }
 
   public void error (Throwable throwable) {
@@ -268,9 +309,19 @@ public class Logger {
     log(Level.ERROR, object);
   }
 
+  public void error (Supplier<String> supplier) {
+
+    log(Level.ERROR, supplier);
+  }
+
   public void error (Throwable throwable, Object object) {
 
     log(Level.ERROR, throwable, object);
+  }
+
+  public void error (Throwable throwable, Supplier<String> supplier) {
+
+    log(Level.ERROR, throwable, supplier);
   }
 
   public void fatal (Throwable throwable) {
@@ -293,9 +344,19 @@ public class Logger {
     log(Level.FATAL, object);
   }
 
+  public void fatal (Supplier<String> supplier) {
+
+    log(Level.FATAL, supplier);
+  }
+
   public void fatal (Throwable throwable, Object object) {
 
     log(Level.FATAL, throwable, object);
+  }
+
+  public void fatal (Throwable throwable, Supplier<String> supplier) {
+
+    log(Level.FATAL, throwable, supplier);
   }
 
   public void log (Level level, Throwable throwable) {
@@ -318,8 +379,18 @@ public class Logger {
     loggerAdapter.logMessage((level == null) ? getLevel() : level, null, object);
   }
 
+  public void log (Level level, Supplier<String> supplier) {
+
+    loggerAdapter.logMessage((level == null) ? getLevel() : level, null, supplier);
+  }
+
   public void log (Level level, Throwable throwable, Object object) {
 
     loggerAdapter.logMessage((level == null) ? getLevel() : level, throwable, object);
+  }
+
+  public void log (Level level, Throwable throwable, Supplier<String> supplier) {
+
+    loggerAdapter.logMessage((level == null) ? getLevel() : level, throwable, supplier);
   }
 }
