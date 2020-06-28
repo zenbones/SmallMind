@@ -460,6 +460,7 @@ There are a few simple reasons for designing yet another logging framework almos
 
 And that last reason is honestly the one which started this project. Hopefully it's not the only one for using it, but, for us, it's enough.
 
+[[scribe-logger, Logger]]
 == Logger
 
 [small]#`org.smallmind.scribe.pen.Logger`#
@@ -508,13 +509,13 @@ Every logger instance has a name by which it's retrieved (see <<scribe-logger-ma
 
 The available log levels, which provide for basic categorization and filtering of log entries, are represented by the *Level* enum, which contains the following ordinal values...
 
-* *TRACE* -
-* *DEBUG* -
-* *INFO* -
-* *WARN* -
-* *ERROR* -
-* *FATAL* -
-* *OFF* -
+* *TRACE* - Intended for very fine gained more-than-debug logging.
+* *DEBUG* - For traditional debug logs.
+* *INFO* - Informational messages, for example service startups and shutdowns, initial conditions, etc.
+* *WARN* - Intended for possible problems or misconfigurations which do not rise to the level of overt errors.
+* *ERROR* - A notice that something has gone wrong, often including an exception.
+* *FATAL* - Intended for world-stopping events which cause shutdown or other unrecoverable states.
+* *OFF* - Do not log. For use on <<scribe-logger>> instances or <<scribe-appenders>>, in order to shut them off. This should *never* be used as the level of a `log()` event.
 
 [[scribe-logical-context, Logical Context]]
 === Logical Context
