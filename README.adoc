@@ -482,27 +482,19 @@ Each log statement has a _<<scribe-level>>_ at which it will be logged, can take
 
 For the sake of clarity and convenience, the above methods are replicated, once for each available log <<scribe-level>> (sans the _Level_ parameter, obviously), as in...
 
-[NOTE]
-====
 .An Info level log with a formatted messge
 [source,java]
 ----
 void info (String message, Object... args)
 ----
-====
 
 ...or...
 
-[NOTE]
-====
 .A Warn level log with a _Throwable_ and _Supplier_
 [source,java]
 ----
 void warn (Throwable throwable, Supplier<String> supplier)
 ----
-====
-
-
 
 [[scribe-logger-name, Name]]
 === Name
