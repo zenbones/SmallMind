@@ -208,7 +208,26 @@ The provided `org.smallmind.claxon.registry.spring.ClaxonRegistryFactoryBean` do
 The prerequisites taken care of, Instrument functionality is accessed through its `with()` method. This method takes the same _caller_, _builder_ and _tags_ parameters as the `register()` method discussed previously (see <<claxon-registry-register>> above), but returns an instance of the Instrumentation (`org.smallmind.claxon.registry.Instrumentation`) interface. Through this interface you can...
 
 * `track()` to follow either an Obervable object, or any object coupled with a measuring function, as you can with the ClaxonRegistry directly.
++
+[NOTE]
+====
+[source,java]
+----
+LinkedList<?> myList = new LinkedList();
+Instrument.with(MyClass.class, new GaugeBuilder(), new Tag("pool", "used")).track(myList, list -> (long)list.size());
+----
+====
+
 * `update()` the registered meter with a value, either a simple long value in the default time units (milliseconds), or with an explicit TimeUnit.
++
+[NOTE]
+====
+[source,java]
+----
+Instrument.with(MyClass.class, new GaugeBuilder(), new Tag("event", "myevent")).update(12345);
+----
+====
+
 * call `as()` to set the default time unit of the Instrumentation instance.
 * call `on()` to wrap a block of code in timing metrics (passed as a Lambda with or without a return value).
 +
@@ -387,6 +406,43 @@ Scribe is a logging framework with no specific dependency on a logger endpoint. 
 
 == Install
 
+To use Scribe you'll need the `scribe-pen` dependency, and, if using an endpoint logger, you'll need to add the appropriate `scribe-ink-*` module. Integration with Apache Commons Logging is achieved through adding the `scribe-apache` module, and with SLF4J by adding the `scribe-slf4j` module.
+
+.Scribe Pen
+[source,xml]
+----
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>scribe-pen</artifactId>
+  <version>LATEST</version>
+</dependency>
+----
+
+.Scribe Ink
+[source,xml]
+----
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>scribe-ink-indigenous</artifactId>
+  <version>LATEST</version>
+</dependency>
+----
+
+.Scribe Integrations
+[source,xml]
+----
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>scribe-apache</artifactId>
+  <version>LATEST</version>
+</dependency>
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>scribe-slf4j</artifactId>
+  <version>LATEST</version>
+</dependency>
+----
+
 == Acknowledgments
 
 Thanks to SLF4J.
@@ -403,6 +459,10 @@ There are a few simple reasons for designing yet another logging framework almos
 * The last argument in *all* logging methods is the _var args_ for message formatting, and this includes those methods which take an Exception (so you can add an exception without losing formatted messages).
 
 And that last reason is honestly the one which started this project. Hopefully it's not the only one for using it, but, for us, it's enough.
+
+== Apache Commons Logging Integration
+
+== SLF4J Integration
 
 [[spark,Spark]]
 = Spark
@@ -453,6 +513,7 @@ The following configuration attributes are supported by the plugin...
 ----
 <mainClass>my.Main</mainClass>
 ----
+
 * *skip* (optional, defaults to _false_) - If this attribute exists and is set `true`, then the plugin will skip its operations and no artifact will be produced.
 +
 .Example

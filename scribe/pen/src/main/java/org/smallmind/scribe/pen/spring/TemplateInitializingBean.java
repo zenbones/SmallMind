@@ -30,25 +30,31 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.scribe.spring;
+package org.smallmind.scribe.pen.spring;
 
-import java.util.Arrays;
 import java.util.LinkedList;
-import org.smallmind.scribe.pen.ExceptionSuppressingLogFilter;
+import java.util.List;
+import org.smallmind.scribe.pen.Template;
 import org.springframework.beans.factory.InitializingBean;
 
-public class ExceptionSuppressingLogInitializingBean implements InitializingBean {
+public class TemplateInitializingBean implements InitializingBean {
 
-  private final LinkedList<Class<? extends Throwable>> suppressedThrowableClassList = new LinkedList<>();
+  private final LinkedList<Template> initialTemplates;
 
-  public void setSuppressedThrowableClasses (Class<? extends Throwable>[] suppressedThrowableClasses) {
+  public TemplateInitializingBean () {
 
-    suppressedThrowableClassList.addAll(Arrays.asList(suppressedThrowableClasses));
+    initialTemplates = new LinkedList<>();
   }
 
-  @Override
+  public void setInitialTemplates (List<Template> initialTemplates) {
+
+    this.initialTemplates.addAll(initialTemplates);
+  }
+
   public void afterPropertiesSet () {
 
-    ExceptionSuppressingLogFilter.addSuppressedThrowableClasses(suppressedThrowableClassList);
+    for (Template template : initialTemplates) {
+      template.register();
+    }
   }
 }

@@ -13,7 +13,6 @@
   <modules>
     <module>ink</module>
     <module>pen</module>
-    <module>spring</module>
     <module>slf4j</module>
     <module>apache</module>
   </modules>
