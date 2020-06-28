@@ -499,8 +499,22 @@ void warn (Throwable throwable, Supplier<String> supplier)
 [[scribe-logger-name, Name]]
 === Name
 
+Every logger instance has a name by which it's retrieved (see <<scribe-logger-manager>> below), by which its configuration may be fine-tuned (see <<scribe-configuration>> below), and by which it may be known in log output. Although the choice of name is yours, it's suggested that you stick with the name of the class doing the logging.
+
 [[scribe-level, Level]]
 === Level
+
+[small]#`org.smallmind.scribe.pen.Level`#
+
+The available log levels, which provide for basic categorization and filtering of log entries, are represented by the *Level* enum, which contains the following ordinal values...
+
+* *TRACE* -
+* *DEBUG* -
+* *INFO* -
+* *WARN* -
+* *ERROR* -
+* *FATAL* -
+* *OFF* -
 
 [[scribe-logical-context, Logical Context]]
 === Logical Context
@@ -525,8 +539,6 @@ void warn (Throwable throwable, Supplier<String> supplier)
 [[scribe-parameters, Parameters]]
 === Parameters
 
-== Configuration
-
 == Adaptation
 
 === Blueprint
@@ -536,6 +548,14 @@ void warn (Throwable throwable, Supplier<String> supplier)
 === Record
 
 === Parameter Adapter
+
+[[scribe-configuration, Configuration]]
+== Configuration
+
+[[scribe-logger-manager, LoggerManager]]
+== LoggerManager
+
+[small]#`org.smallmind.scribe.pen.LoggerManager`#
 
 == Apache Commons Logging Integration
 
