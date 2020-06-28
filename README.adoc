@@ -484,7 +484,7 @@ For the sake of clarity and convenience, the above methods are replicated, once 
 
 [NOTE]
 ====
-.An info level log with a formatted messge
+.An Info level log with a formatted messge
 [source,java]
 ----
 void info (String message, Object... args)
@@ -495,7 +495,7 @@ void info (String message, Object... args)
 
 [NOTE]
 ====
-.A warn level log with a _Throwable_ and _Supplier_
+.A Warn level log with a _Throwable_ and _Supplier_
 [source,java]
 ----
 void warn (Throwable throwable, Supplier<String> supplier)
