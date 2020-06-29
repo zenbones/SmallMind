@@ -41,27 +41,22 @@ import org.smallmind.nutsnbolts.io.PathUtility;
 
 public class Cleanup {
 
-  private CleanupRule[] rules;
-  private char separator;
+  private CleanupRule<?>[] rules;
+  private char separator = '-';
 
   public Cleanup () {
 
   }
 
-  public Cleanup (CleanupRule... rules) {
+  public Cleanup (CleanupRule<?>... rules) {
 
-    this('-', rules);
-  }
-
-  public Cleanup (char separator, CleanupRule... rules) {
-
-    this.separator = separator;
     this.rules = rules;
   }
 
-  public char getSeparator () {
+  public Cleanup (char separator, CleanupRule<?>... rules) {
 
-    return separator;
+    this.separator = separator;
+    this.rules = rules;
   }
 
   public void setSeparator (char separator) {
@@ -69,7 +64,7 @@ public class Cleanup {
     this.separator = separator;
   }
 
-  public void setRules (CleanupRule[] rules) {
+  public void setRules (CleanupRule<?>[] rules) {
 
     this.rules = rules;
   }
@@ -77,46 +72,49 @@ public class Cleanup {
   public void vacuum (Path logPath)
     throws IOException, LoggerException {
 
-    CleanupRule[] copyRules;
-    Path parentPath;
-    String logFileName;
-    String prologue;
-    String epilogue = null;
-    int dotPos;
+    if ((rules != null) && (rules.length > 0)) {
 
-    copyRules = new CleanupRule[(rules == null) ? 0 : rules.length];
-    for (int index = 0; index < copyRules.length; index++) {
-      copyRules[index] = rules[index].copy();
-    }
+      CleanupRule<?>[] copyOfRules;
+      Path parentPath;
+      String logFileName;
+      String prologue;
+      String epilogue = null;
+      int dotPos;
 
-    logFileName = PathUtility.fileNameAsString(logPath);
+      copyOfRules = new CleanupRule[rules.length];
+      for (int index = 0; index < copyOfRules.length; index++) {
+        copyOfRules[index] = rules[index].copy();
+      }
 
-    if ((dotPos = logFileName.lastIndexOf('.')) >= 0) {
-      prologue = logFileName.substring(0, dotPos) + separator;
-      epilogue = logFileName.substring(dotPos);
-    } else {
-      prologue = logFileName + separator;
-    }
+      logFileName = PathUtility.fileNameAsString(logPath);
 
-    try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(((parentPath = logPath.getParent()) == null) ? Paths.get("/") : parentPath)) {
-      for (Path possiblePath : directoryStream) {
-        if (Files.isRegularFile(possiblePath) && (!possiblePath.equals(logPath))) {
+      if ((dotPos = logFileName.lastIndexOf('.')) >= 0) {
+        prologue = logFileName.substring(0, dotPos) + separator;
+        epilogue = logFileName.substring(dotPos);
+      } else {
+        prologue = logFileName + separator;
+      }
 
-          String possibleFileName = PathUtility.fileNameAsString(possiblePath);
+      try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(((parentPath = logPath.getParent()) == null) ? Paths.get("/") : parentPath)) {
+        for (Path possiblePath : directoryStream) {
+          if (Files.isRegularFile(possiblePath) && (!possiblePath.equals(logPath))) {
 
-          if (possibleFileName.startsWith(prologue) && ((epilogue == null) || possibleFileName.endsWith(epilogue))) {
-            for (CleanupRule rule : copyRules) {
-              if (rule.willCleanup(possiblePath)) {
-                Files.deleteIfExists(possiblePath);
-                break;
+            String possibleFileName = PathUtility.fileNameAsString(possiblePath);
+
+            if (possibleFileName.startsWith(prologue) && ((epilogue == null) || possibleFileName.endsWith(epilogue))) {
+              for (CleanupRule<?> rule : copyOfRules) {
+                if (rule.willCleanup(possiblePath)) {
+                  Files.deleteIfExists(possiblePath);
+                  break;
+                }
               }
             }
           }
         }
-      }
 
-      for (CleanupRule rule : copyRules) {
-        rule.finish();
+        for (CleanupRule<?> rule : copyOfRules) {
+          rule.finish();
+        }
       }
     }
   }
