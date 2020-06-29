@@ -520,14 +520,54 @@ The available log levels, which provide for basic categorization and filtering o
 [[scribe-logical-context, Logical Context]]
 === Logical Context
 
+[small]#`org.smallmind.scribe.pen.LogicalContext`#
+
+Some loggers are capable of adding information about the point in the code at which logging was initiated. This 'logical context' may include...
+
+* `String getClassName()` - The class which in which the logger was called.
+* `String getMethodName()` - The method from which the logger was called.
+* `String getFileName()` - The name of the file containing the code which initiated the logging call.
+* `int getLineNumber()` - The line number of the initiating call in the file containing the calling code.
+* `boolean isNativeMethod()` - Whether the valling code represents a native method (via C interface).
+
+There is some overhead to gathering this information, so the capability to automatically include it can but turned on/off via the `setAutoFillLogicalContext()` method on the logger.
+
 [[scribe-appenders, Appenders]]
 === Appenders
 
-==== More Filters
+[small]#`org.smallmind.scribe.pen.Appender`#
+
+Appenders are the vehicle for publishing log records. What 'publishing' means is up to the appender implementation. Appenders can take <<scribe-filters>>, and implementations should honor them. An appender can be set inactive, via the `setActive()` method, and inactive appenders should not output log records. An appender can also have an instance of ErrorHandler set on it, which will be called upon to handle uncaught errors in the appender's `publish()` method.
 
 ==== Formatted Appender
 
+[small]#`org.smallmind.scribe.pen.FormattedAppender`#
+
+A FormattedAppender takes an implementation of <<scribe-formatter>> which will determine the structure of its output (as defined by the appender).
+
+[[scribe-formatter, Formatter]]
 ===== Formatter
+
+[small]#`org.smallmind.scribe.pen.Formatter`#
+
+A formatter takes a log <<scribe-record>> and returns a string to be output by an appender. How a formatter does this is completely up to its implementation. There are a couple of useful formatters included with this project.
+
+====== XMLFormatter
+
+[small]#`org.smallmind.scribe.pen.XMLFormatter`#
+
+  private Timestamp timestamp = DateFormatTimestamp.getDefaultInstance();
+  private RecordElement[] recordElements = RecordElement.values();
+  private String newLine = System.getProperty("line.separator");
+  private boolean cdata = false;
+  private int indent = 3;
+
+====== PatternFormatter
+
+[small]#`org.smallmind.scribe.pen.PatternFormatter`#
+
+  private String format;
+  private Timestamp timestamp;
 
 ==== Out Of The Box
 
@@ -546,6 +586,7 @@ The available log levels, which provide for basic categorization and filtering o
 
 === LoggerAdapter
 
+[[scribe-record, Record]]
 === Record
 
 === Parameter Adapter
