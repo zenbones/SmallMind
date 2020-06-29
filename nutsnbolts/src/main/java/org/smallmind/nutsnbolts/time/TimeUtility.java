@@ -117,8 +117,7 @@ public class TimeUtility {
       }
 
       if (!hasT) {
-
-        return LocalDate.from(ISO_LOCAL_DATE_FORMATTER.parse(value)).atStartOfDay().atZone(ZoneId.systemDefault());
+        return LocalDate.from(ISO_LOCAL_DATE_FORMATTER.parse(value)).atStartOfDay(ZoneId.systemDefault());
       } else if (!(hasZ || hasPlusOrMinus)) {
         return LocalDateTime.from(ISO_LOCAL_DATE_TIME_FORMATTER.parse(value)).atZone(ZoneId.systemDefault());
       } else if (!hasOpenSquareBracket) {

@@ -32,71 +32,31 @@
  */
 package org.smallmind.nutsnbolts.json;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
+import org.smallmind.nutsnbolts.time.TimeUtility;
 
 public class DateXmlAdapter extends XmlAdapter<String, Date> {
-
-  private static final DateTimeFormatter ISO_ZONED_DATE_TIME_FORMATTER = DateTimeFormatter.ISO_ZONED_DATE_TIME;
-  private static final DateTimeFormatter ISO_OFFSET_DATE_TIME_FORMATTER = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
-  private static final DateTimeFormatter ISO_LOCAL_DATE_TIME_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
-  private static final DateTimeFormatter ISO_LOCAL_DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE;
 
   @Override
   public Date unmarshal (String value) {
 
-    if (value == null) {
+    ZonedDateTime zonedDateTime;
+
+    if ((zonedDateTime = TimeUtility.parse(value)) == null) {
 
       return null;
     } else {
 
-      boolean hasT = false;
-      boolean hasZ = false;
-      boolean hasPlusOrMinus = false;
-      boolean hasOpenSquareBracket = false;
-
-      for (int index = 0; index < value.length(); index++) {
-        switch (value.charAt(index)) {
-          case 'T':
-            hasT = true;
-            break;
-          case 'Z':
-            hasZ = true;
-            break;
-          case '+':
-            hasPlusOrMinus = true;
-            break;
-          case '-':
-            // if we're past the 'T' time separator
-            hasPlusOrMinus = hasT;
-            break;
-          case '[':
-            hasOpenSquareBracket = true;
-            break;
-        }
-      }
-
-      if (!hasT) {
-
-        return Date.from(LocalDate.from(ISO_LOCAL_DATE_FORMATTER.parse(value)).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
-      } else if (!(hasZ || hasPlusOrMinus)) {
-        return Date.from(LocalDateTime.from(ISO_LOCAL_DATE_TIME_FORMATTER.parse(value)).atZone(ZoneId.systemDefault()).toInstant());
-      } else if (!hasOpenSquareBracket) {
-        return Date.from(ZonedDateTime.from(ISO_OFFSET_DATE_TIME_FORMATTER.parse(value)).toInstant());
-      } else {
-        return Date.from(ZonedDateTime.from(ISO_ZONED_DATE_TIME_FORMATTER.parse(value)).toInstant());
-      }
+      return Date.from(zonedDateTime.toInstant());
     }
   }
 
   @Override
   public String marshal (Date date) {
 
-    return (date == null) ? null : ISO_OFFSET_DATE_TIME_FORMATTER.format(date.toInstant().atZone(ZoneId.systemDefault()));
+    return (date == null) ? null : TimeUtility.format(date.toInstant().atZone(ZoneId.systemDefault()));
   }
 }
