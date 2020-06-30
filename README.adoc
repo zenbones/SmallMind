@@ -556,7 +556,7 @@ A formatter takes a log <<scribe-record>> and returns a string to be output by a
 
 [small]#`org.smallmind.scribe.pen.XMLFormatter`#
 
-The XMLFormatter provides, unsurprisingly, an xml formatted output. There are a few attributes you can set on the formatter to configure its behavior.
+The XMLFormatter provides, unsurprisingly, an xml formatted output. There are a few attributes you can set on the formatter to configure its behavior...
 
 * *timestamp* (_org.smallmind.scribe.pen.Timestamp_) - Controls how dates are formatted. Defaults to "yyyy-MM-dd'T'HH:mm:ss.SSSZ".
 * *newLine* (_String_) - The line separator used when pretty printing the output. Defaults to `System.getProperty("line.separator")`.
@@ -577,8 +577,71 @@ The XMLFormatter provides, unsurprisingly, an xml formatted output. There are a 
 
 [small]#`org.smallmind.scribe.pen.PatternFormatter`#
 
-  private String format;
-  private Timestamp timestamp;
+The pattern formatter is a flexible log record formatter with a traditional output style. This formatter takes only two configuration parameters...
+
+* *timestamp* (_org.smallmind.scribe.pen.Timestamp_) - Controls how dates are formatted. Defaults to "yyyy-MM-dd'T'HH:mm:ss.SSSZ".
+* *format* (_String_) - Here's where it gets a little complex...
++
+====
+The operation of the format string is similar to that of _String_ formatting Flags. Portrayed as a regular expression, each Flag has the general form of...
+
+[source,regexp]
+----
+({[^%]+)?%((+|-)?(\d+))?(.\d*)?(!(+|-)[^!]*!)?([dtnlmTCMNLFsp])([^}]+})?
+----
+
+Let's take this apart piece by piece...
+
+. *{_header_* -
+. *%* -
+. *``+|-``_width_* -
+. *._precision_* -
+. *!``+|-``_prefix_!* -
+. *conversion* -
+. *_footer_}* -
+
+  [{<header text>] is used to insert starting text (only if the field value exists and will be output).
+  [<footer text>}] is used to insert ending text (only if the field value exists and will be output).
+
+  [<+|->width] is used to set the maximum field length, where the optional '+' or '-' is used to denote right or left
+  padded formatting where the field length is less than the width specifier. If absent, then no padding will be used.
+
+  [.precision] is used in dot notated fields (logger name, context class, etc.) to specify a maximum number
+  of segments to display, starting from the right. For example, given a logger name of 'com.mydomain.myproject.MyClass'
+  and a format flag of %.2n, the conversion would print 'myproject.MyClass'. The precision specifier is
+  used with the multi-line fields Parameters, Statements and Metrics, to specify the maximum number of lines
+  displayed (as a multi-line list). The precision specifier will be ignored on all other field types.
+
+  [!(+|-)<prefix text>!] is used to specify a line separator and any line prefix text to insert before each line of a
+  multi-line field e.g. Stack Trace, Parameters, Correlator, Statements, and Metrics. The '+' or '-' must be present,
+  and sets whether the first line should be prefixed with the text, '+' for true and '-' for false. For instance, the
+  flag '!-,\n! would tell the formatter to insert a comma followed by a line-break before each line of a multi-line
+  field, excluding the first, which will present a comma separated list. If you desire text after the last line, use a
+  footer flag. The default is equivalent to !+\n\t!, or a new-line followed by a tab starting each output line,
+  including the first.
+
+  Available conversions are...
+
+  d - The date stamp of the log entry (yyyy-MM-dd'T'HH:mm:ss.SSSZ)
+  t - The time stamp of the entry in milliseconds
+  n - The logger name
+  l - The logger level
+  m - The log message
+  T - The name of the thread in which the logging occurred (if available)
+  C - The class from which the log event was issued (if available)
+  M - The method in which the log event was issued (if available)
+  N - Whether the method which issued the log event was native code or not [true or false] (if available)
+  L - The line number in the class file from which the log event was issued (if available)
+  F - The file name of the class file from which the log event was issued (if available)
+  s - The stack trace associated with the log event (if present)
+  p - The parameters associated with the log event (if present)
+
+  s and p (stack trace and parameters) are multi-line fields, and are
+  unaffected by the width or padding specifiers.
+
+  The sequence %% outputs a single '%'.
+  The character '\n' will be replaced by the machine specific line separator.
+====
 
 ==== Out Of The Box
 
