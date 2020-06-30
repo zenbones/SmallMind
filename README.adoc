@@ -517,8 +517,8 @@ The available log levels, which provide for basic categorization and filtering o
 * *FATAL* - Intended for world-stopping events which cause shutdown or other unrecoverable states.
 * *OFF* - Do not log. For use on <<scribe-logger>> instances or <<scribe-appenders>>, in order to shut them off. This should *never* be used as the level of a `log()` event.
 
-[[scribe-logical-context, Logical Context]]
-=== Logical Context
+[[scribe-logical-context, LogicalContext]]
+=== LogicalContext
 
 [small]#`org.smallmind.scribe.pen.LogicalContext`#
 
@@ -537,7 +537,7 @@ There is some overhead to gathering this information, so the capability to autom
 
 [small]#`org.smallmind.scribe.pen.Appender`#
 
-Appenders are the vehicle for publishing log records. What 'publishing' means is up to the appender implementation. Appenders can take <<scribe-filters>>, and implementations should honor them. An appender can be set inactive, via the `setActive()` method, and inactive appenders should not output log records. An appender can also have an instance of ErrorHandler set on it, which will be called upon to handle uncaught errors in the appender's `publish()` method.
+Appenders are the vehicle for publishing log records. What 'publishing' means is up to the appender implementation. Appenders can take <<scribe-filters>>, and implementations should honor them. An appender can be set inactive, via the `setActive()` method, and inactive appenders should not output log records. An appender can also have an instance of <<scribe-error-handler>> set on it, which will be called upon to handle uncaught errors in the appender's `publish()` method.
 
 ==== Formatted Appender
 
@@ -604,19 +604,19 @@ For example, given a logger name of `com.mydomain.myproject.MyClass` and a forma
 [NOTE]
 For example, the marker `!-,\n!` would tell the formatter to insert a comma followed by a line-break before each line of a multi-line field, _excluding_ the first, which would present a comma separated list. The default used is equivalent to `!+\n\t!`, or a new-line followed by a tab starting each output line, _including_ the first.
 . *conversion* - The available conversion flags are...
-*  *d* - The date stamp of the log entry (defaults to yyyy-MM-dd'T'HH:mm:ss.SSSZ).
-*  *t* - The time stamp of the entry in milliseconds.
-*  *n* - The logger name.
-*  *l* - The logger <<scribe-level>>.
-*  *m* - The log message.
-*  *T* - The name of the thread in which the logging occurred (if available).
-*  *C* - The class from which the log event was issued (if available).
-*  *M* - The method in which the log event was issued (if available).
-*  *N* - Whether the method which issued the log event was native code or not [true or false] (if available).
-*  *L* - The line number in the class file from which the log event was issued (if available).
-*  *F* - The file name of the class file from which the log event was issued (if available).
-*  *s* - The stack trace associated with the log event (if present). Although this is a multi-line field, it's formatting is the same as that used by the `printStackTrace()` method.
-*  *p* - The parameters associated with the log event (if present). This is a multi-line field.
+* *d* - The date stamp of the log entry (defaults to yyyy-MM-dd'T'HH:mm:ss.SSSZ).
+* *t* - The time stamp of the entry in milliseconds.
+* *n* - The logger name.
+* *l* - The logger <<scribe-level>>.
+* *m* - The log message.
+* *T* - The name of the thread in which the logging occurred (if available).
+* *C* - The class from which the log event was issued (if available).
+* *M* - The method in which the log event was issued (if available).
+* *N* - Whether the method which issued the log event was native code or not [true or false] (if available).
+* *L* - The line number in the class file from which the log event was issued (if available).
+* *F* - The file name of the class file from which the log event was issued (if available).
+* *s* - The stack trace associated with the log event (if present). Although this is a multi-line field, it's formatting is the same as that used by the `printStackTrace()` method.
+* *p* - The parameters associated with the log event (if present). This is a multi-line field.
 . *_footer_}* - Optional footer text which is any string which does not contain, but does end with a `}`.
 
 [TIP]
@@ -633,6 +633,55 @@ For example, the following format string...
 ====
 
 ==== Out Of The Box
+
+This project includes a few appenders you may find useful.
+
+===== AbstractAppender
+
+[small]#`org.smallmind.scribe.pen.AbstractAppender`#
+
+Not an appender in its own right, but a useful base class for complete implementations. This abstract class insures a minimum of correct fields and takes proper care of a few housekeeping chores, like calling an <<scribe-error-handler>> when the `publish()` method fails. In order stsndardize this behavior, _AbstractAppender_ fulfills the `publish()` method, while sub-classes should should implement...
+
+[source,java]
+----
+public abstract void handleOutput (Record record)
+  throws Exception;
+----
+
+[[scribe-error-handler, ErrorHandler]]
+====== ErrorHandler
+
+[small]#`org.smallmind.scribe.pen.ErrorHandler`#
+
+An error handler provides an opportunity for sub-classes of AbstractAppender to find a way to notify client code when the normal log publishing operation fails unexpectedly. WHen designing an error handler, it's important to keep in mind that notification options may be limited, as the usual venue for logging has just failed. One way to make use of this capability would be to use `org.smallmind.scribe.pen.DefaultErrorHandler`, which takes another appender upon construction and attempts to log the resulting error using this alternate route. Using a <<scribe-console-appender>> as the alternate logger is a usually a safe bet, although the efficacy of this solution will depend upon how the client code is handling standard out. Creating an error handler is just a matter of implementing...
+
+[source,java]
+----
+void process (Record record, Exception exception, String errorMessage, Object... args);
+----
+
+...where _record_ is the original log record, _exception_ is the exception thrown from the failed `publish()` method, and the _errorMessage_ and _args_ represent a suggestion for an additional message about the error.
+
+===== AsynchronousAppender
+
+[small]#`org.smallmind.scribe.pen.AsynchronousAppender`#
+
+[[scribe-console-appender, ConsoleAppender]]
+===== ConsoleAppender
+
+[small]#`org.smallmind.scribe.pen.ConsoleAppender`#
+
+===== EmailAppender
+
+[small]#`org.smallmind.scribe.pen.EmailAppender`#
+
+===== FileAppender
+
+[small]#`org.smallmind.scribe.pen.FileAppender`#
+
+===== FluentAppender
+
+[small]#`org.smallmind.scribe.pen.FluentAppender`#
 
 [[scribe-filters, Filters]]
 === Filters
