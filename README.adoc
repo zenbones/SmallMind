@@ -149,7 +149,7 @@ The purpose of meters is to emit metrics, or _quantities_ in the parlance of thi
 
 [small]#`org.smallmind.claxon.registry.ObviousNamingStrategy``#
 
-The ObviousNamingStrategy holds a Set of <<claxon-dot-notation>> instances which it attempts to match against the names of the caller classes submitted with meter registrations. If any match can be found, then the name of the caller class becomes the root name of the registered meter. If no match can be found, then no meter will be registered, and no metrics will be emitted.
+The ObviousNamingStrategy holds a Set of <<claxon-dot-notation>> instances which it attempts to match against the names of the caller classes submitted with meter registrations. If any match can be found, then the *full name of the caller class* becomes the root name of the registered meter. If no match can be found, then no meter will be registered, and no metrics will be emitted.
 
 [TIP]
 The diversity of this naming should ease the pressure on submitted Tag sets to guarantee the unique namespaces of warehoused time series, however, creators of libraries using this project should not count on this, as it's the choice of the library consumer. It's best to generate Tag sets with enough total cardinality to guarantee unique time series namespaces in their own right.

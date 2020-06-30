@@ -49,19 +49,18 @@ public class PatternFormatter implements Formatter {
   [<+|->width] is used to set the maximum field length, where the optional '+' or '-' is used to denote right or left
   padded formatting where the field length is less than the width specifier. If absent, then no padding will be used.
 
-  [.precision] is used in dot notated fields (logger name, context class, etc.) to specify a maximum number
-  of segments to display, starting from the right. For example, given a logger name of 'com.mydomain.myproject.MyClass'
-  and a format flag of %.2n, the conversion would print 'myproject.MyClass'. The precision specifier is
-  used with the multi-line fields Parameters, Statements and Metrics, to specify the maximum number of lines
-  displayed (as a multi-line list). The precision specifier will be ignored on all other field types.
+  [.precision] is used in dot notated fields (logger name and context class) to specify a maximum number of segments
+  to display, starting from the right. For example, given a logger name of 'com.mydomain.myproject.MyClass' and a
+  format flag of %.2n, the conversion would print 'myproject.MyClass'. The precision specifier is used with multi-line
+  fields (currently just Parameters), to specify the maximum number of lines displayed (as a multi-line list). The
+  precision specifier will be ignored on all other field types.
 
   [!(+|-)<prefix text>!] is used to specify a line separator and any line prefix text to insert before each line of a
-  multi-line field e.g. Stack Trace, Parameters, Correlator, Statements, and Metrics. The '+' or '-' must be present,
-  and sets whether the first line should be prefixed with the text, '+' for true and '-' for false. For instance, the
-  flag '!-,\n! would tell the formatter to insert a comma followed by a line-break before each line of a multi-line
-  field, excluding the first, which will present a comma separated list. If you desire text after the last line, use a
-  footer flag. The default is equivalent to !+\n\t!, or a new-line followed by a tab starting each output line,
-  including the first.
+  multi-line field e.g. Parameters. The '+' or '-' must be present, and sets whether the first line should be prefixed
+  with the text, '+' for true and '-' for false. For instance, the flag '!-,\n! would tell the formatter to insert a
+  comma followed by a line-break before each line of a multi-line field, excluding the first, which will present a
+  comma separated list. If you desire text after the last line, use a footer flag. The default is equivalent to
+  !+\n\t!, or a new-line followed by a tab starting each output line, including the first.
 
   Available conversions are...
 
