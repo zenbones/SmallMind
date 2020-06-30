@@ -580,10 +580,10 @@ The XMLFormatter provides, unsurprisingly, an xml formatted output. There are a 
 The pattern formatter is a flexible log record formatter with a traditional output style. This formatter takes only two configuration parameters...
 
 * *timestamp* (_org.smallmind.scribe.pen.Timestamp_) - Controls how dates are formatted. Defaults to "yyyy-MM-dd'T'HH:mm:ss.SSSZ".
-* *format* (_String_) - Here's where it gets a little complex...
+* *format* (_String_) - The operation of the format string is similar to that of _String_ formatting flags...
 +
 ====
-The operation of the format string is similar to that of _String_ formatting Flags. Portrayed as a regular expression, each Flag has the general form of...
+Portrayed as a regular expression, each flag has the general form of...
 
 [source,regexp]
 ----
@@ -592,55 +592,44 @@ The operation of the format string is similar to that of _String_ formatting Fla
 
 Let's take this apart piece by piece...
 
-. *{_header_* -
-. *%* -
-. *``+|-``_width_* -
-. *._precision_* -
-. *!``+|-``_prefix_!* -
-. *conversion* -
-. *_footer_}* -
+. *{_header_* - An optional header starts with `{` followed by any text which does not contain a `%`.
+. *%* - The `%` declares a formatting field which will be substituted according to the possible conversions (see below).
+. *``+|-``_width_* - Sets the maximum field length, where the optional ``+`` or ``-`` is used to denote a right or left padded field, if the field length is less than the width specifier. If this segment is absent, then no padding will be used.
+. *._precision_* - An optional precision starts with a `.` and is used in the dot notated fields (logger name `n` and context class `C`) to specify a maximum number of segments to display, starting from the right. The precision specifier is also used in the multi-line conversion fields (currently just parameters `p`), to specify the maximum number of lines displayed (as a multi-line list). The precision specifier will be ignored on all other field types.
++
+[NOTE]
+For example, given a logger name of `com.mydomain.myproject.MyClass` and a format flag of `%.2n`, the conversion would print `myproject.MyClass`.
+. *!``+|-``_prefix_!* - The `!...!` markers specify a line separator for, and optional prefix text to insert before, each line of a multi-line field (parameters `p`). The `+` or `-` is required, and sets whether the *first* line should also be prefixed with the text (`+` for true and `-` for false).
++
+[NOTE]
+For example, the marker `!-,\n!` would tell the formatter to insert a comma followed by a line-break before each line of a multi-line field, _excluding_ the first, which would present a comma separated list. The default used is equivalent to `!+\n\t!`, or a new-line followed by a tab starting each output line, _including_ the first.
+. *conversion* - The available conversion flags are...
+*  *d* - The date stamp of the log entry (defaults to yyyy-MM-dd'T'HH:mm:ss.SSSZ).
+*  *t* - The time stamp of the entry in milliseconds.
+*  *n* - The logger name.
+*  *l* - The logger <<scribe-level>>.
+*  *m* - The log message.
+*  *T* - The name of the thread in which the logging occurred (if available).
+*  *C* - The class from which the log event was issued (if available).
+*  *M* - The method in which the log event was issued (if available).
+*  *N* - Whether the method which issued the log event was native code or not [true or false] (if available).
+*  *L* - The line number in the class file from which the log event was issued (if available).
+*  *F* - The file name of the class file from which the log event was issued (if available).
+*  *s* - The stack trace associated with the log event (if present). Although this is a multi-line field, it's formatting is the same as that used by the `printStackTrace()` method.
+*  *p* - The parameters associated with the log event (if present). This is a multi-line field.
+. *_footer_}* - Optional footer text which is any string which does not contain, but does end with a `}`.
 
-  [{<header text>] is used to insert starting text (only if the field value exists and will be output).
-  [<footer text>}] is used to insert ending text (only if the field value exists and will be output).
+[TIP]
+_The sequence `%%` outputs a single `%`, the sequence `\n` will be replaced by the platform specific line separator, and the sequence `\t` will be replaced by a tab._
+====
 
-  [<+|->width] is used to set the maximum field length, where the optional '+' or '-' is used to denote right or left
-  padded formatting where the field length is less than the width specifier. If absent, then no padding will be used.
+[NOTE]
+====
+For example, the following format string...
 
-  [.precision] is used in dot notated fields (logger name, context class, etc.) to specify a maximum number
-  of segments to display, starting from the right. For example, given a logger name of 'com.mydomain.myproject.MyClass'
-  and a format flag of %.2n, the conversion would print 'myproject.MyClass'. The precision specifier is
-  used with the multi-line fields Parameters, Statements and Metrics, to specify the maximum number of lines
-  displayed (as a multi-line list). The precision specifier will be ignored on all other field types.
+`%d %n %+5l (%.1C.%M:%L) [%T] - %m%!+\n\t!p%!+\n\t!s`
 
-  [!(+|-)<prefix text>!] is used to specify a line separator and any line prefix text to insert before each line of a
-  multi-line field e.g. Stack Trace, Parameters, Correlator, Statements, and Metrics. The '+' or '-' must be present,
-  and sets whether the first line should be prefixed with the text, '+' for true and '-' for false. For instance, the
-  flag '!-,\n! would tell the formatter to insert a comma followed by a line-break before each line of a multi-line
-  field, excluding the first, which will present a comma separated list. If you desire text after the last line, use a
-  footer flag. The default is equivalent to !+\n\t!, or a new-line followed by a tab starting each output line,
-  including the first.
-
-  Available conversions are...
-
-  d - The date stamp of the log entry (yyyy-MM-dd'T'HH:mm:ss.SSSZ)
-  t - The time stamp of the entry in milliseconds
-  n - The logger name
-  l - The logger level
-  m - The log message
-  T - The name of the thread in which the logging occurred (if available)
-  C - The class from which the log event was issued (if available)
-  M - The method in which the log event was issued (if available)
-  N - Whether the method which issued the log event was native code or not [true or false] (if available)
-  L - The line number in the class file from which the log event was issued (if available)
-  F - The file name of the class file from which the log event was issued (if available)
-  s - The stack trace associated with the log event (if present)
-  p - The parameters associated with the log event (if present)
-
-  s and p (stack trace and parameters) are multi-line fields, and are
-  unaffected by the width or padding specifiers.
-
-  The sequence %% outputs a single '%'.
-  The character '\n' will be replaced by the machine specific line separator.
+...will produce the date, a space, the logger name, a space, the logging level (if the level is less than 5 characters it will br right padded to that length), a space, a left parenthesis, the right-most segment of the name of the calling class, a period, the method name from which the log statement was issued, a colon, the line number at which the log was issued, a right parenthesis, a space, a left bracket, the name of the context thread, a right bracket, a space, a dash, a space, the log message, any parameters available (each one preceded by a new line followed by a tab), and, finally, any stack trace preceded by a new line and tab (if there is a stack trace).
 ====
 
 ==== Out Of The Box
