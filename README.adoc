@@ -556,11 +556,22 @@ A formatter takes a log <<scribe-record>> and returns a string to be output by a
 
 [small]#`org.smallmind.scribe.pen.XMLFormatter`#
 
-  private Timestamp timestamp = DateFormatTimestamp.getDefaultInstance();
-  private RecordElement[] recordElements = RecordElement.values();
-  private String newLine = System.getProperty("line.separator");
-  private boolean cdata = false;
-  private int indent = 3;
+The XMLFormatter provides, unsurprisingly, an xml formatted output. There are a few attributes you can set on the formatter to configure its behavior.
+
+* *timestamp* (_org.smallmind.scribe.pen.Timestamp_) - Controls how dates are formatted. Defaults to "yyyy-MM-dd'T'HH:mm:ss.SSSZ".
+* *newLine* (_String_) - The line separator used when pretty printing the output. Defaults to `System.getProperty("line.separator")`.
+* *cdata* (_boolean_) - If true then the output of any stack trace will be wrapped in `<![CDATA[ ... ]]>` markers. Defaults to false.
+* *indent* (_int_) - The number of spaces used when pretty printing the output. Defaults to a 3 space indent.
+* *recordElements* (_org.smallmind.scribe.pen.RecordElement[]_) - An array of enum values representing the elements which will be included in the output. Defaults to all of the below...
+** *DATE* - The date this log record was emitted.
+** *LEVEL* - The <<scribe-level>> at which this log record was emitted.
+** *LOGGER_NAME* - The name of the logger emitting this record.
+** *LOGICAL_CONTEXT* - The <<scribe-logical-context>> of this log record (if available).
+** *MESSAGE* - The log message attached to this record.
+** *MILLISECONDS* - The epoch milliseconds at which this record was emitted.
+** *PARAMETERS* - The <<scribe-parameters>> available to this record.
+** *STACK_TRACE* - The stack trace of any _Throwable_ set on this record.
+** *THREAD* - Information about the thread which carried this logging call.
 
 ====== PatternFormatter
 
