@@ -539,6 +539,7 @@ There is some overhead to gathering this information, so the capability to autom
 
 Appenders are the vehicle for publishing log records. What 'publishing' means is up to the appender implementation. Appenders can take <<scribe-filters>>, and implementations should honor them. An appender can be set inactive, via the `setActive()` method, and inactive appenders should not output log records. An appender can also have an instance of <<scribe-error-handler>> set on it, which will be called upon to handle uncaught errors in the appender's `publish()` method.
 
+[[scribe-formatted-appender, FormattedAppender]]
 ==== Formatted Appender
 
 [small]#`org.smallmind.scribe.pen.FormattedAppender`#
@@ -550,7 +551,15 @@ A FormattedAppender takes an implementation of <<scribe-formatter>> which will d
 
 [small]#`org.smallmind.scribe.pen.Formatter`#
 
-A formatter takes a log <<scribe-record>> and returns a string to be output by an appender. How a formatter does this is completely up to its implementation. There are a couple of useful formatters included with this project.
+A formatter takes a log <<scribe-record>> and returns a string to be output by an appender by fulfilling...
+
+[source,java]
+----
+String format (Record record)
+  throws Exception;
+----
+
+There are a couple of useful formatters included with this project.
 
 ====== XMLFormatter
 
@@ -636,6 +645,7 @@ For example, the following format string...
 
 This project includes a few appenders you may find useful.
 
+[[scribe-abstract-appender, AbstractAppender]]
 ===== AbstractAppender
 
 [small]#`org.smallmind.scribe.pen.AbstractAppender`#
@@ -653,7 +663,7 @@ public abstract void handleOutput (Record record)
 
 [small]#`org.smallmind.scribe.pen.ErrorHandler`#
 
-An error handler provides an opportunity for sub-classes of AbstractAppender to find a way to notify client code when the normal log publishing operation fails unexpectedly. WHen designing an error handler, it's important to keep in mind that notification options may be limited, as the usual venue for logging has just failed. One way to make use of this capability would be to use `org.smallmind.scribe.pen.DefaultErrorHandler`, which takes another appender upon construction and attempts to log the resulting error using this alternate route. Using a <<scribe-console-appender>> as the alternate logger is a usually a safe bet, although the efficacy of this solution will depend upon how the client code is handling standard out. Creating an error handler is just a matter of implementing...
+An error handler provides an opportunity for sub-classes of AbstractAppender to find a way to notify client code when the normal log publishing operation fails unexpectedly. When designing an error handler, it's important to keep in mind that notification options may be limited, as the usual venue for logging has just failed. One way to make use of this capability would be to use `org.smallmind.scribe.pen.DefaultErrorHandler`, which takes another appender upon construction and attempts to log the resulting error using this alternate route. Using a <<scribe-console-appender>> as the alternate logger can be a safe bet, although the efficacy of this solution will depend upon how the client code is handling standard out. Creating an error handler is just a matter of implementing...
 
 [source,java]
 ----
@@ -662,22 +672,66 @@ void process (Record record, Exception exception, String errorMessage, Object...
 
 ...where _record_ is the original log record, _exception_ is the exception thrown from the failed `publish()` method, and the _errorMessage_ and _args_ represent a suggestion for an additional message about the error.
 
+===== AbstractFormattedAppender
+
+[small]#`org.smallmind.scribe.pen.AbstractFormattedAppender`#
+
+Simply the formatted version of an <<scribe-abstract-appender>>, for completeness and convenience.
+
 ===== AsynchronousAppender
 
 [small]#`org.smallmind.scribe.pen.AsynchronousAppender`#
+
+The AsynchronousAppender is not a complete appender, but rather an appender wrapper which takes `publish()` requests, puts them on a queue, and returns immediately. It holds a background thread which completes the publishing operation asynchronously. To use the AsynchronousAppender you pass its constructor another appender implementation and a buffer size for the queue. If the queue is full at the time the asynchronous appender's `publish()` method is called, an exception will be thrown to that effect.
 
 [[scribe-console-appender, ConsoleAppender]]
 ===== ConsoleAppender
 
 [small]#`org.smallmind.scribe.pen.ConsoleAppender`#
 
+The ConsoleAppender is a <<scribe-formatted-appender>> that outputs log records to standard out, i.e. _System.out_.
+
 ===== EmailAppender
 
 [small]#`org.smallmind.scribe.pen.EmailAppender`#
 
+A <<scribe-formatted-appender>> appender which sends each log record as the body of an email. You should use this judiciously, unless you like a *lot* of email. This appender requires...
+
+* *smtpServer* (_String_) - The smtp server host.
+* *smtpPort* (_int_) - The smtp server port.
+* *authentication* (_org.smallmind.nutsnbolts.email.Authentication_) - An optional authentication structure, is required by the server.
+* *secure* (_boolean_) - An optional flag noting that the smtp server is using a secure transport.
+* *from* (_String_) - The email address of the sender.
+* *to* (_String_) - The email address of the recipient.
+* *subject* (_String_) - The subject of the emails.
+
 ===== FileAppender
 
 [small]#`org.smallmind.scribe.pen.FileAppender`#
+
+A <<scribe-formatted-appender>> appender which publishes its log records to a file. There are multiple constructors for this class, but in the end the important parameters are...
+
+* *logPath* (_java.nio.file.Path_) - The path of the file to which log records are appended, which will be created as necessary.
+* *rollover* (_<<scribe-rollover>>_) - An object describing the rules for archiving log files whenever they get too large, or too old.
+* *cleanup* (_<<scribe-cleanup>>_) - An object describing the rules for cleaning up archived log files when they have gotten too old, or too numerous.
+
+[[scribe-rollover, Rollover]]
+====== Rollover
+
+A rollover describes the rules for archiving log files which meet the requirements of its rule set. The files will be archived by copying them into the parent of the log path (as siblings of the current log file), with a file name which templates the original file name by adding a timestamp and an ordinal integer, separated by a singe character (which defaults to `-`).
+
+[NOTE]
+For example, if the original log name is `project.log`, then the archived file might be `project-1996-07-04-0.log`.
+
+  private RolloverRule[] rules;
+  private Timestamp timestamp;
+  private char separator;
+
+[[scribe-cleanup, Cleanup]]
+====== Cleanup
+
+  private CleanupRule<?>[] rules;
+  private char separator = '-';
 
 ===== FluentAppender
 
