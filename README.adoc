@@ -561,6 +561,7 @@ String format (Record record)
 
 There are a couple of useful formatters included with this project.
 
+[[scribe-xml-formatter, XMLFormatter]]
 ====== XMLFormatter
 
 [small]#`org.smallmind.scribe.pen.XMLFormatter`#
@@ -748,12 +749,41 @@ Sets the time at which the current log file will be archived and rolled over.
 [[scribe-cleanup, Cleanup]]
 ====== Cleanup
 
-  private CleanupRule<?>[] rules;
-  private char separator = '-';
+A cleanup instance describes the rules by which archived logs are deleted. The cleanup is configured with the following parameters...
+
+* *separator* (_char_) - The separator used in the rollover for this FileAppender (required so the cleanup can properly parse the file names).
+* *rules* (_org.smallmind.scribe.pen.CleanupRule[]_) - An array of cleanup rules. Any archived log files that match any of the given rules will be deleted. This project comes with the following implementations...
++
+====
+*FileCountCleanupRule*
+
+[small]#`org.smallmind.scribe.pen.FileCountCleanupRule`#
+
+Sets the maximum number of archived log files that will kept around. If the number of archived files exceeds the maximum in the rule, then the oldest files will be deleted first, until the total count of files is within bounds.
+====
++
+====
+*LastModifiedCleanupRule*
+
+[small]#`org.smallmind.scribe.pen.LastModifiedCleanupRule`#
+
+Provides the maximum age an archived file is allowed to reach before being deleted.
+====
 
 ===== FluentAppender
 
 [small]#`org.smallmind.scribe.pen.FluentAppender`#
+
+Thi appender's output format is the *_forward_* protocol (see https://docs.fluentd.org/input/forward) from FluentD/FluentBit. You'll obviously need a FluentD or FluentBit daemon running somewhere to make this useful. The following parameters are used to configure this appender...
+
+* *host* (_String_) - The host on which the FluentD or FluentBit process is running.
+* *port* (_int_) - The port for the fluent process.
+* *timestamp* (_org.smallmind.scribe.pen.Timestamp_) - Controls how dates are formatted. Defaults to "yyyy-MM-dd'T'HH:mm:ss.SSSZ".
+* *newLine* (_String_) - The line separator used to format the multi-line portions of the output. Defaults to `System.getProperty("line.separator")`.
+* *retryAttempts* (_int_) - The number of times the appender will attempt to send a batch of log records before giving up.
+* *batch* (_int) - The number of log records the appender will wait for and batch up into a single send.
+* *recordElements* (_org.smallmind.scribe.pen.RecordElement[]_) - An array of enum values representing the elements which will be included in the output (same as for the <<scribe-xml-formatter>> above).
+* *additionalEventData* (_Map<String, String>_) - A map of additional event parameters that will be included in each log record.
 
 [[scribe-filters, Filters]]
 === Filters
