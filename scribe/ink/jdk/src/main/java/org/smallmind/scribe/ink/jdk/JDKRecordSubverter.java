@@ -122,7 +122,7 @@ public class JDKRecordSubverter extends LogRecord implements RecordWrapper {
     @Override
     public String getMessage () {
 
-      return MessageTranslator.translateMessage(logRecord.getMessage(), logRecord.getParameters());
+      return logRecord.getMessage();
     }
 
     @Override
