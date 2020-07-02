@@ -699,7 +699,7 @@ A <<scribe-formatted-appender>> appender which sends each log record as the body
 
 * *smtpServer* (_String_) - The smtp server host.
 * *smtpPort* (_int_) - The smtp server port.
-* *authentication* (_org.smallmind.nutsnbolts.email.Authentication_) - An optional authentication structure, is required by the server.
+* *authentication* (_org.smallmind.nutsnbolts.email.Authentication_) - An authentication structure if required by the server.
 * *secure* (_boolean_) - An optional flag noting that the smtp server is using a secure transport.
 * *from* (_String_) - The email address of the sender.
 * *to* (_String_) - The email address of the recipient.
@@ -723,9 +723,27 @@ A rollover describes the rules for archiving log files which meet the requiremen
 [NOTE]
 For example, if the original log name is `project.log`, then the archived file might be `project-1996-07-04-0.log`.
 
-  private RolloverRule[] rules;
-  private Timestamp timestamp;
-  private char separator;
+The rollover is configured by the following parameters...
+
+* *separator* (_char_) - The separator used between the file name, the date and the ordinal index. Defauts to the `-` character.
+* *timestamp* (_org.smallmind.scribe.pen.Timestamp_) - Controls how dates are formatted. Defaults to "yyyy-MM-dd'T'HH:mm:ss.SSSZ".
+* *rules* (_org.smallmind.scribe.pen.RolloverRule[]_) - An array of rollover rules. The file will be archived and rolled over if any of the rules is true. This project comes with the following implementations...
++
+====
+*FileSizeRolloverRule*
+
+[small]#`org.smallmind.scribe.pen.FileSizeRolloverRule`#
+
+Sets the maximum size log files are allowed to reach before being archived and rolled over.
+====
++
+====
+*TimestampRolloverRule*
+
+[small]#`org.smallmind.scribe.pen.TimestampRolloverRule`#
+
+Sets the time at which the current log file will be archived and rolled over.
+====
 
 [[scribe-cleanup, Cleanup]]
 ====== Cleanup
