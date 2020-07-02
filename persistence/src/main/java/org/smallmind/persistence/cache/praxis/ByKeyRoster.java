@@ -140,11 +140,13 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
     return durableClass.isAssignableFrom(obj.getClass()) && keyRoster.contains(new DurableKey<I, D>(durableClass, durableClass.cast(obj).getId()));
   }
 
+  @Override
   public Object[] toArray () {
 
     return toArray(null);
   }
 
+  @Override
   public <T> T[] toArray (T[] a) {
 
     Object[] elements;

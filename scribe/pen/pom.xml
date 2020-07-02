@@ -12,6 +12,12 @@
   <packaging>jar</packaging>
   <dependencies>
     <dependency>
+      <groupId>javax.activation</groupId>
+      <artifactId>activation</artifactId>
+      <scope>compile</scope>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
       <groupId>org.smallmind</groupId>
       <artifactId>smallmind-nutsnbolts</artifactId>
       <scope>compile</scope>
