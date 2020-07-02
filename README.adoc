@@ -788,13 +788,57 @@ Thi appender's output format is the *_forward_* protocol (see https://docs.fluen
 [[scribe-filters, Filters]]
 === Filters
 
+[small]#`org.smallmind.scribe.pen.Filter`#
+
+Both <<scribe-logger>> implementations and <<scribe-appenders>> can take filters. To implement a filter you need to fulfill the `willLog()` method...
+
+[source,java]
+----
+boolean willLog (Record record);
+----
+
+If any filter in a set returns false for the method above, then the record will not be logged. This project comes with the following filters...
+
+==== DotNotatedLoggerNameFilter
+
+[small]#`org.smallmind.scribe.pen.DotNotatedLoggerNameFilter`#
+
+A filter which allows log records through based on either meeting a particular _<<scribe-level>>_ and/or matching the logger's name with one of the dot notation patterns provided (see `org.smallmind.nutsnbolts.util.DotNotation`). By adding the same instance of this filter to every logger, a client of this project could dynamically control whether log records are output based on the logger name and level associated with each record. This might allow, for example, turning on debug logging across the system, or turning *all* logging on for a particular set of classes or modules.
+
+==== LevelFilter
+
+[small]#`org.smallmind.scribe.pen.LevelFilter`#
+
+A basic level fiter. Log records are passed through that meet or exceed the <<scribe-level>> set on this filter.
+
 [[scribe-enhancer, Enhancers]]
 === Enhancers
+
+[small]#`org.smallmind.scribe.pen.Enhancer`#
+
+An enhancer is meant as a log record decorator. A kind of log record 'get of jail free card', an enhancer can do whatever it wants with a log record by implementing the `enhance()` method...
+
+[source,java]
+----
+void enhance (Record record);
+----
 
 [[scribe-parameters, Parameters]]
 === Parameters
 
+A parameter is a key/value pair. <<scribe-logger>> implementations that have a notion of thread local context such as Log4Js MDC, or our <<scribe-indigenous>> logger, can make use of this project's notion of parameters.
+
+[[scribe-logger-manager, LoggerManager]]
+== LoggerManager
+
 == Adaptation
+
+[[scribe-indigenous, Indigenous]]
+=== Indigenous
+
+=== JDK Logging
+
+=== Log4J
 
 === Blueprint
 
@@ -807,9 +851,6 @@ Thi appender's output format is the *_forward_* protocol (see https://docs.fluen
 
 [[scribe-configuration, Configuration]]
 == Configuration
-
-[[scribe-logger-manager, LoggerManager]]
-== LoggerManager
 
 [small]#`org.smallmind.scribe.pen.LoggerManager`#
 
