@@ -143,7 +143,7 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
   @Override
   public Object[] toArray () {
 
-    return toArray(null);
+    return toArray((Object[])null);
   }
 
   @Override

@@ -152,7 +152,7 @@ public class IntrinsicRoster<T> implements Roster<T> {
   @Override
   public Object[] toArray () {
 
-    return toArray(null);
+    return toArray((Object[])null);
   }
 
   @Override
