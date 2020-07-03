@@ -826,7 +826,11 @@ void enhance (Record record);
 [[scribe-parameters, Parameters]]
 === Parameters
 
-A parameter is a key/value pair. <<scribe-logger>> implementations that have a notion of thread local context such as Log4Js MDC, or our <<scribe-indigenous>> logger, can make use of this project's notion of parameters.
+A parameter is a key/value pair which should properly be held in thread local context so that they can carry cross-cutting concerns (or at least bits of data about such concerns).
+
+
+
+<<scribe-logger>> implementations that have a notion of thread local context such as Log4Js MDC, or our <<scribe-indigenous>> logger, can make use of this project's notion of parameters.
 
 [[scribe-logger-manager, LoggerManager]]
 == LoggerManager
