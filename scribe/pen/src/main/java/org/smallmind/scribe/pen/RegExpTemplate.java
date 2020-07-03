@@ -51,18 +51,18 @@ public class RegExpTemplate extends Template {
     loggerPatternRef.set(Pattern.compile(expression));
   }
 
-  public RegExpTemplate (Level level, boolean autoFillLogicalContext, String expression)
+  public RegExpTemplate (Level level, boolean autoFillLoggerContext, String expression)
     throws LoggerException {
 
-    super(level, autoFillLogicalContext);
+    super(level, autoFillLoggerContext);
 
     loggerPatternRef.set(Pattern.compile(expression));
   }
 
-  public RegExpTemplate (Filter[] filters, Appender[] appenders, Enhancer[] enhancers, Level level, boolean autoFillLogicalContext, String expression)
+  public RegExpTemplate (Filter[] filters, Appender[] appenders, Enhancer[] enhancers, Level level, boolean autoFillLoggerContext, String expression)
     throws LoggerException {
 
-    super(filters, appenders, enhancers, level, autoFillLogicalContext);
+    super(filters, appenders, enhancers, level, autoFillLoggerContext);
 
     loggerPatternRef.set(Pattern.compile(expression));
   }

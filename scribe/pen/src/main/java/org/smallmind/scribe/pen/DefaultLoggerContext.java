@@ -34,7 +34,7 @@ package org.smallmind.scribe.pen;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class DefaultLogicalContext implements LogicalContext {
+public class DefaultLoggerContext implements LoggerContext {
 
   private final AtomicBoolean filled = new AtomicBoolean(false);
   private StackTraceElement contextElement;

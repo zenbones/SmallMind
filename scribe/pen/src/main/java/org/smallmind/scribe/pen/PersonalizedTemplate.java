@@ -50,18 +50,18 @@ public class PersonalizedTemplate extends Template {
     loggerNameRef.set(loggerName);
   }
 
-  public PersonalizedTemplate (Level level, boolean autoFillLogicalContext, String loggerName)
+  public PersonalizedTemplate (Level level, boolean autoFillLoggerContext, String loggerName)
     throws LoggerException {
 
-    super(level, autoFillLogicalContext);
+    super(level, autoFillLoggerContext);
 
     loggerNameRef.set(loggerName);
   }
 
-  public PersonalizedTemplate (Filter[] filters, Appender[] appenders, Enhancer[] enhancers, Level level, boolean autoFillLogicalContext, String loggerName)
+  public PersonalizedTemplate (Filter[] filters, Appender[] appenders, Enhancer[] enhancers, Level level, boolean autoFillLoggerContext, String loggerName)
     throws LoggerException {
 
-    super(filters, appenders, enhancers, level, autoFillLogicalContext);
+    super(filters, appenders, enhancers, level, autoFillLoggerContext);
 
     loggerNameRef.set(loggerName);
   }

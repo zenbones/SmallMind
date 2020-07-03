@@ -52,18 +52,18 @@ public class ClassNameTemplate extends Template {
     setPattern(pattern);
   }
 
-  public ClassNameTemplate (Level level, boolean autoFillLogicalContext, String pattern)
+  public ClassNameTemplate (Level level, boolean autoFillLoggerContext, String pattern)
     throws LoggerException {
 
-    super(level, autoFillLogicalContext);
+    super(level, autoFillLoggerContext);
 
     setPattern(pattern);
   }
 
-  public ClassNameTemplate (Filter[] filters, Appender[] appenders, Enhancer[] enhancers, Level level, boolean autoFillLogicalContext, String pattern)
+  public ClassNameTemplate (Filter[] filters, Appender[] appenders, Enhancer[] enhancers, Level level, boolean autoFillLoggerContext, String pattern)
     throws LoggerException {
 
-    super(filters, appenders, enhancers, level, autoFillLogicalContext);
+    super(filters, appenders, enhancers, level, autoFillLoggerContext);
 
     setPattern(pattern);
   }

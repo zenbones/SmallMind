@@ -34,10 +34,10 @@ package org.smallmind.scribe.ink.jdk;
 
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
-import org.smallmind.scribe.pen.DefaultLogicalContext;
+import org.smallmind.scribe.pen.DefaultLoggerContext;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerManager;
-import org.smallmind.scribe.pen.LogicalContext;
+import org.smallmind.scribe.pen.LoggerContext;
 import org.smallmind.scribe.pen.Record;
 import org.smallmind.scribe.pen.adapter.LoggerAdapter;
 import org.smallmind.scribe.pen.adapter.LoggingBlueprint;
@@ -56,11 +56,11 @@ public class JDKLoggingBlueprint extends LoggingBlueprint {
 
   public Record errorRecord (Record record, Throwable throwable, String message, Object... args) {
 
-    LogicalContext logicalContext;
+    LoggerContext loggerContext;
 
-    logicalContext = new DefaultLogicalContext();
-    logicalContext.fillIn();
+    loggerContext = new DefaultLoggerContext();
+    loggerContext.fillIn();
 
-    return new JDKRecordSubverter(((LogRecord)record.getNativeLogEntry()).getLoggerName(), Level.FATAL, logicalContext, throwable, message, args).getRecord();
+    return new JDKRecordSubverter(((LogRecord)record.getNativeLogEntry()).getLoggerName(), Level.FATAL, loggerContext, throwable, message, args).getRecord();
   }
 }

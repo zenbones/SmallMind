@@ -465,7 +465,7 @@ And that last reason is honestly the one which started this project. Hopefully i
 
 [small]#`org.smallmind.scribe.pen.Logger`#
 
-The mechanism of logging in Scribe is a Logger. A logger has a <<scribe-logger-name>> and a <<scribe-level>> at which it will log, may have a <<scribe-logical-context>>, holds <<scribe-appenders>>, <<scribe-filters>> and <<scribe-enhancer>>, and can decorate logs with <<scribe-parameters>>. The basic function of a Logger is expressed through its `log()` methods....
+The mechanism of logging in Scribe is a Logger. A logger has a <<scribe-logger-name>> and a <<scribe-level>> at which it will log, may have a <<scribe-logger-context>>, holds <<scribe-appenders>>, <<scribe-filters>> and <<scribe-enhancer>>, and can decorate logs with <<scribe-parameters>>. The basic function of a Logger is expressed through its `log()` methods....
 
 * `void log (Level level, String message, Object... args)`
 * `void log (Level level, Throwable throwable)`
@@ -517,12 +517,12 @@ The available log levels, which provide for basic categorization and filtering o
 * *FATAL* - Intended for world-stopping events which cause shutdown or other unrecoverable states.
 * *OFF* - Do not log. For use on <<scribe-logger>> instances or <<scribe-appenders>>, in order to shut them off. This should *never* be used as the level of a `log()` event.
 
-[[scribe-logical-context, LogicalContext]]
-=== LogicalContext
+[[scribe-logger-context, LoggerContext]]
+=== LoggerContext
 
-[small]#`org.smallmind.scribe.pen.LogicalContext`#
+[small]#`LoggerContext`#
 
-Some loggers are capable of adding information about the point in the code at which logging was initiated. This 'logical context' may include...
+Some loggers are capable of adding information about the point in the code at which logging was initiated. This 'logger context' may include...
 
 * `String getClassName()` - The class which in which the logger was called.
 * `String getMethodName()` - The method from which the logger was called.
@@ -530,7 +530,7 @@ Some loggers are capable of adding information about the point in the code at wh
 * `int getLineNumber()` - The line number of the initiating call in the file containing the calling code.
 * `boolean isNativeMethod()` - Whether the valling code represents a native method (via C interface).
 
-There is some overhead to gathering this information, so the capability to automatically include it can but turned on/off via the `setAutoFillLogicalContext()` method on the logger.
+There is some overhead to gathering this information, so the capability to automatically include it can but turned on/off via the `setAutoFillLoggerContext()` method on the logger.
 
 [[scribe-appenders, Appenders]]
 === Appenders
@@ -576,7 +576,7 @@ The XMLFormatter provides, unsurprisingly, an xml formatted output. There are a 
 ** *DATE* - The date this log record was emitted.
 ** *LEVEL* - The <<scribe-level>> at which this log record was emitted.
 ** *LOGGER_NAME* - The name of the logger emitting this record.
-** *LOGICAL_CONTEXT* - The <<scribe-logical-context>> of this log record (if available).
+** *LOGGER_CONTEXT* - The <<scribe-logger-context>> of this log record (if available).
 ** *MESSAGE* - The log message attached to this record.
 ** *MILLISECONDS* - The epoch milliseconds at which this record was emitted.
 ** *PARAMETERS* - The <<scribe-parameters>> available to this record.

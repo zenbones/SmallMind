@@ -36,7 +36,7 @@ import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.impl.Log4jLogEvent;
 import org.apache.logging.log4j.message.FormattedMessage;
 import org.smallmind.scribe.pen.Level;
-import org.smallmind.scribe.pen.LogicalContext;
+import org.smallmind.scribe.pen.LoggerContext;
 import org.smallmind.scribe.pen.ParameterAwareRecord;
 import org.smallmind.scribe.pen.Record;
 import org.smallmind.scribe.pen.SequenceGenerator;
@@ -45,15 +45,15 @@ import org.smallmind.scribe.pen.adapter.RecordWrapper;
 public class Log4JRecordSubverter extends Log4jLogEvent implements RecordWrapper {
 
   private final Log4JRecord log4jRecord;
-  private final LogicalContext logicalContext;
+  private final LoggerContext loggerContext;
   private final Level level;
 
-  public Log4JRecordSubverter (String loggerName, String loggerClassName, Level level, LogicalContext logicalContext, Throwable throwable, String message, Object... args) {
+  public Log4JRecordSubverter (String loggerName, String loggerClassName, Level level, LoggerContext loggerContext, Throwable throwable, String message, Object... args) {
 
     super(loggerName, null, loggerClassName, Log4JLevelTranslator.getLog4JLevel(level), new FormattedMessage(message, args), null, throwable);
 
     this.level = level;
-    this.logicalContext = logicalContext;
+    this.loggerContext = loggerContext;
 
     log4jRecord = new Log4JRecord(this);
   }
@@ -108,9 +108,9 @@ public class Log4JRecordSubverter extends Log4jLogEvent implements RecordWrapper
     }
 
     @Override
-    public LogicalContext getLogicalContext () {
+    public LoggerContext getLoggerContext () {
 
-      return logicalContext;
+      return loggerContext;
     }
 
     @Override

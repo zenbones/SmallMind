@@ -127,8 +127,8 @@ public class XMLFormatter implements Formatter {
         case THREAD:
           appendThreadInfo(formatBuilder, record.getThreadName(), record.getThreadID(), 1);
           break;
-        case LOGICAL_CONTEXT:
-          appendLogicalContext(formatBuilder, record.getLogicalContext(), 1);
+        case LOGGER_CONTEXT:
+          appendLoggerContext(formatBuilder, record.getLoggerContext(), 1);
           break;
         case PARAMETERS:
           appendParameters(formatBuilder, record.getParameters(), 1);
@@ -156,15 +156,15 @@ public class XMLFormatter implements Formatter {
     }
   }
 
-  private void appendLogicalContext (StringBuilder formatBuilder, LogicalContext logicalContext, int level) {
+  private void appendLoggerContext (StringBuilder formatBuilder, LoggerContext loggerContext, int level) {
 
-    if ((logicalContext != null) && (logicalContext.isFilled())) {
+    if ((loggerContext != null) && (loggerContext.isFilled())) {
       appendLine(formatBuilder, "<context>", level);
-      appendElement(formatBuilder, "class", logicalContext.getClassName(), false, level + 1);
-      appendElement(formatBuilder, "method", logicalContext.getMethodName(), false, level + 1);
-      appendElement(formatBuilder, "native", String.valueOf(logicalContext.isNativeMethod()), false, level + 1);
-      appendElement(formatBuilder, "line", ((!logicalContext.isNativeMethod()) && (logicalContext.getLineNumber() > 0)) ? String.valueOf(logicalContext.getLineNumber()) : null, false, level + 1);
-      appendElement(formatBuilder, "file", logicalContext.getFileName(), false, level + 1);
+      appendElement(formatBuilder, "class", loggerContext.getClassName(), false, level + 1);
+      appendElement(formatBuilder, "method", loggerContext.getMethodName(), false, level + 1);
+      appendElement(formatBuilder, "native", String.valueOf(loggerContext.isNativeMethod()), false, level + 1);
+      appendElement(formatBuilder, "line", ((!loggerContext.isNativeMethod()) && (loggerContext.getLineNumber() > 0)) ? String.valueOf(loggerContext.getLineNumber()) : null, false, level + 1);
+      appendElement(formatBuilder, "file", loggerContext.getFileName(), false, level + 1);
       appendLine(formatBuilder, "</context>", level);
     }
   }

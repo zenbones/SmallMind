@@ -30,43 +30,23 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.scribe.pen.adapter;
+package org.smallmind.scribe.pen;
 
-import java.util.function.Supplier;
-import org.smallmind.scribe.pen.Appender;
-import org.smallmind.scribe.pen.Enhancer;
-import org.smallmind.scribe.pen.Filter;
-import org.smallmind.scribe.pen.Level;
+import java.io.Serializable;
 
-public interface LoggerAdapter {
+public interface LoggerContext extends Serializable {
 
-  String getName ();
+  boolean isFilled ();
 
-  ParameterAdapter getParameterAdapter ();
+  void fillIn ();
 
-  boolean getAutoFillLoggerContext ();
+  String getClassName ();
 
-  void setAutoFillLoggerContext (boolean autoFillLoggerContext);
+  String getMethodName ();
 
-  void addFilter (Filter filter);
+  String getFileName ();
 
-  void clearFilters ();
+  boolean isNativeMethod ();
 
-  void addAppender (Appender appender);
-
-  void clearAppenders ();
-
-  void addEnhancer (Enhancer enhancer);
-
-  void clearEnhancers ();
-
-  Level getLevel ();
-
-  void setLevel (Level level);
-
-  void logMessage (Level level, Throwable throwable, String message, Object... args);
-
-  void logMessage (Level level, Throwable throwable, Object object);
-
-  void logMessage (Level level, Throwable throwable, Supplier<String> supplier);
+  int getLineNumber ();
 }

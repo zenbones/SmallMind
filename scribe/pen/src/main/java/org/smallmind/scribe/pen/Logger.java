@@ -81,14 +81,14 @@ public class Logger {
     return loggerAdapter.getParameterAdapter().getParameters();
   }
 
-  public boolean getAutoFillLogicalContext () {
+  public boolean getAutoFillLoggerContext () {
 
-    return loggerAdapter.getAutoFillLogicalContext();
+    return loggerAdapter.getAutoFillLoggerContext();
   }
 
-  public void setAutoFillLogicalContext (boolean autoFillLogicalContext) {
+  public void setAutoFillLoggerContext (boolean autoFillLoggerContext) {
 
-    loggerAdapter.setAutoFillLogicalContext(autoFillLogicalContext);
+    loggerAdapter.setAutoFillLoggerContext(autoFillLoggerContext);
   }
 
   public void addFilters (Filter[] filters) {

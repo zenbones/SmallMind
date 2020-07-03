@@ -33,7 +33,7 @@
 package org.smallmind.scribe.ink.indigenous;
 
 import org.smallmind.scribe.pen.Level;
-import org.smallmind.scribe.pen.LogicalContext;
+import org.smallmind.scribe.pen.LoggerContext;
 import org.smallmind.scribe.pen.MessageTranslator;
 import org.smallmind.scribe.pen.ParameterAwareRecord;
 import org.smallmind.scribe.pen.Record;
@@ -51,7 +51,7 @@ public class IndigenousRecord extends ParameterAwareRecord implements RecordWrap
   private final long millis;
   private final long threadId;
   private final long sequenceNumber;
-  private LogicalContext logicalContext;
+  private LoggerContext loggerContext;
 
   public IndigenousRecord (String loggerName, Level level, Throwable throwable, String message, Object... args) {
 
@@ -105,14 +105,14 @@ public class IndigenousRecord extends ParameterAwareRecord implements RecordWrap
   }
 
   @Override
-  public LogicalContext getLogicalContext () {
+  public LoggerContext getLoggerContext () {
 
-    return logicalContext;
+    return loggerContext;
   }
 
-  public void setLogicalContext (LogicalContext logicalContext) {
+  public void setLoggerContext (LoggerContext loggerContext) {
 
-    this.logicalContext = logicalContext;
+    this.loggerContext = loggerContext;
   }
 
   @Override

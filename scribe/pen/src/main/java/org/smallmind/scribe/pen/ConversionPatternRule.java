@@ -137,7 +137,7 @@ public class ConversionPatternRule implements PatternRule {
 
   public String convert (Record record, Timestamp timestamp) {
 
-    LogicalContext logicalContext;
+    LoggerContext loggerContext;
     Throwable throwable = record.getThrown();
     Parameter[] parameters;
 
@@ -169,32 +169,32 @@ public class ConversionPatternRule implements PatternRule {
 
         return trimToWidthAndPad(record.getThreadName());
       case 'C':
-        if (((logicalContext = record.getLogicalContext()) != null) && logicalContext.isFilled()) {
-          return trimToWidthAndPad(trimToDotPrecision(logicalContext.getClassName()));
+        if (((loggerContext = record.getLoggerContext()) != null) && loggerContext.isFilled()) {
+          return trimToWidthAndPad(trimToDotPrecision(loggerContext.getClassName()));
         }
 
         return null;
       case 'M':
-        if (((logicalContext = record.getLogicalContext()) != null) && logicalContext.isFilled()) {
-          return trimToWidthAndPad(logicalContext.getMethodName());
+        if (((loggerContext = record.getLoggerContext()) != null) && loggerContext.isFilled()) {
+          return trimToWidthAndPad(loggerContext.getMethodName());
         }
 
         return null;
       case 'N':
-        if (((logicalContext = record.getLogicalContext()) != null) && logicalContext.isFilled()) {
-          return trimToWidthAndPad(String.valueOf(logicalContext.isNativeMethod()));
+        if (((loggerContext = record.getLoggerContext()) != null) && loggerContext.isFilled()) {
+          return trimToWidthAndPad(String.valueOf(loggerContext.isNativeMethod()));
         }
 
         return null;
       case 'L':
-        if (((logicalContext = record.getLogicalContext()) != null) && logicalContext.isFilled()) {
-          return trimToWidthAndPad(String.valueOf(logicalContext.getLineNumber()));
+        if (((loggerContext = record.getLoggerContext()) != null) && loggerContext.isFilled()) {
+          return trimToWidthAndPad(String.valueOf(loggerContext.getLineNumber()));
         }
 
         return null;
       case 'F':
-        if (((logicalContext = record.getLogicalContext()) != null) && logicalContext.isFilled()) {
-          return trimToWidthAndPad(logicalContext.getFileName());
+        if (((loggerContext = record.getLoggerContext()) != null) && loggerContext.isFilled()) {
+          return trimToWidthAndPad(loggerContext.getFileName());
         }
 
         return null;

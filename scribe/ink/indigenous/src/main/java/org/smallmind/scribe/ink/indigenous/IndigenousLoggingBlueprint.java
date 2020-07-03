@@ -32,9 +32,9 @@
  */
 package org.smallmind.scribe.ink.indigenous;
 
-import org.smallmind.scribe.pen.DefaultLogicalContext;
+import org.smallmind.scribe.pen.DefaultLoggerContext;
 import org.smallmind.scribe.pen.Level;
-import org.smallmind.scribe.pen.LogicalContext;
+import org.smallmind.scribe.pen.LoggerContext;
 import org.smallmind.scribe.pen.Record;
 import org.smallmind.scribe.pen.adapter.LoggerAdapter;
 import org.smallmind.scribe.pen.adapter.LoggingBlueprint;
@@ -49,12 +49,12 @@ public class IndigenousLoggingBlueprint extends LoggingBlueprint {
   public Record errorRecord (Record record, Throwable throwable, String message, Object... args) {
 
     IndigenousRecord indigenousRecord;
-    LogicalContext logicalContext;
+    LoggerContext loggerContext;
 
     indigenousRecord = new IndigenousRecord(record.getLoggerName(), Level.FATAL, throwable, message, args);
-    logicalContext = new DefaultLogicalContext();
-    logicalContext.fillIn();
-    indigenousRecord.setLogicalContext(logicalContext);
+    loggerContext = new DefaultLoggerContext();
+    loggerContext.fillIn();
+    indigenousRecord.setLoggerContext(loggerContext);
 
     return indigenousRecord.getRecord();
   }

@@ -36,11 +36,11 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Supplier;
 import org.apache.logging.log4j.core.Logger;
 import org.smallmind.scribe.pen.Appender;
-import org.smallmind.scribe.pen.DefaultLogicalContext;
+import org.smallmind.scribe.pen.DefaultLoggerContext;
 import org.smallmind.scribe.pen.Enhancer;
 import org.smallmind.scribe.pen.Filter;
 import org.smallmind.scribe.pen.Level;
-import org.smallmind.scribe.pen.LogicalContext;
+import org.smallmind.scribe.pen.LoggerContext;
 import org.smallmind.scribe.pen.ParameterAwareRecord;
 import org.smallmind.scribe.pen.Record;
 import org.smallmind.scribe.pen.adapter.LoggerAdapter;
@@ -52,7 +52,7 @@ public class Log4JLoggerAdapter implements LoggerAdapter {
   private final Logger logger;
   private final ConcurrentLinkedQueue<Filter> filterList;
   private final ConcurrentLinkedQueue<Enhancer> enhancerList;
-  private boolean autoFillLogicalContext = false;
+  private boolean autoFillLoggerContext = false;
 
   public Log4JLoggerAdapter (Logger logger) {
 
@@ -77,15 +77,15 @@ public class Log4JLoggerAdapter implements LoggerAdapter {
   }
 
   @Override
-  public boolean getAutoFillLogicalContext () {
+  public boolean getAutoFillLoggerContext () {
 
-    return autoFillLogicalContext;
+    return autoFillLoggerContext;
   }
 
   @Override
-  public void setAutoFillLogicalContext (boolean autoFillLogicalContext) {
+  public void setAutoFillLoggerContext (boolean autoFillLoggerContext) {
 
-    this.autoFillLogicalContext = autoFillLogicalContext;
+    this.autoFillLoggerContext = autoFillLoggerContext;
   }
 
   @Override
@@ -142,11 +142,11 @@ public class Log4JLoggerAdapter implements LoggerAdapter {
   public void logMessage (Level level, Throwable throwable, String message, Object... args) {
 
     Log4JRecordSubverter recordSubverter;
-    LogicalContext logicalContext;
+    LoggerContext loggerContext;
 
     if ((!level.equals(Level.OFF)) && getLevel().noGreater(level)) {
-      if ((logicalContext = willLog(level)) != null) {
-        recordSubverter = new Log4JRecordSubverter(logger.getName(), logger.getClass().getCanonicalName(), level, logicalContext, throwable, message, args);
+      if ((loggerContext = willLog(level)) != null) {
+        recordSubverter = new Log4JRecordSubverter(logger.getName(), logger.getClass().getCanonicalName(), level, loggerContext, throwable, message, args);
         ((ParameterAwareRecord)recordSubverter.getRecord()).setParameters(getParameterAdapter().getParameters());
         enhanceRecord(recordSubverter.getRecord());
         for (org.apache.logging.log4j.core.Appender appender : logger.getAppenders().values()) {
@@ -160,11 +160,11 @@ public class Log4JLoggerAdapter implements LoggerAdapter {
   public void logMessage (Level level, Throwable throwable, Object object) {
 
     Log4JRecordSubverter recordSubverter;
-    LogicalContext logicalContext;
+    LoggerContext loggerContext;
 
     if ((!level.equals(Level.OFF)) && getLevel().noGreater(level)) {
-      if ((logicalContext = willLog(level)) != null) {
-        recordSubverter = new Log4JRecordSubverter(logger.getName(), logger.getClass().getCanonicalName(), level, logicalContext, throwable, (object == null) ? null : object.toString());
+      if ((loggerContext = willLog(level)) != null) {
+        recordSubverter = new Log4JRecordSubverter(logger.getName(), logger.getClass().getCanonicalName(), level, loggerContext, throwable, (object == null) ? null : object.toString());
         ((ParameterAwareRecord)recordSubverter.getRecord()).setParameters(getParameterAdapter().getParameters());
         enhanceRecord(recordSubverter.getRecord());
         for (org.apache.logging.log4j.core.Appender appender : logger.getAppenders().values()) {
@@ -178,11 +178,11 @@ public class Log4JLoggerAdapter implements LoggerAdapter {
   public void logMessage (Level level, Throwable throwable, Supplier<String> supplier) {
 
     Log4JRecordSubverter recordSubverter;
-    LogicalContext logicalContext;
+    LoggerContext loggerContext;
 
     if ((!level.equals(Level.OFF)) && getLevel().noGreater(level)) {
-      if ((logicalContext = willLog(level)) != null) {
-        recordSubverter = new Log4JRecordSubverter(logger.getName(), logger.getClass().getCanonicalName(), level, logicalContext, throwable, (supplier == null) ? null : supplier.get());
+      if ((loggerContext = willLog(level)) != null) {
+        recordSubverter = new Log4JRecordSubverter(logger.getName(), logger.getClass().getCanonicalName(), level, loggerContext, throwable, (supplier == null) ? null : supplier.get());
         ((ParameterAwareRecord)recordSubverter.getRecord()).setParameters(getParameterAdapter().getParameters());
         enhanceRecord(recordSubverter.getRecord());
         for (org.apache.logging.log4j.core.Appender appender : logger.getAppenders().values()) {
@@ -192,18 +192,18 @@ public class Log4JLoggerAdapter implements LoggerAdapter {
     }
   }
 
-  private LogicalContext willLog (Level level) {
+  private LoggerContext willLog (Level level) {
 
-    LogicalContext logicalContext;
+    LoggerContext loggerContext;
     Record filterRecord;
 
-    logicalContext = new DefaultLogicalContext();
-    if (getAutoFillLogicalContext()) {
-      logicalContext.fillIn();
+    loggerContext = new DefaultLoggerContext();
+    if (getAutoFillLoggerContext()) {
+      loggerContext.fillIn();
     }
 
     if (!filterList.isEmpty()) {
-      filterRecord = new Log4JRecordSubverter(logger.getName(), logger.getClass().getCanonicalName(), level, logicalContext, null, null).getRecord();
+      filterRecord = new Log4JRecordSubverter(logger.getName(), logger.getClass().getCanonicalName(), level, loggerContext, null, null).getRecord();
       for (Filter filter : filterList) {
         if (!filter.willLog(filterRecord)) {
           return null;
@@ -211,7 +211,7 @@ public class Log4JLoggerAdapter implements LoggerAdapter {
       }
     }
 
-    return logicalContext;
+    return loggerContext;
   }
 
   private void enhanceRecord (Record record) {
