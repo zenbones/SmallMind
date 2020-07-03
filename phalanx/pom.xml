@@ -39,11 +39,6 @@
     </dependency>
     <dependency>
       <groupId>org.smallmind</groupId>
-      <artifactId>scribe-spring</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.smallmind</groupId>
       <artifactId>claxon-registry</artifactId>
       <scope>compile</scope>
     </dependency>

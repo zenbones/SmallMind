@@ -155,11 +155,6 @@
       </dependency>
       <dependency>
         <groupId>org.smallmind</groupId>
-        <artifactId>scribe-spring</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.smallmind</groupId>
         <artifactId>scribe-apache</artifactId>
         <version>${project.version}</version>
       </dependency>
