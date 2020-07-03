@@ -35,9 +35,9 @@ package org.smallmind.scribe.pen.adapter;
 import java.io.Serializable;
 import org.smallmind.scribe.pen.Parameter;
 
-public class ScribeParameterAdapter implements ParameterAdapter {
+public class Parameters implements ParameterAdapter {
 
-  private static final ScribeParameterAdapter INSTANCE = new ScribeParameterAdapter();
+  private static final Parameters INSTANCE = new Parameters();
 
   private static final InheritableThreadLocal<RecordParameters> RECORD_PARAMETERS_LOCAL = new InheritableThreadLocal<RecordParameters>() {
 
@@ -48,7 +48,7 @@ public class ScribeParameterAdapter implements ParameterAdapter {
     }
   };
 
-  public static ScribeParameterAdapter getInstance () {
+  public static Parameters getInstance () {
 
     return INSTANCE;
   }

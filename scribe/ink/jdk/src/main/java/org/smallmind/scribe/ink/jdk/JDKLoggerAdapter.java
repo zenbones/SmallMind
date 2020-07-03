@@ -47,7 +47,7 @@ import org.smallmind.scribe.pen.ParameterAwareRecord;
 import org.smallmind.scribe.pen.Record;
 import org.smallmind.scribe.pen.adapter.LoggerAdapter;
 import org.smallmind.scribe.pen.adapter.ParameterAdapter;
-import org.smallmind.scribe.pen.adapter.ScribeParameterAdapter;
+import org.smallmind.scribe.pen.adapter.Parameters;
 
 public class JDKLoggerAdapter implements LoggerAdapter {
 
@@ -74,7 +74,7 @@ public class JDKLoggerAdapter implements LoggerAdapter {
   @Override
   public ParameterAdapter getParameterAdapter () {
 
-    return ScribeParameterAdapter.getInstance();
+    return Parameters.getInstance();
   }
 
   @Override

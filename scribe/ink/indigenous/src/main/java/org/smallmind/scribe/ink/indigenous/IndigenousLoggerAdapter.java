@@ -42,7 +42,7 @@ import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerContext;
 import org.smallmind.scribe.pen.adapter.LoggerAdapter;
 import org.smallmind.scribe.pen.adapter.ParameterAdapter;
-import org.smallmind.scribe.pen.adapter.ScribeParameterAdapter;
+import org.smallmind.scribe.pen.adapter.Parameters;
 
 public class IndigenousLoggerAdapter implements LoggerAdapter {
 
@@ -71,7 +71,7 @@ public class IndigenousLoggerAdapter implements LoggerAdapter {
   @Override
   public ParameterAdapter getParameterAdapter () {
 
-    return ScribeParameterAdapter.getInstance();
+    return Parameters.getInstance();
   }
 
   @Override
