@@ -33,7 +33,6 @@
 package org.smallmind.scribe.pen;
 
 import java.util.Date;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
@@ -87,8 +86,8 @@ public class MessagePackFormatter {
         case THREAD:
           appendThreadInfo(messageNode, record.getThreadName(), record.getThreadID());
           break;
-        case LOGICAL_CONTEXT:
-          appendLogicalContext(messageNode, record.getLogicalContext());
+        case LOGGER_CONTEXT:
+          appendLoggerContext(messageNode, record.getLoggerContext());
           break;
         case PARAMETERS:
           appendParameters(messageNode, record.getParameters());
@@ -121,19 +120,19 @@ public class MessagePackFormatter {
     }
   }
 
-  private void appendLogicalContext (ObjectNode messageNode, LogicalContext logicalContext) {
+  private void appendLoggerContext (ObjectNode messageNode, LoggerContext loggerContext) {
 
-    if ((logicalContext != null) && (logicalContext.isFilled())) {
+    if ((loggerContext != null) && (loggerContext.isFilled())) {
 
       ObjectNode contextNode = JsonNodeFactory.instance.objectNode();
 
-      contextNode.put("class", logicalContext.getClassName());
-      contextNode.put("method", logicalContext.getMethodName());
-      contextNode.put("native", logicalContext.isNativeMethod());
-      if ((!logicalContext.isNativeMethod()) && (logicalContext.getLineNumber() > 0)) {
-        contextNode.put("line", logicalContext.getLineNumber());
+      contextNode.put("class", loggerContext.getClassName());
+      contextNode.put("method", loggerContext.getMethodName());
+      contextNode.put("native", loggerContext.isNativeMethod());
+      if ((!loggerContext.isNativeMethod()) && (loggerContext.getLineNumber() > 0)) {
+        contextNode.put("line", loggerContext.getLineNumber());
       }
-      contextNode.put("file", logicalContext.getFileName());
+      contextNode.put("file", loggerContext.getFileName());
 
       messageNode.set("context", contextNode);
     }

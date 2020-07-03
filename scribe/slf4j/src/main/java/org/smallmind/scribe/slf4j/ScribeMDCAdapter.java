@@ -37,14 +37,14 @@ import java.util.HashMap;
 import java.util.Map;
 import org.slf4j.spi.MDCAdapter;
 import org.smallmind.scribe.pen.Parameter;
-import org.smallmind.scribe.pen.adapter.ScribeParameterAdapter;
+import org.smallmind.scribe.pen.adapter.Parameters;
 
 public class ScribeMDCAdapter implements MDCAdapter {
 
   @Override
   public void put (String key, String val) {
 
-    ScribeParameterAdapter.getInstance().put(key, val);
+    Parameters.getInstance().put(key, val);
   }
 
   @Override
@@ -52,19 +52,19 @@ public class ScribeMDCAdapter implements MDCAdapter {
 
     Serializable value;
 
-    return ((value = ScribeParameterAdapter.getInstance().get(key)) == null) ? null : value.toString();
+    return ((value = Parameters.getInstance().get(key)) == null) ? null : value.toString();
   }
 
   @Override
   public void remove (String key) {
 
-    ScribeParameterAdapter.getInstance().remove(key);
+    Parameters.getInstance().remove(key);
   }
 
   @Override
   public void clear () {
 
-    ScribeParameterAdapter.getInstance().clear();
+    Parameters.getInstance().clear();
   }
 
   @Override
@@ -72,7 +72,7 @@ public class ScribeMDCAdapter implements MDCAdapter {
 
     HashMap<String, String> map = new HashMap<>();
 
-    for (Parameter parameter : ScribeParameterAdapter.getInstance().getParameters()) {
+    for (Parameter parameter : Parameters.getInstance().getParameters()) {
       map.put(parameter.getKey(), parameter.getValue().toString());
     }
 
@@ -82,9 +82,9 @@ public class ScribeMDCAdapter implements MDCAdapter {
   @Override
   public void setContextMap (Map<String, String> contextMap) {
 
-    ScribeParameterAdapter.getInstance().clear();
+    Parameters.getInstance().clear();
     for (Map.Entry<String, String> entry : contextMap.entrySet()) {
-      ScribeParameterAdapter.getInstance().put(entry.getKey(), entry.getValue());
+      Parameters.getInstance().put(entry.getKey(), entry.getValue());
     }
   }
 }

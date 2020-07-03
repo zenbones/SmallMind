@@ -39,16 +39,16 @@ public class DefaultTemplate extends Template {
     super();
   }
 
-  public DefaultTemplate (Level level, boolean autoFillLogicalContext)
+  public DefaultTemplate (Level level, boolean autoFillLoggerContext)
     throws LoggerException {
 
-    super(level, autoFillLogicalContext);
+    super(level, autoFillLoggerContext);
   }
 
-  public DefaultTemplate (Filter[] filters, Appender[] appenders, Enhancer[] enhancers, Level level, boolean autoFillLogicalContext)
+  public DefaultTemplate (Filter[] filters, Appender[] appenders, Enhancer[] enhancers, Level level, boolean autoFillLoggerContext)
     throws LoggerException {
 
-    super(filters, appenders, enhancers, level, autoFillLogicalContext);
+    super(filters, appenders, enhancers, level, autoFillLoggerContext);
   }
 
   public int matchLogger (String loggerName) {

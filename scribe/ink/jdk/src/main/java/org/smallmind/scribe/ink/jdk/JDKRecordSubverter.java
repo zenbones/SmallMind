@@ -34,8 +34,7 @@ package org.smallmind.scribe.ink.jdk;
 
 import java.util.logging.LogRecord;
 import org.smallmind.scribe.pen.Level;
-import org.smallmind.scribe.pen.LogicalContext;
-import org.smallmind.scribe.pen.MessageTranslator;
+import org.smallmind.scribe.pen.LoggerContext;
 import org.smallmind.scribe.pen.ParameterAwareRecord;
 import org.smallmind.scribe.pen.Record;
 import org.smallmind.scribe.pen.adapter.RecordWrapper;
@@ -43,10 +42,10 @@ import org.smallmind.scribe.pen.adapter.RecordWrapper;
 public class JDKRecordSubverter extends LogRecord implements RecordWrapper {
 
   private final JDKRecord jdkRecord;
-  private final LogicalContext logicalContext;
+  private final LoggerContext loggerContext;
   private final Level level;
 
-  public JDKRecordSubverter (String loggerName, Level level, LogicalContext logicalContext, Throwable throwable, String message, Object... args) {
+  public JDKRecordSubverter (String loggerName, Level level, LoggerContext loggerContext, Throwable throwable, String message, Object... args) {
 
     super(JDKLevelTranslator.getLog4JLevel(level), message);
 
@@ -55,15 +54,15 @@ public class JDKRecordSubverter extends LogRecord implements RecordWrapper {
     setParameters(args);
 
     this.level = level;
-    this.logicalContext = logicalContext;
+    this.loggerContext = loggerContext;
 
     jdkRecord = new JDKRecord(this);
   }
 
   public String getSourceClassName () {
 
-    if (logicalContext != null) {
-      return logicalContext.getClassName();
+    if (loggerContext != null) {
+      return loggerContext.getClassName();
     }
 
     return null;
@@ -71,8 +70,8 @@ public class JDKRecordSubverter extends LogRecord implements RecordWrapper {
 
   public String getSourceMethodName () {
 
-    if (logicalContext != null) {
-      return logicalContext.getMethodName();
+    if (loggerContext != null) {
+      return loggerContext.getMethodName();
     }
 
     return null;
@@ -126,9 +125,9 @@ public class JDKRecordSubverter extends LogRecord implements RecordWrapper {
     }
 
     @Override
-    public LogicalContext getLogicalContext () {
+    public LoggerContext getLoggerContext () {
 
-      return logicalContext;
+      return loggerContext;
     }
 
     @Override

@@ -5,7 +5,7 @@
 
   <!-- Logging Templates -->
   <bean id="defaultTemplate" class="org.smallmind.scribe.pen.DefaultTemplate" init-method="register">
-    <property name="autoFillLogicalContext" value="true"/>
+    <property name="autoFillLoggerContext" value="true"/>
     <property name="appenders">
       <list>
         <ref bean="consoleAppender"/>
@@ -15,7 +15,7 @@
   </bean>
 
   <bean id="dynamicTemplate" class="org.smallmind.scribe.pen.spring.DynamicClassNameTemplateInitializingBean">
-    <property name="autoFillLogicalContext" value="true"/>
+    <property name="autoFillLoggerContext" value="true"/>
     <property name="appenders">
       <list>
         <ref bean="consoleAppender"/>

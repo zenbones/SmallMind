@@ -30,56 +30,23 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.scribe.pen.adapter;
+package org.smallmind.scribe.pen;
 
 import java.io.Serializable;
-import org.smallmind.scribe.pen.Parameter;
 
-public class ScribeParameterAdapter implements ParameterAdapter {
+public interface LoggerContext extends Serializable {
 
-  private static final ScribeParameterAdapter INSTANCE = new ScribeParameterAdapter();
+  boolean isFilled ();
 
-  private static final InheritableThreadLocal<RecordParameters> RECORD_PARAMETERS_LOCAL = new InheritableThreadLocal<RecordParameters>() {
+  void fillIn ();
 
-    @Override
-    protected RecordParameters initialValue () {
+  String getClassName ();
 
-      return new RecordParameters();
-    }
-  };
+  String getMethodName ();
 
-  public static ScribeParameterAdapter getInstance () {
+  String getFileName ();
 
-    return INSTANCE;
-  }
+  boolean isNativeMethod ();
 
-  @Override
-  public void put (String key, Serializable value) {
-
-    RECORD_PARAMETERS_LOCAL.get().put(key, value);
-  }
-
-  @Override
-  public void remove (String key) {
-
-    RECORD_PARAMETERS_LOCAL.get().remove(key);
-  }
-
-  @Override
-  public void clear () {
-
-    RECORD_PARAMETERS_LOCAL.get().clear();
-  }
-
-  @Override
-  public Serializable get (String key) {
-
-    return RECORD_PARAMETERS_LOCAL.get().get(key);
-  }
-
-  @Override
-  public Parameter[] getParameters () {
-
-    return RECORD_PARAMETERS_LOCAL.get().asParameters();
-  }
+  int getLineNumber ();
 }

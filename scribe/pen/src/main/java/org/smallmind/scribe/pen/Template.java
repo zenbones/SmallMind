@@ -49,7 +49,7 @@ public abstract class Template {
   private final LinkedList<Appender> appenderList;
   private final LinkedList<Enhancer> enhancerList;
   private Level level = Level.INFO;
-  private boolean autoFillLogicalContext = false;
+  private boolean autoFillLoggerContext = false;
   private boolean registered = false;
 
   public Template () {
@@ -59,15 +59,15 @@ public abstract class Template {
     enhancerList = new LinkedList<>();
   }
 
-  public Template (Level level, boolean autoFillLogicalContext) {
+  public Template (Level level, boolean autoFillLoggerContext) {
 
     this();
 
     this.level = level;
-    this.autoFillLogicalContext = autoFillLogicalContext;
+    this.autoFillLoggerContext = autoFillLoggerContext;
   }
 
-  public Template (Filter[] filters, Appender[] appenders, Enhancer[] enhancers, Level level, boolean autoFillLogicalContext) {
+  public Template (Filter[] filters, Appender[] appenders, Enhancer[] enhancers, Level level, boolean autoFillLoggerContext) {
 
     this();
 
@@ -76,7 +76,7 @@ public abstract class Template {
     enhancerList.addAll(Arrays.asList(enhancers));
 
     this.level = level;
-    this.autoFillLogicalContext = autoFillLogicalContext;
+    this.autoFillLoggerContext = autoFillLoggerContext;
   }
 
   public abstract int matchLogger (String loggerName);
@@ -105,14 +105,14 @@ public abstract class Template {
     }
   }
 
-  public synchronized boolean isAutoFillLogicalContext () {
+  public synchronized boolean isautoFillLoggerContext () {
 
-    return autoFillLogicalContext;
+    return autoFillLoggerContext;
   }
 
-  public synchronized void setAutoFillLogicalContext (boolean autoFillLogicalContext) {
+  public synchronized void setAutoFillLoggerContext (boolean autoFillLoggerContext) {
 
-    this.autoFillLogicalContext = autoFillLogicalContext;
+    this.autoFillLoggerContext = autoFillLoggerContext;
 
     if (registered) {
       LoggerManager.commitTemplateChanges(Change.CONTEXT, this);
@@ -257,7 +257,7 @@ public abstract class Template {
         logger.setLevel(level);
         break;
       case CONTEXT:
-        logger.setAutoFillLogicalContext(autoFillLogicalContext);
+        logger.setAutoFillLoggerContext(autoFillLoggerContext);
         break;
       case FILTER:
         logger.clearFilters();

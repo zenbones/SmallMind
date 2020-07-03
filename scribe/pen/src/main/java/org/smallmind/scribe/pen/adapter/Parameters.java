@@ -32,41 +32,54 @@
  */
 package org.smallmind.scribe.pen.adapter;
 
-import java.util.function.Supplier;
-import org.smallmind.scribe.pen.Appender;
-import org.smallmind.scribe.pen.Enhancer;
-import org.smallmind.scribe.pen.Filter;
-import org.smallmind.scribe.pen.Level;
+import java.io.Serializable;
+import org.smallmind.scribe.pen.Parameter;
 
-public interface LoggerAdapter {
+public class Parameters implements ParameterAdapter {
 
-  String getName ();
+  private static final Parameters INSTANCE = new Parameters();
 
-  ParameterAdapter getParameterAdapter ();
+  private static final InheritableThreadLocal<RecordParameters> RECORD_PARAMETERS_LOCAL = new InheritableThreadLocal<RecordParameters>() {
 
-  boolean getAutoFillLoggerContext ();
+    @Override
+    protected RecordParameters initialValue () {
 
-  void setAutoFillLoggerContext (boolean autoFillLoggerContext);
+      return new RecordParameters();
+    }
+  };
 
-  void addFilter (Filter filter);
+  public static Parameters getInstance () {
 
-  void clearFilters ();
+    return INSTANCE;
+  }
 
-  void addAppender (Appender appender);
+  @Override
+  public void put (String key, Serializable value) {
 
-  void clearAppenders ();
+    RECORD_PARAMETERS_LOCAL.get().put(key, value);
+  }
 
-  void addEnhancer (Enhancer enhancer);
+  @Override
+  public void remove (String key) {
 
-  void clearEnhancers ();
+    RECORD_PARAMETERS_LOCAL.get().remove(key);
+  }
 
-  Level getLevel ();
+  @Override
+  public void clear () {
 
-  void setLevel (Level level);
+    RECORD_PARAMETERS_LOCAL.get().clear();
+  }
 
-  void logMessage (Level level, Throwable throwable, String message, Object... args);
+  @Override
+  public Serializable get (String key) {
 
-  void logMessage (Level level, Throwable throwable, Object object);
+    return RECORD_PARAMETERS_LOCAL.get().get(key);
+  }
 
-  void logMessage (Level level, Throwable throwable, Supplier<String> supplier);
+  @Override
+  public Parameter[] getParameters () {
+
+    return RECORD_PARAMETERS_LOCAL.get().asParameters();
+  }
 }

@@ -112,7 +112,7 @@ public class SyslogAppender extends AbstractAppender implements InitializingBean
     StructuredSyslogMessage message;
     HashMap<String, HashMap<String, String>> idMap = new HashMap<>();
     HashMap<String, String> logParamMap;
-    LogicalContext logicalContext;
+    LoggerContext loggerContext;
     Parameter[] parameters;
     Throwable throwable;
     String threadName;
@@ -141,17 +141,17 @@ public class SyslogAppender extends AbstractAppender implements InitializingBean
       logParamMap.put("stack-trace", (base64EncodeStackTraces) ? Base64Codec.encode(StackTraceUtility.obtainStackTraceAsString(throwable)) : StackTraceUtility.obtainStackTraceAsString(throwable));
     }
 
-    if (((logicalContext = record.getLogicalContext()) != null) && logicalContext.isFilled()) {
+    if (((loggerContext = record.getLoggerContext()) != null) && loggerContext.isFilled()) {
 
       HashMap<String, String> contextParamMap;
       int lineNumber;
 
       idMap.put("context", contextParamMap = new HashMap<>());
-      contextParamMap.put("class", logicalContext.getClassName());
-      contextParamMap.put("method", logicalContext.getMethodName());
-      contextParamMap.put("native", String.valueOf(logicalContext.isNativeMethod()));
-      contextParamMap.put("file", logicalContext.getFileName());
-      if ((!logicalContext.isNativeMethod()) && ((lineNumber = logicalContext.getLineNumber()) > 0)) {
+      contextParamMap.put("class", loggerContext.getClassName());
+      contextParamMap.put("method", loggerContext.getMethodName());
+      contextParamMap.put("native", String.valueOf(loggerContext.isNativeMethod()));
+      contextParamMap.put("file", loggerContext.getFileName());
+      if ((!loggerContext.isNativeMethod()) && ((lineNumber = loggerContext.getLineNumber()) > 0)) {
         contextParamMap.put("line", String.valueOf(lineNumber));
       }
     }

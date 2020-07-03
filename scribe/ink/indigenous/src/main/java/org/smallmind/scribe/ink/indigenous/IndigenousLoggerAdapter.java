@@ -35,14 +35,14 @@ package org.smallmind.scribe.ink.indigenous;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Supplier;
 import org.smallmind.scribe.pen.Appender;
-import org.smallmind.scribe.pen.DefaultLogicalContext;
+import org.smallmind.scribe.pen.DefaultLoggerContext;
 import org.smallmind.scribe.pen.Enhancer;
 import org.smallmind.scribe.pen.Filter;
 import org.smallmind.scribe.pen.Level;
-import org.smallmind.scribe.pen.LogicalContext;
+import org.smallmind.scribe.pen.LoggerContext;
 import org.smallmind.scribe.pen.adapter.LoggerAdapter;
 import org.smallmind.scribe.pen.adapter.ParameterAdapter;
-import org.smallmind.scribe.pen.adapter.ScribeParameterAdapter;
+import org.smallmind.scribe.pen.adapter.Parameters;
 
 public class IndigenousLoggerAdapter implements LoggerAdapter {
 
@@ -51,7 +51,7 @@ public class IndigenousLoggerAdapter implements LoggerAdapter {
   private final ConcurrentLinkedQueue<Enhancer> enhancerList;
   private final String name;
   private Level level = Level.INFO;
-  private boolean autoFillLogicalContext = false;
+  private boolean autoFillLoggerContext = false;
 
   public IndigenousLoggerAdapter (String name) {
 
@@ -71,19 +71,19 @@ public class IndigenousLoggerAdapter implements LoggerAdapter {
   @Override
   public ParameterAdapter getParameterAdapter () {
 
-    return ScribeParameterAdapter.getInstance();
+    return Parameters.getInstance();
   }
 
   @Override
-  public boolean getAutoFillLogicalContext () {
+  public boolean getAutoFillLoggerContext () {
 
-    return autoFillLogicalContext;
+    return autoFillLoggerContext;
   }
 
   @Override
-  public void setAutoFillLogicalContext (boolean autoFillLogicalContext) {
+  public void setAutoFillLoggerContext (boolean autoFillLoggerContext) {
 
-    this.autoFillLogicalContext = autoFillLogicalContext;
+    this.autoFillLoggerContext = autoFillLoggerContext;
   }
 
   @Override
@@ -175,14 +175,14 @@ public class IndigenousLoggerAdapter implements LoggerAdapter {
 
   private boolean willLog (IndigenousRecord record) {
 
-    LogicalContext logicalContext;
+    LoggerContext loggerContext;
 
-    logicalContext = new DefaultLogicalContext();
-    if (getAutoFillLogicalContext()) {
-      logicalContext.fillIn();
+    loggerContext = new DefaultLoggerContext();
+    if (getAutoFillLoggerContext()) {
+      loggerContext.fillIn();
     }
 
-    record.setLogicalContext(logicalContext);
+    record.setLoggerContext(loggerContext);
 
     if (!filterList.isEmpty()) {
       for (Filter filter : filterList) {

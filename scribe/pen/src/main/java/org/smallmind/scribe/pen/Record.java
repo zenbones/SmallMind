@@ -48,7 +48,7 @@ public interface Record extends Serializable {
 
   Parameter[] getParameters ();
 
-  LogicalContext getLogicalContext ();
+  LoggerContext getLoggerContext ();
 
   long getThreadID ();
 

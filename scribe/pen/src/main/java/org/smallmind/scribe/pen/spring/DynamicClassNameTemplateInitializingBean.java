@@ -48,7 +48,7 @@ public class DynamicClassNameTemplateInitializingBean implements InitializingBea
   private Filter[] filters = new Filter[0];
   private Appender[] appenders = new Appender[0];
   private Enhancer[] enhancers = new Enhancer[0];
-  private boolean autoFillLogicalContext = false;
+  private boolean autoFillLoggerContext = false;
 
   public void setFilters (Filter[] filters) {
 
@@ -65,9 +65,9 @@ public class DynamicClassNameTemplateInitializingBean implements InitializingBea
     this.enhancers = enhancers;
   }
 
-  public void setAutoFillLogicalContext (boolean autoFillLogicalContext) {
+  public void setAutoFillLoggerContext (boolean autoFillLoggerContext) {
 
-    this.autoFillLogicalContext = autoFillLogicalContext;
+    this.autoFillLoggerContext = autoFillLoggerContext;
   }
 
   @Override
@@ -96,7 +96,7 @@ public class DynamicClassNameTemplateInitializingBean implements InitializingBea
         throw new LoggerException("Undefined level for log key(%s)", logKey);
       }
 
-      classNameTemplate = new ClassNameTemplate(filters, appenders, enhancers, Level.valueOf(levelValue), autoFillLogicalContext, templateMap.get(logKey));
+      classNameTemplate = new ClassNameTemplate(filters, appenders, enhancers, Level.valueOf(levelValue), autoFillLoggerContext, templateMap.get(logKey));
       classNameTemplate.register();
     }
   }
