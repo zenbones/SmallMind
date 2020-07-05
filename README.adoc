@@ -426,6 +426,16 @@ To use Scribe you'll need the `scribe-pen` dependency, and, if using an endpoint
   <artifactId>scribe-ink-indigenous</artifactId>
   <version>LATEST</version>
 </dependency>
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>scribe-ink-jdk</artifactId>
+  <version>LATEST</version>
+</dependency>
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>scribe-ink-log4j</artifactId>
+  <version>LATEST</version>
+</dependency>
 ----
 
 .Scribe Integrations
