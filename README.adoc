@@ -1,6 +1,6 @@
 = Smallmind
 :doctype: book
-:toc: left
+:toc: auto
 :icons: font
 A journey through glue code
 
