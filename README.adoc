@@ -676,12 +676,14 @@ public abstract void handleOutput (Record record)
 
 An error handler provides an opportunity for sub-classes of AbstractAppender to find a way to notify client code when the normal log publishing operation fails unexpectedly. When designing an error handler, it's important to keep in mind that notification options may be limited, as the usual venue for logging has just failed. One way to make use of this capability would be to use `org.smallmind.scribe.pen.DefaultErrorHandler`, which takes another appender upon construction and attempts to log the resulting error using this alternate route. Using a <<scribe-console-appender>> as the alternate logger can be a safe bet, although the efficacy of this solution will depend upon how the client code is handling standard out. Creating an error handler is just a matter of implementing...
 
+====
 [source,java]
 ----
 void process (Record record, Exception exception, String errorMessage, Object... args);
 ----
 
 ...where _record_ is the original log record, _exception_ is the exception thrown from the failed `publish()` method, and the _errorMessage_ and _args_ represent a suggestion for an additional message about the error.
+====
 
 ===== AbstractFormattedAppender
 
