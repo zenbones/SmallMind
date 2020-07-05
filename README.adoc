@@ -406,7 +406,7 @@ Scribe is a logging framework with no specific dependency on a logger endpoint. 
 
 == Install
 
-To use Scribe you'll need the `scribe-pen` dependency, and, if using an endpoint logger, you'll need to add the appropriate `scribe-ink-*` module. Integration with Apache Commons Logging is achieved through adding the `scribe-apache` module, and with SLF4J by adding the `scribe-slf4j` module.
+To use Scribe you'll need the `scribe-pen` dependency, and, if using an endpoint logger, you'll need to add the appropriate `scribe-ink-*` module (these modules describe services, so use only the single dependency that matches your endpoint logging framework). Integration with Apache Commons Logging is achieved through adding the `scribe-apache` module, and with SLF4J by adding the `scribe-slf4j` module.
 
 .Scribe Pen
 [source,xml]
@@ -838,7 +838,7 @@ void enhance (Record record);
 
 [small]#`org.smallmind.scribe.pen.adapter.Parameters`#
 
-A parameter is a key/value pair, properly held in thread local context, so they are capable of carrying cross-cutting concerns (or at least bits of data about such concerns). Although <<scribe-logger>> implementations may provide alternate integrations to the capabilities of end point logging systems, all of those provided by this project use the Parameters class, which is both a factory, and an implementation, of `org.smallmind.scribe.pen.adapter.ParameterAdapter`. To accommodate this behavior, you get the current instance via `Parameters.getInstance()`, upon which you may now call...
+A parameter is a key/value pair, properly held in thread local context, so they are capable of carrying cross-cutting concerns (or at least bits of data about such concerns). Although <<scribe-logger>> implementations may provide alternate integrations to the capabilities of endpoint logging systems, all of those provided by this project use the Parameters class, which is both a factory, and an implementation, of `org.smallmind.scribe.pen.adapter.ParameterAdapter`. To accommodate this behavior, you get the current instance via `Parameters.getInstance()`, upon which you may now call...
 
 * `void put (String key, Serializable value)` - Puts a value into the backing thread local map.
 * `void remove (String key)` - Removes a value from the backing thread local map.
