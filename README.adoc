@@ -24,7 +24,7 @@ There is none. IOC projects provide both the base container and configuration. S
 * <<claxon>> - A unified monitoring framework with extensible meters and pluggable metric warehousing integrations (comes with Datadog, JMX, Logging and Prometheus).
 * <<spark>> - Maven packaging formats for the construction of self-contained executable build artifacts.
 
-[[claxon,Claxon]]
+[[claxon, Claxon]]
 = Claxon
 
 [partintro]
@@ -398,7 +398,7 @@ The Prometheus collection interval must be less than or equal to the Claxon coll
 
 Prometheus does not allow dot notated names, nor anything but the most basic ascii characters and numbers. The more natural dot notated names used by Claxon will be translated to underscore separated names. Most everything otherwise inadmissible for prometheus will also end up as underscores. Fortunately, prometheus is muti-dimensional and Claxon's guidelines for tags are in line with those promulgated by Prometheus.
 
-[[scribe,Scribe]]
+[[scribe, Scribe]]
 = Scribe
 
 [partintro]
@@ -870,7 +870,6 @@ Templates can either be statically added to the <<scribe-logger-manager>>, or th
 
 We recommend generating a default template, which acts as a fallback default configuration, and then a set of templates which will bind themselves to the appropriate hierarchically named loggers as they are requested. Such a setup is not hard given the available template implementations.
 
-
 [[scribe-class-name-template, ClassNameTemplate]]
 ==== ClassNameTemplate
 
@@ -920,13 +919,13 @@ Although the <<scribe-class-name-template>> is more flexible, and in general a b
 
 == SLF4J Integration
 
-[[spark,Spark]]
+[[spark, Spark]]
 = Spark
 
 [partintro]
 The Spark project consists of Maven packaging formats for the construction of self-contained executable build artifacts.
 
-[[spark-singularity,Singularity]]
+[[spark-singularity, Singularity]]
 == Singularity
 
 Singularity is a Maven packaging format for executable jars *with* all their dependencies. Notably, a Singularity package does not unpack and repack its dependencies. The original jar files are maintained, and their namespaces are preserved. In order to speed class resolution and loading, indexes are built on compilation through a bit of Maven plugin magic. There should be nothing special you need to do with your code to create a Singulairty from it, other than defining the packaging and nominating a `public static void main (String... args)` entry point.
