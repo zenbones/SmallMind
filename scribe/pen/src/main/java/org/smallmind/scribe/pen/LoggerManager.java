@@ -90,7 +90,7 @@ public class LoggerManager {
     }
   }
 
-  public static Logger getLogger (Class loggableClass) {
+  public static Logger getLogger (Class<?> loggableClass) {
 
     return getLogger(loggableClass.getCanonicalName());
   }

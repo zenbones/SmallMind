@@ -465,7 +465,7 @@ And that last reason is honestly the one which started this project. Hopefully i
 
 [small]#`org.smallmind.scribe.pen.Logger`#
 
-The mechanism of logging in Scribe is a Logger. A logger has a <<scribe-logger-name>> and a <<scribe-level>> at which it will log, may have a <<scribe-logger-context>>, holds <<scribe-appenders>>, <<scribe-filters>> and <<scribe-enhancer>>, and can decorate logs with <<scribe-parameters>>. The basic function of a Logger is expressed through its `log()` methods....
+The mechanism of logging in Scribe is a Logger. A logger has a <<scribe-logger-name>> and a <<scribe-level>> at which it will log, may have a <<scribe-logger-context>>, holds <<scribe-appenders>>, <<scribe-filters>> and <<scribe-enhancers>>, and can decorate logs with <<scribe-parameters>>. The basic function of a Logger is expressed through its `log()` methods....
 
 * `void log (Level level, String message, Object... args)`
 * `void log (Level level, Throwable throwable)`
@@ -500,7 +500,7 @@ void warn (Throwable throwable, Supplier<String> supplier)
 [[scribe-logger-name, Name]]
 === Name
 
-Every logger instance has a name by which it's retrieved (see <<scribe-logger-manager>> below), by which its configuration may be fine-tuned (see <<scribe-configuration>> below), and by which it may be known in log output. Although the choice of name is yours, it's suggested that you stick with the name of the class doing the logging.
+Every logger instance has a name by which it's retrieved (see <<scribe-logger-manager>> below), by which its configuration may be fine-tuned (see <<scribe-templates>> below), and by which it may be known in log output. Although the choice of name is yours, it's suggested that you stick with the name of the class doing the logging.
 
 [[scribe-level, Level]]
 === Level
@@ -811,12 +811,12 @@ A filter which allows log records through based on either meeting a particular _
 
 A basic level fiter. Log records are passed through that meet or exceed the <<scribe-level>> set on this filter.
 
-[[scribe-enhancer, Enhancers]]
+[[scribe-enhancers, Enhancers]]
 === Enhancers
 
 [small]#`org.smallmind.scribe.pen.Enhancer`#
 
-An enhancer is meant as a log record decorator. A kind of log record 'get of jail free card', an enhancer can do whatever it wants with a log record by implementing the `enhance()` method...
+An enhancer is essentially a log record decorator. A kind of log record 'get of jail free card', an enhancer can do whatever it wants with a log record by implementing the `enhance()` method...
 
 [source,java]
 ----
@@ -826,14 +826,67 @@ void enhance (Record record);
 [[scribe-parameters, Parameters]]
 === Parameters
 
-A parameter is a key/value pair which should properly be held in thread local context so that they can carry cross-cutting concerns (or at least bits of data about such concerns).
+[small]#`org.smallmind.scribe.pen.adapter.Parameters`#
 
+A parameter is a key/value pair, properly held in thread local context, so they are capable of carrying cross-cutting concerns (or at least bits of data about such concerns). Although <<scribe-logger>> implementations may provide alternate integrations to the capabilities of end point logging systems, all of those provided by this project use the Parameters class, which is both a factory, and an implementation, of `org.smallmind.scribe.pen.adapter.ParameterAdapter`. To accommodate this behavior, you get the current instance via `Parameters.getInstance()`, upon which you may now call...
 
+* `void put (String key, Serializable value)` - Puts a value into the backing thread local map.
+* `void remove (String key)` - Removes a value from the backing thread local map.
+* `void clear ()` - Clears the backing thread local map.
+* `Serializable get (String key)` - Gets a value from the baking thread local map.
+* `Parameter[] getParameters ()` - Get all parameters currently in the backing thread local map.
 
-<<scribe-logger>> implementations that have a notion of thread local context such as Log4Js MDC, or our <<scribe-indigenous>> logger, can make use of this project's notion of parameters.
+See the various implementations of <<scribe-formatter>> for the output of parameters to a log record.
 
 [[scribe-logger-manager, LoggerManager]]
 == LoggerManager
+
+[small]#`org.smallmind.scribe.pen.LoggerManager`#
+
+The LoggerManager class is the factory for <<scribe-logger>> instances. It's the static `getLogger()` method which returns an instance of a logger for use, and which takes either a `_String_` or `_Class<?>_` as parameter. The preferred method is to pass it the `_Class_` from which the resulting logger will be called, which makes organizing both loggers and their output relatively natural and tidy. This does mean you end up with, generally, a lot of loggers, which you'll need to configure with the appropriate objects and fields (such as <<scribe-level>>, <<scribe-appenders>>, <<scribe-filters>> and such). Rather than a complex system of hierarchical configurations and inheritances, this project uses <<scribe-templates>>.
+
+[[scribe-templates, Templates]]
+=== Templates
+
+[small]#`org.smallmind.scribe.pen.Template`#
+
+Templates can either be statically added to the <<scribe-logger-manager>>, or they will add themselves when their `register()` method is called, usually from the configuring dependency injection framework. Every template vies for the right to configure each logger with the set of objects it contains, with the strongest template winning. A template has methods for conveniently setting, and is a subsequent container for, the following information...
+
+* *Appenders* (_<<scribe-appenders>>_) - A list of appenders which will be set on any matching logger.
+* *AutoFillLoggerContext* (_boolean_) - Whether the matching logger will auto-fill its <<scribe-logger-context>>. Defaults to false.
+* *Enhancers* (_<<scribe-enhancers>>_) - A list of enhancers which will be set on any matching logger.
+* *Filters* (_<<scribe-filters>>_) - A list of filters which will be set on any matching logger.
+* *Level* (_<<scribe-level>>_) - The default level for any matching logger. Defaults to _Level.INFO_.
+
+We recommend generating a default template, which acts as a fallback default configuration, and then a set of templates which will bind themselves to the appropriate hierarchically named loggers as they are requested. Such a setup is not hard given the available template implementations.
+
+
+[[scribe-class-name-template, ClassNameTemplate]]
+==== ClassNameTemplate
+
+[small]#`org.smallmind.scribe.pen.ClassNameTemplate`#
+
+This template takes a dot-notated pattern upon construction (see `org.smallmind.nutsnbolts.util.DotNotation`), and binds to loggers based on the strength of the match with their names (which should, obviously, be dot notated). The binding strength is proportional to the number of matching segments in the pattern, with wild card segments valued as slightly weaker.
+
+==== DefaultTemplate
+
+[small]#`org.smallmind.scribe.pen.DefaultTemplate`#
+
+This template will match any logger at the weakest possible binding value.
+
+==== PeronalizedTemplate
+
+[small]#`org.smallmind.scribe.pen.PersonalizedTemplate`#
+
+This template takes a name upon construction and is all or nothing, matching any logger with exactly the same name, at the strongest possible binding value.
+
+==== RegExTemplate
+
+[small]#`org.smallmind.scribe.pen.RegexTemplate`#
+
+Although the <<scribe-class-name-template>> is more flexible, and in general a better choice, this template can be used when logger names do not follow dot-notated conventions. This template take a regular expression upon construction, and binds to loggers whose names match the regular expression. The binding value is all or nothing, and will bind at the maximum strength if there's a match.
+
+== Configuration
 
 == Adaptation
 
@@ -852,11 +905,6 @@ A parameter is a key/value pair which should properly be held in thread local co
 === Record
 
 === Parameter Adapter
-
-[[scribe-configuration, Configuration]]
-== Configuration
-
-[small]#`org.smallmind.scribe.pen.LoggerManager`#
 
 == Apache Commons Logging Integration
 

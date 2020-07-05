@@ -30,23 +30,56 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.io;
+package org.smallmind.scribe.pen;
 
-import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
-public class WildcardFileNamePathFilter implements PathFilter {
+public class RegExTemplate extends Template {
 
-  private final Pattern namePattern;
+  private final AtomicReference<Pattern> loggerPatternRef = new AtomicReference<Pattern>();
 
-  public WildcardFileNamePathFilter (String name) {
+  public RegExTemplate () {
 
-    namePattern = Pattern.compile(RegExTranslator.translate(name));
+    super();
   }
 
-  @Override
-  public boolean accept (Path path) {
+  public RegExTemplate (String expression) {
 
-    return namePattern.matcher(path.getFileName().toString()).matches();
+    super();
+
+    loggerPatternRef.set(Pattern.compile(expression));
+  }
+
+  public RegExTemplate (Level level, boolean autoFillLoggerContext, String expression)
+    throws LoggerException {
+
+    super(level, autoFillLoggerContext);
+
+    loggerPatternRef.set(Pattern.compile(expression));
+  }
+
+  public RegExTemplate (Filter[] filters, Appender[] appenders, Enhancer[] enhancers, Level level, boolean autoFillLoggerContext, String expression)
+    throws LoggerException {
+
+    super(filters, appenders, enhancers, level, autoFillLoggerContext);
+
+    loggerPatternRef.set(Pattern.compile(expression));
+  }
+
+  public void setExpression (String expression) {
+
+    if (!loggerPatternRef.compareAndSet(null, Pattern.compile(expression))) {
+      throw new LoggerRuntimeException("RegExpTemplate has been previously initialized with a pattern");
+    }
+  }
+
+  public int matchLogger (String loggerName) {
+
+    if (loggerPatternRef.get() == null) {
+      throw new LoggerRuntimeException("RegExpTemplate was never initialized with a pattern");
+    }
+
+    return loggerPatternRef.get().matcher(loggerName).matches() ? Integer.MAX_VALUE : NO_MATCH;
   }
 }

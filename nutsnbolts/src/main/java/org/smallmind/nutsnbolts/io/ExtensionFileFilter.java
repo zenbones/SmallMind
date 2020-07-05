@@ -66,7 +66,7 @@ public final class ExtensionFileFilter extends FileFilter implements java.io.Fil
 
     Pattern parsedPattern;
 
-    parsedPattern = Pattern.compile(RegExpTranslator.translate("*." + extension));
+    parsedPattern = Pattern.compile(RegExTranslator.translate("*." + extension));
     regExpList.add(parsedPattern);
     extensionList.add(extension);
   }

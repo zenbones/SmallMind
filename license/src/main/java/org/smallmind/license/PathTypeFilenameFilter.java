@@ -9,7 +9,7 @@ public class PathTypeFilenameFilter implements PathFilter {
 
   public PathTypeFilenameFilter (String name) {
 
-    namePattern = Pattern.compile(FileTypeRegExpTranslator.translate(name));
+    namePattern = Pattern.compile(FileTypeRegExTranslator.translate(name));
   }
 
   public boolean accept (Path path) {
