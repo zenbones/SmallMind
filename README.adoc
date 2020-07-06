@@ -398,6 +398,124 @@ The Prometheus collection interval must be less than or equal to the Claxon coll
 
 Prometheus does not allow dot notated names, nor anything but the most basic ascii characters and numbers. The more natural dot notated names used by Claxon will be translated to underscore separated names. Most everything otherwise inadmissible for prometheus will also end up as underscores. Fortunately, prometheus is muti-dimensional and Claxon's guidelines for tags are in line with those promulgated by Prometheus.
 
+== Configuration
+
+The following is one possible configuration that's demonstrative of a simple but realistic scenario. It's in Spring XML format, but should be indicative of what's necessary in any injection framework...
+
+.Spring XML
+[source,xml]
+----
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+  <bean id="claxonEmitter" class="org.smallmind.claxon.emitter.prometheus.PrometheusEmitter"/>
+
+  <bean id="emitterMap" class="com.forio.epicenter.skeleton.instrument.claxon.spring.EmitterMapFactoryBean">
+    <property name="key" value="prometheus"/>
+    <property name="emitter" ref="claxonEmitter"/>
+  </bean>
+
+  <bean id="claxonEmitterResource" class="org.smallmind.claxon.http.EmitterResource">
+    <property name="registry" ref="claxonRegistry"/>
+  </bean>
+
+  <bean id="claxonRegistry" class="org.smallmind.claxon.registry.spring.ClaxonRegistryFactoryBean">
+    <property name="configuration">
+      <bean class="org.smallmind.claxon.registry.ClaxonConfiguration">
+        <property name="collectionStint">
+          <bean class="org.smallmind.claxon.registry.spring.StintFactoryBean">
+            <property name="time" value="3"/>
+            <property name="timeUnit" value="SECONDS"/>
+          </bean>
+        </property>
+        <property name="namingStrategy">
+          <bean class="org.smallmind.claxon.registry.ImpliedNamingStrategy">
+            <property name="prefixMap">
+              <map>
+                <entry value="com.mycompany.metric.http">
+                  <key>
+                    <bean class="org.smallmind.nutsnbolts.util.DotNotation">
+                      <property name="notation" value="com.mycompany.instrument.rest.*"/>
+                    </bean>
+                  </key>
+                </entry>
+                <entry value="com.mycompany.metric.persistence">
+                  <key>
+                    <bean class="org.smallmind.nutsnbolts.util.DotNotation">
+                      <property name="notation" value="org.smallmind.persistence.cache.*"/>
+                    </bean>
+                  </key>
+                </entry>
+                 <entry value="com.mycompany.metric.persistence">
+                  <key>
+                    <bean class="org.smallmind.nutsnbolts.util.DotNotation">
+                      <property name="notation" value="org.smallmind.persistence.orm.*"/>
+                    </bean>
+                  </key>
+                </entry>
+                <entry value="com.forio.epicenter.metric.pool">
+                  <key>
+                    <bean class="org.smallmind.nutsnbolts.util.DotNotation">
+                      <property name="notation" value="org.smallmind.quorum.pool.*"/>
+                    </bean>
+                  </key>
+                </entry>
+                <entry value="com.forio.epicenter.metric.push">
+                  <key>
+                    <bean class="org.smallmind.nutsnbolts.util.DotNotation">
+                      <property name="notation" value="com.forio.epicenter.skeleton.push.v4.*"/>
+                    </bean>
+                  </key>
+                </entry>
+                <entry value="com.forio.epicenter.metric.task">
+                  <key>
+                    <bean class="org.smallmind.nutsnbolts.util.DotNotation">
+                      <property name="notation" value="com.forio.epicenter.ontology.gestalt.v3.task.*"/>
+                    </bean>
+                  </key>
+                </entry>
+                <entry value="com.forio.epicenter.metric.task">
+                  <key>
+                    <bean class="org.smallmind.nutsnbolts.util.DotNotation">
+                      <property name="notation" value="com.forio.epicenter.ontology.gestalt.v4.task.*"/>
+                    </bean>
+                  </key>
+                </entry>
+                <entry value="com.forio.epicenter.metric.unknown">
+                  <key>
+                    <bean class="org.smallmind.nutsnbolts.util.DotNotation">
+                      <property name="notation" value="*"/>
+                    </bean>
+                  </key>
+                </entry>
+                <entry value="com.forio.epicenter.metric.wire">
+                  <key>
+                    <bean class="org.smallmind.nutsnbolts.util.DotNotation">
+                      <property name="notation" value="org.smallmind.phalanx.wire.*"/>
+                    </bean>
+                  </key>
+                </entry>
+                <entry value="com.forio.epicenter.metric.worker">
+                  <key>
+                    <bean class="org.smallmind.nutsnbolts.util.DotNotation">
+                      <property name="notation" value="org.smallmind.phalanx.worker.*"/>
+                    </bean>
+                  </key>
+                </entry>
+              </map>
+            </property>
+          </bean>
+        </property>
+      </bean>
+    </property>
+    <property name="emitterMap" ref="emitterMap"/>
+  </bean>
+</beans>
+----
+
+
 [[scribe, Scribe]]
 = Scribe
 
@@ -899,7 +1017,7 @@ Although the <<scribe-class-name-template>> is more flexible, and in general a b
 
 == Configuration
 
-The following is one possible configuration that demonstrative of a simple but realistic scenario. It's in Spring xml format, but should be indicative of what's necessary in any injection framework...
+The following is one possible configuration that's demonstrative of a simple but realistic scenario. It's in Spring XML format, but should be indicative of what's necessary in any injection framework...
 
 .Spring XML
 [source,xml]
