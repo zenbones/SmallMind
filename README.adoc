@@ -1091,6 +1091,27 @@ The following is one possible configuration that's demonstrative of a simple but
 
 == Adaptation
 
+In order to adapt an endpoint logging framework for use by Scribe, you'll need to fulfill a set of contracts defined by the following classes...
+
+=== LoggingBlueprint
+
+[small]#`org.smallmind.scribe.pen.adapter.LoggingBlueprint`#
+
+A LoggngBlueprint implementation is required to define a Java Service Provider for the `org.smallmind.scribe.pen.adapter.LoggingBlueprint` service interface. The overhead for this is pretty minimal, as all you really need is a file at */META-INF/services* named, literally, 'org.smallmind.scribe.pen.adapter.LoggingBlueprint', which contains a single line of text, and that text is the name of your implementation class. Your implementation will also need to complete the methods...
+
+* `public <<scribe-logger-adapter>> getLoggingAdapter (String name)` - Given the logger name, retuns an adapter to a logger in the underlying framework.
+* `public <<scribe-record>> errorRecord (<<scribe-record>> record, Throwable throwable, String message, Object... args)` - Should an error occur within an appender, such that the publishing contract cannot be fulfilled, the `org.smallmind.scribe.pen.DefaultErrorHandler` (if it's in use) will use this method to request a <<scribe-record>> compatible with the underlying framework, in order to try and call an alternate appender. The implementation should get any information it needs to construct the new record from the given parameters.
+
+Because implementations of LoggingBlueprint are service providers, a client need only include the dependency containing the implementation in their build, and it will be loaded by the Scribe framework. The one twist is that a client can have no more than a _single_ endpoint integration defined within their transitive dependencies. It's therefore *important*, that any code intended as a library for use by others make no attempt to include any endpoint integration within its own runtime dependency set.
+
+[[scribe-logger-adapter, LoggerAdapter]]
+=== LoggerAdapter
+
+[[scribe-record, Record]]
+=== Record
+
+=== Parameter Adapter
+
 [[scribe-indigenous, Indigenous]]
 === Indigenous
 
@@ -1098,14 +1119,7 @@ The following is one possible configuration that's demonstrative of a simple but
 
 === Log4J
 
-=== Blueprint
 
-=== LoggerAdapter
-
-[[scribe-record, Record]]
-=== Record
-
-=== Parameter Adapter
 
 == Apache Commons Logging Integration
 
