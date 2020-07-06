@@ -412,11 +412,6 @@ The following is one possible configuration that's demonstrative of a simple but
 
   <bean id="claxonEmitter" class="org.smallmind.claxon.emitter.prometheus.PrometheusEmitter"/>
 
-  <bean id="emitterMap" class="com.forio.epicenter.skeleton.instrument.claxon.spring.EmitterMapFactoryBean">
-    <property name="key" value="prometheus"/>
-    <property name="emitter" ref="claxonEmitter"/>
-  </bean>
-
   <bean id="claxonEmitterResource" class="org.smallmind.claxon.http.EmitterResource">
     <property name="registry" ref="claxonRegistry"/>
   </bean>
@@ -455,52 +450,17 @@ The following is one possible configuration that's demonstrative of a simple but
                     </bean>
                   </key>
                 </entry>
-                <entry value="com.forio.epicenter.metric.pool">
+                <entry value="com.mycompany.metric.task">
                   <key>
                     <bean class="org.smallmind.nutsnbolts.util.DotNotation">
-                      <property name="notation" value="org.smallmind.quorum.pool.*"/>
+                      <property name="notation" value="com.mycompany.task.*"/>
                     </bean>
                   </key>
                 </entry>
-                <entry value="com.forio.epicenter.metric.push">
-                  <key>
-                    <bean class="org.smallmind.nutsnbolts.util.DotNotation">
-                      <property name="notation" value="com.forio.epicenter.skeleton.push.v4.*"/>
-                    </bean>
-                  </key>
-                </entry>
-                <entry value="com.forio.epicenter.metric.task">
-                  <key>
-                    <bean class="org.smallmind.nutsnbolts.util.DotNotation">
-                      <property name="notation" value="com.forio.epicenter.ontology.gestalt.v3.task.*"/>
-                    </bean>
-                  </key>
-                </entry>
-                <entry value="com.forio.epicenter.metric.task">
-                  <key>
-                    <bean class="org.smallmind.nutsnbolts.util.DotNotation">
-                      <property name="notation" value="com.forio.epicenter.ontology.gestalt.v4.task.*"/>
-                    </bean>
-                  </key>
-                </entry>
-                <entry value="com.forio.epicenter.metric.unknown">
+                <entry value="com.mycompany.metric.unknown">
                   <key>
                     <bean class="org.smallmind.nutsnbolts.util.DotNotation">
                       <property name="notation" value="*"/>
-                    </bean>
-                  </key>
-                </entry>
-                <entry value="com.forio.epicenter.metric.wire">
-                  <key>
-                    <bean class="org.smallmind.nutsnbolts.util.DotNotation">
-                      <property name="notation" value="org.smallmind.phalanx.wire.*"/>
-                    </bean>
-                  </key>
-                </entry>
-                <entry value="com.forio.epicenter.metric.worker">
-                  <key>
-                    <bean class="org.smallmind.nutsnbolts.util.DotNotation">
-                      <property name="notation" value="org.smallmind.phalanx.worker.*"/>
                     </bean>
                   </key>
                 </entry>
@@ -510,11 +470,14 @@ The following is one possible configuration that's demonstrative of a simple but
         </property>
       </bean>
     </property>
-    <property name="emitterMap" ref="emitterMap"/>
+    <property name="emitterMap">
+      <map>
+        <entry key="prometheus" value-ref="claxonEmitter"/>
+      </map>
+    </property>
   </bean>
 </beans>
 ----
-
 
 [[scribe, Scribe]]
 = Scribe
