@@ -55,11 +55,10 @@ import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
-import sun.security.util.SecurityConstants;
 
 public class SingularityClassLoader extends ClassLoader {
 
-  private static final PermissionCollection ALL_PERMISSIONS_COLLECTION;
+  private static final PermissionCollection ALL_PERMISSION_COLLECTION;
   private static final String[] INOPERABLE_NAMESPACES = new String[] {"javax.xml.", "org.xml.", "org.w3c."};
   private final HashMap<String, URL> urlMap = new HashMap<>();
   private final HashSet<String> packageSet = new HashSet<>();
@@ -73,8 +72,10 @@ public class SingularityClassLoader extends ClassLoader {
 
   static {
 
-    ALL_PERMISSIONS_COLLECTION = new AllPermission().newPermissionCollection();
-    ALL_PERMISSIONS_COLLECTION.add(SecurityConstants.ALL_PERMISSION);
+    AllPermission allPermission = new AllPermission();
+
+    ALL_PERMISSION_COLLECTION = allPermission.newPermissionCollection();
+    ALL_PERMISSION_COLLECTION.add(allPermission);
 
     ClassLoader.registerAsParallelCapable();
     URL.setURLStreamHandlerFactory(new SingularityJarURLStreamHandlerFactory());
@@ -199,7 +200,7 @@ public class SingularityClassLoader extends ClassLoader {
           }
 
           CodeSource codeSource = new CodeSource(codeSourceUrl, (Certificate[])null);
-          ProtectionDomain protectionDomain = new ProtectionDomain(codeSource, ALL_PERMISSIONS_COLLECTION, this, null);
+          ProtectionDomain protectionDomain = new ProtectionDomain(codeSource, ALL_PERMISSION_COLLECTION, this, null);
           InputStream classInputStream;
           byte[] classData;
 

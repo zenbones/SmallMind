@@ -42,7 +42,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import sun.security.util.SecurityConstants;
 
 /*
     Policy.setPolicy(new SandboxSecurityPolicy(<White Listed ClassLoader(s)>));
@@ -56,8 +55,10 @@ public class SandboxSecurityPolicy extends Policy {
 
   static {
 
-    ALL_PERMISSION_COLLECTION = new AllPermission().newPermissionCollection();
-    ALL_PERMISSION_COLLECTION.add(SecurityConstants.ALL_PERMISSION);
+    AllPermission allPermission = new AllPermission();
+
+    ALL_PERMISSION_COLLECTION = allPermission.newPermissionCollection();
+    ALL_PERMISSION_COLLECTION.add(allPermission);
   }
 
   public SandboxSecurityPolicy (ClassLoader... whiteListedClassLoaders) {

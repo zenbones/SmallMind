@@ -36,16 +36,17 @@ import java.security.AllPermission;
 import java.security.CodeSource;
 import java.security.PermissionCollection;
 import java.security.SecureClassLoader;
-import sun.security.util.SecurityConstants;
 
 public class AllPermissionsClassLoader extends SecureClassLoader {
 
-  private static final PermissionCollection ALL_PERMISSIONS_COLLECTION;
+  private static final PermissionCollection ALL_PERMISSION_COLLECTION;
 
   static {
 
-    ALL_PERMISSIONS_COLLECTION = new AllPermission().newPermissionCollection();
-    ALL_PERMISSIONS_COLLECTION.add(SecurityConstants.ALL_PERMISSION);
+    AllPermission allPermission = new AllPermission();
+
+    ALL_PERMISSION_COLLECTION = allPermission.newPermissionCollection();
+    ALL_PERMISSION_COLLECTION.add(allPermission);
   }
 
   public AllPermissionsClassLoader (ClassLoader classLoader) {
@@ -56,6 +57,6 @@ public class AllPermissionsClassLoader extends SecureClassLoader {
   @Override
   protected PermissionCollection getPermissions (CodeSource codesource) {
 
-    return ALL_PERMISSIONS_COLLECTION;
+    return ALL_PERMISSION_COLLECTION;
   }
 }
