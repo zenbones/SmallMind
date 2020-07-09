@@ -1134,7 +1134,16 @@ The Spark project consists of Maven packaging formats for the construction of se
 [[spark-singularity, Singularity]]
 == Singularity
 
-Singularity is a Maven packaging format for self-contained executable jars *with* all their dependencies. Notably, a Singularity package does *not* unpack and repack its dependencies. The original jar files are maintained, and their namespaces are preserved. The Singularity package will contain a boot class loader that understands the jar within jar format. In order to speed class resolution and loading, offset indexes of entries within the jar library dependencies are built during package construction, through a bit of Maven plugin magic. There should be nothing special you need to do with your code to create a Singularity from it, other than defining the packaging and nominating a `public static void main (String... args)` entry point.
+Singularity is a Maven packaging format for self-contained executable jars *with* all their dependencies. Notably, a Singularity package does *not* unpack and repack its dependencies. The original jar files are maintained, and their namespaces are preserved. The Singularity package will contain a boot class loader that understands the _jar within jar_ format. In order to speed class resolution and loading, offset indexes of entries within the jar library dependencies are built during package construction. There should be nothing special you need to do with your code to create a Singularity from it, other than defining the packaging and nominating a `public static void main (String... args)` entry point.
+[TIP]
+====
+Code looking to obtain a class loader should use...
+[source,java]
+----
+Thread.currentThread().getContextClassLoader();
+----
+...as the system class loader will not understand the _jar within jar_ packaging format.
+====
 
 === Install
 
