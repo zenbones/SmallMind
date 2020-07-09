@@ -60,6 +60,7 @@ public class SingularityClassLoader extends ClassLoader {
 
   private static final PermissionCollection ALL_PERMISSION_COLLECTION;
   private static final String[] INOPERABLE_NAMESPACES = new String[] {"javax.xml.", "org.xml.", "org.w3c."};
+  private static final String[] OPERABLE_NAMESPACES = new String[] {"javax.xml.bind."};
   private final HashMap<String, URL> urlMap = new HashMap<>();
   private final HashSet<String> packageSet = new HashSet<>();
   private final URL sealBase;
@@ -222,6 +223,12 @@ public class SingularityClassLoader extends ClassLoader {
 
   private boolean isOperableNamespace (String name) {
 
+    for (String operableNamespace : OPERABLE_NAMESPACES) {
+      if (name.startsWith(operableNamespace)) {
+
+        return true;
+      }
+    }
     for (String inoperableNamespace : INOPERABLE_NAMESPACES) {
       if (name.startsWith(inoperableNamespace)) {
 
