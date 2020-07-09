@@ -1,6 +1,6 @@
 = Smallmind
 :doctype: book
-:toc: left
+:toc: auto
 :icons: font
 A journey through glue code
 
@@ -24,7 +24,7 @@ There is none. IOC projects provide both the base container and configuration. S
 * <<claxon>> - A unified monitoring framework with extensible meters and pluggable metric warehousing integrations (comes with Datadog, JMX, Logging and Prometheus).
 * <<spark>> - Maven packaging formats for the construction of self-contained executable build artifacts.
 
-[[claxon,Claxon]]
+[[claxon, Claxon]]
 = Claxon
 
 [partintro]
@@ -398,7 +398,88 @@ The Prometheus collection interval must be less than or equal to the Claxon coll
 
 Prometheus does not allow dot notated names, nor anything but the most basic ascii characters and numbers. The more natural dot notated names used by Claxon will be translated to underscore separated names. Most everything otherwise inadmissible for prometheus will also end up as underscores. Fortunately, prometheus is muti-dimensional and Claxon's guidelines for tags are in line with those promulgated by Prometheus.
 
-[[scribe,Scribe]]
+== Configuration
+
+The following is one possible configuration that's demonstrative of a simple but realistic scenario. It's in Spring XML format, but should be indicative of what's necessary in any injection framework...
+
+.Spring XML
+[source,xml]
+----
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+  <bean id="claxonEmitter" class="org.smallmind.claxon.emitter.prometheus.PrometheusEmitter"/>
+
+  <bean id="claxonEmitterResource" class="org.smallmind.claxon.http.EmitterResource">
+    <property name="registry" ref="claxonRegistry"/>
+  </bean>
+
+  <bean id="claxonRegistry" class="org.smallmind.claxon.registry.spring.ClaxonRegistryFactoryBean">
+    <property name="configuration">
+      <bean class="org.smallmind.claxon.registry.ClaxonConfiguration">
+        <property name="collectionStint">
+          <bean class="org.smallmind.claxon.registry.spring.StintFactoryBean">
+            <property name="time" value="3"/>
+            <property name="timeUnit" value="SECONDS"/>
+          </bean>
+        </property>
+        <property name="namingStrategy">
+          <bean class="org.smallmind.claxon.registry.ImpliedNamingStrategy">
+            <property name="prefixMap">
+              <map>
+                <entry value="com.mycompany.metric.http">
+                  <key>
+                    <bean class="org.smallmind.nutsnbolts.util.DotNotation">
+                      <property name="notation" value="com.mycompany.instrument.rest.*"/>
+                    </bean>
+                  </key>
+                </entry>
+                <entry value="com.mycompany.metric.persistence">
+                  <key>
+                    <bean class="org.smallmind.nutsnbolts.util.DotNotation">
+                      <property name="notation" value="org.smallmind.persistence.cache.*"/>
+                    </bean>
+                  </key>
+                </entry>
+                 <entry value="com.mycompany.metric.persistence">
+                  <key>
+                    <bean class="org.smallmind.nutsnbolts.util.DotNotation">
+                      <property name="notation" value="org.smallmind.persistence.orm.*"/>
+                    </bean>
+                  </key>
+                </entry>
+                <entry value="com.mycompany.metric.task">
+                  <key>
+                    <bean class="org.smallmind.nutsnbolts.util.DotNotation">
+                      <property name="notation" value="com.mycompany.task.*"/>
+                    </bean>
+                  </key>
+                </entry>
+                <entry value="com.mycompany.metric.unknown">
+                  <key>
+                    <bean class="org.smallmind.nutsnbolts.util.DotNotation">
+                      <property name="notation" value="*"/>
+                    </bean>
+                  </key>
+                </entry>
+              </map>
+            </property>
+          </bean>
+        </property>
+      </bean>
+    </property>
+    <property name="emitterMap">
+      <map>
+        <entry key="prometheus" value-ref="claxonEmitter"/>
+      </map>
+    </property>
+  </bean>
+</beans>
+----
+
+[[scribe, Scribe]]
 = Scribe
 
 [partintro]
@@ -406,7 +487,7 @@ Scribe is a logging framework with no specific dependency on a logger endpoint. 
 
 == Install
 
-To use Scribe you'll need the `scribe-pen` dependency, and, if using an endpoint logger, you'll need to add the appropriate `scribe-ink-*` module. Integration with Apache Commons Logging is achieved through adding the `scribe-apache` module, and with SLF4J by adding the `scribe-slf4j` module.
+To use Scribe you'll need the `scribe-pen` dependency, and, if using an endpoint logger, you'll need to add the appropriate `scribe-ink-*` module (these modules describe services, so use only the single dependency that matches your endpoint logging framework). Integration with Apache Commons Logging is achieved through adding the `scribe-apache` module, and with SLF4J by adding the `scribe-slf4j` module.
 
 .Scribe Pen
 [source,xml]
@@ -424,6 +505,16 @@ To use Scribe you'll need the `scribe-pen` dependency, and, if using an endpoint
 <dependency>
   <groupId>org.smallmind</groupId>
   <artifactId>scribe-ink-indigenous</artifactId>
+  <version>LATEST</version>
+</dependency>
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>scribe-ink-jdk</artifactId>
+  <version>LATEST</version>
+</dependency>
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>scribe-ink-log4j</artifactId>
   <version>LATEST</version>
 </dependency>
 ----
@@ -465,7 +556,7 @@ And that last reason is honestly the one which started this project. Hopefully i
 
 [small]#`org.smallmind.scribe.pen.Logger`#
 
-The mechanism of logging in Scribe is a Logger. A logger has a <<scribe-logger-name>> and a <<scribe-level>> at which it will log, may have a <<scribe-logger-context>>, holds <<scribe-appenders>>, <<scribe-filters>> and <<scribe-enhancer>>, and can decorate logs with <<scribe-parameters>>. The basic function of a Logger is expressed through its `log()` methods....
+The mechanism of logging in Scribe is a Logger. A logger has a <<scribe-logger-name>> and a <<scribe-level>> at which it will log, may have a <<scribe-logger-context>>, holds <<scribe-appenders>>, <<scribe-filters>> and <<scribe-enhancers>>, and can decorate logs with <<scribe-parameters>>. The basic function of a Logger is expressed through its `log()` methods....
 
 * `void log (Level level, String message, Object... args)`
 * `void log (Level level, Throwable throwable)`
@@ -500,7 +591,7 @@ void warn (Throwable throwable, Supplier<String> supplier)
 [[scribe-logger-name, Name]]
 === Name
 
-Every logger instance has a name by which it's retrieved (see <<scribe-logger-manager>> below), by which its configuration may be fine-tuned (see <<scribe-configuration>> below), and by which it may be known in log output. Although the choice of name is yours, it's suggested that you stick with the name of the class doing the logging.
+Every logger instance has a name by which it's retrieved (see <<scribe-logger-manager>> below), by which its configuration may be fine-tuned (see <<scribe-templates>> below), and by which it may be known in log output. Although the choice of name is yours, it's suggested that you stick with the name of the class doing the logging.
 
 [[scribe-level, Level]]
 === Level
@@ -666,12 +757,14 @@ public abstract void handleOutput (Record record)
 
 An error handler provides an opportunity for sub-classes of AbstractAppender to find a way to notify client code when the normal log publishing operation fails unexpectedly. When designing an error handler, it's important to keep in mind that notification options may be limited, as the usual venue for logging has just failed. One way to make use of this capability would be to use `org.smallmind.scribe.pen.DefaultErrorHandler`, which takes another appender upon construction and attempts to log the resulting error using this alternate route. Using a <<scribe-console-appender>> as the alternate logger can be a safe bet, although the efficacy of this solution will depend upon how the client code is handling standard out. Creating an error handler is just a matter of implementing...
 
+====
 [source,java]
 ----
 void process (Record record, Exception exception, String errorMessage, Object... args);
 ----
 
 ...where _record_ is the original log record, _exception_ is the exception thrown from the failed `publish()` method, and the _errorMessage_ and _args_ represent a suggestion for an additional message about the error.
+====
 
 ===== AbstractFormattedAppender
 
@@ -811,12 +904,12 @@ A filter which allows log records through based on either meeting a particular _
 
 A basic level fiter. Log records are passed through that meet or exceed the <<scribe-level>> set on this filter.
 
-[[scribe-enhancer, Enhancers]]
+[[scribe-enhancers, Enhancers]]
 === Enhancers
 
 [small]#`org.smallmind.scribe.pen.Enhancer`#
 
-An enhancer is meant as a log record decorator. A kind of log record 'get of jail free card', an enhancer can do whatever it wants with a log record by implementing the `enhance()` method...
+An enhancer is essentially a log record decorator. A kind of log record 'get of jail free card', an enhancer can do whatever it wants with a log record by implementing the `enhance()` method...
 
 [source,java]
 ----
@@ -826,12 +919,198 @@ void enhance (Record record);
 [[scribe-parameters, Parameters]]
 === Parameters
 
-A parameter is a key/value pair. <<scribe-logger>> implementations that have a notion of thread local context such as Log4Js MDC, or our <<scribe-indigenous>> logger, can make use of this project's notion of parameters.
+[small]#`org.smallmind.scribe.pen.adapter.Parameters`#
+
+A parameter is a key/value pair, properly held in thread local context, so they are capable of carrying cross-cutting concerns (or at least bits of data about such concerns). Although <<scribe-logger>> implementations may provide alternate integrations to the capabilities of endpoint logging systems, all of those provided by this project use the Parameters class, which is both a factory, and an implementation, of `org.smallmind.scribe.pen.adapter.ParameterAdapter`. To accommodate this behavior, you get the current instance via `Parameters.getInstance()`, upon which you may now call...
+
+* `void put (String key, Serializable value)` - Puts a value into the backing thread local map.
+* `void remove (String key)` - Removes a value from the backing thread local map.
+* `void clear ()` - Clears the backing thread local map.
+* `Serializable get (String key)` - Gets a value from the baking thread local map.
+* `Parameter[] getParameters ()` - Get all parameters currently in the backing thread local map.
+
+See the various implementations of <<scribe-formatter>> for the output of parameters to a log record.
 
 [[scribe-logger-manager, LoggerManager]]
 == LoggerManager
 
+[small]#`org.smallmind.scribe.pen.LoggerManager`#
+
+The LoggerManager class is the factory for <<scribe-logger>> instances. It's the static `getLogger()` method which returns an instance of a logger for use, and which takes either a `_String_` or `_Class<?>_` as parameter. The preferred method is to pass it the `_Class_` from which the resulting logger will be called, which makes organizing both loggers and their output relatively natural and tidy. This does mean you end up with, generally, a lot of loggers, which you'll need to configure with the appropriate objects and fields (such as <<scribe-level>>, <<scribe-appenders>>, <<scribe-filters>> and such). Rather than a complex system of hierarchical configurations and inheritances, this project uses <<scribe-templates>>.
+
+[[scribe-templates, Templates]]
+=== Templates
+
+[small]#`org.smallmind.scribe.pen.Template`#
+
+Templates can either be statically added to the <<scribe-logger-manager>>, or they will add themselves when their `register()` method is called, usually from the configuring dependency injection framework. Every template vies for the right to configure each logger with the set of objects it contains, with the strongest template winning. A template has methods for conveniently setting, and is a subsequent container for, the following information...
+
+* *Appenders* (_<<scribe-appenders>>_) - A list of appenders which will be set on any matching logger.
+* *AutoFillLoggerContext* (_boolean_) - Whether the matching logger will auto-fill its <<scribe-logger-context>>. Defaults to false.
+* *Enhancers* (_<<scribe-enhancers>>_) - A list of enhancers which will be set on any matching logger.
+* *Filters* (_<<scribe-filters>>_) - A list of filters which will be set on any matching logger.
+* *Level* (_<<scribe-level>>_) - The default level for any matching logger. Defaults to _Level.INFO_.
+
+We recommend generating a default template, which acts as a fallback default configuration, and then a set of templates which will bind themselves to the appropriate hierarchically named loggers as they are requested. Such a setup is not hard given the available template implementations.
+
+[[scribe-class-name-template, ClassNameTemplate]]
+==== ClassNameTemplate
+
+[small]#`org.smallmind.scribe.pen.ClassNameTemplate`#
+
+This template takes a dot-notated pattern upon construction (see `org.smallmind.nutsnbolts.util.DotNotation`), and binds to loggers based on the strength of the match with their names (which should, obviously, be dot notated). The binding strength is proportional to the number of matching segments in the pattern, with wild card segments valued as slightly weaker.
+
+==== DefaultTemplate
+
+[small]#`org.smallmind.scribe.pen.DefaultTemplate`#
+
+This template will match any logger at the weakest possible binding value.
+
+==== PeronalizedTemplate
+
+[small]#`org.smallmind.scribe.pen.PersonalizedTemplate`#
+
+This template takes a name upon construction and is all or nothing, matching any logger with exactly the same name, at the strongest possible binding value.
+
+==== RegExTemplate
+
+[small]#`org.smallmind.scribe.pen.RegexTemplate`#
+
+Although the <<scribe-class-name-template>> is more flexible, and in general a better choice, this template can be used when logger names do not follow dot-notated conventions. This template take a regular expression upon construction, and binds to loggers whose names match the regular expression. The binding value is all or nothing, and will bind at the maximum strength if there's a match.
+
+== Configuration
+
+The following is one possible configuration that's demonstrative of a simple but realistic scenario. It's in Spring XML format, but should be indicative of what's necessary in any injection framework...
+
+.Spring XML
+[source,xml]
+----
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+  <!-- Templates -->
+  <bean id="defaultTemplate" class="org.smallmind.scribe.pen.DefaultTemplate" init-method="register">
+    <property name="autoFillLoggerContext" value="true"/>
+    <property name="appenders">
+      <list>
+        <ref bean="logAppender"/>
+      </list>
+    </property>
+    <property name="level" value="INFO"/>
+  </bean>
+
+  <bean id="classNameTemplate" class="org.smallmind.scribe.pen.ClassNameTemplate" init-method="register">
+    <property name="autoFillLoggerContext" value="true"/>
+    <property name="pattern" value="com.mycompany.*"/>
+    <property name="appenders">
+      <list>
+        <ref bean="logAppender"/>
+      </list>
+    </property>
+    <property name="level" value="DEBUG"/>
+  </bean>
+
+  <!-- Logger -->
+  <bean id="shortTimestamp" class="org.smallmind.scribe.pen.DateFormatTimestamp">
+    <property name="dateFormat">
+      <bean class="java.text.SimpleDateFormat">
+        <constructor-arg index="0" value="yyyy-MM-dd"/>
+      </bean>
+    </property>
+  </bean>
+
+  <bean id="fullTimestamp" class="org.smallmind.scribe.pen.DateFormatTimestamp">
+    <property name="dateFormat">
+      <bean class="java.text.SimpleDateFormat">
+        <constructor-arg index="0" value="yyyy-MM-dd'T'HH:mm:ss.SSSZ"/>
+      </bean>
+    </property>
+  </bean>
+
+  <bean id="patternFormatter" class="org.smallmind.scribe.pen.PatternFormatter">
+    <property name="timestamp" ref="fullTimestamp"/>
+    <property name="format" value="%d %n %+5l (%.1C.%M:%L) [%T] - %m%!+\n\t!p%!+\n\t!s"/>
+  </bean>
+
+  <bean id="rollover" class="org.smallmind.scribe.pen.Rollover">
+    <property name="timestamp" ref="shortTimestamp"/>
+    <property name="separator" value="."/>
+    <property name="rules">
+      <list>
+        <bean class="org.smallmind.scribe.pen.TimestampRolloverRule">
+          <property name="timestampQuantifier" value="TOP_OF_DAY"/>
+        </bean>
+        <bean class="org.smallmind.scribe.pen.FileSizeRolloverRule">
+          <property name="fileSizeQuantifier" value="MEGABYTES"/>
+          <property name="maxSize" value="100"/>
+        </bean>
+      </list>
+    </property>
+  </bean>
+
+  <bean id="cleanup" class="org.smallmind.scribe.pen.Cleanup">
+    <property name="separator" value="."/>
+    <property name="rules">
+      <list>
+        <bean class="org.smallmind.scribe.pen.LastModifiedCleanupRule">
+          <property name="stint">
+            <bean class="org.smallmind.nutsnbolts.time.Stint">
+              <constructor-arg index="0" name="time" value="30"/>
+              <constructor-arg index="1" name="timeUnit" value="DAYS"/>
+            </bean>
+          </property>
+        </bean>
+      </list>
+    </property>
+  </bean>
+
+  <bean id="consoleAppender" class="org.smallmind.scribe.pen.ConsoleAppender">
+    <property name="formatter" ref="patternFormatter"/>
+  </bean>
+
+  <bean id="consoleErrorHandler" class="org.smallmind.scribe.pen.DefaultErrorHandler">
+    <property name="backupAppender" ref="consoleAppender"/>
+  </bean>
+
+  <bean id="logAppender" class="org.smallmind.scribe.pen.AsynchronousAppender">
+    <constructor-arg index="0" name="internalAppender">
+      <bean class="org.smallmind.scribe.pen.FileAppender">
+        <property name="logPath" value="/var/log/mycompany/myproject.log"/>
+        <property name="rollover" ref="rollover"/>
+        <property name="cleanup" ref="cleanup"/>
+        <property name="formatter" ref="patternFormatter"/>
+        <property name="errorHandler" ref="consoleErrorHandler"/>
+      </bean>
+    </constructor-arg>
+    <constructor-arg index="1" name="bufferSize" value="300"/>
+  </bean>
+</beans>
+----
+
 == Adaptation
+
+In order to adapt an endpoint logging framework for use by Scribe, you'll need to fulfill a set of contracts defined by the following classes...
+
+=== LoggingBlueprint
+
+[small]#`org.smallmind.scribe.pen.adapter.LoggingBlueprint`#
+
+A LoggngBlueprint implementation is required to define a Java Service Provider for the `org.smallmind.scribe.pen.adapter.LoggingBlueprint` service interface. The overhead for this is pretty minimal, as all you really need is a file at */META-INF/services* named, literally, 'org.smallmind.scribe.pen.adapter.LoggingBlueprint', which contains a single line of text, and that text is the name of your implementation class. Your implementation will also need to complete the methods...
+
+* `public <<scribe-logger-adapter>> getLoggingAdapter (String name)` - Given the logger name, retuns an adapter to a logger in the underlying framework.
+* `public <<scribe-record>> errorRecord (<<scribe-record>> record, Throwable throwable, String message, Object... args)` - Should an error occur within an appender, such that the publishing contract cannot be fulfilled, the `org.smallmind.scribe.pen.DefaultErrorHandler` (if it's in use) will use this method to request a <<scribe-record>> compatible with the underlying framework, in order to try and call an alternate appender. The implementation should get any information it needs to construct the new record from the given parameters.
+
+Because implementations of LoggingBlueprint are service providers, a client need only include the dependency containing the implementation in their build, and it will be loaded by the Scribe framework. The one twist is that a client can have no more than a _single_ endpoint integration defined within their transitive dependencies. It's therefore *important*, that any code intended as a library for use by others make no attempt to include any endpoint integration within its own runtime dependency set.
+
+[[scribe-logger-adapter, LoggerAdapter]]
+=== LoggerAdapter
+
+[[scribe-record, Record]]
+=== Record
+
+=== Parameter Adapter
 
 [[scribe-indigenous, Indigenous]]
 === Indigenous
@@ -840,34 +1119,31 @@ A parameter is a key/value pair. <<scribe-logger>> implementations that have a n
 
 === Log4J
 
-=== Blueprint
 
-=== LoggerAdapter
-
-[[scribe-record, Record]]
-=== Record
-
-=== Parameter Adapter
-
-[[scribe-configuration, Configuration]]
-== Configuration
-
-[small]#`org.smallmind.scribe.pen.LoggerManager`#
 
 == Apache Commons Logging Integration
 
 == SLF4J Integration
 
-[[spark,Spark]]
+[[spark, Spark]]
 = Spark
 
 [partintro]
 The Spark project consists of Maven packaging formats for the construction of self-contained executable build artifacts.
 
-[[spark-singularity,Singularity]]
+[[spark-singularity, Singularity]]
 == Singularity
 
-Singularity is a Maven packaging format for executable jars *with* all their dependencies. Notably, a Singularity package does not unpack and repack its dependencies. The original jar files are maintained, and their namespaces are preserved. In order to speed class resolution and loading, indexes are built on compilation through a bit of Maven plugin magic. There should be nothing special you need to do with your code to create a Singulairty from it, other than defining the packaging and nominating a `public static void main (String... args)` entry point.
+Singularity is a Maven packaging format for self-contained executable jars *with* all their dependencies. Notably, a Singularity package does *not* unpack and repack its dependencies. The original jar files are maintained, and their namespaces are preserved. The Singularity package will contain a boot class loader that understands the _jar within jar_ format. In order to speed class resolution and loading, offset indexes of entries within the jar library dependencies are built during package construction. There should be nothing special you need to do with your code to create a Singularity from it, other than defining the packaging and nominating a `public static void main (String... args)` entry point.
+[TIP]
+====
+Code looking to obtain a class loader should use...
+[source,java]
+----
+Thread.currentThread().getContextClassLoader();
+----
+...as the system class loader will not understand the _jar within jar_ packaging format.
+====
 
 === Install
 

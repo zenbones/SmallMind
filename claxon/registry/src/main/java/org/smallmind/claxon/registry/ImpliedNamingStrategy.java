@@ -32,7 +32,6 @@
  */
 package org.smallmind.claxon.registry;
 
-import java.util.HashMap;
 import java.util.Map;
 import org.smallmind.nutsnbolts.util.DotNotation;
 

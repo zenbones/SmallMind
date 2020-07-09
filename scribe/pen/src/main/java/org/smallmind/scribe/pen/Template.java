@@ -105,7 +105,7 @@ public abstract class Template {
     }
   }
 
-  public synchronized boolean isautoFillLoggerContext () {
+  public synchronized boolean isAutoFillLoggerContext () {
 
     return autoFillLoggerContext;
   }

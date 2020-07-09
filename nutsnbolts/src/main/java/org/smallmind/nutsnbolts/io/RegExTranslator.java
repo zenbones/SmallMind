@@ -32,21 +32,45 @@
  */
 package org.smallmind.nutsnbolts.io;
 
-import java.nio.file.Path;
-import java.util.regex.Pattern;
+public class RegExTranslator {
 
-public class WildcardFileNamePathFilter implements PathFilter {
+  public static String translate (String pattern) {
 
-  private final Pattern namePattern;
+    StringBuilder patternBuilder = new StringBuilder();
+    boolean isStar = false;
 
-  public WildcardFileNamePathFilter (String name) {
+    for (int index = 0; index < pattern.length(); index++) {
+      if (isStar && (pattern.charAt(index) != '*')) {
+        patternBuilder.append("[^/]*");
+        isStar = false;
+      }
 
-    namePattern = Pattern.compile(RegExTranslator.translate(name));
-  }
+      switch (pattern.charAt(index)) {
+        case '$':
+          patternBuilder.append("\\$");
+        case '.':
+          patternBuilder.append("\\.");
+          break;
+        case '*':
+          if (isStar) {
+            patternBuilder.append(".*");
+            isStar = false;
+          } else {
+            isStar = true;
+          }
+          break;
+        case '?':
+          patternBuilder.append("[^/]?");
+          break;
+        default:
+          patternBuilder.append(pattern.charAt(index));
+      }
+    }
 
-  @Override
-  public boolean accept (Path path) {
+    if (isStar) {
+      patternBuilder.append("[^/]*");
+    }
 
-    return namePattern.matcher(path.getFileName().toString()).matches();
+    return patternBuilder.toString();
   }
 }

@@ -1,6 +1,6 @@
 package org.smallmind.license;
 
-public class FileTypeRegExpTranslator {
+public class FileTypeRegExTranslator {
 
   public static String translate (String pattern) {
 
