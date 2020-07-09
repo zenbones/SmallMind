@@ -94,7 +94,7 @@ public class SingularityClassLoader extends ClassLoader {
 
     while ((jarEntry = jarInputStream.getNextJarEntry()) != null) {
       if (!jarEntry.isDirectory()) {
-        if (jarEntry.getName().equals("META-INF/index/singularity.idx")) {
+        if (jarEntry.getName().equals("META-INF/singularity/index/singularity.idx")) {
           ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
           int singleByte;

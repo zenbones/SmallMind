@@ -102,8 +102,8 @@ public class GenerateSingularityMojo extends AbstractMojo {
 
       try {
         Files.createDirectories(buildPath = Paths.get(project.getBuild().getDirectory(), singularityBuildDir));
-        Files.createDirectories(libraryPath = buildPath.resolve("META-INF").resolve("singularity"));
-        Files.createDirectories(indexPath = buildPath.resolve("META-INF").resolve("index"));
+        Files.createDirectories(libraryPath = buildPath.resolve("META-INF").resolve("singularity").resolve("lib"));
+        Files.createDirectories(indexPath = buildPath.resolve("META-INF").resolve("singularity").resolve("index"));
       } catch (IOException ioException) {
         throw new MojoExecutionException("Unable to create a build directory", ioException);
       }
