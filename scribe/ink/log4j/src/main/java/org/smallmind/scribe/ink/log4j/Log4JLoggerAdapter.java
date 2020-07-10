@@ -1,28 +1,28 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under either, at your discretion...
- * 
+ *
  * 1) The terms of GNU Affero General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or (at
  * your option) any later version.
- * 
+ *
  * ...or...
- * 
+ *
  * 2) The terms of the Apache License, Version 2.0.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License or Apache License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * and the Apache License along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -34,6 +34,7 @@ package org.smallmind.scribe.ink.log4j;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Supplier;
+import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.Logger;
 import org.smallmind.scribe.pen.Appender;
 import org.smallmind.scribe.pen.DefaultLoggerContext;
@@ -147,7 +148,7 @@ public class Log4JLoggerAdapter implements LoggerAdapter {
     if ((!level.equals(Level.OFF)) && getLevel().noGreater(level)) {
       if ((loggerContext = willLog(level)) != null) {
         recordSubverter = new Log4JRecordSubverter(logger.getName(), logger.getClass().getCanonicalName(), level, loggerContext, throwable, message, args);
-        ((ParameterAwareRecord)recordSubverter.getRecord()).setParameters(getParameterAdapter().getParameters());
+        ((ParameterAwareRecord<LogEvent>)recordSubverter.getRecord()).setParameters(getParameterAdapter().getParameters());
         enhanceRecord(recordSubverter.getRecord());
         for (org.apache.logging.log4j.core.Appender appender : logger.getAppenders().values()) {
           appender.append(recordSubverter);
@@ -165,7 +166,7 @@ public class Log4JLoggerAdapter implements LoggerAdapter {
     if ((!level.equals(Level.OFF)) && getLevel().noGreater(level)) {
       if ((loggerContext = willLog(level)) != null) {
         recordSubverter = new Log4JRecordSubverter(logger.getName(), logger.getClass().getCanonicalName(), level, loggerContext, throwable, (object == null) ? null : object.toString());
-        ((ParameterAwareRecord)recordSubverter.getRecord()).setParameters(getParameterAdapter().getParameters());
+        ((ParameterAwareRecord<LogEvent>)recordSubverter.getRecord()).setParameters(getParameterAdapter().getParameters());
         enhanceRecord(recordSubverter.getRecord());
         for (org.apache.logging.log4j.core.Appender appender : logger.getAppenders().values()) {
           appender.append(recordSubverter);
@@ -183,7 +184,7 @@ public class Log4JLoggerAdapter implements LoggerAdapter {
     if ((!level.equals(Level.OFF)) && getLevel().noGreater(level)) {
       if ((loggerContext = willLog(level)) != null) {
         recordSubverter = new Log4JRecordSubverter(logger.getName(), logger.getClass().getCanonicalName(), level, loggerContext, throwable, (supplier == null) ? null : supplier.get());
-        ((ParameterAwareRecord)recordSubverter.getRecord()).setParameters(getParameterAdapter().getParameters());
+        ((ParameterAwareRecord<LogEvent>)recordSubverter.getRecord()).setParameters(getParameterAdapter().getParameters());
         enhanceRecord(recordSubverter.getRecord());
         for (org.apache.logging.log4j.core.Appender appender : logger.getAppenders().values()) {
           appender.append(recordSubverter);
@@ -195,7 +196,7 @@ public class Log4JLoggerAdapter implements LoggerAdapter {
   private LoggerContext willLog (Level level) {
 
     LoggerContext loggerContext;
-    Record filterRecord;
+    Record<LogEvent> filterRecord;
 
     loggerContext = new DefaultLoggerContext();
     if (getAutoFillLoggerContext()) {
@@ -214,7 +215,7 @@ public class Log4JLoggerAdapter implements LoggerAdapter {
     return loggerContext;
   }
 
-  private void enhanceRecord (Record record) {
+  private void enhanceRecord (Record<LogEvent> record) {
 
     for (Enhancer enhancer : enhancerList) {
       enhancer.enhance(record);
