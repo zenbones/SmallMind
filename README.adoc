@@ -1120,18 +1120,34 @@ A Record is a Scribe container for all the elements which might be available for
 
 A ParameterAdapter provides access to a map of key/value pairs which should ideally be held in a thread local state. This function can be conveniently fulfilled by simply wrapping the <<scribe-parameters>> helper class.
 
+== Endpoint Loggers
+
+This project provides adaptations for a few of the more popular endpoint logging systems, as well as a purely native alternative. Integration is achived simply by including *_one_* of the appropriate dependencies .
+
 [[scribe-indigenous, Indigenous]]
 === Indigenous
 
+A completely native implementation of an endpoint logger.
+
 === JDK Logging
+
+Integration for JDK Logging. It's possible to completely configure the system via Scribe's programmatic configuration.
 
 === Log4J
 
+Integration for the Log4J2 project. It's possible to completely configure the system via Scribe's programmatic configuration.
 
+== Other Integrations
 
-== Apache Commons Logging Integration
+As Scribe is certainly not the only neutral logging framework available, nor the first, this project provides integration with some of these more popular alternatives as convenience to the adopter.
 
-== SLF4J Integration
+=== Apache Commons Logging Integration
+
+Simply including the Apache Commons Logging integration module as a dependency will route the output from code using Apache Commons Logging through your configured Scribe loggers.
+
+=== SLF4J Integration
+
+Simply including the SLF4J integration module as a dependency will route the output from code using SLF4J through your configured Scribe loggers.
 
 [[spark, Spark]]
 = Spark
