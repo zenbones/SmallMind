@@ -489,6 +489,26 @@ Doppelganger is a set of annotations, and an APT (Annotation Processing Tool) co
 
 == Install
 
+.Doppelganger
+[source,xml]
+----
+<dependency>
+  <groupId>javax.annotation</groupId>
+  <artifactId>javax.annotation-api</artifactId>
+  <version>LATEST</version>
+</dependency>
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>web-json-doppelganger</artifactId>
+  <version>LATEST</version>
+</dependency>
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>web-json-scaffold</artifactId>
+  <version>LATEST</version>
+</dependency>
+----
+
 [[scribe, Scribe]]
 = Scribe
 
