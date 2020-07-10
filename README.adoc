@@ -1107,8 +1107,14 @@ Because implementations of LoggingBlueprint are service providers, a client need
 [[scribe-logger-adapter, LoggerAdapter]]
 === LoggerAdapter
 
+[small]#`org.smallmind.scribe.pen.adapter.LoggingAdapter`#
+
+A LoggerAdapter is a shim into the underlying logging framework being integrated into Scribe. The methods are self-explanatory so we'll avoid a method by method breakdown here. If you have questions, the implementations provided by this project should provide for ample examples.
+
 [[scribe-record, Record]]
 === Record
+
+
 
 === Parameter Adapter
 
