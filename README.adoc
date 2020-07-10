@@ -489,6 +489,8 @@ Doppelganger is a set of annotations, and an APT (Annotation Processing Tool) co
 
 == Install
 
+The annotation processing system will pick up on Doppelganger annotated classes during compilation given the following included dependencies. Besides Doppelganger itself, you'll need the annotation subsystem (currently in javax.* but moving to the jakarta.* namespace), and our JSON scaffolding helper classes.
+
 .Doppelganger
 [source,xml]
 ----
@@ -508,6 +510,8 @@ Doppelganger is a set of annotations, and an APT (Annotation Processing Tool) co
   <version>LATEST</version>
 </dependency>
 ----
+
+== Annotations
 
 [[scribe, Scribe]]
 = Scribe
