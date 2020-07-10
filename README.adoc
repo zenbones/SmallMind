@@ -1114,9 +1114,11 @@ A LoggerAdapter is a shim into the underlying logging framework being integrated
 [[scribe-record, Record]]
 === Record
 
-
+A Record is a Scribe container for all the elements which might be available for output in a single logged event. As an implementation detail, the integrations in this project tend to extend the underlying notion of a such an event with the Record interface, guaranteeing that both are available within a single representative object.
 
 === Parameter Adapter
+
+A ParameterAdapter provides access to a map of key/value pairs which should ideally be held in a thread local state. This function can be conveniently fulfilled by simply wrapping the <<scribe-parameters>> helper class.
 
 [[scribe-indigenous, Indigenous]]
 === Indigenous
