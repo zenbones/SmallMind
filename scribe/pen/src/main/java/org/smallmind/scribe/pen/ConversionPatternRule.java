@@ -135,7 +135,7 @@ public class ConversionPatternRule implements PatternRule {
     return strippedBuffer.toString();
   }
 
-  public String convert (Record<?> record, Timestamp timestamp) {
+  public String convert (Record record, Timestamp timestamp) {
 
     LoggerContext loggerContext;
     Throwable throwable = record.getThrown();
@@ -324,10 +324,23 @@ public class ConversionPatternRule implements PatternRule {
           return field;
         case RIGHT:
 
-          return new StringBuilder(field).append(" ".repeat(width - field.length())).toString();
+          paddingBuilder = new StringBuilder(field);
+
+          for (int count = 0; count < width - field.length(); count++) {
+            paddingBuilder.append(' ');
+          }
+
+          return paddingBuilder.toString();
         case LEFT:
 
-          return new StringBuilder(" ".repeat(width - field.length())).append(field).toString();
+          paddingBuilder = new StringBuilder();
+
+          for (int count = 0; count < width - field.length(); count++) {
+            paddingBuilder.append(' ');
+          }
+          paddingBuilder.append(field);
+
+          return paddingBuilder.toString();
         default:
           throw new UnknownSwitchCaseException(padding.name());
       }

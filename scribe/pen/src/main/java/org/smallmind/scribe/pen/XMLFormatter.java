@@ -89,7 +89,7 @@ public class XMLFormatter implements Formatter {
     return this;
   }
 
-  public String format (Record<?> record) {
+  public String format (Record record) {
 
     StringBuilder formatBuilder = new StringBuilder();
 
@@ -273,6 +273,8 @@ public class XMLFormatter implements Formatter {
 
   private void appendIndent (StringBuilder formatBuilder, int level) {
 
-    formatBuilder.append(" ".repeat(level * indent));
+    for (int count = 0; count < (level * indent); count++) {
+      formatBuilder.append(" ");
+    }
   }
 }
