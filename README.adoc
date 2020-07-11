@@ -522,7 +522,7 @@ The rules for generating the views of the polymorphic subclasses of the annotate
 * `Class[] subClasses () default {}` -The list of sub-classes which will be generated with polymorphic annotations.
 * `boolean useAttribute () default false` - If false, polymorphic subclasses will be generated with a wrapping object, otherwise the subclasses will be genetared with an extra object type attribute.
 +
-[TIP]
+[NOTE]
 ====
 Given a polymorphic subtype named _MySubClass_ with a doppelganger name of "mySubClass", if `useAttribute()` is *false* the following JSON would be generated...
 
@@ -546,7 +546,7 @@ A representation of a `javax.validation.Constraint` annotation instance which sh
 * `Class<?> value ()` - The class of the `javax.validation.Constraint` annotation to be applied.
 * `String arguments () default ""` - The arguments to the validation constraint, given as the text which would otherwise be placed within the *()* of the annotation, were it used in a more natural context.
 +
-[NOTE]
+[TIP]
 ====
 For example, applying a numerical minimum validation of '3' could be accomplished with the following...
 
