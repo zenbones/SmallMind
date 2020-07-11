@@ -538,6 +538,7 @@ Given a polymorphic subtype named _MySubClass_ with a doppelganger name of "mySu
 ----
 ====
 
+[[doppelganger-constraint, Constraint]]
 ==== @Constraint
 
 A representation of a `javax.validation.Constraint` annotation instance which should be added to the generted class or property.
@@ -564,20 +565,40 @@ Creates a 'virtual' property, which exists only in the generated views (and not 
 * `String field ()` - The field name of the generated property.
 * `Idiom[] idioms () default {}` - The list of alternate idioms in which this property should be included (see below). If empty, this property will be included in the default idiom.
 * `Class<? extends XmlAdapter> adapter () default DefaultXmlAdapter.class` - The XmlAdapter class, if any, to be used for encoding and decoding this property.
-* `boolean required () default false` - If the generated JSON element is required. If false, this may be overriden by the idioms.
+* `boolean required () default false` - If the generated JSON element is required. If false, this may be overriden by the idioms (see above). Although an element may be marked as required, the enforcement of this is erratic at best. The use of a *NotNull* constraint is a far more persuasive argument.
 
 ===== @Type
 
+Represents the type information of a virtual property.
+
+* `Class<?> value ()` - The class of the generated property.
+* `Class[] parameters () default {}` - The classes of any parameterizations (generics) of the generated property (useful for collections).
+
+[[doppelganger-idiom, Idiom]]
 ===== @Idiom
+
+Idioms are the way to differentiate views. There's the basic differentiation of _in_ or _out_ views, and these can be further decomposed into arbitrary _purposes_. Each idiom may be marked as required, or not, and may have set of validation constraints applied.
+
+* `Visibility visibility () default Visibility.BOTH` - The visibility of the property within this idiom (_IN_, _OUT_ or default to _BOTH_).
+* `String[] purposes () default {}` - The name of this idiom (a short descriptive string such as 'create' or 'internal'). Useful for finely differentiating between create, update and delete operations, for example.
+* `Constraint[] constraints () default {}` - The constraint annotations to be applied to the property within this idiom (see <<doppelganger-constraint>> above).
+* `boolean required () default false` - Marks the generated JSON element as required in this idiom (with all of the issues previously noted).
 
 ==== @Pledge
 
-It may be that, given the idioms annotated for the set of properties of the originating class, some of the resultant `purposes` (see <<doppelganger-idioms>> below) may end up with no properties at all, and those views would, therefore, never be generated. In those cases, you can use a pledge force generation of specific view classes.
+It may be that, given the idioms annotated for the set of properties of the originating class, some of the resultant `purposes` (see <<doppelganger-idiom>> above) may end up with no properties at all, and those views would, therefore, never be generated. In those cases, you can use a pledge force generation of specific view classes.
 
 * `Visibility visibility () default Visibility.BOTH` - The visibility for which views should be generated, defaults to both _in_ and _out_ views.
 * `String[] purposes () default {}` - Any purposes for which the views should be generated. If empty then only the default (un-named) purpose will be enforced.
 
 === @View
+
+Creates a 'view' property, and determines how the annotated field is represented in those generated views.
+
+* `String name () default ""` - The name of the JSON attribute generated for the annotated property. If left empty the attribute name will be the same as the field name.
+* `Idiom[] idioms () default {}` - The list of alternate idioms in which this property should be included (see <<doppelganger-idiom>> above). If empty, this property will be included in the default idiom.
+* `Class<? extends XmlAdapter> adapter () default DefaultXmlAdapter.class` - The XmlAdapter class, if any, to be used for encoding and decoding this property.
+* `boolean required () default false` - Marks the generated JSON element as required (with all of the issues previously noted).
 
 [[scribe, Scribe]]
 = Scribe
