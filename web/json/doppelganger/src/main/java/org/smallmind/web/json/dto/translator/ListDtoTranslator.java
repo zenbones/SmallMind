@@ -40,8 +40,8 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
-import org.smallmind.web.json.scaffold.dto.DtoPropertyException;
-import org.smallmind.web.json.scaffold.dto.ListMutator;
+import org.smallmind.web.json.scaffold.property.PropertyException;
+import org.smallmind.web.json.scaffold.property.ListMutator;
 
 public class ListDtoTranslator implements DtoTranslator {
 
@@ -87,6 +87,6 @@ public class ListDtoTranslator implements DtoTranslator {
       }
     }
 
-    throw new DtoPropertyException("Could not extract dto type from '%s'", qualifiedListTypeName);
+    throw new PropertyException("Could not extract dto type from '%s'", qualifiedListTypeName);
   }
 }

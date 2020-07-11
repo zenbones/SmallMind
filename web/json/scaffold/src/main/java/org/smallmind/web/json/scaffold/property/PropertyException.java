@@ -30,56 +30,19 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.json.scaffold.dto;
+package org.smallmind.web.json.scaffold.property;
 
-import java.lang.reflect.Method;
-import java.util.HashMap;
-import org.smallmind.nutsnbolts.util.MutationUtility;
+import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
-public class ArrayMutator {
+public class PropertyException extends FormattedRuntimeException {
 
-  public static <T, U> U[] toEntityType (Class<U> entityClass, T[] dtoArray)
-    throws DtoPropertyException {
+  public PropertyException (String message, Object... args) {
 
-    if (dtoArray == null) {
-
-      return null;
-    } else {
-
-      HashMap<Class<?>, Method> factoryMethodMap = new HashMap<>();
-
-      try {
-        return MutationUtility.toArray(dtoArray, entityClass, (dto) -> {
-
-          Method factoryMethod;
-
-          if ((factoryMethod = factoryMethodMap.get(dto.getClass())) == null) {
-            factoryMethodMap.put(dto.getClass(), factoryMethod = dto.getClass().getMethod("factory"));
-          }
-
-          return (U)factoryMethod.invoke(dto);
-        });
-      } catch (Exception exception) {
-        throw new DtoPropertyException(exception);
-      }
-    }
+    super(message, args);
   }
 
-  public static <T, U> U[] toDtoType (Class<? extends T> entityClass, Class<U> dtoClass, T[] entityArray)
-    throws DtoPropertyException {
+  public PropertyException (Throwable cause) {
 
-    if (entityArray == null) {
-
-      return null;
-    } else {
-      try {
-
-        Method instanceMethod = dtoClass.getMethod("instance", entityClass);
-
-        return MutationUtility.toArray(entityArray, dtoClass, (entity) -> (U)instanceMethod.invoke(null, entity));
-      } catch (Exception exception) {
-        throw new DtoPropertyException(exception);
-      }
-    }
+    super(cause);
   }
 }

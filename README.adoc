@@ -22,7 +22,7 @@ There is none. IOC projects provide both the base container and configuration. S
 === Modules
 
 * <<claxon>> - A unified monitoring framework with extensible meters and pluggable metric warehousing integrations (comes with Datadog, JMX, Logging and Prometheus).
-* <<doppelganger>> - An annotation-based data transfer object generating facility that can create multiple polymorphic-aware, fully-validated, JAXB and REST compliant views, from a single description.
+* <<doppelganger>> - An annotation-based data transfer object generating facility that can create multiple polymorphic-aware, fully-validated, JSON serializable views, from a single description.
 * <<scribe>> - A fast, light, easily extended, endpoint neutral, library safe, unified logging framework with decidedly lazy message interpolation.
 * <<spark>> - Maven packaging formats for the construction of self-contained executable build artifacts.
 
@@ -485,7 +485,7 @@ The following is one possible configuration that's demonstrative of a simple but
 = Doppelganger
 
 [partintro]
-Doppelganger is a set of annotations, and an APT (Annotation Processing Tool) conforming processor, that can generate multiple polymorphic-aware, fully-validated views of a class from a single description. These views are JAXB annotated and will translate themselves cleanly to and/or from JSON via any JAXB compliant implementation (including Jackson). Doppelganger generated views can construct themselves from the instances from which they were generated, or act as a factory for such instances. They understand references to other Doppelganger annotated classes, including arrays and collections of such classes, and will automatically encode/decode such references into/from their appropriate views (or collections of those views). The multiple views inherent in Doppelganger annotations can be used to both limit and validate the generated classes for CRUD (create, read, update and delete) use cases, from a single annotated base entity. Doppelganger includes annotations that extend the generated views with fields which do not exist in the original class, allowing the construction of data from more client-friendly proxy attributes, made easier with the fluent API generated for every view.
+Doppelganger is a set of annotations, and an APT (Annotation Processing Tool) conforming processor, that can generate multiple polymorphic-aware, fully-validated views of a class from a single description. These views are JAXB annotated and will translate themselves cleanly to and/or from JSON via Jackson (with the JaxbAnnotationModule registered). Doppelganger generated views can construct themselves from the instances from which they were generated, or act as a factory for such instances. They understand references to other Doppelganger annotated classes, including arrays and collections of such classes, and will automatically encode/decode such references into/from their appropriate views (or collections of those views). The multiple views inherent in Doppelganger annotations can be used to both limit and validate the generated classes for CRUD (create, read, update and delete) use cases, from a single annotated base entity. Doppelganger includes annotations that extend the generated views with fields which do not exist in the original class, allowing the construction of data from more client-friendly proxy attributes, made even easier with the fluent API generated for every view.
 
 == Install
 

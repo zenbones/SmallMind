@@ -40,7 +40,7 @@ import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
-import org.smallmind.web.json.scaffold.dto.ArrayMutator;
+import org.smallmind.web.json.scaffold.property.ArrayMutator;
 
 public class ArrayDtoTranslator implements DtoTranslator {
 

@@ -6,10 +6,10 @@
     <artifactId>web-json</artifactId>
     <version>3.6.0-SNAPSHOT</version>
   </parent>
-  <artifactId>web-json-dto</artifactId>
+  <artifactId>web-json-doppelganger</artifactId>
   <packaging>jar</packaging>
-  <name>Web-Json-Dto</name>
-  <description>Json Dto Annotation Processor</description>
+  <name>Web-Json-Doppelganger</name>
+  <description>Doppelganger Annotation Processor</description>
   <dependencies>
     <dependency>
       <groupId>javax.validation</groupId>
