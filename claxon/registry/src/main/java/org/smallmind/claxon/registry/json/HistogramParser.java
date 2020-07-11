@@ -45,7 +45,7 @@ public class HistogramParser implements InstrumentedParser<Histogram> {
   public MeterBuilder<Histogram> parse (String json)
     throws IOException {
 
-    HistogramProperties properties = JsonCodec.read(json, HistogramPropertiesInDto.class).factory();
+    HistogramProperties properties = JsonCodec.read(json, HistogramPropertiesInView.class).factory();
     HistogramBuilder builder = new HistogramBuilder();
 
     if (properties.getLowestDiscernibleValue() != null) {

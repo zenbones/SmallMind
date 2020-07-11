@@ -45,7 +45,7 @@ public class TraceParser implements InstrumentedParser<Trace> {
   public MeterBuilder<Trace> parse (String json)
     throws IOException {
 
-    TraceProperties properties = JsonCodec.read(json, TracePropertiesInDto.class).factory();
+    TraceProperties properties = JsonCodec.read(json, TracePropertiesInView.class).factory();
     TraceBuilder builder = new TraceBuilder();
 
     if (properties.getWindowTimeUnit() != null) {

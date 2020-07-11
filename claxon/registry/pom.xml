@@ -23,7 +23,7 @@
     </dependency>
     <dependency>
       <groupId>org.smallmind</groupId>
-      <artifactId>web-json-dto</artifactId>
+      <artifactId>web-json-doppelganger</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>

@@ -38,10 +38,10 @@ import org.smallmind.nutsnbolts.util.MutationUtility;
 
 public class ArrayMutator {
 
-  public static <T, U> U[] toEntityType (Class<U> entityClass, T[] dtoArray)
+  public static <T, U> U[] toEntityType (Class<U> entityClass, T[] viewArray)
     throws PropertyException {
 
-    if (dtoArray == null) {
+    if (viewArray == null) {
 
       return null;
     } else {
@@ -49,15 +49,15 @@ public class ArrayMutator {
       HashMap<Class<?>, Method> factoryMethodMap = new HashMap<>();
 
       try {
-        return MutationUtility.toArray(dtoArray, entityClass, (dto) -> {
+        return MutationUtility.toArray(viewArray, entityClass, (view) -> {
 
           Method factoryMethod;
 
-          if ((factoryMethod = factoryMethodMap.get(dto.getClass())) == null) {
-            factoryMethodMap.put(dto.getClass(), factoryMethod = dto.getClass().getMethod("factory"));
+          if ((factoryMethod = factoryMethodMap.get(view.getClass())) == null) {
+            factoryMethodMap.put(view.getClass(), factoryMethod = view.getClass().getMethod("factory"));
           }
 
-          return (U)factoryMethod.invoke(dto);
+          return (U)factoryMethod.invoke(view);
         });
       } catch (Exception exception) {
         throw new PropertyException(exception);
@@ -65,7 +65,7 @@ public class ArrayMutator {
     }
   }
 
-  public static <T, U> U[] toDtoType (Class<? extends T> entityClass, Class<U> dtoClass, T[] entityArray)
+  public static <T, U> U[] toViewType (Class<? extends T> entityClass, Class<U> viewClass, T[] entityArray)
     throws PropertyException {
 
     if (entityArray == null) {
@@ -74,9 +74,9 @@ public class ArrayMutator {
     } else {
       try {
 
-        Method instanceMethod = dtoClass.getMethod("instance", entityClass);
+        Method instanceMethod = viewClass.getMethod("instance", entityClass);
 
-        return MutationUtility.toArray(entityArray, dtoClass, (entity) -> (U)instanceMethod.invoke(null, entity));
+        return MutationUtility.toArray(entityArray, viewClass, (entity) -> (U)instanceMethod.invoke(null, entity));
       } catch (Exception exception) {
         throw new PropertyException(exception);
       }

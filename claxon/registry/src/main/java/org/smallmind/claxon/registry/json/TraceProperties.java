@@ -34,18 +34,18 @@ package org.smallmind.claxon.registry.json;
 
 import java.util.concurrent.TimeUnit;
 import org.smallmind.claxon.registry.Window;
-import org.smallmind.web.json.dto.DtoGenerator;
-import org.smallmind.web.json.dto.DtoProperty;
-import org.smallmind.web.json.dto.Idiom;
+import org.smallmind.web.json.doppelganger.Doppelganger;
+import org.smallmind.web.json.doppelganger.View;
+import org.smallmind.web.json.doppelganger.Idiom;
 
-import static org.smallmind.web.json.dto.Visibility.IN;
+import static org.smallmind.web.json.doppelganger.Visibility.IN;
 
-@DtoGenerator
+@Doppelganger
 public class TraceProperties {
 
-  @DtoProperty(adapter = TimeUnitEnumXmlAdapter.class, idioms = @Idiom(visibility = IN))
+  @View(adapter = TimeUnitEnumXmlAdapter.class, idioms = @Idiom(visibility = IN))
   private TimeUnit windowTimeUnit = TimeUnit.MINUTES;
-  @DtoProperty(idioms = @Idiom(visibility = IN))
+  @View(idioms = @Idiom(visibility = IN))
   private Window[] windows = new Window[] {new Window("m1", 1), new Window("m5", 5), new Window("m15", 15)};
 
   public TimeUnit getWindowTimeUnit () {

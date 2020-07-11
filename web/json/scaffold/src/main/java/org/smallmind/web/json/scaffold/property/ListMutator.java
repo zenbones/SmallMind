@@ -39,10 +39,10 @@ import org.smallmind.nutsnbolts.util.MutationUtility;
 
 public class ListMutator {
 
-  public static <T, U> List<U> toEntityType (List<? extends T> dtoList)
+  public static <T, U> List<U> toEntityType (List<? extends T> viewList)
     throws PropertyException {
 
-    if (dtoList == null) {
+    if (viewList == null) {
 
       return null;
     } else {
@@ -50,15 +50,15 @@ public class ListMutator {
       HashMap<Class<?>, Method> factoryMethodMap = new HashMap<>();
 
       try {
-        return MutationUtility.toList(dtoList, (dto) -> {
+        return MutationUtility.toList(viewList, (view) -> {
 
           Method factoryMethod;
 
-          if ((factoryMethod = factoryMethodMap.get(dto.getClass())) == null) {
-            factoryMethodMap.put(dto.getClass(), factoryMethod = dto.getClass().getMethod("factory"));
+          if ((factoryMethod = factoryMethodMap.get(view.getClass())) == null) {
+            factoryMethodMap.put(view.getClass(), factoryMethod = view.getClass().getMethod("factory"));
           }
 
-          return (U)factoryMethod.invoke(dto);
+          return (U)factoryMethod.invoke(view);
         });
       } catch (Exception exception) {
         throw new PropertyException(exception);
@@ -66,7 +66,7 @@ public class ListMutator {
     }
   }
 
-  public static <T, U> List<U> toDtoType (Class<? extends T> entityClass, Class<U> dtoClass, List<? extends T> entityList)
+  public static <T, U> List<U> toViewType (Class<? extends T> entityClass, Class<U> viewClass, List<? extends T> entityList)
     throws PropertyException {
 
     if (entityList == null) {
@@ -75,7 +75,7 @@ public class ListMutator {
     } else {
       try {
 
-        Method instanceMethod = dtoClass.getMethod("instance", entityClass);
+        Method instanceMethod = viewClass.getMethod("instance", entityClass);
 
         return MutationUtility.toList(entityList, (entity) -> (U)instanceMethod.invoke(null, entity));
       } catch (Exception exception) {
