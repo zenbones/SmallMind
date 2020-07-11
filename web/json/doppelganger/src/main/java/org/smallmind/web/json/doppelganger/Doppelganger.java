@@ -41,16 +41,16 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface Doppelganger {
 
-  // the list of virtual properties to be added to the dto
+  // the list of virtual properties to be added to the view
   Virtual[] properties () default {};
 
-  // the list of conditions under which to guarantee a dto is generated (should be used only when the dto would otherwise not be generated)
+  // the list of conditions under which to guarantee a view is generated (should be used only when the view would otherwise not be generated)
   Pledge[] pledges () default {};
 
   // the requirements for polymorphic annotations
   Polymorphic polymorphic () default @Polymorphic();
 
-  // the constraint annotations to be applied to the dto
+  // the constraint annotations to be applied to the view
   Constraint[] constraints () default {};
 
   // the xml root element name

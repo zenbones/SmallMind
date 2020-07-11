@@ -50,13 +50,13 @@ public class NameUtility {
 
   public static String getSimpleName (ProcessingEnvironment processingEnvironment, String purpose, Direction direction, TypeElement typeElement) {
 
-    StringBuilder dtoNameBuilder = new StringBuilder((processingEnvironment.getOptions().get("prefix") == null) ? "" : processingEnvironment.getOptions().get("prefix")).append(typeElement.getSimpleName());
+    StringBuilder viewNameBuilder = new StringBuilder((processingEnvironment.getOptions().get("prefix") == null) ? "" : processingEnvironment.getOptions().get("prefix")).append(typeElement.getSimpleName());
 
     if ((purpose != null) && (!purpose.isEmpty())) {
-      dtoNameBuilder.append(Character.toUpperCase(purpose.charAt(0))).append(purpose.substring(1));
+      viewNameBuilder.append(Character.toUpperCase(purpose.charAt(0))).append(purpose.substring(1));
     }
 
-    return dtoNameBuilder.append(direction.getCode()).append("View").toString();
+    return viewNameBuilder.append(direction.getCode()).append("View").toString();
   }
 
   public static String processTypeMirror (ProcessingEnvironment processingEnvironment, VisibilityTracker visibilityTracker, ClassTracker classTracker, String purpose, Direction direction, TypeMirror typeMirror) {

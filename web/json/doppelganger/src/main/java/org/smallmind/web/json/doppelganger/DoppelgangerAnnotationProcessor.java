@@ -422,7 +422,7 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
           writer.write(" else {");
           writer.newLine();
           if (classElement.getModifiers().contains(Modifier.ABSTRACT)) {
-            writer.write("      throw new IllegalStateException(\"Unable to find a known polymorphic dto subclass for type(\" + ");
+            writer.write("      throw new IllegalStateException(\"Unable to find a known polymorphic view subclass for type(\" + ");
             writer.write(asMemberName(classElement.getSimpleName()));
             writer.write(".getClass().getName()");
             writer.write(" + \")\");");
