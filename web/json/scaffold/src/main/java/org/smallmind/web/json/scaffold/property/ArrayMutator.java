@@ -30,19 +30,18 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.json.scaffold.dto;
+package org.smallmind.web.json.scaffold.property;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
-import java.util.List;
 import org.smallmind.nutsnbolts.util.MutationUtility;
 
-public class ListMutator {
+public class ArrayMutator {
 
-  public static <T, U> List<U> toEntityType (List<? extends T> dtoList)
-    throws DtoPropertyException {
+  public static <T, U> U[] toEntityType (Class<U> entityClass, T[] dtoArray)
+    throws PropertyException {
 
-    if (dtoList == null) {
+    if (dtoArray == null) {
 
       return null;
     } else {
@@ -50,7 +49,7 @@ public class ListMutator {
       HashMap<Class<?>, Method> factoryMethodMap = new HashMap<>();
 
       try {
-        return MutationUtility.toList(dtoList, (dto) -> {
+        return MutationUtility.toArray(dtoArray, entityClass, (dto) -> {
 
           Method factoryMethod;
 
@@ -61,15 +60,15 @@ public class ListMutator {
           return (U)factoryMethod.invoke(dto);
         });
       } catch (Exception exception) {
-        throw new DtoPropertyException(exception);
+        throw new PropertyException(exception);
       }
     }
   }
 
-  public static <T, U> List<U> toDtoType (Class<? extends T> entityClass, Class<U> dtoClass, List<? extends T> entityList)
-    throws DtoPropertyException {
+  public static <T, U> U[] toDtoType (Class<? extends T> entityClass, Class<U> dtoClass, T[] entityArray)
+    throws PropertyException {
 
-    if (entityList == null) {
+    if (entityArray == null) {
 
       return null;
     } else {
@@ -77,9 +76,9 @@ public class ListMutator {
 
         Method instanceMethod = dtoClass.getMethod("instance", entityClass);
 
-        return MutationUtility.toList(entityList, (entity) -> (U)instanceMethod.invoke(null, entity));
+        return MutationUtility.toArray(entityArray, dtoClass, (entity) -> (U)instanceMethod.invoke(null, entity));
       } catch (Exception exception) {
-        throw new DtoPropertyException(exception);
+        throw new PropertyException(exception);
       }
     }
   }

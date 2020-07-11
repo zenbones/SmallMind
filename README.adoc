@@ -22,6 +22,8 @@ There is none. IOC projects provide both the base container and configuration. S
 === Modules
 
 * <<claxon>> - A unified monitoring framework with extensible meters and pluggable metric warehousing integrations (comes with Datadog, JMX, Logging and Prometheus).
+* <<doppelganger>> - An annotation-based data transfer object generating facility that can create multiple polymorphic-aware, fully-validated, JSON serializable views, from a single description.
+* <<scribe>> - A fast, light, easily extended, endpoint neutral, library safe, unified logging framework with decidedly lazy message interpolation.
 * <<spark>> - Maven packaging formats for the construction of self-contained executable build artifacts.
 
 [[claxon, Claxon]]
@@ -478,6 +480,38 @@ The following is one possible configuration that's demonstrative of a simple but
   </bean>
 </beans>
 ----
+
+[[doppelganger, Doppelganger]]
+= Doppelganger
+
+[partintro]
+Doppelganger is a set of annotations, and an APT (Annotation Processing Tool) conforming processor, that can generate multiple polymorphic-aware, fully-validated views of a class from a single description. These views are JAXB annotated and will translate themselves cleanly to and/or from JSON via Jackson (with the JaxbAnnotationModule registered). Doppelganger generated views can construct themselves from the instances from which they were generated, or act as a factory for such instances. They understand references to other Doppelganger annotated classes, including arrays and collections of such classes, and will automatically encode/decode such references into/from their appropriate views (or collections of those views). The multiple views inherent in Doppelganger annotations can be used to both limit and validate the generated classes for CRUD (create, read, update and delete) use cases, from a single annotated base entity. Doppelganger includes annotations that extend the generated views with fields which do not exist in the original class, allowing the construction of data from more client-friendly proxy attributes, made even easier with the fluent API generated for every view.
+
+== Install
+
+The annotation processing system will pick up on Doppelganger annotated classes during compilation given the following included dependencies. Besides Doppelganger itself, you'll need the annotation subsystem (currently in javax.* but moving to the jakarta.* namespace), and our JSON scaffolding helper classes.
+
+.Doppelganger
+[source,xml]
+----
+<dependency>
+  <groupId>javax.annotation</groupId>
+  <artifactId>javax.annotation-api</artifactId>
+  <version>LATEST</version>
+</dependency>
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>web-json-doppelganger</artifactId>
+  <version>LATEST</version>
+</dependency>
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>web-json-scaffold</artifactId>
+  <version>LATEST</version>
+</dependency>
+----
+
+== Annotations
 
 [[scribe, Scribe]]
 = Scribe
@@ -1114,22 +1148,40 @@ A LoggerAdapter is a shim into the underlying logging framework being integrated
 [[scribe-record, Record]]
 === Record
 
-
+A Record is a Scribe container for all the elements which might be available for output in a single logged event. As an implementation detail, the integrations in this project tend to extend the underlying notion of a such an event with the Record interface, guaranteeing that both are available within a single representative object.
 
 === Parameter Adapter
+
+A ParameterAdapter provides access to a map of key/value pairs which should ideally be held in a thread local state. This function can be conveniently fulfilled by simply wrapping the <<scribe-parameters>> helper class.
+
+== Endpoint Loggers
+
+This project provides adaptations for a few of the more popular endpoint logging systems, as well as a purely native alternative. Integration is achived simply by including *_one_* of the appropriate dependencies .
 
 [[scribe-indigenous, Indigenous]]
 === Indigenous
 
+A completely native implementation of an endpoint logger.
+
 === JDK Logging
+
+Integration for JDK Logging. It's possible to completely configure the system via Scribe's programmatic configuration.
 
 === Log4J
 
+Integration for the Log4J2 project. It's possible to completely configure the system via Scribe's programmatic configuration.
 
+== Other Integrations
 
-== Apache Commons Logging Integration
+As Scribe is certainly not the only neutral logging framework available, nor the first, this project provides integration with some of these more popular alternatives as convenience to the adopter.
 
-== SLF4J Integration
+=== Apache Commons Logging Integration
+
+Simply including the Apache Commons Logging integration module as a dependency will route the output from code using Apache Commons Logging through your configured Scribe loggers.
+
+=== SLF4J Integration
+
+Simply including the SLF4J integration module as a dependency will route the output from code using SLF4J through your configured Scribe loggers.
 
 [[spark, Spark]]
 = Spark

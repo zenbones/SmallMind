@@ -12,7 +12,7 @@
   <description>Json Integrations</description>
 
   <modules>
-    <module>dto</module>
+    <module>doppelganger</module>
     <module>query</module>
     <module>scaffold</module>
   </modules>
