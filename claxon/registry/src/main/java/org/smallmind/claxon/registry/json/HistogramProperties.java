@@ -34,24 +34,24 @@ package org.smallmind.claxon.registry.json;
 
 import org.smallmind.claxon.registry.Percentile;
 import org.smallmind.nutsnbolts.time.Stint;
-import org.smallmind.web.json.dto.DtoGenerator;
-import org.smallmind.web.json.dto.DtoProperty;
-import org.smallmind.web.json.dto.Idiom;
+import org.smallmind.web.json.doppelganger.Doppelganger;
+import org.smallmind.web.json.doppelganger.View;
+import org.smallmind.web.json.doppelganger.Idiom;
 
-import static org.smallmind.web.json.dto.Visibility.IN;
+import static org.smallmind.web.json.doppelganger.Visibility.IN;
 
-@DtoGenerator
+@Doppelganger
 public class HistogramProperties {
 
-  @DtoProperty(adapter = StintXmlAdapter.class, idioms = @Idiom(visibility = IN))
+  @View(adapter = StintXmlAdapter.class, idioms = @Idiom(visibility = IN))
   private Stint resolutionStint;
-  @DtoProperty(idioms = @Idiom(visibility = IN))
+  @View(idioms = @Idiom(visibility = IN))
   private Percentile[] percentiles;
-  @DtoProperty(idioms = @Idiom(visibility = IN))
+  @View(idioms = @Idiom(visibility = IN))
   private Long lowestDiscernibleValue;
-  @DtoProperty(idioms = @Idiom(visibility = IN))
+  @View(idioms = @Idiom(visibility = IN))
   private Long highestTrackableValue;
-  @DtoProperty(idioms = @Idiom(visibility = IN))
+  @View(idioms = @Idiom(visibility = IN))
   private Integer numberOfSignificantValueDigits;
 
   public Stint getResolutionStint () {

@@ -30,31 +30,48 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.registry.json;
+package org.smallmind.web.json.doppelganger;
 
-import java.io.IOException;
-import org.smallmind.claxon.registry.aop.InstrumentedParser;
-import org.smallmind.claxon.registry.meter.MeterBuilder;
-import org.smallmind.claxon.registry.meter.Trace;
-import org.smallmind.claxon.registry.meter.TraceBuilder;
-import org.smallmind.web.json.scaffold.util.JsonCodec;
+import java.util.HashMap;
 
-public class TraceParser implements InstrumentedParser<Trace> {
+public class PropertyLexicon {
 
-  @Override
-  public MeterBuilder<Trace> parse (String json)
-    throws IOException {
+  private final HashMap<String, PropertyInformation> realMap = new HashMap<>();
+  private final HashMap<String, PropertyInformation> virtualMap = new HashMap<>();
 
-    TraceProperties properties = JsonCodec.read(json, TracePropertiesInView.class).factory();
-    TraceBuilder builder = new TraceBuilder();
+  public void put (String key, PropertyInformation propertyInformation) {
 
-    if (properties.getWindowTimeUnit() != null) {
-      builder.windowTimeUnit(properties.getWindowTimeUnit());
+    if (propertyInformation.isVirtual()) {
+
+      virtualMap.put(key, propertyInformation);
+    } else {
+
+      realMap.put(key, propertyInformation);
     }
-    if (properties.getWindows() != null) {
-      builder.windows(properties.getWindows());
-    }
+  }
 
-    return builder;
+  public boolean isReal () {
+
+    return !realMap.isEmpty();
+  }
+
+  public boolean isVirtual () {
+
+    return !virtualMap.isEmpty();
+  }
+
+  public boolean containsKey (String key) {
+
+    return realMap.containsKey(key) || virtualMap.containsKey(key);
+  }
+
+  public HashMap<String, PropertyInformation> getRealMap () {
+
+    return realMap;
+  }
+
+  public HashMap<String, PropertyInformation> getVirtualMap () {
+
+    return virtualMap;
   }
 }

@@ -30,30 +30,46 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.registry;
+package org.smallmind.web.json.doppelganger;
 
-import org.smallmind.web.json.doppelganger.Doppelganger;
-import org.smallmind.web.json.doppelganger.View;
-import org.smallmind.web.json.doppelganger.Idiom;
+import java.util.List;
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.type.TypeMirror;
+import org.smallmind.nutsnbolts.apt.AptUtility;
 
-import static org.smallmind.web.json.doppelganger.Visibility.IN;
+public class PropertyInformation {
 
-@Doppelganger
-public class Percentile {
+  private final List<ConstraintInformation> constraintList;
+  private final TypeMirror adapter;
+  private final TypeMirror type;
+  private final String name;
+  private final Boolean required;
+  private final boolean virtual;
 
-  @View(idioms = @Idiom(visibility = IN))
-  private String name;
-  @View(idioms = @Idiom(visibility = IN))
-  private double value;
+  public PropertyInformation (AnnotationMirror propertyAnnotationMirror, List<ConstraintInformation> constraintList, boolean idiomRequired, TypeMirror type, boolean virtual) {
 
-  public Percentile () {
+    this.type = type;
+    this.virtual = virtual;
+    this.constraintList = constraintList;
 
+    adapter = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "adapter", TypeMirror.class, null);
+    name = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "name", String.class, "");
+    required = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "required", Boolean.class, Boolean.FALSE) || idiomRequired;
   }
 
-  public Percentile (String name, double value) {
+  public boolean isVirtual () {
 
-    this.name = name;
-    this.value = value;
+    return virtual;
+  }
+
+  public TypeMirror getAdapter () {
+
+    return adapter;
+  }
+
+  public TypeMirror getType () {
+
+    return type;
   }
 
   public String getName () {
@@ -61,18 +77,14 @@ public class Percentile {
     return name;
   }
 
-  public void setName (String name) {
+  public Iterable<ConstraintInformation> constraints () {
 
-    this.name = name;
+    return constraintList;
   }
 
-  public double getValue () {
+  public boolean isRequired () {
 
-    return value;
-  }
-
-  public void setValue (double value) {
-
-    this.value = value;
+    return (required != null) && required;
   }
 }
+

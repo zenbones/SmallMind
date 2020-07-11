@@ -30,31 +30,19 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.registry.json;
+package org.smallmind.web.json.doppelganger;
 
-import java.io.IOException;
-import org.smallmind.claxon.registry.aop.InstrumentedParser;
-import org.smallmind.claxon.registry.meter.MeterBuilder;
-import org.smallmind.claxon.registry.meter.Trace;
-import org.smallmind.claxon.registry.meter.TraceBuilder;
-import org.smallmind.web.json.scaffold.util.JsonCodec;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-public class TraceParser implements InstrumentedParser<Trace> {
+@Retention(RetentionPolicy.SOURCE)
+@Target({})
+public @interface Type {
 
-  @Override
-  public MeterBuilder<Trace> parse (String json)
-    throws IOException {
+  // the class of the generated property
+  Class<?> value ();
 
-    TraceProperties properties = JsonCodec.read(json, TracePropertiesInView.class).factory();
-    TraceBuilder builder = new TraceBuilder();
-
-    if (properties.getWindowTimeUnit() != null) {
-      builder.windowTimeUnit(properties.getWindowTimeUnit());
-    }
-    if (properties.getWindows() != null) {
-      builder.windows(properties.getWindows());
-    }
-
-    return builder;
-  }
+  // the classes of the generic parameterization for the generated property
+  Class[] parameters () default {};
 }

@@ -30,31 +30,31 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.registry.json;
+package org.smallmind.web.json.doppelganger.translator;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
-import org.smallmind.claxon.registry.aop.InstrumentedParser;
-import org.smallmind.claxon.registry.meter.MeterBuilder;
-import org.smallmind.claxon.registry.meter.Trace;
-import org.smallmind.claxon.registry.meter.TraceBuilder;
-import org.smallmind.web.json.scaffold.util.JsonCodec;
+import javax.annotation.processing.ProcessingEnvironment;
+import javax.lang.model.type.TypeKind;
+import javax.lang.model.type.TypeMirror;
+import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
 
-public class TraceParser implements InstrumentedParser<Trace> {
+public class NoopTranslator implements Translator {
 
   @Override
-  public MeterBuilder<Trace> parse (String json)
+  public void writeRightSideOfEquals (BufferedWriter writer, ProcessingEnvironment processingEnvironment, String entityInstanceName, String entityFieldName, TypeMirror entityFieldTypeMirror, String dtoFieldQualifiedTypeName)
     throws IOException {
 
-    TraceProperties properties = JsonCodec.read(json, TracePropertiesInView.class).factory();
-    TraceBuilder builder = new TraceBuilder();
+    writer.write(entityInstanceName);
+    writer.write(".");
+    writer.write(TypeKind.BOOLEAN.equals(entityFieldTypeMirror.getKind()) ? BeanUtility.asIsName(entityFieldName) : BeanUtility.asGetterName(entityFieldName));
+    writer.write("();");
+  }
 
-    if (properties.getWindowTimeUnit() != null) {
-      builder.windowTimeUnit(properties.getWindowTimeUnit());
-    }
-    if (properties.getWindows() != null) {
-      builder.windows(properties.getWindows());
-    }
+  @Override
+  public void writeInsideOfSet (BufferedWriter writer, ProcessingEnvironment processingEnvironment, TypeMirror entityFieldTypeMirror, String dtoFieldQualifiedTypeName, String dtoFieldName)
+    throws IOException {
 
-    return builder;
+    writer.write(dtoFieldName);
   }
 }

@@ -30,56 +30,61 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.json.scaffold.property;
+package org.smallmind.web.json.doppelganger;
 
-import java.lang.reflect.Method;
 import java.util.HashMap;
-import org.smallmind.nutsnbolts.util.MutationUtility;
+import java.util.Map;
+import java.util.Set;
 
-public class ArrayMutator {
+public class DirectionalGuide {
 
-  public static <T, U> U[] toEntityType (Class<U> entityClass, T[] viewArray)
-    throws PropertyException {
+  private final HashMap<String, PropertyLexicon> lexiconMap = new HashMap<>();
+  private final Direction direction;
 
-    if (viewArray == null) {
+  public DirectionalGuide (Direction direction) {
 
-      return null;
+    this.direction = direction;
+  }
+
+  public void put (String purpose, String fieldName, PropertyInformation propertyInformation)
+    throws DefinitionException {
+
+    if (!isJavaNameFragment(purpose)) {
+      throw new DefinitionException("The purpose(%s) must be a legal identifier fragment", purpose);
+    }
+
+    PropertyLexicon propertyLexicon;
+
+    if ((propertyLexicon = lexiconMap.get(purpose)) == null) {
+      lexiconMap.put(purpose, propertyLexicon = new PropertyLexicon());
+    }
+
+    if (propertyLexicon.containsKey(fieldName)) {
+      throw new DefinitionException("The field(name=%s, purpose=%s, direction=%s) has already been processed", fieldName, (purpose.isEmpty()) ? "n/a" : purpose, direction.name());
     } else {
-
-      HashMap<Class<?>, Method> factoryMethodMap = new HashMap<>();
-
-      try {
-        return MutationUtility.toArray(viewArray, entityClass, (view) -> {
-
-          Method factoryMethod;
-
-          if ((factoryMethod = factoryMethodMap.get(view.getClass())) == null) {
-            factoryMethodMap.put(view.getClass(), factoryMethod = view.getClass().getMethod("factory"));
-          }
-
-          return (U)factoryMethod.invoke(view);
-        });
-      } catch (Exception exception) {
-        throw new PropertyException(exception);
-      }
+      propertyLexicon.put(fieldName, propertyInformation);
     }
   }
 
-  public static <T, U> U[] toViewType (Class<? extends T> entityClass, Class<U> viewClass, T[] entityArray)
-    throws PropertyException {
+  public Set<String> keySet () {
 
-    if (entityArray == null) {
+    return lexiconMap.keySet();
+  }
 
-      return null;
-    } else {
-      try {
+  public Set<Map.Entry<String, PropertyLexicon>> entrySet () {
 
-        Method instanceMethod = viewClass.getMethod("instance", entityClass);
+    return lexiconMap.entrySet();
+  }
 
-        return MutationUtility.toArray(entityArray, viewClass, (entity) -> (U)instanceMethod.invoke(null, entity));
-      } catch (Exception exception) {
-        throw new PropertyException(exception);
+  private boolean isJavaNameFragment (String purpose) {
+
+    for (int index = 0; index < purpose.length(); index++) {
+      if (!Character.isJavaIdentifierPart(purpose.charAt(index))) {
+
+        return false;
       }
     }
+
+    return true;
   }
 }

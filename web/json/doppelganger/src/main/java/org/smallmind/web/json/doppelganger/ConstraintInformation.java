@@ -30,31 +30,30 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.registry.json;
+package org.smallmind.web.json.doppelganger;
 
-import java.io.IOException;
-import org.smallmind.claxon.registry.aop.InstrumentedParser;
-import org.smallmind.claxon.registry.meter.MeterBuilder;
-import org.smallmind.claxon.registry.meter.Trace;
-import org.smallmind.claxon.registry.meter.TraceBuilder;
-import org.smallmind.web.json.scaffold.util.JsonCodec;
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.type.TypeMirror;
+import org.smallmind.nutsnbolts.apt.AptUtility;
 
-public class TraceParser implements InstrumentedParser<Trace> {
+public class ConstraintInformation {
 
-  @Override
-  public MeterBuilder<Trace> parse (String json)
-    throws IOException {
+  private final TypeMirror type;
+  private final String arguments;
 
-    TraceProperties properties = JsonCodec.read(json, TracePropertiesInView.class).factory();
-    TraceBuilder builder = new TraceBuilder();
+  public ConstraintInformation (AnnotationMirror constraintAnnotationMirror) {
 
-    if (properties.getWindowTimeUnit() != null) {
-      builder.windowTimeUnit(properties.getWindowTimeUnit());
-    }
-    if (properties.getWindows() != null) {
-      builder.windows(properties.getWindows());
-    }
+    type = AptUtility.extractAnnotationValue(constraintAnnotationMirror, "value", TypeMirror.class, null);
+    arguments = AptUtility.extractAnnotationValue(constraintAnnotationMirror, "arguments", String.class, "");
+  }
 
-    return builder;
+  public TypeMirror getType () {
+
+    return type;
+  }
+
+  public String getArguments () {
+
+    return arguments;
   }
 }

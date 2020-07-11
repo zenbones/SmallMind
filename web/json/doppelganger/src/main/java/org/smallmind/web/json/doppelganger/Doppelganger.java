@@ -30,31 +30,29 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.registry.json;
+package org.smallmind.web.json.doppelganger;
 
-import java.io.IOException;
-import org.smallmind.claxon.registry.aop.InstrumentedParser;
-import org.smallmind.claxon.registry.meter.MeterBuilder;
-import org.smallmind.claxon.registry.meter.Trace;
-import org.smallmind.claxon.registry.meter.TraceBuilder;
-import org.smallmind.web.json.scaffold.util.JsonCodec;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-public class TraceParser implements InstrumentedParser<Trace> {
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+public @interface Doppelganger {
 
-  @Override
-  public MeterBuilder<Trace> parse (String json)
-    throws IOException {
+  // the list of virtual properties to be added to the dto
+  Virtual[] properties () default {};
 
-    TraceProperties properties = JsonCodec.read(json, TracePropertiesInView.class).factory();
-    TraceBuilder builder = new TraceBuilder();
+  // the list of conditions under which to guarantee a dto is generated (should be used only when the dto would otherwise not be generated)
+  Pledge[] pledges () default {};
 
-    if (properties.getWindowTimeUnit() != null) {
-      builder.windowTimeUnit(properties.getWindowTimeUnit());
-    }
-    if (properties.getWindows() != null) {
-      builder.windows(properties.getWindows());
-    }
+  // the requirements for polymorphic annotations
+  Polymorphic polymorphic () default @Polymorphic();
 
-    return builder;
-  }
+  // the constraint annotations to be applied to the dto
+  Constraint[] constraints () default {};
+
+  // the xml root element name
+  String name () default "";
 }

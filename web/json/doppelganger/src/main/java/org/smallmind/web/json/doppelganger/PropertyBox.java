@@ -30,31 +30,33 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.registry.json;
+package org.smallmind.web.json.doppelganger;
 
-import java.io.IOException;
-import org.smallmind.claxon.registry.aop.InstrumentedParser;
-import org.smallmind.claxon.registry.meter.MeterBuilder;
-import org.smallmind.claxon.registry.meter.Trace;
-import org.smallmind.claxon.registry.meter.TraceBuilder;
-import org.smallmind.web.json.scaffold.util.JsonCodec;
+public class PropertyBox {
 
-public class TraceParser implements InstrumentedParser<Trace> {
+  private final PropertyInformation propertyInformation;
+  private final Visibility visibility;
+  private final String purpose;
 
-  @Override
-  public MeterBuilder<Trace> parse (String json)
-    throws IOException {
+  public PropertyBox (Visibility visibility, String purpose, PropertyInformation propertyInformation) {
 
-    TraceProperties properties = JsonCodec.read(json, TracePropertiesInView.class).factory();
-    TraceBuilder builder = new TraceBuilder();
+    this.visibility = visibility;
+    this.purpose = purpose;
+    this.propertyInformation = propertyInformation;
+  }
 
-    if (properties.getWindowTimeUnit() != null) {
-      builder.windowTimeUnit(properties.getWindowTimeUnit());
-    }
-    if (properties.getWindows() != null) {
-      builder.windows(properties.getWindows());
-    }
+  public Visibility getVisibility () {
 
-    return builder;
+    return visibility;
+  }
+
+  public String getPurpose () {
+
+    return purpose;
+  }
+
+  public PropertyInformation getPropertyInformation () {
+
+    return propertyInformation;
   }
 }

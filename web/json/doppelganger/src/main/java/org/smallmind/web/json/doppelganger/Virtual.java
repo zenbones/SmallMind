@@ -30,31 +30,32 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.registry.json;
+package org.smallmind.web.json.doppelganger;
 
-import java.io.IOException;
-import org.smallmind.claxon.registry.aop.InstrumentedParser;
-import org.smallmind.claxon.registry.meter.MeterBuilder;
-import org.smallmind.claxon.registry.meter.Trace;
-import org.smallmind.claxon.registry.meter.TraceBuilder;
-import org.smallmind.web.json.scaffold.util.JsonCodec;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import javax.xml.bind.annotation.adapters.XmlAdapter;
 
-public class TraceParser implements InstrumentedParser<Trace> {
+@Retention(RetentionPolicy.SOURCE)
+@Target({})
+public @interface Virtual {
 
-  @Override
-  public MeterBuilder<Trace> parse (String json)
-    throws IOException {
+  // the list of alternate idioms in which this property should be included (overrides the default idiom)
+  Idiom[] idioms () default {};
 
-    TraceProperties properties = JsonCodec.read(json, TracePropertiesInView.class).factory();
-    TraceBuilder builder = new TraceBuilder();
+  // the xml adapter to be used for this property
+  Class<? extends XmlAdapter> adapter () default DefaultXmlAdapter.class;
 
-    if (properties.getWindowTimeUnit() != null) {
-      builder.windowTimeUnit(properties.getWindowTimeUnit());
-    }
-    if (properties.getWindows() != null) {
-      builder.windows(properties.getWindows());
-    }
+  // the type information for the generated property
+  Type type ();
 
-    return builder;
-  }
+  // the field name of the generated property
+  String field ();
+
+  // the xml element name
+  String name () default "";
+
+  // if the xml element is required, may be overridden by an idiom if false
+  boolean required () default false;
 }
