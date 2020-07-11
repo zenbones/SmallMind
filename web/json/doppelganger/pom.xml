@@ -25,7 +25,6 @@
       <groupId>org.smallmind</groupId>
       <artifactId>web-json-scaffold</artifactId>
       <scope>compile</scope>
-      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>com.google.auto.service</groupId>
