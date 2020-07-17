@@ -139,7 +139,7 @@ Creates a 'view' property, and determines how the annotated field is represented
 * `Class<? extends XmlAdapter> adapter () default DefaultXmlAdapter.class` - The XmlAdapter class, if any, to be used for encoding and decoding this property.
 * `boolean required () default false` - Marks the generated JSON element as required (with all of the issues previously noted).
 
-== Example
+== In The Wild
 
 [source, java]
 ----
