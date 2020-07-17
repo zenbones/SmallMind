@@ -42,7 +42,7 @@ import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
 public class ClassTranslator implements Translator {
 
   @Override
-  public void writeRightSideOfEquals (BufferedWriter writer, ProcessingEnvironment processingEnvironment, String entityInstanceName, String entityFieldName, TypeMirror entityFieldTypeMirror, String dtoFieldQualifiedTypeName)
+  public void writeRightSideOfEquals (BufferedWriter writer, ProcessingEnvironment processingEnvironment, String entityInstanceName, String entityFieldName, TypeMirror entityFieldTypeMirror, String viewFieldQualifiedTypeName)
     throws IOException {
 
     writer.write("(");
@@ -50,7 +50,7 @@ public class ClassTranslator implements Translator {
     writer.write(".");
     writer.write(TypeKind.BOOLEAN.equals(entityFieldTypeMirror.getKind()) ? BeanUtility.asIsName(entityFieldName) : BeanUtility.asGetterName(entityFieldName));
     writer.write("() == null) ? null : ");
-    writer.write(dtoFieldQualifiedTypeName);
+    writer.write(viewFieldQualifiedTypeName);
     writer.write(".instance(");
     writer.write(entityInstanceName);
     writer.write(".");
@@ -59,13 +59,13 @@ public class ClassTranslator implements Translator {
   }
 
   @Override
-  public void writeInsideOfSet (BufferedWriter writer, ProcessingEnvironment processingEnvironment, TypeMirror entityFieldTypeMirror, String dtoFieldQualifiedTypeName, String dtoFieldName)
+  public void writeInsideOfSet (BufferedWriter writer, ProcessingEnvironment processingEnvironment, TypeMirror entityFieldTypeMirror, String viewFieldQualifiedTypeName, String viewFieldName)
     throws IOException {
 
     writer.write("(this.");
-    writer.write(dtoFieldName);
+    writer.write(viewFieldName);
     writer.write(" == null) ? null : this.");
-    writer.write(dtoFieldName);
+    writer.write(viewFieldName);
     writer.write(".factory()");
   }
 }

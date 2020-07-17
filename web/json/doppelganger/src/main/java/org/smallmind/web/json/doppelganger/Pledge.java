@@ -40,9 +40,9 @@ import java.lang.annotation.Target;
 @Target({})
 public @interface Pledge {
 
-  // the visibility for which dto generation should be guaranteed
+  // the visibility for which view generation should be guaranteed
   Visibility visibility () default Visibility.BOTH;
 
-  // the purposes for which dto generation should be guaranteed
+  // the purposes for which view generation should be guaranteed
   String[] purposes () default {};
 }

@@ -64,12 +64,12 @@ public class ListTranslator implements Translator {
   }
 
   @Override
-  public void writeInsideOfSet (BufferedWriter writer, ProcessingEnvironment processingEnvironment, TypeMirror entityFieldTypeMirror, String dtoFieldQualifiedTypeName, String dtoFieldName)
+  public void writeInsideOfSet (BufferedWriter writer, ProcessingEnvironment processingEnvironment, TypeMirror entityFieldTypeMirror, String viewFieldQualifiedTypeName, String viewFieldName)
     throws IOException {
 
     writer.write(LIST_MUTATOR_NAME);
     writer.write(".toEntityType(this.");
-    writer.write(dtoFieldName);
+    writer.write(viewFieldName);
     writer.write(")");
   }
 
@@ -87,6 +87,6 @@ public class ListTranslator implements Translator {
       }
     }
 
-    throw new PropertyException("Could not extract dto type from '%s'", qualifiedListTypeName);
+    throw new PropertyException("Could not extract view type from '%s'", qualifiedListTypeName);
   }
 }

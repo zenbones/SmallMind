@@ -47,14 +47,14 @@ public class ArrayTranslator implements Translator {
   private static final String ARRAY_MUTATOR_NAME = ArrayMutator.class.getCanonicalName();
 
   @Override
-  public void writeRightSideOfEquals (BufferedWriter writer, ProcessingEnvironment processingEnvironment, String entityInstanceName, String entityFieldName, TypeMirror entityFieldTypeMirror, String dtoFieldQualifiedTypeName)
+  public void writeRightSideOfEquals (BufferedWriter writer, ProcessingEnvironment processingEnvironment, String entityInstanceName, String entityFieldName, TypeMirror entityFieldTypeMirror, String viewFieldQualifiedTypeName)
     throws IOException {
 
     writer.write(ARRAY_MUTATOR_NAME);
     writer.write(".toViewType(");
     writer.write(((TypeElement)processingEnvironment.getTypeUtils().asElement(((ArrayType)entityFieldTypeMirror).getComponentType())).getQualifiedName().toString());
     writer.write(".class, ");
-    writer.write(dtoFieldQualifiedTypeName.substring(0, dtoFieldQualifiedTypeName.length() - 2));
+    writer.write(viewFieldQualifiedTypeName.substring(0, viewFieldQualifiedTypeName.length() - 2));
     writer.write(".class, ");
     writer.write(entityInstanceName);
     writer.write(".");
@@ -63,14 +63,14 @@ public class ArrayTranslator implements Translator {
   }
 
   @Override
-  public void writeInsideOfSet (BufferedWriter writer, ProcessingEnvironment processingEnvironment, TypeMirror entityFieldTypeMirror, String dtoFieldQualifiedTypeName, String dtoFieldName)
+  public void writeInsideOfSet (BufferedWriter writer, ProcessingEnvironment processingEnvironment, TypeMirror entityFieldTypeMirror, String viewFieldQualifiedTypeName, String viewFieldName)
     throws IOException {
 
     writer.write(ARRAY_MUTATOR_NAME);
     writer.write(".toEntityType(");
     writer.write(((TypeElement)processingEnvironment.getTypeUtils().asElement(((ArrayType)entityFieldTypeMirror).getComponentType())).getQualifiedName().toString());
     writer.write(".class, this.");
-    writer.write(dtoFieldName);
+    writer.write(viewFieldName);
     writer.write(")");
   }
 }
