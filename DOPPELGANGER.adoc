@@ -1,0 +1,146 @@
+[[doppelganger, Doppelganger]]
+= Doppelganger
+
+[partintro]
+Doppelganger is a set of annotations, and an APT (Annotation Processing Tool) conforming processor, that can generate multiple polymorphic-aware, fully-validated views of a class from a single description. These views are JAXB annotated and will translate themselves cleanly to and/or from JSON via Jackson (with the JaxbAnnotationModule registered). Doppelganger generated views can construct themselves from the instances from which they were generated, or act as a factory for such instances. They understand references to other Doppelganger annotated classes, including arrays and collections of such classes, and will automatically encode/decode such references into/from their appropriate views (or collections of those views). The multiple views inherent in Doppelganger annotations can be used to both limit and validate the generated classes for CRUD (create, read, update and delete) use cases, from a single annotated base entity. Doppelganger includes annotations that extend the generated views with fields which do not exist in the original class, allowing the construction of data from more client-friendly proxy attributes, made even easier with the fluent API generated for every view.
+
+== Install
+
+The annotation processing system will pick up on Doppelganger annotated classes during compilation given the following included dependencies. Besides Doppelganger itself, you'll need the annotation subsystem (currently in javax.* but moving to the jakarta.* namespace), and our JSON scaffolding helper classes.
+
+.Doppelganger
+[source,xml]
+----
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>web-json-doppelganger</artifactId>
+  <version>LATEST</version>
+</dependency>
+----
+
+== Raison D'etre
+
+Well designed REST APIs are often backed by a clear services layer, which, in turn, will depend upon database mapped entities (via orthogonal persistence frameworks, like JPA or Morphia). Although it may be tempting to shortcut a lot of hassle by simply annotating database entities as the medium of exchange for the REST APIs, as either input parameters our output return values, doing so is usually a mistake. It binds the REST APIs too tightly to both the services business logic, and the particulars of database tables. As requirements change, and the backend evolves, the whole becomes a mess of leaking abstractions. The higher road involve creating a set of 'data transfer objects' to be used within the client facing APIs, which in turn provide evolutionary freedom to what are connected but loosely coupled layers. However, doing the right thing can mean a lot of boiler-plate code and documentation overhead. The Doppelganger annotations embodied in this project relieve much of the burden, auto-generating the views of your entities, while acting as documentation in code (the best kind), while providing the loose coupling necessary to accommodate the independent evolution of the application layers.
+
+== Exposition
+
+The Doppelganger annotation framework creates JAXB annotated classes intended for JSON encoding/decoding via the Jackson JSON library. The specificity of this dependency comes from the use of Jackson's `com.fasterxml.jackson.databind.JsonNode` in the polymorphic adapters. The annotations provided by this project are capable of creating multiple, finely differentiated views, from a single annotated class. Any field in the annotated class (or 'virtual' fields not present in the class at all) may appear, with different validation constraints, in any of several views. The views are differentiated by *visibility* (see <<doppelganger-visibility>> below) and, possibly, a freely definable *purpose* string. The visibility, purpose, and any validation constraints, are held by an <<doppelganger-idiom>>. Many fields may be present in the same idiom, and the set of all defined idioms will determine the set of views generated during annotation processing. The name of each view follows the pattern `[Annotated Class Name]<Purpose>[Visibility]View`, with each view being generated in the same package as its annotated class.
+
+[TIP]
+For example, given the annotated `com.mycompany.MyClass` with some fields with `Visibility.IN` and purposes 'create' and 'update', and some fields with `Visibility.OUT` and the single purpose 'read', the annotation processor will generate the views `com.mycompany.MyClassCreateInView`, `com.mycompany.MyClassUpdateInView` and `com.mycompany.MyClassReadOutView`.
+
+There's no strict requirement that a view follow the meaning embodied in its name. In other words, a 'CreateIn' view need not be used for create operations, nor even as an input parameter. However, naming is important, and we think it best to try to name both consistently and with meaning.
+
+[[doppelganger-visibility, Visibility]]
+=== Visibility
+
+[small]#`org.smallmind.web.json.doppelganger.Visibility`#
+
+The Visibility enum has 3 values, *IN*, *OUT* and *BOTH* (equivalent to having both IN and OUT visibility). The intent, given this project's focus on JSON encoded data transfer objects (views), is that IN views will be usd as REST parameters, while OUT views will be used as REST return values.
+
+=== Purpose
+
+The use of purposes is optional, but helps to distinguish input parameters or return values by their particular operations or contexts. Some annotated fields may be required for a create operation, for example, but might be either optional or disallowed in an update operation. This can be accomplished by varying validation constraints between the two, or leaving a field completely out of the latter.
+
+== Annotations
+
+=== @Doppelganger
+
+Holds the base rules for generating the views of the annotated class. The following attributes control the specifics...
+
+* `String name () default ""` - The root name of the element, if empty it will default to the simple name of the annotated class.
+* `Polymorphic polymorphic () default @Polymorphic()` - The rules for handling polymorphic encoding / decoding (see below). The default presumes a non-polymorphic type.
+* `Constraint[] constraints () default {}` - The list of class level validation constraints to apply to the generated view (see below).
+* `Virtual[] properties () default {}` - The list of virtual properties to be added to the view (see below).
+* `Pledge[] pledges () default {}` - The list of conditions under which to guarantee a view is generated (only necessary when the view would otherwise not be generated, see below).
+
+==== @Polymorphic
+
+The rules for generating the views of the polymorphic subclasses of the annotated class.
+
+* `Class[] subClasses () default {}` -The list of sub-classes which will be generated with polymorphic annotations.
+* `boolean useAttribute () default false` - If false, polymorphic subclasses will be generated with a wrapping object, otherwise the subclasses will be genetared with an extra object type attribute.
++
+[NOTE]
+====
+Given a polymorphic subtype named _MySubClass_ with a doppelganger name of "mySubClass", if `useAttribute()` is *false* the following JSON would be generated...
+
+[source]
+----
+{"mySubClass":  {... other attributes ...}}
+----
+
+...otherwise, if `useAttribute()` is *true* the following JSON would be generated...
+[source]
+----
+{... other attributes ..., "java/object": "mySubClass"}
+----
+====
+
+[[doppelganger-constraint, Constraint]]
+==== @Constraint
+
+A representation of a `javax.validation.Constraint` annotation instance which should be added to the generted class or property.
+
+* `Class<?> value ()` - The class of the `javax.validation.Constraint` annotation to be applied.
+* `String arguments () default ""` - The arguments to the validation constraint, given as the text which would otherwise be placed within the *()* of the annotation, were it used in a more natural context.
++
+[TIP]
+====
+For example, applying a numerical minimum validation of '3' could be accomplished with the following...
+
+[source]
+----
+@Constraint(value = Min.class, arguments = "3")
+----
+====
+
+==== @Virtual
+
+Creates a 'virtual' property, which exists only in the generated views (and not the annotated class).
+
+* `String name () default ""` - The name of the JSON attribute generated for the annotated property. If left empty the attribute name will be the same as the field name (see below).
+* `Type type ()` - The type information for the generated property (see below).
+* `String field ()` - The field name of the generated property.
+* `Idiom[] idioms () default {}` - The list of alternate idioms in which this property should be included (see below). If empty, this property will be included in the default idiom.
+* `Class<? extends XmlAdapter> adapter () default DefaultXmlAdapter.class` - The XmlAdapter class, if any, to be used for encoding and decoding this property.
+* `boolean required () default false` - If the generated JSON element is required. If false, this may be overriden by the idioms (see above). Although an element may be marked as required, the enforcement of this is erratic at best. The use of a *NotNull* constraint is a far more persuasive argument.
+
+===== @Type
+
+Represents the type information of a virtual property.
+
+* `Class<?> value ()` - The class of the generated property.
+* `Class[] parameters () default {}` - The classes of any parameterizations (generics) of the generated property (useful for collections).
+
+[[doppelganger-idiom, Idiom]]
+===== @Idiom
+
+Idioms are the way to differentiate views. There's the basic differentiation of _in_ or _out_ views, and these can be further decomposed into arbitrary _purposes_. Each idiom may be marked as required, or not, and may have set of validation constraints applied.
+
+* `Visibility visibility () default Visibility.BOTH` - The visibility of the property within this idiom (_IN_, _OUT_ or default to _BOTH_).
+* `String[] purposes () default {}` - The name of this idiom (a short descriptive string such as 'create' or 'internal'). Useful for finely differentiating between create, update and delete operations, for example.
+* `Constraint[] constraints () default {}` - The constraint annotations to be applied to the property within this idiom (see <<doppelganger-constraint>> above).
+* `boolean required () default false` - Marks the generated JSON element as required in this idiom (with all of the issues previously noted).
+
+==== @Pledge
+
+It may be that, given the idioms annotated for the set of properties of the originating class, some of the resultant `purposes` (see <<doppelganger-idiom>> above) may end up with no properties at all, and those views would, therefore, never be generated. In those cases, you can use a pledge force generation of specific view classes.
+
+* `Visibility visibility () default Visibility.BOTH` - The visibility for which views should be generated, defaults to both _in_ and _out_ views.
+* `String[] purposes () default {}` - Any purposes for which the views should be generated. If empty then only the default (un-named) purpose will be enforced.
+
+=== @View
+
+Creates a 'view' property, and determines how the annotated field is represented in those generated views.
+
+* `String name () default ""` - The name of the JSON attribute generated for the annotated property. If left empty the attribute name will be the same as the field name.
+* `Idiom[] idioms () default {}` - The list of alternate idioms in which this property should be included (see <<doppelganger-idiom>> above). If empty, this property will be included in the default idiom.
+* `Class<? extends XmlAdapter> adapter () default DefaultXmlAdapter.class` - The XmlAdapter class, if any, to be used for encoding and decoding this property.
+* `boolean required () default false` - Marks the generated JSON element as required (with all of the issues previously noted).
+
+== In The Wild
+
+[source, java]
+----
+----
