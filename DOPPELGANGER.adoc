@@ -141,6 +141,121 @@ Creates a 'view' property, and determines how the annotated field is represented
 
 == In The Wild
 
+The following is a simplified, but still plausible, example of how the Doppelganger annotations might be used. We'll refrain from reproducing the generated sources here, but you can take the following code and generate them for yourself. It may be instructive to try the resulting constructors and factory methods.
+
 [source, java]
 ----
+public enum Biome {
+
+  ARCTIC, FOREST, JUNGLE, TUNDRA
+}
+
+@Doppelganger(polymorphic = @Polymorphic(subClasses = {Lion.class, Tiger.class, Bear.class}), properties = @Virtual(field = "tame", type = @Type(value = Boolean.class), idioms = @Idiom(purposes = "create", visibility = IN, constraints = @Constraint(NotBlank.class))))
+public abstract class Predator {
+
+  @View(idioms = {@Idiom(purposes = "create", visibility = IN, constraints = @Constraint(NotBlank.class)), @Idiom(purposes = "read", visibility = OUT)})
+  private String name;
+  @View(idioms = {@Idiom(purposes = "create", visibility = IN, constraints = @Constraint(NotBlank.class)), @Idiom(purposes = "update", visibility = IN), @Idiom(purposes = "read", visibility = OUT)})
+  private Biome biome;
+
+  public String getName () {
+
+    return name;
+  }
+
+  public void setName (String name) {
+
+    this.name = name;
+  }
+
+  public Biome getBiome () {
+
+    return biome;
+  }
+
+  public void setBiome (Biome biome) {
+
+    this.biome = biome;
+  }
+}
+
+@Doppelganger(name = "lion")
+public class Lion extends Predator {
+
+  @View(idioms = {@Idiom(purposes = {"create", "update"}, visibility = IN, constraints = @Constraint(value = Min.class, arguments = "0")), @Idiom(purposes = "read", visibility = OUT)})
+  private int pride;
+
+  public int getPride () {
+
+    return pride;
+  }
+
+  public void setPride (int pride) {
+
+    this.pride = pride;
+  }
+}
+
+@Doppelganger(name = "tiger")
+public class Tiger extends Predator {
+
+  @View(idioms = {@Idiom(purposes = "create", visibility = IN, constraints = @Constraint(NotNull.class)), @Idiom(purposes = "update", visibility = IN), @Idiom(purposes = "read", visibility = OUT)})
+  private Boolean albino;
+
+  public Boolean getAlbino () {
+
+    return albino;
+  }
+
+  public void setAlbino (Boolean albino) {
+
+    this.albino = albino;
+  }
+}
+
+@Doppelganger
+public class Circus {
+
+  @View(idioms = {@Idiom(purposes = "create", visibility = IN, constraints = @Constraint(NotBlank.class)), @Idiom(purposes = "read", visibility = OUT)})
+  private String location;
+
+  public String getLocation () {
+
+    return location;
+  }
+
+  public void setLocation (String location) {
+
+    this.location = location;
+  }
+}
+
+@Doppelganger(name = "bear")
+public class Bear extends Predator {
+
+  @View(idioms = {@Idiom(purposes = "create", visibility = IN, constraints = @Constraint(NotBlank.class)), @Idiom(purposes = "update", visibility = IN), @Idiom(purposes = "read", visibility = OUT)})
+  private String color;
+  @View(idioms = {@Idiom(purposes = {"create", "update"}, visibility = IN), @Idiom(purposes = "read", visibility = OUT)})
+  private Circus circus;
+
+  public String getColor () {
+
+    return color;
+  }
+
+  public void setColor (String color) {
+
+    this.color = color;
+  }
+
+  public Circus getCircus () {
+
+    return circus;
+  }
+
+  public void setCircus (Circus circus) {
+
+    this.circus = circus;
+  }
+}
 ----
