@@ -125,7 +125,7 @@ public class Page<T> implements Iterable<T> {
     return Arrays.asList(values).iterator();
   }
 
-  @XmlElement(name = "first_result", required = true, nillable = false)
+  @XmlElement(name = "firstResult", required = true, nillable = false)
   public int getFirstResult () {
 
     return firstResult;
@@ -136,7 +136,7 @@ public class Page<T> implements Iterable<T> {
     this.firstResult = firstResult;
   }
 
-  @XmlElement(name = "max_results", required = true, nillable = false)
+  @XmlElement(name = "maxResults", required = true, nillable = false)
   public int getMaxResults () {
 
     return maxResults;
@@ -147,7 +147,7 @@ public class Page<T> implements Iterable<T> {
     this.maxResults = maxResults;
   }
 
-  @XmlElement(name = "result_size", required = true, nillable = false)
+  @XmlElement(name = "resultSize", required = true, nillable = false)
   public int getResultSize () {
 
     return resultSize;
@@ -158,7 +158,7 @@ public class Page<T> implements Iterable<T> {
     this.resultSize = resultSize;
   }
 
-  @XmlElement(name = "total_results", required = true, nillable = false)
+  @XmlElement(name = "totalResults", required = true, nillable = false)
   public long getTotalResults () {
 
     return totalResults;

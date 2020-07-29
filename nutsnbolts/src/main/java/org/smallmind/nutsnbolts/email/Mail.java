@@ -35,17 +35,18 @@ package org.smallmind.nutsnbolts.email;
 import java.io.Reader;
 import java.io.StringReader;
 import javax.activation.DataSource;
+import javax.activation.FileDataSource;
 
 public class Mail {
 
   private Reader bodyReader;
   private DataSource[] attachments;
-  private String from = null;
-  private String to = null;
-  private String replyTo = null;
-  private String cc = null;
-  private String bcc = null;
-  private String subject = null;
+  private String from;
+  private String to;
+  private String replyTo;
+  private String cc;
+  private String bcc;
+  private String subject;
   private boolean html = false;
 
   public Mail (String from, String to, DataSource... attachments) {

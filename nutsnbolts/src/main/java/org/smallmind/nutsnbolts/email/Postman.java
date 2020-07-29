@@ -183,7 +183,7 @@ public class Postman {
     }
   }
 
-  private class SHA256Key {
+  private static class SHA256Key {
 
     private final byte[] hash;
 
