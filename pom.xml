@@ -94,7 +94,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <aether.version>1.1.0</aether.version>
-    <asm.version>7.3.1</asm.version>
+    <asm.version>8.0.1</asm.version>
     <grizzly.version>2.4.4</grizzly.version>
     <jaxb.version>2.3.1</jaxb.version>
     <jackson.version>2.10.3</jackson.version>
