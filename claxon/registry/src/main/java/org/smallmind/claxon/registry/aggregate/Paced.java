@@ -78,19 +78,19 @@ public class Paced implements Aggregate {
     add(value);
   }
 
-  public synchronized double getVelocity () {
+  public synchronized double[] getMeasurements () {
 
-    double velocity;
+    double rate;
     double timeFactor;
     long now = clock.monotonicTime();
     long currentCount = count.sum();
 
     timeFactor = nanosecondsInWindow / (now - markTime);
-    velocity = currentCount * timeFactor;
+    rate = currentCount * timeFactor;
 
     count.add(-currentCount);
     markTime = now;
 
-    return velocity;
+    return new double[] {currentCount, rate};
   }
 }
