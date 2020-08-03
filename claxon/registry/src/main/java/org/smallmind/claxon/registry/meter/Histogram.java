@@ -63,7 +63,7 @@ public class Histogram implements Meter {
     HistogramTime snapshot = stratified.get();
     Quantity[] basicQuantities = new Quantity[] {
       new Quantity("count", snapshot.getHistogram().getTotalCount()),
-      new Quantity("velocity", snapshot.getHistogram().getTotalCount() * snapshot.getTimeFactor()),
+      new Quantity("rate", snapshot.getHistogram().getTotalCount() * snapshot.getTimeFactor()),
       new Quantity("minimum", snapshot.getHistogram().getMinValue()),
       new Quantity("maximum", snapshot.getHistogram().getMaxValue()),
       new Quantity("mean", snapshot.getHistogram().getMean())};

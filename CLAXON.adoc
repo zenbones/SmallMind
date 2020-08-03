@@ -60,7 +60,7 @@ Thanks to Dropwizard Metrics, micrometer.io and HdrHistogram.
 
 == Design Choices
 
-Metric warehousing systems such as StatsD, InfluxDB or Prometheus all store and provide for the querying of time series data. Some systems allow for the calculation of aggregations (minimums, maximums, velocity, histograms, etc.) upon storing data points, or as part of the provided query capabilities, while others do not. Some systems we may want to integrate with, such as JMX, have no notion of a time series at all. A project such as this one might fulfill its goals by fixing its notion of the meters it allows, and then pushing the responsibility of implementing each of those meters onto the warehouse integrations. This would allow integrations with systems with a built-in notion of aggregations to take advantage of those capabilities. We have instead chosen to ignore most of the differences between warehousing systems, and separate the implementation of meters from the underlying capabilities of the various data stores. That doesn't mean that you can't choose to build your own meters and warehousing integrations that are more tightly coupled, it just means that the meters provided by this project all aggregate on the client, and are uniformly usable on both the provided warehouse integrations, or with new integrations you may choose to create. It means that this framework does not privilege its provided meters in any way, and all of its capabilities, including AOP instrumentation annotations, are extended to any meters you choose to create. Further, you can create new warehouse integrations without having to provide implementations for any meters at all, and those integrations will be usable with all meters which fulfill the contracts for this project.
+Metric warehousing systems such as StatsD, InfluxDB or Prometheus all store and provide for the querying of time series data. Some systems allow for the calculation of aggregations (minimums, maximums, rate, histograms, etc.) upon storing data points, or as part of the provided query capabilities, while others do not. Some systems we may want to integrate with, such as JMX, have no notion of a time series at all. A project such as this one might fulfill its goals by fixing its notion of the meters it allows, and then pushing the responsibility of implementing each of those meters onto the warehouse integrations. This would allow integrations with systems with a built-in notion of aggregations to take advantage of those capabilities. We have instead chosen to ignore most of the differences between warehousing systems, and separate the implementation of meters from the underlying capabilities of the various data stores. That doesn't mean that you can't choose to build your own meters and warehousing integrations that are more tightly coupled, it just means that the meters provided by this project all aggregate on the client, and are uniformly usable on both the provided warehouse integrations, or with new integrations you may choose to create. It means that this framework does not privilege its provided meters in any way, and all of its capabilities, including AOP instrumentation annotations, are extended to any meters you choose to create. Further, you can create new warehouse integrations without having to provide implementations for any meters at all, and those integrations will be usable with all meters which fulfill the contracts for this project.
 
 == Registry
 
@@ -292,18 +292,18 @@ The Meter implementations in this project use a series of helper classes in the 
 
 [small]#`org.smallmind.claxon.registry.Quantity`#
 
-A quantity is a just container for a String name and a double value. The name of each quantity will be concatenated with the root name provided by the emitting meter to create a namespace for the value that's passed to each warehouse emitter. Exactly how this name is expressed, along with the meter's tags, is up to the logic within each emitter (see <<claxon-emitters>> below). We recommend that quantity names by kept simple. You can distinguish multi-word names via dot notation, hyphens, camel case, or simply smooshing them all together, but be prepared for the emitters to less sophisticated systems to mess with your naming, so simpler is better. We recommend sticking to dot notated names in most cases.
+A quantity is just a container for a String name and a double value. The name of each quantity will be concatenated with the root name provided by the emitting meter to create a namespace for the value that's passed to each warehouse emitter. Exactly how this name is expressed, along with the meter's tags, is up to the logic within each emitter (see <<claxon-emitters>> below). We recommend that quantity names by kept simple. You can distinguish multi-word names via dot notation, hyphens, camel case, or simply smooshing them all together, but be prepared for the emitters to less sophisticated systems to mess with your naming, so simpler is better. We recommend sticking to dot notated names in most cases.
 
 === Out Of The Box
 
 This project includes a set of Meters in the `org.smallmind.claxon.registry.meter` package.
 
-* *Gauge* - Emits the "minimum", "maximum" and "average" of the updated values over the collection cycle.
-* *Histogram* - Emits the "count" of updates, their "velocity", the "minimum", "maximum", "mean", and a set of specified quantiles over the collection cycle.
-* *Speedometer* - Emits the "minimum", "maximum" and "velocity" of the updated values over the collection cycle.
-* *Tachometer* - Emits just the "velocity" of the updated values over the collection cycle.
-* *Tally* - Emits the running total of all updated values (which can be both positive and negative) over the life of the meter.
-* *Trace* - Emits the exponential decaying average of the updated values over a set of specified time windows.
+* *Gauge* - Emits the "minimum", "maximum" and "average" of the updated values _over the collection cycle_.
+* *Histogram* - Emits the "count" of updates, their "rate", the "minimum", "maximum", "mean", and a set of specified quantiles _over the collection cycle_.
+* *Speedometer* - Emits the "minimum", "maximum", "count" and "rate" of the updated values _over the collection cycle_.
+* *Tachometer* - Emits just the "count" and "rate" of the updated values _over the collection cycle_.
+* *Tally* - Emits the running "count" of all updated values (which can be either positive or negative) _over the life of the meter_.
+* *Trace* - Emits the exponential decaying "average" of the updated values _over a set of specified time windows_.
 
 [[claxon-tags, Tags]]
 == Tags
