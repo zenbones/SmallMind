@@ -329,6 +329,11 @@
         <version>1.0.1</version>
       </dependency>
       <dependency>
+        <groupId>javax.enterprise</groupId>
+        <artifactId>cdi-api</artifactId>
+        <version>2.0.SP1</version>
+      </dependency>
+      <dependency>
         <groupId>javax.jms</groupId>
         <artifactId>javax.jms-api</artifactId>
         <version>2.0.1</version>
@@ -742,6 +747,11 @@
       <dependency>
         <groupId>org.glassfish.jersey.ext</groupId>
         <artifactId>jersey-bean-validation</artifactId>
+        <version>${jersey.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.glassfish.jersey.ext.cdi</groupId>
+        <artifactId>jersey-cdi1x</artifactId>
         <version>${jersey.version}</version>
       </dependency>
       <dependency>
