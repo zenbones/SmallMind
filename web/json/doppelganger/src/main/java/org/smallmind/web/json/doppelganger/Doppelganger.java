@@ -55,4 +55,6 @@ public @interface Doppelganger {
 
   // the xml root element name
   String name () default "";
+
+  String namespace () default "http://org.smallmind/web/json/doppelganger";
 }

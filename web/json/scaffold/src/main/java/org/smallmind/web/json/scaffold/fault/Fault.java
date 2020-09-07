@@ -1,28 +1,28 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020 David Berkman
- *
+ * 
  * This file is part of the SmallMind Code Project.
- *
+ * 
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under either, at your discretion...
- *
+ * 
  * 1) The terms of GNU Affero General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or (at
  * your option) any later version.
- *
+ * 
  * ...or...
- *
+ * 
  * 2) The terms of the Apache License, Version 2.0.
- *
+ * 
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License or Apache License for more details.
- *
+ * 
  * You should have received a copy of the GNU Affero General Public License
  * and the Apache License along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
- *
+ * 
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -38,9 +38,8 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.smallmind.scribe.pen.LoggerManager;
-import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 @XmlRootElement(name = "fault", namespace = "http://org.smallmind/web/json/scaffold/fault")
 @XmlAccessorType(XmlAccessType.PROPERTY)
@@ -49,7 +48,7 @@ public class Fault implements Serializable {
   private Fault cause;
   private FaultElement context;
   private FaultElement[] elements;
-  private JsonNode information;
+  private ObjectNode information;
   private String throwableType;
   private String message;
   private NativeObject nativeObject;
@@ -182,25 +181,13 @@ public class Fault implements Serializable {
     this.elements = elements;
   }
 
-  public <T> T readInformation (Class<T> clazz) {
-
-    return (information == null) ? null : JsonNode.class.equals(clazz) ? clazz.cast(information) : JsonCodec.convert(information, clazz);
-  }
-
-  public Fault writeInformation (Object obj) {
-
-    information = (obj == null) ? null : (obj instanceof JsonNode) ? (JsonNode)obj : JsonCodec.writeAsJsonNode(obj);
-
-    return this;
-  }
-
   @XmlElement(name = "information")
-  public JsonNode getInformation () {
+  public ObjectNode getInformation () {
 
     return information;
   }
 
-  public void setInformation (JsonNode information) {
+  public void setInformation (ObjectNode information) {
 
     this.information = information;
   }

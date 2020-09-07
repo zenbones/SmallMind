@@ -283,6 +283,10 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
         if (!classElement.getModifiers().contains(Modifier.ABSTRACT)) {
           writer.write("@XmlRootElement(name = \"");
           writer.write(generatorInformation.getName().isEmpty() ? asMemberName(classElement.getSimpleName()) : generatorInformation.getName());
+          if (!generatorInformation.getNamespace().isEmpty()) {
+            writer.write("\", namespace = \"");
+            writer.write(generatorInformation.getNamespace());
+          }
           writer.write("\")");
           writer.newLine();
         }

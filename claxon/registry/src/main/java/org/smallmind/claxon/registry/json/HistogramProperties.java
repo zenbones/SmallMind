@@ -40,7 +40,7 @@ import org.smallmind.web.json.doppelganger.Idiom;
 
 import static org.smallmind.web.json.doppelganger.Visibility.IN;
 
-@Doppelganger
+@Doppelganger(namespace = "http://org.smallmind/claxon/registry")
 public class HistogramProperties {
 
   @View(adapter = StintXmlAdapter.class, idioms = @Idiom(visibility = IN))

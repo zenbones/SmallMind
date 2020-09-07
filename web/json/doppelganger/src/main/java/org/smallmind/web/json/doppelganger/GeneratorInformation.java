@@ -55,6 +55,7 @@ public class GeneratorInformation {
   private final HashMap<String, Visibility> pledgedMap = new HashMap<>();
   private final HashMap<String, Visibility> fulfilledMap = new HashMap<>();
   private final String name;
+  private final String namespace;
 
   public GeneratorInformation (ProcessingEnvironment processingEnvironment, UsefulTypeMirrors usefulTypeMirrors, DoppelgangerAnnotationProcessor doppelgangerAnnotationProcessor, TypeElement classElement, VisibilityTracker visibilityTracker, ClassTracker classTracker, AnnotationMirror generatorAnnotationMirror)
     throws IOException, DefinitionException {
@@ -62,6 +63,7 @@ public class GeneratorInformation {
     AnnotationMirror polymorphicAnnotationMirror;
 
     name = AptUtility.extractAnnotationValue(generatorAnnotationMirror, "name", String.class, "");
+    namespace = AptUtility.extractAnnotationValue(generatorAnnotationMirror, "namespace", String.class, "http://org.smallmind/web/json/doppelganger");
 
     for (AnnotationMirror constraintAnnotationMirror : AptUtility.extractAnnotationValueAsList(generatorAnnotationMirror, "constraints", AnnotationMirror.class)) {
       constraintList.add(new ConstraintInformation(constraintAnnotationMirror));
@@ -146,6 +148,11 @@ public class GeneratorInformation {
   public String getName () {
 
     return name;
+  }
+
+  public String getNamespace () {
+
+    return namespace;
   }
 
   public Iterable<ConstraintInformation> constraints () {

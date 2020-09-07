@@ -38,7 +38,7 @@ import org.smallmind.web.json.doppelganger.Idiom;
 
 import static org.smallmind.web.json.doppelganger.Visibility.IN;
 
-@Doppelganger
+@Doppelganger(namespace = "http://org.smallmind/claxon/registry")
 public class Window {
 
   @View(idioms = @Idiom(visibility = IN))
