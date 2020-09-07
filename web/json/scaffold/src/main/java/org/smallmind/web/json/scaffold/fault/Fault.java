@@ -189,7 +189,7 @@ public class Fault implements Serializable {
 
   public Fault writeInformation (Object obj) {
 
-    information = (obj == null) ? null : JsonCodec.writeAsJsonNode(obj);
+    information = (obj == null) ? null : (obj instanceof JsonNode) ? (JsonNode)obj : JsonCodec.writeAsJsonNode(obj);
 
     return this;
   }
