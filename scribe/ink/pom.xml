@@ -11,6 +11,7 @@
   <description>Ink Logging Extensions</description>
   <packaging>pom</packaging>
   <modules>
+    <module>aws</module>
     <module>indigenous</module>
     <module>jdk</module>
     <module>log4j</module>

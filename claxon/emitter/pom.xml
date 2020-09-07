@@ -11,6 +11,7 @@
   <description>Emitter Monitoring Extensions</description>
   <packaging>pom</packaging>
   <modules>
+    <module>aws</module>
     <module>datadog</module>
     <module>jmx</module>
     <module>message</module>
