@@ -35,6 +35,7 @@ package org.smallmind.persistence.orm.hibernate;
 import java.sql.Types;
 import org.hibernate.dialect.function.SQLFunctionTemplate;
 import org.hibernate.type.IntegerType;
+import org.hibernate.type.StandardBasicTypes;
 import org.hibernate.type.TimestampType;
 
 public class MySQL5InnoDBDialect extends org.hibernate.dialect.MySQL5InnoDBDialect {
@@ -46,5 +47,6 @@ public class MySQL5InnoDBDialect extends org.hibernate.dialect.MySQL5InnoDBDiale
     registerColumnType(Types.BOOLEAN, "BIT(1)");
     registerFunction("org_smallmind_day_diff", new SQLFunctionTemplate(IntegerType.INSTANCE, "datediff(?2, ?1)"));
     registerFunction("org_smallmind_date_sub_minutes", new SQLFunctionTemplate(TimestampType.INSTANCE, "date_sub(?1, INTERVAL ?2 MINUTE)"));
+    this.registerFunction("org_smallmind_group_concat", new SQLFunctionTemplate(StandardBasicTypes.STRING, "group_concat(?1)"));
   }
 }
