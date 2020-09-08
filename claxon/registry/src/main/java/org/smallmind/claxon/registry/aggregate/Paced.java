@@ -41,7 +41,7 @@ import org.smallmind.nutsnbolts.time.StintUtility;
 public class Paced implements Aggregate {
 
   private final Clock clock;
-  private final LongAdder count = new LongAdder();
+  private final LongAdder adder = new LongAdder();
   private final double nanosecondsInWindow;
   private long markTime;
 
@@ -68,7 +68,7 @@ public class Paced implements Aggregate {
     if (delta < 0) {
       throw new IllegalArgumentException(delta + " is less than 0");
     } else {
-      count.add(delta);
+      adder.add(delta);
     }
   }
 
@@ -83,14 +83,14 @@ public class Paced implements Aggregate {
     double rate;
     double timeFactor;
     long now = clock.monotonicTime();
-    long currentCount = count.sum();
+    long count = adder.sum();
 
     timeFactor = nanosecondsInWindow / (now - markTime);
-    rate = currentCount * timeFactor;
+    rate = count * timeFactor;
 
-    count.add(-currentCount);
+    adder.add(-count);
     markTime = now;
 
-    return new double[] {currentCount, rate};
+    return new double[] {count, rate};
   }
 }

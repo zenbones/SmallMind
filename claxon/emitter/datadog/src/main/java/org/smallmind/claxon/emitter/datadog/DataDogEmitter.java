@@ -41,13 +41,16 @@ import org.smallmind.claxon.registry.Tag;
 public class DataDogEmitter extends PushEmitter {
 
   private final StatsDClient statsdClient;
+  private final boolean countAsCount;
 
   public DataDogEmitter () {
 
-    this(null, "localhost", 8125, null);
+    this(null, "localhost", 8125, true, null);
   }
 
-  public DataDogEmitter (String prefix, String hostName, int port, Tag... constantTags) {
+  public DataDogEmitter (String prefix, String hostName, int port, boolean countAsCount, Tag... constantTags) {
+
+    this.countAsCount = countAsCount;
 
     statsdClient = new NonBlockingStatsDClient(prefix, hostName, port, translateTags(constantTags));
   }
@@ -58,7 +61,11 @@ public class DataDogEmitter extends PushEmitter {
     String[] translatedTags = translateTags(tags);
 
     for (Quantity quantity : quantities) {
-      statsdClient.gauge(meterName + '.' + quantity.getName(), quantity.getValue(), translatedTags);
+      if (countAsCount && "count".equals(quantity.getName())) {
+        statsdClient.count(meterName + '.' + quantity.getName(), quantity.getValue(), translatedTags);
+      } else {
+        statsdClient.gauge(meterName + '.' + quantity.getName(), quantity.getValue(), translatedTags);
+      }
     }
   }
 

@@ -40,11 +40,11 @@ import org.springframework.beans.factory.InitializingBean;
 public class DataDogEmitterFactoryBean implements FactoryBean<DataDogEmitter>, InitializingBean {
 
   private DataDogEmitter emitter;
-
+  private Tag[] constantTags;
   private String prefix;
   private String hostName = "localhost";
+  private boolean countAsCount = true;
   private int port = 8125;
-  private Tag[] constantTags;
 
   public void setPrefix (String prefix) {
 
@@ -59,6 +59,11 @@ public class DataDogEmitterFactoryBean implements FactoryBean<DataDogEmitter>, I
   public void setPort (int port) {
 
     this.port = port;
+  }
+
+  public void setCountAsCount (boolean countAsCount) {
+
+    this.countAsCount = countAsCount;
   }
 
   public void setConstantTags (Tag[] constantTags) {
@@ -87,6 +92,6 @@ public class DataDogEmitterFactoryBean implements FactoryBean<DataDogEmitter>, I
   @Override
   public void afterPropertiesSet () {
 
-    emitter = new DataDogEmitter(prefix, hostName, port, constantTags);
+    emitter = new DataDogEmitter(prefix, hostName, port, countAsCount, constantTags);
   }
 }
