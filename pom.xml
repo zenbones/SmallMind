@@ -95,7 +95,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <aether.version>1.1.0</aether.version>
     <asm.version>8.0.1</asm.version>
-    <aws.version>1.11.856</aws.version>
+    <aws.version>2.4.13</aws.version>
     <bouncycastle.version>1.66</bouncycastle.version>
     <grizzly.version>2.4.4</grizzly.version>
     <jaxb.version>2.3.1</jaxb.version>
@@ -413,13 +413,13 @@
         <version>2.22.1</version>
       </dependency>
       <dependency>
-        <groupId>com.amazonaws</groupId>
-        <artifactId>aws-java-sdk-cloudwatch</artifactId>
+        <groupId>software.amazon.awssdk</groupId>
+        <artifactId>cloudwatch</artifactId>
         <version>${aws.version}</version>
       </dependency>
       <dependency>
-        <groupId>com.amazonaws</groupId>
-        <artifactId>aws-java-sdk-logs</artifactId>
+        <groupId>software.amazon.awssdk</groupId>
+        <artifactId>cloudwatchlogs</artifactId>
         <version>${aws.version}</version>
       </dependency>
       <dependency>

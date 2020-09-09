@@ -32,6 +32,49 @@
  */
 package org.smallmind.claxon.emitter.aws;
 
-public class AWSEmitter {
+import java.time.Instant;
+import java.util.Date;
+import org.smallmind.claxon.registry.PushEmitter;
+import org.smallmind.claxon.registry.Quantity;
+import org.smallmind.claxon.registry.Tag;
+import software.amazon.awssdk.services.cloudwatch.CloudWatchClient;
+import software.amazon.awssdk.services.cloudwatch.model.Dimension;
+import software.amazon.awssdk.services.cloudwatch.model.MetricDatum;
+import software.amazon.awssdk.services.cloudwatch.model.PutMetricDataRequest;
+import software.amazon.awssdk.services.cloudwatch.model.PutMetricDataResponse;
+import software.amazon.awssdk.services.cloudwatch.model.StandardUnit;
 
+public class AWSEmitter extends PushEmitter {
+
+  private final CloudWatchClient client = null;
+  private final String namespace;
+
+  public AWSEmitter (String namespace) {
+
+    this.namespace = namespace;
+  }
+
+  @Override
+  public void record (String meterName, Tag[] tags, Quantity[] quantities) {
+
+    Instant now = Instant.now();
+    MetricDatum[] data = new MetricDatum[quantities.length];
+    Dimension[] dimensions = new Dimension[(tags == null) ? 0 : tags.length];
+    int dataIndex = 0;
+
+    if ((tags != null) && (tags.length > 0)) {
+
+      int tagIndex = 0;
+
+      for (Tag tag : tags) {
+        dimensions[tagIndex++] = Dimension.builder().name(tag.getKey()).value(tag.getValue()).build();
+      }
+    }
+
+    for (Quantity quantity : quantities) {
+      data[dataIndex++] = MetricDatum.builder().metricName(quantity.getName()).timestamp(now).unit(StandardUnit.NONE).value(quantity.getValue()).dimensions(dimensions).build();
+    }
+
+    client.putMetricData(PutMetricDataRequest.builder().namespace(namespace).metricData(data).build());
+  }
 }
