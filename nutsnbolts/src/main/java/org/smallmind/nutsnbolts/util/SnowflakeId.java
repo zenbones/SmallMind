@@ -38,10 +38,12 @@ import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.StampedLock;
 import org.smallmind.nutsnbolts.security.EncryptionUtility;
 
 public class SnowflakeId implements Comparable<SnowflakeId> {
+
+  private static final StampedLock LOCK = new StampedLock();
 
   private static final int[] DOT_OFFSET_0 = {0, 0, 0};
   private static final int[] DOT_OFFSET_1 = {0, 0, 0};
@@ -60,10 +62,8 @@ public class SnowflakeId implements Comparable<SnowflakeId> {
 
   private static final byte[] MAC_BYTES = createMachineIdentifier();
   private static final byte[] JVM_BYTES = createJVMProcessIdentifier();
-
-  private static final AtomicLong ATOMIC_TIME = new AtomicLong(System.currentTimeMillis());
-  private static final AtomicInteger ATOMIC_COUNT = new AtomicInteger(Short.MIN_VALUE);
-
+  private static final AtomicInteger COUNT = new AtomicInteger(Short.MIN_VALUE);
+  private static long TIME = System.currentTimeMillis();
   private final byte[] uniqueArray;
 
   public SnowflakeId () {
@@ -131,13 +131,28 @@ public class SnowflakeId implements Comparable<SnowflakeId> {
     byte[] bytes = new byte[18];
     long currentTime = 0;
     int currentCount;
+    long stamp;
 
     do {
-      if ((currentCount = ATOMIC_COUNT.incrementAndGet()) < Short.MAX_VALUE) {
-        currentTime = ATOMIC_TIME.get();
-      } else if (currentCount == Short.MAX_VALUE) {
-        ATOMIC_TIME.set(currentTime = Math.max(ATOMIC_TIME.get() + 1, System.currentTimeMillis()));
-        ATOMIC_COUNT.set(currentCount = Short.MIN_VALUE);
+      stamp = LOCK.readLock();
+      try {
+        if ((currentCount = COUNT.incrementAndGet()) < Short.MAX_VALUE) {
+          currentTime = TIME;
+        } else if (currentCount == Short.MAX_VALUE) {
+
+          long upgradedStamp;
+
+          if ((upgradedStamp = LOCK.tryConvertToWriteLock(stamp)) == 0L) {
+            LOCK.unlock(stamp);
+            upgradedStamp = LOCK.writeLock();
+          }
+
+          stamp = upgradedStamp;
+          TIME = currentTime = Math.max(TIME + 1, System.currentTimeMillis());
+          COUNT.set(currentCount = Short.MIN_VALUE);
+        }
+      } finally {
+        LOCK.unlock(stamp);
       }
     } while (currentCount > Short.MAX_VALUE);
 

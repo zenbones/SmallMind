@@ -39,6 +39,12 @@
       <optional>true</optional>
     </dependency>
     <dependency>
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>cloudwatchlogs</artifactId>
+      <scope>compile</scope>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
       <groupId>org.syslog4j</groupId>
       <artifactId>syslog4j</artifactId>
       <scope>compile</scope>

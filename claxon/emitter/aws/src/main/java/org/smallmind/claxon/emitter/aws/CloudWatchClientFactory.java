@@ -32,48 +32,59 @@
  */
 package org.smallmind.claxon.emitter.aws;
 
-import java.time.Instant;
-import org.smallmind.claxon.registry.PushEmitter;
-import org.smallmind.claxon.registry.Quantity;
-import org.smallmind.claxon.registry.Tag;
+import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.InitializingBean;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.cloudwatch.CloudWatchClient;
-import software.amazon.awssdk.services.cloudwatch.model.Dimension;
-import software.amazon.awssdk.services.cloudwatch.model.MetricDatum;
-import software.amazon.awssdk.services.cloudwatch.model.PutMetricDataRequest;
-import software.amazon.awssdk.services.cloudwatch.model.StandardUnit;
 
-public class AWSEmitter extends PushEmitter {
+public class CloudWatchClientFactory implements FactoryBean<CloudWatchClient>, InitializingBean {
 
-  private final CloudWatchClient client;
-  private final String namespace;
+  private CloudWatchClient client;
+  private Region region;
+  private String awsAccessKey;
+  private String awsSecretKey;
 
-  public AWSEmitter (CloudWatchClient client, String namespace) {
+  public void setAwsAccessKey (String awsAccessKey) {
 
-    this.client = client;
-    this.namespace = namespace;
+    this.awsAccessKey = awsAccessKey;
+  }
+
+  public void setAwsSecretKey (String awsSecretKey) {
+
+    this.awsSecretKey = awsSecretKey;
+  }
+
+  public void setRegion (Region region) {
+
+    this.region = region;
   }
 
   @Override
-  public void record (String meterName, Tag[] tags, Quantity[] quantities) {
+  public boolean isSingleton () {
 
-    Instant now = Instant.now();
-    MetricDatum[] data = new MetricDatum[quantities.length];
-    Dimension[] dimensions = new Dimension[(tags == null) ? 0 : tags.length];
-    int dataIndex = 0;
+    return true;
+  }
 
-    if ((tags != null) && (tags.length > 0)) {
+  @Override
+  public Class<?> getObjectType () {
 
-      int tagIndex = 0;
+    return CloudWatchClient.class;
+  }
 
-      for (Tag tag : tags) {
-        dimensions[tagIndex++] = Dimension.builder().name(tag.getKey()).value(tag.getValue()).build();
-      }
-    }
+  @Override
+  public CloudWatchClient getObject () {
 
-    for (Quantity quantity : quantities) {
-      data[dataIndex++] = MetricDatum.builder().metricName(quantity.getName()).timestamp(now).unit(StandardUnit.NONE).value(quantity.getValue()).dimensions(dimensions).build();
-    }
+    return client;
+  }
 
-    client.putMetricData(PutMetricDataRequest.builder().namespace(namespace).metricData(data).build());
+  @Override
+  public void afterPropertiesSet () throws Exception {
+
+    AwsCredentialsProvider credentialsProvider = StaticCredentialsProvider.create(AwsBasicCredentials.create(awsAccessKey, awsSecretKey));
+
+    client = CloudWatchClient.builder().credentialsProvider(credentialsProvider).region(region).build();
   }
 }
