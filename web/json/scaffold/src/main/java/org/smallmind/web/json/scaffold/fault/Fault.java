@@ -43,7 +43,7 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 @XmlRootElement(name = "fault", namespace = "http://org.smallmind/web/json/scaffold/fault")
 @XmlAccessorType(XmlAccessType.PROPERTY)
-public class Fault implements Serializable {
+public class Fault implements Serializable, Informed {
 
   private Fault cause;
   private FaultElement context;
@@ -111,6 +111,10 @@ public class Fault implements Serializable {
 
     if (throwable.getCause() != null) {
       cause = new Fault(throwable.getCause());
+    }
+
+    if (throwable instanceof Informed) {
+      information = ((Informed)throwable).getInformation();
     }
   }
 

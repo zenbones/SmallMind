@@ -30,9 +30,11 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.registry;
+package org.smallmind.web.json.scaffold.fault;
 
-public enum QuantityType {
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
-  NONE, COUNT
+public interface Informed {
+
+  ObjectNode getInformation ();
 }
