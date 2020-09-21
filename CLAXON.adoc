@@ -292,7 +292,17 @@ The Meter implementations in this project use a series of helper classes in the 
 
 [small]#`org.smallmind.claxon.registry.Quantity`#
 
-A quantity is just a container for a String name and a double value. The name of each quantity will be concatenated with the root name provided by the emitting meter to create a namespace for the value that's passed to each warehouse emitter. Exactly how this name is expressed, along with the meter's tags, is up to the logic within each emitter (see <<claxon-emitters>> below). We recommend that quantity names by kept simple. You can distinguish multi-word names via dot notation, hyphens, camel case, or simply smooshing them all together, but be prepared for the emitters to less sophisticated systems to mess with your naming, so simpler is better. We recommend sticking to dot notated names in most cases.
+A quantity is a container for a String name, a double value, and an *optional* <<claxon-meters-quantity-type>> type. The name of each quantity will be concatenated with the root name provided by the emitting meter to create a namespace for the value that's passed to each warehouse emitter. Exactly how this name is expressed, along with the meter's tags, is up to the logic within each emitter (see <<claxon-emitters>> below). We recommend that quantity names by kept simple. You can distinguish multi-word names via dot notation, hyphens, camel case, or simply smooshing them all together, but be prepared for the emitters to less sophisticated systems to mess with your naming, so simpler is better. We recommend sticking to dot notated names in most cases. The type, if any, associated with a quantity, is a hint to each warehouse emitter as to how the quantity's value should be interpreted, assuming the underlying warehouse is capable of making those distinctions, and assuming the emitter has been built to take advantage of them.
+
+[[claxon-meters-quantity-type, QuantityType]]
+==== QuantityType
+
+A hint to underlying warehouses and their <<claxon-emitters>> as to how each quantity's value should be stored.
+
+* *NONE* - Store the value in the emitter's most natural form, which is usually as 'gauge', which is normally defined as a single unrelated instance in time.
+* *COUNT* - Store the value as an additive, increasing count, _over the collection cycle_.
+
+[small]#`org.smallmind.claxon.registry.QuantityType`#
 
 === Out Of The Box
 
