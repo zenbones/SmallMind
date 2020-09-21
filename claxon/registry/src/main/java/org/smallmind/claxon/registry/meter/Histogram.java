@@ -35,6 +35,7 @@ package org.smallmind.claxon.registry.meter;
 import org.smallmind.claxon.registry.Clock;
 import org.smallmind.claxon.registry.Percentile;
 import org.smallmind.claxon.registry.Quantity;
+import org.smallmind.claxon.registry.QuantityType;
 import org.smallmind.claxon.registry.aggregate.HistogramTime;
 import org.smallmind.claxon.registry.aggregate.Stratified;
 import org.smallmind.nutsnbolts.time.Stint;
@@ -62,7 +63,7 @@ public class Histogram implements Meter {
 
     HistogramTime snapshot = stratified.get();
     Quantity[] basicQuantities = new Quantity[] {
-      new Quantity("count", snapshot.getHistogram().getTotalCount()),
+      new Quantity("count", snapshot.getHistogram().getTotalCount(), QuantityType.COUNT),
       new Quantity("rate", snapshot.getHistogram().getTotalCount() * snapshot.getTimeFactor()),
       new Quantity("minimum", snapshot.getHistogram().getMinValue()),
       new Quantity("maximum", snapshot.getHistogram().getMaxValue()),

@@ -34,6 +34,7 @@ package org.smallmind.claxon.registry.meter;
 
 import org.smallmind.claxon.registry.Clock;
 import org.smallmind.claxon.registry.Quantity;
+import org.smallmind.claxon.registry.QuantityType;
 import org.smallmind.claxon.registry.aggregate.Bounded;
 import org.smallmind.claxon.registry.aggregate.Paced;
 import org.smallmind.nutsnbolts.time.Stint;
@@ -81,7 +82,7 @@ public class Speedometer implements Meter {
     if (maximum > Long.MIN_VALUE) {
       quantities[index++] = new Quantity("maximum", maximum);
     }
-    quantities[index++] = new Quantity("count", measurements[0]);
+    quantities[index++] = new Quantity("count", measurements[0], QuantityType.COUNT);
     quantities[index] = new Quantity("rate", measurements[1]);
 
     return quantities;

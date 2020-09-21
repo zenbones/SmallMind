@@ -33,6 +33,7 @@
 package org.smallmind.claxon.registry.meter;
 
 import org.smallmind.claxon.registry.Quantity;
+import org.smallmind.claxon.registry.QuantityType;
 import org.smallmind.claxon.registry.aggregate.Tallied;
 
 public class Tally implements Meter {
@@ -53,6 +54,6 @@ public class Tally implements Meter {
   @Override
   public Quantity[] record () {
 
-    return new Quantity[] {new Quantity("count", tallied.getCount())};
+    return new Quantity[] {new Quantity("count", tallied.getCount(), QuantityType.COUNT)};
   }
 }

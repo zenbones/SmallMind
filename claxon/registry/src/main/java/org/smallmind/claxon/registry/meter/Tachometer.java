@@ -34,6 +34,7 @@ package org.smallmind.claxon.registry.meter;
 
 import org.smallmind.claxon.registry.Clock;
 import org.smallmind.claxon.registry.Quantity;
+import org.smallmind.claxon.registry.QuantityType;
 import org.smallmind.claxon.registry.aggregate.Paced;
 import org.smallmind.nutsnbolts.time.Stint;
 
@@ -57,6 +58,6 @@ public class Tachometer implements Meter {
 
     double[] measurements = paced.getMeasurements();
 
-    return new Quantity[] {new Quantity("count", measurements[0]), new Quantity("rate", measurements[1])};
+    return new Quantity[] {new Quantity("count", measurements[0], QuantityType.COUNT), new Quantity("rate", measurements[1])};
   }
 }
