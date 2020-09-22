@@ -88,52 +88,20 @@ public abstract class SSLJerseyTest {
 
   private static final Logger LOGGER = Logger.getLogger(JerseyTest.class.getName());
 
-  /**
-   * Holds the test container factory class to be used for running the tests by default
-   * (if testContainerFactory has not been set).
-   * This static field is initialized in {@link #getDefaultTestContainerFactory()} method
-   * and is reused by any instances of {@code JerseyTest} that are subsequently run.
-   * This is done to optimize the number of TestContainerFactory service provider look-ups
-   * and class loading.
-   */
   private static Class<? extends TestContainerFactory> defaultTestContainerFactoryClass;
 
-  /**
-   * Configured deployment context for the tested application.
-   */
   private final DeploymentContext context;
   private final AtomicReference<Client> client = new AtomicReference<>(null);
-  /**
-   * JerseyTest property bag that can be used to configure the test behavior.
-   * These properties can be overridden with a system property.
-   */
+
   private final Map<String, String> propertyMap = new HashMap<>();
-  /**
-   * JerseyTest forced property bag that can be used to configure the test behavior.
-   * These property cannot be overridden with a system property.
-   */
+
   private final Map<String, String> forcedPropertyMap = new HashMap<>();
   private final Map<Logger, Level> logLevelMap = new IdentityHashMap<>();
-  /**
-   * The test container factory which creates an instance of the test container
-   * on which the tests would be run.
-   */
+
   private TestContainerFactory testContainerFactory;
-  /**
-   * The test container on which the tests would be run.
-   */
+
   private TestContainer testContainer;
 
-  /**
-   * Initialize JerseyTest instance.
-   * <p>
-   * This constructor can be used from an extending subclass.
-   * <p>
-   * When this constructor is used, the extending concrete subclass must implement one of the
-   * {@link #configure()} or {@link #configureDeployment()} methods to provide the tested application
-   * configuration and deployment context.
-   * </p>
-   */
   public SSLJerseyTest () {
     // Note: this must be the first call in the constructor to allow setting config
     // properties (especially around logging) in the configure() or configureDeployment()
@@ -143,18 +111,6 @@ public abstract class SSLJerseyTest {
     this.testContainerFactory = getTestContainerFactory();
   }
 
-  /**
-   * Initialize JerseyTest instance and specify the test container factory to be used by this test.
-   * <p>
-   * This constructor can be used from an extending subclass.
-   * <p>
-   * When this constructor is used, the extending concrete subclass must implement one of the
-   * {@link #configure()} or {@link #configureDeployment()} methods to provide the tested application
-   * configuration and deployment context.
-   * </p>
-   *
-   * @param testContainerFactory the test container factory to use for testing.
-   */
   public SSLJerseyTest (final TestContainerFactory testContainerFactory) {
     // Note: this must be the first call in the constructor to allow setting config
     // properties (especially around logging) in the configure() or configureDeployment()
@@ -164,25 +120,6 @@ public abstract class SSLJerseyTest {
     this.testContainerFactory = testContainerFactory;
   }
 
-  /**
-   * Initialize JerseyTest instance.
-   * <p>
-   * This constructor can be used from an extending subclass.
-   * <p>
-   * When this constructor is used, the extending concrete subclass must implement one of the
-   * {@link #configure()} or {@link #configureDeployment()} methods are ignored.
-   * </p>
-   * <p>
-   * Please note that when this constructor is used, recording of startup logs as well as configuring
-   * other {@code JerseyTest} properties and features may not work properly. While using this constructor
-   * should generally be avoided, in certain scenarios it may be necessary to use this constructor.
-   * (E.g. when running parameterized tests in which application is created based on test parameters
-   * passed in by JUnit framework via test constructor - in such case it is not possible to propagate
-   * the necessary information to one of the overridden {@code JerseyTest.configure...} methods).
-   * </p>
-   *
-   * @param jaxrsApplication tested application.
-   */
   public SSLJerseyTest (final Application jaxrsApplication) {
 
     this.context = DeploymentContext.newInstance(jaxrsApplication);
@@ -274,12 +211,6 @@ public abstract class SSLJerseyTest {
     }
   }
 
-  /**
-   * Utility method that safely closes a client instance without throwing an exception.
-   *
-   * @param clients client instances to close. Each instance may be {@code null}.
-   * @since 2.5
-   */
   public static void closeIfNotNull (final Client... clients) {
 
     if (clients == null || clients.length == 0) {
@@ -298,22 +229,11 @@ public abstract class SSLJerseyTest {
     }
   }
 
-  /**
-   * Return currently used test container to run the tests in. This method can be overridden.
-   *
-   * @return a test container instance or {@code null} if the container is not set.
-   */
   /* package */ TestContainer getTestContainer () {
 
     return testContainer;
   }
 
-  /**
-   * Returns old test container used to run the tests in and set a new one. This method can be overridden.
-   *
-   * @param testContainer a test container instance or {@code null} it the current test container should be released.
-   * @return old test container instance.
-   */
   /* package */ TestContainer setTestContainer (final TestContainer testContainer) {
 
     final TestContainer old = this.testContainer;
@@ -326,94 +246,41 @@ public abstract class SSLJerseyTest {
     return getTestContainerFactory().create(getBaseUri(), context);
   }
 
-  /**
-   * Programmatically enable a feature with a given name.
-   * Enabling of the feature may be overridden via a system property.
-   *
-   * @param featureName name of the enabled feature.
-   */
   protected final void enable (final String featureName) {
     // TODO: perhaps we could reuse the resource config for the test properties?
     propertyMap.put(featureName, Boolean.TRUE.toString());
   }
 
-  /**
-   * Programmatically disable a feature with a given name.
-   * Disabling of the feature may be overridden via a system property.
-   *
-   * @param featureName name of the disabled feature.
-   */
   protected final void disable (final String featureName) {
 
     propertyMap.put(featureName, Boolean.FALSE.toString());
   }
 
-  /**
-   * Programmatically force-enable a feature with a given name.
-   * Force-enabling of the feature cannot be overridden via a system property.
-   * Use with care!
-   *
-   * @param featureName name of the force-enabled feature.
-   */
   protected final void forceEnable (final String featureName) {
 
     forcedPropertyMap.put(featureName, Boolean.TRUE.toString());
   }
 
-  /**
-   * Programmatically force-disable a feature with a given name.
-   * Force-disabling of the feature cannot be overridden via a system property.
-   * Use with care!
-   *
-   * @param featureName name of the force-disabled feature.
-   */
   protected final void forceDisable (final String featureName) {
 
     forcedPropertyMap.put(featureName, Boolean.FALSE.toString());
   }
 
-  /**
-   * Programmatically set a value of a property with a given name.
-   * The property value may be overridden via a system property.
-   *
-   * @param propertyName name of the property.
-   * @param value        property value.
-   */
   protected final void set (final String propertyName, final Object value) {
 
     set(propertyName, value.toString());
   }
 
-  /**
-   * Programmatically set a value of a property with a given name.
-   * The property value may be overridden via a system property.
-   *
-   * @param propertyName name of the property.
-   * @param value        property value.
-   */
   protected final void set (final String propertyName, final String value) {
 
     propertyMap.put(propertyName, value);
   }
 
-  /**
-   * Programmatically force-set a value of a property with a given name.
-   * The force-set property value cannot be overridden via a system property.
-   *
-   * @param propertyName name of the property.
-   * @param value        property value.
-   */
   protected final void forceSet (final String propertyName, final String value) {
 
     forcedPropertyMap.put(propertyName, value);
   }
 
-  /**
-   * Check if the Jersey test boolean property (flag) has been set to {@code true}.
-   *
-   * @param propertyName name of the Jersey test boolean property.
-   * @return {@code true} if the test property has been enabled, {@code false} otherwise.
-   */
   protected final boolean isEnabled (final String propertyName) {
 
     return Boolean.valueOf(getProperty(propertyName));
@@ -455,56 +322,21 @@ public abstract class SSLJerseyTest {
     return testContainerFactory;
   }
 
-  /**
-   * Create a JAX-RS web target whose URI refers to the {@link #getBaseUri() base URI} the tested
-   * JAX-RS / Jersey application is deployed at, plus the path specified in the {@code path} argument.
-   * <p>
-   * This method is an equivalent of calling <tt>client().target(getBaseUri())</tt>.
-   * </p>
-   *
-   * @return the created JAX-RS web target.
-   */
   public final WebTarget target () {
 
     return client().target(getTestContainer().getBaseUri());
   }
 
-  /**
-   * Create a JAX-RS web target whose URI refers to the {@link #getBaseUri() base URI} the tested
-   * JAX-RS / Jersey application is deployed at, plus the path specified in the {@code path} argument.
-   * <p>
-   * This method is an equivalent of calling {@code target().path(path)}.
-   * </p>
-   *
-   * @param path relative path (from tested application base URI) this web target should point to.
-   * @return the created JAX-RS web target.
-   */
   public final WebTarget target (final String path) {
 
     return target().path(path);
   }
 
-  /**
-   * Get the JAX-RS test client that is {@link #configureClient(org.glassfish.jersey.client.ClientConfig) pre-configured}
-   * for this test.
-   *
-   * @return the configured test client.
-   */
   public final Client client () {
 
     return getClient();
   }
 
-  /**
-   * Set up the test by creating a test container instance, {@link TestContainer#start() starting} it and by creating a new
-   * {@link #configureClient(org.glassfish.jersey.client.ClientConfig) pre-configured} test client.
-   * The test container is obtained from the {@link #getTestContainerFactory() test container factory}.
-   *
-   * @throws TestContainerException if the default test container factory cannot be obtained,
-   *                                or the test application deployment context is not supported
-   *                                by the test container factory.
-   * @throws Exception              if an exception is thrown during setting up the test environment.
-   */
   @Before
   public void setUp () throws Exception {
 
@@ -518,14 +350,6 @@ public abstract class SSLJerseyTest {
     setClient(getClient(testContainer.getClientConfig()));
   }
 
-  /**
-   * Tear down the test by {@link TestContainer#stop() stopping} the test container obtained from the
-   * {@link #getTestContainerFactory() test container factory} and by {@link javax.ws.rs.client.Client#close() closing}
-   * and discarding the {@link #configureClient(org.glassfish.jersey.client.ClientConfig) pre-configured} test client
-   * that was {@link #setUp() set up} for the test.
-   *
-   * @throws Exception if an exception is thrown during tearing down the test environment.
-   */
   @After
   public void tearDown () throws Exception {
 
@@ -539,23 +363,11 @@ public abstract class SSLJerseyTest {
     }
   }
 
-  /**
-   * Get the JAX-RS test client that is {@link #configureClient(org.glassfish.jersey.client.ClientConfig) pre-configured}
-   * for this test. This method can be overridden.
-   *
-   * @return the configured test client.
-   */
   protected Client getClient () {
 
     return client.get();
   }
 
-  /**
-   * Get the old JAX-RS test client and set a new one. This method can be overridden.
-   *
-   * @param client the configured test client.
-   * @return old configured test client.
-   */
   protected Client setClient (final Client client) {
 
     return this.client.getAndSet(client);
@@ -583,11 +395,6 @@ public abstract class SSLJerseyTest {
     // do nothing
   }
 
-  /**
-   * Returns the base URI of the tested application.
-   *
-   * @return the base URI of the tested application.
-   */
   // TODO make final
   protected URI getBaseUri () {
 
@@ -602,11 +409,6 @@ public abstract class SSLJerseyTest {
     return UriBuilder.fromUri("http://localhost/").port(getPort()).build();
   }
 
-  /**
-   * Get the port to be used for test application deployments.
-   *
-   * @return The HTTP port of the URI
-   */
   protected final int getPort () {
 
     final TestContainer container = getTestContainer();
@@ -638,12 +440,6 @@ public abstract class SSLJerseyTest {
     return TestProperties.DEFAULT_CONTAINER_PORT;
   }
 
-  /**
-   * Utility method that safely closes a response without throwing an exception.
-   *
-   * @param responses responses to close. Each response may be {@code null}.
-   * @since 2.5
-   */
   public final void close (final Response... responses) {
 
     if (responses == null || responses.length == 0) {
