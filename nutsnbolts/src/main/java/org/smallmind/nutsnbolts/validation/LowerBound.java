@@ -57,7 +57,7 @@ public @interface LowerBound {
     LowerBound[] value ();
   }
 
-  String message () default "'The {first}' field must be >= '{second}' field offset by {value}";
+  String message () default "The '{first}' field must be >= '{second}' field offset by {value}";
 
   Class<?>[] groups () default {};
 
