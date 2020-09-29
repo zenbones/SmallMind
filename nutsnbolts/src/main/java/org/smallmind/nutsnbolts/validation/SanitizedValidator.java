@@ -32,53 +32,30 @@
  */
 package org.smallmind.nutsnbolts.validation;
 
-import java.util.regex.Pattern;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
-public class EmailValidator implements ConstraintValidator<Email, String> {
+public class SanitizedValidator implements ConstraintValidator<Sanitized, String> {
 
-  private static final Pattern EMAIL_PATTERN = Pattern.compile("([a-zA-Z0-9_\\-\\.']+)@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.)|(([a-zA-Z0-9\\-]+\\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\\]?)");
-
-  private Email constraintAnnotation;
-
-  @Override
-  public void initialize (Email constraintAnnotation) {
-
-    this.constraintAnnotation = constraintAnnotation;
-  }
+  private static final String ILLEGAL_CHARACTERS = "`$%^*()+={}[]|;\"<>?";
 
   @Override
   public boolean isValid (String value, ConstraintValidatorContext context) {
 
     if (value == null) {
       return true;
-    }
+    } else if (value.isEmpty()) {
 
-    if (constraintAnnotation.separator() == '\0') {
-
-      return isAnEmail(value);
+      return false;
     } else {
+      for (int index = 1; index < value.length(); index++) {
+        if (ILLEGAL_CHARACTERS.indexOf(value.charAt(index)) >= 0) {
 
-      int lastIndex = 0;
-
-      for (int index = 0; index < value.length(); index++) {
-        if (value.charAt(index) == constraintAnnotation.separator()) {
-          if (!isAnEmail(value.substring(lastIndex, index).trim())) {
-
-            return false;
-          }
-
-          lastIndex = index + 1;
+          return false;
         }
       }
 
-      return isAnEmail(value.substring(lastIndex).trim());
+      return true;
     }
-  }
-
-  private boolean isAnEmail (String possibility) {
-
-    return EMAIL_PATTERN.matcher(possibility).matches();
   }
 }

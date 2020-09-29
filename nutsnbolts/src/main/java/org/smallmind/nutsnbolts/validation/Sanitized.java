@@ -32,53 +32,31 @@
  */
 package org.smallmind.nutsnbolts.validation;
 
-import java.util.regex.Pattern;
-import javax.validation.ConstraintValidator;
-import javax.validation.ConstraintValidatorContext;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import javax.validation.Constraint;
+import javax.validation.Payload;
 
-public class EmailValidator implements ConstraintValidator<Email, String> {
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD})
+@Constraint(validatedBy = SanitizedValidator.class)
+public @interface Sanitized {
 
-  private static final Pattern EMAIL_PATTERN = Pattern.compile("([a-zA-Z0-9_\\-\\.']+)@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.)|(([a-zA-Z0-9\\-]+\\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\\]?)");
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD})
+  @Documented
+  @interface List {
 
-  private Email constraintAnnotation;
-
-  @Override
-  public void initialize (Email constraintAnnotation) {
-
-    this.constraintAnnotation = constraintAnnotation;
+    Sanitized[] value ();
   }
 
-  @Override
-  public boolean isValid (String value, ConstraintValidatorContext context) {
+  String message () default "Must not be empty or contain illegal characters";
 
-    if (value == null) {
-      return true;
-    }
+  Class<?>[] groups () default {};
 
-    if (constraintAnnotation.separator() == '\0') {
-
-      return isAnEmail(value);
-    } else {
-
-      int lastIndex = 0;
-
-      for (int index = 0; index < value.length(); index++) {
-        if (value.charAt(index) == constraintAnnotation.separator()) {
-          if (!isAnEmail(value.substring(lastIndex, index).trim())) {
-
-            return false;
-          }
-
-          lastIndex = index + 1;
-        }
-      }
-
-      return isAnEmail(value.substring(lastIndex).trim());
-    }
-  }
-
-  private boolean isAnEmail (String possibility) {
-
-    return EMAIL_PATTERN.matcher(possibility).matches();
-  }
+  Class<? extends Payload>[] payload () default {};
 }
