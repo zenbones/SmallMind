@@ -123,17 +123,17 @@ The purpose of meters is to emit metrics, or _quantities_ in the parlance of thi
 
 [small]#`org.smallmind.claxon.registry.ObviousNamingStrategy``#
 
-The ObviousNamingStrategy holds a Set of <<claxon-dot-notation>> instances which it attempts to match against the names of the caller classes submitted with meter registrations. If any match can be found, then the *full name of the caller class* becomes the root name of the registered meter. If no match can be found, then no meter will be registered, and no metrics will be emitted.
+The ObviousNamingStrategy holds a *Set* of <<claxon-dot-notation>> instances which it attempts to match against the names of the caller classes submitted with meter registrations. If any match can be found, then the *full name of the caller class* becomes the root name of the registered meter. If no match can be found, then no meter will be registered, and no metrics will be emitted.
 
 [TIP]
-The diversity of this naming should ease the pressure on submitted Tag sets to guarantee the unique namespaces of warehoused time series, however, creators of libraries using this project should not count on this, as it's the choice of the library consumer. It's best to generate Tag sets with enough total cardinality to guarantee unique time series namespaces in their own right.
+The diversity of this naming may ease the pressure on submitted Tag sets to guarantee the unique namespaces of warehoused time series, however, creators of libraries using this project should not count on this, as it's the choice of the library consumer. It's best to generate Tag sets with enough total cardinality to guarantee unique time series namespaces in their own right.
 
 [[claxon-configuration-implied-naming-strategy, ImpliedNamingStrategy]]
 ===== ImpliedNamingStrategy
 
 [small]#`org.smallmind.claxon.registry.ImpliedNamingStrategy`#
 
-The ImpliedNamingStrategy holds a Map of _<<claxon-dot-notation>> to String_ entries. This strategy attempts to match the dot notated keys against the names of the caller classes submitted with meter registrations. If no match can be found, then no meter will be registered, and no metrics will be emitted. If one or more matches are found, then the strongest match, which is the one matching the most dot notated segments in the name, will determine the root name for that meter, which will be the String *value* of the winning map entry. Although there's no constraint on the values of this strategy's mappings, it's recommended to use dot notated names. This is the default naming strategy for Claxon configurations.
+The ImpliedNamingStrategy holds a *Map* of _<<claxon-dot-notation>> to String_ entries. This strategy attempts to match the dot notated keys against the names of the caller classes submitted with meter registrations. If no match can be found, then no meter will be registered, and no metrics will be emitted. If one or more matches are found, then the strongest match, which is the one matching the most dot notated segments in the name, will determine the root name for that meter, which will be the String *value* of the winning map entry. Although there's no constraint on the values of this strategy's mappings, it's recommended to use dot notated names. This is the default naming strategy for Claxon configurations.
 
 [TIP]
 If you wanted to emit all metrics with a single root name you could add a single _prefixMap_ entry like `put(new DotNotation("*"), "my.metrics")`. Multiple entries can map to the same value, but even if each entry maps to a unique root name, the resulting namespaces are likely to be crowded. It is, therefore, very important that the Tag set registered for each meter guarantee the appropriate differentiation.
