@@ -80,9 +80,9 @@ public class X509KeyReader implements KeyReader {
 
             ASN1ObjectIdentifier oid = (ASN1ObjectIdentifier)identifierSequence.getObjectAt(0);
 
-            if (!oid.getId().equals("1.2.840.113549.1.1.1")) {
-              throw new IllegalArgumentException("Unknown RSA object id");
-            } else {
+            //if (!oid.getId().equals("1.2.840.113549.1.1.1")) {
+              //throw new IllegalArgumentException("Unknown RSA object id");
+            //} else {
 
               ASN1Sequence dataSequence = (ASN1Sequence)ASN1Sequence.fromByteArray(((ASN1BitString)outerSequence.getObjectAt(1)).getBytes());
 
@@ -94,7 +94,7 @@ public class X509KeyReader implements KeyReader {
               BigInteger exponent = ((ASN1Integer)dataSequence.getObjectAt(1)).getValue();
 
               keyFactors = new KeyFactors(modulus, exponent);
-            }
+            //}
           }
         }
       } else {
