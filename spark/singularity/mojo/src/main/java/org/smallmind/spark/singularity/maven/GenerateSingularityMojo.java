@@ -87,7 +87,7 @@ public class GenerateSingularityMojo extends AbstractMojo {
   protected List<Artifact> pluginArtifacts;
 
   public void execute ()
-    throws MojoExecutionException, MojoFailureException {
+    throws MojoExecutionException {
 
     if (!skip) {
 

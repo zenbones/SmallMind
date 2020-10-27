@@ -40,7 +40,6 @@ import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -65,7 +64,7 @@ public class DeploySingularityMojo extends AbstractMojo {
   ArtifactDeployer artifactDeployer;
 
   public void execute ()
-    throws MojoExecutionException, MojoFailureException {
+    throws MojoExecutionException {
 
     if (!skip) {
 
