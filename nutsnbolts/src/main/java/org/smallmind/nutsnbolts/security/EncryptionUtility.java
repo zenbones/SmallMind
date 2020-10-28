@@ -46,7 +46,6 @@ import java.security.KeyPairGenerator;
 import java.security.KeyRep;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Security;
@@ -136,10 +135,10 @@ public class EncryptionUtility {
     return mac.doFinal(data);
   }
 
-  public static byte[] sign (RSASigningAlgorithm algorithm, PrivateKey privateKey, byte[] data)
-    throws NoSuchProviderException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+  public static byte[] sign (SecurityAlgorithm algorithm, PrivateKey privateKey, byte[] data)
+    throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
 
-    Signature signature = Signature.getInstance(algorithm.getAlgorithmName(), "BC");
+    Signature signature = Signature.getInstance(algorithm.getAlgorithmName());
 
     signature.initSign(privateKey);
     signature.update(data);
@@ -147,10 +146,10 @@ public class EncryptionUtility {
     return signature.sign();
   }
 
-  public static boolean verify (RSASigningAlgorithm algorithm, PublicKey publicKey, byte[] data, byte[] signedData)
-    throws NoSuchProviderException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+  public static boolean verify (SecurityAlgorithm algorithm, PublicKey publicKey, byte[] data, byte[] signedData)
+    throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
 
-    Signature signature = Signature.getInstance(algorithm.getAlgorithmName(), "BC");
+    Signature signature = Signature.getInstance(algorithm.getAlgorithmName());
 
     signature.initVerify(publicKey);
     signature.update(data);

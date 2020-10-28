@@ -41,13 +41,13 @@ import java.security.PublicKey;
 import java.security.SignatureException;
 import org.smallmind.nutsnbolts.http.Base64Codec;
 
-public enum RSASigningAlgorithm implements SecurityAlgorithm, SigningAlgorithm {
+public enum ECDSASigningAlgorithm implements SecurityAlgorithm, SigningAlgorithm {
 
-  SHA_256_WITH_RSA("SHA256withRSA");
+  SHA_256_WITH_EDCSA("SHA256withECDSA");
 
   private final String algorithmName;
 
-  RSASigningAlgorithm (String algorithmName) {
+  ECDSASigningAlgorithm (String algorithmName) {
 
     this.algorithmName = algorithmName;
   }
