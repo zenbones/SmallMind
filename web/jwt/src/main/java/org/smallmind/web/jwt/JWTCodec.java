@@ -34,21 +34,30 @@ package org.smallmind.web.jwt;
 
 import java.io.UnsupportedEncodingException;
 import org.smallmind.nutsnbolts.http.Base64Codec;
+import org.smallmind.nutsnbolts.util.Pair;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public class JWTCodec {
 
-  public static String encode (Object claims, JWTKeyMaster keyMaster)
+  public static String encode (Object claims, JWTKeyMaster keyMaster, Pair<String, String>... optionalHeaderParameters)
     throws Exception {
 
-    return encode(claims, keyMaster, false);
+    return encode(claims, keyMaster, false, optionalHeaderParameters);
   }
 
-  public static String encode (Object claims, JWTKeyMaster keyMaster, boolean urlSafe)
+  public static String encode (Object claims, JWTKeyMaster keyMaster, boolean urlSafe, Pair<String, String>... optionalHeaderParameters)
     throws Exception {
 
-    String header = "{\"typ\":\"JWT\",\r\n \"alg\":\"" + keyMaster.getEncryptionAlgorithm().name() + "\"}";
-    String encodedHeader = urlSafe ? Base64Codec.urlSafeEncode(header) : Base64Codec.encode(header);
+    StringBuilder headerBuilder = new StringBuilder("{\"typ\":\"JWT\",\r\n \"alg\":\"").append(keyMaster.getEncryptionAlgorithm().name()).append('"');
+
+    if ((optionalHeaderParameters != null) && (optionalHeaderParameters.length > 0)) {
+      for (Pair<String, String> optionalHeaderParameter : optionalHeaderParameters) {
+        headerBuilder.append(",\"").append(optionalHeaderParameter.getFirst()).append("\":\"").append(optionalHeaderParameter.getSecond()).append('"');
+      }
+    }
+    headerBuilder.append('}');
+
+    String encodedHeader = urlSafe ? Base64Codec.urlSafeEncode(headerBuilder.toString()) : Base64Codec.encode(headerBuilder.toString());
     String encodedClaims = urlSafe ? Base64Codec.urlSafeEncode(JsonCodec.writeAsBytes(claims)) : Base64Codec.encode(JsonCodec.writeAsBytes(claims));
     String prologue = encodedHeader + '.' + encodedClaims;
     String epilogue;
