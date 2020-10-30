@@ -48,9 +48,9 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 public abstract class AbstractAnnotationSeekingBeanFactoryPostProcessor implements BeanFactoryPostProcessor {
 
   private static final Class[] NO_CLASSES = new Class[0];
-  private final HashMap<String, HashSet<Class>> annotatedClassMap = new HashMap<>();
+  private final HashMap<String, HashSet<Class<?>>> annotatedClassMap = new HashMap<>();
 
-  public abstract Class<? extends ManagedDao>[] getDaoImplementations ();
+  public abstract Class<? extends ManagedDao<?,?>>[] getDaoImplementations ();
 
   public abstract Class<? extends Annotation>[] getTargetAnnotations ();
 
@@ -62,7 +62,7 @@ public abstract class AbstractAnnotationSeekingBeanFactoryPostProcessor implemen
   public Class[] getAnnotatedClasses (String sessionSourceKey) {
 
     Class[] annotatedClasses;
-    HashSet<Class> annotatedClassSet;
+    HashSet<Class<?>> annotatedClassSet;
 
     if ((annotatedClassSet = annotatedClassMap.get(sessionSourceKey)) == null) {
       return NO_CLASSES;
@@ -90,7 +90,7 @@ public abstract class AbstractAnnotationSeekingBeanFactoryPostProcessor implemen
           } else {
 
             SessionSource dataSourceAnnotation;
-            HashSet<Class> annotatedClassSet;
+            HashSet<Class<?>> annotatedClassSet;
 
             String sessionSourceKey = null;
 
@@ -109,7 +109,7 @@ public abstract class AbstractAnnotationSeekingBeanFactoryPostProcessor implemen
     }
   }
 
-  private void processClass (Class<?> persistentClass, HashSet<Class> annotatedClassSet) {
+  private void processClass (Class<?> persistentClass, HashSet<Class<?>> annotatedClassSet) {
 
     if (hasTargetAnnotation(persistentClass)) {
 
@@ -119,7 +119,7 @@ public abstract class AbstractAnnotationSeekingBeanFactoryPostProcessor implemen
       annotatedClassSet.add(persistentClass);
 
       if ((mappedSubClasses = persistentClass.getAnnotation(MappedSubClasses.class)) != null) {
-        for (Class subclass : mappedSubClasses.value()) {
+        for (Class<?> subclass : mappedSubClasses.value()) {
           if (!persistentClass.isAssignableFrom(subclass)) {
             throw new FatalBeanException("Mapped subclass of type (" + subclass.getName() + ") must inherit from parent type (" + persistentClass.getName() + ")");
           }
@@ -129,16 +129,16 @@ public abstract class AbstractAnnotationSeekingBeanFactoryPostProcessor implemen
       }
 
       if ((mappedRelationships = persistentClass.getAnnotation(MappedRelationships.class)) != null) {
-        for (Class relatedClass : mappedRelationships.value()) {
+        for (Class<?> relatedClass : mappedRelationships.value()) {
           processClass(relatedClass, annotatedClassSet);
         }
       }
     }
   }
 
-  private boolean isDaoImplementation (Class beanClass) {
+  private boolean isDaoImplementation (Class<?> beanClass) {
 
-    for (Class<? extends ManagedDao> daoImplementation : getDaoImplementations()) {
+    for (Class<? extends ManagedDao<?,?>> daoImplementation : getDaoImplementations()) {
       if (daoImplementation.isAssignableFrom(beanClass)) {
 
         return true;
@@ -148,7 +148,7 @@ public abstract class AbstractAnnotationSeekingBeanFactoryPostProcessor implemen
     return false;
   }
 
-  private boolean hasTargetAnnotation (Class persistentClass) {
+  private boolean hasTargetAnnotation (Class<?> persistentClass) {
 
     for (Class<? extends Annotation> targetAnnotation : getTargetAnnotations()) {
       if (persistentClass.isAnnotationPresent(targetAnnotation)) {

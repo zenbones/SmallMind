@@ -38,16 +38,16 @@ import org.springframework.beans.FatalBeanException;
 
 public class ManagedDaoSupport {
 
-  public static Class findDurableClass (Class beanClass) {
+  public static Class<?> findDurableClass (Class<?> beanClass) {
 
-    Class currentClass = beanClass;
+    Class<?> currentClass = beanClass;
     Type superType;
     Type returnType;
 
     try {
       if ((returnType = ((ParameterizedType)beanClass.getMethod("getManagedClass").getGenericReturnType()).getActualTypeArguments()[0]) instanceof Class) {
 
-        return (Class)returnType;
+        return (Class<?>)returnType;
       }
     } catch (NoSuchMethodException noSuchMethodException) {
       throw new FatalBeanException("HibernateDao classes are expected to contain the method getManagedClass()", noSuchMethodException);
@@ -56,9 +56,9 @@ public class ManagedDaoSupport {
     do {
       if (((superType = currentClass.getGenericSuperclass()) != null) && (superType instanceof ParameterizedType)) {
         for (Type genericType : ((ParameterizedType)superType).getActualTypeArguments()) {
-          if ((genericType instanceof Class) && Durable.class.isAssignableFrom((Class)genericType)) {
+          if ((genericType instanceof Class) && Durable.class.isAssignableFrom((Class<?>)genericType)) {
 
-            return (Class)genericType;
+            return (Class<?>)genericType;
           }
         }
       }
