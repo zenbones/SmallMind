@@ -33,26 +33,38 @@
 package org.smallmind.web.jwt;
 
 import java.io.UnsupportedEncodingException;
+import java.util.Map;
 import org.smallmind.nutsnbolts.http.Base64Codec;
-import org.smallmind.nutsnbolts.util.Pair;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public class JWTCodec {
 
-  public static String encode (Object claims, JWTKeyMaster keyMaster, Pair<String, String>... optionalHeaderParameters)
+  public static String encode (Object claims, JWTKeyMaster keyMaster)
     throws Exception {
 
-    return encode(claims, keyMaster, false, optionalHeaderParameters);
+    return encode(claims, keyMaster, false, null);
   }
 
-  public static String encode (Object claims, JWTKeyMaster keyMaster, boolean urlSafe, Pair<String, String>... optionalHeaderParameters)
+  public static String encode (Object claims, JWTKeyMaster keyMaster, Map<String, String> optionalHeaderMap)
+    throws Exception {
+
+    return encode(claims, keyMaster, false, optionalHeaderMap);
+  }
+
+  public static String encode (Object claims, JWTKeyMaster keyMaster, boolean urlSafe)
+    throws Exception {
+
+    return encode(claims, keyMaster, urlSafe, null);
+  }
+
+  public static String encode (Object claims, JWTKeyMaster keyMaster, boolean urlSafe, Map<String, String> optionalHeaderMap)
     throws Exception {
 
     StringBuilder headerBuilder = new StringBuilder("{\"typ\":\"JWT\",\r\n \"alg\":\"").append(keyMaster.getEncryptionAlgorithm().name()).append('"');
 
-    if ((optionalHeaderParameters != null) && (optionalHeaderParameters.length > 0)) {
-      for (Pair<String, String> optionalHeaderParameter : optionalHeaderParameters) {
-        headerBuilder.append(",\"").append(optionalHeaderParameter.getFirst()).append("\":\"").append(optionalHeaderParameter.getSecond()).append('"');
+    if ((optionalHeaderMap != null) && (!optionalHeaderMap.isEmpty())) {
+      for (Map.Entry<String, String> optionalHeaderEntry : optionalHeaderMap.entrySet()) {
+        headerBuilder.append(",\"").append(optionalHeaderEntry.getKey()).append("\":\"").append(optionalHeaderEntry.getValue()).append('"');
       }
     }
     headerBuilder.append('}');
