@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.websocket.spi;
+package org.smallmind.nutsnbolts.reflection.type;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -62,6 +62,6 @@ public class GenericParameterUtility {
       }
     } while ((currentClass = currentClass.getSuperclass()) != null);
 
-    throw new MalformedMessageHandlerException("Unable to determine the parameterized type of %s(%s)", targetInterface.getName(), objectClass.getName());
+    return null;
   }
 }

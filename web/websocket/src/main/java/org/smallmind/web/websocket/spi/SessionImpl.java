@@ -58,6 +58,7 @@ import javax.websocket.RemoteEndpoint;
 import javax.websocket.Session;
 import javax.websocket.WebSocketContainer;
 import org.smallmind.nutsnbolts.http.HTTPCodec;
+import org.smallmind.nutsnbolts.reflection.type.GenericParameterUtility;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.web.websocket.CloseCode;
 import org.smallmind.web.websocket.CloseListener;

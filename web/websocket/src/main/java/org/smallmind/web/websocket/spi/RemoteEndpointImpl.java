@@ -51,6 +51,7 @@ import javax.websocket.EndpointConfig;
 import javax.websocket.RemoteEndpoint;
 import javax.websocket.SendHandler;
 import javax.websocket.SendResult;
+import org.smallmind.nutsnbolts.reflection.type.GenericParameterUtility;
 import org.smallmind.web.websocket.WebSocket;
 import org.smallmind.web.websocket.WebSocketException;
 
@@ -82,7 +83,7 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
           }
         }
 
-        encoderHandlerMap.put(GenericParameterUtility.getTypeParameter(encoderClass, Encoder.Text.class), new EncoderTextHandler<>((Encoder.Text)encoder));
+        encoderHandlerMap.put(getTypeParameter(encoderClass, Encoder.Text.class), new EncoderTextHandler<>((Encoder.Text<?>)encoder));
       }
       if (Encoder.TextStream.class.isAssignableFrom(encoderClass)) {
 
@@ -96,7 +97,7 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
           }
         }
 
-        encoderHandlerMap.put(GenericParameterUtility.getTypeParameter(encoderClass, Encoder.TextStream.class), new EncoderTextStreamHandler<>((Encoder.TextStream)encoder));
+        encoderHandlerMap.put(getTypeParameter(encoderClass, Encoder.TextStream.class), new EncoderTextStreamHandler<>((Encoder.TextStream<?>)encoder));
       }
       if (Encoder.Binary.class.isAssignableFrom(encoderClass)) {
 
@@ -110,7 +111,7 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
           }
         }
 
-        encoderHandlerMap.put(GenericParameterUtility.getTypeParameter(encoderClass, Encoder.Binary.class), new EncoderBinaryHandler<>((Encoder.Binary)encoder));
+        encoderHandlerMap.put(getTypeParameter(encoderClass, Encoder.Binary.class), new EncoderBinaryHandler<>((Encoder.Binary<?>)encoder));
       }
       if (Encoder.BinaryStream.class.isAssignableFrom(encoderClass)) {
 
@@ -124,9 +125,20 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
           }
         }
 
-        encoderHandlerMap.put(GenericParameterUtility.getTypeParameter(encoderClass, Encoder.BinaryStream.class), new EncoderBinaryStreamHandler<>((Encoder.BinaryStream)encoder));
+        encoderHandlerMap.put(getTypeParameter(encoderClass, Encoder.BinaryStream.class), new EncoderBinaryStreamHandler<>((Encoder.BinaryStream<?>)encoder));
       }
     }
+  }
+
+  private Class<?> getTypeParameter (Class<? extends Encoder> encoderClass, Class<?> encoderInterface) {
+
+    Class<?> parameterClass;
+
+    if ((parameterClass = GenericParameterUtility.getTypeParameter(encoderClass, encoderInterface)) == null) {
+      throw new MalformedMessageHandlerException("Unable to determine the parameterized type of %s(%s)", encoderInterface.getName(), encoderClass.getName());
+    }
+
+    return parameterClass;
   }
 
   public SessionImpl getSession () {

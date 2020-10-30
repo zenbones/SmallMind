@@ -43,11 +43,11 @@ import org.smallmind.persistence.orm.spring.AbstractAnnotationSeekingBeanFactory
 
 public class AnnotationSeekingBeanFactoryPostProcessor extends AbstractAnnotationSeekingBeanFactoryPostProcessor {
 
-  private static final Class<? extends ManagedDao>[] DAO_IMPLEMENTATIONS = new Class[] {JPADao.class, QJPADao.class};
+  private static final Class<? extends ManagedDao<?, ?>>[] DAO_IMPLEMENTATIONS = new Class[] {JPADao.class, QJPADao.class};
   private static final Class<? extends Annotation>[] TARGET_ANNOTATIONS = new Class[] {Entity.class, Embeddable.class, MappedSuperclass.class};
 
   @Override
-  public Class<? extends ManagedDao>[] getDaoImplementations () {
+  public Class<? extends ManagedDao<?, ?>>[] getDaoImplementations () {
 
     return DAO_IMPLEMENTATIONS;
   }
