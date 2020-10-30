@@ -47,14 +47,14 @@ public class GenericParameterUtility {
 
           Type rawType;
 
-          if (((rawType = ((ParameterizedType)interfaceType).getRawType()) instanceof Class) && targetInterface.isAssignableFrom((Class)rawType)) {
+          if (((rawType = ((ParameterizedType)interfaceType).getRawType()) instanceof Class) && targetInterface.isAssignableFrom((Class<?>)rawType)) {
 
             Type[] typeArguments;
 
             if ((typeArguments = ((ParameterizedType)interfaceType).getActualTypeArguments()).length == 1) {
               if (typeArguments[0] instanceof Class) {
 
-                return (Class)typeArguments[0];
+                return (Class<?>)typeArguments[0];
               }
             }
           }
