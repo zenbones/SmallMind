@@ -42,7 +42,7 @@ public abstract class EnumXmlAdapter<E extends Enum<E>> extends XmlAdapter<Strin
 
   public EnumXmlAdapter () {
 
-    enumClass = (Class<E>)GenericUtility.getTypeArguments(EnumXmlAdapter.class, this.getClass()).get(0);
+    enumClass = (Class<E>)GenericUtility.getTypeArgumentsOfSubclass(EnumXmlAdapter.class, this.getClass()).get(0);
   }
 
   @Override

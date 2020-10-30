@@ -52,7 +52,7 @@ public abstract class AbstractManagedDao<I extends Serializable & Comparable<I>,
 
     this.metricSource = metricSource;
 
-    List<Class<?>> typeArguments = GenericUtility.getTypeArguments(AbstractManagedDao.class, this.getClass());
+    List<Class<?>> typeArguments = GenericUtility.getTypeArgumentsOfSubclass(AbstractManagedDao.class, this.getClass());
 
     if (typeArguments.size() == 2) {
       if (typeArguments.get(0) != null) {

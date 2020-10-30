@@ -50,7 +50,7 @@ public abstract class AttributedPolymorphicXmlAdapter<T> extends XmlAdapter<Obje
 
   public AttributedPolymorphicXmlAdapter () {
 
-    baseClass = GenericUtility.getTypeArguments(AttributedPolymorphicXmlAdapter.class, this.getClass()).get(0);
+    baseClass = GenericUtility.getTypeArgumentsOfSubclass(AttributedPolymorphicXmlAdapter.class, this.getClass()).get(0);
   }
 
   public static String getDefaultPolymorphicAttributeName () {

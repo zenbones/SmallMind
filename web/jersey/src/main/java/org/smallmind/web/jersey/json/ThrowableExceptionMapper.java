@@ -63,7 +63,7 @@ public class ThrowableExceptionMapper implements ExceptionMapper<Throwable> {
     if (mappers != null) {
       for (ExceptionMapper mapper : mappers) {
 
-        Class<? extends Throwable> mappedThrowableClass = (Class<? extends Throwable>)GenericUtility.getTypeArguments(ConcreteExceptionMapper.class, mapper.getClass()).get(0);
+        Class<? extends Throwable> mappedThrowableClass = (Class<? extends Throwable>)GenericUtility.getTypeArgumentsOfSubclass(ConcreteExceptionMapper.class, mapper.getClass()).get(0);
 
         if (mappedThrowableClass.isAssignableFrom(throwable.getClass())) {
 

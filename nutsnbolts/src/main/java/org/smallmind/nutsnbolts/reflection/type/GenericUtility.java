@@ -38,19 +38,22 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class GenericUtility {
 
-  public static List<Class<?>> getTypeArguments (Class<?> baseClass, Class<?> childClass) {
+  public static List<Class<?>> getTypeArgumentsOfSubclass (Class<?> baseClass, Class<?> childClass) {
 
     Map<Type, Type> resolvedTypes = new HashMap<>();
     Type type = childClass;
 
     while (!getClass(type).equals(baseClass)) {
-      if (type instanceof Class) {
+      if (Object.class.equals(type)) {
+        throw new TypeInferenceException("The child(%s) does not inherit from the base(%s)", childClass.getName(), baseClass.getName());
+      } else if (type instanceof Class) {
         type = ((Class<?>)type).getGenericSuperclass();
       } else {
 
@@ -80,13 +83,61 @@ public class GenericUtility {
     List<Class<?>> typeArgumentsAsClasses = new ArrayList<>();
 
     for (Type baseType : actualTypeArguments) {
+
+      Class<?> typeArgumentAsClass;
+
       while (resolvedTypes.containsKey(baseType)) {
         baseType = resolvedTypes.get(baseType);
       }
-      typeArgumentsAsClasses.add(getClass(baseType));
+
+      if ((typeArgumentAsClass = getClass(baseType)) == null) {
+        throw new UnexpectedGenericDeclaration("The type(%s) has no known conversion to a concrete type", baseType.getTypeName());
+      } else {
+        typeArgumentsAsClasses.add(typeArgumentAsClass);
+      }
     }
 
     return typeArgumentsAsClasses;
+  }
+
+  public static List<Class<?>> getTypeArgumentsOfImplementation (Class<?> objectClass, Class<?> targetInterface) {
+
+    Class<?> currentClass = objectClass;
+
+    do {
+      for (Type interfaceType : currentClass.getGenericInterfaces()) {
+        if (interfaceType instanceof Class) {
+          if (targetInterface.isAssignableFrom((Class<?>)interfaceType)) {
+
+            return Collections.emptyList();
+          }
+        } else if (interfaceType instanceof ParameterizedType) {
+
+          Type rawType;
+
+          if (((rawType = ((ParameterizedType)interfaceType).getRawType()) instanceof Class) && targetInterface.isAssignableFrom((Class<?>)rawType)) {
+
+            List<Class<?>> typeArgumentsAsClasses = new ArrayList<>();
+            Type[] actualTypeArguments = ((ParameterizedType)interfaceType).getActualTypeArguments();
+
+            for (Type actualTypeArgument : actualTypeArguments) {
+
+              Class<?> typeArgumentAsClass;
+
+              if ((typeArgumentAsClass = GenericUtility.getClass(actualTypeArgument)) == null) {
+                throw new UnexpectedGenericDeclaration("The type(%s) has no known conversion to a concrete type", actualTypeArgument.getTypeName());
+              } else {
+                typeArgumentsAsClasses.add(typeArgumentAsClass);
+              }
+            }
+
+            return typeArgumentsAsClasses;
+          }
+        }
+      }
+    } while ((currentClass = currentClass.getSuperclass()) != null);
+
+    throw new TypeInferenceException("The class(%s) does not implement the interface(%s)", objectClass.getName(), targetInterface.getName());
   }
 
   public static Class<?> getClass (Type type) {

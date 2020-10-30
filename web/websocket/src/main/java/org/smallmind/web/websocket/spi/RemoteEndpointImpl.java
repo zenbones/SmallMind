@@ -38,6 +38,7 @@ import java.io.OutputStream;
 import java.io.Writer;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -51,7 +52,7 @@ import javax.websocket.EndpointConfig;
 import javax.websocket.RemoteEndpoint;
 import javax.websocket.SendHandler;
 import javax.websocket.SendResult;
-import org.smallmind.nutsnbolts.reflection.type.GenericParameterUtility;
+import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
 import org.smallmind.web.websocket.WebSocket;
 import org.smallmind.web.websocket.WebSocketException;
 
@@ -132,13 +133,13 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
 
   private Class<?> getTypeParameter (Class<? extends Encoder> encoderClass, Class<?> encoderInterface) {
 
-    Class<?> parameterClass;
+    List<Class<?>> parameterList;
 
-    if ((parameterClass = GenericParameterUtility.getTypeParameter(encoderClass, encoderInterface)) == null) {
+    if ((parameterList = GenericUtility.getTypeArgumentsOfImplementation(encoderClass, encoderInterface)).size() != 1) {
       throw new MalformedMessageHandlerException("Unable to determine the parameterized type of %s(%s)", encoderInterface.getName(), encoderClass.getName());
     }
 
-    return parameterClass;
+    return parameterList.get(0);
   }
 
   public SessionImpl getSession () {

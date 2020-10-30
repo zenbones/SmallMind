@@ -50,6 +50,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.websocket.ClientEndpointConfig;
 import javax.websocket.CloseReason;
 import javax.websocket.Decoder;
+import javax.websocket.Encoder;
 import javax.websocket.Endpoint;
 import javax.websocket.Extension;
 import javax.websocket.MessageHandler;
@@ -58,7 +59,7 @@ import javax.websocket.RemoteEndpoint;
 import javax.websocket.Session;
 import javax.websocket.WebSocketContainer;
 import org.smallmind.nutsnbolts.http.HTTPCodec;
-import org.smallmind.nutsnbolts.reflection.type.GenericParameterUtility;
+import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.web.websocket.CloseCode;
 import org.smallmind.web.websocket.CloseListener;
@@ -162,10 +163,10 @@ public class SessionImpl implements Session, CloseListener {
     throws IllegalStateException {
 
     if (handler instanceof MessageHandler.Whole) {
-      addMessageHandler(GenericParameterUtility.getTypeParameter(handler.getClass(), MessageHandler.Whole.class), (MessageHandler.Whole)handler);
+      addMessageHandler(getTypeParameter(handler.getClass(), MessageHandler.Whole.class), (MessageHandler.Whole)handler);
     }
     if (handler instanceof MessageHandler.Partial) {
-      addMessageHandler(GenericParameterUtility.getTypeParameter(handler.getClass(), MessageHandler.Partial.class), (MessageHandler.Partial)handler);
+      addMessageHandler(getTypeParameter(handler.getClass(), MessageHandler.Partial.class), (MessageHandler.Partial)handler);
     }
   }
 
@@ -237,7 +238,7 @@ public class SessionImpl implements Session, CloseListener {
     boolean assigned = false;
 
     for (Class<? extends Decoder> decoderClass : endpointConfig.getDecoders()) {
-      if ((Decoder.Text.class.isAssignableFrom(decoderClass)) && clazz.isAssignableFrom(GenericParameterUtility.getTypeParameter(decoderClass, Decoder.Text.class))) {
+      if ((Decoder.Text.class.isAssignableFrom(decoderClass)) && clazz.isAssignableFrom(getTypeParameter(decoderClass, Decoder.Text.class))) {
 
         Decoder decoder;
 
@@ -245,10 +246,10 @@ public class SessionImpl implements Session, CloseListener {
           decoderInstanceMap.put(decoderClass, decoder = decoderClass.newInstance());
         }
 
-        assignTextMessageHandler(new DecodedStringHandler<>(this, endpoint, (Decoder.Text)decoder, messageHandler));
+        assignTextMessageHandler(new DecodedStringHandler(this, endpoint, (Decoder.Text<?>)decoder, messageHandler));
         assigned = true;
       }
-      if ((Decoder.TextStream.class.isAssignableFrom(decoderClass)) && clazz.isAssignableFrom(GenericParameterUtility.getTypeParameter(decoderClass, Decoder.TextStream.class))) {
+      if ((Decoder.TextStream.class.isAssignableFrom(decoderClass)) && clazz.isAssignableFrom(getTypeParameter(decoderClass, Decoder.TextStream.class))) {
 
         Decoder decoder;
 
@@ -256,10 +257,10 @@ public class SessionImpl implements Session, CloseListener {
           decoderInstanceMap.put(decoderClass, decoder = decoderClass.newInstance());
         }
 
-        assignTextMessageHandler(new DecodedReaderHandler<>(this, endpoint, (Decoder.TextStream)decoder, messageHandler));
+        assignTextMessageHandler(new DecodedReaderHandler(this, endpoint, (Decoder.TextStream<?>)decoder, messageHandler));
         assigned = true;
       }
-      if ((Decoder.Binary.class.isAssignableFrom(decoderClass)) && clazz.isAssignableFrom(GenericParameterUtility.getTypeParameter(decoderClass, Decoder.Binary.class))) {
+      if ((Decoder.Binary.class.isAssignableFrom(decoderClass)) && clazz.isAssignableFrom(getTypeParameter(decoderClass, Decoder.Binary.class))) {
 
         Decoder decoder;
 
@@ -267,10 +268,10 @@ public class SessionImpl implements Session, CloseListener {
           decoderInstanceMap.put(decoderClass, decoder = decoderClass.newInstance());
         }
 
-        assignBinaryMessageHandler(new DecodedByteBufferHandler<>(this, endpoint, (Decoder.Binary)decoder, messageHandler));
+        assignBinaryMessageHandler(new DecodedByteBufferHandler(this, endpoint, (Decoder.Binary<?>)decoder, messageHandler));
         assigned = true;
       }
-      if ((Decoder.BinaryStream.class.isAssignableFrom(decoderClass)) && clazz.isAssignableFrom(GenericParameterUtility.getTypeParameter(decoderClass, Decoder.BinaryStream.class))) {
+      if ((Decoder.BinaryStream.class.isAssignableFrom(decoderClass)) && clazz.isAssignableFrom(getTypeParameter(decoderClass, Decoder.BinaryStream.class))) {
 
         Decoder decoder;
 
@@ -278,12 +279,23 @@ public class SessionImpl implements Session, CloseListener {
           decoderInstanceMap.put(decoderClass, decoder = decoderClass.newInstance());
         }
 
-        assignBinaryMessageHandler(new DecodedInputStreamHandler<>(this, endpoint, (Decoder.BinaryStream)decoder, messageHandler));
+        assignBinaryMessageHandler(new DecodedInputStreamHandler(this, endpoint, (Decoder.BinaryStream<?>)decoder, messageHandler));
         assigned = true;
       }
     }
 
     return assigned;
+  }
+
+  private Class<?> getTypeParameter (Class<?> objectClass, Class<?> targetInterface) {
+
+    List<Class<?>> parameterList;
+
+    if ((parameterList = GenericUtility.getTypeArgumentsOfImplementation(objectClass, targetInterface)).size() != 1) {
+      throw new MalformedMessageHandlerException("Unable to determine the parameterized type of %s(%s)", targetInterface.getName(), objectClass.getName());
+    }
+
+    return parameterList.get(0);
   }
 
   private void assignTextMessageHandler (MessageHandler messageHandler) {

@@ -95,7 +95,7 @@ public abstract class AbstractIndexedJsonEntity implements JsonEntity {
 
           xmlAdapter = adapterConstructor.newInstance();
 
-          return JsonCodec.convert(xmlAdapter.unmarshal(JsonCodec.convert(arguments[index], GenericUtility.getTypeArguments(XmlAdapter.class, xmlAdapter.getClass()).get(0))), clazz);
+          return JsonCodec.convert(xmlAdapter.unmarshal(JsonCodec.convert(arguments[index], GenericUtility.getTypeArgumentsOfSubclass(XmlAdapter.class, xmlAdapter.getClass()).get(0))), clazz);
         } catch (Exception exception) {
           throw new ParameterProcessingException(exception);
         }

@@ -36,10 +36,10 @@ public class TypeUtility {
 
   private static final Class[] PRIMITIVES = new Class[] {Long.class, Boolean.class, Integer.class, Double.class, Float.class, Character.class, Short.class, Byte.class};
 
-  public static boolean isEssentiallyPrimitive (Class aClass) {
+  public static boolean isEssentiallyPrimitive (Class<?> aClass) {
 
     if (!aClass.isPrimitive()) {
-      for (Class primitive : PRIMITIVES) {
+      for (Class<?> primitive : PRIMITIVES) {
         if (primitive.equals(aClass)) {
 
           return true;

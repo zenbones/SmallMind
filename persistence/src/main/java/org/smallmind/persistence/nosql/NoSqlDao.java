@@ -53,7 +53,7 @@ public abstract class NoSqlDao<W extends Serializable & Comparable<W>, I extends
 
     this.cacheEnabled = cacheEnabled;
 
-    List<Class<?>> typeArguments = GenericUtility.getTypeArguments(NoSqlDao.class, this.getClass());
+    List<Class<?>> typeArguments = GenericUtility.getTypeArgumentsOfSubclass(NoSqlDao.class, this.getClass());
 
     if (typeArguments.size() == 3) {
       if (typeArguments.get(0) != null) {

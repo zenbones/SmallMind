@@ -51,7 +51,7 @@ public abstract class PolymorphicXmlAdapter<T> extends XmlAdapter<JsonNode, T> {
 
   public PolymorphicXmlAdapter () {
 
-    baseClass = GenericUtility.getTypeArguments(PolymorphicXmlAdapter.class, this.getClass()).get(0);
+    baseClass = GenericUtility.getTypeArgumentsOfSubclass(PolymorphicXmlAdapter.class, this.getClass()).get(0);
   }
 
   @Override
