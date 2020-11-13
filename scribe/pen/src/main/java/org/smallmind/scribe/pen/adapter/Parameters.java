@@ -39,7 +39,7 @@ public class Parameters implements ParameterAdapter {
 
   private static final Parameters INSTANCE = new Parameters();
 
-  private static final InheritableThreadLocal<RecordParameters> RECORD_PARAMETERS_LOCAL = new InheritableThreadLocal<RecordParameters>() {
+  private static final InheritableThreadLocal<RecordParameters> RECORD_PARAMETERS_LOCAL = new InheritableThreadLocal<>() {
 
     @Override
     protected RecordParameters initialValue () {

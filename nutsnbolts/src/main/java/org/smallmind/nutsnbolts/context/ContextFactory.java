@@ -42,7 +42,7 @@ import java.util.Map;
 
 public class ContextFactory {
 
-  private static final InheritableThreadLocal<Map<Class<? extends Context>, LinkedList<? extends Context>>> CONTEXT_MAP_LOCAL = new InheritableThreadLocal<Map<Class<? extends Context>, LinkedList<? extends Context>>>() {
+  private static final InheritableThreadLocal<Map<Class<? extends Context>, LinkedList<? extends Context>>> CONTEXT_MAP_LOCAL = new InheritableThreadLocal<>() {
 
     @Override
     protected Map<Class<? extends Context>, LinkedList<? extends Context>> initialValue () {

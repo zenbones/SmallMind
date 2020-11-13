@@ -36,7 +36,7 @@ import java.util.HashMap;
 
 public class TestContext {
 
-  private static final InheritableThreadLocal<HashMap<String, Object>> CONTEXT_MAP = new InheritableThreadLocal<HashMap<String, Object>>() {
+  private static final InheritableThreadLocal<HashMap<String, Object>> CONTEXT_MAP = new InheritableThreadLocal<>() {
 
     @Override
     protected HashMap<String, Object> initialValue () {
