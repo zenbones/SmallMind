@@ -79,7 +79,7 @@ public abstract class PolymorphicXmlAdapter<T> extends XmlAdapter<JsonNode, T> {
         }
 
         try {
-          PolymorphicValueInstantiator.setPolymorphicInstance(polymorphicInstance = polymorphicSubClass.newInstance());
+          PolymorphicValueInstantiator.setPolymorphicInstance(polymorphicInstance = polymorphicSubClass.getDeclaredConstructor().newInstance());
         } catch (Exception exception) {
           throw new JAXBProcessingException(exception);
         }

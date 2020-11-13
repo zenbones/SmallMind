@@ -113,6 +113,10 @@ public class HibernateProxySession extends ProxySession<SessionFactory, Session>
 
     do {
       if ((session = managerThreadLocal.get()) == null) {
+
+        TransactionalState.initialize();
+        NonTransactionalState.initialize();
+
         session = sessionFactory.openSession();
         managerThreadLocal.set(session);
 
@@ -135,8 +139,8 @@ public class HibernateProxySession extends ProxySession<SessionFactory, Session>
       } else if (!session.isConnected()) {
         session = null;
 
-        managerThreadLocal.set(null);
-        transactionThreadLocal.set(null);
+        managerThreadLocal.remove();
+        transactionThreadLocal.remove();
       }
     } while (session == null);
 
@@ -152,8 +156,8 @@ public class HibernateProxySession extends ProxySession<SessionFactory, Session>
         session.close();
       }
     } finally {
-      managerThreadLocal.set(null);
-      transactionThreadLocal.set(null);
+      managerThreadLocal.remove();
+      transactionThreadLocal.remove();
     }
   }
 }

@@ -79,7 +79,7 @@ public class ApplicationUpdaterCLI {
         int index = 0;
 
         for (String decoratorClassName : decoratorClassNames) {
-          decorators[index++] = (Decorator)Class.forName(decoratorClassName).newInstance();
+          decorators[index++] = (Decorator)Class.forName(decoratorClassName).getConstructor().newInstance();
         }
       }
 
