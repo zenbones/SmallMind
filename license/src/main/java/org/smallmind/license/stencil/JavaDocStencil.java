@@ -3,7 +3,7 @@ package org.smallmind.license.stencil;
 public class JavaDocStencil extends StaticStencil {
 
   @Override
-  public String getSkipLines () {
+  public String getSkipLinePattern () {
 
     return null;
   }
@@ -21,15 +21,15 @@ public class JavaDocStencil extends StaticStencil {
   }
 
   @Override
-  public String getBeforeEachLine () {
+  public String getLinePrefix () {
 
     return " * ";
   }
 
   @Override
-  public boolean willPrefixBlankLines () {
+  public String getBlankLinePrefix () {
 
-    return true;
+    return " *";
   }
 
   @Override

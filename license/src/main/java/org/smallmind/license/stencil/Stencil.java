@@ -3,11 +3,11 @@ package org.smallmind.license.stencil;
 public class Stencil {
 
   private String id;
-  private String skipLines;
+  private String skipLinePattern;
   private String firstLine;
   private String lastLine;
-  private String beforeEachLine;
-  private boolean prefixBlankLines = false;
+  private String linePrefix;
+  private String blankLinePrefix;
   private int blankLinesBefore;
   private int blankLinesAfter;
 
@@ -21,14 +21,14 @@ public class Stencil {
     this.id = id;
   }
 
-  public String getSkipLines () {
+  public String getSkipLinePattern () {
 
-    return skipLines;
+    return skipLinePattern;
   }
 
-  public void setSkipLines (String skipLines) {
+  public void setSkipLinePattern (String skipLinePattern) {
 
-    this.skipLines = skipLines;
+    this.skipLinePattern = skipLinePattern;
   }
 
   public String getFirstLine () {
@@ -51,24 +51,24 @@ public class Stencil {
     this.lastLine = lastLine;
   }
 
-  public String getBeforeEachLine () {
+  public String getLinePrefix () {
 
-    return beforeEachLine;
+    return linePrefix;
   }
 
-  public void setBeforeEachLine (String beforeEachLine) {
+  public void setLinePrefix (String linePrefix) {
 
-    this.beforeEachLine = beforeEachLine;
+    this.linePrefix = linePrefix;
   }
 
-  public boolean willPrefixBlankLines () {
+  public String getBlankLinePrefix () {
 
-    return prefixBlankLines;
+    return blankLinePrefix;
   }
 
-  public void setPrefixBlankLines (boolean prefixBlankLines) {
+  public void setBlankLinePrefix (String blankLinePrefix) {
 
-    this.prefixBlankLines = prefixBlankLines;
+    this.blankLinePrefix = blankLinePrefix;
   }
 
   public int getBlankLinesBefore () {

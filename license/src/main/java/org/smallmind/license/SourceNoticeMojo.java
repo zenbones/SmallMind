@@ -153,8 +153,8 @@ public class SourceNoticeMojo extends AbstractMojo {
 
       final Pattern skipPattern;
 
-      if (stencil.getSkipLines() != null) {
-        skipPattern = Pattern.compile(stencil.getSkipLines());
+      if (stencil.getSkipLinePattern() != null) {
+        skipPattern = Pattern.compile(stencil.getSkipLinePattern());
       } else {
         skipPattern = null;
       }
@@ -256,13 +256,6 @@ public class SourceNoticeMojo extends AbstractMojo {
 
     NoticeState noticeState;
     String singleLine = null;
-    String generalPrefix = (stencil.getBeforeEachLine() != null) ? stencil.getBeforeEachLine() : "";
-    int whitespaceIndex = generalPrefix.length();
-
-    while ((whitespaceIndex > 0) && Character.isWhitespace(generalPrefix.charAt(whitespaceIndex - 1))) {
-      whitespaceIndex--;
-    }
-    generalPrefix = generalPrefix.substring(0, whitespaceIndex);
 
     noticeState = (stencil.getFirstLine() != null) ? NoticeState.FIRST : NoticeState.LAST;
     while ((!(noticeState.equals(NoticeState.COMPLETED) || noticeState.equals(NoticeState.TERMINATED))) && ((singleLine = fileReader.readLine()) != null)) {
@@ -276,9 +269,9 @@ public class SourceNoticeMojo extends AbstractMojo {
           case LAST:
             if ((stencil.getLastLine() != null) && singleLine.equals(stencil.getLastLine())) {
               noticeState = NoticeState.COMPLETED;
-            } else if ((singleLine.length() > 0) && (!singleLine.startsWith(generalPrefix))) {
+            } else if ((singleLine.length() > 0) && ((stencil.getLinePrefix() == null) || (!singleLine.startsWith(stencil.getLinePrefix())))) {
               noticeState = NoticeState.TERMINATED;
-            } else if ((singleLine.length() == 0) && stencil.willPrefixBlankLines()) {
+            } else if ((singleLine.length() == 0) && (stencil.getBlankLinePrefix() == null)) {
               noticeState = NoticeState.TERMINATED;
             }
             break;
@@ -313,10 +306,16 @@ public class SourceNoticeMojo extends AbstractMojo {
     }
 
     for (String noticeLine : noticeArray) {
-      if ((stencil.getBeforeEachLine() != null) && ((noticeLine.length() > 0) || stencil.willPrefixBlankLines())) {
-        fileWriter.write(stencil.getBeforeEachLine());
+      if (noticeLine.length() == 0) {
+        if (stencil.getBlankLinePrefix() != null) {
+          fileWriter.write(stencil.getBlankLinePrefix());
+        }
+      } else {
+        if (stencil.getLinePrefix() != null) {
+          fileWriter.write(stencil.getLinePrefix());
+        }
+        fileWriter.write(noticeLine);
       }
-      fileWriter.write(noticeLine);
       fileWriter.write(System.getProperty("line.separator"));
     }
 

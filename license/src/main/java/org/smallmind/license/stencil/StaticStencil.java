@@ -15,7 +15,7 @@ public class StaticStencil extends Stencil {
   }
 
   @Override
-  public final void setSkipLines (String skipLines) {
+  public final void setSkipLinePattern (String skipLinePattern) {
 
     throw new UnsupportedOperationException();
   }
@@ -33,13 +33,13 @@ public class StaticStencil extends Stencil {
   }
 
   @Override
-  public final void setBeforeEachLine (String beforeEachLine) {
+  public final void setLinePrefix (String linePrefix) {
 
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public final void setPrefixBlankLines (boolean prefixBlankLines) {
+  public void setBlankLinePrefix (String blankLinePrefix) {
 
     throw new UnsupportedOperationException();
   }
