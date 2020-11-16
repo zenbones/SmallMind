@@ -86,7 +86,7 @@ public class SpringPropertyAccessor {
     try {
       return Option.of(Long.parseLong(stringValue));
     } catch (NumberFormatException numberFormatException) {
-      throw new RuntimeBeansException("The value of key(%s) must interpolate as an long(%s)", key, stringValue);
+      throw new RuntimeBeansException("The value of key(%s) must interpolate as a long(%s)", key, stringValue);
     }
   }
 

@@ -90,12 +90,12 @@ public class YamlPropertyHandler implements PropertyHandler<YamlPropertyEntry> {
         namedIterationList.push(new NamedIteration(((Map<String, Object>)entry.getValue()).entrySet().iterator()));
 
         return next();
-      } else if (entry.getValue() instanceof List) {
+      } else if (entry.getValue() instanceof List<?>) {
 
         LinkedHashMap<String, Object> interpolatedMap = new LinkedHashMap<>();
         int index = 0;
 
-        for (Object item : (List)entry.getValue()) {
+        for (Object item : (List<?>)entry.getValue()) {
           interpolatedMap.put(String.valueOf(index++), item);
         }
 
