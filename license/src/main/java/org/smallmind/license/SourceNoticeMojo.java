@@ -269,7 +269,7 @@ public class SourceNoticeMojo extends AbstractMojo {
           case LAST:
             if ((stencil.getLastLine() != null) && singleLine.equals(stencil.getLastLine())) {
               noticeState = NoticeState.COMPLETED;
-            } else if ((singleLine.length() > 0) && ((stencil.getLinePrefix() == null) || (!singleLine.startsWith(stencil.getLinePrefix())))) {
+            } else if ((singleLine.length() > 0) && (!(singleLine.equals(stencil.getBlankLinePrefix()) || ((stencil.getLinePrefix() != null) && singleLine.startsWith(stencil.getLinePrefix()))))) {
               noticeState = NoticeState.TERMINATED;
             } else if ((singleLine.length() == 0) && (stencil.getBlankLinePrefix() == null)) {
               noticeState = NoticeState.TERMINATED;
