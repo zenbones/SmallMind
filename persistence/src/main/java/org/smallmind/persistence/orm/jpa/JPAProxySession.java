@@ -114,9 +114,6 @@ public class JPAProxySession extends ProxySession<EntityManagerFactory, EntityMa
     do {
       if ((entityManager = managerThreadLocal.get()) == null) {
 
-        TransactionalState.initialize();
-        NonTransactionalState.initialize();
-
         entityManager = entityManagerFactory.createEntityManager();
         managerThreadLocal.set(entityManager);
 

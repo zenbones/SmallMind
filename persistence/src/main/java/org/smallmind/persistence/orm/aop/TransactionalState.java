@@ -40,11 +40,6 @@ public class TransactionalState {
 
   private static final ThreadLocal<LinkedList<RollbackAwareBoundarySet<ProxyTransaction<?>>>> TRANSACTION_SET_STACK_LOCAL = new ThreadLocal<>();
 
-  public static void initialize () {
-
-    TRANSACTION_SET_STACK_LOCAL.remove();
-  }
-
   public static boolean isInTransaction () {
 
     return isInTransaction(null);

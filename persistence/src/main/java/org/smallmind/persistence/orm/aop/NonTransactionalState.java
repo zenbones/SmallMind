@@ -40,11 +40,6 @@ public class NonTransactionalState {
 
   private static final ThreadLocal<LinkedList<BoundarySet<ProxySession<?, ?>>>> SESSION_SET_STACK_LOCAL = new ThreadLocal<>();
 
-  public static void initialize () {
-
-    SESSION_SET_STACK_LOCAL.remove();
-  }
-
   public static boolean isInSession () {
 
     return isInSession(null);

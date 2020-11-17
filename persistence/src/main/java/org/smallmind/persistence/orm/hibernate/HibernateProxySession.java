@@ -114,9 +114,6 @@ public class HibernateProxySession extends ProxySession<SessionFactory, Session>
     do {
       if ((session = managerThreadLocal.get()) == null) {
 
-        TransactionalState.initialize();
-        NonTransactionalState.initialize();
-
         session = sessionFactory.openSession();
         managerThreadLocal.set(session);
 
