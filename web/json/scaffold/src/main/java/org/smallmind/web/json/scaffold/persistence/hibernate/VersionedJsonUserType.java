@@ -76,7 +76,7 @@ public class VersionedJsonUserType<V extends Version<V>> implements UserType, Pa
   }
 
   @Override
-  public Class returnedClass () {
+  public Class<?> returnedClass () {
 
     return VersionedJson.class;
   }

@@ -66,7 +66,7 @@ public class EnumUserType implements UserType, ParameterizedType {
   }
 
   @Override
-  public Class returnedClass () {
+  public Class<?> returnedClass () {
 
     return enumClass;
   }
@@ -86,7 +86,7 @@ public class EnumUserType implements UserType, ParameterizedType {
   @Override
   public Serializable disassemble (Object value) {
 
-    return (Enum)value;
+    return (Enum<?>)value;
   }
 
   @Override
@@ -129,7 +129,7 @@ public class EnumUserType implements UserType, ParameterizedType {
     if (value == null) {
       preparedStatement.setNull(index, Types.VARCHAR);
     } else {
-      preparedStatement.setString(index, ((Enum)value).name());
+      preparedStatement.setString(index, ((Enum<?>)value).name());
     }
   }
 }

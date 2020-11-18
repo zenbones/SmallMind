@@ -75,7 +75,7 @@ public class ObjectUserType implements UserType, ParameterizedType {
   }
 
   @Override
-  public Class returnedClass () {
+  public Class<?> returnedClass () {
 
     return embeddedClass;
   }
