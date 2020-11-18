@@ -70,9 +70,10 @@ import org.springframework.core.PriorityOrdered;
 public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, BeanFactoryAware, BeanNameAware, PriorityOrdered {
 
   private final TreeMap<String, String> debugMap = new TreeMap<>(new DotNotationComparator());
+  private final List<String> locations = new LinkedList<>();
+
   private BeanFactory beanFactory;
   private KeyDebugger keyDebugger;
-  private List<String> locations = new LinkedList<>();
   private String beanName;
   private SystemPropertyMode systemPropertyMode = SystemPropertyMode.FALLBACK;
   private boolean ignoreResourceNotFound = false;
