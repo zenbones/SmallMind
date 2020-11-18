@@ -110,7 +110,7 @@ public class EnumUserType implements UserType, ParameterizedType {
   public boolean equals (Object x, Object y)
     throws HibernateException {
 
-    return x == y;
+    return (x == y) || ((x != null) && x.equals(y));
   }
 
   @Override

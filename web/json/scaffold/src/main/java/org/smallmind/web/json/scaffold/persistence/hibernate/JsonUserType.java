@@ -82,13 +82,13 @@ public class JsonUserType implements UserType, ParameterizedType {
   public boolean equals (Object x, Object y)
     throws HibernateException {
 
-    return x == y;
+    return (x == y) || ((x != null) && x.equals(y));
   }
 
   public int hashCode (Object x)
     throws HibernateException {
 
-    return x.hashCode();
+    return (x == null) ? 0 : x.hashCode();
   }
 
   public boolean isMutable () {
