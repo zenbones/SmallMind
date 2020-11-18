@@ -38,6 +38,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import org.smallmind.nutsnbolts.property.PropertyExpander;
@@ -53,6 +54,7 @@ import org.smallmind.nutsnbolts.util.DotNotationComparator;
 import org.smallmind.nutsnbolts.util.DotNotationException;
 import org.smallmind.nutsnbolts.util.SystemPropertyMode;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.PropertyValue;
 import org.springframework.beans.factory.BeanDefinitionStoreException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
@@ -61,6 +63,8 @@ import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinitionVisitor;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.beans.factory.config.TypedStringValue;
+import org.springframework.beans.factory.support.BeanDefinitionValidationException;
 import org.springframework.core.PriorityOrdered;
 
 public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, BeanFactoryAware, BeanNameAware, PriorityOrdered {
@@ -124,7 +128,7 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
 
   public void setLocations (List<String> locations) {
 
-    this.locations = locations;
+    this.locations.addAll(locations);
   }
 
   public void setDebugKeys (String[] debugPatterns)
@@ -142,7 +146,6 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
     ResourceParser resourceParser;
     PropertyExpander locationExpander;
     BeanDefinitionVisitor beanDefinitionVisitor;
-    BeanDefinition beanDefinition;
 
     resourceParser = new ResourceParser(new ResourceTypeFactory());
 
@@ -150,6 +153,31 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
       locationExpander = new PropertyExpander(true, SystemPropertyMode.OVERRIDE, true);
     } catch (PropertyExpanderException propertyExpanderException) {
       throw new RuntimeBeansException(propertyExpanderException);
+    }
+
+    for (String beanName : beanFactoryToProcess.getBeanDefinitionNames()) {
+
+      BeanDefinition beanDefinition;
+
+      if (Objects.equals((beanDefinition = beanFactoryToProcess.getBeanDefinition(beanName)).getBeanClassName(), PropertyConfiguration.class.getName())) {
+
+        PropertyValue propertyValue;
+
+        if ((propertyValue = beanDefinition.getPropertyValues().getPropertyValue("location")) == null) {
+          throw new BeanDefinitionValidationException("The property configuration bean(" + beanName + ") is missing its 'location' property");
+        } else {
+
+          Object value;
+
+          if ((value = propertyValue.getValue()) == null) {
+            throw new BeanDefinitionValidationException("The property configuration bean(" + beanName + ") is missing its 'location' property");
+          } else if (!(value instanceof TypedStringValue)) {
+            throw new BeanDefinitionValidationException("The 'location propertyy for property configuration bean(" + beanName + ") could not be parsed");
+          } else {
+            locations.add(((TypedStringValue)value).getValue());
+          }
+        }
+      }
     }
 
     System.out.println("---------------- Property Loading ----------------");
@@ -181,7 +209,9 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
 
     for (String beanName : beanFactoryToProcess.getBeanDefinitionNames()) {
       if ((!(beanName.equals(this.beanName)) && beanFactoryToProcess.equals(this.beanFactory))) {
-        beanDefinition = beanFactoryToProcess.getBeanDefinition(beanName);
+
+        BeanDefinition beanDefinition = beanFactoryToProcess.getBeanDefinition(beanName);
+
         try {
           beanDefinitionVisitor.visitBeanDefinition(beanDefinition);
         } catch (BeanDefinitionStoreException beanDefinitionStoreException) {
