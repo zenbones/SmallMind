@@ -174,7 +174,7 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
             throw new BeanDefinitionValidationException("The property configuration bean(" + beanName + ") is missing its 'location' property");
           } else if (!(value instanceof TypedStringValue)) {
             throw new BeanDefinitionValidationException("The 'location propertyy for property configuration bean(" + beanName + ") could not be parsed");
-          } else {
+          } else if (!locations.contains(((TypedStringValue)value).getValue())) {
             locations.add(((TypedStringValue)value).getValue());
           }
         }
