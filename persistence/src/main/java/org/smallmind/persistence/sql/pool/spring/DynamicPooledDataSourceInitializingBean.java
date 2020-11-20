@@ -72,7 +72,7 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
   <prefix>.jdbc.mapping.<data source name> (required for each data source binding)
   */
 
-  private final HashMap<String, AbstractPooledDataSource> dataSourceMap = new HashMap<String, AbstractPooledDataSource>();
+  private final HashMap<String, AbstractPooledDataSource<?, ?>> dataSourceMap = new HashMap<>();
   private final HashMap<String, String> poolNameMap = new HashMap<String, String>();
 
   private Map<String, DataSourceFactory<?, ?>> factoryMap;
@@ -130,7 +130,7 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
       }
     }
 
-    for (AbstractPooledDataSource dataSource : dataSourceMap.values()) {
+    for (AbstractPooledDataSource<?, ?> dataSource : dataSourceMap.values()) {
       dataSource.startup();
     }
   }
@@ -139,12 +139,12 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
   public void destroy ()
     throws ComponentPoolException {
 
-    for (AbstractPooledDataSource dataSource : dataSourceMap.values()) {
+    for (AbstractPooledDataSource<?, ?> dataSource : dataSourceMap.values()) {
       dataSource.shutdown();
     }
   }
 
-  private AbstractPooledDataSource parsePoolDefinition (SpringPropertyAccessor springPropertyAccessor, String poolName)
+  private AbstractPooledDataSource<?, ?> parsePoolDefinition (SpringPropertyAccessor springPropertyAccessor, String poolName)
     throws SQLException, ComponentPoolException {
 
     ComplexPoolConfig complexPoolConfig = new ComplexPoolConfig();
