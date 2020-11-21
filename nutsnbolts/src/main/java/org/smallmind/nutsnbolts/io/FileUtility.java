@@ -84,7 +84,7 @@ public class FileUtility {
       } else {
 
         Files.createDirectories(destination);
-        Files.walkFileTree(source, new SimpleFileVisitor<Path>() {
+        Files.walkFileTree(source, new SimpleFileVisitor<>() {
 
           @Override
           public FileVisitResult visitFile (Path file, BasicFileAttributes attrs)
@@ -126,7 +126,7 @@ public class FileUtility {
     throws IOException {
 
     if (Files.exists(target)) {
-      Files.walkFileTree(target, new SimpleFileVisitor<Path>() {
+      Files.walkFileTree(target, new SimpleFileVisitor<>() {
 
         @Override
         public FileVisitResult visitFile (Path file, BasicFileAttributes attrs)
