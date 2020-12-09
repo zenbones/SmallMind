@@ -5,5 +5,3 @@
 .idea
 target/
 test-output/
-CVS
-.cvsignore
