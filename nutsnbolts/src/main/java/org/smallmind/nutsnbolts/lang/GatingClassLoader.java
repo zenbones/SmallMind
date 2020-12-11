@@ -113,7 +113,7 @@ public class GatingClassLoader extends SecureClassLoader {
   public synchronized Class<?> loadClass (String name, boolean resolve)
     throws ClassNotFoundException {
 
-    Class gatedClass;
+    Class<?> gatedClass;
     ClassGateTicket classGateTicket;
 
     if ((gatedClass = findLoadedClass(name)) != null) {
@@ -123,7 +123,7 @@ public class GatingClassLoader extends SecureClassLoader {
         }
 
         if (classGateTicket.getTimeStamp() != ClassGate.STATIC_CLASS) {
-          if (System.currentTimeMillis() >= (classGateTicket.getTimeStamp() + (gracePeriodSeconds * 1000))) {
+          if (System.currentTimeMillis() >= (classGateTicket.getTimeStamp() + (gracePeriodSeconds * 1000L))) {
 
             long lastModTime;
 
@@ -163,7 +163,7 @@ public class GatingClassLoader extends SecureClassLoader {
   }
 
   @Override
-  public synchronized Class findClass (String name)
+  public synchronized Class<?> findClass (String name)
     throws ClassNotFoundException {
 
     for (ClassGate classGate : classGates) {
@@ -174,7 +174,7 @@ public class GatingClassLoader extends SecureClassLoader {
         if ((classStreamTicket = classGate.getTicket(name)) != null) {
 
           CodeSource codeSource;
-          Class definedClass;
+          Class<?> definedClass;
           byte[] classData;
 
           try (InputStream classInputStream = classStreamTicket.getInputStream()) {
@@ -243,7 +243,7 @@ public class GatingClassLoader extends SecureClassLoader {
 
           return resourceStream;
         }
-      } catch (Exception exception) {
+      } catch (IOException ioException) {
       }
     }
 
@@ -261,7 +261,7 @@ public class GatingClassLoader extends SecureClassLoader {
 
           return resourceURL;
         }
-      } catch (Exception exception) {
+      } catch (IOException ioException) {
       }
     }
 
@@ -281,7 +281,7 @@ public class GatingClassLoader extends SecureClassLoader {
         if ((resourceURL = classGate.getResource(name)) != null) {
           urlList.add(resourceURL);
         }
-      } catch (Exception exception) {
+      } catch (IOException ioException) {
       }
     }
 

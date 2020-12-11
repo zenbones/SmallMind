@@ -32,6 +32,7 @@
  */
 package org.smallmind.nutsnbolts.lang;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.security.CodeSource;
@@ -47,10 +48,10 @@ public interface ClassGate {
     throws Exception;
 
   URL getResource (String path)
-    throws Exception;
+    throws IOException;
 
   InputStream getResourceAsStream (String path)
-    throws Exception;
+    throws IOException;
 
   long getLastModDate (String path)
     throws Exception;

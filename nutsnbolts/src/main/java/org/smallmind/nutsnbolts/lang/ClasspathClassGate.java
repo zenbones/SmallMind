@@ -77,7 +77,8 @@ public class ClasspathClassGate implements ClassGate {
 
     synchronized (filePathMap) {
       if ((filePath = filePathMap.get(name)) != null) {
-        Files.getLastModifiedTime(filePath).toMillis();
+
+        return Files.getLastModifiedTime(filePath).toMillis();
       }
     }
 
@@ -123,7 +124,8 @@ public class ClasspathClassGate implements ClassGate {
     return null;
   }
 
-  public URL getResource (String path) throws Exception {
+  public URL getResource (String path)
+    throws IOException {
 
     for (String pathComponent : pathComponents) {
 
@@ -155,7 +157,7 @@ public class ClasspathClassGate implements ClassGate {
   }
 
   public InputStream getResourceAsStream (String path)
-    throws Exception {
+    throws IOException {
 
     for (String pathComponent : pathComponents) {
 
@@ -221,7 +223,7 @@ public class ClasspathClassGate implements ClassGate {
     return null;
   }
 
-  private class JarLocator {
+  private static class JarLocator {
 
     private final JarFile jarFile;
     private final JarEntry jarEntry;
