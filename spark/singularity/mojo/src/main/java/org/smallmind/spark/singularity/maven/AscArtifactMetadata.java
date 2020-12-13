@@ -32,34 +32,36 @@
  */
 package org.smallmind.spark.singularity.maven;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.metadata.AbstractArtifactMetadata;
 import org.apache.maven.artifact.metadata.ArtifactMetadata;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.repository.metadata.RepositoryMetadataStoreException;
-import org.codehaus.plexus.util.FileUtils;
 
 public class AscArtifactMetadata extends AbstractArtifactMetadata {
 
   private final Artifact artifact;
-  private final File file;
+  private final Path path;
   private final String fileName;
 
-  public AscArtifactMetadata (Artifact artifact, File file) {
+  public AscArtifactMetadata (Artifact artifact, Path path) {
 
     super(artifact);
 
     this.artifact = artifact;
-    this.file = file;
+    this.path = path;
 
     fileName = getFilename();
   }
 
-  public File getFile () {
+  public Path getPath () {
 
-    return file;
+    return path;
   }
 
   @Override
@@ -96,10 +98,10 @@ public class AscArtifactMetadata extends AbstractArtifactMetadata {
   public void storeInLocalRepository (ArtifactRepository localRepository, ArtifactRepository remoteRepository)
     throws RepositoryMetadataStoreException {
 
-    File destination = new File(localRepository.getBasedir(), localRepository.pathOfLocalRepositoryMetadata(this, remoteRepository));
+    Path destination = Paths.get(localRepository.getBasedir(), localRepository.pathOfLocalRepositoryMetadata(this, remoteRepository));
 
     try {
-      FileUtils.copyFile(file, destination);
+      Files.copy(path, destination, StandardCopyOption.REPLACE_EXISTING);
     } catch (IOException ioException) {
       throw new RepositoryMetadataStoreException("Error copying ASC to the local repository", ioException);
     }
@@ -108,7 +110,7 @@ public class AscArtifactMetadata extends AbstractArtifactMetadata {
   @Override
   public void merge (ArtifactMetadata metadata) {
 
-    if (!((AscArtifactMetadata)metadata).getFile().equals(file)) {
+    if (!((AscArtifactMetadata)metadata).getPath().equals(path)) {
       throw new IllegalStateException("Cannot add two different pieces of metadata for key(" + getKey() + ")");
     }
   }
@@ -116,7 +118,7 @@ public class AscArtifactMetadata extends AbstractArtifactMetadata {
   @Override
   public void merge (org.apache.maven.repository.legacy.metadata.ArtifactMetadata metadata) {
 
-    if (!((AscArtifactMetadata)metadata).getFile().equals(file)) {
+    if (!((AscArtifactMetadata)metadata).getPath().equals(path)) {
       throw new IllegalStateException("Cannot add two different pieces of metadata for key(" + getKey() + ")");
     }
   }

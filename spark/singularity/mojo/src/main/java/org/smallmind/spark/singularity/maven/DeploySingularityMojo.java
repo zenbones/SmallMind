@@ -33,6 +33,9 @@
 package org.smallmind.spark.singularity.maven;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.deployer.ArtifactDeployer;
 import org.apache.maven.artifact.deployer.ArtifactDeploymentException;
@@ -69,7 +72,7 @@ public class DeploySingularityMojo extends AbstractMojo {
     if (!skip) {
 
       Artifact applicationArtifact;
-      File artifactAscFile;
+      Path artifactAscPath;
       StringBuilder pathBuilder;
 
       if (project.getArtifact().getClassifier() == null) {
@@ -87,8 +90,8 @@ public class DeploySingularityMojo extends AbstractMojo {
 
       pathBuilder.append(".jar");
 
-      if ((artifactAscFile = new File(pathBuilder.toString() + ".asc")).isFile()) {
-        applicationArtifact.addMetadata(new AscArtifactMetadata(applicationArtifact, artifactAscFile));
+      if (Files.isRegularFile(artifactAscPath = Paths.get(pathBuilder.toString() + ".asc"))) {
+        applicationArtifact.addMetadata(new AscArtifactMetadata(applicationArtifact, artifactAscPath));
       }
 
       try {
