@@ -110,7 +110,7 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
           } else {
 
             UsefulTypeMirrors usefulTypeMirrors = new UsefulTypeMirrors(processingEnv);
-            GeneratorInformation generatorInformation;
+            DoppelgangerInformation doppelgangerInformation;
             TypeElement nearestViewSuperclass;
 
             processedSet.add(classElement);
@@ -118,34 +118,34 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
               generate(nearestViewSuperclass);
             }
 
-            generatorInformation = new GeneratorInformation(processingEnv, usefulTypeMirrors, this, classElement, visibilityTracker, classTracker, doppelgangerAnnotationMirror);
-            ClassWalker.walk(processingEnv, this, classElement, generatorInformation, usefulTypeMirrors);
-            generatorInformation.update(classElement, visibilityTracker);
+            doppelgangerInformation = new DoppelgangerInformation(processingEnv, usefulTypeMirrors, this, classElement, visibilityTracker, classTracker, doppelgangerAnnotationMirror);
+            ClassWalker.walk(processingEnv, this, classElement, doppelgangerInformation, usefulTypeMirrors);
+            doppelgangerInformation.update(classElement, visibilityTracker);
 
             for (TypeElement polymorphicSubClass : classTracker.getPolymorphicSubclasses(classElement)) {
               visibilityTracker.add(polymorphicSubClass, classElement);
               generate(polymorphicSubClass);
             }
 
-            for (Map.Entry<String, PropertyLexicon> purposeEntry : generatorInformation.getInDirectionalGuide().entrySet()) {
-              processIn(generatorInformation, usefulTypeMirrors, classElement, nearestViewSuperclass, purposeEntry.getKey(), purposeEntry.getValue());
+            for (Map.Entry<String, PropertyLexicon> purposeEntry : doppelgangerInformation.getInDirectionalGuide().entrySet()) {
+              processIn(doppelgangerInformation, usefulTypeMirrors, classElement, nearestViewSuperclass, purposeEntry.getKey(), purposeEntry.getValue());
             }
-            for (String unfulfilledPurpose : generatorInformation.unfulfilledPurposes(classElement, visibilityTracker, Direction.IN)) {
-              processIn(generatorInformation, usefulTypeMirrors, classElement, nearestViewSuperclass, unfulfilledPurpose, new PropertyLexicon());
+            for (String unfulfilledPurpose : doppelgangerInformation.unfulfilledPurposes(classElement, visibilityTracker, Direction.IN)) {
+              processIn(doppelgangerInformation, usefulTypeMirrors, classElement, nearestViewSuperclass, unfulfilledPurpose, new PropertyLexicon());
             }
-            for (Map.Entry<String, PropertyLexicon> purposeEntry : generatorInformation.getOutDirectionalGuide().entrySet()) {
-              processOut(generatorInformation, usefulTypeMirrors, classElement, nearestViewSuperclass, purposeEntry.getKey(), purposeEntry.getValue());
+            for (Map.Entry<String, PropertyLexicon> purposeEntry : doppelgangerInformation.getOutDirectionalGuide().entrySet()) {
+              processOut(doppelgangerInformation, usefulTypeMirrors, classElement, nearestViewSuperclass, purposeEntry.getKey(), purposeEntry.getValue());
             }
-            for (String unfulfilledPurpose : generatorInformation.unfulfilledPurposes(classElement, visibilityTracker, Direction.OUT)) {
-              processOut(generatorInformation, usefulTypeMirrors, classElement, nearestViewSuperclass, unfulfilledPurpose, new PropertyLexicon());
+            for (String unfulfilledPurpose : doppelgangerInformation.unfulfilledPurposes(classElement, visibilityTracker, Direction.OUT)) {
+              processOut(doppelgangerInformation, usefulTypeMirrors, classElement, nearestViewSuperclass, unfulfilledPurpose, new PropertyLexicon());
             }
 
             if (visibilityTracker.hasNoPurpose(classElement) && (!classElement.getModifiers().contains(Modifier.ABSTRACT))) {
               throw new DefinitionException("The class(%s) was annotated as @%s but contained no properties", classElement.getQualifiedName(), Doppelganger.class.getSimpleName());
             } else {
 
-              String[] inOverwroughtPurposes = generatorInformation.overwroughtPurposes(classElement, visibilityTracker, Direction.IN);
-              String[] outOverwroughtPurposes = generatorInformation.overwroughtPurposes(classElement, visibilityTracker, Direction.OUT);
+              String[] inOverwroughtPurposes = doppelgangerInformation.overwroughtPurposes(classElement, visibilityTracker, Direction.IN);
+              String[] outOverwroughtPurposes = doppelgangerInformation.overwroughtPurposes(classElement, visibilityTracker, Direction.OUT);
 
               if ((inOverwroughtPurposes.length > 0) || (outOverwroughtPurposes.length > 0)) {
 
@@ -172,20 +172,20 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
     }
   }
 
-  private void processIn (GeneratorInformation generatorInformation, UsefulTypeMirrors usefulTypeMirrors, TypeElement classElement, TypeElement nearestViewSuperclass, String purpose, PropertyLexicon propertyLexicon)
+  private void processIn (DoppelgangerInformation doppelgangerInformation, UsefulTypeMirrors usefulTypeMirrors, TypeElement classElement, TypeElement nearestViewSuperclass, String purpose, PropertyLexicon propertyLexicon)
     throws IOException {
 
-    writeView(generatorInformation, usefulTypeMirrors, classElement, nearestViewSuperclass, purpose, Direction.IN, propertyLexicon);
+    writeView(doppelgangerInformation, usefulTypeMirrors, classElement, nearestViewSuperclass, purpose, Direction.IN, propertyLexicon);
 
-    generatorInformation.denotePurpose(purpose, Direction.IN);
+    doppelgangerInformation.denotePurpose(purpose, Direction.IN);
   }
 
-  private void processOut (GeneratorInformation generatorInformation, UsefulTypeMirrors usefulTypeMirrors, TypeElement classElement, TypeElement nearestViewSuperclass, String purpose, PropertyLexicon propertyLexicon)
+  private void processOut (DoppelgangerInformation doppelgangerInformation, UsefulTypeMirrors usefulTypeMirrors, TypeElement classElement, TypeElement nearestViewSuperclass, String purpose, PropertyLexicon propertyLexicon)
     throws IOException {
 
-    writeView(generatorInformation, usefulTypeMirrors, classElement, nearestViewSuperclass, purpose, Direction.OUT, propertyLexicon);
+    writeView(doppelgangerInformation, usefulTypeMirrors, classElement, nearestViewSuperclass, purpose, Direction.OUT, propertyLexicon);
 
-    generatorInformation.denotePurpose(purpose, Direction.OUT);
+    doppelgangerInformation.denotePurpose(purpose, Direction.OUT);
   }
 
   private String asMemberName (Name name) {
@@ -207,7 +207,7 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
     return null;
   }
 
-  private void writeView (GeneratorInformation generatorInformation, UsefulTypeMirrors usefulTypeMirrors, TypeElement classElement, TypeElement nearestViewSuperclass, String purpose, Direction direction, PropertyLexicon propertyLexicon)
+  private void writeView (DoppelgangerInformation doppelgangerInformation, UsefulTypeMirrors usefulTypeMirrors, TypeElement classElement, TypeElement nearestViewSuperclass, String purpose, Direction direction, PropertyLexicon propertyLexicon)
     throws IOException {
 
     JavaFileObject sourceFile;
@@ -282,10 +282,10 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
         // @XmlRootElement
         if (!classElement.getModifiers().contains(Modifier.ABSTRACT)) {
           writer.write("@XmlRootElement(name = \"");
-          writer.write(generatorInformation.getName().isEmpty() ? asMemberName(classElement.getSimpleName()) : generatorInformation.getName());
-          if (!generatorInformation.getNamespace().isEmpty()) {
+          writer.write(doppelgangerInformation.getName().isEmpty() ? asMemberName(classElement.getSimpleName()) : doppelgangerInformation.getName());
+          if (!doppelgangerInformation.getNamespace().isEmpty()) {
             writer.write("\", namespace = \"");
-            writer.write(generatorInformation.getNamespace());
+            writer.write(doppelgangerInformation.getNamespace());
           }
           writer.write("\")");
           writer.newLine();
@@ -337,7 +337,7 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
         }
 
         // class level constraints
-        writeConstraints(writer, generatorInformation.constraints(), 0);
+        writeConstraints(writer, doppelgangerInformation.constraints(), 0);
 
         // class declaration
         writer.write("public ");
@@ -360,6 +360,11 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
             writer.write(">");
           }
         }
+
+        if (doppelgangerInformation.isSerializable()) {
+          writer.write(" implements java.io.Serializable");
+        }
+
         writer.write(" {");
         writer.newLine();
 

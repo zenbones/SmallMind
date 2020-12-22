@@ -57,4 +57,6 @@ public @interface Doppelganger {
   String name () default "";
 
   String namespace () default "http://org.smallmind/web/json/doppelganger";
+
+  boolean serializable () default false;
 }

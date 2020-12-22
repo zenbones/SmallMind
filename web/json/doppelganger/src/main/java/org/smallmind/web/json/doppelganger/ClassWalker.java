@@ -49,7 +49,7 @@ import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 public class ClassWalker {
 
-  public static void walk (ProcessingEnvironment processingEnvironment, DoppelgangerAnnotationProcessor doppelgangerAnnotationProcessor, TypeElement classElement, GeneratorInformation generatorInformation, UsefulTypeMirrors usefulTypeMirrors)
+  public static void walk (ProcessingEnvironment processingEnvironment, DoppelgangerAnnotationProcessor doppelgangerAnnotationProcessor, TypeElement classElement, DoppelgangerInformation doppelgangerInformation, UsefulTypeMirrors usefulTypeMirrors)
     throws IOException, DefinitionException {
 
     HashMap<String, ExecutableElement> setMethodMap = new HashMap<>();
@@ -79,7 +79,7 @@ public class ClassWalker {
                 throw new DefinitionException("The 'is' method(%s) found in class(%s) can't be annotated as 'IN' only", enclosedElement.getSimpleName(), classElement.getQualifiedName());
               }
 
-              generatorInformation.getOutDirectionalGuide().put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
+              doppelgangerInformation.getOutDirectionalGuide().put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
             }
           }
 
@@ -97,7 +97,7 @@ public class ClassWalker {
               }
 
               doppelgangerAnnotationProcessor.processTypeMirror(((ExecutableElement)enclosedElement).getReturnType());
-              generatorInformation.getOutDirectionalGuide().put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
+              doppelgangerInformation.getOutDirectionalGuide().put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
             }
           }
 
@@ -115,7 +115,7 @@ public class ClassWalker {
               }
 
               doppelgangerAnnotationProcessor.processTypeMirror(((ExecutableElement)enclosedElement).getParameters().get(0).asType());
-              generatorInformation.getInDirectionalGuide().put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
+              doppelgangerInformation.getInDirectionalGuide().put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
             }
           }
 
@@ -135,14 +135,14 @@ public class ClassWalker {
           for (PropertyBox propertyBox : new PropertyParser(processingEnvironment, usefulTypeMirrors, viewAnnotationMirror, enclosedElement.asType(), false)) {
             switch (propertyBox.getVisibility()) {
               case IN:
-                addInField(classElement, generatorInformation, setMethodMap, enclosedElement.getSimpleName().toString(), propertyBox);
+                addInField(classElement, doppelgangerInformation, setMethodMap, enclosedElement.getSimpleName().toString(), propertyBox);
                 break;
               case OUT:
-                addOutField(classElement, generatorInformation, getFieldNameSet, isFieldNameSet, enclosedElement.getSimpleName().toString(), propertyBox);
+                addOutField(classElement, doppelgangerInformation, getFieldNameSet, isFieldNameSet, enclosedElement.getSimpleName().toString(), propertyBox);
                 break;
               case BOTH:
-                addInField(classElement, generatorInformation, setMethodMap, enclosedElement.getSimpleName().toString(), propertyBox);
-                addOutField(classElement, generatorInformation, getFieldNameSet, isFieldNameSet, enclosedElement.getSimpleName().toString(), propertyBox);
+                addInField(classElement, doppelgangerInformation, setMethodMap, enclosedElement.getSimpleName().toString(), propertyBox);
+                addOutField(classElement, doppelgangerInformation, getFieldNameSet, isFieldNameSet, enclosedElement.getSimpleName().toString(), propertyBox);
                 break;
               default:
                 throw new UnknownSwitchCaseException(propertyBox.getVisibility().name());
@@ -159,7 +159,7 @@ public class ClassWalker {
                 throw new DefinitionException("The 'getter' method(%s) found in class(%s) must have a corresponding 'setter'", enclosedElement.getSimpleName(), classElement.getQualifiedName());
               } else {
                 doppelgangerAnnotationProcessor.processTypeMirror(setMethodMap.get(fieldName).getParameters().get(0).asType());
-                generatorInformation.getInDirectionalGuide().put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
+                doppelgangerInformation.getInDirectionalGuide().put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
               }
             }
           }
@@ -168,21 +168,21 @@ public class ClassWalker {
     }
   }
 
-  private static void addInField (TypeElement classElement, GeneratorInformation generatorInformation, HashMap<String, ExecutableElement> setMethodMap, String fieldName, PropertyBox propertyBox)
+  private static void addInField (TypeElement classElement, DoppelgangerInformation doppelgangerInformation, HashMap<String, ExecutableElement> setMethodMap, String fieldName, PropertyBox propertyBox)
     throws DefinitionException {
 
     if (setMethodMap.containsKey(fieldName)) {
-      generatorInformation.getInDirectionalGuide().put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
+      doppelgangerInformation.getInDirectionalGuide().put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
     } else {
       throw new DefinitionException("The property field(%s) has no 'setter' method in class(%s)", fieldName, classElement.getQualifiedName());
     }
   }
 
-  private static void addOutField (TypeElement classElement, GeneratorInformation generatorInformation, HashSet<String> getFieldNameSet, HashSet<String> isFieldNameSet, String fieldName, PropertyBox propertyBox)
+  private static void addOutField (TypeElement classElement, DoppelgangerInformation doppelgangerInformation, HashSet<String> getFieldNameSet, HashSet<String> isFieldNameSet, String fieldName, PropertyBox propertyBox)
     throws DefinitionException {
 
     if (getFieldNameSet.contains(fieldName) || isFieldNameSet.contains(fieldName)) {
-      generatorInformation.getOutDirectionalGuide().put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
+      doppelgangerInformation.getOutDirectionalGuide().put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
     } else {
       throw new DefinitionException("The property field(%s) has no 'getter' method in class(%s)", fieldName, classElement.getQualifiedName());
     }

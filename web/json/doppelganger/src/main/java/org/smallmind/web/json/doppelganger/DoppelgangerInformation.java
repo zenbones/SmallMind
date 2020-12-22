@@ -47,7 +47,7 @@ import javax.lang.model.type.TypeMirror;
 import org.smallmind.nutsnbolts.apt.AptUtility;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
-public class GeneratorInformation {
+public class DoppelgangerInformation {
 
   private final DirectionalGuide inDirectionalGuide = new DirectionalGuide(Direction.IN);
   private final DirectionalGuide outDirectionalGuide = new DirectionalGuide(Direction.OUT);
@@ -56,24 +56,26 @@ public class GeneratorInformation {
   private final HashMap<String, Visibility> fulfilledMap = new HashMap<>();
   private final String name;
   private final String namespace;
+  private final boolean serializable;
 
-  public GeneratorInformation (ProcessingEnvironment processingEnvironment, UsefulTypeMirrors usefulTypeMirrors, DoppelgangerAnnotationProcessor doppelgangerAnnotationProcessor, TypeElement classElement, VisibilityTracker visibilityTracker, ClassTracker classTracker, AnnotationMirror generatorAnnotationMirror)
+  public DoppelgangerInformation (ProcessingEnvironment processingEnvironment, UsefulTypeMirrors usefulTypeMirrors, DoppelgangerAnnotationProcessor doppelgangerAnnotationProcessor, TypeElement classElement, VisibilityTracker visibilityTracker, ClassTracker classTracker, AnnotationMirror doppelgangerAnnotationMirror)
     throws IOException, DefinitionException {
 
     AnnotationMirror polymorphicAnnotationMirror;
 
-    name = AptUtility.extractAnnotationValue(generatorAnnotationMirror, "name", String.class, "");
-    namespace = AptUtility.extractAnnotationValue(generatorAnnotationMirror, "namespace", String.class, "http://org.smallmind/web/json/doppelganger");
+    name = AptUtility.extractAnnotationValue(doppelgangerAnnotationMirror, "name", String.class, "");
+    namespace = AptUtility.extractAnnotationValue(doppelgangerAnnotationMirror, "namespace", String.class, "http://org.smallmind/web/json/doppelganger");
+    serializable = AptUtility.extractAnnotationValue(doppelgangerAnnotationMirror, "serializable", Boolean.class, false);
 
-    for (AnnotationMirror constraintAnnotationMirror : AptUtility.extractAnnotationValueAsList(generatorAnnotationMirror, "constraints", AnnotationMirror.class)) {
+    for (AnnotationMirror constraintAnnotationMirror : AptUtility.extractAnnotationValueAsList(doppelgangerAnnotationMirror, "constraints", AnnotationMirror.class)) {
       constraintList.add(new ConstraintInformation(constraintAnnotationMirror));
     }
 
-    if ((polymorphicAnnotationMirror = AptUtility.extractAnnotationValue(generatorAnnotationMirror, "polymorphic", AnnotationMirror.class, null)) != null) {
+    if ((polymorphicAnnotationMirror = AptUtility.extractAnnotationValue(doppelgangerAnnotationMirror, "polymorphic", AnnotationMirror.class, null)) != null) {
       classTracker.addPolymorphic(classElement, new PolymorphicInformation(processingEnvironment, polymorphicAnnotationMirror));
     }
 
-    for (AnnotationMirror pledgeAnnotationMirror : AptUtility.extractAnnotationValueAsList(generatorAnnotationMirror, "pledges", AnnotationMirror.class)) {
+    for (AnnotationMirror pledgeAnnotationMirror : AptUtility.extractAnnotationValueAsList(doppelgangerAnnotationMirror, "pledges", AnnotationMirror.class)) {
 
       PledgeInformation pledgeInformation = new PledgeInformation(pledgeAnnotationMirror);
 
@@ -83,7 +85,7 @@ public class GeneratorInformation {
       }
     }
 
-    for (AnnotationMirror propertyAnnotationMirror : AptUtility.extractAnnotationValueAsList(generatorAnnotationMirror, "properties", AnnotationMirror.class)) {
+    for (AnnotationMirror propertyAnnotationMirror : AptUtility.extractAnnotationValueAsList(doppelgangerAnnotationMirror, "properties", AnnotationMirror.class)) {
 
       String fieldName = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "field", String.class, null);
 
@@ -153,6 +155,11 @@ public class GeneratorInformation {
   public String getNamespace () {
 
     return namespace;
+  }
+
+  public boolean isSerializable () {
+
+    return serializable;
   }
 
   public Iterable<ConstraintInformation> constraints () {
