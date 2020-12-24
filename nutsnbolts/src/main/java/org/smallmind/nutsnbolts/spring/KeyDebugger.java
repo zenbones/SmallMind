@@ -46,7 +46,7 @@ public class KeyDebugger {
 
     DebugMatcher debugMatcher;
 
-    matcherList = new LinkedList<DebugMatcher>();
+    matcherList = new LinkedList<>();
     for (String pattern : patterns) {
       matcherList.add(debugMatcher = new DebugMatcher(pattern));
       if (!debugMatcher.isExclusion()) {
@@ -78,7 +78,7 @@ public class KeyDebugger {
     return match;
   }
 
-  private class DebugMatcher {
+  private static class DebugMatcher {
 
     private final DotNotation dotNotation;
     private boolean exclusion = false;
