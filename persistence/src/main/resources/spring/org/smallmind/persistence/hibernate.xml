@@ -3,23 +3,8 @@
        xmlns="http://www.springframework.org/schema/beans"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-  <import resource="classpath:org/smallmind/instrument/metric.xml"/>
-
   <bean id="jpaAnnotationSeekingBeanFactoryPostProcessor" class="org.smallmind.persistence.orm.spring.jpa.AnnotationSeekingBeanFactoryPostProcessor"/>
   <bean id="hibernateFileSeekingBeanFactoryPostProcessor" class="org.smallmind.persistence.orm.spring.hibernate.FileSeekingBeanFactoryPostProcessor"/>
-
-  <bean id="persistence" class="org.smallmind.persistence.Persistence" init-method="register">
-    <constructor-arg index="0">
-      <bean class="org.smallmind.instrument.config.MetricConfiguration">
-        <property name="instrumented" value="${orm.statistics}"/>
-        <property name="metricDomain">
-          <bean class="org.smallmind.instrument.config.PackageMetricDomain">
-            <constructor-arg index="0" value="org.smallmind.persistence.EntitySource"/>
-          </bean>
-        </property>
-      </bean>
-    </constructor-arg>
-  </bean>
 
   <bean id="sessionFactory" class="org.smallmind.persistence.orm.spring.hibernate.EntitySeekingSessionFactoryBean">
     <property name="sessionSourceKey" value="sourceKey"/>
