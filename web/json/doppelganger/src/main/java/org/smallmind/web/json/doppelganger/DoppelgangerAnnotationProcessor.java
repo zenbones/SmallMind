@@ -273,6 +273,18 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
         }
         writer.newLine();
 
+        if (doppelgangerInformation.getImports().length > 0) {
+          writer.write("// additional imports");
+          writer.newLine();
+          for (String doppelgangerImport : doppelgangerInformation.getImports()) {
+            writer.write("import ");
+            writer.write(doppelgangerImport);
+            writer.write(";");
+            writer.newLine();
+          }
+          writer.newLine();
+        }
+
         // @Generated
         writer.write("@Generated(\"");
         writer.write(DoppelgangerAnnotationProcessor.class.getName());

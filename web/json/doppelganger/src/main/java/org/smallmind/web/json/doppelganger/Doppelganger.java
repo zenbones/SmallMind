@@ -53,6 +53,8 @@ public @interface Doppelganger {
   // the constraint annotations to be applied to the view
   Constraint[] constraints () default {};
 
+  String[] imports () default {};
+
   // the xml root element name
   String name () default "";
 

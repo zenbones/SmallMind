@@ -54,6 +54,7 @@ public class DoppelgangerInformation {
   private final List<ConstraintInformation> constraintList = new LinkedList<>();
   private final HashMap<String, Visibility> pledgedMap = new HashMap<>();
   private final HashMap<String, Visibility> fulfilledMap = new HashMap<>();
+  private final String[] imports;
   private final String name;
   private final String namespace;
   private final boolean serializable;
@@ -62,10 +63,15 @@ public class DoppelgangerInformation {
     throws IOException, DefinitionException {
 
     AnnotationMirror polymorphicAnnotationMirror;
+    List<String> importList;
 
     name = AptUtility.extractAnnotationValue(doppelgangerAnnotationMirror, "name", String.class, "");
     namespace = AptUtility.extractAnnotationValue(doppelgangerAnnotationMirror, "namespace", String.class, "http://org.smallmind/web/json/doppelganger");
     serializable = AptUtility.extractAnnotationValue(doppelgangerAnnotationMirror, "serializable", Boolean.class, false);
+
+    importList = AptUtility.extractAnnotationValueAsList(doppelgangerAnnotationMirror, "imports", String.class);
+    imports = new String[importList.size()];
+    importList.toArray(imports);
 
     for (AnnotationMirror constraintAnnotationMirror : AptUtility.extractAnnotationValueAsList(doppelgangerAnnotationMirror, "constraints", AnnotationMirror.class)) {
       constraintList.add(new ConstraintInformation(constraintAnnotationMirror));
@@ -160,6 +166,11 @@ public class DoppelgangerInformation {
   public boolean isSerializable () {
 
     return serializable;
+  }
+
+  public String[] getImports () {
+
+    return imports;
   }
 
   public Iterable<ConstraintInformation> constraints () {
