@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.registry;
+package org.smallmind.nutsnbolts.util;
 
 @FunctionalInterface
 public interface WithResultExecutable<T> {

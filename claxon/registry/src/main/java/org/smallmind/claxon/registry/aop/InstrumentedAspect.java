@@ -37,7 +37,7 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Tag;
-import org.smallmind.claxon.registry.WithResultExecutable;
+import org.smallmind.nutsnbolts.util.WithResultExecutable;
 import org.smallmind.claxon.registry.meter.MeterBuilder;
 import org.smallmind.nutsnbolts.reflection.aop.AOPUtility;
 

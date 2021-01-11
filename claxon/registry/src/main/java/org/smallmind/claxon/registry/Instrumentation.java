@@ -35,6 +35,8 @@ package org.smallmind.claxon.registry;
 import java.util.Observable;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import org.smallmind.nutsnbolts.util.SansResultExecutable;
+import org.smallmind.nutsnbolts.util.WithResultExecutable;
 
 public interface Instrumentation {
 
