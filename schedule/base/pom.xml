@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>smallmind-schedule</artifactId>
-    <version>4.4.2</version>
+    <version>4.4.3-SNAPSHOT</version>
   </parent>
   <artifactId>schedule-base</artifactId>
   <name>Sechedule-Base</name>
