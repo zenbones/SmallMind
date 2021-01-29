@@ -76,7 +76,7 @@ public class ApplicationUpdater {
     }
 
     System.out.println("Exploding new service installation...");
-    CompressionType.ZIP.explode(zipPath, installPath, (name) -> System.out.println("Expanding " + name + "..."));
+    CompressionType.ZIP.explode(zipPath, installPath, (path) -> System.out.println("Expanding " + path.getFileName() + "..."));
     Files.deleteIfExists(zipPath);
 
     Files.createDirectories(applicationRootPath.resolve("log"));
