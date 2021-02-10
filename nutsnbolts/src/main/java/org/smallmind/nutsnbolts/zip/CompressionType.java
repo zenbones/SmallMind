@@ -113,7 +113,7 @@ public enum CompressionType {
 
   public abstract ZipEntry getEntry (String name);
 
-  public void walk (Path compressedFile, Consumer<ZipEntry> entryConsumer)
+  public void walk (Path compressedFile, ZipEntryConsumer entryConsumer)
     throws IOException {
 
     try (ZipInputStream zipInputStream = getInputStream(Files.newInputStream(compressedFile, StandardOpenOption.READ))) {
@@ -169,7 +169,7 @@ public enum CompressionType {
     explode(compressedFile, outputDir, null);
   }
 
-  public void explode (Path compressedFile, Path outputDir, Consumer<Path> pathConsumer)
+  public void explode (Path compressedFile, Path outputDir, ZipEntryConsumer entryConsumer)
     throws IOException {
 
     Files.createDirectories(outputDir);
@@ -183,8 +183,8 @@ public enum CompressionType {
 
         Path entryPath = outputDir.resolve(zipEntry.getName());
 
-        if (pathConsumer != null) {
-          pathConsumer.accept(entryPath);
+        if (entryConsumer != null) {
+          entryConsumer.accept(zipEntry);
         }
 
         if (zipEntry.isDirectory()) {
