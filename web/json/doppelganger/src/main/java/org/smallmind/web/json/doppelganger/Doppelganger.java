@@ -53,7 +53,11 @@ public @interface Doppelganger {
   // the constraint annotations to be applied to the view
   Constraint[] constraints () default {};
 
-  String[] imports () default {};
+  // Additional interfaces that the generated class should be marked as implementing
+  Implementation[] implementations () default {};
+
+  // Additional imports to be added to the generated class
+  Import[] imports () default {};
 
   // the xml root element name
   String name () default "";

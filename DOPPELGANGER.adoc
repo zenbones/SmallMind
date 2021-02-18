@@ -50,7 +50,8 @@ Holds the base rules for generating the views of the annotated class. The follow
 
 * `String name () default ""` - The root name of the element, if empty it will default to the simple name of the annotated class.
 * `Polymorphic polymorphic () default @Polymorphic()` - The rules for handling polymorphic encoding / decoding (see below). The default presumes a non-polymorphic type.
-* `String[] imports () default {}` - A list of additional imports to add to the generated classes, for convenience.
+* `Import[] imports () default {}` - A list of additional imports to add to the generated classes, for convenience.
+* `Implementation[] implementations () default {}` - A list of additional interfaces to be adopted into the *implements* clause of the generated classes
 * `Constraint[] constraints () default {}` - The list of class level validation constraints to apply to the generated view (see below).
 * `Virtual[] properties () default {}` - The list of virtual properties to be added to the view (see below).
 * `Pledge[] pledges () default {}` - The list of conditions under which to guarantee a view is generated (only necessary when the view would otherwise not be generated, see below).
@@ -78,10 +79,30 @@ Given a polymorphic subtype named _MySubClass_ with a doppelganger name of "mySu
 ----
 ====
 
+[[doppelganger-import, Import]]
+==== @Import
+
+A description of a set of imports which should be added to the generated classes.
+
+* `Visibility visibility () default Visibility.BOTH` - The visibility for which these imports should be added, defaults to both _in_ and _out_ views.
+* `String[] purposes () default {}` - Any purposes for which these imports should be added. If empty then only the default (un-named) purpose will be enforced.
+* `String[] value()` - An array of imports as valid class names or wildcard import specifications.
+====
+
+[[doppelganger-implementation, Implementation]]
+==== @Implementation
+
+A description of a set of interfaces which should be adopted into the *implements* clause of the generated classes.
+
+* `Visibility visibility () default Visibility.BOTH` - The visibility for which these implementations should be adopted, defaults to both _in_ and _out_ views.
+* `String[] purposes () default {}` - Any purposes for which these implementations should be adopted. If empty then only the default (un-named) purpose will be enforced.
+* `Class[] value()` - An array of interfaces which should be adopted.
+====
+
 [[doppelganger-constraint, Constraint]]
 ==== @Constraint
 
-A representation of a `javax.validation.Constraint` annotation instance which should be added to the generted class or property.
+A representation of a `javax.validation.Constraint` annotation instance which should be added to the generated class or property.
 
 * `Class<?> value ()` - The class of the `javax.validation.Constraint` annotation to be applied.
 * `String arguments () default ""` - The arguments to the validation constraint, given as the text which would otherwise be placed within the *()* of the annotation, were it used in a more natural context.

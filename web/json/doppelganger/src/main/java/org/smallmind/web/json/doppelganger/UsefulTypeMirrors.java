@@ -32,6 +32,7 @@
  */
 package org.smallmind.web.json.doppelganger;
 
+import java.io.Serializable;
 import java.util.List;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.type.TypeMirror;
@@ -40,6 +41,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 public class UsefulTypeMirrors {
 
+  private final TypeMirror serializableTypeMirror;
   private final TypeMirror viewTypeMirror;
   private final TypeMirror notNullTypeMirror;
   private final TypeMirror listTypeMirror;
@@ -48,11 +50,17 @@ public class UsefulTypeMirrors {
 
   public UsefulTypeMirrors (ProcessingEnvironment processingEnvironment) {
 
+    serializableTypeMirror = processingEnvironment.getElementUtils().getTypeElement(Serializable.class.getName()).asType();
     viewTypeMirror = processingEnvironment.getElementUtils().getTypeElement(View.class.getName()).asType();
     notNullTypeMirror = processingEnvironment.getElementUtils().getTypeElement(NotNull.class.getName()).asType();
     listTypeMirror = processingEnvironment.getElementUtils().getTypeElement(List.class.getName()).asType();
     jsonNodeTypeMirror = processingEnvironment.getElementUtils().getTypeElement(JsonNode.class.getName()).asType();
     objectTypeMirror = processingEnvironment.getElementUtils().getTypeElement(Object.class.getName()).asType();
+  }
+
+  public TypeMirror getSerializableTypeMirror () {
+
+    return serializableTypeMirror;
   }
 
   public TypeMirror getViewTypeMirror () {

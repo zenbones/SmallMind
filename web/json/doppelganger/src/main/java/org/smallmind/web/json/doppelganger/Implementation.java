@@ -32,23 +32,14 @@
  */
 package org.smallmind.web.json.doppelganger;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+public @interface Implementation {
 
-@Retention(RetentionPolicy.SOURCE)
-@Target({})
-public @interface Idiom {
-
-  // the constraint annotations to be applied to the property within this idiom
-  Constraint[] constraints () default {};
-
-  // the visibility of the property within this idiom (IN, OUT or BOTH)
+  // the visibility of these implementations (IN, OUT or BOTH)
   Visibility visibility () default Visibility.BOTH;
 
-  // the name(s) of this idiom (a short descriptive string such as 'create' or 'internal')
+  // the name(s) of the idioms to which these implementations apply
   String[] purposes () default {};
 
-  // if the xml element is required in this idiom, if false may overridden by use of a NotNull constraint
-  boolean required () default false;
+  // The interfaces to be adopted into the implements clause of the generated classes
+  Class<?>[] value ();
 }

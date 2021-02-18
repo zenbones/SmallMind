@@ -38,6 +38,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.TypeElement;
@@ -52,9 +53,10 @@ public class DoppelgangerInformation {
   private final DirectionalGuide inDirectionalGuide = new DirectionalGuide(Direction.IN);
   private final DirectionalGuide outDirectionalGuide = new DirectionalGuide(Direction.OUT);
   private final List<ConstraintInformation> constraintList = new LinkedList<>();
+  private final HashMap<IdiomKey, HashSet<TypeMirror>> implementationMap = new HashMap<>();
+  private final HashMap<IdiomKey, HashSet<String>> importMap = new HashMap<>();
   private final HashMap<String, Visibility> pledgedMap = new HashMap<>();
   private final HashMap<String, Visibility> fulfilledMap = new HashMap<>();
-  private final String[] imports;
   private final String name;
   private final String namespace;
   private final boolean serializable;
@@ -63,15 +65,74 @@ public class DoppelgangerInformation {
     throws IOException, DefinitionException {
 
     AnnotationMirror polymorphicAnnotationMirror;
-    List<String> importList;
 
     name = AptUtility.extractAnnotationValue(doppelgangerAnnotationMirror, "name", String.class, "");
     namespace = AptUtility.extractAnnotationValue(doppelgangerAnnotationMirror, "namespace", String.class, "http://org.smallmind/web/json/doppelganger");
     serializable = AptUtility.extractAnnotationValue(doppelgangerAnnotationMirror, "serializable", Boolean.class, false);
 
-    importList = AptUtility.extractAnnotationValueAsList(doppelgangerAnnotationMirror, "imports", String.class);
-    imports = new String[importList.size()];
-    importList.toArray(imports);
+    for (AnnotationMirror importAnnotationMirror : AptUtility.extractAnnotationValueAsList(doppelgangerAnnotationMirror, "imports", AnnotationMirror.class)) {
+
+      List<String> purposeList = AptUtility.extractAnnotationValueAsList(importAnnotationMirror, "purposes", String.class);
+      Visibility visibility = AptUtility.extractAnnotationValue(importAnnotationMirror, "visibility", Visibility.class, Visibility.BOTH);
+
+      for (Direction direction : Direction.values()) {
+        if (visibility.matches(direction)) {
+          if (purposeList.isEmpty()) {
+
+            HashSet<String> importSet;
+            IdiomKey idiomKey = new IdiomKey(direction, "");
+
+            if ((importSet = importMap.get(idiomKey)) == null) {
+              importMap.put(idiomKey, importSet = new HashSet<>());
+            }
+            importSet.addAll(AptUtility.extractAnnotationValueAsList(importAnnotationMirror, "value", String.class));
+          } else {
+            for (String purpose : purposeList) {
+
+              HashSet<String> importSet;
+              IdiomKey idiomKey = new IdiomKey(direction, purpose);
+
+              if ((importSet = importMap.get(idiomKey)) == null) {
+                importMap.put(idiomKey, importSet = new HashSet<>());
+              }
+              importSet.addAll(AptUtility.extractAnnotationValueAsList(importAnnotationMirror, "value", String.class));
+            }
+          }
+        }
+      }
+    }
+
+    for (AnnotationMirror implementationAnnotationMirror : AptUtility.extractAnnotationValueAsList(doppelgangerAnnotationMirror, "implementations", AnnotationMirror.class)) {
+
+      List<String> purposeList = AptUtility.extractAnnotationValueAsList(implementationAnnotationMirror, "purposes", String.class);
+      Visibility visibility = AptUtility.extractAnnotationValue(implementationAnnotationMirror, "visibility", Visibility.class, Visibility.BOTH);
+
+      for (Direction direction : Direction.values()) {
+        if (visibility.matches(direction)) {
+          if (purposeList.isEmpty()) {
+
+            HashSet<TypeMirror> implementationSet;
+            IdiomKey idiomKey = new IdiomKey(direction, "");
+
+            if ((implementationSet = implementationMap.get(idiomKey)) == null) {
+              implementationMap.put(idiomKey, implementationSet = new HashSet<>());
+            }
+            implementationSet.addAll(AptUtility.extractAnnotationValueAsList(implementationAnnotationMirror, "value", TypeMirror.class));
+          } else {
+            for (String purpose : purposeList) {
+
+              HashSet<TypeMirror> implementationSet;
+              IdiomKey idiomKey = new IdiomKey(direction, purpose);
+
+              if ((implementationSet = implementationMap.get(idiomKey)) == null) {
+                implementationMap.put(idiomKey, implementationSet = new HashSet<>());
+              }
+              implementationSet.addAll(AptUtility.extractAnnotationValueAsList(implementationAnnotationMirror, "value", TypeMirror.class));
+            }
+          }
+        }
+      }
+    }
 
     for (AnnotationMirror constraintAnnotationMirror : AptUtility.extractAnnotationValueAsList(doppelgangerAnnotationMirror, "constraints", AnnotationMirror.class)) {
       constraintList.add(new ConstraintInformation(constraintAnnotationMirror));
@@ -145,10 +206,10 @@ public class DoppelgangerInformation {
 
   public void update (TypeElement classElement, VisibilityTracker visibilityTracker) {
 
-    for (Map.Entry<String, PropertyLexicon> purposeEntry : inDirectionalGuide.entrySet()) {
+    for (Map.Entry<String, PropertyLexicon> purposeEntry : inDirectionalGuide.lexiconEntrySet()) {
       visibilityTracker.add(classElement, purposeEntry.getKey(), Visibility.IN, purposeEntry.getValue());
     }
-    for (Map.Entry<String, PropertyLexicon> purposeEntry : outDirectionalGuide.entrySet()) {
+    for (Map.Entry<String, PropertyLexicon> purposeEntry : outDirectionalGuide.lexiconEntrySet()) {
       visibilityTracker.add(classElement, purposeEntry.getKey(), Visibility.OUT, purposeEntry.getValue());
     }
   }
@@ -168,9 +229,18 @@ public class DoppelgangerInformation {
     return serializable;
   }
 
-  public String[] getImports () {
+  public String[] getImports (Direction direction, String purpose) {
 
-    return imports;
+    HashSet<String> importSet;
+
+    return ((importSet = importMap.get(new IdiomKey(direction, purpose))) == null) ? new String[0] : importSet.toArray(new String[0]);
+  }
+
+  public TypeMirror[] getImplementations (Direction direction, String purpose) {
+
+    HashSet<TypeMirror> implementationSet;
+
+    return ((implementationSet = implementationMap.get(new IdiomKey(direction, purpose))) == null) ? new TypeMirror[0] : implementationSet.toArray(new TypeMirror[0]);
   }
 
   public Iterable<ConstraintInformation> constraints () {
@@ -215,5 +285,39 @@ public class DoppelgangerInformation {
     overwroughtSet.toArray(purposes);
 
     return purposes;
+  }
+
+  private static class IdiomKey {
+
+    private final Direction direction;
+    private final String purpose;
+
+    public IdiomKey (Direction direction, String purpose) {
+
+      this.direction = direction;
+      this.purpose = purpose;
+    }
+
+    public Direction getDirection () {
+
+      return direction;
+    }
+
+    public String getPurpose () {
+
+      return purpose;
+    }
+
+    @Override
+    public int hashCode () {
+
+      return (direction.hashCode() * 31) + (purpose == null ? 0 : purpose.hashCode());
+    }
+
+    @Override
+    public boolean equals (Object obj) {
+
+      return (obj instanceof IdiomKey) && ((IdiomKey)obj).getDirection().equals(direction) && Objects.equals(((IdiomKey)obj).getPurpose(), purpose);
+    }
   }
 }

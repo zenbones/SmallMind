@@ -66,12 +66,7 @@ public class DirectionalGuide {
     }
   }
 
-  public Set<String> keySet () {
-
-    return lexiconMap.keySet();
-  }
-
-  public Set<Map.Entry<String, PropertyLexicon>> entrySet () {
+  public Set<Map.Entry<String, PropertyLexicon>> lexiconEntrySet () {
 
     return lexiconMap.entrySet();
   }

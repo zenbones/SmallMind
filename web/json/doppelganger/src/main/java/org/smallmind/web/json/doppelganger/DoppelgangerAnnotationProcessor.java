@@ -127,13 +127,13 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
               generate(polymorphicSubClass);
             }
 
-            for (Map.Entry<String, PropertyLexicon> purposeEntry : doppelgangerInformation.getInDirectionalGuide().entrySet()) {
+            for (Map.Entry<String, PropertyLexicon> purposeEntry : doppelgangerInformation.getInDirectionalGuide().lexiconEntrySet()) {
               processIn(doppelgangerInformation, usefulTypeMirrors, classElement, nearestViewSuperclass, purposeEntry.getKey(), purposeEntry.getValue());
             }
             for (String unfulfilledPurpose : doppelgangerInformation.unfulfilledPurposes(classElement, visibilityTracker, Direction.IN)) {
               processIn(doppelgangerInformation, usefulTypeMirrors, classElement, nearestViewSuperclass, unfulfilledPurpose, new PropertyLexicon());
             }
-            for (Map.Entry<String, PropertyLexicon> purposeEntry : doppelgangerInformation.getOutDirectionalGuide().entrySet()) {
+            for (Map.Entry<String, PropertyLexicon> purposeEntry : doppelgangerInformation.getOutDirectionalGuide().lexiconEntrySet()) {
               processOut(doppelgangerInformation, usefulTypeMirrors, classElement, nearestViewSuperclass, purposeEntry.getKey(), purposeEntry.getValue());
             }
             for (String unfulfilledPurpose : doppelgangerInformation.unfulfilledPurposes(classElement, visibilityTracker, Direction.OUT)) {
@@ -222,6 +222,8 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
       try (BufferedWriter writer = new BufferedWriter(sourceFile.openWriter())) {
 
         LinkedList<TypeElement> matchingSubClassList = new LinkedList<>();
+        HashSet<TypeMirror> implementationSet = new HashSet<>();
+        String[] imports;
 
         // package
         writer.write("package ");
@@ -273,10 +275,10 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
         }
         writer.newLine();
 
-        if (doppelgangerInformation.getImports().length > 0) {
+        if ((imports = doppelgangerInformation.getImports(direction, purpose)).length > 0) {
           writer.write("// additional imports");
           writer.newLine();
-          for (String doppelgangerImport : doppelgangerInformation.getImports()) {
+          for (String doppelgangerImport : imports) {
             writer.write("import ");
             writer.write(doppelgangerImport);
             writer.write(";");
@@ -374,7 +376,21 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
         }
 
         if (doppelgangerInformation.isSerializable()) {
-          writer.write(" implements java.io.Serializable");
+          implementationSet.add(usefulTypeMirrors.getSerializableTypeMirror());
+        }
+        implementationSet.addAll(Arrays.asList(doppelgangerInformation.getImplementations(direction, purpose)));
+        if (!implementationSet.isEmpty()) {
+
+          boolean first = true;
+
+          writer.write(" implements ");
+          for (TypeMirror implementedType : implementationSet) {
+            if (!first) {
+              writer.write(", ");
+            }
+            writer.write(implementedType.toString());
+            first = false;
+          }
         }
 
         writer.write(" {");
