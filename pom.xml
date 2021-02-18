@@ -3,7 +3,7 @@
 
   <groupId>org.smallmind</groupId>
   <artifactId>smallmind</artifactId>
-  <version>4.4.3-SNAPSHOT</version>
+  <version>4.5.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Parent</name>
   <description>Parent POM</description>
@@ -77,21 +77,21 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <aether.version>1.1.0</aether.version>
-    <asm.version>8.0.1</asm.version>
-    <aws.version>2.4.13</aws.version>
-    <bouncycastle.version>1.66</bouncycastle.version>
-    <grizzly.version>2.4.4</grizzly.version>
+    <asm.version>9.1</asm.version>
+    <aws.version>2.16.1</aws.version>
+    <bouncycastle.version>1.68</bouncycastle.version>
+    <grizzly.version>3.0.0</grizzly.version>
+    <jackson.version>2.12.1</jackson.version>
     <jaxb.version>2.3.1</jaxb.version>
-    <jackson.version>2.10.3</jackson.version>
-    <jersey.version>2.31</jersey.version>
+    <jersey.version>2.33</jersey.version>
     <jetty.version>9.4.27.v20200227</jetty.version>
     <maven.version>3.6.3</maven.version>
     <maven.aether.provider.version>3.3.9</maven.aether.provider.version>
     <maven.plugin.annotations.version>3.6.0</maven.plugin.annotations.version>
-    <querydsl.version>4.3.1</querydsl.version>
+    <querydsl.version>4.4.0</querydsl.version>
     <slf4j.version>1.7.30</slf4j.version>
-    <spring.version>5.2.4.RELEASE</spring.version>
-    <tyrus.version>1.16</tyrus.version>
+    <spring.version>5.3.4</spring.version>
+    <tyrus.version>1.17</tyrus.version>
   </properties>
 
   <modules>
@@ -388,7 +388,7 @@
       <dependency>
         <groupId>org.testng</groupId>
         <artifactId>testng</artifactId>
-        <version>7.1.0</version>
+        <version>7.3.0</version>
       </dependency>
       <dependency>
         <groupId>org.apache.maven.surefire</groupId>
@@ -448,7 +448,7 @@
       <dependency>
         <groupId>org.aspectj</groupId>
         <artifactId>aspectjrt</artifactId>
-        <version>1.9.5</version>
+        <version>1.9.6</version>
       </dependency>
       <dependency>
         <groupId>org.bouncycastle</groupId>
@@ -498,7 +498,7 @@
       <dependency>
         <groupId>org.springframework.batch</groupId>
         <artifactId>spring-batch-core</artifactId>
-        <version>4.2.1.RELEASE</version>
+        <version>4.3.1</version>
       </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>
@@ -533,7 +533,7 @@
       <dependency>
         <groupId>org.apache.shiro</groupId>
         <artifactId>shiro-spring</artifactId>
-        <version>1.5.3</version>
+        <version>1.7.1</version>
       </dependency>
       <dependency>
         <groupId>org.hsqldb</groupId>
@@ -619,7 +619,7 @@
       <dependency>
         <groupId>org.springframework.amqp</groupId>
         <artifactId>spring-rabbit</artifactId>
-        <version>2.2.5.RELEASE</version>
+        <version>2.3.5</version>
       </dependency>
       <dependency>
         <groupId>org.quartz-scheduler</groupId>
@@ -1048,7 +1048,7 @@
             <dependency>
               <groupId>org.aspectj</groupId>
               <artifactId>aspectjtools</artifactId>
-              <version>1.9.5</version>
+              <version>1.9.6</version>
             </dependency>
             <dependency>
               <groupId>com.sun</groupId>
