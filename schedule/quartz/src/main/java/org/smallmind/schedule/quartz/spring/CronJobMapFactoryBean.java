@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import org.quartz.CronTrigger;
 import org.quartz.JobDetail;
+import org.quartz.JobKey;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.config.BeanPostProcessor;
@@ -69,7 +70,11 @@ public class CronJobMapFactoryBean implements FactoryBean<Map<JobDetail, List<Cr
 
     if (bean instanceof CronJob) {
       for (String allowedJobId : allowedJobIds) {
-        if (beanName.equals(allowedJobId)) {
+
+        JobKey jobKey = ((CronJob)bean).getJobDetail().getKey();
+        String jobId = jobKey.getGroup() + "." + jobKey.getName();
+
+        if (allowedJobId.equals(jobId)) {
           jobMap.put(((CronJob)bean).getJobDetail(), List.of(((CronJob)bean).getCronTrigger()));
           break;
         }
