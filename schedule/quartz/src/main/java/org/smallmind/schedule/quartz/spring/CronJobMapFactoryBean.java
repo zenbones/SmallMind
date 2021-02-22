@@ -30,33 +30,59 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.spring;
+package org.smallmind.schedule.quartz.spring;
 
-import java.util.LinkedList;
-import javax.ws.rs.Path;
-import org.glassfish.jersey.server.ResourceConfig;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.quartz.CronTrigger;
+import org.quartz.JobDetail;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 
-public class ResourceBeanPostProcessor implements BeanPostProcessor {
+public class CronJobMapFactoryBean implements FactoryBean<Map<JobDetail, List<CronTrigger>>>, BeanPostProcessor {
 
-  private final LinkedList<Object> resourceList = new LinkedList<>();
+  private final HashMap<JobDetail, List<CronTrigger>> jobMap = new HashMap<>();
+  private List<Class<?>> allowsJobImplementations;
 
-  public synchronized void registerResources (ResourceConfig resourceConfig) {
+  public void setAllowsJobImplementations (List<Class<?>> allowsJobImplementations) {
 
-    for (Object bean : resourceList) {
-      resourceConfig.register(bean);
-    }
+    this.allowsJobImplementations = allowsJobImplementations;
   }
 
   @Override
-  public synchronized Object postProcessAfterInitialization (Object bean, String beanName)
+  public boolean isSingleton () {
+
+    return true;
+  }
+
+  @Override
+  public Class<?> getObjectType () {
+
+    return Map.class;
+  }
+
+  @Override
+  public Object postProcessAfterInitialization (Object bean, String beanName)
     throws BeansException {
 
-    if (bean.getClass().getAnnotation(Path.class) != null) {
-      resourceList.add(bean);
+    if (bean instanceof CronJob) {
+      for (Class<?> allowedJobImplementation : allowsJobImplementations) {
+        if (((CronJob)bean).getJobDetail().getJobClass().equals(allowedJobImplementation)) {
+          jobMap.put(((CronJob)bean).getJobDetail(), List.of(((CronJob)bean).getCronTrigger()));
+          break;
+        }
+      }
     }
 
     return bean;
   }
+
+  @Override
+  public Map<JobDetail, List<CronTrigger>> getObject () {
+
+    return jobMap;
+  }
 }
+

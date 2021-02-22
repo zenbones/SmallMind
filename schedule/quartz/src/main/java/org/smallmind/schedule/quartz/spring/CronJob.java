@@ -30,33 +30,33 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.spring;
+package org.smallmind.schedule.quartz.spring;
 
-import java.util.LinkedList;
-import javax.ws.rs.Path;
-import org.glassfish.jersey.server.ResourceConfig;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.config.BeanPostProcessor;
+import org.quartz.CronTrigger;
+import org.quartz.JobDetail;
 
-public class ResourceBeanPostProcessor implements BeanPostProcessor {
+public class CronJob {
 
-  private final LinkedList<Object> resourceList = new LinkedList<>();
+  private JobDetail jobDetail;
+  private CronTrigger cronTrigger;
 
-  public synchronized void registerResources (ResourceConfig resourceConfig) {
+  public JobDetail getJobDetail () {
 
-    for (Object bean : resourceList) {
-      resourceConfig.register(bean);
-    }
+    return jobDetail;
   }
 
-  @Override
-  public synchronized Object postProcessAfterInitialization (Object bean, String beanName)
-    throws BeansException {
+  public void setJobDetail (JobDetail jobDetail) {
 
-    if (bean.getClass().getAnnotation(Path.class) != null) {
-      resourceList.add(bean);
-    }
+    this.jobDetail = jobDetail;
+  }
 
-    return bean;
+  public CronTrigger getCronTrigger () {
+
+    return cronTrigger;
+  }
+
+  public void setCronTrigger (CronTrigger cronTrigger) {
+
+    this.cronTrigger = cronTrigger;
   }
 }
