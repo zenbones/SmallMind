@@ -44,11 +44,11 @@ import org.springframework.beans.factory.config.BeanPostProcessor;
 public class CronJobMapFactoryBean implements FactoryBean<Map<JobDetail, List<CronTrigger>>>, BeanPostProcessor {
 
   private final HashMap<JobDetail, List<CronTrigger>> jobMap = new HashMap<>();
-  private List<Class<?>> allowsJobImplementations;
+  private List<String> allowedJobIds;
 
-  public void setAllowsJobImplementations (List<Class<?>> allowsJobImplementations) {
+  public void setAllowedJobIds (List<String> allowedJobIds) {
 
-    this.allowsJobImplementations = allowsJobImplementations;
+    this.allowedJobIds = allowedJobIds;
   }
 
   @Override
@@ -68,8 +68,8 @@ public class CronJobMapFactoryBean implements FactoryBean<Map<JobDetail, List<Cr
     throws BeansException {
 
     if (bean instanceof CronJob) {
-      for (Class<?> allowedJobImplementation : allowsJobImplementations) {
-        if (((CronJob)bean).getJobDetail().getJobClass().equals(allowedJobImplementation)) {
+      for (String allowedJobId : allowedJobIds) {
+        if (beanName.equals(allowedJobId)) {
           jobMap.put(((CronJob)bean).getJobDetail(), List.of(((CronJob)bean).getCronTrigger()));
           break;
         }
