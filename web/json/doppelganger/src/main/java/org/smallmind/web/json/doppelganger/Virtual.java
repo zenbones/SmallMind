@@ -45,7 +45,10 @@ public @interface Virtual {
   Idiom[] idioms () default {};
 
   // the xml adapter to be used for this property
-  Class<? extends XmlAdapter> adapter () default DefaultXmlAdapter.class;
+  Class<? extends XmlAdapter> adapter () default NullXmlAdapter.class;
+
+  // a type hint for tools which may process generated classes
+  Class<?> as () default Void.class;
 
   // the type information for the generated property
   Type type ();

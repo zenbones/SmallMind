@@ -125,8 +125,9 @@ Creates a 'virtual' property, which exists only in the generated views (and not 
 * `Type type ()` - The type information for the generated property (see below).
 * `String field ()` - The field name of the generated property.
 * `Idiom[] idioms () default {}` - The list of alternate idioms in which this property should be included (see below). If empty, this property will be included in the default idiom.
-* `Class<? extends XmlAdapter> adapter () default DefaultXmlAdapter.class` - The XmlAdapter class, if any, to be used for encoding and decoding this property.
-* `boolean required () default false` - If the generated JSON element is required. If false, this may be overriden by the idioms (see above). Although an element may be marked as required, the enforcement of this is erratic at best. The use of a *NotNull* constraint is a far more persuasive argument.
+* `Class<? extends XmlAdapter> adapter () default NullXmlAdapter.class` - The XmlAdapter class, if any, to be used for encoding and decoding this property.
+* `Class<?> as () default Void.class` - A type hint for tools which may process Doppelganger generated views.
+* `boolean required () default false` - If the generated JSON element is required. If false, this may be overridden by the idioms (see above). Although an element may be marked as required, the enforcement of this is erratic at best. The use of a *NotNull* constraint is a far more persuasive argument.
 
 ===== @Type
 
@@ -158,8 +159,9 @@ Creates a 'view' property, and determines how the annotated field is represented
 
 * `String name () default ""` - The name of the JSON attribute generated for the annotated property. If left empty the attribute name will be the same as the field name.
 * `Idiom[] idioms () default {}` - The list of alternate idioms in which this property should be included (see <<doppelganger-idiom>> above). If empty, this property will be included in the default idiom.
-* `Class<? extends XmlAdapter> adapter () default DefaultXmlAdapter.class` - The XmlAdapter class, if any, to be used for encoding and decoding this property.
-* `boolean required () default false` - Marks the generated JSON element as required (with all of the issues previously noted).
+* `Class<? extends XmlAdapter> adapter () default NullXmlAdapter.class` - The XmlAdapter class, if any, to be used for encoding and decoding this property.
+* `Class<?> as () default Void.class` - A type hint for tools which may process Doppelganger generated views.
+* `boolean required () default false` - Marks the generated JSON element as required (with all the issues previously noted).
 
 == In The Wild
 

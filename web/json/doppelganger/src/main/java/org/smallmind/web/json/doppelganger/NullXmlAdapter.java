@@ -34,7 +34,7 @@ package org.smallmind.web.json.doppelganger;
 
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 
-public class DefaultXmlAdapter extends XmlAdapter<Object, Object> {
+public class NullXmlAdapter extends XmlAdapter<Object, Object> {
 
   @Override
   public Object unmarshal (Object v) {

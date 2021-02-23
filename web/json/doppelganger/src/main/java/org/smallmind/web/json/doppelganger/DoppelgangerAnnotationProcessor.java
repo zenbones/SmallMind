@@ -260,6 +260,8 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
         writer.newLine();
         writer.write("import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;");
         writer.newLine();
+        writer.write("import org.smallmind.web.json.scaffold.util.As;");
+        writer.newLine();
         if (!matchingSubClassList.isEmpty()) {
           writer.write("import org.smallmind.web.json.scaffold.util.XmlPolymorphicSubClasses;");
           writer.newLine();
@@ -585,7 +587,7 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
           writer.write("  // virtual getters and setters");
           for (Map.Entry<String, PropertyInformation> propertyInformationEntry : propertyLexicon.getVirtualMap().entrySet()) {
             writer.newLine();
-            writeGettersAndSetters(writer, usefulTypeMirrors, classElement, purpose, direction, propertyInformationEntry);
+            writeGettersAndSetters(writer, classElement, purpose, direction, propertyInformationEntry);
           }
         }
 
@@ -595,7 +597,7 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
           writer.write("  // native getters and setters");
           for (Map.Entry<String, PropertyInformation> propertyInformationEntry : propertyLexicon.getRealMap().entrySet()) {
             writer.newLine();
-            writeGettersAndSetters(writer, usefulTypeMirrors, classElement, purpose, direction, propertyInformationEntry);
+            writeGettersAndSetters(writer, classElement, purpose, direction, propertyInformationEntry);
           }
         }
 
@@ -646,9 +648,15 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
     }
   }
 
-  private void writeGettersAndSetters (BufferedWriter writer, UsefulTypeMirrors usefulTypeMirrors, TypeElement classElement, String purpose, Direction direction, Map.Entry<String, PropertyInformation> propertyInformationEntry)
+  private void writeGettersAndSetters (BufferedWriter writer, TypeElement classElement, String purpose, Direction direction, Map.Entry<String, PropertyInformation> propertyInformationEntry)
     throws IOException {
 
+    if (propertyInformationEntry.getValue().getAs() != null) {
+      writer.write("  @As(");
+      writer.write(propertyInformationEntry.getValue().getAs().toString());
+      writer.write(".class)");
+      writer.newLine();
+    }
     if (propertyInformationEntry.getValue().getAdapter() != null) {
       writer.write("  @XmlJavaTypeAdapter(");
       writer.write(propertyInformationEntry.getValue().getAdapter().toString());

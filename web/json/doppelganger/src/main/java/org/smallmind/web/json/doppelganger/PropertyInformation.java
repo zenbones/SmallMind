@@ -41,6 +41,7 @@ public class PropertyInformation {
 
   private final List<ConstraintInformation> constraintList;
   private final TypeMirror adapter;
+  private final TypeMirror as;
   private final TypeMirror type;
   private final String name;
   private final Boolean required;
@@ -53,6 +54,7 @@ public class PropertyInformation {
     this.constraintList = constraintList;
 
     adapter = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "adapter", TypeMirror.class, null);
+    as = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "as", TypeMirror.class, null);
     name = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "name", String.class, "");
     required = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "required", Boolean.class, Boolean.FALSE) || idiomRequired;
   }
@@ -65,6 +67,11 @@ public class PropertyInformation {
   public TypeMirror getAdapter () {
 
     return adapter;
+  }
+
+  public TypeMirror getAs () {
+
+    return as;
   }
 
   public TypeMirror getType () {
