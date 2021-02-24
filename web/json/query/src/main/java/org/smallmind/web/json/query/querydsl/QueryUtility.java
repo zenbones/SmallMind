@@ -159,6 +159,8 @@ public class QueryUtility {
         return Expressions.predicate(Ops.GOE, wherePath.getPath(), Expressions.constant(fieldValue));
       case GT:
         return Expressions.predicate(Ops.GT, wherePath.getPath(), Expressions.constant(fieldValue));
+      case EXISTS:
+        return Boolean.TRUE.equals(fieldValue) ? Expressions.predicate(Ops.IS_NOT_NULL, wherePath.getPath()) : Expressions.predicate(Ops.IS_NULL, wherePath.getPath());
       case LIKE:
         return Expressions.predicate(Ops.LIKE, wherePath.getPath(), Expressions.constant(WildcardUtility.swapWithSqlWildcard((String)fieldValue)));
       case UNLIKE:

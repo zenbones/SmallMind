@@ -159,6 +159,8 @@ public class HibernateQueryUtility {
         return Restrictions.ge(fieldName, fieldValue);
       case GT:
         return Restrictions.gt(fieldName, fieldValue);
+      case EXISTS:
+        return Boolean.TRUE.equals(fieldValue) ? Restrictions.isNotNull(fieldName) : Restrictions.isNull(fieldName);
       case LIKE:
         return Restrictions.like(fieldName, fieldValue);
       case UNLIKE:

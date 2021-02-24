@@ -153,6 +153,20 @@ public enum WhereOperator {
       throw new QueryProcessingException("The operator(%s) requires numeric or date inputs", name());
     }
   },
+  EXISTS {
+    @Override
+    public boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2) {
+
+      if (!OperandType.BOOLEAN.equals(op1.getOperandType())) {
+        throw new QueryProcessingException("The operator(%s) requires a boolean operand", name());
+      }
+      if (OperandType.ARRAY.equals(op2.getOperandType())) {
+        throw new QueryProcessingException("The operator(%s) does not accept array inputs", name());
+      } else {
+        return ElementType.NULL.equals(op2.getElementType()) ? Boolean.FALSE.equals(op1.get()) : Boolean.TRUE.equals(op1.get());
+      }
+    }
+  },
   LIKE {
     @Override
     public boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2) {
