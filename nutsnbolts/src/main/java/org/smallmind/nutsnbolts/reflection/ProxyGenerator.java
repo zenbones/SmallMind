@@ -87,7 +87,7 @@ public class ProxyGenerator {
             throw new ByteCodeManipulationException("A concrete proxy class(%s) must not be 'abstract'", toBeProxiedClass.getName());
           } else {
 
-            Class currentClass;
+            Class<?> currentClass;
             ClassReader classReader;
             ClassWriter classWriter;
             CheckClassAdapter checkClassAdapter;
@@ -180,7 +180,7 @@ public class ProxyGenerator {
       super(parent);
     }
 
-    public Class extractInterface (String name, byte[] b) {
+    public Class<?> extractInterface (String name, byte[] b) {
 
       return defineClass(name, b, 0, b.length);
     }
@@ -189,16 +189,16 @@ public class ProxyGenerator {
   private static class ProxyClassVisitor extends ClassVisitor {
 
     private final ClassVisitor nextClassVisitor;
-    private final Class toBeProxiedClass;
-    private final Class currentClass;
+    private final Class<?> toBeProxiedClass;
+    private final Class<?> currentClass;
     private final AnnotationFilter annotationFilter;
     private final HashSet<MethodTracker> methodTrackerSet;
     private final boolean initialized;
     private boolean constructed = false;
 
-    public ProxyClassVisitor (ClassVisitor nextClassVisitor, Class toBeProxiedClass, Class currentClass, AnnotationFilter annotationFilter, HashSet<MethodTracker> methodTrackerSet, boolean initialized) {
+    public ProxyClassVisitor (ClassVisitor nextClassVisitor, Class<?> toBeProxiedClass, Class<?> currentClass, AnnotationFilter annotationFilter, HashSet<MethodTracker> methodTrackerSet, boolean initialized) {
 
-      super(Opcodes.ASM5);
+      super(Opcodes.ASM8);
 
       this.nextClassVisitor = nextClassVisitor;
       this.toBeProxiedClass = toBeProxiedClass;
@@ -566,7 +566,7 @@ public class ProxyGenerator {
 
     public ProxyMethodVisitor (MethodVisitor nextMethodVisitor, AnnotationFilter annotationFilter) {
 
-      super(Opcodes.ASM5);
+      super(Opcodes.ASM8);
 
       this.nextMethodVisitor = nextMethodVisitor;
       this.annotationFilter = annotationFilter;
