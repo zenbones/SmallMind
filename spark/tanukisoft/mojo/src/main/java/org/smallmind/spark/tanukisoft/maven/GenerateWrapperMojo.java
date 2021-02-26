@@ -435,7 +435,7 @@ public class GenerateWrapperMojo extends AbstractMojo {
     Template freemarkerTemplate;
     Writer freemarkerWriter;
 
-    freemarkerConf = new Configuration();
+    freemarkerConf = new Configuration(Configuration.DEFAULT_INCOMPATIBLE_IMPROVEMENTS);
     freemarkerConf.setTagSyntax(freemarker.template.Configuration.SQUARE_BRACKET_TAG_SYNTAX);
     freemarkerConf.setTemplateLoader(new ClassPathTemplateLoader(GenerateWrapperMojo.class));
 

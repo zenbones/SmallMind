@@ -49,7 +49,7 @@ public class FreeMarkerModel extends AbstractReadOnlyModel<String> {
 
   static {
 
-    FREEMARKER_CONF = new Configuration();
+    FREEMARKER_CONF = new Configuration(Configuration.DEFAULT_INCOMPATIBLE_IMPROVEMENTS);
     FREEMARKER_CONF.setTagSyntax(freemarker.template.Configuration.SQUARE_BRACKET_TAG_SYNTAX);
   }
 
