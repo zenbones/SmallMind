@@ -30,58 +30,52 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.lang;
+package org.smallmind.nutsnbolts.freemarker;
 
 import java.io.IOException;
-import java.io.InputStream;
-import org.smallmind.nutsnbolts.resource.Resource;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import freemarker.cache.TemplateLoader;
 import org.smallmind.nutsnbolts.resource.ResourceException;
 import org.smallmind.nutsnbolts.resource.ResourceParser;
 import org.smallmind.nutsnbolts.resource.ResourceTypeResourceFactory;
 
-public class SecureStore {
+public class ResourceTemplateLoader implements TemplateLoader {
 
   private static final ResourceParser RESOURCE_PARSER = new ResourceParser(new ResourceTypeResourceFactory());
 
-  private String resource;
-  private String password;
+  @Override
+  public Object findTemplateSource (String name)
+    throws IOException {
 
-  public byte[] getBytes ()
-    throws IOException, ResourceException {
-
-    Resource resourceImpl = RESOURCE_PARSER.parseResource(resource);
-    byte[] resourceBuffer;
-
-    try (InputStream resourceInputStream = resourceImpl.getInputStream()) {
-
-      resourceBuffer = new byte[resourceInputStream.available()];
-      int bytesRead = 0;
-
-      while (bytesRead < resourceBuffer.length) {
-        bytesRead += resourceInputStream.read(resourceBuffer, bytesRead, resourceBuffer.length - bytesRead);
-      }
+    try {
+      return new ResourceTemplateSource(RESOURCE_PARSER.parseResource(name));
+    } catch (ResourceException resourceException) {
+      throw new IOException(resourceException);
     }
-
-    return resourceBuffer;
   }
 
-  public String getResource () {
+  @Override
+  public long getLastModified (Object templateSource) {
 
-    return resource;
+    return -1;
   }
 
-  public void setResource (String resource) {
+  @Override
+  public Reader getReader (Object templateSource, String encoding)
+    throws IOException {
 
-    this.resource = resource;
+    try {
+      return new InputStreamReader(((ResourceTemplateSource)templateSource).getInputStream(), encoding);
+    } catch (ResourceException resourceException) {
+      throw new IOException(resourceException);
+    }
   }
 
-  public String getPassword () {
+  @Override
+  public void closeTemplateSource (Object templateSource)
+    throws IOException {
 
-    return password;
-  }
-
-  public void setPassword (String password) {
-
-    this.password = password;
+    ((ResourceTemplateSource)templateSource).close();
   }
 }

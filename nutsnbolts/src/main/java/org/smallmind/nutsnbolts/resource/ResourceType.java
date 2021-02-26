@@ -34,7 +34,7 @@ package org.smallmind.nutsnbolts.resource;
 
 public enum ResourceType {
 
-  FILE("file", FileResource.class), CLASSPATH("classpath", ClasspathResource.class), URL("url", URLResource.class);
+  CLASSPATH("classpath", ClasspathResource.class), FILE("file", FileResource.class), JAR("jar", JarResource.class), URL("url", URLResource.class);
   private final String resourceScheme;
   private final Class<? extends Resource> resourceClass;
 

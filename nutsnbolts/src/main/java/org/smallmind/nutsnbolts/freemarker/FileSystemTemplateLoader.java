@@ -62,7 +62,7 @@ public class FileSystemTemplateLoader implements TemplateLoader {
 
       Path filePath;
 
-      // Adding a slash back because freemarker removes starting slashes as a security measure
+      // Adding a slash back in because freemarker removes starting slashes as a security measure
       return new FileSystemTemplateSource(((filePath = Paths.get(name)).isAbsolute()) ? filePath : Paths.get("/" + name));
     }
   }
@@ -80,13 +80,15 @@ public class FileSystemTemplateLoader implements TemplateLoader {
   }
 
   @Override
-  public Reader getReader (Object templateSource, String encoding) throws IOException {
+  public Reader getReader (Object templateSource, String encoding)
+    throws IOException {
 
     return new InputStreamReader(((FileSystemTemplateSource)templateSource).getInputStream(), encoding);
   }
 
   @Override
-  public void closeTemplateSource (Object templateSource) throws IOException {
+  public void closeTemplateSource (Object templateSource)
+    throws IOException {
 
     ((FileSystemTemplateSource)templateSource).close();
   }

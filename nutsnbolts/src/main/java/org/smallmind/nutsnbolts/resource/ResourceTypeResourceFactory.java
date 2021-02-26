@@ -30,58 +30,53 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.lang;
+package org.smallmind.nutsnbolts.resource;
 
-import java.io.IOException;
-import java.io.InputStream;
-import org.smallmind.nutsnbolts.resource.Resource;
-import org.smallmind.nutsnbolts.resource.ResourceException;
-import org.smallmind.nutsnbolts.resource.ResourceParser;
-import org.smallmind.nutsnbolts.resource.ResourceTypeResourceFactory;
+import java.lang.reflect.Constructor;
+import java.util.LinkedList;
 
-public class SecureStore {
+public class ResourceTypeResourceFactory implements ResourceFactory {
 
-  private static final ResourceParser RESOURCE_PARSER = new ResourceParser(new ResourceTypeResourceFactory());
+  private static final Class[] SIGNATURE = new Class[] {String.class};
 
-  private String resource;
-  private String password;
+  private static final ResourceSchemes VALID_SCHEMES;
 
-  public byte[] getBytes ()
-    throws IOException, ResourceException {
+  static {
 
-    Resource resourceImpl = RESOURCE_PARSER.parseResource(resource);
-    byte[] resourceBuffer;
+    String[] schemes;
+    LinkedList<String> schemeList;
 
-    try (InputStream resourceInputStream = resourceImpl.getInputStream()) {
+    schemeList = new LinkedList<>();
+    for (ResourceType resourceType : ResourceType.values()) {
+      schemeList.add(resourceType.getResourceScheme());
+    }
 
-      resourceBuffer = new byte[resourceInputStream.available()];
-      int bytesRead = 0;
+    schemes = new String[schemeList.size()];
+    schemeList.toArray(schemes);
+    VALID_SCHEMES = new ResourceSchemes(schemes);
+  }
 
-      while (bytesRead < resourceBuffer.length) {
-        bytesRead += resourceInputStream.read(resourceBuffer, bytesRead, resourceBuffer.length - bytesRead);
+  public ResourceSchemes getValidSchemes () {
+
+    return VALID_SCHEMES;
+  }
+
+  public Resource createResource (String scheme, String path)
+    throws ResourceException {
+
+    Constructor<? extends Resource> resourceConstructor;
+
+    for (ResourceType resourceType : ResourceType.values()) {
+      if (resourceType.getResourceScheme().equals(scheme)) {
+        try {
+          resourceConstructor = resourceType.getResourceClass().getConstructor(SIGNATURE);
+          return resourceConstructor.newInstance(path);
+        } catch (Exception exception) {
+          throw new ResourceException(exception);
+        }
       }
     }
 
-    return resourceBuffer;
-  }
-
-  public String getResource () {
-
-    return resource;
-  }
-
-  public void setResource (String resource) {
-
-    this.resource = resource;
-  }
-
-  public String getPassword () {
-
-    return password;
-  }
-
-  public void setPassword (String password) {
-
-    this.password = password;
+    throw new ResourceException("This factory does not handle the references scheme(%s)", scheme);
   }
 }

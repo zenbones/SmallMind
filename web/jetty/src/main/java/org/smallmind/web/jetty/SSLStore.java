@@ -37,11 +37,11 @@ import java.io.InputStream;
 import org.smallmind.nutsnbolts.resource.Resource;
 import org.smallmind.nutsnbolts.resource.ResourceException;
 import org.smallmind.nutsnbolts.resource.ResourceParser;
-import org.smallmind.nutsnbolts.resource.ResourceTypeFactory;
+import org.smallmind.nutsnbolts.resource.ResourceTypeResourceFactory;
 
 public class SSLStore {
 
-  private static final ResourceParser RESOURCE_PARSER = new ResourceParser(new ResourceTypeFactory());
+  private static final ResourceParser RESOURCE_PARSER = new ResourceParser(new ResourceTypeResourceFactory());
 
   private String resource;
   private String password;

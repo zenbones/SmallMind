@@ -78,8 +78,8 @@ public class ClassPathTemplateLoader implements TemplateLoader {
     return classLoader;
   }
 
-  public Object findTemplateSource (String name)
-    throws IOException {
+  @Override
+  public Object findTemplateSource (String name) {
 
     ClassPathTemplateSource source;
 
@@ -96,17 +96,20 @@ public class ClassPathTemplateLoader implements TemplateLoader {
     return (source.exists()) ? source : null;
   }
 
+  @Override
   public long getLastModified (Object templateSource) {
 
     return -1;
   }
 
+  @Override
   public Reader getReader (Object templateSource, String encoding)
     throws IOException {
 
     return new InputStreamReader(((ClassPathTemplateSource)templateSource).getInputStream(), encoding);
   }
 
+  @Override
   public void closeTemplateSource (Object templateSource)
     throws IOException {
 

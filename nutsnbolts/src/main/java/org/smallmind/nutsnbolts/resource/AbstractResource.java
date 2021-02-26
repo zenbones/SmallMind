@@ -34,7 +34,7 @@ package org.smallmind.nutsnbolts.resource;
 
 public abstract class AbstractResource implements Resource {
 
-  private String path;
+  private final String path;
 
   public AbstractResource (String path) {
 
@@ -51,13 +51,20 @@ public abstract class AbstractResource implements Resource {
     return path;
   }
 
-  public void setPath (String path) {
-
-    this.path = path;
-  }
-
   public String toString () {
 
     return getIdentifier();
+  }
+
+  @Override
+  public int hashCode () {
+
+    return (getScheme().hashCode() * 31) + path.hashCode();
+  }
+
+  @Override
+  public boolean equals (Object obj) {
+
+    return (obj instanceof AbstractResource) && ((AbstractResource)obj).getScheme().equals(getScheme()) && ((AbstractResource)obj).getPath().equals(path);
   }
 }

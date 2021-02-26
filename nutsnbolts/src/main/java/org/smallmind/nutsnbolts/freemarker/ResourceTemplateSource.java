@@ -30,58 +30,55 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.lang;
+package org.smallmind.nutsnbolts.freemarker;
 
 import java.io.IOException;
 import java.io.InputStream;
 import org.smallmind.nutsnbolts.resource.Resource;
 import org.smallmind.nutsnbolts.resource.ResourceException;
-import org.smallmind.nutsnbolts.resource.ResourceParser;
-import org.smallmind.nutsnbolts.resource.ResourceTypeResourceFactory;
 
-public class SecureStore {
+public class ResourceTemplateSource {
 
-  private static final ResourceParser RESOURCE_PARSER = new ResourceParser(new ResourceTypeResourceFactory());
+  private final Resource resource;
+  private InputStream inputStream;
 
-  private String resource;
-  private String password;
-
-  public byte[] getBytes ()
-    throws IOException, ResourceException {
-
-    Resource resourceImpl = RESOURCE_PARSER.parseResource(resource);
-    byte[] resourceBuffer;
-
-    try (InputStream resourceInputStream = resourceImpl.getInputStream()) {
-
-      resourceBuffer = new byte[resourceInputStream.available()];
-      int bytesRead = 0;
-
-      while (bytesRead < resourceBuffer.length) {
-        bytesRead += resourceInputStream.read(resourceBuffer, bytesRead, resourceBuffer.length - bytesRead);
-      }
-    }
-
-    return resourceBuffer;
-  }
-
-  public String getResource () {
-
-    return resource;
-  }
-
-  public void setResource (String resource) {
+  public ResourceTemplateSource (Resource resource) {
 
     this.resource = resource;
   }
 
-  public String getPassword () {
+  public Resource getResource () {
 
-    return password;
+    return resource;
   }
 
-  public void setPassword (String password) {
+  public synchronized InputStream getInputStream ()
+    throws ResourceException {
 
-    this.password = password;
+    if (inputStream == null) {
+      inputStream = resource.getInputStream();
+    }
+
+    return inputStream;
+  }
+
+  public synchronized void close ()
+    throws IOException {
+
+    if (inputStream != null) {
+      inputStream.close();
+    }
+  }
+
+  @Override
+  public int hashCode () {
+
+    return resource.hashCode();
+  }
+
+  @Override
+  public boolean equals (Object obj) {
+
+    return (obj instanceof ResourceTemplateSource) && ((ResourceTemplateSource)obj).getResource().equals(resource);
   }
 }

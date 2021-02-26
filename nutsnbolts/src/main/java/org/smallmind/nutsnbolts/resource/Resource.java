@@ -42,8 +42,6 @@ public interface Resource {
 
   String getPath ();
 
-  void setPath (String path);
-
   InputStream getInputStream ()
     throws ResourceException;
 }
