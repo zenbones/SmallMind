@@ -152,11 +152,36 @@ public class DoppelgangerInformation {
       }
     }
 
-    for (AnnotationMirror propertyAnnotationMirror : AptUtility.extractAnnotationValueAsList(doppelgangerAnnotationMirror, "properties", AnnotationMirror.class)) {
+    for (AnnotationMirror virtualAnnotationMirror : AptUtility.extractAnnotationValueAsList(doppelgangerAnnotationMirror, "virtual", AnnotationMirror.class)) {
 
-      String fieldName = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "field", String.class, null);
+      String fieldName = AptUtility.extractAnnotationValue(virtualAnnotationMirror, "field", String.class, null);
 
-      for (PropertyBox propertyBox : new PropertyParser(processingEnvironment, usefulTypeMirrors, propertyAnnotationMirror, extractType(classElement, fieldName, processingEnvironment, propertyAnnotationMirror), true)) {
+      for (PropertyBox propertyBox : new PropertyParser(processingEnvironment, usefulTypeMirrors, virtualAnnotationMirror, extractType(classElement, fieldName, processingEnvironment, virtualAnnotationMirror), true)) {
+
+        doppelgangerAnnotationProcessor.processTypeMirror(propertyBox.getPropertyInformation().getType());
+
+        switch (propertyBox.getVisibility()) {
+          case IN:
+            inDirectionalGuide.put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
+            break;
+          case OUT:
+            outDirectionalGuide.put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
+            break;
+          case BOTH:
+            inDirectionalGuide.put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
+            outDirectionalGuide.put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
+            break;
+          default:
+            throw new UnknownSwitchCaseException(propertyBox.getVisibility().name());
+        }
+      }
+    }
+
+    for (AnnotationMirror realAnnotationMirror : AptUtility.extractAnnotationValueAsList(doppelgangerAnnotationMirror, "real", AnnotationMirror.class)) {
+
+      String fieldName = AptUtility.extractAnnotationValue(realAnnotationMirror, "field", String.class, null);
+
+      for (PropertyBox propertyBox : new PropertyParser(processingEnvironment, usefulTypeMirrors, realAnnotationMirror, extractType(classElement, fieldName, processingEnvironment, realAnnotationMirror), false)) {
 
         doppelgangerAnnotationProcessor.processTypeMirror(propertyBox.getPropertyInformation().getType());
 

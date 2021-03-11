@@ -53,7 +53,8 @@ Holds the base rules for generating the views of the annotated class. The follow
 * `Import[] imports () default {}` - A list of additional imports to add to the generated classes, for convenience.
 * `Implementation[] implementations () default {}` - A list of additional interfaces to be adopted into the *implements* clause of the generated classes
 * `Constraint[] constraints () default {}` - The list of class level validation constraints to apply to the generated view (see below).
-* `Virtual[] properties () default {}` - The list of virtual properties to be added to the view (see below).
+* `Virtual[] virtual () default {}` - The list of virtual properties to be added to the view (see below).
+* `Real[] real () default {}` - The list of real properties to be added to the view (see below). These should be added via direct @View annotations, but sometimes that won't be possible and listing them via this property will make sense.
 * `Pledge[] pledges () default {}` - The list of conditions under which to guarantee a view is generated (only necessary when the view would otherwise not be generated, see below).
 
 ==== @Polymorphic
@@ -87,7 +88,6 @@ A description of a set of imports which should be added to the generated classes
 * `Visibility visibility () default Visibility.BOTH` - The visibility for which these imports should be added, defaults to both _in_ and _out_ views.
 * `String[] purposes () default {}` - Any purposes for which these imports should be added. If empty then only the default (un-named) purpose will be enforced.
 * `String[] value()` - An array of imports as valid class names or wildcard import specifications.
-====
 
 [[doppelganger-implementation, Implementation]]
 ==== @Implementation
@@ -97,7 +97,6 @@ A description of a set of interfaces which should be adopted into the *implement
 * `Visibility visibility () default Visibility.BOTH` - The visibility for which these implementations should be adopted, defaults to both _in_ and _out_ views.
 * `String[] purposes () default {}` - Any purposes for which these implementations should be adopted. If empty then only the default (un-named) purpose will be enforced.
 * `Class[] value()` - An array of interfaces which should be adopted.
-====
 
 [[doppelganger-constraint, Constraint]]
 ==== @Constraint
@@ -129,6 +128,18 @@ Creates a 'virtual' property, which exists only in the generated views (and not 
 * `Class<?> as () default Void.class` - A type hint for tools which may process Doppelganger generated views.
 * `boolean required () default false` - If the generated JSON element is required. If false, this may be overridden by the idioms (see above). Although an element may be marked as required, the enforcement of this is erratic at best. The use of a *NotNull* constraint is a far more persuasive argument.
 
+==== @Real
+
+Creates a reference to a 'real' property of the annotated class. The better way to handle real properties are through *@View* annotations (see below) directly on the appropriate fields or getters/setters. However, when surfacing fields from non-annotated super classes, or when annotating such a super class would be difficult due the inability to pre-define all of its polymorphic sub-classes, it can be better to treat these fields on a case-by-case basis via this annotation.
+
+* `String name () default ""` - The name of the JSON attribute generated for the annotated property. If left empty the attribute name will be the same as the field name (see below).
+* `Type type ()` - The type information for the referenced property (see below).
+* `String field ()` - The field name of the referenced property.
+* `Idiom[] idioms () default {}` - The list of alternate idioms in which this property should be included (see below). If empty, this property will be included in the default idiom.
+* `Class<? extends XmlAdapter> adapter () default NullXmlAdapter.class` - The XmlAdapter class, if any, to be used for encoding and decoding this property.
+* `Class<?> as () default Void.class` - A type hint for tools which may process Doppelganger generated views.
+* `boolean required () default false` - If the generated JSON element is required. If false, this may be overridden by the idioms (see above). Although an element may be marked as required, the enforcement of this is erratic at best. The use of a *NotNull* constraint is a far more persuasive argument.
+
 ===== @Type
 
 Represents the type information of a virtual property.
@@ -153,6 +164,7 @@ It may be that, given the idioms annotated for the set of properties of the orig
 * `Visibility visibility () default Visibility.BOTH` - The visibility for which views should be generated, defaults to both _in_ and _out_ views.
 * `String[] purposes () default {}` - Any purposes for which the views should be generated. If empty then only the default (un-named) purpose will be enforced.
 
+[[doppelganger-view, View]]
 === @View
 
 Creates a 'view' property, and determines how the annotated field is represented in those generated views.

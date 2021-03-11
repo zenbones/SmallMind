@@ -41,16 +41,19 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface Doppelganger {
 
-  // the list of virtual properties to be added to the view
-  Virtual[] properties () default {};
+  // the list of virtual properties to be added to the generated class
+  Virtual[] virtual () default {};
 
-  // the list of conditions under which to guarantee a view is generated (should be used only when the view would otherwise not be generated)
+  // the list of real properties to be added to the generated class
+  Real[] real () default {};
+
+  // the list of conditions under which to guarantee a class is generated (should be used only when the class would otherwise not be generated)
   Pledge[] pledges () default {};
 
   // the requirements for polymorphic annotations
   Polymorphic polymorphic () default @Polymorphic();
 
-  // the constraint annotations to be applied to the view
+  // the constraint annotations to be applied to the generated class
   Constraint[] constraints () default {};
 
   // Additional interfaces that the generated class should be marked as implementing
