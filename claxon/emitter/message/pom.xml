@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>claxon-emitter</artifactId>
-    <version>4.4.3</version>
+    <version>4.4.4-SNAPSHOT</version>
   </parent>
   <artifactId>claxon-emitter-message</artifactId>
   <name>Claxon-Emitter-Message</name>
