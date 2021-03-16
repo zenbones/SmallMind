@@ -33,6 +33,7 @@
 package org.smallmind.nutsnbolts.lang;
 
 import java.security.AllPermission;
+import java.security.CodeSource;
 import java.security.Permission;
 import java.security.PermissionCollection;
 import java.security.Permissions;
@@ -75,6 +76,12 @@ public class SandboxSecurityPolicy extends Policy {
     }
 
     return this;
+  }
+
+  @Override
+  public PermissionCollection getPermissions (CodeSource codesource) {
+
+    return new Permissions();
   }
 
   @Override
