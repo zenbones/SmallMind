@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>smallmind-claxon</artifactId>
-    <version>4.4.4</version>
+    <version>4.4.5-SNAPSHOT</version>
   </parent>
   <artifactId>claxon-http</artifactId>
   <packaging>jar</packaging>
