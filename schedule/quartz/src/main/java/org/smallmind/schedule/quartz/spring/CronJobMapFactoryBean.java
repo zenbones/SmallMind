@@ -69,11 +69,11 @@ public class CronJobMapFactoryBean implements FactoryBean<Map<JobDetail, List<Cr
     throws BeansException {
 
     if (bean instanceof CronJob) {
+
+      JobKey jobKey = ((CronJob)bean).getJobDetail().getKey();
+      String jobId = jobKey.getGroup() + "." + jobKey.getName();
+
       for (String allowedJobId : allowedJobIds) {
-
-        JobKey jobKey = ((CronJob)bean).getJobDetail().getKey();
-        String jobId = jobKey.getGroup() + "." + jobKey.getName();
-
         if (allowedJobId.equals(jobId)) {
           jobMap.put(((CronJob)bean).getJobDetail(), List.of(((CronJob)bean).getCronTrigger()));
           break;
