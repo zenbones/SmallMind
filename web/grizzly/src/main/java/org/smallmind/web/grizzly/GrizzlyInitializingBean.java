@@ -249,6 +249,7 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
       HttpHandler httpHandler = new JaxwsHandler(webServiceInstaller.getService(), Boolean.TRUE.equals(webServiceInstaller.getAsyncSupported()));
 
       httpServer.getServerConfiguration().addHttpHandler(httpHandler, combinePaths(combinePaths(contextPath, soapPath), normalizePath(webServiceInstaller.getPath())));
+      LoggerManager.getLogger(GrizzlyInitializingBean.class).info("Grizzly installed web service(%s)", webServiceInstaller.getService().getClass().getName());
     }
 
     try {
@@ -283,6 +284,8 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
             webappContext.addContextInitParameter(parameterEntry.getKey(), parameterEntry.getValue());
           }
         }
+
+        LoggerManager.getLogger(GrizzlyInitializingBean.class).info("Grizzly installed listener(%s)", listenerInstaller.getListener().getClass().getName());
       } catch (Exception exception) {
         throw new GrizzlyInitializationException(exception);
       }
@@ -302,6 +305,8 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
         if ((initParameters = filterInstaller.getInitParameters()) != null) {
           filterRegistration.setInitParameters(initParameters);
         }
+
+        LoggerManager.getLogger(GrizzlyInitializingBean.class).info("Grizzly installed filter(%s)", filterInstaller.getDisplayName());
       } catch (Exception exception) {
         throw new GrizzlyInitializationException(exception);
       }
@@ -324,6 +329,8 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
         if ((initParameters = servletInstaller.getInitParameters()) != null) {
           servletRegistration.setInitParameters(initParameters);
         }
+
+        LoggerManager.getLogger(GrizzlyInitializingBean.class).info("Grizzly installed servlet(%s)", servletInstaller.getDisplayName());
       } catch (Exception exception) {
         throw new GrizzlyInitializationException(exception);
       }
