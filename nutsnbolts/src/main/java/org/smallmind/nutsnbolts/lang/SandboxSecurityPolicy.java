@@ -51,7 +51,8 @@ import java.util.Set;
 public class SandboxSecurityPolicy extends Policy {
 
   private static final PermissionCollection ALL_PERMISSION_COLLECTION;
-  private final Set<? extends ClassLoader> whiteListedClassLoaderSet;
+  private final Set<? extends ClassLoader> whiteListedCompiledClassLoaderSet;
+  private final Set<String> whiteListedRuntimeClassLoaderSet;
   private final PermissionCollection basePermissionCollection = new Permissions();
 
   static {
@@ -62,9 +63,15 @@ public class SandboxSecurityPolicy extends Policy {
     ALL_PERMISSION_COLLECTION.add(allPermission);
   }
 
-  public SandboxSecurityPolicy (ClassLoader... whiteListedClassLoaders) {
+  public SandboxSecurityPolicy (ClassLoader... whiteListedCompiledClassLoaders) {
 
-    whiteListedClassLoaderSet = ((whiteListedClassLoaders == null) || (whiteListedClassLoaders.length == 0)) ? Collections.emptySet() : new HashSet<>(Arrays.asList(whiteListedClassLoaders));
+    this(null, whiteListedCompiledClassLoaders);
+  }
+
+  public SandboxSecurityPolicy (String[] whiteListedRuntimeClassLoaders, ClassLoader... whiteListedCompiledClassLoaders) {
+
+    whiteListedCompiledClassLoaderSet = ((whiteListedCompiledClassLoaders == null) || (whiteListedCompiledClassLoaders.length == 0)) ? Collections.emptySet() : new HashSet<>(Arrays.asList(whiteListedCompiledClassLoaders));
+    whiteListedRuntimeClassLoaderSet = ((whiteListedRuntimeClassLoaders == null) || (whiteListedRuntimeClassLoaders.length == 0)) ? Collections.emptySet() : new HashSet<>(Arrays.asList(whiteListedRuntimeClassLoaders));
   }
 
   public SandboxSecurityPolicy addPermissions (Permission... permissions) {
@@ -87,6 +94,6 @@ public class SandboxSecurityPolicy extends Policy {
   @Override
   public PermissionCollection getPermissions (ProtectionDomain domain) {
 
-    return whiteListedClassLoaderSet.contains(domain.getClassLoader()) ? ALL_PERMISSION_COLLECTION : basePermissionCollection;
+    return (whiteListedCompiledClassLoaderSet.contains(domain.getClassLoader()) || whiteListedRuntimeClassLoaderSet.contains(domain.getClassLoader().getClass().getName())) ? ALL_PERMISSION_COLLECTION : basePermissionCollection;
   }
 }

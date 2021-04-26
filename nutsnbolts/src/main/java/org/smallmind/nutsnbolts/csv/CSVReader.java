@@ -134,7 +134,7 @@ public class CSVReader implements AutoCloseable {
                 case ',':
                   appendField(fieldList, trimFields);
                   break;
-                case '\"':
+                case '"':
                   if (fieldBuilder.length() > 0) {
                     throw new CSVParseException("The first character in a quoted field must be '\"'");
                   } else {
@@ -147,8 +147,8 @@ public class CSVReader implements AutoCloseable {
               break;
             case QUOTED:
               switch (singleLine.charAt(count)) {
-                case '\"':
-                  if ((count < (singleLine.length() - 1)) && (!((singleLine.charAt(count + 1) == '\"') || (singleLine.charAt(count + 1) == ',')))) {
+                case '"':
+                  if ((count < (singleLine.length() - 1)) && (!((singleLine.charAt(count + 1) == '"') || (singleLine.charAt(count + 1) == ',')))) {
                     throw new CSVParseException("The last character in a quoted field must be '\"'");
                   } else if ((count == (singleLine.length() - 1)) || (singleLine.charAt(count + 1) == ',')) {
                     state = State.UNQOUTED;
