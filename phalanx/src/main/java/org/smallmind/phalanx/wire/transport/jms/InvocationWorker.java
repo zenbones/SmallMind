@@ -38,10 +38,10 @@ import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Tag;
 import org.smallmind.claxon.registry.meter.LazyBuilder;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
-import org.smallmind.phalanx.wire.signal.InvocationSignal;
-import org.smallmind.phalanx.wire.transport.ResponseTransport;
-import org.smallmind.phalanx.wire.signal.SignalCodec;
 import org.smallmind.phalanx.wire.TransportException;
+import org.smallmind.phalanx.wire.signal.InvocationSignal;
+import org.smallmind.phalanx.wire.signal.SignalCodec;
+import org.smallmind.phalanx.wire.transport.ResponseTransmitter;
 import org.smallmind.phalanx.wire.transport.WireInvocationCircuit;
 import org.smallmind.phalanx.wire.transport.WireProperty;
 import org.smallmind.phalanx.worker.WorkQueue;
@@ -49,17 +49,17 @@ import org.smallmind.phalanx.worker.Worker;
 
 public class InvocationWorker extends Worker<Message> {
 
-  private final ResponseTransport responseTransport;
+  private final ResponseTransmitter responseTransmitter;
   private final WireInvocationCircuit invocationCircuit;
   private final SignalCodec signalCodec;
 
   private final byte[] buffer;
 
-  public InvocationWorker (WorkQueue<Message> workQueue, ResponseTransport responseTransport, WireInvocationCircuit invocationCircuit, SignalCodec signalCodec, int maximumMessageLength) {
+  public InvocationWorker (WorkQueue<Message> workQueue, ResponseTransmitter responseTransmitter, WireInvocationCircuit invocationCircuit, SignalCodec signalCodec, int maximumMessageLength) {
 
     super(workQueue);
 
-    this.responseTransport = responseTransport;
+    this.responseTransmitter = responseTransmitter;
     this.invocationCircuit = invocationCircuit;
     this.signalCodec = signalCodec;
 
@@ -80,7 +80,7 @@ public class InvocationWorker extends Worker<Message> {
       invocationSignal = signalCodec.decode(buffer, 0, (int)((BytesMessage)message).getBodyLength(), InvocationSignal.class);
 
       Instrument.with(InvocationWorker.class, LazyBuilder.instance(SpeedometerBuilder::new), new Tag("operation", "invoke"), new Tag("service", invocationSignal.getRoute().getService()), new Tag("method", invocationSignal.getRoute().getFunction().getName())).on(
-        () -> invocationCircuit.handle(responseTransport, signalCodec, message.getStringProperty(WireProperty.CALLER_ID.getKey()), message.getJMSMessageID(), invocationSignal)
+        () -> invocationCircuit.handle(responseTransmitter, signalCodec, message.getStringProperty(WireProperty.CALLER_ID.getKey()), message.getJMSMessageID(), invocationSignal)
       );
     }
   }
