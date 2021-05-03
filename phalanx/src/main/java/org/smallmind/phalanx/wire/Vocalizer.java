@@ -33,6 +33,7 @@
 package org.smallmind.phalanx.wire;
 
 import java.util.HashMap;
+import org.smallmind.phalanx.wire.signal.WireContext;
 
 public interface Vocalizer<V extends Voice> {
 

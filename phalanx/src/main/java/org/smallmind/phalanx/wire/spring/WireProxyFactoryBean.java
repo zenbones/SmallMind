@@ -34,8 +34,7 @@ package org.smallmind.phalanx.wire.spring;
 
 import java.lang.reflect.Proxy;
 import org.smallmind.phalanx.wire.ParameterExtractor;
-import org.smallmind.phalanx.wire.RequestTransport;
-import org.smallmind.phalanx.wire.WireProxyFactory;
+import org.smallmind.phalanx.wire.transport.RequestTransport;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 

@@ -33,8 +33,8 @@
 package org.smallmind.phalanx.wire.jmx;
 
 import javax.management.StandardMBean;
-import org.smallmind.phalanx.wire.ResponseTransport;
-import org.smallmind.phalanx.wire.TransportState;
+import org.smallmind.phalanx.wire.transport.ResponseTransport;
+import org.smallmind.phalanx.wire.transport.TransportState;
 
 public class ResponseTransportMonitor extends StandardMBean implements ResponseTransportMXBean {
 

@@ -39,6 +39,10 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import org.smallmind.nutsnbolts.context.Context;
 import org.smallmind.nutsnbolts.context.ContextFactory;
+import org.smallmind.phalanx.wire.signal.Function;
+import org.smallmind.phalanx.wire.signal.Route;
+import org.smallmind.phalanx.wire.signal.WireContext;
+import org.smallmind.phalanx.wire.transport.RequestTransport;
 
 public class WireInvocationHandler implements InvocationHandler {
 

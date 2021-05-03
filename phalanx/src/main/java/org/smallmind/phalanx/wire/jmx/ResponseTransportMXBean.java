@@ -32,7 +32,7 @@
  */
 package org.smallmind.phalanx.wire.jmx;
 
-import org.smallmind.phalanx.wire.TransportState;
+import org.smallmind.phalanx.wire.transport.TransportState;
 
 public interface ResponseTransportMXBean {
 

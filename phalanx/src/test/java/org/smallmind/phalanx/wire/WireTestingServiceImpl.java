@@ -34,6 +34,8 @@ package org.smallmind.phalanx.wire;
 
 import java.util.Date;
 import org.smallmind.nutsnbolts.context.ContextFactory;
+import org.smallmind.phalanx.wire.transport.ResponseTransport;
+import org.smallmind.phalanx.wire.transport.WiredService;
 
 public class WireTestingServiceImpl implements WireTestingService, WiredService {
 

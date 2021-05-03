@@ -34,6 +34,9 @@ package org.smallmind.phalanx.wire;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import org.smallmind.phalanx.wire.MissingInstanceIdException;
+import org.smallmind.phalanx.wire.ParameterExtractor;
+import org.smallmind.phalanx.wire.signal.WireContext;
 
 public class StaticParameterExtractor<T> implements ParameterExtractor<T> {
 

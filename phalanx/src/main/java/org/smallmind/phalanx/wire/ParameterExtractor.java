@@ -34,6 +34,7 @@ package org.smallmind.phalanx.wire;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import org.smallmind.phalanx.wire.signal.WireContext;
 
 public interface ParameterExtractor<T> {
 

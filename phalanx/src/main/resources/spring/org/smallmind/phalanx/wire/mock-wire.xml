@@ -3,20 +3,20 @@
        xmlns="http://www.springframework.org/schema/beans"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-  <bean id="mockMessageRouter" class="org.smallmind.phalanx.wire.mock.MockMessageRouter"/>
+  <bean id="mockMessageRouter" class="org.smallmind.phalanx.wire.transport.mock.MockMessageRouter"/>
 
-  <bean id="jsonSignalCodec" class="org.smallmind.phalanx.wire.JsonSignalCodec">
+  <bean id="jsonSignalCodec" class="org.smallmind.phalanx.wire.signal.JsonSignalCodec">
     <property name="verbose" value="true"/>
     <property name="verboseLogLevel" value="DEBUG"/>
   </bean>
 
-  <bean id="mockRequestTransport" class="org.smallmind.phalanx.wire.mock.MockRequestTransport">
+  <bean id="mockRequestTransport" class="org.smallmind.phalanx.wire.transport.mock.MockRequestTransport">
     <constructor-arg index="0" name="messageRouter" ref="mockMessageRouter"/>
     <constructor-arg index="1" name="signalCodec" ref="jsonSignalCodec"/>
     <constructor-arg index="2" name="defaultTimeoutSeconds" value="${wire.default_timeout_seconds}"/>
   </bean>
 
-  <bean id="mockResponseTransport" class="org.smallmind.phalanx.wire.mock.MockResponseTransport">
+  <bean id="mockResponseTransport" class="org.smallmind.phalanx.wire.transport.mock.MockResponseTransport">
     <constructor-arg index="0" name="messageRouter" ref="mockMessageRouter"/>
     <constructor-arg index="1" name="signalCodec" ref="jsonSignalCodec"/>
   </bean>
