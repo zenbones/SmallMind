@@ -47,9 +47,6 @@ public interface ResponseTransport {
   void pause ()
     throws Exception;
 
-  void transmit (String callerId, String correlationId, boolean error, String nativeType, Object result)
-    throws Throwable;
-
   void close ()
     throws Exception;
 }

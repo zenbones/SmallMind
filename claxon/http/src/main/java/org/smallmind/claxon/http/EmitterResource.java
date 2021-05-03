@@ -43,7 +43,7 @@ import org.smallmind.claxon.registry.InvalidEmitterException;
 import org.smallmind.claxon.registry.PullEmitter;
 import org.smallmind.claxon.registry.UnknownEmitterException;
 
-@Path("/claxon")
+@Path("/org/smallmind/claxon/emitter")
 public class EmitterResource {
 
   private ClaxonRegistry registry;

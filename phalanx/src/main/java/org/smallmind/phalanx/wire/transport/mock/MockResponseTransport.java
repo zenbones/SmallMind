@@ -36,6 +36,7 @@ import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import org.smallmind.phalanx.wire.signal.InvocationSignal;
+import org.smallmind.phalanx.wire.transport.ResponseTransmitter;
 import org.smallmind.phalanx.wire.transport.ResponseTransport;
 import org.smallmind.phalanx.wire.signal.ResultSignal;
 import org.smallmind.phalanx.wire.ServiceDefinitionException;
@@ -46,7 +47,7 @@ import org.smallmind.phalanx.wire.transport.WireProperty;
 import org.smallmind.phalanx.wire.transport.WiredService;
 import org.smallmind.scribe.pen.LoggerManager;
 
-public class MockResponseTransport implements ResponseTransport {
+public class MockResponseTransport implements ResponseTransport, ResponseTransmitter {
 
   private final AtomicReference<TransportState> transportStateRef = new AtomicReference<>(TransportState.PLAYING);
   private final WireInvocationCircuit invocationCircuit = new WireInvocationCircuit();

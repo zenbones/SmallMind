@@ -57,7 +57,7 @@ public class WireInvocationCircuit {
     invokerMap.putIfAbsent(new ServiceKey(targetService.getVersion(), targetService.getServiceName()), new MethodInvoker(targetService, serviceInterface));
   }
 
-  public void handle (ResponseTransport transport, SignalCodec signalCodec, String callerId, String messageId, InvocationSignal invocationSignal) {
+  public void handle (ResponseTransmitter transmitter, SignalCodec signalCodec, String callerId, String messageId, InvocationSignal invocationSignal) {
 
     MethodInvoker methodInvoker;
     Object result = null;
@@ -117,7 +117,7 @@ public class WireInvocationCircuit {
       }
 
       if (!invocationSignal.isInOnly()) {
-        transport.transmit(callerId, messageId, error, nativeType, result);
+        transmitter.transmit(callerId, messageId, error, nativeType, result);
       }
     } catch (Throwable throwable) {
       LoggerManager.getLogger(WireInvocationCircuit.class).error(throwable);

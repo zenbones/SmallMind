@@ -38,6 +38,7 @@ import org.smallmind.claxon.registry.Tag;
 import org.smallmind.claxon.registry.meter.LazyBuilder;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.phalanx.wire.signal.InvocationSignal;
+import org.smallmind.phalanx.wire.transport.ResponseTransmitter;
 import org.smallmind.phalanx.wire.transport.ResponseTransport;
 import org.smallmind.phalanx.wire.signal.SignalCodec;
 import org.smallmind.phalanx.wire.transport.WireInvocationCircuit;
@@ -49,15 +50,15 @@ public class InvocationWorker extends Worker<RabbitMQMessage> {
 
   private static final String CALLER_ID_AMQP_KEY = "x-opt-" + WireProperty.CALLER_ID.getKey();
 
-  private final ResponseTransport responseTransport;
+  private final ResponseTransmitter responseTransmitter;
   private final WireInvocationCircuit invocationCircuit;
   private final SignalCodec signalCodec;
 
-  public InvocationWorker (WorkQueue<RabbitMQMessage> workQueue, ResponseTransport responseTransport, WireInvocationCircuit invocationCircuit, SignalCodec signalCodec) {
+  public InvocationWorker (WorkQueue<RabbitMQMessage> workQueue, ResponseTransmitter responseTransmitter, WireInvocationCircuit invocationCircuit, SignalCodec signalCodec) {
 
     super(workQueue);
 
-    this.responseTransport = responseTransport;
+    this.responseTransmitter = responseTransmitter;
     this.invocationCircuit = invocationCircuit;
     this.signalCodec = signalCodec;
   }
@@ -69,7 +70,7 @@ public class InvocationWorker extends Worker<RabbitMQMessage> {
     InvocationSignal invocationSignal = signalCodec.decode(message.getBody(), 0, message.getBody().length, InvocationSignal.class);
 
     Instrument.with(InvocationWorker.class, LazyBuilder.instance(SpeedometerBuilder::new), new Tag("operation", "invoke"), new Tag("service", invocationSignal.getRoute().getService()), new Tag("method", invocationSignal.getRoute().getFunction().getName())).on(
-      () -> invocationCircuit.handle(responseTransport, signalCodec, getCallerId(message.getProperties().getHeaders()), message.getProperties().getMessageId(), invocationSignal)
+      () -> invocationCircuit.handle(responseTransmitter, signalCodec, getCallerId(message.getProperties().getHeaders()), message.getProperties().getMessageId(), invocationSignal)
     );
   }
 

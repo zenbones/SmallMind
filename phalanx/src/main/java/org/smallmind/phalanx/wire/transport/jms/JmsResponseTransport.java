@@ -45,6 +45,7 @@ import org.smallmind.claxon.registry.meter.LazyBuilder;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.transport.ClaxonTag;
+import org.smallmind.phalanx.wire.transport.ResponseTransmitter;
 import org.smallmind.phalanx.wire.transport.ResponseTransport;
 import org.smallmind.phalanx.wire.signal.ResultSignal;
 import org.smallmind.phalanx.wire.ServiceDefinitionException;
@@ -58,7 +59,7 @@ import org.smallmind.phalanx.worker.WorkManager;
 import org.smallmind.phalanx.worker.WorkQueue;
 import org.smallmind.phalanx.worker.WorkerFactory;
 
-public class JmsResponseTransport extends WorkManager<InvocationWorker, Message> implements WorkerFactory<InvocationWorker, Message>, ResponseTransport {
+public class JmsResponseTransport extends WorkManager<InvocationWorker, Message> implements WorkerFactory<InvocationWorker, Message>, ResponseTransport, ResponseTransmitter {
 
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final AtomicReference<TransportState> transportStateRef = new AtomicReference<>(TransportState.PLAYING);
