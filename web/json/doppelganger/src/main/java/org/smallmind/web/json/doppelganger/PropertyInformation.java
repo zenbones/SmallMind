@@ -44,6 +44,7 @@ public class PropertyInformation {
   private final TypeMirror as;
   private final TypeMirror type;
   private final String name;
+  private String comment;
   private final Boolean required;
   private final boolean virtual;
 
@@ -56,6 +57,7 @@ public class PropertyInformation {
     adapter = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "adapter", TypeMirror.class, null);
     as = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "as", TypeMirror.class, null);
     name = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "name", String.class, "");
+    comment = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "comment", String.class, "");
     required = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "required", Boolean.class, Boolean.FALSE) || idiomRequired;
   }
 
@@ -82,6 +84,11 @@ public class PropertyInformation {
   public String getName () {
 
     return name;
+  }
+
+  public String getComment () {
+
+    return comment;
   }
 
   public Iterable<ConstraintInformation> constraints () {

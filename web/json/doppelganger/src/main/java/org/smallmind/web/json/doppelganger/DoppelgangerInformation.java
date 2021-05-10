@@ -59,6 +59,7 @@ public class DoppelgangerInformation {
   private final HashMap<String, Visibility> fulfilledMap = new HashMap<>();
   private final String name;
   private final String namespace;
+  private final String comment;
   private final boolean serializable;
 
   public DoppelgangerInformation (ProcessingEnvironment processingEnvironment, UsefulTypeMirrors usefulTypeMirrors, DoppelgangerAnnotationProcessor doppelgangerAnnotationProcessor, TypeElement classElement, VisibilityTracker visibilityTracker, ClassTracker classTracker, AnnotationMirror doppelgangerAnnotationMirror)
@@ -69,6 +70,7 @@ public class DoppelgangerInformation {
     name = AptUtility.extractAnnotationValue(doppelgangerAnnotationMirror, "name", String.class, "");
     namespace = AptUtility.extractAnnotationValue(doppelgangerAnnotationMirror, "namespace", String.class, "http://org.smallmind/web/json/doppelganger");
     serializable = AptUtility.extractAnnotationValue(doppelgangerAnnotationMirror, "serializable", Boolean.class, false);
+    comment = AptUtility.extractAnnotationValue(doppelgangerAnnotationMirror, "comment", String.class, "");
 
     for (AnnotationMirror importAnnotationMirror : AptUtility.extractAnnotationValueAsList(doppelgangerAnnotationMirror, "imports", AnnotationMirror.class)) {
 
@@ -247,6 +249,11 @@ public class DoppelgangerInformation {
   public String getNamespace () {
 
     return namespace;
+  }
+
+  public String getComment () {
+
+    return comment;
   }
 
   public boolean isSerializable () {

@@ -68,4 +68,7 @@ public @interface Doppelganger {
   String namespace () default "http://org.smallmind/web/json/doppelganger";
 
   boolean serializable () default false;
+
+  // The text for a generated @Comment annotation
+  String comment () default "";
 }

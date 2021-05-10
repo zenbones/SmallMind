@@ -56,4 +56,7 @@ public @interface View {
 
   // if the xml element is required, may be overridden by an idiom if false
   boolean required () default false;
+
+  // The text for a generated @Comment annotation
+  String comment () default "";
 }

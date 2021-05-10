@@ -262,6 +262,10 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
         writer.newLine();
         writer.write("import org.smallmind.web.json.scaffold.util.As;");
         writer.newLine();
+        if ((!doppelgangerInformation.getComment().isEmpty()) || propertyLexicon.hasComment()) {
+          writer.write("import org.smallmind.web.json.scaffold.util.Comment;");
+          writer.newLine();
+        }
         if (!matchingSubClassList.isEmpty()) {
           writer.write("import org.smallmind.web.json.scaffold.util.XmlPolymorphicSubClasses;");
           writer.newLine();
@@ -294,6 +298,14 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
         writer.write(DoppelgangerAnnotationProcessor.class.getName());
         writer.write("\")");
         writer.newLine();
+
+        // @Comment
+        if (!doppelgangerInformation.getComment().isEmpty()) {
+          writer.write("@Comment(\"");
+          writer.write(doppelgangerInformation.getComment());
+          writer.write("\")");
+          writer.newLine();
+        }
 
         // @XmlRootElement
         if (!classElement.getModifiers().contains(Modifier.ABSTRACT)) {
@@ -651,6 +663,12 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
   private void writeGettersAndSetters (BufferedWriter writer, TypeElement classElement, String purpose, Direction direction, Map.Entry<String, PropertyInformation> propertyInformationEntry)
     throws IOException {
 
+    if (!propertyInformationEntry.getValue().getComment().isEmpty()) {
+      writer.write("  @Comment(\"");
+      writer.write(propertyInformationEntry.getValue().getComment());
+      writer.write("\")");
+      writer.newLine();
+    }
     if (propertyInformationEntry.getValue().getAs() != null) {
       writer.write("  @As(");
       writer.write(propertyInformationEntry.getValue().getAs().toString());

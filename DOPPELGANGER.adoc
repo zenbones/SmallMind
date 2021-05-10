@@ -56,6 +56,7 @@ Holds the base rules for generating the views of the annotated class. The follow
 * `Virtual[] virtual () default {}` - The list of virtual properties to be added to the view (see below).
 * `Real[] real () default {}` - The list of real properties to be added to the view (see below). These should be added via direct @View annotations, but sometimes that won't be possible and listing them via this property will make sense.
 * `Pledge[] pledges () default {}` - The list of conditions under which to guarantee a view is generated (only necessary when the view would otherwise not be generated, see below).
+* `String comment () default ""` - A notation passed into generated classes by annotating the generated types with a @Comment (see below) containing this text. If this value is left blank, then no @Comment will be generated.
 
 ==== @Polymorphic
 
@@ -127,6 +128,7 @@ Creates a 'virtual' property, which exists only in the generated views (and not 
 * `Class<? extends XmlAdapter> adapter () default NullXmlAdapter.class` - The XmlAdapter class, if any, to be used for encoding and decoding this property.
 * `Class<?> as () default Void.class` - A type hint for tools which may process Doppelganger generated views.
 * `boolean required () default false` - If the generated JSON element is required. If false, this may be overridden by the idioms (see above). Although an element may be marked as required, the enforcement of this is erratic at best. The use of a *NotNull* constraint is a far more persuasive argument.
+* `String comment () default ""` - A notation passed into generated classes by annotating the generated field with a @Comment (see below) containing this text. If this value is left blank, then no @Comment will be generated.
 
 ==== @Real
 
@@ -139,6 +141,7 @@ Creates a reference to a 'real' property of the annotated class. The better way 
 * `Class<? extends XmlAdapter> adapter () default NullXmlAdapter.class` - The XmlAdapter class, if any, to be used for encoding and decoding this property.
 * `Class<?> as () default Void.class` - A type hint for tools which may process Doppelganger generated views.
 * `boolean required () default false` - If the generated JSON element is required. If false, this may be overridden by the idioms (see above). Although an element may be marked as required, the enforcement of this is erratic at best. The use of a *NotNull* constraint is a far more persuasive argument.
+* `String comment () default ""` - A notation passed into generated classes by annotating the generated field with a @Comment (see below) containing this text. If this value is left blank, then no @Comment will be generated.
 
 ===== @Type
 
@@ -174,6 +177,14 @@ Creates a 'view' property, and determines how the annotated field is represented
 * `Class<? extends XmlAdapter> adapter () default NullXmlAdapter.class` - The XmlAdapter class, if any, to be used for encoding and decoding this property.
 * `Class<?> as () default Void.class` - A type hint for tools which may process Doppelganger generated views.
 * `boolean required () default false` - Marks the generated JSON element as required (with all the issues previously noted).
+* `String comment () default ""` - A notation passed into generated classes by annotating the generated field with a @Comment (see below) containing this text. If this value is left blank, then no @Comment will be generated.
+
+[[doppelganger-comment, Comment]]
+=== @Comment
+
+Simply holds a string which may be used by other tools creation automated descriptions of the annotated entities.
+
+* `String value () default ""` - The text of the comment.
 
 == In The Wild
 

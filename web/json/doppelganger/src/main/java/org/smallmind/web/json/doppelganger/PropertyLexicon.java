@@ -60,6 +60,28 @@ public class PropertyLexicon {
     return !virtualMap.isEmpty();
   }
 
+  public boolean hasComment () {
+
+    if (!realMap.isEmpty()) {
+      for (PropertyInformation propertyInformation : realMap.values()) {
+        if (!propertyInformation.getComment().isEmpty()) {
+
+          return true;
+        }
+      }
+    }
+    if (!virtualMap.isEmpty()) {
+      for (PropertyInformation propertyInformation : virtualMap.values()) {
+        if (!propertyInformation.getComment().isEmpty()) {
+
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
   public boolean containsKey (String key) {
 
     return realMap.containsKey(key) || virtualMap.containsKey(key);
