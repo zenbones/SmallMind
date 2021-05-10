@@ -42,4 +42,7 @@ import java.lang.annotation.Target;
 public @interface EntityParam {
 
   String value ();
+
+  // Useful for documentation generating tools
+  String comment () default "";
 }
