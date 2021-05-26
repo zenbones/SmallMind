@@ -180,14 +180,10 @@ public class ComponentParser {
             index++;
             break;
           case END_SUBSCRIPT:
-            switch (methodChain.charAt(index)) {
-              case '.':
-                state = State.START_COMPONENT;
-                break;
-              default:
-                if (!Character.isWhitespace(methodChain.charAt(index))) {
-                  throw new BeanAccessException("Illegal start of component at index(%d) in method chain(%s)", index, methodChain);
-                }
+            if (methodChain.charAt(index) == '.') {
+              state = State.START_COMPONENT;
+            } else if (!Character.isWhitespace(methodChain.charAt(index))) {
+              throw new BeanAccessException("Illegal start of component at index(%d) in method chain(%s)", index, methodChain);
             }
             index++;
             break;
