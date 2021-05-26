@@ -38,7 +38,7 @@ import org.smallmind.nutsnbolts.reflection.bean.BeanAccessException;
 
 public class ComponentParser {
 
-  private enum State {START_COMPONENT, START_METHOD_NAME, METHOD_NAME, END_METHOD_NAME, START_PARAMETERS, PARAMETERS, STRING, ESCAPE, END_PARAMETERS, START_SUBSCRIPT, SUBSCRIPT}
+  private enum State {START_COMPONENT, START_METHOD_NAME, METHOD_NAME, END_METHOD_NAME, START_PARAMETERS, PARAMETERS, STRING, ESCAPE, END_PARAMETERS, START_SUBSCRIPT, END_SUBSCRIPT}
 
   public static PathComponent[] parse (String methodChain)
     throws BeanAccessException {
@@ -86,6 +86,7 @@ public class ComponentParser {
               case '[':
                 state = State.START_SUBSCRIPT;
                 component = new PathComponent(methodChain.substring(mark, index));
+                mark = index + 1;
                 break;
               default:
                 if (Character.isWhitespace(methodChain.charAt(index))) {
@@ -106,6 +107,7 @@ public class ComponentParser {
                 state = State.START_PARAMETERS;
                 break;
               case '[':
+                mark = index + 1;
                 state = State.START_SUBSCRIPT;
                 break;
               default:
@@ -156,32 +158,36 @@ public class ComponentParser {
                 state = State.START_COMPONENT;
                 break;
               case '[':
+                mark = index + 1;
                 state = State.START_SUBSCRIPT;
                 break;
               default:
                 if (!Character.isWhitespace(methodChain.charAt(index))) {
-                  throw new BeanAccessException("Illegal java identifier at index(%d) in method chain(%s)", index, methodChain);
+                  throw new BeanAccessException("Illegal start of component at index(%d) in method chain(%s)", index, methodChain);
                 }
             }
             index++;
             break;
           case START_SUBSCRIPT:
-            if (Character.isDigit(methodChain.charAt(index))) {
-              mark = index;
-              state = State.SUBSCRIPT;
-            } else if (!Character.isWhitespace(methodChain.charAt(index))) {
-              throw new BeanAccessException("Illegal subscript at index(%d) in method chain(%s)", index, methodChain);
-            }
-            index++;
-            break;
-          case SUBSCRIPT:
             if (methodChain.charAt(index) == ']') {
               try {
-                component.addSubscript(methodChain.substring(mark, index));
+                component.addSubscript(methodChain.substring(mark, index).trim());
               } catch (NumberFormatException numberFormatException) {
                 throw new BeanAccessException("Illegal subscript at index(%d) in method chain(%s)", mark, methodChain);
               }
-              state = State.END_PARAMETERS;
+              state = State.END_SUBSCRIPT;
+            }
+            index++;
+            break;
+          case END_SUBSCRIPT:
+            switch (methodChain.charAt(index)) {
+              case '.':
+                state = State.START_COMPONENT;
+                break;
+              default:
+                if (!Character.isWhitespace(methodChain.charAt(index))) {
+                  throw new BeanAccessException("Illegal start of component at index(%d) in method chain(%s)", index, methodChain);
+                }
             }
             index++;
             break;
@@ -202,6 +208,9 @@ public class ComponentParser {
           componentList.add(component);
           break;
         case END_PARAMETERS:
+          componentList.add(component);
+          break;
+        case END_SUBSCRIPT:
           componentList.add(component);
           break;
         default:
