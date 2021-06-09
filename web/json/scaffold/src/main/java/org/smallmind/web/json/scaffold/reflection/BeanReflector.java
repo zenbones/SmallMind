@@ -44,7 +44,7 @@ import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public class BeanReflector {
 
-  public Object get (Object target, String methodChain)
+  public static Object get (Object target, String methodChain)
     throws BeanAccessException {
 
     PathComponent[] components = ComponentParser.parse(methodChain);
@@ -56,7 +56,7 @@ public class BeanReflector {
     return applySubscripts(executeGetter(traverse(target, components), components[components.length - 1].getName()), components[components.length - 1].getSubscripts());
   }
 
-  public Object set (Object target, String methodChain, Object value)
+  public static Object set (Object target, String methodChain, Object value)
     throws BeanAccessException {
 
     PathComponent[] components = ComponentParser.parse(methodChain);
@@ -68,7 +68,7 @@ public class BeanReflector {
     return executeSetter(traverse(target, components), components[components.length - 1].getName(), components[components.length - 1].getSubscripts(), value);
   }
 
-  public Object apply (Object target, String methodChain, Object... values)
+  public static Object apply (Object target, String methodChain, Object... values)
     throws BeanAccessException {
 
     PathComponent[] components = ComponentParser.parse(methodChain);
@@ -80,7 +80,7 @@ public class BeanReflector {
     return applySubscripts(executeMethod(traverse(target, components), components[components.length - 1].getName(), values), components[components.length - 1].getSubscripts());
   }
 
-  private Object traverse (Object target, PathComponent[] components)
+  private static Object traverse (Object target, PathComponent[] components)
     throws BeanAccessException {
 
     Object currentTarget = target;
@@ -92,7 +92,7 @@ public class BeanReflector {
     return currentTarget;
   }
 
-  private Object executeGetterOrMethod (Object target, PathComponent component)
+  private static Object executeGetterOrMethod (Object target, PathComponent component)
     throws BeanAccessException {
 
     if (component.getArguments() != null) {
@@ -104,7 +104,7 @@ public class BeanReflector {
     }
   }
 
-  private Object executeGetter (Object target, String name)
+  private static Object executeGetter (Object target, String name)
     throws BeanAccessException {
 
     if (target == null) {
@@ -154,7 +154,7 @@ public class BeanReflector {
     }
   }
 
-  private Object executeSetter (Object target, String name, int[] subscripts, Object value)
+  private static Object executeSetter (Object target, String name, int[] subscripts, Object value)
     throws BeanAccessException {
 
     if (target == null) {
@@ -210,7 +210,7 @@ public class BeanReflector {
     return null;
   }
 
-  private Object applyIndexedValue (Object target, String name, int[] subscripts, Object value)
+  private static Object applyIndexedValue (Object target, String name, int[] subscripts, Object value)
     throws BeanAccessException {
 
     Object currentValue = executeGetter(target, name);
@@ -232,7 +232,7 @@ public class BeanReflector {
     }
   }
 
-  private Object executeMethod (Object target, String name, Object[] arguments)
+  private static Object executeMethod (Object target, String name, Object[] arguments)
     throws BeanAccessException {
 
     if (target == null) {
@@ -277,7 +277,7 @@ public class BeanReflector {
     }
   }
 
-  private Object applySubscripts (Object value, int[] subscripts)
+  private static Object applySubscripts (Object value, int[] subscripts)
     throws BeanAccessException {
 
     Object indexedValue = value;
@@ -301,7 +301,7 @@ public class BeanReflector {
     return indexedValue;
   }
 
-  private String indexToNth (int index) {
+  private static String indexToNth (int index) {
 
     switch (index) {
       case 0:
