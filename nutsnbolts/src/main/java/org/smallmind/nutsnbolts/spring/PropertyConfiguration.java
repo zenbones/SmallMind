@@ -32,9 +32,23 @@
  */
 package org.smallmind.nutsnbolts.spring;
 
-public class PropertyConfiguration {
+import org.springframework.core.PriorityOrdered;
+
+public class PropertyConfiguration implements PriorityOrdered {
 
   private String[] locations;
+  private int order;
+
+  @Override
+  public int getOrder () {
+
+    return order;
+  }
+
+  public void setOrder (int order) {
+
+    this.order = order;
+  }
 
   public String[] getLocations () {
 
