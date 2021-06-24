@@ -34,10 +34,15 @@ package org.smallmind.nutsnbolts.spring;
 
 public class PropertyConfiguration {
 
-  private String location;
+  private String[] locations;
 
-  public void setLocation (String location) {
+  public String[] getLocations () {
 
-    this.location = location;
+    return locations;
+  }
+
+  public void setLocations (String[] locations) {
+
+    this.locations = locations;
   }
 }

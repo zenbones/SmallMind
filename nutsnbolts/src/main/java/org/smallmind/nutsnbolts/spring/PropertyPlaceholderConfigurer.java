@@ -65,6 +65,7 @@ import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.config.TypedStringValue;
 import org.springframework.beans.factory.support.BeanDefinitionValidationException;
+import org.springframework.beans.factory.support.ManagedList;
 import org.springframework.core.PriorityOrdered;
 
 public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, BeanFactoryAware, BeanNameAware, PriorityOrdered {
@@ -164,18 +165,36 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
 
         PropertyValue propertyValue;
 
-        if ((propertyValue = beanDefinition.getPropertyValues().getPropertyValue("location")) == null) {
-          throw new BeanDefinitionValidationException("The property configuration bean(" + beanName + ") is missing its 'location' property");
+        if ((propertyValue = beanDefinition.getPropertyValues().getPropertyValue("locations")) == null) {
+          throw new BeanDefinitionValidationException("The property configuration bean(" + beanName + ") is missing its 'locations' property");
         } else {
 
           Object value;
 
           if ((value = propertyValue.getValue()) == null) {
-            throw new BeanDefinitionValidationException("The property configuration bean(" + beanName + ") is missing its 'location' property");
-          } else if (!(value instanceof TypedStringValue)) {
-            throw new BeanDefinitionValidationException("The 'location' property for the bean(" + beanName + ") could not be parsed");
-          } else if (!locations.contains(((TypedStringValue)value).getValue())) {
-            locations.add(((TypedStringValue)value).getValue());
+            throw new BeanDefinitionValidationException("The property configuration bean(" + beanName + ") is missing its 'locations' property");
+          } else if (value instanceof TypedStringValue) {
+
+            String additionalLocation = ((TypedStringValue)value).getValue();
+
+            if (!locations.contains(additionalLocation)) {
+              locations.add(additionalLocation);
+            }
+          } else if (value instanceof ManagedList) {
+            for (Object childValue : (ManagedList<?>)value) {
+              if (childValue instanceof TypedStringValue) {
+
+                String additionalLocation = ((TypedStringValue)childValue).getValue();
+
+                if (!locations.contains(additionalLocation)) {
+                  locations.add(additionalLocation);
+                }
+              } else {
+                throw new BeanDefinitionValidationException("The property configuration bean(" + beanName + ") is missing its 'locations' property");
+              }
+            }
+          } else {
+            throw new BeanDefinitionValidationException("The 'locations' property for the bean(" + beanName + ") could not be parsed");
           }
         }
       }
