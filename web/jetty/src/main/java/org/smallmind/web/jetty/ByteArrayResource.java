@@ -35,7 +35,7 @@ package org.smallmind.web.jetty;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
-import java.net.URL;
+import java.net.URI;
 import java.nio.channels.ReadableByteChannel;
 import org.eclipse.jetty.util.resource.Resource;
 
@@ -84,7 +84,7 @@ public class ByteArrayResource extends Resource {
   }
 
   @Override
-  public URL getURL () {
+  public URI getURI () {
 
     return null;
   }

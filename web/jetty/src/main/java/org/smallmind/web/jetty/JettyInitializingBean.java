@@ -38,7 +38,8 @@ import java.util.EnumSet;
 import java.util.LinkedList;
 import java.util.Map;
 import javax.servlet.DispatcherType;
-import javax.servlet.ServletException;
+import javax.servlet.ServletContext;
+import javax.websocket.server.ServerContainer;
 import javax.xml.ws.Endpoint;
 import com.sun.net.httpserver.HttpContext;
 import org.eclipse.jetty.http.HttpVersion;
@@ -59,7 +60,7 @@ import org.eclipse.jetty.util.resource.PathResource;
 import org.eclipse.jetty.util.resource.Resource;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
-import org.eclipse.jetty.websocket.jsr356.server.deploy.WebSocketServerContainerInitializer;
+import org.eclipse.jetty.websocket.javax.server.config.JavaxWebSocketServletContainerInitializer;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.smallmind.nutsnbolts.lang.web.PerApplicationContextFilter;
 import org.smallmind.nutsnbolts.resource.ResourceException;
@@ -220,7 +221,7 @@ public class JettyInitializingBean implements DisposableBean, ApplicationContext
     if (sslInfo != null) {
 
       ServerConnector sslConnector;
-      SslContextFactory sslContextFactory = new SslContextFactory.Server();
+      SslContextFactory.Server sslContextFactory = new SslContextFactory.Server();
       HttpConfiguration httpsConfig = new HttpConfiguration(httpConfig);
 
       httpsConfig.setSecureScheme("https");
@@ -241,7 +242,7 @@ public class JettyInitializingBean implements DisposableBean, ApplicationContext
         throw new JettyInitializationException(exception);
       }
 
-      sslConnector = new ServerConnector(server, new SslConnectionFactory(sslContextFactory, HttpVersion.HTTP_1_1.asString()), new HttpConnectionFactory(httpsConfig));
+      sslConnector = new ServerConnector(server, sslContextFactory, new SslConnectionFactory(HttpVersion.HTTP_2.asString()), new HttpConnectionFactory(httpsConfig));
       sslConnector.setHost(host);
       sslConnector.setPort(sslInfo.getPort());
 
@@ -374,11 +375,7 @@ public class JettyInitializingBean implements DisposableBean, ApplicationContext
       }
 
       if (webSocketOption != null) {
-        try {
-          WebSocketServerContainerInitializer.initialize(servletContextHandler).setDefaultMaxSessionIdleTimeout(webSocketOption.getMaxSessionIdleTimeout());
-        } catch (ServletException servletException) {
-          throw new JettyInitializationException(servletException);
-        }
+        JavaxWebSocketServletContainerInitializer.configure(servletContextHandler, (servletContext, serverContainer) -> serverContainer.setDefaultMaxSessionIdleTimeout(webSocketOption.getMaxSessionIdleTimeout()));
       }
 
       contextHandlerCollection.addHandler(servletContextHandler);
