@@ -32,7 +32,7 @@
  */
 package org.smallmind.claxon.emitter.datadog;
 
-import com.timgroup.statsd.NonBlockingStatsDClient;
+import com.timgroup.statsd.NonBlockingStatsDClientBuilder;
 import com.timgroup.statsd.StatsDClient;
 import org.smallmind.claxon.registry.PushEmitter;
 import org.smallmind.claxon.registry.Quantity;
@@ -53,7 +53,7 @@ public class DataDogEmitter extends PushEmitter {
 
     this.countAsCount = countAsCount;
 
-    statsdClient = new NonBlockingStatsDClient(prefix, hostName, port, translateTags(constantTags));
+    statsdClient = new NonBlockingStatsDClientBuilder().prefix(prefix).hostname(hostName).port(port).constantTags(translateTags(constantTags)).build();
   }
 
   @Override
