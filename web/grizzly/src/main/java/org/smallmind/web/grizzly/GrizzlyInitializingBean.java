@@ -382,15 +382,15 @@ public class GrizzlyInitializingBean implements InitializingBean, DisposableBean
     ServicePath servicePath;
 
     if (bean instanceof WebSocketExtensionInstaller) {
-      webAppStateFor(((WebSocketExtensionInstaller)bean).getContext()).addWebSocketExtensionInstaller((WebSocketExtensionInstaller)bean);
+      webAppStateFor(((WebSocketExtensionInstaller)bean).getContextPath()).addWebSocketExtensionInstaller((WebSocketExtensionInstaller)bean);
     } else if (bean instanceof ListenerInstaller) {
-      webAppStateFor(((ListenerInstaller)bean).getContext()).addListenerInstaller((ListenerInstaller)bean);
+      webAppStateFor(((ListenerInstaller)bean).getContextPath()).addListenerInstaller((ListenerInstaller)bean);
     } else if (bean instanceof FilterInstaller) {
-      webAppStateFor(((FilterInstaller)bean).getContext()).addFilterInstaller((FilterInstaller)bean);
+      webAppStateFor(((FilterInstaller)bean).getContextPath()).addFilterInstaller((FilterInstaller)bean);
     } else if (bean instanceof ServletInstaller) {
-      webAppStateFor(((ServletInstaller)bean).getContext()).addServletInstaller((ServletInstaller)bean);
+      webAppStateFor(((ServletInstaller)bean).getContextPath()).addServletInstaller((ServletInstaller)bean);
     } else if ((servicePath = bean.getClass().getAnnotation(ServicePath.class)) != null) {
-      webAppStateFor(servicePath.context()).addWebServiceInstaller(new WebServiceInstaller(servicePath.value(), bean));
+      webAppStateFor(servicePath.contextPath()).addWebServiceInstaller(new WebServiceInstaller(servicePath.value(), bean));
     }
 
     return bean;

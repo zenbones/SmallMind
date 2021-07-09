@@ -43,5 +43,5 @@ public @interface ServicePath {
 
   String value ();
 
-  String context ();
+  String contextPath ();
 }

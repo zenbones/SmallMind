@@ -34,17 +34,17 @@ package org.smallmind.web.jetty.installer;
 
 public abstract class JettyInstaller {
 
-  private String context;
+  private String contextPath;
 
   public abstract JettyInstallerType getOptionType ();
 
-  public String getContext () {
+  public String getContextPath () {
 
-    return context;
+    return contextPath;
   }
 
-  public void setContext (String context) {
+  public void setContextPath (String contextPath) {
 
-    this.context = context;
+    this.contextPath = contextPath;
   }
 }
