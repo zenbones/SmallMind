@@ -34,7 +34,7 @@ package org.smallmind.web.grizzly.option;
 
 import java.util.Map;
 
-public class DocumentRootOption implements GrizzlyOption {
+public class DocumentRootOption {
 
   private Map<String, String> documentRoots;
   private String documentPath = "/document";

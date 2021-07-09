@@ -32,6 +32,6 @@
  */
 package org.smallmind.web.grizzly.option;
 
-public class SpringSupportOption implements GrizzlyOption {
+public class SpringSupportOption {
 
 }

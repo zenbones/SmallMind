@@ -30,75 +30,39 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jetty;
+package org.smallmind.web.grizzly.installer;
 
-import java.util.Map;
-import javax.servlet.Filter;
+// @ServicePath(value="/<service Uri>", context="/context")
+public class WebServiceInstaller {
 
-public class FilterInstaller {
-
-  private Filter filter;
-  private Class<? extends Filter> filterClass;
-  private Map<String, String> initParameters;
-  private String displayName;
-  private String urlPattern;
+  private String path;
+  private Object service;
   private Boolean asyncSupported;
-  private boolean matchAfter = false;
 
-  public String getDisplayName () {
+  public WebServiceInstaller (String path, Object service) {
 
-    return displayName;
+    this.path = path;
+    this.service = service;
   }
 
-  public void setDisplayName (String displayName) {
+  public String getPath () {
 
-    this.displayName = displayName;
+    return path;
   }
 
-  public Filter getFilter ()
-    throws InstantiationException, IllegalAccessException {
+  public void setPath (String path) {
 
-    return (filter != null) ? filter : filterClass.newInstance();
+    this.path = path;
   }
 
-  public void setFilter (Filter filter) {
+  public Object getService () {
 
-    this.filter = filter;
+    return service;
   }
 
-  public void setFilterClass (Class<? extends Filter> filterClass) {
+  public void setService (Object service) {
 
-    this.filterClass = filterClass;
-  }
-
-  public Map<String, String> getInitParameters () {
-
-    return initParameters;
-  }
-
-  public void setInitParameters (Map<String, String> initParameters) {
-
-    this.initParameters = initParameters;
-  }
-
-  public boolean isMatchAfter () {
-
-    return matchAfter;
-  }
-
-  public void setMatchAfter (boolean matchAfter) {
-
-    this.matchAfter = matchAfter;
-  }
-
-  public String getUrlPattern () {
-
-    return urlPattern;
-  }
-
-  public void setUrlPattern (String urlPattern) {
-
-    this.urlPattern = urlPattern;
+    this.service = service;
   }
 
   public Boolean getAsyncSupported () {

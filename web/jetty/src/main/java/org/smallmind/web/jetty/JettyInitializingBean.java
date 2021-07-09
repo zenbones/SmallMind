@@ -35,7 +35,7 @@ package org.smallmind.web.jetty;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.EnumSet;
-import java.util.LinkedList;
+import java.util.HashMap;
 import java.util.Map;
 import javax.servlet.DispatcherType;
 import javax.servlet.ServletException;
@@ -67,35 +67,27 @@ import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.web.jersey.spring.ExposedApplicationContext;
 import org.smallmind.web.jersey.spring.JerseyResourceConfig;
 import org.smallmind.web.jersey.spring.ResourceConfigExtension;
-import org.smallmind.web.jetty.option.ClassLoaderResourceOption;
-import org.smallmind.web.jetty.option.DocumentRootOption;
-import org.smallmind.web.jetty.option.JaxRSOption;
-import org.smallmind.web.jetty.option.SpringSupportOption;
-import org.smallmind.web.jetty.option.WebSocketOption;
+import org.smallmind.web.jetty.installer.FilterInstaller;
+import org.smallmind.web.jetty.installer.ListenerInstaller;
+import org.smallmind.web.jetty.installer.ServletInstaller;
+import org.smallmind.web.jetty.installer.WebServiceInstaller;
+import org.smallmind.web.jetty.option.WebApplicationOption;
 import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 
-public class JettyInitializingBean implements DisposableBean, ApplicationContextAware, ApplicationListener<ContextRefreshedEvent>, BeanPostProcessor {
+public class JettyInitializingBean implements InitializingBean, DisposableBean, ApplicationContextAware, ApplicationListener<ContextRefreshedEvent>, BeanPostProcessor {
 
-  private final LinkedList<WebServiceInstaller> webServiceInstallerList = new LinkedList<>();
-  private final LinkedList<ListenerInstaller> listenerInstallerList = new LinkedList<>();
-  private final LinkedList<FilterInstaller> filterInstallerList = new LinkedList<>();
-  private final LinkedList<ServletInstaller> servletInstallerList = new LinkedList<>();
+  private final HashMap<String, JettyWebAppState> webAppStateMap = new HashMap<>();
   private Server server;
   private ResourceConfigExtension[] resourceConfigExtensions;
-  private ClassLoaderResourceOption classLoaderResourceOption;
-  private DocumentRootOption documentRootOption;
-  private JaxRSOption jaxRSOption;
-  private SpringSupportOption springSupportOption;
-  private WebSocketOption webSocketOption;
+  private WebApplicationOption[] webApplicationOptions;
   private SSLInfo sslInfo;
   private String host;
-  private String contextPath = "/context";
-  private String soapPath = "/soap";
   private Integer maxHttpHeaderSize;
   private Integer initialWorkerPoolSize;
   private Integer maximumWorkerPoolSize;
@@ -113,49 +105,19 @@ public class JettyInitializingBean implements DisposableBean, ApplicationContext
     this.port = port;
   }
 
-  public void setClassLoaderResourceOption (ClassLoaderResourceOption classLoaderResourceOption) {
-
-    this.classLoaderResourceOption = classLoaderResourceOption;
-  }
-
-  public void setDocumentRootOption (DocumentRootOption documentRootOption) {
-
-    this.documentRootOption = documentRootOption;
-  }
-
-  public void setJaxRSOption (JaxRSOption jaxRSOption) {
-
-    this.jaxRSOption = jaxRSOption;
-  }
-
-  public void setSpringSupportOption (SpringSupportOption springSupportOption) {
-
-    this.springSupportOption = springSupportOption;
-  }
-
-  public void setWebSocketOption (WebSocketOption webSocketOption) {
-
-    this.webSocketOption = webSocketOption;
-  }
-
   public void setSslInfo (SSLInfo sslInfo) {
 
     this.sslInfo = sslInfo;
   }
 
-  public void setContextPath (String contextPath) {
-
-    this.contextPath = normalizePath(contextPath);
-  }
-
-  public void setSoapPath (String soapPath) {
-
-    this.soapPath = normalizePath(soapPath);
-  }
-
   public void setResourceConfigExtensions (ResourceConfigExtension[] resourceConfigExtensions) {
 
     this.resourceConfigExtensions = resourceConfigExtensions;
+  }
+
+  public void setWebApplicationOptions (WebApplicationOption[] webApplicationOptions) {
+
+    this.webApplicationOptions = webApplicationOptions;
   }
 
   public void setInitialWorkerPoolSize (Integer initialWorkerPoolSize) {
@@ -181,6 +143,35 @@ public class JettyInitializingBean implements DisposableBean, ApplicationContext
   public void setDebug (boolean debug) {
 
     this.debug = debug;
+  }
+
+  @Override
+  public void afterPropertiesSet () {
+
+    for (WebApplicationOption webApplicationOption : webApplicationOptions) {
+      if (webAppStateMap.containsKey(webApplicationOption.getContextPath())) {
+        throw new JettyInitializationException("Duplicate context paths(%s) are not allowed", webApplicationOption.getContextPath());
+      } else {
+        webAppStateMap.put(webApplicationOption.getContextPath(), new JettyWebAppState());
+      }
+    }
+  }
+
+  private JettyWebAppState webAppStateFor (String context) {
+
+    if ((context == null) || context.isEmpty()) {
+      throw new JettyInitializationException("Missing context path");
+    } else {
+
+      JettyWebAppState webAppState;
+
+      if ((webAppState = webAppStateMap.get(context)) == null) {
+        throw new JettyInitializationException("The context path(%s) was not properly initialized", context);
+      } else {
+
+        return webAppState;
+      }
+    }
   }
 
   @Override
@@ -261,127 +252,132 @@ public class JettyInitializingBean implements DisposableBean, ApplicationContext
 
     server.setHandler(contextHandlerCollection);
 
-    if (classLoaderResourceOption != null) {
+    for (WebApplicationOption webApplicationOption : webApplicationOptions) {
 
-      ContextHandler staticContextHandler = new ContextHandler(combinePaths(contextPath, classLoaderResourceOption.getStaticPath()));
-      ResourceHandler staticResourceHandler = new ResourceHandler();
+      JettyWebAppState webAppState = webAppStateFor(webApplicationOption.getContextPath());
 
-      staticResourceHandler.setBaseResource(Resource.newClassPathResource("/"));
-      staticContextHandler.setHandler(staticResourceHandler);
-      contextHandlerCollection.addHandler(staticContextHandler);
-    }
+      if (webApplicationOption.getClassLoaderResourceOption() != null) {
 
-    if (documentRootOption != null) {
-      for (Map.Entry<String, String> documentRootEntry : documentRootOption.getDocumentRoots().entrySet()) {
+        ContextHandler staticContextHandler = new ContextHandler(combinePaths(webApplicationOption.getContextPath(), webApplicationOption.getClassLoaderResourceOption().getStaticPath()));
+        ResourceHandler staticResourceHandler = new ResourceHandler();
 
-        ContextHandler documentContextHandler = new ContextHandler(combinePaths(combinePaths(contextPath, documentRootOption.getDocumentPath()), normalizePath(documentRootEntry.getKey())));
-        ResourceHandler documentResourceHandler = new ResourceHandler();
-
-        documentResourceHandler.setBaseResource(new PathResource(Paths.get(documentRootEntry.getValue())));
-        documentContextHandler.setHandler(documentContextHandler);
-
-        contextHandlerCollection.addHandler(documentContextHandler);
+        staticResourceHandler.setBaseResource(Resource.newClassPathResource("/"));
+        staticContextHandler.setHandler(staticResourceHandler);
+        contextHandlerCollection.addHandler(staticContextHandler);
       }
-    }
 
-    if (!webServiceInstallerList.isEmpty()) {
+      if (webApplicationOption.getDocumentRootOption() != null) {
+        for (Map.Entry<String, String> documentRootEntry : webApplicationOption.getDocumentRootOption().getDocumentRoots().entrySet()) {
 
-      JettyHttpServer jettyHttpServer = new JettyHttpServer(server, true);
+          ContextHandler documentContextHandler = new ContextHandler(combinePaths(combinePaths(webApplicationOption.getContextPath(), webApplicationOption.getDocumentRootOption().getDocumentPath()), normalizePath(documentRootEntry.getKey())));
+          ResourceHandler documentResourceHandler = new ResourceHandler();
 
-      for (WebServiceInstaller webServiceInstaller : webServiceInstallerList) {
+          documentResourceHandler.setBaseResource(new PathResource(Paths.get(documentRootEntry.getValue())));
+          documentContextHandler.setHandler(documentContextHandler);
 
-        HttpContext httpContext = jettyHttpServer.createContext(combinePaths(combinePaths(contextPath, soapPath), normalizePath(webServiceInstaller.getPath())));
-        Endpoint endpoint = Endpoint.create(webServiceInstaller.getService());
-
-        endpoint.publish(httpContext);
-      }
-    }
-
-    if ((!listenerInstallerList.isEmpty()) || (!filterInstallerList.isEmpty()) || (!servletInstallerList.isEmpty()) || (jaxRSOption != null) || (springSupportOption != null) || (webSocketOption != null)) {
-
-      ServletContextHandler servletContextHandler = new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
-
-      servletContextHandler.setContextPath(contextPath);
-
-      for (ListenerInstaller listenerInstaller : listenerInstallerList) {
-        try {
-          servletContextHandler.addEventListener(listenerInstaller.getListener());
-        } catch (IllegalAccessException | InstantiationException exception) {
-          throw new JettyInitializationException(exception);
-        }
-      }
-      for (FilterInstaller filterInstaller : filterInstallerList) {
-        try {
-
-          FilterHolder filterHolder = new FilterHolder(filterInstaller.getFilter());
-          String urlPattern;
-
-          filterHolder.setName(filterInstaller.getDisplayName());
-          filterHolder.setDisplayName(filterInstaller.getDisplayName());
-          if (filterInstaller.getAsyncSupported() != null) {
-            filterHolder.setAsyncSupported(filterInstaller.getAsyncSupported());
-          }
-          if (filterInstaller.getInitParameters() != null) {
-            filterHolder.setInitParameters(filterInstaller.getInitParameters());
-          }
-
-          servletContextHandler.addFilter(filterHolder, ((urlPattern = filterInstaller.getUrlPattern()) == null) ? "/*" : urlPattern, EnumSet.of(DispatcherType.REQUEST));
-        } catch (IllegalAccessException | InstantiationException exception) {
-          throw new JettyInitializationException(exception);
-        }
-      }
-      for (ServletInstaller servletInstaller : servletInstallerList) {
-        try {
-
-          ServletHolder servletHolder = new ServletHolder(servletInstaller.getServlet());
-          String urlPattern;
-
-          servletHolder.setName(servletInstaller.getDisplayName());
-          servletHolder.setDisplayName(servletInstaller.getDisplayName());
-          if (servletInstaller.getLoadOnStartup() != null) {
-            servletHolder.setInitOrder(servletInstaller.getLoadOnStartup());
-          }
-          if (servletInstaller.getAsyncSupported() != null) {
-            servletHolder.setAsyncSupported(servletInstaller.getAsyncSupported());
-          }
-          if (servletInstaller.getInitParameters() != null) {
-            servletHolder.setInitParameters(servletInstaller.getInitParameters());
-          }
-
-          servletContextHandler.addServlet(servletHolder, ((urlPattern = servletInstaller.getUrlPattern()) == null) ? "/*" : urlPattern);
-        } catch (IllegalAccessException | InstantiationException exception) {
-          throw new JettyInitializationException(exception);
+          contextHandlerCollection.addHandler(documentContextHandler);
         }
       }
 
-      if (jaxRSOption != null) {
+      if (!webAppState.getWebServiceInstallerList().isEmpty()) {
 
-        ServletHolder jerseyServletHolder = new ServletHolder(new ServletContainer(new JerseyResourceConfig(ExposedApplicationContext.getApplicationContext(), resourceConfigExtensions)));
-        FilterHolder jerseyFilterHolder = new FilterHolder(new PerApplicationContextFilter());
+        JettyHttpServer jettyHttpServer = new JettyHttpServer(server, true);
 
-        jerseyServletHolder.setName("JAX-RS Application");
-        jerseyServletHolder.setDisplayName("JAX-RS Application");
+        for (WebServiceInstaller webServiceInstaller : webAppState.getWebServiceInstallerList()) {
 
-        jerseyFilterHolder.setName("per-application-data");
-        jerseyFilterHolder.setDisplayName("per-application-data");
+          HttpContext httpContext = jettyHttpServer.createContext(combinePaths(combinePaths(webApplicationOption.getContextPath(), webApplicationOption.getSoapPath()), normalizePath(webServiceInstaller.getPath())));
+          Endpoint endpoint = Endpoint.create(webServiceInstaller.getService());
 
-        servletContextHandler.addServlet(jerseyServletHolder, jaxRSOption.getRestPath() + "/*");
-        servletContextHandler.addFilter(jerseyFilterHolder, jaxRSOption.getRestPath() + "/*", EnumSet.of(DispatcherType.REQUEST));
-      }
-
-      if (springSupportOption != null) {
-        servletContextHandler.addEventListener(new JettyRequestContextListener());
-      }
-
-      if (webSocketOption != null) {
-        try {
-          WebSocketServerContainerInitializer.initialize(servletContextHandler).setDefaultMaxSessionIdleTimeout(webSocketOption.getMaxSessionIdleTimeout());
-        } catch (ServletException servletException) {
-          throw new JettyInitializationException(servletException);
+          endpoint.publish(httpContext);
         }
       }
 
-      contextHandlerCollection.addHandler(servletContextHandler);
+      if ((!webAppState.getListenerInstallerList().isEmpty()) || (!webAppState.getFilterInstallerList().isEmpty()) || (!webAppState.getServletInstallerList().isEmpty()) || (webApplicationOption.getJaxRSOption() != null) || (webApplicationOption.getSpringSupportOption() != null) || (webApplicationOption.getWebSocketOption() != null)) {
+
+        ServletContextHandler servletContextHandler = new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
+
+        servletContextHandler.setContextPath(webApplicationOption.getContextPath());
+
+        for (ListenerInstaller listenerInstaller : webAppState.getListenerInstallerList()) {
+          try {
+            servletContextHandler.addEventListener(listenerInstaller.getListener());
+          } catch (IllegalAccessException | InstantiationException exception) {
+            throw new JettyInitializationException(exception);
+          }
+        }
+        for (FilterInstaller filterInstaller : webAppState.getFilterInstallerList()) {
+          try {
+
+            FilterHolder filterHolder = new FilterHolder(filterInstaller.getFilter());
+            String urlPattern;
+
+            filterHolder.setName(filterInstaller.getDisplayName());
+            filterHolder.setDisplayName(filterInstaller.getDisplayName());
+            if (filterInstaller.getAsyncSupported() != null) {
+              filterHolder.setAsyncSupported(filterInstaller.getAsyncSupported());
+            }
+            if (filterInstaller.getInitParameters() != null) {
+              filterHolder.setInitParameters(filterInstaller.getInitParameters());
+            }
+
+            servletContextHandler.addFilter(filterHolder, ((urlPattern = filterInstaller.getUrlPattern()) == null) ? "/*" : urlPattern, EnumSet.of(DispatcherType.REQUEST));
+          } catch (IllegalAccessException | InstantiationException exception) {
+            throw new JettyInitializationException(exception);
+          }
+        }
+        for (ServletInstaller servletInstaller : webAppState.getServletInstallerList()) {
+          try {
+
+            ServletHolder servletHolder = new ServletHolder(servletInstaller.getServlet());
+            String urlPattern;
+
+            servletHolder.setName(servletInstaller.getDisplayName());
+            servletHolder.setDisplayName(servletInstaller.getDisplayName());
+            if (servletInstaller.getLoadOnStartup() != null) {
+              servletHolder.setInitOrder(servletInstaller.getLoadOnStartup());
+            }
+            if (servletInstaller.getAsyncSupported() != null) {
+              servletHolder.setAsyncSupported(servletInstaller.getAsyncSupported());
+            }
+            if (servletInstaller.getInitParameters() != null) {
+              servletHolder.setInitParameters(servletInstaller.getInitParameters());
+            }
+
+            servletContextHandler.addServlet(servletHolder, ((urlPattern = servletInstaller.getUrlPattern()) == null) ? "/*" : urlPattern);
+          } catch (IllegalAccessException | InstantiationException exception) {
+            throw new JettyInitializationException(exception);
+          }
+        }
+
+        if (webApplicationOption.getJaxRSOption() != null) {
+
+          ServletHolder jerseyServletHolder = new ServletHolder(new ServletContainer(new JerseyResourceConfig(ExposedApplicationContext.getApplicationContext(), resourceConfigExtensions)));
+          FilterHolder jerseyFilterHolder = new FilterHolder(new PerApplicationContextFilter());
+
+          jerseyServletHolder.setName("JAX-RS Application");
+          jerseyServletHolder.setDisplayName("JAX-RS Application");
+
+          jerseyFilterHolder.setName("per-application-data");
+          jerseyFilterHolder.setDisplayName("per-application-data");
+
+          servletContextHandler.addServlet(jerseyServletHolder, webApplicationOption.getJaxRSOption().getRestPath() + "/*");
+          servletContextHandler.addFilter(jerseyFilterHolder, webApplicationOption.getJaxRSOption().getRestPath() + "/*", EnumSet.of(DispatcherType.REQUEST));
+        }
+
+        if (webApplicationOption.getSpringSupportOption() != null) {
+          servletContextHandler.addEventListener(new JettyRequestContextListener());
+        }
+
+        if (webApplicationOption.getWebSocketOption() != null) {
+          try {
+            WebSocketServerContainerInitializer.initialize(servletContextHandler).setDefaultMaxSessionIdleTimeout(webApplicationOption.getWebSocketOption().getMaxSessionIdleTimeout());
+          } catch (ServletException servletException) {
+            throw new JettyInitializationException(servletException);
+          }
+        }
+
+        contextHandlerCollection.addHandler(servletContextHandler);
+      }
     }
 
     try {
@@ -422,13 +418,13 @@ public class JettyInitializingBean implements DisposableBean, ApplicationContext
     ServicePath servicePath;
 
     if (bean instanceof ListenerInstaller) {
-      listenerInstallerList.add((ListenerInstaller)bean);
+      webAppStateFor(((ListenerInstaller)bean).getContext()).addListenerInstaller((ListenerInstaller)bean);
     } else if (bean instanceof FilterInstaller) {
-      filterInstallerList.add((FilterInstaller)bean);
+      webAppStateFor(((FilterInstaller)bean).getContext()).addFilterInstaller((FilterInstaller)bean);
     } else if (bean instanceof ServletInstaller) {
-      servletInstallerList.add((ServletInstaller)bean);
+      webAppStateFor(((ServletInstaller)bean).getContext()).addServletInstaller((ServletInstaller)bean);
     } else if ((servicePath = bean.getClass().getAnnotation(ServicePath.class)) != null) {
-      webServiceInstallerList.add(new WebServiceInstaller(servicePath.value(), bean));
+      webAppStateFor(servicePath.context()).addWebServiceInstaller(new WebServiceInstaller(servicePath.value(), bean));
     }
 
     return bean;

@@ -30,20 +30,26 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.grizzly;
+package org.smallmind.web.jetty.installer;
 
 import java.util.Map;
-import javax.servlet.Filter;
+import javax.servlet.Servlet;
 
-public class FilterInstaller {
+public class ServletInstaller extends JettyInstaller {
 
-  private Filter filter;
-  private Class<? extends Filter> filterClass;
+  private Servlet servlet;
+  private Class<? extends Servlet> servletClass;
   private Map<String, String> initParameters;
   private String displayName;
   private String urlPattern;
+  private Integer loadOnStartup;
   private Boolean asyncSupported;
-  private boolean matchAfter = false;
+
+  @Override
+  public JettyInstallerType getOptionType () {
+
+    return JettyInstallerType.SERVLET;
+  }
 
   public String getDisplayName () {
 
@@ -55,20 +61,20 @@ public class FilterInstaller {
     this.displayName = displayName;
   }
 
-  public Filter getFilter ()
+  public Servlet getServlet ()
     throws InstantiationException, IllegalAccessException {
 
-    return (filter != null) ? filter : filterClass.newInstance();
+    return (servlet != null) ? servlet : servletClass.newInstance();
   }
 
-  public void setFilter (Filter filter) {
+  public void setServlet (Servlet servlet) {
 
-    this.filter = filter;
+    this.servlet = servlet;
   }
 
-  public void setFilterClass (Class<? extends Filter> filterClass) {
+  public void setServletClass (Class<? extends Servlet> servletClass) {
 
-    this.filterClass = filterClass;
+    this.servletClass = servletClass;
   }
 
   public Map<String, String> getInitParameters () {
@@ -81,16 +87,6 @@ public class FilterInstaller {
     this.initParameters = initParameters;
   }
 
-  public boolean isMatchAfter () {
-
-    return matchAfter;
-  }
-
-  public void setMatchAfter (boolean matchAfter) {
-
-    this.matchAfter = matchAfter;
-  }
-
   public String getUrlPattern () {
 
     return urlPattern;
@@ -99,6 +95,16 @@ public class FilterInstaller {
   public void setUrlPattern (String urlPattern) {
 
     this.urlPattern = urlPattern;
+  }
+
+  public Integer getLoadOnStartup () {
+
+    return loadOnStartup;
+  }
+
+  public void setLoadOnStartup (Integer loadOnStartup) {
+
+    this.loadOnStartup = loadOnStartup;
   }
 
   public Boolean getAsyncSupported () {

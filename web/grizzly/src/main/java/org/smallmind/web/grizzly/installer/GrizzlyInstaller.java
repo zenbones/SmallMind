@@ -30,32 +30,21 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jetty.option;
+package org.smallmind.web.grizzly.installer;
 
-import java.util.Map;
+public abstract class GrizzlyInstaller {
 
-public class DocumentRootOption {
+  private String context;
 
-  private Map<String, String> documentRoots;
-  private String documentPath = "/document";
+  public abstract GrizzlyInstallerType getOptionType ();
 
-  public Map<String, String> getDocumentRoots () {
+  public String getContext () {
 
-    return documentRoots;
+    return context;
   }
 
-  public void setDocumentRoots (Map<String, String> documentRoots) {
+  public void setContext (String context) {
 
-    this.documentRoots = documentRoots;
-  }
-
-  public String getDocumentPath () {
-
-    return documentPath;
-  }
-
-  public void setDocumentPath (String documentPath) {
-
-    this.documentPath = documentPath;
+    this.context = context;
   }
 }

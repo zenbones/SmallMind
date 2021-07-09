@@ -30,40 +30,49 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jetty;
+package org.smallmind.web.grizzly.installer;
 
-import java.util.EventListener;
-import java.util.Map;
+import javax.websocket.Extension;
 
-public class ListenerInstaller {
+public class WebSocketExtensionInstaller extends GrizzlyInstaller {
 
-  private EventListener eventListener;
-  private Class<? extends EventListener> listenerClass;
-  private Map<String, String> contextParameters;
+  private Extension[] extensions;
+  private Class<?> endpointClass;
+  private String path;
 
-  public EventListener getListener ()
-    throws InstantiationException, IllegalAccessException {
+  @Override
+  public GrizzlyInstallerType getOptionType () {
 
-    return (eventListener != null) ? eventListener : listenerClass.newInstance();
+    return GrizzlyInstallerType.WEB_SOCKET_EXTENSION;
   }
 
-  public void setEventListener (EventListener eventListener) {
+  public Extension[] getExtensions () {
 
-    this.eventListener = eventListener;
+    return extensions;
   }
 
-  public void setListenerClass (Class<? extends EventListener> listenerClass) {
+  public void setExtensions (Extension[] extensions) {
 
-    this.listenerClass = listenerClass;
+    this.extensions = extensions;
   }
 
-  public Map<String, String> getContextParameters () {
+  public Class<?> getEndpointClass () {
 
-    return contextParameters;
+    return endpointClass;
   }
 
-  public void setContextParameters (Map<String, String> contextParameters) {
+  public void setEndpointClass (Class<?> endpointClass) {
 
-    this.contextParameters = contextParameters;
+    this.endpointClass = endpointClass;
+  }
+
+  public String getPath () {
+
+    return path;
+  }
+
+  public void setPath (String path) {
+
+    this.path = path;
   }
 }

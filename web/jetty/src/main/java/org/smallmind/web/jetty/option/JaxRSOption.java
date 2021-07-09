@@ -32,7 +32,7 @@
  */
 package org.smallmind.web.jetty.option;
 
-public class JaxRSOption implements JettyOption {
+public class JaxRSOption {
 
   private String restPath = "/rest";
 

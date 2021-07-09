@@ -30,40 +30,48 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.grizzly;
+package org.smallmind.web.jetty.installer;
 
-import java.util.EventListener;
-import java.util.Map;
+// @ServicePath("/<service Uri>")
+public class WebServiceInstaller {
 
-public class ListenerInstaller {
+  private String path;
+  private Object service;
+  private Boolean asyncSupported;
 
-  private EventListener eventListener;
-  private Class<? extends EventListener> listenerClass;
-  private Map<String, String> contextParameters;
+  public WebServiceInstaller (String path, Object service) {
 
-  public EventListener getListener ()
-    throws InstantiationException, IllegalAccessException {
-
-    return (eventListener != null) ? eventListener : listenerClass.newInstance();
+    this.path = path;
+    this.service = service;
   }
 
-  public void setEventListener (EventListener eventListener) {
+  public String getPath () {
 
-    this.eventListener = eventListener;
+    return path;
   }
 
-  public void setListenerClass (Class<? extends EventListener> listenerClass) {
+  public void setPath (String path) {
 
-    this.listenerClass = listenerClass;
+    this.path = path;
   }
 
-  public Map<String, String> getContextParameters () {
+  public Object getService () {
 
-    return contextParameters;
+    return service;
   }
 
-  public void setContextParameters (Map<String, String> contextParameters) {
+  public void setService (Object service) {
 
-    this.contextParameters = contextParameters;
+    this.service = service;
+  }
+
+  public Boolean getAsyncSupported () {
+
+    return asyncSupported;
+  }
+
+  public void setAsyncSupported (Boolean asyncSupported) {
+
+    this.asyncSupported = asyncSupported;
   }
 }

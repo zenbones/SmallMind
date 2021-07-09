@@ -32,7 +32,7 @@
  */
 package org.smallmind.web.grizzly.option;
 
-public class JaxRSOption implements GrizzlyOption {
+public class JaxRSOption {
 
   private String restPath = "/rest";
 

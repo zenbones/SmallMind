@@ -32,7 +32,7 @@
  */
 package org.smallmind.web.grizzly.option;
 
-public class ClassLoaderResourceOption implements GrizzlyOption {
+public class ClassLoaderResourceOption {
 
   private ClassLoader staticClassLoader;
   private String staticPath = "/static";

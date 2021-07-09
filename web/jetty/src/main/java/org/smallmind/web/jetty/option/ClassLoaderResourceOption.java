@@ -32,7 +32,7 @@
  */
 package org.smallmind.web.jetty.option;
 
-public class ClassLoaderResourceOption implements JettyOption {
+public class ClassLoaderResourceOption {
 
   private String staticPath = "/static";
 

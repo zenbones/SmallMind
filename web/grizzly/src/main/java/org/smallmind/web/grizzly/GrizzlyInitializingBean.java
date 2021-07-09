@@ -36,7 +36,7 @@ import java.io.IOException;
 import java.net.BindException;
 import java.nio.file.Paths;
 import java.util.EnumSet;
-import java.util.LinkedList;
+import java.util.HashMap;
 import java.util.Map;
 import javax.servlet.DispatcherType;
 import org.glassfish.grizzly.IOStrategy;
@@ -57,43 +57,34 @@ import org.smallmind.nutsnbolts.io.PathUtility;
 import org.smallmind.nutsnbolts.lang.web.PerApplicationContextFilter;
 import org.smallmind.nutsnbolts.resource.ResourceException;
 import org.smallmind.scribe.pen.LoggerManager;
-import org.smallmind.web.grizzly.option.ClassLoaderResourceOption;
-import org.smallmind.web.grizzly.option.DocumentRootOption;
-import org.smallmind.web.grizzly.option.JaxRSOption;
-import org.smallmind.web.grizzly.option.SpringSupportOption;
-import org.smallmind.web.grizzly.option.WebSocketOption;
+import org.smallmind.web.grizzly.installer.FilterInstaller;
+import org.smallmind.web.grizzly.installer.ListenerInstaller;
+import org.smallmind.web.grizzly.installer.ServletInstaller;
+import org.smallmind.web.grizzly.installer.WebServiceInstaller;
+import org.smallmind.web.grizzly.installer.WebSocketExtensionInstaller;
+import org.smallmind.web.grizzly.option.WebApplicationOption;
 import org.smallmind.web.grizzly.tyrus.TyrusWebSocketAddOn;
 import org.smallmind.web.jersey.spring.ExposedApplicationContext;
 import org.smallmind.web.jersey.spring.JerseyResourceConfig;
 import org.smallmind.web.jersey.spring.ResourceConfigExtension;
 import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 
-public class GrizzlyInitializingBean implements DisposableBean, ApplicationContextAware, ApplicationListener<ContextRefreshedEvent>, BeanPostProcessor {
+public class GrizzlyInitializingBean implements InitializingBean, DisposableBean, ApplicationContextAware, ApplicationListener<ContextRefreshedEvent>, BeanPostProcessor {
 
-  private final LinkedList<WebSocketExtensionInstaller> webSocketExtensionInstallerList = new LinkedList<>();
-  private final LinkedList<WebServiceInstaller> webServiceInstallerList = new LinkedList<>();
-  private final LinkedList<ListenerInstaller> listenerInstallerList = new LinkedList<>();
-  private final LinkedList<FilterInstaller> filterInstallerList = new LinkedList<>();
-  private final LinkedList<ServletInstaller> servletInstallerList = new LinkedList<>();
+  private final HashMap<String, GrizzlyWebAppState> webAppStateMap = new HashMap<>();
   private HttpServer httpServer;
-  private TyrusWebSocketAddOn tyrusWebSocketAddOn;
   private IOStrategy ioStrategy;
   private ResourceConfigExtension[] resourceConfigExtensions;
   private AddOn[] addOns;
-  private ClassLoaderResourceOption classLoaderResourceOption;
-  private DocumentRootOption documentRootOption;
-  private JaxRSOption jaxRSOption;
-  private SpringSupportOption springSupportOption;
-  private WebSocketOption webSocketOption;
+  private WebApplicationOption[] webApplicationOptions;
   private SSLInfo sslInfo;
   private String host;
-  private String contextPath = "/context";
-  private String soapPath = "/soap";
   private Integer maxHttpHeaderSize;
   private Integer initialWorkerPoolSize;
   private Integer maximumWorkerPoolSize;
@@ -136,16 +127,6 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
     this.sslInfo = sslInfo;
   }
 
-  public void setContextPath (String contextPath) {
-
-    this.contextPath = normalizePath(contextPath);
-  }
-
-  public void setSoapPath (String soapPath) {
-
-    this.soapPath = normalizePath(soapPath);
-  }
-
   public void setResourceConfigExtensions (ResourceConfigExtension[] resourceConfigExtensions) {
 
     this.resourceConfigExtensions = resourceConfigExtensions;
@@ -156,29 +137,9 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
     this.addOns = addOns;
   }
 
-  public void setClassLoaderResourceOption (ClassLoaderResourceOption classLoaderResourceOption) {
+  public void setWebApplicationOptions (WebApplicationOption[] webApplicationOptions) {
 
-    this.classLoaderResourceOption = classLoaderResourceOption;
-  }
-
-  public void setDocumentRootOption (DocumentRootOption documentRootOption) {
-
-    this.documentRootOption = documentRootOption;
-  }
-
-  public void setJaxRSOption (JaxRSOption jaxRSOption) {
-
-    this.jaxRSOption = jaxRSOption;
-  }
-
-  public void setSpringSupportOption (SpringSupportOption springSupportOption) {
-
-    this.springSupportOption = springSupportOption;
-  }
-
-  public void setWebSocketOption (WebSocketOption webSocketOption) {
-
-    this.webSocketOption = webSocketOption;
+    this.webApplicationOptions = webApplicationOptions;
   }
 
   public void setAllowInsecure (boolean allowInsecure) {
@@ -192,11 +153,39 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
   }
 
   @Override
+  public void afterPropertiesSet () {
+
+    for (WebApplicationOption webApplicationOption : webApplicationOptions) {
+      if (webAppStateMap.containsKey(webApplicationOption.getContextPath())) {
+        throw new GrizzlyInitializationException("Duplicate context paths(%s) are not allowed", webApplicationOption.getContextPath());
+      } else {
+        webAppStateMap.put(webApplicationOption.getContextPath(), new GrizzlyWebAppState(new WebappContext("Grizzly Application Context(" + webApplicationOption.getContextPath() + ")", webApplicationOption.getContextPath())));
+      }
+    }
+  }
+
+  private GrizzlyWebAppState webAppStateFor (String context) {
+
+    if ((context == null) || context.isEmpty()) {
+      throw new GrizzlyInitializationException("Missing context path");
+    } else {
+
+      GrizzlyWebAppState webAppState;
+
+      if ((webAppState = webAppStateMap.get(context)) == null) {
+        throw new GrizzlyInitializationException("The context path(%s) was not properly initialized", context);
+      } else {
+
+        return webAppState;
+      }
+    }
+  }
+
+  @Override
   public synchronized void onApplicationEvent (ContextRefreshedEvent event) {
 
     NetworkListener insecureNetworkListener = null;
     NetworkListener secureNetworkListener = null;
-    WebappContext webappContext;
 
     if (debug) {
       System.setProperty("com.sun.xml.ws.transport.http.HttpAdapter.dump", "true");
@@ -225,31 +214,34 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
       }
     }
 
-    webappContext = new WebappContext("Grizzly Application Context", contextPath);
+    for (WebApplicationOption webApplicationOption : webApplicationOptions) {
 
-    if (webSocketOption != null) {
+      GrizzlyWebAppState webAppState = webAppStateFor(webApplicationOption.getContextPath());
 
-      NetworkListener configuredNetworkListener = (secureNetworkListener != null) ? secureNetworkListener : insecureNetworkListener;
+      if (webApplicationOption.getWebSocketOption() != null) {
 
-      configuredNetworkListener.registerAddOn(tyrusWebSocketAddOn = new TyrusWebSocketAddOn(httpServer.getServerConfiguration(), webappContext, combinePaths(contextPath, webSocketOption.getWebSocketPath()), true, null, webSocketExtensionInstallerList.toArray(new WebSocketExtensionInstaller[0])));
-    }
+        NetworkListener configuredNetworkListener = (secureNetworkListener != null) ? secureNetworkListener : insecureNetworkListener;
 
-    if (classLoaderResourceOption != null) {
-      httpServer.getServerConfiguration().addHttpHandler(new CLStaticHttpHandler(classLoaderResourceOption.getStaticClassLoader(), "/"), combinePaths(contextPath, classLoaderResourceOption.getStaticPath()));
-    }
-
-    if (documentRootOption != null) {
-      for (Map.Entry<String, String> documentRootEntry : documentRootOption.getDocumentRoots().entrySet()) {
-        httpServer.getServerConfiguration().addHttpHandler(new StaticHttpHandler(PathUtility.asResourceString(Paths.get(documentRootEntry.getValue())), combinePaths(combinePaths(contextPath, documentRootOption.getDocumentPath()), normalizePath(documentRootEntry.getKey()))));
+        configuredNetworkListener.registerAddOn(webAppState.setTyrusWebSocketAddOn(new TyrusWebSocketAddOn(httpServer.getServerConfiguration(), webAppState.getWebAppContext(), combinePaths(webApplicationOption.getContextPath(), webApplicationOption.getWebSocketOption().getWebSocketPath()), true, null, webAppState.getWebSocketExtensionInstallerList().toArray(new WebSocketExtensionInstaller[0]))));
       }
-    }
 
-    for (WebServiceInstaller webServiceInstaller : webServiceInstallerList) {
+      if (webApplicationOption.getClassLoaderResourceOption() != null) {
+        httpServer.getServerConfiguration().addHttpHandler(new CLStaticHttpHandler(webApplicationOption.getClassLoaderResourceOption().getStaticClassLoader(), "/"), combinePaths(webApplicationOption.getContextPath(), webApplicationOption.getClassLoaderResourceOption().getStaticPath()));
+      }
 
-      HttpHandler httpHandler = new JaxwsHandler(webServiceInstaller.getService(), Boolean.TRUE.equals(webServiceInstaller.getAsyncSupported()));
+      if (webApplicationOption.getDocumentRootOption() != null) {
+        for (Map.Entry<String, String> documentRootEntry : webApplicationOption.getDocumentRootOption().getDocumentRoots().entrySet()) {
+          httpServer.getServerConfiguration().addHttpHandler(new StaticHttpHandler(PathUtility.asResourceString(Paths.get(documentRootEntry.getValue())), combinePaths(combinePaths(webApplicationOption.getContextPath(), webApplicationOption.getDocumentRootOption().getDocumentPath()), normalizePath(documentRootEntry.getKey()))));
+        }
+      }
 
-      httpServer.getServerConfiguration().addHttpHandler(httpHandler, combinePaths(combinePaths(contextPath, soapPath), normalizePath(webServiceInstaller.getPath())));
-      LoggerManager.getLogger(GrizzlyInitializingBean.class).info("Grizzly installed web service(%s)", webServiceInstaller.getService().getClass().getName());
+      for (WebServiceInstaller webServiceInstaller : webAppState.getWebServiceInstallerList()) {
+
+        HttpHandler httpHandler = new JaxwsHandler(webServiceInstaller.getService(), Boolean.TRUE.equals(webServiceInstaller.getAsyncSupported()));
+
+        httpServer.getServerConfiguration().addHttpHandler(httpHandler, combinePaths(combinePaths(webApplicationOption.getContextPath(), webApplicationOption.getSoapPath()), normalizePath(webServiceInstaller.getPath())));
+        LoggerManager.getLogger(GrizzlyInitializingBean.class).info("Grizzly installed web service(%s)", webServiceInstaller.getService().getClass().getName());
+      }
     }
 
     try {
@@ -264,86 +256,91 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
       }
     }
 
-    if (jaxRSOption != null) {
-      webappContext.addServlet("JAX-RS Application", new ServletContainer(new JerseyResourceConfig(ExposedApplicationContext.getApplicationContext(), resourceConfigExtensions))).addMapping(jaxRSOption.getRestPath() + "/*");
-      webappContext.addFilter("per-application-data", new PerApplicationContextFilter()).addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), jaxRSOption.getRestPath() + "/*");
-    }
+    for (WebApplicationOption webApplicationOption : webApplicationOptions) {
 
-    if (springSupportOption != null) {
-      webappContext.addListener(new GrizzlyRequestContextListener());
-    }
+      GrizzlyWebAppState webAppState = webAppStateFor(webApplicationOption.getContextPath());
 
-    for (ListenerInstaller listenerInstaller : listenerInstallerList) {
-      try {
+      if (webApplicationOption.getJaxRSOption() != null) {
+        webAppState.getWebAppContext().addServlet("JAX-RS Application", new ServletContainer(new JerseyResourceConfig(ExposedApplicationContext.getApplicationContext(), resourceConfigExtensions))).addMapping(webApplicationOption.getJaxRSOption().getRestPath() + "/*");
+        webAppState.getWebAppContext().addFilter("per-application-data", new PerApplicationContextFilter()).addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), webApplicationOption.getJaxRSOption().getRestPath() + "/*");
+      }
 
-        Map<String, String> contextParameters;
+      if (webApplicationOption.getSpringSupportOption() != null) {
+        webAppState.getWebAppContext().addListener(new GrizzlyRequestContextListener());
+      }
 
-        webappContext.addListener(listenerInstaller.getListener());
-        if ((contextParameters = listenerInstaller.getContextParameters()) != null) {
-          for (Map.Entry<String, String> parameterEntry : contextParameters.entrySet()) {
-            webappContext.addContextInitParameter(parameterEntry.getKey(), parameterEntry.getValue());
+      for (ListenerInstaller listenerInstaller : webAppState.getListenerInstallerList()) {
+        try {
+
+          Map<String, String> contextParameters;
+
+          webAppState.getWebAppContext().addListener(listenerInstaller.getListener());
+          if ((contextParameters = listenerInstaller.getContextParameters()) != null) {
+            for (Map.Entry<String, String> parameterEntry : contextParameters.entrySet()) {
+              webAppState.getWebAppContext().addContextInitParameter(parameterEntry.getKey(), parameterEntry.getValue());
+            }
           }
-        }
 
-        LoggerManager.getLogger(GrizzlyInitializingBean.class).info("Grizzly installed listener(%s)", listenerInstaller.getListener().getClass().getName());
-      } catch (Exception exception) {
-        throw new GrizzlyInitializationException(exception);
+          LoggerManager.getLogger(GrizzlyInitializingBean.class).info("Grizzly installed listener(%s)", listenerInstaller.getListener().getClass().getName());
+        } catch (Exception exception) {
+          throw new GrizzlyInitializationException(exception);
+        }
       }
-    }
-    for (FilterInstaller filterInstaller : filterInstallerList) {
-      try {
+      for (FilterInstaller filterInstaller : webAppState.getFilterInstallerList()) {
+        try {
 
-        FilterRegistration filterRegistration;
-        Map<String, String> initParameters;
-        String urlPattern;
+          FilterRegistration filterRegistration;
+          Map<String, String> initParameters;
+          String urlPattern;
 
-        filterRegistration = webappContext.addFilter(filterInstaller.getDisplayName(), filterInstaller.getFilter());
-        filterRegistration.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), filterInstaller.isMatchAfter(), ((urlPattern = filterInstaller.getUrlPattern()) == null) ? "/*" : urlPattern);
-        if (filterInstaller.getAsyncSupported() != null) {
-          filterRegistration.setAsyncSupported(filterInstaller.getAsyncSupported());
+          filterRegistration = webAppState.getWebAppContext().addFilter(filterInstaller.getDisplayName(), filterInstaller.getFilter());
+          filterRegistration.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), filterInstaller.isMatchAfter(), ((urlPattern = filterInstaller.getUrlPattern()) == null) ? "/*" : urlPattern);
+          if (filterInstaller.getAsyncSupported() != null) {
+            filterRegistration.setAsyncSupported(filterInstaller.getAsyncSupported());
+          }
+          if ((initParameters = filterInstaller.getInitParameters()) != null) {
+            filterRegistration.setInitParameters(initParameters);
+          }
+
+          LoggerManager.getLogger(GrizzlyInitializingBean.class).info("Grizzly installed filter(%s)", filterInstaller.getDisplayName());
+        } catch (Exception exception) {
+          throw new GrizzlyInitializationException(exception);
         }
-        if ((initParameters = filterInstaller.getInitParameters()) != null) {
-          filterRegistration.setInitParameters(initParameters);
-        }
-
-        LoggerManager.getLogger(GrizzlyInitializingBean.class).info("Grizzly installed filter(%s)", filterInstaller.getDisplayName());
-      } catch (Exception exception) {
-        throw new GrizzlyInitializationException(exception);
       }
-    }
-    for (ServletInstaller servletInstaller : servletInstallerList) {
-      try {
+      for (ServletInstaller servletInstaller : webAppState.getServletInstallerList()) {
+        try {
 
-        ServletRegistration servletRegistration;
-        Map<String, String> initParameters;
-        String urlPattern;
+          ServletRegistration servletRegistration;
+          Map<String, String> initParameters;
+          String urlPattern;
 
-        servletRegistration = webappContext.addServlet(servletInstaller.getDisplayName(), servletInstaller.getServlet());
-        servletRegistration.addMapping(((urlPattern = servletInstaller.getUrlPattern()) == null) ? "/*" : urlPattern);
-        if (servletInstaller.getLoadOnStartup() != null) {
-          servletRegistration.setLoadOnStartup(servletInstaller.getLoadOnStartup());
-        }
-        if (servletInstaller.getAsyncSupported() != null) {
-          servletRegistration.setAsyncSupported(servletInstaller.getAsyncSupported());
-        }
-        if ((initParameters = servletInstaller.getInitParameters()) != null) {
-          servletRegistration.setInitParameters(initParameters);
-        }
+          servletRegistration = webAppState.getWebAppContext().addServlet(servletInstaller.getDisplayName(), servletInstaller.getServlet());
+          servletRegistration.addMapping(((urlPattern = servletInstaller.getUrlPattern()) == null) ? "/*" : urlPattern);
+          if (servletInstaller.getLoadOnStartup() != null) {
+            servletRegistration.setLoadOnStartup(servletInstaller.getLoadOnStartup());
+          }
+          if (servletInstaller.getAsyncSupported() != null) {
+            servletRegistration.setAsyncSupported(servletInstaller.getAsyncSupported());
+          }
+          if ((initParameters = servletInstaller.getInitParameters()) != null) {
+            servletRegistration.setInitParameters(initParameters);
+          }
 
-        LoggerManager.getLogger(GrizzlyInitializingBean.class).info("Grizzly installed servlet(%s)", servletInstaller.getDisplayName());
-      } catch (Exception exception) {
-        throw new GrizzlyInitializationException(exception);
+          LoggerManager.getLogger(GrizzlyInitializingBean.class).info("Grizzly installed servlet(%s)", servletInstaller.getDisplayName());
+        } catch (Exception exception) {
+          throw new GrizzlyInitializationException(exception);
+        }
       }
-    }
 
-    webappContext.deploy(httpServer);
+      webAppState.getWebAppContext().deploy(httpServer);
 
-    if (tyrusWebSocketAddOn != null) {
-      tyrusWebSocketAddOn.doneDeployment();
-      try {
-        tyrusWebSocketAddOn.start(port);
-      } catch (Exception exception) {
-        throw new GrizzlyInitializationException(exception);
+      if (webAppState.getTyrusWebSocketAddOn() != null) {
+        webAppState.getTyrusWebSocketAddOn().doneDeployment();
+        try {
+          webAppState.getTyrusWebSocketAddOn().start(port);
+        } catch (Exception exception) {
+          throw new GrizzlyInitializationException(exception);
+        }
       }
     }
 
@@ -385,15 +382,15 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
     ServicePath servicePath;
 
     if (bean instanceof WebSocketExtensionInstaller) {
-      webSocketExtensionInstallerList.add((WebSocketExtensionInstaller)bean);
+      webAppStateFor(((WebSocketExtensionInstaller)bean).getContext()).addWebSocketExtensionInstaller((WebSocketExtensionInstaller)bean);
     } else if (bean instanceof ListenerInstaller) {
-      listenerInstallerList.add((ListenerInstaller)bean);
+      webAppStateFor(((ListenerInstaller)bean).getContext()).addListenerInstaller((ListenerInstaller)bean);
     } else if (bean instanceof FilterInstaller) {
-      filterInstallerList.add((FilterInstaller)bean);
+      webAppStateFor(((FilterInstaller)bean).getContext()).addFilterInstaller((FilterInstaller)bean);
     } else if (bean instanceof ServletInstaller) {
-      servletInstallerList.add((ServletInstaller)bean);
+      webAppStateFor(((ServletInstaller)bean).getContext()).addServletInstaller((ServletInstaller)bean);
     } else if ((servicePath = bean.getClass().getAnnotation(ServicePath.class)) != null) {
-      webServiceInstallerList.add(new WebServiceInstaller(servicePath.value(), bean));
+      webAppStateFor(servicePath.context()).addWebServiceInstaller(new WebServiceInstaller(servicePath.value(), bean));
     }
 
     return bean;
@@ -402,9 +399,17 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
   @Override
   public synchronized void destroy () {
 
-    if (tyrusWebSocketAddOn != null) {
-      tyrusWebSocketAddOn.stop();
+    for (WebApplicationOption webApplicationOption : webApplicationOptions) {
+
+      GrizzlyWebAppState webAppState;
+
+      if ((webAppState = webAppStateMap.get(webApplicationOption.getContextPath())) != null) {
+        if (webAppState.getTyrusWebSocketAddOn() != null) {
+          webAppState.getTyrusWebSocketAddOn().stop();
+        }
+      }
     }
+
     if (httpServer != null) {
       httpServer.shutdown();
     }

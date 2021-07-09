@@ -30,84 +30,46 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.grizzly;
+package org.smallmind.web.jetty.installer;
 
+import java.util.EventListener;
 import java.util.Map;
-import javax.servlet.Servlet;
 
-public class ServletInstaller {
+public class ListenerInstaller extends JettyInstaller {
 
-  private Servlet servlet;
-  private Class<? extends Servlet> servletClass;
-  private Map<String, String> initParameters;
-  private String displayName;
-  private String urlPattern;
-  private Integer loadOnStartup;
-  private Boolean asyncSupported;
+  private EventListener eventListener;
+  private Class<? extends EventListener> listenerClass;
+  private Map<String, String> contextParameters;
 
-  public String getDisplayName () {
+  @Override
+  public JettyInstallerType getOptionType () {
 
-    return displayName;
+    return JettyInstallerType.LISTENER;
   }
 
-  public void setDisplayName (String displayName) {
-
-    this.displayName = displayName;
-  }
-
-  public Servlet getServlet ()
+  public EventListener getListener ()
     throws InstantiationException, IllegalAccessException {
 
-    return (servlet != null) ? servlet : servletClass.newInstance();
+    return (eventListener != null) ? eventListener : listenerClass.newInstance();
   }
 
-  public void setServlet (Servlet servlet) {
+  public void setEventListener (EventListener eventListener) {
 
-    this.servlet = servlet;
+    this.eventListener = eventListener;
   }
 
-  public void setServletClass (Class<? extends Servlet> servletClass) {
+  public void setListenerClass (Class<? extends EventListener> listenerClass) {
 
-    this.servletClass = servletClass;
+    this.listenerClass = listenerClass;
   }
 
-  public Map<String, String> getInitParameters () {
+  public Map<String, String> getContextParameters () {
 
-    return initParameters;
+    return contextParameters;
   }
 
-  public void setInitParameters (Map<String, String> initParameters) {
+  public void setContextParameters (Map<String, String> contextParameters) {
 
-    this.initParameters = initParameters;
-  }
-
-  public String getUrlPattern () {
-
-    return urlPattern;
-  }
-
-  public void setUrlPattern (String urlPattern) {
-
-    this.urlPattern = urlPattern;
-  }
-
-  public Integer getLoadOnStartup () {
-
-    return loadOnStartup;
-  }
-
-  public void setLoadOnStartup (Integer loadOnStartup) {
-
-    this.loadOnStartup = loadOnStartup;
-  }
-
-  public Boolean getAsyncSupported () {
-
-    return asyncSupported;
-  }
-
-  public void setAsyncSupported (Boolean asyncSupported) {
-
-    this.asyncSupported = asyncSupported;
+    this.contextParameters = contextParameters;
   }
 }

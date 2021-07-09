@@ -32,7 +32,7 @@
  */
 package org.smallmind.web.grizzly.option;
 
-public class WebSocketOption implements GrizzlyOption {
+public class WebSocketOption {
 
   private String webSocketPath = "/websocket";
 

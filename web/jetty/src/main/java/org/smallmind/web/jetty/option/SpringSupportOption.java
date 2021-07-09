@@ -32,6 +32,6 @@
  */
 package org.smallmind.web.jetty.option;
 
-public class SpringSupportOption implements JettyOption {
+public class SpringSupportOption {
 
 }

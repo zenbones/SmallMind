@@ -32,7 +32,7 @@
  */
 package org.smallmind.web.jetty.option;
 
-public class WebSocketOption implements JettyOption {
+public class WebSocketOption {
 
   private static final long FIVE_MINUTES = 5 * 60 * 1000;
 

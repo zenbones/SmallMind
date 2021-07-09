@@ -50,7 +50,7 @@ import org.glassfish.grizzly.servlet.WebappContext;
 import org.glassfish.tyrus.core.TyrusWebSocketEngine;
 import org.glassfish.tyrus.core.wsadl.model.Application;
 import org.smallmind.web.grizzly.GrizzlyInitializationException;
-import org.smallmind.web.grizzly.WebSocketExtensionInstaller;
+import org.smallmind.web.grizzly.installer.WebSocketExtensionInstaller;
 
 public class TyrusWebSocketAddOn implements AddOn {
 

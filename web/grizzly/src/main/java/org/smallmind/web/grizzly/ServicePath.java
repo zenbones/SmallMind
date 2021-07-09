@@ -42,4 +42,6 @@ import java.lang.annotation.Target;
 public @interface ServicePath {
 
   String value ();
+
+  String context ();
 }
