@@ -35,8 +35,10 @@ package org.smallmind.web.grizzly.tyrus;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.websocket.CloseReason;
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.CloseListener;
@@ -159,17 +161,30 @@ public class TyrusGrizzlyServerFilter extends BaseFilter {
       }
 
       final String ATTR_NAME = "org.glassfish.tyrus.container.grizzly.WebSocketFilter.HANDSHAKE_PROCESSED";
-
       final AttributeHolder attributeHolder = ctx.getAttributes();
+
       if (attributeHolder != null) {
+
         final Object attribute = attributeHolder.getAttribute(ATTR_NAME);
-        if (attribute != null) {
-          // handshake was already performed on this context.
-          return ctx.getInvokeAction();
+
+        if (!(attribute instanceof Set)) {
+
+          HashSet<String> contextPathSet = new HashSet<>();
+
+          contextPathSet.add(contextPath);
+          attributeHolder.setAttribute(ATTR_NAME, contextPathSet);
         } else {
-          attributeHolder.setAttribute(ATTR_NAME, true);
+
+          Set<String> contextPathSet = (Set<String>)attribute;
+
+          if (!contextPathSet.add(contextPath)) {
+            return ctx.getInvokeAction();
+          } else {
+            attributeHolder.setAttribute(ATTR_NAME, contextPathSet);
+          }
         }
       }
+
       // Handle handshake
       return handleHandshake(ctx, message);
     }
@@ -226,6 +241,7 @@ public class TyrusGrizzlyServerFilter extends BaseFilter {
       // the request is not for the deployed application
       return ctx.getInvokeAction();
     }
+
     // TODO: final UpgradeResponse upgradeResponse = GrizzlyUpgradeResponse(HttpResponsePacket)
     final UpgradeResponse upgradeResponse = new TyrusUpgradeResponse();
     final WebSocketEngine.UpgradeInfo upgradeInfo = serverContainer.getWebSocketEngine().upgrade(upgradeRequest, upgradeResponse);
