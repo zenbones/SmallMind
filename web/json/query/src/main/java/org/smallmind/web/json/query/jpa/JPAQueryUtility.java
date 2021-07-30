@@ -128,7 +128,7 @@ public class JPAQueryUtility {
     Object fieldValue = whereField.getOperand().get();
     WherePath<Root<?>, Path<?>> wherePath = fieldTransformer.transform(whereField.getEntity(), whereField.getName());
 
-    rootSet.add(((JPAWherePath)wherePath).getRoot());
+    rootSet.add(wherePath.getRoot());
     switch (whereField.getOperator()) {
       case LT:
         return OperandType.DATE.equals(whereField.getOperand().getOperandType()) ? criteriaBuilder.lessThan((Path<Date>)wherePath.getPath(), (Date)fieldValue) : criteriaBuilder.lt((Path<Number>)wherePath.getPath(), (Number)fieldValue);
@@ -175,7 +175,7 @@ public class JPAQueryUtility {
 
         WherePath<Root<?>, Path<?>> wherePath = fieldTransformer.transform(sortField.getEntity(), sortField.getName());
 
-        rootSet.add(((JPAWherePath)wherePath).getRoot());
+        rootSet.add(wherePath.getRoot());
         switch (sortField.getDirection()) {
           case ASC:
             orderList.add(criteriaBuilder.asc(wherePath.getPath()));

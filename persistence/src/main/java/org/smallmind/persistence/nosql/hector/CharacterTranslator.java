@@ -54,7 +54,7 @@ public class CharacterTranslator implements HectorTranslator<Character, String> 
   @Override
   public String toHectorValue (Character value) {
 
-    return new String(new char[] {value});
+    return String.valueOf(value);
   }
 
   @Override

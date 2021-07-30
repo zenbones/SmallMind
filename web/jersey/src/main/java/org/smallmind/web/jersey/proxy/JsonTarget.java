@@ -386,7 +386,7 @@ public class JsonTarget {
       }
 
       entityInputStreamHolder.setInputStream(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()));
-      debugBuilder.append(new String(byteArrayOutputStream.toByteArray())).append('\n');
+      debugBuilder.append(byteArrayOutputStream).append('\n');
 
       return debugBuilder.toString();
     }

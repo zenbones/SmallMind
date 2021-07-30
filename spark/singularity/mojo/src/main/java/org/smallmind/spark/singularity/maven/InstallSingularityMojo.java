@@ -88,7 +88,7 @@ public class InstallSingularityMojo extends AbstractMojo {
 
       pathBuilder.append(".jar");
 
-      if (Files.isRegularFile(artifactAscPath = Paths.get(pathBuilder.toString() + ".asc"))) {
+      if (Files.isRegularFile(artifactAscPath = Paths.get(pathBuilder + ".asc"))) {
         applicationArtifact.addMetadata(new AscArtifactMetadata(applicationArtifact, artifactAscPath));
       }
 

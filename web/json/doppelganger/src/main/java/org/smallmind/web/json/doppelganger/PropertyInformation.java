@@ -44,7 +44,7 @@ public class PropertyInformation {
   private final TypeMirror as;
   private final TypeMirror type;
   private final String name;
-  private String comment;
+  private final String comment;
   private final Boolean required;
   private final boolean virtual;
 

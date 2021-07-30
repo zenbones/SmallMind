@@ -77,7 +77,7 @@ public class DynamicWebstartServlet extends HttpServlet {
       jnlpOutputStream.close();
       jnlpInputStream.close();
 
-      jnlpContents = new String(jnlpOutputStream.toByteArray());
+      jnlpContents = jnlpOutputStream.toString();
       if ((jnlpHrefMatcher = JNLP_HREF_PATTERN.matcher(jnlpContents)).find()) {
         jnlpContents = jnlpContents.substring(0, jnlpHrefMatcher.start(1)) + req.getRequestURL() + jnlpContents.substring(jnlpHrefMatcher.end(1));
       }

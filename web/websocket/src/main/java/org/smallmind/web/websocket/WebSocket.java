@@ -420,7 +420,7 @@ public abstract class WebSocket implements AutoCloseable {
                     switch (fragmentList.getFirst().getOpCode()) {
                       case TEXT:
 
-                        String asString = new String(fragmentStream.toByteArray());
+                        String asString = fragmentStream.toString();
 
                         if (asString.length() > maxTextBufferSize.get()) {
                           close(CloseCode.MESSAGE_TOO_LARGE, "exceeded maximum text buffer size");

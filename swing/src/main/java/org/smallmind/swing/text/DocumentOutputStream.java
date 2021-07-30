@@ -66,7 +66,7 @@ public class DocumentOutputStream extends OutputStream {
       document.insertString(cursor, new String(buffer, off, len), null);
       cursor += len - off;
     } catch (BadLocationException badLocationException) {
-      throw (IOException)new IOException(badLocationException.getMessage(), badLocationException);
+      throw new IOException(badLocationException.getMessage(), badLocationException);
     }
   }
 }

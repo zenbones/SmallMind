@@ -72,7 +72,7 @@ public class MessageEmitter extends PushEmitter {
     recordBuilder.append("].");
 
     for (Quantity quantity : quantities) {
-      output.accept(recordBuilder.toString() + quantity.getName() + "=" + quantity.getValue());
+      output.accept(recordBuilder + quantity.getName() + "=" + quantity.getValue());
     }
   }
 }
