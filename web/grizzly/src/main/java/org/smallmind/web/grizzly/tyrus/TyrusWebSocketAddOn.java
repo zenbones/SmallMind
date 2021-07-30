@@ -32,126 +32,34 @@
  */
 package org.smallmind.web.grizzly.tyrus;
 
-import java.io.IOException;
-import javax.websocket.DeploymentException;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
 import org.glassfish.grizzly.filterchain.FilterChainBuilder;
-import org.glassfish.grizzly.http.Method;
 import org.glassfish.grizzly.http.server.AddOn;
-import org.glassfish.grizzly.http.server.HttpHandler;
 import org.glassfish.grizzly.http.server.HttpServerFilter;
 import org.glassfish.grizzly.http.server.NetworkListener;
-import org.glassfish.grizzly.http.server.Request;
-import org.glassfish.grizzly.http.server.Response;
-import org.glassfish.grizzly.http.server.ServerConfiguration;
-import org.glassfish.grizzly.http.util.ContentType;
-import org.glassfish.grizzly.servlet.WebappContext;
-import org.glassfish.tyrus.core.TyrusWebSocketEngine;
-import org.glassfish.tyrus.core.wsadl.model.Application;
+import org.glassfish.tyrus.spi.ServerContainer;
 import org.smallmind.web.grizzly.GrizzlyInitializationException;
-import org.smallmind.web.grizzly.installer.WebSocketExtensionInstaller;
 
 public class TyrusWebSocketAddOn implements AddOn {
 
-  private final WebSocketExtensionInstaller[] webSocketExtensionInstallers;
-  private final ServerConfiguration serverConfiguration;
-  private final WebappContext webappContext;
-  private final HttpHandler staticHttpHandler;
+  private final ServerContainer serverContainer;
   private final String contextPath;
-  private final boolean includeWsadlSupport;
-  private TyrusGrizzlyServerContainer serverContainer;
 
-  public TyrusWebSocketAddOn (ServerConfiguration serverConfiguration, WebappContext webappContext, String contextPath, boolean includeWsadlSupport, HttpHandler staticHttpHandler, WebSocketExtensionInstaller... webSocketExtensionInstallers) {
+  public TyrusWebSocketAddOn (ServerContainer serverContainer, String contextPath) {
 
-    this.webSocketExtensionInstallers = webSocketExtensionInstallers;
-    this.serverConfiguration = serverConfiguration;
-    this.webappContext = webappContext;
+    this.serverContainer = serverContainer;
     this.contextPath = contextPath;
-    this.includeWsadlSupport = includeWsadlSupport;
-    this.staticHttpHandler = staticHttpHandler;
-  }
-
-  public void start (int port)
-    throws IOException, DeploymentException {
-
-    serverContainer.start(contextPath, port);
-  }
-
-  public void doneDeployment () {
-
-    serverContainer.doneDeployment();
-  }
-
-  public void stop () {
-
-    serverContainer.stop();
   }
 
   @Override
-  public void setup (NetworkListener networkListener, FilterChainBuilder builder) {
+  public void setup (NetworkListener networkListener, FilterChainBuilder filterChainBuilder) {
 
     int httpServerFilterIndex;
 
-    serverContainer = new TyrusGrizzlyServerContainer(networkListener, contextPath, webSocketExtensionInstallers);
-
-    if ((httpServerFilterIndex = builder.indexOfType(HttpServerFilter.class)) < 0) {
+    if ((httpServerFilterIndex = filterChainBuilder.indexOfType(HttpServerFilter.class)) < 0) {
       throw new GrizzlyInitializationException("Missing http servlet filter in the available filter chain");
     } else {
-
-      networkListener.getKeepAlive().setIdleTimeoutInSeconds(-1);
-
-      if (includeWsadlSupport) {
-        serverConfiguration.addHttpHandler(new WsadlHttpHandler((TyrusWebSocketEngine)serverContainer.getWebSocketEngine(), staticHttpHandler));
-      }
-
       // Insert the WebSocketFilter right before HttpServerFilter
-      builder.add(httpServerFilterIndex, new TyrusGrizzlyServerFilter(serverContainer.getWebSocketEngine(), contextPath));
-      webappContext.setAttribute("javax.websocket.server.ServerContainer", serverContainer);
-    }
-  }
-
-  private static class WsadlHttpHandler extends HttpHandler {
-
-    private final TyrusWebSocketEngine tyrusWebSocketEngine;
-    private final HttpHandler staticHttpHandler;
-
-    private JAXBContext wsadlJaxbContext;
-
-    private WsadlHttpHandler (TyrusWebSocketEngine tyrusWebSocketEngine, HttpHandler staticHttpHandler) {
-
-      this.tyrusWebSocketEngine = tyrusWebSocketEngine;
-      this.staticHttpHandler = staticHttpHandler;
-    }
-
-    private synchronized JAXBContext getWsadlJaxbContext ()
-      throws JAXBException {
-
-      if (wsadlJaxbContext == null) {
-        wsadlJaxbContext = JAXBContext.newInstance(Application.class.getPackage().getName());
-      }
-      return wsadlJaxbContext;
-    }
-
-    @Override
-    public void service (Request request, Response response)
-      throws Exception {
-
-      if (request.getMethod().equals(Method.GET) && request.getRequestURI().endsWith("application.wsadl")) {
-
-        getWsadlJaxbContext().createMarshaller().marshal(tyrusWebSocketEngine.getWsadlApplication(), response.getWriter());
-        response.setStatus(200);
-        response.setContentType(ContentType.newContentType("application/wsadl+xml"));
-
-        return;
-      }
-
-      if (staticHttpHandler != null) {
-        staticHttpHandler.service(request, response);
-      } else {
-        response.sendError(404);
-      }
+      filterChainBuilder.add(httpServerFilterIndex, new TyrusGrizzlyServerFilter(serverContainer, contextPath));
     }
   }
 }
-

@@ -39,7 +39,7 @@ import org.smallmind.web.grizzly.installer.ListenerInstaller;
 import org.smallmind.web.grizzly.installer.ServletInstaller;
 import org.smallmind.web.grizzly.installer.WebServiceInstaller;
 import org.smallmind.web.grizzly.installer.WebSocketExtensionInstaller;
-import org.smallmind.web.grizzly.tyrus.TyrusWebSocketAddOn;
+import org.smallmind.web.grizzly.tyrus.TyrusGrizzlyServerContainer;
 
 public class GrizzlyWebAppState {
 
@@ -49,7 +49,7 @@ public class GrizzlyWebAppState {
   private final LinkedList<FilterInstaller> filterInstallerList = new LinkedList<>();
   private final LinkedList<ServletInstaller> servletInstallerList = new LinkedList<>();
   private final WebappContext webAppContext;
-  private TyrusWebSocketAddOn tyrusWebSocketAddOn;
+  private TyrusGrizzlyServerContainer tyrusGrizzlyServerContainer;
 
   public GrizzlyWebAppState (WebappContext webAppContext) {
 
@@ -111,15 +111,13 @@ public class GrizzlyWebAppState {
     return servletInstallerList;
   }
 
-  public TyrusWebSocketAddOn getTyrusWebSocketAddOn () {
+  public TyrusGrizzlyServerContainer getTyrusGrizzlyServerContainer () {
 
-    return tyrusWebSocketAddOn;
+    return tyrusGrizzlyServerContainer;
   }
 
-  public TyrusWebSocketAddOn setTyrusWebSocketAddOn (TyrusWebSocketAddOn tyrusWebSocketAddOn) {
+  public void setTyrusGrizzlyServerContainer (TyrusGrizzlyServerContainer tyrusGrizzlyServerContainer) {
 
-    this.tyrusWebSocketAddOn = tyrusWebSocketAddOn;
-
-    return tyrusWebSocketAddOn;
+    this.tyrusGrizzlyServerContainer = tyrusGrizzlyServerContainer;
   }
 }

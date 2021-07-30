@@ -34,15 +34,15 @@ package org.smallmind.web.grizzly.option;
 
 public class WebSocketOption {
 
-  private String webSocketPath = "/websocket";
+  private boolean includeWsadlSupport = false;
 
-  public String getWebSocketPath () {
+  public boolean isIncludeWsadlSupport () {
 
-    return webSocketPath;
+    return includeWsadlSupport;
   }
 
-  public void setWebSocketPath (String webSocketPath) {
+  public void setIncludeWsadlSupport (boolean includeWsadlSupport) {
 
-    this.webSocketPath = webSocketPath;
+    this.includeWsadlSupport = includeWsadlSupport;
   }
 }

@@ -32,39 +32,58 @@
  */
 package org.smallmind.web.grizzly.tyrus;
 
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Set;
 import javax.websocket.DeploymentException;
 import javax.websocket.Extension;
 import javax.websocket.server.ServerEndpointConfig;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import org.glassfish.grizzly.http.Method;
+import org.glassfish.grizzly.http.server.HttpHandler;
+import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.grizzly.http.server.NetworkListener;
+import org.glassfish.grizzly.http.server.Request;
+import org.glassfish.grizzly.http.server.Response;
+import org.glassfish.grizzly.http.util.ContentType;
+import org.glassfish.grizzly.servlet.WebappContext;
 import org.glassfish.tyrus.core.DebugContext;
 import org.glassfish.tyrus.core.TyrusWebSocketEngine;
 import org.glassfish.tyrus.core.Utils;
 import org.glassfish.tyrus.core.cluster.ClusterContext;
 import org.glassfish.tyrus.core.monitoring.ApplicationEventListener;
+import org.glassfish.tyrus.core.wsadl.model.Application;
 import org.glassfish.tyrus.server.TyrusServerContainer;
 import org.glassfish.tyrus.spi.WebSocketEngine;
 import org.smallmind.web.grizzly.installer.WebSocketExtensionInstaller;
 
 public class TyrusGrizzlyServerContainer extends TyrusServerContainer {
 
+  private final TyrusWebSocketEngine webSocketEngine;
   private final WebSocketExtensionInstaller[] webSocketExtensionInstallers;
-  private final WebSocketEngine webSocketEngine;
   private final NetworkListener networkListener;
   private final String contextPath;
 
-  public TyrusGrizzlyServerContainer (NetworkListener networkListener, String contextPath, WebSocketExtensionInstaller... webSocketExtensionInstallers) {
+  public TyrusGrizzlyServerContainer (HttpServer httpServer, NetworkListener networkListener, WebappContext webappContext, Map<String, Object> properties, boolean includeWsadlSupport, HttpHandler staticHttpHandler, WebSocketExtensionInstaller... webSocketExtensionInstallers) {
 
     super((Set<Class<?>>)null);
 
+    final Map<String, Object> localProperties;
+
     this.networkListener = networkListener;
-    this.contextPath = contextPath;
     this.webSocketExtensionInstallers = webSocketExtensionInstallers;
 
-    HashMap<String, Object> localProperties = new HashMap<>();
+    // defensive copy
+    if (properties == null) {
+      localProperties = Collections.emptyMap();
+    } else {
+      localProperties = new HashMap<>(properties);
+    }
 
     final Integer incomingBufferSize = Utils.getProperty(localProperties, TyrusWebSocketEngine.INCOMING_BUFFER_SIZE, Integer.class);
     final ClusterContext clusterContext = Utils.getProperty(localProperties, ClusterContext.CLUSTER_CONTEXT, ClusterContext.class);
@@ -76,27 +95,42 @@ public class TyrusGrizzlyServerContainer extends TyrusServerContainer {
     final DebugContext.TracingThreshold tracingThreshold = Utils.getProperty(localProperties, TyrusWebSocketEngine.TRACING_THRESHOLD, DebugContext.TracingThreshold.class, DebugContext.TracingThreshold.TRACE);
 
     webSocketEngine = TyrusWebSocketEngine.builder(this)
-                        .incomingBufferSize(incomingBufferSize)
-                        .clusterContext(clusterContext)
-                        .applicationEventListener(applicationEventListener)
-                        .maxSessionsPerApp(maxSessionsPerApp)
-                        .maxSessionsPerRemoteAddr(maxSessionsPerRemoteAddr)
-                        .parallelBroadcastEnabled(parallelBroadcastEnabled)
-                        .tracingType(tracingType)
-                        .tracingThreshold(tracingThreshold)
-                        .build();
+      .incomingBufferSize(incomingBufferSize)
+      .clusterContext(clusterContext)
+      .applicationEventListener(applicationEventListener)
+      .maxSessionsPerApp(maxSessionsPerApp)
+      .maxSessionsPerRemoteAddr(maxSessionsPerRemoteAddr)
+      .parallelBroadcastEnabled(parallelBroadcastEnabled)
+      .tracingType(tracingType)
+      .tracingThreshold(tracingThreshold)
+      .build();
+
+    // idle timeout set to indefinite.
+    networkListener.getKeepAlive().setIdleTimeoutInSeconds(-1);
+    networkListener.registerAddOn(new TyrusWebSocketAddOn(this, webappContext.getContextPath()));
+
+    if (includeWsadlSupport) {
+      httpServer.getServerConfiguration().addHttpHandler(new WsadlHttpHandler(webSocketEngine, staticHttpHandler));
+    }
+
+    contextPath = webappContext.getContextPath();
+    webappContext.setAttribute("javax.websocket.server.ServerContainer", this);
   }
 
   @Override
-  public void register (Class<?> endpointClass)
-    throws DeploymentException {
+  public int getPort () {
+
+    return ((networkListener != null) && (networkListener.getPort() > 0)) ? networkListener.getPort() : -1;
+  }
+
+  @Override
+  public void register (Class<?> endpointClass) throws DeploymentException {
 
     webSocketEngine.register(endpointClass, contextPath);
   }
 
   @Override
-  public void register (ServerEndpointConfig serverEndpointConfig)
-    throws DeploymentException {
+  public void register (ServerEndpointConfig serverEndpointConfig) throws DeploymentException {
 
     webSocketEngine.register(mergeExtensions(serverEndpointConfig), contextPath);
   }
@@ -121,11 +155,11 @@ public class TyrusGrizzlyServerContainer extends TyrusServerContainer {
             addedExtensionList.addAll(serverEndpointConfig.getExtensions());
 
             return ServerEndpointConfig.Builder.create(serverEndpointConfig.getEndpointClass(), serverEndpointConfig.getPath())
-                     .configurator(serverEndpointConfig.getConfigurator())
-                     .decoders(serverEndpointConfig.getDecoders())
-                     .encoders(serverEndpointConfig.getEncoders())
-                     .extensions(addedExtensionList)
-                     .subprotocols(serverEndpointConfig.getSubprotocols()).build();
+              .configurator(serverEndpointConfig.getConfigurator())
+              .decoders(serverEndpointConfig.getDecoders())
+              .encoders(serverEndpointConfig.getEncoders())
+              .extensions(addedExtensionList)
+              .subprotocols(serverEndpointConfig.getSubprotocols()).build();
           }
         }
       }
@@ -140,9 +174,52 @@ public class TyrusGrizzlyServerContainer extends TyrusServerContainer {
     return webSocketEngine;
   }
 
-  @Override
-  public int getPort () {
+  public void start ()
+    throws IOException, DeploymentException {
 
-    return ((networkListener != null) && (networkListener.getPort() > 0)) ? networkListener.getPort() : -1;
+    super.start(contextPath, getPort());
+  }
+
+  private static class WsadlHttpHandler extends HttpHandler {
+
+    private final TyrusWebSocketEngine tyrusWebSocketEngine;
+    private final HttpHandler staticHttpHandler;
+
+    private JAXBContext wsadlJaxbContext;
+
+    private WsadlHttpHandler (TyrusWebSocketEngine tyrusWebSocketEngine, HttpHandler staticHttpHandler) {
+
+      this.tyrusWebSocketEngine = tyrusWebSocketEngine;
+      this.staticHttpHandler = staticHttpHandler;
+    }
+
+    private synchronized JAXBContext getWsadlJaxbContext ()
+      throws JAXBException {
+
+      if (wsadlJaxbContext == null) {
+        wsadlJaxbContext = JAXBContext.newInstance(Application.class.getPackage().getName());
+      }
+      return wsadlJaxbContext;
+    }
+
+    @Override
+    public void service (Request request, Response response)
+      throws Exception {
+
+      if (request.getMethod().equals(Method.GET) && request.getRequestURI().endsWith("application.wsadl")) {
+
+        getWsadlJaxbContext().createMarshaller().marshal(tyrusWebSocketEngine.getWsadlApplication(), response.getWriter());
+        response.setStatus(200);
+        response.setContentType(ContentType.newContentType("application/wsadl+xml"));
+
+        return;
+      }
+
+      if (staticHttpHandler != null) {
+        staticHttpHandler.service(request, response);
+      } else {
+        response.sendError(404);
+      }
+    }
   }
 }

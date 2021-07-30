@@ -63,7 +63,7 @@ import org.smallmind.web.grizzly.installer.ServletInstaller;
 import org.smallmind.web.grizzly.installer.WebServiceInstaller;
 import org.smallmind.web.grizzly.installer.WebSocketExtensionInstaller;
 import org.smallmind.web.grizzly.option.WebApplicationOption;
-import org.smallmind.web.grizzly.tyrus.TyrusWebSocketAddOn;
+import org.smallmind.web.grizzly.tyrus.TyrusGrizzlyServerContainer;
 import org.smallmind.web.jersey.spring.ExposedApplicationContext;
 import org.smallmind.web.jersey.spring.JerseyResourceConfig;
 import org.smallmind.web.jersey.spring.ResourceConfigExtension;
@@ -222,7 +222,7 @@ public class GrizzlyInitializingBean implements InitializingBean, DisposableBean
 
         NetworkListener configuredNetworkListener = (secureNetworkListener != null) ? secureNetworkListener : insecureNetworkListener;
 
-        configuredNetworkListener.registerAddOn(webAppState.setTyrusWebSocketAddOn(new TyrusWebSocketAddOn(httpServer.getServerConfiguration(), webAppState.getWebAppContext(), combinePaths(webApplicationOption.getContextPath(), webApplicationOption.getWebSocketOption().getWebSocketPath()), true, null, webAppState.getWebSocketExtensionInstallerList().toArray(new WebSocketExtensionInstaller[0]))));
+        webAppState.setTyrusGrizzlyServerContainer(new TyrusGrizzlyServerContainer(httpServer, configuredNetworkListener, webAppState.getWebAppContext(), null, webApplicationOption.getWebSocketOption().isIncludeWsadlSupport(), null, webAppState.getWebSocketExtensionInstallerList().toArray(new WebSocketExtensionInstaller[0])));
       }
 
       if (webApplicationOption.getClassLoaderResourceOption() != null) {
@@ -334,10 +334,10 @@ public class GrizzlyInitializingBean implements InitializingBean, DisposableBean
 
       webAppState.getWebAppContext().deploy(httpServer);
 
-      if (webAppState.getTyrusWebSocketAddOn() != null) {
-        webAppState.getTyrusWebSocketAddOn().doneDeployment();
+      if (webAppState.getTyrusGrizzlyServerContainer() != null) {
+        webAppState.getTyrusGrizzlyServerContainer().doneDeployment();
         try {
-          webAppState.getTyrusWebSocketAddOn().start(port);
+          webAppState.getTyrusGrizzlyServerContainer().start();
         } catch (Exception exception) {
           throw new GrizzlyInitializationException(exception);
         }
@@ -404,8 +404,8 @@ public class GrizzlyInitializingBean implements InitializingBean, DisposableBean
       GrizzlyWebAppState webAppState;
 
       if ((webAppState = webAppStateMap.get(webApplicationOption.getContextPath())) != null) {
-        if (webAppState.getTyrusWebSocketAddOn() != null) {
-          webAppState.getTyrusWebSocketAddOn().stop();
+        if (webAppState.getTyrusGrizzlyServerContainer() != null) {
+          webAppState.getTyrusGrizzlyServerContainer().stop();
         }
       }
     }
