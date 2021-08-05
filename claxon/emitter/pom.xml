@@ -15,6 +15,7 @@
     <module>datadog</module>
     <module>jmx</module>
     <module>message</module>
+    <module>noop</module>
     <module>prometheus</module>
   </modules>
 </project>
