@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.io;
+package org.smallmind.file.jailed;
 
 import java.io.IOException;
 import java.nio.file.FileStore;
@@ -48,11 +48,11 @@ public class JailedFileSystem extends FileSystem {
   private final JailedFileSystemProvider jailedFileSystemProvider;
   private final FileSystem nativeFileSystem;
 
-  public JailedFileSystem (FileSystem nativeFileSystem, JailedAccessCheck jailedAccessCheck) {
+  public JailedFileSystem (FileSystem nativeFileSystem, JailedAccessCheck jailedAccessCheck, String scheme) {
 
     this.nativeFileSystem = nativeFileSystem;
 
-    jailedFileSystemProvider = new JailedFileSystemProvider(this, jailedAccessCheck);
+    jailedFileSystemProvider = new JailedFileSystemProvider(this, jailedAccessCheck, scheme);
   }
 
   public FileSystem getNativeFileSystem () {

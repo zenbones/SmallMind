@@ -30,15 +30,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.io;
+package org.smallmind.file.jailed;
 
-import java.io.IOException;
-import java.nio.file.AccessMode;
 import java.nio.file.Path;
 
-@FunctionalInterface
-public interface JailedAccessCheck {
+public class JailedPathUtility {
 
-  void checkAccess (Path path, AccessMode... modes)
-    throws IOException;
+  public static Path unwrap (Path path) {
+
+    return (path instanceof org.smallmind.file.jailed.JailedPath) ? ((org.smallmind.file.jailed.JailedPath)path).getNativePath() : path;
+  }
 }

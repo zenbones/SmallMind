@@ -30,14 +30,16 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.io;
+package org.smallmind.file.test;
 
-import java.nio.file.Path;
+import java.nio.file.FileSystems;
+import java.nio.file.spi.FileSystemProvider;
 
-public class JailedPathUtility {
+public class Wombat {
 
-  public static Path unwrap (Path path) {
+  public static void main (String... args) {
 
-    return (path instanceof JailedPath) ? ((JailedPath)path).getNativePath() : path;
+    System.out.println(FileSystems.getDefault());
+    System.out.println(FileSystemProvider.installedProviders());
   }
 }

@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.io;
+package org.smallmind.file.jailed;
 
 import java.io.IOException;
 import java.net.URI;
@@ -40,6 +40,7 @@ import java.nio.file.CopyOption;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.LinkOption;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
@@ -56,30 +57,42 @@ public class JailedFileSystemProvider extends FileSystemProvider {
 
   private final JailedFileSystem jailedFileSystem;
   private final JailedAccessCheck jailedAccessCheck;
+  private final String scheme;
 
-  public JailedFileSystemProvider (JailedFileSystem jailedFileSystem, JailedAccessCheck jailedAccessCheck) {
+  public JailedFileSystemProvider () {
+
+    this(new JailedFileSystem(FileSystems.getDefault(), null, "foobar"), null, "foobar");
+  }
+
+  public JailedFileSystemProvider (FileSystemProvider fileSystemProvider) {
+
+    this(new JailedFileSystem(FileSystems.getDefault(), null, "foobar"), null, "foobar");
+  }
+
+  public JailedFileSystemProvider (JailedFileSystem jailedFileSystem, JailedAccessCheck jailedAccessCheck, String scheme) {
 
     this.jailedFileSystem = jailedFileSystem;
     this.jailedAccessCheck = jailedAccessCheck;
+    this.scheme = scheme;
   }
 
   @Override
   public String getScheme () {
 
-    return jailedFileSystem.getNativeFileSystem().provider().getScheme();
+    return scheme;
   }
 
   @Override
   public FileSystem newFileSystem (URI uri, Map<String, ?> env)
     throws IOException {
 
-    return new JailedFileSystem(jailedFileSystem.getNativeFileSystem().provider().newFileSystem(uri, env), jailedAccessCheck);
+    return new JailedFileSystem(jailedFileSystem.getNativeFileSystem().provider().newFileSystem(uri, env), jailedAccessCheck, scheme);
   }
 
   @Override
   public FileSystem getFileSystem (URI uri) {
 
-    return new JailedFileSystem(jailedFileSystem.getNativeFileSystem().provider().getFileSystem(uri), jailedAccessCheck);
+    return new JailedFileSystem(jailedFileSystem.getNativeFileSystem().provider().getFileSystem(uri), jailedAccessCheck, scheme);
   }
 
   @Override

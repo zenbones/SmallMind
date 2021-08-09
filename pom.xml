@@ -99,6 +99,7 @@
     <module>artifact</module>
     <module>batch</module>
     <module>claxon</module>
+    <module>file</module>
     <module>forge</module>
     <module>foundation</module>
     <module>javafx</module>
@@ -153,6 +154,11 @@
       <dependency>
         <groupId>org.smallmind</groupId>
         <artifactId>claxon-registry</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.smallmind</groupId>
+        <artifactId>file-jailed</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

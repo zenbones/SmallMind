@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.io;
+package org.smallmind.file.jailed;
 
 import java.io.IOException;
 import java.net.URI;
@@ -78,7 +78,7 @@ public class JailedPath implements Path {
   @Override
   public Path getFileName () {
 
-    return nativePath.getFileName();
+    return new JailedPath(jailedFileSystem, nativePath.getFileName());
   }
 
   @Override
@@ -96,7 +96,7 @@ public class JailedPath implements Path {
   @Override
   public Path getName (int index) {
 
-    return nativePath.getName(index);
+    return new JailedPath(jailedFileSystem, nativePath.getName(index));
   }
 
   @Override
@@ -138,7 +138,13 @@ public class JailedPath implements Path {
   @Override
   public URI toUri () {
 
-    return nativePath.toUri();
+    URI nativeURI = nativePath.toUri();
+
+    try {
+      return new URI(jailedFileSystem.provider().getScheme(), nativeURI.getUserInfo(), nativeURI.getHost(), nativeURI.getPort(), new JailedPath(jailedFileSystem, nativePath.toAbsolutePath()).toString(), null, null);
+    } catch (Exception exception) {
+      throw new RuntimeException(exception);
+    }
   }
 
   @Override
