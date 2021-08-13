@@ -35,6 +35,7 @@ package org.smallmind.file.jailed;
 import java.io.IOException;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.WatchService;
@@ -47,15 +48,9 @@ public class JailedFileSystem extends FileSystem {
 
   private final JailedFileSystemProvider jailedFileSystemProvider;
 
-  public JailedFileSystem (FileSystem nativeFileSystem, String scheme, JailedPathTranslator jailedPathTranslator) {
+  public JailedFileSystem (JailedFileSystemProvider jailedFileSystemProvider, String scheme, JailedPathTranslator jailedPathTranslator) {
 
     jailedFileSystemProvider = new JailedFileSystemProvider(scheme, jailedPathTranslator);
-  }
-
-  public FileSystem getNativeFileSystem () {
-
-    return null;
-//    return nativeFileSystem;
   }
 
   public FileSystemProvider provider () {
@@ -64,17 +59,14 @@ public class JailedFileSystem extends FileSystem {
   }
 
   @Override
-  public void close ()
-    throws IOException {
+  public void close () {
 
-//    nativeFileSystem.close();
   }
 
   @Override
   public boolean isOpen () {
 
-    return false;
-//    return nativeFileSystem.isOpen();
+    return FileSystems.getDefault().isOpen();
   }
 
   @Override
