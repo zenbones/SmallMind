@@ -35,7 +35,6 @@ package org.smallmind.file.jailed;
 import java.io.IOException;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.WatchService;
@@ -46,6 +45,8 @@ import java.util.Set;
 
 public class JailedFileSystem extends FileSystem {
 
+  private static final String SEPARATOR = Character.toString(JailedPath.SEPARATOR);
+
   private final JailedFileSystemProvider jailedFileSystemProvider;
   private final JailedPath rootPath;
 
@@ -53,7 +54,7 @@ public class JailedFileSystem extends FileSystem {
 
     this.jailedFileSystemProvider = jailedFileSystemProvider;
 
-    rootPath = new JailedPath(this, new char[] {'/'}, true);
+    rootPath = new JailedPath(this, getSeparator().toCharArray(), true);
   }
 
   public FileSystemProvider provider () {
@@ -69,19 +70,19 @@ public class JailedFileSystem extends FileSystem {
   @Override
   public boolean isOpen () {
 
-    return FileSystems.getDefault().isOpen();
+    return jailedFileSystemProvider.getJailedPathTranslator().getNativeFileSystem().isOpen();
   }
 
   @Override
   public boolean isReadOnly () {
 
-    return FileSystems.getDefault().isReadOnly();
+    return jailedFileSystemProvider.getJailedPathTranslator().getNativeFileSystem().isReadOnly();
   }
 
   @Override
   public String getSeparator () {
 
-    return "/";
+    return SEPARATOR;
   }
 
   @Override
@@ -93,37 +94,37 @@ public class JailedFileSystem extends FileSystem {
   @Override
   public Iterable<FileStore> getFileStores () {
 
-    return FileSystems.getDefault().getFileStores();
+    return jailedFileSystemProvider.getJailedPathTranslator().getNativeFileSystem().getFileStores();
   }
 
   @Override
   public Set<String> supportedFileAttributeViews () {
 
-    return FileSystems.getDefault().supportedFileAttributeViews();
+    return jailedFileSystemProvider.getJailedPathTranslator().getNativeFileSystem().supportedFileAttributeViews();
   }
 
   @Override
   public Path getPath (String first, String... more) {
 
-    return new JailedPath(this, ((more == null) || (more.length == 0)) ? first : first + "/" + String.join("/", more));
+    return new JailedPath(this, ((more == null) || (more.length == 0)) ? first : first + getSeparator() + String.join(getSeparator(), more));
   }
 
   @Override
   public PathMatcher getPathMatcher (String syntaxAndPattern) {
 
-    return FileSystems.getDefault().getPathMatcher(syntaxAndPattern);
+    return jailedFileSystemProvider.getJailedPathTranslator().getNativeFileSystem().getPathMatcher(syntaxAndPattern);
   }
 
   @Override
   public UserPrincipalLookupService getUserPrincipalLookupService () {
 
-    return FileSystems.getDefault().getUserPrincipalLookupService();
+    return jailedFileSystemProvider.getJailedPathTranslator().getNativeFileSystem().getUserPrincipalLookupService();
   }
 
   @Override
   public WatchService newWatchService ()
     throws IOException {
 
-    return FileSystems.getDefault().newWatchService();
+    return jailedFileSystemProvider.getJailedPathTranslator().getNativeFileSystem().newWatchService();
   }
 }

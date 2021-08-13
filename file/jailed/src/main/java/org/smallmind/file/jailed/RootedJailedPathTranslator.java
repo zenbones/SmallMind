@@ -1,0 +1,95 @@
+/*
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020 David Berkman
+ *
+ * This file is part of the SmallMind Code Project.
+ *
+ * The SmallMind Code Project is free software, you can redistribute
+ * it and/or modify it under either, at your discretion...
+ *
+ * 1) The terms of GNU Affero General Public License as published by the
+ * Free Software Foundation, either version 3 of the License, or (at
+ * your option) any later version.
+ *
+ * ...or...
+ *
+ * 2) The terms of the Apache License, Version 2.0.
+ *
+ * The SmallMind Code Project is distributed in the hope that it will
+ * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License or Apache License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * and the Apache License along with the SmallMind Code Project. If not, see
+ * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
+ *
+ * Additional permission under the GNU Affero GPL version 3 section 7
+ * ------------------------------------------------------------------
+ * If you modify this Program, or any covered work, by linking or
+ * combining it with other code, such other code is not for that reason
+ * alone subject to any of the requirements of the GNU Affero GPL
+ * version 3.
+ */
+package org.smallmind.file.jailed;
+
+import java.nio.file.FileSystem;
+import java.nio.file.Path;
+
+public class RootedJailedPathTranslator implements JailedPathTranslator {
+
+  private Path nativeRoot;
+
+  public RootedJailedPathTranslator (Path nativeRoot) {
+
+    this.nativeRoot = nativeRoot;
+  }
+
+  @Override
+  public FileSystem getNativeFileSystem () {
+
+    return nativeRoot.getFileSystem();
+  }
+
+  @Override
+  public Path wrapPath (JailedFileSystem jailedFileSystem, Path nativePath) {
+
+    if (nativePath.isAbsolute()) {
+      if (!nativePath.startsWith(nativeRoot)) {
+        throw new SecurityException("No authorization for path");
+      } else {
+
+        StringBuilder pathBuilder = new StringBuilder();
+
+        for (int index = nativeRoot.getNameCount(); index < nativePath.getNameCount(); index++) {
+          pathBuilder.append(jailedFileSystem.getSeparator()).append(nativePath.getName(index));
+        }
+
+        return new JailedPath(jailedFileSystem, pathBuilder.toString());
+      }
+    } else {
+
+      StringBuilder pathBuilder = new StringBuilder();
+
+      for (int index = 0; index < nativePath.getNameCount(); index++) {
+        pathBuilder.append('/').append(nativePath.getName(index));
+      }
+
+      return new JailedPath(jailedFileSystem, pathBuilder.toString());
+    }
+  }
+
+  @Override
+  public Path unwrapPath (FileSystem nativeFleSystem, Path jailedPath) {
+
+    StringBuilder pathBuilder = new StringBuilder();
+
+    for (int index = 0; index < jailedPath.getNameCount(); index++) {
+      if (index > 0) {
+        pathBuilder.append(nativeFleSystem.getSeparator());
+      }
+      pathBuilder.append(jailedPath.getName(index));
+    }
+
+    return nativeRoot.resolve(pathBuilder.toString());
+  }
+}

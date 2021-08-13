@@ -32,14 +32,6 @@
  */
 package org.smallmind.file.test;
 
-import java.nio.file.FileSystems;
-import java.nio.file.spi.FileSystemProvider;
+public class PathTest {
 
-public class Wombat {
-
-  public static void main (String... args) {
-
-    System.out.println(FileSystems.getDefault());
-    System.out.println(FileSystemProvider.installedProviders());
-  }
 }

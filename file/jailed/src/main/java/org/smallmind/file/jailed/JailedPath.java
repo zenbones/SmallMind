@@ -45,6 +45,8 @@ import java.util.LinkedList;
 
 public class JailedPath implements Path {
 
+  protected static final char SEPARATOR = '/';
+
   private final JailedFileSystem jailedFileSystem;
   private final Segment[] segments;
   private final char[] text;
@@ -63,7 +65,7 @@ public class JailedPath implements Path {
     this.jailedFileSystem = jailedFileSystem;
     this.text = text;
 
-    hasRoot = ((text.length > 0) && (text[0] == '/'));
+    hasRoot = ((text.length > 0) && (text[0] == SEPARATOR));
     segments = divideAndConquer();
   }
 
@@ -80,7 +82,7 @@ public class JailedPath implements Path {
     int begin = 0;
 
     for (char singleChar : text) {
-      if (singleChar == '/') {
+      if (singleChar == SEPARATOR) {
         slash = true;
       } else if (slash) {
         slash = false;
@@ -94,7 +96,7 @@ public class JailedPath implements Path {
       slash = true;
       count = 0;
       for (int index = 0; index < text.length; index++) {
-        if (text[index] == '/') {
+        if (text[index] == SEPARATOR) {
           if (!slash) {
             segments[count++] = new Segment(begin, index);
           }
@@ -161,7 +163,7 @@ public class JailedPath implements Path {
       int segmentLength = segments[segmentIndex].length();
 
       if (hasRoot || translatedTextBuilder.length() > 0) {
-        translatedTextBuilder.append('/');
+        translatedTextBuilder.append(SEPARATOR);
         translatedSegments[segmentIndex] = new Segment(translatedTextBuilder.length(), translatedTextBuilder.length() + segmentLength);
       } else {
         translatedSegments[segmentIndex] = new Segment(0, segmentLength);
@@ -193,7 +195,7 @@ public class JailedPath implements Path {
   @Override
   public Path getRoot () {
 
-    return hasRoot ? new JailedPath(jailedFileSystem, new char[] {'/'}, true) : null;
+    return hasRoot ? new JailedPath(jailedFileSystem, new char[] {SEPARATOR}, true) : null;
   }
 
   @Override
@@ -373,7 +375,7 @@ public class JailedPath implements Path {
           for (int count = 0; count < segments.length - segmentIndex; count++) {
             if (redactedTextBuilder.length() > 0) {
               redactedSegmentList.add(new Segment(redactedTextBuilder.length() + 1, redactedTextBuilder.length() + 3));
-              redactedTextBuilder.append('/');
+              redactedTextBuilder.append(SEPARATOR);
             } else {
               redactedSegmentList.add(new Segment(0, 2));
             }
