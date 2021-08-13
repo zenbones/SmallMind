@@ -74,19 +74,20 @@ public class JailedFileSystemProvider extends FileSystemProvider {
   public FileSystem newFileSystem (URI uri, Map<String, ?> env)
     throws IOException {
 
-    return new JailedFileSystem(FileSystems.getDefault().provider().newFileSystem(uri, env), scheme);
+    return new JailedFileSystem(FileSystems.getDefault().provider().newFileSystem(uri, env), scheme, null);
   }
 
   @Override
   public FileSystem getFileSystem (URI uri) {
 
-    return new JailedFileSystem(FileSystems.getDefault().provider().getFileSystem(uri), scheme);
+    return new JailedFileSystem(FileSystems.getDefault().provider().getFileSystem(uri), scheme, null);
   }
 
   @Override
   public Path getPath (URI uri) {
 
-    return new JailedPath(jailedFileSystem, uri.getPath());
+    return null;
+//    return new JailedPath(jailedFileSystem, uri.getPath());
   }
 
   @Override
@@ -124,7 +125,8 @@ public class JailedFileSystemProvider extends FileSystemProvider {
           @Override
           public Path next () {
 
-            return jailedPathTranslator.wrapPath(jailedFiledSystem, nativeIterator.next());
+            return null;
+            // return jailedPathTranslator.wrapPath(jailedFiledSystem, nativeIterator.next());
           }
         };
       }

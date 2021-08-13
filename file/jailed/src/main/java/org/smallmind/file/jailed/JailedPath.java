@@ -67,6 +67,11 @@ public class JailedPath implements Path {
     segments = divideAndConquer();
   }
 
+  public JailedPath (JailedFileSystem jailedFileSystem, String text) {
+
+    this(jailedFileSystem, text.toCharArray());
+  }
+
   private Segment[] divideAndConquer () {
 
     Segment[] segments;
@@ -253,7 +258,7 @@ public class JailedPath implements Path {
 
     if (!(other instanceof JailedPath)) {
       throw new ProviderMismatchException();
-    } else if (jailedFileSystem.equals(other.getFileSystem()) && (hasRoot == other.isAbsolute()) && (other.getNameCount() <= segments.length)) {
+    } else if ((hasRoot == other.isAbsolute()) && (other.getNameCount() <= segments.length)) {
 
       int segmentIndex = 0;
 
@@ -275,7 +280,7 @@ public class JailedPath implements Path {
 
     if (!(other instanceof JailedPath)) {
       throw new ProviderMismatchException();
-    } else if (jailedFileSystem.equals(other.getFileSystem()) && ((!other.isAbsolute()) || hasRoot) && (segments.length >= other.getNameCount())) {
+    } else if (((!other.isAbsolute()) || hasRoot) && (segments.length >= other.getNameCount())) {
 
       int segmentIndex = segments.length - other.getNameCount();
 
@@ -473,6 +478,12 @@ public class JailedPath implements Path {
   public WatchKey register (WatchService watcher, WatchEvent.Kind<?>[] events, WatchEvent.Modifier... modifiers) {
 
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public String toString () {
+
+    return String.valueOf(text);
   }
 
   private static class Segment {
