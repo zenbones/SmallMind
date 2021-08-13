@@ -50,7 +50,7 @@ public class JailedPath implements Path {
   private final char[] text;
   private final boolean hasRoot;
 
-  private JailedPath (JailedFileSystem jailedFileSystem, char[] text, boolean hasRoot, Segment... segments) {
+  protected JailedPath (JailedFileSystem jailedFileSystem, char[] text, boolean hasRoot, Segment... segments) {
 
     this.jailedFileSystem = jailedFileSystem;
     this.text = text;
@@ -486,7 +486,7 @@ public class JailedPath implements Path {
     return String.valueOf(text);
   }
 
-  private static class Segment {
+  protected static class Segment {
 
     private final int begin;
     private final int end;

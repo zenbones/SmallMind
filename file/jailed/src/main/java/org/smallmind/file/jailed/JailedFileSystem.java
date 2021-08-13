@@ -41,16 +41,19 @@ import java.nio.file.PathMatcher;
 import java.nio.file.WatchService;
 import java.nio.file.attribute.UserPrincipalLookupService;
 import java.nio.file.spi.FileSystemProvider;
-import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 public class JailedFileSystem extends FileSystem {
 
   private final JailedFileSystemProvider jailedFileSystemProvider;
+  private final JailedPath rootPath;
 
-  public JailedFileSystem (JailedFileSystemProvider jailedFileSystemProvider, String scheme, JailedPathTranslator jailedPathTranslator) {
+  public JailedFileSystem (JailedFileSystemProvider jailedFileSystemProvider) {
 
-    jailedFileSystemProvider = new JailedFileSystemProvider(scheme, jailedPathTranslator);
+    this.jailedFileSystemProvider = jailedFileSystemProvider;
+
+    rootPath = new JailedPath(this, new char[] {'/'}, true);
   }
 
   public FileSystemProvider provider () {
@@ -72,92 +75,55 @@ public class JailedFileSystem extends FileSystem {
   @Override
   public boolean isReadOnly () {
 
-    return false;
-    //   return nativeFileSystem.isReadOnly();
+    return FileSystems.getDefault().isReadOnly();
   }
 
   @Override
   public String getSeparator () {
 
-    return null;
-    //   return nativeFileSystem.getSeparator();
+    return "/";
   }
 
   @Override
   public Iterable<Path> getRootDirectories () {
 
-//    Iterator<Path> nativeIterator = nativeFileSystem.getRootDirectories().iterator();
-
-    return () -> new Iterator<>() {
-
-      @Override
-      public boolean hasNext () {
-
-        return false;
-        //       return nativeIterator.hasNext();
-      }
-
-      @Override
-      public Path next () {
-
-        return null;
-        //       return new JailedPath(JailedFileSystem.this, nativeIterator.next());
-      }
-    };
+    return List.of(rootPath);
   }
 
   @Override
   public Iterable<FileStore> getFileStores () {
 
-    return null;
-//    return nativeFileSystem.getFileStores();
+    return FileSystems.getDefault().getFileStores();
   }
 
   @Override
   public Set<String> supportedFileAttributeViews () {
 
-    return null;
-    //  return nativeFileSystem.supportedFileAttributeViews();
+    return FileSystems.getDefault().supportedFileAttributeViews();
   }
 
   @Override
   public Path getPath (String first, String... more) {
 
-    return null;
-//    return new JailedPath(this, nativeFileSystem.getPath(first, more));
+    return new JailedPath(this, ((more == null) || (more.length == 0)) ? first : first + "/" + String.join("/", more));
   }
 
   @Override
   public PathMatcher getPathMatcher (String syntaxAndPattern) {
 
-    return null;
-    //  return nativeFileSystem.getPathMatcher(syntaxAndPattern);
+    return FileSystems.getDefault().getPathMatcher(syntaxAndPattern);
   }
 
   @Override
   public UserPrincipalLookupService getUserPrincipalLookupService () {
 
-    return null;
-    //  return nativeFileSystem.getUserPrincipalLookupService();
+    return FileSystems.getDefault().getUserPrincipalLookupService();
   }
 
   @Override
   public WatchService newWatchService ()
     throws IOException {
 
-    return null;
-    //  return nativeFileSystem.newWatchService();
-  }
-
-  @Override
-  public int hashCode () {
-
-    return super.hashCode();
-  }
-
-  @Override
-  public boolean equals (Object obj) {
-
-    return (obj instanceof JailedFileSystem); // and path translators are equivalent?
+    return FileSystems.getDefault().newWatchService();
   }
 }

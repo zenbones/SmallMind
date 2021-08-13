@@ -64,7 +64,7 @@ public class JailedFileSystemProvider extends FileSystemProvider {
     this.scheme = scheme;
     this.jailedPathTranslator = jailedPathTranslator;
 
-    jailedFileSystem = new JailedFileSystem(this, scheme, jailedPathTranslator);
+    jailedFileSystem = new JailedFileSystem(this);
   }
 
   @Override
