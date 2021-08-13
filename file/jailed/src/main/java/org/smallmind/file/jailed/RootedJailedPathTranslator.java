@@ -79,13 +79,13 @@ public class RootedJailedPathTranslator implements JailedPathTranslator {
   }
 
   @Override
-  public Path unwrapPath (FileSystem nativeFleSystem, Path jailedPath) {
+  public Path unwrapPath (Path jailedPath) {
 
     StringBuilder pathBuilder = new StringBuilder();
 
     for (int index = 0; index < jailedPath.getNameCount(); index++) {
       if (index > 0) {
-        pathBuilder.append(nativeFleSystem.getSeparator());
+        pathBuilder.append(getNativeFileSystem().getSeparator());
       }
       pathBuilder.append(jailedPath.getName(index));
     }

@@ -43,6 +43,6 @@ public interface JailedPathTranslator {
   Path wrapPath (JailedFileSystem jailedFileSystem, Path nativePath)
     throws IOException;
 
-  Path unwrapPath (FileSystem nativeFleSystem, Path jailedPath)
+  Path unwrapPath (Path jailedPath)
     throws IOException;
 }

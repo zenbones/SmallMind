@@ -102,14 +102,21 @@ public class JailedFileSystemProvider extends FileSystemProvider {
   public SeekableByteChannel newByteChannel (Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs)
     throws IOException {
 
-    return jailedPathTranslator.getNativeFileSystem().provider().newByteChannel(jailedPathTranslator.unwrapPath(jailedPathTranslator.getNativeFileSystem(), path), options, attrs);
+    return jailedPathTranslator.getNativeFileSystem().provider().newByteChannel(jailedPathTranslator.unwrapPath(path), options, attrs);
   }
 
   @Override
   public DirectoryStream<Path> newDirectoryStream (Path dir, DirectoryStream.Filter<? super Path> filter)
     throws IOException {
 
-    DirectoryStream<Path> nativeDirectoryStream = jailedPathTranslator.getNativeFileSystem().provider().newDirectoryStream(jailedPathTranslator.unwrapPath(jailedPathTranslator.getNativeFileSystem(), dir), filter);
+    DirectoryStream<Path> nativeDirectoryStream = jailedPathTranslator.getNativeFileSystem().provider().newDirectoryStream(jailedPathTranslator.unwrapPath(dir), entry -> {
+
+      try {
+        return filter.accept(jailedPathTranslator.wrapPath(jailedFileSystem, entry));
+      } catch (IOException ioException) {
+        throw new RuntimeException(ioException);
+      }
+    });
 
     return new DirectoryStream<>() {
 
@@ -151,63 +158,63 @@ public class JailedFileSystemProvider extends FileSystemProvider {
   public void createDirectory (Path dir, FileAttribute<?>... attrs)
     throws IOException {
 
-    jailedPathTranslator.getNativeFileSystem().provider().createDirectory(jailedPathTranslator.unwrapPath(jailedPathTranslator.getNativeFileSystem(), dir), attrs);
+    jailedPathTranslator.getNativeFileSystem().provider().createDirectory(jailedPathTranslator.unwrapPath(dir), attrs);
   }
 
   @Override
   public void delete (Path path)
     throws IOException {
 
-    jailedPathTranslator.getNativeFileSystem().provider().delete(jailedPathTranslator.unwrapPath(jailedPathTranslator.getNativeFileSystem(), path));
+    jailedPathTranslator.getNativeFileSystem().provider().delete(jailedPathTranslator.unwrapPath(path));
   }
 
   @Override
   public void copy (Path source, Path target, CopyOption... options)
     throws IOException {
 
-    jailedPathTranslator.getNativeFileSystem().provider().copy(jailedPathTranslator.unwrapPath(jailedPathTranslator.getNativeFileSystem(), source), jailedPathTranslator.unwrapPath(jailedPathTranslator.getNativeFileSystem(), target), options);
+    jailedPathTranslator.getNativeFileSystem().provider().copy(jailedPathTranslator.unwrapPath(source), jailedPathTranslator.unwrapPath(target), options);
   }
 
   @Override
   public void move (Path source, Path target, CopyOption... options)
     throws IOException {
 
-    jailedPathTranslator.getNativeFileSystem().provider().move(jailedPathTranslator.unwrapPath(jailedPathTranslator.getNativeFileSystem(), source), jailedPathTranslator.unwrapPath(jailedPathTranslator.getNativeFileSystem(), target), options);
+    jailedPathTranslator.getNativeFileSystem().provider().move(jailedPathTranslator.unwrapPath(source), jailedPathTranslator.unwrapPath(target), options);
   }
 
   @Override
   public boolean isSameFile (Path path, Path path2)
     throws IOException {
 
-    return jailedPathTranslator.getNativeFileSystem().provider().isSameFile(jailedPathTranslator.unwrapPath(jailedPathTranslator.getNativeFileSystem(), path), jailedPathTranslator.unwrapPath(jailedPathTranslator.getNativeFileSystem(), path));
+    return jailedPathTranslator.getNativeFileSystem().provider().isSameFile(jailedPathTranslator.unwrapPath(path), jailedPathTranslator.unwrapPath(path));
   }
 
   @Override
   public boolean isHidden (Path path)
     throws IOException {
 
-    return jailedPathTranslator.getNativeFileSystem().provider().isHidden(jailedPathTranslator.unwrapPath(jailedPathTranslator.getNativeFileSystem(), path));
+    return jailedPathTranslator.getNativeFileSystem().provider().isHidden(jailedPathTranslator.unwrapPath(path));
   }
 
   @Override
   public FileStore getFileStore (Path path)
     throws IOException {
 
-    return jailedPathTranslator.getNativeFileSystem().provider().getFileStore(jailedPathTranslator.unwrapPath(jailedPathTranslator.getNativeFileSystem(), path));
+    return jailedPathTranslator.getNativeFileSystem().provider().getFileStore(jailedPathTranslator.unwrapPath(path));
   }
 
   @Override
   public void checkAccess (Path path, AccessMode... modes)
     throws IOException {
 
-    jailedPathTranslator.getNativeFileSystem().provider().checkAccess(jailedPathTranslator.unwrapPath(jailedPathTranslator.getNativeFileSystem(), path), modes);
+    jailedPathTranslator.getNativeFileSystem().provider().checkAccess(jailedPathTranslator.unwrapPath(path), modes);
   }
 
   @Override
   public <V extends FileAttributeView> V getFileAttributeView (Path path, Class<V> type, LinkOption... options) {
 
     try {
-      return jailedPathTranslator.getNativeFileSystem().provider().getFileAttributeView(jailedPathTranslator.unwrapPath(jailedPathTranslator.getNativeFileSystem(), path), type, options);
+      return jailedPathTranslator.getNativeFileSystem().provider().getFileAttributeView(jailedPathTranslator.unwrapPath(path), type, options);
     } catch (IOException ioException) {
       throw new RuntimeException(ioException);
     }
@@ -217,20 +224,20 @@ public class JailedFileSystemProvider extends FileSystemProvider {
   public <A extends BasicFileAttributes> A readAttributes (Path path, Class<A> type, LinkOption... options)
     throws IOException {
 
-    return jailedPathTranslator.getNativeFileSystem().provider().readAttributes(jailedPathTranslator.unwrapPath(jailedPathTranslator.getNativeFileSystem(), path), type, options);
+    return jailedPathTranslator.getNativeFileSystem().provider().readAttributes(jailedPathTranslator.unwrapPath(path), type, options);
   }
 
   @Override
   public Map<String, Object> readAttributes (Path path, String attributes, LinkOption... options)
     throws IOException {
 
-    return jailedPathTranslator.getNativeFileSystem().provider().readAttributes(jailedPathTranslator.unwrapPath(jailedPathTranslator.getNativeFileSystem(), path), attributes, options);
+    return jailedPathTranslator.getNativeFileSystem().provider().readAttributes(jailedPathTranslator.unwrapPath(path), attributes, options);
   }
 
   @Override
   public void setAttribute (Path path, String attribute, Object value, LinkOption... options)
     throws IOException {
 
-    jailedPathTranslator.getNativeFileSystem().provider().setAttribute(jailedPathTranslator.unwrapPath(jailedPathTranslator.getNativeFileSystem(), path), attribute, value, options);
+    jailedPathTranslator.getNativeFileSystem().provider().setAttribute(jailedPathTranslator.unwrapPath(path), attribute, value, options);
   }
 }
