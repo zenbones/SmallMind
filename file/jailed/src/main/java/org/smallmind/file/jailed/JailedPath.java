@@ -32,7 +32,6 @@
  */
 package org.smallmind.file.jailed;
 
-import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.LinkOption;
@@ -383,21 +382,26 @@ public class JailedPath implements Path {
         }
       }
 
-      return constructPath(otherNormalizedPath.getText(), false, Arrays.copyOfRange(otherNormalizedPath.getSegments(), segments.length, otherNormalizedPath.getNameCount()))
+      return constructPath(otherNormalizedPath.getText(), false, Arrays.copyOfRange(otherNormalizedPath.getSegments(), segments.length, otherNormalizedPath.getNameCount()));
     }
   }
 
   @Override
   public Path toAbsolutePath () {
 
-    return new JailedPath(jailedFileSystem, nativePath.toAbsolutePath());
+    if (isAbsolute()) {
+
+      return this;
+    } else {
+
+      return constructPath(text, true, getSegments());
+    }
   }
 
   @Override
-  public Path toRealPath (LinkOption... options)
-    throws IOException {
+  public Path toRealPath (LinkOption... options) {
 
-    return new JailedPath(jailedFileSystem, nativePath.toRealPath(options));
+    return normalize().toAbsolutePath();
   }
 
   @Override
@@ -405,27 +409,70 @@ public class JailedPath implements Path {
 
     if (!(other instanceof JailedPath)) {
       throw new ProviderMismatchException();
+    } else if (hasRoot != other.isAbsolute()) {
+
+      return hasRoot ? 1 : -1;
+    } else {
+
+      int maxSegmentCount = Math.max(segments.length, other.getNameCount());
+
+      for (int segmentIndex = 0; segmentIndex < maxSegmentCount; segmentIndex++) {
+        if ((segmentIndex >= segments.length) || (segmentIndex >= other.getNameCount())) {
+
+          return (segmentIndex >= segments.length) ? -1 : 1;
+        } else {
+
+          int comparison;
+
+          if ((comparison = compareSegment(segments[segmentIndex], ((JailedPath)other).getText(), ((JailedPath)other).getSegments()[segmentIndex])) != 0) {
+
+            return comparison;
+          }
+        }
+      }
+
+      return 0;
     }
-    return nativePath.compareTo(JailedPathUtility.unwrap(other));
+  }
+
+  private int compareSegment (Segment segment, char[] otherText, Segment otherSegment) {
+
+    int segmentLength = segment.length();
+    int otherSegmentLength = otherSegment.length();
+    int maxSegmentLength = Math.max(segmentLength, otherSegmentLength);
+
+    for (int charIndex = 0; charIndex < maxSegmentLength; charIndex++) {
+      if ((charIndex >= segmentLength) || (charIndex >= otherSegmentLength)) {
+
+        return (charIndex >= segmentLength) ? -1 : 1;
+      } else {
+
+        int comparison;
+
+        if ((comparison = Character.compare(text[segment.getBegin() + charIndex], otherText[otherSegment.getBegin() + charIndex])) != 0) {
+
+          return comparison;
+        }
+      }
+    }
+
+    return 0;
   }
 
   @Override
   public URI toUri () {
 
-    URI nativeURI = nativePath.toUri();
-
     try {
-      return new URI(jailedFileSystem.provider().getScheme(), nativeURI.getUserInfo(), nativeURI.getHost(), nativeURI.getPort(), new JailedPath(jailedFileSystem, nativePath.toAbsolutePath()).toString(), null, null);
+      return new URI(jailedFileSystem.provider().getScheme(), "", toAbsolutePath().toString(), null);
     } catch (Exception exception) {
       throw new RuntimeException(exception);
     }
   }
 
   @Override
-  public WatchKey register (WatchService watcher, WatchEvent.Kind<?>[] events, WatchEvent.Modifier... modifiers)
-    throws IOException {
+  public WatchKey register (WatchService watcher, WatchEvent.Kind<?>[] events, WatchEvent.Modifier... modifiers) {
 
-    return nativePath.register(watcher, events, modifiers);
+    throw new UnsupportedOperationException();
   }
 
   private static class Segment {
