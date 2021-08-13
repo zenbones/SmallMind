@@ -325,9 +325,9 @@ public class JailedPath implements Path {
 
         if ((segmentLength != 1) || (text[segment.getBegin()] != '.')) {
           if ((segmentLength == 2) && (text[segment.getBegin()] == '.') && (text[segment.getBegin() + 1] == '.')) {
-            normalizedSegmentList.pop();
+            normalizedSegmentList.removeLast();
           } else {
-            normalizedSegmentList.push(segment);
+            normalizedSegmentList.add(segment);
           }
         }
       }
