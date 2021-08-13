@@ -46,13 +46,13 @@ import java.util.Set;
 public class JailedFileSystem extends FileSystem {
 
   private final JailedFileSystemProvider jailedFileSystemProvider;
-  private final FileSystem nativeFileSystem;
+private final JailedPathTranslator jailedPathTranslator;
 
-  public JailedFileSystem (FileSystem nativeFileSystem, JailedAccessCheck jailedAccessCheck, String scheme) {
+  public JailedFileSystem (FileSystem nativeFileSystem,  String scheme) {
 
-    this.nativeFileSystem = nativeFileSystem;
 
-    jailedFileSystemProvider = new JailedFileSystemProvider(this, jailedAccessCheck, scheme);
+
+    jailedFileSystemProvider = new JailedFileSystemProvider(this, scheme);
   }
 
   public FileSystem getNativeFileSystem () {

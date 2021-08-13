@@ -5,7 +5,7 @@ import java.nio.file.Path;
 
 public interface JailedPathTranslator {
 
-  Path wrapPath (Path nativePath)
+  Path wrapPath (JailedFileSystem jailedFileSystem, Path nativePath)
     throws IOException;
 
   Path unwrapPath (Path jailedPath)

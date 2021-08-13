@@ -40,6 +40,7 @@ import java.nio.file.CopyOption;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.LinkOption;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
@@ -55,13 +56,11 @@ import java.util.Set;
 public class JailedFileSystemProvider extends FileSystemProvider {
 
   private final JailedPathTranslator jailedPathTranslator;
-  private final JailedAccessCheck jailedAccessCheck;
   private final String scheme;
 
-  public JailedFileSystemProvider (String scheme, JailedAccessCheck jailedAccessCheck, JailedPathTranslator jailedPathTranslator) {
+  public JailedFileSystemProvider (String scheme, JailedPathTranslator jailedPathTranslator) {
 
     this.scheme = scheme;
-    this.jailedAccessCheck = jailedAccessCheck;
     this.jailedPathTranslator = jailedPathTranslator;
   }
 
@@ -75,19 +74,19 @@ public class JailedFileSystemProvider extends FileSystemProvider {
   public FileSystem newFileSystem (URI uri, Map<String, ?> env)
     throws IOException {
 
-    return new JailedFileSystem(jailedFileSystem.getNativeFileSystem().provider().newFileSystem(uri, env), jailedAccessCheck, scheme);
+    return new JailedFileSystem(FileSystems.getDefault().provider().newFileSystem(uri, env), scheme);
   }
 
   @Override
   public FileSystem getFileSystem (URI uri) {
 
-    return new JailedFileSystem(jailedFileSystem.getNativeFileSystem().provider().getFileSystem(uri), jailedAccessCheck, scheme);
+    return new JailedFileSystem(FileSystems.getDefault().provider().getFileSystem(uri), scheme);
   }
 
   @Override
   public Path getPath (URI uri) {
 
-    return new JailedPath(jailedFileSystem, jailedFileSystem.getNativeFileSystem().provider().getPath(uri));
+    return new JailedPath(jailedFileSystem, uri.getPath());
   }
 
   @Override
@@ -96,7 +95,7 @@ public class JailedFileSystemProvider extends FileSystemProvider {
 
     checkAccess(path, (options.contains(StandardOpenOption.WRITE) || options.contains(StandardOpenOption.APPEND)) ? AccessMode.WRITE : AccessMode.READ);
 
-    return jailedFileSystem.getNativeFileSystem().provider().newByteChannel(JailedPathUtility.unwrap(path), options, attrs);
+    return FileSystems.getDefault().provider().newByteChannel(jailedPathTranslator.unwrapPath(path), options, attrs);
   }
 
   @Override
@@ -105,7 +104,7 @@ public class JailedFileSystemProvider extends FileSystemProvider {
 
     checkAccess(dir, AccessMode.READ);
 
-    DirectoryStream<Path> nativeDirectoryStream = jailedFileSystem.getNativeFileSystem().provider().newDirectoryStream(JailedPathUtility.unwrap(dir), filter);
+    DirectoryStream<Path> nativeDirectoryStream = FileSystems.getDefault().provider().newDirectoryStream(jailedPathTranslator.unwrapPath(dir), filter);
 
     return new DirectoryStream<>() {
 
@@ -125,7 +124,7 @@ public class JailedFileSystemProvider extends FileSystemProvider {
           @Override
           public Path next () {
 
-            return new JailedPath(jailedFileSystem, nativeIterator.next());
+            return jailedPathTranslator.wrapPath(jailedFiledSystem, nativeIterator.next());
           }
         };
       }
@@ -144,14 +143,14 @@ public class JailedFileSystemProvider extends FileSystemProvider {
     throws IOException {
 
     checkAccess(dir, AccessMode.WRITE);
-    jailedFileSystem.getNativeFileSystem().provider().createDirectory(JailedPathUtility.unwrap(dir), attrs);
+    FileSystems.getDefault().provider().createDirectory(jailedPathTranslator.unwrapPath(dir), attrs);
   }
 
   @Override
   public void delete (Path path) throws IOException {
 
     checkAccess(path, AccessMode.WRITE);
-    jailedFileSystem.getNativeFileSystem().provider().delete(JailedPathUtility.unwrap(path));
+    FileSystems.getDefault().provider().delete(jailedPathTranslator.unwrapPath(path));
   }
 
   @Override
@@ -160,7 +159,7 @@ public class JailedFileSystemProvider extends FileSystemProvider {
 
     checkAccess(source, AccessMode.READ);
     checkAccess(target, AccessMode.WRITE);
-    jailedFileSystem.getNativeFileSystem().provider().copy(JailedPathUtility.unwrap(source), JailedPathUtility.unwrap(target), options);
+    FileSystems.getDefault().provider().copy(jailedPathTranslator.unwrapPath(source), jailedPathTranslator.unwrapPath(target), options);
   }
 
   @Override
@@ -169,7 +168,7 @@ public class JailedFileSystemProvider extends FileSystemProvider {
 
     checkAccess(source, AccessMode.WRITE);
     checkAccess(target, AccessMode.WRITE);
-    jailedFileSystem.getNativeFileSystem().provider().move(JailedPathUtility.unwrap(source), JailedPathUtility.unwrap(target), options);
+    FileSystems.getDefault().provider().move(jailedPathTranslator.unwrapPath(source), jailedPathTranslator.unwrapPath(target), options);
   }
 
   @Override
@@ -178,7 +177,7 @@ public class JailedFileSystemProvider extends FileSystemProvider {
 
     checkAccess(path, AccessMode.READ);
     checkAccess(path2, AccessMode.READ);
-    return jailedFileSystem.getNativeFileSystem().provider().isSameFile(JailedPathUtility.unwrap(path), JailedPathUtility.unwrap(path2));
+    return FileSystems.getDefault().provider().isSameFile(jailedPathTranslator.unwrapPath(path), jailedPathTranslator.unwrapPath(path));
   }
 
   @Override
@@ -186,7 +185,7 @@ public class JailedFileSystemProvider extends FileSystemProvider {
     throws IOException {
 
     checkAccess(path, AccessMode.READ);
-    return jailedFileSystem.getNativeFileSystem().provider().isHidden(JailedPathUtility.unwrap(path));
+    return FileSystems.getDefault().provider().isHidden(jailedPathTranslator.unwrapPath(path));
   }
 
   @Override
@@ -194,20 +193,23 @@ public class JailedFileSystemProvider extends FileSystemProvider {
     throws IOException {
 
     checkAccess(path, AccessMode.READ);
-    return jailedFileSystem.getNativeFileSystem().provider().getFileStore(JailedPathUtility.unwrap(path));
+    return FileSystems.getDefault().provider().getFileStore(jailedPathTranslator.unwrapPath(path));
   }
 
   @Override
-  public void checkAccess (Path path, AccessMode... modes)
-    throws IOException {
+  public void checkAccess (Path path, AccessMode... modes) {
 
-    jailedAccessCheck.checkAccess(path, modes);
+    // the whole point of a jailed path is that the client is limited to paths they actually have access to
   }
 
   @Override
   public <V extends FileAttributeView> V getFileAttributeView (Path path, Class<V> type, LinkOption... options) {
 
-    return jailedFileSystem.getNativeFileSystem().provider().getFileAttributeView(JailedPathUtility.unwrap(path), type, options);
+    try {
+      return FileSystems.getDefault().provider().getFileAttributeView(jailedPathTranslator.unwrapPath(path), type, options);
+    } catch (IOException ioException) {
+      throw new RuntimeException(ioException);
+    }
   }
 
   @Override
@@ -215,7 +217,7 @@ public class JailedFileSystemProvider extends FileSystemProvider {
     throws IOException {
 
     checkAccess(path, AccessMode.READ);
-    return jailedFileSystem.getNativeFileSystem().provider().readAttributes(JailedPathUtility.unwrap(path), type, options);
+    return FileSystems.getDefault().provider().readAttributes(jailedPathTranslator.unwrapPath(path), type, options);
   }
 
   @Override
@@ -223,7 +225,7 @@ public class JailedFileSystemProvider extends FileSystemProvider {
     throws IOException {
 
     checkAccess(path, AccessMode.READ);
-    return jailedFileSystem.getNativeFileSystem().provider().readAttributes(JailedPathUtility.unwrap(path), attributes, options);
+    return FileSystems.getDefault().provider().readAttributes(jailedPathTranslator.unwrapPath(path), attributes, options);
   }
 
   @Override
@@ -231,6 +233,6 @@ public class JailedFileSystemProvider extends FileSystemProvider {
     throws IOException {
 
     checkAccess(path, AccessMode.WRITE);
-    jailedFileSystem.getNativeFileSystem().provider().setAttribute(JailedPathUtility.unwrap(path), attribute, value, options);
+    FileSystems.getDefault().provider().setAttribute(jailedPathTranslator.unwrapPath(path), attribute, value, options);
   }
 }
