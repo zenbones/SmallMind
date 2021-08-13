@@ -35,32 +35,32 @@ package org.smallmind.file.jailed;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
 
-public class RootedJailedPathTranslator implements JailedPathTranslator {
+public class RootedPathTranslator implements JailedPathTranslator {
 
-  private Path nativeRoot;
+  private final Path rootPath;
 
-  public RootedJailedPathTranslator (Path nativeRoot) {
+  public RootedPathTranslator (Path rootPath) {
 
-    this.nativeRoot = nativeRoot;
+    this.rootPath = rootPath;
   }
 
   @Override
   public FileSystem getNativeFileSystem () {
 
-    return nativeRoot.getFileSystem();
+    return rootPath.getFileSystem();
   }
 
   @Override
   public Path wrapPath (JailedFileSystem jailedFileSystem, Path nativePath) {
 
     if (nativePath.isAbsolute()) {
-      if (!nativePath.startsWith(nativeRoot)) {
+      if (!nativePath.startsWith(rootPath)) {
         throw new SecurityException("No authorization for path");
       } else {
 
         StringBuilder pathBuilder = new StringBuilder();
 
-        for (int index = nativeRoot.getNameCount(); index < nativePath.getNameCount(); index++) {
+        for (int index = rootPath.getNameCount(); index < nativePath.getNameCount(); index++) {
           pathBuilder.append(jailedFileSystem.getSeparator()).append(nativePath.getName(index));
         }
 
@@ -90,6 +90,6 @@ public class RootedJailedPathTranslator implements JailedPathTranslator {
       pathBuilder.append(jailedPath.getName(index));
     }
 
-    return nativeRoot.resolve(pathBuilder.toString());
+    return rootPath.resolve(pathBuilder.toString());
   }
 }

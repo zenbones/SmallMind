@@ -41,6 +41,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystemAlreadyExistsException;
+import java.nio.file.FileSystems;
 import java.nio.file.LinkOption;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
@@ -57,6 +58,16 @@ public class JailedFileSystemProvider extends FileSystemProvider {
   private final JailedFileSystem jailedFileSystem;
   private final JailedPathTranslator jailedPathTranslator;
   private final String scheme;
+
+  public JailedFileSystemProvider () {
+
+    this("jailed", new ContextSensitiveRootedPathTranslator(FileSystems.getDefault()));
+  }
+
+  public JailedFileSystemProvider (FileSystemProvider fileSystemProvider) {
+
+    this("jailed", new ContextSensitiveRootedPathTranslator(fileSystemProvider.getFileSystem(URI.create(fileSystemProvider.getScheme() + ":///"))));
+  }
 
   public JailedFileSystemProvider (String scheme, JailedPathTranslator jailedPathTranslator) {
 
