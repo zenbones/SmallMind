@@ -37,24 +37,141 @@ import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.nio.file.ProviderMismatchException;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
+import java.util.Arrays;
+import java.util.LinkedList;
 
 public class JailedPath implements Path {
 
   private final JailedFileSystem jailedFileSystem;
-  private final Path nativePath;
+  private final Segment[] segments;
+  private final char[] text;
+  private final boolean hasRoot;
 
-  public JailedPath (JailedFileSystem jailedFileSystem, Path nativePath) {
+  private JailedPath (JailedFileSystem jailedFileSystem, char[] text, boolean hasRoot, Segment... segments) {
 
     this.jailedFileSystem = jailedFileSystem;
-    this.nativePath = nativePath;
+    this.text = text;
+    this.hasRoot = hasRoot;
+    this.segments = segments;
   }
 
-  public Path getNativePath () {
+  public JailedPath (JailedFileSystem jailedFileSystem, char... text) {
 
-    return nativePath;
+    this.jailedFileSystem = jailedFileSystem;
+    this.text = text;
+
+    hasRoot = ((text.length > 0) && (text[0] == '/'));
+    segments = divideAndConquer();
+  }
+
+  private Segment[] divideAndConquer () {
+
+    Segment[] segments;
+    boolean slash = true;
+    int count = 0;
+    int begin = 0;
+
+    for (char singleChar : text) {
+      if (singleChar == '/') {
+        slash = true;
+      } else if (slash) {
+        slash = false;
+        count++;
+      }
+    }
+
+    segments = new Segment[count];
+
+    if (count > 0) {
+      slash = true;
+      count = 0;
+      for (int index = 0; index < text.length; index++) {
+        if (text[index] == '/') {
+          if (!slash) {
+            segments[count++] = new Segment(begin, index);
+          }
+          slash = true;
+        } else if (slash) {
+          slash = false;
+          begin = index;
+        }
+      }
+      if (!slash) {
+        segments[count] = new Segment(begin, text.length);
+      }
+    }
+
+    return segments;
+  }
+
+  private char[] getText () {
+
+    return text;
+  }
+
+  private Segment[] getSegments () {
+
+    return segments;
+  }
+
+  private boolean sameSegment (char[] otherText, Segment otherSegment, int segmentIndex) {
+
+    Segment segment = segments[segmentIndex];
+    int segmentLength = segment.length();
+
+    if (segmentLength == otherSegment.length()) {
+      for (int charIndex = 0; charIndex < segmentLength; charIndex++) {
+        if (!(text[segment.getBegin() + charIndex] == otherText[otherSegment.getBegin() + charIndex])) {
+
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    return false;
+  }
+
+  private Path constructPath (char[] text, boolean hasRoot, Segment... segments) {
+
+    return constructPath(null, null, text, hasRoot, segments);
+  }
+
+  private Path constructPath (char[] prologueText, Segment[] prologueSegments, char[] text, boolean hasRoot, Segment... segments) {
+
+    Segment[] translatedSegments = new Segment[((prologueSegments == null) ? 0 : prologueSegments.length) + segments.length];
+    StringBuilder translatedTextBuilder = (prologueText == null) ? new StringBuilder() : new StringBuilder(String.copyValueOf(prologueText));
+    char[] translatedText;
+
+    if (prologueSegments != null) {
+      System.arraycopy(prologueSegments, 0, translatedSegments, 0, prologueSegments.length);
+    }
+
+    for (int segmentIndex = 0; segmentIndex < segments.length; segmentIndex++) {
+
+      int segmentLength = segments[segmentIndex].length();
+
+      if (hasRoot || translatedTextBuilder.length() > 0) {
+        translatedTextBuilder.append('/');
+        translatedSegments[segmentIndex] = new Segment(translatedTextBuilder.length(), translatedTextBuilder.length() + segmentLength);
+      } else {
+        translatedSegments[segmentIndex] = new Segment(0, segmentLength);
+      }
+
+      for (int charIndex = 0; charIndex < segmentLength; charIndex++) {
+        translatedTextBuilder.append(text[segments[segmentIndex].getBegin() + charIndex]);
+      }
+    }
+
+    translatedText = new char[translatedTextBuilder.length()];
+    translatedTextBuilder.getChars(0, translatedTextBuilder.length(), translatedText, 0);
+
+    return new JailedPath(jailedFileSystem, translatedText, hasRoot, translatedSegments);
   }
 
   @Override
@@ -66,84 +183,207 @@ public class JailedPath implements Path {
   @Override
   public boolean isAbsolute () {
 
-    return nativePath.isAbsolute();
+    return hasRoot;
   }
 
   @Override
   public Path getRoot () {
 
-    return new JailedPath(jailedFileSystem, nativePath.getRoot());
+    return hasRoot ? new JailedPath(jailedFileSystem, new char[] {'/'}, true) : null;
   }
 
   @Override
   public Path getFileName () {
 
-    return new JailedPath(jailedFileSystem, nativePath.getFileName());
+    return (segments.length == 0) ? null : constructPath(text, false, segments[segments.length - 1]);
   }
 
   @Override
   public Path getParent () {
 
-    return new JailedPath(jailedFileSystem, nativePath.getParent());
+    if (segments.length == 0) {
+
+      return null;
+    } else if (segments.length == 1) {
+
+      return getRoot();
+    } else {
+
+      Segment[] allButOne = new Segment[segments.length - 1];
+
+      System.arraycopy(segments, 0, allButOne, 0, segments.length - 1);
+
+      return constructPath(text, hasRoot, allButOne);
+    }
   }
 
   @Override
   public int getNameCount () {
 
-    return nativePath.getNameCount();
+    return segments.length;
   }
 
   @Override
   public Path getName (int index) {
 
-    return new JailedPath(jailedFileSystem, nativePath.getName(index));
+    if ((index < 0) || (index >= segments.length)) {
+      throw new IllegalArgumentException("The requested element does not exist");
+    } else {
+
+      return constructPath(text, false, segments[index]);
+    }
   }
 
   @Override
   public Path subpath (int beginIndex, int endIndex) {
 
-    return new JailedPath(jailedFileSystem, nativePath.subpath(beginIndex, endIndex));
+    if ((beginIndex < 0) || (beginIndex >= segments.length) || (endIndex <= beginIndex) || (endIndex > segments.length)) {
+      throw new IllegalArgumentException("The subpath specified does not exist");
+    } else {
+
+      Segment[] subSegments = new Segment[endIndex - beginIndex];
+
+      System.arraycopy(segments, beginIndex, subSegments, 0, endIndex - beginIndex);
+
+      return constructPath(text, false, subSegments);
+    }
   }
 
   @Override
   public boolean startsWith (Path other) {
 
-    return nativePath.startsWith(JailedPathUtility.unwrap(other));
+    if (!(other instanceof JailedPath)) {
+      throw new ProviderMismatchException();
+    } else if (jailedFileSystem.equals(other.getFileSystem()) && (hasRoot == other.isAbsolute()) && (other.getNameCount() <= segments.length)) {
+
+      int segmentIndex = 0;
+
+      for (Segment otherSegment : ((JailedPath)other).getSegments()) {
+        if (!sameSegment(((JailedPath)other).getText(), otherSegment, segmentIndex++)) {
+
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    return false;
   }
 
   @Override
   public boolean endsWith (Path other) {
 
-    return nativePath.equals(JailedPathUtility.unwrap(other));
+    if (!(other instanceof JailedPath)) {
+      throw new ProviderMismatchException();
+    } else if (jailedFileSystem.equals(other.getFileSystem()) && ((!other.isAbsolute()) || hasRoot) && (segments.length >= other.getNameCount())) {
+
+      int segmentIndex = segments.length - other.getNameCount();
+
+      for (Segment otherSegment : ((JailedPath)other).getSegments()) {
+        if (!sameSegment(((JailedPath)other).getText(), otherSegment, segmentIndex++)) {
+
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    return false;
   }
 
   @Override
   public Path normalize () {
 
-    return new JailedPath(jailedFileSystem, nativePath.normalize());
+    boolean normalized = true;
+
+    for (Segment segment : segments) {
+
+      int segmentLength = segment.length();
+
+      if (((segmentLength == 1) && (text[segment.getBegin()] != '.')) || ((segmentLength == 2) && (text[segment.getBegin()] == '.') && (text[segment.getBegin() + 1] == '.'))) {
+        normalized = false;
+        break;
+      }
+    }
+
+    if (normalized) {
+
+      return this;
+    } else {
+
+      LinkedList<Segment> normalizedSegmentList = new LinkedList<>();
+
+      for (Segment segment : segments) {
+
+        int segmentLength = segment.length();
+
+        if ((segmentLength != 1) || (text[segment.getBegin()] != '.')) {
+          if ((segmentLength == 2) && (text[segment.getBegin()] == '.') && (text[segment.getBegin() + 1] == '.')) {
+            normalizedSegmentList.pop();
+          } else {
+            normalizedSegmentList.push(segment);
+          }
+        }
+      }
+
+      return constructPath(text, hasRoot, normalizedSegmentList.toArray(new Segment[0]));
+    }
   }
 
   @Override
   public Path resolve (Path other) {
 
-    return new JailedPath(jailedFileSystem, nativePath.resolve(JailedPathUtility.unwrap(other)));
+    if (!(other instanceof JailedPath)) {
+      throw new ProviderMismatchException();
+    } else if (other.isAbsolute()) {
+
+      return other;
+    } else if (other.getNameCount() == 0) {
+
+      return this;
+    } else {
+
+      return constructPath(text, segments, ((JailedPath)other).getText(), hasRoot, ((JailedPath)other).getSegments());
+    }
   }
 
   @Override
   public Path relativize (Path other) {
 
-    return new JailedPath(jailedFileSystem, nativePath.relativize(JailedPathUtility.unwrap(other)));
-  }
+    if (!(other instanceof JailedPath)) {
+      throw new ProviderMismatchException();
+    } else if (hasRoot != other.isAbsolute()) {
+      throw new IllegalArgumentException("The paths specified must be either both absolute or both relative");
+    } else {
 
-  @Override
-  public URI toUri () {
+      JailedPath normalizedPath = (JailedPath)normalize();
+      JailedPath otherNormalizedPath = (JailedPath)other.normalize();
+      LinkedList<Segment> redactedSegmentList = new LinkedList<>();
+      StringBuilder redactedTextBuilder = new StringBuilder();
+      char[] redactedText;
 
-    URI nativeURI = nativePath.toUri();
+      for (int segmentIndex = 0; segmentIndex < segments.length; segmentIndex++) {
+        if ((segmentIndex >= otherNormalizedPath.getNameCount()) || (!normalizedPath.sameSegment(otherNormalizedPath.getText(), otherNormalizedPath.getSegments()[segmentIndex], segmentIndex))) {
+          for (int count = 0; count < segments.length - segmentIndex; count++) {
+            if (redactedTextBuilder.length() > 0) {
+              redactedSegmentList.add(new Segment(redactedTextBuilder.length() + 1, redactedTextBuilder.length() + 3));
+              redactedTextBuilder.append('/');
+            } else {
+              redactedSegmentList.add(new Segment(0, 2));
+            }
+            redactedTextBuilder.append("..");
+          }
 
-    try {
-      return new URI(jailedFileSystem.provider().getScheme(), nativeURI.getUserInfo(), nativeURI.getHost(), nativeURI.getPort(), new JailedPath(jailedFileSystem, nativePath.toAbsolutePath()).toString(), null, null);
-    } catch (Exception exception) {
-      throw new RuntimeException(exception);
+          redactedText = new char[redactedTextBuilder.length()];
+          redactedTextBuilder.getChars(0, redactedTextBuilder.length(), redactedText, 0);
+
+          return constructPath(redactedText, redactedSegmentList.toArray(new Segment[0]), otherNormalizedPath.getText(), false, Arrays.copyOfRange(otherNormalizedPath.getSegments(), segmentIndex, otherNormalizedPath.getNameCount()));
+        }
+      }
+
+      return constructPath(otherNormalizedPath.getText(), false, Arrays.copyOfRange(otherNormalizedPath.getSegments(), segments.length, otherNormalizedPath.getNameCount()))
     }
   }
 
@@ -161,15 +401,57 @@ public class JailedPath implements Path {
   }
 
   @Override
+  public int compareTo (Path other) {
+
+    if (!(other instanceof JailedPath)) {
+      throw new ProviderMismatchException();
+    }
+    return nativePath.compareTo(JailedPathUtility.unwrap(other));
+  }
+
+  @Override
+  public URI toUri () {
+
+    URI nativeURI = nativePath.toUri();
+
+    try {
+      return new URI(jailedFileSystem.provider().getScheme(), nativeURI.getUserInfo(), nativeURI.getHost(), nativeURI.getPort(), new JailedPath(jailedFileSystem, nativePath.toAbsolutePath()).toString(), null, null);
+    } catch (Exception exception) {
+      throw new RuntimeException(exception);
+    }
+  }
+
+  @Override
   public WatchKey register (WatchService watcher, WatchEvent.Kind<?>[] events, WatchEvent.Modifier... modifiers)
     throws IOException {
 
     return nativePath.register(watcher, events, modifiers);
   }
 
-  @Override
-  public int compareTo (Path other) {
+  private static class Segment {
 
-    return nativePath.compareTo(JailedPathUtility.unwrap(other));
+    private final int begin;
+    private final int end;
+
+    public Segment (int begin, int end) {
+
+      this.begin = begin;
+      this.end = end;
+    }
+
+    public int getBegin () {
+
+      return begin;
+    }
+
+    public int getEnd () {
+
+      return end;
+    }
+
+    public int length () {
+
+      return end - begin;
+    }
   }
 }

@@ -147,4 +147,16 @@ public class JailedFileSystem extends FileSystem {
 
     return nativeFileSystem.newWatchService();
   }
+
+  @Override
+  public int hashCode () {
+
+    return super.hashCode();
+  }
+
+  @Override
+  public boolean equals (Object obj) {
+
+    return (obj instanceof JailedFileSystem); // and path translators are equivalent?
+  }
 }
