@@ -45,6 +45,6 @@ public class MySQL5InnoDBDialect extends org.hibernate.dialect.MySQL5InnoDBDiale
 
     registerColumnType(Types.BOOLEAN, "BIT(1)");
     registerFunction("org_smallmind_date_sub_minutes", new SQLFunctionTemplate(TimestampType.INSTANCE, "date_sub(?1, INTERVAL ?2 MINUTE)"));
-    this.registerFunction("org_smallmind_group_concat", new SQLFunctionTemplate(StandardBasicTypes.STRING, "group_concat(?1)"));
+    registerFunction("org_smallmind_group_concat", new SQLFunctionTemplate(StandardBasicTypes.STRING, "group_concat(?1)"));
   }
 }
