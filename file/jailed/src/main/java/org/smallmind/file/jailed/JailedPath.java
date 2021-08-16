@@ -58,6 +58,12 @@ public class JailedPath implements Path {
     this.text = text;
     this.hasRoot = hasRoot;
     this.segments = segments;
+
+    for (Segment segment : segments) {
+      if (segment == null) {
+        throw new NullPointerException();
+      }
+    }
   }
 
   public JailedPath (JailedFileSystem jailedFileSystem, char... text) {
@@ -308,7 +314,7 @@ public class JailedPath implements Path {
 
       int segmentLength = segment.length();
 
-      if (((segmentLength == 1) && (text[segment.getBegin()] != '.')) || ((segmentLength == 2) && (text[segment.getBegin()] == '.') && (text[segment.getBegin() + 1] == '.'))) {
+      if (((segmentLength == 1) && (text[segment.getBegin()] == '.')) || ((segmentLength == 2) && (text[segment.getBegin()] == '.') && (text[segment.getBegin() + 1] == '.'))) {
         normalized = false;
         break;
       }
