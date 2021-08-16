@@ -58,12 +58,6 @@ public class JailedPath implements Path {
     this.text = text;
     this.hasRoot = hasRoot;
     this.segments = segments;
-
-    for (Segment segment : segments) {
-      if (segment == null) {
-        throw new NullPointerException();
-      }
-    }
   }
 
   public JailedPath (JailedFileSystem jailedFileSystem, char... text) {
