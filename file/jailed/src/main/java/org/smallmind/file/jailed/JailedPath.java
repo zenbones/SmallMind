@@ -156,7 +156,8 @@ public class JailedPath implements Path {
 
   private Path constructPath (char[] prologueText, Segment[] prologueSegments, char[] text, boolean hasRoot, Segment... segments) {
 
-    Segment[] translatedSegments = new Segment[((prologueSegments == null) ? 0 : prologueSegments.length) + segments.length];
+    int prologueSegmentCount = (prologueSegments == null) ? 0 : prologueSegments.length;
+    Segment[] translatedSegments = new Segment[prologueSegmentCount + segments.length];
     StringBuilder translatedTextBuilder = (prologueText == null) ? new StringBuilder() : new StringBuilder(String.copyValueOf(prologueText));
     char[] translatedText;
 
@@ -170,9 +171,9 @@ public class JailedPath implements Path {
 
       if (hasRoot || translatedTextBuilder.length() > 0) {
         translatedTextBuilder.append(SEPARATOR);
-        translatedSegments[segmentIndex] = new Segment(translatedTextBuilder.length(), translatedTextBuilder.length() + segmentLength);
+        translatedSegments[prologueSegmentCount + segmentIndex] = new Segment(translatedTextBuilder.length(), translatedTextBuilder.length() + segmentLength);
       } else {
-        translatedSegments[segmentIndex] = new Segment(0, segmentLength);
+        translatedSegments[prologueSegmentCount + segmentIndex] = new Segment(0, segmentLength);
       }
 
       for (int charIndex = 0; charIndex < segmentLength; charIndex++) {
