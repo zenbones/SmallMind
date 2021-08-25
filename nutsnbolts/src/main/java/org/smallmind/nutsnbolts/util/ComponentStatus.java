@@ -47,4 +47,18 @@ public enum ComponentStatus {
 
     return priority;
   }
+
+  public boolean in (ComponentStatus... matchingStatuses) {
+
+    if (matchingStatuses != null) {
+      for (ComponentStatus matchingStatus : matchingStatuses) {
+        if (this.equals(matchingStatus)) {
+
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
 }
