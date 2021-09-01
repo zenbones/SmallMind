@@ -36,23 +36,23 @@ import org.apache.wicket.Component;
 import org.apache.wicket.behavior.AttributeAppender;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.FormComponent;
-import org.apache.wicket.model.AbstractReadOnlyModel;
+import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.StringResourceModel;
 
 public class FormLabel extends Label {
 
-  public FormLabel (String id, Component parentComponent, FormComponent formComponent, String resourceKey) {
+  public FormLabel (String id, Component parentComponent, FormComponent<?> formComponent, String resourceKey) {
 
     super(id, new FormLabelModel(parentComponent, resourceKey));
 
     add(new AttributeAppender("style", new FormLabelColorModel(formComponent), ";"));
   }
 
-  private class FormLabelColorModel extends AbstractReadOnlyModel<String> {
+  private static class FormLabelColorModel implements IModel<String> {
 
-    private final FormComponent formComponent;
+    private final FormComponent<?> formComponent;
 
-    public FormLabelColorModel (FormComponent formComponent) {
+    public FormLabelColorModel (FormComponent<?> formComponent) {
 
       this.formComponent = formComponent;
     }
@@ -63,7 +63,7 @@ public class FormLabel extends Label {
     }
   }
 
-  private static class FormLabelModel extends AbstractReadOnlyModel<String> {
+  private static class FormLabelModel implements IModel<String> {
 
     private final StringResourceModel innerModel;
 
@@ -72,7 +72,6 @@ public class FormLabel extends Label {
       innerModel = new StringResourceModel(resourceKey, parentComponent, null);
     }
 
-    @Override
     public String getObject () {
 
       return innerModel.getObject() + ":";

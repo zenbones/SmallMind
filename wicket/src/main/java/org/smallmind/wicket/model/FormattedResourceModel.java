@@ -34,10 +34,10 @@ package org.smallmind.wicket.model;
 
 import java.text.MessageFormat;
 import org.apache.wicket.Component;
-import org.apache.wicket.model.AbstractReadOnlyModel;
+import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
 
-public class FormattedResourceModel extends AbstractReadOnlyModel {
+public class FormattedResourceModel implements IModel<String> {
 
   private final Component component;
   private final Object[] args;
@@ -50,7 +50,7 @@ public class FormattedResourceModel extends AbstractReadOnlyModel {
     this.args = args;
   }
 
-  public Object getObject () {
+  public String getObject () {
 
     if ((args == null) || args.length == 0) {
       return component.getApplication().getResourceSettings().getLocalizer().getString(key, component);
@@ -60,7 +60,7 @@ public class FormattedResourceModel extends AbstractReadOnlyModel {
 
     for (int count = 0; count < args.length; count++) {
       if (args[count] instanceof Model) {
-        unwrappedArgs[count] = ((Model)args[count]).getObject();
+        unwrappedArgs[count] = ((Model<?>)args[count]).getObject();
       } else {
         unwrappedArgs[count] = args[count];
       }

@@ -96,18 +96,10 @@ public class ExternalLink extends AbstractLink {
 
   public void onComponentTagBody (MarkupStream markupStream, ComponentTag openTag) {
 
-    if (!isLinkEnabled() && getBeforeDisabledLink() != null) {
-      getResponse().write(getBeforeDisabledLink());
-    }
-
     if ((label != null) && (label.getObject() != null)) {
       replaceComponentTagBody(markupStream, openTag, getDefaultModelObjectAsString(label.getObject()));
     } else {
       super.onComponentTagBody(markupStream, openTag);
-    }
-
-    if (!isLinkEnabled() && getAfterDisabledLink() != null) {
-      getResponse().write(getAfterDisabledLink());
     }
   }
 }

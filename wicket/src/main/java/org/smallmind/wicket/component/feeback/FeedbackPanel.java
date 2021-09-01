@@ -41,7 +41,6 @@ import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.list.ListItem;
 import org.apache.wicket.markup.html.list.ListView;
 import org.apache.wicket.markup.html.panel.Panel;
-import org.apache.wicket.model.AbstractReadOnlyModel;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.protocol.http.WebApplication;
 import org.smallmind.wicket.behavior.CssBehavior;
@@ -66,9 +65,9 @@ public class FeedbackPanel extends Panel {
     add(new CssBehavior(cssProperties));
   }
 
-  private class FeedbackListView extends ListView {
+  private static class FeedbackListView extends ListView<FeedbackMessage> {
 
-    public FeedbackListView (String id, IModel messageListModel) {
+    public FeedbackListView (String id, IModel<List<FeedbackMessage>> messageListModel) {
 
       super(id, messageListModel);
     }
@@ -79,15 +78,15 @@ public class FeedbackPanel extends Panel {
     }
   }
 
-  private class FeedbackMessageListModel extends AbstractReadOnlyModel {
+  private static class FeedbackMessageListModel implements IModel<List<FeedbackMessage>> {
 
-    public Object getObject () {
+    public List<FeedbackMessage> getObject () {
 
       return Session.get().getFeedbackMessages().messages(null);
     }
   }
 
-  private class FeedbackDisplayModel extends VisibilityModel {
+  private static class FeedbackDisplayModel extends VisibilityModel {
 
     private final FeedbackMessageListModel feedbackMessageListModel;
 
@@ -98,7 +97,7 @@ public class FeedbackPanel extends Panel {
 
     public boolean isVisible () {
 
-      return !((List)feedbackMessageListModel.getObject()).isEmpty();
+      return !(feedbackMessageListModel.getObject()).isEmpty();
     }
   }
 }

@@ -39,7 +39,7 @@ import org.apache.wicket.extensions.markup.html.tabs.ITab;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.panel.Panel;
-import org.apache.wicket.model.AbstractReadOnlyModel;
+import org.apache.wicket.model.IModel;
 
 public class Tab extends Panel {
 
@@ -99,17 +99,17 @@ public class Tab extends Panel {
     return this;
   }
 
-  private class TabClassModel extends AbstractReadOnlyModel {
+  private class TabClassModel implements IModel<String> {
 
-    public Object getObject () {
+    public String getObject () {
 
       return (isSelected()) ? "tabselected" : "tabstandard";
     }
   }
 
-  private class TabSelectedModel extends AbstractReadOnlyModel {
+  private class TabSelectedModel implements IModel<String> {
 
-    public Object getObject () {
+    public String getObject () {
 
       return (isSelected()) ? "selected" : null;
     }

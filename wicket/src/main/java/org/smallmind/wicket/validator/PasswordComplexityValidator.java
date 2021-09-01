@@ -32,10 +32,14 @@
  */
 package org.smallmind.wicket.validator;
 
+import java.util.HashMap;
+import java.util.Map;
+import org.apache.wicket.util.lang.Classes;
 import org.apache.wicket.validation.IValidatable;
-import org.apache.wicket.validation.validator.AbstractValidator;
+import org.apache.wicket.validation.IValidator;
+import org.apache.wicket.validation.ValidationError;
 
-public class PasswordComplexityValidator extends AbstractValidator {
+public class PasswordComplexityValidator implements IValidator<String> {
 
   private static final PasswordComplexityValidator STATIC_INSTANCE = new PasswordComplexityValidator();
 
@@ -44,13 +48,14 @@ public class PasswordComplexityValidator extends AbstractValidator {
     return STATIC_INSTANCE;
   }
 
-  protected void onValidate (IValidatable iValidatable) {
+  @Override
+  public void validate (IValidatable<String> iValidatable) {
 
     String password;
     int digitCount = 0;
     int punctuationCount = 0;
 
-    password = (String)iValidatable.getValue();
+    password = iValidatable.getValue();
 
     if (password.length() < 6) {
       error(iValidatable, "error.password.complexity.length");
@@ -67,5 +72,35 @@ public class PasswordComplexityValidator extends AbstractValidator {
     if ((digitCount < 1) && (punctuationCount < 1)) {
       error(iValidatable, "error.password.complexity.safety");
     }
+  }
+
+  public void error (final IValidatable<?> validatable, String resourceKey) {
+
+    if (resourceKey == null) {
+      throw new IllegalArgumentException("Argument [[resourceKey]] cannot be null");
+    }
+    error(validatable, resourceKey, new HashMap<>());
+  }
+
+  public void error (final IValidatable<?> validatable, final String resourceKey, Map<String, Object> vars) {
+
+    if (validatable == null) {
+      throw new IllegalArgumentException("Argument [[validatable]] cannot be null");
+    }
+    if (vars == null) {
+      throw new IllegalArgumentException("Argument [[vars]] cannot be null");
+    }
+    if (resourceKey == null) {
+      throw new IllegalArgumentException("Argument [[resourceKey]] cannot be null");
+    }
+
+    ValidationError error = new ValidationError().addKey(resourceKey);
+    final String defaultKey = Classes.simpleName(getClass());
+    if (!resourceKey.equals(defaultKey)) {
+      error.addKey(defaultKey);
+    }
+
+    error.setVariables(vars);
+    validatable.error(error);
   }
 }

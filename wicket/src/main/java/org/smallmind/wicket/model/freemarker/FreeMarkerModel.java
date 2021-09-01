@@ -38,9 +38,9 @@ import java.io.StringWriter;
 import java.util.Map;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
-import org.apache.wicket.model.AbstractReadOnlyModel;
+import org.apache.wicket.model.IModel;
 
-public class FreeMarkerModel extends AbstractReadOnlyModel<String> {
+public class FreeMarkerModel implements IModel<String> {
 
   private static final Configuration FREEMARKER_CONF;
 
@@ -61,7 +61,6 @@ public class FreeMarkerModel extends AbstractReadOnlyModel<String> {
     template = new Template(null, new StringReader(templateText), FREEMARKER_CONF);
   }
 
-  @Override
   public String getObject () {
 
     StringWriter templateWriter = new StringWriter();

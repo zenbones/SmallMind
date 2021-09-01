@@ -32,13 +32,13 @@
  */
 package org.smallmind.wicket.model;
 
-import org.apache.wicket.model.AbstractReadOnlyModel;
+import org.apache.wicket.model.IModel;
 
-public abstract class VisibilityModel extends AbstractReadOnlyModel {
+public abstract class VisibilityModel implements IModel<String> {
 
   public abstract boolean isVisible ();
 
-  public Object getObject () {
+  public String getObject () {
 
     return isVisible() ? "visibility: visible; display: block" : "visibility: collapse; display: none";
   }

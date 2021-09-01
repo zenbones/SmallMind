@@ -38,7 +38,6 @@ import org.apache.wicket.behavior.Behavior;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.panel.Panel;
-import org.apache.wicket.model.AbstractReadOnlyModel;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.protocol.http.WebApplication;
 import org.smallmind.wicket.behavior.CssBehavior;
@@ -49,7 +48,7 @@ public class Button extends Panel {
 
   private final WebMarkupContainer buttonSkin;
 
-  public Button (String id, IModel labelModel, SkinManager skinManager) {
+  public Button (String id, IModel<?> labelModel, SkinManager skinManager) {
 
     super(id);
 
@@ -80,17 +79,17 @@ public class Button extends Panel {
     buttonSkin.add(behavior);
   }
 
-  private class ButtonClassModel extends AbstractReadOnlyModel {
+  private class ButtonClassModel implements IModel<String> {
 
-    public Object getObject () {
+    public String getObject () {
 
       return (!isEnabled()) ? "buttondisabled" : "buttonstandard";
     }
   }
 
-  private class ButtonDisabledModel extends AbstractReadOnlyModel {
+  private class ButtonDisabledModel implements IModel<String> {
 
-    public Object getObject () {
+    public String getObject () {
 
       return (!isEnabled()) ? "true" : "false";
     }

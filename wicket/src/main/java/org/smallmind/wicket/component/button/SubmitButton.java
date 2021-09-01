@@ -34,29 +34,28 @@ package org.smallmind.wicket.component.button;
 
 import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.markup.html.form.Form;
-import org.apache.wicket.model.AbstractReadOnlyModel;
 import org.apache.wicket.model.IModel;
 import org.smallmind.wicket.skin.SkinManager;
 
 public class SubmitButton extends Button {
 
-  public SubmitButton (String id, IModel labelModel, Form form, SkinManager skinManager) {
+  public SubmitButton (String id, IModel<?> labelModel, Form<?> form, SkinManager skinManager) {
 
     super(id, labelModel, skinManager);
 
     addButtonBehavior(new AttributeModifier("onclick", new FormSubmitActionModel(form)));
   }
 
-  private class FormSubmitActionModel extends AbstractReadOnlyModel {
+  private class FormSubmitActionModel implements IModel<String> {
 
-    private final Form form;
+    private final Form<?> form;
 
-    public FormSubmitActionModel (Form form) {
+    public FormSubmitActionModel (Form<?> form) {
 
       this.form = form;
     }
 
-    public Object getObject () {
+    public String getObject () {
 
       if (!SubmitButton.this.isEnabled()) {
         return "";
