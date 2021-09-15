@@ -36,6 +36,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
+// Lays out items one after another, in the Bias direction, with growth/shrink values also in the bias direction
 public class SerialBox extends Box<SerialBox> {
 
   private Justification justification;

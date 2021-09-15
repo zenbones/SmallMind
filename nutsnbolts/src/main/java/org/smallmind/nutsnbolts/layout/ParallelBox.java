@@ -41,6 +41,7 @@ public class ParallelBox extends Box<ParallelBox> {
   private Double preferredOverrideMeasurement;
   private Double maximumOverrideMeasurement;
 
+  // Lays out items one after another, in the direction *opposite* to the Bias, but with growth/shrink values still in the bias direction
   protected ParallelBox (ParaboxLayout layout) {
 
     this(layout, Alignment.LEADING);
