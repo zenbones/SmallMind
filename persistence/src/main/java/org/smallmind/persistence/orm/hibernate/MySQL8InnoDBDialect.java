@@ -32,14 +32,12 @@
  */
 package org.smallmind.persistence.orm.hibernate;
 
-import java.sql.Types;
 import org.hibernate.dialect.MySQL8Dialect;
 
 public class MySQL8InnoDBDialect extends MySQL8Dialect {
 
   public MySQL8InnoDBDialect () {
 
-    registerColumnType(Types.BOOLEAN, "BIT(1)");
   }
 }
 
