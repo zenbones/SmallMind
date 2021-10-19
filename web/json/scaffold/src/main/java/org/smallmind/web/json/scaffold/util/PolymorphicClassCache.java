@@ -33,29 +33,29 @@
 package org.smallmind.web.json.scaffold.util;
 
 import java.util.HashMap;
-import java.util.concurrent.ConcurrentHashMap;
 import javax.xml.bind.annotation.XmlRootElement;
+import org.smallmind.nutsnbolts.lang.LoaderAwareClassCache;
 
 public class PolymorphicClassCache {
 
-  private static final ConcurrentHashMap<Class<?>, Class<?>> TO_PROXY_CLASS_MAP = new ConcurrentHashMap<>();
-  private static final ConcurrentHashMap<Class<?>, Class<?>> FROM_PROXY_CLASS_MAP = new ConcurrentHashMap<>();
-  private static final ConcurrentHashMap<Class<?>, HashMap<String, Class<?>>> SUB_CLASS_MAP = new ConcurrentHashMap<>();
+  private static final LoaderAwareClassCache<Class<?>> TO_PROXY_CLASS_CACHE = new LoaderAwareClassCache<>();
+  private static final LoaderAwareClassCache<Class<?>> FROM_PROXY_CLASS_CACHE = new LoaderAwareClassCache<>();
+  private static final LoaderAwareClassCache<HashMap<String, Class<?>>> SUB_CLASS_MAP_CACHE = new LoaderAwareClassCache<>();
 
   public static Class<?> getPolymorphicSubClass (Class<?> baseClass, String polymorphicKey) {
 
     HashMap<String, Class<?>> polymorphicKeyMap;
 
-    if ((polymorphicKeyMap = SUB_CLASS_MAP.get(baseClass)) == null) {
-      synchronized (SUB_CLASS_MAP) {
-        if ((polymorphicKeyMap = SUB_CLASS_MAP.get(baseClass)) == null) {
+    if ((polymorphicKeyMap = SUB_CLASS_MAP_CACHE.get(baseClass)) == null) {
+      synchronized (SUB_CLASS_MAP_CACHE) {
+        if ((polymorphicKeyMap = SUB_CLASS_MAP_CACHE.get(baseClass)) == null) {
 
           XmlPolymorphicSubClasses xmlPolymorphicSubClassesAnnotation;
 
           if ((xmlPolymorphicSubClassesAnnotation = baseClass.getAnnotation(XmlPolymorphicSubClasses.class)) == null) {
             throw new JAXBProcessingException("The class(%s) is missing a %s annotation", baseClass.getName(), XmlPolymorphicSubClasses.class.getSimpleName());
           } else {
-            SUB_CLASS_MAP.put(baseClass, polymorphicKeyMap = new HashMap<>());
+            SUB_CLASS_MAP_CACHE.put(baseClass, polymorphicKeyMap = new HashMap<>());
 
             XmlRootElement baseClassXmlRootElementAnnotation;
 
@@ -83,17 +83,17 @@ public class PolymorphicClassCache {
 
   public static void addClassRelationship (Class<?> polymorphicSubClass, Class<?> proxySubClass) {
 
-    TO_PROXY_CLASS_MAP.putIfAbsent(polymorphicSubClass, proxySubClass);
-    FROM_PROXY_CLASS_MAP.putIfAbsent(proxySubClass, polymorphicSubClass);
+    TO_PROXY_CLASS_CACHE.putIfAbsent(polymorphicSubClass, proxySubClass);
+    FROM_PROXY_CLASS_CACHE.putIfAbsent(proxySubClass, polymorphicSubClass);
   }
 
   public static Class<?> getProxyClassForPolymorphicClass (Class<?> polymorphicSubClass) {
 
-    return TO_PROXY_CLASS_MAP.get(polymorphicSubClass);
+    return TO_PROXY_CLASS_CACHE.get(polymorphicSubClass);
   }
 
   public static Class<?> getPolymorphicClassForProxyClass (Class<?> proxySubClass) {
 
-    return FROM_PROXY_CLASS_MAP.get(proxySubClass);
+    return FROM_PROXY_CLASS_CACHE.get(proxySubClass);
   }
 }

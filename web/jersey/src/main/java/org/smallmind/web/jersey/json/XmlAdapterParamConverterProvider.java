@@ -33,6 +33,7 @@
 package org.smallmind.web.jersey.json;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.ws.rs.ext.ParamConverter;
@@ -60,8 +61,8 @@ public class XmlAdapterParamConverterProvider implements ParamConverterProvider 
             synchronized (CONVERTER_MAP) {
               if ((paramConverter = CONVERTER_MAP.get(xmlAdapterClass)) == null) {
                 try {
-                  CONVERTER_MAP.put(xmlAdapterClass, new XmlAdapterParamConverter<T>(xmlAdapterClass.newInstance()));
-                } catch (InstantiationException | IllegalAccessException exception) {
+                  CONVERTER_MAP.put(xmlAdapterClass, new XmlAdapterParamConverter<T>(xmlAdapterClass.getConstructor().newInstance()));
+                } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException exception) {
                   throw new XmlAdapterParamConversionException(exception);
                 }
               }
@@ -76,7 +77,7 @@ public class XmlAdapterParamConverterProvider implements ParamConverterProvider 
     return null;
   }
 
-  private class XmlAdapterParamConverter<T> implements ParamConverter<T> {
+  private static class XmlAdapterParamConverter<T> implements ParamConverter<T> {
 
     private final XmlAdapter<String, T> xmlAdapter;
 
