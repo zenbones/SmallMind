@@ -116,7 +116,6 @@
     <module>spark</module>
     <module>swing</module>
     <module>web</module>
-    <module>wicket</module>
   </modules>
 
   <dependencyManagement>
