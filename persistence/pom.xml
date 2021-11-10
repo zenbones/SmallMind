@@ -115,12 +115,6 @@
       <optional>true</optional>
     </dependency>
     <dependency>
-      <groupId>org.hectorclient</groupId>
-      <artifactId>hector-core</artifactId>
-      <scope>compile</scope>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
       <groupId>org.ehcache</groupId>
       <artifactId>ehcache</artifactId>
       <scope>compile</scope>
@@ -144,6 +138,14 @@
       <plugin>
         <groupId>com.mysema.maven</groupId>
         <artifactId>apt-maven-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>16</source>
+          <target>16</target>
+        </configuration>
       </plugin>
     </plugins>
   </build>

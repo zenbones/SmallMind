@@ -34,54 +34,26 @@ package org.smallmind.nutsnbolts.spring.remote;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
-import java.rmi.activation.ActivationException;
-import java.rmi.activation.ActivationGroup;
-import java.rmi.activation.ActivationSystem;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.springframework.beans.factory.InitializingBean;
 
 public class RMIDaemonInitializingBean implements InitializingBean {
 
   private final AtomicBoolean stopped = new AtomicBoolean(false);
-  private ActivationSystem activationSystem;
-  private long retryDelayMilliseconds;
-  private int maxAttempts;
-
-  public void setMaxAttempts (int maxAttempts) {
-
-    this.maxAttempts = maxAttempts;
-  }
-
-  public void setRetryDelayMilliseconds (long retryDelayMilliseconds) {
-
-    this.retryDelayMilliseconds = retryDelayMilliseconds;
-  }
+  private Process rmidProcess;
 
   @Override
   public void afterPropertiesSet ()
     throws IOException, InterruptedException {
 
-    int retryCount = 0;
-
-    do {
-      try {
-        activationSystem = ActivationGroup.getSystem();
-      } catch (ActivationException a) {
-        if (retryCount++ == maxAttempts) {
-          throw new IOException("Unable to bind the rmi daemon");
-        }
-
-        Runtime.getRuntime().exec("rmid");
-        Thread.sleep(retryDelayMilliseconds);
-      }
-    } while (activationSystem == null);
+    rmidProcess = Runtime.getRuntime().exec("rmid");
   }
 
   public void stop ()
     throws RemoteException {
 
-    if ((activationSystem != null) && stopped.compareAndSet(false, true)) {
-      activationSystem.shutdown();
+    if ((rmidProcess != null) && stopped.compareAndSet(false, true)) {
+      rmidProcess.destroy();
     }
   }
 }
