@@ -85,8 +85,12 @@
     <aws.version>2.4.13</aws.version>
     <bouncycastle.version>1.69</bouncycastle.version>
     <commons.net.version>3.8.0</commons.net.version>
+    <dogstatsd.client.version>3.0.0</dogstatsd.client.version>
     <ehcache.version>3.9.7</ehcache.version>
+    <freemarker.version>2.3.31</freemarker.version>
+    <google.autoservice.version>1.0.1</google.autoservice.version>
     <grizzly.version>2.4.4</grizzly.version>
+    <hdrhistogram.version>2.1.12</hdrhistogram.version>
     <hibernate.version>5.6.1.Final</hibernate.version>
     <hibernate.annotations.version>5.1.2.Final</hibernate.annotations.version>
     <hibernate.validator.version>6.2.0.Final</hibernate.validator.version>
@@ -113,11 +117,14 @@
     <querydsl.version>5.0.0</querydsl.version>
     <shiro.version>1.8.0</shiro.version>
     <slf4j.version>1.7.32</slf4j.version>
+    <snakeyaml.version>1.29</snakeyaml.version>
     <spring.version>5.3.12</spring.version>
     <spring.batch.version>4.3.3</spring.batch.version>
     <spring.rabbit.version>2.3.11</spring.rabbit.version>
     <sshd.version>2.7.0</sshd.version>
     <syslog4j.version>0.9.30</syslog4j.version>
+    <tanukisoft.version>3.5.43</tanukisoft.version>
+    <testng.version>7.4.0</testng.version>
     <tyrus.version>1.18</tyrus.version>
     <xmemcached.version>2.4.7</xmemcached.version>
   </properties>
@@ -389,6 +396,16 @@
         <version>${jaxb.version}</version>
       </dependency>
       <dependency>
+        <groupId>com.sun.xml.bind</groupId>
+        <artifactId>jaxb-impl</artifactId>
+        <version>${jaxb.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.glassfish.jaxb</groupId>
+        <artifactId>jaxb-runtime</artifactId>
+        <version>${jaxb.version}</version>
+      </dependency>
+      <dependency>
         <groupId>javax.websocket</groupId>
         <artifactId>javax.websocket-client-api</artifactId>
         <version>1.1</version>
@@ -404,16 +421,6 @@
         <version>15-ea+6</version>
       </dependency>
       <dependency>
-        <groupId>com.sun.xml.bind</groupId>
-        <artifactId>jaxb-impl</artifactId>
-        <version>${jaxb.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.glassfish.jaxb</groupId>
-        <artifactId>jaxb-runtime</artifactId>
-        <version>${jaxb.version}</version>
-      </dependency>
-      <dependency>
         <groupId>org.jfxtras</groupId>
         <artifactId>jfxtras-labs</artifactId>
         <version>8.0-r5</version>
@@ -421,17 +428,17 @@
       <dependency>
         <groupId>tanukisoft</groupId>
         <artifactId>wrapper</artifactId>
-        <version>3.5.43</version>
+        <version>${tanukisoft.version}</version>
       </dependency>
       <dependency>
         <groupId>org.testng</groupId>
         <artifactId>testng</artifactId>
-        <version>7.1.0</version>
+        <version>${testng.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.maven.surefire</groupId>
         <artifactId>surefire-api</artifactId>
-        <version>2.22.1</version>
+        <version>2.22.2</version>
       </dependency>
       <dependency>
         <groupId>software.amazon.awssdk</groupId>
@@ -446,27 +453,27 @@
       <dependency>
         <groupId>com.datadoghq</groupId>
         <artifactId>java-dogstatsd-client</artifactId>
-        <version>2.11.0</version>
+        <version>${dogstatsd.client.version}</version>
       </dependency>
       <dependency>
         <groupId>org.hdrhistogram</groupId>
         <artifactId>HdrHistogram</artifactId>
-        <version>2.1.12</version>
+        <version>${hdrhistogram.version}</version>
       </dependency>
       <dependency>
         <groupId>org.freemarker</groupId>
         <artifactId>freemarker</artifactId>
-        <version>2.3.31</version>
+        <version>${freemarker.version}</version>
       </dependency>
       <dependency>
         <groupId>org.yaml</groupId>
         <artifactId>snakeyaml</artifactId>
-        <version>1.27</version>
+        <version>${snakeyaml.version}</version>
       </dependency>
       <dependency>
         <groupId>com.google.auto.service</groupId>
         <artifactId>auto-service</artifactId>
-        <version>1.0-rc5</version>
+        <version>${google.autoservice.version}</version>
       </dependency>
       <dependency>
         <groupId>org.ow2.asm</groupId>
