@@ -32,8 +32,8 @@
  */
 package org.smallmind.web.json.query;
 
-import java.rmi.activation.UnknownObjectException;
 import java.util.Date;
+import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.nutsnbolts.util.NumberComparator;
 
 public enum WhereOperator {
@@ -88,7 +88,7 @@ public enum WhereOperator {
             case DATE:
               return op1.get().equals(op2.get());
             default:
-              throw new QueryProcessingException(new UnknownObjectException(op1.getElementType().name()));
+              throw new QueryProcessingException(new UnknownSwitchCaseException(op1.getElementType().name()));
           }
         }
       }
@@ -116,7 +116,7 @@ public enum WhereOperator {
             case DATE:
               return !op1.get().equals(op2.get());
             default:
-              throw new QueryProcessingException(new UnknownObjectException(op1.getElementType().name()));
+              throw new QueryProcessingException(new UnknownSwitchCaseException(op1.getElementType().name()));
           }
         }
       }
@@ -246,7 +246,7 @@ public enum WhereOperator {
                   }
                   break;
                 default:
-                  throw new QueryProcessingException(new UnknownObjectException(op1.getElementType().name()));
+                  throw new QueryProcessingException(new UnknownSwitchCaseException(op1.getElementType().name()));
               }
             }
 

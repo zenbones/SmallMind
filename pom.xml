@@ -77,21 +77,56 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <aether.version>1.1.0</aether.version>
-    <asm.version>8.0.1</asm.version>
+    <amqp.client.version>5.13.1</amqp.client.version>
+    <apt.maven.plugin.version>1.1.3</apt.maven.plugin.version>
+    <asm.version>9.2</asm.version>
+    <aspectj.version>1.9.8.RC1</aspectj.version>
+    <aspectj.maven.plugin.version>1.14.0</aspectj.maven.plugin.version>
     <aws.version>2.4.13</aws.version>
     <bouncycastle.version>1.69</bouncycastle.version>
+    <commons.net.version>3.8.0</commons.net.version>
+    <dogstatsd.client.version>3.0.0</dogstatsd.client.version>
+    <ehcache.version>3.9.7</ehcache.version>
+    <freemarker.version>2.3.31</freemarker.version>
+    <google.autoservice.version>1.0.1</google.autoservice.version>
     <grizzly.version>2.4.4</grizzly.version>
+    <hdrhistogram.version>2.1.12</hdrhistogram.version>
+    <hibernate.version>5.6.1.Final</hibernate.version>
+    <hibernate.annotations.version>5.1.2.Final</hibernate.annotations.version>
+    <hibernate.validator.version>6.2.0.Final</hibernate.validator.version>
+    <hibernate.enhance.maven.plugin.version>5.6.1.Final</hibernate.enhance.maven.plugin.version>
+    <hsqldb.version>2.6.1</hsqldb.version>
+    <httpcomponents.version>4.4.14</httpcomponents.version>
+    <jackson.version>2.13.0</jackson.version>
+    <jakarta.activation.version>2.1.0-RC1</jakarta.activation.version>
     <jaxb.version>2.3.1</jaxb.version>
-    <jackson.version>2.12.4</jackson.version>
-    <jersey.version>2.31</jersey.version>
-    <jetty.version>9.4.43.v20210629</jetty.version>
-    <maven.version>3.6.3</maven.version>
+    <jersey.version>2.35</jersey.version>
+    <jetty.version>9.4.44.v20210927</jetty.version>
+    <jgit.version>5.13.0.202109080827-r</jgit.version>
+    <jolokia.version>1.7.1</jolokia.version>
+    <kryo.version>5.2.0</kryo.version>
+    <liquibase.version>4.6.1</liquibase.version>
+    <log4j.version>2.14.1</log4j.version>
+    <maven.version>3.8.3</maven.version>
     <maven.aether.provider.version>3.3.9</maven.aether.provider.version>
-    <maven.plugin.annotations.version>3.6.0</maven.plugin.annotations.version>
+    <maven.plugin.annotations.version>3.6.1</maven.plugin.annotations.version>
+    <morphia.version>1.3.2</morphia.version>
+    <msgpack.version>0.9.0</msgpack.version>
+    <netty.version>4.1.70.Final</netty.version>
+    <quartz.version>2.3.2</quartz.version>
     <querydsl.version>5.0.0</querydsl.version>
-    <slf4j.version>1.7.30</slf4j.version>
-    <spring.version>5.3.4</spring.version>
-    <tyrus.version>1.17</tyrus.version>
+    <shiro.version>1.8.0</shiro.version>
+    <slf4j.version>1.7.32</slf4j.version>
+    <snakeyaml.version>1.29</snakeyaml.version>
+    <spring.version>5.3.12</spring.version>
+    <spring.batch.version>4.3.3</spring.batch.version>
+    <spring.rabbit.version>2.3.11</spring.rabbit.version>
+    <sshd.version>2.7.0</sshd.version>
+    <syslog4j.version>0.9.30</syslog4j.version>
+    <tanukisoft.version>3.5.43</tanukisoft.version>
+    <testng.version>7.4.0</testng.version>
+    <tyrus.version>1.18</tyrus.version>
+    <xmemcached.version>2.4.7</xmemcached.version>
   </properties>
 
   <modules>
@@ -306,6 +341,11 @@
         <version>${aether.version}</version>
       </dependency>
       <dependency>
+        <groupId>jakarta.activation</groupId>
+        <artifactId>jakarta.activation-api</artifactId>
+        <version>2.1.0-RC1</version>
+      </dependency>
+      <dependency>
         <groupId>javax.activation</groupId>
         <artifactId>activation</artifactId>
         <version>1.1.1</version>
@@ -356,6 +396,16 @@
         <version>${jaxb.version}</version>
       </dependency>
       <dependency>
+        <groupId>com.sun.xml.bind</groupId>
+        <artifactId>jaxb-impl</artifactId>
+        <version>${jaxb.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.glassfish.jaxb</groupId>
+        <artifactId>jaxb-runtime</artifactId>
+        <version>${jaxb.version}</version>
+      </dependency>
+      <dependency>
         <groupId>javax.websocket</groupId>
         <artifactId>javax.websocket-client-api</artifactId>
         <version>1.1</version>
@@ -371,16 +421,6 @@
         <version>15-ea+6</version>
       </dependency>
       <dependency>
-        <groupId>com.sun.xml.bind</groupId>
-        <artifactId>jaxb-impl</artifactId>
-        <version>${jaxb.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.glassfish.jaxb</groupId>
-        <artifactId>jaxb-runtime</artifactId>
-        <version>${jaxb.version}</version>
-      </dependency>
-      <dependency>
         <groupId>org.jfxtras</groupId>
         <artifactId>jfxtras-labs</artifactId>
         <version>8.0-r5</version>
@@ -388,17 +428,17 @@
       <dependency>
         <groupId>tanukisoft</groupId>
         <artifactId>wrapper</artifactId>
-        <version>3.5.43</version>
+        <version>${tanukisoft.version}</version>
       </dependency>
       <dependency>
         <groupId>org.testng</groupId>
         <artifactId>testng</artifactId>
-        <version>7.1.0</version>
+        <version>${testng.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.maven.surefire</groupId>
         <artifactId>surefire-api</artifactId>
-        <version>2.22.1</version>
+        <version>2.22.2</version>
       </dependency>
       <dependency>
         <groupId>software.amazon.awssdk</groupId>
@@ -413,27 +453,27 @@
       <dependency>
         <groupId>com.datadoghq</groupId>
         <artifactId>java-dogstatsd-client</artifactId>
-        <version>2.11.0</version>
+        <version>${dogstatsd.client.version}</version>
       </dependency>
       <dependency>
         <groupId>org.hdrhistogram</groupId>
         <artifactId>HdrHistogram</artifactId>
-        <version>2.1.12</version>
+        <version>${hdrhistogram.version}</version>
       </dependency>
       <dependency>
         <groupId>org.freemarker</groupId>
         <artifactId>freemarker</artifactId>
-        <version>2.3.31</version>
+        <version>${freemarker.version}</version>
       </dependency>
       <dependency>
         <groupId>org.yaml</groupId>
         <artifactId>snakeyaml</artifactId>
-        <version>1.27</version>
+        <version>${snakeyaml.version}</version>
       </dependency>
       <dependency>
         <groupId>com.google.auto.service</groupId>
         <artifactId>auto-service</artifactId>
-        <version>1.0-rc5</version>
+        <version>${google.autoservice.version}</version>
       </dependency>
       <dependency>
         <groupId>org.ow2.asm</groupId>
@@ -453,7 +493,7 @@
       <dependency>
         <groupId>org.aspectj</groupId>
         <artifactId>aspectjrt</artifactId>
-        <version>1.9.5</version>
+        <version>${aspectj.version}</version>
       </dependency>
       <dependency>
         <groupId>org.bouncycastle</groupId>
@@ -503,7 +543,7 @@
       <dependency>
         <groupId>org.springframework.batch</groupId>
         <artifactId>spring-batch-core</artifactId>
-        <version>4.2.1.RELEASE</version>
+        <version>${spring.batch.version}</version>
       </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>
@@ -523,62 +563,57 @@
       <dependency>
         <groupId>org.apache.logging.log4j</groupId>
         <artifactId>log4j-core</artifactId>
-        <version>2.13.3</version>
+        <version>${log4j.version}</version>
       </dependency>
       <dependency>
         <groupId>org.syslog4j</groupId>
         <artifactId>syslog4j</artifactId>
-        <version>0.9.30</version>
+        <version>${syslog4j.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.shiro</groupId>
         <artifactId>shiro-core</artifactId>
-        <version>1.8.0</version>
+        <version>${shiro.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.shiro</groupId>
         <artifactId>shiro-spring</artifactId>
-        <version>1.8.0</version>
+        <version>${shiro.version}</version>
       </dependency>
       <dependency>
         <groupId>org.hsqldb</groupId>
         <artifactId>hsqldb</artifactId>
-        <version>2.4.1</version>
-      </dependency>
-      <dependency>
-        <groupId>com.h2database</groupId>
-        <artifactId>h2</artifactId>
-        <version>1.4.200</version>
+        <version>${hsqldb.version}</version>
       </dependency>
       <dependency>
         <groupId>org.liquibase</groupId>
         <artifactId>liquibase-core</artifactId>
-        <version>4.4.3</version>
+        <version>${liquibase.version}</version>
       </dependency>
       <dependency>
         <groupId>org.hibernate</groupId>
         <artifactId>hibernate-core</artifactId>
-        <version>5.4.12.Final</version>
+        <version>${hibernate.version}</version>
       </dependency>
       <dependency>
         <groupId>org.hibernate</groupId>
         <artifactId>hibernate-entitymanager</artifactId>
-        <version>5.4.12.Final</version>
+        <version>${hibernate.version}</version>
       </dependency>
       <dependency>
         <groupId>org.hibernate.validator</groupId>
         <artifactId>hibernate-validator</artifactId>
-        <version>6.2.0.Final</version>
+        <version>${hibernate.validator.version}</version>
       </dependency>
       <dependency>
         <groupId>org.hibernate.common</groupId>
         <artifactId>hibernate-commons-annotations</artifactId>
-        <version>5.1.0.Final</version>
+        <version>${hibernate.annotations.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mongodb.morphia</groupId>
         <artifactId>morphia</artifactId>
-        <version>1.3.2</version>
+        <version>${morphia.version}</version>
       </dependency>
       <dependency>
         <groupId>com.querydsl</groupId>
@@ -601,59 +636,54 @@
         <version>${querydsl.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.hectorclient</groupId>
-        <artifactId>hector-core</artifactId>
-        <version>1.1-4</version>
-      </dependency>
-      <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-all</artifactId>
-        <version>4.1.50.Final</version>
+        <version>${netty.version}</version>
       </dependency>
       <dependency>
         <groupId>com.rabbitmq</groupId>
         <artifactId>amqp-client</artifactId>
-        <version>5.8.0</version>
+        <version>${amqp.client.version}</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.amqp</groupId>
         <artifactId>spring-rabbit</artifactId>
-        <version>2.2.5.RELEASE</version>
+        <version>${spring.rabbit.version}</version>
       </dependency>
       <dependency>
         <groupId>org.quartz-scheduler</groupId>
         <artifactId>quartz</artifactId>
-        <version>2.3.2</version>
+        <version>${quartz.version}</version>
       </dependency>
       <dependency>
         <groupId>org.ehcache</groupId>
         <artifactId>ehcache</artifactId>
-        <version>3.6.3</version>
+        <version>${ehcache.version}</version>
       </dependency>
       <dependency>
         <groupId>com.googlecode.xmemcached</groupId>
         <artifactId>xmemcached</artifactId>
-        <version>2.4.6</version>
+        <version>${xmemcached.version}</version>
       </dependency>
       <dependency>
         <groupId>com.esotericsoftware.kryo</groupId>
         <artifactId>kryo5</artifactId>
-        <version>5.0.0-RC5</version>
+        <version>${kryo.version}</version>
       </dependency>
       <dependency>
         <groupId>commons-net</groupId>
         <artifactId>commons-net</artifactId>
-        <version>3.3</version>
+        <version>${commons.net.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.httpcomponents</groupId>
         <artifactId>httpcore</artifactId>
-        <version>4.4.14</version>
+        <version>${httpcomponents.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.httpcomponents</groupId>
         <artifactId>httpcore-nio</artifactId>
-        <version>4.4.14</version>
+        <version>${httpcomponents.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.httpcomponents</groupId>
@@ -663,7 +693,7 @@
       <dependency>
         <groupId>org.apache.sshd</groupId>
         <artifactId>sshd-core</artifactId>
-        <version>2.7.0</version>
+        <version>${sshd.version}</version>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
@@ -698,7 +728,7 @@
       <dependency>
         <groupId>org.msgpack</groupId>
         <artifactId>jackson-dataformat-msgpack</artifactId>
-        <version>0.8.20</version>
+        <version>${msgpack.version}</version>
       </dependency>
       <dependency>
         <groupId>org.glassfish.jersey.core</groupId>
@@ -873,12 +903,12 @@
       <dependency>
         <groupId>org.eclipse.jgit</groupId>
         <artifactId>org.eclipse.jgit</artifactId>
-        <version>5.3.0.201903130848-r</version>
+        <version>${jgit.version}</version>
       </dependency>
       <dependency>
         <groupId>org.jolokia</groupId>
         <artifactId>jolokia-core</artifactId>
-        <version>1.6.0</version>
+        <version>${jolokia.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -915,7 +945,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-source-plugin</artifactId>
-          <version>3.1.0</version>
+          <version>3.2.1</version>
           <executions>
             <execution>
               <id>attach-sources</id>
@@ -927,18 +957,8 @@
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.8.1</version>
-          <configuration>
-            <source>11</source>
-            <target>11</target>
-            <release>11</release>
-          </configuration>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-javadoc-plugin</artifactId>
-          <version>3.1.1</version>
+          <version>3.3.1</version>
           <executions>
             <execution>
               <id>attach-javadocs</id>
@@ -954,11 +974,6 @@
           -->
         </plugin>
         <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-war-plugin</artifactId>
-          <version>3.2.3</version>
-        </plugin>
-        <plugin>
           <groupId>org.sonatype.plugins</groupId>
           <artifactId>nexus-staging-maven-plugin</artifactId>
           <version>1.6.8</version>
@@ -966,7 +981,7 @@
         <plugin>
           <groupId>org.hibernate.orm.tooling</groupId>
           <artifactId>hibernate-enhance-maven-plugin</artifactId>
-          <version>5.5.3.Final</version>
+          <version>${hibernate.enhance.maven.plugin.version}</version>
           <executions>
             <execution>
               <goals>
@@ -983,7 +998,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-plugin-plugin</artifactId>
-          <version>3.6.0</version>
+          <version>3.6.1</version>
           <executions>
             <execution>
               <id>default-descriptor</id>
@@ -1004,7 +1019,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-gpg-plugin</artifactId>
-          <version>1.6</version>
+          <version>3.0.1</version>
           <executions>
             <execution>
               <id>sign-artifacts</id>
@@ -1018,7 +1033,7 @@
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>aspectj-maven-plugin</artifactId>
-          <version>1.11</version>
+          <version>${aspectj.maven.plugin.version}</version>
           <executions>
             <execution>
               <goals>
@@ -1038,7 +1053,7 @@
             <dependency>
               <groupId>org.aspectj</groupId>
               <artifactId>aspectjtools</artifactId>
-              <version>1.9.5</version>
+              <version>${aspectj.version}</version>
             </dependency>
             <dependency>
               <groupId>com.sun</groupId>
@@ -1052,7 +1067,7 @@
         <plugin>
           <groupId>com.mysema.maven</groupId>
           <artifactId>apt-maven-plugin</artifactId>
-          <version>1.1.3</version>
+          <version>${apt.maven.plugin.version}</version>
           <executions>
             <execution>
               <id>jpa</id>
@@ -1144,6 +1159,12 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.8.1</version>
+        <configuration>
+          <source>11</source>
+          <target>11</target>
+          <release>11</release>
+        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
