@@ -155,40 +155,42 @@ public class FluentAppender extends AbstractAppender implements InitializingBean
       entryNode.add(record.getMillis() / 1000);
       entryNode.add(messageNode);
 
-      if (entriesNode.add(entryNode).size() == batch) {
+      if (entriesNode.add(entryNode).size() >= batch) {
+        try {
 
-        ArrayNode eventNode = JsonNodeFactory.instance.arrayNode();
-        ObjectNode optionNode = JsonNodeFactory.instance.objectNode();
-        byte[] chunk = new byte[16];
-        int retry = 0;
+          ArrayNode eventNode = JsonNodeFactory.instance.arrayNode();
+          ObjectNode optionNode = JsonNodeFactory.instance.objectNode();
+          byte[] chunk = new byte[16];
+          int retry = 0;
 
-        ThreadLocalRandom.current().nextBytes(chunk);
-        optionNode.put("chunk", Base64Codec.encode(chunk));
-        optionNode.put("size", batch);
+          ThreadLocalRandom.current().nextBytes(chunk);
+          optionNode.put("chunk", Base64Codec.encode(chunk));
+          optionNode.put("size", batch);
 
-        eventNode.add(getName());
-        eventNode.add(entriesNode);
-        eventNode.add(optionNode);
+          eventNode.add(getName());
+          eventNode.add(entriesNode);
+          eventNode.add(optionNode);
 
-        do {
-          try {
-            if (socket == null) {
-              connect();
-            } else if (socket.isClosed() || (!socket.isConnected())) {
-              socket.close();
-              connect();
+          do {
+            try {
+              if (socket == null) {
+                connect();
+              } else if (socket.isClosed() || (!socket.isConnected())) {
+                socket.close();
+                connect();
+              }
+
+              socket.getOutputStream().write(objectMapper.writeValueAsBytes(eventNode));
+            } catch (IOException ioException) {
+              socket = null;
+              if (++retry > retryAttempts) {
+                throw ioException;
+              }
             }
-
-            socket.getOutputStream().write(objectMapper.writeValueAsBytes(eventNode));
-          } catch (IOException ioException) {
-            socket = null;
-            if (++retry > retryAttempts) {
-              throw ioException;
-            }
-          }
-        } while (socket == null);
-
-        entriesNode = JsonNodeFactory.instance.arrayNode(batch);
+          } while (socket == null);
+        } finally {
+          entriesNode = JsonNodeFactory.instance.arrayNode(batch);
+        }
       }
     }
   }
