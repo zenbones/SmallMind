@@ -32,8 +32,6 @@
  */
 package org.smallmind.phalanx.wire.signal;
 
-import org.smallmind.phalanx.wire.signal.Signal;
-
 public interface SignalCodec {
 
   String getContentType ();

@@ -46,7 +46,7 @@ import org.smallmind.web.jersey.aop.Envelope;
 
 public class JsonEntityInvocationHandler implements InvocationHandler {
 
-  private final ConcurrentHashMap<Class<?>, XmlAdapter<?,?>> xmlAdapterMap = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<Class<?>, XmlAdapter<?, ?>> xmlAdapterMap = new ConcurrentHashMap<>();
   private final ConcurrentHashMap<Method, JsonArgument[]> jsonArgumentMap = new ConcurrentHashMap<>();
   private final Level level;
   private final JsonTarget target;
@@ -111,7 +111,7 @@ public class JsonEntityInvocationHandler implements InvocationHandler {
     for (Annotation[] parameterAnnotations : method.getParameterAnnotations()) {
 
       String name = null;
-      XmlAdapter<?,?> xmlAdapter = null;
+      XmlAdapter<?, ?> xmlAdapter = null;
 
       for (Annotation annotation : parameterAnnotations) {
         if (annotation.annotationType().equals(EntityParam.class)) {

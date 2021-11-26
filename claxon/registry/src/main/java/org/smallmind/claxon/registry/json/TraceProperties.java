@@ -35,8 +35,8 @@ package org.smallmind.claxon.registry.json;
 import java.util.concurrent.TimeUnit;
 import org.smallmind.claxon.registry.Window;
 import org.smallmind.web.json.doppelganger.Doppelganger;
-import org.smallmind.web.json.doppelganger.View;
 import org.smallmind.web.json.doppelganger.Idiom;
+import org.smallmind.web.json.doppelganger.View;
 
 import static org.smallmind.web.json.doppelganger.Visibility.IN;
 

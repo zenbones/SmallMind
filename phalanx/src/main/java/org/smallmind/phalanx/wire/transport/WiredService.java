@@ -32,8 +32,6 @@
  */
 package org.smallmind.phalanx.wire.transport;
 
-import org.smallmind.phalanx.wire.transport.ResponseTransport;
-
 public interface WiredService {
 
   int getVersion ();

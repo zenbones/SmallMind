@@ -274,9 +274,9 @@ public class MavenRepository {
   private void constructRemoteRepository (AuthenticationSelector authenticationSelector, MirrorSelector mirrorSelector, List<RemoteRepository> remoteRepositoryList, Repository repository) {
 
     RemoteRepository remoteRepository = new RemoteRepository.Builder(repository.getId(), repository.getLayout(), repository.getUrl())
-                                          .setReleasePolicy(new RepositoryPolicy(true, RepositoryPolicy.UPDATE_POLICY_ALWAYS, RepositoryPolicy.CHECKSUM_POLICY_WARN))
-                                          .setSnapshotPolicy(new RepositoryPolicy(true, RepositoryPolicy.UPDATE_POLICY_ALWAYS, RepositoryPolicy.CHECKSUM_POLICY_WARN))
-                                          .build();
+      .setReleasePolicy(new RepositoryPolicy(true, RepositoryPolicy.UPDATE_POLICY_ALWAYS, RepositoryPolicy.CHECKSUM_POLICY_WARN))
+      .setSnapshotPolicy(new RepositoryPolicy(true, RepositoryPolicy.UPDATE_POLICY_ALWAYS, RepositoryPolicy.CHECKSUM_POLICY_WARN))
+      .build();
     RemoteRepository mirrorRepository = mirrorSelector.getMirror(remoteRepository);
     RemoteRepository coercedRepository = (mirrorRepository != null) ? mirrorRepository : remoteRepository;
 

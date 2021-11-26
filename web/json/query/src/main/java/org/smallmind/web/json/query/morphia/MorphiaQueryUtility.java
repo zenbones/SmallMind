@@ -34,7 +34,6 @@ package org.smallmind.web.json.query.morphia;
 
 import java.util.Arrays;
 import java.util.LinkedList;
-import org.hibernate.criterion.Restrictions;
 import org.mongodb.morphia.query.Criteria;
 import org.mongodb.morphia.query.FieldEnd;
 import org.mongodb.morphia.query.Query;
@@ -144,7 +143,7 @@ public class MorphiaQueryUtility {
       case GT:
         return fieldEnd.greaterThan(fieldValue);
       case EXISTS:
-        return Boolean.TRUE.equals(fieldValue) ? fieldEnd.exists(): fieldEnd.doesNotExist();
+        return Boolean.TRUE.equals(fieldValue) ? fieldEnd.exists() : fieldEnd.doesNotExist();
       case LIKE:
 
         Object likeValue;

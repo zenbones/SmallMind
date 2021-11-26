@@ -33,9 +33,9 @@
 package org.smallmind.phalanx.wire.transport;
 
 import java.util.Map;
+import org.smallmind.phalanx.wire.Voice;
 import org.smallmind.phalanx.wire.signal.ResultSignal;
 import org.smallmind.phalanx.wire.signal.Route;
-import org.smallmind.phalanx.wire.Voice;
 import org.smallmind.phalanx.wire.signal.WireContext;
 
 public interface RequestTransport {

@@ -43,14 +43,14 @@ import org.smallmind.claxon.registry.Tag;
 import org.smallmind.claxon.registry.meter.LazyBuilder;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
-import org.smallmind.phalanx.wire.transport.AbstractRequestTransport;
-import org.smallmind.phalanx.wire.transport.ClaxonTag;
 import org.smallmind.phalanx.wire.ConversationType;
-import org.smallmind.phalanx.wire.signal.Route;
-import org.smallmind.phalanx.wire.signal.SignalCodec;
 import org.smallmind.phalanx.wire.TransportException;
 import org.smallmind.phalanx.wire.Voice;
+import org.smallmind.phalanx.wire.signal.Route;
+import org.smallmind.phalanx.wire.signal.SignalCodec;
 import org.smallmind.phalanx.wire.signal.WireContext;
+import org.smallmind.phalanx.wire.transport.AbstractRequestTransport;
+import org.smallmind.phalanx.wire.transport.ClaxonTag;
 
 public class RabbitMQRequestTransport extends AbstractRequestTransport {
 

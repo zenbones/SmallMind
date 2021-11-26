@@ -37,9 +37,9 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
 import org.smallmind.nutsnbolts.context.ContextFactory;
-import org.smallmind.phalanx.wire.signal.Function;
 import org.smallmind.phalanx.wire.MissingInvocationException;
 import org.smallmind.phalanx.wire.ServiceDefinitionException;
+import org.smallmind.phalanx.wire.signal.Function;
 import org.smallmind.phalanx.wire.signal.WireContext;
 
 public class MethodInvoker {

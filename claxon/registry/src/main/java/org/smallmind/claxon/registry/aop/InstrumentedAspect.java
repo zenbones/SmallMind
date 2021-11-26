@@ -37,9 +37,9 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Tag;
-import org.smallmind.nutsnbolts.util.WithResultExecutable;
 import org.smallmind.claxon.registry.meter.MeterBuilder;
 import org.smallmind.nutsnbolts.reflection.aop.AOPUtility;
+import org.smallmind.nutsnbolts.util.WithResultExecutable;
 
 @Aspect
 public class InstrumentedAspect {
@@ -68,8 +68,8 @@ public class InstrumentedAspect {
       builder = new InstrumentedLazyBuilder(instrumented.parser(), instrumented.json());
 
       return Instrument.with(caller, builder, tags)
-               .as(instrumented.timeUnit())
-               .on((WithResultExecutable<Object>)thisJoinPoint::proceed);
+        .as(instrumented.timeUnit())
+        .on((WithResultExecutable<Object>)thisJoinPoint::proceed);
     }
   }
 }

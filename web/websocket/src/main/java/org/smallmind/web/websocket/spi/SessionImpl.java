@@ -50,7 +50,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.websocket.ClientEndpointConfig;
 import javax.websocket.CloseReason;
 import javax.websocket.Decoder;
-import javax.websocket.Encoder;
 import javax.websocket.Endpoint;
 import javax.websocket.Extension;
 import javax.websocket.MessageHandler;

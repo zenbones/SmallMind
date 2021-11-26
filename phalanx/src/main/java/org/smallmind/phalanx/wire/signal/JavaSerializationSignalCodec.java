@@ -38,8 +38,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import javax.ws.rs.core.MediaType;
-import org.smallmind.phalanx.wire.signal.Signal;
-import org.smallmind.phalanx.wire.signal.SignalCodec;
 
 public class JavaSerializationSignalCodec implements SignalCodec {
 

@@ -45,14 +45,14 @@ import org.smallmind.claxon.registry.Tag;
 import org.smallmind.claxon.registry.meter.LazyBuilder;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
-import org.smallmind.phalanx.wire.transport.ClaxonTag;
+import org.smallmind.phalanx.wire.VocalMode;
+import org.smallmind.phalanx.wire.Voice;
 import org.smallmind.phalanx.wire.signal.InvocationSignal;
 import org.smallmind.phalanx.wire.signal.ResultSignal;
 import org.smallmind.phalanx.wire.signal.Route;
 import org.smallmind.phalanx.wire.signal.SignalCodec;
-import org.smallmind.phalanx.wire.VocalMode;
-import org.smallmind.phalanx.wire.Voice;
 import org.smallmind.phalanx.wire.signal.WireContext;
+import org.smallmind.phalanx.wire.transport.ClaxonTag;
 import org.smallmind.phalanx.wire.transport.WireProperty;
 import org.smallmind.scribe.pen.LoggerManager;
 
@@ -156,11 +156,11 @@ public class RequestMessageRouter extends MessageRouter {
       }
 
       AMQP.BasicProperties properties = new AMQP.BasicProperties.Builder()
-                                          .contentType(signalCodec.getContentType())
-                                          .messageId(SnowflakeId.newInstance().generateDottedString())
-                                          .timestamp(new Date())
-                                          .expiration(String.valueOf(ttlSeconds * 1000))
-                                          .headers(headerMap).build();
+        .contentType(signalCodec.getContentType())
+        .messageId(SnowflakeId.newInstance().generateDottedString())
+        .timestamp(new Date())
+        .expiration(String.valueOf(ttlSeconds * 1000))
+        .headers(headerMap).build();
 
       return new RabbitMQMessage(properties, signalCodec.encode(new InvocationSignal(inOnly, route, arguments, contexts)));
     });

@@ -33,8 +33,8 @@
 package org.smallmind.claxon.registry;
 
 import org.smallmind.web.json.doppelganger.Doppelganger;
-import org.smallmind.web.json.doppelganger.View;
 import org.smallmind.web.json.doppelganger.Idiom;
+import org.smallmind.web.json.doppelganger.View;
 
 import static org.smallmind.web.json.doppelganger.Visibility.IN;
 

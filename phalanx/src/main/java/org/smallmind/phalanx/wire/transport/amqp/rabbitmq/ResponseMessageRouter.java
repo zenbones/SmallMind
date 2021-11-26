@@ -44,10 +44,10 @@ import org.smallmind.claxon.registry.Tag;
 import org.smallmind.claxon.registry.meter.LazyBuilder;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
-import org.smallmind.phalanx.wire.transport.ClaxonTag;
+import org.smallmind.phalanx.wire.VocalMode;
 import org.smallmind.phalanx.wire.signal.ResultSignal;
 import org.smallmind.phalanx.wire.signal.SignalCodec;
-import org.smallmind.phalanx.wire.VocalMode;
+import org.smallmind.phalanx.wire.transport.ClaxonTag;
 import org.smallmind.phalanx.wire.transport.jms.QueueOperator;
 import org.smallmind.scribe.pen.LoggerManager;
 
@@ -179,11 +179,11 @@ public class ResponseMessageRouter extends MessageRouter {
     return Instrument.with(ResponseMessageRouter.class, LazyBuilder.instance(SpeedometerBuilder::new), new Tag("event", ClaxonTag.CONSTRUCT_MESSAGE.getDisplay())).on(() -> {
 
       AMQP.BasicProperties properties = new AMQP.BasicProperties.Builder()
-                                          .contentType(signalCodec.getContentType())
-                                          .messageId(SnowflakeId.newInstance().generateDottedString())
-                                          .correlationId(correlationId)
-                                          .timestamp(new Date())
-                                          .expiration(String.valueOf(ttlSeconds * 1000 * 3)).build();
+        .contentType(signalCodec.getContentType())
+        .messageId(SnowflakeId.newInstance().generateDottedString())
+        .correlationId(correlationId)
+        .timestamp(new Date())
+        .expiration(String.valueOf(ttlSeconds * 1000 * 3)).build();
 
       return new RabbitMQMessage(properties, signalCodec.encode(new ResultSignal(error, nativeType, result)));
     });

@@ -32,8 +32,8 @@
  */
 package org.smallmind.phalanx.wire.spring;
 
-import org.smallmind.phalanx.wire.signal.WireContext;
 import org.smallmind.phalanx.wire.WireContextManager;
+import org.smallmind.phalanx.wire.signal.WireContext;
 import org.springframework.beans.factory.InitializingBean;
 
 public class WireContextInitializingBean implements InitializingBean {

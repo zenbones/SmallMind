@@ -35,15 +35,15 @@ package org.smallmind.phalanx.wire.transport.mock;
 import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
-import org.smallmind.phalanx.wire.transport.AbstractRequestTransport;
 import org.smallmind.phalanx.wire.ConversationType;
+import org.smallmind.phalanx.wire.VocalMode;
+import org.smallmind.phalanx.wire.Voice;
 import org.smallmind.phalanx.wire.signal.InvocationSignal;
 import org.smallmind.phalanx.wire.signal.ResultSignal;
 import org.smallmind.phalanx.wire.signal.Route;
 import org.smallmind.phalanx.wire.signal.SignalCodec;
-import org.smallmind.phalanx.wire.VocalMode;
-import org.smallmind.phalanx.wire.Voice;
 import org.smallmind.phalanx.wire.signal.WireContext;
+import org.smallmind.phalanx.wire.transport.AbstractRequestTransport;
 import org.smallmind.phalanx.wire.transport.WireProperty;
 import org.smallmind.scribe.pen.LoggerManager;
 

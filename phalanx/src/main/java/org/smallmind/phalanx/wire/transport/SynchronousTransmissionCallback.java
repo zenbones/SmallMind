@@ -36,7 +36,6 @@ import org.smallmind.nutsnbolts.time.Stint;
 import org.smallmind.phalanx.wire.SignatureUtility;
 import org.smallmind.phalanx.wire.signal.ResultSignal;
 import org.smallmind.phalanx.wire.signal.SignalCodec;
-import org.smallmind.phalanx.wire.transport.TransmissionCallback;
 
 public class SynchronousTransmissionCallback extends TransmissionCallback {
 
