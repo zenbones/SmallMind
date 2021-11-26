@@ -50,7 +50,7 @@ public abstract class AbstractAnnotationSeekingBeanFactoryPostProcessor implemen
   private static final Class[] NO_CLASSES = new Class[0];
   private final HashMap<String, HashSet<Class<?>>> annotatedClassMap = new HashMap<>();
 
-  public abstract Class<? extends ManagedDao<?,?>>[] getDaoImplementations ();
+  public abstract Class<? extends ManagedDao<?, ?>>[] getDaoImplementations ();
 
   public abstract Class<? extends Annotation>[] getTargetAnnotations ();
 
@@ -138,7 +138,7 @@ public abstract class AbstractAnnotationSeekingBeanFactoryPostProcessor implemen
 
   private boolean isDaoImplementation (Class<?> beanClass) {
 
-    for (Class<? extends ManagedDao<?,?>> daoImplementation : getDaoImplementations()) {
+    for (Class<? extends ManagedDao<?, ?>> daoImplementation : getDaoImplementations()) {
       if (daoImplementation.isAssignableFrom(beanClass)) {
 
         return true;
