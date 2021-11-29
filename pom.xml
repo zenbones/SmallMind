@@ -102,8 +102,6 @@
     <jaxb.version>2.3.1</jaxb.version>
     <jersey.version>2.35</jersey.version>
     <jetty.version>9.4.44.v20210927</jetty.version>
-    <jgit.version>5.13.0.202109080827-r</jgit.version>
-    <jolokia.version>1.7.1</jolokia.version>
     <kryo.version>5.2.0</kryo.version>
     <liquibase.version>4.6.1</liquibase.version>
     <log4j.version>2.14.1</log4j.version>
@@ -899,16 +897,6 @@
         <groupId>org.eclipse.jetty.websocket</groupId>
         <artifactId>javax-websocket-server-impl</artifactId>
         <version>${jetty.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.eclipse.jgit</groupId>
-        <artifactId>org.eclipse.jgit</artifactId>
-        <version>${jgit.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.jolokia</groupId>
-        <artifactId>jolokia-core</artifactId>
-        <version>${jolokia.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
