@@ -39,6 +39,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.RejectedExecutionException;
 import javax.websocket.CloseReason;
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.CloseListener;
@@ -69,6 +70,7 @@ import org.glassfish.tyrus.spi.ServerContainer;
 import org.glassfish.tyrus.spi.UpgradeRequest;
 import org.glassfish.tyrus.spi.UpgradeResponse;
 import org.glassfish.tyrus.spi.WebSocketEngine;
+import org.smallmind.scribe.pen.LoggerManager;
 
 public class TyrusGrizzlyServerFilter extends BaseFilter {
 
@@ -322,7 +324,11 @@ public class TyrusGrizzlyServerFilter extends BaseFilter {
     @Override
     public void execute () {
 
-      readHandler.handle(buffer);
+      try {
+        readHandler.handle(buffer);
+      } catch (RejectedExecutionException rejectedExecutionException) {
+        LoggerManager.getLogger(TyrusGrizzlyServerFilter.class).warn(rejectedExecutionException.getMessage());
+      }
     }
   }
 
