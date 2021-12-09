@@ -43,6 +43,7 @@ import org.springframework.core.PriorityOrdered;
 public class JMXPropertyInitializingBean implements BeanFactoryPostProcessor, PriorityOrdered {
 
   private int order;
+  private RMIHost rmiHost = RMIHost.HOST_NAME;
 
   @Override
   public int getOrder () {
@@ -55,12 +56,19 @@ public class JMXPropertyInitializingBean implements BeanFactoryPostProcessor, Pr
     this.order = order;
   }
 
+  public void setRmiHost (RMIHost rmiHost) {
+
+    if (rmiHost != null) {
+      this.rmiHost = rmiHost;
+    }
+  }
+
   @Override
   public void postProcessBeanFactory (ConfigurableListableBeanFactory beanFactory)
     throws BeansException {
 
     try {
-      System.setProperty("java.rmi.server.hostname", InetAddress.getLocalHost().getHostName());
+      System.setProperty("java.rmi.server.hostname", RMIHost.HOST_NAME.equals(rmiHost) ? InetAddress.getLocalHost().getHostName() : InetAddress.getLocalHost().getHostAddress());
     } catch (UnknownHostException unknownHostException) {
       throw new FatalBeanException(unknownHostException.getMessage(), unknownHostException);
     }
