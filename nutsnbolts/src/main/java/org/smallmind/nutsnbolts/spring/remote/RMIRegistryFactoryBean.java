@@ -44,7 +44,7 @@ import org.springframework.beans.factory.InitializingBean;
 
 public class RMIRegistryFactoryBean implements FactoryBean<Registry>, InitializingBean {
 
-  private SelfAwareRegistry registry;
+  private Registry registry;
   private RMIClientSocketFactory clientSocketFactory;
   private RMIServerSocketFactory serverSocketFactory;
   private String host;
@@ -71,7 +71,7 @@ public class RMIRegistryFactoryBean implements FactoryBean<Registry>, Initializi
   }
 
   @Override
-  public SelfAwareRegistry getObject () throws Exception {
+  public Registry getObject () throws Exception {
 
     return registry;
   }
@@ -79,7 +79,7 @@ public class RMIRegistryFactoryBean implements FactoryBean<Registry>, Initializi
   @Override
   public Class<?> getObjectType () {
 
-    return SelfAwareRegistry.class;
+    return Registry.class;
   }
 
   @Override
@@ -100,15 +100,15 @@ public class RMIRegistryFactoryBean implements FactoryBean<Registry>, Initializi
 
     synchronized (LocateRegistry.class) {
       try {
-        registry = new SelfAwareRegistry(host, port, LocateRegistry.getRegistry(host, port, clientSocketFactory));
+        registry = LocateRegistry.getRegistry(host, port, clientSocketFactory);
         registry.list();
       } catch (RemoteException remoteException) {
         if ((hostInetAddress == null) || InetAddress.getLocalHost().equals(hostInetAddress)) {
           if ((clientSocketFactory != null) && (serverSocketFactory != null)) {
-            registry = new SelfAwareRegistry(InetAddress.getLocalHost().getHostAddress(), port, LocateRegistry.createRegistry(port, clientSocketFactory, serverSocketFactory));
+            registry = LocateRegistry.createRegistry(port, clientSocketFactory, serverSocketFactory);
             registry.list();
           } else if ((clientSocketFactory == null) && (serverSocketFactory == null)) {
-            registry = new SelfAwareRegistry(InetAddress.getLocalHost().getHostAddress(), port, LocateRegistry.createRegistry(port));
+            registry = LocateRegistry.createRegistry(port);
             registry.list();
           } else {
             throw new IllegalStateException("Either both client and server socket factories must be left null, or both must be set, in order to create a registry");
