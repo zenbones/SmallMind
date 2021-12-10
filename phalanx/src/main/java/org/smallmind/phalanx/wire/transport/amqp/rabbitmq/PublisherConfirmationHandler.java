@@ -30,9 +30,11 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.spring.jmx;
+package org.smallmind.phalanx.wire.transport.amqp.rabbitmq;
 
-public enum RMIHost {
+import com.rabbitmq.client.ConfirmListener;
 
-  IP_ADDRESS, HOST_NAME
+public interface PublisherConfirmationHandler {
+
+  ConfirmListener generateConfirmListener ();
 }

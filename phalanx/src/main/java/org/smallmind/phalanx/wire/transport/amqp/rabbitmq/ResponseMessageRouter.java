@@ -61,9 +61,9 @@ public class ResponseMessageRouter extends MessageRouter {
   private final int index;
   private final int ttlSeconds;
 
-  public ResponseMessageRouter (RabbitMQConnector connector, NameConfiguration nameConfiguration, RabbitMQResponseTransport responseTransport, SignalCodec signalCodec, String serviceGroup, String instanceId, int index, int ttlSeconds, boolean autoAcknowledge) {
+  public ResponseMessageRouter (RabbitMQConnector connector, NameConfiguration nameConfiguration, RabbitMQResponseTransport responseTransport, SignalCodec signalCodec, String serviceGroup, String instanceId, int index, int ttlSeconds, boolean autoAcknowledge, PublisherConfirmationHandler publisherConfirmationHandler) {
 
-    super(connector, nameConfiguration);
+    super(connector, nameConfiguration, publisherConfirmationHandler);
 
     this.responseTransport = responseTransport;
     this.signalCodec = signalCodec;

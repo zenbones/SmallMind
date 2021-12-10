@@ -50,11 +50,13 @@ public abstract class MessageRouter {
   private final AtomicInteger version = new AtomicInteger(0);
   private final RabbitMQConnector connector;
   private final NameConfiguration nameConfiguration;
+  private final PublisherConfirmationHandler publisherConfirmationHandler;
 
-  public MessageRouter (RabbitMQConnector connector, NameConfiguration nameConfiguration) {
+  public MessageRouter (RabbitMQConnector connector, NameConfiguration nameConfiguration, PublisherConfirmationHandler publisherConfirmationHandler) {
 
     this.connector = connector;
     this.nameConfiguration = nameConfiguration;
+    this.publisherConfirmationHandler = publisherConfirmationHandler;
   }
 
   public abstract void bindQueues ()
@@ -109,6 +111,12 @@ public abstract class MessageRouter {
         final int nextStamp;
 
         channel = connector.getConnection().createChannel();
+
+        if (publisherConfirmationHandler != null) {
+          channel.confirmSelect();
+          channel.addConfirmListener(publisherConfirmationHandler.generateConfirmListener());
+        }
+
         channel.basicQos(0, 1, false);
         channel.exchangeDeclare(getRequestExchangeName(), "direct", false, false, null);
         channel.exchangeDeclare(getResponseExchangeName(), "direct", false, false, null);
