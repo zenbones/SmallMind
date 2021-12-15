@@ -173,17 +173,17 @@ public class ComponentPool<C> extends Pool {
 
   public void returnInstance (ComponentInstance<C> componentInstance) {
 
-    componentPinManager.process(componentInstance);
+    componentPinManager.process(componentInstance, true);
   }
 
   public void terminateInstance (ComponentInstance<C> componentInstance) {
 
-    componentPinManager.terminate(componentInstance, true);
+    componentPinManager.terminate(componentInstance, true, true);
   }
 
   public void removePin (ComponentPin<C> componentPin, boolean withPrejudice) {
 
-    componentPinManager.remove(componentPin, false, withPrejudice);
+    componentPinManager.remove(componentPin, false, withPrejudice, true);
   }
 
   public int getPoolSize () {
