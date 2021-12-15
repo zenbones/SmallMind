@@ -37,7 +37,6 @@ import javax.sql.ConnectionPoolDataSource;
 import javax.sql.PooledConnection;
 import org.smallmind.quorum.juggler.Juggler;
 import org.smallmind.quorum.juggler.JugglerResourceCreationException;
-import org.smallmind.quorum.juggler.JugglerResourceException;
 import org.smallmind.quorum.juggler.NoAvailableJugglerResourceException;
 import org.smallmind.quorum.pool.complex.ComponentInstance;
 import org.smallmind.quorum.pool.complex.ComponentInstanceFactory;
@@ -55,7 +54,7 @@ public class PooledConnectionComponentInstanceFactory<P extends PooledConnection
 
   public PooledConnectionComponentInstanceFactory (int recoveryCheckSeconds, Class<P> pooledConnectionClass, ConnectionPoolDataSource... dataSources) {
 
-    pooledConnectionJuggler = new Juggler<>(ConnectionPoolDataSource.class, pooledConnectionClass, recoveryCheckSeconds, new PooledConnectionJugglingPinFactory<P>(), dataSources);
+    pooledConnectionJuggler = new Juggler<>(ConnectionPoolDataSource.class, pooledConnectionClass, recoveryCheckSeconds, new PooledConnectionJugglingPinFactory<>(), dataSources);
   }
 
   @Override
@@ -66,8 +65,7 @@ public class PooledConnectionComponentInstanceFactory<P extends PooledConnection
   }
 
   @Override
-  public void startup ()
-    throws JugglerResourceException {
+  public void startup () {
 
     pooledConnectionJuggler.startup();
   }
@@ -95,7 +93,7 @@ public class PooledConnectionComponentInstanceFactory<P extends PooledConnection
   }
 
   @Override
-  public void deconstruct () throws Exception {
+  public void deconstruct () {
 
     pooledConnectionJuggler.deconstruct();
   }

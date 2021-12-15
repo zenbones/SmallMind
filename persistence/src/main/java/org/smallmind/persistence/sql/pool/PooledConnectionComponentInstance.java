@@ -52,8 +52,7 @@ public class PooledConnectionComponentInstance<P extends PooledConnection> imple
 
   private PreparedStatement validationStatement;
 
-  public PooledConnectionComponentInstance (ComponentPool<P> componentPool, P pooledConnection)
-    throws SQLException {
+  public PooledConnectionComponentInstance (ComponentPool<P> componentPool, P pooledConnection) {
 
     this.componentPool = componentPool;
     this.pooledConnection = pooledConnection;

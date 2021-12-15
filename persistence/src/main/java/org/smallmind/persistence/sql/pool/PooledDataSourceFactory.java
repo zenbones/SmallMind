@@ -39,14 +39,13 @@ import javax.sql.XAConnection;
 import javax.sql.XADataSource;
 import org.smallmind.persistence.sql.pool.spring.DatabaseConnection;
 import org.smallmind.persistence.sql.pool.spring.PooledConnectionComponentPoolFactory;
-import org.smallmind.quorum.pool.ComponentPoolException;
 import org.smallmind.quorum.pool.complex.ComplexPoolConfig;
 import org.smallmind.quorum.pool.complex.ComponentPool;
 
 public class PooledDataSourceFactory {
 
   public static <D extends CommonDataSource> AbstractPooledDataSource createPooledDataSource (String poolName, DataSourceFactory<D, ? extends PooledConnection> dataSourceFactory, String validationQuery, int maxStatements, ComplexPoolConfig poolConfig, DatabaseConnection[] connections)
-    throws SQLException, ComponentPoolException {
+    throws SQLException {
 
     if (XADataSource.class.isAssignableFrom(dataSourceFactory.getDataSourceClass())) {
       return new PooledXADataSource((ComponentPool<XAConnection>)PooledConnectionComponentPoolFactory.constructComponentPool(poolName, dataSourceFactory, validationQuery, maxStatements, poolConfig, connections));
