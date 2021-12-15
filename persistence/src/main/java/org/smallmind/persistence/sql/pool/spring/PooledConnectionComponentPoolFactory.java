@@ -38,14 +38,13 @@ import javax.sql.PooledConnection;
 import org.smallmind.persistence.sql.pool.ConnectionEndpoint;
 import org.smallmind.persistence.sql.pool.DataSourceComponentInstanceFactory;
 import org.smallmind.persistence.sql.pool.DataSourceFactory;
-import org.smallmind.quorum.pool.ComponentPoolException;
 import org.smallmind.quorum.pool.complex.ComplexPoolConfig;
 import org.smallmind.quorum.pool.complex.ComponentPool;
 
 public class PooledConnectionComponentPoolFactory {
 
   public static <D extends CommonDataSource> ComponentPool<? extends PooledConnection> constructComponentPool (String poolName, DataSourceFactory<D, ? extends PooledConnection> dataSourceFactory, String validationQuery, int maxStatements, ComplexPoolConfig poolConfig, DatabaseConnection... connections)
-    throws SQLException, ComponentPoolException {
+    throws SQLException {
 
     DataSourceComponentInstanceFactory<D, ? extends PooledConnection> connectionInstanceFactory = new DataSourceComponentInstanceFactory<>(dataSourceFactory, maxStatements, createConnectionEndpoints(connections));
 
