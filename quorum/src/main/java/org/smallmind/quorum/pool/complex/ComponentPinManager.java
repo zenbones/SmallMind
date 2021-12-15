@@ -233,13 +233,13 @@ public class ComponentPinManager<C> {
 
     // order here matters as alreadyAcquired means it's been removed from the queue, otherwise we try to remove,
     // otherwise we would like to terminate anyway because this component *is* going away in any case
-    try {
-      if (alreadyAcquired || freeQueue.remove(componentPin) || withPrejudice) {
+    if (alreadyAcquired || freeQueue.remove(componentPin) || withPrejudice) {
+      try {
         terminate(componentPin.getComponentInstance(), true, false);
-      }
-    } finally {
-      if (track) {
-        trackSize();
+      } finally {
+        if (track) {
+          trackSize();
+        }
       }
     }
   }
