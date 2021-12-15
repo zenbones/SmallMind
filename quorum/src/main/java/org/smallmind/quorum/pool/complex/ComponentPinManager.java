@@ -163,12 +163,12 @@ public class ComponentPinManager<C> {
 
       int minPoolSize = componentPool.getComplexPoolConfig().getMinPoolSize();
       int maxPoolSize = componentPool.getComplexPoolConfig().getMaxPoolSize();
-      int currentSize = size.get();
+      int currentSize = getPoolSize();
 
       if ((forced || (currentSize < minPoolSize)) && ((maxPoolSize == 0) || (currentSize < maxPoolSize))) {
         backingLock.writeLock().lock();
         try {
-          currentSize = size.get();
+          currentSize = getPoolSize();
 
           if ((forced || (currentSize < minPoolSize)) && ((maxPoolSize == 0) || (currentSize < maxPoolSize))) {
 
@@ -310,7 +310,7 @@ public class ComponentPinManager<C> {
 
     if (stateRef.compareAndSet(State.STARTED, State.STOPPING)) {
 
-      while (size.get() > 0) {
+      while (getPoolSize() > 0) {
 
         ComponentInstance<C>[] activeComponents;
 
@@ -370,7 +370,7 @@ public class ComponentPinManager<C> {
 
     int freeSize;
 
-    Instrument.with(ComponentPinManager.class, LazyBuilder.instance(SpeedometerBuilder::new), new Tag("pool", componentPool.getPoolName()), new Tag("size", ClaxonTag.FREE.getDisplay())).update(freeSize = freeQueue.size());
+    Instrument.with(ComponentPinManager.class, LazyBuilder.instance(SpeedometerBuilder::new), new Tag("pool", componentPool.getPoolName()), new Tag("size", ClaxonTag.FREE.getDisplay())).update(freeSize = getFreeSize());
     Instrument.with(ComponentPinManager.class, LazyBuilder.instance(SpeedometerBuilder::new), new Tag("pool", componentPool.getPoolName()), new Tag("size", ClaxonTag.PROCESSING.getDisplay())).update(getPoolSize() - freeSize);
   }
 
