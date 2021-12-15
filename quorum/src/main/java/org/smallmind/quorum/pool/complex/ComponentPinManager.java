@@ -119,7 +119,7 @@ public class ComponentPinManager<C> {
 
     while ((componentPin = freeQueue.poll()) != null) {
       if (componentPool.getComplexPoolConfig().isTestOnAcquire() && (!componentPin.getComponentInstance().validate())) {
-        remove(componentPin, true);
+        remove(componentPin, true, false);
       } else {
         trackSize();
 
@@ -140,7 +140,7 @@ public class ComponentPinManager<C> {
 
       while ((acquireWaitTimeMillis > 0) && (componentPin = freeQueue.poll(acquireWaitTimeMillis, TimeUnit.MILLISECONDS)) != null) {
         if (componentPool.getComplexPoolConfig().isTestOnAcquire() && (!componentPin.getComponentInstance().validate())) {
-          remove(componentPin, true);
+          remove(componentPin, true, false);
           acquireWaitTimeMillis = componentPool.getComplexPoolConfig().getAcquireWaitTimeMillis() - (System.currentTimeMillis() - start);
         } else {
           trackSize();
@@ -227,10 +227,12 @@ public class ComponentPinManager<C> {
     return componentInstance;
   }
 
-  public void remove (ComponentPin<C> componentPin, boolean withPrejudice) {
+  public void remove (ComponentPin<C> componentPin, boolean alreadyAcquired, boolean withPrejudice) {
 
-    if (freeQueue.remove(componentPin) || withPrejudice) {
-      terminate(componentPin.getComponentInstance());
+    // order here matters as alreadyAcquired means it's been removed from the queue, otherwise we try to remove,
+    // otherwise we would like to terminate anyway because this component *is* going away in any case
+    if (alreadyAcquired || freeQueue.remove(componentPin) || withPrejudice) {
+      terminate(componentPin.getComponentInstance(), true);
       trackSize();
     }
   }
@@ -250,7 +252,7 @@ public class ComponentPinManager<C> {
       componentPin.free();
 
       if (componentPin.isTerminated()) {
-        terminate(componentPin.getComponentInstance());
+        terminate(componentPin.getComponentInstance(), State.STARTED.equals(stateRef.get()));
       } else {
         if (State.STARTED.equals(stateRef.get())) {
           try {
@@ -265,7 +267,7 @@ public class ComponentPinManager<C> {
     }
   }
 
-  public void terminate (ComponentInstance<C> componentInstance) {
+  public void terminate (ComponentInstance<C> componentInstance, boolean allowReplacement) {
 
     ComponentPin<C> componentPin;
 
@@ -286,15 +288,17 @@ public class ComponentPinManager<C> {
         LoggerManager.getLogger(ComponentPinManager.class).error(exception);
       }
 
-      try {
+      if (allowReplacement) {
+        try {
 
-        ComponentPin<C> replacementComponentPin;
+          ComponentPin<C> replacementComponentPin;
 
-        if ((replacementComponentPin = addComponentPin(false)) != null) {
-          freeQueue.put(replacementComponentPin);
+          if ((replacementComponentPin = addComponentPin(false)) != null) {
+            freeQueue.put(replacementComponentPin);
+          }
+        } catch (Exception exception) {
+          LoggerManager.getLogger(ComponentPinManager.class).error(exception);
         }
-      } catch (Exception exception) {
-        LoggerManager.getLogger(ComponentPinManager.class).error(exception);
       }
 
       trackSize();
@@ -323,7 +327,7 @@ public class ComponentPinManager<C> {
         }
 
         for (ComponentInstance<C> activeComponent : activeComponents) {
-          terminate(activeComponent);
+          terminate(activeComponent, false);
         }
       }
 
