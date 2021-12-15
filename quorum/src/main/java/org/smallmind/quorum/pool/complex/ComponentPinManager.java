@@ -115,41 +115,43 @@ public class ComponentPinManager<C> {
       throw new ComponentPoolException("%s is not in the 'started' state", ComponentPool.class.getSimpleName());
     }
 
-    ComponentPin<C> componentPin;
-
-    while ((componentPin = freeQueue.poll()) != null) {
-      if (componentPool.getComplexPoolConfig().isTestOnAcquire() && (!componentPin.getComponentInstance().validate())) {
-        remove(componentPin, true, false);
-      } else {
-        trackSize();
-
-        return componentPin;
-      }
-    }
-
-    if ((componentPin = addComponentPin(true)) != null) {
-      trackSize();
-
-      return componentPin;
-    }
-
     try {
 
-      long acquireWaitTimeMillis = componentPool.getComplexPoolConfig().getAcquireWaitTimeMillis();
-      long start = System.currentTimeMillis();
+      ComponentPin<C> componentPin;
 
-      while ((acquireWaitTimeMillis > 0) && (componentPin = freeQueue.poll(acquireWaitTimeMillis, TimeUnit.MILLISECONDS)) != null) {
+      while ((componentPin = freeQueue.poll()) != null) {
         if (componentPool.getComplexPoolConfig().isTestOnAcquire() && (!componentPin.getComponentInstance().validate())) {
-          remove(componentPin, true, false);
-          acquireWaitTimeMillis = componentPool.getComplexPoolConfig().getAcquireWaitTimeMillis() - (System.currentTimeMillis() - start);
+          remove(componentPin, true, false, false);
         } else {
-          trackSize();
 
           return componentPin;
         }
       }
-    } catch (InterruptedException interruptedException) {
-      throw new ComponentPoolException(interruptedException);
+
+      if ((componentPin = addComponentPin(true)) != null) {
+
+        return componentPin;
+      }
+
+      try {
+
+        long acquireWaitTimeMillis = componentPool.getComplexPoolConfig().getAcquireWaitTimeMillis();
+        long start = System.currentTimeMillis();
+
+        while ((acquireWaitTimeMillis > 0) && (componentPin = freeQueue.poll(acquireWaitTimeMillis, TimeUnit.MILLISECONDS)) != null) {
+          if (componentPool.getComplexPoolConfig().isTestOnAcquire() && (!componentPin.getComponentInstance().validate())) {
+            remove(componentPin, true, false, false);
+            acquireWaitTimeMillis = componentPool.getComplexPoolConfig().getAcquireWaitTimeMillis() - (System.currentTimeMillis() - start);
+          } else {
+
+            return componentPin;
+          }
+        }
+      } catch (InterruptedException interruptedException) {
+        throw new ComponentPoolException(interruptedException);
+      }
+    } finally {
+      trackSize();
     }
 
     trackTimeout();
@@ -227,81 +229,96 @@ public class ComponentPinManager<C> {
     return componentInstance;
   }
 
-  public void remove (ComponentPin<C> componentPin, boolean alreadyAcquired, boolean withPrejudice) {
+  public void remove (ComponentPin<C> componentPin, boolean alreadyAcquired, boolean withPrejudice, boolean track) {
 
     // order here matters as alreadyAcquired means it's been removed from the queue, otherwise we try to remove,
     // otherwise we would like to terminate anyway because this component *is* going away in any case
-    if (alreadyAcquired || freeQueue.remove(componentPin) || withPrejudice) {
-      terminate(componentPin.getComponentInstance(), true);
-      trackSize();
+    try {
+      if (alreadyAcquired || freeQueue.remove(componentPin) || withPrejudice) {
+        terminate(componentPin.getComponentInstance(), true, false);
+      }
+    } finally {
+      if (track) {
+        trackSize();
+      }
     }
   }
 
-  public void process (ComponentInstance<C> componentInstance) {
+  public void process (ComponentInstance<C> componentInstance, boolean track) {
 
-    ComponentPin<C> componentPin;
-
-    backingLock.readLock().lock();
     try {
-      componentPin = backingMap.get(componentInstance);
-    } finally {
-      backingLock.readLock().unlock();
-    }
 
-    if (componentPin != null) {
-      componentPin.free();
+      ComponentPin<C> componentPin;
 
-      if (componentPin.isTerminated()) {
-        terminate(componentPin.getComponentInstance(), State.STARTED.equals(stateRef.get()));
-      } else {
-        if (State.STARTED.equals(stateRef.get())) {
-          try {
-            freeQueue.put(componentPin);
-          } catch (InterruptedException interruptedException) {
-            LoggerManager.getLogger(ComponentPinManager.class).error(interruptedException);
+      backingLock.readLock().lock();
+      try {
+        componentPin = backingMap.get(componentInstance);
+      } finally {
+        backingLock.readLock().unlock();
+      }
+
+      if (componentPin != null) {
+        componentPin.free();
+
+        if (componentPin.isTerminated()) {
+          terminate(componentPin.getComponentInstance(), State.STARTED.equals(stateRef.get()), false);
+        } else {
+          if (State.STARTED.equals(stateRef.get())) {
+            try {
+              freeQueue.put(componentPin);
+            } catch (InterruptedException interruptedException) {
+              LoggerManager.getLogger(ComponentPinManager.class).error(interruptedException);
+            }
           }
         }
       }
-
-      trackSize();
+    } finally {
+      if (track) {
+        trackSize();
+      }
     }
   }
 
-  public void terminate (ComponentInstance<C> componentInstance, boolean allowReplacement) {
+  public void terminate (ComponentInstance<C> componentInstance, boolean allowReplacement, boolean track) {
 
-    ComponentPin<C> componentPin;
-
-    backingLock.writeLock().lock();
     try {
-      componentPin = backingMap.remove(componentInstance);
-    } finally {
-      backingLock.writeLock().unlock();
-    }
 
-    if (componentPin != null) {
-      size.decrementAndGet();
-      componentPin.fizzle();
+      ComponentPin<C> componentPin;
 
+      backingLock.writeLock().lock();
       try {
-        componentPin.getComponentInstance().close();
-      } catch (Exception exception) {
-        LoggerManager.getLogger(ComponentPinManager.class).error(exception);
+        componentPin = backingMap.remove(componentInstance);
+      } finally {
+        backingLock.writeLock().unlock();
       }
 
-      if (allowReplacement) {
+      if (componentPin != null) {
+        size.decrementAndGet();
+        componentPin.fizzle();
+
         try {
-
-          ComponentPin<C> replacementComponentPin;
-
-          if ((replacementComponentPin = addComponentPin(false)) != null) {
-            freeQueue.put(replacementComponentPin);
-          }
+          componentPin.getComponentInstance().close();
         } catch (Exception exception) {
           LoggerManager.getLogger(ComponentPinManager.class).error(exception);
         }
-      }
 
-      trackSize();
+        if (allowReplacement) {
+          try {
+
+            ComponentPin<C> replacementComponentPin;
+
+            if ((replacementComponentPin = addComponentPin(false)) != null) {
+              freeQueue.put(replacementComponentPin);
+            }
+          } catch (Exception exception) {
+            LoggerManager.getLogger(ComponentPinManager.class).error(exception);
+          }
+        }
+      }
+    } finally {
+      if (track) {
+        trackSize();
+      }
     }
   }
 
@@ -327,7 +344,7 @@ public class ComponentPinManager<C> {
         }
 
         for (ComponentInstance<C> activeComponent : activeComponents) {
-          terminate(activeComponent, false);
+          terminate(activeComponent, false, false);
         }
       }
 
@@ -381,7 +398,7 @@ public class ComponentPinManager<C> {
 
   public StackTrace[] getExistentialStackTraces () {
 
-    LinkedList<StackTrace> stackTraceList = new LinkedList<StackTrace>();
+    LinkedList<StackTrace> stackTraceList = new LinkedList<>();
     StackTrace[] stackTraces;
 
     backingLock.readLock().lock();
