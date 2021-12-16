@@ -55,9 +55,14 @@ public class DeconstructionCoordinator {
     if (componentPool.getComplexPoolConfig().getMaxIdleTimeSeconds() > 0) {
       fuseList.add(new MaxIdleTimeDeconstructionFuse(componentPool, deconstructionQueue, this));
     }
-    if (componentPool.getComplexPoolConfig().getUnReturnedElementTimeoutSeconds() > 0) {
-      fuseList.add(new UnReturnedElementTimeoutDeconstructionFuse(componentPool, deconstructionQueue, this));
+    if (componentPool.getComplexPoolConfig().getMaxProcessingTimeSeconds() > 0) {
+      fuseList.add(new MaxProcessingTimeDeconstructionFuse(componentPool, deconstructionQueue, this));
     }
+  }
+
+  public StackTraceElement[] getExistentialStackTrace () {
+
+    return componentPin.getExistentialStackTrace();
   }
 
   public void free () {

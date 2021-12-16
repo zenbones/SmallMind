@@ -209,14 +209,14 @@ public class ComponentPoolMonitor extends NotificationBroadcasterSupport impleme
     componentPool.getComplexPoolConfig().setMaxIdleTimeSeconds(maxIdleTimeSeconds);
   }
 
-  public int getUnReturnedElementTimeoutSeconds () {
+  public int getMaxProcessingTimeSeconds () {
 
-    return componentPool.getComplexPoolConfig().getUnReturnedElementTimeoutSeconds();
+    return componentPool.getComplexPoolConfig().getMaxProcessingTimeSeconds();
   }
 
-  public void setUnReturnedElementTimeoutSeconds (int unReturnedElementTimeoutSeconds) {
+  public void setMaxProcessingTimeTimeSeconds (int maxProcessingTimeSeconds) {
 
-    componentPool.getComplexPoolConfig().setUnReturnedElementTimeoutSeconds(unReturnedElementTimeoutSeconds);
+    componentPool.getComplexPoolConfig().setMaxProcessingTimeSeconds(maxProcessingTimeSeconds);
   }
 
   public int getPoolSize () {

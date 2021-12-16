@@ -62,12 +62,14 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
   <prefix>.jdbc.validation_query.<pool name> (optional - defaults to 'select 1')
   <prefix>.jdbc.pool.test_on_create.<pool name> (optional - defaults to 'false')
   <prefix>.jdbc.pool.test_on_acquire.<pool name> (optional - defaults to 'false')
+  <prefix>.jdbc.pool.existentially_aware.<pool name> (optional - defaults to 'false')
   <prefix>.jdbc.pool.initial_size.<pool name> (optional - defaults to '0')
   <prefix>.jdbc.pool.min_size.<pool name> (optional - defaults to '0')
   <prefix>.jdbc.pool.max_size.<pool name> (optional - defaults to '10')
   <prefix>.jdbc.pool.acquire_wait_time_millis.<pool name> (optional - defaults to '0')
   <prefix>.jdbc.pool.connection_timeout_millis.<pool name> (optional - defaults to '0')
   <prefix>.jdbc.pool.max_idle_seconds.<pool name> (optional - defaults to '0')
+  <prefix>.jdbc.pool.max_processing_seconds.<pool name> (optional - defaults to '0')
   <prefix>.jdbc.pool.max_lease_time_seconds.<pool name> (optional - defaults to '0')
   <prefix>.jdbc.mapping.<data source name> (required for each data source binding)
   */
@@ -152,6 +154,7 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
     HashMap<String, DatabaseConnection[]> postContextMap = new HashMap<>();
     Option<Boolean> testOnCreateOption;
     Option<Boolean> testOnAcquireOption;
+    Option<Boolean> existentiallyAwareOption;
     Option<Long> acquireWaitTimeMillisOption;
     Option<Long> connectionTimeoutMillisOption;
     Option<Integer> maxStatementsOption;
@@ -159,6 +162,7 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
     Option<Integer> minSizeOption;
     Option<Integer> maxSizeOption;
     Option<Integer> maxIdleSecondsOption;
+    Option<Integer> maxProcessingSecondsOption;
     Option<Integer> maxLeaseTimeSecondsOption;
     String validationQuery;
     String urlPrefix = prefix + "jdbc.url." + poolName + ".";
@@ -227,6 +231,9 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
     if (!(testOnAcquireOption = springPropertyAccessor.asBoolean(prefix + "jdbc.pool.test_on_acquire." + poolName)).isNone()) {
       complexPoolConfig.setTestOnAcquire(testOnAcquireOption.get());
     }
+    if (!(existentiallyAwareOption = springPropertyAccessor.asBoolean(prefix + "jdbc.pool.existentially_aware." + poolName)).isNone()) {
+      complexPoolConfig.setExistentiallyAware(existentiallyAwareOption.get());
+    }
     if (!(initialSizeOption = springPropertyAccessor.asInt(prefix + "jdbc.pool.initial_size." + poolName)).isNone()) {
       complexPoolConfig.setInitialPoolSize(initialSizeOption.get());
     }
@@ -244,6 +251,9 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
     }
     if (!(maxIdleSecondsOption = springPropertyAccessor.asInt(prefix + "jdbc.pool.max_idle_seconds." + poolName)).isNone()) {
       complexPoolConfig.setMaxIdleTimeSeconds(maxIdleSecondsOption.get());
+    }
+    if (!(maxProcessingSecondsOption = springPropertyAccessor.asInt(prefix + "jdbc.pool.max_processing_seconds." + poolName)).isNone()) {
+      complexPoolConfig.setMaxProcessingTimeSeconds(maxProcessingSecondsOption.get());
     }
     if (!(maxLeaseTimeSecondsOption = springPropertyAccessor.asInt(prefix + "jdbc.pool.max_lease_time_seconds." + poolName)).isNone()) {
       complexPoolConfig.setMaxLeaseTimeSeconds(maxLeaseTimeSecondsOption.get());

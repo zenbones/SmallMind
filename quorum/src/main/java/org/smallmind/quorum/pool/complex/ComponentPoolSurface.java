@@ -92,7 +92,7 @@ public interface ComponentPoolSurface {
 
   void setMaxIdleTimeSeconds (int maxIdleTimeSeconds);
 
-  int getUnReturnedElementTimeoutSeconds ();
+  int getMaxProcessingTimeSeconds ();
 
-  void setUnReturnedElementTimeoutSeconds (int unReturnedElementTimeoutSeconds);
+  void setMaxProcessingTimeTimeSeconds (int maxProcessingTimeSeconds);
 }

@@ -32,16 +32,18 @@
  */
 package org.smallmind.quorum.pool.complex;
 
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.smallmind.scribe.pen.LoggerManager;
 
-public class UnReturnedElementTimeoutDeconstructionFuse extends DeconstructionFuse {
+public class MaxProcessingTimeDeconstructionFuse extends DeconstructionFuse {
 
   private final ComponentPool<?> componentPool;
   private final AtomicInteger generation = new AtomicInteger(0);
   private final AtomicInteger generationServed = new AtomicInteger(0);
 
-  protected UnReturnedElementTimeoutDeconstructionFuse (ComponentPool<?> componentPool, DeconstructionQueue deconstructionQueue, DeconstructionCoordinator deconstructionCoordinator) {
+  protected MaxProcessingTimeDeconstructionFuse (ComponentPool<?> componentPool, DeconstructionQueue deconstructionQueue, DeconstructionCoordinator deconstructionCoordinator) {
 
     super(deconstructionQueue, deconstructionCoordinator);
 
@@ -65,14 +67,21 @@ public class UnReturnedElementTimeoutDeconstructionFuse extends DeconstructionFu
   public void serve () {
 
     generationServed.set(generation.incrementAndGet());
-    setIgnitionTime(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(componentPool.getComplexPoolConfig().getUnReturnedElementTimeoutSeconds()));
+    setIgnitionTime(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(componentPool.getComplexPoolConfig().getMaxProcessingTimeSeconds()));
   }
 
   @Override
   public synchronized void ignite () {
 
     if (generationServed.get() == generation.get()) {
+
+      StackTraceElement[] stackTraceElements;
+
       super.ignite();
+
+      if (((stackTraceElements = getExistentialStackTrace()) != null) && (stackTraceElements.length > 0)) {
+        LoggerManager.getLogger(MaxProcessingTimeDeconstructionFuse.class).warn(Arrays.toString(getExistentialStackTrace()));
+      }
     }
   }
 }
