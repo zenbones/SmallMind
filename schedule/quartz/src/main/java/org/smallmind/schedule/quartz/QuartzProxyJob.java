@@ -39,6 +39,7 @@ import org.quartz.InterruptableJob;
 import org.quartz.JobExecutionContext;
 import org.smallmind.nutsnbolts.util.SuccessOrFailure;
 import org.smallmind.schedule.base.ProxyJob;
+import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public abstract class QuartzProxyJob implements ProxyJob, InterruptableJob {
@@ -164,7 +165,7 @@ public abstract class QuartzProxyJob implements ProxyJob, InterruptableJob {
         if (SuccessOrFailure.INTERRUPTED.equals(status)) {
           LoggerManager.getLogger(this.getClass()).info("Job(%s) start(%s) has been interrupted", this.getClass().getSimpleName(), startTime, stopTime, count, status.name());
         } else if (SuccessOrFailure.FAILURE.equals(status) || (count > 0) || logOnZeroCount()) {
-          LoggerManager.getLogger(this.getClass()).info("Job(%s) start(%s) stop(%s) count(%d) state(%s)", this.getClass().getSimpleName(), startTime, stopTime, count, status.name());
+          LoggerManager.getLogger(this.getClass()).log(SuccessOrFailure.FAILURE.equals(status) ? Level.WARN : Level.INFO, "Job(%s) start(%s) stop(%s) count(%d) state(%s)", this.getClass().getSimpleName(), startTime, stopTime, count, status.name());
         }
 
         try {
