@@ -32,8 +32,10 @@
  */
 package org.smallmind.quorum.pool.complex;
 
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.smallmind.scribe.pen.LoggerManager;
 
 public class UnReturnedElementTimeoutDeconstructionFuse extends DeconstructionFuse {
 
@@ -73,6 +75,8 @@ public class UnReturnedElementTimeoutDeconstructionFuse extends DeconstructionFu
 
     if (generationServed.get() == generation.get()) {
       super.ignite();
+
+      LoggerManager.getLogger(UnReturnedElementTimeoutDeconstructionFuse.class).warn(Arrays.toString(getExistentialStackTrace()));
     }
   }
 }

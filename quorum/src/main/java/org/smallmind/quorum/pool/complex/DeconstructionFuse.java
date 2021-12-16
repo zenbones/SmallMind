@@ -79,4 +79,9 @@ public abstract class DeconstructionFuse {
 
     deconstructionCoordinator.ignite(this, isPrejudicial());
   }
+
+  public StackTraceElement[] getExistentialStackTrace () {
+
+    return deconstructionCoordinator.getExistentialStackTrace();
+  }
 }

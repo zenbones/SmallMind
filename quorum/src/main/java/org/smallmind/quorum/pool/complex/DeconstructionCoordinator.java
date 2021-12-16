@@ -60,6 +60,11 @@ public class DeconstructionCoordinator {
     }
   }
 
+  public StackTraceElement[] getExistentialStackTrace () {
+
+    return componentPin.getExistentialStackTrace();
+  }
+
   public void free () {
 
     for (DeconstructionFuse fuse : fuseList) {
