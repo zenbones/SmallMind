@@ -64,7 +64,7 @@ public class JDKLevelTranslator {
     }
   }
 
-  public static java.util.logging.Level getLog4JLevel (Level level) {
+  public static java.util.logging.Level getJDKLevel (Level level) {
 
     switch (level) {
       case TRACE:

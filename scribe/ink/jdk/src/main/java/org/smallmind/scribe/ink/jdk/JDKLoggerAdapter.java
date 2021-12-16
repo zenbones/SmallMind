@@ -140,7 +140,7 @@ public class JDKLoggerAdapter implements LoggerAdapter {
   @Override
   public void setLevel (Level level) {
 
-    logger.setLevel(JDKLevelTranslator.getLog4JLevel(level));
+    logger.setLevel(JDKLevelTranslator.getJDKLevel(level));
   }
 
   @Override

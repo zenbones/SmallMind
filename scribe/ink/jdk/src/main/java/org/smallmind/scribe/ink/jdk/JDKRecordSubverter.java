@@ -47,7 +47,7 @@ public class JDKRecordSubverter extends LogRecord implements RecordWrapper {
 
   public JDKRecordSubverter (String loggerName, Level level, LoggerContext loggerContext, Throwable throwable, String message, Object... args) {
 
-    super(JDKLevelTranslator.getLog4JLevel(level), message);
+    super(JDKLevelTranslator.getJDKLevel(level), message);
 
     setLoggerName(loggerName);
     setThrown(throwable);
