@@ -32,67 +32,51 @@
  */
 package org.smallmind.quorum.pool.complex;
 
-import org.smallmind.quorum.pool.ComponentPoolException;
+import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.smallmind.scribe.pen.LoggerManager;
 
-public interface ComponentPoolSurface {
+public class MaxProcessingTimeDeconstructionFuse extends DeconstructionFuse {
 
-  String getPoolName ();
+  private final ComponentPool<?> componentPool;
+  private final AtomicInteger generation = new AtomicInteger(0);
+  private final AtomicInteger generationServed = new AtomicInteger(0);
 
-  void startup ()
-    throws ComponentPoolException;
+  protected MaxProcessingTimeDeconstructionFuse (ComponentPool<?> componentPool, DeconstructionQueue deconstructionQueue, DeconstructionCoordinator deconstructionCoordinator) {
 
-  void shutdown ()
-    throws ComponentPoolException;
+    super(deconstructionQueue, deconstructionCoordinator);
 
-  int getPoolSize ();
+    this.componentPool = componentPool;
+  }
 
-  int getFreeSize ();
+  @Override
+  public boolean isPrejudicial () {
 
-  int getProcessingSize ();
+    return true;
+  }
 
-  boolean isTestOnCreate ();
+  @Override
+  public synchronized void free () {
 
-  void setTestOnCreate (boolean testOnCreate);
+    generation.incrementAndGet();
+    abort();
+  }
 
-  boolean isTestOnAcquire ();
+  @Override
+  public void serve () {
 
-  void setTestOnAcquire (boolean testOnAcquire);
+    generationServed.set(generation.incrementAndGet());
+    setIgnitionTime(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(componentPool.getComplexPoolConfig().getMaxProcessingTimeSeconds()));
+  }
 
-  boolean isReportLeaseTimeNanos ();
+  @Override
+  public synchronized void ignite () {
 
-  void setReportLeaseTimeNanos (boolean reportLeaseTimeNanos);
+    if (generationServed.get() == generation.get()) {
+      super.ignite();
 
-  boolean isExistentiallyAware ();
-
-  void setExistentiallyAware (boolean existentiallyAware);
-
-  long getCreationTimeoutMillis ();
-
-  void setCreationTimeoutMillis (long creationTimeoutMillis);
-
-  long getAcquireWaitTimeMillis ();
-
-  void setAcquireWaitTimeMillis (long acquireWaitTimeMillis);
-
-  int getInitialPoolSize ();
-
-  int getMinPoolSize ();
-
-  void setMinPoolSize (int minPoolSize);
-
-  int getMaxPoolSize ();
-
-  void setMaxPoolSize (int maxPoolSize);
-
-  int getMaxLeaseTimeSeconds ();
-
-  void setMaxLeaseTimeSeconds (int maxLeaseTimeSeconds);
-
-  int getMaxIdleTimeSeconds ();
-
-  void setMaxIdleTimeSeconds (int maxIdleTimeSeconds);
-
-  int getMaxProcessingTimeSeconds ();
-
-  void setMaxProcessingTimeTimeSeconds (int maxProcessingTimeSeconds);
+      LoggerManager.getLogger(MaxProcessingTimeDeconstructionFuse.class).warn(Arrays.toString(getExistentialStackTrace()));
+    }
+  }
 }

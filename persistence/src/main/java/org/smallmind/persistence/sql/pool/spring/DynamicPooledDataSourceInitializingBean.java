@@ -69,6 +69,7 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
   <prefix>.jdbc.pool.acquire_wait_time_millis.<pool name> (optional - defaults to '0')
   <prefix>.jdbc.pool.connection_timeout_millis.<pool name> (optional - defaults to '0')
   <prefix>.jdbc.pool.max_idle_seconds.<pool name> (optional - defaults to '0')
+  <prefix>.jdbc.pool.max_processing_seconds.<pool name> (optional - defaults to '0')
   <prefix>.jdbc.pool.max_lease_time_seconds.<pool name> (optional - defaults to '0')
   <prefix>.jdbc.mapping.<data source name> (required for each data source binding)
   */
@@ -161,6 +162,7 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
     Option<Integer> minSizeOption;
     Option<Integer> maxSizeOption;
     Option<Integer> maxIdleSecondsOption;
+    Option<Integer> maxProcessingSecondsOption;
     Option<Integer> maxLeaseTimeSecondsOption;
     String validationQuery;
     String urlPrefix = prefix + "jdbc.url." + poolName + ".";
@@ -249,6 +251,9 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
     }
     if (!(maxIdleSecondsOption = springPropertyAccessor.asInt(prefix + "jdbc.pool.max_idle_seconds." + poolName)).isNone()) {
       complexPoolConfig.setMaxIdleTimeSeconds(maxIdleSecondsOption.get());
+    }
+    if (!(maxProcessingSecondsOption = springPropertyAccessor.asInt(prefix + "jdbc.pool.max_processing_seconds." + poolName)).isNone()) {
+      complexPoolConfig.setMaxProcessingTimeSeconds(maxProcessingSecondsOption.get());
     }
     if (!(maxLeaseTimeSecondsOption = springPropertyAccessor.asInt(prefix + "jdbc.pool.max_lease_time_seconds." + poolName)).isNone()) {
       complexPoolConfig.setMaxLeaseTimeSeconds(maxLeaseTimeSecondsOption.get());

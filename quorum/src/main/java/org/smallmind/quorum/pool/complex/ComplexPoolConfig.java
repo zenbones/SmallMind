@@ -48,7 +48,7 @@ public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
   private final AtomicInteger minPoolSize = new AtomicInteger(0);
   private final AtomicInteger maxLeaseTimeSeconds = new AtomicInteger(0);
   private final AtomicInteger maxIdleTimeSeconds = new AtomicInteger(0);
-  private final AtomicInteger unReturnedElementTimeoutSeconds = new AtomicInteger(0);
+  private final AtomicInteger maxProcessingTimeSeconds = new AtomicInteger(0);
 
   public ComplexPoolConfig () {
 
@@ -68,7 +68,7 @@ public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
       setMinPoolSize(((ComplexPoolConfig)poolConfig).getMinPoolSize());
       setMaxLeaseTimeSeconds(((ComplexPoolConfig)poolConfig).getMaxLeaseTimeSeconds());
       setMaxIdleTimeSeconds(((ComplexPoolConfig)poolConfig).getMaxIdleTimeSeconds());
-      setUnReturnedElementTimeoutSeconds(((ComplexPoolConfig)poolConfig).getUnReturnedElementTimeoutSeconds());
+      setMaxProcessingTimeSeconds(((ComplexPoolConfig)poolConfig).getMaxProcessingTimeSeconds());
     }
   }
 
@@ -80,7 +80,7 @@ public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
 
   public boolean requiresDeconstruction () {
 
-    return (getMaxLeaseTimeSeconds() > 0) || (getMaxIdleTimeSeconds() > 0) || (getUnReturnedElementTimeoutSeconds() > 0);
+    return (getMaxLeaseTimeSeconds() > 0) || (getMaxIdleTimeSeconds() > 0) || (getMaxProcessingTimeSeconds() > 0);
   }
 
   public boolean isReportLeaseTimeNanos () {
@@ -211,18 +211,18 @@ public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
     return getConfigurationClass().cast(this);
   }
 
-  public int getUnReturnedElementTimeoutSeconds () {
+  public int getMaxProcessingTimeSeconds () {
 
-    return unReturnedElementTimeoutSeconds.get();
+    return maxProcessingTimeSeconds.get();
   }
 
-  public ComplexPoolConfig setUnReturnedElementTimeoutSeconds (int unReturnedElementTimeoutSeconds) {
+  public ComplexPoolConfig setMaxProcessingTimeSeconds (int maxProcessingTimeSeconds) {
 
-    if (unReturnedElementTimeoutSeconds < 0) {
+    if (maxProcessingTimeSeconds < 0) {
       throw new IllegalArgumentException("Un-returned element timeout must be >= 0");
     }
 
-    this.unReturnedElementTimeoutSeconds.set(unReturnedElementTimeoutSeconds);
+    this.maxProcessingTimeSeconds.set(maxProcessingTimeSeconds);
 
     return getConfigurationClass().cast(this);
   }
