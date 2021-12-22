@@ -176,21 +176,6 @@ public abstract class AbstractPooledConnection<D extends CommonDataSource> imple
     }
   }
 
-  public void finalize ()
-    throws SQLException {
-
-    try {
-      close();
-    } catch (SQLException sqlException) {
-
-      PrintWriter logWriter;
-
-      if ((logWriter = getLogWriter()) != null) {
-        sqlException.printStackTrace(logWriter);
-      }
-    }
-  }
-
   public void addConnectionEventListener (ConnectionEventListener listener) {
 
     connectionEventListenerQueue.add(listener);

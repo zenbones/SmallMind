@@ -34,7 +34,6 @@ package org.smallmind.persistence.orm;
 
 import java.util.LinkedList;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
-import org.smallmind.persistence.orm.aop.TransactionalState;
 
 public abstract class ProxyTransaction<S extends ProxySession<?, ?>> {
 
