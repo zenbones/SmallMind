@@ -304,7 +304,7 @@ public class Juggler<P, R> implements BlackList<R> {
 
                 if ((recoveredPin = blacklistMap.remove(firstEntry.getKey()).getJugglingPin()) != null) {
                   targetPins.add(recoveredPin);
-                  LoggerManager.getLogger(Juggler.class).info("Recovered resource(%s) from black list", recoveredPin.describe());
+                  LoggerManager.getLogger(Juggler.class).warn("Recovered resource(%s) from black list", recoveredPin.describe());
                 } else {
                   LoggerManager.getLogger(ProviderRecoveryWorker.class).fatal("We've lost a resource(%s), which should never occur - please notify a system administrator", providerClass.getSimpleName());
                 }
