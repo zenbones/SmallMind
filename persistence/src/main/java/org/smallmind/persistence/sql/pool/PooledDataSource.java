@@ -36,6 +36,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import javax.sql.DataSource;
 import javax.sql.PooledConnection;
+import org.smallmind.nutsnbolts.lang.StackTrace;
 import org.smallmind.persistence.sql.DataSourceManager;
 import org.smallmind.quorum.pool.ComponentPoolException;
 import org.smallmind.quorum.pool.complex.ComponentPool;
@@ -81,6 +82,11 @@ public class PooledDataSource extends AbstractPooledDataSource<DataSource, Poole
   public Connection getConnection (String username, String password) {
 
     throw new UnsupportedOperationException("Please properly configure the underlying resource managed by the pool which is represented by this DataSource");
+  }
+
+  public StackTrace[] getExistentialStackTraces () {
+
+    return componentPool.getExistentialStackTraces();
   }
 
   @Override

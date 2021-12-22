@@ -399,22 +399,23 @@ public class ComponentPinManager<C> {
   public StackTrace[] getExistentialStackTraces () {
 
     LinkedList<StackTrace> stackTraceList = new LinkedList<>();
-    StackTrace[] stackTraces;
 
     backingLock.readLock().lock();
     try {
       for (ComponentPin<C> componentPin : backingMap.values()) {
         if (!freeQueue.contains(componentPin)) {
-          stackTraceList.add(new StackTrace(componentPin.getExistentialStackTrace()));
+
+          StackTraceElement[] stackTraceElements;
+
+          if ((stackTraceElements = componentPin.getExistentialStackTrace()) != null) {
+            stackTraceList.add(new StackTrace(stackTraceElements));
+          }
         }
       }
     } finally {
       backingLock.readLock().unlock();
     }
 
-    stackTraces = new StackTrace[stackTraceList.size()];
-    stackTraceList.toArray(stackTraces);
-
-    return stackTraces;
+    return stackTraceList.toArray(new StackTrace[0]);
   }
 }
