@@ -33,8 +33,13 @@
 package org.smallmind.memcached.spring;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedList;
 import net.rubyeye.xmemcached.MemcachedClientBuilder;
 import net.rubyeye.xmemcached.XMemcachedClientBuilder;
 import net.rubyeye.xmemcached.command.BinaryCommandFactory;
@@ -42,12 +47,15 @@ import net.rubyeye.xmemcached.impl.KetamaMemcachedSessionLocator;
 import net.rubyeye.xmemcached.transcoders.Transcoder;
 import org.smallmind.memcached.MemcachedServer;
 import org.smallmind.memcached.XMemcachedMemcachedClient;
+import org.smallmind.nutsnbolts.net.InetAddressComparator;
 import org.smallmind.scribe.pen.LoggerManager;
 import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
 public class XMemcachedMemcachedClientFactoryBean implements FactoryBean<XMemcachedMemcachedClient>, InitializingBean {
+
+  private static final Comparator<InetAddress> INET_ADDRESS_COMPARATOR = new InetAddressComparator();
 
   private XMemcachedMemcachedClient memcachedClient;
   private Transcoder<?> transcoder;
@@ -122,7 +130,7 @@ public class XMemcachedMemcachedClientFactoryBean implements FactoryBean<XMemcac
             backup = servers[index == (servers.length - 1) ? 0 : index + 1];
           }
 
-          addressMap.put(new InetSocketAddress(server.getHost(), server.getPort()), (backup == null) ? null : new InetSocketAddress(backup.getHost(), backup.getPort()));
+          addressMap.put(new InetSocketAddress(inetAddressFromHost(server.getHost()), server.getPort()), (backup == null) ? null : new InetSocketAddress(inetAddressFromHost(backup.getHost()), backup.getPort()));
           index++;
         }
 
@@ -140,6 +148,16 @@ public class XMemcachedMemcachedClientFactoryBean implements FactoryBean<XMemcac
         memcachedClient = new XMemcachedMemcachedClient(builder.build());
       }
     }
+  }
+
+  private InetAddress inetAddressFromHost (String host)
+    throws UnknownHostException {
+
+    LinkedList<InetAddress> addressList = new LinkedList<>(Arrays.asList(InetAddress.getAllByName(host)));
+
+    addressList.sort(INET_ADDRESS_COMPARATOR);
+
+    return addressList.getFirst();
   }
 
   public void shutdown () {
