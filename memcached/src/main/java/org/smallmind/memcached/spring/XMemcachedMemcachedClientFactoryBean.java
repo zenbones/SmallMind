@@ -40,6 +40,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import net.rubyeye.xmemcached.MemcachedClientBuilder;
 import net.rubyeye.xmemcached.XMemcachedClientBuilder;
 import net.rubyeye.xmemcached.command.BinaryCommandFactory;
@@ -146,6 +147,8 @@ public class XMemcachedMemcachedClientFactoryBean implements FactoryBean<XMemcac
         builder.setSessionLocator(new KetamaMemcachedSessionLocator());
 
         memcachedClient = new XMemcachedMemcachedClient(builder.build());
+
+        LoggerManager.getLogger(XMemcachedMemcachedClientFactoryBean.class).info("Memcached servers(%s) initialized...", outputAddresses(addressMap));
       }
     }
   }
@@ -158,6 +161,26 @@ public class XMemcachedMemcachedClientFactoryBean implements FactoryBean<XMemcac
     addressList.sort(INET_ADDRESS_COMPARATOR);
 
     return addressList.getFirst();
+  }
+
+  private String outputAddresses (HashMap<InetSocketAddress, InetSocketAddress> addressMap) {
+
+    String[] output = new String[addressMap.size()];
+    int index = 0;
+
+    for (Map.Entry<InetSocketAddress, InetSocketAddress> addressEntry : addressMap.entrySet()) {
+
+      StringBuilder outputBuilder = new StringBuilder();
+
+      outputBuilder.append("primary=").append(addressEntry.getKey());
+      if (addressEntry.getValue() != null) {
+        outputBuilder.append(", secondary=").append(addressEntry.getValue());
+      }
+
+      output[index++] = outputBuilder.toString();
+    }
+
+    return Arrays.toString(output);
   }
 
   public void shutdown () {
