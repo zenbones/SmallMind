@@ -104,7 +104,7 @@
     <jetty.version>9.4.44.v20210927</jetty.version>
     <kryo.version>5.2.0</kryo.version>
     <liquibase.version>4.6.1</liquibase.version>
-    <log4j.version>2.16.0</log4j.version>
+    <log4j.version>2.17.1</log4j.version>
     <maven.version>3.8.3</maven.version>
     <maven.aether.provider.version>3.3.9</maven.aether.provider.version>
     <maven.plugin.annotations.version>3.6.1</maven.plugin.annotations.version>
