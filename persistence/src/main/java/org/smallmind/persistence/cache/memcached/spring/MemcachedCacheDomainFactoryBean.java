@@ -39,11 +39,11 @@ import org.smallmind.persistence.cache.memcached.MemcachedCacheDomain;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
-public class MemcachedCacheDomainFactoryBean implements FactoryBean<MemcachedCacheDomain>, InitializingBean {
+public class MemcachedCacheDomainFactoryBean implements FactoryBean<MemcachedCacheDomain<?, ?>>, InitializingBean {
 
-  private MemcachedCacheDomain memcachedCacheDomain;
+  private MemcachedCacheDomain<?, ?> memcachedCacheDomain;
   private ProxyMemcachedClient memcachedClient;
-  private Map<Class, Integer> timeToLiveOverrideMap;
+  private Map<Class<?>, Integer> timeToLiveOverrideMap;
   private String discriminator;
   private int timeToLiveSeconds;
 
@@ -62,7 +62,7 @@ public class MemcachedCacheDomainFactoryBean implements FactoryBean<MemcachedCac
     this.timeToLiveSeconds = timeToLiveSeconds;
   }
 
-  public void setTimeToLiveOverrideMap (Map<Class, Integer> timeToLiveOverrideMap) {
+  public void setTimeToLiveOverrideMap (Map<Class<?>, Integer> timeToLiveOverrideMap) {
 
     this.timeToLiveOverrideMap = timeToLiveOverrideMap;
   }
@@ -77,7 +77,7 @@ public class MemcachedCacheDomainFactoryBean implements FactoryBean<MemcachedCac
   }
 
   @Override
-  public MemcachedCacheDomain getObject () {
+  public MemcachedCacheDomain<?, ?> getObject () {
 
     return memcachedCacheDomain;
   }

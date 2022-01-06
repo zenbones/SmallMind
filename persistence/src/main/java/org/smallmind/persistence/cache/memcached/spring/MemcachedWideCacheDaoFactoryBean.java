@@ -37,12 +37,12 @@ import org.smallmind.persistence.cache.praxis.extrinsic.WideExtrinsicCacheDao;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
-public class MemcachedWideCacheDaoFactoryBean implements FactoryBean<WideExtrinsicCacheDao>, InitializingBean {
+public class MemcachedWideCacheDaoFactoryBean implements FactoryBean<WideExtrinsicCacheDao<?, ?, ?>>, InitializingBean {
 
-  private WideExtrinsicCacheDao memcachedWideCacheDao;
-  private MemcachedCacheDomain memcachedCacheDomain;
+  private WideExtrinsicCacheDao<?, ?, ?> memcachedWideCacheDao;
+  private MemcachedCacheDomain<?, ?> memcachedCacheDomain;
 
-  public void setMemcachedCacheDomain (MemcachedCacheDomain memcachedCacheDomain) {
+  public void setMemcachedCacheDomain (MemcachedCacheDomain<?, ?> memcachedCacheDomain) {
 
     this.memcachedCacheDomain = memcachedCacheDomain;
   }
@@ -51,12 +51,12 @@ public class MemcachedWideCacheDaoFactoryBean implements FactoryBean<WideExtrins
   public void afterPropertiesSet () {
 
     if (memcachedCacheDomain != null) {
-      memcachedWideCacheDao = new WideExtrinsicCacheDao(memcachedCacheDomain);
+      memcachedWideCacheDao = new WideExtrinsicCacheDao<>(memcachedCacheDomain);
     }
   }
 
   @Override
-  public WideExtrinsicCacheDao getObject () {
+  public WideExtrinsicCacheDao<?, ?, ?> getObject () {
 
     return memcachedWideCacheDao;
   }

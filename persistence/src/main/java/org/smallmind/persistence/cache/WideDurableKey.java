@@ -44,11 +44,7 @@ public class WideDurableKey<W extends Serializable & Comparable<W>, D extends Du
 
     this.durableClass = durableClass;
 
-    StringBuilder keyBuilder = new StringBuilder(context);
-
-    keyBuilder.append('.').append((parentClass.getSimpleName())).append('[').append(durableClass.getSimpleName()).append(']').append('=').append(parentId);
-
-    key = keyBuilder.toString();
+    key = context + '.' + (parentClass.getSimpleName()) + '[' + durableClass.getSimpleName() + ']' + '=' + parentId;
   }
 
   public Class<D> getDurableClass () {

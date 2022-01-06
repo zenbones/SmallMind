@@ -39,7 +39,7 @@ import org.smallmind.persistence.cache.aop.Classifications;
 import org.smallmind.persistence.cache.aop.Vector;
 import org.smallmind.persistence.cache.aop.VectorCalculator;
 
-public class VectorKey<D extends Durable> implements Serializable {
+public class VectorKey<D extends Durable<?>> implements Serializable {
 
   private final Class<D> elementClass;
   private final String key;
@@ -110,6 +110,6 @@ public class VectorKey<D extends Durable> implements Serializable {
 
   public boolean equals (Object obj) {
 
-    return (obj instanceof VectorKey) && key.equals(((VectorKey)obj).getKey());
+    return (obj instanceof VectorKey) && key.equals(((VectorKey<?>)obj).getKey());
   }
 }

@@ -52,7 +52,7 @@ public abstract class AbstractWideCacheDao<W extends Serializable & Comparable<W
   }
 
   @Override
-  public PersistenceCache<String, List> getWideInstanceCache (Class<D> durableClass) {
+  public PersistenceCache<String, List<D>> getWideInstanceCache (Class<D> durableClass) {
 
     return cacheDomain.getWideInstanceCache(durableClass);
   }

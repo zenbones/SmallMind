@@ -38,5 +38,5 @@ import org.smallmind.persistence.Durable;
 
 public interface WideCacheDao<W extends Serializable & Comparable<W>, I extends Serializable & Comparable<I>, D extends Durable<I>> extends WideVectoredDao<W, I, D> {
 
-  PersistenceCache<String, List> getWideInstanceCache (Class<D> durableClass);
+  PersistenceCache<String, List<D>> getWideInstanceCache (Class<D> durableClass);
 }

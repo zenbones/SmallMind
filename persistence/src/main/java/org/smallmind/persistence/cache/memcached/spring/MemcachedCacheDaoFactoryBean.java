@@ -38,12 +38,12 @@ import org.smallmind.persistence.cache.praxis.extrinsic.ByKeyExtrinsicCacheDao;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
-public class MemcachedCacheDaoFactoryBean implements FactoryBean<ByKeyExtrinsicCacheDao>, InitializingBean {
+public class MemcachedCacheDaoFactoryBean implements FactoryBean<ByKeyExtrinsicCacheDao<?, ?>>, InitializingBean {
 
-  private ByKeyExtrinsicCacheDao memcachedCacheDao;
-  private MemcachedCacheDomain memcachedCacheDomain;
+  private ByKeyExtrinsicCacheDao<?, ?> memcachedCacheDao;
+  private MemcachedCacheDomain<?, ?> memcachedCacheDomain;
 
-  public void setMemcachedCacheDomain (MemcachedCacheDomain memcachedCacheDomain) {
+  public void setMemcachedCacheDomain (MemcachedCacheDomain<?, ?> memcachedCacheDomain) {
 
     this.memcachedCacheDomain = memcachedCacheDomain;
   }
@@ -53,12 +53,12 @@ public class MemcachedCacheDaoFactoryBean implements FactoryBean<ByKeyExtrinsicC
     throws IOException {
 
     if (memcachedCacheDomain != null) {
-      memcachedCacheDao = new ByKeyExtrinsicCacheDao(memcachedCacheDomain);
+      memcachedCacheDao = new ByKeyExtrinsicCacheDao<>(memcachedCacheDomain);
     }
   }
 
   @Override
-  public ByKeyExtrinsicCacheDao getObject () {
+  public ByKeyExtrinsicCacheDao<?, ?> getObject () {
 
     return memcachedCacheDao;
   }

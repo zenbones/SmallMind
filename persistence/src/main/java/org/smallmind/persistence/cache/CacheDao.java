@@ -39,5 +39,5 @@ public interface CacheDao<I extends Serializable & Comparable<I>, D extends Dura
 
   PersistenceCache<String, D> getInstanceCache (Class<D> durableClass);
 
-  PersistenceCache<String, ? extends DurableVector> getVectorCache (Class<D> durableClass);
+  PersistenceCache<String, ? extends DurableVector<I, D>> getVectorCache (Class<D> durableClass);
 }

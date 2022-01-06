@@ -64,18 +64,18 @@ public abstract class AbstractCacheDao<I extends Serializable & Comparable<I>, D
 
   public D get (Class<D> durableClass, I id) {
 
-    DurableKey<I, D> durableKey = new DurableKey<I, D>(durableClass, id);
+    DurableKey<I, D> durableKey = new DurableKey<>(durableClass, id);
 
     return getInstanceCache(durableClass).get(durableKey.getKey());
   }
 
   public Map<DurableKey<I, D>, D> get (Class<D> durableClass, List<DurableKey<I, D>> durableKeys) {
 
-    Map<DurableKey<I, D>, D> resultMap = new HashMap<DurableKey<I, D>, D>();
+    Map<DurableKey<I, D>, D> resultMap = new HashMap<>();
 
     if ((durableKeys != null) && (!durableKeys.isEmpty())) {
 
-      HashMap<String, DurableKey<I, D>> durableKeyMap = new HashMap<String, DurableKey<I, D>>();
+      HashMap<String, DurableKey<I, D>> durableKeyMap = new HashMap<>();
       Map<String, D> valueMap;
       String[] keys = new String[durableKeys.size()];
       int index = 0;
@@ -99,7 +99,7 @@ public abstract class AbstractCacheDao<I extends Serializable & Comparable<I>, D
 
     if (durable != null) {
 
-      DurableKey<I, D> durableKey = new DurableKey<I, D>(durableClass, durable.getId());
+      DurableKey<I, D> durableKey = new DurableKey<>(durableClass, durable.getId());
 
       getInstanceCache(durableClass).remove(durableKey.getKey());
     }

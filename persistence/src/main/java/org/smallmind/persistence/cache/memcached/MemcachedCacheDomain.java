@@ -48,7 +48,7 @@ public class MemcachedCacheDomain<I extends Serializable & Comparable<I>, D exte
   private final ProxyMemcachedClient memcachedClient;
   private final Map<Class<D>, Integer> timeTiLiveOverrideMap;
   private final ConcurrentHashMap<Class<D>, MemcachedCache<D>> instanceCacheMap = new ConcurrentHashMap<>();
-  private final ConcurrentHashMap<Class<D>, MemcachedCache<List>> wideInstanceCacheMap = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<Class<D>, MemcachedCache<List<D>>> wideInstanceCacheMap = new ConcurrentHashMap<>();
   private final ConcurrentHashMap<Class<D>, MemcachedCache<DurableVector<I, D>>> vectorCacheMap = new ConcurrentHashMap<>();
   private final String discriminator;
   private final int timeToLiveSeconds;
@@ -89,14 +89,14 @@ public class MemcachedCacheDomain<I extends Serializable & Comparable<I>, D exte
   }
 
   @Override
-  public PersistenceCache<String, List> getWideInstanceCache (Class<D> managedClass) {
+  public PersistenceCache<String, List<D>> getWideInstanceCache (Class<D> managedClass) {
 
-    MemcachedCache<List> wideInstanceCache;
+    MemcachedCache<List<D>> wideInstanceCache;
 
     if ((wideInstanceCache = wideInstanceCacheMap.get(managedClass)) == null) {
       synchronized (wideInstanceCacheMap) {
         if ((wideInstanceCache = wideInstanceCacheMap.get(managedClass)) == null) {
-          wideInstanceCacheMap.put(managedClass, wideInstanceCache = new MemcachedCache<>(memcachedClient, discriminator, List.class, getTimeToLiveSeconds(managedClass)));
+          wideInstanceCacheMap.put(managedClass, wideInstanceCache = new MemcachedCache(memcachedClient, discriminator, List.class, getTimeToLiveSeconds(managedClass)));
         }
       }
     }

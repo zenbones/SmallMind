@@ -44,12 +44,7 @@ public class DurableKey<I extends Serializable & Comparable<I>, D extends Durabl
 
     this.durableClass = durableClass;
 
-    StringBuilder keyBuilder = new StringBuilder(durableClass.getSimpleName());
-
-    keyBuilder.append('=');
-    keyBuilder.append(id);
-
-    key = keyBuilder.toString();
+    key = durableClass.getSimpleName() + "=" + id;
   }
 
   public Class<D> getDurableClass () {
@@ -79,6 +74,6 @@ public class DurableKey<I extends Serializable & Comparable<I>, D extends Durabl
 
   public boolean equals (Object obj) {
 
-    return (obj instanceof DurableKey) && key.equals(((DurableKey)obj).getKey());
+    return (obj instanceof DurableKey) && key.equals(((DurableKey<?, ?>)obj).getKey());
   }
 }
