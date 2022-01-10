@@ -3,17 +3,15 @@
 
   <parent>
     <groupId>org.smallmind</groupId>
-    <artifactId>smallmind</artifactId>
+    <artifactId>smallmind-memcached</artifactId>
     <version>4.4.10-SNAPSHOT</version>
   </parent>
-  <artifactId>smallmind-memcached</artifactId>
-  <name>Memcached</name>
-  <description>Memcached Additions</description>
-  <packaging>pom</packaging>
-  <modules>
-    <module>cubby</module>
-    <module>utility</module>
-  </modules>
+  <artifactId>memcached-cubby</artifactId>
+  <packaging>jar</packaging>
+  <name>Memcached Cubby</name>
+  <description>Memcached Client</description>
+  <dependencies>
+  </dependencies>
   <build>
     <plugins>
       <plugin>
