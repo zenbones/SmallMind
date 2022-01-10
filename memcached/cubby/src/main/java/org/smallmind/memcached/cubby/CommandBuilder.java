@@ -1,2 +1,5 @@
-package org.smallmind.memcached.cubby;public class CommandBuilder {
+package org.smallmind.memcached.cubby;
+
+public abstract class CommandBuilder {
+
 }
