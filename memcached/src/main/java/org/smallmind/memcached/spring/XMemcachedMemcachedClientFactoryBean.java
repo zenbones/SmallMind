@@ -64,11 +64,17 @@ public class XMemcachedMemcachedClientFactoryBean implements FactoryBean<XMemcac
   private MemcachedServer[] servers;
   private MemcachedServer[] backups;
   private boolean enabled = true;
+  private boolean useBackups = true;
   private int poolSize;
 
   public void setEnabled (boolean enabled) {
 
     this.enabled = enabled;
+  }
+
+  public void setUseBackups (boolean useBackups) {
+
+    this.useBackups = useBackups;
   }
 
   public void setTranscoder (Transcoder<?> transcoder) {
@@ -126,7 +132,7 @@ public class XMemcachedMemcachedClientFactoryBean implements FactoryBean<XMemcac
 
           MemcachedServer backup = null;
 
-          if (backups != null) {
+          if (useBackups && (backups != null)) {
             backup = backups[index];
           } else if (servers.length > 1) {
             backup = servers[index == (servers.length - 1) ? 0 : index + 1];
