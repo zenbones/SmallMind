@@ -69,8 +69,14 @@ public class AlphaSpread {
           char start = zoneMatcher.group(1).charAt(0);
           char end = zoneMatcher.group(2).charAt(0);
 
-          for (char letter = start; letter <= end; letter++) {
-            charHash.add(letter);
+          if (start <= end) {
+            for (char letter = start; letter <= end; letter++) {
+              charHash.add(letter);
+            }
+          } else {
+            for (char letter = start; letter >= end; letter--) {
+              charHash.add(letter);
+            }
           }
         } else {
           throw new SpreadParserException("Could not parse elements");
