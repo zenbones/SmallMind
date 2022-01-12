@@ -69,8 +69,14 @@ public class NumericSpread {
           int start = Integer.parseInt(zoneMatcher.group(1));
           int end = Integer.parseInt(zoneMatcher.group(2));
 
-          for (int number = start; number <= end; number++) {
-            intHash.add(number);
+          if (start <= end) {
+            for (int number = start; number <= end; number++) {
+              intHash.add(number);
+            }
+          } else {
+            for (int number = start; number >= end; number--) {
+              intHash.add(number);
+            }
           }
         } else {
           throw new SpreadParserException("Could not parse elements");
