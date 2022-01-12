@@ -32,8 +32,7 @@
  */
 package org.smallmind.nutsnbolts.util;
 
-import java.util.Arrays;
-import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -51,19 +50,18 @@ public class AlphaSpread {
     } else {
 
       Matcher zoneMatcher;
-      HashSet<Character> charHash;
+      LinkedList<Character> letterList = new LinkedList<>();
       String[] zones = letters.split(",", 0);
       char[] spreadArray;
       int index = 0;
 
-      charHash = new HashSet<>();
       for (String zone : zones) {
         if (zone.trim().length() == 0) {
           throw new SpreadParserException("Empty elements are not allowed");
         }
 
         if ((zoneMatcher = LETTER_PATTERN.matcher(zone.trim())).matches()) {
-          charHash.add(zoneMatcher.group().charAt(0));
+          letterList.add(zoneMatcher.group().charAt(0));
         } else if ((zoneMatcher = SPREAD_PATTERN.matcher(zone.trim())).matches()) {
 
           char start = zoneMatcher.group(1).charAt(0);
@@ -71,11 +69,11 @@ public class AlphaSpread {
 
           if (start <= end) {
             for (char letter = start; letter <= end; letter++) {
-              charHash.add(letter);
+              letterList.add(letter);
             }
           } else {
             for (char letter = start; letter >= end; letter--) {
-              charHash.add(letter);
+              letterList.add(letter);
             }
           }
         } else {
@@ -83,12 +81,10 @@ public class AlphaSpread {
         }
       }
 
-      spreadArray = new char[charHash.size()];
-      for (Character letter : charHash) {
+      spreadArray = new char[letterList.size()];
+      for (Character letter : letterList) {
         spreadArray[index++] = letter;
       }
-
-      Arrays.sort(spreadArray);
 
       return spreadArray;
     }

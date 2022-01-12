@@ -32,8 +32,7 @@
  */
 package org.smallmind.nutsnbolts.util;
 
-import java.util.Arrays;
-import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -51,19 +50,18 @@ public class NumericSpread {
     } else {
 
       Matcher zoneMatcher;
-      HashSet<Integer> intHash;
+      LinkedList<Integer> numberList = new LinkedList<>();
       String[] zones = numbers.split(",", 0);
       int[] spreadArray;
       int index = 0;
 
-      intHash = new HashSet<>();
       for (String zone : zones) {
         if (zone.trim().length() == 0) {
           throw new SpreadParserException("Empty elements are not allowed");
         }
 
         if ((zoneMatcher = NUMBER_PATTERN.matcher(zone.trim())).matches()) {
-          intHash.add(Integer.parseInt(zoneMatcher.group()));
+          numberList.add(Integer.parseInt(zoneMatcher.group()));
         } else if ((zoneMatcher = SPREAD_PATTERN.matcher(zone.trim())).matches()) {
 
           int start = Integer.parseInt(zoneMatcher.group(1));
@@ -71,11 +69,11 @@ public class NumericSpread {
 
           if (start <= end) {
             for (int number = start; number <= end; number++) {
-              intHash.add(number);
+              numberList.add(number);
             }
           } else {
             for (int number = start; number >= end; number--) {
-              intHash.add(number);
+              numberList.add(number);
             }
           }
         } else {
@@ -83,12 +81,10 @@ public class NumericSpread {
         }
       }
 
-      spreadArray = new int[intHash.size()];
-      for (Integer number : intHash) {
+      spreadArray = new int[numberList.size()];
+      for (Integer number : numberList) {
         spreadArray[index++] = number;
       }
-
-      Arrays.sort(spreadArray);
 
       return spreadArray;
     }
