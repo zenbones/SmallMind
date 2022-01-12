@@ -116,7 +116,7 @@
     <shiro.version>1.8.0</shiro.version>
     <slf4j.version>1.7.32</slf4j.version>
     <snakeyaml.version>1.29</snakeyaml.version>
-    <spring.version>5.3.12</spring.version>
+    <spring.version>5.3.14</spring.version>
     <spring.batch.version>4.3.3</spring.batch.version>
     <spring.rabbit.version>2.3.11</spring.rabbit.version>
     <sshd.version>2.7.0</sshd.version>
