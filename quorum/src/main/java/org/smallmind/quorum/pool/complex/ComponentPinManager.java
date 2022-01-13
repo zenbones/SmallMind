@@ -34,6 +34,7 @@ package org.smallmind.quorum.pool.complex;
 
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -242,6 +243,22 @@ public class ComponentPinManager<C> {
         }
       }
     }
+  }
+
+  public void killAllProcessing () {
+
+    backingLock.writeLock().lock();
+    try {
+      for (Map.Entry<ComponentInstance<C>, ComponentPin<C>> backingEntry : backingMap.entrySet()) {
+        if (!freeQueue.contains(backingEntry.getValue())) {
+          terminate(backingEntry.getKey(), true, false);
+        }
+      }
+    } finally {
+      backingLock.writeLock().unlock();
+    }
+
+    trackSize();
   }
 
   public void process (ComponentInstance<C> componentInstance, boolean track) {

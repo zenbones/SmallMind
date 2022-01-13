@@ -186,6 +186,11 @@ public class ComponentPool<C> extends Pool {
     componentPinManager.remove(componentPin, false, withPrejudice, true);
   }
 
+  public void killAllProcessing () {
+
+    componentPinManager.killAllProcessing();
+  }
+
   public int getPoolSize () {
 
     return componentPinManager.getPoolSize();

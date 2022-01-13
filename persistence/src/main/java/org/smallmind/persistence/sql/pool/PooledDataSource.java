@@ -89,6 +89,11 @@ public class PooledDataSource extends AbstractPooledDataSource<DataSource, Poole
     return componentPool.getExistentialStackTraces();
   }
 
+  public void killAllProcessing () {
+
+    componentPool.killAllProcessing();
+  }
+
   @Override
   public void startup ()
     throws ComponentPoolException {
