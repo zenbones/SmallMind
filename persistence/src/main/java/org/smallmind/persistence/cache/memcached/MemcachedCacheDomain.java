@@ -36,7 +36,7 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import org.smallmind.memcached.ProxyMemcachedClient;
+import org.smallmind.memcached.utility.ProxyMemcachedClient;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.EntitySource;
 import org.smallmind.persistence.cache.CacheDomain;

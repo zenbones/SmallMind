@@ -28,7 +28,7 @@
     </dependency>
     <dependency>
       <groupId>org.smallmind</groupId>
-      <artifactId>smallmind-memcached</artifactId>
+      <artifactId>memcached-utility</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>

@@ -195,7 +195,7 @@
       </dependency>
       <dependency>
         <groupId>org.smallmind</groupId>
-        <artifactId>smallmind-memcached</artifactId>
+        <artifactId>memcached-utility</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

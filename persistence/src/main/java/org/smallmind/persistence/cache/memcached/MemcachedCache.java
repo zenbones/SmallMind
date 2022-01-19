@@ -34,8 +34,8 @@ package org.smallmind.persistence.cache.memcached;
 
 import java.util.Arrays;
 import java.util.Map;
-import org.smallmind.memcached.ProxyCASResponse;
-import org.smallmind.memcached.ProxyMemcachedClient;
+import org.smallmind.memcached.utility.ProxyCASResponse;
+import org.smallmind.memcached.utility.ProxyMemcachedClient;
 import org.smallmind.persistence.cache.CASSupportingPersistenceCache;
 import org.smallmind.persistence.cache.CASValue;
 import org.smallmind.persistence.cache.CacheOperationException;
