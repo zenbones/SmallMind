@@ -40,6 +40,8 @@ public class SourceNoticeMojo extends AbstractMojo {
   private Stencil[] stencils;
   @Parameter
   private Rule[] rules;
+  @Parameter(defaultValue = "UNIX")
+  private LineEndings lineEndings;
   @Parameter(defaultValue = "false")
   private boolean allowNoticeRemoval;
   @Parameter(defaultValue = "true")
@@ -147,6 +149,7 @@ public class SourceNoticeMojo extends AbstractMojo {
   private void updateNotice (Stencil stencil, String[] noticeArray, char[] buffer, String directory, PathFilter... pathFilters)
     throws MojoFailureException {
 
+    LineTerminator lineTerminator = new LineTerminator(lineEndings);
     Path directoryPath = Paths.get(directory);
 
     if (Files.isDirectory(directoryPath)) {
@@ -177,15 +180,15 @@ public class SourceNoticeMojo extends AbstractMojo {
                     String unprocessedLine;
                     int charsRead;
 
-                    unprocessedLine = seekNotice(stencil, skipPattern, fileReader, fileWriter);
+                    unprocessedLine = seekNotice(stencil, skipPattern, fileReader, fileWriter, lineTerminator);
 
                     if (noticeArray != null) {
-                      applyNotice(stencil, noticeArray, fileWriter);
+                      applyNotice(stencil, noticeArray, fileWriter, lineTerminator);
                     }
 
                     if (unprocessedLine != null) {
                       fileWriter.write(unprocessedLine);
-                      fileWriter.write(System.getProperty("line.separator"));
+                      fileWriter.write(lineTerminator.end());
                     }
 
                     while ((charsRead = fileReader.read(buffer)) >= 0) {
@@ -251,7 +254,7 @@ public class SourceNoticeMojo extends AbstractMojo {
     return lineArray;
   }
 
-  private String seekNotice (Stencil stencil, Pattern skipPattern, BufferedReader fileReader, BufferedWriter fileWriter)
+  private String seekNotice (Stencil stencil, Pattern skipPattern, BufferedReader fileReader, BufferedWriter fileWriter, LineTerminator lineTerminator)
     throws IOException, MojoFailureException {
 
     NoticeState noticeState;
@@ -280,7 +283,7 @@ public class SourceNoticeMojo extends AbstractMojo {
         }
       } else {
         fileWriter.write(singleLine);
-        fileWriter.write(System.getProperty("line.separator"));
+        fileWriter.write(lineTerminator.end());
       }
     }
 
@@ -293,16 +296,16 @@ public class SourceNoticeMojo extends AbstractMojo {
     return singleLine;
   }
 
-  private void applyNotice (Stencil stencil, String[] noticeArray, BufferedWriter fileWriter)
+  private void applyNotice (Stencil stencil, String[] noticeArray, BufferedWriter fileWriter, LineTerminator lineTerminator)
     throws IOException {
 
     for (int count = 0; count < stencil.getBlankLinesBefore(); count++) {
-      fileWriter.write(System.getProperty("line.separator"));
+      fileWriter.write(lineTerminator.end());
     }
 
     if (stencil.getFirstLine() != null) {
       fileWriter.write(stencil.getFirstLine());
-      fileWriter.write(System.getProperty("line.separator"));
+      fileWriter.write(lineTerminator.end());
     }
 
     for (String noticeLine : noticeArray) {
@@ -316,16 +319,16 @@ public class SourceNoticeMojo extends AbstractMojo {
         }
         fileWriter.write(noticeLine);
       }
-      fileWriter.write(System.getProperty("line.separator"));
+      fileWriter.write(lineTerminator.end());
     }
 
     if (stencil.getLastLine() != null) {
       fileWriter.write(stencil.getLastLine());
-      fileWriter.write(System.getProperty("line.separator"));
+      fileWriter.write(lineTerminator.end());
     }
 
     for (int count = 0; count < stencil.getBlankLinesAfter(); count++) {
-      fileWriter.write(System.getProperty("line.separator"));
+      fileWriter.write(lineTerminator.end());
     }
   }
 }
