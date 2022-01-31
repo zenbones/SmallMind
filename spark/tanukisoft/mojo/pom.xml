@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>spark-tanukisoft</artifactId>
-    <version>4.4.10-SNAPSHOT</version>
+    <version>4.4.11-SNAPSHOT</version>
   </parent>
   <artifactId>spark-tanukisoft-maven-plugin</artifactId>
   <name>Spark-Tanukisoft-Maven-Plugin</name>
