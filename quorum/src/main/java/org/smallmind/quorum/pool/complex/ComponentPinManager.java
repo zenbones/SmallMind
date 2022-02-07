@@ -178,8 +178,9 @@ public class ComponentPinManager<C> {
             ComponentPin<C> componentPin;
             ComponentInstance<C> componentInstance;
 
-            backingMap.put(componentInstance = manufactureComponentInstance(), componentPin = new ComponentPin<>(componentPool, deconstructionQueue, componentInstance));
-            size.incrementAndGet();
+            if (backingMap.put(componentInstance = manufactureComponentInstance(), componentPin = new ComponentPin<>(componentPool, deconstructionQueue, componentInstance)) == null) {
+              size.incrementAndGet();
+            }
 
             return componentPin;
           }
