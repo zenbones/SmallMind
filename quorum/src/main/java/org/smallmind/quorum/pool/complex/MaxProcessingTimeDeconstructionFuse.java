@@ -75,11 +75,11 @@ public class MaxProcessingTimeDeconstructionFuse extends DeconstructionFuse {
 
     if (generationServed.get() == generation.get()) {
 
-      StackTraceElement[] stackTraceElements;
+      StackTraceElement[] stackTraceElements = getExistentialStackTrace();
 
       super.ignite();
 
-      if (((stackTraceElements = getExistentialStackTrace()) != null) && (stackTraceElements.length > 0)) {
+      if ((stackTraceElements != null) && (stackTraceElements.length > 0)) {
         LoggerManager.getLogger(MaxProcessingTimeDeconstructionFuse.class).warn(Arrays.toString(getExistentialStackTrace()));
       }
     }
