@@ -135,34 +135,36 @@ public class TransactionalState {
     if ((!(throwable instanceof TransactionError)) || ((TRANSACTION_SET_STACK_LOCAL.get() != null) && (TRANSACTION_SET_STACK_LOCAL.get().size() != ((TransactionError)throwable).getClosure()))) {
 
       LinkedList<RollbackAwareBoundarySet<ProxyTransaction<?>>> transactionSetStack;
-      RollbackAwareBoundarySet<ProxyTransaction<?>> transactionSet;
-      IncompleteTransactionError incompleteTransactionError = null;
 
       if (((transactionSetStack = TRANSACTION_SET_STACK_LOCAL.get()) == null) || transactionSetStack.isEmpty()) {
         throw new TransactionBoundaryError(0, "No transaction boundary has been enforced");
-      }
+      } else {
 
-      try {
-        for (ProxyTransaction<?> proxyTransaction : transactionSet = transactionSetStack.removeLast()) {
-          try {
-            if (transactionSet.isRollbackOnly() || proxyTransaction.isRollbackOnly()) {
-              proxyTransaction.rollback();
-            } else {
-              proxyTransaction.commit();
-            }
-          } catch (Throwable unexpectedThrowable) {
-            if (incompleteTransactionError == null) {
-              incompleteTransactionError = new IncompleteTransactionError(transactionSetStack.size(), unexpectedThrowable);
+        RollbackAwareBoundarySet<ProxyTransaction<?>> transactionSet;
+        IncompleteTransactionError incompleteTransactionError = null;
+
+        try {
+          for (ProxyTransaction<?> proxyTransaction : transactionSet = transactionSetStack.removeLast()) {
+            try {
+              if (transactionSet.isRollbackOnly() || proxyTransaction.isRollbackOnly()) {
+                proxyTransaction.rollback();
+              } else {
+                proxyTransaction.commit();
+              }
+            } catch (Throwable unexpectedThrowable) {
+              if (incompleteTransactionError == null) {
+                incompleteTransactionError = new IncompleteTransactionError(transactionSetStack.size(), unexpectedThrowable);
+              }
             }
           }
-        }
 
-        if (incompleteTransactionError != null) {
-          throw incompleteTransactionError;
-        }
-      } finally {
-        if (transactionSetStack.isEmpty()) {
-          TRANSACTION_SET_STACK_LOCAL.remove();
+          if (incompleteTransactionError != null) {
+            throw incompleteTransactionError;
+          }
+        } finally {
+          if (transactionSetStack.isEmpty()) {
+            TRANSACTION_SET_STACK_LOCAL.remove();
+          }
         }
       }
     } else {
@@ -176,29 +178,31 @@ public class TransactionalState {
     if ((!(throwable instanceof TransactionError)) || ((TRANSACTION_SET_STACK_LOCAL.get() != null) && (TRANSACTION_SET_STACK_LOCAL.get().size() != ((TransactionError)throwable).getClosure()))) {
 
       LinkedList<RollbackAwareBoundarySet<ProxyTransaction<?>>> transactionSetStack;
-      IncompleteTransactionError incompleteTransactionError = null;
 
       if (((transactionSetStack = TRANSACTION_SET_STACK_LOCAL.get()) == null) || transactionSetStack.isEmpty()) {
         throw new TransactionBoundaryError(0, throwable, "No transaction boundary has been enforced");
-      }
+      } else {
 
-      try {
-        for (ProxyTransaction<?> proxyTransaction : transactionSetStack.removeLast()) {
-          try {
-            proxyTransaction.rollback();
-          } catch (Throwable unexpectedThrowable) {
-            if (incompleteTransactionError == null) {
-              incompleteTransactionError = new IncompleteTransactionError(transactionSetStack.size(), unexpectedThrowable);
+        IncompleteTransactionError incompleteTransactionError = null;
+
+        try {
+          for (ProxyTransaction<?> proxyTransaction : transactionSetStack.removeLast()) {
+            try {
+              proxyTransaction.rollback();
+            } catch (Throwable unexpectedThrowable) {
+              if (incompleteTransactionError == null) {
+                incompleteTransactionError = new IncompleteTransactionError(transactionSetStack.size(), unexpectedThrowable);
+              }
             }
           }
-        }
 
-        if (incompleteTransactionError != null) {
-          throw incompleteTransactionError;
-        }
-      } finally {
-        if (transactionSetStack.isEmpty()) {
-          TRANSACTION_SET_STACK_LOCAL.remove();
+          if (incompleteTransactionError != null) {
+            throw incompleteTransactionError;
+          }
+        } finally {
+          if (transactionSetStack.isEmpty()) {
+            TRANSACTION_SET_STACK_LOCAL.remove();
+          }
         }
       }
     } else {
