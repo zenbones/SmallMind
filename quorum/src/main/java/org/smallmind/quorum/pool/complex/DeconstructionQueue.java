@@ -102,7 +102,11 @@ public class DeconstructionQueue {
             DeconstructionFuse firstFuse;
 
             if ((firstFuse = fuseMap.remove(firstEntry.getKey())) != null) {
-              firstFuse.ignite();
+              try {
+                firstFuse.ignite();
+              } catch (Exception exception) {
+                LoggerManager.getLogger(DeconstructionQueue.class).error(exception);
+              }
             }
           }
         }
@@ -114,7 +118,7 @@ public class DeconstructionQueue {
     }
   }
 
-  private class IgnitionKey implements Comparable<IgnitionKey> {
+  private static class IgnitionKey implements Comparable<IgnitionKey> {
 
     private final long ignitionTime;
     private final int ordinal;
