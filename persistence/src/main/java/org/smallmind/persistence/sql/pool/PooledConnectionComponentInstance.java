@@ -138,9 +138,7 @@ public class PooledConnectionComponentInstance<P extends PooledConnection> imple
 
       SQLException validationCloseException = null;
 
-      if (componentPool.getComplexPoolConfig().isExistentiallyAware()) {
-        stackTraceReference.set(null);
-      }
+      componentPool.terminateInstance(this);
 
       if (validationStatement != null) {
         try {

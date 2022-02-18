@@ -118,9 +118,7 @@ public class JavaContextComponentInstance implements ComponentInstance<PooledJav
     throws Exception {
 
     if (closed.compareAndSet(false, true)) {
-      if (componentPool.getComplexPoolConfig().isExistentiallyAware()) {
-        stackTraceReference.set(null);
-      }
+      componentPool.terminateInstance(this);
 
       if (pooledJavaContext != null) {
         pooledJavaContext.close(true);
