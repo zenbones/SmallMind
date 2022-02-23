@@ -35,6 +35,7 @@ package org.smallmind.persistence.orm.aop;
 import java.util.LinkedList;
 import org.smallmind.persistence.orm.ProxySession;
 import org.smallmind.persistence.orm.ProxyTransaction;
+import org.smallmind.scribe.pen.LoggerManager;
 
 public class TransactionalState {
 
@@ -118,6 +119,9 @@ public class TransactionalState {
 
     if ((transactionSetStack = TRANSACTION_SET_STACK_LOCAL.get()) == null) {
       TRANSACTION_SET_STACK_LOCAL.set(transactionSetStack = new LinkedList<>());
+    } else if (!transactionSetStack.isEmpty()) {
+      LoggerManager.getLogger(TransactionalState.class).warn("Dirty transactional state - please report this as a bug to the project owners");
+      transactionSetStack.clear();
     }
 
     transactionSetStack.addLast(new RollbackAwareBoundarySet<>(transactional.dataSources(), transactional.implicit(), transactional.rollbackOnly()));
