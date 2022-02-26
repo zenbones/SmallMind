@@ -34,23 +34,19 @@ package org.smallmind.persistence.orm.aop;
 
 public class TransactionBoundaryError extends TransactionError {
 
-  public TransactionBoundaryError (int closure) {
+  public TransactionBoundaryError (String message, Object... args) {
 
-    super(closure);
+    super(message, args);
   }
 
-  public TransactionBoundaryError (int closure, String message, Object... args) {
+  public TransactionBoundaryError (Throwable throwable, String message, Object... args) {
 
-    super(closure, message, args);
+    super(throwable, message, args);
   }
 
-  public TransactionBoundaryError (int closure, Throwable throwable, String message, Object... args) {
+  @Override
+  public boolean isTerminal () {
 
-    super(closure, throwable, message, args);
-  }
-
-  public TransactionBoundaryError (int closure, Throwable throwable) {
-
-    super(closure, throwable);
+    return true;
   }
 }
