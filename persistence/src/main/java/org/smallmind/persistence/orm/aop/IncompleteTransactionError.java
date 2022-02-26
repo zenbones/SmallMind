@@ -34,23 +34,14 @@ package org.smallmind.persistence.orm.aop;
 
 public class IncompleteTransactionError extends TransactionError {
 
-  public IncompleteTransactionError (int closure) {
+  public IncompleteTransactionError (Throwable throwable) {
 
-    super(closure);
+    super(throwable);
   }
 
-  public IncompleteTransactionError (int closure, String message, Object... args) {
+  @Override
+  public boolean isTerminal () {
 
-    super(closure, message, args);
-  }
-
-  public IncompleteTransactionError (int closure, Throwable throwable, String message, Object... args) {
-
-    super(closure, throwable, message, args);
-  }
-
-  public IncompleteTransactionError (int closure, Throwable throwable) {
-
-    super(closure, throwable);
+    return false;
   }
 }

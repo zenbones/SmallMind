@@ -53,7 +53,7 @@ public class BoundarySet<T> extends HashSet<T> {
     return implicit && (sessionSourceKeys.length == 0);
   }
 
-  public boolean allows (ProxySession proxySession) {
+  public boolean allows (ProxySession<?, ?> proxySession) {
 
     return allows(proxySession.getSessionSourceKey());
   }

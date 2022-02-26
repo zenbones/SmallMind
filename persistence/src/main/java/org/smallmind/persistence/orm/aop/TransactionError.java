@@ -36,38 +36,20 @@ import org.smallmind.nutsnbolts.lang.FormattedError;
 
 public abstract class TransactionError extends FormattedError {
 
-  private final int closure;
+  public abstract boolean isTerminal ();
 
-  public TransactionError (int closure) {
-
-    super();
-
-    this.closure = closure;
-  }
-
-  public TransactionError (int closure, String message, Object... args) {
+  public TransactionError (String message, Object... args) {
 
     super(message, args);
-
-    this.closure = closure;
   }
 
-  public TransactionError (int closure, Throwable throwable, String message, Object... args) {
+  public TransactionError (Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);
-
-    this.closure = closure;
   }
 
-  public TransactionError (int closure, Throwable throwable) {
+  public TransactionError (Throwable throwable) {
 
     super(throwable);
-
-    this.closure = closure;
-  }
-
-  public int getClosure () {
-
-    return closure;
   }
 }
