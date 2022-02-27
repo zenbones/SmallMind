@@ -152,7 +152,7 @@ public class TransactionalState {
         throw new TransactionBoundaryError(throwable, "No transaction boundary has been enforced");
       } else if (transactionSetStack.isEmpty()) {
         TRANSACTION_SET_STACK_LOCAL.remove();
-        throw new TransactionBoundaryError(throwable, "No transaction boundary has been enforced");
+        throw new TransactionBoundaryError(throwable, "The transaction boundary is in an inconsistent state");
       } else {
         try {
 
@@ -167,20 +167,6 @@ public class TransactionalState {
                 proxyTransaction.commit();
               }
             } catch (Throwable unexpectedThrowable) {
-
-              ProxySession<?, ?> proxySession;
-
-              if ((proxySession = proxyTransaction.getSession()) != null) {
-                try {
-                  proxySession.close();
-                } catch (Throwable doublyUnexpectedThrowable) {
-                  if ((incompleteTransactionError == null) && (!(throwable instanceof TransactionError))) {
-                    doublyUnexpectedThrowable.initCause(unexpectedThrowable);
-                    incompleteTransactionError = new IncompleteTransactionError(doublyUnexpectedThrowable);
-                  }
-                }
-              }
-
               if ((incompleteTransactionError == null) && (!(throwable instanceof TransactionError))) {
                 incompleteTransactionError = new IncompleteTransactionError(unexpectedThrowable);
               }
@@ -199,4 +185,3 @@ public class TransactionalState {
     }
   }
 }
-
