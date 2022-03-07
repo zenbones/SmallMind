@@ -32,30 +32,8 @@
  */
 package org.smallmind.memcached.cubby;
 
-public class CubbyConnection {
+import java.io.IOException;
 
-  public CubbyConnection ()
-    throws Exception {
+public class InvalidSelectionKeyException extends IOException {
 
-    EventLoop eventLoop;
-    Thread eventThread;
-
-    eventThread = new Thread(eventLoop = new EventLoop("localhost", 11211));
-
-    eventThread.setDaemon(true);
-    eventThread.start();
-
-    Thread.sleep(5000);
-
-    System.out.println("send...");
-    eventLoop.send(new NoopCommand());
-
-    Thread.sleep(30000);
-  }
-
-  public static void main (String... args)
-    throws Exception {
-
-    new CubbyConnection();
-  }
 }

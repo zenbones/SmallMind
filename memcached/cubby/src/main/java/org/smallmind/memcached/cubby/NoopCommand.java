@@ -32,30 +32,11 @@
  */
 package org.smallmind.memcached.cubby;
 
-public class CubbyConnection {
+public class NoopCommand extends Command {
 
-  public CubbyConnection ()
-    throws Exception {
+  @Override
+  public String toString () {
 
-    EventLoop eventLoop;
-    Thread eventThread;
-
-    eventThread = new Thread(eventLoop = new EventLoop("localhost", 11211));
-
-    eventThread.setDaemon(true);
-    eventThread.start();
-
-    Thread.sleep(5000);
-
-    System.out.println("send...");
-    eventLoop.send(new NoopCommand());
-
-    Thread.sleep(30000);
-  }
-
-  public static void main (String... args)
-    throws Exception {
-
-    new CubbyConnection();
+    return "mn\r\n";
   }
 }

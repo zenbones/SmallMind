@@ -32,30 +32,19 @@
  */
 package org.smallmind.memcached.cubby;
 
-public class CubbyConnection {
+public enum Mode {
 
-  public CubbyConnection ()
-    throws Exception {
+  ADD('E'), APPEND('A'), PREPEND('P'), REPLACE('R'), SET('S');
 
-    EventLoop eventLoop;
-    Thread eventThread;
+  private final char token;
 
-    eventThread = new Thread(eventLoop = new EventLoop("localhost", 11211));
+  Mode (char token) {
 
-    eventThread.setDaemon(true);
-    eventThread.start();
-
-    Thread.sleep(5000);
-
-    System.out.println("send...");
-    eventLoop.send(new NoopCommand());
-
-    Thread.sleep(30000);
+    this.token = token;
   }
 
-  public static void main (String... args)
-    throws Exception {
+  public char getToken () {
 
-    new CubbyConnection();
+    return token;
   }
 }
