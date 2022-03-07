@@ -70,7 +70,7 @@ with CAS semantics did not exist.
 
    */
 
-  public static void parse (StringBuilder responseBuilder)
+  public static Response parse (StringBuilder responseBuilder)
     throws IOException {
 
     if (responseBuilder.length() < 2) {
@@ -103,6 +103,8 @@ with CAS semantics did not exist.
       }
 
       parseFlags(response, responseBuilder);
+
+      return response;
     }
   }
 
@@ -111,12 +113,8 @@ with CAS semantics did not exist.
 
     int flagIndex = 2;
 
-    do {
-      if (responseBuilder.length() < flagIndex + 1) {
-        throw new IncomprehensibleResponseException(responseBuilder.toString());
-      } else if ((responseBuilder.charAt(flagIndex) == '\r') && (responseBuilder.charAt(flagIndex + 1) == '\n')) {
-        throw new IncomprehensibleResponseException(responseBuilder.toString());
-      } else if (responseBuilder.charAt(flagIndex) != ' ') {
+    while (responseBuilder.length() != flagIndex) {
+      if (responseBuilder.charAt(flagIndex) != ' ') {
         throw new IncomprehensibleResponseException(responseBuilder.toString());
       } else {
 
@@ -135,7 +133,7 @@ with CAS semantics did not exist.
             throw new IncomprehensibleResponseException(responseBuilder.toString());
         }
       }
-    } while (true);
+    }
   }
 
   private static String accumulateToken (StringBuilder responseBuilder, int index) {

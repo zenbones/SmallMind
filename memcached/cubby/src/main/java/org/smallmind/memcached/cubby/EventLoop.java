@@ -147,7 +147,7 @@ public class EventLoop implements Runnable {
                               responseBuilder.append('\n');
                             } else {
                               try {
-                                ResponseParser.parse(responseBuilder);
+                                System.out.println(ResponseParser.parse(responseBuilder));
                               } catch (IOException ioException) {
                                 LoggerManager.getLogger(EventLoop.class).error(ioException);
                               }
