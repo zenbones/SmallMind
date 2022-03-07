@@ -83,13 +83,6 @@ public class EventLoop implements Runnable {
   private void shutdown () {
 
     finished.set(true);
-
-    try {
-      selectionKey.channel().close();
-    } catch (IOException ioException) {
-      LoggerManager.getLogger(Transformer.class).error(ioException);
-    }
-
     selectionKey.cancel();
 
     try {
