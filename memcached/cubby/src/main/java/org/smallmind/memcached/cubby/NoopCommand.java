@@ -34,9 +34,16 @@ package org.smallmind.memcached.cubby;
 
 public class NoopCommand extends Command {
 
-  @Override
-  public String construct () {
+  private static final byte[] bytes = "mn\r\n".getBytes();
 
-    return "mn\r\n";
+  public NoopCommand (Codec codec) {
+
+    super(codec);
+  }
+
+  @Override
+  public byte[] construct () {
+
+    return bytes;
   }
 }

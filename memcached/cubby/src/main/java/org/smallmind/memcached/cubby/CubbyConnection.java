@@ -46,7 +46,9 @@ public class CubbyConnection {
     eventThread.start();
 
     System.out.println("send...");
-    eventLoop.send(new NoopCommand());
+    eventLoop.send(new GetCommand(new ObjectStreamCodec()).setKey("hello").setCas(true));
+    eventLoop.send(new SetCommand(new ObjectStreamCodec()).setKey("hello").setValue("goodbye").setCas(2L));
+//    eventLoop.send(new NoopCommand(new ObjectStreamCodec()));
 
     Thread.sleep(30000);
   }

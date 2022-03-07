@@ -35,32 +35,24 @@ package org.smallmind.memcached.cubby;
 import java.io.IOException;
 import org.smallmind.nutsnbolts.http.Base64Codec;
 
-public class SetCommand extends Command {
+public class GetCommand extends Command {
 
-  private Object value;
   private String key;
-  private Long cas;
+  private boolean cas;
 
-  public SetCommand (Codec codec) {
+  public GetCommand (Codec codec) {
 
     super(codec);
   }
 
-  public SetCommand setValue (Object value) {
-
-    this.value = value;
-
-    return this;
-  }
-
-  public SetCommand setKey (String key) {
+  public GetCommand setKey (String key) {
 
     this.key = key;
 
     return this;
   }
 
-  public SetCommand setCas (Long cas) {
+  public GetCommand setCas (boolean cas) {
 
     this.cas = cas;
 
@@ -70,23 +62,12 @@ public class SetCommand extends Command {
   public byte[] construct ()
     throws IOException {
 
-    byte[] bytes;
-    byte[] commandBytes;
-    byte[] valueBytes = getCodec().serialize(value);
+    StringBuilder line = new StringBuilder("mg ").append(Base64Codec.encode(key)).append(" b").append(" O").append(OpaqueGenerator.borrow());
 
-    StringBuilder line = new StringBuilder("ms ").append(Base64Codec.encode(key)).append(' ').append(valueBytes.length).append(" b").append(" O").append(OpaqueGenerator.borrow());
-
-    if (cas != null) {
-      line.append(" C").append(cas).append(" c");
+    if (cas) {
+      line.append(" c");
     }
 
-    commandBytes = line.append("\r\n").toString().getBytes();
-    bytes = new byte[commandBytes.length + valueBytes.length + 2];
-
-    System.arraycopy(commandBytes, 0, bytes, 0, commandBytes.length);
-    System.arraycopy(valueBytes, 0, bytes, commandBytes.length, valueBytes.length);
-    System.arraycopy("\r\n".getBytes(), 0, bytes, commandBytes.length + valueBytes.length, 2);
-
-    return bytes;
+    return line.append("\r\n").toString().getBytes();
   }
 }

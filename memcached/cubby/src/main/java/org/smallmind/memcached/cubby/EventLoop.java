@@ -144,6 +144,7 @@ public class EventLoop implements Runnable {
                             if (data) {
                               lineBuilder.append('\n');
                             } else {
+                              // parse and decrement O if returned
                               System.out.println(lineBuilder);
                               lineBuilder = new StringBuilder();
                               data = true;
@@ -165,7 +166,7 @@ public class EventLoop implements Runnable {
                         if ((command = commandQueue.poll()) == null) {
                           selectionKey.interestOps(SelectionKey.OP_READ);
                         } else {
-                          commandBuffer = command.construct().getBytes();
+                          commandBuffer = command.construct();
                         }
                       }
                     }

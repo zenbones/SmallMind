@@ -36,14 +36,18 @@ import java.io.IOException;
 
 public abstract class Command {
 
-  private Codec codec;
+  private final Codec codec;
 
-  public abstract String construct ()
+  public Command (Codec codec) {
+
+    this.codec = codec;
+  }
+
+  public abstract byte[] construct ()
     throws IOException;
 
-  public byte[] serialize (Object obj)
-    throws IOException {
+  public Codec getCodec () {
 
-    return codec.serialize(obj);
+    return codec;
   }
 }
