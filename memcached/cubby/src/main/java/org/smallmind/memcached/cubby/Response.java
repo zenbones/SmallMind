@@ -34,7 +34,7 @@ package org.smallmind.memcached.cubby;
 
 public class Response {
 
-  private ResponseCode code;
+  private final ResponseCode code;
   private String token;
   private long cas;
 
