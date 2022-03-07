@@ -59,7 +59,8 @@ public class EventLoop implements Runnable {
 
     socketChannel = SocketChannel.open();
     socketChannel.configureBlocking(false);
-    socketChannel.socket().bind(new InetSocketAddress(host, port));
+    socketChannel.connect(new InetSocketAddress(host, port));
+    socketChannel.finishConnect();
 
     selectionKey = socketChannel.register(selector = Selector.open(), SelectionKey.OP_READ | SelectionKey.OP_WRITE);
   }
@@ -132,7 +133,7 @@ public class EventLoop implements Runnable {
 
                       byteBuffer.flip();
                       do {
-                        switch (singleChar = (char)byteBuffer.getInt()) {
+                        switch (singleChar = (char)byteBuffer.get()) {
                           case '\r':
                             if (!data) {
                               lineBuilder.append('\r');
