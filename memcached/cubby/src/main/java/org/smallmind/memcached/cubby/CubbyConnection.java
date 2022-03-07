@@ -45,8 +45,6 @@ public class CubbyConnection {
     eventThread.setDaemon(true);
     eventThread.start();
 
-    Thread.sleep(5000);
-
     System.out.println("send...");
     eventLoop.send(new NoopCommand());
 

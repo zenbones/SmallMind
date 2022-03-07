@@ -62,7 +62,7 @@ public class EventLoop implements Runnable {
     socketChannel.connect(new InetSocketAddress(host, port));
     socketChannel.finishConnect();
 
-    selectionKey = socketChannel.register(selector = Selector.open(), SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+    selectionKey = socketChannel.register(selector = Selector.open(), SelectionKey.OP_WRITE);
   }
 
   public void send (Command command) {
