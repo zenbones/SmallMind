@@ -125,7 +125,7 @@ public class EventLoop implements Runnable {
                 } else {
                   if (selectionKey.isReadable() && selectionKey.channel().isOpen()) {
 
-                    StringBuilder lineBuilder = new StringBuilder();
+                    StringBuilder responseBuilder = new StringBuilder();
                     boolean data = true;
 
                     byteBuffer.clear();
@@ -138,22 +138,27 @@ public class EventLoop implements Runnable {
                         switch (singleChar = (char)byteBuffer.get()) {
                           case '\r':
                             if (!data) {
-                              lineBuilder.append('\r');
+                              responseBuilder.append('\r');
                             }
                             data = false;
                             break;
                           case '\n':
                             if (data) {
-                              lineBuilder.append('\n');
+                              responseBuilder.append('\n');
                             } else {
-                              // parse and decrement O if returned
-                              System.out.println(lineBuilder);
-                              lineBuilder = new StringBuilder();
+                              try {
+                                ResponseParser.parse(responseBuilder);
+                              } catch (IOException ioException) {
+                                ioException.printStackTrace();
+                              //  LoggerManager.getLogger(EventLoop.class).error(ioException);
+                              }
+
+                              responseBuilder = new StringBuilder();
                               data = true;
                             }
                             break;
                           default:
-                            lineBuilder.append(singleChar);
+                            responseBuilder.append(singleChar);
                         }
                       } while (byteBuffer.remaining() > 0);
                     }
@@ -189,6 +194,7 @@ public class EventLoop implements Runnable {
           }
         } catch (IOException ioException) {
           LoggerManager.getLogger(EventLoop.class).error(ioException);
+          shutdown();
         }
       }
     } finally {

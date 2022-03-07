@@ -32,6 +32,12 @@
  */
 package org.smallmind.memcached.cubby;
 
-public abstract class CommandBuilder {
+import java.io.IOException;
 
+public class IncomprehensibleResponseException extends IOException {
+
+  public IncomprehensibleResponseException (String message) {
+
+    super(message);
+  }
 }
