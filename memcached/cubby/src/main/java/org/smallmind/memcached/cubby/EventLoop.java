@@ -49,7 +49,7 @@ public class EventLoop implements Runnable {
 
   private final CountDownLatch terminationLatch = new CountDownLatch(1);
   private final AtomicBoolean finished = new AtomicBoolean(false);
-  private final LinkedBlockingQueue<Command> commandQueue = new LinkedBlockingQueue<>();
+  private final LinkedBlockingQueue<byte[]> requestQueue = new LinkedBlockingQueue<>();
   private final OpaqueToken opaqueToken = new OpaqueToken();
   private final SocketChannel socketChannel;
   private final Selector selector;
@@ -66,10 +66,11 @@ public class EventLoop implements Runnable {
     selectionKey = socketChannel.register(selector = Selector.open(), SelectionKey.OP_WRITE);
   }
 
-  public void send (Command command) {
+  public void send (Command command)
+    throws IOException {
 
-    synchronized (commandQueue) {
-      commandQueue.offer(command);
+    synchronized (requestQueue) {
+      requestQueue.offer(command.construct(opaqueToken.next()));
       selectionKey.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
       selector.wakeup();
     }
@@ -104,7 +105,7 @@ public class EventLoop implements Runnable {
   public void run () {
 
     ByteBuffer byteBuffer = ByteBuffer.allocateDirect(8192);
-    byte[] commandBuffer = null;
+    byte[] request = null;
     int writeIndex = 0;
 
     try {
@@ -159,28 +160,23 @@ public class EventLoop implements Runnable {
                   }
                   if (selectionKey.isWritable() && selectionKey.channel().isOpen()) {
 
-                    if (commandBuffer == null) {
-                      synchronized (commandQueue) {
-
-                        Command command;
-
-                        if ((command = commandQueue.poll()) == null) {
+                    if (request == null) {
+                      synchronized (requestQueue) {
+                        if ((request = requestQueue.poll()) == null) {
                           selectionKey.interestOps(SelectionKey.OP_READ);
-                        } else {
-                          commandBuffer = command.construct(opaqueToken.next());
                         }
                       }
                     }
 
-                    if (commandBuffer != null) {
+                    if (request != null) {
                       byteBuffer.clear();
-                      byteBuffer.put(commandBuffer, writeIndex, Math.min(byteBuffer.remaining(), commandBuffer.length - writeIndex));
+                      byteBuffer.put(request, writeIndex, Math.min(byteBuffer.remaining(), request.length - writeIndex));
 
                       byteBuffer.flip();
                       writeIndex += socketChannel.write(byteBuffer);
 
-                      if (writeIndex == commandBuffer.length) {
-                        commandBuffer = null;
+                      if (writeIndex == request.length) {
+                        request = null;
                         writeIndex = 0;
                       }
                     }
