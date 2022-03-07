@@ -76,35 +76,40 @@ with CAS semantics did not exist.
     if (responseBuilder.length() < 2) {
       throw new IncomprehensibleResponseException(responseBuilder.toString());
     } else {
+
+      Response response;
+
       switch (responseBuilder.substring(0, 2)) {
         case "HD":
-          parseFlags(responseBuilder, 2);
+          response = new Response(ResponseCode.HD);
           break;
         case "VA":
-          parseFlags(responseBuilder, 2);
+          response = new Response(ResponseCode.VA);
           break;
         case "EN":
-          parseFlags(responseBuilder, 2);
+          response = new Response(ResponseCode.EN);
           break;
         case "EX":
-          parseFlags(responseBuilder, 2);
+          response = new Response(ResponseCode.EX);
           break;
         case "NF":
-          parseFlags(responseBuilder, 2);
+          response = new Response(ResponseCode.NF);
           break;
         case "NS":
-          parseFlags(responseBuilder, 2);
+          response = new Response(ResponseCode.NS);
           break;
         default:
           throw new IncomprehensibleResponseException(responseBuilder.toString());
       }
+
+      parseFlags(response, responseBuilder);
     }
   }
 
-  private static int parseFlags (StringBuilder responseBuilder, int index)
+  private static void parseFlags (Response response, StringBuilder responseBuilder)
     throws IOException {
 
-    int flagIndex = index;
+    int flagIndex = 2;
 
     do {
       if (responseBuilder.length() < flagIndex + 1) {
@@ -120,11 +125,11 @@ with CAS semantics did not exist.
         switch (responseBuilder.charAt(flagIndex + 1)) {
           case 'O':
             flagIndex += (token = accumulateToken(responseBuilder, flagIndex + 2)).length() + 2;
-            System.out.println("O" + token);
+            response.setToken(token);
             break;
           case 'c':
             flagIndex += (token = accumulateToken(responseBuilder, flagIndex + 2)).length() + 2;
-            System.out.println("c" + token);
+            response.setCas(Long.parseLong(token));
             break;
           default:
             throw new IncomprehensibleResponseException(responseBuilder.toString());
