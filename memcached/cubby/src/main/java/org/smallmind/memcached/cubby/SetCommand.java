@@ -37,13 +37,22 @@ import org.smallmind.nutsnbolts.http.Base64Codec;
 
 public class SetCommand extends Command {
 
+  private Mode mode;
   private Object value;
   private String key;
   private Long cas;
+  private Long expiration;
 
   public SetCommand (Codec codec) {
 
     super(codec);
+  }
+
+  public SetCommand setKey (String key) {
+
+    this.key = key;
+
+    return this;
   }
 
   public SetCommand setValue (Object value) {
@@ -53,9 +62,9 @@ public class SetCommand extends Command {
     return this;
   }
 
-  public SetCommand setKey (String key) {
+  public SetCommand setMode (Mode mode) {
 
-    this.key = key;
+    this.mode = mode;
 
     return this;
   }
@@ -67,6 +76,13 @@ public class SetCommand extends Command {
     return this;
   }
 
+  public SetCommand setExpiration (Long expiration) {
+
+    this.expiration = expiration;
+
+    return this;
+  }
+
   public byte[] construct ()
     throws IOException {
 
@@ -74,10 +90,16 @@ public class SetCommand extends Command {
     byte[] commandBytes;
     byte[] valueBytes = getCodec().serialize(value);
 
-    StringBuilder line = new StringBuilder("ms ").append(Base64Codec.encode(key)).append(' ').append(valueBytes.length).append(" b").append(" O").append(OpaqueGenerator.borrow());
+    StringBuilder line = new StringBuilder("ms ").append(Base64Codec.encode(key)).append(' ').append(valueBytes.length).append(" b").append(" O").append(getOpaqueToken());
 
+    if (mode != null) {
+      line.append(" M").append(mode.getToken());
+    }
     if (cas != null) {
       line.append(" C").append(cas).append(" c");
+    }
+    if (expiration != null) {
+      line.append(" T").append(expiration);
     }
 
     commandBytes = line.append("\r\n").toString().getBytes();

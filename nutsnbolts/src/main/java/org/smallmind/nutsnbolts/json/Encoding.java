@@ -35,7 +35,7 @@ package org.smallmind.nutsnbolts.json;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import org.smallmind.nutsnbolts.http.Base64Codec;
-import org.smallmind.nutsnbolts.security.EncryptionUtility;
+import org.smallmind.nutsnbolts.security.HexCodec;
 
 public enum Encoding {
 
@@ -43,14 +43,14 @@ public enum Encoding {
     @Override
     public String encode (byte[] bytes) throws Exception {
 
-      return EncryptionUtility.hexEncode(bytes);
+      return HexCodec.hexEncode(bytes);
     }
 
     @Override
     public byte[] decode (String encoded)
       throws UnsupportedEncodingException {
 
-      return EncryptionUtility.hexDecode(encoded);
+      return HexCodec.hexDecode(encoded);
     }
   },
   BASE_64 {

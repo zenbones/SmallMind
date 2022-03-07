@@ -62,7 +62,7 @@ public class GetCommand extends Command {
   public byte[] construct ()
     throws IOException {
 
-    StringBuilder line = new StringBuilder("mg ").append(Base64Codec.encode(key)).append(" b").append(" O").append(OpaqueGenerator.borrow());
+    StringBuilder line = new StringBuilder("mg ").append(Base64Codec.encode(key)).append(" b").append(" O").append(getOpaqueToken());
 
     if (cas) {
       line.append(" c");

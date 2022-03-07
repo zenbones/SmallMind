@@ -37,7 +37,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.UnsupportedEncodingException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
@@ -65,58 +64,6 @@ public class EncryptionUtility {
   static {
 
     Security.addProvider(new BouncyCastleProvider());
-  }
-
-  public static String hexEncode (byte[] bytes) {
-
-    return hexEncode(bytes, 0, bytes.length);
-  }
-
-  public static String hexEncode (byte[] bytes, int offset, int length) {
-
-    StringBuilder encodingBuilder;
-
-    encodingBuilder = new StringBuilder();
-    for (int index = offset; index < offset + length; index++) {
-      if ((bytes[index] < 0x10) && (bytes[index] >= 0)) {
-        encodingBuilder.append('0');
-      }
-      encodingBuilder.append(Integer.toHexString(bytes[index] & 0xff));
-    }
-
-    return encodingBuilder.toString();
-  }
-
-  public static byte[] hexDecode (String toBeDecoded)
-    throws UnsupportedEncodingException {
-
-    return hexDecode(toBeDecoded.getBytes());
-  }
-
-  public static byte[] hexDecode (byte[] toBeDecoded)
-    throws UnsupportedEncodingException {
-
-    if (toBeDecoded.length % 2 != 0) {
-      throw new UnsupportedEncodingException("Not hex encoded");
-    } else {
-
-      byte[] bytes = new byte[toBeDecoded.length / 2];
-
-      for (int count = 0; count < toBeDecoded.length; count += 2) {
-        if (isHexDigit(toBeDecoded[count]) && isHexDigit(toBeDecoded[count + 1])) {
-          bytes[count / 2] = (byte)((Character.digit(toBeDecoded[count], 16) * 16) + Character.digit(toBeDecoded[count + 1], 16));
-        } else {
-          throw new UnsupportedEncodingException("Not hex encoded");
-        }
-      }
-
-      return bytes;
-    }
-  }
-
-  private static boolean isHexDigit (byte singleChar) {
-
-    return ((singleChar >= '0') && (singleChar <= '9')) || ((singleChar >= 'A') && (singleChar <= 'F')) || ((singleChar >= 'a') && (singleChar <= 'f'));
   }
 
   public static byte[] hash (HashAlgorithm algorithm, byte[] toBeHashed)
