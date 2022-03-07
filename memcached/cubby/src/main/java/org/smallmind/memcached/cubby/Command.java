@@ -33,26 +33,17 @@
 package org.smallmind.memcached.cubby;
 
 import java.io.IOException;
-import org.smallmind.nutsnbolts.util.SnowflakeId;
 
 public abstract class Command {
 
   private final Codec codec;
-  private final String opaqueToken;
 
   public Command (Codec codec) {
 
     this.codec = codec;
-
-    opaqueToken = SnowflakeId.newInstance().generateHexEncoding();
   }
 
-  public String getOpaqueToken () {
-
-    return opaqueToken;
-  }
-
-  public abstract byte[] construct ()
+  public abstract byte[] construct (String opaqueToken)
     throws IOException;
 
   public Codec getCodec () {

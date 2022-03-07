@@ -32,30 +32,41 @@
  */
 package org.smallmind.memcached.cubby;
 
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.net.Socket;
+public class OpaqueToken {
 
-public class Wombat {
+  private static final String ALPHABET = "!#$%&()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_abcdefghijklmnopqrstuvwxyz{|}~";
 
-  public static void main (String... args)
-    throws Exception {
+  private final byte[] counter = new byte[32];
 
-    Socket socket = new Socket("localhost", 11211);
-    socket.setTcpNoDelay(true);
-    socket.setSoTimeout(10000);
+  public synchronized String next () {
 
-    socket.getOutputStream().write("mn\r\n".getBytes());
-    socket.getOutputStream().flush();
+    StringBuilder count = new StringBuilder();
+    int index = 0;
 
-    InputStream input = socket.getInputStream();
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    byte[] buffer = new byte[1024];
-    int bytesRead;
+    do {
+      if (counter[index] < ALPHABET.length()) {
+        counter[index] = (byte)(counter[index] + 1);
+        break;
+      } else {
+        counter[index] = 1;
+      }
+    } while (++index < 32);
 
-    while ((bytesRead = input.read(buffer)) >= 0) {
-      baos.write(buffer, 0, bytesRead);
-      System.out.println(baos);
+    if (index == 32) {
+      counter[0] = 1;
+      for (int column = 1; column < 32; column++) {
+        counter[column] = 0;
+      }
     }
+
+    for (int loop = 0; loop < 32; loop++) {
+      if (counter[loop] > 0) {
+        count.append(ALPHABET.charAt(counter[loop] - 1));
+      } else {
+        break;
+      }
+    }
+
+    return count.toString();
   }
 }

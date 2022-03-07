@@ -41,7 +41,7 @@ public class SetCommand extends Command {
   private Object value;
   private String key;
   private Long cas;
-  private Long expiration;
+  private Integer expiration;
 
   public SetCommand (Codec codec) {
 
@@ -76,21 +76,21 @@ public class SetCommand extends Command {
     return this;
   }
 
-  public SetCommand setExpiration (Long expiration) {
+  public SetCommand setExpiration (Integer expiration) {
 
     this.expiration = expiration;
 
     return this;
   }
 
-  public byte[] construct ()
+  public byte[] construct (String opaqueToken)
     throws IOException {
 
     byte[] bytes;
     byte[] commandBytes;
     byte[] valueBytes = getCodec().serialize(value);
 
-    StringBuilder line = new StringBuilder("ms ").append(Base64Codec.encode(key)).append(' ').append(valueBytes.length).append(" b").append(" O").append(getOpaqueToken());
+    StringBuilder line = new StringBuilder("ms ").append(Base64Codec.encode(key)).append(' ').append(valueBytes.length).append(" b").append(" O").append(opaqueToken);
 
     if (mode != null) {
       line.append(" M").append(mode.getToken());

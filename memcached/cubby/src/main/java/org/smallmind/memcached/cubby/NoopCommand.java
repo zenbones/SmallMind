@@ -42,7 +42,7 @@ public class NoopCommand extends Command {
   }
 
   @Override
-  public byte[] construct () {
+  public byte[] construct (String opaqueToken) {
 
     return bytes;
   }

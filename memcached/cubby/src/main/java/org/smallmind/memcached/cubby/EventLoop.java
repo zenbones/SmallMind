@@ -50,6 +50,7 @@ public class EventLoop implements Runnable {
   private final CountDownLatch terminationLatch = new CountDownLatch(1);
   private final AtomicBoolean finished = new AtomicBoolean(false);
   private final LinkedBlockingQueue<Command> commandQueue = new LinkedBlockingQueue<>();
+  private final OpaqueToken opaqueToken = new OpaqueToken();
   private final SocketChannel socketChannel;
   private final Selector selector;
   private final SelectionKey selectionKey;
@@ -166,7 +167,7 @@ public class EventLoop implements Runnable {
                         if ((command = commandQueue.poll()) == null) {
                           selectionKey.interestOps(SelectionKey.OP_READ);
                         } else {
-                          commandBuffer = command.construct();
+                          commandBuffer = command.construct(opaqueToken.next());
                         }
                       }
                     }
