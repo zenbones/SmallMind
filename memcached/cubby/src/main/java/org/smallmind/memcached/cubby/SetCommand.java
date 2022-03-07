@@ -33,17 +33,28 @@
 package org.smallmind.memcached.cubby;
 
 import java.io.IOException;
+import org.smallmind.nutsnbolts.http.Base64Codec;
 
-public abstract class Command {
+public class SetCommand extends Command {
 
-  private Codec codec;
+//ms <key> <datalen> <flags>*\r\n
+// ms <key> <datalen> b
 
-  public abstract String construct ()
-    throws IOException;
+  private Object value;
+  private String key;
+  private Long cas;
 
-  public byte[] serialize (Object obj)
+  public String construct ()
     throws IOException {
 
-    return codec.serialize(obj);
+    byte[] valueBytes = serialize(value);
+
+    StringBuilder line = new StringBuilder("ms ").append(Base64Codec.encode(key)).append(' ').append(valueBytes.length).append(" b").append(" O").append(OpaqueGenerator.borrow());
+
+    if (cas != null) {
+      line.append(" C").append(cas).append(" c");
+    }
+
+    return line.append("\r\n").toString();
   }
 }

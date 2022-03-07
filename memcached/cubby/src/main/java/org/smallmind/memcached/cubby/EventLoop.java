@@ -165,7 +165,7 @@ public class EventLoop implements Runnable {
                         if ((command = commandQueue.poll()) == null) {
                           selectionKey.interestOps(SelectionKey.OP_READ);
                         } else {
-                          commandBuffer = command.toString().getBytes();
+                          commandBuffer = command.construct().getBytes();
                         }
                       }
                     }

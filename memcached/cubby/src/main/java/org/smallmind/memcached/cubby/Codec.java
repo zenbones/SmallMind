@@ -34,16 +34,11 @@ package org.smallmind.memcached.cubby;
 
 import java.io.IOException;
 
-public abstract class Command {
+public interface Codec {
 
-  private Codec codec;
-
-  public abstract String construct ()
+  byte[] serialize (Object obj)
     throws IOException;
 
-  public byte[] serialize (Object obj)
-    throws IOException {
-
-    return codec.serialize(obj);
-  }
+  Object deserialize (byte[] bytes)
+    throws IOException, ClassNotFoundException;
 }

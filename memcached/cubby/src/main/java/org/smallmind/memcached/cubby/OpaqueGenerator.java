@@ -32,18 +32,19 @@
  */
 package org.smallmind.memcached.cubby;
 
-import java.io.IOException;
+import java.util.concurrent.atomic.AtomicLong;
 
-public abstract class Command {
+public class OpaqueGenerator {
 
-  private Codec codec;
+  private static final AtomicLong token = new AtomicLong(0);
 
-  public abstract String construct ()
-    throws IOException;
+  public static long borrow () {
 
-  public byte[] serialize (Object obj)
-    throws IOException {
+    return token.getAndIncrement();
+  }
 
-    return codec.serialize(obj);
+  public static void repay () {
+
+    token.decrementAndGet();
   }
 }

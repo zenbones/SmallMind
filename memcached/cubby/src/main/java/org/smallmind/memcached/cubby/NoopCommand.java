@@ -35,7 +35,7 @@ package org.smallmind.memcached.cubby;
 public class NoopCommand extends Command {
 
   @Override
-  public String toString () {
+  public String construct () {
 
     return "mn\r\n";
   }
