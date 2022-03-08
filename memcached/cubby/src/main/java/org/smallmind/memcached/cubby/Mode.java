@@ -30,48 +30,21 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.json;
+package org.smallmind.memcached.cubby;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import org.smallmind.nutsnbolts.http.Base64Codec;
-import org.smallmind.nutsnbolts.security.HexCodec;
+public enum Mode {
 
-public enum Encoding {
+  ADD('E'), APPEND('A'), PREPEND('P'), REPLACE('R'), SET('S');
 
-  HEX {
-    @Override
-    public String encode (byte[] bytes) throws Exception {
+  private final char token;
 
-      return HexCodec.hexEncode(bytes);
-    }
+  Mode (char token) {
 
-    @Override
-    public byte[] decode (String encoded)
-      throws UnsupportedEncodingException {
+    this.token = token;
+  }
 
-      return HexCodec.hexDecode(encoded);
-    }
-  },
-  BASE_64 {
-    @Override
-    public String encode (byte[] bytes)
-      throws IOException {
+  public char getToken () {
 
-      return Base64Codec.encode(bytes);
-    }
-
-    @Override
-    public byte[] decode (String encoded)
-      throws IOException {
-
-      return Base64Codec.decode(encoded);
-    }
-  };
-
-  public abstract String encode (byte[] bytes)
-    throws Exception;
-
-  public abstract byte[] decode (String encoded)
-    throws Exception;
+    return token;
+  }
 }

@@ -30,48 +30,54 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.json;
+package org.smallmind.quorum.namespace.backingStore;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import org.smallmind.nutsnbolts.http.Base64Codec;
-import org.smallmind.nutsnbolts.security.HexCodec;
+public class NamingConnectionDetails {
 
-public enum Encoding {
+  private final String host;
+  private final String rootNamespace;
+  private final String userName;
+  private final String password;
+  private final int port;
+  private boolean tls = false;
 
-  HEX {
-    @Override
-    public String encode (byte[] bytes) throws Exception {
+  public NamingConnectionDetails (String host, int port, boolean tls, String rootNamespace, String userName, String password) {
 
-      return HexCodec.hexEncode(bytes);
-    }
+    this.host = host;
+    this.port = port;
+    this.tls = tls;
+    this.rootNamespace = rootNamespace;
+    this.userName = userName;
+    this.password = password;
+  }
 
-    @Override
-    public byte[] decode (String encoded)
-      throws UnsupportedEncodingException {
+  public String getHost () {
 
-      return HexCodec.hexDecode(encoded);
-    }
-  },
-  BASE_64 {
-    @Override
-    public String encode (byte[] bytes)
-      throws IOException {
+    return host;
+  }
 
-      return Base64Codec.encode(bytes);
-    }
+  public int getPort () {
 
-    @Override
-    public byte[] decode (String encoded)
-      throws IOException {
+    return port;
+  }
 
-      return Base64Codec.decode(encoded);
-    }
-  };
+  public boolean useTLS () {
 
-  public abstract String encode (byte[] bytes)
-    throws Exception;
+    return tls;
+  }
 
-  public abstract byte[] decode (String encoded)
-    throws Exception;
+  public String getRootNamespace () {
+
+    return rootNamespace;
+  }
+
+  public String getUserName () {
+
+    return userName;
+  }
+
+  public String getPassword () {
+
+    return password;
+  }
 }

@@ -30,48 +30,20 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.json;
+package org.smallmind.memcached.cubby;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import org.smallmind.nutsnbolts.http.Base64Codec;
-import org.smallmind.nutsnbolts.security.HexCodec;
+public enum ResponseCode {
 
-public enum Encoding {
-
-  HEX {
-    @Override
-    public String encode (byte[] bytes) throws Exception {
-
-      return HexCodec.hexEncode(bytes);
-    }
-
-    @Override
-    public byte[] decode (String encoded)
-      throws UnsupportedEncodingException {
-
-      return HexCodec.hexDecode(encoded);
-    }
-  },
-  BASE_64 {
-    @Override
-    public String encode (byte[] bytes)
-      throws IOException {
-
-      return Base64Codec.encode(bytes);
-    }
-
-    @Override
-    public byte[] decode (String encoded)
-      throws IOException {
-
-      return Base64Codec.decode(encoded);
-    }
-  };
-
-  public abstract String encode (byte[] bytes)
-    throws Exception;
-
-  public abstract byte[] decode (String encoded)
-    throws Exception;
+  // (HIT), to indicate success
+  HD,
+  // (VALUE), followed by the value data
+  VA,
+  // (MISS), to indicate that the item with this key was not found
+  EN,
+  // (EXISTS), to indicate that the supplied CAS token does not match the stored item, or to indicate that the item you are trying to store with CAS semantics has been modified since you last fetched it
+  EX,
+  // (NOT_FOUND), to indicate that the item with this key was not found, or to indicate that the item you are trying to store with CAS semantics did not exist
+  NF,
+  // (NOT_STORED), to indicate the data was not stored, but not because of an error
+  NS
 }

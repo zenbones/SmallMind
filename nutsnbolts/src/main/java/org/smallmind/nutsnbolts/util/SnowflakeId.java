@@ -39,7 +39,7 @@ import java.util.Arrays;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.StampedLock;
-import org.smallmind.nutsnbolts.security.EncryptionUtility;
+import org.smallmind.nutsnbolts.security.HexCodec;
 
 public class SnowflakeId implements Comparable<SnowflakeId> {
 
@@ -180,7 +180,7 @@ public class SnowflakeId implements Comparable<SnowflakeId> {
 
   public String generateHexEncoding () {
 
-    return EncryptionUtility.hexEncode(uniqueArray);
+    return HexCodec.hexEncode(uniqueArray);
   }
 
   public String generateCompactString () {

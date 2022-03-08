@@ -30,48 +30,46 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.json;
+package org.smallmind.memcached.cubby;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import org.smallmind.nutsnbolts.http.Base64Codec;
-import org.smallmind.nutsnbolts.security.HexCodec;
 
-public enum Encoding {
+public class GetCommand extends Command {
 
-  HEX {
-    @Override
-    public String encode (byte[] bytes) throws Exception {
+  private String key;
+  private boolean cas;
 
-      return HexCodec.hexEncode(bytes);
+  public GetCommand setKey (String key) {
+
+    this.key = key;
+
+    return this;
+  }
+
+  public GetCommand setCas (boolean cas) {
+
+    this.cas = cas;
+
+    return this;
+  }
+
+  @Override
+  public Object foobar (Response response)
+    throws IOException {
+
+    return null;
+  }
+
+  public byte[] construct (CubbyCodec codec, String opaqueToken)
+    throws IOException {
+
+    StringBuilder line = new StringBuilder("mg ").append(Base64Codec.encode(key)).append(" b v N").append(300).append(" O").append(opaqueToken);
+
+    if (cas) {
+      line.append(" c");
     }
 
-    @Override
-    public byte[] decode (String encoded)
-      throws UnsupportedEncodingException {
-
-      return HexCodec.hexDecode(encoded);
-    }
-  },
-  BASE_64 {
-    @Override
-    public String encode (byte[] bytes)
-      throws IOException {
-
-      return Base64Codec.encode(bytes);
-    }
-
-    @Override
-    public byte[] decode (String encoded)
-      throws IOException {
-
-      return Base64Codec.decode(encoded);
-    }
-  };
-
-  public abstract String encode (byte[] bytes)
-    throws Exception;
-
-  public abstract byte[] decode (String encoded)
-    throws Exception;
+    return line.append("\r\n").toString().getBytes();
+  }
 }

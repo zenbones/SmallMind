@@ -30,48 +30,29 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.json;
+package org.smallmind.nutsnbolts.io;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import org.smallmind.nutsnbolts.http.Base64Codec;
-import org.smallmind.nutsnbolts.security.HexCodec;
 
-public enum Encoding {
+public class FormattedIOException extends IOException {
 
-  HEX {
-    @Override
-    public String encode (byte[] bytes) throws Exception {
+  public FormattedIOException () {
 
-      return HexCodec.hexEncode(bytes);
-    }
+    super();
+  }
 
-    @Override
-    public byte[] decode (String encoded)
-      throws UnsupportedEncodingException {
+  public FormattedIOException (String message, Object... args) {
 
-      return HexCodec.hexDecode(encoded);
-    }
-  },
-  BASE_64 {
-    @Override
-    public String encode (byte[] bytes)
-      throws IOException {
+    super(message == null ? null : String.format(message, args));
+  }
 
-      return Base64Codec.encode(bytes);
-    }
+  public FormattedIOException (Throwable throwable, String message, Object... args) {
 
-    @Override
-    public byte[] decode (String encoded)
-      throws IOException {
+    super(message == null ? null : String.format(message, args), throwable);
+  }
 
-      return Base64Codec.decode(encoded);
-    }
-  };
+  public FormattedIOException (Throwable throwable) {
 
-  public abstract String encode (byte[] bytes)
-    throws Exception;
-
-  public abstract byte[] decode (String encoded)
-    throws Exception;
+    super(throwable);
+  }
 }

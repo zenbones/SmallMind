@@ -30,48 +30,34 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.json;
+package org.smallmind.quorum.namespace.event;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import org.smallmind.nutsnbolts.http.Base64Codec;
-import org.smallmind.nutsnbolts.security.HexCodec;
+import java.util.EventObject;
+import javax.naming.CommunicationException;
 
-public enum Encoding {
+public class JavaContextEvent extends EventObject {
 
-  HEX {
-    @Override
-    public String encode (byte[] bytes) throws Exception {
+  private final CommunicationException communicationException;
 
-      return HexCodec.hexEncode(bytes);
-    }
+  public JavaContextEvent (Object source) {
 
-    @Override
-    public byte[] decode (String encoded)
-      throws UnsupportedEncodingException {
+    this(source, null);
+  }
 
-      return HexCodec.hexDecode(encoded);
-    }
-  },
-  BASE_64 {
-    @Override
-    public String encode (byte[] bytes)
-      throws IOException {
+  public JavaContextEvent (Object source, CommunicationException communicationException) {
 
-      return Base64Codec.encode(bytes);
-    }
+    super(source);
 
-    @Override
-    public byte[] decode (String encoded)
-      throws IOException {
+    this.communicationException = communicationException;
+  }
 
-      return Base64Codec.decode(encoded);
-    }
-  };
+  public boolean containsCommunicationException () {
 
-  public abstract String encode (byte[] bytes)
-    throws Exception;
+    return communicationException != null;
+  }
 
-  public abstract byte[] decode (String encoded)
-    throws Exception;
+  public CommunicationException getCommunicationException () {
+
+    return communicationException;
+  }
 }

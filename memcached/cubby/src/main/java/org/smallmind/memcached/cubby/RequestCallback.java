@@ -30,48 +30,54 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.json;
+package org.smallmind.memcached.cubby;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import org.smallmind.nutsnbolts.http.Base64Codec;
-import org.smallmind.nutsnbolts.security.HexCodec;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
+import org.smallmind.nutsnbolts.time.Stint;
+import org.smallmind.nutsnbolts.util.SelfDestructive;
 
-public enum Encoding {
+public class RequestCallback implements SelfDestructive {
 
-  HEX {
-    @Override
-    public String encode (byte[] bytes) throws Exception {
+  private final CountDownLatch resultLatch = new CountDownLatch(1);
+  private final AtomicReference<Stint> timeoutStintRef = new AtomicReference<>();
+  private final AtomicReference<Response> resultRef = new AtomicReference<>();
+  private final Command command;
 
-      return HexCodec.hexEncode(bytes);
+  public RequestCallback (Command command) {
+
+    this.command = command;
+  }
+
+  @Override
+  public void destroy (Stint timeoutStint) {
+
+    timeoutStintRef.set(timeoutStint);
+
+    resultLatch.countDown();
+  }
+
+  public Response getResult ()
+    throws InterruptedException, IOException {
+
+    Response response;
+
+    resultLatch.await();
+    if ((response = resultRef.get()) == null) {
+
+      Stint timeoutStint = timeoutStintRef.get();
+
+      throw new ResponseTimeoutException("The timeout(%s) milliseconds was exceeded while waiting for a response from command(%s)", (timeoutStint == null) ? "unknown" : String.valueOf(timeoutStint.toMilliseconds()), command);
+    } else {
+
+      return response;
     }
+  }
 
-    @Override
-    public byte[] decode (String encoded)
-      throws UnsupportedEncodingException {
+  public void setResult (Response response) {
 
-      return HexCodec.hexDecode(encoded);
-    }
-  },
-  BASE_64 {
-    @Override
-    public String encode (byte[] bytes)
-      throws IOException {
-
-      return Base64Codec.encode(bytes);
-    }
-
-    @Override
-    public byte[] decode (String encoded)
-      throws IOException {
-
-      return Base64Codec.decode(encoded);
-    }
-  };
-
-  public abstract String encode (byte[] bytes)
-    throws Exception;
-
-  public abstract byte[] decode (String encoded)
-    throws Exception;
+    resultRef.set(response);
+    resultLatch.countDown();
+  }
 }

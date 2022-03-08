@@ -30,48 +30,41 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.json;
+package org.smallmind.quorum.namespace;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import org.smallmind.nutsnbolts.http.Base64Codec;
-import org.smallmind.nutsnbolts.security.HexCodec;
+import java.util.Hashtable;
+import javax.naming.InvalidNameException;
+import javax.naming.directory.DirContext;
+import org.smallmind.quorum.namespace.backingStore.NameTranslator;
 
-public enum Encoding {
+public class NamingEnumerationUtility {
 
-  HEX {
-    @Override
-    public String encode (byte[] bytes) throws Exception {
+  protected static String convertName (String name, NameTranslator nameTranslator)
+    throws InvalidNameException {
 
-      return HexCodec.hexEncode(bytes);
+    return nameTranslator.fromExternalStringToInternalString(name);
+  }
+
+  protected static String convertClassName (String className, Class internalDirContextClass) {
+
+    if (className != null) {
+      if (className.equals(internalDirContextClass.getName())) {
+
+        return JavaContext.class.getName();
+      }
     }
 
-    @Override
-    public byte[] decode (String encoded)
-      throws UnsupportedEncodingException {
+    return className;
+  }
 
-      return HexCodec.hexDecode(encoded);
+  protected static Object convertObject (Object boundObject, Class internalDirContextClass, Hashtable<String, Object> environment, NameTranslator nameTranslator, JavaNameParser nameParser, boolean modifiable) {
+
+    if (boundObject != null) {
+      if (boundObject.getClass().equals(internalDirContextClass)) {
+
+        return new JavaContext(environment, (DirContext)boundObject, nameTranslator, nameParser, modifiable);
+      }
     }
-  },
-  BASE_64 {
-    @Override
-    public String encode (byte[] bytes)
-      throws IOException {
-
-      return Base64Codec.encode(bytes);
-    }
-
-    @Override
-    public byte[] decode (String encoded)
-      throws IOException {
-
-      return Base64Codec.decode(encoded);
-    }
-  };
-
-  public abstract String encode (byte[] bytes)
-    throws Exception;
-
-  public abstract byte[] decode (String encoded)
-    throws Exception;
+    return boundObject;
+  }
 }

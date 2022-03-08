@@ -30,48 +30,25 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.json;
+package org.smallmind.quorum.namespace.backingStore;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import org.smallmind.nutsnbolts.http.Base64Codec;
-import org.smallmind.nutsnbolts.security.HexCodec;
+import javax.naming.NamingException;
+import javax.naming.directory.DirContext;
 
-public enum Encoding {
+public abstract class ContextCreator {
 
-  HEX {
-    @Override
-    public String encode (byte[] bytes) throws Exception {
+  private final NamingConnectionDetails connectionDetails;
 
-      return HexCodec.hexEncode(bytes);
-    }
+  public ContextCreator (NamingConnectionDetails connectionDetails) {
 
-    @Override
-    public byte[] decode (String encoded)
-      throws UnsupportedEncodingException {
+    this.connectionDetails = connectionDetails;
+  }
 
-      return HexCodec.hexDecode(encoded);
-    }
-  },
-  BASE_64 {
-    @Override
-    public String encode (byte[] bytes)
-      throws IOException {
+  public NamingConnectionDetails getConnectionDetails () {
 
-      return Base64Codec.encode(bytes);
-    }
+    return connectionDetails;
+  }
 
-    @Override
-    public byte[] decode (String encoded)
-      throws IOException {
-
-      return Base64Codec.decode(encoded);
-    }
-  };
-
-  public abstract String encode (byte[] bytes)
-    throws Exception;
-
-  public abstract byte[] decode (String encoded)
-    throws Exception;
+  public abstract DirContext getInitialContext ()
+    throws NamingException;
 }

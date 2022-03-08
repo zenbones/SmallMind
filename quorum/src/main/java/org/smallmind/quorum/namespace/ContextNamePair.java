@@ -30,48 +30,29 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.json;
+package org.smallmind.quorum.namespace;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import org.smallmind.nutsnbolts.http.Base64Codec;
-import org.smallmind.nutsnbolts.security.HexCodec;
+import javax.naming.Name;
+import javax.naming.directory.DirContext;
 
-public enum Encoding {
+public class ContextNamePair {
 
-  HEX {
-    @Override
-    public String encode (byte[] bytes) throws Exception {
+  private final DirContext dirContext;
+  private final Name name;
 
-      return HexCodec.hexEncode(bytes);
-    }
+  public ContextNamePair (DirContext dirContext, Name name) {
 
-    @Override
-    public byte[] decode (String encoded)
-      throws UnsupportedEncodingException {
+    this.dirContext = dirContext;
+    this.name = name;
+  }
 
-      return HexCodec.hexDecode(encoded);
-    }
-  },
-  BASE_64 {
-    @Override
-    public String encode (byte[] bytes)
-      throws IOException {
+  public DirContext getContext () {
 
-      return Base64Codec.encode(bytes);
-    }
+    return dirContext;
+  }
 
-    @Override
-    public byte[] decode (String encoded)
-      throws IOException {
+  public Name getName () {
 
-      return Base64Codec.decode(encoded);
-    }
-  };
-
-  public abstract String encode (byte[] bytes)
-    throws Exception;
-
-  public abstract byte[] decode (String encoded)
-    throws Exception;
+    return name;
+  }
 }

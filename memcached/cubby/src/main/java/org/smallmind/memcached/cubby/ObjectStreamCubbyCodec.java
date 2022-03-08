@@ -30,48 +30,65 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.json;
+package org.smallmind.memcached.cubby;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import org.smallmind.nutsnbolts.http.Base64Codec;
-import org.smallmind.nutsnbolts.security.HexCodec;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.ObjectStreamClass;
 
-public enum Encoding {
+public class ObjectStreamCubbyCodec implements CubbyCodec {
 
-  HEX {
-    @Override
-    public String encode (byte[] bytes) throws Exception {
+  @Override
+  public byte[] serialize (Object obj)
+    throws IOException {
 
-      return HexCodec.hexEncode(bytes);
+    if (obj == null) {
+      throw new NullPointerException("Can not serialize a null value");
+    } else {
+
+      ByteArrayOutputStream byteStream;
+
+      try (ObjectOutputStream out = new ObjectOutputStream(byteStream = new ByteArrayOutputStream())) {
+        out.writeObject(obj);
+      }
+
+      return byteStream.toByteArray();
     }
+  }
 
-    @Override
-    public byte[] decode (String encoded)
-      throws UnsupportedEncodingException {
+  @Override
+  public Object deserialize (byte[] bytes)
+    throws IOException, ClassNotFoundException {
 
-      return HexCodec.hexDecode(encoded);
+    try (ResolvingObjectInputStream in = new ResolvingObjectInputStream(new ByteArrayInputStream(bytes))) {
+
+      return in.readObject();
     }
-  },
-  BASE_64 {
-    @Override
-    public String encode (byte[] bytes)
+  }
+
+  private static final class ResolvingObjectInputStream extends ObjectInputStream {
+
+    public ResolvingObjectInputStream (InputStream in)
       throws IOException {
 
-      return Base64Codec.encode(bytes);
+      super(in);
     }
 
     @Override
-    public byte[] decode (String encoded)
-      throws IOException {
+    protected Class<?> resolveClass (ObjectStreamClass desc)
+      throws IOException, ClassNotFoundException {
 
-      return Base64Codec.decode(encoded);
+      try {
+
+        return super.resolveClass(desc);
+      } catch (ClassNotFoundException classNotFoundException) {
+
+        return Thread.currentThread().getContextClassLoader().loadClass(desc.getName());
+      }
     }
-  };
-
-  public abstract String encode (byte[] bytes)
-    throws Exception;
-
-  public abstract byte[] decode (String encoded)
-    throws Exception;
+  }
 }

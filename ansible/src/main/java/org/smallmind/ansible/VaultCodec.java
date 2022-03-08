@@ -42,7 +42,7 @@ import java.security.spec.InvalidKeySpecException;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
-import org.smallmind.nutsnbolts.security.EncryptionUtility;
+import org.smallmind.nutsnbolts.security.HexCodec;
 
 public class VaultCodec {
 
@@ -69,11 +69,11 @@ public class VaultCodec {
       vaultCake = new VaultTumbler(password).encrypt(byteOutputStream.toByteArray());
     }
 
-    encryptedBuilder.append(EncryptionUtility.hexEncode(EncryptionUtility.hexEncode(vaultCake.getSalt()).getBytes()));
+    encryptedBuilder.append(HexCodec.hexEncode(HexCodec.hexEncode(vaultCake.getSalt()).getBytes()));
     encryptedBuilder.append("0a");
-    encryptedBuilder.append(EncryptionUtility.hexEncode(EncryptionUtility.hexEncode(vaultCake.getHmac()).getBytes()));
+    encryptedBuilder.append(HexCodec.hexEncode(HexCodec.hexEncode(vaultCake.getHmac()).getBytes()));
     encryptedBuilder.append("0a");
-    encryptedBuilder.append(EncryptionUtility.hexEncode(EncryptionUtility.hexEncode(vaultCake.getEncrypted()).getBytes()));
+    encryptedBuilder.append(HexCodec.hexEncode(HexCodec.hexEncode(vaultCake.getEncrypted()).getBytes()));
 
     for (int index = (encryptedBuilder.length() / 80) * 80; index > 0; index -= 80) {
       encryptedBuilder.insert(index, '\n');
@@ -138,7 +138,7 @@ public class VaultCodec {
     } else {
       skip0A(inputStream);
 
-      return EncryptionUtility.hexDecode(EncryptionUtility.hexDecode(buffer));
+      return HexCodec.hexDecode(HexCodec.hexDecode(buffer));
     }
   }
 
@@ -155,7 +155,7 @@ public class VaultCodec {
         }
       }
 
-      return EncryptionUtility.hexDecode(EncryptionUtility.hexDecode(byteOutputStream.toByteArray()));
+      return HexCodec.hexDecode(HexCodec.hexDecode(byteOutputStream.toByteArray()));
     }
   }
 

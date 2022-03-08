@@ -30,48 +30,24 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.json;
+package org.smallmind.memcached.cubby;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import org.smallmind.nutsnbolts.http.Base64Codec;
-import org.smallmind.nutsnbolts.security.HexCodec;
 
-public enum Encoding {
+public class NoopCommand extends Command {
 
-  HEX {
-    @Override
-    public String encode (byte[] bytes) throws Exception {
+  private static final byte[] bytes = "mn\r\n".getBytes();
 
-      return HexCodec.hexEncode(bytes);
-    }
+  @Override
+  public Object foobar (Response response)
+    throws IOException {
 
-    @Override
-    public byte[] decode (String encoded)
-      throws UnsupportedEncodingException {
+    return null;
+  }
 
-      return HexCodec.hexDecode(encoded);
-    }
-  },
-  BASE_64 {
-    @Override
-    public String encode (byte[] bytes)
-      throws IOException {
+  @Override
+  public byte[] construct (CubbyCodec codec, String opaqueToken) {
 
-      return Base64Codec.encode(bytes);
-    }
-
-    @Override
-    public byte[] decode (String encoded)
-      throws IOException {
-
-      return Base64Codec.decode(encoded);
-    }
-  };
-
-  public abstract String encode (byte[] bytes)
-    throws Exception;
-
-  public abstract byte[] decode (String encoded)
-    throws Exception;
+    return bytes;
+  }
 }

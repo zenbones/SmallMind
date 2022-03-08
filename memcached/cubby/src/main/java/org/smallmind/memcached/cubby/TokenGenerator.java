@@ -30,48 +30,43 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.json;
+package org.smallmind.memcached.cubby;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import org.smallmind.nutsnbolts.http.Base64Codec;
-import org.smallmind.nutsnbolts.security.HexCodec;
+public class TokenGenerator {
 
-public enum Encoding {
+  private static final String ALPHABET = "!#$%&()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_abcdefghijklmnopqrstuvwxyz{|}~";
 
-  HEX {
-    @Override
-    public String encode (byte[] bytes) throws Exception {
+  private final byte[] counter = new byte[32];
 
-      return HexCodec.hexEncode(bytes);
+  public synchronized String next () {
+
+    StringBuilder count = new StringBuilder();
+    int index = 0;
+
+    do {
+      if (counter[index] < ALPHABET.length()) {
+        counter[index] = (byte)(counter[index] + 1);
+        break;
+      } else {
+        counter[index] = 1;
+      }
+    } while (++index < 32);
+
+    if (index == 32) {
+      counter[0] = 1;
+      for (int column = 1; column < 32; column++) {
+        counter[column] = 0;
+      }
     }
 
-    @Override
-    public byte[] decode (String encoded)
-      throws UnsupportedEncodingException {
-
-      return HexCodec.hexDecode(encoded);
-    }
-  },
-  BASE_64 {
-    @Override
-    public String encode (byte[] bytes)
-      throws IOException {
-
-      return Base64Codec.encode(bytes);
+    for (int loop = 0; loop < 32; loop++) {
+      if (counter[loop] > 0) {
+        count.append(ALPHABET.charAt(counter[loop] - 1));
+      } else {
+        break;
+      }
     }
 
-    @Override
-    public byte[] decode (String encoded)
-      throws IOException {
-
-      return Base64Codec.decode(encoded);
-    }
-  };
-
-  public abstract String encode (byte[] bytes)
-    throws Exception;
-
-  public abstract byte[] decode (String encoded)
-    throws Exception;
+    return count.toString();
+  }
 }

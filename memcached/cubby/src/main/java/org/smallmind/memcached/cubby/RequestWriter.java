@@ -30,48 +30,33 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.json;
+package org.smallmind.memcached.cubby;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import org.smallmind.nutsnbolts.http.Base64Codec;
-import org.smallmind.nutsnbolts.security.HexCodec;
+import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
 
-public enum Encoding {
+public class RequestWriter {
 
-  HEX {
-    @Override
-    public String encode (byte[] bytes) throws Exception {
+  private final byte[] buffer;
+  private int index = 0;
 
-      return HexCodec.hexEncode(bytes);
-    }
+  public RequestWriter (byte[] buffer) {
 
-    @Override
-    public byte[] decode (String encoded)
-      throws UnsupportedEncodingException {
+    this.buffer = buffer;
+  }
 
-      return HexCodec.hexDecode(encoded);
-    }
-  },
-  BASE_64 {
-    @Override
-    public String encode (byte[] bytes)
-      throws IOException {
+  public int write (SocketChannel socketChannel, ByteBuffer byteBuffer)
+    throws IOException {
 
-      return Base64Codec.encode(bytes);
-    }
+    int bytesWritten;
 
-    @Override
-    public byte[] decode (String encoded)
-      throws IOException {
+    byteBuffer.clear();
+    byteBuffer.put(buffer, index, Math.min(byteBuffer.remaining(), buffer.length - index));
 
-      return Base64Codec.decode(encoded);
-    }
-  };
+    byteBuffer.flip();
+    index += (bytesWritten = socketChannel.write(byteBuffer));
 
-  public abstract String encode (byte[] bytes)
-    throws Exception;
-
-  public abstract byte[] decode (String encoded)
-    throws Exception;
+    return (index == buffer.length) ? bytesWritten : -bytesWritten;
+  }
 }

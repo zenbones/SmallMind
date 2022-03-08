@@ -30,48 +30,52 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.json;
+package org.smallmind.memcached.cubby;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import org.smallmind.nutsnbolts.http.Base64Codec;
-import org.smallmind.nutsnbolts.security.HexCodec;
+public class CubbyConnection {
 
-public enum Encoding {
+  public CubbyConnection ()
+    throws Exception {
 
-  HEX {
-    @Override
-    public String encode (byte[] bytes) throws Exception {
+    CubbyCodec codec = new ObjectStreamCubbyCodec();
+    EventLoop eventLoop;
+    Thread eventThread;
 
-      return HexCodec.hexEncode(bytes);
-    }
+    eventThread = new Thread(eventLoop = new EventLoop(this, "localhost", 11211, 300, 300));
 
-    @Override
-    public byte[] decode (String encoded)
-      throws UnsupportedEncodingException {
+    eventThread.setDaemon(true);
+    eventThread.start();
 
-      return HexCodec.hexDecode(encoded);
-    }
-  },
-  BASE_64 {
-    @Override
-    public String encode (byte[] bytes)
-      throws IOException {
+    System.out.println("send...");
 
-      return Base64Codec.encode(bytes);
-    }
+    Response response;
 
-    @Override
-    public byte[] decode (String encoded)
-      throws IOException {
+    response = eventLoop.send(new SetCommand().setKey("hello").setValue("goodbye"), codec, null);
+    System.out.println(response);
+    response = eventLoop.send(new GetCommand().setKey("hello").setCas(true), codec, null);
+    System.out.println(response);
+    Object value = codec.deserialize(response.getValue());
+    System.out.println(value);
+    response = eventLoop.send(new GetCommand().setKey("hello2").setCas(true), codec, null);
+    System.out.println(response);
+    response = eventLoop.send(new GetCommand().setKey("hello2").setCas(true), codec, null);
+    System.out.println(response);
+    //    eventLoop.send(new NoopCommand(new ObjectStreamCodec()));
 
-      return Base64Codec.decode(encoded);
-    }
-  };
+    Thread.sleep(3000);
+  }
 
-  public abstract String encode (byte[] bytes)
-    throws Exception;
+  public void start () {
 
-  public abstract byte[] decode (String encoded)
-    throws Exception;
+  }
+
+  public void disconnected () {
+
+  }
+
+  public static void main (String... args)
+    throws Exception {
+
+    new CubbyConnection();
+  }
 }

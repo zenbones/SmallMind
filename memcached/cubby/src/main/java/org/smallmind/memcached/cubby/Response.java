@@ -30,48 +30,85 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.json;
+package org.smallmind.memcached.cubby;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import org.smallmind.nutsnbolts.http.Base64Codec;
-import org.smallmind.nutsnbolts.security.HexCodec;
+public class Response {
 
-public enum Encoding {
+  private final ResponseCode code;
+  private String token;
+  private boolean won;
+  private boolean alsoWon;
+  private long cas;
+  private int valueLength = -1;
+  private byte[] value;
 
-  HEX {
-    @Override
-    public String encode (byte[] bytes) throws Exception {
+  public Response (ResponseCode code) {
 
-      return HexCodec.hexEncode(bytes);
-    }
+    this.code = code;
+  }
 
-    @Override
-    public byte[] decode (String encoded)
-      throws UnsupportedEncodingException {
+  public ResponseCode getCode () {
 
-      return HexCodec.hexDecode(encoded);
-    }
-  },
-  BASE_64 {
-    @Override
-    public String encode (byte[] bytes)
-      throws IOException {
+    return code;
+  }
 
-      return Base64Codec.encode(bytes);
-    }
+  public String getToken () {
 
-    @Override
-    public byte[] decode (String encoded)
-      throws IOException {
+    return token;
+  }
 
-      return Base64Codec.decode(encoded);
-    }
-  };
+  public void setToken (String token) {
 
-  public abstract String encode (byte[] bytes)
-    throws Exception;
+    this.token = token;
+  }
 
-  public abstract byte[] decode (String encoded)
-    throws Exception;
+  public int getValueLength () {
+
+    return valueLength;
+  }
+
+  public void setValueLength (int valueLength) {
+
+    this.valueLength = valueLength;
+  }
+
+  public byte[] getValue () {
+
+    return value;
+  }
+
+  public void setValue (byte[] value) {
+
+    this.value = value;
+  }
+
+  public long getCas () {
+
+    return cas;
+  }
+
+  public void setCas (long cas) {
+
+    this.cas = cas;
+  }
+
+  public boolean isWon () {
+
+    return won;
+  }
+
+  public void setWon (boolean won) {
+
+    this.won = won;
+  }
+
+  public boolean isAlsoWon () {
+
+    return alsoWon;
+  }
+
+  public void setAlsoWon (boolean alsoWon) {
+
+    this.alsoWon = alsoWon;
+  }
 }
