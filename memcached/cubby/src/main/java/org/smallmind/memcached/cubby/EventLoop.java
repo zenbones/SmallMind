@@ -55,6 +55,10 @@ public class EventLoop implements Runnable {
   private final Selector selector;
   private final SelectionKey selectionKey;
 
+  {
+    terminationLatch.countDown();
+  }
+
   public EventLoop (String host, int port)
     throws IOException {
 
@@ -105,8 +109,8 @@ public class EventLoop implements Runnable {
   public void run () {
 
     ByteBuffer byteBuffer = ByteBuffer.allocateDirect(8192);
-    byte[] request = null;
-    int writeIndex = 0;
+    ResponseReader responseReader = new ResponseReader();
+    RequestWriter requestWriter = null;
 
     try {
       while (!finished.get()) {
@@ -124,66 +128,50 @@ public class EventLoop implements Runnable {
                   throw new InvalidSelectionKeyException();
                 } else {
                   if (selectionKey.isReadable() && selectionKey.channel().isOpen()) {
-
-                    StringBuilder responseBuilder = new StringBuilder();
-                    boolean data = true;
-
                     byteBuffer.clear();
                     if (((SocketChannel)selectionKey.channel()).read(byteBuffer) > 0) {
-
-                      char singleChar;
-
-                      byteBuffer.flip();
                       do {
-                        switch (singleChar = (char)byteBuffer.get()) {
-                          case '\r':
-                            if (!data) {
-                              responseBuilder.append('\r');
-                            }
-                            data = false;
-                            break;
-                          case '\n':
-                            if (data) {
-                              responseBuilder.append('\n');
-                            } else {
-                              try {
-                                System.out.println(ResponseParser.parse(responseBuilder));
-                              } catch (IOException ioException) {
-                                LoggerManager.getLogger(EventLoop.class).error(ioException);
-                              }
 
-                              responseBuilder = new StringBuilder();
-                              data = true;
-                            }
-                            break;
-                          default:
-                            responseBuilder.append(singleChar);
+                        Response response;
+
+                        if ((response = responseReader.read(byteBuffer)) != null) {
+                          System.out.println(response);
                         }
                       } while (byteBuffer.remaining() > 0);
                     }
                   }
                   if (selectionKey.isWritable() && selectionKey.channel().isOpen()) {
 
-                    if (request == null) {
-                      synchronized (requestQueue) {
-                        if ((request = requestQueue.poll()) == null) {
-                          selectionKey.interestOps(SelectionKey.OP_READ);
+                    int totalBytesWritten = 0;
+                    boolean complete = true;
+
+                    do {
+                      if (requestWriter == null) {
+                        synchronized (requestQueue) {
+
+                          byte[] request;
+
+                          if ((request = requestQueue.poll()) == null) {
+                            complete = false;
+                            selectionKey.interestOps(SelectionKey.OP_READ);
+                          } else {
+                            requestWriter = new RequestWriter(request);
+                          }
                         }
                       }
-                    }
+                      if (requestWriter != null) {
 
-                    if (request != null) {
-                      byteBuffer.clear();
-                      byteBuffer.put(request, writeIndex, Math.min(byteBuffer.remaining(), request.length - writeIndex));
+                        int bytesWritten;
 
-                      byteBuffer.flip();
-                      writeIndex += socketChannel.write(byteBuffer);
+                        if ((bytesWritten = requestWriter.write(socketChannel, byteBuffer)) >= 0) {
+                          requestWriter = null;
+                        } else {
+                          complete = false;
+                        }
 
-                      if (writeIndex == request.length) {
-                        request = null;
-                        writeIndex = 0;
+                        totalBytesWritten += Math.abs(bytesWritten);
                       }
-                    }
+                    } while (complete && (totalBytesWritten < byteBuffer.capacity()));
                   }
                 }
               } finally {
