@@ -43,9 +43,9 @@ public class SetCommand extends Command {
   private Long cas;
   private Integer expiration;
 
-  public SetCommand (Codec codec) {
+  public SetCommand (CubbyCodec cubbyCodec) {
 
-    super(codec);
+    super(cubbyCodec);
   }
 
   public SetCommand setKey (String key) {

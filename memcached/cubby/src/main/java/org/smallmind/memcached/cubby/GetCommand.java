@@ -40,9 +40,9 @@ public class GetCommand extends Command {
   private String key;
   private boolean cas;
 
-  public GetCommand (Codec codec) {
+  public GetCommand (CubbyCodec cubbyCodec) {
 
-    super(codec);
+    super(cubbyCodec);
   }
 
   public GetCommand setKey (String key) {

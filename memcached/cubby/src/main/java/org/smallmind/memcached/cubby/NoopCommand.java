@@ -36,9 +36,9 @@ public class NoopCommand extends Command {
 
   private static final byte[] bytes = "mn\r\n".getBytes();
 
-  public NoopCommand (Codec codec) {
+  public NoopCommand (CubbyCodec cubbyCodec) {
 
-    super(codec);
+    super(cubbyCodec);
   }
 
   @Override

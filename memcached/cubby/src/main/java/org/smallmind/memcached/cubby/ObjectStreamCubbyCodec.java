@@ -32,13 +32,63 @@
  */
 package org.smallmind.memcached.cubby;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.ObjectStreamClass;
 
-public interface Codec {
+public class ObjectStreamCubbyCodec implements CubbyCodec {
 
-  byte[] serialize (Object obj)
-    throws IOException;
+  @Override
+  public byte[] serialize (Object obj)
+    throws IOException {
 
-  Object deserialize (byte[] bytes)
-    throws IOException, ClassNotFoundException;
+    if (obj == null) {
+      throw new NullPointerException("Can not serialize a null value");
+    } else {
+
+      ByteArrayOutputStream byteStream;
+
+      try (ObjectOutputStream out = new ObjectOutputStream(byteStream = new ByteArrayOutputStream())) {
+        out.writeObject(obj);
+      }
+
+      return byteStream.toByteArray();
+    }
+  }
+
+  @Override
+  public Object deserialize (byte[] bytes)
+    throws IOException, ClassNotFoundException {
+
+    try (ResolvingObjectInputStream in = new ResolvingObjectInputStream(new ByteArrayInputStream(bytes))) {
+
+      return in.readObject();
+    }
+  }
+
+  private static final class ResolvingObjectInputStream extends ObjectInputStream {
+
+    public ResolvingObjectInputStream (InputStream in)
+      throws IOException {
+
+      super(in);
+    }
+
+    @Override
+    protected Class<?> resolveClass (ObjectStreamClass desc)
+      throws IOException, ClassNotFoundException {
+
+      try {
+
+        return super.resolveClass(desc);
+      } catch (ClassNotFoundException classNotFoundException) {
+
+        return Thread.currentThread().getContextClassLoader().loadClass(desc.getName());
+      }
+    }
+  }
 }

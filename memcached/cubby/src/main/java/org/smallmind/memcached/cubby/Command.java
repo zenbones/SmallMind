@@ -36,18 +36,18 @@ import java.io.IOException;
 
 public abstract class Command {
 
-  private final Codec codec;
+  private final CubbyCodec cubbyCodec;
 
-  public Command (Codec codec) {
+  public Command (CubbyCodec cubbyCodec) {
 
-    this.codec = codec;
+    this.cubbyCodec = cubbyCodec;
   }
 
   public abstract byte[] construct (String opaqueToken)
     throws IOException;
 
-  public Codec getCodec () {
+  public CubbyCodec getCodec () {
 
-    return codec;
+    return cubbyCodec;
   }
 }
