@@ -37,6 +37,8 @@ public class Response {
   private final ResponseCode code;
   private String token;
   private long cas;
+  private boolean won;
+  private boolean alsoWon;
 
   public Response (ResponseCode code) {
 
@@ -58,6 +60,20 @@ public class Response {
   public Response setCas (long cas) {
 
     this.cas = cas;
+
+    return this;
+  }
+
+  public Response setWon (boolean won) {
+
+    this.won = won;
+
+    return this;
+  }
+
+  public Response setAlsoWon (boolean alsoWon) {
+
+    this.alsoWon = alsoWon;
 
     return this;
   }

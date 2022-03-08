@@ -129,6 +129,14 @@ with CAS semantics did not exist.
             flagIndex += (token = accumulateToken(responseBuilder, flagIndex + 2)).length() + 2;
             response.setCas(Long.parseLong(token));
             break;
+          case 'W':
+            flagIndex += 2;
+            response.setWon(true);
+            break;
+          case 'Z':
+            flagIndex += 2;
+            response.setAlsoWon(true);
+            break;
           default:
             throw new IncomprehensibleResponseException(responseBuilder.toString());
         }

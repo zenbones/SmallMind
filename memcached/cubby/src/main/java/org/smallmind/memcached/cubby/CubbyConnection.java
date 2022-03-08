@@ -51,9 +51,13 @@ public class CubbyConnection {
 
     response = eventLoop.send(new SetCommand(new ObjectStreamCubbyCodec()).setKey("hello").setValue("goodbye"), null);
     System.out.println(response);
+    response = eventLoop.send(new GetCommand(new ObjectStreamCubbyCodec()).setKey("hello").setCas(true), null);
+    System.out.println(response);
     response = eventLoop.send(new GetCommand(new ObjectStreamCubbyCodec()).setKey("hello2").setCas(true), null);
     System.out.println(response);
-//    eventLoop.send(new NoopCommand(new ObjectStreamCodec()));
+    response = eventLoop.send(new GetCommand(new ObjectStreamCubbyCodec()).setKey("hello2").setCas(true), null);
+    System.out.println(response);
+    //    eventLoop.send(new NoopCommand(new ObjectStreamCodec()));
 
     Thread.sleep(30000);
   }
