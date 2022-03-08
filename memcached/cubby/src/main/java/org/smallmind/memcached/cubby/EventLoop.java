@@ -88,7 +88,7 @@ public class EventLoop implements Runnable {
     selectionKey = socketChannel.register(selector = Selector.open(), SelectionKey.OP_WRITE);
   }
 
-  public Response send (Command command, CubbyCodec codec, Long timeout)
+  public Response send (Command command, KeyTranslator keyTranslator, CubbyCodec codec, Long timeout)
     throws InterruptedException, IOException {
 
     RequestCallback requestCallback;
@@ -97,7 +97,7 @@ public class EventLoop implements Runnable {
     callbackMap.putIfAbsent(opaqueToken = tokenGenerator.next(), requestCallback = new RequestCallback(command), (timeout == null) ? defaultTimeoutStint : new Stint(timeout, TimeUnit.MILLISECONDS));
 
     synchronized (requestQueue) {
-      requestQueue.offer(command.construct(codec, opaqueToken));
+      requestQueue.offer(command.construct(keyTranslator, codec, opaqueToken));
       selectionKey.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
       selector.wakeup();
     }

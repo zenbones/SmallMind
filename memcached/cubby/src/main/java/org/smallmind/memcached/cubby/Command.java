@@ -36,7 +36,7 @@ import java.io.IOException;
 
 public abstract class Command {
 
-  public abstract byte[] construct (CubbyCodec codec, String opaqueToken)
+  public abstract byte[] construct (KeyTranslator keyTranslator, CubbyCodec codec, String opaqueToken)
     throws IOException;
 
   public abstract Object foobar (Response response)

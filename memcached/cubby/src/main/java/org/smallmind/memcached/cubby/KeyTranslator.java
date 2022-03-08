@@ -34,20 +34,8 @@ package org.smallmind.memcached.cubby;
 
 import java.io.IOException;
 
-public class NoopCommand extends Command {
+public interface KeyTranslator {
 
-  private static final byte[] bytes = "mn\r\n".getBytes();
-
-  @Override
-  public Object foobar (Response response)
-    throws IOException {
-
-    return null;
-  }
-
-  @Override
-  public byte[] construct (KeyTranslator keyTranslator, CubbyCodec codec, String opaqueToken) {
-
-    return bytes;
-  }
+  String encode (String key)
+    throws IOException;
 }

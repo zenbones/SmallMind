@@ -85,7 +85,7 @@ public class SetCommand extends Command {
     return null;
   }
 
-  public byte[] construct (CubbyCodec codec, String opaqueToken)
+  public byte[] construct (KeyTranslator keyTranslator, CubbyCodec codec, String opaqueToken)
     throws IOException {
 
     byte[] bytes;

@@ -61,10 +61,10 @@ public class GetCommand extends Command {
     return null;
   }
 
-  public byte[] construct (CubbyCodec codec, String opaqueToken)
+  public byte[] construct (KeyTranslator keyTranslator, CubbyCodec codec, String opaqueToken)
     throws IOException {
 
-    StringBuilder line = new StringBuilder("mg ").append(Base64Codec.encode(key)).append(" b v N").append(300).append(" O").append(opaqueToken);
+    StringBuilder line = new StringBuilder("mg ").append(keyTranslator.encode(key)).append(" b v N").append(300).append(" O").append(opaqueToken);
 
     if (cas) {
       line.append(" c");

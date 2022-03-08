@@ -37,6 +37,7 @@ public class CubbyConnection {
   public CubbyConnection ()
     throws Exception {
 
+    KeyTranslator keyTranslator = new LargeKeyHashingTranslator(new DefaultKeyTranslator());
     CubbyCodec codec = new ObjectStreamCubbyCodec();
     EventLoop eventLoop;
     Thread eventThread;
@@ -50,19 +51,25 @@ public class CubbyConnection {
 
     Response response;
 
-    response = eventLoop.send(new SetCommand().setKey("hello").setValue("goodbye"), codec, null);
+    response = eventLoop.send(new SetCommand().setKey("hello").setValue("goodbye"), keyTranslator, codec, null);
     System.out.println(response);
-    response = eventLoop.send(new GetCommand().setKey("hello").setCas(true), codec, null);
+    response = eventLoop.send(new GetCommand().setKey("hello").setCas(true), keyTranslator, codec, null);
     System.out.println(response);
     Object value = codec.deserialize(response.getValue());
     System.out.println(value);
-    response = eventLoop.send(new GetCommand().setKey("hello2").setCas(true), codec, null);
+    response = eventLoop.send(new GetCommand().setKey("hello2").setCas(true), keyTranslator, codec, null);
     System.out.println(response);
-    response = eventLoop.send(new GetCommand().setKey("hello2").setCas(true), codec, null);
+    response = eventLoop.send(new GetCommand().setKey("hello2").setCas(true), keyTranslator, codec, null);
     System.out.println(response);
     //    eventLoop.send(new NoopCommand(new ObjectStreamCodec()));
 
     Thread.sleep(3000);
+  }
+
+  public static void main (String... args)
+    throws Exception {
+
+    new CubbyConnection();
   }
 
   public void start () {
@@ -71,11 +78,5 @@ public class CubbyConnection {
 
   public void disconnected () {
 
-  }
-
-  public static void main (String... args)
-    throws Exception {
-
-    new CubbyConnection();
   }
 }

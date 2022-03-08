@@ -34,20 +34,35 @@ package org.smallmind.memcached.cubby;
 
 import java.io.IOException;
 
-public class NoopCommand extends Command {
+public class LargeValueCompressingCodec implements CubbyCodec {
 
-  private static final byte[] bytes = "mn\r\n".getBytes();
+  private static final int DEFAULT_COMPRESSION_THRESHOLD = 16384;
 
-  @Override
-  public Object foobar (Response response)
-    throws IOException {
+  private CubbyCodec codec;
+  private int compressionThreshold;
 
-    return null;
+  public LargeValueCompressingCodec (CubbyCodec codec) {
+
+    this(codec, DEFAULT_COMPRESSION_THRESHOLD);
+  }
+
+  public LargeValueCompressingCodec (CubbyCodec codec, int compressionThreshold) {
+
+    this.codec = codec;
+    this.compressionThreshold = compressionThreshold;
   }
 
   @Override
-  public byte[] construct (KeyTranslator keyTranslator, CubbyCodec codec, String opaqueToken) {
+  public byte[] serialize (Object obj)
+    throws IOException {
 
-    return bytes;
+    return new byte[0];
+  }
+
+  @Override
+  public Object deserialize (byte[] bytes)
+    throws IOException, ClassNotFoundException {
+
+    return null;
   }
 }
