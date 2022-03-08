@@ -278,7 +278,7 @@ public class Juggler<P, R> implements BlackList<R> {
 
       terminationLatch = new CountDownLatch(1);
       exitLatch = new CountDownLatch(1);
-      recoveryCheckMillis = recoveryCheckSeconds * 1000;
+      recoveryCheckMillis = recoveryCheckSeconds * 1000L;
     }
 
     public void abort ()
