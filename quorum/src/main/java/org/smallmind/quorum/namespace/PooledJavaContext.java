@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.namespace.java;
+package org.smallmind.quorum.namespace;
 
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -48,9 +48,9 @@ import javax.naming.directory.ModificationItem;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
-import org.smallmind.quorum.namespace.java.backingStore.NameTranslator;
-import org.smallmind.quorum.namespace.java.event.JavaContextEvent;
-import org.smallmind.quorum.namespace.java.event.JavaContextListener;
+import org.smallmind.quorum.namespace.backingStore.NameTranslator;
+import org.smallmind.quorum.namespace.event.JavaContextEvent;
+import org.smallmind.quorum.namespace.event.JavaContextListener;
 
 public class PooledJavaContext extends JavaContext {
 

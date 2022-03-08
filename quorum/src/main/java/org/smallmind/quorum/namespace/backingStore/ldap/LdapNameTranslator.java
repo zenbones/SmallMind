@@ -30,13 +30,13 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.namespace.java.backingStore.ldap;
+package org.smallmind.quorum.namespace.backingStore.ldap;
 
 import javax.naming.InvalidNameException;
 import javax.naming.Name;
-import org.smallmind.quorum.namespace.java.JavaName;
-import org.smallmind.quorum.namespace.java.backingStore.ContextCreator;
-import org.smallmind.quorum.namespace.java.backingStore.NameTranslator;
+import org.smallmind.quorum.namespace.JavaName;
+import org.smallmind.quorum.namespace.backingStore.ContextCreator;
+import org.smallmind.quorum.namespace.backingStore.NameTranslator;
 
 public class LdapNameTranslator extends NameTranslator {
 

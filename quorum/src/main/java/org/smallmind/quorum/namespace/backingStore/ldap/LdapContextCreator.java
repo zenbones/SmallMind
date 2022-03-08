@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.namespace.java.backingStore.ldap;
+package org.smallmind.quorum.namespace.backingStore.ldap;
 
 import java.util.Hashtable;
 import javax.naming.Context;
@@ -38,8 +38,8 @@ import javax.naming.NameNotFoundException;
 import javax.naming.NamingException;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
-import org.smallmind.quorum.namespace.java.backingStore.ContextCreator;
-import org.smallmind.quorum.namespace.java.backingStore.NamingConnectionDetails;
+import org.smallmind.quorum.namespace.backingStore.ContextCreator;
+import org.smallmind.quorum.namespace.backingStore.NamingConnectionDetails;
 
 public class LdapContextCreator extends ContextCreator {
 

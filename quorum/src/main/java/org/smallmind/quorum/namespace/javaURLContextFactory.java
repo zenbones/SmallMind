@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.namespace.java;
+package org.smallmind.quorum.namespace;
 
 import java.lang.reflect.Constructor;
 import java.util.Hashtable;
@@ -38,9 +38,9 @@ import javax.naming.Context;
 import javax.naming.Name;
 import javax.naming.spi.ObjectFactory;
 import org.smallmind.nutsnbolts.util.StringUtility;
-import org.smallmind.quorum.namespace.java.backingStore.ContextCreator;
-import org.smallmind.quorum.namespace.java.backingStore.NameTranslator;
-import org.smallmind.quorum.namespace.java.backingStore.NamingConnectionDetails;
+import org.smallmind.quorum.namespace.backingStore.ContextCreator;
+import org.smallmind.quorum.namespace.backingStore.NameTranslator;
+import org.smallmind.quorum.namespace.backingStore.NamingConnectionDetails;
 
 public class javaURLContextFactory implements ObjectFactory {
 

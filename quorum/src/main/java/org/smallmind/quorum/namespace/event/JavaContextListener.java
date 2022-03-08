@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.namespace.java.event;
+package org.smallmind.quorum.namespace.event;
 
 import java.util.EventListener;
 

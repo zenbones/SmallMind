@@ -30,15 +30,15 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.namespace.java.pool;
+package org.smallmind.quorum.namespace.pool;
 
 import java.util.Hashtable;
 import javax.naming.Context;
 import javax.naming.InitialContext;
-import org.smallmind.quorum.namespace.java.JavaContext;
-import org.smallmind.quorum.namespace.java.PooledJavaContext;
-import org.smallmind.quorum.namespace.java.backingStore.NamingConnectionDetails;
-import org.smallmind.quorum.namespace.java.backingStore.StorageType;
+import org.smallmind.quorum.namespace.JavaContext;
+import org.smallmind.quorum.namespace.PooledJavaContext;
+import org.smallmind.quorum.namespace.backingStore.NamingConnectionDetails;
+import org.smallmind.quorum.namespace.backingStore.StorageType;
 import org.smallmind.quorum.pool.complex.AbstractComponentInstanceFactory;
 import org.smallmind.quorum.pool.complex.ComponentInstance;
 import org.smallmind.quorum.pool.complex.ComponentPool;

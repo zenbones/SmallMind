@@ -30,14 +30,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.namespace.java.pool;
+package org.smallmind.quorum.namespace.pool;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.naming.NamingException;
-import org.smallmind.quorum.namespace.java.PooledJavaContext;
-import org.smallmind.quorum.namespace.java.event.JavaContextEvent;
-import org.smallmind.quorum.namespace.java.event.JavaContextListener;
+import org.smallmind.quorum.namespace.PooledJavaContext;
+import org.smallmind.quorum.namespace.event.JavaContextEvent;
+import org.smallmind.quorum.namespace.event.JavaContextListener;
 import org.smallmind.quorum.pool.complex.ComponentInstance;
 import org.smallmind.quorum.pool.complex.ComponentPool;
 import org.smallmind.scribe.pen.LoggerManager;

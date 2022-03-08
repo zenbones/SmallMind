@@ -30,14 +30,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.namespace.java.backingStore;
+package org.smallmind.quorum.namespace.backingStore;
 
 import javax.naming.InvalidNameException;
 import javax.naming.Name;
 import javax.naming.NamingException;
 import javax.naming.directory.DirContext;
-import org.smallmind.quorum.namespace.java.ContextNamePair;
-import org.smallmind.quorum.namespace.java.JavaName;
+import org.smallmind.quorum.namespace.ContextNamePair;
+import org.smallmind.quorum.namespace.JavaName;
 
 public abstract class NameTranslator {
 

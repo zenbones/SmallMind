@@ -30,25 +30,21 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.namespace.java.backingStore;
+package org.smallmind.quorum.namespace.backingStore;
 
-import javax.naming.NamingException;
-import javax.naming.directory.DirContext;
+public enum StorageType {
 
-public abstract class ContextCreator {
+  LDAP("ldap");
 
-  private final NamingConnectionDetails connectionDetails;
+  private final String backingStore;
 
-  public ContextCreator (NamingConnectionDetails connectionDetails) {
+  StorageType (String backingStore) {
 
-    this.connectionDetails = connectionDetails;
+    this.backingStore = backingStore;
   }
 
-  public NamingConnectionDetails getConnectionDetails () {
+  public String getBackingStore () {
 
-    return connectionDetails;
+    return backingStore;
   }
-
-  public abstract DirContext getInitialContext ()
-    throws NamingException;
 }

@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.namespace.java;
+package org.smallmind.quorum.namespace;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,7 +39,7 @@ import java.util.List;
 import javax.naming.InvalidNameException;
 import javax.naming.Name;
 import org.smallmind.nutsnbolts.util.AlphaNumericComparator;
-import org.smallmind.quorum.namespace.java.backingStore.NameTranslator;
+import org.smallmind.quorum.namespace.backingStore.NameTranslator;
 
 public class JavaName implements Name {
 

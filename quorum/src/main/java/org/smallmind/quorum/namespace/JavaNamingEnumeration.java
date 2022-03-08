@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.namespace.java;
+package org.smallmind.quorum.namespace;
 
 import java.lang.reflect.Constructor;
 import java.util.Hashtable;
@@ -41,7 +41,7 @@ import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.SearchResult;
-import org.smallmind.quorum.namespace.java.backingStore.NameTranslator;
+import org.smallmind.quorum.namespace.backingStore.NameTranslator;
 
 public class JavaNamingEnumeration<T> implements NamingEnumeration<T> {
 

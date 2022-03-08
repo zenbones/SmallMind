@@ -30,12 +30,12 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.namespace.java;
+package org.smallmind.quorum.namespace;
 
 import javax.naming.Name;
 import javax.naming.NameParser;
 import javax.naming.NamingException;
-import org.smallmind.quorum.namespace.java.backingStore.NameTranslator;
+import org.smallmind.quorum.namespace.backingStore.NameTranslator;
 
 public class JavaNameParser implements NameParser {
 

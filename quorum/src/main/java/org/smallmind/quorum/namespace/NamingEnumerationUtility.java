@@ -30,29 +30,41 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.namespace.java;
+package org.smallmind.quorum.namespace;
 
-import javax.naming.Name;
+import java.util.Hashtable;
+import javax.naming.InvalidNameException;
 import javax.naming.directory.DirContext;
+import org.smallmind.quorum.namespace.backingStore.NameTranslator;
 
-public class ContextNamePair {
+public class NamingEnumerationUtility {
 
-  private final DirContext dirContext;
-  private final Name name;
+  protected static String convertName (String name, NameTranslator nameTranslator)
+    throws InvalidNameException {
 
-  public ContextNamePair (DirContext dirContext, Name name) {
-
-    this.dirContext = dirContext;
-    this.name = name;
+    return nameTranslator.fromExternalStringToInternalString(name);
   }
 
-  public DirContext getContext () {
+  protected static String convertClassName (String className, Class internalDirContextClass) {
 
-    return dirContext;
+    if (className != null) {
+      if (className.equals(internalDirContextClass.getName())) {
+
+        return JavaContext.class.getName();
+      }
+    }
+
+    return className;
   }
 
-  public Name getName () {
+  protected static Object convertObject (Object boundObject, Class internalDirContextClass, Hashtable<String, Object> environment, NameTranslator nameTranslator, JavaNameParser nameParser, boolean modifiable) {
 
-    return name;
+    if (boundObject != null) {
+      if (boundObject.getClass().equals(internalDirContextClass)) {
+
+        return new JavaContext(environment, (DirContext)boundObject, nameTranslator, nameParser, modifiable);
+      }
+    }
+    return boundObject;
   }
 }

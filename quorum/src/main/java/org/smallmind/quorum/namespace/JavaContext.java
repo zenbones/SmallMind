@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.namespace.java;
+package org.smallmind.quorum.namespace;
 
 import java.util.Hashtable;
 import javax.naming.Binding;
@@ -47,7 +47,7 @@ import javax.naming.directory.DirContext;
 import javax.naming.directory.ModificationItem;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
-import org.smallmind.quorum.namespace.java.backingStore.NameTranslator;
+import org.smallmind.quorum.namespace.backingStore.NameTranslator;
 
 public class JavaContext implements DirContext {
 
