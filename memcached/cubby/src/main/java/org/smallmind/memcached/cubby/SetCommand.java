@@ -43,11 +43,6 @@ public class SetCommand extends Command {
   private Long cas;
   private Integer expiration;
 
-  public SetCommand (CubbyCodec cubbyCodec) {
-
-    super(cubbyCodec);
-  }
-
   public SetCommand setKey (String key) {
 
     this.key = key;
@@ -90,12 +85,12 @@ public class SetCommand extends Command {
     return null;
   }
 
-  public byte[] construct (String opaqueToken)
+  public byte[] construct (CubbyCodec codec, String opaqueToken)
     throws IOException {
 
     byte[] bytes;
     byte[] commandBytes;
-    byte[] valueBytes = getCodec().serialize(value);
+    byte[] valueBytes = codec.serialize(value);
 
     StringBuilder line = new StringBuilder("ms ").append(Base64Codec.encode(key)).append(' ').append(valueBytes.length).append(" b").append(" O").append(opaqueToken);
 

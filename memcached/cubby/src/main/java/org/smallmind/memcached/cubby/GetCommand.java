@@ -40,11 +40,6 @@ public class GetCommand extends Command {
   private String key;
   private boolean cas;
 
-  public GetCommand (CubbyCodec cubbyCodec) {
-
-    super(cubbyCodec);
-  }
-
   public GetCommand setKey (String key) {
 
     this.key = key;
@@ -66,10 +61,10 @@ public class GetCommand extends Command {
     return null;
   }
 
-  public byte[] construct (String opaqueToken)
+  public byte[] construct (CubbyCodec codec, String opaqueToken)
     throws IOException {
 
-    StringBuilder line = new StringBuilder("mg ").append(Base64Codec.encode(key)).append(" b N").append(300).append(" O").append(opaqueToken);
+    StringBuilder line = new StringBuilder("mg ").append(Base64Codec.encode(key)).append(" b v N").append(300).append(" O").append(opaqueToken);
 
     if (cas) {
       line.append(" c");

@@ -38,11 +38,6 @@ public class NoopCommand extends Command {
 
   private static final byte[] bytes = "mn\r\n".getBytes();
 
-  public NoopCommand (CubbyCodec cubbyCodec) {
-
-    super(cubbyCodec);
-  }
-
   @Override
   public Object foobar (Response response)
     throws IOException {
@@ -51,7 +46,7 @@ public class NoopCommand extends Command {
   }
 
   @Override
-  public byte[] construct (String opaqueToken) {
+  public byte[] construct (CubbyCodec codec, String opaqueToken) {
 
     return bytes;
   }

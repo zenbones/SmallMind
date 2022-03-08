@@ -34,45 +34,79 @@ package org.smallmind.memcached.cubby;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import org.smallmind.scribe.pen.LoggerManager;
 
 public class ResponseReader {
 
+  private Response partialResponse;
   private StringBuilder responseBuilder = new StringBuilder();
   private boolean complete = false;
+  private byte[] value;
+  private int valueIndex;
 
   public Response read (ByteBuffer byteBuffer) {
 
     char singleChar;
 
     do {
-      switch (singleChar = (char)byteBuffer.get()) {
-        case '\r':
-          if (complete) {
-            responseBuilder.append('\r');
+      if (value != null) {
+
+        int valueBytesRead;
+
+        byteBuffer.get(value, valueIndex, valueBytesRead = Math.min(byteBuffer.remaining(), value.length - valueIndex));
+        if ((valueIndex += valueBytesRead) == value.length) {
+
+          Response response = partialResponse;
+
+          if (value.length > 2) {
+
+            byte[] truncatedValue = new byte[value.length - 2];
+            System.arraycopy(value, 0, truncatedValue, 0, truncatedValue.length);
+
+            partialResponse.setValue(truncatedValue);
           }
-          complete = true;
-          break;
-        case '\n':
-          if (!complete) {
-            responseBuilder.append('\n');
-          } else {
-            try {
 
-              Response response = ResponseParser.parse(responseBuilder);
+          partialResponse = null;
+          value = null;
+          valueIndex = 0;
 
-              complete = false;
-              responseBuilder = new StringBuilder();
-
-              return response;
-            } catch (IOException ioException) {
-              ioException.printStackTrace();
-//              LoggerManager.getLogger(EventLoop.class).error(ioException);
+          return response;
+        }
+      } else {
+        switch (singleChar = (char)byteBuffer.get()) {
+          case '\r':
+            if (complete) {
+              responseBuilder.append('\r');
             }
-          }
-          break;
-        default:
-          responseBuilder.append(singleChar);
+            complete = true;
+            break;
+          case '\n':
+            if (!complete) {
+              responseBuilder.append('\n');
+            } else {
+              try {
+
+                Response response = ResponseParser.parse(responseBuilder);
+                int valueLength;
+
+                if ((valueLength = response.getValueLength()) >= 0) {
+                  partialResponse = response;
+                  value = new byte[valueLength + 2];
+                } else {
+
+                  return response;
+                }
+              } catch (IOException ioException) {
+                ioException.printStackTrace();
+//              LoggerManager.getLogger(EventLoop.class).error(ioException);
+              } finally {
+                complete = false;
+                responseBuilder = new StringBuilder();
+              }
+            }
+            break;
+          default:
+            responseBuilder.append(singleChar);
+        }
       }
     } while (byteBuffer.remaining() > 0);
 

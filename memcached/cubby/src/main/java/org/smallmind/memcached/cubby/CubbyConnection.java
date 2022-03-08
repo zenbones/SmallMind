@@ -37,10 +37,11 @@ public class CubbyConnection {
   public CubbyConnection ()
     throws Exception {
 
+    CubbyCodec codec = new ObjectStreamCubbyCodec();
     EventLoop eventLoop;
     Thread eventThread;
 
-    eventThread = new Thread(eventLoop = new EventLoop("localhost", 11211, 300, 3000));
+    eventThread = new Thread(eventLoop = new EventLoop("localhost", 11211, 300, 300));
 
     eventThread.setDaemon(true);
     eventThread.start();
@@ -49,17 +50,19 @@ public class CubbyConnection {
 
     Response response;
 
-    response = eventLoop.send(new SetCommand(new ObjectStreamCubbyCodec()).setKey("hello").setValue("goodbye"), null);
+    response = eventLoop.send(new SetCommand().setKey("hello").setValue("goodbye"), codec, null);
     System.out.println(response);
-    response = eventLoop.send(new GetCommand(new ObjectStreamCubbyCodec()).setKey("hello").setCas(true), null);
+    response = eventLoop.send(new GetCommand().setKey("hello").setCas(true), codec, null);
     System.out.println(response);
-    response = eventLoop.send(new GetCommand(new ObjectStreamCubbyCodec()).setKey("hello2").setCas(true), null);
+    Object value = codec.deserialize(response.getValue());
+    System.out.println(value);
+    response = eventLoop.send(new GetCommand().setKey("hello2").setCas(true), codec, null);
     System.out.println(response);
-    response = eventLoop.send(new GetCommand(new ObjectStreamCubbyCodec()).setKey("hello2").setCas(true), null);
+    response = eventLoop.send(new GetCommand().setKey("hello2").setCas(true), codec, null);
     System.out.println(response);
     //    eventLoop.send(new NoopCommand(new ObjectStreamCodec()));
 
-    Thread.sleep(30000);
+    Thread.sleep(3000);
   }
 
   public static void main (String... args)

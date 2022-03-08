@@ -78,6 +78,7 @@ with CAS semantics did not exist.
     } else {
 
       Response response;
+      int index = 2;
 
       switch (responseBuilder.substring(0, 2)) {
         case "HD":
@@ -85,6 +86,23 @@ with CAS semantics did not exist.
           break;
         case "VA":
           response = new Response(ResponseCode.VA);
+          if ((responseBuilder.length() < 4) || responseBuilder.charAt(index++) != ' ') {
+            throw new IncomprehensibleResponseException(responseBuilder.toString());
+          } else {
+
+            StringBuilder lengthBuilder = new StringBuilder();
+            char singleChar;
+
+            while ((index < responseBuilder.length()) && ((singleChar = responseBuilder.charAt(index)) != ' ')) {
+              lengthBuilder.append(singleChar);
+              index++;
+            }
+            try {
+              response.setValueLength(Integer.parseInt(lengthBuilder.toString()));
+            } catch (NumberFormatException numberFormatException) {
+              throw new IncomprehensibleResponseException(responseBuilder.toString());
+            }
+          }
           break;
         case "EN":
           response = new Response(ResponseCode.EN);
@@ -102,16 +120,16 @@ with CAS semantics did not exist.
           throw new IncomprehensibleResponseException(responseBuilder.toString());
       }
 
-      parseFlags(response, responseBuilder);
+      parseFlags(response, responseBuilder, index);
 
       return response;
     }
   }
 
-  private static void parseFlags (Response response, StringBuilder responseBuilder)
+  private static void parseFlags (Response response, StringBuilder responseBuilder, int index)
     throws IOException {
 
-    int flagIndex = 2;
+    int flagIndex = index;
 
     while (responseBuilder.length() != flagIndex) {
       if (responseBuilder.charAt(flagIndex) != ' ') {

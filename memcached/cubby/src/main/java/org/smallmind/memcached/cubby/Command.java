@@ -36,21 +36,9 @@ import java.io.IOException;
 
 public abstract class Command {
 
-  private final CubbyCodec cubbyCodec;
-
-  public Command (CubbyCodec cubbyCodec) {
-
-    this.cubbyCodec = cubbyCodec;
-  }
-
-  public abstract byte[] construct (String opaqueToken)
+  public abstract byte[] construct (CubbyCodec codec, String opaqueToken)
     throws IOException;
 
   public abstract Object foobar (Response response)
     throws IOException;
-
-  public CubbyCodec getCodec () {
-
-    return cubbyCodec;
-  }
 }

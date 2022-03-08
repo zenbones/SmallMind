@@ -36,13 +36,20 @@ public class Response {
 
   private final ResponseCode code;
   private String token;
-  private long cas;
   private boolean won;
   private boolean alsoWon;
+  private long cas;
+  private int valueLength = -1;
+  private byte[] value;
 
   public Response (ResponseCode code) {
 
     this.code = code;
+  }
+
+  public ResponseCode getCode () {
+
+    return code;
   }
 
   public String getToken () {
@@ -50,31 +57,58 @@ public class Response {
     return token;
   }
 
-  public Response setToken (String token) {
+  public void setToken (String token) {
 
     this.token = token;
-
-    return this;
   }
 
-  public Response setCas (long cas) {
+  public int getValueLength () {
+
+    return valueLength;
+  }
+
+  public void setValueLength (int valueLength) {
+
+    this.valueLength = valueLength;
+  }
+
+  public byte[] getValue () {
+
+    return value;
+  }
+
+  public void setValue (byte[] value) {
+
+    this.value = value;
+  }
+
+  public long getCas () {
+
+    return cas;
+  }
+
+  public void setCas (long cas) {
 
     this.cas = cas;
-
-    return this;
   }
 
-  public Response setWon (boolean won) {
+  public boolean isWon () {
+
+    return won;
+  }
+
+  public void setWon (boolean won) {
 
     this.won = won;
-
-    return this;
   }
 
-  public Response setAlsoWon (boolean alsoWon) {
+  public boolean isAlsoWon () {
+
+    return alsoWon;
+  }
+
+  public void setAlsoWon (boolean alsoWon) {
 
     this.alsoWon = alsoWon;
-
-    return this;
   }
 }
