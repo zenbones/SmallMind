@@ -40,7 +40,7 @@ public class CubbyConnection {
     EventLoop eventLoop;
     Thread eventThread;
 
-    eventThread = new Thread(eventLoop = new EventLoop("localhost", 11211));
+    eventThread = new Thread(eventLoop = new EventLoop("localhost", 11211, 300));
 
     eventThread.setDaemon(true);
     eventThread.start();

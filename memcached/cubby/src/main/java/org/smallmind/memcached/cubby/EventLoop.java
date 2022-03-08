@@ -34,6 +34,7 @@ package org.smallmind.memcached.cubby;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -55,17 +56,24 @@ public class EventLoop implements Runnable {
   private final Selector selector;
   private final SelectionKey selectionKey;
 
-  {
-    terminationLatch.countDown();
-  }
+  public EventLoop (String host, int port, long connectionTimeout)
+    throws IOException, InterruptedException {
 
-  public EventLoop (String host, int port)
-    throws IOException {
+    long start = System.currentTimeMillis();
 
-    socketChannel = SocketChannel.open();
+    socketChannel = SocketChannel.open()
+      .setOption(StandardSocketOptions.SO_KEEPALIVE, true)
+      .setOption(StandardSocketOptions.TCP_NODELAY, true);
     socketChannel.configureBlocking(false);
     socketChannel.connect(new InetSocketAddress(host, port));
-    socketChannel.finishConnect();
+
+    while ((!socketChannel.finishConnect()) && (System.currentTimeMillis() - start) < connectionTimeout) {
+      Thread.sleep(100);
+    }
+
+    if (socketChannel.isConnectionPending()) {
+      throw new ConnectionTimeoutException();
+    }
 
     selectionKey = socketChannel.register(selector = Selector.open(), SelectionKey.OP_WRITE);
   }
@@ -130,6 +138,7 @@ public class EventLoop implements Runnable {
                   if (selectionKey.isReadable() && selectionKey.channel().isOpen()) {
                     byteBuffer.clear();
                     if (((SocketChannel)selectionKey.channel()).read(byteBuffer) > 0) {
+                      byteBuffer.flip();
                       do {
 
                         Response response;
@@ -163,7 +172,7 @@ public class EventLoop implements Runnable {
 
                         int bytesWritten;
 
-                        if ((bytesWritten = requestWriter.write(socketChannel, byteBuffer)) >= 0) {
+                        if ((bytesWritten = requestWriter.write(socketChannel, byteBuffer)) > 0) {
                           requestWriter = null;
                         } else {
                           complete = false;
