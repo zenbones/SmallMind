@@ -42,22 +42,29 @@ import java.nio.channels.SocketChannel;
 import java.util.Iterator;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.xml.transform.Transformer;
+import org.smallmind.nutsnbolts.time.Stint;
+import org.smallmind.nutsnbolts.util.SelfDestructiveMap;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class EventLoop implements Runnable {
 
   private final CountDownLatch terminationLatch = new CountDownLatch(1);
   private final AtomicBoolean finished = new AtomicBoolean(false);
+  private final SelfDestructiveMap<String, RequestCallback> callbackMap = new SelfDestructiveMap<>(new Stint(3, TimeUnit.SECONDS), new Stint(100, TimeUnit.MILLISECONDS));
   private final LinkedBlockingQueue<byte[]> requestQueue = new LinkedBlockingQueue<>();
-  private final OpaqueToken opaqueToken = new OpaqueToken();
+  private final TokenGenerator tokenGenerator = new TokenGenerator();
   private final SocketChannel socketChannel;
   private final Selector selector;
   private final SelectionKey selectionKey;
+  private final Stint defaultTimeoutStint;
 
-  public EventLoop (String host, int port, long connectionTimeout)
+  public EventLoop (String host, int port, long connectionTimeout, long defaultRequestTimeout)
     throws IOException, InterruptedException {
+
+    defaultTimeoutStint = new Stint(defaultRequestTimeout, TimeUnit.MILLISECONDS);
 
     long start = System.currentTimeMillis();
 
@@ -78,14 +85,21 @@ public class EventLoop implements Runnable {
     selectionKey = socketChannel.register(selector = Selector.open(), SelectionKey.OP_WRITE);
   }
 
-  public void send (Command command)
-    throws IOException {
+  public Response send (Command command, Long timeout)
+    throws InterruptedException, IOException {
+
+    RequestCallback requestCallback;
+    String opaqueToken;
+
+    callbackMap.putIfAbsent(opaqueToken = tokenGenerator.next(), requestCallback = new RequestCallback(command), (timeout == null) ? defaultTimeoutStint : new Stint(timeout, TimeUnit.MILLISECONDS));
 
     synchronized (requestQueue) {
-      requestQueue.offer(command.construct(opaqueToken.next()));
+      requestQueue.offer(command.construct(opaqueToken));
       selectionKey.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
       selector.wakeup();
     }
+
+    return requestCallback.getResult();
   }
 
   public void stop ()
@@ -144,7 +158,12 @@ public class EventLoop implements Runnable {
                         Response response;
 
                         if ((response = responseReader.read(byteBuffer)) != null) {
-                          System.out.println(response);
+
+                          RequestCallback requestCallback;
+
+                          if ((response.getToken() != null) && ((requestCallback = callbackMap.get(response.getToken())) != null)) {
+                            requestCallback.setCallbackResult(response);
+                          }
                         }
                       } while (byteBuffer.remaining() > 0);
                     }

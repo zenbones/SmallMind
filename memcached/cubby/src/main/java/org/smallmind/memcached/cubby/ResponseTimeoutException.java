@@ -32,41 +32,12 @@
  */
 package org.smallmind.memcached.cubby;
 
-public class OpaqueToken {
+import org.smallmind.nutsnbolts.io.FormattedIOException;
 
-  private static final String ALPHABET = "!#$%&()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_abcdefghijklmnopqrstuvwxyz{|}~";
+public class ResponseTimeoutException extends FormattedIOException {
 
-  private final byte[] counter = new byte[32];
+  public ResponseTimeoutException (String message, Object... args) {
 
-  public synchronized String next () {
-
-    StringBuilder count = new StringBuilder();
-    int index = 0;
-
-    do {
-      if (counter[index] < ALPHABET.length()) {
-        counter[index] = (byte)(counter[index] + 1);
-        break;
-      } else {
-        counter[index] = 1;
-      }
-    } while (++index < 32);
-
-    if (index == 32) {
-      counter[0] = 1;
-      for (int column = 1; column < 32; column++) {
-        counter[column] = 0;
-      }
-    }
-
-    for (int loop = 0; loop < 32; loop++) {
-      if (counter[loop] > 0) {
-        count.append(ALPHABET.charAt(counter[loop] - 1));
-      } else {
-        break;
-      }
-    }
-
-    return count.toString();
+    super(message, args);
   }
 }

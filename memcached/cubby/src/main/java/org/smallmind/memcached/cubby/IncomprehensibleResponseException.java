@@ -32,12 +32,12 @@
  */
 package org.smallmind.memcached.cubby;
 
-import java.io.IOException;
+import org.smallmind.nutsnbolts.io.FormattedIOException;
 
-public class IncomprehensibleResponseException extends IOException {
+public class IncomprehensibleResponseException extends FormattedIOException {
 
-  public IncomprehensibleResponseException (String message) {
+  public IncomprehensibleResponseException (String message, Object... args) {
 
-    super(message);
+    super(message, args);
   }
 }

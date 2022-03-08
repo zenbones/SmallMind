@@ -40,14 +40,19 @@ public class CubbyConnection {
     EventLoop eventLoop;
     Thread eventThread;
 
-    eventThread = new Thread(eventLoop = new EventLoop("localhost", 11211, 300));
+    eventThread = new Thread(eventLoop = new EventLoop("localhost", 11211, 300, 3000));
 
     eventThread.setDaemon(true);
     eventThread.start();
 
     System.out.println("send...");
-    eventLoop.send(new GetCommand(new ObjectStreamCubbyCodec()).setKey("hello").setCas(true));
-    eventLoop.send(new SetCommand(new ObjectStreamCubbyCodec()).setKey("hello").setValue("goodbye").setCas(2L));
+
+    Response response;
+
+    response = eventLoop.send(new SetCommand(new ObjectStreamCubbyCodec()).setKey("hello").setValue("goodbye"), null);
+    System.out.println(response);
+    response = eventLoop.send(new GetCommand(new ObjectStreamCubbyCodec()).setKey("hello2").setCas(true), null);
+    System.out.println(response);
 //    eventLoop.send(new NoopCommand(new ObjectStreamCodec()));
 
     Thread.sleep(30000);

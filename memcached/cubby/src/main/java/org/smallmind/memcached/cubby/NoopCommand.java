@@ -32,6 +32,8 @@
  */
 package org.smallmind.memcached.cubby;
 
+import java.io.IOException;
+
 public class NoopCommand extends Command {
 
   private static final byte[] bytes = "mn\r\n".getBytes();
@@ -39,6 +41,13 @@ public class NoopCommand extends Command {
   public NoopCommand (CubbyCodec cubbyCodec) {
 
     super(cubbyCodec);
+  }
+
+  @Override
+  public Object foobar (Response response)
+    throws IOException {
+
+    return null;
   }
 
   @Override

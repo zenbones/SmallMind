@@ -30,20 +30,29 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.memcached.cubby;
+package org.smallmind.nutsnbolts.io;
 
-public enum ResponseCode {
+import java.io.IOException;
 
-  // (HIT), to indicate success
-  HD,
-  // (VALUE), followed by the value data
-  VA,
-  // (MISS), to indicate that the item with this key was not found
-  EN,
-  // (EXISTS), to indicate that the supplied CAS token does not match the stored item, or to indicate that the item you are trying to store with CAS semantics has been modified since you last fetched it
-  EX,
-  // (NOT_FOUND), to indicate that the item with this key was not found, or to indicate that the item you are trying to store with CAS semantics did not exist
-  NF,
-  // (NOT_STORED), to indicate the data was not stored, but not because of an error
-  NS
+public class FormattedIOException extends IOException {
+
+  public FormattedIOException () {
+
+    super();
+  }
+
+  public FormattedIOException (String message, Object... args) {
+
+    super(message == null ? null : String.format(message, args));
+  }
+
+  public FormattedIOException (Throwable throwable, String message, Object... args) {
+
+    super(message == null ? null : String.format(message, args), throwable);
+  }
+
+  public FormattedIOException (Throwable throwable) {
+
+    super(throwable);
+  }
 }

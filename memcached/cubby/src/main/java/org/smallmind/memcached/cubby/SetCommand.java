@@ -83,6 +83,13 @@ public class SetCommand extends Command {
     return this;
   }
 
+  @Override
+  public Object foobar (Response response)
+    throws IOException {
+
+    return null;
+  }
+
   public byte[] construct (String opaqueToken)
     throws IOException {
 

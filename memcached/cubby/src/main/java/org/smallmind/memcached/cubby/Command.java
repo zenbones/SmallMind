@@ -46,6 +46,9 @@ public abstract class Command {
   public abstract byte[] construct (String opaqueToken)
     throws IOException;
 
+  public abstract Object foobar (Response response)
+    throws IOException;
+
   public CubbyCodec getCodec () {
 
     return cubbyCodec;

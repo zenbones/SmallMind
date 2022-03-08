@@ -43,6 +43,11 @@ public class Response {
     this.code = code;
   }
 
+  public String getToken () {
+
+    return token;
+  }
+
   public Response setToken (String token) {
 
     this.token = token;

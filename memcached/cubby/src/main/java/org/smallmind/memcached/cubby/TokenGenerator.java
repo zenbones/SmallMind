@@ -32,18 +32,41 @@
  */
 package org.smallmind.memcached.cubby;
 
-public enum ResponseCode {
+public class TokenGenerator {
 
-  // (HIT), to indicate success
-  HD,
-  // (VALUE), followed by the value data
-  VA,
-  // (MISS), to indicate that the item with this key was not found
-  EN,
-  // (EXISTS), to indicate that the supplied CAS token does not match the stored item, or to indicate that the item you are trying to store with CAS semantics has been modified since you last fetched it
-  EX,
-  // (NOT_FOUND), to indicate that the item with this key was not found, or to indicate that the item you are trying to store with CAS semantics did not exist
-  NF,
-  // (NOT_STORED), to indicate the data was not stored, but not because of an error
-  NS
+  private static final String ALPHABET = "!#$%&()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_abcdefghijklmnopqrstuvwxyz{|}~";
+
+  private final byte[] counter = new byte[32];
+
+  public synchronized String next () {
+
+    StringBuilder count = new StringBuilder();
+    int index = 0;
+
+    do {
+      if (counter[index] < ALPHABET.length()) {
+        counter[index] = (byte)(counter[index] + 1);
+        break;
+      } else {
+        counter[index] = 1;
+      }
+    } while (++index < 32);
+
+    if (index == 32) {
+      counter[0] = 1;
+      for (int column = 1; column < 32; column++) {
+        counter[column] = 0;
+      }
+    }
+
+    for (int loop = 0; loop < 32; loop++) {
+      if (counter[loop] > 0) {
+        count.append(ALPHABET.charAt(counter[loop] - 1));
+      } else {
+        break;
+      }
+    }
+
+    return count.toString();
+  }
 }

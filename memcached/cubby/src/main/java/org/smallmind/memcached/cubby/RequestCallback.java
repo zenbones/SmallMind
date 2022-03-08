@@ -32,18 +32,52 @@
  */
 package org.smallmind.memcached.cubby;
 
-public enum ResponseCode {
+import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
+import org.smallmind.nutsnbolts.time.Stint;
+import org.smallmind.nutsnbolts.util.SelfDestructive;
 
-  // (HIT), to indicate success
-  HD,
-  // (VALUE), followed by the value data
-  VA,
-  // (MISS), to indicate that the item with this key was not found
-  EN,
-  // (EXISTS), to indicate that the supplied CAS token does not match the stored item, or to indicate that the item you are trying to store with CAS semantics has been modified since you last fetched it
-  EX,
-  // (NOT_FOUND), to indicate that the item with this key was not found, or to indicate that the item you are trying to store with CAS semantics did not exist
-  NF,
-  // (NOT_STORED), to indicate the data was not stored, but not because of an error
-  NS
+public class RequestCallback implements SelfDestructive {
+
+  private final CountDownLatch resultLatch = new CountDownLatch(1);
+  private final AtomicReference<Stint> timeoutStintRef = new AtomicReference<>();
+  private final AtomicReference<Response> resultRef = new AtomicReference<>();
+  private final Command command;
+
+  public RequestCallback (Command command) {
+
+    this.command = command;
+  }
+
+  @Override
+  public void destroy (Stint timeoutStint) {
+
+    timeoutStintRef.set(timeoutStint);
+
+    resultLatch.countDown();
+  }
+
+  public Response getResult ()
+    throws InterruptedException, IOException {
+
+    Response response;
+
+    resultLatch.await();
+    if ((response = resultRef.get()) == null) {
+
+      Stint timeoutStint = timeoutStintRef.get();
+
+      throw new ResponseTimeoutException("The timeout(%s) milliseconds was exceeded while waiting for a response from command(%s)", (timeoutStint == null) ? "unknown" : String.valueOf(timeoutStint.toMilliseconds()), command);
+    } else {
+
+      return response;
+    }
+  }
+
+  public void setCallbackResult (Response response) {
+
+    resultRef.set(response);
+    resultLatch.countDown();
+  }
 }

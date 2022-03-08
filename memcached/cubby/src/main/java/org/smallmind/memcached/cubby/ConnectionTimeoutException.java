@@ -32,8 +32,8 @@
  */
 package org.smallmind.memcached.cubby;
 
-import java.io.IOException;
+import org.smallmind.nutsnbolts.io.FormattedIOException;
 
-public class ConnectionTimeoutException extends IOException {
+public class ConnectionTimeoutException extends FormattedIOException {
 
 }
