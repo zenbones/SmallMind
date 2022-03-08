@@ -75,7 +75,7 @@ public class RequestCallback implements SelfDestructive {
     }
   }
 
-  public void setCallbackResult (Response response) {
+  public void setResult (Response response) {
 
     resultRef.set(response);
     resultLatch.countDown();

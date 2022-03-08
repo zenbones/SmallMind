@@ -162,7 +162,7 @@ public class EventLoop implements Runnable {
                           RequestCallback requestCallback;
 
                           if ((response.getToken() != null) && ((requestCallback = callbackMap.get(response.getToken())) != null)) {
-                            requestCallback.setCallbackResult(response);
+                            requestCallback.setResult(response);
                           }
                         }
                       } while (byteBuffer.remaining() > 0);
