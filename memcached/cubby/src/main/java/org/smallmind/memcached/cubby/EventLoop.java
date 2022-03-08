@@ -53,6 +53,7 @@ public class EventLoop implements Runnable {
 
   private final CountDownLatch terminationLatch = new CountDownLatch(1);
   private final AtomicBoolean finished = new AtomicBoolean(false);
+  private final CubbyConnection connection;
   private final SelfDestructiveMap<String, RequestCallback> callbackMap = new SelfDestructiveMap<>(new Stint(3, TimeUnit.SECONDS), new Stint(100, TimeUnit.MILLISECONDS));
   private final LinkedBlockingQueue<byte[]> requestQueue = new LinkedBlockingQueue<>();
   private final TokenGenerator tokenGenerator = new TokenGenerator();
@@ -61,8 +62,10 @@ public class EventLoop implements Runnable {
   private final SelectionKey selectionKey;
   private final Stint defaultTimeoutStint;
 
-  public EventLoop (String host, int port, long connectionTimeout, long defaultRequestTimeout)
+  public EventLoop (CubbyConnection connection, String host, int port, long connectionTimeout, long defaultRequestTimeout)
     throws IOException, InterruptedException {
+
+    this.connection = connection;
 
     defaultTimeoutStint = new Stint(defaultRequestTimeout, TimeUnit.MILLISECONDS);
 
@@ -111,19 +114,22 @@ public class EventLoop implements Runnable {
 
   private void shutdown () {
 
-    finished.set(true);
-    selectionKey.cancel();
+    if (finished.compareAndSet(false, true)) {
+      selectionKey.cancel();
 
-    try {
-      selector.close();
-    } catch (IOException ioException) {
-      LoggerManager.getLogger(Transformer.class).error(ioException);
-    }
+      try {
+        selector.close();
+      } catch (IOException ioException) {
+        LoggerManager.getLogger(Transformer.class).error(ioException);
+      }
 
-    try {
-      socketChannel.close();
-    } catch (IOException ioException) {
-      LoggerManager.getLogger(Transformer.class).error(ioException);
+      try {
+        socketChannel.close();
+      } catch (IOException ioException) {
+        LoggerManager.getLogger(Transformer.class).error(ioException);
+      }
+
+      connection.disconnected();
     }
   }
 

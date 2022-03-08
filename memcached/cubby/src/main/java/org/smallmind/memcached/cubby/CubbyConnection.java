@@ -41,7 +41,7 @@ public class CubbyConnection {
     EventLoop eventLoop;
     Thread eventThread;
 
-    eventThread = new Thread(eventLoop = new EventLoop("localhost", 11211, 300, 300));
+    eventThread = new Thread(eventLoop = new EventLoop(this, "localhost", 11211, 300, 300));
 
     eventThread.setDaemon(true);
     eventThread.start();
@@ -63,6 +63,14 @@ public class CubbyConnection {
     //    eventLoop.send(new NoopCommand(new ObjectStreamCodec()));
 
     Thread.sleep(3000);
+  }
+
+  public void start () {
+
+  }
+
+  public void disconnected () {
+
   }
 
   public static void main (String... args)
