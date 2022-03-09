@@ -32,14 +32,18 @@
  */
 package org.smallmind.memcached.cubby;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 public class LargeValueCompressingCodec implements CubbyCodec {
 
   private static final int DEFAULT_COMPRESSION_THRESHOLD = 16384;
 
-  private CubbyCodec codec;
-  private int compressionThreshold;
+  private final CubbyCodec codec;
+  private final int compressionThreshold;
 
   public LargeValueCompressingCodec (CubbyCodec codec) {
 
@@ -56,13 +60,47 @@ public class LargeValueCompressingCodec implements CubbyCodec {
   public byte[] serialize (Object obj)
     throws IOException {
 
-    return new byte[0];
+    byte[] bytes;
+
+    if ((bytes = codec.serialize(obj)).length >= compressionThreshold) {
+
+      ByteArrayOutputStream byteStream;
+
+      try (GZIPOutputStream gzipOut = new GZIPOutputStream(byteStream = new ByteArrayOutputStream())) {
+        gzipOut.write(bytes);
+      }
+
+      return codec.serialize(new GzipObjectWrapper(byteStream.toByteArray()));
+    } else {
+
+      return bytes;
+    }
   }
 
   @Override
   public Object deserialize (byte[] bytes)
     throws IOException, ClassNotFoundException {
 
-    return null;
+    Object obj;
+
+    if ((obj = codec.deserialize(bytes)) instanceof GzipObjectWrapper) {
+
+      ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+
+      try (GZIPInputStream gzipIn = new GZIPInputStream(new ByteArrayInputStream(((GzipObjectWrapper)obj).getCompressedBytes()))) {
+
+        int bytesRead;
+        byte[] buffer = new byte[8196];
+
+        while ((bytesRead = gzipIn.read(buffer)) >= 0) {
+          byteStream.write(buffer, 0, bytesRead);
+        }
+      }
+
+      return codec.deserialize(byteStream.toByteArray());
+    } else {
+
+      return obj;
+    }
   }
 }

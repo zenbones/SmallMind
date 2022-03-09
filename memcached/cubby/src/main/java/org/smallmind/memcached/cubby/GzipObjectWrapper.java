@@ -32,38 +32,19 @@
  */
 package org.smallmind.memcached.cubby;
 
-import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
-import org.smallmind.nutsnbolts.http.Base64Codec;
-import org.smallmind.nutsnbolts.security.EncryptionUtility;
-import org.smallmind.nutsnbolts.security.HashAlgorithm;
+import java.io.Serializable;
 
-public class LargeKeyHashingTranslator implements KeyTranslator {
+public class GzipObjectWrapper implements Serializable {
 
-  private final KeyTranslator keyTranslator;
+  private byte[] compressedBytes;
 
-  public LargeKeyHashingTranslator (KeyTranslator keyTranslator) {
+  public GzipObjectWrapper (byte[] bytes) {
 
-    this.keyTranslator = keyTranslator;
+    this.compressedBytes = bytes;
   }
 
-  @Override
-  public String encode (String key)
-    throws IOException {
+  public byte[] getCompressedBytes () {
 
-    String translatedKey;
-
-    if ((translatedKey = keyTranslator.encode(key)).length() > 250) {
-      try {
-
-        //must start with no more than 187 bytes (which will base 64 encode to 250)
-        return Base64Codec.encode(EncryptionUtility.hash(HashAlgorithm.SHA3_512, key.getBytes()));
-      } catch (NoSuchAlgorithmException noSuchAlgorithmException) {
-        throw new IOException(noSuchAlgorithmException);
-      }
-    } else {
-
-      return translatedKey;
-    }
+    return compressedBytes;
   }
 }

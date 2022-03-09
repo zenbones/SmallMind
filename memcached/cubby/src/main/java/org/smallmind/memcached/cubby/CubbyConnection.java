@@ -38,7 +38,7 @@ public class CubbyConnection {
     throws Exception {
 
     KeyTranslator keyTranslator = new LargeKeyHashingTranslator(new DefaultKeyTranslator());
-    CubbyCodec codec = new ObjectStreamCubbyCodec();
+    CubbyCodec codec = new LargeValueCompressingCodec(new ObjectStreamCubbyCodec());
     EventLoop eventLoop;
     Thread eventThread;
 
