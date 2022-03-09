@@ -54,6 +54,11 @@ public class ServerPool implements Iterable<Map.Entry<String, MemcachedHost>> {
     return hostMap.size();
   }
 
+  public MemcachedHost get (String name) {
+
+    return hostMap.get(name);
+  }
+
   public Set<String> keySet () {
 
     return hostMap.keySet();

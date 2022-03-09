@@ -32,22 +32,25 @@
  */
 package org.smallmind.memcached.cubby.locator;
 
+import java.io.IOException;
 import java.math.BigInteger;
-import java.net.InetSocketAddress;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import org.smallmind.memcached.cubby.MemcachedHost;
+import org.smallmind.memcached.cubby.NoAvailableHostException;
 import org.smallmind.memcached.cubby.ServerPool;
 import org.smallmind.nutsnbolts.security.EncryptionUtility;
 import org.smallmind.nutsnbolts.security.HashAlgorithm;
 
 public class MaglevKeyLocator implements KeyLocator {
 
+  private final ServerPool serverPool;
   private final HashMap<String, int[]> permutationMap = new HashMap<>();
   private final int permutationSize;
+  private final long longerPermutationSize;
   private HashMap<Integer, String> routingMap = new HashMap<>();
 
   public MaglevKeyLocator (ServerPool serverPool)
@@ -59,13 +62,16 @@ public class MaglevKeyLocator implements KeyLocator {
   public MaglevKeyLocator (ServerPool serverPool, int virtualHostCount)
     throws NoSuchAlgorithmException {
 
+    this.serverPool = serverPool;
+
     permutationSize = PrimeGenerator.nextPrime(serverPool.size() * virtualHostCount);
+    longerPermutationSize = permutationSize;
 
     for (String name : serverPool.keySet()) {
 
       int[] permutations;
-      int offset = new BigInteger(EncryptionUtility.hash(HashAlgorithm.SHA_256, name.getBytes())).mod(BigInteger.valueOf(permutationSize)).intValue();
-      int skip = new BigInteger(EncryptionUtility.hash(HashAlgorithm.SHA3_256, name.getBytes())).mod(BigInteger.valueOf(permutationSize - 1)).intValue() + 1;
+      int offset = new BigInteger(EncryptionUtility.hash(HashAlgorithm.SHA_256, name.getBytes())).mod(BigInteger.valueOf(longerPermutationSize)).intValue();
+      int skip = new BigInteger(EncryptionUtility.hash(HashAlgorithm.SHA3_256, name.getBytes())).mod(BigInteger.valueOf(longerPermutationSize - 1)).intValue() + 1;
 
       permutationMap.put(name, permutations = new int[permutationSize]);
       for (int index = 0; index < permutationSize; index++) {
@@ -74,12 +80,6 @@ public class MaglevKeyLocator implements KeyLocator {
     }
 
     routingMap = generateRoutingMap(serverPool);
-  }
-
-  public static void main (String... args)
-    throws NoSuchAlgorithmException {
-
-    new MaglevKeyLocator(new ServerPool(new MemcachedHost("abc", new InetSocketAddress("localhost", 11211)), new MemcachedHost("def", new InetSocketAddress("localhost", 11211)), new MemcachedHost("ghi", new InetSocketAddress("localhost", 11211))), 10);
   }
 
   private HashMap<Integer, String> generateRoutingMap (ServerPool serverPool) {
@@ -133,8 +133,14 @@ public class MaglevKeyLocator implements KeyLocator {
   }
 
   @Override
-  public MemcachedHost find (String key) {
+  public MemcachedHost find (String key)
+    throws IOException, NoSuchAlgorithmException {
 
-    return null;
+    if (routingMap.isEmpty()) {
+      throw new NoAvailableHostException();
+    } else {
+
+      return serverPool.get(routingMap.get(new BigInteger(EncryptionUtility.hash(HashAlgorithm.MD5, key.getBytes())).mod(BigInteger.valueOf(longerPermutationSize)).intValue()));
+    }
   }
 }
