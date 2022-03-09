@@ -30,40 +30,65 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.memcached.cubby;
+package org.smallmind.memcached.cubby.codec;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
-import org.smallmind.nutsnbolts.http.Base64Codec;
-import org.smallmind.nutsnbolts.security.EncryptionUtility;
-import org.smallmind.nutsnbolts.security.HashAlgorithm;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.ObjectStreamClass;
 
-public class LargeKeyHashingTranslator implements KeyTranslator {
+public class ObjectStreamCubbyCodec implements CubbyCodec {
 
-  private final KeyTranslator keyTranslator;
+  @Override
+  public byte[] serialize (Object obj)
+    throws IOException {
 
-  public LargeKeyHashingTranslator (KeyTranslator keyTranslator) {
+    if (obj == null) {
+      throw new NullPointerException("Can not serialize a null value");
+    } else {
 
-    this.keyTranslator = keyTranslator;
+      ByteArrayOutputStream byteStream;
+
+      try (ObjectOutputStream out = new ObjectOutputStream(byteStream = new ByteArrayOutputStream())) {
+        out.writeObject(obj);
+      }
+
+      return byteStream.toByteArray();
+    }
   }
 
   @Override
-  public String encode (String key)
-    throws IOException {
+  public Object deserialize (byte[] bytes)
+    throws IOException, ClassNotFoundException {
 
-    String translatedKey;
+    try (ResolvingObjectInputStream in = new ResolvingObjectInputStream(new ByteArrayInputStream(bytes))) {
 
-    if ((translatedKey = keyTranslator.encode(key)).length() > 250) {
+      return in.readObject();
+    }
+  }
+
+  private static final class ResolvingObjectInputStream extends ObjectInputStream {
+
+    public ResolvingObjectInputStream (InputStream in)
+      throws IOException {
+
+      super(in);
+    }
+
+    @Override
+    protected Class<?> resolveClass (ObjectStreamClass desc)
+      throws IOException, ClassNotFoundException {
+
       try {
 
-        //must start with no more than 187 bytes (which will base 64 encode to 250)
-        return Base64Codec.encode(EncryptionUtility.hash(HashAlgorithm.SHA3_512, key.getBytes()));
-      } catch (NoSuchAlgorithmException noSuchAlgorithmException) {
-        throw new IOException(noSuchAlgorithmException);
-      }
-    } else {
+        return super.resolveClass(desc);
+      } catch (ClassNotFoundException classNotFoundException) {
 
-      return translatedKey;
+        return Thread.currentThread().getContextClassLoader().loadClass(desc.getName());
+      }
     }
   }
 }

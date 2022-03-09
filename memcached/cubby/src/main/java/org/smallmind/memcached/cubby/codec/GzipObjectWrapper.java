@@ -30,46 +30,21 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.memcached.cubby;
+package org.smallmind.memcached.cubby.codec;
 
-import java.io.IOException;
-import org.smallmind.nutsnbolts.http.Base64Codec;
+import java.io.Serializable;
 
-public class GetCommand extends Command {
+public class GzipObjectWrapper implements Serializable {
 
-  private String key;
-  private boolean cas;
+  private byte[] compressedBytes;
 
-  public GetCommand setKey (String key) {
+  public GzipObjectWrapper (byte[] bytes) {
 
-    this.key = key;
-
-    return this;
+    this.compressedBytes = bytes;
   }
 
-  public GetCommand setCas (boolean cas) {
+  public byte[] getCompressedBytes () {
 
-    this.cas = cas;
-
-    return this;
-  }
-
-  @Override
-  public Object foobar (Response response)
-    throws IOException {
-
-    return null;
-  }
-
-  public byte[] construct (KeyTranslator keyTranslator, CubbyCodec codec, String opaqueToken)
-    throws IOException {
-
-    StringBuilder line = new StringBuilder("mg ").append(keyTranslator.encode(key)).append(" b v N").append(300).append(" O").append(opaqueToken);
-
-    if (cas) {
-      line.append(" c");
-    }
-
-    return line.append("\r\n").toString().getBytes();
+    return compressedBytes;
   }
 }

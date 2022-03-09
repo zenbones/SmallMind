@@ -30,15 +30,18 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.memcached.cubby;
+package org.smallmind.memcached.cubby.command;
 
 import java.io.IOException;
+import org.smallmind.memcached.cubby.codec.CubbyCodec;
+import org.smallmind.memcached.cubby.translator.KeyTranslator;
+import org.smallmind.memcached.cubby.Response;
 
-public interface CubbyCodec {
+public abstract class Command {
 
-  byte[] serialize (Object obj)
+  public abstract byte[] construct (KeyTranslator keyTranslator, CubbyCodec codec, String opaqueToken)
     throws IOException;
 
-  Object deserialize (byte[] bytes)
-    throws IOException, ClassNotFoundException;
+  public abstract Object foobar (Response response)
+    throws IOException;
 }

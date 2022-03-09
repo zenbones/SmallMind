@@ -30,15 +30,12 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.memcached.cubby;
+package org.smallmind.memcached.cubby.translator;
 
 import java.io.IOException;
 
-public abstract class Command {
+public interface KeyTranslator {
 
-  public abstract byte[] construct (KeyTranslator keyTranslator, CubbyCodec codec, String opaqueToken)
-    throws IOException;
-
-  public abstract Object foobar (Response response)
+  String encode (String key)
     throws IOException;
 }

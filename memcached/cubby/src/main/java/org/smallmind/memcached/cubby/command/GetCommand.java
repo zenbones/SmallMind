@@ -30,17 +30,48 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.memcached.cubby;
+package org.smallmind.memcached.cubby.command;
 
 import java.io.IOException;
-import org.smallmind.nutsnbolts.http.Base64Codec;
+import org.smallmind.memcached.cubby.codec.CubbyCodec;
+import org.smallmind.memcached.cubby.translator.KeyTranslator;
+import org.smallmind.memcached.cubby.Response;
 
-public class DefaultKeyTranslator implements KeyTranslator {
+public class GetCommand extends Command {
+
+  private String key;
+  private boolean cas;
+
+  public GetCommand setKey (String key) {
+
+    this.key = key;
+
+    return this;
+  }
+
+  public GetCommand setCas (boolean cas) {
+
+    this.cas = cas;
+
+    return this;
+  }
 
   @Override
-  public String encode (String key)
+  public Object foobar (Response response)
     throws IOException {
 
-    return Base64Codec.encode(key);
+    return null;
+  }
+
+  public byte[] construct (KeyTranslator keyTranslator, CubbyCodec codec, String opaqueToken)
+    throws IOException {
+
+    StringBuilder line = new StringBuilder("mg ").append(keyTranslator.encode(key)).append(" b v N").append(300).append(" O").append(opaqueToken);
+
+    if (cas) {
+      line.append(" c");
+    }
+
+    return line.append("\r\n").toString().getBytes();
   }
 }

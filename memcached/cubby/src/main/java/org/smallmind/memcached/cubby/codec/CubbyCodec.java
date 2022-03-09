@@ -30,55 +30,15 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.memcached.cubby;
+package org.smallmind.memcached.cubby.codec;
 
 import java.io.IOException;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicReference;
-import org.smallmind.memcached.cubby.command.Command;
-import org.smallmind.nutsnbolts.time.Stint;
-import org.smallmind.nutsnbolts.util.SelfDestructive;
 
-public class RequestCallback implements SelfDestructive {
+public interface CubbyCodec {
 
-  private final CountDownLatch resultLatch = new CountDownLatch(1);
-  private final AtomicReference<Stint> timeoutStintRef = new AtomicReference<>();
-  private final AtomicReference<Response> resultRef = new AtomicReference<>();
-  private final Command command;
+  byte[] serialize (Object obj)
+    throws IOException;
 
-  public RequestCallback (Command command) {
-
-    this.command = command;
-  }
-
-  @Override
-  public void destroy (Stint timeoutStint) {
-
-    timeoutStintRef.set(timeoutStint);
-
-    resultLatch.countDown();
-  }
-
-  public Response getResult ()
-    throws InterruptedException, IOException {
-
-    Response response;
-
-    resultLatch.await();
-    if ((response = resultRef.get()) == null) {
-
-      Stint timeoutStint = timeoutStintRef.get();
-
-      throw new ResponseTimeoutException("The timeout(%s) milliseconds was exceeded while waiting for a response from command(%s)", (timeoutStint == null) ? "unknown" : String.valueOf(timeoutStint.toMilliseconds()), command);
-    } else {
-
-      return response;
-    }
-  }
-
-  public void setResult (Response response) {
-
-    resultRef.set(response);
-    resultLatch.countDown();
-  }
+  Object deserialize (byte[] bytes)
+    throws IOException, ClassNotFoundException;
 }

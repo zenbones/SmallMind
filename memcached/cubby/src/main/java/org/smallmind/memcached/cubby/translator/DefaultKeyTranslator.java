@@ -30,24 +30,17 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.memcached.cubby;
+package org.smallmind.memcached.cubby.translator;
 
 import java.io.IOException;
+import org.smallmind.nutsnbolts.http.Base64Codec;
 
-public class NoopCommand extends Command {
-
-  private static final byte[] bytes = "mn\r\n".getBytes();
+public class DefaultKeyTranslator implements KeyTranslator {
 
   @Override
-  public Object foobar (Response response)
+  public String encode (String key)
     throws IOException {
 
-    return null;
-  }
-
-  @Override
-  public byte[] construct (KeyTranslator keyTranslator, CubbyCodec codec, String opaqueToken) {
-
-    return bytes;
+    return Base64Codec.encode(key);
   }
 }

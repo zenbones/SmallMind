@@ -30,33 +30,50 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.memcached.cubby;
+package org.smallmind.memcached.cubby.codec;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.ObjectStreamClass;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
-public class ObjectStreamCubbyCodec implements CubbyCodec {
+public class LargeValueCompressingCodec implements CubbyCodec {
+
+  private static final int DEFAULT_COMPRESSION_THRESHOLD = 16384;
+
+  private final CubbyCodec codec;
+  private final int compressionThreshold;
+
+  public LargeValueCompressingCodec (CubbyCodec codec) {
+
+    this(codec, DEFAULT_COMPRESSION_THRESHOLD);
+  }
+
+  public LargeValueCompressingCodec (CubbyCodec codec, int compressionThreshold) {
+
+    this.codec = codec;
+    this.compressionThreshold = compressionThreshold;
+  }
 
   @Override
   public byte[] serialize (Object obj)
     throws IOException {
 
-    if (obj == null) {
-      throw new NullPointerException("Can not serialize a null value");
-    } else {
+    byte[] bytes;
+
+    if ((bytes = codec.serialize(obj)).length >= compressionThreshold) {
 
       ByteArrayOutputStream byteStream;
 
-      try (ObjectOutputStream out = new ObjectOutputStream(byteStream = new ByteArrayOutputStream())) {
-        out.writeObject(obj);
+      try (GZIPOutputStream gzipOut = new GZIPOutputStream(byteStream = new ByteArrayOutputStream())) {
+        gzipOut.write(bytes);
       }
 
-      return byteStream.toByteArray();
+      return codec.serialize(new GzipObjectWrapper(byteStream.toByteArray()));
+    } else {
+
+      return bytes;
     }
   }
 
@@ -64,31 +81,26 @@ public class ObjectStreamCubbyCodec implements CubbyCodec {
   public Object deserialize (byte[] bytes)
     throws IOException, ClassNotFoundException {
 
-    try (ResolvingObjectInputStream in = new ResolvingObjectInputStream(new ByteArrayInputStream(bytes))) {
+    Object obj;
 
-      return in.readObject();
-    }
-  }
+    if ((obj = codec.deserialize(bytes)) instanceof GzipObjectWrapper) {
 
-  private static final class ResolvingObjectInputStream extends ObjectInputStream {
+      ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
 
-    public ResolvingObjectInputStream (InputStream in)
-      throws IOException {
+      try (GZIPInputStream gzipIn = new GZIPInputStream(new ByteArrayInputStream(((GzipObjectWrapper)obj).getCompressedBytes()))) {
 
-      super(in);
-    }
+        int bytesRead;
+        byte[] buffer = new byte[8196];
 
-    @Override
-    protected Class<?> resolveClass (ObjectStreamClass desc)
-      throws IOException, ClassNotFoundException {
-
-      try {
-
-        return super.resolveClass(desc);
-      } catch (ClassNotFoundException classNotFoundException) {
-
-        return Thread.currentThread().getContextClassLoader().loadClass(desc.getName());
+        while ((bytesRead = gzipIn.read(buffer)) >= 0) {
+          byteStream.write(buffer, 0, bytesRead);
+        }
       }
+
+      return codec.deserialize(byteStream.toByteArray());
+    } else {
+
+      return obj;
     }
   }
 }
