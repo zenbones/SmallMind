@@ -33,7 +33,6 @@
 package org.smallmind.memcached.cubby;
 
 import java.io.IOException;
-import org.smallmind.nutsnbolts.http.Base64Codec;
 
 public class SetCommand extends Command {
 
@@ -92,7 +91,7 @@ public class SetCommand extends Command {
     byte[] commandBytes;
     byte[] valueBytes = codec.serialize(value);
 
-    StringBuilder line = new StringBuilder("ms ").append(Base64Codec.encode(key)).append(' ').append(valueBytes.length).append(" b").append(" O").append(opaqueToken);
+    StringBuilder line = new StringBuilder("ms ").append(keyTranslator.encode(key)).append(' ').append(valueBytes.length).append(" b").append(" O").append(opaqueToken);
 
     if (mode != null) {
       line.append(" M").append(mode.getToken());

@@ -21,6 +21,12 @@
       <artifactId>scribe-pen</artifactId>
       <scope>compile</scope>
     </dependency>
+    <dependency>
+      <groupId>org.bouncycastle</groupId>
+      <artifactId>bcprov-jdk15on</artifactId>
+      <scope>runtime</scope>
+      <optional>true</optional>
+    </dependency>
   </dependencies>
   <build>
     <plugins>
