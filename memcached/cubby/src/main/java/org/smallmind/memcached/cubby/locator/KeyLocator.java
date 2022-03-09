@@ -30,39 +30,11 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.memcached.cubby;
+package org.smallmind.memcached.cubby.locator;
 
-import java.net.SocketAddress;
+import org.smallmind.memcached.cubby.MemcachedHost;
 
-public class MemcachedHost {
+public interface KeyLocator {
 
-  private final String name;
-  private final SocketAddress address;
-  private boolean active = true;
-
-  public MemcachedHost (String name, SocketAddress address) {
-
-    this.name = name;
-    this.address = address;
-  }
-
-  public String getName () {
-
-    return name;
-  }
-
-  public SocketAddress getAddress () {
-
-    return address;
-  }
-
-  public boolean isActive () {
-
-    return active;
-  }
-
-  public void setActive (boolean active) {
-
-    this.active = active;
-  }
+  MemcachedHost find (String key);
 }

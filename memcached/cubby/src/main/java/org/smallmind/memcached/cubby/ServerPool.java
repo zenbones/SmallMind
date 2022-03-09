@@ -32,6 +32,41 @@
  */
 package org.smallmind.memcached.cubby;
 
-public class ServerPool {
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
+public class ServerPool implements Iterable<Map.Entry<String, MemcachedHost>> {
+
+  private final HashMap<String, MemcachedHost> hostMap = new HashMap<>();
+
+  public ServerPool (MemcachedHost... memcachedHosts) {
+
+    for (MemcachedHost memcachedHost : memcachedHosts) {
+      hostMap.put(memcachedHost.getName(), memcachedHost);
+    }
+  }
+
+  public int size () {
+
+    return hostMap.size();
+  }
+
+  public Set<String> keySet () {
+
+    return hostMap.keySet();
+  }
+
+  public Collection<MemcachedHost> values () {
+
+    return hostMap.values();
+  }
+
+  @Override
+  public Iterator<Map.Entry<String, MemcachedHost>> iterator () {
+
+    return hostMap.entrySet().iterator();
+  }
 }

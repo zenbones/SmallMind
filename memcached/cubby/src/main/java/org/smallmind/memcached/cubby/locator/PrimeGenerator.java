@@ -30,9 +30,50 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.memcached.cubby;
+package org.smallmind.memcached.cubby.locator;
 
-public interface KeyLocator {
+public class PrimeGenerator {
 
-  MemcachedHost find (ServerPool serverPool, String key);
+  private static boolean isPrime (int n) {
+
+    if (n <= 1) {
+
+      return false;
+    } else if (n <= 3) {
+
+      return true;
+    } else {
+      if ((n % 2 == 0) || (n % 3 == 0)) {
+
+        return false;
+      } else {
+        for (int i = 5; i * i <= n; i = i + 6) {
+          if ((n % i == 0) || (n % (i + 2) == 0)) {
+
+            return false;
+          }
+        }
+
+        return true;
+      }
+    }
+  }
+
+  public static int nextPrime (int n) {
+
+    if (n <= 1) {
+
+      return 2;
+    } else {
+
+      int prime = n;
+
+      while (true) {
+        if (isPrime(++prime)) {
+
+          return prime;
+        }
+      }
+    }
+  }
 }
