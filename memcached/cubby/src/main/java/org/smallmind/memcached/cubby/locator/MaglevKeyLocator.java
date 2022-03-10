@@ -39,14 +39,18 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
+import io.whitfin.siphash.SipHasher;
+import io.whitfin.siphash.SipHasherContainer;
 import org.smallmind.memcached.cubby.MemcachedHost;
 import org.smallmind.memcached.cubby.NoAvailableHostException;
 import org.smallmind.memcached.cubby.ServerPool;
 import org.smallmind.nutsnbolts.security.EncryptionUtility;
 import org.smallmind.nutsnbolts.security.HashAlgorithm;
+import org.smallmind.nutsnbolts.util.Bytes;
 
 public class MaglevKeyLocator implements KeyLocator {
 
+  private static final SipHasherContainer SIPHASH = SipHasher.container("0123456789ABCDEF".getBytes());
   private final ServerPool serverPool;
   private final HashMap<String, int[]> permutationMap = new HashMap<>();
   private final int permutationSize;
@@ -134,13 +138,13 @@ public class MaglevKeyLocator implements KeyLocator {
 
   @Override
   public MemcachedHost find (String key)
-    throws IOException, NoSuchAlgorithmException {
+    throws IOException {
 
     if (routingMap.isEmpty()) {
       throw new NoAvailableHostException();
     } else {
 
-      return serverPool.get(routingMap.get(new BigInteger(EncryptionUtility.hash(HashAlgorithm.MD5, key.getBytes())).mod(BigInteger.valueOf(longerPermutationSize)).intValue()));
+      return serverPool.get(routingMap.get(new BigInteger(Bytes.getBytes(SIPHASH.hash(key.getBytes()))).mod(BigInteger.valueOf(longerPermutationSize)).intValue()));
     }
   }
 }

@@ -27,6 +27,12 @@
       <scope>runtime</scope>
       <optional>true</optional>
     </dependency>
+    <dependency>
+      <groupId>io.whitfin</groupId>
+      <artifactId>siphash</artifactId>
+      <scope>compile</scope>
+      <optional>true</optional>
+    </dependency>
   </dependencies>
   <build>
     <plugins>
