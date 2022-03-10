@@ -46,11 +46,10 @@ import org.smallmind.nutsnbolts.lang.ClassGate;
 import org.smallmind.nutsnbolts.lang.ClasspathClassGate;
 import org.smallmind.nutsnbolts.lang.GatingClassLoader;
 import org.smallmind.nutsnbolts.time.Stint;
+import org.smallmind.nutsnbolts.util.ComponentStatus;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class MavenScanner {
-
-  private enum State {STARTED, STOPPED}
 
   private final LinkedList<MavenScannerListener> listenerList = new LinkedList<>();
   private final Stint cycleStint;
@@ -58,7 +57,7 @@ public class MavenScanner {
   private final MavenCoordinate[] mavenCoordinates;
   private final ArtifactTag[] artifactTags;
   private ScannerWorker scannerWorker;
-  private State state = State.STOPPED;
+  private ComponentStatus status = ComponentStatus.STOPPED;
 
   public MavenScanner (String repositoryId, boolean offline, Stint cycleStint, MavenCoordinate... mavenCoordinates)
     throws SettingsBuildingException {
@@ -101,7 +100,7 @@ public class MavenScanner {
   public synchronized void start ()
     throws DependencyCollectionException, DependencyResolutionException, ArtifactResolutionException {
 
-    if (state.equals(State.STOPPED)) {
+    if (status.equals(ComponentStatus.STOPPED)) {
 
       Thread workerThread;
 
@@ -111,19 +110,19 @@ public class MavenScanner {
       workerThread.setDaemon(true);
       workerThread.start();
 
-      state = State.STARTED;
+      status = ComponentStatus.STARTED;
     }
   }
 
   public synchronized void stop ()
     throws InterruptedException {
 
-    if (state.equals(State.STARTED)) {
+    if (status.equals(ComponentStatus.STARTED)) {
       if (scannerWorker != null) {
         scannerWorker.stop();
       }
 
-      state = State.STOPPED;
+      status = ComponentStatus.STOPPED;
     }
   }
 
@@ -170,13 +169,6 @@ public class MavenScanner {
         listener.artifactChange(event);
       }
     }
-  }
-
-  @Override
-  protected void finalize ()
-    throws InterruptedException {
-
-    stop();
   }
 
   private class ScannerWorker implements Runnable {

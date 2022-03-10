@@ -83,7 +83,7 @@ public class DefaultKeyLocator implements KeyLocator {
   public MemcachedHost find (ServerPool serverPool, String key)
     throws IOException {
 
-    if (routingArray.length == 0) {
+    if ((routingArray == null) || (routingArray.length == 0)) {
       throw new NoAvailableHostException();
     } else {
 

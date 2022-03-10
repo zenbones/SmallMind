@@ -39,13 +39,13 @@ import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Tag;
 import org.smallmind.claxon.registry.meter.LazyBuilder;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
+import org.smallmind.nutsnbolts.util.ComponentStatus;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class WorkManager<W extends Worker<T>, T> {
+  
 
-  private enum State {STOPPED, STARTING, STARTED, STOPPING}
-
-  private final AtomicReference<State> stateRef = new AtomicReference<>(State.STOPPED);
+  private final AtomicReference<ComponentStatus> statusRef = new AtomicReference<>(ComponentStatus.STOPPED);
   private final WorkQueue<T> workQueue;
   private final Class<W> workerClass;
   private final int concurrencyLimit;
@@ -71,7 +71,7 @@ public class WorkManager<W extends Worker<T>, T> {
   public void startUp (WorkerFactory<W, T> workerFactory)
     throws InterruptedException {
 
-    if (stateRef.compareAndSet(State.STOPPED, State.STARTING)) {
+    if (statusRef.compareAndSet(ComponentStatus.STOPPED, ComponentStatus.STARTING)) {
 
       workers = (W[])Array.newInstance(workerClass, concurrencyLimit);
       for (int index = 0; index < workers.length; index++) {
@@ -82,9 +82,9 @@ public class WorkManager<W extends Worker<T>, T> {
         workerThread.start();
       }
 
-      stateRef.set(State.STARTED);
+      statusRef.set(ComponentStatus.STARTED);
     } else {
-      while (State.STARTING.equals(stateRef.get())) {
+      while (ComponentStatus.STARTING.equals(statusRef.get())) {
         Thread.sleep(100);
       }
     }
@@ -93,7 +93,7 @@ public class WorkManager<W extends Worker<T>, T> {
   public void execute (final T work)
     throws Throwable {
 
-    if (!State.STARTED.equals(stateRef.get())) {
+    if (!ComponentStatus.STARTED.equals(statusRef.get())) {
       throw new WorkManagerException("%s is not in the 'started' state", WorkManager.class.getSimpleName());
     }
 
@@ -110,7 +110,7 @@ public class WorkManager<W extends Worker<T>, T> {
   public void shutDown ()
     throws InterruptedException {
 
-    if (stateRef.compareAndSet(State.STARTED, State.STOPPING)) {
+    if (statusRef.compareAndSet(ComponentStatus.STARTED, ComponentStatus.STOPPING)) {
       for (W worker : workers) {
         try {
           worker.stop();
@@ -118,9 +118,9 @@ public class WorkManager<W extends Worker<T>, T> {
           LoggerManager.getLogger(WorkManager.class).error(exception);
         }
       }
-      stateRef.set(State.STOPPED);
+      statusRef.set(ComponentStatus.STOPPED);
     } else {
-      while (State.STOPPING.equals(stateRef.get())) {
+      while (ComponentStatus.STOPPING.equals(statusRef.get())) {
         Thread.sleep(100);
       }
     }

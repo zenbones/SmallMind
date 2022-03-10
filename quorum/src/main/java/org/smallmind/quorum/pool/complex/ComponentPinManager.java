@@ -47,19 +47,18 @@ import org.smallmind.claxon.registry.meter.LazyBuilder;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.claxon.registry.meter.TachometerBuilder;
 import org.smallmind.nutsnbolts.lang.StackTrace;
+import org.smallmind.nutsnbolts.util.ComponentStatus;
 import org.smallmind.quorum.pool.ComponentPoolException;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class ComponentPinManager<C> {
-
-  private enum State {STOPPED, STARTING, STARTED, STOPPING}
 
   private final ComponentPool<C> componentPool;
   private final HashMap<ComponentInstance<C>, ComponentPin<C>> backingMap = new HashMap<>();
   private final LinkedBlockingQueue<ComponentPin<C>> freeQueue = new LinkedBlockingQueue<>();
   private final ReentrantReadWriteLock backingLock = new ReentrantReadWriteLock();
   private final DeconstructionQueue deconstructionQueue = new DeconstructionQueue();
-  private final AtomicReference<State> stateRef = new AtomicReference<>(State.STOPPED);
+  private final AtomicReference<ComponentStatus> statusRef = new AtomicReference<>(ComponentStatus.STOPPED);
   private final AtomicInteger size = new AtomicInteger(0);
 
   public ComponentPinManager (ComponentPool<C> componentPool) {
@@ -70,7 +69,7 @@ public class ComponentPinManager<C> {
   public void startup ()
     throws ComponentPoolException {
 
-    if (stateRef.compareAndSet(State.STOPPED, State.STARTING)) {
+    if (statusRef.compareAndSet(ComponentStatus.STOPPED, ComponentStatus.STARTING)) {
       deconstructionQueue.startup();
 
       backingLock.writeLock().lock();
@@ -85,14 +84,14 @@ public class ComponentPinManager<C> {
         }
 
         size.set(backingMap.size());
-        stateRef.set(State.STARTED);
+        statusRef.set(ComponentStatus.STARTED);
 
         trackSize();
       } catch (Exception exception) {
         freeQueue.clear();
         backingMap.clear();
         size.set(0);
-        stateRef.set(State.STOPPED);
+        statusRef.set(ComponentStatus.STOPPED);
 
         throw new ComponentPoolException(exception);
       } finally {
@@ -100,7 +99,7 @@ public class ComponentPinManager<C> {
       }
     } else {
       try {
-        while (State.STARTING.equals(stateRef.get())) {
+        while (ComponentStatus.STARTING.equals(statusRef.get())) {
           Thread.sleep(100);
         }
       } catch (InterruptedException interruptedException) {
@@ -112,7 +111,7 @@ public class ComponentPinManager<C> {
   public ComponentPin<C> serve ()
     throws ComponentPoolException {
 
-    if (!State.STARTED.equals(stateRef.get())) {
+    if (!ComponentStatus.STARTED.equals(statusRef.get())) {
       throw new ComponentPoolException("%s is not in the 'started' state", ComponentPool.class.getSimpleName());
     }
 
@@ -162,7 +161,7 @@ public class ComponentPinManager<C> {
   private ComponentPin<C> addComponentPin (boolean forced)
     throws ComponentCreationException, ComponentValidationException {
 
-    if (State.STARTED.equals(stateRef.get())) {
+    if (ComponentStatus.STARTED.equals(statusRef.get())) {
 
       int minPoolSize = componentPool.getComplexPoolConfig().getMinPoolSize();
       int maxPoolSize = componentPool.getComplexPoolConfig().getMaxPoolSize();
@@ -279,9 +278,9 @@ public class ComponentPinManager<C> {
         componentPin.free();
 
         if (componentPin.isTerminated()) {
-          terminate(componentPin.getComponentInstance(), State.STARTED.equals(stateRef.get()), false);
+          terminate(componentPin.getComponentInstance(), ComponentStatus.STARTED.equals(statusRef.get()), false);
         } else {
-          if (State.STARTED.equals(stateRef.get())) {
+          if (ComponentStatus.STARTED.equals(statusRef.get())) {
             try {
               freeQueue.put(componentPin);
             } catch (InterruptedException interruptedException) {
@@ -343,7 +342,7 @@ public class ComponentPinManager<C> {
   public void shutdown ()
     throws ComponentPoolException {
 
-    if (stateRef.compareAndSet(State.STARTED, State.STOPPING)) {
+    if (statusRef.compareAndSet(ComponentStatus.STARTED, ComponentStatus.STOPPING)) {
 
       while (getPoolSize() > 0) {
 
@@ -374,10 +373,10 @@ public class ComponentPinManager<C> {
         LoggerManager.getLogger(ComponentPinManager.class).error(interruptedException);
       }
 
-      stateRef.set(State.STOPPED);
+      statusRef.set(ComponentStatus.STOPPED);
     } else {
       try {
-        while (State.STOPPING.equals(stateRef.get())) {
+        while (ComponentStatus.STOPPING.equals(statusRef.get())) {
           Thread.sleep(100);
         }
       } catch (InterruptedException interruptedException) {

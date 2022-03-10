@@ -32,25 +32,23 @@
  */
 package org.smallmind.memcached.cubby;
 
-import java.util.concurrent.TimeUnit;
-import org.smallmind.nutsnbolts.time.Stint;
-
 public class CubbyMemcachedClient {
 
-  private final Stint timeoutStint;
+  private enum State {STARTED,STOPPED};
+  private final ServerPool serverPool;
+  private final CubbyConfiguration configuration;
 
-  public CubbyMemcachedClient () {
+  public CubbyMemcachedClient (ServerPool serverPool, CubbyConfiguration configuration) {
 
-    this(new Stint(3, TimeUnit.SECONDS));
+    this.serverPool = serverPool;
+    this.configuration = configuration;
   }
 
-  public CubbyMemcachedClient (Stint timeoutStint) {
+  public void start () {
 
-    this.timeoutStint = timeoutStint;
   }
 
-  public Stint getTimeoutStint () {
+  public void stop () {
 
-    return timeoutStint;
   }
 }

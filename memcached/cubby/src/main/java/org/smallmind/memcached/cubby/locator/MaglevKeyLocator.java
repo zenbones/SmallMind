@@ -148,7 +148,7 @@ public class MaglevKeyLocator implements KeyLocator {
   public MemcachedHost find (ServerPool serverPool, String key)
     throws IOException {
 
-    if (routingMap.isEmpty()) {
+    if ((routingMap == null) || routingMap.isEmpty()) {
       throw new NoAvailableHostException();
     } else {
 

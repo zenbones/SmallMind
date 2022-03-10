@@ -42,11 +42,10 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import org.smallmind.nutsnbolts.util.ComponentStatus;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class Juggler<P, R> implements BlackList<R> {
-
-  private enum State {DECONSTRUCTED, INITIALIZED, STARTED, STOPPED}
 
   private final SecureRandom random = new SecureRandom();
   private final JugglingPinFactory<P, R> jugglingPinFactory;
@@ -58,7 +57,7 @@ public class Juggler<P, R> implements BlackList<R> {
   private ArrayList<JugglingPin<R>> sourcePins;
   private ArrayList<JugglingPin<R>> targetPins;
   private ConcurrentSkipListMap<Long, BlacklistEntry<R>> blacklistMap;
-  private State state = State.DECONSTRUCTED;
+  private ComponentStatus status = ComponentStatus.UNINITIALIZED;
 
   public Juggler (Class<P> providerClass, Class<R> resourceClass, int recoveryCheckSeconds, JugglingPinFactory<P, R> jugglingPinFactory, P provider, int size) {
 
@@ -86,7 +85,7 @@ public class Juggler<P, R> implements BlackList<R> {
   public synchronized void initialize ()
     throws JugglerResourceCreationException {
 
-    if (state.equals(State.DECONSTRUCTED)) {
+    if (status.equals(ComponentStatus.UNINITIALIZED)) {
       sourcePins = new ArrayList<>(providers.length);
       targetPins = new ArrayList<>(providers.length);
       blacklistMap = new ConcurrentSkipListMap<>();
@@ -99,7 +98,7 @@ public class Juggler<P, R> implements BlackList<R> {
         sourcePins.add(targetPins.remove(random.nextInt(targetPins.size())));
       }
 
-      state = State.INITIALIZED;
+      status = ComponentStatus.INITIALIZED;
     }
   }
 
@@ -110,7 +109,7 @@ public class Juggler<P, R> implements BlackList<R> {
 
   public synchronized void startup (Method method, Object... args) {
 
-    if (state.equals(State.INITIALIZED)) {
+    if (status.equals(ComponentStatus.INITIALIZED)) {
 
       Thread recoveryThread;
       Iterator<JugglingPin<R>> sourcePinIter = sourcePins.iterator();
@@ -137,14 +136,14 @@ public class Juggler<P, R> implements BlackList<R> {
         recoveryThread.start();
       }
 
-      state = State.STARTED;
+      status = ComponentStatus.STARTED;
     }
   }
 
   public synchronized R pickResource ()
     throws NoAvailableJugglerResourceException {
 
-    if (!(state.equals(State.INITIALIZED) || state.equals(State.STARTED))) {
+    if (!(status.equals(ComponentStatus.INITIALIZED) || status.equals(ComponentStatus.STARTED))) {
       throw new IllegalStateException("Juggler must be in the initialized or started state");
     }
 
@@ -215,7 +214,7 @@ public class Juggler<P, R> implements BlackList<R> {
 
   public synchronized void shutdown (Method method, Object... args) {
 
-    if (state.equals(State.STARTED)) {
+    if (status.equals(ComponentStatus.STARTED)) {
       if (recoveryWorker != null) {
         try {
           recoveryWorker.abort();
@@ -244,7 +243,7 @@ public class Juggler<P, R> implements BlackList<R> {
         }
       }
 
-      state = State.STOPPED;
+      status = ComponentStatus.STOPPED;
     }
   }
 
@@ -255,7 +254,7 @@ public class Juggler<P, R> implements BlackList<R> {
 
   public synchronized void deconstruct (Method method, Object... args) {
 
-    if (state.equals(State.STOPPED)) {
+    if (status.equals(ComponentStatus.STOPPED)) {
       for (JugglingPin<R> pin : sourcePins) {
         try {
           pin.close(method, args);
@@ -264,7 +263,7 @@ public class Juggler<P, R> implements BlackList<R> {
         }
       }
 
-      state = State.DECONSTRUCTED;
+      status = ComponentStatus.UNINITIALIZED;
     }
   }
 
