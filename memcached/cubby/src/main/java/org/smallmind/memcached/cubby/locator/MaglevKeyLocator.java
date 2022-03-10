@@ -46,7 +46,6 @@ import org.smallmind.memcached.cubby.NoAvailableHostException;
 import org.smallmind.memcached.cubby.ServerPool;
 import org.smallmind.nutsnbolts.security.EncryptionUtility;
 import org.smallmind.nutsnbolts.security.HashAlgorithm;
-import org.smallmind.nutsnbolts.util.Bytes;
 
 public class MaglevKeyLocator implements KeyLocator {
 
@@ -55,7 +54,7 @@ public class MaglevKeyLocator implements KeyLocator {
   private final HashMap<String, int[]> permutationMap = new HashMap<>();
   private final int permutationSize;
   private final long longerPermutationSize;
-  private HashMap<Integer, String> routingMap = new HashMap<>();
+  private HashMap<Integer, String> routingMap;
 
   public MaglevKeyLocator (ServerPool serverPool)
     throws NoSuchAlgorithmException {
@@ -144,7 +143,7 @@ public class MaglevKeyLocator implements KeyLocator {
       throw new NoAvailableHostException();
     } else {
 
-      return serverPool.get(routingMap.get(new BigInteger(Bytes.getBytes(SIPHASH.hash(key.getBytes()))).mod(BigInteger.valueOf(longerPermutationSize)).intValue()));
+      return serverPool.get(routingMap.get((int)(SIPHASH.hash(key.getBytes()) % longerPermutationSize)));
     }
   }
 }
