@@ -64,15 +64,27 @@ public class CubbyTest {
     try {
       response = client.send(new SetCommand().setKey("hello").setValue("goodbye"), null);
       System.out.println(response);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    try {
       response = client.send(new GetCommand().setKey("hello").setCas(true), null);
       System.out.println(response);
       Object value = codec.deserialize(response.getValue());
       System.out.println(value);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    Thread.sleep(20000);
+    try {
       response = client.send(new GetCommand().setKey("hello2").setCas(true), null);
       System.out.println(response);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    try {
       response = client.send(new GetCommand().setKey("hello2").setCas(true), null);
       System.out.println(response);
-      //    eventLoop.send(new NoopCommand(new ObjectStreamCodec()));
     } catch (Exception e) {
       e.printStackTrace();
     }

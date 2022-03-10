@@ -46,7 +46,7 @@ public class CubbyConfiguration {
   private KeyTranslator keyTranslator = new DefaultKeyTranslator();
   private long defaultRequestTimeoutSeconds = 3;
   private long connectionTimeoutMilliseconds = 3000;
-  private long resuscitationSeconds = 60;
+  private long resuscitationSeconds = 10;
 
   public CubbyCodec getCodec () {
 
