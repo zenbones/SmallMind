@@ -46,6 +46,7 @@ public class CubbyConfiguration {
   private KeyTranslator keyTranslator = new DefaultKeyTranslator();
   private long defaultRequestTimeoutSeconds = 3;
   private long connectionTimeoutMilliseconds = 3000;
+  private long resuscitationSeconds = 60;
 
   public CubbyCodec getCodec () {
 
@@ -103,6 +104,18 @@ public class CubbyConfiguration {
   public CubbyConfiguration setConnectionTimeoutMilliseconds (long connectionTimeoutMilliseconds) {
 
     this.connectionTimeoutMilliseconds = connectionTimeoutMilliseconds;
+
+    return this;
+  }
+
+  public long getResuscitationSeconds () {
+
+    return resuscitationSeconds;
+  }
+
+  public CubbyConfiguration setResuscitationSeconds (long resuscitationSeconds) {
+
+    this.resuscitationSeconds = resuscitationSeconds;
 
     return this;
   }

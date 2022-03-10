@@ -40,6 +40,8 @@ import org.smallmind.memcached.cubby.translator.KeyTranslator;
 
 public abstract class Command {
 
+  public abstract String getKey ();
+
   public abstract byte[] construct (KeyTranslator keyTranslator, CubbyCodec codec, String opaqueToken)
     throws IOException, CubbyOperationException;
 

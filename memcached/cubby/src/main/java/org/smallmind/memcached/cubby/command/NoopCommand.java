@@ -41,6 +41,12 @@ public class NoopCommand extends Command {
   private static final byte[] bytes = "mn\r\n".getBytes();
 
   @Override
+  public String getKey () {
+
+    return "";
+  }
+
+  @Override
   public Object foobar (Response response) {
 
     return null;

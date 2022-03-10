@@ -38,46 +38,37 @@ import org.smallmind.memcached.cubby.codec.LargeValueCompressingCodec;
 import org.smallmind.memcached.cubby.codec.ObjectStreamCubbyCodec;
 import org.smallmind.memcached.cubby.command.GetCommand;
 import org.smallmind.memcached.cubby.command.SetCommand;
-import org.smallmind.memcached.cubby.locator.KeyLocator;
+import org.smallmind.memcached.cubby.locator.MaglevKeyLocator;
 import org.smallmind.memcached.cubby.translator.DefaultKeyTranslator;
-import org.smallmind.memcached.cubby.translator.KeyTranslator;
 import org.smallmind.memcached.cubby.translator.LargeKeyHashingTranslator;
 
 public class CubbyTest {
 
-  private final ServerPool serverPool;
-  private KeyLocator keyLocator;
-
   public CubbyTest ()
     throws Exception {
 
-    KeyTranslator keyTranslator = new LargeKeyHashingTranslator(new DefaultKeyTranslator());
+    ServerPool serverPool = new ServerPool(new MemcachedHost("0", new InetSocketAddress("localhost", 11211)));
     CubbyCodec codec = new LargeValueCompressingCodec(new ObjectStreamCubbyCodec());
-    CubbyConnection cubbyConnection;
-    MemcachedHost memcachedHost;
-    Thread eventThread;
-
-    serverPool = new ServerPool(memcachedHost = new MemcachedHost("0", new InetSocketAddress("localhost", 11211)));
-
-    eventThread = new Thread(cubbyConnection = new CubbyConnection(serverPool, memcachedHost, keyLocator, 300, 300));
-
-    eventThread.setDaemon(true);
-    eventThread.start();
+    CubbyConfiguration configuration = new CubbyConfiguration()
+      .setCodec(codec)
+      .setKeyLocator(new MaglevKeyLocator())
+      .setKeyTranslator(new LargeKeyHashingTranslator(new DefaultKeyTranslator()));
+    CubbyMemcachedClient client = new CubbyMemcachedClient(serverPool, configuration);
 
     System.out.println("send...");
 
     Response response;
 
     try {
-      response = cubbyConnection.send(new SetCommand().setKey("hello").setValue("goodbye"), keyTranslator, codec, null);
+      response = client.send(new SetCommand().setKey("hello").setValue("goodbye"), null);
       System.out.println(response);
-      response = cubbyConnection.send(new GetCommand().setKey("hello").setCas(true), keyTranslator, codec, null);
+      response = client.send(new GetCommand().setKey("hello").setCas(true), null);
       System.out.println(response);
       Object value = codec.deserialize(response.getValue());
       System.out.println(value);
-      response = cubbyConnection.send(new GetCommand().setKey("hello2").setCas(true), keyTranslator, codec, null);
+      response = client.send(new GetCommand().setKey("hello2").setCas(true), null);
       System.out.println(response);
-      response = cubbyConnection.send(new GetCommand().setKey("hello2").setCas(true), keyTranslator, codec, null);
+      response = client.send(new GetCommand().setKey("hello2").setCas(true), null);
       System.out.println(response);
       //    eventLoop.send(new NoopCommand(new ObjectStreamCodec()));
     } catch (Exception e) {
@@ -95,11 +86,5 @@ public class CubbyTest {
 
   public void start () {
 
-  }
-
-  public void disconnected (MemcachedHost memcachedHost) {
-
-    memcachedHost.setActive(false);
-    keyLocator.updateRouting(serverPool);
   }
 }

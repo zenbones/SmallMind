@@ -32,7 +32,9 @@
  */
 package org.smallmind.memcached.cubby;
 
+import java.io.IOException;
 import java.util.HashMap;
+import org.smallmind.memcached.cubby.command.Command;
 import org.smallmind.nutsnbolts.util.ComponentStatus;
 
 public class CubbyMemcachedClient {
@@ -50,22 +52,40 @@ public class CubbyMemcachedClient {
   }
 
   public synchronized void start ()
-    throws CubbyOperationException {
+    throws InterruptedException, IOException, CubbyOperationException {
 
     if (ComponentStatus.STOPPED.equals(status)) {
 
-      Thread thread = new Thread(serverDefibrillator = new ServerDefibrillator(serverPool, configuration.getKeyLocator(), (int)configuration.getConnectionTimeoutMilliseconds(), configuration.getDefaultRequestTimeoutSeconds()));
-
-      thread.setDaemon(true);
-      thread.start();
-
-      for (MemcachedHost memcachedHost : serverPool.values()) {
-
-      }
+      Thread thread;
 
       configuration.getKeyLocator().installRouting(serverPool);
 
+      for (MemcachedHost memcachedHost : serverPool.values()) {
+
+        CubbyConnection connection;
+
+        connectionMap.put(memcachedHost.getName(), connection = new CubbyConnection(this, memcachedHost, configuration.getKeyTranslator(), configuration.getCodec(), configuration.getConnectionTimeoutMilliseconds(), configuration.getDefaultRequestTimeoutSeconds()));
+        connection.start();
+      }
+
+      thread = new Thread(serverDefibrillator = new ServerDefibrillator(serverPool, configuration.getKeyLocator(), (int)configuration.getConnectionTimeoutMilliseconds(), configuration.getResuscitationSeconds()));
+      thread.setDaemon(true);
+      thread.start();
       status = ComponentStatus.STARTED;
+    }
+  }
+
+  public Response send (Command command, Long timeoutSeconds)
+    throws InterruptedException, IOException, CubbyOperationException {
+
+    CubbyConnection cubbyConnection;
+    String name;
+
+    if ((cubbyConnection = connectionMap.get(name = configuration.getKeyLocator().find(serverPool, command.getKey()).getName())) == null) {
+      throw new CubbyOperationException("Missing connection(%s)", name);
+    } else {
+
+      return cubbyConnection.send(command, timeoutSeconds);
     }
   }
 
@@ -77,9 +97,20 @@ public class CubbyMemcachedClient {
 
       for (MemcachedHost memcachedHost : serverPool.values()) {
 
+        CubbyConnection connection;
+
+        if ((connection = connectionMap.get(memcachedHost.getName())) != null) {
+          connection.stop();
+        }
       }
 
       status = ComponentStatus.STOPPED;
     }
+  }
+
+  public void disconnect (MemcachedHost memcachedHost) {
+
+    memcachedHost.setActive(false);
+    configuration.getKeyLocator().updateRouting(serverPool);
   }
 }

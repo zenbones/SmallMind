@@ -46,7 +46,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.xml.transform.Transformer;
 import org.smallmind.memcached.cubby.codec.CubbyCodec;
 import org.smallmind.memcached.cubby.command.Command;
-import org.smallmind.memcached.cubby.locator.KeyLocator;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
 import org.smallmind.nutsnbolts.time.Stint;
 import org.smallmind.nutsnbolts.util.SelfDestructiveMap;
@@ -56,24 +55,31 @@ public class CubbyConnection implements Runnable {
 
   private final CountDownLatch terminationLatch = new CountDownLatch(1);
   private final AtomicBoolean finished = new AtomicBoolean(false);
-  private final ServerPool serverPool;
+  private final CubbyMemcachedClient client;
   private final MemcachedHost memcachedHost;
-  private final KeyLocator keyLocator;
+  private final KeyTranslator keyTranslator;
+  private final CubbyCodec codec;
   private final SelfDestructiveMap<String, RequestCallback> callbackMap;
   private final LinkedBlockingQueue<byte[]> requestQueue = new LinkedBlockingQueue<>();
   private final TokenGenerator tokenGenerator = new TokenGenerator();
-  private final SocketChannel socketChannel;
-  private final Selector selector;
-  private final SelectionKey selectionKey;
+  private final long connectionTimeoutMilliseconds;
+  private SocketChannel socketChannel;
+  private Selector selector;
+  private SelectionKey selectionKey;
 
-  public CubbyConnection (ServerPool serverPool, MemcachedHost memcachedHost, KeyLocator keyLocator, long connectionTimeoutMilliseconds, long defaultRequestTimeoutSeconds)
-    throws IOException, InterruptedException {
+  public CubbyConnection (CubbyMemcachedClient client, MemcachedHost memcachedHost, KeyTranslator keyTranslator, CubbyCodec codec, long connectionTimeoutMilliseconds, long defaultRequestTimeoutSeconds) {
 
-    this.serverPool = serverPool;
+    this.client = client;
     this.memcachedHost = memcachedHost;
-    this.keyLocator = keyLocator;
+    this.keyTranslator = keyTranslator;
+    this.codec = codec;
+    this.connectionTimeoutMilliseconds = connectionTimeoutMilliseconds;
 
     callbackMap = new SelfDestructiveMap<>(new Stint(defaultRequestTimeoutSeconds, TimeUnit.SECONDS), new Stint(100, TimeUnit.MILLISECONDS));
+  }
+
+  public void start ()
+    throws InterruptedException, IOException {
 
     long start = System.currentTimeMillis();
 
@@ -92,23 +98,6 @@ public class CubbyConnection implements Runnable {
     }
 
     selectionKey = socketChannel.register(selector = Selector.open(), SelectionKey.OP_WRITE);
-  }
-
-  public Response send (Command command, KeyTranslator keyTranslator, CubbyCodec codec, Long timeoutSeconds)
-    throws InterruptedException, IOException, CubbyOperationException {
-
-    RequestCallback requestCallback;
-    String opaqueToken;
-
-    callbackMap.putIfAbsent(opaqueToken = tokenGenerator.next(), requestCallback = new RequestCallback(command), (timeoutSeconds == null) ? null : new Stint(timeoutSeconds, TimeUnit.SECONDS));
-
-    synchronized (requestQueue) {
-      requestQueue.offer(command.construct(keyTranslator, codec, opaqueToken));
-      selectionKey.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
-      selector.wakeup();
-    }
-
-    return requestCallback.getResult();
   }
 
   public void stop ()
@@ -136,10 +125,26 @@ public class CubbyConnection implements Runnable {
       }
 
       if (unexpected) {
-        memcachedHost.setActive(false);
-        keyLocator.updateRouting(serverPool);
+        client.disconnect(memcachedHost);
       }
     }
+  }
+
+  public Response send (Command command, Long timeoutSeconds)
+    throws InterruptedException, IOException, CubbyOperationException {
+
+    RequestCallback requestCallback;
+    String opaqueToken;
+
+    callbackMap.putIfAbsent(opaqueToken = tokenGenerator.next(), requestCallback = new RequestCallback(command), (timeoutSeconds == null) ? null : new Stint(timeoutSeconds, TimeUnit.SECONDS));
+
+    synchronized (requestQueue) {
+      requestQueue.offer(command.construct(keyTranslator, codec, opaqueToken));
+      selectionKey.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+      selector.wakeup();
+    }
+
+    return requestCallback.getResult();
   }
 
   @Override

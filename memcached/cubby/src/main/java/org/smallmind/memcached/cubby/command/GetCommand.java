@@ -43,6 +43,12 @@ public class GetCommand extends Command {
   private String key;
   private boolean cas;
 
+  @Override
+  public String getKey () {
+
+    return key;
+  }
+
   public GetCommand setKey (String key) {
 
     this.key = key;
