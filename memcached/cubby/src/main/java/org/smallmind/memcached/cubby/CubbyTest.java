@@ -44,7 +44,7 @@ import org.smallmind.memcached.cubby.translator.LargeKeyHashingTranslator;
 
 public class CubbyTest {
 
-  public CubbyTest ()
+  public static void main (String... args)
     throws Exception {
 
     ServerPool serverPool = new ServerPool(new MemcachedHost("0", new InetSocketAddress("localhost", 11211)));
@@ -54,6 +54,8 @@ public class CubbyTest {
       .setKeyLocator(new MaglevKeyLocator())
       .setKeyTranslator(new LargeKeyHashingTranslator(new DefaultKeyTranslator()));
     CubbyMemcachedClient client = new CubbyMemcachedClient(serverPool, configuration);
+
+    client.start();
 
     System.out.println("send...");
 
@@ -76,15 +78,5 @@ public class CubbyTest {
     }
 
     Thread.sleep(3000);
-  }
-
-  public static void main (String... args)
-    throws Exception {
-
-    new CubbyTest();
-  }
-
-  public void start () {
-
   }
 }
