@@ -52,9 +52,11 @@ public class CubbyConfiguration {
     return codec;
   }
 
-  public void setCodec (CubbyCodec codec) {
+  public CubbyConfiguration setCodec (CubbyCodec codec) {
 
     this.codec = codec;
+
+    return this;
   }
 
   public KeyLocator getKeyLocator () {
@@ -62,9 +64,11 @@ public class CubbyConfiguration {
     return keyLocator;
   }
 
-  public void setKeyLocator (KeyLocator keyLocator) {
+  public CubbyConfiguration setKeyLocator (KeyLocator keyLocator) {
 
     this.keyLocator = keyLocator;
+
+    return this;
   }
 
   public KeyTranslator getKeyTranslator () {
@@ -72,9 +76,11 @@ public class CubbyConfiguration {
     return keyTranslator;
   }
 
-  public void setKeyTranslator (KeyTranslator keyTranslator) {
+  public CubbyConfiguration setKeyTranslator (KeyTranslator keyTranslator) {
 
     this.keyTranslator = keyTranslator;
+
+    return this;
   }
 
   public long getDefaultRequestTimeoutSeconds () {
@@ -82,9 +88,11 @@ public class CubbyConfiguration {
     return defaultRequestTimeoutSeconds;
   }
 
-  public void setDefaultRequestTimeoutSeconds (long defaultRequestTimeoutSeconds) {
+  public CubbyConfiguration setDefaultRequestTimeoutSeconds (long defaultRequestTimeoutSeconds) {
 
     this.defaultRequestTimeoutSeconds = defaultRequestTimeoutSeconds;
+
+    return this;
   }
 
   public long getConnectionTimeoutMilliseconds () {
@@ -92,8 +100,10 @@ public class CubbyConfiguration {
     return connectionTimeoutMilliseconds;
   }
 
-  public void setConnectionTimeoutMilliseconds (long connectionTimeoutMilliseconds) {
+  public CubbyConfiguration setConnectionTimeoutMilliseconds (long connectionTimeoutMilliseconds) {
 
     this.connectionTimeoutMilliseconds = connectionTimeoutMilliseconds;
+
+    return this;
   }
 }
