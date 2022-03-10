@@ -38,11 +38,15 @@ import org.smallmind.memcached.cubby.codec.LargeValueCompressingCodec;
 import org.smallmind.memcached.cubby.codec.ObjectStreamCubbyCodec;
 import org.smallmind.memcached.cubby.command.GetCommand;
 import org.smallmind.memcached.cubby.command.SetCommand;
+import org.smallmind.memcached.cubby.locator.KeyLocator;
 import org.smallmind.memcached.cubby.translator.DefaultKeyTranslator;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
 import org.smallmind.memcached.cubby.translator.LargeKeyHashingTranslator;
 
 public class CubbyConnection {
+
+  private ServerPool serverPool;
+  private KeyLocator keyLocator;
 
   public CubbyConnection ()
     throws Exception {
@@ -92,6 +96,7 @@ public class CubbyConnection {
 
   public void disconnected (MemcachedHost memcachedHost) {
 
-
+    memcachedHost.setActive(false);
+    keyLocator.updateRouting(serverPool);
   }
 }

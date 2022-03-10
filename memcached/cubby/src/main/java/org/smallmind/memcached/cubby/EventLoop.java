@@ -111,11 +111,11 @@ public class EventLoop implements Runnable {
   public void stop ()
     throws InterruptedException {
 
-    shutdown();
+    shutdown(false);
     terminationLatch.await();
   }
 
-  private void shutdown () {
+  private void shutdown (boolean unexpected) {
 
     if (finished.compareAndSet(false, true)) {
       selectionKey.cancel();
@@ -132,7 +132,9 @@ public class EventLoop implements Runnable {
         LoggerManager.getLogger(Transformer.class).error(ioException);
       }
 
-      connection.disconnected(memcachedHost);
+      if (unexpected) {
+        connection.disconnected(memcachedHost);
+      }
     }
   }
 
@@ -223,7 +225,7 @@ public class EventLoop implements Runnable {
           }
         } catch (IOException ioException) {
           LoggerManager.getLogger(EventLoop.class).error(ioException);
-          shutdown();
+          shutdown(true);
         }
       }
     } finally {
