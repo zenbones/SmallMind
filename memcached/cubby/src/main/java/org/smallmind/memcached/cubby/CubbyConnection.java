@@ -67,15 +67,15 @@ public class CubbyConnection implements Runnable {
   private Selector selector;
   private SelectionKey selectionKey;
 
-  public CubbyConnection (CubbyMemcachedClient client, MemcachedHost memcachedHost, KeyTranslator keyTranslator, CubbyCodec codec, long connectionTimeoutMilliseconds, long defaultRequestTimeoutSeconds) {
+  public CubbyConnection (CubbyMemcachedClient client, CubbyConfiguration configuration, MemcachedHost memcachedHost) {
 
     this.client = client;
     this.memcachedHost = memcachedHost;
-    this.keyTranslator = keyTranslator;
-    this.codec = codec;
-    this.connectionTimeoutMilliseconds = connectionTimeoutMilliseconds;
+    this.keyTranslator = configuration.getKeyTranslator();
+    this.codec = configuration.getCodec();
+    this.connectionTimeoutMilliseconds = configuration.getConnectionTimeoutMilliseconds();
 
-    callbackMap = new SelfDestructiveMap<>(new Stint(defaultRequestTimeoutSeconds, TimeUnit.SECONDS), new Stint(100, TimeUnit.MILLISECONDS));
+    callbackMap = new SelfDestructiveMap<>(new Stint(configuration.getDefaultRequestTimeoutSeconds(), TimeUnit.SECONDS), new Stint(100, TimeUnit.MILLISECONDS));
   }
 
   public void start ()

@@ -62,7 +62,7 @@ public class CubbyMemcachedClient {
 
       configuration.getKeyLocator().installRouting(serverPool);
 
-      defibrillatorThread = new Thread(serverDefibrillator = new ServerDefibrillator(this, serverPool, (int)configuration.getConnectionTimeoutMilliseconds(), configuration.getResuscitationSeconds()));
+      defibrillatorThread = new Thread(serverDefibrillator = new ServerDefibrillator(this, configuration, serverPool));
       defibrillatorThread.setDaemon(true);
       defibrillatorThread.start();
 
@@ -139,7 +139,7 @@ public class CubbyMemcachedClient {
 
     lock.writeLock().lock();
     try {
-      connectionMap.put(memcachedHost.getName(), connection = new CubbyConnection(this, memcachedHost, configuration.getKeyTranslator(), configuration.getCodec(), configuration.getConnectionTimeoutMilliseconds(), configuration.getDefaultRequestTimeoutSeconds()));
+      connectionMap.put(memcachedHost.getName(), connection = new CubbyConnection(this, configuration, memcachedHost));
     } finally {
       lock.writeLock().unlock();
     }

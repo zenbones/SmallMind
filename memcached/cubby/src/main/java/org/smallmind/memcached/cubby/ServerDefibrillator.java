@@ -48,12 +48,13 @@ public class ServerDefibrillator implements Runnable {
   private final long resuscitationSeconds;
   private final int connectionTimeoutMilliseconds;
 
-  public ServerDefibrillator (CubbyMemcachedClient client, ServerPool serverPool, int connectionTimeoutMilliseconds, long resuscitationSeconds) {
+  public ServerDefibrillator (CubbyMemcachedClient client, CubbyConfiguration configuration, ServerPool serverPool) {
 
     this.client = client;
     this.serverPool = serverPool;
-    this.connectionTimeoutMilliseconds = connectionTimeoutMilliseconds;
-    this.resuscitationSeconds = resuscitationSeconds;
+
+    this.connectionTimeoutMilliseconds = (int)configuration.getConnectionTimeoutMilliseconds();
+    this.resuscitationSeconds = configuration.getResuscitationSeconds();
   }
 
   public void stop ()

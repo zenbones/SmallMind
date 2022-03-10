@@ -36,40 +36,6 @@ import java.io.IOException;
 
 public class ResponseParser {
 
-  /*
-  - "HD" (STORED), to indicate success.
-
-- "NS" (NOT_STORED), to indicate the data was not stored, but not
-because of an error.
-
-- "EX" (EXISTS), to indicate that the item you are trying to store with
-CAS semantics has been modified since you last fetched it.
-
-- "NF" (NOT_FOUND), to indicate that the item you are trying to store
-with CAS semantics did not exist.
-
-
-  EN
-  HD
-  VA
-
-  - "NF" (NOT_FOUND), to indicate that the item with this key was not found.
-
-- "EX" (EXISTS), to indicate that the supplied CAS token does not match the
-  stored item.
-
-- "HD" to indicate success
-
-- "NF" (NOT_FOUND), to indicate that the item with this key was not found.
-
-- "NS" (NOT_STORED), to indicate that the item was not created as requested
-  after a miss.
-
-- "EX" (EXISTS), to indicate that the supplied CAS token does not match the
-  stored item.
-
-   */
-
   public static Response parse (StringBuilder responseBuilder)
     throws IOException {
 

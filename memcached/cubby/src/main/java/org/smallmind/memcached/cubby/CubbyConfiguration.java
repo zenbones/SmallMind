@@ -47,6 +47,7 @@ public class CubbyConfiguration {
   private long defaultRequestTimeoutSeconds = 3;
   private long connectionTimeoutMilliseconds = 3000;
   private long resuscitationSeconds = 10;
+  private int connectionsPerHost = 1;
 
   public CubbyCodec getCodec () {
 
@@ -116,6 +117,18 @@ public class CubbyConfiguration {
   public CubbyConfiguration setResuscitationSeconds (long resuscitationSeconds) {
 
     this.resuscitationSeconds = resuscitationSeconds;
+
+    return this;
+  }
+
+  public int getConnectionsPerHost () {
+
+    return connectionsPerHost;
+  }
+
+  public CubbyConfiguration setConnectionsPerHost (int connectionsPerHost) {
+
+    this.connectionsPerHost = connectionsPerHost;
 
     return this;
   }
