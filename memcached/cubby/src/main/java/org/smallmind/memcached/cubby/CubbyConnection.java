@@ -60,19 +60,23 @@ public class CubbyConnection {
 
     Response response;
 
-    response = eventLoop.send(new SetCommand().setKey("hello").setValue("goodbye"), keyTranslator, codec, null);
-    System.out.println(response);
-    response = eventLoop.send(new GetCommand().setKey("hello").setCas(true), keyTranslator, codec, null);
-    System.out.println(response);
-    Object value = codec.deserialize(response.getValue());
-    System.out.println(value);
-    response = eventLoop.send(new GetCommand().setKey("hello2").setCas(true), keyTranslator, codec, null);
-    System.out.println(response);
-    response = eventLoop.send(new GetCommand().setKey("hello2").setCas(true), keyTranslator, codec, null);
-    System.out.println(response);
-    //    eventLoop.send(new NoopCommand(new ObjectStreamCodec()));
+    try {
+      response = eventLoop.send(new SetCommand().setKey("hello").setValue("goodbye"), keyTranslator, codec, null);
+      System.out.println(response);
+      response = eventLoop.send(new GetCommand().setKey("hello").setCas(true), keyTranslator, codec, null);
+      System.out.println(response);
+      Object value = codec.deserialize(response.getValue());
+      System.out.println(value);
+      response = eventLoop.send(new GetCommand().setKey("hello2").setCas(true), keyTranslator, codec, null);
+      System.out.println(response);
+      response = eventLoop.send(new GetCommand().setKey("hello2").setCas(true), keyTranslator, codec, null);
+      System.out.println(response);
+      //    eventLoop.send(new NoopCommand(new ObjectStreamCodec()));
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
 
-    Thread.sleep(3000);
+    Thread.sleep(300000);
   }
 
   public static void main (String... args)
@@ -86,6 +90,6 @@ public class CubbyConnection {
   }
 
   public void disconnected () {
-
+// deactivate
   }
 }

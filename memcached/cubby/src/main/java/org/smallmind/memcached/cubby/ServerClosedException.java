@@ -30,16 +30,10 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.memcached.cubby.locator;
+package org.smallmind.memcached.cubby;
 
-import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
-import org.smallmind.memcached.cubby.MemcachedHost;
+import org.smallmind.nutsnbolts.io.FormattedIOException;
 
-public interface KeyLocator {
+public class ServerClosedException extends FormattedIOException {
 
-  void updateRouting ();
-
-  MemcachedHost find (String key)
-    throws IOException, NoSuchAlgorithmException;
 }

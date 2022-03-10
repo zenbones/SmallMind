@@ -158,9 +158,14 @@ public class EventLoop implements Runnable {
                 if (!selectionKey.isValid()) {
                   throw new InvalidSelectionKeyException();
                 } else {
-                  if (selectionKey.isReadable() && selectionKey.channel().isOpen()) {
+                  if (selectionKey.isReadable()) {
+
+                    int bytesRead;
+
                     byteBuffer.clear();
-                    if (((SocketChannel)selectionKey.channel()).read(byteBuffer) > 0) {
+                    if ((bytesRead = ((SocketChannel)selectionKey.channel()).read(byteBuffer)) < 0) {
+                      throw new ServerClosedException();
+                    } else if (bytesRead > 0) {
                       byteBuffer.flip();
                       do {
 
@@ -177,7 +182,7 @@ public class EventLoop implements Runnable {
                       } while (byteBuffer.remaining() > 0);
                     }
                   }
-                  if (selectionKey.isWritable() && selectionKey.channel().isOpen()) {
+                  if (selectionKey.isWritable()) {
 
                     int totalBytesWritten = 0;
                     boolean complete = true;

@@ -136,6 +136,11 @@ public class MaglevKeyLocator implements KeyLocator {
   }
 
   @Override
+  public void updateRouting () {
+    
+  }
+
+  @Override
   public MemcachedHost find (String key)
     throws IOException {
 

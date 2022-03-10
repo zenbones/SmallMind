@@ -34,6 +34,7 @@ package org.smallmind.memcached.cubby;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import org.smallmind.scribe.pen.LoggerManager;
 
 public class ResponseReader {
 
@@ -96,8 +97,7 @@ public class ResponseReader {
                   return response;
                 }
               } catch (IOException ioException) {
-                ioException.printStackTrace();
-//              LoggerManager.getLogger(EventLoop.class).error(ioException);
+                LoggerManager.getLogger(EventLoop.class).error(ioException);
               } finally {
                 complete = false;
                 responseBuilder = new StringBuilder();
