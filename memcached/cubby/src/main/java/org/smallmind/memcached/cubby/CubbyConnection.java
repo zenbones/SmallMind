@@ -32,6 +32,7 @@
  */
 package org.smallmind.memcached.cubby;
 
+import java.net.InetSocketAddress;
 import org.smallmind.memcached.cubby.codec.CubbyCodec;
 import org.smallmind.memcached.cubby.codec.LargeValueCompressingCodec;
 import org.smallmind.memcached.cubby.codec.ObjectStreamCubbyCodec;
@@ -51,7 +52,7 @@ public class CubbyConnection {
     EventLoop eventLoop;
     Thread eventThread;
 
-    eventThread = new Thread(eventLoop = new EventLoop(this, "localhost", 11211, 300, 300));
+    eventThread = new Thread(eventLoop = new EventLoop(this, new MemcachedHost("0", new InetSocketAddress("localhost", 11211)), 300, 300));
 
     eventThread.setDaemon(true);
     eventThread.start();
@@ -76,7 +77,7 @@ public class CubbyConnection {
       e.printStackTrace();
     }
 
-    Thread.sleep(300000);
+    Thread.sleep(3000);
   }
 
   public static void main (String... args)
@@ -89,7 +90,8 @@ public class CubbyConnection {
 
   }
 
-  public void disconnected () {
-// deactivate
+  public void disconnected (MemcachedHost memcachedHost) {
+
+
   }
 }

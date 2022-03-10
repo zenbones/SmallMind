@@ -32,6 +32,68 @@
  */
 package org.smallmind.memcached.cubby;
 
+import org.smallmind.memcached.cubby.codec.CubbyCodec;
+import org.smallmind.memcached.cubby.codec.ObjectStreamCubbyCodec;
+import org.smallmind.memcached.cubby.locator.DefaultKeyLocator;
+import org.smallmind.memcached.cubby.locator.KeyLocator;
+import org.smallmind.memcached.cubby.translator.DefaultKeyTranslator;
+import org.smallmind.memcached.cubby.translator.KeyTranslator;
+
 public class CubbyConfiguration {
 
+  private CubbyCodec codec = new ObjectStreamCubbyCodec();
+  private KeyLocator keyLocator = new DefaultKeyLocator();
+  private KeyTranslator keyTranslator = new DefaultKeyTranslator();
+  private long defaultRequestTimeoutSeconds = 3;
+  private long connectionTimeoutMilliseconds = 3000;
+
+  public CubbyCodec getCodec () {
+
+    return codec;
+  }
+
+  public void setCodec (CubbyCodec codec) {
+
+    this.codec = codec;
+  }
+
+  public KeyLocator getKeyLocator () {
+
+    return keyLocator;
+  }
+
+  public void setKeyLocator (KeyLocator keyLocator) {
+
+    this.keyLocator = keyLocator;
+  }
+
+  public KeyTranslator getKeyTranslator () {
+
+    return keyTranslator;
+  }
+
+  public void setKeyTranslator (KeyTranslator keyTranslator) {
+
+    this.keyTranslator = keyTranslator;
+  }
+
+  public long getDefaultRequestTimeoutSeconds () {
+
+    return defaultRequestTimeoutSeconds;
+  }
+
+  public void setDefaultRequestTimeoutSeconds (long defaultRequestTimeoutSeconds) {
+
+    this.defaultRequestTimeoutSeconds = defaultRequestTimeoutSeconds;
+  }
+
+  public long getConnectionTimeoutMilliseconds () {
+
+    return connectionTimeoutMilliseconds;
+  }
+
+  public void setConnectionTimeoutMilliseconds (long connectionTimeoutMilliseconds) {
+
+    this.connectionTimeoutMilliseconds = connectionTimeoutMilliseconds;
+  }
 }

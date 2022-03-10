@@ -35,11 +35,15 @@ package org.smallmind.memcached.cubby.locator;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import org.smallmind.memcached.cubby.MemcachedHost;
+import org.smallmind.memcached.cubby.ServerPool;
 
 public interface KeyLocator {
 
-  void updateRouting ();
+  void installRouting (ServerPool serverPool)
+    throws NoSuchAlgorithmException;
 
-  MemcachedHost find (String key)
+  void updateRouting (ServerPool serverPool);
+
+  MemcachedHost find (ServerPool serverPool, String key)
     throws IOException, NoSuchAlgorithmException;
 }

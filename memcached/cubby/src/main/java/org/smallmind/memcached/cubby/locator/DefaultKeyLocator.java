@@ -41,15 +41,7 @@ import org.smallmind.memcached.cubby.ServerPool;
 
 public class DefaultKeyLocator implements KeyLocator {
 
-  private final ServerPool serverPool;
   private String[] routingArray;
-
-  public DefaultKeyLocator (ServerPool serverPool) {
-
-    this.serverPool = serverPool;
-
-    routingArray = generateRoutingArray(serverPool);
-  }
 
   private String[] generateRoutingArray (ServerPool serverPool) {
 
@@ -76,12 +68,19 @@ public class DefaultKeyLocator implements KeyLocator {
   }
 
   @Override
-  public void updateRouting () {
+  public void installRouting (ServerPool serverPool) {
 
+    updateRouting(serverPool);
   }
 
   @Override
-  public MemcachedHost find (String key)
+  public void updateRouting (ServerPool serverPool) {
+
+    routingArray = generateRoutingArray(serverPool);
+  }
+
+  @Override
+  public MemcachedHost find (ServerPool serverPool, String key)
     throws IOException {
 
     if (routingArray.length == 0) {

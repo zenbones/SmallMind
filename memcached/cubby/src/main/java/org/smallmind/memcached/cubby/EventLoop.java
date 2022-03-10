@@ -33,7 +33,6 @@
 package org.smallmind.memcached.cubby;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
@@ -57,20 +56,21 @@ public class EventLoop implements Runnable {
   private final CountDownLatch terminationLatch = new CountDownLatch(1);
   private final AtomicBoolean finished = new AtomicBoolean(false);
   private final CubbyConnection connection;
-  private final SelfDestructiveMap<String, RequestCallback> callbackMap = new SelfDestructiveMap<>(new Stint(3, TimeUnit.SECONDS), new Stint(100, TimeUnit.MILLISECONDS));
+  private final MemcachedHost memcachedHost;
+  private final SelfDestructiveMap<String, RequestCallback> callbackMap;
   private final LinkedBlockingQueue<byte[]> requestQueue = new LinkedBlockingQueue<>();
   private final TokenGenerator tokenGenerator = new TokenGenerator();
   private final SocketChannel socketChannel;
   private final Selector selector;
   private final SelectionKey selectionKey;
-  private final Stint defaultTimeoutStint;
 
-  public EventLoop (CubbyConnection connection, String host, int port, long connectionTimeout, long defaultRequestTimeout)
+  public EventLoop (CubbyConnection connection, MemcachedHost memcachedHost, long connectionTimeoutMilliseconds, long defaultRequestTimeoutSeconds)
     throws IOException, InterruptedException {
 
     this.connection = connection;
+    this.memcachedHost = memcachedHost;
 
-    defaultTimeoutStint = new Stint(defaultRequestTimeout, TimeUnit.MILLISECONDS);
+    callbackMap = new SelfDestructiveMap<>(new Stint(defaultRequestTimeoutSeconds, TimeUnit.SECONDS), new Stint(100, TimeUnit.MILLISECONDS));
 
     long start = System.currentTimeMillis();
 
@@ -78,9 +78,9 @@ public class EventLoop implements Runnable {
       .setOption(StandardSocketOptions.SO_KEEPALIVE, true)
       .setOption(StandardSocketOptions.TCP_NODELAY, true);
     socketChannel.configureBlocking(false);
-    socketChannel.connect(new InetSocketAddress(host, port));
+    socketChannel.connect(memcachedHost.getAddress());
 
-    while ((!socketChannel.finishConnect()) && (System.currentTimeMillis() - start) < connectionTimeout) {
+    while ((!socketChannel.finishConnect()) && (System.currentTimeMillis() - start) < connectionTimeoutMilliseconds) {
       Thread.sleep(100);
     }
 
@@ -91,13 +91,13 @@ public class EventLoop implements Runnable {
     selectionKey = socketChannel.register(selector = Selector.open(), SelectionKey.OP_WRITE);
   }
 
-  public Response send (Command command, KeyTranslator keyTranslator, CubbyCodec codec, Long timeout)
+  public Response send (Command command, KeyTranslator keyTranslator, CubbyCodec codec, Long timeoutSeconds)
     throws InterruptedException, IOException {
 
     RequestCallback requestCallback;
     String opaqueToken;
 
-    callbackMap.putIfAbsent(opaqueToken = tokenGenerator.next(), requestCallback = new RequestCallback(command), (timeout == null) ? defaultTimeoutStint : new Stint(timeout, TimeUnit.MILLISECONDS));
+    callbackMap.putIfAbsent(opaqueToken = tokenGenerator.next(), requestCallback = new RequestCallback(command), (timeoutSeconds == null) ? null : new Stint(timeoutSeconds, TimeUnit.SECONDS));
 
     synchronized (requestQueue) {
       requestQueue.offer(command.construct(keyTranslator, codec, opaqueToken));
@@ -132,7 +132,7 @@ public class EventLoop implements Runnable {
         LoggerManager.getLogger(Transformer.class).error(ioException);
       }
 
-      connection.disconnected();
+      connection.disconnected(memcachedHost);
     }
   }
 

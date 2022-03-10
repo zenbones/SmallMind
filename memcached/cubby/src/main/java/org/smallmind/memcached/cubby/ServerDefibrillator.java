@@ -83,7 +83,7 @@ public class ServerDefibrillator implements Runnable {
           }
 
           if (changed) {
-            keyLocator.updateRouting();
+            keyLocator.updateRouting(serverPool);
           }
         }
       }

@@ -50,39 +50,20 @@ import org.smallmind.nutsnbolts.security.HashAlgorithm;
 public class MaglevKeyLocator implements KeyLocator {
 
   private static final SipHasherContainer SIPHASH = SipHasher.container("0123456789ABCDEF".getBytes());
-  private final ServerPool serverPool;
   private final HashMap<String, int[]> permutationMap = new HashMap<>();
-  private final int permutationSize;
-  private final long longerPermutationSize;
+  private final int virtualHostCount;
   private HashMap<Integer, String> routingMap;
+  private int permutationSize;
+  private long longerPermutationSize;
 
-  public MaglevKeyLocator (ServerPool serverPool)
-    throws NoSuchAlgorithmException {
+  public MaglevKeyLocator () {
 
-    this(serverPool, 100);
+    this(100);
   }
 
-  public MaglevKeyLocator (ServerPool serverPool, int virtualHostCount)
-    throws NoSuchAlgorithmException {
+  public MaglevKeyLocator (int virtualHostCount) {
 
-    this.serverPool = serverPool;
-
-    permutationSize = PrimeGenerator.nextPrime(serverPool.size() * virtualHostCount);
-    longerPermutationSize = permutationSize;
-
-    for (String name : serverPool.keySet()) {
-
-      int[] permutations;
-      int offset = new BigInteger(EncryptionUtility.hash(HashAlgorithm.SHA_256, name.getBytes())).mod(BigInteger.valueOf(longerPermutationSize)).intValue();
-      int skip = new BigInteger(EncryptionUtility.hash(HashAlgorithm.SHA3_256, name.getBytes())).mod(BigInteger.valueOf(longerPermutationSize - 1)).intValue() + 1;
-
-      permutationMap.put(name, permutations = new int[permutationSize]);
-      for (int index = 0; index < permutationSize; index++) {
-        permutations[index] = (offset + (index * skip)) % permutationSize;
-      }
-    }
-
-    routingMap = generateRoutingMap(serverPool);
+    this.virtualHostCount = virtualHostCount;
   }
 
   private HashMap<Integer, String> generateRoutingMap (ServerPool serverPool) {
@@ -136,12 +117,35 @@ public class MaglevKeyLocator implements KeyLocator {
   }
 
   @Override
-  public void updateRouting () {
-    
+  public void installRouting (ServerPool serverPool)
+    throws NoSuchAlgorithmException {
+
+    permutationSize = PrimeGenerator.nextPrime(serverPool.size() * virtualHostCount);
+    longerPermutationSize = permutationSize;
+
+    for (String name : serverPool.keySet()) {
+
+      int[] permutations;
+      int offset = new BigInteger(EncryptionUtility.hash(HashAlgorithm.SHA_256, name.getBytes())).mod(BigInteger.valueOf(longerPermutationSize)).intValue();
+      int skip = new BigInteger(EncryptionUtility.hash(HashAlgorithm.SHA3_256, name.getBytes())).mod(BigInteger.valueOf(longerPermutationSize - 1)).intValue() + 1;
+
+      permutationMap.put(name, permutations = new int[permutationSize]);
+      for (int index = 0; index < permutationSize; index++) {
+        permutations[index] = (offset + (index * skip)) % permutationSize;
+      }
+    }
+
+    updateRouting(serverPool);
   }
 
   @Override
-  public MemcachedHost find (String key)
+  public void updateRouting (ServerPool serverPool) {
+
+    routingMap = generateRoutingMap(serverPool);
+  }
+
+  @Override
+  public MemcachedHost find (ServerPool serverPool, String key)
     throws IOException {
 
     if (routingMap.isEmpty()) {
