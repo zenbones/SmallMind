@@ -32,11 +32,14 @@
  */
 package org.smallmind.memcached.cubby;
 
+import org.smallmind.nutsnbolts.util.ComponentStatus;
+
 public class CubbyMemcachedClient {
 
-  private enum State {STARTED,STOPPED};
   private final ServerPool serverPool;
   private final CubbyConfiguration configuration;
+  private ServerDefibrillator serverDefibrillator;
+  private ComponentStatus status = ComponentStatus.STOPPED;
 
   public CubbyMemcachedClient (ServerPool serverPool, CubbyConfiguration configuration) {
 
@@ -44,11 +47,34 @@ public class CubbyMemcachedClient {
     this.configuration = configuration;
   }
 
-  public void start () {
+  public synchronized void start () {
 
+    if (ComponentStatus.STOPPED.equals(status)) {
+
+      Thread thread = new Thread(serverDefibrillator = new ServerDefibrillator(serverPool, configuration.getKeyLocator(), (int)configuration.getConnectionTimeoutMilliseconds(), configuration.getDefaultRequestTimeoutSeconds()));
+
+      thread.setDaemon(true);
+      thread.start();
+
+      for (MemcachedHost memcachedHost : serverPool.values()) {
+
+      }
+
+      status = ComponentStatus.STARTED;
+    }
   }
 
-  public void stop () {
+  public synchronized void stop ()
+    throws InterruptedException {
 
+    if (ComponentStatus.STARTED.equals(status)) {
+      serverDefibrillator.stop();
+
+      for (MemcachedHost memcachedHost : serverPool.values()) {
+
+      }
+
+      status = ComponentStatus.STOPPED;
+    }
   }
 }

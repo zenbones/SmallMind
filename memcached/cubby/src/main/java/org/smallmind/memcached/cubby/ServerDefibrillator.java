@@ -46,13 +46,13 @@ public class ServerDefibrillator implements Runnable {
   private final ServerPool serverPool;
   private final KeyLocator keyLocator;
   private final long resuscitationSeconds;
-  private final int connectionTimeout;
+  private final int connectionTimeoutMilliseconds;
 
-  public ServerDefibrillator (ServerPool serverPool, KeyLocator keyLocator, int connectionTimeout, long resuscitationSeconds) {
+  public ServerDefibrillator (ServerPool serverPool, KeyLocator keyLocator, int connectionTimeoutMilliseconds, long resuscitationSeconds) {
 
     this.serverPool = serverPool;
     this.keyLocator = keyLocator;
-    this.connectionTimeout = connectionTimeout;
+    this.connectionTimeoutMilliseconds = connectionTimeoutMilliseconds;
     this.resuscitationSeconds = resuscitationSeconds;
   }
 
@@ -74,7 +74,7 @@ public class ServerDefibrillator implements Runnable {
         for (MemcachedHost memcachedHost : serverPool.values()) {
           if (!memcachedHost.isActive()) {
             try (Socket socket = new Socket()) {
-              socket.connect(memcachedHost.getAddress(), connectionTimeout);
+              socket.connect(memcachedHost.getAddress(), connectionTimeoutMilliseconds);
               memcachedHost.setActive(true);
               changed = true;
             } catch (IOException ioException) {

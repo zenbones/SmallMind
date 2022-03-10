@@ -32,71 +32,208 @@
  */
 package org.smallmind.memcached.cubby;
 
-import java.net.InetSocketAddress;
+import java.io.IOException;
+import java.net.StandardSocketOptions;
+import java.nio.ByteBuffer;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.channels.SocketChannel;
+import java.util.Iterator;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import javax.xml.transform.Transformer;
 import org.smallmind.memcached.cubby.codec.CubbyCodec;
-import org.smallmind.memcached.cubby.codec.LargeValueCompressingCodec;
-import org.smallmind.memcached.cubby.codec.ObjectStreamCubbyCodec;
-import org.smallmind.memcached.cubby.command.GetCommand;
-import org.smallmind.memcached.cubby.command.SetCommand;
+import org.smallmind.memcached.cubby.command.Command;
 import org.smallmind.memcached.cubby.locator.KeyLocator;
-import org.smallmind.memcached.cubby.translator.DefaultKeyTranslator;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
-import org.smallmind.memcached.cubby.translator.LargeKeyHashingTranslator;
+import org.smallmind.nutsnbolts.time.Stint;
+import org.smallmind.nutsnbolts.util.SelfDestructiveMap;
+import org.smallmind.scribe.pen.LoggerManager;
 
-public class CubbyConnection {
+public class CubbyConnection implements Runnable {
 
-  private ServerPool serverPool;
-  private KeyLocator keyLocator;
+  private final CountDownLatch terminationLatch = new CountDownLatch(1);
+  private final AtomicBoolean finished = new AtomicBoolean(false);
+  private final ServerPool serverPool;
+  private final MemcachedHost memcachedHost;
+  private final KeyLocator keyLocator;
+  private final SelfDestructiveMap<String, RequestCallback> callbackMap;
+  private final LinkedBlockingQueue<byte[]> requestQueue = new LinkedBlockingQueue<>();
+  private final TokenGenerator tokenGenerator = new TokenGenerator();
+  private final SocketChannel socketChannel;
+  private final Selector selector;
+  private final SelectionKey selectionKey;
 
-  public CubbyConnection ()
-    throws Exception {
+  public CubbyConnection (ServerPool serverPool, MemcachedHost memcachedHost, KeyLocator keyLocator, long connectionTimeoutMilliseconds, long defaultRequestTimeoutSeconds)
+    throws IOException, InterruptedException {
 
-    KeyTranslator keyTranslator = new LargeKeyHashingTranslator(new DefaultKeyTranslator());
-    CubbyCodec codec = new LargeValueCompressingCodec(new ObjectStreamCubbyCodec());
-    EventLoop eventLoop;
-    Thread eventThread;
+    this.serverPool = serverPool;
+    this.memcachedHost = memcachedHost;
+    this.keyLocator = keyLocator;
 
-    eventThread = new Thread(eventLoop = new EventLoop(this, new MemcachedHost("0", new InetSocketAddress("localhost", 11211)), 300, 300));
+    callbackMap = new SelfDestructiveMap<>(new Stint(defaultRequestTimeoutSeconds, TimeUnit.SECONDS), new Stint(100, TimeUnit.MILLISECONDS));
 
-    eventThread.setDaemon(true);
-    eventThread.start();
+    long start = System.currentTimeMillis();
 
-    System.out.println("send...");
+    socketChannel = SocketChannel.open()
+      .setOption(StandardSocketOptions.SO_KEEPALIVE, true)
+      .setOption(StandardSocketOptions.TCP_NODELAY, true);
+    socketChannel.configureBlocking(false);
+    socketChannel.connect(memcachedHost.getAddress());
 
-    Response response;
-
-    try {
-      response = eventLoop.send(new SetCommand().setKey("hello").setValue("goodbye"), keyTranslator, codec, null);
-      System.out.println(response);
-      response = eventLoop.send(new GetCommand().setKey("hello").setCas(true), keyTranslator, codec, null);
-      System.out.println(response);
-      Object value = codec.deserialize(response.getValue());
-      System.out.println(value);
-      response = eventLoop.send(new GetCommand().setKey("hello2").setCas(true), keyTranslator, codec, null);
-      System.out.println(response);
-      response = eventLoop.send(new GetCommand().setKey("hello2").setCas(true), keyTranslator, codec, null);
-      System.out.println(response);
-      //    eventLoop.send(new NoopCommand(new ObjectStreamCodec()));
-    } catch (Exception e) {
-      e.printStackTrace();
+    while ((!socketChannel.finishConnect()) && (System.currentTimeMillis() - start) < connectionTimeoutMilliseconds) {
+      Thread.sleep(100);
     }
 
-    Thread.sleep(3000);
+    if (socketChannel.isConnectionPending()) {
+      throw new ConnectionTimeoutException();
+    }
+
+    selectionKey = socketChannel.register(selector = Selector.open(), SelectionKey.OP_WRITE);
   }
 
-  public static void main (String... args)
-    throws Exception {
+  public Response send (Command command, KeyTranslator keyTranslator, CubbyCodec codec, Long timeoutSeconds)
+    throws InterruptedException, IOException {
 
-    new CubbyConnection();
+    RequestCallback requestCallback;
+    String opaqueToken;
+
+    callbackMap.putIfAbsent(opaqueToken = tokenGenerator.next(), requestCallback = new RequestCallback(command), (timeoutSeconds == null) ? null : new Stint(timeoutSeconds, TimeUnit.SECONDS));
+
+    synchronized (requestQueue) {
+      requestQueue.offer(command.construct(keyTranslator, codec, opaqueToken));
+      selectionKey.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+      selector.wakeup();
+    }
+
+    return requestCallback.getResult();
   }
 
-  public void start () {
+  public void stop ()
+    throws InterruptedException {
 
+    shutdown(false);
+    terminationLatch.await();
   }
 
-  public void disconnected (MemcachedHost memcachedHost) {
+  private void shutdown (boolean unexpected) {
 
-    memcachedHost.setActive(false);
-    keyLocator.updateRouting(serverPool);
+    if (finished.compareAndSet(false, true)) {
+      selectionKey.cancel();
+
+      try {
+        selector.close();
+      } catch (IOException ioException) {
+        LoggerManager.getLogger(Transformer.class).error(ioException);
+      }
+
+      try {
+        socketChannel.close();
+      } catch (IOException ioException) {
+        LoggerManager.getLogger(Transformer.class).error(ioException);
+      }
+
+      if (unexpected) {
+        memcachedHost.setActive(false);
+        keyLocator.updateRouting(serverPool);
+      }
+    }
+  }
+
+  @Override
+  public void run () {
+
+    ByteBuffer byteBuffer = ByteBuffer.allocateDirect(8192);
+    ResponseReader responseReader = new ResponseReader();
+    RequestWriter requestWriter = null;
+
+    try {
+      while (!finished.get()) {
+        try {
+          if (selector.select(1000) > 0) {
+
+            Iterator<SelectionKey> selectionKeyIter = selector.selectedKeys().iterator();
+
+            while (selectionKeyIter.hasNext()) {
+
+              SelectionKey selectionKey = selectionKeyIter.next();
+
+              try {
+                if (!selectionKey.isValid()) {
+                  throw new InvalidSelectionKeyException();
+                } else {
+                  if (selectionKey.isReadable()) {
+
+                    int bytesRead;
+
+                    byteBuffer.clear();
+                    if ((bytesRead = ((SocketChannel)selectionKey.channel()).read(byteBuffer)) < 0) {
+                      throw new ServerClosedException();
+                    } else if (bytesRead > 0) {
+                      byteBuffer.flip();
+                      do {
+
+                        Response response;
+
+                        if ((response = responseReader.read(byteBuffer)) != null) {
+
+                          RequestCallback requestCallback;
+
+                          if ((response.getToken() != null) && ((requestCallback = callbackMap.get(response.getToken())) != null)) {
+                            requestCallback.setResult(response);
+                          }
+                        }
+                      } while (byteBuffer.remaining() > 0);
+                    }
+                  }
+                  if (selectionKey.isWritable()) {
+
+                    int totalBytesWritten = 0;
+                    boolean complete = true;
+
+                    do {
+                      if (requestWriter == null) {
+                        synchronized (requestQueue) {
+
+                          byte[] request;
+
+                          if ((request = requestQueue.poll()) == null) {
+                            complete = false;
+                            selectionKey.interestOps(SelectionKey.OP_READ);
+                          } else {
+                            requestWriter = new RequestWriter(request);
+                          }
+                        }
+                      }
+                      if (requestWriter != null) {
+
+                        int bytesWritten;
+
+                        if ((bytesWritten = requestWriter.write(socketChannel, byteBuffer)) > 0) {
+                          requestWriter = null;
+                        } else {
+                          complete = false;
+                        }
+
+                        totalBytesWritten += Math.abs(bytesWritten);
+                      }
+                    } while (complete && (totalBytesWritten < byteBuffer.capacity()));
+                  }
+                }
+              } finally {
+                selectionKeyIter.remove();
+              }
+            }
+          }
+        } catch (IOException ioException) {
+          LoggerManager.getLogger(CubbyConnection.class).error(ioException);
+          shutdown(true);
+        }
+      }
+    } finally {
+      terminationLatch.countDown();
+    }
   }
 }

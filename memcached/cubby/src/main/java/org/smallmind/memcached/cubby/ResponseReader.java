@@ -97,7 +97,7 @@ public class ResponseReader {
                   return response;
                 }
               } catch (IOException ioException) {
-                LoggerManager.getLogger(EventLoop.class).error(ioException);
+                LoggerManager.getLogger(CubbyConnection.class).error(ioException);
               } finally {
                 complete = false;
                 responseBuilder = new StringBuilder();
