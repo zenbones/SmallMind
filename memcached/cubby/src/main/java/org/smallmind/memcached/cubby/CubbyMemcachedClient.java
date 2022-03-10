@@ -56,9 +56,13 @@ public class CubbyMemcachedClient {
 
     if (ComponentStatus.STOPPED.equals(status)) {
 
-      Thread thread;
+      Thread defibrillatorThread;
 
       configuration.getKeyLocator().installRouting(serverPool);
+
+      defibrillatorThread = new Thread(serverDefibrillator = new ServerDefibrillator(serverPool, configuration.getKeyLocator(), (int)configuration.getConnectionTimeoutMilliseconds(), configuration.getResuscitationSeconds()));
+      defibrillatorThread.setDaemon(true);
+      defibrillatorThread.start();
 
       for (MemcachedHost memcachedHost : serverPool.values()) {
 
@@ -66,11 +70,10 @@ public class CubbyMemcachedClient {
 
         connectionMap.put(memcachedHost.getName(), connection = new CubbyConnection(this, memcachedHost, configuration.getKeyTranslator(), configuration.getCodec(), configuration.getConnectionTimeoutMilliseconds(), configuration.getDefaultRequestTimeoutSeconds()));
         connection.start();
+
+        new Thread(connection).start();
       }
 
-      thread = new Thread(serverDefibrillator = new ServerDefibrillator(serverPool, configuration.getKeyLocator(), (int)configuration.getConnectionTimeoutMilliseconds(), configuration.getResuscitationSeconds()));
-      thread.setDaemon(true);
-      thread.start();
       status = ComponentStatus.STARTED;
     }
   }

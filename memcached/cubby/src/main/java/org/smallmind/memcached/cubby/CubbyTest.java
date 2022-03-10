@@ -78,5 +78,7 @@ public class CubbyTest {
     }
 
     Thread.sleep(3000);
+
+    client.stop();
   }
 }
