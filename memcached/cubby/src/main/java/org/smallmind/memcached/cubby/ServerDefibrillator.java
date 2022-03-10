@@ -34,24 +34,24 @@ package org.smallmind.memcached.cubby;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.LinkedList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import org.smallmind.memcached.cubby.locator.KeyLocator;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class ServerDefibrillator implements Runnable {
 
   private final CountDownLatch finishedLatch = new CountDownLatch(1);
   private final CountDownLatch terminatedLatch = new CountDownLatch(1);
+  private final CubbyMemcachedClient client;
   private final ServerPool serverPool;
-  private final KeyLocator keyLocator;
   private final long resuscitationSeconds;
   private final int connectionTimeoutMilliseconds;
 
-  public ServerDefibrillator (ServerPool serverPool, KeyLocator keyLocator, int connectionTimeoutMilliseconds, long resuscitationSeconds) {
+  public ServerDefibrillator (CubbyMemcachedClient client, ServerPool serverPool, int connectionTimeoutMilliseconds, long resuscitationSeconds) {
 
+    this.client = client;
     this.serverPool = serverPool;
-    this.keyLocator = keyLocator;
     this.connectionTimeoutMilliseconds = connectionTimeoutMilliseconds;
     this.resuscitationSeconds = resuscitationSeconds;
   }
@@ -69,21 +69,26 @@ public class ServerDefibrillator implements Runnable {
     try {
       while (!finishedLatch.await(resuscitationSeconds, TimeUnit.SECONDS)) {
 
-        boolean changed = false;
+        LinkedList<MemcachedHost> reconnectionList = new LinkedList<>();
 
         for (MemcachedHost memcachedHost : serverPool.values()) {
           if (!memcachedHost.isActive()) {
             try (Socket socket = new Socket()) {
               socket.connect(memcachedHost.getAddress(), connectionTimeoutMilliseconds);
-              memcachedHost.setActive(true);
-              changed = true;
+              reconnectionList.add(memcachedHost);
             } catch (IOException ioException) {
               // do nothing
             }
           }
+        }
 
-          if (changed) {
-            keyLocator.updateRouting(serverPool);
+        if (!reconnectionList.isEmpty()) {
+          for (MemcachedHost memcachedHost : reconnectionList) {
+            try {
+              client.reconnect(memcachedHost);
+            } catch (IOException ioException) {
+              LoggerManager.getLogger(ServerDefibrillator.class).error(ioException);
+            }
           }
         }
       }

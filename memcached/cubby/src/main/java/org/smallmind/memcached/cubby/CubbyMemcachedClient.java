@@ -34,11 +34,13 @@ package org.smallmind.memcached.cubby;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.smallmind.memcached.cubby.command.Command;
 import org.smallmind.nutsnbolts.util.ComponentStatus;
 
 public class CubbyMemcachedClient {
 
+  private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
   private final ServerPool serverPool;
   private final CubbyConfiguration configuration;
   private final HashMap<String, CubbyConnection> connectionMap = new HashMap<>();
@@ -60,35 +62,15 @@ public class CubbyMemcachedClient {
 
       configuration.getKeyLocator().installRouting(serverPool);
 
-      defibrillatorThread = new Thread(serverDefibrillator = new ServerDefibrillator(serverPool, configuration.getKeyLocator(), (int)configuration.getConnectionTimeoutMilliseconds(), configuration.getResuscitationSeconds()));
+      defibrillatorThread = new Thread(serverDefibrillator = new ServerDefibrillator(this, serverPool, (int)configuration.getConnectionTimeoutMilliseconds(), configuration.getResuscitationSeconds()));
       defibrillatorThread.setDaemon(true);
       defibrillatorThread.start();
 
       for (MemcachedHost memcachedHost : serverPool.values()) {
-
-        CubbyConnection connection;
-
-        connectionMap.put(memcachedHost.getName(), connection = new CubbyConnection(this, memcachedHost, configuration.getKeyTranslator(), configuration.getCodec(), configuration.getConnectionTimeoutMilliseconds(), configuration.getDefaultRequestTimeoutSeconds()));
-        connection.start();
-
-        new Thread(connection).start();
+        constructConnection(memcachedHost);
       }
 
       status = ComponentStatus.STARTED;
-    }
-  }
-
-  public Response send (Command command, Long timeoutSeconds)
-    throws InterruptedException, IOException, CubbyOperationException {
-
-    CubbyConnection cubbyConnection;
-    String name;
-
-    if ((cubbyConnection = connectionMap.get(name = configuration.getKeyLocator().find(serverPool, command.getKey()).getName())) == null) {
-      throw new CubbyOperationException("Missing connection(%s)", name);
-    } else {
-
-      return cubbyConnection.send(command, timeoutSeconds);
     }
   }
 
@@ -102,7 +84,7 @@ public class CubbyMemcachedClient {
 
         CubbyConnection connection;
 
-        if ((connection = connectionMap.get(memcachedHost.getName())) != null) {
+        if ((connection = getConnection(memcachedHost)) != null) {
           connection.stop();
         }
       }
@@ -111,9 +93,59 @@ public class CubbyMemcachedClient {
     }
   }
 
-  public void disconnect (MemcachedHost memcachedHost) {
+  public Response send (Command command, Long timeoutSeconds)
+    throws InterruptedException, IOException, CubbyOperationException {
+
+    CubbyConnection cubbyConnection;
+    MemcachedHost memcachedHost;
+
+    if ((cubbyConnection = getConnection(memcachedHost = configuration.getKeyLocator().find(serverPool, command.getKey()))) == null) {
+      throw new CubbyOperationException("Missing connection(%s)", memcachedHost.getName());
+    } else {
+
+      return cubbyConnection.send(command, timeoutSeconds);
+    }
+  }
+
+  private CubbyConnection getConnection (MemcachedHost memcachedHost) {
+
+    lock.readLock().lock();
+    try {
+
+      return connectionMap.get(memcachedHost.getName());
+    } finally {
+      lock.readLock().unlock();
+    }
+  }
+
+  protected void disconnect (MemcachedHost memcachedHost) {
 
     memcachedHost.setActive(false);
     configuration.getKeyLocator().updateRouting(serverPool);
+  }
+
+  protected void reconnect (MemcachedHost memcachedHost)
+    throws InterruptedException, IOException {
+
+    constructConnection(memcachedHost);
+    memcachedHost.setActive(true);
+    configuration.getKeyLocator().updateRouting(serverPool);
+  }
+
+  private void constructConnection (MemcachedHost memcachedHost)
+    throws InterruptedException, IOException {
+
+    CubbyConnection connection;
+
+    lock.writeLock().lock();
+    try {
+      connectionMap.put(memcachedHost.getName(), connection = new CubbyConnection(this, memcachedHost, configuration.getKeyTranslator(), configuration.getCodec(), configuration.getConnectionTimeoutMilliseconds(), configuration.getDefaultRequestTimeoutSeconds()));
+    } finally {
+      lock.writeLock().unlock();
+    }
+
+    connection.start();
+
+    new Thread(connection).start();
   }
 }
