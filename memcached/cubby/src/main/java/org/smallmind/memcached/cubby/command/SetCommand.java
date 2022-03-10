@@ -33,6 +33,7 @@
 package org.smallmind.memcached.cubby.command;
 
 import java.io.IOException;
+import org.smallmind.memcached.cubby.CubbyOperationException;
 import org.smallmind.memcached.cubby.codec.CubbyCodec;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
 import org.smallmind.memcached.cubby.Mode;
@@ -89,7 +90,7 @@ public class SetCommand extends Command {
   }
 
   public byte[] construct (KeyTranslator keyTranslator, CubbyCodec codec, String opaqueToken)
-    throws IOException {
+    throws IOException, CubbyOperationException {
 
     byte[] bytes;
     byte[] commandBytes;

@@ -33,14 +33,15 @@
 package org.smallmind.memcached.cubby.command;
 
 import java.io.IOException;
+import org.smallmind.memcached.cubby.CubbyOperationException;
+import org.smallmind.memcached.cubby.Response;
 import org.smallmind.memcached.cubby.codec.CubbyCodec;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
-import org.smallmind.memcached.cubby.Response;
 
 public abstract class Command {
 
   public abstract byte[] construct (KeyTranslator keyTranslator, CubbyCodec codec, String opaqueToken)
-    throws IOException;
+    throws IOException, CubbyOperationException;
 
   public abstract Object foobar (Response response)
     throws IOException;

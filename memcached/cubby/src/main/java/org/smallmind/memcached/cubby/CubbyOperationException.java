@@ -30,20 +30,28 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.memcached.cubby.locator;
+package org.smallmind.memcached.cubby;
 
-import java.io.IOException;
-import org.smallmind.memcached.cubby.CubbyOperationException;
-import org.smallmind.memcached.cubby.MemcachedHost;
-import org.smallmind.memcached.cubby.ServerPool;
+import org.smallmind.nutsnbolts.lang.FormattedException;
 
-public interface KeyLocator {
+public class CubbyOperationException extends FormattedException {
 
-  void installRouting (ServerPool serverPool)
-    throws CubbyOperationException;
+  public CubbyOperationException () {
 
-  void updateRouting (ServerPool serverPool);
+  }
 
-  MemcachedHost find (ServerPool serverPool, String key)
-    throws IOException, CubbyOperationException;
+  public CubbyOperationException (String message, Object... args) {
+
+    super(message, args);
+  }
+
+  public CubbyOperationException (Throwable throwable, String message, Object... args) {
+
+    super(throwable, message, args);
+  }
+
+  public CubbyOperationException (Throwable throwable) {
+
+    super(throwable);
+  }
 }

@@ -33,9 +33,10 @@
 package org.smallmind.memcached.cubby.translator;
 
 import java.io.IOException;
+import org.smallmind.memcached.cubby.CubbyOperationException;
 
 public interface KeyTranslator {
 
   String encode (String key)
-    throws IOException;
+    throws IOException, CubbyOperationException;
 }

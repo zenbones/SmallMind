@@ -35,12 +35,14 @@ package org.smallmind.memcached.cubby.locator;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedList;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.smallmind.memcached.cubby.MemcachedHost;
 import org.smallmind.memcached.cubby.NoAvailableHostException;
 import org.smallmind.memcached.cubby.ServerPool;
 
 public class DefaultKeyLocator implements KeyLocator {
 
+  private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
   private String[] routingArray;
 
   private String[] generateRoutingArray (ServerPool serverPool) {
@@ -76,18 +78,28 @@ public class DefaultKeyLocator implements KeyLocator {
   @Override
   public void updateRouting (ServerPool serverPool) {
 
-    routingArray = generateRoutingArray(serverPool);
+    lock.writeLock().lock();
+    try {
+      routingArray = generateRoutingArray(serverPool);
+    } finally {
+      lock.writeLock().unlock();
+    }
   }
 
   @Override
   public MemcachedHost find (ServerPool serverPool, String key)
     throws IOException {
 
-    if ((routingArray == null) || (routingArray.length == 0)) {
-      throw new NoAvailableHostException();
-    } else {
+    lock.readLock().lock();
+    try {
+      if ((routingArray == null) || (routingArray.length == 0)) {
+        throw new NoAvailableHostException();
+      } else {
 
-      return serverPool.get(routingArray[key.hashCode() % routingArray.length]);
+        return serverPool.get(routingArray[key.hashCode() % routingArray.length]);
+      }
+    } finally {
+      lock.readLock().unlock();
     }
   }
 }

@@ -95,7 +95,7 @@ public class CubbyConnection implements Runnable {
   }
 
   public Response send (Command command, KeyTranslator keyTranslator, CubbyCodec codec, Long timeoutSeconds)
-    throws InterruptedException, IOException {
+    throws InterruptedException, IOException, CubbyOperationException {
 
     RequestCallback requestCallback;
     String opaqueToken;

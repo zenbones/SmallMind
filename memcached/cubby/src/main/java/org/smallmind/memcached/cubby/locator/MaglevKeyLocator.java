@@ -39,8 +39,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import io.whitfin.siphash.SipHasher;
 import io.whitfin.siphash.SipHasherContainer;
+import org.smallmind.memcached.cubby.CubbyOperationException;
 import org.smallmind.memcached.cubby.MemcachedHost;
 import org.smallmind.memcached.cubby.NoAvailableHostException;
 import org.smallmind.memcached.cubby.ServerPool;
@@ -50,6 +52,7 @@ import org.smallmind.nutsnbolts.security.HashAlgorithm;
 public class MaglevKeyLocator implements KeyLocator {
 
   private static final SipHasherContainer SIPHASH = SipHasher.container("0123456789ABCDEF".getBytes());
+  private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
   private final HashMap<String, int[]> permutationMap = new HashMap<>();
   private final int virtualHostCount;
   private HashMap<Integer, String> routingMap;
@@ -118,20 +121,24 @@ public class MaglevKeyLocator implements KeyLocator {
 
   @Override
   public void installRouting (ServerPool serverPool)
-    throws NoSuchAlgorithmException {
+    throws CubbyOperationException {
 
     permutationSize = PrimeGenerator.nextPrime(serverPool.size() * virtualHostCount);
     longerPermutationSize = permutationSize;
 
     for (String name : serverPool.keySet()) {
+      try {
 
-      int[] permutations;
-      int offset = new BigInteger(EncryptionUtility.hash(HashAlgorithm.SHA_256, name.getBytes())).mod(BigInteger.valueOf(longerPermutationSize)).intValue();
-      int skip = new BigInteger(EncryptionUtility.hash(HashAlgorithm.SHA3_256, name.getBytes())).mod(BigInteger.valueOf(longerPermutationSize - 1)).intValue() + 1;
+        int[] permutations;
+        int offset = new BigInteger(EncryptionUtility.hash(HashAlgorithm.SHA_256, name.getBytes())).mod(BigInteger.valueOf(longerPermutationSize)).intValue();
+        int skip = new BigInteger(EncryptionUtility.hash(HashAlgorithm.SHA3_256, name.getBytes())).mod(BigInteger.valueOf(longerPermutationSize - 1)).intValue() + 1;
 
-      permutationMap.put(name, permutations = new int[permutationSize]);
-      for (int index = 0; index < permutationSize; index++) {
-        permutations[index] = (offset + (index * skip)) % permutationSize;
+        permutationMap.put(name, permutations = new int[permutationSize]);
+        for (int index = 0; index < permutationSize; index++) {
+          permutations[index] = (offset + (index * skip)) % permutationSize;
+        }
+      } catch (NoSuchAlgorithmException noSuchAlgorithmException) {
+        throw new CubbyOperationException(noSuchAlgorithmException);
       }
     }
 
@@ -141,18 +148,28 @@ public class MaglevKeyLocator implements KeyLocator {
   @Override
   public void updateRouting (ServerPool serverPool) {
 
-    routingMap = generateRoutingMap(serverPool);
+    lock.writeLock().lock();
+    try {
+      routingMap = generateRoutingMap(serverPool);
+    } finally {
+      lock.writeLock().unlock();
+    }
   }
 
   @Override
   public MemcachedHost find (ServerPool serverPool, String key)
     throws IOException {
 
-    if ((routingMap == null) || routingMap.isEmpty()) {
-      throw new NoAvailableHostException();
-    } else {
+    lock.readLock().lock();
+    try {
+      if ((routingMap == null) || routingMap.isEmpty()) {
+        throw new NoAvailableHostException();
+      } else {
 
-      return serverPool.get(routingMap.get((int)(SIPHASH.hash(key.getBytes()) % longerPermutationSize)));
+        return serverPool.get(routingMap.get((int)(SIPHASH.hash(key.getBytes()) % longerPermutationSize)));
+      }
+    } finally {
+      lock.readLock().unlock();
     }
   }
 }

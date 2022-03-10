@@ -36,7 +36,7 @@ import java.io.Serializable;
 
 public class GzipObjectWrapper implements Serializable {
 
-  private byte[] compressedBytes;
+  private final byte[] compressedBytes;
 
   public GzipObjectWrapper (byte[] bytes) {
 

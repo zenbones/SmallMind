@@ -32,18 +32,16 @@
  */
 package org.smallmind.memcached.cubby.command;
 
-import java.io.IOException;
+import org.smallmind.memcached.cubby.Response;
 import org.smallmind.memcached.cubby.codec.CubbyCodec;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
-import org.smallmind.memcached.cubby.Response;
 
 public class NoopCommand extends Command {
 
   private static final byte[] bytes = "mn\r\n".getBytes();
 
   @Override
-  public Object foobar (Response response)
-    throws IOException {
+  public Object foobar (Response response) {
 
     return null;
   }

@@ -34,6 +34,7 @@ package org.smallmind.memcached.cubby.translator;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
+import org.smallmind.memcached.cubby.CubbyOperationException;
 import org.smallmind.nutsnbolts.http.Base64Codec;
 import org.smallmind.nutsnbolts.security.EncryptionUtility;
 import org.smallmind.nutsnbolts.security.HashAlgorithm;
@@ -49,7 +50,7 @@ public class LargeKeyHashingTranslator implements KeyTranslator {
 
   @Override
   public String encode (String key)
-    throws IOException {
+    throws IOException, CubbyOperationException {
 
     String translatedKey;
 
@@ -59,7 +60,7 @@ public class LargeKeyHashingTranslator implements KeyTranslator {
         //must start with no more than 187 bytes (which will base 64 encode to 250)
         return Base64Codec.encode(EncryptionUtility.hash(HashAlgorithm.SHA3_512, key.getBytes()));
       } catch (NoSuchAlgorithmException noSuchAlgorithmException) {
-        throw new IOException(noSuchAlgorithmException);
+        throw new CubbyOperationException(noSuchAlgorithmException);
       }
     } else {
 

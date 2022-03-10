@@ -32,12 +32,14 @@
  */
 package org.smallmind.memcached.cubby;
 
+import java.util.HashMap;
 import org.smallmind.nutsnbolts.util.ComponentStatus;
 
 public class CubbyMemcachedClient {
 
   private final ServerPool serverPool;
   private final CubbyConfiguration configuration;
+  private final HashMap<String, CubbyConnection> connectionMap = new HashMap<>();
   private ServerDefibrillator serverDefibrillator;
   private ComponentStatus status = ComponentStatus.STOPPED;
 
@@ -47,7 +49,8 @@ public class CubbyMemcachedClient {
     this.configuration = configuration;
   }
 
-  public synchronized void start () {
+  public synchronized void start ()
+    throws CubbyOperationException {
 
     if (ComponentStatus.STOPPED.equals(status)) {
 
@@ -59,6 +62,8 @@ public class CubbyMemcachedClient {
       for (MemcachedHost memcachedHost : serverPool.values()) {
 
       }
+
+      configuration.getKeyLocator().installRouting(serverPool);
 
       status = ComponentStatus.STARTED;
     }
