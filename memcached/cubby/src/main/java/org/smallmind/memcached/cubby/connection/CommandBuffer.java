@@ -34,8 +34,8 @@ package org.smallmind.memcached.cubby.connection;
 
 public class CommandBuffer {
 
-  private byte[] request;
-  private long index;
+  private final byte[] request;
+  private final long index;
 
   public CommandBuffer (long index, byte[] request) {
 
