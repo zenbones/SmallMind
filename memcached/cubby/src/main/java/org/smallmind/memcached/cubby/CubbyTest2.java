@@ -53,7 +53,8 @@ public class CubbyTest2 {
     CubbyConfiguration configuration = new CubbyConfiguration()
       .setCodec(codec)
       .setKeyLocator(new MaglevKeyLocator())
-      .setKeyTranslator(new LargeKeyHashingTranslator(new DefaultKeyTranslator())).setConnectionsPerHost(5);
+      .setKeyTranslator(new LargeKeyHashingTranslator(new DefaultKeyTranslator()))
+      .setConnectionsPerHost(3);
     CubbyMemcachedClient client = new CubbyMemcachedClient(configuration, new MemcachedHost("0", new InetSocketAddress("localhost", 11211)));
 
     client.start();
@@ -70,8 +71,10 @@ public class CubbyTest2 {
       new Thread(new Worker(counter, startLatch, finishLatch, client, tokenGenerator)).start();
     }
 
+    long start = System.currentTimeMillis();
     startLatch.countDown();
     finishLatch.await();
+    System.out.println(System.currentTimeMillis() - start);
 
     System.out.println("done[" + counter.get() + "]...");
     client.stop();
@@ -100,7 +103,7 @@ public class CubbyTest2 {
       try {
         startLatch.await();
 
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 1000; i++) {
 
           String opaqueToken = tokenGenerator.next();
 
@@ -109,10 +112,10 @@ public class CubbyTest2 {
             System.exit(0);
           }
           counter.incrementAndGet();
-          System.out.println(opaqueToken);
         }
         finishLatch.countDown();
       } catch (Exception e) {
+        e.printStackTrace();
         System.exit(1);
       }
     }
