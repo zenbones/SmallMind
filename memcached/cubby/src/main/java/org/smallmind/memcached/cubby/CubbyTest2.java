@@ -62,12 +62,13 @@ public class CubbyTest2 {
     System.out.println("send...");
     client.send(new SetCommand().setKey("hello").setValue("goodbye"), null);
 
+    TokenGenerator tokenGenerator = new TokenGenerator();
     CountDownLatch startLatch = new CountDownLatch(1);
     CountDownLatch finishLatch = new CountDownLatch(100);
     AtomicInteger counter = new AtomicInteger(0);
 
     for (int i = 0; i < 100; i++) {
-      new Thread(new Worker(counter, startLatch, finishLatch, client)).start();
+      new Thread(new Worker(counter, startLatch, finishLatch, client, tokenGenerator)).start();
     }
 
     long start = System.currentTimeMillis();
@@ -85,14 +86,15 @@ public class CubbyTest2 {
     private final CountDownLatch startLatch;
     private final CountDownLatch finishLatch;
     private final CubbyMemcachedClient client;
+    private final TokenGenerator tokenGenerator;
 
-
-    public Worker (AtomicInteger counter, CountDownLatch startLatch, CountDownLatch finishLatch, CubbyMemcachedClient client) {
+    public Worker (AtomicInteger counter, CountDownLatch startLatch, CountDownLatch finishLatch, CubbyMemcachedClient client, TokenGenerator tokenGenerator) {
 
       this.counter = counter;
       this.startLatch = startLatch;
       this.finishLatch = finishLatch;
       this.client = client;
+      this.tokenGenerator = tokenGenerator;
     }
 
     @Override
@@ -102,7 +104,13 @@ public class CubbyTest2 {
         startLatch.await();
 
         for (int i = 0; i < 1000; i++) {
-          client.send(new GetCommand().setKey("hello"), null);
+
+          String opaqueToken = tokenGenerator.next();
+
+          ServerResponse response = client.send(new GetCommand().setKey("hello").setCas(true).setOpaqueToken(opaqueToken), null);
+          if (!opaqueToken.equals(response.getToken())) {
+            System.exit(0);
+          }
           counter.incrementAndGet();
         }
         finishLatch.countDown();

@@ -235,7 +235,7 @@ public class CubbyConnection implements Runnable {
                   if (selectionKey.isWritable()) {
 
                     int totalBytesWritten = 0;
-                    boolean complete = true;
+                    boolean proceed = true;
 
                     do {
                       if (requestWriter == null) {
@@ -244,7 +244,7 @@ public class CubbyConnection implements Runnable {
                           CommandBuffer commandBuffer;
 
                           if ((commandBuffer = requestQueue.poll()) == null) {
-                            complete = false;
+                            proceed = false;
                             selectionKey.interestOps(SelectionKey.OP_READ);
                           } else {
                             requestWriter = new RequestWriter(commandBuffer.getRequest());
@@ -258,14 +258,12 @@ public class CubbyConnection implements Runnable {
 
                         if ((bytesWritten = requestWriter.write(socketChannel, byteBuffer)) > 0) {
                           requestWriter = null;
-                          //
+                          totalBytesWritten += Math.abs(bytesWritten);
                         } else {
-                          complete = false;
+                          proceed = false;
                         }
-
-                        totalBytesWritten += Math.abs(bytesWritten);
                       }
-                    } while (complete && (totalBytesWritten < byteBuffer.capacity()));
+                    } while (proceed && (totalBytesWritten < byteBuffer.capacity()));
                   }
                 }
               } finally {
