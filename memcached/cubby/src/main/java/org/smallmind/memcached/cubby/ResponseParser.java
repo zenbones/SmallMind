@@ -39,7 +39,7 @@ public class ResponseParser {
   public static Response parse (StringBuilder responseBuilder)
     throws IOException {
 
-    if (responseBuilder.length() < 2) {
+    if ((responseBuilder.length() < 2) || isError(responseBuilder)) {
       throw new IncomprehensibleResponseException(responseBuilder.toString());
     } else {
 
@@ -90,6 +90,16 @@ public class ResponseParser {
 
       return response;
     }
+  }
+
+  private static boolean isError (StringBuilder responseBuilder) {
+
+    return (responseBuilder.length() == 5)
+             && (responseBuilder.charAt(0) == 'E')
+             && (responseBuilder.charAt(1) == 'R')
+             && (responseBuilder.charAt(2) == 'R')
+             && (responseBuilder.charAt(3) == 'O')
+             && (responseBuilder.charAt(4) == 'R');
   }
 
   private static void parseFlags (Response response, StringBuilder responseBuilder, int index)
