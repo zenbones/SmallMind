@@ -43,7 +43,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import javax.xml.transform.Transformer;
 import org.smallmind.memcached.cubby.codec.CubbyCodec;
 import org.smallmind.memcached.cubby.command.Command;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
@@ -59,23 +58,25 @@ public class CubbyConnection implements Runnable {
   private final MemcachedHost memcachedHost;
   private final KeyTranslator keyTranslator;
   private final CubbyCodec codec;
-  private final SelfDestructiveMap<String, RequestCallback> callbackMap;
+
   private final LinkedBlockingQueue<byte[]> requestQueue = new LinkedBlockingQueue<>();
   private final TokenGenerator tokenGenerator = new TokenGenerator();
   private final long connectionTimeoutMilliseconds;
+  private final long defaultRequestTimeoutSeconds;
   private SocketChannel socketChannel;
   private Selector selector;
   private SelectionKey selectionKey;
+  private SelfDestructiveMap<String, RequestCallback> callbackMap;
 
   public CubbyConnection (ConnectionCoordinator connectionCoordinator, CubbyConfiguration configuration, MemcachedHost memcachedHost) {
 
     this.connectionCoordinator = connectionCoordinator;
     this.memcachedHost = memcachedHost;
-    this.keyTranslator = configuration.getKeyTranslator();
-    this.codec = configuration.getCodec();
-    this.connectionTimeoutMilliseconds = configuration.getConnectionTimeoutMilliseconds();
 
-    callbackMap = new SelfDestructiveMap<>(new Stint(configuration.getDefaultRequestTimeoutSeconds(), TimeUnit.SECONDS), new Stint(100, TimeUnit.MILLISECONDS));
+    keyTranslator = configuration.getKeyTranslator();
+    codec = configuration.getCodec();
+    connectionTimeoutMilliseconds = configuration.getConnectionTimeoutMilliseconds();
+    defaultRequestTimeoutSeconds = configuration.getDefaultRequestTimeoutSeconds();
   }
 
   public void start ()
@@ -98,6 +99,7 @@ public class CubbyConnection implements Runnable {
     }
 
     selectionKey = socketChannel.register(selector = Selector.open(), SelectionKey.OP_WRITE);
+    callbackMap = new SelfDestructiveMap<>(new Stint(defaultRequestTimeoutSeconds, TimeUnit.SECONDS), new Stint(100, TimeUnit.MILLISECONDS));
   }
 
   public void stop ()
@@ -115,13 +117,19 @@ public class CubbyConnection implements Runnable {
       try {
         selector.close();
       } catch (IOException ioException) {
-        LoggerManager.getLogger(Transformer.class).error(ioException);
+        LoggerManager.getLogger(CubbyConnection.class).error(ioException);
       }
 
       try {
         socketChannel.close();
       } catch (IOException ioException) {
-        LoggerManager.getLogger(Transformer.class).error(ioException);
+        LoggerManager.getLogger(CubbyConnection.class).error(ioException);
+      }
+
+      try {
+        callbackMap.shutdown();
+      } catch (InterruptedException interruptedException) {
+        LoggerManager.getLogger(CubbyConnection.class).error(interruptedException);
       }
 
       if (unexpected) {
