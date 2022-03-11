@@ -52,7 +52,7 @@ public class CubbyMemcachedClient {
   }
 
   public synchronized void stop ()
-    throws InterruptedException {
+    throws InterruptedException,IOException {
 
     connectionMultiplexer.stop();
   }

@@ -43,7 +43,7 @@ public interface CubbyConnection extends Runnable {
     throws InterruptedException, IOException;
 
   void stop ()
-    throws InterruptedException;
+    throws InterruptedException, IOException;
 
   ServerResponse send (Command command, Long timeoutSeconds)
     throws InterruptedException, IOException, CubbyOperationException;

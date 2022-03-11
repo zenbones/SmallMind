@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.smallmind.memcached.cubby.command.Command;
+import org.smallmind.memcached.cubby.connection.BlockingCubbyConnection;
 import org.smallmind.memcached.cubby.connection.CubbyConnection;
 import org.smallmind.memcached.cubby.connection.NIOCubbyConnection;
 import org.smallmind.memcached.cubby.response.ServerResponse;
@@ -79,7 +80,7 @@ public class ConnectionCoordinator {
   }
 
   public synchronized void stop ()
-    throws InterruptedException {
+    throws InterruptedException, IOException {
 
     if (ComponentStatus.STARTED.equals(status)) {
       serverDefibrillator.stop();
@@ -143,7 +144,7 @@ public class ConnectionCoordinator {
 
     lock.writeLock().lock();
     try {
-      connectionMap.put(memcachedHost.getName(), connection = new NIOCubbyConnection(this, configuration, memcachedHost));
+      connectionMap.put(memcachedHost.getName(), connection = new BlockingCubbyConnection(this, configuration, memcachedHost));
     } finally {
       lock.writeLock().unlock();
     }

@@ -59,7 +59,7 @@ public class ConnectionMultiplexer {
   }
 
   public synchronized void stop ()
-    throws InterruptedException {
+    throws InterruptedException, IOException {
 
     for (ConnectionCoordinator connectionCoordinator : connectionCoordinators) {
       connectionCoordinator.stop();
