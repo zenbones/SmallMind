@@ -61,4 +61,52 @@ public class CubbyMemcachedClient {
 
     return connectionMultiplexer.send(command, timeoutSeconds);
   }
+
+  public <T> T get (String key)
+    throws Exception {
+
+    return null;
+  }
+
+  public <T> CASValue<T> casGet (String key)
+    throws Exception {
+
+    return null;
+  }
+
+  public <T> boolean set (String key, int expiration, T value)
+    throws Exception {
+
+    return false;
+  }
+
+  public <T> boolean casSet (String key, int expiration, T value, long cas)
+    throws Exception {
+
+    return false;
+  }
+
+  public boolean delete (String key)
+    throws Exception {
+
+    return false;
+  }
+
+  public boolean casDelete (String key, long cas)
+    throws Exception {
+
+    return false;
+  }
+
+  public boolean touch (String key, int expiration)
+    throws Exception {
+
+    return false;
+  }
+
+  public <T> T getAndTouch (String key, int expiration)
+    throws Exception {
+
+    return null;
+  }
 }
