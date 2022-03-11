@@ -186,11 +186,6 @@ public class JDKAppenderWrapper extends Handler {
     return appender.hashCode();
   }
 
-  protected void finalize () {
-
-    close();
-  }
-
   public boolean equals (Object obj) {
 
     if (obj instanceof JDKAppenderWrapper) {

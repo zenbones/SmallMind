@@ -235,16 +235,9 @@ public class DefaultMultiThumbModel implements MultiThumbModel {
         exitLatch.countDown();
       }
     }
-
-    @Override
-    protected void finalize ()
-      throws InterruptedException {
-
-      finish();
-    }
   }
 
-  private class DelayedMove {
+  private static class DelayedMove {
 
     private final int thumbIndex;
     private final int startingValue;

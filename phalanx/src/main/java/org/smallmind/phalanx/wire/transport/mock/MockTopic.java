@@ -71,12 +71,6 @@ public class MockTopic {
     messageQueue.add(message);
   }
 
-  @Override
-  protected void finalize () {
-
-    worker.close();
-  }
-
   private class QueueWorker implements Runnable {
 
     public void close () {

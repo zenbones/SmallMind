@@ -331,10 +331,4 @@ public class FileAppender extends AbstractFormattedAppender {
       }
     }
   }
-
-  public void finalize ()
-    throws LoggerException {
-
-    close();
-  }
 }

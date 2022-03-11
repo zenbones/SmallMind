@@ -89,12 +89,6 @@ public class ConsolidatingEventHandler<T extends Event> implements EventHandler<
   private static class ConsolidationWorker implements Runnable {
 
     @Override
-    protected void finalize () {
-
-      stopLatch.countDown();
-    }
-
-    @Override
     public void run () {
 
       try {

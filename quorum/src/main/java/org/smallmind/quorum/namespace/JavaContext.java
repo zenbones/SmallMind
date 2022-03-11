@@ -376,12 +376,6 @@ public class JavaContext implements DirContext {
     }
   }
 
-  public void finalize ()
-    throws NamingException {
-
-    close();
-  }
-
   public String getNameInNamespace ()
     throws NamingException {
 

@@ -317,13 +317,4 @@ public class Spinner extends JPanel implements EditorListener, ActionListener, C
 
     cancelEditing();
   }
-
-  public void finalize ()
-    throws Throwable {
-
-    spinnerUpButtonRepeater.finalize();
-    spinnerDownButtonRepeater.finalize();
-
-    super.finalize();
-  }
 }

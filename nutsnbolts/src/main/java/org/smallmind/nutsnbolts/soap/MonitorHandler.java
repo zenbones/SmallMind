@@ -116,9 +116,4 @@ public class MonitorHandler implements SOAPHandler<SOAPMessageContext> {
   public void close (MessageContext context) {
 
   }
-
-  protected void finalize () {
-
-    printStream.close();
-  }
 }

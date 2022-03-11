@@ -35,7 +35,6 @@ package org.smallmind.swing.progress;
 import java.awt.GridLayout;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
-import org.smallmind.scribe.pen.LoggerManager;
 
 public class ProgressPanel extends JPanel {
 
@@ -72,14 +71,5 @@ public class ProgressPanel extends JPanel {
     percentageProgress = (dataHandler.getIndex() * 100) / dataHandler.getLength();
     progressBar.setValue((int)percentageProgress);
     progressBar.setString(percentageProgress + "%");
-  }
-
-  public void finalize () {
-
-    try {
-      progressTimer.finish();
-    } catch (InterruptedException interruptedException) {
-      LoggerManager.getLogger(ProgressPanel.class).error(interruptedException);
-    }
   }
 }

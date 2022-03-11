@@ -60,14 +60,6 @@ public class AutoCloseMorphiaIterable<T> implements Iterable<T>, AutoCloseable {
     return new AutoCloseMorphiaIterator();
   }
 
-  @Override
-  protected void finalize ()
-    throws Throwable {
-
-    close();
-    super.finalize();
-  }
-
   private class AutoCloseMorphiaIterator implements Iterator<T> {
 
     @Override

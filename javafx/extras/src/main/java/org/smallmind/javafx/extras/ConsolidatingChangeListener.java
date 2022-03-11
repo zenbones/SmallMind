@@ -86,12 +86,6 @@ public class ConsolidatingChangeListener<T> implements ChangeListener<T>, Compar
     return hashCode() - listener.hashCode();
   }
 
-  @Override
-  protected void finalize () {
-
-    stopLatch.countDown();
-  }
-
   private static class ConsolidationWorker implements Runnable {
 
     @Override

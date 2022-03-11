@@ -98,15 +98,6 @@ public class ButtonRepeater implements ChangeListener {
     }
   }
 
-  public void finalize () {
-
-    try {
-      autoPress.finish();
-    } catch (InterruptedException interruptedException) {
-      LoggerManager.getLogger(ButtonRepeater.class).error(interruptedException);
-    }
-  }
-
   private class DoClick implements Runnable {
 
     public void run () {

@@ -113,19 +113,4 @@ public class PooledPreparedStatement implements InvocationHandler {
       actualStatement.close();
     }
   }
-
-  public void finalize ()
-    throws SQLException {
-
-    try {
-      close();
-    } catch (SQLException sqlExecption) {
-
-      PrintWriter logWriter;
-
-      if ((logWriter = getLogWriter()) != null) {
-        sqlExecption.printStackTrace(logWriter);
-      }
-    }
-  }
 }
