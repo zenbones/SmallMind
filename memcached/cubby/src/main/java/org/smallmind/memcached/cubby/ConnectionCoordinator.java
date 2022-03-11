@@ -140,7 +140,7 @@ public class ConnectionCoordinator {
 
     lock.writeLock().lock();
     try {
-      connectionMap.put(memcachedHost.getName(), connection = new CubbyConnection(this, configuration, memcachedHost));
+      connectionMap.put(memcachedHost.getName(), connection = new NIOCubbyConnection(this, configuration, memcachedHost));
     } finally {
       lock.writeLock().unlock();
     }
