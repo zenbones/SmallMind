@@ -91,13 +91,6 @@ public class SelfDestructiveMap<K extends Comparable<K>, S extends SelfDestructi
     ignitionWorker.shutdown();
   }
 
-  @Override
-  protected void finalize ()
-    throws InterruptedException {
-
-    shutdown();
-  }
-
   private class IgnitionWorker implements Runnable {
 
     private final CountDownLatch terminationLatch = new CountDownLatch(1);
