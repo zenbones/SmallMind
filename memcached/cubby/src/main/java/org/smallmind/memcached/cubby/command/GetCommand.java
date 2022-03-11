@@ -34,7 +34,7 @@ package org.smallmind.memcached.cubby.command;
 
 import java.io.IOException;
 import org.smallmind.memcached.cubby.CubbyOperationException;
-import org.smallmind.memcached.cubby.ServerResponse;
+import org.smallmind.memcached.cubby.response.ServerResponse;
 import org.smallmind.memcached.cubby.codec.CubbyCodec;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
 

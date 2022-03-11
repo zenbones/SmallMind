@@ -34,6 +34,7 @@ package org.smallmind.memcached.cubby;
 
 import java.io.IOException;
 import org.smallmind.memcached.cubby.command.Command;
+import org.smallmind.memcached.cubby.response.ServerResponse;
 
 public class CubbyMemcachedClient {
 

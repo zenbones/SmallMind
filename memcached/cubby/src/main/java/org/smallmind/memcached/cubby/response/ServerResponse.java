@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.memcached.cubby;
+package org.smallmind.memcached.cubby.response;
 
 import org.smallmind.memcached.cubby.response.Response;
 import org.smallmind.memcached.cubby.response.ResponseCode;

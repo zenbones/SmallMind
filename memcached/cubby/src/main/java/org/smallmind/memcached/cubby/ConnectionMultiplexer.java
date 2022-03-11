@@ -35,6 +35,7 @@ package org.smallmind.memcached.cubby;
 import java.io.IOException;
 import java.util.concurrent.ThreadLocalRandom;
 import org.smallmind.memcached.cubby.command.Command;
+import org.smallmind.memcached.cubby.response.ServerResponse;
 
 public class ConnectionMultiplexer {
 

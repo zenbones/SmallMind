@@ -36,6 +36,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.smallmind.memcached.cubby.command.Command;
+import org.smallmind.memcached.cubby.connection.CubbyConnection;
+import org.smallmind.memcached.cubby.connection.NIOCubbyConnection;
+import org.smallmind.memcached.cubby.response.ServerResponse;
 import org.smallmind.nutsnbolts.util.ComponentStatus;
 
 public class ConnectionCoordinator {
