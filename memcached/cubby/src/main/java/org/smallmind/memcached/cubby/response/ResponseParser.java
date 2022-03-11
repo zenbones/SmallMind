@@ -33,6 +33,7 @@
 package org.smallmind.memcached.cubby.response;
 
 import java.io.IOException;
+import org.smallmind.memcached.cubby.IncomprehensibleRequestException;
 import org.smallmind.memcached.cubby.IncomprehensibleResponseException;
 import org.smallmind.memcached.cubby.ServerResponse;
 
@@ -41,8 +42,10 @@ public class ResponseParser {
   public static ServerResponse parse (StringBuilder responseBuilder)
     throws IOException {
 
-    if ((responseBuilder.length() < 2) || isError(responseBuilder)) {
+    if (responseBuilder.length() < 2) {
       throw new IncomprehensibleResponseException(responseBuilder.toString());
+    } else if (isError(responseBuilder)) {
+      throw new IncomprehensibleRequestException();
     } else {
 
       ServerResponse response;

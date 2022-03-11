@@ -63,7 +63,7 @@ public class CubbyConnection implements Runnable {
   private final KeyTranslator keyTranslator;
   private final CubbyCodec codec;
   private final LinkedBlockingQueue<CommandBuffer> requestQueue = new LinkedBlockingQueue<>();
-  private final LinkedBlockingQueue<Long> responseStack = new LinkedBlockingQueue<>();
+  private final LinkedBlockingQueue<CommandBuffer> responseQueue = new LinkedBlockingQueue<>();
   private final AtomicLong commandCounter = new AtomicLong(0);
   private final long connectionTimeoutMilliseconds;
   private final long defaultRequestTimeoutSeconds;
@@ -106,7 +106,7 @@ public class CubbyConnection implements Runnable {
     callbackMap = new SelfDestructiveMap<>(new Stint(defaultRequestTimeoutSeconds, TimeUnit.SECONDS), new Stint(100, TimeUnit.MILLISECONDS));
 
     requestQueue.clear();
-    responseStack.clear();
+    responseQueue.clear();
     commandCounter.set(0L);
   }
 
@@ -200,18 +200,32 @@ public class CubbyConnection implements Runnable {
 
                         if ((response = responseReader.read(byteBuffer)) != null) {
 
-                          RequestCallback requestCallback;
+                          CommandBuffer commandBuffer;
 
-                          if ((requestCallback = callbackMap.get(responseStack.poll())) != null) {
-                            switch (response.getType()) {
-                              case ERROR:
-                                requestCallback.setException(((ErrorResponse)response).getException());
-                                break;
-                              case SERVER:
-                                requestCallback.setResult((ServerResponse)response);
-                                break;
-                              default:
-                                throw new UnknownSwitchCaseException(response.getType().name());
+                          if ((commandBuffer = responseQueue.poll()) == null) {
+                            throw new CubbyOperationException("Desynchronized connection state");
+                          } else {
+
+                            RequestCallback requestCallback;
+
+                            if ((requestCallback = callbackMap.get(commandBuffer.getIndex())) != null) {
+                              switch (response.getType()) {
+                                case ERROR:
+
+                                  IOException ioException;
+
+                                  if ((ioException = ((ErrorResponse)response).getException()) instanceof IncomprehensibleRequestException) {
+                                    ioException = new IncomprehensibleRequestException(new String(commandBuffer.getRequest()));
+                                  }
+
+                                  requestCallback.setException(ioException);
+                                  break;
+                                case SERVER:
+                                  requestCallback.setResult((ServerResponse)response);
+                                  break;
+                                default:
+                                  throw new UnknownSwitchCaseException(response.getType().name());
+                              }
                             }
                           }
                         }
@@ -234,7 +248,7 @@ public class CubbyConnection implements Runnable {
                             selectionKey.interestOps(SelectionKey.OP_READ);
                           } else {
                             requestWriter = new RequestWriter(commandBuffer.getRequest());
-                            responseStack.add(commandBuffer.getIndex());
+                            responseQueue.add(commandBuffer);
                           }
                         }
                       }
@@ -259,8 +273,8 @@ public class CubbyConnection implements Runnable {
               }
             }
           }
-        } catch (IOException ioException) {
-          LoggerManager.getLogger(CubbyConnection.class).error(ioException);
+        } catch (IOException | CubbyOperationException exception) {
+          LoggerManager.getLogger(CubbyConnection.class).error(exception);
           shutdown(true);
         }
       }
