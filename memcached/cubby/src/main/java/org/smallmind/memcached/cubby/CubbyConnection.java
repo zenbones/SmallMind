@@ -258,10 +258,11 @@ public class CubbyConnection implements Runnable {
 
                         if ((bytesWritten = requestWriter.write(socketChannel, byteBuffer)) > 0) {
                           requestWriter = null;
-                          totalBytesWritten += Math.abs(bytesWritten);
                         } else {
                           proceed = false;
                         }
+
+                        totalBytesWritten += Math.abs(bytesWritten);
                       }
                     } while (proceed && (totalBytesWritten < byteBuffer.capacity()));
                   }
