@@ -30,13 +30,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.memcached.cubby;
+package org.smallmind.memcached.cubby.connection;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import org.smallmind.memcached.cubby.response.ErrorResponse;
 import org.smallmind.memcached.cubby.response.Response;
 import org.smallmind.memcached.cubby.response.ResponseParser;
+import org.smallmind.memcached.cubby.response.ServerResponse;
 
 public class ResponseReader {
 

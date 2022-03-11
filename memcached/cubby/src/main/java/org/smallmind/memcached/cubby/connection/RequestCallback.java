@@ -30,12 +30,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.memcached.cubby;
+package org.smallmind.memcached.cubby.connection;
 
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
+import org.smallmind.memcached.cubby.ResponseTimeoutException;
 import org.smallmind.memcached.cubby.command.Command;
+import org.smallmind.memcached.cubby.response.ServerResponse;
 import org.smallmind.nutsnbolts.time.Stint;
 import org.smallmind.nutsnbolts.util.SelfDestructive;
 

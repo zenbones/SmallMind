@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.memcached.cubby;
+package org.smallmind.memcached.cubby.connection;
 
 import java.io.IOException;
 import java.net.StandardSocketOptions;
@@ -44,10 +44,19 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import org.smallmind.memcached.cubby.ConnectionCoordinator;
+import org.smallmind.memcached.cubby.ConnectionTimeoutException;
+import org.smallmind.memcached.cubby.CubbyConfiguration;
+import org.smallmind.memcached.cubby.CubbyOperationException;
+import org.smallmind.memcached.cubby.IncomprehensibleRequestException;
+import org.smallmind.memcached.cubby.InvalidSelectionKeyException;
+import org.smallmind.memcached.cubby.MemcachedHost;
+import org.smallmind.memcached.cubby.ServerClosedException;
 import org.smallmind.memcached.cubby.codec.CubbyCodec;
 import org.smallmind.memcached.cubby.command.Command;
 import org.smallmind.memcached.cubby.response.ErrorResponse;
 import org.smallmind.memcached.cubby.response.Response;
+import org.smallmind.memcached.cubby.response.ServerResponse;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.nutsnbolts.time.Stint;
