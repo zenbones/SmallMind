@@ -71,7 +71,7 @@ public class ConnectionMultiplexer {
     int index = 0;
 
     if (connectionCoordinators.length > 1) {
-      index = ThreadLocalRandom.current().nextInt(4);
+      index = ThreadLocalRandom.current().nextInt(connectionCoordinators.length);
     }
 
     return connectionCoordinators[index].send(command, timeoutSeconds);
