@@ -43,9 +43,13 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import org.smallmind.memcached.cubby.codec.CubbyCodec;
 import org.smallmind.memcached.cubby.command.Command;
+import org.smallmind.memcached.cubby.response.ErrorResponse;
+import org.smallmind.memcached.cubby.response.Response;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
+import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.nutsnbolts.time.Stint;
 import org.smallmind.nutsnbolts.util.SelfDestructiveMap;
 import org.smallmind.scribe.pen.LoggerManager;
@@ -58,15 +62,15 @@ public class CubbyConnection implements Runnable {
   private final MemcachedHost memcachedHost;
   private final KeyTranslator keyTranslator;
   private final CubbyCodec codec;
-
-  private final LinkedBlockingQueue<byte[]> requestQueue = new LinkedBlockingQueue<>();
-  private final TokenGenerator tokenGenerator = new TokenGenerator();
+  private final LinkedBlockingQueue<CommandBuffer> requestQueue = new LinkedBlockingQueue<>();
+  private final LinkedBlockingQueue<Long> responseStack = new LinkedBlockingQueue<>();
+  private final AtomicLong commandCounter = new AtomicLong(0);
   private final long connectionTimeoutMilliseconds;
   private final long defaultRequestTimeoutSeconds;
   private SocketChannel socketChannel;
   private Selector selector;
   private SelectionKey selectionKey;
-  private SelfDestructiveMap<String, RequestCallback> callbackMap;
+  private SelfDestructiveMap<Long, RequestCallback> callbackMap;
 
   public CubbyConnection (ConnectionCoordinator connectionCoordinator, CubbyConfiguration configuration, MemcachedHost memcachedHost) {
 
@@ -100,6 +104,10 @@ public class CubbyConnection implements Runnable {
 
     selectionKey = socketChannel.register(selector = Selector.open(), SelectionKey.OP_WRITE);
     callbackMap = new SelfDestructiveMap<>(new Stint(defaultRequestTimeoutSeconds, TimeUnit.SECONDS), new Stint(100, TimeUnit.MILLISECONDS));
+
+    requestQueue.clear();
+    responseStack.clear();
+    commandCounter.set(0L);
   }
 
   public void stop ()
@@ -138,16 +146,16 @@ public class CubbyConnection implements Runnable {
     }
   }
 
-  public Response send (Command command, Long timeoutSeconds)
+  public ServerResponse send (Command command, Long timeoutSeconds)
     throws InterruptedException, IOException, CubbyOperationException {
 
     RequestCallback requestCallback;
-    String opaqueToken;
+    long commandIndex;
 
-    callbackMap.putIfAbsent(opaqueToken = tokenGenerator.next(), requestCallback = new RequestCallback(command), (timeoutSeconds == null) ? null : new Stint(timeoutSeconds, TimeUnit.SECONDS));
+    callbackMap.putIfAbsent(commandIndex = commandCounter.getAndIncrement(), requestCallback = new RequestCallback(command), (timeoutSeconds == null) ? null : new Stint(timeoutSeconds, TimeUnit.SECONDS));
 
     synchronized (requestQueue) {
-      requestQueue.offer(command.construct(keyTranslator, codec, opaqueToken));
+      requestQueue.offer(new CommandBuffer(commandIndex, command.construct(keyTranslator, codec)));
       selectionKey.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
       selector.wakeup();
     }
@@ -194,8 +202,17 @@ public class CubbyConnection implements Runnable {
 
                           RequestCallback requestCallback;
 
-                          if ((response.getToken() != null) && ((requestCallback = callbackMap.get(response.getToken())) != null)) {
-                            requestCallback.setResult(response);
+                          if ((requestCallback = callbackMap.get(responseStack.poll())) != null) {
+                            switch (response.getType()) {
+                              case ERROR:
+                                requestCallback.setException(((ErrorResponse)response).getException());
+                                break;
+                              case SERVER:
+                                requestCallback.setResult((ServerResponse)response);
+                                break;
+                              default:
+                                throw new UnknownSwitchCaseException(response.getType().name());
+                            }
                           }
                         }
                       } while (byteBuffer.remaining() > 0);
@@ -210,13 +227,14 @@ public class CubbyConnection implements Runnable {
                       if (requestWriter == null) {
                         synchronized (requestQueue) {
 
-                          byte[] request;
+                          CommandBuffer commandBuffer;
 
-                          if ((request = requestQueue.poll()) == null) {
+                          if ((commandBuffer = requestQueue.poll()) == null) {
                             complete = false;
                             selectionKey.interestOps(SelectionKey.OP_READ);
                           } else {
-                            requestWriter = new RequestWriter(request);
+                            requestWriter = new RequestWriter(commandBuffer.getRequest());
+                            responseStack.add(commandBuffer.getIndex());
                           }
                         }
                       }
@@ -226,6 +244,7 @@ public class CubbyConnection implements Runnable {
 
                         if ((bytesWritten = requestWriter.write(socketChannel, byteBuffer)) > 0) {
                           requestWriter = null;
+                          //
                         } else {
                           complete = false;
                         }

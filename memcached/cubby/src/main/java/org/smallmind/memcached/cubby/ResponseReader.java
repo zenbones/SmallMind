@@ -34,11 +34,13 @@ package org.smallmind.memcached.cubby;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import org.smallmind.scribe.pen.LoggerManager;
+import org.smallmind.memcached.cubby.response.ErrorResponse;
+import org.smallmind.memcached.cubby.response.Response;
+import org.smallmind.memcached.cubby.response.ResponseParser;
 
 public class ResponseReader {
 
-  private Response partialResponse;
+  private ServerResponse partialResponse;
   private StringBuilder responseBuilder = new StringBuilder();
   private boolean complete = false;
   private byte[] value;
@@ -56,7 +58,7 @@ public class ResponseReader {
         byteBuffer.get(value, valueIndex, valueBytesRead = Math.min(byteBuffer.remaining(), value.length - valueIndex));
         if ((valueIndex += valueBytesRead) == value.length) {
 
-          Response response = partialResponse;
+          ServerResponse response = partialResponse;
 
           if (value.length > 2) {
 
@@ -86,7 +88,7 @@ public class ResponseReader {
             } else {
               try {
 
-                Response response = ResponseParser.parse(responseBuilder);
+                ServerResponse response = ResponseParser.parse(responseBuilder);
                 int valueLength;
 
                 if ((valueLength = response.getValueLength()) >= 0) {
@@ -97,7 +99,8 @@ public class ResponseReader {
                   return response;
                 }
               } catch (IOException ioException) {
-                LoggerManager.getLogger(CubbyConnection.class).error(ioException);
+
+                return new ErrorResponse(ioException);
               } finally {
                 complete = false;
                 responseBuilder = new StringBuilder();

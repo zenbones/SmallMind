@@ -30,67 +30,27 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.memcached.cubby.command;
+package org.smallmind.memcached.cubby.response;
 
 import java.io.IOException;
-import org.smallmind.memcached.cubby.CubbyOperationException;
-import org.smallmind.memcached.cubby.ServerResponse;
-import org.smallmind.memcached.cubby.codec.CubbyCodec;
-import org.smallmind.memcached.cubby.translator.KeyTranslator;
 
-public class GetCommand extends Command {
+public class ErrorResponse implements Response{
 
-  private String key;
-  private String opaqueToken;
-  private boolean cas;
+  private final IOException exception;
 
-  @Override
-  public String getKey () {
+  public ErrorResponse (IOException exception) {
 
-    return key;
-  }
-
-  public GetCommand setKey (String key) {
-
-    this.key = key;
-
-    return this;
-  }
-
-  public GetCommand setCas (boolean cas) {
-
-    this.cas = cas;
-
-    return this;
-  }
-
-  public GetCommand setOpaqueToken (String opaqueToken) {
-
-    this.opaqueToken = opaqueToken;
-
-    return this;
+    this.exception = exception;
   }
 
   @Override
-  public Object foobar (ServerResponse response)
-    throws IOException {
+  public ResponseType getType () {
 
-    return null;
+    return ResponseType.ERROR;
   }
 
-  @Override
-  public byte[] construct (KeyTranslator keyTranslator, CubbyCodec codec)
-    throws IOException, CubbyOperationException {
+  public IOException getException () {
 
-    StringBuilder line = new StringBuilder("mg ").append(keyTranslator.encode(key)).append(" b v N").append(300);
-
-    if (cas) {
-      line.append(" c");
-    }
-    if (opaqueToken != null) {
-      line.append(" O").append(opaqueToken);
-    }
-
-    return line.append("\r\n").toString().getBytes();
+    return exception;
   }
 }

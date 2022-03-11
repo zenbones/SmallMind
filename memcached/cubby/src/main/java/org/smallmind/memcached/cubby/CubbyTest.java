@@ -58,7 +58,7 @@ public class CubbyTest {
 
     System.out.println("send...");
 
-    Response response;
+    ServerResponse response;
 
     try {
       response = client.send(new SetCommand().setKey("hello").setValue("goodbye"), null);

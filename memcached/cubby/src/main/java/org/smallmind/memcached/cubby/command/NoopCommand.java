@@ -32,7 +32,7 @@
  */
 package org.smallmind.memcached.cubby.command;
 
-import org.smallmind.memcached.cubby.Response;
+import org.smallmind.memcached.cubby.ServerResponse;
 import org.smallmind.memcached.cubby.codec.CubbyCodec;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
 
@@ -47,13 +47,13 @@ public class NoopCommand extends Command {
   }
 
   @Override
-  public Object foobar (Response response) {
+  public Object foobar (ServerResponse response) {
 
     return null;
   }
 
   @Override
-  public byte[] construct (KeyTranslator keyTranslator, CubbyCodec codec, String opaqueToken) {
+  public byte[] construct (KeyTranslator keyTranslator, CubbyCodec codec) {
 
     return bytes;
   }

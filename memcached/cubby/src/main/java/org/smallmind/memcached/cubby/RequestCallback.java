@@ -43,7 +43,8 @@ public class RequestCallback implements SelfDestructive {
 
   private final CountDownLatch resultLatch = new CountDownLatch(1);
   private final AtomicReference<Stint> timeoutStintRef = new AtomicReference<>();
-  private final AtomicReference<Response> resultRef = new AtomicReference<>();
+  private final AtomicReference<ServerResponse> resultRef = new AtomicReference<>();
+  private final AtomicReference<IOException> exceptionRef = new AtomicReference<>();
   private final Command command;
 
   public RequestCallback (Command command) {
@@ -59,26 +60,40 @@ public class RequestCallback implements SelfDestructive {
     resultLatch.countDown();
   }
 
-  public Response getResult ()
+  public ServerResponse getResult ()
     throws InterruptedException, IOException {
 
-    Response response;
+    ServerResponse response;
 
     resultLatch.await();
     if ((response = resultRef.get()) == null) {
 
-      Stint timeoutStint = timeoutStintRef.get();
+      IOException exception;
 
-      throw new ResponseTimeoutException("The timeout(%s) milliseconds was exceeded while waiting for a response from command(%s)", (timeoutStint == null) ? "unknown" : String.valueOf(timeoutStint.toMilliseconds()), command);
+      if ((exception = exceptionRef.get()) != null) {
+
+        throw exception;
+      } else {
+
+        Stint timeoutStint = timeoutStintRef.get();
+
+        throw new ResponseTimeoutException("The timeout(%s) milliseconds was exceeded while waiting for a response from command(%s)", (timeoutStint == null) ? "unknown" : String.valueOf(timeoutStint.toMilliseconds()), command);
+      }
     } else {
 
       return response;
     }
   }
 
-  public void setResult (Response response) {
+  public void setResult (ServerResponse response) {
 
     resultRef.set(response);
+    resultLatch.countDown();
+  }
+
+  public void setException (IOException ioException) {
+
+    exceptionRef.set(ioException);
     resultLatch.countDown();
   }
 }

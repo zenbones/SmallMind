@@ -30,28 +30,30 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.memcached.cubby;
+package org.smallmind.memcached.cubby.response;
 
 import java.io.IOException;
+import org.smallmind.memcached.cubby.IncomprehensibleResponseException;
+import org.smallmind.memcached.cubby.ServerResponse;
 
 public class ResponseParser {
 
-  public static Response parse (StringBuilder responseBuilder)
+  public static ServerResponse parse (StringBuilder responseBuilder)
     throws IOException {
 
     if ((responseBuilder.length() < 2) || isError(responseBuilder)) {
       throw new IncomprehensibleResponseException(responseBuilder.toString());
     } else {
 
-      Response response;
+      ServerResponse response;
       int index = 2;
 
       switch (responseBuilder.substring(0, 2)) {
         case "HD":
-          response = new Response(ResponseCode.HD);
+          response = new ServerResponse(ResponseCode.HD);
           break;
         case "VA":
-          response = new Response(ResponseCode.VA);
+          response = new ServerResponse(ResponseCode.VA);
           if ((responseBuilder.length() < 4) || responseBuilder.charAt(index++) != ' ') {
             throw new IncomprehensibleResponseException(responseBuilder.toString());
           } else {
@@ -71,16 +73,16 @@ public class ResponseParser {
           }
           break;
         case "EN":
-          response = new Response(ResponseCode.EN);
+          response = new ServerResponse(ResponseCode.EN);
           break;
         case "EX":
-          response = new Response(ResponseCode.EX);
+          response = new ServerResponse(ResponseCode.EX);
           break;
         case "NF":
-          response = new Response(ResponseCode.NF);
+          response = new ServerResponse(ResponseCode.NF);
           break;
         case "NS":
-          response = new Response(ResponseCode.NS);
+          response = new ServerResponse(ResponseCode.NS);
           break;
         default:
           throw new IncomprehensibleResponseException(responseBuilder.toString());
@@ -102,7 +104,7 @@ public class ResponseParser {
              && (responseBuilder.charAt(4) == 'R');
   }
 
-  private static void parseFlags (Response response, StringBuilder responseBuilder, int index)
+  private static void parseFlags (ServerResponse response, StringBuilder responseBuilder, int index)
     throws IOException {
 
     int flagIndex = index;

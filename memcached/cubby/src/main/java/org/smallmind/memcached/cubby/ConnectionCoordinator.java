@@ -94,7 +94,7 @@ public class ConnectionCoordinator {
     }
   }
 
-  public Response send (Command command, Long timeoutSeconds)
+  public ServerResponse send (Command command, Long timeoutSeconds)
     throws InterruptedException, IOException, CubbyOperationException {
 
     CubbyConnection cubbyConnection;

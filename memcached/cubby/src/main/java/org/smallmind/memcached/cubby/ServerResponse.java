@@ -32,18 +32,93 @@
  */
 package org.smallmind.memcached.cubby;
 
-public enum ResponseCode {
+import org.smallmind.memcached.cubby.response.Response;
+import org.smallmind.memcached.cubby.response.ResponseCode;
+import org.smallmind.memcached.cubby.response.ResponseType;
 
-  // (HIT), to indicate success
-  HD,
-  // (VALUE), followed by the value data
-  VA,
-  // (MISS), to indicate that the item with this key was not found
-  EN,
-  // (EXISTS), to indicate that the supplied CAS token does not match the stored item, or to indicate that the item you are trying to store with CAS semantics has been modified since you last fetched it
-  EX,
-  // (NOT_FOUND), to indicate that the item with this key was not found, or to indicate that the item you are trying to store with CAS semantics did not exist
-  NF,
-  // (NOT_STORED), to indicate the data was not stored, but not because of an error
-  NS
+public class ServerResponse implements Response {
+
+  private final ResponseCode code;
+  private String token;
+  private boolean won;
+  private boolean alsoWon;
+  private long cas;
+  private int valueLength = -1;
+  private byte[] value;
+
+  public ServerResponse (ResponseCode code) {
+
+    this.code = code;
+  }
+
+  @Override
+  public ResponseType getType () {
+
+    return ResponseType.SERVER;
+  }
+
+  public ResponseCode getCode () {
+
+    return code;
+  }
+
+  public String getToken () {
+
+    return token;
+  }
+
+  public void setToken (String token) {
+
+    this.token = token;
+  }
+
+  public int getValueLength () {
+
+    return valueLength;
+  }
+
+  public void setValueLength (int valueLength) {
+
+    this.valueLength = valueLength;
+  }
+
+  public byte[] getValue () {
+
+    return value;
+  }
+
+  public void setValue (byte[] value) {
+
+    this.value = value;
+  }
+
+  public long getCas () {
+
+    return cas;
+  }
+
+  public void setCas (long cas) {
+
+    this.cas = cas;
+  }
+
+  public boolean isWon () {
+
+    return won;
+  }
+
+  public void setWon (boolean won) {
+
+    this.won = won;
+  }
+
+  public boolean isAlsoWon () {
+
+    return alsoWon;
+  }
+
+  public void setAlsoWon (boolean alsoWon) {
+
+    this.alsoWon = alsoWon;
+  }
 }

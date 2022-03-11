@@ -65,7 +65,7 @@ public class ConnectionMultiplexer {
     }
   }
 
-  public Response send (Command command, Long timeoutSeconds)
+  public ServerResponse send (Command command, Long timeoutSeconds)
     throws InterruptedException, IOException, CubbyOperationException {
 
     int index = 0;

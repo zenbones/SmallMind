@@ -34,7 +34,7 @@ package org.smallmind.memcached.cubby.command;
 
 import java.io.IOException;
 import org.smallmind.memcached.cubby.CubbyOperationException;
-import org.smallmind.memcached.cubby.Response;
+import org.smallmind.memcached.cubby.ServerResponse;
 import org.smallmind.memcached.cubby.codec.CubbyCodec;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
 
@@ -43,6 +43,7 @@ public class SetCommand extends Command {
   private Mode mode;
   private Object value;
   private String key;
+  private String opaqueToken;
   private Long cas;
   private Integer expiration;
 
@@ -87,22 +88,29 @@ public class SetCommand extends Command {
     return this;
   }
 
+  public SetCommand setOpaqueToken (String opaqueToken) {
+
+    this.opaqueToken = opaqueToken;
+
+    return this;
+  }
+
   @Override
-  public Object foobar (Response response)
+  public Object foobar (ServerResponse response)
     throws IOException {
 
     return null;
   }
 
   @Override
-  public byte[] construct (KeyTranslator keyTranslator, CubbyCodec codec, String opaqueToken)
+  public byte[] construct (KeyTranslator keyTranslator, CubbyCodec codec)
     throws IOException, CubbyOperationException {
 
     byte[] bytes;
     byte[] commandBytes;
     byte[] valueBytes = codec.serialize(value);
 
-    StringBuilder line = new StringBuilder("ms ").append(keyTranslator.encode(key)).append(' ').append(valueBytes.length).append(" b").append(" O").append(opaqueToken);
+    StringBuilder line = new StringBuilder("ms ").append(keyTranslator.encode(key)).append(' ').append(valueBytes.length).append(" b");
 
     if (mode != null) {
       line.append(" M").append(mode.getToken());
@@ -112,6 +120,9 @@ public class SetCommand extends Command {
     }
     if (expiration != null) {
       line.append(" T").append(expiration);
+    }
+    if (opaqueToken != null) {
+      line.append(" O").append(opaqueToken);
     }
 
     commandBytes = line.append("\r\n").toString().getBytes();
