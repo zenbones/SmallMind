@@ -33,119 +33,32 @@
 package org.smallmind.memcached.cubby;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.smallmind.memcached.cubby.command.Command;
-import org.smallmind.nutsnbolts.util.ComponentStatus;
 
 public class CubbyMemcachedClient {
 
-  private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-  private final ServerPool serverPool;
-  private final CubbyConfiguration configuration;
-  private final HashMap<String, CubbyConnection> connectionMap = new HashMap<>();
-  private ServerDefibrillator serverDefibrillator;
-  private ComponentStatus status = ComponentStatus.STOPPED;
+  private final ConnectionMultiplexer connectionMultiplexer;
 
-  public CubbyMemcachedClient (ServerPool serverPool, CubbyConfiguration configuration) {
+  public CubbyMemcachedClient (CubbyConfiguration configuration, MemcachedHost... memcachedHosts) {
 
-    this.serverPool = serverPool;
-    this.configuration = configuration;
+    connectionMultiplexer = new ConnectionMultiplexer(configuration, memcachedHosts);
   }
 
   public synchronized void start ()
     throws InterruptedException, IOException, CubbyOperationException {
 
-    if (ComponentStatus.STOPPED.equals(status)) {
-
-      Thread defibrillatorThread;
-
-      configuration.getKeyLocator().installRouting(serverPool);
-
-      defibrillatorThread = new Thread(serverDefibrillator = new ServerDefibrillator(this, configuration, serverPool));
-      defibrillatorThread.setDaemon(true);
-      defibrillatorThread.start();
-
-      for (MemcachedHost memcachedHost : serverPool.values()) {
-        constructConnection(memcachedHost);
-      }
-
-      status = ComponentStatus.STARTED;
-    }
+    connectionMultiplexer.start();
   }
 
   public synchronized void stop ()
     throws InterruptedException {
 
-    if (ComponentStatus.STARTED.equals(status)) {
-      serverDefibrillator.stop();
-
-      for (MemcachedHost memcachedHost : serverPool.values()) {
-
-        CubbyConnection connection;
-
-        if ((connection = getConnection(memcachedHost)) != null) {
-          connection.stop();
-        }
-      }
-
-      status = ComponentStatus.STOPPED;
-    }
+    connectionMultiplexer.stop();
   }
 
   public Response send (Command command, Long timeoutSeconds)
     throws InterruptedException, IOException, CubbyOperationException {
 
-    CubbyConnection cubbyConnection;
-    MemcachedHost memcachedHost;
-
-    if ((cubbyConnection = getConnection(memcachedHost = configuration.getKeyLocator().find(serverPool, command.getKey()))) == null) {
-      throw new CubbyOperationException("Missing connection(%s)", memcachedHost.getName());
-    } else {
-
-      return cubbyConnection.send(command, timeoutSeconds);
-    }
-  }
-
-  private CubbyConnection getConnection (MemcachedHost memcachedHost) {
-
-    lock.readLock().lock();
-    try {
-
-      return connectionMap.get(memcachedHost.getName());
-    } finally {
-      lock.readLock().unlock();
-    }
-  }
-
-  protected void disconnect (MemcachedHost memcachedHost) {
-
-    memcachedHost.setActive(false);
-    configuration.getKeyLocator().updateRouting(serverPool);
-  }
-
-  protected void reconnect (MemcachedHost memcachedHost)
-    throws InterruptedException, IOException {
-
-    constructConnection(memcachedHost);
-    memcachedHost.setActive(true);
-    configuration.getKeyLocator().updateRouting(serverPool);
-  }
-
-  private void constructConnection (MemcachedHost memcachedHost)
-    throws InterruptedException, IOException {
-
-    CubbyConnection connection;
-
-    lock.writeLock().lock();
-    try {
-      connectionMap.put(memcachedHost.getName(), connection = new CubbyConnection(this, configuration, memcachedHost));
-    } finally {
-      lock.writeLock().unlock();
-    }
-
-    connection.start();
-
-    new Thread(connection).start();
+    return connectionMultiplexer.send(command, timeoutSeconds);
   }
 }

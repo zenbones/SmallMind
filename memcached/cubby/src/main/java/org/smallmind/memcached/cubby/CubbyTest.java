@@ -47,13 +47,12 @@ public class CubbyTest {
   public static void main (String... args)
     throws Exception {
 
-    ServerPool serverPool = new ServerPool(new MemcachedHost("0", new InetSocketAddress("localhost", 11211)));
     CubbyCodec codec = new LargeValueCompressingCodec(new ObjectStreamCubbyCodec());
     CubbyConfiguration configuration = new CubbyConfiguration()
       .setCodec(codec)
       .setKeyLocator(new MaglevKeyLocator())
       .setKeyTranslator(new LargeKeyHashingTranslator(new DefaultKeyTranslator()));
-    CubbyMemcachedClient client = new CubbyMemcachedClient(serverPool, configuration);
+    CubbyMemcachedClient client = new CubbyMemcachedClient(configuration, new MemcachedHost("0", new InetSocketAddress("localhost", 11211)));
 
     client.start();
 
@@ -75,7 +74,6 @@ public class CubbyTest {
     } catch (Exception e) {
       e.printStackTrace();
     }
-    Thread.sleep(20000);
     try {
       response = client.send(new GetCommand().setKey("hello2").setCas(true), null);
       System.out.println(response);

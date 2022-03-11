@@ -38,14 +38,14 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-public class ServerPool implements Iterable<Map.Entry<String, MemcachedHost>> {
+public class ServerPool implements Iterable<Map.Entry<String, HostControl>> {
 
-  private final HashMap<String, MemcachedHost> hostMap = new HashMap<>();
+  private final HashMap<String, HostControl> hostMap = new HashMap<>();
 
   public ServerPool (MemcachedHost... memcachedHosts) {
 
     for (MemcachedHost memcachedHost : memcachedHosts) {
-      hostMap.put(memcachedHost.getName(), memcachedHost);
+      hostMap.put(memcachedHost.getName(), new HostControl(memcachedHost));
     }
   }
 
@@ -54,7 +54,7 @@ public class ServerPool implements Iterable<Map.Entry<String, MemcachedHost>> {
     return hostMap.size();
   }
 
-  public MemcachedHost get (String name) {
+  public HostControl get (String name) {
 
     return hostMap.get(name);
   }
@@ -64,13 +64,13 @@ public class ServerPool implements Iterable<Map.Entry<String, MemcachedHost>> {
     return hostMap.keySet();
   }
 
-  public Collection<MemcachedHost> values () {
+  public Collection<HostControl> values () {
 
     return hostMap.values();
   }
 
   @Override
-  public Iterator<Map.Entry<String, MemcachedHost>> iterator () {
+  public Iterator<Map.Entry<String, HostControl>> iterator () {
 
     return hostMap.entrySet().iterator();
   }

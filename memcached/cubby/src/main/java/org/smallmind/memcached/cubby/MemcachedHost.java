@@ -38,7 +38,6 @@ public class MemcachedHost {
 
   private final String name;
   private final SocketAddress address;
-  private boolean active = true;
 
   public MemcachedHost (String name, SocketAddress address) {
 
@@ -54,15 +53,5 @@ public class MemcachedHost {
   public SocketAddress getAddress () {
 
     return address;
-  }
-
-  public boolean isActive () {
-
-    return active;
-  }
-
-  public void setActive (boolean active) {
-
-    this.active = active;
   }
 }

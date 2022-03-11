@@ -55,7 +55,7 @@ public class CubbyConnection implements Runnable {
 
   private final CountDownLatch terminationLatch = new CountDownLatch(1);
   private final AtomicBoolean finished = new AtomicBoolean(false);
-  private final CubbyMemcachedClient client;
+  private final ConnectionCoordinator connectionCoordinator;
   private final MemcachedHost memcachedHost;
   private final KeyTranslator keyTranslator;
   private final CubbyCodec codec;
@@ -67,9 +67,9 @@ public class CubbyConnection implements Runnable {
   private Selector selector;
   private SelectionKey selectionKey;
 
-  public CubbyConnection (CubbyMemcachedClient client, CubbyConfiguration configuration, MemcachedHost memcachedHost) {
+  public CubbyConnection (ConnectionCoordinator connectionCoordinator, CubbyConfiguration configuration, MemcachedHost memcachedHost) {
 
-    this.client = client;
+    this.connectionCoordinator = connectionCoordinator;
     this.memcachedHost = memcachedHost;
     this.keyTranslator = configuration.getKeyTranslator();
     this.codec = configuration.getCodec();
@@ -125,7 +125,7 @@ public class CubbyConnection implements Runnable {
       }
 
       if (unexpected) {
-        client.disconnect(memcachedHost);
+        connectionCoordinator.disconnect(memcachedHost);
       }
     }
   }

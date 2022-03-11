@@ -32,48 +32,28 @@
  */
 package org.smallmind.memcached.cubby;
 
-import java.io.IOException;
-import java.util.concurrent.ThreadLocalRandom;
-import org.smallmind.memcached.cubby.command.Command;
+public class HostControl {
 
-public class ConnectionMultiplexer {
+  private final MemcachedHost memcachedHost;
+  private boolean active = true;
 
-  private final ConnectionCoordinator[] connectionCoordinators;
+  public HostControl (MemcachedHost memcachedHost) {
 
-  public ConnectionMultiplexer (CubbyConfiguration configuration, MemcachedHost... memcachedHosts) {
-
-    connectionCoordinators = new ConnectionCoordinator[configuration.getConnectionsPerHost()];
-
-    for (int index = 0; index < connectionCoordinators.length; index++) {
-      connectionCoordinators[index] = new ConnectionCoordinator(configuration, memcachedHosts);
-    }
+    this.memcachedHost = memcachedHost;
   }
 
-  public synchronized void start ()
-    throws InterruptedException, IOException, CubbyOperationException {
+  public MemcachedHost getMemcachedHost () {
 
-    for (ConnectionCoordinator connectionCoordinator : connectionCoordinators) {
-      connectionCoordinator.start();
-    }
+    return memcachedHost;
   }
 
-  public synchronized void stop ()
-    throws InterruptedException {
+  public boolean isActive () {
 
-    for (ConnectionCoordinator connectionCoordinator : connectionCoordinators) {
-      connectionCoordinator.stop();
-    }
+    return active;
   }
 
-  public Response send (Command command, Long timeoutSeconds)
-    throws InterruptedException, IOException, CubbyOperationException {
+  public void setActive (boolean active) {
 
-    int index = 0;
-
-    if (connectionCoordinators.length > 1) {
-      index = ThreadLocalRandom.current().nextInt(4);
-    }
-
-    return connectionCoordinators[index].send(command, timeoutSeconds);
+    this.active = active;
   }
 }

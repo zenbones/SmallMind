@@ -43,14 +43,14 @@ public class ServerDefibrillator implements Runnable {
 
   private final CountDownLatch finishedLatch = new CountDownLatch(1);
   private final CountDownLatch terminatedLatch = new CountDownLatch(1);
-  private final CubbyMemcachedClient client;
+  private final ConnectionCoordinator connectionCoordinator;
   private final ServerPool serverPool;
   private final long resuscitationSeconds;
   private final int connectionTimeoutMilliseconds;
 
-  public ServerDefibrillator (CubbyMemcachedClient client, CubbyConfiguration configuration, ServerPool serverPool) {
+  public ServerDefibrillator (ConnectionCoordinator connectionCoordinator, CubbyConfiguration configuration, ServerPool serverPool) {
 
-    this.client = client;
+    this.connectionCoordinator = connectionCoordinator;
     this.serverPool = serverPool;
 
     this.connectionTimeoutMilliseconds = (int)configuration.getConnectionTimeoutMilliseconds();
@@ -72,11 +72,11 @@ public class ServerDefibrillator implements Runnable {
 
         LinkedList<MemcachedHost> reconnectionList = new LinkedList<>();
 
-        for (MemcachedHost memcachedHost : serverPool.values()) {
-          if (!memcachedHost.isActive()) {
+        for (HostControl hostControl : serverPool.values()) {
+          if (!hostControl.isActive()) {
             try (Socket socket = new Socket()) {
-              socket.connect(memcachedHost.getAddress(), connectionTimeoutMilliseconds);
-              reconnectionList.add(memcachedHost);
+              socket.connect(hostControl.getMemcachedHost().getAddress(), connectionTimeoutMilliseconds);
+              reconnectionList.add(hostControl.getMemcachedHost());
             } catch (IOException ioException) {
               // do nothing
             }
@@ -86,7 +86,7 @@ public class ServerDefibrillator implements Runnable {
         if (!reconnectionList.isEmpty()) {
           for (MemcachedHost memcachedHost : reconnectionList) {
             try {
-              client.reconnect(memcachedHost);
+              connectionCoordinator.reconnect(memcachedHost);
             } catch (IOException ioException) {
               LoggerManager.getLogger(ServerDefibrillator.class).error(ioException);
             }
