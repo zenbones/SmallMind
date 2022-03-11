@@ -132,14 +132,14 @@ public class RabbitMQRequestTransport extends AbstractRequestTransport {
 
   @Override
   public void close ()
-    throws IOException, InterruptedException, TimeoutException {
+    throws Exception {
 
     if (closed.compareAndSet(false, true)) {
       for (RequestMessageRouter requestMessageRouter : requestMessageRouters) {
         requestMessageRouter.close();
       }
 
-      getCallbackMap().shutdown();
+      super.close();
     }
   }
 }

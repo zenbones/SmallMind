@@ -57,9 +57,4 @@ public class RestRequestTransport extends AbstractRequestTransport {
 
     return null;
   }
-
-  @Override
-  public void close () throws Exception {
-
-  }
 }

@@ -49,11 +49,6 @@ public abstract class AbstractRequestTransport implements RequestTransport {
     callbackMap = new SelfDestructiveMap<>(new Stint(defaultTimeoutSeconds, TimeUnit.SECONDS));
   }
 
-  public SelfDestructiveMap<String, TransmissionCallback> getCallbackMap () {
-
-    return callbackMap;
-  }
-
   public Object acquireResult (SignalCodec signalCodec, Route route, Voice<?, ?> voice, String messageId, boolean inOnly)
     throws Throwable {
 
@@ -64,7 +59,7 @@ public abstract class AbstractRequestTransport implements RequestTransport {
       Object timeoutObject;
       int timeoutSeconds = (timeoutObject = voice.getConversation().getTimeout()) == null ? 0 : (Integer)timeoutObject;
 
-      if ((previousCallback = (SynchronousTransmissionCallback)getCallbackMap().putIfAbsent(messageId, asynchronousCallback, (timeoutSeconds > 0) ? new Stint(timeoutSeconds, TimeUnit.SECONDS) : null)) != null) {
+      if ((previousCallback = (SynchronousTransmissionCallback)callbackMap.putIfAbsent(messageId, asynchronousCallback, (timeoutSeconds > 0) ? new Stint(timeoutSeconds, TimeUnit.SECONDS) : null)) != null) {
 
         return previousCallback.getResult(signalCodec);
       }
@@ -88,5 +83,12 @@ public abstract class AbstractRequestTransport implements RequestTransport {
     } else if (previousCallback instanceof AsynchronousTransmissionCallback) {
       ((AsynchronousTransmissionCallback)previousCallback).setResultSignal(resultSignal);
     }
+  }
+
+  @Override
+  public void close ()
+    throws Exception {
+
+    callbackMap.shutdown();
   }
 }

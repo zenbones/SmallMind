@@ -115,11 +115,4 @@ public class MockRequestTransport extends AbstractRequestTransport {
 
     return acquireResult(signalCodec, route, voice, messageId, inOnly);
   }
-
-  @Override
-  public void close ()
-    throws Exception {
-
-    getCallbackMap().shutdown();
-  }
 }

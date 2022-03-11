@@ -187,7 +187,7 @@ public class JmsRequestTransport extends AbstractRequestTransport {
 
   @Override
   public void close ()
-    throws JMSException, InterruptedException {
+    throws Exception {
 
     if (closed.compareAndSet(false, true)) {
       for (ConnectionManager requestConnectionManager : whisperAndShoutRequestConnectionManagers) {
@@ -208,7 +208,7 @@ public class JmsRequestTransport extends AbstractRequestTransport {
         responseListener.close();
       }
 
-      getCallbackMap().shutdown();
+      super.close();
     }
   }
 }
