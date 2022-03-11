@@ -30,44 +30,47 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.memcached.cubby;
+package org.smallmind.memcached.utility.spring;
 
 import java.net.InetSocketAddress;
+import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.smallmind.memcached.cubby.codec.CubbyCodec;
-import org.smallmind.memcached.cubby.codec.LargeValueCompressingCodec;
-import org.smallmind.memcached.cubby.codec.ObjectStreamCubbyCodec;
-import org.smallmind.memcached.cubby.command.GetCommand;
-import org.smallmind.memcached.cubby.command.SetCommand;
-import org.smallmind.memcached.cubby.locator.MaglevKeyLocator;
-import org.smallmind.memcached.cubby.translator.DefaultKeyTranslator;
-import org.smallmind.memcached.cubby.translator.LargeKeyHashingTranslator;
+import net.rubyeye.xmemcached.CommandFactory;
+import net.rubyeye.xmemcached.MemcachedClient;
+import net.rubyeye.xmemcached.XMemcachedClientBuilder;
+import net.rubyeye.xmemcached.command.BinaryCommandFactory;
+import net.rubyeye.xmemcached.command.TextCommandFactory;
+import net.rubyeye.xmemcached.impl.AddressMemcachedSessionComparator;
+import net.rubyeye.xmemcached.impl.KetamaMemcachedSessionLocator;
 
-public class CubbyTest2 {
+public class CubbyTest3 {
 
   public static void main (String... args)
     throws Exception {
 
-    CubbyCodec codec = new LargeValueCompressingCodec(new ObjectStreamCubbyCodec());
-    CubbyConfiguration configuration = new CubbyConfiguration()
-      .setCodec(codec)
-      .setKeyLocator(new MaglevKeyLocator())
-      .setKeyTranslator(new LargeKeyHashingTranslator(new DefaultKeyTranslator()))
-      .setConnectionsPerHost(1);
-    CubbyMemcachedClient client = new CubbyMemcachedClient(configuration, new MemcachedHost("0", new InetSocketAddress("localhost", 11211)));
+    HashMap<InetSocketAddress, InetSocketAddress> addressMap = new HashMap<>();
+    addressMap.put(new InetSocketAddress("localhost", 11211), new InetSocketAddress("localhost", 11211));
 
-    client.start();
+    XMemcachedClientBuilder builder = new XMemcachedClientBuilder(addressMap);
+
+    builder.setFailureMode(true);
+    builder.setConnectionPoolSize(1);
+    builder.setCommandFactory(new TextCommandFactory());
+    builder.setSessionLocator(new KetamaMemcachedSessionLocator());
+    builder.setSessionComparator(new AddressMemcachedSessionComparator());
+
+    MemcachedClient memcachedClient = builder.build();
 
     System.out.println("send...");
-    client.send(new SetCommand().setKey("hello").setValue("goodbye"), null);
+    memcachedClient.set("hello", 30000, "goodbye");
 
     CountDownLatch startLatch = new CountDownLatch(1);
     CountDownLatch finishLatch = new CountDownLatch(100);
     AtomicInteger counter = new AtomicInteger(0);
 
     for (int i = 0; i < 100; i++) {
-      new Thread(new Worker(counter, startLatch, finishLatch, client)).start();
+      new Thread(new Worker(counter, startLatch, finishLatch, memcachedClient)).start();
     }
 
     long start = System.currentTimeMillis();
@@ -76,7 +79,6 @@ public class CubbyTest2 {
     System.out.println(System.currentTimeMillis() - start);
 
     System.out.println("done[" + counter.get() + "]...");
-    client.stop();
   }
 
   private static class Worker implements Runnable {
@@ -84,10 +86,9 @@ public class CubbyTest2 {
     private final AtomicInteger counter;
     private final CountDownLatch startLatch;
     private final CountDownLatch finishLatch;
-    private final CubbyMemcachedClient client;
+    private final MemcachedClient client;
 
-
-    public Worker (AtomicInteger counter, CountDownLatch startLatch, CountDownLatch finishLatch, CubbyMemcachedClient client) {
+    public Worker (AtomicInteger counter, CountDownLatch startLatch, CountDownLatch finishLatch, MemcachedClient client) {
 
       this.counter = counter;
       this.startLatch = startLatch;
@@ -102,7 +103,7 @@ public class CubbyTest2 {
         startLatch.await();
 
         for (int i = 0; i < 1000; i++) {
-          client.send(new GetCommand().setKey("hello"), null);
+          client.get("hello");
           counter.incrementAndGet();
         }
         finishLatch.countDown();
