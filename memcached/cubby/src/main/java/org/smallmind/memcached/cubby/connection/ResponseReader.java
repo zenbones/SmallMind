@@ -111,6 +111,7 @@ public class ResponseReader {
 
         return null;
       } else {
+
         byte[] value = new byte[partialResponse.getValueLength()];
 
         joinedBuffer.get(value);
