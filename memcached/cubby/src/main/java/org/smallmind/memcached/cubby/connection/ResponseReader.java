@@ -57,30 +57,10 @@ public class ResponseReader {
 
     int bytesRead;
 
-    readBuffer.mark();
-    byte[] all = new byte[readBuffer.limit()];
-    readBuffer.get(all);
-    readBuffer.reset();
-    System.out.println("oooooooooooooooooooooooooooooooooooooooooooooooooooooooooo");
-    System.out.println(new String(all));
-    System.out.println(readBuffer.position());
-    System.out.println(readBuffer.limit());
-    System.out.println(readBuffer.capacity());
-
     if ((bytesRead = socketChannel.read(readBuffer)) < 0) {
       throw new ServerClosedException();
     } else if (bytesRead > 0) {
       readBuffer.flip();
-
-      readBuffer.mark();
-      byte[] all2 = new byte[readBuffer.limit()];
-      readBuffer.get(all2);
-      readBuffer.reset();
-      System.out.println("---------------------------------------------------------");
-      System.out.println(new String(all2));
-      System.out.println(readBuffer.position());
-      System.out.println(readBuffer.limit());
-      System.out.println(readBuffer.capacity());
 
       return true;
     } else {
@@ -93,19 +73,15 @@ public class ResponseReader {
 
     if (readBuffer.remaining() == 0) {
       readBuffer.clear();
-    } else if (readBuffer.position() > 0) {
+    } else if (readBuffer.position() == 0) {
+      readBuffer.position(readBuffer.limit());
+    } else {
 
       byte[] remaining = new byte[readBuffer.limit() - readBuffer.position()];
 
       readBuffer.get(remaining);
       readBuffer.clear();
       readBuffer.put(remaining);
-
-      System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-      System.out.println(new String(remaining));
-      System.out.println(readBuffer.position());
-      System.out.println(readBuffer.limit());
-      System.out.println(readBuffer.capacity());
     }
   }
 

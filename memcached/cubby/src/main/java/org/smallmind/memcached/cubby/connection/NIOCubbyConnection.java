@@ -208,6 +208,7 @@ public class NIOCubbyConnection implements CubbyConnection {
                 } else {
                   if (selectionKey.isReadable()) {
                     if (responseReader.read()) {
+                      System.out.println("Reading...");
 
                       boolean proceed = true;
 
