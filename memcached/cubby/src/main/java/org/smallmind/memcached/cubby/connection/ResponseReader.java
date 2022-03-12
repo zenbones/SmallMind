@@ -104,6 +104,22 @@ public class ResponseReader {
       shiftRemaining();
 
       return null;
+    }
+    if (partialResponse != null) {
+      if (joinedBuffer.remaining() < (partialResponse.getValueLength() + 2)) {
+        shiftRemaining();
+
+        return null;
+      } else {
+        byte[] value = new byte[partialResponse.getValueLength()];
+
+        joinedBuffer.get(value);
+        partialResponse.setValue(value);
+
+        joinedBuffer.position(joinedBuffer.position() + 2);
+
+        return partialResponse;
+      }
     } else {
 
       Response response = ResponseParser.parse(joinedBuffer, joinedBuffer.position(), endOfLine - 2 - joinedBuffer.position());
