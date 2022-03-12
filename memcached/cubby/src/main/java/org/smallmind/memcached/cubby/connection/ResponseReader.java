@@ -49,7 +49,7 @@ public class ResponseReader {
 
     this.socketChannel = socketChannel;
 
-    readBuffer = ByteBuffer.allocateDirect(5);
+    readBuffer = ByteBuffer.allocateDirect(8192);
   }
 
   public boolean read ()
@@ -67,6 +67,21 @@ public class ResponseReader {
 
       return false;
     }
+  }
+
+  private void debug () {
+
+    byte[] all = new byte[readBuffer.limit()];
+    int pos = readBuffer.position();
+
+    readBuffer.position(0);
+    readBuffer.get(all);
+    readBuffer.position(pos);
+
+    System.out.println("++++++++++++++++++++++++++++++++++++++++++++++");
+    System.out.println(readBuffer.position());
+    System.out.println(readBuffer.limit());
+    System.out.println(new String(all));
   }
 
   private void shiftRemaining () {
@@ -96,7 +111,7 @@ public class ResponseReader {
       return null;
     } else {
 
-      Response response = ResponseParser.parse(readBuffer, endOfLine - 2 - readBuffer.position());
+      Response response = ResponseParser.parse(readBuffer, readBuffer.position(), endOfLine - 2 - readBuffer.position());
 
       readBuffer.position(readBuffer.position() + 2);
       if (response.getValueLength() >= 0) {

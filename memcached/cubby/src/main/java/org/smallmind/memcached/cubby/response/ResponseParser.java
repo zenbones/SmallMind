@@ -39,7 +39,7 @@ import org.smallmind.memcached.cubby.IncomprehensibleResponseException;
 
 public class ResponseParser {
 
-  public static Response parse (ByteBuffer readBuffer, int length)
+  public static Response parse (ByteBuffer readBuffer, int offset, int length)
     throws IOException {
 
     readBuffer.mark();
@@ -65,7 +65,7 @@ public class ResponseParser {
 
           StringBuilder lengthBuilder = new StringBuilder();
 
-          while (readBuffer.position() < length) {
+          while ((readBuffer.position() - offset) < length) {
 
             char singleChar;
 
@@ -94,7 +94,7 @@ public class ResponseParser {
         throw createIncomprehensibleResponseException(readBuffer, length);
       }
 
-      parseFlags(response, readBuffer, length);
+      parseFlags(response, readBuffer, offset, length);
 
       return response;
     }
@@ -114,19 +114,19 @@ public class ResponseParser {
     }
   }
 
-  private static void parseFlags (Response response, ByteBuffer readBuffer, int length)
+  private static void parseFlags (Response response, ByteBuffer readBuffer, int offset, int length)
     throws IOException {
 
-    while (readBuffer.position() < length) {
+    while ((readBuffer.position() - offset) < length) {
       if (readBuffer.get() != ' ') {
         throw createIncomprehensibleResponseException(readBuffer, length);
       } else {
         switch (readBuffer.get()) {
           case 'O':
-            response.setToken(accumulateToken(readBuffer, length));
+            response.setToken(accumulateToken(readBuffer, offset, length));
             break;
           case 'c':
-            response.setCas(Long.parseLong(accumulateToken(readBuffer, length)));
+            response.setCas(Long.parseLong(accumulateToken(readBuffer, offset, length)));
             break;
           case 'W':
             response.setWon(true);
@@ -141,11 +141,11 @@ public class ResponseParser {
     }
   }
 
-  private static String accumulateToken (ByteBuffer readBuffer, int length) {
+  private static String accumulateToken (ByteBuffer readBuffer, int offset, int length) {
 
     StringBuilder tokenBuilder = new StringBuilder();
 
-    while (readBuffer.position() < length) {
+    while ((readBuffer.position() - offset) < length) {
 
       char tokenChar;
 

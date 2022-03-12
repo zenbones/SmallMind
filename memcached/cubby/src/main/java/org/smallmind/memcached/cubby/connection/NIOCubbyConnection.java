@@ -184,7 +184,6 @@ public class NIOCubbyConnection implements CubbyConnection {
       throw new CubbyOperationException("Desynchronized connection state");
     }
 
-    System.out.println("Pop:" + commandBuffer.getIndex());
     return new MissingLink(callbackMap.get(commandBuffer.getIndex()), commandBuffer);
   }
 
@@ -208,7 +207,6 @@ public class NIOCubbyConnection implements CubbyConnection {
                 } else {
                   if (selectionKey.isReadable()) {
                     if (responseReader.read()) {
-                      System.out.println("Reading...");
 
                       boolean proceed = true;
 
@@ -253,7 +251,6 @@ public class NIOCubbyConnection implements CubbyConnection {
                           selectionKey.interestOps(SelectionKey.OP_READ);
                         } else {
                           responseQueue.add(commandBuffer);
-                          System.out.println("Push:" + commandBuffer.getIndex());
 
                           if (!requestWriter.add(commandBuffer)) {
                             break;

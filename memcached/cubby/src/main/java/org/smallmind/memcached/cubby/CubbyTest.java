@@ -76,6 +76,30 @@ public class CubbyTest {
       e.printStackTrace();
     }
     try {
+      response = client.send(new GetCommand().setKey("hello").setCas(true), null);
+      System.out.println(response);
+      Object value = codec.deserialize(response.getValue());
+      System.out.println(value);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    try {
+      response = client.send(new GetCommand().setKey("hello").setCas(true), null);
+      System.out.println(response);
+      Object value = codec.deserialize(response.getValue());
+      System.out.println(value);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    try {
+      response = client.send(new GetCommand().setKey("hello").setCas(true), null);
+      System.out.println(response);
+      Object value = codec.deserialize(response.getValue());
+      System.out.println(value);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    try {
       response = client.send(new GetCommand().setKey("hello2").setCas(true), null);
       System.out.println(response);
     } catch (Exception e) {

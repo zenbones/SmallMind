@@ -106,12 +106,12 @@ public class CubbyTest2 {
 
         for (int i = 0; i < 1000; i++) {
 
-//          String opaqueToken = tokenGenerator.next();
+          String opaqueToken = tokenGenerator.next();
 
-          Response response = client.send(new GetCommand().setKey("hello").setCas(true), null);
-  //        if (!opaqueToken.equals(response.getToken())) {
-      //      System.exit(0);
-    //      }
+          Response response = client.send(new GetCommand().setKey("hello").setCas(true).setOpaqueToken(opaqueToken), null);
+          if (!opaqueToken.equals(response.getToken())) {
+            System.exit(0);
+          }
           counter.incrementAndGet();
         }
         finishLatch.countDown();
