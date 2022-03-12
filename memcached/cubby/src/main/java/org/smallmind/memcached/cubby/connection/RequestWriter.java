@@ -57,7 +57,7 @@ public class RequestWriter {
       sendBufferSize = 8192;
     }
 
-    writeBuffer = ByteBuffer.allocateDirect(sendBufferSize);
+    writeBuffer = ByteBuffer.allocate(sendBufferSize);
   }
 
   public boolean prepare () {

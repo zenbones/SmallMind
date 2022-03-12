@@ -33,53 +33,52 @@
 package org.smallmind.memcached.cubby.response;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import org.smallmind.memcached.cubby.IncomprehensibleRequestException;
 import org.smallmind.memcached.cubby.IncomprehensibleResponseException;
 
 public class ResponseParser {
 
-  public static Response parse (ByteBuffer readBuffer, int offset, int length)
+  public static Response parse (JoinedBuffer joinedBuffer, int offset, int length)
     throws IOException {
 
-    readBuffer.mark();
+    joinedBuffer.mark();
 
     if (length < 2) {
-      throw createIncomprehensibleResponseException(readBuffer, length);
-    } else if (isError(readBuffer, length)) {
+      throw createIncomprehensibleResponseException(joinedBuffer, length);
+    } else if (isError(joinedBuffer, length)) {
       throw new IncomprehensibleRequestException();
     } else {
 
       Response response;
-      byte first = readBuffer.get();
-      byte second = readBuffer.get();
+      byte first = joinedBuffer.get();
+      byte second = joinedBuffer.get();
 
       if (ResponseCode.HD.begins(first, second)) {
         response = new Response(ResponseCode.HD);
       } else if (ResponseCode.VA.begins(first, second)) {
         response = new Response(ResponseCode.VA);
 
-        if ((length < 4) || readBuffer.get() != ' ') {
-          throw createIncomprehensibleResponseException(readBuffer, length);
+        if ((length < 4) || joinedBuffer.get() != ' ') {
+          throw createIncomprehensibleResponseException(joinedBuffer, length);
         } else {
 
           StringBuilder lengthBuilder = new StringBuilder();
 
-          while ((readBuffer.position() - offset) < length) {
+          while ((joinedBuffer.position() - offset) < length) {
 
             char singleChar;
 
-            if ((singleChar = (char)readBuffer.get()) != ' ') {
+            if ((singleChar = (char)joinedBuffer.get()) != ' ') {
               lengthBuilder.append(singleChar);
             } else {
-              readBuffer.position(readBuffer.position() - 1);
+              joinedBuffer.position(joinedBuffer.position() - 1);
               break;
             }
           }
           try {
             response.setValueLength(Integer.parseInt(lengthBuilder.toString()));
           } catch (NumberFormatException numberFormatException) {
-            throw createIncomprehensibleResponseException(readBuffer, length);
+            throw createIncomprehensibleResponseException(joinedBuffer, length);
           }
         }
       } else if (ResponseCode.EN.begins(first, second)) {
@@ -91,42 +90,42 @@ public class ResponseParser {
       } else if (ResponseCode.NS.begins(first, second)) {
         response = new Response(ResponseCode.NS);
       } else {
-        throw createIncomprehensibleResponseException(readBuffer, length);
+        throw createIncomprehensibleResponseException(joinedBuffer, length);
       }
 
-      parseFlags(response, readBuffer, offset, length);
+      parseFlags(response, joinedBuffer, offset, length);
 
       return response;
     }
   }
 
-  private static boolean isError (ByteBuffer readBuffer, int length) {
+  private static boolean isError (JoinedBuffer joinedBuffer, int length) {
 
     try {
       return (length == 5)
-               && (readBuffer.get() == 'E')
-               && (readBuffer.get() == 'R')
-               && (readBuffer.get() == 'R')
-               && (readBuffer.get() == 'O')
-               && (readBuffer.get() == 'R');
+               && (joinedBuffer.get() == 'E')
+               && (joinedBuffer.get() == 'R')
+               && (joinedBuffer.get() == 'R')
+               && (joinedBuffer.get() == 'O')
+               && (joinedBuffer.get() == 'R');
     } finally {
-      readBuffer.reset();
+      joinedBuffer.reset();
     }
   }
 
-  private static void parseFlags (Response response, ByteBuffer readBuffer, int offset, int length)
+  private static void parseFlags (Response response, JoinedBuffer joinedBuffer, int offset, int length)
     throws IOException {
 
-    while ((readBuffer.position() - offset) < length) {
-      if (readBuffer.get() != ' ') {
-        throw createIncomprehensibleResponseException(readBuffer, length);
+    while ((joinedBuffer.position() - offset) < length) {
+      if (joinedBuffer.get() != ' ') {
+        throw createIncomprehensibleResponseException(joinedBuffer, length);
       } else {
-        switch (readBuffer.get()) {
+        switch (joinedBuffer.get()) {
           case 'O':
-            response.setToken(accumulateToken(readBuffer, offset, length));
+            response.setToken(accumulateToken(joinedBuffer, offset, length));
             break;
           case 'c':
-            response.setCas(Long.parseLong(accumulateToken(readBuffer, offset, length)));
+            response.setCas(Long.parseLong(accumulateToken(joinedBuffer, offset, length)));
             break;
           case 'W':
             response.setWon(true);
@@ -135,22 +134,22 @@ public class ResponseParser {
             response.setAlsoWon(true);
             break;
           default:
-            throw createIncomprehensibleResponseException(readBuffer, length);
+            throw createIncomprehensibleResponseException(joinedBuffer, length);
         }
       }
     }
   }
 
-  private static String accumulateToken (ByteBuffer readBuffer, int offset, int length) {
+  private static String accumulateToken (JoinedBuffer joinedBuffer, int offset, int length) {
 
     StringBuilder tokenBuilder = new StringBuilder();
 
-    while ((readBuffer.position() - offset) < length) {
+    while ((joinedBuffer.position() - offset) < length) {
 
       char tokenChar;
 
-      if ((tokenChar = (char)readBuffer.get()) == ' ') {
-        readBuffer.position(readBuffer.position() - 1);
+      if ((tokenChar = (char)joinedBuffer.get()) == ' ') {
+        joinedBuffer.position(joinedBuffer.position() - 1);
 
         return tokenBuilder.toString();
       }
@@ -161,12 +160,12 @@ public class ResponseParser {
     return tokenBuilder.toString();
   }
 
-  private static IncomprehensibleResponseException createIncomprehensibleResponseException (ByteBuffer readBuffer, int length) {
+  private static IncomprehensibleResponseException createIncomprehensibleResponseException (JoinedBuffer joinedBuffer, int length) {
 
     byte[] slice = new byte[length];
 
-    readBuffer.reset();
-    readBuffer.get(slice);
+    joinedBuffer.reset();
+    joinedBuffer.get(slice);
 
     return new IncomprehensibleResponseException(new String(slice));
   }

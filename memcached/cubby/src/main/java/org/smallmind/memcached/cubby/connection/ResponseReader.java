@@ -32,10 +32,12 @@
  */
 package org.smallmind.memcached.cubby.connection;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import org.smallmind.memcached.cubby.ServerClosedException;
+import org.smallmind.memcached.cubby.response.JoinedBuffer;
 import org.smallmind.memcached.cubby.response.Response;
 import org.smallmind.memcached.cubby.response.ResponseParser;
 
@@ -43,13 +45,16 @@ public class ResponseReader {
 
   private final SocketChannel socketChannel;
   private final ByteBuffer readBuffer;
+  private final ByteArrayOutputStream accumulatingStream;
+  private JoinedBuffer joinedBuffer;
   private Response partialResponse;
 
   public ResponseReader (SocketChannel socketChannel) {
 
     this.socketChannel = socketChannel;
 
-    readBuffer = ByteBuffer.allocateDirect(8192);
+    readBuffer = ByteBuffer.allocate(8192);
+    accumulatingStream = new ByteArrayOutputStream(1024);
   }
 
   public boolean read ()
@@ -61,6 +66,7 @@ public class ResponseReader {
       throw new ServerClosedException();
     } else if (bytesRead > 0) {
       readBuffer.flip();
+      joinedBuffer = new JoinedBuffer(accumulatingStream, readBuffer);
 
       return true;
     } else {
@@ -69,34 +75,19 @@ public class ResponseReader {
     }
   }
 
-  private void debug () {
-
-    byte[] all = new byte[readBuffer.limit()];
-    int pos = readBuffer.position();
-
-    readBuffer.position(0);
-    readBuffer.get(all);
-    readBuffer.position(pos);
-
-    System.out.println("++++++++++++++++++++++++++++++++++++++++++++++");
-    System.out.println(readBuffer.position());
-    System.out.println(readBuffer.limit());
-    System.out.println(new String(all));
-  }
-
-  private void shiftRemaining () {
+  private void shiftRemaining ()
+    throws IOException {
 
     if (readBuffer.remaining() == 0) {
       readBuffer.clear();
-    } else if (readBuffer.position() == 0) {
-      readBuffer.position(readBuffer.limit());
     } else {
 
       byte[] remaining = new byte[readBuffer.limit() - readBuffer.position()];
 
       readBuffer.get(remaining);
       readBuffer.clear();
-      readBuffer.put(remaining);
+
+      accumulatingStream.write(remaining);
     }
   }
 
@@ -105,17 +96,17 @@ public class ResponseReader {
 
     int endOfLine;
 
-    if ((endOfLine = findLineEnd()) < 0) {
+    if ((endOfLine = findLineEnd(joinedBuffer)) < 0) {
       shiftRemaining();
 
       return null;
     } else {
 
-      Response response = ResponseParser.parse(readBuffer, readBuffer.position(), endOfLine - 2 - readBuffer.position());
+      Response response = ResponseParser.parse(joinedBuffer, joinedBuffer.position(), endOfLine - 2 - joinedBuffer.position());
 
-      readBuffer.position(readBuffer.position() + 2);
+      joinedBuffer.position(joinedBuffer.position() + 2);
       if (response.getValueLength() >= 0) {
-        if (readBuffer.remaining() < (response.getValueLength() + 2)) {
+        if (joinedBuffer.remaining() < (response.getValueLength() + 2)) {
           partialResponse = response;
           shiftRemaining();
 
@@ -125,11 +116,11 @@ public class ResponseReader {
 
             byte[] value = new byte[response.getValueLength()];
 
-            readBuffer.get(value);
+            joinedBuffer.get(value);
             response.setValue(value);
           }
 
-          readBuffer.position(readBuffer.position() + 2);
+          joinedBuffer.position(joinedBuffer.position() + 2);
         }
       }
 
@@ -137,22 +128,22 @@ public class ResponseReader {
     }
   }
 
-  private int findLineEnd () {
+  private int findLineEnd (JoinedBuffer joinedBuffer) {
 
     boolean completed = false;
 
-    readBuffer.mark();
+    joinedBuffer.mark();
 
     try {
-      while (readBuffer.remaining() > 0) {
-        switch (readBuffer.get()) {
+      while (joinedBuffer.remaining() > 0) {
+        switch (joinedBuffer.get()) {
           case '\r':
             completed = true;
             break;
           case '\n':
             if (completed) {
 
-              return readBuffer.position();
+              return joinedBuffer.position();
             }
             break;
           default:
@@ -162,7 +153,7 @@ public class ResponseReader {
 
       return -1;
     } finally {
-      readBuffer.reset();
+      joinedBuffer.reset();
     }
   }
 }

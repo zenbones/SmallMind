@@ -58,7 +58,7 @@ public class ReverseProxyService {
   private final ProxyExecutor proxyExecutor;
   private final Lock selectLock = new ReentrantLock(true);
   private final Lock loopLock = new ReentrantLock(true);
-  private final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(8192);
+  private final ByteBuffer byteBuffer = ByteBuffer.allocate(8192);
   private final int connectTimeoutMillis;
   private EventLoop eventLoop;
 
