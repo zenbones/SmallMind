@@ -33,7 +33,6 @@
 package org.smallmind.memcached.cubby.connection;
 
 import java.io.IOException;
-import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import org.smallmind.memcached.cubby.ServerClosedException;
@@ -44,21 +43,13 @@ public class ResponseReader {
 
   private final SocketChannel socketChannel;
   private final ByteBuffer readBuffer;
-  private byte[] reserve;
+  private Response partialResponse;
 
   public ResponseReader (SocketChannel socketChannel) {
 
-    int receiveBufferSize;
-
     this.socketChannel = socketChannel;
 
-    try {
-      receiveBufferSize = socketChannel.socket().getReceiveBufferSize();
-    } catch (SocketException socketException) {
-      receiveBufferSize = 8192;
-    }
-
-    readBuffer = ByteBuffer.allocateDirect(receiveBufferSize);
+    readBuffer = ByteBuffer.allocateDirect(5);
   }
 
   public boolean read ()
@@ -66,15 +57,55 @@ public class ResponseReader {
 
     int bytesRead;
 
+    readBuffer.mark();
+    byte[] all = new byte[readBuffer.limit()];
+    readBuffer.get(all);
+    readBuffer.reset();
+    System.out.println("oooooooooooooooooooooooooooooooooooooooooooooooooooooooooo");
+    System.out.println(new String(all));
+    System.out.println(readBuffer.position());
+    System.out.println(readBuffer.limit());
+    System.out.println(readBuffer.capacity());
+
     if ((bytesRead = socketChannel.read(readBuffer)) < 0) {
       throw new ServerClosedException();
     } else if (bytesRead > 0) {
       readBuffer.flip();
 
+      readBuffer.mark();
+      byte[] all2 = new byte[readBuffer.limit()];
+      readBuffer.get(all2);
+      readBuffer.reset();
+      System.out.println("---------------------------------------------------------");
+      System.out.println(new String(all2));
+      System.out.println(readBuffer.position());
+      System.out.println(readBuffer.limit());
+      System.out.println(readBuffer.capacity());
+
       return true;
     } else {
 
       return false;
+    }
+  }
+
+  private void shiftRemaining () {
+
+    if (readBuffer.remaining() == 0) {
+      readBuffer.clear();
+    } else if (readBuffer.position() > 0) {
+
+      byte[] remaining = new byte[readBuffer.limit() - readBuffer.position()];
+
+      readBuffer.get(remaining);
+      readBuffer.clear();
+      readBuffer.put(remaining);
+
+      System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+      System.out.println(new String(remaining));
+      System.out.println(readBuffer.position());
+      System.out.println(readBuffer.limit());
+      System.out.println(readBuffer.capacity());
     }
   }
 
@@ -84,16 +115,7 @@ public class ResponseReader {
     int endOfLine;
 
     if ((endOfLine = findLineEnd()) < 0) {
-      if (readBuffer.remaining() == 0) {
-        readBuffer.clear();
-      } else {
-
-        byte[] remaining = new byte[readBuffer.limit() - readBuffer.position()];
-
-        readBuffer.get(remaining);
-        readBuffer.clear();
-        readBuffer.put(remaining);
-      }
+      shiftRemaining();
 
       return null;
     } else {
@@ -101,14 +123,23 @@ public class ResponseReader {
       Response response = ResponseParser.parse(readBuffer, endOfLine - 2 - readBuffer.position());
 
       readBuffer.position(readBuffer.position() + 2);
-      if (response.getValueLength() > 0) {
+      if (response.getValueLength() >= 0) {
+        if (readBuffer.remaining() < (response.getValueLength() + 2)) {
+          partialResponse = response;
+          shiftRemaining();
 
-        byte[] value = new byte[response.getValueLength()];
+          return null;
+        } else {
+          if (response.getValueLength() > 0) {
 
-        readBuffer.get(value);
-        readBuffer.position(readBuffer.position() + 2);
+            byte[] value = new byte[response.getValueLength()];
 
-        response.setValue(value);
+            readBuffer.get(value);
+            response.setValue(value);
+          }
+
+          readBuffer.position(readBuffer.position() + 2);
+        }
       }
 
       return response;
