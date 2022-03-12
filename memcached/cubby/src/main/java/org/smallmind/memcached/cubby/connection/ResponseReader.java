@@ -53,7 +53,7 @@ public class ResponseReader {
 
     this.socketChannel = socketChannel;
 
-    readBuffer = ByteBuffer.allocate(5);
+    readBuffer = ByteBuffer.allocate(8192);
     accumulatingStream = new ByteArrayOutputStream(1024);
   }
 
@@ -112,14 +112,17 @@ public class ResponseReader {
         return null;
       } else {
 
-        byte[] value = new byte[partialResponse.getValueLength()];
+        Response response = partialResponse;
+
+        byte[] value = new byte[response.getValueLength()];
 
         joinedBuffer.get(value);
-        partialResponse.setValue(value);
+        response.setValue(value);
 
         joinedBuffer.position(joinedBuffer.position() + 2);
+        partialResponse = null;
 
-        return partialResponse;
+        return response;
       }
     } else {
 

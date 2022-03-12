@@ -33,7 +33,6 @@
 package org.smallmind.memcached.cubby.response;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 
 public class JoinedBuffer {
