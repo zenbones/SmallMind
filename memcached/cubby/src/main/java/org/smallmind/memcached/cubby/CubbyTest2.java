@@ -41,7 +41,7 @@ import org.smallmind.memcached.cubby.codec.ObjectStreamCubbyCodec;
 import org.smallmind.memcached.cubby.command.GetCommand;
 import org.smallmind.memcached.cubby.command.SetCommand;
 import org.smallmind.memcached.cubby.locator.MaglevKeyLocator;
-import org.smallmind.memcached.cubby.response.ServerResponse;
+import org.smallmind.memcached.cubby.response.Response;
 import org.smallmind.memcached.cubby.translator.DefaultKeyTranslator;
 import org.smallmind.memcached.cubby.translator.LargeKeyHashingTranslator;
 
@@ -108,7 +108,7 @@ public class CubbyTest2 {
 
 //          String opaqueToken = tokenGenerator.next();
 
-          ServerResponse response = client.send(new GetCommand().setKey("hello").setCas(true), null);
+          Response response = client.send(new GetCommand().setKey("hello").setCas(true), null);
   //        if (!opaqueToken.equals(response.getToken())) {
       //      System.exit(0);
     //      }

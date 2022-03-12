@@ -37,7 +37,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 import org.smallmind.memcached.cubby.ResponseTimeoutException;
 import org.smallmind.memcached.cubby.command.Command;
-import org.smallmind.memcached.cubby.response.ServerResponse;
+import org.smallmind.memcached.cubby.response.Response;
 import org.smallmind.nutsnbolts.time.Stint;
 import org.smallmind.nutsnbolts.util.SelfDestructive;
 
@@ -45,7 +45,7 @@ public class RequestCallback implements SelfDestructive {
 
   private final CountDownLatch resultLatch = new CountDownLatch(1);
   private final AtomicReference<Stint> timeoutStintRef = new AtomicReference<>();
-  private final AtomicReference<ServerResponse> resultRef = new AtomicReference<>();
+  private final AtomicReference<Response> resultRef = new AtomicReference<>();
   private final AtomicReference<IOException> exceptionRef = new AtomicReference<>();
   private final Command command;
 
@@ -62,10 +62,10 @@ public class RequestCallback implements SelfDestructive {
     resultLatch.countDown();
   }
 
-  public ServerResponse getResult ()
+  public Response getResult ()
     throws InterruptedException, IOException {
 
-    ServerResponse response;
+    Response response;
 
     resultLatch.await();
     if ((response = resultRef.get()) == null) {
@@ -87,7 +87,7 @@ public class RequestCallback implements SelfDestructive {
     }
   }
 
-  public void setResult (ServerResponse response) {
+  public void setResult (Response response) {
 
     resultRef.set(response);
     resultLatch.countDown();

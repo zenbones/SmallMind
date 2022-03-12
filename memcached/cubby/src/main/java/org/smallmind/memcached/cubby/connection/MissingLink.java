@@ -30,95 +30,26 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.memcached.cubby.response;
+package org.smallmind.memcached.cubby.connection;
 
-import org.smallmind.memcached.cubby.response.Response;
-import org.smallmind.memcached.cubby.response.ResponseCode;
-import org.smallmind.memcached.cubby.response.ResponseType;
+public class MissingLink {
 
-public class ServerResponse implements Response {
+  private final RequestCallback requestCallback;
+  private final CommandBuffer commandBuffer;
 
-  private final ResponseCode code;
-  private String token;
-  private boolean won;
-  private boolean alsoWon;
-  private long cas;
-  private int valueLength = -1;
-  private byte[] value;
+  public MissingLink (RequestCallback requestCallback, CommandBuffer commandBuffer) {
 
-  public ServerResponse (ResponseCode code) {
-
-    this.code = code;
+    this.requestCallback = requestCallback;
+    this.commandBuffer = commandBuffer;
   }
 
-  @Override
-  public ResponseType getType () {
+  public RequestCallback getRequestCallback () {
 
-    return ResponseType.SERVER;
+    return requestCallback;
   }
 
-  public ResponseCode getCode () {
+  public CommandBuffer getCommandBuffer () {
 
-    return code;
-  }
-
-  public String getToken () {
-
-    return token;
-  }
-
-  public void setToken (String token) {
-
-    this.token = token;
-  }
-
-  public int getValueLength () {
-
-    return valueLength;
-  }
-
-  public void setValueLength (int valueLength) {
-
-    this.valueLength = valueLength;
-  }
-
-  public byte[] getValue () {
-
-    return value;
-  }
-
-  public void setValue (byte[] value) {
-
-    this.value = value;
-  }
-
-  public long getCas () {
-
-    return cas;
-  }
-
-  public void setCas (long cas) {
-
-    this.cas = cas;
-  }
-
-  public boolean isWon () {
-
-    return won;
-  }
-
-  public void setWon (boolean won) {
-
-    this.won = won;
-  }
-
-  public boolean isAlsoWon () {
-
-    return alsoWon;
-  }
-
-  public void setAlsoWon (boolean alsoWon) {
-
-    this.alsoWon = alsoWon;
+    return commandBuffer;
   }
 }

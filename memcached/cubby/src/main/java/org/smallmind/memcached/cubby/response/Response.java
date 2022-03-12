@@ -32,7 +32,83 @@
  */
 package org.smallmind.memcached.cubby.response;
 
-public interface Response {
+public class Response {
 
-  ResponseType getType ();
+  private final ResponseCode code;
+  private String token;
+  private boolean won;
+  private boolean alsoWon;
+  private long cas;
+  private int valueLength = -1;
+  private byte[] value;
+
+  public Response (ResponseCode code) {
+
+    this.code = code;
+  }
+
+  public ResponseCode getCode () {
+
+    return code;
+  }
+
+  public String getToken () {
+
+    return token;
+  }
+
+  public void setToken (String token) {
+
+    this.token = token;
+  }
+
+  public int getValueLength () {
+
+    return valueLength;
+  }
+
+  public void setValueLength (int valueLength) {
+
+    this.valueLength = valueLength;
+  }
+
+  public byte[] getValue () {
+
+    return value;
+  }
+
+  public void setValue (byte[] value) {
+
+    this.value = value;
+  }
+
+  public long getCas () {
+
+    return cas;
+  }
+
+  public void setCas (long cas) {
+
+    this.cas = cas;
+  }
+
+  public boolean isWon () {
+
+    return won;
+  }
+
+  public void setWon (boolean won) {
+
+    this.won = won;
+  }
+
+  public boolean isAlsoWon () {
+
+    return alsoWon;
+  }
+
+  public void setAlsoWon (boolean alsoWon) {
+
+    this.alsoWon = alsoWon;
+  }
 }

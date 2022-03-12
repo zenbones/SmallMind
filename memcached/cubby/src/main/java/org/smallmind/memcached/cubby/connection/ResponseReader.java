@@ -33,87 +33,114 @@
 package org.smallmind.memcached.cubby.connection;
 
 import java.io.IOException;
+import java.net.SocketException;
 import java.nio.ByteBuffer;
-import org.smallmind.memcached.cubby.response.ErrorResponse;
+import java.nio.channels.SocketChannel;
+import org.smallmind.memcached.cubby.ServerClosedException;
 import org.smallmind.memcached.cubby.response.Response;
 import org.smallmind.memcached.cubby.response.ResponseParser;
-import org.smallmind.memcached.cubby.response.ServerResponse;
 
 public class ResponseReader {
 
-  private ServerResponse partialResponse;
-  private StringBuilder responseBuilder = new StringBuilder();
-  private boolean complete = false;
-  private byte[] value;
-  private int valueIndex;
+  private final SocketChannel socketChannel;
+  private final ByteBuffer readBuffer;
+  private byte[] reserve;
 
-  public Response read (ByteBuffer byteBuffer) {
+  public ResponseReader (SocketChannel socketChannel) {
 
-    char singleChar;
+    int receiveBufferSize;
 
-    do {
-      if (value != null) {
+    this.socketChannel = socketChannel;
 
-        int valueBytesRead;
+    try {
+      receiveBufferSize = socketChannel.socket().getReceiveBufferSize();
+    } catch (SocketException socketException) {
+      receiveBufferSize = 8192;
+    }
 
-        byteBuffer.get(value, valueIndex, valueBytesRead = Math.min(byteBuffer.remaining(), value.length - valueIndex));
-        if ((valueIndex += valueBytesRead) == value.length) {
+    readBuffer = ByteBuffer.allocateDirect(receiveBufferSize);
+  }
 
-          ServerResponse response = partialResponse;
+  public boolean read ()
+    throws IOException {
 
-          if (value.length > 2) {
+    int bytesRead;
 
-            byte[] truncatedValue = new byte[value.length - 2];
-            System.arraycopy(value, 0, truncatedValue, 0, truncatedValue.length);
+    if ((bytesRead = socketChannel.read(readBuffer)) < 0) {
+      throw new ServerClosedException();
+    } else if (bytesRead > 0) {
+      readBuffer.flip();
 
-            partialResponse.setValue(truncatedValue);
-          }
+      return true;
+    } else {
 
-          partialResponse = null;
-          value = null;
-          valueIndex = 0;
+      return false;
+    }
+  }
 
-          return response;
-        }
+  public Response extract ()
+    throws IOException {
+
+    int endOfLine;
+
+    if ((endOfLine = findLineEnd()) < 0) {
+      if (readBuffer.remaining() == 0) {
+        readBuffer.clear();
       } else {
-        switch (singleChar = (char)byteBuffer.get()) {
+
+        byte[] remaining = new byte[readBuffer.limit() - readBuffer.position()];
+
+        readBuffer.get(remaining);
+        readBuffer.clear();
+        readBuffer.put(remaining);
+      }
+
+      return null;
+    } else {
+
+      Response response = ResponseParser.parse(readBuffer, endOfLine - 2 - readBuffer.position());
+
+      readBuffer.position(readBuffer.position() + 2);
+      if (response.getValueLength() > 0) {
+
+        byte[] value = new byte[response.getValueLength()];
+
+        readBuffer.get(value);
+        readBuffer.position(readBuffer.position() + 2);
+
+        response.setValue(value);
+      }
+
+      return response;
+    }
+  }
+
+  private int findLineEnd () {
+
+    boolean completed = false;
+
+    readBuffer.mark();
+
+    try {
+      while (readBuffer.remaining() > 0) {
+        switch (readBuffer.get()) {
           case '\r':
-            if (complete) {
-              responseBuilder.append('\r');
-            }
-            complete = true;
+            completed = true;
             break;
           case '\n':
-            if (!complete) {
-              responseBuilder.append('\n');
-            } else {
-              try {
+            if (completed) {
 
-                ServerResponse response = ResponseParser.parse(responseBuilder);
-                int valueLength;
-
-                if ((valueLength = response.getValueLength()) >= 0) {
-                  partialResponse = response;
-                  value = new byte[valueLength + 2];
-                } else {
-
-                  return response;
-                }
-              } catch (IOException ioException) {
-
-                return new ErrorResponse(ioException);
-              } finally {
-                complete = false;
-                responseBuilder = new StringBuilder();
-              }
+              return readBuffer.position();
             }
             break;
           default:
-            responseBuilder.append(singleChar);
+            completed = false;
         }
       }
-    } while (byteBuffer.remaining() > 0);
 
-    return null;
+      return -1;
+    } finally {
+      readBuffer.reset();
+    }
   }
 }

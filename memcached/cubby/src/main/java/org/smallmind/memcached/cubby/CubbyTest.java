@@ -39,7 +39,7 @@ import org.smallmind.memcached.cubby.codec.ObjectStreamCubbyCodec;
 import org.smallmind.memcached.cubby.command.GetCommand;
 import org.smallmind.memcached.cubby.command.SetCommand;
 import org.smallmind.memcached.cubby.locator.MaglevKeyLocator;
-import org.smallmind.memcached.cubby.response.ServerResponse;
+import org.smallmind.memcached.cubby.response.Response;
 import org.smallmind.memcached.cubby.translator.DefaultKeyTranslator;
 import org.smallmind.memcached.cubby.translator.LargeKeyHashingTranslator;
 
@@ -59,7 +59,7 @@ public class CubbyTest {
 
     System.out.println("send...");
 
-    ServerResponse response;
+    Response response;
 
     try {
       response = client.send(new SetCommand().setKey("hello").setValue("goodbye"), null);

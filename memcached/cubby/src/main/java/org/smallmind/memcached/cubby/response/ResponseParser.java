@@ -33,133 +33,141 @@
 package org.smallmind.memcached.cubby.response;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import org.smallmind.memcached.cubby.IncomprehensibleRequestException;
 import org.smallmind.memcached.cubby.IncomprehensibleResponseException;
 
 public class ResponseParser {
 
-  public static ServerResponse parse (StringBuilder responseBuilder)
+  public static Response parse (ByteBuffer readBuffer, int length)
     throws IOException {
 
-    if (responseBuilder.length() < 2) {
-      throw new IncomprehensibleResponseException(responseBuilder.toString());
-    } else if (isError(responseBuilder)) {
+    readBuffer.mark();
+
+    if (length < 2) {
+      throw createIncomprehensibleResponseException(readBuffer, length);
+    } else if (isError(readBuffer, length)) {
       throw new IncomprehensibleRequestException();
     } else {
 
-      ServerResponse response;
-      int index = 2;
+      Response response;
+      byte first = readBuffer.get();
+      byte second = readBuffer.get();
 
-      switch (responseBuilder.substring(0, 2)) {
-        case "HD":
-          response = new ServerResponse(ResponseCode.HD);
-          break;
-        case "VA":
-          response = new ServerResponse(ResponseCode.VA);
-          if ((responseBuilder.length() < 4) || responseBuilder.charAt(index++) != ' ') {
-            throw new IncomprehensibleResponseException(responseBuilder.toString());
-          } else {
+      if (ResponseCode.HD.begins(first, second)) {
+        response = new Response(ResponseCode.HD);
+      } else if (ResponseCode.VA.begins(first, second)) {
+        response = new Response(ResponseCode.VA);
 
-            StringBuilder lengthBuilder = new StringBuilder();
+        if ((length < 4) || readBuffer.get() != ' ') {
+          throw createIncomprehensibleResponseException(readBuffer, length);
+        } else {
+
+          StringBuilder lengthBuilder = new StringBuilder();
+
+          while (readBuffer.position() < length) {
+
             char singleChar;
 
-            while ((index < responseBuilder.length()) && ((singleChar = responseBuilder.charAt(index)) != ' ')) {
+            if ((singleChar = (char)readBuffer.get()) != ' ') {
               lengthBuilder.append(singleChar);
-              index++;
-            }
-            try {
-              response.setValueLength(Integer.parseInt(lengthBuilder.toString()));
-            } catch (NumberFormatException numberFormatException) {
-              throw new IncomprehensibleResponseException(responseBuilder.toString());
+            } else {
+              readBuffer.position(readBuffer.position() - 1);
+              break;
             }
           }
-          break;
-        case "EN":
-          response = new ServerResponse(ResponseCode.EN);
-          break;
-        case "EX":
-          response = new ServerResponse(ResponseCode.EX);
-          break;
-        case "NF":
-          response = new ServerResponse(ResponseCode.NF);
-          break;
-        case "NS":
-          response = new ServerResponse(ResponseCode.NS);
-          break;
-        default:
-          throw new IncomprehensibleResponseException(responseBuilder.toString());
+          try {
+            response.setValueLength(Integer.parseInt(lengthBuilder.toString()));
+          } catch (NumberFormatException numberFormatException) {
+            throw createIncomprehensibleResponseException(readBuffer, length);
+          }
+        }
+      } else if (ResponseCode.EN.begins(first, second)) {
+        response = new Response(ResponseCode.EN);
+      } else if (ResponseCode.EX.begins(first, second)) {
+        response = new Response(ResponseCode.EX);
+      } else if (ResponseCode.NF.begins(first, second)) {
+        response = new Response(ResponseCode.NF);
+      } else if (ResponseCode.NS.begins(first, second)) {
+        response = new Response(ResponseCode.NS);
+      } else {
+        throw createIncomprehensibleResponseException(readBuffer, length);
       }
 
-      parseFlags(response, responseBuilder, index);
+      parseFlags(response, readBuffer, length);
 
       return response;
     }
   }
 
-  private static boolean isError (StringBuilder responseBuilder) {
+  private static boolean isError (ByteBuffer readBuffer, int length) {
 
-    return (responseBuilder.length() == 5)
-             && (responseBuilder.charAt(0) == 'E')
-             && (responseBuilder.charAt(1) == 'R')
-             && (responseBuilder.charAt(2) == 'R')
-             && (responseBuilder.charAt(3) == 'O')
-             && (responseBuilder.charAt(4) == 'R');
+    try {
+      return (length == 5)
+               && (readBuffer.get() == 'E')
+               && (readBuffer.get() == 'R')
+               && (readBuffer.get() == 'R')
+               && (readBuffer.get() == 'O')
+               && (readBuffer.get() == 'R');
+    } finally {
+      readBuffer.reset();
+    }
   }
 
-  private static void parseFlags (ServerResponse response, StringBuilder responseBuilder, int index)
+  private static void parseFlags (Response response, ByteBuffer readBuffer, int length)
     throws IOException {
 
-    int flagIndex = index;
-
-    while (responseBuilder.length() != flagIndex) {
-      if (responseBuilder.charAt(flagIndex) != ' ') {
-        throw new IncomprehensibleResponseException(responseBuilder.toString());
+    while (readBuffer.position() < length) {
+      if (readBuffer.get() != ' ') {
+        throw createIncomprehensibleResponseException(readBuffer, length);
       } else {
-
-        String token;
-
-        switch (responseBuilder.charAt(flagIndex + 1)) {
+        switch (readBuffer.get()) {
           case 'O':
-            flagIndex += (token = accumulateToken(responseBuilder, flagIndex + 2)).length() + 2;
-            response.setToken(token);
+            response.setToken(accumulateToken(readBuffer, length));
             break;
           case 'c':
-            flagIndex += (token = accumulateToken(responseBuilder, flagIndex + 2)).length() + 2;
-            response.setCas(Long.parseLong(token));
+            response.setCas(Long.parseLong(accumulateToken(readBuffer, length)));
             break;
           case 'W':
-            flagIndex += 2;
             response.setWon(true);
             break;
           case 'Z':
-            flagIndex += 2;
             response.setAlsoWon(true);
             break;
           default:
-            throw new IncomprehensibleResponseException(responseBuilder.toString());
+            throw createIncomprehensibleResponseException(readBuffer, length);
         }
       }
     }
   }
 
-  private static String accumulateToken (StringBuilder responseBuilder, int index) {
+  private static String accumulateToken (ByteBuffer readBuffer, int length) {
 
     StringBuilder tokenBuilder = new StringBuilder();
-    int tokenIndex = index;
 
-    while (responseBuilder.length() > tokenIndex) {
+    while (readBuffer.position() < length) {
 
       char tokenChar;
 
-      if ((tokenChar = responseBuilder.charAt(tokenIndex)) == ' ') {
+      if ((tokenChar = (char)readBuffer.get()) == ' ') {
+        readBuffer.position(readBuffer.position() - 1);
 
         return tokenBuilder.toString();
       }
 
       tokenBuilder.append(tokenChar);
-      tokenIndex++;
     }
 
     return tokenBuilder.toString();
+  }
+
+  private static IncomprehensibleResponseException createIncomprehensibleResponseException (ByteBuffer readBuffer, int length) {
+
+    byte[] slice = new byte[length];
+
+    readBuffer.reset();
+    readBuffer.get(slice);
+
+    return new IncomprehensibleResponseException(new String(slice));
   }
 }

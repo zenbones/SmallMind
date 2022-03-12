@@ -33,30 +33,106 @@
 package org.smallmind.memcached.cubby.connection;
 
 import java.io.IOException;
+import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
 public class RequestWriter {
 
-  private final byte[] buffer;
-  private int index = 0;
+  private final SocketChannel socketChannel;
+  private final ByteBuffer writeBuffer;
+  private CommandBuffer unfinishedCommandBuffer;
+  private boolean draining = false;
+  private int unfinishedCommandIndex = 0;
 
-  public RequestWriter (byte[] buffer) {
+  public RequestWriter (SocketChannel socketChannel) {
 
-    this.buffer = buffer;
+    int sendBufferSize;
+
+    this.socketChannel = socketChannel;
+
+    try {
+      sendBufferSize = socketChannel.socket().getSendBufferSize();
+    } catch (SocketException socketException) {
+      sendBufferSize = 8192;
+    }
+
+    writeBuffer = ByteBuffer.allocateDirect(sendBufferSize);
   }
 
-  public int write (SocketChannel socketChannel, ByteBuffer byteBuffer)
+  public boolean prepare () {
+
+    if (draining) {
+
+      return false;
+    } else if (unfinishedCommandBuffer == null) {
+
+      return true;
+    } else if (writeBuffer.remaining() > 0) {
+
+      byte[] request;
+      int bytesRead;
+
+      writeBuffer.put(request = unfinishedCommandBuffer.getRequest(), unfinishedCommandIndex, bytesRead = Math.min(writeBuffer.remaining(), request.length - unfinishedCommandIndex));
+      unfinishedCommandIndex += bytesRead;
+
+      if (unfinishedCommandIndex == request.length) {
+        unfinishedCommandBuffer = null;
+        unfinishedCommandIndex = 0;
+
+        return true;
+      } else {
+
+        return false;
+      }
+    } else {
+
+      return false;
+    }
+  }
+
+  public boolean add (CommandBuffer commandBuffer) {
+
+    if ((!draining) && (writeBuffer.remaining() > 0)) {
+
+      byte[] request;
+      int bytesRead;
+
+      writeBuffer.put(request = commandBuffer.getRequest(), 0, bytesRead = Math.min(writeBuffer.remaining(), request.length));
+
+      if (bytesRead == request.length) {
+
+        return true;
+      } else {
+        unfinishedCommandBuffer = commandBuffer;
+        unfinishedCommandIndex = bytesRead;
+
+        return false;
+      }
+    } else {
+      unfinishedCommandBuffer = commandBuffer;
+      unfinishedCommandIndex = 0;
+
+      return false;
+    }
+  }
+
+  public void write ()
     throws IOException {
 
-    int bytesWritten;
+    if (!draining) {
+      writeBuffer.flip();
+    }
 
-    byteBuffer.clear();
-    byteBuffer.put(buffer, index, Math.min(byteBuffer.remaining(), buffer.length - index));
+    if (writeBuffer.position() < writeBuffer.limit()) {
+      socketChannel.write(writeBuffer);
+    }
 
-    byteBuffer.flip();
-    index += (bytesWritten = socketChannel.write(byteBuffer));
-
-    return (index == buffer.length) ? bytesWritten : -bytesWritten;
+    if (writeBuffer.position() < writeBuffer.limit()) {
+      draining = true;
+    } else {
+      draining = false;
+      writeBuffer.clear();
+    }
   }
 }

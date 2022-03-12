@@ -34,7 +34,6 @@ package org.smallmind.memcached.cubby.connection;
 
 import java.io.IOException;
 import java.net.StandardSocketOptions;
-import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
@@ -51,14 +50,10 @@ import org.smallmind.memcached.cubby.CubbyOperationException;
 import org.smallmind.memcached.cubby.IncomprehensibleRequestException;
 import org.smallmind.memcached.cubby.InvalidSelectionKeyException;
 import org.smallmind.memcached.cubby.MemcachedHost;
-import org.smallmind.memcached.cubby.ServerClosedException;
 import org.smallmind.memcached.cubby.codec.CubbyCodec;
 import org.smallmind.memcached.cubby.command.Command;
-import org.smallmind.memcached.cubby.response.ErrorResponse;
 import org.smallmind.memcached.cubby.response.Response;
-import org.smallmind.memcached.cubby.response.ServerResponse;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
-import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.nutsnbolts.time.Stint;
 import org.smallmind.nutsnbolts.util.SelfDestructiveMap;
 import org.smallmind.scribe.pen.LoggerManager;
@@ -79,6 +74,8 @@ public class NIOCubbyConnection implements CubbyConnection {
   private SocketChannel socketChannel;
   private Selector selector;
   private SelectionKey selectionKey;
+  private RequestWriter requestWriter;
+  private ResponseReader responseReader;
   private SelfDestructiveMap<Long, RequestCallback> callbackMap;
 
   public NIOCubbyConnection (ConnectionCoordinator connectionCoordinator, CubbyConfiguration configuration, MemcachedHost memcachedHost) {
@@ -113,6 +110,9 @@ public class NIOCubbyConnection implements CubbyConnection {
     }
 
     selectionKey = socketChannel.register(selector = Selector.open(), SelectionKey.OP_WRITE);
+
+    requestWriter = new RequestWriter(socketChannel);
+    responseReader = new ResponseReader(socketChannel);
     callbackMap = new SelfDestructiveMap<>(new Stint(defaultRequestTimeoutSeconds, TimeUnit.SECONDS), new Stint(100, TimeUnit.MILLISECONDS));
 
     requestQueue.clear();
@@ -158,16 +158,16 @@ public class NIOCubbyConnection implements CubbyConnection {
   }
 
   @Override
-  public ServerResponse send (Command command, Long timeoutSeconds)
+  public Response send (Command command, Long timeoutSeconds)
     throws InterruptedException, IOException, CubbyOperationException {
 
     RequestCallback requestCallback;
-    long commandIndex;
+    long messageId;
 
-    callbackMap.putIfAbsent(commandIndex = commandCounter.getAndIncrement(), requestCallback = new RequestCallback(command), (timeoutSeconds == null) ? null : new Stint(timeoutSeconds, TimeUnit.SECONDS));
+    callbackMap.putIfAbsent(messageId = commandCounter.getAndIncrement(), requestCallback = new RequestCallback(command), (timeoutSeconds == null) ? null : new Stint(timeoutSeconds, TimeUnit.SECONDS));
 
     synchronized (requestQueue) {
-      requestQueue.offer(new CommandBuffer(commandIndex, command.construct(keyTranslator, codec)));
+      requestQueue.offer(new CommandBuffer(messageId, command.construct(keyTranslator, codec)));
       selectionKey.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
       selector.wakeup();
     }
@@ -175,12 +175,20 @@ public class NIOCubbyConnection implements CubbyConnection {
     return requestCallback.getResult();
   }
 
+  private MissingLink retrieveMissingLink ()
+    throws CubbyOperationException {
+
+    CommandBuffer commandBuffer;
+
+    if ((commandBuffer = responseQueue.poll()) == null) {
+      throw new CubbyOperationException("Desynchronized connection state");
+    }
+
+    return new MissingLink(callbackMap.get(commandBuffer.getIndex()), commandBuffer);
+  }
+
   @Override
   public void run () {
-
-    ByteBuffer byteBuffer = ByteBuffer.allocateDirect(8192);
-    ResponseReader responseReader = new ResponseReader();
-    RequestWriter requestWriter = null;
 
     try {
       while (!finished.get()) {
@@ -198,85 +206,60 @@ public class NIOCubbyConnection implements CubbyConnection {
                   throw new InvalidSelectionKeyException();
                 } else {
                   if (selectionKey.isReadable()) {
+                    if (responseReader.read()) {
 
-                    int bytesRead;
+                      boolean proceed = true;
 
-                    byteBuffer.clear();
-                    if ((bytesRead = ((SocketChannel)selectionKey.channel()).read(byteBuffer)) < 0) {
-                      throw new ServerClosedException();
-                    } else if (bytesRead > 0) {
-                      byteBuffer.flip();
                       do {
 
                         Response response;
 
-                        if ((response = responseReader.read(byteBuffer)) != null) {
-
-                          CommandBuffer commandBuffer;
-
-                          if ((commandBuffer = responseQueue.poll()) == null) {
-                            throw new CubbyOperationException("Desynchronized connection state");
+                        try {
+                          if ((response = responseReader.extract()) == null) {
+                            proceed = false;
                           } else {
 
-                            RequestCallback requestCallback;
+                            MissingLink missingLink;
 
-                            if ((requestCallback = callbackMap.get(commandBuffer.getIndex())) != null) {
-                              switch (response.getType()) {
-                                case ERROR:
-
-                                  IOException ioException;
-
-                                  if ((ioException = ((ErrorResponse)response).getException()) instanceof IncomprehensibleRequestException) {
-                                    ioException = new IncomprehensibleRequestException(new String(commandBuffer.getRequest()));
-                                  }
-
-                                  requestCallback.setException(ioException);
-                                  break;
-                                case SERVER:
-                                  requestCallback.setResult((ServerResponse)response);
-                                  break;
-                                default:
-                                  throw new UnknownSwitchCaseException(response.getType().name());
-                              }
+                            if ((missingLink = retrieveMissingLink()).getRequestCallback() != null) {
+                              missingLink.getRequestCallback().setResult(response);
                             }
                           }
+                        } catch (IOException ioException) {
+
+                          IOException exception = ioException;
+                          MissingLink missingLink;
+
+                          if ((missingLink = retrieveMissingLink()).getRequestCallback() != null) {
+                            if (exception instanceof IncomprehensibleRequestException) {
+                              exception = new IncomprehensibleRequestException(new String(missingLink.getCommandBuffer().getRequest()));
+                            }
+
+                            missingLink.getRequestCallback().setException(exception);
+                          }
                         }
-                      } while (byteBuffer.remaining() > 0);
+                      } while (proceed);
                     }
                   }
                   if (selectionKey.isWritable()) {
+                    if (requestWriter.prepare()) {
 
-                    int totalBytesWritten = 0;
-                    boolean proceed = true;
+                      CommandBuffer commandBuffer;
 
-                    do {
-                      if (requestWriter == null) {
-                        synchronized (requestQueue) {
+                      do {
+                        if ((commandBuffer = requestQueue.poll()) == null) {
+                          selectionKey.interestOps(SelectionKey.OP_READ);
+                        } else {
+                          responseQueue.add(commandBuffer);
 
-                          CommandBuffer commandBuffer;
-
-                          if ((commandBuffer = requestQueue.poll()) == null) {
-                            proceed = false;
-                            selectionKey.interestOps(SelectionKey.OP_READ);
-                          } else {
-                            requestWriter = new RequestWriter(commandBuffer.getRequest());
-                            responseQueue.add(commandBuffer);
+                          if (!requestWriter.add(commandBuffer)) {
+                            break;
                           }
                         }
-                      }
-                      if (requestWriter != null) {
+                      } while (commandBuffer != null);
+                    }
 
-                        int bytesWritten;
-
-                        if ((bytesWritten = requestWriter.write(socketChannel, byteBuffer)) > 0) {
-                          requestWriter = null;
-                        } else {
-                          proceed = false;
-                        }
-
-                        totalBytesWritten += Math.abs(bytesWritten);
-                      }
-                    } while (proceed && (totalBytesWritten < byteBuffer.capacity()));
+                    requestWriter.write();
                   }
                 }
               } finally {

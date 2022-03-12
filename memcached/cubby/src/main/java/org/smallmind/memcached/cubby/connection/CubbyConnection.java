@@ -35,7 +35,7 @@ package org.smallmind.memcached.cubby.connection;
 import java.io.IOException;
 import org.smallmind.memcached.cubby.CubbyOperationException;
 import org.smallmind.memcached.cubby.command.Command;
-import org.smallmind.memcached.cubby.response.ServerResponse;
+import org.smallmind.memcached.cubby.response.Response;
 
 public interface CubbyConnection extends Runnable {
 
@@ -45,6 +45,6 @@ public interface CubbyConnection extends Runnable {
   void stop ()
     throws InterruptedException, IOException;
 
-  ServerResponse send (Command command, Long timeoutSeconds)
+  Response send (Command command, Long timeoutSeconds)
     throws InterruptedException, IOException, CubbyOperationException;
 }

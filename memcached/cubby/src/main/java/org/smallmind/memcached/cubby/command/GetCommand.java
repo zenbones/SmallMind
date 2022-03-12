@@ -34,7 +34,7 @@ package org.smallmind.memcached.cubby.command;
 
 import java.io.IOException;
 import org.smallmind.memcached.cubby.CubbyOperationException;
-import org.smallmind.memcached.cubby.response.ServerResponse;
+import org.smallmind.memcached.cubby.response.Response;
 import org.smallmind.memcached.cubby.codec.CubbyCodec;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
 
@@ -72,7 +72,7 @@ public class GetCommand extends Command {
   }
 
   @Override
-  public Object foobar (ServerResponse response)
+  public Object foobar (Response response)
     throws IOException {
 
     return null;

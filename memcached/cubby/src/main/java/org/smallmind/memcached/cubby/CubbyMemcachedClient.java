@@ -34,7 +34,7 @@ package org.smallmind.memcached.cubby;
 
 import java.io.IOException;
 import org.smallmind.memcached.cubby.command.Command;
-import org.smallmind.memcached.cubby.response.ServerResponse;
+import org.smallmind.memcached.cubby.response.Response;
 
 public class CubbyMemcachedClient {
 
@@ -57,7 +57,7 @@ public class CubbyMemcachedClient {
     connectionMultiplexer.stop();
   }
 
-  public ServerResponse send (Command command, Long timeoutSeconds)
+  public Response send (Command command, Long timeoutSeconds)
     throws InterruptedException, IOException, CubbyOperationException {
 
     return connectionMultiplexer.send(command, timeoutSeconds);

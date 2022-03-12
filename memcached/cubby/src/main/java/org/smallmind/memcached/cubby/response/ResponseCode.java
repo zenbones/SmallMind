@@ -45,5 +45,10 @@ public enum ResponseCode {
   // (NOT_FOUND), to indicate that the item with this key was not found, or to indicate that the item you are trying to store with CAS semantics did not exist
   NF,
   // (NOT_STORED), to indicate the data was not stored, but not because of an error
-  NS
+  NS;
+
+  public boolean begins (byte first, byte second) {
+
+    return (first == name().charAt(0)) && (second == name().charAt(1));
+  }
 }

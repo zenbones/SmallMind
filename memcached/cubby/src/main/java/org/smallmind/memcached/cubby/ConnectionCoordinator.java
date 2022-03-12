@@ -36,10 +36,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.smallmind.memcached.cubby.command.Command;
-import org.smallmind.memcached.cubby.connection.BlockingCubbyConnection;
 import org.smallmind.memcached.cubby.connection.CubbyConnection;
 import org.smallmind.memcached.cubby.connection.NIOCubbyConnection;
-import org.smallmind.memcached.cubby.response.ServerResponse;
+import org.smallmind.memcached.cubby.response.Response;
 import org.smallmind.nutsnbolts.util.ComponentStatus;
 
 public class ConnectionCoordinator {
@@ -98,7 +97,7 @@ public class ConnectionCoordinator {
     }
   }
 
-  public ServerResponse send (Command command, Long timeoutSeconds)
+  public Response send (Command command, Long timeoutSeconds)
     throws InterruptedException, IOException, CubbyOperationException {
 
     CubbyConnection cubbyConnection;
@@ -144,7 +143,7 @@ public class ConnectionCoordinator {
 
     lock.writeLock().lock();
     try {
-      connectionMap.put(memcachedHost.getName(), connection = new BlockingCubbyConnection(this, configuration, memcachedHost));
+      connectionMap.put(memcachedHost.getName(), connection = new NIOCubbyConnection(this, configuration, memcachedHost));
     } finally {
       lock.writeLock().unlock();
     }
