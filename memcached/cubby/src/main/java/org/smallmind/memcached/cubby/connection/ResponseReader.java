@@ -53,7 +53,7 @@ public class ResponseReader {
 
     this.socketChannel = socketChannel;
 
-    readBuffer = ByteBuffer.allocate(8192);
+    readBuffer = ByteBuffer.allocate(5);
     accumulatingStream = new ByteArrayOutputStream(1024);
   }
 
@@ -80,7 +80,11 @@ public class ResponseReader {
 
     if (readBuffer.remaining() == 0) {
       readBuffer.clear();
+      accumulatingStream.reset();
     } else {
+      if (readBuffer.position() > 0) {
+        accumulatingStream.reset();
+      }
 
       byte[] remaining = new byte[readBuffer.limit() - readBuffer.position()];
 
