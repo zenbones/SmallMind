@@ -32,8 +32,8 @@
  */
 package org.smallmind.memcached.cubby.response;
 
-import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
+import org.smallmind.memcached.cubby.connection.ExposedByteArrayOutputStream;
 
 public class JoinedBuffer {
 
@@ -42,11 +42,11 @@ public class JoinedBuffer {
   private int position = 0;
   private int mark = -1;
 
-  public JoinedBuffer (ByteArrayOutputStream accumulatingStream, ByteBuffer readBuffer) {
+  public JoinedBuffer (ExposedByteArrayOutputStream accumulatingStream, ByteBuffer readBuffer) {
 
     this.readBuffer = readBuffer;
 
-    accumulatingBuffer = ByteBuffer.wrap(accumulatingStream.toByteArray());
+    accumulatingBuffer = ByteBuffer.wrap(accumulatingStream.getBuffer(), 0, accumulatingStream.size());
   }
 
   public byte get () {

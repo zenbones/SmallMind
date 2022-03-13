@@ -32,7 +32,6 @@
  */
 package org.smallmind.memcached.cubby.connection;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
@@ -45,7 +44,7 @@ public class ResponseReader {
 
   private final SocketChannel socketChannel;
   private final ByteBuffer readBuffer;
-  private final ByteArrayOutputStream accumulatingStream;
+  private final ExposedByteArrayOutputStream accumulatingStream;
   private JoinedBuffer joinedBuffer;
   private Response partialResponse;
 
@@ -54,7 +53,7 @@ public class ResponseReader {
     this.socketChannel = socketChannel;
 
     readBuffer = ByteBuffer.allocate(8192);
-    accumulatingStream = new ByteArrayOutputStream(1024);
+    accumulatingStream = new ExposedByteArrayOutputStream(1024);
   }
 
   public boolean read ()
