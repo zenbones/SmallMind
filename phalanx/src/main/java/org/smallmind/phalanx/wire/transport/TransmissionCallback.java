@@ -34,7 +34,6 @@ package org.smallmind.phalanx.wire.transport;
 
 import java.io.ByteArrayInputStream;
 import java.io.ObjectInputStream;
-import org.smallmind.nutsnbolts.util.SelfDestructive;
 import org.smallmind.phalanx.wire.signal.ResultSignal;
 import org.smallmind.phalanx.wire.signal.SignalCodec;
 import org.smallmind.web.json.scaffold.fault.Fault;
@@ -42,9 +41,9 @@ import org.smallmind.web.json.scaffold.fault.FaultWrappingException;
 import org.smallmind.web.json.scaffold.fault.NativeLanguage;
 import org.smallmind.web.json.scaffold.fault.NativeObject;
 
-public abstract class TransmissionCallback implements SelfDestructive {
+public abstract class TransmissionCallback {
 
-  public abstract Object getResult (SignalCodec signalCodec)
+  public abstract Object getResult (SignalCodec signalCodec, long timeoutSeconds)
     throws Throwable;
 
   public void handleError (SignalCodec signalCodec, ResultSignal resultSignal)

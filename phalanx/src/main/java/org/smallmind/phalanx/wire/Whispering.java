@@ -40,10 +40,10 @@ public class Whispering implements Voice<String, String> {
 
   public Whispering (String serviceGroup, String instanceId) {
 
-    this(serviceGroup, instanceId, 0);
+    this(serviceGroup, instanceId, 0L);
   }
 
-  public Whispering (String serviceGroup, String instanceId, Integer timeout) {
+  public Whispering (String serviceGroup, String instanceId, Long timeout) {
 
     this.serviceGroup = serviceGroup;
     this.instanceId = instanceId;

@@ -42,5 +42,5 @@ import java.lang.annotation.Target;
 public @interface InOut {
 
   // Any positive value (> 0) will override the default service timeout seconds
-  int timeoutSeconds ();
+  long timeoutSeconds ();
 }

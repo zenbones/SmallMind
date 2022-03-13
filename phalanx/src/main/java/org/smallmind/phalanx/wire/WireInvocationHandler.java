@@ -55,12 +55,12 @@ public class WireInvocationHandler implements InvocationHandler {
   private final HashMap<Method, String[]> methodMap = new HashMap<>();
   private final ParameterExtractor<String> serviceGroupExtractor;
   private final ParameterExtractor<String> instanceIdExtractor;
-  private final ParameterExtractor<Integer> timeoutExtractor;
+  private final ParameterExtractor<Long> timeoutExtractor;
   private final Class<?> serviceInterface;
   private final String serviceName;
   private final int version;
 
-  public WireInvocationHandler (RequestTransport transport, int version, String serviceName, Class<?> serviceInterface, ParameterExtractor<String> serviceGroupExtractor, ParameterExtractor<String> instanceIdExtractor, ParameterExtractor<Integer> timeoutExtractor)
+  public WireInvocationHandler (RequestTransport transport, int version, String serviceName, Class<?> serviceInterface, ParameterExtractor<String> serviceGroupExtractor, ParameterExtractor<String> instanceIdExtractor, ParameterExtractor<Long> timeoutExtractor)
     throws Exception {
 
     this.transport = transport;
@@ -161,7 +161,7 @@ public class WireInvocationHandler implements InvocationHandler {
           throw new ServiceDefinitionException("The method(%s) in service interface(%s) is marked as @Whisper but no instance id extractor %s is defined", method.getName(), serviceInterface.getName(), ParameterExtractor.class.getSimpleName());
         }
 
-        Integer timeoutSeconds = null;
+        Long timeoutSeconds = null;
 
         if (timeoutExtractor != null) {
           timeoutSeconds = timeoutExtractor.getParameter(method, argumentMap, wireContexts);
@@ -183,7 +183,7 @@ public class WireInvocationHandler implements InvocationHandler {
       } else {
 
         InOut inOut = method.getAnnotation(InOut.class);
-        Integer timeoutSeconds = null;
+        Long timeoutSeconds = null;
 
         if (timeoutExtractor != null) {
           timeoutSeconds = timeoutExtractor.getParameter(method, argumentMap, wireContexts);

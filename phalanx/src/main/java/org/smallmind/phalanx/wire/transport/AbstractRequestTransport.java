@@ -32,9 +32,7 @@
  */
 package org.smallmind.phalanx.wire.transport;
 
-import java.util.concurrent.TimeUnit;
-import org.smallmind.nutsnbolts.time.Stint;
-import org.smallmind.nutsnbolts.util.SelfDestructiveMap;
+import java.util.concurrent.ConcurrentHashMap;
 import org.smallmind.phalanx.wire.Voice;
 import org.smallmind.phalanx.wire.signal.ResultSignal;
 import org.smallmind.phalanx.wire.signal.Route;
@@ -42,11 +40,14 @@ import org.smallmind.phalanx.wire.signal.SignalCodec;
 
 public abstract class AbstractRequestTransport implements RequestTransport {
 
-  private final SelfDestructiveMap<String, TransmissionCallback> callbackMap;
+  private final ConcurrentHashMap<String, TransmissionCallback> callbackMap;
+  private final long defaultTimeoutSeconds;
 
-  public AbstractRequestTransport (int defaultTimeoutSeconds) {
+  public AbstractRequestTransport (long defaultTimeoutSeconds) {
 
-    callbackMap = new SelfDestructiveMap<>(new Stint(defaultTimeoutSeconds, TimeUnit.SECONDS));
+    this.defaultTimeoutSeconds = defaultTimeoutSeconds;
+
+    callbackMap = new ConcurrentHashMap<>();
   }
 
   public Object acquireResult (SignalCodec signalCodec, Route route, Voice<?, ?> voice, String messageId, boolean inOnly)
@@ -57,14 +58,18 @@ public abstract class AbstractRequestTransport implements RequestTransport {
       AsynchronousTransmissionCallback asynchronousCallback = new AsynchronousTransmissionCallback(route.getService(), route.getFunction().getName());
       SynchronousTransmissionCallback previousCallback;
       Object timeoutObject;
-      int timeoutSeconds = (timeoutObject = voice.getConversation().getTimeout()) == null ? 0 : (Integer)timeoutObject;
+      long timeoutSeconds = ((timeoutObject = voice.getConversation().getTimeout()) == null) ? defaultTimeoutSeconds : (Long)timeoutObject;
 
-      if ((previousCallback = (SynchronousTransmissionCallback)callbackMap.putIfAbsent(messageId, asynchronousCallback, (timeoutSeconds > 0) ? new Stint(timeoutSeconds, TimeUnit.SECONDS) : null)) != null) {
+      if ((previousCallback = (SynchronousTransmissionCallback)callbackMap.putIfAbsent(messageId, asynchronousCallback)) != null) {
 
-        return previousCallback.getResult(signalCodec);
+        return previousCallback.getResult(signalCodec, 0);
       }
 
-      return asynchronousCallback.getResult(signalCodec);
+      try {
+        return asynchronousCallback.getResult(signalCodec, timeoutSeconds);
+      } finally {
+        callbackMap.remove(messageId);
+      }
     }
 
     return null;
@@ -83,12 +88,5 @@ public abstract class AbstractRequestTransport implements RequestTransport {
     } else if (previousCallback instanceof AsynchronousTransmissionCallback) {
       ((AsynchronousTransmissionCallback)previousCallback).setResultSignal(resultSignal);
     }
-  }
-
-  @Override
-  public void close ()
-    throws Exception {
-
-    callbackMap.shutdown();
   }
 }

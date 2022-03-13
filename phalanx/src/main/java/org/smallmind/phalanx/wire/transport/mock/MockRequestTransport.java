@@ -53,7 +53,7 @@ public class MockRequestTransport extends AbstractRequestTransport {
   private final SignalCodec signalCodec;
   private final String callerId = UUID.randomUUID().toString();
 
-  public MockRequestTransport (MockMessageRouter messageRouter, final SignalCodec signalCodec, int defaultTimeoutSeconds) {
+  public MockRequestTransport (MockMessageRouter messageRouter, final SignalCodec signalCodec, long defaultTimeoutSeconds) {
 
     super(defaultTimeoutSeconds);
 
@@ -114,5 +114,10 @@ public class MockRequestTransport extends AbstractRequestTransport {
     }
 
     return acquireResult(signalCodec, route, voice, messageId, inOnly);
+  }
+
+  @Override
+  public void close () {
+
   }
 }

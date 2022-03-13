@@ -32,16 +32,16 @@
  */
 package org.smallmind.phalanx.wire;
 
-public class TwoWayConversation implements Conversation<Integer> {
+public class TwoWayConversation implements Conversation<Long> {
 
-  Integer timeout;
+  Long timeout;
 
   public TwoWayConversation () {
 
-    this(0);
+    this(0L);
   }
 
-  public TwoWayConversation (Integer timeout) {
+  public TwoWayConversation (Long timeout) {
 
     this.timeout = timeout;
   }
@@ -54,7 +54,7 @@ public class TwoWayConversation implements Conversation<Integer> {
 
   // Any positive value (> 0) will override the default service timeout seconds
   @Override
-  public Integer getTimeout () {
+  public Long getTimeout () {
 
     return timeout;
   }

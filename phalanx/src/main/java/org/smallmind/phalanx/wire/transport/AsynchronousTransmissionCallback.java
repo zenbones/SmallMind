@@ -33,8 +33,8 @@
 package org.smallmind.phalanx.wire.transport;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import org.smallmind.nutsnbolts.time.Stint;
 import org.smallmind.phalanx.wire.SignatureUtility;
 import org.smallmind.phalanx.wire.TransportTimeoutException;
 import org.smallmind.phalanx.wire.signal.ResultSignal;
@@ -43,7 +43,6 @@ import org.smallmind.phalanx.wire.signal.SignalCodec;
 public class AsynchronousTransmissionCallback extends TransmissionCallback {
 
   private final CountDownLatch resultLatch = new CountDownLatch(1);
-  private final AtomicReference<Stint> timeoutDurationRef = new AtomicReference<>();
   private final AtomicReference<ResultSignal> resultSignalRef = new AtomicReference<>();
   private final String serviceName;
   private final String functionName;
@@ -54,32 +53,24 @@ public class AsynchronousTransmissionCallback extends TransmissionCallback {
     this.functionName = functionName;
   }
 
-  @Override
-  public void destroy (Stint timeoutStint) {
-
-    timeoutDurationRef.set(timeoutStint);
-
-    resultLatch.countDown();
-  }
-
-  @Override
-  public Object getResult (SignalCodec signalCodec)
+  public Object getResult (SignalCodec signalCodec, long timeoutSeconds)
     throws Throwable {
 
     ResultSignal resultSignal;
 
-    resultLatch.await();
+    if (!resultLatch.await(timeoutSeconds, TimeUnit.SECONDS)) {
+      throw new TransportTimeoutException("The timeout(%d) seconds was exceeded while waiting for a response(%s.%s)", timeoutSeconds, serviceName, functionName);
+    } else {
 
-    if ((resultSignal = resultSignalRef.get()) == null) {
+      if ((resultSignal = resultSignalRef.get()) == null) {
+        throw new IllegalStateException("Missing signal result");
+      } else {
 
-      Stint timeoutStint = timeoutDurationRef.get();
+        handleError(signalCodec, resultSignal);
 
-      throw new TransportTimeoutException("The timeout(%s) milliseconds was exceeded while waiting for a response(%s.%s)", (timeoutStint == null) ? "unknown" : String.valueOf(timeoutStint.toMilliseconds()), serviceName, functionName);
+        return signalCodec.extractObject(resultSignal.getResult(), SignatureUtility.nativeDecode(resultSignal.getNativeType()));
+      }
     }
-
-    handleError(signalCodec, resultSignal);
-
-    return signalCodec.extractObject(resultSignal.getResult(), SignatureUtility.nativeDecode(resultSignal.getNativeType()));
   }
 
   public void setResultSignal (ResultSignal resultSignal) {

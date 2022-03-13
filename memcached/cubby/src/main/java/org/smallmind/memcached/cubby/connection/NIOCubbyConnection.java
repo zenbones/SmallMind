@@ -40,7 +40,6 @@ import java.nio.channels.SocketChannel;
 import java.util.Iterator;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import org.smallmind.memcached.cubby.ConnectionCoordinator;
@@ -54,8 +53,6 @@ import org.smallmind.memcached.cubby.codec.CubbyCodec;
 import org.smallmind.memcached.cubby.command.Command;
 import org.smallmind.memcached.cubby.response.Response;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
-import org.smallmind.nutsnbolts.time.Stint;
-import org.smallmind.nutsnbolts.util.SelfDestructiveMap;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class NIOCubbyConnection implements CubbyConnection {
@@ -66,8 +63,8 @@ public class NIOCubbyConnection implements CubbyConnection {
   private final MemcachedHost memcachedHost;
   private final KeyTranslator keyTranslator;
   private final CubbyCodec codec;
-  private final LinkedBlockingQueue<CommandBuffer> requestQueue = new LinkedBlockingQueue<>();
-  private final LinkedBlockingQueue<CommandBuffer> responseQueue = new LinkedBlockingQueue<>();
+  private final LinkedBlockingQueue<MissingLink> requestQueue = new LinkedBlockingQueue<>();
+  private final LinkedBlockingQueue<MissingLink> responseQueue = new LinkedBlockingQueue<>();
   private final AtomicLong commandCounter = new AtomicLong(0);
   private final long connectionTimeoutMilliseconds;
   private final long defaultRequestTimeoutSeconds;
@@ -76,7 +73,6 @@ public class NIOCubbyConnection implements CubbyConnection {
   private SelectionKey selectionKey;
   private RequestWriter requestWriter;
   private ResponseReader responseReader;
-  private SelfDestructiveMap<Long, RequestCallback> callbackMap;
 
   public NIOCubbyConnection (ConnectionCoordinator connectionCoordinator, CubbyConfiguration configuration, MemcachedHost memcachedHost) {
 
@@ -113,7 +109,6 @@ public class NIOCubbyConnection implements CubbyConnection {
 
     requestWriter = new RequestWriter(socketChannel);
     responseReader = new ResponseReader(socketChannel);
-    callbackMap = new SelfDestructiveMap<>(new Stint(defaultRequestTimeoutSeconds, TimeUnit.SECONDS), new Stint(100, TimeUnit.MILLISECONDS));
 
     requestQueue.clear();
     responseQueue.clear();
@@ -145,12 +140,6 @@ public class NIOCubbyConnection implements CubbyConnection {
         LoggerManager.getLogger(NIOCubbyConnection.class).error(ioException);
       }
 
-      try {
-        callbackMap.shutdown();
-      } catch (InterruptedException interruptedException) {
-        LoggerManager.getLogger(NIOCubbyConnection.class).error(interruptedException);
-      }
-
       if (unexpected) {
         connectionCoordinator.disconnect(memcachedHost);
       }
@@ -164,27 +153,28 @@ public class NIOCubbyConnection implements CubbyConnection {
     RequestCallback requestCallback;
     long messageId;
 
-    callbackMap.putIfAbsent(messageId = commandCounter.getAndIncrement(), requestCallback = new RequestCallback(command), (timeoutSeconds == null) ? null : new Stint(timeoutSeconds, TimeUnit.SECONDS));
+    messageId = commandCounter.getAndIncrement();
+    requestCallback = new RequestCallback(command);
 
     synchronized (requestQueue) {
-      requestQueue.offer(new CommandBuffer(messageId, command.construct(keyTranslator, codec)));
+      requestQueue.offer(new MissingLink(requestCallback, new CommandBuffer(messageId, command.construct(keyTranslator, codec))));
       selectionKey.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
       selector.wakeup();
     }
 
-    return requestCallback.getResult();
+    return requestCallback.getResult(defaultRequestTimeoutSeconds);
   }
 
   private MissingLink retrieveMissingLink ()
     throws CubbyOperationException {
 
-    CommandBuffer commandBuffer;
+    MissingLink missingLink;
 
-    if ((commandBuffer = responseQueue.poll()) == null) {
+    if ((missingLink = responseQueue.poll()) == null) {
       throw new CubbyOperationException("Desynchronized connection state");
     }
 
-    return new MissingLink(callbackMap.get(commandBuffer.getIndex()), commandBuffer);
+    return missingLink;
   }
 
   @Override
@@ -244,19 +234,19 @@ public class NIOCubbyConnection implements CubbyConnection {
                   if (selectionKey.isWritable()) {
                     if (requestWriter.prepare()) {
 
-                      CommandBuffer commandBuffer;
+                      MissingLink missingLink;
 
                       do {
-                        if ((commandBuffer = requestQueue.poll()) == null) {
+                        if ((missingLink = requestQueue.poll()) == null) {
                           selectionKey.interestOps(SelectionKey.OP_READ);
                         } else {
-                          responseQueue.add(commandBuffer);
+                          responseQueue.add(missingLink);
 
-                          if (!requestWriter.add(commandBuffer)) {
+                          if (!requestWriter.add(missingLink.getCommandBuffer())) {
                             break;
                           }
                         }
-                      } while (commandBuffer != null);
+                      } while (missingLink != null);
                     }
 
                     requestWriter.write();

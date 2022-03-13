@@ -60,7 +60,7 @@ public class RabbitMQRequestTransport extends AbstractRequestTransport {
   private final RequestMessageRouter[] requestMessageRouters;
   private final String callerId = SnowflakeId.newInstance().generateDottedString();
 
-  public RabbitMQRequestTransport (RabbitMQConnector rabbitMQConnector, NameConfiguration nameConfiguration, SignalCodec signalCodec, int clusterSize, int concurrencyLimit, int defaultTimeoutSeconds, int messageTTLSeconds, boolean autoAcknowledge, PublisherConfirmationHandler publisherConfirmationHandler)
+  public RabbitMQRequestTransport (RabbitMQConnector rabbitMQConnector, NameConfiguration nameConfiguration, SignalCodec signalCodec, int clusterSize, int concurrencyLimit, long defaultTimeoutSeconds, int messageTTLSeconds, boolean autoAcknowledge, PublisherConfirmationHandler publisherConfirmationHandler)
     throws IOException, TimeoutException {
 
     super(defaultTimeoutSeconds);
@@ -138,8 +138,6 @@ public class RabbitMQRequestTransport extends AbstractRequestTransport {
       for (RequestMessageRouter requestMessageRouter : requestMessageRouters) {
         requestMessageRouter.close();
       }
-
-      super.close();
     }
   }
 }

@@ -32,7 +32,6 @@
  */
 package org.smallmind.phalanx.wire.transport;
 
-import org.smallmind.nutsnbolts.time.Stint;
 import org.smallmind.phalanx.wire.SignatureUtility;
 import org.smallmind.phalanx.wire.signal.ResultSignal;
 import org.smallmind.phalanx.wire.signal.SignalCodec;
@@ -47,12 +46,7 @@ public class SynchronousTransmissionCallback extends TransmissionCallback {
   }
 
   @Override
-  public void destroy (Stint timeoutStint) {
-
-  }
-
-  @Override
-  public synchronized Object getResult (SignalCodec signalCodec)
+  public synchronized Object getResult (SignalCodec signalCodec, long timoueSeconds)
     throws Throwable {
 
     handleError(signalCodec, resultSignal);

@@ -39,7 +39,7 @@ import org.smallmind.phalanx.wire.transport.RequestTransport;
 
 public class WireProxyFactory {
 
-  public static Proxy generateProxy (RequestTransport transport, int version, String serviceName, Class<?> serviceInterface, ParameterExtractor<String> serviceGroupExtractor, ParameterExtractor<String> instanceIdExtractor, ParameterExtractor<Integer> timeoutExtractor)
+  public static Proxy generateProxy (RequestTransport transport, int version, String serviceName, Class<?> serviceInterface, ParameterExtractor<String> serviceGroupExtractor, ParameterExtractor<String> instanceIdExtractor, ParameterExtractor<Long> timeoutExtractor)
     throws Exception {
 
     return (Proxy)Proxy.newProxyInstance(serviceInterface.getClassLoader(), new Class[] {serviceInterface}, new WireInvocationHandler(transport, version, serviceName, serviceInterface, serviceGroupExtractor, instanceIdExtractor, timeoutExtractor));

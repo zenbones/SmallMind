@@ -69,7 +69,7 @@ public class JmsRequestTransport extends AbstractRequestTransport {
   private final ResponseListener[] responseListeners;
   private final String callerId = SnowflakeId.newInstance().generateDottedString();
 
-  public JmsRequestTransport (RoutingFactories routingFactories, MessagePolicy messagePolicy, ReconnectionPolicy reconnectionPolicy, SignalCodec signalCodec, int clusterSize, int concurrencyLimit, int maximumMessageLength, int defaultTimeoutSeconds)
+  public JmsRequestTransport (RoutingFactories routingFactories, MessagePolicy messagePolicy, ReconnectionPolicy reconnectionPolicy, SignalCodec signalCodec, int clusterSize, int concurrencyLimit, int maximumMessageLength, long defaultTimeoutSeconds)
     throws JMSException, TransportException {
 
     super(defaultTimeoutSeconds);
@@ -207,8 +207,6 @@ public class JmsRequestTransport extends AbstractRequestTransport {
       for (ResponseListener responseListener : responseListeners) {
         responseListener.close();
       }
-
-      super.close();
     }
   }
 }

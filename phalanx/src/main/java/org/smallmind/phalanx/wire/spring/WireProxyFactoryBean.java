@@ -44,7 +44,7 @@ public class WireProxyFactoryBean implements InitializingBean, FactoryBean<Proxy
   private RequestTransport requestTransport;
   private ParameterExtractor<String> serviceGroupExtractor;
   private ParameterExtractor<String> instanceIdExtractor;
-  private ParameterExtractor<Integer> timeoutExtractor;
+  private ParameterExtractor<Long> timeoutExtractor;
   private Class<?> serviceInterface;
   private String serviceName;
   private int version;
@@ -79,7 +79,7 @@ public class WireProxyFactoryBean implements InitializingBean, FactoryBean<Proxy
     this.instanceIdExtractor = instanceIdExtractor;
   }
 
-  public void setTimeoutExtractor (ParameterExtractor<Integer> timeoutExtractor) {
+  public void setTimeoutExtractor (ParameterExtractor<Long> timeoutExtractor) {
 
     this.timeoutExtractor = timeoutExtractor;
   }

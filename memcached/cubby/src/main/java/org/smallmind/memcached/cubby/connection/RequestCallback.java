@@ -34,17 +34,15 @@ package org.smallmind.memcached.cubby.connection;
 
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import org.smallmind.memcached.cubby.ResponseTimeoutException;
 import org.smallmind.memcached.cubby.command.Command;
 import org.smallmind.memcached.cubby.response.Response;
-import org.smallmind.nutsnbolts.time.Stint;
-import org.smallmind.nutsnbolts.util.SelfDestructive;
 
-public class RequestCallback implements SelfDestructive {
+public class RequestCallback {
 
   private final CountDownLatch resultLatch = new CountDownLatch(1);
-  private final AtomicReference<Stint> timeoutStintRef = new AtomicReference<>();
   private final AtomicReference<Response> resultRef = new AtomicReference<>();
   private final AtomicReference<IOException> exceptionRef = new AtomicReference<>();
   private final Command command;
@@ -54,21 +52,14 @@ public class RequestCallback implements SelfDestructive {
     this.command = command;
   }
 
-  @Override
-  public void destroy (Stint timeoutStint) {
-
-    timeoutStintRef.set(timeoutStint);
-
-    resultLatch.countDown();
-  }
-
-  public Response getResult ()
+  public Response getResult (long timeoutSeconds)
     throws InterruptedException, IOException {
 
     Response response;
 
-    resultLatch.await();
-    if ((response = resultRef.get()) == null) {
+    if (!resultLatch.await(timeoutSeconds, TimeUnit.SECONDS)) {
+      throw new ResponseTimeoutException("The timeout(%d) milliseconds was exceeded while waiting for a response from command(%s)", timeoutSeconds, command);
+    } else if ((response = resultRef.get()) == null) {
 
       IOException exception;
 
@@ -76,10 +67,7 @@ public class RequestCallback implements SelfDestructive {
 
         throw exception;
       } else {
-
-        Stint timeoutStint = timeoutStintRef.get();
-
-        throw new ResponseTimeoutException("The timeout(%s) milliseconds was exceeded while waiting for a response from command(%s)", (timeoutStint == null) ? "unknown" : String.valueOf(timeoutStint.toMilliseconds()), command);
+        throw new IllegalArgumentException("Missing response");
       }
     } else {
 

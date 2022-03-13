@@ -40,7 +40,7 @@ import org.smallmind.phalanx.wire.transport.AbstractRequestTransport;
 
 public class RestRequestTransport extends AbstractRequestTransport {
 
-  public RestRequestTransport (int defaultTimeoutSeconds) {
+  public RestRequestTransport (long defaultTimeoutSeconds) {
 
     super(defaultTimeoutSeconds);
   }
@@ -56,5 +56,10 @@ public class RestRequestTransport extends AbstractRequestTransport {
     throws Throwable {
 
     return null;
+  }
+
+  @Override
+  public void close () {
+
   }
 }
