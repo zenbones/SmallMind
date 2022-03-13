@@ -34,11 +34,15 @@ package org.smallmind.memcached.cubby.response;
 
 import java.nio.ByteBuffer;
 import org.smallmind.memcached.cubby.connection.ExposedByteArrayOutputStream;
+import org.smallmind.nutsnbolts.lang.FormattedIllegalArgumentException;
 
 public class JoinedBuffer {
 
+  private static final byte[] NO_BYTES = new byte[0];
+
   private final ByteBuffer readBuffer;
   private final ByteBuffer accumulatingBuffer;
+  private final int limit;
   private int position = 0;
   private int mark = -1;
 
@@ -47,6 +51,13 @@ public class JoinedBuffer {
     this.readBuffer = readBuffer;
 
     accumulatingBuffer = ByteBuffer.wrap(accumulatingStream.getBuffer(), 0, accumulatingStream.size());
+
+    limit = accumulatingStream.size() + readBuffer.limit();
+  }
+
+  public byte peek (int index) {
+
+    return get(position() + index);
   }
 
   public byte get () {
@@ -58,7 +69,16 @@ public class JoinedBuffer {
     }
   }
 
-  public void get (byte[] buffer) {
+  public byte get (int index) {
+
+    if (index < accumulatingBuffer.limit()) {
+      return accumulatingBuffer.get(index);
+    } else {
+      return readBuffer.get(index - accumulatingBuffer.limit());
+    }
+  }
+
+  public byte[] get (byte[] buffer) {
 
     int bytesRead = 0;
 
@@ -70,6 +90,13 @@ public class JoinedBuffer {
     }
 
     position += buffer.length;
+
+    return buffer;
+  }
+
+  public int limit () {
+
+    return limit;
   }
 
   public int position () {
@@ -77,13 +104,20 @@ public class JoinedBuffer {
     return position;
   }
 
+  public int incPosition (int delta) {
+
+    position(position + delta);
+
+    return position;
+  }
+
   public void position (int position) {
 
     if (position < 0) {
-      throw new IllegalArgumentException("Attempt to set position < 0");
+      throw new FormattedIllegalArgumentException("Attempt to set position < 0");
     } else if (position > accumulatingBuffer.limit() + readBuffer.limit()) {
 
-      throw new IllegalArgumentException("Attempt to set position > " + accumulatingBuffer.limit() + readBuffer.limit());
+      throw new FormattedIllegalArgumentException("Attempt to set position > %d", accumulatingBuffer.limit() + readBuffer.limit());
     } else {
 
       this.position = position;
@@ -104,7 +138,7 @@ public class JoinedBuffer {
 
   public int remaining () {
 
-    return accumulatingBuffer.limit() + readBuffer.limit() - position;
+    return limit - position;
   }
 
   public void mark () {

@@ -61,25 +61,7 @@ public class ResponseParser {
         if ((length < 4) || joinedBuffer.get() != ' ') {
           throw createIncomprehensibleResponseException(joinedBuffer, length);
         } else {
-
-          StringBuilder lengthBuilder = new StringBuilder();
-
-          while ((joinedBuffer.position() - offset) < length) {
-
-            char singleChar;
-
-            if ((singleChar = (char)joinedBuffer.get()) != ' ') {
-              lengthBuilder.append(singleChar);
-            } else {
-              joinedBuffer.position(joinedBuffer.position() - 1);
-              break;
-            }
-          }
-          try {
-            response.setValueLength(Integer.parseInt(lengthBuilder.toString()));
-          } catch (NumberFormatException numberFormatException) {
-            throw createIncomprehensibleResponseException(joinedBuffer, length);
-          }
+          response.setValueLength(accumulateInt(joinedBuffer, offset, length));
         }
       } else if (ResponseCode.EN.begins(first, second)) {
         response = new Response(ResponseCode.EN);
@@ -125,7 +107,7 @@ public class ResponseParser {
             response.setToken(accumulateToken(joinedBuffer, offset, length));
             break;
           case 'c':
-            response.setCas(Long.parseLong(accumulateToken(joinedBuffer, offset, length)));
+            response.setCas(accumulateLong(joinedBuffer, offset, length));
             break;
           case 'W':
             response.setWon(true);
@@ -140,24 +122,40 @@ public class ResponseParser {
     }
   }
 
+  private static int accumulateInt (JoinedBuffer joinedBuffer, int offset, int length)
+    throws IOException {
+
+    try {
+      return Integer.parseInt(accumulateToken(joinedBuffer, offset, length));
+    } catch (NumberFormatException numberFormatException) {
+      throw createIncomprehensibleResponseException(joinedBuffer, length);
+    }
+  }
+
+  private static long accumulateLong (JoinedBuffer joinedBuffer, int offset, int length)
+    throws IOException {
+
+    try {
+      return Long.parseLong(accumulateToken(joinedBuffer, offset, length));
+    } catch (NumberFormatException numberFormatException) {
+      throw createIncomprehensibleResponseException(joinedBuffer, length);
+    }
+  }
+
   private static String accumulateToken (JoinedBuffer joinedBuffer, int offset, int length) {
 
-    StringBuilder tokenBuilder = new StringBuilder();
+    int index = 0;
 
-    while ((joinedBuffer.position() - offset) < length) {
+    while ((joinedBuffer.position() + index) < (offset + length)) {
 
-      char tokenChar;
-
-      if ((tokenChar = (char)joinedBuffer.get()) == ' ') {
-        joinedBuffer.position(joinedBuffer.position() - 1);
-
-        return tokenBuilder.toString();
+      if (joinedBuffer.peek(index) == ' ') {
+        return new String(joinedBuffer.get(new byte[index]));
       }
 
-      tokenBuilder.append(tokenChar);
+      index++;
     }
 
-    return tokenBuilder.toString();
+    return new String(joinedBuffer.get(new byte[index]));
   }
 
   private static IncomprehensibleResponseException createIncomprehensibleResponseException (JoinedBuffer joinedBuffer, int length) {

@@ -30,10 +30,29 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.memcached.cubby;
+package org.smallmind.nutsnbolts.lang;
 
-import org.smallmind.nutsnbolts.lang.FormattedIOException;
+import java.io.IOException;
 
-public class NoAvailableHostException extends FormattedIOException {
+public class FormattedIOException extends IOException {
 
+  public FormattedIOException () {
+
+    super();
+  }
+
+  public FormattedIOException (String message, Object... args) {
+
+    super(message == null ? null : String.format(message, args));
+  }
+
+  public FormattedIOException (Throwable throwable, String message, Object... args) {
+
+    super(message == null ? null : String.format(message, args), throwable);
+  }
+
+  public FormattedIOException (Throwable throwable) {
+
+    super(throwable);
+  }
 }

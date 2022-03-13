@@ -97,9 +97,9 @@ public class ResponseReader {
   public Response extract ()
     throws IOException {
 
-    int endOfLine;
+    int lineLength;
 
-    if ((endOfLine = findLineEnd(joinedBuffer)) < 0) {
+    if ((lineLength = findLineEnd(joinedBuffer)) < 0) {
       shiftRemaining();
 
       return null;
@@ -118,16 +118,16 @@ public class ResponseReader {
         joinedBuffer.get(value);
         response.setValue(value);
 
-        joinedBuffer.position(joinedBuffer.position() + 2);
+        joinedBuffer.incPosition(2);
         partialResponse = null;
 
         return response;
       }
     } else {
 
-      Response response = ResponseParser.parse(joinedBuffer, joinedBuffer.position(), endOfLine - 2 - joinedBuffer.position());
+      Response response = ResponseParser.parse(joinedBuffer, joinedBuffer.position(), lineLength - 2);
 
-      joinedBuffer.position(joinedBuffer.position() + 2);
+      joinedBuffer.incPosition(2);
       if (response.getValueLength() >= 0) {
         if (joinedBuffer.remaining() < (response.getValueLength() + 2)) {
           partialResponse = response;
@@ -143,7 +143,7 @@ public class ResponseReader {
             response.setValue(value);
           }
 
-          joinedBuffer.position(joinedBuffer.position() + 2);
+          joinedBuffer.incPosition(2);
         }
       }
 
@@ -154,29 +154,24 @@ public class ResponseReader {
   private int findLineEnd (JoinedBuffer joinedBuffer) {
 
     boolean completed = false;
+    int index = 0;
 
-    joinedBuffer.mark();
+    while (joinedBuffer.position() + index < joinedBuffer.limit()) {
+      switch (joinedBuffer.peek(index++)) {
+        case '\r':
+          completed = true;
+          break;
+        case '\n':
+          if (completed) {
 
-    try {
-      while (joinedBuffer.remaining() > 0) {
-        switch (joinedBuffer.get()) {
-          case '\r':
-            completed = true;
-            break;
-          case '\n':
-            if (completed) {
-
-              return joinedBuffer.position();
-            }
-            break;
-          default:
-            completed = false;
-        }
+            return index;
+          }
+          break;
+        default:
+          completed = false;
       }
-
-      return -1;
-    } finally {
-      joinedBuffer.reset();
     }
+
+    return -1;
   }
 }

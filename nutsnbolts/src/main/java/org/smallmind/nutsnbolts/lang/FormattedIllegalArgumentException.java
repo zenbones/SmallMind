@@ -30,28 +30,26 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.io;
+package org.smallmind.nutsnbolts.lang;
 
-import java.io.IOException;
+public class FormattedIllegalArgumentException extends IllegalArgumentException {
 
-public class FormattedIOException extends IOException {
-
-  public FormattedIOException () {
+  public FormattedIllegalArgumentException () {
 
     super();
   }
 
-  public FormattedIOException (String message, Object... args) {
+  public FormattedIllegalArgumentException (String message, Object... args) {
 
     super(message == null ? null : String.format(message, args));
   }
 
-  public FormattedIOException (Throwable throwable, String message, Object... args) {
+  public FormattedIllegalArgumentException (Throwable throwable, String message, Object... args) {
 
     super(message == null ? null : String.format(message, args), throwable);
   }
 
-  public FormattedIOException (Throwable throwable) {
+  public FormattedIllegalArgumentException (Throwable throwable) {
 
     super(throwable);
   }

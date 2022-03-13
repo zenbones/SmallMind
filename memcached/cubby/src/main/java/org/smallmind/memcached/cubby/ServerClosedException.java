@@ -32,7 +32,7 @@
  */
 package org.smallmind.memcached.cubby;
 
-import org.smallmind.nutsnbolts.io.FormattedIOException;
+import org.smallmind.nutsnbolts.lang.FormattedIOException;
 
 public class ServerClosedException extends FormattedIOException {
 
