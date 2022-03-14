@@ -33,65 +33,27 @@
 package org.smallmind.memcached.cubby.command;
 
 import java.io.IOException;
+import org.smallmind.memcached.cubby.Authentication;
 import org.smallmind.memcached.cubby.CubbyOperationException;
 import org.smallmind.memcached.cubby.codec.CubbyCodec;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
 
-public class SetCommand extends Command {
+public class AuthenticationCommand extends Command {
 
-  private Mode mode;
-  private Object value;
-  private String key;
-  private String opaqueToken;
-  private Long cas;
-  private Integer expiration;
+  private Authentication authentication;
+
+  public AuthenticationCommand setAuthentication (Authentication authentication) {
+
+    this.authentication = authentication;
+
+    return this;
+  }
 
   @Override
-  public String getKey () {
+  public String getKey ()
+    throws CubbyOperationException {
 
-    return key;
-  }
-
-  public SetCommand setKey (String key) {
-
-    this.key = key;
-
-    return this;
-  }
-
-  public SetCommand setValue (Object value) {
-
-    this.value = value;
-
-    return this;
-  }
-
-  public SetCommand setMode (Mode mode) {
-
-    this.mode = mode;
-
-    return this;
-  }
-
-  public SetCommand setCas (Long cas) {
-
-    this.cas = cas;
-
-    return this;
-  }
-
-  public SetCommand setExpiration (Integer expiration) {
-
-    this.expiration = expiration;
-
-    return this;
-  }
-
-  public SetCommand setOpaqueToken (String opaqueToken) {
-
-    this.opaqueToken = opaqueToken;
-
-    return this;
+    throw new CubbyOperationException("Authentication can't be used in the normal request/response cycle");
   }
 
   @Override
@@ -100,22 +62,9 @@ public class SetCommand extends Command {
 
     byte[] bytes;
     byte[] commandBytes;
-    byte[] valueBytes = codec.serialize(value);
+    byte[] valueBytes = codec.serialize(authentication.getUsername() + " " + authentication.getPassword());
 
-    StringBuilder line = new StringBuilder("ms ").append(keyTranslator.encode(key)).append(' ').append(valueBytes.length).append(" b");
-
-    if (mode != null) {
-      line.append(" M").append(mode.getToken());
-    }
-    if (cas != null) {
-      line.append(" C").append(cas).append(" c");
-    }
-    if (expiration != null) {
-      line.append(" T").append(expiration);
-    }
-    if (opaqueToken != null) {
-      line.append(" O").append(opaqueToken);
-    }
+    StringBuilder line = new StringBuilder("ms ").append(keyTranslator.encode("unused")).append(' ').append(valueBytes.length).append(" b");
 
     commandBytes = line.append("\r\n").toString().getBytes();
     bytes = new byte[commandBytes.length + valueBytes.length + 2];

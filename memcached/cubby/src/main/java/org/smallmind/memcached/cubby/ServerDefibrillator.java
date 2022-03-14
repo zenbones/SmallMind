@@ -87,8 +87,8 @@ public class ServerDefibrillator implements Runnable {
           for (MemcachedHost memcachedHost : reconnectionList) {
             try {
               connectionCoordinator.reconnect(memcachedHost);
-            } catch (IOException ioException) {
-              LoggerManager.getLogger(ServerDefibrillator.class).error(ioException);
+            } catch (IOException | CubbyOperationException exception) {
+              LoggerManager.getLogger(ServerDefibrillator.class).error(exception);
             }
           }
         }

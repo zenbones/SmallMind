@@ -44,6 +44,7 @@ public class CubbyConfiguration {
   private CubbyCodec codec = new ObjectStreamCubbyCodec();
   private KeyLocator keyLocator = new DefaultKeyLocator();
   private KeyTranslator keyTranslator = new DefaultKeyTranslator();
+  private Authentication authentication;
   private long defaultRequestTimeoutMilliseconds = 0;
   private long connectionTimeoutMilliseconds = 3000;
   private long resuscitationSeconds = 10;
@@ -81,6 +82,18 @@ public class CubbyConfiguration {
   public CubbyConfiguration setKeyTranslator (KeyTranslator keyTranslator) {
 
     this.keyTranslator = keyTranslator;
+
+    return this;
+  }
+
+  public Authentication getAuthentication () {
+
+    return authentication;
+  }
+
+  public CubbyConfiguration setAuthentication (Authentication authentication) {
+
+    this.authentication = authentication;
 
     return this;
   }

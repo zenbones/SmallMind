@@ -129,7 +129,7 @@ public class ConnectionCoordinator {
   }
 
   public void reconnect (MemcachedHost memcachedHost)
-    throws InterruptedException, IOException {
+    throws InterruptedException, IOException, CubbyOperationException {
 
     constructConnection(memcachedHost);
     serverPool.get(memcachedHost.getName()).setActive(true);
@@ -137,7 +137,7 @@ public class ConnectionCoordinator {
   }
 
   private void constructConnection (MemcachedHost memcachedHost)
-    throws InterruptedException, IOException {
+    throws InterruptedException, IOException, CubbyOperationException {
 
     CubbyConnection connection;
 

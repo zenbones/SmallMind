@@ -40,7 +40,7 @@ import org.smallmind.memcached.cubby.response.Response;
 public interface CubbyConnection extends Runnable {
 
   void start ()
-    throws InterruptedException, IOException;
+    throws InterruptedException, IOException, CubbyOperationException;
 
   void stop ()
     throws InterruptedException, IOException;

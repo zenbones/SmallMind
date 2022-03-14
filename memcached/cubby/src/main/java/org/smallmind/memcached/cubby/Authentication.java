@@ -30,59 +30,26 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.memcached.cubby.command;
+package org.smallmind.memcached.cubby;
 
-import java.io.IOException;
-import org.smallmind.memcached.cubby.CubbyOperationException;
-import org.smallmind.memcached.cubby.codec.CubbyCodec;
-import org.smallmind.memcached.cubby.translator.KeyTranslator;
+public class Authentication {
 
-public class GetCommand extends Command {
+  private final String username;
+  private final String password;
 
-  private String key;
-  private String opaqueToken;
-  private boolean cas;
+  public Authentication (String username, String password) {
 
-  @Override
-  public String getKey () {
-
-    return key;
+    this.username = username;
+    this.password = password;
   }
 
-  public GetCommand setKey (String key) {
+  public String getUsername () {
 
-    this.key = key;
-
-    return this;
+    return username;
   }
 
-  public GetCommand setCas (boolean cas) {
+  public String getPassword () {
 
-    this.cas = cas;
-
-    return this;
-  }
-
-  public GetCommand setOpaqueToken (String opaqueToken) {
-
-    this.opaqueToken = opaqueToken;
-
-    return this;
-  }
-
-  @Override
-  public byte[] construct (KeyTranslator keyTranslator, CubbyCodec codec)
-    throws IOException, CubbyOperationException {
-
-    StringBuilder line = new StringBuilder("mg ").append(keyTranslator.encode(key)).append(" b v N").append(300);
-
-    if (cas) {
-      line.append(" c");
-    }
-    if (opaqueToken != null) {
-      line.append(" O").append(opaqueToken);
-    }
-
-    return line.append("\r\n").toString().getBytes();
+    return password;
   }
 }

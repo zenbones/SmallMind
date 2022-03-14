@@ -32,7 +32,6 @@
  */
 package org.smallmind.memcached.cubby.command;
 
-import org.smallmind.memcached.cubby.response.Response;
 import org.smallmind.memcached.cubby.codec.CubbyCodec;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
 
@@ -44,12 +43,6 @@ public class NoopCommand extends Command {
   public String getKey () {
 
     return "";
-  }
-
-  @Override
-  public Object foobar (Response response) {
-
-    return null;
   }
 
   @Override

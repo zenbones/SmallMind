@@ -42,6 +42,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import org.smallmind.memcached.cubby.Authentication;
 import org.smallmind.memcached.cubby.ConnectionCoordinator;
 import org.smallmind.memcached.cubby.ConnectionTimeoutException;
 import org.smallmind.memcached.cubby.CubbyConfiguration;
@@ -50,6 +51,7 @@ import org.smallmind.memcached.cubby.IncomprehensibleRequestException;
 import org.smallmind.memcached.cubby.InvalidSelectionKeyException;
 import org.smallmind.memcached.cubby.MemcachedHost;
 import org.smallmind.memcached.cubby.codec.CubbyCodec;
+import org.smallmind.memcached.cubby.command.AuthenticationCommand;
 import org.smallmind.memcached.cubby.command.Command;
 import org.smallmind.memcached.cubby.response.Response;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
@@ -66,6 +68,7 @@ public class NIOCubbyConnection implements CubbyConnection {
   private final LinkedBlockingQueue<MissingLink> requestQueue = new LinkedBlockingQueue<>();
   private final LinkedBlockingQueue<MissingLink> responseQueue = new LinkedBlockingQueue<>();
   private final AtomicLong commandCounter = new AtomicLong(0);
+  private final Authentication authentication;
   private final long connectionTimeoutMilliseconds;
   private final long defaultRequestTimeoutMilliseconds;
   private SocketChannel socketChannel;
@@ -81,13 +84,14 @@ public class NIOCubbyConnection implements CubbyConnection {
 
     keyTranslator = configuration.getKeyTranslator();
     codec = configuration.getCodec();
+    authentication = configuration.getAuthentication();
     connectionTimeoutMilliseconds = configuration.getConnectionTimeoutMilliseconds();
     defaultRequestTimeoutMilliseconds = configuration.getDefaultRequestTimeoutMilliseconds();
   }
 
   @Override
   public void start ()
-    throws InterruptedException, IOException {
+    throws InterruptedException, IOException, CubbyOperationException {
 
     long start = System.currentTimeMillis();
 
@@ -113,6 +117,10 @@ public class NIOCubbyConnection implements CubbyConnection {
     requestQueue.clear();
     responseQueue.clear();
     commandCounter.set(0L);
+
+    if (authentication != null) {
+      send(new AuthenticationCommand().setAuthentication(authentication), 0L);
+    }
   }
 
   @Override
