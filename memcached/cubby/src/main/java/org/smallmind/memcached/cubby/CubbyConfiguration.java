@@ -44,7 +44,7 @@ public class CubbyConfiguration {
   private CubbyCodec codec = new ObjectStreamCubbyCodec();
   private KeyLocator keyLocator = new DefaultKeyLocator();
   private KeyTranslator keyTranslator = new DefaultKeyTranslator();
-  private long defaultRequestTimeoutSeconds = 3;
+  private long defaultRequestTimeoutMilliseconds = 0;
   private long connectionTimeoutMilliseconds = 3000;
   private long resuscitationSeconds = 10;
   private int connectionsPerHost = 1;
@@ -85,14 +85,14 @@ public class CubbyConfiguration {
     return this;
   }
 
-  public long getDefaultRequestTimeoutSeconds () {
+  public long getDefaultRequestTimeoutMilliseconds () {
 
-    return defaultRequestTimeoutSeconds;
+    return defaultRequestTimeoutMilliseconds;
   }
 
-  public CubbyConfiguration setDefaultRequestTimeoutSeconds (long defaultRequestTimeoutSeconds) {
+  public CubbyConfiguration setDefaultRequestTimeoutMilliseconds (long defaultRequestTimeoutMilliseconds) {
 
-    this.defaultRequestTimeoutSeconds = defaultRequestTimeoutSeconds;
+    this.defaultRequestTimeoutMilliseconds = defaultRequestTimeoutMilliseconds;
 
     return this;
   }

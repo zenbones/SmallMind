@@ -52,14 +52,20 @@ public class RequestCallback {
     this.command = command;
   }
 
-  public Response getResult (long timeoutSeconds)
+  public Response getResult (long timeoutMilliseconds)
     throws InterruptedException, IOException {
 
     Response response;
 
-    if (!resultLatch.await(timeoutSeconds, TimeUnit.SECONDS)) {
-      throw new ResponseTimeoutException("The timeout(%d) milliseconds was exceeded while waiting for a response from command(%s)", timeoutSeconds, command);
-    } else if ((response = resultRef.get()) == null) {
+    if (timeoutMilliseconds > 0) {
+      if (!resultLatch.await(timeoutMilliseconds, TimeUnit.SECONDS)) {
+        throw new ResponseTimeoutException("The timeout(%d) milliseconds was exceeded while waiting for a response from command(%s)", timeoutMilliseconds, command);
+      }
+    } else {
+      resultLatch.await();
+    }
+
+    if ((response = resultRef.get()) == null) {
 
       IOException exception;
 

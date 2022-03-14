@@ -103,7 +103,7 @@ public class CubbyTest3 {
         startLatch.await();
 
         for (int i = 0; i < 1000; i++) {
-          client.get("hello");
+          client.get("hello", 3000);
           counter.incrementAndGet();
         }
         finishLatch.countDown();

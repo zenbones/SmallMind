@@ -67,7 +67,7 @@ public class NIOCubbyConnection implements CubbyConnection {
   private final LinkedBlockingQueue<MissingLink> responseQueue = new LinkedBlockingQueue<>();
   private final AtomicLong commandCounter = new AtomicLong(0);
   private final long connectionTimeoutMilliseconds;
-  private final long defaultRequestTimeoutSeconds;
+  private final long defaultRequestTimeoutMilliseconds;
   private SocketChannel socketChannel;
   private Selector selector;
   private SelectionKey selectionKey;
@@ -82,7 +82,7 @@ public class NIOCubbyConnection implements CubbyConnection {
     keyTranslator = configuration.getKeyTranslator();
     codec = configuration.getCodec();
     connectionTimeoutMilliseconds = configuration.getConnectionTimeoutMilliseconds();
-    defaultRequestTimeoutSeconds = configuration.getDefaultRequestTimeoutSeconds();
+    defaultRequestTimeoutMilliseconds = configuration.getDefaultRequestTimeoutMilliseconds();
   }
 
   @Override
@@ -162,7 +162,7 @@ public class NIOCubbyConnection implements CubbyConnection {
       selector.wakeup();
     }
 
-    return requestCallback.getResult(defaultRequestTimeoutSeconds);
+    return requestCallback.getResult((timeoutSeconds == null) ? defaultRequestTimeoutMilliseconds : timeoutSeconds);
   }
 
   private MissingLink retrieveMissingLink ()
