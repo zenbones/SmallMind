@@ -62,7 +62,7 @@ public abstract class AbstractRequestTransport implements RequestTransport {
 
       if ((previousCallback = (SynchronousTransmissionCallback)callbackMap.putIfAbsent(messageId, asynchronousCallback)) != null) {
 
-        return previousCallback.getResult(signalCodec, 0);
+        return previousCallback.getResult(signalCodec, (timeoutSeconds > 0) ? timeoutSeconds : defaultTimeoutSeconds);
       }
 
       try {
