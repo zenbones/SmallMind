@@ -64,6 +64,13 @@ public class GetCommand extends Command {
     return this;
   }
 
+  public GetCommand setExpiration (Integer expiration) {
+
+    this.expiration = expiration;
+
+    return this;
+  }
+
   public GetCommand setOpaqueToken (String opaqueToken) {
 
     this.opaqueToken = opaqueToken;
