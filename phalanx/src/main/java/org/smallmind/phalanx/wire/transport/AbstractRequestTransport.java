@@ -57,15 +57,17 @@ public abstract class AbstractRequestTransport implements RequestTransport {
 
       AsynchronousTransmissionCallback asynchronousCallback = new AsynchronousTransmissionCallback(route.getService(), route.getFunction().getName());
       SynchronousTransmissionCallback previousCallback;
-      Object timeoutObject;
-      long timeoutSeconds = ((timeoutObject = voice.getConversation().getTimeout()) == null) ? defaultTimeoutSeconds : (Long)timeoutObject;
 
       if ((previousCallback = (SynchronousTransmissionCallback)callbackMap.putIfAbsent(messageId, asynchronousCallback)) != null) {
 
-        return previousCallback.getResult(signalCodec, (timeoutSeconds > 0) ? timeoutSeconds : defaultTimeoutSeconds);
+        return previousCallback.getResult(signalCodec, 0);
       }
 
       try {
+
+        Object timeoutObject;
+        long timeoutSeconds = (((timeoutObject = voice.getConversation().getTimeout()) == null) || ((Long)timeoutObject <= 0)) ? defaultTimeoutSeconds : (Long)timeoutObject;
+
         return asynchronousCallback.getResult(signalCodec, timeoutSeconds);
       } finally {
         callbackMap.remove(messageId);
