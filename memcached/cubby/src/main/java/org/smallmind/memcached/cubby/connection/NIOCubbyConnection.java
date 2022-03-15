@@ -109,7 +109,7 @@ public class NIOCubbyConnection implements CubbyConnection {
       throw new ConnectionTimeoutException();
     }
 
-    selectionKey = socketChannel.register(selector = Selector.open(), SelectionKey.OP_WRITE);
+    selectionKey = socketChannel.register(selector = Selector.open(), SelectionKey.OP_READ | SelectionKey.OP_WRITE);
 
     requestWriter = new RequestWriter(socketChannel);
     responseReader = new ResponseReader(socketChannel);
@@ -159,16 +159,9 @@ public class NIOCubbyConnection implements CubbyConnection {
     throws InterruptedException, IOException, CubbyOperationException {
 
     RequestCallback requestCallback;
-    long messageId;
 
-    messageId = commandCounter.getAndIncrement();
     requestCallback = new RequestCallback(command);
-
-    synchronized (requestQueue) {
-      requestQueue.offer(new MissingLink(requestCallback, new CommandBuffer(messageId, command.construct(keyTranslator, codec))));
-      selectionKey.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
-      selector.wakeup();
-    }
+    requestQueue.offer(new MissingLink(requestCallback, new CommandBuffer(commandCounter.getAndIncrement(), command.construct(keyTranslator, codec))));
 
     return requestCallback.getResult((timeoutSeconds == null) ? defaultRequestTimeoutMilliseconds : timeoutSeconds);
   }
@@ -245,9 +238,7 @@ public class NIOCubbyConnection implements CubbyConnection {
                       MissingLink missingLink;
 
                       do {
-                        if ((missingLink = requestQueue.poll()) == null) {
-                          selectionKey.interestOps(SelectionKey.OP_READ);
-                        } else {
+                        if ((missingLink = requestQueue.poll()) != null) {
                           responseQueue.add(missingLink);
 
                           if (!requestWriter.add(missingLink.getCommandBuffer())) {
