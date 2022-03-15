@@ -35,6 +35,7 @@ package org.smallmind.nutsnbolts.email;
 import java.io.CharArrayReader;
 import java.io.CharArrayWriter;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -118,7 +119,7 @@ public class Postman {
       message.setSentDate(new Date());
 
       if (mail.getSubject() != null) {
-        message.setSubject(mail.getSubject());
+        message.setSubject(mail.getSubject(), StandardCharsets.UTF_8.name());
       }
 
       if (mail.getBodyReader() != null) {
@@ -137,7 +138,7 @@ public class Postman {
         MimeBodyPart textPart = new MimeBodyPart();
 
         if (interpolationMap == null) {
-          textPart.setText(bodyWriter.toString(), "utf-8", mail.isHtml() ? "html" : "plain");
+          textPart.setText(bodyWriter.toString(), StandardCharsets.UTF_8.name(), mail.isHtml() ? "html" : "plain");
         } else {
 
           Template template;
@@ -151,7 +152,7 @@ public class Postman {
           }
 
           template.process(interpolationMap, templateWriter = new StringWriter());
-          textPart.setText(templateWriter.toString(), "utf-8", mail.isHtml() ? "html" : "plain");
+          textPart.setText(templateWriter.toString(), StandardCharsets.UTF_8.name(), mail.isHtml() ? "html" : "plain");
         }
 
         multipart.addBodyPart(textPart);
