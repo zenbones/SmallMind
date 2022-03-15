@@ -181,6 +181,8 @@ public class NIOCubbyConnection implements CubbyConnection {
   @Override
   public void run () {
 
+    int invalidSelectionKeyCount = 0;
+
     try {
       while (!finished.get()) {
         try {
@@ -194,8 +196,12 @@ public class NIOCubbyConnection implements CubbyConnection {
 
               try {
                 if (!selectionKey.isValid()) {
-                  throw new InvalidSelectionKeyException();
+                  if (++invalidSelectionKeyCount >= 3) {
+                    throw new InvalidSelectionKeyException();
+                  }
                 } else {
+                  invalidSelectionKeyCount = 0;
+
                   if (selectionKey.isReadable()) {
                     if (responseReader.read()) {
 
@@ -252,11 +258,14 @@ public class NIOCubbyConnection implements CubbyConnection {
                   }
                 }
               } finally {
-                selectionKeyIter.remove();
+                if (invalidSelectionKeyCount == 0) {
+                  selectionKeyIter.remove();
+                }
               }
             }
           }
         } catch (IOException | CubbyOperationException exception) {
+          exception.printStackTrace();
           LoggerManager.getLogger(NIOCubbyConnection.class).error(exception);
           shutdown(true);
         }
