@@ -40,7 +40,7 @@ public class TokenGenerator {
 
   public synchronized String next () {
 
-    StringBuilder count = new StringBuilder();
+    StringBuilder countBuilder = new StringBuilder();
     int index = 0;
 
     do {
@@ -61,12 +61,12 @@ public class TokenGenerator {
 
     for (int loop = 0; loop < 32; loop++) {
       if (counter[loop] > 0) {
-        count.append(ALPHABET.charAt(counter[loop] - 1));
+        countBuilder.append(ALPHABET.charAt(counter[loop] - 1));
       } else {
         break;
       }
     }
 
-    return count.toString();
+    return countBuilder.toString();
   }
 }

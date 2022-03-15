@@ -37,12 +37,11 @@ import org.smallmind.memcached.cubby.CubbyOperationException;
 import org.smallmind.memcached.cubby.codec.CubbyCodec;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
 
-public class GetCommand extends Command {
+public class DeleteCommand extends Command {
 
   private String key;
   private String opaqueToken;
-  private boolean cas;
-  private Integer expiration;
+  private Long cas;
 
   @Override
   public String getKey () {
@@ -50,21 +49,21 @@ public class GetCommand extends Command {
     return key;
   }
 
-  public GetCommand setKey (String key) {
+  public DeleteCommand setKey (String key) {
 
     this.key = key;
 
     return this;
   }
 
-  public GetCommand setCas (boolean cas) {
+  public DeleteCommand setCas (Long cas) {
 
     this.cas = cas;
 
     return this;
   }
 
-  public GetCommand setOpaqueToken (String opaqueToken) {
+  public DeleteCommand setOpaqueToken (String opaqueToken) {
 
     this.opaqueToken = opaqueToken;
 
@@ -75,13 +74,10 @@ public class GetCommand extends Command {
   public byte[] construct (KeyTranslator keyTranslator, CubbyCodec codec)
     throws IOException, CubbyOperationException {
 
-    StringBuilder line = new StringBuilder("mg ").append(keyTranslator.encode(key)).append(" b v N").append(300);
+    StringBuilder line = new StringBuilder("md ").append(keyTranslator.encode(key)).append(" b");
 
-    if (cas) {
-      line.append(" c");
-    }
-    if (expiration != null) {
-      line.append(" T").append(expiration);
+    if (cas != null) {
+      line.append(" C").append(cas).append(" c");
     }
     if (opaqueToken != null) {
       line.append(" O").append(opaqueToken);

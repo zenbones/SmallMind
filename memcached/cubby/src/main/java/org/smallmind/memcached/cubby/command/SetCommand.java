@@ -39,12 +39,12 @@ import org.smallmind.memcached.cubby.translator.KeyTranslator;
 
 public class SetCommand extends Command {
 
-  private Mode mode;
+  private SetMode mode;
   private Object value;
   private String key;
   private String opaqueToken;
-  private Long cas;
   private Integer expiration;
+  private Long cas;
 
   @Override
   public String getKey () {
@@ -66,7 +66,7 @@ public class SetCommand extends Command {
     return this;
   }
 
-  public SetCommand setMode (Mode mode) {
+  public SetCommand setMode (SetMode mode) {
 
     this.mode = mode;
 

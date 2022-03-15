@@ -37,12 +37,15 @@ import org.smallmind.memcached.cubby.CubbyOperationException;
 import org.smallmind.memcached.cubby.codec.CubbyCodec;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
 
-public class GetCommand extends Command {
+public class ArithmeticCommand extends Command {
 
+  private ArithmeticMode mode = ArithmeticMode.INCREMENT;
   private String key;
   private String opaqueToken;
-  private boolean cas;
+  private Integer initial;
+  private Integer delta;
   private Integer expiration;
+  private Long cas;
 
   @Override
   public String getKey () {
@@ -50,21 +53,49 @@ public class GetCommand extends Command {
     return key;
   }
 
-  public GetCommand setKey (String key) {
+  public ArithmeticCommand setKey (String key) {
 
     this.key = key;
 
     return this;
   }
 
-  public GetCommand setCas (boolean cas) {
+  public ArithmeticCommand setMode (ArithmeticMode mode) {
+
+    this.mode = mode;
+
+    return this;
+  }
+
+  public ArithmeticCommand setCas (Long cas) {
 
     this.cas = cas;
 
     return this;
   }
 
-  public GetCommand setOpaqueToken (String opaqueToken) {
+  public ArithmeticCommand setInitial (Integer initial) {
+
+    this.initial = initial;
+
+    return this;
+  }
+
+  public ArithmeticCommand setDelta (Integer delta) {
+
+    this.delta = delta;
+
+    return this;
+  }
+
+  public ArithmeticCommand setExpiration (Integer expiration) {
+
+    this.expiration = expiration;
+
+    return this;
+  }
+
+  public ArithmeticCommand setOpaqueToken (String opaqueToken) {
 
     this.opaqueToken = opaqueToken;
 
@@ -75,10 +106,24 @@ public class GetCommand extends Command {
   public byte[] construct (KeyTranslator keyTranslator, CubbyCodec codec)
     throws IOException, CubbyOperationException {
 
-    StringBuilder line = new StringBuilder("mg ").append(keyTranslator.encode(key)).append(" b v N").append(300);
+    if ((delta != null) && (delta < 0)) {
+      delta = Math.abs(delta);
+      mode = mode.flip();
+    }
 
-    if (cas) {
-      line.append(" c");
+    StringBuilder line = new StringBuilder("ms ").append(keyTranslator.encode(key)).append(' ').append(" b v N");
+
+    if (mode != null) {
+      line.append(" M").append(mode.getToken());
+    }
+    if (cas != null) {
+      line.append(" C").append(cas).append(" c");
+    }
+    if (initial != null) {
+      line.append("J").append(initial);
+    }
+    if (delta != null) {
+      line.append(" D").append(delta);
     }
     if (expiration != null) {
       line.append(" T").append(expiration);
