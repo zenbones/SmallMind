@@ -35,13 +35,13 @@ package org.smallmind.memcached.cubby.command;
 public class Result<T> {
 
   private final T value;
-  private final boolean hit;
+  private final boolean successful;
   private final long cas;
 
-  public Result (T value, boolean hit, long cas) {
+  public Result (T value, boolean successful, long cas) {
 
     this.value = value;
-    this.hit = hit;
+    this.successful = successful;
     this.cas = cas;
   }
 
@@ -50,9 +50,9 @@ public class Result<T> {
     return value;
   }
 
-  public boolean isHit () {
+  public boolean isSuccessful () {
 
-    return hit;
+    return successful;
   }
 
   public long getCas () {
