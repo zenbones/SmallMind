@@ -35,6 +35,8 @@ package org.smallmind.memcached.cubby.command;
 import java.io.IOException;
 import org.smallmind.memcached.cubby.CubbyOperationException;
 import org.smallmind.memcached.cubby.codec.CubbyCodec;
+import org.smallmind.memcached.cubby.response.Response;
+import org.smallmind.memcached.cubby.result.Result;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
 
 public class SetCommand extends Command {
@@ -125,5 +127,11 @@ public class SetCommand extends Command {
     System.arraycopy("\r\n".getBytes(), 0, bytes, commandBytes.length + valueBytes.length, 2);
 
     return bytes;
+  }
+
+  @Override
+  public Result process (Response response) {
+
+    return null;
   }
 }

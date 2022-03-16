@@ -36,6 +36,8 @@ import java.io.IOException;
 import org.smallmind.memcached.cubby.Authentication;
 import org.smallmind.memcached.cubby.CubbyOperationException;
 import org.smallmind.memcached.cubby.codec.CubbyCodec;
+import org.smallmind.memcached.cubby.response.Response;
+import org.smallmind.memcached.cubby.result.Result;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
 
 public class AuthenticationCommand extends Command {
@@ -74,5 +76,11 @@ public class AuthenticationCommand extends Command {
     System.arraycopy("\r\n".getBytes(), 0, bytes, commandBytes.length + valueBytes.length, 2);
 
     return bytes;
+  }
+
+  @Override
+  public Result process (Response response) {
+
+    return null;
   }
 }

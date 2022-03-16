@@ -35,6 +35,8 @@ package org.smallmind.memcached.cubby.command;
 import java.io.IOException;
 import org.smallmind.memcached.cubby.CubbyOperationException;
 import org.smallmind.memcached.cubby.codec.CubbyCodec;
+import org.smallmind.memcached.cubby.response.Response;
+import org.smallmind.memcached.cubby.result.Result;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
 
 public abstract class Command {
@@ -44,4 +46,6 @@ public abstract class Command {
 
   public abstract byte[] construct (KeyTranslator keyTranslator, CubbyCodec codec)
     throws IOException, CubbyOperationException;
+
+  public abstract Result process (Response response);
 }
