@@ -144,4 +144,14 @@ public class CubbyMemcachedClient {
 
     return result.isSuccessful() ? result.getValue() : null;
   }
+
+  public <T> CASValue<T> casGetAndTouch (String key, int expiration)
+    throws IOException, InterruptedException, CubbyOperationException, ClassNotFoundException {
+
+    GetCommand command;
+    Response response = connectionMultiplexer.send(command = new GetCommand().setKey(key).setExpiration(expiration).setCas(true), null);
+    Result<T> result = command.process(configuration.getCodec(), response);
+
+    return result.isSuccessful() ? new CASValue<>(result) : null;
+  }
 }
