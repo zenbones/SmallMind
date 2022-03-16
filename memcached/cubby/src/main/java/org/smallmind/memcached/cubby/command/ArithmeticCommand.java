@@ -137,7 +137,7 @@ public class ArithmeticCommand extends Command {
   }
 
   @Override
-  public Result process (Response response) {
+  public <T> Result<T> process (CubbyCodec codec, Response response) {
 
     return null;
   }

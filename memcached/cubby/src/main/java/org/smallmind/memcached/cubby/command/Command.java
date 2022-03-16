@@ -46,5 +46,6 @@ public abstract class Command {
   public abstract byte[] construct (KeyTranslator keyTranslator, CubbyCodec codec)
     throws IOException, CubbyOperationException;
 
-  public abstract Result process (Response response);
+  public abstract <T> Result<T> process (CubbyCodec codec, Response response)
+    throws IOException, ClassNotFoundException;
 }

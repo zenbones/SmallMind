@@ -36,6 +36,7 @@ import java.io.IOException;
 import org.smallmind.memcached.cubby.CubbyOperationException;
 import org.smallmind.memcached.cubby.codec.CubbyCodec;
 import org.smallmind.memcached.cubby.response.Response;
+import org.smallmind.memcached.cubby.response.ResponseCode;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
 
 public class GetCommand extends Command {
@@ -99,8 +100,15 @@ public class GetCommand extends Command {
   }
 
   @Override
-  public Result process (Response response) {
+  public <T> Result<T> process (CubbyCodec codec, Response response)
+    throws IOException, ClassNotFoundException {
 
-    return null;
+    if (ResponseCode.EN.equals(response.getCode()) || response.isWon() || response.isAlsoWon()) {
+
+      return new Result<>(null, false, 0);
+    } else {
+
+      return new Result<>((T)codec.deserialize(response.getValue()), true, response.getCas());
+    }
   }
 }
