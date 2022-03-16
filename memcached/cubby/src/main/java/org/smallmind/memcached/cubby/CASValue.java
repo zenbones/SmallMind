@@ -32,6 +32,29 @@
  */
 package org.smallmind.memcached.cubby;
 
-public class CASValue<T> {
+import org.smallmind.memcached.cubby.command.Result;
+import org.smallmind.memcached.utility.ProxyCASResponse;
 
+public class CASValue<T> implements ProxyCASResponse<T> {
+
+  private final T value;
+  private final long cas;
+
+  public CASValue (Result<T> result) {
+
+    value = result.getValue();
+    cas = result.getCas();
+  }
+
+  @Override
+  public T getValue () {
+
+    return value;
+  }
+
+  @Override
+  public long getCas () {
+
+    return cas;
+  }
 }

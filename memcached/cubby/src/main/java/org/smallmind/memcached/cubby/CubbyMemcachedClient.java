@@ -34,13 +34,20 @@ package org.smallmind.memcached.cubby;
 
 import java.io.IOException;
 import org.smallmind.memcached.cubby.command.Command;
+import org.smallmind.memcached.cubby.command.DeleteCommand;
+import org.smallmind.memcached.cubby.command.GetCommand;
+import org.smallmind.memcached.cubby.command.Result;
+import org.smallmind.memcached.cubby.command.SetCommand;
 import org.smallmind.memcached.cubby.response.Response;
 
 public class CubbyMemcachedClient {
 
   private final ConnectionMultiplexer connectionMultiplexer;
+  private final CubbyConfiguration configuration;
 
   public CubbyMemcachedClient (CubbyConfiguration configuration, MemcachedHost... memcachedHosts) {
+
+    this.configuration = configuration;
 
     connectionMultiplexer = new ConnectionMultiplexer(configuration, memcachedHosts);
   }
@@ -52,7 +59,7 @@ public class CubbyMemcachedClient {
   }
 
   public synchronized void stop ()
-    throws InterruptedException,IOException {
+    throws InterruptedException, IOException {
 
     connectionMultiplexer.stop();
   }
@@ -64,50 +71,77 @@ public class CubbyMemcachedClient {
   }
 
   public <T> T get (String key)
-    throws Exception {
+    throws IOException, InterruptedException, CubbyOperationException, ClassNotFoundException {
 
-    return null;
+    GetCommand command;
+    Response response = connectionMultiplexer.send(command = new GetCommand().setKey(key), null);
+    Result<T> result = command.process(configuration.getCodec(), response);
+
+    return result.isSuccessful() ? result.getValue() : null;
   }
 
   public <T> CASValue<T> casGet (String key)
-    throws Exception {
+    throws IOException, InterruptedException, CubbyOperationException, ClassNotFoundException {
 
-    return null;
+    GetCommand command;
+    Response response = connectionMultiplexer.send(command = new GetCommand().setKey(key).setCas(true), null);
+    Result<T> result = command.process(configuration.getCodec(), response);
+
+    return result.isSuccessful() ? new CASValue<>(result) : null;
   }
 
   public <T> boolean set (String key, int expiration, T value)
-    throws Exception {
+    throws IOException, InterruptedException, CubbyOperationException {
 
-    return false;
+    SetCommand command;
+    Response response = connectionMultiplexer.send(command = new SetCommand().setKey(key).setExpiration(expiration).setValue(value), null);
+
+    return command.process(configuration.getCodec(), response).isSuccessful();
   }
 
   public <T> boolean casSet (String key, int expiration, T value, long cas)
-    throws Exception {
+    throws IOException, InterruptedException, CubbyOperationException {
 
-    return false;
+    SetCommand command;
+    Response response = connectionMultiplexer.send(command = new SetCommand().setKey(key).setExpiration(expiration).setCas(cas).setValue(value), null);
+
+    return command.process(configuration.getCodec(), response).isSuccessful();
   }
 
   public boolean delete (String key)
-    throws Exception {
+    throws IOException, InterruptedException, CubbyOperationException {
 
-    return false;
+    DeleteCommand command;
+    Response response = connectionMultiplexer.send(command = new DeleteCommand().setKey(key), null);
+
+    return command.process(configuration.getCodec(), response).isSuccessful();
   }
 
   public boolean casDelete (String key, long cas)
-    throws Exception {
+    throws IOException, InterruptedException, CubbyOperationException {
 
-    return false;
+    DeleteCommand command;
+    Response response = connectionMultiplexer.send(command = new DeleteCommand().setKey(key).setCas(cas), null);
+
+    return command.process(configuration.getCodec(), response).isSuccessful();
   }
 
   public boolean touch (String key, int expiration)
-    throws Exception {
+    throws IOException, InterruptedException, CubbyOperationException, ClassNotFoundException {
 
-    return false;
+    GetCommand command;
+    Response response = connectionMultiplexer.send(command = new GetCommand().setKey(key).setExpiration(expiration).setValue(false), null);
+
+    return command.process(configuration.getCodec(), response).isSuccessful();
   }
 
   public <T> T getAndTouch (String key, int expiration)
-    throws Exception {
+    throws IOException, InterruptedException, CubbyOperationException, ClassNotFoundException {
 
-    return null;
+    GetCommand command;
+    Response response = connectionMultiplexer.send(command = new GetCommand().setKey(key).setExpiration(expiration), null);
+    Result<T> result = command.process(configuration.getCodec(), response);
+
+    return result.isSuccessful() ? result.getValue() : null;
   }
 }

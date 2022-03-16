@@ -45,6 +45,7 @@ public class GetCommand extends Command {
   private String key;
   private String opaqueToken;
   private boolean cas;
+  private boolean value = true;
   private Integer expiration;
 
   @Override
@@ -81,12 +82,22 @@ public class GetCommand extends Command {
     return this;
   }
 
+  public GetCommand setValue (boolean value) {
+
+    this.value = value;
+
+    return this;
+  }
+
   @Override
   public byte[] construct (KeyTranslator keyTranslator, CubbyCodec codec)
     throws IOException, CubbyOperationException {
 
-    StringBuilder line = new StringBuilder("mg ").append(keyTranslator.encode(key)).append(" b v").append(300);
+    StringBuilder line = new StringBuilder("mg ").append(keyTranslator.encode(key)).append(" b");
 
+    if (value) {
+      line.append(" v");
+    }
     if (cas) {
       line.append(" c");
     }
@@ -109,7 +120,7 @@ public class GetCommand extends Command {
       return new Result<>(null, false, response.getCas());
     } else if (ResponseCode.HD.equals(response.getCode())) {
 
-      return new Result<>((T)codec.deserialize(response.getValue()), true, response.getCas());
+      return new Result<>(value ? (T)codec.deserialize(response.getValue()) : null, true, response.getCas());
     } else {
       throw new UnexpectedResponseException("Unexpected response code(%s)", response.getCode().name());
     }
