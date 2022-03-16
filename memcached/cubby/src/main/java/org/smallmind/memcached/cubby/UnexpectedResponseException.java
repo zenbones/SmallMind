@@ -30,36 +30,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.memcached.cubby.response;
+package org.smallmind.memcached.cubby;
 
-public enum ResponseCode {
+import org.smallmind.nutsnbolts.lang.FormattedIOException;
 
-  // (HIT), to indicate success
-  HD,
-  // (VALUE), followed by the value data
-  VA,
-  // (MISS), to indicate that the item with this key was not found
-  EN,
-  // (EXISTS), to indicate that the supplied CAS token does not match the stored item, or to indicate that the item you are trying to store with CAS semantics has been modified since you last fetched it
-  EX,
-  // (NOT_FOUND), to indicate that the item with this key was not found, or to indicate that the item you are trying to store with CAS semantics did not exist
-  NF,
-  // (NOT_STORED), to indicate the data was not stored, but not because of an error
-  NS;
+public class UnexpectedResponseException extends FormattedIOException {
 
-  public boolean begins (byte first, byte second) {
+  public UnexpectedResponseException (String message, Object... args) {
 
-    return (first == name().charAt(0)) && (second == name().charAt(1));
-  }
-
-  public boolean in (ResponseCode... codes) {
-
-    for (ResponseCode code : codes) {
-      if (code.equals(this)) {
-        return true;
-      }
-    }
-
-    return false;
+    super(message, args);
   }
 }

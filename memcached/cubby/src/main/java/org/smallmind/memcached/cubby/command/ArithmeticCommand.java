@@ -34,8 +34,10 @@ package org.smallmind.memcached.cubby.command;
 
 import java.io.IOException;
 import org.smallmind.memcached.cubby.CubbyOperationException;
+import org.smallmind.memcached.cubby.UnexpectedResponseException;
 import org.smallmind.memcached.cubby.codec.CubbyCodec;
 import org.smallmind.memcached.cubby.response.Response;
+import org.smallmind.memcached.cubby.response.ResponseCode;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
 
 public class ArithmeticCommand extends Command {
@@ -112,7 +114,7 @@ public class ArithmeticCommand extends Command {
       mode = mode.flip();
     }
 
-    StringBuilder line = new StringBuilder("ms ").append(keyTranslator.encode(key)).append(' ').append(" b v N");
+    StringBuilder line = new StringBuilder("ms ").append(keyTranslator.encode(key)).append(' ').append(" b v");
 
     if (mode != null) {
       line.append(" M").append(mode.getToken());
@@ -137,8 +139,17 @@ public class ArithmeticCommand extends Command {
   }
 
   @Override
-  public <T> Result<T> process (CubbyCodec codec, Response response) {
+  public <T> Result<T> process (CubbyCodec codec, Response response)
+    throws IOException, ClassNotFoundException {
 
-    return null;
+    if (response.getCode().in(ResponseCode.EX, ResponseCode.NF, ResponseCode.NS)) {
+
+      return new Result<>(null, false, response.getCas());
+    } else if (ResponseCode.HD.equals(response.getCode())) {
+
+      return new Result<>((T)codec.deserialize(response.getValue()), true, response.getCas());
+    } else {
+      throw new UnexpectedResponseException("Unexpected response code(%s)", response.getCode().name());
+    }
   }
 }

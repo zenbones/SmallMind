@@ -34,6 +34,7 @@ package org.smallmind.memcached.cubby.command;
 
 import java.io.IOException;
 import org.smallmind.memcached.cubby.CubbyOperationException;
+import org.smallmind.memcached.cubby.UnexpectedResponseException;
 import org.smallmind.memcached.cubby.codec.CubbyCodec;
 import org.smallmind.memcached.cubby.response.Response;
 import org.smallmind.memcached.cubby.response.ResponseCode;
@@ -84,7 +85,7 @@ public class GetCommand extends Command {
   public byte[] construct (KeyTranslator keyTranslator, CubbyCodec codec)
     throws IOException, CubbyOperationException {
 
-    StringBuilder line = new StringBuilder("mg ").append(keyTranslator.encode(key)).append(" b v N").append(300);
+    StringBuilder line = new StringBuilder("mg ").append(keyTranslator.encode(key)).append(" b v").append(300);
 
     if (cas) {
       line.append(" c");
@@ -105,10 +106,12 @@ public class GetCommand extends Command {
 
     if (ResponseCode.EN.equals(response.getCode()) || response.isWon() || response.isAlsoWon()) {
 
-      return new Result<>(null, false, 0);
-    } else {
+      return new Result<>(null, false, response.getCas());
+    } else if (ResponseCode.HD.equals(response.getCode())) {
 
       return new Result<>((T)codec.deserialize(response.getValue()), true, response.getCas());
+    } else {
+      throw new UnexpectedResponseException("Unexpected response code(%s)", response.getCode().name());
     }
   }
 }
