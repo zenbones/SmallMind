@@ -42,19 +42,24 @@ public class CASValue<T> implements ProxyCASResponse<T> {
 
   public CASValue (Result<T> result) {
 
-    value = result.getValue();
-    cas = result.getCas();
+    this(result.getCas(), result.getValue());
   }
 
-  @Override
-  public T getValue () {
+  public CASValue (long cas, T value) {
 
-    return value;
+    this.cas = cas;
+    this.value = value;
   }
 
   @Override
   public long getCas () {
 
     return cas;
+  }
+
+  @Override
+  public T getValue () {
+
+    return value;
   }
 }

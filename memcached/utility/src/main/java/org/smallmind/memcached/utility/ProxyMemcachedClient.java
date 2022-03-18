@@ -37,7 +37,7 @@ import java.util.Map;
 
 public interface ProxyMemcachedClient {
 
-  long getOpTimeout ();
+  long getDefaultTimeout ();
 
   <T> ProxyCASResponse<T> createCASResponse (long cas, T value);
 

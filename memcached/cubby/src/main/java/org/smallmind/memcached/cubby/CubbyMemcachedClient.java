@@ -33,14 +33,19 @@
 package org.smallmind.memcached.cubby;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import org.smallmind.memcached.cubby.command.Command;
 import org.smallmind.memcached.cubby.command.DeleteCommand;
 import org.smallmind.memcached.cubby.command.GetCommand;
 import org.smallmind.memcached.cubby.command.Result;
 import org.smallmind.memcached.cubby.command.SetCommand;
 import org.smallmind.memcached.cubby.response.Response;
+import org.smallmind.memcached.utility.ProxyCASResponse;
+import org.smallmind.memcached.utility.ProxyMemcachedClient;
 
-public class CubbyMemcachedClient {
+public class CubbyMemcachedClient implements ProxyMemcachedClient {
 
   private final ConnectionMultiplexer connectionMultiplexer;
   private final CubbyConfiguration configuration;
@@ -62,6 +67,44 @@ public class CubbyMemcachedClient {
     throws InterruptedException, IOException {
 
     connectionMultiplexer.stop();
+  }
+
+  @Override
+  public long getDefaultTimeout () {
+
+    return configuration.getDefaultRequestTimeoutMilliseconds();
+  }
+
+  @Override
+  public void clear () {
+
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void shutdown ()
+    throws InterruptedException, IOException {
+
+    stop();
+  }
+
+  @Override
+  public <T> ProxyCASResponse<T> createCASResponse (long cas, T value) {
+
+    return new CASValue<>(cas, value);
+  }
+
+  @Override
+  public <T> Map<String, T> get (Collection<String> keys)
+    throws IOException, InterruptedException, CubbyOperationException, ClassNotFoundException {
+
+    HashMap<String, T> resultMap = new HashMap<>();
+
+    for (String key : keys) {
+      resultMap.put(key, get(key));
+    }
+
+    return resultMap;
   }
 
   public Response send (Command command, Long timeoutSeconds)

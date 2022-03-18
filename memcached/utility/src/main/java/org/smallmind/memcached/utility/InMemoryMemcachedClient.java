@@ -42,7 +42,7 @@ public class InMemoryMemcachedClient implements ProxyMemcachedClient {
   private final HashMap<String, Holder<?>> internalMap = new HashMap<>();
   private final AtomicLong counter = new AtomicLong(0);
 
-  public long getOpTimeout () {
+  public long getDefaultTimeout () {
 
     return 5000L;
   }

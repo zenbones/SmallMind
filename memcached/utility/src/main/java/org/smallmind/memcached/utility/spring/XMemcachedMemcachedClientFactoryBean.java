@@ -52,10 +52,11 @@ import org.smallmind.memcached.utility.XMemcachedMemcachedClient;
 import org.smallmind.nutsnbolts.net.InetAddressComparator;
 import org.smallmind.scribe.pen.LoggerManager;
 import org.springframework.beans.factory.BeanCreationException;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
-public class XMemcachedMemcachedClientFactoryBean implements FactoryBean<XMemcachedMemcachedClient>, InitializingBean {
+public class XMemcachedMemcachedClientFactoryBean implements FactoryBean<XMemcachedMemcachedClient>, InitializingBean, DisposableBean {
 
   private static final Comparator<InetAddress> INET_ADDRESS_COMPARATOR = new InetAddressComparator();
 
@@ -191,14 +192,12 @@ public class XMemcachedMemcachedClientFactoryBean implements FactoryBean<XMemcac
     return Arrays.toString(output);
   }
 
-  public void shutdown () {
+  @Override
+  public void destroy ()
+    throws IOException {
 
     if (memcachedClient != null) {
-      try {
-        memcachedClient.shutdown();
-      } catch (IOException ioException) {
-        LoggerManager.getLogger(XMemcachedMemcachedClientFactoryBean.class).error(ioException);
-      }
+      memcachedClient.shutdown();
     }
   }
 }

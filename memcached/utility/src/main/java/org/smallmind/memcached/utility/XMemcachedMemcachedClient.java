@@ -50,7 +50,7 @@ public class XMemcachedMemcachedClient implements ProxyMemcachedClient {
   }
 
   @Override
-  public long getOpTimeout () {
+  public long getDefaultTimeout () {
 
     return memcachedClient.getOpTimeout();
   }
@@ -114,7 +114,7 @@ public class XMemcachedMemcachedClient implements ProxyMemcachedClient {
   public boolean casDelete (String key, long cas)
     throws TimeoutException, InterruptedException, MemcachedException {
 
-    return memcachedClient.delete(key, cas, getOpTimeout());
+    return memcachedClient.delete(key, cas, getDefaultTimeout());
   }
 
   @Override
