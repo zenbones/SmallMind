@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>claxon-emitter</artifactId>
-    <version>4.5.0-SNAPSHOT</version>
+    <version>4.5.0</version>
   </parent>
   <artifactId>claxon-emitter-datadog</artifactId>
   <name>Claxon-Emitter-DataDog</name>
