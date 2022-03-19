@@ -74,7 +74,7 @@ public class CommandLineParser {
             Option usedOption;
 
             if ((usedOption = findUsedOptionByName(usedSet, name)) != null) {
-              if (ArgumentType.LIST.equals(usedOption.getArgument().getType())) {
+              if (ArgumentType.MULTIPLE.equals(usedOption.getArgument().getType())) {
                 matchingOption = usedOption;
               } else {
                 throw new CommandLineException("The option name '--%s' has already been invoked", name);
@@ -92,6 +92,9 @@ public class CommandLineParser {
             optionSet.addOption(matchingOption.getName());
             break;
           case SINGLE:
+            optionSet.addArgument(matchingOption.getName(), obtainArgument(null, argCounter, args));
+            break;
+          case MULTIPLE:
             optionSet.addArgument(matchingOption.getName(), obtainArgument(null, argCounter, args));
             break;
           case LIST:
@@ -126,7 +129,7 @@ public class CommandLineParser {
             Option usedOption;
 
             if ((usedOption = findUsedOptionByFlag(usedSet, flagChar)) != null) {
-              if (ArgumentType.LIST.equals(usedOption.getArgument().getType())) {
+              if (ArgumentType.MULTIPLE.equals(usedOption.getArgument().getType())) {
                 matchingOption = usedOption;
               } else {
                 throw new CommandLineException("The option flag '-%s' has already been invoked", String.valueOf(flagChar));
@@ -143,6 +146,10 @@ public class CommandLineParser {
               optionSet.addOption(matchingOption.getName());
               break;
             case SINGLE:
+              optionSet.addArgument(matchingOption.getName(), obtainArgument(args[argCounter.get()].substring(flagIndex), argCounter, args));
+              flagIndex = args[argCounter.get()].length();
+              break;
+            case MULTIPLE:
               optionSet.addArgument(matchingOption.getName(), obtainArgument(args[argCounter.get()].substring(flagIndex), argCounter, args));
               flagIndex = args[argCounter.get()].length();
               break;

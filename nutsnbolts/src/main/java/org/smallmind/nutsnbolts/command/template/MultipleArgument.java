@@ -32,7 +32,23 @@
  */
 package org.smallmind.nutsnbolts.command.template;
 
-public enum ArgumentType {
+public class MultipleArgument extends Argument {
 
-  NONE, SINGLE, LIST, MULTIPLE, ENUMERATED
+  private final String description;
+
+  public MultipleArgument (String description) {
+
+    this.description = description;
+  }
+
+  @Override
+  public ArgumentType getType () {
+
+    return ArgumentType.MULTIPLE;
+  }
+
+  public String getDescription () {
+
+    return description;
+  }
 }
