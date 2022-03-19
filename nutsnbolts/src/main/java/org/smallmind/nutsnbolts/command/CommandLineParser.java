@@ -35,6 +35,7 @@ package org.smallmind.nutsnbolts.command;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
+import org.smallmind.nutsnbolts.command.template.ArgumentType;
 import org.smallmind.nutsnbolts.command.template.EnumeratedArgument;
 import org.smallmind.nutsnbolts.command.template.Option;
 import org.smallmind.nutsnbolts.command.template.Template;
@@ -69,8 +70,15 @@ public class CommandLineParser {
           String name;
 
           if ((matchingOption = findUnusedOptionByName(unusedSet, name = args[argCounter.get()].substring(2))) == null) {
-            if (isNameUsed(usedSet, name)) {
-              throw new CommandLineException("The option name '--%s' has already been invoked", name);
+
+            Option usedOption;
+
+            if ((usedOption = findUsedOptionByName(usedSet, name)) != null) {
+              if (ArgumentType.LIST.equals(usedOption.getArgument().getType())) {
+                matchingOption = usedOption;
+              } else {
+                throw new CommandLineException("The option name '--%s' has already been invoked", name);
+              }
             } else {
               throw new CommandLineException("No such option name '--%s'", name);
             }
@@ -114,8 +122,15 @@ public class CommandLineParser {
           char flagChar;
 
           if ((matchingOption = findUnusedOptionByFlag(unusedSet, flagChar = args[argCounter.get()].charAt(flagIndex++))) == null) {
-            if (isFlagUsed(usedSet, flagChar)) {
-              throw new CommandLineException("The option flag '-%s' has already been invoked", String.valueOf(flagChar));
+
+            Option usedOption;
+
+            if ((usedOption = findUsedOptionByFlag(usedSet, flagChar)) != null) {
+              if (ArgumentType.LIST.equals(usedOption.getArgument().getType())) {
+                matchingOption = usedOption;
+              } else {
+                throw new CommandLineException("The option flag '-%s' has already been invoked", String.valueOf(flagChar));
+              }
             } else {
               throw new CommandLineException("No such option flag '-%s'", String.valueOf(flagChar));
             }
@@ -197,32 +212,32 @@ public class CommandLineParser {
   private static String obtainArgument (String currentString, Counter argCounter, String[] args)
     throws CommandLineException {
 
-    String argument;
+    StringBuilder argumentBuilder;
 
     if ((currentString != null) && (!currentString.isEmpty())) {
-      argument = currentString;
+      argumentBuilder = new StringBuilder(currentString);
     } else if (args[argCounter.incAndGet()].charAt(0) != '-') {
-      argument = args[argCounter.get()];
+      argumentBuilder = new StringBuilder(args[argCounter.get()]);
     } else {
       throw new CommandLineException("Missing argument for option marked as requiring arguments");
     }
 
-    if ((argument.charAt(0) == '\'') || (argument.charAt(0) == '"')) {
+    if ((argumentBuilder.charAt(0) == '\'') || (argumentBuilder.charAt(0) == '"')) {
 
-      char delimiter = argument.charAt(0);
+      char delimiter = argumentBuilder.charAt(0);
 
-      while ((argument.charAt(argument.length() - 1) != delimiter) && (argCounter.get() + 1 < args.length)) {
-        argument += ' ' + args[argCounter.incAndGet()];
+      while ((argumentBuilder.charAt(argumentBuilder.length() - 1) != delimiter) && (argCounter.get() + 1 < args.length)) {
+        argumentBuilder.append(' ').append(args[argCounter.incAndGet()]);
       }
 
-      if (argument.charAt(argument.length() - 1) != delimiter) {
+      if (argumentBuilder.charAt(argumentBuilder.length() - 1) != delimiter) {
         throw new CommandLineException("Unterminated quote delimited argument");
       }
 
-      return argument;
+      return argumentBuilder.toString();
     } else {
 
-      return argument;
+      return argumentBuilder.toString();
     }
   }
 
@@ -252,27 +267,27 @@ public class CommandLineParser {
     return null;
   }
 
-  private static final boolean isFlagUsed (HashSet<Option> usedSet, Character flag) {
+  private static Option findUsedOptionByFlag (HashSet<Option> usedSet, Character flag) {
 
     for (Option option : usedSet) {
       if (flag.equals(option.getFlag())) {
 
-        return true;
+        return option;
       }
     }
 
-    return false;
+    return null;
   }
 
-  private static final boolean isNameUsed (HashSet<Option> usedSet, String name) {
+  private static Option findUsedOptionByName (HashSet<Option> usedSet, String name) {
 
     for (Option option : usedSet) {
       if (name.equals(option.getName())) {
 
-        return true;
+        return option;
       }
     }
 
-    return false;
+    return null;
   }
 }
