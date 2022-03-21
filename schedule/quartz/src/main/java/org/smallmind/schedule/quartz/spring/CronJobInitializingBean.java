@@ -38,7 +38,7 @@ import java.util.Map;
 import org.quartz.CronTrigger;
 import org.quartz.JobDetail;
 import org.quartz.Scheduler;
-import org.quartz.SchedulerException;
+import org.smallmind.scribe.pen.LoggerManager;
 import org.springframework.beans.factory.InitializingBean;
 
 public class CronJobInitializingBean implements InitializingBean {
@@ -61,24 +61,27 @@ public class CronJobInitializingBean implements InitializingBean {
     this.jobMap.putAll(jobMap);
   }
 
-  public void afterPropertiesSet ()
-    throws SchedulerException {
+  public void afterPropertiesSet () {
 
     CronTrigger installedCronTrigger;
     JobDetail installedJobDetail;
 
     for (JobDetail jobDetail : jobMap.keySet()) {
       for (CronTrigger cronTrigger : jobMap.get(jobDetail)) {
-        if ((installedJobDetail = scheduler.getJobDetail(jobDetail.getKey())) == null) {
-          scheduler.addJob(jobDetail, false);
-        } else if (!isSame(jobDetail, installedJobDetail)) {
-          scheduler.addJob(jobDetail, true);
-        }
+        try {
+          if ((installedJobDetail = scheduler.getJobDetail(jobDetail.getKey())) == null) {
+            scheduler.addJob(jobDetail, false);
+          } else if (!isSame(jobDetail, installedJobDetail)) {
+            scheduler.addJob(jobDetail, true);
+          }
 
-        if ((installedCronTrigger = (CronTrigger)scheduler.getTrigger(cronTrigger.getKey())) == null) {
-          scheduler.scheduleJob(cronTrigger);
-        } else if (!cronTrigger.getCronExpression().equals(installedCronTrigger.getCronExpression())) {
-          scheduler.rescheduleJob(installedCronTrigger.getKey(), cronTrigger);
+          if ((installedCronTrigger = (CronTrigger)scheduler.getTrigger(cronTrigger.getKey())) == null) {
+            scheduler.scheduleJob(cronTrigger);
+          } else if (!cronTrigger.getCronExpression().equals(installedCronTrigger.getCronExpression())) {
+            scheduler.rescheduleJob(installedCronTrigger.getKey(), cronTrigger);
+          }
+        } catch (Exception exception) {
+          LoggerManager.getLogger(CronJobInitializingBean.class).error(exception);
         }
       }
     }
