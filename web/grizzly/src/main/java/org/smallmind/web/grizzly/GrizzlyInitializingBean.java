@@ -452,7 +452,7 @@ public class GrizzlyInitializingBean implements InitializingBean, DisposableBean
     }
 
     /* Note: clientMode (2nd param) means server does not
-     *  authenticate to client - which we never want
+     *  authenticate the client - which we never want
      */
     SSLEngineConfigurator sslEngineConfig = new SSLEngineConfigurator(sslContextConfigurator.createSSLContext(true), false, sslInfo.isRequireClientAuth(), true);
     secureListener.setSSLEngineConfig(sslEngineConfig);
