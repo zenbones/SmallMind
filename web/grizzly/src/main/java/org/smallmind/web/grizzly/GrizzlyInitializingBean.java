@@ -436,7 +436,7 @@ public class GrizzlyInitializingBean implements InitializingBean, DisposableBean
   private NetworkListener generateSecureNetworkListener (SSLInfo sslInfo)
     throws IOException, ResourceException {
 
-    NetworkListener secureListener = new NetworkListener("grizzly2Secure", host, sslInfo.getPort());
+    NetworkListener secureListener = new NetworkListener("grizzlySecure", host, sslInfo.getPort());
     SSLContextConfigurator sslContextConfigurator = new SSLContextConfigurator();
 
     secureListener.setSecure(true);
