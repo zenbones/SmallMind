@@ -11,6 +11,7 @@
   <description>Alterative File Systems</description>
   <packaging>pom</packaging>
   <modules>
+    <module>ephemeral</module>
     <module>jailed</module>
   </modules>
   <build>
