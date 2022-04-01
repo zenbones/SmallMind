@@ -38,6 +38,8 @@ import java.nio.file.Path;
 
 public interface JailedPathTranslator {
 
+
+
   FileSystem getNativeFileSystem ();
 
   Path wrapPath (JailedFileSystem jailedFileSystem, Path nativePath)

@@ -37,7 +37,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import org.smallmind.nutsnbolts.context.ContextFactory;
 
-public class ContextSensitiveRootedPathTranslator implements JailedPathTranslator {
+public class ContextSensitiveRootedPathTranslator extends AbstractJailedPathTranslator {
 
   private final FileSystem nativeFileSystem;
 
@@ -62,31 +62,7 @@ public class ContextSensitiveRootedPathTranslator implements JailedPathTranslato
       throw new SecurityException("No authorization for path");
     } else {
 
-      Path rootPath = FileSystems.getDefault().getPath(root);
-
-      if (nativePath.isAbsolute()) {
-        if (!nativePath.startsWith(rootPath)) {
-          throw new SecurityException("No authorization for path");
-        } else {
-
-          StringBuilder pathBuilder = new StringBuilder();
-
-          for (int index = rootPath.getNameCount(); index < nativePath.getNameCount(); index++) {
-            pathBuilder.append(jailedFileSystem.getSeparator()).append(nativePath.getName(index));
-          }
-
-          return new JailedPath(jailedFileSystem, pathBuilder.toString());
-        }
-      } else {
-
-        StringBuilder pathBuilder = new StringBuilder();
-
-        for (int index = 0; index < nativePath.getNameCount(); index++) {
-          pathBuilder.append('/').append(nativePath.getName(index));
-        }
-
-        return new JailedPath(jailedFileSystem, pathBuilder.toString());
-      }
+      return wrapPath(FileSystems.getDefault().getPath(root), jailedFileSystem, nativePath);
     }
   }
 
@@ -100,18 +76,7 @@ public class ContextSensitiveRootedPathTranslator implements JailedPathTranslato
       throw new SecurityException("No authorization for path");
     } else {
 
-      Path rootPath = FileSystems.getDefault().getPath(root);
-
-      StringBuilder pathBuilder = new StringBuilder();
-
-      for (int index = 0; index < jailedPath.getNameCount(); index++) {
-        if (index > 0) {
-          pathBuilder.append(getNativeFileSystem().getSeparator());
-        }
-        pathBuilder.append(jailedPath.getName(index));
-      }
-
-      return rootPath.resolve(pathBuilder.toString());
+      return unwrapPath(FileSystems.getDefault().getPath(root), jailedPath);
     }
   }
 }
