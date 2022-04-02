@@ -29,6 +29,11 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
     this("ephemeral");
   }
 
+  public EphemeralFileSystemProvider (FileSystemProvider fileSystemProvider) {
+
+    this(fileSystemProvider.getScheme());
+  }
+
   public EphemeralFileSystemProvider (String scheme) {
 
     this.scheme = scheme;
