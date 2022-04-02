@@ -3,8 +3,10 @@ package org.smallmind.file.ephemeral;
 import java.io.IOException;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.FileStore;
+import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
@@ -111,7 +113,57 @@ public class EphemeralFileStore extends FileStore {
     }
   }
 
+  /*
+READ
+WRITE
+
+  APPEND
+If this option is present then the file is opened for writing and each invocation of the channel's write method first advances the position to the end of the file and then writes the requested data. Whether the advancement of the position and the writing of the data are done in a single atomic operation is system-dependent and therefore unspecified. This option may not be used in conjunction with the READ or TRUNCATE_EXISTING options.
+TRUNCATE_EXISTING
+If this option is present then the existing file is truncated to a size of 0 bytes. This option is ignored when the file is opened only for reading.
+CREATE_NEW
+If this option is present then a new file is created, failing if the file already exists or is a symbolic link. When creating a file the check for the existence of the file and the creation of the file if it does not exist is atomic with respect to other file system operations. This option is ignored when the file is opened only for reading.
+CREATE
+If this option is present then an existing file is opened if it exists, otherwise a new file is created. This option is ignored if the CREATE_NEW option is also present or the file is opened only for reading.
+DELETE_ON_CLOSE
+When this option is present then the implementation makes a best effort attempt to delete the file when closed by the close method. If the close method is not invoked then a best effort attempt is made to delete the file when the Java virtual machine terminates.
+SPARSE
+When creating a new file this option is a hint that the new file will be sparse. This option is ignored when not creating a new file.
+SYNC
+Requires that every update to the file's content or metadata be written synchronously to the underlying storage device. (see Synchronized I/O file integrity).
+DSYNC
+Requires that every update to the file's content be written synchronously to the underlying storage device. (see Synchronized I/O file integrity).
+   */
+
+  /*
+IllegalArgumentException – if the set contains an invalid combination of options
+UnsupportedOperationException – if an unsupported open option is specified or the array contains attributes that cannot be set atomically when creating the file
+FileAlreadyExistsException – if a file of that name already exists and the CREATE_NEW option is specified (optional specific exception)
+IOException – if an I/O error occurs
+SecurityException – In the case of the default provider, and a security manager is installed, the checkRead method is invoked to check read access to the path if the file is opened for reading. The checkWrite method is invoked to check write access to the path if the file is opened for writing. The checkDelete method is invoked to check delete access if the file is opened with the DELETE_ON_CLOSE option.
+   */
+
   public SeekableByteChannel newByteChannel (Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) {
 
+    Boolean read = null;
+    boolean skipToEnd;
+
+    for (OpenOption option : options) {
+      if (StandardOpenOption.READ.equals(option)) {
+        if (Boolean.FALSE.equals(read)) {
+          throw new IllegalArgumentException("Invalid option combination");
+        } else {
+          read = Boolean.TRUE;
+        }
+      } else if (StandardOpenOption.WRITE.equals(option) || StandardOpenOption.APPEND.equals(option)) {
+        if (Boolean.TRUE.equals(read)) {
+          throw new IllegalArgumentException("Invalid option combination");
+        } else {
+          read = Boolean.FALSE;
+        }
+      }
+    }
+
+    Files.newByteChannel()
   }
 }

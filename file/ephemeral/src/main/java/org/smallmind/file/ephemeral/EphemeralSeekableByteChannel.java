@@ -5,6 +5,8 @@ import java.nio.channels.SeekableByteChannel;
 
 public class EphemeralSeekableByteChannel implements SeekableByteChannel {
 
+
+
   @Override
   public int read (ByteBuffer dst) {
 
