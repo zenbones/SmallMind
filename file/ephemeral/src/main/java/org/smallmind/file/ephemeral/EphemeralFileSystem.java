@@ -61,6 +61,11 @@ public class EphemeralFileSystem extends FileSystem {
     return ROOT_PATH;
   }
 
+  public EphemeralFileStore getFileStore () {
+
+    return fileStore;
+  }
+
   @Override
   public Iterable<FileStore> getFileStores () {
 

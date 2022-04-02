@@ -1,8 +1,12 @@
 package org.smallmind.file.ephemeral;
 
 import java.io.IOException;
+import java.nio.channels.SeekableByteChannel;
 import java.nio.file.FileStore;
+import java.nio.file.OpenOption;
+import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributeView;
+import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.FileStoreAttributeView;
 import java.util.Map;
@@ -15,11 +19,13 @@ public class EphemeralFileStore extends FileStore {
   private static final Map<String, Class<? extends FileAttributeView>> SUPPORTED_FILE_VIEW_MAP = Map.of("basic", BasicFileAttributeView.class);
   private final EphemeralFileStoreAttributeView fileStoreAttributeView = new EphemeralFileStoreAttributeView();
   private final HeapNode rootNode = new DirectoryNode();
-  private final long size;
+  private final long capacity;
+  private final long blockSize;
 
-  public EphemeralFileStore (long size) {
+  public EphemeralFileStore (long capacity, long blockSize) {
 
-    this.size = size;
+    this.capacity = capacity;
+    this.blockSize = blockSize;
   }
 
   @Override
@@ -49,13 +55,13 @@ public class EphemeralFileStore extends FileStore {
   @Override
   public long getUsableSpace () {
 
-    return size;
+    return capacity;
   }
 
   @Override
   public long getUnallocatedSpace () {
 
-    return size - rootNode.size();
+    return capacity - rootNode.size();
   }
 
   @Override
@@ -103,5 +109,9 @@ public class EphemeralFileStore extends FileStore {
         return null;
       }
     }
+  }
+
+  public SeekableByteChannel newByteChannel (Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) {
+
   }
 }
