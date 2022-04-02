@@ -5,11 +5,14 @@ import java.nio.file.FileStore;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.FileStoreAttributeView;
+import java.util.Map;
+import java.util.Set;
 import org.smallmind.file.ephemeral.heap.DirectoryNode;
 import org.smallmind.file.ephemeral.heap.HeapNode;
 
 public class EphemeralFileStore extends FileStore {
 
+  private static final Map<String, Class<? extends FileAttributeView>> SUPPORTED_FILE_VIEW_MAP = Map.of("basic", BasicFileAttributeView.class);
   private final EphemeralFileStoreAttributeView fileStoreAttributeView = new EphemeralFileStoreAttributeView();
   private final HeapNode rootNode = new DirectoryNode();
   private final long size;
@@ -58,13 +61,18 @@ public class EphemeralFileStore extends FileStore {
   @Override
   public boolean supportsFileAttributeView (Class<? extends FileAttributeView> type) {
 
-    return BasicFileAttributeView.class.equals(type);
+    return SUPPORTED_FILE_VIEW_MAP.containsValue(type);
   }
 
   @Override
   public boolean supportsFileAttributeView (String name) {
 
-    return "basic".equals(name);
+    return SUPPORTED_FILE_VIEW_MAP.containsKey(name);
+  }
+
+  public Set<String> getSupportedFileAttributeViewNames () {
+
+    return SUPPORTED_FILE_VIEW_MAP.keySet();
   }
 
   @Override

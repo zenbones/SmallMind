@@ -11,7 +11,12 @@ import java.nio.file.WatchService;
 
 public class EphemeralPath implements Path {
 
-  protected static final char SEPARATOR = '/';
+  private static final char SEPARATOR = '/';
+
+  public static char getSeparator () {
+
+    return SEPARATOR;
+  }
 
   @Override
   public FileSystem getFileSystem () {
