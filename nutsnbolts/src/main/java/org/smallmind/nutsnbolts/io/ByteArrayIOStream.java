@@ -357,9 +357,7 @@ public class ByteArrayIOStream implements Closeable {
 
     public Bookmark inc () {
 
-      if (segmentIndex > limitBookmark.segmentIndex()) {
-        throw new IllegalStateException("End of stream");
-      } else if (segmentIndex < limitBookmark.segmentIndex()) {
+      if (segmentIndex < limitBookmark.segmentIndex()) {
         if (++byteIndex == allocation) {
           byteIndex = 0;
           segmentIndex++;
