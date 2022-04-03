@@ -272,13 +272,60 @@ public class EphemeralPath implements Path {
   @Override
   public Path resolve (Path other) {
 
-    return null;
+    if (other.isAbsolute()) {
+
+      return other;
+    } else if (other.getNameCount() == 0) {
+
+      return this;
+    } else {
+
+      String[] resolvedNames = new String[names.length + other.getNameCount()];
+
+      System.arraycopy(names, 0, resolvedNames, 0, names.length);
+      for (int index = 0; index < other.getNameCount(); index++) {
+        resolvedNames[names.length + index] = other.getName(index).toString();
+      }
+
+      return new EphemeralPath(fileSystem, resolvedNames, absolute);
+    }
   }
 
   @Override
   public Path relativize (Path other) {
 
-    return null;
+    if (absolute != other.isAbsolute()) {
+      throw new IllegalArgumentException("No relative path can be constructed");
+    } else {
+
+      LinkedList<String> namesList = new LinkedList<>();
+      int index = 0;
+
+      for (String name : names) {
+        if (name.equals(other.getName(index).toString())) {
+          index++;
+        } else {
+          break;
+        }
+      }
+
+      if (index < names.length) {
+
+        int redacted = names.length - index;
+
+        for (int loop = 0; loop < redacted; loop++) {
+          namesList.add("..");
+        }
+      }
+
+      if (index < other.getNameCount()) {
+        for (int loop = index; loop < other.getNameCount(); loop++) {
+          namesList.add(other.getName(loop).toString());
+        }
+      }
+
+      return new EphemeralPath(fileSystem, namesList.toArray(new String[0]), false);
+    }
   }
 
   @Override
