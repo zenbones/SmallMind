@@ -141,7 +141,7 @@ public class ByteArrayIOStream implements Closeable {
 
           try {
             while (available() == 0) {
-              segmentList.wait();
+              ByteArrayIOStream.this.wait();
             }
           } catch (InterruptedException interruptedException) {
             throw new IOException(interruptedException);
@@ -252,6 +252,18 @@ public class ByteArrayIOStream implements Closeable {
       }
     }
 
+    public void rewind ()
+      throws IOException {
+
+      synchronized (ByteArrayIOStream.this) {
+        if (closed) {
+          throw new IOException("This stream has already been closed");
+        }
+
+        readBookmark.rewind();
+      }
+    }
+
     @Override
     public void close () {
 
@@ -291,7 +303,7 @@ public class ByteArrayIOStream implements Closeable {
         }
         writeBookmark.inc();
 
-        segmentList.notify();
+        ByteArrayIOStream.this.notify();
       }
     }
 
@@ -312,6 +324,18 @@ public class ByteArrayIOStream implements Closeable {
             write(bytes[index]);
           }
         }
+      }
+    }
+
+    public void rewind ()
+      throws IOException {
+
+      synchronized (ByteArrayIOStream.this) {
+        if (closed) {
+          throw new IOException("This stream has already been closed");
+        }
+
+        writeBookmark.rewind();
       }
     }
 
@@ -358,6 +382,14 @@ public class ByteArrayIOStream implements Closeable {
       return (segmentIndex * ((long)allocation)) + byteIndex;
     }
 
+    public Bookmark rewind () {
+
+      segmentIndex = 0;
+      byteIndex = 0;
+
+      return this;
+    }
+
     public Bookmark reset (Bookmark bookmark) {
 
       if (bookmark != null) {
@@ -370,7 +402,7 @@ public class ByteArrayIOStream implements Closeable {
 
     public Bookmark inc () {
 
-      if (segmentIndex < limitBookmark.segmentIndex()) {
+      if (segmentIndex < segmentList.size()) {
         if (++byteIndex == allocation) {
           byteIndex = 0;
           segmentIndex++;
