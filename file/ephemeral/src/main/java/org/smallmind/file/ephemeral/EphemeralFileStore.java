@@ -35,7 +35,6 @@ package org.smallmind.file.ephemeral;
 import java.io.IOException;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.FileStore;
-import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -54,9 +53,9 @@ public class EphemeralFileStore extends FileStore {
   private final EphemeralFileStoreAttributeView fileStoreAttributeView = new EphemeralFileStoreAttributeView();
   private final HeapNode rootNode = new DirectoryNode();
   private final long capacity;
-  private final long blockSize;
+  private final int blockSize;
 
-  public EphemeralFileStore (long capacity, long blockSize) {
+  public EphemeralFileStore (long capacity, int blockSize) {
 
     this.capacity = capacity;
     this.blockSize = blockSize;
@@ -198,5 +197,16 @@ SecurityException – In the case of the default provider, and a security manage
 
     return null;
 //    Files.newByteChannel()
+  }
+
+  private HeapNode findNode (Path path) {
+
+    HeapNode node = rootNode;
+
+    for (Path segment : path.toAbsolutePath()) {
+if (segment = )
+    }
+
+    return node;
   }
 }

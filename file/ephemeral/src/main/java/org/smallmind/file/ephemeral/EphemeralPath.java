@@ -35,25 +35,85 @@ package org.smallmind.file.ephemeral;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
+import java.nio.file.InvalidPathException;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
+import java.util.LinkedList;
 
 public class EphemeralPath implements Path {
 
-  private static final char SEPARATOR = '/';
+  private static final String SEPARATOR = "/";
   private final EphemeralFileSystem fileSystem;
+  private final LinkedList<String> nameList = new LinkedList<>();
+  private final boolean absolute;
+
+  protected EphemeralPath (EphemeralFileSystem fileSystem) {
+
+    this.fileSystem = fileSystem;
+
+    absolute = true;
+  }
 
   public EphemeralPath (EphemeralFileSystem fileSystem, String first, String... more) {
 
     this.fileSystem = fileSystem;
+
+    if (first == null) {
+      throw new NullPointerException();
+    } else {
+      absolute = first.startsWith(SEPARATOR);
+
+      append(first, absolute);
+
+      if ((more != null) && (more.length > 0)) {
+        for (String another : more) {
+          append(another, false);
+        }
+      }
+    }
   }
 
-  public static char getSeparator () {
+  private EphemeralPath (EphemeralPath path, int begin, int end) {
+
+    fileSystem = path.fileSystem;
+    absolute = path.absolute;
+
+    for (int index = begin; index < end; index++) {
+      nameList.add(path.nameList.get(index));
+    }
+  }
+
+  public static char getSeparatorChar () {
+
+    return SEPARATOR.charAt(0);
+  }
+
+  public static String getSeparator () {
 
     return SEPARATOR;
+  }
+
+  private void append (String text, boolean absolute) {
+
+    if (text.length() == 0) {
+      throw new InvalidPathException(text, "Empty path component");
+    } else {
+
+      int index = 0;
+
+      for (String segment : text.split(SEPARATOR, -1)) {
+        if (segment.length() == 0) {
+          if (absolute && (index > 0))
+            throw new InvalidPathException(text, "Empty path component");
+        } else {
+          nameList.add(segment);
+          index++;
+        }
+      }
+    }
   }
 
   @Override
@@ -65,43 +125,52 @@ public class EphemeralPath implements Path {
   @Override
   public boolean isAbsolute () {
 
-    return false;
+    return absolute;
   }
 
   @Override
   public Path getRoot () {
 
-    return null;
+    return absolute ? new EphemeralPath(fileSystem) : null;
   }
 
   @Override
   public Path getFileName () {
 
-    return null;
+    return nameList.isEmpty() ? null : new EphemeralPath(fileSystem, nameList.getLast());
   }
 
   @Override
   public Path getParent () {
 
-    return null;
+    return nameList.isEmpty() ? null : (nameList.size() > 1) ? new EphemeralPath(this, 0, nameList.size() - 1) : absolute ? new EphemeralPath(fileSystem) : null;
   }
 
   @Override
   public int getNameCount () {
 
-    return 0;
+    return nameList.size();
   }
 
   @Override
   public Path getName (int index) {
 
-    return null;
+    if ((index < 0) || (index >= nameList.size())) {
+      throw new IllegalArgumentException("Illegal index value");
+    }
+
+    return new EphemeralPath(fileSystem, nameList.get(index));
   }
 
   @Override
   public Path subpath (int beginIndex, int endIndex) {
 
-    return null;
+    if ((beginIndex < 0) || (beginIndex >= nameList.size()) || (endIndex <= beginIndex) || (endIndex > nameList.size())) {
+      throw new IllegalArgumentException("Illegal index value");
+    } else {
+
+      return new EphemeralPath(this, beginIndex, endIndex);
+    }
   }
 
   @Override

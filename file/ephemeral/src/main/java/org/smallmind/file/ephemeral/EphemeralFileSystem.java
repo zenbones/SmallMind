@@ -46,7 +46,6 @@ import org.smallmind.nutsnbolts.util.SingleItemIterable;
 public class EphemeralFileSystem extends FileSystem {
 
   private static final EphemeralUserPrincipalLookupService USER_PRINCIPAL_LOOKUP_SERVICE = new EphemeralUserPrincipalLookupService();
-  private static final String SEPARATOR = String.valueOf(EphemeralPath.getSeparator());
   private final EphemeralPath rootPath;
   private final EphemeralFileStore fileStore;
   private final EphemeralFileSystemProvider provider;
@@ -57,7 +56,7 @@ public class EphemeralFileSystem extends FileSystem {
     this.provider = provider;
 
     fileStore = new EphemeralFileStore(0, 0);
-    rootPath = new EphemeralPath(this, SEPARATOR);
+    rootPath = new EphemeralPath(this);
   }
 
   @Override
@@ -87,7 +86,7 @@ public class EphemeralFileSystem extends FileSystem {
   @Override
   public String getSeparator () {
 
-    return SEPARATOR;
+    return EphemeralPath.getSeparator();
   }
 
   @Override
@@ -133,7 +132,7 @@ public class EphemeralFileSystem extends FileSystem {
       switch (syntax = syntaxAndPattern.substring(0, colonPos)) {
         case "glob":
 
-          return new RegexPathMatcher(Glob.toRegexPattern(EphemeralPath.getSeparator(), syntaxAndPattern.substring(colonPos + 1)));
+          return new RegexPathMatcher(Glob.toRegexPattern(EphemeralPath.getSeparatorChar(), syntaxAndPattern.substring(colonPos + 1)));
         case "regex":
 
           return new RegexPathMatcher(Pattern.compile(syntaxAndPattern.substring(colonPos + 1)));
