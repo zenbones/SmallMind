@@ -36,28 +36,27 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.LinkedList;
+import java.util.ArrayList;
 
 public class ByteArrayIOStream implements Closeable {
 
   private final ByteArrayInputStream inputStream = new ByteArrayInputStream();
   private final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-  private final LinkedList<byte[]> segmentList = new LinkedList<>();
-  private final int allocation;
+  private final ArrayList<byte[]> segmentList = new ArrayList<>();
+  private final Bookmark limitBookmark = new Bookmark();
+  private final Bookmark readBookmark = new Bookmark();
+  private final Bookmark writeBookmark = new Bookmark();
+  private final long allocation;
   private boolean closed = false;
-  private int readIndex = 0;
-  private int writeIndex;
 
   public ByteArrayIOStream () {
 
     this(1024);
   }
 
-  public ByteArrayIOStream (int allocation) {
+  public ByteArrayIOStream (long allocation) {
 
     this.allocation = allocation;
-
-    writeIndex = allocation;
   }
 
   @Override
@@ -81,9 +80,7 @@ public class ByteArrayIOStream implements Closeable {
 
   public class ByteArrayInputStream extends InputStream {
 
-    private LinkedList<byte[]> markList;
-    private int readLimit = 0;
-    private int markIndex = 0;
+    private Bookmark markBookmark;
 
     public byte peek (int index)
       throws IOException {
@@ -95,24 +92,9 @@ public class ByteArrayIOStream implements Closeable {
           throw new IndexOutOfBoundsException(index + ">=" + available());
         } else {
 
-          int bytesToSeek = index;
+          Bookmark peekBookmark = readBookmark.offset(index);
 
-          if (bytesToSeek < allocation - readIndex) {
-
-            return segmentList.getFirst()[readIndex + bytesToSeek];
-          } else {
-
-            int segmentIndex = 1;
-
-            bytesToSeek -= allocation - readIndex;
-
-            while (bytesToSeek >= allocation) {
-              bytesToSeek = allocation;
-              segmentIndex++;
-            }
-
-            return segmentList.get(segmentIndex)[bytesToSeek];
-          }
+          return segmentList.get(peekBookmark.segmentIndex())[peekBookmark.byteIndex()];
         }
       }
     }
@@ -137,6 +119,9 @@ public class ByteArrayIOStream implements Closeable {
       synchronized (segmentList) {
         if (closed) {
           throw new IOException("This stream has already been closed");
+        } else if ((readBookmark.segmentIndex() == limitBookmark.segmentIndex()) && (readBookmark.byteIndex() > limitBookmark.byteIndex())) {
+
+          return -1;
         } else {
 
           byte singleByte;
@@ -149,8 +134,8 @@ public class ByteArrayIOStream implements Closeable {
             throw new IOException(interruptedException);
           }
 
-          singleByte = segmentList.getFirst()[readIndex];
-          peelSegment(1);
+          singleByte = segmentList.get(readBookmark.segmentIndex())[readBookmark.byteIndex()];
+          readBookmark.inc();
 
           return singleByte;
         }
@@ -158,15 +143,15 @@ public class ByteArrayIOStream implements Closeable {
     }
 
     @Override
-    public int read (byte[] b, int off, int len)
+    public int read (byte[] bytes, int off, int len)
       throws IOException {
 
       synchronized (segmentList) {
         if (closed) {
           throw new IOException("This stream has already been closed");
-        } else if (b == null) {
+        } else if (bytes == null) {
           throw new NullPointerException();
-        } else if (off < 0 || len < 0 || off > b.length || len > b.length - off) {
+        } else if (off < 0 || len < 0 || off > bytes.length || len > bytes.length - off) {
           throw new IndexOutOfBoundsException();
         } else if (len == 0) {
 
@@ -184,18 +169,13 @@ public class ByteArrayIOStream implements Closeable {
           }
 
           int bytesToRead = Math.min(bytesAvailable, len);
-          int bytesRead = 0;
 
-          while (bytesRead < bytesToRead) {
-
-            int bytesToReadInSegment = Math.min(allocation - readIndex, bytesToRead - bytesRead);
-
-            System.arraycopy(segmentList.getFirst(), readIndex, b, off + bytesRead, bytesToReadInSegment);
-            bytesRead += bytesToReadInSegment;
-            peelSegment(bytesToReadInSegment);
+          for (int index = 0; index < bytesToRead; index++) {
+            bytes[off + index] = segmentList.get(readBookmark.segmentIndex())[readBookmark.byteIndex()];
+            readBookmark.inc();
           }
 
-          return bytesRead;
+          return bytesToRead;
         }
       }
     }
@@ -208,37 +188,12 @@ public class ByteArrayIOStream implements Closeable {
 
       if ((bytesToSkip = Math.min(available(), n)) > 0) {
 
-        long bytesSkipped = 0;
+        readBookmark.skip(bytesToSkip);
 
-        while (bytesSkipped < bytesToSkip) {
-
-          int bytesToSkipInSegment = (int)Math.min(allocation - readIndex, bytesToSkip - bytesSkipped);
-
-          bytesSkipped += bytesToSkipInSegment;
-          peelSegment(bytesToSkipInSegment);
-        }
-
-        return bytesSkipped;
+        return bytesToSkip;
       }
 
       return 0;
-    }
-
-    private void peelSegment (int readIncrement) {
-
-      if ((readIndex += readIncrement) == allocation) {
-
-        byte[] usedSegment = segmentList.removeFirst();
-
-        readIndex = 0;
-
-        if (markList != null) {
-          markList.add(usedSegment);
-          if (remembered() > readLimit) {
-            markList = null;
-          }
-        }
-      }
     }
 
     @Override
@@ -250,13 +205,8 @@ public class ByteArrayIOStream implements Closeable {
           throw new IOException("This stream has already been closed");
         }
 
-        return segmentList.isEmpty() ? 0 : (allocation * (segmentList.size() - 1)) + writeIndex - readIndex;
+        return (int)(limitBookmark.position() - readBookmark.position());
       }
-    }
-
-    private int remembered () {
-
-      return (markList == null) ? 0 : (allocation * markList.size()) + readIndex - markIndex;
     }
 
     @Override
@@ -264,11 +214,7 @@ public class ByteArrayIOStream implements Closeable {
 
       synchronized (segmentList) {
         if (!closed) {
-
-          this.readLimit = readLimit;
-
-          markList = new LinkedList<>();
-          markIndex = readIndex;
+          markBookmark = new Bookmark(readBookmark);
         }
       }
     }
@@ -282,10 +228,7 @@ public class ByteArrayIOStream implements Closeable {
           throw new IOException("This stream has already been closed");
         }
 
-        segmentList.addAll(0, markList);
-        readIndex = markIndex;
-
-        markList = null;
+        readBookmark.reset(markBookmark);
       }
     }
 
@@ -293,7 +236,7 @@ public class ByteArrayIOStream implements Closeable {
     public void close () {
 
       synchronized (segmentList) {
-        markList = null;
+        markBookmark = null;
 
         ByteArrayIOStream.this.close();
       }
@@ -328,15 +271,15 @@ public class ByteArrayIOStream implements Closeable {
     }
 
     @Override
-    public void write (byte[] b, int off, int len)
+    public void write (byte[] bytes, int off, int len)
       throws IOException {
 
       synchronized (segmentList) {
         if (closed) {
           throw new IOException("This stream has already been closed");
-        } else if (b == null) {
+        } else if (bytes == null) {
           throw new NullPointerException();
-        } else if (off < 0 || len < 0 || off > b.length || len > b.length - off) {
+        } else if (off < 0 || len < 0 || off > bytes.length || len > bytes.length - off) {
           throw new IndexOutOfBoundsException();
         } else if (len > 0) {
 
@@ -347,7 +290,7 @@ public class ByteArrayIOStream implements Closeable {
             int bytesToWriteInSegment = Math.min(allocation - writeIndex, len - bytesWritten);
 
             if (bytesToWriteInSegment > 0) {
-              System.arraycopy(b, off + bytesWritten, segmentList.getLast(), writeIndex, bytesToWriteInSegment);
+              System.arraycopy(bytes, off + bytesWritten, segmentList.getLast(), writeIndex, bytesToWriteInSegment);
               bytesWritten += bytesToWriteInSegment;
             }
             if ((writeIndex += bytesToWriteInSegment) == allocation) {
@@ -363,6 +306,98 @@ public class ByteArrayIOStream implements Closeable {
     public void close () {
 
       ByteArrayIOStream.this.close();
+    }
+  }
+
+  private class Bookmark {
+
+    private int segmentIndex;
+    private int byteIndex;
+
+    public Bookmark () {
+
+    }
+
+    public Bookmark (long position) {
+
+      segmentIndex = (int)(position / allocation);
+      byteIndex = (int)(position % allocation);
+    }
+
+    public Bookmark (Bookmark bookmark) {
+
+      segmentIndex = bookmark.segmentIndex();
+      byteIndex = bookmark.byteIndex();
+    }
+
+    public int segmentIndex () {
+
+      return segmentIndex;
+    }
+
+    public int byteIndex () {
+
+      return byteIndex;
+    }
+
+    public long position () {
+
+      return (segmentIndex * allocation) + byteIndex;
+    }
+
+    public Bookmark reset (Bookmark bookmark) {
+
+      if (bookmark != null) {
+        segmentIndex = bookmark.segmentIndex();
+        byteIndex = bookmark.byteIndex();
+      }
+
+      return this;
+    }
+
+    public Bookmark inc () {
+
+      if (segmentIndex > limitBookmark.segmentIndex()) {
+        throw new IllegalStateException("End of stream");
+      } else if (segmentIndex < limitBookmark.segmentIndex()) {
+        if (++byteIndex == allocation) {
+          byteIndex = 0;
+          segmentIndex++;
+        }
+      } else if (byteIndex <= limitBookmark.byteIndex()) {
+        byteIndex++;
+      } else {
+        throw new IllegalStateException("End of stream");
+      }
+
+      return this;
+    }
+
+    public Bookmark skip (long n) {
+
+      long futurePosition = position() + n;
+
+      if (futurePosition > limitBookmark.position()) {
+        throw new IllegalArgumentException("Offset not within bounds");
+      } else {
+
+        segmentIndex = (int)(futurePosition / allocation);
+        byteIndex = (int)(futurePosition % allocation);
+
+        return this;
+      }
+    }
+
+    public Bookmark offset (long delta) {
+
+      long futurePosition = position() + delta;
+
+      if ((futurePosition < 0) || (futurePosition > limitBookmark.position())) {
+        throw new IllegalArgumentException("Offset not within bounds");
+      } else {
+
+        return new Bookmark(futurePosition);
+      }
     }
   }
 }
