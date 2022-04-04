@@ -32,9 +32,11 @@
  */
 package org.smallmind.file.ephemeral;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.ClosedFileSystemException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileStore;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.OpenOption;
@@ -251,29 +253,99 @@ IOException – if an I/O error occurs
 SecurityException – In the case of the default provider, and a security manager is installed, the checkRead method is invoked to check read access to the path if the file is opened for reading. The checkWrite method is invoked to check write access to the path if the file is opened for writing. The checkDelete method is invoked to check delete access if the file is opened with the DELETE_ON_CLOSE option.
    */
 
-  public SeekableByteChannel newByteChannel (EphemeralPath path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) {
+  public SeekableByteChannel newByteChannel (EphemeralPath path, Set<? extends OpenOption> options, FileAttribute<?>... attrs)
+    throws IOException {
 
     if (!fileSystem.isOpen()) {
       throw new ClosedFileSystemException();
     } else {
 
+      HeapNode heapNode = findNode(path);
       Boolean read = null;
-      boolean skipToEnd;
+      boolean append = false;
+      boolean truncateExisting = false;
+      boolean createNew = false;
+      boolean create = false;
+      boolean deleteOnClose = false;
 
       for (OpenOption option : options) {
-        if (StandardOpenOption.READ.equals(option)) {
-          if (Boolean.FALSE.equals(read)) {
-            throw new IllegalArgumentException("Invalid option combination");
-          } else {
-            read = Boolean.TRUE;
-          }
-        } else if (StandardOpenOption.WRITE.equals(option) || StandardOpenOption.APPEND.equals(option)) {
-          if (Boolean.TRUE.equals(read)) {
-            throw new IllegalArgumentException("Invalid option combination");
-          } else {
-            read = Boolean.FALSE;
+        if (!(option instanceof StandardOpenOption)) {
+          throw new UnsupportedOperationException("Only standard open options are supported");
+        } else {
+          if (StandardOpenOption.READ.equals(option)) {
+            if (Boolean.FALSE.equals(read)) {
+              throw new IllegalArgumentException("Invalid option combination");
+            } else {
+              read = Boolean.TRUE;
+            }
+          } else if (StandardOpenOption.WRITE.equals(option) || StandardOpenOption.APPEND.equals(option)) {
+            if (Boolean.TRUE.equals(read)) {
+              throw new IllegalArgumentException("Invalid option combination");
+            } else {
+              if (StandardOpenOption.APPEND.equals(option)) {
+                if (truncateExisting) {
+                  throw new IllegalArgumentException("Invalid option combination");
+                } else {
+                  append = true;
+                }
+              }
+              read = Boolean.FALSE;
+            }
+          } else if (StandardOpenOption.TRUNCATE_EXISTING.equals(option)) {
+            if (append) {
+              throw new IllegalArgumentException("Invalid option combination");
+            } else {
+              truncateExisting = true;
+            }
+          } else if (StandardOpenOption.CREATE_NEW.equals(option)) {
+            createNew = true;
+          } else if (StandardOpenOption.CREATE.equals(option)) {
+            create = true;
+          } else if (StandardOpenOption.DELETE_ON_CLOSE.equals(option)) {
+            deleteOnClose = true;
           }
         }
+      }
+
+      for (FileAttribute<?> attribute : attrs) {
+        if (!"posix:permissions".equals(attribute.name())) {
+          throw new UnsupportedOperationException("Only posix permission file attributes are supported");
+        }
+      }
+
+      if (read == null) {
+        read = Boolean.TRUE;
+      }
+
+      if (Boolean.TRUE.equals(read)) {
+        if (heapNode == null) {
+          throw new FileNotFoundException(path.toString());
+        } else if (HeapNodeType.DIRECTORY.equals(heapNode.getType())) {
+          throw new IOException("Cannot open a directory for read operations");
+        } else {
+          // open (delOnC)
+        }
+      } else {
+        if (heapNode == null) {
+          if (!(createNew || create)) {
+            throw new FileNotFoundException(path.toString());
+          } else {
+            // create and open
+          }
+        } else {
+         if (createNew) {
+           throw new FileAlreadyExistsException(path.toString());
+         } else {
+           if (truncateExisting) {
+             // empty
+           } else if (append) {
+             // open and set to end
+           } else {
+             // open
+           }
+         }
+        }
+
       }
 
       return null;

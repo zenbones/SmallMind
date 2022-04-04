@@ -32,57 +32,118 @@
  */
 package org.smallmind.file.ephemeral;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
+import java.nio.channels.NonReadableChannelException;
+import java.nio.channels.NonWritableChannelException;
 import java.nio.channels.SeekableByteChannel;
+import org.smallmind.nutsnbolts.io.ByteArrayIOStream;
 
 public class EphemeralSeekableByteChannel implements SeekableByteChannel {
 
-
+  private final ByteArrayIOStream stream;
+  private final boolean read;
+  private boolean append;
+  private boolean deleteOnClose;
 
   @Override
-  public int read (ByteBuffer dst) {
+  public int read (ByteBuffer dst)
+    throws IOException {
 
-    return 0;
+    if (!read) {
+      throw new NonReadableChannelException();
+    } else {
+      synchronized (stream) {
+        if (stream.isClosed()) {
+          throw new ClosedChannelException();
+        } else {
+
+          byte[] buffer = new byte[dst.remaining()];
+          int bytesRead = stream.asInputStream().read(buffer);
+
+          dst.put(buffer, 0, bytesRead);
+
+          return bytesRead;
+        }
+      }
+    }
   }
 
   @Override
-  public int write (ByteBuffer src) {
+  public int write (ByteBuffer src)
+    throws IOException {
 
-    return 0;
+    if (read) {
+      throw new NonWritableChannelException();
+    } else {
+      synchronized (stream) {
+        if (stream.isClosed()) {
+          throw new ClosedChannelException();
+        } else {
+
+          byte[] buffer;
+          int bytesWritten = src.remaining();
+
+          if (bytesWritten > 0) {
+
+            buffer = new byte[bytesWritten];
+            src.get(buffer);
+            stream.asOutputStream().write(buffer);
+          }
+          return bytesWritten;
+        }
+      }
+    }
   }
 
   @Override
-  public long position () {
+  public long position ()
+    throws IOException {
 
-    return 0;
+    synchronized (stream) {
+
+      return (read) ? stream.asInputStream().position() : stream.asOutputStream().position();
+    }
   }
 
   @Override
-  public SeekableByteChannel position (long newPosition) {
+  public SeekableByteChannel position (long newPosition)
+    throws IOException {
 
-    return null;
+    if (read) {
+      stream.asInputStream().position(newPosition);
+    } else {
+      stream.asOutputStream().position(newPosition);
+    }
+
+    return this;
   }
 
   @Override
-  public long size () {
+  public long size ()
+    throws IOException {
 
-    return 0;
+    return stream.size();
   }
 
   @Override
   public SeekableByteChannel truncate (long size) {
 
-    return null;
+    stream.truncate(size);
+
+    return this;
   }
 
   @Override
   public boolean isOpen () {
 
-    return false;
+    return !stream.isClosed();
   }
 
   @Override
   public void close () {
 
+    stream.close();
   }
 }
