@@ -32,11 +32,17 @@
  */
 package org.smallmind.file.ephemeral.heap;
 
+import java.io.IOException;
 import java.util.HashMap;
 
 public class DirectoryNode extends HeapNode {
 
-  private HashMap<String, HeapNode> children = new HashMap<>();
+  private final HashMap<String, HeapNode> children = new HashMap<>();
+
+  public DirectoryNode (String name) {
+
+    super(name);
+  }
 
   @Override
   public HeapNodeType getType () {
@@ -44,8 +50,21 @@ public class DirectoryNode extends HeapNode {
     return HeapNodeType.DIRECTORY;
   }
 
+  public synchronized HeapNode get (String name) {
+
+    return children.get(name);
+  }
+
+  public synchronized DirectoryNode put (HeapNode heapNode) {
+
+    children.put(heapNode.getName(), heapNode);
+
+    return this;
+  }
+
   @Override
-  public synchronized long size () {
+  public synchronized long size ()
+    throws IOException {
 
     long size = 0;
 

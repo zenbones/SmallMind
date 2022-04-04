@@ -1,5 +1,6 @@
 package org.smallmind.file.ephemeral.watch;
 
+import java.nio.file.NoSuchFileException;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.Watchable;
@@ -12,17 +13,15 @@ public class EphemeralWatchKey implements WatchKey {
 
   private final EphemeralWatchService watchService;
   private final WatchEvent.Kind<?>[] events;
-  private final WatchEvent.Modifier[] modifiers;
   private final EphemeralPath path;
   private final LinkedBlockingQueue<WatchEvent<?>> eventQueue = new LinkedBlockingQueue<>();
   private boolean valid = true;
   private boolean signalled = false;
 
-  public EphemeralWatchKey (EphemeralWatchService watchService, WatchEvent.Kind<?>[] events, WatchEvent.Modifier[] modifiers, EphemeralPath path) {
+  public EphemeralWatchKey (EphemeralWatchService watchService, WatchEvent.Kind<?>[] events, EphemeralPath path) {
 
     this.watchService = watchService;
     this.events = events;
-    this.modifiers = modifiers;
     this.path = path;
   }
 
@@ -101,7 +100,11 @@ public class EphemeralWatchKey implements WatchKey {
     valid = false;
 
     if (deregister) {
-      watchService.unregister(this);
+      try {
+        watchService.unregister(this);
+      } catch (NoSuchFileException noSuchFileException) {
+        // nothing to do here
+      }
     }
   }
 

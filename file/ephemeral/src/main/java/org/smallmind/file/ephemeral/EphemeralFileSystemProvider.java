@@ -32,6 +32,7 @@
  */
 package org.smallmind.file.ephemeral;
 
+import java.io.IOException;
 import java.net.URI;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.AccessMode;
@@ -106,7 +107,8 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
   }
 
   @Override
-  public SeekableByteChannel newByteChannel (Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) {
+  public SeekableByteChannel newByteChannel (Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs)
+    throws IOException {
 
     if (!EphemeralFileSystem.class.isAssignableFrom(path.getFileSystem().getClass())) {
       throw new ProviderMismatchException("The path(" + path + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());

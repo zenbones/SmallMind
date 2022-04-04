@@ -36,6 +36,7 @@ import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.InvalidPathException;
 import java.nio.file.LinkOption;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.nio.file.WatchEvent;
@@ -154,19 +155,19 @@ public class EphemeralPath implements Path {
   }
 
   @Override
-  public Path getRoot () {
+  public EphemeralPath getRoot () {
 
     return absolute ? new EphemeralPath(fileSystem) : null;
   }
 
   @Override
-  public Path getFileName () {
+  public EphemeralPath getFileName () {
 
     return (names.length == 0) ? null : new EphemeralPath(fileSystem, names[names.length - 1]);
   }
 
   @Override
-  public Path getParent () {
+  public EphemeralPath getParent () {
 
     return (names.length == 0) ? null : (names.length > 1) ? new EphemeralPath(this, 0, names.length - 1) : absolute ? new EphemeralPath(fileSystem) : null;
   }
@@ -178,7 +179,7 @@ public class EphemeralPath implements Path {
   }
 
   @Override
-  public Path getName (int index) {
+  public EphemeralPath getName (int index) {
 
     if ((index < 0) || (index >= names.length)) {
       throw new IllegalArgumentException("Illegal index value");
@@ -188,7 +189,7 @@ public class EphemeralPath implements Path {
   }
 
   @Override
-  public Path subpath (int beginIndex, int endIndex) {
+  public EphemeralPath subpath (int beginIndex, int endIndex) {
 
     if ((beginIndex < 0) || (beginIndex >= names.length) || (endIndex <= beginIndex) || (endIndex > names.length)) {
       throw new IllegalArgumentException("Illegal index value");
@@ -240,7 +241,7 @@ public class EphemeralPath implements Path {
   }
 
   @Override
-  public Path normalize () {
+  public EphemeralPath normalize () {
 
     LinkedList<String> namesList = null;
     int position = 0;
@@ -294,7 +295,7 @@ public class EphemeralPath implements Path {
   }
 
   @Override
-  public Path relativize (Path other) {
+  public EphemeralPath relativize (Path other) {
 
     if (absolute != other.isAbsolute()) {
       throw new IllegalArgumentException("No relative path can be constructed");
@@ -337,13 +338,13 @@ public class EphemeralPath implements Path {
   }
 
   @Override
-  public Path toAbsolutePath () {
+  public EphemeralPath toAbsolutePath () {
 
     return absolute ? this : new EphemeralPath(fileSystem, names, true);
   }
 
   @Override
-  public Path toRealPath (LinkOption... options) {
+  public EphemeralPath toRealPath (LinkOption... options) {
 
     // TODO: will need to handle symlinks when/if the file system provide for them
     return normalize().toAbsolutePath();
@@ -351,7 +352,7 @@ public class EphemeralPath implements Path {
 
   @Override
   public WatchKey register (WatchService watcher, WatchEvent.Kind<?>[] events, WatchEvent.Modifier... modifiers)
-    throws NotDirectoryException {
+    throws NoSuchFileException, NotDirectoryException {
 
     if (!(watcher instanceof EphemeralWatchService)) {
       throw new IllegalArgumentException("The watcher is not associated with this file system");
@@ -359,7 +360,8 @@ public class EphemeralPath implements Path {
 
       EphemeralWatchKey watchKey;
 
-      ((EphemeralWatchService)watcher).register(watchKey = new EphemeralWatchKey((EphemeralWatchService)watcher, events, modifiers, this));
+      // modifiers unused as yet
+      ((EphemeralWatchService)watcher).register(watchKey = new EphemeralWatchKey((EphemeralWatchService)watcher, events, this));
 
       return watchKey;
     }

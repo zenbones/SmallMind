@@ -32,21 +32,31 @@
  */
 package org.smallmind.file.ephemeral.heap;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.LinkedList;
 import org.smallmind.file.ephemeral.EphemeralBasicFileAttributes;
 
 public abstract class HeapNode {
 
+  private final EphemeralBasicFileAttributes attributes;
+  private final String name;
   private LinkedList<HeapEventListener> listenerList;
-  private EphemeralBasicFileAttributes attributes;
-  private HeapNode parent;
-  private Path path;
-  private String name;
+
+  public HeapNode (String name) {
+
+    this.name = name;
+  }
 
   public abstract HeapNodeType getType ();
 
-  public abstract long size ();
+  public abstract long size ()
+    throws IOException;
+
+  public String getName () {
+
+    return name;
+  }
 
   public synchronized void registerListener (HeapEventListener eventListener) {
 

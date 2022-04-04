@@ -33,6 +33,7 @@
 package org.smallmind.file.ephemeral.watch;
 
 import java.nio.file.ClosedWatchServiceException;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
@@ -80,7 +81,7 @@ public class EphemeralWatchService implements WatchService {
   }
 
   public synchronized void register (EphemeralWatchKey ephemeralWatchKey)
-    throws NotDirectoryException {
+    throws NoSuchFileException, NotDirectoryException {
 
     if (closed) {
       throw new ClosedWatchServiceException();
@@ -97,7 +98,8 @@ public class EphemeralWatchService implements WatchService {
     }
   }
 
-  public synchronized void unregister (EphemeralWatchKey ephemeralWatchKey) {
+  public synchronized void unregister (EphemeralWatchKey ephemeralWatchKey)
+    throws NoSuchFileException {
 
     LinkedList<EphemeralWatchKey> watchKeyList;
 

@@ -81,31 +81,50 @@ public class ByteArrayIOStream implements Closeable {
     }
   }
 
-  public synchronized void truncate (long size) {
+  public synchronized void clear ()
+    throws IOException {
 
-    int truncatedSegmentIndex = (int)(size / allocation);
-    int truncatedByteIndex = (int)(size % allocation);
-    int truncatedSegmentCount = truncatedSegmentIndex + ((truncatedByteIndex) == 0 ? 0 : 1);
-
-    while (segmentList.size() > truncatedSegmentCount) {
-      segmentList.remove(segmentList.size() - 1);
+    if (closed) {
+      throw new IOException("This stream has already been closed");
+    } else {
+      segmentList.clear();
+      limitBookmark.rewind();
+      readBookmark.rewind();
+      writeBookmark.rewind();
     }
+  }
 
-    if (truncatedByteIndex > 0) {
+  public synchronized void truncate (long size)
+    throws IOException {
 
-      byte[] segment = segmentList.get(truncatedSegmentIndex);
+    if (closed) {
+      throw new IOException("This stream has already been closed");
+    } else {
 
-      for (int index = truncatedByteIndex; index < allocation; index++) {
-        segment[index] = 0;
+      int truncatedSegmentIndex = (int)(size / allocation);
+      int truncatedByteIndex = (int)(size % allocation);
+      int truncatedSegmentCount = truncatedSegmentIndex + ((truncatedByteIndex) == 0 ? 0 : 1);
+
+      while (segmentList.size() > truncatedSegmentCount) {
+        segmentList.remove(segmentList.size() - 1);
       }
-    }
 
-    limitBookmark.position(size);
-    if (readBookmark.position() > size) {
-      readBookmark.position(size);
-    }
-    if (writeBookmark.position() > size) {
-      writeBookmark.position(size);
+      if (truncatedByteIndex > 0) {
+
+        byte[] segment = segmentList.get(truncatedSegmentIndex);
+
+        for (int index = truncatedByteIndex; index < allocation; index++) {
+          segment[index] = 0;
+        }
+      }
+
+      limitBookmark.position(size);
+      if (readBookmark.position() > size) {
+        readBookmark.position(size);
+      }
+      if (writeBookmark.position() > size) {
+        writeBookmark.position(size);
+      }
     }
   }
 

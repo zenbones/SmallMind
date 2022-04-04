@@ -38,9 +38,9 @@ import java.nio.channels.SeekableByteChannel;
 import java.nio.file.ClosedFileSystemException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileStore;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.OpenOption;
-import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.FileAttribute;
@@ -49,16 +49,18 @@ import java.nio.file.attribute.FileStoreAttributeView;
 import java.util.Map;
 import java.util.Set;
 import org.smallmind.file.ephemeral.heap.DirectoryNode;
+import org.smallmind.file.ephemeral.heap.FileNode;
 import org.smallmind.file.ephemeral.heap.HeapEventListener;
 import org.smallmind.file.ephemeral.heap.HeapNode;
 import org.smallmind.file.ephemeral.heap.HeapNodeType;
+import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 public class EphemeralFileStore extends FileStore {
 
   private static final Map<String, Class<? extends FileAttributeView>> SUPPORTED_FILE_VIEW_MAP = Map.of("basic", BasicFileAttributeView.class);
   private final EphemeralFileSystem fileSystem;
   private final EphemeralFileStoreAttributeView fileStoreAttributeView = new EphemeralFileStoreAttributeView();
-  private final HeapNode rootNode = new DirectoryNode();
+  private final DirectoryNode rootNode = new DirectoryNode(null);
   private final long capacity;
   private final int blockSize;
 
@@ -110,7 +112,8 @@ public class EphemeralFileStore extends FileStore {
   }
 
   @Override
-  public long getUnallocatedSpace () {
+  public synchronized long getUnallocatedSpace ()
+    throws IOException {
 
     if (!fileSystem.isOpen()) {
       throw new ClosedFileSystemException();
@@ -193,7 +196,7 @@ public class EphemeralFileStore extends FileStore {
   }
 
   public void registerHeapListener (EphemeralPath path, HeapEventListener listener)
-    throws NotDirectoryException {
+    throws NoSuchFileException, NotDirectoryException {
 
     if (!fileSystem.isOpen()) {
       throw new ClosedFileSystemException();
@@ -209,7 +212,8 @@ public class EphemeralFileStore extends FileStore {
     }
   }
 
-  public void unregisterHeapListener (EphemeralPath path, HeapEventListener listener) {
+  public void unregisterHeapListener (EphemeralPath path, HeapEventListener listener)
+    throws NoSuchFileException {
 
     if (!fileSystem.isOpen()) {
       throw new ClosedFileSystemException();
@@ -223,41 +227,13 @@ public class EphemeralFileStore extends FileStore {
     }
   }
 
-  /*
-READ
-WRITE
-
-  APPEND
-If this option is present then the file is opened for writing and each invocation of the channel's write method first advances the position to the end of the file and then writes the requested data. Whether the advancement of the position and the writing of the data are done in a single atomic operation is system-dependent and therefore unspecified. This option may not be used in conjunction with the READ or TRUNCATE_EXISTING options.
-TRUNCATE_EXISTING
-If this option is present then the existing file is truncated to a size of 0 bytes. This option is ignored when the file is opened only for reading.
-CREATE_NEW
-If this option is present then a new file is created, failing if the file already exists or is a symbolic link. When creating a file the check for the existence of the file and the creation of the file if it does not exist is atomic with respect to other file system operations. This option is ignored when the file is opened only for reading.
-CREATE
-If this option is present then an existing file is opened if it exists, otherwise a new file is created. This option is ignored if the CREATE_NEW option is also present or the file is opened only for reading.
-DELETE_ON_CLOSE
-When this option is present then the implementation makes a best effort attempt to delete the file when closed by the close method. If the close method is not invoked then a best effort attempt is made to delete the file when the Java virtual machine terminates.
-SPARSE
-When creating a new file this option is a hint that the new file will be sparse. This option is ignored when not creating a new file.
-SYNC
-Requires that every update to the file's content or metadata be written synchronously to the underlying storage device. (see Synchronized I/O file integrity).
-DSYNC
-Requires that every update to the file's content be written synchronously to the underlying storage device. (see Synchronized I/O file integrity).
-   */
-
-  /*
-IllegalArgumentException – if the set contains an invalid combination of options
-UnsupportedOperationException – if an unsupported open option is specified or the array contains attributes that cannot be set atomically when creating the file
-FileAlreadyExistsException – if a file of that name already exists and the CREATE_NEW option is specified (optional specific exception)
-IOException – if an I/O error occurs
-SecurityException – In the case of the default provider, and a security manager is installed, the checkRead method is invoked to check read access to the path if the file is opened for reading. The checkWrite method is invoked to check write access to the path if the file is opened for writing. The checkDelete method is invoked to check delete access if the file is opened with the DELETE_ON_CLOSE option.
-   */
-
-  public SeekableByteChannel newByteChannel (EphemeralPath path, Set<? extends OpenOption> options, FileAttribute<?>... attrs)
+  public synchronized SeekableByteChannel newByteChannel (EphemeralPath path, Set<? extends OpenOption> options, FileAttribute<?>... attrs)
     throws IOException {
 
     if (!fileSystem.isOpen()) {
       throw new ClosedFileSystemException();
+    } else if (path.getNameCount() == 0) {
+      throw new NoSuchFileException(path.toString());
     } else {
 
       HeapNode heapNode = findNode(path);
@@ -320,47 +296,100 @@ SecurityException – In the case of the default provider, and a security manage
       if (Boolean.TRUE.equals(read)) {
         if (heapNode == null) {
           throw new FileNotFoundException(path.toString());
-        } else if (HeapNodeType.DIRECTORY.equals(heapNode.getType())) {
-          throw new IOException("Cannot open a directory for read operations");
         } else {
-          // open (delOnC)
+          switch (heapNode.getType()) {
+            case FILE:
+
+              return new EphemeralSeekableByteChannel(this, ((FileNode)heapNode).getStream(), true, false, deleteOnClose);
+            case DIRECTORY:
+              throw new IOException("Cannot open a directory for read operations");
+            default:
+              throw new UnknownSwitchCaseException(heapNode.getType().name());
+          }
         }
       } else {
         if (heapNode == null) {
           if (!(createNew || create)) {
             throw new FileNotFoundException(path.toString());
           } else {
-            // create and open
+
+            HeapNode parentNode;
+
+            if ((parentNode = findNode(path.getParent())) == null) {
+              throw new FileNotFoundException(path.toString());
+            } else {
+              switch (parentNode.getType()) {
+                case FILE:
+                  throw new FileNotFoundException(path.toString());
+                case DIRECTORY:
+
+                  FileNode fileNode;
+
+                  ((DirectoryNode)parentNode).put(fileNode = new FileNode(path.getNames()[path.getNameCount() - 1], blockSize));
+
+                  return new EphemeralSeekableByteChannel(this, fileNode.getStream(), false, false, deleteOnClose);
+                default:
+                  throw new UnknownSwitchCaseException(parentNode.getType().name());
+              }
+            }
           }
         } else {
-         if (createNew) {
-           throw new FileAlreadyExistsException(path.toString());
-         } else {
-           if (truncateExisting) {
-             // empty
-           } else if (append) {
-             // open and set to end
-           } else {
-             // open
-           }
-         }
+          if (createNew) {
+            throw new FileAlreadyExistsException(path.toString());
+          } else {
+            switch (heapNode.getType()) {
+              case FILE:
+                if (truncateExisting) {
+                  ((FileNode)heapNode).getStream().clear();
+                }
+
+                return new EphemeralSeekableByteChannel(this, ((FileNode)heapNode).getStream(), false, append, deleteOnClose);
+              case DIRECTORY:
+                throw new IOException("Cannot open a directory for write operations");
+              default:
+                throw new UnknownSwitchCaseException(heapNode.getType().name());
+            }
+          }
         }
-
       }
-
-      return null;
-//    Files.newByteChannel()
     }
   }
 
-  private HeapNode findNode (EphemeralPath path) {
+  private synchronized HeapNode findNode (EphemeralPath path)
+    throws NoSuchFileException {
 
-    HeapNode node = rootNode;
+    if (!path.isAbsolute()) {
+      throw new NoSuchFileException(path.toString());
+    } else {
 
-    for (Path segment : path.toAbsolutePath()) {
-      if (segment =)
+      DirectoryNode currentNode = rootNode;
+
+      for (int index = 0; index < path.getNames().length; index++) {
+
+        HeapNode childNode;
+
+        if ((childNode = currentNode.get(path.getNames()[index])) == null) {
+
+          return null;
+        } else {
+          switch (childNode.getType()) {
+            case FILE:
+              if (index < path.getNames().length - 1) {
+                throw new NoSuchFileException(path.toString());
+              } else {
+
+                return childNode;
+              }
+            case DIRECTORY:
+              currentNode = (DirectoryNode)childNode;
+              break;
+            default:
+              throw new UnknownSwitchCaseException(childNode.getType().name());
+          }
+        }
+      }
+
+      return currentNode;
     }
-
-    return node;
   }
 }

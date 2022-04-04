@@ -133,7 +133,8 @@ public class EphemeralSeekableByteChannel implements SeekableByteChannel {
   }
 
   @Override
-  public synchronized SeekableByteChannel truncate (long size) {
+  public synchronized SeekableByteChannel truncate (long size)
+    throws IOException {
 
     stream.truncate(size);
 

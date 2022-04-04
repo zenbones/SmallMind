@@ -32,11 +32,19 @@
  */
 package org.smallmind.file.ephemeral.heap;
 
-import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import org.smallmind.nutsnbolts.io.ByteArrayIOStream;
 
 public class FileNode extends HeapNode {
 
-  private ByteArrayOutputStream buffer;
+  private final ByteArrayIOStream stream;
+
+  public FileNode (String name, int allocaation) {
+
+    super(name);
+
+    stream = new ByteArrayIOStream(allocaation);
+  }
 
   @Override
   public HeapNodeType getType () {
@@ -44,9 +52,15 @@ public class FileNode extends HeapNode {
     return HeapNodeType.FILE;
   }
 
-  @Override
-  public long size () {
+  public ByteArrayIOStream getStream () {
 
-    return buffer.size();
+    return stream;
+  }
+
+  @Override
+  public long size ()
+    throws IOException {
+
+    return stream.size();
   }
 }
