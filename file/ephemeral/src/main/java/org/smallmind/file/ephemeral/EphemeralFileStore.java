@@ -34,6 +34,7 @@ package org.smallmind.file.ephemeral;
 
 import java.io.IOException;
 import java.nio.channels.SeekableByteChannel;
+import java.nio.file.ClosedFileSystemException;
 import java.nio.file.FileStore;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.OpenOption;
@@ -53,13 +54,15 @@ import org.smallmind.file.ephemeral.heap.HeapNodeType;
 public class EphemeralFileStore extends FileStore {
 
   private static final Map<String, Class<? extends FileAttributeView>> SUPPORTED_FILE_VIEW_MAP = Map.of("basic", BasicFileAttributeView.class);
+  private final EphemeralFileSystem fileSystem;
   private final EphemeralFileStoreAttributeView fileStoreAttributeView = new EphemeralFileStoreAttributeView();
   private final HeapNode rootNode = new DirectoryNode();
   private final long capacity;
   private final int blockSize;
 
-  public EphemeralFileStore (long capacity, int blockSize) {
+  public EphemeralFileStore (EphemeralFileSystem fileSystem, long capacity, int blockSize) {
 
+    this.fileSystem = fileSystem;
     this.capacity = capacity;
     this.blockSize = blockSize;
   }
@@ -85,64 +88,104 @@ public class EphemeralFileStore extends FileStore {
   @Override
   public long getTotalSpace () {
 
-    return getUsableSpace();
+    if (!fileSystem.isOpen()) {
+      throw new ClosedFileSystemException();
+    } else {
+
+      return getUsableSpace();
+    }
   }
 
   @Override
   public long getUsableSpace () {
 
-    return capacity;
+    if (!fileSystem.isOpen()) {
+      throw new ClosedFileSystemException();
+    } else {
+
+      return capacity;
+    }
   }
 
   @Override
   public long getUnallocatedSpace () {
 
-    return capacity - rootNode.size();
+    if (!fileSystem.isOpen()) {
+      throw new ClosedFileSystemException();
+    } else {
+
+      return capacity - rootNode.size();
+    }
   }
 
   @Override
   public boolean supportsFileAttributeView (Class<? extends FileAttributeView> type) {
 
-    return SUPPORTED_FILE_VIEW_MAP.containsValue(type);
+    if (!fileSystem.isOpen()) {
+      throw new ClosedFileSystemException();
+    } else {
+
+      return SUPPORTED_FILE_VIEW_MAP.containsValue(type);
+    }
   }
 
   @Override
   public boolean supportsFileAttributeView (String name) {
 
-    return SUPPORTED_FILE_VIEW_MAP.containsKey(name);
+    if (!fileSystem.isOpen()) {
+      throw new ClosedFileSystemException();
+    } else {
+
+      return SUPPORTED_FILE_VIEW_MAP.containsKey(name);
+    }
   }
 
   public Set<String> getSupportedFileAttributeViewNames () {
 
-    return SUPPORTED_FILE_VIEW_MAP.keySet();
+    if (!fileSystem.isOpen()) {
+      throw new ClosedFileSystemException();
+    } else {
+
+      return SUPPORTED_FILE_VIEW_MAP.keySet();
+    }
   }
 
   @Override
   public <V extends FileStoreAttributeView> V getFileStoreAttributeView (Class<V> type) {
 
-    return EphemeralFileStoreAttributeView.class.equals(type) ? type.cast(fileStoreAttributeView) : null;
+    if (!fileSystem.isOpen()) {
+      throw new ClosedFileSystemException();
+    } else {
+
+      return EphemeralFileStoreAttributeView.class.equals(type) ? type.cast(fileStoreAttributeView) : null;
+    }
   }
 
   @Override
   public Object getAttribute (String attribute)
     throws IOException {
 
-    int colonPos;
-
-    if ((colonPos = attribute.indexOf(':')) < 0) {
-      throw new IllegalArgumentException(attribute);
+    if (!fileSystem.isOpen()) {
+      throw new ClosedFileSystemException();
     } else {
 
-      if (fileStoreAttributeView.name().equals(attribute.substring(0, colonPos))) {
-        try {
+      int colonPos;
 
-          return fileStoreAttributeView.getClass().getDeclaredField(attribute.substring(colonPos + 1)).get(fileStoreAttributeView);
-        } catch (NoSuchFieldException | IllegalAccessException exception) {
-          throw new IOException(exception);
-        }
+      if ((colonPos = attribute.indexOf(':')) < 0) {
+        throw new IllegalArgumentException(attribute);
       } else {
 
-        return null;
+        if (fileStoreAttributeView.name().equals(attribute.substring(0, colonPos))) {
+          try {
+
+            return fileStoreAttributeView.getClass().getDeclaredField(attribute.substring(colonPos + 1)).get(fileStoreAttributeView);
+          } catch (NoSuchFieldException | IllegalAccessException exception) {
+            throw new IOException(exception);
+          }
+        } else {
+
+          return null;
+        }
       }
     }
   }
@@ -150,21 +193,31 @@ public class EphemeralFileStore extends FileStore {
   public void registerHeapListener (EphemeralPath path, HeapEventListener listener)
     throws NotDirectoryException {
 
-    HeapNode node;
-
-    if (((node = findNode(path)) == null) || (!HeapNodeType.DIRECTORY.equals(node.getType()))) {
-      throw new NotDirectoryException(path.toString());
+    if (!fileSystem.isOpen()) {
+      throw new ClosedFileSystemException();
     } else {
-      node.registerListener(listener);
+
+      HeapNode node;
+
+      if (((node = findNode(path)) == null) || (!HeapNodeType.DIRECTORY.equals(node.getType()))) {
+        throw new NotDirectoryException(path.toString());
+      } else {
+        node.registerListener(listener);
+      }
     }
   }
 
   public void unregisterHeapListener (EphemeralPath path, HeapEventListener listener) {
 
-    HeapNode node;
+    if (!fileSystem.isOpen()) {
+      throw new ClosedFileSystemException();
+    } else {
 
-    if ((node = findNode(path)) != null) {
-      node.unregisterListener(listener);
+      HeapNode node;
+
+      if ((node = findNode(path)) != null) {
+        node.unregisterListener(listener);
+      }
     }
   }
 
@@ -200,27 +253,32 @@ SecurityException – In the case of the default provider, and a security manage
 
   public SeekableByteChannel newByteChannel (EphemeralPath path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) {
 
-    Boolean read = null;
-    boolean skipToEnd;
+    if (!fileSystem.isOpen()) {
+      throw new ClosedFileSystemException();
+    } else {
 
-    for (OpenOption option : options) {
-      if (StandardOpenOption.READ.equals(option)) {
-        if (Boolean.FALSE.equals(read)) {
-          throw new IllegalArgumentException("Invalid option combination");
-        } else {
-          read = Boolean.TRUE;
-        }
-      } else if (StandardOpenOption.WRITE.equals(option) || StandardOpenOption.APPEND.equals(option)) {
-        if (Boolean.TRUE.equals(read)) {
-          throw new IllegalArgumentException("Invalid option combination");
-        } else {
-          read = Boolean.FALSE;
+      Boolean read = null;
+      boolean skipToEnd;
+
+      for (OpenOption option : options) {
+        if (StandardOpenOption.READ.equals(option)) {
+          if (Boolean.FALSE.equals(read)) {
+            throw new IllegalArgumentException("Invalid option combination");
+          } else {
+            read = Boolean.TRUE;
+          }
+        } else if (StandardOpenOption.WRITE.equals(option) || StandardOpenOption.APPEND.equals(option)) {
+          if (Boolean.TRUE.equals(read)) {
+            throw new IllegalArgumentException("Invalid option combination");
+          } else {
+            read = Boolean.FALSE;
+          }
         }
       }
-    }
 
-    return null;
+      return null;
 //    Files.newByteChannel()
+    }
   }
 
   private HeapNode findNode (EphemeralPath path) {

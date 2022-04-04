@@ -32,6 +32,7 @@
  */
 package org.smallmind.file.ephemeral;
 
+import java.nio.file.ClosedFileSystemException;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
@@ -56,7 +57,7 @@ public class EphemeralFileSystem extends FileSystem {
 
     this.provider = provider;
 
-    fileStore = new EphemeralFileStore(0, 0);
+    fileStore = new EphemeralFileStore(this, 0, 0);
     rootPath = new EphemeralPath(this);
   }
 
@@ -67,9 +68,12 @@ public class EphemeralFileSystem extends FileSystem {
   }
 
   @Override
-  public void close () {
+  public synchronized void close () {
 
-    closed = true;
+    if ((!closed) && (!provider.isDefault())) {
+      //TODO: Closing a file system will close all open channels, directory-streams, watch-service, and other closeable objects associated with this file system
+      closed = true;
+    }
   }
 
   @Override
@@ -98,47 +102,72 @@ public class EphemeralFileSystem extends FileSystem {
 
   public EphemeralFileStore getFileStore () {
 
-    return fileStore;
+    if (closed) {
+      throw new ClosedFileSystemException();
+    } else {
+
+      return fileStore;
+    }
   }
 
   @Override
   public Iterable<FileStore> getFileStores () {
 
-    return new SingleItemIterable<>(fileStore);
+    if (closed) {
+      throw new ClosedFileSystemException();
+    } else {
+
+      return new SingleItemIterable<>(fileStore);
+    }
   }
 
   @Override
   public Set<String> supportedFileAttributeViews () {
 
-    return fileStore.getSupportedFileAttributeViewNames();
+    if (closed) {
+      throw new ClosedFileSystemException();
+    } else {
+
+      return fileStore.getSupportedFileAttributeViewNames();
+    }
   }
 
   @Override
   public Path getPath (String first, String... more) {
 
-    return new EphemeralPath(this, first, more);
+    if (closed) {
+      throw new ClosedFileSystemException();
+    } else {
+
+      return new EphemeralPath(this, first, more);
+    }
   }
 
   @Override
   public PathMatcher getPathMatcher (String syntaxAndPattern) {
 
-    int colonPos;
-
-    if ((colonPos = syntaxAndPattern.indexOf(':')) < 0) {
-      throw new IllegalArgumentException(syntaxAndPattern);
+    if (closed) {
+      throw new ClosedFileSystemException();
     } else {
 
-      String syntax;
+      int colonPos;
 
-      switch (syntax = syntaxAndPattern.substring(0, colonPos)) {
-        case "glob":
+      if ((colonPos = syntaxAndPattern.indexOf(':')) < 0) {
+        throw new IllegalArgumentException(syntaxAndPattern);
+      } else {
 
-          return new RegexPathMatcher(Glob.toRegexPattern(EphemeralPath.getSeparatorChar(), syntaxAndPattern.substring(colonPos + 1)));
-        case "regex":
+        String syntax;
 
-          return new RegexPathMatcher(Pattern.compile(syntaxAndPattern.substring(colonPos + 1)));
-        default:
-          throw new UnsupportedOperationException(syntax);
+        switch (syntax = syntaxAndPattern.substring(0, colonPos)) {
+          case "glob":
+
+            return new RegexPathMatcher(Glob.toRegexPattern(EphemeralPath.getSeparatorChar(), syntaxAndPattern.substring(colonPos + 1)));
+          case "regex":
+
+            return new RegexPathMatcher(Pattern.compile(syntaxAndPattern.substring(colonPos + 1)));
+          default:
+            throw new UnsupportedOperationException(syntax);
+        }
       }
     }
   }
@@ -146,12 +175,22 @@ public class EphemeralFileSystem extends FileSystem {
   @Override
   public UserPrincipalLookupService getUserPrincipalLookupService () {
 
-    return USER_PRINCIPAL_LOOKUP_SERVICE;
+    if (closed) {
+      throw new ClosedFileSystemException();
+    } else {
+
+      return USER_PRINCIPAL_LOOKUP_SERVICE;
+    }
   }
 
   @Override
   public WatchService newWatchService () {
 
-    return new EphemeralWatchService(fileStore);
+    if (closed) {
+      throw new ClosedFileSystemException();
+    } else {
+
+      return new EphemeralWatchService(fileStore);
+    }
   }
 }

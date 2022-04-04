@@ -60,7 +60,7 @@ public class EphemeralWatchService implements WatchService {
     heapEventListener = new EphemeralHeapEventListener(this);
   }
 
-  public synchronized boolean isClosed () {
+  public boolean isClosed () {
 
     return closed;
   }

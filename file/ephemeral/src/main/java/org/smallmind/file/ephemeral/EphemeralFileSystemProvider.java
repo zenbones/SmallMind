@@ -73,6 +73,11 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
     ephemeralFileSystem = new EphemeralFileSystem(this);
   }
 
+  public boolean isDefault () {
+
+    return "file".equals(scheme);
+  }
+
   @Override
   public String getScheme () {
 
