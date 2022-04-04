@@ -42,63 +42,68 @@ import org.smallmind.nutsnbolts.io.ByteArrayIOStream;
 
 public class EphemeralSeekableByteChannel implements SeekableByteChannel {
 
+  private final EphemeralFileStore fileStore;
   private final ByteArrayIOStream stream;
   private final boolean read;
-  private boolean append;
-  private boolean deleteOnClose;
+  private final boolean deleteOnClose;
+
+  public EphemeralSeekableByteChannel (EphemeralFileStore fileStore, ByteArrayIOStream stream, boolean read, boolean append, boolean deleteOnClose)
+    throws IOException {
+
+    this.fileStore = fileStore;
+    this.stream = stream;
+    this.read = read;
+    this.deleteOnClose = deleteOnClose;
+
+    if (append) {
+      stream.asOutputStream().advance();
+    }
+  }
 
   @Override
-  public int read (ByteBuffer dst)
+  public synchronized int read (ByteBuffer dst)
     throws IOException {
 
     if (!read) {
       throw new NonReadableChannelException();
+    } else if (stream.isClosed()) {
+      throw new ClosedChannelException();
     } else {
-      synchronized (stream) {
-        if (stream.isClosed()) {
-          throw new ClosedChannelException();
-        } else {
 
-          byte[] buffer = new byte[dst.remaining()];
-          int bytesRead = stream.asInputStream().read(buffer);
+      byte[] buffer = new byte[dst.remaining()];
+      int bytesRead = stream.asInputStream().read(buffer);
 
-          dst.put(buffer, 0, bytesRead);
+      dst.put(buffer, 0, bytesRead);
 
-          return bytesRead;
-        }
-      }
+      return bytesRead;
     }
   }
 
   @Override
-  public int write (ByteBuffer src)
+  public synchronized int write (ByteBuffer src)
     throws IOException {
 
     if (read) {
       throw new NonWritableChannelException();
+    } else if (stream.isClosed()) {
+      throw new ClosedChannelException();
     } else {
-      synchronized (stream) {
-        if (stream.isClosed()) {
-          throw new ClosedChannelException();
-        } else {
 
-          byte[] buffer;
-          int bytesWritten = src.remaining();
+      byte[] buffer;
+      int bytesWritten = src.remaining();
 
-          if (bytesWritten > 0) {
+      if (bytesWritten > 0) {
 
-            buffer = new byte[bytesWritten];
-            src.get(buffer);
-            stream.asOutputStream().write(buffer);
-          }
-          return bytesWritten;
-        }
+        buffer = new byte[bytesWritten];
+        src.get(buffer);
+        stream.asOutputStream().write(buffer);
       }
+      return bytesWritten;
     }
   }
 
   @Override
-  public long position ()
+  public synchronized long position ()
     throws IOException {
 
     synchronized (stream) {
@@ -108,7 +113,7 @@ public class EphemeralSeekableByteChannel implements SeekableByteChannel {
   }
 
   @Override
-  public SeekableByteChannel position (long newPosition)
+  public synchronized SeekableByteChannel position (long newPosition)
     throws IOException {
 
     if (read) {
@@ -121,14 +126,14 @@ public class EphemeralSeekableByteChannel implements SeekableByteChannel {
   }
 
   @Override
-  public long size ()
+  public synchronized long size ()
     throws IOException {
 
     return stream.size();
   }
 
   @Override
-  public SeekableByteChannel truncate (long size) {
+  public synchronized SeekableByteChannel truncate (long size) {
 
     stream.truncate(size);
 
@@ -136,14 +141,17 @@ public class EphemeralSeekableByteChannel implements SeekableByteChannel {
   }
 
   @Override
-  public boolean isOpen () {
+  public synchronized boolean isOpen () {
 
     return !stream.isClosed();
   }
 
   @Override
-  public void close () {
+  public synchronized void close () {
 
     stream.close();
+    if (deleteOnClose) {
+      fileStore.
+    }
   }
 }
