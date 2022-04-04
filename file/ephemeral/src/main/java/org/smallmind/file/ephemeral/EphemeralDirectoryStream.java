@@ -3,13 +3,13 @@ package org.smallmind.file.ephemeral;
 import java.io.IOException;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.ClosedDirectoryStreamException;
+import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
-import java.nio.file.ProviderMismatchException;
 import java.nio.file.SecureDirectoryStream;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
@@ -19,16 +19,16 @@ import org.smallmind.file.ephemeral.heap.DirectoryNode;
 
 public class EphemeralDirectoryStream implements SecureDirectoryStream<Path> {
 
-  private final EphemeralFileStore fileStore;
-  private final EphemeralPath path;
+  private final EphemeralFileSystemProvider provider;
+  private final EphemeralPath streamPath;
   private final DirectoryNode directoryNode;
   private final DirectoryStream.Filter<? super Path> filter;
   private boolean closed = false;
 
-  public EphemeralDirectoryStream (EphemeralFileStore fileStore, EphemeralPath path, DirectoryNode directoryNode, DirectoryStream.Filter<? super Path> filter) {
+  public EphemeralDirectoryStream (EphemeralFileSystemProvider provider, EphemeralPath streamPath, DirectoryNode directoryNode, DirectoryStream.Filter<? super Path> filter) {
 
-    this.fileStore = fileStore;
-    this.path = path;
+    this.provider = provider;
+    this.streamPath = streamPath;
     this.directoryNode = directoryNode;
     this.filter = filter;
   }
@@ -46,7 +46,7 @@ public class EphemeralDirectoryStream implements SecureDirectoryStream<Path> {
       throw new ClosedDirectoryStreamException();
     } else {
 
-      return directoryNode.iterator(path, filter);
+      return directoryNode.iterator(streamPath, filter);
     }
   }
 
@@ -56,11 +56,9 @@ public class EphemeralDirectoryStream implements SecureDirectoryStream<Path> {
 
     if (closed) {
       throw new ClosedDirectoryStreamException();
-    } else if (!EphemeralFileSystem.class.isAssignableFrom(path.getFileSystem().getClass())) {
-      throw new ProviderMismatchException("The path(" + path + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
     } else {
 
-      return fileStore.newDirectoryStream((EphemeralPath)path, null, options);
+      return provider.newDirectoryStream(path.isAbsolute() ? path : streamPath.resolve(path), null, options);
     }
   }
 
@@ -70,33 +68,31 @@ public class EphemeralDirectoryStream implements SecureDirectoryStream<Path> {
 
     if (closed) {
       throw new ClosedDirectoryStreamException();
-    } else if (!EphemeralFileSystem.class.isAssignableFrom(path.getFileSystem().getClass())) {
-      throw new ProviderMismatchException("The path(" + path + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
     } else {
 
-      return fileStore.newByteChannel((EphemeralPath)path, options, attrs);
+      return provider.newByteChannel(path.isAbsolute() ? path : streamPath.resolve(path), options, attrs);
     }
   }
 
   @Override
-  public synchronized void deleteFile (Path path) {
+  public synchronized void deleteFile (Path path)
+    throws NoSuchFileException, DirectoryNotEmptyException {
 
     if (closed) {
       throw new ClosedDirectoryStreamException();
-    } else if (!EphemeralFileSystem.class.isAssignableFrom(path.getFileSystem().getClass())) {
-      throw new ProviderMismatchException("The path(" + path + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
     } else {
-
+      provider.delete(path.isAbsolute() ? path : streamPath.resolve(path));
     }
   }
 
   @Override
-  public synchronized void deleteDirectory (Path path) {
+  public synchronized void deleteDirectory (Path path)
+    throws NoSuchFileException, DirectoryNotEmptyException {
 
     if (closed) {
       throw new ClosedDirectoryStreamException();
     } else {
-
+      provider.delete(path.isAbsolute() ? path : streamPath.resolve(path));
     }
   }
 

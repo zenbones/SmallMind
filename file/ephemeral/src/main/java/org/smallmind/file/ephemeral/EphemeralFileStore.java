@@ -245,7 +245,7 @@ public class EphemeralFileStore extends FileStore {
         throw new NotDirectoryException(dir.toString());
       } else {
 
-        return new EphemeralDirectoryStream(this, dir, (DirectoryNode)heapNode, filter);
+        return new EphemeralDirectoryStream(fileSystem.provider(), dir, (DirectoryNode)heapNode, filter);
       }
     }
   }

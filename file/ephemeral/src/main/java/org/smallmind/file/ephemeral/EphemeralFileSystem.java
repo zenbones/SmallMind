@@ -39,7 +39,6 @@ import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.WatchService;
 import java.nio.file.attribute.UserPrincipalLookupService;
-import java.nio.file.spi.FileSystemProvider;
 import java.util.Set;
 import java.util.regex.Pattern;
 import org.smallmind.file.ephemeral.watch.EphemeralWatchService;
@@ -62,7 +61,7 @@ public class EphemeralFileSystem extends FileSystem {
   }
 
   @Override
-  public FileSystemProvider provider () {
+  public EphemeralFileSystemProvider provider () {
 
     return provider;
   }
