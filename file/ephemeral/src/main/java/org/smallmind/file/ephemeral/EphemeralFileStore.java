@@ -32,10 +32,10 @@
  */
 package org.smallmind.file.ephemeral;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.ClosedFileSystemException;
+import java.nio.file.CopyOption;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileAlreadyExistsException;
@@ -46,6 +46,7 @@ import java.nio.file.NotDirectoryException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.SecureDirectoryStream;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.FileAttribute;
@@ -251,7 +252,7 @@ public class EphemeralFileStore extends FileStore {
   }
 
   public synchronized void createDirectory (EphemeralPath path, FileAttribute<?>... attrs)
-    throws NoSuchFileException, FileNotFoundException, FileAlreadyExistsException {
+    throws NoSuchFileException, FileAlreadyExistsException {
 
     if (!fileSystem.isOpen()) {
       throw new ClosedFileSystemException();
@@ -267,14 +268,15 @@ public class EphemeralFileStore extends FileStore {
         throw new NoSuchFileException(path.toString());
       } else {
 
+        EphemeralPath parentPath;
         HeapNode parentNode;
 
-        if ((parentNode = findNode(path.getParent())) == null) {
-          throw new FileNotFoundException(path.toString());
+        if ((parentNode = findNode(parentPath = path.getParent())) == null) {
+          throw new NoSuchFileException(parentPath.toString());
         } else {
           switch (parentNode.getType()) {
             case FILE:
-              throw new FileNotFoundException(path.toString());
+              throw new NoSuchFileException(path.toString());
             case DIRECTORY:
               if (((DirectoryNode)parentNode).get(path.getNames()[path.getNameCount() - 1]) != null) {
                 throw new FileAlreadyExistsException(path.toString());
@@ -319,6 +321,102 @@ public class EphemeralFileStore extends FileStore {
         }
       }
     }
+  }
+
+  public synchronized void copy (EphemeralPath source, EphemeralPath target, CopyOption... options)
+    throws NoSuchFileException, FileAlreadyExistsException {
+
+    HeapNode sourceNode;
+    boolean replaceExisting = false;
+
+    for (CopyOption option : options) {
+      if (!(option instanceof StandardCopyOption)) {
+        throw new UnsupportedOperationException("Only standard open options are supported");
+      } else if (StandardCopyOption.REPLACE_EXISTING.equals(option)) {
+        replaceExisting = true;
+      }
+    }
+
+    if ((sourceNode = findNode(source)) == null) {
+      throw new NoSuchFileException(source.toString());
+    } else {
+
+      HeapNode targetNode;
+      HeapNode parentOfTargetNode = null;
+
+      if ((targetNode = findNode(target)) == null) {
+        if (target.getNameCount() == 0) {
+          throw new NoSuchFileException(target.toString());
+        } else {
+
+          EphemeralPath parentOfTargetPath;
+
+          if ((parentOfTargetNode = findNode(parentOfTargetPath = target.getParent())) == null) {
+            throw new NoSuchFileException(parentOfTargetPath.toString());
+          }
+        }
+      }
+
+      switch (sourceNode.getType()) {
+        case FILE:
+          if (targetNode != null) {
+            switch (targetNode.getType()) {
+              case FILE:
+                if (!replaceExisting) {
+                  throw new FileAlreadyExistsException(target.toString());
+                }else {
+
+                }
+                break;
+              case DIRECTORY:
+                break;
+              default:
+                throw new UnknownSwitchCaseException(targetNode.getType().name());
+            }
+          } else {
+            switch (parentOfTargetNode.getType()) {
+              case FILE:
+
+                break;
+              case DIRECTORY:
+                break;
+              default:
+                throw new UnknownSwitchCaseException(parentOfTargetNode.getType().name());
+            }
+          }
+          break;
+        case DIRECTORY:
+          if (targetNode != null) {
+            switch (targetNode.getType()) {
+              case FILE:
+
+                break;
+              case DIRECTORY:
+                break;
+              default:
+                throw new UnknownSwitchCaseException(targetNode.getType().name());
+            }
+          } else {
+            switch (parentOfTargetNode.getType()) {
+              case FILE:
+
+                break;
+              case DIRECTORY:
+                break;
+              default:
+                throw new UnknownSwitchCaseException(parentOfTargetNode.getType().name());
+            }
+          }
+          break;
+        default:
+          throw new UnknownSwitchCaseException(sourceNode.getType().name());
+      }
+    }
+  }
+
+  public synchronized void move (EphemeralPath source, EphemeralPath target, CopyOption... options)
+    throws NoSuchFileException {
+
   }
 
   public synchronized SeekableByteChannel newByteChannel (EphemeralPath path, Set<? extends OpenOption> options, FileAttribute<?>... attrs)
@@ -389,7 +487,7 @@ public class EphemeralFileStore extends FileStore {
 
       if (Boolean.TRUE.equals(read)) {
         if (heapNode == null) {
-          throw new FileNotFoundException(path.toString());
+          throw new NoSuchFileException(path.toString());
         } else {
           switch (heapNode.getType()) {
             case FILE:
@@ -404,17 +502,18 @@ public class EphemeralFileStore extends FileStore {
       } else {
         if (heapNode == null) {
           if (!(createNew || create)) {
-            throw new FileNotFoundException(path.toString());
+            throw new NoSuchFileException(path.toString());
           } else {
 
+            EphemeralPath parentPath;
             HeapNode parentNode;
 
-            if ((parentNode = findNode(path.getParent())) == null) {
-              throw new FileNotFoundException(path.toString());
+            if ((parentNode = findNode(parentPath = path.getParent())) == null) {
+              throw new NoSuchFileException(parentNode.toString());
             } else {
               switch (parentNode.getType()) {
                 case FILE:
-                  throw new FileNotFoundException(path.toString());
+                  throw new NoSuchFileException(path.toString());
                 case DIRECTORY:
 
                   FileNode fileNode;

@@ -32,7 +32,6 @@
  */
 package org.smallmind.file.ephemeral;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.channels.SeekableByteChannel;
@@ -152,7 +151,7 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
 
   @Override
   public synchronized void createDirectory (Path dir, FileAttribute<?>... attrs)
-    throws NoSuchFileException, FileNotFoundException, FileAlreadyExistsException {
+    throws NoSuchFileException, FileAlreadyExistsException {
 
     if (!EphemeralFileSystem.class.isAssignableFrom(dir.getFileSystem().getClass())) {
       throw new ProviderMismatchException("The path(" + dir + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
@@ -192,8 +191,18 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
   }
 
   @Override
-  public void move (Path source, Path target, CopyOption... options) {
+  public synchronized void move (Path source, Path target, CopyOption... options) {
 
+    if (!EphemeralFileSystem.class.isAssignableFrom(source.getFileSystem().getClass())) {
+      throw new ProviderMismatchException("The path(" + source + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
+    } else if (!EphemeralFileSystem.class.isAssignableFrom(target.getFileSystem().getClass())) {
+      throw new ProviderMismatchException("The path(" + target + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
+    } else {
+      checkAccess(source, AccessMode.READ);
+      checkAccess(target, AccessMode.WRITE);
+
+      ((EphemeralFileSystem)source.getFileSystem()).getFileStore().
+    }
   }
 
   @Override

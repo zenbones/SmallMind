@@ -97,7 +97,7 @@ public class EphemeralDirectoryStream implements SecureDirectoryStream<Path> {
   }
 
   @Override
-  public synchronized void move (Path srcpath, SecureDirectoryStream<Path> targetdir, Path targetpath) {
+  public synchronized void move (Path src, SecureDirectoryStream<Path> target, Path targetpath) {
 
     if (closed) {
       throw new ClosedDirectoryStreamException();

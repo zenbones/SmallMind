@@ -32,18 +32,18 @@
  */
 package org.smallmind.file.ephemeral.heap;
 
-import java.io.IOException;
+import org.smallmind.nutsnbolts.io.ByteArrayIOBuffer;
 import org.smallmind.nutsnbolts.io.ByteArrayIOStream;
 
 public class FileNode extends HeapNode {
 
-  private final ByteArrayIOStream stream;
+  private final ByteArrayIOBuffer segmentBuffer;
 
-  public FileNode (DirectoryNode parent, String name, int allocaation) {
+  public FileNode (DirectoryNode parent, String name, int allocation) {
 
     super(parent, name);
 
-    stream = new ByteArrayIOStream(allocaation);
+    segmentBuffer = new ByteArrayIOBuffer(allocation);
   }
 
   @Override
@@ -54,13 +54,12 @@ public class FileNode extends HeapNode {
 
   public ByteArrayIOStream getStream () {
 
-    return stream;
+    return new ByteArrayIOStream(segmentBuffer);
   }
 
   @Override
-  public long size ()
-    throws IOException {
+  public long size () {
 
-    return stream.size();
+    return segmentBuffer.getLimitBookmark().position();
   }
 }
