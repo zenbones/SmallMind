@@ -59,6 +59,8 @@ import org.smallmind.file.ephemeral.heap.FileNode;
 import org.smallmind.file.ephemeral.heap.HeapEventListener;
 import org.smallmind.file.ephemeral.heap.HeapNode;
 import org.smallmind.file.ephemeral.heap.HeapNodeType;
+import org.smallmind.nutsnbolts.io.ByteArrayIOBuffer;
+import org.smallmind.nutsnbolts.io.ByteArrayIOStream;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 public class EphemeralFileStore extends FileStore {
@@ -264,9 +266,7 @@ public class EphemeralFileStore extends FileStore {
         }
       }
 
-      if (path.getNameCount() == 0) {
-        throw new NoSuchFileException(path.toString());
-      } else {
+      if (path.getNameCount() > 0) {
 
         EphemeralPath parentPath;
         HeapNode parentNode;
@@ -292,7 +292,7 @@ public class EphemeralFileStore extends FileStore {
   }
 
   public synchronized void delete (EphemeralPath path)
-    throws NoSuchFileException, DirectoryNotEmptyException {
+    throws IOException {
 
     if (!fileSystem.isOpen()) {
       throw new ClosedFileSystemException();
@@ -301,7 +301,7 @@ public class EphemeralFileStore extends FileStore {
       HeapNode heapNode;
 
       if (path.getNameCount() == 0) {
-        throw new NoSuchFileException(path.toString());
+        throw new IOException("Not allowed");
       } else if ((heapNode = findNode(path)) == null) {
         throw new NoSuchFileException(path.toString());
       } else {
@@ -324,7 +324,7 @@ public class EphemeralFileStore extends FileStore {
   }
 
   public synchronized void copy (EphemeralPath source, EphemeralPath target, CopyOption... options)
-    throws NoSuchFileException, FileAlreadyExistsException {
+    throws IOException {
 
     HeapNode sourceNode;
     boolean replaceExisting = false;
@@ -345,15 +345,11 @@ public class EphemeralFileStore extends FileStore {
       HeapNode parentOfTargetNode = null;
 
       if ((targetNode = findNode(target)) == null) {
-        if (target.getNameCount() == 0) {
-          throw new NoSuchFileException(target.toString());
-        } else {
 
-          EphemeralPath parentOfTargetPath;
+        EphemeralPath parentOfTargetPath;
 
-          if ((parentOfTargetNode = findNode(parentOfTargetPath = target.getParent())) == null) {
-            throw new NoSuchFileException(parentOfTargetPath.toString());
-          }
+        if ((parentOfTargetNode = findNode(parentOfTargetPath = target.getParent())) == null) {
+          throw new NoSuchFileException(parentOfTargetPath.toString());
         }
       }
 
@@ -364,11 +360,14 @@ public class EphemeralFileStore extends FileStore {
               case FILE:
                 if (!replaceExisting) {
                   throw new FileAlreadyExistsException(target.toString());
-                }else {
-
+                } else {
+                  // all sorts of nasty race condition, need ByteArrayIOBuffer to self-encapsulate and synchronize
+                  targetNode.getParent().put(new FileNode(targetNode.getParent(), targetNode.getName(), new ByteArrayIOBuffer(((FileNode)sourceNode).getSegmentBuffer())));
                 }
                 break;
               case DIRECTORY:
+                // all sorts of nasty race condition, need ByteArrayIOBuffer to self-encapsulate and synchronize
+                ((DirectoryNode)targetNode).put(new FileNode((DirectoryNode)targetNode, sourceNode.getName(), new ByteArrayIOBuffer(((FileNode)sourceNode).getSegmentBuffer())));
                 break;
               default:
                 throw new UnknownSwitchCaseException(targetNode.getType().name());
@@ -376,9 +375,9 @@ public class EphemeralFileStore extends FileStore {
           } else {
             switch (parentOfTargetNode.getType()) {
               case FILE:
-
-                break;
+                throw new NoSuchFileException(target.toString());
               case DIRECTORY:
+                ((DirectoryNode)parentOfTargetNode).put(new FileNode((DirectoryNode)parentOfTargetNode, target.getNames()[target.getNameCount() - 1], new ByteArrayIOBuffer(((FileNode)sourceNode).getSegmentBuffer())));
                 break;
               default:
                 throw new UnknownSwitchCaseException(parentOfTargetNode.getType().name());
@@ -389,9 +388,15 @@ public class EphemeralFileStore extends FileStore {
           if (targetNode != null) {
             switch (targetNode.getType()) {
               case FILE:
-
-                break;
+                throw new FileAlreadyExistsException(target.toString());
               case DIRECTORY:
+                if (targetNode.getParent() == null) {
+                  throw new IOException("Not Allowed");
+                } else if (!((DirectoryNode)targetNode).isEmpty()) {
+                  throw new DirectoryNotEmptyException(target.toString());
+                } else {
+                  targetNode.getParent().put(new DirectoryNode(targetNode.getParent(), sourceNode.getName()));
+                }
                 break;
               default:
                 throw new UnknownSwitchCaseException(targetNode.getType().name());
@@ -399,9 +404,9 @@ public class EphemeralFileStore extends FileStore {
           } else {
             switch (parentOfTargetNode.getType()) {
               case FILE:
-
-                break;
+                throw new NoSuchFileException(target.toString());
               case DIRECTORY:
+                ((DirectoryNode)parentOfTargetNode).put(new DirectoryNode((DirectoryNode)parentOfTargetNode, sourceNode.getName()));
                 break;
               default:
                 throw new UnknownSwitchCaseException(parentOfTargetNode.getType().name());
@@ -425,7 +430,7 @@ public class EphemeralFileStore extends FileStore {
     if (!fileSystem.isOpen()) {
       throw new ClosedFileSystemException();
     } else if (path.getNameCount() == 0) {
-      throw new NoSuchFileException(path.toString());
+      throw new IOException("Cannot open a directory for read operations");
     } else {
 
       HeapNode heapNode = findNode(path);
@@ -492,7 +497,7 @@ public class EphemeralFileStore extends FileStore {
           switch (heapNode.getType()) {
             case FILE:
 
-              return new EphemeralSeekableByteChannel(this, ((FileNode)heapNode).getStream(), true, false, deleteOnClose);
+              return new EphemeralSeekableByteChannel(this, new ByteArrayIOStream(((FileNode)heapNode).getSegmentBuffer()), true, false, deleteOnClose);
             case DIRECTORY:
               throw new IOException("Cannot open a directory for read operations");
             default:
@@ -509,7 +514,7 @@ public class EphemeralFileStore extends FileStore {
             HeapNode parentNode;
 
             if ((parentNode = findNode(parentPath = path.getParent())) == null) {
-              throw new NoSuchFileException(parentNode.toString());
+              throw new NoSuchFileException(parentPath.toString());
             } else {
               switch (parentNode.getType()) {
                 case FILE:
@@ -520,7 +525,7 @@ public class EphemeralFileStore extends FileStore {
 
                   ((DirectoryNode)parentNode).put(fileNode = new FileNode((DirectoryNode)parentNode, path.getNames()[path.getNameCount() - 1], blockSize));
 
-                  return new EphemeralSeekableByteChannel(this, fileNode.getStream(), false, false, deleteOnClose);
+                  return new EphemeralSeekableByteChannel(this, new ByteArrayIOStream(fileNode.getSegmentBuffer()), false, false, deleteOnClose);
                 default:
                   throw new UnknownSwitchCaseException(parentNode.getType().name());
               }
@@ -533,10 +538,10 @@ public class EphemeralFileStore extends FileStore {
             switch (heapNode.getType()) {
               case FILE:
                 if (truncateExisting) {
-                  ((FileNode)heapNode).getStream().clear();
+                  ((FileNode)heapNode).getSegmentBuffer().clear();
                 }
 
-                return new EphemeralSeekableByteChannel(this, ((FileNode)heapNode).getStream(), false, append, deleteOnClose);
+                return new EphemeralSeekableByteChannel(this, new ByteArrayIOStream(((FileNode)heapNode).getSegmentBuffer()), false, append, deleteOnClose);
               case DIRECTORY:
                 throw new IOException("Cannot open a directory for write operations");
               default:

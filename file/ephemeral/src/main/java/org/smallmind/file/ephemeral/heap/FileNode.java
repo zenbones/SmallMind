@@ -33,7 +33,6 @@
 package org.smallmind.file.ephemeral.heap;
 
 import org.smallmind.nutsnbolts.io.ByteArrayIOBuffer;
-import org.smallmind.nutsnbolts.io.ByteArrayIOStream;
 
 public class FileNode extends HeapNode {
 
@@ -46,15 +45,22 @@ public class FileNode extends HeapNode {
     segmentBuffer = new ByteArrayIOBuffer(allocation);
   }
 
+  public FileNode (DirectoryNode parent, String name, ByteArrayIOBuffer segmentBuffer) {
+
+    super(parent, name);
+
+    this.segmentBuffer = segmentBuffer;
+  }
+
   @Override
   public HeapNodeType getType () {
 
     return HeapNodeType.FILE;
   }
 
-  public ByteArrayIOStream getStream () {
+  public ByteArrayIOBuffer getSegmentBuffer () {
 
-    return new ByteArrayIOStream(segmentBuffer);
+    return segmentBuffer;
   }
 
   @Override

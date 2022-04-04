@@ -94,8 +94,8 @@ public class ByteArrayIOStream implements Closeable {
     if (closed) {
       throw new IOException("This stream has already been closed");
     } else {
-      segmentBuffer.getSegmentList().clear();
-      segmentBuffer.getLimitBookmark().rewind();
+      segmentBuffer.clear();
+
       readBookmark.rewind();
       writeBookmark.rewind();
     }

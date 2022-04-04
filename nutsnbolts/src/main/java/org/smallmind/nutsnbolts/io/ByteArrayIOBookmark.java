@@ -24,6 +24,7 @@ public class ByteArrayIOBookmark {
   public ByteArrayIOBookmark (ByteArrayIOBookmark bookmark) {
 
     this(bookmark.getAllocation());
+
     segmentIndex = bookmark.segmentIndex();
     byteIndex = bookmark.byteIndex();
   }
