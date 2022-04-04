@@ -34,23 +34,30 @@ package org.smallmind.file.ephemeral.watch;
 
 import java.nio.file.ClosedWatchServiceException;
 import java.nio.file.NotDirectoryException;
+import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import org.smallmind.file.ephemeral.EphemeralFileStore;
+import org.smallmind.file.ephemeral.EphemeralPath;
 import org.smallmind.file.ephemeral.heap.HeapEventListener;
 
 public class EphemeralWatchService implements WatchService {
 
   private final EphemeralFileStore ephemeralFileStore;
   private final HeapEventListener heapEventListener;
+  private final HashMap<EphemeralPath, LinkedList<EphemeralWatchKey>> watchKeyMap = new HashMap<>();
+  private final LinkedBlockingQueue<EphemeralWatchKey> watchKeyQueue = new LinkedBlockingQueue<>();
   private boolean closed = false;
 
   public EphemeralWatchService (EphemeralFileStore ephemeralFileStore) {
 
     this.ephemeralFileStore = ephemeralFileStore;
 
-    heapEventListener = new EphemeralHeapEventListener();
+    heapEventListener = new EphemeralHeapEventListener(this);
   }
 
   public synchronized boolean isCosed () {
@@ -70,30 +77,72 @@ public class EphemeralWatchService implements WatchService {
     if (closed) {
       throw new ClosedWatchServiceException();
     } else {
-      ephemeralFileStore.registerHeapListener(ephemeralWatchKey.getPath(), heapEventListener);
+
+      LinkedList<EphemeralWatchKey> watchKeyList;
+
+      if ((watchKeyList = watchKeyMap.get(ephemeralWatchKey.getPath())) == null) {
+        watchKeyMap.put(ephemeralWatchKey.getPath(), watchKeyList = new LinkedList<>());
+        ephemeralFileStore.registerHeapListener(ephemeralWatchKey.getPath(), heapEventListener);
+      }
+
+      watchKeyList.add(ephemeralWatchKey);
     }
   }
 
   public synchronized void unregister (EphemeralWatchKey ephemeralWatchKey) {
 
-    ephemeralFileStore.unregisterHeapListener(ephemeralWatchKey.getPath(), heapEventListener);
+    if (closed) {
+      throw new ClosedWatchServiceException();
+    } else {
+
+      LinkedList<EphemeralWatchKey> watchKeyList;
+
+      if ((watchKeyList = watchKeyMap.get(ephemeralWatchKey.getPath())) != null) {
+        if (watchKeyList.remove(ephemeralWatchKey)) {
+          if (watchKeyList.isEmpty()) {
+            watchKeyMap.remove(ephemeralWatchKey.getPath());
+            ephemeralFileStore.unregisterHeapListener(ephemeralWatchKey.getPath(), heapEventListener);
+          }
+        }
+      }
+    }
+  }
+
+  public synchronized void fire (EphemeralPath path, WatchEvent.Kind<?> event) {
+
+    LinkedList<EphemeralWatchKey> watchKeyList;
+
+    if ((watchKeyList = watchKeyMap.get(path)) != null) {
+      for (EphemeralWatchKey watchKey : watchKeyList) {
+        if (watchKey.fire(event)) {
+          watchKeyQueue.add(watchKey);
+        }
+      }
+    }
+  }
+
+  public void requeue (EphemeralWatchKey watchKey) {
+
+    watchKeyQueue.add(watchKey);
   }
 
   @Override
   public WatchKey poll () {
 
-    return null;
+    return watchKeyQueue.poll();
   }
 
   @Override
-  public WatchKey poll (long timeout, TimeUnit unit) {
+  public WatchKey poll (long timeout, TimeUnit unit)
+    throws InterruptedException {
 
-    return null;
+    return watchKeyQueue.poll(timeout, unit);
   }
 
   @Override
-  public WatchKey take () {
+  public WatchKey take ()
+    throws InterruptedException {
 
-    return null;
+    return watchKeyQueue.take();
   }
 }

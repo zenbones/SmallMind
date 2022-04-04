@@ -389,6 +389,18 @@ public class EphemeralPath implements Path {
   }
 
   @Override
+  public int hashCode () {
+
+    return (Arrays.hashCode(names) * 31) + (absolute ? Boolean.TRUE.hashCode() : Boolean.FALSE.hashCode());
+  }
+
+  @Override
+  public boolean equals (Object obj) {
+
+    return (obj instanceof EphemeralPath) && (((EphemeralPath)obj).isAbsolute() == absolute) && Arrays.equals(((EphemeralPath)obj).getNames(), names);
+  }
+
+  @Override
   public String toString () {
 
     StringBuilder pathBuilder = new StringBuilder();

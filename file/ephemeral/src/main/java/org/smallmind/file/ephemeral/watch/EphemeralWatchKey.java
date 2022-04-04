@@ -7,9 +7,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import org.smallmind.file.ephemeral.EphemeralPath;
-import org.smallmind.file.ephemeral.heap.HeapEventListener;
 
-public class EphemeralWatchKey implements WatchKey, HeapEventListener {
+public class EphemeralWatchKey implements WatchKey {
 
   private final EphemeralWatchService watchService;
   private final WatchEvent.Kind<?>[] events;
@@ -17,6 +16,7 @@ public class EphemeralWatchKey implements WatchKey, HeapEventListener {
   private final EphemeralPath path;
   private final LinkedBlockingQueue<WatchEvent<?>> eventQueue = new LinkedBlockingQueue<>();
   private boolean valid = true;
+  private boolean signalled = false;
 
   public EphemeralWatchKey (EphemeralWatchService watchService, WatchEvent.Kind<?>[] events, WatchEvent.Modifier[] modifiers, EphemeralPath path) {
 
@@ -37,6 +37,26 @@ public class EphemeralWatchKey implements WatchKey, HeapEventListener {
     return valid && (!watchService.isCosed());
   }
 
+  public synchronized boolean fire (WatchEvent.Kind<?> firedEvent) {
+
+    for (WatchEvent.Kind<?> event : events) {
+      if (event.getClass().equals(firedEvent.getClass()) && event.name().equals(firedEvent.name())) {
+        eventQueue.add(new EphemeralWatchEvent<>(firedEvent, 1, null));
+
+        if (!signalled) {
+          signalled = true;
+
+          return true;
+        } else {
+
+          return false;
+        }
+      }
+    }
+
+    return false;
+  }
+
   @Override
   public List<WatchEvent<?>> pollEvents () {
 
@@ -55,7 +75,13 @@ public class EphemeralWatchKey implements WatchKey, HeapEventListener {
 
     if (isValid()) {
 
-      return watchService.
+      if (!eventQueue.isEmpty()) {
+        watchService.requeue(this);
+      } else {
+        signalled = false;
+      }
+
+      return true;
     } else {
 
       return false;

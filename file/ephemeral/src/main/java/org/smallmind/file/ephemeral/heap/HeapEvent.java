@@ -1,14 +1,14 @@
 package org.smallmind.file.ephemeral.heap;
 
-import java.nio.file.Path;
 import java.util.EventObject;
+import org.smallmind.file.ephemeral.EphemeralPath;
 
 public class HeapEvent extends EventObject {
 
   private final HeapEventType type;
-  private final Path path;
+  private final EphemeralPath path;
 
-  public HeapEvent (Object source, Path path, HeapEventType type) {
+  public HeapEvent (Object source, EphemeralPath path, HeapEventType type) {
 
     super(source);
 
@@ -21,7 +21,7 @@ public class HeapEvent extends EventObject {
     return type;
   }
 
-  public Path getPath () {
+  public EphemeralPath getPath () {
 
     return path;
   }
