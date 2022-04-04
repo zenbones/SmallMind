@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.file.ephemeral;
+package org.smallmind.file.ephemeral.watch;
 
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
@@ -38,9 +38,18 @@ import java.util.concurrent.TimeUnit;
 
 public class EphemeralWatchService implements WatchService {
 
-  @Override
-  public void close () {
 
+  private boolean closed = false;
+
+  public synchronized boolean isCosed () {
+
+    return closed;
+  }
+
+  @Override
+  public synchronized void close () {
+
+    closed = true;
   }
 
   @Override

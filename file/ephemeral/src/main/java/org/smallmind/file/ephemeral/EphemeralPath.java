@@ -32,7 +32,6 @@
  */
 package org.smallmind.file.ephemeral;
 
-import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.InvalidPathException;
@@ -331,30 +330,63 @@ public class EphemeralPath implements Path {
   @Override
   public URI toUri () {
 
-    return null;
+    return URI.create(fileSystem.provider().getScheme() + "://" + toAbsolutePath());
   }
 
   @Override
   public Path toAbsolutePath () {
 
-    return null;
+    return absolute ? this : new EphemeralPath(fileSystem, names, true);
   }
 
   @Override
-  public Path toRealPath (LinkOption... options) throws IOException {
+  public Path toRealPath (LinkOption... options) {
 
-    return null;
+    return normalize().toAbsolutePath();
   }
 
   @Override
-  public WatchKey register (WatchService watcher, WatchEvent.Kind<?>[] events, WatchEvent.Modifier... modifiers) throws IOException {
+  public WatchKey register (WatchService watcher, WatchEvent.Kind<?>[] events, WatchEvent.Modifier... modifiers) {
 
-    return null;
+
+
   }
 
   @Override
   public int compareTo (Path other) {
 
-    return 0;
+    EphemeralPath otherEphemeralPath = (EphemeralPath)other;
+
+    if (names.length == other.getNameCount()) {
+      for (int index = 0; index < names.length; index++) {
+
+        int comparison;
+
+        if ((comparison = names[index].compareTo(otherEphemeralPath.getNames()[index])) != 0) {
+
+          return comparison;
+        }
+      }
+
+      return 0;
+    } else {
+
+      return names.length - otherEphemeralPath.getNameCount();
+    }
+  }
+
+  @Override
+  public String toString () {
+
+    StringBuilder pathBuilder = new StringBuilder();
+
+    for (String name : names) {
+      if (absolute || (pathBuilder.length() > 0)) {
+        pathBuilder.append(SEPARATOR);
+      }
+      pathBuilder.append(name);
+    }
+
+    return pathBuilder.toString();
   }
 }

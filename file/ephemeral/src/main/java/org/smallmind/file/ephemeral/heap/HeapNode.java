@@ -32,8 +32,11 @@
  */
 package org.smallmind.file.ephemeral.heap;
 
+import org.smallmind.file.ephemeral.EphemeralBasicFileAttributes;
+
 public abstract class HeapNode {
 
+  private EphemeralBasicFileAttributes attributes;
   private HeapNode parent;
   private String name;
 
