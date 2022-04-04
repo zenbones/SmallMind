@@ -32,13 +32,46 @@
  */
 package org.smallmind.file.ephemeral.heap;
 
+import java.nio.file.Path;
+import java.util.LinkedList;
 import org.smallmind.file.ephemeral.EphemeralBasicFileAttributes;
 
 public abstract class HeapNode {
 
+  private LinkedList<HeapEventListener> listenerList;
   private EphemeralBasicFileAttributes attributes;
   private HeapNode parent;
+  private Path path;
   private String name;
 
+  public abstract HeapNodeType getType ();
+
   public abstract long size ();
+
+  public synchronized void registerListener (HeapEventListener eventListener) {
+
+    if (listenerList == null) {
+      listenerList = new LinkedList<>();
+    }
+
+    listenerList.add(eventListener);
+  }
+
+  public synchronized void unregisterListener (HeapEventListener eventListener) {
+
+    listenerList.remove(eventListener);
+  }
+
+  public synchronized void bubble (HeapEvent event) {
+
+    if (listenerList != null) {
+      for (HeapEventListener listener : listenerList) {
+        listener.handle(event);
+      }
+    }
+
+    if (parent != null) {
+      parent.bubble(event);
+    }
+  }
 }

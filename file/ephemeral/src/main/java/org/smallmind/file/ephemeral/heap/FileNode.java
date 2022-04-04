@@ -39,6 +39,12 @@ public class FileNode extends HeapNode {
   private ByteArrayOutputStream buffer;
 
   @Override
+  public HeapNodeType getType () {
+
+    return HeapNodeType.FILE;
+  }
+
+  @Override
   public long size () {
 
     return buffer.size();

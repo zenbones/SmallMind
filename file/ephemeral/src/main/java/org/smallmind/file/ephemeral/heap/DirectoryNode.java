@@ -39,6 +39,12 @@ public class DirectoryNode extends HeapNode {
   private HashMap<String, HeapNode> children = new HashMap<>();
 
   @Override
+  public HeapNodeType getType () {
+
+    return HeapNodeType.DIRECTORY;
+  }
+
+  @Override
   public synchronized long size () {
 
     long size = 0;

@@ -41,6 +41,7 @@ import java.nio.file.attribute.UserPrincipalLookupService;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.Set;
 import java.util.regex.Pattern;
+import org.smallmind.file.ephemeral.watch.EphemeralWatchService;
 import org.smallmind.nutsnbolts.util.SingleItemIterable;
 
 public class EphemeralFileSystem extends FileSystem {
@@ -151,6 +152,6 @@ public class EphemeralFileSystem extends FileSystem {
   @Override
   public WatchService newWatchService () {
 
-    return new EphemeralWatchService();
+    return new EphemeralWatchService(fileStore);
   }
 }

@@ -32,14 +32,26 @@
  */
 package org.smallmind.file.ephemeral.watch;
 
+import java.nio.file.ClosedWatchServiceException;
+import java.nio.file.NotDirectoryException;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.util.concurrent.TimeUnit;
+import org.smallmind.file.ephemeral.EphemeralFileStore;
+import org.smallmind.file.ephemeral.heap.HeapEventListener;
 
 public class EphemeralWatchService implements WatchService {
 
-
+  private final EphemeralFileStore ephemeralFileStore;
+  private final HeapEventListener heapEventListener;
   private boolean closed = false;
+
+  public EphemeralWatchService (EphemeralFileStore ephemeralFileStore) {
+
+    this.ephemeralFileStore = ephemeralFileStore;
+
+    heapEventListener = new EphemeralHeapEventListener();
+  }
 
   public synchronized boolean isCosed () {
 
@@ -50,6 +62,21 @@ public class EphemeralWatchService implements WatchService {
   public synchronized void close () {
 
     closed = true;
+  }
+
+  public synchronized void register (EphemeralWatchKey ephemeralWatchKey)
+    throws NotDirectoryException {
+
+    if (closed) {
+      throw new ClosedWatchServiceException();
+    } else {
+      ephemeralFileStore.registerHeapListener(ephemeralWatchKey.getPath(), heapEventListener);
+    }
+  }
+
+  public synchronized void unregister (EphemeralWatchKey ephemeralWatchKey) {
+
+    ephemeralFileStore.unregisterHeapListener(ephemeralWatchKey.getPath(), heapEventListener);
   }
 
   @Override

@@ -35,6 +35,7 @@ package org.smallmind.file.ephemeral;
 import java.io.IOException;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.FileStore;
+import java.nio.file.NotDirectoryException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -45,7 +46,9 @@ import java.nio.file.attribute.FileStoreAttributeView;
 import java.util.Map;
 import java.util.Set;
 import org.smallmind.file.ephemeral.heap.DirectoryNode;
+import org.smallmind.file.ephemeral.heap.HeapEventListener;
 import org.smallmind.file.ephemeral.heap.HeapNode;
+import org.smallmind.file.ephemeral.heap.HeapNodeType;
 
 public class EphemeralFileStore extends FileStore {
 
@@ -144,6 +147,27 @@ public class EphemeralFileStore extends FileStore {
     }
   }
 
+  public void registerHeapListener (EphemeralPath path, HeapEventListener listener)
+    throws NotDirectoryException {
+
+    HeapNode node;
+
+    if (((node = findNode(path)) == null) || (!HeapNodeType.DIRECTORY.equals(node.getType()))) {
+      throw new NotDirectoryException(path.toString());
+    } else {
+      node.registerListener(listener);
+    }
+  }
+
+  public void unregisterHeapListener (EphemeralPath path, HeapEventListener listener) {
+
+    HeapNode node;
+
+    if ((node = findNode(path)) != null) {
+      node.unregisterListener(listener);
+    }
+  }
+
   /*
 READ
 WRITE
@@ -174,7 +198,7 @@ IOException – if an I/O error occurs
 SecurityException – In the case of the default provider, and a security manager is installed, the checkRead method is invoked to check read access to the path if the file is opened for reading. The checkWrite method is invoked to check write access to the path if the file is opened for writing. The checkDelete method is invoked to check delete access if the file is opened with the DELETE_ON_CLOSE option.
    */
 
-  public SeekableByteChannel newByteChannel (Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) {
+  public SeekableByteChannel newByteChannel (EphemeralPath path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) {
 
     Boolean read = null;
     boolean skipToEnd;
@@ -199,12 +223,12 @@ SecurityException – In the case of the default provider, and a security manage
 //    Files.newByteChannel()
   }
 
-  private HeapNode findNode (Path path) {
+  private HeapNode findNode (EphemeralPath path) {
 
     HeapNode node = rootNode;
 
     for (Path segment : path.toAbsolutePath()) {
-if (segment = )
+      if (segment =)
     }
 
     return node;

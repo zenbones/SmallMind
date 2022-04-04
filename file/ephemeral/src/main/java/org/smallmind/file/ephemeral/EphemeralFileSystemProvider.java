@@ -107,7 +107,7 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
       throw new ProviderMismatchException("The path(" + path + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
     }
 
-    return ((EphemeralFileSystem)path.getFileSystem()).getFileStore().newByteChannel(path, options, attrs);
+    return ((EphemeralFileSystem)path.getFileSystem()).getFileStore().newByteChannel((EphemeralPath)path, options, attrs);
   }
 
   @Override

@@ -36,12 +36,15 @@ import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.InvalidPathException;
 import java.nio.file.LinkOption;
+import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.util.Arrays;
 import java.util.LinkedList;
+import org.smallmind.file.ephemeral.watch.EphemeralWatchKey;
+import org.smallmind.file.ephemeral.watch.EphemeralWatchService;
 
 public class EphemeralPath implements Path {
 
@@ -342,14 +345,24 @@ public class EphemeralPath implements Path {
   @Override
   public Path toRealPath (LinkOption... options) {
 
+    // TODO: will need to handle symlinks when/if the file system provide for them
     return normalize().toAbsolutePath();
   }
 
   @Override
-  public WatchKey register (WatchService watcher, WatchEvent.Kind<?>[] events, WatchEvent.Modifier... modifiers) {
+  public WatchKey register (WatchService watcher, WatchEvent.Kind<?>[] events, WatchEvent.Modifier... modifiers)
+    throws NotDirectoryException {
 
+    if (!(watcher instanceof EphemeralWatchService)) {
+      throw new IllegalArgumentException("The watcher is not associated with this file system");
+    } else {
 
+      EphemeralWatchKey watchKey;
 
+      ((EphemeralWatchService)watcher).register(watchKey = new EphemeralWatchKey((EphemeralWatchService)watcher, events, modifiers, this));
+
+      return watchKey;
+    }
   }
 
   @Override
