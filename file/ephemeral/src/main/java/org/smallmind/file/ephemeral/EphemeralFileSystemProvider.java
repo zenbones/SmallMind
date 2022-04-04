@@ -32,16 +32,20 @@
  */
 package org.smallmind.file.ephemeral;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
 import java.nio.file.DirectoryStream;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystemAlreadyExistsException;
 import java.nio.file.LinkOption;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.NotDirectoryException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.ProviderMismatchException;
@@ -112,20 +116,33 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
 
     if (!EphemeralFileSystem.class.isAssignableFrom(path.getFileSystem().getClass())) {
       throw new ProviderMismatchException("The path(" + path + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
+    } else {
+
+      return ((EphemeralFileSystem)path.getFileSystem()).getFileStore().newByteChannel((EphemeralPath)path, options, attrs);
     }
-
-    return ((EphemeralFileSystem)path.getFileSystem()).getFileStore().newByteChannel((EphemeralPath)path, options, attrs);
   }
 
   @Override
-  public DirectoryStream<Path> newDirectoryStream (Path dir, DirectoryStream.Filter<? super Path> filter) {
+  public DirectoryStream<Path> newDirectoryStream (Path dir, DirectoryStream.Filter<? super Path> filter)
+    throws NoSuchFileException, NotDirectoryException {
 
-    return null;
+    if (!EphemeralFileSystem.class.isAssignableFrom(dir.getFileSystem().getClass())) {
+      throw new ProviderMismatchException("The path(" + dir + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
+    } else {
+
+      return ((EphemeralFileSystem)dir.getFileSystem()).getFileStore().newDirectoryStream((EphemeralPath)dir, filter);
+    }
   }
 
   @Override
-  public void createDirectory (Path dir, FileAttribute<?>... attrs) {
+  public void createDirectory (Path dir, FileAttribute<?>... attrs)
+    throws NoSuchFileException, FileNotFoundException, FileAlreadyExistsException {
 
+    if (!EphemeralFileSystem.class.isAssignableFrom(dir.getFileSystem().getClass())) {
+      throw new ProviderMismatchException("The path(" + dir + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
+    } else {
+      ((EphemeralFileSystem)dir.getFileSystem()).getFileStore().createDirectory((EphemeralPath)dir, attrs);
+    }
   }
 
   @Override

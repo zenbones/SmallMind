@@ -36,11 +36,15 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.ClosedFileSystemException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileStore;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.OpenOption;
+import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.FileAttribute;
@@ -223,6 +227,52 @@ public class EphemeralFileStore extends FileStore {
 
       if ((node = findNode(path)) != null) {
         node.unregisterListener(listener);
+      }
+    }
+  }
+
+  public synchronized DirectoryStream<Path> newDirectoryStream (EphemeralPath dir, DirectoryStream.Filter<? super Path> filter, LinkOption... options)
+    throws NoSuchFileException, NotDirectoryException {
+
+    HeapNode heapNode;
+
+    if (((heapNode = findNode(dir)) == null) || (!HeapNodeType.DIRECTORY.equals(heapNode.getType())) {
+      throw new NotDirectoryException(dir.toString());
+    } else{
+
+    }
+  }
+
+  public synchronized void createDirectory (EphemeralPath path, FileAttribute<?>... attrs)
+    throws NoSuchFileException, FileNotFoundException, FileAlreadyExistsException {
+
+    for (FileAttribute<?> attribute : attrs) {
+      if (!"posix:permissions".equals(attribute.name())) {
+        throw new UnsupportedOperationException("Only posix permission file attributes are supported");
+      }
+    }
+
+    if (path.getNameCount() == 0) {
+      throw new NoSuchFileException(path.toString());
+    } else {
+
+      HeapNode parentNode;
+
+      if ((parentNode = findNode(path.getParent())) == null) {
+        throw new FileNotFoundException(path.toString());
+      } else {
+        switch (parentNode.getType()) {
+          case FILE:
+            throw new FileNotFoundException(path.toString());
+          case DIRECTORY:
+            if (((DirectoryNode)parentNode).get(path.getNames()[path.getNameCount() - 1]) != null) {
+              throw new FileAlreadyExistsException(path.toString());
+            } else {
+              ((DirectoryNode)parentNode).put(new DirectoryNode(path.getNames()[path.getNameCount() - 1]));
+            }
+          default:
+            throw new UnknownSwitchCaseException(parentNode.getType().name());
+        }
       }
     }
   }
