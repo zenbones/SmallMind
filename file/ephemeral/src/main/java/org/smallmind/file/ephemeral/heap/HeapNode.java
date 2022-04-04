@@ -33,18 +33,19 @@
 package org.smallmind.file.ephemeral.heap;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.LinkedList;
 import org.smallmind.file.ephemeral.EphemeralBasicFileAttributes;
 
 public abstract class HeapNode {
 
   private final EphemeralBasicFileAttributes attributes;
+  private final DirectoryNode parent;
   private final String name;
   private LinkedList<HeapEventListener> listenerList;
 
-  public HeapNode (String name) {
+  public HeapNode (DirectoryNode parent, String name) {
 
+    this.parent = parent;
     this.name = name;
   }
 
@@ -52,6 +53,11 @@ public abstract class HeapNode {
 
   public abstract long size ()
     throws IOException;
+
+  public DirectoryNode getParent () {
+
+    return parent;
+  }
 
   public String getName () {
 

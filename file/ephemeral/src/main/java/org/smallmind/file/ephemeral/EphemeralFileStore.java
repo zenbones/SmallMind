@@ -36,15 +36,16 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.ClosedFileSystemException;
+import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileStore;
-import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.SecureDirectoryStream;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.FileAttribute;
@@ -64,7 +65,7 @@ public class EphemeralFileStore extends FileStore {
   private static final Map<String, Class<? extends FileAttributeView>> SUPPORTED_FILE_VIEW_MAP = Map.of("basic", BasicFileAttributeView.class);
   private final EphemeralFileSystem fileSystem;
   private final EphemeralFileStoreAttributeView fileStoreAttributeView = new EphemeralFileStoreAttributeView();
-  private final DirectoryNode rootNode = new DirectoryNode(null);
+  private final DirectoryNode rootNode = new DirectoryNode(null, null);
   private final long capacity;
   private final int blockSize;
 
@@ -231,47 +232,90 @@ public class EphemeralFileStore extends FileStore {
     }
   }
 
-  public synchronized DirectoryStream<Path> newDirectoryStream (EphemeralPath dir, DirectoryStream.Filter<? super Path> filter, LinkOption... options)
+  public synchronized SecureDirectoryStream<Path> newDirectoryStream (EphemeralPath dir, DirectoryStream.Filter<? super Path> filter, LinkOption... options)
     throws NoSuchFileException, NotDirectoryException {
 
-    HeapNode heapNode;
+    if (!fileSystem.isOpen()) {
+      throw new ClosedFileSystemException();
+    } else {
 
-    if (((heapNode = findNode(dir)) == null) || (!HeapNodeType.DIRECTORY.equals(heapNode.getType())) {
-      throw new NotDirectoryException(dir.toString());
-    } else{
+      HeapNode heapNode;
 
+      if (((heapNode = findNode(dir)) == null) || (!HeapNodeType.DIRECTORY.equals(heapNode.getType()))) {
+        throw new NotDirectoryException(dir.toString());
+      } else {
+
+        return new EphemeralDirectoryStream(this, dir, (DirectoryNode)heapNode, filter);
+      }
     }
   }
 
   public synchronized void createDirectory (EphemeralPath path, FileAttribute<?>... attrs)
     throws NoSuchFileException, FileNotFoundException, FileAlreadyExistsException {
 
-    for (FileAttribute<?> attribute : attrs) {
-      if (!"posix:permissions".equals(attribute.name())) {
-        throw new UnsupportedOperationException("Only posix permission file attributes are supported");
-      }
-    }
-
-    if (path.getNameCount() == 0) {
-      throw new NoSuchFileException(path.toString());
+    if (!fileSystem.isOpen()) {
+      throw new ClosedFileSystemException();
     } else {
 
-      HeapNode parentNode;
+      for (FileAttribute<?> attribute : attrs) {
+        if (!"posix:permissions".equals(attribute.name())) {
+          throw new UnsupportedOperationException("Only posix permission file attributes are supported");
+        }
+      }
 
-      if ((parentNode = findNode(path.getParent())) == null) {
-        throw new FileNotFoundException(path.toString());
+      if (path.getNameCount() == 0) {
+        throw new NoSuchFileException(path.toString());
       } else {
-        switch (parentNode.getType()) {
+
+        HeapNode parentNode;
+
+        if ((parentNode = findNode(path.getParent())) == null) {
+          throw new FileNotFoundException(path.toString());
+        } else {
+          switch (parentNode.getType()) {
+            case FILE:
+              throw new FileNotFoundException(path.toString());
+            case DIRECTORY:
+              if (((DirectoryNode)parentNode).get(path.getNames()[path.getNameCount() - 1]) != null) {
+                throw new FileAlreadyExistsException(path.toString());
+              } else {
+                ((DirectoryNode)parentNode).put(new DirectoryNode((DirectoryNode)parentNode, path.getNames()[path.getNameCount() - 1]));
+              }
+            default:
+              throw new UnknownSwitchCaseException(parentNode.getType().name());
+          }
+        }
+      }
+    }
+  }
+
+  public synchronized void delete (EphemeralPath path)
+    throws NoSuchFileException, DirectoryNotEmptyException {
+
+    if (!fileSystem.isOpen()) {
+      throw new ClosedFileSystemException();
+    } else {
+
+      HeapNode heapNode;
+
+      if (path.getNameCount() == 0) {
+        throw new NoSuchFileException(path.toString());
+      } else if ((heapNode = findNode(path)) == null) {
+        throw new NoSuchFileException(path.toString());
+      } else {
+        switch (heapNode.getType()) {
           case FILE:
-            throw new FileNotFoundException(path.toString());
+            heapNode.getParent().remove(heapNode.getName());
+            break;
           case DIRECTORY:
-            if (((DirectoryNode)parentNode).get(path.getNames()[path.getNameCount() - 1]) != null) {
-              throw new FileAlreadyExistsException(path.toString());
+            if (!((DirectoryNode)heapNode).isEmpty()) {
+              throw new DirectoryNotEmptyException(path.toString());
             } else {
-              ((DirectoryNode)parentNode).put(new DirectoryNode(path.getNames()[path.getNameCount() - 1]));
+              heapNode.getParent().remove(heapNode.getName());
             }
+            break;
           default:
-            throw new UnknownSwitchCaseException(parentNode.getType().name());
+            throw new UnknownSwitchCaseException(heapNode.getType().name());
         }
       }
     }
@@ -375,7 +419,7 @@ public class EphemeralFileStore extends FileStore {
 
                   FileNode fileNode;
 
-                  ((DirectoryNode)parentNode).put(fileNode = new FileNode(path.getNames()[path.getNameCount() - 1], blockSize));
+                  ((DirectoryNode)parentNode).put(fileNode = new FileNode((DirectoryNode)parentNode, path.getNames()[path.getNameCount() - 1], blockSize));
 
                   return new EphemeralSeekableByteChannel(this, fileNode.getStream(), false, false, deleteOnClose);
                 default:

@@ -39,9 +39,9 @@ public class FileNode extends HeapNode {
 
   private final ByteArrayIOStream stream;
 
-  public FileNode (String name, int allocaation) {
+  public FileNode (DirectoryNode parent, String name, int allocaation) {
 
-    super(name);
+    super(parent, name);
 
     stream = new ByteArrayIOStream(allocaation);
   }

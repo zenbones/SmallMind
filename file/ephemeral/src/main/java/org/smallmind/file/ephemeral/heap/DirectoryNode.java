@@ -33,21 +33,31 @@
 package org.smallmind.file.ephemeral.heap;
 
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import org.smallmind.file.ephemeral.EphemeralPath;
 
 public class DirectoryNode extends HeapNode {
 
   private final HashMap<String, HeapNode> children = new HashMap<>();
 
-  public DirectoryNode (String name) {
+  public DirectoryNode (DirectoryNode parent, String name) {
 
-    super(name);
+    super(parent, name);
   }
 
   @Override
   public HeapNodeType getType () {
 
     return HeapNodeType.DIRECTORY;
+  }
+
+  public synchronized boolean isEmpty () {
+
+    return children.isEmpty();
   }
 
   public synchronized HeapNode get (String name) {
@@ -60,6 +70,31 @@ public class DirectoryNode extends HeapNode {
     children.put(heapNode.getName(), heapNode);
 
     return this;
+  }
+
+  public synchronized HeapNode remove (String name) {
+
+    return children.remove(name);
+  }
+
+  public synchronized Iterator<Path> iterator (EphemeralPath path, DirectoryStream.Filter<? super Path> filter) {
+
+    LinkedList<Path> pathList = new LinkedList<>();
+
+    for (String name : children.keySet()) {
+
+      Path childPath;
+
+      try {
+        if (filter.accept(childPath = path.resolve(name))) {
+          pathList.add(childPath);
+        }
+      } catch (IOException ioException) {
+        // nothing to do here
+      }
+    }
+
+    return pathList.iterator();
   }
 
   @Override
