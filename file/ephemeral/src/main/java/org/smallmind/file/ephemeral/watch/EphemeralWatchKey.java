@@ -34,22 +34,24 @@ public class EphemeralWatchKey implements WatchKey {
   @Override
   public synchronized boolean isValid () {
 
-    return valid && (!watchService.isCosed());
+    return valid && (!watchService.isClosed());
   }
 
   public synchronized boolean fire (WatchEvent.Kind<?> firedEvent) {
 
-    for (WatchEvent.Kind<?> event : events) {
-      if (event.getClass().equals(firedEvent.getClass()) && event.name().equals(firedEvent.name())) {
-        eventQueue.add(new EphemeralWatchEvent<>(firedEvent, 1, null));
+    if (valid) {
+      for (WatchEvent.Kind<?> event : events) {
+        if (event.getClass().equals(firedEvent.getClass()) && event.name().equals(firedEvent.name())) {
+          eventQueue.add(new EphemeralWatchEvent<>(firedEvent, 1, null));
 
-        if (!signalled) {
-          signalled = true;
+          if (!signalled) {
+            signalled = true;
 
-          return true;
-        } else {
+            return true;
+          } else {
 
-          return false;
+            return false;
+          }
         }
       }
     }
@@ -91,8 +93,16 @@ public class EphemeralWatchKey implements WatchKey {
   @Override
   public synchronized void cancel () {
 
+    cancel(true);
+  }
+
+  public synchronized void cancel (boolean deregister) {
+
     valid = false;
-    watchService.unregister(this);
+
+    if (deregister) {
+      watchService.unregister(this);
+    }
   }
 
   @Override

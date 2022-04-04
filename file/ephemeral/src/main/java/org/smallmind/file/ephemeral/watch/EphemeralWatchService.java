@@ -51,7 +51,7 @@ public class EphemeralWatchService implements WatchService {
   private final HeapEventListener heapEventListener;
   private final HashMap<EphemeralPath, LinkedList<EphemeralWatchKey>> watchKeyMap = new HashMap<>();
   private final LinkedBlockingQueue<EphemeralWatchKey> watchKeyQueue = new LinkedBlockingQueue<>();
-  private boolean closed = false;
+  private volatile boolean closed = false;
 
   public EphemeralWatchService (EphemeralFileStore ephemeralFileStore) {
 
@@ -60,7 +60,7 @@ public class EphemeralWatchService implements WatchService {
     heapEventListener = new EphemeralHeapEventListener(this);
   }
 
-  public synchronized boolean isCosed () {
+  public synchronized boolean isClosed () {
 
     return closed;
   }
@@ -68,7 +68,15 @@ public class EphemeralWatchService implements WatchService {
   @Override
   public synchronized void close () {
 
-    closed = true;
+    if (!closed) {
+      closed = true;
+
+      for (LinkedList<EphemeralWatchKey> watchKeyList : watchKeyMap.values()) {
+        for (EphemeralWatchKey watchKey : watchKeyList) {
+          watchKey.cancel(false);
+        }
+      }
+    }
   }
 
   public synchronized void register (EphemeralWatchKey ephemeralWatchKey)
@@ -91,58 +99,107 @@ public class EphemeralWatchService implements WatchService {
 
   public synchronized void unregister (EphemeralWatchKey ephemeralWatchKey) {
 
-    if (closed) {
-      throw new ClosedWatchServiceException();
-    } else {
+    LinkedList<EphemeralWatchKey> watchKeyList;
 
-      LinkedList<EphemeralWatchKey> watchKeyList;
-
-      if ((watchKeyList = watchKeyMap.get(ephemeralWatchKey.getPath())) != null) {
-        if (watchKeyList.remove(ephemeralWatchKey)) {
-          if (watchKeyList.isEmpty()) {
-            watchKeyMap.remove(ephemeralWatchKey.getPath());
-            ephemeralFileStore.unregisterHeapListener(ephemeralWatchKey.getPath(), heapEventListener);
-          }
+    if ((watchKeyList = watchKeyMap.get(ephemeralWatchKey.getPath())) != null) {
+      if (watchKeyList.remove(ephemeralWatchKey)) {
+        if (watchKeyList.isEmpty()) {
+          watchKeyMap.remove(ephemeralWatchKey.getPath());
+          ephemeralFileStore.unregisterHeapListener(ephemeralWatchKey.getPath(), heapEventListener);
         }
+
+        watchKeyQueue.remove(ephemeralWatchKey);
       }
     }
   }
 
   public synchronized void fire (EphemeralPath path, WatchEvent.Kind<?> event) {
 
-    LinkedList<EphemeralWatchKey> watchKeyList;
+    if (!closed) {
 
-    if ((watchKeyList = watchKeyMap.get(path)) != null) {
-      for (EphemeralWatchKey watchKey : watchKeyList) {
-        if (watchKey.fire(event)) {
-          watchKeyQueue.add(watchKey);
+      LinkedList<EphemeralWatchKey> watchKeyList;
+
+      if ((watchKeyList = watchKeyMap.get(path)) != null) {
+        for (EphemeralWatchKey watchKey : watchKeyList) {
+          if (watchKey.fire(event)) {
+            watchKeyQueue.add(watchKey);
+          }
         }
       }
     }
   }
 
-  public void requeue (EphemeralWatchKey watchKey) {
+  public synchronized void requeue (EphemeralWatchKey watchKey) {
 
-    watchKeyQueue.add(watchKey);
+    if (!closed) {
+      watchKeyQueue.add(watchKey);
+    }
   }
 
   @Override
   public WatchKey poll () {
 
-    return watchKeyQueue.poll();
+    if (closed) {
+      throw new ClosedWatchServiceException();
+    } else {
+      return watchKeyQueue.poll();
+    }
   }
 
   @Override
   public WatchKey poll (long timeout, TimeUnit unit)
     throws InterruptedException {
 
-    return watchKeyQueue.poll(timeout, unit);
+    if (closed) {
+      throw new ClosedWatchServiceException();
+    } else {
+
+      long wait;
+
+      if ((wait = unit.toMillis(timeout)) < 500) {
+        return watchKeyQueue.poll(timeout, unit);
+      } else {
+
+        long started = System.currentTimeMillis();
+
+        do {
+
+          WatchKey watchKey;
+
+          if ((watchKey = watchKeyQueue.poll(500, TimeUnit.MILLISECONDS)) != null) {
+
+            return watchKey;
+          }
+        } while ((!closed) && (System.currentTimeMillis() - started < wait));
+
+        if (closed) {
+          throw new ClosedWatchServiceException();
+        } else {
+
+          return null;
+        }
+      }
+    }
   }
 
   @Override
   public WatchKey take ()
     throws InterruptedException {
 
-    return watchKeyQueue.take();
+    if (closed) {
+      throw new ClosedWatchServiceException();
+    } else {
+      do {
+
+        WatchKey watchKey;
+
+        if ((watchKey = watchKeyQueue.poll(500, TimeUnit.MILLISECONDS)) != null) {
+
+          return watchKey;
+        }
+      } while (!closed);
+
+      throw new ClosedWatchServiceException();
+    }
   }
 }
