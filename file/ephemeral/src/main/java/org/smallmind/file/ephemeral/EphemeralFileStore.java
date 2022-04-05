@@ -65,7 +65,7 @@ import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 public class EphemeralFileStore extends FileStore {
 
-  private static final Map<String, Class<? extends FileAttributeView>> SUPPORTED_FILE_VIEW_MAP = Map.of("basic", BasicFileAttributeView.class);
+  private static final Map<String, Class<? extends FileAttributeView>> SUPPORTED_FILE_ATTRIBUTE_VIEW_MAP = Map.of("basic", BasicFileAttributeView.class);
   private final EphemeralFileSystem fileSystem;
   private final EphemeralFileStoreAttributeView fileStoreAttributeView = new EphemeralFileStoreAttributeView();
   private final DirectoryNode rootNode = new DirectoryNode(null, null);
@@ -138,7 +138,7 @@ public class EphemeralFileStore extends FileStore {
       throw new ClosedFileSystemException();
     } else {
 
-      return SUPPORTED_FILE_VIEW_MAP.containsValue(type);
+      return SUPPORTED_FILE_ATTRIBUTE_VIEW_MAP.containsValue(type);
     }
   }
 
@@ -149,7 +149,7 @@ public class EphemeralFileStore extends FileStore {
       throw new ClosedFileSystemException();
     } else {
 
-      return SUPPORTED_FILE_VIEW_MAP.containsKey(name);
+      return SUPPORTED_FILE_ATTRIBUTE_VIEW_MAP.containsKey(name);
     }
   }
 
@@ -159,7 +159,7 @@ public class EphemeralFileStore extends FileStore {
       throw new ClosedFileSystemException();
     } else {
 
-      return SUPPORTED_FILE_VIEW_MAP.keySet();
+      return SUPPORTED_FILE_ATTRIBUTE_VIEW_MAP.keySet();
     }
   }
 
@@ -171,6 +171,22 @@ public class EphemeralFileStore extends FileStore {
     } else {
 
       return EphemeralFileStoreAttributeView.class.equals(type) ? type.cast(fileStoreAttributeView) : null;
+    }
+  }
+
+  public <V extends FileAttributeView> V getFileAttributeView (EphemeralPath path, Class<V> type, LinkOption... options)
+    throws NoSuchFileException {
+
+    if (!SUPPORTED_FILE_ATTRIBUTE_VIEW_MAP.containsValue(type)) {
+
+      return null;
+    } else {
+
+      HeapNode heapNode;
+
+      if ((heapNode= findNode(path)) != null) {
+        heapNode.
+      }
     }
   }
 

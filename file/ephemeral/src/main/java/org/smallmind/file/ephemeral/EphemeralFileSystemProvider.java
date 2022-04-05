@@ -42,6 +42,7 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystemAlreadyExistsException;
+import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.NotDirectoryException;
@@ -264,7 +265,17 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
   @Override
   public <V extends FileAttributeView> V getFileAttributeView (Path path, Class<V> type, LinkOption... options) {
 
-    return null;
+    Files.move()
+    if (!EphemeralFileSystem.class.isAssignableFrom(path.getFileSystem().getClass())) {
+      throw new ProviderMismatchException("The path(" + path + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
+    } else {
+
+      Path normalizedPath = path.normalize();
+
+      checkAccess(normalizedPath, AccessMode.WRITE);
+
+      ((EphemeralFileSystem)normalizedPath.getFileSystem()).getFileStore().getF
+    }
   }
 
   @Override

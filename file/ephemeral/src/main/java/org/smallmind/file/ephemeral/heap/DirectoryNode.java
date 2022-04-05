@@ -103,8 +103,7 @@ public class DirectoryNode extends HeapNode {
   }
 
   @Override
-  public synchronized long size ()
-    throws IOException {
+  public synchronized long size () {
 
     long size = 0;
 
