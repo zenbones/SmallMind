@@ -226,9 +226,22 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
   }
 
   @Override
-  public boolean isSameFile (Path path, Path path2) {
+  public boolean isSameFile (Path source, Path target) {
 
-    return false;
+    if (!EphemeralFileSystem.class.isAssignableFrom(source.getFileSystem().getClass())) {
+      throw new ProviderMismatchException("The path(" + source + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
+    } else if (!EphemeralFileSystem.class.isAssignableFrom(target.getFileSystem().getClass())) {
+      throw new ProviderMismatchException("The path(" + target + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
+    } else {
+
+      Path normalizedSource = source.normalize();
+      Path normalizedTarget = target.normalize();
+
+      checkAccess(normalizedSource, AccessMode.READ);
+      checkAccess(normalizedTarget, AccessMode.READ);
+
+      return normalizedSource.equals(normalizedTarget);
+    }
   }
 
   @Override
