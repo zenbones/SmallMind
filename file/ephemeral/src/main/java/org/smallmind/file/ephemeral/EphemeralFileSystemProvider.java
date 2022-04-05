@@ -79,7 +79,7 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
 
     this.scheme = scheme;
 
-    ephemeralFileSystem = new EphemeralFileSystem(this);
+    ephemeralFileSystem = new EphemeralFileSystem(this, new EphemeralFileSystemConfiguration());
   }
 
   public boolean isDefault () {

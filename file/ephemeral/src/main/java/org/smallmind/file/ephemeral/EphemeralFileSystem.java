@@ -138,7 +138,7 @@ public class EphemeralFileSystem extends FileSystem {
 
     if (closed) {
       throw new ClosedFileSystemException();
-    } else if (first.startsWith("/opt/epicenter")) {
+    } else if (configuration.isOurs(first, more)) {
 
       return new EphemeralPath(this, first, more);
     } else {

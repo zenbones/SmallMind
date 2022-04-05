@@ -60,6 +60,6 @@ public class Wombat {
       bb.flip();
       bc.write(bb);
     }
-    System.out.println(new String(Files.readAllBytes(pe)));
+    System.out.println(new String(Files.readAllBytes(pe.resolve("sparkle.txt"))));
   }
 }
