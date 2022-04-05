@@ -52,9 +52,7 @@ public class SleuthThreadPool {
 
     semaphores[testTier.ordinal()].acquire();
 
-    Thread thread = new Thread(() -> {
-      runnable.run();
-    });
+    Thread thread = new Thread(runnable);
 
     thread.start();
     if (thread.isInterrupted()) {
