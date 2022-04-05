@@ -34,13 +34,16 @@ package org.smallmind.file.ephemeral;
 
 public class EphemeralFileSystemConfiguration {
 
+  private static final String CAPACITY_PROPERTY = "org.smallmind.file.ephemeral.configuration.capacity";
+  private static final String BLOCK_SIZ_PROPERTY = "org.smallmind.file.ephemeral.configuration.blockSize";
+  private static final String ROOTS_PROPERTY = "org.smallmind.file.ephemeral.configuration.roots";
   private final String[] roots;
   private final long capacity;
   private final int blockSize;
 
   public EphemeralFileSystemConfiguration () {
 
-    this(Long.MAX_VALUE, 1024, EphemeralPath.getSeparator());
+    this(deriveCapacity(), deriveBlockSize(), deriveRoots());
   }
 
   public EphemeralFileSystemConfiguration (long capacity, int blockSize, String... roots) {
@@ -60,6 +63,60 @@ public class EphemeralFileSystemConfiguration {
       this.capacity = capacity;
       this.blockSize = blockSize;
       this.roots = roots;
+    }
+  }
+
+  private static long deriveCapacity () {
+
+    String capacityEnvVar;
+
+    if ((capacityEnvVar = System.getProperty(CAPACITY_PROPERTY)) != null) {
+
+      return Long.parseLong(capacityEnvVar);
+    } else {
+
+      return Long.MAX_VALUE;
+    }
+  }
+
+  private static int deriveBlockSize () {
+
+    String blockSizeEnvVar;
+
+    if ((blockSizeEnvVar = System.getProperty(BLOCK_SIZ_PROPERTY)) != null) {
+
+      return Integer.parseInt(blockSizeEnvVar);
+    } else {
+
+      return 1024;
+    }
+  }
+
+  private static String[] deriveRoots () {
+
+    String rootsEnvVar;
+
+    if ((rootsEnvVar = System.getProperty(ROOTS_PROPERTY)) != null) {
+
+      String trimmedRootsEnvVar = rootsEnvVar.trim();
+
+      if (trimmedRootsEnvVar.startsWith("[") && trimmedRootsEnvVar.endsWith("]")) {
+
+        String[] rawNames = trimmedRootsEnvVar.split(",");
+        String[] trimmedNames = new String[rawNames.length];
+
+        for (int index = 0; index < rawNames.length; index++) {
+          trimmedNames[index] = rawNames[index].trim();
+        }
+
+        return trimmedNames;
+      } else {
+
+        return new String[] {trimmedRootsEnvVar};
+      }
+    } else {
+
+      return new String[] {EphemeralPath.getSeparator()};
     }
   }
 
