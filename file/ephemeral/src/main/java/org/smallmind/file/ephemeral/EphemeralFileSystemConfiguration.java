@@ -102,7 +102,7 @@ public class EphemeralFileSystemConfiguration {
 
       if (trimmedRootsEnvVar.startsWith("[") && trimmedRootsEnvVar.endsWith("]")) {
 
-        String[] rawNames = trimmedRootsEnvVar.split(",");
+        String[] rawNames = trimmedRootsEnvVar.substring(1, trimmedRootsEnvVar.length() - 1).split(",");
         String[] trimmedNames = new String[rawNames.length];
 
         for (int index = 0; index < rawNames.length; index++) {
