@@ -3,7 +3,6 @@ package org.smallmind.file.ephemeral;
 import java.io.IOException;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.ClosedDirectoryStreamException;
-import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
@@ -76,7 +75,7 @@ public class EphemeralDirectoryStream implements SecureDirectoryStream<Path> {
 
   @Override
   public synchronized void deleteFile (Path path)
-    throws NoSuchFileException, DirectoryNotEmptyException {
+    throws IOException {
 
     if (closed) {
       throw new ClosedDirectoryStreamException();
@@ -87,7 +86,7 @@ public class EphemeralDirectoryStream implements SecureDirectoryStream<Path> {
 
   @Override
   public synchronized void deleteDirectory (Path path)
-    throws NoSuchFileException, DirectoryNotEmptyException {
+    throws IOException {
 
     if (closed) {
       throw new ClosedDirectoryStreamException();
@@ -97,12 +96,13 @@ public class EphemeralDirectoryStream implements SecureDirectoryStream<Path> {
   }
 
   @Override
-  public synchronized void move (Path src, SecureDirectoryStream<Path> target, Path targetpath) {
+  public synchronized void move (Path src, SecureDirectoryStream<Path> target, Path targetpath)
+    throws IOException {
 
     if (closed) {
       throw new ClosedDirectoryStreamException();
     } else {
-
+      provider.move(src.isAbsolute() ? src : streamPath.resolve(src), targetpath.isAbsolute() ? targetpath : target.iterator().next().resolve(targetpath));
     }
   }
 

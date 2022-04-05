@@ -278,7 +278,7 @@ public class EphemeralFileStore extends FileStore {
             case FILE:
               throw new NoSuchFileException(path.toString());
             case DIRECTORY:
-              if (((DirectoryNode)parentNode).get(path.getNames()[path.getNameCount() - 1]) != null) {
+              if (((DirectoryNode)parentNode).exists(path.getNames()[path.getNameCount() - 1])) {
                 throw new FileAlreadyExistsException(path.toString());
               } else {
                 ((DirectoryNode)parentNode).put(new DirectoryNode((DirectoryNode)parentNode, path.getNames()[path.getNameCount() - 1]));
@@ -326,102 +326,214 @@ public class EphemeralFileStore extends FileStore {
   public synchronized void copy (EphemeralPath source, EphemeralPath target, CopyOption... options)
     throws IOException {
 
-    HeapNode sourceNode;
-    boolean replaceExisting = false;
+    if (!source.equals(target)) {
 
-    for (CopyOption option : options) {
-      if (!(option instanceof StandardCopyOption)) {
-        throw new UnsupportedOperationException("Only standard open options are supported");
-      } else if (StandardCopyOption.REPLACE_EXISTING.equals(option)) {
-        replaceExisting = true;
-      }
-    }
+      HeapNode sourceNode;
+      boolean replaceExisting = false;
 
-    if ((sourceNode = findNode(source)) == null) {
-      throw new NoSuchFileException(source.toString());
-    } else {
-
-      HeapNode targetNode;
-      HeapNode parentOfTargetNode = null;
-
-      if ((targetNode = findNode(target)) == null) {
-
-        EphemeralPath parentOfTargetPath;
-
-        if ((parentOfTargetNode = findNode(parentOfTargetPath = target.getParent())) == null) {
-          throw new NoSuchFileException(parentOfTargetPath.toString());
+      for (CopyOption option : options) {
+        if (!(option instanceof StandardCopyOption)) {
+          throw new UnsupportedOperationException("Only standard open options are supported");
+        } else if (StandardCopyOption.REPLACE_EXISTING.equals(option)) {
+          replaceExisting = true;
         }
       }
 
-      switch (sourceNode.getType()) {
-        case FILE:
-          if (targetNode != null) {
-            switch (targetNode.getType()) {
-              case FILE:
-                if (!replaceExisting) {
-                  throw new FileAlreadyExistsException(target.toString());
-                } else {
+      if ((sourceNode = findNode(source)) == null) {
+        throw new NoSuchFileException(source.toString());
+      } else {
+
+        HeapNode targetNode;
+        HeapNode parentOfTargetNode = null;
+
+        if ((targetNode = findNode(target)) == null) {
+
+          EphemeralPath parentOfTargetPath;
+
+          if ((parentOfTargetNode = findNode(parentOfTargetPath = target.getParent())) == null) {
+            throw new NoSuchFileException(parentOfTargetPath.toString());
+          }
+        }
+
+        switch (sourceNode.getType()) {
+          case FILE:
+            if (targetNode != null) {
+              switch (targetNode.getType()) {
+                case FILE:
+                  if (!replaceExisting) {
+                    throw new FileAlreadyExistsException(target.toString());
+                  } else {
+                    // all sorts of nasty race condition, need ByteArrayIOBuffer to self-encapsulate and synchronize
+                    targetNode.getParent().put(new FileNode(targetNode.getParent(), targetNode.getName(), new ByteArrayIOBuffer(((FileNode)sourceNode).getSegmentBuffer())));
+                  }
+                  break;
+                case DIRECTORY:
+                  if (((DirectoryNode)targetNode).exists(sourceNode.getName()) && (!replaceExisting)) {
+                    throw new FileAlreadyExistsException(target.resolve(source.getFileName()).toString());
+                  } else {
+                    // all sorts of nasty race condition, need ByteArrayIOBuffer to self-encapsulate and synchronize
+                    ((DirectoryNode)targetNode).put(new FileNode((DirectoryNode)targetNode, sourceNode.getName(), new ByteArrayIOBuffer(((FileNode)sourceNode).getSegmentBuffer())));
+                  }
+                  break;
+                default:
+                  throw new UnknownSwitchCaseException(targetNode.getType().name());
+              }
+            } else {
+              switch (parentOfTargetNode.getType()) {
+                case FILE:
+                  throw new NoSuchFileException(target.toString());
+                case DIRECTORY:
                   // all sorts of nasty race condition, need ByteArrayIOBuffer to self-encapsulate and synchronize
-                  targetNode.getParent().put(new FileNode(targetNode.getParent(), targetNode.getName(), new ByteArrayIOBuffer(((FileNode)sourceNode).getSegmentBuffer())));
-                }
-                break;
-              case DIRECTORY:
-                // all sorts of nasty race condition, need ByteArrayIOBuffer to self-encapsulate and synchronize
-                ((DirectoryNode)targetNode).put(new FileNode((DirectoryNode)targetNode, sourceNode.getName(), new ByteArrayIOBuffer(((FileNode)sourceNode).getSegmentBuffer())));
-                break;
-              default:
-                throw new UnknownSwitchCaseException(targetNode.getType().name());
+                  ((DirectoryNode)parentOfTargetNode).put(new FileNode((DirectoryNode)parentOfTargetNode, target.getNames()[target.getNameCount() - 1], new ByteArrayIOBuffer(((FileNode)sourceNode).getSegmentBuffer())));
+                  break;
+                default:
+                  throw new UnknownSwitchCaseException(parentOfTargetNode.getType().name());
+              }
             }
-          } else {
-            switch (parentOfTargetNode.getType()) {
-              case FILE:
-                throw new NoSuchFileException(target.toString());
-              case DIRECTORY:
-                ((DirectoryNode)parentOfTargetNode).put(new FileNode((DirectoryNode)parentOfTargetNode, target.getNames()[target.getNameCount() - 1], new ByteArrayIOBuffer(((FileNode)sourceNode).getSegmentBuffer())));
-                break;
-              default:
-                throw new UnknownSwitchCaseException(parentOfTargetNode.getType().name());
+            break;
+          case DIRECTORY:
+            if (targetNode != null) {
+              switch (targetNode.getType()) {
+                case FILE:
+                  throw new FileAlreadyExistsException(target.toString());
+                case DIRECTORY:
+                  if (targetNode.getParent() == null) {
+                    throw new IOException("Not Allowed");
+                  } else if (!((DirectoryNode)targetNode).isEmpty()) {
+                    throw new DirectoryNotEmptyException(target.toString());
+                  } else if (!replaceExisting) {
+                    throw new FileAlreadyExistsException(target.toString());
+                  } else {
+                    targetNode.getParent().put(new DirectoryNode(targetNode.getParent(), sourceNode.getName()));
+                    targetNode.getParent().remove(targetNode.getName());
+                  }
+                  break;
+                default:
+                  throw new UnknownSwitchCaseException(targetNode.getType().name());
+              }
+            } else {
+              switch (parentOfTargetNode.getType()) {
+                case FILE:
+                  throw new NoSuchFileException(target.toString());
+                case DIRECTORY:
+                  ((DirectoryNode)parentOfTargetNode).put(new DirectoryNode((DirectoryNode)parentOfTargetNode, sourceNode.getName()));
+                  break;
+                default:
+                  throw new UnknownSwitchCaseException(parentOfTargetNode.getType().name());
+              }
             }
-          }
-          break;
-        case DIRECTORY:
-          if (targetNode != null) {
-            switch (targetNode.getType()) {
-              case FILE:
-                throw new FileAlreadyExistsException(target.toString());
-              case DIRECTORY:
-                if (targetNode.getParent() == null) {
-                  throw new IOException("Not Allowed");
-                } else if (!((DirectoryNode)targetNode).isEmpty()) {
-                  throw new DirectoryNotEmptyException(target.toString());
-                } else {
-                  targetNode.getParent().put(new DirectoryNode(targetNode.getParent(), sourceNode.getName()));
-                }
-                break;
-              default:
-                throw new UnknownSwitchCaseException(targetNode.getType().name());
-            }
-          } else {
-            switch (parentOfTargetNode.getType()) {
-              case FILE:
-                throw new NoSuchFileException(target.toString());
-              case DIRECTORY:
-                ((DirectoryNode)parentOfTargetNode).put(new DirectoryNode((DirectoryNode)parentOfTargetNode, sourceNode.getName()));
-                break;
-              default:
-                throw new UnknownSwitchCaseException(parentOfTargetNode.getType().name());
-            }
-          }
-          break;
-        default:
-          throw new UnknownSwitchCaseException(sourceNode.getType().name());
+            break;
+          default:
+            throw new UnknownSwitchCaseException(sourceNode.getType().name());
+        }
       }
     }
   }
 
   public synchronized void move (EphemeralPath source, EphemeralPath target, CopyOption... options)
-    throws NoSuchFileException {
+    throws IOException {
 
+    if (!source.equals(target)) {
+
+      HeapNode sourceNode;
+      boolean replaceExisting = false;
+
+      for (CopyOption option : options) {
+        if (!(option instanceof StandardCopyOption)) {
+          throw new UnsupportedOperationException("Only standard open options are supported");
+        } else if (StandardCopyOption.REPLACE_EXISTING.equals(option)) {
+          replaceExisting = true;
+        }
+      }
+
+      if ((sourceNode = findNode(source)) == null) {
+        throw new NoSuchFileException(source.toString());
+      } else {
+
+        HeapNode targetNode;
+        HeapNode parentOfTargetNode = null;
+
+        if ((targetNode = findNode(target)) == null) {
+
+          EphemeralPath parentOfTargetPath;
+
+          if ((parentOfTargetNode = findNode(parentOfTargetPath = target.getParent())) == null) {
+            throw new NoSuchFileException(parentOfTargetPath.toString());
+          }
+        }
+
+        switch (sourceNode.getType()) {
+          case FILE:
+            if (targetNode != null) {
+              switch (targetNode.getType()) {
+                case FILE:
+                  if (!replaceExisting) {
+                    throw new FileAlreadyExistsException(target.toString());
+                  } else {
+                    targetNode.getParent().put(new FileNode(targetNode.getParent(), targetNode.getName(), ((FileNode)sourceNode).getSegmentBuffer()));
+                  }
+                  break;
+                case DIRECTORY:
+                  if (((DirectoryNode)targetNode).exists(sourceNode.getName()) && (!replaceExisting)) {
+                    throw new FileAlreadyExistsException(target.resolve(source.getFileName()).toString());
+                  } else {
+                    ((DirectoryNode)targetNode).put(new FileNode((DirectoryNode)targetNode, sourceNode.getName(), ((FileNode)sourceNode).getSegmentBuffer()));
+                  }
+                  break;
+                default:
+                  throw new UnknownSwitchCaseException(targetNode.getType().name());
+              }
+            } else {
+              switch (parentOfTargetNode.getType()) {
+                case FILE:
+                  throw new NoSuchFileException(target.toString());
+                case DIRECTORY:
+                  ((DirectoryNode)parentOfTargetNode).put(new FileNode((DirectoryNode)parentOfTargetNode, target.getNames()[target.getNameCount() - 1], ((FileNode)sourceNode).getSegmentBuffer()));
+                  break;
+                default:
+                  throw new UnknownSwitchCaseException(parentOfTargetNode.getType().name());
+              }
+            }
+            break;
+          case DIRECTORY:
+            if (targetNode != null) {
+              switch (targetNode.getType()) {
+                case FILE:
+                  throw new FileAlreadyExistsException(target.toString());
+                case DIRECTORY:
+                  if (targetNode.getParent() == null) {
+                    throw new IOException("Not Allowed");
+                  } else if (!((DirectoryNode)targetNode).isEmpty()) {
+                    throw new DirectoryNotEmptyException(target.toString());
+                  } else if (!replaceExisting) {
+                    throw new FileAlreadyExistsException(target.toString());
+                  } else {
+                    targetNode.getParent().put(new DirectoryNode(targetNode.getParent(), sourceNode.getName()));
+                    targetNode.getParent().remove(targetNode.getName());
+                  }
+                  break;
+                default:
+                  throw new UnknownSwitchCaseException(targetNode.getType().name());
+              }
+            } else {
+              switch (parentOfTargetNode.getType()) {
+                case FILE:
+                  throw new NoSuchFileException(target.toString());
+                case DIRECTORY:
+                  ((DirectoryNode)parentOfTargetNode).put(new DirectoryNode((DirectoryNode)parentOfTargetNode, sourceNode.getName()));
+                  break;
+                default:
+                  throw new UnknownSwitchCaseException(parentOfTargetNode.getType().name());
+              }
+            }
+            break;
+          default:
+            throw new UnknownSwitchCaseException(sourceNode.getType().name());
+        }
+
+        sourceNode.getParent().remove(sourceNode.getName());
+      }
+    }
   }
 
   public synchronized SeekableByteChannel newByteChannel (EphemeralPath path, Set<? extends OpenOption> options, FileAttribute<?>... attrs)
