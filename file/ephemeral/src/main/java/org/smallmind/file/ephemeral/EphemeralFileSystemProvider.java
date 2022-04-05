@@ -61,6 +61,7 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
 
   private final EphemeralFileSystem ephemeralFileSystem;
   private final String scheme;
+  private FileSystem nativeFileSystem;
 
   public EphemeralFileSystemProvider () {
 
@@ -70,6 +71,8 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
   public EphemeralFileSystemProvider (FileSystemProvider fileSystemProvider) {
 
     this(fileSystemProvider.getScheme());
+
+    nativeFileSystem = fileSystemProvider.getFileSystem(URI.create(fileSystemProvider.getScheme() + ":///"));
   }
 
   public EphemeralFileSystemProvider (String scheme) {
@@ -88,6 +91,11 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
   public String getScheme () {
 
     return scheme;
+  }
+
+  public FileSystem getNativeFileSystem () {
+
+    return nativeFileSystem;
   }
 
   @Override
@@ -119,15 +127,15 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
       throw new ProviderMismatchException("The path(" + path + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
     } else {
 
-      Path normalizedPath = path.normalize();
+      EphemeralPath normalizedPath = (EphemeralPath)path.normalize();
 
       if (options.contains(StandardOpenOption.WRITE) || options.contains(StandardOpenOption.APPEND)) {
-        checkAccess(normalizedPath, AccessMode.WRITE);
+        internalCheckAccess(normalizedPath, AccessMode.WRITE);
       } else {
-        checkAccess(normalizedPath, AccessMode.READ);
+        internalCheckAccess(normalizedPath, AccessMode.READ);
       }
 
-      return ((EphemeralFileSystem)normalizedPath.getFileSystem()).getFileStore().newByteChannel((EphemeralPath)normalizedPath, options, attrs);
+      return ((EphemeralFileSystem)normalizedPath.getFileSystem()).getFileStore().newByteChannel(normalizedPath, options, attrs);
     }
   }
 
@@ -145,11 +153,11 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
       throw new ProviderMismatchException("The path(" + dir + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
     } else {
 
-      Path normalizedDir = dir.normalize();
+      EphemeralPath normalizedDir = (EphemeralPath)dir.normalize();
 
-      checkAccess(normalizedDir, AccessMode.READ);
+      internalCheckAccess(normalizedDir, AccessMode.READ);
 
-      return ((EphemeralFileSystem)normalizedDir.getFileSystem()).getFileStore().newDirectoryStream((EphemeralPath)normalizedDir, filter);
+      return ((EphemeralFileSystem)normalizedDir.getFileSystem()).getFileStore().newDirectoryStream(normalizedDir, filter);
     }
   }
 
@@ -161,11 +169,13 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
       throw new ProviderMismatchException("The path(" + dir + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
     } else {
 
-      Path normalizedDir = dir.normalize();
+      EphemeralPath normalizedDir = (EphemeralPath)dir.normalize();
 
-      checkAccess(normalizedDir, AccessMode.WRITE);
+      if (normalizedDir.getNames().length > 0) {
+        internalCheckAccess(normalizedDir.getParent(), AccessMode.WRITE);
+      }
 
-      ((EphemeralFileSystem)normalizedDir.getFileSystem()).getFileStore().createDirectory((EphemeralPath)normalizedDir, attrs);
+      ((EphemeralFileSystem)normalizedDir.getFileSystem()).getFileStore().createDirectory(normalizedDir, attrs);
     }
   }
 
@@ -177,11 +187,11 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
       throw new ProviderMismatchException("The path(" + path + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
     } else {
 
-      Path normalizedPath = path.normalize();
+      EphemeralPath normalizedPath = (EphemeralPath)path.normalize();
 
-      checkAccess(normalizedPath, AccessMode.WRITE);
+      internalCheckAccess(normalizedPath, AccessMode.WRITE);
 
-      ((EphemeralFileSystem)normalizedPath.getFileSystem()).getFileStore().delete((EphemeralPath)normalizedPath);
+      ((EphemeralFileSystem)normalizedPath.getFileSystem()).getFileStore().delete(normalizedPath);
     }
   }
 
@@ -195,13 +205,13 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
       throw new ProviderMismatchException("The path(" + target + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
     } else {
 
-      Path normalizedSource = source.normalize();
-      Path normalizedTarget = target.normalize();
+      EphemeralPath normalizedSource = (EphemeralPath)source.normalize();
+      EphemeralPath normalizedTarget = (EphemeralPath)target.normalize();
 
-      checkAccess(normalizedSource, AccessMode.READ);
-      checkAccess(normalizedTarget, AccessMode.WRITE);
+      internalCheckAccess(normalizedSource, AccessMode.READ);
+      internalCheckAccess(normalizedTarget, AccessMode.WRITE);
 
-      ((EphemeralFileSystem)normalizedSource.getFileSystem()).getFileStore().copy((EphemeralPath)normalizedSource, (EphemeralPath)normalizedTarget, options);
+      ((EphemeralFileSystem)normalizedSource.getFileSystem()).getFileStore().copy(normalizedSource, normalizedTarget, options);
     }
   }
 
@@ -215,18 +225,19 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
       throw new ProviderMismatchException("The path(" + target + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
     } else {
 
-      Path normalizedSource = source.normalize();
-      Path normalizedTarget = target.normalize();
+      EphemeralPath normalizedSource = (EphemeralPath)source.normalize();
+      EphemeralPath normalizedTarget = (EphemeralPath)target.normalize();
 
-      checkAccess(normalizedSource, AccessMode.READ);
-      checkAccess(normalizedTarget, AccessMode.WRITE);
+      internalCheckAccess(normalizedSource, AccessMode.READ);
+      internalCheckAccess(normalizedTarget, AccessMode.WRITE);
 
-      ((EphemeralFileSystem)source.getFileSystem()).getFileStore().move((EphemeralPath)normalizedSource, (EphemeralPath)normalizedTarget, options);
+      ((EphemeralFileSystem)source.getFileSystem()).getFileStore().move(normalizedSource, normalizedTarget, options);
     }
   }
 
   @Override
-  public boolean isSameFile (Path source, Path target) {
+  public boolean isSameFile (Path source, Path target)
+    throws NoSuchFileException {
 
     if (!EphemeralFileSystem.class.isAssignableFrom(source.getFileSystem().getClass())) {
       throw new ProviderMismatchException("The path(" + source + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
@@ -234,11 +245,11 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
       throw new ProviderMismatchException("The path(" + target + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
     } else {
 
-      Path normalizedSource = source.normalize();
-      Path normalizedTarget = target.normalize();
+      EphemeralPath normalizedSource = (EphemeralPath)source.normalize();
+      EphemeralPath normalizedTarget = (EphemeralPath)target.normalize();
 
-      checkAccess(normalizedSource, AccessMode.READ);
-      checkAccess(normalizedTarget, AccessMode.READ);
+      internalCheckAccess(normalizedSource, AccessMode.READ);
+      internalCheckAccess(normalizedTarget, AccessMode.READ);
 
       return normalizedSource.equals(normalizedTarget);
     }
@@ -257,8 +268,23 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
   }
 
   @Override
-  public void checkAccess (Path path, AccessMode... modes) {
+  public void checkAccess (Path path, AccessMode... modes)
+    throws NoSuchFileException {
 
+    if (!EphemeralFileSystem.class.isAssignableFrom(path.getFileSystem().getClass())) {
+      throw new ProviderMismatchException("The path(" + path + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
+    } else {
+
+      EphemeralPath normalizedPath = (EphemeralPath)path.normalize();
+
+      internalCheckAccess(normalizedPath, modes);
+    }
+  }
+
+  private void internalCheckAccess (EphemeralPath path, AccessMode... modes)
+    throws NoSuchFileException {
+
+    ((EphemeralFileSystem)path.getFileSystem()).getFileStore().checkAccess(path);
   }
 
   @Override
@@ -268,13 +294,12 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
       throw new ProviderMismatchException("The path(" + path + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
     } else {
 
-      Path normalizedPath = path.normalize();
-
-      checkAccess(normalizedPath, AccessMode.READ);
+      EphemeralPath normalizedPath = (EphemeralPath)path.normalize();
 
       try {
+        internalCheckAccess(normalizedPath, AccessMode.READ);
 
-        return ((EphemeralFileSystem)normalizedPath.getFileSystem()).getFileStore().getFileAttributeView((EphemeralPath)normalizedPath, type, options);
+        return ((EphemeralFileSystem)normalizedPath.getFileSystem()).getFileStore().getFileAttributeView(normalizedPath, type, options);
       } catch (NoSuchFileException noSuchFileException) {
 
         return null;
@@ -290,11 +315,11 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
       throw new ProviderMismatchException("The path(" + path + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
     } else {
 
-      Path normalizedPath = path.normalize();
+      EphemeralPath normalizedPath = (EphemeralPath)path.normalize();
 
-      checkAccess(normalizedPath, AccessMode.READ);
+      internalCheckAccess(normalizedPath, AccessMode.READ);
 
-      return ((EphemeralFileSystem)normalizedPath.getFileSystem()).getFileStore().readAttributes((EphemeralPath)path, type, options);
+      return ((EphemeralFileSystem)normalizedPath.getFileSystem()).getFileStore().readAttributes(normalizedPath, type, options);
     }
   }
 
@@ -306,11 +331,11 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
       throw new ProviderMismatchException("The path(" + path + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
     } else {
 
-      Path normalizedPath = path.normalize();
+      EphemeralPath normalizedPath = (EphemeralPath)path.normalize();
 
-      checkAccess(normalizedPath, AccessMode.READ);
+      internalCheckAccess(normalizedPath, AccessMode.READ);
 
-      return ((EphemeralFileSystem)normalizedPath.getFileSystem()).getFileStore().readAttributes((EphemeralPath)path, attributes, options);
+      return ((EphemeralFileSystem)normalizedPath.getFileSystem()).getFileStore().readAttributes(normalizedPath, attributes, options);
     }
   }
 
@@ -322,11 +347,11 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
       throw new ProviderMismatchException("The path(" + path + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
     } else {
 
-      Path normalizedPath = path.normalize();
+      EphemeralPath normalizedPath = (EphemeralPath)path.normalize();
 
-      checkAccess(normalizedPath, AccessMode.WRITE);
+      internalCheckAccess(normalizedPath, AccessMode.WRITE);
 
-      ((EphemeralFileSystem)normalizedPath.getFileSystem()).getFileStore().setAttribute((EphemeralPath)path, attribute, value, options);
+      ((EphemeralFileSystem)normalizedPath.getFileSystem()).getFileStore().setAttribute(normalizedPath, attribute, value, options);
     }
   }
 }

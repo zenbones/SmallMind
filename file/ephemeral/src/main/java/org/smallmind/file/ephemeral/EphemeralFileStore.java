@@ -374,6 +374,14 @@ public class EphemeralFileStore extends FileStore {
     }
   }
 
+  public void checkAccess (EphemeralPath path)
+    throws NoSuchFileException {
+
+    if (findNode(path) == null) {
+      throw new NoSuchFileException(path.toString());
+    }
+  }
+
   public void unregisterHeapListener (EphemeralPath path, HeapEventListener listener)
     throws NoSuchFileException {
 
@@ -437,6 +445,7 @@ public class EphemeralFileStore extends FileStore {
               } else {
                 ((DirectoryNode)parentNode).put(new DirectoryNode((DirectoryNode)parentNode, path.getNames()[path.getNameCount() - 1]));
               }
+              break;
             default:
               throw new UnknownSwitchCaseException(parentNode.getType().name());
           }
