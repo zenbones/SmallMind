@@ -64,6 +64,11 @@ public abstract class HeapNode {
     return name;
   }
 
+  public EphemeralBasicFileAttributes getAttributes () {
+
+    return attributes;
+  }
+
   public synchronized void registerListener (HeapEventListener eventListener) {
 
     if (listenerList == null) {

@@ -38,26 +38,34 @@ import java.nio.channels.ClosedChannelException;
 import java.nio.channels.NonReadableChannelException;
 import java.nio.channels.NonWritableChannelException;
 import java.nio.channels.SeekableByteChannel;
+import java.nio.file.attribute.FileTime;
+import org.smallmind.file.ephemeral.heap.FileNode;
 import org.smallmind.nutsnbolts.io.ByteArrayIOStream;
 
 public class EphemeralSeekableByteChannel implements SeekableByteChannel {
 
   private final EphemeralFileStore fileStore;
+  private final FileNode fileNode;
+  private final EphemeralPath filePath;
   private final ByteArrayIOStream stream;
   private final boolean read;
   private final boolean deleteOnClose;
 
-  public EphemeralSeekableByteChannel (EphemeralFileStore fileStore, ByteArrayIOStream stream, boolean read, boolean append, boolean deleteOnClose)
+  public EphemeralSeekableByteChannel (EphemeralFileStore fileStore, FileNode fileNode, EphemeralPath filePath, boolean read, boolean append, boolean deleteOnClose)
     throws IOException {
 
     this.fileStore = fileStore;
-    this.stream = stream;
+    this.filePath = filePath;
+    this.fileNode = fileNode;
     this.read = read;
     this.deleteOnClose = deleteOnClose;
 
+    stream = new ByteArrayIOStream(fileNode.getSegmentBuffer());
     if (append) {
       stream.asOutputStream().advance();
     }
+
+    fileNode.getAttributes().setLastAccessTime(FileTime.fromMillis(System.currentTimeMillis()));
   }
 
   @Override
@@ -73,7 +81,11 @@ public class EphemeralSeekableByteChannel implements SeekableByteChannel {
       byte[] buffer = new byte[dst.remaining()];
       int bytesRead = stream.asInputStream().read(buffer);
 
-      dst.put(buffer, 0, bytesRead);
+      if (bytesRead > 0) {
+        dst.put(buffer, 0, bytesRead);
+
+        fileNode.getAttributes().setLastAccessTime(FileTime.fromMillis(System.currentTimeMillis()));
+      }
 
       return bytesRead;
     }
@@ -97,7 +109,11 @@ public class EphemeralSeekableByteChannel implements SeekableByteChannel {
         buffer = new byte[bytesWritten];
         src.get(buffer);
         stream.asOutputStream().write(buffer);
+
+        fileNode.getAttributes().setLastAccessTime(FileTime.fromMillis(System.currentTimeMillis()));
+        fileNode.getAttributes().setLastModifiedTime(FileTime.fromMillis(System.currentTimeMillis()));
       }
+
       return bytesWritten;
     }
   }
@@ -129,6 +145,8 @@ public class EphemeralSeekableByteChannel implements SeekableByteChannel {
   public synchronized long size ()
     throws IOException {
 
+    fileNode.getAttributes().setLastAccessTime(FileTime.fromMillis(System.currentTimeMillis()));
+
     return stream.size();
   }
 
@@ -137,6 +155,9 @@ public class EphemeralSeekableByteChannel implements SeekableByteChannel {
     throws IOException {
 
     stream.truncate(size);
+
+    fileNode.getAttributes().setLastAccessTime(FileTime.fromMillis(System.currentTimeMillis()));
+    fileNode.getAttributes().setLastModifiedTime(FileTime.fromMillis(System.currentTimeMillis()));
 
     return this;
   }
@@ -148,11 +169,12 @@ public class EphemeralSeekableByteChannel implements SeekableByteChannel {
   }
 
   @Override
-  public synchronized void close () {
+  public synchronized void close ()
+    throws IOException {
 
     stream.close();
     if (deleteOnClose) {
-      fileStore.
+      fileStore.delete(filePath);
     }
   }
 }

@@ -60,7 +60,6 @@ import org.smallmind.file.ephemeral.heap.HeapEventListener;
 import org.smallmind.file.ephemeral.heap.HeapNode;
 import org.smallmind.file.ephemeral.heap.HeapNodeType;
 import org.smallmind.nutsnbolts.io.ByteArrayIOBuffer;
-import org.smallmind.nutsnbolts.io.ByteArrayIOStream;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 public class EphemeralFileStore extends FileStore {
@@ -184,7 +183,7 @@ public class EphemeralFileStore extends FileStore {
 
       HeapNode heapNode;
 
-      if ((heapNode= findNode(path)) != null) {
+      if ((heapNode = findNode(path)) != null) {
         heapNode.
       }
     }
@@ -625,7 +624,7 @@ public class EphemeralFileStore extends FileStore {
           switch (heapNode.getType()) {
             case FILE:
 
-              return new EphemeralSeekableByteChannel(this, new ByteArrayIOStream(((FileNode)heapNode).getSegmentBuffer()), true, false, deleteOnClose);
+              return new EphemeralSeekableByteChannel(this, (FileNode)heapNode, path, true, false, deleteOnClose);
             case DIRECTORY:
               throw new IOException("Cannot open a directory for read operations");
             default:
@@ -653,7 +652,7 @@ public class EphemeralFileStore extends FileStore {
 
                   ((DirectoryNode)parentNode).put(fileNode = new FileNode((DirectoryNode)parentNode, path.getNames()[path.getNameCount() - 1], blockSize));
 
-                  return new EphemeralSeekableByteChannel(this, new ByteArrayIOStream(fileNode.getSegmentBuffer()), false, false, deleteOnClose);
+                  return new EphemeralSeekableByteChannel(this, fileNode, path, false, false, deleteOnClose);
                 default:
                   throw new UnknownSwitchCaseException(parentNode.getType().name());
               }
@@ -669,7 +668,7 @@ public class EphemeralFileStore extends FileStore {
                   ((FileNode)heapNode).getSegmentBuffer().clear();
                 }
 
-                return new EphemeralSeekableByteChannel(this, new ByteArrayIOStream(((FileNode)heapNode).getSegmentBuffer()), false, append, deleteOnClose);
+                return new EphemeralSeekableByteChannel(this, (FileNode)heapNode, path, false, append, deleteOnClose);
               case DIRECTORY:
                 throw new IOException("Cannot open a directory for write operations");
               default:
