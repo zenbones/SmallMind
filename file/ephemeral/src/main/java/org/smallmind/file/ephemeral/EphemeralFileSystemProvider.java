@@ -64,7 +64,7 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
 
   public EphemeralFileSystemProvider () {
 
-    this("ephemeral");
+    this("file");
   }
 
   public EphemeralFileSystemProvider (FileSystemProvider fileSystemProvider) {
