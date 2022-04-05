@@ -77,6 +77,10 @@ public class EphemeralFileStore extends FileStore {
 
   public EphemeralFileStore (EphemeralFileSystem fileSystem, long capacity, int blockSize) {
 
+    if ((capacity <= 0) || (blockSize <= 0)) {
+      throw new IllegalArgumentException("Both capacity and block size must be > 0");
+    }
+
     this.fileSystem = fileSystem;
     this.capacity = capacity;
     this.blockSize = blockSize;
@@ -123,8 +127,7 @@ public class EphemeralFileStore extends FileStore {
   }
 
   @Override
-  public synchronized long getUnallocatedSpace ()
-    throws IOException {
+  public synchronized long getUnallocatedSpace () {
 
     if (!fileSystem.isOpen()) {
       throw new ClosedFileSystemException();
@@ -286,7 +289,7 @@ public class EphemeralFileStore extends FileStore {
     }
   }
 
-  public void setAttribute (EphemeralPath path, String attribute, Object value, LinkOption... options)
+  public synchronized void setAttribute (EphemeralPath path, String attribute, Object value, LinkOption... options)
     throws NoSuchFileException {
 
     if (!fileSystem.isOpen()) {
@@ -357,7 +360,7 @@ public class EphemeralFileStore extends FileStore {
     }
   }
 
-  public void registerHeapListener (EphemeralPath path, HeapEventListener listener)
+  public synchronized void registerHeapListener (EphemeralPath path, HeapEventListener listener)
     throws NoSuchFileException, NotDirectoryException {
 
     if (!fileSystem.isOpen()) {
@@ -374,15 +377,7 @@ public class EphemeralFileStore extends FileStore {
     }
   }
 
-  public void checkAccess (EphemeralPath path)
-    throws NoSuchFileException {
-
-    if (findNode(path) == null) {
-      throw new NoSuchFileException(path.toString());
-    }
-  }
-
-  public void unregisterHeapListener (EphemeralPath path, HeapEventListener listener)
+  public synchronized void unregisterHeapListener (EphemeralPath path, HeapEventListener listener)
     throws NoSuchFileException {
 
     if (!fileSystem.isOpen()) {
@@ -394,6 +389,14 @@ public class EphemeralFileStore extends FileStore {
       if ((node = findNode(path)) != null) {
         node.unregisterListener(listener);
       }
+    }
+  }
+
+  public synchronized void checkAccess (EphemeralPath path)
+    throws NoSuchFileException {
+
+    if (findNode(path) == null) {
+      throw new NoSuchFileException(path.toString());
     }
   }
 
@@ -828,7 +831,7 @@ public class EphemeralFileStore extends FileStore {
     }
   }
 
-  private synchronized HeapNode findNode (EphemeralPath path)
+  private HeapNode findNode (EphemeralPath path)
     throws NoSuchFileException {
 
     if (!path.isAbsolute()) {

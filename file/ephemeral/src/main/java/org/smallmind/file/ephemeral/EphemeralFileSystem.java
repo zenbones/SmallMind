@@ -47,16 +47,18 @@ import org.smallmind.nutsnbolts.util.SingleItemIterable;
 public class EphemeralFileSystem extends FileSystem {
 
   private static final EphemeralUserPrincipalLookupService USER_PRINCIPAL_LOOKUP_SERVICE = new EphemeralUserPrincipalLookupService();
-  private final EphemeralPath rootPath;
-  private final EphemeralFileStore fileStore;
   private final EphemeralFileSystemProvider provider;
+  private final EphemeralFileSystemConfiguration configuration;
+  private final EphemeralFileStore fileStore;
+  private final EphemeralPath rootPath;
   private volatile boolean closed;
 
-  public EphemeralFileSystem (EphemeralFileSystemProvider provider) {
+  public EphemeralFileSystem (EphemeralFileSystemProvider provider, EphemeralFileSystemConfiguration configuration) {
 
     this.provider = provider;
+    this.configuration = configuration;
 
-    fileStore = new EphemeralFileStore(this, 0, 0);
+    fileStore = new EphemeralFileStore(this, configuration.getCapacity(), configuration.getBlockSize());
     rootPath = new EphemeralPath(this);
   }
 
@@ -76,7 +78,7 @@ public class EphemeralFileSystem extends FileSystem {
   }
 
   @Override
-  public boolean isOpen () {
+  public synchronized boolean isOpen () {
 
     return !closed;
   }

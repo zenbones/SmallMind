@@ -130,7 +130,13 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
       EphemeralPath normalizedPath = (EphemeralPath)path.normalize();
 
       if (options.contains(StandardOpenOption.WRITE) || options.contains(StandardOpenOption.APPEND)) {
-        internalCheckAccess(normalizedPath, AccessMode.WRITE);
+        try {
+          internalCheckAccess(normalizedPath, AccessMode.WRITE);
+        } catch (NoSuchFileException noSuchFileException) {
+          if (normalizedPath.getNames().length > 0) {
+            internalCheckAccess(normalizedPath.getParent(), AccessMode.WRITE);
+          }
+        }
       } else {
         internalCheckAccess(normalizedPath, AccessMode.READ);
       }
@@ -140,7 +146,7 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
   }
 
   @Override
-  public DirectoryStream<Path> newDirectoryStream (Path dir, DirectoryStream.Filter<? super Path> filter)
+  public synchronized DirectoryStream<Path> newDirectoryStream (Path dir, DirectoryStream.Filter<? super Path> filter)
     throws NoSuchFileException, NotDirectoryException {
 
     return newDirectoryStream(dir, filter, new LinkOption[0]);
@@ -236,7 +242,7 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
   }
 
   @Override
-  public boolean isSameFile (Path source, Path target)
+  public synchronized boolean isSameFile (Path source, Path target)
     throws NoSuchFileException {
 
     if (!EphemeralFileSystem.class.isAssignableFrom(source.getFileSystem().getClass())) {
@@ -268,7 +274,7 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
   }
 
   @Override
-  public void checkAccess (Path path, AccessMode... modes)
+  public synchronized void checkAccess (Path path, AccessMode... modes)
     throws NoSuchFileException {
 
     if (!EphemeralFileSystem.class.isAssignableFrom(path.getFileSystem().getClass())) {
@@ -288,7 +294,7 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
   }
 
   @Override
-  public <V extends FileAttributeView> V getFileAttributeView (Path path, Class<V> type, LinkOption... options) {
+  public synchronized <V extends FileAttributeView> V getFileAttributeView (Path path, Class<V> type, LinkOption... options) {
 
     if (!EphemeralFileSystem.class.isAssignableFrom(path.getFileSystem().getClass())) {
       throw new ProviderMismatchException("The path(" + path + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
@@ -308,7 +314,7 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
   }
 
   @Override
-  public <A extends BasicFileAttributes> A readAttributes (Path path, Class<A> type, LinkOption... options)
+  public synchronized <A extends BasicFileAttributes> A readAttributes (Path path, Class<A> type, LinkOption... options)
     throws NoSuchFileException {
 
     if (!EphemeralFileSystem.class.isAssignableFrom(path.getFileSystem().getClass())) {
@@ -324,7 +330,7 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
   }
 
   @Override
-  public Map<String, Object> readAttributes (Path path, String attributes, LinkOption... options)
+  public synchronized Map<String, Object> readAttributes (Path path, String attributes, LinkOption... options)
     throws NoSuchFileException {
 
     if (!EphemeralFileSystem.class.isAssignableFrom(path.getFileSystem().getClass())) {
@@ -340,7 +346,7 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
   }
 
   @Override
-  public void setAttribute (Path path, String attribute, Object value, LinkOption... options)
+  public synchronized void setAttribute (Path path, String attribute, Object value, LinkOption... options)
     throws NoSuchFileException {
 
     if (!EphemeralFileSystem.class.isAssignableFrom(path.getFileSystem().getClass())) {
