@@ -315,7 +315,18 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
   }
 
   @Override
-  public void setAttribute (Path path, String attribute, Object value, LinkOption... options) {
+  public void setAttribute (Path path, String attribute, Object value, LinkOption... options)
+    throws NoSuchFileException {
 
+    if (!EphemeralFileSystem.class.isAssignableFrom(path.getFileSystem().getClass())) {
+      throw new ProviderMismatchException("The path(" + path + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
+    } else {
+
+      Path normalizedPath = path.normalize();
+
+      checkAccess(normalizedPath, AccessMode.WRITE);
+
+      ((EphemeralFileSystem)normalizedPath.getFileSystem()).getFileStore().setAttribute((EphemeralPath)path, attribute, value, options);
+    }
   }
 }

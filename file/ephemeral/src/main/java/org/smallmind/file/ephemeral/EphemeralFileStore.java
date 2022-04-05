@@ -53,6 +53,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.FileStoreAttributeView;
+import java.nio.file.attribute.FileTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -215,7 +216,7 @@ public class EphemeralFileStore extends FileStore {
 
       HeapNode heapNode;
       String[] attributeNames;
-      String viewName = "basic";
+      String viewName;
       boolean asterisk = false;
       int colonPos;
 
@@ -281,6 +282,48 @@ public class EphemeralFileStore extends FileStore {
         }
 
         return attributeMap;
+      }
+    }
+  }
+
+  public void setAttribute (EphemeralPath path, String attribute, Object value, LinkOption... options)
+    throws NoSuchFileException {
+
+    if (!fileSystem.isOpen()) {
+      throw new ClosedFileSystemException();
+    } else {
+
+      HeapNode heapNode;
+      String attributeName;
+      String viewName;
+      int colonPos;
+
+      if ((colonPos = attribute.indexOf(':')) >= 0) {
+        if (!SUPPORTED_FILE_ATTRIBUTE_VIEW_MAP.containsKey(viewName = attribute.substring(0, colonPos))) {
+          throw new UnsupportedOperationException(viewName);
+        }
+        attributeName = attribute.substring(colonPos + 1);
+      } else {
+        attributeName = attribute;
+      }
+
+      if ((heapNode = findNode(path)) == null) {
+        throw new NoSuchFileException(path.toString());
+      } else {
+
+        EphemeralBasicFileAttributes fileAttributes = heapNode.getAttributes();
+
+        switch (attributeName) {
+          case "creationTime":
+            fileAttributes.setCreationTime((FileTime)value);
+            break;
+          case "lastModifiedTime":
+            fileAttributes.setLastModifiedTime((FileTime)value);
+            break;
+          case "lastAccessTime":
+            fileAttributes.setLastAccessTime((FileTime)value);
+            break;
+        }
       }
     }
   }
