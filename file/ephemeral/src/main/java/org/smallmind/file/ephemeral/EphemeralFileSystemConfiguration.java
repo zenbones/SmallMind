@@ -40,8 +40,7 @@ public class EphemeralFileSystemConfiguration {
 
   public EphemeralFileSystemConfiguration () {
 
-//    this(Long.MAX_VALUE, 1024, EphemeralPath.getSeparator());
-    this(Long.MAX_VALUE, 1024, "/opt/epicenter");
+    this(Long.MAX_VALUE, 1024, EphemeralPath.getSeparator());
   }
 
   public EphemeralFileSystemConfiguration (long capacity, int blockSize, String... roots) {
