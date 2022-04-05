@@ -98,22 +98,22 @@ public class EphemeralFileSystemConfiguration {
 
     if ((rootsEnvVar = System.getProperty(ROOTS_PROPERTY)) != null) {
 
+      String[] rawNames;
+      String[] trimmedNames;
       String trimmedRootsEnvVar = rootsEnvVar.trim();
 
       if (trimmedRootsEnvVar.startsWith("[") && trimmedRootsEnvVar.endsWith("]")) {
-
-        String[] rawNames = trimmedRootsEnvVar.substring(1, trimmedRootsEnvVar.length() - 1).split(",");
-        String[] trimmedNames = new String[rawNames.length];
-
-        for (int index = 0; index < rawNames.length; index++) {
-          trimmedNames[index] = rawNames[index].trim();
-        }
-
-        return trimmedNames;
+        rawNames = trimmedRootsEnvVar.substring(1, trimmedRootsEnvVar.length() - 1).split(",");
       } else {
-
-        return new String[] {trimmedRootsEnvVar};
+        rawNames = trimmedRootsEnvVar.split(",");
       }
+
+      trimmedNames = new String[rawNames.length];
+      for (int index = 0; index < rawNames.length; index++) {
+        trimmedNames[index] = rawNames[index].trim();
+      }
+
+      return trimmedNames;
     } else {
 
       return new String[] {EphemeralPath.getSeparator()};
