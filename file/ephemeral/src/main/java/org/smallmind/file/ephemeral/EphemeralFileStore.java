@@ -49,9 +49,11 @@ import java.nio.file.SecureDirectoryStream;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributeView;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.FileStoreAttributeView;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import org.smallmind.file.ephemeral.heap.DirectoryNode;
@@ -65,6 +67,7 @@ import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 public class EphemeralFileStore extends FileStore {
 
   private static final Map<String, Class<? extends FileAttributeView>> SUPPORTED_FILE_ATTRIBUTE_VIEW_MAP = Map.of("basic", BasicFileAttributeView.class);
+  private static final String[] BASIC_FILE_ATTRIBUTE_NAMES = new String[] {"creationTime", "lastModifiedTime", "lastAccessTime", "isDirectory", "isRegularFile", "isSymbolicLink", "isOther", "size", "fileKey"};
   private final EphemeralFileSystem fileSystem;
   private final EphemeralFileStoreAttributeView fileStoreAttributeView = new EphemeralFileStoreAttributeView();
   private final DirectoryNode rootNode = new DirectoryNode(null, null);
@@ -173,10 +176,12 @@ public class EphemeralFileStore extends FileStore {
     }
   }
 
-  public <V extends FileAttributeView> V getFileAttributeView (EphemeralPath path, Class<V> type, LinkOption... options)
+  public synchronized <V extends FileAttributeView> V getFileAttributeView (EphemeralPath path, Class<V> type, LinkOption... options)
     throws NoSuchFileException {
 
-    if (!SUPPORTED_FILE_ATTRIBUTE_VIEW_MAP.containsValue(type)) {
+    if (!fileSystem.isOpen()) {
+      throw new ClosedFileSystemException();
+    } else if (!SUPPORTED_FILE_ATTRIBUTE_VIEW_MAP.containsValue(type)) {
 
       return null;
     } else {
@@ -184,6 +189,99 @@ public class EphemeralFileStore extends FileStore {
       HeapNode heapNode;
 
       return ((heapNode = findNode(path)) != null) ? type.cast(new EphemeralBasicFileAttributeView(heapNode.getAttributes())) : null;
+    }
+  }
+
+  public synchronized <A extends BasicFileAttributes> A readAttributes (EphemeralPath path, Class<A> type, LinkOption... options)
+    throws NoSuchFileException {
+
+    if (!fileSystem.isOpen()) {
+      throw new ClosedFileSystemException();
+    } else if (!type.isAssignableFrom(EphemeralBasicFileAttributes.class)) {
+      throw new UnsupportedOperationException(type.getName());
+    } else {
+      HeapNode heapNode;
+
+      return ((heapNode = findNode(path)) != null) ? type.cast(heapNode.getAttributes()) : null;
+    }
+  }
+
+  public synchronized Map<String, Object> readAttributes (EphemeralPath path, String attributes, LinkOption... options)
+    throws NoSuchFileException {
+
+    if (!fileSystem.isOpen()) {
+      throw new ClosedFileSystemException();
+    } else {
+
+      HeapNode heapNode;
+      String[] attributeNames;
+      String viewName = "basic";
+      boolean asterisk = false;
+      int colonPos;
+
+      if ((colonPos = attributes.indexOf(':')) >= 0) {
+        if (!SUPPORTED_FILE_ATTRIBUTE_VIEW_MAP.containsKey(viewName = attributes.substring(0, colonPos))) {
+          throw new UnsupportedOperationException(viewName);
+        }
+        attributeNames = attributes.substring(colonPos + 1).split(",");
+      } else {
+        attributeNames = attributes.split(",");
+      }
+
+      for (int index = 0; index < attributeNames.length; index++) {
+        attributeNames[index] = attributeNames[index].strip();
+
+        if (!asterisk) {
+          if (attributeNames[index].indexOf('*') >= 0) {
+            asterisk = true;
+          }
+        }
+      }
+      if (asterisk) {
+        attributeNames = BASIC_FILE_ATTRIBUTE_NAMES;
+      }
+
+      if ((heapNode = findNode(path)) == null) {
+        throw new NoSuchFileException(path.toString());
+      } else {
+
+        EphemeralBasicFileAttributes fileAttributes = heapNode.getAttributes();
+        HashMap<String, Object> attributeMap = new HashMap<>();
+
+        for (String attributeName : attributeNames) {
+          switch (attributeName) {
+            case "creationTime":
+              attributeMap.put("creationTime", fileAttributes.creationTime());
+              break;
+            case "lastModifiedTime":
+              attributeMap.put("lastModifiedTime", fileAttributes.lastModifiedTime());
+              break;
+            case "lastAccessTime":
+              attributeMap.put("lastAccessTime", fileAttributes.lastAccessTime());
+              break;
+            case "isDirectory":
+              attributeMap.put("isDirectory", fileAttributes.isDirectory());
+              break;
+            case "isRegularFile":
+              attributeMap.put("isRegularFile", fileAttributes.isRegularFile());
+              break;
+            case "isSymbolicLink":
+              attributeMap.put("isSymbolicLink", fileAttributes.isSymbolicLink());
+              break;
+            case "isOther":
+              attributeMap.put("isOther", fileAttributes.isOther());
+              break;
+            case "size":
+              attributeMap.put("size", fileAttributes.size());
+              break;
+            case "fileKey":
+              attributeMap.put("fileKey", fileAttributes.fileKey());
+              break;
+          }
+        }
+
+        return attributeMap;
+      }
     }
   }
 

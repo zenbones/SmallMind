@@ -42,7 +42,6 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystemAlreadyExistsException;
-import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.NotDirectoryException;
@@ -265,29 +264,54 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
   @Override
   public <V extends FileAttributeView> V getFileAttributeView (Path path, Class<V> type, LinkOption... options) {
 
-    Files.move()
     if (!EphemeralFileSystem.class.isAssignableFrom(path.getFileSystem().getClass())) {
       throw new ProviderMismatchException("The path(" + path + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
     } else {
 
       Path normalizedPath = path.normalize();
 
-      checkAccess(normalizedPath, AccessMode.WRITE);
+      checkAccess(normalizedPath, AccessMode.READ);
 
-      ((EphemeralFileSystem)normalizedPath.getFileSystem()).getFileStore().getF
+      try {
+
+        return ((EphemeralFileSystem)normalizedPath.getFileSystem()).getFileStore().getFileAttributeView((EphemeralPath)normalizedPath, type, options);
+      } catch (NoSuchFileException noSuchFileException) {
+
+        return null;
+      }
     }
   }
 
   @Override
-  public <A extends BasicFileAttributes> A readAttributes (Path path, Class<A> type, LinkOption... options) {
+  public <A extends BasicFileAttributes> A readAttributes (Path path, Class<A> type, LinkOption... options)
+    throws NoSuchFileException {
 
-    return null;
+    if (!EphemeralFileSystem.class.isAssignableFrom(path.getFileSystem().getClass())) {
+      throw new ProviderMismatchException("The path(" + path + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
+    } else {
+
+      Path normalizedPath = path.normalize();
+
+      checkAccess(normalizedPath, AccessMode.READ);
+
+      return ((EphemeralFileSystem)normalizedPath.getFileSystem()).getFileStore().readAttributes((EphemeralPath)path, type, options);
+    }
   }
 
   @Override
-  public Map<String, Object> readAttributes (Path path, String attributes, LinkOption... options) {
+  public Map<String, Object> readAttributes (Path path, String attributes, LinkOption... options)
+    throws NoSuchFileException {
 
-    return null;
+    if (!EphemeralFileSystem.class.isAssignableFrom(path.getFileSystem().getClass())) {
+      throw new ProviderMismatchException("The path(" + path + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
+    } else {
+
+      Path normalizedPath = path.normalize();
+
+      checkAccess(normalizedPath, AccessMode.READ);
+
+      return ((EphemeralFileSystem)normalizedPath.getFileSystem()).getFileStore().readAttributes((EphemeralPath)path, attributes, options);
+    }
   }
 
   @Override
