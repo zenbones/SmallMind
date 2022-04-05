@@ -183,9 +183,7 @@ public class EphemeralFileStore extends FileStore {
 
       HeapNode heapNode;
 
-      if ((heapNode = findNode(path)) != null) {
-        heapNode.
-      }
+      return ((heapNode = findNode(path)) != null) ? type.cast(new EphemeralBasicFileAttributeView(heapNode.getAttributes())) : null;
     }
   }
 

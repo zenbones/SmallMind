@@ -38,20 +38,36 @@ import java.nio.file.attribute.FileTime;
 
 public class EphemeralBasicFileAttributeView implements BasicFileAttributeView {
 
+  private EphemeralBasicFileAttributes attributes;
+
+  public EphemeralBasicFileAttributeView (EphemeralBasicFileAttributes attributes) {
+
+    this.attributes = attributes;
+  }
+
   @Override
   public String name () {
 
-    return null;
+    return "basic";
   }
 
   @Override
   public BasicFileAttributes readAttributes () {
 
-    return null;
+    return attributes;
   }
 
   @Override
   public void setTimes (FileTime lastModifiedTime, FileTime lastAccessTime, FileTime createTime) {
 
+    if (lastModifiedTime != null) {
+      attributes.setLastModifiedTime(lastModifiedTime);
+    }
+    if (lastAccessTime != null) {
+      attributes.setLastAccessTime(lastAccessTime);
+    }
+    if (createTime != null) {
+      attributes.setCreationTime(createTime);
+    }
   }
 }
