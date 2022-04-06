@@ -57,11 +57,11 @@ public class DirectoryTreeCellRenderer implements TreeCellRenderer {
     JLabel directoryLabel;
 
     if (row == 0) {
-      directoryLabel = new JLabel(((Directory)((DirectoryNode)value).getUserObject()).getAbsolutePath(), DRIVE, SwingConstants.LEFT);
+      directoryLabel = new JLabel(((Directory)((DirectoryTreeNode)value).getAttachment()).getAbsolutePath(), DRIVE, SwingConstants.LEFT);
     } else if (leaf) {
-      directoryLabel = new JLabel(((Directory)((DirectoryNode)value).getUserObject()).getName(), FOLDER, SwingConstants.LEFT);
+      directoryLabel = new JLabel(((Directory)((DirectoryTreeNode)value).getAttachment()).getName(), FOLDER, SwingConstants.LEFT);
     } else {
-      directoryLabel = new JLabel(((Directory)((DirectoryNode)value).getUserObject()).getName(), FOLDERS, SwingConstants.LEFT);
+      directoryLabel = new JLabel(((Directory)((DirectoryTreeNode)value).getAttachment()).getName(), FOLDERS, SwingConstants.LEFT);
     }
 
     directoryLabel.setBorder(INVISIBLE_BORDER);

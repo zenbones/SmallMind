@@ -30,24 +30,70 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.util;
+package org.smallmind.swing.file;
 
-public class Tree {
+import java.util.Comparator;
+import java.util.Enumeration;
+import javax.swing.tree.TreeNode;
+import org.smallmind.swing.tree.AttachmentTreeNode;
 
-  private TreeNode root;
+public class DirectoryTreeNode extends AttachmentTreeNode {
 
-  public Tree (TreeNode root) {
+  private boolean instantiated = false;
 
-    this.root = root;
+  public DirectoryTreeNode (Directory directory) {
+
+    super(directory, directory.hasChildren());
   }
 
-  public Object getRoot () {
+  private synchronized void instantiateChildren () {
 
-    return root;
+    Directory[] childDirectories;
+
+    if (!instantiated) {
+      instantiated = true;
+
+      if (getAllowsChildren()) {
+        childDirectories = ((Directory)getAttachment()).getChildren();
+        for (Directory childDirectory : childDirectories) {
+          add(new DirectoryTreeNode(childDirectory));
+        }
+      }
+    }
   }
 
-  public void setRoot (TreeNode root) {
+  public Enumeration<TreeNode> children () {
 
-    this.root = root;
+    instantiateChildren();
+
+    return super.children();
+  }
+
+  public TreeNode getChildAt (int childIndex) {
+
+    instantiateChildren();
+
+    return super.getChildAt(childIndex);
+  }
+
+  public int getChildCount () {
+
+    instantiateChildren();
+
+    return super.getChildCount();
+  }
+
+  public int getIndex (TreeNode node) {
+
+    instantiateChildren();
+
+    return super.getIndex(node);
+  }
+
+  public void sortChildren (Comparator<TreeNode> sort) {
+
+    instantiateChildren();
+
+    super.sortChildren(sort);
   }
 }

@@ -35,16 +35,15 @@ package org.smallmind.swing.tree;
 import java.util.Iterator;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
+import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
-import org.smallmind.nutsnbolts.util.Tree;
-import org.smallmind.nutsnbolts.util.TreeNode;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 
-public class TreeModel extends Tree implements javax.swing.tree.TreeModel {
+public class AttachmentTreeModel extends Tree implements TreeModel {
 
   private final WeakEventListenerList<TreeModelListener> listenerList;
 
-  public TreeModel (TreeNode root) {
+  public AttachmentTreeModel (AttachmentTreeNode root) {
 
     super(root);
     listenerList = new WeakEventListenerList<TreeModelListener>();
@@ -62,31 +61,31 @@ public class TreeModel extends Tree implements javax.swing.tree.TreeModel {
 
   public Object getChild (Object parent, int childIndex) {
 
-    return ((TreeNode)parent).getChildAt(childIndex);
+    return ((AttachmentTreeNode)parent).getChildAt(childIndex);
   }
 
   public int getChildCount (Object parent) {
 
-    return ((TreeNode)parent).getChildCount();
+    return ((AttachmentTreeNode)parent).getChildCount();
   }
 
   public int getIndexOfChild (Object parent, Object child) {
 
-    return ((TreeNode)parent).getIndex((TreeNode)child);
+    return ((AttachmentTreeNode)parent).getIndex((AttachmentTreeNode)child);
   }
 
   public boolean isLeaf (Object node) {
 
-    return ((TreeNode)node).isLeaf();
+    return ((AttachmentTreeNode)node).isLeaf();
   }
 
   public void valueForPathChanged (TreePath path, Object newValue) {
 
-    TreeNode lastNode = (TreeNode)path.getLastPathComponent();
+    AttachmentTreeNode lastNode = (AttachmentTreeNode)path.getLastPathComponent();
     Object[] children = {};
     int[] childIndices = {};
 
-    if (!lastNode.getUserObject().equals(newValue)) {
+    if (!lastNode.getAttachment().equals(newValue)) {
       lastNode.setUserObject(newValue);
       fireTreeNodesChanged(this, path.getPath(), childIndices, children);
     }
@@ -125,7 +124,7 @@ public class TreeModel extends Tree implements javax.swing.tree.TreeModel {
           return false;
         }
       } else {
-        if (((TreeNode)pathArray[count - 1]).getIndex((TreeNode)pathArray[count]) < 0) {
+        if (((AttachmentTreeNode)pathArray[count - 1]).getIndex((AttachmentTreeNode)pathArray[count]) < 0) {
           return false;
         }
       }

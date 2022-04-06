@@ -56,14 +56,14 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreeSelectionModel;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
-import org.smallmind.swing.tree.TreeModel;
+import org.smallmind.swing.tree.AttachmentTreeModel;
 
 public class DirectoryChooserPanel extends JPanel implements ActionListener, ItemListener, TreeSelectionListener, DocumentListener {
 
   private static final GridBagLayout GRID_BAG_LAYOUT = new GridBagLayout();
   private static final Dimension PREFERRED_DIMENSION = new Dimension(300, 500);
 
-  private final WeakEventListenerList<DirectoryChoiceListener> listenerList = new WeakEventListenerList<DirectoryChoiceListener>();
+  private final WeakEventListenerList<DirectoryChoiceListener> listenerList = new WeakEventListenerList<>();
   private final JTree directoryTree;
   private final JTextField directoryTextField;
   private final JButton cancelButton;
@@ -75,14 +75,14 @@ public class DirectoryChooserPanel extends JPanel implements ActionListener, Ite
 
     GroupLayout layout;
     JScrollPane directoryTreeScrollPane;
-    JComboBox rootComboBox;
+    JComboBox<Object> rootComboBox;
     JLabel rootLabel;
     JLabel directoryLabel;
     LinkedList<File> rootList;
 
     setLayout(layout = new GroupLayout(this));
 
-    rootList = new LinkedList<File>();
+    rootList = new LinkedList<>();
     for (File root : File.listRoots()) {
       if (root.isDirectory()) {
         rootList.add(root);
@@ -92,7 +92,7 @@ public class DirectoryChooserPanel extends JPanel implements ActionListener, Ite
     rootLabel = new JLabel("Root:");
     directoryLabel = new JLabel("Directory:");
 
-    rootComboBox = new JComboBox(rootList.toArray());
+    rootComboBox = new JComboBox<>(rootList.toArray());
     rootComboBox.setEditable(false);
     rootComboBox.setRenderer(new RootListCellRenderer());
 
@@ -154,7 +154,7 @@ public class DirectoryChooserPanel extends JPanel implements ActionListener, Ite
 
   private void setRoot (File file) {
 
-    directoryTree.setModel(new TreeModel(new DirectoryNode(new Directory(file.getAbsolutePath()))));
+    directoryTree.setModel(new AttachmentTreeModel(new DirectoryTreeNode(new Directory(file.getAbsolutePath()))));
   }
 
   private synchronized void fireDirectoryChosen (DirectoryChoiceEvent directoryChoiceEvent) {
@@ -195,7 +195,7 @@ public class DirectoryChooserPanel extends JPanel implements ActionListener, Ite
 
     Directory directory;
 
-    directory = (Directory)((DirectoryNode)treeSelectionEvent.getPath().getLastPathComponent()).getUserObject();
+    directory = (Directory)((DirectoryTreeNode)treeSelectionEvent.getPath().getLastPathComponent()).getAttachment();
 
     directoryTextField.getDocument().removeDocumentListener(this);
     directoryTextField.setText(directory.getAbsolutePath());

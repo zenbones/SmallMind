@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.util;
+package org.smallmind.swing.tree;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -39,32 +39,33 @@ import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.LinkedList;
 import javax.swing.tree.MutableTreeNode;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 
-public class TreeNode implements Cloneable, Serializable, MutableTreeNode {
+public class AttachmentTreeNode implements Serializable, MutableTreeNode {
 
-  private TreeNode parent;
-  private Object userObject;
+  private AttachmentTreeNode parent;
+  private Object attachment;
   private boolean allowsChildren;
-  protected LinkedList<javax.swing.tree.TreeNode> childList;
+  protected LinkedList<TreeNode> childList;
 
-  public TreeNode () {
+  public AttachmentTreeNode () {
 
     this(null, true);
   }
 
-  public TreeNode (Object userObject) {
+  public AttachmentTreeNode (Object attachment) {
 
-    this(userObject, true);
+    this(attachment, true);
   }
 
-  public TreeNode (Object userObject, boolean allowsChildren) {
+  public AttachmentTreeNode (Object attachment, boolean allowsChildren) {
 
     parent = null;
-    this.userObject = userObject;
+    this.attachment = attachment;
     this.allowsChildren = allowsChildren;
     if (allowsChildren) {
-      childList = new LinkedList<javax.swing.tree.TreeNode>();
+      childList = new LinkedList<TreeNode>();
     } else {
       childList = null;
     }
@@ -80,14 +81,14 @@ public class TreeNode implements Cloneable, Serializable, MutableTreeNode {
     if (allowsChildren != newAllowsChildren) {
       allowsChildren = newAllowsChildren;
       if (allowsChildren) {
-        childList = new LinkedList<javax.swing.tree.TreeNode>();
+        childList = new LinkedList<>();
       } else {
         childList = null;
       }
     }
   }
 
-  public synchronized Enumeration children () {
+  public synchronized Enumeration<TreeNode> children () {
 
     if (!allowsChildren) {
       return null;
@@ -95,7 +96,7 @@ public class TreeNode implements Cloneable, Serializable, MutableTreeNode {
     return Collections.enumeration(childList);
   }
 
-  public synchronized javax.swing.tree.TreeNode getChildAt (int childIndex) {
+  public synchronized TreeNode getChildAt (int childIndex) {
 
     if (!allowsChildren) {
       return null;
@@ -111,7 +112,7 @@ public class TreeNode implements Cloneable, Serializable, MutableTreeNode {
     return childList.size();
   }
 
-  public synchronized int getIndex (javax.swing.tree.TreeNode node) {
+  public synchronized int getIndex (TreeNode node) {
 
     if (!allowsChildren) {
       return -1;
@@ -121,16 +122,16 @@ public class TreeNode implements Cloneable, Serializable, MutableTreeNode {
 
   public synchronized int getUserObjectIndex (Object childUserObject) {
 
-    TreeNode childNode;
+    AttachmentTreeNode childNode;
     int count;
 
     if (!allowsChildren) {
       return -1;
     }
     for (count = 0; count < childList.size(); count++) {
-      childNode = (TreeNode)childList.get(count);
-      if (childNode.getUserObject() != null) {
-        if (childNode.getUserObject().equals(childUserObject)) {
+      childNode = (AttachmentTreeNode)childList.get(count);
+      if (childNode.getAttachment() != null) {
+        if (childNode.getAttachment().equals(childUserObject)) {
           return count;
         }
       }
@@ -138,39 +139,39 @@ public class TreeNode implements Cloneable, Serializable, MutableTreeNode {
     return -1;
   }
 
-  public synchronized javax.swing.tree.TreeNode getParent () {
+  public synchronized TreeNode getParent () {
 
     return parent;
   }
 
   public synchronized void setParent (MutableTreeNode parent) {
 
-    this.parent = (TreeNode)parent;
+    this.parent = (AttachmentTreeNode)parent;
   }
 
-  public synchronized Object getUserObject () {
+  public synchronized Object getAttachment () {
 
-    return userObject;
+    return attachment;
   }
 
   public synchronized void setUserObject (Object userObject) {
 
-    this.userObject = userObject;
+    this.attachment = userObject;
   }
 
-  public synchronized void sortChildren (Comparator<javax.swing.tree.TreeNode> sort) {
+  public synchronized void sortChildren (Comparator<TreeNode> sort) {
 
     if (allowsChildren) {
-      Collections.sort(childList, sort);
+      childList.sort(sort);
     }
   }
 
-  public synchronized javax.swing.tree.TreeNode getPrevInThread () {
+  public synchronized TreeNode getPrevInThread () {
 
     return parent;
   }
 
-  public synchronized javax.swing.tree.TreeNode getNextInThread () {
+  public synchronized TreeNode getNextInThread () {
 
     if (!allowsChildren) {
       return null;
@@ -183,8 +184,8 @@ public class TreeNode implements Cloneable, Serializable, MutableTreeNode {
 
   public synchronized TreePath getTreePath () {
 
-    ArrayList<javax.swing.tree.TreeNode> pathList = new ArrayList<javax.swing.tree.TreeNode>();
-    javax.swing.tree.TreeNode curNode = this;
+    ArrayList<TreeNode> pathList = new ArrayList<TreeNode>();
+    TreeNode curNode = this;
     Object[] thisNodesPath;
 
     pathList.add(curNode);
@@ -227,10 +228,10 @@ public class TreeNode implements Cloneable, Serializable, MutableTreeNode {
 
   public synchronized void remove (int childIndex) {
 
-    TreeNode child;
+    AttachmentTreeNode child;
 
     if (allowsChildren) {
-      child = (TreeNode)childList.get(childIndex);
+      child = (AttachmentTreeNode)childList.get(childIndex);
       childList.remove(childIndex);
       child.setParent(null);
     }
@@ -253,8 +254,8 @@ public class TreeNode implements Cloneable, Serializable, MutableTreeNode {
 
   public String toString () {
 
-    if (userObject != null) {
-      return userObject.toString();
+    if (attachment != null) {
+      return attachment.toString();
     } else {
       return "null";
     }

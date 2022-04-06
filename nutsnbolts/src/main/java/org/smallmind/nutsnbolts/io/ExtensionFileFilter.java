@@ -35,9 +35,8 @@ package org.smallmind.nutsnbolts.io;
 import java.io.File;
 import java.util.LinkedList;
 import java.util.regex.Pattern;
-import javax.swing.filechooser.FileFilter;
 
-public final class ExtensionFileFilter extends FileFilter implements java.io.FileFilter {
+public final class ExtensionFileFilter implements java.io.FileFilter {
 
   private final LinkedList<Pattern> regExpList;
   private final LinkedList<String> extensionList;
