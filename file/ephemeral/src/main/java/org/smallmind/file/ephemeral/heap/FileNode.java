@@ -30,33 +30,42 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.sleuth.runner;
+package org.smallmind.file.ephemeral.heap;
 
-import java.util.concurrent.Semaphore;
+import org.smallmind.nutsnbolts.io.ByteArrayIOBuffer;
 
-public class SleuthThreadPool {
+public class FileNode extends HeapNode {
 
-  private final Semaphore[] semaphores;
+  private final ByteArrayIOBuffer segmentBuffer;
 
-  public SleuthThreadPool (int maxThreads) {
+  public FileNode (DirectoryNode parent, String name, int allocation) {
 
-    semaphores = new Semaphore[TestTier.values().length];
+    super(parent, name);
 
-    for (TestTier testTier : TestTier.values()) {
-      semaphores[testTier.ordinal()] = new Semaphore(maxThreads, true);
-    }
+    segmentBuffer = new ByteArrayIOBuffer(allocation);
   }
 
-  public synchronized void execute (TestTier testTier, Runnable runnable)
-    throws InterruptedException {
+  public FileNode (DirectoryNode parent, String name, ByteArrayIOBuffer segmentBuffer) {
 
-    semaphores[testTier.ordinal()].acquire();
+    super(parent, name);
 
-    Thread thread = new Thread(runnable);
+    this.segmentBuffer = segmentBuffer;
+  }
 
-    thread.start();
-    if (thread.isInterrupted()) {
-      throw new InterruptedException();
-    }
+  @Override
+  public HeapNodeType getType () {
+
+    return HeapNodeType.FILE;
+  }
+
+  public ByteArrayIOBuffer getSegmentBuffer () {
+
+    return segmentBuffer;
+  }
+
+  @Override
+  public long size () {
+
+    return segmentBuffer.getLimitBookmark().position();
   }
 }

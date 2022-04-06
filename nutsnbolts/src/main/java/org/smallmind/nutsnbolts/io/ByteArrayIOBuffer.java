@@ -30,33 +30,57 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.sleuth.runner;
+package org.smallmind.nutsnbolts.io;
 
-import java.util.concurrent.Semaphore;
+import java.io.IOException;
+import java.util.ArrayList;
 
-public class SleuthThreadPool {
+public class ByteArrayIOBuffer {
 
-  private final Semaphore[] semaphores;
+  private final ArrayList<byte[]> segmentList = new ArrayList<>();
+  private final ByteArrayIOBookmark limitBookmark;
+  private final int allocation;
 
-  public SleuthThreadPool (int maxThreads) {
+  public ByteArrayIOBuffer (int allocation) {
 
-    semaphores = new Semaphore[TestTier.values().length];
+    this.allocation = allocation;
 
-    for (TestTier testTier : TestTier.values()) {
-      semaphores[testTier.ordinal()] = new Semaphore(maxThreads, true);
+    limitBookmark = new ByteArrayIOBookmark(allocation);
+  }
+
+  public ByteArrayIOBuffer (ByteArrayIOBuffer segmentBuffer) {
+
+    allocation = segmentBuffer.getAllocation();
+    limitBookmark = new ByteArrayIOBookmark(segmentBuffer.getLimitBookmark());
+
+    for (byte[] segment : segmentBuffer.getSegmentList()) {
+
+      byte[] copyOfSegment = new byte[segment.length];
+
+      System.arraycopy(segment, 0, copyOfSegment, 0, segment.length);
+      segmentList.add(copyOfSegment);
     }
   }
 
-  public synchronized void execute (TestTier testTier, Runnable runnable)
-    throws InterruptedException {
+  public int getAllocation () {
 
-    semaphores[testTier.ordinal()].acquire();
+    return allocation;
+  }
 
-    Thread thread = new Thread(runnable);
+  public ArrayList<byte[]> getSegmentList () {
 
-    thread.start();
-    if (thread.isInterrupted()) {
-      throw new InterruptedException();
-    }
+    return segmentList;
+  }
+
+  public ByteArrayIOBookmark getLimitBookmark () {
+
+    return limitBookmark;
+  }
+
+  public void clear ()
+    throws IOException {
+
+    segmentList.clear();
+    limitBookmark.rewind();
   }
 }

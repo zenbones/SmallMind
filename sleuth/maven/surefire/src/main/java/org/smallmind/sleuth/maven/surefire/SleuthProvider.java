@@ -109,7 +109,7 @@ public class SleuthProvider extends AbstractProvider {
     startMilliseconds = System.currentTimeMillis();
 
     runListener.testSetStarting(new SimpleReportEntry("Sleuth Tests", "Test Assay", "test set starting"));
-    sleuthRunner.execute(providerParameters.getProviderProperties().get("threadCount") == null ? 0 : Integer.parseInt(providerParameters.getProviderProperties().get("threadCount")), groups, testsToRun);
+    sleuthRunner.execute(providerParameters.getProviderProperties().get("threadcount") == null ? 0 : Integer.parseInt(providerParameters.getProviderProperties().get("threadcount")), groups, testsToRun);
     runListener.testSetCompleted(new SimpleReportEntry("Sleuth Tests", "Test Assay", (int)(System.currentTimeMillis() - startMilliseconds)));
 
     runResult = reporterFactory.close();

@@ -30,33 +30,24 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.sleuth.runner;
+package org.smallmind.file.ephemeral;
 
-import java.util.concurrent.Semaphore;
+import java.nio.file.Path;
+import java.nio.file.PathMatcher;
+import java.util.regex.Pattern;
 
-public class SleuthThreadPool {
+public class RegexPathMatcher implements PathMatcher {
 
-  private final Semaphore[] semaphores;
+  Pattern pattern;
 
-  public SleuthThreadPool (int maxThreads) {
+  public RegexPathMatcher (Pattern pattern) {
 
-    semaphores = new Semaphore[TestTier.values().length];
-
-    for (TestTier testTier : TestTier.values()) {
-      semaphores[testTier.ordinal()] = new Semaphore(maxThreads, true);
-    }
+    this.pattern = pattern;
   }
 
-  public synchronized void execute (TestTier testTier, Runnable runnable)
-    throws InterruptedException {
+  @Override
+  public boolean matches (Path path) {
 
-    semaphores[testTier.ordinal()].acquire();
-
-    Thread thread = new Thread(runnable);
-
-    thread.start();
-    if (thread.isInterrupted()) {
-      throw new InterruptedException();
-    }
+    return pattern.matcher(path.toString()).matches();
   }
 }

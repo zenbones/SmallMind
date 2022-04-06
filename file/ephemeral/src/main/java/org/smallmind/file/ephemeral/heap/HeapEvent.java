@@ -30,33 +30,31 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.sleuth.runner;
+package org.smallmind.file.ephemeral.heap;
 
-import java.util.concurrent.Semaphore;
+import java.util.EventObject;
+import org.smallmind.file.ephemeral.EphemeralPath;
 
-public class SleuthThreadPool {
+public class HeapEvent extends EventObject {
 
-  private final Semaphore[] semaphores;
+  private final HeapEventType type;
+  private final EphemeralPath path;
 
-  public SleuthThreadPool (int maxThreads) {
+  public HeapEvent (Object source, EphemeralPath path, HeapEventType type) {
 
-    semaphores = new Semaphore[TestTier.values().length];
+    super(source);
 
-    for (TestTier testTier : TestTier.values()) {
-      semaphores[testTier.ordinal()] = new Semaphore(maxThreads, true);
-    }
+    this.path = path;
+    this.type = type;
   }
 
-  public synchronized void execute (TestTier testTier, Runnable runnable)
-    throws InterruptedException {
+  public HeapEventType getType () {
 
-    semaphores[testTier.ordinal()].acquire();
+    return type;
+  }
 
-    Thread thread = new Thread(runnable);
+  public EphemeralPath getPath () {
 
-    thread.start();
-    if (thread.isInterrupted()) {
-      throw new InterruptedException();
-    }
+    return path;
   }
 }

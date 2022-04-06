@@ -48,7 +48,7 @@ public class LoggingBlueprintFactory {
 
     blueprintsIter = ServiceLoader.load(LoggingBlueprint.class, Thread.currentThread().getContextClassLoader()).iterator();
     if (!blueprintsIter.hasNext()) {
-      throw new StaticInitializationError("No provider found for LoggingBlueprint");
+      throw new StaticInitializationError("No provider found for " + LoggingBlueprint.class.getSimpleName());
     }
 
     LOGGING_BLUEPRINT = blueprintsIter.next();

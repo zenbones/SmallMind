@@ -30,33 +30,36 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.sleuth.runner;
+package org.smallmind.file.ephemeral;
 
-import java.util.concurrent.Semaphore;
+import java.nio.ByteBuffer;
+import java.nio.channels.SeekableByteChannel;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.util.Set;
 
-public class SleuthThreadPool {
+public class Wombat {
 
-  private final Semaphore[] semaphores;
+  public static void main (String... args)
+    throws Exception {
 
-  public SleuthThreadPool (int maxThreads) {
-
-    semaphores = new Semaphore[TestTier.values().length];
-
-    for (TestTier testTier : TestTier.values()) {
-      semaphores[testTier.ordinal()] = new Semaphore(maxThreads, true);
+    System.out.println(".........................................");
+    System.out.println(FileSystems.getDefault());
+    Path ps = Paths.get("C:\\Users\\david\\Documents\\response.txt");
+    System.out.println(Files.isRegularFile(ps));
+    System.out.println(new String(Files.readAllBytes(ps)));
+    System.out.println(".........................................");
+    Path pe = Paths.get("/opt/epicenter/twimble/farkle");
+    Files.createDirectories(pe);
+    try (SeekableByteChannel bc = Files.newByteChannel(pe.resolve("sparkle.txt"), Set.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE))) {
+      ByteBuffer bb = ByteBuffer.allocate(1024);
+      bb.put("Hello out there!".getBytes());
+      bb.flip();
+      bc.write(bb);
     }
-  }
-
-  public synchronized void execute (TestTier testTier, Runnable runnable)
-    throws InterruptedException {
-
-    semaphores[testTier.ordinal()].acquire();
-
-    Thread thread = new Thread(runnable);
-
-    thread.start();
-    if (thread.isInterrupted()) {
-      throw new InterruptedException();
-    }
+    System.out.println(new String(Files.readAllBytes(pe.resolve("sparkle.txt"))));
   }
 }

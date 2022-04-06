@@ -30,33 +30,44 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.sleuth.runner;
+package org.smallmind.file.ephemeral;
 
-import java.util.concurrent.Semaphore;
+import java.nio.file.attribute.BasicFileAttributeView;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
 
-public class SleuthThreadPool {
+public class EphemeralBasicFileAttributeView implements BasicFileAttributeView {
 
-  private final Semaphore[] semaphores;
+  private EphemeralBasicFileAttributes attributes;
 
-  public SleuthThreadPool (int maxThreads) {
+  public EphemeralBasicFileAttributeView (EphemeralBasicFileAttributes attributes) {
 
-    semaphores = new Semaphore[TestTier.values().length];
-
-    for (TestTier testTier : TestTier.values()) {
-      semaphores[testTier.ordinal()] = new Semaphore(maxThreads, true);
-    }
+    this.attributes = attributes;
   }
 
-  public synchronized void execute (TestTier testTier, Runnable runnable)
-    throws InterruptedException {
+  @Override
+  public String name () {
 
-    semaphores[testTier.ordinal()].acquire();
+    return "basic";
+  }
 
-    Thread thread = new Thread(runnable);
+  @Override
+  public BasicFileAttributes readAttributes () {
 
-    thread.start();
-    if (thread.isInterrupted()) {
-      throw new InterruptedException();
+    return attributes;
+  }
+
+  @Override
+  public void setTimes (FileTime lastModifiedTime, FileTime lastAccessTime, FileTime createTime) {
+
+    if (lastModifiedTime != null) {
+      attributes.setLastModifiedTime(lastModifiedTime);
+    }
+    if (lastAccessTime != null) {
+      attributes.setLastAccessTime(lastAccessTime);
+    }
+    if (createTime != null) {
+      attributes.setCreationTime(createTime);
     }
   }
 }

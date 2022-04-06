@@ -193,6 +193,11 @@
       </dependency>
       <dependency>
         <groupId>org.smallmind</groupId>
+        <artifactId>file-ephemeral</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.smallmind</groupId>
         <artifactId>file-jailed</artifactId>
         <version>${project.version}</version>
       </dependency>

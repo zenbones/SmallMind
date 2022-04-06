@@ -30,33 +30,69 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.sleuth.runner;
+package org.smallmind.file.ephemeral.heap;
 
-import java.util.concurrent.Semaphore;
+import java.util.LinkedList;
+import org.smallmind.file.ephemeral.EphemeralBasicFileAttributes;
 
-public class SleuthThreadPool {
+public abstract class HeapNode {
 
-  private final Semaphore[] semaphores;
+  private final EphemeralBasicFileAttributes attributes;
+  private final DirectoryNode parent;
+  private final String name;
+  private LinkedList<HeapEventListener> listenerList;
 
-  public SleuthThreadPool (int maxThreads) {
+  public HeapNode (DirectoryNode parent, String name) {
 
-    semaphores = new Semaphore[TestTier.values().length];
+    this.parent = parent;
+    this.name = name;
 
-    for (TestTier testTier : TestTier.values()) {
-      semaphores[testTier.ordinal()] = new Semaphore(maxThreads, true);
-    }
+    attributes = new EphemeralBasicFileAttributes(this);
   }
 
-  public synchronized void execute (TestTier testTier, Runnable runnable)
-    throws InterruptedException {
+  public abstract HeapNodeType getType ();
 
-    semaphores[testTier.ordinal()].acquire();
+  public abstract long size ();
 
-    Thread thread = new Thread(runnable);
+  public DirectoryNode getParent () {
 
-    thread.start();
-    if (thread.isInterrupted()) {
-      throw new InterruptedException();
+    return parent;
+  }
+
+  public String getName () {
+
+    return name;
+  }
+
+  public EphemeralBasicFileAttributes getAttributes () {
+
+    return attributes;
+  }
+
+  public synchronized void registerListener (HeapEventListener eventListener) {
+
+    if (listenerList == null) {
+      listenerList = new LinkedList<>();
+    }
+
+    listenerList.add(eventListener);
+  }
+
+  public synchronized void unregisterListener (HeapEventListener eventListener) {
+
+    listenerList.remove(eventListener);
+  }
+
+  public synchronized void bubble (HeapEvent event) {
+
+    if (listenerList != null) {
+      for (HeapEventListener listener : listenerList) {
+        listener.handle(event);
+      }
+    }
+
+    if (parent != null) {
+      parent.bubble(event);
     }
   }
 }

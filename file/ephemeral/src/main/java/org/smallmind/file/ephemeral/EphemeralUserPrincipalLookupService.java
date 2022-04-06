@@ -30,33 +30,23 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.sleuth.runner;
+package org.smallmind.file.ephemeral;
 
-import java.util.concurrent.Semaphore;
+import java.nio.file.attribute.GroupPrincipal;
+import java.nio.file.attribute.UserPrincipal;
+import java.nio.file.attribute.UserPrincipalLookupService;
 
-public class SleuthThreadPool {
+public class EphemeralUserPrincipalLookupService extends UserPrincipalLookupService {
 
-  private final Semaphore[] semaphores;
+  @Override
+  public UserPrincipal lookupPrincipalByName (String name) {
 
-  public SleuthThreadPool (int maxThreads) {
-
-    semaphores = new Semaphore[TestTier.values().length];
-
-    for (TestTier testTier : TestTier.values()) {
-      semaphores[testTier.ordinal()] = new Semaphore(maxThreads, true);
-    }
+    return new EphemeralUserPrincipal(name);
   }
 
-  public synchronized void execute (TestTier testTier, Runnable runnable)
-    throws InterruptedException {
+  @Override
+  public GroupPrincipal lookupPrincipalByGroupName (String group) {
 
-    semaphores[testTier.ordinal()].acquire();
-
-    Thread thread = new Thread(runnable);
-
-    thread.start();
-    if (thread.isInterrupted()) {
-      throw new InterruptedException();
-    }
+    return new EphemeralGroupPrincipal(group);
   }
 }

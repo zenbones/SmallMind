@@ -36,17 +36,15 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.LinkedList;
 
 public class ByteArrayIOStream implements Closeable {
 
   private final ByteArrayInputStream inputStream = new ByteArrayInputStream();
   private final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-  private final LinkedList<byte[]> segmentList = new LinkedList<>();
-  private final int allocation;
+  private final ByteArrayIOBuffer segmentBuffer;
+  private final ByteArrayIOBookmark readBookmark;
+  private final ByteArrayIOBookmark writeBookmark;
   private boolean closed = false;
-  private int readIndex = 0;
-  private int writeIndex;
 
   public ByteArrayIOStream () {
 
@@ -55,17 +53,85 @@ public class ByteArrayIOStream implements Closeable {
 
   public ByteArrayIOStream (int allocation) {
 
-    this.allocation = allocation;
+    segmentBuffer = new ByteArrayIOBuffer(allocation);
+    readBookmark = new ByteArrayIOBookmark(allocation);
+    writeBookmark = new ByteArrayIOBookmark(allocation);
+  }
 
-    writeIndex = allocation;
+  public ByteArrayIOStream (ByteArrayIOBuffer segmentBuffer) {
+
+    this.segmentBuffer = segmentBuffer;
+
+    readBookmark = new ByteArrayIOBookmark(segmentBuffer.getAllocation());
+    writeBookmark = new ByteArrayIOBookmark(segmentBuffer.getAllocation());
+  }
+
+  public synchronized boolean isClosed () {
+
+    return closed;
   }
 
   @Override
-  public void close () {
+  public synchronized void close () {
 
-    synchronized (segmentList) {
-      closed = true;
-      segmentList.clear();
+    closed = true;
+  }
+
+  public synchronized long size ()
+    throws IOException {
+
+    if (closed) {
+      throw new IOException("This stream has already been closed");
+    } else {
+
+      return segmentBuffer.getLimitBookmark().position();
+    }
+  }
+
+  public synchronized void clear ()
+    throws IOException {
+
+    if (closed) {
+      throw new IOException("This stream has already been closed");
+    } else {
+      segmentBuffer.clear();
+
+      readBookmark.rewind();
+      writeBookmark.rewind();
+    }
+  }
+
+  public synchronized void truncate (long size)
+    throws IOException {
+
+    if (closed) {
+      throw new IOException("This stream has already been closed");
+    } else {
+
+      int truncatedSegmentIndex = (int)(size / segmentBuffer.getAllocation());
+      int truncatedByteIndex = (int)(size % segmentBuffer.getAllocation());
+      int truncatedSegmentCount = truncatedSegmentIndex + ((truncatedByteIndex) == 0 ? 0 : 1);
+
+      while (segmentBuffer.getSegmentList().size() > truncatedSegmentCount) {
+        segmentBuffer.getSegmentList().remove(segmentBuffer.getSegmentList().size() - 1);
+      }
+
+      if (truncatedByteIndex > 0) {
+
+        byte[] segment = segmentBuffer.getSegmentList().get(truncatedSegmentIndex);
+
+        for (int index = truncatedByteIndex; index < segmentBuffer.getAllocation(); index++) {
+          segment[index] = 0;
+        }
+      }
+
+      segmentBuffer.getLimitBookmark().position(size);
+      if (readBookmark.position() > size) {
+        readBookmark.position(size);
+      }
+      if (writeBookmark.position() > size) {
+        writeBookmark.position(size);
+      }
     }
   }
 
@@ -79,40 +145,67 @@ public class ByteArrayIOStream implements Closeable {
     return outputStream;
   }
 
+  public synchronized String toString () {
+
+    StringBuilder builder = new StringBuilder();
+
+    for (int index = 0; index < segmentBuffer.getSegmentList().size(); index++) {
+      if (index == segmentBuffer.getLimitBookmark().segmentIndex()) {
+        builder.append(new String(segmentBuffer.getSegmentList().get(index), 0, segmentBuffer.getLimitBookmark().byteIndex()));
+      } else {
+        builder.append(new String(segmentBuffer.getSegmentList().get(index)));
+      }
+    }
+
+    return builder.toString();
+  }
+
   public class ByteArrayInputStream extends InputStream {
 
-    private LinkedList<byte[]> markList;
-    private int readLimit = 0;
-    private int markIndex = 0;
+    private ByteArrayIOBookmark markBookmark;
+
+    public long position ()
+      throws IOException {
+
+      synchronized (ByteArrayIOStream.this) {
+        if (closed) {
+          throw new IOException("This stream has already been closed");
+        } else {
+
+          return readBookmark.position();
+        }
+      }
+    }
+
+    public void position (long position)
+      throws IOException {
+
+      if (position < 0) {
+        throw new IllegalArgumentException("Attempt to set position < 0");
+      } else {
+        synchronized (ByteArrayIOStream.this) {
+          if (closed) {
+            throw new IOException("This stream has already been closed");
+          } else {
+            readBookmark.position(Math.min(position, segmentBuffer.getLimitBookmark().position()));
+          }
+        }
+      }
+    }
 
     public byte peek (int index)
       throws IOException {
 
-      synchronized (segmentList) {
+      synchronized (ByteArrayIOStream.this) {
         if (closed) {
           throw new IOException("This stream has already been closed");
         } else if (index < 0 || index >= available()) {
           throw new IndexOutOfBoundsException(index + ">=" + available());
         } else {
 
-          int bytesToSeek = index;
+          ByteArrayIOBookmark peekBookmark = readBookmark.offset(segmentBuffer.getLimitBookmark(), index);
 
-          if (bytesToSeek < allocation - readIndex) {
-
-            return segmentList.getFirst()[readIndex + bytesToSeek];
-          } else {
-
-            int segmentIndex = 1;
-
-            bytesToSeek -= allocation - readIndex;
-
-            while (bytesToSeek >= allocation) {
-              bytesToSeek = allocation;
-              segmentIndex++;
-            }
-
-            return segmentList.get(segmentIndex)[bytesToSeek];
-          }
+          return segmentBuffer.getSegmentList().get(peekBookmark.segmentIndex())[peekBookmark.byteIndex()];
         }
       }
     }
@@ -120,13 +213,17 @@ public class ByteArrayIOStream implements Closeable {
     public byte[] readAvailable ()
       throws IOException {
 
-      synchronized (segmentList) {
+      synchronized (ByteArrayIOStream.this) {
+        if (closed) {
+          throw new IOException("This stream has already been closed");
+        } else {
 
-        byte[] buffer = new byte[available()];
+          byte[] buffer = new byte[available()];
 
-        read(buffer);
+          read(buffer);
 
-        return buffer;
+          return buffer;
+        }
       }
     }
 
@@ -134,23 +231,18 @@ public class ByteArrayIOStream implements Closeable {
     public int read ()
       throws IOException {
 
-      synchronized (segmentList) {
+      synchronized (ByteArrayIOStream.this) {
         if (closed) {
           throw new IOException("This stream has already been closed");
+        } else if (available() == 0) {
+
+          return -1;
         } else {
 
           byte singleByte;
 
-          try {
-            while (available() == 0) {
-              segmentList.wait();
-            }
-          } catch (InterruptedException interruptedException) {
-            throw new IOException(interruptedException);
-          }
-
-          singleByte = segmentList.getFirst()[readIndex];
-          peelSegment(1);
+          singleByte = segmentBuffer.getSegmentList().get(readBookmark.segmentIndex())[readBookmark.byteIndex()];
+          readBookmark.inc(segmentBuffer.getLimitBookmark(), segmentBuffer.getSegmentList());
 
           return singleByte;
         }
@@ -158,15 +250,15 @@ public class ByteArrayIOStream implements Closeable {
     }
 
     @Override
-    public int read (byte[] b, int off, int len)
+    public int read (byte[] bytes, int off, int len)
       throws IOException {
 
-      synchronized (segmentList) {
+      synchronized (ByteArrayIOStream.this) {
         if (closed) {
           throw new IOException("This stream has already been closed");
-        } else if (b == null) {
+        } else if (bytes == null) {
           throw new NullPointerException();
-        } else if (off < 0 || len < 0 || off > b.length || len > b.length - off) {
+        } else if (off < 0 || len < 0 || off > bytes.length || len > bytes.length - off) {
           throw new IndexOutOfBoundsException();
         } else if (len == 0) {
 
@@ -175,27 +267,20 @@ public class ByteArrayIOStream implements Closeable {
 
           int bytesAvailable;
 
-          try {
-            while ((bytesAvailable = available()) == 0) {
-              segmentList.wait();
+          if ((bytesAvailable = available()) == 0) {
+
+            return -1;
+          } else {
+
+            int bytesToRead = Math.min(bytesAvailable, len);
+
+            for (int index = 0; index < bytesToRead; index++) {
+              bytes[off + index] = segmentBuffer.getSegmentList().get(readBookmark.segmentIndex())[readBookmark.byteIndex()];
+              readBookmark.inc(segmentBuffer.getLimitBookmark(), segmentBuffer.getSegmentList());
             }
-          } catch (InterruptedException interruptedException) {
-            throw new IOException(interruptedException);
+
+            return bytesToRead;
           }
-
-          int bytesToRead = Math.min(bytesAvailable, len);
-          int bytesRead = 0;
-
-          while (bytesRead < bytesToRead) {
-
-            int bytesToReadInSegment = Math.min(allocation - readIndex, bytesToRead - bytesRead);
-
-            System.arraycopy(segmentList.getFirst(), readIndex, b, off + bytesRead, bytesToReadInSegment);
-            bytesRead += bytesToReadInSegment;
-            peelSegment(bytesToReadInSegment);
-          }
-
-          return bytesRead;
         }
       }
     }
@@ -204,39 +289,21 @@ public class ByteArrayIOStream implements Closeable {
     public long skip (long n)
       throws IOException {
 
-      long bytesToSkip;
+      synchronized (ByteArrayIOStream.this) {
+        if (closed) {
+          throw new IOException("This stream has already been closed");
+        } else {
 
-      if ((bytesToSkip = Math.min(available(), n)) > 0) {
+          long bytesToSkip;
 
-        long bytesSkipped = 0;
+          if ((bytesToSkip = Math.min(available(), n)) > 0) {
 
-        while (bytesSkipped < bytesToSkip) {
+            readBookmark.skip(segmentBuffer.getLimitBookmark(), bytesToSkip);
 
-          int bytesToSkipInSegment = (int)Math.min(allocation - readIndex, bytesToSkip - bytesSkipped);
-
-          bytesSkipped += bytesToSkipInSegment;
-          peelSegment(bytesToSkipInSegment);
-        }
-
-        return bytesSkipped;
-      }
-
-      return 0;
-    }
-
-    private void peelSegment (int readIncrement) {
-
-      if ((readIndex += readIncrement) == allocation) {
-
-        byte[] usedSegment = segmentList.removeFirst();
-
-        readIndex = 0;
-
-        if (markList != null) {
-          markList.add(usedSegment);
-          if (remembered() > readLimit) {
-            markList = null;
+            return bytesToSkip;
           }
+
+          return 0;
         }
       }
     }
@@ -245,30 +312,21 @@ public class ByteArrayIOStream implements Closeable {
     public int available ()
       throws IOException {
 
-      synchronized (segmentList) {
+      synchronized (ByteArrayIOStream.this) {
         if (closed) {
           throw new IOException("This stream has already been closed");
         }
 
-        return segmentList.isEmpty() ? 0 : (allocation * (segmentList.size() - 1)) + writeIndex - readIndex;
+        return (int)(segmentBuffer.getLimitBookmark().position() - readBookmark.position());
       }
-    }
-
-    private int remembered () {
-
-      return (markList == null) ? 0 : (allocation * markList.size()) + readIndex - markIndex;
     }
 
     @Override
     public void mark (int readLimit) {
 
-      synchronized (segmentList) {
+      synchronized (ByteArrayIOStream.this) {
         if (!closed) {
-
-          this.readLimit = readLimit;
-
-          markList = new LinkedList<>();
-          markIndex = readIndex;
+          markBookmark = new ByteArrayIOBookmark(readBookmark);
         }
       }
     }
@@ -277,23 +335,32 @@ public class ByteArrayIOStream implements Closeable {
     public void reset ()
       throws IOException {
 
-      synchronized (segmentList) {
+      synchronized (ByteArrayIOStream.this) {
         if (closed) {
           throw new IOException("This stream has already been closed");
         }
 
-        segmentList.addAll(0, markList);
-        readIndex = markIndex;
+        readBookmark.reset(markBookmark);
+      }
+    }
 
-        markList = null;
+    public void rewind ()
+      throws IOException {
+
+      synchronized (ByteArrayIOStream.this) {
+        if (closed) {
+          throw new IOException("This stream has already been closed");
+        }
+
+        readBookmark.rewind();
       }
     }
 
     @Override
     public void close () {
 
-      synchronized (segmentList) {
-        markList = null;
+      synchronized (ByteArrayIOStream.this) {
+        markBookmark = null;
 
         ByteArrayIOStream.this.close();
       }
@@ -308,54 +375,98 @@ public class ByteArrayIOStream implements Closeable {
 
   public class ByteArrayOutputStream extends OutputStream {
 
-    @Override
-    public void write (int b)
+    public long position ()
       throws IOException {
 
-      synchronized (segmentList) {
+      synchronized (ByteArrayIOStream.this) {
         if (closed) {
           throw new IOException("This stream has already been closed");
-        }
+        } else {
 
-        if (writeIndex == allocation) {
-          segmentList.add(new byte[allocation]);
-          writeIndex = 0;
+          return writeBookmark.position();
         }
+      }
+    }
 
-        segmentList.getLast()[writeIndex++] = (byte)b;
-        segmentList.notify();
+    public void position (long position)
+      throws IOException {
+
+      if (position < 0) {
+        throw new IllegalArgumentException("Attempt to set position < 0");
+      } else {
+        synchronized (ByteArrayIOStream.this) {
+          if (closed) {
+            throw new IOException("This stream has already been closed");
+          } else {
+            writeBookmark.position(Math.min(position, segmentBuffer.getLimitBookmark().position()));
+          }
+        }
       }
     }
 
     @Override
-    public void write (byte[] b, int off, int len)
+    public void write (int b)
       throws IOException {
 
-      synchronized (segmentList) {
+      synchronized (ByteArrayIOStream.this) {
         if (closed) {
           throw new IOException("This stream has already been closed");
-        } else if (b == null) {
+        }
+
+        if (writeBookmark.segmentIndex() == segmentBuffer.getSegmentList().size()) {
+          segmentBuffer.getSegmentList().add(new byte[segmentBuffer.getAllocation()]);
+        }
+
+        segmentBuffer.getSegmentList().get(writeBookmark.segmentIndex())[writeBookmark.byteIndex()] = (byte)b;
+
+        if (segmentBuffer.getLimitBookmark().equals(writeBookmark)) {
+          segmentBuffer.getLimitBookmark().inc(segmentBuffer.getLimitBookmark(), segmentBuffer.getSegmentList());
+        }
+        writeBookmark.inc(segmentBuffer.getLimitBookmark(), segmentBuffer.getSegmentList());
+      }
+    }
+
+    @Override
+    public void write (byte[] bytes, int off, int len)
+      throws IOException {
+
+      synchronized (ByteArrayIOStream.this) {
+        if (closed) {
+          throw new IOException("This stream has already been closed");
+        } else if (bytes == null) {
           throw new NullPointerException();
-        } else if (off < 0 || len < 0 || off > b.length || len > b.length - off) {
+        } else if (off < 0 || len < 0 || off > bytes.length || len > bytes.length - off) {
           throw new IndexOutOfBoundsException();
         } else if (len > 0) {
 
-          int bytesWritten = 0;
-
-          while (bytesWritten < len) {
-
-            int bytesToWriteInSegment = Math.min(allocation - writeIndex, len - bytesWritten);
-
-            if (bytesToWriteInSegment > 0) {
-              System.arraycopy(b, off + bytesWritten, segmentList.getLast(), writeIndex, bytesToWriteInSegment);
-              bytesWritten += bytesToWriteInSegment;
-            }
-            if ((writeIndex += bytesToWriteInSegment) == allocation) {
-              segmentList.add(new byte[allocation]);
-              writeIndex = 0;
-            }
+          for (int index = off; index < len; index++) {
+            write(bytes[index]);
           }
         }
+      }
+    }
+
+    public void rewind ()
+      throws IOException {
+
+      synchronized (ByteArrayIOStream.this) {
+        if (closed) {
+          throw new IOException("This stream has already been closed");
+        }
+
+        writeBookmark.rewind();
+      }
+    }
+
+    public void advance ()
+      throws IOException {
+
+      synchronized (ByteArrayIOStream.this) {
+        if (closed) {
+          throw new IOException("This stream has already been closed");
+        }
+
+        writeBookmark.reset(segmentBuffer.getLimitBookmark());
       }
     }
 

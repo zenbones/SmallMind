@@ -30,33 +30,9 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.sleuth.runner;
+package org.smallmind.file.ephemeral.heap;
 
-import java.util.concurrent.Semaphore;
+public enum HeapNodeType {
 
-public class SleuthThreadPool {
-
-  private final Semaphore[] semaphores;
-
-  public SleuthThreadPool (int maxThreads) {
-
-    semaphores = new Semaphore[TestTier.values().length];
-
-    for (TestTier testTier : TestTier.values()) {
-      semaphores[testTier.ordinal()] = new Semaphore(maxThreads, true);
-    }
-  }
-
-  public synchronized void execute (TestTier testTier, Runnable runnable)
-    throws InterruptedException {
-
-    semaphores[testTier.ordinal()].acquire();
-
-    Thread thread = new Thread(runnable);
-
-    thread.start();
-    if (thread.isInterrupted()) {
-      throw new InterruptedException();
-    }
-  }
+  DIRECTORY, FILE
 }

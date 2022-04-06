@@ -30,33 +30,29 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.sleuth.runner;
+package org.smallmind.file.ephemeral;
 
-import java.util.concurrent.Semaphore;
+import java.nio.file.attribute.GroupPrincipal;
+import javax.security.auth.Subject;
 
-public class SleuthThreadPool {
+public class EphemeralGroupPrincipal implements GroupPrincipal {
 
-  private final Semaphore[] semaphores;
+  private String name;
 
-  public SleuthThreadPool (int maxThreads) {
+  public EphemeralGroupPrincipal (String name) {
 
-    semaphores = new Semaphore[TestTier.values().length];
-
-    for (TestTier testTier : TestTier.values()) {
-      semaphores[testTier.ordinal()] = new Semaphore(maxThreads, true);
-    }
+    this.name = name;
   }
 
-  public synchronized void execute (TestTier testTier, Runnable runnable)
-    throws InterruptedException {
+  @Override
+  public String getName () {
 
-    semaphores[testTier.ordinal()].acquire();
+    return null;
+  }
 
-    Thread thread = new Thread(runnable);
+  @Override
+  public boolean implies (Subject subject) {
 
-    thread.start();
-    if (thread.isInterrupted()) {
-      throw new InterruptedException();
-    }
+    return GroupPrincipal.super.implies(subject);
   }
 }

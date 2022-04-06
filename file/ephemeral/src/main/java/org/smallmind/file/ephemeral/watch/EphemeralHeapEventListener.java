@@ -30,33 +30,23 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.sleuth.runner;
+package org.smallmind.file.ephemeral.watch;
 
-import java.util.concurrent.Semaphore;
+import org.smallmind.file.ephemeral.heap.HeapEvent;
+import org.smallmind.file.ephemeral.heap.HeapEventListener;
 
-public class SleuthThreadPool {
+public class EphemeralHeapEventListener implements HeapEventListener {
 
-  private final Semaphore[] semaphores;
+  private final EphemeralWatchService watchService;
 
-  public SleuthThreadPool (int maxThreads) {
+  public EphemeralHeapEventListener (EphemeralWatchService watchService) {
 
-    semaphores = new Semaphore[TestTier.values().length];
-
-    for (TestTier testTier : TestTier.values()) {
-      semaphores[testTier.ordinal()] = new Semaphore(maxThreads, true);
-    }
+    this.watchService = watchService;
   }
 
-  public synchronized void execute (TestTier testTier, Runnable runnable)
-    throws InterruptedException {
+  @Override
+  public void handle (HeapEvent heapEvent) {
 
-    semaphores[testTier.ordinal()].acquire();
-
-    Thread thread = new Thread(runnable);
-
-    thread.start();
-    if (thread.isInterrupted()) {
-      throw new InterruptedException();
-    }
+    watchService.fire(heapEvent.getPath(), heapEvent.getType().getKind());
   }
 }

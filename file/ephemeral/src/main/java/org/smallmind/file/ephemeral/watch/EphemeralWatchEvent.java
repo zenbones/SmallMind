@@ -30,33 +30,38 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.sleuth.runner;
+package org.smallmind.file.ephemeral.watch;
 
-import java.util.concurrent.Semaphore;
+import java.nio.file.WatchEvent;
 
-public class SleuthThreadPool {
+public class EphemeralWatchEvent<T> implements WatchEvent<T> {
 
-  private final Semaphore[] semaphores;
+  private final Kind<T> kind;
+  private final T context;
+  private final int count;
 
-  public SleuthThreadPool (int maxThreads) {
+  public EphemeralWatchEvent (Kind<T> kind, int count, T context) {
 
-    semaphores = new Semaphore[TestTier.values().length];
-
-    for (TestTier testTier : TestTier.values()) {
-      semaphores[testTier.ordinal()] = new Semaphore(maxThreads, true);
-    }
+    this.kind = kind;
+    this.count = count;
+    this.context = context;
   }
 
-  public synchronized void execute (TestTier testTier, Runnable runnable)
-    throws InterruptedException {
+  @Override
+  public Kind<T> kind () {
 
-    semaphores[testTier.ordinal()].acquire();
+    return kind;
+  }
 
-    Thread thread = new Thread(runnable);
+  @Override
+  public int count () {
 
-    thread.start();
-    if (thread.isInterrupted()) {
-      throw new InterruptedException();
-    }
+    return count;
+  }
+
+  @Override
+  public T context () {
+
+    return context;
   }
 }
