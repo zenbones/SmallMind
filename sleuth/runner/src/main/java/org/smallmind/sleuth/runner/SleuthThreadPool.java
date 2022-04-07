@@ -47,21 +47,21 @@ public class SleuthThreadPool {
     }
   }
 
-  public synchronized void execute (TestTier testTier, Runnable runnable)
+  public void execute (TestTier testTier, Runnable runnable)
     throws InterruptedException {
 
     semaphores[testTier.ordinal()].acquire();
 
     Thread thread = new Thread(runnable);
 
-    try {
-      thread.start();
-    } finally {
-      semaphores[testTier.ordinal()].release();
-    }
-
+    thread.start();
     if (thread.isInterrupted()) {
       throw new InterruptedException();
     }
+  }
+
+  public void release (TestTier testTier) {
+
+    semaphores[testTier.ordinal()].release();
   }
 }

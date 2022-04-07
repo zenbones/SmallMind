@@ -80,6 +80,7 @@ public class SleuthProvider extends AbstractProvider {
     String[] groups = null;
     String groupsParameter;
     long startMilliseconds;
+    int threadCount = 0;
 
     System.setOut(new ForwardingPrintStream((ConsoleOutputReceiver)runListener, true));
     System.setErr(new ForwardingPrintStream((ConsoleOutputReceiver)runListener, false));
@@ -105,11 +106,17 @@ public class SleuthProvider extends AbstractProvider {
       }
     }
 
+    if (providerParameters.getProviderProperties().get("threadCount") != null) {
+      threadCount = Integer.parseInt(providerParameters.getProviderProperties().get("threadCount"));
+    } else if (providerParameters.getProviderProperties().get("threadcount") != null) {
+      threadCount = Integer.parseInt(providerParameters.getProviderProperties().get("threadcount"));
+    }
+
     sleuthRunner.addListener(sleuthEventListener = new SurefireSleuthEventListener(runListener));
     startMilliseconds = System.currentTimeMillis();
 
     runListener.testSetStarting(new SimpleReportEntry("Sleuth Tests", "Test Assay", "test set starting"));
-    sleuthRunner.execute(providerParameters.getProviderProperties().get("threadcount") == null ? 0 : Integer.parseInt(providerParameters.getProviderProperties().get("threadcount")), groups, testsToRun);
+    sleuthRunner.execute(threadCount, groups, testsToRun);
     runListener.testSetCompleted(new SimpleReportEntry("Sleuth Tests", "Test Assay", (int)(System.currentTimeMillis() - startMilliseconds)));
 
     runResult = reporterFactory.close();

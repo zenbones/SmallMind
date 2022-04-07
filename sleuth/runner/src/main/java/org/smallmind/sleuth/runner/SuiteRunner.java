@@ -105,7 +105,7 @@ public class SuiteRunner implements Runnable {
       testCompletedLatch = new CountDownLatch(testMethodDependencyQueue.size());
       while ((testMethodDependency = testMethodDependencyQueue.poll()) != null) {
         try {
-          threadPool.execute(TestTier.TEST, new TestRunner(sleuthRunner, testCompletedLatch, culprit, suiteDependency.getValue(), instance, testMethodDependency, testMethodDependencyQueue, annotationProcessor));
+          threadPool.execute(TestTier.TEST, new TestRunner(sleuthRunner, testCompletedLatch, culprit, suiteDependency.getValue(), instance, testMethodDependency, testMethodDependencyQueue, annotationProcessor, threadPool));
         } catch (InterruptedException interruptedException) {
           culprit = new Culprit(SuiteRunner.class.getName(), "run", interruptedException);
           Thread.currentThread().interrupt();
@@ -122,6 +122,7 @@ public class SuiteRunner implements Runnable {
     } catch (Exception exception) {
       sleuthRunner.fire(new FatalSleuthEvent(SuiteRunner.class.getName(), "run", System.currentTimeMillis() - startMilliseconds, exception));
     } finally {
+      threadPool.release(TestTier.SUITE);
       suiteDependencyQueue.complete(suiteDependency);
       suiteCompletedLatch.countDown();
     }

@@ -51,6 +51,7 @@ public class TestRunner implements Runnable {
 
   private final SleuthRunner sleuthRunner;
   private final AnnotationProcessor annotationProcessor;
+  private final SleuthThreadPool threadPool;
   private final DependencyQueue<Test, Method> testMethodDependencyQueue;
   private final Dependency<Test, Method> testMethodDependency;
   private final CountDownLatch testCompletedLatch;
@@ -58,7 +59,7 @@ public class TestRunner implements Runnable {
   private final Object instance;
   private Culprit culprit;
 
-  public TestRunner (SleuthRunner sleuthRunner, CountDownLatch testCompletedLatch, Culprit culprit, Class<?> clazz, Object instance, Dependency<Test, Method> testMethodDependency, DependencyQueue<Test, Method> testMethodDependencyQueue, AnnotationProcessor annotationProcessor) {
+  public TestRunner (SleuthRunner sleuthRunner, CountDownLatch testCompletedLatch, Culprit culprit, Class<?> clazz, Object instance, Dependency<Test, Method> testMethodDependency, DependencyQueue<Test, Method> testMethodDependencyQueue, AnnotationProcessor annotationProcessor, SleuthThreadPool threadPool) {
 
     this.sleuthRunner = sleuthRunner;
     this.testCompletedLatch = testCompletedLatch;
@@ -68,6 +69,7 @@ public class TestRunner implements Runnable {
     this.testMethodDependency = testMethodDependency;
     this.testMethodDependencyQueue = testMethodDependencyQueue;
     this.annotationProcessor = annotationProcessor;
+    this.threadPool = threadPool;
   }
 
   @Override
@@ -112,6 +114,7 @@ public class TestRunner implements Runnable {
 
       testMethodDependency.setCulprit(culprit);
     } finally {
+      threadPool.release(TestTier.TEST);
       testMethodDependencyQueue.complete(testMethodDependency);
       testCompletedLatch.countDown();
     }
