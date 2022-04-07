@@ -54,7 +54,12 @@ public class SleuthThreadPool {
 
     Thread thread = new Thread(runnable);
 
-    thread.start();
+    try {
+      thread.start();
+    } finally {
+      semaphores[testTier.ordinal()].release();
+    }
+
     if (thread.isInterrupted()) {
       throw new InterruptedException();
     }
