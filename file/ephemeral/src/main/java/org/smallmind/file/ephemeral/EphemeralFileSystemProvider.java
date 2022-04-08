@@ -57,6 +57,14 @@ import java.nio.file.spi.FileSystemProvider;
 import java.util.Map;
 import java.util.Set;
 
+/*
+ -Djava.nio.file.spi.DefaultFileSystemProvider=org.smallmind.file.ephemeral.EphemeralFileSystemProvider
+
+  -Dorg.smallmind.file.ephemeral.configuration.capacity=<Long.MAX_VALUE>
+  -Dorg.smallmind.file.ephemeral.configuration.blockSize=<1024>
+  -Dorg.smallmind.file.ephemeral.configuration.roots=/overlay/file/system,/any/other/path
+*/
+
 public class EphemeralFileSystemProvider extends FileSystemProvider {
 
   private final EphemeralFileSystem ephemeralFileSystem;
