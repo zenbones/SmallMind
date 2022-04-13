@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>smallmind-batch</artifactId>
-    <version>4.5.1-SNAPSHOT</version>
+    <version>4.6.0</version>
   </parent>
   <artifactId>batch-base</artifactId>
   <name>Batch-Base</name>
