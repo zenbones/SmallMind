@@ -40,6 +40,8 @@ import org.smallmind.batch.base.JobFactory;
 import org.smallmind.batch.base.LongBatchParameter;
 import org.smallmind.batch.base.StringBatchParameter;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
+import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.core.JobInstance;
 import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.JobParametersInvalidException;
 import org.springframework.batch.core.configuration.JobLocator;
@@ -96,6 +98,25 @@ public class BatchJobFactory implements JobFactory {
   public BatchJobMonitor monitor (Long jobId) {
 
     return new BatchJobMonitor(jobExplorer, jobId);
+  }
+
+  public BatchJobMonitor monitorLatest (String logicalName) {
+
+    JobInstance jobInstance;
+
+    if ((jobInstance = jobExplorer.getLastJobInstance(logicalName)) == null) {
+      throw new MissingJobException("Missing job instance(%s)", logicalName);
+    } else {
+
+      JobExecution jobExecution;
+
+      if ((jobExecution = jobExplorer.getLastJobExecution(jobInstance)) == null) {
+        throw new MissingJobException("Missing job execution(%s)", logicalName);
+      } else {
+
+        return new BatchJobMonitor(jobExplorer, jobExecution.getJobId());
+      }
+    }
   }
 
   public Long start (String logicalName, Map<String, BatchParameter<?>> parameterMap)
