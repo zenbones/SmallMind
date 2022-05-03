@@ -43,6 +43,7 @@ import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.JobParametersInvalidException;
 import org.springframework.batch.core.configuration.JobLocator;
+import org.springframework.batch.core.explore.JobExplorer;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.launch.JobOperator;
 import org.springframework.batch.core.launch.NoSuchJobException;
@@ -56,6 +57,7 @@ public class BatchJobFactory implements JobFactory {
   private JobLocator jobLocator;
   private JobLauncher jobLauncher;
   private JobOperator jobOperator;
+  private JobExplorer jobExplorer;
 
   public void setJobLocator (JobLocator jobLocator) {
 
@@ -72,8 +74,32 @@ public class BatchJobFactory implements JobFactory {
     this.jobOperator = jobOperator;
   }
 
+  public void setJobExplorer (JobExplorer jobExplorer) {
+
+    this.jobExplorer = jobExplorer;
+  }
+
   @Override
   public void create (String logicalName, Map<String, BatchParameter<?>> parameterMap)
+    throws NoSuchJobException, JobParametersInvalidException, JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException {
+
+    start(logicalName, parameterMap);
+  }
+
+  @Override
+  public void restart (long executionId)
+    throws NoSuchJobException, NoSuchJobExecutionException, JobParametersInvalidException, JobRestartException, JobInstanceAlreadyCompleteException {
+
+    jobOperator.restart(executionId);
+  }
+
+  public BatchJobMonitor monitor (String logicalName, Map<String, BatchParameter<?>> parameterMap)
+    throws NoSuchJobException, JobParametersInvalidException, JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException {
+
+    return new BatchJobMonitor(jobExplorer, start(logicalName, parameterMap));
+  }
+
+  private Long start (String logicalName, Map<String, BatchParameter<?>> parameterMap)
     throws NoSuchJobException, JobParametersInvalidException, JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException {
 
     JobParametersBuilder jobParametersBuilder = new JobParametersBuilder();
@@ -99,13 +125,6 @@ public class BatchJobFactory implements JobFactory {
       }
     }
 
-    jobLauncher.run(jobLocator.getJob(logicalName), jobParametersBuilder.toJobParameters());
-  }
-
-  @Override
-  public void restart (long executionId)
-    throws NoSuchJobException, NoSuchJobExecutionException, JobParametersInvalidException, JobRestartException, JobInstanceAlreadyCompleteException {
-
-    jobOperator.restart(executionId);
+    return jobLauncher.run(jobLocator.getJob(logicalName), jobParametersBuilder.toJobParameters()).getJobId();
   }
 }

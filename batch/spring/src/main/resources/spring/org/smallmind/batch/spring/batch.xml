@@ -41,6 +41,7 @@
     <property name="jobLocator" ref="jobLocator"/>
     <property name="jobLauncher" ref="jobLauncher"/>
     <property name="jobOperator" ref="jobOperator"/>
+    <property name="jobExplorer" ref="jobExplorer"/>
   </bean>
 
 </beans>
