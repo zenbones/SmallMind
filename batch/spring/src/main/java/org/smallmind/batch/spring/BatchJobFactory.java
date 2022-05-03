@@ -93,13 +93,12 @@ public class BatchJobFactory implements JobFactory {
     jobOperator.restart(executionId);
   }
 
-  public BatchJobMonitor monitor (String logicalName, Map<String, BatchParameter<?>> parameterMap)
-    throws NoSuchJobException, JobParametersInvalidException, JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException {
+  public BatchJobMonitor monitor (Long jobId) {
 
-    return new BatchJobMonitor(jobExplorer, start(logicalName, parameterMap));
+    return new BatchJobMonitor(jobExplorer, jobId);
   }
 
-  private Long start (String logicalName, Map<String, BatchParameter<?>> parameterMap)
+  public Long start (String logicalName, Map<String, BatchParameter<?>> parameterMap)
     throws NoSuchJobException, JobParametersInvalidException, JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException {
 
     JobParametersBuilder jobParametersBuilder = new JobParametersBuilder();
