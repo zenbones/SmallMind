@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -207,6 +208,17 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
     return null;
   }
 
+  private boolean hasPurpose (String purpose, List<String> purposeList) {
+
+    if ((purpose == null) || purpose.isEmpty()) {
+
+      return purposeList.isEmpty();
+    } else {
+
+      return purposeList.contains(purpose);
+    }
+  }
+
   private void writeView (DoppelgangerInformation doppelgangerInformation, UsefulTypeMirrors usefulTypeMirrors, TypeElement classElement, TypeElement nearestViewSuperclass, String purpose, Direction direction, PropertyLexicon propertyLexicon)
     throws IOException {
 
@@ -365,7 +377,7 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
         }
 
         // class level constraints
-        writeConstraints(writer, doppelgangerInformation.constraints(), 0);
+        writeConstrainingIdioms(writer, purpose, direction, doppelgangerInformation.constrainingIdioms());
 
         // class declaration
         writer.write("public ");
@@ -640,6 +652,16 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
     writer.write(propertyInformationEntry.getKey());
     writer.write(";");
     writer.newLine();
+  }
+
+  private void writeConstrainingIdioms (BufferedWriter writer, String purpose, Direction direction, Iterable<IdiomInformation> constrainingIdioms)
+    throws IOException {
+
+    for (IdiomInformation idiom : constrainingIdioms) {
+      if ((!idiom.getConstraintList().isEmpty()) && hasPurpose(purpose, idiom.getPurposeList()) && idiom.getVisibility().matches(direction)) {
+        writeConstraints(writer, idiom.getConstraintList(), 0);
+      }
+    }
   }
 
   private void writeConstraints (BufferedWriter writer, Iterable<ConstraintInformation> constraints, int indent)

@@ -54,7 +54,7 @@ public @interface Doppelganger {
   Polymorphic polymorphic () default @Polymorphic();
 
   // the constraint annotations to be applied to the generated class
-  Constraint[] constraints () default {};
+  Idiom[] constrainingIdioms () default {};
 
   // Additional interfaces that the generated class should be marked as implementing
   Implementation[] implementations () default {};

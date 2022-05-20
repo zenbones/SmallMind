@@ -52,7 +52,7 @@ public class DoppelgangerInformation {
 
   private final DirectionalGuide inDirectionalGuide = new DirectionalGuide(Direction.IN);
   private final DirectionalGuide outDirectionalGuide = new DirectionalGuide(Direction.OUT);
-  private final List<ConstraintInformation> constraintList = new LinkedList<>();
+  private final List<IdiomInformation> constrainingIdiomList = new LinkedList<>();
   private final HashMap<IdiomKey, HashSet<TypeMirror>> implementationMap = new HashMap<>();
   private final HashMap<IdiomKey, HashSet<String>> importMap = new HashMap<>();
   private final HashMap<String, Visibility> pledgedMap = new HashMap<>();
@@ -136,8 +136,8 @@ public class DoppelgangerInformation {
       }
     }
 
-    for (AnnotationMirror constraintAnnotationMirror : AptUtility.extractAnnotationValueAsList(doppelgangerAnnotationMirror, "constraints", AnnotationMirror.class)) {
-      constraintList.add(new ConstraintInformation(constraintAnnotationMirror));
+    for (AnnotationMirror idiomAnnotationMirror : AptUtility.extractAnnotationValueAsList(doppelgangerAnnotationMirror, "constrainingIdioms", AnnotationMirror.class)) {
+      constrainingIdiomList.add(new IdiomInformation(processingEnvironment, usefulTypeMirrors, idiomAnnotationMirror));
     }
 
     if ((polymorphicAnnotationMirror = AptUtility.extractAnnotationValue(doppelgangerAnnotationMirror, "polymorphic", AnnotationMirror.class, null)) != null) {
@@ -275,9 +275,9 @@ public class DoppelgangerInformation {
     return ((implementationSet = implementationMap.get(new IdiomKey(direction, purpose))) == null) ? new TypeMirror[0] : implementationSet.toArray(new TypeMirror[0]);
   }
 
-  public Iterable<ConstraintInformation> constraints () {
+  public Iterable<IdiomInformation> constrainingIdioms () {
 
-    return constraintList;
+    return constrainingIdiomList;
   }
 
   public DirectionalGuide getInDirectionalGuide () {
