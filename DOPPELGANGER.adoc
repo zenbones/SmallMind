@@ -52,7 +52,7 @@ Holds the base rules for generating the views of the annotated class. The follow
 * `Polymorphic polymorphic () default @Polymorphic()` - The rules for handling polymorphic encoding / decoding (see below). The default presumes a non-polymorphic type.
 * `Import[] imports () default {}` - A list of additional imports to add to the generated classes, for convenience.
 * `Implementation[] implementations () default {}` - A list of additional interfaces to be adopted into the *implements* clause of the generated classes
-* `Constraint[] constraints () default {}` - The list of class level validation constraints to apply to the generated view (see below).
+* `Idiom[] constrainingIdioms () default {}` - The list of class level validation constraints to apply to the generated view given the matching idioms (see below).
 * `Virtual[] virtual () default {}` - The list of virtual properties to be added to the view (see below).
 * `Real[] real () default {}` - The list of real properties to be added to the view (see below). These should be added via direct @View annotations, but sometimes that won't be possible and listing them via this property will make sense.
 * `Pledge[] pledges () default {}` - The list of conditions under which to guarantee a view is generated (only necessary when the view would otherwise not be generated, see below).
