@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>spark-singularity</artifactId>
-    <version>4.7.0</version>
+    <version>4.8.0-SNAPSHOT</version>
   </parent>
   <artifactId>spark-singularity-boot</artifactId>
   <packaging>jar</packaging>
