@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>smallmind-scribe</artifactId>
-    <version>4.7.1</version>
+    <version>4.8.0-SNAPSHOT</version>
   </parent>
   <artifactId>scribe-pen</artifactId>
   <name>Scribe-Pen</name>
