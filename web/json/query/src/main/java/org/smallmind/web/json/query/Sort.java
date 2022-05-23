@@ -32,7 +32,6 @@
  */
 package org.smallmind.web.json.query;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import javax.xml.bind.annotation.XmlAccessType;
@@ -45,7 +44,7 @@ import javax.xml.bind.annotation.XmlTransient;
 @XmlAccessorType(XmlAccessType.PROPERTY)
 public class Sort implements WherePermissible<Sort> {
 
-  private HashSet<SortField> fieldSet;
+  private SortField[] fields;
 
   public Sort () {
 
@@ -53,7 +52,7 @@ public class Sort implements WherePermissible<Sort> {
 
   public Sort (SortField... fields) {
 
-    fieldSet = new HashSet<>(Arrays.asList(fields));
+    this.fields = fields;
   }
 
   public static Sort instance (SortField... fields) {
@@ -67,7 +66,7 @@ public class Sort implements WherePermissible<Sort> {
 
     HashSet<WherePermit> targetSet = new HashSet<>();
 
-    for (SortField field : fieldSet) {
+    for (SortField field : fields) {
       targetSet.add(new TargetWherePermit(field.getEntity(), field.getName()));
     }
 
@@ -77,23 +76,17 @@ public class Sort implements WherePermissible<Sort> {
   @XmlTransient
   public synchronized boolean isEmpty () {
 
-    return (fieldSet == null) || fieldSet.isEmpty();
+    return (fields == null) || (fields.length == 0);
   }
 
   @XmlElement(name = "fields")
   public synchronized SortField[] getFields () {
-
-    SortField[] fields = new SortField[fieldSet == null ? 0 : fieldSet.size()];
-
-    if (fieldSet != null) {
-      fieldSet.toArray(fields);
-    }
 
     return fields;
   }
 
   public synchronized void setFields (SortField... fields) {
 
-    this.fieldSet = new HashSet<>(Arrays.asList(fields));
+    this.fields = fields;
   }
 }
