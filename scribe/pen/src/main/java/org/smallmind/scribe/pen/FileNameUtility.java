@@ -39,13 +39,14 @@ import org.smallmind.nutsnbolts.io.PathUtility;
 
 public class FileNameUtility {
 
-  public static Path calculateUniquePath (Path desiredPath, char separator, String timestampSuffix) {
+  public static Path calculateUniquePath (Path desiredPath, char separator, String timestampSuffix, boolean alwaysUseIndex) {
 
     Path calculatedPath;
     Path parentPath = desiredPath.getParent();
     StringBuilder baseNameBuilder;
     StringBuilder uniqueNameBuilder;
     String fileName;
+    boolean first = true;
     int dotPos;
     int uniqueCount = 0;
 
@@ -63,12 +64,17 @@ public class FileNameUtility {
 
     do {
       uniqueNameBuilder = new StringBuilder(baseNameBuilder);
-      uniqueNameBuilder.append(separator);
-      uniqueNameBuilder.append(uniqueCount++);
+
+      if (alwaysUseIndex || (!first)) {
+        uniqueNameBuilder.append(separator);
+        uniqueNameBuilder.append(uniqueCount++);
+      }
 
       if (dotPos >= 0) {
         uniqueNameBuilder.append(fileName.substring(dotPos));
       }
+
+      first = false;
     } while (Files.exists(calculatedPath = (parentPath == null) ? Paths.get(uniqueNameBuilder.toString()) : parentPath.resolve(uniqueNameBuilder.toString())));
 
     return calculatedPath;

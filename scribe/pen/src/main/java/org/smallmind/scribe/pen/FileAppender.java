@@ -250,7 +250,7 @@ public class FileAppender extends AbstractFormattedAppender {
     if (outputStream != null) {
       if ((rollover != null) && rollover.willRollover(fileSize, lastModified, formattedBytes.length)) {
 
-        Path rolloverPath = FileNameUtility.calculateUniquePath(logPath, rollover.getSeparator(), rollover.getTimestampSuffix(new Date()));
+        Path rolloverPath = FileNameUtility.calculateUniquePath(logPath, rollover.getSeparator(), rollover.getTimestampSuffix(new Date()), true);
 
         try {
           outputStream.close();
