@@ -39,7 +39,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Date;
-import org.smallmind.nutsnbolts.io.PathUtility;
 
 public class FileAppender extends AbstractFormattedAppender {
 
@@ -251,35 +250,7 @@ public class FileAppender extends AbstractFormattedAppender {
     if (outputStream != null) {
       if ((rollover != null) && rollover.willRollover(fileSize, lastModified, formattedBytes.length)) {
 
-        Path rolloverPath;
-        Path parentPath = logPath.getParent();
-        StringBuilder rolloverNameBuilder;
-        StringBuilder uniqueNameBuilder;
-        String logFileName;
-        int dotPos;
-        int uniqueCount = 0;
-
-        rolloverNameBuilder = new StringBuilder();
-        logFileName = PathUtility.fileNameAsString(logPath);
-
-        if ((dotPos = logFileName.lastIndexOf('.')) >= 0) {
-          rolloverNameBuilder.append(logFileName, 0, dotPos);
-        } else {
-          rolloverNameBuilder.append(logFileName);
-        }
-
-        rolloverNameBuilder.append(rollover.getSeparator());
-        rolloverNameBuilder.append(rollover.getTimestampSuffix(new Date()));
-
-        do {
-          uniqueNameBuilder = new StringBuilder(rolloverNameBuilder);
-          uniqueNameBuilder.append(rollover.getSeparator());
-          uniqueNameBuilder.append(uniqueCount++);
-
-          if (dotPos >= 0) {
-            uniqueNameBuilder.append(logFileName.substring(dotPos));
-          }
-        } while (Files.exists(rolloverPath = (parentPath == null) ? Paths.get(uniqueNameBuilder.toString()) : parentPath.resolve(uniqueNameBuilder.toString())));
+        Path rolloverPath = FileNameUtility.calculateUniquePath(logPath, rollover.getSeparator(), rollover.getTimestampSuffix(new Date()));
 
         try {
           outputStream.close();
