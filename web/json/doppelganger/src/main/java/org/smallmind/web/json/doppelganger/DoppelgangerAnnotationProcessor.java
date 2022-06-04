@@ -174,7 +174,7 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
   }
 
   private void processIn (DoppelgangerInformation doppelgangerInformation, UsefulTypeMirrors usefulTypeMirrors, TypeElement classElement, TypeElement nearestViewSuperclass, String purpose, PropertyLexicon propertyLexicon)
-    throws IOException {
+    throws IOException, DefinitionException {
 
     writeView(doppelgangerInformation, usefulTypeMirrors, classElement, nearestViewSuperclass, purpose, Direction.IN, propertyLexicon);
 
@@ -182,7 +182,7 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
   }
 
   private void processOut (DoppelgangerInformation doppelgangerInformation, UsefulTypeMirrors usefulTypeMirrors, TypeElement classElement, TypeElement nearestViewSuperclass, String purpose, PropertyLexicon propertyLexicon)
-    throws IOException {
+    throws IOException, DefinitionException {
 
     writeView(doppelgangerInformation, usefulTypeMirrors, classElement, nearestViewSuperclass, purpose, Direction.OUT, propertyLexicon);
 
@@ -220,7 +220,7 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
   }
 
   private void writeView (DoppelgangerInformation doppelgangerInformation, UsefulTypeMirrors usefulTypeMirrors, TypeElement classElement, TypeElement nearestViewSuperclass, String purpose, Direction direction, PropertyLexicon propertyLexicon)
-    throws IOException {
+    throws IOException, DefinitionException {
 
     JavaFileObject sourceFile;
 
@@ -233,8 +233,9 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
     if (sourceFile.getNestingKind() == null) {
       try (BufferedWriter writer = new BufferedWriter(sourceFile.openWriter())) {
 
-        LinkedList<TypeElement> matchingSubClassList = new LinkedList<>();
         HashSet<TypeMirror> implementationSet = new HashSet<>();
+        LinkedList<TypeElement> matchingSubClassList = new LinkedList<>();
+        List<TypeElement> polymorphicSubclassList;
         String[] imports;
 
         // package
@@ -244,12 +245,21 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
         writer.newLine();
         writer.newLine();
 
-        for (TypeElement polymorphicSubClass : classTracker.getPolymorphicSubclasses(classElement)) {
+        if (!(polymorphicSubclassList = classTracker.getPolymorphicSubclasses(classElement)).isEmpty()) {
 
-          Visibility visibility;
+          String packageName = processingEnv.getElementUtils().getPackageOf(classElement).getQualifiedName().toString();
 
-          if (((visibility = visibilityTracker.getVisibility(polymorphicSubClass, purpose)) != null) && visibility.matches(direction)) {
-            matchingSubClassList.add(polymorphicSubClass);
+          for (TypeElement polymorphicSubClass : polymorphicSubclassList) {
+
+            Visibility visibility;
+
+            if (((visibility = visibilityTracker.getVisibility(polymorphicSubClass, purpose)) != null) && visibility.matches(direction)) {
+              if (!packageName.equals(processingEnv.getElementUtils().getPackageOf(polymorphicSubClass).getQualifiedName().toString())) {
+                throw new DefinitionException("The class(%s) must be in package(%s)", polymorphicSubClass, packageName);
+              } else {
+                matchingSubClassList.add(polymorphicSubClass);
+              }
+            }
           }
         }
 
