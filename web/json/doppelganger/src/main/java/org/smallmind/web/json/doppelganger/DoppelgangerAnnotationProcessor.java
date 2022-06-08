@@ -456,6 +456,11 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
         writer.newLine();
         writer.write("  public static ");
         writer.write(NameUtility.getSimpleName(processingEnv, purpose, direction, classElement));
+
+        if (classTracker.hasPolymorphicSubClasses(classElement)) {
+          writer.write("<?>");
+        }
+
         writer.write(" instance (");
         writer.write(classElement.getSimpleName().toString());
         writer.write(" ");
