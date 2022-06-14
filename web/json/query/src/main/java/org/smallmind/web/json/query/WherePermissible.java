@@ -76,7 +76,7 @@ public interface WherePermissible<W extends WherePermissible<W>> {
       }
 
       if (!failedDependencySet.isEmpty()) {
-        throw new WhereValidationException("The elements(%s) have failed dependencies for this query", Arrays.toString(failedDependencySet.toArray()), this.getClass().getSimpleName());
+        throw new WhereValidationException("The elements(%s) are failed dependencies for this query", Arrays.toString(failedDependencySet.toArray()), this.getClass().getSimpleName());
       }
       if (!requestedSet.containsAll(requiredSet)) {
         throw new WhereValidationException("The elements(%s) are required in %s clauses for this query", Arrays.toString(requiredSet.toArray()), this.getClass().getSimpleName());
