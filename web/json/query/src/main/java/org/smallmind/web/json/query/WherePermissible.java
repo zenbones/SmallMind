@@ -75,6 +75,12 @@ public interface WherePermissible<W extends WherePermissible<W>> {
         }
       }
 
+      if (!failedDependencySet.isEmpty()) {
+        throw new WhereValidationException("The elements(%s) have failed dependencies for this query", Arrays.toString(failedDependencySet.toArray()), this.getClass().getSimpleName());
+      }
+      if (!requestedSet.containsAll(requiredSet)) {
+        throw new WhereValidationException("The elements(%s) are required in %s clauses for this query", Arrays.toString(requiredSet.toArray()), this.getClass().getSimpleName());
+      }
       for (WherePermit target : requestedSet) {
         if (excludedSet.contains(target)) {
           throw new WhereValidationException("The element(%s) is not permitted in %s clauses for this query", target, this.getClass().getSimpleName());
@@ -82,12 +88,6 @@ public interface WherePermissible<W extends WherePermissible<W>> {
         if ((!allowedSet.isEmpty()) && (!allowedSet.contains(target))) {
           throw new WhereValidationException("The element(%s) is not permitted in %s clauses for this query", target, this.getClass().getSimpleName());
         }
-      }
-      if (!requestedSet.containsAll(requiredSet)) {
-        throw new WhereValidationException("The elements(%s) are required in %s clauses for this query", Arrays.toString(requiredSet.toArray()), this.getClass().getSimpleName());
-      }
-      if (!failedDependencySet.isEmpty()) {
-        throw new WhereValidationException("The elements(%s) have failed dependencies for this query", Arrays.toString(failedDependencySet.toArray()), this.getClass().getSimpleName());
       }
     }
 
