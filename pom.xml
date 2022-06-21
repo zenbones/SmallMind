@@ -120,9 +120,9 @@
         <siphash.version>2.0.0</siphash.version>
         <slf4j.version>1.7.32</slf4j.version>
         <snakeyaml.version>1.29</snakeyaml.version>
-        <spring.version>5.3.18</spring.version>
-        <spring.batch.version>4.3.5</spring.batch.version>
-        <spring.rabbit.version>2.3.11</spring.rabbit.version>
+        <spring.version>5.3.21</spring.version>
+        <spring.batch.version>4.3.6</spring.batch.version>
+        <spring.rabbit.version>2.4.5</spring.rabbit.version>
         <sshd.version>2.7.0</sshd.version>
         <syslog4j.version>0.9.30</syslog4j.version>
         <tanukisoft.version>3.5.43</tanukisoft.version>
