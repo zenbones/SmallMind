@@ -168,10 +168,10 @@ public class SignatureUtility {
     }
   }
 
-  private static Class getObjectType (String type)
+  private static Class<?> getObjectType (String type)
     throws ClassNotFoundException {
 
-    Class objectType;
+    Class<?> objectType;
 
     if ((objectType = SIGNATURE_MAP.get(type)) == null) {
       synchronized (SIGNATURE_MAP) {
