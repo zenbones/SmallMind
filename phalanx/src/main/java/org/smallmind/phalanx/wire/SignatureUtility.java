@@ -59,9 +59,7 @@ public class SignatureUtility {
           clazz = clazz.getComponentType();
         }
 
-        for (int commas = 0; commas < (dimensions - 1); commas++) {
-          codeBuilder.append(',');
-        }
+        codeBuilder.append(",".repeat(Math.max(0, (dimensions - 1))));
         codeBuilder.append(']');
       }
 
