@@ -40,7 +40,7 @@ public abstract class WireAdapter<V, B> {
 
   public abstract Class<V> getValueType ();
 
-  public abstract B unmarshal (V obj, Class<B> boundType)
+  public abstract B unmarshal (V obj)
     throws Exception;
 
   public abstract V marshal (B obj)

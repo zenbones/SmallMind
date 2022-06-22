@@ -68,10 +68,10 @@ public class ArgumentRectifier {
     return adapter.marshal(boundObj);
   }
 
-  private static Object unmarshal (WireAdapter adapter, Class boundType, Object valueObj)
+  private static Object unmarshal (WireAdapter adapter, Object valueObj)
     throws Exception {
 
-    return adapter.unmarshal(valueObj, boundType);
+    return adapter.unmarshal(valueObj);
   }
 
   public static HashMap<String, Object> induceMap (String[] argumentNames, Object[] args)
@@ -140,7 +140,7 @@ public class ArgumentRectifier {
 
               WireAdapter<?, ?> adapter;
 
-              arguments[argumentInfo.getIndex()] = unmarshal(adapter = getAdapter(wire.adapter()), argumentInfo.getParameterType(), signalCodec.extractObject(argumentEntry.getValue(), adapter.getValueType()));
+              arguments[argumentInfo.getIndex()] = unmarshal(adapter = getAdapter(wire.adapter()), signalCodec.extractObject(argumentEntry.getValue(), adapter.getValueType()));
             } catch (Exception exception) {
               throw new TransportException(exception);
             }

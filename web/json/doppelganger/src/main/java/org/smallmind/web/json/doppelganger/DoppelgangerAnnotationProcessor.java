@@ -454,7 +454,15 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
 
         // static instance creator
         writer.newLine();
+
         writer.write("  public static ");
+
+        if (classTracker.hasPolymorphicSubClasses(classElement)) {
+          writer.write("<T extends ");
+          writer.write(classElement.getSimpleName().toString());
+          writer.write("> ");
+        }
+
         writer.write(NameUtility.getSimpleName(processingEnv, purpose, direction, classElement));
 
         if (classTracker.hasPolymorphicSubClasses(classElement)) {
@@ -462,8 +470,14 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
         }
 
         writer.write(" instance (");
-        writer.write(classElement.getSimpleName().toString());
-        writer.write(" ");
+
+        if (classTracker.hasPolymorphicSubClasses(classElement)) {
+          writer.write("T ");
+        } else {
+          writer.write(classElement.getSimpleName().toString());
+          writer.write(" ");
+        }
+
         writer.write(asMemberName(classElement.getSimpleName()));
         writer.write(") {");
         writer.newLine();
