@@ -33,9 +33,10 @@
 package org.smallmind.phalanx.wire;
 
 import java.io.Serializable;
-import java.lang.reflect.Method;
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import org.smallmind.phalanx.wire.signal.Function;
 import org.smallmind.phalanx.wire.signal.InvocationSignal;
 import org.smallmind.phalanx.wire.signal.SignalCodec;
@@ -43,7 +44,37 @@ import org.smallmind.phalanx.wire.transport.ArgumentInfo;
 
 public class ArgumentRectifier {
 
-  public static HashMap<String, Object> induceMap (Method method, String[] argumentNames, Object[] args)
+  private static final ConcurrentHashMap<Class<? extends WireAdapter<?, ?>>, WireAdapter<?, ?>> ADAPTER_INSTANCE_MAP = new ConcurrentHashMap<>();
+
+  private static WireAdapter<?, ?> getAdapter (Class<? extends WireAdapter<?, ?>> adapterClass)
+    throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+
+    WireAdapter<?, ?> adapter;
+
+    if ((adapter = ADAPTER_INSTANCE_MAP.get(adapterClass)) == null) {
+      synchronized (ADAPTER_INSTANCE_MAP) {
+        if ((adapter = ADAPTER_INSTANCE_MAP.get(adapterClass)) == null) {
+          ADAPTER_INSTANCE_MAP.put(adapterClass, adapter = adapterClass.getConstructor().newInstance());
+        }
+      }
+    }
+
+    return adapter;
+  }
+
+  private static Object marshal (WireAdapter adapter, Object boundObj)
+    throws Exception {
+
+    return adapter.marshal(boundObj);
+  }
+
+  private static Object unmarshal (WireAdapter adapter, Class boundType, Object valueObj)
+    throws Exception {
+
+    return adapter.unmarshal(valueObj, boundType);
+  }
+
+  public static HashMap<String, Object> induceMap (String[] argumentNames, Object[] args)
     throws TransportException {
 
     if ((args == null) || (args.length == 0)) {
@@ -54,11 +85,32 @@ public class ArgumentRectifier {
       HashMap<String, Object> argumentMap = new HashMap<>();
 
       for (int index = 0; index < args.length; index++) {
-        if ((args[index] != null) && (!(args[index] instanceof Serializable))) {
-          throw new TransportException("The argument(index=%d, name=%s, class=%s) is not Serializable", index, argumentNames[index], args[index].getClass().getName());
-        }
+        if (args[index] == null) {
+          argumentMap.put(argumentNames[index], null);
+        } else {
 
-        argumentMap.put(argumentNames[index], args[index]);
+          Wire wire;
+          Class<?> argumentClass = args[index].getClass();
+
+          if ((wire = argumentClass.getAnnotation(Wire.class)) != null) {
+            try {
+
+              WireAdapter<?, ?> adapter = getAdapter(wire.adapter());
+
+              if (!Serializable.class.isAssignableFrom(adapter.getValueType())) {
+                throw new TransportException("The argument(index=%d, name=%s, class=%s) is not Serializable", index, argumentNames[index], adapter.getValueType().getName());
+              } else {
+                argumentMap.put(argumentNames[index], marshal(getAdapter(wire.adapter()), args[index]));
+              }
+            } catch (Exception exception) {
+              throw new TransportException(exception);
+            }
+          } else if (!Serializable.class.isAssignableFrom(argumentClass)) {
+            throw new TransportException("The argument(index=%d, name=%s, class=%s) is not Serializable", index, argumentNames[index], args[index].getClass().getName());
+          } else {
+            argumentMap.put(argumentNames[index], args[index]);
+          }
+        }
       }
 
       return argumentMap;
@@ -66,7 +118,7 @@ public class ArgumentRectifier {
   }
 
   public static Object[] constructArray (SignalCodec signalCodec, InvocationSignal invocationSignal, Function invocationFunction, Methodology methodology)
-    throws MismatchedArgumentException {
+    throws TransportException {
 
     Object[] arguments = new Object[invocationFunction.getSignature().length];
 
@@ -77,12 +129,25 @@ public class ArgumentRectifier {
 
         if ((argumentInfo = methodology.getArgumentInfo(argumentEntry.getKey())) == null) {
           throw new MismatchedArgumentException("Invocation argument(%s) on method(%s) of service(%s) can't be matched by name", argumentEntry.getKey(), invocationFunction.getName(), invocationSignal.getRoute().getService());
-        }
-        if (argumentInfo.getIndex() >= arguments.length) {
+        } else if (argumentInfo.getIndex() >= arguments.length) {
           throw new MismatchedArgumentException("Invocation argument(%s) on method(%s) of service(%s) maps to a non-existent argument index(%d)", argumentEntry.getKey(), invocationFunction.getName(), invocationSignal.getRoute().getService(), argumentInfo.getIndex());
-        }
+        } else if (argumentEntry.getValue() != null) {
 
-        arguments[argumentInfo.getIndex()] = signalCodec.extractObject(argumentEntry.getValue(), argumentInfo.getParameterType());
+          Wire wire;
+
+          if ((wire = argumentInfo.getParameterType().getAnnotation(Wire.class)) != null) {
+            try {
+
+              WireAdapter<?, ?> adapter;
+
+              arguments[argumentInfo.getIndex()] = unmarshal(adapter = getAdapter(wire.adapter()), argumentInfo.getParameterType(), signalCodec.extractObject(argumentEntry.getValue(), adapter.getValueType()));
+            } catch (Exception exception) {
+              throw new TransportException(exception);
+            }
+          } else {
+            arguments[argumentInfo.getIndex()] = signalCodec.extractObject(argumentEntry.getValue(), argumentInfo.getParameterType());
+          }
+        }
       }
     }
 

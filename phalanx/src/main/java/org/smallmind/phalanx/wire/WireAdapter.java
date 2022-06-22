@@ -32,6 +32,17 @@
  */
 package org.smallmind.phalanx.wire;
 
-public interface WireCodec {
+public abstract class WireAdapter<V, B> {
 
+  protected WireAdapter () {
+
+  }
+
+  public abstract Class<V> getValueType ();
+
+  public abstract B unmarshal (V obj, Class<B> boundType)
+    throws Exception;
+
+  public abstract V marshal (B obj)
+    throws Exception;
 }

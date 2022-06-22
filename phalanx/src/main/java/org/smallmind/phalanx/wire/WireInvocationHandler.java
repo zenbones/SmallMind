@@ -129,7 +129,7 @@ public class WireInvocationHandler implements InvocationHandler {
       throw new ServiceDefinitionException("The arguments for method(%s) in the service interface(%s) do not match those known from the service interface annotations", method.getName(), serviceInterface.getName());
     }
 
-    argumentMap = ArgumentRectifier.induceMap(method, argumentNames, args);
+    argumentMap = ArgumentRectifier.induceMap(argumentNames, args);
     filteredContexts = ContextFactory.filterContextsOn(method, WireContext.class);
 
     wireContexts = new WireContext[filteredContexts.length];
