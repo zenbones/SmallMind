@@ -128,7 +128,7 @@ public class ContextFactory {
     return filterContextsOn(method, Context.class);
   }
 
-  public static Context[] filterContextsOn (Method method, Class<? extends Context>... filterClasses)
+  public static Context[] filterContextsOn (Method method, Class... filterClasses)
     throws ContextException {
 
     Context[] contexts;

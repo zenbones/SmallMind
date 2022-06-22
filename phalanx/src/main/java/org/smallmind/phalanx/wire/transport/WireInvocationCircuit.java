@@ -35,6 +35,8 @@ package org.smallmind.phalanx.wire.transport;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import org.smallmind.phalanx.wire.ArgumentRectifier;
+import org.smallmind.phalanx.wire.Methodology;
 import org.smallmind.phalanx.wire.MismatchedArgumentException;
 import org.smallmind.phalanx.wire.MissingInvocationException;
 import org.smallmind.phalanx.wire.ServiceDefinitionException;
@@ -86,24 +88,9 @@ public class WireInvocationCircuit {
         }
 
         methodology = methodInvoker.getMethodology(invocationFunction);
-        arguments = new Object[invocationFunction.getSignature().length];
-        if (invocationSignal.getArguments() != null) {
-          for (Map.Entry<String, Object> argumentEntry : invocationSignal.getArguments().entrySet()) {
-
-            ArgumentInfo argumentInfo;
-
-            if ((argumentInfo = methodology.getArgumentInfo(argumentEntry.getKey())) == null) {
-              throw new MismatchedArgumentException("Invocation argument(%s) on method(%s) of service(%s) can't be matched by name", argumentEntry.getKey(), invocationFunction.getName(), invocationSignal.getRoute().getService());
-            }
-            if (argumentInfo.getIndex() >= arguments.length) {
-              throw new MismatchedArgumentException("Invocation argument(%s) on method(%s) of service(%s) maps to a non-existent argument index(%d)", argumentEntry.getKey(), invocationFunction.getName(), invocationSignal.getRoute().getService(), argumentInfo.getIndex());
-            }
-
-            arguments[argumentInfo.getIndex()] = signalCodec.extractObject(argumentEntry.getValue(), argumentInfo.getParameterType());
-          }
-        }
-
+        arguments = ArgumentRectifier.constructArray(signalCodec,invocationSignal,invocationFunction, methodology);
         nativeType = invocationFunction.getNativeType();
+
         result = methodInvoker.remoteInvocation(invocationSignal.getContexts(), invocationFunction, arguments);
 
         if ((result != null) && (!(result instanceof Serializable))) {

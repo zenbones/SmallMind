@@ -30,13 +30,13 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.phalanx.wire.transport;
+package org.smallmind.phalanx.wire;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.HashMap;
-import org.smallmind.phalanx.wire.Argument;
-import org.smallmind.phalanx.wire.ServiceDefinitionException;
+import org.smallmind.phalanx.wire.transport.ArgumentInfo;
+import org.smallmind.phalanx.wire.transport.SyntheticArgument;
 
 public class Methodology {
 

@@ -32,7 +32,6 @@
  */
 package org.smallmind.phalanx.wire;
 
-import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -116,11 +115,12 @@ public class WireInvocationHandler implements InvocationHandler {
   public Object invoke (Object proxy, final Method method, final Object[] args)
     throws Throwable {
 
-    HashMap<String, Object> argumentMap = null;
+    HashMap<String, Object> argumentMap;
     Context[] filteredContexts;
     WireContext[] wireContexts = null;
     Voice<?, ?> voice;
     String[] argumentNames;
+    int index = 0;
 
     if ((argumentNames = methodMap.get(method)) == null) {
       throw new MissingInvocationException("No method(%s) available in the service interface(%s)", method.getName(), serviceInterface.getName());
@@ -129,25 +129,12 @@ public class WireInvocationHandler implements InvocationHandler {
       throw new ServiceDefinitionException("The arguments for method(%s) in the service interface(%s) do not match those known from the service interface annotations", method.getName(), serviceInterface.getName());
     }
 
-    if ((args != null) && (args.length > 0)) {
-      argumentMap = new HashMap<>();
-      for (int index = 0; index < args.length; index++) {
-        if ((args[index] != null) && (!(args[index] instanceof Serializable))) {
-          throw new TransportException("The argument(index=%d, name=%s, class=%s) is not Serializable", index, argumentNames[index], args[index].getClass().getName());
-        }
+    argumentMap = ArgumentRectifier.induceMap(method, argumentNames, args);
+    filteredContexts = ContextFactory.filterContextsOn(method, WireContext.class);
 
-        argumentMap.put(argumentNames[index], args[index]);
-      }
-    }
-
-    if ((filteredContexts = ContextFactory.filterContextsOn(method, WireContext.class)) != null) {
-
-      int index = 0;
-
-      wireContexts = new WireContext[filteredContexts.length];
-      for (Context filteredContext : filteredContexts) {
-        wireContexts[index++] = (WireContext)filteredContext;
-      }
+    wireContexts = new WireContext[filteredContexts.length];
+    for (Context filteredContext : filteredContexts) {
+      wireContexts[index++] = (WireContext)filteredContext;
     }
 
     if (method.getAnnotation(Shout.class) != null) {
