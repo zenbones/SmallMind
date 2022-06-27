@@ -70,7 +70,8 @@ public abstract class AbstractDurable<I extends Serializable & Comparable<I>, D 
     return durable.getId().compareTo(getId());
   }
 
-  public synchronized int hashCode () {
+  @Override
+  public int hashCode () {
 
     if (getId() == null) {
 
@@ -85,7 +86,7 @@ public abstract class AbstractDurable<I extends Serializable & Comparable<I>, D 
   }
 
   @Override
-  public synchronized boolean equals (Object obj) {
+  public boolean equals (Object obj) {
 
     if (obj instanceof Durable) {
       if ((((Durable)obj).getId() == null) || (getId() == null)) {

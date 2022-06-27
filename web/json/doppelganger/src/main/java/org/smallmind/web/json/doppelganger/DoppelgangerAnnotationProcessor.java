@@ -234,8 +234,9 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
       try (BufferedWriter writer = new BufferedWriter(sourceFile.openWriter())) {
 
         HashSet<TypeMirror> implementationSet = new HashSet<>();
-        LinkedList<TypeElement> matchingSubClassList = new LinkedList<>();
         List<TypeElement> polymorphicSubclassList;
+        LinkedList<TypeElement> matchingSubClassList = new LinkedList<>();
+        LinkedList<String> getterList = new LinkedList<>();
         String[] imports;
 
         // package
@@ -264,6 +265,8 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
         }
 
         // imports
+        writer.write("import java.util.Objects;");
+        writer.newLine();
         writer.write("import javax.annotation.Generated;");
         writer.newLine();
         if ((nearestViewSuperclass == null)) {
@@ -642,7 +645,7 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
           writer.write("  // virtual getters and setters");
           for (Map.Entry<String, PropertyInformation> propertyInformationEntry : propertyLexicon.getVirtualMap().entrySet()) {
             writer.newLine();
-            writeGettersAndSetters(writer, classElement, purpose, direction, propertyInformationEntry);
+            writeGettersAndSetters(writer, classElement, purpose, direction, propertyInformationEntry, getterList);
           }
         }
 
@@ -652,8 +655,13 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
           writer.write("  // native getters and setters");
           for (Map.Entry<String, PropertyInformation> propertyInformationEntry : propertyLexicon.getRealMap().entrySet()) {
             writer.newLine();
-            writeGettersAndSetters(writer, classElement, purpose, direction, propertyInformationEntry);
+            writeGettersAndSetters(writer, classElement, purpose, direction, propertyInformationEntry, getterList);
           }
+        }
+
+        // hashCode and equals
+        if (!getterList.isEmpty()) {
+          writeHashCodeAndEquals(writer, NameUtility.getSimpleName(processingEnv, purpose, direction, classElement), getterList, nearestViewSuperclass != null);
         }
 
         writer.write("}");
@@ -713,8 +721,10 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
     }
   }
 
-  private void writeGettersAndSetters (BufferedWriter writer, TypeElement classElement, String purpose, Direction direction, Map.Entry<String, PropertyInformation> propertyInformationEntry)
+  private void writeGettersAndSetters (BufferedWriter writer, TypeElement classElement, String purpose, Direction direction, Map.Entry<String, PropertyInformation> propertyInformationEntry, LinkedList<String> getterList)
     throws IOException {
+
+    String getter;
 
     if (!propertyInformationEntry.getValue().getComment().isEmpty()) {
       writer.write("  @Comment(\"");
@@ -741,7 +751,7 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
     writer.write("  public ");
     writer.write(NameUtility.processTypeMirror(processingEnv, visibilityTracker, classTracker, purpose, direction, propertyInformationEntry.getValue().getType()));
     writer.write(" ");
-    writer.write(TypeKind.BOOLEAN.equals(propertyInformationEntry.getValue().getType().getKind()) ? BeanUtility.asIsName(propertyInformationEntry.getKey()) : BeanUtility.asGetterName(propertyInformationEntry.getKey()));
+    writer.write(getter = TypeKind.BOOLEAN.equals(propertyInformationEntry.getValue().getType().getKind()) ? BeanUtility.asIsName(propertyInformationEntry.getKey()) : BeanUtility.asGetterName(propertyInformationEntry.getKey()));
     writer.write(" () {");
     writer.newLine();
     writer.newLine();
@@ -752,6 +762,8 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
     writer.write("  }");
     writer.newLine();
     writer.newLine();
+
+    getterList.add(getter);
 
     writer.write("  public ");
     if (classTracker.hasPolymorphicSubClasses(classElement)) {
@@ -780,6 +792,102 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
       writer.write("(D)");
     }
     writer.write("this;");
+    writer.newLine();
+    writer.write("  }");
+    writer.newLine();
+  }
+
+  private void writeHashCodeAndEquals (BufferedWriter writer, String simpleClassName, LinkedList<String> getterList, boolean hasSuperClass)
+    throws IOException {
+
+    boolean first = true;
+
+    writer.newLine();
+    writer.write("  @Override");
+    writer.newLine();
+    writer.write("  public int hashCode () {");
+    writer.newLine();
+    writer.newLine();
+    writer.write("    int h;");
+    writer.newLine();
+    writer.newLine();
+
+    for (String getter : getterList) {
+      if (first) {
+        writer.write("    h = ");
+        first = false;
+      } else {
+        writer.write("    h = (31 * h) + ");
+      }
+
+      writer.write("Objects.hashCode(");
+      writer.write(getter);
+      writer.write("());");
+      writer.newLine();
+    }
+
+    if (hasSuperClass) {
+      writer.newLine();
+      writer.write("    h = (31 * h) + super.hashCode();");
+      writer.newLine();
+    }
+
+    writer.newLine();
+    writer.write("    return h;");
+    writer.newLine();
+    writer.write("  }");
+    writer.newLine();
+
+    writer.newLine();
+    writer.write("  @Override");
+    writer.newLine();
+    writer.write("  public boolean equals (Object obj) {");
+    writer.newLine();
+    writer.newLine();
+
+    /*
+        if (this == o) return true;
+    if (!(o instanceof Foobar)) return false;
+    Foobar foobar = (Foobar)o;
+    return flag == foobar.flag && Objects.equals(t, foobar.t);
+     */
+
+    writer.write("    if (this == obj) {");
+    writer.newLine();
+    writer.write("      return true;");
+    writer.newLine();
+    writer.write("    } else if (!(obj instanceof ");
+    writer.write(simpleClassName);
+    writer.write(")) {");
+    writer.newLine();
+    writer.write("      return false;");
+    writer.newLine();
+    writer.write("    } else {");
+    writer.newLine();
+
+    for (String getter : getterList) {
+      writer.write("      if (!Objects.equals(this.");
+      writer.write(getter);
+      writer.write("(), ((");
+      writer.write(simpleClassName);
+      writer.write(")obj).");
+      writer.write(getter);
+      writer.write("())) {");
+      writer.newLine();
+      writer.write("        return false;");
+      writer.newLine();
+      writer.write("      }");
+      writer.newLine();
+    }
+
+    writer.newLine();
+    if (hasSuperClass) {
+      writer.write("      return super.equals(obj);");
+    }else {
+      writer.write("      return true;");
+    }
+    writer.newLine();
+    writer.write("    }");
     writer.newLine();
     writer.write("  }");
     writer.newLine();
