@@ -82,6 +82,28 @@ public class PropertyLexicon {
     return false;
   }
 
+  public boolean hasAs () {
+
+    if (!realMap.isEmpty()) {
+      for (PropertyInformation propertyInformation : realMap.values()) {
+        if (propertyInformation.getAs() != null) {
+
+          return true;
+        }
+      }
+    }
+    if (!virtualMap.isEmpty()) {
+      for (PropertyInformation propertyInformation : virtualMap.values()) {
+        if (propertyInformation.getAs() != null) {
+
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
   public boolean containsKey (String key) {
 
     return realMap.containsKey(key) || virtualMap.containsKey(key);

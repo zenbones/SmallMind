@@ -282,8 +282,10 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
         writer.newLine();
         writer.write("import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;");
         writer.newLine();
-        writer.write("import org.smallmind.web.json.scaffold.util.As;");
-        writer.newLine();
+        if (propertyLexicon.hasAs()) {
+          writer.write("import org.smallmind.web.json.scaffold.util.As;");
+          writer.newLine();
+        }
         if ((!doppelgangerInformation.getComment().isEmpty()) || propertyLexicon.hasComment()) {
           writer.write("import org.smallmind.web.json.scaffold.util.Comment;");
           writer.newLine();
