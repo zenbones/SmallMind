@@ -660,9 +660,7 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
         }
 
         // hashCode and equals
-        if (!getterList.isEmpty()) {
-          writeHashCodeAndEquals(writer, NameUtility.getSimpleName(processingEnv, purpose, direction, classElement), getterList, nearestViewSuperclass != null);
-        }
+        writeHashCodeAndEquals(writer, NameUtility.getSimpleName(processingEnv, purpose, direction, classElement), getterList, nearestViewSuperclass != null);
 
         writer.write("}");
         writer.newLine();
@@ -808,33 +806,45 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
     writer.write("  public int hashCode () {");
     writer.newLine();
     writer.newLine();
-    writer.write("    int h;");
-    writer.newLine();
-    writer.newLine();
 
-    for (String getter : getterList) {
-      if (first) {
-        writer.write("    h = ");
-        first = false;
+    if (getterList.isEmpty()) {
+      if (hasSuperClass) {
+        writer.write("    return super.hashCode();");
+        writer.newLine();
       } else {
-        writer.write("    h = (31 * h) + ");
+        writer.write("    return 0;");
+        writer.newLine();
+      }
+    } else {
+      writer.write("    int h;");
+      writer.newLine();
+      writer.newLine();
+
+      for (String getter : getterList) {
+        if (first) {
+          writer.write("    h = ");
+          first = false;
+        } else {
+          writer.write("    h = (31 * h) + ");
+        }
+
+        writer.write("Objects.hashCode(");
+        writer.write(getter);
+        writer.write("());");
+        writer.newLine();
       }
 
-      writer.write("Objects.hashCode(");
-      writer.write(getter);
-      writer.write("());");
+      if (hasSuperClass) {
+        writer.newLine();
+        writer.write("    h = (31 * h) + super.hashCode();");
+        writer.newLine();
+      }
+
+      writer.newLine();
+      writer.write("    return h;");
       writer.newLine();
     }
 
-    if (hasSuperClass) {
-      writer.newLine();
-      writer.write("    h = (31 * h) + super.hashCode();");
-      writer.newLine();
-    }
-
-    writer.newLine();
-    writer.write("    return h;");
-    writer.newLine();
     writer.write("  }");
     writer.newLine();
 
@@ -844,14 +854,6 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
     writer.write("  public boolean equals (Object obj) {");
     writer.newLine();
     writer.newLine();
-
-    /*
-        if (this == o) return true;
-    if (!(o instanceof Foobar)) return false;
-    Foobar foobar = (Foobar)o;
-    return flag == foobar.flag && Objects.equals(t, foobar.t);
-     */
-
     writer.write("    if (this == obj) {");
     writer.newLine();
     writer.write("      return true;");
@@ -883,7 +885,7 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
     writer.newLine();
     if (hasSuperClass) {
       writer.write("      return super.equals(obj);");
-    }else {
+    } else {
       writer.write("      return true;");
     }
     writer.newLine();
