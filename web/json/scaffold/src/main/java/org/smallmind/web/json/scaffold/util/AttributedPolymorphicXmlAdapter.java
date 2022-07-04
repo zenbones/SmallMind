@@ -87,7 +87,7 @@ public abstract class AttributedPolymorphicXmlAdapter<T> extends XmlAdapter<Obje
         objectNode.remove(PolymorphicAttributeManager.getPolymorphicAttributeName());
 
         try {
-          PolymorphicValueInstantiator.setPolymorphicInstance(polymorphicInstance = polymorphicSubClass.newInstance());
+          PolymorphicValueInstantiator.setPolymorphicInstance(polymorphicInstance = polymorphicSubClass.getConstructor().newInstance());
         } catch (Exception exception) {
           throw new JAXBProcessingException(exception);
         }
