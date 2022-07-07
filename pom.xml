@@ -102,7 +102,7 @@
         <jakarta.activation.version>2.1.0-RC1</jakarta.activation.version>
         <jaxb.version>2.3.1</jaxb.version>
         <jersey.version>2.35</jersey.version>
-        <jetty.version>9.4.44.v20210927</jetty.version>
+        <jetty.version>9.4.48.v20220622</jetty.version>
         <kryo.version>5.2.0</kryo.version>
         <liquibase.version>4.6.1</liquibase.version>
         <log4j.version>2.17.2</log4j.version>
