@@ -58,11 +58,6 @@ public class CubbyMemcachedClientFactoryBean implements FactoryBean<CubbyMemcach
     this.enabled = enabled;
   }
 
-  public void setMemcachedClient (CubbyMemcachedClient memcachedClient) {
-
-    this.memcachedClient = memcachedClient;
-  }
-
   public void setConfiguration (CubbyConfiguration configuration) {
 
     this.configuration = configuration;
