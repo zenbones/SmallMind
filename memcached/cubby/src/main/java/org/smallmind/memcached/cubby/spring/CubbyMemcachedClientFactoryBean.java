@@ -38,6 +38,7 @@ import java.util.Arrays;
 import java.util.Map;
 import org.smallmind.memcached.cubby.CubbyConfiguration;
 import org.smallmind.memcached.cubby.CubbyMemcachedClient;
+import org.smallmind.memcached.cubby.CubbyOperationException;
 import org.smallmind.memcached.cubby.MemcachedHost;
 import org.smallmind.memcached.utility.MemcachedServer;
 import org.smallmind.memcached.utility.XMemcachedMemcachedClient;
@@ -87,7 +88,8 @@ public class CubbyMemcachedClientFactoryBean implements FactoryBean<CubbyMemcach
   }
 
   @Override
-  public void afterPropertiesSet () {
+  public void afterPropertiesSet ()
+    throws IOException, InterruptedException, CubbyOperationException {
 
     if (enabled && (servers != null) && (servers.size() > 0)) {
 
@@ -99,8 +101,9 @@ public class CubbyMemcachedClientFactoryBean implements FactoryBean<CubbyMemcach
       }
 
       memcachedClient = new CubbyMemcachedClient(configuration, memcachedHosts);
-
       LoggerManager.getLogger(org.smallmind.memcached.utility.spring.XMemcachedMemcachedClientFactoryBean.class).info("Memcached servers(%s) initialized...", outputAddresses(memcachedHosts));
+      memcachedClient.start();
+      LoggerManager.getLogger(org.smallmind.memcached.utility.spring.XMemcachedMemcachedClientFactoryBean.class).info("Memcached client started...");
     }
   }
 
@@ -122,6 +125,7 @@ public class CubbyMemcachedClientFactoryBean implements FactoryBean<CubbyMemcach
 
     if (memcachedClient != null) {
       memcachedClient.stop();
+      LoggerManager.getLogger(org.smallmind.memcached.utility.spring.XMemcachedMemcachedClientFactoryBean.class).info("Memcached client stopped...");
     }
   }
 }
