@@ -58,7 +58,7 @@ public class RequestCallback {
     Response response;
 
     if (timeoutMilliseconds > 0) {
-      if (!resultLatch.await(timeoutMilliseconds, TimeUnit.SECONDS)) {
+      if (!resultLatch.await(timeoutMilliseconds, TimeUnit.MILLISECONDS)) {
         throw new ResponseTimeoutException("The timeout(%d) milliseconds was exceeded while waiting for a response from command(%s)", timeoutMilliseconds, command);
       }
     } else {

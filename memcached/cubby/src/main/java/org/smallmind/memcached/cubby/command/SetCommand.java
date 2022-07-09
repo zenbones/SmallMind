@@ -42,6 +42,8 @@ import org.smallmind.memcached.cubby.translator.KeyTranslator;
 
 public class SetCommand extends Command {
 
+  private static final Long ZERO = 0L;
+
   private SetMode mode;
   private Object value;
   private String key;
@@ -107,11 +109,16 @@ public class SetCommand extends Command {
 
     StringBuilder line = new StringBuilder("ms ").append(keyTranslator.encode(key)).append(' ').append(valueBytes.length).append(" b");
 
-    if (mode != null) {
-      line.append(" M").append(mode.getToken());
-    }
-    if (cas != null) {
-      line.append(" C").append(cas).append(" c");
+    if (ZERO.equals(cas) && ((mode == null) || SetMode.SET.equals(mode))) {
+      line.append(" M").append(SetMode.ADD.getToken());
+      line.append(" C1 c");
+    } else {
+      if (mode != null) {
+        line.append(" M").append(mode.getToken());
+      }
+      if (cas != null) {
+        line.append(" C").append(cas).append(" c");
+      }
     }
     if (expiration != null) {
       line.append(" T").append(expiration);

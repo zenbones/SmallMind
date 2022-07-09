@@ -34,7 +34,7 @@ package org.smallmind.memcached.cubby.command;
 
 public enum SetMode {
 
-  ADD('I'), APPEND('A'), PREPEND('P'), REPLACE('R'), SET('S');
+  ADD('E'), APPEND('A'), PREPEND('P'), REPLACE('R'), SET('S');
 
   private final char token;
 
