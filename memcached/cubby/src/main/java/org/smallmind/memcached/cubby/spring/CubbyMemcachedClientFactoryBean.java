@@ -94,29 +94,19 @@ public class CubbyMemcachedClientFactoryBean implements FactoryBean<CubbyMemcach
     if (enabled && (servers != null) && (servers.size() > 0)) {
 
       MemcachedHost[] memcachedHosts = new MemcachedHost[servers.size()];
+      String[] output = new String[servers.size()];
       int index = 0;
 
       for (Map.Entry<String, MemcachedServer> serverEntry : servers.entrySet()) {
+        output[index] = serverEntry.getKey() + '=' + serverEntry.getValue().getHost() + ':' + serverEntry.getValue().getPort();
         memcachedHosts[index++] = new MemcachedHost(serverEntry.getKey(), new InetSocketAddress(serverEntry.getValue().getHost(), serverEntry.getValue().getPort()));
       }
 
       memcachedClient = new CubbyMemcachedClient(configuration, memcachedHosts);
-      LoggerManager.getLogger(org.smallmind.memcached.utility.spring.XMemcachedMemcachedClientFactoryBean.class).info("Memcached servers(%s) initialized...", outputAddresses(memcachedHosts));
+      LoggerManager.getLogger(org.smallmind.memcached.utility.spring.XMemcachedMemcachedClientFactoryBean.class).info("Memcached servers(%s) initialized...", Arrays.toString(output));
       memcachedClient.start();
       LoggerManager.getLogger(org.smallmind.memcached.utility.spring.XMemcachedMemcachedClientFactoryBean.class).info("Memcached client started...");
     }
-  }
-
-  private String outputAddresses (MemcachedHost[] memcachedHosts) {
-
-    String[] output = new String[memcachedHosts.length];
-    int index = 0;
-
-    for (MemcachedHost memcachedHost : memcachedHosts) {
-      output[index++] = memcachedHost.toString();
-    }
-
-    return Arrays.toString(output);
   }
 
   @Override
