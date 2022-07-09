@@ -118,9 +118,12 @@ public class GetCommand extends Command {
     if (ResponseCode.EN.equals(response.getCode()) || response.isWon() || response.isAlsoWon()) {
 
       return new Result<>(null, false, response.getCas());
-    } else if (ResponseCode.HD.equals(response.getCode())) {
+    } else if (value && ResponseCode.VA.equals(response.getCode())) {
 
-      return new Result<>(value ? (T)codec.deserialize(response.getValue()) : null, true, response.getCas());
+      return new Result<>((T)codec.deserialize(response.getValue()), true, response.getCas());
+    } else if ((!value) && ResponseCode.HD.equals(response.getCode())) {
+
+      return new Result<>(null, true, response.getCas());
     } else {
       throw new UnexpectedResponseException("Unexpected response code(%s)", response.getCode().name());
     }
