@@ -101,7 +101,7 @@ public class ResponseParser {
     while ((joinedBuffer.position() - offset) < length) {
       if (joinedBuffer.get() != ' ') {
         throw createIncomprehensibleResponseException(joinedBuffer, length);
-      } else {
+      } else if ((joinedBuffer.position() - offset) < length) {
         switch (joinedBuffer.get()) {
           case 'O':
             response.setToken(accumulateToken(joinedBuffer, offset, length));

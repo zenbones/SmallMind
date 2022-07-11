@@ -51,6 +51,7 @@ public class CubbyTest {
   private final CubbyConfiguration configuration = CubbyConfiguration.OPTIMAL;
   private final CubbyCodec codec = configuration.getCodec();
   private CubbyMemcachedClient client;
+  private Long setCas;
 
   @BeforeClass
   public void beforeClass ()
@@ -58,6 +59,8 @@ public class CubbyTest {
 
     client = new CubbyMemcachedClient(configuration, new MemcachedHost("0", new InetSocketAddress("localhost", 11211)));
     client.start();
+
+    client.delete("second");
   }
 
   @AfterClass
@@ -71,7 +74,7 @@ public class CubbyTest {
   public void testBasicSetWithOpaqueToken ()
     throws InterruptedException, IOException, CubbyOperationException {
 
-    Response response = client.send(new SetCommand().setKey("first").setValue("value").setOpaqueToken("opaque"), null);
+    Response response = client.send(new SetCommand().setKey("first").setValue("value1").setOpaqueToken("opaque"), null);
     Assert.assertEquals(response.getCode(), ResponseCode.HD);
     Assert.assertEquals(response.getToken(), "opaque");
   }
@@ -86,14 +89,30 @@ public class CubbyTest {
 
     Assert.assertEquals(response.getCode(), ResponseCode.VA);
     Assert.assertTrue(result.isSuccessful());
-    Assert.assertEquals(result.getValue(), "value");
+    Assert.assertEquals(result.getValue(), "value1");
   }
 
   @Test
   public void testCasSet ()
     throws InterruptedException, IOException, CubbyOperationException {
 
-    Response response = client.send(new SetCommand().setKey("second").setValue("value").setCas(0L), null);
+    Response response = client.send(new SetCommand().setKey("second").setValue("value2").setCas(0L), null);
     Assert.assertEquals(response.getCode(), ResponseCode.HD);
+    Assert.assertTrue(response.getCas() > 0);
+    setCas = response.getCas();
+  }
+
+  @Test(dependsOnMethods = "testCasSet")
+  public void testCasGet ()
+    throws InterruptedException, IOException, CubbyOperationException, ClassNotFoundException {
+
+    GetCommand command;
+    Response response = client.send(command = new GetCommand().setKey("second").setValue(true).setCas(true), null);
+    Result<?> result = command.process(configuration.getCodec(), response);
+
+    Assert.assertEquals(response.getCode(), ResponseCode.VA);
+    Assert.assertTrue(result.isSuccessful());
+    Assert.assertEquals(result.getValue(), "value2");
+    Assert.assertEquals(result.getCas(), setCas);
   }
 }
