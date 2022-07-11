@@ -45,7 +45,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-@Test(groups = "unit")
+@Test(groups = "experimental")
 public class CubbyTest {
 
   private final CubbyConfiguration configuration = CubbyConfiguration.OPTIMAL;
@@ -87,5 +87,13 @@ public class CubbyTest {
     Assert.assertEquals(response.getCode(), ResponseCode.VA);
     Assert.assertTrue(result.isSuccessful());
     Assert.assertEquals(result.getValue(), "value");
+  }
+
+  @Test
+  public void testCasSet ()
+    throws InterruptedException, IOException, CubbyOperationException {
+
+    Response response = client.send(new SetCommand().setKey("second").setValue("value").setCas(0L), null);
+    Assert.assertEquals(response.getCode(), ResponseCode.HD);
   }
 }

@@ -111,7 +111,7 @@ public class SetCommand extends Command {
 
     if (ZERO.equals(cas) && ((mode == null) || SetMode.SET.equals(mode))) {
       line.append(" M").append(SetMode.ADD.getToken());
-      line.append(" C1 c");
+      line.append(" c");
     } else {
       if (mode != null) {
         line.append(" M").append(mode.getToken());
