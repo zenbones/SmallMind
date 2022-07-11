@@ -32,72 +32,60 @@
  */
 package org.smallmind.memcached.cubby;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import org.smallmind.memcached.cubby.codec.CubbyCodec;
-import org.smallmind.memcached.cubby.codec.LargeValueCompressingCodec;
-import org.smallmind.memcached.cubby.codec.ObjectStreamCubbyCodec;
 import org.smallmind.memcached.cubby.command.GetCommand;
+import org.smallmind.memcached.cubby.command.Result;
 import org.smallmind.memcached.cubby.command.SetCommand;
-import org.smallmind.memcached.cubby.locator.MaglevKeyLocator;
 import org.smallmind.memcached.cubby.response.Response;
-import org.smallmind.memcached.cubby.translator.DefaultKeyTranslator;
-import org.smallmind.memcached.cubby.translator.LargeKeyHashingTranslator;
+import org.smallmind.memcached.cubby.response.ResponseCode;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
+@Test(groups = "unit")
 public class CubbyTest {
 
-  public static void main (String... args)
+  private final CubbyConfiguration configuration = CubbyConfiguration.OPTIMAL;
+  private final CubbyCodec codec = configuration.getCodec();
+  private CubbyMemcachedClient client;
+
+  @BeforeClass
+  public void beforeClass ()
     throws Exception {
 
-    CubbyCodec codec = new LargeValueCompressingCodec(new ObjectStreamCubbyCodec());
-    CubbyConfiguration configuration = new CubbyConfiguration()
-      .setCodec(codec)
-      .setKeyLocator(new MaglevKeyLocator())
-      .setKeyTranslator(new LargeKeyHashingTranslator(new DefaultKeyTranslator()));
-    CubbyMemcachedClient client = new CubbyMemcachedClient(configuration, new MemcachedHost("0", new InetSocketAddress("localhost", 11211)));
-
+    client = new CubbyMemcachedClient(configuration, new MemcachedHost("0", new InetSocketAddress("localhost", 11211)));
     client.start();
+  }
 
-    System.out.println("send...");
-
-    Response response;
-
-    try {
-      response = client.send(new SetCommand().setKey("hello").setValue("goodbye"), null);
-      System.out.println(response);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-    try {
-      response = client.send(new GetCommand().setKey("hello").setCas(true), null);
-      System.out.println(response);
-      Object value = codec.deserialize(response.getValue());
-      System.out.println(value);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-    try {
-      response = client.send(new GetCommand().setKey("hello").setCas(true), null);
-      System.out.println(response);
-      Object value = codec.deserialize(response.getValue());
-      System.out.println(value);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-    try {
-      response = client.send(new GetCommand().setKey("hello2").setCas(true), null);
-      System.out.println(response);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-    try {
-      response = client.send(new GetCommand().setKey("hello2").setCas(true), null);
-      System.out.println(response);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-
-    Thread.sleep(3000);
+  @AfterClass
+  public void afterClass ()
+    throws Exception {
 
     client.stop();
+  }
+
+  @Test
+  public void testBasicSetWithOpaqueToken ()
+    throws InterruptedException, IOException, CubbyOperationException {
+
+    Response response = client.send(new SetCommand().setKey("first").setValue("value").setOpaqueToken("opaque"), null);
+    Assert.assertEquals(response.getCode(), ResponseCode.HD);
+    Assert.assertEquals(response.getToken(), "opaque");
+  }
+
+  @Test(dependsOnMethods = "testBasicSetWithOpaqueToken")
+  public void testBasicGet ()
+    throws InterruptedException, IOException, CubbyOperationException, ClassNotFoundException {
+
+    GetCommand command;
+    Response response = client.send(command = new GetCommand().setKey("first").setValue(true).setCas(true), null);
+    Result<?> result = command.process(configuration.getCodec(), response);
+
+    Assert.assertEquals(response.getCode(), ResponseCode.VA);
+    Assert.assertTrue(result.isSuccessful());
+    Assert.assertEquals(result.getValue(), "value");
   }
 }
