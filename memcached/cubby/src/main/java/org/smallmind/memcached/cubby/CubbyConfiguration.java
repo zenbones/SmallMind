@@ -33,13 +33,22 @@
 package org.smallmind.memcached.cubby;
 
 import org.smallmind.memcached.cubby.codec.CubbyCodec;
+import org.smallmind.memcached.cubby.codec.LargeValueCompressingCodec;
 import org.smallmind.memcached.cubby.codec.ObjectStreamCubbyCodec;
 import org.smallmind.memcached.cubby.locator.DefaultKeyLocator;
 import org.smallmind.memcached.cubby.locator.KeyLocator;
+import org.smallmind.memcached.cubby.locator.MaglevKeyLocator;
 import org.smallmind.memcached.cubby.translator.DefaultKeyTranslator;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
+import org.smallmind.memcached.cubby.translator.LargeKeyHashingTranslator;
 
 public class CubbyConfiguration {
+
+  public static final CubbyConfiguration DEFAULT = new CubbyConfiguration();
+  public static final CubbyConfiguration OPTIMAL = new CubbyConfiguration()
+    .setCodec(new LargeValueCompressingCodec(new ObjectStreamCubbyCodec()))
+    .setKeyLocator(new MaglevKeyLocator())
+    .setKeyTranslator(new LargeKeyHashingTranslator(new DefaultKeyTranslator()));
 
   private CubbyCodec codec = new ObjectStreamCubbyCodec();
   private KeyLocator keyLocator = new DefaultKeyLocator();
