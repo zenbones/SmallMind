@@ -55,7 +55,6 @@ public class CubbyTest {
   private static final String LARGE_VALUE = Strings.repeat("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 650);
 
   private final CubbyConfiguration configuration = CubbyConfiguration.OPTIMAL;
-  private final CubbyCodec codec = configuration.getCodec();
   private CubbyMemcachedClient client;
   private Long setCas;
 
