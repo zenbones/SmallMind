@@ -46,9 +46,13 @@ import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import org.testng.util.Strings;
 
 @Test(groups = "experimental")
 public class CubbyTest {
+
+  private static final String LARGE_KEY = Strings.repeat("0123456789", 30);
+  private static final String LARGE_VALUE = Strings.repeat("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 650);
 
   private final CubbyConfiguration configuration = CubbyConfiguration.OPTIMAL;
   private final CubbyCodec codec = configuration.getCodec();
@@ -145,9 +149,9 @@ public class CubbyTest {
 
   @Test(dependsOnMethods = "testReplace")
   public void testAppend ()
-    throws InterruptedException, IOException, CubbyOperationException, ClassNotFoundException {
+    throws InterruptedException, IOException, CubbyOperationException {
 
-    client.send(new SetCommand().setKey("fourth").setValue("value4".getBytes()).setRaw(true),null);
+    client.send(new SetCommand().setKey("fourth").setValue("value4".getBytes()).setRaw(true), null);
 
     Response response = client.send(new SetCommand().setKey("fifth").setValue("5").setMode(SetMode.APPEND), null);
     Assert.assertEquals(response.getCode(), ResponseCode.NS);
@@ -155,13 +159,13 @@ public class CubbyTest {
     response = client.send(new SetCommand().setKey("fourth").setValue("5".getBytes()).setMode(SetMode.APPEND).setRaw(true), null);
     Assert.assertEquals(response.getCode(), ResponseCode.HD);
 
-    response = client.send(new RawCommand().setKey("fourth").setValue(true),null);
+    response = client.send(new RawCommand().setKey("fourth").setValue(true), null);
     Assert.assertEquals(new String(response.getValue()), "value45");
   }
 
   @Test(dependsOnMethods = "testAppend")
   public void testPrepend ()
-    throws InterruptedException, IOException, CubbyOperationException, ClassNotFoundException {
+    throws InterruptedException, IOException, CubbyOperationException {
 
     Response response = client.send(new SetCommand().setKey("fifth").setValue("5").setMode(SetMode.PREPEND), null);
     Assert.assertEquals(response.getCode(), ResponseCode.NS);
@@ -169,7 +173,24 @@ public class CubbyTest {
     response = client.send(new SetCommand().setKey("fourth").setValue("3".getBytes()).setMode(SetMode.PREPEND).setRaw(true), null);
     Assert.assertEquals(response.getCode(), ResponseCode.HD);
 
-    response = client.send(new RawCommand().setKey("fourth").setValue(true),null);
+    response = client.send(new RawCommand().setKey("fourth").setValue(true), null);
     Assert.assertEquals(new String(response.getValue()), "3value45");
+  }
+
+  @Test
+  public void testLargeSetAndGet ()
+    throws InterruptedException, IOException, CubbyOperationException, ClassNotFoundException {
+
+    GetCommand command;
+    Result<?> result;
+    Response response = client.send(new SetCommand().setKey(LARGE_KEY).setValue(LARGE_VALUE), null);
+    Assert.assertEquals(response.getCode(), ResponseCode.HD);
+
+    response = client.send(command = new GetCommand().setKey(LARGE_KEY), null);
+    result = command.process(configuration.getCodec(), response);
+
+    Assert.assertEquals(response.getCode(), ResponseCode.VA);
+    Assert.assertTrue(result.isSuccessful());
+    Assert.assertEquals(result.getValue(), LARGE_VALUE);
   }
 }
