@@ -38,6 +38,7 @@ public class Response {
   private String token;
   private boolean won;
   private boolean alsoWon;
+  private boolean stale;
   private long cas;
   private int valueLength = -1;
   private byte[] value;
@@ -110,5 +111,15 @@ public class Response {
   public void setAlsoWon (boolean alsoWon) {
 
     this.alsoWon = alsoWon;
+  }
+
+  public boolean isStale () {
+
+    return stale;
+  }
+
+  public void setStale (boolean stale) {
+
+    this.stale = stale;
   }
 }

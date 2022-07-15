@@ -115,6 +115,9 @@ public class ResponseParser {
           case 'Z':
             response.setAlsoWon(true);
             break;
+          case 'X':
+            response.setStale(true);
+            break;
           default:
             throw createIncomprehensibleResponseException(joinedBuffer, length);
         }

@@ -40,17 +40,13 @@ import org.smallmind.memcached.cubby.response.Response;
 import org.smallmind.memcached.cubby.response.ResponseCode;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
 
-public class SetCommand extends Command {
+public class RawCommand extends Command {
 
-  private static final Long ZERO = 0L;
-
-  private SetMode mode;
-  private Object value;
   private String key;
   private String opaqueToken;
-  private boolean raw;
+  private boolean cas;
+  private boolean value = true;
   private Integer expiration;
-  private Long cas;
 
   @Override
   public String getKey () {
@@ -58,51 +54,37 @@ public class SetCommand extends Command {
     return key;
   }
 
-  public SetCommand setKey (String key) {
+  public RawCommand setKey (String key) {
 
     this.key = key;
 
     return this;
   }
 
-  public SetCommand setValue (Object value) {
-
-    this.value = value;
-
-    return this;
-  }
-
-  public SetCommand setMode (SetMode mode) {
-
-    this.mode = mode;
-
-    return this;
-  }
-
-  public SetCommand setCas (Long cas) {
+  public RawCommand setCas (boolean cas) {
 
     this.cas = cas;
 
     return this;
   }
 
-  public SetCommand setExpiration (Integer expiration) {
+  public RawCommand setExpiration (Integer expiration) {
 
     this.expiration = expiration;
 
     return this;
   }
 
-  public SetCommand setOpaqueToken (String opaqueToken) {
+  public RawCommand setOpaqueToken (String opaqueToken) {
 
     this.opaqueToken = opaqueToken;
 
     return this;
   }
 
-  public SetCommand setRaw (boolean raw) {
+  public RawCommand setValue (boolean value) {
 
-    this.raw = raw;
+    this.value = value;
 
     return this;
   }
@@ -111,22 +93,13 @@ public class SetCommand extends Command {
   public byte[] construct (KeyTranslator keyTranslator, CubbyCodec codec)
     throws IOException, CubbyOperationException {
 
-    byte[] bytes;
-    byte[] commandBytes;
-    byte[] valueBytes = (raw && (value instanceof byte[])) ? (byte[])value : codec.serialize(value);
+    StringBuilder line = new StringBuilder("mg ").append(keyTranslator.encode(key)).append(" b");
 
-    StringBuilder line = new StringBuilder("ms ").append(keyTranslator.encode(key)).append(' ').append(valueBytes.length).append(" b");
-
-    if (ZERO.equals(cas) && ((mode == null) || SetMode.SET.equals(mode))) {
-      line.append(" M").append(SetMode.ADD.getToken());
+    if (value) {
+      line.append(" v");
+    }
+    if (cas) {
       line.append(" c");
-    } else {
-      if (mode != null) {
-        line.append(" M").append(mode.getToken());
-      }
-      if (cas != null) {
-        line.append(" C").append(cas).append(" c");
-      }
     }
     if (expiration != null) {
       line.append(" T").append(expiration);
@@ -135,24 +108,20 @@ public class SetCommand extends Command {
       line.append(" O").append(opaqueToken);
     }
 
-    commandBytes = line.append("\r\n").toString().getBytes();
-    bytes = new byte[commandBytes.length + valueBytes.length + 2];
-
-    System.arraycopy(commandBytes, 0, bytes, 0, commandBytes.length);
-    System.arraycopy(valueBytes, 0, bytes, commandBytes.length, valueBytes.length);
-    System.arraycopy("\r\n".getBytes(), 0, bytes, commandBytes.length + valueBytes.length, 2);
-
-    return bytes;
+    return line.append("\r\n").toString().getBytes();
   }
 
   @Override
-  public <T> Result<T> process (CubbyCodec codec, Response response)
-    throws IOException {
+  public Result<byte[]> process (CubbyCodec codec, Response response)
+    throws IOException, ClassNotFoundException {
 
-    if (response.getCode().in(ResponseCode.EX, ResponseCode.NF, ResponseCode.NS)) {
+    if (ResponseCode.EN.equals(response.getCode()) || response.isWon() || response.isAlsoWon()) {
 
       return new Result<>(null, false, response.getCas());
-    } else if (ResponseCode.HD.equals(response.getCode())) {
+    } else if (value && ResponseCode.VA.equals(response.getCode())) {
+
+      return new Result<>(response.getValue(), true, response.getCas());
+    } else if ((!value) && ResponseCode.HD.equals(response.getCode())) {
 
       return new Result<>(null, true, response.getCas());
     } else {

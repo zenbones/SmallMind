@@ -36,8 +36,10 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import org.smallmind.memcached.cubby.codec.CubbyCodec;
 import org.smallmind.memcached.cubby.command.GetCommand;
+import org.smallmind.memcached.cubby.command.RawCommand;
 import org.smallmind.memcached.cubby.command.Result;
 import org.smallmind.memcached.cubby.command.SetCommand;
+import org.smallmind.memcached.cubby.command.SetMode;
 import org.smallmind.memcached.cubby.response.Response;
 import org.smallmind.memcached.cubby.response.ResponseCode;
 import org.testng.Assert;
@@ -61,6 +63,8 @@ public class CubbyTest {
     client.start();
 
     client.delete("second");
+    client.delete("third");
+    client.delete("fourth");
   }
 
   @AfterClass
@@ -114,5 +118,58 @@ public class CubbyTest {
     Assert.assertTrue(result.isSuccessful());
     Assert.assertEquals(result.getValue(), "value2");
     Assert.assertEquals(result.getCas(), setCas);
+  }
+
+  @Test(dependsOnMethods = "testBasicSetWithOpaqueToken")
+  public void testAdd ()
+    throws InterruptedException, IOException, CubbyOperationException, ClassNotFoundException {
+
+    Response response = client.send(new SetCommand().setKey("first").setValue("value3").setMode(SetMode.ADD), null);
+    Assert.assertEquals(response.getCode(), ResponseCode.NS);
+
+    response = client.send(new SetCommand().setKey("third").setValue("value3").setMode(SetMode.ADD), null);
+    Assert.assertEquals(response.getCode(), ResponseCode.HD);
+  }
+
+  @Test(dependsOnMethods = "testAdd")
+  public void testReplace ()
+    throws InterruptedException, IOException, CubbyOperationException, ClassNotFoundException {
+
+    Response response = client.send(new SetCommand().setKey("fourth").setValue("value4").setMode(SetMode.REPLACE), null);
+    Assert.assertEquals(response.getCode(), ResponseCode.NS);
+
+    response = client.send(new SetCommand().setKey("third").setValue("value4").setMode(SetMode.REPLACE), null);
+    Assert.assertEquals(response.getCode(), ResponseCode.HD);
+    Assert.assertEquals(client.get("third"), "value4");
+  }
+
+  @Test(dependsOnMethods = "testReplace")
+  public void testAppend ()
+    throws InterruptedException, IOException, CubbyOperationException, ClassNotFoundException {
+
+    client.send(new SetCommand().setKey("fourth").setValue("value4".getBytes()).setRaw(true),null);
+
+    Response response = client.send(new SetCommand().setKey("fifth").setValue("5").setMode(SetMode.APPEND), null);
+    Assert.assertEquals(response.getCode(), ResponseCode.NS);
+
+    response = client.send(new SetCommand().setKey("fourth").setValue("5".getBytes()).setMode(SetMode.APPEND).setRaw(true), null);
+    Assert.assertEquals(response.getCode(), ResponseCode.HD);
+
+    response = client.send(new RawCommand().setKey("fourth").setValue(true),null);
+    Assert.assertEquals(new String(response.getValue()), "value45");
+  }
+
+  @Test(dependsOnMethods = "testAppend")
+  public void testPrepend ()
+    throws InterruptedException, IOException, CubbyOperationException, ClassNotFoundException {
+
+    Response response = client.send(new SetCommand().setKey("fifth").setValue("5").setMode(SetMode.PREPEND), null);
+    Assert.assertEquals(response.getCode(), ResponseCode.NS);
+
+    response = client.send(new SetCommand().setKey("fourth").setValue("3".getBytes()).setMode(SetMode.PREPEND).setRaw(true), null);
+    Assert.assertEquals(response.getCode(), ResponseCode.HD);
+
+    response = client.send(new RawCommand().setKey("fourth").setValue(true),null);
+    Assert.assertEquals(new String(response.getValue()), "3value45");
   }
 }
