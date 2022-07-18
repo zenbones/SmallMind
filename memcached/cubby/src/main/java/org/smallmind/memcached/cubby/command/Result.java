@@ -32,20 +32,20 @@
  */
 package org.smallmind.memcached.cubby.command;
 
-public class Result<T> {
+public class Result {
 
-  private final T value;
+  private final byte[] value;
   private final boolean successful;
   private final long cas;
 
-  public Result (T value, boolean successful, long cas) {
+  public Result (byte[] value, boolean successful, long cas) {
 
     this.value = value;
     this.successful = successful;
     this.cas = cas;
   }
 
-  public T getValue () {
+  public byte[] getValue () {
 
     return value;
   }

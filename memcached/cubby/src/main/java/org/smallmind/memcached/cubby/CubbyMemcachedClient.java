@@ -118,9 +118,9 @@ public class CubbyMemcachedClient implements ProxyMemcachedClient {
 
     GetCommand command;
     Response response = connectionMultiplexer.send(command = new GetCommand().setKey(key), null);
-    Result<T> result = command.process(configuration.getCodec(), response);
+    Result result = command.process(response);
 
-    return result.isSuccessful() ? result.getValue() : null;
+    return result.isSuccessful() ? (T)configuration.getCodec().deserialize(result.getValue()) : null;
   }
 
   public <T> CASValue<T> casGet (String key)
@@ -128,27 +128,27 @@ public class CubbyMemcachedClient implements ProxyMemcachedClient {
 
     GetCommand command;
     Response response = connectionMultiplexer.send(command = new GetCommand().setKey(key).setCas(true), null);
-    Result<T> result = command.process(configuration.getCodec(), response);
+    Result result = command.process(response);
 
-    return result.isSuccessful() ? new CASValue<>(result) : null;
+    return result.isSuccessful() ? new CASValue<>(result, configuration.getCodec()) : null;
   }
 
   public <T> boolean set (String key, int expiration, T value)
     throws IOException, InterruptedException, CubbyOperationException {
 
     SetCommand command;
-    Response response = connectionMultiplexer.send(command = new SetCommand().setKey(key).setExpiration(expiration).setValue(value), null);
+    Response response = connectionMultiplexer.send(command = new SetCommand().setKey(key).setExpiration(expiration).setValue(configuration.getCodec().serialize(value)), null);
 
-    return command.process(configuration.getCodec(), response).isSuccessful();
+    return command.process(response).isSuccessful();
   }
 
   public <T> boolean casSet (String key, int expiration, T value, long cas)
     throws IOException, InterruptedException, CubbyOperationException {
 
     SetCommand command;
-    Response response = connectionMultiplexer.send(command = new SetCommand().setKey(key).setExpiration(expiration).setCas(cas).setValue(value), null);
+    Response response = connectionMultiplexer.send(command = new SetCommand().setKey(key).setExpiration(expiration).setCas(cas).setValue(configuration.getCodec().serialize(value)), null);
 
-    return command.process(configuration.getCodec(), response).isSuccessful();
+    return command.process(response).isSuccessful();
   }
 
   public boolean delete (String key)
@@ -157,7 +157,7 @@ public class CubbyMemcachedClient implements ProxyMemcachedClient {
     DeleteCommand command;
     Response response = connectionMultiplexer.send(command = new DeleteCommand().setKey(key), null);
 
-    return command.process(configuration.getCodec(), response).isSuccessful();
+    return command.process(response).isSuccessful();
   }
 
   public boolean casDelete (String key, long cas)
@@ -166,7 +166,7 @@ public class CubbyMemcachedClient implements ProxyMemcachedClient {
     DeleteCommand command;
     Response response = connectionMultiplexer.send(command = new DeleteCommand().setKey(key).setCas(cas), null);
 
-    return command.process(configuration.getCodec(), response).isSuccessful();
+    return command.process(response).isSuccessful();
   }
 
   public boolean touch (String key, int expiration)
@@ -175,7 +175,7 @@ public class CubbyMemcachedClient implements ProxyMemcachedClient {
     GetCommand command;
     Response response = connectionMultiplexer.send(command = new GetCommand().setKey(key).setExpiration(expiration).setValue(false), null);
 
-    return command.process(configuration.getCodec(), response).isSuccessful();
+    return command.process(response).isSuccessful();
   }
 
   public <T> T getAndTouch (String key, int expiration)
@@ -183,9 +183,9 @@ public class CubbyMemcachedClient implements ProxyMemcachedClient {
 
     GetCommand command;
     Response response = connectionMultiplexer.send(command = new GetCommand().setKey(key).setExpiration(expiration), null);
-    Result<T> result = command.process(configuration.getCodec(), response);
+    Result result = command.process(response);
 
-    return result.isSuccessful() ? result.getValue() : null;
+    return result.isSuccessful() ? (T)configuration.getCodec().deserialize(result.getValue()) : null;
   }
 
   public <T> CASValue<T> casGetAndTouch (String key, int expiration)
@@ -193,8 +193,8 @@ public class CubbyMemcachedClient implements ProxyMemcachedClient {
 
     GetCommand command;
     Response response = connectionMultiplexer.send(command = new GetCommand().setKey(key).setExpiration(expiration).setCas(true), null);
-    Result<T> result = command.process(configuration.getCodec(), response);
+    Result result = command.process(response);
 
-    return result.isSuccessful() ? new CASValue<>(result) : null;
+    return result.isSuccessful() ? new CASValue<>(result, configuration.getCodec()) : null;
   }
 }

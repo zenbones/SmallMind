@@ -35,7 +35,6 @@ package org.smallmind.memcached.cubby.command;
 import java.io.IOException;
 import org.smallmind.memcached.cubby.CubbyOperationException;
 import org.smallmind.memcached.cubby.UnexpectedResponseException;
-import org.smallmind.memcached.cubby.codec.CubbyCodec;
 import org.smallmind.memcached.cubby.response.Response;
 import org.smallmind.memcached.cubby.response.ResponseCode;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
@@ -45,10 +44,9 @@ public class SetCommand extends Command {
   private static final Long ZERO = 0L;
 
   private SetMode mode;
-  private Object value;
+  private byte[] value;
   private String key;
   private String opaqueToken;
-  private boolean raw;
   private Integer expiration;
   private Long cas;
 
@@ -65,7 +63,7 @@ public class SetCommand extends Command {
     return this;
   }
 
-  public SetCommand setValue (Object value) {
+  public SetCommand setValue (byte[] value) {
 
     this.value = value;
 
@@ -100,22 +98,14 @@ public class SetCommand extends Command {
     return this;
   }
 
-  public SetCommand setRaw (boolean raw) {
-
-    this.raw = raw;
-
-    return this;
-  }
-
   @Override
-  public byte[] construct (KeyTranslator keyTranslator, CubbyCodec codec)
+  public byte[] construct (KeyTranslator keyTranslator)
     throws IOException, CubbyOperationException {
 
     byte[] bytes;
     byte[] commandBytes;
-    byte[] valueBytes = (raw && (value instanceof byte[])) ? (byte[])value : codec.serialize(value);
 
-    StringBuilder line = new StringBuilder("ms ").append(keyTranslator.encode(key)).append(' ').append(valueBytes.length).append(" b");
+    StringBuilder line = new StringBuilder("ms ").append(keyTranslator.encode(key)).append(' ').append(value.length).append(" b");
 
     if (ZERO.equals(cas) && ((mode == null) || SetMode.SET.equals(mode))) {
       line.append(" M").append(SetMode.ADD.getToken());
@@ -136,25 +126,25 @@ public class SetCommand extends Command {
     }
 
     commandBytes = line.append("\r\n").toString().getBytes();
-    bytes = new byte[commandBytes.length + valueBytes.length + 2];
+    bytes = new byte[commandBytes.length + value.length + 2];
 
     System.arraycopy(commandBytes, 0, bytes, 0, commandBytes.length);
-    System.arraycopy(valueBytes, 0, bytes, commandBytes.length, valueBytes.length);
-    System.arraycopy("\r\n".getBytes(), 0, bytes, commandBytes.length + valueBytes.length, 2);
+    System.arraycopy(value, 0, bytes, commandBytes.length, value.length);
+    System.arraycopy("\r\n".getBytes(), 0, bytes, commandBytes.length + value.length, 2);
 
     return bytes;
   }
 
   @Override
-  public <T> Result<T> process (CubbyCodec codec, Response response)
-    throws IOException {
+  public Result process (Response response)
+    throws UnexpectedResponseException {
 
     if (response.getCode().in(ResponseCode.EX, ResponseCode.NF, ResponseCode.NS)) {
 
-      return new Result<>(null, false, response.getCas());
+      return new Result(null, false, response.getCas());
     } else if (ResponseCode.HD.equals(response.getCode())) {
 
-      return new Result<>(null, true, response.getCas());
+      return new Result(null, true, response.getCas());
     } else {
       throw new UnexpectedResponseException("Unexpected response code(%s)", response.getCode().name());
     }

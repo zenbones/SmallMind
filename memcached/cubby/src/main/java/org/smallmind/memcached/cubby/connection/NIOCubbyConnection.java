@@ -50,7 +50,6 @@ import org.smallmind.memcached.cubby.CubbyOperationException;
 import org.smallmind.memcached.cubby.IncomprehensibleRequestException;
 import org.smallmind.memcached.cubby.InvalidSelectionKeyException;
 import org.smallmind.memcached.cubby.MemcachedHost;
-import org.smallmind.memcached.cubby.codec.CubbyCodec;
 import org.smallmind.memcached.cubby.command.AuthenticationCommand;
 import org.smallmind.memcached.cubby.command.Command;
 import org.smallmind.memcached.cubby.response.Response;
@@ -64,7 +63,6 @@ public class NIOCubbyConnection implements CubbyConnection {
   private final ConnectionCoordinator connectionCoordinator;
   private final MemcachedHost memcachedHost;
   private final KeyTranslator keyTranslator;
-  private final CubbyCodec codec;
   private final LinkedBlockingQueue<MissingLink> requestQueue = new LinkedBlockingQueue<>();
   private final LinkedBlockingQueue<MissingLink> responseQueue = new LinkedBlockingQueue<>();
   private final AtomicLong commandCounter = new AtomicLong(0);
@@ -83,7 +81,6 @@ public class NIOCubbyConnection implements CubbyConnection {
     this.memcachedHost = memcachedHost;
 
     keyTranslator = configuration.getKeyTranslator();
-    codec = configuration.getCodec();
     authentication = configuration.getAuthentication();
     connectionTimeoutMilliseconds = configuration.getConnectionTimeoutMilliseconds();
     defaultRequestTimeoutMilliseconds = configuration.getDefaultRequestTimeoutMilliseconds();
@@ -163,7 +160,7 @@ public class NIOCubbyConnection implements CubbyConnection {
     requestCallback = new RequestCallback(command);
 
     synchronized (requestQueue) {
-      requestQueue.offer(new MissingLink(requestCallback, new CommandBuffer(commandCounter.getAndIncrement(), command.construct(keyTranslator, codec))));
+      requestQueue.offer(new MissingLink(requestCallback, new CommandBuffer(commandCounter.getAndIncrement(), command.construct(keyTranslator))));
       selectionKey.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
       selector.wakeup();
     }

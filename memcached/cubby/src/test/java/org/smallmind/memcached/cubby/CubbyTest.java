@@ -34,9 +34,9 @@ package org.smallmind.memcached.cubby;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import org.smallmind.memcached.cubby.codec.CubbyCodec;
+import org.smallmind.memcached.cubby.command.ArithmeticCommand;
+import org.smallmind.memcached.cubby.command.ArithmeticMode;
 import org.smallmind.memcached.cubby.command.GetCommand;
-import org.smallmind.memcached.cubby.command.RawCommand;
 import org.smallmind.memcached.cubby.command.Result;
 import org.smallmind.memcached.cubby.command.SetCommand;
 import org.smallmind.memcached.cubby.command.SetMode;
@@ -68,6 +68,8 @@ public class CubbyTest {
     client.delete("second");
     client.delete("third");
     client.delete("fourth");
+    client.delete("sixth");
+    client.delete("seventh");
   }
 
   @AfterClass
@@ -81,7 +83,7 @@ public class CubbyTest {
   public void testBasicSetWithOpaqueToken ()
     throws InterruptedException, IOException, CubbyOperationException {
 
-    Response response = client.send(new SetCommand().setKey("first").setValue("value1").setOpaqueToken("opaque"), null);
+    Response response = client.send(new SetCommand().setKey("first").setValue(configuration.getCodec().serialize("value1")).setOpaqueToken("opaque"), null);
     Assert.assertEquals(response.getCode(), ResponseCode.HD);
     Assert.assertEquals(response.getToken(), "opaque");
   }
@@ -92,18 +94,18 @@ public class CubbyTest {
 
     GetCommand command;
     Response response = client.send(command = new GetCommand().setKey("first").setValue(true).setCas(true), null);
-    Result<?> result = command.process(configuration.getCodec(), response);
+    Result result = command.process(response);
 
     Assert.assertEquals(response.getCode(), ResponseCode.VA);
     Assert.assertTrue(result.isSuccessful());
-    Assert.assertEquals(result.getValue(), "value1");
+    Assert.assertEquals(configuration.getCodec().deserialize(result.getValue()), "value1");
   }
 
   @Test
   public void testCasSet ()
     throws InterruptedException, IOException, CubbyOperationException {
 
-    Response response = client.send(new SetCommand().setKey("second").setValue("value2").setCas(0L), null);
+    Response response = client.send(new SetCommand().setKey("second").setValue(configuration.getCodec().serialize("value2")).setCas(0L), null);
     Assert.assertEquals(response.getCode(), ResponseCode.HD);
     Assert.assertTrue(response.getCas() > 0);
     setCas = response.getCas();
@@ -115,22 +117,22 @@ public class CubbyTest {
 
     GetCommand command;
     Response response = client.send(command = new GetCommand().setKey("second").setValue(true).setCas(true), null);
-    Result<?> result = command.process(configuration.getCodec(), response);
+    Result result = command.process(response);
 
     Assert.assertEquals(response.getCode(), ResponseCode.VA);
     Assert.assertTrue(result.isSuccessful());
-    Assert.assertEquals(result.getValue(), "value2");
+    Assert.assertEquals(configuration.getCodec().deserialize(result.getValue()), "value2");
     Assert.assertEquals(result.getCas(), setCas);
   }
 
   @Test(dependsOnMethods = "testBasicSetWithOpaqueToken")
   public void testAdd ()
-    throws InterruptedException, IOException, CubbyOperationException, ClassNotFoundException {
+    throws InterruptedException, IOException, CubbyOperationException {
 
-    Response response = client.send(new SetCommand().setKey("first").setValue("value3").setMode(SetMode.ADD), null);
+    Response response = client.send(new SetCommand().setKey("first").setValue(configuration.getCodec().serialize("value3")).setMode(SetMode.ADD), null);
     Assert.assertEquals(response.getCode(), ResponseCode.NS);
 
-    response = client.send(new SetCommand().setKey("third").setValue("value3").setMode(SetMode.ADD), null);
+    response = client.send(new SetCommand().setKey("third").setValue(configuration.getCodec().serialize("value3")).setMode(SetMode.ADD), null);
     Assert.assertEquals(response.getCode(), ResponseCode.HD);
   }
 
@@ -138,10 +140,10 @@ public class CubbyTest {
   public void testReplace ()
     throws InterruptedException, IOException, CubbyOperationException, ClassNotFoundException {
 
-    Response response = client.send(new SetCommand().setKey("fourth").setValue("value4").setMode(SetMode.REPLACE), null);
+    Response response = client.send(new SetCommand().setKey("fourth").setValue(configuration.getCodec().serialize("value4")).setMode(SetMode.REPLACE), null);
     Assert.assertEquals(response.getCode(), ResponseCode.NS);
 
-    response = client.send(new SetCommand().setKey("third").setValue("value4").setMode(SetMode.REPLACE), null);
+    response = client.send(new SetCommand().setKey("third").setValue(configuration.getCodec().serialize("value4")).setMode(SetMode.REPLACE), null);
     Assert.assertEquals(response.getCode(), ResponseCode.HD);
     Assert.assertEquals(client.get("third"), "value4");
   }
@@ -150,15 +152,15 @@ public class CubbyTest {
   public void testAppend ()
     throws InterruptedException, IOException, CubbyOperationException {
 
-    client.send(new SetCommand().setKey("fourth").setValue("value4".getBytes()).setRaw(true), null);
+    client.send(new SetCommand().setKey("fourth").setValue("value4".getBytes()), null);
 
-    Response response = client.send(new SetCommand().setKey("fifth").setValue("5").setMode(SetMode.APPEND), null);
+    Response response = client.send(new SetCommand().setKey("fifth").setValue("5".getBytes()).setMode(SetMode.APPEND), null);
     Assert.assertEquals(response.getCode(), ResponseCode.NS);
 
-    response = client.send(new SetCommand().setKey("fourth").setValue("5".getBytes()).setMode(SetMode.APPEND).setRaw(true), null);
+    response = client.send(new SetCommand().setKey("fourth").setValue("5".getBytes()).setMode(SetMode.APPEND), null);
     Assert.assertEquals(response.getCode(), ResponseCode.HD);
 
-    response = client.send(new RawCommand().setKey("fourth").setValue(true), null);
+    response = client.send(new GetCommand().setKey("fourth").setValue(true), null);
     Assert.assertEquals(new String(response.getValue()), "value45");
   }
 
@@ -166,13 +168,13 @@ public class CubbyTest {
   public void testPrepend ()
     throws InterruptedException, IOException, CubbyOperationException {
 
-    Response response = client.send(new SetCommand().setKey("fifth").setValue("5").setMode(SetMode.PREPEND), null);
+    Response response = client.send(new SetCommand().setKey("fifth").setValue("5".getBytes()).setMode(SetMode.PREPEND), null);
     Assert.assertEquals(response.getCode(), ResponseCode.NS);
 
-    response = client.send(new SetCommand().setKey("fourth").setValue("3".getBytes()).setMode(SetMode.PREPEND).setRaw(true), null);
+    response = client.send(new SetCommand().setKey("fourth").setValue("3".getBytes()).setMode(SetMode.PREPEND), null);
     Assert.assertEquals(response.getCode(), ResponseCode.HD);
 
-    response = client.send(new RawCommand().setKey("fourth").setValue(true), null);
+    response = client.send(new GetCommand().setKey("fourth").setValue(true), null);
     Assert.assertEquals(new String(response.getValue()), "3value45");
   }
 
@@ -181,15 +183,68 @@ public class CubbyTest {
     throws InterruptedException, IOException, CubbyOperationException, ClassNotFoundException {
 
     GetCommand command;
-    Result<?> result;
-    Response response = client.send(new SetCommand().setKey(LARGE_KEY).setValue(LARGE_VALUE), null);
+    Result result;
+    Response response = client.send(new SetCommand().setKey(LARGE_KEY).setValue(configuration.getCodec().serialize(LARGE_VALUE)), null);
     Assert.assertEquals(response.getCode(), ResponseCode.HD);
 
     response = client.send(command = new GetCommand().setKey(LARGE_KEY), null);
-    result = command.process(configuration.getCodec(), response);
+    result = command.process(response);
 
     Assert.assertEquals(response.getCode(), ResponseCode.VA);
     Assert.assertTrue(result.isSuccessful());
-    Assert.assertEquals(result.getValue(), LARGE_VALUE);
+    Assert.assertEquals(configuration.getCodec().deserialize(result.getValue()), LARGE_VALUE);
+  }
+
+  @Test
+  public void testInitialIncrement ()
+    throws InterruptedException, IOException, CubbyOperationException {
+
+    Response response = client.send(new ArithmeticCommand().setKey("sixth").setInitial(2).setDelta(3), null);
+    Assert.assertEquals(response.getCode(), ResponseCode.VA);
+    Assert.assertEquals(new String(response.getValue()), "2");
+  }
+
+  @Test(dependsOnMethods = "testInitialIncrement")
+  public void testIncrement ()
+    throws InterruptedException, IOException, CubbyOperationException {
+
+    Response response = client.send(new ArithmeticCommand().setKey("sixth").setInitial(11).setDelta(3), null);
+    Assert.assertEquals(response.getCode(), ResponseCode.VA);
+    Assert.assertEquals(new String(response.getValue()), "5");
+  }
+
+  @Test(dependsOnMethods = "testIncrement")
+  public void testImplicitDecrement ()
+    throws InterruptedException, IOException, CubbyOperationException {
+
+    Response response = client.send(new ArithmeticCommand().setKey("sixth").setDelta(-2), null);
+    Assert.assertEquals(response.getCode(), ResponseCode.VA);
+    Assert.assertEquals(new String(response.getValue()), "3");
+  }
+
+  @Test(dependsOnMethods = "testImplicitDecrement")
+  public void testExplicitDecrement ()
+    throws InterruptedException, IOException, CubbyOperationException {
+
+    Response response = client.send(new ArithmeticCommand().setKey("sixth").setMode(ArithmeticMode.DECREMENT).setDelta(2), null);
+    Assert.assertEquals(response.getCode(), ResponseCode.VA);
+    Assert.assertEquals(new String(response.getValue()), "1");
+  }
+
+  public void testIncrementWithCas ()
+    throws InterruptedException, IOException, CubbyOperationException {
+
+    long incrementCas;
+    Response response = client.send(new ArithmeticCommand().setKey("seventh").setInitial(0).setDelta(3).setCas(0L), null);
+    Assert.assertEquals(response.getCode(), ResponseCode.VA);
+    Assert.assertEquals(new String(response.getValue()), "0");
+    incrementCas = response.getCas();
+
+    response = client.send(new ArithmeticCommand().setKey("seventh").setInitial(0).setDelta(8).setCas(incrementCas + 1), null);
+    Assert.assertEquals(response.getCode(), ResponseCode.EX);
+
+    response = client.send(new ArithmeticCommand().setKey("seventh").setInitial(0).setDelta(8).setCas(incrementCas), null);
+    Assert.assertEquals(response.getCode(), ResponseCode.VA);
+    Assert.assertEquals(new String(response.getValue()), "8");
   }
 }

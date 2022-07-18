@@ -35,7 +35,6 @@ package org.smallmind.memcached.cubby.command;
 import java.io.IOException;
 import org.smallmind.memcached.cubby.Authentication;
 import org.smallmind.memcached.cubby.CubbyOperationException;
-import org.smallmind.memcached.cubby.codec.CubbyCodec;
 import org.smallmind.memcached.cubby.response.Response;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
 
@@ -58,27 +57,27 @@ public class AuthenticationCommand extends Command {
   }
 
   @Override
-  public byte[] construct (KeyTranslator keyTranslator, CubbyCodec codec)
+  public byte[] construct (KeyTranslator keyTranslator)
     throws IOException, CubbyOperationException {
 
     byte[] bytes;
     byte[] commandBytes;
-    byte[] valueBytes = codec.serialize(authentication.getUsername() + " " + authentication.getPassword());
+    byte[] value = (authentication.getUsername() + " " + authentication.getPassword()).getBytes();
 
-    StringBuilder line = new StringBuilder("ms ").append(keyTranslator.encode("unused")).append(' ').append(valueBytes.length).append(" b");
+    StringBuilder line = new StringBuilder("ms ").append(keyTranslator.encode("unused")).append(' ').append(value.length).append(" b");
 
     commandBytes = line.append("\r\n").toString().getBytes();
-    bytes = new byte[commandBytes.length + valueBytes.length + 2];
+    bytes = new byte[commandBytes.length + value.length + 2];
 
     System.arraycopy(commandBytes, 0, bytes, 0, commandBytes.length);
-    System.arraycopy(valueBytes, 0, bytes, commandBytes.length, valueBytes.length);
-    System.arraycopy("\r\n".getBytes(), 0, bytes, commandBytes.length + valueBytes.length, 2);
+    System.arraycopy(value, 0, bytes, commandBytes.length, value.length);
+    System.arraycopy("\r\n".getBytes(), 0, bytes, commandBytes.length + value.length, 2);
 
     return bytes;
   }
 
   @Override
-  public <T> Result<T> process (CubbyCodec codec, Response response) {
+  public Result process (Response response) {
 
     return null;
   }

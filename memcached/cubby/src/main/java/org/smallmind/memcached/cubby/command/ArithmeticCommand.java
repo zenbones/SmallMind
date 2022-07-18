@@ -35,7 +35,6 @@ package org.smallmind.memcached.cubby.command;
 import java.io.IOException;
 import org.smallmind.memcached.cubby.CubbyOperationException;
 import org.smallmind.memcached.cubby.UnexpectedResponseException;
-import org.smallmind.memcached.cubby.codec.CubbyCodec;
 import org.smallmind.memcached.cubby.response.Response;
 import org.smallmind.memcached.cubby.response.ResponseCode;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
@@ -106,7 +105,7 @@ public class ArithmeticCommand extends Command {
   }
 
   @Override
-  public byte[] construct (KeyTranslator keyTranslator, CubbyCodec codec)
+  public byte[] construct (KeyTranslator keyTranslator)
     throws IOException, CubbyOperationException {
 
     if ((delta != null) && (delta < 0)) {
@@ -114,7 +113,7 @@ public class ArithmeticCommand extends Command {
       mode = mode.flip();
     }
 
-    StringBuilder line = new StringBuilder("ms ").append(keyTranslator.encode(key)).append(' ').append(" b v");
+    StringBuilder line = new StringBuilder("ma ").append(keyTranslator.encode(key)).append(' ').append(" b v");
 
     if (mode != null) {
       line.append(" M").append(mode.getToken());
@@ -123,7 +122,8 @@ public class ArithmeticCommand extends Command {
       line.append(" C").append(cas).append(" c");
     }
     if (initial != null) {
-      line.append("J").append(initial);
+      line.append(" J").append(initial);
+      line.append(" N").append((expiration == null) ? 0 : expiration);
     }
     if (delta != null) {
       line.append(" D").append(delta);
@@ -139,15 +139,15 @@ public class ArithmeticCommand extends Command {
   }
 
   @Override
-  public <T> Result<T> process (CubbyCodec codec, Response response)
-    throws IOException, ClassNotFoundException {
+  public Result process (Response response)
+    throws UnexpectedResponseException {
 
     if (response.getCode().in(ResponseCode.EX, ResponseCode.NF, ResponseCode.NS)) {
 
-      return new Result<>(null, false, response.getCas());
+      return new Result(null, false, response.getCas());
     } else if (ResponseCode.HD.equals(response.getCode())) {
 
-      return new Result<>((T)codec.deserialize(response.getValue()), true, response.getCas());
+      return new Result(response.getValue(), true, response.getCas());
     } else {
       throw new UnexpectedResponseException("Unexpected response code(%s)", response.getCode().name());
     }

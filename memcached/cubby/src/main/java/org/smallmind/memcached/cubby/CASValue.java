@@ -32,6 +32,8 @@
  */
 package org.smallmind.memcached.cubby;
 
+import java.io.IOException;
+import org.smallmind.memcached.cubby.codec.CubbyCodec;
 import org.smallmind.memcached.cubby.command.Result;
 import org.smallmind.memcached.utility.ProxyCASResponse;
 
@@ -40,9 +42,10 @@ public class CASValue<T> implements ProxyCASResponse<T> {
   private final T value;
   private final long cas;
 
-  public CASValue (Result<T> result) {
+  public CASValue (Result result, CubbyCodec codec)
+    throws IOException, ClassNotFoundException {
 
-    this(result.getCas(), result.getValue());
+    this(result.getCas(), (T)codec.deserialize(result.getValue()));
   }
 
   public CASValue (long cas, T value) {
