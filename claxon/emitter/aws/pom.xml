@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>claxon-emitter</artifactId>
-    <version>4.8.0</version>
+    <version>4.9.0-SNAPSHOT</version>
   </parent>
   <artifactId>claxon-emitter-aws</artifactId>
   <name>Claxon-Emitter-AWS</name>
