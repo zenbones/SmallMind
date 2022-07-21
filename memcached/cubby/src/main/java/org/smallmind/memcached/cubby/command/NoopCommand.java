@@ -30,14 +30,50 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.memcached.cubby.connection;
+package org.smallmind.memcached.cubby.command;
 
-import java.io.IOException;
+import org.smallmind.memcached.cubby.UnexpectedResponseException;
 import org.smallmind.memcached.cubby.response.Response;
+import org.smallmind.memcached.cubby.response.ResponseCode;
+import org.smallmind.memcached.cubby.translator.KeyTranslator;
 
-public interface RequestCallback {
+public class NoopCommand extends Command {
 
-  void setResult (Response response);
+  private static final byte[] BYTES = "mn\r\n".getBytes();
 
-  void setException (IOException ioException);
+  private String key;
+
+  @Override
+  public String getKey () {
+
+    return key;
+  }
+
+  public NoopCommand setKey (String key) {
+
+    this.key = key;
+
+    return this;
+  }
+
+  @Override
+  public byte[] construct (KeyTranslator keyTranslator) {
+
+    return BYTES;
+  }
+
+  @Override
+  public Result process (Response response)
+    throws UnexpectedResponseException {
+
+    if (response.getCode().equals(ResponseCode.MN)) {
+
+      return new Result(null, true, response.getCas());
+    } else if (ResponseCode.HD.equals(response.getCode())) {
+
+      return new Result(null, false, response.getCas());
+    } else {
+      throw new UnexpectedResponseException("Unexpected response code(%s)", response.getCode().name());
+    }
+  }
 }

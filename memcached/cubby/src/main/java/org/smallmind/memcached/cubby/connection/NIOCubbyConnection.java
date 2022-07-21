@@ -52,6 +52,7 @@ import org.smallmind.memcached.cubby.InvalidSelectionKeyException;
 import org.smallmind.memcached.cubby.MemcachedHost;
 import org.smallmind.memcached.cubby.command.AuthenticationCommand;
 import org.smallmind.memcached.cubby.command.Command;
+import org.smallmind.memcached.cubby.command.NoopCommand;
 import org.smallmind.memcached.cubby.response.Response;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
 import org.smallmind.scribe.pen.LoggerManager;
@@ -68,6 +69,7 @@ public class NIOCubbyConnection implements CubbyConnection {
   private final AtomicLong commandCounter = new AtomicLong(0);
   private final Authentication authentication;
   private final long connectionTimeoutMilliseconds;
+  private final long heartbeatMilliseconds;
   private final long defaultRequestTimeoutMilliseconds;
   private SocketChannel socketChannel;
   private Selector selector;
@@ -83,6 +85,7 @@ public class NIOCubbyConnection implements CubbyConnection {
     keyTranslator = configuration.getKeyTranslator();
     authentication = configuration.getAuthentication();
     connectionTimeoutMilliseconds = configuration.getConnectionTimeoutMilliseconds();
+    heartbeatMilliseconds = configuration.getHeartbeatSeconds() * 1000;
     defaultRequestTimeoutMilliseconds = configuration.getDefaultRequestTimeoutMilliseconds();
   }
 
@@ -155,9 +158,7 @@ public class NIOCubbyConnection implements CubbyConnection {
   public Response send (Command command, Long timeoutSeconds)
     throws InterruptedException, IOException, CubbyOperationException {
 
-    RequestCallback requestCallback;
-
-    requestCallback = new RequestCallback(command);
+    ClientRequestCallback requestCallback = new ClientRequestCallback(command);
 
     synchronized (requestQueue) {
       requestQueue.offer(new MissingLink(requestCallback, new CommandBuffer(commandCounter.getAndIncrement(), command.construct(keyTranslator))));
@@ -184,9 +185,25 @@ public class NIOCubbyConnection implements CubbyConnection {
   public void run () {
 
     int invalidSelectionKeyCount = 0;
+    long lastHeartbeatTimestamp = System.currentTimeMillis();
 
     try {
       while (!finished.get()) {
+        if (heartbeatMilliseconds > 0) {
+
+          long now;
+
+          if (((now = System.currentTimeMillis()) - lastHeartbeatTimestamp) > heartbeatMilliseconds) {
+            lastHeartbeatTimestamp = now;
+
+            synchronized (requestQueue) {
+              requestQueue.offer(new MissingLink(new ServerRequestCallback(), new CommandBuffer(commandCounter.getAndIncrement(), new NoopCommand().construct(keyTranslator))));
+              selectionKey.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+              selector.wakeup();
+            }
+          }
+        }
+
         try {
           if (selector.select(1000) > 0) {
 

@@ -53,7 +53,9 @@ public class ResponseParser {
       byte first = joinedBuffer.get();
       byte second = joinedBuffer.get();
 
-      if (ResponseCode.HD.begins(first, second)) {
+      if (ResponseCode.MN.begins(first, second)) {
+        response = new Response(ResponseCode.MN);
+      } else if (ResponseCode.HD.begins(first, second)) {
         response = new Response(ResponseCode.HD);
       } else if (ResponseCode.VA.begins(first, second)) {
         response = new Response(ResponseCode.VA);

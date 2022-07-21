@@ -34,10 +34,18 @@ package org.smallmind.memcached.cubby.connection;
 
 import java.io.IOException;
 import org.smallmind.memcached.cubby.response.Response;
+import org.smallmind.scribe.pen.LoggerManager;
 
-public interface RequestCallback {
+public class ServerRequestCallback implements RequestCallback {
 
-  void setResult (Response response);
+  @Override
+  public void setResult (Response response) {
 
-  void setException (IOException ioException);
+  }
+
+  @Override
+  public void setException (IOException ioException) {
+
+    LoggerManager.getLogger(ServerRequestCallback.class).error(ioException);
+  }
 }

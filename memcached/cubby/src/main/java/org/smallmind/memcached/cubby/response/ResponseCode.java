@@ -34,6 +34,8 @@ package org.smallmind.memcached.cubby.response;
 
 public enum ResponseCode {
 
+  // (NOOP), returned by the noop command
+  MN,
   // (HIT), to indicate success
   HD,
   // (VALUE), followed by the value data
