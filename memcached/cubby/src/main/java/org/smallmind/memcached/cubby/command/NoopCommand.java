@@ -69,9 +69,6 @@ public class NoopCommand extends Command {
     if (response.getCode().equals(ResponseCode.MN)) {
 
       return new Result(null, true, response.getCas());
-    } else if (ResponseCode.HD.equals(response.getCode())) {
-
-      return new Result(null, false, response.getCas());
     } else {
       throw new UnexpectedResponseException("Unexpected response code(%s)", response.getCode().name());
     }

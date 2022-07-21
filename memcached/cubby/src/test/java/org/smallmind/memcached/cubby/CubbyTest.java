@@ -36,7 +36,9 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import org.smallmind.memcached.cubby.command.ArithmeticCommand;
 import org.smallmind.memcached.cubby.command.ArithmeticMode;
+import org.smallmind.memcached.cubby.command.Command;
 import org.smallmind.memcached.cubby.command.GetCommand;
+import org.smallmind.memcached.cubby.command.NoopCommand;
 import org.smallmind.memcached.cubby.command.Result;
 import org.smallmind.memcached.cubby.command.SetCommand;
 import org.smallmind.memcached.cubby.command.SetMode;
@@ -77,6 +79,14 @@ public class CubbyTest {
     throws Exception {
 
     client.stop();
+  }
+
+  @Test
+  public void testNoop ()
+    throws InterruptedException, IOException, CubbyOperationException {
+
+    Response response = client.send(new NoopCommand().setKey("none"), null);
+    Assert.assertEquals(response.getCode(), ResponseCode.MN);
   }
 
   @Test
