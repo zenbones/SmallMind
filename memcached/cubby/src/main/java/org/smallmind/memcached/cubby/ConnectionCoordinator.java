@@ -40,6 +40,7 @@ import org.smallmind.memcached.cubby.connection.CubbyConnection;
 import org.smallmind.memcached.cubby.connection.NIOCubbyConnection;
 import org.smallmind.memcached.cubby.response.Response;
 import org.smallmind.nutsnbolts.util.ComponentStatus;
+import org.smallmind.scribe.pen.LoggerManager;
 
 public class ConnectionCoordinator {
 
@@ -126,6 +127,7 @@ public class ConnectionCoordinator {
 
     serverPool.get(memcachedHost.getName()).setActive(false);
     configuration.getKeyLocator().updateRouting(serverPool);
+    LoggerManager.getLogger(ConnectionCoordinator.class).info("Disconnected memcached host(%s=%s)", memcachedHost.getName(), memcachedHost.getAddress());
   }
 
   public void reconnect (MemcachedHost memcachedHost)
@@ -134,6 +136,7 @@ public class ConnectionCoordinator {
     constructConnection(memcachedHost);
     serverPool.get(memcachedHost.getName()).setActive(true);
     configuration.getKeyLocator().updateRouting(serverPool);
+    LoggerManager.getLogger(ConnectionCoordinator.class).info("Reconnected memcached host(%s=%s)", memcachedHost.getName(), memcachedHost.getAddress());
   }
 
   private void constructConnection (MemcachedHost memcachedHost)
