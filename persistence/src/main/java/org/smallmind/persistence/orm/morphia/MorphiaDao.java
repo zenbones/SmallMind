@@ -152,6 +152,11 @@ public class MorphiaDao<I extends Serializable & Comparable<I>, D extends Morphi
     return persist(durableClass, durable, new InsertOptions().writeConcern(WriteConcern.JOURNALED));
   }
 
+  public D persist (D durable, InsertOptions insertOptions) {
+
+    return persist(getManagedClass(), durable, insertOptions);
+  }
+
   public D persist (Class<D> durableClass, D durable, InsertOptions insertOptions) {
 
     if (durable != null) {
