@@ -81,7 +81,6 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
       try {
         generate((TypeElement)annotatedElement);
       } catch (Exception exception) {
-        exception.printStackTrace();
         processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, exception.getMessage());
       }
     }

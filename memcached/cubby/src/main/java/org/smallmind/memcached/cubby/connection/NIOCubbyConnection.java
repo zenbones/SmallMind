@@ -273,7 +273,6 @@ public class NIOCubbyConnection implements CubbyConnection {
             }
           }
         } catch (IOException | CubbyOperationException exception) {
-          exception.printStackTrace();
           LoggerManager.getLogger(NIOCubbyConnection.class).error(exception);
           shutdown(true);
         }
