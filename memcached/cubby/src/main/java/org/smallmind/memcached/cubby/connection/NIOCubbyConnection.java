@@ -69,7 +69,7 @@ public class NIOCubbyConnection implements CubbyConnection {
   private final AtomicLong commandCounter = new AtomicLong(0);
   private final Authentication authentication;
   private final long connectionTimeoutMilliseconds;
-  private final long heartbeatMilliseconds;
+  private final long keepAliveSeconds;
   private final long defaultRequestTimeoutMilliseconds;
   private SocketChannel socketChannel;
   private Selector selector;
@@ -85,7 +85,7 @@ public class NIOCubbyConnection implements CubbyConnection {
     keyTranslator = configuration.getKeyTranslator();
     authentication = configuration.getAuthentication();
     connectionTimeoutMilliseconds = configuration.getConnectionTimeoutMilliseconds();
-    heartbeatMilliseconds = configuration.getHeartbeatSeconds() * 1000;
+    keepAliveSeconds = configuration.getKeepAliveSeconds();
     defaultRequestTimeoutMilliseconds = configuration.getDefaultRequestTimeoutMilliseconds();
   }
 
@@ -185,27 +185,26 @@ public class NIOCubbyConnection implements CubbyConnection {
   public void run () {
 
     int invalidSelectionKeyCount = 0;
-    long lastHeartbeatTimestamp = System.currentTimeMillis();
+    int secondsSinceLastSelection = 0;
 
     try {
       while (!finished.get()) {
-        if (heartbeatMilliseconds > 0) {
-
-          long now;
-
-          if (((now = System.currentTimeMillis()) - lastHeartbeatTimestamp) > heartbeatMilliseconds) {
-            lastHeartbeatTimestamp = now;
-
-            synchronized (requestQueue) {
-              requestQueue.offer(new MissingLink(new ServerRequestCallback(), new CommandBuffer(commandCounter.getAndIncrement(), new NoopCommand().construct(keyTranslator))));
-              selectionKey.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
-              selector.wakeup();
-            }
-          }
-        }
-
         try {
-          if (selector.select(1000) > 0) {
+          if (selector.select(1000) <= 0) {
+            if (++secondsSinceLastSelection > keepAliveSeconds) {
+              secondsSinceLastSelection = 0;
+
+              synchronized (requestQueue) {
+                if (selectionKey.isValid()) {
+                  requestQueue.offer(new MissingLink(new ServerRequestCallback(), new CommandBuffer(commandCounter.getAndIncrement(), new NoopCommand().construct(keyTranslator))));
+                  selectionKey.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+                  selector.wakeup();
+                } else if (++invalidSelectionKeyCount >= 3) {
+                  throw new InvalidSelectionKeyException();
+                }
+              }
+            }
+          } else {
 
             Iterator<SelectionKey> selectionKeyIter = selector.selectedKeys().iterator();
 
@@ -283,9 +282,7 @@ public class NIOCubbyConnection implements CubbyConnection {
                   }
                 }
               } finally {
-                if (invalidSelectionKeyCount == 0) {
-                  selectionKeyIter.remove();
-                }
+                selectionKeyIter.remove();
               }
             }
           }

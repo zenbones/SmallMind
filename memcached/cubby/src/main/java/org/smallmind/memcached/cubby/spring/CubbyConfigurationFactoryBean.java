@@ -50,7 +50,7 @@ public class CubbyConfigurationFactoryBean implements FactoryBean<CubbyConfigura
   private Authentication authentication;
   private Long defaultRequestTimeoutMilliseconds;
   private Long connectionTimeoutMilliseconds;
-  private Long heartbeatSeconds;
+  private Long keepAliveSeconds;
   private Long resuscitationSeconds;
   private Integer connectionsPerHost;
 
@@ -107,9 +107,9 @@ public class CubbyConfigurationFactoryBean implements FactoryBean<CubbyConfigura
     this.connectionTimeoutMilliseconds = connectionTimeoutMilliseconds;
   }
 
-  public void setHeartbeatSeconds (Long heartbeatSeconds) {
+  public void setKeepAliveSeconds (Long keepAliveSeconds) {
 
-    this.heartbeatSeconds = heartbeatSeconds;
+    this.keepAliveSeconds = keepAliveSeconds;
   }
 
   public void setResuscitationSeconds (Long resuscitationSeconds) {
@@ -145,8 +145,8 @@ public class CubbyConfigurationFactoryBean implements FactoryBean<CubbyConfigura
     if (connectionTimeoutMilliseconds != null) {
       configuration.setConnectionTimeoutMilliseconds(connectionTimeoutMilliseconds);
     }
-    if (heartbeatSeconds != null) {
-      configuration.setHeartbeatSeconds(heartbeatSeconds);
+    if (keepAliveSeconds != null) {
+      configuration.setKeepAliveSeconds(keepAliveSeconds);
     }
     if (resuscitationSeconds != null) {
       configuration.setResuscitationSeconds(resuscitationSeconds);

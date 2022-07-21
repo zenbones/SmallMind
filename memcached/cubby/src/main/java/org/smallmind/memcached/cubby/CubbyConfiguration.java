@@ -56,7 +56,7 @@ public class CubbyConfiguration {
   private Authentication authentication;
   private long defaultRequestTimeoutMilliseconds = 0;
   private long connectionTimeoutMilliseconds = 3000;
-  private long heartbeatSeconds = 30;
+  private long keepAliveSeconds = 30;
   private long resuscitationSeconds = 10;
   private int connectionsPerHost = 1;
 
@@ -132,14 +132,14 @@ public class CubbyConfiguration {
     return this;
   }
 
-  public long getHeartbeatSeconds () {
+  public long getKeepAliveSeconds () {
 
-    return heartbeatSeconds;
+    return keepAliveSeconds;
   }
 
-  public CubbyConfiguration setHeartbeatSeconds (long heartbeatSeconds) {
+  public CubbyConfiguration setKeepAliveSeconds (long keepAliveSeconds) {
 
-    this.heartbeatSeconds = heartbeatSeconds;
+    this.keepAliveSeconds = keepAliveSeconds;
 
     return this;
   }
