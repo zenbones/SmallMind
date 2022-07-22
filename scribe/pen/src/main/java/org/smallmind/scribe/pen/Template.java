@@ -67,13 +67,31 @@ public abstract class Template {
     this.autoFillLoggerContext = autoFillLoggerContext;
   }
 
+  public Template (Level level, boolean autoFillLoggerContext, Appender... appenders) {
+
+    this();
+
+    this.level = level;
+    this.autoFillLoggerContext = autoFillLoggerContext;
+
+    if (appenders != null) {
+      appenderList.addAll(Arrays.asList(appenders));
+    }
+  }
+
   public Template (Filter[] filters, Appender[] appenders, Enhancer[] enhancers, Level level, boolean autoFillLoggerContext) {
 
     this();
 
-    filterList.addAll(Arrays.asList(filters));
-    appenderList.addAll(Arrays.asList(appenders));
-    enhancerList.addAll(Arrays.asList(enhancers));
+    if (filters != null) {
+      filterList.addAll(Arrays.asList(filters));
+    }
+    if (appenders != null) {
+      appenderList.addAll(Arrays.asList(appenders));
+    }
+    if (enhancers != null) {
+      enhancerList.addAll(Arrays.asList(enhancers));
+    }
 
     this.level = level;
     this.autoFillLoggerContext = autoFillLoggerContext;

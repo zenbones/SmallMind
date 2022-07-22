@@ -30,65 +30,42 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.scribe.pen;
+package org.smallmind.scribe.pen.spring.plan;
 
-import org.smallmind.nutsnbolts.util.DotNotation;
-import org.smallmind.nutsnbolts.util.DotNotationException;
+import org.smallmind.scribe.pen.Level;
 
-public class ClassNameTemplate extends Template {
+public class Log {
 
-  private DotNotation notation;
+  private Level level;
+  private String pattern;
 
-  public ClassNameTemplate () {
+  public Log () {
 
-    super();
   }
 
-  public ClassNameTemplate (String pattern)
-    throws LoggerException {
+  public Log (Level level, String String) {
 
-    super();
-
-    setPattern(pattern);
+    this.level = level;
+    this.pattern = String;
   }
 
-  public ClassNameTemplate (Level level, boolean autoFillLoggerContext, String pattern)
-    throws LoggerException {
+  public Level getLevel () {
 
-    super(level, autoFillLoggerContext);
-
-    setPattern(pattern);
+    return level;
   }
 
-  public ClassNameTemplate (Level level, boolean autoFillLoggerContext, String pattern, Appender... appenders)
-    throws LoggerException {
+  public void setLevel (Level level) {
 
-    super(level, autoFillLoggerContext, appenders);
-
-    setPattern(pattern);
+    this.level = level;
   }
 
-  public ClassNameTemplate (Filter[] filters, Appender[] appenders, Enhancer[] enhancers, Level level, boolean autoFillLoggerContext, String pattern)
-    throws LoggerException {
+  public String getPattern () {
 
-    super(filters, appenders, enhancers, level, autoFillLoggerContext);
-
-    setPattern(pattern);
+    return pattern;
   }
 
-  public void setPattern (String pattern)
-    throws LoggerException {
+  public void setPattern (String pattern) {
 
-    try {
-      notation = new DotNotation(pattern);
-    } catch (DotNotationException dotNotationException) {
-      throw new LoggerException(dotNotationException);
-    }
-  }
-
-  @Override
-  public int matchLogger (String loggerName) {
-
-    return notation.calculateValue(loggerName, NO_MATCH);
+    this.pattern = pattern;
   }
 }

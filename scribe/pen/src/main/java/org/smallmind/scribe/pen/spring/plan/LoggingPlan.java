@@ -30,65 +30,54 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.scribe.pen;
+package org.smallmind.scribe.pen.spring.plan;
 
-import org.smallmind.nutsnbolts.util.DotNotation;
-import org.smallmind.nutsnbolts.util.DotNotationException;
+import java.io.IOException;
+import org.smallmind.scribe.pen.Appender;
+import org.smallmind.scribe.pen.AsynchronousAppender;
+import org.smallmind.scribe.pen.ClassNameTemplate;
+import org.smallmind.scribe.pen.DefaultTemplate;
+import org.smallmind.scribe.pen.Level;
+import org.springframework.beans.factory.InitializingBean;
 
-public class ClassNameTemplate extends Template {
+public abstract class LoggingPlan implements InitializingBean {
 
-  private DotNotation notation;
+  private Log[] logs;
+  private Level defaultLogLevel = Level.INFO;
+  private int logRecordBufferSize = 400;
 
-  public ClassNameTemplate () {
+  public abstract Appender getAppender ()
+    throws IOException;
 
-    super();
+  public void setDefaultLogLevel (Level defaultLogLevel) {
+
+    this.defaultLogLevel = defaultLogLevel;
   }
 
-  public ClassNameTemplate (String pattern)
-    throws LoggerException {
+  public void setLogRecordBufferSize (int logRecordBufferSize) {
 
-    super();
-
-    setPattern(pattern);
+    this.logRecordBufferSize = logRecordBufferSize;
   }
 
-  public ClassNameTemplate (Level level, boolean autoFillLoggerContext, String pattern)
-    throws LoggerException {
+  public void setLogs (Log[] logs) {
 
-    super(level, autoFillLoggerContext);
-
-    setPattern(pattern);
-  }
-
-  public ClassNameTemplate (Level level, boolean autoFillLoggerContext, String pattern, Appender... appenders)
-    throws LoggerException {
-
-    super(level, autoFillLoggerContext, appenders);
-
-    setPattern(pattern);
-  }
-
-  public ClassNameTemplate (Filter[] filters, Appender[] appenders, Enhancer[] enhancers, Level level, boolean autoFillLoggerContext, String pattern)
-    throws LoggerException {
-
-    super(filters, appenders, enhancers, level, autoFillLoggerContext);
-
-    setPattern(pattern);
-  }
-
-  public void setPattern (String pattern)
-    throws LoggerException {
-
-    try {
-      notation = new DotNotation(pattern);
-    } catch (DotNotationException dotNotationException) {
-      throw new LoggerException(dotNotationException);
-    }
+    this.logs = logs;
   }
 
   @Override
-  public int matchLogger (String loggerName) {
+  public void afterPropertiesSet () throws Exception {
 
-    return notation.calculateValue(loggerName, NO_MATCH);
+    Appender asynchronousAppender;
+
+    asynchronousAppender = new AsynchronousAppender(getAppender(), logRecordBufferSize);
+
+    new DefaultTemplate(defaultLogLevel, true, asynchronousAppender).register();
+
+    if ((logs != null) && (logs.length > 0)) {
+      for (Log log : logs) {
+        new ClassNameTemplate(log.getLevel(), true, log.getPattern(), asynchronousAppender).register();
+      }
+    }
   }
 }
+

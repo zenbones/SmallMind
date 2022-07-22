@@ -43,6 +43,19 @@ public class XMLFormatter implements Formatter {
   private boolean cdata = false;
   private int indent = 3;
 
+  public XMLFormatter () {
+
+  }
+
+  public XMLFormatter (Timestamp timestamp, String newLine, int indent, boolean cdata, RecordElement... recordElements) {
+
+    this.timestamp = timestamp;
+    this.newLine = newLine;
+    this.indent = indent;
+    this.cdata = cdata;
+    this.recordElements = recordElements;
+  }
+
   private static int findRepeatedStackElements (StackTraceElement singleElement, StackTraceElement[] prevStackTrace) {
 
     for (int count = 0; count < prevStackTrace.length; count++) {

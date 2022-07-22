@@ -45,7 +45,7 @@ import org.msgpack.jackson.dataformat.MessagePackFactory;
 import org.smallmind.nutsnbolts.http.Base64Codec;
 import org.springframework.beans.factory.InitializingBean;
 
-public class FluentAppender extends AbstractAppender implements InitializingBean {
+public class FluentBitAppender extends AbstractAppender implements InitializingBean {
 
   private final AtomicBoolean finished = new AtomicBoolean(false);
   private final ObjectMapper objectMapper = new ObjectMapper(new MessagePackFactory());
@@ -61,12 +61,12 @@ public class FluentAppender extends AbstractAppender implements InitializingBean
   private int retryAttempts = 3;
   private int batch = 1;
 
-  public FluentAppender (String name) {
+  public FluentBitAppender (String name) {
 
     this(name, null);
   }
 
-  public FluentAppender (String name, ErrorHandler errorHandler) {
+  public FluentBitAppender (String name, ErrorHandler errorHandler) {
 
     super(name, errorHandler);
   }
@@ -112,7 +112,7 @@ public class FluentAppender extends AbstractAppender implements InitializingBean
   }
 
   @Override
-  public void afterPropertiesSet () throws Exception {
+  public void afterPropertiesSet () {
 
     formatter = new MessagePackFormatter(timestamp, recordElements, newLine);
     entriesNode = JsonNodeFactory.instance.arrayNode(batch);

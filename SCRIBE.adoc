@@ -384,7 +384,7 @@ Provides the maximum age an archived file is allowed to reach before being delet
 
 ===== FluentAppender
 
-[small]#`org.smallmind.scribe.pen.FluentAppender`#
+[small]#`FluentBitAppender`#
 
 Thi appender's output format is the *_forward_* protocol (see https://docs.fluentd.org/input/forward) from FluentD/FluentBit. You'll obviously need a FluentD or FluentBit daemon running somewhere to make this useful. The following parameters are used to configure this appender...
 

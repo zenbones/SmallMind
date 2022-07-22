@@ -30,65 +30,26 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.scribe.pen;
+package org.smallmind.scribe.pen.spring.plan;
 
-import org.smallmind.nutsnbolts.util.DotNotation;
-import org.smallmind.nutsnbolts.util.DotNotationException;
+import java.text.SimpleDateFormat;
+import org.smallmind.scribe.pen.Appender;
+import org.smallmind.scribe.pen.ConsoleAppender;
+import org.smallmind.scribe.pen.DateFormatTimestamp;
+import org.smallmind.scribe.pen.PatternFormatter;
 
-public class ClassNameTemplate extends Template {
+public class ConsoleLoggingPlan extends LoggingPlan {
 
-  private DotNotation notation;
+  private DateFormatTimestamp fullTimestamp = new DateFormatTimestamp(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ"));
 
-  public ClassNameTemplate () {
+  public void setFullTimestamp (DateFormatTimestamp fullTimestamp) {
 
-    super();
-  }
-
-  public ClassNameTemplate (String pattern)
-    throws LoggerException {
-
-    super();
-
-    setPattern(pattern);
-  }
-
-  public ClassNameTemplate (Level level, boolean autoFillLoggerContext, String pattern)
-    throws LoggerException {
-
-    super(level, autoFillLoggerContext);
-
-    setPattern(pattern);
-  }
-
-  public ClassNameTemplate (Level level, boolean autoFillLoggerContext, String pattern, Appender... appenders)
-    throws LoggerException {
-
-    super(level, autoFillLoggerContext, appenders);
-
-    setPattern(pattern);
-  }
-
-  public ClassNameTemplate (Filter[] filters, Appender[] appenders, Enhancer[] enhancers, Level level, boolean autoFillLoggerContext, String pattern)
-    throws LoggerException {
-
-    super(filters, appenders, enhancers, level, autoFillLoggerContext);
-
-    setPattern(pattern);
-  }
-
-  public void setPattern (String pattern)
-    throws LoggerException {
-
-    try {
-      notation = new DotNotation(pattern);
-    } catch (DotNotationException dotNotationException) {
-      throw new LoggerException(dotNotationException);
-    }
+    this.fullTimestamp = fullTimestamp;
   }
 
   @Override
-  public int matchLogger (String loggerName) {
+  public Appender getAppender () {
 
-    return notation.calculateValue(loggerName, NO_MATCH);
+    return new ConsoleAppender(new PatternFormatter(fullTimestamp, "%d %n %+5l (%.1C.%M:%L) [%T] - %m%!+\n\t!p%!+\n\t!s"));
   }
 }

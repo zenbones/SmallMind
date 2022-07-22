@@ -39,14 +39,17 @@ public class DefaultTemplate extends Template {
     super();
   }
 
-  public DefaultTemplate (Level level, boolean autoFillLoggerContext)
-    throws LoggerException {
+  public DefaultTemplate (Level level, boolean autoFillLoggerContext) {
 
     super(level, autoFillLoggerContext);
   }
 
-  public DefaultTemplate (Filter[] filters, Appender[] appenders, Enhancer[] enhancers, Level level, boolean autoFillLoggerContext)
-    throws LoggerException {
+  public DefaultTemplate (Level level, boolean autoFillLoggerContext, Appender... appenders) {
+
+    super(level, autoFillLoggerContext, appenders);
+  }
+
+  public DefaultTemplate (Filter[] filters, Appender[] appenders, Enhancer[] enhancers, Level level, boolean autoFillLoggerContext) {
 
     super(filters, appenders, enhancers, level, autoFillLoggerContext);
   }
