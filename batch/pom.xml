@@ -12,7 +12,6 @@
   <packaging>pom</packaging>
   <modules>
     <module>base</module>
-    <module>indigenous</module>
     <module>spring</module>
   </modules>
   <build>
