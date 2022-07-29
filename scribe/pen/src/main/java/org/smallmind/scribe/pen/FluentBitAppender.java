@@ -184,7 +184,7 @@ public class FluentBitAppender extends AbstractAppender implements InitializingB
             } catch (IOException ioException) {
               socket = null;
               if (++retry > retryAttempts) {
-                throw ioException;
+                throw new FluentBitConnectionException(ioException, "Failed to connect to host(%s:%d)", host, port);
               }
             }
           } while (socket == null);
