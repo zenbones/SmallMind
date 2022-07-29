@@ -99,10 +99,11 @@ public class SystemPropertyInitializingBean implements BeanFactoryPostProcessor,
     if ((keyDebugger != null) && keyDebugger.willDebug()) {
       debugMap.put("user.home", System.getProperty("user.home"));
       debugMap.put("java.io.tmpdir", System.getProperty("java.io.tmpdir"));
+      debugMap.put("spring.profiles.active", System.getProperty("spring.profiles.active"));
 
       System.out.println("---------------- System Properties ---------------");
       for (Map.Entry<String, String> debugEntry : debugMap.entrySet()) {
-        System.out.println("[" + debugEntry.getKey() + "=" + debugEntry.getValue() + "]");
+        System.out.println("[" + debugEntry.getKey() + "=" + ((debugEntry.getValue() == null) ? "null" : debugEntry.getValue()) + "]");
       }
       System.out.println("--------------------------------------------------");
     }
