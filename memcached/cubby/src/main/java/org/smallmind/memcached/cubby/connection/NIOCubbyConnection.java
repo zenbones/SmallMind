@@ -61,7 +61,7 @@ public class NIOCubbyConnection implements CubbyConnection {
 
   private final CountDownLatch terminationLatch = new CountDownLatch(1);
   private final AtomicBoolean finished = new AtomicBoolean(false);
-  private final AtomicBoolean terminated = new AtomicBoolean(false);
+  private final AtomicBoolean disconnected = new AtomicBoolean(false);
   private final ConnectionCoordinator connectionCoordinator;
   private final MemcachedHost memcachedHost;
   private final KeyTranslator keyTranslator;
@@ -136,7 +136,7 @@ public class NIOCubbyConnection implements CubbyConnection {
 
   private void shutdown (boolean unexpected) {
 
-    if (terminated.compareAndSet(false, true)) {
+    if (disconnected.compareAndSet(false, true)) {
       selectionKey.cancel();
 
       try {
