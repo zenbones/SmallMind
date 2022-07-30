@@ -123,14 +123,14 @@ public class ConnectionCoordinator {
     }
   }
 
-  public void disconnect (MemcachedHost memcachedHost) {
+  public synchronized void disconnect (MemcachedHost memcachedHost) {
 
     serverPool.get(memcachedHost.getName()).setActive(false);
     configuration.getKeyLocator().updateRouting(serverPool);
     LoggerManager.getLogger(ConnectionCoordinator.class).info("Disconnected memcached host(%s=%s)", memcachedHost.getName(), memcachedHost.getAddress());
   }
 
-  public void reconnect (MemcachedHost memcachedHost)
+  public synchronized void reconnect (MemcachedHost memcachedHost)
     throws InterruptedException, IOException, CubbyOperationException {
 
     constructConnection(memcachedHost);
