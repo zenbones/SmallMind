@@ -34,6 +34,7 @@ package org.smallmind.memcached.cubby;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.smallmind.memcached.cubby.command.Command;
 import org.smallmind.memcached.cubby.connection.CubbyConnection;
@@ -44,12 +45,12 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class ConnectionCoordinator {
 
+  private final AtomicReference<ComponentStatus> status = new AtomicReference<>(ComponentStatus.STOPPED);
   private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
   private final CubbyConfiguration configuration;
   private final ServerPool serverPool;
   private final HashMap<String, CubbyConnection> connectionMap = new HashMap<>();
   private ServerDefibrillator serverDefibrillator;
-  private ComponentStatus status = ComponentStatus.STOPPED;
 
   public ConnectionCoordinator (CubbyConfiguration configuration, MemcachedHost... memcachedHosts) {
 
@@ -61,82 +62,111 @@ public class ConnectionCoordinator {
   public synchronized void start ()
     throws InterruptedException, IOException, CubbyOperationException {
 
-    if (ComponentStatus.STOPPED.equals(status)) {
+    if (status.compareAndSet(ComponentStatus.STOPPED, ComponentStatus.STARTING)) {
+      lock.writeLock().lock();
 
-      Thread defibrillatorThread;
+      try {
 
-      configuration.getKeyLocator().installRouting(serverPool);
+        Thread defibrillatorThread;
 
-      defibrillatorThread = new Thread(serverDefibrillator = new ServerDefibrillator(this, configuration, serverPool));
-      defibrillatorThread.setDaemon(true);
-      defibrillatorThread.start();
+        configuration.getKeyLocator().installRouting(serverPool);
 
-      for (HostControl hostControl : serverPool.values()) {
-        constructConnection(hostControl.getMemcachedHost());
+        defibrillatorThread = new Thread(serverDefibrillator = new ServerDefibrillator(this, configuration, serverPool));
+        defibrillatorThread.setDaemon(true);
+        defibrillatorThread.start();
+
+        for (HostControl hostControl : serverPool.values()) {
+          constructConnection(hostControl.getMemcachedHost());
+        }
+
+        status.set(ComponentStatus.STARTED);
+      } finally {
+        lock.writeLock().unlock();
       }
-
-      status = ComponentStatus.STARTED;
     }
   }
 
   public synchronized void stop ()
     throws InterruptedException, IOException {
 
-    if (ComponentStatus.STARTED.equals(status)) {
-      serverDefibrillator.stop();
+    if (status.compareAndSet(ComponentStatus.STARTED, ComponentStatus.STOPPING)) {
+      lock.writeLock().lock();
 
-      for (HostControl hostControl : serverPool.values()) {
+      try {
+        serverDefibrillator.stop();
 
-        CubbyConnection connection;
+        for (HostControl hostControl : serverPool.values()) {
 
-        if ((connection = getConnection(hostControl.getMemcachedHost())) != null) {
-          connection.stop();
+          CubbyConnection connection;
+
+          if ((connection = connectionMap.get(hostControl.getMemcachedHost().getName())) != null) {
+            connection.stop();
+          }
         }
-      }
 
-      status = ComponentStatus.STOPPED;
+        status.set(ComponentStatus.STOPPED);
+      } finally {
+        lock.writeLock().unlock();
+      }
     }
   }
 
   public Response send (Command command, Long timeoutSeconds)
     throws InterruptedException, IOException, CubbyOperationException {
 
-    CubbyConnection cubbyConnection;
-    MemcachedHost memcachedHost;
-
-    if ((cubbyConnection = getConnection(memcachedHost = configuration.getKeyLocator().find(serverPool, command.getKey()))) == null) {
-      throw new CubbyOperationException("Missing connection(%s)", memcachedHost.getName());
-    } else {
-
-      return cubbyConnection.send(command, timeoutSeconds);
-    }
+    return getConnection(command).send(command, timeoutSeconds);
   }
 
-  private CubbyConnection getConnection (MemcachedHost memcachedHost) {
+  private CubbyConnection getConnection (Command command)
+    throws IOException, CubbyOperationException {
 
     lock.readLock().lock();
     try {
+      if (!ComponentStatus.STARTED.equals(status.get())) {
+        throw new CubbyOperationException("The connection has been stopped");
+      } else {
 
-      return connectionMap.get(memcachedHost.getName());
+        CubbyConnection cubbyConnection;
+        MemcachedHost memcachedHost = configuration.getKeyLocator().find(serverPool, command.getKey());
+
+        if ((cubbyConnection = connectionMap.get(memcachedHost.getName())) == null) {
+          throw new CubbyOperationException("Missing connection(%s)", memcachedHost.getName());
+        } else {
+
+          return cubbyConnection;
+        }
+      }
     } finally {
       lock.readLock().unlock();
     }
   }
 
-  public synchronized void disconnect (MemcachedHost memcachedHost) {
+  public void disconnect (MemcachedHost memcachedHost) {
 
-    serverPool.get(memcachedHost.getName()).setActive(false);
-    configuration.getKeyLocator().updateRouting(serverPool);
-    LoggerManager.getLogger(ConnectionCoordinator.class).info("Disconnected memcached host(%s=%s)", memcachedHost.getName(), memcachedHost.getAddress());
+    lock.writeLock().lock();
+
+    try {
+      serverPool.get(memcachedHost.getName()).setActive(false);
+      configuration.getKeyLocator().updateRouting(serverPool);
+      LoggerManager.getLogger(ConnectionCoordinator.class).info("Disconnected memcached host(%s=%s)", memcachedHost.getName(), memcachedHost.getAddress());
+    } finally {
+      lock.writeLock().unlock();
+    }
   }
 
-  public synchronized void reconnect (MemcachedHost memcachedHost)
+  public void reconnect (MemcachedHost memcachedHost)
     throws InterruptedException, IOException, CubbyOperationException {
 
-    constructConnection(memcachedHost);
-    serverPool.get(memcachedHost.getName()).setActive(true);
-    configuration.getKeyLocator().updateRouting(serverPool);
-    LoggerManager.getLogger(ConnectionCoordinator.class).info("Reconnected memcached host(%s=%s)", memcachedHost.getName(), memcachedHost.getAddress());
+    lock.writeLock().lock();
+
+    try {
+      constructConnection(memcachedHost);
+      serverPool.get(memcachedHost.getName()).setActive(true);
+      configuration.getKeyLocator().updateRouting(serverPool);
+      LoggerManager.getLogger(ConnectionCoordinator.class).info("Reconnected memcached host(%s=%s)", memcachedHost.getName(), memcachedHost.getAddress());
+    } finally {
+      lock.writeLock().unlock();
+    }
   }
 
   private void constructConnection (MemcachedHost memcachedHost)
@@ -144,15 +174,8 @@ public class ConnectionCoordinator {
 
     CubbyConnection connection;
 
-    lock.writeLock().lock();
-    try {
-      connectionMap.put(memcachedHost.getName(), connection = new NIOCubbyConnection(this, configuration, memcachedHost));
-    } finally {
-      lock.writeLock().unlock();
-    }
-
+    connectionMap.put(memcachedHost.getName(), connection = new NIOCubbyConnection(this, configuration, memcachedHost));
     connection.start();
-
     new Thread(connection).start();
   }
 }

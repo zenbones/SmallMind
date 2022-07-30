@@ -42,6 +42,12 @@ public class HostControl {
     this.memcachedHost = memcachedHost;
   }
 
+  public HostControl (HostControl hostControl) {
+
+    memcachedHost = hostControl.getMemcachedHost();
+    active = hostControl.isActive();
+  }
+
   public MemcachedHost getMemcachedHost () {
 
     return memcachedHost;
