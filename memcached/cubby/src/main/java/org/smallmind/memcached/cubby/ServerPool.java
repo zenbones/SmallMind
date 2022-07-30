@@ -34,11 +34,9 @@ package org.smallmind.memcached.cubby;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 
-public class ServerPool implements Iterable<Map.Entry<String, HostControl>> {
+public class ServerPool {
 
   private final HashMap<String, HostControl> hostMap = new HashMap<>();
 
@@ -67,11 +65,5 @@ public class ServerPool implements Iterable<Map.Entry<String, HostControl>> {
   public Collection<HostControl> values () {
 
     return hostMap.values();
-  }
-
-  @Override
-  public Iterator<Map.Entry<String, HostControl>> iterator () {
-
-    return hostMap.entrySet().iterator();
   }
 }

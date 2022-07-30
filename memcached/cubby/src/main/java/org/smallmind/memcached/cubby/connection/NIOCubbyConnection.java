@@ -61,6 +61,7 @@ public class NIOCubbyConnection implements CubbyConnection {
 
   private final CountDownLatch terminationLatch = new CountDownLatch(1);
   private final AtomicBoolean finished = new AtomicBoolean(false);
+  private final AtomicBoolean terminated = new AtomicBoolean(false);
   private final ConnectionCoordinator connectionCoordinator;
   private final MemcachedHost memcachedHost;
   private final KeyTranslator keyTranslator;
@@ -127,13 +128,15 @@ public class NIOCubbyConnection implements CubbyConnection {
   public void stop ()
     throws InterruptedException {
 
-    shutdown(false);
+    finished.set(true);
     terminationLatch.await();
+
+    shutdown(false);
   }
 
   private void shutdown (boolean unexpected) {
 
-    if (finished.compareAndSet(false, true)) {
+    if (terminated.compareAndSet(false, true)) {
       selectionKey.cancel();
 
       try {
@@ -288,6 +291,8 @@ public class NIOCubbyConnection implements CubbyConnection {
           }
         } catch (IOException | CubbyOperationException exception) {
           LoggerManager.getLogger(NIOCubbyConnection.class).error(exception);
+
+          finished.set(true);
           shutdown(true);
         }
       }
