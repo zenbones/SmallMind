@@ -34,11 +34,11 @@ package org.smallmind.memcached.cubby;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class ServerPool implements Iterable<Map.Entry<String, HostControl>> {
+public class ServerPool {
 
   private final HashMap<String, HostControl> hostMap = new HashMap<>();
 
@@ -46,13 +46,6 @@ public class ServerPool implements Iterable<Map.Entry<String, HostControl>> {
 
     for (MemcachedHost memcachedHost : memcachedHosts) {
       hostMap.put(memcachedHost.getName(), new HostControl(memcachedHost));
-    }
-  }
-
-  public ServerPool (ServerPool serverPool) {
-
-    for (Map.Entry<String, HostControl> controlEntry : serverPool) {
-      hostMap.put(controlEntry.getKey(), new HostControl(controlEntry.getValue()));
     }
   }
 
@@ -76,17 +69,17 @@ public class ServerPool implements Iterable<Map.Entry<String, HostControl>> {
     return hostMap.values();
   }
 
-  public boolean isSame (ServerPool serverPool) {
+  public boolean representsHosts (List<MemcachedHost> hostList) {
 
-    if (hostMap.size() != serverPool.size()) {
+    if (hostMap.size() != hostList.size()) {
 
       return false;
     } else {
-      for (Map.Entry<String, HostControl> controlEntry : serverPool) {
+      for (MemcachedHost memcachedHost : hostList) {
 
         HostControl hostControl;
 
-        if (((hostControl = hostMap.get(controlEntry.getKey())) == null) || (controlEntry.getValue().isActive() != hostControl.isActive())) {
+        if (((hostControl = hostMap.get(memcachedHost.getName())) == null) || (!hostControl.isActive())) {
 
           return false;
         }
@@ -94,11 +87,5 @@ public class ServerPool implements Iterable<Map.Entry<String, HostControl>> {
 
       return true;
     }
-  }
-
-  @Override
-  public Iterator<Map.Entry<String, HostControl>> iterator () {
-
-    return hostMap.entrySet().iterator();
   }
 }

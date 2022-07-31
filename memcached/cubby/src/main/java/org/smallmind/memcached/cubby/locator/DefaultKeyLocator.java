@@ -44,17 +44,17 @@ import org.smallmind.memcached.cubby.ServerPool;
 public class DefaultKeyLocator implements KeyLocator {
 
   private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-  private ServerPool currentServerPool;
+  private LinkedList<MemcachedHost> currentHostList;
   private String[] routingArray;
 
   private String[] generateRoutingArray (ServerPool serverPool) {
 
     LinkedList<String> activeNameList = new LinkedList<>();
 
-    currentServerPool = new ServerPool(serverPool);
-
+    currentHostList = new LinkedList<>();
     for (HostControl hostControl : serverPool.values()) {
       if (hostControl.isActive()) {
+        currentHostList.add(hostControl.getMemcachedHost());
         activeNameList.add(hostControl.getMemcachedHost().getName());
       }
     }
@@ -84,7 +84,7 @@ public class DefaultKeyLocator implements KeyLocator {
 
     lock.writeLock().lock();
     try {
-      if ((currentServerPool == null) || (!currentServerPool.isSame(serverPool))) {
+      if ((currentHostList == null) || (!serverPool.representsHosts(currentHostList))) {
         routingArray = generateRoutingArray(serverPool);
       }
     } finally {

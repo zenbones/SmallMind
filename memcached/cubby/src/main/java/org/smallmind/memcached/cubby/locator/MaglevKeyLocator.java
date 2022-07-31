@@ -56,8 +56,8 @@ public class MaglevKeyLocator implements KeyLocator {
   private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
   private final HashMap<String, int[]> permutationMap = new HashMap<>();
   private final int virtualHostCount;
-  private ServerPool currentServerPool;
   private HashMap<Integer, String> routingMap;
+  private LinkedList<MemcachedHost> currentHostList;
   private int permutationSize;
   private long longerPermutationSize;
 
@@ -76,10 +76,10 @@ public class MaglevKeyLocator implements KeyLocator {
     HashMap<Integer, String> routingMap = new HashMap<>();
     LinkedList<String> activeNameList = new LinkedList<>();
 
-    currentServerPool = new ServerPool(serverPool);
-
+    currentHostList = new LinkedList<>();
     for (HostControl hostControl : serverPool.values()) {
       if (hostControl.isActive()) {
+        currentHostList.add(hostControl.getMemcachedHost());
         activeNameList.add(hostControl.getMemcachedHost().getName());
       }
     }
@@ -154,7 +154,7 @@ public class MaglevKeyLocator implements KeyLocator {
 
     lock.writeLock().lock();
     try {
-      if ((currentServerPool == null) || (!currentServerPool.isSame(serverPool))) {
+      if ((currentHostList == null) || (!serverPool.representsHosts(currentHostList))) {
         routingMap = generateRoutingMap(serverPool);
       }
     } finally {
