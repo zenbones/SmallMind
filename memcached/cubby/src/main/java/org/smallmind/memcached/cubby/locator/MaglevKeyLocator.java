@@ -173,7 +173,7 @@ public class MaglevKeyLocator implements KeyLocator {
       } else {
 
         // Any hash will do, it just needs to be fast and well distributed, and does not need to be cryptographically safe
-        return serverPool.get(routingMap.get((int)(Math.abs(SIPHASH.hash(key.getBytes())) % longerPermutationSize))).getMemcachedHost();
+        return serverPool.get(routingMap.get((int)(Math.abs(SIPHASH.hash(key.getBytes(), 1, 3)) % longerPermutationSize))).getMemcachedHost();
       }
     } finally {
       lock.readLock().unlock();
