@@ -103,9 +103,9 @@ public class CubbyMemcachedClientFactoryBean implements FactoryBean<CubbyMemcach
       }
 
       memcachedClient = new CubbyMemcachedClient(configuration, memcachedHosts);
-      LoggerManager.getLogger(org.smallmind.memcached.utility.spring.XMemcachedMemcachedClientFactoryBean.class).info("Memcached servers(%s) initialized...", Arrays.toString(output));
+      LoggerManager.getLogger(CubbyMemcachedClientFactoryBean.class).info("Memcached servers(%s) initialized...", Arrays.toString(output));
       memcachedClient.start();
-      LoggerManager.getLogger(org.smallmind.memcached.utility.spring.XMemcachedMemcachedClientFactoryBean.class).info("Memcached client started...");
+      LoggerManager.getLogger(CubbyMemcachedClientFactoryBean.class).info("Memcached client started...");
     }
   }
 
@@ -115,7 +115,7 @@ public class CubbyMemcachedClientFactoryBean implements FactoryBean<CubbyMemcach
 
     if (memcachedClient != null) {
       memcachedClient.stop();
-      LoggerManager.getLogger(org.smallmind.memcached.utility.spring.XMemcachedMemcachedClientFactoryBean.class).info("Memcached client stopped...");
+      LoggerManager.getLogger(CubbyMemcachedClientFactoryBean.class).info("Memcached client stopped...");
     }
   }
 }
