@@ -137,7 +137,6 @@ public class SpringLiquibase implements InitializingBean {
     if (!goal.equals(Goal.NONE)) {
 
       HashSet<String> catalogSet = new HashSet<>();
-      int index = 0;
 
       for (ChangeLog changeLog : changeLogs) {
 
