@@ -140,9 +140,7 @@ public class SpringLiquibase implements InitializingBean {
 
       for (ChangeLog changeLog : changeLogs) {
 
-        JdbcConnection connection;
-
-        connection = new JdbcConnection(dataSource.getConnection());
+        JdbcConnection connection = new JdbcConnection(dataSource.getConnection());
 
         try {
 
