@@ -76,6 +76,7 @@ public class ConnectionCoordinator {
         defibrillatorThread.start();
 
         for (HostControl hostControl : serverPool.values()) {
+          LoggerManager.getLogger(ConnectionCoordinator.class).info("Connecting to memcached host(%s=%s)", hostControl.getMemcachedHost().getName(), hostControl.getMemcachedHost().getAddress());
           constructConnection(hostControl.getMemcachedHost());
         }
 
