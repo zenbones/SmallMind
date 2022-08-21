@@ -36,7 +36,7 @@ import java.util.Map;
 
 public interface JobFactory {
 
-  void create (String logicalName, Map<String, BatchParameter<?>> parameterMap)
+  Long create (String logicalName, Map<String, BatchParameter<?>> parameterMap)
     throws Exception;
 
   void restart (long executionId)

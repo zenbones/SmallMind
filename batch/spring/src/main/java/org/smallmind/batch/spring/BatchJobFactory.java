@@ -82,10 +82,10 @@ public class BatchJobFactory implements JobFactory {
   }
 
   @Override
-  public void create (String logicalName, Map<String, BatchParameter<?>> parameterMap)
+  public Long create (String logicalName, Map<String, BatchParameter<?>> parameterMap)
     throws NoSuchJobException, JobParametersInvalidException, JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException {
 
-    start(logicalName, parameterMap);
+    return start(logicalName, parameterMap);
   }
 
   @Override
