@@ -7,13 +7,14 @@ import java.security.KeyPairGenerator;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Signature;
-import java.security.spec.EdECPoint;
-import java.security.spec.EdECPrivateKeySpec;
-import java.security.spec.EdECPublicKeySpec;
+// import java.security.spec.EdECPoint;
+// import java.security.spec.EdECPrivateKeySpec;
+// import java.security.spec.EdECPublicKeySpec;
 import java.security.spec.NamedParameterSpec;
 import org.bouncycastle.util.Arrays;
 import org.smallmind.nutsnbolts.http.Base64Codec;
 
+//TODO: We await java 17
 public class Ed25519Utility {
 
   private static final String OPENSSH_KEY_V1 = "openssh-key-v1";
