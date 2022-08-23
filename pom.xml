@@ -84,7 +84,7 @@
         <aspectj.version>1.9.9.1</aspectj.version>
         <aspectj.maven.plugin.version>1.14.0</aspectj.maven.plugin.version>
         <aws.version>2.4.13</aws.version>
-        <bouncycastle.version>1.69</bouncycastle.version>
+        <bouncycastle.version>1.70</bouncycastle.version>
         <commons.net.version>3.8.0</commons.net.version>
         <dogstatsd.client.version>3.0.0</dogstatsd.client.version>
         <ehcache.version>3.9.7</ehcache.version>
