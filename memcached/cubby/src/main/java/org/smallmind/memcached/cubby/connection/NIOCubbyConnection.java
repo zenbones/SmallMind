@@ -97,8 +97,8 @@ public class NIOCubbyConnection implements CubbyConnection {
     long start = System.currentTimeMillis();
 
     socketChannel = SocketChannel.open()
-      .setOption(StandardSocketOptions.SO_KEEPALIVE, true)
-      .setOption(StandardSocketOptions.TCP_NODELAY, true);
+                      .setOption(StandardSocketOptions.SO_KEEPALIVE, true)
+                      .setOption(StandardSocketOptions.TCP_NODELAY, true);
     socketChannel.configureBlocking(false);
     socketChannel.connect(memcachedHost.getAddress());
 

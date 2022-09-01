@@ -46,9 +46,9 @@ public class CubbyConfiguration {
 
   public static final CubbyConfiguration DEFAULT = new CubbyConfiguration();
   public static final CubbyConfiguration OPTIMAL = new CubbyConfiguration()
-    .setCodec(new LargeValueCompressingCodec(new ObjectStreamCubbyCodec()))
-    .setKeyLocator(new MaglevKeyLocator())
-    .setKeyTranslator(new LargeKeyHashingTranslator(new DefaultKeyTranslator()));
+                                                     .setCodec(new LargeValueCompressingCodec(new ObjectStreamCubbyCodec()))
+                                                     .setKeyLocator(new MaglevKeyLocator())
+                                                     .setKeyTranslator(new LargeKeyHashingTranslator(new DefaultKeyTranslator()));
 
   private CubbyCodec codec = new ObjectStreamCubbyCodec();
   private KeyLocator keyLocator = new DefaultKeyLocator();
