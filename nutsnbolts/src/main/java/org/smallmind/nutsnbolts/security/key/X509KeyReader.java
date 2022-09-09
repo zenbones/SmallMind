@@ -38,14 +38,14 @@ import org.bouncycastle.asn1.ASN1BitString;
 import org.bouncycastle.asn1.ASN1Integer;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.ASN1Sequence;
+import org.bouncycastle.asn1.DEROctetString;
 import org.smallmind.nutsnbolts.http.Base64Codec;
 
 public class X509KeyReader implements KeyReader {
 
   private final KeyFactors keyFactors;
 
-  public X509KeyReader (String raw)
-    throws IOException, KeyParseException {
+  public X509KeyReader (String raw) throws IOException, KeyParseException {
 
     StringBuilder strippedRawBuilder = new StringBuilder();
 
@@ -60,60 +60,66 @@ public class X509KeyReader implements KeyReader {
 
     ASN1Sequence outerSequence = (ASN1Sequence)ASN1Sequence.fromByteArray(Base64Codec.decode(strippedRawBuilder.toString()));
 
-    if (outerSequence.size() < 1) {
-      throw new KeyParseException("ASN.1 outer sequence is missing elements");
-    } else {
+    if (outerSequence.size() < 2) {
+      throw new KeyParseException("ASN.1 sequence could not be parsed");
+    } else if (outerSequence.size() == 2) {
 
-      Object firstObject = outerSequence.getObjectAt(0);
+      ASN1Sequence identifierSequence = (ASN1Sequence)outerSequence.getObjectAt(0);
 
-      if (firstObject instanceof ASN1Sequence) {
-
-        if (outerSequence.size() < 2) {
-          throw new KeyParseException("ASN.1 outer sequence is missing elements");
-        } else {
-
-          ASN1Sequence identifierSequence = ((ASN1Sequence)firstObject);
-
-          if ((identifierSequence.size() < 1)) {
-            throw new KeyParseException("ASN.1 identifier sequence is empty");
-          } else {
-
-            ASN1ObjectIdentifier oid = (ASN1ObjectIdentifier)identifierSequence.getObjectAt(0);
-
-            //if (!oid.getId().equals("1.2.840.113549.1.1.1")) {
-            //throw new IllegalArgumentException("Unknown RSA object id");
-            //} else {
-
-            ASN1Sequence dataSequence = (ASN1Sequence)ASN1Sequence.fromByteArray(((ASN1BitString)outerSequence.getObjectAt(1)).getBytes());
-
-            if (dataSequence.size() < 2) {
-              throw new KeyParseException("ASN.1 data sequence is missing elements");
-            }
-
-            BigInteger modulus = ((ASN1Integer)dataSequence.getObjectAt(0)).getValue();
-            BigInteger exponent = ((ASN1Integer)dataSequence.getObjectAt(1)).getValue();
-
-            keyFactors = new KeyFactors(modulus, exponent);
-            //}
-          }
-        }
+      if ((identifierSequence.size() < 1)) {
+        throw new KeyParseException("ASN.1 identifier sequence is empty");
       } else {
 
-        if (outerSequence.size() < 4) {
-          throw new KeyParseException("ASN.1 outer sequence is missing elements");
+        ASN1ObjectIdentifier oid = (ASN1ObjectIdentifier)identifierSequence.getObjectAt(0);
+
+        //if (!oid.getId().equals("1.2.840.113549.1.1.1")) {
+        //throw new IllegalArgumentException("Unknown RSA object id");
+        //} else {
+
+        ASN1Sequence dataSequence = (ASN1Sequence)ASN1Sequence.fromByteArray(((ASN1BitString)outerSequence.getObjectAt(1)).getBytes());
+
+        if (dataSequence.size() < 2) {
+          throw new KeyParseException("ASN.1 data sequence is missing elements");
+        }
+
+        BigInteger modulus = ((ASN1Integer)dataSequence.getObjectAt(0)).getValue();
+        BigInteger exponent = ((ASN1Integer)dataSequence.getObjectAt(1)).getValue();
+
+        keyFactors = new KeyFactors(modulus, exponent);
+      }
+    } else {
+
+      int version = ((ASN1Integer)outerSequence.getObjectAt(0)).getValue().intValue();
+
+      if (version != 0 && version != 1) {
+        throw new IllegalArgumentException("Wrong version for RSA key");
+      } else if (outerSequence.size() == 3) {
+
+        ASN1Sequence identifierSequence = (ASN1Sequence)outerSequence.getObjectAt(1);
+
+        if ((identifierSequence.size() < 1)) {
+          throw new KeyParseException("ASN.1 identifier sequence is empty");
         } else {
 
-          int version = ((ASN1Integer)firstObject).getValue().intValue();
+          ASN1ObjectIdentifier oid = (ASN1ObjectIdentifier)identifierSequence.getObjectAt(0);
 
-          if (version != 0 && version != 1) {
-            throw new IllegalArgumentException("Wrong version for RSA key");
-          }
+          //if (!oid.getId().equals("1.2.840.113549.1.1.1")) {
+          //throw new IllegalArgumentException("Unknown RSA object id");
+          //} else {
 
-          BigInteger modulus = ((ASN1Integer)outerSequence.getObjectAt(1)).getValue();
-          BigInteger exponent = ((ASN1Integer)outerSequence.getObjectAt(3)).getValue();
+          ASN1Sequence dataSequence = (ASN1Sequence)ASN1Sequence.fromByteArray(((DEROctetString)outerSequence.getObjectAt(2)).getOctets());
+
+          BigInteger modulus = ((ASN1Integer)dataSequence.getObjectAt(1)).getValue();
+          BigInteger exponent = ((ASN1Integer)dataSequence.getObjectAt(3)).getValue();
 
           keyFactors = new KeyFactors(modulus, exponent);
         }
+      } else {
+
+        BigInteger modulus = ((ASN1Integer)outerSequence.getObjectAt(1)).getValue();
+        BigInteger exponent = ((ASN1Integer)outerSequence.getObjectAt(3)).getValue();
+
+        keyFactors = new KeyFactors(modulus, exponent);
       }
     }
   }
