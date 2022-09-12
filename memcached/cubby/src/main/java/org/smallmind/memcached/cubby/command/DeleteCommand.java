@@ -92,10 +92,10 @@ public class DeleteCommand extends Command {
   public Result process (Response response)
     throws UnexpectedResponseException {
 
-    if (response.getCode().in(ResponseCode.EX, ResponseCode.NF)) {
+    if (ResponseCode.EX.equals(response.getCode())) {
 
       return new Result(null, false, response.getCas());
-    } else if (ResponseCode.HD.equals(response.getCode())) {
+    } else if (response.getCode().in(ResponseCode.HD, ResponseCode.NF)) {
 
       return new Result(null, true, response.getCas());
     } else {
