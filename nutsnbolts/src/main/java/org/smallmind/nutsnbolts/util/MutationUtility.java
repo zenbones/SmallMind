@@ -45,7 +45,7 @@ public class MutationUtility {
   public static <T, U> U[] toArray (T[] array, Class<U> outType, Mutation<? super T, U> mutation)
     throws MutationException {
 
-    return toArray(Arrays.asList(array), outType, mutation);
+    return toArray((array == null) ? null : Arrays.asList(array), outType, mutation);
   }
 
   public static <T, U> U[] toArray (Collection<T> collection, Class<U> outType, Mutation<? super T, U> mutation)
@@ -74,7 +74,7 @@ public class MutationUtility {
   public static <T, U> List<U> toList (T[] array, Mutation<? super T, U> mutation)
     throws MutationException {
 
-    return toList(Arrays.asList(array), mutation);
+    return toList((array == null) ? null : Arrays.asList(array), mutation);
   }
 
   public static <T, U> List<U> toList (Collection<T> collection, Mutation<? super T, U> mutation)
@@ -102,7 +102,7 @@ public class MutationUtility {
   public static <T, U> Set<U> toSet (T[] array, Mutation<? super T, U> mutation)
     throws MutationException {
 
-    return toSet(Arrays.asList(array), mutation);
+    return toSet((array == null) ? null : Arrays.asList(array), mutation);
   }
 
   public static <T, U> Set<U> toSet (Collection<T> collection, Mutation<? super T, U> mutation)
