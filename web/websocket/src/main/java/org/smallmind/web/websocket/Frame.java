@@ -32,6 +32,7 @@
  */
 package org.smallmind.web.websocket;
 
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class Frame {
@@ -57,7 +58,7 @@ public class Frame {
       message = status;
     } else {
 
-      byte[] reasonsBytes = reason.getBytes();
+      byte[] reasonsBytes = reason.getBytes(StandardCharsets.UTF_8);
 
       message = new byte[reasonsBytes.length + 2];
       System.arraycopy(status, 0, message, 0, 2);
@@ -79,7 +80,7 @@ public class Frame {
 
   public static byte[] text (String message) {
 
-    return data(OpCode.TEXT, message.getBytes());
+    return data(OpCode.TEXT, message.getBytes(StandardCharsets.UTF_8));
   }
 
   public static byte[] binary (byte[] message) {

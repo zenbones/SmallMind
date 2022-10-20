@@ -32,6 +32,7 @@
  */
 package org.smallmind.memcached.cubby.command;
 
+import java.nio.charset.StandardCharsets;
 import org.smallmind.memcached.cubby.UnexpectedResponseException;
 import org.smallmind.memcached.cubby.response.Response;
 import org.smallmind.memcached.cubby.response.ResponseCode;
@@ -39,7 +40,7 @@ import org.smallmind.memcached.cubby.translator.KeyTranslator;
 
 public class NoopCommand extends Command {
 
-  private static final byte[] BYTES = "mn\r\n".getBytes();
+  private static final byte[] BYTES = "mn\r\n".getBytes(StandardCharsets.UTF_8);
 
   private String key;
 

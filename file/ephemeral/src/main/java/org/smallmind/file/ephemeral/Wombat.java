@@ -34,6 +34,7 @@ package org.smallmind.file.ephemeral;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -56,7 +57,7 @@ public class Wombat {
     Files.createDirectories(pe);
     try (SeekableByteChannel bc = Files.newByteChannel(pe.resolve("sparkle.txt"), Set.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE))) {
       ByteBuffer bb = ByteBuffer.allocate(1024);
-      bb.put("Hello out there!".getBytes());
+      bb.put("Hello out there!".getBytes(StandardCharsets.UTF_8));
       bb.flip();
       bc.write(bb);
     }

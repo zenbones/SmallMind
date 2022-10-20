@@ -34,6 +34,7 @@ package org.smallmind.nutsnbolts.lang;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.CodeSource;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;

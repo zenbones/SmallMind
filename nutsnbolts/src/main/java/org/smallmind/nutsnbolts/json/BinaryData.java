@@ -33,6 +33,7 @@
 package org.smallmind.nutsnbolts.json;
 
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -76,7 +77,7 @@ public class BinaryData implements Serializable {
     this.encoding = encoding;
     this.encryption = encryption;
 
-    data = encoding.encode(encryption.encrypt(key, original.getBytes()));
+    data = encoding.encode(encryption.encrypt(key, original.getBytes(StandardCharsets.UTF_8)));
   }
 
   public byte[] decode ()

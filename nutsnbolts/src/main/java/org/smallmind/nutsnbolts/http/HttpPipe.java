@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.nio.charset.StandardCharsets;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 public class HttpPipe {
@@ -97,7 +98,7 @@ public class HttpPipe {
       throw new IllegalStateException("Pipe's state does not allow writing");
     }
 
-    httpOutput.write(body.getBytes());
+    httpOutput.write(body.getBytes(StandardCharsets.UTF_8));
     httpOutput.flush();
 
     return this;

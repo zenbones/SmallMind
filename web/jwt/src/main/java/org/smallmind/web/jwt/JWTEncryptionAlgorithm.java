@@ -32,6 +32,7 @@
  */
 package org.smallmind.web.jwt;
 
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import org.smallmind.nutsnbolts.security.HMACSigningAlgorithm;
 import org.smallmind.nutsnbolts.security.RSASigningAlgorithm;
@@ -43,7 +44,7 @@ public enum JWTEncryptionAlgorithm {
     public byte[] encrypt (Key key, String prologue)
       throws Exception {
 
-      return HMACSigningAlgorithm.HMAC_SHA_256.sign(key, prologue.getBytes());
+      return HMACSigningAlgorithm.HMAC_SHA_256.sign(key, prologue.getBytes(StandardCharsets.UTF_8));
     }
 
     @Override
@@ -57,7 +58,7 @@ public enum JWTEncryptionAlgorithm {
     public byte[] encrypt (Key key, String prologue)
       throws Exception {
 
-      return RSASigningAlgorithm.SHA_256_WITH_RSA.sign(key, prologue.getBytes());
+      return RSASigningAlgorithm.SHA_256_WITH_RSA.sign(key, prologue.getBytes(StandardCharsets.UTF_8));
     }
 
     @Override

@@ -34,6 +34,7 @@ package org.smallmind.scribe.pen;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -241,7 +242,7 @@ public class FileAppender extends AbstractFormattedAppender {
   public synchronized void handleOutput (String formattedOutput)
     throws LoggerException {
 
-    byte[] formattedBytes = formattedOutput.getBytes();
+    byte[] formattedBytes = formattedOutput.getBytes(StandardCharsets.UTF_8);
 
     if (closed) {
       throw new LoggerException("Appender to file(%s) has been previously closed", logPath.toAbsolutePath());

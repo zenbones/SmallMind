@@ -33,6 +33,7 @@
 package org.smallmind.memcached.cubby.command;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import org.smallmind.memcached.cubby.Authentication;
 import org.smallmind.memcached.cubby.CubbyOperationException;
 import org.smallmind.memcached.cubby.response.Response;
@@ -62,16 +63,16 @@ public class AuthenticationCommand extends Command {
 
     byte[] bytes;
     byte[] commandBytes;
-    byte[] value = (authentication.getUsername() + " " + authentication.getPassword()).getBytes();
+    byte[] value = (authentication.getUsername() + " " + authentication.getPassword()).getBytes(StandardCharsets.UTF_8);
 
     StringBuilder line = new StringBuilder("ms ").append(keyTranslator.encode("unused")).append(' ').append(value.length).append(" b");
 
-    commandBytes = line.append("\r\n").toString().getBytes();
+    commandBytes = line.append("\r\n").toString().getBytes(StandardCharsets.UTF_8);
     bytes = new byte[commandBytes.length + value.length + 2];
 
     System.arraycopy(commandBytes, 0, bytes, 0, commandBytes.length);
     System.arraycopy(value, 0, bytes, commandBytes.length, value.length);
-    System.arraycopy("\r\n".getBytes(), 0, bytes, commandBytes.length + value.length, 2);
+    System.arraycopy("\r\n".getBytes(StandardCharsets.UTF_8), 0, bytes, commandBytes.length + value.length, 2);
 
     return bytes;
   }

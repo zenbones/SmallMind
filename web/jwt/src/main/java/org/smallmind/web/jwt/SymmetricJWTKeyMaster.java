@@ -32,6 +32,7 @@
  */
 package org.smallmind.web.jwt;
 
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import org.smallmind.nutsnbolts.security.HMACSigningAlgorithm;
 
@@ -41,7 +42,7 @@ public class SymmetricJWTKeyMaster implements JWTKeyMaster {
 
   public SymmetricJWTKeyMaster (String secret) {
 
-    key = HMACSigningAlgorithm.HMAC_SHA_256.generateKey(secret.getBytes());
+    key = HMACSigningAlgorithm.HMAC_SHA_256.generateKey(secret.getBytes(StandardCharsets.UTF_8));
   }
 
   @Override

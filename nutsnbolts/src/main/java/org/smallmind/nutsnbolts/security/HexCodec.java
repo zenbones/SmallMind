@@ -33,6 +33,7 @@
 package org.smallmind.nutsnbolts.security;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 
 public class HexCodec {
 
@@ -59,7 +60,7 @@ public class HexCodec {
   public static byte[] hexDecode (String toBeDecoded)
     throws UnsupportedEncodingException {
 
-    return hexDecode(toBeDecoded.getBytes());
+    return hexDecode(toBeDecoded.getBytes(StandardCharsets.UTF_8));
   }
 
   public static byte[] hexDecode (byte[] toBeDecoded)

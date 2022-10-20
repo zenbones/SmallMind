@@ -143,7 +143,7 @@ public class Postman {
 
           Template template;
           StringWriter templateWriter;
-          SHA256Key sha256Key = new SHA256Key(EncryptionUtility.hash(HashAlgorithm.SHA_256, bodyWriter.toString().getBytes()));
+          SHA256Key sha256Key = new SHA256Key(EncryptionUtility.hash(HashAlgorithm.SHA_256, bodyWriter.toString().getBytes(StandardCharsets.UTF_8)));
 
           synchronized (templateMap) {
             if ((template = templateMap.get(sha256Key)) == null) {

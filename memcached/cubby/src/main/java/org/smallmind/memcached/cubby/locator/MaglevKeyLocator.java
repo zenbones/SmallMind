@@ -34,6 +34,7 @@ package org.smallmind.memcached.cubby.locator;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -52,7 +53,7 @@ import org.smallmind.nutsnbolts.security.HashAlgorithm;
 
 public class MaglevKeyLocator implements KeyLocator {
 
-  private static final SipHasherContainer SIPHASH = SipHasher.container("0123456789ABCDEF".getBytes());
+  private static final SipHasherContainer SIPHASH = SipHasher.container("0123456789ABCDEF".getBytes(StandardCharsets.UTF_8));
   private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
   private final HashMap<String, int[]> permutationMap = new HashMap<>();
   private final int virtualHostCount;
@@ -134,8 +135,8 @@ public class MaglevKeyLocator implements KeyLocator {
       try {
 
         int[] permutations;
-        int offset = new BigInteger(EncryptionUtility.hash(HashAlgorithm.SHA_256, name.getBytes())).mod(BigInteger.valueOf(longerPermutationSize)).intValue();
-        int skip = new BigInteger(EncryptionUtility.hash(HashAlgorithm.SHA3_256, name.getBytes())).mod(BigInteger.valueOf(longerPermutationSize - 1)).intValue() + 1;
+        int offset = new BigInteger(EncryptionUtility.hash(HashAlgorithm.SHA_256, name.getBytes(StandardCharsets.UTF_8))).mod(BigInteger.valueOf(longerPermutationSize)).intValue();
+        int skip = new BigInteger(EncryptionUtility.hash(HashAlgorithm.SHA3_256, name.getBytes(StandardCharsets.UTF_8))).mod(BigInteger.valueOf(longerPermutationSize - 1)).intValue() + 1;
 
         permutationMap.put(name, permutations = new int[permutationSize]);
         for (int index = 0; index < permutationSize; index++) {
@@ -173,7 +174,7 @@ public class MaglevKeyLocator implements KeyLocator {
       } else {
 
         // Any hash will do, it just needs to be fast and well distributed, and does not need to be cryptographically safe
-        return serverPool.get(routingMap.get((int)(Math.abs(SIPHASH.hash(key.getBytes(), 1, 3)) % longerPermutationSize))).getMemcachedHost();
+        return serverPool.get(routingMap.get((int)(Math.abs(SIPHASH.hash(key.getBytes(StandardCharsets.UTF_8), 1, 3)) % longerPermutationSize))).getMemcachedHost();
       }
     } finally {
       lock.readLock().unlock();

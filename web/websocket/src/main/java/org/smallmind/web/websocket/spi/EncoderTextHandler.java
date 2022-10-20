@@ -32,6 +32,7 @@
  */
 package org.smallmind.web.websocket.spi;
 
+import java.nio.charset.StandardCharsets;
 import javax.websocket.EncodeException;
 import javax.websocket.Encoder;
 
@@ -47,6 +48,6 @@ public class EncoderTextHandler<T> implements EncoderHandler<T> {
   public byte[] encode (Object object)
     throws EncodeException {
 
-    return encoder.encode((T)object).getBytes();
+    return encoder.encode((T)object).getBytes(StandardCharsets.UTF_8);
   }
 }

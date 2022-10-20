@@ -34,6 +34,7 @@ package org.smallmind.nutsnbolts.util;
 
 import java.lang.management.ManagementFactory;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.concurrent.ThreadLocalRandom;

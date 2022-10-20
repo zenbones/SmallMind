@@ -36,6 +36,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 
 public final class Base64Codec {
 
@@ -44,7 +45,7 @@ public final class Base64Codec {
   public static String urlSafeEncode (String original)
     throws IOException {
 
-    return encode(original.getBytes(), false, '-', '_');
+    return encode(original.getBytes(StandardCharsets.UTF_8), false, '-', '_');
   }
 
   public static String urlSafeEncode (byte[] bytes)
@@ -62,25 +63,25 @@ public final class Base64Codec {
   public static String encode (String original)
     throws IOException {
 
-    return encode(original.getBytes(), true, '+', '/');
+    return encode(original.getBytes(StandardCharsets.UTF_8), true, '+', '/');
   }
 
   public static String encode (String original, boolean includePadding)
     throws IOException {
 
-    return encode(original.getBytes(), includePadding, '+', '/');
+    return encode(original.getBytes(StandardCharsets.UTF_8), includePadding, '+', '/');
   }
 
   public static String encode (String original, char char62, char char63)
     throws IOException {
 
-    return encode(original.getBytes(), true, char62, char63);
+    return encode(original.getBytes(StandardCharsets.UTF_8), true, char62, char63);
   }
 
   public static String encode (String original, boolean includePadding, char char62, char char63)
     throws IOException {
 
-    return encode(original.getBytes(), includePadding, char62, char63);
+    return encode(original.getBytes(StandardCharsets.UTF_8), includePadding, char62, char63);
   }
 
   public static String encode (byte[] bytes)
@@ -155,7 +156,7 @@ public final class Base64Codec {
   public static byte[] urlSafeDecode (String encoded)
     throws IOException {
 
-    return decode(encoded.getBytes(), false, '-', '_');
+    return decode(encoded.getBytes(StandardCharsets.UTF_8), false, '-', '_');
   }
 
   public static byte[] urlSafeDecode (byte[] bytes)
@@ -173,25 +174,25 @@ public final class Base64Codec {
   public static byte[] decode (String encoded)
     throws IOException {
 
-    return decode(encoded.getBytes(), true, '+', '/');
+    return decode(encoded.getBytes(StandardCharsets.UTF_8), true, '+', '/');
   }
 
   public static byte[] decode (String encoded, boolean strict)
     throws IOException {
 
-    return decode(encoded.getBytes(), strict, '+', '/');
+    return decode(encoded.getBytes(StandardCharsets.UTF_8), strict, '+', '/');
   }
 
   public static byte[] decode (String encoded, char char62, char char63)
     throws IOException {
 
-    return decode(encoded.getBytes(), true, char62, char63);
+    return decode(encoded.getBytes(StandardCharsets.UTF_8), true, char62, char63);
   }
 
   public static byte[] decode (String encoded, boolean strict, char char62, char char63)
     throws IOException {
 
-    return decode(encoded.getBytes(), strict, char62, char63);
+    return decode(encoded.getBytes(StandardCharsets.UTF_8), strict, char62, char63);
   }
 
   public static byte[] decode (byte[] bytes)

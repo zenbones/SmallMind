@@ -34,6 +34,7 @@ package org.smallmind.memcached.cubby;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import org.smallmind.memcached.cubby.command.ArithmeticCommand;
 import org.smallmind.memcached.cubby.command.ArithmeticMode;
 import org.smallmind.memcached.cubby.command.Command;
@@ -162,12 +163,12 @@ public class CubbyTest {
   public void testAppend ()
     throws InterruptedException, IOException, CubbyOperationException {
 
-    client.send(new SetCommand().setKey("fourth").setValue("value4".getBytes()), null);
+    client.send(new SetCommand().setKey("fourth").setValue("value4".getBytes(StandardCharsets.UTF_8)), null);
 
-    Response response = client.send(new SetCommand().setKey("fifth").setValue("5".getBytes()).setMode(SetMode.APPEND), null);
+    Response response = client.send(new SetCommand().setKey("fifth").setValue("5".getBytes(StandardCharsets.UTF_8)).setMode(SetMode.APPEND), null);
     Assert.assertEquals(response.getCode(), ResponseCode.NS);
 
-    response = client.send(new SetCommand().setKey("fourth").setValue("5".getBytes()).setMode(SetMode.APPEND), null);
+    response = client.send(new SetCommand().setKey("fourth").setValue("5".getBytes(StandardCharsets.UTF_8)).setMode(SetMode.APPEND), null);
     Assert.assertEquals(response.getCode(), ResponseCode.HD);
 
     response = client.send(new GetCommand().setKey("fourth").setValue(true), null);
@@ -178,10 +179,10 @@ public class CubbyTest {
   public void testPrepend ()
     throws InterruptedException, IOException, CubbyOperationException {
 
-    Response response = client.send(new SetCommand().setKey("fifth").setValue("5".getBytes()).setMode(SetMode.PREPEND), null);
+    Response response = client.send(new SetCommand().setKey("fifth").setValue("5".getBytes(StandardCharsets.UTF_8)).setMode(SetMode.PREPEND), null);
     Assert.assertEquals(response.getCode(), ResponseCode.NS);
 
-    response = client.send(new SetCommand().setKey("fourth").setValue("3".getBytes()).setMode(SetMode.PREPEND), null);
+    response = client.send(new SetCommand().setKey("fourth").setValue("3".getBytes(StandardCharsets.UTF_8)).setMode(SetMode.PREPEND), null);
     Assert.assertEquals(response.getCode(), ResponseCode.HD);
 
     response = client.send(new GetCommand().setKey("fourth").setValue(true), null);

@@ -34,6 +34,7 @@ package org.smallmind.nutsnbolts.csv;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 
 public class CSVWriter implements AutoCloseable {
 
@@ -73,10 +74,10 @@ public class CSVWriter implements AutoCloseable {
 
       if (mustBeQuoted(field)) {
         outputStream.write('"');
-        outputStream.write(doubleAllQuotes(field).getBytes());
+        outputStream.write(doubleAllQuotes(field).getBytes(StandardCharsets.UTF_8));
         outputStream.write('"');
       } else {
-        outputStream.write(doubleAllQuotes(field).getBytes());
+        outputStream.write(doubleAllQuotes(field).getBytes(StandardCharsets.UTF_8));
       }
 
       init = true;

@@ -33,6 +33,7 @@
 package org.smallmind.nutsnbolts.security;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
@@ -72,6 +73,6 @@ public enum HMACSigningAlgorithm implements SecurityAlgorithm, SigningAlgorithm 
   public boolean verify (Key key, String[] parts, boolean urlSafe)
     throws IOException, NoSuchAlgorithmException, InvalidKeyException {
 
-    return Arrays.equals(EncryptionUtility.sign(this, key, (parts[0] + "." + parts[1]).getBytes()), urlSafe ? Base64Codec.urlSafeDecode(parts[2]) : Base64Codec.decode(parts[2]));
+    return Arrays.equals(EncryptionUtility.sign(this, key, (parts[0] + "." + parts[1]).getBytes(StandardCharsets.UTF_8)), urlSafe ? Base64Codec.urlSafeDecode(parts[2]) : Base64Codec.decode(parts[2]));
   }
 }

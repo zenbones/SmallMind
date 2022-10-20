@@ -35,6 +35,7 @@ package org.smallmind.web.jersey.json;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.nio.charset.StandardCharsets;
 import javax.ws.rs.client.ClientRequestContext;
 import javax.ws.rs.client.ClientResponseContext;
 import javax.ws.rs.client.ClientResponseFilter;
@@ -86,4 +87,3 @@ public class FaultTranslatingClientResponseFilter implements ClientResponseFilte
     }
   }
 }
-

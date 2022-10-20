@@ -33,6 +33,7 @@
 package org.smallmind.memcached.cubby.translator;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import org.smallmind.memcached.cubby.CubbyOperationException;
 import org.smallmind.nutsnbolts.http.Base64Codec;
@@ -58,7 +59,7 @@ public class LargeKeyHashingTranslator implements KeyTranslator {
       try {
 
         //must start with no more than 187 bytes (which will base 64 encode to 250)
-        return Base64Codec.encode(EncryptionUtility.hash(HashAlgorithm.SHA3_512, key.getBytes()));
+        return Base64Codec.encode(EncryptionUtility.hash(HashAlgorithm.SHA3_512, key.getBytes(StandardCharsets.UTF_8)));
       } catch (NoSuchAlgorithmException noSuchAlgorithmException) {
         throw new CubbyOperationException(noSuchAlgorithmException);
       }

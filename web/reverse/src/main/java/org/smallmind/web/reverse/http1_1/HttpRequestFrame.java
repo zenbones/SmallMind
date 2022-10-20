@@ -34,6 +34,7 @@ package org.smallmind.web.reverse.http1_1;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.smallmind.nutsnbolts.http.HttpMethod;
@@ -96,27 +97,27 @@ public class HttpRequestFrame extends HttpFrame {
   public void toOutputStream (OutputStream outputStream)
     throws IOException {
 
-    outputStream.write(getMethod().name().getBytes());
+    outputStream.write(getMethod().name().getBytes(StandardCharsets.UTF_8));
     outputStream.write(' ');
-    outputStream.write(getPath().getBytes());
-    outputStream.write(" HTTP/".getBytes());
-    outputStream.write(getVersion().getBytes());
-    outputStream.write("\r\n".getBytes());
+    outputStream.write(getPath().getBytes(StandardCharsets.UTF_8));
+    outputStream.write(" HTTP/".getBytes(StandardCharsets.UTF_8));
+    outputStream.write(getVersion().getBytes(StandardCharsets.UTF_8));
+    outputStream.write("\r\n".getBytes(StandardCharsets.UTF_8));
 
     for (HttpHeader header : getHeaders()) {
 
       int valueIndex = 0;
 
-      outputStream.write(header.getName().getBytes());
-      outputStream.write(": ".getBytes());
+      outputStream.write(header.getName().getBytes(StandardCharsets.UTF_8));
+      outputStream.write(": ".getBytes(StandardCharsets.UTF_8));
       for (String value : header.getValues()) {
         if (valueIndex++ > 0) {
-          outputStream.write(", ".getBytes());
+          outputStream.write(", ".getBytes(StandardCharsets.UTF_8));
         }
-        outputStream.write(value.getBytes());
+        outputStream.write(value.getBytes(StandardCharsets.UTF_8));
       }
-      outputStream.write("\r\n".getBytes());
+      outputStream.write("\r\n".getBytes(StandardCharsets.UTF_8));
     }
-    outputStream.write("\r\n".getBytes());
+    outputStream.write("\r\n".getBytes(StandardCharsets.UTF_8));
   }
 }

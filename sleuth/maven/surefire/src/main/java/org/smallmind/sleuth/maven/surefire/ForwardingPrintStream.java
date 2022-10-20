@@ -34,6 +34,7 @@ package org.smallmind.sleuth.maven.surefire;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import org.apache.maven.surefire.report.ConsoleOutputReceiver;
 
 public class ForwardingPrintStream extends PrintStream {
@@ -72,7 +73,7 @@ public class ForwardingPrintStream extends PrintStream {
   @Override
   public void println (String s) {
 
-    byte[] bytes = (((s == null) ? "null" : s) + LINE_SEPARATOR).getBytes();
+    byte[] bytes = (((s == null) ? "null" : s) + LINE_SEPARATOR).getBytes(StandardCharsets.UTF_8);
 
     consoleOutputReceiver.writeTestOutput(bytes, 0, bytes.length, isStdOut);
   }

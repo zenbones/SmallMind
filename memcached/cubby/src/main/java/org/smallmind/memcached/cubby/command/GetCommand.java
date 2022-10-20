@@ -33,6 +33,7 @@
 package org.smallmind.memcached.cubby.command;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import org.smallmind.memcached.cubby.CubbyOperationException;
 import org.smallmind.memcached.cubby.UnexpectedResponseException;
 import org.smallmind.memcached.cubby.response.Response;
@@ -107,7 +108,7 @@ public class GetCommand extends Command {
       line.append(" O").append(opaqueToken);
     }
 
-    return line.append("\r\n").toString().getBytes();
+    return line.append("\r\n").toString().getBytes(StandardCharsets.UTF_8);
   }
 
   @Override

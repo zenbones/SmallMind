@@ -35,6 +35,7 @@ package org.smallmind.ansible;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -69,11 +70,11 @@ public class VaultCodec {
       vaultCake = new VaultTumbler(password).encrypt(byteOutputStream.toByteArray());
     }
 
-    encryptedBuilder.append(HexCodec.hexEncode(HexCodec.hexEncode(vaultCake.getSalt()).getBytes()));
+    encryptedBuilder.append(HexCodec.hexEncode(HexCodec.hexEncode(vaultCake.getSalt()).getBytes(StandardCharsets.UTF_8)));
     encryptedBuilder.append("0a");
-    encryptedBuilder.append(HexCodec.hexEncode(HexCodec.hexEncode(vaultCake.getHmac()).getBytes()));
+    encryptedBuilder.append(HexCodec.hexEncode(HexCodec.hexEncode(vaultCake.getHmac()).getBytes(StandardCharsets.UTF_8)));
     encryptedBuilder.append("0a");
-    encryptedBuilder.append(HexCodec.hexEncode(HexCodec.hexEncode(vaultCake.getEncrypted()).getBytes()));
+    encryptedBuilder.append(HexCodec.hexEncode(HexCodec.hexEncode(vaultCake.getEncrypted()).getBytes(StandardCharsets.UTF_8)));
 
     for (int index = (encryptedBuilder.length() / 80) * 80; index > 0; index -= 80) {
       encryptedBuilder.insert(index, '\n');

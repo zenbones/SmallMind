@@ -36,6 +36,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.util.LinkedList;
 import java.util.regex.Matcher;
@@ -102,7 +103,7 @@ public class Handshake {
     }
     handshakeBuilder.append('\n');
 
-    return handshakeBuilder.toString().getBytes();
+    return handshakeBuilder.toString().getBytes(StandardCharsets.UTF_8);
   }
 
   public static HandshakeResponse validateResponse (Tuple<String, String> headerTuple, String response, byte[] keyBytes, Extension[] installedExtensions, String... protocols)
@@ -160,7 +161,7 @@ public class Handshake {
     if (!headerTuple.containsKey("Sec-WebSocket-Accept")) {
       throw new SyntaxException("The http header does not contain a 'Sec-WebSocket-Accept' field");
     }
-    if (!headerTuple.getValue("Sec-WebSocket-Accept").equals(Base64Codec.encode(EncryptionUtility.hash(HashAlgorithm.SHA_1, (Base64Codec.encode(keyBytes) + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11").getBytes())))) {
+    if (!headerTuple.getValue("Sec-WebSocket-Accept").equals(Base64Codec.encode(EncryptionUtility.hash(HashAlgorithm.SHA_1, (Base64Codec.encode(keyBytes) + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11").getBytes(StandardCharsets.UTF_8))))) {
       throw new SyntaxException("The 'Sec-WebSocket-Accept' field(%s) of the http header does not contain the correct value", headerTuple.getValue("Sec-WebSocket-Accept"));
     }
 
