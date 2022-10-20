@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -140,7 +141,7 @@ public abstract class WebSocket implements AutoCloseable {
     }
 
     socket.getOutputStream().write(Handshake.constructRequest(uri, headerTuple));
-    handshakeResponse = Handshake.validateResponse(headerTuple = new Tuple<>(), new String(read()), keyBytes, extensions, protocols);
+    handshakeResponse = Handshake.validateResponse(headerTuple = new Tuple<>(), new String(read(), StandardCharsets.UTF_8), keyBytes, extensions, protocols);
 
     if (handshakeListener != null) {
       handshakeListener.afterResponse(headerTuple);
@@ -448,7 +449,7 @@ public abstract class WebSocket implements AutoCloseable {
                     throw new WebSocketException("Expecting the final frame of a continuation");
                   }
 
-                  String asString = new String(fragment.getMessage());
+                  String asString = new String(fragment.getMessage(), StandardCharsets.UTF_8);
 
                   if (asString.length() > maxTextBufferSize.get()) {
                     close(CloseCode.MESSAGE_TOO_LARGE, "exceeded maximum text buffer size");

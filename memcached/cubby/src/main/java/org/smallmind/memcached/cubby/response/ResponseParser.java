@@ -33,6 +33,7 @@
 package org.smallmind.memcached.cubby.response;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import org.smallmind.memcached.cubby.IncomprehensibleRequestException;
 import org.smallmind.memcached.cubby.IncomprehensibleResponseException;
 
@@ -154,13 +155,13 @@ public class ResponseParser {
     while ((joinedBuffer.position() + index) < (offset + length)) {
 
       if (joinedBuffer.peek(index) == ' ') {
-        return new String(joinedBuffer.get(new byte[index]));
+        return new String(joinedBuffer.get(new byte[index]), StandardCharsets.UTF_8);
       }
 
       index++;
     }
 
-    return new String(joinedBuffer.get(new byte[index]));
+    return new String(joinedBuffer.get(new byte[index]), StandardCharsets.UTF_8);
   }
 
   private static IncomprehensibleResponseException createIncomprehensibleResponseException (JoinedBuffer joinedBuffer, int length) {
@@ -170,6 +171,6 @@ public class ResponseParser {
     joinedBuffer.reset();
     joinedBuffer.get(slice);
 
-    return new IncomprehensibleResponseException(new String(slice));
+    return new IncomprehensibleResponseException(new String(slice, StandardCharsets.UTF_8));
   }
 }

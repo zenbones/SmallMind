@@ -51,7 +51,7 @@ public class Wombat {
     System.out.println(FileSystems.getDefault());
     Path ps = Paths.get("C:\\Users\\david\\Documents\\response.txt");
     System.out.println(Files.isRegularFile(ps));
-    System.out.println(new String(Files.readAllBytes(ps)));
+    System.out.println(Files.readString(ps, StandardCharsets.UTF_8));
     System.out.println(".........................................");
     Path pe = Paths.get("/opt/epicenter/twimble/farkle");
     Files.createDirectories(pe);

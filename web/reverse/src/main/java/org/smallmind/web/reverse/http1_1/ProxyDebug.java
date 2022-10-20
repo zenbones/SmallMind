@@ -32,6 +32,8 @@
  */
 package org.smallmind.web.reverse.http1_1;
 
+import java.nio.charset.StandardCharsets;
+
 public class ProxyDebug {
 
   private final byte[] buffer;
@@ -48,6 +50,6 @@ public class ProxyDebug {
   @Override
   public String toString () {
 
-    return new String(buffer, offset, length);
+    return new String(buffer, offset, length, StandardCharsets.UTF_8);
   }
 }

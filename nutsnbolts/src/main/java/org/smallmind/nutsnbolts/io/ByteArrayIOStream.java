@@ -36,6 +36,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 
 public class ByteArrayIOStream implements Closeable {
 
@@ -151,9 +152,9 @@ public class ByteArrayIOStream implements Closeable {
 
     for (int index = 0; index < segmentBuffer.getSegmentList().size(); index++) {
       if (index == segmentBuffer.getLimitBookmark().segmentIndex()) {
-        builder.append(new String(segmentBuffer.getSegmentList().get(index), 0, segmentBuffer.getLimitBookmark().byteIndex()));
+        builder.append(new String(segmentBuffer.getSegmentList().get(index), 0, segmentBuffer.getLimitBookmark().byteIndex(), StandardCharsets.UTF_8));
       } else {
-        builder.append(new String(segmentBuffer.getSegmentList().get(index)));
+        builder.append(new String(segmentBuffer.getSegmentList().get(index), StandardCharsets.UTF_8));
       }
     }
 

@@ -147,7 +147,7 @@ public class Postman {
 
           synchronized (templateMap) {
             if ((template = templateMap.get(sha256Key)) == null) {
-              templateMap.put(sha256Key, template = new Template(new String(sha256Key.getHash()), new CharArrayReader(bodyWriter.toCharArray()), freemarkerConf));
+              templateMap.put(sha256Key, template = new Template(new String(sha256Key.getHash(), StandardCharsets.UTF_8), new CharArrayReader(bodyWriter.toCharArray()), freemarkerConf));
             }
           }
 

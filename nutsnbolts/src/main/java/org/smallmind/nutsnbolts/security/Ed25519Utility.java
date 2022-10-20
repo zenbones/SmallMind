@@ -79,7 +79,7 @@ public class Ed25519Utility {
     byte[] rawKey = Base64Codec.decode(priv);
 
     byte[] verify = java.util.Arrays.copyOfRange(rawKey, 0, OPENSSH_KEY_V1.length());
-    if (!new String(verify).equals(OPENSSH_KEY_V1)) {
+    if (!new String(verify, StandardCharsets.UTF_8).equals(OPENSSH_KEY_V1)) {
       throw new RuntimeException("Invalid OPENSSH file");
     }
 

@@ -34,6 +34,7 @@ package org.smallmind.swing.text;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 
@@ -63,7 +64,7 @@ public class DocumentOutputStream extends OutputStream {
     throws IOException {
 
     try {
-      document.insertString(cursor, new String(buffer, off, len), null);
+      document.insertString(cursor, new String(buffer, off, len, StandardCharsets.UTF_8), null);
       cursor += len - off;
     } catch (BadLocationException badLocationException) {
       throw new IOException(badLocationException.getMessage(), badLocationException);

@@ -37,6 +37,7 @@ import java.net.StandardSocketOptions;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -250,7 +251,7 @@ public class NIOCubbyConnection implements CubbyConnection {
 
                           if ((missingLink = retrieveMissingLink()).getRequestCallback() != null) {
                             if (exception instanceof IncomprehensibleRequestException) {
-                              exception = new IncomprehensibleRequestException(new String(missingLink.getCommandBuffer().getRequest()));
+                              exception = new IncomprehensibleRequestException(new String(missingLink.getCommandBuffer().getRequest(), StandardCharsets.UTF_8));
                             }
 
                             missingLink.getRequestCallback().setException(exception);

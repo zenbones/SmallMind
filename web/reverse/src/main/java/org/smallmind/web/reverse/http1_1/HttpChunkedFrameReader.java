@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
+import java.nio.charset.StandardCharsets;
 
 public class HttpChunkedFrameReader implements FrameReader {
 
@@ -100,7 +101,7 @@ public class HttpChunkedFrameReader implements FrameReader {
           case EXTENSION:
             if ((currentChar == '\n') && (lastChar == '\r')) {
               try {
-                last = (index = Integer.parseInt(new String(chunkArray, 0, index), 16)) == 0;
+                last = (index = Integer.parseInt(new String(chunkArray, 0, index, StandardCharsets.UTF_8), 16)) == 0;
               } catch (NumberFormatException numberFormatException) {
                 throw new ProtocolException(CannedResponse.BAD_REQUEST);
               }
@@ -111,7 +112,7 @@ public class HttpChunkedFrameReader implements FrameReader {
           case END_CHUNK:
             if (currentChar == '\n') {
               try {
-                last = (index = Integer.parseInt(new String(chunkArray, 0, index), 16)) == 0;
+                last = (index = Integer.parseInt(new String(chunkArray, 0, index, StandardCharsets.UTF_8), 16)) == 0;
               } catch (NumberFormatException numberFormatException) {
                 throw new ProtocolException(CannedResponse.BAD_REQUEST);
               }

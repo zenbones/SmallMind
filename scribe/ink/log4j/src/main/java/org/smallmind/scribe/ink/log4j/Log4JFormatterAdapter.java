@@ -32,6 +32,7 @@
  */
 package org.smallmind.scribe.ink.log4j;
 
+import java.nio.charset.StandardCharsets;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LogEvent;
 import org.smallmind.scribe.pen.Formatter;
@@ -54,14 +55,14 @@ public class Log4JFormatterAdapter implements Formatter {
 
     header = layout.getHeader();
     if (header != null) {
-      formatBuilder.append(new String(header));
+      formatBuilder.append(new String(header, StandardCharsets.UTF_8));
     }
 
-    formatBuilder.append(new String(layout.toByteArray((LogEvent)record.getNativeLogEntry())));
+    formatBuilder.append(new String(layout.toByteArray((LogEvent)record.getNativeLogEntry()), StandardCharsets.UTF_8));
 
     footer = layout.getFooter();
     if (footer != null) {
-      formatBuilder.append(new String(footer));
+      formatBuilder.append(new String(footer, StandardCharsets.UTF_8));
     }
 
     return formatBuilder.toString();

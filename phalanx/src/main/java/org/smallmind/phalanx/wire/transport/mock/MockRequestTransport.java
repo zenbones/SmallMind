@@ -32,6 +32,7 @@
  */
 package org.smallmind.phalanx.wire.transport.mock;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
@@ -72,7 +73,7 @@ public class MockRequestTransport extends AbstractRequestTransport {
       public void handle (MockMessage message) {
 
         try {
-          completeCallback(new String(message.getProperties().getCorrelationId()), signalCodec.decode(message.getBytes(), 0, message.getBytes().length, ResultSignal.class));
+          completeCallback(new String(message.getProperties().getCorrelationId(), StandardCharsets.UTF_8), signalCodec.decode(message.getBytes(), 0, message.getBytes().length, ResultSignal.class));
         } catch (Exception exception) {
           LoggerManager.getLogger(MockRequestTransport.class).error(exception);
         }

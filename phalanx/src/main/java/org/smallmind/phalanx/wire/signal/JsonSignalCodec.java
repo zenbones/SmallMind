@@ -33,6 +33,7 @@
 package org.smallmind.phalanx.wire.signal;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import javax.ws.rs.core.MediaType;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.smallmind.scribe.pen.Level;
@@ -111,7 +112,7 @@ public class JsonSignalCodec implements SignalCodec {
     @Override
     public String toString () {
 
-      return new String(buffer, offset, len);
+      return new String(buffer, offset, len, StandardCharsets.UTF_8);
     }
   }
 }

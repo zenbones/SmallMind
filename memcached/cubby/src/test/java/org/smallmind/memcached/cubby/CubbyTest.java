@@ -37,7 +37,6 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import org.smallmind.memcached.cubby.command.ArithmeticCommand;
 import org.smallmind.memcached.cubby.command.ArithmeticMode;
-import org.smallmind.memcached.cubby.command.Command;
 import org.smallmind.memcached.cubby.command.GetCommand;
 import org.smallmind.memcached.cubby.command.NoopCommand;
 import org.smallmind.memcached.cubby.command.Result;
@@ -172,7 +171,7 @@ public class CubbyTest {
     Assert.assertEquals(response.getCode(), ResponseCode.HD);
 
     response = client.send(new GetCommand().setKey("fourth").setValue(true), null);
-    Assert.assertEquals(new String(response.getValue()), "value45");
+    Assert.assertEquals(new String(response.getValue(), StandardCharsets.UTF_8), "value45");
   }
 
   @Test(dependsOnMethods = "testAppend")
@@ -186,7 +185,7 @@ public class CubbyTest {
     Assert.assertEquals(response.getCode(), ResponseCode.HD);
 
     response = client.send(new GetCommand().setKey("fourth").setValue(true), null);
-    Assert.assertEquals(new String(response.getValue()), "3value45");
+    Assert.assertEquals(new String(response.getValue(), StandardCharsets.UTF_8), "3value45");
   }
 
   @Test
@@ -212,7 +211,7 @@ public class CubbyTest {
 
     Response response = client.send(new ArithmeticCommand().setKey("sixth").setInitial(2).setDelta(3), null);
     Assert.assertEquals(response.getCode(), ResponseCode.VA);
-    Assert.assertEquals(new String(response.getValue()), "2");
+    Assert.assertEquals(new String(response.getValue(), StandardCharsets.UTF_8), "2");
   }
 
   @Test(dependsOnMethods = "testInitialIncrement")
@@ -221,7 +220,7 @@ public class CubbyTest {
 
     Response response = client.send(new ArithmeticCommand().setKey("sixth").setInitial(11).setDelta(3), null);
     Assert.assertEquals(response.getCode(), ResponseCode.VA);
-    Assert.assertEquals(new String(response.getValue()), "5");
+    Assert.assertEquals(new String(response.getValue(), StandardCharsets.UTF_8), "5");
   }
 
   @Test(dependsOnMethods = "testIncrement")
@@ -230,7 +229,7 @@ public class CubbyTest {
 
     Response response = client.send(new ArithmeticCommand().setKey("sixth").setDelta(-2), null);
     Assert.assertEquals(response.getCode(), ResponseCode.VA);
-    Assert.assertEquals(new String(response.getValue()), "3");
+    Assert.assertEquals(new String(response.getValue(), StandardCharsets.UTF_8), "3");
   }
 
   @Test(dependsOnMethods = "testImplicitDecrement")
@@ -239,7 +238,7 @@ public class CubbyTest {
 
     Response response = client.send(new ArithmeticCommand().setKey("sixth").setMode(ArithmeticMode.DECREMENT).setDelta(2), null);
     Assert.assertEquals(response.getCode(), ResponseCode.VA);
-    Assert.assertEquals(new String(response.getValue()), "1");
+    Assert.assertEquals(new String(response.getValue(), StandardCharsets.UTF_8), "1");
   }
 
   public void testIncrementWithCas ()
@@ -248,7 +247,7 @@ public class CubbyTest {
     long incrementCas;
     Response response = client.send(new ArithmeticCommand().setKey("seventh").setInitial(0).setDelta(3).setCas(0L), null);
     Assert.assertEquals(response.getCode(), ResponseCode.VA);
-    Assert.assertEquals(new String(response.getValue()), "0");
+    Assert.assertEquals(new String(response.getValue(), StandardCharsets.UTF_8), "0");
     incrementCas = response.getCas();
 
     response = client.send(new ArithmeticCommand().setKey("seventh").setInitial(0).setDelta(8).setCas(incrementCas + 1), null);
@@ -256,6 +255,6 @@ public class CubbyTest {
 
     response = client.send(new ArithmeticCommand().setKey("seventh").setInitial(0).setDelta(8).setCas(incrementCas), null);
     Assert.assertEquals(response.getCode(), ResponseCode.VA);
-    Assert.assertEquals(new String(response.getValue()), "8");
+    Assert.assertEquals(new String(response.getValue(), StandardCharsets.UTF_8), "8");
   }
 }

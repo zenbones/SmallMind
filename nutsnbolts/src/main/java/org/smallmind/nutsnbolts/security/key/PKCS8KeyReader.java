@@ -36,6 +36,7 @@ import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import org.smallmind.nutsnbolts.http.Base64Codec;
 
 public class PKCS8KeyReader implements KeyReader {
@@ -47,7 +48,7 @@ public class PKCS8KeyReader implements KeyReader {
 
     try (DataInputStream dataInputStream = new DataInputStream(new ByteArrayInputStream(Base64Codec.decode(raw)))) {
 
-      if (!"ssh-rsa".equals(new String(readBytes(dataInputStream)))) {
+      if (!"ssh-rsa".equals(new String(readBytes(dataInputStream), StandardCharsets.UTF_8))) {
         throw new KeyParseException("Missing RFC-416 'ssh-rsa' prologue");
       }
 
