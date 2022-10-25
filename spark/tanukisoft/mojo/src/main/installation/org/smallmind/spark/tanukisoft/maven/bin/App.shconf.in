@@ -1,7 +1,7 @@
 #! /bin/sh
 
 #
-# Copyright (c) 1999, 2020 Tanuki Software, Ltd.
+# Copyright (c) 1999, 2022 Tanuki Software, Ltd.
 # http://www.tanukisoftware.com
 # All rights reserved.
 #
@@ -12,7 +12,7 @@
 #
 # Java Service Wrapper shconf file.  Suitable for overriding the default
 #  settings of the Wrapper Shell Script.
-# Optimized for use with version 3.5.43 of the Wrapper.
+# Optimized for use with version 3.5.50 of the Wrapper.
 #
 
 #-----------------------------------------------------------------------------
@@ -107,28 +107,26 @@ WAIT_FOR_STARTED_TIMEOUT=120
 #  be overriden.
 #PAUSABLE_MODE=signals
 
-# If specified, the Wrapper will be run as the specified user.
+# If set, the Wrapper will be run as the specified user.
 # IMPORTANT - Make sure that the user has the required privileges to write
 #  the PID file and wrapper.log files.  Failure to be able to write the log
 #  file will cause the Wrapper to exit without any way to write out an error
 #  message.
-# NOTE - This will set the user which is used to run the Wrapper as well as
+# NOTES - This will set the user which is used to run the Wrapper as well as
 #  the JVM and is not useful in situations where a privileged resource or
 #  port needs to be allocated prior to the user being changed.
+#       - Setting this variable will cause stdin to be closed. While this
+#  should not be a problem when running as Daemon, it would disable ability
+#  for console applications to receive inputs.
 #RUN_AS_USER=
 
-# Set the full path to the 'su' command (substitute user).
-# NOTE - In case 'su' is not in the PATH, you can set the absolute path here,
-#  for example:
-#  SU_BIN=/bin/su
-# NOTE - For Red Hat, the script will use '/sbin/runuser' if it is present and 
-#  ignore the value of SU_BIN.
-SU_BIN=su
-
-# Set option(s) for 'su' or 'runuser'.
-# In case the user set in RUN_AS_USER has no bash set, the 'su' command will fail.
-# The workaround for GNU/Linux system is to specify which bash to use with 
-#  the '-s' option.
+# When RUN_AS_USER is set, the 'runuser' command will be used to substitute the
+#  user. If not present on the machine, 'su' will be used as a fallback.
+#  The parameter below lets you specify option(s) for the 'runuser' (or 'su')
+#  command.
+# NOTES - The '-u' option is not allowed. Please set the user with RUN_AS_USER.
+#       - On GNU/Linux systems, if the user specified by RUN_AS_USER doesn't
+#  have a default shell please specify one with the '-s' option.
 #SU_OPTS="-s /bin/bash"
 
 # By default we show a detailed usage block.  Uncomment to show brief usage.

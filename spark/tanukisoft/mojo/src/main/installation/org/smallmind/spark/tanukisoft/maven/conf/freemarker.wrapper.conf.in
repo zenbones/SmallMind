@@ -54,6 +54,9 @@ wrapper.java.command=${javaCommand}
 #  http://wrapper.tanukisoftware.com/doc/english/integrate.html
 wrapper.java.mainclass=${wrapperListener}
 
+# Log level for notices about missing Java Classpath entries.
+wrapper.java.classpath.missing.loglevel=WARN
+
 # Java Classpath (include wrapper.jar)  Add class path elements as
 #  needed starting from 1
 [#list classpathElements as classpathElement]
@@ -228,4 +231,3 @@ wrapper.ntservice.interactive=FALSE
 wrapper.ntservice.permissions.1.account=${runAs}
 wrapper.ntservice.permissions.1.allow=START, STOP, PAUSE_RESUME
 [/#if]
-
