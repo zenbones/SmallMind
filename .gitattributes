@@ -7,3 +7,6 @@ wrapper-* binary
 *.exe binary
 *.png binary
 *.so binary
+*.sl binary
+*.jnlib binary
+*.dylin binary
