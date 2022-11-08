@@ -58,6 +58,8 @@ public class MinimalPermissions extends PermissionCollection {
     permissions.add(new PropertyPermission("path.separator", "read"));
     permissions.add(new PropertyPermission("line.separator", "read"));
 
+    permissions.add(new PropertyPermission("java.runtime.name", "read"));
+
     permissions.add(new PropertyPermission("java.specification.version", "read"));
     permissions.add(new PropertyPermission("java.specification.vendor", "read"));
     permissions.add(new PropertyPermission("java.specification.name", "read"));

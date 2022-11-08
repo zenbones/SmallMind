@@ -34,7 +34,6 @@ package org.smallmind.nutsnbolts.util;
 
 import java.lang.management.ManagementFactory;
 import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.concurrent.ThreadLocalRandom;
@@ -98,6 +97,7 @@ public class SnowflakeId implements Comparable<SnowflakeId> {
       System.arraycopy(macAddress, 0, macBytes, 0, 6);
     } catch (Exception exception) {
       RANDOM.nextBytes(macBytes);
+      macBytes[0] = (byte)(macBytes[0] | 0x1);
     }
 
     return macBytes;
@@ -161,7 +161,8 @@ public class SnowflakeId implements Comparable<SnowflakeId> {
       throw new IllegalStateException("Current time value should never be '0'");
     }
 
-    System.arraycopy(Bytes.getBytes(currentTime), 0, bytes, 0, 8);
+    bytes[0] = 0x0;
+    System.arraycopy(Bytes.getBytes(currentTime), 1, bytes, 1, 7);
     System.arraycopy(MAC_BYTES, 0, bytes, 8, 6);
     System.arraycopy(JVM_BYTES, 0, bytes, 14, 2);
     System.arraycopy(Bytes.getBytes((short)currentCount), 0, bytes, 16, 2);
