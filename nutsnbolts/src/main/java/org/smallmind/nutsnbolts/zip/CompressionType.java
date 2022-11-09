@@ -134,14 +134,32 @@ public enum CompressionType {
   public void compress (Path sourceDir, Path outputFile, Manifest manifest)
     throws IOException {
 
+    compress(sourceDir, Files.newOutputStream(outputFile, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING), outputFile, manifest);
+  }
+
+  public void compress (Path sourceDir, OutputStream outputStream)
+    throws IOException {
+
+    compress(sourceDir, outputStream, null, null);
+  }
+
+  public void compress (Path sourceDir, OutputStream outputStream, Manifest manifest)
+    throws IOException {
+
+    compress(sourceDir, outputStream, null, manifest);
+  }
+
+  private void compress (Path sourceDir, OutputStream outputStream, Path ignoredPath, Manifest manifest)
+    throws IOException {
+
     Path normalizedSourceDir = sourceDir.toAbsolutePath().normalize();
 
     try (Stream<Path> pathStream = Files.walk(normalizedSourceDir)) {
-      try (ZipOutputStream zipOutputStream = getOutputStream(Files.newOutputStream(outputFile, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING), manifest)) {
+      try (ZipOutputStream zipOutputStream = getOutputStream(outputStream, manifest)) {
         try {
           pathStream.forEach((compressionPath) -> {
 
-            if (Files.isRegularFile(compressionPath) && (!compressionPath.equals(outputFile))) {
+            if (Files.isRegularFile(compressionPath) && (!compressionPath.equals(ignoredPath))) {
               try {
 
                 ZipEntry zipEntry = getEntry(PathUtility.asResourceString(normalizedSourceDir.relativize(compressionPath)));
@@ -171,9 +189,21 @@ public enum CompressionType {
   public void explode (Path compressedFile, Path outputDir, ZipEntryConsumer entryConsumer)
     throws IOException {
 
+    explode(Files.newInputStream(compressedFile, StandardOpenOption.READ), outputDir, entryConsumer);
+  }
+
+  public void explode (InputStream inputStream, Path outputDir)
+    throws IOException {
+
+    explode(inputStream, outputDir, null);
+  }
+
+  public void explode (InputStream inputStream, Path outputDir, ZipEntryConsumer entryConsumer)
+    throws IOException {
+
     Files.createDirectories(outputDir);
 
-    try (ZipInputStream zipInputStream = getInputStream(Files.newInputStream(compressedFile, StandardOpenOption.READ))) {
+    try (ZipInputStream zipInputStream = getInputStream(inputStream)) {
 
       ZipEntry zipEntry;
       byte[] buffer = new byte[2048];
