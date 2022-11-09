@@ -165,6 +165,8 @@ public enum CompressionType {
                 ZipEntry zipEntry = getEntry(PathUtility.asResourceString(normalizedSourceDir.relativize(compressionPath)));
 
                 zipEntry.setTime(Files.getLastModifiedTime(compressionPath).toMillis());
+                zipEntry.setSize(Files.size(compressionPath));
+
                 zipOutputStream.putNextEntry(zipEntry);
                 Files.copy(compressionPath, zipOutputStream);
                 zipOutputStream.closeEntry();
