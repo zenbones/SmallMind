@@ -241,7 +241,7 @@ public class MorphiaDao<I extends Serializable & Comparable<I>, D extends Morphi
 
     Query<D> query = getSession().getNativeSession().createQuery(getManagedClass());
 
-    ((QueryImpl)query).setQueryObject((DBObject)JSON.parse(rawJson));
+    ((QueryImpl<?>)query).setQueryObject((DBObject)JSON.parse(rawJson));
 
     return query;
   }
