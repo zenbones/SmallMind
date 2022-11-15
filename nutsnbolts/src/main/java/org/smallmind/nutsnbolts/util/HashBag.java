@@ -37,6 +37,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Set;
 
 public class HashBag<T> implements Bag<T> {
@@ -277,7 +278,7 @@ public class HashBag<T> implements Bag<T> {
   @Override
   public boolean equals (Object obj) {
 
-    return internalMap.equals(obj);
+    return (obj instanceof Bag<?>) && Objects.equals(this, obj);
   }
 
   private class BagIterator implements Iterator<T> {
