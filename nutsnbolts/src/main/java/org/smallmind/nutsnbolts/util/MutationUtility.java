@@ -156,4 +156,32 @@ public class MutationUtility {
       }
     }
   }
+
+  public static <T, U> Bag<U> toBag (T[] array, Mutation<? super T, U> mutation)
+    throws MutationException {
+
+    return toBag((array == null) ? null : Arrays.asList(array), mutation);
+  }
+
+  public static <T, U> Bag<U> toBag (Collection<T> collection, Mutation<? super T, U> mutation)
+    throws MutationException {
+
+    if (collection == null) {
+
+      return null;
+    } else {
+      try {
+
+        HashBag<U> outBag = new HashBag<>();
+
+        for (T inType : collection) {
+          outBag.add(mutation.apply(inType));
+        }
+
+        return outBag;
+      } catch (Exception exception) {
+        throw new MutationException(exception);
+      }
+    }
+  }
 }
