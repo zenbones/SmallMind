@@ -35,9 +35,11 @@ package org.smallmind.nutsnbolts.util;
 import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class MutationUtility {
@@ -121,6 +123,34 @@ public class MutationUtility {
         }
 
         return outSet;
+      } catch (Exception exception) {
+        throw new MutationException(exception);
+      }
+    }
+  }
+
+  public static <T, K, U> Map<K, U> toMap (T[] array, Mutation<T, K> keyMutation, Mutation<? super T, U> valueMutation)
+    throws MutationException {
+
+    return toMap((array == null) ? null : Arrays.asList(array), keyMutation, valueMutation);
+  }
+
+  public static <T, K, U> Map<K, U> toMap (Collection<T> collection, Mutation<T, K> keyMutation, Mutation<? super T, U> valueMutation)
+    throws MutationException {
+
+    if (collection == null) {
+
+      return null;
+    } else {
+      try {
+
+        HashMap<K, U> outMap = new HashMap<>();
+
+        for (T inType : collection) {
+          outMap.put(keyMutation.apply(inType), valueMutation.apply(inType));
+        }
+
+        return outMap;
       } catch (Exception exception) {
         throw new MutationException(exception);
       }
