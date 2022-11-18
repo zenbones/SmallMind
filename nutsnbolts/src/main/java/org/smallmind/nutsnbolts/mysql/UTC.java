@@ -41,7 +41,7 @@ import org.smallmind.nutsnbolts.json.ZonedDateTimeXmlAdapter;
 public class UTC {
 
   private static final ZonedDateTimeXmlAdapter ZONED_DATE_DATE_XML_ADAPTER = new ZonedDateTimeXmlAdapter();
-  private static final ZoneId UTC_ZONE_ID = ZoneId.of("UTC").normalized();
+  private static final ZoneId UTC_ZONE_ID = ZoneId.of("UTC");
 
   public static ZonedDateTime isoParse (String date) {
 
