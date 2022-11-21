@@ -37,6 +37,10 @@ import org.smallmind.persistence.AbstractVectorAwareManagedDao;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.cache.VectoredDao;
 
+// I id
+// D durable
+// F native session Factory
+// N native session
 public abstract class ORMDao<I extends Serializable & Comparable<I>, D extends Durable<I>, F, N> extends AbstractVectorAwareManagedDao<I, D> implements RelationalDao<I, D, F, N> {
 
   private final ProxySession<F, N> proxySession;

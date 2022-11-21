@@ -34,112 +34,116 @@ package org.smallmind.web.json.scaffold.persistence.hibernate;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Types;
 import java.util.Objects;
 import java.util.Properties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.hibernate.HibernateException;
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
+import org.hibernate.metamodel.spi.ValueAccess;
+import org.hibernate.usertype.CompositeUserType;
 import org.hibernate.usertype.ParameterizedType;
-import org.hibernate.usertype.UserType;
-import org.smallmind.web.json.scaffold.util.JsonCodec;
+import org.smallmind.web.json.scaffold.version.Version;
+import org.smallmind.web.json.scaffold.version.Versioned;
 
-public class JsonUserType<O> implements UserType<O>, ParameterizedType {
+public class VersionedUserType<V extends Enum<V> & Version<V>> implements CompositeUserType<Versioned<V>>, ParameterizedType {
 
-  private Class<?> embeddedClass;
+  private Class<V> versionClass;
 
   public void setParameterValues (Properties parameters) {
 
-    String objectClassName = parameters.getProperty("embeddedClassName");
+    String versionClassName = parameters.getProperty("versionClassName");
 
     try {
-      embeddedClass = Class.forName(objectClassName);
-    } catch (ClassNotFoundException cnfe) {
-      throw new HibernateException(cnfe);
+      versionClass = (Class<V>)Class.forName(versionClassName);
+    } catch (Exception exception) {
+      throw new HibernateException(exception);
     }
   }
 
+  @Override
   public boolean isMutable () {
 
     return false;
   }
 
   @Override
-  public Class<O> returnedClass () {
+  public Class<?> embeddable () {
 
-    return (Class<O>)embeddedClass;
+    return VersionedMapper.class;
   }
 
   @Override
-  public int getSqlType () {
+  public Class<Versioned<V>> returnedClass () {
 
-    return Types.LONGVARCHAR;
+    return (Class<Versioned<V>>)(Object)versionClass;
   }
 
   @Override
-  public int hashCode (O x) {
+  public boolean equals (Versioned<V> x, Versioned<V> y) {
+
+    return x == y;
+  }
+
+  @Override
+  public int hashCode (Versioned<V> x) {
 
     return Objects.hashCode(x);
   }
 
   @Override
-  public boolean equals (O x, O y) {
-
-    return Objects.equals(x, y);
-  }
-
-  @Override
-  public O deepCopy (O value) {
+  public Versioned<V> deepCopy (Versioned<V> value) {
 
     return value;
   }
 
   @Override
-  public O assemble (Serializable cached, Object owner) {
+  public Serializable disassemble (Versioned<V> value) {
 
-    return (O)cached;
+    return value;
   }
 
   @Override
-  public Serializable disassemble (O value) {
+  public Versioned<V> assemble (Serializable cached, Object owner) {
 
-    return (Serializable)value;
+    return (Versioned<V>)cached;
   }
 
   @Override
-  public O replace (O detached, O managed, Object owner) {
+  public Versioned<V> replace (Versioned<V> detached, Versioned<V> managed, Object owner) {
 
     return detached;
   }
 
   @Override
-  public O nullSafeGet (ResultSet rs, int position, SharedSessionContractImplementor session, Object owner)
-    throws SQLException {
-
-    String string = rs.getString(position);
+  public Object getPropertyValue (Versioned<V> component, int property)
+    throws HibernateException {
 
     try {
-      return rs.wasNull() ? null : (O)JsonCodec.read(string, embeddedClass);
+      // alphabetical
+      return switch (property) {
+        case 0 -> component.getVersion().toJson(component);
+        case 1 -> component.getVersion().name();
+        default -> null;
+      };
+    } catch (JsonProcessingException jsonProcessingException) {
+      throw new HibernateException(jsonProcessingException);
+    }
+  }
+
+  @Override
+  public Versioned<V> instantiate (ValueAccess values, SessionFactoryImplementor sessionFactory)
+    throws HibernateException {
+
+    try {
+      return Enum.valueOf(versionClass, values.getValue(1, String.class)).fromJson(values.getValue(0, String.class));
     } catch (IOException ioException) {
       throw new HibernateException(ioException);
     }
   }
 
-  @Override
-  public void nullSafeSet (PreparedStatement st, O value, int index, SharedSessionContractImplementor session)
-    throws SQLException {
+  public static class VersionedMapper {
 
-    if (value == null) {
-      st.setNull(index, Types.LONGNVARCHAR);
-    } else {
-      try {
-        st.setString(index, JsonCodec.writeAsString(value));
-      } catch (JsonProcessingException jsonProcessingException) {
-        throw new HibernateException(jsonProcessingException);
-      }
-    }
+    String version;
+    String json;
   }
 }

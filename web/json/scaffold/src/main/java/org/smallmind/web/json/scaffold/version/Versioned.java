@@ -30,9 +30,11 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.version;
+package org.smallmind.web.json.scaffold.version;
 
-public interface Versioned<V extends Version<V>> {
+import java.io.Serializable;
+
+public interface Versioned<V extends Enum<V> & Version<V>> extends Serializable {
 
   V getVersion ();
 }

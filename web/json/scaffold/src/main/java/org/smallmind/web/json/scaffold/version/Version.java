@@ -30,9 +30,25 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.version;
+package org.smallmind.web.json.scaffold.version;
 
-public interface VersionFactory<V extends Version<V>> {
+import java.io.IOException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import org.smallmind.web.json.scaffold.util.JsonCodec;
 
-  V fromString (String aString);
+public interface Version<V extends Enum<V> & Version<V>> {
+
+  Class<? extends Versioned<V>> getVersionedClass ();
+
+  default Versioned<V> fromJson (String json)
+    throws IOException {
+
+    return JsonCodec.read(json, getVersionedClass());
+  }
+
+  default String toJson (Versioned<V> versioned)
+    throws JsonProcessingException {
+
+    return JsonCodec.writeAsString(versioned);
+  }
 }
