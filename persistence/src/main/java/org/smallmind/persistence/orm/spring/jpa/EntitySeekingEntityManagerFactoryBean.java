@@ -32,15 +32,15 @@
  */
 package org.smallmind.persistence.orm.spring.jpa;
 
-import javax.persistence.CacheRetrieveMode;
-import javax.persistence.CacheStoreMode;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.PersistenceException;
-import javax.persistence.SharedCacheMode;
-import javax.persistence.ValidationMode;
-import javax.persistence.spi.PersistenceProvider;
-import javax.persistence.spi.PersistenceUnitTransactionType;
 import javax.sql.DataSource;
+import jakarta.persistence.CacheRetrieveMode;
+import jakarta.persistence.CacheStoreMode;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.PersistenceException;
+import jakarta.persistence.SharedCacheMode;
+import jakarta.persistence.ValidationMode;
+import jakarta.persistence.spi.PersistenceProvider;
+import jakarta.persistence.spi.PersistenceUnitTransactionType;
 import org.springframework.beans.BeanUtils;
 import org.springframework.orm.jpa.AbstractEntityManagerFactoryBean;
 import org.springframework.orm.jpa.persistenceunit.MutablePersistenceUnitInfo;

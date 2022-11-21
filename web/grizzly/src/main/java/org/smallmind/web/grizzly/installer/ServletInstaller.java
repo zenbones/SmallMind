@@ -33,7 +33,7 @@
 package org.smallmind.web.grizzly.installer;
 
 import java.util.Map;
-import javax.servlet.Servlet;
+import jakarta.servlet.Servlet;
 
 public class ServletInstaller extends GrizzlyInstaller {
 

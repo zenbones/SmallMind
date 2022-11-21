@@ -42,7 +42,6 @@ import java.util.Properties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.hibernate.HibernateException;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.type.TextType;
 import org.hibernate.usertype.ParameterizedType;
 import org.hibernate.usertype.UserType;
 import org.smallmind.nutsnbolts.json.VersionedJson;
@@ -50,7 +49,7 @@ import org.smallmind.nutsnbolts.version.Version;
 import org.smallmind.nutsnbolts.version.VersionFactory;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
-public class VersionedJsonUserType<V extends Version<V>> implements UserType, ParameterizedType {
+public class VersionedJsonUserType<V extends Version<V>> implements UserType<V>, ParameterizedType {
 
   private VersionFactory<V> versionFactory;
 
@@ -63,7 +62,7 @@ public class VersionedJsonUserType<V extends Version<V>> implements UserType, Pa
       Class<? extends VersionFactory<V>> versionFactoryClass;
 
       versionFactoryClass = (Class<? extends VersionFactory<V>>)Class.forName(versionFactoryClassName);
-      versionFactory = versionFactoryClass.newInstance();
+      versionFactory = versionFactoryClass.getConstructor().newInstance();
     } catch (Exception exception) {
       throw new HibernateException(exception);
     }

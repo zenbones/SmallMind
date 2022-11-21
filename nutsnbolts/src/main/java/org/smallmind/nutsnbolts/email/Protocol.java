@@ -33,8 +33,8 @@
 package org.smallmind.nutsnbolts.email;
 
 import java.util.Properties;
-import javax.mail.Authenticator;
-import javax.mail.Session;
+import jakarta.mail.Authenticator;
+import jakarta.mail.Session;
 
 public enum Protocol {
 

@@ -12,8 +12,8 @@
   <packaging>jar</packaging>
   <dependencies>
     <dependency>
-      <groupId>javax.annotation</groupId>
-      <artifactId>javax.annotation-api</artifactId>
+      <groupId>jakarta.annotation</groupId>
+      <artifactId>jakarta.annotation-api</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -67,13 +67,13 @@
       <optional>true</optional>
     </dependency>
     <dependency>
-      <groupId>org.hibernate</groupId>
+      <groupId>org.hibernate.orm</groupId>
       <artifactId>hibernate-core</artifactId>
       <scope>compile</scope>
       <optional>true</optional>
     </dependency>
     <dependency>
-      <groupId>org.hibernate</groupId>
+      <groupId>org.hibernate.orm</groupId>
       <artifactId>hibernate-entitymanager</artifactId>
       <scope>compile</scope>
       <optional>true</optional>

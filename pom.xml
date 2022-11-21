@@ -77,7 +77,6 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <aether.version>1.1.0</aether.version>
     <amqp.client.version>5.13.1</amqp.client.version>
     <apt.maven.plugin.version>1.1.3</apt.maven.plugin.version>
     <asm.version>9.3</asm.version>
@@ -90,24 +89,29 @@
     <ehcache.version>3.9.7</ehcache.version>
     <freemarker.version>2.3.31</freemarker.version>
     <google.autoservice.version>1.0.1</google.autoservice.version>
-    <grizzly.version>2.4.4</grizzly.version>
+    <grizzly.version>4.0.0</grizzly.version>
     <hdrhistogram.version>2.1.12</hdrhistogram.version>
-    <hibernate.version>5.6.1.Final</hibernate.version>
+    <hibernate.version>6.1.5.Final</hibernate.version>
     <hibernate.annotations.version>5.1.2.Final</hibernate.annotations.version>
-    <hibernate.validator.version>6.2.0.Final</hibernate.validator.version>
+    <hibernate.validator.version>8.0.0.Final</hibernate.validator.version>
     <hibernate.enhance.maven.plugin.version>5.6.1.Final</hibernate.enhance.maven.plugin.version>
     <hsqldb.version>2.6.1</hsqldb.version>
     <httpcomponents.version>4.4.14</httpcomponents.version>
     <jackson.version>2.13.4</jackson.version>
-    <jakarta.activation.version>2.1.0-RC1</jakarta.activation.version>
+    <jakarta.activation.version>2.0.1</jakarta.activation.version>
+    <jakarta.annotation.version>2.1.1</jakarta.annotation.version>
+    <jakarta.mail.version>2.1.0</jakarta.mail.version>
+    <jakarta.persistence.version>3.1.0</jakarta.persistence.version>
+    <jakarta.servlet.version>6.0.0</jakarta.servlet.version>
+    <jakarta.validation.version>3.0.2</jakarta.validation.version>
     <jaxb.version>2.3.1</jaxb.version>
-    <jersey.version>2.35</jersey.version>
+    <jersey.version>3.1.0</jersey.version>
     <jetty.version>10.0.11</jetty.version>
     <kryo.version>5.2.0</kryo.version>
     <liquibase.version>4.6.1</liquibase.version>
     <log4j.version>2.17.2</log4j.version>
     <maven.version>3.8.6</maven.version>
-    <maven.aether.provider.version>3.3.9</maven.aether.provider.version>
+    <maven.resolver.version>1.9.1</maven.resolver.version>
     <maven.plugin.annotations.version>3.6.4</maven.plugin.annotations.version>
     <mongodb.driver.version>3.5.0</mongodb.driver.version>
     <mongodb.bson.version>3.5.0</mongodb.bson.version>
@@ -120,9 +124,9 @@
     <siphash.version>2.0.0</siphash.version>
     <slf4j.version>1.7.32</slf4j.version>
     <snakeyaml.version>1.29</snakeyaml.version>
-    <spring.version>5.3.21</spring.version>
-    <spring.batch.version>4.3.6</spring.batch.version>
-    <spring.rabbit.version>2.4.5</spring.rabbit.version>
+    <spring.version>6.0.0</spring.version>
+    <spring.batch.version>4.3.7</spring.batch.version>
+    <spring.rabbit.version>2.4.7</spring.rabbit.version>
     <sshd.version>2.7.0</sshd.version>
     <syslog4j.version>0.9.30</syslog4j.version>
     <tanukisoft.version>3.5.43</tanukisoft.version>
@@ -303,64 +307,29 @@
         <version>${maven.plugin.annotations.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.apache.maven</groupId>
-        <artifactId>maven-aether-provider</artifactId>
-        <version>${maven.aether.provider.version}</version>
+        <groupId>org.apache.maven.resolver</groupId>
+        <artifactId>maven-resolver-api</artifactId>
+        <version>${maven.resolver.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.eclipse.aether</groupId>
-        <artifactId>aether-api</artifactId>
-        <version>${aether.version}</version>
+        <groupId>org.apache.maven.resolver</groupId>
+        <artifactId>maven-resolver-impl</artifactId>
+        <version>${maven.resolver.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.eclipse.aether</groupId>
-        <artifactId>aether-impl</artifactId>
-        <version>${aether.version}</version>
+        <groupId>org.apache.maven.resolver</groupId>
+        <artifactId>maven-resolver-connector-basic</artifactId>
+        <version>${maven.resolver.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.eclipse.aether</groupId>
-        <artifactId>aether-util</artifactId>
-        <version>${aether.version}</version>
+        <groupId>org.apache.maven.resolver</groupId>
+        <artifactId>maven-resolver-transport-http</artifactId>
+        <version>${maven.resolver.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.eclipse.aether</groupId>
-        <artifactId>aether-spi</artifactId>
-        <version>${aether.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.eclipse.aether</groupId>
-        <artifactId>aether-connector-basic</artifactId>
-        <version>${aether.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.eclipse.aether</groupId>
-        <artifactId>aether-transport-http</artifactId>
-        <version>${aether.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.eclipse.aether</groupId>
-        <artifactId>aether-transport-file</artifactId>
-        <version>${aether.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.eclipse.aether</groupId>
-        <artifactId>aether-transport-wagon</artifactId>
-        <version>${aether.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>jakarta.activation</groupId>
-        <artifactId>jakarta.activation-api</artifactId>
-        <version>2.1.0-RC1</version>
-      </dependency>
-      <dependency>
-        <groupId>javax.activation</groupId>
-        <artifactId>activation</artifactId>
-        <version>1.1.1</version>
-      </dependency>
-      <dependency>
-        <groupId>javax.annotation</groupId>
-        <artifactId>javax.annotation-api</artifactId>
-        <version>1.3.2</version>
+        <groupId>org.apache.maven.resolver</groupId>
+        <artifactId>maven-resolver-transport-file</artifactId>
+        <version>${maven.resolver.version}</version>
       </dependency>
       <dependency>
         <groupId>javax.batch</groupId>
@@ -378,24 +347,34 @@
         <version>2.0.1</version>
       </dependency>
       <dependency>
-        <groupId>javax.mail</groupId>
-        <artifactId>javax.mail-api</artifactId>
-        <version>1.6.2</version>
+        <groupId>jakarta.activation</groupId>
+        <artifactId>jakarta.activation-api</artifactId>
+        <version>${jakarta.activation.version}</version>
       </dependency>
       <dependency>
-        <groupId>javax.persistence</groupId>
-        <artifactId>javax.persistence-api</artifactId>
-        <version>2.2</version>
+        <groupId>jakarta.annotation</groupId>
+        <artifactId>jakarta.annotation-api</artifactId>
+        <version>${jakarta.annotation.version}</version>
       </dependency>
       <dependency>
-        <groupId>javax.servlet</groupId>
-        <artifactId>javax.servlet-api</artifactId>
-        <version>4.0.1</version>
+        <groupId>jakarta.mail</groupId>
+        <artifactId>jakarta.mail-api</artifactId>
+        <version>${jakarta.mail.version}</version>
       </dependency>
       <dependency>
-        <groupId>javax.validation</groupId>
-        <artifactId>validation-api</artifactId>
-        <version>2.0.1.Final</version>
+        <groupId>jakarta.persistence</groupId>
+        <artifactId>jakarta.persistence-api</artifactId>
+        <version>${jakarta.persistence.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>jakarta.servlet</groupId>
+        <artifactId>jakarta.servlet-api</artifactId>
+        <version>${jakarta.servlet.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>jakarta.validation</groupId>
+        <artifactId>jakarta.validation-api</artifactId>
+        <version>${jakarta.validation.version}</version>
       </dependency>
       <dependency>
         <groupId>javax.xml.bind</groupId>
@@ -598,14 +577,14 @@
         <version>${liquibase.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.hibernate</groupId>
+        <groupId>org.hibernate.orm</groupId>
         <artifactId>hibernate-core</artifactId>
         <version>${hibernate.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.hibernate</groupId>
+        <groupId>org.hibernate.orm</groupId>
         <artifactId>hibernate-entitymanager</artifactId>
-        <version>${hibernate.version}</version>
+        <version>6.0.0.Alpha7</version>
       </dependency>
       <dependency>
         <groupId>org.hibernate.validator</groupId>
@@ -1056,9 +1035,9 @@
           </executions>
           <configuration>
             <verbose>true</verbose>
-            <source>11</source>
-            <target>11</target>
-            <complianceLevel>11</complianceLevel>
+            <source>17</source>
+            <target>17</target>
+            <complianceLevel>17</complianceLevel>
             <showWeaveInfo>true</showWeaveInfo>
           </configuration>
           <dependencies>
@@ -1173,9 +1152,9 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.8.1</version>
         <configuration>
-          <source>11</source>
-          <target>11</target>
-          <release>11</release>
+          <source>17</source>
+          <target>17</target>
+          <release>17</release>
         </configuration>
       </plugin>
       <plugin>

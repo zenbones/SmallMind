@@ -32,9 +32,9 @@
  */
 package org.smallmind.web.grizzly;
 
-import javax.servlet.ServletRequestEvent;
-import javax.servlet.ServletRequestListener;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.ServletRequestEvent;
+import jakarta.servlet.ServletRequestListener;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -49,12 +49,11 @@ public class GrizzlyRequestContextListener implements ServletRequestListener {
   @Override
   public void requestInitialized (ServletRequestEvent requestEvent) {
 
-    if (!(requestEvent.getServletRequest() instanceof HttpServletRequest)) {
+    if (!(requestEvent.getServletRequest() instanceof HttpServletRequest request)) {
       throw new IllegalArgumentException(
         "Request is not an HttpServletRequest: " + requestEvent.getServletRequest());
     }
 
-    HttpServletRequest request = (HttpServletRequest)requestEvent.getServletRequest();
     ServletRequestAttributes attributes = new ServletRequestAttributes(request);
 
     request.setAttribute(REQUEST_ATTRIBUTES_ATTRIBUTE, attributes);
