@@ -86,7 +86,6 @@
     <bouncycastle.version>1.70</bouncycastle.version>
     <commons.net.version>3.8.0</commons.net.version>
     <dogstatsd.client.version>3.0.0</dogstatsd.client.version>
-    <ehcache.version>3.9.7</ehcache.version>
     <freemarker.version>2.3.31</freemarker.version>
     <google.autoservice.version>1.0.1</google.autoservice.version>
     <grizzly.version>4.0.0</grizzly.version>
@@ -653,11 +652,6 @@
         <groupId>org.quartz-scheduler</groupId>
         <artifactId>quartz</artifactId>
         <version>${quartz.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.ehcache</groupId>
-        <artifactId>ehcache</artifactId>
-        <version>${ehcache.version}</version>
       </dependency>
       <dependency>
         <groupId>com.googlecode.xmemcached</groupId>
