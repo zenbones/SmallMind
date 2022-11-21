@@ -32,6 +32,8 @@
  */
 package org.smallmind.persistence.cache.praxis.intrinsic;
 
+import java.util.Objects;
+
 public class IntrinsicRosterNode<T> {
 
   private IntrinsicRosterNode<T> prev;
@@ -57,7 +59,7 @@ public class IntrinsicRosterNode<T> {
 
   public synchronized boolean objEquals (Object something) {
 
-    return (obj == something) || ((obj != null) && obj.equals(something));
+    return Objects.equals(obj, something);
   }
 
   public IntrinsicRosterNode<T> getPrev () {

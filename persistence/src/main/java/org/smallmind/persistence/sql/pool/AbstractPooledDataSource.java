@@ -69,7 +69,8 @@ public abstract class AbstractPooledDataSource<D extends CommonDataSource, P ext
     return pooledConnectionClass;
   }
 
-  public Logger getParentLogger () throws SQLFeatureNotSupportedException {
+  public Logger getParentLogger ()
+    throws SQLFeatureNotSupportedException {
 
     throw new SQLFeatureNotSupportedException();
   }

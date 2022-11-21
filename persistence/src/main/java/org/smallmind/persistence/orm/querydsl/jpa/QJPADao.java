@@ -37,8 +37,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
 import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.Ops;
 import com.querydsl.core.types.Order;
@@ -50,6 +48,9 @@ import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.jpa.impl.JPADeleteClause;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAUpdateClause;
+import jakarta.persistence.EntityGraph;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
 import org.smallmind.nutsnbolts.util.IterableIterator;
 import org.smallmind.persistence.UpdateMode;
 import org.smallmind.persistence.cache.VectoredDao;
@@ -331,8 +332,11 @@ public class QJPADao<I extends Serializable & Comparable<I>, D extends JPADurabl
 
     JPAQuery<T> query = new JPAQuery<>(getSession().getNativeSession());
 
-    if (queryDetails.getEntityGraphSetting() != null) {
-      query.setHint(queryDetails.getEntityGraphSetting().getHint().getKey(), getSession().getNativeSession().createEntityGraph(queryDetails.getEntityGraphSetting().getName()));
+    if (queryDetails.getGraph() != null) {
+
+      EntityGraph<?> entityGraph = getSession().getNativeSession().getEntityGraph(queryDetails.getGraph());
+
+      query.setHint("jakarta.persistence.fetchgraph", entityGraph);
     }
 
     return queryDetails.completeQuery(query);

@@ -36,8 +36,6 @@ import org.smallmind.nutsnbolts.lang.FormattedError;
 
 public abstract class TransactionError extends FormattedError {
 
-  public abstract boolean isTerminal ();
-
   public TransactionError (String message, Object... args) {
 
     super(message, args);
@@ -52,4 +50,6 @@ public abstract class TransactionError extends FormattedError {
 
     super(throwable);
   }
+
+  public abstract boolean isTerminal ();
 }

@@ -65,7 +65,7 @@ public class CurrencyUserType implements UserType<Currency> {
   @Override
   public int hashCode (Currency currency) {
 
-    return  Objects.hashCode(currency);
+    return Objects.hashCode(currency);
   }
 
   @Override

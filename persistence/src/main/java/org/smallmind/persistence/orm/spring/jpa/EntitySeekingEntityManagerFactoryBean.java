@@ -145,10 +145,10 @@ public class EntitySeekingEntityManagerFactoryBean extends AbstractEntityManager
       persistenceUnitInfo.setSharedCacheMode(sharedCacheMode);
     }
     if (cacheStoreMode != null) {
-      persistenceUnitInfo.getProperties().setProperty("javax.persistence.cache.storeMode", cacheStoreMode.name());
+      persistenceUnitInfo.getProperties().setProperty("jakarta.persistence.cache.storeMode", cacheStoreMode.name());
     }
     if (cacheRetrieveMode != null) {
-      persistenceUnitInfo.getProperties().setProperty("javax.persistence.cache.retrieveMode", cacheRetrieveMode.name());
+      persistenceUnitInfo.getProperties().setProperty("jakarta.persistence.cache.retrieveMode", cacheRetrieveMode.name());
     }
     if (validationMode != null) {
       persistenceUnitInfo.setValidationMode(validationMode);

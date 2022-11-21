@@ -32,7 +32,7 @@
  */
 package org.smallmind.persistence.orm.jpa;
 
-import javax.persistence.criteria.Root;
+import jakarta.persistence.criteria.Root;
 
 public interface CriteriaDetails<T> {
 

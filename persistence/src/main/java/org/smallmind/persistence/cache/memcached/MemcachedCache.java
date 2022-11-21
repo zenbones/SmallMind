@@ -178,6 +178,6 @@ public class MemcachedCache<V> implements CASSupportingPersistenceCache<String, 
 
   private String getDiscriminatedKey (String key) {
 
-    return new StringBuilder(discriminator).append('[').append(key).append(']').toString();
+    return discriminator + '[' + key + ']';
   }
 }

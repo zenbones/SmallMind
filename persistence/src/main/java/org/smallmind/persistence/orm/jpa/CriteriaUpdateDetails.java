@@ -32,8 +32,8 @@
  */
 package org.smallmind.persistence.orm.jpa;
 
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaUpdate;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaUpdate;
 
 public abstract class CriteriaUpdateDetails<T> {
 

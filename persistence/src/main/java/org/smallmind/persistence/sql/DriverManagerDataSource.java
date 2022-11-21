@@ -73,7 +73,8 @@ public class DriverManagerDataSource implements DataSource {
     return DriverManager.getConnection(jdbcUrl, user, password);
   }
 
-  public Logger getParentLogger () throws SQLFeatureNotSupportedException {
+  public Logger getParentLogger ()
+    throws SQLFeatureNotSupportedException {
 
     throw new SQLFeatureNotSupportedException();
   }

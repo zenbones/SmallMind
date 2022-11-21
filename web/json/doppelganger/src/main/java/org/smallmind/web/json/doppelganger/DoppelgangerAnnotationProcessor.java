@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
@@ -266,7 +267,7 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
         // imports
         writer.write("import java.util.Objects;");
         writer.newLine();
-        writer.write("import javax.annotation.Generated;");
+        writer.write("import jakarta.annotation.Generated;");
         writer.newLine();
         if ((nearestViewSuperclass == null)) {
           writer.write("import javax.xml.bind.annotation.XmlAccessType;");
@@ -918,7 +919,7 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
         writer.newLine();
 
         // imports
-        writer.write("import javax.annotation.Generated;");
+        writer.write("import jakarta.annotation.Generated;");
         writer.newLine();
         writer.write("import org.smallmind.web.json.scaffold.util.");
         if (classTracker.usePolymorphicAttribute(classElement)) {

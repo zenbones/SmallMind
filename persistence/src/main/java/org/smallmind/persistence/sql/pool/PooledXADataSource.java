@@ -79,7 +79,8 @@ public class PooledXADataSource extends AbstractPooledDataSource<XADataSource, X
   }
 
   @Override
-  public XAConnection getXAConnection (String user, String password) throws SQLException {
+  public XAConnection getXAConnection (String user, String password)
+    throws SQLException {
 
     throw new UnsupportedOperationException("Please properly configure the underlying resource managed by the pool which is represented by this DataSource");
   }
