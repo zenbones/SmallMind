@@ -34,8 +34,8 @@ package org.smallmind.phalanx.wire.signal;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import javax.ws.rs.core.MediaType;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import jakarta.ws.rs.core.MediaType;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.web.json.scaffold.util.JsonCodec;

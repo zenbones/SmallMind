@@ -38,8 +38,7 @@
     </dependency>
     <dependency>
       <groupId>com.querydsl</groupId>
-      <artifactId>querydsl-jpa</artifactId>
-      <classifier>jakarta</classifier>
+      <artifactId>querydsl-core</artifactId>
       <scope>compile</scope>
       <optional>true</optional>
     </dependency>

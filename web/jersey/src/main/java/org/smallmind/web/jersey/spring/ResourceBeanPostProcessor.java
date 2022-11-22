@@ -33,7 +33,7 @@
 package org.smallmind.web.jersey.spring;
 
 import java.util.LinkedList;
-import javax.ws.rs.Path;
+import jakarta.ws.rs.Path;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;

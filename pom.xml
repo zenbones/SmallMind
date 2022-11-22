@@ -612,19 +612,20 @@
       </dependency>
       <dependency>
         <groupId>com.querydsl</groupId>
+        <artifactId>querydsl-core</artifactId>
+        <version>${querydsl.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.querydsl</groupId>
         <artifactId>querydsl-apt</artifactId>
+        <!--
         <classifier>jakarta</classifier>
+        -->
         <version>${querydsl.version}</version>
       </dependency>
       <dependency>
         <groupId>com.querydsl</groupId>
         <artifactId>querydsl-jpa</artifactId>
-        <classifier>jakarta</classifier>
-        <version>${querydsl.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.querydsl</groupId>
-        <artifactId>querydsl-jpa-codegen</artifactId>
         <classifier>jakarta</classifier>
         <version>${querydsl.version}</version>
       </dependency>
@@ -740,7 +741,7 @@
       </dependency>
       <dependency>
         <groupId>org.glassfish.jersey.ext</groupId>
-        <artifactId>jersey-spring5</artifactId>
+        <artifactId>jersey-spring6</artifactId>
         <version>${jersey.version}</version>
       </dependency>
       <dependency>
@@ -802,11 +803,6 @@
         <groupId>org.glassfish.jersey.test-framework.providers</groupId>
         <artifactId>jersey-test-framework-provider-external</artifactId>
         <version>${jersey.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>javax.ws.rs</groupId>
-        <artifactId>javax.ws.rs-api</artifactId>
-        <version>2.1</version>
       </dependency>
       <dependency>
         <groupId>org.glassfish</groupId>

@@ -41,12 +41,10 @@ import java.util.Properties;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Application;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.UriBuilder;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.internal.ServiceFinder;
 import org.glassfish.jersey.internal.util.PropertiesHelper;
@@ -314,7 +312,8 @@ public abstract class SSLJerseyTest {
     return DeploymentContext.builder(configure()).build();
   }
 
-  protected TestContainerFactory getTestContainerFactory () throws TestContainerException {
+  protected TestContainerFactory getTestContainerFactory ()
+    throws TestContainerException {
 
     if (testContainerFactory == null) {
       testContainerFactory = getDefaultTestContainerFactory();
@@ -338,7 +337,8 @@ public abstract class SSLJerseyTest {
   }
 
   @Before
-  public void setUp () throws Exception {
+  public void setUp ()
+    throws Exception {
 
     final TestContainer testContainer = createTestContainer(context);
 
@@ -351,7 +351,8 @@ public abstract class SSLJerseyTest {
   }
 
   @After
-  public void tearDown () throws Exception {
+  public void tearDown ()
+    throws Exception {
 
     try {
       TestContainer oldContainer = setTestContainer(null);
