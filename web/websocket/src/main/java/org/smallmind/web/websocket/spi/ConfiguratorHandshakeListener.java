@@ -34,7 +34,7 @@ package org.smallmind.web.websocket.spi;
 
 import java.util.List;
 import java.util.Map;
-import javax.websocket.ClientEndpointConfig;
+import jakarta.websocket.ClientEndpointConfig;
 import org.smallmind.nutsnbolts.util.Tuple;
 import org.smallmind.web.websocket.HandshakeListener;
 

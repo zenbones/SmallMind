@@ -32,7 +32,7 @@
  */
 package org.smallmind.web.grizzly.installer;
 
-import javax.websocket.Extension;
+import jakarta.websocket.Extension;
 
 public class WebSocketExtensionInstaller extends GrizzlyInstaller {
 

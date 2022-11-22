@@ -40,7 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.RejectedExecutionException;
-import javax.websocket.CloseReason;
+import jakarta.websocket.CloseReason;
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.CloseListener;
 import org.glassfish.grizzly.Connection;

@@ -39,9 +39,9 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
-import javax.websocket.DeploymentException;
-import javax.websocket.Extension;
-import javax.websocket.server.ServerEndpointConfig;
+import jakarta.websocket.DeploymentException;
+import jakarta.websocket.Extension;
+import jakarta.websocket.server.ServerEndpointConfig;
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
 import org.glassfish.grizzly.http.Method;
@@ -114,7 +114,7 @@ public class TyrusGrizzlyServerContainer extends TyrusServerContainer {
     }
 
     contextPath = webappContext.getContextPath();
-    webappContext.setAttribute("javax.websocket.server.ServerContainer", this);
+    webappContext.setAttribute("jakarta.websocket.server.ServerContainer", this);
   }
 
   @Override

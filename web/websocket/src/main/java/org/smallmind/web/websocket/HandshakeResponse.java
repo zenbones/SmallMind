@@ -33,7 +33,7 @@
 package org.smallmind.web.websocket;
 
 import java.util.List;
-import javax.websocket.Extension;
+import jakarta.websocket.Extension;
 
 public class HandshakeResponse {
 

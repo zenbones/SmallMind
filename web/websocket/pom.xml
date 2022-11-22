@@ -11,8 +11,8 @@
   <description>Websocket Implementations</description>
   <dependencies>
     <dependency>
-      <groupId>javax.websocket</groupId>
-      <artifactId>javax.websocket-client-api</artifactId>
+      <groupId>jakarta.websocket</groupId>
+      <artifactId>jakarta.websocket-client-api</artifactId>
       <scope>compile</scope>
       <optional>true</optional>
     </dependency>

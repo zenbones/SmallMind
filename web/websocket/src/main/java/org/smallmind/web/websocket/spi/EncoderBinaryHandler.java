@@ -32,8 +32,8 @@
  */
 package org.smallmind.web.websocket.spi;
 
-import javax.websocket.EncodeException;
-import javax.websocket.Encoder;
+import jakarta.websocket.EncodeException;
+import jakarta.websocket.Encoder;
 
 public class EncoderBinaryHandler<T> implements EncoderHandler<T> {
 

@@ -32,8 +32,8 @@
  */
 package org.smallmind.web.websocket.spi;
 
-import javax.websocket.ContainerProvider;
-import javax.websocket.WebSocketContainer;
+import jakarta.websocket.ContainerProvider;
+import jakarta.websocket.WebSocketContainer;
 
 public class ContainerProviderImpl extends ContainerProvider {
 

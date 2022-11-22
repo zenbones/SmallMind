@@ -41,7 +41,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.websocket.Extension;
+import jakarta.websocket.Extension;
 import org.smallmind.nutsnbolts.http.Base64Codec;
 import org.smallmind.nutsnbolts.security.EncryptionUtility;
 import org.smallmind.nutsnbolts.security.HashAlgorithm;
@@ -58,7 +58,7 @@ public class Handshake {
     Tuple<String, String> headerTuple = new Tuple<>();
     String extesnionsValue;
 
-    headerTuple.addPair("Host", new StringBuilder(uri.getHost().toLowerCase()).append(':').append((uri.getPort() != -1) ? uri.getPort() : uri.getScheme().equals("ws") ? 80 : 443).toString());
+    headerTuple.addPair("Host", uri.getHost().toLowerCase() + ':' + ((uri.getPort() != -1) ? uri.getPort() : uri.getScheme().equals("ws") ? 80 : 443));
     headerTuple.addPair("Upgrade", "websocket");
     headerTuple.addPair("Connection", "Upgrade");
     headerTuple.addPair("Sec-WebSocket-Key", Base64Codec.encode(keyBytes));
