@@ -32,17 +32,15 @@
  */
 package org.smallmind.liquibase.spring;
 
-import java.io.IOException;
+import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.sql.SQLException;
 import java.util.Collections;
 import java.util.HashSet;
 import javax.sql.DataSource;
-import javax.xml.parsers.ParserConfigurationException;
 import liquibase.CatalogAndSchema;
 import liquibase.Liquibase;
 import liquibase.database.Database;
@@ -53,9 +51,8 @@ import liquibase.diff.DiffResult;
 import liquibase.diff.compare.CompareControl;
 import liquibase.diff.output.DiffOutputControl;
 import liquibase.diff.output.changelog.DiffToChangeLog;
-import liquibase.exception.LiquibaseException;
 import liquibase.resource.ClassLoaderResourceAccessor;
-import liquibase.resource.FileSystemResourceAccessor;
+import liquibase.resource.DirectoryResourceAccessor;
 import liquibase.resource.ResourceAccessor;
 import liquibase.snapshot.DatabaseSnapshot;
 import liquibase.snapshot.SnapshotControl;
@@ -69,7 +66,7 @@ public class SpringLiquibase implements InitializingBean {
   private final ClassLoader classloader;
 
   private DataSource dataSource;
-  private ResourceAccessor resourceAccessor;
+  private Source source;
   private Goal goal;
   private Writer previewWriter;
   private ChangeLog[] changeLogs;
@@ -93,16 +90,7 @@ public class SpringLiquibase implements InitializingBean {
 
   public void setSource (Source source) {
 
-    switch (source) {
-      case FILE:
-        resourceAccessor = new FileSystemResourceAccessor();
-        break;
-      case CLASSPATH:
-        resourceAccessor = new ClassLoaderResourceAccessor(classloader);
-        break;
-      default:
-        throw new UnknownSwitchCaseException(source.name());
-    }
+    this.source = source;
   }
 
   public void setGoal (Goal goal) {
@@ -132,67 +120,65 @@ public class SpringLiquibase implements InitializingBean {
 
   @Transactional
   public void afterPropertiesSet ()
-    throws IOException, ParserConfigurationException, SQLException, LiquibaseException {
+    throws Exception {
 
     if (!goal.equals(Goal.NONE)) {
 
       HashSet<String> catalogSet = new HashSet<>();
 
       for (ChangeLog changeLog : changeLogs) {
+        try (JdbcConnection connection = new JdbcConnection(dataSource.getConnection())) {
+          try (ResourceAccessor resourceAccessor = getResourceAccessor(changeLog)) {
 
-        JdbcConnection connection = new JdbcConnection(dataSource.getConnection());
+            Liquibase liquibase = new Liquibase(changeLog.getInput(), resourceAccessor, connection);
 
-        try {
+            switch (goal) {
+              case PREVIEW -> liquibase.update(contexts, (previewWriter == null) ? new PrintWriter(System.out) : previewWriter);
+              case UPDATE -> liquibase.update(contexts);
+              case DOCUMENT -> liquibase.generateDocumentation(((outputDir == null) || outputDir.isEmpty()) ? System.getProperty("java.io.tmpdir") : outputDir, contexts);
+              case GENERATE -> {
+                Database database;
+                String catalog;
+                if (catalogSet.add(catalog = (database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(connection)).getDefaultCatalogName())) {
 
-          Liquibase liquibase = new Liquibase(changeLog.getInput(), resourceAccessor, connection);
+                  SnapshotControl snapshotControl;
+                  CompareControl compareControl;
+                  DatabaseSnapshot originalDatabaseSnapshot;
+                  DiffResult diffResult;
+                  DiffToChangeLog changeLogWriter;
 
-          switch (goal) {
-            case PREVIEW:
-              liquibase.update(contexts, (previewWriter == null) ? new PrintWriter(System.out) : previewWriter);
-              break;
-            case UPDATE:
-              liquibase.update(contexts);
-              break;
-            case DOCUMENT:
-              liquibase.generateDocumentation(((outputDir == null) || outputDir.isEmpty()) ? System.getProperty("java.io.tmpdir") : outputDir, contexts);
-              break;
-            case GENERATE:
+                  snapshotControl = new SnapshotControl(database);
+                  compareControl = new CompareControl(new CompareControl.SchemaComparison[] {new CompareControl.SchemaComparison(new CatalogAndSchema(database.getDefaultCatalogName(), database.getDefaultSchemaName()), new CatalogAndSchema(database.getDefaultCatalogName(), database.getDefaultSchemaName()))}, Collections.emptySet());
 
-              Database database;
-              String catalog;
+                  originalDatabaseSnapshot = SnapshotGeneratorFactory.getInstance().createSnapshot(compareControl.getSchemas(CompareControl.DatabaseRole.REFERENCE), database, snapshotControl);
+                  diffResult = DiffGeneratorFactory.getInstance().compare(originalDatabaseSnapshot, SnapshotGeneratorFactory.getInstance().createSnapshot(compareControl.getSchemas(CompareControl.DatabaseRole.REFERENCE), null, snapshotControl), compareControl);
 
-              if (catalogSet.add(catalog = (database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(connection)).getDefaultCatalogName())) {
+                  DiffOutputControl diffOutputControl = new DiffOutputControl();
+                  diffOutputControl.setDataDir(null);
 
-                SnapshotControl snapshotControl;
-                CompareControl compareControl;
-                DatabaseSnapshot originalDatabaseSnapshot;
-                DiffResult diffResult;
-                DiffToChangeLog changeLogWriter;
+                  changeLogWriter = new DiffToChangeLog(diffResult, diffOutputControl);
 
-                snapshotControl = new SnapshotControl(database);
-                compareControl = new CompareControl(new CompareControl.SchemaComparison[] {new CompareControl.SchemaComparison(new CatalogAndSchema(database.getDefaultCatalogName(), database.getDefaultSchemaName()), new CatalogAndSchema(database.getDefaultCatalogName(), database.getDefaultSchemaName()))}, Collections.emptySet());
+                  changeLogWriter.setChangeSetAuthor("auto.generated");
+                  changeLogWriter.setChangeSetContext(contexts);
 
-                originalDatabaseSnapshot = SnapshotGeneratorFactory.getInstance().createSnapshot(compareControl.getSchemas(CompareControl.DatabaseRole.REFERENCE), database, snapshotControl);
-                diffResult = DiffGeneratorFactory.getInstance().compare(originalDatabaseSnapshot, SnapshotGeneratorFactory.getInstance().createSnapshot(compareControl.getSchemas(CompareControl.DatabaseRole.REFERENCE), null, snapshotControl), compareControl);
-
-                DiffOutputControl diffOutputControl = new DiffOutputControl();
-                diffOutputControl.setDataDir(null);
-
-                changeLogWriter = new DiffToChangeLog(diffResult, diffOutputControl);
-
-                changeLogWriter.setChangeSetAuthor("auto.generated");
-                changeLogWriter.setChangeSetContext(contexts);
-
-                changeLogWriter.print(new PrintStream(Files.newOutputStream(Paths.get(((outputDir == null) || outputDir.isEmpty()) ? System.getProperty("java.io.tmpdir") : outputDir, catalog + ".changelog"))));
+                  changeLogWriter.print(new PrintStream(Files.newOutputStream(Paths.get(((outputDir == null) || outputDir.isEmpty()) ? System.getProperty("java.io.tmpdir") : outputDir, catalog + ".changelog"))));
+                }
               }
-              break;
-            default:
-              throw new UnknownSwitchCaseException(goal.name());
+              default -> throw new UnknownSwitchCaseException(goal.name());
+            }
           }
-        } finally {
-          connection.close();
         }
       }
     }
+  }
+
+  private ResourceAccessor getResourceAccessor (ChangeLog changeLog)
+    throws FileNotFoundException {
+
+    return switch (source) {
+
+      case FILE -> new DirectoryResourceAccessor(Paths.get(changeLog.getInput()));
+      case CLASSPATH -> new ClassLoaderResourceAccessor(classloader);
+    };
   }
 }

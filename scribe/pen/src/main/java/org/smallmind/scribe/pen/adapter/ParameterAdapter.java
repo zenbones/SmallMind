@@ -33,17 +33,24 @@
 package org.smallmind.scribe.pen.adapter;
 
 import java.io.Serializable;
+import java.util.List;
 import org.smallmind.scribe.pen.Parameter;
 
 public interface ParameterAdapter {
 
-  void put (String key, Serializable value);
+  void clear ();
 
   void remove (String key);
 
-  void clear ();
-
   Serializable get (String key);
+
+  void set (String key, Serializable value);
+
+  Serializable pop (String key);
+
+  void push (String key, Serializable value);
+
+  List<Serializable> copyList (String key);
 
   Parameter[] getParameters ();
 }

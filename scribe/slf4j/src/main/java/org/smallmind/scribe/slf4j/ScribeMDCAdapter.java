@@ -33,18 +33,28 @@
 package org.smallmind.scribe.slf4j;
 
 import java.io.Serializable;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.slf4j.spi.MDCAdapter;
+import org.smallmind.nutsnbolts.util.MutationUtility;
 import org.smallmind.scribe.pen.Parameter;
 import org.smallmind.scribe.pen.adapter.Parameters;
 
 public class ScribeMDCAdapter implements MDCAdapter {
 
   @Override
-  public void put (String key, String val) {
+  public void clear () {
 
-    Parameters.getInstance().put(key, val);
+    Parameters.getInstance().clear();
+  }
+
+  @Override
+  public void remove (String key) {
+
+    Parameters.getInstance().remove(key);
   }
 
   @Override
@@ -56,15 +66,9 @@ public class ScribeMDCAdapter implements MDCAdapter {
   }
 
   @Override
-  public void remove (String key) {
+  public void put (String key, String val) {
 
-    Parameters.getInstance().remove(key);
-  }
-
-  @Override
-  public void clear () {
-
-    Parameters.getInstance().clear();
+    Parameters.getInstance().set(key, val);
   }
 
   @Override
@@ -84,7 +88,35 @@ public class ScribeMDCAdapter implements MDCAdapter {
 
     Parameters.getInstance().clear();
     for (Map.Entry<String, String> entry : contextMap.entrySet()) {
-      Parameters.getInstance().put(entry.getKey(), entry.getValue());
+      Parameters.getInstance().set(entry.getKey(), entry.getValue());
     }
+  }
+
+  @Override
+  public void pushByKey (String key, String s1) {
+
+    Parameters.getInstance().push(key, s1);
+  }
+
+  @Override
+  public String popByKey (String key) {
+
+    Serializable value;
+
+    return ((value = Parameters.getInstance().pop(key)) == null) ? null : value.toString();
+  }
+
+  @Override
+  public Deque<String> getCopyOfDequeByKey (String key) {
+
+    List<Serializable> valuesList;
+
+    return ((valuesList = Parameters.getInstance().copyList(key)) == null) ? null : new ArrayDeque<>(MutationUtility.toList(valuesList, Serializable::toString));
+  }
+
+  @Override
+  public void clearDequeByKey (String key) {
+
+    Parameters.getInstance().remove(key);
   }
 }

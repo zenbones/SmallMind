@@ -33,72 +33,54 @@
 package org.smallmind.scribe.pen.adapter;
 
 import java.io.Serializable;
+import java.util.LinkedList;
 import java.util.List;
-import org.smallmind.scribe.pen.Parameter;
 
-public class Parameters implements ParameterAdapter {
+public class StackParameterValue implements RecordParameterValue {
 
-  private static final Parameters INSTANCE = new Parameters();
+  private final LinkedList<Serializable> stack = new LinkedList<>();
 
-  private static final InheritableThreadLocal<RecordParameters> RECORD_PARAMETERS_LOCAL = new InheritableThreadLocal<>() {
+  public StackParameterValue (Serializable value) {
 
-    @Override
-    protected RecordParameters initialValue () {
+    stack.push(value);
+  }
 
-      return new RecordParameters();
+  @Override
+  public ParameterValueType type () {
+
+    return ParameterValueType.STACK;
+  }
+
+  @Override
+  public Serializable get () {
+
+    return stack.isEmpty() ? null : stack.getFirst();
+  }
+
+  @Override
+  public void set (Serializable value) {
+
+    if (!stack.isEmpty()) {
+      stack.removeFirst();
     }
-  };
 
-  public static Parameters getInstance () {
-
-    return INSTANCE;
+    stack.push(value);
   }
 
   @Override
-  public void clear () {
+  public void push (Serializable value) {
 
-    RECORD_PARAMETERS_LOCAL.get().clear();
+    stack.push(value);
   }
 
   @Override
-  public void remove (String key) {
+  public Serializable pop () {
 
-    RECORD_PARAMETERS_LOCAL.get().remove(key);
+    return stack.isEmpty() ? null : stack.pop();
   }
 
-  @Override
-  public Serializable get (String key) {
+  public List<Serializable> copyList () {
 
-    return RECORD_PARAMETERS_LOCAL.get().get(key);
-  }
-
-  @Override
-  public void set (String key, Serializable value) {
-
-    RECORD_PARAMETERS_LOCAL.get().set(key, value);
-  }
-
-  @Override
-  public Serializable pop (String key) {
-
-    return RECORD_PARAMETERS_LOCAL.get().pop(key);
-  }
-
-  @Override
-  public void push (String key, Serializable value) {
-
-    RECORD_PARAMETERS_LOCAL.get().push(key, value);
-  }
-
-  @Override
-  public List<Serializable> copyList (String key) {
-
-    return RECORD_PARAMETERS_LOCAL.get().copyList(key);
-  }
-
-  @Override
-  public Parameter[] getParameters () {
-
-    return RECORD_PARAMETERS_LOCAL.get().asParameters();
+    return new LinkedList<>(stack);
   }
 }

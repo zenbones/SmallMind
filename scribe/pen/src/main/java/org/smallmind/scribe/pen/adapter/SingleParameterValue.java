@@ -33,72 +33,47 @@
 package org.smallmind.scribe.pen.adapter;
 
 import java.io.Serializable;
-import java.util.List;
-import org.smallmind.scribe.pen.Parameter;
 
-public class Parameters implements ParameterAdapter {
+public class SingleParameterValue implements RecordParameterValue {
 
-  private static final Parameters INSTANCE = new Parameters();
+  private Serializable value;
 
-  private static final InheritableThreadLocal<RecordParameters> RECORD_PARAMETERS_LOCAL = new InheritableThreadLocal<>() {
+  public SingleParameterValue (Serializable value) {
 
-    @Override
-    protected RecordParameters initialValue () {
-
-      return new RecordParameters();
-    }
-  };
-
-  public static Parameters getInstance () {
-
-    return INSTANCE;
+    this.value = value;
   }
 
   @Override
-  public void clear () {
+  public ParameterValueType type () {
 
-    RECORD_PARAMETERS_LOCAL.get().clear();
+    return ParameterValueType.SINGLE;
   }
 
   @Override
-  public void remove (String key) {
+  public Serializable get () {
 
-    RECORD_PARAMETERS_LOCAL.get().remove(key);
+    return value;
   }
 
   @Override
-  public Serializable get (String key) {
+  public void set (Serializable value) {
 
-    return RECORD_PARAMETERS_LOCAL.get().get(key);
+    this.value = value;
   }
 
   @Override
-  public void set (String key, Serializable value) {
+  public void push (Serializable value) {
 
-    RECORD_PARAMETERS_LOCAL.get().set(key, value);
+    this.value = value;
   }
 
   @Override
-  public Serializable pop (String key) {
+  public Serializable pop () {
 
-    return RECORD_PARAMETERS_LOCAL.get().pop(key);
-  }
+    Serializable temp = value;
 
-  @Override
-  public void push (String key, Serializable value) {
+    value = null;
 
-    RECORD_PARAMETERS_LOCAL.get().push(key, value);
-  }
-
-  @Override
-  public List<Serializable> copyList (String key) {
-
-    return RECORD_PARAMETERS_LOCAL.get().copyList(key);
-  }
-
-  @Override
-  public Parameter[] getParameters () {
-
-    return RECORD_PARAMETERS_LOCAL.get().asParameters();
+    return temp;
   }
 }

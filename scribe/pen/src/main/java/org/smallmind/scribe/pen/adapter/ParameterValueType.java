@@ -32,73 +32,7 @@
  */
 package org.smallmind.scribe.pen.adapter;
 
-import java.io.Serializable;
-import java.util.List;
-import org.smallmind.scribe.pen.Parameter;
+public enum ParameterValueType {
 
-public class Parameters implements ParameterAdapter {
-
-  private static final Parameters INSTANCE = new Parameters();
-
-  private static final InheritableThreadLocal<RecordParameters> RECORD_PARAMETERS_LOCAL = new InheritableThreadLocal<>() {
-
-    @Override
-    protected RecordParameters initialValue () {
-
-      return new RecordParameters();
-    }
-  };
-
-  public static Parameters getInstance () {
-
-    return INSTANCE;
-  }
-
-  @Override
-  public void clear () {
-
-    RECORD_PARAMETERS_LOCAL.get().clear();
-  }
-
-  @Override
-  public void remove (String key) {
-
-    RECORD_PARAMETERS_LOCAL.get().remove(key);
-  }
-
-  @Override
-  public Serializable get (String key) {
-
-    return RECORD_PARAMETERS_LOCAL.get().get(key);
-  }
-
-  @Override
-  public void set (String key, Serializable value) {
-
-    RECORD_PARAMETERS_LOCAL.get().set(key, value);
-  }
-
-  @Override
-  public Serializable pop (String key) {
-
-    return RECORD_PARAMETERS_LOCAL.get().pop(key);
-  }
-
-  @Override
-  public void push (String key, Serializable value) {
-
-    RECORD_PARAMETERS_LOCAL.get().push(key, value);
-  }
-
-  @Override
-  public List<Serializable> copyList (String key) {
-
-    return RECORD_PARAMETERS_LOCAL.get().copyList(key);
-  }
-
-  @Override
-  public Parameter[] getParameters () {
-
-    return RECORD_PARAMETERS_LOCAL.get().asParameters();
-  }
+  SINGLE, STACK;
 }
