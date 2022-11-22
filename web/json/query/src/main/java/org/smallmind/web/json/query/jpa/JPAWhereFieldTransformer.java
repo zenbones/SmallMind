@@ -32,8 +32,8 @@
  */
 package org.smallmind.web.json.query.jpa;
 
-import javax.persistence.criteria.Path;
-import javax.persistence.criteria.Root;
+import jakarta.persistence.criteria.Path;
+import jakarta.persistence.criteria.Root;
 import org.smallmind.web.json.query.WhereFieldTransform;
 import org.smallmind.web.json.query.WhereFieldTransformer;
 
