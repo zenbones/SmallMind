@@ -41,7 +41,7 @@ public class Logger {
 
   private final LoggerAdapter loggerAdapter;
 
-  public Logger (Class loggableClass) {
+  public Logger (Class<?> loggableClass) {
 
     this(loggableClass.getCanonicalName());
   }
@@ -63,7 +63,7 @@ public class Logger {
 
   public void putParameter (String key, Serializable value) {
 
-    loggerAdapter.getParameterAdapter().put(key, value);
+    loggerAdapter.getParameterAdapter().set(key, value);
   }
 
   public void removeParameter (String key) {

@@ -48,13 +48,12 @@ import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import org.testng.util.Strings;
 
 @Test(groups = "experimental")
 public class CubbyTest {
 
-  private static final String LARGE_KEY = Strings.repeat("0123456789", 30);
-  private static final String LARGE_VALUE = Strings.repeat("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 650);
+  private static final String LARGE_KEY = "0123456789".repeat(30);
+  private static final String LARGE_VALUE = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".repeat(650);
 
   private final CubbyConfiguration configuration = CubbyConfiguration.OPTIMAL;
   private CubbyMemcachedClient client;
