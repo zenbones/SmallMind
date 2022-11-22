@@ -32,10 +32,12 @@
  */
 package org.smallmind.web.websocket.spi;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.net.ssl.SSLContext;
 import jakarta.websocket.ClientEndpoint;
 import jakarta.websocket.ClientEndpointConfig;
 import jakarta.websocket.Decoder;
@@ -61,7 +63,7 @@ public class AnnotatedEndpoint extends Endpoint {
 
     try {
       endpointConfig = new AnnotatedClientEndpointConfig(clientEndpointAnnotation);
-    } catch (InstantiationException | IllegalAccessException exception) {
+    } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException exception) {
       throw new DeploymentException("Unable to to instantiate the client endpoint configuration", exception);
     }
   }
@@ -76,24 +78,25 @@ public class AnnotatedEndpoint extends Endpoint {
 
   }
 
-  private class AnnotatedClientEndpointConfig implements ClientEndpointConfig {
+  private static class AnnotatedClientEndpointConfig implements ClientEndpointConfig {
 
-    private final ClientEndpoint clientEndpoint;
-    private final Configurator configurator;
+    private final ClientEndpointConfig clientEndpointConfig;
     private final HashMap<String, Object> userProperties = new HashMap<>();
 
     public AnnotatedClientEndpointConfig (ClientEndpoint clientEndpoint)
-      throws InstantiationException, IllegalAccessException {
+      throws NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
 
-      this.clientEndpoint = clientEndpoint;
-
-      configurator = clientEndpoint.configurator().newInstance();
+      clientEndpointConfig = ClientEndpointConfig.Builder.create()
+                               .encoders(Arrays.asList(clientEndpoint.encoders()))
+                               .decoders(Arrays.asList(clientEndpoint.decoders()))
+                               .preferredSubprotocols(Arrays.asList(clientEndpoint.subprotocols()))
+                               .build();
     }
 
     @Override
     public List<String> getPreferredSubprotocols () {
 
-      return Arrays.asList(clientEndpoint.subprotocols());
+      return clientEndpointConfig.getPreferredSubprotocols();
     }
 
     @Override
@@ -105,25 +108,31 @@ public class AnnotatedEndpoint extends Endpoint {
     @Override
     public Configurator getConfigurator () {
 
-      return configurator;
+      return clientEndpointConfig.getConfigurator();
     }
 
     @Override
     public List<Class<? extends Encoder>> getEncoders () {
 
-      return Arrays.asList(clientEndpoint.encoders());
+      return clientEndpointConfig.getEncoders();
     }
 
     @Override
     public List<Class<? extends Decoder>> getDecoders () {
 
-      return Arrays.asList(clientEndpoint.decoders());
+      return clientEndpointConfig.getDecoders();
     }
 
     @Override
     public Map<String, Object> getUserProperties () {
 
       return userProperties;
+    }
+
+    @Override
+    public SSLContext getSSLContext () {
+
+      return clientEndpointConfig.getSSLContext();
     }
   }
 }
