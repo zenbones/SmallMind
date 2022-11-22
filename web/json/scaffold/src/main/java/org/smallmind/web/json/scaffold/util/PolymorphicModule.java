@@ -35,7 +35,7 @@ package org.smallmind.web.json.scaffold.util;
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.deser.std.StdValueInstantiator;
-import com.fasterxml.jackson.module.jaxb.PackageVersion;
+import com.fasterxml.jackson.module.jakarta.xmlbind.PackageVersion;
 
 public class PolymorphicModule extends Module {
 

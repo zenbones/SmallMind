@@ -35,8 +35,8 @@ package org.smallmind.web.json.scaffold.util;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.Module;
-import com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector;
-import com.fasterxml.jackson.module.jaxb.PackageVersion;
+import com.fasterxml.jackson.module.jakarta.xmlbind.JakartaXmlBindAnnotationIntrospector;
+import com.fasterxml.jackson.module.jakarta.xmlbind.PackageVersion;
 
 public class JaxbAnnotationModule extends Module {
 
@@ -64,7 +64,7 @@ public class JaxbAnnotationModule extends Module {
   @Override
   public void setupModule (SetupContext context) {
 
-    JaxbAnnotationIntrospector intr = new JaxbAnnotationIntrospector(context.getTypeFactory());
+    JakartaXmlBindAnnotationIntrospector intr = new JakartaXmlBindAnnotationIntrospector(context.getTypeFactory());
 
     intr.setNonNillableInclusion(_nonNillableInclusion);
     switch (_priority) {
@@ -100,4 +100,3 @@ public class JaxbAnnotationModule extends Module {
     return this;
   }
 }
-

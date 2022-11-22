@@ -33,6 +33,7 @@
 package org.smallmind.phalanx.wire;
 
 import java.util.Date;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import org.smallmind.nutsnbolts.context.ContextException;
 import org.smallmind.nutsnbolts.context.ContextFactory;
 import org.smallmind.nutsnbolts.lang.PerApplicationContext;
@@ -41,6 +42,7 @@ import org.smallmind.phalanx.wire.transport.RequestTransport;
 import org.smallmind.phalanx.wire.transport.ResponseTransport;
 import org.smallmind.phalanx.wire.transport.mock.MockRequestTransport;
 import org.smallmind.phalanx.wire.transport.mock.MockResponseTransport;
+import org.smallmind.web.json.scaffold.util.JsonCodec;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -77,6 +79,8 @@ public class MockWireTest {
 
     responseTransport.register(WireTestingService.class, new WireTestingServiceImpl());
     wireTestingService = (WireTestingService)WireProxyFactory.generateProxy(requestTransport, 1, "WireTestService", WireTestingService.class, new StaticParameterExtractor<>("test"), null, null);
+
+    JsonCodec.writeAsString(JsonNodeFactory.instance.textNode("hello"));
   }
 
   @AfterClass
