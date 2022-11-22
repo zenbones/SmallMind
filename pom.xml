@@ -123,7 +123,7 @@
     <shiro.version>1.8.0</shiro.version>
     <siphash.version>2.0.0</siphash.version>
     <slf4j.version>1.7.32</slf4j.version>
-    <snakeyaml.version>1.29</snakeyaml.version>
+    <snakeyaml.version>1.33</snakeyaml.version>
     <spring.version>6.0.0</spring.version>
     <spring.batch.version>4.3.7</spring.batch.version>
     <spring.rabbit.version>2.4.7</spring.rabbit.version>
@@ -132,8 +132,8 @@
     <sun.xml.ws.version>4.0.0</sun.xml.ws.version>
     <syslog4j.version>0.9.30</syslog4j.version>
     <tanukisoft.version>3.5.43</tanukisoft.version>
-    <testng.version>7.5</testng.version>
-    <tyrus.version>1.18</tyrus.version>
+    <testng.version>7.6.1</testng.version>
+    <tyrus.version>2.1.1</tyrus.version>
     <xmemcached.version>2.4.7</xmemcached.version>
   </properties>
 
