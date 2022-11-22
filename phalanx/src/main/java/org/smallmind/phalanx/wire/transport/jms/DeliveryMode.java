@@ -34,7 +34,7 @@ package org.smallmind.phalanx.wire.transport.jms;
 
 public enum DeliveryMode {
 
-  PERSISTENT(javax.jms.DeliveryMode.PERSISTENT), NON_PERSISTENT(javax.jms.DeliveryMode.NON_PERSISTENT);
+  PERSISTENT(jakarta.jms.DeliveryMode.PERSISTENT), NON_PERSISTENT(jakarta.jms.DeliveryMode.NON_PERSISTENT);
 
   private final int jmsValue;
 

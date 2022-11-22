@@ -17,6 +17,11 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
+      <groupId>jakarta.xml.ws</groupId>
+      <artifactId>jakarta.xml.ws-api</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
       <groupId>org.smallmind</groupId>
       <artifactId>smallmind-nutsnbolts</artifactId>
       <scope>compile</scope>
@@ -68,7 +73,7 @@
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty.websocket</groupId>
-      <artifactId>websocket-javax-server</artifactId>
+      <artifactId>websocket-jakarta-server</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>

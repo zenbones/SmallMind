@@ -32,7 +32,7 @@
  */
 package org.smallmind.phalanx.wire.transport.jms;
 
-import javax.jms.Session;
+import jakarta.jms.Session;
 
 public enum JmsAcknowledgeMode implements AcknowledgeMode {
 

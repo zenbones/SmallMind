@@ -32,10 +32,10 @@
  */
 package org.smallmind.phalanx.wire.transport.jms.jndi;
 
-import javax.jms.Connection;
-import javax.jms.Destination;
-import javax.jms.Queue;
-import javax.jms.QueueConnectionFactory;
+import jakarta.jms.Connection;
+import jakarta.jms.Destination;
+import jakarta.jms.Queue;
+import jakarta.jms.QueueConnectionFactory;
 import javax.naming.Context;
 import org.smallmind.phalanx.wire.TransportException;
 import org.smallmind.phalanx.wire.transport.jms.ManagedObjectFactory;

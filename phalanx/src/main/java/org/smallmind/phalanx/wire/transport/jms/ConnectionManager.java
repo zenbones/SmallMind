@@ -34,13 +34,13 @@ package org.smallmind.phalanx.wire.transport.jms;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import javax.jms.Connection;
-import javax.jms.ExceptionListener;
-import javax.jms.JMSException;
-import javax.jms.MessageConsumer;
-import javax.jms.MessageListener;
-import javax.jms.MessageProducer;
-import javax.jms.Session;
+import jakarta.jms.Connection;
+import jakarta.jms.ExceptionListener;
+import jakarta.jms.JMSException;
+import jakarta.jms.MessageConsumer;
+import jakarta.jms.MessageListener;
+import jakarta.jms.MessageProducer;
+import jakarta.jms.Session;
 import org.smallmind.phalanx.wire.TransportException;
 import org.smallmind.scribe.pen.LoggerManager;
 
@@ -212,4 +212,3 @@ public class ConnectionManager implements ExceptionListener {
     }
   }
 }
-

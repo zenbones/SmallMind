@@ -32,9 +32,9 @@
  */
 package org.smallmind.phalanx.wire.transport.jms;
 
-import javax.jms.BytesMessage;
-import javax.jms.JMSException;
-import javax.jms.Message;
+import jakarta.jms.BytesMessage;
+import jakarta.jms.JMSException;
+import jakarta.jms.Message;
 
 public interface MessageHandler {
 

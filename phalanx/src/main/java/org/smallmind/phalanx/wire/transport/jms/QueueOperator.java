@@ -32,11 +32,11 @@
  */
 package org.smallmind.phalanx.wire.transport.jms;
 
-import javax.jms.BytesMessage;
-import javax.jms.Destination;
-import javax.jms.JMSException;
-import javax.jms.Message;
-import javax.jms.Queue;
+import jakarta.jms.BytesMessage;
+import jakarta.jms.Destination;
+import jakarta.jms.JMSException;
+import jakarta.jms.Message;
+import jakarta.jms.Queue;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class QueueOperator implements SessionEmployer, MessageHandler {
