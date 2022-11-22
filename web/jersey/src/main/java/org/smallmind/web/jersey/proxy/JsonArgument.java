@@ -32,7 +32,7 @@
  */
 package org.smallmind.web.jersey.proxy;
 
-import javax.xml.bind.annotation.adapters.XmlAdapter;
+import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 
 public class JsonArgument {
 

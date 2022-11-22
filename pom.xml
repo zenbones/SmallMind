@@ -96,14 +96,15 @@
     <hibernate.enhance.maven.plugin.version>5.6.1.Final</hibernate.enhance.maven.plugin.version>
     <hsqldb.version>2.6.1</hsqldb.version>
     <httpcomponents.version>4.4.14</httpcomponents.version>
-    <jackson.version>2.13.4</jackson.version>
+    <jackson.version>2.14.0</jackson.version>
     <jakarta.activation.version>2.0.1</jakarta.activation.version>
     <jakarta.annotation.version>2.1.1</jakarta.annotation.version>
     <jakarta.mail.version>2.1.0</jakarta.mail.version>
     <jakarta.persistence.version>3.1.0</jakarta.persistence.version>
     <jakarta.servlet.version>6.0.0</jakarta.servlet.version>
     <jakarta.validation.version>3.0.2</jakarta.validation.version>
-    <jaxb.version>2.3.1</jaxb.version>
+    <jakarta.xml.bind.version>4.0.0</jakarta.xml.bind.version>
+    <jakarta.xml.ws.version>4.0.0</jakarta.xml.ws.version>
     <jersey.version>3.1.0</jersey.version>
     <jetty.version>10.0.11</jetty.version>
     <kryo.version>5.2.0</kryo.version>
@@ -127,6 +128,8 @@
     <spring.batch.version>4.3.7</spring.batch.version>
     <spring.rabbit.version>2.4.7</spring.rabbit.version>
     <sshd.version>2.7.0</sshd.version>
+    <sun.xml.bind.version>4.0.1</sun.xml.bind.version>
+    <sun.xml.ws.version>4.0.0</sun.xml.ws.version>
     <syslog4j.version>0.9.30</syslog4j.version>
     <tanukisoft.version>3.5.43</tanukisoft.version>
     <testng.version>7.5</testng.version>
@@ -376,19 +379,24 @@
         <version>${jakarta.validation.version}</version>
       </dependency>
       <dependency>
-        <groupId>javax.xml.bind</groupId>
-        <artifactId>jaxb-api</artifactId>
-        <version>${jaxb.version}</version>
+        <groupId>jakarta.xml.bind</groupId>
+        <artifactId>jakarta.xml.bind-api</artifactId>
+        <version>${jakarta.xml.bind.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>jakarta.xml.ws</groupId>
+        <artifactId>jakarta.xml.ws-api</artifactId>
+        <version>${jakarta.xml.ws.version}</version>
       </dependency>
       <dependency>
         <groupId>com.sun.xml.bind</groupId>
         <artifactId>jaxb-impl</artifactId>
-        <version>${jaxb.version}</version>
+        <version>${sun.xml.bind.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.glassfish.jaxb</groupId>
-        <artifactId>jaxb-runtime</artifactId>
-        <version>${jaxb.version}</version>
+        <groupId>com.sun.xml.ws</groupId>
+        <artifactId>jaxws-rt</artifactId>
+        <version>${sun.xml.ws.version}</version>
       </dependency>
       <dependency>
         <groupId>javax.websocket</groupId>
@@ -810,16 +818,6 @@
         <version>3.0.1-b11</version>
       </dependency>
       <dependency>
-        <groupId>javax.xml.ws</groupId>
-        <artifactId>jaxws-api</artifactId>
-        <version>2.3.1</version>
-      </dependency>
-      <dependency>
-        <groupId>com.sun.xml.ws</groupId>
-        <artifactId>jaxws-rt</artifactId>
-        <version>2.3.5</version>
-      </dependency>
-      <dependency>
         <groupId>org.glassfish.grizzly</groupId>
         <artifactId>grizzly-framework</artifactId>
         <version>${grizzly.version}</version>
@@ -1074,23 +1072,6 @@
               </configuration>
             </execution>
           </executions>
-          <dependencies>
-            <dependency>
-              <groupId>javax.xml.bind</groupId>
-              <artifactId>jaxb-api</artifactId>
-              <version>${jaxb.version}</version>
-            </dependency>
-            <dependency>
-              <groupId>com.sun.xml.bind</groupId>
-              <artifactId>jaxb-impl</artifactId>
-              <version>${jaxb.version}</version>
-            </dependency>
-            <dependency>
-              <groupId>org.glassfish.jaxb</groupId>
-              <artifactId>jaxb-runtime</artifactId>
-              <version>${jaxb.version}</version>
-            </dependency>
-          </dependencies>
         </plugin>
         <plugin>
           <groupId>org.smallmind</groupId>

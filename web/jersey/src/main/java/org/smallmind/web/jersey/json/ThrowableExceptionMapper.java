@@ -33,6 +33,7 @@
 package org.smallmind.web.jersey.json;
 
 import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
 import org.smallmind.nutsnbolts.reflection.type.GenericUtility;

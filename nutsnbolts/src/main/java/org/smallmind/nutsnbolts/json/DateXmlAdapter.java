@@ -35,7 +35,7 @@ package org.smallmind.nutsnbolts.json;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Date;
-import javax.xml.bind.annotation.adapters.XmlAdapter;
+import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 import org.smallmind.nutsnbolts.time.TimeUtility;
 
 public class DateXmlAdapter extends XmlAdapter<String, Date> {

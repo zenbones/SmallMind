@@ -44,7 +44,7 @@ public abstract class JPAQueryDetails<T> {
 
   public JPAQueryDetails (String graph, String name) {
 
-   this.graph = graph;
+    this.graph = graph;
   }
 
   public String getGraph () {

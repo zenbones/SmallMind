@@ -15,11 +15,5 @@
       <artifactId>smallmind-nutsnbolts</artifactId>
       <scope>compile</scope>
     </dependency>
-    <dependency>
-      <groupId>javax.xml.bind</groupId>
-      <artifactId>jaxb-api</artifactId>
-      <scope>compile</scope>
-      <optional>true</optional>
-    </dependency>
   </dependencies>
 </project>

@@ -86,7 +86,7 @@
   </bean>
 
   <!--Proxy Session-->
-  <bean id="schemaProxySession"  class="org.smallmind.persistence.orm.jpa.JPAProxySession" init-method="register">
+  <bean id="schemaProxySession" class="org.smallmind.persistence.orm.jpa.JPAProxySession" init-method="register">
     <constructor-arg index="0" value="mysql"/>
     <constructor-arg index="1" value="mysql-epicenter"/>
     <constructor-arg index="2" ref="schemaSessionFactory"/>

@@ -52,9 +52,9 @@ public class WireContextInitializingBean implements InitializingBean {
   }
 
   @Override
-  public void afterPropertiesSet () throws Exception {
+  public void afterPropertiesSet ()
+    throws Exception {
 
     WireContextManager.register(handle, contextClass);
   }
 }
-

@@ -33,11 +33,9 @@
 package org.smallmind.phalanx.wire.transport;
 
 import java.io.Serializable;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.smallmind.phalanx.wire.ArgumentRectifier;
 import org.smallmind.phalanx.wire.Methodology;
-import org.smallmind.phalanx.wire.MismatchedArgumentException;
 import org.smallmind.phalanx.wire.MissingInvocationException;
 import org.smallmind.phalanx.wire.ServiceDefinitionException;
 import org.smallmind.phalanx.wire.TransportException;
@@ -88,7 +86,7 @@ public class WireInvocationCircuit {
         }
 
         methodology = methodInvoker.getMethodology(invocationFunction);
-        arguments = ArgumentRectifier.constructArray(signalCodec,invocationSignal,invocationFunction, methodology);
+        arguments = ArgumentRectifier.constructArray(signalCodec, invocationSignal, invocationFunction, methodology);
         nativeType = invocationFunction.getNativeType();
 
         result = methodInvoker.remoteInvocation(invocationSignal.getContexts(), invocationFunction, arguments);

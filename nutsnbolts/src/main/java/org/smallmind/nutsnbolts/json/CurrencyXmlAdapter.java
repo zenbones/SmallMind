@@ -33,7 +33,7 @@
 package org.smallmind.nutsnbolts.json;
 
 import java.util.Currency;
-import javax.xml.bind.annotation.adapters.XmlAdapter;
+import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 
 public class CurrencyXmlAdapter extends XmlAdapter<String, Currency> {
 

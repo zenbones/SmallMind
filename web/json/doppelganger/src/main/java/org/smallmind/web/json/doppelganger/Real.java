@@ -35,7 +35,7 @@ package org.smallmind.web.json.doppelganger;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import javax.xml.bind.annotation.adapters.XmlAdapter;
+import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 
 @Retention(RetentionPolicy.SOURCE)
 @Target({})

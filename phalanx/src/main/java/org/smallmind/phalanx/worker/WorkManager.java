@@ -43,7 +43,6 @@ import org.smallmind.nutsnbolts.util.ComponentStatus;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class WorkManager<W extends Worker<T>, T> {
-  
 
   private final AtomicReference<ComponentStatus> statusRef = new AtomicReference<>(ComponentStatus.STOPPED);
   private final WorkQueue<T> workQueue;
@@ -126,4 +125,3 @@ public class WorkManager<W extends Worker<T>, T> {
     }
   }
 }
-

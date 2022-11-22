@@ -46,7 +46,8 @@ public class HttpProtocolOutputStream extends OutputStream {
   }
 
   @Override
-  public void write (int b) throws IOException {
+  public void write (int b)
+    throws IOException {
 
     byteArrayOutputStream.write(b);
   }

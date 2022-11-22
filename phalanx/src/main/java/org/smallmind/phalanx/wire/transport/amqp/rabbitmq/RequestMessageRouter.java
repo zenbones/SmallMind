@@ -156,14 +156,13 @@ public class RequestMessageRouter extends MessageRouter {
       }
 
       AMQP.BasicProperties properties = new AMQP.BasicProperties.Builder()
-        .contentType(signalCodec.getContentType())
-        .messageId(SnowflakeId.newInstance().generateDottedString())
-        .timestamp(new Date())
-        .expiration(String.valueOf(ttlSeconds * 1000))
-        .headers(headerMap).build();
+                                          .contentType(signalCodec.getContentType())
+                                          .messageId(SnowflakeId.newInstance().generateDottedString())
+                                          .timestamp(new Date())
+                                          .expiration(String.valueOf(ttlSeconds * 1000))
+                                          .headers(headerMap).build();
 
       return new RabbitMQMessage(properties, signalCodec.encode(new InvocationSignal(inOnly, route, arguments, contexts)));
     });
   }
 }
-

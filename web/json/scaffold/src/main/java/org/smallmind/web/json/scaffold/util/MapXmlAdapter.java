@@ -33,7 +33,7 @@
 package org.smallmind.web.json.scaffold.util;
 
 import java.util.Map;
-import javax.xml.bind.annotation.adapters.XmlAdapter;
+import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 
 public abstract class MapXmlAdapter<M extends Map<K, V>, K, V> extends XmlAdapter<MapKeyValue<K, V>[], M> {
 

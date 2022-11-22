@@ -32,7 +32,7 @@
  */
 package org.smallmind.nutsnbolts.json;
 
-import javax.xml.bind.annotation.adapters.XmlAdapter;
+import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
 import org.smallmind.nutsnbolts.util.EnumUtility;
 
