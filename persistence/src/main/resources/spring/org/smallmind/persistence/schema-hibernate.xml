@@ -50,54 +50,45 @@
     <constructor-arg index="1" ref="schemaDBPool"/>
   </bean>
 
-  <bean id="annotationSeekingBeanFactoryPostProcessor" class="org.smallmind.persistence.orm.spring.hibernate.AnnotationSeekingBeanFactoryPostProcessor"/>
-  <bean id="hibernateFileSeekingBeanFactoryPostProcessor" class="org.smallmind.persistence.orm.spring.hibernate.FileSeekingBeanFactoryPostProcessor"/>
-
   <!-- Session and Transaction -->
-  <bean id="schemaSessionFactory" class="org.smallmind.persistence.orm.spring.hibernate.EntitySeekingSessionFactoryBean">
-    <property name="annotationSeekingBeanFactoryPostProcessor">
-      <bean class="org.smallmind.persistence.orm.spring.hibernate.AnnotationSeekingBeanFactoryPostProcessor"/>
-    </property>
-    <property name="sessionSourceKey" value="schema"/>
+  <bean id="schemaSessionFactory" class="org.smallmind.persistence.orm.spring.jpa.EntitySeekingEntityManagerFactoryBean">
+    <property name="sessionSourceKey" value="mysql-epicenter"/>
+    <property name="annotationSeekingBeanFactoryPostProcessor" ref="jpaAnnotationSeekingBeanFactoryPostProcessor"/>
     <property name="dataSource" ref="schemaPooledDataSource"/>
-    <property name="mappingLocations">
-      <bean class="org.smallmind.persistence.orm.spring.hibernate.FileSeekingFactoryBean">
-        <property name="fileSeekingBeanFactoryPostProcessor" ref="hibernateFileSeekingBeanFactoryPostProcessor"/>
-        <property name="sessionSourceKey" value="schema"/>
+    <property name="persistenceUnitInfo">
+      <bean class="org.springframework.orm.jpa.persistenceunit.SpringPersistenceUnitInfo">
+        <property name="persistenceUnitName" value="epicenterMysqlPersistenceUnit"/>
+        <property name="persistenceProviderClassName" value="org.hibernate.jpa.HibernatePersistenceProvider"/>
+        <property name="properties">
+          <value>
+            hibernate.dialect=${mysql.hibernate.dialect}
+            hibernate.hbm2ddl.auto=${mysql.hibernate.hbm2ddl.auto}
+            hibernate.bytecode.use_reflection_optimizer=true
+            hibernate.id.new_generator_mappings=true
+            hibernate.connection.isolation=${mysql.hibernate.connection.isolation}
+            hibernate.connection.autocommit=${mysql.hibernate.connection.autocommit}
+            hibernate.jdbc.use_scrollable_resultset=true
+            hibernate.jdbc.use_streams_for_binary=false
+            hibernate.jdbc.batch_size=${mysql.hibernate.jdbc.batch_size}
+            hibernate.query.substitutions=true 1, false 0
+            hibernate.show_sql=${mysql.hibernate.show_sql}
+            hibernate.format_sql=${mysql.hibernate.format_sql}
+            hibernate.use_sql_comments=false
+            hibernate.generate_statistics=false
+            hibernate.cache.use_second_level_cache=${mysql.hibernate.cache.use_second_level_cache}
+            hibernate.cache.use_query_cache=false
+            hibernate.cache.use_minimal_puts=true
+            hibernate.cache.provider_class=
+          </value>
+        </property>
       </bean>
-    </property>
-    <property name="hibernateProperties">
-      <value>
-        hibernate.dialect=${hibernate.dialect}
-        hibernate.hbm2ddl.auto=${hibernate.hbm2ddl.auto}
-        hibernate.bytecode.use_reflection_optimizer=true
-        hibernate.id.new_generator_mappings=true
-        hibernate.connection.isolation=${hibernate.connection.isolation}
-        hibernate.connection.autocommit=${hibernate.connection.autocommit}
-        hibernate.jdbc.use_scrollable_resultset=true
-        hibernate.jdbc.use_streams_for_binary=false
-        hibernate.jdbc.batch_size=${hibernate.jdbc.batch_size}
-        hibernate.query.substitutions=true 1, false 0
-        hibernate.show_sql=${hibernate.show_sql}
-        hibernate.format_sql=${hibernate.format_sql}
-        hibernate.use_sql_comments=false
-        hibernate.generate_statistics=false
-        hibernate.cache.use_second_level_cache=${hibernate.cache.use_second_level_cache}
-        hibernate.cache.use_query_cache=false
-        hibernate.cache.use_minimal_puts=true
-        hibernate.cache.provider_class=org.terracotta.hibernate.TerracottaHibernateCacheProvider
-        hibernate.search.default.directory_provider=org.hibernate.search.store.FSDirectoryProvider
-        hibernate.search.default.indexBase=${lucene.dir}
-        hibernate.search.default.batch.merge_factor=10
-        hibernate.search.default.batch.max_buffered_docs=100
-      </value>
     </property>
   </bean>
 
   <!--Proxy Session-->
-  <bean id="schemaProxySession" class="org.smallmind.persistence.orm.hibernate.HibernateProxySession" init-method="register">
-    <constructor-arg index="0" value="orm"/>
-    <constructor-arg index="1" value="schema"/>
+  <bean id="schemaProxySession"  class="org.smallmind.persistence.orm.jpa.JPAProxySession" init-method="register">
+    <constructor-arg index="0" value="mysql"/>
+    <constructor-arg index="1" value="mysql-epicenter"/>
     <constructor-arg index="2" ref="schemaSessionFactory"/>
     <constructor-arg index="3" value="true"/>
     <constructor-arg index="4" value="true"/>
