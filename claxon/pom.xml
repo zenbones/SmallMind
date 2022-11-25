@@ -22,7 +22,7 @@
         <artifactId>smallmind-license-plugin</artifactId>
       </plugin>
       <plugin>
-        <groupId>org.codehaus.mojo</groupId>
+        <groupId>dev.aspectj</groupId>
         <artifactId>aspectj-maven-plugin</artifactId>
       </plugin>
     </plugins>
