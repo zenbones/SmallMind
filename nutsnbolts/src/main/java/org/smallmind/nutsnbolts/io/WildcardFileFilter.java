@@ -32,21 +32,21 @@
  */
 package org.smallmind.nutsnbolts.io;
 
-import java.nio.file.Path;
+import java.io.File;
+import java.io.FileFilter;
 import java.util.regex.Pattern;
 
-public class WildcardFileNamePathFilter implements PathFilter {
+public class WildcardFileFilter implements FileFilter {
 
   private final Pattern namePattern;
 
-  public WildcardFileNamePathFilter (String name) {
+  public WildcardFileFilter (String name) {
 
     namePattern = Pattern.compile(RegExTranslator.translate(name));
   }
 
-  @Override
-  public boolean accept (Path path) {
+  public boolean accept (File file) {
 
-    return namePattern.matcher(path.getFileName().toString()).matches();
+    return namePattern.matcher(file.getName()).matches();
   }
 }

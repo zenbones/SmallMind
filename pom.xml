@@ -81,7 +81,7 @@
     <apt.maven.plugin.version>1.1.3</apt.maven.plugin.version>
     <asm.version>9.4</asm.version>
     <aspectj.version>1.9.9.1</aspectj.version>
-    <aspectj.maven.plugin.version>1.13.1</aspectj.maven.plugin.version>
+    <aspectj.maven.plugin.version>1.13.2-SNAPSHOT</aspectj.maven.plugin.version>
     <aws.version>2.4.13</aws.version>
     <bouncycastle.version>1.70</bouncycastle.version>
     <commons.net.version>3.8.0</commons.net.version>
@@ -1013,6 +1013,9 @@
             <complianceLevel>17</complianceLevel>
             <showWeaveInfo>true</showWeaveInfo>
             <verbose>true</verbose>
+            <excludes>
+              <exclude>**/target/generated-sources/annotations/**/*.java</exclude>
+            </excludes>
           </configuration>
           <dependencies>
             <dependency>
