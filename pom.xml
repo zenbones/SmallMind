@@ -1002,14 +1002,23 @@
           <version>${aspectj.maven.plugin.version}</version>
           <executions>
             <execution>
+              <id>aspect</id>
               <goals>
                 <goal>compile</goal>
+              </goals>
+              <phase>process-classes</phase>
+            </execution>
+            <execution>
+              <id>aspect-tests</id>
+              <goals>
                 <goal>test-compile</goal>
               </goals>
+              <phase>process-test-classes</phase>
             </execution>
           </executions>
           <configuration>
             <complianceLevel>17</complianceLevel>
+            <proc>none</proc>
             <showWeaveInfo>true</showWeaveInfo>
             <verbose>true</verbose>
           </configuration>
