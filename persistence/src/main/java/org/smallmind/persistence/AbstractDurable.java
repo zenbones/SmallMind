@@ -44,7 +44,7 @@ import org.smallmind.nutsnbolts.reflection.Overlay;
 
 public abstract class AbstractDurable<I extends Serializable & Comparable<I>, D extends AbstractDurable<I, D>> implements Overlay<D>, Durable<I> {
 
-  private static final ThreadLocal<Set<Durable>> IN_USE_SET_LOCAL = ThreadLocal.withInitial(HashSet::new);
+  private static final ThreadLocal<Set<Durable<?>>> IN_USE_SET_LOCAL = ThreadLocal.withInitial(HashSet::new);
 
   public int compareTo (Durable<I> durable) {
 
@@ -89,22 +89,29 @@ public abstract class AbstractDurable<I extends Serializable & Comparable<I>, D 
   public boolean equals (Object obj) {
 
     if (obj instanceof Durable) {
-      if ((((Durable)obj).getId() == null) || (getId() == null)) {
+      if ((((Durable<?>)obj).getId() == null) || (getId() == null)) {
         return super.equals(obj);
       } else {
-        return ((Durable)obj).getId().equals(getId());
+        return ((Durable<?>)obj).getId().equals(getId());
       }
     }
 
     return false;
   }
 
-  public boolean mirrors (Durable durable) {
+  public boolean mirrors (Durable<?> durable) {
 
-    return mirrors(durable, FieldUtility.getFieldAccessor(this.getClass(), "id").getField());
+    FieldAccessor idFieldAccessor;
+
+    if ((idFieldAccessor = FieldUtility.getFieldAccessor(this.getClass(), "id")) == null) {
+      throw new PersistenceException("Missing 'id' field in durable type(%s)", durable.getClass().getName());
+    } else {
+
+      return mirrors(durable, idFieldAccessor.getField());
+    }
   }
 
-  public boolean mirrors (Durable durable, Field... exclusions) {
+  public boolean mirrors (Durable<?> durable, Field... exclusions) {
 
     if (this.getClass().isAssignableFrom(durable.getClass())) {
 
