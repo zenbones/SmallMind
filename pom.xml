@@ -83,6 +83,7 @@
     <aspectj.maven.plugin.version>1.13.1</aspectj.maven.plugin.version>
     <aws.version>2.18.24</aws.version>
     <bouncycastle.version>1.72</bouncycastle.version>
+    <commons.logging.version>1.2</commons.logging.version>
     <commons.net.version>3.8.0</commons.net.version>
     <dogstatsd.client.version>4.1.0</dogstatsd.client.version>
     <freemarker.version>2.3.31</freemarker.version>
@@ -108,12 +109,15 @@
     <jakarta.xml.ws.version>4.0.0</jakarta.xml.ws.version>
     <jersey.version>3.1.0</jersey.version>
     <jetty.version>11.0.12</jetty.version>
+    <jfx.version>20-ea+9</jfx.version>
+    <jfx.extras.version>9.0-r1</jfx.extras.version>
     <kryo.version>5.3.0</kryo.version>
     <liquibase.version>4.17.2</liquibase.version>
     <log4j.version>2.19.0</log4j.version>
     <maven.version>3.8.6</maven.version>
     <maven.resolver.version>1.9.1</maven.resolver.version>
     <maven.plugin.annotations.version>3.7.0</maven.plugin.annotations.version>
+    <maven.surefire.api.version>2.22.2</maven.surefire.api.version>
     <mongodb.driver.version>3.12.11</mongodb.driver.version>
     <mongodb.bson.version>4.8.0</mongodb.bson.version>
     <!--
@@ -128,15 +132,15 @@
     <siphash.version>2.0.0</siphash.version>
     <slf4j.version>2.0.5</slf4j.version>
     <spring.version>6.0.0</spring.version>
-    <spring.batch.version>4.3.7</spring.batch.version>
-    <spring.rabbit.version>2.4.7</spring.rabbit.version>
+    <spring.batch.version>5.0.0</spring.batch.version>
+    <spring.rabbit.version>3.0.0</spring.rabbit.version>
     <sshd.version>2.9.2</sshd.version>
     <sun.xml.bind.version>4.0.1</sun.xml.bind.version>
     <sun.xml.ws.version>4.0.0</sun.xml.ws.version>
     <syslog4j.version>0.9.30</syslog4j.version>
     <tanukisoft.version>3.5.43</tanukisoft.version>
     <testng.version>7.6.1</testng.version>
-    <tyrus.version>2.1.1</tyrus.version>
+    <tyrus.version>2.1.2</tyrus.version>
     <xmemcached.version>2.4.7</xmemcached.version>
   </properties>
 
@@ -404,17 +408,17 @@
       <dependency>
         <groupId>org.openjfx</groupId>
         <artifactId>javafx-base</artifactId>
-        <version>15-ea+6</version>
+        <version>${jfx.version}</version>
       </dependency>
       <dependency>
         <groupId>org.openjfx</groupId>
         <artifactId>javafx-controls</artifactId>
-        <version>15-ea+6</version>
+        <version>${jfx.version}</version>
       </dependency>
       <dependency>
         <groupId>org.jfxtras</groupId>
         <artifactId>jfxtras-labs</artifactId>
-        <version>8.0-r5</version>
+        <version>${jfx.extras.version}</version>
       </dependency>
       <dependency>
         <groupId>tanukisoft</groupId>
@@ -429,7 +433,7 @@
       <dependency>
         <groupId>org.apache.maven.surefire</groupId>
         <artifactId>surefire-api</artifactId>
-        <version>2.22.2</version>
+        <version>${maven.surefire.api.version}</version>
       </dependency>
       <dependency>
         <groupId>software.amazon.awssdk</groupId>
@@ -544,7 +548,7 @@
       <dependency>
         <groupId>commons-logging</groupId>
         <artifactId>commons-logging</artifactId>
-        <version>1.2</version>
+        <version>${commons.logging.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.logging.log4j</groupId>
@@ -580,11 +584,6 @@
         <groupId>org.hibernate.orm</groupId>
         <artifactId>hibernate-core</artifactId>
         <version>${hibernate.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.hibernate.orm</groupId>
-        <artifactId>hibernate-entitymanager</artifactId>
-        <version>6.0.0.Alpha7</version>
       </dependency>
       <dependency>
         <groupId>org.hibernate.validator</groupId>
@@ -911,7 +910,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>2.22.2</version>
+          <version>${maven.surefire.api.version}</version>
           <configuration>
             <useSystemClassLoader>false</useSystemClassLoader>
             <groups>unit</groups>
@@ -951,7 +950,7 @@
         <plugin>
           <groupId>org.sonatype.plugins</groupId>
           <artifactId>nexus-staging-maven-plugin</artifactId>
-          <version>1.6.8</version>
+          <version>1.6.13</version>
         </plugin>
         <plugin>
           <groupId>org.hibernate.orm.tooling</groupId>
