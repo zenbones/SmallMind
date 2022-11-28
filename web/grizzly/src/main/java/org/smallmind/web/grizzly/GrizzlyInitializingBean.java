@@ -222,7 +222,7 @@ public class GrizzlyInitializingBean implements InitializingBean, DisposableBean
 
         NetworkListener configuredNetworkListener = (secureNetworkListener != null) ? secureNetworkListener : insecureNetworkListener;
 
-        webAppState.setTyrusGrizzlyServerContainer(new TyrusGrizzlyServerContainer(httpServer, configuredNetworkListener, webAppState.getWebAppContext(), null, webApplicationOption.getWebSocketOption().isIncludeWsadlSupport(), null, webAppState.getWebSocketExtensionInstallerList().toArray(new WebSocketExtensionInstaller[0])));
+        webAppState.setTyrusGrizzlyServerContainer(new TyrusGrizzlyServerContainer(httpServer, configuredNetworkListener, webAppState.getWebAppContext(), null, webApplicationOption.getWebSocketOption(), null, webAppState.getWebSocketExtensionInstallerList().toArray(new WebSocketExtensionInstaller[0])));
       }
 
       if (webApplicationOption.getClassLoaderResourceOption() != null) {

@@ -61,6 +61,7 @@ import org.glassfish.tyrus.core.wsadl.model.Application;
 import org.glassfish.tyrus.server.TyrusServerContainer;
 import org.glassfish.tyrus.spi.WebSocketEngine;
 import org.smallmind.web.grizzly.installer.WebSocketExtensionInstaller;
+import org.smallmind.web.grizzly.option.WebSocketOption;
 
 public class TyrusGrizzlyServerContainer extends TyrusServerContainer {
 
@@ -69,7 +70,7 @@ public class TyrusGrizzlyServerContainer extends TyrusServerContainer {
   private final NetworkListener networkListener;
   private final String contextPath;
 
-  public TyrusGrizzlyServerContainer (HttpServer httpServer, NetworkListener networkListener, WebappContext webappContext, Map<String, Object> properties, boolean includeWsadlSupport, HttpHandler staticHttpHandler, WebSocketExtensionInstaller... webSocketExtensionInstallers) {
+  public TyrusGrizzlyServerContainer (HttpServer httpServer, NetworkListener networkListener, WebappContext webappContext, Map<String, Object> properties, WebSocketOption webSocketOption, HttpHandler staticHttpHandler, WebSocketExtensionInstaller... webSocketExtensionInstallers) {
 
     super((Set<Class<?>>)null);
 
@@ -109,8 +110,14 @@ public class TyrusGrizzlyServerContainer extends TyrusServerContainer {
     networkListener.getKeepAlive().setIdleTimeoutInSeconds(-1);
     networkListener.registerAddOn(new TyrusWebSocketAddOn(this, webappContext.getContextPath()));
 
-    if (includeWsadlSupport) {
-      httpServer.getServerConfiguration().addHttpHandler(new WsadlHttpHandler(webSocketEngine, staticHttpHandler));
+    if (webSocketOption != null) {
+      setDefaultMaxSessionIdleTimeout(webSocketOption.getMaxSessionIdleTimeout());
+      setDefaultMaxTextMessageBufferSize(webSocketOption.getMaxTextMessageBufferSize());
+      setDefaultMaxBinaryMessageBufferSize(webSocketOption.getMaxBinaryMessageBufferSize());
+
+      if (webSocketOption.isIncludeWsadlSupport()) {
+        httpServer.getServerConfiguration().addHttpHandler(new WsadlHttpHandler(webSocketEngine, staticHttpHandler));
+      }
     }
 
     contextPath = webappContext.getContextPath();

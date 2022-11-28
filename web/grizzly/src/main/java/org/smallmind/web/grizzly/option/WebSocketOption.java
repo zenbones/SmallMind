@@ -35,6 +35,9 @@ package org.smallmind.web.grizzly.option;
 public class WebSocketOption {
 
   private boolean includeWsadlSupport = false;
+  private long maxSessionIdleTimeout = 0L;
+  private int maxTextMessageBufferSize = Integer.MAX_VALUE;
+  private int maxBinaryMessageBufferSize = Integer.MAX_VALUE;
 
   public boolean isIncludeWsadlSupport () {
 
@@ -44,5 +47,35 @@ public class WebSocketOption {
   public void setIncludeWsadlSupport (boolean includeWsadlSupport) {
 
     this.includeWsadlSupport = includeWsadlSupport;
+  }
+
+  public long getMaxSessionIdleTimeout () {
+
+    return maxSessionIdleTimeout;
+  }
+
+  public void setMaxSessionIdleTimeout (long maxSessionIdleTimeout) {
+
+    this.maxSessionIdleTimeout = maxSessionIdleTimeout;
+  }
+
+  public int getMaxTextMessageBufferSize () {
+
+    return maxTextMessageBufferSize;
+  }
+
+  public void setMaxTextMessageBufferSize (int maxTextMessageBufferSize) {
+
+    this.maxTextMessageBufferSize = maxTextMessageBufferSize;
+  }
+
+  public int getMaxBinaryMessageBufferSize () {
+
+    return maxBinaryMessageBufferSize;
+  }
+
+  public void setMaxBinaryMessageBufferSize (int maxBinaryMessageBufferSize) {
+
+    this.maxBinaryMessageBufferSize = maxBinaryMessageBufferSize;
   }
 }

@@ -34,14 +34,11 @@ package org.smallmind.web.jetty.option;
 
 public class WebSocketOption {
 
-  private static final long FIVE_MINUTES = 5 * 60 * 1000;
+  private long maxSessionIdleTimeout = 0L;
+  private int maxTextMessageBufferSize = Integer.MAX_VALUE;
+  private int maxBinaryMessageBufferSize = Integer.MAX_VALUE;
 
-  private long maxSessionIdleTimeout = FIVE_MINUTES;
 
-  public static long getFiveMinutes () {
-
-    return FIVE_MINUTES;
-  }
 
   public long getMaxSessionIdleTimeout () {
 
@@ -51,5 +48,25 @@ public class WebSocketOption {
   public void setMaxSessionIdleTimeout (long maxSessionIdleTimeout) {
 
     this.maxSessionIdleTimeout = maxSessionIdleTimeout;
+  }
+
+  public int getMaxTextMessageBufferSize () {
+
+    return maxTextMessageBufferSize;
+  }
+
+  public void setMaxTextMessageBufferSize (int maxTextMessageBufferSize) {
+
+    this.maxTextMessageBufferSize = maxTextMessageBufferSize;
+  }
+
+  public int getMaxBinaryMessageBufferSize () {
+
+    return maxBinaryMessageBufferSize;
+  }
+
+  public void setMaxBinaryMessageBufferSize (int maxBinaryMessageBufferSize) {
+
+    this.maxBinaryMessageBufferSize = maxBinaryMessageBufferSize;
   }
 }

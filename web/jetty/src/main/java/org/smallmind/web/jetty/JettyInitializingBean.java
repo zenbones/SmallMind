@@ -39,6 +39,7 @@ import java.util.HashMap;
 import java.util.Map;
 import com.sun.net.httpserver.HttpContext;
 import jakarta.servlet.DispatcherType;
+import jakarta.xml.ws.Endpoint;
 import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.http.spi.JettyHttpServer;
 import org.eclipse.jetty.server.HttpConfiguration;
@@ -57,7 +58,6 @@ import org.eclipse.jetty.util.resource.PathResource;
 import org.eclipse.jetty.util.resource.Resource;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
-import jakarta.xml.ws.Endpoint;
 import org.eclipse.jetty.websocket.jakarta.server.config.JakartaWebSocketServletContainerInitializer;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.smallmind.nutsnbolts.lang.web.PerApplicationContextFilter;
@@ -369,7 +369,11 @@ public class JettyInitializingBean implements InitializingBean, DisposableBean, 
 
         if (webApplicationOption.getWebSocketOption() != null) {
           try {
-            JakartaWebSocketServletContainerInitializer.configure(servletContextHandler, (servletContext, serverContainer) -> serverContainer.setDefaultMaxSessionIdleTimeout(webApplicationOption.getWebSocketOption().getMaxSessionIdleTimeout()));
+            JakartaWebSocketServletContainerInitializer.configure(servletContextHandler, (servletContext, serverContainer) -> {
+              serverContainer.setDefaultMaxSessionIdleTimeout(webApplicationOption.getWebSocketOption().getMaxSessionIdleTimeout());
+              serverContainer.setDefaultMaxTextMessageBufferSize(webApplicationOption.getWebSocketOption().getMaxTextMessageBufferSize());
+              serverContainer.setDefaultMaxBinaryMessageBufferSize(webApplicationOption.getWebSocketOption().getMaxBinaryMessageBufferSize());
+            });
           } catch (Exception exception) {
             throw new JettyInitializationException(exception);
           }
