@@ -30,61 +30,41 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.spring.property;
+package org.smallmind.nutsnbolts.yaml;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Properties;
-import org.smallmind.nutsnbolts.yaml.YamlCodec;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 
-public enum PropertyFileType {
+public class YamlCodec {
 
-  PROPERTIES(new String[] {"properties"}) {
-    @Override
-    public PropertyHandler<?> getPropertyHandler (InputStream inputStream)
-      throws IOException {
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper(new YAMLFactory().enable(YAMLGenerator.Feature.LITERAL_BLOCK_STYLE));
 
-      Properties properties = new Properties();
+  public static JsonNode readAsJsonNode (byte[] bytes)
+    throws IOException {
 
-      properties.load(inputStream);
-
-      return new PropertiesPropertyHandler(properties);
-    }
-  },
-  YAML(new String[] {"yaml", "yml"}) {
-    @Override
-    public PropertyHandler<?> getPropertyHandler (InputStream inputStream)
-      throws IOException {
-
-      return new YamlPropertyHandler(YamlCodec.readAsJsonNode(inputStream));
-    }
-  };
-  private final String[] extensions;
-
-  PropertyFileType (String[] extensions) {
-
-    this.extensions = extensions;
+    return OBJECT_MAPPER.readTree(bytes);
   }
 
-  public static PropertyFileType forExtension (String extension) {
+  public static JsonNode readAsJsonNode (InputStream inputStream)
+    throws IOException {
 
-    for (PropertyFileType propertyFileType : PropertyFileType.values()) {
-      for (String possibleExtension : propertyFileType.getExtensions()) {
-        if (possibleExtension.equals(extension)) {
-
-          return propertyFileType;
-        }
-      }
-    }
-
-    return null;
+    return OBJECT_MAPPER.readTree(inputStream);
   }
 
-  public abstract PropertyHandler<?> getPropertyHandler (InputStream inputStream)
-    throws IOException;
+  public static byte[] writeAsBytes (Object obj)
+    throws JsonProcessingException {
 
-  public String[] getExtensions () {
+    return OBJECT_MAPPER.writeValueAsBytes(obj);
+  }
 
-    return extensions;
+  public static String writeAsString (Object obj)
+    throws JsonProcessingException {
+
+    return OBJECT_MAPPER.writeValueAsString(obj);
   }
 }

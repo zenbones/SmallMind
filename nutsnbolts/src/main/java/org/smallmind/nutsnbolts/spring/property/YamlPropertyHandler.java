@@ -35,32 +35,34 @@ package org.smallmind.nutsnbolts.spring.property;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeType;
+import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 public class YamlPropertyHandler implements PropertyHandler<YamlPropertyEntry> {
 
-  private final Map<String, Object> yamlMap;
+  private final JsonNode yamlNode;
 
-  public YamlPropertyHandler (Map<String, Object> yamlMap) {
+  public YamlPropertyHandler (JsonNode yamlNode) {
 
-    this.yamlMap = yamlMap;
+    this.yamlNode = yamlNode;
   }
 
   @Override
   public Iterator<YamlPropertyEntry> iterator () {
 
-    return new YamlPropertyEntryIterator(yamlMap);
+    return new YamlPropertyEntryIterator(yamlNode);
   }
 
   private static class YamlPropertyEntryIterator implements Iterator<YamlPropertyEntry> {
 
     private final LinkedList<NamedIteration> namedIterationList = new LinkedList<>();
 
-    private YamlPropertyEntryIterator (Map<String, Object> yamlMap) {
+    private YamlPropertyEntryIterator (JsonNode yamlNode) {
 
-      if ((yamlMap != null) && (!yamlMap.isEmpty())) {
-        namedIterationList.push(new NamedIteration(yamlMap.entrySet().iterator()));
+      if (yamlNode != null) {
+        namedIterationList.push(new NamedIteration(yamlNode.fields()));
       }
     }
 
@@ -82,40 +84,61 @@ public class YamlPropertyHandler implements PropertyHandler<YamlPropertyEntry> {
     @Override
     public YamlPropertyEntry next () {
 
-      Map.Entry<String, Object> entry = namedIterationList.peekFirst().getIterator().next();
+      NamedIteration namedIteration;
 
-      namedIterationList.peekFirst().setName(entry.getKey());
-
-      if (entry.getValue() instanceof Map) {
-        namedIterationList.push(new NamedIteration(((Map<String, Object>)entry.getValue()).entrySet().iterator()));
-
-        return next();
-      } else if (entry.getValue() instanceof List<?>) {
-
-        LinkedHashMap<String, Object> interpolatedMap = new LinkedHashMap<>();
-        int index = 0;
-
-        for (Object item : (List<?>)entry.getValue()) {
-          interpolatedMap.put(String.valueOf(index++), item);
-        }
-
-        namedIterationList.push(new NamedIteration(interpolatedMap.entrySet().iterator()));
-
-        return next();
+      if ((namedIteration = namedIterationList.peekFirst()) == null) {
+        throw new NullPointerException();
       } else {
 
-        StringBuilder keyBuilder = new StringBuilder();
-        boolean first = true;
+        Map.Entry<String, JsonNode> entry = namedIteration.getIterator().next();
 
-        for (NamedIteration namedIteration : namedIterationList) {
-          if (!first) {
-            keyBuilder.insert(0, '.');
+        namedIteration.setName(entry.getKey());
+
+        if (JsonNodeType.OBJECT.equals(entry.getValue().getNodeType())) {
+          namedIterationList.push(new NamedIteration(entry.getValue().fields()));
+
+          return next();
+        } else if (JsonNodeType.ARRAY.equals(entry.getValue().getNodeType())) {
+
+          LinkedHashMap<String, JsonNode> interpolatedMap = new LinkedHashMap<>();
+          int index = 0;
+
+          for (JsonNode item : entry.getValue()) {
+            interpolatedMap.put(String.valueOf(index++), item);
           }
-          first = false;
-          keyBuilder.insert(0, namedIteration.getName());
-        }
 
-        return new YamlPropertyEntry(keyBuilder.toString(), entry.getValue());
+          namedIterationList.push(new NamedIteration(interpolatedMap.entrySet().iterator()));
+
+          return next();
+        } else {
+
+          StringBuilder keyBuilder = new StringBuilder();
+          boolean first = true;
+
+          for (NamedIteration child : namedIterationList) {
+            if (!first) {
+              keyBuilder.insert(0, '.');
+            }
+            first = false;
+            keyBuilder.insert(0, child.getName());
+          }
+
+          return new YamlPropertyEntry(keyBuilder.toString(),
+            switch (entry.getValue().getNodeType()) {
+              case NUMBER -> {
+                if (entry.getValue().isInt()) {
+                  yield entry.getValue().asInt();
+                } else if (entry.getValue().isLong()) {
+                  yield entry.getValue().asLong();
+                } else {
+                  yield entry.getValue().asDouble();
+                }
+              }
+              case BOOLEAN -> entry.getValue().asBoolean();
+              case STRING -> entry.getValue().asText();
+              default -> throw new UnknownSwitchCaseException(entry.getValue().getNodeType().name());
+            });
+        }
       }
     }
 
@@ -128,10 +151,10 @@ public class YamlPropertyHandler implements PropertyHandler<YamlPropertyEntry> {
 
   private static class NamedIteration {
 
-    private final Iterator<Map.Entry<String, Object>> iterator;
+    private final Iterator<Map.Entry<String, JsonNode>> iterator;
     private String name;
 
-    private NamedIteration (Iterator<Map.Entry<String, Object>> iterator) {
+    private NamedIteration (Iterator<Map.Entry<String, JsonNode>> iterator) {
 
       this.iterator = iterator;
     }
@@ -146,7 +169,7 @@ public class YamlPropertyHandler implements PropertyHandler<YamlPropertyEntry> {
       this.name = name;
     }
 
-    private Iterator<Map.Entry<String, Object>> getIterator () {
+    private Iterator<Map.Entry<String, JsonNode>> getIterator () {
 
       return iterator;
     }

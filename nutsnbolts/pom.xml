@@ -96,8 +96,8 @@
       <optional>true</optional>
     </dependency>
     <dependency>
-      <groupId>org.yaml</groupId>
-      <artifactId>snakeyaml</artifactId>
+      <groupId>com.fasterxml.jackson.dataformat</groupId>
+      <artifactId>jackson-dataformat-yaml</artifactId>
       <scope>compile</scope>
       <optional>true</optional>
     </dependency>
