@@ -80,9 +80,9 @@
     <amqp.client.version>5.16.0</amqp.client.version>
     <asm.version>9.4</asm.version>
     <aspectj.version>1.9.9.1</aspectj.version>
-    <aspectj.maven.plugin.version>1.13.2-SNAPSHOT</aspectj.maven.plugin.version>
-    <aws.version>2.4.13</aws.version>
-    <bouncycastle.version>1.70</bouncycastle.version>
+    <aspectj.maven.plugin.version>1.13.1</aspectj.maven.plugin.version>
+    <aws.version>2.18.24</aws.version>
+    <bouncycastle.version>1.72</bouncycastle.version>
     <commons.net.version>3.8.0</commons.net.version>
     <dogstatsd.client.version>4.1.0</dogstatsd.client.version>
     <freemarker.version>2.3.31</freemarker.version>
@@ -486,7 +486,7 @@
       </dependency>
       <dependency>
         <groupId>org.bouncycastle</groupId>
-        <artifactId>bcprov-jdk15on</artifactId>
+        <artifactId>bcprov-jdk18on</artifactId>
         <version>${bouncycastle.version}</version>
       </dependency>
       <dependency>
