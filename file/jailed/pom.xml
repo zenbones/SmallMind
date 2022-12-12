@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>smallmind-file</artifactId>
-    <version>4.9.0</version>
+    <version>4.10.0-SNAPSHOT</version>
   </parent>
   <artifactId>file-jailed</artifactId>
   <name>File-Jailed</name>
