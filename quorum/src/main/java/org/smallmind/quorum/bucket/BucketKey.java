@@ -32,7 +32,6 @@
  */
 package org.smallmind.quorum.bucket;
 
-public interface BucketSelector<T> {
+public interface BucketKey<T> {
 
-  BucketKey<T> selection (T input);
 }
