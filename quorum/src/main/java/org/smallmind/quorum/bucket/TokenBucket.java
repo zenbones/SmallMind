@@ -41,7 +41,7 @@ public class TokenBucket<T> {
   private final BucketSelector<T> selector;
   private final double limit;
   private final double refillPerNanosecond;
-  private HashMap<String, TokenBucket<T>> children;
+  private HashMap<BucketKey<T>, TokenBucket<T>> children;
   private double capacity;
   private long timestamp;
 
@@ -52,12 +52,13 @@ public class TokenBucket<T> {
     this.limit = limit;
 
     refillPerNanosecond = refillQuantity / (double)refillRate.getTimeUnit().toNanos(refillRate.getTime());
+    System.out.println(refillPerNanosecond);
 
     capacity = limit;
     timestamp = System.nanoTime();
   }
 
-  public synchronized void add (String key, BucketFactory<T> factory) {
+  public synchronized void add (BucketKey<T> key, BucketFactory<T> factory) {
 
     if (children == null) {
       children = new HashMap<>();
@@ -70,22 +71,27 @@ public class TokenBucket<T> {
 
   public synchronized boolean allowed (T input) {
 
+    return allowed(System.nanoTime(), input);
+  }
+
+  // synchronized in the case where a child might be shared between two bucket hierarchies
+  private synchronized boolean allowed (long current, T input) {
+
     double quantity;
-    long current = System.nanoTime();
 
     if (current > timestamp) {
       if ((capacity += (current - timestamp) * refillPerNanosecond) > limit) {
         capacity = limit;
-
-        timestamp = current;
       }
+
+      timestamp = current;
     }
 
     if ((quantity = quantifier.quantity(input)) <= capacity) {
 
       TokenBucket<T> child;
 
-      if ((children == null) || children.isEmpty() || ((child = children.get(selector.selection(input))) == null) || child.allowed(input)) {
+      if ((children == null) || children.isEmpty() || ((child = children.get(selector.selection(input))) == null) || child.allowed(current, input)) {
         capacity -= quantity;
 
         return true;
