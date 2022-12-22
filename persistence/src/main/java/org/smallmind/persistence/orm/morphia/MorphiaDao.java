@@ -34,6 +34,7 @@ package org.smallmind.persistence.orm.morphia;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import com.mongodb.DBObject;
 import com.mongodb.WriteConcern;
@@ -47,6 +48,7 @@ import org.mongodb.morphia.query.Query;
 import org.mongodb.morphia.query.QueryImpl;
 import org.mongodb.morphia.query.UpdateOperations;
 import org.mongodb.morphia.query.UpdateResults;
+import org.smallmind.nutsnbolts.util.EmptyIterable;
 import org.smallmind.persistence.UpdateMode;
 import org.smallmind.persistence.cache.VectoredDao;
 import org.smallmind.persistence.orm.ORMDao;
@@ -199,27 +201,37 @@ public class MorphiaDao<I extends Serializable & Comparable<I>, D extends Morphi
 
   public long countByQuery (CountQueryDetails<D> queryDetails) {
 
-    return constructQuery(queryDetails).count(queryDetails.getCountOptions());
+    Query<D> constructedQuery;
+
+    return ((constructedQuery = constructQuery(queryDetails)) == null) ? 0 : constructedQuery.count(queryDetails.getCountOptions());
   }
 
   public D findByQuery (FindQueryDetails<D> queryDetails) {
 
-    return constructQuery(queryDetails).get(queryDetails.getFindOptions());
+    Query<D> constructedQuery;
+
+    return ((constructedQuery = constructQuery(queryDetails)) == null) ? null : constructedQuery.get(queryDetails.getFindOptions());
   }
 
   public List<D> listByQuery (FindQueryDetails<D> queryDetails) {
 
-    return constructQuery(queryDetails).asList(queryDetails.getFindOptions());
+    Query<D> constructedQuery;
+
+    return ((constructedQuery = constructQuery(queryDetails)) == null) ? Collections.emptyList() : constructedQuery.asList(queryDetails.getFindOptions());
   }
 
   public Iterable<D> scrollByQuery (FindQueryDetails<D> queryDetails) {
 
-    return new AutoCloseMorphiaIterable<>(constructQuery(queryDetails).fetch(queryDetails.getFindOptions()));
+    Query<D> constructedQuery;
+
+    return ((constructedQuery = constructQuery(queryDetails)) == null) ? new EmptyIterable<>() : new AutoCloseMorphiaIterable<>(constructedQuery.fetch(queryDetails.getFindOptions()));
   }
 
   public WriteResult deleteByQuery (DeleteQueryDetails<D> queryDetails) {
 
-    return getSession().getNativeSession().delete(constructQuery(queryDetails), queryDetails.getDeleteOptions());
+    Query<D> constructedQuery;
+
+    return ((constructedQuery = constructQuery(queryDetails)) == null) ? WriteResult.unacknowledged() : getSession().getNativeSession().delete(constructedQuery, queryDetails.getDeleteOptions());
   }
 
   public UpdateResults updateByQuery (UpdateQueryDetails<D> updateQueryDetails) {

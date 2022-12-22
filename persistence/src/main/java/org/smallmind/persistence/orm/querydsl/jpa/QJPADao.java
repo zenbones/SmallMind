@@ -50,6 +50,7 @@ import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.jpa.impl.JPADeleteClause;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAUpdateClause;
+import org.smallmind.nutsnbolts.util.EmptyIterable;
 import org.smallmind.nutsnbolts.util.IterableIterator;
 import org.smallmind.persistence.UpdateMode;
 import org.smallmind.persistence.cache.VectoredDao;
@@ -289,42 +290,58 @@ public class QJPADao<I extends Serializable & Comparable<I>, D extends JPADurabl
 
   public <T> long countByQuery (JPAQueryDetails<T> queryDetails) {
 
-    return constructQuery(queryDetails).fetchCount();
+    JPAQuery<T> constructedQuery;
+
+    return ((constructedQuery = constructQuery(queryDetails)) == null) ? 0 : constructedQuery.fetchCount();
   }
 
   public D findByQuery (JPAQueryDetails<D> queryDetails) {
 
-    return getManagedClass().cast(constructQuery(queryDetails).fetchOne());
+    JPAQuery<D> constructedQuery;
+
+    return ((constructedQuery = constructQuery(queryDetails)) == null) ? null : getManagedClass().cast(constructedQuery.fetchOne());
   }
 
   public <T> T findByQuery (Class<T> returnType, JPAQueryDetails<T> queryDetails) {
 
-    return returnType.cast(constructQuery(queryDetails).fetchOne());
+    JPAQuery<T> constructedQuery;
+
+    return ((constructedQuery = constructQuery(queryDetails)) == null) ? null : returnType.cast(constructedQuery.fetchOne());
   }
 
   public List<D> listByQuery (JPAQueryDetails<D> queryDetails) {
 
-    return Collections.checkedList(constructQuery(queryDetails).fetch(), getManagedClass());
+    JPAQuery<D> constructedQuery;
+
+    return ((constructedQuery = constructQuery(queryDetails)) == null) ? Collections.emptyList() : Collections.checkedList(constructedQuery.fetch(), getManagedClass());
   }
 
   public <T> List<T> listByQuery (Class<T> returnType, JPAQueryDetails<T> queryDetails) {
 
-    return Collections.checkedList(constructQuery(queryDetails).fetch(), returnType);
+    JPAQuery<T> constructedQuery;
+
+    return ((constructedQuery = constructQuery(queryDetails)) == null) ? Collections.emptyList() : Collections.checkedList(constructedQuery.fetch(), returnType);
   }
 
   public <T> Iterable<T> scrollByQuery (JPAQueryDetails<T> queryDetails) {
 
-    return new IterableIterator<>(constructQuery(queryDetails).iterate());
+    JPAQuery<T> constructedQuery;
+
+    return ((constructedQuery = constructQuery(queryDetails)) == null) ? new EmptyIterable<>() : new IterableIterator<>(constructedQuery.iterate());
   }
 
   public Long updateWithQuery (JPAUpdateDetails<D> updateDetails) {
 
-    return constructUpdate(updateDetails).execute();
+    JPAUpdateClause updateClause;
+
+    return ((updateClause = constructUpdate(updateDetails)) == null) ? 0 : updateClause.execute();
   }
 
   public Long deleteWithQuery (JPADeleteDetails<D> deleteDetails) {
 
-    return constructDelete(deleteDetails).execute();
+    JPADeleteClause deleteClause;
+
+    return ((deleteClause = constructDelete(deleteDetails)) == null) ? 0 : deleteClause.execute();
   }
 
   private <T> JPAQuery<T> constructQuery (JPAQueryDetails<T> queryDetails) {
