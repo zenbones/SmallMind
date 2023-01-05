@@ -17,6 +17,7 @@
     <property name="transactionManager" ref="batchPlatformTransactionManager"/>
     <property name="maxVarCharLength" value="2500"/>
     <property name="validateTransactionState" value="false"/>
+    <property name="isolationLevelForCreate" value="REPEATABLE_READ"/>
   </bean>
 
   <bean id="jobExplorer" class="org.springframework.batch.core.explore.support.JobExplorerFactoryBean">
