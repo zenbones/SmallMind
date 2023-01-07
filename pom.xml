@@ -109,8 +109,8 @@
     <maven.version>3.8.6</maven.version>
     <maven.aether.provider.version>3.3.9</maven.aether.provider.version>
     <maven.plugin.annotations.version>3.6.4</maven.plugin.annotations.version>
-    <mongodb.driver.version>3.5.0</mongodb.driver.version>
-    <mongodb.bson.version>3.5.0</mongodb.bson.version>
+    <mongodb.driver.version>3.12.11</mongodb.driver.version>
+    <mongodb.bson.version>4.8.1</mongodb.bson.version>
     <morphia.version>1.3.2</morphia.version>
     <msgpack.version>0.9.0</msgpack.version>
     <netty.version>4.1.70.Final</netty.version>
