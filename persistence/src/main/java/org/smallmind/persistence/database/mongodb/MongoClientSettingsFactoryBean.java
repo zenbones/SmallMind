@@ -42,7 +42,6 @@ import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcern;
 import org.bson.UuidRepresentation;
-import org.bson.codecs.UuidCodec;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.springframework.beans.factory.FactoryBean;
@@ -56,6 +55,7 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
   private final MongoClientSettings.Builder settingsBuilder;
   private MongoCredential mongoCredential;
   private ServerAddress[] serverAddresses;
+  private CodecRegistry[] codecRegistries;
   private ReadPreference readPreference;
   private ReadConcern readConcern;
   private WriteConcern writeConcern;
@@ -74,7 +74,7 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
 
     CodecRegistry codecRegistry;
 
-    codecRegistry = CodecRegistries.fromRegistries(CodecRegistries.fromCodecs(new UuidCodec(UuidRepresentation.STANDARD)), MongoClient.getDefaultCodecRegistry());
+    codecRegistry = CodecRegistries.fromRegistries(MongoClient.getDefaultCodecRegistry());
     settingsBuilder = MongoClientSettings.builder().codecRegistry(codecRegistry);
   }
 
@@ -86,6 +86,11 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
   public void setServerAddresses (ServerAddress[] serverAddresses) {
 
     this.serverAddresses = serverAddresses;
+  }
+
+  public void setCodecRegistries (CodecRegistry[] codecRegistries) {
+
+    this.codecRegistries = codecRegistries;
   }
 
   public void setReadPreference (ReadPreference readPreference) {
@@ -218,5 +223,9 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
       settingsBuilder.credential(mongoCredential);
     }
     settingsBuilder.uuidRepresentation(UuidRepresentation.STANDARD);
+
+    if ((codecRegistries != null) && (codecRegistries.length > 0)) {
+      settingsBuilder.codecRegistry(CodecRegistries.fromRegistries(CodecRegistries.fromRegistries(codecRegistries), MongoClient.getDefaultCodecRegistry()));
+    }
   }
 }
