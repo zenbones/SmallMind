@@ -51,6 +51,7 @@ import com.querydsl.jpa.impl.JPAUpdateClause;
 import jakarta.persistence.EntityGraph;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
+import org.smallmind.nutsnbolts.util.EmptyIterable;
 import org.smallmind.nutsnbolts.util.IterableIterator;
 import org.smallmind.persistence.UpdateMode;
 import org.smallmind.persistence.cache.VectoredDao;
