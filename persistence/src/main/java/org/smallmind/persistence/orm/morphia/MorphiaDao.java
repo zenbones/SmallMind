@@ -263,12 +263,7 @@ public class MorphiaDao<I extends Serializable & Comparable<I>, D extends Morphi
   public Query<D> constructQuery (QueryDetails<D> queryDetails) {
 
     Query<D> query = getSession().getNativeSession().find(getManagedClass());
-    Filter[] filters;
 
-    if ((filters = queryDetails.completeQuery()) != null) {
-      query.filter(filters);
-    }
-
-    return query;
+    return queryDetails.completeQuery(query);
   }
 }

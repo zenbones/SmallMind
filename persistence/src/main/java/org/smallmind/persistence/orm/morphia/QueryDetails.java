@@ -32,9 +32,9 @@
  */
 package org.smallmind.persistence.orm.morphia;
 
-import dev.morphia.query.filters.Filter;
+import dev.morphia.query.Query;
 
 public abstract class QueryDetails<D extends MorphiaDurable<?, D>> {
 
-  public abstract Filter[] completeQuery ();
+  public abstract Query<D> completeQuery (Query<D> query);
 }
