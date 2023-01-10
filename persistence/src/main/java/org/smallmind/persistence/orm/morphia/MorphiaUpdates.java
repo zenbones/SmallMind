@@ -52,6 +52,13 @@ public class MorphiaUpdates {
     return updateOperatorList.toArray(new UpdateOperator[0]);
   }
 
+  public MorphiaUpdates setOnInsert (String field, Object value) {
+
+    setOnInsertMap.put(field, value);
+
+    return this;
+  }
+
   public MorphiaUpdates set (String field, Object value) {
 
     updateOperatorList.add(UpdateOperators.set(field, value));
