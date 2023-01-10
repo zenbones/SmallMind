@@ -45,6 +45,7 @@ import dev.morphia.query.FindOptions;
 import dev.morphia.query.MorphiaCursor;
 import dev.morphia.query.Query;
 import dev.morphia.query.Sort;
+import dev.morphia.query.filters.Filter;
 import dev.morphia.query.filters.Filters;
 import org.smallmind.nutsnbolts.util.EmptyIterable;
 import org.smallmind.persistence.UpdateMode;
@@ -262,7 +263,12 @@ public class MorphiaDao<I extends Serializable & Comparable<I>, D extends Morphi
   public Query<D> constructQuery (QueryDetails<D> queryDetails) {
 
     Query<D> query = getSession().getNativeSession().find(getManagedClass());
+    Filter[] filters;
 
-    return queryDetails.completeQuery(query);
+    if ((filters = queryDetails.completeQuery()) != null) {
+      query.filter(filters);
+    }
+
+    return query;
   }
 }
