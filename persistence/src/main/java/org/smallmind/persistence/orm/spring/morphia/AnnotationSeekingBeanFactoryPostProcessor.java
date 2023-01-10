@@ -33,7 +33,7 @@
 package org.smallmind.persistence.orm.spring.morphia;
 
 import java.lang.annotation.Annotation;
-import org.mongodb.morphia.annotations.Entity;
+import dev.morphia.annotations.Entity;
 import org.smallmind.persistence.ManagedDao;
 import org.smallmind.persistence.orm.morphia.MorphiaDao;
 import org.smallmind.persistence.orm.spring.AbstractAnnotationSeekingBeanFactoryPostProcessor;

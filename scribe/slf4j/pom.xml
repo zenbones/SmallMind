@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>smallmind-scribe</artifactId>
-    <version>4.10.0-SNAPSHOT</version>
+    <version>5.0.0-SNAPSHOT</version>
   </parent>
   <artifactId>scribe-slf4j</artifactId>
   <name>Scribe-SLF4J</name>

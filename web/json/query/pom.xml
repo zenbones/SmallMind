@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>web-json</artifactId>
-    <version>4.10.0-SNAPSHOT</version>
+    <version>5.0.0-SNAPSHOT</version>
   </parent>
   <artifactId>web-json-query</artifactId>
   <packaging>jar</packaging>
@@ -43,8 +43,8 @@
       <optional>true</optional>
     </dependency>
     <dependency>
-      <groupId>org.mongodb.morphia</groupId>
-      <artifactId>morphia</artifactId>
+      <groupId>dev.morphia.morphia</groupId>
+      <artifactId>morphia-core</artifactId>
       <scope>compile</scope>
       <optional>true</optional>
     </dependency>

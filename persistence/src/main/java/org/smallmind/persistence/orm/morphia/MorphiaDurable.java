@@ -34,9 +34,8 @@ package org.smallmind.persistence.orm.morphia;
 
 import java.io.Serializable;
 import com.mongodb.DBObject;
-import org.mongodb.morphia.annotations.Id;
-import org.mongodb.morphia.annotations.PrePersist;
-import org.mongodb.morphia.annotations.PreSave;
+import dev.morphia.annotations.Id;
+import dev.morphia.annotations.PrePersist;
 import org.smallmind.persistence.AbstractDurable;
 
 public abstract class MorphiaDurable<I extends Serializable & Comparable<I>, D extends MorphiaDurable<I, D>> extends AbstractDurable<I, D> {
@@ -56,9 +55,8 @@ public abstract class MorphiaDurable<I extends Serializable & Comparable<I>, D e
     this.id = id;
   }
 
-  @PreSave
   @PrePersist
-  public void preSave (final DBObject dbObj) {
+  public void prePersist (final DBObject dbObj) {
 
     dbObj.removeField("overlayClass");
   }

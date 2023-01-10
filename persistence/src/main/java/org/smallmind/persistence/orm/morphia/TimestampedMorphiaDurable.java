@@ -34,8 +34,8 @@ package org.smallmind.persistence.orm.morphia;
 
 import java.io.Serializable;
 import java.util.Date;
-import org.mongodb.morphia.annotations.PrePersist;
-import org.mongodb.morphia.annotations.Property;
+import dev.morphia.annotations.PrePersist;
+import dev.morphia.annotations.Property;
 
 public abstract class TimestampedMorphiaDurable<I extends Serializable & Comparable<I>, D extends TimestampedMorphiaDurable<I, D>> extends MorphiaDurable<I, D> {
 

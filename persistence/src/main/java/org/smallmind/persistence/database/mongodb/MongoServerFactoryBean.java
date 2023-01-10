@@ -33,14 +33,15 @@
 package org.smallmind.persistence.database.mongodb;
 
 import java.util.LinkedList;
+import com.mongodb.ServerAddress;
 import org.smallmind.nutsnbolts.util.Spread;
 import org.smallmind.nutsnbolts.util.SpreadParserException;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
-public class MongoServerFactoryBean implements FactoryBean<MongoServer[]>, InitializingBean {
+public class MongoServerFactoryBean implements InitializingBean, FactoryBean<ServerAddress[]> {
 
-  private MongoServer[] serverArray;
+  private ServerAddress[] serverAddresses;
   private String serverPattern;
   private String serverSpread;
 
@@ -55,51 +56,51 @@ public class MongoServerFactoryBean implements FactoryBean<MongoServer[]>, Initi
   }
 
   @Override
-  public void afterPropertiesSet ()
-    throws SpreadParserException {
+  public boolean isSingleton () {
 
-    if ((serverPattern != null) && (serverPattern.length() > 0)) {
-
-      LinkedList<MongoServer> serverList = new LinkedList<>();
-      int colonPos = serverPattern.indexOf(':');
-      int poundPos;
-
-      if ((poundPos = serverPattern.indexOf('#')) < 0) {
-        if (colonPos >= 0) {
-          serverList.add(new MongoServer(serverPattern.substring(0, colonPos), Integer.parseInt(serverPattern.substring(colonPos + 1))));
-        } else {
-          serverList.add(new MongoServer(serverPattern, 27017));
-        }
-      } else {
-        for (String serverDesignator : Spread.calculate(serverSpread)) {
-          if (colonPos >= 0) {
-            serverList.add(new MongoServer(serverPattern.substring(0, poundPos) + serverDesignator + serverPattern.substring(poundPos + 1, colonPos), Integer.parseInt(serverPattern.substring(colonPos + 1))));
-          } else {
-            serverList.add(new MongoServer(serverPattern.substring(0, poundPos) + serverDesignator + serverPattern.substring(poundPos + 1), 27017));
-          }
-        }
-      }
-
-      serverArray = new MongoServer[serverList.size()];
-      serverList.toArray(serverArray);
-    }
-  }
-
-  @Override
-  public MongoServer[] getObject () {
-
-    return serverArray;
+    return true;
   }
 
   @Override
   public Class<?> getObjectType () {
 
-    return MongoServer[].class;
+    return ServerAddress[].class;
   }
 
   @Override
-  public boolean isSingleton () {
+  public ServerAddress[] getObject () {
 
-    return true;
+    return serverAddresses;
+  }
+
+  @Override
+  public void afterPropertiesSet ()
+    throws SpreadParserException {
+
+    if ((serverPattern != null) && (serverPattern.length() > 0)) {
+
+      LinkedList<ServerAddress> serverList = new LinkedList<>();
+      int colonPos = serverPattern.indexOf(':');
+      int poundPos;
+
+      if ((poundPos = serverPattern.indexOf('#')) < 0) {
+        if (colonPos >= 0) {
+          serverList.add(new ServerAddress(serverPattern.substring(0, colonPos), Integer.parseInt(serverPattern.substring(colonPos + 1))));
+        } else {
+          serverList.add(new ServerAddress(serverPattern, 27017));
+        }
+      } else {
+        for (String serverDesignator : Spread.calculate(serverSpread)) {
+          if (colonPos >= 0) {
+            serverList.add(new ServerAddress(serverPattern.substring(0, poundPos) + serverDesignator + serverPattern.substring(poundPos + 1, colonPos), Integer.parseInt(serverPattern.substring(colonPos + 1))));
+          } else {
+            serverList.add(new ServerAddress(serverPattern.substring(0, poundPos) + serverDesignator + serverPattern.substring(poundPos + 1), 27017));
+          }
+        }
+      }
+
+      serverAddresses = new ServerAddress[serverList.size()];
+      serverList.toArray(serverAddresses);
+    }
   }
 }

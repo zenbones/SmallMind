@@ -36,18 +36,16 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import com.mongodb.DBObject;
 import com.mongodb.WriteConcern;
-import com.mongodb.WriteResult;
-import com.mongodb.util.JSON;
-import org.mongodb.morphia.Datastore;
-import org.mongodb.morphia.InsertOptions;
-import org.mongodb.morphia.mapping.Mapper;
-import org.mongodb.morphia.query.FindOptions;
-import org.mongodb.morphia.query.Query;
-import org.mongodb.morphia.query.QueryImpl;
-import org.mongodb.morphia.query.UpdateOperations;
-import org.mongodb.morphia.query.UpdateResults;
+import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.UpdateResult;
+import dev.morphia.Datastore;
+import dev.morphia.InsertOneOptions;
+import dev.morphia.query.FindOptions;
+import dev.morphia.query.MorphiaCursor;
+import dev.morphia.query.Query;
+import dev.morphia.query.Sort;
+import dev.morphia.query.filters.Filters;
 import org.smallmind.nutsnbolts.util.EmptyIterable;
 import org.smallmind.persistence.UpdateMode;
 import org.smallmind.persistence.cache.VectoredDao;
@@ -97,75 +95,87 @@ public class MorphiaDao<I extends Serializable & Comparable<I>, D extends Morphi
   @Override
   public D acquire (Class<D> durableClass, I id) {
 
-    return (id == null) ? null : durableClass.cast(getSession().getNativeSession().get(durableClass, id));
+    return (id == null) ? null : durableClass.cast(getSession().getNativeSession().find(durableClass).filter(Filters.eq("_id", id)).first());
   }
 
   @Override
   public List<D> list () {
 
-    return getSession().getNativeSession().createQuery(getManagedClass()).asList();
+    try (MorphiaCursor<D> cursor = getSession().getNativeSession().find(getManagedClass()).iterator()) {
+
+      return cursor.toList();
+    }
   }
 
   @Override
   public List<D> list (int maxResults) {
 
-    return getSession().getNativeSession().createQuery(getManagedClass()).asList(new FindOptions().limit(maxResults));
+    try (MorphiaCursor<D> cursor = getSession().getNativeSession().find(getManagedClass()).iterator(new FindOptions().limit(maxResults))) {
+
+      return cursor.toList();
+    }
   }
 
   @Override
   public List<D> list (I greaterThan, int maxResults) {
 
-    return getSession().getNativeSession().createQuery(getManagedClass()).field(Mapper.ID_KEY).greaterThan(greaterThan).order(Mapper.ID_KEY).asList(new FindOptions().limit(maxResults));
+    try (MorphiaCursor<D> cursor = getSession().getNativeSession().find(getManagedClass()).filter(Filters.gt("_id", greaterThan)).iterator(new FindOptions().sort(Sort.ascending("_id")).limit(maxResults))) {
+
+      return cursor.toList();
+    }
   }
 
   @Override
   public List<D> list (Collection<I> idCollection) {
 
-    return getSession().getNativeSession().createQuery(getManagedClass()).field(Mapper.ID_KEY).in(idCollection).asList();
+    try (MorphiaCursor<D> cursor = getSession().getNativeSession().find(getManagedClass()).filter(Filters.in("_id", idCollection)).iterator()) {
+
+      return cursor.toList();
+    }
   }
 
   @Override
   public Iterable<D> scroll () {
 
-    return new AutoCloseMorphiaIterable<>(getSession().getNativeSession().createQuery(getManagedClass()).fetch());
+    return new AutoCloseMorphiaIterable<>(getSession().getNativeSession().find(getManagedClass()).iterator());
   }
 
   @Override
   public Iterable<D> scroll (int fetchSize) {
 
-    return new AutoCloseMorphiaIterable<>(getSession().getNativeSession().createQuery(getManagedClass()).fetch(new FindOptions().batchSize(fetchSize)));
+    return new AutoCloseMorphiaIterable<>(getSession().getNativeSession().find(getManagedClass()).iterator(new FindOptions().batchSize(fetchSize)));
   }
 
   @Override
   public Iterable<D> scrollById (final I greaterThan, final int fetchSize) {
 
-    return new AutoCloseMorphiaIterable<>(getSession().getNativeSession().createQuery(getManagedClass()).field(Mapper.ID_KEY).greaterThan(greaterThan).order(Mapper.ID_KEY).fetch(new FindOptions().batchSize(fetchSize)));
+    return new AutoCloseMorphiaIterable<>(getSession().getNativeSession().find(getManagedClass()).filter(Filters.gt("_id", greaterThan)).iterator(new FindOptions().sort(Sort.ascending("_id")).batchSize(fetchSize)));
   }
 
   @Override
   public long size () {
 
-    return getSession().getNativeSession().createQuery(getManagedClass()).count();
+    return getSession().getNativeSession().find(getManagedClass()).count();
   }
 
   @Override
   public D persist (Class<D> durableClass, D durable) {
 
-    return persist(durableClass, durable, new InsertOptions().writeConcern(WriteConcern.JOURNALED));
+    return persist(durableClass, durable, new InsertOneOptions().writeConcern(WriteConcern.JOURNALED));
   }
 
-  public D persist (D durable, InsertOptions insertOptions) {
+  public D persist (D durable, InsertOneOptions insertOneOptions) {
 
-    return persist(getManagedClass(), durable, insertOptions);
+    return persist(getManagedClass(), durable, insertOneOptions);
   }
 
-  public D persist (Class<D> durableClass, D durable, InsertOptions insertOptions) {
+  public D persist (Class<D> durableClass, D durable, InsertOneOptions insertOneOptions) {
 
     if (durable != null) {
 
       VectoredDao<I, D> vectoredDao = getVectoredDao();
 
-      getSession().getNativeSession().save(durable, insertOptions);
+      getSession().getNativeSession().save(durable, insertOneOptions);
 
       if (vectoredDao != null) {
 
@@ -185,7 +195,7 @@ public class MorphiaDao<I extends Serializable & Comparable<I>, D extends Morphi
 
       VectoredDao<I, D> vectoredDao = getVectoredDao();
 
-      getSession().getNativeSession().delete(durableClass, durable.getId());
+      getSession().getNativeSession().find(durableClass).filter(Filters.eq("_id", durable.getId())).delete();
 
       if (vectoredDao != null) {
         vectoredDao.delete(durableClass, durable);
@@ -210,51 +220,49 @@ public class MorphiaDao<I extends Serializable & Comparable<I>, D extends Morphi
 
     Query<D> constructedQuery;
 
-    return ((constructedQuery = constructQuery(queryDetails)) == null) ? null : constructedQuery.get(queryDetails.getFindOptions());
+    return ((constructedQuery = constructQuery(queryDetails)) == null) ? null : constructedQuery.first(queryDetails.getFindOptions());
   }
 
   public List<D> listByQuery (FindQueryDetails<D> queryDetails) {
 
     Query<D> constructedQuery;
 
-    return ((constructedQuery = constructQuery(queryDetails)) == null) ? Collections.emptyList() : constructedQuery.asList(queryDetails.getFindOptions());
+    if ((constructedQuery = constructQuery(queryDetails)) == null) {
+
+      return Collections.emptyList();
+    } else {
+      try (MorphiaCursor<D> cursor = constructedQuery.iterator(queryDetails.getFindOptions())) {
+
+        return cursor.toList();
+      }
+    }
   }
 
   public Iterable<D> scrollByQuery (FindQueryDetails<D> queryDetails) {
 
     Query<D> constructedQuery;
 
-    return ((constructedQuery = constructQuery(queryDetails)) == null) ? new EmptyIterable<>() : new AutoCloseMorphiaIterable<>(constructedQuery.fetch(queryDetails.getFindOptions()));
+    return ((constructedQuery = constructQuery(queryDetails)) == null) ? new EmptyIterable<>() : new AutoCloseMorphiaIterable<>(constructedQuery.iterator(queryDetails.getFindOptions()));
   }
 
-  public WriteResult deleteByQuery (DeleteQueryDetails<D> queryDetails) {
+  public DeleteResult deleteByQuery (DeleteQueryDetails<D> queryDetails) {
 
     Query<D> constructedQuery;
 
-    return ((constructedQuery = constructQuery(queryDetails)) == null) ? WriteResult.unacknowledged() : getSession().getNativeSession().delete(constructedQuery, queryDetails.getDeleteOptions());
+    return ((constructedQuery = constructQuery(queryDetails)) == null) ? DeleteResult.unacknowledged() : constructedQuery.delete(queryDetails.getDeleteOptions());
   }
 
-  public UpdateResults updateByQuery (UpdateQueryDetails<D> updateQueryDetails) {
+  public UpdateResult updateByQuery (UpdateQueryDetails<D> queryDetails) {
 
-    Query<D> query = getSession().getNativeSession().createQuery(getManagedClass());
-    UpdateOperations<D> update = getSession().getNativeSession().createUpdateOperations(getManagedClass());
+    Query<D> constructedQuery;
 
-    return getSession().getNativeSession().update(updateQueryDetails.completeQuery(query), updateQueryDetails.completeUpdates(update), updateQueryDetails.getUpdateOptions());
+    return ((constructedQuery = constructQuery(queryDetails)) == null) ? UpdateResult.unacknowledged() : constructedQuery.update(queryDetails.getUpdateOptions(), queryDetails.completeUpdates());
   }
 
   public Query<D> constructQuery (QueryDetails<D> queryDetails) {
 
-    Query<D> query = getSession().getNativeSession().createQuery(getManagedClass());
+    Query<D> query = getSession().getNativeSession().find(getManagedClass());
 
     return queryDetails.completeQuery(query);
-  }
-
-  public Query<D> constructRawQuery (String rawJson) {
-
-    Query<D> query = getSession().getNativeSession().createQuery(getManagedClass());
-
-    ((QueryImpl<?>)query).setQueryObject((DBObject)JSON.parse(rawJson));
-
-    return query;
   }
 }

@@ -32,50 +32,38 @@
  */
 package org.smallmind.persistence.database.mongodb;
 
-public class MongoDatabase {
+import com.mongodb.MongoCredential;
+import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.InitializingBean;
 
+public class MongoCredentialFactoryBean implements InitializingBean, FactoryBean<MongoCredential> {
+
+  private MongoCredential mongoCredential;
   private String user;
   private String password;
   private String database;
 
-  public MongoDatabase () {
+  @Override
+  public boolean isSingleton () {
 
+    return true;
   }
 
-  public MongoDatabase (String user, String password, String database) {
+  @Override
+  public Class<?> getObjectType () {
 
-    this.user = user;
-    this.password = password;
-    this.database = database;
+    return MongoCredential.class;
   }
 
-  public String getUser () {
+  @Override
+  public MongoCredential getObject () {
 
-    return user;
+    return mongoCredential;
   }
 
-  public void setUser (String user) {
+  @Override
+  public void afterPropertiesSet () {
 
-    this.user = user;
-  }
-
-  public String getPassword () {
-
-    return password;
-  }
-
-  public void setPassword (String password) {
-
-    this.password = password;
-  }
-
-  public String getDatabase () {
-
-    return database;
-  }
-
-  public void setDatabase (String database) {
-
-    this.database = database;
+    mongoCredential = MongoCredential.createCredential(user, database, password.toCharArray());
   }
 }

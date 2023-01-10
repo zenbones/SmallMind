@@ -34,23 +34,23 @@ package org.smallmind.persistence.orm.morphia;
 
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.mongodb.morphia.query.MorphiaIterator;
+import dev.morphia.query.MorphiaCursor;
 
 public class AutoCloseMorphiaIterable<T> implements Iterable<T>, AutoCloseable {
 
   private final AtomicBoolean closed = new AtomicBoolean(false);
-  private final MorphiaIterator<T, T> morphiaIterator;
+  private final MorphiaCursor<T> morphiaCursor;
 
-  public AutoCloseMorphiaIterable (MorphiaIterator<T, T> morphiaIterator) {
+  public AutoCloseMorphiaIterable (MorphiaCursor<T> morphiaCursor) {
 
-    this.morphiaIterator = morphiaIterator;
+    this.morphiaCursor = morphiaCursor;
   }
 
   @Override
   public void close () {
 
     if (closed.compareAndSet(false, true)) {
-      morphiaIterator.close();
+      morphiaCursor.close();
     }
   }
 
@@ -67,7 +67,7 @@ public class AutoCloseMorphiaIterable<T> implements Iterable<T>, AutoCloseable {
 
       boolean hasNext;
 
-      if (!(hasNext = morphiaIterator.hasNext())) {
+      if (!(hasNext = morphiaCursor.hasNext())) {
         close();
       }
 
@@ -77,13 +77,13 @@ public class AutoCloseMorphiaIterable<T> implements Iterable<T>, AutoCloseable {
     @Override
     public T next () {
 
-      return morphiaIterator.next();
+      return morphiaCursor.next();
     }
 
     @Override
     public void remove () {
 
-      morphiaIterator.remove();
+      morphiaCursor.remove();
     }
   }
 }

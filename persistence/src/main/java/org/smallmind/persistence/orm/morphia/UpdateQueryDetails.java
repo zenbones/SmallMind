@@ -32,8 +32,8 @@
  */
 package org.smallmind.persistence.orm.morphia;
 
-import org.mongodb.morphia.UpdateOptions;
-import org.mongodb.morphia.query.UpdateOperations;
+import dev.morphia.UpdateOptions;
+import dev.morphia.query.updates.UpdateOperator;
 
 public abstract class UpdateQueryDetails<D extends MorphiaDurable<?, D>> extends QueryDetails<D> {
 
@@ -53,5 +53,5 @@ public abstract class UpdateQueryDetails<D extends MorphiaDurable<?, D>> extends
     return (updateOptions == null) ? new UpdateOptions() : updateOptions;
   }
 
-  public abstract UpdateOperations<D> completeUpdates (UpdateOperations<D> update);
+  public abstract UpdateOperator[] completeUpdates ();
 }

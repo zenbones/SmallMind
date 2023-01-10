@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>smallmind</artifactId>
-    <version>4.10.0-SNAPSHOT</version>
+    <version>5.0.0-SNAPSHOT</version>
   </parent>
   <artifactId>smallmind-persistence</artifactId>
   <name>Persistence</name>
@@ -85,8 +85,8 @@
       <optional>true</optional>
     </dependency>
     <dependency>
-      <groupId>org.mongodb.morphia</groupId>
-      <artifactId>morphia</artifactId>
+      <groupId>dev.morphia.morphia</groupId>
+      <artifactId>morphia-core</artifactId>
       <scope>compile</scope>
       <optional>true</optional>
     </dependency>
