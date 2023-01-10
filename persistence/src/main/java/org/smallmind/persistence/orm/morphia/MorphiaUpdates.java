@@ -32,25 +32,65 @@
  */
 package org.smallmind.persistence.orm.morphia;
 
-import dev.morphia.UpdateOptions;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import dev.morphia.query.updates.UpdateOperator;
+import dev.morphia.query.updates.UpdateOperators;
 
-public abstract class UpdateQueryDetails<D extends MorphiaDurable<?, D>> extends QueryDetails<D> {
+public class MorphiaUpdates {
 
-  private UpdateOptions updateOptions;
+  private final LinkedList<UpdateOperator> updateOperatorList = new LinkedList<>();
+  private final HashMap<String, Object> setOnInsertMap = new HashMap<>();
 
-  public UpdateQueryDetails () {
+  public UpdateOperator[] getCollected () {
 
+    if (!setOnInsertMap.isEmpty()) {
+      updateOperatorList.add(UpdateOperators.setOnInsert(setOnInsertMap));
+    }
+
+    return updateOperatorList.toArray(new UpdateOperator[0]);
   }
 
-  public UpdateQueryDetails (UpdateOptions updateOptions) {
+  public MorphiaUpdates set (String field, Object value) {
 
-    this.updateOptions = updateOptions;
+    updateOperatorList.add(UpdateOperators.set(field, value));
+
+    return this;
   }
 
-  public UpdateOptions getUpdateOptions () {
+  public MorphiaUpdates unset (String field) {
 
-    return (updateOptions == null) ? new UpdateOptions() : updateOptions;
+    updateOperatorList.add(UpdateOperators.unset(field));
+
+    return this;
   }
 
-  public abstract MorphiaUpdates completeUpdates (MorphiaUpdates morphiaUpdates);
+  public MorphiaUpdates push (String field, Object value) {
+
+    updateOperatorList.add(UpdateOperators.push(field, value));
+
+    return this;
+  }
+
+  public MorphiaUpdates removeFirst (String field) {
+
+    updateOperatorList.add(UpdateOperators.pop(field).removeFirst());
+
+    return this;
+  }
+
+  public MorphiaUpdates removeLast (String field) {
+
+    updateOperatorList.add(UpdateOperators.pop(field));
+
+    return this;
+  }
+
+  public MorphiaUpdates removeAll (String field, Object value) {
+
+    updateOperatorList.add(UpdateOperators.pullAll(field, List.of(value)));
+
+    return this;
+  }
 }
