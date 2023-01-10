@@ -20,7 +20,7 @@
       </list>
     </property>
     <property name="clientOptions">
-      <bean class="org.smallmind.persistence.database.mongodb.MongoClientOptionsFactoryBean">
+      <bean class="org.smallmind.persistence.database.mongodb.MongoClientSettingsFactoryBean">
         <property name="connectionsPerHost" value="100"/>
         <property name="threadsAllowedToBlockForConnectionMultiplier" value="5"/>
       </bean>

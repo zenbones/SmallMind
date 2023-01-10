@@ -32,7 +32,7 @@
  */
 package org.smallmind.persistence.orm.morphia;
 
-import org.mongodb.morphia.DeleteOptions;
+import dev.morphia.DeleteOptions;
 
 public abstract class DeleteQueryDetails<D extends MorphiaDurable<?, D>> extends QueryDetails<D> {
 

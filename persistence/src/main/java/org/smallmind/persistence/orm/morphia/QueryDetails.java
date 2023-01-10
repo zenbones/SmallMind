@@ -32,7 +32,7 @@
  */
 package org.smallmind.persistence.orm.morphia;
 
-import org.mongodb.morphia.query.Query;
+import dev.morphia.query.Query;
 
 public abstract class QueryDetails<D extends MorphiaDurable<?, D>> {
 

@@ -32,7 +32,7 @@
  */
 package org.smallmind.persistence.orm.morphia;
 
-import org.mongodb.morphia.query.FindOptions;
+import dev.morphia.query.FindOptions;
 
 public abstract class FindQueryDetails<D extends MorphiaDurable<?, D>> extends QueryDetails<D> {
 

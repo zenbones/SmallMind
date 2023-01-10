@@ -32,8 +32,8 @@
  */
 package org.smallmind.persistence.orm.morphia;
 
-import org.mongodb.morphia.query.CountOptions;
-import org.mongodb.morphia.query.Query;
+import dev.morphia.query.CountOptions;
+import dev.morphia.query.Query;
 
 public abstract class CountQueryDetails<D extends MorphiaDurable<?, D>> extends QueryDetails<D> {
 

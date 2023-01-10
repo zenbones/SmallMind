@@ -34,9 +34,10 @@ package org.smallmind.web.json.query.morphia;
 
 import java.util.Arrays;
 import java.util.LinkedList;
-import org.mongodb.morphia.query.Criteria;
-import org.mongodb.morphia.query.FieldEnd;
-import org.mongodb.morphia.query.Query;
+import dev.morphia.query.FindOptions;
+import dev.morphia.query.Query;
+import dev.morphia.query.filters.Filter;
+import dev.morphia.query.filters.Filters;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.web.json.query.QueryProcessingException;
 import org.smallmind.web.json.query.Sort;
@@ -62,121 +63,119 @@ public class MorphiaQueryUtility {
   public static <T> Query<T> apply (Query<T> query, Where where, WhereFieldTransformer<Void, Void> fieldTransformer) {
 
     if (where != null) {
-      walkConjunction(query, where.getRootConjunction(), fieldTransformer);
+      query.filter(walkConjunction(where.getRootConjunction(), fieldTransformer));
     }
 
     return query;
   }
 
-  private static <T> Criteria walkConjunction (Query<T> query, WhereConjunction whereConjunction, WhereFieldTransformer<Void, Void> fieldTransformer) {
+  private static Filter walkConjunction (WhereConjunction whereConjunction, WhereFieldTransformer<Void, Void> fieldTransformer) {
 
     if ((whereConjunction == null) || whereConjunction.isEmpty()) {
 
       return null;
-    }
-
-    LinkedList<Criteria> criteriaList = new LinkedList<>();
-
-    for (WhereCriterion whereCriterion : whereConjunction.getCriteria()) {
-
-      Criteria criteria;
-
-      switch (whereCriterion.getCriterionType()) {
-        case CONJUNCTION:
-          if ((criteria = walkConjunction(query, (WhereConjunction)whereCriterion, fieldTransformer)) != null) {
-            criteriaList.add(criteria);
-          }
-          break;
-        case FIELD:
-          if ((criteria = walkField(query, (WhereField)whereCriterion, fieldTransformer)) != null) {
-            criteriaList.add(criteria);
-          }
-          break;
-        default:
-          throw new UnknownSwitchCaseException(whereCriterion.getCriterionType().name());
-      }
-    }
-
-    if (criteriaList.isEmpty()) {
-
-      return null;
     } else {
 
-      Criteria[] criteria;
+      LinkedList<Filter> filterList = new LinkedList<>();
 
-      criteria = new Criteria[criteriaList.size()];
-      criteriaList.toArray(criteria);
+      for (WhereCriterion whereCriterion : whereConjunction.getCriteria()) {
 
-      switch (whereConjunction.getConjunctionType()) {
-        case AND:
-          return query.and(criteria);
-        case OR:
-          return query.or(criteria);
-        default:
-          throw new UnknownSwitchCaseException(whereConjunction.getConjunctionType().name());
+        Filter filter;
+
+        switch (whereCriterion.getCriterionType()) {
+          case CONJUNCTION:
+            if ((filter = walkConjunction((WhereConjunction)whereCriterion, fieldTransformer)) != null) {
+              filterList.add(filter);
+            }
+            break;
+          case FIELD:
+            if ((filter = walkField((WhereField)whereCriterion, fieldTransformer)) != null) {
+              filterList.add(filter);
+            }
+            break;
+          default:
+            throw new UnknownSwitchCaseException(whereCriterion.getCriterionType().name());
+        }
+      }
+
+      if (filterList.isEmpty()) {
+
+        return null;
+      } else {
+
+        Filter[] filters = filterList.toArray(new Filter[0]);
+
+        switch (whereConjunction.getConjunctionType()) {
+          case AND:
+            return Filters.and(filters);
+          case OR:
+            return Filters.or(filters);
+          default:
+            throw new UnknownSwitchCaseException(whereConjunction.getConjunctionType().name());
+        }
       }
     }
   }
 
-  private static <T> Criteria walkField (Query<T> query, WhereField whereField, WhereFieldTransformer<Void, Void> fieldTransformer) {
+  private static Filter walkField (WhereField whereField, WhereFieldTransformer<Void, Void> fieldTransformer) {
 
-    FieldEnd<? extends Criteria> fieldEnd = query.criteria((fieldTransformer == null) ? whereField.getName() : fieldTransformer.transform(whereField.getEntity(), whereField.getName()).getField());
+    String fieldName = (fieldTransformer == null) ? whereField.getName() : fieldTransformer.transform(whereField.getEntity(), whereField.getName()).getField();
     Object fieldValue = whereField.getOperand().get();
 
     switch (whereField.getOperator()) {
       case LT:
-        return fieldEnd.lessThan(fieldValue);
+        return Filters.lt(fieldName, fieldValue);
       case LE:
-        return fieldEnd.lessThanOrEq(fieldValue);
+        return Filters.lte(fieldName, fieldValue);
       case EQ:
 
         Object equalValue;
 
-        return ((equalValue = fieldValue) == null) ? fieldEnd.doesNotExist() : fieldEnd.equal(equalValue);
+        return ((equalValue = fieldValue) == null) ? Filters.exists(fieldName).not() : Filters.eq(fieldName, equalValue);
       case NE:
 
         Object notEqualValue;
 
-        return ((notEqualValue = fieldValue) == null) ? fieldEnd.exists() : fieldEnd.notEqual(notEqualValue);
+        return ((notEqualValue = fieldValue) == null) ? Filters.exists(fieldName) : Filters.ne(fieldName, notEqualValue);
       case GE:
-        return fieldEnd.greaterThanOrEq(fieldValue);
+        return Filters.gte(fieldName, fieldValue);
       case GT:
-        return fieldEnd.greaterThan(fieldValue);
+        return Filters.gt(fieldName, fieldValue);
       case EXISTS:
-        return Boolean.TRUE.equals(fieldValue) ? fieldEnd.exists() : fieldEnd.doesNotExist();
+        return Boolean.TRUE.equals(fieldValue) ? Filters.exists(fieldName) : Filters.exists(fieldName).not();
       case LIKE:
 
         Object likeValue;
 
         if ((likeValue = fieldValue) == null) {
 
-          return fieldEnd.doesNotExist();
+          return Filters.exists(fieldName).not();
         } else if (!(likeValue instanceof String)) {
 
           throw new QueryProcessingException("The operation(%s) requires a String operand", WhereOperator.LIKE.name());
         } else {
           switch (((String)likeValue).length()) {
             case 0:
-              return fieldEnd.equal("");
+              return Filters.eq(fieldName, "");
             case 1:
-              return likeValue.equals(SINGLE_WILDCARD) ? fieldEnd.exists() : fieldEnd.equal(likeValue);
+              return likeValue.equals(SINGLE_WILDCARD) ? Filters.exists(fieldName) : Filters.eq(fieldName, likeValue);
             case 2:
-              return likeValue.equals(DOUBLE_WILDCARD) ? fieldEnd.exists() : (((String)likeValue).charAt(0) == WILDCARD_CHAR) ? fieldEnd.endsWith(((String)likeValue).substring(1)) : (((String)likeValue).charAt(1) == WILDCARD_CHAR) ? fieldEnd.startsWith(((String)likeValue).substring(0, 1)) : fieldEnd.equal(likeValue);
+              return likeValue.equals(DOUBLE_WILDCARD) ? Filters.exists(fieldName) : (((String)likeValue).charAt(0) == WILDCARD_CHAR) ? Filters.regex(fieldName).pattern(".*" + ((String)likeValue).substring(1)) : (((String)likeValue).charAt(1) == WILDCARD_CHAR) ? Filters.regex(fieldName).pattern(((String)likeValue).charAt(0) + ".*") : Filters.eq(fieldName, likeValue);
             default:
               if (((String)likeValue).substring(1, ((String)likeValue).length() - 1).indexOf(WILDCARD_CHAR) >= 0) {
                 throw new QueryProcessingException("The operation(%s) allows wildcards(%s) only at the start or end of the operand", WhereOperator.LIKE.name(), SINGLE_WILDCARD);
               } else if (((String)likeValue).startsWith(SINGLE_WILDCARD) && ((String)likeValue).endsWith(SINGLE_WILDCARD)) {
 
-                return fieldEnd.contains(((String)likeValue).substring(1, ((String)likeValue).length() - 1));
+                return Filters.regex(fieldName).pattern(".*" + ((String)likeValue).substring(1, ((String)likeValue).length() - 1) + ".*");
               } else if (((String)likeValue).startsWith(SINGLE_WILDCARD)) {
 
-                return fieldEnd.endsWith(((String)likeValue).substring(1));
+                return Filters.regex(fieldName).pattern(".*" + ((String)likeValue).substring(1));
               } else if (((String)likeValue).endsWith(SINGLE_WILDCARD)) {
 
-                return fieldEnd.startsWith(((String)likeValue).substring(0, ((String)likeValue).length() - 1));
+                return Filters.regex(fieldName).pattern(((String)likeValue).substring(0, ((String)likeValue).length() - 1) + ".*");
               } else {
 
-                return fieldEnd.equal(likeValue);
+                return Filters.eq(fieldName, likeValue);
               }
           }
         }
@@ -186,76 +185,73 @@ public class MorphiaQueryUtility {
 
         if ((unlikeValue = fieldValue) == null) {
 
-          return fieldEnd.exists();
+          return Filters.exists(fieldName);
         } else if (!(unlikeValue instanceof String)) {
 
           throw new QueryProcessingException("The operation(%s) requires a String operand", WhereOperator.UNLIKE.name());
         } else {
           switch (((String)unlikeValue).length()) {
             case 0:
-              return fieldEnd.notEqual("");
+              return Filters.ne(fieldName, "");
             case 1:
-              return unlikeValue.equals(SINGLE_WILDCARD) ? fieldEnd.doesNotExist() : fieldEnd.notEqual(unlikeValue);
+              return unlikeValue.equals(SINGLE_WILDCARD) ? Filters.exists(fieldName).not() : Filters.ne(fieldName, unlikeValue);
             case 2:
-              return unlikeValue.equals(DOUBLE_WILDCARD) ? fieldEnd.doesNotExist() : (((String)unlikeValue).charAt(0) == WILDCARD_CHAR) ? fieldEnd.not().endsWith(((String)unlikeValue).substring(1)) : (((String)unlikeValue).charAt(1) == WILDCARD_CHAR) ? fieldEnd.not().startsWith(((String)unlikeValue).substring(0, 1)) : fieldEnd.notEqual(unlikeValue);
+              return unlikeValue.equals(DOUBLE_WILDCARD) ? Filters.exists(fieldName).not() : (((String)unlikeValue).charAt(0) == WILDCARD_CHAR) ? Filters.regex(fieldName).pattern(".*" + ((String)unlikeValue).substring(1)).not() : (((String)unlikeValue).charAt(1) == WILDCARD_CHAR) ? Filters.regex(fieldName).pattern(((String)unlikeValue).charAt(0) + ".*").not() : Filters.ne(fieldName, unlikeValue);
             default:
               if (((String)unlikeValue).substring(1, ((String)unlikeValue).length() - 1).indexOf(WILDCARD_CHAR) >= 0) {
                 throw new QueryProcessingException("The operation(%s) allows wildcards(%s) only at the start or end of the operand", WhereOperator.UNLIKE.name(), SINGLE_WILDCARD);
               } else if (((String)unlikeValue).startsWith(SINGLE_WILDCARD) && ((String)unlikeValue).endsWith(SINGLE_WILDCARD)) {
 
-                return fieldEnd.not().contains(((String)unlikeValue).substring(1, ((String)unlikeValue).length() - 1));
+                return Filters.regex(fieldName).pattern(".*" + ((String)unlikeValue).substring(1, ((String)unlikeValue).length() - 1) + ".*").not();
               } else if (((String)unlikeValue).startsWith(SINGLE_WILDCARD)) {
 
-                return fieldEnd.not().endsWith(((String)unlikeValue).substring(1));
+                return Filters.regex(fieldName).pattern(".*" + ((String)unlikeValue).substring(1)).not();
               } else if (((String)unlikeValue).endsWith(SINGLE_WILDCARD)) {
 
-                return fieldEnd.not().startsWith(((String)unlikeValue).substring(0, ((String)unlikeValue).length() - 1));
+                return Filters.regex(fieldName).pattern(((String)unlikeValue).substring(0, ((String)unlikeValue).length() - 1) + ".*").not();
               } else {
 
-                return fieldEnd.notEqual(unlikeValue);
+                return Filters.ne(fieldName, unlikeValue);
               }
           }
         }
       case IN:
-        return fieldEnd.in(Arrays.asList((Object[])fieldValue));
+        return Filters.in(fieldName, Arrays.asList((Object[])fieldValue));
       default:
         throw new UnknownSwitchCaseException(whereField.getOperator().name());
     }
   }
 
-  public static <T> Query<T> apply (Query<T> query, Sort sort) {
+  public static FindOptions apply (FindOptions findOptions, Sort sort) {
 
-    return apply(query, sort, null);
+    return apply(findOptions, sort, null);
   }
 
-  public static <T> Query<T> apply (Query<T> query, Sort sort, WhereFieldTransformer<Void, Void> fieldTransformer) {
+  public static FindOptions apply (FindOptions findOptions, Sort sort, WhereFieldTransformer<Void, Void> fieldTransformer) {
 
     if ((sort != null) && (!sort.isEmpty())) {
 
-      StringBuilder sortBuilder = new StringBuilder();
+      LinkedList<dev.morphia.query.Sort> morphiaSortList = new LinkedList<>();
 
       for (SortField sortField : sort.getFields()) {
 
         String fieldName = (fieldTransformer == null) ? sortField.getName() : fieldTransformer.transform(sortField.getEntity(), sortField.getName()).getField();
 
-        if (sortBuilder.length() > 0) {
-          sortBuilder.append(", ");
-        }
         switch (sortField.getDirection()) {
           case ASC:
-            sortBuilder.append(fieldName);
+            morphiaSortList.add(dev.morphia.query.Sort.ascending(fieldName));
             break;
           case DESC:
-            sortBuilder.append('-').append(fieldName);
+            morphiaSortList.add(dev.morphia.query.Sort.descending(fieldName));
             break;
           default:
             throw new UnknownSwitchCaseException(sortField.getDirection().name());
         }
       }
 
-      return query.order(sortBuilder.toString());
+      return findOptions.sort(morphiaSortList.toArray(new dev.morphia.query.Sort[0]));
     }
 
-    return query;
+    return findOptions;
   }
 }

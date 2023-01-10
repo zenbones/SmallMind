@@ -32,7 +32,7 @@
  */
 package org.smallmind.persistence.orm.morphia;
 
-import org.mongodb.morphia.Datastore;
+import dev.morphia.Datastore;
 import org.smallmind.persistence.orm.ProxySession;
 
 public class MorphiaProxySession extends ProxySession<DataStoreFactory, Datastore> {

@@ -34,7 +34,7 @@ package org.smallmind.persistence.orm.spring.morphia;
 
 import java.util.LinkedList;
 import javax.management.StandardMBean;
-import org.mongodb.morphia.Datastore;
+import dev.morphia.Datastore;
 
 public class MorphiaIndexer extends StandardMBean implements MorphiaIndexingMXBean {
 

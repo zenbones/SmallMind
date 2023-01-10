@@ -32,11 +32,9 @@
  */
 package org.smallmind.persistence.orm.spring.morphia;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import com.mongodb.MongoClient;
-import org.mongodb.morphia.Datastore;
-import org.mongodb.morphia.Morphia;
+import com.mongodb.client.MongoClient;
+import dev.morphia.Datastore;
+import dev.morphia.Morphia;
 import org.smallmind.persistence.orm.morphia.DataStoreFactory;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
@@ -81,28 +79,30 @@ public class EntitySeekingDataStoreFactoryBean implements FactoryBean<DataStoreF
     this.ensureIndexes = ensureIndexes;
   }
 
-  public Class getObjectType () {
-
-    return DataStoreFactory.class;
-  }
-
+  @Override
   public boolean isSingleton () {
 
     return true;
   }
 
+  @Override
+  public Class<?> getObjectType () {
+
+    return DataStoreFactory.class;
+  }
+
+  @Override
   public DataStoreFactory getObject () {
 
     return dataStoreFactory;
   }
 
+  @Override
   public void afterPropertiesSet () {
 
-    Morphia morphia;
-    Datastore datastore;
+    Datastore datastore = Morphia.createDatastore(mongoClient, databaseName);
 
-    morphia = new Morphia(new HashSet<>(Arrays.asList(annotationSeekingBeanFactoryPostProcessor.getAnnotatedClasses(sessionSourceKey))));
-    datastore = morphia.createDatastore(mongoClient, databaseName);
+    datastore.getMapper().map(annotationSeekingBeanFactoryPostProcessor.getAnnotatedClasses(sessionSourceKey));
 
     if (ensureIndexes) {
       datastore.ensureIndexes();

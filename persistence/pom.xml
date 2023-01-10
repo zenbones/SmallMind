@@ -90,8 +90,8 @@
       <optional>true</optional>
     </dependency>
     <dependency>
-      <groupId>org.mongodb.morphia</groupId>
-      <artifactId>morphia</artifactId>
+      <groupId>dev.morphia.morphia</groupId>
+      <artifactId>morphia-core</artifactId>
       <scope>compile</scope>
       <optional>true</optional>
     </dependency>
