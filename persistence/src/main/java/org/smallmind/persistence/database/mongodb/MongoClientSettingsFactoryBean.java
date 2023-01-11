@@ -52,7 +52,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class MongoClientSettingsFactoryBean implements InitializingBean, FactoryBean<MongoClientSettings> {
 
-  private final MongoClientSettings.Builder settingsBuilder;
+  private MongoClientSettings.Builder settingsBuilder;
   private MongoCredential mongoCredential;
   private ServerAddress[] serverAddresses;
   private CodecRegistry[] codecRegistries;
@@ -69,14 +69,6 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
   private Integer connectionPoolMaxWaitTimeMilliseconds;
   private Integer connectionPoolMaxConnectionLifeTimeSeconds;
   private Integer connectionPoolMaxConnectionIdleTimeSeconds;
-
-  public MongoClientSettingsFactoryBean () {
-
-    CodecRegistry codecRegistry;
-
-    codecRegistry = CodecRegistries.fromRegistries(MongoClient.getDefaultCodecRegistry());
-    settingsBuilder = MongoClientSettings.builder().codecRegistry(codecRegistry);
-  }
 
   public void setMongoCredential (MongoCredential mongoCredential) {
 
@@ -167,7 +159,7 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
   @Override
   public Class<?> getObjectType () {
 
-    return MongoClientOptions.class;
+    return MongoClientSettings.class;
   }
 
   @Override
@@ -178,6 +170,8 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
 
   @Override
   public void afterPropertiesSet () {
+
+    settingsBuilder = MongoClientSettings.builder();
 
     if (socketConnectTimeoutMilliseconds != null) {
       settingsBuilder.applyToSocketSettings(builder -> builder.connectTimeout(socketConnectTimeoutMilliseconds, MILLISECONDS));

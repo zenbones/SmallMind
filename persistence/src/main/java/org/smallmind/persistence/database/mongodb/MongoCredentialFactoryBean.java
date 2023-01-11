@@ -43,6 +43,21 @@ public class MongoCredentialFactoryBean implements InitializingBean, FactoryBean
   private String password;
   private String database;
 
+  public void setUser (String user) {
+
+    this.user = user;
+  }
+
+  public void setPassword (String password) {
+
+    this.password = password;
+  }
+
+  public void setDatabase (String database) {
+
+    this.database = database;
+  }
+
   @Override
   public boolean isSingleton () {
 
