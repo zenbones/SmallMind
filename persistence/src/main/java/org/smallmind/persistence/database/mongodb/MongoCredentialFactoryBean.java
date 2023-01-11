@@ -41,7 +41,7 @@ public class MongoCredentialFactoryBean implements InitializingBean, FactoryBean
   private MongoCredential mongoCredential;
   private String user;
   private String password;
-  private String database;
+  private String source;
 
   public void setUser (String user) {
 
@@ -53,9 +53,9 @@ public class MongoCredentialFactoryBean implements InitializingBean, FactoryBean
     this.password = password;
   }
 
-  public void setDatabase (String database) {
+  public void setSource (String source) {
 
-    this.database = database;
+    this.source = source;
   }
 
   @Override
@@ -79,6 +79,6 @@ public class MongoCredentialFactoryBean implements InitializingBean, FactoryBean
   @Override
   public void afterPropertiesSet () {
 
-    mongoCredential = MongoCredential.createCredential(user, database, password.toCharArray());
+    mongoCredential = MongoCredential.createScramSha1Credential(user, source, password.toCharArray());
   }
 }
