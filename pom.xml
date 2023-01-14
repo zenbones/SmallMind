@@ -122,7 +122,7 @@
     <maven.source.plugin.version>3.2.1</maven.source.plugin.version>
     <maven.surefire.api.version>2.22.2</maven.surefire.api.version>
     <maven.version>3.8.6</maven.version>
-    <mongodb.driver.version>3.12.11</mongodb.driver.version>
+    <mongodb.driver.version>4.8.1</mongodb.driver.version>
     <mongodb.bson.version>4.8.1</mongodb.bson.version>
     <morphia.version>2.3.0</morphia.version>
     <msgpack.version>0.9.3</msgpack.version>
@@ -615,7 +615,7 @@
       </dependency>
       <dependency>
         <groupId>org.mongodb</groupId>
-        <artifactId>mongo-java-driver</artifactId>
+        <artifactId>mongodb-driver-sync</artifactId>
         <version>${mongodb.driver.version}</version>
       </dependency>
       <dependency>

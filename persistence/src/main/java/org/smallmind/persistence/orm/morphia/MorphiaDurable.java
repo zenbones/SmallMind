@@ -36,6 +36,7 @@ import java.io.Serializable;
 import com.mongodb.DBObject;
 import dev.morphia.annotations.Id;
 import dev.morphia.annotations.PrePersist;
+import org.bson.Document;
 import org.smallmind.persistence.AbstractDurable;
 
 public abstract class MorphiaDurable<I extends Serializable & Comparable<I>, D extends MorphiaDurable<I, D>> extends AbstractDurable<I, D> {
@@ -56,8 +57,8 @@ public abstract class MorphiaDurable<I extends Serializable & Comparable<I>, D e
   }
 
   @PrePersist
-  public void prePersist (final DBObject dbObj) {
+  public void prePersist (Document document) {
 
-    dbObj.removeField("overlayClass");
+    document.remove("overlayClass");
   }
 }
