@@ -124,9 +124,6 @@
     <maven.version>3.8.6</maven.version>
     <mongodb.driver.version>3.12.11</mongodb.driver.version>
     <mongodb.bson.version>4.8.1</mongodb.bson.version>
-    <!--
-    <morphia.version>2.3.0</morphia.version>
-    -->
     <morphia.version>2.3.0</morphia.version>
     <msgpack.version>0.9.3</msgpack.version>
     <netty.version>4.1.85.Final</netty.version>
