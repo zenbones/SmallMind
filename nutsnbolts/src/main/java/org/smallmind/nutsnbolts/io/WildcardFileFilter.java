@@ -42,7 +42,7 @@ public class WildcardFileFilter implements FileFilter {
 
   public WildcardFileFilter (String name) {
 
-    namePattern = Pattern.compile(RegExTranslator.translate(name));
+    namePattern = Pattern.compile(WilcardRegExTranslator.translate(name));
   }
 
   public boolean accept (File file) {

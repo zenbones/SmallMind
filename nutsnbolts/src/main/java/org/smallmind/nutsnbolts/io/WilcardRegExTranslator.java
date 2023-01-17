@@ -32,7 +32,7 @@
  */
 package org.smallmind.nutsnbolts.io;
 
-public class RegExTranslator {
+public class WilcardRegExTranslator {
 
   public static String translate (String pattern) {
 

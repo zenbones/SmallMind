@@ -41,7 +41,7 @@ public class WildcardPathFilter implements PathFilter {
 
   public WildcardPathFilter (String name) {
 
-    namePattern = Pattern.compile(RegExTranslator.translate(name));
+    namePattern = Pattern.compile(WilcardRegExTranslator.translate(name));
   }
 
   @Override

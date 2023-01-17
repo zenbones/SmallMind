@@ -3,13 +3,13 @@ package org.smallmind.license;
 import java.nio.file.Path;
 import java.util.regex.Pattern;
 
-public class PathTypeFilenameFilter implements PathFilter {
+public class WildcardPathFilter implements PathFilter {
 
   private final Pattern namePattern;
 
-  public PathTypeFilenameFilter (String name) {
+  public WildcardPathFilter (String name) {
 
-    namePattern = Pattern.compile(FileTypeRegExTranslator.translate(name));
+    namePattern = Pattern.compile(WildcardRegExTranslator.translate(name));
   }
 
   public boolean accept (Path path) {

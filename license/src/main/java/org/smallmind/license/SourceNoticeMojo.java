@@ -108,7 +108,7 @@ public class SourceNoticeMojo extends AbstractMojo {
 
         pathFilters = new PathFilter[rule.getFileTypes().length];
         for (int count = 0; count < pathFilters.length; count++) {
-          pathFilters[count] = new PathTypeFilenameFilter(rule.getFileTypes()[count]);
+          pathFilters[count] = new WildcardPathFilter(rule.getFileTypes()[count]);
         }
 
         stenciled = false;
