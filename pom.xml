@@ -121,7 +121,7 @@
     <maven.resolver.version>1.9.2</maven.resolver.version>
     <maven.source.plugin.version>3.2.1</maven.source.plugin.version>
     <maven.surefire.api.version>2.22.2</maven.surefire.api.version>
-    <maven.version>3.8.6</maven.version>
+    <maven.version>3.8.7</maven.version>
     <mongodb.driver.version>4.8.1</mongodb.driver.version>
     <mongodb.bson.version>4.8.1</mongodb.bson.version>
     <morphia.version>2.3.0</morphia.version>
