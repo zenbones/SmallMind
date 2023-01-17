@@ -36,8 +36,9 @@ import java.util.Arrays;
 import java.util.Set;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Path;
+import jakarta.validation.ValidationException;
 
-public class EntityValidationException extends javax.validation.ValidationException {
+public class EntityValidationException extends ValidationException {
 
   public <T> EntityValidationException (Set<ConstraintViolation<T>> constraintViolationSet) {
 
