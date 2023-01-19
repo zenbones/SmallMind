@@ -44,6 +44,7 @@ import org.smallmind.memcached.cubby.command.SetCommand;
 import org.smallmind.memcached.cubby.command.SetMode;
 import org.smallmind.memcached.cubby.response.Response;
 import org.smallmind.memcached.cubby.response.ResponseCode;
+import org.smallmind.scribe.pen.TestLoggerConfiguration;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -63,6 +64,8 @@ public class CubbyTest {
   @BeforeClass
   public void beforeClass ()
     throws Exception {
+
+    TestLoggerConfiguration.setup();
 
     client = new CubbyMemcachedClient(configuration, new MemcachedHost("0", new InetSocketAddress("localhost", 11211)));
     client.start();
