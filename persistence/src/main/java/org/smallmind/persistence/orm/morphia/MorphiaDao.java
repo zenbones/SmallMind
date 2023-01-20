@@ -256,7 +256,7 @@ public class MorphiaDao<I extends Serializable & Comparable<I>, D extends Morphi
 
     Query<D> constructedQuery;
 
-    return ((constructedQuery = constructQuery(queryDetails)) == null) ? UpdateResult.unacknowledged() : constructedQuery.update(queryDetails.getUpdateOptions(), queryDetails.completeUpdates(new MorphiaUpdates()).getCollected());
+    return ((constructedQuery = constructQuery(queryDetails)) == null) ? UpdateResult.unacknowledged() : constructedQuery.update(queryDetails.getUpdateOptions(), queryDetails.completeUpdates(new MorphiaUpdates<>(constructedQuery)).getCollected());
   }
 
   public Query<D> constructQuery (QueryDetails<D> queryDetails) {
