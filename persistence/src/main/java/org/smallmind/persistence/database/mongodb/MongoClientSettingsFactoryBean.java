@@ -55,7 +55,6 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
   private MongoClientSettings.Builder settingsBuilder;
   private MongoCredential mongoCredential;
   private ServerAddress[] serverAddresses;
-  private CodecRegistry[] codecRegistries;
   private ReadPreference readPreference;
   private ReadConcern readConcern;
   private WriteConcern writeConcern;
@@ -78,11 +77,6 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
   public void setServerAddresses (ServerAddress[] serverAddresses) {
 
     this.serverAddresses = serverAddresses;
-  }
-
-  public void setCodecRegistries (CodecRegistry[] codecRegistries) {
-
-    this.codecRegistries = codecRegistries;
   }
 
   public void setReadPreference (ReadPreference readPreference) {
@@ -217,9 +211,5 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
       settingsBuilder.credential(mongoCredential);
     }
     settingsBuilder.uuidRepresentation(UuidRepresentation.STANDARD);
-
-    if ((codecRegistries != null) && (codecRegistries.length > 0)) {
-      settingsBuilder.codecRegistry(CodecRegistries.fromRegistries(CodecRegistries.fromRegistries(codecRegistries), MongoClient.getDefaultCodecRegistry()));
-    }
   }
 }

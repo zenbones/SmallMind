@@ -35,6 +35,8 @@ package org.smallmind.persistence.orm.spring.morphia;
 import com.mongodb.client.MongoClient;
 import dev.morphia.Datastore;
 import dev.morphia.Morphia;
+import dev.morphia.mapping.MapperOptions;
+import org.bson.codecs.configuration.CodecProvider;
 import org.smallmind.persistence.orm.morphia.DataStoreFactory;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
@@ -45,6 +47,7 @@ public class EntitySeekingDataStoreFactoryBean implements FactoryBean<DataStoreF
   private AnnotationSeekingBeanFactoryPostProcessor annotationSeekingBeanFactoryPostProcessor;
   private MorphiaIndexer morphiaIndexer;
   private MongoClient mongoClient;
+  private CodecProvider codecProvider;
   private String sessionSourceKey;
   private String databaseName;
   private boolean ensureIndexes = false;
@@ -62,6 +65,11 @@ public class EntitySeekingDataStoreFactoryBean implements FactoryBean<DataStoreF
   public void setMongoClient (MongoClient mongoClient) {
 
     this.mongoClient = mongoClient;
+  }
+
+  public void setCodecProvider (CodecProvider codecProvider) {
+
+    this.codecProvider = codecProvider;
   }
 
   public void setDatabaseName (String databaseName) {
@@ -100,8 +108,14 @@ public class EntitySeekingDataStoreFactoryBean implements FactoryBean<DataStoreF
   @Override
   public void afterPropertiesSet () {
 
-    Datastore datastore = Morphia.createDatastore(mongoClient, databaseName);
+    Datastore datastore;
+    MapperOptions.Builder mapperOptionsBuilder = MapperOptions.builder();
 
+    if (codecProvider != null) {
+      mapperOptionsBuilder.codecProvider(codecProvider);
+    }
+
+    datastore = Morphia.createDatastore(mongoClient, databaseName, mapperOptionsBuilder.build());
     datastore.getMapper().map(annotationSeekingBeanFactoryPostProcessor.getAnnotatedClasses(sessionSourceKey));
 
     if (ensureIndexes) {
