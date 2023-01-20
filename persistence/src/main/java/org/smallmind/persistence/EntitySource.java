@@ -34,7 +34,7 @@ package org.smallmind.persistence;
 
 public enum EntitySource {
 
-  MYSQL("MySql"), MONGO("MongoDB"), TERRACOTTA("Terracotta"), MEMCACHED("Memcached"), EHCACHE("Ehcache"), CASSANDRA("Cassandra");
+  MYSQL("MySql"), MONGO("MongoDB"), MEMCACHED("Memcached"), EHCACHE("Ehcache"), CASSANDRA("Cassandra");
 
   private final String display;
 
