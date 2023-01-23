@@ -33,10 +33,10 @@
 package org.smallmind.web.jersey.cors.spring;
 
 import org.glassfish.jersey.server.ResourceConfig;
-import org.smallmind.web.jersey.cors.CorsResponseFilter;
+import org.smallmind.web.jersey.cors.CorsFilter;
 import org.smallmind.web.jersey.spring.PrioritizedResourceConfigExtension;
 
-public class CorsResponseExtension extends PrioritizedResourceConfigExtension {
+public class CorsExtension extends PrioritizedResourceConfigExtension {
 
   private String[] allowedHeaders;
   private String[] exposedHeaders;
@@ -54,7 +54,7 @@ public class CorsResponseExtension extends PrioritizedResourceConfigExtension {
   @Override
   public void apply (ResourceConfig resourceConfig) {
 
-    resourceConfig.register(new CorsResponseFilter(concatenateHeaders(allowedHeaders), concatenateHeaders(exposedHeaders)), getPriority());
+    resourceConfig.register(new CorsFilter(concatenateHeaders(allowedHeaders), concatenateHeaders(exposedHeaders)), getPriority());
   }
 
   private String concatenateHeaders (String[] headers) {
