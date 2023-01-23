@@ -69,7 +69,7 @@ public class CorsResponseExtension extends PrioritizedResourceConfigExtension {
 
       for (String header : headers) {
         if (!first) {
-          headerBuilder.append(", ");
+          headerBuilder.append(",");
         }
         headerBuilder.append(header);
         first = false;
