@@ -85,22 +85,25 @@ public class CorsFilter implements ContainerRequestFilter, ContainerResponseFilt
   @Override
   public void filter (ContainerRequestContext requestContext, ContainerResponseContext responseContext) {
 
-    String originHeader;
+    if (!"OPTIONS".equals(requestContext.getMethod())) {
 
-    if (((originHeader = requestContext.getHeaderString("Origin")) != null) && (!originHeader.isEmpty())) {
-      responseContext.getHeaders().add("Access-Control-Allow-Origin", originHeader);
-    } else {
-      responseContext.getHeaders().add("Access-Control-Allow-Origin", "*");
-    }
+      String originHeader;
 
-    if (allowedHeaders != null) {
-      responseContext.getHeaders().add("Access-Control-Allow-Headers", allowedHeaders);
-    }
-    if (exposedHeaders != null) {
-      responseContext.getHeaders().add("Access-Control-Expose-Headers", exposedHeaders);
-    }
+      if (((originHeader = requestContext.getHeaderString("Origin")) != null) && (!originHeader.isEmpty())) {
+        responseContext.getHeaders().add("Access-Control-Allow-Origin", originHeader);
+      } else {
+        responseContext.getHeaders().add("Access-Control-Allow-Origin", "*");
+      }
 
-    responseContext.getHeaders().add("Access-Control-Allow-Methods", "CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT");
-    responseContext.getHeaders().add("Access-Control-Allow-Credentials", "true");
+      if (allowedHeaders != null) {
+        responseContext.getHeaders().add("Access-Control-Allow-Headers", allowedHeaders);
+      }
+      if (exposedHeaders != null) {
+        responseContext.getHeaders().add("Access-Control-Expose-Headers", exposedHeaders);
+      }
+
+      responseContext.getHeaders().add("Access-Control-Allow-Methods", "CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT");
+      responseContext.getHeaders().add("Access-Control-Allow-Credentials", "true");
+    }
   }
 }
