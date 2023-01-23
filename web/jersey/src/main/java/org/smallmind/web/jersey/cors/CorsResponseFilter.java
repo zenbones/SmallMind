@@ -32,19 +32,52 @@
  */
 package org.smallmind.web.jersey.cors;
 
+import java.io.IOException;
 import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.ContainerResponseContext;
 import javax.ws.rs.container.ContainerResponseFilter;
+import javax.ws.rs.core.Response;
 
-public class CorsResponseFilter implements ContainerResponseFilter {
+public class CorsFilter implements ContainerRequestFilter, ContainerResponseFilter {
 
   private final String allowedHeaders;
   private final String exposedHeaders;
 
-  public CorsResponseFilter (String allowedHeaders, String exposedHeaders) {
+  public CorsFilter (String allowedHeaders, String exposedHeaders) {
 
     this.allowedHeaders = allowedHeaders;
     this.exposedHeaders = exposedHeaders;
+  }
+
+  @Override
+  public void filter (ContainerRequestContext requestContext)
+    throws IOException {
+
+    if ("OPTIONS".equals(requestContext.getMethod())) {
+
+      Response.ResponseBuilder responseBuilder = Response.ok();
+
+      String originHeader;
+
+      if (((originHeader = requestContext.getHeaderString("Origin")) != null) && (!originHeader.isEmpty())) {
+        responseBuilder.header("Access-Control-Allow-Origin", originHeader);
+      } else {
+        responseBuilder.header("Access-Control-Allow-Origin", "*");
+      }
+
+      if (allowedHeaders != null) {
+        responseBuilder.header("Access-Control-Allow-Headers", allowedHeaders);
+      }
+      if (exposedHeaders != null) {
+        responseBuilder.header("Access-Control-Expose-Headers", exposedHeaders);
+      }
+
+      responseBuilder.header("Access-Control-Allow-Methods", "CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT");
+      responseBuilder.header("Access-Control-Allow-Credentials", "true");
+
+      requestContext.abortWith(responseBuilder.build());
+    }
   }
 
   @Override
