@@ -30,42 +30,52 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.cors;
+package org.smallmind.web.jersey.cors.spring;
 
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ContainerResponseContext;
-import javax.ws.rs.container.ContainerResponseFilter;
+import org.glassfish.jersey.server.ResourceConfig;
+import org.smallmind.web.jersey.cors.CorsFilter;
+import org.smallmind.web.jersey.spring.PrioritizedResourceConfigExtension;
 
-public class CorsResponseFilter implements ContainerResponseFilter {
+public class CorsExtension extends PrioritizedResourceConfigExtension {
 
-  private final String allowedHeaders;
-  private final String exposedHeaders;
+  private String[] allowedHeaders;
+  private String[] exposedHeaders;
 
-  public CorsResponseFilter (String allowedHeaders, String exposedHeaders) {
+  public void setAllowedHeaders (String[] allowedHeaders) {
 
     this.allowedHeaders = allowedHeaders;
+  }
+
+  public void setExposedHeaders (String[] exposedHeaders) {
+
     this.exposedHeaders = exposedHeaders;
   }
 
   @Override
-  public void filter (ContainerRequestContext requestContext, ContainerResponseContext responseContext) {
+  public void apply (ResourceConfig resourceConfig) {
 
-    String originHeader;
+    resourceConfig.register(new CorsFilter(concatenateHeaders(allowedHeaders), concatenateHeaders(exposedHeaders)), getPriority());
+  }
 
-    if (((originHeader = requestContext.getHeaderString("Origin")) != null) && (!originHeader.isEmpty())) {
-      responseContext.getHeaders().add("Access-Control-Allow-Origin", originHeader);
+  private String concatenateHeaders (String[] headers) {
+
+    if ((headers == null) || (headers.length == 0)) {
+
+      return null;
     } else {
-      responseContext.getHeaders().add("Access-Control-Allow-Origin", "*");
-    }
 
-    if (allowedHeaders != null) {
-      responseContext.getHeaders().add("Access-Control-Allow-Headers", allowedHeaders);
-    }
-    if (exposedHeaders != null) {
-      responseContext.getHeaders().add("Access-Control-Expose-Headers", exposedHeaders);
-    }
+      StringBuilder headerBuilder = new StringBuilder();
+      boolean first = true;
 
-    responseContext.getHeaders().add("Access-Control-Allow-Methods", "DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT");
-    responseContext.getHeaders().add("Access-Control-Allow-Credentials", "true");
+      for (String header : headers) {
+        if (!first) {
+          headerBuilder.append(",");
+        }
+        headerBuilder.append(header);
+        first = false;
+      }
+
+      return headerBuilder.toString();
+    }
   }
 }
