@@ -34,9 +34,9 @@ package org.smallmind.persistence.orm.spring.data.mongo;
 
 import org.smallmind.persistence.orm.ProxyTransaction;
 
-public class MongoProxyTransaction extends ProxyTransaction<MongoProxySession> {
+public class MongoDataProxyTransaction extends ProxyTransaction<MongoDataProxySession> {
 
-  public MongoProxyTransaction (MongoProxySession proxySession) {
+  public MongoDataProxyTransaction (MongoDataProxySession proxySession) {
 
     super(proxySession);
   }

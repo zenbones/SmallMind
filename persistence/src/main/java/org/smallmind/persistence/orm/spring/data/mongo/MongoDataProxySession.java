@@ -35,28 +35,28 @@ package org.smallmind.persistence.orm.spring.data.mongo;
 import org.smallmind.persistence.orm.ProxySession;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
-public class MongoProxySession extends ProxySession<MongoTemplateFactory, MongoTemplate> {
+public class MongoDataProxySession extends ProxySession<MongoTemplateFactory, MongoTemplate> {
 
   private final MongoTemplateFactory mongoTemplateFactory;
-  private final MongoProxyTransaction proxyTransaction;
+  private final MongoDataProxyTransaction proxyTransaction;
 
-  public MongoProxySession (String dataSourceType, String sessionSourceKey, MongoTemplateFactory mongoTemplateFactory, boolean boundaryEnforced, boolean cacheEnabled) {
+  public MongoDataProxySession (String dataSourceType, String sessionSourceKey, MongoTemplateFactory mongoTemplateFactory, boolean boundaryEnforced, boolean cacheEnabled) {
 
     super(dataSourceType, sessionSourceKey, boundaryEnforced, cacheEnabled);
 
     this.mongoTemplateFactory = mongoTemplateFactory;
 
-    proxyTransaction = new MongoProxyTransaction(this);
+    proxyTransaction = new MongoDataProxyTransaction(this);
   }
 
   @Override
-  public MongoProxyTransaction currentTransaction () {
+  public MongoDataProxyTransaction currentTransaction () {
 
     return proxyTransaction;
   }
 
   @Override
-  public MongoProxyTransaction beginTransaction () {
+  public MongoDataProxyTransaction beginTransaction () {
 
     return proxyTransaction;
   }

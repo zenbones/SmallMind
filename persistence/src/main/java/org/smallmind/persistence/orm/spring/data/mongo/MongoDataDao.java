@@ -7,13 +7,8 @@ import java.util.List;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
-import dev.morphia.InsertOneOptions;
-import dev.morphia.query.FindOptions;
-import dev.morphia.query.MorphiaCursor;
-import dev.morphia.query.Query;
-import dev.morphia.query.Sort;
-import dev.morphia.query.filters.Filters;
 import org.smallmind.nutsnbolts.util.EmptyIterable;
+import org.smallmind.nutsnbolts.util.IterableIterator;
 import org.smallmind.persistence.UpdateMode;
 import org.smallmind.persistence.cache.VectoredDao;
 import org.smallmind.persistence.orm.ORMDao;
@@ -24,16 +19,19 @@ import org.smallmind.persistence.orm.morphia.FindQueryDetails;
 import org.smallmind.persistence.orm.morphia.MorphiaUpdates;
 import org.smallmind.persistence.orm.morphia.QueryDetails;
 import org.smallmind.persistence.orm.morphia.UpdateQueryDetails;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 
 public class MongoDataDao<I extends Serializable & Comparable<I>, D extends MongoDataDurable<I, D>> extends ORMDao<I, D, MongoTemplateFactory, MongoTemplate> {
 
-  public MongoDataDao (MongoProxySession proxySession) {
+  public MongoDataDao (MongoDataProxySession proxySession) {
 
     this(proxySession, null);
   }
 
-  public MongoDataDao (MongoProxySession proxySession, VectoredDao<I, D> vectoredDao) {
+  public MongoDataDao (MongoDataProxySession proxySession, VectoredDao<I, D> vectoredDao) {
 
     super(proxySession, vectoredDao);
   }
@@ -70,67 +68,55 @@ public class MongoDataDao<I extends Serializable & Comparable<I>, D extends Mong
   @Override
   public D acquire (Class<D> durableClass, I id) {
 
-    return (id == null) ? null : durableClass.cast(getSession().getNativeSession().find(durableClass).filter(Filters.eq("_id", id)).first());
+    return (id == null) ? null : durableClass.cast(getSession().getNativeSession().findOne(Query.query(Criteria.where("_id").is(id)), durableClass));
   }
 
   @Override
   public List<D> list () {
 
-    try (MorphiaCursor<D> cursor = getSession().getNativeSession().find(getManagedClass()).iterator()) {
-
-      return cursor.toList();
-    }
+    return getSession().getNativeSession().findAll(getManagedClass());
   }
 
   @Override
   public List<D> list (int maxResults) {
 
-    try (MorphiaCursor<D> cursor = getSession().getNativeSession().find(getManagedClass()).iterator(new FindOptions().limit(maxResults))) {
-
-      return cursor.toList();
-    }
+    return getSession().getNativeSession().find(new Query().limit(maxResults), getManagedClass());
   }
 
   @Override
   public List<D> list (I greaterThan, int maxResults) {
 
-    try (MorphiaCursor<D> cursor = getSession().getNativeSession().find(getManagedClass()).filter(Filters.gt("_id", greaterThan)).iterator(new FindOptions().sort(Sort.ascending("_id")).limit(maxResults))) {
-
-      return cursor.toList();
-    }
+    return getSession().getNativeSession().find(Query.query(Criteria.where("_id").gt(greaterThan)).with(Sort.by("_id").ascending()).limit(maxResults), getManagedClass());
   }
 
   @Override
   public List<D> list (Collection<I> idCollection) {
 
-    try (MorphiaCursor<D> cursor = getSession().getNativeSession().find(getManagedClass()).filter(Filters.in("_id", idCollection)).iterator()) {
-
-      return cursor.toList();
-    }
+    return getSession().getNativeSession().find(Query.query(Criteria.where("_id").in(idCollection)), getManagedClass());
   }
 
   @Override
   public Iterable<D> scroll () {
 
-    return new AutoCloseMorphiaIterable<>(getSession().getNativeSession().find(getManagedClass()).iterator());
+    return new IterableIterator<>(getSession().getNativeSession().stream(new Query(), getManagedClass()).iterator());
   }
 
   @Override
   public Iterable<D> scroll (int fetchSize) {
 
-    return new AutoCloseMorphiaIterable<>(getSession().getNativeSession().find(getManagedClass()).iterator(new FindOptions().batchSize(fetchSize)));
+    return new IterableIterator<>(getSession().getNativeSession().stream(new Query().cursorBatchSize(fetchSize), getManagedClass()).iterator());
   }
 
   @Override
   public Iterable<D> scrollById (final I greaterThan, final int fetchSize) {
 
-    return new AutoCloseMorphiaIterable<>(getSession().getNativeSession().find(getManagedClass()).filter(Filters.gt("_id", greaterThan)).iterator(new FindOptions().sort(Sort.ascending("_id")).batchSize(fetchSize)));
+    return new IterableIterator<>(getSession().getNativeSession().stream(Query.query(Criteria.where("_id").gt(greaterThan)).with(Sort.by("_id").ascending()).cursorBatchSize(fetchSize), getManagedClass()).iterator());
   }
 
   @Override
   public long size () {
 
-    return getSession().getNativeSession().find(getManagedClass()).count();
+    return getSession().getNativeSession().count();
   }
 
   @Override
