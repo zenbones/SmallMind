@@ -32,19 +32,25 @@
  */
 package org.smallmind.persistence.orm.spring.data.mongo;
 
-import org.springframework.data.mongodb.core.MongoTemplate;
+import java.lang.annotation.Annotation;
+import org.smallmind.persistence.ManagedDao;
+import org.smallmind.persistence.orm.spring.AbstractAnnotationSeekingBeanFactoryPostProcessor;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-public class MongoTemplateFactory {
+public class AnnotationSeekingBeanFactoryPostProcessor extends AbstractAnnotationSeekingBeanFactoryPostProcessor {
 
-  private final MongoTemplate mongoTemplate;
+  private static final Class<? extends ManagedDao<?, ?>>[] DAO_IMPLEMENTATIONS = new Class[] {MongoDataDao.class};
+  private static final Class<? extends Annotation>[] TARGET_ANNOTATIONS = new Class[] {Document.class};
 
-  public MongoTemplateFactory (MongoTemplate mongoTemplate) {
+  @Override
+  public Class<? extends ManagedDao<?, ?>>[] getDaoImplementations () {
 
-    this.mongoTemplate = mongoTemplate;
+    return DAO_IMPLEMENTATIONS;
   }
 
-  public MongoTemplate get () {
+  @Override
+  public Class<? extends Annotation>[] getTargetAnnotations () {
 
-    return mongoTemplate;
+    return TARGET_ANNOTATIONS;
   }
 }

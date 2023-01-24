@@ -94,6 +94,6 @@ public class MongoDataProxySession extends ProxySession<MongoTemplateFactory, Mo
   @Override
   public MongoTemplate getNativeSession () {
 
-    return mongoTemplateFactory.getMongoTemplate();
+    return mongoTemplateFactory.get();
   }
 }
