@@ -11,17 +11,11 @@ import org.smallmind.nutsnbolts.util.IterableIterator;
 import org.smallmind.persistence.UpdateMode;
 import org.smallmind.persistence.cache.VectoredDao;
 import org.smallmind.persistence.orm.ORMDao;
-import org.smallmind.persistence.orm.morphia.AutoCloseMorphiaIterable;
-import org.smallmind.persistence.orm.morphia.CountQueryDetails;
-import org.smallmind.persistence.orm.morphia.DeleteQueryDetails;
-import org.smallmind.persistence.orm.morphia.FindQueryDetails;
-import org.smallmind.persistence.orm.morphia.MorphiaUpdates;
-import org.smallmind.persistence.orm.morphia.QueryDetails;
-import org.smallmind.persistence.orm.morphia.UpdateQueryDetails;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 
 public class MongoDataDao<I extends Serializable & Comparable<I>, D extends MongoDataDurable<I, D>> extends ORMDao<I, D, MongoTemplateFactory, MongoTemplate> {
 
@@ -159,60 +153,56 @@ public class MongoDataDao<I extends Serializable & Comparable<I>, D extends Mong
     throw new UnsupportedOperationException("Morphia has no explicit detached state");
   }
 
-  public long countByQuery (CountQueryDetails<D> queryDetails) {
+  public long countByQuery (CountQueryDetails queryDetails) {
 
-    Query<D> constructedQuery;
+    Query constructedQuery;
 
-    return ((constructedQuery = constructQuery(queryDetails)) == null) ? 0 : constructedQuery.count(queryDetails.getCountOptions());
+    return ((constructedQuery = constructQuery(queryDetails)) == null) ? 0 : getSession().getNativeSession().count(constructedQuery, getManagedClass());
   }
 
-  public D findByQuery (FindQueryDetails<D> queryDetails) {
+  public D findByQuery (FindQueryDetails queryDetails) {
 
-    Query<D> constructedQuery;
+    Query constructedQuery;
 
-    return ((constructedQuery = constructQuery(queryDetails)) == null) ? null : constructedQuery.first(queryDetails.getFindOptions());
+    return ((constructedQuery = constructQuery(queryDetails)) == null) ? null : getSession().getNativeSession().findOne(constructedQuery, getManagedClass());
   }
 
-  public List<D> listByQuery (FindQueryDetails<D> queryDetails) {
+  public List<D> listByQuery (FindQueryDetails queryDetails) {
 
-    Query<D> constructedQuery;
+    Query constructedQuery;
 
     if ((constructedQuery = constructQuery(queryDetails)) == null) {
 
       return Collections.emptyList();
     } else {
-      try (MorphiaCursor<D> cursor = constructedQuery.iterator(queryDetails.getFindOptions())) {
 
-        return cursor.toList();
-      }
+      return getSession().getNativeSession().find(constructedQuery, getManagedClass());
     }
   }
 
-  public Iterable<D> scrollByQuery (FindQueryDetails<D> queryDetails) {
+  public Iterable<D> scrollByQuery (FindQueryDetails queryDetails) {
 
-    Query<D> constructedQuery;
+    Query constructedQuery;
 
-    return ((constructedQuery = constructQuery(queryDetails)) == null) ? new EmptyIterable<>() : new AutoCloseMorphiaIterable<>(constructedQuery.iterator(queryDetails.getFindOptions()));
+    return ((constructedQuery = constructQuery(queryDetails)) == null) ? new EmptyIterable<>() : new IterableIterator<>(getSession().getNativeSession().stream(constructedQuery, getManagedClass()).iterator());
   }
 
-  public DeleteResult deleteByQuery (DeleteQueryDetails<D> queryDetails) {
+  public DeleteResult deleteByQuery (DeleteQueryDetails queryDetails) {
 
-    Query<D> constructedQuery;
+    Query constructedQuery;
 
-    return ((constructedQuery = constructQuery(queryDetails)) == null) ? DeleteResult.unacknowledged() : constructedQuery.delete(queryDetails.getDeleteOptions());
+    return ((constructedQuery = constructQuery(queryDetails)) == null) ? DeleteResult.unacknowledged() : getSession().getNativeSession().remove(constructedQuery, getManagedClass());
   }
 
-  public UpdateResult updateByQuery (UpdateQueryDetails<D> queryDetails) {
+  public UpdateResult updateByQuery (UpdateQueryDetails queryDetails) {
 
-    Query<D> constructedQuery;
+    Query constructedQuery;
 
-    return ((constructedQuery = constructQuery(queryDetails)) == null) ? UpdateResult.unacknowledged() : constructedQuery.update(queryDetails.getUpdateOptions(), queryDetails.completeUpdates(new MorphiaUpdates<>(constructedQuery)).getCollected());
+    return ((constructedQuery = constructQuery(queryDetails)) == null) ? UpdateResult.unacknowledged() : getSession().getNativeSession().upsert(constructedQuery, queryDetails.completeUpdates(new Update()), getManagedClass());
   }
 
-  public Query<D> constructQuery (QueryDetails<D> queryDetails) {
+  public Query constructQuery (QueryDetails queryDetails) {
 
-    Query<D> query = getSession().getNativeSession().find(getManagedClass());
-
-    return queryDetails.completeQuery(query);
+    return queryDetails.completeQuery(new Query());
   }
 }
