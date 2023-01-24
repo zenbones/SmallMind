@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import com.mongodb.WriteConcern;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import org.smallmind.nutsnbolts.util.EmptyIterable;
@@ -116,27 +115,17 @@ public class MongoDataDao<I extends Serializable & Comparable<I>, D extends Mong
   @Override
   public long size () {
 
-    return getSession().getNativeSession().count();
+    return getSession().getNativeSession().count(new Query(), getManagedClass());
   }
 
   @Override
   public D persist (Class<D> durableClass, D durable) {
 
-    return persist(durableClass, durable, new InsertOneOptions().writeConcern(WriteConcern.JOURNALED));
-  }
-
-  public D persist (D durable, InsertOneOptions insertOneOptions) {
-
-    return persist(getManagedClass(), durable, insertOneOptions);
-  }
-
-  public D persist (Class<D> durableClass, D durable, InsertOneOptions insertOneOptions) {
-
     if (durable != null) {
 
       VectoredDao<I, D> vectoredDao = getVectoredDao();
 
-      getSession().getNativeSession().save(durable, insertOneOptions);
+      getSession().getNativeSession().save(durable);
 
       if (vectoredDao != null) {
 
@@ -156,7 +145,7 @@ public class MongoDataDao<I extends Serializable & Comparable<I>, D extends Mong
 
       VectoredDao<I, D> vectoredDao = getVectoredDao();
 
-      getSession().getNativeSession().find(durableClass).filter(Filters.eq("_id", durable.getId())).delete();
+      getSession().getNativeSession().remove(durable);
 
       if (vectoredDao != null) {
         vectoredDao.delete(durableClass, durable);
