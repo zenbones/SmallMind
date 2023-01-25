@@ -30,21 +30,21 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence;
+package org.smallmind.persistence.orm.spring.data.mongo;
 
-public enum EntitySource {
+import org.springframework.data.mongodb.core.MongoTemplate;
 
-  MYSQL("MySql"), MONGO("MongoDB"), MEMCACHED("Memcached"), EHCACHE("Ehcache"), CASSANDRA("Cassandra");
+public class MongoTemplateFactory {
 
-  private final String display;
+  private final MongoTemplate mongoTemplate;
 
-  EntitySource (String display) {
+  public MongoTemplateFactory (MongoTemplate mongoTemplate) {
 
-    this.display = display;
+    this.mongoTemplate = mongoTemplate;
   }
 
-  public String getDisplay () {
+  public MongoTemplate get () {
 
-    return display;
+    return mongoTemplate;
   }
 }

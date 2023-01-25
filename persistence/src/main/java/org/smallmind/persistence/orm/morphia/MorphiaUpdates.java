@@ -35,15 +35,22 @@ package org.smallmind.persistence.orm.morphia;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import dev.morphia.query.Query;
 import dev.morphia.query.updates.UpdateOperator;
 import dev.morphia.query.updates.UpdateOperators;
 
-public class MorphiaUpdates {
+public class MorphiaUpdates<T> {
 
+  private final Query<T> query;
   private final LinkedList<UpdateOperator> updateOperatorList = new LinkedList<>();
   private final HashMap<String, Object> setOnInsertMap = new HashMap<>();
 
-  public UpdateOperator[] getCollected () {
+  public MorphiaUpdates (Query<T> query) {
+
+    this.query = query;
+  }
+
+  protected UpdateOperator[] getCollected () {
 
     if (!setOnInsertMap.isEmpty()) {
       updateOperatorList.add(UpdateOperators.setOnInsert(setOnInsertMap));
@@ -52,49 +59,63 @@ public class MorphiaUpdates {
     return updateOperatorList.toArray(new UpdateOperator[0]);
   }
 
-  public MorphiaUpdates setOnInsert (String field, Object value) {
+  public MorphiaUpdates<T> disableValidation () {
+
+    query.disableValidation();
+
+    return this;
+  }
+
+  public MorphiaUpdates<T> enableValidation () {
+
+    query.enableValidation();
+
+    return this;
+  }
+
+  public MorphiaUpdates<T> setOnInsert (String field, Object value) {
 
     setOnInsertMap.put(field, value);
 
     return this;
   }
 
-  public MorphiaUpdates set (String field, Object value) {
+  public MorphiaUpdates<T> set (String field, Object value) {
 
     updateOperatorList.add(UpdateOperators.set(field, value));
 
     return this;
   }
 
-  public MorphiaUpdates unset (String field) {
+  public MorphiaUpdates<T> unset (String field) {
 
     updateOperatorList.add(UpdateOperators.unset(field));
 
     return this;
   }
 
-  public MorphiaUpdates push (String field, Object value) {
+  public MorphiaUpdates<T> push (String field, Object value) {
 
     updateOperatorList.add(UpdateOperators.push(field, value));
 
     return this;
   }
 
-  public MorphiaUpdates removeFirst (String field) {
+  public MorphiaUpdates<T> removeFirst (String field) {
 
     updateOperatorList.add(UpdateOperators.pop(field).removeFirst());
 
     return this;
   }
 
-  public MorphiaUpdates removeLast (String field) {
+  public MorphiaUpdates<T> removeLast (String field) {
 
     updateOperatorList.add(UpdateOperators.pop(field));
 
     return this;
   }
 
-  public MorphiaUpdates removeAll (String field, Object value) {
+  public MorphiaUpdates<T> removeAll (String field, Object value) {
 
     updateOperatorList.add(UpdateOperators.pullAll(field, List.of(value)));
 

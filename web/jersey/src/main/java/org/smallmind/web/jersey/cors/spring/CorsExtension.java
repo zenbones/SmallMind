@@ -30,21 +30,52 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence;
+package org.smallmind.web.jersey.cors.spring;
 
-public enum EntitySource {
+import org.glassfish.jersey.server.ResourceConfig;
+import org.smallmind.web.jersey.cors.CorsFilter;
+import org.smallmind.web.jersey.spring.PrioritizedResourceConfigExtension;
 
-  MYSQL("MySql"), MONGO("MongoDB"), MEMCACHED("Memcached"), EHCACHE("Ehcache"), CASSANDRA("Cassandra");
+public class CorsExtension extends PrioritizedResourceConfigExtension {
 
-  private final String display;
+  private String[] allowedHeaders;
+  private String[] exposedHeaders;
 
-  EntitySource (String display) {
+  public void setAllowedHeaders (String[] allowedHeaders) {
 
-    this.display = display;
+    this.allowedHeaders = allowedHeaders;
   }
 
-  public String getDisplay () {
+  public void setExposedHeaders (String[] exposedHeaders) {
 
-    return display;
+    this.exposedHeaders = exposedHeaders;
+  }
+
+  @Override
+  public void apply (ResourceConfig resourceConfig) {
+
+    resourceConfig.register(new CorsFilter(concatenateHeaders(allowedHeaders), concatenateHeaders(exposedHeaders)), getPriority());
+  }
+
+  private String concatenateHeaders (String[] headers) {
+
+    if ((headers == null) || (headers.length == 0)) {
+
+      return null;
+    } else {
+
+      StringBuilder headerBuilder = new StringBuilder();
+      boolean first = true;
+
+      for (String header : headers) {
+        if (!first) {
+          headerBuilder.append(",");
+        }
+        headerBuilder.append(header);
+        first = false;
+      }
+
+      return headerBuilder.toString();
+    }
   }
 }

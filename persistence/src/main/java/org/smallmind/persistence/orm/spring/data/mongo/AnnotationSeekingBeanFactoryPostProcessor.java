@@ -30,21 +30,27 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence;
+package org.smallmind.persistence.orm.spring.data.mongo;
 
-public enum EntitySource {
+import java.lang.annotation.Annotation;
+import org.smallmind.persistence.ManagedDao;
+import org.smallmind.persistence.orm.spring.AbstractAnnotationSeekingBeanFactoryPostProcessor;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-  MYSQL("MySql"), MONGO("MongoDB"), MEMCACHED("Memcached"), EHCACHE("Ehcache"), CASSANDRA("Cassandra");
+public class AnnotationSeekingBeanFactoryPostProcessor extends AbstractAnnotationSeekingBeanFactoryPostProcessor {
 
-  private final String display;
+  private static final Class<? extends ManagedDao<?, ?>>[] DAO_IMPLEMENTATIONS = new Class[] {MongoDataDao.class};
+  private static final Class<? extends Annotation>[] TARGET_ANNOTATIONS = new Class[] {Document.class};
 
-  EntitySource (String display) {
+  @Override
+  public Class<? extends ManagedDao<?, ?>>[] getDaoImplementations () {
 
-    this.display = display;
+    return DAO_IMPLEMENTATIONS;
   }
 
-  public String getDisplay () {
+  @Override
+  public Class<? extends Annotation>[] getTargetAnnotations () {
 
-    return display;
+    return TARGET_ANNOTATIONS;
   }
 }

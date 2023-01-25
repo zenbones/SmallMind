@@ -30,21 +30,16 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence;
+package org.smallmind.persistence.orm.spring.data.mongo.internal;
 
-public enum EntitySource {
+import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
 
-  MYSQL("MySql"), MONGO("MongoDB"), MEMCACHED("Memcached"), EHCACHE("Ehcache"), CASSANDRA("Cassandra");
+public class MongoDataMappingContext extends MongoMappingContext {
 
-  private final String display;
+  public void addEntities (Class[] entityClasses) {
 
-  EntitySource (String display) {
-
-    this.display = display;
-  }
-
-  public String getDisplay () {
-
-    return display;
+    for (Class<?> entityClass : entityClasses) {
+      addPersistentEntity(entityClass);
+    }
   }
 }

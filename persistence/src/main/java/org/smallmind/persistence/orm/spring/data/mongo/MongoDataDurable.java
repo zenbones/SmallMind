@@ -30,21 +30,32 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence;
+package org.smallmind.persistence.orm.spring.data.mongo;
 
-public enum EntitySource {
+import java.io.Serializable;
+import com.mongodb.DBObject;
+import org.smallmind.persistence.AbstractDurable;
+import org.springframework.data.annotation.Id;
 
-  MYSQL("MySql"), MONGO("MongoDB"), MEMCACHED("Memcached"), EHCACHE("Ehcache"), CASSANDRA("Cassandra");
+public class MongoDataDurable<I extends Serializable & Comparable<I>, D extends MongoDataDurable<I, D>> extends AbstractDurable<I, D> {
 
-  private final String display;
+  @Id
+  private I id;
 
-  EntitySource (String display) {
+  @Override
+  public I getId () {
 
-    this.display = display;
+    return id;
   }
 
-  public String getDisplay () {
+  @Override
+  public void setId (I id) {
 
-    return display;
+    this.id = id;
+  }
+
+  public void preSave (final DBObject dbObj) {
+
+    dbObj.removeField("overlayClass");
   }
 }

@@ -30,21 +30,37 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence;
+package org.smallmind.persistence.orm.spring.data.mongo.internal;
 
-public enum EntitySource {
+import java.util.Collections;
+import org.springframework.data.mongodb.MongoDatabaseFactory;
+import org.springframework.data.mongodb.core.convert.DefaultDbRefResolver;
+import org.springframework.data.mongodb.core.convert.MappingMongoConverter;
+import org.springframework.data.mongodb.core.convert.MongoCustomConversions;
 
-  MYSQL("MySql"), MONGO("MongoDB"), MEMCACHED("Memcached"), EHCACHE("Ehcache"), CASSANDRA("Cassandra");
+public class MongoDataConverter extends MappingMongoConverter {
 
-  private final String display;
+  public MongoDataConverter (MongoDatabaseFactory factory, boolean ensureIndexes, Class... entityClasses) {
 
-  EntitySource (String display) {
+    super(new DefaultDbRefResolver(factory), createMappingContext(ensureIndexes));
 
-    this.display = display;
+    setCustomConversions(conversions);
+    setCodecRegistryProvider(factory);
+
+    afterPropertiesSet();
   }
 
-  public String getDisplay () {
+  private static MongoDataMappingContext createMappingContext (boolean ensureIndexes, Class... entityClasses) {
 
-    return display;
+    MongoCustomConversions conversions = new MongoCustomConversions(Collections.emptyList());
+    MongoDataMappingContext mappingContext = new MongoDataMappingContext();
+
+    mappingContext.setSimpleTypeHolder(conversions.getSimpleTypeHolder());
+    mappingContext.setAutoIndexCreation(ensureIndexes);
+    mappingContext.addEntities(entityClasses);
+
+    mappingContext.afterPropertiesSet();
+
+    return mappingContext;
   }
 }

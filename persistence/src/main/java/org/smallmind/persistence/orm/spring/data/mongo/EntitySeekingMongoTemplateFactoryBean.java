@@ -30,22 +30,21 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.spring.morphia;
+package org.smallmind.persistence.orm.spring.data.mongo;
 
 import com.mongodb.client.MongoClient;
-import dev.morphia.Datastore;
-import dev.morphia.Morphia;
-import dev.morphia.mapping.MapperOptions;
 import org.bson.codecs.configuration.CodecProvider;
-import org.smallmind.persistence.orm.morphia.DataStoreFactory;
+import org.smallmind.persistence.orm.spring.data.mongo.internal.MongoDataConverter;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.data.mongodb.MongoDatabaseFactory;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.SimpleMongoClientDatabaseFactory;
 
-public class EntitySeekingDataStoreFactoryBean implements FactoryBean<DataStoreFactory>, InitializingBean {
+public class EntitySeekingMongoTemplateFactoryBean implements FactoryBean<MongoTemplateFactory>, InitializingBean {
 
-  private DataStoreFactory dataStoreFactory;
+  private MongoTemplateFactory mongoTemplateFactory;
   private AnnotationSeekingBeanFactoryPostProcessor annotationSeekingBeanFactoryPostProcessor;
-  private MorphiaIndexer morphiaIndexer;
   private MongoClient mongoClient;
   private CodecProvider codecProvider;
   private String sessionSourceKey;
@@ -55,11 +54,6 @@ public class EntitySeekingDataStoreFactoryBean implements FactoryBean<DataStoreF
   public void setAnnotationSeekingBeanFactoryPostProcessor (AnnotationSeekingBeanFactoryPostProcessor annotationSeekingBeanFactoryPostProcessor) {
 
     this.annotationSeekingBeanFactoryPostProcessor = annotationSeekingBeanFactoryPostProcessor;
-  }
-
-  public void setMorphiaIndexer (MorphiaIndexer morphiaIndexer) {
-
-    this.morphiaIndexer = morphiaIndexer;
   }
 
   public void setMongoClient (MongoClient mongoClient) {
@@ -96,34 +90,22 @@ public class EntitySeekingDataStoreFactoryBean implements FactoryBean<DataStoreF
   @Override
   public Class<?> getObjectType () {
 
-    return DataStoreFactory.class;
+    return MongoTemplateFactory.class;
   }
 
   @Override
-  public DataStoreFactory getObject () {
+  public MongoTemplateFactory getObject ()
+    throws Exception {
 
-    return dataStoreFactory;
+    return mongoTemplateFactory;
   }
 
   @Override
   public void afterPropertiesSet () {
 
-    Datastore datastore;
-    MapperOptions.Builder mapperOptionsBuilder = MapperOptions.builder();
+    MongoDatabaseFactory mongoDatabaseFactory = new SimpleMongoClientDatabaseFactory(mongoClient, databaseName);
+    MongoTemplate mongoTemplate = new MongoTemplate(mongoDatabaseFactory, new MongoDataConverter(mongoDatabaseFactory, ensureIndexes, annotationSeekingBeanFactoryPostProcessor.getAnnotatedClasses(sessionSourceKey)));
 
-    if (codecProvider != null) {
-      mapperOptionsBuilder.codecProvider(codecProvider);
-    }
-
-    datastore = Morphia.createDatastore(mongoClient, databaseName, mapperOptionsBuilder.build());
-    datastore.getMapper().map(annotationSeekingBeanFactoryPostProcessor.getAnnotatedClasses(sessionSourceKey));
-
-    if (ensureIndexes) {
-      datastore.ensureIndexes();
-    } else if (morphiaIndexer != null) {
-      morphiaIndexer.registerDatastore(datastore);
-    }
-
-    dataStoreFactory = new DataStoreFactory(datastore);
+    mongoTemplateFactory = new MongoTemplateFactory(mongoTemplate);
   }
 }

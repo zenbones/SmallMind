@@ -52,5 +52,5 @@ public abstract class UpdateQueryDetails<D extends MorphiaDurable<?, D>> extends
     return (updateOptions == null) ? new UpdateOptions() : updateOptions;
   }
 
-  public abstract MorphiaUpdates completeUpdates (MorphiaUpdates morphiaUpdates);
+  public abstract MorphiaUpdates<D> completeUpdates (MorphiaUpdates<D> morphiaUpdates);
 }

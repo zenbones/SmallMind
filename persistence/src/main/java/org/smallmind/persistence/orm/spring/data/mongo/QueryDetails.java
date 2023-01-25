@@ -30,52 +30,11 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.cors.spring;
+package org.smallmind.persistence.orm.spring.data.mongo;
 
-import org.glassfish.jersey.server.ResourceConfig;
-import org.smallmind.web.jersey.cors.CorsResponseFilter;
-import org.smallmind.web.jersey.spring.PrioritizedResourceConfigExtension;
+import org.springframework.data.mongodb.core.query.Query;
 
-public class CorsResponseExtension extends PrioritizedResourceConfigExtension {
+public abstract class QueryDetails {
 
-  private String[] allowedHeaders;
-  private String[] exposedHeaders;
-
-  public void setAllowedHeaders (String[] allowedHeaders) {
-
-    this.allowedHeaders = allowedHeaders;
-  }
-
-  public void setExposedHeaders (String[] exposedHeaders) {
-
-    this.exposedHeaders = exposedHeaders;
-  }
-
-  @Override
-  public void apply (ResourceConfig resourceConfig) {
-
-    resourceConfig.register(new CorsResponseFilter(concatenateHeaders(allowedHeaders), concatenateHeaders(exposedHeaders)), getPriority());
-  }
-
-  private String concatenateHeaders (String[] headers) {
-
-    if ((headers == null) || (headers.length == 0)) {
-
-      return null;
-    } else {
-
-      StringBuilder headerBuilder = new StringBuilder();
-      boolean first = true;
-
-      for (String header : headers) {
-        if (!first) {
-          headerBuilder.append(", ");
-        }
-        headerBuilder.append(header);
-        first = false;
-      }
-
-      return headerBuilder.toString();
-    }
-  }
+  public abstract Query completeQuery (Query query);
 }

@@ -30,21 +30,35 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence;
+package org.smallmind.persistence.orm.spring.data.mongo;
 
-public enum EntitySource {
+import org.smallmind.persistence.orm.ProxyTransaction;
 
-  MYSQL("MySql"), MONGO("MongoDB"), MEMCACHED("Memcached"), EHCACHE("Ehcache"), CASSANDRA("Cassandra");
+public class MongoDataProxyTransaction extends ProxyTransaction<MongoDataProxySession> {
 
-  private final String display;
+  public MongoDataProxyTransaction (MongoDataProxySession proxySession) {
 
-  EntitySource (String display) {
-
-    this.display = display;
+    super(proxySession);
   }
 
-  public String getDisplay () {
+  @Override
+  public boolean isCompleted () {
 
-    return display;
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void flush () {
+
+  }
+
+  @Override
+  public void commit () {
+
+  }
+
+  @Override
+  public void rollback () {
+
   }
 }

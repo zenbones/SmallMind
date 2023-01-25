@@ -33,8 +33,6 @@
 package org.smallmind.persistence.database.mongodb;
 
 import java.util.Arrays;
-import com.mongodb.MongoClient;
-import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCredential;
 import com.mongodb.ReadConcern;
@@ -42,8 +40,6 @@ import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcern;
 import org.bson.UuidRepresentation;
-import org.bson.codecs.configuration.CodecRegistries;
-import org.bson.codecs.configuration.CodecRegistry;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
@@ -55,7 +51,6 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
   private MongoClientSettings.Builder settingsBuilder;
   private MongoCredential mongoCredential;
   private ServerAddress[] serverAddresses;
-  private CodecRegistry[] codecRegistries;
   private ReadPreference readPreference;
   private ReadConcern readConcern;
   private WriteConcern writeConcern;
@@ -78,11 +73,6 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
   public void setServerAddresses (ServerAddress[] serverAddresses) {
 
     this.serverAddresses = serverAddresses;
-  }
-
-  public void setCodecRegistries (CodecRegistry[] codecRegistries) {
-
-    this.codecRegistries = codecRegistries;
   }
 
   public void setReadPreference (ReadPreference readPreference) {
@@ -217,9 +207,5 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
       settingsBuilder.credential(mongoCredential);
     }
     settingsBuilder.uuidRepresentation(UuidRepresentation.STANDARD);
-
-    if ((codecRegistries != null) && (codecRegistries.length > 0)) {
-      settingsBuilder.codecRegistry(CodecRegistries.fromRegistries(CodecRegistries.fromRegistries(codecRegistries), MongoClient.getDefaultCodecRegistry()));
-    }
   }
 }

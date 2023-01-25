@@ -30,21 +30,15 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence;
+package org.smallmind.persistence.orm.spring.data.mongo;
 
-public enum EntitySource {
+import org.springframework.data.mongodb.core.query.Query;
 
-  MYSQL("MySql"), MONGO("MongoDB"), MEMCACHED("Memcached"), EHCACHE("Ehcache"), CASSANDRA("Cassandra");
+public abstract class CountQueryDetails extends QueryDetails {
 
-  private final String display;
+  public CountQueryDetails () {
 
-  EntitySource (String display) {
-
-    this.display = display;
   }
 
-  public String getDisplay () {
-
-    return display;
-  }
+  public abstract Query completeQuery (Query query);
 }
