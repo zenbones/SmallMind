@@ -123,19 +123,19 @@ public class MongoDataDao<I extends Serializable & Comparable<I>, D extends Mong
   @Override
   public Iterable<D> scroll () {
 
-    return new IterableIterator<>(getSession().getNativeSession().stream(new Query(), getManagedClass()).iterator());
+    return new IterableIterator<>(getSession().getNativeSession().stream(new Query(), getManagedClass()));
   }
 
   @Override
   public Iterable<D> scroll (int fetchSize) {
 
-    return new IterableIterator<>(getSession().getNativeSession().stream(new Query().cursorBatchSize(fetchSize), getManagedClass()).iterator());
+    return new IterableIterator<>(getSession().getNativeSession().stream(new Query().cursorBatchSize(fetchSize), getManagedClass()));
   }
 
   @Override
   public Iterable<D> scrollById (final I greaterThan, final int fetchSize) {
 
-    return new IterableIterator<>(getSession().getNativeSession().stream(Query.query(Criteria.where("_id").gt(greaterThan)).with(Sort.by("_id").ascending()).cursorBatchSize(fetchSize), getManagedClass()).iterator());
+    return new IterableIterator<>(getSession().getNativeSession().stream(Query.query(Criteria.where("_id").gt(greaterThan)).with(Sort.by("_id").ascending()).cursorBatchSize(fetchSize), getManagedClass()));
   }
 
   @Override
@@ -216,7 +216,7 @@ public class MongoDataDao<I extends Serializable & Comparable<I>, D extends Mong
 
     Query constructedQuery;
 
-    return ((constructedQuery = constructQuery(queryDetails)) == null) ? new EmptyIterable<>() : new IterableIterator<>(getSession().getNativeSession().stream(constructedQuery, getManagedClass()).iterator());
+    return ((constructedQuery = constructQuery(queryDetails)) == null) ? new EmptyIterable<>() : new IterableIterator<>(getSession().getNativeSession().stream(constructedQuery, getManagedClass()));
   }
 
   public DeleteResult deleteByQuery (DeleteQueryDetails queryDetails) {

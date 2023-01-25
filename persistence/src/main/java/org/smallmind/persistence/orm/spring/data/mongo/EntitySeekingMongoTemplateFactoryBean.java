@@ -34,6 +34,7 @@ package org.smallmind.persistence.orm.spring.data.mongo;
 
 import com.mongodb.client.MongoClient;
 import org.bson.codecs.configuration.CodecProvider;
+import org.smallmind.persistence.orm.spring.data.mongo.internal.MongoDataConverter;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.data.mongodb.MongoDatabaseFactory;
