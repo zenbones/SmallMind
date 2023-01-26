@@ -32,21 +32,34 @@
  */
 package org.smallmind.persistence.orm.data.mongo;
 
+import com.mongodb.client.result.UpdateResult;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 
-public abstract class UpdateQueryDetails extends QueryDetails {
+public enum UpdateType {
 
-  private final UpdateType updateType;
+  FIRST {
+    @Override
+    public UpdateResult execute (MongoTemplate mongoTemplate, Query query, Update update, Class<?> managedClass) {
 
-  public UpdateQueryDetails (UpdateType updateType) {
+      return mongoTemplate.updateFirst(query, update, managedClass);
+    }
+  },
+  MULTI {
+    @Override
+    public UpdateResult execute (MongoTemplate mongoTemplate, Query query, Update update, Class<?> managedClass) {
 
-    this.updateType = updateType;
-  }
+      return mongoTemplate.updateMulti(query, update, managedClass);
+    }
+  },
+  UPSERT {
+    @Override
+    public UpdateResult execute (MongoTemplate mongoTemplate, Query query, Update update, Class<?> managedClass) {
 
-  public abstract Update completeUpdates (Update update);
+      return mongoTemplate.upsert(query, update, managedClass);
+    }
+  };
 
-  public UpdateType getUpdateType () {
-
-    return updateType;
-  }
+  public abstract UpdateResult execute (MongoTemplate mongoTemplate, Query query, Update update, Class<?> managedClass);
 }

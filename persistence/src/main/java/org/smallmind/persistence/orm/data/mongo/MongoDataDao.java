@@ -230,7 +230,7 @@ public class MongoDataDao<I extends Serializable & Comparable<I>, D extends Mong
 
     Query constructedQuery;
 
-    return ((constructedQuery = constructQuery(queryDetails)) == null) ? UpdateResult.unacknowledged() : getSession().getNativeSession().upsert(constructedQuery, queryDetails.completeUpdates(new Update()), getManagedClass());
+    return ((constructedQuery = constructQuery(queryDetails)) == null) ? UpdateResult.unacknowledged() : queryDetails.getUpdateType().execute(getSession().getNativeSession(), constructedQuery, queryDetails.completeUpdates(new Update()), getManagedClass());
   }
 
   public Query constructQuery (QueryDetails queryDetails) {
