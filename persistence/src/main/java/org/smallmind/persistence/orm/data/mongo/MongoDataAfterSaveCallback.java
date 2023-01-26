@@ -30,27 +30,15 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.morphia;
+package org.smallmind.persistence.orm.data.mongo;
 
-import dev.morphia.UpdateOptions;
+import org.springframework.data.mongodb.core.mapping.event.AfterSaveCallback;
 
-public abstract class UpdateQueryDetails<D extends MorphiaDurable<?, D>> extends QueryDetails<D> {
+public abstract class MongoDataAfterSaveCallback<T> extends MongoDataEntityCallback<T> implements AfterSaveCallback<T> {
 
-  private UpdateOptions updateOptions;
+  @Override
+  public CallbackType getCallbackType () {
 
-  public UpdateQueryDetails () {
-
+    return CallbackType.AFTER_SAVE;
   }
-
-  public UpdateQueryDetails (UpdateOptions updateOptions) {
-
-    this.updateOptions = updateOptions;
-  }
-
-  public UpdateOptions getUpdateOptions () {
-
-    return (updateOptions == null) ? new UpdateOptions() : updateOptions;
-  }
-
-  public abstract MorphiaUpdates<D> completeUpdates (MorphiaUpdates<D> morphiaUpdates);
 }

@@ -30,11 +30,16 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.spring.data.mongo;
+package org.smallmind.persistence.orm.data.mongo.internal;
 
-import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
 
-public abstract class QueryDetails {
+public class MongoDataMappingContext extends MongoMappingContext {
 
-  public abstract Query completeQuery (Query query);
+  public void addEntities (Class[] entityClasses) {
+
+    for (Class<?> entityClass : entityClasses) {
+      addPersistentEntity(entityClass);
+    }
+  }
 }

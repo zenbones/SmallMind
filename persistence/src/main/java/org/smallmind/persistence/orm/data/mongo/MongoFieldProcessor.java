@@ -30,28 +30,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.spring.morphia;
+package org.smallmind.persistence.orm.data.mongo;
 
 import java.lang.annotation.Annotation;
-import dev.morphia.annotations.Entity;
-import org.smallmind.persistence.ManagedDao;
-import org.smallmind.persistence.orm.morphia.MorphiaDao;
-import org.smallmind.persistence.orm.spring.AbstractAnnotationSeekingBeanFactoryPostProcessor;
+import java.lang.reflect.Field;
 
-public class AnnotationSeekingBeanFactoryPostProcessor extends AbstractAnnotationSeekingBeanFactoryPostProcessor {
+@FunctionalInterface
+public interface MongoFieldProcessor {
 
-  private static final Class<? extends ManagedDao<?, ?>>[] DAO_IMPLEMENTATIONS = new Class[] {MorphiaDao.class};
-  private static final Class<? extends Annotation>[] TARGET_ANNOTATIONS = new Class[] {Entity.class};
-
-  @Override
-  public Class<? extends ManagedDao<?, ?>>[] getDaoImplementations () {
-
-    return DAO_IMPLEMENTATIONS;
-  }
-
-  @Override
-  public Class<? extends Annotation>[] getTargetAnnotations () {
-
-    return TARGET_ANNOTATIONS;
-  }
+  void process (Object value, Field field, Annotation annotation)
+    throws Exception;
 }

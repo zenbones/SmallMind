@@ -30,21 +30,32 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.morphia;
+package org.smallmind.persistence.orm.data.mongo;
 
-import dev.morphia.Datastore;
+import java.io.Serializable;
+import com.mongodb.DBObject;
+import org.smallmind.persistence.AbstractDurable;
+import org.springframework.data.annotation.Id;
 
-public class DataStoreFactory {
+public class MongoDataDurable<I extends Serializable & Comparable<I>, D extends MongoDataDurable<I, D>> extends AbstractDurable<I, D> {
 
-  private final Datastore datastore;
+  @Id
+  private I id;
 
-  public DataStoreFactory (Datastore datastore) {
+  @Override
+  public I getId () {
 
-    this.datastore = datastore;
+    return id;
   }
 
-  public Datastore get () {
+  @Override
+  public void setId (I id) {
 
-    return datastore;
+    this.id = id;
+  }
+
+  public void preSave (final DBObject dbObj) {
+
+    dbObj.removeField("overlayClass");
   }
 }

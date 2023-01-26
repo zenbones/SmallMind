@@ -30,60 +30,11 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.morphia;
+package org.smallmind.persistence.orm.data.mongo;
 
-import java.util.Iterator;
-import java.util.concurrent.atomic.AtomicBoolean;
-import dev.morphia.query.MorphiaCursor;
+import org.springframework.data.mongodb.core.query.Update;
 
-public class AutoCloseMorphiaIterable<T> implements Iterable<T>, AutoCloseable {
+public abstract class UpdateQueryDetails extends QueryDetails {
 
-  private final AtomicBoolean closed = new AtomicBoolean(false);
-  private final MorphiaCursor<T> morphiaCursor;
-
-  public AutoCloseMorphiaIterable (MorphiaCursor<T> morphiaCursor) {
-
-    this.morphiaCursor = morphiaCursor;
-  }
-
-  @Override
-  public void close () {
-
-    if (closed.compareAndSet(false, true)) {
-      morphiaCursor.close();
-    }
-  }
-
-  @Override
-  public Iterator<T> iterator () {
-
-    return new AutoCloseMorphiaIterator();
-  }
-
-  private class AutoCloseMorphiaIterator implements Iterator<T> {
-
-    @Override
-    public boolean hasNext () {
-
-      boolean hasNext;
-
-      if (!(hasNext = morphiaCursor.hasNext())) {
-        close();
-      }
-
-      return hasNext;
-    }
-
-    @Override
-    public T next () {
-
-      return morphiaCursor.next();
-    }
-
-    @Override
-    public void remove () {
-
-      morphiaCursor.remove();
-    }
-  }
+  public abstract Update completeUpdates (Update update);
 }

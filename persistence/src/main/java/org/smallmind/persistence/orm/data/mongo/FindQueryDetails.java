@@ -30,10 +30,8 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.spring.morphia;
+package org.smallmind.persistence.orm.data.mongo;
 
-public interface MorphiaIndexingMXBean {
+public abstract class FindQueryDetails extends QueryDetails {
 
-  void enforce ()
-    throws Exception;
 }

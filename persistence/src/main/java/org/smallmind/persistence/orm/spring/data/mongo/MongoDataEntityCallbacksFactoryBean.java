@@ -30,70 +30,45 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.morphia;
+package org.smallmind.persistence.orm.spring.data.mongo;
 
-import dev.morphia.Datastore;
-import org.smallmind.persistence.orm.ProxySession;
+import org.smallmind.persistence.orm.data.mongo.MongoDataEntityCallback;
+import org.smallmind.persistence.orm.data.mongo.MongoDataEntityCallbacks;
+import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.InitializingBean;
 
-public class MorphiaProxySession extends ProxySession<DataStoreFactory, Datastore> {
+public class MongoDataEntityCallbacksFactoryBean implements FactoryBean<MongoDataEntityCallbacks>, InitializingBean {
 
-  private final DataStoreFactory dataStoreFactory;
-  private final MorphiaProxyTransaction proxyTransaction;
+  private MongoDataEntityCallbacks mongoDataEntityCallbacks;
+  private MongoDataEntityCallback[] callbacks;
 
-  public MorphiaProxySession (String dataSourceType, String sessionSourceKey, DataStoreFactory dataStoreFactory, boolean boundaryEnforced, boolean cacheEnabled) {
+  public void setCallbacks (MongoDataEntityCallback[] callbacks) {
 
-    super(dataSourceType, sessionSourceKey, boundaryEnforced, cacheEnabled);
-
-    this.dataStoreFactory = dataStoreFactory;
-
-    proxyTransaction = new MorphiaProxyTransaction(this);
+    this.callbacks = callbacks;
   }
 
   @Override
-  public MorphiaProxyTransaction currentTransaction () {
+  public boolean isSingleton () {
 
-    return proxyTransaction;
+    return true;
   }
 
   @Override
-  public MorphiaProxyTransaction beginTransaction () {
+  public Class<?> getObjectType () {
 
-    return proxyTransaction;
+    return MongoDataEntityCallbacks.class;
   }
 
   @Override
-  public void flush () {
+  public MongoDataEntityCallbacks getObject ()
+    throws Exception {
 
-    throw new UnsupportedOperationException();
+    return mongoDataEntityCallbacks;
   }
 
   @Override
-  public void clear () {
+  public void afterPropertiesSet () {
 
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void close () {
-
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public boolean isClosed () {
-
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public DataStoreFactory getNativeSessionFactory () {
-
-    return dataStoreFactory;
-  }
-
-  @Override
-  public Datastore getNativeSession () {
-
-    return dataStoreFactory.get();
+    mongoDataEntityCallbacks = new MongoDataEntityCallbacks(callbacks);
   }
 }

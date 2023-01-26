@@ -124,7 +124,6 @@
     <maven.version>3.8.7</maven.version>
     <mongodb.driver.version>4.8.1</mongodb.driver.version>
     <mongodb.bson.version>4.8.1</mongodb.bson.version>
-    <morphia.version>2.3.0</morphia.version>
     <msgpack.version>0.9.3</msgpack.version>
     <netty.version>4.1.85.Final</netty.version>
     <nexus.staging.plugin.version>1.6.13</nexus.staging.plugin.version>
@@ -251,11 +250,6 @@
         <version>${querydsl.version}</version>
       </dependency>
       <dependency>
-        <groupId>com.querydsl</groupId>
-        <artifactId>querydsl-mongodb</artifactId>
-        <version>${querydsl.version}</version>
-      </dependency>
-      <dependency>
         <groupId>com.rabbitmq</groupId>
         <artifactId>amqp-client</artifactId>
         <version>${amqp.client.version}</version>
@@ -284,11 +278,6 @@
         <groupId>org.springframework.data</groupId>
         <artifactId>spring-data-mongodb</artifactId>
         <version>${spring.data.mongodb.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>dev.morphia.morphia</groupId>
-        <artifactId>morphia-core</artifactId>
-        <version>${morphia.version}</version>
       </dependency>
       <dependency>
         <groupId>io.netty</groupId>

@@ -90,8 +90,14 @@
       <optional>true</optional>
     </dependency>
     <dependency>
-      <groupId>dev.morphia.morphia</groupId>
-      <artifactId>morphia-core</artifactId>
+      <groupId>org.mongodb</groupId>
+      <artifactId>mongodb-driver-sync</artifactId>
+      <scope>compile</scope>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.mongodb</groupId>
+      <artifactId>bson</artifactId>
       <scope>compile</scope>
       <optional>true</optional>
     </dependency>
@@ -106,12 +112,6 @@
       <groupId>com.querydsl</groupId>
       <artifactId>querydsl-jpa</artifactId>
       <classifier>jakarta</classifier>
-      <scope>compile</scope>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>com.querydsl</groupId>
-      <artifactId>querydsl-mongodb</artifactId>
       <scope>compile</scope>
       <optional>true</optional>
     </dependency>

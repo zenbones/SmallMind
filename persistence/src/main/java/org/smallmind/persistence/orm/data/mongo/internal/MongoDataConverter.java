@@ -30,11 +30,37 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.morphia;
+package org.smallmind.persistence.orm.data.mongo.internal;
 
-import dev.morphia.query.Query;
+import java.util.Collections;
+import org.springframework.data.mongodb.MongoDatabaseFactory;
+import org.springframework.data.mongodb.core.convert.DefaultDbRefResolver;
+import org.springframework.data.mongodb.core.convert.MappingMongoConverter;
+import org.springframework.data.mongodb.core.convert.MongoCustomConversions;
 
-public abstract class QueryDetails<D extends MorphiaDurable<?, D>> {
+public class MongoDataConverter extends MappingMongoConverter {
 
-  public abstract Query<D> completeQuery (Query<D> query);
+  public MongoDataConverter (MongoDatabaseFactory factory, boolean ensureIndexes, Class... entityClasses) {
+
+    super(new DefaultDbRefResolver(factory), createMappingContext(ensureIndexes, entityClasses));
+
+    setCustomConversions(conversions);
+    setCodecRegistryProvider(factory);
+
+    afterPropertiesSet();
+  }
+
+  private static MongoDataMappingContext createMappingContext (boolean ensureIndexes, Class... entityClasses) {
+
+    MongoCustomConversions conversions = new MongoCustomConversions(Collections.emptyList());
+    MongoDataMappingContext mappingContext = new MongoDataMappingContext();
+
+    mappingContext.setSimpleTypeHolder(conversions.getSimpleTypeHolder());
+    mappingContext.setAutoIndexCreation(ensureIndexes);
+    mappingContext.addEntities(entityClasses);
+
+    mappingContext.afterPropertiesSet();
+
+    return mappingContext;
+  }
 }

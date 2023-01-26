@@ -30,35 +30,40 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.morphia;
+package org.smallmind.persistence.orm.data.mongo;
 
 import java.io.Serializable;
-import com.mongodb.DBObject;
-import dev.morphia.annotations.Id;
-import dev.morphia.annotations.PrePersist;
-import org.bson.Document;
-import org.smallmind.persistence.AbstractDurable;
+import java.util.Date;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.domain.Persistable;
+import org.springframework.data.mongodb.core.index.IndexDirection;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Field;
 
-public abstract class MorphiaDurable<I extends Serializable & Comparable<I>, D extends MorphiaDurable<I, D>> extends AbstractDurable<I, D> {
+public abstract class TimestampedMongoDataDurable<I extends Serializable & Comparable<I>, D extends TimestampedMongoDataDurable<I, D>> extends MongoDataDurable<I, D> implements Persistable<I> {
 
-  @Id
-  private I id;
+  @CreatedDate
+  @Field("created")
+  private Date created;
+  @LastModifiedDate
+  @Indexed(direction = IndexDirection.DESCENDING)
+  @Field("lastUpdated")
+  private Date lastUpdated;
 
   @Override
-  public I getId () {
+  public boolean isNew () {
 
-    return id;
+    return created == null;
   }
 
-  @Override
-  public void setId (I id) {
+  public Date getCreated () {
 
-    this.id = id;
+    return created;
   }
 
-  @PrePersist
-  public void prePersist (Document document) {
+  public Date getLastUpdated () {
 
-    document.remove("overlayClass");
+    return lastUpdated;
   }
 }

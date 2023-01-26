@@ -30,21 +30,70 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.spring.data.mongo;
+package org.smallmind.persistence.orm.data.mongo;
 
+import org.smallmind.persistence.orm.ProxySession;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
-public class MongoTemplateFactory {
+public class MongoDataProxySession extends ProxySession<MongoTemplateFactory, MongoTemplate> {
 
-  private final MongoTemplate mongoTemplate;
+  private final MongoTemplateFactory mongoTemplateFactory;
+  private final MongoDataProxyTransaction proxyTransaction;
 
-  public MongoTemplateFactory (MongoTemplate mongoTemplate) {
+  public MongoDataProxySession (String dataSourceType, String sessionSourceKey, MongoTemplateFactory mongoTemplateFactory, boolean boundaryEnforced, boolean cacheEnabled) {
 
-    this.mongoTemplate = mongoTemplate;
+    super(dataSourceType, sessionSourceKey, boundaryEnforced, cacheEnabled);
+
+    this.mongoTemplateFactory = mongoTemplateFactory;
+
+    proxyTransaction = new MongoDataProxyTransaction(this);
   }
 
-  public MongoTemplate get () {
+  @Override
+  public MongoDataProxyTransaction currentTransaction () {
 
-    return mongoTemplate;
+    return proxyTransaction;
+  }
+
+  @Override
+  public MongoDataProxyTransaction beginTransaction () {
+
+    return proxyTransaction;
+  }
+
+  @Override
+  public void flush () {
+
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void clear () {
+
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void close () {
+
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean isClosed () {
+
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public MongoTemplateFactory getNativeSessionFactory () {
+
+    return mongoTemplateFactory;
+  }
+
+  @Override
+  public MongoTemplate getNativeSession () {
+
+    return mongoTemplateFactory.get();
   }
 }

@@ -30,31 +30,15 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.spring.morphia;
+package org.smallmind.persistence.orm.data.mongo;
 
-import java.util.LinkedList;
-import javax.management.StandardMBean;
-import dev.morphia.Datastore;
+import org.springframework.data.mongodb.core.mapping.event.BeforeConvertCallback;
 
-public class MorphiaIndexer extends StandardMBean implements MorphiaIndexingMXBean {
-
-  private final LinkedList<Datastore> dataStoreList = new LinkedList<>();
-
-  public MorphiaIndexer () {
-
-    super(MorphiaIndexingMXBean.class, true);
-  }
-
-  public synchronized void registerDatastore (Datastore datastore) {
-
-    dataStoreList.add(datastore);
-  }
+public abstract class MongoDataBeforeConvertCallback<T> extends MongoDataEntityCallback<T> implements BeforeConvertCallback<T> {
 
   @Override
-  public synchronized void enforce () {
+  public CallbackType getCallbackType () {
 
-    for (Datastore datastore : dataStoreList) {
-      datastore.ensureIndexes();
-    }
+    return CallbackType.BEFORE_CONVERT;
   }
 }

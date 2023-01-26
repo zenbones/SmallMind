@@ -33,8 +33,9 @@
 package org.smallmind.persistence.orm.spring.data.mongo;
 
 import com.mongodb.client.MongoClient;
-import org.bson.codecs.configuration.CodecProvider;
-import org.smallmind.persistence.orm.spring.data.mongo.internal.MongoDataConverter;
+import org.smallmind.persistence.orm.data.mongo.MongoDataEntityCallbacks;
+import org.smallmind.persistence.orm.data.mongo.MongoTemplateFactory;
+import org.smallmind.persistence.orm.data.mongo.internal.MongoDataConverter;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.data.mongodb.MongoDatabaseFactory;
@@ -46,7 +47,7 @@ public class EntitySeekingMongoTemplateFactoryBean implements FactoryBean<MongoT
   private MongoTemplateFactory mongoTemplateFactory;
   private AnnotationSeekingBeanFactoryPostProcessor annotationSeekingBeanFactoryPostProcessor;
   private MongoClient mongoClient;
-  private CodecProvider codecProvider;
+  private MongoDataEntityCallbacks mongoDataEntityCallbacks;
   private String sessionSourceKey;
   private String databaseName;
   private boolean ensureIndexes = false;
@@ -61,9 +62,9 @@ public class EntitySeekingMongoTemplateFactoryBean implements FactoryBean<MongoT
     this.mongoClient = mongoClient;
   }
 
-  public void setCodecProvider (CodecProvider codecProvider) {
+  public void setMongoDataEntityCallbacks (MongoDataEntityCallbacks mongoDataEntityCallbacks) {
 
-    this.codecProvider = codecProvider;
+    this.mongoDataEntityCallbacks = mongoDataEntityCallbacks;
   }
 
   public void setDatabaseName (String databaseName) {
@@ -105,6 +106,10 @@ public class EntitySeekingMongoTemplateFactoryBean implements FactoryBean<MongoT
 
     MongoDatabaseFactory mongoDatabaseFactory = new SimpleMongoClientDatabaseFactory(mongoClient, databaseName);
     MongoTemplate mongoTemplate = new MongoTemplate(mongoDatabaseFactory, new MongoDataConverter(mongoDatabaseFactory, ensureIndexes, annotationSeekingBeanFactoryPostProcessor.getAnnotatedClasses(sessionSourceKey)));
+
+    if (mongoDataEntityCallbacks != null) {
+      mongoTemplate.setEntityCallbacks(mongoDataEntityCallbacks);
+    }
 
     mongoTemplateFactory = new MongoTemplateFactory(mongoTemplate);
   }

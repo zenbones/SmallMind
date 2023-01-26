@@ -34,6 +34,7 @@ package org.smallmind.persistence.orm.spring.data.mongo;
 
 import java.lang.annotation.Annotation;
 import org.smallmind.persistence.ManagedDao;
+import org.smallmind.persistence.orm.data.mongo.MongoDataDao;
 import org.smallmind.persistence.orm.spring.AbstractAnnotationSeekingBeanFactoryPostProcessor;
 import org.springframework.data.mongodb.core.mapping.Document;
 
