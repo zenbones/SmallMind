@@ -32,8 +32,6 @@
  */
 package org.smallmind.persistence.orm.data.mongo;
 
-import org.springframework.data.mongodb.core.query.Query;
-
 public abstract class QueryDetails {
 
   public abstract Query completeQuery (Query query);

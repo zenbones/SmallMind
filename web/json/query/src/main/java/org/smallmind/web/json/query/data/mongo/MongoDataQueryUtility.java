@@ -34,6 +34,7 @@ package org.smallmind.web.json.query.data.mongo;
 
 import java.util.LinkedList;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
+import org.smallmind.persistence.orm.data.mongo.Query;
 import org.smallmind.web.json.query.QueryProcessingException;
 import org.smallmind.web.json.query.Sort;
 import org.smallmind.web.json.query.SortField;
@@ -44,7 +45,6 @@ import org.smallmind.web.json.query.WhereField;
 import org.smallmind.web.json.query.WhereFieldTransformer;
 import org.smallmind.web.json.query.WhereOperator;
 import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
 
 public class MongoDataQueryUtility {
 
@@ -60,7 +60,7 @@ public class MongoDataQueryUtility {
   public static Query apply (Query query, Where where, WhereFieldTransformer<Void, Void> fieldTransformer) {
 
     if (where != null) {
-      query.addCriteria(walkConjunction(where.getRootConjunction(), fieldTransformer));
+      query.and(walkConjunction(where.getRootConjunction(), fieldTransformer));
     }
 
     return query;
@@ -98,6 +98,9 @@ public class MongoDataQueryUtility {
       if (criteriaList.isEmpty()) {
 
         return null;
+      } else if (criteriaList.size() == 1) {
+
+        return criteriaList.getFirst();
       } else {
         switch (whereConjunction.getConjunctionType()) {
           case AND:
@@ -237,7 +240,7 @@ public class MongoDataQueryUtility {
         }
       }
 
-      return query.with(org.springframework.data.domain.Sort.by(orderList));
+      return query.orderBy(org.springframework.data.domain.Sort.by(orderList));
     }
 
     return query;
