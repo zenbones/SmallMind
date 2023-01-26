@@ -105,7 +105,11 @@ public class EntitySeekingMongoTemplateFactoryBean implements FactoryBean<MongoT
 
     MongoDatabaseFactory mongoDatabaseFactory = new SimpleMongoClientDatabaseFactory(mongoClient, databaseName);
     MongoTemplate mongoTemplate = new MongoTemplate(mongoDatabaseFactory, new MongoDataConverter(mongoDatabaseFactory, ensureIndexes, annotationSeekingBeanFactoryPostProcessor.getAnnotatedClasses(sessionSourceKey)));
+    MongoDataEntityCallbacks mongoDataEntityCallbacks = new MongoDataEntityCallbacks();
 
+    mongoDataEntityCallbacks.addEntityCallback(new CreatedAndLastUpdatedCallback());
+
+    mongoTemplate.setEntityCallbacks(mongoDataEntityCallbacks);
     mongoTemplateFactory = new MongoTemplateFactory(mongoTemplate);
   }
 }

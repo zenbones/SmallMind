@@ -30,25 +30,15 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.morphia;
+package org.smallmind.persistence.orm.spring.data.mongo;
 
-import dev.morphia.DeleteOptions;
+import org.springframework.data.mongodb.core.mapping.event.AfterConvertCallback;
 
-public abstract class DeleteQueryDetails<D extends MorphiaDurable<?, D>> extends QueryDetails<D> {
+public abstract class MongoDataAfterConvertCallback<T> extends MongoDataEntityCallback<T> implements AfterConvertCallback<T> {
 
-  private DeleteOptions deleteOptions;
+  @Override
+  public CallbackType getCallbackType () {
 
-  public DeleteQueryDetails () {
-
-  }
-
-  public DeleteQueryDetails (DeleteOptions deleteOptions) {
-
-    this.deleteOptions = deleteOptions;
-  }
-
-  public DeleteOptions getDeleteOptions () {
-
-    return (deleteOptions == null) ? new DeleteOptions() : deleteOptions;
+    return CallbackType.AFTER_CONVERT;
   }
 }

@@ -30,28 +30,21 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.spring.morphia;
+package org.smallmind.persistence.orm.spring.data.mongo;
 
-import java.lang.annotation.Annotation;
-import dev.morphia.annotations.Entity;
-import org.smallmind.persistence.ManagedDao;
-import org.smallmind.persistence.orm.morphia.MorphiaDao;
-import org.smallmind.persistence.orm.spring.AbstractAnnotationSeekingBeanFactoryPostProcessor;
+import org.bson.Document;
 
-public class AnnotationSeekingBeanFactoryPostProcessor extends AbstractAnnotationSeekingBeanFactoryPostProcessor {
-
-  private static final Class<? extends ManagedDao<?, ?>>[] DAO_IMPLEMENTATIONS = new Class[] {MorphiaDao.class};
-  private static final Class<? extends Annotation>[] TARGET_ANNOTATIONS = new Class[] {Entity.class};
+public class CreatedAndLastUpdatedCallback extends MongoDataBeforeSaveCallback<TimestampedMongoDataDurable> {
 
   @Override
-  public Class<? extends ManagedDao<?, ?>>[] getDaoImplementations () {
+  public Class<TimestampedMongoDataDurable> getEntityClass () {
 
-    return DAO_IMPLEMENTATIONS;
+    return TimestampedMongoDataDurable.class;
   }
 
   @Override
-  public Class<? extends Annotation>[] getTargetAnnotations () {
+  public TimestampedMongoDataDurable onBeforeSave (TimestampedMongoDataDurable entity, Document document, String collection) {
 
-    return TARGET_ANNOTATIONS;
+    return null;
   }
 }

@@ -30,35 +30,15 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.morphia;
+package org.smallmind.persistence.orm.spring.data.mongo;
 
-import java.io.Serializable;
-import com.mongodb.DBObject;
-import dev.morphia.annotations.Id;
-import dev.morphia.annotations.PrePersist;
-import org.bson.Document;
-import org.smallmind.persistence.AbstractDurable;
+import org.springframework.data.mongodb.core.mapping.event.BeforeConvertCallback;
 
-public abstract class MorphiaDurable<I extends Serializable & Comparable<I>, D extends MorphiaDurable<I, D>> extends AbstractDurable<I, D> {
-
-  @Id
-  private I id;
+public abstract class MongoDataBeforeConvertCallback<T> extends MongoDataEntityCallback<T> implements BeforeConvertCallback<T> {
 
   @Override
-  public I getId () {
+  public CallbackType getCallbackType () {
 
-    return id;
-  }
-
-  @Override
-  public void setId (I id) {
-
-    this.id = id;
-  }
-
-  @PrePersist
-  public void prePersist (Document document) {
-
-    document.remove("overlayClass");
+    return CallbackType.BEFORE_CONVERT;
   }
 }

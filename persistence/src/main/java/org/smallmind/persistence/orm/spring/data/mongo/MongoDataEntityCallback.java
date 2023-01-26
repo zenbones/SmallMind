@@ -30,70 +30,13 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.morphia;
+package org.smallmind.persistence.orm.spring.data.mongo;
 
-import dev.morphia.Datastore;
-import org.smallmind.persistence.orm.ProxySession;
+import org.springframework.data.mapping.callback.EntityCallback;
 
-public class MorphiaProxySession extends ProxySession<DataStoreFactory, Datastore> {
+public abstract class MongoDataEntityCallback<T> implements EntityCallback<T> {
 
-  private final DataStoreFactory dataStoreFactory;
-  private final MorphiaProxyTransaction proxyTransaction;
+  public abstract CallbackType getCallbackType ();
 
-  public MorphiaProxySession (String dataSourceType, String sessionSourceKey, DataStoreFactory dataStoreFactory, boolean boundaryEnforced, boolean cacheEnabled) {
-
-    super(dataSourceType, sessionSourceKey, boundaryEnforced, cacheEnabled);
-
-    this.dataStoreFactory = dataStoreFactory;
-
-    proxyTransaction = new MorphiaProxyTransaction(this);
-  }
-
-  @Override
-  public MorphiaProxyTransaction currentTransaction () {
-
-    return proxyTransaction;
-  }
-
-  @Override
-  public MorphiaProxyTransaction beginTransaction () {
-
-    return proxyTransaction;
-  }
-
-  @Override
-  public void flush () {
-
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void clear () {
-
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void close () {
-
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public boolean isClosed () {
-
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public DataStoreFactory getNativeSessionFactory () {
-
-    return dataStoreFactory;
-  }
-
-  @Override
-  public Datastore getNativeSession () {
-
-    return dataStoreFactory.get();
-  }
+  public abstract Class<T> getEntityClass ();
 }

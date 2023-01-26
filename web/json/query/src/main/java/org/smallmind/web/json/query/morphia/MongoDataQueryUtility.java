@@ -32,35 +32,23 @@
  */
 package org.smallmind.web.json.query.morphia;
 
-import java.util.Arrays;
-import java.util.LinkedList;
-import dev.morphia.query.FindOptions;
-import dev.morphia.query.Query;
-import dev.morphia.query.filters.Filter;
-import dev.morphia.query.filters.Filters;
-import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
-import org.smallmind.web.json.query.QueryProcessingException;
-import org.smallmind.web.json.query.Sort;
-import org.smallmind.web.json.query.SortField;
 import org.smallmind.web.json.query.Where;
-import org.smallmind.web.json.query.WhereConjunction;
-import org.smallmind.web.json.query.WhereCriterion;
-import org.smallmind.web.json.query.WhereField;
-import org.smallmind.web.json.query.WhereFieldTransformer;
-import org.smallmind.web.json.query.WhereOperator;
+import org.springframework.data.mongodb.core.query.Query;
 
-public class MorphiaQueryUtility {
+public class MongoDataQueryUtility {
 
   private static final String SINGLE_WILDCARD = "*";
   private static final String DOUBLE_WILDCARD = SINGLE_WILDCARD + SINGLE_WILDCARD;
   private static final char WILDCARD_CHAR = '*';
 
-  public static <T> Query<T> apply (Query<T> query, Where where) {
+  public static Query apply (Query query, Where where) {
 
-    return apply(query, where, null);
+    return null;
+   // return apply(query, where, null);
   }
 
-  public static <T> Query<T> apply (Query<T> query, Where where, WhereFieldTransformer<Void, Void> fieldTransformer) {
+  /*
+  public static  Query apply (Query query, Where where, WhereFieldTransformer<Void, Void> fieldTransformer) {
 
     if (where != null) {
       query.filter(walkConjunction(where.getRootConjunction(), fieldTransformer));
@@ -231,7 +219,7 @@ public class MorphiaQueryUtility {
 
     if ((sort != null) && (!sort.isEmpty())) {
 
-      LinkedList<dev.morphia.query.Sort> morphiaSortList = new LinkedList<>();
+      LinkedList<Sort> morphiaSortList = new LinkedList<>();
 
       for (SortField sortField : sort.getFields()) {
 
@@ -239,19 +227,20 @@ public class MorphiaQueryUtility {
 
         switch (sortField.getDirection()) {
           case ASC:
-            morphiaSortList.add(dev.morphia.query.Sort.ascending(fieldName));
+            morphiaSortList.add(Sort.ascending(fieldName));
             break;
           case DESC:
-            morphiaSortList.add(dev.morphia.query.Sort.descending(fieldName));
+            morphiaSortList.add(Sort.descending(fieldName));
             break;
           default:
             throw new UnknownSwitchCaseException(sortField.getDirection().name());
         }
       }
 
-      return findOptions.sort(morphiaSortList.toArray(new dev.morphia.query.Sort[0]));
+      return findOptions.sort(morphiaSortList.toArray(Sort[0]));
     }
 
     return findOptions;
   }
+  */
 }

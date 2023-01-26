@@ -36,11 +36,12 @@ import java.io.Serializable;
 import java.util.Date;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.domain.Persistable;
 import org.springframework.data.mongodb.core.index.IndexDirection;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Field;
 
-public abstract class TimestampedMongoDataDurable<I extends Serializable & Comparable<I>, D extends TimestampedMongoDataDurable<I, D>> extends MongoDataDurable<I, D> {
+public abstract class TimestampedMongoDataDurable<I extends Serializable & Comparable<I>, D extends TimestampedMongoDataDurable<I, D>> extends MongoDataDurable<I, D> implements Persistable<I> {
 
   @CreatedDate
   @Field("created")
@@ -49,6 +50,12 @@ public abstract class TimestampedMongoDataDurable<I extends Serializable & Compa
   @Indexed(direction = IndexDirection.DESCENDING)
   @Field("lastUpdated")
   private Date lastUpdated;
+
+  @Override
+  public boolean isNew () {
+
+    return created == null;
+  }
 
   public Date getCreated () {
 

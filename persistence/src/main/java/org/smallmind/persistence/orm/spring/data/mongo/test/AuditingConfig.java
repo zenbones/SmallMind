@@ -30,35 +30,20 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.morphia;
+package org.smallmind.persistence.orm.spring.data.mongo.test;
 
-import org.smallmind.persistence.orm.ProxyTransaction;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.domain.AuditorAware;
+import org.springframework.data.mongodb.config.EnableMongoAuditing;
 
-public class MorphiaProxyTransaction extends ProxyTransaction<MorphiaProxySession> {
+@Configuration
+@EnableMongoAuditing
+public class AuditingConfig {
 
-  public MorphiaProxyTransaction (MorphiaProxySession proxySession) {
+  @Bean
+  public AuditorAware<String> myAuditorProvider () {
 
-    super(proxySession);
-  }
-
-  @Override
-  public boolean isCompleted () {
-
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void flush () {
-
-  }
-
-  @Override
-  public void commit () {
-
-  }
-
-  @Override
-  public void rollback () {
-
+    return null;
   }
 }

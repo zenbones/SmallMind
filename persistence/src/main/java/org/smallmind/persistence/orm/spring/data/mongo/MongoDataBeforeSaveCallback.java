@@ -30,47 +30,15 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.morphia;
+package org.smallmind.persistence.orm.spring.data.mongo;
 
-import java.io.Serializable;
-import java.util.Date;
-import dev.morphia.annotations.PrePersist;
-import dev.morphia.annotations.Property;
+import org.springframework.data.mongodb.core.mapping.event.BeforeSaveCallback;
 
-public abstract class TimestampedMorphiaDurable<I extends Serializable & Comparable<I>, D extends TimestampedMorphiaDurable<I, D>> extends MorphiaDurable<I, D> {
+public abstract class MongoDataBeforeSaveCallback<T> extends MongoDataEntityCallback<T> implements BeforeSaveCallback<T> {
 
-  @Property("created")
-  private Date created;
-  @Property("lastUpdated")
-  private Date lastUpdated;
+  @Override
+  public CallbackType getCallbackType () {
 
-  public Date getCreated () {
-
-    return created;
-  }
-
-  public void setCreated (Date created) {
-
-    this.created = created;
-  }
-
-  public Date getLastUpdated () {
-
-    return lastUpdated;
-  }
-
-  public void setLastUpdated (Date lastUpdated) {
-
-    this.lastUpdated = lastUpdated;
-  }
-
-  @PrePersist
-  public void prePersist () {
-
-    if (created == null) {
-      created = new Date();
-    }
-
-    lastUpdated = new Date();
+    return CallbackType.BEFORE_SAVE;
   }
 }

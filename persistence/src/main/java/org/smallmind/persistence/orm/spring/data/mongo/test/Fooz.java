@@ -30,31 +30,39 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.spring.morphia;
+package org.smallmind.persistence.orm.spring.data.mongo.test;
 
-import java.util.LinkedList;
-import javax.management.StandardMBean;
-import dev.morphia.Datastore;
+import java.util.Date;
+import org.bson.types.ObjectId;
+import org.smallmind.persistence.orm.spring.data.mongo.TimestampedMongoDataDurable;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
-public class MorphiaIndexer extends StandardMBean implements MorphiaIndexingMXBean {
+@Document(collection = "fooz")
+public class Fooz extends TimestampedMongoDataDurable<ObjectId, Fooz> {
 
-  private final LinkedList<Datastore> dataStoreList = new LinkedList<>();
+  @Field("color")
+  private String color;
+  @CreatedDate
+  private Date bar;
 
-  public MorphiaIndexer () {
+  public Fooz () {
 
-    super(MorphiaIndexingMXBean.class, true);
   }
 
-  public synchronized void registerDatastore (Datastore datastore) {
+  public Fooz (String color) {
 
-    dataStoreList.add(datastore);
+    this.color = color;
   }
 
-  @Override
-  public synchronized void enforce () {
+  public String getColor () {
 
-    for (Datastore datastore : dataStoreList) {
-      datastore.ensureIndexes();
-    }
+    return color;
+  }
+
+  public void setColor (String color) {
+
+    this.color = color;
   }
 }

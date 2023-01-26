@@ -42,7 +42,7 @@ public class MongoDataConverter extends MappingMongoConverter {
 
   public MongoDataConverter (MongoDatabaseFactory factory, boolean ensureIndexes, Class... entityClasses) {
 
-    super(new DefaultDbRefResolver(factory), createMappingContext(ensureIndexes));
+    super(new DefaultDbRefResolver(factory), createMappingContext(ensureIndexes, entityClasses));
 
     setCustomConversions(conversions);
     setCodecRegistryProvider(factory);

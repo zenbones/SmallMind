@@ -30,60 +30,34 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.morphia;
+package org.smallmind.persistence.orm.spring.data.mongo;
 
-import java.util.Iterator;
-import java.util.concurrent.atomic.AtomicBoolean;
-import dev.morphia.query.MorphiaCursor;
+import org.springframework.data.mapping.callback.EntityCallback;
+import org.springframework.data.mongodb.core.mapping.event.AfterConvertCallback;
+import org.springframework.data.mongodb.core.mapping.event.AfterSaveCallback;
+import org.springframework.data.mongodb.core.mapping.event.BeforeConvertCallback;
+import org.springframework.data.mongodb.core.mapping.event.BeforeSaveCallback;
 
-public class AutoCloseMorphiaIterable<T> implements Iterable<T>, AutoCloseable {
+public enum CallbackType {
 
-  private final AtomicBoolean closed = new AtomicBoolean(false);
-  private final MorphiaCursor<T> morphiaCursor;
+  BEFORE_SAVE(BeforeSaveCallback.class), BEFORE_CONVERT(BeforeConvertCallback.class), AFTER_CONVERT(AfterConvertCallback.class), AFTER_SAVE(AfterSaveCallback.class);
 
-  public AutoCloseMorphiaIterable (MorphiaCursor<T> morphiaCursor) {
+  private Class<? extends EntityCallback> callbackClass;
 
-    this.morphiaCursor = morphiaCursor;
+  CallbackType (Class<? extends EntityCallback> callbackClass) {
+
+    this.callbackClass = callbackClass;
   }
 
-  @Override
-  public void close () {
+  public static CallbackType from (Class<? extends EntityCallback> callbackClass) {
 
-    if (closed.compareAndSet(false, true)) {
-      morphiaCursor.close();
-    }
-  }
+    for (CallbackType callbackType : CallbackType.values()) {
+      if (callbackType.callbackClass.isAssignableFrom(callbackClass)) {
 
-  @Override
-  public Iterator<T> iterator () {
-
-    return new AutoCloseMorphiaIterator();
-  }
-
-  private class AutoCloseMorphiaIterator implements Iterator<T> {
-
-    @Override
-    public boolean hasNext () {
-
-      boolean hasNext;
-
-      if (!(hasNext = morphiaCursor.hasNext())) {
-        close();
+        return callbackType;
       }
-
-      return hasNext;
     }
 
-    @Override
-    public T next () {
-
-      return morphiaCursor.next();
-    }
-
-    @Override
-    public void remove () {
-
-      morphiaCursor.remove();
-    }
+    return null;
   }
 }

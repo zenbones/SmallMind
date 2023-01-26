@@ -30,25 +30,15 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.morphia;
+package org.smallmind.persistence.orm.spring.data.mongo;
 
-import dev.morphia.query.FindOptions;
+import org.springframework.data.mongodb.core.mapping.event.AfterSaveCallback;
 
-public abstract class FindQueryDetails<D extends MorphiaDurable<?, D>> extends QueryDetails<D> {
+public abstract class MongoDataAfterSaveCallback<T> extends MongoDataEntityCallback<T> implements AfterSaveCallback<T> {
 
-  private FindOptions findOptions;
+  @Override
+  public CallbackType getCallbackType () {
 
-  public FindQueryDetails () {
-
-  }
-
-  public FindQueryDetails (FindOptions findOptions) {
-
-    this.findOptions = findOptions;
-  }
-
-  public FindOptions getFindOptions () {
-
-    return (findOptions == null) ? new FindOptions() : findOptions;
+    return CallbackType.AFTER_SAVE;
   }
 }
