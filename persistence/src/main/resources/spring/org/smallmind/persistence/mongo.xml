@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd"
+       profile="default">
+
+  <bean id="mongoClient" class="org.smallmind.persistence.database.mongodb.MongoClientFactoryBean">
+    <property name="clientSettings">
+      <bean class="org.smallmind.persistence.database.mongodb.MongoClientSettingsFactoryBean">
+        <property name="mongoCredential">
+          <bean class="org.smallmind.persistence.database.mongodb.MongoCredentialFactoryBean">
+            <property name="user" value="${mongo.user}"/>
+            <property name="password" value="${mongo.password}"/>
+            <property name="source" value="admin"/>
+          </bean>
+        </property>
+        <property name="serverAddresses">
+          <bean class="org.smallmind.persistence.database.mongodb.MongoServerFactoryBean">
+            <property name="serverPattern" value="${mongo.server_pattern}"/>
+            <property name="serverSpread" value="${mongo.server_spread}"/>
+          </bean>
+        </property>
+        <property name="sslEnabled" value="${mongo.ssl_enabled}"/>
+        <property name="writeConcern">
+          <bean class="org.smallmind.persistence.database.mongodb.MorphiaWriteConcern">
+            <property name="acknowledgment" value="${mongo.write_concern.acknowledgment}"/>
+            <property name="journaled" value="true"/>
+          </bean>
+        </property>
+      </bean>
+    </property>
+  </bean>
+
+  <bean name="annotationSeekingBeanFactoryPostProcessor" class="org.smallmind.persistence.orm.spring.data.mongo.AnnotationSeekingBeanFactoryPostProcessor"/>
+
+  <bean id="annotatedEntityModels" class="org.smallmind.persistence.orm.data.mongo.AnnotatedEntityModels"/>
+
+  <bean id="mongoDataEntityCallbacks" class="org.smallmind.persistence.orm.spring.data.mongo.MongoDataEntityCallbacksFactoryBean">
+    <property name="callbacks">
+      <list>
+        <bean class="org.smallmind.persistence.orm.data.mongo.CreatedAndLastUpdatedCallback">
+          <constructor-arg index="0" name="annotatedEntityModels" ref="annotatedEntityModels"/>
+        </bean>
+      </list>
+    </property>
+  </bean>
+
+  <bean id="mongoTemplateFactory" class="org.smallmind.persistence.orm.spring.data.mongo.EntitySeekingMongoTemplateFactoryBean">
+    <property name="annotationSeekingBeanFactoryPostProcessor" ref="annotationSeekingBeanFactoryPostProcessor"/>
+    <property name="mongoClient" ref="mongoClient"/>
+    <property name="databaseName" value="myDatabase"/>
+    <property name="sessionSourceKey" value="mySessionLey"/>
+    <property name="ensureIndexes" value="false"/>
+    <property name="mongoDataEntityCallbacks" ref="mongoDataEntityCallbacks"/>
+  </bean>
+
+  <!-- Proxy Session -->
+  <bean id="morphiaProxySession" class="org.smallmind.persistence.orm.data.mongo.MongoDataProxySession" init-method="register">
+    <constructor-arg index="0" value="mongodb"/>
+    <constructor-arg index="1" value="mysession"/>
+    <constructor-arg index="2" ref="mongoTemplateFactory"/>
+    <constructor-arg index="3" value="true"/>
+    <constructor-arg index="4" value="false"/>
+  </bean>
+</beans>
