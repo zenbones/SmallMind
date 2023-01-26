@@ -30,20 +30,22 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.spring.data.mongo.test;
+package org.smallmind.persistence.orm.data.mongo;
 
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.data.domain.AuditorAware;
-import org.springframework.data.mongodb.config.EnableMongoAuditing;
+import java.util.HashMap;
 
-@Configuration
-@EnableMongoAuditing
-public class AuditingConfig {
+public class AnnotatedEntityModels {
 
-  @Bean
-  public AuditorAware<String> myAuditorProvider () {
+  private final HashMap<Class<?>, AnnotatedEntityModel> modelMap = new HashMap<>();
 
-    return null;
+  public AnnotatedEntityModel getModel (Class<?> entityClass) {
+
+    AnnotatedEntityModel model;
+
+    if ((model = modelMap.get(entityClass)) == null) {
+      modelMap.put(entityClass, model = new AnnotatedEntityModel(entityClass));
+    }
+
+    return model;
   }
 }

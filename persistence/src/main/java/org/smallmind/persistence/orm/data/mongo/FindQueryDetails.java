@@ -30,15 +30,8 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.spring.data.mongo;
+package org.smallmind.persistence.orm.data.mongo;
 
-import org.springframework.data.mongodb.core.mapping.event.BeforeConvertCallback;
+public abstract class FindQueryDetails extends QueryDetails {
 
-public abstract class MongoDataBeforeConvertCallback<T> extends MongoDataEntityCallback<T> implements BeforeConvertCallback<T> {
-
-  @Override
-  public CallbackType getCallbackType () {
-
-    return CallbackType.BEFORE_CONVERT;
-  }
 }

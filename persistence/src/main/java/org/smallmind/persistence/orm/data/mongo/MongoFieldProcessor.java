@@ -30,13 +30,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.spring.data.mongo;
+package org.smallmind.persistence.orm.data.mongo;
 
-import org.springframework.data.mapping.callback.EntityCallback;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 
-public abstract class MongoDataEntityCallback<T> implements EntityCallback<T> {
+@FunctionalInterface
+public interface MongoFieldProcessor {
 
-  public abstract CallbackType getCallbackType ();
-
-  public abstract Class<T> getEntityClass ();
+  void process (Object value, Field field, Annotation annotation)
+    throws Exception;
 }

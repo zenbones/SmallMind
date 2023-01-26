@@ -30,21 +30,13 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.spring.data.mongo;
+package org.smallmind.persistence.orm.data.mongo;
 
-import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mapping.callback.EntityCallback;
 
-public class MongoTemplateFactory {
+public abstract class MongoDataEntityCallback<T> implements EntityCallback<T> {
 
-  private final MongoTemplate mongoTemplate;
+  public abstract CallbackType getCallbackType ();
 
-  public MongoTemplateFactory (MongoTemplate mongoTemplate) {
-
-    this.mongoTemplate = mongoTemplate;
-  }
-
-  public MongoTemplate get () {
-
-    return mongoTemplate;
-  }
+  public abstract Class<T> getEntityClass ();
 }

@@ -30,15 +30,15 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.spring.data.mongo;
+package org.smallmind.persistence.orm.data.mongo;
 
-import org.springframework.data.mongodb.core.mapping.event.BeforeSaveCallback;
+import org.springframework.data.mongodb.core.mapping.event.AfterSaveCallback;
 
-public abstract class MongoDataBeforeSaveCallback<T> extends MongoDataEntityCallback<T> implements BeforeSaveCallback<T> {
+public abstract class MongoDataAfterSaveCallback<T> extends MongoDataEntityCallback<T> implements AfterSaveCallback<T> {
 
   @Override
   public CallbackType getCallbackType () {
 
-    return CallbackType.BEFORE_SAVE;
+    return CallbackType.AFTER_SAVE;
   }
 }

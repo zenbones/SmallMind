@@ -30,15 +30,15 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.spring.data.mongo;
+package org.smallmind.persistence.orm.data.mongo;
 
-import org.springframework.data.mongodb.core.mapping.event.AfterConvertCallback;
+import org.springframework.data.mongodb.core.query.Query;
 
-public abstract class MongoDataAfterConvertCallback<T> extends MongoDataEntityCallback<T> implements AfterConvertCallback<T> {
+public abstract class CountQueryDetails extends QueryDetails {
 
-  @Override
-  public CallbackType getCallbackType () {
+  public CountQueryDetails () {
 
-    return CallbackType.AFTER_CONVERT;
   }
+
+  public abstract Query completeQuery (Query query);
 }

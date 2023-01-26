@@ -30,22 +30,37 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.spring.data.mongo;
+package org.smallmind.persistence.orm.data.mongo.internal;
 
-import java.util.HashMap;
+import java.util.Collections;
+import org.springframework.data.mongodb.MongoDatabaseFactory;
+import org.springframework.data.mongodb.core.convert.DefaultDbRefResolver;
+import org.springframework.data.mongodb.core.convert.MappingMongoConverter;
+import org.springframework.data.mongodb.core.convert.MongoCustomConversions;
 
-public class AnnotatedEntityModels {
+public class MongoDataConverter extends MappingMongoConverter {
 
-  private final HashMap<Class<?>, AnnotatedEntityModel> modelMap = new HashMap<>();
+  public MongoDataConverter (MongoDatabaseFactory factory, boolean ensureIndexes, Class... entityClasses) {
 
-  public AnnotatedEntityModel getModel (Class<?> entityClass) {
+    super(new DefaultDbRefResolver(factory), createMappingContext(ensureIndexes, entityClasses));
 
-    AnnotatedEntityModel model;
+    setCustomConversions(conversions);
+    setCodecRegistryProvider(factory);
 
-    if ((model = modelMap.get(entityClass)) == null) {
-      modelMap.put(entityClass, model = new AnnotatedEntityModel(entityClass));
-    }
+    afterPropertiesSet();
+  }
 
-    return model;
+  private static MongoDataMappingContext createMappingContext (boolean ensureIndexes, Class... entityClasses) {
+
+    MongoCustomConversions conversions = new MongoCustomConversions(Collections.emptyList());
+    MongoDataMappingContext mappingContext = new MongoDataMappingContext();
+
+    mappingContext.setSimpleTypeHolder(conversions.getSimpleTypeHolder());
+    mappingContext.setAutoIndexCreation(ensureIndexes);
+    mappingContext.addEntities(entityClasses);
+
+    mappingContext.afterPropertiesSet();
+
+    return mappingContext;
   }
 }

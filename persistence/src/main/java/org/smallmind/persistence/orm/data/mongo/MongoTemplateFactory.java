@@ -30,14 +30,21 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.spring.data.mongo;
+package org.smallmind.persistence.orm.data.mongo;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
+import org.springframework.data.mongodb.core.MongoTemplate;
 
-@FunctionalInterface
-public interface MongoFieldProcessor {
+public class MongoTemplateFactory {
 
-  void process (Object value, Field field, Annotation annotation)
-    throws Exception;
+  private final MongoTemplate mongoTemplate;
+
+  public MongoTemplateFactory (MongoTemplate mongoTemplate) {
+
+    this.mongoTemplate = mongoTemplate;
+  }
+
+  public MongoTemplate get () {
+
+    return mongoTemplate;
+  }
 }

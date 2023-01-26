@@ -30,16 +30,20 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.spring.data.mongo.internal;
+package org.smallmind.persistence.orm.data.mongo.test;
 
-import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.domain.AuditorAware;
+import org.springframework.data.mongodb.config.EnableMongoAuditing;
 
-public class MongoDataMappingContext extends MongoMappingContext {
+@Configuration
+@EnableMongoAuditing
+public class AuditingConfig {
 
-  public void addEntities (Class[] entityClasses) {
+  @Bean
+  public AuditorAware<String> myAuditorProvider () {
 
-    for (Class<?> entityClass : entityClasses) {
-      addPersistentEntity(entityClass);
-    }
+    return null;
   }
 }

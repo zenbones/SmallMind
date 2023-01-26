@@ -30,15 +30,11 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.spring.data.mongo;
+package org.smallmind.persistence.orm.data.mongo;
 
-import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 
-public abstract class CountQueryDetails extends QueryDetails {
+public abstract class UpdateQueryDetails extends QueryDetails {
 
-  public CountQueryDetails () {
-
-  }
-
-  public abstract Query completeQuery (Query query);
+  public abstract Update completeUpdates (Update update);
 }

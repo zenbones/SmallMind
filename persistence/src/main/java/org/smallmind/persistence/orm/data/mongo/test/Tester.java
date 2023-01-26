@@ -30,17 +30,17 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.spring.data.mongo.test;
+package org.smallmind.persistence.orm.data.mongo.test;
 
 import java.util.List;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.ServerAddress;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
-import org.smallmind.persistence.orm.spring.data.mongo.AnnotatedEntityModels;
-import org.smallmind.persistence.orm.spring.data.mongo.CreatedAndLastUpdatedCallback;
-import org.smallmind.persistence.orm.spring.data.mongo.MongoDataEntityCallbacks;
-import org.smallmind.persistence.orm.spring.data.mongo.internal.MongoDataConverter;
+import org.smallmind.persistence.orm.data.mongo.AnnotatedEntityModels;
+import org.smallmind.persistence.orm.data.mongo.CreatedAndLastUpdatedCallback;
+import org.smallmind.persistence.orm.data.mongo.MongoDataEntityCallbacks;
+import org.smallmind.persistence.orm.data.mongo.internal.MongoDataConverter;
 import org.springframework.data.mongodb.MongoDatabaseFactory;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.SimpleMongoClientDatabaseFactory;

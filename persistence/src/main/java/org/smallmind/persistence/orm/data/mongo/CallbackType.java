@@ -30,37 +30,34 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.spring.data.mongo.internal;
+package org.smallmind.persistence.orm.data.mongo;
 
-import java.util.Collections;
-import org.springframework.data.mongodb.MongoDatabaseFactory;
-import org.springframework.data.mongodb.core.convert.DefaultDbRefResolver;
-import org.springframework.data.mongodb.core.convert.MappingMongoConverter;
-import org.springframework.data.mongodb.core.convert.MongoCustomConversions;
+import org.springframework.data.mapping.callback.EntityCallback;
+import org.springframework.data.mongodb.core.mapping.event.AfterConvertCallback;
+import org.springframework.data.mongodb.core.mapping.event.AfterSaveCallback;
+import org.springframework.data.mongodb.core.mapping.event.BeforeConvertCallback;
+import org.springframework.data.mongodb.core.mapping.event.BeforeSaveCallback;
 
-public class MongoDataConverter extends MappingMongoConverter {
+public enum CallbackType {
 
-  public MongoDataConverter (MongoDatabaseFactory factory, boolean ensureIndexes, Class... entityClasses) {
+  BEFORE_SAVE(BeforeSaveCallback.class), BEFORE_CONVERT(BeforeConvertCallback.class), AFTER_CONVERT(AfterConvertCallback.class), AFTER_SAVE(AfterSaveCallback.class);
 
-    super(new DefaultDbRefResolver(factory), createMappingContext(ensureIndexes, entityClasses));
+  private Class<? extends EntityCallback> callbackClass;
 
-    setCustomConversions(conversions);
-    setCodecRegistryProvider(factory);
+  CallbackType (Class<? extends EntityCallback> callbackClass) {
 
-    afterPropertiesSet();
+    this.callbackClass = callbackClass;
   }
 
-  private static MongoDataMappingContext createMappingContext (boolean ensureIndexes, Class... entityClasses) {
+  public static CallbackType from (Class<? extends EntityCallback> callbackClass) {
 
-    MongoCustomConversions conversions = new MongoCustomConversions(Collections.emptyList());
-    MongoDataMappingContext mappingContext = new MongoDataMappingContext();
+    for (CallbackType callbackType : CallbackType.values()) {
+      if (callbackType.callbackClass.isAssignableFrom(callbackClass)) {
 
-    mappingContext.setSimpleTypeHolder(conversions.getSimpleTypeHolder());
-    mappingContext.setAutoIndexCreation(ensureIndexes);
-    mappingContext.addEntities(entityClasses);
+        return callbackType;
+      }
+    }
 
-    mappingContext.afterPropertiesSet();
-
-    return mappingContext;
+    return null;
   }
 }

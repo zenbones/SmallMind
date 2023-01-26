@@ -30,39 +30,15 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.spring.data.mongo.test;
+package org.smallmind.persistence.orm.data.mongo;
 
-import java.util.Date;
-import org.bson.types.ObjectId;
-import org.smallmind.persistence.orm.spring.data.mongo.TimestampedMongoDataDurable;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.Field;
+import org.springframework.data.mongodb.core.mapping.event.BeforeConvertCallback;
 
-@Document(collection = "fooz")
-public class Fooz extends TimestampedMongoDataDurable<ObjectId, Fooz> {
+public abstract class MongoDataBeforeConvertCallback<T> extends MongoDataEntityCallback<T> implements BeforeConvertCallback<T> {
 
-  @Field("color")
-  private String color;
-  @CreatedDate
-  private Date bar;
+  @Override
+  public CallbackType getCallbackType () {
 
-  public Fooz () {
-
-  }
-
-  public Fooz (String color) {
-
-    this.color = color;
-  }
-
-  public String getColor () {
-
-    return color;
-  }
-
-  public void setColor (String color) {
-
-    this.color = color;
+    return CallbackType.BEFORE_CONVERT;
   }
 }

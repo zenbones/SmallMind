@@ -30,11 +30,15 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.spring.data.mongo;
+package org.smallmind.persistence.orm.data.mongo;
 
-import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.data.mongodb.core.mapping.event.AfterConvertCallback;
 
-public abstract class UpdateQueryDetails extends QueryDetails {
+public abstract class MongoDataAfterConvertCallback<T> extends MongoDataEntityCallback<T> implements AfterConvertCallback<T> {
 
-  public abstract Update completeUpdates (Update update);
+  @Override
+  public CallbackType getCallbackType () {
+
+    return CallbackType.AFTER_CONVERT;
+  }
 }

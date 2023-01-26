@@ -30,32 +30,46 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.spring.data.mongo;
+package org.smallmind.persistence.orm.data.mongo;
 
-import java.io.Serializable;
-import com.mongodb.DBObject;
-import org.smallmind.persistence.AbstractDurable;
+import java.util.Date;
+import java.util.concurrent.atomic.AtomicReference;
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
 
-public class MongoDataDurable<I extends Serializable & Comparable<I>, D extends MongoDataDurable<I, D>> extends AbstractDurable<I, D> {
+public class CreatedAndLastUpdatedCallback extends MongoDataBeforeConvertCallback<TimestampedMongoDataDurable> {
 
-  @Id
-  private I id;
+  private final AnnotatedEntityModels annotatedEntityModels;
 
-  @Override
-  public I getId () {
+  public CreatedAndLastUpdatedCallback (AnnotatedEntityModels annotatedEntityModels) {
 
-    return id;
+    this.annotatedEntityModels = annotatedEntityModels;
   }
 
   @Override
-  public void setId (I id) {
+  public Class<TimestampedMongoDataDurable> getEntityClass () {
 
-    this.id = id;
+    return TimestampedMongoDataDurable.class;
   }
 
-  public void preSave (final DBObject dbObj) {
+  @Override
+  public TimestampedMongoDataDurable onBeforeConvert (TimestampedMongoDataDurable entity, String collection) {
 
-    dbObj.removeField("overlayClass");
+    try {
+
+      AtomicReference<Object> objectRef = new AtomicReference<>();
+      Date now = new Date();
+
+      annotatedEntityModels.getModel(entity.getClass()).process(Id.class, entity, (value, field, annotation) -> objectRef.set(field.get(value)));
+      if (objectRef.get() == null) {
+        annotatedEntityModels.getModel(entity.getClass()).process(CreatedDate.class, entity, (value, field, annotation) -> field.set(value, now));
+      }
+      annotatedEntityModels.getModel(entity.getClass()).process(LastModifiedDate.class, entity, (value, field, annotation) -> field.set(value, now));
+
+      return entity;
+    } catch (Exception exception) {
+      throw new RuntimeException(exception);
+    }
   }
 }

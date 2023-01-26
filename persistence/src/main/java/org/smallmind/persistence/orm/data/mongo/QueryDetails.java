@@ -30,8 +30,11 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.spring.data.mongo;
+package org.smallmind.persistence.orm.data.mongo;
 
-public abstract class DeleteQueryDetails extends QueryDetails {
+import org.springframework.data.mongodb.core.query.Query;
 
+public abstract class QueryDetails {
+
+  public abstract Query completeQuery (Query query);
 }
