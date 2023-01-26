@@ -38,7 +38,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
 
-public class CreatedAndLastUpdatedCallback extends MongoDataBeforeConvertCallback<TimestampedMongoDataDurable> {
+public class CreatedAndLastUpdatedCallback extends MongoDataBeforeConvertCallback<TimestampedMongoDataDurable<?,?>> {
 
   private final AnnotatedEntityModels annotatedEntityModels;
 
@@ -48,13 +48,13 @@ public class CreatedAndLastUpdatedCallback extends MongoDataBeforeConvertCallbac
   }
 
   @Override
-  public Class<TimestampedMongoDataDurable> getEntityClass () {
+  public Class<TimestampedMongoDataDurable<?,?>> getEntityClass () {
 
-    return TimestampedMongoDataDurable.class;
+    return (Class<TimestampedMongoDataDurable<?,?>>)(Object)TimestampedMongoDataDurable.class;
   }
 
   @Override
-  public TimestampedMongoDataDurable onBeforeConvert (TimestampedMongoDataDurable entity, String collection) {
+  public TimestampedMongoDataDurable<?,?> onBeforeConvert (TimestampedMongoDataDurable<?,?> entity, String collection) {
 
     try {
 
