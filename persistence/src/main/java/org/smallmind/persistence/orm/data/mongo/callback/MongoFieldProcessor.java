@@ -30,22 +30,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.data.mongo;
+package org.smallmind.persistence.orm.data.mongo.callback;
 
-import java.util.HashMap;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 
-public class AnnotatedEntityModels {
+@FunctionalInterface
+public interface MongoFieldProcessor {
 
-  private final HashMap<Class<?>, AnnotatedEntityModel> modelMap = new HashMap<>();
-
-  public AnnotatedEntityModel getModel (Class<?> entityClass) {
-
-    AnnotatedEntityModel model;
-
-    if ((model = modelMap.get(entityClass)) == null) {
-      modelMap.put(entityClass, model = new AnnotatedEntityModel(entityClass));
-    }
-
-    return model;
-  }
+  void process (Object value, Field field, Annotation annotation)
+    throws Exception;
 }

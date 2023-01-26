@@ -34,7 +34,9 @@ package org.smallmind.web.json.query.data.mongo;
 
 import java.util.LinkedList;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
-import org.smallmind.persistence.orm.data.mongo.Query;
+import org.smallmind.persistence.orm.data.mongo.query.Criterion;
+import org.smallmind.persistence.orm.data.mongo.query.Filter;
+import org.smallmind.persistence.orm.data.mongo.query.Query;
 import org.smallmind.web.json.query.QueryProcessingException;
 import org.smallmind.web.json.query.Sort;
 import org.smallmind.web.json.query.SortField;
@@ -44,7 +46,6 @@ import org.smallmind.web.json.query.WhereCriterion;
 import org.smallmind.web.json.query.WhereField;
 import org.smallmind.web.json.query.WhereFieldTransformer;
 import org.smallmind.web.json.query.WhereOperator;
-import org.springframework.data.mongodb.core.query.Criteria;
 
 public class MongoDataQueryUtility {
 
@@ -60,34 +61,34 @@ public class MongoDataQueryUtility {
   public static Query apply (Query query, Where where, WhereFieldTransformer<Void, Void> fieldTransformer) {
 
     if (where != null) {
-      query.and(walkConjunction(where.getRootConjunction(), fieldTransformer));
+      query.add(walkConjunction(where.getRootConjunction(), fieldTransformer));
     }
 
     return query;
   }
 
-  private static Criteria walkConjunction (WhereConjunction whereConjunction, WhereFieldTransformer<Void, Void> fieldTransformer) {
+  private static Criterion walkConjunction (WhereConjunction whereConjunction, WhereFieldTransformer<Void, Void> fieldTransformer) {
 
     if ((whereConjunction == null) || whereConjunction.isEmpty()) {
 
       return null;
     } else {
 
-      LinkedList<Criteria> criteriaList = new LinkedList<>();
+      LinkedList<Criterion> criterionList = new LinkedList<>();
 
       for (WhereCriterion whereCriterion : whereConjunction.getCriteria()) {
 
-        Criteria criteria;
+        Criterion criterion;
 
         switch (whereCriterion.getCriterionType()) {
           case CONJUNCTION:
-            if ((criteria = walkConjunction((WhereConjunction)whereCriterion, fieldTransformer)) != null) {
-              criteriaList.add(criteria);
+            if ((criterion = walkConjunction((WhereConjunction)whereCriterion, fieldTransformer)) != null) {
+              criterionList.add(criterion);
             }
             break;
           case FIELD:
-            if ((criteria = walkField((WhereField)whereCriterion, fieldTransformer)) != null) {
-              criteriaList.add(criteria);
+            if ((criterion = walkField((WhereField)whereCriterion, fieldTransformer)) != null) {
+              criterionList.add(criterion);
             }
             break;
           default:
@@ -95,18 +96,18 @@ public class MongoDataQueryUtility {
         }
       }
 
-      if (criteriaList.isEmpty()) {
+      if (criterionList.isEmpty()) {
 
         return null;
-      } else if (criteriaList.size() == 1) {
+      } else if (criterionList.size() == 1) {
 
-        return criteriaList.getFirst();
+        return criterionList.getFirst();
       } else {
         switch (whereConjunction.getConjunctionType()) {
           case AND:
-            return new Criteria().andOperator(criteriaList);
+            return Query.and(criterionList);
           case OR:
-            return new Criteria().orOperator(criteriaList);
+            return Query.or(criterionList);
           default:
             throw new UnknownSwitchCaseException(whereConjunction.getConjunctionType().name());
         }
@@ -114,59 +115,59 @@ public class MongoDataQueryUtility {
     }
   }
 
-  private static Criteria walkField (WhereField whereField, WhereFieldTransformer<Void, Void> fieldTransformer) {
+  private static Filter walkField (WhereField whereField, WhereFieldTransformer<Void, Void> fieldTransformer) {
 
     String fieldName = (fieldTransformer == null) ? whereField.getName() : fieldTransformer.transform(whereField.getEntity(), whereField.getName()).getField();
     Object fieldValue = whereField.getOperand().get();
 
     switch (whereField.getOperator()) {
       case LT:
-        return Criteria.where(fieldName).lt(fieldValue);
+        return Filter.where(fieldName).lt(fieldValue);
       case LE:
-        return Criteria.where(fieldName).lte(fieldValue);
+        return Filter.where(fieldName).lte(fieldValue);
       case EQ:
-        return (fieldValue == null) ? Criteria.where(fieldName).exists(false) : Criteria.where(fieldName).is(fieldValue);
+        return (fieldValue == null) ? Filter.where(fieldName).exists(false) : Filter.where(fieldName).eq(fieldValue);
       case NE:
-        return (fieldValue == null) ? Criteria.where(fieldName).exists(true) : Criteria.where(fieldName).ne(fieldValue);
+        return (fieldValue == null) ? Filter.where(fieldName).exists(true) : Filter.where(fieldName).ne(fieldValue);
       case GE:
-        return Criteria.where(fieldName).gte(fieldValue);
+        return Filter.where(fieldName).gte(fieldValue);
       case GT:
-        return Criteria.where(fieldName).gt(fieldValue);
+        return Filter.where(fieldName).gt(fieldValue);
       case EXISTS:
-        return Boolean.TRUE.equals(fieldValue) ? Criteria.where(fieldName).exists(true) : Criteria.where(fieldName).exists(false);
+        return Boolean.TRUE.equals(fieldValue) ? Filter.where(fieldName).exists(true) : Filter.where(fieldName).exists(false);
       case LIKE:
 
         Object likeValue;
 
         if ((likeValue = fieldValue) == null) {
 
-          return Criteria.where(fieldName).exists(false);
+          return Filter.where(fieldName).exists(false);
         } else if (!(likeValue instanceof String)) {
 
           throw new QueryProcessingException("The operation(%s) requires a String operand", WhereOperator.LIKE.name());
         } else {
           switch (((String)likeValue).length()) {
             case 0:
-              return Criteria.where(fieldName).is("");
+              return Filter.where(fieldName).eq("");
             case 1:
-              return likeValue.equals(SINGLE_WILDCARD) ? Criteria.where(fieldName).exists(true) : Criteria.where(fieldName).is(likeValue);
+              return likeValue.equals(SINGLE_WILDCARD) ? Filter.where(fieldName).exists(true) : Filter.where(fieldName).eq(likeValue);
             case 2:
-              return likeValue.equals(DOUBLE_WILDCARD) ? Criteria.where(fieldName).exists(true) : (((String)likeValue).charAt(0) == WILDCARD_CHAR) ? Criteria.where(fieldName).regex(".*" + ((String)likeValue).substring(1)) : (((String)likeValue).charAt(1) == WILDCARD_CHAR) ? Criteria.where(fieldName).regex(((String)likeValue).charAt(0) + ".*") : Criteria.where(fieldName).is(likeValue);
+              return likeValue.equals(DOUBLE_WILDCARD) ? Filter.where(fieldName).exists(true) : (((String)likeValue).charAt(0) == WILDCARD_CHAR) ? Filter.where(fieldName).regex(".*" + ((String)likeValue).substring(1)) : (((String)likeValue).charAt(1) == WILDCARD_CHAR) ? Filter.where(fieldName).regex(((String)likeValue).charAt(0) + ".*") : Filter.where(fieldName).eq(likeValue);
             default:
               if (((String)likeValue).substring(1, ((String)likeValue).length() - 1).indexOf(WILDCARD_CHAR) >= 0) {
                 throw new QueryProcessingException("The operation(%s) allows wildcards(%s) only at the start or end of the operand", WhereOperator.LIKE.name(), SINGLE_WILDCARD);
               } else if (((String)likeValue).startsWith(SINGLE_WILDCARD) && ((String)likeValue).endsWith(SINGLE_WILDCARD)) {
 
-                return Criteria.where(fieldName).regex(".*" + ((String)likeValue).substring(1, ((String)likeValue).length() - 1) + ".*");
+                return Filter.where(fieldName).regex(".*" + ((String)likeValue).substring(1, ((String)likeValue).length() - 1) + ".*");
               } else if (((String)likeValue).startsWith(SINGLE_WILDCARD)) {
 
-                return Criteria.where(fieldName).regex(".*" + ((String)likeValue).substring(1));
+                return Filter.where(fieldName).regex(".*" + ((String)likeValue).substring(1));
               } else if (((String)likeValue).endsWith(SINGLE_WILDCARD)) {
 
-                return Criteria.where(fieldName).regex(((String)likeValue).substring(0, ((String)likeValue).length() - 1) + ".*");
+                return Filter.where(fieldName).regex(((String)likeValue).substring(0, ((String)likeValue).length() - 1) + ".*");
               } else {
 
-                return Criteria.where(fieldName).is(likeValue);
+                return Filter.where(fieldName).eq(likeValue);
               }
           }
         }
@@ -176,38 +177,38 @@ public class MongoDataQueryUtility {
 
         if ((unlikeValue = fieldValue) == null) {
 
-          return Criteria.where(fieldName).exists(true);
+          return Filter.where(fieldName).exists(true);
         } else if (!(unlikeValue instanceof String)) {
 
           throw new QueryProcessingException("The operation(%s) requires a String operand", WhereOperator.UNLIKE.name());
         } else {
           switch (((String)unlikeValue).length()) {
             case 0:
-              return Criteria.where(fieldName).ne("");
+              return Filter.where(fieldName).ne("");
             case 1:
-              return unlikeValue.equals(SINGLE_WILDCARD) ? Criteria.where(fieldName).exists(false) : Criteria.where(fieldName).ne(unlikeValue);
+              return unlikeValue.equals(SINGLE_WILDCARD) ? Filter.where(fieldName).exists(false) : Filter.where(fieldName).ne(unlikeValue);
             case 2:
-              return unlikeValue.equals(DOUBLE_WILDCARD) ? Criteria.where(fieldName).exists(false) : (((String)unlikeValue).charAt(0) == WILDCARD_CHAR) ? Criteria.where(fieldName).regex(".*" + ((String)unlikeValue).substring(1)).not() : (((String)unlikeValue).charAt(1) == WILDCARD_CHAR) ? Criteria.where(fieldName).regex(((String)unlikeValue).charAt(0) + ".*").not() : Criteria.where(fieldName).ne(unlikeValue);
+              return unlikeValue.equals(DOUBLE_WILDCARD) ? Filter.where(fieldName).exists(false) : (((String)unlikeValue).charAt(0) == WILDCARD_CHAR) ? Filter.where(fieldName).regex(".*" + ((String)unlikeValue).substring(1)).not() : (((String)unlikeValue).charAt(1) == WILDCARD_CHAR) ? Filter.where(fieldName).regex(((String)unlikeValue).charAt(0) + ".*").not() : Filter.where(fieldName).ne(unlikeValue);
             default:
               if (((String)unlikeValue).substring(1, ((String)unlikeValue).length() - 1).indexOf(WILDCARD_CHAR) >= 0) {
                 throw new QueryProcessingException("The operation(%s) allows wildcards(%s) only at the start or end of the operand", WhereOperator.UNLIKE.name(), SINGLE_WILDCARD);
               } else if (((String)unlikeValue).startsWith(SINGLE_WILDCARD) && ((String)unlikeValue).endsWith(SINGLE_WILDCARD)) {
 
-                return Criteria.where(fieldName).regex(".*" + ((String)unlikeValue).substring(1, ((String)unlikeValue).length() - 1) + ".*").not();
+                return Filter.where(fieldName).regex(".*" + ((String)unlikeValue).substring(1, ((String)unlikeValue).length() - 1) + ".*").not();
               } else if (((String)unlikeValue).startsWith(SINGLE_WILDCARD)) {
 
-                return Criteria.where(fieldName).regex(".*" + ((String)unlikeValue).substring(1)).not();
+                return Filter.where(fieldName).regex(".*" + ((String)unlikeValue).substring(1)).not();
               } else if (((String)unlikeValue).endsWith(SINGLE_WILDCARD)) {
 
-                return Criteria.where(fieldName).regex(((String)unlikeValue).substring(0, ((String)unlikeValue).length() - 1) + ".*").not();
+                return Filter.where(fieldName).regex(((String)unlikeValue).substring(0, ((String)unlikeValue).length() - 1) + ".*").not();
               } else {
 
-                return Criteria.where(fieldName).ne(unlikeValue);
+                return Filter.where(fieldName).ne(unlikeValue);
               }
           }
         }
       case IN:
-        return Criteria.where(fieldName).in((Object[])fieldValue);
+        return Filter.where(fieldName).in((Object[])fieldValue);
       default:
         throw new UnknownSwitchCaseException(whereField.getOperator().name());
     }

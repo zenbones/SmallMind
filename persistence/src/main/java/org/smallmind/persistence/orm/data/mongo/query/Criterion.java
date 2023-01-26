@@ -30,11 +30,11 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.data.mongo;
+package org.smallmind.persistence.orm.data.mongo.query;
 
 import org.springframework.data.mongodb.core.query.Criteria;
 
-public interface Conjunction {
+public interface Criterion {
 
   Criteria as ();
 }

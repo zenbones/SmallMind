@@ -30,13 +30,34 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.data.mongo;
+package org.smallmind.persistence.orm.data.mongo.callback;
 
 import org.springframework.data.mapping.callback.EntityCallback;
+import org.springframework.data.mongodb.core.mapping.event.AfterConvertCallback;
+import org.springframework.data.mongodb.core.mapping.event.AfterSaveCallback;
+import org.springframework.data.mongodb.core.mapping.event.BeforeConvertCallback;
+import org.springframework.data.mongodb.core.mapping.event.BeforeSaveCallback;
 
-public abstract class MongoDataEntityCallback<T> implements EntityCallback<T> {
+public enum CallbackType {
 
-  public abstract CallbackType getCallbackType ();
+  BEFORE_SAVE(BeforeSaveCallback.class), BEFORE_CONVERT(BeforeConvertCallback.class), AFTER_CONVERT(AfterConvertCallback.class), AFTER_SAVE(AfterSaveCallback.class);
 
-  public abstract Class<T> getEntityClass ();
+  private Class<? extends EntityCallback> callbackClass;
+
+  CallbackType (Class<? extends EntityCallback> callbackClass) {
+
+    this.callbackClass = callbackClass;
+  }
+
+  public static CallbackType from (Class<? extends EntityCallback> callbackClass) {
+
+    for (CallbackType callbackType : CallbackType.values()) {
+      if (callbackType.callbackClass.isAssignableFrom(callbackClass)) {
+
+        return callbackType;
+      }
+    }
+
+    return null;
+  }
 }

@@ -235,6 +235,6 @@ public class MongoDataDao<I extends Serializable & Comparable<I>, D extends Mong
 
   public Query constructQuery (QueryDetails queryDetails) {
 
-    return queryDetails.completeQuery(new org.smallmind.persistence.orm.data.mongo.Query()).as();
+    return queryDetails.completeQuery(new org.smallmind.persistence.orm.data.mongo.query.Query()).as();
   }
 }

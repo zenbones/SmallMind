@@ -30,30 +30,21 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.data.mongo;
+package org.smallmind.persistence.orm.data.mongo.query;
 
-import java.util.Arrays;
 import java.util.LinkedList;
 import org.springframework.data.mongodb.core.query.Criteria;
 
-public class Or implements Conjunction {
+public class Or extends Conjunction<Or> {
 
-  private final LinkedList<Criteria> criteriaList = new LinkedList<>();
+  protected Or (Criterion... criteria) {
 
-  protected Or () {
-
+    add(criteria);
   }
 
   @Override
-  public Criteria as () {
+  public Criteria aggregate (LinkedList<Criteria> criteriaList) {
 
-    return criteriaList.isEmpty() ? null : (criteriaList.size() == 1) ? criteriaList.getFirst() : new Criteria().andOperator(criteriaList);
-  }
-
-  public Or add (Criteria... criterion) {
-
-    criteriaList.addAll(Arrays.asList(criterion));
-
-    return this;
+    return new Criteria().orOperator(criteriaList);
   }
 }

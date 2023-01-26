@@ -30,30 +30,15 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.data.mongo;
+package org.smallmind.persistence.orm.data.mongo.callback;
 
-import java.util.Arrays;
-import java.util.LinkedList;
-import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.mapping.event.BeforeConvertCallback;
 
-public class And implements Conjunction {
-
-  private final LinkedList<Criteria> criteriaList = new LinkedList<>();
-
-  protected And () {
-
-  }
+public abstract class MongoDataBeforeConvertCallback<T> extends MongoDataEntityCallback<T> implements BeforeConvertCallback<T> {
 
   @Override
-  public Criteria as () {
+  public CallbackType getCallbackType () {
 
-    return criteriaList.isEmpty() ? null : (criteriaList.size() == 1) ? criteriaList.getFirst() : new Criteria().andOperator(criteriaList);
-  }
-
-  public And add (Criteria... criterion) {
-
-    criteriaList.addAll(Arrays.asList(criterion));
-
-    return this;
+    return CallbackType.BEFORE_CONVERT;
   }
 }

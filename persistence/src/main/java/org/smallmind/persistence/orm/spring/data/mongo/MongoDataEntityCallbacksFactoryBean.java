@@ -32,8 +32,8 @@
  */
 package org.smallmind.persistence.orm.spring.data.mongo;
 
-import org.smallmind.persistence.orm.data.mongo.MongoDataEntityCallback;
-import org.smallmind.persistence.orm.data.mongo.MongoDataEntityCallbacks;
+import org.smallmind.persistence.orm.data.mongo.callback.MongoDataEntityCallback;
+import org.smallmind.persistence.orm.data.mongo.callback.MongoDataEntityCallbacks;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 

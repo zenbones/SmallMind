@@ -30,15 +30,22 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.data.mongo;
+package org.smallmind.persistence.orm.data.mongo.callback;
 
-import org.springframework.data.mongodb.core.mapping.event.BeforeConvertCallback;
+import java.util.HashMap;
 
-public abstract class MongoDataBeforeConvertCallback<T> extends MongoDataEntityCallback<T> implements BeforeConvertCallback<T> {
+public class AnnotatedEntityModels {
 
-  @Override
-  public CallbackType getCallbackType () {
+  private final HashMap<Class<?>, AnnotatedEntityModel> modelMap = new HashMap<>();
 
-    return CallbackType.BEFORE_CONVERT;
+  public AnnotatedEntityModel getModel (Class<?> entityClass) {
+
+    AnnotatedEntityModel model;
+
+    if ((model = modelMap.get(entityClass)) == null) {
+      modelMap.put(entityClass, model = new AnnotatedEntityModel(entityClass));
+    }
+
+    return model;
   }
 }

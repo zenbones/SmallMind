@@ -30,9 +30,10 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.data.mongo;
+package org.smallmind.persistence.orm.data.mongo.query;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.LinkedList;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -45,14 +46,29 @@ public class Query {
   private long skip = 0;
   private int limit = 0;
 
-  public static And and () {
+  public static And and (Criterion... criteria) {
 
-    return new And();
+    return new And(criteria);
   }
 
-  public static Or or () {
+  public static And and (Collection<Criterion> criterionCollection) {
 
-    return new Or();
+    return new And(criterionCollection.toArray(new Criterion[0]));
+  }
+
+  public static Or or (Criterion... criteria) {
+
+    return new Or(criteria);
+  }
+
+  public static Or or (Collection<Criterion> criterionCollection) {
+
+    return new Or(criterionCollection.toArray(new Criterion[0]));
+  }
+
+  public static Filter filter (String key) {
+
+    return Filter.where(key);
   }
 
   public org.springframework.data.mongodb.core.query.Query as () {
@@ -94,18 +110,16 @@ public class Query {
     return this;
   }
 
-  public Query and (Conjunction conjunction) {
+  public Query add (Criterion... criteria) {
 
-    return and(conjunction.as());
-  }
+    if ((criteria != null) && (criteria.length > 0)) {
+      for (Criterion criterion : criteria) {
 
-  public Query and (Criteria... criterion) {
+        Criteria mongoCriteria;
 
-    if ((criterion != null) && (criterion.length > 0)) {
-      if (criterion.length == 1) {
-        criteriaList.add(criterion[0]);
-      } else {
-        criteriaList.addAll(Arrays.asList(criterion));
+        if ((mongoCriteria = criterion.as()) != null) {
+          criteriaList.add(mongoCriteria);
+        }
       }
     }
 

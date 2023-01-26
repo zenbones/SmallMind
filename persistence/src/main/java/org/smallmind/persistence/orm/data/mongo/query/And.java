@@ -30,14 +30,21 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.data.mongo;
+package org.smallmind.persistence.orm.data.mongo.query;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
+import java.util.LinkedList;
+import org.springframework.data.mongodb.core.query.Criteria;
 
-@FunctionalInterface
-public interface MongoFieldProcessor {
+public class And extends Conjunction<And> {
 
-  void process (Object value, Field field, Annotation annotation)
-    throws Exception;
+  protected And (Criterion... criteria) {
+
+    add(criteria);
+  }
+
+  @Override
+  public Criteria aggregate (LinkedList<Criteria> criteriaList) {
+
+    return new Criteria().andOperator(criteriaList);
+  }
 }
