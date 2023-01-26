@@ -30,34 +30,15 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.json.query.morphia;
+package org.smallmind.web.json.query.data.mongo;
 
-import org.smallmind.web.json.query.WherePath;
+import org.smallmind.web.json.query.WhereFieldTransform;
+import org.smallmind.web.json.query.WhereFieldTransformer;
 
-public class MorphiaWherePath extends WherePath<Void, Void> {
+public class MongoDataWhereFieldTransformer extends WhereFieldTransformer<Void, Void> {
 
-  private final String field;
+  public MongoDataWhereFieldTransformer (WhereFieldTransform<Void, Void> transform) {
 
-  public MorphiaWherePath (String field) {
-
-    this.field = field;
-  }
-
-  @Override
-  public Void getRoot () {
-
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public Void getPath () {
-
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public String getField () {
-
-    return field;
+    super(transform);
   }
 }
