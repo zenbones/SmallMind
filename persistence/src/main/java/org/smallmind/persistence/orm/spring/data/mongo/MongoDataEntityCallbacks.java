@@ -47,6 +47,17 @@ public class MongoDataEntityCallbacks implements EntityCallbacks {
 
   private final HashMap<CallbackType, LinkedList<MongoDataEntityCallback<?>>> callbackMap = new HashMap<>();
 
+  public MongoDataEntityCallbacks () {
+
+  }
+
+  public MongoDataEntityCallbacks (MongoDataEntityCallback[] callbacks) {
+
+    for (MongoDataEntityCallback<?> callback : callbacks) {
+      addEntityCallback(callback);
+    }
+  }
+
   @Override
   public void addEntityCallback (EntityCallback<?> callback) {
 
@@ -76,21 +87,23 @@ public class MongoDataEntityCallbacks implements EntityCallbacks {
 
       if (((callbackList = callbackMap.get(callbackType)) != null) && (!callbackList.isEmpty())) {
         for (MongoDataEntityCallback<?> callback : callbackList) {
-          switch (callbackType) {
-            case BEFORE_SAVE:
-              ((BeforeSaveCallback<T>)callback).onBeforeSave(entity, (Document)args[0], (String)args[1]);
-              break;
-            case AFTER_SAVE:
-              ((AfterSaveCallback<T>)callback).onAfterSave(entity, (Document)args[0], (String)args[1]);
-              break;
-            case BEFORE_CONVERT:
-              ((BeforeConvertCallback<T>)callback).onBeforeConvert(entity, (String)args[1]);
-              break;
-            case AFTER_CONVERT:
-              ((AfterConvertCallback<T>)callback).onAfterConvert(entity, (Document)args[0], (String)args[1]);
-              break;
-            default:
-              throw new UnknownSwitchCaseException(callbackType.name());
+          if (callback.getEntityClass().isAssignableFrom(entity.getClass())) {
+            switch (callbackType) {
+              case BEFORE_SAVE:
+                entity = ((BeforeSaveCallback<T>)callback).onBeforeSave(entity, (Document)args[0], (String)args[1]);
+                break;
+              case AFTER_SAVE:
+                entity = ((AfterSaveCallback<T>)callback).onAfterSave(entity, (Document)args[0], (String)args[1]);
+                break;
+              case BEFORE_CONVERT:
+                entity = ((BeforeConvertCallback<T>)callback).onBeforeConvert(entity, (String)args[0]);
+                break;
+              case AFTER_CONVERT:
+                entity = ((AfterConvertCallback<T>)callback).onAfterConvert(entity, (Document)args[0], (String)args[1]);
+                break;
+              default:
+                throw new UnknownSwitchCaseException(callbackType.name());
+            }
           }
         }
       }

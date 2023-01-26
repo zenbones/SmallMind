@@ -32,44 +32,20 @@
  */
 package org.smallmind.persistence.orm.spring.data.mongo;
 
-import java.util.Date;
-import java.util.concurrent.atomic.AtomicReference;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.LastModifiedDate;
+import java.util.HashMap;
 
-public class CreatedAndLastUpdatedCallback extends MongoDataBeforeConvertCallback<TimestampedMongoDataDurable> {
+public class AnnotatedEntityModels {
 
-  private final AnnotatedEntityModels annotatedEntityModels;
+  private final HashMap<Class<?>, AnnotatedEntityModel> modelMap = new HashMap<>();
 
-  public CreatedAndLastUpdatedCallback (AnnotatedEntityModels annotatedEntityModels) {
+  public AnnotatedEntityModel getModel (Class<?> entityClass) {
 
-    this.annotatedEntityModels = annotatedEntityModels;
-  }
+    AnnotatedEntityModel model;
 
-  @Override
-  public Class<TimestampedMongoDataDurable> getEntityClass () {
-
-    return TimestampedMongoDataDurable.class;
-  }
-
-  @Override
-  public TimestampedMongoDataDurable onBeforeConvert (TimestampedMongoDataDurable entity, String collection) {
-
-    try {
-
-      AtomicReference<Object> objectRef = new AtomicReference<>();
-      Date now = new Date();
-
-      annotatedEntityModels.getModel(entity.getClass()).process(Id.class, entity, (value, field, annotation) -> objectRef.set(field.get(value)));
-      if (objectRef.get() == null) {
-        annotatedEntityModels.getModel(entity.getClass()).process(CreatedDate.class, entity, (value, field, annotation) -> field.set(value, now));
-      }
-      annotatedEntityModels.getModel(entity.getClass()).process(LastModifiedDate.class, entity, (value, field, annotation) -> field.set(value, now));
-
-      return entity;
-    } catch (Exception exception) {
-      throw new RuntimeException(exception);
+    if ((model = modelMap.get(entityClass)) == null) {
+      modelMap.put(entityClass, model = new AnnotatedEntityModel(entityClass));
     }
+
+    return model;
   }
 }

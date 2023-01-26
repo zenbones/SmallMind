@@ -37,6 +37,7 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.ServerAddress;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
+import org.smallmind.persistence.orm.spring.data.mongo.AnnotatedEntityModels;
 import org.smallmind.persistence.orm.spring.data.mongo.CreatedAndLastUpdatedCallback;
 import org.smallmind.persistence.orm.spring.data.mongo.MongoDataEntityCallbacks;
 import org.smallmind.persistence.orm.spring.data.mongo.internal.MongoDataConverter;
@@ -56,8 +57,9 @@ public class Tester {
     MongoDatabaseFactory mongoDatabaseFactory = new SimpleMongoClientDatabaseFactory(mongoClient, "epicenter");
     MongoTemplate mongoTemplate = new MongoTemplate(mongoDatabaseFactory, new MongoDataConverter(mongoDatabaseFactory, true, Fooz.class));
     MongoDataEntityCallbacks mongoDataEntityCallbacks = new MongoDataEntityCallbacks();
+    AnnotatedEntityModels annotatedEntityModels = new AnnotatedEntityModels();
 
-    mongoDataEntityCallbacks.addEntityCallback(new CreatedAndLastUpdatedCallback());
+    mongoDataEntityCallbacks.addEntityCallback(new CreatedAndLastUpdatedCallback(annotatedEntityModels));
     mongoTemplate.setEntityCallbacks(mongoDataEntityCallbacks);
 
     mongoTemplate.save(new Fooz("purple"));
