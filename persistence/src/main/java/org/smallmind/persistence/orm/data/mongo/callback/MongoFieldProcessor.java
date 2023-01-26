@@ -30,15 +30,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.data.mongo;
+package org.smallmind.persistence.orm.data.mongo.callback;
 
-import org.springframework.data.mongodb.core.mapping.event.BeforeSaveCallback;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 
-public abstract class MongoDataBeforeSaveCallback<T> extends MongoDataEntityCallback<T> implements BeforeSaveCallback<T> {
+@FunctionalInterface
+public interface MongoFieldProcessor {
 
-  @Override
-  public CallbackType getCallbackType () {
-
-    return CallbackType.BEFORE_SAVE;
-  }
+  void process (Object value, Field field, Annotation annotation)
+    throws Exception;
 }

@@ -33,12 +33,12 @@
 
   <bean name="annotationSeekingBeanFactoryPostProcessor" class="org.smallmind.persistence.orm.spring.data.mongo.AnnotationSeekingBeanFactoryPostProcessor"/>
 
-  <bean id="annotatedEntityModels" class="org.smallmind.persistence.orm.data.mongo.AnnotatedEntityModels"/>
+  <bean id="annotatedEntityModels" class="org.smallmind.persistence.orm.data.mongo.callback.AnnotatedEntityModels"/>
 
   <bean id="mongoDataEntityCallbacks" class="org.smallmind.persistence.orm.spring.data.mongo.MongoDataEntityCallbacksFactoryBean">
     <property name="callbacks">
       <list>
-        <bean class="org.smallmind.persistence.orm.data.mongo.CreatedAndLastUpdatedCallback">
+        <bean class="org.smallmind.persistence.orm.data.mongo.callback.CreatedAndLastUpdatedCallback">
           <constructor-arg index="0" name="annotatedEntityModels" ref="annotatedEntityModels"/>
         </bean>
       </list>

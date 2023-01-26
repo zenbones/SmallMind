@@ -30,23 +30,13 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.data.mongo;
+package org.smallmind.persistence.orm.data.mongo.callback;
 
-import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.data.mapping.callback.EntityCallback;
 
-public abstract class UpdateQueryDetails extends QueryDetails {
+public abstract class MongoDataEntityCallback<T> implements EntityCallback<T> {
 
-  private final UpdateType updateType;
+  public abstract CallbackType getCallbackType ();
 
-  public UpdateQueryDetails (UpdateType updateType) {
-
-    this.updateType = updateType;
-  }
-
-  public abstract Update completeUpdates (Update update);
-
-  public UpdateType getUpdateType () {
-
-    return updateType;
-  }
+  public abstract Class<T> getEntityClass ();
 }

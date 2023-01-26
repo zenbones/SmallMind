@@ -32,7 +32,7 @@
  */
 package org.smallmind.persistence.orm.data.mongo;
 
-import org.springframework.data.mongodb.core.query.Query;
+import org.smallmind.persistence.orm.data.mongo.query.Query;
 
 public abstract class QueryDetails {
 

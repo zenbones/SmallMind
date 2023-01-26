@@ -30,15 +30,21 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.data.mongo;
+package org.smallmind.persistence.orm.data.mongo.query;
 
-import org.springframework.data.mongodb.core.mapping.event.AfterSaveCallback;
+import java.util.LinkedList;
+import org.springframework.data.mongodb.core.query.Criteria;
 
-public abstract class MongoDataAfterSaveCallback<T> extends MongoDataEntityCallback<T> implements AfterSaveCallback<T> {
+public class And extends Conjunction<And> {
+
+  protected And (Criterion... criteria) {
+
+    add(criteria);
+  }
 
   @Override
-  public CallbackType getCallbackType () {
+  public Criteria aggregate (LinkedList<Criteria> criteriaList) {
 
-    return CallbackType.AFTER_SAVE;
+    return new Criteria().andOperator(criteriaList);
   }
 }

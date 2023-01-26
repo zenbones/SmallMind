@@ -30,23 +30,15 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.data.mongo;
+package org.smallmind.persistence.orm.data.mongo.callback;
 
-import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.data.mongodb.core.mapping.event.BeforeSaveCallback;
 
-public abstract class UpdateQueryDetails extends QueryDetails {
+public abstract class MongoDataBeforeSaveCallback<T> extends MongoDataEntityCallback<T> implements BeforeSaveCallback<T> {
 
-  private final UpdateType updateType;
+  @Override
+  public CallbackType getCallbackType () {
 
-  public UpdateQueryDetails (UpdateType updateType) {
-
-    this.updateType = updateType;
-  }
-
-  public abstract Update completeUpdates (Update update);
-
-  public UpdateType getUpdateType () {
-
-    return updateType;
+    return CallbackType.BEFORE_SAVE;
   }
 }

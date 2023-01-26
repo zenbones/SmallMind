@@ -30,23 +30,34 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.data.mongo;
+package org.smallmind.persistence.orm.data.mongo.callback;
 
-import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.data.mapping.callback.EntityCallback;
+import org.springframework.data.mongodb.core.mapping.event.AfterConvertCallback;
+import org.springframework.data.mongodb.core.mapping.event.AfterSaveCallback;
+import org.springframework.data.mongodb.core.mapping.event.BeforeConvertCallback;
+import org.springframework.data.mongodb.core.mapping.event.BeforeSaveCallback;
 
-public abstract class UpdateQueryDetails extends QueryDetails {
+public enum CallbackType {
 
-  private final UpdateType updateType;
+  BEFORE_SAVE(BeforeSaveCallback.class), BEFORE_CONVERT(BeforeConvertCallback.class), AFTER_CONVERT(AfterConvertCallback.class), AFTER_SAVE(AfterSaveCallback.class);
 
-  public UpdateQueryDetails (UpdateType updateType) {
+  private Class<? extends EntityCallback> callbackClass;
 
-    this.updateType = updateType;
+  CallbackType (Class<? extends EntityCallback> callbackClass) {
+
+    this.callbackClass = callbackClass;
   }
 
-  public abstract Update completeUpdates (Update update);
+  public static CallbackType from (Class<? extends EntityCallback> callbackClass) {
 
-  public UpdateType getUpdateType () {
+    for (CallbackType callbackType : CallbackType.values()) {
+      if (callbackType.callbackClass.isAssignableFrom(callbackClass)) {
 
-    return updateType;
+        return callbackType;
+      }
+    }
+
+    return null;
   }
 }

@@ -30,34 +30,22 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.data.mongo;
+package org.smallmind.persistence.orm.data.mongo.callback;
 
-import org.springframework.data.mapping.callback.EntityCallback;
-import org.springframework.data.mongodb.core.mapping.event.AfterConvertCallback;
-import org.springframework.data.mongodb.core.mapping.event.AfterSaveCallback;
-import org.springframework.data.mongodb.core.mapping.event.BeforeConvertCallback;
-import org.springframework.data.mongodb.core.mapping.event.BeforeSaveCallback;
+import java.util.HashMap;
 
-public enum CallbackType {
+public class AnnotatedEntityModels {
 
-  BEFORE_SAVE(BeforeSaveCallback.class), BEFORE_CONVERT(BeforeConvertCallback.class), AFTER_CONVERT(AfterConvertCallback.class), AFTER_SAVE(AfterSaveCallback.class);
+  private final HashMap<Class<?>, AnnotatedEntityModel> modelMap = new HashMap<>();
 
-  private Class<? extends EntityCallback> callbackClass;
+  public AnnotatedEntityModel getModel (Class<?> entityClass) {
 
-  CallbackType (Class<? extends EntityCallback> callbackClass) {
+    AnnotatedEntityModel model;
 
-    this.callbackClass = callbackClass;
-  }
-
-  public static CallbackType from (Class<? extends EntityCallback> callbackClass) {
-
-    for (CallbackType callbackType : CallbackType.values()) {
-      if (callbackType.callbackClass.isAssignableFrom(callbackClass)) {
-
-        return callbackType;
-      }
+    if ((model = modelMap.get(entityClass)) == null) {
+      modelMap.put(entityClass, model = new AnnotatedEntityModel(entityClass));
     }
 
-    return null;
+    return model;
   }
 }

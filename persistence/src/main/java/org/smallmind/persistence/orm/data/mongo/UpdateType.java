@@ -32,13 +32,34 @@
  */
 package org.smallmind.persistence.orm.data.mongo;
 
-import org.springframework.data.mongodb.core.mapping.event.AfterConvertCallback;
+import com.mongodb.client.result.UpdateResult;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 
-public abstract class MongoDataAfterConvertCallback<T> extends MongoDataEntityCallback<T> implements AfterConvertCallback<T> {
+public enum UpdateType {
 
-  @Override
-  public CallbackType getCallbackType () {
+  FIRST {
+    @Override
+    public UpdateResult execute (MongoTemplate mongoTemplate, Query query, Update update, Class<?> managedClass) {
 
-    return CallbackType.AFTER_CONVERT;
-  }
+      return mongoTemplate.updateFirst(query, update, managedClass);
+    }
+  },
+  MULTI {
+    @Override
+    public UpdateResult execute (MongoTemplate mongoTemplate, Query query, Update update, Class<?> managedClass) {
+
+      return mongoTemplate.updateMulti(query, update, managedClass);
+    }
+  },
+  UPSERT {
+    @Override
+    public UpdateResult execute (MongoTemplate mongoTemplate, Query query, Update update, Class<?> managedClass) {
+
+      return mongoTemplate.upsert(query, update, managedClass);
+    }
+  };
+
+  public abstract UpdateResult execute (MongoTemplate mongoTemplate, Query query, Update update, Class<?> managedClass);
 }

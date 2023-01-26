@@ -30,10 +30,11 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.data.mongo;
+package org.smallmind.persistence.orm.data.mongo.callback;
 
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicReference;
+import org.smallmind.persistence.orm.data.mongo.TimestampedMongoDataDurable;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;

@@ -30,14 +30,11 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.data.mongo;
+package org.smallmind.persistence.orm.data.mongo.query;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
+import org.springframework.data.mongodb.core.query.Criteria;
 
-@FunctionalInterface
-public interface MongoFieldProcessor {
+public interface Criterion {
 
-  void process (Object value, Field field, Annotation annotation)
-    throws Exception;
+  Criteria as ();
 }

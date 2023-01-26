@@ -30,23 +30,36 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.data.mongo;
+package org.smallmind.persistence.orm.data.mongo.query;
 
-import org.springframework.data.mongodb.core.query.Update;
+import java.util.LinkedList;
+import org.springframework.data.mongodb.core.query.Criteria;
 
-public abstract class UpdateQueryDetails extends QueryDetails {
+public abstract class Conjunction<C extends Conjunction<C>> implements Criterion {
 
-  private final UpdateType updateType;
+  private final LinkedList<Criteria> criteriaList = new LinkedList<>();
 
-  public UpdateQueryDetails (UpdateType updateType) {
+  public abstract Criteria aggregate (LinkedList<Criteria> criteriaList);
 
-    this.updateType = updateType;
+  @Override
+  public Criteria as () {
+
+    return criteriaList.isEmpty() ? null : (criteriaList.size() == 1) ? criteriaList.getFirst() : aggregate(criteriaList);
   }
 
-  public abstract Update completeUpdates (Update update);
+  public Conjunction<C> add (Criterion... criteria) {
 
-  public UpdateType getUpdateType () {
+    if ((criteria != null) && (criteria.length > 0)) {
+      for (Criterion criterion : criteria) {
 
-    return updateType;
+        Criteria mongoCriteria;
+
+        if ((mongoCriteria = criterion.as()) != null) {
+          criteriaList.add(mongoCriteria);
+        }
+      }
+    }
+
+    return this;
   }
 }

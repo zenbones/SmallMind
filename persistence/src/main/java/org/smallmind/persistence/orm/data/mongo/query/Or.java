@@ -30,22 +30,21 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.data.mongo;
+package org.smallmind.persistence.orm.data.mongo.query;
 
-import java.util.HashMap;
+import java.util.LinkedList;
+import org.springframework.data.mongodb.core.query.Criteria;
 
-public class AnnotatedEntityModels {
+public class Or extends Conjunction<Or> {
 
-  private final HashMap<Class<?>, AnnotatedEntityModel> modelMap = new HashMap<>();
+  protected Or (Criterion... criteria) {
 
-  public AnnotatedEntityModel getModel (Class<?> entityClass) {
+    add(criteria);
+  }
 
-    AnnotatedEntityModel model;
+  @Override
+  public Criteria aggregate (LinkedList<Criteria> criteriaList) {
 
-    if ((model = modelMap.get(entityClass)) == null) {
-      modelMap.put(entityClass, model = new AnnotatedEntityModel(entityClass));
-    }
-
-    return model;
+    return new Criteria().orOperator(criteriaList);
   }
 }
