@@ -62,8 +62,18 @@ public abstract class TimestampedMongoDataDurable<I extends Serializable & Compa
     return created;
   }
 
+  public void setCreated (Date created) {
+
+    this.created = created;
+  }
+
   public Date getLastUpdated () {
 
     return lastUpdated;
+  }
+
+  public void setLastUpdated (Date lastUpdated) {
+
+    this.lastUpdated = lastUpdated;
   }
 }
