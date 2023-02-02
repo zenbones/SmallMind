@@ -96,43 +96,43 @@ public class ConversionPatternRule implements PatternRule {
       return null;
     }
 
-    StringBuffer strippedBuffer;
+    StringBuilder strippedBuilder;
     boolean slashed = false;
 
-    strippedBuffer = new StringBuffer();
+    strippedBuilder = new StringBuilder();
 
     for (int count = 0; count < slashedString.length(); count++) {
       if (slashed) {
         switch (slashedString.charAt(count)) {
           case 'r':
-            strippedBuffer.append('\r');
+            strippedBuilder.append('\r');
             break;
           case 't':
-            strippedBuffer.append('\t');
+            strippedBuilder.append('\t');
             break;
           case 'f':
-            strippedBuffer.append('\f');
+            strippedBuilder.append('\f');
             break;
           case 'n':
-            strippedBuffer.append(System.getProperty("line.separator"));
+            strippedBuilder.append(System.getProperty("line.separator"));
             break;
           default:
-            strippedBuffer.append(slashedString.charAt(count));
+            strippedBuilder.append(slashedString.charAt(count));
         }
 
         slashed = false;
       } else if (slashedString.charAt(count) == '\\') {
         slashed = true;
       } else {
-        strippedBuffer.append(slashedString.charAt(count));
+        strippedBuilder.append(slashedString.charAt(count));
       }
     }
 
     if (slashed) {
-      strippedBuffer.append('\\');
+      strippedBuilder.append('\\');
     }
 
-    return strippedBuffer.toString();
+    return strippedBuilder.toString();
   }
 
   public String convert (Record<?> record, Timestamp timestamp) {

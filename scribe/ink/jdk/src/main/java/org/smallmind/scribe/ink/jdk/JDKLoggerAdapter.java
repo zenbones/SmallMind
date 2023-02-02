@@ -194,7 +194,6 @@ public class JDKLoggerAdapter implements LoggerAdapter {
   private LoggerContext willLog (Level level) {
 
     LoggerContext loggerContext;
-    Record<LogRecord> record;
 
     loggerContext = new DefaultLoggerContext();
     if (getAutoFillLoggerContext()) {
@@ -202,7 +201,8 @@ public class JDKLoggerAdapter implements LoggerAdapter {
     }
 
     if (!((logger.getFilter() == null) && filterList.isEmpty())) {
-      record = new JDKRecordSubverter(logger.getName(), level, loggerContext, null, null).getRecord();
+
+      Record<LogRecord> record = new JDKRecordSubverter(logger.getName(), level, loggerContext, null, null).getRecord();
 
       if (logger.getFilter() != null) {
         if (!logger.getFilter().isLoggable(record.getNativeLogEntry())) {

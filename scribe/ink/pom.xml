@@ -13,5 +13,6 @@
     <module>indigenous</module>
     <module>jdk</module>
     <module>log4j</module>
+    <module>slf4j</module>
   </modules>
 </project>

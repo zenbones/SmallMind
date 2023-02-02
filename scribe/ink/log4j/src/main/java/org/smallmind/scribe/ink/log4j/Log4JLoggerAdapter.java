@@ -196,7 +196,6 @@ public class Log4JLoggerAdapter implements LoggerAdapter {
   private LoggerContext willLog (Level level) {
 
     LoggerContext loggerContext;
-    Record<LogEvent> filterRecord;
 
     loggerContext = new DefaultLoggerContext();
     if (getAutoFillLoggerContext()) {
@@ -204,7 +203,9 @@ public class Log4JLoggerAdapter implements LoggerAdapter {
     }
 
     if (!filterList.isEmpty()) {
-      filterRecord = new Log4JRecordSubverter(logger.getName(), logger.getClass().getCanonicalName(), level, loggerContext, null, null).getRecord();
+
+      Record<LogEvent> filterRecord = new Log4JRecordSubverter(logger.getName(), logger.getClass().getCanonicalName(), level, loggerContext, null, null).getRecord();
+
       for (Filter filter : filterList) {
         if (!filter.willLog(filterRecord)) {
           return null;
