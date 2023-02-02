@@ -40,6 +40,8 @@ import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcern;
 import org.bson.UuidRepresentation;
+import org.bson.codecs.configuration.CodecRegistries;
+import org.bson.codecs.configuration.CodecRegistry;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
@@ -49,6 +51,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 public class MongoClientSettingsFactoryBean implements InitializingBean, FactoryBean<MongoClientSettings> {
 
   private MongoClientSettings.Builder settingsBuilder;
+  private CodecRegistry codecRegistry;
   private MongoCredential mongoCredential;
   private ServerAddress[] serverAddresses;
   private ReadPreference readPreference;
@@ -64,6 +67,11 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
   private Integer connectionPoolMaxWaitTimeMilliseconds;
   private Integer connectionPoolMaxConnectionLifeTimeSeconds;
   private Integer connectionPoolMaxConnectionIdleTimeSeconds;
+
+  public void setCodecRegistry (CodecRegistry codecRegistry) {
+
+    this.codecRegistry = codecRegistry;
+  }
 
   public void setMongoCredential (MongoCredential mongoCredential) {
 
@@ -206,6 +214,10 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
     if (mongoCredential != null) {
       settingsBuilder.credential(mongoCredential);
     }
+    if (codecRegistry != null) {
+      settingsBuilder.codecRegistry(CodecRegistries.fromRegistries(codecRegistry, MongoClientSettings.getDefaultCodecRegistry()));
+    }
+
     settingsBuilder.uuidRepresentation(UuidRepresentation.STANDARD);
   }
 }
