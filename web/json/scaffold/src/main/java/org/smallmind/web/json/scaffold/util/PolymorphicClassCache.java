@@ -73,8 +73,9 @@ public class PolymorphicClassCache {
               }
 
               polymorphicKeyMap.put(subClassXmlRootElementAnnotation.name(), polymorphicSubClass);
-              SUB_CLASS_MAP_CACHE.put(baseClass, polymorphicKeyMap);
             }
+
+            SUB_CLASS_MAP_CACHE.put(baseClass, polymorphicKeyMap);
           }
         }
       }
