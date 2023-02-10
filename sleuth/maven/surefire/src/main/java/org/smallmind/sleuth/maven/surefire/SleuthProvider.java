@@ -43,6 +43,7 @@ import org.apache.maven.surefire.suite.RunResult;
 import org.apache.maven.surefire.testset.TestSetFailedException;
 import org.apache.maven.surefire.util.TestsToRun;
 import org.smallmind.sleuth.runner.SleuthRunner;
+import org.smallmind.sleuth.runner.SleuthThreadPool;
 
 public class SleuthProvider extends AbstractProvider {
 
@@ -77,10 +78,12 @@ public class SleuthProvider extends AbstractProvider {
     RunResult runResult;
     RunListener runListener = reporterFactory.createReporter();
     SurefireSleuthEventListener sleuthEventListener;
+    StringBuilder testNameBuilder;
     String[] groups = null;
     String groupsParameter;
     long startMilliseconds;
     int threadCount = 0;
+    int testIndex = 0;
 
     System.setOut(new ForwardingPrintStream((ConsoleOutputReceiver)runListener, true));
     System.setErr(new ForwardingPrintStream((ConsoleOutputReceiver)runListener, false));
@@ -112,11 +115,24 @@ public class SleuthProvider extends AbstractProvider {
       threadCount = Integer.parseInt(providerParameters.getProviderProperties().get("threadcount"));
     }
 
+    testNameBuilder = new StringBuilder("[");
+    for (Class<?> testClass : testsToRun) {
+      if (testIndex++ > 0) {
+        testNameBuilder.append(',');
+      }
+      testNameBuilder.append(testClass.getSimpleName());
+    }
+    testNameBuilder.append(']');
+
     sleuthRunner.addListener(sleuthEventListener = new SurefireSleuthEventListener(runListener));
     startMilliseconds = System.currentTimeMillis();
 
+    System.out.println("Sleuth test set starting " + testNameBuilder + "...");
     runListener.testSetStarting(new SimpleReportEntry("Sleuth Tests", "Test Assay", "test set starting"));
-    sleuthRunner.execute(threadCount, groups, testsToRun);
+
+    sleuthRunner.execute(groups, new SleuthThreadPool((threadCount <= 0) ? Integer.MAX_VALUE : threadCount), testsToRun);
+
+    System.out.println("Sleuth test set completed in " + (System.currentTimeMillis() - startMilliseconds) + "ms");
     runListener.testSetCompleted(new SimpleReportEntry("Sleuth Tests", "Test Assay", (int)(System.currentTimeMillis() - startMilliseconds)));
 
     runResult = reporterFactory.close();
