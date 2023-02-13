@@ -95,7 +95,7 @@ public class Fault implements Serializable, Informed {
       try {
         nativeObject = new NativeObject(throwable);
       } catch (IOException ioException) {
-        LoggerManager.getLogger(Fault.class).error(ioException);
+        LoggerManager.getLogger(Fault.class).error(ioException.initCause(new NativeObjectException(throwable)));
       }
     }
 
