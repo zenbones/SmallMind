@@ -72,12 +72,12 @@ public class SleuthRunner {
     cancelled.set(true);
   }
 
-  public void execute (int maxThreads, String[] groups, Class<?>... classes) {
+  public void execute (String[] groups, SleuthThreadPool threadPool, Class<?>... classes) {
 
-    execute(maxThreads, groups, Arrays.asList(classes));
+    execute(groups, threadPool, Arrays.asList(classes));
   }
 
-  public void execute (int maxThreads, String[] groups, Iterable<Class<?>> classIterable) {
+  public void execute (String[] groups, SleuthThreadPool threadPool, Iterable<Class<?>> classIterable) {
 
     if (classIterable != null) {
 
@@ -86,7 +86,6 @@ public class SleuthRunner {
       try {
 
         AnnotationProcessor annotationProcessor = new AnnotationProcessor(new NativeAnnotationTranslator(), new TestNGAnnotationTranslator());
-        SleuthThreadPool threadPool = new SleuthThreadPool((maxThreads <= 0) ? Integer.MAX_VALUE : maxThreads);
         DependencyAnalysis<Suite, Class<?>> suiteAnalysis = new DependencyAnalysis<>(Suite.class);
         DependencyQueue<Suite, Class<?>> suiteDependencyQueue;
         Dependency<Suite, Class<?>> suiteDependency;
