@@ -37,6 +37,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +49,22 @@ public class MutationUtility {
     throws MutationException {
 
     return toArray((array == null) ? null : Arrays.asList(array), outType, mutation);
+  }
+
+  public static <T, U> U[] toArray (Iterator<T> iterator, Class<U> outType, Mutation<? super T, U> mutation)
+    throws MutationException {
+
+    if (iterator == null) {
+
+      return null;
+    } else {
+
+      LinkedList<T> listOfT = new LinkedList<>();
+
+      iterator.forEachRemaining(listOfT::add);
+
+      return toArray(listOfT, outType, mutation);
+    }
   }
 
   public static <T, U> U[] toArray (Collection<T> collection, Class<U> outType, Mutation<? super T, U> mutation)
@@ -79,10 +96,16 @@ public class MutationUtility {
     return toList((array == null) ? null : Arrays.asList(array), mutation);
   }
 
-  public static <T, U> List<U> toList (Collection<T> collection, Mutation<? super T, U> mutation)
+  public static <T, U> List<U> toList (Iterator<T> iterator, Mutation<? super T, U> mutation)
     throws MutationException {
 
-    if (collection == null) {
+    return (iterator == null) ? null : toList((Iterable<T>)new IterableIterator<>(iterator), mutation);
+  }
+
+  public static <T, U> List<U> toList (Iterable<T> iterable, Mutation<? super T, U> mutation)
+    throws MutationException {
+
+    if (iterable == null) {
 
       return null;
     } else {
@@ -90,7 +113,7 @@ public class MutationUtility {
 
         LinkedList<U> outList = new LinkedList<>();
 
-        for (T inType : collection) {
+        for (T inType : iterable) {
           outList.add(mutation.apply(inType));
         }
 
@@ -107,10 +130,16 @@ public class MutationUtility {
     return toSet((array == null) ? null : Arrays.asList(array), mutation);
   }
 
-  public static <T, U> Set<U> toSet (Collection<T> collection, Mutation<? super T, U> mutation)
+  public static <T, U> Set<U> toSet (Iterator<T> iterator, Mutation<? super T, U> mutation)
     throws MutationException {
 
-    if (collection == null) {
+    return (iterator == null) ? null : toSet((Iterable<T>)new IterableIterator<>(iterator), mutation);
+  }
+
+  public static <T, U> Set<U> toSet (Iterable<T> iterable, Mutation<? super T, U> mutation)
+    throws MutationException {
+
+    if (iterable == null) {
 
       return null;
     } else {
@@ -118,7 +147,7 @@ public class MutationUtility {
 
         HashSet<U> outSet = new HashSet<>();
 
-        for (T inType : collection) {
+        for (T inType : iterable) {
           outSet.add(mutation.apply(inType));
         }
 
@@ -135,10 +164,16 @@ public class MutationUtility {
     return toMap((array == null) ? null : Arrays.asList(array), keyMutation, valueMutation);
   }
 
-  public static <T, K, U> Map<K, U> toMap (Collection<T> collection, Mutation<T, K> keyMutation, Mutation<? super T, U> valueMutation)
+  public static <T, K, U> Map<K, U> toMap (Iterator<T> iterator, Mutation<T, K> keyMutation, Mutation<? super T, U> valueMutation)
     throws MutationException {
 
-    if (collection == null) {
+    return (iterator == null) ? null : toMap((Iterable<T>)new IterableIterator<>(iterator), keyMutation, valueMutation);
+  }
+
+  public static <T, K, U> Map<K, U> toMap (Iterable<T> iterable, Mutation<T, K> keyMutation, Mutation<? super T, U> valueMutation)
+    throws MutationException {
+
+    if (iterable == null) {
 
       return null;
     } else {
@@ -146,7 +181,7 @@ public class MutationUtility {
 
         HashMap<K, U> outMap = new HashMap<>();
 
-        for (T inType : collection) {
+        for (T inType : iterable) {
           outMap.put(keyMutation.apply(inType), valueMutation.apply(inType));
         }
 
@@ -163,10 +198,16 @@ public class MutationUtility {
     return toBag((array == null) ? null : Arrays.asList(array), mutation);
   }
 
-  public static <T, U> Bag<U> toBag (Collection<T> collection, Mutation<? super T, U> mutation)
+  public static <T, U> Bag<U> toBag (Iterator<T> iterator, Mutation<? super T, U> mutation)
     throws MutationException {
 
-    if (collection == null) {
+    return (iterator == null) ? null : toBag((Iterable<T>)new IterableIterator<>(iterator), mutation);
+  }
+
+  public static <T, U> Bag<U> toBag (Iterable<T> iterable, Mutation<? super T, U> mutation)
+    throws MutationException {
+
+    if (iterable == null) {
 
       return null;
     } else {
@@ -174,7 +215,7 @@ public class MutationUtility {
 
         HashBag<U> outBag = new HashBag<>();
 
-        for (T inType : collection) {
+        for (T inType : iterable) {
           outBag.add(mutation.apply(inType));
         }
 
