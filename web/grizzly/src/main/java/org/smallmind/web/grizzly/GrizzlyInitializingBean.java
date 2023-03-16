@@ -34,7 +34,6 @@ package org.smallmind.web.grizzly;
 
 import java.io.IOException;
 import java.net.BindException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -53,6 +52,7 @@ import org.glassfish.grizzly.servlet.ServletRegistration;
 import org.glassfish.grizzly.servlet.WebappContext;
 import org.glassfish.grizzly.ssl.SSLContextConfigurator;
 import org.glassfish.grizzly.ssl.SSLEngineConfigurator;
+import org.glassfish.grizzly.threadpool.ThreadPoolProbe;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.smallmind.nutsnbolts.io.PathUtility;
 import org.smallmind.nutsnbolts.lang.web.PerApplicationContextFilter;
@@ -81,6 +81,7 @@ public class GrizzlyInitializingBean implements InitializingBean, DisposableBean
   private final HashMap<String, GrizzlyWebAppState> webAppStateMap = new HashMap<>();
   private HttpServer httpServer;
   private IOStrategy ioStrategy;
+  private ThreadPoolProbe threadPoolProbe;
   private ResourceConfigExtension[] resourceConfigExtensions;
   private AddOn[] addOns;
   private WebApplicationOption[] webApplicationOptions;
@@ -96,6 +97,11 @@ public class GrizzlyInitializingBean implements InitializingBean, DisposableBean
   public void setIoStrategy (IOStrategy ioStrategy) {
 
     this.ioStrategy = ioStrategy;
+  }
+
+  public void setThreadPoolProbe (ThreadPoolProbe threadPoolProbe) {
+
+    this.threadPoolProbe = threadPoolProbe;
   }
 
   public void setHost (String host) {
@@ -429,6 +435,9 @@ public class GrizzlyInitializingBean implements InitializingBean, DisposableBean
     }
     if (maximumWorkerPoolSize != null) {
       networkListener.getTransport().getWorkerThreadPoolConfig().setMaxPoolSize(maximumWorkerPoolSize);
+    }
+    if (threadPoolProbe != null) {
+      networkListener.getTransport().getWorkerThreadPoolConfig().getInitialMonitoringConfig().addProbes(threadPoolProbe);
     }
 
     return networkListener;
