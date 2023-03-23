@@ -32,13 +32,6 @@
  */
 package org.smallmind.persistence.orm.data.mongo;
 
-import org.springframework.data.mongodb.core.query.Query;
-
 public abstract class CountQueryDetails extends QueryDetails {
 
-  public CountQueryDetails () {
-
-  }
-
-  public abstract Query completeQuery (Query query);
 }
