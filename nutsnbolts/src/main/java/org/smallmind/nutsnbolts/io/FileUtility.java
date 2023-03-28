@@ -85,7 +85,7 @@ public class FileUtility {
               Files.copy(source, destination, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
             }
           } else {
-            Files.createDirectories(destination.getParent(), directoryAttributes);
+            createDirectories(destination.getParent(), directoryAttributes);
             Files.copy(source, destination, StandardCopyOption.COPY_ATTRIBUTES);
           }
         }
@@ -93,7 +93,7 @@ public class FileUtility {
         throw new IOException("Can not move directory(" + source + ") to file(" + destination + ")");
       } else {
 
-        Files.createDirectories(destination, directoryAttributes);
+        createDirectories(destination, directoryAttributes);
         Files.walkFileTree(source, new SimpleFileVisitor<>() {
 
           @Override
@@ -112,7 +112,7 @@ public class FileUtility {
             throws IOException {
 
             if ((!source.equals(dir)) || includeSourceDirectory) {
-              Files.createDirectories(destination.resolve(includeSourceDirectory ? source.getParent().relativize(dir) : source.relativize(dir)), directoryAttributes);
+              createDirectories(destination.resolve(includeSourceDirectory ? source.getParent().relativize(dir) : source.relativize(dir)), directoryAttributes);
             }
 
             return FileVisitResult.CONTINUE;
@@ -171,6 +171,17 @@ public class FileUtility {
           return FileVisitResult.CONTINUE;
         }
       });
+    }
+  }
+
+  private static void createDirectories (Path path, FileAttribute<?>... fileAttributes)
+    throws IOException {
+
+    // Why this is necessary I don't know, but passing in a nul FileAttribute[] causes a NUllPointerException despite the signature
+    if ((fileAttributes == null) || (fileAttributes.length == 0)) {
+      Files.createDirectories(path);
+    } else {
+      Files.createDirectories(path, fileAttributes);
     }
   }
 
