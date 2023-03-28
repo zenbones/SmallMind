@@ -41,8 +41,11 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileAttribute;
 
 public class FileUtility {
+
+  private static final FileAttribute<?>[] NO_FILE_ATTRIBUTES = new FileAttribute[0];
 
   public static CopyTreeConfigurationBuilder copyBuilder (Path source, Path destination) {
 
@@ -54,7 +57,8 @@ public class FileUtility {
     return new DeleteTreeConfigurationBuilder(target);
   }
 
-  public static boolean isDirectoryEmpty (Path directory) throws IOException {
+  public static boolean isDirectoryEmpty (Path directory)
+    throws IOException {
 
     try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(directory)) {
 
@@ -63,6 +67,12 @@ public class FileUtility {
   }
 
   public static void copyTree (Path source, Path destination, boolean includeSourceDirectory, PathFilter... pathFilters)
+    throws IOException {
+
+    copyTree(source, destination, includeSourceDirectory, pathFilters, NO_FILE_ATTRIBUTES);
+  }
+
+  public static void copyTree (Path source, Path destination, boolean includeSourceDirectory, PathFilter[] pathFilters, FileAttribute<?>... directoryAttributes)
     throws IOException {
 
     if (Files.exists(source)) {
@@ -75,7 +85,7 @@ public class FileUtility {
               Files.copy(source, destination, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
             }
           } else {
-            Files.createDirectories(destination.getParent());
+            Files.createDirectories(destination.getParent(), directoryAttributes);
             Files.copy(source, destination, StandardCopyOption.COPY_ATTRIBUTES);
           }
         }
@@ -83,7 +93,7 @@ public class FileUtility {
         throw new IOException("Can not move directory(" + source + ") to file(" + destination + ")");
       } else {
 
-        Files.createDirectories(destination);
+        Files.createDirectories(destination, directoryAttributes);
         Files.walkFileTree(source, new SimpleFileVisitor<>() {
 
           @Override
@@ -98,10 +108,11 @@ public class FileUtility {
           }
 
           @Override
-          public FileVisitResult preVisitDirectory (Path dir, BasicFileAttributes attrs) throws IOException {
+          public FileVisitResult preVisitDirectory (Path dir, BasicFileAttributes attrs)
+            throws IOException {
 
             if ((!source.equals(dir)) || includeSourceDirectory) {
-              Files.createDirectories(destination.resolve(includeSourceDirectory ? source.getParent().relativize(dir) : source.relativize(dir)));
+              Files.createDirectories(destination.resolve(includeSourceDirectory ? source.getParent().relativize(dir) : source.relativize(dir)), directoryAttributes);
             }
 
             return FileVisitResult.CONTINUE;
