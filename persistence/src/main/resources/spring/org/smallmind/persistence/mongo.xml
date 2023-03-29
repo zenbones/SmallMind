@@ -55,7 +55,7 @@
   </bean>
 
   <!-- Proxy Session -->
-  <bean id="morphiaProxySession" class="org.smallmind.persistence.orm.data.mongo.MongoDataProxySession" init-method="register">
+  <bean id="mongoDataProxySession" class="org.smallmind.persistence.orm.data.mongo.MongoDataProxySession" init-method="register">
     <constructor-arg index="0" value="mongodb"/>
     <constructor-arg index="1" value="mysession"/>
     <constructor-arg index="2" ref="mongoTemplateFactory"/>
