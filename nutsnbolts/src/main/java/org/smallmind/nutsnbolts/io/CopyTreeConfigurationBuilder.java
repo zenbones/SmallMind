@@ -34,12 +34,14 @@ package org.smallmind.nutsnbolts.io;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileAttribute;
 
 public class CopyTreeConfigurationBuilder {
 
   private final Path source;
   private final Path destination;
   private PathFilter[] pathFilters;
+  private FileAttribute<?>[] fileAttributes;
   private boolean includeSourceDirectory = false;
 
   public CopyTreeConfigurationBuilder (Path source, Path destination) {
@@ -55,6 +57,13 @@ public class CopyTreeConfigurationBuilder {
     return this;
   }
 
+  public CopyTreeConfigurationBuilder attributes (FileAttribute<?>... fileAttributes) {
+
+    this.fileAttributes = fileAttributes;
+
+    return this;
+  }
+
   public CopyTreeConfigurationBuilder includeSourceDirectory (boolean includeSourceDirectory) {
 
     this.includeSourceDirectory = includeSourceDirectory;
@@ -65,6 +74,6 @@ public class CopyTreeConfigurationBuilder {
   public void build ()
     throws IOException {
 
-    FileUtility.copyTree(source, destination, includeSourceDirectory, pathFilters);
+    FileUtility.copyTree(source, destination, includeSourceDirectory, pathFilters, fileAttributes);
   }
 }
