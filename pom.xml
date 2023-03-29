@@ -103,7 +103,6 @@
     <jaxb.version>2.3.1</jaxb.version>
     <jersey.version>2.37</jersey.version>
     <jetty.version>10.0.11</jetty.version>
-    <kryo.version>5.2.0</kryo.version>
     <liquibase.version>4.6.1</liquibase.version>
     <log4j.version>2.17.2</log4j.version>
     <maven.version>3.8.6</maven.version>
@@ -128,7 +127,6 @@
     <tanukisoft.version>3.5.43</tanukisoft.version>
     <testng.version>7.5</testng.version>
     <tyrus.version>1.18</tyrus.version>
-    <xmemcached.version>2.4.7</xmemcached.version>
   </properties>
 
   <modules>
@@ -143,6 +141,7 @@
     <module>license</module>
     <module>liquibase</module>
     <module>memcached</module>
+    <module>mongodb</module>
     <module>nutsnbolts</module>
     <module>persistence</module>
     <module>phalanx</module>
@@ -671,16 +670,6 @@
         <groupId>org.ehcache</groupId>
         <artifactId>ehcache</artifactId>
         <version>${ehcache.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.googlecode.xmemcached</groupId>
-        <artifactId>xmemcached</artifactId>
-        <version>${xmemcached.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.esotericsoftware.kryo</groupId>
-        <artifactId>kryo5</artifactId>
-        <version>${kryo.version}</version>
       </dependency>
       <dependency>
         <groupId>io.whitfin</groupId>
