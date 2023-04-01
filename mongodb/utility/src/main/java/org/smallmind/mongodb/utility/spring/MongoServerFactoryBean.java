@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.database.mongodb;
+package org.smallmind.mongodb.utility.spring;
 
 import java.util.LinkedList;
 import com.mongodb.ServerAddress;

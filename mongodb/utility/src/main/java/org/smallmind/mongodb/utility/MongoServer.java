@@ -30,55 +30,40 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.database.mongodb;
+package org.smallmind.mongodb.utility;
 
-import com.mongodb.MongoCredential;
-import org.springframework.beans.factory.FactoryBean;
-import org.springframework.beans.factory.InitializingBean;
+public class MongoServer {
 
-public class MongoCredentialFactoryBean implements InitializingBean, FactoryBean<MongoCredential> {
+  private String host;
+  private int port = 27017;
 
-  private MongoCredential mongoCredential;
-  private String user;
-  private String password;
-  private String source;
+  public MongoServer () {
 
-  public void setUser (String user) {
-
-    this.user = user;
   }
 
-  public void setPassword (String password) {
+  public MongoServer (String host, int port) {
 
-    this.password = password;
+    this.host = host;
+    this.port = port;
   }
 
-  public void setSource (String source) {
+  public String getHost () {
 
-    this.source = source;
+    return host;
   }
 
-  @Override
-  public boolean isSingleton () {
+  public void setHost (String host) {
 
-    return true;
+    this.host = host;
   }
 
-  @Override
-  public Class<?> getObjectType () {
+  public int getPort () {
 
-    return MongoCredential.class;
+    return port;
   }
 
-  @Override
-  public MongoCredential getObject () {
+  public void setPort (int port) {
 
-    return mongoCredential;
-  }
-
-  @Override
-  public void afterPropertiesSet () {
-
-    mongoCredential = MongoCredential.createScramSha1Credential(user, source, password.toCharArray());
+    this.port = port;
   }
 }

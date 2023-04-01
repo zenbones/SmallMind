@@ -32,6 +32,14 @@
  */
 package org.smallmind.mongodb.throng;
 
+import com.mongodb.client.MongoClient;
+
 public class ThrongClient {
 
+  private MongoClient mongoClient;
+
+  public ThrongClient (MongoClient mongoClient) {
+
+    this.mongoClient = mongoClient;
+  }
 }

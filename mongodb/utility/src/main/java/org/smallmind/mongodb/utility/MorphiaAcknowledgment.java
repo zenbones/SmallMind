@@ -30,52 +30,30 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.database.mongodb;
+package org.smallmind.mongodb.utility;
 
-import com.mongodb.MongoClientSettings;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
-import org.springframework.beans.factory.DisposableBean;
-import org.springframework.beans.factory.FactoryBean;
-import org.springframework.beans.factory.InitializingBean;
+import com.mongodb.WriteConcern;
 
-public class MongoClientFactoryBean implements FactoryBean<MongoClient>, InitializingBean, DisposableBean {
+public enum MorphiaAcknowledgment {
 
-  private MongoClient mongoClient;
-  private MongoClientSettings clientSettings;
+  ZERO(WriteConcern.UNACKNOWLEDGED, false), ONE(WriteConcern.W1, true), TWO(WriteConcern.W2, true), THREE(WriteConcern.W3, true), MAJORITY(WriteConcern.MAJORITY, true);
 
-  public void setClientSettings (MongoClientSettings clientSettings) {
+  private final WriteConcern writeConcern;
+  private final boolean journable;
 
-    this.clientSettings = clientSettings;
+  MorphiaAcknowledgment (WriteConcern writeConcern, boolean journable) {
+
+    this.writeConcern = writeConcern;
+    this.journable = journable;
   }
 
-  @Override
-  public void afterPropertiesSet () {
+  public WriteConcern getWriteConcern () {
 
-    mongoClient = MongoClients.create(clientSettings);
+    return writeConcern;
   }
 
-  @Override
-  public boolean isSingleton () {
+  public boolean isJournable () {
 
-    return true;
-  }
-
-  @Override
-  public Class<?> getObjectType () {
-
-    return MongoClient.class;
-  }
-
-  @Override
-  public MongoClient getObject () {
-
-    return mongoClient;
-  }
-
-  @Override
-  public void destroy () {
-
-    mongoClient.close();
+    return journable;
   }
 }

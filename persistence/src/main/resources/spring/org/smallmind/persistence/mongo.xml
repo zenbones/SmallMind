@@ -4,25 +4,25 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd"
        profile="default">
 
-  <bean id="mongoClient" class="org.smallmind.persistence.database.mongodb.MongoClientFactoryBean">
+  <bean id="mongoClient" class="org.smallmind.mongodb.utility.spring.MongoClientFactoryBean">
     <property name="clientSettings">
-      <bean class="org.smallmind.persistence.database.mongodb.MongoClientSettingsFactoryBean">
+      <bean class="org.smallmind.mongodb.utility.spring.MongoClientSettingsFactoryBean">
         <property name="mongoCredential">
-          <bean class="org.smallmind.persistence.database.mongodb.MongoCredentialFactoryBean">
+          <bean class="org.smallmind.mongodb.utility.spring.MongoCredentialFactoryBean">
             <property name="user" value="${mongo.user}"/>
             <property name="password" value="${mongo.password}"/>
             <property name="source" value="admin"/>
           </bean>
         </property>
         <property name="serverAddresses">
-          <bean class="org.smallmind.persistence.database.mongodb.MongoServerFactoryBean">
+          <bean class="org.smallmind.mongodb.utility.spring.MongoServerFactoryBean">
             <property name="serverPattern" value="${mongo.server_pattern}"/>
             <property name="serverSpread" value="${mongo.server_spread}"/>
           </bean>
         </property>
         <property name="sslEnabled" value="${mongo.ssl_enabled}"/>
         <property name="writeConcern">
-          <bean class="org.smallmind.persistence.database.mongodb.MorphiaWriteConcern">
+          <bean class="org.smallmind.mongodb.utility.MongoWriteConcern">
             <property name="acknowledgment" value="${mongo.write_concern.acknowledgment}"/>
             <property name="journaled" value="true"/>
           </bean>

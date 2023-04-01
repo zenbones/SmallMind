@@ -30,31 +30,55 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.database.mongodb;
+package org.smallmind.mongodb.utility.spring;
 
-import com.mongodb.WriteConcern;
+import com.mongodb.MongoCredential;
+import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.InitializingBean;
 
-public enum MorphiaAcknowledgment {
+public class MongoCredentialFactoryBean implements InitializingBean, FactoryBean<MongoCredential> {
 
-  ZERO(WriteConcern.UNACKNOWLEDGED, false), ONE(WriteConcern.W1, true), TWO(WriteConcern.W2, true), THREE(WriteConcern.W3, true), MAJORITY(WriteConcern.MAJORITY, true);
+  private MongoCredential mongoCredential;
+  private String user;
+  private String password;
+  private String source;
 
-  private final WriteConcern writeConcern;
-  private final boolean journable;
+  public void setUser (String user) {
 
-  MorphiaAcknowledgment (WriteConcern writeConcern, boolean journable) {
-
-    this.writeConcern = writeConcern;
-    this.journable = journable;
+    this.user = user;
   }
 
-  public WriteConcern getWriteConcern () {
+  public void setPassword (String password) {
 
-    return writeConcern;
+    this.password = password;
   }
 
-  public boolean isJournable () {
+  public void setSource (String source) {
 
-    return journable;
+    this.source = source;
+  }
+
+  @Override
+  public boolean isSingleton () {
+
+    return true;
+  }
+
+  @Override
+  public Class<?> getObjectType () {
+
+    return MongoCredential.class;
+  }
+
+  @Override
+  public MongoCredential getObject () {
+
+    return mongoCredential;
+  }
+
+  @Override
+  public void afterPropertiesSet () {
+
+    mongoCredential = MongoCredential.createScramSha1Credential(user, source, password.toCharArray());
   }
 }
-

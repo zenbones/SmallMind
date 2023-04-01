@@ -30,47 +30,52 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.database.mongodb;
+package org.smallmind.mongodb.utility.spring;
 
-import com.mongodb.WriteConcern;
+import com.mongodb.MongoClientSettings;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.InitializingBean;
 
-public class MorphiaWriteConcern implements FactoryBean<WriteConcern> {
+public class MongoClientFactoryBean implements FactoryBean<MongoClient>, InitializingBean, DisposableBean {
 
-  private MorphiaAcknowledgment acknowledgment;
-  private boolean journaled;
+  private MongoClient mongoClient;
+  private MongoClientSettings clientSettings;
 
-  public void setAcknowledgment (MorphiaAcknowledgment acknowledgment) {
+  public void setClientSettings (MongoClientSettings clientSettings) {
 
-    this.acknowledgment = acknowledgment;
+    this.clientSettings = clientSettings;
   }
 
-  public void setJournaled (boolean journaled) {
+  @Override
+  public void afterPropertiesSet () {
 
-    this.journaled = journaled;
+    mongoClient = MongoClients.create(clientSettings);
   }
 
   @Override
   public boolean isSingleton () {
 
-    return false;
+    return true;
   }
 
   @Override
   public Class<?> getObjectType () {
 
-    return WriteConcern.class;
+    return MongoClient.class;
   }
 
   @Override
-  public WriteConcern getObject () {
+  public MongoClient getObject () {
 
-    WriteConcern writeConcern = acknowledgment.getWriteConcern();
+    return mongoClient;
+  }
 
-    if (acknowledgment.isJournable()) {
-      writeConcern.withJournal(journaled);
-    }
+  @Override
+  public void destroy () {
 
-    return writeConcern;
+    mongoClient.close();
   }
 }
