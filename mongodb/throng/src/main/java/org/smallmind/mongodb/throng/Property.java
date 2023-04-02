@@ -32,30 +32,14 @@
  */
 package org.smallmind.mongodb.throng;
 
-import java.util.HashMap;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
-import org.bson.codecs.configuration.CodecRegistries;
-import org.bson.codecs.configuration.CodecRegistry;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-public class ThrongClient {
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
+public @interface Property {
 
-  private final HashMap<Class<?>, MongoCollection> collectionMap = new HashMap<>();
-  private final MongoDatabase mongoDatabase;
-  private final CodecRegistry codecRegistry;
-
-  public ThrongClient (MongoClient mongoClient, String database, Class<?>... entityClasses)
-    throws ThrongMappingException {
-
-    mongoDatabase = mongoClient.getDatabase(database);
-    codecRegistry = CodecRegistries.fromRegistries(CodecRegistries.fromCodecs(new ThrongDocumentCodec()), mongoDatabase.getCodecRegistry());
-
-    if (entityClasses != null) {
-      for (Class<?> entityClass : entityClasses) {
-        mongoDatabase.getCollection("collection").withCodecRegistry(codecRegistry).withDocumentClass(ThrongDocument.class);
-        new ThrongEntity(entityClass);
-      }
-    }
-  }
+  String value () default "";
 }

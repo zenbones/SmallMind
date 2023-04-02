@@ -30,32 +30,16 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.mongodb.throng;
+package org.smallmind.mongodb.test;
 
-import java.util.HashMap;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
-import org.bson.codecs.configuration.CodecRegistries;
-import org.bson.codecs.configuration.CodecRegistry;
+import org.smallmind.mongodb.throng.Entity;
+import org.smallmind.mongodb.throng.Property;
 
-public class ThrongClient {
+@Entity
+public class Permit {
 
-  private final HashMap<Class<?>, MongoCollection> collectionMap = new HashMap<>();
-  private final MongoDatabase mongoDatabase;
-  private final CodecRegistry codecRegistry;
-
-  public ThrongClient (MongoClient mongoClient, String database, Class<?>... entityClasses)
-    throws ThrongMappingException {
-
-    mongoDatabase = mongoClient.getDatabase(database);
-    codecRegistry = CodecRegistries.fromRegistries(CodecRegistries.fromCodecs(new ThrongDocumentCodec()), mongoDatabase.getCodecRegistry());
-
-    if (entityClasses != null) {
-      for (Class<?> entityClass : entityClasses) {
-        mongoDatabase.getCollection("collection").withCodecRegistry(codecRegistry).withDocumentClass(ThrongDocument.class);
-        new ThrongEntity(entityClass);
-      }
-    }
-  }
+  @Property
+  private Byte readLock;
+  @Property
+  private Byte writeLock;
 }

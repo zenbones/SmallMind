@@ -32,29 +32,29 @@
  */
 package org.smallmind.mongodb.throng;
 
-import java.util.HashMap;
-import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
-import org.bson.codecs.configuration.CodecRegistries;
-import org.bson.codecs.configuration.CodecRegistry;
+import org.smallmind.nutsnbolts.reflection.FieldAccessor;
+import org.smallmind.nutsnbolts.reflection.FieldUtility;
 
-public class ThrongClient {
+public class ThrongEntity {
 
-  private final HashMap<Class<?>, MongoCollection> collectionMap = new HashMap<>();
-  private final MongoDatabase mongoDatabase;
-  private final CodecRegistry codecRegistry;
+  private MongoCollection<ThrongDocument> mongoCollection;
 
-  public ThrongClient (MongoClient mongoClient, String database, Class<?>... entityClasses)
+  public ThrongEntity (Class<?> entityClass)
     throws ThrongMappingException {
 
-    mongoDatabase = mongoClient.getDatabase(database);
-    codecRegistry = CodecRegistries.fromRegistries(CodecRegistries.fromCodecs(new ThrongDocumentCodec()), mongoDatabase.getCodecRegistry());
+    Entity entity;
 
-    if (entityClasses != null) {
-      for (Class<?> entityClass : entityClasses) {
-        mongoDatabase.getCollection("collection").withCodecRegistry(codecRegistry).withDocumentClass(ThrongDocument.class);
-        new ThrongEntity(entityClass);
+    if ((entity = entityClass.getAnnotation(Entity.class)) == null) {
+      throw new ThrongMappingException("The entity class(%s) is not @Entity annotated", entityClass.getName());
+    } else {
+      for (FieldAccessor fieldAccessor : FieldUtility.getFieldAccessors(entityClass)) {
+
+        Property property;
+
+        if ((property = fieldAccessor.getField().getAnnotation(Property.class)) != null) {
+          System.out.println(fieldAccessor.getName());
+        }
       }
     }
   }

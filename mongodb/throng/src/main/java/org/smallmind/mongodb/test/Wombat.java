@@ -30,32 +30,23 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.mongodb.throng;
+package org.smallmind.mongodb.test;
 
-import java.util.HashMap;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
+import com.mongodb.MongoClientSettings;
+import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.smallmind.mongodb.throng.IntegerCodec;
+import org.smallmind.mongodb.throng.ThrongEntity;
 
-public class ThrongClient {
+public class Wombat {
 
-  private final HashMap<Class<?>, MongoCollection> collectionMap = new HashMap<>();
-  private final MongoDatabase mongoDatabase;
-  private final CodecRegistry codecRegistry;
+  public static void main (String... args)
+    throws Exception {
 
-  public ThrongClient (MongoClient mongoClient, String database, Class<?>... entityClasses)
-    throws ThrongMappingException {
-
-    mongoDatabase = mongoClient.getDatabase(database);
-    codecRegistry = CodecRegistries.fromRegistries(CodecRegistries.fromCodecs(new ThrongDocumentCodec()), mongoDatabase.getCodecRegistry());
-
-    if (entityClasses != null) {
-      for (Class<?> entityClass : entityClasses) {
-        mongoDatabase.getCollection("collection").withCodecRegistry(codecRegistry).withDocumentClass(ThrongDocument.class);
-        new ThrongEntity(entityClass);
-      }
-    }
+    CodecRegistry codecRegistry = CodecRegistries.fromRegistries(MongoClientSettings.getDefaultCodecRegistry(), CodecRegistries.fromCodecs(new IntegerCodec()));
+    Codec<Integer> codec = codecRegistry.get(Integer.class);
+    System.out.println(codec);
+    new ThrongEntity(Permit.class);
   }
 }
