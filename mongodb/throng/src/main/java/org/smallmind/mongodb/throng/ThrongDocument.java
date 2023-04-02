@@ -38,6 +38,11 @@ public class ThrongDocument {
 
   private final BsonDocument bsonDocument;
 
+  public ThrongDocument () {
+
+    bsonDocument = new BsonDocument();
+  }
+
   public ThrongDocument (BsonDocument bsonDocument) {
 
     this.bsonDocument = bsonDocument;
