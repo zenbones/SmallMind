@@ -33,6 +33,7 @@
 package org.smallmind.mongodb.throng;
 
 import org.bson.BsonDocument;
+import org.bson.BsonValue;
 
 public class ThrongDocument {
 
@@ -51,5 +52,12 @@ public class ThrongDocument {
   public BsonDocument getBsonDocument () {
 
     return bsonDocument;
+  }
+
+  public ThrongDocument add (String key, BsonValue value) {
+
+    bsonDocument.put(key, value);
+
+    return this;
   }
 }
