@@ -33,18 +33,39 @@
 package org.smallmind.mongodb.throng;
 
 import org.bson.BsonDocument;
+import org.bson.BsonReader;
+import org.bson.BsonType;
+import org.bson.BsonValue;
+import org.bson.BsonWriter;
+import org.bson.codecs.Codec;
+import org.bson.codecs.DecoderContext;
+import org.bson.codecs.EncoderContext;
 
-public class ThrongDocument {
+public class ThrongDocumentCodec implements Codec<ThrongDocument> {
 
-  private final BsonDocument bsonDocument;
+  @Override
+  public Class<ThrongDocument> getEncoderClass () {
 
-  public ThrongDocument (BsonDocument bsonDocument) {
-
-    this.bsonDocument = bsonDocument;
+    return ThrongDocument.class;
   }
 
-  public BsonDocument getBsonDocument () {
+  @Override
+  public ThrongDocument decode (BsonReader reader, DecoderContext decoderContext) {
 
-    return bsonDocument;
+    BsonValue bsonValue = BsonUtility.read(reader);
+
+    if (!BsonType.DOCUMENT.equals(bsonValue.getBsonType())) {
+      throw new DocumentParsingException("The bson node is not a document");
+    } else {
+
+      return new ThrongDocument((BsonDocument)bsonValue);
+    }
+  }
+
+  @Override
+  public void encode (BsonWriter writer, ThrongDocument document, EncoderContext encoderContext)
+    throws DocumentParsingException {
+
+    BsonUtility.write(writer, document.getBsonDocument());
   }
 }

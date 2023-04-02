@@ -32,19 +32,12 @@
  */
 package org.smallmind.mongodb.throng;
 
-import org.bson.BsonDocument;
+import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
-public class ThrongDocument {
+public class DocumentParsingException extends FormattedRuntimeException {
 
-  private final BsonDocument bsonDocument;
+  public DocumentParsingException (String message, Object... args) {
 
-  public ThrongDocument (BsonDocument bsonDocument) {
-
-    this.bsonDocument = bsonDocument;
-  }
-
-  public BsonDocument getBsonDocument () {
-
-    return bsonDocument;
+    super(message, args);
   }
 }
