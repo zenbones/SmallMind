@@ -32,28 +32,61 @@
  */
 package org.smallmind.mongodb.throng;
 
+import java.lang.reflect.InvocationTargetException;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 
-public class IntegerCodec implements Codec<Integer> {
+public class ThrongPropertiesCodec<T> implements Codec<T> {
 
-  @Override
-  public Class<Integer> getEncoderClass () {
+  private final ThrongProperties throngProperties;
+  private final Class<T> embeddedClass;
 
-    return Integer.class;
+  public ThrongPropertiesCodec (Class<T> embeddedClass, ThrongProperties throngProperties) {
+
+    this.embeddedClass = embeddedClass;
+    this.throngProperties = throngProperties;
   }
 
   @Override
-  public Integer decode (BsonReader reader, DecoderContext decoderContext) {
+  public Class<T> getEncoderClass () {
 
-    return null;
+    return embeddedClass;
   }
 
   @Override
-  public void encode (BsonWriter writer, Integer value, EncoderContext encoderContext) {
+  public T decode (BsonReader reader, DecoderContext decoderContext) {
 
+    try {
+      T instance = embeddedClass.getConstructor().newInstance();
+
+      for (ThrongProperty throngProperty : throngProperties.values()) {
+        throngProperty.getFieldAccessor().set(instance, throngProperty.getCodec().decode(reader, decoderContext));
+      }
+
+      return instance;
+    } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException exception) {
+      throw new ThrongRuntimeException(exception);
+    }
+  }
+
+  @Override
+  public void encode (BsonWriter writer, T value, EncoderContext encoderContext) {
+
+    for (ThrongProperty throngProperty : throngProperties.values()) {
+      writer.writeName(throngProperty.getName());
+      try {
+        reEncode(writer, throngProperty.getCodec(), throngProperty.getFieldAccessor().get(value), encoderContext);
+      } catch (IllegalAccessException | InvocationTargetException exception) {
+        throw new ThrongRuntimeException(exception);
+      }
+    }
+  }
+
+  private <U> void reEncode (BsonWriter writer, Codec<U> codec, Object stuff, EncoderContext encoderContext) {
+
+    codec.encode(writer, (U)stuff, encoderContext);
   }
 }

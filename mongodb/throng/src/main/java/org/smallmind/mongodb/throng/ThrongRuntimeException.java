@@ -32,33 +32,12 @@
  */
 package org.smallmind.mongodb.throng;
 
-import org.smallmind.nutsnbolts.reflection.FieldAccessor;
+import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
-public class ThrongProperty {
+public class ThrongRuntimeException extends FormattedRuntimeException {
 
-  private final FieldAccessor fieldAccessor;
-  private final org.bson.codecs.Codec<?> codec;
-  private final String name;
+  public ThrongRuntimeException (Throwable throwable) {
 
-  public ThrongProperty (FieldAccessor fieldAccessor, org.bson.codecs.Codec<?> codec, String name) {
-
-    this.fieldAccessor = fieldAccessor;
-    this.codec = codec;
-    this.name = name;
-  }
-
-  public FieldAccessor getFieldAccessor () {
-
-    return fieldAccessor;
-  }
-
-  public org.bson.codecs.Codec<?> getCodec () {
-
-    return codec;
-  }
-
-  public String getName () {
-
-    return name;
+    super(throwable);
   }
 }

@@ -35,7 +35,7 @@ package org.smallmind.mongodb.test;
 import org.smallmind.mongodb.throng.Entity;
 import org.smallmind.mongodb.throng.Property;
 
-@Entity
+@Entity("floob")
 public class Permit {
 
   @Property
