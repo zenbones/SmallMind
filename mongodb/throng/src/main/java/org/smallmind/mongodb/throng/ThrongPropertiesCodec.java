@@ -45,9 +45,9 @@ public class ThrongPropertiesCodec<T> implements Codec<T> {
   private final ThrongProperties throngProperties;
   private final Class<T> embeddedClass;
 
-  public ThrongPropertiesCodec (Class<T> embeddedClass, ThrongProperties throngProperties) {
+  public ThrongPropertiesCodec (Class<T> entityClass, ThrongProperties throngProperties) {
 
-    this.embeddedClass = embeddedClass;
+    this.embeddedClass = entityClass;
     this.throngProperties = throngProperties;
   }
 
