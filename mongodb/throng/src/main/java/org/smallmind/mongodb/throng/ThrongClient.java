@@ -45,11 +45,11 @@ public class ThrongClient {
   private final MongoDatabase mongoDatabase;
   private final CodecRegistry codecRegistry;
 
-  public ThrongClient (MongoClient mongoClient, String database, Class<?>... entityClasses)
+  public ThrongClient (MongoClient mongoClient, String database, CodecRegistry clientRegistry, Class<?>... entityClasses)
     throws ThrongMappingException {
 
     mongoDatabase = mongoClient.getDatabase(database);
-    codecRegistry = CodecRegistries.fromRegistries(CodecRegistries.fromCodecs(new ThrongDocumentCodec()), mongoDatabase.getCodecRegistry());
+    codecRegistry = CodecRegistries.fromRegistries(clientRegistry, CodecRegistries.fromCodecs(new ThrongDocumentCodec()), mongoDatabase.getCodecRegistry());
 
     if (entityClasses != null) {
       for (Class<?> entityClass : entityClasses) {
