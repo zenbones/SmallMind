@@ -35,6 +35,7 @@ package org.smallmind.nutsnbolts.reflection;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 
 public class FieldAccessor {
 
@@ -57,6 +58,11 @@ public class FieldAccessor {
   public Class<?> getType () {
 
     return field.getType();
+  }
+
+  public Type getGenericType () {
+
+    return field.getGenericType();
   }
 
   public Field getField () {

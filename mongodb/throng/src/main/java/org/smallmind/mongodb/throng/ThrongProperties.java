@@ -35,6 +35,7 @@ package org.smallmind.mongodb.throng;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.TreeMap;
+import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.smallmind.nutsnbolts.reflection.FieldAccessor;
 import org.smallmind.nutsnbolts.reflection.FieldUtility;
@@ -62,8 +63,12 @@ public class ThrongProperties extends TreeMap<String, ThrongProperty> {
           if ((codec = embeddedReferenceMap.get(fieldAccessor.getName())) == null) {
             embeddedReferenceMap.put(fieldAccessor.getName(), (ThrongEmbeddedCodec<?>)(codec = new ThrongEmbeddedCodec<>(fieldAccessor.getType(), new ThrongProperties(fieldAccessor.getType(), codecRegistry, embeddedReferenceMap))));
           }
-        } else if ((codec = codecRegistry.get(fieldAccessor.getType())) == null) {
-          throw new ThrongMappingException("No known codec for field(%s) of type(%s) in entity(%s)", fieldAccessor.getName(), fieldAccessor.getType().getName(), entityClass.getName());
+        } else {
+          try {
+            codec =  CodecRegistryUtility.getReifiedCodec(codecRegistry, entityClass, fieldAccessor);
+          } catch (CodecConfigurationException codecConfigurationException) {
+            throw new ThrongMappingException("No known codec for field(%s) of type(%s) in entity(%s)", fieldAccessor.getName(), fieldAccessor.getType().getName(), entityClass.getName());
+          }
         }
 
         put(fieldAccessor.getName(), new ThrongProperty(fieldAccessor, codec, propertyName));

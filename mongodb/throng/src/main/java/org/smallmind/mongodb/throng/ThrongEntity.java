@@ -34,7 +34,7 @@ package org.smallmind.mongodb.throng;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
-import org.bson.codecs.Codec;
+import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.smallmind.nutsnbolts.reflection.FieldAccessor;
 import org.smallmind.nutsnbolts.reflection.FieldUtility;
@@ -67,13 +67,10 @@ public class ThrongEntity extends ThrongProperties {
           } else if (idProperty != null) {
             throw new ThrongMappingException("The entity(%s) has multiple 'id' fields defined", entityClass.getName());
           } else {
-
-            Codec<?> idCodec;
-
-            if ((idCodec = codecRegistry.get(fieldAccessor.getType())) == null) {
+            try {
+              idProperty = new ThrongProperty(fieldAccessor, CodecRegistryUtility.getReifiedCodec(codecRegistry, entityClass, fieldAccessor), idAnnotation.value());
+            } catch (CodecConfigurationException codecConfigurationException) {
               throw new ThrongMappingException("No known codec for id(%s) of type(%s) in entity(%s)", fieldAccessor.getName(), fieldAccessor.getType().getName(), entityClass.getName());
-            } else {
-              idProperty = new ThrongProperty(fieldAccessor, idCodec, idAnnotation.value());
             }
           }
         }

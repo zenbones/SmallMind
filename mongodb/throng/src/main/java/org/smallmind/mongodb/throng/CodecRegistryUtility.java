@@ -30,33 +30,34 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.data.mongo;
+package org.smallmind.mongodb.throng;
 
-import java.io.Serializable;
-import com.mongodb.DBObject;
-import org.smallmind.persistence.AbstractDurable;
-import org.springframework.data.annotation.Id;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
+import org.bson.codecs.Codec;
+import org.bson.codecs.configuration.CodecRegistry;
+import org.smallmind.nutsnbolts.reflection.FieldAccessor;
+import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
 
-public class MongoDataDurable<I extends Serializable & Comparable<I>, D extends MongoDataDurable<I, D>> extends AbstractDurable<I, D> {
+public class CodecRegistryUtility {
 
-  @Id
-  @org.smallmind.mongodb.throng.Id
-  private I id;
+  public static Codec<?> getReifiedCodec (CodecRegistry codecRegistry, Class<?> parentClass, FieldAccessor fieldAccessor) {
 
-  @Override
-  public I getId () {
+    Type genericType;
 
-    return id;
-  }
+    if ((genericType = fieldAccessor.getGenericType()) instanceof TypeVariable) {
 
-  @Override
-  public void setId (I id) {
+      Class<?> reifiedFieldType;
 
-    this.id = id;
-  }
+      if ((reifiedFieldType = GenericUtility.findTypeArgument(parentClass, (TypeVariable<?>)genericType)) == null) {
+        throw new ThrongRuntimeException("Could not reify the type of field(%s) in entity(%s)", fieldAccessor.getName(), parentClass.getName());
+      } else {
 
-  public void preSave (final DBObject dbObj) {
+        return codecRegistry.get(reifiedFieldType);
+      }
+    } else {
 
-    dbObj.removeField("overlayClass");
+      return codecRegistry.get(fieldAccessor.getType());
+    }
   }
 }
