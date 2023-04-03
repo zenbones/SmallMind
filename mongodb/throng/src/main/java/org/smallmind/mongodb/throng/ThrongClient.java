@@ -70,4 +70,9 @@ public class ThrongClient {
 
     codecRegistry = CodecRegistries.fromRegistries(CodecRegistries.fromCodecs(new ThrongDocumentCodec()), CodecRegistries.fromCodecs(throngCodecList), mongoDatabase.getCodecRegistry());
   }
+
+  public CodecRegistry getCodecRegistry () {
+
+    return codecRegistry;
+  }
 }
