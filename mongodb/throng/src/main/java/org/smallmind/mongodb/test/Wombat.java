@@ -47,6 +47,6 @@ public class Wombat {
     CodecRegistry codecRegistry = CodecRegistries.fromRegistries(MongoClientSettings.getDefaultCodecRegistry(), CodecRegistries.fromCodecs(new IntegerCodec()));
     Codec<Integer> codec = codecRegistry.get(Integer.class);
     System.out.println(codec);
-    new ThrongEntity(Permit.class);
+    new ThrongEntity(Permit.class, codecRegistry);
   }
 }

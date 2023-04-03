@@ -32,6 +32,7 @@
  */
 package org.smallmind.mongodb.throng;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
@@ -45,16 +46,16 @@ public class ThrongClient {
   private final MongoDatabase mongoDatabase;
   private final CodecRegistry codecRegistry;
 
-  public ThrongClient (MongoClient mongoClient, String database, CodecRegistry clientRegistry, Class<?>... entityClasses)
-    throws ThrongMappingException {
+  public ThrongClient (MongoClient mongoClient, String database, Class<?>... entityClasses)
+    throws ThrongMappingException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
 
     mongoDatabase = mongoClient.getDatabase(database);
-    codecRegistry = CodecRegistries.fromRegistries(clientRegistry, CodecRegistries.fromCodecs(new ThrongDocumentCodec()), mongoDatabase.getCodecRegistry());
+    codecRegistry = CodecRegistries.fromRegistries(CodecRegistries.fromCodecs(new ThrongDocumentCodec()), mongoDatabase.getCodecRegistry());
 
     if (entityClasses != null) {
       for (Class<?> entityClass : entityClasses) {
         mongoDatabase.getCollection("collection").withCodecRegistry(codecRegistry).withDocumentClass(ThrongDocument.class);
-        new ThrongEntity(entityClass);
+        new ThrongEntity(entityClass, codecRegistry);
       }
     }
   }

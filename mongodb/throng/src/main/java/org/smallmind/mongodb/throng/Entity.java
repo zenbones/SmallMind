@@ -41,5 +41,5 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface Entity {
 
-  String value () default "";
+  String value ();
 }
