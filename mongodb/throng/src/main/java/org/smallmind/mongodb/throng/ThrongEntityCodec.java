@@ -32,6 +32,63 @@
  */
 package org.smallmind.mongodb.throng;
 
-public class ThrongEntityCodec {
+import java.lang.reflect.InvocationTargetException;
+import org.bson.BsonReader;
+import org.bson.BsonWriter;
+import org.bson.codecs.DecoderContext;
+import org.bson.codecs.EncoderContext;
 
+public class ThrongEntityCodec<T> extends ThrongPropertiesCodec<T> {
+
+  private final ThrongProperty idProperty;
+
+  public ThrongEntityCodec (Class<T> entityClass, ThrongEntity throngEntity) {
+
+    super(entityClass, throngEntity);
+
+    idProperty = throngEntity.getIdProperty();
+  }
+
+  @Override
+  public T decode (BsonReader reader, DecoderContext decoderContext) {
+
+    T instance;
+    String idName;
+
+    reader.readStartDocument();
+
+    if (!idProperty.getName().equals(idName = reader.readName())) {
+      throw new ThrongRuntimeException("The expected 'id' field(%s) does not match the actual(%s)", idProperty.getName(), idName);
+    } else {
+
+      Object idValue = idProperty.getCodec().decode(reader, decoderContext);
+
+      instance = super.decode(reader, decoderContext);
+      reader.readEndDocument();
+
+      try {
+        idProperty.getFieldAccessor().set(instance, idValue);
+      } catch (IllegalAccessException | InvocationTargetException exception) {
+        throw new ThrongRuntimeException(exception);
+      }
+
+      return instance;
+    }
+  }
+
+  @Override
+  public void encode (BsonWriter writer, T value, EncoderContext encoderContext) {
+
+    writer.writeStartDocument();
+    writer.writeName(idProperty.getName());
+
+    try {
+      reEncode(writer, idProperty.getCodec(), idProperty.getFieldAccessor().get(value), encoderContext);
+    } catch (IllegalAccessException | InvocationTargetException exception) {
+      throw new ThrongRuntimeException(exception);
+    }
+
+    super.encode(writer, value, encoderContext);
+    writer.writeEndDocument();
+  }
 }

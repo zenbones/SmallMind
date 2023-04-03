@@ -33,6 +33,7 @@
 package org.smallmind.mongodb.throng;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
 import java.util.TreeMap;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.smallmind.nutsnbolts.reflection.FieldAccessor;
@@ -40,7 +41,9 @@ import org.smallmind.nutsnbolts.reflection.FieldUtility;
 
 public class ThrongProperties extends TreeMap<String, ThrongProperty> {
 
-  public ThrongProperties (Class<?> entityClass, CodecRegistry codecRegistry)
+  private final HashMap<String, String> propertyNameMap = new HashMap<>();
+
+  public ThrongProperties (Class<?> entityClass, CodecRegistry codecRegistry, HashMap<String, ThrongEmbeddedCodec<?>> embeddedReferenceMap)
     throws ThrongMappingException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
 
     for (FieldAccessor fieldAccessor : FieldUtility.getFieldAccessors(entityClass)) {
@@ -51,17 +54,28 @@ public class ThrongProperties extends TreeMap<String, ThrongProperty> {
 
         Codec codecAnnotation;
         org.bson.codecs.Codec<?> codec;
+        String propertyName = propertyAnnotation.value().isEmpty() ? fieldAccessor.getName() : propertyAnnotation.value();
 
         if ((codecAnnotation = fieldAccessor.getField().getAnnotation(Codec.class)) != null) {
           codec = codecAnnotation.value().getConstructor().newInstance();
         } else if (fieldAccessor.getType().getAnnotation(Embedded.class) != null) {
-          codec = new ThrongPropertiesCodec<>(fieldAccessor.getType(), new ThrongProperties(fieldAccessor.getType(), codecRegistry));
+          if ((codec = embeddedReferenceMap.get(fieldAccessor.getName())) == null) {
+            embeddedReferenceMap.put(fieldAccessor.getName(), (ThrongEmbeddedCodec<?>)(codec = new ThrongEmbeddedCodec<>(fieldAccessor.getType(), new ThrongProperties(fieldAccessor.getType(), codecRegistry, embeddedReferenceMap))));
+          }
         } else if ((codec = codecRegistry.get(fieldAccessor.getType())) == null) {
           throw new ThrongMappingException("No known codec for field(%s) of type(%s) in entity(%s)", fieldAccessor.getName(), fieldAccessor.getType().getName(), entityClass.getName());
         }
 
-        put(fieldAccessor.getName(), new ThrongProperty(fieldAccessor, codec, propertyAnnotation.value().isEmpty() ? fieldAccessor.getName() : propertyAnnotation.value()));
+        put(fieldAccessor.getName(), new ThrongProperty(fieldAccessor, codec, propertyName));
+        propertyNameMap.put(propertyName, fieldAccessor.getName());
       }
     }
+  }
+
+  public ThrongProperty getByPropertyName (String propertyName) {
+
+    String fieldName;
+
+    return ((fieldName = propertyNameMap.get(propertyName)) != null) ? get(fieldName) : null;
   }
 }

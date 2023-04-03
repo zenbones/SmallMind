@@ -34,6 +34,7 @@ package org.smallmind.mongodb.throng;
 
 import java.lang.reflect.InvocationTargetException;
 import org.bson.BsonReader;
+import org.bson.BsonType;
 import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
@@ -62,8 +63,13 @@ public class ThrongPropertiesCodec<T> implements Codec<T> {
     try {
       T instance = embeddedClass.getConstructor().newInstance();
 
-      for (ThrongProperty throngProperty : throngProperties.values()) {
-        throngProperty.getFieldAccessor().set(instance, throngProperty.getCodec().decode(reader, decoderContext));
+      while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
+
+        ThrongProperty throngProperty;
+
+        if ((throngProperty = throngProperties.getByPropertyName(reader.readName())) != null) {
+          throngProperty.getFieldAccessor().set(instance, throngProperty.getCodec().decode(reader, decoderContext));
+        }
       }
 
       return instance;
@@ -85,7 +91,8 @@ public class ThrongPropertiesCodec<T> implements Codec<T> {
     }
   }
 
-  private <U> void reEncode (BsonWriter writer, Codec<U> codec, Object stuff, EncoderContext encoderContext) {
+  // Due to the fact that object is not of type 'capture of ?'
+  protected <U> void reEncode (BsonWriter writer, Codec<U> codec, Object stuff, EncoderContext encoderContext) {
 
     codec.encode(writer, (U)stuff, encoderContext);
   }

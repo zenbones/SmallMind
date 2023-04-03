@@ -34,9 +34,11 @@ package org.smallmind.mongodb.throng;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
+import java.util.LinkedList;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
 
@@ -46,17 +48,26 @@ public class ThrongClient {
   private final MongoDatabase mongoDatabase;
   private final CodecRegistry codecRegistry;
 
+  // mongoDatabase.getCollection("collection").withCodecRegistry(codecRegistry).withDocumentClass(ThrongDocument.class);
+
   public ThrongClient (MongoClient mongoClient, String database, Class<?>... entityClasses)
     throws ThrongMappingException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
 
+    LinkedList<Codec<?>> throngCodecList = new LinkedList<>();
+
     mongoDatabase = mongoClient.getDatabase(database);
-    codecRegistry = CodecRegistries.fromRegistries(CodecRegistries.fromCodecs(new ThrongDocumentCodec()), mongoDatabase.getCodecRegistry());
 
     if (entityClasses != null) {
+
+      HashMap<String, ThrongEmbeddedCodec<?>> embeddedReferenceMap = new HashMap<>();
+
       for (Class<?> entityClass : entityClasses) {
-        mongoDatabase.getCollection("collection").withCodecRegistry(codecRegistry).withDocumentClass(ThrongDocument.class);
-        new ThrongEntity(entityClass, codecRegistry);
+        throngCodecList.add(new ThrongEntityCodec<>(entityClass, new ThrongEntity(entityClass, mongoDatabase.getCodecRegistry(), embeddedReferenceMap)));
       }
+
+      throngCodecList.addAll(embeddedReferenceMap.values());
     }
+
+    codecRegistry = CodecRegistries.fromRegistries(CodecRegistries.fromCodecs(new ThrongDocumentCodec()), CodecRegistries.fromCodecs(throngCodecList), mongoDatabase.getCodecRegistry());
   }
 }

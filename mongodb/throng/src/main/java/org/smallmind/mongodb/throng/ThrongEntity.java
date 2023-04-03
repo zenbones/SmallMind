@@ -33,23 +33,65 @@
 package org.smallmind.mongodb.throng;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
+import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.smallmind.nutsnbolts.reflection.FieldAccessor;
+import org.smallmind.nutsnbolts.reflection.FieldUtility;
 
-public class ThrongEntity {
+public class ThrongEntity extends ThrongProperties {
 
-  private final ThrongProperties throngProperties;
   private final String collection;
+  private ThrongProperty idProperty;
 
-  public ThrongEntity (Class<?> entityClass, CodecRegistry codecRegistry)
+  public ThrongEntity (Class<?> entityClass, CodecRegistry codecRegistry, HashMap<String, ThrongEmbeddedCodec<?>> embeddedReferenceMap)
     throws ThrongMappingException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
+
+    super(entityClass, codecRegistry, embeddedReferenceMap);
 
     Entity entityAnnotation;
 
     if ((entityAnnotation = entityClass.getAnnotation(Entity.class)) == null) {
       throw new ThrongMappingException("The entity class(%s) is not @Entity annotated", entityClass.getName());
     } else {
+
       collection = entityAnnotation.value();
-      throngProperties = new ThrongProperties(entityClass, codecRegistry);
+
+      for (FieldAccessor fieldAccessor : FieldUtility.getFieldAccessors(entityClass)) {
+
+        Id idAnnotation;
+
+        if ((idAnnotation = fieldAccessor.getField().getAnnotation(Id.class)) != null) {
+          if (containsKey(fieldAccessor.getName())) {
+            throw new ThrongMappingException("The field(%s) in entity(%s) can't be both an 'id' and a 'property'", fieldAccessor.getName(), fieldAccessor.getType().getName(), entityClass.getName());
+          } else if (idProperty != null) {
+            throw new ThrongMappingException("The entity(%s) has multiple 'id' fields defined", entityClass.getName());
+          } else {
+
+            Codec<?> idCodec;
+
+            if ((idCodec = codecRegistry.get(fieldAccessor.getType())) == null) {
+              throw new ThrongMappingException("No known codec for id(%s) of type(%s) in entity(%s)", fieldAccessor.getName(), fieldAccessor.getType().getName(), entityClass.getName());
+            } else {
+              idProperty = new ThrongProperty(fieldAccessor, idCodec, idAnnotation.value());
+            }
+          }
+        }
+      }
+
+      if (idProperty == null) {
+        throw new ThrongMappingException("The entity(%s) has no 'id' field defined", entityClass.getName());
+      }
     }
+  }
+
+  public String getCollection () {
+
+    return collection;
+  }
+
+  public ThrongProperty getIdProperty () {
+
+    return idProperty;
   }
 }

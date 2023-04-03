@@ -40,4 +40,9 @@ public class ThrongRuntimeException extends FormattedRuntimeException {
 
     super(throwable);
   }
+
+  public ThrongRuntimeException (String message, Object... args) {
+
+    super(message, args);
+  }
 }
