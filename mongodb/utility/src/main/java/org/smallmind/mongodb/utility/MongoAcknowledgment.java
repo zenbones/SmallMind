@@ -34,14 +34,14 @@ package org.smallmind.mongodb.utility;
 
 import com.mongodb.WriteConcern;
 
-public enum MorphiaAcknowledgment {
+public enum MongoAcknowledgment {
 
   ZERO(WriteConcern.UNACKNOWLEDGED, false), ONE(WriteConcern.W1, true), TWO(WriteConcern.W2, true), THREE(WriteConcern.W3, true), MAJORITY(WriteConcern.MAJORITY, true);
 
   private final WriteConcern writeConcern;
   private final boolean journable;
 
-  MorphiaAcknowledgment (WriteConcern writeConcern, boolean journable) {
+  MongoAcknowledgment (WriteConcern writeConcern, boolean journable) {
 
     this.writeConcern = writeConcern;
     this.journable = journable;

@@ -33,14 +33,11 @@
 package org.smallmind.mongodb.throng;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.smallmind.nutsnbolts.reflection.FieldAccessor;
-import org.smallmind.nutsnbolts.reflection.FieldUtility;
 
 public class ThrongEntity {
 
-  private final HashMap<String, FieldInfo> fieldInfoMap = new HashMap<>();
+  private final ThrongProperties throngProperties;
   private final String collection;
 
   public ThrongEntity (Class<?> entityClass, CodecRegistry codecRegistry)
@@ -52,54 +49,7 @@ public class ThrongEntity {
       throw new ThrongMappingException("The entity class(%s) is not @Entity annotated", entityClass.getName());
     } else {
       collection = entityAnnotation.value();
-
-      for (FieldAccessor fieldAccessor : FieldUtility.getFieldAccessors(entityClass)) {
-
-        Property propertyAnnotation;
-
-        if ((propertyAnnotation = fieldAccessor.getField().getAnnotation(Property.class)) != null) {
-
-          Codec codecAnnotation;
-          org.bson.codecs.Codec<?> codec;
-
-          if ((codecAnnotation = fieldAccessor.getField().getAnnotation(Codec.class)) != null) {
-            codec = codecAnnotation.value().getConstructor().newInstance();
-          } else if ((codec = codecRegistry.get(fieldAccessor.getType())) == null) {
-            throw new ThrongMappingException("No known codec for field(%s) of type(%s) in entity(%s)", fieldAccessor.getName(), fieldAccessor.getType().getName(), entityClass.getName());
-          }
-
-          fieldInfoMap.put(fieldAccessor.getName(), new FieldInfo(fieldAccessor, codec, propertyAnnotation.value().isEmpty() ? fieldAccessor.getName() : propertyAnnotation.value()));
-        }
-      }
-    }
-  }
-
-  private static class FieldInfo {
-
-    private final FieldAccessor fieldAccessor;
-    private final org.bson.codecs.Codec<?> codec;
-    private final String name;
-
-    public FieldInfo (FieldAccessor fieldAccessor, org.bson.codecs.Codec<?> codec, String name) {
-
-      this.fieldAccessor = fieldAccessor;
-      this.codec = codec;
-      this.name = name;
-    }
-
-    public FieldAccessor getFieldAccessor () {
-
-      return fieldAccessor;
-    }
-
-    public org.bson.codecs.Codec<?> getCodec () {
-
-      return codec;
-    }
-
-    public String getName () {
-
-      return name;
+      throngProperties = new ThrongProperties(entityClass, codecRegistry);
     }
   }
 }

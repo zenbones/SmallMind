@@ -37,10 +37,10 @@ import org.springframework.beans.factory.FactoryBean;
 
 public class MongoWriteConcern implements FactoryBean<WriteConcern> {
 
-  private MorphiaAcknowledgment acknowledgment;
+  private MongoAcknowledgment acknowledgment;
   private boolean journaled;
 
-  public void setAcknowledgment (MorphiaAcknowledgment acknowledgment) {
+  public void setAcknowledgment (MongoAcknowledgment acknowledgment) {
 
     this.acknowledgment = acknowledgment;
   }
