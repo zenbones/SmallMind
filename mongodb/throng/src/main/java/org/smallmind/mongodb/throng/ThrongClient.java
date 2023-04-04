@@ -62,7 +62,7 @@ public class ThrongClient {
       HashMap<String, ThrongEmbeddedCodec<?>> embeddedReferenceMap = new HashMap<>();
 
       for (Class<?> entityClass : entityClasses) {
-        throngCodecList.add(new ThrongEntityCodec<>(entityClass, new ThrongEntity(entityClass, mongoDatabase.getCodecRegistry(), embeddedReferenceMap), false));
+        throngCodecList.add(new ThrongEntityCodec<>(entityClass, new ThrongEntity(entityClass, mongoDatabase.getCodecRegistry(), embeddedReferenceMap, false), false));
       }
 
       throngCodecList.addAll(embeddedReferenceMap.values());

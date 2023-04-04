@@ -44,10 +44,10 @@ public class ThrongEntity extends ThrongProperties {
   private final String collection;
   private ThrongProperty idProperty;
 
-  public ThrongEntity (Class<?> entityClass, CodecRegistry codecRegistry, HashMap<String, ThrongEmbeddedCodec<?>> embeddedReferenceMap)
+  public ThrongEntity (Class<?> entityClass, CodecRegistry codecRegistry, HashMap<String, ThrongEmbeddedCodec<?>> embeddedReferenceMap, boolean storeNulls)
     throws ThrongMappingException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
 
-    super(entityClass, codecRegistry, embeddedReferenceMap);
+    super(entityClass, codecRegistry, embeddedReferenceMap, storeNulls);
 
     Entity entityAnnotation;
 

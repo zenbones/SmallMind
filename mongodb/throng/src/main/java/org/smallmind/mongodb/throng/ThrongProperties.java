@@ -44,7 +44,7 @@ public class ThrongProperties extends TreeMap<String, ThrongProperty> {
 
   private final HashMap<String, String> propertyNameMap = new HashMap<>();
 
-  public ThrongProperties (Class<?> entityClass, CodecRegistry codecRegistry, HashMap<String, ThrongEmbeddedCodec<?>> embeddedReferenceMap)
+  public ThrongProperties (Class<?> entityClass, CodecRegistry codecRegistry, HashMap<String, ThrongEmbeddedCodec<?>> embeddedReferenceMap, boolean storeNulls)
     throws ThrongMappingException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
 
     for (FieldAccessor fieldAccessor : FieldUtility.getFieldAccessors(entityClass)) {
@@ -61,11 +61,11 @@ public class ThrongProperties extends TreeMap<String, ThrongProperty> {
           codec = codecAnnotation.value().getConstructor().newInstance();
         } else if (fieldAccessor.getType().getAnnotation(Embedded.class) != null) {
           if ((codec = embeddedReferenceMap.get(fieldAccessor.getName())) == null) {
-            embeddedReferenceMap.put(fieldAccessor.getName(), (ThrongEmbeddedCodec<?>)(codec = new ThrongEmbeddedCodec<>(fieldAccessor.getType(), new ThrongProperties(fieldAccessor.getType(), codecRegistry, embeddedReferenceMap))));
+            embeddedReferenceMap.put(fieldAccessor.getName(), (ThrongEmbeddedCodec<?>)(codec = new ThrongEmbeddedCodec<>(fieldAccessor.getType(), new ThrongProperties(fieldAccessor.getType(), codecRegistry, embeddedReferenceMap, storeNulls), storeNulls)));
           }
         } else {
           try {
-            codec =  CodecRegistryUtility.getReifiedCodec(codecRegistry, entityClass, fieldAccessor);
+            codec = CodecRegistryUtility.getReifiedCodec(codecRegistry, entityClass, fieldAccessor);
           } catch (CodecConfigurationException codecConfigurationException) {
             throw new ThrongMappingException("No known codec for field(%s) of type(%s) in entity(%s)", fieldAccessor.getName(), fieldAccessor.getType().getName(), entityClass.getName());
           }
