@@ -49,8 +49,8 @@ public class ThrongClient {
 
   private final HashMap<Class<?>, MongoCollection> collectionMap = new HashMap<>();
   private final MongoDatabase mongoDatabase;
-  private final CodecRegistry databaseRegistry;
-  private final CodecRegistry mappingRegistry;
+  private final CodecRegistry databaseCodecRegistry;
+  private final CodecRegistry mappingCodecRegistry;
 
   // mongoDatabase.getCollection("collection").withCodecRegistry(codecRegistry).withDocumentClass(ThrongDocument.class);
 
@@ -60,7 +60,7 @@ public class ThrongClient {
     LinkedList<Codec<?>> throngCodecList = new LinkedList<>();
 
     mongoDatabase = mongoClient.getDatabase(database);
-    databaseRegistry = CodecRegistries.fromRegistries(CodecRegistries.fromCodecs(new ThrongDocumentCodec()), mongoDatabase.getCodecRegistry());
+    databaseCodecRegistry = CodecRegistries.fromRegistries(CodecRegistries.fromCodecs(new ThrongDocumentCodec()), mongoDatabase.getCodecRegistry());
 
     if (entityClasses != null) {
 
@@ -73,16 +73,16 @@ public class ThrongClient {
       throngCodecList.addAll(embeddedReferenceMap.values());
     }
 
-    mappingRegistry = CodecRegistries.fromRegistries(CodecRegistries.fromCodecs(throngCodecList));
+    mappingCodecRegistry = CodecRegistries.fromRegistries(CodecRegistries.fromCodecs(throngCodecList));
   }
 
-  public CodecRegistry getDatabaseRegistry () {
+  public CodecRegistry getDatabaseCodecRegistry () {
 
-    return databaseRegistry;
+    return databaseCodecRegistry;
   }
 
-  public CodecRegistry getMappingRegistry () {
+  public CodecRegistry getMappingCodecRegistry () {
 
-    return mappingRegistry;
+    return mappingCodecRegistry;
   }
 }
