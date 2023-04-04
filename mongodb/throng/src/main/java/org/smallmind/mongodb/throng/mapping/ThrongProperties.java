@@ -48,7 +48,7 @@ public class ThrongProperties extends TreeMap<String, ThrongProperty> {
 
   private final HashMap<String, String> propertyNameMap = new HashMap<>();
 
-  public ThrongProperties (Class<?> entityClass, CodecRegistry codecRegistry, HashMap<String, ThrongEmbeddedCodec<?>> embeddedReferenceMap, boolean storeNulls)
+  public ThrongProperties (Class<?> entityClass, CodecRegistry codecRegistry, HashMap<Class<?>, ThrongEmbeddedCodec<?>> embeddedReferenceMap, boolean storeNulls)
     throws ThrongMappingException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
 
     for (FieldAccessor fieldAccessor : FieldUtility.getFieldAccessors(entityClass)) {
@@ -64,8 +64,8 @@ public class ThrongProperties extends TreeMap<String, ThrongProperty> {
         if ((codecAnnotation = fieldAccessor.getField().getAnnotation(Codec.class)) != null) {
           codec = codecAnnotation.value().getConstructor().newInstance();
         } else if (fieldAccessor.getType().getAnnotation(Embedded.class) != null) {
-          if ((codec = embeddedReferenceMap.get(fieldAccessor.getName())) == null) {
-            embeddedReferenceMap.put(fieldAccessor.getName(), (ThrongEmbeddedCodec<?>)(codec = new ThrongEmbeddedCodec<>(fieldAccessor.getType(), new ThrongProperties(fieldAccessor.getType(), codecRegistry, embeddedReferenceMap, storeNulls), storeNulls)));
+          if ((codec = embeddedReferenceMap.get(fieldAccessor.getType())) == null) {
+            embeddedReferenceMap.put(fieldAccessor.getType(), (ThrongEmbeddedCodec<?>)(codec = new ThrongEmbeddedCodec<>(fieldAccessor.getType(), new ThrongProperties(fieldAccessor.getType(), codecRegistry, embeddedReferenceMap, storeNulls), storeNulls)));
           }
         } else {
           try {
