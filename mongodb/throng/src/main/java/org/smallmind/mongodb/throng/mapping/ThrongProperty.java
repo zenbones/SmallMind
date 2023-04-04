@@ -30,30 +30,35 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.mongodb.throng;
+package org.smallmind.mongodb.throng.mapping;
 
-import org.bson.BsonReader;
-import org.bson.BsonWriter;
-import org.bson.codecs.Codec;
-import org.bson.codecs.DecoderContext;
-import org.bson.codecs.EncoderContext;
+import org.smallmind.nutsnbolts.reflection.FieldAccessor;
 
-public class IntegerCodec implements Codec<Integer> {
+public class ThrongProperty {
 
-  @Override
-  public Class<Integer> getEncoderClass () {
+  private final FieldAccessor fieldAccessor;
+  private final org.bson.codecs.Codec<?> codec;
+  private final String name;
 
-    return Integer.class;
+  public ThrongProperty (FieldAccessor fieldAccessor, org.bson.codecs.Codec<?> codec, String name) {
+
+    this.fieldAccessor = fieldAccessor;
+    this.codec = codec;
+    this.name = name;
   }
 
-  @Override
-  public Integer decode (BsonReader reader, DecoderContext decoderContext) {
+  public FieldAccessor getFieldAccessor () {
 
-    return null;
+    return fieldAccessor;
   }
 
-  @Override
-  public void encode (BsonWriter writer, Integer value, EncoderContext encoderContext) {
+  public org.bson.codecs.Codec<?> getCodec () {
 
+    return codec;
+  }
+
+  public String getName () {
+
+    return name;
   }
 }

@@ -30,72 +30,83 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.mongodb.throng;
+package org.smallmind.mongodb.throng.mapping;
 
 import java.lang.reflect.InvocationTargetException;
 import org.bson.BsonReader;
+import org.bson.BsonType;
 import org.bson.BsonWriter;
+import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
+import org.smallmind.mongodb.throng.ThrongRuntimeException;
 
-public class ThrongEntityCodec<T> extends ThrongPropertiesCodec<T> {
+public class ThrongPropertiesCodec<T> implements Codec<T> {
 
-  private final ThrongProperty idProperty;
+  private final ThrongProperties throngProperties;
+  private final Class<T> embeddedClass;
+  private final boolean storeNulls;
 
-  public ThrongEntityCodec (Class<T> entityClass, ThrongEntity throngEntity, boolean storeNulls) {
+  public ThrongPropertiesCodec (Class<T> entityClass, ThrongProperties throngProperties, boolean storeNulls) {
 
-    super(entityClass, throngEntity, storeNulls);
+    this.embeddedClass = entityClass;
+    this.throngProperties = throngProperties;
+    this.storeNulls = storeNulls;
+  }
 
-    idProperty = throngEntity.getIdProperty();
+  public boolean isStoreNulls () {
+
+    return storeNulls;
+  }
+
+  @Override
+  public Class<T> getEncoderClass () {
+
+    return embeddedClass;
   }
 
   @Override
   public T decode (BsonReader reader, DecoderContext decoderContext) {
 
-    T instance;
-    String idName;
+    try {
+      T instance = embeddedClass.getConstructor().newInstance();
 
-    reader.readStartDocument();
+      while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
 
-    if (!idProperty.getName().equals(idName = reader.readName())) {
-      throw new ThrongRuntimeException("The expected 'id' field(%s) does not match the actual(%s)", idProperty.getName(), idName);
-    } else {
+        ThrongProperty throngProperty;
 
-      Object idValue = idProperty.getCodec().decode(reader, decoderContext);
-
-      instance = super.decode(reader, decoderContext);
-      reader.readEndDocument();
-
-      try {
-        idProperty.getFieldAccessor().set(instance, idValue);
-      } catch (IllegalAccessException | InvocationTargetException exception) {
-        throw new ThrongRuntimeException(exception);
+        if ((throngProperty = throngProperties.getByPropertyName(reader.readName())) != null) {
+          throngProperty.getFieldAccessor().set(instance, throngProperty.getCodec().decode(reader, decoderContext));
+        }
       }
 
       return instance;
+    } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException exception) {
+      throw new ThrongRuntimeException(exception);
     }
   }
 
   @Override
   public void encode (BsonWriter writer, T value, EncoderContext encoderContext) {
 
-    if (value != null) {
-      writer.writeStartDocument();
-
+    for (ThrongProperty throngProperty : throngProperties.values()) {
       try {
 
-        Object idValue;
+        Object propertyValue;
 
-        if ((idValue = idProperty.getFieldAccessor().get(value)) != null) {
-          writer.writeName(idProperty.getName());
-          reEncode(writer, idProperty.getCodec(), idValue, encoderContext);
+        if (((propertyValue = throngProperty.getFieldAccessor().get(value)) != null) || storeNulls) {
+          writer.writeName(throngProperty.getName());
+          reEncode(writer, throngProperty.getCodec(), propertyValue, encoderContext);
         }
       } catch (IllegalAccessException | InvocationTargetException exception) {
         throw new ThrongRuntimeException(exception);
       }
-
-      super.encode(writer, value, encoderContext);
-      writer.writeEndDocument();
     }
+  }
+
+  // Due to the fact that object is not of type 'capture of ?'
+  protected <U> void reEncode (BsonWriter writer, Codec<U> codec, Object stuff, EncoderContext encoderContext) {
+
+    codec.encode(writer, (U)stuff, encoderContext);
   }
 }

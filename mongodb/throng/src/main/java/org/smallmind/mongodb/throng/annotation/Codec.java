@@ -30,35 +30,16 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.mongodb.throng;
+package org.smallmind.mongodb.throng.annotation;
 
-import org.smallmind.nutsnbolts.reflection.FieldAccessor;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-public class ThrongProperty {
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
+public @interface Codec {
 
-  private final FieldAccessor fieldAccessor;
-  private final org.bson.codecs.Codec<?> codec;
-  private final String name;
-
-  public ThrongProperty (FieldAccessor fieldAccessor, org.bson.codecs.Codec<?> codec, String name) {
-
-    this.fieldAccessor = fieldAccessor;
-    this.codec = codec;
-    this.name = name;
-  }
-
-  public FieldAccessor getFieldAccessor () {
-
-    return fieldAccessor;
-  }
-
-  public org.bson.codecs.Codec<?> getCodec () {
-
-    return codec;
-  }
-
-  public String getName () {
-
-    return name;
-  }
+  Class<? extends org.bson.codecs.Codec<?>> value ();
 }

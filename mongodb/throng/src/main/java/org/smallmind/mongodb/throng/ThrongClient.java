@@ -41,6 +41,9 @@ import com.mongodb.client.MongoDatabase;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.smallmind.mongodb.throng.mapping.ThrongEmbeddedCodec;
+import org.smallmind.mongodb.throng.mapping.ThrongEntity;
+import org.smallmind.mongodb.throng.mapping.ThrongEntityCodec;
 
 public class ThrongClient {
 

@@ -30,16 +30,35 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.mongodb.throng;
+package org.smallmind.mongodb.throng.mapping;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
+import org.bson.codecs.Codec;
+import org.bson.codecs.configuration.CodecRegistry;
+import org.smallmind.mongodb.throng.ThrongRuntimeException;
+import org.smallmind.nutsnbolts.reflection.FieldAccessor;
+import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
-public @interface Property {
+public class CodecRegistryUtility {
 
-  String value () default "";
+  public static Codec<?> getReifiedCodec (CodecRegistry codecRegistry, Class<?> parentClass, FieldAccessor fieldAccessor) {
+
+    Type genericType;
+
+    if ((genericType = fieldAccessor.getGenericType()) instanceof TypeVariable) {
+
+      Class<?> reifiedFieldType;
+
+      if ((reifiedFieldType = GenericUtility.findTypeArgument(parentClass, (TypeVariable<?>)genericType)) == null) {
+        throw new ThrongRuntimeException("Could not reify the type of field(%s) in entity(%s)", fieldAccessor.getName(), parentClass.getName());
+      } else {
+
+        return codecRegistry.get(reifiedFieldType);
+      }
+    } else {
+
+      return codecRegistry.get(fieldAccessor.getType());
+    }
+  }
 }

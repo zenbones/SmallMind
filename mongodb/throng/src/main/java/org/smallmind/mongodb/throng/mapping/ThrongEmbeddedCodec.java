@@ -30,16 +30,41 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.mongodb.throng;
+package org.smallmind.mongodb.throng.mapping;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import org.bson.BsonReader;
+import org.bson.BsonWriter;
+import org.bson.codecs.DecoderContext;
+import org.bson.codecs.EncoderContext;
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface Entity {
+public class ThrongEmbeddedCodec<T> extends ThrongPropertiesCodec<T> {
 
-  String value ();
+  public ThrongEmbeddedCodec (Class<T> embeddedClass, ThrongProperties throngProperties, boolean storeNulls) {
+
+    super(embeddedClass, throngProperties, storeNulls);
+  }
+
+  @Override
+  public T decode (BsonReader reader, DecoderContext decoderContext) {
+
+    T instance;
+
+    reader.readStartDocument();
+    instance = super.decode(reader, decoderContext);
+    reader.readEndDocument();
+
+    return instance;
+  }
+
+  @Override
+  public void encode (BsonWriter writer, T value, EncoderContext encoderContext) {
+
+    if (value != null) {
+      writer.writeStartDocument();
+      super.encode(writer, value, encoderContext);
+      writer.writeEndDocument();
+    } else if (isStoreNulls()) {
+      writer.writeNull();
+    }
+  }
 }

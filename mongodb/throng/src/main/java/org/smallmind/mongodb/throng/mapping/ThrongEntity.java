@@ -30,12 +30,15 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.mongodb.throng;
+package org.smallmind.mongodb.throng.mapping;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.smallmind.mongodb.throng.ThrongMappingException;
+import org.smallmind.mongodb.throng.annotation.Entity;
+import org.smallmind.mongodb.throng.annotation.Id;
 import org.smallmind.nutsnbolts.reflection.FieldAccessor;
 import org.smallmind.nutsnbolts.reflection.FieldUtility;
 
