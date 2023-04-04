@@ -39,9 +39,9 @@ import org.bson.codecs.EncoderContext;
 
 public class ThrongEmbeddedCodec<T> extends ThrongPropertiesCodec<T> {
 
-  public ThrongEmbeddedCodec (Class<T> embeddedClass, ThrongProperties throngProperties, boolean storeNulls) {
+  public ThrongEmbeddedCodec (ThrongProperties<T> throngProperties) {
 
-    super(embeddedClass, throngProperties, storeNulls);
+    super(throngProperties);
   }
 
   @Override

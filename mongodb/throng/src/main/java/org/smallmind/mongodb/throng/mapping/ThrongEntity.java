@@ -42,12 +42,12 @@ import org.smallmind.mongodb.throng.annotation.Id;
 import org.smallmind.nutsnbolts.reflection.FieldAccessor;
 import org.smallmind.nutsnbolts.reflection.FieldUtility;
 
-public class ThrongEntity extends ThrongProperties {
+public class ThrongEntity<T> extends ThrongProperties<T> {
 
   private final String collection;
   private ThrongProperty idProperty;
 
-  public ThrongEntity (Class<?> entityClass, CodecRegistry codecRegistry, HashMap<Class<?>, ThrongEmbeddedCodec<?>> embeddedReferenceMap, boolean storeNulls)
+  public ThrongEntity (Class<T> entityClass, CodecRegistry codecRegistry, HashMap<Class<?>, ThrongEmbeddedCodec<?>> embeddedReferenceMap, boolean storeNulls)
     throws ThrongMappingException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
 
     super(entityClass, codecRegistry, embeddedReferenceMap, storeNulls);

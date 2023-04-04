@@ -44,12 +44,17 @@ import org.smallmind.mongodb.throng.annotation.Property;
 import org.smallmind.nutsnbolts.reflection.FieldAccessor;
 import org.smallmind.nutsnbolts.reflection.FieldUtility;
 
-public class ThrongProperties extends TreeMap<String, ThrongProperty> {
+public class ThrongProperties<T> extends TreeMap<String, ThrongProperty> {
 
+  private final Class<T> entityClass;
   private final HashMap<String, String> propertyNameMap = new HashMap<>();
+  private final boolean storeNulls;
 
-  public ThrongProperties (Class<?> entityClass, CodecRegistry codecRegistry, HashMap<Class<?>, ThrongEmbeddedCodec<?>> embeddedReferenceMap, boolean storeNulls)
+  public ThrongProperties (Class<T> entityClass, CodecRegistry codecRegistry, HashMap<Class<?>, ThrongEmbeddedCodec<?>> embeddedReferenceMap, boolean storeNulls)
     throws ThrongMappingException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
+
+    this.entityClass = entityClass;
+    this.storeNulls = storeNulls;
 
     for (FieldAccessor fieldAccessor : FieldUtility.getFieldAccessors(entityClass)) {
 
@@ -65,7 +70,7 @@ public class ThrongProperties extends TreeMap<String, ThrongProperty> {
           codec = codecAnnotation.value().getConstructor().newInstance();
         } else if (fieldAccessor.getType().getAnnotation(Embedded.class) != null) {
           if ((codec = embeddedReferenceMap.get(fieldAccessor.getType())) == null) {
-            embeddedReferenceMap.put(fieldAccessor.getType(), (ThrongEmbeddedCodec<?>)(codec = new ThrongEmbeddedCodec<>(fieldAccessor.getType(), new ThrongProperties(fieldAccessor.getType(), codecRegistry, embeddedReferenceMap, storeNulls), storeNulls)));
+            embeddedReferenceMap.put(fieldAccessor.getType(), (ThrongEmbeddedCodec<?>)(codec = new ThrongEmbeddedCodec<>(new ThrongProperties<>(fieldAccessor.getType(), codecRegistry, embeddedReferenceMap, storeNulls))));
           }
         } else {
           try {
@@ -79,6 +84,16 @@ public class ThrongProperties extends TreeMap<String, ThrongProperty> {
         propertyNameMap.put(propertyName, fieldAccessor.getName());
       }
     }
+  }
+
+  public Class<T> getEntityClass () {
+
+    return entityClass;
+  }
+
+  public boolean isStoreNulls () {
+
+    return storeNulls;
   }
 
   public ThrongProperty getByPropertyName (String propertyName) {

@@ -43,33 +43,29 @@ import org.smallmind.mongodb.throng.ThrongRuntimeException;
 
 public class ThrongPropertiesCodec<T> implements Codec<T> {
 
-  private final ThrongProperties throngProperties;
-  private final Class<T> embeddedClass;
-  private final boolean storeNulls;
+  private final ThrongProperties<T> throngProperties;
 
-  public ThrongPropertiesCodec (Class<T> entityClass, ThrongProperties throngProperties, boolean storeNulls) {
+  public ThrongPropertiesCodec (ThrongProperties<T> throngProperties) {
 
-    this.embeddedClass = entityClass;
     this.throngProperties = throngProperties;
-    this.storeNulls = storeNulls;
-  }
-
-  public boolean isStoreNulls () {
-
-    return storeNulls;
   }
 
   @Override
   public Class<T> getEncoderClass () {
 
-    return embeddedClass;
+    return throngProperties.getEntityClass();
+  }
+
+  public boolean isStoreNulls () {
+
+    return throngProperties.isStoreNulls();
   }
 
   @Override
   public T decode (BsonReader reader, DecoderContext decoderContext) {
 
     try {
-      T instance = embeddedClass.getConstructor().newInstance();
+      T instance = throngProperties.getEntityClass().getConstructor().newInstance();
 
       while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
 
@@ -94,7 +90,7 @@ public class ThrongPropertiesCodec<T> implements Codec<T> {
 
         Object propertyValue;
 
-        if (((propertyValue = throngProperty.getFieldAccessor().get(value)) != null) || storeNulls) {
+        if (((propertyValue = throngProperty.getFieldAccessor().get(value)) != null) || throngProperties.isStoreNulls()) {
           writer.writeName(throngProperty.getName());
           reEncode(writer, throngProperty.getCodec(), propertyValue, encoderContext);
         }

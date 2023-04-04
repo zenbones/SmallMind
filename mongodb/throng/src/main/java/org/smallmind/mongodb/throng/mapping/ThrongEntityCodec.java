@@ -43,9 +43,9 @@ public class ThrongEntityCodec<T> extends ThrongPropertiesCodec<T> {
 
   private final ThrongProperty idProperty;
 
-  public ThrongEntityCodec (Class<T> entityClass, ThrongEntity throngEntity, boolean storeNulls) {
+  public ThrongEntityCodec (ThrongEntity<T> throngEntity) {
 
-    super(entityClass, throngEntity, storeNulls);
+    super(throngEntity);
 
     idProperty = throngEntity.getIdProperty();
   }
