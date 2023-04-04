@@ -42,9 +42,9 @@ public class ThrongEntityCodec<T> extends ThrongPropertiesCodec<T> {
 
   private final ThrongProperty idProperty;
 
-  public ThrongEntityCodec (Class<T> entityClass, ThrongEntity throngEntity) {
+  public ThrongEntityCodec (Class<T> entityClass, ThrongEntity throngEntity, boolean storeNulls) {
 
-    super(entityClass, throngEntity);
+    super(entityClass, throngEntity, storeNulls);
 
     idProperty = throngEntity.getIdProperty();
   }
@@ -79,16 +79,23 @@ public class ThrongEntityCodec<T> extends ThrongPropertiesCodec<T> {
   @Override
   public void encode (BsonWriter writer, T value, EncoderContext encoderContext) {
 
-    writer.writeStartDocument();
-    writer.writeName(idProperty.getName());
+    if (value != null) {
+      writer.writeStartDocument();
 
-    try {
-      reEncode(writer, idProperty.getCodec(), idProperty.getFieldAccessor().get(value), encoderContext);
-    } catch (IllegalAccessException | InvocationTargetException exception) {
-      throw new ThrongRuntimeException(exception);
+      try {
+
+        Object idValue;
+
+        if ((idValue = idProperty.getFieldAccessor().get(value)) != null) {
+          writer.writeName(idProperty.getName());
+          reEncode(writer, idProperty.getCodec(), idValue, encoderContext);
+        }
+      } catch (IllegalAccessException | InvocationTargetException exception) {
+        throw new ThrongRuntimeException(exception);
+      }
+
+      super.encode(writer, value, encoderContext);
+      writer.writeEndDocument();
     }
-
-    super.encode(writer, value, encoderContext);
-    writer.writeEndDocument();
   }
 }

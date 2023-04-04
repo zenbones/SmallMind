@@ -39,9 +39,9 @@ import org.bson.codecs.EncoderContext;
 
 public class ThrongEmbeddedCodec<T> extends ThrongPropertiesCodec<T> {
 
-  public ThrongEmbeddedCodec (Class<T> embeddedClass, ThrongProperties throngProperties) {
+  public ThrongEmbeddedCodec (Class<T> embeddedClass, ThrongProperties throngProperties, boolean storeNulls) {
 
-    super(embeddedClass, throngProperties);
+    super(embeddedClass, throngProperties, storeNulls);
   }
 
   @Override
@@ -59,8 +59,12 @@ public class ThrongEmbeddedCodec<T> extends ThrongPropertiesCodec<T> {
   @Override
   public void encode (BsonWriter writer, T value, EncoderContext encoderContext) {
 
-    writer.writeStartDocument();
-    super.encode(writer, value, encoderContext);
-    writer.writeEndDocument();
+    if (value != null) {
+      writer.writeStartDocument();
+      super.encode(writer, value, encoderContext);
+      writer.writeEndDocument();
+    } else if (isStoreNulls()) {
+      writer.writeNull();
+    }
   }
 }

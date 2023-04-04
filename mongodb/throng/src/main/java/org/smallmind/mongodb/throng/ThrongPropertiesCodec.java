@@ -44,11 +44,18 @@ public class ThrongPropertiesCodec<T> implements Codec<T> {
 
   private final ThrongProperties throngProperties;
   private final Class<T> embeddedClass;
+  private final boolean storeNulls;
 
-  public ThrongPropertiesCodec (Class<T> entityClass, ThrongProperties throngProperties) {
+  public ThrongPropertiesCodec (Class<T> entityClass, ThrongProperties throngProperties, boolean storeNulls) {
 
     this.embeddedClass = entityClass;
     this.throngProperties = throngProperties;
+    this.storeNulls = storeNulls;
+  }
+
+  public boolean isStoreNulls () {
+
+    return storeNulls;
   }
 
   @Override
@@ -82,9 +89,14 @@ public class ThrongPropertiesCodec<T> implements Codec<T> {
   public void encode (BsonWriter writer, T value, EncoderContext encoderContext) {
 
     for (ThrongProperty throngProperty : throngProperties.values()) {
-      writer.writeName(throngProperty.getName());
       try {
-        reEncode(writer, throngProperty.getCodec(), throngProperty.getFieldAccessor().get(value), encoderContext);
+
+        Object propertyValue;
+
+        if (((propertyValue = throngProperty.getFieldAccessor().get(value)) != null) || storeNulls) {
+          writer.writeName(throngProperty.getName());
+          reEncode(writer, throngProperty.getCodec(), propertyValue, encoderContext);
+        }
       } catch (IllegalAccessException | InvocationTargetException exception) {
         throw new ThrongRuntimeException(exception);
       }
