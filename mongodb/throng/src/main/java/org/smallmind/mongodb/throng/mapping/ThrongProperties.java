@@ -66,6 +66,7 @@ public class ThrongProperties<T> extends TreeMap<String, ThrongProperty> {
         org.bson.codecs.Codec<?> codec;
         String propertyName = propertyAnnotation.value().isEmpty() ? fieldAccessor.getName() : propertyAnnotation.value();
 
+        //TODO: need actual field type so we know what codec to get, and that codec's applicable type is what goes in embeddedReferenceMap
         if ((codecAnnotation = fieldAccessor.getField().getAnnotation(Codec.class)) != null) {
           codec = codecAnnotation.value().getConstructor().newInstance();
         } else if (fieldAccessor.getType().getAnnotation(Embedded.class) != null) {
@@ -80,8 +81,13 @@ public class ThrongProperties<T> extends TreeMap<String, ThrongProperty> {
           }
         }
 
+        if (propertyNameMap.containsKey(propertyName)) {
+          throw new ThrongMappingException("The property(%s) in entity(%s) must be unique", propertyName, entityClass.getName());
+        } else {
+          propertyNameMap.put(propertyName, fieldAccessor.getName());
+        }
+
         put(fieldAccessor.getName(), new ThrongProperty(fieldAccessor, codec, propertyName));
-        propertyNameMap.put(propertyName, fieldAccessor.getName());
       }
     }
   }
