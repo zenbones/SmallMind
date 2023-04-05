@@ -35,7 +35,6 @@ package org.smallmind.mongodb.throng;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.LinkedList;
-import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.InsertOneOptions;
@@ -128,6 +127,6 @@ public class ThrongClient {
 
     ThrongRootCodec<T> entityCodec = getCodec(entityCLass);
 
-    return new ThrongIterable<>((FindIterable<ThrongDocument>)mongoDatabase.getCollection(entityCodec.getCollection()).withCodecRegistry(codecRegistry).withDocumentClass(ThrongDocument.class).find(entityCLass), entityCodec);
+    return new ThrongIterable<>(mongoDatabase.getCollection(entityCodec.getCollection()).withCodecRegistry(codecRegistry).withDocumentClass(ThrongDocument.class).find(), entityCodec);
   }
 }
