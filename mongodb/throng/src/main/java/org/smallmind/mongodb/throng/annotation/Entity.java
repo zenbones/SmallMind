@@ -42,4 +42,6 @@ import java.lang.annotation.Target;
 public @interface Entity {
 
   String value ();
+
+  Polymorphic polymorphic () default @Polymorphic();
 }

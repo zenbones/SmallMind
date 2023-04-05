@@ -32,28 +32,49 @@
  */
 package org.smallmind.mongodb.throng.mapping;
 
+import java.lang.reflect.InvocationTargetException;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
+import org.smallmind.mongodb.throng.ThrongRuntimeException;
 
-public class ThrongPolymorphicEmbeddedCodec<T> extends ThrongPropertiesMultiplexerCodec<T> {
+public class ThrongPolymorphicEntityCodec<T> extends ThrongPropertiesMultiplexerCodec<T> {
 
-  public ThrongPolymorphicEmbeddedCodec (ThrongPropertiesMultiplexer<T> throngPropertiesMultiplexer) {
+  private final ThrongProperty idProperty;
 
-    super(throngPropertiesMultiplexer);
+  public ThrongPolymorphicEntityCodec (ThrongEntityMultiplexer<T> throngEntityMultiplexer) {
+
+    super(throngEntityMultiplexer);
+
+    idProperty = throngEntityMultiplexer.getIdProperty();
   }
 
   @Override
   public T decode (BsonReader reader, DecoderContext decoderContext) {
 
     T instance;
+    String idName;
 
     reader.readStartDocument();
-    instance = super.decode(reader, decoderContext);
-    reader.readEndDocument();
 
-    return instance;
+    if (!idProperty.getName().equals(idName = reader.readName())) {
+      throw new ThrongRuntimeException("The expected 'id' field(%s) does not match the actual(%s)", idProperty.getName(), idName);
+    } else {
+
+      Object idValue = idProperty.getCodec().decode(reader, decoderContext);
+
+      instance = super.decode(reader, decoderContext);
+      reader.readEndDocument();
+
+      try {
+        idProperty.getFieldAccessor().set(instance, idValue);
+      } catch (IllegalAccessException | InvocationTargetException exception) {
+        throw new ThrongRuntimeException(exception);
+      }
+
+      return instance;
+    }
   }
 
   @Override
@@ -61,10 +82,21 @@ public class ThrongPolymorphicEmbeddedCodec<T> extends ThrongPropertiesMultiplex
 
     if (value != null) {
       writer.writeStartDocument();
+
+      try {
+
+        Object idValue;
+
+        if ((idValue = idProperty.getFieldAccessor().get(value)) != null) {
+          writer.writeName(idProperty.getName());
+          reEncode(writer, idProperty.getCodec(), idValue, encoderContext);
+        }
+      } catch (IllegalAccessException | InvocationTargetException exception) {
+        throw new ThrongRuntimeException(exception);
+      }
+
       super.encode(writer, value, encoderContext);
       writer.writeEndDocument();
-    } else if (isStoreNulls()) {
-      writer.writeNull();
     }
   }
 }

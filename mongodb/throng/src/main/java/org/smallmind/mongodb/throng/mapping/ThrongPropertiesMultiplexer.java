@@ -37,27 +37,57 @@ import java.util.HashMap;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.smallmind.mongodb.throng.ThrongMappingException;
-import org.smallmind.mongodb.throng.annotation.Embedded;
+import org.smallmind.mongodb.throng.ThrongRuntimeException;
 import org.smallmind.mongodb.throng.annotation.Polymorphic;
 
-public class ThrongEmbeddedUtility {
+public class ThrongPropertiesMultiplexer<T> {
 
-  public static Codec<?> generateEmbeddedCodec (Class<?> embeddedType, Embedded embedded, CodecRegistry codecRegistry, HashMap<Class<?>, Codec<?>> embeddedReferenceMap, boolean storeNulls)
+  private final HashMap<String, Codec<?>> polymorphicCodecMap = new HashMap<>();
+  private final Class<T> entityClass;
+  private final String key;
+  private final boolean storeNulls;
+
+  public ThrongPropertiesMultiplexer (Class<T> entityClass, Polymorphic polymorphic, CodecRegistry codecRegistry, HashMap<Class<?>, Codec<?>> embeddedReferenceMap, boolean storeNulls)
     throws ThrongMappingException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
 
-    Codec<?> codec;
+    this.entityClass = entityClass;
+    this.storeNulls = storeNulls;
 
-    if ((codec = embeddedReferenceMap.get(embeddedType)) == null) {
+    key = polymorphic.key().isEmpty() ? "java/object" : polymorphic.key();
 
-      Polymorphic polymorphic;
-
-      if ((polymorphic = embedded.polymorphic()).value().length > 0) {
-        embeddedReferenceMap.put(embeddedType, codec = new ThrongPolymorphicEmbeddedCodec<>(new ThrongPropertiesMultiplexer<>(embeddedType, polymorphic, codecRegistry, embeddedReferenceMap, storeNulls)));
+    for (Class<?> polymorphicClass : polymorphic.value()) {
+      if (!polymorphicClass.isAssignableFrom(entityClass)) {
+        throw new ThrongMappingException("The declared polymorphic class(%s) is not assignable from the declaring type(%s)", polymorphicClass.getName(), entityClass.getName());
       } else {
-        embeddedReferenceMap.put(embeddedType, codec = new ThrongEmbeddedCodec<>(new ThrongProperties<>(embeddedType, codecRegistry, embeddedReferenceMap, storeNulls)));
+        polymorphicCodecMap.put(polymorphicClass.getName(), new ThrongPropertiesCodec<>(new ThrongProperties<>(polymorphicClass, codecRegistry, embeddedReferenceMap, storeNulls)));
       }
     }
+  }
 
-    return codec;
+  public Class<T> getEntityClass () {
+
+    return entityClass;
+  }
+
+  public boolean isStoreNulls () {
+
+    return storeNulls;
+  }
+
+  public String getKey () {
+
+    return key;
+  }
+
+  public Codec<?> getCodec (String polymorphicClassName) {
+
+    Codec<?> polymorphicCodec;
+
+    if ((polymorphicCodec = polymorphicCodecMap.get(polymorphicClassName)) == null) {
+      throw new ThrongRuntimeException("No known codec for polymorphic key(%s) of entity type(%s)", polymorphicClassName, entityClass.getName());
+    } else {
+
+      return polymorphicCodec;
+    }
   }
 }

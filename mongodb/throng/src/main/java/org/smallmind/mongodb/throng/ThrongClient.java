@@ -47,14 +47,13 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.smallmind.mongodb.throng.annotation.Embedded;
 import org.smallmind.mongodb.throng.annotation.Entity;
 import org.smallmind.mongodb.throng.mapping.ThrongEmbeddedUtility;
-import org.smallmind.mongodb.throng.mapping.ThrongEntity;
-import org.smallmind.mongodb.throng.mapping.ThrongEntityCodec;
+import org.smallmind.mongodb.throng.mapping.ThrongEntityUtility;
 
 public class ThrongClient {
 
   private final MongoDatabase mongoDatabase;
   private final CodecRegistry codecRegistry;
-  private final HashMap<Class<?>, ThrongEntityCodec<?>> entityCodecMap = new HashMap<>();
+  private final HashMap<Class<?>, Codec<?>> entityCodecMap = new HashMap<>();
 
   // mongoDatabase.getCollection("collection").withCodecRegistry(codecRegistry).withDocumentClass(ThrongDocument.class);
 
@@ -82,7 +81,7 @@ public class ThrongClient {
         Entity entity;
 
         if ((entity = entityClass.getAnnotation(Entity.class)) != null) {
-          entityCodecMap.put(entityClass, new ThrongEntityCodec<>(new ThrongEntity<>(entityClass, entity, mongoDatabase.getCodecRegistry(), embeddedReferenceMap, false)));
+          entityCodecMap.put(entityClass, ThrongEntityUtility.generateEntityCodec(entityClass, entity, codecRegistry, embeddedReferenceMap, false));
         }
       }
     }
@@ -91,9 +90,9 @@ public class ThrongClient {
   public <T> BsonDocument toBson (T entity)
     throws ThrongMappingException {
 
-    ThrongEntityCodec<T> entityCodec;
+    Codec<T> entityCodec;
 
-    if ((entityCodec = (ThrongEntityCodec<T>)entityCodecMap.get(entity.getClass())) == null) {
+    if ((entityCodec = (Codec<T>)entityCodecMap.get(entity.getClass())) == null) {
       throw new ThrongMappingException("Unmapped entity type(%s)", entity.getClass());
     } else {
 
@@ -108,9 +107,9 @@ public class ThrongClient {
   public <T> T fromBson (Class<T> entityClass, BsonDocument bsonDocument)
     throws ThrongMappingException {
 
-    ThrongEntityCodec<T> entityCodec;
+    Codec<T> entityCodec;
 
-    if ((entityCodec = (ThrongEntityCodec<T>)entityCodecMap.get(entityClass)) == null) {
+    if ((entityCodec = (Codec<T>)entityCodecMap.get(entityClass)) == null) {
       throw new ThrongMappingException("Unmapped entity type(%s)", entityClass);
     } else {
 

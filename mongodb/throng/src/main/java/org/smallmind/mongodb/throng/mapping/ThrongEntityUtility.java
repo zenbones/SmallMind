@@ -37,57 +37,22 @@ import java.util.HashMap;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.smallmind.mongodb.throng.ThrongMappingException;
-import org.smallmind.mongodb.throng.ThrongRuntimeException;
+import org.smallmind.mongodb.throng.annotation.Entity;
 import org.smallmind.mongodb.throng.annotation.Polymorphic;
 
-public class ThrongPolymorphicMultiplexer<T> {
+public class ThrongEntityUtility {
 
-  private final HashMap<String, Codec<?>> polymorphicCodecMap = new HashMap<>();
-  private final Class<T> entityClass;
-  private final String key;
-  private final boolean storeNulls;
-
-  public ThrongPolymorphicMultiplexer (Class<T> entityClass, Polymorphic polymorphic, CodecRegistry codecRegistry, HashMap<Class<?>, Codec<?>> embeddedReferenceMap, boolean storeNulls)
+  public static Codec<?> generateEntityCodec (Class<?> entityType, Entity entity, CodecRegistry codecRegistry, HashMap<Class<?>, Codec<?>> embeddedReferenceMap, boolean storeNulls)
     throws ThrongMappingException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
 
-    this.entityClass = entityClass;
-    this.storeNulls = storeNulls;
+    Polymorphic polymorphic;
 
-    key = polymorphic.key().isEmpty() ? "java/object" : polymorphic.key();
+    if ((polymorphic = entity.polymorphic()).value().length > 0) {
 
-    for (Class<?> polymorphicClass : polymorphic.value()) {
-      if (!polymorphicClass.isAssignableFrom(entityClass)) {
-        throw new ThrongMappingException("The declared polymorphic class(%s) is not assignable from the declaring type(%s)", polymorphicClass.getName(), entityClass.getName());
-      } else {
-        polymorphicCodecMap.put(polymorphicClass.getName(), new ThrongPropertiesCodec<>(new ThrongProperties<>(polymorphicClass, codecRegistry, embeddedReferenceMap, storeNulls)));
-      }
-    }
-  }
-
-  public Class<T> getEntityClass () {
-
-    return entityClass;
-  }
-
-  public boolean isStoreNulls () {
-
-    return storeNulls;
-  }
-
-  public String getKey () {
-
-    return key;
-  }
-
-  public Codec<?> getCodec (String polymorphicClassName) {
-
-    Codec<?> polymorphicCodec;
-
-    if ((polymorphicCodec = polymorphicCodecMap.get(polymorphicClassName)) == null) {
-      throw new ThrongRuntimeException("No known codec for polymorphic key(%s) of entity type(%s)", polymorphicClassName, entityClass.getName());
+      return new ThrongPolymorphicEntityCodec<>(new ThrongEntityMultiplexer<>(entityType, entity, codecRegistry, embeddedReferenceMap, storeNulls));
     } else {
 
-      return polymorphicCodec;
+      return new ThrongEntityCodec<>(new ThrongEntity<>(entityType, entity, codecRegistry, embeddedReferenceMap, storeNulls));
     }
   }
 }
