@@ -39,11 +39,11 @@ import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.smallmind.mongodb.throng.ThrongRuntimeException;
 
-public class ThrongPolymorphicMultiplexerCodec<T> implements Codec<T> {
+public class ThrongPolymorphicEmbeddedCodec<T> implements Codec<T> {
 
   private final ThrongPolymorphicMultiplexer<T> polymorphicMultiplexer;
 
-  public ThrongPolymorphicMultiplexerCodec (ThrongPolymorphicMultiplexer<T> polymorphicMultiplexer) {
+  public ThrongPolymorphicEmbeddedCodec (ThrongPolymorphicMultiplexer<T> polymorphicMultiplexer) {
 
     this.polymorphicMultiplexer = polymorphicMultiplexer;
   }
