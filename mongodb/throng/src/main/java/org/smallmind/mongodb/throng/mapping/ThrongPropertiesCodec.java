@@ -65,7 +65,6 @@ public class ThrongPropertiesCodec<T> implements Codec<T> {
   public T decode (BsonReader reader, DecoderContext decoderContext) {
 
     try {
-      //TODO: Need @Polymorphic if interface or abstract and then will need to read key which should be second value after id;
       T instance = throngProperties.getEntityClass().getConstructor().newInstance();
 
       while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
