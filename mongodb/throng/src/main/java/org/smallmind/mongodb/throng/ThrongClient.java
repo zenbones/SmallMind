@@ -44,6 +44,9 @@ import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.smallmind.mongodb.throng.annotation.Embedded;
+import org.smallmind.mongodb.throng.annotation.Entity;
+import org.smallmind.mongodb.throng.mapping.ThrongEmbeddedUtility;
 import org.smallmind.mongodb.throng.mapping.ThrongEntity;
 import org.smallmind.mongodb.throng.mapping.ThrongEntityCodec;
 
@@ -66,7 +69,21 @@ public class ThrongClient {
       HashMap<Class<?>, Codec<?>> embeddedReferenceMap = new HashMap<>();
 
       for (Class<?> entityClass : entityClasses) {
-        entityCodecMap.put(entityClass, new ThrongEntityCodec<>(new ThrongEntity<>(entityClass, mongoDatabase.getCodecRegistry(), embeddedReferenceMap, false)));
+
+        Embedded embedded;
+
+        if ((embedded = entityClass.getAnnotation(Embedded.class)) != null) {
+          ThrongEmbeddedUtility.generateEmbeddedCodec(entityClass, embedded, codecRegistry, embeddedReferenceMap, false);
+        }
+      }
+
+      for (Class<?> entityClass : entityClasses) {
+
+        Entity entity;
+
+        if ((entity = entityClass.getAnnotation(Entity.class)) != null) {
+          entityCodecMap.put(entityClass, new ThrongEntityCodec<>(new ThrongEntity<>(entityClass, entity, mongoDatabase.getCodecRegistry(), embeddedReferenceMap, false)));
+        }
       }
     }
   }

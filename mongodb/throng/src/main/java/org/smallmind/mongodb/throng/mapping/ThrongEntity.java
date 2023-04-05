@@ -48,41 +48,34 @@ public class ThrongEntity<T> extends ThrongProperties<T> {
   private final String collection;
   private ThrongProperty idProperty;
 
-  public ThrongEntity (Class<T> entityClass, CodecRegistry codecRegistry, HashMap<Class<?>, Codec<?>> embeddedReferenceMap, boolean storeNulls)
+  public ThrongEntity (Class<T> entityClass, Entity entityAnnotation, CodecRegistry codecRegistry, HashMap<Class<?>, Codec<?>> embeddedReferenceMap, boolean storeNulls)
     throws ThrongMappingException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
 
     super(entityClass, codecRegistry, embeddedReferenceMap, storeNulls);
 
-    Entity entityAnnotation;
+    collection = entityAnnotation.value();
 
-    if ((entityAnnotation = entityClass.getAnnotation(Entity.class)) == null) {
-      throw new ThrongMappingException("The entity class(%s) is not @Entity annotated", entityClass.getName());
-    } else {
+    for (FieldAccessor fieldAccessor : FieldUtility.getFieldAccessors(entityClass)) {
 
-      collection = entityAnnotation.value();
+      Id idAnnotation;
 
-      for (FieldAccessor fieldAccessor : FieldUtility.getFieldAccessors(entityClass)) {
-
-        Id idAnnotation;
-
-        if ((idAnnotation = fieldAccessor.getField().getAnnotation(Id.class)) != null) {
-          if (containsKey(fieldAccessor.getName())) {
-            throw new ThrongMappingException("The field(%s) in entity(%s) can't be both an 'id' and a 'property'", fieldAccessor.getName(), fieldAccessor.getType().getName(), entityClass.getName());
-          } else if (idProperty != null) {
-            throw new ThrongMappingException("The entity(%s) has multiple 'id' fields defined", entityClass.getName());
-          } else {
-            try {
-              idProperty = new ThrongProperty(fieldAccessor, CodecRegistryUtility.getReifiedCodec(codecRegistry, entityClass, fieldAccessor), idAnnotation.value());
-            } catch (CodecConfigurationException codecConfigurationException) {
-              throw new ThrongMappingException("No known codec for id(%s) of type(%s) in entity(%s)", fieldAccessor.getName(), fieldAccessor.getType().getName(), entityClass.getName());
-            }
+      if ((idAnnotation = fieldAccessor.getField().getAnnotation(Id.class)) != null) {
+        if (containsKey(fieldAccessor.getName())) {
+          throw new ThrongMappingException("The field(%s) in entity(%s) can't be both an 'id' and a 'property'", fieldAccessor.getName(), fieldAccessor.getType().getName(), entityClass.getName());
+        } else if (idProperty != null) {
+          throw new ThrongMappingException("The entity(%s) has multiple 'id' fields defined", entityClass.getName());
+        } else {
+          try {
+            idProperty = new ThrongProperty(fieldAccessor, CodecRegistryUtility.getReifiedCodec(codecRegistry, entityClass, fieldAccessor), idAnnotation.value());
+          } catch (CodecConfigurationException codecConfigurationException) {
+            throw new ThrongMappingException("No known codec for id(%s) of type(%s) in entity(%s)", fieldAccessor.getName(), fieldAccessor.getType().getName(), entityClass.getName());
           }
         }
       }
+    }
 
-      if (idProperty == null) {
-        throw new ThrongMappingException("The entity(%s) has no 'id' field defined", entityClass.getName());
-      }
+    if (idProperty == null) {
+      throw new ThrongMappingException("The entity(%s) has no 'id' field defined", entityClass.getName());
     }
   }
 
