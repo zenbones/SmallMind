@@ -39,11 +39,11 @@ import com.mongodb.client.MongoDatabase;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentReader;
 import org.bson.BsonDocumentWriter;
+import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.smallmind.mongodb.throng.mapping.ThrongEmbeddedCodec;
 import org.smallmind.mongodb.throng.mapping.ThrongEntity;
 import org.smallmind.mongodb.throng.mapping.ThrongEntityCodec;
 
@@ -63,7 +63,7 @@ public class ThrongClient {
 
     if (entityClasses != null) {
 
-      HashMap<Class<?>, ThrongEmbeddedCodec<?>> embeddedReferenceMap = new HashMap<>();
+      HashMap<Class<?>, Codec<?>> embeddedReferenceMap = new HashMap<>();
 
       for (Class<?> entityClass : entityClasses) {
         entityCodecMap.put(entityClass, new ThrongEntityCodec<>(new ThrongEntity<>(entityClass, mongoDatabase.getCodecRegistry(), embeddedReferenceMap, false)));

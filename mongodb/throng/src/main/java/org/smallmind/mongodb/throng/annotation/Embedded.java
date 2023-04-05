@@ -41,4 +41,5 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface Embedded {
 
+  Polymorphic value () default @Polymorphic();
 }

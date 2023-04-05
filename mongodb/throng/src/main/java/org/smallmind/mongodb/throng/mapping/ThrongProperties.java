@@ -40,6 +40,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.smallmind.mongodb.throng.ThrongMappingException;
 import org.smallmind.mongodb.throng.annotation.Codec;
 import org.smallmind.mongodb.throng.annotation.Embedded;
+import org.smallmind.mongodb.throng.annotation.Polymorphic;
 import org.smallmind.mongodb.throng.annotation.Property;
 import org.smallmind.nutsnbolts.reflection.FieldAccessor;
 import org.smallmind.nutsnbolts.reflection.FieldUtility;
@@ -50,7 +51,7 @@ public class ThrongProperties<T> extends TreeMap<String, ThrongProperty> {
   private final HashMap<String, String> propertyNameMap = new HashMap<>();
   private final boolean storeNulls;
 
-  public ThrongProperties (Class<T> entityClass, CodecRegistry codecRegistry, HashMap<Class<?>, ThrongEmbeddedCodec<?>> embeddedReferenceMap, boolean storeNulls)
+  public ThrongProperties (Class<T> entityClass, CodecRegistry codecRegistry, HashMap<Class<?>, org.bson.codecs.Codec<?>> embeddedReferenceMap, boolean storeNulls)
     throws ThrongMappingException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
 
     this.entityClass = entityClass;
@@ -68,15 +69,27 @@ public class ThrongProperties<T> extends TreeMap<String, ThrongProperty> {
 
         if ((codecAnnotation = fieldAccessor.getField().getAnnotation(Codec.class)) != null) {
           codec = codecAnnotation.value().getConstructor().newInstance();
-        } else if (fieldAccessor.getType().getAnnotation(Embedded.class) != null) {
-          if ((codec = embeddedReferenceMap.get(fieldAccessor.getType())) == null) {
-            embeddedReferenceMap.put(fieldAccessor.getType(), (ThrongEmbeddedCodec<?>)(codec = new ThrongEmbeddedCodec<>(new ThrongProperties<>(fieldAccessor.getType(), codecRegistry, embeddedReferenceMap, storeNulls))));
-          }
         } else {
-          try {
-            codec = CodecRegistryUtility.getReifiedCodec(codecRegistry, entityClass, fieldAccessor);
-          } catch (CodecConfigurationException codecConfigurationException) {
-            throw new ThrongMappingException("No known codec for field(%s) of type(%s) in entity(%s)", fieldAccessor.getName(), fieldAccessor.getType().getName(), entityClass.getName());
+
+          Embedded embedded;
+
+          if ((embedded = fieldAccessor.getType().getAnnotation(Embedded.class)) != null) {
+            if ((codec = embeddedReferenceMap.get(fieldAccessor.getType())) == null) {
+
+              Polymorphic polymorphic;
+
+              if ((polymorphic = embedded.value()).value().length > 0) {
+                embeddedReferenceMap.put(fieldAccessor.getType(), codec = new ThrongPolymorphicMultiplexerCodec<>(new ThrongPolymorphicMultiplexer<>(fieldAccessor.getType(), polymorphic, codecRegistry, embeddedReferenceMap, storeNulls)));
+              } else {
+                embeddedReferenceMap.put(fieldAccessor.getType(), codec = new ThrongEmbeddedCodec<>(new ThrongProperties<>(fieldAccessor.getType(), codecRegistry, embeddedReferenceMap, storeNulls)));
+              }
+            }
+          } else {
+            try {
+              codec = CodecRegistryUtility.getReifiedCodec(codecRegistry, entityClass, fieldAccessor);
+            } catch (CodecConfigurationException codecConfigurationException) {
+              throw new ThrongMappingException("No known codec for field(%s) of type(%s) in entity(%s)", fieldAccessor.getName(), fieldAccessor.getType().getName(), entityClass.getName());
+            }
           }
         }
 

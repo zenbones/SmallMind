@@ -65,6 +65,7 @@ public class ThrongPropertiesCodec<T> implements Codec<T> {
   public T decode (BsonReader reader, DecoderContext decoderContext) {
 
     try {
+
       T instance = throngProperties.getEntityClass().getConstructor().newInstance();
 
       while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
