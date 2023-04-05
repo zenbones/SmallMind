@@ -32,24 +32,11 @@
  */
 package org.smallmind.mongodb.throng.mapping;
 
-import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
 import org.bson.codecs.Codec;
-import org.bson.codecs.configuration.CodecRegistry;
-import org.smallmind.mongodb.throng.ThrongMappingException;
-import org.smallmind.mongodb.throng.annotation.Entity;
 
-public class ThrongEntityUtility {
+public interface ThrongRootCodec<T> extends Codec<T> {
 
-  public static ThrongRootCodec<?> generateEntityCodec (Class<?> entityType, Entity entity, CodecRegistry codecRegistry, HashMap<Class<?>, Codec<?>> embeddedReferenceMap, boolean storeNulls)
-    throws ThrongMappingException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
+  String getCollection ();
 
-    if (entity.polymorphic().value().length > 0) {
-
-      return new ThrongPolymorphicEntityCodec<>(new ThrongEntityMultiplexer<>(entityType, entity, codecRegistry, embeddedReferenceMap, storeNulls));
-    } else {
-
-      return new ThrongEntityCodec<>(new ThrongEntity<>(entityType, entity, codecRegistry, embeddedReferenceMap, storeNulls));
-    }
-  }
+  ThrongProperty getIdProperty ();
 }

@@ -30,26 +30,51 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.mongodb.throng.mapping;
+package org.smallmind.mongodb.throng;
 
-import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
+import java.util.Iterator;
+import com.mongodb.client.FindIterable;
+import com.mongodb.client.MongoCursor;
+import org.bson.BsonDocumentReader;
 import org.bson.codecs.Codec;
-import org.bson.codecs.configuration.CodecRegistry;
-import org.smallmind.mongodb.throng.ThrongMappingException;
-import org.smallmind.mongodb.throng.annotation.Entity;
+import org.bson.codecs.DecoderContext;
 
-public class ThrongEntityUtility {
+public class ThrongIterable<T> implements Iterable<T> {
 
-  public static ThrongRootCodec<?> generateEntityCodec (Class<?> entityType, Entity entity, CodecRegistry codecRegistry, HashMap<Class<?>, Codec<?>> embeddedReferenceMap, boolean storeNulls)
-    throws ThrongMappingException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
+  private final FindIterable<ThrongDocument> findIterable;
+  private final Codec<T> codec;
 
-    if (entity.polymorphic().value().length > 0) {
+  public ThrongIterable (FindIterable<ThrongDocument> findIterable, Codec<T> codec) {
 
-      return new ThrongPolymorphicEntityCodec<>(new ThrongEntityMultiplexer<>(entityType, entity, codecRegistry, embeddedReferenceMap, storeNulls));
-    } else {
+    this.findIterable = findIterable;
+    this.codec = codec;
+  }
 
-      return new ThrongEntityCodec<>(new ThrongEntity<>(entityType, entity, codecRegistry, embeddedReferenceMap, storeNulls));
+  @Override
+  public Iterator<T> iterator () {
+
+    return new ThrongIterator(findIterable.iterator());
+  }
+
+  private class ThrongIterator implements Iterator<T> {
+
+    private final MongoCursor<ThrongDocument> mongoCursor;
+
+    public ThrongIterator (MongoCursor<ThrongDocument> mongoCursor) {
+
+      this.mongoCursor = mongoCursor;
+    }
+
+    @Override
+    public boolean hasNext () {
+
+      return mongoCursor.hasNext();
+    }
+
+    @Override
+    public T next () {
+
+      return codec.decode(new BsonDocumentReader(mongoCursor.next().getBsonDocument()), DecoderContext.builder().build());
     }
   }
 }

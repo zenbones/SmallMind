@@ -39,15 +39,29 @@ import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.smallmind.mongodb.throng.ThrongRuntimeException;
 
-public class ThrongEntityCodec<T> extends ThrongPropertiesCodec<T> {
+public class ThrongEntityCodec<T> extends ThrongPropertiesCodec<T> implements ThrongRootCodec<T> {
 
   private final ThrongProperty idProperty;
+  private final String collection;
 
   public ThrongEntityCodec (ThrongEntity<T> throngEntity) {
 
     super(throngEntity);
 
     idProperty = throngEntity.getIdProperty();
+    collection = throngEntity.getCollection();
+  }
+
+  @Override
+  public String getCollection () {
+
+    return collection;
+  }
+
+  @Override
+  public ThrongProperty getIdProperty () {
+
+    return idProperty;
   }
 
   @Override

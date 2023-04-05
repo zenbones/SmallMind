@@ -34,8 +34,12 @@ package org.smallmind.mongodb.throng;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
+import java.util.LinkedList;
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.InsertOneOptions;
+import com.mongodb.client.result.InsertOneResult;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentReader;
 import org.bson.BsonDocumentWriter;
@@ -48,72 +52,82 @@ import org.smallmind.mongodb.throng.annotation.Embedded;
 import org.smallmind.mongodb.throng.annotation.Entity;
 import org.smallmind.mongodb.throng.mapping.ThrongEmbeddedUtility;
 import org.smallmind.mongodb.throng.mapping.ThrongEntityUtility;
+import org.smallmind.mongodb.throng.mapping.ThrongRootCodec;
 
 public class ThrongClient {
 
   private final MongoDatabase mongoDatabase;
   private final CodecRegistry codecRegistry;
-  private final HashMap<Class<?>, Codec<?>> entityCodecMap = new HashMap<>();
-
-  // mongoDatabase.getCollection("collection").withCodecRegistry(codecRegistry).withDocumentClass(ThrongDocument.class);
+  private final HashMap<Class<?>, ThrongRootCodec<?>> entityCodecMap = new HashMap<>();
 
   public ThrongClient (MongoClient mongoClient, String database, Class<?>... entityClasses)
     throws ThrongMappingException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
 
+    HashMap<Class<?>, Codec<?>> embeddedReferenceMap = new HashMap<>();
+
     mongoDatabase = mongoClient.getDatabase(database);
-    codecRegistry = CodecRegistries.fromRegistries(CodecRegistries.fromCodecs(new ThrongDocumentCodec()), mongoDatabase.getCodecRegistry());
 
     if (entityClasses != null) {
-
-      HashMap<Class<?>, Codec<?>> embeddedReferenceMap = new HashMap<>();
-
       for (Class<?> entityClass : entityClasses) {
 
         Embedded embedded;
 
         if ((embedded = entityClass.getAnnotation(Embedded.class)) != null) {
-          ThrongEmbeddedUtility.generateEmbeddedCodec(entityClass, embedded, codecRegistry, embeddedReferenceMap, false);
+          ThrongEmbeddedUtility.generateEmbeddedCodec(entityClass, embedded, mongoDatabase.getCodecRegistry(), embeddedReferenceMap, false);
         }
       }
 
+      //TODO: update indexes
       for (Class<?> entityClass : entityClasses) {
 
         Entity entity;
 
         if ((entity = entityClass.getAnnotation(Entity.class)) != null) {
-          entityCodecMap.put(entityClass, ThrongEntityUtility.generateEntityCodec(entityClass, entity, codecRegistry, embeddedReferenceMap, false));
+          entityCodecMap.put(entityClass, ThrongEntityUtility.generateEntityCodec(entityClass, entity, mongoDatabase.getCodecRegistry(), embeddedReferenceMap, false));
         }
       }
     }
+
+    codecRegistry = CodecRegistries.fromRegistries(CodecRegistries.fromCodecs(new ThrongDocumentCodec()), CodecRegistries.fromCodecs(new LinkedList<>(embeddedReferenceMap.values())), mongoDatabase.getCodecRegistry());
   }
 
-  public <T> BsonDocument toBson (T entity)
-    throws ThrongMappingException {
+  private <T> BsonDocument toBson (T entity, Codec<T> entityCodec) {
 
-    Codec<T> entityCodec;
+    BsonDocument bsonDocument = new BsonDocument();
 
-    if ((entityCodec = (Codec<T>)entityCodecMap.get(entity.getClass())) == null) {
-      throw new ThrongMappingException("Unmapped entity type(%s)", entity.getClass());
+    entityCodec.encode(new BsonDocumentWriter(bsonDocument), entity, EncoderContext.builder().build());
+
+    return bsonDocument;
+  }
+
+  private <T> T fromBson (Codec<T> entityCodec, BsonDocument bsonDocument) {
+
+    return entityCodec.decode(new BsonDocumentReader(bsonDocument), DecoderContext.builder().build());
+  }
+
+  private <T> ThrongRootCodec<T> getCodec (Class<T> entityClass) {
+
+    ThrongRootCodec<T> entityCodec;
+
+    if ((entityCodec = (ThrongRootCodec<T>)entityCodecMap.get(entityClass)) == null) {
+      throw new ThrongRuntimeException("Unmapped entity type(%s)", entityClass);
     } else {
 
-      BsonDocument bsonDocument = new BsonDocument();
-
-      entityCodec.encode(new BsonDocumentWriter(bsonDocument), entity, EncoderContext.builder().build());
-
-      return bsonDocument;
+      return entityCodec;
     }
   }
 
-  public <T> T fromBson (Class<T> entityClass, BsonDocument bsonDocument)
-    throws ThrongMappingException {
+  public <T> InsertOneResult insertOne (T value, InsertOneOptions options) {
 
-    Codec<T> entityCodec;
+    ThrongRootCodec<T> entityCodec = getCodec((Class<T>)value.getClass());
 
-    if ((entityCodec = (Codec<T>)entityCodecMap.get(entityClass)) == null) {
-      throw new ThrongMappingException("Unmapped entity type(%s)", entityClass);
-    } else {
+    return mongoDatabase.getCollection(entityCodec.getCollection()).withCodecRegistry(codecRegistry).withDocumentClass(ThrongDocument.class).insertOne(new ThrongDocument(toBson(value, entityCodec)));
+  }
 
-      return entityCodec.decode(new BsonDocumentReader(bsonDocument), DecoderContext.builder().build());
-    }
+  public <T> Iterable<T> find (Class<T> entityCLass) {
+
+    ThrongRootCodec<T> entityCodec = getCodec(entityCLass);
+
+    return new ThrongIterable<>((FindIterable<ThrongDocument>)mongoDatabase.getCollection(entityCodec.getCollection()).withCodecRegistry(codecRegistry).withDocumentClass(ThrongDocument.class).find(entityCLass), entityCodec);
   }
 }
