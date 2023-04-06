@@ -35,13 +35,22 @@ package org.smallmind.mongodb.throng;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.LinkedList;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.IndexOptions;
+import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.InsertOneOptions;
 import com.mongodb.client.result.InsertOneResult;
+import org.bson.BSONObject;
+import org.bson.BsonReader;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.conversions.Bson;
+import org.bson.json.JsonObject;
+import org.bson.json.JsonReader;
 import org.smallmind.mongodb.throng.annotation.Embedded;
 import org.smallmind.mongodb.throng.annotation.Entity;
 import org.smallmind.mongodb.throng.mapping.ThrongEmbeddedUtility;
@@ -71,7 +80,6 @@ public class ThrongClient {
         }
       }
 
-      //TODO: update indexes
       for (Class<?> entityClass : entityClasses) {
 
         Entity entity;
