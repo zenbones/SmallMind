@@ -35,16 +35,14 @@ package org.smallmind.mongodb.throng;
 import java.util.Iterator;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCursor;
-import org.bson.BsonDocumentReader;
-import org.bson.codecs.Codec;
-import org.bson.codecs.DecoderContext;
+import org.smallmind.mongodb.throng.mapping.ThrongEntityCodec;
 
 public class ThrongIterable<T> implements Iterable<T> {
 
   private final FindIterable<ThrongDocument> findIterable;
-  private final Codec<T> codec;
+  private final ThrongEntityCodec<T> codec;
 
-  public ThrongIterable (FindIterable<ThrongDocument> findIterable, Codec<T> codec) {
+  public ThrongIterable (FindIterable<ThrongDocument> findIterable, ThrongEntityCodec<T> codec) {
 
     this.findIterable = findIterable;
     this.codec = codec;
@@ -74,7 +72,7 @@ public class ThrongIterable<T> implements Iterable<T> {
     @Override
     public T next () {
 
-      return codec.decode(new BsonDocumentReader(mongoCursor.next().getBsonDocument()), DecoderContext.builder().build());
+      return TranslationUtility.fromBson(codec, mongoCursor.next().getBsonDocument());
     }
   }
 }

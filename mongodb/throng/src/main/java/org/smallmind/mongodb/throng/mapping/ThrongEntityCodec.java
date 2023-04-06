@@ -38,9 +38,12 @@ import org.bson.BsonWriter;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.smallmind.mongodb.throng.ThrongRuntimeException;
+import org.smallmind.mongodb.throng.event.ThrongLifecycle;
 
-public class ThrongEntityCodec<T> extends ThrongPropertiesCodec<T> implements ThrongRootCodec<T> {
+public class ThrongEntityCodec<T> extends ThrongPropertiesCodec<T> {
 
+  private final ThrongLifecycle<T> lifecycle;
+  private final Class<T> entityClass;
   private final ThrongProperty idProperty;
   private final String collection;
 
@@ -48,20 +51,25 @@ public class ThrongEntityCodec<T> extends ThrongPropertiesCodec<T> implements Th
 
     super(throngEntity);
 
+    entityClass = throngEntity.getEntityClass();
     idProperty = throngEntity.getIdProperty();
     collection = throngEntity.getCollection();
+    lifecycle = throngEntity.getLifecycle();
   }
 
-  @Override
+  public Class<T> getEntityClass () {
+
+    return entityClass;
+  }
+
   public String getCollection () {
 
     return collection;
   }
 
-  @Override
-  public ThrongProperty getIdProperty () {
+  public ThrongLifecycle<T> getLifecycle () {
 
-    return idProperty;
+    return lifecycle;
   }
 
   @Override
@@ -77,6 +85,7 @@ public class ThrongEntityCodec<T> extends ThrongPropertiesCodec<T> implements Th
     } else {
 
       Object idValue = idProperty.getCodec().decode(reader, decoderContext);
+      ThrongLifecycle<T> events;
 
       instance = super.decode(reader, decoderContext);
       reader.readEndDocument();

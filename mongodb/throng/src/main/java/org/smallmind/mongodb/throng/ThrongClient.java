@@ -39,25 +39,20 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.InsertOneOptions;
 import com.mongodb.client.result.InsertOneResult;
-import org.bson.BsonDocument;
-import org.bson.BsonDocumentReader;
-import org.bson.BsonDocumentWriter;
 import org.bson.codecs.Codec;
-import org.bson.codecs.DecoderContext;
-import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.smallmind.mongodb.throng.annotation.Embedded;
 import org.smallmind.mongodb.throng.annotation.Entity;
 import org.smallmind.mongodb.throng.mapping.ThrongEmbeddedUtility;
-import org.smallmind.mongodb.throng.mapping.ThrongEntityUtility;
-import org.smallmind.mongodb.throng.mapping.ThrongRootCodec;
+import org.smallmind.mongodb.throng.mapping.ThrongEntity;
+import org.smallmind.mongodb.throng.mapping.ThrongEntityCodec;
 
 public class ThrongClient {
 
   private final MongoDatabase mongoDatabase;
   private final CodecRegistry codecRegistry;
-  private final HashMap<Class<?>, ThrongRootCodec<?>> entityCodecMap = new HashMap<>();
+  private final HashMap<Class<?>, ThrongEntityCodec<?>> entityCodecMap = new HashMap<>();
 
   public ThrongClient (MongoClient mongoClient, String database, Class<?>... entityClasses)
     throws ThrongMappingException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
@@ -82,7 +77,7 @@ public class ThrongClient {
         Entity entity;
 
         if ((entity = entityClass.getAnnotation(Entity.class)) != null) {
-          entityCodecMap.put(entityClass, ThrongEntityUtility.generateEntityCodec(entityClass, entity, mongoDatabase.getCodecRegistry(), embeddedReferenceMap, false));
+          entityCodecMap.put(entityClass, new ThrongEntityCodec<>(new ThrongEntity<>(entityClass, entity, mongoDatabase.getCodecRegistry(), embeddedReferenceMap, false)));
         }
       }
     }
@@ -90,25 +85,11 @@ public class ThrongClient {
     codecRegistry = CodecRegistries.fromRegistries(CodecRegistries.fromCodecs(new ThrongDocumentCodec()), CodecRegistries.fromCodecs(new LinkedList<>(embeddedReferenceMap.values())), mongoDatabase.getCodecRegistry());
   }
 
-  private <T> BsonDocument toBson (T entity, Codec<T> entityCodec) {
+  private <T> ThrongEntityCodec<T> getCodec (Class<T> entityClass) {
 
-    BsonDocument bsonDocument = new BsonDocument();
+    ThrongEntityCodec<T> entityCodec;
 
-    entityCodec.encode(new BsonDocumentWriter(bsonDocument), entity, EncoderContext.builder().build());
-
-    return bsonDocument;
-  }
-
-  private <T> T fromBson (Codec<T> entityCodec, BsonDocument bsonDocument) {
-
-    return entityCodec.decode(new BsonDocumentReader(bsonDocument), DecoderContext.builder().build());
-  }
-
-  private <T> ThrongRootCodec<T> getCodec (Class<T> entityClass) {
-
-    ThrongRootCodec<T> entityCodec;
-
-    if ((entityCodec = (ThrongRootCodec<T>)entityCodecMap.get(entityClass)) == null) {
+    if ((entityCodec = (ThrongEntityCodec<T>)entityCodecMap.get(entityClass)) == null) {
       throw new ThrongRuntimeException("Unmapped entity type(%s)", entityClass);
     } else {
 
@@ -118,14 +99,14 @@ public class ThrongClient {
 
   public <T> InsertOneResult insertOne (T value, InsertOneOptions options) {
 
-    ThrongRootCodec<T> entityCodec = getCodec((Class<T>)value.getClass());
+    ThrongEntityCodec<T> entityCodec = getCodec((Class<T>)value.getClass());
 
-    return mongoDatabase.getCollection(entityCodec.getCollection()).withCodecRegistry(codecRegistry).withDocumentClass(ThrongDocument.class).insertOne(new ThrongDocument(toBson(value, entityCodec)));
+    return mongoDatabase.getCollection(entityCodec.getCollection()).withCodecRegistry(codecRegistry).withDocumentClass(ThrongDocument.class).insertOne(new ThrongDocument(TranslationUtility.toBson(value, entityCodec)));
   }
 
   public <T> Iterable<T> find (Class<T> entityCLass) {
 
-    ThrongRootCodec<T> entityCodec = getCodec(entityCLass);
+    ThrongEntityCodec<T> entityCodec = getCodec(entityCLass);
 
     return new ThrongIterable<>(mongoDatabase.getCollection(entityCodec.getCollection()).withCodecRegistry(codecRegistry).withDocumentClass(ThrongDocument.class).find(), entityCodec);
   }

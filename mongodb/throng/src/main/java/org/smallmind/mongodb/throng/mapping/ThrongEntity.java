@@ -40,11 +40,13 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.smallmind.mongodb.throng.ThrongMappingException;
 import org.smallmind.mongodb.throng.annotation.Entity;
 import org.smallmind.mongodb.throng.annotation.Id;
+import org.smallmind.mongodb.throng.event.ThrongLifecycle;
 import org.smallmind.nutsnbolts.reflection.FieldAccessor;
 import org.smallmind.nutsnbolts.reflection.FieldUtility;
 
 public class ThrongEntity<T> extends ThrongProperties<T> {
 
+  private final ThrongLifecycle<T> lifecycle;
   private final String collection;
   private ThrongProperty idProperty;
 
@@ -54,6 +56,8 @@ public class ThrongEntity<T> extends ThrongProperties<T> {
     super(entityClass, codecRegistry, embeddedReferenceMap, storeNulls);
 
     collection = entityAnnotation.value();
+
+    lifecycle = new ThrongLifecycle<>(entityClass);
 
     for (FieldAccessor fieldAccessor : FieldUtility.getFieldAccessors(entityClass)) {
 
@@ -87,5 +91,10 @@ public class ThrongEntity<T> extends ThrongProperties<T> {
   public ThrongProperty getIdProperty () {
 
     return idProperty;
+  }
+
+  public ThrongLifecycle<T> getLifecycle () {
+
+    return lifecycle;
   }
 }

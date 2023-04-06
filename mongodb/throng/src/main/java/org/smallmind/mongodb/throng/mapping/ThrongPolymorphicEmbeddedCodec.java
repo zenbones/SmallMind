@@ -36,6 +36,7 @@ import org.bson.BsonReader;
 import org.bson.BsonWriter;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
+import org.smallmind.mongodb.throng.event.ThrongLifecycle;
 
 public class ThrongPolymorphicEmbeddedCodec<T> extends ThrongPropertiesMultiplexerCodec<T> {
 
@@ -48,6 +49,7 @@ public class ThrongPolymorphicEmbeddedCodec<T> extends ThrongPropertiesMultiplex
   public T decode (BsonReader reader, DecoderContext decoderContext) {
 
     T instance;
+    ThrongLifecycle<T> events;
 
     reader.readStartDocument();
     instance = super.decode(reader, decoderContext);
