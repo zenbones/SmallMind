@@ -34,6 +34,8 @@ package org.smallmind.persistence.orm.data.mongo;
 
 import java.io.Serializable;
 import java.util.Date;
+import org.smallmind.mongodb.throng.annotation.Property;
+import org.smallmind.mongodb.throng.lifecycle.PrePersist;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.domain.Persistable;
@@ -45,10 +47,12 @@ public abstract class TimestampedMongoDataDurable<I extends Serializable & Compa
 
   @CreatedDate
   @Field("created")
+  @Property("created")
   private Date created;
   @LastModifiedDate
   @Indexed(direction = IndexDirection.DESCENDING)
   @Field("lastUpdated")
+  @Property("lastUpdated")
   private Date lastUpdated;
 
   @Override
@@ -75,5 +79,15 @@ public abstract class TimestampedMongoDataDurable<I extends Serializable & Compa
   public void setLastUpdated (Date lastUpdated) {
 
     this.lastUpdated = lastUpdated;
+  }
+
+  @PrePersist
+  public void prePersist () {
+
+    if (created == null) {
+      created = new Date();
+    }
+
+    lastUpdated = new Date();
   }
 }
