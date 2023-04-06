@@ -38,7 +38,7 @@ import org.bson.BsonWriter;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.smallmind.mongodb.throng.ThrongRuntimeException;
-import org.smallmind.mongodb.throng.event.ThrongLifecycle;
+import org.smallmind.mongodb.throng.lifecycle.ThrongLifecycle;
 
 public class ThrongEntityCodec<T> extends ThrongPropertiesCodec<T> {
 

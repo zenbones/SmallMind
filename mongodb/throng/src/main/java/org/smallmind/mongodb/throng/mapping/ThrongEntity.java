@@ -40,7 +40,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.smallmind.mongodb.throng.ThrongMappingException;
 import org.smallmind.mongodb.throng.annotation.Entity;
 import org.smallmind.mongodb.throng.annotation.Id;
-import org.smallmind.mongodb.throng.event.ThrongLifecycle;
+import org.smallmind.mongodb.throng.lifecycle.ThrongLifecycle;
 import org.smallmind.nutsnbolts.reflection.FieldAccessor;
 import org.smallmind.nutsnbolts.reflection.FieldUtility;
 
