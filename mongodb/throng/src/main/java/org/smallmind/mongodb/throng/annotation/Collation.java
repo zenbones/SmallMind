@@ -45,7 +45,7 @@ import com.mongodb.client.model.CollationStrength;
 @Target(ElementType.ANNOTATION_TYPE)
 public @interface Collation {
 
-  String locale () default "";
+  String locale () default "simple";
 
   boolean caseLevel () default false;
 
@@ -57,7 +57,7 @@ public @interface Collation {
 
   CollationAlternate alternate () default CollationAlternate.NON_IGNORABLE;
 
-  CollationMaxVariable maxVariable () default CollationMaxVariable.SPACE;
+  CollationMaxVariable maxVariable () default CollationMaxVariable.PUNCT;
 
   boolean normalization () default false;
 
