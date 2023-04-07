@@ -34,10 +34,10 @@ package org.smallmind.persistence.orm.data.mongo;
 
 import java.io.Serializable;
 import java.util.Date;
-import org.smallmind.mongodb.throng.annotation.Indexed;
-import org.smallmind.mongodb.throng.annotation.Property;
+import org.smallmind.mongodb.throng.index.annotation.Indexed;
+import org.smallmind.mongodb.throng.mapping.annotation.Property;
 import org.smallmind.mongodb.throng.index.IndexType;
-import org.smallmind.mongodb.throng.lifecycle.PrePersist;
+import org.smallmind.mongodb.throng.lifecycle.annotation.PrePersist;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.domain.Persistable;

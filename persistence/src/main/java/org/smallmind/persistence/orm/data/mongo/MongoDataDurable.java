@@ -40,7 +40,7 @@ import org.springframework.data.annotation.Id;
 public class MongoDataDurable<I extends Serializable & Comparable<I>, D extends MongoDataDurable<I, D>> extends AbstractDurable<I, D> {
 
   @Id
-  @org.smallmind.mongodb.throng.annotation.Id
+  @org.smallmind.mongodb.throng.mapping.annotation.Id
   private I id;
 
   @Override

@@ -32,7 +32,7 @@
  */
 package org.smallmind.mongodb.throng.index;
 
-import org.smallmind.mongodb.throng.annotation.Collation;
+import org.smallmind.mongodb.throng.index.annotation.Collation;
 
 public class CollationUtility {
 

@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.mongodb.throng.annotation;
+package org.smallmind.mongodb.throng.lifecycle.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -38,8 +38,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
-public @interface Id {
+@Target(ElementType.METHOD)
+// public method () {}
+public @interface PrePersist {
 
-  String value () default "_id";
 }

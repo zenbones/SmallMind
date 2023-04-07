@@ -30,36 +30,16 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.mongodb.throng.annotation;
+package org.smallmind.mongodb.throng.index.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import com.mongodb.client.model.CollationAlternate;
-import com.mongodb.client.model.CollationCaseFirst;
-import com.mongodb.client.model.CollationMaxVariable;
-import com.mongodb.client.model.CollationStrength;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.ANNOTATION_TYPE)
-public @interface Collation {
+@Target(ElementType.TYPE)
+public @interface AllIndexes {
 
-  String locale () default "simple";
-
-  boolean caseLevel () default false;
-
-  CollationCaseFirst caseFirst () default CollationCaseFirst.OFF;
-
-  CollationStrength strength () default CollationStrength.TERTIARY;
-
-  boolean numericOrdering () default false;
-
-  CollationAlternate alternate () default CollationAlternate.NON_IGNORABLE;
-
-  CollationMaxVariable maxVariable () default CollationMaxVariable.PUNCT;
-
-  boolean normalization () default false;
-
-  boolean backwards () default false;
+  Indexes[] value ();
 }

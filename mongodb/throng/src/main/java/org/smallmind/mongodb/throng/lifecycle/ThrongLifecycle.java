@@ -39,6 +39,10 @@ import java.util.LinkedList;
 import org.bson.BsonDocument;
 import org.smallmind.mongodb.throng.ThrongMappingException;
 import org.smallmind.mongodb.throng.ThrongRuntimeException;
+import org.smallmind.mongodb.throng.lifecycle.annotation.PostLoad;
+import org.smallmind.mongodb.throng.lifecycle.annotation.PostPersist;
+import org.smallmind.mongodb.throng.lifecycle.annotation.PreLoad;
+import org.smallmind.mongodb.throng.lifecycle.annotation.PrePersist;
 
 public class ThrongLifecycle<T> {
 

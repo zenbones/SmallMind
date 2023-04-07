@@ -30,16 +30,19 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.mongodb.throng.lifecycle;
+package org.smallmind.mongodb.throng.index.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import org.smallmind.mongodb.throng.index.IndexType;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-// public method () {}
-public @interface PrePersist {
+@Target(ElementType.ANNOTATION_TYPE)
+public @interface Index {
 
+  String value ();
+
+  IndexType type () default IndexType.ASCENDING;
 }

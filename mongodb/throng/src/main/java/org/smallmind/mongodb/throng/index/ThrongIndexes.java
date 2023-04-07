@@ -33,8 +33,8 @@
 package org.smallmind.mongodb.throng.index;
 
 import java.util.LinkedList;
-import org.smallmind.mongodb.throng.annotation.Indexed;
-import org.smallmind.mongodb.throng.annotation.Indexes;
+import org.smallmind.mongodb.throng.index.annotation.Indexed;
+import org.smallmind.mongodb.throng.index.annotation.Indexes;
 
 public class ThrongIndexes {
 

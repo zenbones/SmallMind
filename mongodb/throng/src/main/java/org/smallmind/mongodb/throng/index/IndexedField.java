@@ -32,7 +32,7 @@
  */
 package org.smallmind.mongodb.throng.index;
 
-import org.smallmind.mongodb.throng.annotation.Indexed;
+import org.smallmind.mongodb.throng.index.annotation.Indexed;
 
 public class IndexedField {
 

@@ -33,9 +33,9 @@
 package org.smallmind.mongodb.throng.index;
 
 import java.util.LinkedList;
-import org.smallmind.mongodb.throng.annotation.Index;
-import org.smallmind.mongodb.throng.annotation.IndexOptions;
-import org.smallmind.mongodb.throng.annotation.Indexes;
+import org.smallmind.mongodb.throng.index.annotation.Index;
+import org.smallmind.mongodb.throng.index.annotation.IndexOptions;
+import org.smallmind.mongodb.throng.index.annotation.Indexes;
 
 public class CompoundIndex {
 

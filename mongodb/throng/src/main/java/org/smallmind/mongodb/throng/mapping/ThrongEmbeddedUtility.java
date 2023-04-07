@@ -36,8 +36,8 @@ import java.lang.reflect.InvocationTargetException;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.smallmind.mongodb.throng.ThrongMappingException;
-import org.smallmind.mongodb.throng.annotation.Embedded;
-import org.smallmind.mongodb.throng.annotation.Polymorphic;
+import org.smallmind.mongodb.throng.mapping.annotation.Embedded;
+import org.smallmind.mongodb.throng.mapping.annotation.Polymorphic;
 
 public class ThrongEmbeddedUtility {
 

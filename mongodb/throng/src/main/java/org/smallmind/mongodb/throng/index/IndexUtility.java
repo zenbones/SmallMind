@@ -38,7 +38,7 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Indexes;
 import org.bson.conversions.Bson;
-import org.smallmind.mongodb.throng.annotation.IndexOptions;
+import org.smallmind.mongodb.throng.index.annotation.IndexOptions;
 
 public class IndexUtility {
 

@@ -30,16 +30,18 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.mongodb.throng.annotation;
+package org.smallmind.mongodb.throng.mapping.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Retention(RetentionPolicy.RUNTIME)
+@Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.TYPE)
-public @interface AllIndexes {
+public @interface Polymorphic {
 
-  Indexes[] value ();
+  Class[] value () default {};
+
+  String key () default "";
 }
