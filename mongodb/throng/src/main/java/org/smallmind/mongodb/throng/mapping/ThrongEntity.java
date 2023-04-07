@@ -33,8 +33,6 @@
 package org.smallmind.mongodb.throng.mapping;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
-import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.smallmind.mongodb.throng.ThrongMappingException;
@@ -50,10 +48,10 @@ public class ThrongEntity<T> extends ThrongProperties<T> {
   private final String collection;
   private ThrongProperty idProperty;
 
-  public ThrongEntity (Class<T> entityClass, Entity entityAnnotation, CodecRegistry codecRegistry, HashMap<Class<?>, Codec<?>> embeddedReferenceMap, boolean storeNulls)
+  public ThrongEntity (Class<T> entityClass, Entity entityAnnotation, CodecRegistry codecRegistry, EmbeddedReferences embeddedReferences, boolean storeNulls)
     throws ThrongMappingException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
 
-    super(entityClass, codecRegistry, embeddedReferenceMap, storeNulls);
+    super(entityClass, codecRegistry, embeddedReferences, storeNulls);
 
     collection = entityAnnotation.value();
 

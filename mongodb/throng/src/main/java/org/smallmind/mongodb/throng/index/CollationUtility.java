@@ -30,19 +30,30 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.mongodb.throng.annotation;
+package org.smallmind.mongodb.throng.index;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import org.smallmind.mongodb.throng.index.IndexType;
+import org.smallmind.mongodb.throng.annotation.Collation;
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.ANNOTATION_TYPE)
-public @interface Index {
+public class CollationUtility {
 
-  String value ();
+  public static com.mongodb.client.model.Collation generate (Collation collationAnnotation) {
 
-  IndexType type () default IndexType.ASCENDING;
+    com.mongodb.client.model.Collation.Builder builder = com.mongodb.client.model.Collation.builder();
+
+    builder.backwards(collationAnnotation.backwards());
+    builder.caseLevel(collationAnnotation.caseLevel());
+    builder.collationAlternate(collationAnnotation.alternate());
+    builder.collationCaseFirst(collationAnnotation.caseFirst());
+    builder.collationMaxVariable(collationAnnotation.maxVariable());
+    builder.collationStrength(collationAnnotation.strength());
+
+    if (!collationAnnotation.locale().isEmpty()) {
+      builder.locale(collationAnnotation.locale());
+    }
+
+    builder.normalization(collationAnnotation.normalization());
+    builder.numericOrdering(collationAnnotation.numericOrdering());
+
+    return builder.build();
+  }
 }

@@ -35,24 +35,16 @@ package org.smallmind.mongodb.throng;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.LinkedList;
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBObject;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.IndexOptions;
-import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.InsertOneOptions;
 import com.mongodb.client.result.InsertOneResult;
-import org.bson.BSONObject;
-import org.bson.BsonReader;
-import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.conversions.Bson;
-import org.bson.json.JsonObject;
-import org.bson.json.JsonReader;
 import org.smallmind.mongodb.throng.annotation.Embedded;
 import org.smallmind.mongodb.throng.annotation.Entity;
+import org.smallmind.mongodb.throng.index.IndexUtility;
+import org.smallmind.mongodb.throng.mapping.EmbeddedReferences;
 import org.smallmind.mongodb.throng.mapping.ThrongEmbeddedUtility;
 import org.smallmind.mongodb.throng.mapping.ThrongEntity;
 import org.smallmind.mongodb.throng.mapping.ThrongEntityCodec;
@@ -63,10 +55,10 @@ public class ThrongClient {
   private final CodecRegistry codecRegistry;
   private final HashMap<Class<?>, ThrongEntityCodec<?>> entityCodecMap = new HashMap<>();
 
-  public ThrongClient (MongoClient mongoClient, String database, Class<?>... entityClasses)
+  public ThrongClient (MongoClient mongoClient, String database, ThrongOptions options, Class<?>... entityClasses)
     throws ThrongMappingException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
 
-    HashMap<Class<?>, Codec<?>> embeddedReferenceMap = new HashMap<>();
+    EmbeddedReferences embeddedReferences = new EmbeddedReferences();
 
     mongoDatabase = mongoClient.getDatabase(database);
 
@@ -76,7 +68,7 @@ public class ThrongClient {
         Embedded embedded;
 
         if ((embedded = entityClass.getAnnotation(Embedded.class)) != null) {
-          ThrongEmbeddedUtility.generateEmbeddedCodec(entityClass, embedded, mongoDatabase.getCodecRegistry(), embeddedReferenceMap, false);
+          ThrongEmbeddedUtility.generateEmbeddedCodec(entityClass, embedded, mongoDatabase.getCodecRegistry(), embeddedReferences, options.isStoreNulls());
         }
       }
 
@@ -85,12 +77,18 @@ public class ThrongClient {
         Entity entity;
 
         if ((entity = entityClass.getAnnotation(Entity.class)) != null) {
-          entityCodecMap.put(entityClass, new ThrongEntityCodec<>(new ThrongEntity<>(entityClass, entity, mongoDatabase.getCodecRegistry(), embeddedReferenceMap, false)));
+
+          ThrongEntityCodec<?> entityCodec;
+
+          entityCodecMap.put(entityClass, entityCodec = new ThrongEntityCodec<>(new ThrongEntity<>(entityClass, entity, mongoDatabase.getCodecRegistry(), embeddedReferences, options.isStoreNulls())));
+          if (options.isCreateIndexes()) {
+            IndexUtility.createIndex(mongoDatabase.getCollection(entityCodec.getCollection()), entityCodec.provideIndexes());
+          }
         }
       }
     }
 
-    codecRegistry = CodecRegistries.fromRegistries(CodecRegistries.fromCodecs(new ThrongDocumentCodec()), CodecRegistries.fromCodecs(new LinkedList<>(embeddedReferenceMap.values())), mongoDatabase.getCodecRegistry());
+    codecRegistry = CodecRegistries.fromRegistries(CodecRegistries.fromCodecs(new ThrongDocumentCodec()), CodecRegistries.fromCodecs(new LinkedList<>(embeddedReferences.values())), mongoDatabase.getCodecRegistry());
   }
 
   private <T> ThrongEntityCodec<T> getCodec (Class<T> entityClass) {

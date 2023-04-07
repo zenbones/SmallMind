@@ -30,19 +30,26 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.mongodb.throng.annotation;
+package org.smallmind.mongodb.throng;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import org.smallmind.mongodb.throng.index.IndexType;
+public class ThrongOptions {
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.ANNOTATION_TYPE)
-public @interface Index {
+  private final boolean storeNulls;
+  private final boolean createIndexes;
 
-  String value ();
+  public ThrongOptions (boolean storeNulls, boolean createIndexes) {
 
-  IndexType type () default IndexType.ASCENDING;
+    this.storeNulls = storeNulls;
+    this.createIndexes = createIndexes;
+  }
+
+  public boolean isStoreNulls () {
+
+    return storeNulls;
+  }
+
+  public boolean isCreateIndexes () {
+
+    return createIndexes;
+  }
 }

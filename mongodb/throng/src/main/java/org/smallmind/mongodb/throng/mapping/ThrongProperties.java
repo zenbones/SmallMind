@@ -40,21 +40,28 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.smallmind.mongodb.throng.ThrongMappingException;
 import org.smallmind.mongodb.throng.annotation.Codec;
 import org.smallmind.mongodb.throng.annotation.Embedded;
+import org.smallmind.mongodb.throng.annotation.Indexed;
+import org.smallmind.mongodb.throng.annotation.Indexes;
 import org.smallmind.mongodb.throng.annotation.Property;
+import org.smallmind.mongodb.throng.index.IndexProvider;
+import org.smallmind.mongodb.throng.index.ThrongIndexes;
 import org.smallmind.nutsnbolts.reflection.FieldAccessor;
 import org.smallmind.nutsnbolts.reflection.FieldUtility;
 
-public class ThrongProperties<T> extends TreeMap<String, ThrongProperty> {
+public class ThrongProperties<T> extends TreeMap<String, ThrongProperty> implements IndexProvider {
 
   private final Class<T> entityClass;
+  private final ThrongIndexes throngIndexes = new ThrongIndexes();
   private final HashMap<String, String> propertyNameMap = new HashMap<>();
   private final boolean storeNulls;
 
-  public ThrongProperties (Class<T> entityClass, CodecRegistry codecRegistry, HashMap<Class<?>, org.bson.codecs.Codec<?>> embeddedReferenceMap, boolean storeNulls)
+  public ThrongProperties (Class<T> entityClass, CodecRegistry codecRegistry, EmbeddedReferences embeddedReferences, boolean storeNulls)
     throws ThrongMappingException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
 
     this.entityClass = entityClass;
     this.storeNulls = storeNulls;
+
+    throngIndexes.addIndexes(entityClass.getAnnotationsByType(Indexes.class));
 
     for (FieldAccessor fieldAccessor : FieldUtility.getFieldAccessors(entityClass)) {
 
@@ -68,8 +75,13 @@ public class ThrongProperties<T> extends TreeMap<String, ThrongProperty> {
           throw new ThrongMappingException("The property(%s) in entity(%s) must be unique", propertyName, entityClass.getName());
         } else {
 
+          Indexed indexedAnnotation;
           Codec codecAnnotation;
           org.bson.codecs.Codec<?> codec;
+
+          if ((indexedAnnotation = fieldAccessor.getField().getAnnotation(Indexed.class)) != null) {
+            throngIndexes.addIndexed(propertyName, indexedAnnotation);
+          }
 
           if ((codecAnnotation = fieldAccessor.getField().getAnnotation(Codec.class)) != null) {
             codec = codecAnnotation.value().getConstructor().newInstance();
@@ -78,7 +90,8 @@ public class ThrongProperties<T> extends TreeMap<String, ThrongProperty> {
             Embedded embedded;
 
             if ((embedded = fieldAccessor.getType().getAnnotation(Embedded.class)) != null) {
-              codec = ThrongEmbeddedUtility.generateEmbeddedCodec(fieldAccessor.getType(), embedded, codecRegistry, embeddedReferenceMap, storeNulls);
+              codec = ThrongEmbeddedUtility.generateEmbeddedCodec(fieldAccessor.getType(), embedded, codecRegistry, embeddedReferences, storeNulls);
+              throngIndexes.accumulate(propertyName, ((IndexProvider)codec).provideIndexes());
             } else {
               try {
                 codec = CodecRegistryUtility.getReifiedCodec(codecRegistry, entityClass, fieldAccessor);
@@ -110,5 +123,11 @@ public class ThrongProperties<T> extends TreeMap<String, ThrongProperty> {
     String fieldName;
 
     return ((fieldName = propertyNameMap.get(propertyName)) != null) ? get(fieldName) : null;
+  }
+
+  @Override
+  public ThrongIndexes provideIndexes () {
+
+    return throngIndexes;
   }
 }

@@ -30,34 +30,33 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.mongodb.throng;
+package org.smallmind.mongodb.throng.index;
 
 import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;
 import com.mongodb.BasicDBObject;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.Indexes;
 import org.bson.conversions.Bson;
-import org.smallmind.mongodb.throng.annotation.Index;
 import org.smallmind.mongodb.throng.annotation.IndexOptions;
-import org.smallmind.mongodb.throng.annotation.Indexed;
-import org.smallmind.mongodb.throng.annotation.Indexes;
 
 public class IndexUtility {
 
-  public static void createIndex (MongoCollection<?> mongoCollection, Indexed indexed, String field) {
+  public static void createIndex (MongoCollection<?> mongoCollection, ThrongIndexes throngIndexes) {
 
-    mongoCollection.createIndex(indexed.value().construct(field), generateIndexOptions(indexed.options()));
-  }
-
-  public static void createIndex (MongoCollection<?> mongoCollection, Indexes indexes) {
-
-    LinkedList<Bson> indexList = new LinkedList<>();
-
-    for (Index index : indexes.value()) {
-      indexList.add(index.type().construct(index.value()));
+    for (IndexedField indexedField : throngIndexes.getIndexedFields()) {
+      mongoCollection.createIndex(indexedField.getIndexed().value().construct(indexedField.getField()), generateIndexOptions(indexedField.getIndexed().options()));
     }
+    for (CompoundIndex compoundIndex : throngIndexes.getCompoundIndexes()) {
 
-    mongoCollection.createIndex(com.mongodb.client.model.Indexes.compoundIndex(indexList), generateIndexOptions(indexes.options()));
+      LinkedList<Bson> bsonList = new LinkedList<>();
+
+      for (IndexedElement indexedElement : compoundIndex.getIndexedElements()) {
+        bsonList.add(indexedElement.getIndexType().construct(indexedElement.getField()));
+      }
+
+      mongoCollection.createIndex(Indexes.compoundIndex(bsonList), generateIndexOptions(compoundIndex.getIndexOptions()));
+    }
   }
 
   private static com.mongodb.client.model.IndexOptions generateIndexOptions (IndexOptions indexOptionsAnnotation) {

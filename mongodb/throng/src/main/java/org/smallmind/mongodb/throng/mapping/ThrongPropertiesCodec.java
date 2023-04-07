@@ -40,8 +40,10 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.smallmind.mongodb.throng.ThrongRuntimeException;
+import org.smallmind.mongodb.throng.index.IndexProvider;
+import org.smallmind.mongodb.throng.index.ThrongIndexes;
 
-public class ThrongPropertiesCodec<T> implements Codec<T> {
+public class ThrongPropertiesCodec<T> implements Codec<T>, IndexProvider {
 
   private final ThrongProperties<T> throngProperties;
 
@@ -59,6 +61,12 @@ public class ThrongPropertiesCodec<T> implements Codec<T> {
   public boolean isStoreNulls () {
 
     return throngProperties.isStoreNulls();
+  }
+
+  @Override
+  public ThrongIndexes provideIndexes () {
+
+    return throngProperties.provideIndexes();
   }
 
   @Override

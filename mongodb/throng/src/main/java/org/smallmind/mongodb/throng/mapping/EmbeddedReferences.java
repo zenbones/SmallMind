@@ -30,19 +30,11 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.mongodb.throng.annotation;
+package org.smallmind.mongodb.throng.mapping;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import org.smallmind.mongodb.throng.index.IndexType;
+import java.util.HashMap;
+import org.bson.codecs.Codec;
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.ANNOTATION_TYPE)
-public @interface Index {
+public class EmbeddedReferences extends HashMap<Class<?>, Codec<?>> {
 
-  String value ();
-
-  IndexType type () default IndexType.ASCENDING;
 }

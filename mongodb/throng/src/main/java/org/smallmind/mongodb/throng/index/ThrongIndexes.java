@@ -30,19 +30,52 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.mongodb.throng.annotation;
+package org.smallmind.mongodb.throng.index;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import org.smallmind.mongodb.throng.index.IndexType;
+import java.util.LinkedList;
+import org.smallmind.mongodb.throng.annotation.Indexed;
+import org.smallmind.mongodb.throng.annotation.Indexes;
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.ANNOTATION_TYPE)
-public @interface Index {
+public class ThrongIndexes {
 
-  String value ();
+  private final LinkedList<IndexedField> indexedFieldList = new LinkedList<>();
+  private final LinkedList<CompoundIndex> compoundIndexList = new LinkedList<>();
 
-  IndexType type () default IndexType.ASCENDING;
+  public IndexedField[] getIndexedFields () {
+
+    return indexedFieldList.toArray(new IndexedField[0]);
+  }
+
+  public CompoundIndex[] getCompoundIndexes () {
+
+    return compoundIndexList.toArray(new CompoundIndex[0]);
+  }
+
+  public void add (ThrongIndexes throngIndexes) {
+
+    indexedFieldList.addAll(throngIndexes.indexedFieldList);
+    compoundIndexList.addAll(throngIndexes.compoundIndexList);
+  }
+
+  public void accumulate (String prolog, ThrongIndexes throngIndexes) {
+
+    for (IndexedField indexedField : throngIndexes.indexedFieldList) {
+      indexedFieldList.add(indexedField.accumulate(prolog));
+    }
+    for (CompoundIndex compoundIndex : throngIndexes.compoundIndexList) {
+      compoundIndexList.add(compoundIndex.accumulate(prolog));
+    }
+  }
+
+  public void addIndexed (String field, Indexed indexed) {
+
+    indexedFieldList.add(new IndexedField(field, indexed));
+  }
+
+  public void addIndexes (Indexes[] indexesArray) {
+
+    for (Indexes indexes : indexesArray) {
+      compoundIndexList.add(new CompoundIndex(indexes));
+    }
+  }
 }

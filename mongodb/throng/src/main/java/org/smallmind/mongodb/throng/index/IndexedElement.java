@@ -30,55 +30,31 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.mongodb.throng.annotation;
+package org.smallmind.mongodb.throng.index;
 
-import com.mongodb.client.model.Indexes;
-import org.bson.conversions.Bson;
+public class IndexedElement {
 
-public enum IndexType {
+  private final String field;
+  private final IndexType indexType;
 
-  ASCENDING {
-    @Override
-    public Bson construct (String field) {
+  public IndexedElement (String field, IndexType indexType) {
 
-      return Indexes.ascending(field);
-    }
-  },
-  DESCENDING {
-    @Override
-    public Bson construct (String field) {
+    this.field = field;
+    this.indexType = indexType;
+  }
 
-      return Indexes.descending(field);
-    }
-  },
-  HASHED {
-    @Override
-    public Bson construct (String field) {
+  public IndexedElement accumulate (String prolog) {
 
-      return Indexes.hashed(field);
-    }
-  },
-  TEXT {
-    @Override
-    public Bson construct (String field) {
+    return new IndexedElement((prolog == null || prolog.isEmpty()) ? field : prolog + "." + field, indexType);
+  }
 
-      return Indexes.text(field);
-    }
-  },
-  GEO2D {
-    @Override
-    public Bson construct (String field) {
+  public String getField () {
 
-      return Indexes.geo2d(field);
-    }
-  },
-  GEO2DSPHERE {
-    @Override
-    public Bson construct (String field) {
+    return field;
+  }
 
-      return Indexes.geo2dsphere(field);
-    }
-  };
+  public IndexType getIndexType () {
 
-  public abstract Bson construct (String field);
+    return indexType;
+  }
 }

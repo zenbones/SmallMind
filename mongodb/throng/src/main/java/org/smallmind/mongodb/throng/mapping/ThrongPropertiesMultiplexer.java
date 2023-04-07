@@ -39,15 +39,17 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.smallmind.mongodb.throng.ThrongMappingException;
 import org.smallmind.mongodb.throng.ThrongRuntimeException;
 import org.smallmind.mongodb.throng.annotation.Polymorphic;
+import org.smallmind.mongodb.throng.index.IndexProvider;
+import org.smallmind.mongodb.throng.index.ThrongIndexes;
 
-public class ThrongPropertiesMultiplexer<T> {
+public class ThrongPropertiesMultiplexer<T> implements IndexProvider {
 
-  private final HashMap<String, Codec<?>> polymorphicCodecMap = new HashMap<>();
+  private final HashMap<String, ThrongPropertiesCodec<?>> polymorphicCodecMap = new HashMap<>();
   private final Class<T> entityClass;
   private final String key;
   private final boolean storeNulls;
 
-  public ThrongPropertiesMultiplexer (Class<T> entityClass, Polymorphic polymorphic, CodecRegistry codecRegistry, HashMap<Class<?>, Codec<?>> embeddedReferenceMap, boolean storeNulls)
+  public ThrongPropertiesMultiplexer (Class<T> entityClass, Polymorphic polymorphic, CodecRegistry codecRegistry, EmbeddedReferences embeddedReferences, boolean storeNulls)
     throws ThrongMappingException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
 
     this.entityClass = entityClass;
@@ -59,7 +61,7 @@ public class ThrongPropertiesMultiplexer<T> {
       if (!polymorphicClass.isAssignableFrom(entityClass)) {
         throw new ThrongMappingException("The declared polymorphic class(%s) is not assignable from the declaring type(%s)", polymorphicClass.getName(), entityClass.getName());
       } else {
-        polymorphicCodecMap.put(polymorphicClass.getName(), new ThrongPropertiesCodec<>(new ThrongProperties<>(polymorphicClass, codecRegistry, embeddedReferenceMap, storeNulls)));
+        polymorphicCodecMap.put(polymorphicClass.getName(), new ThrongPropertiesCodec<>(new ThrongProperties<>(polymorphicClass, codecRegistry, embeddedReferences, storeNulls)));
       }
     }
   }
@@ -89,5 +91,17 @@ public class ThrongPropertiesMultiplexer<T> {
 
       return polymorphicCodec;
     }
+  }
+
+  @Override
+  public ThrongIndexes provideIndexes () {
+
+    ThrongIndexes throngIndexes = new ThrongIndexes();
+
+    for (ThrongPropertiesCodec<?> polymorphicCodec : polymorphicCodecMap.values()) {
+      throngIndexes.add(polymorphicCodec.provideIndexes());
+    }
+
+    return throngIndexes;
   }
 }

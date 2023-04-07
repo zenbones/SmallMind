@@ -30,19 +30,52 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.mongodb.throng.annotation;
+package org.smallmind.mongodb.throng.index;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import org.smallmind.mongodb.throng.index.IndexType;
+import java.util.LinkedList;
+import org.smallmind.mongodb.throng.annotation.Index;
+import org.smallmind.mongodb.throng.annotation.IndexOptions;
+import org.smallmind.mongodb.throng.annotation.Indexes;
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.ANNOTATION_TYPE)
-public @interface Index {
+public class CompoundIndex {
 
-  String value ();
+  private final IndexOptions indexOptions;
+  private final LinkedList<IndexedElement> indexedElementList = new LinkedList<>();
 
-  IndexType type () default IndexType.ASCENDING;
+  public CompoundIndex (Indexes indexes) {
+
+    indexOptions = indexes.options();
+
+    for (Index index : indexes.value()) {
+      indexedElementList.add(new IndexedElement(index.value(), index.type()));
+    }
+  }
+
+  private CompoundIndex (LinkedList<IndexedElement> indexedElementList, IndexOptions indexOptions) {
+
+    this.indexOptions = indexOptions;
+
+    this.indexedElementList.addAll(indexedElementList);
+  }
+
+  public CompoundIndex accumulate (String prolog) {
+
+    LinkedList<IndexedElement> indexedElementList = new LinkedList<>();
+
+    for (IndexedElement indexedElement : this.indexedElementList) {
+      indexedElementList.add(indexedElement.accumulate(prolog));
+    }
+
+    return new CompoundIndex(indexedElementList, indexOptions);
+  }
+
+  public IndexedElement[] getIndexedElements () {
+
+    return indexedElementList.toArray(new IndexedElement[0]);
+  }
+
+  public IndexOptions getIndexOptions () {
+
+    return indexOptions;
+  }
 }

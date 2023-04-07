@@ -33,7 +33,6 @@
 package org.smallmind.mongodb.throng.mapping;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.smallmind.mongodb.throng.ThrongMappingException;
@@ -42,19 +41,19 @@ import org.smallmind.mongodb.throng.annotation.Polymorphic;
 
 public class ThrongEmbeddedUtility {
 
-  public static Codec<?> generateEmbeddedCodec (Class<?> embeddedType, Embedded embedded, CodecRegistry codecRegistry, HashMap<Class<?>, Codec<?>> embeddedReferenceMap, boolean storeNulls)
+  public static Codec<?> generateEmbeddedCodec (Class<?> embeddedType, Embedded embedded, CodecRegistry codecRegistry, EmbeddedReferences embeddedReferences, boolean storeNulls)
     throws ThrongMappingException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
 
     Codec<?> codec;
 
-    if ((codec = embeddedReferenceMap.get(embeddedType)) == null) {
+    if ((codec = embeddedReferences.get(embeddedType)) == null) {
 
       Polymorphic polymorphic;
 
       if ((polymorphic = embedded.polymorphic()).value().length > 0) {
-        embeddedReferenceMap.put(embeddedType, codec = new ThrongPolymorphicEmbeddedCodec<>(new ThrongPropertiesMultiplexer<>(embeddedType, polymorphic, codecRegistry, embeddedReferenceMap, storeNulls)));
+        embeddedReferences.put(embeddedType, codec = new ThrongPolymorphicEmbeddedCodec<>(new ThrongPropertiesMultiplexer<>(embeddedType, polymorphic, codecRegistry, embeddedReferences, storeNulls)));
       } else {
-        embeddedReferenceMap.put(embeddedType, codec = new ThrongEmbeddedCodec<>(new ThrongProperties<>(embeddedType, codecRegistry, embeddedReferenceMap, storeNulls)));
+        embeddedReferences.put(embeddedType, codec = new ThrongEmbeddedCodec<>(new ThrongProperties<>(embeddedType, codecRegistry, embeddedReferences, storeNulls)));
       }
     }
 

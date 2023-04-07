@@ -30,30 +30,33 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.mongodb.throng;
+package org.smallmind.mongodb.throng.index;
 
-import org.smallmind.mongodb.throng.annotation.Collation;
+import org.smallmind.mongodb.throng.annotation.Indexed;
 
-public class CollationUtility {
+public class IndexedField {
 
-  public static com.mongodb.client.model.Collation generate (Collation collationAnnotation) {
+  private final Indexed indexed;
+  private final String field;
 
-    com.mongodb.client.model.Collation.Builder builder = com.mongodb.client.model.Collation.builder();
+  public IndexedField (String field, Indexed indexed) {
 
-    builder.backwards(collationAnnotation.backwards());
-    builder.caseLevel(collationAnnotation.caseLevel());
-    builder.collationAlternate(collationAnnotation.alternate());
-    builder.collationCaseFirst(collationAnnotation.caseFirst());
-    builder.collationMaxVariable(collationAnnotation.maxVariable());
-    builder.collationStrength(collationAnnotation.strength());
+    this.field = field;
+    this.indexed = indexed;
+  }
 
-    if (!collationAnnotation.locale().isEmpty()) {
-      builder.locale(collationAnnotation.locale());
-    }
+  public IndexedField accumulate (String prolog) {
 
-    builder.normalization(collationAnnotation.normalization());
-    builder.numericOrdering(collationAnnotation.numericOrdering());
+    return new IndexedField((prolog == null || prolog.isEmpty()) ? field : prolog + "." + field, indexed);
+  }
 
-    return builder.build();
+  public String getField () {
+
+    return field;
+  }
+
+  public Indexed getIndexed () {
+
+    return indexed;
   }
 }
