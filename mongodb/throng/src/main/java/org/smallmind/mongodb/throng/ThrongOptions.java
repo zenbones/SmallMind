@@ -34,8 +34,12 @@ package org.smallmind.mongodb.throng;
 
 public class ThrongOptions {
 
-  private final boolean storeNulls;
-  private final boolean createIndexes;
+  private boolean storeNulls;
+  private boolean createIndexes;
+
+  private ThrongOptions () {
+
+  }
 
   public ThrongOptions (boolean storeNulls, boolean createIndexes) {
 
@@ -48,8 +52,22 @@ public class ThrongOptions {
     return storeNulls;
   }
 
+  public ThrongOptions setStoreNulls (boolean storeNulls) {
+
+    this.storeNulls = storeNulls;
+
+    return this;
+  }
+
   public boolean isCreateIndexes () {
 
     return createIndexes;
+  }
+
+  public ThrongOptions setCreateIndexes (boolean createIndexes) {
+
+    this.createIndexes = createIndexes;
+
+    return this;
   }
 }
