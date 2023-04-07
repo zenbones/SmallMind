@@ -38,16 +38,21 @@ import java.util.LinkedList;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.InsertOneOptions;
+import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.result.InsertOneResult;
+import com.mongodb.client.result.UpdateResult;
+import org.bson.BsonDocument;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.smallmind.mongodb.throng.mapping.annotation.Embedded;
-import org.smallmind.mongodb.throng.mapping.annotation.Entity;
 import org.smallmind.mongodb.throng.index.IndexUtility;
 import org.smallmind.mongodb.throng.mapping.EmbeddedReferences;
 import org.smallmind.mongodb.throng.mapping.ThrongEmbeddedUtility;
 import org.smallmind.mongodb.throng.mapping.ThrongEntity;
 import org.smallmind.mongodb.throng.mapping.ThrongEntityCodec;
+import org.smallmind.mongodb.throng.mapping.annotation.Embedded;
+import org.smallmind.mongodb.throng.mapping.annotation.Entity;
+import org.smallmind.mongodb.throng.query.Filter;
+import org.smallmind.mongodb.throng.query.Updates;
 
 public class ThrongClient {
 
@@ -110,10 +115,17 @@ public class ThrongClient {
     return mongoDatabase.getCollection(entityCodec.getCollection()).withCodecRegistry(codecRegistry).withDocumentClass(ThrongDocument.class).insertOne(new ThrongDocument(TranslationUtility.toBson(value, entityCodec)));
   }
 
-  public <T> Iterable<T> find (Class<T> entityCLass) {
+  public <T> Iterable<T> find (Class<T> entityClass) {
 
-    ThrongEntityCodec<T> entityCodec = getCodec(entityCLass);
+    ThrongEntityCodec<T> entityCodec = getCodec(entityClass);
 
     return new ThrongIterable<>(mongoDatabase.getCollection(entityCodec.getCollection()).withCodecRegistry(codecRegistry).withDocumentClass(ThrongDocument.class).find(), entityCodec);
+  }
+
+  public <T> UpdateResult updateOne (Class<T> entityClass, Filter filter, Updates updates, UpdateOptions updateOptions) {
+
+    ThrongEntityCodec<T> entityCodec = getCodec(entityClass);
+
+    return mongoDatabase.getCollection(entityCodec.getCollection()).withCodecRegistry(codecRegistry).withDocumentClass(ThrongDocument.class).updateOne(filter.toBsonDocument(BsonDocument.class, codecRegistry), updates.toBsonDocument(BsonDocument.class, codecRegistry), updateOptions);
   }
 }
