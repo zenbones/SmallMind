@@ -39,6 +39,7 @@ import org.smallmind.mongodb.throng.ThrongMappingException;
 import org.smallmind.mongodb.throng.mapping.annotation.Entity;
 import org.smallmind.mongodb.throng.mapping.annotation.Id;
 import org.smallmind.mongodb.throng.lifecycle.ThrongLifecycle;
+import org.smallmind.mongodb.throng.mapping.annotation.Polymorphic;
 import org.smallmind.nutsnbolts.reflection.FieldAccessor;
 import org.smallmind.nutsnbolts.reflection.FieldUtility;
 
@@ -53,8 +54,12 @@ public class ThrongEntity<T> extends ThrongProperties<T> {
 
     super(entityClass, codecRegistry, embeddedReferences, storeNulls);
 
-    collection = entityAnnotation.value();
+    // check for misuse of the polymorphic annotation
+    if (entityClass.getAnnotation(Polymorphic.class) != null) {
+      throw new ThrongMappingException("Only @Embedded classes may be marked as @Polymorphic");
+    }
 
+    collection = entityAnnotation.value();
     lifecycle = new ThrongLifecycle<>(entityClass);
 
     for (FieldAccessor fieldAccessor : FieldUtility.getFieldAccessors(entityClass)) {

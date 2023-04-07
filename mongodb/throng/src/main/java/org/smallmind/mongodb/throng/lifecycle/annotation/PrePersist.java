@@ -40,6 +40,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 // public method () {}
+// Only usable in @Entity classes
 public @interface PrePersist {
 
 }

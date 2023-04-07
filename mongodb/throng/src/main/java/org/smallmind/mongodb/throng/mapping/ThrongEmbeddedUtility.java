@@ -36,6 +36,7 @@ import java.lang.reflect.InvocationTargetException;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.smallmind.mongodb.throng.ThrongMappingException;
+import org.smallmind.mongodb.throng.lifecycle.ThrongLifecycleRejection;
 import org.smallmind.mongodb.throng.mapping.annotation.Embedded;
 import org.smallmind.mongodb.throng.mapping.annotation.Polymorphic;
 
@@ -49,6 +50,9 @@ public class ThrongEmbeddedUtility {
     if ((codec = embeddedReferences.get(embeddedType)) == null) {
 
       Polymorphic polymorphic;
+
+      // check for misuse of lifecycle annotations
+      ThrongLifecycleRejection.reject(embeddedType);
 
       if ((polymorphic = embedded.polymorphic()).value().length > 0) {
         embeddedReferences.put(embeddedType, codec = new ThrongPolymorphicEmbeddedCodec<>(new ThrongPropertiesMultiplexer<>(embeddedType, polymorphic, codecRegistry, embeddedReferences, storeNulls)));
