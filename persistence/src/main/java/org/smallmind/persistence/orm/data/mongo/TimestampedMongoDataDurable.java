@@ -34,13 +34,14 @@ package org.smallmind.persistence.orm.data.mongo;
 
 import java.io.Serializable;
 import java.util.Date;
+import org.smallmind.mongodb.throng.annotation.Indexed;
 import org.smallmind.mongodb.throng.annotation.Property;
+import org.smallmind.mongodb.throng.index.IndexType;
 import org.smallmind.mongodb.throng.lifecycle.PrePersist;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.domain.Persistable;
 import org.springframework.data.mongodb.core.index.IndexDirection;
-import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Field;
 
 public abstract class TimestampedMongoDataDurable<I extends Serializable & Comparable<I>, D extends TimestampedMongoDataDurable<I, D>> extends MongoDataDurable<I, D> implements Persistable<I> {
@@ -50,8 +51,9 @@ public abstract class TimestampedMongoDataDurable<I extends Serializable & Compa
   @Property("created")
   private Date created;
   @LastModifiedDate
-  @Indexed(direction = IndexDirection.DESCENDING)
+  @org.springframework.data.mongodb.core.index.Indexed(direction = IndexDirection.DESCENDING)
   @Field("lastUpdated")
+  @Indexed(IndexType.DESCENDING)
   @Property("lastUpdated")
   private Date lastUpdated;
 
