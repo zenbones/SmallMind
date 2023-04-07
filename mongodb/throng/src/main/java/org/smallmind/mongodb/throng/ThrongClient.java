@@ -122,6 +122,13 @@ public class ThrongClient {
     return new ThrongIterable<>(mongoDatabase.getCollection(entityCodec.getCollection()).withCodecRegistry(codecRegistry).withDocumentClass(ThrongDocument.class).find(), entityCodec);
   }
 
+  public <T> Iterable<T> find (Class<T> entityClass, Filter filter) {
+
+    ThrongEntityCodec<T> entityCodec = getCodec(entityClass);
+
+    return new ThrongIterable<>(mongoDatabase.getCollection(entityCodec.getCollection()).withCodecRegistry(codecRegistry).withDocumentClass(ThrongDocument.class).find(filter.toBsonDocument(BsonDocument.class, codecRegistry)), entityCodec);
+  }
+
   public <T> UpdateResult updateOne (Class<T> entityClass, Filter filter, Updates updates, UpdateOptions updateOptions) {
 
     ThrongEntityCodec<T> entityCodec = getCodec(entityClass);
