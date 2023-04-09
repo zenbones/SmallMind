@@ -30,33 +30,27 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.mongodb.throng.lifecycle;
+package org.smallmind.mongodb.throng.codec;
 
-import java.lang.reflect.Method;
-import org.smallmind.mongodb.throng.ThrongMappingException;
-import org.smallmind.mongodb.throng.lifecycle.annotation.PostLoad;
-import org.smallmind.mongodb.throng.lifecycle.annotation.PostPersist;
-import org.smallmind.mongodb.throng.lifecycle.annotation.PreLoad;
-import org.smallmind.mongodb.throng.lifecycle.annotation.PrePersist;
+import org.bson.codecs.Codec;
+import org.bson.codecs.configuration.CodecProvider;
+import org.bson.codecs.configuration.CodecRegistry;
 
-public class ThrongLifecycleRejection {
+public class ArrayCodecProvider implements CodecProvider {
 
-  public static void reject (Class<?> embeddedClass)
-    throws ThrongMappingException {
+  @Override
+  public <T> Codec<T> get (Class<T> clazz, CodecRegistry registry) {
 
-    for (Method method : embeddedClass.getMethods()) {
-      if (method.getAnnotation(PreLoad.class) != null) {
-        throw new ThrongMappingException("Lifecycle annotations may only be used within @Entity classes");
-      }
-      if (method.getAnnotation(PostLoad.class) != null) {
-        throw new ThrongMappingException("Lifecycle annotations may only be used within @Entity classes");
-      }
-      if (method.getAnnotation(PrePersist.class) != null) {
-        throw new ThrongMappingException("Lifecycle annotations may only be used within @Entity classes");
-      }
-      if (method.getAnnotation(PostPersist.class) != null) {
-        throw new ThrongMappingException("Lifecycle annotations may only be used within @Entity classes");
+    if (clazz.isArray()) {
+
+      Codec<?> itemCodec;
+
+      if ((itemCodec = registry.get(clazz.getComponentType())) != null) {
+
+        return new ArrayCodec<>(clazz, clazz.getComponentType(), itemCodec);
       }
     }
+
+    return null;
   }
 }

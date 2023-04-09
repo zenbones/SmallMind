@@ -44,6 +44,7 @@ import com.mongodb.client.result.UpdateResult;
 import org.bson.BsonDocument;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.smallmind.mongodb.throng.codec.ArrayCodecProvider;
 import org.smallmind.mongodb.throng.index.IndexUtility;
 import org.smallmind.mongodb.throng.mapping.EmbeddedReferences;
 import org.smallmind.mongodb.throng.mapping.ThrongEmbeddedUtility;
@@ -63,9 +64,12 @@ public class ThrongClient {
   public ThrongClient (MongoClient mongoClient, String database, ThrongOptions options, Class<?>... entityClasses)
     throws ThrongMappingException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
 
+    CodecRegistry driverCodecRegistry;
+    CodecRegistry embeddecCodecRegistry;
     EmbeddedReferences embeddedReferences = new EmbeddedReferences();
 
     mongoDatabase = mongoClient.getDatabase(database);
+    driverCodecRegistry = CodecRegistries.fromRegistries(mongoDatabase.getCodecRegistry(), CodecRegistries.fromProviders(new ArrayCodecProvider()));
 
     if (entityClasses != null) {
       for (Class<?> entityClass : entityClasses) {
@@ -73,9 +77,11 @@ public class ThrongClient {
         Embedded embedded;
 
         if ((embedded = entityClass.getAnnotation(Embedded.class)) != null) {
-          ThrongEmbeddedUtility.generateEmbeddedCodec(entityClass, embedded, mongoDatabase.getCodecRegistry(), embeddedReferences, options.isStoreNulls());
+          ThrongEmbeddedUtility.generateEmbeddedCodec(entityClass, embedded, driverCodecRegistry, embeddedReferences, options.isStoreNulls());
         }
       }
+
+      embeddecCodecRegistry = CodecRegistries.fromRegistries(CodecRegistries.fromCodecs(new LinkedList<>(embeddedReferences.values())));
 
       for (Class<?> entityClass : entityClasses) {
 
@@ -85,7 +91,7 @@ public class ThrongClient {
 
           ThrongEntityCodec<?> entityCodec;
 
-          entityCodecMap.put(entityClass, entityCodec = new ThrongEntityCodec<>(new ThrongEntity<>(entityClass, entity, mongoDatabase.getCodecRegistry(), embeddedReferences, options.isStoreNulls())));
+          entityCodecMap.put(entityClass, entityCodec = new ThrongEntityCodec<>(new ThrongEntity<>(entityClass, entity, CodecRegistries.fromRegistries(embeddecCodecRegistry, driverCodecRegistry), embeddedReferences, options.isStoreNulls())));
           if (options.isCreateIndexes()) {
             IndexUtility.createIndex(mongoDatabase.getCollection(entityCodec.getCollection()), entityCodec.provideIndexes());
           }
@@ -93,7 +99,7 @@ public class ThrongClient {
       }
     }
 
-    codecRegistry = CodecRegistries.fromRegistries(CodecRegistries.fromCodecs(new ThrongDocumentCodec()), CodecRegistries.fromCodecs(new LinkedList<>(embeddedReferences.values())), mongoDatabase.getCodecRegistry());
+    codecRegistry = CodecRegistries.fromRegistries(CodecRegistries.fromCodecs(new ThrongDocumentCodec()), driverCodecRegistry);
   }
 
   private <T> ThrongEntityCodec<T> getCodec (Class<T> entityClass) {
