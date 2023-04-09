@@ -38,13 +38,14 @@ import java.util.TreeMap;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.smallmind.mongodb.throng.ThrongMappingException;
-import org.smallmind.mongodb.throng.mapping.annotation.Codec;
-import org.smallmind.mongodb.throng.mapping.annotation.Embedded;
-import org.smallmind.mongodb.throng.index.annotation.Indexed;
-import org.smallmind.mongodb.throng.index.annotation.Indexes;
-import org.smallmind.mongodb.throng.mapping.annotation.Property;
+import org.smallmind.mongodb.throng.codec.ArrayCodec;
 import org.smallmind.mongodb.throng.index.IndexProvider;
 import org.smallmind.mongodb.throng.index.ThrongIndexes;
+import org.smallmind.mongodb.throng.index.annotation.Indexed;
+import org.smallmind.mongodb.throng.index.annotation.Indexes;
+import org.smallmind.mongodb.throng.mapping.annotation.Codec;
+import org.smallmind.mongodb.throng.mapping.annotation.Embedded;
+import org.smallmind.mongodb.throng.mapping.annotation.Property;
 import org.smallmind.nutsnbolts.reflection.FieldAccessor;
 import org.smallmind.nutsnbolts.reflection.FieldUtility;
 
@@ -92,6 +93,12 @@ public class ThrongProperties<T> extends TreeMap<String, ThrongProperty> impleme
             if ((embedded = fieldAccessor.getType().getAnnotation(Embedded.class)) != null) {
               codec = ThrongEmbeddedUtility.generateEmbeddedCodec(fieldAccessor.getType(), embedded, codecRegistry, embeddedReferences, storeNulls);
               throngIndexes.accumulate(propertyName, ((IndexProvider)codec).provideIndexes());
+            } else if (fieldAccessor.getType().isArray() && ((embedded = fieldAccessor.getType().getComponentType().getAnnotation(Embedded.class)) != null)) {
+
+              org.bson.codecs.Codec<?> componentCodec;
+
+              codec = new ArrayCodec<>(fieldAccessor.getType(), fieldAccessor.getType().getComponentType(), componentCodec = ThrongEmbeddedUtility.generateEmbeddedCodec(fieldAccessor.getType().getComponentType(), embedded, codecRegistry, embeddedReferences, storeNulls));
+              throngIndexes.accumulate(propertyName, ((IndexProvider)componentCodec).provideIndexes());
             } else {
               try {
                 codec = CodecRegistryUtility.getReifiedCodec(codecRegistry, entityClass, fieldAccessor);
