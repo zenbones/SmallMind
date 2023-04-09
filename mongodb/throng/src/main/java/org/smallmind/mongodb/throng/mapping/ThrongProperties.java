@@ -86,6 +86,14 @@ public class ThrongProperties<T> extends TreeMap<String, ThrongProperty> impleme
 
           if ((codecAnnotation = fieldAccessor.getField().getAnnotation(Codec.class)) != null) {
             codec = codecAnnotation.value().getConstructor().newInstance();
+
+            if (!codec.getEncoderClass().isAssignableFrom(fieldAccessor.getType())) {
+              if (fieldAccessor.getType().isArray() && codec.getEncoderClass().isAssignableFrom(fieldAccessor.getType().getComponentType())) {
+                codec = new ArrayCodec<>(fieldAccessor.getType(), fieldAccessor.getType().getComponentType(), codec, storeNulls);
+              } else {
+                throw new ThrongMappingException("The field(%s) in entity(%s) is not handled by @Codec(%s)", fieldAccessor.getName(), entityClass.getName(), codec.getClass().getName());
+              }
+            }
           } else {
 
             Embedded embedded;

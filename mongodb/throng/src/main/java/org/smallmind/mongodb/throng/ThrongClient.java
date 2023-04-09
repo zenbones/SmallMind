@@ -59,9 +59,11 @@ import org.smallmind.mongodb.throng.query.Updates;
 
 /*
   Weaknesses...
-    1) Entity classes can not be marked as polymorphic
-    2) Embedded classes can not have lifecycle methods
-    3) There's no automated handling of containers of embedded types, i.e. List, Map, Bag, etc.
+    1) Entity classes can not be marked as polymorphic.
+    2) Embedded classes can not have lifecycle methods.
+    3) There's no fully correct automated handling for containers with generics of either @Embedded or @Codec types, i.e. List, Map, Bag, etc.
+       Containers of @Embedded types will miss automated index processing, and containers of @Codec types will throw an exception due to mismatch
+       of the field and codec types.
 */
 public class ThrongClient {
 
