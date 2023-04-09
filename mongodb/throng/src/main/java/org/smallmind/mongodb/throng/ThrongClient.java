@@ -55,6 +55,12 @@ import org.smallmind.mongodb.throng.mapping.annotation.Entity;
 import org.smallmind.mongodb.throng.query.Filter;
 import org.smallmind.mongodb.throng.query.Updates;
 
+/*
+  Weaknesses...
+    1) Entity classes can not be marked as polymorphic
+    2) Embedded classes can not have lifecycle methods
+    3) There's no automated handling of containers of embedded types, i.e. List, Map, Bag, etc.
+*/
 public class ThrongClient {
 
   private final MongoDatabase mongoDatabase;
