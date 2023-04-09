@@ -63,7 +63,8 @@ import org.smallmind.mongodb.throng.query.Updates;
     2) Embedded classes can not have lifecycle methods.
     3) There's no fully correct automated handling for containers with generics of either @Embedded or @Codec types, i.e. List, Map, Bag, etc.
        Containers of @Embedded types will miss automated index processing, and containers of @Codec types will throw an exception due to mismatch
-       of the field and codec types.
+       of the field and codec. Creating container subclasses, with codecs parameterized for those subclasses, and, in the case of @Embedded types,
+       adding the appropriate indexes to the parent class, is the correct route.
 */
 public class ThrongClient {
 
