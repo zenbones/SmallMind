@@ -41,7 +41,7 @@ import org.smallmind.persistence.orm.throng.ThrongClientFactory;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
-public class EntitySeekingThrongCLientFactoryBean implements FactoryBean<ThrongClientFactory>, InitializingBean {
+public class EntitySeekingThrongClientFactoryBean implements FactoryBean<ThrongClientFactory>, InitializingBean {
 
   private ThrongClientFactory throngClientFactory;
   private AnnotationSeekingBeanFactoryPostProcessor annotationSeekingBeanFactoryPostProcessor;
