@@ -41,6 +41,7 @@ import com.mongodb.client.result.UpdateResult;
 import org.smallmind.mongodb.throng.ThrongClient;
 import org.smallmind.nutsnbolts.util.EmptyIterable;
 import org.smallmind.nutsnbolts.util.IterableIterator;
+import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.UpdateMode;
 import org.smallmind.persistence.cache.VectoredDao;
 import org.smallmind.persistence.orm.ORMDao;
@@ -55,7 +56,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 
-public class ThrongDao<I extends Serializable & Comparable<I>, D extends MongoDataDurable<I, D>> extends ORMDao<I, D, ThrongClientFactory, ThrongClient> {
+public class ThrongDao<I extends Serializable & Comparable<I>, D extends ThrongDurable<I, D>> extends ORMDao<I, D, ThrongClientFactory, ThrongClient> {
 
   public ThrongDao (ThrongProxySession proxySession) {
 
