@@ -30,34 +30,50 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.mongodb.throng.codec;
+package org.smallmind.persistence.orm.throng;
 
-import org.bson.codecs.Codec;
-import org.bson.codecs.configuration.CodecProvider;
-import org.bson.codecs.configuration.CodecRegistry;
+import java.io.Serializable;
+import java.util.Date;
+import org.smallmind.mongodb.throng.index.IndexType;
+import org.smallmind.mongodb.throng.index.annotation.Indexed;
+import org.smallmind.mongodb.throng.lifecycle.annotation.PrePersist;
+import org.smallmind.mongodb.throng.mapping.annotation.Property;
 
-public class ArrayCodecProvider implements CodecProvider {
+public abstract class TimestampedThrongDurable<I extends Serializable & Comparable<I>, D extends TimestampedThrongDurable<I, D>> extends ThrongDurable<I, D> {
 
-  private final boolean storeNulls;
+  @Property("created")
+  private Date created;
+  @Property("lastUpdated")
+  @Indexed(IndexType.DESCENDING)
+  private Date lastUpdated;
 
-  public ArrayCodecProvider (boolean storeNulls) {
+  public Date getCreated () {
 
-    this.storeNulls = storeNulls;
+    return created;
   }
 
-  @Override
-  public <T> Codec<T> get (Class<T> clazz, CodecRegistry registry) {
+  public void setCreated (Date created) {
 
-    if (clazz.isArray()) {
+    this.created = created;
+  }
 
-      Codec<?> itemCodec;
+  public Date getLastUpdated () {
 
-      if ((itemCodec = registry.get(clazz.getComponentType())) != null) {
+    return lastUpdated;
+  }
 
-        return new ArrayCodec<>(clazz, clazz.getComponentType(), itemCodec, storeNulls);
-      }
+  public void setLastUpdated (Date lastUpdated) {
+
+    this.lastUpdated = lastUpdated;
+  }
+
+  @PrePersist
+  public void prePersist () {
+
+    if (created == null) {
+      created = new Date();
     }
 
-    return null;
+    lastUpdated = new Date();
   }
 }

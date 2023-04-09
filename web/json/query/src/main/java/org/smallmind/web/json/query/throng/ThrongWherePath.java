@@ -30,34 +30,34 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.mongodb.throng.codec;
+package org.smallmind.web.json.query.throng;
 
-import org.bson.codecs.Codec;
-import org.bson.codecs.configuration.CodecProvider;
-import org.bson.codecs.configuration.CodecRegistry;
+import org.smallmind.web.json.query.WherePath;
 
-public class ArrayCodecProvider implements CodecProvider {
+public class ThrongWherePath extends WherePath<Void, Void> {
 
-  private final boolean storeNulls;
+  private final String field;
 
-  public ArrayCodecProvider (boolean storeNulls) {
+  public ThrongWherePath (String field) {
 
-    this.storeNulls = storeNulls;
+    this.field = field;
   }
 
   @Override
-  public <T> Codec<T> get (Class<T> clazz, CodecRegistry registry) {
+  public Void getRoot () {
 
-    if (clazz.isArray()) {
+    throw new UnsupportedOperationException();
+  }
 
-      Codec<?> itemCodec;
+  @Override
+  public Void getPath () {
 
-      if ((itemCodec = registry.get(clazz.getComponentType())) != null) {
+    throw new UnsupportedOperationException();
+  }
 
-        return new ArrayCodec<>(clazz, clazz.getComponentType(), itemCodec, storeNulls);
-      }
-    }
+  @Override
+  public String getField () {
 
-    return null;
+    return field;
   }
 }

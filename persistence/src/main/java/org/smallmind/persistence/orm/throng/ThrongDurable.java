@@ -30,34 +30,34 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.mongodb.throng.codec;
+package org.smallmind.persistence.orm.throng;
 
-import org.bson.codecs.Codec;
-import org.bson.codecs.configuration.CodecProvider;
-import org.bson.codecs.configuration.CodecRegistry;
+import java.io.Serializable;
+import org.bson.BsonDocument;
+import org.smallmind.mongodb.throng.lifecycle.annotation.PostPersist;
+import org.smallmind.mongodb.throng.mapping.annotation.Id;
+import org.smallmind.persistence.AbstractDurable;
 
-public class ArrayCodecProvider implements CodecProvider {
+public class ThrongDurable<I extends Serializable & Comparable<I>, D extends ThrongDurable<I, D>> extends AbstractDurable<I, D> {
 
-  private final boolean storeNulls;
+  @Id
+  private I id;
 
-  public ArrayCodecProvider (boolean storeNulls) {
+  @Override
+  public I getId () {
 
-    this.storeNulls = storeNulls;
+    return id;
   }
 
   @Override
-  public <T> Codec<T> get (Class<T> clazz, CodecRegistry registry) {
+  public void setId (I id) {
 
-    if (clazz.isArray()) {
+    this.id = id;
+  }
 
-      Codec<?> itemCodec;
+  @PostPersist
+  public void preSave (BsonDocument bsonDocument) {
 
-      if ((itemCodec = registry.get(clazz.getComponentType())) != null) {
-
-        return new ArrayCodec<>(clazz, clazz.getComponentType(), itemCodec, storeNulls);
-      }
-    }
-
-    return null;
+    bsonDocument.remove("overlayClass");
   }
 }

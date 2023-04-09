@@ -97,7 +97,7 @@ public class ThrongProperties<T> extends TreeMap<String, ThrongProperty> impleme
 
               org.bson.codecs.Codec<?> componentCodec;
 
-              codec = new ArrayCodec<>(fieldAccessor.getType(), fieldAccessor.getType().getComponentType(), componentCodec = ThrongEmbeddedUtility.generateEmbeddedCodec(fieldAccessor.getType().getComponentType(), embedded, codecRegistry, embeddedReferences, storeNulls));
+              codec = new ArrayCodec<>(fieldAccessor.getType(), fieldAccessor.getType().getComponentType(), componentCodec = ThrongEmbeddedUtility.generateEmbeddedCodec(fieldAccessor.getType().getComponentType(), embedded, codecRegistry, embeddedReferences, storeNulls), storeNulls);
               throngIndexes.accumulate(propertyName, ((IndexProvider)componentCodec).provideIndexes());
             } else {
               try {

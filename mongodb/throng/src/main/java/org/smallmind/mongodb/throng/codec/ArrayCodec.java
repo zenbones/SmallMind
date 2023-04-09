@@ -47,12 +47,14 @@ public class ArrayCodec<T> implements Codec<T> {
   private final Codec<?> itemCodec;
   private final Class<T> arrayClass;
   private final Class<?> componentClass;
+  private final boolean storeNulls;
 
-  public ArrayCodec (Class<T> arrayClass, Class<?> componentClass, Codec<?> itemCodec) {
+  public ArrayCodec (Class<T> arrayClass, Class<?> componentClass, Codec<?> itemCodec, boolean storeNulls) {
 
     this.arrayClass = arrayClass;
     this.componentClass = componentClass;
     this.itemCodec = itemCodec;
+    this.storeNulls = storeNulls;
   }
 
   @Override
@@ -81,9 +83,7 @@ public class ArrayCodec<T> implements Codec<T> {
   @Override
   public void encode (BsonWriter writer, T value, EncoderContext encoderContext) {
 
-    if (value == null) {
-      writer.writeNull();
-    } else {
+    if (value != null) {
 
       writer.writeStartArray();
 
@@ -92,6 +92,8 @@ public class ArrayCodec<T> implements Codec<T> {
       }
 
       writer.writeEndArray();
+    } else if (storeNulls) {
+      writer.writeNull();
     }
   }
 

@@ -30,34 +30,29 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.mongodb.throng.codec;
+package org.smallmind.persistence.orm.spring.throng;
 
-import org.bson.codecs.Codec;
-import org.bson.codecs.configuration.CodecProvider;
-import org.bson.codecs.configuration.CodecRegistry;
+import java.lang.annotation.Annotation;
+import org.smallmind.mongodb.throng.mapping.annotation.Embedded;
+import org.smallmind.mongodb.throng.mapping.annotation.Entity;
+import org.smallmind.persistence.ManagedDao;
+import org.smallmind.persistence.orm.spring.AbstractAnnotationSeekingBeanFactoryPostProcessor;
+import org.smallmind.persistence.orm.throng.ThrongDao;
 
-public class ArrayCodecProvider implements CodecProvider {
+public class AnnotationSeekingBeanFactoryPostProcessor extends AbstractAnnotationSeekingBeanFactoryPostProcessor {
 
-  private final boolean storeNulls;
+  private static final Class<? extends ManagedDao<?, ?>>[] DAO_IMPLEMENTATIONS = new Class[] {ThrongDao.class};
+  private static final Class<? extends Annotation>[] TARGET_ANNOTATIONS = new Class[] {Entity.class, Embedded.class};
 
-  public ArrayCodecProvider (boolean storeNulls) {
+  @Override
+  public Class<? extends ManagedDao<?, ?>>[] getDaoImplementations () {
 
-    this.storeNulls = storeNulls;
+    return DAO_IMPLEMENTATIONS;
   }
 
   @Override
-  public <T> Codec<T> get (Class<T> clazz, CodecRegistry registry) {
+  public Class<? extends Annotation>[] getTargetAnnotations () {
 
-    if (clazz.isArray()) {
-
-      Codec<?> itemCodec;
-
-      if ((itemCodec = registry.get(clazz.getComponentType())) != null) {
-
-        return new ArrayCodec<>(clazz, clazz.getComponentType(), itemCodec, storeNulls);
-      }
-    }
-
-    return null;
+    return TARGET_ANNOTATIONS;
   }
 }

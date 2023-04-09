@@ -30,34 +30,35 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.mongodb.throng.codec;
+package org.smallmind.persistence.orm.throng;
 
-import org.bson.codecs.Codec;
-import org.bson.codecs.configuration.CodecProvider;
-import org.bson.codecs.configuration.CodecRegistry;
+import org.smallmind.persistence.orm.ProxyTransaction;
 
-public class ArrayCodecProvider implements CodecProvider {
+public class ThrongProxyTransaction extends ProxyTransaction<ThrongProxySession> {
 
-  private final boolean storeNulls;
+  public ThrongProxyTransaction (ThrongProxySession proxySession) {
 
-  public ArrayCodecProvider (boolean storeNulls) {
-
-    this.storeNulls = storeNulls;
+    super(proxySession);
   }
 
   @Override
-  public <T> Codec<T> get (Class<T> clazz, CodecRegistry registry) {
+  public boolean isCompleted () {
 
-    if (clazz.isArray()) {
+    throw new UnsupportedOperationException();
+  }
 
-      Codec<?> itemCodec;
+  @Override
+  public void flush () {
 
-      if ((itemCodec = registry.get(clazz.getComponentType())) != null) {
+  }
 
-        return new ArrayCodec<>(clazz, clazz.getComponentType(), itemCodec, storeNulls);
-      }
-    }
+  @Override
+  public void commit () {
 
-    return null;
+  }
+
+  @Override
+  public void rollback () {
+
   }
 }

@@ -30,34 +30,21 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.mongodb.throng.codec;
+package org.smallmind.persistence.orm.throng;
 
-import org.bson.codecs.Codec;
-import org.bson.codecs.configuration.CodecProvider;
-import org.bson.codecs.configuration.CodecRegistry;
+import org.smallmind.mongodb.throng.ThrongClient;
 
-public class ArrayCodecProvider implements CodecProvider {
+public class ThrongClientFactory {
 
-  private final boolean storeNulls;
+  private final ThrongClient throngClient;
 
-  public ArrayCodecProvider (boolean storeNulls) {
+  public ThrongClientFactory (ThrongClient throngClient) {
 
-    this.storeNulls = storeNulls;
+    this.throngClient = throngClient;
   }
 
-  @Override
-  public <T> Codec<T> get (Class<T> clazz, CodecRegistry registry) {
+  public ThrongClient getThrongClient () {
 
-    if (clazz.isArray()) {
-
-      Codec<?> itemCodec;
-
-      if ((itemCodec = registry.get(clazz.getComponentType())) != null) {
-
-        return new ArrayCodec<>(clazz, clazz.getComponentType(), itemCodec, storeNulls);
-      }
-    }
-
-    return null;
+    return throngClient;
   }
 }

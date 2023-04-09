@@ -75,7 +75,7 @@ public class ThrongClient {
     EmbeddedReferences embeddedReferences = new EmbeddedReferences();
 
     mongoDatabase = mongoClient.getDatabase(database);
-    driverCodecRegistry = CodecRegistries.fromRegistries(mongoDatabase.getCodecRegistry(), CodecRegistries.fromProviders(new ArrayCodecProvider()));
+    driverCodecRegistry = CodecRegistries.fromRegistries(mongoDatabase.getCodecRegistry(), CodecRegistries.fromProviders(new ArrayCodecProvider(options.isStoreNulls())));
 
     if (entityClasses != null) {
       for (Class<?> entityClass : entityClasses) {
