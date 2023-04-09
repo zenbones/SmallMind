@@ -42,11 +42,11 @@ public class Filter {
   private final String fieldName;
   private Bson bson;
 
-  private Filter (Bson bson) {
+  private Filter (String filterName, Bson bson) {
+
+    this(filterName);
 
     this.bson = bson;
-
-    fieldName = "";
   }
 
   public Filter (String fieldName) {
@@ -59,14 +59,27 @@ public class Filter {
     return new Filter(fieldName);
   }
 
+  public static Filter empty () {
+
+    return new Filter("empty", com.mongodb.client.model.Filters.empty());
+  }
+
   public static Filter and (Filter... filters) {
 
     if ((filters == null) || (filters.length == 0)) {
 
-      return new Filter(com.mongodb.client.model.Filters.empty());
+      return new Filter("and", com.mongodb.client.model.Filters.empty());
     } else {
 
-      return new Filter(com.mongodb.client.model.Filters.and(MutationUtility.toArray(filters, Bson.class, filter -> filter.bson)));
+      return new Filter("and", com.mongodb.client.model.Filters.and(MutationUtility.toArray(filters, Bson.class, filter -> {
+
+        if (filter.bson == null) {
+          throw new IllegalFilterStateException("The filter(%s) is incomplete", filter.fieldName);
+        } else {
+
+          return filter.bson;
+        }
+      })));
     }
   }
 
@@ -74,17 +87,25 @@ public class Filter {
 
     if ((filters == null) || (filters.length == 0)) {
 
-      return new Filter(com.mongodb.client.model.Filters.empty());
+      return new Filter("or", com.mongodb.client.model.Filters.empty());
     } else {
 
-      return new Filter(com.mongodb.client.model.Filters.or(MutationUtility.toArray(filters, Bson.class, filter -> filter.bson)));
+      return new Filter("or", com.mongodb.client.model.Filters.or(MutationUtility.toArray(filters, Bson.class, filter -> {
+
+        if (filter.bson == null) {
+          throw new IllegalFilterStateException("The filter(%s) is incomplete", filter.fieldName);
+        } else {
+
+          return filter.bson;
+        }
+      })));
     }
   }
 
   public Filter eq (Object value) {
 
     if (bson != null) {
-      throw new UnsupportedOperationException();
+      throw new IllegalFilterStateException("The filter(%s) is closed", fieldName);
     } else {
 
       bson = com.mongodb.client.model.Filters.eq(fieldName, value);
@@ -96,7 +117,7 @@ public class Filter {
   public Filter ne (Object value) {
 
     if (bson != null) {
-      throw new UnsupportedOperationException();
+      throw new IllegalFilterStateException("The filter(%s) is closed", fieldName);
     } else {
 
       bson = com.mongodb.client.model.Filters.ne(fieldName, value);
@@ -108,7 +129,7 @@ public class Filter {
   public Filter gt (Object value) {
 
     if (bson != null) {
-      throw new UnsupportedOperationException();
+      throw new IllegalFilterStateException("The filter(%s) is closed", fieldName);
     } else {
 
       bson = com.mongodb.client.model.Filters.gt(fieldName, value);
@@ -120,7 +141,7 @@ public class Filter {
   public Filter gte (Object value) {
 
     if (bson != null) {
-      throw new UnsupportedOperationException();
+      throw new IllegalFilterStateException("The filter(%s) is closed", fieldName);
     } else {
 
       bson = com.mongodb.client.model.Filters.gte(fieldName, value);
@@ -132,7 +153,7 @@ public class Filter {
   public Filter lt (Object value) {
 
     if (bson != null) {
-      throw new UnsupportedOperationException();
+      throw new IllegalFilterStateException("The filter(%s) is closed", fieldName);
     } else {
 
       bson = com.mongodb.client.model.Filters.lt(fieldName, value);
@@ -144,7 +165,7 @@ public class Filter {
   public Filter lte (Object value) {
 
     if (bson != null) {
-      throw new UnsupportedOperationException();
+      throw new IllegalFilterStateException("The filter(%s) is closed", fieldName);
     } else {
 
       bson = com.mongodb.client.model.Filters.lte(fieldName, value);
@@ -156,7 +177,7 @@ public class Filter {
   public Filter exists (boolean exists) {
 
     if (bson != null) {
-      throw new UnsupportedOperationException();
+      throw new IllegalFilterStateException("The filter(%s) is closed", fieldName);
     } else {
 
       bson = com.mongodb.client.model.Filters.exists(fieldName, exists);
@@ -168,7 +189,7 @@ public class Filter {
   public Filter in (Object... values) {
 
     if (bson != null) {
-      throw new UnsupportedOperationException();
+      throw new IllegalFilterStateException("The filter(%s) is closed", fieldName);
     } else {
 
       bson = com.mongodb.client.model.Filters.in(fieldName, values);
@@ -180,7 +201,7 @@ public class Filter {
   public Filter nin (Object... values) {
 
     if (bson != null) {
-      throw new UnsupportedOperationException();
+      throw new IllegalFilterStateException("The filter(%s) is closed", fieldName);
     } else {
 
       bson = com.mongodb.client.model.Filters.nin(fieldName, values);
@@ -192,7 +213,7 @@ public class Filter {
   public Filter regex (Pattern pattern) {
 
     if (bson != null) {
-      throw new UnsupportedOperationException();
+      throw new IllegalFilterStateException("The filter(%s) is closed", fieldName);
     } else {
 
       bson = com.mongodb.client.model.Filters.regex(fieldName, pattern);
@@ -204,7 +225,7 @@ public class Filter {
   public Filter not () {
 
     if (bson == null) {
-      throw new UnsupportedOperationException();
+      throw new IllegalFilterStateException("The filter(%s) is incomplete", fieldName);
     } else {
 
       bson = com.mongodb.client.model.Filters.not(bson);

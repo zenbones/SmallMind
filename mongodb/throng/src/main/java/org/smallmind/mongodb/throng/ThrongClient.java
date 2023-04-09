@@ -35,6 +35,7 @@ package org.smallmind.mongodb.throng;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.LinkedList;
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.InsertOneOptions;
@@ -53,6 +54,7 @@ import org.smallmind.mongodb.throng.mapping.ThrongEntityCodec;
 import org.smallmind.mongodb.throng.mapping.annotation.Embedded;
 import org.smallmind.mongodb.throng.mapping.annotation.Entity;
 import org.smallmind.mongodb.throng.query.Filter;
+import org.smallmind.mongodb.throng.query.Query;
 import org.smallmind.mongodb.throng.query.Updates;
 
 /*
@@ -120,25 +122,33 @@ public class ThrongClient {
     }
   }
 
+  public <T> Iterable<T> find (Class<T> entityClass, Query query) {
+
+    ThrongEntityCodec<T> entityCodec = getCodec(entityClass);
+
+    return new ThrongIterable<>(query.apply(mongoDatabase.getCollection(entityCodec.getCollection()).withCodecRegistry(codecRegistry).withDocumentClass(ThrongDocument.class).find(), BsonDocument.class, codecRegistry), entityCodec);
+  }
+
+  public <T> T findOne (Class<T> entityClass, Filter filter) {
+
+    ThrongEntityCodec<T> entityCodec = getCodec(entityClass);
+    FindIterable<ThrongDocument> findIterable = mongoDatabase.getCollection(entityCodec.getCollection()).withCodecRegistry(codecRegistry).withDocumentClass(ThrongDocument.class).find(filter.toBsonDocument(BsonDocument.class, codecRegistry)).limit(1);
+    ThrongDocument throngDocument;
+
+    if ((throngDocument = findIterable.first()) == null) {
+
+      return null;
+    } else {
+
+      return TranslationUtility.fromBson(entityCodec, throngDocument.getBsonDocument());
+    }
+  }
+
   public <T> InsertOneResult insertOne (T value, InsertOneOptions options) {
 
     ThrongEntityCodec<T> entityCodec = getCodec((Class<T>)value.getClass());
 
     return mongoDatabase.getCollection(entityCodec.getCollection()).withCodecRegistry(codecRegistry).withDocumentClass(ThrongDocument.class).insertOne(new ThrongDocument(TranslationUtility.toBson(value, entityCodec)));
-  }
-
-  public <T> Iterable<T> find (Class<T> entityClass) {
-
-    ThrongEntityCodec<T> entityCodec = getCodec(entityClass);
-
-    return new ThrongIterable<>(mongoDatabase.getCollection(entityCodec.getCollection()).withCodecRegistry(codecRegistry).withDocumentClass(ThrongDocument.class).find(), entityCodec);
-  }
-
-  public <T> Iterable<T> find (Class<T> entityClass, Filter filter) {
-
-    ThrongEntityCodec<T> entityCodec = getCodec(entityClass);
-
-    return new ThrongIterable<>(mongoDatabase.getCollection(entityCodec.getCollection()).withCodecRegistry(codecRegistry).withDocumentClass(ThrongDocument.class).find(filter.toBsonDocument(BsonDocument.class, codecRegistry)), entityCodec);
   }
 
   public <T> UpdateResult updateOne (Class<T> entityClass, Filter filter, Updates updates, UpdateOptions updateOptions) {
