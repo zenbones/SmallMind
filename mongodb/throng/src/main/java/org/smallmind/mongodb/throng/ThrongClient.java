@@ -38,8 +38,10 @@ import java.util.LinkedList;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.DeleteOptions;
 import com.mongodb.client.model.InsertOneOptions;
 import com.mongodb.client.model.UpdateOptions;
+import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
 import org.bson.BsonDocument;
@@ -147,17 +149,24 @@ public class ThrongClient {
     }
   }
 
-  public <T> InsertOneResult insertOne (T value, InsertOneOptions options) {
+  public <T> InsertOneResult insert (T value, InsertOneOptions options) {
 
     ThrongEntityCodec<T> entityCodec = getCodec((Class<T>)value.getClass());
 
     return mongoDatabase.getCollection(entityCodec.getCollection()).withCodecRegistry(codecRegistry).withDocumentClass(ThrongDocument.class).insertOne(new ThrongDocument(TranslationUtility.toBson(value, entityCodec)));
   }
 
-  public <T> UpdateResult updateOne (Class<T> entityClass, Filter filter, Updates updates, UpdateOptions updateOptions) {
+  public <T> UpdateResult update (Class<T> entityClass, Filter filter, Updates updates, UpdateOptions updateOptions) {
 
     ThrongEntityCodec<T> entityCodec = getCodec(entityClass);
 
-    return mongoDatabase.getCollection(entityCodec.getCollection()).withCodecRegistry(codecRegistry).withDocumentClass(ThrongDocument.class).updateOne(filter.toBsonDocument(BsonDocument.class, codecRegistry), updates.toBsonDocument(BsonDocument.class, codecRegistry), updateOptions);
+    return mongoDatabase.getCollection(entityCodec.getCollection()).withCodecRegistry(codecRegistry).withDocumentClass(ThrongDocument.class).updateMany(filter.toBsonDocument(BsonDocument.class, codecRegistry), updates.toBsonDocument(BsonDocument.class, codecRegistry), updateOptions);
+  }
+
+  public <T> DeleteResult delete (Class<T> entityClass, Filter filter, DeleteOptions deleteOptions) {
+
+    ThrongEntityCodec<T> entityCodec = getCodec(entityClass);
+
+    return mongoDatabase.getCollection(entityCodec.getCollection()).withCodecRegistry(codecRegistry).withDocumentClass(ThrongDocument.class).deleteMany(filter.toBsonDocument(BsonDocument.class, codecRegistry), deleteOptions);
   }
 }
