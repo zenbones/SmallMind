@@ -227,7 +227,7 @@ public class ThrongDao<I extends Serializable & Comparable<I>, D extends ThrongD
     return ((constructedFilters = constructFilters(filterDetails)) == null) ? DeleteResult.unacknowledged() : getSession().getNativeSession().delete(getManagedClass(), constructedFilters.combine(), filterDetails.getDeleteOptions());
   }
 
-  public UpdateResult updateByQuery (UpdateFilterDetails filterDetails) {
+  public UpdateResult updateByFilter (UpdateFilterDetails filterDetails) {
 
     Filters constructedFilters;
 
