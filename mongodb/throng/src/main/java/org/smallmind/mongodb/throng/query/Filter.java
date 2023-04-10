@@ -69,6 +69,13 @@ public class Filter {
     if ((filters == null) || (filters.length == 0)) {
 
       return new Filter("and", com.mongodb.client.model.Filters.empty());
+    } else if (filters.length == 1) {
+      if (filters[0].bson == null) {
+        throw new IllegalFilterStateException("The filter(%s) is incomplete", filters[0].fieldName);
+      } else {
+
+        return filters[0];
+      }
     } else {
 
       return new Filter("and", com.mongodb.client.model.Filters.and(MutationUtility.toArray(filters, Bson.class, filter -> {
@@ -88,6 +95,13 @@ public class Filter {
     if ((filters == null) || (filters.length == 0)) {
 
       return new Filter("or", com.mongodb.client.model.Filters.empty());
+    } else if (filters.length == 1) {
+      if (filters[0].bson == null) {
+        throw new IllegalFilterStateException("The filter(%s) is incomplete", filters[0].fieldName);
+      } else {
+
+        return filters[0];
+      }
     } else {
 
       return new Filter("or", com.mongodb.client.model.Filters.or(MutationUtility.toArray(filters, Bson.class, filter -> {
@@ -181,6 +195,18 @@ public class Filter {
     } else {
 
       bson = com.mongodb.client.model.Filters.exists(fieldName, exists);
+
+      return this;
+    }
+  }
+
+  public Filter in (Iterable<?> iterable) {
+
+    if (bson != null) {
+      throw new IllegalFilterStateException("The filter(%s) is closed", fieldName);
+    } else {
+
+      bson = com.mongodb.client.model.Filters.in(fieldName, iterable);
 
       return this;
     }

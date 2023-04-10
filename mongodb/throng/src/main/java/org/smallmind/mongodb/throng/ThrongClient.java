@@ -127,7 +127,14 @@ public class ThrongClient {
     }
   }
 
-  public <T> Iterable<T> find (Class<T> entityClass, Query query) {
+  public <T> long count (Class<T> entityClass, Filter filter) {
+
+    ThrongEntityCodec<T> entityCodec = getCodec(entityClass);
+
+    return mongoDatabase.getCollection(entityCodec.getCollection()).withCodecRegistry(codecRegistry).withDocumentClass(ThrongDocument.class).countDocuments(filter.toBsonDocument(BsonDocument.class, codecRegistry));
+  }
+
+  public <T> ThrongIterable<T> find (Class<T> entityClass, Query query) {
 
     ThrongEntityCodec<T> entityCodec = getCodec(entityClass);
 

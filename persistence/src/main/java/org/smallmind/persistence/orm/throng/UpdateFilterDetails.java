@@ -30,60 +30,24 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.mongodb.throng;
+package org.smallmind.persistence.orm.throng;
 
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoCursor;
-import org.smallmind.mongodb.throng.mapping.ThrongEntityCodec;
+import com.mongodb.client.model.UpdateOptions;
+import org.smallmind.mongodb.throng.query.Updates;
 
-public class ThrongIterable<T> implements Iterable<T> {
+public abstract class UpdateFilterDetails extends FilterDetails {
 
-  private final FindIterable<ThrongDocument> findIterable;
-  private final ThrongEntityCodec<T> codec;
+  private final UpdateOptions updateOptions;
 
-  public ThrongIterable (FindIterable<ThrongDocument> findIterable, ThrongEntityCodec<T> codec) {
+  public UpdateFilterDetails (UpdateOptions updateOptions) {
 
-    this.findIterable = findIterable;
-    this.codec = codec;
+    this.updateOptions = updateOptions;
   }
 
-  public List<T> asList () {
+  public abstract Updates completeUpdates (Updates updates);
 
-    LinkedList<T> list = new LinkedList<>();
+  public UpdateOptions getUpdateOptions () {
 
-    iterator().forEachRemaining(list::add);
-
-    return list;
-  }
-
-  @Override
-  public Iterator<T> iterator () {
-
-    return new ThrongIterator(findIterable.iterator());
-  }
-
-  private class ThrongIterator implements Iterator<T> {
-
-    private final MongoCursor<ThrongDocument> mongoCursor;
-
-    public ThrongIterator (MongoCursor<ThrongDocument> mongoCursor) {
-
-      this.mongoCursor = mongoCursor;
-    }
-
-    @Override
-    public boolean hasNext () {
-
-      return mongoCursor.hasNext();
-    }
-
-    @Override
-    public T next () {
-
-      return TranslationUtility.fromBson(codec, mongoCursor.next().getBsonDocument());
-    }
+    return updateOptions;
   }
 }

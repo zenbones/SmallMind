@@ -38,25 +38,28 @@ import org.smallmind.mongodb.throng.ThrongDocument;
 
 public class Query {
 
-  private final Filter filter;
+  private Filter filter;
   private Sort sort;
   private Projection projection;
   private int skip = 0;
   private int limit = 0;
+  private int batchSize = 0;
 
-  public Query (Filter filter) {
+  public static Query with () {
 
-    this.filter = filter;
+    return new Query();
   }
 
   public static Query empty () {
 
-    return new Query(Filter.empty());
+    return new Query().filter(Filter.empty());
   }
 
-  public static Query filter (Filter filter) {
+  public Query filter (Filter filter) {
 
-    return new Query(filter);
+    this.filter = filter;
+
+    return this;
   }
 
   public Query sort (Sort sort) {
@@ -87,6 +90,13 @@ public class Query {
     return this;
   }
 
+  public Query batchSize (int batchSize) {
+
+    this.batchSize = batchSize;
+
+    return this;
+  }
+
   public <T> FindIterable<ThrongDocument> apply (FindIterable<ThrongDocument> findIterable, Class<T> documentClass, CodecRegistry codecRegistry) {
 
     if (filter != null) {
@@ -103,6 +113,9 @@ public class Query {
     }
     if (limit > 0) {
       findIterable.limit(limit);
+    }
+    if (batchSize > 0) {
+      findIterable.batchSize(batchSize);
     }
 
     return findIterable;

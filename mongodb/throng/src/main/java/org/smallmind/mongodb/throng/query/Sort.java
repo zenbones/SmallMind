@@ -41,6 +41,11 @@ public class Sort {
 
   private final LinkedList<Bson> sortList = new LinkedList<>();
 
+  public static Sort on () {
+
+    return new Sort();
+  }
+
   public Sort asc (String fieldName) {
 
     sortList.add(Sorts.ascending(fieldName));

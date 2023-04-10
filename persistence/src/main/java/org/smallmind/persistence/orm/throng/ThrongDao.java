@@ -36,25 +36,19 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import com.mongodb.client.model.DeleteOptions;
+import com.mongodb.client.model.InsertOneOptions;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import org.smallmind.mongodb.throng.ThrongClient;
+import org.smallmind.mongodb.throng.query.Filter;
+import org.smallmind.mongodb.throng.query.Query;
+import org.smallmind.mongodb.throng.query.Sort;
+import org.smallmind.mongodb.throng.query.Updates;
 import org.smallmind.nutsnbolts.util.EmptyIterable;
-import org.smallmind.nutsnbolts.util.IterableIterator;
-import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.UpdateMode;
 import org.smallmind.persistence.cache.VectoredDao;
 import org.smallmind.persistence.orm.ORMDao;
-import org.smallmind.persistence.orm.data.mongo.CountQueryDetails;
-import org.smallmind.persistence.orm.data.mongo.DeleteQueryDetails;
-import org.smallmind.persistence.orm.data.mongo.FindQueryDetails;
-import org.smallmind.persistence.orm.data.mongo.MongoDataDurable;
-import org.smallmind.persistence.orm.data.mongo.QueryDetails;
-import org.smallmind.persistence.orm.data.mongo.UpdateQueryDetails;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.mongodb.core.query.Update;
 
 public class ThrongDao<I extends Serializable & Comparable<I>, D extends ThrongDurable<I, D>> extends ORMDao<I, D, ThrongClientFactory, ThrongClient> {
 
@@ -68,84 +62,6 @@ public class ThrongDao<I extends Serializable & Comparable<I>, D extends ThrongD
     super(proxySession, vectoredDao);
   }
 
-  @Override
-  public D get (Class<D> persistentClass, I id) {
-
-    return null;
-  }
-
-  @Override
-  public void delete (Class<D> persistentClass, D persistent) {
-
-  }
-
-  @Override
-  public D persist (Class<D> durableClass, D durable) {
-
-    return null;
-  }
-
-  @Override
-  public List<D> list () {
-
-    return null;
-  }
-
-  @Override
-  public List<D> list (int fetchSize) {
-
-    return null;
-  }
-
-  @Override
-  public List<D> list (I greaterThan, int fetchSize) {
-
-    return null;
-  }
-
-  @Override
-  public List<D> list (Collection<I> idCollection) {
-
-    return null;
-  }
-
-  @Override
-  public D acquire (Class<D> durableClass, I id) {
-
-    return null;
-  }
-
-  @Override
-  public D detach (D durable) {
-
-    return null;
-  }
-
-  @Override
-  public Iterable<D> scroll () {
-
-    return null;
-  }
-
-  @Override
-  public Iterable<D> scroll (int fetchSize) {
-
-    return null;
-  }
-
-  @Override
-  public Iterable<D> scrollById (I greaterThan, int fetchSize) {
-
-    return null;
-  }
-
-  @Override
-  public long size () {
-
-    return 0;
-  }
-
-  /*
   @Override
   public D get (Class<D> durableClass, I id) {
 
@@ -178,55 +94,55 @@ public class ThrongDao<I extends Serializable & Comparable<I>, D extends ThrongD
   @Override
   public D acquire (Class<D> durableClass, I id) {
 
-    return (id == null) ? null : durableClass.cast(getSession().getNativeSession().findOne(Query.query(Criteria.where("_id").is(id)), durableClass));
+    return (id == null) ? null : durableClass.cast(getSession().getNativeSession().findOne(durableClass, Filter.where("_id").eq("id")));
   }
 
   @Override
   public List<D> list () {
 
-    return getSession().getNativeSession().findAll(getManagedClass());
+    return getSession().getNativeSession().find(getManagedClass(), Query.empty()).asList();
   }
 
   @Override
   public List<D> list (int maxResults) {
 
-    return getSession().getNativeSession().find(new Query().limit(maxResults), getManagedClass());
+    return getSession().getNativeSession().find(getManagedClass(), Query.empty().limit(maxResults)).asList();
   }
 
   @Override
   public List<D> list (I greaterThan, int maxResults) {
 
-    return getSession().getNativeSession().find(Query.query(Criteria.where("_id").gt(greaterThan)).with(Sort.by("_id").ascending()).limit(maxResults), getManagedClass());
+    return getSession().getNativeSession().find(getManagedClass(), Query.with().filter(Filter.where("_id").gt(greaterThan)).sort(Sort.on().asc("_id")).limit(maxResults)).asList();
   }
 
   @Override
   public List<D> list (Collection<I> idCollection) {
 
-    return getSession().getNativeSession().find(Query.query(Criteria.where("_id").in(idCollection)), getManagedClass());
+    return getSession().getNativeSession().find(getManagedClass(), Query.with().filter(Filter.where("_id").in(idCollection))).asList();
   }
 
   @Override
   public Iterable<D> scroll () {
 
-    return new IterableIterator<>(getSession().getNativeSession().stream(new Query(), getManagedClass()));
+    return getSession().getNativeSession().find(getManagedClass(), Query.empty());
   }
 
   @Override
   public Iterable<D> scroll (int fetchSize) {
 
-    return new IterableIterator<>(getSession().getNativeSession().stream(new Query().cursorBatchSize(fetchSize), getManagedClass()));
+    return getSession().getNativeSession().find(getManagedClass(), Query.empty().batchSize(fetchSize));
   }
 
   @Override
   public Iterable<D> scrollById (final I greaterThan, final int fetchSize) {
 
-    return new IterableIterator<>(getSession().getNativeSession().stream(Query.query(Criteria.where("_id").gt(greaterThan)).with(Sort.by("_id").ascending()).cursorBatchSize(fetchSize), getManagedClass()));
+    return getSession().getNativeSession().find(getManagedClass(), Query.with().filter(Filter.where("_id").gt(greaterThan)).sort(Sort.on().asc("_id")).batchSize(fetchSize));
   }
 
   @Override
   public long size () {
 
-    return getSession().getNativeSession().count(new Query(), getManagedClass());
+    return getSession().getNativeSession().count(getManagedClass(), Filter.empty());
   }
 
   @Override
@@ -236,7 +152,7 @@ public class ThrongDao<I extends Serializable & Comparable<I>, D extends ThrongD
 
       VectoredDao<I, D> vectoredDao = getVectoredDao();
 
-      getSession().getNativeSession().save(durable);
+      getSession().getNativeSession().insert(durable, new InsertOneOptions());
 
       if (vectoredDao != null) {
 
@@ -256,7 +172,7 @@ public class ThrongDao<I extends Serializable & Comparable<I>, D extends ThrongD
 
       VectoredDao<I, D> vectoredDao = getVectoredDao();
 
-      getSession().getNativeSession().remove(durable);
+      getSession().getNativeSession().delete(durableClass, Filter.where("_id").eq(durable.getId()), new DeleteOptions());
 
       if (vectoredDao != null) {
         vectoredDao.delete(durableClass, durable);
@@ -270,18 +186,18 @@ public class ThrongDao<I extends Serializable & Comparable<I>, D extends ThrongD
     throw new UnsupportedOperationException("Morphia has no explicit detached state");
   }
 
-  public long countByQuery (CountQueryDetails queryDetails) {
+  public long countByFilter (CountFilterDetails filterDetails) {
 
-    Query constructedQuery;
+    Filters constructedFilters;
 
-    return ((constructedQuery = constructQuery(queryDetails)) == null) ? 0 : getSession().getNativeSession().count(constructedQuery, getManagedClass());
+    return ((constructedFilters = constructFilters(filterDetails)) == null) ? 0 : getSession().getNativeSession().count(getManagedClass(), constructedFilters.combine());
   }
 
-  public D findByQuery (FindQueryDetails queryDetails) {
+  public D findByFilter (FindFilterDetails filterDetails) {
 
-    Query constructedQuery;
+    Filters constructedFilters;
 
-    return ((constructedQuery = constructQuery(queryDetails)) == null) ? null : getSession().getNativeSession().findOne(constructedQuery, getManagedClass());
+    return ((constructedFilters = constructFilters(filterDetails)) == null) ? null : getSession().getNativeSession().findOne(getManagedClass(), constructedFilters.combine());
   }
 
   public List<D> listByQuery (FindQueryDetails queryDetails) {
@@ -293,7 +209,7 @@ public class ThrongDao<I extends Serializable & Comparable<I>, D extends ThrongD
       return Collections.emptyList();
     } else {
 
-      return getSession().getNativeSession().find(constructedQuery, getManagedClass());
+      return getSession().getNativeSession().find(getManagedClass(), constructedQuery).asList();
     }
   }
 
@@ -301,26 +217,30 @@ public class ThrongDao<I extends Serializable & Comparable<I>, D extends ThrongD
 
     Query constructedQuery;
 
-    return ((constructedQuery = constructQuery(queryDetails)) == null) ? new EmptyIterable<>() : new IterableIterator<>(getSession().getNativeSession().stream(constructedQuery, getManagedClass()));
+    return ((constructedQuery = constructQuery(queryDetails)) == null) ? new EmptyIterable<>() : getSession().getNativeSession().find(getManagedClass(), constructedQuery);
   }
 
-  public DeleteResult deleteByQuery (DeleteQueryDetails queryDetails) {
+  public DeleteResult deleteByFilter (DeleteFilterDetails filterDetails) {
 
-    Query constructedQuery;
+    Filters constructedFilters;
 
-    return ((constructedQuery = constructQuery(queryDetails)) == null) ? DeleteResult.unacknowledged() : getSession().getNativeSession().remove(constructedQuery, getManagedClass());
+    return ((constructedFilters = constructFilters(filterDetails)) == null) ? DeleteResult.unacknowledged() : getSession().getNativeSession().delete(getManagedClass(), constructedFilters.combine(), filterDetails.getDeleteOptions());
   }
 
-  public UpdateResult updateByQuery (UpdateQueryDetails queryDetails) {
+  public UpdateResult updateByQuery (UpdateFilterDetails filterDetails) {
 
-    Query constructedQuery;
+    Filters constructedFilters;
 
-    return ((constructedQuery = constructQuery(queryDetails)) == null) ? UpdateResult.unacknowledged() : queryDetails.getUpdateType().execute(getSession().getNativeSession(), constructedQuery, queryDetails.completeUpdates(new Update()), getManagedClass());
+    return ((constructedFilters = constructFilters(filterDetails)) == null) ? UpdateResult.unacknowledged() : getSession().getNativeSession().update(getManagedClass(), constructedFilters.combine(), filterDetails.completeUpdates(Updates.of()), filterDetails.getUpdateOptions());
   }
 
   public Query constructQuery (QueryDetails queryDetails) {
 
-    return queryDetails.completeQuery(new org.smallmind.persistence.orm.data.mongo.query.Query()).as();
+    return queryDetails.completeQuery(Query.with());
   }
-   */
+
+  public Filters constructFilters (FilterDetails filterDetails) {
+
+    return filterDetails.completeFilter(Filters.on());
+  }
 }

@@ -40,6 +40,11 @@ public class Updates {
 
   private final LinkedList<Bson> updateList = new LinkedList<>();
 
+  public static Updates of () {
+
+    return new Updates();
+  }
+
   public Updates set (String fieldName, Object value) {
 
     updateList.add(com.mongodb.client.model.Updates.set(fieldName, value));

@@ -30,60 +30,39 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.mongodb.throng;
+package org.smallmind.persistence.orm.throng;
 
-import java.util.Iterator;
+import java.util.Arrays;
 import java.util.LinkedList;
-import java.util.List;
-import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoCursor;
-import org.smallmind.mongodb.throng.mapping.ThrongEntityCodec;
+import org.smallmind.mongodb.throng.query.Filter;
 
-public class ThrongIterable<T> implements Iterable<T> {
+public class Filters {
 
-  private final FindIterable<ThrongDocument> findIterable;
-  private final ThrongEntityCodec<T> codec;
+  private final LinkedList<Filter> filterList = new LinkedList<>();
 
-  public ThrongIterable (FindIterable<ThrongDocument> findIterable, ThrongEntityCodec<T> codec) {
+  public static Filters on () {
 
-    this.findIterable = findIterable;
-    this.codec = codec;
+    return new Filters();
   }
 
-  public List<T> asList () {
+  public Filters and (Filter... filters) {
 
-    LinkedList<T> list = new LinkedList<>();
+    filterList.addAll(Arrays.asList(filters));
 
-    iterator().forEachRemaining(list::add);
-
-    return list;
+    return this;
   }
 
-  @Override
-  public Iterator<T> iterator () {
+  public Filter combine () {
 
-    return new ThrongIterator(findIterable.iterator());
-  }
+    if (filterList.isEmpty()) {
 
-  private class ThrongIterator implements Iterator<T> {
+      return Filter.empty();
+    } else if (filterList.size() == 1) {
 
-    private final MongoCursor<ThrongDocument> mongoCursor;
+      return filterList.getFirst();
+    } else {
 
-    public ThrongIterator (MongoCursor<ThrongDocument> mongoCursor) {
-
-      this.mongoCursor = mongoCursor;
-    }
-
-    @Override
-    public boolean hasNext () {
-
-      return mongoCursor.hasNext();
-    }
-
-    @Override
-    public T next () {
-
-      return TranslationUtility.fromBson(codec, mongoCursor.next().getBsonDocument());
+      return Filter.and(filterList.toArray(new Filter[0]));
     }
   }
 }
