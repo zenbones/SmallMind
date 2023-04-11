@@ -141,10 +141,10 @@ public class ThrongClient {
     return new ThrongIterable<>(query.apply(mongoDatabase.getCollection(entityCodec.getCollection()).withCodecRegistry(codecRegistry).withDocumentClass(ThrongDocument.class).find(), BsonDocument.class, codecRegistry), entityCodec);
   }
 
-  public <T> T findOne (Class<T> entityClass, Filter filter) {
+  public <T> T findOne (Class<T> entityClass, Query query) {
 
     ThrongEntityCodec<T> entityCodec = getCodec(entityClass);
-    FindIterable<ThrongDocument> findIterable = mongoDatabase.getCollection(entityCodec.getCollection()).withCodecRegistry(codecRegistry).withDocumentClass(ThrongDocument.class).find(filter.toBsonDocument(BsonDocument.class, codecRegistry)).limit(1);
+    FindIterable<ThrongDocument> findIterable = query.apply(mongoDatabase.getCollection(entityCodec.getCollection()).withCodecRegistry(codecRegistry).withDocumentClass(ThrongDocument.class).find(), BsonDocument.class, codecRegistry).limit(1);
     ThrongDocument throngDocument;
 
     if ((throngDocument = findIterable.first()) == null) {

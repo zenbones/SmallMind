@@ -31,34 +31,26 @@
     </property>
   </bean>
 
-  <bean name="annotationSeekingBeanFactoryPostProcessor" class="org.smallmind.persistence.orm.spring.data.mongo.AnnotationSeekingBeanFactoryPostProcessor"/>
+  <bean name="annotationSeekingBeanFactoryPostProcessor" class="org.smallmind.persistence.orm.spring.throng.AnnotationSeekingBeanFactoryPostProcessor"/>
 
-  <bean id="annotatedEntityModels" class="org.smallmind.persistence.orm.data.mongo.callback.AnnotatedEntityModels"/>
-
-  <bean id="mongoDataEntityCallbacks" class="org.smallmind.persistence.orm.spring.data.mongo.MongoDataEntityCallbacksFactoryBean">
-    <property name="callbacks">
-      <list>
-        <bean class="org.smallmind.persistence.orm.data.mongo.callback.CreatedAndLastUpdatedCallback">
-          <constructor-arg index="0" name="annotatedEntityModels" ref="annotatedEntityModels"/>
-        </bean>
-      </list>
-    </property>
-  </bean>
-
-  <bean id="mongoTemplateFactory" class="org.smallmind.persistence.orm.spring.data.mongo.EntitySeekingMongoTemplateFactoryBean">
+  <bean id="throngClientFactory" class="org.smallmind.persistence.orm.spring.throng.EntitySeekingThrongClientFactoryBean">
     <property name="annotationSeekingBeanFactoryPostProcessor" ref="annotationSeekingBeanFactoryPostProcessor"/>
     <property name="mongoClient" ref="mongoClient"/>
     <property name="databaseName" value="myDatabase"/>
     <property name="sessionSourceKey" value="mySessionLey"/>
-    <property name="ensureIndexes" value="false"/>
-    <property name="mongoDataEntityCallbacks" ref="mongoDataEntityCallbacks"/>
+    <property name="throngOptions">
+      <bean class="org.smallmind.mongodb.throng.ThrongOptions">
+        <property name="createIndexes" value="false"/>
+        <property name="storeNulls" value="false"/>
+      </bean>
+    </property>
   </bean>
 
   <!-- Proxy Session -->
-  <bean id="mongoDataProxySession" class="org.smallmind.persistence.orm.data.mongo.MongoDataProxySession" init-method="register">
+  <bean id="epicenterThrongProxySession" class="org.smallmind.persistence.orm.throng.ThrongProxySession" init-method="register">
     <constructor-arg index="0" value="mongodb"/>
     <constructor-arg index="1" value="mysession"/>
-    <constructor-arg index="2" ref="mongoTemplateFactory"/>
+    <constructor-arg index="2" ref="throngClientFactory"/>
     <constructor-arg index="3" value="true"/>
     <constructor-arg index="4" value="false"/>
   </bean>

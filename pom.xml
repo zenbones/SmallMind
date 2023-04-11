@@ -120,7 +120,6 @@
     <snakeyaml.version>1.29</snakeyaml.version>
     <spring.version>5.3.21</spring.version>
     <spring.batch.version>4.3.6</spring.batch.version>
-    <spring.data.mongodb.version>3.4.7</spring.data.mongodb.version>
     <spring.rabbit.version>2.4.5</spring.rabbit.version>
     <sshd.version>2.7.0</sshd.version>
     <syslog4j.version>0.9.30</syslog4j.version>
@@ -625,11 +624,6 @@
         <groupId>org.hibernate.common</groupId>
         <artifactId>hibernate-commons-annotations</artifactId>
         <version>${hibernate.annotations.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.springframework.data</groupId>
-        <artifactId>spring-data-mongodb</artifactId>
-        <version>${spring.data.mongodb.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mongodb</groupId>

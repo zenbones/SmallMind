@@ -94,7 +94,7 @@ public class ThrongDao<I extends Serializable & Comparable<I>, D extends ThrongD
   @Override
   public D acquire (Class<D> durableClass, I id) {
 
-    return (id == null) ? null : durableClass.cast(getSession().getNativeSession().findOne(durableClass, Filter.where("_id").eq("id")));
+    return (id == null) ? null : durableClass.cast(getSession().getNativeSession().findOne(durableClass, Query.with().filter(Filter.where("_id").eq("id"))));
   }
 
   @Override
@@ -193,11 +193,11 @@ public class ThrongDao<I extends Serializable & Comparable<I>, D extends ThrongD
     return ((constructedFilters = constructFilters(filterDetails)) == null) ? 0 : getSession().getNativeSession().count(getManagedClass(), constructedFilters.combine());
   }
 
-  public D findByFilter (FindFilterDetails filterDetails) {
+  public D findByQuery (FindQueryDetails queryDetails) {
 
-    Filters constructedFilters;
+    Query constructedQuery;
 
-    return ((constructedFilters = constructFilters(filterDetails)) == null) ? null : getSession().getNativeSession().findOne(getManagedClass(), constructedFilters.combine());
+    return ((constructedQuery = constructQuery(queryDetails)) == null) ? null : getSession().getNativeSession().findOne(getManagedClass(), constructedQuery);
   }
 
   public List<D> listByQuery (FindQueryDetails queryDetails) {

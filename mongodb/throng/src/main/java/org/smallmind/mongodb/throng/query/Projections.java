@@ -30,16 +30,37 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.data.mongo.internal;
+package org.smallmind.mongodb.throng.query;
 
-import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
+import java.util.LinkedList;
+import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.conversions.Bson;
 
-public class MongoDataMappingContext extends MongoMappingContext {
+public class Projections {
 
-  public void addEntities (Class[] entityClasses) {
+  private final LinkedList<Bson> projectionList = new LinkedList<>();
 
-    for (Class<?> entityClass : entityClasses) {
-      addPersistentEntity(entityClass);
-    }
+  public static Projections with () {
+
+    return new Projections();
+  }
+
+  public Projections include (String... fieldNames) {
+
+    projectionList.add(com.mongodb.client.model.Projections.include(fieldNames));
+
+    return this;
+  }
+
+  public Projections exclude (String... fieldNames) {
+
+    projectionList.add(com.mongodb.client.model.Projections.exclude(fieldNames));
+
+    return this;
+  }
+
+  public Bson toBsonDocument (Class<?> documentClass, CodecRegistry codecRegistry) {
+
+    return com.mongodb.client.model.Projections.fields(projectionList).toBsonDocument(documentClass, codecRegistry);
   }
 }

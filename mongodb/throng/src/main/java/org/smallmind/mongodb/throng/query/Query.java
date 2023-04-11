@@ -40,7 +40,7 @@ public class Query {
 
   private Filter filter;
   private Sort sort;
-  private Projection projection;
+  private Projections projections;
   private int skip = 0;
   private int limit = 0;
   private int batchSize = 0;
@@ -69,9 +69,9 @@ public class Query {
     return this;
   }
 
-  public Query projection (Projection projection) {
+  public Query projection (Projections projections) {
 
-    this.projection = projection;
+    this.projections = projections;
 
     return this;
   }
@@ -105,8 +105,8 @@ public class Query {
     if (sort != null) {
       findIterable.sort(sort.toBsonDocument(documentClass, codecRegistry));
     }
-    if (projection != null) {
-      findIterable.projection(projection.toBsonDocument(documentClass, codecRegistry));
+    if (projections != null) {
+      findIterable.projection(projections.toBsonDocument(documentClass, codecRegistry));
     }
     if (skip > 0) {
       findIterable.skip(skip);
