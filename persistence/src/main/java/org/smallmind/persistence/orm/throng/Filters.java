@@ -45,6 +45,13 @@ public class Filters {
     return new Filters();
   }
 
+  public Filters and (Filters filters) {
+
+    filterList.addAll(filters.filterList);
+
+    return this;
+  }
+
   public Filters and (Filter... filters) {
 
     filterList.addAll(Arrays.asList(filters));
