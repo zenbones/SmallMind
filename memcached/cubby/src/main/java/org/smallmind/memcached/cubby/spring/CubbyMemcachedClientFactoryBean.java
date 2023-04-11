@@ -41,7 +41,6 @@ import org.smallmind.memcached.cubby.CubbyMemcachedClient;
 import org.smallmind.memcached.cubby.CubbyOperationException;
 import org.smallmind.memcached.cubby.MemcachedHost;
 import org.smallmind.memcached.utility.MemcachedServer;
-import org.smallmind.memcached.utility.XMemcachedMemcachedClient;
 import org.smallmind.scribe.pen.LoggerManager;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.FactoryBean;
@@ -78,7 +77,7 @@ public class CubbyMemcachedClientFactoryBean implements FactoryBean<CubbyMemcach
   @Override
   public Class<?> getObjectType () {
 
-    return XMemcachedMemcachedClient.class;
+    return CubbyMemcachedClient.class;
   }
 
   @Override

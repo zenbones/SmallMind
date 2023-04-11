@@ -35,6 +35,7 @@ package org.smallmind.nutsnbolts.reflection;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Type;
 import java.util.LinkedList;
 import java.util.concurrent.ConcurrentHashMap;
 import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
@@ -73,6 +74,7 @@ public class FieldUtility {
               if (!(field.isSynthetic() || Modifier.isStatic(field.getModifiers()) || Modifier.isTransient(field.getModifiers()))) {
 
                 field.setAccessible(true);
+                Type t;
                 fieldAccessorList.add(new FieldAccessor(field, locateGetter(clazz, field), locateSetter(clazz, field)));
               }
             }

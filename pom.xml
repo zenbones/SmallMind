@@ -134,7 +134,6 @@
     <slf4j.version>2.0.5</slf4j.version>
     <spring.version>6.0.4</spring.version>
     <spring.batch.version>5.0.0</spring.batch.version>
-    <spring.data.mongodb.version>4.0.1</spring.data.mongodb.version>
     <spring.rabbit.version>3.0.0</spring.rabbit.version>
     <sshd.version>2.9.2</sshd.version>
     <sun.xml.bind.version>4.0.1</sun.xml.bind.version>
@@ -273,11 +272,6 @@
         <groupId>commons-net</groupId>
         <artifactId>commons-net</artifactId>
         <version>${commons.net.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.springframework.data</groupId>
-        <artifactId>spring-data-mongodb</artifactId>
-        <version>${spring.data.mongodb.version}</version>
       </dependency>
       <dependency>
         <groupId>io.netty</groupId>
@@ -697,6 +691,16 @@
       <dependency>
         <groupId>org.smallmind</groupId>
         <artifactId>memcached-utility</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.smallmind</groupId>
+        <artifactId>mongodb-throng</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.smallmind</groupId>
+        <artifactId>mongodb-utility</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

@@ -3,10 +3,16 @@
        xmlns="http://www.springframework.org/schema/beans"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-  <bean id="memcachedClient" class="org.smallmind.memcached.utility.spring.XMemcachedMemcachedClientFactoryBean" destroy-method="shutdown">
-    <property name="poolSize" value="${memcached.pool.size.max}"/>
+  <bean id="memcachedClient" class="org.smallmind.memcached.cubby.spring.CubbyMemcachedClientFactoryBean">
+    <property name="configuration">
+      <bean class="org.smallmind.memcached.cubby.spring.CubbyConfigurationFactoryBean">
+        <property name="initial" value="OPTIMAL"/>
+        <property name="defaultRequestTimeoutMilliseconds" value="3000"/>
+        <property name="connectionsPerHost" value="${memcached.connections_per_host}"/>
+      </bean>
+    </property>
     <property name="servers">
-      <bean class="org.smallmind.memcached.utility.spring.MemcachedServerFactoryBean">
+      <bean class="org.smallmind.memcached.cubby.spring.MemcachedServerMapFactoryBean">
         <property name="serverPattern" value="${memcached.server_pattern}"/>
         <property name="serverSpread" value="${memcached.server_spread}"/>
       </bean>

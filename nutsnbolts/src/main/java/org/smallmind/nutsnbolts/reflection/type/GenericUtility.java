@@ -45,6 +45,41 @@ import java.util.Map;
 
 public class GenericUtility {
 
+  public static Class<?> findTypeArgument (Class<?> objectClass, TypeVariable<?> typeVariable) {
+
+    Class<?> currentClass = objectClass;
+
+    while (!Object.class.equals(currentClass)) {
+
+      Type superclassType;
+
+      if ((superclassType = currentClass.getGenericSuperclass()) instanceof ParameterizedType) {
+
+        int argumentIndex = 0;
+
+        for (Type argumentType : ((ParameterizedType)superclassType).getActualTypeArguments()) {
+          if (argumentType instanceof TypeVariable) {
+            if (typeVariable.equals(argumentType)) {
+
+              List<Class<?>> reifiedArgumentList;
+
+              if ((reifiedArgumentList = GenericUtility.getTypeArgumentsOfSubclass(currentClass.getSuperclass(), objectClass)).size() > argumentIndex) {
+
+                return reifiedArgumentList.get(argumentIndex);
+              }
+            }
+
+            argumentIndex++;
+          }
+        }
+      }
+
+      currentClass = currentClass.getSuperclass();
+    }
+
+    return null;
+  }
+
   public static List<Class<?>> getTypeArgumentsOfSubclass (Class<?> baseClass, Class<?> childClass) {
 
     Map<Type, Type> resolvedTypes = new HashMap<>();

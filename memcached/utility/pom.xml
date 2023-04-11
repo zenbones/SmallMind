@@ -13,29 +13,12 @@
   <dependencies>
     <dependency>
       <groupId>org.smallmind</groupId>
-      <artifactId>scribe-pen</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.smallmind</groupId>
       <artifactId>smallmind-nutsnbolts</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-context</artifactId>
-      <scope>compile</scope>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>com.googlecode.xmemcached</groupId>
-      <artifactId>xmemcached</artifactId>
-      <scope>compile</scope>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>com.esotericsoftware.kryo</groupId>
-      <artifactId>kryo5</artifactId>
       <scope>compile</scope>
       <optional>true</optional>
     </dependency>
