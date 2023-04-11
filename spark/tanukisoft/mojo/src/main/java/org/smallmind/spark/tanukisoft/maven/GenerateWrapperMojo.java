@@ -94,6 +94,8 @@ public class GenerateWrapperMojo extends AbstractMojo {
   private String jvmInitMemoryMB;
   @Parameter
   private String jvmMaxMemoryMB;
+  @Parameter(defaultValue = "0022")
+  private String umask;
   @Parameter
   private String runAs;
   @Parameter(defaultValue = "0")
@@ -226,6 +228,8 @@ public class GenerateWrapperMojo extends AbstractMojo {
       if ((runAs != null) && (!runAs.isEmpty())) {
         freemarkerMap.put("runAs", runAs);
       }
+
+      freemarkerMap.put("umask", umask);
 
       freemarkerMap.put("useUpstart", useUpstart);
       freemarkerMap.put("useSystemD", useSystemD);
