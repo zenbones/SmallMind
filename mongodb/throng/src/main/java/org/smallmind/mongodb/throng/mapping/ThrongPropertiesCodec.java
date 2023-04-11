@@ -72,22 +72,33 @@ public class ThrongPropertiesCodec<T> implements Codec<T>, IndexProvider {
   @Override
   public T decode (BsonReader reader, DecoderContext decoderContext) {
 
-    try {
+    if (BsonType.NULL.equals(reader.getCurrentBsonType())) {
+      reader.readNull();
 
-      T instance = throngProperties.getEntityClass().getConstructor().newInstance();
+      return null;
+    } else {
+      try {
 
-      while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
+        T instance = throngProperties.getEntityClass().getConstructor().newInstance();
 
-        ThrongProperty throngProperty;
+        while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
 
-        if ((throngProperty = throngProperties.getByPropertyName(reader.readName())) != null) {
-          throngProperty.getFieldAccessor().set(instance, throngProperty.getCodec().decode(reader, decoderContext));
+          ThrongProperty throngProperty;
+
+          if ((throngProperty = throngProperties.getByPropertyName(reader.readName())) != null) {
+            if (BsonType.NULL.equals(reader.getCurrentBsonType())) {
+              reader.readNull();
+              throngProperty.getFieldAccessor().set(instance, null);
+            } else {
+              throngProperty.getFieldAccessor().set(instance, throngProperty.getCodec().decode(reader, decoderContext));
+            }
+          }
         }
-      }
 
-      return instance;
-    } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException exception) {
-      throw new ThrongRuntimeException(exception);
+        return instance;
+      } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException exception) {
+        throw new ThrongRuntimeException(exception);
+      }
     }
   }
 
@@ -101,7 +112,12 @@ public class ThrongPropertiesCodec<T> implements Codec<T>, IndexProvider {
 
         if (((propertyValue = throngProperty.getFieldAccessor().get(value)) != null) || throngProperties.isStoreNulls()) {
           writer.writeName(throngProperty.getName());
-          reEncode(writer, throngProperty.getCodec(), propertyValue, encoderContext);
+
+          if (propertyValue == null) {
+            writer.writeNull();
+          } else {
+            reEncode(writer, throngProperty.getCodec(), propertyValue, encoderContext);
+          }
         }
       } catch (IllegalAccessException | InvocationTargetException exception) {
         throw new ThrongRuntimeException(exception);

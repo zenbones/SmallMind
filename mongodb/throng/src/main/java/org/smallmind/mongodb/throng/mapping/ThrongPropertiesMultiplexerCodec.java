@@ -33,6 +33,7 @@
 package org.smallmind.mongodb.throng.mapping;
 
 import org.bson.BsonReader;
+import org.bson.BsonType;
 import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
@@ -70,26 +71,40 @@ public class ThrongPropertiesMultiplexerCodec<T> implements Codec<T>, IndexProvi
   @Override
   public T decode (BsonReader reader, DecoderContext decoderContext) {
 
-    String polymorphicKey;
+    if (BsonType.NULL.equals(reader.getCurrentBsonType())) {
+      reader.readNull();
 
-    if (!throngPropertiesMultiplexer.getKey().equals(polymorphicKey = reader.readName())) {
-      throw new ThrongRuntimeException("The expected polymorphic key field(%s) does not match the actual(%s)", throngPropertiesMultiplexer.getKey(), polymorphicKey);
+      return null;
     } else {
 
-      T instance;
+      String polymorphicKey;
 
-      instance = throngPropertiesMultiplexer.getEntityClass().cast(throngPropertiesMultiplexer.getCodec(reader.readString()).decode(reader, decoderContext));
+      if (!throngPropertiesMultiplexer.getKey().equals(polymorphicKey = reader.readName())) {
+        throw new ThrongRuntimeException("The expected polymorphic key field(%s) does not match the actual(%s)", throngPropertiesMultiplexer.getKey(), polymorphicKey);
+      } else {
 
-      return instance;
+        T instance;
+
+        instance = throngPropertiesMultiplexer.getEntityClass().cast(throngPropertiesMultiplexer.getCodec(reader.readString()).decode(reader, decoderContext));
+
+        return instance;
+      }
     }
   }
 
   @Override
   public void encode (BsonWriter writer, T value, EncoderContext encoderContext) {
 
-    writer.writeName(throngPropertiesMultiplexer.getKey());
-    writer.writeString(value.getClass().getName());
-    reEncode(writer, throngPropertiesMultiplexer.getCodec(value.getClass().getName()), value, encoderContext);
+    if ((value != null) || throngPropertiesMultiplexer.isStoreNulls()) {
+      if (value == null) {
+        writer.writeNull();
+      } else {
+        writer.writeName(throngPropertiesMultiplexer.getKey());
+        writer.writeString(value.getClass().getName());
+
+        reEncode(writer, throngPropertiesMultiplexer.getCodec(value.getClass().getName()), value, encoderContext);
+      }
+    }
   }
 
   // Due to the fact that object is not of type 'capture of ?'
