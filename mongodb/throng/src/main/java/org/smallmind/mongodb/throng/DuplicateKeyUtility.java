@@ -36,7 +36,7 @@ import com.mongodb.MongoWriteException;
 
 public class DuplicateKeyUtility {
 
-  public boolean idDuplicateKeyException (MongoWriteException writeException) {
+  public static boolean idDuplicateKeyException (MongoWriteException writeException) {
 
     return writeException.getError().getCode() == 11000;
   }
