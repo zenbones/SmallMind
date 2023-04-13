@@ -161,7 +161,8 @@ public class ConnectionCoordinator {
     lock.writeLock().lock();
 
     try {
-      constructConnection(memcachedHost);
+      memcachedHost.regenerate();
+
       serverPool.get(memcachedHost.getName()).setActive(true);
       configuration.getKeyLocator().updateRouting(serverPool);
       LoggerManager.getLogger(ConnectionCoordinator.class).info("Reconnected memcached host(%s=%s)", memcachedHost.getName(), memcachedHost.getAddress());
