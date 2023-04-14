@@ -33,7 +33,6 @@
 package org.smallmind.memcached.cubby;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import org.smallmind.memcached.cubby.command.ArithmeticCommand;
 import org.smallmind.memcached.cubby.command.ArithmeticMode;
@@ -67,7 +66,7 @@ public class CubbyTest {
 
     TestLoggerConfiguration.setup();
 
-    client = new CubbyMemcachedClient(configuration, new MemcachedHost("0", new InetSocketAddress("localhost", 11211)));
+    client = new CubbyMemcachedClient(configuration, new MemcachedHost("0", "localhost", 11211));
     client.start();
 
     client.delete("second");
