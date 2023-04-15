@@ -34,15 +34,13 @@ package org.smallmind.mongodb.throng.mapping;
 
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
-import org.bson.codecs.Codec;
-import org.bson.codecs.configuration.CodecRegistry;
 import org.smallmind.mongodb.throng.ThrongRuntimeException;
 import org.smallmind.nutsnbolts.reflection.FieldAccessor;
 import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
 
-public class CodecRegistryUtility {
+public class CodecUtility {
 
-  public static Codec<?> getReifiedCodec (CodecRegistry codecRegistry, Class<?> parentClass, FieldAccessor fieldAccessor) {
+  public static Class<?> getReifiedType (Class<?> parentClass, FieldAccessor fieldAccessor) {
 
     Type genericType;
 
@@ -54,11 +52,11 @@ public class CodecRegistryUtility {
         throw new ThrongRuntimeException("Could not reify the type of field(%s) in entity(%s)", fieldAccessor.getName(), parentClass.getName());
       } else {
 
-        return codecRegistry.get(reifiedFieldType);
+        return reifiedFieldType;
       }
     } else {
 
-      return codecRegistry.get(fieldAccessor.getType());
+      return fieldAccessor.getType();
     }
   }
 }

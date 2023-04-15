@@ -109,7 +109,19 @@ public class ThrongProperties<T> extends TreeMap<String, ThrongProperty> impleme
               throngIndexes.accumulate(propertyName, ((IndexProvider)componentCodec).provideIndexes());
             } else {
               try {
-                codec = CodecRegistryUtility.getReifiedCodec(codecRegistry, entityClass, fieldAccessor);
+
+                Class<?> refiedClass = CodecUtility.getReifiedType(entityClass, fieldAccessor);
+
+                if ((codec = codecRegistry.get(refiedClass)) == null) {
+
+                  org.bson.codecs.Codec<?> componentCodec;
+
+                  if (refiedClass.isArray() && ((componentCodec = codecRegistry.get(refiedClass.getComponentType())) != null)) {
+                    codec = new ArrayCodec<>(refiedClass, refiedClass.getComponentType(), componentCodec, storeNulls);
+                  } else {
+                    throw new ThrongMappingException("No known codec for field(%s) of type(%s) in entity(%s)", fieldAccessor.getName(), fieldAccessor.getType().getName(), entityClass.getName());
+                  }
+                }
               } catch (CodecConfigurationException codecConfigurationException) {
                 throw new ThrongMappingException("No known codec for field(%s) of type(%s) in entity(%s)", fieldAccessor.getName(), fieldAccessor.getType().getName(), entityClass.getName());
               }
