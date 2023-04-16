@@ -49,9 +49,7 @@ public class TranslationUtility {
       entityCodec.getLifecycle().executePreLoad(entityCodec.getEntityClass(), bsonDocument);
     }
 
-    instance = entityCodec.decode(new BsonDocumentReader(bsonDocument), DecoderContext.builder().build());
-
-    if (entityCodec.getLifecycle() != null) {
+    if (((instance = entityCodec.decode(new BsonDocumentReader(bsonDocument), DecoderContext.builder().build())) != null) && (entityCodec.getLifecycle() != null)) {
       entityCodec.getLifecycle().executePostLoad(instance);
     }
 
@@ -62,13 +60,13 @@ public class TranslationUtility {
 
     BsonDocument bsonDocument;
 
-    if (entityCodec.getLifecycle() != null) {
+    if ((entity != null) && (entityCodec.getLifecycle() != null)) {
       entityCodec.getLifecycle().executePrePersist(entity);
     }
 
     entityCodec.encode(new BsonDocumentWriter(bsonDocument = new BsonDocument()), entity, EncoderContext.builder().build());
 
-    if (entityCodec.getLifecycle() != null) {
+    if ((entity != null) && (entityCodec.getLifecycle() != null)) {
       entityCodec.getLifecycle().executePostPersist(entity, bsonDocument);
     }
 

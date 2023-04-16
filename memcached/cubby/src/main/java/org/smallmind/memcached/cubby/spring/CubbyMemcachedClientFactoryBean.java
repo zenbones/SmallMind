@@ -33,7 +33,6 @@
 package org.smallmind.memcached.cubby.spring;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.Map;
 import org.smallmind.memcached.cubby.CubbyConfiguration;
@@ -98,7 +97,7 @@ public class CubbyMemcachedClientFactoryBean implements FactoryBean<CubbyMemcach
 
       for (Map.Entry<String, MemcachedServer> serverEntry : servers.entrySet()) {
         output[index] = serverEntry.getKey() + '=' + serverEntry.getValue().getHost() + ':' + serverEntry.getValue().getPort();
-        memcachedHosts[index++] = new MemcachedHost(serverEntry.getKey(), new InetSocketAddress(serverEntry.getValue().getHost(), serverEntry.getValue().getPort()));
+        memcachedHosts[index++] = new MemcachedHost(serverEntry.getKey(), serverEntry.getValue().getHost(), serverEntry.getValue().getPort());
       }
 
       memcachedClient = new CubbyMemcachedClient(configuration, memcachedHosts);

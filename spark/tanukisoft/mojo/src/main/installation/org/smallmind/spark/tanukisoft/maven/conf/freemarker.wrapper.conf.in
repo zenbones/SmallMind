@@ -35,6 +35,12 @@
 wrapper.lang.folder=../lang
 
 #********************************************************************
+# Wrapper Umask
+#********************************************************************
+# Specify the umask for the wrapper process
+wrapper.umask=${umask}
+
+#********************************************************************
 # Wrapper Java Properties
 #********************************************************************
 # Java Application
@@ -228,4 +234,3 @@ wrapper.ntservice.interactive=FALSE
 wrapper.ntservice.permissions.1.account=${runAs}
 wrapper.ntservice.permissions.1.allow=START, STOP, PAUSE_RESUME
 [/#if]
-

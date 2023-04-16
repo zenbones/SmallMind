@@ -33,6 +33,7 @@
 package org.smallmind.mongodb.throng.mapping;
 
 import org.bson.BsonReader;
+import org.bson.BsonType;
 import org.bson.BsonWriter;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
@@ -47,13 +48,20 @@ public class ThrongEmbeddedCodec<T> extends ThrongPropertiesCodec<T> {
   @Override
   public T decode (BsonReader reader, DecoderContext decoderContext) {
 
-    T instance;
+    if (BsonType.NULL.equals(reader.getCurrentBsonType())) {
+     reader.readNull();
 
-    reader.readStartDocument();
-    instance = super.decode(reader, decoderContext);
-    reader.readEndDocument();
+     return null;
+    } else {
 
-    return instance;
+      T instance;
+
+      reader.readStartDocument();
+      instance = super.decode(reader, decoderContext);
+      reader.readEndDocument();
+
+      return instance;
+    }
   }
 
   @Override

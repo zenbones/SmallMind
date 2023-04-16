@@ -33,10 +33,10 @@
 package org.smallmind.mongodb.throng.mapping;
 
 import org.bson.BsonReader;
+import org.bson.BsonType;
 import org.bson.BsonWriter;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
-import org.smallmind.mongodb.throng.lifecycle.ThrongLifecycle;
 
 public class ThrongPolymorphicEmbeddedCodec<T> extends ThrongPropertiesMultiplexerCodec<T> {
 
@@ -48,14 +48,20 @@ public class ThrongPolymorphicEmbeddedCodec<T> extends ThrongPropertiesMultiplex
   @Override
   public T decode (BsonReader reader, DecoderContext decoderContext) {
 
-    T instance;
-    ThrongLifecycle<T> events;
+    if (BsonType.NULL.equals(reader.getCurrentBsonType())) {
+      reader.readNull();
 
-    reader.readStartDocument();
-    instance = super.decode(reader, decoderContext);
-    reader.readEndDocument();
+      return null;
+    } else {
 
-    return instance;
+      T instance;
+
+      reader.readStartDocument();
+      instance = super.decode(reader, decoderContext);
+      reader.readEndDocument();
+
+      return instance;
+    }
   }
 
   @Override

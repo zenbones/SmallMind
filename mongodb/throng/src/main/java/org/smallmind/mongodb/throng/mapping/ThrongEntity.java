@@ -33,12 +33,13 @@
 package org.smallmind.mongodb.throng.mapping;
 
 import java.lang.reflect.InvocationTargetException;
+import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.smallmind.mongodb.throng.ThrongMappingException;
+import org.smallmind.mongodb.throng.lifecycle.ThrongLifecycle;
 import org.smallmind.mongodb.throng.mapping.annotation.Entity;
 import org.smallmind.mongodb.throng.mapping.annotation.Id;
-import org.smallmind.mongodb.throng.lifecycle.ThrongLifecycle;
 import org.smallmind.mongodb.throng.mapping.annotation.Polymorphic;
 import org.smallmind.nutsnbolts.reflection.FieldAccessor;
 import org.smallmind.nutsnbolts.reflection.FieldUtility;
@@ -73,7 +74,14 @@ public class ThrongEntity<T> extends ThrongProperties<T> {
           throw new ThrongMappingException("The entity(%s) has multiple 'id' fields defined", entityClass.getName());
         } else {
           try {
-            idProperty = new ThrongProperty(fieldAccessor, CodecRegistryUtility.getReifiedCodec(codecRegistry, entityClass, fieldAccessor), idAnnotation.value());
+
+            Codec<?> idCodec;
+
+            if ((idCodec = codecRegistry.get(CodecUtility.getReifiedType(entityClass, fieldAccessor))) == null) {
+              throw new ThrongMappingException("No known codec for id(%s) of type(%s) in entity(%s)", fieldAccessor.getName(), fieldAccessor.getType().getName(), entityClass.getName());
+            } else {
+              idProperty = new ThrongProperty(fieldAccessor, idCodec, idAnnotation.value());
+            }
           } catch (CodecConfigurationException codecConfigurationException) {
             throw new ThrongMappingException("No known codec for id(%s) of type(%s) in entity(%s)", fieldAccessor.getName(), fieldAccessor.getType().getName(), entityClass.getName());
           }

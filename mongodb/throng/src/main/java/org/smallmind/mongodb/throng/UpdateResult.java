@@ -30,46 +30,46 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.throng;
+package org.smallmind.mongodb.throng;
 
-import java.util.Arrays;
-import java.util.LinkedList;
-import org.smallmind.mongodb.throng.query.Filter;
+import org.bson.BsonValue;
 
-public class Filters {
+public class UpdateResult {
 
-  private final LinkedList<Filter> filterList = new LinkedList<>();
+  private final com.mongodb.client.result.UpdateResult updateResult;
 
-  public static Filters on () {
+  public UpdateResult (com.mongodb.client.result.UpdateResult updateResult) {
 
-    return new Filters();
+    this.updateResult = updateResult;
   }
 
-  public Filters and (Filters filters) {
+  public static UpdateResult unacknowledged () {
 
-    filterList.addAll(filters.filterList);
-
-    return this;
+    return new UpdateResult(com.mongodb.client.result.UpdateResult.unacknowledged());
   }
 
-  public Filters and (Filter... filters) {
+  public boolean wasAcknowledged () {
 
-    filterList.addAll(Arrays.asList(filters));
-
-    return this;
+    return updateResult.wasAcknowledged();
   }
 
-  public Filter combine () {
+  public long getMatchedCount () {
 
-    if (filterList.isEmpty()) {
+    return updateResult.getMatchedCount();
+  }
 
-      return Filter.empty();
-    } else if (filterList.size() == 1) {
+  public long getModifiedCount () {
 
-      return filterList.getFirst();
-    } else {
+    return updateResult.getModifiedCount();
+  }
 
-      return Filter.and(filterList.toArray(new Filter[0]));
-    }
+  public BsonValue getUpsertedId () {
+
+    return updateResult.getUpsertedId();
+  }
+
+  public long getModifiedPlusInsertedCount () {
+
+    return getModifiedCount() + ((getUpsertedId()) == null ? 0 : 1);
   }
 }

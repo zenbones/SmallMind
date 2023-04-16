@@ -30,46 +30,33 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.throng;
+package org.smallmind.mongodb.throng.mapping;
 
-import java.util.Arrays;
-import java.util.LinkedList;
-import org.smallmind.mongodb.throng.query.Filter;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
+import org.smallmind.mongodb.throng.ThrongRuntimeException;
+import org.smallmind.nutsnbolts.reflection.FieldAccessor;
+import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
 
-public class Filters {
+public class CodecUtility {
 
-  private final LinkedList<Filter> filterList = new LinkedList<>();
+  public static Class<?> getReifiedType (Class<?> parentClass, FieldAccessor fieldAccessor) {
 
-  public static Filters on () {
+    Type genericType;
 
-    return new Filters();
-  }
+    if ((genericType = fieldAccessor.getGenericType()) instanceof TypeVariable) {
 
-  public Filters and (Filters filters) {
+      Class<?> reifiedFieldType;
 
-    filterList.addAll(filters.filterList);
+      if ((reifiedFieldType = GenericUtility.findTypeArgument(parentClass, (TypeVariable<?>)genericType)) == null) {
+        throw new ThrongRuntimeException("Could not reify the type of field(%s) in entity(%s)", fieldAccessor.getName(), parentClass.getName());
+      } else {
 
-    return this;
-  }
-
-  public Filters and (Filter... filters) {
-
-    filterList.addAll(Arrays.asList(filters));
-
-    return this;
-  }
-
-  public Filter combine () {
-
-    if (filterList.isEmpty()) {
-
-      return Filter.empty();
-    } else if (filterList.size() == 1) {
-
-      return filterList.getFirst();
+        return reifiedFieldType;
+      }
     } else {
 
-      return Filter.and(filterList.toArray(new Filter[0]));
+      return fieldAccessor.getType();
     }
   }
 }

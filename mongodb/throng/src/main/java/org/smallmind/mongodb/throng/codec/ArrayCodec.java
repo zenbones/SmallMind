@@ -66,18 +66,28 @@ public class ArrayCodec<T> implements Codec<T> {
   @Override
   public T decode (BsonReader reader, DecoderContext decoderContext) {
 
-    Object[] array;
-    List<Object> list = new ArrayList<Object>();
+    if (BsonType.NULL.equals(reader.getCurrentBsonType())) {
+      reader.readNull();
 
-    while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
-      list.add(itemCodec.decode(reader, decoderContext));
+      return null;
+    } else {
+
+      Object[] array;
+      List<Object> list = new ArrayList<Object>();
+
+      reader.readStartArray();
+
+      while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
+        list.add(itemCodec.decode(reader, decoderContext));
+      }
+
+      reader.readEndArray();
+
+      array = (Object[])Array.newInstance(componentClass, list.size());
+      list.toArray(array);
+
+      return arrayClass.cast(array);
     }
-    reader.readEndArray();
-
-    array = (Object[])Array.newInstance(componentClass, list.size());
-    list.toArray(array);
-
-    return arrayClass.cast(array);
   }
 
   @Override

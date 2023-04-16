@@ -32,17 +32,28 @@
  */
 package org.smallmind.memcached.cubby;
 
+import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 
 public class MemcachedHost {
 
   private final String name;
-  private final SocketAddress address;
+  private final String hostName;
+  private final int port;
+  private SocketAddress address;
 
-  public MemcachedHost (String name, SocketAddress address) {
+  public MemcachedHost (String name, String hostName, int port) {
 
     this.name = name;
-    this.address = address;
+    this.hostName = hostName;
+    this.port = port;
+
+    address = new InetSocketAddress(hostName, port);
+  }
+
+  public void regenerate () {
+
+    address = new InetSocketAddress(hostName, port);
   }
 
   public String getName () {
