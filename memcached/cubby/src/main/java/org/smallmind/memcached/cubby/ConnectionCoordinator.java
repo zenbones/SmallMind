@@ -161,11 +161,20 @@ public class ConnectionCoordinator {
     lock.writeLock().lock();
 
     try {
-      memcachedHost.regenerate();
 
-      serverPool.get(memcachedHost.getName()).setActive(true);
-      configuration.getKeyLocator().updateRouting(serverPool);
-      LoggerManager.getLogger(ConnectionCoordinator.class).info("Reconnected memcached host(%s=%s)", memcachedHost.getName(), memcachedHost.getAddress());
+      HostControl hostControl;
+
+      if ((hostControl = serverPool.get(memcachedHost.getName())) == null) {
+        LoggerManager.getLogger(ConnectionCoordinator.class).info("Missing control entry for memcached host(%s=%s)", memcachedHost.getName(), memcachedHost.getAddress());
+      } else {
+
+        hostControl.getMemcachedHost().regenerate();
+        constructConnection(hostControl.getMemcachedHost());
+
+        hostControl.setActive(true);
+        configuration.getKeyLocator().updateRouting(serverPool);
+        LoggerManager.getLogger(ConnectionCoordinator.class).info("Reconnected memcached host(%s=%s)", memcachedHost.getName(), memcachedHost.getAddress());
+      }
     } finally {
       lock.writeLock().unlock();
     }
@@ -174,10 +183,15 @@ public class ConnectionCoordinator {
   private void constructConnection (MemcachedHost memcachedHost)
     throws InterruptedException, IOException, CubbyOperationException {
 
-    CubbyConnection connection;
+    CubbyConnection constructedConnection;
+    CubbyConnection priorConnection;
 
-    connectionMap.put(memcachedHost.getName(), connection = new NIOCubbyConnection(this, configuration, memcachedHost));
-    connection.start();
-    new Thread(connection).start();
+    if ((priorConnection = connectionMap.get(memcachedHost.getName())) != null) {
+      priorConnection.stop();
+    }
+
+    connectionMap.put(memcachedHost.getName(), constructedConnection = new NIOCubbyConnection(this, configuration, memcachedHost));
+    constructedConnection.start();
+    new Thread(constructedConnection).start();
   }
 }
