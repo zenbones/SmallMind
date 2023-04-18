@@ -147,9 +147,16 @@ public class ConnectionCoordinator {
     lock.writeLock().lock();
 
     try {
-      serverPool.get(memcachedHost.getName()).setActive(false);
-      configuration.getKeyLocator().updateRouting(serverPool);
-      LoggerManager.getLogger(ConnectionCoordinator.class).info("Disconnected memcached host(%s=%s)", memcachedHost.getName(), memcachedHost.getAddress());
+
+      HostControl hostControl;
+
+      if ((hostControl = serverPool.get(memcachedHost.getName())) == null) {
+        LoggerManager.getLogger(ConnectionCoordinator.class).info("Missing control entry for memcached host(%s=%s)", memcachedHost.getName(), memcachedHost.getAddress());
+      } else {
+        hostControl.setActive(false);
+        configuration.getKeyLocator().updateRouting(serverPool);
+        LoggerManager.getLogger(ConnectionCoordinator.class).info("Disconnected memcached host(%s=%s)", memcachedHost.getName(), memcachedHost.getAddress());
+      }
     } finally {
       lock.writeLock().unlock();
     }
@@ -167,10 +174,7 @@ public class ConnectionCoordinator {
       if ((hostControl = serverPool.get(memcachedHost.getName())) == null) {
         LoggerManager.getLogger(ConnectionCoordinator.class).info("Missing control entry for memcached host(%s=%s)", memcachedHost.getName(), memcachedHost.getAddress());
       } else {
-
-        hostControl.getMemcachedHost().regenerate();
         constructConnection(hostControl.getMemcachedHost());
-
         hostControl.setActive(true);
         configuration.getKeyLocator().updateRouting(serverPool);
         LoggerManager.getLogger(ConnectionCoordinator.class).info("Reconnected memcached host(%s=%s)", memcachedHost.getName(), memcachedHost.getAddress());
