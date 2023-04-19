@@ -28,14 +28,24 @@ azp
 OPTIONAL. Authorized party - the party to which the ID Token was issued. If present, it MUST contain the OAuth 2.0 Client ID of this party. This Claim is only needed when the ID Token has a single audience value and that audience is different than the authorized party. It MAY be included even when the authorized party is the same as the sole audience. The azp value is a case sensitive string containing a StringOrURI value.
    */
 
+  // optional
   private ArrayNode amr;
+  // required
   private URL iss;
+  // required (single valued strings are also allowed)
   private String[] aud;
+  // required
   private String sub;
+  // optional (but required when present in the auth request)
   private String nonce;
+  // optional
   private String acr;
+  // optional
   private String azp;
+  // optional (required when a max_age request is made or when auth_time is requested as an Essential Claim)
   private Integer authTime;
+  // required
   private int exp;
+  // required
   private int iat;
 }
