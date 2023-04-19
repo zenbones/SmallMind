@@ -142,6 +142,7 @@
     <module>memcached</module>
     <module>mongodb</module>
     <module>nutsnbolts</module>
+    <module>sso</module>
     <module>persistence</module>
     <module>phalanx</module>
     <module>quorum</module>
