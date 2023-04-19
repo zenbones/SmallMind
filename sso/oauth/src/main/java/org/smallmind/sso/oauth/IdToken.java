@@ -1,8 +1,11 @@
 package org.smallmind.sso.oauth;
 
+import java.net.URL;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+
 public class IdToken {
 
-  /*
+    /*
   iss
 REQUIRED. Issuer Identifier for the Issuer of the response. The iss value is a case sensitive URL using the https scheme that contains scheme, host, and optionally, port number and path components and no query or fragment components.
 sub
@@ -24,4 +27,15 @@ OPTIONAL. Authentication Methods References. JSON array of strings that are iden
 azp
 OPTIONAL. Authorized party - the party to which the ID Token was issued. If present, it MUST contain the OAuth 2.0 Client ID of this party. This Claim is only needed when the ID Token has a single audience value and that audience is different than the authorized party. It MAY be included even when the authorized party is the same as the sole audience. The azp value is a case sensitive string containing a StringOrURI value.
    */
+
+  private ArrayNode amr;
+  private URL iss;
+  private String[] aud;
+  private String sub;
+  private String nonce;
+  private String acr;
+  private String azp;
+  private Integer authTime;
+  private int exp;
+  private int iat;
 }
