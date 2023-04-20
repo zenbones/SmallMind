@@ -95,7 +95,7 @@ public class DependencyQueue<A extends Annotation, T> {
 
   private boolean isComplete (Dependency<A, T> dependency) {
 
-    if ((dependency.getDependsOn() != null) && (dependency.getDependsOn().length > 0)) {
+    if (dependency.getDependsOn() != null) {
       for (String requirement : dependency.getDependsOn()) {
         if (!completedSet.contains(requirement)) {
 
@@ -105,7 +105,7 @@ public class DependencyQueue<A extends Annotation, T> {
         }
       }
     }
-    if ((dependency.getExecuteAfter() != null) && (dependency.getExecuteAfter().length > 0)) {
+    if (dependency.getExecuteAfter() != null) {
       for (String requirement : dependency.getExecuteAfter()) {
         if (!completedSet.contains(requirement)) {
 
@@ -113,7 +113,7 @@ public class DependencyQueue<A extends Annotation, T> {
         }
       }
     }
-    if ((dependency.getPriorityOn() != null) && (dependency.getPriorityOn().length > 0)) {
+    if (dependency.getPriorityOn() != null) {
       for (String requirement : dependency.getPriorityOn()) {
         if (!completedSet.contains(requirement)) {
 
