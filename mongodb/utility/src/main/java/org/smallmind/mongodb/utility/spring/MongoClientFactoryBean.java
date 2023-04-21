@@ -76,6 +76,8 @@ public class MongoClientFactoryBean implements FactoryBean<MongoClient>, Initial
   @Override
   public void destroy () {
 
-    mongoClient.close();
+    if (mongoClient != null) {
+      mongoClient.close();
+    }
   }
 }
