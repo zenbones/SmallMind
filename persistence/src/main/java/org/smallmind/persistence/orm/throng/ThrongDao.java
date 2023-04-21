@@ -183,7 +183,7 @@ public class ThrongDao<I extends Serializable & Comparable<I>, D extends ThrongD
   @Override
   public D detach (D object) {
 
-    throw new UnsupportedOperationException("Morphia has no explicit detached state");
+    throw new UnsupportedOperationException("Throng has no explicit detached state");
   }
 
   public long countByFilter (CountFilterDetails filterDetails) {
