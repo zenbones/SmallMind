@@ -122,8 +122,8 @@
     <maven.source.plugin.version>3.2.1</maven.source.plugin.version>
     <maven.surefire.api.version>2.22.2</maven.surefire.api.version>
     <maven.version>3.8.7</maven.version>
-    <mongodb.driver.version>4.8.1</mongodb.driver.version>
-    <mongodb.bson.version>4.8.1</mongodb.bson.version>
+    <mongodb.driver.version>4.9.1</mongodb.driver.version>
+    <mongodb.bson.version>4.9.1</mongodb.bson.version>
     <msgpack.version>0.9.3</msgpack.version>
     <netty.version>4.1.85.Final</netty.version>
     <nexus.staging.plugin.version>1.6.13</nexus.staging.plugin.version>
@@ -505,7 +505,7 @@
       </dependency>
       <dependency>
         <groupId>org.glassfish.jersey.ext.cdi</groupId>
-        <artifactId>jersey-cdi1x</artifactId>
+        <artifactId>jersey-mongocdi1x</artifactId>
         <version>${jersey.version}</version>
       </dependency>
       <dependency>

@@ -51,9 +51,16 @@ public class MemcachedHost {
     address = new InetSocketAddress(hostName, port);
   }
 
-  public void regenerate () {
+  protected InetSocketAddress constructAddress () {
 
-    address = new InetSocketAddress(hostName, port);
+    return new InetSocketAddress(hostName, port);
+  }
+
+  protected MemcachedHost regenerate (InetSocketAddress address) {
+
+    this.address = address;
+
+    return this;
   }
 
   public String getName () {

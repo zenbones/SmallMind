@@ -33,6 +33,7 @@
 package org.smallmind.memcached.cubby;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.LinkedList;
 import java.util.concurrent.CountDownLatch;
@@ -75,8 +76,12 @@ public class ServerDefibrillator implements Runnable {
         for (HostControl hostControl : serverPool.values()) {
           if (!hostControl.isActive()) {
             try (Socket socket = new Socket()) {
-              socket.connect(hostControl.getMemcachedHost().getAddress(), connectionTimeoutMilliseconds);
-              reconnectionList.add(hostControl.getMemcachedHost());
+
+              // In case disconnection was due to a change in downstream load balancing
+              InetSocketAddress constructedAddress;
+
+              socket.connect(constructedAddress = hostControl.getMemcachedHost().constructAddress(), connectionTimeoutMilliseconds);
+              reconnectionList.add(hostControl.getMemcachedHost().regenerate(constructedAddress));
             } catch (IOException ioException) {
               // do nothing
             }
