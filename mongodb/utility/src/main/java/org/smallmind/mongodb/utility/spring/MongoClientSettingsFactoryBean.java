@@ -201,10 +201,13 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
         builder.maxConnectionIdleTime(connectionPoolMaxConnectionIdleTimeSeconds, SECONDS);
       }
     });
-    if (serverSelectionTimeoutMilliseconds != null) {
-      settingsBuilder.applyToClusterSettings(builder -> builder.serverSelectionTimeout(serverSelectionTimeoutMilliseconds, MILLISECONDS));
-    }
-    settingsBuilder.applyToClusterSettings(builder -> builder.hosts(Arrays.asList(serverAddresses)));
+    settingsBuilder.applyToClusterSettings(builder -> {
+      builder.hosts(Arrays.asList(serverAddresses));
+
+      if (serverSelectionTimeoutMilliseconds != null) {
+        builder.serverSelectionTimeout(serverSelectionTimeoutMilliseconds, MILLISECONDS);
+      }
+    });
     if (readPreference != null) {
       settingsBuilder.readPreference(readPreference);
     }
