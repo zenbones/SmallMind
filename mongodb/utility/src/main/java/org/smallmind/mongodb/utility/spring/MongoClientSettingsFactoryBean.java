@@ -61,6 +61,7 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
   private Boolean retryWrites;
   private Boolean sslEnabled;
   private Integer socketConnectTimeoutMilliseconds;
+  private Integer serverSelectionTimeoutMilliseconds;
   private Integer connectionPoolMinSize;
   private Integer connectionPoolMaxSize;
   private Integer connectionPoolMaxConnecting;
@@ -116,6 +117,11 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
   public void setSocketConnectTimeoutMilliseconds (Integer socketConnectTimeoutMilliseconds) {
 
     this.socketConnectTimeoutMilliseconds = socketConnectTimeoutMilliseconds;
+  }
+
+  public void setServerSelectionTimeoutMilliseconds (Integer serverSelectionTimeoutMilliseconds) {
+
+    this.serverSelectionTimeoutMilliseconds = serverSelectionTimeoutMilliseconds;
   }
 
   public void setConnectionPoolMinSize (Integer connectionPoolMinSize) {
@@ -195,6 +201,9 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
         builder.maxConnectionIdleTime(connectionPoolMaxConnectionIdleTimeSeconds, SECONDS);
       }
     });
+    if (serverSelectionTimeoutMilliseconds != null) {
+      settingsBuilder.applyToClusterSettings(builder -> builder.serverSelectionTimeout(serverSelectionTimeoutMilliseconds, MILLISECONDS));
+    }
     settingsBuilder.applyToClusterSettings(builder -> builder.hosts(Arrays.asList(serverAddresses)));
     if (readPreference != null) {
       settingsBuilder.readPreference(readPreference);
