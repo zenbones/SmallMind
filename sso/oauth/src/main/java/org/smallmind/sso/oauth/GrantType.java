@@ -32,16 +32,17 @@
  */
 package org.smallmind.sso.oauth;
 
-public enum AuthorizationGrantType {
+public enum GrantType {
 
   AUTHORIZATION_CODE("authorization code"),
   IMPLICIT("implicit"),
   RESOURCE_OWNER_CREDENTIALS("resource_owner_password_credentials"),
-  CLIENT_CREDENTIALS("client_credentials");
+  CLIENT_CREDENTIALS("client_credentials"),
+  REFRESH_TOKEN("refresh_token");
 
   private final String code;
 
-  AuthorizationGrantType (String code) {
+  GrantType (String code) {
 
     this.code = code;
   }
