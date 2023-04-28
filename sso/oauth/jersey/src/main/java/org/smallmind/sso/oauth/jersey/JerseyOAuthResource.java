@@ -32,26 +32,56 @@
  */
 package org.smallmind.sso.oauth.jersey;
 
-import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import org.smallmind.sso.oauth.spi.InvalidClientIdException;
+import org.smallmind.sso.oauth.spi.InvalidRedirectUriException;
+import org.smallmind.sso.oauth.spi.MismatchingRedirectUriException;
+import org.smallmind.sso.oauth.spi.MissingClientIdException;
+import org.smallmind.sso.oauth.spi.MissingRedirectUriException;
 import org.smallmind.sso.oauth.spi.ResponseType;
+import org.smallmind.sso.oauth.spi.server.AuthorizationError;
+import org.smallmind.sso.oauth.spi.server.AuthorizationErrorType;
+import org.smallmind.sso.oauth.spi.server.AuthorizationHandler;
+import org.smallmind.sso.oauth.spi.server.AuthorizationResponse;
 
 @Path("")
 public class JerseyOAuthResource {
 
+  private AuthorizationHandler authorizationHandler;
+
+  public void setAuthorizationHandler (AuthorizationHandler authorizationHandler) {
+
+    this.authorizationHandler = authorizationHandler;
+  }
+
   @GET
   @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-  public Response authorization (@QueryParam("response_type") @NotNull @XmlJavaTypeAdapter(CodedEnumXmlAdapter.class) ResponseType responseType,
-                                 @QueryParam("client_id") @NotNull String clientId,
-                                 @QueryParam("redirect_url") String redirectUrl,
-                                 @QueryParam("scope") String scope,
-                                 @QueryParam("state") String state) {
+  public AuthorizationResponse authorization (@QueryParam("response_type") String responseType,
+                                              @QueryParam("client_id") String clientId,
+                                              @QueryParam("redirect_uri") String redirectUri,
+                                              @QueryParam("scope") String scope,
+                                              @QueryParam("state") String state)
+    throws MissingClientIdException, InvalidClientIdException, MissingRedirectUriException, InvalidRedirectUriException, MismatchingRedirectUriException {
+
+    AuthorizationError error;
+    ResponseType decodedResponseType;
+
+    if (clientId == null) {
+      throw new MissingClientIdException();
+    } else {
+
+    }
+
+    if (responseType == null) {
+      error= new AuthorizationError(AuthorizationErrorType.INVALID_REQUEST, "Missing response_type");
+    } else if ((decodedResponseType = ResponseType.fromCode(responseType)) == null) {
+      error= new AuthorizationError(AuthorizationErrorType.INVALID_REQUEST, "Unknown response_type(%s)", responseType);
+    } else {
+    }
 
     return null;
   }

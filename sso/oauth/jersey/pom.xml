@@ -12,11 +12,6 @@
   <description>OAuth 2.x Jersey Resource</description>
   <dependencies>
     <dependency>
-      <groupId>javax.xml.bind</groupId>
-      <artifactId>jaxb-api</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
       <groupId>org.smallmind</groupId>
       <artifactId>sso-ouath-spi</artifactId>
       <scope>compile</scope>
