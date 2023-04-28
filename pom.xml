@@ -243,6 +243,11 @@
       </dependency>
       <dependency>
         <groupId>org.smallmind</groupId>
+        <artifactId>sso-ouath-spi</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.smallmind</groupId>
         <artifactId>sleuth-runner</artifactId>
         <version>${project.version}</version>
       </dependency>

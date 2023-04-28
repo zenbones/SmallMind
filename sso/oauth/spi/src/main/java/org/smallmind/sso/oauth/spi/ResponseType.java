@@ -12,6 +12,18 @@ public enum ResponseType {
     this.code = code;
   }
 
+  public static ResponseType fromCode (String code) {
+
+    for (ResponseType responseType : ResponseType.values()) {
+      if (responseType.getCode().equals(code)) {
+
+        return responseType;
+      }
+    }
+
+    return null;
+  }
+
   public String getCode () {
 
     return code;

@@ -7,8 +7,8 @@
     <version>5.0.0-SNAPSHOT</version>
   </parent>
   <artifactId>sso-oauth</artifactId>
-  <name>SSO-Oauth</name>
-  <description>Oauth 2.x Implementation</description>
+  <name>SSO-OAuth</name>
+  <description>OAuth 2.x Implementation</description>
   <packaging>pom</packaging>
   <modules>
     <module>jersey</module>

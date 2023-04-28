@@ -8,22 +8,17 @@
   </parent>
   <artifactId>sso-oauth-jersey</artifactId>
   <packaging>jar</packaging>
-  <name>SSO-Oauth-Jersey</name>
-  <description>Oauth 2.x Jersey Resource</description>
+  <name>SSO-OAuth-Jersey</name>
+  <description>OAuth 2.x Jersey Resource</description>
   <dependencies>
     <dependency>
+      <groupId>javax.xml.bind</groupId>
+      <artifactId>jaxb-api</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
       <groupId>org.smallmind</groupId>
-      <artifactId>smallmind-nutsnbolts</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-core</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
+      <artifactId>sso-ouath-spi</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>
