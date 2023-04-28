@@ -30,25 +30,34 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.sso.oauth;
+package org.smallmind.sso.oauth.spi.server;
 
-public enum GrantType {
+import java.io.UnsupportedEncodingException;
+import org.smallmind.nutsnbolts.http.URLCodec;
 
-  AUTHORIZATION_CODE("authorization code"),
-  IMPLICIT("implicit"),
-  RESOURCE_OWNER_CREDENTIALS("resource_owner_password_credentials"),
-  CLIENT_CREDENTIALS("client_credentials"),
-  REFRESH_TOKEN("refresh_token");
+public class FormDecoder {
 
-  private final String code;
+  public static ParameterMap decode (String parameterBlock)
+    throws UnsupportedEncodingException {
 
-  GrantType (String code) {
+    ParameterMap parameterMap = new ParameterMap();
 
-    this.code = code;
-  }
+    if ((parameterBlock != null) && (!parameterBlock.isEmpty())) {
 
-  public String getCode () {
+      String[] parameters = parameterBlock.split("&");
 
-    return code;
+      for (String parameter : parameters) {
+
+        int equalsPos;
+
+        if ((equalsPos = parameter.indexOf('=')) < 0) {
+          parameterMap.put(URLCodec.urlDecode(parameter), "");
+        } else {
+          parameterMap.put(URLCodec.urlDecode(parameter.substring(0, equalsPos)), URLCodec.urlDecode(parameter.substring(equalsPos + 1)));
+        }
+      }
+    }
+
+    return parameterMap;
   }
 }

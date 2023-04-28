@@ -30,16 +30,15 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.sso.oauth.provider.jersey;
+package org.smallmind.sso.oauth.jersey;
 
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
-import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import org.smallmind.sso.oauth.ResponseType;
+import org.smallmind.sso.oauth.spi.ResponseType;
 
 /*
    response_type

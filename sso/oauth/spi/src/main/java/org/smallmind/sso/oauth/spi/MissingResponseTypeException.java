@@ -1,4 +1,4 @@
-package org.smallmind.sso.oauth;
+package org.smallmind.sso.oauth.spi;
 
 import org.smallmind.nutsnbolts.lang.FormattedException;
 

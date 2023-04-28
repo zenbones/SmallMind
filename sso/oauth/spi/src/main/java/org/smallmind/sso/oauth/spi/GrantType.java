@@ -30,26 +30,25 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.sso.oauth.provider;
+package org.smallmind.sso.oauth.spi;
 
-public class UserAndPassword {
+public enum GrantType {
 
-  private final String user;
-  private final String password;
+  AUTHORIZATION_CODE("authorization code"),
+  IMPLICIT("implicit"),
+  RESOURCE_OWNER_CREDENTIALS("resource_owner_password_credentials"),
+  CLIENT_CREDENTIALS("client_credentials"),
+  REFRESH_TOKEN("refresh_token");
 
-  public UserAndPassword (String user, String password) {
+  private final String code;
 
-    this.user = user;
-    this.password = password;
+  GrantType (String code) {
+
+    this.code = code;
   }
 
-  public String getUser () {
+  public String getCode () {
 
-    return user;
-  }
-
-  public String getPassword () {
-
-    return password;
+    return code;
   }
 }

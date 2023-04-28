@@ -1,4 +1,4 @@
-package org.smallmind.sso.oauth;
+package org.smallmind.sso.oauth.spi;
 
 //   .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 public class AuthorizationRequest {

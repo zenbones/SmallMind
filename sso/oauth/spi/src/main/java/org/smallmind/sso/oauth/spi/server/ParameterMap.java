@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.sso.oauth.provider;
+package org.smallmind.sso.oauth.spi.server;
 
 import java.util.TreeMap;
 

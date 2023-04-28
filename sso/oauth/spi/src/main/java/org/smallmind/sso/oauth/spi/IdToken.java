@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.sso.oauth;
+package org.smallmind.sso.oauth.spi;
 
 import java.net.URL;
 import com.fasterxml.jackson.databind.node.ArrayNode;
