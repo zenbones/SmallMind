@@ -32,12 +32,12 @@
  */
 package org.smallmind.sso.oauth.spi.server;
 
-public class AuthorizationError extends AuthorizationResponse {
+public class AuthorizationErrorResponse extends AuthorizationResponse {
 
   private final AuthorizationErrorType type;
   private final String description;
 
-  public AuthorizationError (String redirectUri, AuthorizationErrorType type, String description, Object... args) {
+  public AuthorizationErrorResponse (String redirectUri, AuthorizationErrorType type, String description, Object... args) {
 
     super(redirectUri);
 

@@ -48,8 +48,8 @@ import org.smallmind.sso.oauth.spi.MismatchingRedirectUriException;
 import org.smallmind.sso.oauth.spi.MissingClientIdException;
 import org.smallmind.sso.oauth.spi.MissingRedirectUriException;
 import org.smallmind.sso.oauth.spi.ResponseType;
-import org.smallmind.sso.oauth.spi.server.AuthorizationCode;
-import org.smallmind.sso.oauth.spi.server.AuthorizationError;
+import org.smallmind.sso.oauth.spi.server.AuthorizationCodeResponse;
+import org.smallmind.sso.oauth.spi.server.AuthorizationErrorResponse;
 import org.smallmind.sso.oauth.spi.server.AuthorizationHandler;
 import org.smallmind.sso.oauth.spi.server.AuthorizationRequest;
 import org.smallmind.sso.oauth.spi.server.AuthorizationResponse;
@@ -82,9 +82,9 @@ public class JerseyOAuthResource {
       StringBuilder uriBuilder = new StringBuilder(authorizationResponse.getRedirectUri());
 
       if (authorizationResponse.isError()) {
-        uriBuilder.append("?error=").append(((AuthorizationError)authorizationResponse).getErrorType().getCode()).append("&error_description=").append(((AuthorizationError)authorizationResponse).getDescription());
+        uriBuilder.append("?error=").append(((AuthorizationErrorResponse)authorizationResponse).getErrorType().getCode()).append("&error_description=").append(((AuthorizationErrorResponse)authorizationResponse).getDescription());
       } else {
-        uriBuilder.append("?code=").append(((AuthorizationCode)authorizationResponse).getCode());
+        uriBuilder.append("?code=").append(((AuthorizationCodeResponse)authorizationResponse).getCode());
       }
 
       if (state != null) {
