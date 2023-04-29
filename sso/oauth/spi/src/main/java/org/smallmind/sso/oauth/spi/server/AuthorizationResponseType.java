@@ -30,18 +30,9 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.sso.oauth.spi;
+package org.smallmind.sso.oauth.spi.server;
 
-import org.smallmind.nutsnbolts.lang.FormattedException;
+public enum AuthorizationResponseType {
 
-public class MismatchingRedirectUriException extends FormattedException {
-
-  public MismatchingRedirectUriException () {
-
-  }
-
-  public MismatchingRedirectUriException (String message, Object... args) {
-
-    super(message, args);
-  }
+  CODE, ERROR;
 }

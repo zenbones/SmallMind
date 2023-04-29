@@ -32,20 +32,26 @@
  */
 package org.smallmind.sso.oauth.jersey;
 
+import java.net.URI;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import org.smallmind.sso.oauth.spi.InvalidClientIdException;
 import org.smallmind.sso.oauth.spi.InvalidRedirectUriException;
 import org.smallmind.sso.oauth.spi.MismatchingRedirectUriException;
 import org.smallmind.sso.oauth.spi.MissingClientIdException;
 import org.smallmind.sso.oauth.spi.MissingRedirectUriException;
 import org.smallmind.sso.oauth.spi.ResponseType;
+import org.smallmind.sso.oauth.spi.server.AuthorizationCode;
 import org.smallmind.sso.oauth.spi.server.AuthorizationError;
-import org.smallmind.sso.oauth.spi.server.AuthorizationErrorType;
 import org.smallmind.sso.oauth.spi.server.AuthorizationHandler;
+import org.smallmind.sso.oauth.spi.server.AuthorizationRequest;
 import org.smallmind.sso.oauth.spi.server.AuthorizationResponse;
 
 @Path("")
@@ -59,29 +65,45 @@ public class JerseyOAuthResource {
   }
 
   @GET
-  @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-  public AuthorizationResponse authorization (@QueryParam("response_type") String responseType,
-                                              @QueryParam("client_id") String clientId,
-                                              @QueryParam("redirect_uri") String redirectUri,
-                                              @QueryParam("scope") String scope,
-                                              @QueryParam("state") String state)
+  @Path("/authorization")
+  public Response authorization (@QueryParam("response_type") String responseType,
+                                 @QueryParam("client_id") String clientId,
+                                 @QueryParam("redirect_uri") String redirectUri,
+                                 @QueryParam("scope") String scope,
+                                 @QueryParam("state") String state)
     throws MissingClientIdException, InvalidClientIdException, MissingRedirectUriException, InvalidRedirectUriException, MismatchingRedirectUriException {
-
-    AuthorizationError error;
-    ResponseType decodedResponseType;
 
     if (clientId == null) {
       throw new MissingClientIdException();
     } else {
 
-    }
+      ResponseType decodedResponseType = (responseType == null) ? null : ResponseType.fromCode(responseType);
+      AuthorizationResponse authorizationResponse = authorizationHandler.validateAuthorizationRequest(new AuthorizationRequest(decodedResponseType, clientId, redirectUri, scope));
+      StringBuilder uriBuilder = new StringBuilder(authorizationResponse.getRedirectUri());
 
-    if (responseType == null) {
-      error= new AuthorizationError(AuthorizationErrorType.INVALID_REQUEST, "Missing response_type");
-    } else if ((decodedResponseType = ResponseType.fromCode(responseType)) == null) {
-      error= new AuthorizationError(AuthorizationErrorType.INVALID_REQUEST, "Unknown response_type(%s)", responseType);
-    } else {
+      if (authorizationResponse.isError()) {
+        uriBuilder.append("?error=").append(((AuthorizationError)authorizationResponse).getErrorType().getCode()).append("&error_description=").append(((AuthorizationError)authorizationResponse).getDescription());
+      } else {
+        uriBuilder.append("?code=").append(((AuthorizationCode)authorizationResponse).getCode());
+      }
+
+      if (state != null) {
+        uriBuilder.append("&state=").append(state);
+      }
+
+      return Response.seeOther(URI.create(uriBuilder.toString())).build();
     }
+  }
+
+  @POST
+  @Path("/token")
+  @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+  public Response token (@HeaderParam("Authorization") String authorization,
+                         @FormParam("grant_type") String grantType,
+                         @FormParam("code") String code,
+                         @FormParam("redirect_uri") String redirectUri,
+                         @FormParam("client_id") String clientId,
+                         @FormParam("client_secret") String clientSecret) {
 
     return null;
   }
