@@ -32,25 +32,32 @@
  */
 package org.smallmind.sso.oauth.spi.server;
 
-public class AuthorizationCodeResponse extends AuthorizationResponse {
+public class ErrorAuthorizationResponse extends AuthorizationResponse {
 
-  private final String code;
+  private final AuthorizationErrorType type;
+  private final String description;
 
-  public AuthorizationCodeResponse (String redirectUri, String code) {
+  public ErrorAuthorizationResponse (String redirectUri, AuthorizationErrorType type, String description, Object... args) {
 
     super(redirectUri);
 
-    this.code = code;
+    this.type = type;
+    this.description = ((args == null) || (args.length == 0)) ? description : String.format(description, args);
   }
 
   @Override
   public AuthorizationResponseType getResponseType () {
 
-    return AuthorizationResponseType.CODE;
+    return AuthorizationResponseType.ERROR;
   }
 
-  public String getCode () {
+  public AuthorizationErrorType getErrorType () {
 
-    return code;
+    return type;
+  }
+
+  public String getDescription () {
+
+    return description;
   }
 }

@@ -42,17 +42,18 @@ import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.sso.oauth.spi.InvalidClientIdException;
 import org.smallmind.sso.oauth.spi.InvalidRedirectUriException;
 import org.smallmind.sso.oauth.spi.MismatchingRedirectUriException;
 import org.smallmind.sso.oauth.spi.MissingClientIdException;
 import org.smallmind.sso.oauth.spi.MissingRedirectUriException;
 import org.smallmind.sso.oauth.spi.ResponseType;
-import org.smallmind.sso.oauth.spi.server.AuthorizationCodeResponse;
-import org.smallmind.sso.oauth.spi.server.AuthorizationErrorResponse;
 import org.smallmind.sso.oauth.spi.server.AuthorizationHandler;
 import org.smallmind.sso.oauth.spi.server.AuthorizationRequest;
 import org.smallmind.sso.oauth.spi.server.AuthorizationResponse;
+import org.smallmind.sso.oauth.spi.server.ErrorAuthorizationResponse;
+import org.smallmind.sso.oauth.spi.server.LoginAuthorizationResponse;
 
 @Path("")
 public class JerseyOAuthResource {
@@ -79,19 +80,36 @@ public class JerseyOAuthResource {
 
       ResponseType decodedResponseType = (responseType == null) ? null : ResponseType.fromCode(responseType);
       AuthorizationResponse authorizationResponse = authorizationHandler.validateAuthorizationRequest(new AuthorizationRequest(decodedResponseType, clientId, redirectUri, scope));
-      StringBuilder uriBuilder = new StringBuilder(authorizationResponse.getRedirectUri());
 
-      if (authorizationResponse.isError()) {
-        uriBuilder.append("?error=").append(((AuthorizationErrorResponse)authorizationResponse).getErrorType().getCode()).append("&error_description=").append(((AuthorizationErrorResponse)authorizationResponse).getDescription());
-      } else {
-        uriBuilder.append("?code=").append(((AuthorizationCodeResponse)authorizationResponse).getCode());
+      switch (authorizationResponse.getResponseType()) {
+        case ERROR:
+
+          StringBuilder errorURIBuilder = new StringBuilder(authorizationResponse.getRedirectUri());
+
+          errorURIBuilder.append("?error=").append(((ErrorAuthorizationResponse)authorizationResponse).getErrorType().getCode())
+            .append("&error_description=").append(((ErrorAuthorizationResponse)authorizationResponse).getDescription());
+
+          if (state != null) {
+            errorURIBuilder.append("&state=").append(state);
+          }
+
+          return Response.seeOther(URI.create(errorURIBuilder.toString())).build();
+        case LOGIN:
+
+          StringBuilder loginURIBuilder = new StringBuilder(((LoginAuthorizationResponse)authorizationResponse).getLoginUri())
+                                            .append("?client_id=").append(clientId).append("&redirect_uri=").append(redirectUri);
+
+          if ((scope != null) && (!scope.isEmpty())) {
+            loginURIBuilder.append("&scope=").append(scope);
+          }
+          if ((state != null) && (!state.isEmpty())) {
+            loginURIBuilder.append("&state=").append(state);
+          }
+
+          return Response.seeOther(URI.create(loginURIBuilder.toString())).build();
+        default:
+          throw new UnknownSwitchCaseException(authorizationResponse.getResponseType().name());
       }
-
-      if (state != null) {
-        uriBuilder.append("&state=").append(state);
-      }
-
-      return Response.seeOther(URI.create(uriBuilder.toString())).build();
     }
   }
 

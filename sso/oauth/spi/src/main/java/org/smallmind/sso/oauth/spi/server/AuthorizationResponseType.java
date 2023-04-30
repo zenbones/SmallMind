@@ -34,5 +34,5 @@ package org.smallmind.sso.oauth.spi.server;
 
 public enum AuthorizationResponseType {
 
-  CODE, ERROR;
+  LOGIN, ERROR;
 }
