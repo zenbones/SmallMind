@@ -39,30 +39,41 @@ import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
+import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.sso.oauth.spi.InvalidClientIdException;
 import org.smallmind.sso.oauth.spi.InvalidRedirectUriException;
 import org.smallmind.sso.oauth.spi.MismatchingRedirectUriException;
 import org.smallmind.sso.oauth.spi.MissingClientIdException;
 import org.smallmind.sso.oauth.spi.MissingRedirectUriException;
 import org.smallmind.sso.oauth.spi.ResponseType;
+import org.smallmind.sso.oauth.spi.server.AuthorizationCycle;
+import org.smallmind.sso.oauth.spi.server.AuthorizationErrorType;
 import org.smallmind.sso.oauth.spi.server.AuthorizationHandler;
 import org.smallmind.sso.oauth.spi.server.AuthorizationRequest;
-import org.smallmind.sso.oauth.spi.server.AuthorizationResponse;
-import org.smallmind.sso.oauth.spi.server.ErrorAuthorizationResponse;
-import org.smallmind.sso.oauth.spi.server.LoginAuthorizationResponse;
+import org.smallmind.sso.oauth.spi.server.ErrorAuthorizationCycle;
+import org.smallmind.sso.oauth.spi.server.LoginAuthorizationCycle;
+import org.smallmind.sso.oauth.spi.server.repository.CodeRegister;
+import org.smallmind.sso.oauth.spi.server.repository.CodeRegisterRepository;
 
 @Path("")
 public class JerseyOAuthResource {
 
   private AuthorizationHandler authorizationHandler;
+  private CodeRegisterRepository codeRegisterRepository;
 
   public void setAuthorizationHandler (AuthorizationHandler authorizationHandler) {
 
     this.authorizationHandler = authorizationHandler;
+  }
+
+  public void setCodeRegisterRepository (CodeRegisterRepository codeRegisterRepository) {
+
+    this.codeRegisterRepository = codeRegisterRepository;
   }
 
   @GET
@@ -71,6 +82,8 @@ public class JerseyOAuthResource {
                                  @QueryParam("client_id") String clientId,
                                  @QueryParam("redirect_uri") String redirectUri,
                                  @QueryParam("scope") String scope,
+                                 @QueryParam("acr_values") String acrValues,
+                                 @QueryParam("max_age") Integer maxAge,
                                  @QueryParam("state") String state)
     throws MissingClientIdException, InvalidClientIdException, MissingRedirectUriException, InvalidRedirectUriException, MismatchingRedirectUriException {
 
@@ -79,37 +92,60 @@ public class JerseyOAuthResource {
     } else {
 
       ResponseType decodedResponseType = (responseType == null) ? null : ResponseType.fromCode(responseType);
-      AuthorizationResponse authorizationResponse = authorizationHandler.validateAuthorizationRequest(new AuthorizationRequest(decodedResponseType, clientId, redirectUri, scope));
+      AuthorizationCycle authorizationCycle = authorizationHandler.validateAuthorizationRequest(new AuthorizationRequest(decodedResponseType, clientId, redirectUri, scope, acrValues));
+      StringBuilder cycleResponseBuilder = authorizationCycle.formulateResponse();
 
-      switch (authorizationResponse.getResponseType()) {
+      switch (authorizationCycle.getCycleType()) {
         case ERROR:
 
-          StringBuilder errorURIBuilder = new StringBuilder(authorizationResponse.getRedirectUri());
-
-          errorURIBuilder.append("?error=").append(((ErrorAuthorizationResponse)authorizationResponse).getErrorType().getCode())
-            .append("&error_description=").append(((ErrorAuthorizationResponse)authorizationResponse).getDescription());
-
           if (state != null) {
-            errorURIBuilder.append("&state=").append(state);
+            cycleResponseBuilder.append("&state=").append(state);
           }
 
-          return Response.seeOther(URI.create(errorURIBuilder.toString())).build();
+          return Response.seeOther(URI.create(cycleResponseBuilder.toString())).build();
         case LOGIN:
 
-          StringBuilder loginURIBuilder = new StringBuilder(((LoginAuthorizationResponse)authorizationResponse).getLoginUri())
-                                            .append("?client_id=").append(clientId).append("&redirect_uri=").append(redirectUri);
+          String code;
 
-          if ((scope != null) && (!scope.isEmpty())) {
-            loginURIBuilder.append("&scope=").append(scope);
-          }
-          if ((state != null) && (!state.isEmpty())) {
-            loginURIBuilder.append("&state=").append(state);
+          codeRegisterRepository.put(code = SnowflakeId.newInstance().generateCompactString(), maxAge, ((LoginAuthorizationCycle)authorizationCycle).generateCodeRegister(clientId, state));
+
+          if (maxAge != null) {
+            cycleResponseBuilder.append("&max_ge=").append(maxAge);
           }
 
-          return Response.seeOther(URI.create(loginURIBuilder.toString())).build();
+          cycleResponseBuilder.append("&code=").append(code);
+
+          return Response.seeOther(URI.create(cycleResponseBuilder.toString())).build();
         default:
-          throw new UnknownSwitchCaseException(authorizationResponse.getResponseType().name());
+          throw new UnknownSwitchCaseException(authorizationCycle.getCycleType().name());
       }
+    }
+  }
+
+  @POST
+  @Path("/confirmation/{code}")
+  @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+  public Response confirmation (@PathParam("code") String code, @QueryParam("redirect_uri") String redirectUri, @QueryParam("max_age") Integer maxAge, @QueryParam("state") String state, @FormParam("access_token") String accessToken, @FormParam("refresh_token") String refreshToken, @FormParam("expires_in") Integer expiresIn)
+    throws MissingRedirectUriException {
+
+    CodeRegister codeRegister;
+
+    if ((codeRegister = codeRegisterRepository.get(code)) == null) {
+      if ((redirectUri == null) || redirectUri.isBlank()) {
+        throw new MissingRedirectUriException();
+      } else {
+
+        StringBuilder missingCodeResponseBuilder = new ErrorAuthorizationCycle(redirectUri, AuthorizationErrorType.INSUFFICIENT_USER_AUTHENTICATION, null, maxAge, "The authentication request exceeded the allowable maximum time of %s seconds", (maxAge == null) ? "unknown" : String.valueOf(maxAge)).formulateResponse();
+
+        if (state != null) {
+          missingCodeResponseBuilder.append("&state=").append(state);
+        }
+
+        return Response.seeOther(URI.create(missingCodeResponseBuilder.toString())).build();
+      }
+    } else {
+
+      return null;
     }
   }
 

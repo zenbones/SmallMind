@@ -37,6 +37,7 @@ public enum AuthorizationErrorType {
   INVALID_REQUEST("invalid_request"),
   UNAUTHORIZED_CLIENT("unauthorized_client"),
   ACCESS_DENIED("access_denied"),
+  INSUFFICIENT_USER_AUTHENTICATION("insufficient_user_authentication"),
   UNSUPPORTED_RESPONSE_TYPE("unsupported_response_type"),
   INVALID_SCOPE("invalid_scope"),
   SERVER_ERROR("server_error"),

@@ -30,11 +30,48 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.sso.oauth.spi;
+package org.smallmind.sso.oauth.spi.server;
 
-//   .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-public class AuthorizationRequest {
+import org.smallmind.sso.oauth.spi.server.repository.CodeRegister;
 
-  private ResponseType responseType; // required
-  private String redirect_uri; // optional, must be compared to registered
+public class LoginAuthorizationCycle extends AuthorizationCycle {
+
+  private final String loginUri;
+  private final String scope;
+  private final String acrValues;
+
+  public LoginAuthorizationCycle (String redirectUri, String loginUri, String scope, String acrValues) {
+
+    super(redirectUri);
+
+    this.loginUri = loginUri;
+    this.scope = scope;
+    this.acrValues = acrValues;
+  }
+
+  @Override
+  public AuthorizationCycleType getCycleType () {
+
+    return AuthorizationCycleType.LOGIN;
+  }
+
+  public CodeRegister generateCodeRegister (String clientId, String state) {
+
+    return new CodeRegister(clientId, getRedirectUri(), scope, acrValues, state);
+  }
+
+  @Override
+  public StringBuilder formulateResponse () {
+
+    StringBuilder loginURIBuilder = new StringBuilder(loginUri).append("?redirect_uri=").append(getRedirectUri());
+
+    if (scope != null) {
+      loginURIBuilder.append("&scope=").append(scope);
+    }
+    if (acrValues != null) {
+      loginURIBuilder.append("&acr_values=").append(acrValues);
+    }
+
+    return loginURIBuilder;
+  }
 }

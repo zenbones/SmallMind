@@ -32,7 +32,26 @@
  */
 package org.smallmind.sso.oauth.spi.server;
 
-public enum AuthorizationResponseType {
+public abstract class AuthorizationCycle {
 
-  LOGIN, ERROR;
+  private final String redirectUri;
+
+  public AuthorizationCycle (String redirectUri) {
+
+    this.redirectUri = redirectUri;
+  }
+
+  public abstract AuthorizationCycleType getCycleType ();
+
+  public abstract StringBuilder formulateResponse ();
+
+  public boolean isError () {
+
+    return AuthorizationCycleType.ERROR.equals(getCycleType());
+  }
+
+  public String getRedirectUri () {
+
+    return redirectUri;
+  }
 }

@@ -32,24 +32,49 @@
  */
 package org.smallmind.sso.oauth.spi.server;
 
-public abstract class AuthorizationResponse {
+public class ErrorAuthorizationCycle extends AuthorizationCycle {
 
-  private final String redirectUri;
+  private final AuthorizationErrorType errorType;
+  private final String description;
+  private final String acrValues;
+  private final Integer maxAge;
 
-  public AuthorizationResponse (String redirectUri) {
+  public ErrorAuthorizationCycle (String redirectUri, AuthorizationErrorType errorType, String acrValues, Integer maxAge, String description, Object... args) {
 
-    this.redirectUri = redirectUri;
+    super(redirectUri);
+
+    this.errorType = errorType;
+    this.description = ((args == null) || (args.length == 0)) ? description : String.format(description, args);
+    this.acrValues = acrValues;
+    this.maxAge = maxAge;
   }
 
-  public abstract AuthorizationResponseType getResponseType ();
+  @Override
+  public AuthorizationCycleType getCycleType () {
 
-  public boolean isError () {
-
-    return AuthorizationResponseType.ERROR.equals(getResponseType());
+    return AuthorizationCycleType.ERROR;
   }
 
-  public String getRedirectUri () {
+  public AuthorizationErrorType getErrorType () {
 
-    return redirectUri;
+    return errorType;
+  }
+
+  @Override
+  public StringBuilder formulateResponse () {
+
+    StringBuilder errorURIBuilder = new StringBuilder(getRedirectUri());
+
+    errorURIBuilder.append("?error=").append(errorType.getCode())
+      .append("&error_description=").append(description);
+
+    if (acrValues != null) {
+      errorURIBuilder.append("&acr_values=").append(acrValues);
+    }
+    if (maxAge != null) {
+      errorURIBuilder.append("&max_age=").append(maxAge);
+    }
+
+    return errorURIBuilder;
   }
 }

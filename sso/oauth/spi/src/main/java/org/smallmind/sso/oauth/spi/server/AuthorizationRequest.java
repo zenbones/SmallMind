@@ -40,13 +40,15 @@ public class AuthorizationRequest {
   private final String clientId;
   private final String redirectUri;
   private final String scope;
+  private final String acrValues;
 
-  public AuthorizationRequest (ResponseType responseType, String clientId, String redirectUri, String scope) {
+  public AuthorizationRequest (ResponseType responseType, String clientId, String redirectUri, String scope, String acrValues) {
 
     this.responseType = responseType;
     this.clientId = clientId;
     this.redirectUri = redirectUri;
     this.scope = scope;
+    this.acrValues = acrValues;
   }
 
   public ResponseType getResponseType () {
@@ -67,5 +69,10 @@ public class AuthorizationRequest {
   public String getScope () {
 
     return scope;
+  }
+
+  public String getAcrValues () {
+
+    return acrValues;
   }
 }

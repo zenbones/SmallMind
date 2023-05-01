@@ -32,32 +32,7 @@
  */
 package org.smallmind.sso.oauth.spi.server;
 
-public class LoginAuthorizationResponse extends AuthorizationResponse {
+public enum AuthorizationCycleType {
 
-  private final String loginUri;
-  private final String scope;
-
-  public LoginAuthorizationResponse (String redirectUri, String loginUri, String scope) {
-
-    super(redirectUri);
-
-    this.loginUri = loginUri;
-    this.scope = scope;
-  }
-
-  @Override
-  public AuthorizationResponseType getResponseType () {
-
-    return AuthorizationResponseType.LOGIN;
-  }
-
-  public String getLoginUri () {
-
-    return loginUri;
-  }
-
-  public String getScope () {
-
-    return scope;
-  }
+  LOGIN, ERROR;
 }

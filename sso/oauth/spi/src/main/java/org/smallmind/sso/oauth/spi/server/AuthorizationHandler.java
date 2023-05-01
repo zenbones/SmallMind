@@ -39,6 +39,6 @@ import org.smallmind.sso.oauth.spi.MissingRedirectUriException;
 
 public interface AuthorizationHandler {
 
-  AuthorizationResponse validateAuthorizationRequest (AuthorizationRequest authorizationRequest)
+  AuthorizationCycle validateAuthorizationRequest (AuthorizationRequest authorizationRequest)
     throws InvalidClientIdException, MissingRedirectUriException, InvalidRedirectUriException, MismatchingRedirectUriException;
 }
