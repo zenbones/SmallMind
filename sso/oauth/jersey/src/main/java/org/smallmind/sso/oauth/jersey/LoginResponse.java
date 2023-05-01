@@ -30,13 +30,13 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.sso.oauth.spi.server.repository;
+package org.smallmind.sso.oauth.jersey;
 
-public interface CodeRegisterRepository {
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 
-  void put (String code, Integer maxAgeSeconds, CodeRegister codeRegister);
+@XmlAccessorType(XmlAccessType.PROPERTY)
+public abstract class LoginResponse {
 
-  CodeRegister get (String code);
-
-  CodeRegister remove (String code);
+  public abstract LoginResponseType getResponseType ();
 }

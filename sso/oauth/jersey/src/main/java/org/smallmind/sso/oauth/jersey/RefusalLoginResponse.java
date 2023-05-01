@@ -30,13 +30,53 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.sso.oauth.spi.server.repository;
+package org.smallmind.sso.oauth.jersey;
 
-public interface CodeRegisterRepository {
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 
-  void put (String code, Integer maxAgeSeconds, CodeRegister codeRegister);
+@XmlRootElement(name = "confirmation")
+public class RefusalLoginResponse extends LoginResponse {
 
-  CodeRegister get (String code);
+  private String errorType;
+  private String description;
 
-  CodeRegister remove (String code);
+  public RefusalLoginResponse () {
+
+  }
+
+  @Override
+  public LoginResponseType getResponseType () {
+
+    return LoginResponseType.REFUSAL;
+  }
+
+  @XmlElement(name = "error_type", required = true)
+  public String getErrorType () {
+
+    return errorType;
+  }
+
+  public void setErrorType (String errorType) {
+
+    this.errorType = errorType;
+  }
+
+  @XmlElement(name = "error_description")
+  public String getDescription () {
+
+    return description;
+  }
+
+  public void setDescription (String description) {
+
+    this.description = description;
+  }
+
+  public String formulateResponse (String redirectUri) {
+
+    return new StringBuilder(redirectUri)
+             .append("?errorType=").append(errorType)
+             .append("&error_description=").append(description).toString();
+  }
 }

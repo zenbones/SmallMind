@@ -123,9 +123,24 @@ public class JerseyOAuthResource {
   }
 
   @POST
-  @Path("/confirmation/{code}")
-  @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-  public Response confirmation (@PathParam("code") String code, @QueryParam("redirect_uri") String redirectUri, @QueryParam("max_age") Integer maxAge, @QueryParam("state") String state, @FormParam("access_token") String accessToken, @FormParam("refresh_token") String refreshToken, @FormParam("expires_in") Integer expiresIn)
+  @Path("/confirm/{code}")
+  @Consumes(MediaType.APPLICATION_JSON)
+  public Response confirmation (@PathParam("code") String code, @QueryParam("redirect_uri") String redirectUri, @QueryParam("max_age") Integer maxAge, @QueryParam("state") String state, ConfirmationLoginResponse loginResponse)
+    throws MissingRedirectUriException {
+
+    return formulateCodeResponse(code, redirectUri, maxAge, state, loginResponse);
+  }
+
+  @POST
+  @Path("/refuse/{code}")
+  @Consumes(MediaType.APPLICATION_JSON)
+  public Response refusal (@PathParam("code") String code, @QueryParam("redirect_uri") String redirectUri, @QueryParam("max_age") Integer maxAge, @QueryParam("state") String state, ConfirmationLoginResponse loginResponse)
+    throws MissingRedirectUriException {
+
+    return formulateCodeResponse(code, redirectUri, maxAge, state, loginResponse);
+  }
+
+  private Response formulateCodeResponse (String code, String redirectUri, Integer maxAge, String state, LoginResponse loginResponse)
     throws MissingRedirectUriException {
 
     CodeRegister codeRegister;
@@ -144,8 +159,16 @@ public class JerseyOAuthResource {
         return Response.seeOther(URI.create(missingCodeResponseBuilder.toString())).build();
       }
     } else {
+      switch (loginResponse.getResponseType()) {
+        case REFUSAL:
+          codeRegisterRepository.remove(code);
 
-      return null;
+          return Response.seeOther(URI.create(((RefusalLoginResponse)loginResponse).formulateResponse(codeRegister.getRedirectUri()))).build();
+        case CONFIRMATION:
+          return Response.seeOther(URI.create(codeRegister.formulateResponse(code, ((ConfirmationLoginResponse)loginResponse).getScope()))).build();
+        default:
+          throw new UnknownSwitchCaseException(loginResponse.getResponseType().name());
+      }
     }
   }
 

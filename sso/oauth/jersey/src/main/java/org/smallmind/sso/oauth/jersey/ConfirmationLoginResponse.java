@@ -30,48 +30,82 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.sso.oauth.spi.server.repository;
+package org.smallmind.sso.oauth.jersey;
 
-public class CodeRegister {
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 
-  private final String clientId;
-  private final String redirectUri;
-  private final String scope;
-  private final String acrValues;
-  private final String state;
+@XmlRootElement(name = "confirmation")
+public class ConfirmationLoginResponse extends LoginResponse {
 
-  public CodeRegister (String clientId, String redirectUri, String scope, String acrValues, String state) {
+  private String accessToken;
+  private String tokenType;
+  private String refreshToken;
+  private String scope;
+  private Integer expiresIn;
 
-    this.clientId = clientId;
-    this.redirectUri = redirectUri;
+  public ConfirmationLoginResponse () {
+
+  }
+
+  @Override
+  public LoginResponseType getResponseType () {
+
+    return LoginResponseType.CONFIRMATION;
+  }
+
+  @XmlElement(name = "access_token", required = true)
+  public String getAccessToken () {
+
+    return accessToken;
+  }
+
+  public void setAccessToken (String accessToken) {
+
+    this.accessToken = accessToken;
+  }
+
+  @XmlElement(name = "token_type", required = true)
+  public String getTokenType () {
+
+    return tokenType;
+  }
+
+  public void setTokenType (String tokenType) {
+
+    this.tokenType = tokenType;
+  }
+
+  @XmlElement(name = "scope")
+  public String getScope () {
+
+    return scope;
+  }
+
+  public void setScope (String scope) {
+
     this.scope = scope;
-    this.acrValues = acrValues;
-    this.state = state;
   }
 
-  public String getRedirectUri () {
+  @XmlElement(name = "expires_in")
+  public Integer getExpiresIn () {
 
-    return redirectUri;
+    return expiresIn;
   }
 
-  public String formulateResponse (String code, String resourceScope) {
+  public void setExpiresIn (Integer expiresIn) {
 
-    StringBuilder responseBuilder = new StringBuilder(redirectUri)
-                                      .append("?client_id=").append(clientId)
-                                      .append("&code=").append(code);
+    this.expiresIn = expiresIn;
+  }
 
-    if (resourceScope != null) {
-      responseBuilder.append("&scope=").append(resourceScope);
-    } else if (scope != null) {
-      responseBuilder.append("&scope=").append(scope);
-    }
-    if (acrValues != null) {
-      responseBuilder.append("&arc_values=").append(acrValues);
-    }
-    if (state != null) {
-      responseBuilder.append("&state=").append(state);
-    }
+  @XmlElement(name = "refresh_token")
+  public String getRefreshToken () {
 
-    return responseBuilder.toString();
+    return refreshToken;
+  }
+
+  public void setRefreshToken (String refreshToken) {
+
+    this.refreshToken = refreshToken;
   }
 }

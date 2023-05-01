@@ -30,13 +30,9 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.sso.oauth.spi.server.repository;
+package org.smallmind.sso.oauth.jersey;
 
-public interface CodeRegisterRepository {
+public enum LoginResponseType {
 
-  void put (String code, Integer maxAgeSeconds, CodeRegister codeRegister);
-
-  CodeRegister get (String code);
-
-  CodeRegister remove (String code);
+  CONFIRMATION, REFUSAL
 }
