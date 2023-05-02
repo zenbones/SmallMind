@@ -54,7 +54,7 @@ public class CodeRegister {
     return redirectUri;
   }
 
-  public String formulateResponse (String code, String resourceScope) {
+  public String formulateResponseUri (String code, String resourceScope) {
 
     StringBuilder responseBuilder = new StringBuilder(redirectUri)
                                       .append("?client_id=").append(clientId)

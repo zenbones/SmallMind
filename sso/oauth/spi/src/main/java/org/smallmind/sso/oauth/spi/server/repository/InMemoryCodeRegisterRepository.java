@@ -32,6 +32,36 @@
  */
 package org.smallmind.sso.oauth.spi.server.repository;
 
-public class InMemoryCodeRegisterRepository {
+import java.util.concurrent.TimeUnit;
+import org.smallmind.nutsnbolts.time.Stint;
+import org.smallmind.nutsnbolts.util.SelfDestructiveMap;
 
+public class InMemoryCodeRegisterRepository implements CodeRegisterRepository {
+
+  private final SelfDestructiveMap<String, CodeRegisterSelfDestructive> codeRegisterMap;
+
+  public InMemoryCodeRegisterRepository (int defaultMaxAge) {
+
+    codeRegisterMap = new SelfDestructiveMap<>(new Stint(defaultMaxAge, TimeUnit.SECONDS), new Stint(3, TimeUnit.SECONDS));
+  }
+
+  @Override
+  public void put (String code, Integer maxAgeSeconds, CodeRegister codeRegister) {
+
+    codeRegisterMap.putIfAbsent(code, new CodeRegisterSelfDestructive(codeRegister), (maxAgeSeconds == null) ? null : new Stint(maxAgeSeconds, TimeUnit.SECONDS));
+  }
+
+  @Override
+  public CodeRegister get (String code) {
+
+    CodeRegisterSelfDestructive value;
+
+    return ((value = codeRegisterMap.get(code)) == null) ? null : value.getCodeRegister();
+  }
+
+  @Override
+  public CodeRegister remove (String code) {
+
+    return get(code);
+  }
 }

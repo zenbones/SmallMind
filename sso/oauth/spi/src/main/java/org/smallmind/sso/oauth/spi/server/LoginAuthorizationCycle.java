@@ -61,7 +61,7 @@ public class LoginAuthorizationCycle extends AuthorizationCycle {
   }
 
   @Override
-  public StringBuilder formulateResponse () {
+  public StringBuilder formulateResponseUri () {
 
     StringBuilder loginURIBuilder = new StringBuilder(loginUri).append("?redirect_uri=").append(getRedirectUri());
 

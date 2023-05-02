@@ -93,7 +93,7 @@ public class JerseyOAuthResource {
 
       ResponseType decodedResponseType = (responseType == null) ? null : ResponseType.fromCode(responseType);
       AuthorizationCycle authorizationCycle = authorizationHandler.validateAuthorizationRequest(new AuthorizationRequest(decodedResponseType, clientId, redirectUri, scope, acrValues));
-      StringBuilder cycleResponseBuilder = authorizationCycle.formulateResponse();
+      StringBuilder cycleResponseBuilder = authorizationCycle.formulateResponseUri();
 
       switch (authorizationCycle.getCycleType()) {
         case ERROR:
@@ -150,7 +150,7 @@ public class JerseyOAuthResource {
         throw new MissingRedirectUriException();
       } else {
 
-        StringBuilder missingCodeResponseBuilder = new ErrorAuthorizationCycle(redirectUri, AuthorizationErrorType.INSUFFICIENT_USER_AUTHENTICATION, null, maxAge, "The authentication request exceeded the allowable maximum time of %s seconds", (maxAge == null) ? "unknown" : String.valueOf(maxAge)).formulateResponse();
+        StringBuilder missingCodeResponseBuilder = new ErrorAuthorizationCycle(redirectUri, AuthorizationErrorType.INSUFFICIENT_USER_AUTHENTICATION, null, maxAge, "The authentication request exceeded the allowable maximum time(%s seconds)", (maxAge == null) ? "unknown" : String.valueOf(maxAge)).formulateResponseUri();
 
         if (state != null) {
           missingCodeResponseBuilder.append("&state=").append(state);
@@ -163,9 +163,9 @@ public class JerseyOAuthResource {
         case REFUSAL:
           codeRegisterRepository.remove(code);
 
-          return Response.seeOther(URI.create(((RefusalLoginResponse)loginResponse).formulateResponse(codeRegister.getRedirectUri()))).build();
+          return Response.seeOther(URI.create(((RefusalLoginResponse)loginResponse).formulateResponseUri(codeRegister.getRedirectUri()))).build();
         case CONFIRMATION:
-          return Response.seeOther(URI.create(codeRegister.formulateResponse(code, ((ConfirmationLoginResponse)loginResponse).getScope()))).build();
+          return Response.seeOther(URI.create(codeRegister.formulateResponseUri(code, ((ConfirmationLoginResponse)loginResponse).getScope()))).build();
         default:
           throw new UnknownSwitchCaseException(loginResponse.getResponseType().name());
       }
@@ -181,6 +181,14 @@ public class JerseyOAuthResource {
                          @FormParam("redirect_uri") String redirectUri,
                          @FormParam("client_id") String clientId,
                          @FormParam("client_secret") String clientSecret) {
+
+    CodeRegister codeRegister;
+
+    if ((codeRegister = codeRegisterRepository.remove(code)) == null) {
+      new ErrorAuthorizationCycle(redirectUri, AuthorizationErrorType.INSUFFICIENT_USER_AUTHENTICATION, null, null, "The authentication request exceeded the allowable maximum time(unknown seconds)").formulateResponseUri();
+    } else {
+
+    }
 
     return null;
   }

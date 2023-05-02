@@ -43,7 +43,7 @@ public abstract class AuthorizationCycle {
 
   public abstract AuthorizationCycleType getCycleType ();
 
-  public abstract StringBuilder formulateResponse ();
+  public abstract StringBuilder formulateResponseUri ();
 
   public boolean isError () {
 

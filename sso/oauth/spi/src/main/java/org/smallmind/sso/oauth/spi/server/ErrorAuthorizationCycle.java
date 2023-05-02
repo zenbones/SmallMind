@@ -61,7 +61,7 @@ public class ErrorAuthorizationCycle extends AuthorizationCycle {
   }
 
   @Override
-  public StringBuilder formulateResponse () {
+  public StringBuilder formulateResponseUri () {
 
     StringBuilder errorURIBuilder = new StringBuilder(getRedirectUri());
 

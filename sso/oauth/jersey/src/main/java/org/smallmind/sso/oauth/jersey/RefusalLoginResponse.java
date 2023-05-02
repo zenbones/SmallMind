@@ -73,7 +73,7 @@ public class RefusalLoginResponse extends LoginResponse {
     this.description = description;
   }
 
-  public String formulateResponse (String redirectUri) {
+  public String formulateResponseUri (String redirectUri) {
 
     return new StringBuilder(redirectUri)
              .append("?errorType=").append(errorType)
