@@ -32,6 +32,10 @@
  */
 package org.smallmind.sso.oauth.spi.server;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 public class ErrorAuthorizationCycle extends AuthorizationCycle {
 
   private final AuthorizationErrorType errorType;
@@ -65,9 +69,11 @@ public class ErrorAuthorizationCycle extends AuthorizationCycle {
 
     StringBuilder errorURIBuilder = new StringBuilder(getRedirectUri());
 
-    errorURIBuilder.append("?error=").append(errorType.getCode())
-      .append("&error_description=").append(description);
+    errorURIBuilder.append("?error=").append(errorType.getCode());
 
+    if (description != null) {
+      errorURIBuilder.append("&error_description=").append(description);
+    }
     if (acrValues != null) {
       errorURIBuilder.append("&acr_values=").append(acrValues);
     }
@@ -76,5 +82,24 @@ public class ErrorAuthorizationCycle extends AuthorizationCycle {
     }
 
     return errorURIBuilder;
+  }
+
+  public JsonNode formulateResponseBody () {
+
+    ObjectNode responseNode = JsonNodeFactory.instance.objectNode();
+
+    responseNode.put("error", errorType.getCode());
+
+    if (description != null) {
+      responseNode.put("error_description", description);
+    }
+    if (acrValues != null) {
+      responseNode.put("acr_values", acrValues);
+    }
+    if (maxAge != null) {
+      responseNode.put("max_age", maxAge);
+    }
+
+    return responseNode;
   }
 }

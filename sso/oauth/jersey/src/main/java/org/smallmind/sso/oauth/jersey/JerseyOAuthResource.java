@@ -185,8 +185,10 @@ public class JerseyOAuthResource {
     CodeRegister codeRegister;
 
     if ((codeRegister = codeRegisterRepository.remove(code)) == null) {
-      new ErrorAuthorizationCycle(redirectUri, AuthorizationErrorType.INSUFFICIENT_USER_AUTHENTICATION, null, null, "The authentication request exceeded the allowable maximum time(unknown seconds)").formulateResponseUri();
+
+      return Response.ok(new ErrorAuthorizationCycle(redirectUri, AuthorizationErrorType.INSUFFICIENT_USER_AUTHENTICATION, null, null, "The authentication request exceeded the allowable maximum time(unknown seconds)").formulateResponseBody(), MediaType.APPLICATION_JSON_TYPE).build();
     } else {
+
 
     }
 
