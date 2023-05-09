@@ -34,6 +34,7 @@ package org.smallmind.sso.oauth.jersey;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import org.smallmind.sso.oauth.spi.OAuthSession;
 
 @XmlRootElement(name = "confirmation")
 public class ConfirmationLoginResponse extends LoginResponse {
@@ -52,6 +53,11 @@ public class ConfirmationLoginResponse extends LoginResponse {
   public LoginResponseType getResponseType () {
 
     return LoginResponseType.CONFIRMATION;
+  }
+
+  public OAuthSession generateSession () {
+
+    return new OAuthSession(accessToken, tokenType, refreshToken, scope, expiresIn);
   }
 
   @XmlElement(name = "access_token", required = true)

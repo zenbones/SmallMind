@@ -32,6 +32,7 @@
  */
 package org.smallmind.sso.oauth.jersey;
 
+import java.io.IOException;
 import java.net.URI;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.FormParam;
@@ -55,8 +56,11 @@ import org.smallmind.sso.oauth.spi.server.AuthorizationCycle;
 import org.smallmind.sso.oauth.spi.server.AuthorizationErrorType;
 import org.smallmind.sso.oauth.spi.server.AuthorizationHandler;
 import org.smallmind.sso.oauth.spi.server.AuthorizationRequest;
+import org.smallmind.sso.oauth.spi.server.CredentialsDecoder;
 import org.smallmind.sso.oauth.spi.server.ErrorAuthorizationCycle;
+import org.smallmind.sso.oauth.spi.server.ErrorTokenResponse;
 import org.smallmind.sso.oauth.spi.server.LoginAuthorizationCycle;
+import org.smallmind.sso.oauth.spi.server.UserAndPassword;
 import org.smallmind.sso.oauth.spi.server.repository.CodeRegister;
 import org.smallmind.sso.oauth.spi.server.repository.CodeRegisterRepository;
 
@@ -107,7 +111,7 @@ public class JerseyOAuthResource {
 
           String code;
 
-          codeRegisterRepository.put(code = SnowflakeId.newInstance().generateCompactString(), maxAge, ((LoginAuthorizationCycle)authorizationCycle).generateCodeRegister(clientId, state));
+          codeRegisterRepository.put(code = SnowflakeId.newInstance().generateCompactString(), maxAge, ((LoginAuthorizationCycle)authorizationCycle).generateCodeRegister(clientId, state, redirectUri));
 
           if (maxAge != null) {
             cycleResponseBuilder.append("&max_ge=").append(maxAge);
@@ -165,6 +169,8 @@ public class JerseyOAuthResource {
 
           return Response.seeOther(URI.create(((RefusalLoginResponse)loginResponse).formulateResponseUri(codeRegister.getRedirectUri()))).build();
         case CONFIRMATION:
+          codeRegister.setSession(((ConfirmationLoginResponse)loginResponse).generateSession());
+
           return Response.seeOther(URI.create(codeRegister.formulateResponseUri(code, ((ConfirmationLoginResponse)loginResponse).getScope()))).build();
         default:
           throw new UnknownSwitchCaseException(loginResponse.getResponseType().name());
@@ -180,18 +186,37 @@ public class JerseyOAuthResource {
                          @FormParam("code") String code,
                          @FormParam("redirect_uri") String redirectUri,
                          @FormParam("client_id") String clientId,
-                         @FormParam("client_secret") String clientSecret) {
+                         @FormParam("client_secret") String clientSecret)
+    throws IOException {
 
     CodeRegister codeRegister;
 
     if ((codeRegister = codeRegisterRepository.remove(code)) == null) {
 
-      return Response.ok(new ErrorAuthorizationCycle(redirectUri, AuthorizationErrorType.INSUFFICIENT_USER_AUTHENTICATION, null, null, "The authentication request exceeded the allowable maximum time(unknown seconds)").formulateResponseBody(), MediaType.APPLICATION_JSON_TYPE).build();
+      return Response.ok(new ErrorTokenResponse(AuthorizationErrorType.INSUFFICIENT_USER_AUTHENTICATION, "The token request exceeded the allowable maximum time(unknown seconds)").formulateResponseBody(), MediaType.APPLICATION_JSON_TYPE).build();
     } else {
 
+      UserAndPassword userAndPassword = null;
 
+      if (authorization != null) {
+        userAndPassword = CredentialsDecoder.basic(authorization);
+      } else if ((clientId != null) && (clientSecret != null)) {
+        userAndPassword = new UserAndPassword(clientId, clientSecret);
+      }
+
+      if (!authorizationHandler.validateTokenRequest(userAndPassword)) {
+
+        return Response.ok(new ErrorTokenResponse(AuthorizationErrorType.UNAUTHORIZED_CLIENT, "Missing client authorization").formulateResponseBody(), MediaType.APPLICATION_JSON_TYPE).build();
+      } else if (((codeRegister.getOriginalRedirectUri() == null) && (redirectUri != null)) || ((codeRegister.getOriginalRedirectUri() != null) && (!codeRegister.getRedirectUri().equals(redirectUri)))) {
+
+        return Response.ok(new ErrorTokenResponse(AuthorizationErrorType.INVALID_REQUEST, "Mismatched request uri").formulateResponseBody(), MediaType.APPLICATION_JSON_TYPE).build();
+      } else if (!"authorization_code".equals(grantType)) {
+
+        return Response.ok(new ErrorTokenResponse(AuthorizationErrorType.INVALID_REQUEST, "Invalid grant type (must be 'authorization_code')").formulateResponseBody(), MediaType.APPLICATION_JSON_TYPE).build();
+      } else {
+
+        return Response.ok(codeRegister.formulateResponseBody(), MediaType.APPLICATION_JSON_TYPE).build();
+      }
     }
-
-    return null;
   }
 }

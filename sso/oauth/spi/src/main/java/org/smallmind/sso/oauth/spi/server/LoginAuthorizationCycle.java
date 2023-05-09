@@ -55,9 +55,9 @@ public class LoginAuthorizationCycle extends AuthorizationCycle {
     return AuthorizationCycleType.LOGIN;
   }
 
-  public CodeRegister generateCodeRegister (String clientId, String state) {
+  public CodeRegister generateCodeRegister (String clientId, String state, String originalRedirectUri) {
 
-    return new CodeRegister(clientId, getRedirectUri(), scope, acrValues, state);
+    return new CodeRegister(clientId, getRedirectUri(), scope, acrValues, state, originalRedirectUri);
   }
 
   @Override

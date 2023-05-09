@@ -32,6 +32,11 @@
  */
 package org.smallmind.sso.oauth.spi.server.repository;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.smallmind.sso.oauth.spi.OAuthSession;
+
 public class CodeRegister {
 
   private final String clientId;
@@ -39,19 +44,37 @@ public class CodeRegister {
   private final String scope;
   private final String acrValues;
   private final String state;
+  private final String originalRedirectUri;
+  private OAuthSession session;
 
-  public CodeRegister (String clientId, String redirectUri, String scope, String acrValues, String state) {
+  public CodeRegister (String clientId, String redirectUri, String scope, String acrValues, String state, String originalRedirectUri) {
 
     this.clientId = clientId;
     this.redirectUri = redirectUri;
     this.scope = scope;
     this.acrValues = acrValues;
     this.state = state;
+    this.originalRedirectUri = originalRedirectUri;
   }
 
   public String getRedirectUri () {
 
     return redirectUri;
+  }
+
+  public String getOriginalRedirectUri () {
+
+    return originalRedirectUri;
+  }
+
+  public OAuthSession getSession () {
+
+    return session;
+  }
+
+  public void setSession (OAuthSession session) {
+
+    this.session = session;
   }
 
   public String formulateResponseUri (String code, String resourceScope) {
@@ -73,5 +96,25 @@ public class CodeRegister {
     }
 
     return responseBuilder.toString();
+  }
+
+  public JsonNode formulateResponseBody () {
+
+    ObjectNode responseNode = JsonNodeFactory.instance.objectNode();
+
+    responseNode.put("access_token", session.getAccessToken());
+    responseNode.put("token_type", session.getTokenType());
+
+    if (session.getExpiresIn() != null) {
+      responseNode.put("expires_in", session.getExpiresIn());
+    }
+    if (session.getRefreshToken() != null) {
+      responseNode.put("refresh_token", session.getRefreshToken());
+    }
+    if (session.getScope() != null) {
+      responseNode.put("scope", session.getScope());
+    }
+
+    return responseNode;
   }
 }

@@ -32,15 +32,42 @@
  */
 package org.smallmind.sso.oauth.spi.server;
 
-import org.smallmind.sso.oauth.spi.InvalidClientIdException;
-import org.smallmind.sso.oauth.spi.InvalidRedirectUriException;
-import org.smallmind.sso.oauth.spi.MismatchingRedirectUriException;
-import org.smallmind.sso.oauth.spi.MissingRedirectUriException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
-public interface AuthorizationHandler {
+public class ErrorTokenResponse {
 
-  AuthorizationCycle validateAuthorizationRequest (AuthorizationRequest authorizationRequest)
-    throws InvalidClientIdException, MissingRedirectUriException, InvalidRedirectUriException, MismatchingRedirectUriException;
+  private final AuthorizationErrorType errorType;
 
-  boolean validateTokenRequest (UserAndPassword userAndPassword);
+  private final String description;
+
+  public ErrorTokenResponse (AuthorizationErrorType errorType, String description, Object... args) {
+
+    this.errorType = errorType;
+    this.description = ((args == null) || (args.length == 0)) ? description : String.format(description, args);
+  }
+
+  public AuthorizationCycleType getCycleType () {
+
+    return AuthorizationCycleType.ERROR;
+  }
+
+  public AuthorizationErrorType getErrorType () {
+
+    return errorType;
+  }
+
+  public JsonNode formulateResponseBody () {
+
+    ObjectNode responseNode = JsonNodeFactory.instance.objectNode();
+
+    responseNode.put("error", errorType.getCode());
+
+    if (description != null) {
+      responseNode.put("error_description", description);
+    }
+
+    return responseNode;
+  }
 }
