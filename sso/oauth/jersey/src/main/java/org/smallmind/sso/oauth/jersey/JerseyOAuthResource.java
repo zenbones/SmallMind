@@ -64,7 +64,7 @@ import org.smallmind.sso.oauth.spi.server.UserAndPassword;
 import org.smallmind.sso.oauth.spi.server.repository.CodeRegister;
 import org.smallmind.sso.oauth.spi.server.repository.CodeRegisterRepository;
 
-@Path("")
+@Path("/sso/oauth")
 public class JerseyOAuthResource {
 
   private AuthorizationHandler authorizationHandler;
