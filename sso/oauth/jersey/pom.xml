@@ -18,6 +18,11 @@
     </dependency>
     <dependency>
       <groupId>org.smallmind</groupId>
+      <artifactId>web-json-scaffold</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.smallmind</groupId>
       <artifactId>sso-ouath-spi</artifactId>
       <scope>compile</scope>
     </dependency>

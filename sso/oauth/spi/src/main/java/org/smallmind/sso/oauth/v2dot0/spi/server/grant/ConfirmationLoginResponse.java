@@ -30,53 +30,88 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.sso.oauth.v2dot0.jersey;
+package org.smallmind.sso.oauth.v2dot0.spi.server.grant;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import org.smallmind.sso.oauth.v2dot0.spi.OAuthSession;
 
 @XmlRootElement(name = "confirmation")
-public class RefusalLoginResponse extends LoginResponse {
+public class ConfirmationLoginResponse extends LoginResponse {
 
-  private String errorType;
-  private String description;
+  private String accessToken;
+  private String tokenType;
+  private String refreshToken;
+  private String scope;
+  private Integer expiresIn;
 
-  public RefusalLoginResponse () {
+  public ConfirmationLoginResponse () {
 
   }
 
   @Override
   public LoginResponseType getResponseType () {
 
-    return LoginResponseType.REFUSAL;
+    return LoginResponseType.CONFIRMATION;
   }
 
-  @XmlElement(name = "error_type", required = true)
-  public String getErrorType () {
+  public OAuthSession generateSession () {
 
-    return errorType;
+    return new OAuthSession(accessToken, tokenType, refreshToken, scope, expiresIn);
   }
 
-  public void setErrorType (String errorType) {
+  @XmlElement(name = "access_token", required = true)
+  public String getAccessToken () {
 
-    this.errorType = errorType;
+    return accessToken;
   }
 
-  @XmlElement(name = "error_description")
-  public String getDescription () {
+  public void setAccessToken (String accessToken) {
 
-    return description;
+    this.accessToken = accessToken;
   }
 
-  public void setDescription (String description) {
+  @XmlElement(name = "token_type", required = true)
+  public String getTokenType () {
 
-    this.description = description;
+    return tokenType;
   }
 
-  public String formulateResponseUri (String redirectUri) {
+  public void setTokenType (String tokenType) {
 
-    return new StringBuilder(redirectUri)
-             .append("?errorType=").append(errorType)
-             .append("&error_description=").append(description).toString();
+    this.tokenType = tokenType;
+  }
+
+  @XmlElement(name = "scope")
+  public String getScope () {
+
+    return scope;
+  }
+
+  public void setScope (String scope) {
+
+    this.scope = scope;
+  }
+
+  @XmlElement(name = "expires_in")
+  public Integer getExpiresIn () {
+
+    return expiresIn;
+  }
+
+  public void setExpiresIn (Integer expiresIn) {
+
+    this.expiresIn = expiresIn;
+  }
+
+  @XmlElement(name = "refresh_token")
+  public String getRefreshToken () {
+
+    return refreshToken;
+  }
+
+  public void setRefreshToken (String refreshToken) {
+
+    this.refreshToken = refreshToken;
   }
 }

@@ -30,13 +30,9 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.sso.oauth.v2dot0.jersey;
+package org.smallmind.sso.oauth.v2dot0.spi.server.grant;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
+public enum LoginResponseType {
 
-@XmlAccessorType(XmlAccessType.PROPERTY)
-public abstract class LoginResponse {
-
-  public abstract LoginResponseType getResponseType ();
+  CONFIRMATION, REFUSAL
 }

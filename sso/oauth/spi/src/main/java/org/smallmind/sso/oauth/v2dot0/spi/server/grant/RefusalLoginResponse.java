@@ -30,88 +30,53 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.sso.oauth.v2dot0.jersey;
+package org.smallmind.sso.oauth.v2dot0.spi.server.grant;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
-import org.smallmind.sso.oauth.v2dot0.spi.OAuthSession;
 
 @XmlRootElement(name = "confirmation")
-public class ConfirmationLoginResponse extends LoginResponse {
+public class RefusalLoginResponse extends LoginResponse {
 
-  private String accessToken;
-  private String tokenType;
-  private String refreshToken;
-  private String scope;
-  private Integer expiresIn;
+  private String errorType;
+  private String description;
 
-  public ConfirmationLoginResponse () {
+  public RefusalLoginResponse () {
 
   }
 
   @Override
   public LoginResponseType getResponseType () {
 
-    return LoginResponseType.CONFIRMATION;
+    return LoginResponseType.REFUSAL;
   }
 
-  public OAuthSession generateSession () {
+  @XmlElement(name = "error_type", required = true)
+  public String getErrorType () {
 
-    return new OAuthSession(accessToken, tokenType, refreshToken, scope, expiresIn);
+    return errorType;
   }
 
-  @XmlElement(name = "access_token", required = true)
-  public String getAccessToken () {
+  public void setErrorType (String errorType) {
 
-    return accessToken;
+    this.errorType = errorType;
   }
 
-  public void setAccessToken (String accessToken) {
+  @XmlElement(name = "error_description")
+  public String getDescription () {
 
-    this.accessToken = accessToken;
+    return description;
   }
 
-  @XmlElement(name = "token_type", required = true)
-  public String getTokenType () {
+  public void setDescription (String description) {
 
-    return tokenType;
+    this.description = description;
   }
 
-  public void setTokenType (String tokenType) {
+  public String formulateResponseUri (String redirectUri) {
 
-    this.tokenType = tokenType;
-  }
-
-  @XmlElement(name = "scope")
-  public String getScope () {
-
-    return scope;
-  }
-
-  public void setScope (String scope) {
-
-    this.scope = scope;
-  }
-
-  @XmlElement(name = "expires_in")
-  public Integer getExpiresIn () {
-
-    return expiresIn;
-  }
-
-  public void setExpiresIn (Integer expiresIn) {
-
-    this.expiresIn = expiresIn;
-  }
-
-  @XmlElement(name = "refresh_token")
-  public String getRefreshToken () {
-
-    return refreshToken;
-  }
-
-  public void setRefreshToken (String refreshToken) {
-
-    this.refreshToken = refreshToken;
+    return new StringBuilder(redirectUri)
+             .append("?errorType=").append(errorType)
+             .append("&error_description=").append(description).toString();
   }
 }

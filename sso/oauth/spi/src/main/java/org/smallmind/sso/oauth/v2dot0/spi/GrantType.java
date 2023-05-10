@@ -34,7 +34,7 @@ package org.smallmind.sso.oauth.v2dot0.spi;
 
 public enum GrantType {
 
-  AUTHORIZATION_CODE("authorization code"),
+  AUTHORIZATION_CODE("authorization_code"),
   IMPLICIT("implicit"),
   RESOURCE_OWNER_CREDENTIALS("resource_owner_password_credentials"),
   CLIENT_CREDENTIALS("client_credentials"),

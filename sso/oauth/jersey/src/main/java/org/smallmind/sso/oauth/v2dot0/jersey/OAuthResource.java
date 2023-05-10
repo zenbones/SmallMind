@@ -44,6 +44,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.sso.oauth.v2dot0.spi.InvalidClientIdException;
@@ -61,8 +62,12 @@ import org.smallmind.sso.oauth.v2dot0.spi.server.ErrorAuthorizationCycle;
 import org.smallmind.sso.oauth.v2dot0.spi.server.ErrorTokenResponse;
 import org.smallmind.sso.oauth.v2dot0.spi.server.LoginAuthorizationCycle;
 import org.smallmind.sso.oauth.v2dot0.spi.server.UserAndPassword;
+import org.smallmind.sso.oauth.v2dot0.spi.server.grant.ConfirmationLoginResponse;
+import org.smallmind.sso.oauth.v2dot0.spi.server.grant.LoginResponse;
+import org.smallmind.sso.oauth.v2dot0.spi.server.grant.RefusalLoginResponse;
 import org.smallmind.sso.oauth.v2dot0.spi.server.repository.CodeContent;
 import org.smallmind.sso.oauth.v2dot0.spi.server.repository.CodeContentRepository;
+import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 @Path("/sso/oauth")
 public class OAuthResource {
@@ -95,53 +100,57 @@ public class OAuthResource {
       throw new MissingClientIdException();
     } else {
 
-      ResponseType decodedResponseType = (responseType == null) ? null : ResponseType.fromCode(responseType);
-      AuthorizationCycle authorizationCycle = authorizationHandler.validateAuthorizationRequest(new AuthorizationRequest(decodedResponseType, clientId, redirectUri, scope, acrValues));
-      StringBuilder cycleResponseBuilder = authorizationCycle.formulateResponseUri();
+      ResponseType decodedResponseType;
 
-      switch (authorizationCycle.getCycleType()) {
-        case ERROR:
+      if ((decodedResponseType = (responseType == null) ? null : ResponseType.fromCode(responseType)) == null) {
 
-          if (state != null) {
-            cycleResponseBuilder.append("&state=").append(state);
-          }
+        StringBuilder cycleResponseBuilder = new ErrorAuthorizationCycle(redirectUri, AuthorizationErrorType.UNSUPPORTED_RESPONSE_TYPE, acrValues, maxAge, "Missing or invalid response type(%s)", (responseType == null) ? "null" : responseType).formulateResponseUri();
 
-          return Response.seeOther(URI.create(cycleResponseBuilder.toString())).build();
-        case LOGIN:
+        if (state != null) {
+          cycleResponseBuilder.append("&state=").append(state);
+        }
 
-          String code;
+        return Response.seeOther(URI.create(cycleResponseBuilder.toString())).build();
+      } else {
 
-          codeContentRepository.put(code = SnowflakeId.newInstance().generateCompactString(), maxAge, ((LoginAuthorizationCycle)authorizationCycle).generateCodeContent(clientId, state, redirectUri));
+        AuthorizationCycle authorizationCycle = authorizationHandler.validateAuthorizationRequest(new AuthorizationRequest(decodedResponseType, clientId, redirectUri, scope, acrValues));
+        StringBuilder cycleResponseBuilder = authorizationCycle.formulateResponseUri();
 
-          if (maxAge != null) {
-            cycleResponseBuilder.append("&max_ge=").append(maxAge);
-          }
+        switch (authorizationCycle.getCycleType()) {
+          case ERROR:
 
-          cycleResponseBuilder.append("&code=").append(code);
+            if (state != null) {
+              cycleResponseBuilder.append("&state=").append(state);
+            }
 
-          return Response.seeOther(URI.create(cycleResponseBuilder.toString())).build();
-        default:
-          throw new UnknownSwitchCaseException(authorizationCycle.getCycleType().name());
+            return Response.seeOther(URI.create(cycleResponseBuilder.toString())).build();
+          case LOGIN:
+
+            String code;
+
+            codeContentRepository.put(code = SnowflakeId.newInstance().generateCompactString(), maxAge, ((LoginAuthorizationCycle)authorizationCycle).generateCodeContent(clientId, state, redirectUri));
+
+            if (maxAge != null) {
+              cycleResponseBuilder.append("&max_ge=").append(maxAge);
+            }
+
+            cycleResponseBuilder.append("&code=").append(code);
+
+            return Response.seeOther(URI.create(cycleResponseBuilder.toString())).build();
+          default:
+            throw new UnknownSwitchCaseException(authorizationCycle.getCycleType().name());
+        }
       }
     }
   }
 
   @POST
-  @Path("/confirm/{code}")
+  @Path("/authentication/authorization_code/{code}")
   @Consumes(MediaType.APPLICATION_JSON)
-  public Response confirmation (@PathParam("code") String code, @QueryParam("redirect_uri") String redirectUri, @QueryParam("max_age") Integer maxAge, @QueryParam("state") String state, ConfirmationLoginResponse loginResponse)
+  public Response confirmation (@PathParam("code") String code, @QueryParam("redirect_uri") String redirectUri, @QueryParam("max_age") Integer maxAge, @QueryParam("state") String state, JsonNode body)
     throws MissingRedirectUriException {
 
-    return formulateCodeResponse(code, redirectUri, maxAge, state, loginResponse);
-  }
-
-  @POST
-  @Path("/refuse/{code}")
-  @Consumes(MediaType.APPLICATION_JSON)
-  public Response refusal (@PathParam("code") String code, @QueryParam("redirect_uri") String redirectUri, @QueryParam("max_age") Integer maxAge, @QueryParam("state") String state, ConfirmationLoginResponse loginResponse)
-    throws MissingRedirectUriException {
-
-    return formulateCodeResponse(code, redirectUri, maxAge, state, loginResponse);
+    return formulateCodeResponse(code, redirectUri, maxAge, state, body.has("error") ? JsonCodec.convert(body, RefusalLoginResponse.class) : JsonCodec.convert(body, ConfirmationLoginResponse.class));
   }
 
   private Response formulateCodeResponse (String code, String redirectUri, Integer maxAge, String state, LoginResponse loginResponse)
