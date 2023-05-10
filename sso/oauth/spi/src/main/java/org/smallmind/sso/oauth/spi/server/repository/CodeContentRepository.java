@@ -32,11 +32,11 @@
  */
 package org.smallmind.sso.oauth.spi.server.repository;
 
-public interface CodeRegisterRepository {
+public interface CodeContentRepository {
 
-  void put (String code, Integer maxAgeSeconds, CodeRegister codeRegister);
+  void put (String code, Integer maxAgeSeconds, CodeContent codeContent);
 
-  CodeRegister get (String code);
+  CodeContent get (String code);
 
-  CodeRegister remove (String code);
+  CodeContent remove (String code);
 }

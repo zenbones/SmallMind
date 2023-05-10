@@ -35,18 +35,18 @@ package org.smallmind.sso.oauth.spi.server.repository;
 import org.smallmind.nutsnbolts.time.Stint;
 import org.smallmind.nutsnbolts.util.SelfDestructive;
 
-public class CodeRegisterSelfDestructive implements SelfDestructive {
+public class CodeContentSelfDestructive implements SelfDestructive {
 
-  private final CodeRegister codeRegister;
+  private final CodeContent codeContent;
 
-  public CodeRegisterSelfDestructive (CodeRegister codeRegister) {
+  public CodeContentSelfDestructive (CodeContent codeContent) {
 
-    this.codeRegister = codeRegister;
+    this.codeContent = codeContent;
   }
 
-  public CodeRegister getCodeRegister () {
+  public CodeContent getCodeContent () {
 
-    return codeRegister;
+    return codeContent;
   }
 
   @Override

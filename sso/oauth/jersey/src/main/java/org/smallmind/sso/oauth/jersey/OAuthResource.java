@@ -61,23 +61,23 @@ import org.smallmind.sso.oauth.spi.server.ErrorAuthorizationCycle;
 import org.smallmind.sso.oauth.spi.server.ErrorTokenResponse;
 import org.smallmind.sso.oauth.spi.server.LoginAuthorizationCycle;
 import org.smallmind.sso.oauth.spi.server.UserAndPassword;
-import org.smallmind.sso.oauth.spi.server.repository.CodeRegister;
-import org.smallmind.sso.oauth.spi.server.repository.CodeRegisterRepository;
+import org.smallmind.sso.oauth.spi.server.repository.CodeContent;
+import org.smallmind.sso.oauth.spi.server.repository.CodeContentRepository;
 
 @Path("/sso/oauth")
 public class OAuthResource {
 
   private AuthorizationHandler authorizationHandler;
-  private CodeRegisterRepository codeRegisterRepository;
+  private CodeContentRepository codeContentRepository;
 
   public void setAuthorizationHandler (AuthorizationHandler authorizationHandler) {
 
     this.authorizationHandler = authorizationHandler;
   }
 
-  public void setCodeRegisterRepository (CodeRegisterRepository codeRegisterRepository) {
+  public void setCodeContentRepository (CodeContentRepository codeContentRepository) {
 
-    this.codeRegisterRepository = codeRegisterRepository;
+    this.codeContentRepository = codeContentRepository;
   }
 
   @GET
@@ -111,7 +111,7 @@ public class OAuthResource {
 
           String code;
 
-          codeRegisterRepository.put(code = SnowflakeId.newInstance().generateCompactString(), maxAge, ((LoginAuthorizationCycle)authorizationCycle).generateCodeRegister(clientId, state, redirectUri));
+          codeContentRepository.put(code = SnowflakeId.newInstance().generateCompactString(), maxAge, ((LoginAuthorizationCycle)authorizationCycle).generateCodeContent(clientId, state, redirectUri));
 
           if (maxAge != null) {
             cycleResponseBuilder.append("&max_ge=").append(maxAge);
@@ -147,9 +147,9 @@ public class OAuthResource {
   private Response formulateCodeResponse (String code, String redirectUri, Integer maxAge, String state, LoginResponse loginResponse)
     throws MissingRedirectUriException {
 
-    CodeRegister codeRegister;
+    CodeContent codeContent;
 
-    if ((codeRegister = codeRegisterRepository.get(code)) == null) {
+    if ((codeContent = codeContentRepository.get(code)) == null) {
       if ((redirectUri == null) || redirectUri.isBlank()) {
         throw new MissingRedirectUriException();
       } else {
@@ -165,13 +165,13 @@ public class OAuthResource {
     } else {
       switch (loginResponse.getResponseType()) {
         case REFUSAL:
-          codeRegisterRepository.remove(code);
+          codeContentRepository.remove(code);
 
-          return Response.seeOther(URI.create(((RefusalLoginResponse)loginResponse).formulateResponseUri(codeRegister.getRedirectUri()))).build();
+          return Response.seeOther(URI.create(((RefusalLoginResponse)loginResponse).formulateResponseUri(codeContent.getRedirectUri()))).build();
         case CONFIRMATION:
-          codeRegister.setSession(((ConfirmationLoginResponse)loginResponse).generateSession());
+          codeContent.setSession(((ConfirmationLoginResponse)loginResponse).generateSession());
 
-          return Response.seeOther(URI.create(codeRegister.formulateResponseUri(code, ((ConfirmationLoginResponse)loginResponse).getScope()))).build();
+          return Response.seeOther(URI.create(codeContent.formulateResponseUri(code, ((ConfirmationLoginResponse)loginResponse).getScope()))).build();
         default:
           throw new UnknownSwitchCaseException(loginResponse.getResponseType().name());
       }
@@ -189,9 +189,9 @@ public class OAuthResource {
                          @FormParam("client_secret") String clientSecret)
     throws IOException {
 
-    CodeRegister codeRegister;
+    CodeContent codeContent;
 
-    if ((codeRegister = codeRegisterRepository.remove(code)) == null) {
+    if ((codeContent = codeContentRepository.remove(code)) == null) {
 
       return Response.ok(new ErrorTokenResponse(AuthorizationErrorType.INSUFFICIENT_USER_AUTHENTICATION, "The token request exceeded the allowable maximum time(unknown seconds)").formulateResponseBody(), MediaType.APPLICATION_JSON_TYPE).build();
     } else {
@@ -207,7 +207,7 @@ public class OAuthResource {
       if (!authorizationHandler.validateTokenRequest(userAndPassword)) {
 
         return Response.ok(new ErrorTokenResponse(AuthorizationErrorType.UNAUTHORIZED_CLIENT, "Missing client authorization").formulateResponseBody(), MediaType.APPLICATION_JSON_TYPE).build();
-      } else if (((codeRegister.getOriginalRedirectUri() == null) && (redirectUri != null)) || ((codeRegister.getOriginalRedirectUri() != null) && (!codeRegister.getRedirectUri().equals(redirectUri)))) {
+      } else if (((codeContent.getOriginalRedirectUri() == null) && (redirectUri != null)) || ((codeContent.getOriginalRedirectUri() != null) && (!codeContent.getRedirectUri().equals(redirectUri)))) {
 
         return Response.ok(new ErrorTokenResponse(AuthorizationErrorType.INVALID_REQUEST, "Mismatched request uri").formulateResponseBody(), MediaType.APPLICATION_JSON_TYPE).build();
       } else if (!"authorization_code".equals(grantType)) {
@@ -215,7 +215,7 @@ public class OAuthResource {
         return Response.ok(new ErrorTokenResponse(AuthorizationErrorType.INVALID_REQUEST, "Invalid grant type (must be 'authorization_code')").formulateResponseBody(), MediaType.APPLICATION_JSON_TYPE).build();
       } else {
 
-        return Response.ok(codeRegister.formulateResponseBody(), MediaType.APPLICATION_JSON_TYPE).build();
+        return Response.ok(codeContent.formulateResponseBody(), MediaType.APPLICATION_JSON_TYPE).build();
       }
     }
   }

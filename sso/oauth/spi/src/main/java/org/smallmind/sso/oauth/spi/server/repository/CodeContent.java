@@ -37,7 +37,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.smallmind.sso.oauth.spi.OAuthSession;
 
-public class CodeRegister {
+public class CodeContent {
 
   private final String clientId;
   private final String redirectUri;
@@ -47,7 +47,7 @@ public class CodeRegister {
   private final String originalRedirectUri;
   private OAuthSession session;
 
-  public CodeRegister (String clientId, String redirectUri, String scope, String acrValues, String state, String originalRedirectUri) {
+  public CodeContent (String clientId, String redirectUri, String scope, String acrValues, String state, String originalRedirectUri) {
 
     this.clientId = clientId;
     this.redirectUri = redirectUri;
@@ -65,11 +65,6 @@ public class CodeRegister {
   public String getOriginalRedirectUri () {
 
     return originalRedirectUri;
-  }
-
-  public OAuthSession getSession () {
-
-    return session;
   }
 
   public void setSession (OAuthSession session) {

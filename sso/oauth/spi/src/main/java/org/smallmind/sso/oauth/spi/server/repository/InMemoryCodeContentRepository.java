@@ -36,31 +36,31 @@ import java.util.concurrent.TimeUnit;
 import org.smallmind.nutsnbolts.time.Stint;
 import org.smallmind.nutsnbolts.util.SelfDestructiveMap;
 
-public class InMemoryCodeRegisterRepository implements CodeRegisterRepository {
+public class InMemoryCodeContentRepository implements CodeContentRepository {
 
-  private final SelfDestructiveMap<String, CodeRegisterSelfDestructive> codeRegisterMap;
+  private final SelfDestructiveMap<String, CodeContentSelfDestructive> codeContentMap;
 
-  public InMemoryCodeRegisterRepository (int defaultMaxAge) {
+  public InMemoryCodeContentRepository (int defaultMaxAge) {
 
-    codeRegisterMap = new SelfDestructiveMap<>(new Stint(defaultMaxAge, TimeUnit.SECONDS), new Stint(3, TimeUnit.SECONDS));
+    codeContentMap = new SelfDestructiveMap<>(new Stint(defaultMaxAge, TimeUnit.SECONDS), new Stint(3, TimeUnit.SECONDS));
   }
 
   @Override
-  public void put (String code, Integer maxAgeSeconds, CodeRegister codeRegister) {
+  public void put (String code, Integer maxAgeSeconds, CodeContent codeContent) {
 
-    codeRegisterMap.putIfAbsent(code, new CodeRegisterSelfDestructive(codeRegister), (maxAgeSeconds == null) ? null : new Stint(maxAgeSeconds, TimeUnit.SECONDS));
+    codeContentMap.putIfAbsent(code, new CodeContentSelfDestructive(codeContent), (maxAgeSeconds == null) ? null : new Stint(maxAgeSeconds, TimeUnit.SECONDS));
   }
 
   @Override
-  public CodeRegister get (String code) {
+  public CodeContent get (String code) {
 
-    CodeRegisterSelfDestructive value;
+    CodeContentSelfDestructive value;
 
-    return ((value = codeRegisterMap.get(code)) == null) ? null : value.getCodeRegister();
+    return ((value = codeContentMap.get(code)) == null) ? null : value.getCodeContent();
   }
 
   @Override
-  public CodeRegister remove (String code) {
+  public CodeContent remove (String code) {
 
     return get(code);
   }

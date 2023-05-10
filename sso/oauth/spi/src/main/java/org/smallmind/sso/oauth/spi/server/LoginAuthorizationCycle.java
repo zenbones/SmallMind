@@ -32,7 +32,7 @@
  */
 package org.smallmind.sso.oauth.spi.server;
 
-import org.smallmind.sso.oauth.spi.server.repository.CodeRegister;
+import org.smallmind.sso.oauth.spi.server.repository.CodeContent;
 
 public class LoginAuthorizationCycle extends AuthorizationCycle {
 
@@ -55,9 +55,9 @@ public class LoginAuthorizationCycle extends AuthorizationCycle {
     return AuthorizationCycleType.LOGIN;
   }
 
-  public CodeRegister generateCodeRegister (String clientId, String state, String originalRedirectUri) {
+  public CodeContent generateCodeContent (String clientId, String state, String originalRedirectUri) {
 
-    return new CodeRegister(clientId, getRedirectUri(), scope, acrValues, state, originalRedirectUri);
+    return new CodeContent(clientId, getRedirectUri(), scope, acrValues, state, originalRedirectUri);
   }
 
   @Override
