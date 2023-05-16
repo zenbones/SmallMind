@@ -3,16 +3,6 @@
        xmlns="http://www.springframework.org/schema/beans"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-  <bean id="transportMetricConfiguration" class="org.smallmind.instrument.config.MetricConfiguration">
-    <property name="instrumented" value="${metric.statistics.transport}"/>
-    <property name="samples" value="${metric.samples}"/>
-    <property name="metricDomain">
-      <bean class="org.smallmind.instrument.config.StringMetricDomain">
-        <constructor-arg index="0" value="org.smallmind.transport.instrument"/>
-      </bean>
-    </property>
-  </bean>
-
   <bean id="rabbitMQConnectorFactory" class="org.smallmind.phalanx.wire.transport.amqp.rabbitmq.spring.RabbitMQConnectorFactoryBean">
     <property name="username" value="${rabbitmq.username}"/>
     <property name="password" value="${rabbitmq.password}"/>
@@ -27,30 +17,31 @@
   </bean>
 
   <bean id="rabbitmqRequestTransport" class="org.smallmind.phalanx.wire.transport.amqp.rabbitmq.RabbitMQRequestTransport" destroy-method="close">
-    <constructor-arg index="0" name="metricConfiguration" ref="transportMetricConfiguration"/>
-    <constructor-arg index="1" name="rabbitMQConnector" ref="rabbitMQConnectorFactory"/>
-    <constructor-arg index="2" name="nameConfiguration" ref="nameConfiguration"/>
-    <constructor-arg index="3" name="signalCodec" ref="jsonSignalCodec"/>
-    <constructor-arg index="4" name="clusterSize" value="${wire.cluster_size}"/>
-    <constructor-arg index="5" name="concurrencyLimit" value="${wire.concurrency_limit}"/>
-    <constructor-arg index="6" name="defaultTimeoutSeconds" value="${wire.default_timeout_seconds}"/>
-    <constructor-arg index="7" name="messageTTLSeconds" value="${wire.message_ttl_seconds}"/>
-    <constructor-arg index="8" name="autoAcknowledge" value="false"/>
+    <constructor-arg index="0" name="rabbitMQConnector" ref="rabbitMQConnectorFactory"/>
+    <constructor-arg index="1" name="nameConfiguration" ref="nameConfiguration"/>
+    <constructor-arg index="2" name="signalCodec" ref="jsonSignalCodec"/>
+    <constructor-arg index="3" name="clusterSize" value="${wire.cluster_size}"/>
+    <constructor-arg index="4" name="concurrencyLimit" value="${wire.concurrency_limit}"/>
+    <constructor-arg index="5" name="defaultTimeoutSeconds" value="${wire.default_timeout_seconds}"/>
+    <constructor-arg index="6" name="messageTTLSeconds" value="${wire.message_ttl_seconds}"/>
+    <constructor-arg index="7" name="autoAcknowledge" value="false"/>
+    <constructor-arg index="8" name="publisherConfirmationHandler">
+      <null/>
+    </constructor-arg>
   </bean>
 
   <bean id="rabbitmqResponseTransport" class="org.smallmind.phalanx.wire.transport.amqp.rabbitmq.RabbitMQResponseTransport" destroy-method="close">
-    <constructor-arg index="0" name="metricConfiguration" ref="transportMetricConfiguration"/>
-    <constructor-arg index="1" name="rabbitMQConnector" ref="rabbitMQConnectorFactory"/>
-    <constructor-arg index="2" name="nameConfiguration" ref="nameConfiguration"/>
-    <constructor-arg index="3" name="workerClass" value="org.smallmind.phalanx.wire.transport.amqp.rabbitmq.InvocationWorker"/>
-    <constructor-arg index="4" name="signalCodec" ref="jsonSignalCodec"/>
-    <constructor-arg index="5" name="serviceGroup" value="default"/>
-    <constructor-arg index="6" name="clusterSize" value="${wire.cluster_size}"/>
-    <constructor-arg index="7" name="concurrencyLimit" value="${wire.concurrency_limit}"/>
-    <constructor-arg index="8" name="messageTTLSeconds" value="${wire.message_ttl_seconds}"/>
-    <constructor-arg index="9" name="autoAcknowledge" value="false"/>
+    <constructor-arg index="0" name="rabbitMQConnector" ref="rabbitMQConnectorFactory"/>
+    <constructor-arg index="1" name="nameConfiguration" ref="nameConfiguration"/>
+    <constructor-arg index="2" name="workerClass" value="org.smallmind.phalanx.wire.transport.amqp.rabbitmq.InvocationWorker"/>
+    <constructor-arg index="3" name="signalCodec" ref="jsonSignalCodec"/>
+    <constructor-arg index="4" name="serviceGroup" value="default"/>
+    <constructor-arg index="5" name="clusterSize" value="${wire.cluster_size}"/>
+    <constructor-arg index="6" name="concurrencyLimit" value="${wire.concurrency_limit}"/>
+    <constructor-arg index="7" name="messageTTLSeconds" value="${wire.message_ttl_seconds}"/>
+    <constructor-arg index="8" name="autoAcknowledge" value="false"/>
+    <constructor-arg index="9" name="publisherConfirmationHandler">
+      <null/>
+    </constructor-arg>
   </bean>
-
 </beans>
-
-
