@@ -127,7 +127,7 @@ public class SleuthProvider extends AbstractProvider {
     sleuthRunner.addListener(sleuthEventListener = new SurefireSleuthEventListener(runListener));
     startMilliseconds = System.currentTimeMillis();
 
-    System.out.println("Sleuth test set starting " + testNameBuilder + "...");
+    System.out.println("Sleuth test set starting with thread count(" + threadCount + ") on " + testNameBuilder + "...");
     runListener.testSetStarting(new SimpleReportEntry("Sleuth Tests", "Test Assay", "test set starting"));
 
     sleuthRunner.execute(groups, new SleuthThreadPool((threadCount <= 0) ? Integer.MAX_VALUE : threadCount), testsToRun);
