@@ -106,44 +106,46 @@ public abstract class MessageRouter {
     throws IOException, TimeoutException {
 
     synchronized (connectionAndChannelRef) {
-      if (connectionAndChannelRef.getStamp() == stamp) {
+      if (!closed.get()) {
+        if (connectionAndChannelRef.getStamp() == stamp) {
 
-        ConnectionAndChannel previousConnectionAndChannel;
-        Connection connection;
-        Channel channel;
-        final int nextStamp;
+          ConnectionAndChannel previousConnectionAndChannel;
+          Connection connection;
+          Channel channel;
+          final int nextStamp;
 
-        if ((previousConnectionAndChannel = connectionAndChannelRef.getReference()) != null) {
-          previousConnectionAndChannel.close();
-        }
-
-        if ((channel = (connection = connector.getConnection()).createChannel()) == null) {
-          throw new IOException("No channel is available");
-        } else {
-
-          if (publisherConfirmationHandler != null) {
-            channel.confirmSelect();
-            channel.addConfirmListener(publisherConfirmationHandler.generateConfirmListener());
+          if ((previousConnectionAndChannel = connectionAndChannelRef.getReference()) != null) {
+            previousConnectionAndChannel.close();
           }
 
-          channel.basicQos(0, 1, false);
-          channel.exchangeDeclare(getRequestExchangeName(), "direct", false, false, null);
-          channel.exchangeDeclare(getResponseExchangeName(), "direct", false, false, null);
+          if ((channel = (connection = connector.getConnection()).createChannel()) == null) {
+            throw new IOException("No channel is available");
+          } else {
 
-          connectionAndChannelRef.set(new ConnectionAndChannel(connection, channel), nextStamp = version.incrementAndGet());
-          channel.addShutdownListener((cause) -> {
-
-            try {
-              if (!closed.get()) {
-                ensureChannel(nextStamp);
-              }
-            } catch (IOException | TimeoutException exception) {
-              LoggerManager.getLogger(RabbitMQConnector.class).error(exception);
+            if (publisherConfirmationHandler != null) {
+              channel.confirmSelect();
+              channel.addConfirmListener(publisherConfirmationHandler.generateConfirmListener());
             }
-          });
 
-          bindQueues();
-          installConsumer();
+            channel.basicQos(0, 1, false);
+            channel.exchangeDeclare(getRequestExchangeName(), "direct", false, false, null);
+            channel.exchangeDeclare(getResponseExchangeName(), "direct", false, false, null);
+
+            connectionAndChannelRef.set(new ConnectionAndChannel(connection, channel), nextStamp = version.incrementAndGet());
+            channel.addShutdownListener((cause) -> {
+
+              try {
+                if (!closed.get()) {
+                  ensureChannel(nextStamp);
+                }
+              } catch (IOException | TimeoutException exception) {
+                LoggerManager.getLogger(RabbitMQConnector.class).error(exception);
+              }
+            });
+
+            bindQueues();
+            installConsumer();
+          }
         }
       }
     }
