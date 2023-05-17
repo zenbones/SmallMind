@@ -178,12 +178,13 @@ public class ResponseMessageRouter extends MessageRouter {
 
     return Instrument.with(ResponseMessageRouter.class, LazyBuilder.instance(SpeedometerBuilder::new), new Tag("event", ClaxonTag.CONSTRUCT_MESSAGE.getDisplay())).on(() -> {
 
-      AMQP.BasicProperties properties = new AMQP.BasicProperties.Builder()
-        .contentType(signalCodec.getContentType())
-        .messageId(SnowflakeId.newInstance().generateDottedString())
-        .correlationId(correlationId)
-        .timestamp(new Date())
-        .expiration(String.valueOf(ttlSeconds * 1000 * 3)).build();
+      AMQP.BasicProperties properties =
+        new AMQP.BasicProperties.Builder()
+          .contentType(signalCodec.getContentType())
+          .messageId(SnowflakeId.newInstance().generateDottedString())
+          .correlationId(correlationId)
+          .timestamp(new Date())
+          .expiration(String.valueOf(ttlSeconds * 1000 * 3)).build();
 
       return new RabbitMQMessage(properties, signalCodec.encode(new ResultSignal(error, nativeType, result)));
     });
