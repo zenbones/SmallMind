@@ -184,7 +184,12 @@ public abstract class MessageRouter {
 
     if (closed.compareAndSet(false, true)) {
       synchronized (channelRef) {
-        channelRef.getReference().close();
+
+        Channel channel;
+
+        if ((channel = channelRef.getReference()) != null) {
+          channel.close();
+        }
       }
     }
   }
