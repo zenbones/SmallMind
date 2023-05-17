@@ -107,8 +107,13 @@ public abstract class MessageRouter {
     synchronized (channelRef) {
       if (channelRef.getStamp() == stamp) {
 
+        Channel previousChannel;
         Channel channel;
         final int nextStamp;
+
+        if ((previousChannel = channelRef.getReference()) != null) {
+          previousChannel.close();
+        }
 
         channel = connector.getConnection().createChannel();
 
