@@ -115,7 +115,13 @@ public abstract class MessageRouter {
           final int nextStamp;
 
           if ((previousConnectionAndChannel = connectionAndChannelRef.getReference()) != null) {
-            previousConnectionAndChannel.close();
+            if (previousConnectionAndChannel.getConnection().isOpen()) {
+              try {
+                previousConnectionAndChannel.close();
+              } catch (IOException ioException) {
+                LoggerManager.getLogger(MessageRouter.class).error(ioException);
+              }
+            }
           }
 
           if ((channel = (connection = connector.getConnection()).createChannel()) == null) {
@@ -139,7 +145,7 @@ public abstract class MessageRouter {
                   ensureChannel(nextStamp);
                 }
               } catch (IOException | TimeoutException exception) {
-                LoggerManager.getLogger(RabbitMQConnector.class).error(exception);
+                LoggerManager.getLogger(MessageRouter.class).error(exception);
               }
             });
 
