@@ -79,8 +79,8 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <amqp.client.version>5.16.0</amqp.client.version>
     <asm.version>9.4</asm.version>
-    <aspectj.version>1.9.9.1</aspectj.version>
-    <aspectj.maven.plugin.version>1.13.1</aspectj.maven.plugin.version>
+    <aspectj.version>1.9.19</aspectj.version>
+    <aspectj.maven.plugin.version>1.14.0</aspectj.maven.plugin.version>
     <aws.version>2.18.24</aws.version>
     <bouncycastle.version>1.72</bouncycastle.version>
     <commons.logging.version>1.2</commons.logging.version>
@@ -726,6 +726,11 @@
       <dependency>
         <groupId>org.smallmind</groupId>
         <artifactId>scribe-slf4j</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.smallmind</groupId>
+        <artifactId>sso-ouath-spi</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
