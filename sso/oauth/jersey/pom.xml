@@ -17,9 +17,14 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
+      <groupId>org.glassfish.jersey.test-framework.providers</groupId>
+      <artifactId>jersey-test-framework-provider-external</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.smallmind</groupId>
-      <artifactId>web-json-scaffold</artifactId>
-      <scope>compile</scope>
+      <artifactId>scribe-ink-indigenous</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.smallmind</groupId>
@@ -27,14 +32,19 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>org.springframework</groupId>
-      <artifactId>spring-beans</artifactId>
+      <groupId>org.smallmind</groupId>
+      <artifactId>web-grizzly</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.smallmind</groupId>
+      <artifactId>web-json-scaffold</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>org.glassfish.jersey.test-framework.providers</groupId>
-      <artifactId>jersey-test-framework-provider-external</artifactId>
-      <scope>compile</scope>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-beans</artifactId>
+      <scope>test</scope>
     </dependency>
   </dependencies>
   <build>
