@@ -102,6 +102,7 @@ public class ServerDefibrillator implements Runnable {
       finishedLatch.countDown();
       LoggerManager.getLogger(ServerDefibrillator.class).error(interruptedException);
     } finally {
+      LoggerManager.getLogger(ServerDefibrillator.class).info("%s stopping...", ServerDefibrillator.class.getName());
       terminatedLatch.countDown();
     }
   }
