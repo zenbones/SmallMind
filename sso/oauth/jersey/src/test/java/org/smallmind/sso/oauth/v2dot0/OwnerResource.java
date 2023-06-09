@@ -32,18 +32,28 @@
  */
 package org.smallmind.sso.oauth.v2dot0;
 
+import java.net.URI;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
-@Path("/reliant")
-public class ReliantResource {
+@Path("/owner")
+public class OwnerResource {
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
-  public boolean stuff () {
+  public Response sso () {
 
-    return true;
+    return Response.seeOther(URI.create("http://localhost:9016/authorization?client_id=abc&redirect_uri=http://localhost:9015/stuff&state=some_state")).build();
+  }
+
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response login (String relayState) {
+
+    // redirect to reliant
+    return null;
   }
 }
