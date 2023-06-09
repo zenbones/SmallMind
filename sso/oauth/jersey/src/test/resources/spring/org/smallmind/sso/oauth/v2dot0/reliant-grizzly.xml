@@ -3,9 +3,9 @@
        xmlns="http://www.springframework.org/schema/beans"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-  <bean id="resourceBeanPostProcessor" class="org.smallmind.web.jersey.spring.ResourceBeanPostProcessor"/>
+  <bean id="reliantResourceBeanPostProcessor" class="org.smallmind.web.jersey.spring.ResourceBeanPostProcessor"/>
 
-  <bean id="grizzlyHttpServer" class="org.smallmind.web.grizzly.GrizzlyInitializingBean">
+  <bean id="reliantGrizzlyHttpServer" class="org.smallmind.web.grizzly.GrizzlyInitializingBean">
     <property name="host" value="0.0.0.0"/>
     <property name="port" value="9015"/>
     <property name="maxHttpHeaderSize" value="65536"/>

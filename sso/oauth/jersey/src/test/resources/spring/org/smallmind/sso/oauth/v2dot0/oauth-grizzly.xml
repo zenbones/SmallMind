@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+  <bean id="oauthResourceBeanPostProcessor" class="org.smallmind.web.jersey.spring.ResourceBeanPostProcessor"/>
+
+  <bean id="oauthGrizzlyHttpServer" class="org.smallmind.web.grizzly.GrizzlyInitializingBean">
+    <property name="host" value="0.0.0.0"/>
+    <property name="port" value="9016"/>
+    <property name="maxHttpHeaderSize" value="65536"/>
+    <property name="initialWorkerPoolSize" value="64"/>
+    <property name="maximumWorkerPoolSize" value="64"/>
+    <property name="webApplicationOptions">
+      <bean class="org.smallmind.web.grizzly.option.WebApplicationOption">
+        <property name="contextPath" value="/smallind"/>
+        <property name="soapPath" value="/soap"/>
+        <property name="jaxRSOption">
+          <bean class="org.smallmind.web.grizzly.option.JaxRSOption">
+            <property name="restPath" value="/rest"/>
+          </bean>
+        </property>
+        <property name="springSupportOption">
+          <bean class="org.smallmind.web.grizzly.option.SpringSupportOption"/>
+        </property>
+        <property name="webSocketOption">
+          <bean class="org.smallmind.web.grizzly.option.WebSocketOption"/>
+        </property>
+      </bean>
+    </property>
+    <property name="resourceConfigExtensions">
+      <list>
+        <bean class="org.smallmind.web.jersey.spring.ResourceConfigProperty">
+          <property name="name" value="jersey.config.beanValidation.disable.server"/>
+          <property name="value" value="true"/>
+        </bean>
+      </list>
+    </property>
+  </bean>
+</beans>

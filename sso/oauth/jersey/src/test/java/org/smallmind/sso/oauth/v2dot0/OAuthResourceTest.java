@@ -50,7 +50,8 @@ import org.testng.annotations.Test;
 @Test
 public class OAuthResourceTest extends JerseyTest {
 
-  private ClassPathXmlApplicationContext context;
+  private ClassPathXmlApplicationContext oauthContext;
+  private ClassPathXmlApplicationContext reliantContext;
 
   @BeforeClass
   public void beforeClass ()
@@ -58,7 +59,8 @@ public class OAuthResourceTest extends JerseyTest {
 
     setUp();
 
-    context = new ClassPathXmlApplicationContext("org/smallmind/sso/oauth/v2dot0/oauth.xml");
+    oauthContext = new ClassPathXmlApplicationContext("org/smallmind/sso/oauth/v2dot0/oauth.xml");
+    reliantContext = new ClassPathXmlApplicationContext("org/smallmind/sso/oauth/v2dot0/reliant.xml");
   }
 
   @AfterClass(alwaysRun = true)

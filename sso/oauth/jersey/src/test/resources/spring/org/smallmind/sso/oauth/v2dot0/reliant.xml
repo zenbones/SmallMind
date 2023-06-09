@@ -3,7 +3,7 @@
        xmlns="http://www.springframework.org/schema/beans"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-  <import resource="classpath:org/smallmind/sso/oauth/v2dot0/oauth-grizzly.xml"/>
+  <import resource="classpath:org/smallmind/sso/oauth/v2dot0/reliant-grizzly.xml"/>
   <import resource="classpath:org/smallmind/sso/oauth/v2dot0/logging.xml"/>
 
 </beans>
