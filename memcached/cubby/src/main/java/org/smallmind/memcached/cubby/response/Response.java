@@ -40,6 +40,7 @@ public class Response {
   private boolean alsoWon;
   private boolean stale;
   private long cas;
+  private int size = -1;
   private int valueLength = -1;
   private byte[] value;
 
@@ -91,6 +92,16 @@ public class Response {
   public void setCas (long cas) {
 
     this.cas = cas;
+  }
+
+  public int getSize () {
+
+    return size;
+  }
+
+  public void setSize (int size) {
+
+    this.size = size;
   }
 
   public boolean isWon () {

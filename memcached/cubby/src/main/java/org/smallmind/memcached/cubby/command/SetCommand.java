@@ -48,6 +48,7 @@ public class SetCommand extends Command {
   private byte[] value;
   private String key;
   private String opaqueToken;
+  private boolean vivify;
   private Integer expiration;
   private Long cas;
 
@@ -92,6 +93,13 @@ public class SetCommand extends Command {
     return this;
   }
 
+  public SetCommand setVivify (boolean vivify) {
+
+    this.vivify = vivify;
+
+    return this;
+  }
+
   public SetCommand setOpaqueToken (String opaqueToken) {
 
     this.opaqueToken = opaqueToken;
@@ -120,8 +128,19 @@ public class SetCommand extends Command {
       }
     }
     if (expiration != null) {
-      line.append(" T").append(expiration);
+      if (SetMode.APPEND.equals(mode) || SetMode.PREPEND.equals(mode)) {
+        if (vivify) {
+          line.append(" N").append(expiration);
+        }
+      } else {
+        line.append(" T").append(expiration);
+      }
+    } else if (SetMode.APPEND.equals(mode) || SetMode.PREPEND.equals(mode)) {
+      if (vivify) {
+        line.append(" N0");
+      }
     }
+
     if (opaqueToken != null) {
       line.append(" O").append(opaqueToken);
     }

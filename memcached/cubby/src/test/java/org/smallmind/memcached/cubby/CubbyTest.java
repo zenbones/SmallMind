@@ -72,6 +72,7 @@ public class CubbyTest {
     client.delete("second");
     client.delete("third");
     client.delete("fourth");
+    client.delete("fifth");
     client.delete("sixth");
     client.delete("seventh");
   }
