@@ -104,6 +104,7 @@
     <jaxb.version>2.3.1</jaxb.version>
     <jersey.version>2.37</jersey.version>
     <jetty.version>10.0.11</jetty.version>
+    <kafka.version>3.4.1</kafka.version>
     <liquibase.version>4.6.1</liquibase.version>
     <log4j.version>2.17.2</log4j.version>
     <maven.version>3.8.6</maven.version>
@@ -432,6 +433,11 @@
         <groupId>javax.websocket</groupId>
         <artifactId>javax.websocket-client-api</artifactId>
         <version>1.1</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.kafka</groupId>
+        <artifactId>kafka-clients</artifactId>
+        <version>${kafka.version}</version>
       </dependency>
       <dependency>
         <groupId>org.cometd.java</groupId>
