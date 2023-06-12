@@ -29,7 +29,7 @@
     <dependency>
       <groupId>org.smallmind</groupId>
       <artifactId>scribe-ink-indigenous</artifactId>
-      <scope>compile</scope>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.springframework</groupId>

@@ -133,6 +133,7 @@
     <module>artifact</module>
     <module>batch</module>
     <module>claxon</module>
+    <module>cometd</module>
     <module>file</module>
     <module>forge</module>
     <module>foundation</module>
@@ -142,7 +143,6 @@
     <module>memcached</module>
     <module>mongodb</module>
     <module>nutsnbolts</module>
-    <module>sso</module>
     <module>persistence</module>
     <module>phalanx</module>
     <module>quorum</module>
@@ -150,6 +150,7 @@
     <module>scribe</module>
     <module>sleuth</module>
     <module>spark</module>
+    <module>sso</module>
     <module>swing</module>
     <module>web</module>
   </modules>
