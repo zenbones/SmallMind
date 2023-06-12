@@ -85,6 +85,7 @@
     <aspectj.maven.plugin.version>1.14.0</aspectj.maven.plugin.version>
     <aws.version>2.4.13</aws.version>
     <bouncycastle.version>1.70</bouncycastle.version>
+    <cometd.version>6.0.10</cometd.version>
     <commons.net.version>3.8.0</commons.net.version>
     <dogstatsd.client.version>3.0.0</dogstatsd.client.version>
     <ehcache.version>3.9.7</ehcache.version>
@@ -431,6 +432,11 @@
         <groupId>javax.websocket</groupId>
         <artifactId>javax.websocket-client-api</artifactId>
         <version>1.1</version>
+      </dependency>
+      <dependency>
+        <groupId>org.cometd.java</groupId>
+        <artifactId>cometd-java-api-server</artifactId>
+        <version>${cometd.version}</version>
       </dependency>
       <dependency>
         <groupId>org.openjfx</groupId>
