@@ -7,7 +7,7 @@
 
   <bean id="oauthGrizzlyHttpServer" class="org.smallmind.web.grizzly.GrizzlyInitializingBean">
     <property name="host" value="0.0.0.0"/>
-    <property name="port" value="9016"/>
+    <property name="port" value="9017"/>
     <property name="maxHttpHeaderSize" value="65536"/>
     <property name="initialWorkerPoolSize" value="64"/>
     <property name="maximumWorkerPoolSize" value="64"/>

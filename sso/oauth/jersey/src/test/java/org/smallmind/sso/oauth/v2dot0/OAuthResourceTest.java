@@ -32,6 +32,7 @@
  */
 package org.smallmind.sso.oauth.v2dot0;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.glassfish.jersey.client.ClientConfig;
@@ -50,7 +51,8 @@ import org.testng.annotations.Test;
 @Test
 public class OAuthResourceTest extends JerseyTest {
 
-  private ClassPathXmlApplicationContext oauthContext;
+  private final CountDownLatch terminalLatch = new CountDownLatch(1);
+  private ClassPathXmlApplicationContext idpContext;
   private ClassPathXmlApplicationContext ownerContext;
   private ClassPathXmlApplicationContext reliantContext;
 
@@ -60,7 +62,7 @@ public class OAuthResourceTest extends JerseyTest {
 
     setUp();
 
-    oauthContext = new ClassPathXmlApplicationContext("org/smallmind/sso/oauth/v2dot0/oauth.xml");
+    idpContext = new ClassPathXmlApplicationContext("org/smallmind/sso/oauth/v2dot0/idp.xml");
     ownerContext = new ClassPathXmlApplicationContext("org/smallmind/sso/oauth/v2dot0/owner.xml");
     reliantContext = new ClassPathXmlApplicationContext("org/smallmind/sso/oauth/v2dot0/reliant.xml");
   }
@@ -68,6 +70,10 @@ public class OAuthResourceTest extends JerseyTest {
   @AfterClass(alwaysRun = true)
   public void afterClass ()
     throws Exception {
+
+    reliantContext.close();
+    ownerContext.close();
+    idpContext.close();
 
     tearDown();
   }
@@ -95,7 +101,9 @@ public class OAuthResourceTest extends JerseyTest {
   }
 
   @Test
-  public void test () {
+  public void test ()
+    throws InterruptedException {
 
+    terminalLatch.await();
   }
 }
