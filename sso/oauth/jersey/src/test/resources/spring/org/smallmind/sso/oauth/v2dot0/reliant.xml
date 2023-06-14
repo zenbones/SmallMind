@@ -6,4 +6,5 @@
   <import resource="classpath:org/smallmind/sso/oauth/v2dot0/reliant-grizzly.xml"/>
   <import resource="classpath:org/smallmind/sso/oauth/v2dot0/logging.xml"/>
 
+  <bean id="reliantResource" class="org.smallmind.sso.oauth.v2dot0.ReliantResource"/>
 </beans>
