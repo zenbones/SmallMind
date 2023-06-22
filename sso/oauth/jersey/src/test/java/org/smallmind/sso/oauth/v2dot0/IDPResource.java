@@ -32,18 +32,76 @@
  */
 package org.smallmind.sso.oauth.v2dot0;
 
+import java.io.IOException;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import com.fasterxml.jackson.databind.JsonNode;
+import org.smallmind.sso.oauth.v2dot0.jersey.IDPService;
+import org.smallmind.sso.oauth.v2dot0.spi.InvalidClientIdException;
+import org.smallmind.sso.oauth.v2dot0.spi.InvalidRedirectUriException;
+import org.smallmind.sso.oauth.v2dot0.spi.MismatchingRedirectUriException;
+import org.smallmind.sso.oauth.v2dot0.spi.MissingClientIdException;
+import org.smallmind.sso.oauth.v2dot0.spi.MissingRedirectUriException;
+import org.smallmind.sso.oauth.v2dot0.spi.server.grant.ConfirmationLoginResponse;
+import org.smallmind.sso.oauth.v2dot0.spi.server.grant.RefusalLoginResponse;
+import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 @Path("/idp")
 public class IDPResource {
 
-  @GET
-  @Produces(MediaType.APPLICATION_JSON)
-  public boolean stuff () {
+  private IDPService idpService;
 
-    return true;
+  public void setIdpService (IDPService idpService) {
+
+    this.idpService = idpService;
+  }
+
+  @GET
+  @Path("/authorization")
+  public Response authorization (@QueryParam("response_type") String responseType,
+                                 @QueryParam("client_id") String clientId,
+                                 @QueryParam("redirect_uri") String redirectUri,
+                                 @QueryParam("scope") String scope,
+                                 @QueryParam("acr_values") String acrValues,
+                                 @QueryParam("max_age") Integer maxAge,
+                                 @QueryParam("state") String state)
+    throws MissingClientIdException, InvalidClientIdException, MissingRedirectUriException, InvalidRedirectUriException, MismatchingRedirectUriException {
+
+    return idpService.authorization(responseType, clientId, redirectUri, scope, acrValues, maxAge, state);
+  }
+
+  @POST
+  @Path("/authentication/authorization_code/{code}")
+  @Consumes(MediaType.APPLICATION_JSON)
+  public Response code (@PathParam("code") String code,
+                        @QueryParam("redirect_uri") String redirectUri,
+                        @QueryParam("max_age") Integer maxAge,
+                        @QueryParam("state") String state,
+                        JsonNode body)
+    throws MissingRedirectUriException {
+
+    return idpService.code(code, redirectUri, maxAge, state, body.has("error") ? JsonCodec.convert(body, RefusalLoginResponse.class) : JsonCodec.convert(body, ConfirmationLoginResponse.class));
+  }
+
+  @POST
+  @Path("/token")
+  @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+  public Response token (@HeaderParam("Authorization") String authorization,
+                         @FormParam("grant_type") String grantType,
+                         @FormParam("code") String code,
+                         @FormParam("redirect_uri") String redirectUri,
+                         @FormParam("client_id") String clientId,
+                         @FormParam("client_secret") String clientSecret)
+    throws IOException {
+
+    return idpService.token(authorization, grantType, code, redirectUri, clientId, clientSecret);
   }
 }
