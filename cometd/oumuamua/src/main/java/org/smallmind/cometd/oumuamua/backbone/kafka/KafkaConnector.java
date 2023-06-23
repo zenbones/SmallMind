@@ -33,8 +33,6 @@
 package org.smallmind.cometd.oumuamua.backbone.kafka;
 
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Properties;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -70,12 +68,12 @@ public class KafkaConnector {
     boostrapServers = boostrapBuilder.toString();
   }
 
-  private Producer<Long, String> createProducer () {
+  public Producer<Long, String> createProducer (String clientId) {
 
     Properties props = new Properties();
 
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, boostrapServers);
-    props.put(ProducerConfig.CLIENT_ID_CONFIG, "KafkaExampleProducer");
+    props.put(ProducerConfig.CLIENT_ID_CONFIG, clientId);
     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, LongSerializer.class.getName());
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
     return new KafkaProducer<>(props);
