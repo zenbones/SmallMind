@@ -32,8 +32,38 @@
  */
 package org.smallmind.cometd.oumuamua.backbone.kafka;
 
-import org.smallmind.cometd.oumuamua.backbone.ServerBackbone;
+public class KafkaServer {
 
-public class KafkBackbone implements ServerBackbone {
+  private String host;
+  private int port = 9092;
 
+  public KafkaServer () {
+
+  }
+
+  public KafkaServer (String host, int port) {
+
+    this.host = host;
+    this.port = port;
+  }
+
+  public String getHost () {
+
+    return host;
+  }
+
+  public void setHost (String host) {
+
+    this.host = host;
+  }
+
+  public int getPort () {
+
+    return port;
+  }
+
+  public void setPort (int port) {
+
+    this.port = port;
+  }
 }
