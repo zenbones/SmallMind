@@ -41,6 +41,14 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 
 public class Wombat {
 
+  /*
+      image: 'bitnami/kafka:latest'
+    ports:
+      - '9092:9092'
+    environment:
+      - ALLOW_PLAINTEXT_LISTENER=yes
+   */
+
   public static void main (String... args)
     throws Exception {
 

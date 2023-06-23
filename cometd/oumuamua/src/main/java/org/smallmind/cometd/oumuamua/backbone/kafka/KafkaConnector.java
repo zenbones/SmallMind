@@ -76,6 +76,11 @@ public class KafkaConnector {
     props.put(ProducerConfig.CLIENT_ID_CONFIG, clientId);
     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, LongSerializer.class.getName());
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+
+    props.put(ProducerConfig.SOCKET_CONNECTION_SETUP_TIMEOUT_MAX_MS_CONFIG, 5000);
+    props.put(ProducerConfig.SOCKET_CONNECTION_SETUP_TIMEOUT_MS_CONFIG, 1000);
+    props.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, 5000);
+    props.put(ProducerConfig.MAX_BLOCK_MS_CONFIG, 3000);
     return new KafkaProducer<>(props);
   }
 
