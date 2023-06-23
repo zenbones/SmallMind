@@ -32,7 +32,11 @@
  */
 package org.smallmind.cometd.oumuamua;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.cometd.bayeux.MarkedReference;
 import org.cometd.bayeux.Transport;
@@ -46,26 +50,43 @@ import org.cometd.bayeux.server.ServerSession;
 
 public class OumuamuaServer implements BayeuxServer {
 
+  private final Map<String, OumuamuaTransport> transportMap;
+  private final List<String> allowedList;
+
+  public OumuamuaServer (Map<String, OumuamuaTransport> transportMap, String... allowed) {
+
+    this.transportMap = transportMap;
+
+    this.allowedList = (allowed == null) ? Collections.emptyList() : Collections.unmodifiableList(Arrays.asList(allowed));
+  }
+
   @Override
   public Set<String> getKnownTransportNames () {
 
-    return null;
+    return transportMap.keySet();
   }
 
   @Override
   public Transport getTransport (String transport) {
 
-    return null;
+    return transportMap.get(transport);
   }
 
   @Override
   public List<String> getAllowedTransports () {
 
-    return null;
+    return allowedList;
   }
 
   @Override
   public Object getOption (String qualifiedName) {
+
+    for (OumuamuaTransport transport : transportMap.values()) {
+      if (qualifiedName.startsWith(transport.getOptionPrefix())) {
+
+        return transport.getOption(qualifiedName.substring(transport.getOptionPrefix().length()));
+      }
+    }
 
     return null;
   }
@@ -73,12 +94,26 @@ public class OumuamuaServer implements BayeuxServer {
   @Override
   public void setOption (String qualifiedName, Object value) {
 
+    for (OumuamuaTransport transport : transportMap.values()) {
+      if (qualifiedName.startsWith(transport.getOptionPrefix())) {
+
+        transport.setOption(qualifiedName.substring(transport.getOptionPrefix().length()), value);
+      }
+    }
   }
 
   @Override
   public Set<String> getOptionNames () {
 
-    return null;
+    HashSet<String> nameSet = new HashSet<>();
+
+    for (OumuamuaTransport transport : transportMap.values()) {
+      for (String name : transport.getOptionNames()) {
+        nameSet.add(transport.getOptionPrefix() + name);
+      }
+    }
+
+    return nameSet;
   }
 
   @Override

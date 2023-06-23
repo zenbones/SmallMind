@@ -32,9 +32,12 @@
  */
 package org.smallmind.cometd.oumuamua;
 
+import java.util.HashMap;
 import java.util.Set;
 
 public abstract class AbstractOumuamuaTransport implements OumuamuaTransport {
+
+  private final HashMap<String, Object> optionMap = new HashMap<>();
 
   @Override
   public long getTimeout () {
@@ -69,12 +72,18 @@ public abstract class AbstractOumuamuaTransport implements OumuamuaTransport {
   @Override
   public Object getOption (String name) {
 
-    return null;
+    return optionMap.get(name);
   }
 
   @Override
   public Set<String> getOptionNames () {
 
-    return null;
+    return optionMap.keySet();
+  }
+
+  @Override
+  public void setOption (String name, Object value) {
+
+    optionMap.put(name, value);
   }
 }

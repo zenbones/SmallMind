@@ -38,4 +38,6 @@ import org.cometd.bayeux.server.ServerTransport;
 public interface OumuamuaTransport extends ServerTransport {
 
   void init (ServletConfig servletConfig);
+
+  void setOption (String name, Object value);
 }

@@ -39,13 +39,13 @@ public class WebSocketTransport extends AbstractOumuamuaTransport {
   @Override
   public String getName () {
 
-    return null;
+    return "websocket";
   }
 
   @Override
   public String getOptionPrefix () {
 
-    return null;
+    return "ws.";
   }
 
   @Override
