@@ -33,11 +33,15 @@
 package org.smallmind.cometd.oumuamua.backbone.kafka;
 
 import java.time.Duration;
+import java.util.Collection;
+import java.util.Properties;
+import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.Node;
 
 public class Wombat {
 
@@ -51,6 +55,18 @@ public class Wombat {
 
   public static void main (String... args)
     throws Exception {
+
+    AdminClient client;
+
+    Properties props = new Properties();
+    props.put("bootstrap.servers", "127.0.0.1:9092");
+    props.put("request.timeout.ms", 3000);
+    props.put("connections.max.idle.ms", 5000);
+
+    client = AdminClient.create(props);
+
+    Collection<Node> nodes = client.describeCluster().nodes().get();
+    System.out.println(nodes != null && nodes.size() > 0);
 
     KafkaConnector connector = new KafkaConnector(new KafkaServer("localhost", 9092));
 
