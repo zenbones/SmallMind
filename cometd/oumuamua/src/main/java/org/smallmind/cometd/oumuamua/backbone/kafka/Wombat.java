@@ -57,6 +57,9 @@ public class Wombat {
   min.insync.replicas - 1/2 given 3 nodes (min.insync.replicas=2, acks=all, replication.factor=3 for n/2-1)
   group.min.session.timeout.ms
   group.max.session.timeout.ms
+  compression.type - none, gzip, lz4, snappy, and zstd (prefer lz4 as fastest if not smallest)
+  rack.id - must be set to the data centre ID (ex: AZ ID in AWS)
+  replica.selector.class - must be set to org.apache.kafka.common.replica.RackAwareReplicaSelector
   */
 
   public static void main (String... args)
