@@ -95,13 +95,14 @@ public class KafkaConnector {
     return new KafkaProducer<>(props);
   }
 
-  public Consumer<Long, String> createConsumer (String groupId, String... topics) {
+  public Consumer<Long, String> createConsumer (String clientId, String groupId, String instanceId, String... topics) {
 
     Properties props = new Properties();
 
     props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, boostrapServers);
+    props.put(ConsumerConfig.CLIENT_ID_CONFIG, clientId);
     props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
-    props.put(ConsumerConfig.GROUP_INSTANCE_ID_CONFIG, "12345");
+    props.put(ConsumerConfig.GROUP_INSTANCE_ID_CONFIG, instanceId);
     props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, LongDeserializer.class);
     props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
 
@@ -113,6 +114,8 @@ public class KafkaConnector {
     props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 500);
     props.put(ConsumerConfig.FETCH_MIN_BYTES_CONFIG, 1);
     props.put(ConsumerConfig.FETCH_MAX_WAIT_MS_CONFIG, 500);
+    props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
+    props.put(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, 500);
     props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
     // props.put(ConsumerConfig.CLIENT_RACK_CONFIG, "<must be set to the data centre ID (ex: AZ ID in AWS)>");
 

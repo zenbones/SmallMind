@@ -80,7 +80,7 @@ public class Wombat {
     KafkaConnector connector = new KafkaConnector(new KafkaServer("localhost", 9094));
 
     Producer<Long, String> producer = connector.createProducer("onenewclient");
-    Consumer<Long, String> consumer = connector.createConsumer("onenewgroup", "first.topic");
+    Consumer<Long, String> consumer = connector.createConsumer("othernewclient", "onenewgroup", "12345", "first.topic");
 
     producer.send(new ProducerRecord<>("first.topic", "hello"), (metadata, exception) -> {
 
@@ -98,9 +98,10 @@ public class Wombat {
       for (ConsumerRecord<Long, String> record : records) {
         System.out.println(record.offset() + ":" + record.value());
       }
+      consumer.commitSync();
     }
 
-    System.out.println("...");
+    Thread.sleep(1000);
     System.out.println("Done...");
   }
 }
