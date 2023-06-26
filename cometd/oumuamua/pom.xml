@@ -46,6 +46,11 @@
       <artifactId>spring-beans</artifactId>
       <scope>compile</scope>
     </dependency>
+    <dependency>
+      <groupId>org.smallmind</groupId>
+      <artifactId>web-grizzly</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
   <build>
     <plugins>
