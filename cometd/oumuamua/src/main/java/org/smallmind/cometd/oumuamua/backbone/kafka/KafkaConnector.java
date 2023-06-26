@@ -77,10 +77,19 @@ public class KafkaConnector {
     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, LongSerializer.class.getName());
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
 
-    props.put(ProducerConfig.SOCKET_CONNECTION_SETUP_TIMEOUT_MAX_MS_CONFIG, 5000);
-    props.put(ProducerConfig.SOCKET_CONNECTION_SETUP_TIMEOUT_MS_CONFIG, 1000);
-    props.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, 5000);
-    props.put(ProducerConfig.MAX_BLOCK_MS_CONFIG, 3000);
+    props.put(ProducerConfig.ACKS_CONFIG, "0");
+//    props.put(ProducerConfig.ACKS_CONFIG, "all");
+    props.put(ProducerConfig.RETRIES_CONFIG, 1);
+    //    props.put(ProducerConfig.RETRIES_CONFIG, Integer.MAX_VALUE);
+    props.put(ProducerConfig.RETRY_BACKOFF_MS_CONFIG, 100);
+    props.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 5);
+    props.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, 500);  // > REQUEST_TIMEOUT_MS_CONFIG + LINGER_MS_CONFIG
+    props.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, 500); // > replica.lag.time.max.ms
+    props.put(ProducerConfig.LINGER_MS_CONFIG, 0);
+    props.put(ProducerConfig.BATCH_SIZE_CONFIG, 0); // bytes
+    props.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, false);
+//    props.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
+
     return new KafkaProducer<>(props);
   }
 
@@ -92,6 +101,16 @@ public class KafkaConnector {
     props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
     props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, LongDeserializer.class);
     props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+
+    props.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, 3000);
+    props.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, 15000);
+//    props.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, 3000);
+//    props.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, 45000);
+    props.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, 300000);
+    props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 500);
+    props.put(ConsumerConfig.FETCH_MIN_BYTES_CONFIG, 1);
+    props.put(ConsumerConfig.FETCH_MAX_WAIT_MS_CONFIG, 500);
+    props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
     // Create the consumer using props.
     final Consumer<Long, String> consumer = new KafkaConsumer<>(props);

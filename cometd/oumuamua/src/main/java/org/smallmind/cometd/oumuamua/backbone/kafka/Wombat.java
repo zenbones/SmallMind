@@ -53,13 +53,19 @@ public class Wombat {
       - ALLOW_PLAINTEXT_LISTENER=yes
    */
 
+  /*
+  min.insync.replicas - 1/2 given 3 nodes (min.insync.replicas=2, acks=all, replication.factor=3 for n/2-1)
+  group.min.session.timeout.ms
+  group.max.session.timeout.ms
+  */
+
   public static void main (String... args)
     throws Exception {
 
     AdminClient client;
 
     Properties props = new Properties();
-    props.put("bootstrap.servers", "127.0.0.1:9092");
+    props.put("bootstrap.servers", "127.0.0.1:9094");
     props.put("request.timeout.ms", 3000);
     props.put("connections.max.idle.ms", 5000);
 
@@ -68,12 +74,12 @@ public class Wombat {
     Collection<Node> nodes = client.describeCluster().nodes().get();
     System.out.println(nodes != null && nodes.size() > 0);
 
-    KafkaConnector connector = new KafkaConnector(new KafkaServer("localhost", 9092));
+    KafkaConnector connector = new KafkaConnector(new KafkaServer("localhost", 9094));
 
     Producer<Long, String> producer = connector.createProducer("onenewclient");
-    Consumer<Long, String> consumer = connector.createConsumer("onenewgroup", "firsttopic");
+    Consumer<Long, String> consumer = connector.createConsumer("onenewgroup", "first.topic");
 
-    producer.send(new ProducerRecord<>("firsttopic", "hello"), (metadata, exception) -> {
+    producer.send(new ProducerRecord<>("first.topic", "hello"), (metadata, exception) -> {
 
       System.out.println("Called back...");
       if (exception != null) {
@@ -87,11 +93,11 @@ public class Wombat {
 
     if ((records = consumer.poll(Duration.ofSeconds(10))) != null) {
       for (ConsumerRecord<Long, String> record : records) {
-        System.out.println(record);
+        System.out.println(record.offset() + ":" + record.value());
       }
     }
 
-    System.out.println("Sleeping...");
-    Thread.sleep(30000);
+    System.out.println("...");
+    System.out.println("Done...");
   }
 }
