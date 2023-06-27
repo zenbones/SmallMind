@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.cometd.oumuamua.backbone.kafka;
+package org.smallmind.cometd.oumuamua;
 
 import java.time.Duration;
 import java.util.Collection;
@@ -42,6 +42,8 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.Node;
+import org.smallmind.cometd.oumuamua.backbone.kafka.KafkaConnector;
+import org.smallmind.cometd.oumuamua.backbone.kafka.KafkaServer;
 
 public class Wombat {
 

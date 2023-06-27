@@ -33,6 +33,8 @@
 package org.smallmind.cometd.oumuamua;
 
 import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
+import javax.websocket.server.ServerContainer;
 
 public class WebSocketTransport extends AbstractOumuamuaTransport {
 
@@ -49,7 +51,16 @@ public class WebSocketTransport extends AbstractOumuamuaTransport {
   }
 
   @Override
-  public void init (ServletConfig servletConfig) {
+  public void init (ServletConfig servletConfig)
+    throws ServletException {
 
+    ServerContainer container = (ServerContainer)servletConfig.getServletContext().getAttribute(ServerContainer.class.getName());
+    System.out.println(container);
+    /*ServerEndpointConfig config = ServerEndpointConfig.Builder.create(WebSocketEndpoint.class, mapping)
+                                    .subprotocols(protocols)
+                                    .configurator(configurator)
+                                    .build();
+*/
+    //  container.addEndpoint(config);
   }
 }

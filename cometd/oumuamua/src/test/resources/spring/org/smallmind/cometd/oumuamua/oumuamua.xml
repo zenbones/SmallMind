@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+  <bean id="oumuamuaServer" class="org.smallmind.cometd.oumuamua.OumuamuaServer">
+    <constructor-arg index="0" name="transportMap">
+      <map>
+        <entry key="websocket">
+          <bean class="org.smallmind.cometd.oumuamua.WebSocketTransport"/>
+        </entry>
+      </map>
+    </constructor-arg>
+    <constructor-arg index="1" name="allowed">
+      <list>
+        <value>websocket</value>
+      </list>
+    </constructor-arg>
+  </bean>
+
+  <bean id="oumuamuaServletContextListener" class="org.smallmind.cometd.oumuamua.OumuamuaServletContextListener">
+    <property name="oumuamuaServer" ref="oumuamuaServer"/>
+  </bean>
+
+  <bean id="cometdServletInstaller" class="org.smallmind.web.grizzly.installer.ServletInstaller">
+    <property name="contextPath" value="${grizzly.path.context}"/>
+    <property name="displayName" value="cometd"/>
+    <property name="servletClass" value="org.smallmind.cometd.oumuamua.OumuamauServlet"/>
+    <property name="urlPattern" value="/cometd/*"/>
+    <property name="loadOnStartup" value="1"/>
+    <property name="asyncSupported" value="true"/>
+  </bean>
+</beans>

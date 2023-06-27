@@ -38,6 +38,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
 import org.cometd.bayeux.MarkedReference;
 import org.cometd.bayeux.Transport;
 import org.cometd.bayeux.server.BayeuxServer;
@@ -58,6 +60,18 @@ public class OumuamuaServer implements BayeuxServer {
     this.transportMap = transportMap;
 
     this.allowedList = (allowed == null) ? Collections.emptyList() : Collections.unmodifiableList(Arrays.asList(allowed));
+  }
+
+  public void start (ServletConfig servletConfig)
+    throws ServletException {
+
+    for (OumuamuaTransport transport : transportMap.values()) {
+      transport.init(servletConfig);
+    }
+  }
+
+  public void stop () {
+
   }
 
   @Override

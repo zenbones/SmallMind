@@ -33,11 +33,13 @@
 package org.smallmind.cometd.oumuamua;
 
 import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
 import org.cometd.bayeux.server.ServerTransport;
 
 public interface OumuamuaTransport extends ServerTransport {
 
-  void init (ServletConfig servletConfig);
+  void init (ServletConfig servletConfig)
+    throws ServletException;
 
   void setOption (String name, Object value);
 }

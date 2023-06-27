@@ -38,9 +38,11 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.cometd.bayeux.server.BayeuxServer;
 
 public class OumuamauServlet extends HttpServlet {
 
+  private OumuamuaServer oumuamuaServer;
 
   @Override
   public String getServletInfo () {
@@ -49,11 +51,16 @@ public class OumuamauServlet extends HttpServlet {
   }
 
   @Override
-  public void init (ServletConfig config)
+  public void init (ServletConfig servletConfig)
     throws ServletException {
 
+    super.init(servletConfig);
 
-    super.init(config);
+    if ((oumuamuaServer = (OumuamuaServer)servletConfig.getServletContext().getAttribute(BayeuxServer.ATTRIBUTE)) == null) {
+      throw new ServletException("Missing " + OumuamuaServer.class.getSimpleName() + " in the servlet context - was the " + OumuamuaServletContextListener.class.getSimpleName() + " installed?");
+    } else {
+      oumuamuaServer.start(servletConfig);
+    }
   }
 
   @Override
