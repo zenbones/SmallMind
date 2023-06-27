@@ -32,6 +32,13 @@
  */
 package org.smallmind.cometd.oumuamua;
 
+import java.util.HashMap;
+import java.util.Map;
+import javax.websocket.ContainerProvider;
+import javax.websocket.WebSocketContainer;
+import org.cometd.client.BayeuxClient;
+import org.cometd.client.transport.ClientTransport;
+import org.cometd.client.websocket.javax.WebSocketTransport;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.testng.annotations.Test;
 
@@ -42,7 +49,25 @@ public class WebsocketTest {
     throws Exception {
 
     ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("org/smallmind/cometd/oumuamua/oumuamua-grizzly.xml", "org/smallmind/cometd/oumuamua/oumuamua.xml");
+    ClientTransport wsTransport;
+    WebSocketContainer webSocketContainer;
+    BayeuxClient bayeuxClient;
 
-    Thread.sleep(300000);
+    webSocketContainer = ContainerProvider.getWebSocketContainer();
+    wsTransport = new WebSocketTransport(null, null, webSocketContainer);
+
+    bayeuxClient = new BayeuxClient("http://localhost:9017/smallmind/cometd", wsTransport);
+
+    Map<String, Object> handshakeMap = new HashMap<>();
+    HashMap<String, Object> tokenMap = new HashMap<>();
+
+    // handshakeMap.put("ext", tokenMap);
+
+    bayeuxClient.handshake(handshakeMap);
+    if (!bayeuxClient.waitFor(5000, BayeuxClient.State.CONNECTED)) {
+      System.out.println("Unable to connect within 5000 milliseconds");
+    }
+
+    System.out.println("Done...");
   }
 }

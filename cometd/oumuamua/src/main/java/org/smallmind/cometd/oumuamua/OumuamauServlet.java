@@ -71,21 +71,12 @@ public class OumuamauServlet extends HttpServlet {
   }
 
   @Override
-  protected void service (HttpServletRequest req, HttpServletResponse resp)
+  protected void service (HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
 
-    /* See CometDServlet
-    if ("OPTIONS".equals(req.getMethod())) {
-      this.serviceOptions(request, response);
-    } else {
-      AbstractHttpTransport transport = this._bayeux.findHttpTransport(request);
-      if (transport == null) {
-        response.sendError(400, "Unknown Bayeux Transport");
-      } else {
-        transport.handle(request, response);
-      }
-    }
-     */
+    System.out.println("ignoring");
+
+    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unknown Bayeux Transport");
   }
 
   @Override

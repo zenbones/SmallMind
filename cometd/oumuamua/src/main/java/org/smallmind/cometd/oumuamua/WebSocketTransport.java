@@ -42,17 +42,17 @@ import javax.websocket.server.ServerEndpointConfig;
 public class WebSocketTransport extends AbstractOumuamuaTransport {
 
   private final String oumuamuaUrl;
-  private final String protocol;
+  private final String subProtocol;
 
   public WebSocketTransport (String oumuamuaUrl) {
 
     this(oumuamuaUrl, null);
   }
 
-  public WebSocketTransport (String oumuamuaUrl, String protocol) {
+  public WebSocketTransport (String oumuamuaUrl, String subProtocol) {
 
     this.oumuamuaUrl = oumuamuaUrl;
-    this.protocol = protocol;
+    this.subProtocol = subProtocol;
   }
 
   @Override
@@ -73,16 +73,22 @@ public class WebSocketTransport extends AbstractOumuamuaTransport {
 
     ServerContainer container = (ServerContainer)servletConfig.getServletContext().getAttribute(ServerContainer.class.getName());
     ServerEndpointConfig.Configurator configurator = new ServerEndpointConfig.Configurator();
-    ServerEndpointConfig.Builder builder = ServerEndpointConfig.Builder.create(WebSocketEndpoint.class, oumuamuaUrl);
-
-    if ((protocol != null) && (!protocol.isEmpty())) {
-      builder.subprotocols(List.of(protocol));
-    }
+    ServerEndpointConfig config = ServerEndpointConfig.Builder.create(WebSocketEndpoint.class, normalizeURL(oumuamuaUrl)).subprotocols(subProtocol == null ? null : List.of(subProtocol)).configurator(configurator).build();
 
     try {
-      container.addEndpoint(builder.configurator(configurator).build());
+      container.addEndpoint(config);
     } catch (DeploymentException deploymentException) {
       throw new FormattedServletException(deploymentException);
     }
+  }
+
+  private String normalizeURL (String url) {
+
+    return url.startsWith("/") ? stripWildcard(url) : "/" + stripWildcard(url);
+  }
+
+  private String stripWildcard (String url) {
+
+    return url.endsWith("/*") ? url.substring(0, url.length() - 2) : url;
   }
 }

@@ -37,6 +37,7 @@ import javax.websocket.Endpoint;
 import javax.websocket.EndpointConfig;
 import javax.websocket.MessageHandler;
 import javax.websocket.Session;
+import org.smallmind.scribe.pen.LoggerManager;
 
 public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<String> {
 
@@ -49,15 +50,18 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
   @Override
   public void onMessage (String data) {
 
+    System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!:" + data);
   }
 
   @Override
   public void onClose (Session wsSession, CloseReason closeReason) {
 
+    throw new RuntimeException("Not implemented");
   }
 
   @Override
   public void onError (Session wsSession, Throwable failure) {
 
+    LoggerManager.getLogger(WebSocketEndpoint.class).error(failure);
   }
 }
