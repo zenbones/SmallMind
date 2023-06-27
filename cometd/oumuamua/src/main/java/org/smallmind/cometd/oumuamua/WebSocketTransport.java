@@ -32,11 +32,28 @@
  */
 package org.smallmind.cometd.oumuamua;
 
+import java.util.List;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
+import javax.websocket.DeploymentException;
 import javax.websocket.server.ServerContainer;
+import javax.websocket.server.ServerEndpointConfig;
 
 public class WebSocketTransport extends AbstractOumuamuaTransport {
+
+  private final String oumuamuaUrl;
+  private final String protocol;
+
+  public WebSocketTransport (String oumuamuaUrl) {
+
+    this(oumuamuaUrl, null);
+  }
+
+  public WebSocketTransport (String oumuamuaUrl, String protocol) {
+
+    this.oumuamuaUrl = oumuamuaUrl;
+    this.protocol = protocol;
+  }
 
   @Override
   public String getName () {
@@ -55,12 +72,17 @@ public class WebSocketTransport extends AbstractOumuamuaTransport {
     throws ServletException {
 
     ServerContainer container = (ServerContainer)servletConfig.getServletContext().getAttribute(ServerContainer.class.getName());
-    System.out.println(container);
-    /*ServerEndpointConfig config = ServerEndpointConfig.Builder.create(WebSocketEndpoint.class, mapping)
-                                    .subprotocols(protocols)
-                                    .configurator(configurator)
-                                    .build();
-*/
-    //  container.addEndpoint(config);
+    ServerEndpointConfig.Configurator configurator = new ServerEndpointConfig.Configurator();
+    ServerEndpointConfig.Builder builder = ServerEndpointConfig.Builder.create(WebSocketEndpoint.class, oumuamuaUrl);
+
+    if ((protocol != null) && (!protocol.isEmpty())) {
+      builder.subprotocols(List.of(protocol));
+    }
+
+    try {
+      container.addEndpoint(builder.configurator(configurator).build());
+    } catch (DeploymentException deploymentException) {
+      throw new FormattedServletException(deploymentException);
+    }
   }
 }
