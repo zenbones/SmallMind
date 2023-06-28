@@ -32,51 +32,22 @@
  */
 package org.smallmind.cometd.oumuamua;
 
-import java.io.IOException;
-import javax.websocket.CloseReason;
-import javax.websocket.Endpoint;
-import javax.websocket.EndpointConfig;
-import javax.websocket.MessageHandler;
-import javax.websocket.Session;
-import com.fasterxml.jackson.databind.JsonNode;
-import org.smallmind.scribe.pen.LoggerManager;
-import org.smallmind.web.json.scaffold.util.JsonCodec;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 
-public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<String> {
+@XmlRootElement(name = "handshake")
+public class HandshakeMessage extends JsonMessage {
 
-  @Override
-  public void onOpen (Session wsSession, EndpointConfig config) {
+  private String[] supportedConnectionTypes;
 
-    wsSession.addMessageHandler(this);
+  @XmlElement(name = "supportedConnectionTypes")
+  public String[] getSupportedConnectionTypes () {
 
-    System.out.println(config.getUserProperties().get("abc"));
+    return supportedConnectionTypes;
   }
 
-  @Override
-  public void onMessage (String data) {
+  public void setSupportedConnectionTypes (String[] supportedConnectionTypes) {
 
-    try {
-
-      JsonNode messageNode = JsonCodec.readAsJsonNode(data);
-
-      if (messageNode.has("channel") && "/meta/handshake".equals(messageNode.get("channel").asText())) {
-        JsonCodec.convert(messageNode, HandshakeMessage.class);
-      }
-      System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!:" + data);
-    } catch (IOException ioException) {
-      throw new RuntimeException(ioException);
-    }
-  }
-
-  @Override
-  public void onClose (Session wsSession, CloseReason closeReason) {
-
-    throw new RuntimeException("Not implemented");
-  }
-
-  @Override
-  public void onError (Session wsSession, Throwable failure) {
-
-    LoggerManager.getLogger(WebSocketEndpoint.class).error(failure);
+    this.supportedConnectionTypes = supportedConnectionTypes;
   }
 }

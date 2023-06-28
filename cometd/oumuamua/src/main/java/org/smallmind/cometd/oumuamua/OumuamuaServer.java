@@ -54,6 +54,7 @@ public class OumuamuaServer implements BayeuxServer {
 
   private final Map<String, OumuamuaTransport> transportMap;
   private final List<String> allowedList;
+  private SecurityPolicy securityPolicy;
 
   public OumuamuaServer (Map<String, OumuamuaTransport> transportMap, String... allowed) {
 
@@ -207,11 +208,12 @@ public class OumuamuaServer implements BayeuxServer {
   @Override
   public SecurityPolicy getSecurityPolicy () {
 
-    return null;
+    return securityPolicy;
   }
 
   @Override
   public void setSecurityPolicy (SecurityPolicy securityPolicy) {
 
+    this.securityPolicy = securityPolicy;
   }
 }

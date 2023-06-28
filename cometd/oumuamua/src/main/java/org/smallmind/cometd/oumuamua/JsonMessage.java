@@ -32,51 +32,39 @@
  */
 package org.smallmind.cometd.oumuamua;
 
-import java.io.IOException;
-import javax.websocket.CloseReason;
-import javax.websocket.Endpoint;
-import javax.websocket.EndpointConfig;
-import javax.websocket.MessageHandler;
-import javax.websocket.Session;
-import com.fasterxml.jackson.databind.JsonNode;
-import org.smallmind.scribe.pen.LoggerManager;
-import org.smallmind.web.json.scaffold.util.JsonCodec;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 
-public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<String> {
+@XmlRootElement(name = "message")
+@XmlAccessorType(XmlAccessType.PROPERTY)
+public class JsonMessage {
 
-  @Override
-  public void onOpen (Session wsSession, EndpointConfig config) {
+  //[{"supportedConnectionTypes":["websocket"],"channel":"/meta/handshake","id":"1","version":"1.0"}]
 
-    wsSession.addMessageHandler(this);
+  private String version;
+  private String channel;
 
-    System.out.println(config.getUserProperties().get("abc"));
+  @XmlElement(name = "version")
+  public String getVersion () {
+
+    return version;
   }
 
-  @Override
-  public void onMessage (String data) {
+  public void setVersion (String version) {
 
-    try {
-
-      JsonNode messageNode = JsonCodec.readAsJsonNode(data);
-
-      if (messageNode.has("channel") && "/meta/handshake".equals(messageNode.get("channel").asText())) {
-        JsonCodec.convert(messageNode, HandshakeMessage.class);
-      }
-      System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!:" + data);
-    } catch (IOException ioException) {
-      throw new RuntimeException(ioException);
-    }
+    this.version = version;
   }
 
-  @Override
-  public void onClose (Session wsSession, CloseReason closeReason) {
+  @XmlElement(name = "channel")
+  public String getChannel () {
 
-    throw new RuntimeException("Not implemented");
+    return channel;
   }
 
-  @Override
-  public void onError (Session wsSession, Throwable failure) {
+  public void setChannel (String channel) {
 
-    LoggerManager.getLogger(WebSocketEndpoint.class).error(failure);
+    this.channel = channel;
   }
 }

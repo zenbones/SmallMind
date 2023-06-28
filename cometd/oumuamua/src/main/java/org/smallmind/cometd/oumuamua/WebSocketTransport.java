@@ -75,6 +75,8 @@ public class WebSocketTransport extends AbstractOumuamuaTransport {
     ServerEndpointConfig.Configurator configurator = new ServerEndpointConfig.Configurator();
     ServerEndpointConfig config = ServerEndpointConfig.Builder.create(WebSocketEndpoint.class, normalizeURL(oumuamuaUrl)).subprotocols(subProtocol == null ? null : List.of(subProtocol)).configurator(configurator).build();
 
+    config.getUserProperties().put("abc", 123);
+
     try {
       container.addEndpoint(config);
     } catch (DeploymentException deploymentException) {
