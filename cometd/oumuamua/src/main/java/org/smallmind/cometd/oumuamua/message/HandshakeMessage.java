@@ -30,41 +30,56 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.cometd.oumuamua;
+package org.smallmind.cometd.oumuamua.message;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
+import com.fasterxml.jackson.databind.JsonNode;
 
-@XmlRootElement(name = "message")
-@XmlAccessorType(XmlAccessType.PROPERTY)
-public class JsonMessage {
+public abstract class HandshakeMessage extends MetaMessage {
 
-  //[{"supportedConnectionTypes":["websocket"],"channel":"/meta/handshake","id":"1","version":"1.0"}]
+  private JsonNode ext;
+  private String id;
+  private String minimumVersion;
 
-  private String version;
-  private String channel;
+  public HandshakeMessage (String version, String channel, JsonNode ext, String id, String minimumVersion) {
 
-  @XmlElement(name = "version")
-  public String getVersion () {
+    super(version, channel);
 
-    return version;
+    this.ext = ext;
+    this.id = id;
+    this.minimumVersion = minimumVersion;
   }
 
-  public void setVersion (String version) {
+  @XmlElement(name = "id")
+  public String getId () {
 
-    this.version = version;
+    return id;
   }
 
-  @XmlElement(name = "channel")
-  public String getChannel () {
+  public void setId (String id) {
 
-    return channel;
+    this.id = id;
   }
 
-  public void setChannel (String channel) {
+  @XmlElement(name = "minimumVersion")
+  public String getMinimumVersion () {
 
-    this.channel = channel;
+    return minimumVersion;
+  }
+
+  public void setMinimumVersion (String minimumVersion) {
+
+    this.minimumVersion = minimumVersion;
+  }
+
+  @XmlElement(name = "ext")
+  public JsonNode getExt () {
+
+    return ext;
+  }
+
+  public void setExt (JsonNode ext) {
+
+    this.ext = ext;
   }
 }

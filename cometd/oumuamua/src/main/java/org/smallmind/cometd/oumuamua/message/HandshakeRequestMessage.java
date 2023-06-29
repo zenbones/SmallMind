@@ -30,15 +30,23 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.cometd.oumuamua;
+package org.smallmind.cometd.oumuamua.message;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import com.fasterxml.jackson.databind.JsonNode;
 
 @XmlRootElement(name = "handshake")
-public class HandshakeMessage extends JsonMessage {
+public class HandshakeRequestMessage extends HandshakeMessage {
 
   private String[] supportedConnectionTypes;
+
+  public HandshakeRequestMessage (String version, String channel, JsonNode ext, String id, String minimumVersion, String[] supportedConnectionTypes) {
+
+    super(version, channel, ext, id, minimumVersion);
+
+    this.supportedConnectionTypes = supportedConnectionTypes;
+  }
 
   @XmlElement(name = "supportedConnectionTypes")
   public String[] getSupportedConnectionTypes () {
