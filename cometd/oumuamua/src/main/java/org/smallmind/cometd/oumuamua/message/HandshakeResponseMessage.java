@@ -3,7 +3,7 @@ package org.smallmind.cometd.oumuamua.message;
 import javax.xml.bind.annotation.XmlElement;
 import com.fasterxml.jackson.databind.JsonNode;
 
-public class HandshakeResponseMessage extends HandshakeMessage {
+public abstract class HandshakeResponseMessage extends HandshakeMessage {
 
   private String[] supportedConnectionTypes;
   private JsonNode advice;
