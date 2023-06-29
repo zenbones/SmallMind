@@ -32,7 +32,6 @@
  */
 package org.smallmind.cometd.oumuamua.message;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import org.smallmind.web.json.doppelganger.Doppelganger;
 import org.smallmind.web.json.doppelganger.Idiom;
 import org.smallmind.web.json.doppelganger.View;
@@ -41,66 +40,30 @@ import static org.smallmind.web.json.doppelganger.Visibility.IN;
 import static org.smallmind.web.json.doppelganger.Visibility.OUT;
 
 @Doppelganger
-public class MetaMessage {
+public class SubscribeMessage extends AdvisedMetaMessage {
 
   @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
-  private JsonNode ext;
+  private String clientId;
   @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
-  private String channel;
-  @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
-  private String id;
-  @View(idioms = @Idiom(purposes = "error", visibility = OUT))
-  private String error;
-  @View(idioms = @Idiom(purposes = {"success", "error"}, visibility = OUT))
-  private Boolean successful;
+  private String subscription;
 
-  public String getChannel () {
+  public String getClientId () {
 
-    return channel;
+    return clientId;
   }
 
-  public void setChannel (String channel) {
+  public void setClientId (String clientId) {
 
-    this.channel = channel;
+    this.clientId = clientId;
   }
 
-  public String getId () {
+  public String getSubscription () {
 
-    return id;
+    return subscription;
   }
 
-  public void setId (String id) {
+  public void setSubscription (String subscription) {
 
-    this.id = id;
-  }
-
-  public JsonNode getExt () {
-
-    return ext;
-  }
-
-  public void setExt (JsonNode ext) {
-
-    this.ext = ext;
-  }
-
-  public Boolean getSuccessful () {
-
-    return successful;
-  }
-
-  public void setSuccessful (Boolean successful) {
-
-    this.successful = successful;
-  }
-
-  public String getError () {
-
-    return error;
-  }
-
-  public void setError (String error) {
-
-    this.error = error;
+    this.subscription = subscription;
   }
 }

@@ -40,7 +40,7 @@ import static org.smallmind.web.json.doppelganger.Visibility.IN;
 import static org.smallmind.web.json.doppelganger.Visibility.OUT;
 
 @Doppelganger
-public class HandshakeMessage extends MetaMessage {
+public class HandshakeMessage extends AdvisedMetaMessage {
 
   @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
   private String[] supportedConnectionTypes;
