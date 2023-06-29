@@ -32,36 +32,45 @@
  */
 package org.smallmind.cometd.oumuamua.message;
 
-import javax.xml.bind.annotation.XmlElement;
-import com.fasterxml.jackson.databind.JsonNode;
+import org.smallmind.web.json.doppelganger.Doppelganger;
+import org.smallmind.web.json.doppelganger.Idiom;
+import org.smallmind.web.json.doppelganger.View;
 
-public abstract class HandshakeMessage extends MetaMessage {
+import static org.smallmind.web.json.doppelganger.Visibility.IN;
+import static org.smallmind.web.json.doppelganger.Visibility.OUT;
 
-  private JsonNode ext;
-  private String id;
+@Doppelganger
+public class HandshakeMessage extends MetaMessage {
+
+  @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
+  private String[] supportedConnectionTypes;
+  @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
+  private String version;
+  @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
   private String minimumVersion;
+  @View(idioms = @Idiom(purposes = "success", visibility = OUT))
+  private String clientId;
 
-  public HandshakeMessage (String version, String channel, JsonNode ext, String id, String minimumVersion) {
+  public String[] getSupportedConnectionTypes () {
 
-    super(version, channel);
-
-    this.ext = ext;
-    this.id = id;
-    this.minimumVersion = minimumVersion;
+    return supportedConnectionTypes;
   }
 
-  @XmlElement(name = "id")
-  public String getId () {
+  public void setSupportedConnectionTypes (String[] supportedConnectionTypes) {
 
-    return id;
+    this.supportedConnectionTypes = supportedConnectionTypes;
   }
 
-  public void setId (String id) {
+  public String getVersion () {
 
-    this.id = id;
+    return version;
   }
 
-  @XmlElement(name = "minimumVersion")
+  public void setVersion (String version) {
+
+    this.version = version;
+  }
+
   public String getMinimumVersion () {
 
     return minimumVersion;
@@ -72,14 +81,13 @@ public abstract class HandshakeMessage extends MetaMessage {
     this.minimumVersion = minimumVersion;
   }
 
-  @XmlElement(name = "ext")
-  public JsonNode getExt () {
+  public String getClientId () {
 
-    return ext;
+    return clientId;
   }
 
-  public void setExt (JsonNode ext) {
+  public void setClientId (String clientId) {
 
-    this.ext = ext;
+    this.clientId = clientId;
   }
 }

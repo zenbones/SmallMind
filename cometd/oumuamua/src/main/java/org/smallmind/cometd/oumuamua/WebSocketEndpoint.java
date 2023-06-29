@@ -39,7 +39,6 @@ import javax.websocket.EndpointConfig;
 import javax.websocket.MessageHandler;
 import javax.websocket.Session;
 import com.fasterxml.jackson.databind.JsonNode;
-import org.smallmind.cometd.oumuamua.message.HandshakeRequestMessage;
 import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
@@ -60,9 +59,9 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
 
       JsonNode messageNode = JsonCodec.readAsJsonNode(data);
 
-      if (messageNode.has("channel") && "/meta/handshake".equals(messageNode.get("channel").asText())) {
-        JsonCodec.convert(messageNode, HandshakeRequestMessage.class);
-      }
+ //     if (messageNode.has("channel") && "/meta/handshake".equals(messageNode.get("channel").asText())) {
+  //      JsonCodec.convert(messageNode, HandshakeRequestMessage.class);
+  //    }
       System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!:" + data);
     } catch (IOException ioException) {
       throw new RuntimeException(ioException);

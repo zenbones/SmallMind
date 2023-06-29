@@ -32,34 +32,30 @@
  */
 package org.smallmind.cometd.oumuamua.message;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
+import com.fasterxml.jackson.databind.JsonNode;
+import org.smallmind.web.json.doppelganger.Doppelganger;
+import org.smallmind.web.json.doppelganger.Idiom;
+import org.smallmind.web.json.doppelganger.View;
 
-@XmlAccessorType(XmlAccessType.PROPERTY)
-public abstract class MetaMessage {
+import static org.smallmind.web.json.doppelganger.Visibility.IN;
+import static org.smallmind.web.json.doppelganger.Visibility.OUT;
 
-  private String version;
+@Doppelganger
+public class MetaMessage {
+
+  @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
+  private JsonNode ext;
+  @View(idioms = @Idiom(purposes = {"success", "error"}, visibility = OUT))
+  private JsonNode advice;
+  @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
   private String channel;
+  @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
+  private String id;
+  @View(idioms = @Idiom(purposes = "error", visibility = OUT))
+  private String error;
+  @View(idioms = @Idiom(purposes = {"success", "error"}, visibility = OUT))
+  private Boolean successful;
 
-  public MetaMessage (String version, String channel) {
-
-    this.version = version;
-    this.channel = channel;
-  }
-
-  @XmlElement(name = "version")
-  public String getVersion () {
-
-    return version;
-  }
-
-  public void setVersion (String version) {
-
-    this.version = version;
-  }
-
-  @XmlElement(name = "channel")
   public String getChannel () {
 
     return channel;
@@ -68,5 +64,55 @@ public abstract class MetaMessage {
   public void setChannel (String channel) {
 
     this.channel = channel;
+  }
+
+  public String getId () {
+
+    return id;
+  }
+
+  public void setId (String id) {
+
+    this.id = id;
+  }
+
+  public JsonNode getExt () {
+
+    return ext;
+  }
+
+  public void setExt (JsonNode ext) {
+
+    this.ext = ext;
+  }
+
+  public JsonNode getAdvice () {
+
+    return advice;
+  }
+
+  public void setAdvice (JsonNode advice) {
+
+    this.advice = advice;
+  }
+
+  public Boolean getSuccessful () {
+
+    return successful;
+  }
+
+  public void setSuccessful (Boolean successful) {
+
+    this.successful = successful;
+  }
+
+  public String getError () {
+
+    return error;
+  }
+
+  public void setError (String error) {
+
+    this.error = error;
   }
 }
