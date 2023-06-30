@@ -49,9 +49,11 @@ import org.cometd.bayeux.server.SecurityPolicy;
 import org.cometd.bayeux.server.ServerChannel;
 import org.cometd.bayeux.server.ServerMessage;
 import org.cometd.bayeux.server.ServerSession;
+import org.smallmind.cometd.oumuamua.channel.ChannelBranch;
 
 public class OumuamuaServer implements BayeuxServer {
 
+  private final ChannelBranch channelTree = new ChannelBranch(null);
   private final Map<String, OumuamuaTransport> transportMap;
   private final List<String> allowedList;
   private SecurityPolicy securityPolicy;
@@ -91,6 +93,18 @@ public class OumuamuaServer implements BayeuxServer {
   public List<String> getAllowedTransports () {
 
     return allowedList;
+  }
+
+  @Override
+  public SecurityPolicy getSecurityPolicy () {
+
+    return securityPolicy;
+  }
+
+  @Override
+  public void setSecurityPolicy (SecurityPolicy securityPolicy) {
+
+    this.securityPolicy = securityPolicy;
   }
 
   @Override
@@ -175,6 +189,25 @@ public class OumuamuaServer implements BayeuxServer {
     return null;
   }
 
+  public void removeChannel (ServerChannel channel) {
+
+    ChannelBranch channelBranch;
+
+  }
+
+  public void cascadeRemoveChannel (ServerChannel channel) {
+
+    String root = channel.getId();
+
+    if (channel.isWild()) {
+      root = root.substring(0, root.length() - OumuamuaServerChannel.WILD_EPILOG.length());
+    } else if (channel.isDeepWild()) {
+      root = root.substring(0, root.length() - OumuamuaServerChannel.DEEP_WILD_EPILOG.length());
+    }
+
+    channelTree.remove(0, channel.getId().split("/",-1));
+  }
+
   @Override
   public ServerSession getSession (String s) {
 
@@ -203,17 +236,5 @@ public class OumuamuaServer implements BayeuxServer {
   public ServerMessage.Mutable newMessage () {
 
     return null;
-  }
-
-  @Override
-  public SecurityPolicy getSecurityPolicy () {
-
-    return securityPolicy;
-  }
-
-  @Override
-  public void setSecurityPolicy (SecurityPolicy securityPolicy) {
-
-    this.securityPolicy = securityPolicy;
   }
 }

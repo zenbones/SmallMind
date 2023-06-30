@@ -49,14 +49,20 @@ public class OumuamuaServerSession implements ServerSession {
   private final String userAgent;
   private boolean handshook;
   private boolean connected;
+  private long interval = -1;
+  private long timeout = -1;
+  private long maxInterval = -1;
+
+  public OumuamuaServerSession () {
+
+    this(null);
+  }
 
   public OumuamuaServerSession (String userAgent) {
 
     this.userAgent = userAgent;
 
     id = SnowflakeId.newInstance().generateHexEncoding();
-    connected = false;
-    handshook = false;
   }
 
   @Override
@@ -86,34 +92,37 @@ public class OumuamuaServerSession implements ServerSession {
   @Override
   public long getInterval () {
 
-    return 0;
+    return interval;
   }
 
   @Override
-  public void setInterval (long l) {
+  public void setInterval (long interval) {
 
+    this.interval = interval;
   }
 
   @Override
   public long getTimeout () {
 
-    return 0;
+    return timeout;
   }
 
   @Override
-  public void setTimeout (long l) {
+  public void setTimeout (long timeout) {
 
+    this.timeout = timeout;
   }
 
   @Override
   public long getMaxInterval () {
 
-    return 0;
+    return maxInterval;
   }
 
   @Override
-  public void setMaxInterval (long l) {
+  public void setMaxInterval (long maxInterval) {
 
+    this.maxInterval = maxInterval;
   }
 
   @Override

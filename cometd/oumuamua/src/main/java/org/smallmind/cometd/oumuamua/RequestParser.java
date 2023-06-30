@@ -34,15 +34,28 @@ package org.smallmind.cometd.oumuamua;
 
 import java.io.IOException;
 import com.fasterxml.jackson.databind.JsonNode;
+import org.cometd.bayeux.Channel;
 import org.smallmind.cometd.oumuamua.message.ConnectMessageRequestInView;
 import org.smallmind.cometd.oumuamua.message.DisconnectMessageRequestInView;
 import org.smallmind.cometd.oumuamua.message.HandshakeMessageRequestInView;
-import org.smallmind.cometd.oumuamua.message.PublishMessageRequestInView;
 import org.smallmind.cometd.oumuamua.message.SubscribeMessageRequestInView;
 import org.smallmind.cometd.oumuamua.message.UnsubscribeMessageRequestInView;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public class RequestParser {
+
+  private static final String META_PROLOG = Channel.META + "/";
+  private static final String SERVICE_PROLOG = Channel.SERVICE + "/";
+
+  public static boolean isMetaChannel (String channel) {
+
+    return channel.startsWith(META_PROLOG);
+  }
+
+  public static boolean isServiceChannel (String channel) {
+
+    return channel.startsWith(SERVICE_PROLOG);
+  }
 
   public static void parse (String data)
     throws IOException {
@@ -54,26 +67,23 @@ public class RequestParser {
       String channel;
 
       switch (channel = messageNode.get("channel").asText()) {
-        case "/meta/handshake":
+        case Channel.META_HANDSHAKE:
           JsonCodec.convert(messageNode, HandshakeMessageRequestInView.class);
           break;
-        case "/meta/subscribe":
+        case Channel.META_SUBSCRIBE:
           JsonCodec.convert(messageNode, SubscribeMessageRequestInView.class);
           break;
-        case "/meta/unsubscribe":
+        case Channel.META_UNSUBSCRIBE:
           JsonCodec.convert(messageNode, UnsubscribeMessageRequestInView.class);
           break;
-        case "/meta/connect":
+        case Channel.META_CONNECT:
           JsonCodec.convert(messageNode, ConnectMessageRequestInView.class);
           break;
-        case "/meta/disconnect":
+        case Channel.META_DISCONNECT:
           JsonCodec.convert(messageNode, DisconnectMessageRequestInView.class);
           break;
-        case "/meta/publish":
-          JsonCodec.convert(messageNode, PublishMessageRequestInView.class);
-          break;
         default:
-          if (!(channel.startsWith("/meta/") || channel.startsWith("/service"))) {
+          if (!(isMetaChannel(channel) || isServiceChannel(channel))) {
             // publish???
           }
       }

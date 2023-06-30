@@ -54,7 +54,7 @@ public class HandshakeMessage extends AdvisedMetaMessage {
 
   public void process (BayeuxServer bayeuxServer) {
 
-    bayeuxServer.getSecurityPolicy().canHandshake(bayeuxServer, );
+    //bayeuxServer.getSecurityPolicy().canHandshake(bayeuxServer, );
   }
 
   public String[] getSupportedConnectionTypes () {

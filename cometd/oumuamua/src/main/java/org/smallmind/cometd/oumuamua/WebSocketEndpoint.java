@@ -44,6 +44,8 @@ import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<String> {
 
+  private final OumuamuaServerSession omOumuamuaServerSession = new OumuamuaServerSession();
+
   @Override
   public void onOpen (Session wsSession, EndpointConfig config) {
 
