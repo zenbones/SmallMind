@@ -48,8 +48,6 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
   public void onOpen (Session wsSession, EndpointConfig config) {
 
     wsSession.addMessageHandler(this);
-
-    System.out.println(config.getUserProperties().get("abc"));
   }
 
   @Override
@@ -59,9 +57,9 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
 
       JsonNode messageNode = JsonCodec.readAsJsonNode(data);
 
- //     if (messageNode.has("channel") && "/meta/handshake".equals(messageNode.get("channel").asText())) {
-  //      JsonCodec.convert(messageNode, HandshakeRequestMessage.class);
-  //    }
+      //     if (messageNode.has("channel") && "/meta/handshake".equals(messageNode.get("channel").asText())) {
+      //      JsonCodec.convert(messageNode, HandshakeRequestMessage.class);
+      //    }
       System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!:" + data);
     } catch (IOException ioException) {
       throw new RuntimeException(ioException);

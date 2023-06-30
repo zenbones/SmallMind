@@ -40,10 +40,10 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.serialization.ByteArrayDeserializer;
+import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.LongDeserializer;
 import org.apache.kafka.common.serialization.LongSerializer;
-import org.apache.kafka.common.serialization.StringDeserializer;
-import org.apache.kafka.common.serialization.StringSerializer;
 
 public class KafkaConnector {
 
@@ -68,14 +68,14 @@ public class KafkaConnector {
     boostrapServers = boostrapBuilder.toString();
   }
 
-  public Producer<Long, String> createProducer (String clientId) {
+  public Producer<Long, byte[]> createProducer (String clientId) {
 
     Properties props = new Properties();
 
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, boostrapServers);
     props.put(ProducerConfig.CLIENT_ID_CONFIG, clientId);
     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, LongSerializer.class.getName());
-    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class.getName());
 
     props.put(ProducerConfig.ACKS_CONFIG, "0");
     // props.put(ProducerConfig.ACKS_CONFIG, "all");
@@ -95,7 +95,7 @@ public class KafkaConnector {
     return new KafkaProducer<>(props);
   }
 
-  public Consumer<Long, String> createConsumer (String clientId, String groupId, String instanceId, String... topics) {
+  public Consumer<Long, byte[]> createConsumer (String clientId, String groupId, String instanceId, String... topics) {
 
     Properties props = new Properties();
 
@@ -104,7 +104,7 @@ public class KafkaConnector {
     props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
     props.put(ConsumerConfig.GROUP_INSTANCE_ID_CONFIG, instanceId);
     props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, LongDeserializer.class);
-    props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class);
 
     props.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, 3000);
     // props.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, 3000);
@@ -120,7 +120,7 @@ public class KafkaConnector {
     // props.put(ConsumerConfig.CLIENT_RACK_CONFIG, "<must be set to the data centre ID (ex: AZ ID in AWS)>");
 
     // Create the consumer using props.
-    final Consumer<Long, String> consumer = new KafkaConsumer<>(props);
+    final Consumer<Long, byte[]> consumer = new KafkaConsumer<>(props);
 
     // Subscribe to the topic.
     consumer.subscribe(Arrays.asList(topics));

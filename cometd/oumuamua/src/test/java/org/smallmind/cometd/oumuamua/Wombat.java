@@ -57,11 +57,12 @@ public class Wombat {
 
   /*
   min.insync.replicas - 1/2 given 3 nodes (min.insync.replicas=2, acks=all, replication.factor=3 for n/2-1)
-  group.min.session.timeout.ms
-  group.max.session.timeout.ms
+  group.min.session.timeout.ms - min session time a consumer can ask for
+  group.max.session.timeout.ms - max session time a consumer can ask for
   compression.type - none, gzip, lz4, snappy, and zstd (prefer lz4 as fastest if not smallest)
   rack.id - must be set to the data centre ID (ex: AZ ID in AWS)
   replica.selector.class - must be set to org.apache.kafka.common.replica.RackAwareReplicaSelector
+  log.retention.ms - ttl for messages
   */
 
   public static void main (String... args)
@@ -71,8 +72,11 @@ public class Wombat {
 
     Properties props = new Properties();
     props.put("bootstrap.servers", "127.0.0.1:9094");
+    props.put("connections.max.idle.ms", 300000);
     props.put("request.timeout.ms", 3000);
-    props.put("connections.max.idle.ms", 5000);
+    props.put("default.api.timeout.ms", 1500);
+    props.put("retries", 0);
+    props.put("client.id", "");
 
     client = AdminClient.create(props);
 
@@ -81,10 +85,10 @@ public class Wombat {
 
     KafkaConnector connector = new KafkaConnector(new KafkaServer("localhost", 9094));
 
-    Producer<Long, String> producer = connector.createProducer("onenewclient");
-    Consumer<Long, String> consumer = connector.createConsumer("othernewclient", "onenewgroup", "12345", "first.topic");
+    Producer<Long, byte[]> producer = connector.createProducer("onenewclient");
+    Consumer<Long, byte[]> consumer = connector.createConsumer("othernewclient", "onenewgroup", "12345", "first.topic");
 
-    producer.send(new ProducerRecord<>("first.topic", "hello"), (metadata, exception) -> {
+    producer.send(new ProducerRecord<>("first.topic", "hello".getBytes()), (metadata, exception) -> {
 
       System.out.println("Called back...");
       if (exception != null) {
@@ -94,11 +98,11 @@ public class Wombat {
       }
     });
 
-    ConsumerRecords<Long, String> records;
+    ConsumerRecords<Long, byte[]> records;
 
     if ((records = consumer.poll(Duration.ofSeconds(10))) != null) {
-      for (ConsumerRecord<Long, String> record : records) {
-        System.out.println(record.offset() + ":" + record.value());
+      for (ConsumerRecord<Long, byte[]> record : records) {
+        System.out.println(record.offset() + ":" + new String(record.value()));
       }
       consumer.commitSync();
     }

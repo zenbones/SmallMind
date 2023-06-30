@@ -34,7 +34,12 @@ package org.smallmind.cometd.oumuamua;
 
 import java.io.IOException;
 import com.fasterxml.jackson.databind.JsonNode;
-import org.cometd.bayeux.Message;
+import org.smallmind.cometd.oumuamua.message.ConnectMessageRequestInView;
+import org.smallmind.cometd.oumuamua.message.DisconnectMessageRequestInView;
+import org.smallmind.cometd.oumuamua.message.HandshakeMessageRequestInView;
+import org.smallmind.cometd.oumuamua.message.PublishMessageRequestInView;
+import org.smallmind.cometd.oumuamua.message.SubscribeMessageRequestInView;
+import org.smallmind.cometd.oumuamua.message.UnsubscribeMessageRequestInView;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public class RequestParser {
@@ -44,6 +49,34 @@ public class RequestParser {
 
     JsonNode messageNode = JsonCodec.readAsJsonNode(data);
 
-//    JsonCodec.convert()
+    if (messageNode.has("channel")) {
+
+      String channel;
+
+      switch (channel = messageNode.get("channel").asText()) {
+        case "/meta/handshake":
+          JsonCodec.convert(messageNode, HandshakeMessageRequestInView.class);
+          break;
+        case "/meta/subscribe":
+          JsonCodec.convert(messageNode, SubscribeMessageRequestInView.class);
+          break;
+        case "/meta/unsubscribe":
+          JsonCodec.convert(messageNode, UnsubscribeMessageRequestInView.class);
+          break;
+        case "/meta/connect":
+          JsonCodec.convert(messageNode, ConnectMessageRequestInView.class);
+          break;
+        case "/meta/disconnect":
+          JsonCodec.convert(messageNode, DisconnectMessageRequestInView.class);
+          break;
+        case "/meta/publish":
+          JsonCodec.convert(messageNode, PublishMessageRequestInView.class);
+          break;
+        default:
+          if (!(channel.startsWith("/meta/") || channel.startsWith("/service"))) {
+            // publish???
+          }
+      }
+    }
   }
 }

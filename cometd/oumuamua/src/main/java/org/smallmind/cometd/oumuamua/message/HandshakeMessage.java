@@ -32,6 +32,7 @@
  */
 package org.smallmind.cometd.oumuamua.message;
 
+import org.cometd.bayeux.server.BayeuxServer;
 import org.smallmind.web.json.doppelganger.Doppelganger;
 import org.smallmind.web.json.doppelganger.Idiom;
 import org.smallmind.web.json.doppelganger.View;
@@ -50,6 +51,11 @@ public class HandshakeMessage extends AdvisedMetaMessage {
   private String minimumVersion;
   @View(idioms = @Idiom(purposes = "success", visibility = OUT))
   private String clientId;
+
+  public void process (BayeuxServer bayeuxServer) {
+
+    bayeuxServer.getSecurityPolicy().canHandshake(bayeuxServer, );
+  }
 
   public String[] getSupportedConnectionTypes () {
 
