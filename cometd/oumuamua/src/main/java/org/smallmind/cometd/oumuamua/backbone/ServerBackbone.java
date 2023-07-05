@@ -34,5 +34,5 @@ package org.smallmind.cometd.oumuamua.backbone;
 
 public interface ServerBackbone {
 
-  void publish ();
+  void publish (String topic, long key, byte[] value);
 }

@@ -33,6 +33,7 @@
 package org.smallmind.cometd.oumuamua.backbone.kafka;
 
 import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.smallmind.cometd.oumuamua.backbone.ServerBackbone;
 
 public class KafkaBackbone implements ServerBackbone {
@@ -41,7 +42,8 @@ public class KafkaBackbone implements ServerBackbone {
   private final Producer<Long, byte[]> producer = connector.createProducer("");
 
   @Override
-  public void publish () {
+  public void publish (String topic, long key, byte[] value) {
 
+    producer.send(new ProducerRecord<>(topic, value));
   }
 }
