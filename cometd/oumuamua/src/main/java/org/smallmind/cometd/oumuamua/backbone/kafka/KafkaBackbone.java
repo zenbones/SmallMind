@@ -32,8 +32,16 @@
  */
 package org.smallmind.cometd.oumuamua.backbone.kafka;
 
+import org.apache.kafka.clients.producer.Producer;
 import org.smallmind.cometd.oumuamua.backbone.ServerBackbone;
 
-public class KafkBackbone implements ServerBackbone {
+public class KafkaBackbone implements ServerBackbone {
 
+  private final KafkaConnector connector = new KafkaConnector(new KafkaServer("localhost", 9094));
+  private final Producer<Long, byte[]> producer = connector.createProducer("");
+
+  @Override
+  public void publish () {
+
+  }
 }
