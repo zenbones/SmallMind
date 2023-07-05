@@ -78,6 +78,31 @@ public class ChannelTree {
 
   public void publish (ChannelIterator channelIterator) {
 
+    if (channelIterator.hasNext()) {
+
+      ChannelTree deepWildBranch;
+      ChannelTree nextBranch;
+
+      if ((deepWildBranch = childMap.get(ChannelId.DEEPWILD)) != null) {
+        // publish to deepWIldBranch
+        System.out.println("deep wild:" + deepWildBranch.channelId);
+      }
+      if ((nextBranch = childMap.get(channelIterator.next())) != null) {
+        nextBranch.publish(channelIterator);
+      }
+    } else {
+      if (parent != null) {
+
+        ChannelTree wildBranch;
+
+        if ((wildBranch = parent.childMap.get(ChannelId.WILD)) != null) {
+          // publish to wildBranch
+          System.out.println("wild:" + wildBranch.channelId);
+        }
+      }
+      // publish to this
+      System.out.println("this:" + channelId);
+    }
   }
 
   public void walk (ChannelOperation operation) {

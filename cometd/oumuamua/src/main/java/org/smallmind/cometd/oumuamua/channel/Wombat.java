@@ -41,7 +41,7 @@ public class Wombat {
     ChannelTree t = new ChannelTree();
 
     t.add(0, new ChannelId("/a"));
-    t.add(0, new ChannelId("/a/*"));
+    t.add(0, new ChannelId("/a/**"));
     t.add(0, new ChannelId("/a/b"));
     t.add(0, new ChannelId("/a/b/*"));
     t.add(0, new ChannelId("/a/b/**"));
@@ -50,10 +50,8 @@ public class Wombat {
     System.out.println(t);
     t.walk(new RemovalOperation());
 
-    ChannelIterator i = new ChannelIterator("/a/goo/wubble*/somoosh/berry/fondle/b");
+    ChannelIterator i = new ChannelIterator("/a/b/c");
 
-    while (i.hasNext()) {
-      System.out.println(i.next());
-    }
+    t.publish(i);
   }
 }
