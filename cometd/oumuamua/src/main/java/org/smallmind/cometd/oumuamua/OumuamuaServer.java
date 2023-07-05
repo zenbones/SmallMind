@@ -54,7 +54,7 @@ import org.smallmind.cometd.oumuamua.channel.ChannelTree;
 
 public class OumuamuaServer implements BayeuxServer {
 
-  private final ChannelTree channelTree = new ChannelTree("");
+  private final ChannelTree channelTree = new ChannelTree();
   private final Map<String, OumuamuaTransport> transportMap;
   private final List<String> allowedList;
   private SecurityPolicy securityPolicy;
@@ -205,7 +205,7 @@ public class OumuamuaServer implements BayeuxServer {
       branchId = branchId.substring(0, branchId.length() - ChannelId.DEEPWILD.length() + 1);
     }
 
-    channelTree.remove(1, branchId.split("/", -1));
+    // channelTree.remove(1, branchId.split("/", -1));
   }
 
   @Override

@@ -32,66 +32,22 @@
  */
 package org.smallmind.cometd.oumuamua.channel;
 
-import java.util.concurrent.ConcurrentHashMap;
 import org.cometd.bayeux.ChannelId;
 
-public class ChannelTree {
+public class Wombat {
 
-  private final ConcurrentHashMap<String, ChannelTree> childMap = new ConcurrentHashMap<>();
-  private final ChannelTree parent;
-  private final ChannelId channelId;
+  public static void main (String... args) {
 
-  public ChannelTree () {
+    ChannelTree t = new ChannelTree();
 
-    this(null, null);
-  }
+    t.add(0, new ChannelId("/a"));
+    t.add(0, new ChannelId("/a/*"));
+    t.add(0, new ChannelId("/a/b"));
+    t.add(0, new ChannelId("/a/b/*"));
+    t.add(0, new ChannelId("/a/b/**"));
+    t.add(0, new ChannelId("/a/b/c"));
 
-  public ChannelTree (ChannelTree parent, ChannelId channelId) {
-
-    this.parent = parent;
-    this.channelId = channelId;
-  }
-
-  public ChannelTree getParent () {
-
-    return parent;
-  }
-
-  public ChannelId getChannelId () {
-
-    return channelId;
-  }
-
-  public ChannelTree add (int index, ChannelId channelId) {
-
-    ChannelTree child;
-
-    if ((child = childMap.get(channelId.getSegment(index))) == null) {
-
-      ChannelId branchChannelId = (index == (channelId.depth() - 1)) ? channelId : ChannelIdUtility.from(index + 1, channelId);
-
-      childMap.put(channelId.getSegment(index), child = new ChannelTree(this, branchChannelId));
-    }
-
-    return (index == (channelId.depth() - 1)) ? child : child.add(index + 1, channelId);
-  }
-
-  public ChannelTree find (int index, ChannelId) {
-
-
-  }
-
-  public void walk (ChannelOperation operation) {
-
-    operation.operate(this);
-
-    for (ChannelTree channelTree : childMap.values()) {
-      channelTree.walk(operation);
-    }
-  }
-
-  public void operate (ChannelOperation operation) {
-
-    operation.operate(this);
+    System.out.println(t);
+    t.walk(new RemovalOperation());
   }
 }
