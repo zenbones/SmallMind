@@ -40,6 +40,7 @@ import java.util.Map;
 import java.util.Set;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
+import org.cometd.bayeux.ChannelId;
 import org.cometd.bayeux.MarkedReference;
 import org.cometd.bayeux.Transport;
 import org.cometd.bayeux.server.BayeuxServer;
@@ -49,11 +50,11 @@ import org.cometd.bayeux.server.SecurityPolicy;
 import org.cometd.bayeux.server.ServerChannel;
 import org.cometd.bayeux.server.ServerMessage;
 import org.cometd.bayeux.server.ServerSession;
-import org.smallmind.cometd.oumuamua.channel.ChannelBranch;
+import org.smallmind.cometd.oumuamua.channel.ChannelTree;
 
 public class OumuamuaServer implements BayeuxServer {
 
-  private final ChannelBranch channelTree = new ChannelBranch(null);
+  private final ChannelTree channelTree = new ChannelTree("");
   private final Map<String, OumuamuaTransport> transportMap;
   private final List<String> allowedList;
   private SecurityPolicy securityPolicy;
@@ -191,21 +192,20 @@ public class OumuamuaServer implements BayeuxServer {
 
   public void removeChannel (ServerChannel channel) {
 
-    ChannelBranch channelBranch;
-
+    ChannelTree channelTree;
   }
 
   public void cascadeRemoveChannel (ServerChannel channel) {
 
-    String root = channel.getId();
+    String branchId = channel.getId();
 
     if (channel.isWild()) {
-      root = root.substring(0, root.length() - OumuamuaServerChannel.WILD_EPILOG.length());
+      branchId = branchId.substring(0, branchId.length() - ChannelId.WILD.length() + 1);
     } else if (channel.isDeepWild()) {
-      root = root.substring(0, root.length() - OumuamuaServerChannel.DEEP_WILD_EPILOG.length());
+      branchId = branchId.substring(0, branchId.length() - ChannelId.DEEPWILD.length() + 1);
     }
 
-    channelTree.remove(0, channel.getId().split("/",-1));
+    channelTree.remove(1, branchId.split("/", -1));
   }
 
   @Override

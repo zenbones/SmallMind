@@ -2,13 +2,13 @@ package org.smallmind.cometd.oumuamua.channel;
 
 import java.util.concurrent.ConcurrentHashMap;
 
-public class ChannelBranch {
+public class ChannelTree {
 
   private static final RemovalOperation REMOVAL_OPERATION = new RemovalOperation();
-  private final ConcurrentHashMap<String, ChannelBranch> childMap = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<String, ChannelTree> childMap = new ConcurrentHashMap<>();
   private final String id;
 
-  public ChannelBranch (String id) {
+  public ChannelTree (String id) {
 
     this.id = id;
   }
@@ -18,28 +18,28 @@ public class ChannelBranch {
     return id;
   }
 
-  public ChannelBranch add (int index, String[] path) {
+  public ChannelTree add (int index, String[] path) {
 
     if (index >= path.length) {
 
       return this;
     } else {
 
-      ChannelBranch child;
+      ChannelTree child;
 
       if ((child = childMap.get(path[index])) == null) {
-        childMap.putIfAbsent(path[index], child = new ChannelBranch(path[index]));
+        childMap.putIfAbsent(path[index], child = new ChannelTree(path[index]));
       }
 
       return child.add(index + 1, path);
     }
   }
 
-  public ChannelBranch remove (int index, String[] path) {
+  public ChannelTree remove (int index, String[] path) {
 
     if (index == (path.length - 1)) {
 
-      ChannelBranch child;
+      ChannelTree child;
 
       if ((child = childMap.remove(path[index])) != null) {
         child.walk(REMOVAL_OPERATION);
@@ -48,7 +48,7 @@ public class ChannelBranch {
       return child;
     } else {
 
-      ChannelBranch child;
+      ChannelTree child;
 
       return ((child = childMap.get(path[index])) == null) ? null : child.remove(index + 1, path);
     }
@@ -58,8 +58,8 @@ public class ChannelBranch {
 
     operation.operate(this);
 
-    for (ChannelBranch channelBranch : childMap.values()) {
-      channelBranch.walk(operation);
+    for (ChannelTree channelTree : childMap.values()) {
+      channelTree.walk(operation);
     }
   }
 

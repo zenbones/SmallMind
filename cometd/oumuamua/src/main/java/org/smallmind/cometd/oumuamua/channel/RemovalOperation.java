@@ -3,7 +3,7 @@ package org.smallmind.cometd.oumuamua.channel;
 public class RemovalOperation implements ChannelOperation {
 
   @Override
-  public void operate (ChannelBranch channelBranch) {
+  public void operate (ChannelTree channelTree) {
 
     /*
     channel listener

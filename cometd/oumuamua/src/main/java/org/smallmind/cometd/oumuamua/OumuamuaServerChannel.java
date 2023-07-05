@@ -5,6 +5,8 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import org.cometd.bayeux.ChannelId;
 import org.cometd.bayeux.Promise;
 import org.cometd.bayeux.Session;
@@ -15,42 +17,47 @@ import org.cometd.bayeux.server.ServerSession;
 
 public class OumuamuaServerChannel implements ServerChannel {
 
-  public static final String WILD_EPILOG = "/*";
-  public static final String DEEP_WILD_EPILOG = "/**";
+  private static final long THIRTY_MINUTES = 30 * 60 * 1000;
 
   private final OumuamuaServer oumuamuaServer;
-  private final HashMap<String, ServerSession> subscriptionMap = new HashMap<>();
+  private final ConcurrentHashMap<String, ServerSession> subscriptionMap = new ConcurrentHashMap<>();
   private final HashMap<String, Object> attributeMap = new HashMap<>();
-  private final LinkedList<ServerChannelListener> listenerList = new LinkedList<>();
+  private final ConcurrentLinkedQueue<ServerChannelListener> listenerList = new ConcurrentLinkedQueue<>();
+  private final ConcurrentLinkedQueue<ServerChannelListener.Weak> weakListenerList = new ConcurrentLinkedQueue<>();
   private final LinkedList<Authorizer> authorizerList = new LinkedList<>();
   private final ChannelId channelId;
-  private final String id;
   private final boolean meta;
   private final boolean service;
   private final boolean broadcast;
-  private final boolean wild;
-  private final boolean deepWild;
   private boolean persistent;
   private boolean broadcastToPublisher;
+  private long ttl;
   private long lazyTimeout = -1;
 
   public OumuamuaServerChannel (OumuamuaServer oumuamuaServer, String id, Authorizer... authorizers) {
 
     this.oumuamuaServer = oumuamuaServer;
-    this.id = id;
 
     channelId = new ChannelId(id);
     meta = RequestParser.isMetaChannel(id);
     service = RequestParser.isServiceChannel(id);
     broadcast = !(meta || service);
-    wild = id.endsWith(WILD_EPILOG);
-    deepWild = id.startsWith(DEEP_WILD_EPILOG);
+
+    ttl = THIRTY_MINUTES;
+  }
+
+  // Call from synchronized methods only
+  private void checkTimeToLive () {
+
+    if ((ttl < 0) && (!persistent) && subscriptionMap.isEmpty() && listenerList.isEmpty()) {
+      ttl = System.currentTimeMillis() + THIRTY_MINUTES;
+    }
   }
 
   @Override
   public String getId () {
 
-    return id;
+    return channelId.getId();
   }
 
   @Override
@@ -80,13 +87,13 @@ public class OumuamuaServerChannel implements ServerChannel {
   @Override
   public boolean isWild () {
 
-    return wild;
+    return channelId.isWild();
   }
 
   @Override
   public boolean isDeepWild () {
 
-    return deepWild;
+    return channelId.isDeepWild();
   }
 
   @Override
@@ -116,15 +123,23 @@ public class OumuamuaServerChannel implements ServerChannel {
   }
 
   @Override
-  public boolean isPersistent () {
+  public synchronized boolean isPersistent () {
 
     return persistent;
   }
 
   @Override
-  public void setPersistent (boolean persistent) {
+  public synchronized void setPersistent (boolean persistent) {
 
-    this.persistent = persistent;
+    if (persistent != this.persistent) {
+      this.persistent = persistent;
+
+      if (persistent) {
+        ttl = -1;
+      } else {
+        checkTimeToLive();
+      }
+    }
   }
 
   @Override
@@ -182,21 +197,57 @@ public class OumuamuaServerChannel implements ServerChannel {
   }
 
   @Override
+  // Do not call this in order to process listeners
+  public List<ServerChannelListener> getListeners () {
+
+    LinkedList<ServerChannelListener> joinedList = new LinkedList<>(weakListenerList);
+
+    joinedList.addAll(listenerList);
+
+    return joinedList;
+  }
+
+  @Override
+  public synchronized void addListener (ServerChannelListener listener) {
+
+    if (ServerChannelListener.Weak.class.isAssignableFrom(listener.getClass())) {
+      weakListenerList.add((ServerChannelListener.Weak)listener);
+    } else {
+      listenerList.add(listener);
+      ttl = 1;
+    }
+  }
+
+  @Override
+  public synchronized void removeListener (ServerChannelListener listener) {
+
+    if (ServerChannelListener.Weak.class.isAssignableFrom(listener.getClass())) {
+      weakListenerList.remove(listener);
+    } else if (listenerList.remove(listener)) {
+      if (listenerList.isEmpty()) {
+        checkTimeToLive();
+      }
+    }
+  }
+
+  @Override
+  // Do not call this in order to process subscriptions
   public Set<ServerSession> getSubscribers () {
 
     return new HashSet<>(subscriptionMap.values());
   }
 
   @Override
-  public boolean subscribe (ServerSession session) {
+  public synchronized boolean subscribe (ServerSession session) {
 
     subscriptionMap.put(session.getId(), session);
+    ttl = -1;
 
     return true;
   }
 
   @Override
-  public boolean unsubscribe (ServerSession session) {
+  public synchronized boolean unsubscribe (ServerSession session) {
 
     ServerSession serverSession;
 
@@ -204,7 +255,11 @@ public class OumuamuaServerChannel implements ServerChannel {
 
       return false;
     } else {
-      // TODO: if no non-weak listeners and no subscriptions and non persistent then remove channel.
+      // TODO: session listener???
+
+      if (subscriptionMap.isEmpty()) {
+        checkTimeToLive();
+      }
 
       return true;
     }
@@ -218,25 +273,6 @@ public class OumuamuaServerChannel implements ServerChannel {
   @Override
   public void publish (Session from, Object data, Promise<Boolean> promise) {
 
-  }
-
-  @Override
-  public void addListener (ServerChannelListener listener) {
-
-    listenerList.add(listener);
-  }
-
-  @Override
-  public void removeListener (ServerChannelListener listener) {
-
-    listenerList.remove(listener);
-    // TODO: if no non-weak listeners and no subscriptions and non persistent then remove channel.
-  }
-
-  @Override
-  public List<ServerChannelListener> getListeners () {
-
-    return listenerList;
   }
 
   @Override
