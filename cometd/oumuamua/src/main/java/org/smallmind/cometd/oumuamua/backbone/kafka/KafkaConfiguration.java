@@ -34,6 +34,7 @@ package org.smallmind.cometd.oumuamua.backbone.kafka;
 
 public class KafkaConfiguration {
 
+  // Should go in a config file (config map fro k8s)
   /*
   min.insync.replicas - 1/2 given 3 nodes (min.insync.replicas=2, acks=all, replication.factor=3 for n/2-1) (min.insync.replicas=1, acks=0, replication.factor=1 for fast and unreplicated)
   group.min.session.timeout.ms - min session time a consumer can ask for
