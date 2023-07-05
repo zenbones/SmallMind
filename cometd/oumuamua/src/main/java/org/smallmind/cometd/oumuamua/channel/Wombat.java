@@ -49,5 +49,11 @@ public class Wombat {
 
     System.out.println(t);
     t.walk(new RemovalOperation());
+
+    ChannelIterator i = new ChannelIterator("/a/goo/wubble*/somoosh/berry/fondle/b");
+
+    while (i.hasNext()) {
+      System.out.println(i.next());
+    }
   }
 }

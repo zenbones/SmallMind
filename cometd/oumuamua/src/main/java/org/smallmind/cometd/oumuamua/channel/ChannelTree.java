@@ -76,8 +76,7 @@ public class ChannelTree {
     return (index == (channelId.depth() - 1)) ? child : child.add(index + 1, channelId);
   }
 
-  public ChannelTree find (int index, ChannelId) {
-
+  public void publish (ChannelIterator channelIterator) {
 
   }
 
