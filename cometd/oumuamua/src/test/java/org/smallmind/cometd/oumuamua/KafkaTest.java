@@ -32,22 +32,15 @@
  */
 package org.smallmind.cometd.oumuamua;
 
-import java.time.Duration;
 import java.util.Collection;
 import java.util.Properties;
 import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.consumer.Consumer;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.producer.Producer;
-import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.Node;
 import org.smallmind.cometd.oumuamua.backbone.TransferQueueDeliveryCallback;
 import org.smallmind.cometd.oumuamua.backbone.kafka.KafkaBackbone;
-import org.smallmind.cometd.oumuamua.backbone.kafka.KafkaConnector;
 import org.smallmind.cometd.oumuamua.backbone.kafka.KafkaServer;
 
-public class Wombat {
+public class KafkaTest {
 
   /*
       image: 'bitnami/kafka:latest'
@@ -75,8 +68,8 @@ public class Wombat {
     Properties props = new Properties();
     props.put("bootstrap.servers", "127.0.0.1:9094");
     props.put("connections.max.idle.ms", 300000);
-    props.put("request.timeout.ms", 3000);
-    props.put("default.api.timeout.ms", 3000);
+    props.put("request.timeout.ms", 1500);
+    props.put("default.api.timeout.ms", 1500);
     props.put("retries", 0);
     props.put("client.id", "");
 
@@ -85,26 +78,15 @@ public class Wombat {
     Collection<Node> nodes = client.describeCluster().nodes().get();
     System.out.println(nodes != null && nodes.size() > 0);
 
-    KafkaConnector connector = new KafkaConnector(new KafkaServer("localhost", 9094));
+    KafkaBackbone kafkaBackbone = new KafkaBackbone("node", 3, "first.topic", new TransferQueueDeliveryCallback(), new KafkaServer("localhost", 9094));
 
-    Producer<Long, byte[]> producer = connector.createProducer("onenewclient");
-    Consumer<Long, byte[]> consumer = connector.createConsumer("othernewclient", "onenewgroup", "12345", "first.topic");
-
-    for (int i = 0; i < 10; i++ ) {
-      producer.send(new ProducerRecord<>("first.topic", "hello".getBytes()));
+    kafkaBackbone.startUp();
+    for (int i = 0; i < 10; i++) {
+      kafkaBackbone.publish("hello".getBytes());
     }
 
-    ConsumerRecords<Long, byte[]> records;
-
-    /*
-    if ((records = consumer.poll(Duration.ofSeconds(10))) != null) {
-      for (ConsumerRecord<Long, byte[]> record : records) {
-        System.out.println(record.offset() + ":" + new String(record.value()));
-      }
-      consumer.commitSync();
-    }
-*/
-    Thread.sleep(1000);
+    Thread.sleep(3000000);
+    kafkaBackbone.shutDown();
     System.out.println("Done...");
   }
 }

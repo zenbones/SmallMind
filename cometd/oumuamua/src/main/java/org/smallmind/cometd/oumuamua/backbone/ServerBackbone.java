@@ -41,7 +41,7 @@ public abstract class ServerBackbone {
     this.deliveryCallback = deliveryCallback;
   }
 
-  public abstract void publish (String topic, long key, byte[] value);
+  public abstract void publish (byte[] value);
 
   public DeliveryCallback getDeliveryCallback () {
 

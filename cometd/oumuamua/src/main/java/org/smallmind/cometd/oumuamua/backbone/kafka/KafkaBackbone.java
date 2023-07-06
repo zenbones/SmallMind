@@ -33,18 +33,13 @@
 package org.smallmind.cometd.oumuamua.backbone.kafka;
 
 import java.time.Duration;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
 import org.smallmind.cometd.oumuamua.backbone.DeliveryCallback;
 import org.smallmind.cometd.oumuamua.backbone.ServerBackbone;
@@ -72,9 +67,9 @@ public class KafkaBackbone extends ServerBackbone {
     this.concurrencyLimit = concurrencyLimit;
     this.topicName = topicName;
 
-    groupId = SnowflakeId.newInstance().generateCompactString();
+    groupId = SnowflakeId.newInstance().generateHexEncoding();
     connector = new KafkaConnector(servers);
-    producer = connector.createProducer(nodeName);
+    producer = connector.createProducer(nodeName + "-p");
   }
 
   public String getNodeName () {
@@ -88,7 +83,7 @@ public class KafkaBackbone extends ServerBackbone {
     if (statusRef.compareAndSet(ComponentStatus.STOPPED, ComponentStatus.STARTING)) {
       workers = new ConsumerWorker[concurrencyLimit];
       for (int index = 0; index < concurrencyLimit; index++) {
-        workers[index] = new ConsumerWorker(connector.createConsumer(nodeName, groupId, groupId + "-" + index, topicName), getDeliveryCallback());
+        // new Thread(workers[index] = new ConsumerWorker(connector.createConsumer(nodeName + "-c", groupId, String.valueOf(index), topicName), getDeliveryCallback())).start();
       }
       statusRef.set(ComponentStatus.STARTED);
     } else {
@@ -114,16 +109,30 @@ public class KafkaBackbone extends ServerBackbone {
   }
 
   @Override
-  public void publish (String topic, long key, byte[] value) {
+  public void publish (byte[] value) {
 
-    producer.send(new ProducerRecord<>(topic, value));
+    producer.send(new ProducerRecord<>(topicName, value));
+/*
+    new Thread(() -> {
+      Consumer<Long, byte[]> consumer = connector.createConsumer(nodeName + "-d", "abc", "5", topicName);
+      ConsumerRecords<Long, byte[]> records;
+
+      if ((records = consumer.poll(Duration.ofSeconds(10))) != null) {
+        for (ConsumerRecord<Long, byte[]> record : records) {
+          System.out.println(record.offset() + ":" + new String(record.value()));
+        }
+        consumer.commitSync();
+      }
+    }).start();
+
+ */
   }
 
   private static class ConsumerWorker implements Runnable {
 
     private final AtomicBoolean finished = new AtomicBoolean(false);
     private final Consumer<Long, byte[]> consumer;
-    private DeliveryCallback deliveryCallback;
+    private final DeliveryCallback deliveryCallback;
 
     public ConsumerWorker (Consumer<Long, byte[]> consumer, DeliveryCallback deliveryCallback) {
 
@@ -147,9 +156,32 @@ public class KafkaBackbone extends ServerBackbone {
 
         while (!finished.get()) {
 
+          /*
+          Consumer<Long, byte[]> consumer = connector.createConsumer(nodeName + "-d", "abc", "5", topicName);
           ConsumerRecords<Long, byte[]> records;
 
-          if ((records = consumer.poll(Duration.ofSeconds(3))) == null) {
+          if ((records = consumer.poll(Duration.ofSeconds(10))) != null) {
+            for (ConsumerRecord<Long, byte[]> record : records) {
+              System.out.println(record.offset() + ":" + new String(record.value()));
+            }
+            consumer.commitSync();
+          }
+           */
+          /*
+          ConsumerRecords<Long, byte[]> records;
+
+          if ((records = consumer.poll(Duration.ofSeconds(10))) != null) {
+            for (ConsumerRecord<Long, byte[]> record : records) {
+              System.out.println(record.offset() + ":" + new String(record.value()));
+            }
+            consumer.commitSync();
+          }
+          */
+
+          /*
+          ConsumerRecords<Long, byte[]> records;
+
+          if (((records = consumer.poll(Duration.ofSeconds(3))) == null) || records.isEmpty()) {
             backoffMilliseconds = 0;
           } else {
 
@@ -164,6 +196,7 @@ public class KafkaBackbone extends ServerBackbone {
                 try {
                   if (!deliveryCallback.deliver(record.value(), 3, TimeUnit.MILLISECONDS)) {
                     trafficJam = true;
+                    System.out.println("Traffic Jam!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
                   }
                 } catch (InterruptedException interruptedException) {
                   LoggerManager.getLogger(KafkaBackbone.class).error(interruptedException);
@@ -189,6 +222,7 @@ public class KafkaBackbone extends ServerBackbone {
               backoffMilliseconds = 0;
             }
           }
+          */
         }
       } catch (WakeupException wakeupException) {
         if (!finished.get()) {
