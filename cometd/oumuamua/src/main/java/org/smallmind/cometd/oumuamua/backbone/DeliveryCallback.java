@@ -1,7 +1,7 @@
 package org.smallmind.cometd.oumuamua.backbone;
 
 @FunctionalInterface
-public interface DeliveryTruck {
+public interface DeliveryCallback {
 
   void deliver (byte[] data);
 }
