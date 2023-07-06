@@ -35,6 +35,7 @@ package org.smallmind.cometd.oumuamua.backbone.kafka;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import org.apache.kafka.clients.consumer.Consumer;
@@ -141,24 +142,51 @@ public class KafkaBackbone extends ServerBackbone {
     public void run () {
 
       try {
+
+        long backoffMilliseconds = 0;
+
         while (!finished.get()) {
 
           ConsumerRecords<Long, byte[]> records;
 
-          if ((records = consumer.poll(Duration.ofSeconds(3))) != null) {
+          if ((records = consumer.poll(Duration.ofSeconds(3))) == null) {
+            backoffMilliseconds = 0;
+          } else {
+
+            boolean trafficJam = false;
+
             for (TopicPartition partition : records.partitions()) {
 
               List<ConsumerRecord<Long, byte[]>> recordList;
               long lastOffset = 0;
 
               for (ConsumerRecord<Long, byte[]> record : recordList = records.records(partition)) {
-                deliveryCallback.deliver(record.value());
+                try {
+                  if (!deliveryCallback.deliver(record.value(), 3, TimeUnit.MILLISECONDS)) {
+                    trafficJam = true;
+                  }
+                } catch (InterruptedException interruptedException) {
+                  LoggerManager.getLogger(KafkaBackbone.class).error(interruptedException);
+                }
+
                 lastOffset = record.offset();
               }
 
               if (!recordList.isEmpty()) {
                 consumer.commitSync(Collections.singletonMap(partition, new OffsetAndMetadata(lastOffset + 1)));
               }
+            }
+
+            if (trafficJam) {
+              backoffMilliseconds += 10;
+
+              try {
+                Thread.sleep(backoffMilliseconds);
+              } catch (InterruptedException interruptedException) {
+                LoggerManager.getLogger(KafkaBackbone.class).error(interruptedException);
+              }
+            } else {
+              backoffMilliseconds = 0;
             }
           }
         }

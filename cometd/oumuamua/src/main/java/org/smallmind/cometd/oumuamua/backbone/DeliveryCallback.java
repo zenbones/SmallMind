@@ -1,7 +1,10 @@
 package org.smallmind.cometd.oumuamua.backbone;
 
+import java.util.concurrent.TimeUnit;
+
 @FunctionalInterface
 public interface DeliveryCallback {
 
-  void deliver (byte[] data);
+  boolean deliver (byte[] data, long timeout, TimeUnit unit)
+    throws InterruptedException;
 }
