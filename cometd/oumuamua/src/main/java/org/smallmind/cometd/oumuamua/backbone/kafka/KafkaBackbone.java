@@ -33,41 +33,80 @@
 package org.smallmind.cometd.oumuamua.backbone.kafka;
 
 import java.time.Duration;
-import java.util.LinkedList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.errors.WakeupException;
 import org.smallmind.cometd.oumuamua.backbone.ServerBackbone;
+import org.smallmind.nutsnbolts.util.ComponentStatus;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
+import org.smallmind.scribe.pen.LoggerManager;
 
 public class KafkaBackbone implements ServerBackbone {
 
+  private final AtomicReference<ComponentStatus> statusRef = new AtomicReference<>(ComponentStatus.STOPPED);
+  private final KafkaConnector connector;
   private final Producer<Long, byte[]> producer;
-  private final LinkedList<Consumer<Long, byte[]>> consumerList = new LinkedList<>();
   private final String nodeName;
+  private final String topicName;
+  private final String groupId;
+  private final int concurrencyLimit;
+  private ConsumerWorker[] workers;
 
   // port 9094 is standard
   public KafkaBackbone (String nodeName, int concurrencyLimit, String topicName, KafkaServer... servers) {
 
-    KafkaConnector connector;
-    String groupId;
-
     this.nodeName = nodeName;
+    this.concurrencyLimit = concurrencyLimit;
+    this.topicName = topicName;
 
     groupId = SnowflakeId.newInstance().generateCompactString();
     connector = new KafkaConnector(servers);
     producer = connector.createProducer(nodeName);
-
-    for (int index = 0; index < concurrencyLimit; index++) {
-      consumerList.add(connector.createConsumer(nodeName, groupId, groupId + "-" + index, topicName));
-    }
   }
 
   public String getNodeName () {
 
     return nodeName;
+  }
+
+  public void startUp ()
+    throws InterruptedException {
+
+    if (statusRef.compareAndSet(ComponentStatus.STOPPED, ComponentStatus.STARTING)) {
+      workers = new ConsumerWorker[concurrencyLimit];
+      for (int index = 0; index < concurrencyLimit; index++) {
+        workers[index] = new ConsumerWorker(connector.createConsumer(nodeName, groupId, groupId + "-" + index, topicName));
+      }
+      statusRef.set(ComponentStatus.STARTED);
+    } else {
+      while (ComponentStatus.STARTING.equals(statusRef.get())) {
+        Thread.sleep(100);
+      }
+    }
+  }
+
+  public void shutDown ()
+    throws InterruptedException {
+
+    if (statusRef.compareAndSet(ComponentStatus.STARTED, ComponentStatus.STOPPING)) {
+      for (ConsumerWorker worker : workers) {
+        worker.stop();
+      }
+      statusRef.set(ComponentStatus.STOPPED);
+    } else {
+      while (ComponentStatus.STOPPING.equals(statusRef.get())) {
+        Thread.sleep(100);
+      }
+    }
   }
 
   @Override
@@ -76,25 +115,55 @@ public class KafkaBackbone implements ServerBackbone {
     producer.send(new ProducerRecord<>(topic, value));
   }
 
-  private class ConsumerWorker implements Runnable {
+  private static class ConsumerWorker implements Runnable {
 
-    private Consumer<Long, byte[]> consumer;
+    private final AtomicBoolean finished = new AtomicBoolean(false);
+    private final Consumer<Long, byte[]> consumer;
 
     public ConsumerWorker (Consumer<Long, byte[]> consumer) {
 
       this.consumer = consumer;
     }
 
+    private void stop () {
+
+      if (finished.compareAndSet(false, true)) {
+        consumer.wakeup();
+      }
+    }
+
     @Override
     public void run () {
 
-      ConsumerRecords<Long, byte[]> records;
+      try {
+        while (!finished.get()) {
 
-      if ((records = consumer.poll(Duration.ofSeconds(3))) != null) {
-        for (ConsumerRecord<Long, byte[]> record : records) {
-          System.out.println(record.offset() + ":" + new String(record.value()));
+          ConsumerRecords<Long, byte[]> records;
+
+          if ((records = consumer.poll(Duration.ofSeconds(3))) != null) {
+            for (TopicPartition partition : records.partitions()) {
+
+              List<ConsumerRecord<Long, byte[]>> recordList;
+              long lastOffset = 0;
+
+              for (ConsumerRecord<Long, byte[]> record : recordList = records.records(partition)) {
+                // deliver value
+                System.out.println(record.offset() + ": " + record.value());
+                lastOffset = record.offset();
+              }
+
+              if (!recordList.isEmpty()) {
+                consumer.commitSync(Collections.singletonMap(partition, new OffsetAndMetadata(lastOffset + 1)));
+              }
+            }
+          }
         }
-        consumer.commitSync();
+      } catch (WakeupException wakeupException) {
+        if (!finished.get()) {
+          LoggerManager.getLogger(KafkaBackbone.class).error(wakeupException);
+        }
+      } finally {
+        consumer.close();
       }
     }
   }
