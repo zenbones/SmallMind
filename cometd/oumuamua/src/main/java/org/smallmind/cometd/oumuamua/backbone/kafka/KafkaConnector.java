@@ -82,6 +82,7 @@ public class KafkaConnector {
     props.put(ProducerConfig.RETRIES_CONFIG, 0);
     // props.put(ProducerConfig.RETRIES_CONFIG, Integer.MAX_VALUE);
     props.put(ProducerConfig.RETRY_BACKOFF_MS_CONFIG, 100);
+    // Must be less than or equal to  max.in.flight.requests.per.connection
     props.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 5);
     props.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, 500);  // > REQUEST_TIMEOUT_MS_CONFIG + LINGER_MS_CONFIG
     props.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, 500); // > replica.lag.time.max.ms

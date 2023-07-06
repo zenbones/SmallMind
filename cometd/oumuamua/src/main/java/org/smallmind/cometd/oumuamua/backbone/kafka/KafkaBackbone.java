@@ -32,18 +32,70 @@
  */
 package org.smallmind.cometd.oumuamua.backbone.kafka;
 
+import java.time.Duration;
+import java.util.LinkedList;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.smallmind.cometd.oumuamua.backbone.ServerBackbone;
+import org.smallmind.nutsnbolts.util.SnowflakeId;
 
 public class KafkaBackbone implements ServerBackbone {
 
-  private final KafkaConnector connector = new KafkaConnector(new KafkaServer("localhost", 9094));
-  private final Producer<Long, byte[]> producer = connector.createProducer("");
+  private final Producer<Long, byte[]> producer;
+  private final LinkedList<Consumer<Long, byte[]>> consumerList = new LinkedList<>();
+  private final String nodeName;
+
+  // port 9094 is standard
+  public KafkaBackbone (String nodeName, int concurrencyLimit, String topicName, KafkaServer... servers) {
+
+    KafkaConnector connector;
+    String groupId;
+
+    this.nodeName = nodeName;
+
+    groupId = SnowflakeId.newInstance().generateCompactString();
+    connector = new KafkaConnector(servers);
+    producer = connector.createProducer(nodeName);
+
+    for (int index = 0; index < concurrencyLimit; index++) {
+      consumerList.add(connector.createConsumer(nodeName, groupId, groupId + "-" + index, topicName));
+    }
+  }
+
+  public String getNodeName () {
+
+    return nodeName;
+  }
 
   @Override
   public void publish (String topic, long key, byte[] value) {
 
     producer.send(new ProducerRecord<>(topic, value));
+  }
+
+  private class ConsumerWorker implements Runnable {
+
+    private Consumer<Long, byte[]> consumer;
+
+    public ConsumerWorker (Consumer<Long, byte[]> consumer) {
+
+      this.consumer = consumer;
+    }
+
+    @Override
+    public void run () {
+
+      ConsumerRecords<Long, byte[]> records;
+
+      if ((records = consumer.poll(Duration.ofSeconds(3))) != null) {
+        for (ConsumerRecord<Long, byte[]> record : records) {
+          System.out.println(record.offset() + ":" + new String(record.value()));
+        }
+        consumer.commitSync();
+      }
+    }
   }
 }

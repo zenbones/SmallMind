@@ -42,8 +42,21 @@ public class KafkaConfiguration {
   compression.type - none, gzip, lz4, snappy, and zstd (prefer lz4 as fastest if not smallest)
   rack.id - must be set to the data centre ID (ex: AZ ID in AWS)
   replica.selector.class - must be set to org.apache.kafka.common.replica.RackAwareReplicaSelector
-  log.retention.ms - ttl for messages, should be set in minutes really, there's a hard drive underneath all this
-  log.retention.check.interval.ms - should be lower than log.retention.ms, but again not too low
+  default.replication.factor - 1
   num.partitions - default number of partitions (defaults to 1, which may be fine given that each reader will be its own group, but might also be number of nodes)
+  log.retention.ms - ttl for messages, should be set in minutes really, there's a hard drive underneath all this
+  log.retention.check.interval.ms - should be lower than log.retention.ms, but again not too low (300000?)
+  log.cleaner.backoff.ms - 15000
+  log.cleaner.delete.retention.ms - 900000
+  log.segment.delete.delay.ms - 60000
+  log.cleaner.enable - true
+  log.cleanup.policy - compact,delete (maybe just delete)
+  num.network.threads - 3
+  num.io.threads - 8
+  num.recovery.threads.per.data.dir - 1
+  queued.max.requests - limit the number of requests allowed in the request queue before the network thread is blocked.
+  group.initial.rebalance.delay.ms - 0
+  auto.create.topics.enable - true
+  delete.topic.enable - true
   */
 }
