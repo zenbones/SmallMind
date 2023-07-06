@@ -32,7 +32,19 @@
  */
 package org.smallmind.cometd.oumuamua.backbone;
 
-public interface ServerBackbone {
+public abstract class ServerBackbone {
 
-  void publish (String topic, long key, byte[] value);
+  private final DeliveryCallback deliveryCallback;
+
+  public ServerBackbone (DeliveryCallback deliveryCallback) {
+
+    this.deliveryCallback = deliveryCallback;
+  }
+
+  public abstract void publish (String topic, long key, byte[] value);
+
+  public DeliveryCallback getDeliveryCallback () {
+
+    return deliveryCallback;
+  }
 }

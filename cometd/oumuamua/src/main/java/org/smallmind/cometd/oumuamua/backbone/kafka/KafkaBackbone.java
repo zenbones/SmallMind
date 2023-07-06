@@ -45,12 +45,13 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
+import org.smallmind.cometd.oumuamua.backbone.DeliveryCallback;
 import org.smallmind.cometd.oumuamua.backbone.ServerBackbone;
 import org.smallmind.nutsnbolts.util.ComponentStatus;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.scribe.pen.LoggerManager;
 
-public class KafkaBackbone implements ServerBackbone {
+public class KafkaBackbone extends ServerBackbone {
 
   private final AtomicReference<ComponentStatus> statusRef = new AtomicReference<>(ComponentStatus.STOPPED);
   private final KafkaConnector connector;
@@ -62,7 +63,9 @@ public class KafkaBackbone implements ServerBackbone {
   private ConsumerWorker[] workers;
 
   // port 9094 is standard
-  public KafkaBackbone (String nodeName, int concurrencyLimit, String topicName, KafkaServer... servers) {
+  public KafkaBackbone (String nodeName, int concurrencyLimit, String topicName, DeliveryCallback deliveryCallback, KafkaServer... servers) {
+
+    super(deliveryCallback);
 
     this.nodeName = nodeName;
     this.concurrencyLimit = concurrencyLimit;
@@ -84,7 +87,7 @@ public class KafkaBackbone implements ServerBackbone {
     if (statusRef.compareAndSet(ComponentStatus.STOPPED, ComponentStatus.STARTING)) {
       workers = new ConsumerWorker[concurrencyLimit];
       for (int index = 0; index < concurrencyLimit; index++) {
-        workers[index] = new ConsumerWorker(connector.createConsumer(nodeName, groupId, groupId + "-" + index, topicName));
+        workers[index] = new ConsumerWorker(connector.createConsumer(nodeName, groupId, groupId + "-" + index, topicName), getDeliveryCallback());
       }
       statusRef.set(ComponentStatus.STARTED);
     } else {
@@ -119,10 +122,12 @@ public class KafkaBackbone implements ServerBackbone {
 
     private final AtomicBoolean finished = new AtomicBoolean(false);
     private final Consumer<Long, byte[]> consumer;
+    private DeliveryCallback deliveryCallback;
 
-    public ConsumerWorker (Consumer<Long, byte[]> consumer) {
+    public ConsumerWorker (Consumer<Long, byte[]> consumer, DeliveryCallback deliveryCallback) {
 
       this.consumer = consumer;
+      this.deliveryCallback = deliveryCallback;
     }
 
     private void stop () {
@@ -147,8 +152,7 @@ public class KafkaBackbone implements ServerBackbone {
               long lastOffset = 0;
 
               for (ConsumerRecord<Long, byte[]> record : recordList = records.records(partition)) {
-                // deliver value
-                System.out.println(record.offset() + ": " + record.value());
+                deliveryCallback.deliver(record.value());
                 lastOffset = record.offset();
               }
 
