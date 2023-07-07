@@ -96,7 +96,7 @@ public class KafkaConnector {
     return new KafkaProducer<>(props);
   }
 
-  public Consumer<Long, byte[]> createConsumer (String clientId, String groupId, String instanceId, String... topics) {
+  public Consumer<Long, byte[]> createConsumer (String clientId, String groupId, String... topics) {
 
     Properties props = new Properties();
 

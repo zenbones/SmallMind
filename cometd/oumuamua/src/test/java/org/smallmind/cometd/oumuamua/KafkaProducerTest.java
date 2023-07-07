@@ -35,12 +35,13 @@ package org.smallmind.cometd.oumuamua;
 import java.util.Collection;
 import java.util.Properties;
 import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.Node;
-import org.smallmind.cometd.oumuamua.backbone.TransferQueueDeliveryCallback;
-import org.smallmind.cometd.oumuamua.backbone.kafka.KafkaBackbone;
+import org.smallmind.cometd.oumuamua.backbone.kafka.KafkaConnector;
 import org.smallmind.cometd.oumuamua.backbone.kafka.KafkaServer;
 
-public class KafkaTest {
+public class KafkaProducerTest {
 
   /*
       image: 'bitnami/kafka:latest'
@@ -78,15 +79,15 @@ public class KafkaTest {
     Collection<Node> nodes = client.describeCluster().nodes().get();
     System.out.println(nodes != null && nodes.size() > 0);
 
-    KafkaBackbone kafkaBackbone = new KafkaBackbone("node", 3, "first.topic", new TransferQueueDeliveryCallback(), new KafkaServer("localhost", 9094));
+    KafkaConnector connector = new KafkaConnector(new KafkaServer("localhost", 9094));
+    Producer<Long, byte[]> producer = connector.createProducer("node-p2");
 
-    kafkaBackbone.startUp();
     for (int i = 0; i < 10; i++) {
-      kafkaBackbone.publish("hello".getBytes());
+      producer.send(new ProducerRecord<>("push", "one..two,,three".getBytes()));
     }
 
-    Thread.sleep(3000000);
-    kafkaBackbone.shutDown();
+    Thread.sleep(3000);
+
     System.out.println("Done...");
   }
 }
