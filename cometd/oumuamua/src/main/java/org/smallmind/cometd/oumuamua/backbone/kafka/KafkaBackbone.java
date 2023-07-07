@@ -83,7 +83,7 @@ public class KafkaBackbone extends ServerBackbone {
     if (statusRef.compareAndSet(ComponentStatus.STOPPED, ComponentStatus.STARTING)) {
       workers = new ConsumerWorker[concurrencyLimit];
       for (int index = 0; index < concurrencyLimit; index++) {
-        // new Thread(workers[index] = new ConsumerWorker(connector.createConsumer(nodeName + "-c", groupId, String.valueOf(index), topicName), getDeliveryCallback())).start();
+        new Thread(workers[index] = new ConsumerWorker(connector.createConsumer(nodeName + "-c", groupId, String.valueOf(index), topicName), getDeliveryCallback())).start();
       }
       statusRef.set(ComponentStatus.STARTED);
     } else {
@@ -112,23 +112,9 @@ public class KafkaBackbone extends ServerBackbone {
   public void publish (byte[] value) {
 
     producer.send(new ProducerRecord<>(topicName, value));
-/*
-    new Thread(() -> {
-      Consumer<Long, byte[]> consumer = connector.createConsumer(nodeName + "-d", "abc", "5", topicName);
-      ConsumerRecords<Long, byte[]> records;
-
-      if ((records = consumer.poll(Duration.ofSeconds(10))) != null) {
-        for (ConsumerRecord<Long, byte[]> record : records) {
-          System.out.println(record.offset() + ":" + new String(record.value()));
-        }
-        consumer.commitSync();
-      }
-    }).start();
-
- */
   }
 
-  private static class ConsumerWorker implements Runnable {
+  private class ConsumerWorker implements Runnable {
 
     private final AtomicBoolean finished = new AtomicBoolean(false);
     private final Consumer<Long, byte[]> consumer;
@@ -138,6 +124,12 @@ public class KafkaBackbone extends ServerBackbone {
 
       this.consumer = consumer;
       this.deliveryCallback = deliveryCallback;
+
+      try {
+        Thread.sleep(3000);
+      } catch (InterruptedException i) {
+        i.printStackTrace();
+      }
     }
 
     private void stop () {
@@ -156,31 +148,16 @@ public class KafkaBackbone extends ServerBackbone {
 
         while (!finished.get()) {
 
-          /*
-          Consumer<Long, byte[]> consumer = connector.createConsumer(nodeName + "-d", "abc", "5", topicName);
           ConsumerRecords<Long, byte[]> records;
 
-          if ((records = consumer.poll(Duration.ofSeconds(10))) != null) {
+          if ((records = consumer.poll(Duration.ofSeconds(1))) != null) {
             for (ConsumerRecord<Long, byte[]> record : records) {
-              System.out.println(record.offset() + ":" + new String(record.value()));
+              System.out.println(record.offset() + "#:" + new String(record.value()));
             }
             consumer.commitSync();
           }
-           */
-          /*
-          ConsumerRecords<Long, byte[]> records;
-
-          if ((records = consumer.poll(Duration.ofSeconds(10))) != null) {
-            for (ConsumerRecord<Long, byte[]> record : records) {
-              System.out.println(record.offset() + ":" + new String(record.value()));
-            }
-            consumer.commitSync();
-          }
-          */
 
           /*
-          ConsumerRecords<Long, byte[]> records;
-
           if (((records = consumer.poll(Duration.ofSeconds(3))) == null) || records.isEmpty()) {
             backoffMilliseconds = 0;
           } else {
