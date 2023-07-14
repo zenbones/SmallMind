@@ -30,20 +30,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.cometd.oumuamua.channel;
+package org.smallmind.cometd.oumuamua.message;
 
-public class UnsubscribeOperation implements ChannelOperation {
+import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
-  @Override
-  public void operate (ChannelTree channelTree) {
+public class MessageProcessingException extends FormattedRuntimeException {
 
-    System.out.println(channelTree.getServerChannel().getId());
-    /*
-    channel listener
-    remove all subscriptions
-    subscription listener
+  public MessageProcessingException (Throwable throwable) {
 
-    remove from map
-     */
+    super(throwable);
   }
 }

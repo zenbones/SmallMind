@@ -38,7 +38,6 @@ import java.io.OutputStream;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.json.JsonReadFeature;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MapperFeature;
@@ -59,7 +58,7 @@ public class JsonCodec {
   }
 
   public static JsonNode readAsJsonNode (String aString)
-    throws IOException {
+    throws JsonProcessingException {
 
     return OBJECT_MAPPER.readTree(aString);
   }
@@ -83,7 +82,7 @@ public class JsonCodec {
   }
 
   public static <T> T read (String aString, Class<T> clazz)
-    throws IOException {
+    throws JsonProcessingException {
 
     return OBJECT_MAPPER.readValue(aString, clazz);
   }
@@ -98,6 +97,12 @@ public class JsonCodec {
     throws IOException {
 
     return OBJECT_MAPPER.readValue(parser, clazz);
+  }
+
+  public static <T> T read (JsonNode node, Class<T> clazz)
+    throws JsonProcessingException {
+
+    return OBJECT_MAPPER.treeToValue(node, clazz);
   }
 
   public static JsonNode writeAsJsonNode (Object obj) {

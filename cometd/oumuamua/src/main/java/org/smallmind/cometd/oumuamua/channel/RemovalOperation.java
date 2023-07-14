@@ -37,7 +37,7 @@ public class RemovalOperation implements ChannelOperation {
   @Override
   public void operate (ChannelTree channelTree) {
 
-    System.out.println(channelTree.getChannelId());
+    System.out.println(channelTree.getServerChannel().getId());
     /*
     channel listener
     remove all subscriptions

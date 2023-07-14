@@ -30,40 +30,26 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.cometd.oumuamua.message;
+package org.smallmind.web.json.doppelganger;
 
-import org.smallmind.web.json.doppelganger.Doppelganger;
-import org.smallmind.web.json.doppelganger.Idiom;
-import org.smallmind.web.json.doppelganger.View;
+import java.util.List;
+import javax.annotation.processing.ProcessingEnvironment;
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.TypeMirror;
+import org.smallmind.nutsnbolts.apt.AptUtility;
 
-import static org.smallmind.web.json.doppelganger.Visibility.IN;
-import static org.smallmind.web.json.doppelganger.Visibility.OUT;
+public class HierarchyInformation {
 
-@Doppelganger
-public class ConnectMessage extends AdvisedMetaMessage {
+  private final List<TypeElement> subClassList;
 
-  @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
-  private String clientId;
-  @View(idioms = @Idiom(purposes = "request", visibility = IN))
-  private String connectionType;
+  public HierarchyInformation (ProcessingEnvironment processingEnvironment, AnnotationMirror hierarchyAnnotationMirror) {
 
-  public String getClientId () {
-
-    return clientId;
+    subClassList = AptUtility.toConcreteList(processingEnvironment, AptUtility.extractAnnotationValueAsList(hierarchyAnnotationMirror, "subClasses", TypeMirror.class));
   }
 
-  public void setClientId (String clientId) {
+  public List<TypeElement> getSubClassList () {
 
-    this.clientId = clientId;
-  }
-
-  public String getConnectionType () {
-
-    return connectionType;
-  }
-
-  public void setConnectionType (String connectionType) {
-
-    this.connectionType = connectionType;
+    return subClassList;
   }
 }

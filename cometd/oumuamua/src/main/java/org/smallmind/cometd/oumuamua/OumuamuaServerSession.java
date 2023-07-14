@@ -32,8 +32,10 @@
  */
 package org.smallmind.cometd.oumuamua;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import org.cometd.bayeux.Promise;
 import org.cometd.bayeux.Session;
 import org.cometd.bayeux.server.LocalSession;
@@ -41,28 +43,34 @@ import org.cometd.bayeux.server.ServerChannel;
 import org.cometd.bayeux.server.ServerMessage;
 import org.cometd.bayeux.server.ServerSession;
 import org.cometd.bayeux.server.ServerTransport;
+import org.smallmind.cometd.oumuamua.transport.OumuamuaCarrier;
+import org.smallmind.cometd.oumuamua.transport.OumuamuaTransport;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
+import org.smallmind.scribe.pen.LoggerManager;
 
 public class OumuamuaServerSession implements ServerSession {
 
+  private final HashMap<String, Object> attributeMap = new HashMap<>();
+  private final ConcurrentLinkedQueue<String> messageQueue = new ConcurrentLinkedQueue<>();
+  private final OumuamuaTransport serverTransport;
+  private final OumuamuaCarrier carrier;
+  private final LocalSession localSession;
   private final String id;
-  private final String userAgent;
+  private Boolean metaConnectDeliveryOnly;
   private boolean handshook;
   private boolean connected;
+  private boolean broadcastToPublisher;
   private long interval = -1;
   private long timeout = -1;
   private long maxInterval = -1;
 
-  public OumuamuaServerSession () {
+  public OumuamuaServerSession (OumuamuaTransport serverTransport, OumuamuaCarrier carrier) {
 
-    this(null);
-  }
-
-  public OumuamuaServerSession (String userAgent) {
-
-    this.userAgent = userAgent;
+    this.serverTransport = serverTransport;
+    this.carrier = carrier;
 
     id = SnowflakeId.newInstance().generateHexEncoding();
+    localSession = null;
   }
 
   @Override
@@ -72,21 +80,31 @@ public class OumuamuaServerSession implements ServerSession {
   }
 
   @Override
-  public boolean isConnected () {
-
-    return connected;
-  }
-
-  @Override
   public boolean isHandshook () {
 
     return handshook;
   }
 
+  public void setHandshook (boolean handshook) {
+
+    this.handshook = handshook;
+  }
+
+  @Override
+  public boolean isConnected () {
+
+    return connected;
+  }
+
+  public void setConnected (boolean connected) {
+
+    this.connected = connected;
+  }
+
   @Override
   public String getUserAgent () {
 
-    return userAgent;
+    return carrier.getUserAgent();
   }
 
   @Override
@@ -126,72 +144,69 @@ public class OumuamuaServerSession implements ServerSession {
   }
 
   @Override
-  public Set<ServerChannel> getSubscriptions () {
-
-    return null;
-  }
-
-  @Override
-  public ServerTransport getServerTransport () {
-
-    return null;
-  }
-
-  @Override
-  public boolean isLocalSession () {
-
-    return false;
-  }
-
-  @Override
-  public LocalSession getLocalSession () {
-
-    return null;
-  }
-
-  @Override
   public boolean isMetaConnectDeliveryOnly () {
 
-    return false;
+    return metaConnectDeliveryOnly;
   }
 
   @Override
-  public void setMetaConnectDeliveryOnly (boolean b) {
+  public void setMetaConnectDeliveryOnly (boolean metaConnectDeliveryOnly) {
 
+    this.metaConnectDeliveryOnly = metaConnectDeliveryOnly;
   }
 
   @Override
   public boolean isBroadcastToPublisher () {
 
-    return false;
+    return broadcastToPublisher;
   }
 
   @Override
-  public void setBroadcastToPublisher (boolean b) {
+  public void setBroadcastToPublisher (boolean broadcastToPublisher) {
 
+    this.broadcastToPublisher = broadcastToPublisher;
+  }
+
+  @Override
+  public ServerTransport getServerTransport () {
+
+    return serverTransport;
+  }
+
+  @Override
+  public boolean isLocalSession () {
+
+    return localSession != null;
+  }
+
+  @Override
+  public LocalSession getLocalSession () {
+
+    return localSession;
   }
 
   @Override
   public void setAttribute (String name, Object value) {
 
+    attributeMap.put(name, value);
   }
 
   @Override
   public Object getAttribute (String name) {
 
-    return null;
+    return attributeMap.get(name);
   }
 
   @Override
   public Set<String> getAttributeNames () {
 
-    return null;
+    return attributeMap.keySet();
   }
 
   @Override
   public Object removeAttribute (String name) {
 
-    return null;
+    return attributeMap.remove(name);
   }
 
   @Override
@@ -221,6 +236,12 @@ public class OumuamuaServerSession implements ServerSession {
   }
 
   @Override
+  public Set<ServerChannel> getSubscriptions () {
+
+    return null;
+  }
+
+  @Override
   public void deliver (Session session, ServerMessage.Mutable mutable, Promise<Boolean> promise) {
 
   }
@@ -228,6 +249,24 @@ public class OumuamuaServerSession implements ServerSession {
   @Override
   public void deliver (Session session, String s, Object o, Promise<Boolean> promise) {
 
+  }
+
+  public String poll () {
+
+    return messageQueue.poll();
+  }
+
+  public void send (String text) {
+
+    if ((metaConnectDeliveryOnly == null) ? serverTransport.isMetaConnectDeliveryOnly() : metaConnectDeliveryOnly) {
+      messageQueue.add(text);
+    } else {
+      try {
+        carrier.send("[" + text + "]");
+      } catch (Exception exception) {
+        LoggerManager.getLogger(OumuamuaServerSession.class).error(exception);
+      }
+    }
   }
 
   @Override

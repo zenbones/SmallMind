@@ -30,40 +30,40 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.cometd.oumuamua.message;
+package org.smallmind.cometd.oumuamua.meta;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.smallmind.web.json.doppelganger.Doppelganger;
 import org.smallmind.web.json.doppelganger.Idiom;
 import org.smallmind.web.json.doppelganger.View;
 
-import static org.smallmind.web.json.doppelganger.Visibility.IN;
 import static org.smallmind.web.json.doppelganger.Visibility.OUT;
 
 @Doppelganger
-public class SubscribeMessage extends AdvisedMetaMessage {
+public class DeliveryMessage extends MetaMessage {
 
-  @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
-  private String clientId;
-  @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
-  private String subscription;
+  @View(idioms = @Idiom(purposes = "success", visibility = OUT))
+  private JsonNode data;
+  @View(idioms = @Idiom(purposes = "success", visibility = OUT))
+  private JsonNode advice;
 
-  public String getClientId () {
+  public JsonNode getData () {
 
-    return clientId;
+    return data;
   }
 
-  public void setClientId (String clientId) {
+  public void setData (JsonNode data) {
 
-    this.clientId = clientId;
+    this.data = data;
   }
 
-  public String getSubscription () {
+  public JsonNode getAdvice () {
 
-    return subscription;
+    return advice;
   }
 
-  public void setSubscription (String subscription) {
+  public void setAdvice (JsonNode advice) {
 
-    this.subscription = subscription;
+    this.advice = advice;
   }
 }

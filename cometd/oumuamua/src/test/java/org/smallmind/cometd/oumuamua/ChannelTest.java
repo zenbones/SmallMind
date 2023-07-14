@@ -30,30 +30,31 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.cometd.oumuamua.message;
+package org.smallmind.cometd.oumuamua;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import org.smallmind.web.json.doppelganger.Doppelganger;
-import org.smallmind.web.json.doppelganger.Idiom;
-import org.smallmind.web.json.doppelganger.Pledge;
-import org.smallmind.web.json.doppelganger.View;
+import org.cometd.bayeux.ChannelId;
+import org.smallmind.cometd.oumuamua.channel.ChannelIterator;
+import org.smallmind.cometd.oumuamua.channel.ChannelTree;
+import org.smallmind.cometd.oumuamua.channel.RemovalOperation;
 
-import static org.smallmind.web.json.doppelganger.Visibility.IN;
-import static org.smallmind.web.json.doppelganger.Visibility.OUT;
+public class ChannelTest {
 
-@Doppelganger(pledges = @Pledge(purposes = "request", visibility = IN))
-public class AdvisedMetaMessage extends MetaMessage {
+  public static void main (String... args) {
 
-  @View(idioms = @Idiom(purposes = {"success", "error"}, visibility = OUT))
-  private JsonNode advice;
+    ChannelTree t = new ChannelTree();
 
-  public JsonNode getAdvice () {
+    t.add(null, 0, new ChannelId("/a"));
+    t.add(null, 0, new ChannelId("/a/**"));
+    t.add(null, 0, new ChannelId("/a/b"));
+    t.add(null, 0, new ChannelId("/a/b/*"));
+    t.add(null, 0, new ChannelId("/a/b/**"));
+    t.add(null, 0, new ChannelId("/a/b/c"));
 
-    return advice;
-  }
+    System.out.println(t);
+    t.walk(new RemovalOperation());
 
-  public void setAdvice (JsonNode advice) {
+    ChannelIterator i = new ChannelIterator("/a/b/c");
 
-    this.advice = advice;
+    t.publish(i, "foobar");
   }
 }

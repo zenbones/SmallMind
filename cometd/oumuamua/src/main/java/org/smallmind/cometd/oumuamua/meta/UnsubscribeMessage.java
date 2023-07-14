@@ -30,11 +30,18 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.cometd.oumuamua.message;
+package org.smallmind.cometd.oumuamua.meta;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.cometd.bayeux.server.ServerChannel;
+import org.smallmind.cometd.oumuamua.OumuamuaServer;
+import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
 import org.smallmind.web.json.doppelganger.Doppelganger;
 import org.smallmind.web.json.doppelganger.Idiom;
 import org.smallmind.web.json.doppelganger.View;
+import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 import static org.smallmind.web.json.doppelganger.Visibility.IN;
 import static org.smallmind.web.json.doppelganger.Visibility.OUT;
@@ -46,6 +53,38 @@ public class UnsubscribeMessage extends AdvisedMetaMessage {
   private String clientId;
   @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
   private String subscription;
+
+  public String process (OumuamuaServer oumuamuaServer, OumuamuaServerSession serverSession)
+    throws JsonProcessingException {
+
+    ObjectNode adviceNode = JsonNodeFactory.instance.objectNode();
+
+    if ((serverSession == null) || (!serverSession.getId().equals(getClientId()))) {
+      adviceNode.put("reconnect", "handshake");
+
+      return JsonCodec.writeAsString(new UnsubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel("/meta/unsubscribe").setId(getId()).setError("Handshake required").setSubscription(getSubscription()).setAdvice(adviceNode));
+    } else if (!serverSession.isHandshook()) {
+
+      adviceNode.put("reconnect", "handshake");
+
+      return JsonCodec.writeAsString(new UnsubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel("/meta/unsubscribe").setClientId(serverSession.getId()).setId(getId()).setError("Handshake required").setSubscription(getSubscription()).setAdvice(adviceNode));
+    } else if (!serverSession.isConnected()) {
+
+      adviceNode.put("reconnect", "retry");
+      adviceNode.put("interval", 0);
+
+      return JsonCodec.writeAsString(new UnsubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel("/meta/unsubscribe").setClientId(serverSession.getId()).setId(getId()).setError("Connection required").setSubscription(getSubscription()).setAdvice(adviceNode));
+    } else {
+
+      ServerChannel serverChannel;
+
+      if ((serverChannel = oumuamuaServer.findChannel(getChannel())) != null) {
+        serverChannel.unsubscribe(serverSession);
+      }
+
+      return JsonCodec.writeAsString(new UnsubscribeMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel("/meta/unsubscribe").setClientId(serverSession.getId()).setId(getId()).setSubscription(getSubscription()).setAdvice(adviceNode));
+    }
+  }
 
   public String getClientId () {
 

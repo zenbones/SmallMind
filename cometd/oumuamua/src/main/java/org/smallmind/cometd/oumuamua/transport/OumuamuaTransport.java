@@ -30,28 +30,25 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.cometd.oumuamua.channel;
+package org.smallmind.cometd.oumuamua.transport;
 
-import org.cometd.bayeux.ChannelId;
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
+import org.cometd.bayeux.server.ServerTransport;
+import org.smallmind.cometd.oumuamua.OumuamuaServer;
 
-public class Wombat {
+  /*
+  From ServerTransport we fulfill these values...
+  timeout - A delay in milliseconds before answering a long poll (can be overridden via advice from client)
+  interval - The delay between client long-poll requests, to be sent in advice
+  maximum interval - The period of time that will elapse before the client is considered lost
+  maximum lazy timeout - The maximum period of time to hold onto a lazy message before enqueuing it for delivery
+  */
 
-  public static void main (String... args) {
+public interface OumuamuaTransport extends ServerTransport {
 
-    ChannelTree t = new ChannelTree();
+  void init (OumuamuaServer oumuamuaServer, ServletConfig servletConfig)
+    throws ServletException;
 
-    t.add(0, new ChannelId("/a"));
-    t.add(0, new ChannelId("/a/**"));
-    t.add(0, new ChannelId("/a/b"));
-    t.add(0, new ChannelId("/a/b/*"));
-    t.add(0, new ChannelId("/a/b/**"));
-    t.add(0, new ChannelId("/a/b/c"));
-
-    System.out.println(t);
-    t.walk(new RemovalOperation());
-
-    ChannelIterator i = new ChannelIterator("/a/b/c");
-
-    t.publish(i);
-  }
+  void setOption (String name, Object value);
 }

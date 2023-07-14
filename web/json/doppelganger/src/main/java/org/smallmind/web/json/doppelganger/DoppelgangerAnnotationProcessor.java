@@ -35,6 +35,7 @@ package org.smallmind.web.json.doppelganger;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -125,6 +126,10 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
             for (TypeElement polymorphicSubClass : classTracker.getPolymorphicSubclasses(classElement)) {
               visibilityTracker.add(polymorphicSubClass, classElement);
               generate(polymorphicSubClass);
+            }
+            for (TypeElement hierarchySubClass : classTracker.getHierarchySubclasses(classElement)) {
+              visibilityTracker.add(hierarchySubClass, classElement);
+              generate(hierarchySubClass);
             }
 
             for (Map.Entry<String, PropertyLexicon> purposeEntry : doppelgangerInformation.getInDirectionalGuide().lexiconEntrySet()) {
@@ -224,7 +229,7 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
     JavaFileObject sourceFile;
 
     if (classTracker.hasPolymorphicSubClasses(classElement)) {
-      writePolymorphicAdapter(classElement, purpose, direction);
+      writePolymorphicAdapter(classElement, purpose, direction, classTracker.usePolymorphicAttribute(classElement));
     }
 
     sourceFile = processingEnv.getFiler().createSourceFile(new StringBuilder(processingEnv.getElementUtils().getPackageOf(classElement).getQualifiedName()).append('.').append(NameUtility.getSimpleName(processingEnv, purpose, direction, classElement)), classElement);
@@ -233,10 +238,26 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
       try (BufferedWriter writer = new BufferedWriter(sourceFile.openWriter())) {
 
         HashSet<TypeMirror> implementationSet = new HashSet<>();
-        List<TypeElement> polymorphicSubclassList;
-        LinkedList<TypeElement> matchingSubClassList = new LinkedList<>();
+        List<TypeElement> subclassList;
+        LinkedList<TypeElement> matchingPolymorphicSubClassList = new LinkedList<>();
         LinkedList<String> getterList = new LinkedList<>();
         String[] imports;
+        boolean hasPolymorphicSubclasses;
+        boolean hasHierarchySubclasses;
+
+        if (classTracker.hasPolymorphicSubClasses(classElement)) {
+          hasPolymorphicSubclasses = true;
+          hasHierarchySubclasses = false;
+          subclassList = classTracker.getPolymorphicSubclasses(classElement);
+        } else if (classTracker.hasHierarchySubClasses(classElement)) {
+          hasPolymorphicSubclasses = false;
+          hasHierarchySubclasses = true;
+          subclassList = classTracker.getHierarchySubclasses(classElement);
+        } else {
+          hasPolymorphicSubclasses = false;
+          hasHierarchySubclasses = false;
+          subclassList = Collections.emptyList();
+        }
 
         // package
         writer.write("package ");
@@ -245,19 +266,19 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
         writer.newLine();
         writer.newLine();
 
-        if (!(polymorphicSubclassList = classTracker.getPolymorphicSubclasses(classElement)).isEmpty()) {
+        if (hasPolymorphicSubclasses && (!subclassList.isEmpty())) {
 
           String packageName = processingEnv.getElementUtils().getPackageOf(classElement).getQualifiedName().toString();
 
-          for (TypeElement polymorphicSubClass : polymorphicSubclassList) {
+          for (TypeElement subClass : subclassList) {
 
             Visibility visibility;
 
-            if (((visibility = visibilityTracker.getVisibility(polymorphicSubClass, purpose)) != null) && visibility.matches(direction)) {
-              if (!packageName.equals(processingEnv.getElementUtils().getPackageOf(polymorphicSubClass).getQualifiedName().toString())) {
-                throw new DefinitionException("The class(%s) must be in package(%s)", polymorphicSubClass, packageName);
+            if (((visibility = visibilityTracker.getVisibility(subClass, purpose)) != null) && visibility.matches(direction)) {
+              if (!packageName.equals(processingEnv.getElementUtils().getPackageOf(subClass).getQualifiedName().toString())) {
+                throw new DefinitionException("The class(%s) must be in package(%s)", subClass, packageName);
               } else {
-                matchingSubClassList.add(polymorphicSubClass);
+                matchingPolymorphicSubClassList.add(subClass);
               }
             }
           }
@@ -292,7 +313,7 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
           writer.write("import org.smallmind.web.json.scaffold.util.Comment;");
           writer.newLine();
         }
-        if (!matchingSubClassList.isEmpty()) {
+        if (!matchingPolymorphicSubClassList.isEmpty()) {
           writer.write("import org.smallmind.web.json.scaffold.util.XmlPolymorphicSubClasses;");
           writer.newLine();
         }
@@ -354,23 +375,23 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
         if (classTracker.isPolymorphic(classElement)) {
           // XmlJavaTypeAdapter
           writer.write("@XmlJavaTypeAdapter(");
-          writer.write(NameUtility.getSimpleName(processingEnv, purpose, direction, (classTracker.hasPolymorphicSubClasses(classElement) ? classElement : classTracker.getPolymorphicBaseClass(classElement))));
-          if (classTracker.hasPolymorphicSubClasses(classElement) ? classTracker.usePolymorphicAttribute(classElement) : classTracker.usePolymorphicAttribute(classTracker.getPolymorphicBaseClass(classElement))) {
+          writer.write(NameUtility.getSimpleName(processingEnv, purpose, direction, (hasPolymorphicSubclasses ? classElement : classTracker.getPolymorphicBaseClass(classElement))));
+          if (hasPolymorphicSubclasses ? classTracker.usePolymorphicAttribute(classElement) : classTracker.usePolymorphicAttribute(classTracker.getPolymorphicBaseClass(classElement))) {
             writer.write("Attributed");
           }
           writer.write("PolymorphicXmlAdapter.class)");
           writer.newLine();
 
           // XmlPolymorphicSubClasses
-          if (!matchingSubClassList.isEmpty()) {
+          if (!matchingPolymorphicSubClassList.isEmpty()) {
 
             boolean firstPolymorphicSubClass = true;
             writer.write("@XmlPolymorphicSubClasses(");
-            if (matchingSubClassList.size() > 1) {
+            if (matchingPolymorphicSubClassList.size() > 1) {
               writer.write("{");
             }
 
-            for (TypeElement polymorphicSubClass : matchingSubClassList) {
+            for (TypeElement polymorphicSubClass : matchingPolymorphicSubClassList) {
               if (!firstPolymorphicSubClass) {
                 writer.write(", ");
               }
@@ -382,7 +403,7 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
               firstPolymorphicSubClass = false;
             }
 
-            if (matchingSubClassList.size() > 1) {
+            if (matchingPolymorphicSubClassList.size() > 1) {
               writer.write("}");
             }
             writer.write(")");
@@ -400,7 +421,7 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
         }
         writer.write("class ");
         writer.write(NameUtility.getSimpleName(processingEnv, purpose, direction, classElement));
-        if (classTracker.hasPolymorphicSubClasses(classElement)) {
+        if (hasPolymorphicSubclasses || hasHierarchySubclasses) {
           writer.write("<D extends ");
           writer.write(NameUtility.getSimpleName(processingEnv, purpose, direction, classElement));
           writer.write("<D>>");
@@ -408,9 +429,13 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
         if (nearestViewSuperclass != null) {
           writer.write(" extends ");
           writer.write(NameUtility.getSimpleName(processingEnv, purpose, direction, nearestViewSuperclass));
-          if (classTracker.hasPolymorphicBaseClass(classElement)) {
+          if (classTracker.hasPolymorphicBaseClass(classElement) || classTracker.hasHierarchyBaseClass(classElement)) {
             writer.write("<");
-            writer.write(NameUtility.getSimpleName(processingEnv, purpose, direction, classElement));
+            if (hasPolymorphicSubclasses || hasHierarchySubclasses) {
+              writer.write("D");
+            } else {
+              writer.write(NameUtility.getSimpleName(processingEnv, purpose, direction, classElement));
+            }
             writer.write(">");
           }
         }
@@ -461,7 +486,7 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
 
         writer.write("  public static ");
 
-        if (classTracker.hasPolymorphicSubClasses(classElement)) {
+        if (hasPolymorphicSubclasses || hasHierarchySubclasses) {
           writer.write("<T extends ");
           writer.write(classElement.getSimpleName().toString());
           writer.write("> ");
@@ -469,13 +494,13 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
 
         writer.write(NameUtility.getSimpleName(processingEnv, purpose, direction, classElement));
 
-        if (classTracker.hasPolymorphicSubClasses(classElement)) {
+        if (hasPolymorphicSubclasses || hasHierarchySubclasses) {
           writer.write("<?>");
         }
 
         writer.write(" instance (");
 
-        if (classTracker.hasPolymorphicSubClasses(classElement)) {
+        if (hasPolymorphicSubclasses || hasHierarchySubclasses) {
           writer.write("T ");
         } else {
           writer.write(classElement.getSimpleName().toString());
@@ -486,13 +511,13 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
         writer.write(") {");
         writer.newLine();
         writer.newLine();
-        if (classTracker.hasPolymorphicSubClasses(classElement)) {
+        if (hasPolymorphicSubclasses || hasHierarchySubclasses) {
 
-          boolean firstPolymorphicSubClass = true;
+          boolean firstSubClass = true;
 
-          for (TypeElement polymorphicSubClass : classTracker.getPolymorphicSubclasses(classElement)) {
-            if (firstPolymorphicSubClass) {
-              firstPolymorphicSubClass = false;
+          for (TypeElement subClass : subclassList) {
+            if (firstSubClass) {
+              firstSubClass = false;
               writer.write("    ");
             } else {
               writer.write(" else ");
@@ -500,15 +525,15 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
             writer.write("if (");
             writer.write(asMemberName(classElement.getSimpleName()));
             writer.write(" instanceof ");
-            writer.write(polymorphicSubClass.getQualifiedName().toString());
+            writer.write(subClass.getQualifiedName().toString());
             writer.write(") {");
             writer.newLine();
             writer.write("      return ");
-            writer.write(NameUtility.getPackageName(processingEnv, polymorphicSubClass));
+            writer.write(NameUtility.getPackageName(processingEnv, subClass));
             writer.write(".");
-            writer.write(NameUtility.getSimpleName(processingEnv, purpose, direction, polymorphicSubClass));
+            writer.write(NameUtility.getSimpleName(processingEnv, purpose, direction, subClass));
             writer.write(".instance((");
-            writer.write(polymorphicSubClass.getQualifiedName().toString());
+            writer.write(subClass.getQualifiedName().toString());
             writer.write(")");
             writer.write(asMemberName(classElement.getSimpleName()));
             writer.write(");");
@@ -644,7 +669,7 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
           writer.write("  // virtual getters and setters");
           for (Map.Entry<String, PropertyInformation> propertyInformationEntry : propertyLexicon.getVirtualMap().entrySet()) {
             writer.newLine();
-            writeGettersAndSetters(writer, classElement, purpose, direction, propertyInformationEntry, getterList);
+            writeGettersAndSetters(writer, classElement, purpose, direction, propertyInformationEntry, getterList, hasPolymorphicSubclasses, hasHierarchySubclasses);
           }
         }
 
@@ -654,7 +679,7 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
           writer.write("  // native getters and setters");
           for (Map.Entry<String, PropertyInformation> propertyInformationEntry : propertyLexicon.getRealMap().entrySet()) {
             writer.newLine();
-            writeGettersAndSetters(writer, classElement, purpose, direction, propertyInformationEntry, getterList);
+            writeGettersAndSetters(writer, classElement, purpose, direction, propertyInformationEntry, getterList, hasPolymorphicSubclasses, hasHierarchySubclasses);
           }
         }
 
@@ -718,7 +743,7 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
     }
   }
 
-  private void writeGettersAndSetters (BufferedWriter writer, TypeElement classElement, String purpose, Direction direction, Map.Entry<String, PropertyInformation> propertyInformationEntry, LinkedList<String> getterList)
+  private void writeGettersAndSetters (BufferedWriter writer, TypeElement classElement, String purpose, Direction direction, Map.Entry<String, PropertyInformation> propertyInformationEntry, LinkedList<String> getterList, boolean hasPolymorphicSubclasses, boolean hasHierarchySubclasses)
     throws IOException {
 
     String getter;
@@ -763,7 +788,7 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
     getterList.add(getter);
 
     writer.write("  public ");
-    if (classTracker.hasPolymorphicSubClasses(classElement)) {
+    if (hasPolymorphicSubclasses || hasHierarchySubclasses) {
       writer.write("D");
     } else {
       writer.write(NameUtility.getSimpleName(processingEnv, purpose, direction, classElement));
@@ -785,7 +810,7 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
     writer.newLine();
     writer.newLine();
     writer.write("    return ");
-    if (classTracker.hasPolymorphicSubClasses(classElement)) {
+    if (hasPolymorphicSubclasses || hasHierarchySubclasses) {
       writer.write("(D)");
     }
     writer.write("this;");
@@ -894,13 +919,13 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
     writer.newLine();
   }
 
-  private void writePolymorphicAdapter (TypeElement classElement, String purpose, Direction direction)
+  private void writePolymorphicAdapter (TypeElement classElement, String purpose, Direction direction, boolean usePolymorphicAttribute)
     throws IOException {
 
     JavaFileObject sourceFile;
     StringBuilder sourceFileBuilder = new StringBuilder(processingEnv.getElementUtils().getPackageOf(classElement).getQualifiedName()).append('.').append(NameUtility.getSimpleName(processingEnv, purpose, direction, classElement));
 
-    if (classTracker.usePolymorphicAttribute(classElement)) {
+    if (usePolymorphicAttribute) {
       sourceFileBuilder.append("Attributed");
     }
     sourceFileBuilder.append("PolymorphicXmlAdapter");
@@ -921,7 +946,7 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
         writer.write("import javax.annotation.Generated;");
         writer.newLine();
         writer.write("import org.smallmind.web.json.scaffold.util.");
-        if (classTracker.usePolymorphicAttribute(classElement)) {
+        if (usePolymorphicAttribute) {
           writer.write("Attributed");
         }
         writer.write("PolymorphicXmlAdapter;");
@@ -937,12 +962,12 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
         // class declaration
         writer.write("public class ");
         writer.write(NameUtility.getSimpleName(processingEnv, purpose, direction, classElement));
-        if (classTracker.usePolymorphicAttribute(classElement)) {
+        if (usePolymorphicAttribute) {
           writer.write("Attributed");
         }
         writer.write("PolymorphicXmlAdapter");
         writer.write(" extends ");
-        if (classTracker.usePolymorphicAttribute(classElement)) {
+        if (usePolymorphicAttribute) {
           writer.write("Attributed");
         }
         writer.write("PolymorphicXmlAdapter<");

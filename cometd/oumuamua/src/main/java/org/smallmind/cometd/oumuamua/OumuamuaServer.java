@@ -50,13 +50,17 @@ import org.cometd.bayeux.server.SecurityPolicy;
 import org.cometd.bayeux.server.ServerChannel;
 import org.cometd.bayeux.server.ServerMessage;
 import org.cometd.bayeux.server.ServerSession;
+import org.smallmind.cometd.oumuamua.channel.ChannelIdCache;
+import org.smallmind.cometd.oumuamua.channel.ChannelIterator;
 import org.smallmind.cometd.oumuamua.channel.ChannelTree;
+import org.smallmind.cometd.oumuamua.transport.OumuamuaTransport;
 
 public class OumuamuaServer implements BayeuxServer {
 
   private final ChannelTree channelTree = new ChannelTree();
   private final Map<String, OumuamuaTransport> transportMap;
   private final List<String> allowedList;
+  private int emptyChannelTimeToLiveMinutes = 30;
   private SecurityPolicy securityPolicy;
 
   public OumuamuaServer (Map<String, OumuamuaTransport> transportMap, String... allowed) {
@@ -66,16 +70,31 @@ public class OumuamuaServer implements BayeuxServer {
     this.allowedList = (allowed == null) ? Collections.emptyList() : Collections.unmodifiableList(Arrays.asList(allowed));
   }
 
+  public int getEmptyChannelTimeToLiveMinutes () {
+
+    return emptyChannelTimeToLiveMinutes;
+  }
+
+  public void setEmptyChannelTimeToLiveMinutes (int emptyChannelTimeToLiveMinutes) {
+
+    this.emptyChannelTimeToLiveMinutes = emptyChannelTimeToLiveMinutes;
+  }
+
   public void start (ServletConfig servletConfig)
     throws ServletException {
 
     for (OumuamuaTransport transport : transportMap.values()) {
-      transport.init(servletConfig);
+      transport.init(this, servletConfig);
     }
   }
 
   public void stop () {
 
+  }
+
+  public String getProtocolVersion () {
+
+    return "1.0";
   }
 
   @Override
@@ -173,42 +192,6 @@ public class OumuamuaServer implements BayeuxServer {
   }
 
   @Override
-  public ServerChannel getChannel (String s) {
-
-    return null;
-  }
-
-  @Override
-  public List<ServerChannel> getChannels () {
-
-    return null;
-  }
-
-  @Override
-  public MarkedReference<ServerChannel> createChannelIfAbsent (String s, ConfigurableServerChannel.Initializer... initializers) {
-
-    return null;
-  }
-
-  public void removeChannel (ServerChannel channel) {
-
-    ChannelTree channelTree;
-  }
-
-  public void cascadeRemoveChannel (ServerChannel channel) {
-
-    String branchId = channel.getId();
-
-    if (channel.isWild()) {
-      branchId = branchId.substring(0, branchId.length() - ChannelId.WILD.length() + 1);
-    } else if (channel.isDeepWild()) {
-      branchId = branchId.substring(0, branchId.length() - ChannelId.DEEPWILD.length() + 1);
-    }
-
-    // channelTree.remove(1, branchId.split("/", -1));
-  }
-
-  @Override
   public ServerSession getSession (String s) {
 
     return null;
@@ -236,5 +219,63 @@ public class OumuamuaServer implements BayeuxServer {
   public ServerMessage.Mutable newMessage () {
 
     return null;
+  }
+
+  @Override
+  public ServerChannel getChannel (String s) {
+
+    return null;
+  }
+
+  @Override
+  public List<ServerChannel> getChannels () {
+
+    return null;
+  }
+
+  public ServerChannel findChannel (String id) {
+
+    ChannelTree channelBranch;
+
+    return ((channelBranch = channelTree.find(0, ChannelIdCache.generate(id))) == null) ? null : channelBranch.getServerChannel();
+  }
+
+  @Override
+  public MarkedReference<ServerChannel> createChannelIfAbsent (String id, ConfigurableServerChannel.Initializer... initializers) {
+
+    MarkedReference<ChannelTree> branchRef = channelTree.add(this, 0, ChannelIdCache.generate(id));
+
+    if (branchRef.isMarked() && (initializers != null)) {
+      for (ConfigurableServerChannel.Initializer initializer : initializers) {
+        initializer.configureChannel(branchRef.getReference().getServerChannel());
+      }
+    }
+
+    return new MarkedReference<>(branchRef.getReference().getServerChannel(), branchRef.isMarked());
+  }
+
+  public void removeChannel (ServerChannel channel) {
+
+    // TODO: remove
+    ChannelTree channelTree;
+  }
+
+  public void publishToChannel (String id, String text) {
+
+    channelTree.publish(new ChannelIterator(id), text);
+  }
+
+  public void cascadeRemoveChannel (ServerChannel channel) {
+
+    String branchId = channel.getId();
+
+    if (channel.isWild()) {
+      branchId = branchId.substring(0, branchId.length() - ChannelId.WILD.length() + 1);
+    } else if (channel.isDeepWild()) {
+      branchId = branchId.substring(0, branchId.length() - ChannelId.DEEPWILD.length() + 1);
+    }
+
+    // TODO: remove
+    // channelTree.remove(1, branchId.split("/", -1));
   }
 }

@@ -7,8 +7,11 @@
     <constructor-arg index="0" name="transportMap">
       <map>
         <entry key="websocket">
-          <bean class="org.smallmind.cometd.oumuamua.WebSocketTransport">
+          <bean class="org.smallmind.cometd.oumuamua.transport.WebSocketTransport">
             <constructor-arg index="0" name="oumuamuaUrl" value="/cometd/*"/>
+            <constructor-arg index="1" name="configuration">
+              <bean class="org.smallmind.cometd.oumuamua.transport.WebSocketTransportConfiguration"/>
+            </constructor-arg>
           </bean>
         </entry>
       </map>

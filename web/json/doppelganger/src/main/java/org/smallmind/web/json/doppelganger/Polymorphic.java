@@ -41,7 +41,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface Polymorphic {
 
-  // the list of sub-classes which will be generated with polymorphic annotations
+  // the list of subclasses which will be generated with polymorphic annotations
   Class[] subClasses () default {};
 
   // if true, will generate json with an object type attribute

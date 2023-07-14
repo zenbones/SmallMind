@@ -33,7 +33,7 @@
 package org.smallmind.cometd.oumuamua;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.smallmind.cometd.oumuamua.message.HandshakeMessageRequestInView;
+import org.smallmind.cometd.oumuamua.meta.HandshakeMessageRequestInView;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public class Kangaroo {

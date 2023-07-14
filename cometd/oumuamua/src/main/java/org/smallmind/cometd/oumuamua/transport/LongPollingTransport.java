@@ -30,42 +30,33 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.cometd.oumuamua.message;
+package org.smallmind.cometd.oumuamua.transport;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import org.smallmind.web.json.doppelganger.Doppelganger;
-import org.smallmind.web.json.doppelganger.Idiom;
-import org.smallmind.web.json.doppelganger.Pledge;
-import org.smallmind.web.json.doppelganger.View;
+import javax.servlet.ServletConfig;
+import org.smallmind.cometd.oumuamua.AbstractOumuamuaTransport;
+import org.smallmind.cometd.oumuamua.OumuamuaServer;
 
-import static org.smallmind.web.json.doppelganger.Visibility.IN;
-import static org.smallmind.web.json.doppelganger.Visibility.OUT;
+public class LongPollingTransport extends AbstractOumuamuaTransport {
 
-@Doppelganger(pledges = @Pledge(purposes = {"success", "error"}, visibility = OUT))
-public class PublishMessage extends MetaMessage {
+  public LongPollingTransport () {
 
-  @View(idioms = @Idiom(purposes = "request", visibility = IN))
-  private JsonNode data;
-  @View(idioms = @Idiom(purposes = "request", visibility = IN))
-  private String clientId;
-
-  public String getClientId () {
-
-    return clientId;
+    super(0, 0, 0, 0, true);
   }
 
-  public void setClientId (String clientId) {
+  @Override
+  public String getName () {
 
-    this.clientId = clientId;
+    return null;
   }
 
-  public JsonNode getData () {
+  @Override
+  public String getOptionPrefix () {
 
-    return data;
+    return "long-polling";
   }
 
-  public void setData (JsonNode data) {
+  @Override
+  public void init (OumuamuaServer oumuamuaServer, ServletConfig servletConfig) {
 
-    this.data = data;
   }
 }

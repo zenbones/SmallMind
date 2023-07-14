@@ -30,16 +30,17 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.cometd.oumuamua;
+package org.smallmind.web.json.doppelganger;
 
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
-import org.cometd.bayeux.server.ServerTransport;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-public interface OumuamuaTransport extends ServerTransport {
+@Retention(RetentionPolicy.SOURCE)
+@Target(ElementType.TYPE)
+public @interface Hierarchy {
 
-  void init (ServletConfig servletConfig)
-    throws ServletException;
-
-  void setOption (String name, Object value);
+  // the list of subclasses which will be generated with generic types
+  Class[] subClasses () default {};
 }

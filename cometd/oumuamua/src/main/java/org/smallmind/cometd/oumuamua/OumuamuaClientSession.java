@@ -32,24 +32,105 @@
  */
 package org.smallmind.cometd.oumuamua;
 
-import javax.servlet.ServletConfig;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import org.cometd.bayeux.client.ClientSession;
+import org.cometd.bayeux.client.ClientSessionChannel;
 
-public class LongPollingTransport extends AbstractOumuamuaTransport {
+public class OumuamuaClientSession implements ClientSession {
 
   @Override
-  public String getName () {
+  public String getId () {
 
     return null;
   }
 
   @Override
-  public String getOptionPrefix () {
+  public boolean isConnected () {
+
+    return false;
+  }
+
+  @Override
+  public boolean isHandshook () {
+
+    return false;
+  }
+
+  @Override
+  public void setAttribute (String name, Object value) {
+
+  }
+
+  @Override
+  public Object getAttribute (String name) {
 
     return null;
   }
 
   @Override
-  public void init (ServletConfig servletConfig) {
+  public Set<String> getAttributeNames () {
 
+    return null;
+  }
+
+  @Override
+  public Object removeAttribute (String name) {
+
+    return null;
+  }
+
+  @Override
+  public void addExtension (Extension extension) {
+
+  }
+
+  @Override
+  public void removeExtension (Extension extension) {
+
+  }
+
+  @Override
+  public List<Extension> getExtensions () {
+
+    return null;
+  }
+
+  @Override
+  public void handshake (Map<String, Object> template, MessageListener callback) {
+
+  }
+
+  @Override
+  public void disconnect (MessageListener callback) {
+
+  }
+
+  @Override
+  public ClientSessionChannel getChannel (String channelName) {
+
+    return null;
+  }
+
+  @Override
+  public void remoteCall (String target, Object data, MessageListener callback) {
+
+  }
+
+  @Override
+  public void batch (Runnable batch) {
+
+  }
+
+  @Override
+  public void startBatch () {
+
+  }
+
+  @Override
+  public boolean endBatch () {
+
+    return false;
   }
 }

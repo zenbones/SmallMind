@@ -44,6 +44,6 @@ public class ChannelIdUtility {
       idBuilder.append('/').append(channelId.getSegment(index));
     }
 
-    return new ChannelId(idBuilder.toString());
+    return ChannelIdCache.generate(idBuilder.toString());
   }
 }

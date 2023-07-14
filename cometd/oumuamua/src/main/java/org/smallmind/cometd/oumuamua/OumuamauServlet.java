@@ -64,23 +64,23 @@ public class OumuamauServlet extends HttpServlet {
   }
 
   @Override
-  protected void doGet (HttpServletRequest req, HttpServletResponse resp)
+  protected void doGet (HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
 
-    super.doGet(req, resp);
+    super.doGet(request, response);
   }
 
   @Override
   protected void service (HttpServletRequest request, HttpServletResponse response)
-    throws ServletException, IOException {
-
-    System.out.println("ignoring");
+    throws IOException {
 
     response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unknown Bayeux Transport");
   }
 
   @Override
   public void destroy () {
+
+    oumuamuaServer.stop();
 
     super.destroy();
   }

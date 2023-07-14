@@ -49,10 +49,8 @@ import org.cometd.bayeux.server.ServerSession;
 
 public class OumuamuaServerChannel implements ServerChannel {
 
-  private static final long THIRTY_MINUTES = 30 * 60 * 1000;
-
   private final OumuamuaServer oumuamuaServer;
-  private final ConcurrentHashMap<String, ServerSession> subscriptionMap = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<String, OumuamuaServerSession> subscriptionMap = new ConcurrentHashMap<>();
   private final HashMap<String, Object> attributeMap = new HashMap<>();
   private final ConcurrentLinkedQueue<ServerChannelListener> listenerList = new ConcurrentLinkedQueue<>();
   private final ConcurrentLinkedQueue<ServerChannelListener.Weak> weakListenerList = new ConcurrentLinkedQueue<>();
@@ -63,26 +61,27 @@ public class OumuamuaServerChannel implements ServerChannel {
   private final boolean broadcast;
   private boolean persistent;
   private boolean broadcastToPublisher;
-  private long ttl;
+  private long channelLifetime;
+
   private long lazyTimeout = -1;
 
-  public OumuamuaServerChannel (OumuamuaServer oumuamuaServer, String id, Authorizer... authorizers) {
+  public OumuamuaServerChannel (OumuamuaServer oumuamuaServer, ChannelId channelId) {
 
     this.oumuamuaServer = oumuamuaServer;
+    this.channelId = channelId;
 
-    channelId = new ChannelId(id);
-    meta = RequestParser.isMetaChannel(id);
-    service = RequestParser.isServiceChannel(id);
+    meta = channelId.isMeta();
+    service = channelId.isService();
     broadcast = !(meta || service);
 
-    ttl = THIRTY_MINUTES;
+    channelLifetime = System.currentTimeMillis() + (oumuamuaServer.getEmptyChannelTimeToLiveMinutes() * 60 * 1000L);
   }
 
   // Call from synchronized methods only
   private void checkTimeToLive () {
 
-    if ((ttl < 0) && (!persistent) && subscriptionMap.isEmpty() && listenerList.isEmpty()) {
-      ttl = System.currentTimeMillis() + THIRTY_MINUTES;
+    if ((channelLifetime < 0) && (!persistent) && subscriptionMap.isEmpty() && listenerList.isEmpty()) {
+      channelLifetime = System.currentTimeMillis() + (oumuamuaServer.getEmptyChannelTimeToLiveMinutes() * 60 * 1000L);
     }
   }
 
@@ -167,7 +166,7 @@ public class OumuamuaServerChannel implements ServerChannel {
       this.persistent = persistent;
 
       if (persistent) {
-        ttl = -1;
+        channelLifetime = -1;
       } else {
         checkTimeToLive();
       }
@@ -246,7 +245,7 @@ public class OumuamuaServerChannel implements ServerChannel {
       weakListenerList.add((ServerChannelListener.Weak)listener);
     } else {
       listenerList.add(listener);
-      ttl = 1;
+      channelLifetime = 1;
     }
   }
 
@@ -272,8 +271,8 @@ public class OumuamuaServerChannel implements ServerChannel {
   @Override
   public synchronized boolean subscribe (ServerSession session) {
 
-    subscriptionMap.put(session.getId(), session);
-    ttl = -1;
+    subscriptionMap.putIfAbsent(session.getId(), (OumuamuaServerSession)session);
+    channelLifetime = -1;
 
     return true;
   }
@@ -305,6 +304,13 @@ public class OumuamuaServerChannel implements ServerChannel {
   @Override
   public void publish (Session from, Object data, Promise<Boolean> promise) {
 
+  }
+
+  public void send (String text) {
+
+    for (OumuamuaServerSession serverSession : subscriptionMap.values()) {
+      serverSession.send(text);
+    }
   }
 
   @Override

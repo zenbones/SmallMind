@@ -34,22 +34,25 @@ package org.smallmind.cometd.oumuamua.channel;
 
 import java.util.concurrent.ConcurrentHashMap;
 import org.cometd.bayeux.ChannelId;
+import org.cometd.bayeux.MarkedReference;
+import org.smallmind.cometd.oumuamua.OumuamuaServer;
+import org.smallmind.cometd.oumuamua.OumuamuaServerChannel;
 
 public class ChannelTree {
 
   private final ConcurrentHashMap<String, ChannelTree> childMap = new ConcurrentHashMap<>();
   private final ChannelTree parent;
-  private final ChannelId channelId;
+  private final OumuamuaServerChannel serverChannel;
 
   public ChannelTree () {
 
     this(null, null);
   }
 
-  public ChannelTree (ChannelTree parent, ChannelId channelId) {
+  public ChannelTree (ChannelTree parent, OumuamuaServerChannel serverChannel) {
 
     this.parent = parent;
-    this.channelId = channelId;
+    this.serverChannel = serverChannel;
   }
 
   public ChannelTree getParent () {
@@ -57,26 +60,45 @@ public class ChannelTree {
     return parent;
   }
 
-  public ChannelId getChannelId () {
+  public OumuamuaServerChannel getServerChannel () {
 
-    return channelId;
+    return serverChannel;
   }
 
-  public ChannelTree add (int index, ChannelId channelId) {
+  public ChannelTree find (int index, ChannelId channelId) {
 
     ChannelTree child;
 
     if ((child = childMap.get(channelId.getSegment(index))) == null) {
 
-      ChannelId branchChannelId = (index == (channelId.depth() - 1)) ? channelId : ChannelIdUtility.from(index + 1, channelId);
+      return null;
+    } else {
 
-      childMap.put(channelId.getSegment(index), child = new ChannelTree(this, branchChannelId));
+      return (index == (channelId.depth() - 1)) ? child : find(index + 1, channelId);
     }
-
-    return (index == (channelId.depth() - 1)) ? child : child.add(index + 1, channelId);
   }
 
-  public void publish (ChannelIterator channelIterator) {
+  public MarkedReference<ChannelTree> add (OumuamuaServer oumuamuaServer, int index, ChannelId channelId) {
+
+    ChannelTree child;
+    boolean created = false;
+
+    if ((child = childMap.get(channelId.getSegment(index))) == null) {
+      synchronized (this) {
+        if ((child = childMap.get(channelId.getSegment(index))) == null) {
+
+          ChannelId branchChannelId = (index == (channelId.depth() - 1)) ? channelId : ChannelIdUtility.from(index + 1, channelId);
+
+          created = true;
+          childMap.put(channelId.getSegment(index), child = new ChannelTree(this, new OumuamuaServerChannel(oumuamuaServer, branchChannelId)));
+        }
+      }
+    }
+
+    return (index == (channelId.depth() - 1)) ? new MarkedReference<>(child, created) : child.add(oumuamuaServer, index + 1, channelId);
+  }
+
+  public void publish (ChannelIterator channelIterator, String text) {
 
     if (channelIterator.hasNext()) {
 
@@ -84,11 +106,10 @@ public class ChannelTree {
       ChannelTree nextBranch;
 
       if ((deepWildBranch = childMap.get(ChannelId.DEEPWILD)) != null) {
-        // publish to deepWIldBranch
-        System.out.println("deep wild:" + deepWildBranch.channelId);
+        deepWildBranch.getServerChannel().send(text);
       }
       if ((nextBranch = childMap.get(channelIterator.next())) != null) {
-        nextBranch.publish(channelIterator);
+        nextBranch.publish(channelIterator, text);
       }
     } else {
       if (parent != null) {
@@ -96,12 +117,11 @@ public class ChannelTree {
         ChannelTree wildBranch;
 
         if ((wildBranch = parent.childMap.get(ChannelId.WILD)) != null) {
-          // publish to wildBranch
-          System.out.println("wild:" + wildBranch.channelId);
+          wildBranch.getServerChannel().send(text);
         }
       }
-      // publish to this
-      System.out.println("this:" + channelId);
+
+      getServerChannel().send(text);
     }
   }
 

@@ -30,20 +30,12 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.cometd.oumuamua.channel;
+package org.smallmind.cometd.oumuamua.transport;
 
-public class UnsubscribeOperation implements ChannelOperation {
+public interface OumuamuaCarrier {
 
-  @Override
-  public void operate (ChannelTree channelTree) {
+  String getUserAgent ();
 
-    System.out.println(channelTree.getServerChannel().getId());
-    /*
-    channel listener
-    remove all subscriptions
-    subscription listener
-
-    remove from map
-     */
-  }
+  void send (String text)
+    throws Exception;
 }

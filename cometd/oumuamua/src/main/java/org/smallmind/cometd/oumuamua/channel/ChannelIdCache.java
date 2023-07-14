@@ -30,28 +30,35 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.cometd.oumuamua.message;
+package org.smallmind.cometd.oumuamua.channel;
 
-import org.smallmind.web.json.doppelganger.Doppelganger;
-import org.smallmind.web.json.doppelganger.Idiom;
-import org.smallmind.web.json.doppelganger.View;
+import java.util.HashMap;
+import org.cometd.bayeux.ChannelId;
 
-import static org.smallmind.web.json.doppelganger.Visibility.IN;
-import static org.smallmind.web.json.doppelganger.Visibility.OUT;
+public class ChannelIdCache {
 
-@Doppelganger
-public class DisconnectMessage extends MetaMessage {
+  private static final ThreadLocal<HashMap<String, ChannelId>> CHANNEL_ID_MAP_LOCAL = new ThreadLocal<>() {
 
-  @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
-  private String clientId;
+    @Override
+    protected HashMap<String, ChannelId> initialValue () {
 
-  public String getClientId () {
+      return new HashMap<>();
+    }
+  };
 
-    return clientId;
+  public static ChannelId generate (String id) {
+
+    ChannelId channelId;
+
+    if ((channelId = CHANNEL_ID_MAP_LOCAL.get().get(id)) == null) {
+      CHANNEL_ID_MAP_LOCAL.get().put(id, channelId = ChannelIdCache.generate(id));
+    }
+
+    return channelId;
   }
 
-  public void setClientId (String clientId) {
+  public static void clear () {
 
-    this.clientId = clientId;
+    CHANNEL_ID_MAP_LOCAL.remove();
   }
 }

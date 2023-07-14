@@ -34,39 +34,54 @@ package org.smallmind.cometd.oumuamua;
 
 import java.util.HashMap;
 import java.util.Set;
+import org.smallmind.cometd.oumuamua.transport.OumuamuaTransport;
 
 public abstract class AbstractOumuamuaTransport implements OumuamuaTransport {
 
   private final HashMap<String, Object> optionMap = new HashMap<>();
+  private final boolean metaConnectDeliveryOnly;
+  private final long timeout;
+  private final long interval;
+  private final long maxInterval;
+  private final long maxLazyTimeout;
+
+  public AbstractOumuamuaTransport (long timeout, long interval, long maxInterval, long maxLazyTimeout, boolean metaConnectDeliveryOnly) {
+
+    this.timeout = timeout;
+    this.interval = interval;
+    this.maxInterval = maxInterval;
+    this.maxLazyTimeout = maxLazyTimeout;
+    this.metaConnectDeliveryOnly = metaConnectDeliveryOnly;
+  }
 
   @Override
   public long getTimeout () {
 
-    return 0;
+    return timeout;
   }
 
   @Override
   public long getInterval () {
 
-    return 0;
+    return interval;
   }
 
   @Override
   public long getMaxInterval () {
 
-    return 0;
+    return maxInterval;
   }
 
   @Override
   public long getMaxLazyTimeout () {
 
-    return 0;
+    return maxLazyTimeout;
   }
 
   @Override
   public boolean isMetaConnectDeliveryOnly () {
 
-    return false;
+    return metaConnectDeliveryOnly;
   }
 
   @Override

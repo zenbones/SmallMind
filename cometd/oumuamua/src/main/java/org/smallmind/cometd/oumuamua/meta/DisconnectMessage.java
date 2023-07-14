@@ -30,53 +30,36 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.cometd.oumuamua;
+package org.smallmind.cometd.oumuamua.meta;
 
-import java.io.IOException;
-import javax.websocket.CloseReason;
-import javax.websocket.Endpoint;
-import javax.websocket.EndpointConfig;
-import javax.websocket.MessageHandler;
-import javax.websocket.Session;
-import com.fasterxml.jackson.databind.JsonNode;
-import org.smallmind.scribe.pen.LoggerManager;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import org.smallmind.web.json.doppelganger.Doppelganger;
+import org.smallmind.web.json.doppelganger.Idiom;
+import org.smallmind.web.json.doppelganger.View;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
-public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<String> {
+import static org.smallmind.web.json.doppelganger.Visibility.IN;
+import static org.smallmind.web.json.doppelganger.Visibility.OUT;
 
-  private final OumuamuaServerSession omOumuamuaServerSession = new OumuamuaServerSession();
+@Doppelganger
+public class DisconnectMessage extends MetaMessage {
 
-  @Override
-  public void onOpen (Session wsSession, EndpointConfig config) {
+  @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
+  private String clientId;
 
-    wsSession.addMessageHandler(this);
+  public String process ()
+    throws JsonProcessingException {
+
+    return JsonCodec.writeAsString(new DisconnectMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel("/meta/disconnect").setId(getId()));
   }
 
-  @Override
-  public void onMessage (String data) {
+  public String getClientId () {
 
-    try {
-
-      JsonNode messageNode = JsonCodec.readAsJsonNode(data);
-
-      //     if (messageNode.has("channel") && "/meta/handshake".equals(messageNode.get("channel").asText())) {
-      //      JsonCodec.convert(messageNode, HandshakeRequestMessage.class);
-      //    }
-      System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!:" + data);
-    } catch (IOException ioException) {
-      throw new RuntimeException(ioException);
-    }
+    return clientId;
   }
 
-  @Override
-  public void onClose (Session wsSession, CloseReason closeReason) {
+  public void setClientId (String clientId) {
 
-    throw new RuntimeException("Not implemented");
-  }
-
-  @Override
-  public void onError (Session wsSession, Throwable failure) {
-
-    LoggerManager.getLogger(WebSocketEndpoint.class).error(failure);
+    this.clientId = clientId;
   }
 }
