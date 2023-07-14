@@ -37,6 +37,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
+import org.smallmind.cometd.oumuamua.message.MapLike;
 import org.smallmind.web.json.doppelganger.Doppelganger;
 import org.smallmind.web.json.doppelganger.Idiom;
 import org.smallmind.web.json.doppelganger.View;
@@ -72,17 +73,17 @@ public class ConnectMessage extends AdvisedMetaMessage {
 
           StringBuilder batchedResponseBuilder = null;
           String connectResponseText;
-          String enqueuedMessageText;
+          MapLike enqueuedMapLile;
 
           serverSession.setConnected(true);
           adviceNode.put("interval", 30000);
 
-          while ((enqueuedMessageText = serverSession.poll()) != null) {
+          while ((enqueuedMapLile = serverSession.poll()) != null) {
             if (batchedResponseBuilder == null) {
               batchedResponseBuilder = new StringBuilder();
             }
 
-            batchedResponseBuilder.append(',').append(enqueuedMessageText);
+            batchedResponseBuilder.append(',').append(enqueuedMapLile.encode());
           }
 
           connectResponseText = JsonCodec.writeAsString(new ConnectMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel("/meta/connect").setId(getId()).setClientId(serverSession.getId()).setAdvice(adviceNode));

@@ -32,10 +32,15 @@
  */
 package org.smallmind.cometd.oumuamua;
 
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.cometd.bayeux.ChannelId;
 import org.smallmind.cometd.oumuamua.channel.ChannelIterator;
 import org.smallmind.cometd.oumuamua.channel.ChannelTree;
 import org.smallmind.cometd.oumuamua.channel.RemovalOperation;
+import org.smallmind.cometd.oumuamua.message.MapLike;
+import org.smallmind.cometd.oumuamua.meta.DeliveryMessageSuccessOutView;
+import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public class ChannelTest {
 
@@ -55,6 +60,6 @@ public class ChannelTest {
 
     ChannelIterator i = new ChannelIterator("/a/b/c");
 
-    t.publish(i, "foobar");
+    t.publish(i, new MapLike(null, (ObjectNode)JsonCodec.writeAsJsonNode(new DeliveryMessageSuccessOutView().setData(JsonNodeFactory.instance.textNode("foobar")))));
   }
 }

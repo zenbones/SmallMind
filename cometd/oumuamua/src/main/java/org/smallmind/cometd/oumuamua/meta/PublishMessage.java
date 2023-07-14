@@ -34,10 +34,12 @@ package org.smallmind.cometd.oumuamua.meta;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.cometd.bayeux.server.SecurityPolicy;
 import org.cometd.bayeux.server.ServerChannel;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
+import org.smallmind.cometd.oumuamua.message.MapLike;
 import org.smallmind.cometd.oumuamua.message.OumuamuaServerMessage;
 import org.smallmind.web.json.doppelganger.Doppelganger;
 import org.smallmind.web.json.doppelganger.Idiom;
@@ -84,12 +86,12 @@ public class PublishMessage extends MetaMessage {
         } else {
           try {
 
-            String deliveryMessageText;
+            MapLike deliveryMapLike;
 
-            oumuamuaServer.publishToChannel(getChannel(), deliveryMessageText = JsonCodec.writeAsString(new DeliveryMessageSuccessOutView().setChannel(getChannel()).setId(getId()).setData(getData())));
+            oumuamuaServer.publishToChannel(getChannel(), deliveryMapLike = new MapLike(null, (ObjectNode)JsonCodec.writeAsJsonNode(new DeliveryMessageSuccessOutView().setChannel(getChannel()).setId(getId()).setData(getData()))));
 
             if (serverSession.isBroadcastToPublisher()) {
-              serverSession.send(deliveryMessageText);
+              serverSession.send(deliveryMapLike);
             }
 
             return JsonCodec.writeAsString(new PublishMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(getChannel()).setId(getId()));

@@ -52,7 +52,7 @@ public class OumuamuaServerMessage extends MapLike implements ServerMessage {
 
   public OumuamuaServerMessage (OumuamuaTransport transport, BayeuxContext context, Mutable associated, ChannelId channelId, String id, String clientId, boolean lazy, ObjectNode node) {
 
-    super(node);
+    super(null, node);
 
     this.transport = transport;
     this.context = context;

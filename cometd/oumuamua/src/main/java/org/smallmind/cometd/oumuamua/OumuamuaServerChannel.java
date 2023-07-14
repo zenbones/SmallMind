@@ -46,6 +46,7 @@ import org.cometd.bayeux.server.Authorizer;
 import org.cometd.bayeux.server.ServerChannel;
 import org.cometd.bayeux.server.ServerMessage;
 import org.cometd.bayeux.server.ServerSession;
+import org.smallmind.cometd.oumuamua.message.MapLike;
 
 public class OumuamuaServerChannel implements ServerChannel {
 
@@ -306,10 +307,10 @@ public class OumuamuaServerChannel implements ServerChannel {
 
   }
 
-  public void send (String text) {
+  public void send (MapLike mapLike) {
 
     for (OumuamuaServerSession serverSession : subscriptionMap.values()) {
-      serverSession.send(text);
+      serverSession.send(mapLike);
     }
   }
 

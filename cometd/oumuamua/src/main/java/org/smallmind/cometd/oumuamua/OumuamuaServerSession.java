@@ -43,6 +43,7 @@ import org.cometd.bayeux.server.ServerChannel;
 import org.cometd.bayeux.server.ServerMessage;
 import org.cometd.bayeux.server.ServerSession;
 import org.cometd.bayeux.server.ServerTransport;
+import org.smallmind.cometd.oumuamua.message.MapLike;
 import org.smallmind.cometd.oumuamua.transport.OumuamuaCarrier;
 import org.smallmind.cometd.oumuamua.transport.OumuamuaTransport;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
@@ -51,7 +52,7 @@ import org.smallmind.scribe.pen.LoggerManager;
 public class OumuamuaServerSession implements ServerSession {
 
   private final HashMap<String, Object> attributeMap = new HashMap<>();
-  private final ConcurrentLinkedQueue<String> messageQueue = new ConcurrentLinkedQueue<>();
+  private final ConcurrentLinkedQueue<MapLike> messageQueue = new ConcurrentLinkedQueue<>();
   private final OumuamuaTransport serverTransport;
   private final OumuamuaCarrier carrier;
   private final LocalSession localSession;
@@ -251,18 +252,18 @@ public class OumuamuaServerSession implements ServerSession {
 
   }
 
-  public String poll () {
+  public MapLike poll () {
 
     return messageQueue.poll();
   }
 
-  public void send (String text) {
+  public void send (MapLike mapLike) {
 
     if ((metaConnectDeliveryOnly == null) ? serverTransport.isMetaConnectDeliveryOnly() : metaConnectDeliveryOnly) {
-      messageQueue.add(text);
+      messageQueue.add(mapLike);
     } else {
       try {
-        carrier.send("[" + text + "]");
+        carrier.send("[" + mapLike.encode() + "]");
       } catch (Exception exception) {
         LoggerManager.getLogger(OumuamuaServerSession.class).error(exception);
       }
