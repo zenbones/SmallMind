@@ -35,6 +35,7 @@ package org.smallmind.web.json.scaffold.util;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -43,8 +44,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchemaGenerator;
+import org.smallmind.nutsnbolts.util.IterableIterator;
 
 public class JsonCodec {
 
@@ -131,6 +136,38 @@ public class JsonCodec {
   public static <T> T convert (Object obj, Class<T> clazz) {
 
     return OBJECT_MAPPER.convertValue(obj, clazz);
+  }
+
+  public static JsonNode clone (JsonNode node) {
+
+    if (node == null) {
+
+      return null;
+    } else {
+      switch (node.getNodeType()) {
+        case OBJECT:
+
+          ObjectNode objectNode = JsonNodeFactory.instance.objectNode();
+
+          for (Map.Entry<String, JsonNode> nodeEntry : new IterableIterator<>(objectNode.fields())) {
+            objectNode.set(nodeEntry.getKey(), clone(nodeEntry.getValue()));
+          }
+
+          return objectNode;
+        case ARRAY:
+
+          ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode(node.size());
+
+          for (JsonNode item : node) {
+            arrayNode.add(clone(item));
+          }
+
+          return arrayNode;
+        default:
+
+          return node;
+      }
+    }
   }
 
   public static JsonSchema generateSchema (Class<?> clazz)

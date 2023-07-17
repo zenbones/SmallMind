@@ -103,7 +103,10 @@ public abstract class NodeBacked {
 
   public Object out (NodeBacked parent, JsonNode node) {
 
-    if (JsonNodeType.OBJECT.equals(node.getNodeType())) {
+    if (node == null) {
+
+      return null;
+    } else if (JsonNodeType.OBJECT.equals(node.getNodeType())) {
 
       return new MapLike(parent, (ObjectNode)node);
     } else if (JsonNodeType.ARRAY.equals(node.getNodeType())) {

@@ -136,9 +136,12 @@ public class MapLike extends NodeBacked implements Map<String, Object> {
   @Override
   public Object put (String key, Object value) {
 
-    mutate();
+    Object previousValue = out(null, node.get(key));
 
-    return node.set(key, in(value));
+    mutate();
+    node.set(key, in(value));
+
+    return previousValue;
   }
 
   @Override
@@ -205,8 +208,8 @@ public class MapLike extends NodeBacked implements Map<String, Object> {
 
     HashSet<Map.Entry<String, Object>> entrySet = new HashSet<>();
 
-    for (Map.Entry<String, JsonNode> entry : new IterableIterator<>(node.fields())) {
-      entrySet.add(new JsonEntry(entry.getKey(), entry.getValue()));
+    for (String key : new IterableIterator<String>(node.fieldNames())) {
+      entrySet.add(new JsonEntry(key));
     }
 
     return entrySet;
@@ -215,12 +218,10 @@ public class MapLike extends NodeBacked implements Map<String, Object> {
   private class JsonEntry implements Map.Entry<String, Object> {
 
     private final String key;
-    private JsonNode value;
 
-    public JsonEntry (String key, JsonNode value) {
+    public JsonEntry (String key) {
 
       this.key = key;
-      this.value = value;
     }
 
     @Override
@@ -232,20 +233,13 @@ public class MapLike extends NodeBacked implements Map<String, Object> {
     @Override
     public Object getValue () {
 
-      return out(MapLike.this, value);
+      return get(key);
     }
 
     @Override
     public Object setValue (Object value) {
 
-      JsonNode translatedValue;
-
-      node.set(key, translatedValue = in(value));
-      this.value = translatedValue;
-
-      mutate();
-
-      return value;
+      return put(key, value);
     }
   }
 }

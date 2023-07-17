@@ -105,12 +105,9 @@ public class ListLike extends NodeBacked implements List<Object> {
     }
   }
 
-  @Override
-  public void mutate () {
+  public void incModeCount () {
 
     modCounter.incAndGet();
-
-    super.mutate();
   }
 
   private int getModCount () {
@@ -135,6 +132,7 @@ public class ListLike extends NodeBacked implements List<Object> {
 
     getNode().insert(endIndex, in(obj));
     endIndex++;
+    incModeCount();
     mutate();
 
     return true;
@@ -148,6 +146,7 @@ public class ListLike extends NodeBacked implements List<Object> {
     if ((index = indexOf(obj)) >= 0) {
       getNode().remove(startIndex + index);
       endIndex--;
+      incModeCount();
       mutate();
 
       return true;
@@ -173,6 +172,7 @@ public class ListLike extends NodeBacked implements List<Object> {
     if ((index < 0) || (index >= (endIndex - startIndex))) {
       throw new IndexOutOfBoundsException(index);
     } else {
+      incModeCount();
       mutate();
 
       return getNode().set(startIndex + index, in(element));
@@ -186,6 +186,7 @@ public class ListLike extends NodeBacked implements List<Object> {
       throw new IndexOutOfBoundsException(index);
     } else {
       endIndex++;
+      incModeCount();
       mutate();
 
       getNode().insert(startIndex + index, in(element));
@@ -203,6 +204,7 @@ public class ListLike extends NodeBacked implements List<Object> {
 
       if ((removedNode = getNode().remove(startIndex + index)) != null) {
         endIndex--;
+        incModeCount();
         mutate();
 
         return out(null, removedNode);
@@ -270,6 +272,7 @@ public class ListLike extends NodeBacked implements List<Object> {
     }
 
     if (!c.isEmpty()) {
+      incModeCount();
       mutate();
 
       return true;
@@ -295,6 +298,7 @@ public class ListLike extends NodeBacked implements List<Object> {
       }
 
       if (!c.isEmpty()) {
+        incModeCount();
         mutate();
 
         return true;
@@ -322,6 +326,7 @@ public class ListLike extends NodeBacked implements List<Object> {
     }
 
     if (changed) {
+      incModeCount();
       mutate();
 
       return true;
@@ -353,6 +358,7 @@ public class ListLike extends NodeBacked implements List<Object> {
         endIndex--;
       }
 
+      incModeCount();
       mutate();
 
       return true;
@@ -374,6 +380,7 @@ public class ListLike extends NodeBacked implements List<Object> {
     }
 
     if (changed) {
+      incModeCount();
       mutate();
     }
   }
