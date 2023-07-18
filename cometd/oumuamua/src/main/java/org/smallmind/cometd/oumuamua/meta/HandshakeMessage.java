@@ -62,7 +62,7 @@ public class HandshakeMessage extends AdvisedMetaMessage {
   @View(idioms = @Idiom(purposes = "success", visibility = OUT))
   private String clientId;
 
-  public String process (OumuamuaServer oumuamuaServer, OumuamuaServerSession serverSession, OumuamuaServerMessage serverMessage)
+  public String process (OumuamuaServer oumuamuaServer, String[] actualTransports, OumuamuaServerSession serverSession, OumuamuaServerMessage serverMessage)
     throws JsonProcessingException {
 
     SecurityPolicy securityPolicy;
@@ -73,6 +73,38 @@ public class HandshakeMessage extends AdvisedMetaMessage {
 
       return JsonCodec.writeAsString(new HandshakeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setId(getId()).setVersion(oumuamuaServer.getProtocolVersion()).setMinimumVersion(oumuamuaServer.getProtocolVersion()).setError("Unauthorized").setSupportedConnectionTypes(oumuamuaServer.getAllowedTransports().toArray(new String[0])).setAdvice(adviceNode));
     } else {
+
+      boolean serverAllowsActual = false;
+      boolean clientUsesActual = false;
+
+      for (String allowedTransport : oumuamuaServer.getAllowedTransports()) {
+        for (String actutalTransport : actualTransports) {
+          if (actutalTransport.equals(allowedTransport)) {
+            serverAllowsActual = true;
+            break;
+          }
+        }
+      }
+      if (!serverAllowsActual) {
+        adviceNode.put("reconnect", "handshake");
+
+        return JsonCodec.writeAsString(new HandshakeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setId(getId()).setVersion(oumuamuaServer.getProtocolVersion()).setMinimumVersion(oumuamuaServer.getProtocolVersion()).setError("Server does not support the current protocol").setSupportedConnectionTypes(oumuamuaServer.getAllowedTransports().toArray(new String[0])).setAdvice(adviceNode));
+      }
+
+      for (String supportedConnectionType : supportedConnectionTypes) {
+        for (String actutalTransport : actualTransports) {
+          if (actutalTransport.equalsIgnoreCase(supportedConnectionType)) {
+            clientUsesActual = true;
+            break;
+          }
+        }
+      }
+      if (!clientUsesActual) {
+        adviceNode.put("reconnect", "handshake");
+
+        return JsonCodec.writeAsString(new HandshakeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setId(getId()).setVersion(oumuamuaServer.getProtocolVersion()).setMinimumVersion(oumuamuaServer.getProtocolVersion()).setError("Client does not support the current protocol").setSupportedConnectionTypes(oumuamuaServer.getAllowedTransports().toArray(new String[0])).setAdvice(adviceNode));
+      }
+
       for (String allowedTransport : oumuamuaServer.getAllowedTransports()) {
         for (String supportedConnectionType : supportedConnectionTypes) {
           if (allowedTransport.equalsIgnoreCase(supportedConnectionType)) {

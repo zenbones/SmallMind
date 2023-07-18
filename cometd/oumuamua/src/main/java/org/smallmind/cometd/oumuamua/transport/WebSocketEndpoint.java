@@ -64,6 +64,8 @@ import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<String>, OumuamuaCarrier {
 
+  private static final String[] ACTUAL_TRANSPORTS = new String[] {"websocket"};
+
   private OumuamuaServer oumuamuaServer;
   private WebSocketTransport websocketTransport;
   private Session websocketSession;
@@ -162,7 +164,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
             serverSession = new OumuamuaServerSession(websocketTransport, this);
           }
 
-          return (handshakeView = JsonCodec.read(messageNode, HandshakeMessageRequestInView.class)).factory().process(oumuamuaServer, serverSession, new OumuamuaServerMessage(websocketTransport, context, null, HandshakeMessage.CHANNEL_ID, handshakeView.getId(), null, false, (ObjectNode)messageNode));
+          return (handshakeView = JsonCodec.read(messageNode, HandshakeMessageRequestInView.class)).factory().process(oumuamuaServer, ACTUAL_TRANSPORTS, serverSession, new OumuamuaServerMessage(websocketTransport, context, null, HandshakeMessage.CHANNEL_ID, handshakeView.getId(), null, false, (ObjectNode)messageNode));
         case "/meta/connect":
 
           return JsonCodec.read(messageNode, ConnectMessageRequestInView.class).factory().process(oumuamuaServer, serverSession);
