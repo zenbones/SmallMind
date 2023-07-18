@@ -139,7 +139,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
     System.out.println("in:" + data);
     try {
       for (JsonNode messageNode : JsonCodec.readAsJsonNode(data)) {
-        send(new OumuamuaPacket(serverSession, respond(messageNode)));
+        send(serverSession, new OumuamuaPacket(serverSession, respond(messageNode)));
       }
 
       // handle disconnect
