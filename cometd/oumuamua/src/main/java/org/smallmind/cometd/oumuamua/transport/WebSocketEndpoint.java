@@ -71,6 +71,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
   private Session websocketSession;
   private OumuamuaServerSession serverSession;
   private OumuamuaWebsocketContext context;
+  private boolean connected = false;
 
   @Override
   public void onOpen (Session websocketSession, EndpointConfig config) {
@@ -140,6 +141,11 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
         send(responseArrayBuilder.insert(0, '[').append(']').toString());
         System.out.println("out:" + responseArrayBuilder);
       }
+
+      // handle disconnect
+      if (!connected) {
+        websocketSession.close(new CloseReason(CloseReason.CloseCodes.NORMAL_CLOSURE, "Client disconnect"));
+      }
     } catch (Exception ioException) {
       LoggerManager.getLogger(WebSocketEndpoint.class).error(ioException);
     } finally {
@@ -162,6 +168,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
 
           if (serverSession == null) {
             serverSession = new OumuamuaServerSession(websocketTransport, this);
+            connected = true;
           }
 
           return (handshakeView = JsonCodec.read(messageNode, HandshakeMessageRequestInView.class)).factory().process(oumuamuaServer, ACTUAL_TRANSPORTS, serverSession, new OumuamuaServerMessage(websocketTransport, context, null, HandshakeMessage.CHANNEL_ID, handshakeView.getId(), null, false, (ObjectNode)messageNode));
@@ -169,8 +176,8 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
 
           return JsonCodec.read(messageNode, ConnectMessageRequestInView.class).factory().process(oumuamuaServer, serverSession);
         case "/meta/disconnect":
-          //TODO: destroy the server session
-          serverSession = null;
+          // disconnect will happen after the response hs been sent
+          connected = false;
 
           return JsonCodec.read(messageNode, DisconnectMessageRequestInView.class).factory().process();
         case "/meta/subscribe":
@@ -214,7 +221,8 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
   @Override
   public synchronized void onClose (Session wsSession, CloseReason closeReason) {
 
-    //TODO: destroy the server session
+    connected = false;
+    //TODO: destroy the server session!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     serverSession = null;
   }
 
