@@ -50,6 +50,8 @@ import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
 import org.smallmind.cometd.oumuamua.channel.ChannelIdCache;
 import org.smallmind.cometd.oumuamua.context.OumuamuaWebsocketContext;
+import org.smallmind.cometd.oumuamua.message.MapLike;
+import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 import org.smallmind.cometd.oumuamua.message.OumuamuaServerMessage;
 import org.smallmind.cometd.oumuamua.meta.ConnectMessageRequestInView;
 import org.smallmind.cometd.oumuamua.meta.DisconnectMessageRequestInView;
@@ -105,14 +107,29 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
   }
 
   @Override
-  public synchronized void send (String text)
+  public synchronized void send (OumuamuaPacket packet)
     throws IOException, InterruptedException, ExecutionException, TimeoutException {
 
-    if (websocketTransport.getAsyncSendTimeoutMilliseconds() > 0) {
-      websocketSession.getAsyncRemote().sendText(text).get(websocketTransport.getAsyncSendTimeoutMilliseconds(), TimeUnit.MILLISECONDS);
-    } else {
-      websocketSession.getBasicRemote().sendText(text);
+    StringBuilder sendBuilder = new StringBuilder("[");
+    boolean first = true;
+
+    for (MapLike mapLike : packet.getMessages()) {
+      if (!first) {
+        sendBuilder.append(',');
+      }
+
+      sendBuilder.append(mapLike.encode());
+      first = false;
     }
+    sendBuilder.append(']');
+
+    if (websocketTransport.getAsyncSendTimeoutMilliseconds() > 0) {
+      websocketSession.getAsyncRemote().sendText(sendBuilder.toString()).get(websocketTransport.getAsyncSendTimeoutMilliseconds(), TimeUnit.MILLISECONDS);
+    } else {
+      websocketSession.getBasicRemote().sendText(sendBuilder.toString());
+    }
+
+    System.out.println("out:" + sendBuilder.toString());
   }
 
   @Override
@@ -120,26 +137,8 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
 
     System.out.println("in:" + data);
     try {
-
-      StringBuilder responseArrayBuilder = new StringBuilder();
-      boolean first = false;
-
       for (JsonNode messageNode : JsonCodec.readAsJsonNode(data)) {
-
-        String responseText;
-
-        if ((responseText = respond(messageNode)) != null) {
-          if (first) {
-            responseArrayBuilder.append(',');
-          }
-          responseArrayBuilder.append(responseText);
-          first = true;
-        }
-      }
-
-      if (first) {
-        send(responseArrayBuilder.insert(0, '[').append(']').toString());
-        System.out.println("out:" + responseArrayBuilder);
+        send(new OumuamuaPacket(serverSession, respond(messageNode)));
       }
 
       // handle disconnect
@@ -154,7 +153,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
     }
   }
 
-  private String respond (JsonNode messageNode)
+  private MapLike[] respond (JsonNode messageNode)
     throws JsonProcessingException {
 
     if (messageNode.has("channel")) {

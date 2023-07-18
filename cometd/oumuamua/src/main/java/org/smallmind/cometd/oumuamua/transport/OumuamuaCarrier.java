@@ -32,10 +32,13 @@
  */
 package org.smallmind.cometd.oumuamua.transport;
 
+import org.smallmind.cometd.oumuamua.message.MapLike;
+import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
+
 public interface OumuamuaCarrier {
 
   String getUserAgent ();
 
-  void send (String text)
+  void send (OumuamuaPacket packet)
     throws Exception;
 }
