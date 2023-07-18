@@ -35,6 +35,7 @@ package org.smallmind.cometd.oumuamua.meta;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.cometd.bayeux.ChannelId;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
 import org.smallmind.cometd.oumuamua.message.MapLike;
@@ -49,6 +50,8 @@ import static org.smallmind.web.json.doppelganger.Visibility.OUT;
 @Doppelganger
 public class ConnectMessage extends AdvisedMetaMessage {
 
+  public static final ChannelId CHANNEL_ID = new ChannelId("/meta/connect");
+
   @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
   private String clientId;
   @View(idioms = @Idiom(purposes = "request", visibility = IN))
@@ -62,11 +65,11 @@ public class ConnectMessage extends AdvisedMetaMessage {
     if ((serverSession == null) || (!serverSession.getId().equals(getClientId()))) {
       adviceNode.put("reconnect", "handshake");
 
-      return JsonCodec.writeAsString(new ConnectMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel("/meta/connect").setId(getId()).setError("Handshake required").setAdvice(adviceNode));
+      return JsonCodec.writeAsString(new ConnectMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setId(getId()).setError("Handshake required").setAdvice(adviceNode));
     } else if (!serverSession.isHandshook()) {
       adviceNode.put("reconnect", "handshake");
 
-      return JsonCodec.writeAsString(new ConnectMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel("/meta/connect").setId(getId()).setClientId(serverSession.getId()).setError("Handshake required").setAdvice(adviceNode));
+      return JsonCodec.writeAsString(new ConnectMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setId(getId()).setClientId(serverSession.getId()).setError("Handshake required").setAdvice(adviceNode));
     } else {
       for (String allowedTransport : oumuamuaServer.getAllowedTransports()) {
         if (allowedTransport.equalsIgnoreCase(connectionType)) {
@@ -87,7 +90,7 @@ public class ConnectMessage extends AdvisedMetaMessage {
             batchedResponseBuilder.append(',').append(enqueuedMapLile.encode());
           }
 
-          connectResponseText = JsonCodec.writeAsString(new ConnectMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel("/meta/connect").setId(getId()).setClientId(serverSession.getId()).setAdvice(adviceNode));
+          connectResponseText = JsonCodec.writeAsString(new ConnectMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(CHANNEL_ID.getId()).setId(getId()).setClientId(serverSession.getId()).setAdvice(adviceNode));
 
           return (batchedResponseBuilder == null) ? connectResponseText : batchedResponseBuilder.insert(0, connectResponseText).toString();
         }
@@ -95,7 +98,7 @@ public class ConnectMessage extends AdvisedMetaMessage {
 
       adviceNode.put("reconnect", "handshake");
 
-      return JsonCodec.writeAsString(new ConnectMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel("/meta/connect").setId(getId()).setClientId(serverSession.getId()).setError("Unavailable transport").setAdvice(adviceNode));
+      return JsonCodec.writeAsString(new ConnectMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setId(getId()).setClientId(serverSession.getId()).setError("Unavailable transport").setAdvice(adviceNode));
     }
   }
 

@@ -43,7 +43,6 @@ import javax.websocket.MessageHandler;
 import javax.websocket.Session;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.cometd.bayeux.server.BayeuxServer;
@@ -54,8 +53,10 @@ import org.smallmind.cometd.oumuamua.context.OumuamuaWebsocketContext;
 import org.smallmind.cometd.oumuamua.message.OumuamuaServerMessage;
 import org.smallmind.cometd.oumuamua.meta.ConnectMessageRequestInView;
 import org.smallmind.cometd.oumuamua.meta.DisconnectMessageRequestInView;
+import org.smallmind.cometd.oumuamua.meta.HandshakeMessage;
 import org.smallmind.cometd.oumuamua.meta.HandshakeMessageRequestInView;
 import org.smallmind.cometd.oumuamua.meta.PublishMessageRequestInView;
+import org.smallmind.cometd.oumuamua.meta.SubscribeMessage;
 import org.smallmind.cometd.oumuamua.meta.SubscribeMessageRequestInView;
 import org.smallmind.cometd.oumuamua.meta.UnsubscribeMessageRequestInView;
 import org.smallmind.scribe.pen.LoggerManager;
@@ -161,7 +162,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
             serverSession = new OumuamuaServerSession(websocketTransport, this);
           }
 
-          return (handshakeView = JsonCodec.read(messageNode, HandshakeMessageRequestInView.class)).factory().process(oumuamuaServer, serverSession, new OumuamuaServerMessage(websocketTransport, context, null, ChannelIdCache.generate(channel), handshakeView.getId(), null, false, (ObjectNode)messageNode));
+          return (handshakeView = JsonCodec.read(messageNode, HandshakeMessageRequestInView.class)).factory().process(oumuamuaServer, serverSession, new OumuamuaServerMessage(websocketTransport, context, null, HandshakeMessage.CHANNEL_ID, handshakeView.getId(), null, false, (ObjectNode)messageNode));
         case "/meta/connect":
 
           return JsonCodec.read(messageNode, ConnectMessageRequestInView.class).factory().process(oumuamuaServer, serverSession);
@@ -174,7 +175,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
 
           SubscribeMessageRequestInView subscribeView;
 
-          return (subscribeView = JsonCodec.read(messageNode, SubscribeMessageRequestInView.class)).factory().process(oumuamuaServer, serverSession, new OumuamuaServerMessage(websocketTransport, context, null, ChannelIdCache.generate(channel), subscribeView.getId(), serverSession.getId(), false, (ObjectNode)messageNode));
+          return (subscribeView = JsonCodec.read(messageNode, SubscribeMessageRequestInView.class)).factory().process(oumuamuaServer, serverSession, new OumuamuaServerMessage(websocketTransport, context, null, SubscribeMessage.CHANNEL_ID, subscribeView.getId(), serverSession.getId(), false, (ObjectNode)messageNode));
         case "/meta/unsubscribe":
           return JsonCodec.read(messageNode, UnsubscribeMessageRequestInView.class).factory().process(oumuamuaServer, serverSession);
         default:

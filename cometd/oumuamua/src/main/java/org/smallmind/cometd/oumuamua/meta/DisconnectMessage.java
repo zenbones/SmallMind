@@ -33,6 +33,7 @@
 package org.smallmind.cometd.oumuamua.meta;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import org.cometd.bayeux.ChannelId;
 import org.smallmind.web.json.doppelganger.Doppelganger;
 import org.smallmind.web.json.doppelganger.Idiom;
 import org.smallmind.web.json.doppelganger.View;
@@ -44,13 +45,15 @@ import static org.smallmind.web.json.doppelganger.Visibility.OUT;
 @Doppelganger
 public class DisconnectMessage extends MetaMessage {
 
+  public static final ChannelId CHANNEL_ID = new ChannelId("/meta/disconnect");
+
   @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
   private String clientId;
 
   public String process ()
     throws JsonProcessingException {
 
-    return JsonCodec.writeAsString(new DisconnectMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel("/meta/disconnect").setId(getId()));
+    return JsonCodec.writeAsString(new DisconnectMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(CHANNEL_ID.getId()).setId(getId()));
   }
 
   public String getClientId () {

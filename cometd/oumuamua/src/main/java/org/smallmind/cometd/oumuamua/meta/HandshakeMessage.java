@@ -35,6 +35,7 @@ package org.smallmind.cometd.oumuamua.meta;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.cometd.bayeux.ChannelId;
 import org.cometd.bayeux.server.SecurityPolicy;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
@@ -49,6 +50,8 @@ import static org.smallmind.web.json.doppelganger.Visibility.OUT;
 
 @Doppelganger
 public class HandshakeMessage extends AdvisedMetaMessage {
+
+  public static final ChannelId CHANNEL_ID = new ChannelId("/meta/handshake");
 
   @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
   private String[] supportedConnectionTypes;
@@ -68,14 +71,14 @@ public class HandshakeMessage extends AdvisedMetaMessage {
     if (((securityPolicy = oumuamuaServer.getSecurityPolicy()) != null) && (!securityPolicy.canHandshake(oumuamuaServer, serverSession, serverMessage))) {
       adviceNode.put("reconnect", "handshake");
 
-      return JsonCodec.writeAsString(new HandshakeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel("/meta/handshake").setId(getId()).setVersion(oumuamuaServer.getProtocolVersion()).setMinimumVersion(oumuamuaServer.getProtocolVersion()).setError("Unauthorized").setSupportedConnectionTypes(oumuamuaServer.getAllowedTransports().toArray(new String[0])).setAdvice(adviceNode));
+      return JsonCodec.writeAsString(new HandshakeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setId(getId()).setVersion(oumuamuaServer.getProtocolVersion()).setMinimumVersion(oumuamuaServer.getProtocolVersion()).setError("Unauthorized").setSupportedConnectionTypes(oumuamuaServer.getAllowedTransports().toArray(new String[0])).setAdvice(adviceNode));
     } else {
       for (String allowedTransport : oumuamuaServer.getAllowedTransports()) {
         for (String supportedConnectionType : supportedConnectionTypes) {
           if (allowedTransport.equalsIgnoreCase(supportedConnectionType)) {
             serverSession.setHandshook(true);
 
-            return JsonCodec.writeAsString(new HandshakeMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel("/meta/handshake").setId(getId()).setVersion(oumuamuaServer.getProtocolVersion()).setMinimumVersion(oumuamuaServer.getProtocolVersion()).setClientId(serverSession.getId()).setSupportedConnectionTypes(oumuamuaServer.getAllowedTransports().toArray(new String[0])).setAdvice(adviceNode));
+            return JsonCodec.writeAsString(new HandshakeMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(CHANNEL_ID.getId()).setId(getId()).setVersion(oumuamuaServer.getProtocolVersion()).setMinimumVersion(oumuamuaServer.getProtocolVersion()).setClientId(serverSession.getId()).setSupportedConnectionTypes(oumuamuaServer.getAllowedTransports().toArray(new String[0])).setAdvice(adviceNode));
           }
         }
       }
@@ -83,7 +86,7 @@ public class HandshakeMessage extends AdvisedMetaMessage {
 
     adviceNode.put("reconnect", "handshake");
 
-    return JsonCodec.writeAsString(new HandshakeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel("/meta/handshake").setId(getId()).setVersion(oumuamuaServer.getProtocolVersion()).setMinimumVersion(oumuamuaServer.getProtocolVersion()).setError("No common negotiated transport").setSupportedConnectionTypes(oumuamuaServer.getAllowedTransports().toArray(new String[0])).setAdvice(adviceNode));
+    return JsonCodec.writeAsString(new HandshakeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setId(getId()).setVersion(oumuamuaServer.getProtocolVersion()).setMinimumVersion(oumuamuaServer.getProtocolVersion()).setError("No common negotiated transport").setSupportedConnectionTypes(oumuamuaServer.getAllowedTransports().toArray(new String[0])).setAdvice(adviceNode));
   }
 
   public String[] getSupportedConnectionTypes () {
