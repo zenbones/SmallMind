@@ -307,10 +307,12 @@ public class OumuamuaServerChannel implements ServerChannel {
 
   }
 
-  public void send (MapLike mapLike) {
+  public void send (MapLike mapLike, HashSet<String> sessionIdSet) {
 
     for (OumuamuaServerSession serverSession : subscriptionMap.values()) {
-      serverSession.send(mapLike);
+      if (sessionIdSet.add(serverSession.getId())) {
+        serverSession.send(mapLike);
+      }
     }
   }
 

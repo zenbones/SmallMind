@@ -32,6 +32,7 @@
  */
 package org.smallmind.cometd.oumuamua;
 
+import java.util.HashSet;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.cometd.bayeux.ChannelId;
@@ -60,6 +61,6 @@ public class ChannelTest {
 
     ChannelIterator i = new ChannelIterator("/a/b/c");
 
-    t.publish(i, new MapLike(null, (ObjectNode)JsonCodec.writeAsJsonNode(new DeliveryMessageSuccessOutView().setData(JsonNodeFactory.instance.textNode("foobar")))));
+    t.publish(i, new MapLike(null, (ObjectNode)JsonCodec.writeAsJsonNode(new DeliveryMessageSuccessOutView().setData(JsonNodeFactory.instance.textNode("foobar")))), new HashSet<>());
   }
 }

@@ -149,7 +149,7 @@ public class JsonCodec {
 
           ObjectNode objectNode = JsonNodeFactory.instance.objectNode();
 
-          for (Map.Entry<String, JsonNode> nodeEntry : new IterableIterator<>(objectNode.fields())) {
+          for (Map.Entry<String, JsonNode> nodeEntry : new IterableIterator<>(node.fields())) {
             objectNode.set(nodeEntry.getKey(), clone(nodeEntry.getValue()));
           }
 

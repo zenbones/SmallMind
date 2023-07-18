@@ -76,6 +76,7 @@ public class ConnectMessage extends AdvisedMetaMessage {
           MapLike enqueuedMapLile;
 
           serverSession.setConnected(true);
+          // TODO: Set the 'interval' properly?
           adviceNode.put("interval", 30000);
 
           while ((enqueuedMapLile = serverSession.poll()) != null) {

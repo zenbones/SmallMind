@@ -32,23 +32,74 @@
  */
 package org.smallmind.cometd.oumuamua;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import org.smallmind.cometd.oumuamua.meta.HandshakeMessageRequestInView;
-import org.smallmind.web.json.scaffold.util.JsonCodec;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import org.smallmind.cometd.oumuamua.message.ExtMapLike;
+import org.smallmind.cometd.oumuamua.message.ListLike;
+import org.smallmind.cometd.oumuamua.message.MapLike;
 
 public class Kangaroo {
 
   public static void main (String... args)
     throws Exception {
 
-    String s = "{\n" +
-                 "    \"channel\": \"/meta/handshake\",\n" +
-                 "    \"version\": \"1.0\",\n" +
-                 "    \"minimumVersion\": \"1.0beta\",\n" +
-                 "    \"supportedConnectionTypes\": [\"long-polling\", \"callback-polling\", \"iframe\"]\n" +
-                 "}";
+    MapLike m = new MapLike(null, JsonNodeFactory.instance.objectNode());
 
-    JsonNode n = JsonCodec.readAsJsonNode(s);
-    JsonCodec.convert(n, HandshakeMessageRequestInView.class);
+    m.put("first", new HashMap<String, Object>());
+    System.out.println(m.encode());
+    System.out.println(m.encode());
+    m.put("second", Collections.emptyList());
+    System.out.println(m.encode());
+    System.out.println(m.encode());
+    ((List)m.get("second")).add(1);
+    System.out.println(m.encode());
+    System.out.println(m.encode());
+    ((List)m.get("second")).addAll(List.of(2, 3, 4, 5, 6, 7, 8, 9, 0));
+    System.out.println(m.encode());
+    System.out.println(m.encode());
+    List subList = ((List)m.get("second")).subList(2, 6);
+    System.out.println(((ListLike)subList).encode());
+    System.out.println(((ListLike)subList).encode());
+    subList.add(2, "A");
+    subList.remove(3);
+    System.out.println(((ListLike)subList).encode());
+    System.out.println(((ListLike)subList).encode());
+    System.out.println(m.encode());
+    System.out.println(m.encode());
+    m.put("ext", Map.of("ack", Map.of("one",8)));
+    System.out.println(m.encode());
+    System.out.println(m.encode());
+
+    ExtMapLike e = new ExtMapLike(m);
+    System.out.println("------------------------------------");
+
+    System.out.println(e.encode());
+    System.out.println(e.encode());
+
+    ((Map)((Map)e.get("ext")).get("ack")).put("one",10);
+    System.out.println(e.encode());
+    System.out.println(e.encode());
+
+    ((Map)e.get("ext")).put("auth", "foobar");
+    ((Map)e.get("ext")).put("custom", Map.of("a", "b"));
+    System.out.println(e.encode());
+    System.out.println(e.encode());
+    ((Map)((Map)e.get("ext")).get("custom")).put("c", "d");
+    System.out.println(e.encode());
+    System.out.println(e.encode());
+    e.remove("ext");
+    System.out.println(e.encode());
+    System.out.println(e.encode());
+    ((Map)e.createIfAbsentMapLike("ext")).put("ack", 8);
+    System.out.println(e.encode());
+    System.out.println(e.encode());
+    ((Map)e.createIfAbsentMapLike("ext")).put("auth", "foobar");
+    System.out.println(e.encode());
+    System.out.println(e.encode());
+
+    System.out.println(m.encode());
   }
 }

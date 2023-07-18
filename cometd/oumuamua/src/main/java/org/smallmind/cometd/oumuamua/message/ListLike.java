@@ -44,14 +44,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import org.smallmind.nutsnbolts.util.Counter;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public class ListLike extends NodeBacked implements List<Object> {
 
-  private final Counter modCounter;
+
   private final ArrayNode node;
   private final int startIndex;
+  private int modification;
   private int endIndex;
 
   public ListLike (NodeBacked parent, ArrayNode node) {
@@ -62,8 +62,6 @@ public class ListLike extends NodeBacked implements List<Object> {
 
     startIndex = 0;
     endIndex = getNode().size();
-
-    modCounter = new Counter(0);
   }
 
   public ListLike (ListLike listLike, int startIndex, int endIndex) {
@@ -77,7 +75,7 @@ public class ListLike extends NodeBacked implements List<Object> {
       this.startIndex = startIndex;
       this.endIndex = endIndex;
 
-      modCounter = listLike.modCounter;
+      modification = listLike.modification;
     }
   }
 
@@ -105,14 +103,14 @@ public class ListLike extends NodeBacked implements List<Object> {
     }
   }
 
-  public void incModeCount () {
+  public void modify () {
 
-    modCounter.incAndGet();
+    modification += 1;
   }
 
-  private int getModCount () {
+  private int getModification () {
 
-    return modCounter.get();
+    return modification;
   }
 
   @Override
@@ -132,7 +130,7 @@ public class ListLike extends NodeBacked implements List<Object> {
 
     getNode().insert(endIndex, in(obj));
     endIndex++;
-    incModeCount();
+    modify();
     mutate();
 
     return true;
@@ -146,7 +144,7 @@ public class ListLike extends NodeBacked implements List<Object> {
     if ((index = indexOf(obj)) >= 0) {
       getNode().remove(startIndex + index);
       endIndex--;
-      incModeCount();
+      modify();
       mutate();
 
       return true;
@@ -172,7 +170,7 @@ public class ListLike extends NodeBacked implements List<Object> {
     if ((index < 0) || (index >= (endIndex - startIndex))) {
       throw new IndexOutOfBoundsException(index);
     } else {
-      incModeCount();
+      modify();
       mutate();
 
       return getNode().set(startIndex + index, in(element));
@@ -186,7 +184,7 @@ public class ListLike extends NodeBacked implements List<Object> {
       throw new IndexOutOfBoundsException(index);
     } else {
       endIndex++;
-      incModeCount();
+      modify();
       mutate();
 
       getNode().insert(startIndex + index, in(element));
@@ -204,7 +202,7 @@ public class ListLike extends NodeBacked implements List<Object> {
 
       if ((removedNode = getNode().remove(startIndex + index)) != null) {
         endIndex--;
-        incModeCount();
+        modify();
         mutate();
 
         return out(null, removedNode);
@@ -272,7 +270,7 @@ public class ListLike extends NodeBacked implements List<Object> {
     }
 
     if (!c.isEmpty()) {
-      incModeCount();
+      modify();
       mutate();
 
       return true;
@@ -298,7 +296,7 @@ public class ListLike extends NodeBacked implements List<Object> {
       }
 
       if (!c.isEmpty()) {
-        incModeCount();
+        modify();
         mutate();
 
         return true;
@@ -326,7 +324,7 @@ public class ListLike extends NodeBacked implements List<Object> {
     }
 
     if (changed) {
-      incModeCount();
+      modify();
       mutate();
 
       return true;
@@ -358,7 +356,7 @@ public class ListLike extends NodeBacked implements List<Object> {
         endIndex--;
       }
 
-      incModeCount();
+      modify();
       mutate();
 
       return true;
@@ -380,7 +378,7 @@ public class ListLike extends NodeBacked implements List<Object> {
     }
 
     if (changed) {
-      incModeCount();
+      modify();
       mutate();
     }
   }
@@ -449,7 +447,7 @@ public class ListLike extends NodeBacked implements List<Object> {
         this.listLike = listLike;
         this.index = index;
 
-        expectedModCount = listLike.getModCount();
+        expectedModCount = listLike.getModification();
       }
     }
 
@@ -462,7 +460,7 @@ public class ListLike extends NodeBacked implements List<Object> {
     @Override
     public Object next () {
 
-      if (expectedModCount != listLike.getModCount()) {
+      if (expectedModCount != listLike.getModification()) {
         throw new ConcurrentModificationException();
       } else if (index >= listLike.size()) {
         throw new NoSuchElementException();
@@ -481,7 +479,7 @@ public class ListLike extends NodeBacked implements List<Object> {
     @Override
     public Object previous () {
 
-      if (expectedModCount != listLike.getModCount()) {
+      if (expectedModCount != listLike.getModification()) {
         throw new ConcurrentModificationException();
       } else if (index <= 0) {
         throw new NoSuchElementException();
@@ -506,33 +504,33 @@ public class ListLike extends NodeBacked implements List<Object> {
     @Override
     public void remove () {
 
-      if (expectedModCount != listLike.getModCount()) {
+      if (expectedModCount != listLike.getModification()) {
         throw new ConcurrentModificationException();
       } else {
         listLike.remove(index);
-        expectedModCount = listLike.getModCount();
+        expectedModCount = listLike.getModification();
       }
     }
 
     @Override
     public void set (Object obj) {
 
-      if (expectedModCount != listLike.getModCount()) {
+      if (expectedModCount != listLike.getModification()) {
         throw new ConcurrentModificationException();
       } else {
         listLike.set(index, obj);
-        expectedModCount = listLike.getModCount();
+        expectedModCount = listLike.getModification();
       }
     }
 
     @Override
     public void add (Object obj) {
 
-      if (expectedModCount != listLike.getModCount()) {
+      if (expectedModCount != listLike.getModification()) {
         throw new ConcurrentModificationException();
       } else {
         listLike.add(obj);
-        expectedModCount = listLike.getModCount();
+        expectedModCount = listLike.getModification();
       }
     }
   }

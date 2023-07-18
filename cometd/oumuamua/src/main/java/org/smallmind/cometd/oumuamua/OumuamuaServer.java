@@ -263,7 +263,7 @@ public class OumuamuaServer implements BayeuxServer {
 
   public void publishToChannel (String id, MapLike mapLike) {
 
-    channelTree.publish(new ChannelIterator(id), mapLike);
+    channelTree.publish(new ChannelIterator(id), mapLike, new HashSet<>());
   }
 
   public void cascadeRemoveChannel (ServerChannel channel) {

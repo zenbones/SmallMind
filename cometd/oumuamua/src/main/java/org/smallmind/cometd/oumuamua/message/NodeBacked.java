@@ -62,7 +62,12 @@ public abstract class NodeBacked {
     return parent;
   }
 
-  public synchronized void mutate () {
+  public boolean isMutated () {
+
+    return encodedVersion != version;
+  }
+
+  public void mutate () {
 
     version += 1;
 
@@ -71,14 +76,19 @@ public abstract class NodeBacked {
     }
   }
 
-  public synchronized String encode ()
-    throws JsonProcessingException {
-
-    if ((encodedText == null) || (encodedVersion != version)) {
-      encodedText = writeAsString();
-    }
+  public void resetMutation () {
 
     encodedVersion = version;
+  }
+
+  public String encode ()
+    throws JsonProcessingException {
+
+    if ((encodedText == null) || isMutated()) {
+      System.out.println("encoding...");
+      encodedText = writeAsString();
+      resetMutation();
+    }
 
     return encodedText;
   }
