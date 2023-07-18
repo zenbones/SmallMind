@@ -229,7 +229,6 @@ public class ExtMapLike extends MapLike {
         copiedNode.set(Message.EXT_FIELD, extNode);
       }
 
-      System.out.println("encoding...");
       encodedText = JsonCodec.writeAsString(copiedNode);
       resetMutation();
 

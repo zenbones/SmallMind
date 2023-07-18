@@ -85,7 +85,6 @@ public abstract class NodeBacked {
     throws JsonProcessingException {
 
     if ((encodedText == null) || isMutated()) {
-      System.out.println("encoding...");
       encodedText = writeAsString();
       resetMutation();
     }
