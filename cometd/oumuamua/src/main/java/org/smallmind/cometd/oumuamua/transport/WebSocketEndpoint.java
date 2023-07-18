@@ -227,7 +227,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
   }
 
   @Override
-  public void onError (Session wsSession, Throwable failure) {
+  public synchronized void onError (Session wsSession, Throwable failure) {
 
     LoggerManager.getLogger(WebSocketEndpoint.class).error(failure);
   }
