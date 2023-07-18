@@ -53,7 +53,7 @@ import org.cometd.bayeux.server.ServerSession;
 import org.smallmind.cometd.oumuamua.channel.ChannelIdCache;
 import org.smallmind.cometd.oumuamua.channel.ChannelIterator;
 import org.smallmind.cometd.oumuamua.channel.ChannelTree;
-import org.smallmind.cometd.oumuamua.message.MapLike;
+import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 import org.smallmind.cometd.oumuamua.transport.OumuamuaTransport;
 
 public class OumuamuaServer implements BayeuxServer {
@@ -261,9 +261,9 @@ public class OumuamuaServer implements BayeuxServer {
     ChannelTree channelTree;
   }
 
-  public void publishToChannel (String id, MapLike mapLike) {
+  public void publishToChannel (String id, OumuamuaPacket packet) {
 
-    channelTree.publish(new ChannelIterator(id), mapLike, new HashSet<>());
+    channelTree.publish(new ChannelIterator(id), packet, new HashSet<>());
   }
 
   public void cascadeRemoveChannel (ServerChannel channel) {

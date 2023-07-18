@@ -263,7 +263,7 @@ public class OumuamuaServerSession implements ServerSession {
       messageQueue.add(packet);
     } else {
       try {
-        carrier.send(packet);
+        carrier.send(this, packet);
       } catch (Exception exception) {
         LoggerManager.getLogger(OumuamuaServerSession.class).error(exception);
       }

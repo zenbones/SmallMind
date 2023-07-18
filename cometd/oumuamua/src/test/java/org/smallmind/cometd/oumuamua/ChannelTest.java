@@ -40,6 +40,7 @@ import org.smallmind.cometd.oumuamua.channel.ChannelIterator;
 import org.smallmind.cometd.oumuamua.channel.ChannelTree;
 import org.smallmind.cometd.oumuamua.channel.RemovalOperation;
 import org.smallmind.cometd.oumuamua.message.MapLike;
+import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 import org.smallmind.cometd.oumuamua.meta.DeliveryMessageSuccessOutView;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
@@ -61,6 +62,6 @@ public class ChannelTest {
 
     ChannelIterator i = new ChannelIterator("/a/b/c");
 
-    t.publish(i, new MapLike(null, (ObjectNode)JsonCodec.writeAsJsonNode(new DeliveryMessageSuccessOutView().setData(JsonNodeFactory.instance.textNode("foobar")))), new HashSet<>());
+    t.publish(i, new OumuamuaPacket(null, new MapLike(null, (ObjectNode)JsonCodec.writeAsJsonNode(new DeliveryMessageSuccessOutView().setData(JsonNodeFactory.instance.textNode("foobar"))))), new HashSet<>());
   }
 }

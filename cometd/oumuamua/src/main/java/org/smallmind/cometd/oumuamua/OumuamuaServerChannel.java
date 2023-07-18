@@ -47,6 +47,7 @@ import org.cometd.bayeux.server.ServerChannel;
 import org.cometd.bayeux.server.ServerMessage;
 import org.cometd.bayeux.server.ServerSession;
 import org.smallmind.cometd.oumuamua.message.MapLike;
+import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 
 public class OumuamuaServerChannel implements ServerChannel {
 
@@ -307,11 +308,11 @@ public class OumuamuaServerChannel implements ServerChannel {
 
   }
 
-  public void send (MapLike mapLike, HashSet<String> sessionIdSet) {
+  public void send (OumuamuaPacket packet, HashSet<String> sessionIdSet) {
 
     for (OumuamuaServerSession serverSession : subscriptionMap.values()) {
       if (sessionIdSet.add(serverSession.getId())) {
-        serverSession.send(mapLike);
+        serverSession.send(packet);
       }
     }
   }

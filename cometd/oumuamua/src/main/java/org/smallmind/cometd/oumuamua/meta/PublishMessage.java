@@ -40,6 +40,7 @@ import org.cometd.bayeux.server.ServerChannel;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
 import org.smallmind.cometd.oumuamua.message.MapLike;
+import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 import org.smallmind.cometd.oumuamua.message.OumuamuaServerMessage;
 import org.smallmind.web.json.doppelganger.Doppelganger;
 import org.smallmind.web.json.doppelganger.Idiom;
@@ -86,12 +87,12 @@ public class PublishMessage extends MetaMessage {
         } else {
           try {
 
-            MapLike deliveryMapLike;
+            OumuamuaPacket deliveryPacket;
 
-            oumuamuaServer.publishToChannel(getChannel(), deliveryMapLike = new MapLike(null, (ObjectNode)JsonCodec.writeAsJsonNode(new DeliveryMessageSuccessOutView().setChannel(getChannel()).setId(getId()).setData(getData()))));
+            oumuamuaServer.publishToChannel(getChannel(), deliveryPacket = new OumuamuaPacket(serverSession, new MapLike(null, (ObjectNode)JsonCodec.writeAsJsonNode(new DeliveryMessageSuccessOutView().setChannel(getChannel()).setId(getId()).setData(getData())))));
 
             if (serverSession.isBroadcastToPublisher()) {
-              serverSession.send(deliveryMapLike);
+              serverSession.send(deliveryPacket);
             }
 
             return JsonCodec.writeAsString(new PublishMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(getChannel()).setId(getId()));

@@ -38,7 +38,7 @@ import org.cometd.bayeux.ChannelId;
 import org.cometd.bayeux.MarkedReference;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerChannel;
-import org.smallmind.cometd.oumuamua.message.MapLike;
+import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 
 public class ChannelTree {
 
@@ -100,7 +100,7 @@ public class ChannelTree {
     return (index == (channelId.depth() - 1)) ? new MarkedReference<>(child, created) : child.add(oumuamuaServer, index + 1, channelId);
   }
 
-  public void publish (ChannelIterator channelIterator, MapLike mapLike, HashSet<String> sessionIdSet) {
+  public void publish (ChannelIterator channelIterator, OumuamuaPacket packet, HashSet<String> sessionIdSet) {
 
     if (channelIterator.hasNext()) {
 
@@ -108,10 +108,10 @@ public class ChannelTree {
       ChannelTree nextBranch;
 
       if ((deepWildBranch = childMap.get(ChannelId.DEEPWILD)) != null) {
-        deepWildBranch.getServerChannel().send(mapLike, sessionIdSet);
+        deepWildBranch.getServerChannel().send(packet, sessionIdSet);
       }
       if ((nextBranch = childMap.get(channelIterator.next())) != null) {
-        nextBranch.publish(channelIterator, mapLike, sessionIdSet);
+        nextBranch.publish(channelIterator, packet, sessionIdSet);
       }
     } else {
       if (parent != null) {
@@ -119,11 +119,11 @@ public class ChannelTree {
         ChannelTree wildBranch;
 
         if ((wildBranch = parent.childMap.get(ChannelId.WILD)) != null) {
-          wildBranch.getServerChannel().send(mapLike, sessionIdSet);
+          wildBranch.getServerChannel().send(packet, sessionIdSet);
         }
       }
 
-      getServerChannel().send(mapLike, sessionIdSet);
+      getServerChannel().send(packet, sessionIdSet);
     }
   }
 
