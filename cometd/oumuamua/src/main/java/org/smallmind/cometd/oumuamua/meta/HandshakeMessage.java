@@ -81,6 +81,7 @@ public class HandshakeMessage extends AdvisedMetaMessage {
         String[] negotiatedTransports = TransportNegotiator.negotiate(actualTransports, oumuamuaServer.getAllowedTransports(), supportedConnectionTypes);
 
         serverSession.setNegotiatedTransports(negotiatedTransports);
+        serverSession.setHandshook(true);
 
         return OumuamuaPacket.asPackets(serverSession, new HandshakeMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(CHANNEL_ID.getId()).setId(getId()).setVersion(oumuamuaServer.getProtocolVersion()).setMinimumVersion(oumuamuaServer.getProtocolVersion()).setClientId(serverSession.getId()).setSupportedConnectionTypes(negotiatedTransports));
       } catch (TransportNegotiationFailure transportNegotiationFailure) {

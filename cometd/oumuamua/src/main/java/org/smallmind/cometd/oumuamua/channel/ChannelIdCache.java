@@ -51,7 +51,7 @@ public class ChannelIdCache {
     ChannelId channelId;
 
     if ((channelId = CHANNEL_ID_MAP_LOCAL.get().get(id)) == null) {
-      CHANNEL_ID_MAP_LOCAL.get().put(id, channelId = ChannelIdCache.generate(id));
+      CHANNEL_ID_MAP_LOCAL.get().put(id, channelId = new ChannelId(id));
     }
 
     return channelId;

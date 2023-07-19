@@ -36,8 +36,6 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.websocket.ContainerProvider;
 import javax.websocket.WebSocketContainer;
-import org.cometd.bayeux.Message;
-import org.cometd.bayeux.client.ClientSessionChannel;
 import org.cometd.client.BayeuxClient;
 import org.cometd.client.transport.ClientTransport;
 import org.cometd.client.websocket.javax.WebSocketTransport;
