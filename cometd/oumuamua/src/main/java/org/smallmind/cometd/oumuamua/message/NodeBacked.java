@@ -32,6 +32,7 @@
  */
 package org.smallmind.cometd.oumuamua.message;
 
+import java.io.Serializable;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -40,7 +41,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
-public abstract class NodeBacked {
+public abstract class NodeBacked implements Serializable {
 
   private final NodeBacked parent;
   private String encodedText;
