@@ -108,19 +108,21 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
   }
 
   @Override
-  public synchronized void send (ServerSession receiver, OumuamuaPacket packet)
+  public synchronized void send (ServerSession receiver, OumuamuaPacket... packets)
     throws IOException, InterruptedException, ExecutionException, TimeoutException {
 
     StringBuilder sendBuilder = new StringBuilder("[");
     boolean first = true;
 
-    for (MapLike mapLike : packet.getMessages()) {
-      if (!first) {
-        sendBuilder.append(',');
-      }
+    for (OumuamuaPacket packet : packets) {
+      for (MapLike mapLike : packet.getMessages()) {
+        if (!first) {
+          sendBuilder.append(',');
+        }
 
-      sendBuilder.append(mapLike.encode());
-      first = false;
+        sendBuilder.append(mapLike.encode());
+        first = false;
+      }
     }
     sendBuilder.append(']');
 
@@ -139,7 +141,12 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
     System.out.println("in:" + data);
     try {
       for (JsonNode messageNode : JsonCodec.readAsJsonNode(data)) {
-        send(serverSession, new OumuamuaPacket(serverSession, respond(messageNode)));
+
+        OumuamuaPacket[] packets;
+
+        if ((packets = respond(messageNode)) != null) {
+          send(serverSession, packets);
+        }
       }
 
       // handle disconnect
@@ -154,7 +161,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
     }
   }
 
-  private MapLike[] respond (JsonNode messageNode)
+  private OumuamuaPacket[] respond (JsonNode messageNode)
     throws JsonProcessingException {
 
     if (messageNode.has("channel")) {
@@ -179,7 +186,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
           // disconnect will happen after the response hs been sent
           connected = false;
 
-          return JsonCodec.read(messageNode, DisconnectMessageRequestInView.class).factory().process();
+          return JsonCodec.read(messageNode, DisconnectMessageRequestInView.class).factory().process(serverSession);
         case "/meta/subscribe":
 
           SubscribeMessageRequestInView subscribeView;
@@ -203,7 +210,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
               errorNode.put("clientId", serverSession.getId());
             }
 
-            return JsonCodec.writeAsString(errorNode);
+            return OumuamuaPacket.asPackets(serverSession, errorNode);
           } else if (channel.startsWith("/service/")) {
             // TODO: service
           } else {

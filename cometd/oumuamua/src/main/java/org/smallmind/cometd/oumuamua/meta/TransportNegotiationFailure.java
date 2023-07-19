@@ -32,36 +32,10 @@
  */
 package org.smallmind.cometd.oumuamua.meta;
 
-import org.cometd.bayeux.ChannelId;
-import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
-import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
-import org.smallmind.web.json.doppelganger.Doppelganger;
-import org.smallmind.web.json.doppelganger.Idiom;
-import org.smallmind.web.json.doppelganger.View;
+public class TransportNegotiationFailure extends Exception {
 
-import static org.smallmind.web.json.doppelganger.Visibility.IN;
-import static org.smallmind.web.json.doppelganger.Visibility.OUT;
+  public TransportNegotiationFailure (String message) {
 
-@Doppelganger
-public class DisconnectMessage extends MetaMessage {
-
-  public static final ChannelId CHANNEL_ID = new ChannelId("/meta/disconnect");
-
-  @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
-  private String clientId;
-
-  public OumuamuaPacket[] process (OumuamuaServerSession serverSession) {
-
-    return OumuamuaPacket.asPackets(serverSession, new DisconnectMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(CHANNEL_ID.getId()).setId(getId()));
-  }
-
-  public String getClientId () {
-
-    return clientId;
-  }
-
-  public void setClientId (String clientId) {
-
-    this.clientId = clientId;
+    super(message);
   }
 }

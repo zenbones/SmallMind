@@ -33,10 +33,15 @@
 package org.smallmind.cometd.oumuamua.meta;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
+import org.smallmind.cometd.oumuamua.message.MapLike;
+import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 import org.smallmind.web.json.doppelganger.Doppelganger;
 import org.smallmind.web.json.doppelganger.Hierarchy;
 import org.smallmind.web.json.doppelganger.Idiom;
 import org.smallmind.web.json.doppelganger.View;
+import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 import static org.smallmind.web.json.doppelganger.Visibility.IN;
 import static org.smallmind.web.json.doppelganger.Visibility.OUT;

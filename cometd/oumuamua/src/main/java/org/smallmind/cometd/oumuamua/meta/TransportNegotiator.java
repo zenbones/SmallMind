@@ -32,36 +32,44 @@
  */
 package org.smallmind.cometd.oumuamua.meta;
 
-import org.cometd.bayeux.ChannelId;
-import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
-import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
-import org.smallmind.web.json.doppelganger.Doppelganger;
-import org.smallmind.web.json.doppelganger.Idiom;
-import org.smallmind.web.json.doppelganger.View;
+import java.util.LinkedList;
+import java.util.List;
 
-import static org.smallmind.web.json.doppelganger.Visibility.IN;
-import static org.smallmind.web.json.doppelganger.Visibility.OUT;
+public class TransportNegotiator {
 
-@Doppelganger
-public class DisconnectMessage extends MetaMessage {
+  public static String[] negotiate (String[] actualTransports, List<String> allowedTransports, String... requestedConnectionTypes)
+    throws TransportNegotiationFailure {
 
-  public static final ChannelId CHANNEL_ID = new ChannelId("/meta/disconnect");
+    LinkedList<String> possibleTransports = new LinkedList<>();
 
-  @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
-  private String clientId;
+    for (String actualTransport : actualTransports) {
+      for (String allowedTransport : allowedTransports) {
+        if (actualTransport.equals(allowedTransport)) {
+          possibleTransports.add(actualTransport);
+        }
+      }
+    }
+    if (possibleTransports.isEmpty()) {
 
-  public OumuamuaPacket[] process (OumuamuaServerSession serverSession) {
+      throw new TransportNegotiationFailure("The server does not support the current transport");
+    } else {
 
-    return OumuamuaPacket.asPackets(serverSession, new DisconnectMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(CHANNEL_ID.getId()).setId(getId()));
-  }
+      LinkedList<String> matchingTranports = new LinkedList<>();
 
-  public String getClientId () {
+      for (String requestedConnectionType : requestedConnectionTypes) {
+        for (String possibleTransport : possibleTransports) {
+          if (possibleTransport.equalsIgnoreCase(requestedConnectionType)) {
+            matchingTranports.add(possibleTransport);
+          }
+        }
+      }
 
-    return clientId;
-  }
+      if (matchingTranports.isEmpty()) {
+        throw new TransportNegotiationFailure("Failed to negotiate the connection type");
+      } else {
 
-  public void setClientId (String clientId) {
-
-    this.clientId = clientId;
+        return matchingTranports.toArray(new String[0]);
+      }
+    }
   }
 }

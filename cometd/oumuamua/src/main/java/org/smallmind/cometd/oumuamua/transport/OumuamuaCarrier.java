@@ -39,6 +39,6 @@ public interface OumuamuaCarrier {
 
   String getUserAgent ();
 
-  void send (ServerSession receiver, OumuamuaPacket packet)
+  void send (ServerSession receiver, OumuamuaPacket... packets)
     throws Exception;
 }

@@ -39,10 +39,10 @@ import org.cometd.bayeux.ChannelId;
 import org.cometd.bayeux.server.ServerChannel;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
+import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 import org.smallmind.web.json.doppelganger.Doppelganger;
 import org.smallmind.web.json.doppelganger.Idiom;
 import org.smallmind.web.json.doppelganger.View;
-import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 import static org.smallmind.web.json.doppelganger.Visibility.IN;
 import static org.smallmind.web.json.doppelganger.Visibility.OUT;
@@ -57,7 +57,7 @@ public class UnsubscribeMessage extends AdvisedMetaMessage {
   @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
   private String subscription;
 
-  public String process (OumuamuaServer oumuamuaServer, OumuamuaServerSession serverSession)
+  public OumuamuaPacket[] process (OumuamuaServer oumuamuaServer, OumuamuaServerSession serverSession)
     throws JsonProcessingException {
 
     ObjectNode adviceNode = JsonNodeFactory.instance.objectNode();
@@ -65,18 +65,18 @@ public class UnsubscribeMessage extends AdvisedMetaMessage {
     if ((serverSession == null) || (!serverSession.getId().equals(getClientId()))) {
       adviceNode.put("reconnect", "handshake");
 
-      return JsonCodec.writeAsString(new UnsubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setId(getId()).setError("Handshake required").setSubscription(getSubscription()).setAdvice(adviceNode));
+      return OumuamuaPacket.asPackets(serverSession, new UnsubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setId(getId()).setError("Handshake required").setSubscription(getSubscription()).setAdvice(adviceNode));
     } else if (!serverSession.isHandshook()) {
 
       adviceNode.put("reconnect", "handshake");
 
-      return JsonCodec.writeAsString(new UnsubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setClientId(serverSession.getId()).setId(getId()).setError("Handshake required").setSubscription(getSubscription()).setAdvice(adviceNode));
+      return OumuamuaPacket.asPackets(serverSession, new UnsubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setClientId(serverSession.getId()).setId(getId()).setError("Handshake required").setSubscription(getSubscription()).setAdvice(adviceNode));
     } else if (!serverSession.isConnected()) {
 
       adviceNode.put("reconnect", "retry");
       adviceNode.put("interval", 0);
 
-      return JsonCodec.writeAsString(new UnsubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setClientId(serverSession.getId()).setId(getId()).setError("Connection required").setSubscription(getSubscription()).setAdvice(adviceNode));
+      return OumuamuaPacket.asPackets(serverSession, new UnsubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setClientId(serverSession.getId()).setId(getId()).setError("Connection required").setSubscription(getSubscription()).setAdvice(adviceNode));
     } else {
 
       ServerChannel serverChannel;
@@ -85,7 +85,7 @@ public class UnsubscribeMessage extends AdvisedMetaMessage {
         serverChannel.unsubscribe(serverSession);
       }
 
-      return JsonCodec.writeAsString(new UnsubscribeMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(CHANNEL_ID.getId()).setClientId(serverSession.getId()).setId(getId()).setSubscription(getSubscription()).setAdvice(adviceNode));
+      return OumuamuaPacket.asPackets(serverSession, new UnsubscribeMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(CHANNEL_ID.getId()).setClientId(serverSession.getId()).setId(getId()).setSubscription(getSubscription()).setAdvice(adviceNode));
     }
   }
 

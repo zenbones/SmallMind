@@ -32,17 +32,16 @@
  */
 package org.smallmind.cometd.oumuamua.meta;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import java.util.LinkedList;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.cometd.bayeux.ChannelId;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
-import org.smallmind.cometd.oumuamua.message.MapLike;
+import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 import org.smallmind.web.json.doppelganger.Doppelganger;
 import org.smallmind.web.json.doppelganger.Idiom;
 import org.smallmind.web.json.doppelganger.View;
-import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 import static org.smallmind.web.json.doppelganger.Visibility.IN;
 import static org.smallmind.web.json.doppelganger.Visibility.OUT;
@@ -57,48 +56,41 @@ public class ConnectMessage extends AdvisedMetaMessage {
   @View(idioms = @Idiom(purposes = "request", visibility = IN))
   private String connectionType;
 
-  public String process (OumuamuaServer oumuamuaServer, OumuamuaServerSession serverSession)
-    throws JsonProcessingException {
+  public OumuamuaPacket[] process (OumuamuaServer oumuamuaServer, OumuamuaServerSession serverSession) {
 
     ObjectNode adviceNode = JsonNodeFactory.instance.objectNode();
 
     if ((serverSession == null) || (!serverSession.getId().equals(getClientId()))) {
       adviceNode.put("reconnect", "handshake");
 
-      return JsonCodec.writeAsString(new ConnectMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setId(getId()).setError("Handshake required").setAdvice(adviceNode));
+      return OumuamuaPacket.asPackets(serverSession, new ConnectMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setId(getId()).setError("Handshake required").setAdvice(adviceNode));
     } else if (!serverSession.isHandshook()) {
       adviceNode.put("reconnect", "handshake");
 
-      return JsonCodec.writeAsString(new ConnectMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setId(getId()).setClientId(serverSession.getId()).setError("Handshake required").setAdvice(adviceNode));
+      return OumuamuaPacket.asPackets(serverSession, new ConnectMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setId(getId()).setClientId(serverSession.getId()).setError("Handshake required").setAdvice(adviceNode));
     } else {
-      for (String allowedTransport : oumuamuaServer.getAllowedTransports()) {
-        if (allowedTransport.equalsIgnoreCase(connectionType)) {
+      for (String negotiatedTransport : serverSession.getNegotiatedTransports()) {
+        if (negotiatedTransport.equalsIgnoreCase(connectionType)) {
 
-          StringBuilder batchedResponseBuilder = null;
-          String connectResponseText;
-          MapLike enqueuedMapLile;
+          LinkedList<OumuamuaPacket> packetList = new LinkedList<>();
+          OumuamuaPacket enqueuedPacket;
 
           serverSession.setConnected(true);
           // TODO: Set the 'interval' properly?
           adviceNode.put("interval", 30000);
 
-          while ((enqueuedMapLile = serverSession.poll()) != null) {
-            if (batchedResponseBuilder == null) {
-              batchedResponseBuilder = new StringBuilder();
-            }
-
-            batchedResponseBuilder.append(',').append(enqueuedMapLile.encode());
+          while ((enqueuedPacket = serverSession.poll()) != null) {
+            packetList.add(enqueuedPacket);
           }
 
-          connectResponseText = JsonCodec.writeAsString(new ConnectMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(CHANNEL_ID.getId()).setId(getId()).setClientId(serverSession.getId()).setAdvice(adviceNode));
-
-          return (batchedResponseBuilder == null) ? connectResponseText : batchedResponseBuilder.insert(0, connectResponseText).toString();
+          return OumuamuaPacket.asPackets(serverSession, new ConnectMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(CHANNEL_ID.getId()).setId(getId()).setClientId(serverSession.getId()).setAdvice(adviceNode), packetList.toArray(new OumuamuaPacket[0]));
         }
       }
 
-      adviceNode.put("reconnect", "handshake");
+      adviceNode.put("reconnect", "retry");
+      adviceNode.put("interval", 0);
 
-      return JsonCodec.writeAsString(new ConnectMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setId(getId()).setClientId(serverSession.getId()).setError("Unavailable transport").setAdvice(adviceNode));
+      return OumuamuaPacket.asPackets(serverSession, new ConnectMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setId(getId()).setClientId(serverSession.getId()).setError("The requested connection type does match a negotiated coennction type").setAdvice(adviceNode));
     }
   }
 

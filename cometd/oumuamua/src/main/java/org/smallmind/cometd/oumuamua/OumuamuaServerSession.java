@@ -57,6 +57,7 @@ public class OumuamuaServerSession implements ServerSession {
   private final OumuamuaCarrier carrier;
   private final LocalSession localSession;
   private final String id;
+  private String[] negotiatedTransports;
   private Boolean metaConnectDeliveryOnly;
   private boolean handshook;
   private boolean connected;
@@ -78,6 +79,16 @@ public class OumuamuaServerSession implements ServerSession {
   public String getId () {
 
     return id;
+  }
+
+  public String[] getNegotiatedTransports () {
+
+    return negotiatedTransports;
+  }
+
+  public void setNegotiatedTransports (String[] negotiatedTransports) {
+
+    this.negotiatedTransports = negotiatedTransports;
   }
 
   @Override
