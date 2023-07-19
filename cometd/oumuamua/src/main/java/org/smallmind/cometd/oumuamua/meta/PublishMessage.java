@@ -34,9 +34,10 @@ package org.smallmind.cometd.oumuamua.meta;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.cometd.bayeux.ChannelId;
 import org.cometd.bayeux.server.SecurityPolicy;
-import org.cometd.bayeux.server.ServerChannel;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
+import org.smallmind.cometd.oumuamua.OumuamuaServerChannel;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
 import org.smallmind.cometd.oumuamua.message.MapLike;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
@@ -58,41 +59,41 @@ public class PublishMessage extends MetaMessage {
   @View(idioms = @Idiom(purposes = "request", visibility = IN))
   private String clientId;
 
-  public OumuamuaPacket[] process (OumuamuaServer oumuamuaServer, OumuamuaServerSession serverSession, OumuamuaServerMessage serverMessage) {
+  public OumuamuaPacket[] process (OumuamuaServer oumuamuaServer, ChannelId channelId, OumuamuaServerSession serverSession, OumuamuaServerMessage serverMessage) {
 
     if ((serverSession == null) || (!serverSession.getId().equals(getClientId()))) {
 
-      return OumuamuaPacket.asPackets(serverSession, new PublishMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(getChannel()).setId(getId()).setError("Handshake required"));
+      return OumuamuaPacket.asPackets(serverSession, channelId, new PublishMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(getChannel()).setId(getId()).setError("Handshake required"));
     } else if (!serverSession.isHandshook()) {
 
-      return OumuamuaPacket.asPackets(serverSession, new PublishMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(getChannel()).setId(getId()).setError("Handshake required"));
+      return OumuamuaPacket.asPackets(serverSession, channelId, new PublishMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(getChannel()).setId(getId()).setError("Handshake required"));
     } else if (!serverSession.isConnected()) {
 
-      return OumuamuaPacket.asPackets(serverSession, new PublishMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(getChannel()).setId(getId()).setError("Connection required"));
+      return OumuamuaPacket.asPackets(serverSession, channelId, new PublishMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(getChannel()).setId(getId()).setError("Connection required"));
     } else {
 
-      ServerChannel serverChannel;
+      OumuamuaServerChannel serverChannel;
 
       if ((serverChannel = oumuamuaServer.findChannel(getChannel())) == null) {
 
-        return OumuamuaPacket.asPackets(serverSession, new PublishMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(getChannel()).setId(getId()).setError("No such channel"));
+        return OumuamuaPacket.asPackets(serverSession, channelId, new PublishMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(getChannel()).setId(getId()).setError("No such channel"));
       } else {
 
         SecurityPolicy securityPolicy;
 
         if (((securityPolicy = oumuamuaServer.getSecurityPolicy()) != null) && (!securityPolicy.canPublish(oumuamuaServer, serverSession, serverChannel, serverMessage))) {
-          return OumuamuaPacket.asPackets(serverSession, new PublishMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(getChannel()).setId(getId()).setError("Unauthorized"));
+          return OumuamuaPacket.asPackets(serverSession, channelId, new PublishMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(getChannel()).setId(getId()).setError("Unauthorized"));
         } else {
 
           OumuamuaPacket deliveryPacket;
 
-          oumuamuaServer.publishToChannel(getChannel(), deliveryPacket = new OumuamuaPacket(serverSession, new MapLike(null, (ObjectNode)JsonCodec.writeAsJsonNode(new DeliveryMessageSuccessOutView().setChannel(getChannel()).setId(getId()).setData(getData())))));
+          oumuamuaServer.publishToChannel(getChannel(), deliveryPacket = new OumuamuaPacket(serverSession, channelId, new MapLike(null, (ObjectNode)JsonCodec.writeAsJsonNode(new DeliveryMessageSuccessOutView().setChannel(getChannel()).setId(getId()).setData(getData())))));
 
           if (serverSession.isBroadcastToPublisher()) {
             serverSession.send(deliveryPacket);
           }
 
-          return OumuamuaPacket.asPackets(serverSession, new PublishMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(getChannel()).setId(getId()));
+          return OumuamuaPacket.asPackets(serverSession, channelId, new PublishMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(getChannel()).setId(getId()));
         }
       }
     }

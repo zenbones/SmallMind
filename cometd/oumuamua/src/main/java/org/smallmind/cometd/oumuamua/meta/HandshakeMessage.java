@@ -69,12 +69,12 @@ public class HandshakeMessage extends AdvisedMetaMessage {
     if (((securityPolicy = oumuamuaServer.getSecurityPolicy()) != null) && (!securityPolicy.canHandshake(oumuamuaServer, serverSession, serverMessage))) {
       adviceNode.put("reconnect", "handshake");
 
-      return OumuamuaPacket.asPackets(serverSession, new HandshakeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setId(getId()).setVersion(oumuamuaServer.getProtocolVersion()).setMinimumVersion(oumuamuaServer.getProtocolVersion()).setError("Unauthorized").setSupportedConnectionTypes(oumuamuaServer.getAllowedTransports().toArray(new String[0])).setAdvice(adviceNode));
+      return OumuamuaPacket.asPackets(serverSession, CHANNEL_ID, new HandshakeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setId(getId()).setVersion(oumuamuaServer.getProtocolVersion()).setMinimumVersion(oumuamuaServer.getProtocolVersion()).setError("Unauthorized").setSupportedConnectionTypes(oumuamuaServer.getAllowedTransports().toArray(new String[0])).setAdvice(adviceNode));
     } else if (serverSession.isHandshook()) {
       adviceNode.put("reconnect", "retry");
       adviceNode.put("interval", 0);
 
-      return OumuamuaPacket.asPackets(serverSession, new HandshakeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setId(getId()).setVersion(oumuamuaServer.getProtocolVersion()).setMinimumVersion(oumuamuaServer.getProtocolVersion()).setError("Handshake was previously completed").setSupportedConnectionTypes(oumuamuaServer.getAllowedTransports().toArray(new String[0])).setAdvice(adviceNode));
+      return OumuamuaPacket.asPackets(serverSession, CHANNEL_ID, new HandshakeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setId(getId()).setVersion(oumuamuaServer.getProtocolVersion()).setMinimumVersion(oumuamuaServer.getProtocolVersion()).setError("Handshake was previously completed").setSupportedConnectionTypes(oumuamuaServer.getAllowedTransports().toArray(new String[0])).setAdvice(adviceNode));
     } else {
       try {
 
@@ -83,11 +83,11 @@ public class HandshakeMessage extends AdvisedMetaMessage {
         serverSession.setNegotiatedTransports(negotiatedTransports);
         serverSession.setHandshook(true);
 
-        return OumuamuaPacket.asPackets(serverSession, new HandshakeMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(CHANNEL_ID.getId()).setId(getId()).setVersion(oumuamuaServer.getProtocolVersion()).setMinimumVersion(oumuamuaServer.getProtocolVersion()).setClientId(serverSession.getId()).setSupportedConnectionTypes(negotiatedTransports));
+        return OumuamuaPacket.asPackets(serverSession, CHANNEL_ID, new HandshakeMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(CHANNEL_ID.getId()).setId(getId()).setVersion(oumuamuaServer.getProtocolVersion()).setMinimumVersion(oumuamuaServer.getProtocolVersion()).setClientId(serverSession.getId()).setSupportedConnectionTypes(negotiatedTransports));
       } catch (TransportNegotiationFailure transportNegotiationFailure) {
         adviceNode.put("reconnect", "handshake");
 
-        return OumuamuaPacket.asPackets(serverSession, new HandshakeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setId(getId()).setVersion(oumuamuaServer.getProtocolVersion()).setMinimumVersion(oumuamuaServer.getProtocolVersion()).setError(transportNegotiationFailure.getMessage()).setSupportedConnectionTypes(oumuamuaServer.getAllowedTransports().toArray(new String[0])).setAdvice(adviceNode));
+        return OumuamuaPacket.asPackets(serverSession, CHANNEL_ID, new HandshakeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setId(getId()).setVersion(oumuamuaServer.getProtocolVersion()).setMinimumVersion(oumuamuaServer.getProtocolVersion()).setError(transportNegotiationFailure.getMessage()).setSupportedConnectionTypes(oumuamuaServer.getAllowedTransports().toArray(new String[0])).setAdvice(adviceNode));
       }
     }
   }

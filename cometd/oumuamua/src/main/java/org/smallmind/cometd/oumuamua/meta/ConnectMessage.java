@@ -63,11 +63,11 @@ public class ConnectMessage extends AdvisedMetaMessage {
     if ((serverSession == null) || (!serverSession.getId().equals(getClientId()))) {
       adviceNode.put("reconnect", "handshake");
 
-      return OumuamuaPacket.asPackets(serverSession, new ConnectMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setId(getId()).setError("Handshake required").setAdvice(adviceNode));
+      return OumuamuaPacket.asPackets(serverSession, CHANNEL_ID, new ConnectMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setId(getId()).setError("Handshake required").setAdvice(adviceNode));
     } else if (!serverSession.isHandshook()) {
       adviceNode.put("reconnect", "handshake");
 
-      return OumuamuaPacket.asPackets(serverSession, new ConnectMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setId(getId()).setClientId(serverSession.getId()).setError("Handshake required").setAdvice(adviceNode));
+      return OumuamuaPacket.asPackets(serverSession, CHANNEL_ID, new ConnectMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setId(getId()).setClientId(serverSession.getId()).setError("Handshake required").setAdvice(adviceNode));
     } else {
       for (String negotiatedTransport : serverSession.getNegotiatedTransports()) {
         if (negotiatedTransport.equalsIgnoreCase(connectionType)) {
@@ -83,14 +83,14 @@ public class ConnectMessage extends AdvisedMetaMessage {
             packetList.add(enqueuedPacket);
           }
 
-          return OumuamuaPacket.asPackets(serverSession, new ConnectMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(CHANNEL_ID.getId()).setId(getId()).setClientId(serverSession.getId()).setAdvice(adviceNode), packetList.toArray(new OumuamuaPacket[0]));
+          return OumuamuaPacket.asPackets(serverSession, CHANNEL_ID, new ConnectMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(CHANNEL_ID.getId()).setId(getId()).setClientId(serverSession.getId()).setAdvice(adviceNode), packetList.toArray(new OumuamuaPacket[0]));
         }
       }
 
       adviceNode.put("reconnect", "retry");
       adviceNode.put("interval", 0);
 
-      return OumuamuaPacket.asPackets(serverSession, new ConnectMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setId(getId()).setClientId(serverSession.getId()).setError("The requested connection type does match a negotiated coennction type").setAdvice(adviceNode));
+      return OumuamuaPacket.asPackets(serverSession, CHANNEL_ID, new ConnectMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setId(getId()).setClientId(serverSession.getId()).setError("The requested connection type does match a negotiated coennction type").setAdvice(adviceNode));
     }
   }
 

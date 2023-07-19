@@ -69,7 +69,7 @@ public class Kangaroo {
     System.out.println(((ListLike)subList).encode());
     System.out.println(m.encode());
     System.out.println(m.encode());
-    m.put("ext", Map.of("ack", Map.of("one",8)));
+    m.put("ext", Map.of("ack", Map.of("one", 8)));
     System.out.println(m.encode());
     System.out.println(m.encode());
 
@@ -79,7 +79,7 @@ public class Kangaroo {
     System.out.println(e.encode());
     System.out.println(e.encode());
 
-    ((Map)((Map)e.get("ext")).get("ack")).put("one",10);
+    ((Map)((Map)e.get("ext")).get("ack")).put("one", 10);
     System.out.println(e.encode());
     System.out.println(e.encode());
 

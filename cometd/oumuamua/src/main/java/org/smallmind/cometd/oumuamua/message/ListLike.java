@@ -48,7 +48,6 @@ import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public class ListLike extends NodeBacked implements List<Object> {
 
-
   private final ArrayNode node;
   private final int startIndex;
   private int modification;

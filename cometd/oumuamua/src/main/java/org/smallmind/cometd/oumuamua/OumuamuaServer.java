@@ -223,18 +223,19 @@ public class OumuamuaServer implements BayeuxServer {
   }
 
   @Override
-  public ServerChannel getChannel (String s) {
+  public ServerChannel getChannel (String id) {
 
-    return null;
+    return findChannel(id);
   }
 
   @Override
   public List<ServerChannel> getChannels () {
 
+    //TODO:...
     return null;
   }
 
-  public ServerChannel findChannel (String id) {
+  public OumuamuaServerChannel findChannel (String id) {
 
     ChannelTree channelBranch;
 

@@ -52,7 +52,7 @@ public class DisconnectMessage extends MetaMessage {
 
   public OumuamuaPacket[] process (OumuamuaServerSession serverSession) {
 
-    return OumuamuaPacket.asPackets(serverSession, new DisconnectMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(CHANNEL_ID.getId()).setId(getId()));
+    return OumuamuaPacket.asPackets(serverSession, CHANNEL_ID, new DisconnectMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(CHANNEL_ID.getId()).setId(getId()));
   }
 
   public String getClientId () {

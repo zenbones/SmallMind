@@ -32,18 +32,14 @@
  */
 package org.smallmind.cometd.oumuamua;
 
-import java.time.Duration;
 import java.util.Collection;
 import java.util.Properties;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.consumer.Consumer;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.Node;
-import org.smallmind.cometd.oumuamua.backbone.TransferQueueDeliveryCallback;
-import org.smallmind.cometd.oumuamua.backbone.kafka.KafkaBackbone;
 import org.smallmind.cometd.oumuamua.backbone.kafka.KafkaConnector;
 import org.smallmind.cometd.oumuamua.backbone.kafka.KafkaServer;
 
@@ -90,7 +86,7 @@ public class Wombat {
     Producer<Long, byte[]> producer = connector.createProducer("onenewclient");
     Consumer<Long, byte[]> consumer = connector.createConsumer("othernewclient", "onenewgroup", "12345", "first.topic");
 
-    for (int i = 0; i < 10; i++ ) {
+    for (int i = 0; i < 10; i++) {
       producer.send(new ProducerRecord<>("first.topic", "hello".getBytes()));
     }
 

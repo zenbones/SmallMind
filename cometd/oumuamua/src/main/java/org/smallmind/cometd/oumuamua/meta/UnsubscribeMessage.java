@@ -65,18 +65,18 @@ public class UnsubscribeMessage extends AdvisedMetaMessage {
     if ((serverSession == null) || (!serverSession.getId().equals(getClientId()))) {
       adviceNode.put("reconnect", "handshake");
 
-      return OumuamuaPacket.asPackets(serverSession, new UnsubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setId(getId()).setError("Handshake required").setSubscription(getSubscription()).setAdvice(adviceNode));
+      return OumuamuaPacket.asPackets(serverSession, CHANNEL_ID, new UnsubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setId(getId()).setError("Handshake required").setSubscription(getSubscription()).setAdvice(adviceNode));
     } else if (!serverSession.isHandshook()) {
 
       adviceNode.put("reconnect", "handshake");
 
-      return OumuamuaPacket.asPackets(serverSession, new UnsubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setClientId(serverSession.getId()).setId(getId()).setError("Handshake required").setSubscription(getSubscription()).setAdvice(adviceNode));
+      return OumuamuaPacket.asPackets(serverSession, CHANNEL_ID, new UnsubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setClientId(serverSession.getId()).setId(getId()).setError("Handshake required").setSubscription(getSubscription()).setAdvice(adviceNode));
     } else if (!serverSession.isConnected()) {
 
       adviceNode.put("reconnect", "retry");
       adviceNode.put("interval", 0);
 
-      return OumuamuaPacket.asPackets(serverSession, new UnsubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setClientId(serverSession.getId()).setId(getId()).setError("Connection required").setSubscription(getSubscription()).setAdvice(adviceNode));
+      return OumuamuaPacket.asPackets(serverSession, CHANNEL_ID, new UnsubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setClientId(serverSession.getId()).setId(getId()).setError("Connection required").setSubscription(getSubscription()).setAdvice(adviceNode));
     } else {
 
       ServerChannel serverChannel;
@@ -85,7 +85,7 @@ public class UnsubscribeMessage extends AdvisedMetaMessage {
         serverChannel.unsubscribe(serverSession);
       }
 
-      return OumuamuaPacket.asPackets(serverSession, new UnsubscribeMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(CHANNEL_ID.getId()).setClientId(serverSession.getId()).setId(getId()).setSubscription(getSubscription()).setAdvice(adviceNode));
+      return OumuamuaPacket.asPackets(serverSession, CHANNEL_ID, new UnsubscribeMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(CHANNEL_ID.getId()).setClientId(serverSession.getId()).setId(getId()).setSubscription(getSubscription()).setAdvice(adviceNode));
     }
   }
 

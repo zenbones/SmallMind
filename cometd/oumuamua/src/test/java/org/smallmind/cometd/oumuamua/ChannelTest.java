@@ -62,6 +62,6 @@ public class ChannelTest {
 
     ChannelIterator i = new ChannelIterator("/a/b/c");
 
-    t.publish(i, new OumuamuaPacket(null, new MapLike(null, (ObjectNode)JsonCodec.writeAsJsonNode(new DeliveryMessageSuccessOutView().setData(JsonNodeFactory.instance.textNode("foobar"))))), new HashSet<>());
+    t.publish(i, new OumuamuaPacket(null, new ChannelId("/foobar"), new MapLike(null, (ObjectNode)JsonCodec.writeAsJsonNode(new DeliveryMessageSuccessOutView().setData(JsonNodeFactory.instance.textNode("foobar"))))), new HashSet<>());
   }
 }

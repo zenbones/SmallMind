@@ -33,31 +33,51 @@
 package org.smallmind.cometd.oumuamua.message;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.cometd.bayeux.ChannelId;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public class OumuamuaPacket {
 
   private final OumuamuaServerSession sender;
+  // DO NOT directly serialize;
+  private final ChannelId channelId;
   private final MapLike[] messages;
+  private boolean lazy;
 
-  public OumuamuaPacket (OumuamuaServerSession sender, MapLike... messages) {
+  public OumuamuaPacket (OumuamuaServerSession sender, ChannelId channelId, MapLike... messages) {
 
     this.sender = sender;
+    this.channelId = channelId;
     this.messages = messages;
   }
 
-  public static OumuamuaPacket[] asPackets (OumuamuaServerSession serverSession, Object message, OumuamuaPacket... enqueuedPackets) {
+  public static OumuamuaPacket[] asPackets (OumuamuaServerSession serverSession, ChannelId channelId, Object message, OumuamuaPacket... enqueuedPackets) {
 
     OumuamuaPacket[] packets = new OumuamuaPacket[1 + ((enqueuedPackets == null) ? 0 : enqueuedPackets.length)];
 
-    packets[0] = new OumuamuaPacket(serverSession, new MapLike(null, (ObjectNode)JsonCodec.writeAsJsonNode(message)));
+    packets[0] = new OumuamuaPacket(serverSession, channelId, new MapLike(null, (ObjectNode)JsonCodec.writeAsJsonNode(message)));
 
     if ((enqueuedPackets != null) && (enqueuedPackets.length > 0)) {
       System.arraycopy(enqueuedPackets, 0, packets, 1, enqueuedPackets.length);
     }
 
     return packets;
+  }
+
+  public ChannelId getChannelId () {
+
+    return channelId;
+  }
+
+  public boolean isLazy () {
+
+    return lazy;
+  }
+
+  public void setLazy (boolean lazy) {
+
+    this.lazy = lazy;
   }
 
   public OumuamuaServerSession getSender () {

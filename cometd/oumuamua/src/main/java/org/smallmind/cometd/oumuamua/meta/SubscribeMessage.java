@@ -66,14 +66,14 @@ public class SubscribeMessage extends AdvisedMetaMessage {
 
       adviceNode.put("reconnect", "handshake");
 
-      return OumuamuaPacket.asPackets(serverSession, new SubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setId(getId()).setError("Handshake required").setSubscription(getSubscription()).setAdvice(adviceNode));
+      return OumuamuaPacket.asPackets(serverSession, CHANNEL_ID, new SubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setId(getId()).setError("Handshake required").setSubscription(getSubscription()).setAdvice(adviceNode));
     } else if (!serverSession.isHandshook()) {
 
       ObjectNode adviceNode = JsonNodeFactory.instance.objectNode();
 
       adviceNode.put("reconnect", "handshake");
 
-      return OumuamuaPacket.asPackets(serverSession, new SubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setClientId(serverSession.getId()).setId(getId()).setError("Handshake required").setSubscription(getSubscription()).setAdvice(adviceNode));
+      return OumuamuaPacket.asPackets(serverSession, CHANNEL_ID, new SubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setClientId(serverSession.getId()).setId(getId()).setError("Handshake required").setSubscription(getSubscription()).setAdvice(adviceNode));
     } else if (!serverSession.isConnected()) {
 
       ObjectNode adviceNode = JsonNodeFactory.instance.objectNode();
@@ -81,12 +81,12 @@ public class SubscribeMessage extends AdvisedMetaMessage {
       adviceNode.put("reconnect", "retry");
       adviceNode.put("interval", 0);
 
-      return OumuamuaPacket.asPackets(serverSession, new SubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setClientId(serverSession.getId()).setId(getId()).setError("Connection required").setSubscription(getSubscription()).setAdvice(adviceNode));
+      return OumuamuaPacket.asPackets(serverSession, CHANNEL_ID, new SubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setClientId(serverSession.getId()).setId(getId()).setError("Connection required").setSubscription(getSubscription()).setAdvice(adviceNode));
     } else {
 
       if (getSubscription().startsWith("/meta/")) {
 
-        return OumuamuaPacket.asPackets(serverSession, new SubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setClientId(serverSession.getId()).setId(getId()).setError("Attempted subscription to a meta channel").setSubscription(getSubscription()));
+        return OumuamuaPacket.asPackets(serverSession, CHANNEL_ID, new SubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setClientId(serverSession.getId()).setId(getId()).setError("Attempted subscription to a meta channel").setSubscription(getSubscription()));
       } else {
 
         SecurityPolicy securityPolicy;
@@ -96,14 +96,14 @@ public class SubscribeMessage extends AdvisedMetaMessage {
           if ((serverChannel = oumuamuaServer.findChannel(getChannel())) == null) {
             if (!securityPolicy.canCreate(oumuamuaServer, serverSession, getChannel(), serverMessage)) {
 
-              return OumuamuaPacket.asPackets(serverSession, new SubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setClientId(serverSession.getId()).setId(getId()).setError("Unauthorized").setSubscription(getSubscription()));
+              return OumuamuaPacket.asPackets(serverSession, CHANNEL_ID, new SubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setClientId(serverSession.getId()).setId(getId()).setError("Unauthorized").setSubscription(getSubscription()));
             } else {
               serverChannel = oumuamuaServer.createChannelIfAbsent(getChannel()).getReference();
             }
           }
 
           if (!securityPolicy.canSubscribe(oumuamuaServer, serverSession, serverChannel, serverMessage)) {
-            return OumuamuaPacket.asPackets(serverSession, new SubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setClientId(serverSession.getId()).setId(getId()).setError("Unauthorized").setSubscription(getSubscription()));
+            return OumuamuaPacket.asPackets(serverSession, CHANNEL_ID, new SubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setClientId(serverSession.getId()).setId(getId()).setError("Unauthorized").setSubscription(getSubscription()));
           }
         } else {
           serverChannel = oumuamuaServer.createChannelIfAbsent(getSubscription()).getReference();
@@ -111,7 +111,7 @@ public class SubscribeMessage extends AdvisedMetaMessage {
 
         serverChannel.subscribe(serverSession);
 
-        return OumuamuaPacket.asPackets(serverSession, new SubscribeMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(CHANNEL_ID.getId()).setClientId(serverSession.getId()).setId(getId()).setSubscription(getSubscription()));
+        return OumuamuaPacket.asPackets(serverSession, CHANNEL_ID, new SubscribeMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(CHANNEL_ID.getId()).setClientId(serverSession.getId()).setId(getId()).setSubscription(getSubscription()));
       }
     }
   }

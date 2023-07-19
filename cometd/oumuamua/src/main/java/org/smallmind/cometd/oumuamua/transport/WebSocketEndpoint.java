@@ -46,7 +46,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.cometd.bayeux.server.BayeuxServer;
-import org.cometd.bayeux.server.ServerSession;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
 import org.smallmind.cometd.oumuamua.channel.ChannelIdCache;
@@ -108,7 +107,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
   }
 
   @Override
-  public synchronized void send (ServerSession receiver, OumuamuaPacket... packets)
+  public synchronized void send (OumuamuaServerSession receivingSession, OumuamuaPacket... packets)
     throws IOException, InterruptedException, ExecutionException, TimeoutException {
 
     StringBuilder sendBuilder = new StringBuilder("[");
@@ -142,10 +141,13 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
     try {
       for (JsonNode messageNode : JsonCodec.readAsJsonNode(data)) {
 
-        OumuamuaPacket[] packets;
+        if (messageNode.has("channel")) {
 
-        if ((packets = respond(messageNode)) != null) {
-          send(serverSession, packets);
+          OumuamuaPacket[] packets;
+
+          if ((packets = respond(messageNode.get("channel").asText(), messageNode)) != null) {
+            send(serverSession, packets);
+          }
         }
       }
 
@@ -161,68 +163,62 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
     }
   }
 
-  private OumuamuaPacket[] respond (JsonNode messageNode)
+  private OumuamuaPacket[] respond (String channel, JsonNode messageNode)
     throws JsonProcessingException {
 
-    if (messageNode.has("channel")) {
+    switch (channel) {
+      case "/meta/handshake":
 
-      String channel;
+        HandshakeMessageRequestInView handshakeView;
 
-      switch (channel = messageNode.get("channel").asText()) {
-        case "/meta/handshake":
+        if (serverSession == null) {
+          serverSession = new OumuamuaServerSession(websocketTransport, this);
+          connected = true;
+        }
 
-          HandshakeMessageRequestInView handshakeView;
+        return (handshakeView = JsonCodec.read(messageNode, HandshakeMessageRequestInView.class)).factory().process(oumuamuaServer, ACTUAL_TRANSPORTS, serverSession, new OumuamuaServerMessage(websocketTransport, context, null, HandshakeMessage.CHANNEL_ID, handshakeView.getId(), null, false, (ObjectNode)messageNode));
+      case "/meta/connect":
 
-          if (serverSession == null) {
-            serverSession = new OumuamuaServerSession(websocketTransport, this);
-            connected = true;
+        return JsonCodec.read(messageNode, ConnectMessageRequestInView.class).factory().process(oumuamuaServer, serverSession);
+      case "/meta/disconnect":
+        // disconnect will happen after the response hs been sent
+        connected = false;
+
+        return JsonCodec.read(messageNode, DisconnectMessageRequestInView.class).factory().process(serverSession);
+      case "/meta/subscribe":
+
+        SubscribeMessageRequestInView subscribeView;
+
+        return (subscribeView = JsonCodec.read(messageNode, SubscribeMessageRequestInView.class)).factory().process(oumuamuaServer, serverSession, new OumuamuaServerMessage(websocketTransport, context, null, SubscribeMessage.CHANNEL_ID, subscribeView.getId(), serverSession.getId(), false, (ObjectNode)messageNode));
+      case "/meta/unsubscribe":
+        return JsonCodec.read(messageNode, UnsubscribeMessageRequestInView.class).factory().process(oumuamuaServer, serverSession);
+      default:
+        if (channel.startsWith("/meta/")) {
+
+          ObjectNode errorNode = JsonNodeFactory.instance.objectNode();
+
+          errorNode.put("successful", false);
+          errorNode.put("channel", channel);
+          errorNode.put("error", "Unknown meta channel");
+
+          if (messageNode.has("id")) {
+            errorNode.set("id", messageNode.get("id"));
+          }
+          if (serverSession != null) {
+            errorNode.put("clientId", serverSession.getId());
           }
 
-          return (handshakeView = JsonCodec.read(messageNode, HandshakeMessageRequestInView.class)).factory().process(oumuamuaServer, ACTUAL_TRANSPORTS, serverSession, new OumuamuaServerMessage(websocketTransport, context, null, HandshakeMessage.CHANNEL_ID, handshakeView.getId(), null, false, (ObjectNode)messageNode));
-        case "/meta/connect":
+          return OumuamuaPacket.asPackets(serverSession, ChannelIdCache.generate(channel), errorNode);
+        } else if (channel.startsWith("/service/")) {
+          // TODO: service
+          return null;
+        } else {
 
-          return JsonCodec.read(messageNode, ConnectMessageRequestInView.class).factory().process(oumuamuaServer, serverSession);
-        case "/meta/disconnect":
-          // disconnect will happen after the response hs been sent
-          connected = false;
+          PublishMessageRequestInView publishView;
 
-          return JsonCodec.read(messageNode, DisconnectMessageRequestInView.class).factory().process(serverSession);
-        case "/meta/subscribe":
-
-          SubscribeMessageRequestInView subscribeView;
-
-          return (subscribeView = JsonCodec.read(messageNode, SubscribeMessageRequestInView.class)).factory().process(oumuamuaServer, serverSession, new OumuamuaServerMessage(websocketTransport, context, null, SubscribeMessage.CHANNEL_ID, subscribeView.getId(), serverSession.getId(), false, (ObjectNode)messageNode));
-        case "/meta/unsubscribe":
-          return JsonCodec.read(messageNode, UnsubscribeMessageRequestInView.class).factory().process(oumuamuaServer, serverSession);
-        default:
-          if (channel.startsWith("/meta/")) {
-
-            ObjectNode errorNode = JsonNodeFactory.instance.objectNode();
-
-            errorNode.put("successful", false);
-            errorNode.put("channel", channel);
-            errorNode.put("error", "Unknown meta channel");
-
-            if (messageNode.has("id")) {
-              errorNode.set("id", messageNode.get("id"));
-            }
-            if (serverSession != null) {
-              errorNode.put("clientId", serverSession.getId());
-            }
-
-            return OumuamuaPacket.asPackets(serverSession, errorNode);
-          } else if (channel.startsWith("/service/")) {
-            // TODO: service
-          } else {
-
-            PublishMessageRequestInView publishView;
-
-            return (publishView = JsonCodec.read(messageNode, PublishMessageRequestInView.class)).factory().process(oumuamuaServer, serverSession, new OumuamuaServerMessage(websocketTransport, context, null, ChannelIdCache.generate(channel), publishView.getId(), serverSession.getId(), false, (ObjectNode)messageNode));
-          }
-      }
+          return (publishView = JsonCodec.read(messageNode, PublishMessageRequestInView.class)).factory().process(oumuamuaServer, ChannelIdCache.generate(channel), serverSession, new OumuamuaServerMessage(websocketTransport, context, null, ChannelIdCache.generate(channel), publishView.getId(), serverSession.getId(), false, (ObjectNode)messageNode));
+        }
     }
-
-    return null;
   }
 
   @Override
