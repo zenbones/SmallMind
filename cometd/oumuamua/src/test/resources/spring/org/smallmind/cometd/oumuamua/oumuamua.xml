@@ -4,22 +4,27 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
   <bean id="oumuamuaServer" class="org.smallmind.cometd.oumuamua.OumuamuaServer">
-    <constructor-arg index="0" name="transportMap">
-      <map>
-        <entry key="websocket">
-          <bean class="org.smallmind.cometd.oumuamua.transport.WebSocketTransport">
-            <constructor-arg index="0" name="oumuamuaUrl" value="/cometd/*"/>
-            <constructor-arg index="1" name="configuration">
-              <bean class="org.smallmind.cometd.oumuamua.transport.WebSocketTransportConfiguration"/>
-            </constructor-arg>
-          </bean>
-        </entry>
-      </map>
-    </constructor-arg>
-    <constructor-arg index="1" name="allowed">
-      <list>
-        <value>websocket</value>
-      </list>
+    <constructor-arg index="0" name="configuration">
+      <bean class="org.smallmind.cometd.oumuamua.OumuamuaConfiguration">
+        <property name="transportMap">
+          <map>
+            <entry key="websocket">
+              <bean class="org.smallmind.cometd.oumuamua.transport.WebSocketTransport">
+                <constructor-arg index="0" name="oumuamuaUrl" value="/cometd/*"/>
+                <constructor-arg index="1" name="configuration">
+                  <bean class="org.smallmind.cometd.oumuamua.transport.WebSocketTransportConfiguration"/>
+                </constructor-arg>
+              </bean>
+            </entry>
+          </map>
+        </property>
+        <property name="allowedTransports">
+          <list>
+            <value>websocket</value>
+          </list>
+        </property>
+        <property name="maximumLayMessageQueueSize" value="1000"/>
+      </bean>
     </constructor-arg>
   </bean>
 

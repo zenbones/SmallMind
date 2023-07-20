@@ -33,11 +33,9 @@
 package org.smallmind.cometd.oumuamua;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -64,19 +62,21 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class OumuamuaServer implements BayeuxServer {
 
+  private final OumuamuaConfiguration configuration;
   private final ChannelTree channelTree = new ChannelTree();
   private final ConcurrentHashMap<String, OumuamuaServerSession> sessionMap = new ConcurrentHashMap<>();
-  private final Map<String, OumuamuaTransport> transportMap;
-  private final List<String> allowedList;
   private LazyMessageSifter lazyMessageSifter;
   private int emptyChannelTimeToLiveMinutes = 30;
   private SecurityPolicy securityPolicy;
 
-  public OumuamuaServer (Map<String, OumuamuaTransport> transportMap, String... allowed) {
+  public OumuamuaServer (OumuamuaConfiguration configuration) {
 
-    this.transportMap = transportMap;
+    this.configuration = configuration;
+  }
 
-    this.allowedList = (allowed == null) ? Collections.emptyList() : Collections.unmodifiableList(Arrays.asList(allowed));
+  public OumuamuaConfiguration getConfiguration () {
+
+    return configuration;
   }
 
   public int getEmptyChannelTimeToLiveMinutes () {
@@ -92,7 +92,7 @@ public class OumuamuaServer implements BayeuxServer {
   public void start (ServletConfig servletConfig)
     throws ServletException {
 
-    for (OumuamuaTransport transport : transportMap.values()) {
+    for (OumuamuaTransport transport : configuration.getTransportMap().values()) {
       transport.init(this, servletConfig);
     }
 
@@ -118,19 +118,19 @@ public class OumuamuaServer implements BayeuxServer {
   @Override
   public Set<String> getKnownTransportNames () {
 
-    return transportMap.keySet();
+    return configuration.getTransportMap().keySet();
   }
 
   @Override
   public Transport getTransport (String transport) {
 
-    return transportMap.get(transport);
+    return configuration.getTransportMap().get(transport);
   }
 
   @Override
   public List<String> getAllowedTransports () {
 
-    return allowedList;
+    return Arrays.asList(configuration.getAllowedTransports());
   }
 
   @Override
@@ -148,7 +148,7 @@ public class OumuamuaServer implements BayeuxServer {
   @Override
   public Object getOption (String qualifiedName) {
 
-    for (OumuamuaTransport transport : transportMap.values()) {
+    for (OumuamuaTransport transport : configuration.getTransportMap().values()) {
       if (qualifiedName.startsWith(transport.getOptionPrefix())) {
 
         return transport.getOption(qualifiedName.substring(transport.getOptionPrefix().length()));
@@ -161,7 +161,7 @@ public class OumuamuaServer implements BayeuxServer {
   @Override
   public void setOption (String qualifiedName, Object value) {
 
-    for (OumuamuaTransport transport : transportMap.values()) {
+    for (OumuamuaTransport transport : configuration.getTransportMap().values()) {
       if (qualifiedName.startsWith(transport.getOptionPrefix())) {
 
         transport.setOption(qualifiedName.substring(transport.getOptionPrefix().length()), value);
@@ -174,7 +174,7 @@ public class OumuamuaServer implements BayeuxServer {
 
     HashSet<String> nameSet = new HashSet<>();
 
-    for (OumuamuaTransport transport : transportMap.values()) {
+    for (OumuamuaTransport transport : configuration.getTransportMap().values()) {
       for (String name : transport.getOptionNames()) {
         nameSet.add(transport.getOptionPrefix() + name);
       }

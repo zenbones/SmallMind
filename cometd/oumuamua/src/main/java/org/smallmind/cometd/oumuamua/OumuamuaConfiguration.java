@@ -32,32 +32,42 @@
  */
 package org.smallmind.cometd.oumuamua;
 
-import java.util.HashSet;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.cometd.bayeux.ChannelId;
-import org.smallmind.cometd.oumuamua.channel.ChannelIterator;
-import org.smallmind.cometd.oumuamua.channel.ChannelTree;
-import org.smallmind.cometd.oumuamua.message.MapLike;
-import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
-import org.smallmind.cometd.oumuamua.meta.DeliveryMessageSuccessOutView;
-import org.smallmind.web.json.scaffold.util.JsonCodec;
+import java.util.Map;
+import org.smallmind.cometd.oumuamua.transport.OumuamuaTransport;
 
-public class ChannelTest {
+public class OumuamuaConfiguration {
 
-  public static void main (String... args) {
+  private Map<String, OumuamuaTransport> transportMap;
+  private String[] allowedTransports;
+  private int maximumLayMessageQueueSize = 1000;
 
-    ChannelTree t = new ChannelTree();
+  public Map<String, OumuamuaTransport> getTransportMap () {
 
-    t.add(null, 0, new ChannelId("/a"));
-    t.add(null, 0, new ChannelId("/a/**"));
-    t.add(null, 0, new ChannelId("/a/b"));
-    t.add(null, 0, new ChannelId("/a/b/*"));
-    t.add(null, 0, new ChannelId("/a/b/**"));
-    t.add(null, 0, new ChannelId("/a/b/c"));
+    return transportMap;
+  }
 
-    ChannelIterator i = new ChannelIterator("/a/b/c");
+  public void setTransportMap (Map<String, OumuamuaTransport> transportMap) {
 
-    t.publish(i, new OumuamuaPacket(null, new ChannelId("/foobar"), new MapLike(null, (ObjectNode)JsonCodec.writeAsJsonNode(new DeliveryMessageSuccessOutView().setData(JsonNodeFactory.instance.textNode("foobar"))))), new HashSet<>());
+    this.transportMap = transportMap;
+  }
+
+  public String[] getAllowedTransports () {
+
+    return allowedTransports;
+  }
+
+  public void setAllowedTransports (String[] allowedTransports) {
+
+    this.allowedTransports = allowedTransports;
+  }
+
+  public int getMaximumLayMessageQueueSize () {
+
+    return maximumLayMessageQueueSize;
+  }
+
+  public void setMaximumLayMessageQueueSize (int maximumLayMessageQueueSize) {
+
+    this.maximumLayMessageQueueSize = maximumLayMessageQueueSize;
   }
 }

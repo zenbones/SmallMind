@@ -76,6 +76,11 @@ public class OumuamuaPacket implements Comparator<OumuamuaPacket> {
     return sender;
   }
 
+  public int size () {
+
+    return messages.length;
+  }
+
   public MapLike[] getMessages () {
 
     return messages;

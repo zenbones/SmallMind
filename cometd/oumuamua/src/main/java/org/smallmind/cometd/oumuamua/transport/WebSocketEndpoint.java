@@ -178,7 +178,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
         HandshakeMessageRequestInView handshakeView;
 
         if (serverSession == null) {
-          serverSession = new OumuamuaServerSession(websocketTransport, this);
+          serverSession = new OumuamuaServerSession(websocketTransport, this, oumuamuaServer.getConfiguration().getMaximumLayMessageQueueSize());
           connected = true;
         }
 

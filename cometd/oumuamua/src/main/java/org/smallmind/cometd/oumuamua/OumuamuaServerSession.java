@@ -63,6 +63,7 @@ public class OumuamuaServerSession implements ServerSession {
   private final OumuamuaCarrier carrier;
   private final LocalSession localSession;
   private final String id;
+  private final int maximumLayMessageQueueSize;
   private String[] negotiatedTransports;
   private Boolean metaConnectDeliveryOnly;
   private boolean handshook;
@@ -71,11 +72,13 @@ public class OumuamuaServerSession implements ServerSession {
   private long interval = -1;
   private long timeout = -1;
   private long maxInterval = -1;
+  private int lazyMessageCount;
 
-  public OumuamuaServerSession (OumuamuaTransport serverTransport, OumuamuaCarrier carrier) {
+  public OumuamuaServerSession (OumuamuaTransport serverTransport, OumuamuaCarrier carrier, int maximumLayMessageQueueSize) {
 
     this.serverTransport = serverTransport;
     this.carrier = carrier;
+    this.maximumLayMessageQueueSize = maximumLayMessageQueueSize;
 
     id = SnowflakeId.newInstance().generateHexEncoding();
     localSession = null;
@@ -284,7 +287,15 @@ public class OumuamuaServerSession implements ServerSession {
 
       if ((lazyEntry = lazyMessageQueue.pollFirstEntry()) != null) {
 
-        return lazyEntry.getValue().toArray(new OumuamuaPacket[0]);
+        OumuamuaPacket[] lazyPackets = new OumuamuaPacket[lazyEntry.getValue().size()];
+        int index = 0;
+
+        for (OumuamuaPacket lazyPacket : lazyEntry.getValue()) {
+          lazyMessageCount -= lazyPacket.size();
+          lazyPackets[index++] = lazyPacket;
+        }
+
+        return lazyEntry.getValue().toArray(lazyPackets);
       } else {
 
         OumuamuaPacket packet;
@@ -304,7 +315,25 @@ public class OumuamuaServerSession implements ServerSession {
 
       Long firstKey;
 
-      return ((firstKey = lazyMessageQueue.firstKey()) <= now) ? lazyMessageQueue.remove(firstKey).toArray(new OumuamuaPacket[0]) : null;
+      if ((firstKey = lazyMessageQueue.firstKey()) <= now) {
+
+        LinkedList<OumuamuaPacket> lazyPacketList;
+
+        if ((lazyPacketList = lazyMessageQueue.remove(firstKey)) != null) {
+
+          OumuamuaPacket[] lazyPackets = new OumuamuaPacket[lazyPacketList.size()];
+          int index = 0;
+
+          for (OumuamuaPacket lazyPacket : lazyPacketList) {
+            lazyMessageCount -= lazyPacket.size();
+            lazyPackets[index++] = lazyPacket;
+          }
+
+          return lazyPackets;
+        }
+      }
+
+      return null;
     } finally {
       messagePollLock.unlock();
     }
@@ -320,6 +349,27 @@ public class OumuamuaServerSession implements ServerSession {
       try {
 
         LinkedList<OumuamuaPacket> packetList;
+
+        if ((lazyMessageCount += packet.size()) > maximumLayMessageQueueSize) {
+
+          long now = System.currentTimeMillis();
+          boolean operating = true;
+
+          while (operating && (lazyMessageCount > maximumLayMessageQueueSize)) {
+
+            OumuamuaPacket[] enqueuedPackets;
+
+            if (((enqueuedPackets = pollLazy(now)) != null) && (enqueuedPackets.length > 0)) {
+              try {
+                carrier.send(this, enqueuedPackets);
+              } catch (Exception exception) {
+                LoggerManager.getLogger(OumuamuaServerSession.class).error(exception);
+              }
+            } else {
+              operating = false;
+            }
+          }
+        }
 
         if ((packetList = lazyMessageQueue.get(lazyTimestamp)) == null) {
           lazyMessageQueue.put(lazyTimestamp, packetList = new LinkedList<>());
