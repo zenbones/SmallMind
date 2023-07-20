@@ -39,6 +39,7 @@ public class OumuamuaConfiguration {
 
   private Map<String, OumuamuaTransport> transportMap;
   private String[] allowedTransports;
+  private long lazyMessageCycleMilliseconds = 3000;
   private int maximumLayMessageQueueSize = 1000;
 
   public Map<String, OumuamuaTransport> getTransportMap () {
@@ -59,6 +60,16 @@ public class OumuamuaConfiguration {
   public void setAllowedTransports (String[] allowedTransports) {
 
     this.allowedTransports = allowedTransports;
+  }
+
+  public long getLazyMessageCycleMilliseconds () {
+
+    return lazyMessageCycleMilliseconds;
+  }
+
+  public void setLazyMessageCycleMilliseconds (long lazyMessageCycleMilliseconds) {
+
+    this.lazyMessageCycleMilliseconds = lazyMessageCycleMilliseconds;
   }
 
   public int getMaximumLayMessageQueueSize () {

@@ -307,8 +307,7 @@ public class OumuamuaServer implements BayeuxServer {
     public void run () {
 
       try {
-        // TODO: Set the pulse time properly
-        while (!finishLatch.await(3, TimeUnit.SECONDS)) {
+        while (!finishLatch.await(configuration.getLazyMessageCycleMilliseconds(), TimeUnit.MILLISECONDS)) {
 
           long now = System.currentTimeMillis();
 
