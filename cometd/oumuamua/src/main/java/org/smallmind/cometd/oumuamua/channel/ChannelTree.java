@@ -100,6 +100,19 @@ public class ChannelTree {
     return (index == (channelId.depth() - 1)) ? new MarkedReference<>(child, created) : child.add(oumuamuaServer, index + 1, channelId);
   }
 
+  public ChannelTree remove (int index, ChannelId channelId) {
+
+    if ((index == (channelId.depth() - 1))) {
+
+      return childMap.remove(channelId.getSegment(index));
+    } else {
+
+      ChannelTree child;
+
+      return ((child = childMap.get(channelId.getSegment(index))) == null) ? null : child.remove(index + 1, channelId);
+    }
+  }
+
   public void publish (ChannelIterator channelIterator, OumuamuaPacket packet, HashSet<String> sessionIdSet) {
 
     if (channelIterator.hasNext()) {
