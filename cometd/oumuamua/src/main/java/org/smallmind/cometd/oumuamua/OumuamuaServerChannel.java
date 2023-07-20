@@ -319,6 +319,6 @@ public class OumuamuaServerChannel implements ServerChannel {
   @Override
   public void remove () {
 
-    oumuamuaServer.cascadeRemoveChannel(this);
+    oumuamuaServer.removeChannel(this);
   }
 }
