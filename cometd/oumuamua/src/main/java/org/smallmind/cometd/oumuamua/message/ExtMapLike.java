@@ -48,6 +48,7 @@ public class ExtMapLike extends MapLike {
   private String encodedText;
   private boolean altered;
   private boolean removed;
+  private long parentEncodedVersion;
 
   public ExtMapLike (MapLike mapLike) {
 
@@ -62,6 +63,16 @@ public class ExtMapLike extends MapLike {
     altered = true;
 
     super.mutate();
+  }
+
+  public boolean isParentMutated () {
+
+    return parentEncodedVersion != parent.getVersion();
+  }
+
+  public void resetPrentMutation () {
+
+    parentEncodedVersion = parent.getVersion();
   }
 
   @Override
@@ -219,18 +230,19 @@ public class ExtMapLike extends MapLike {
     if (!(altered || removed)) {
 
       return parent.encode();
-    } else if ((encodedText == null) || isMutated()) {
+    } else if ((encodedText == null) || isMutated() || isParentMutated()) {
 
-      ObjectNode copiedNode = parent.getNode();
+      ObjectNode clonedNode = (ObjectNode)JsonCodec.clone(parent.getNode());
 
       if (removed || JsonNodeType.NULL.equals(extNode.getNodeType())) {
-        copiedNode.remove(Message.EXT_FIELD);
+        clonedNode.remove(Message.EXT_FIELD);
       } else {
-        copiedNode.set(Message.EXT_FIELD, extNode);
+        clonedNode.set(Message.EXT_FIELD, extNode);
       }
 
-      encodedText = JsonCodec.writeAsString(copiedNode);
+      encodedText = JsonCodec.writeAsString(clonedNode);
       resetMutation();
+      resetPrentMutation();
 
       return encodedText;
     } else {

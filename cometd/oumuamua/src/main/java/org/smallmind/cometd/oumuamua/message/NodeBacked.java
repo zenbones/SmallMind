@@ -63,6 +63,11 @@ public abstract class NodeBacked implements Serializable {
     return parent;
   }
 
+  public long getVersion () {
+
+    return version;
+  }
+
   public boolean isMutated () {
 
     return encodedVersion != version;
