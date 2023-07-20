@@ -307,7 +307,7 @@ public class OumuamuaServerChannel implements ServerChannel {
 
   public void send (OumuamuaPacket packet, HashSet<String> sessionIdSet) {
 
-    packet.setLazy(isLazy());
+    packet.setLazyTimestamp(lazy ? (lazyTimeout > 0) ? System.currentTimeMillis() + lazyTimeout : 0 : 0);
 
     for (OumuamuaServerSession serverSession : subscriptionMap.values()) {
       if (sessionIdSet.add(serverSession.getId())) {

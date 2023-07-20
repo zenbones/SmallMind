@@ -32,18 +32,19 @@
  */
 package org.smallmind.cometd.oumuamua.message;
 
+import java.util.Comparator;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.cometd.bayeux.ChannelId;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
-public class OumuamuaPacket {
+public class OumuamuaPacket implements Comparator<OumuamuaPacket> {
 
   private final OumuamuaServerSession sender;
   // DO NOT directly serialize;
   private final ChannelId channelId;
   private final MapLike[] messages;
-  private boolean lazy;
+  private long lazyTimestamp;
 
   public OumuamuaPacket (OumuamuaServerSession sender, ChannelId channelId, MapLike... messages) {
 
@@ -70,16 +71,6 @@ public class OumuamuaPacket {
     return channelId;
   }
 
-  public boolean isLazy () {
-
-    return lazy;
-  }
-
-  public void setLazy (boolean lazy) {
-
-    this.lazy = lazy;
-  }
-
   public OumuamuaServerSession getSender () {
 
     return sender;
@@ -88,5 +79,21 @@ public class OumuamuaPacket {
   public MapLike[] getMessages () {
 
     return messages;
+  }
+
+  public long getLazyTimestamp () {
+
+    return lazyTimestamp;
+  }
+
+  public void setLazyTimestamp (long lazyTimestamp) {
+
+    this.lazyTimestamp = lazyTimestamp;
+  }
+
+  @Override
+  public int compare (OumuamuaPacket packet1, OumuamuaPacket packet2) {
+
+    return Long.compare(packet1.getLazyTimestamp(), packet2.getLazyTimestamp());
   }
 }

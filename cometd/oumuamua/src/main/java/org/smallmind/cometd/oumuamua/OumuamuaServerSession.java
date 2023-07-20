@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.PriorityBlockingQueue;
 import org.cometd.bayeux.Promise;
 import org.cometd.bayeux.Session;
 import org.cometd.bayeux.server.LocalSession;
@@ -52,6 +53,7 @@ import org.smallmind.scribe.pen.LoggerManager;
 public class OumuamuaServerSession implements ServerSession {
 
   private final HashMap<String, Object> attributeMap = new HashMap<>();
+  private final PriorityBlockingQueue<OumuamuaPacket> lazyMessageQueue = new PriorityBlockingQueue<>();
   private final ConcurrentLinkedQueue<OumuamuaPacket> messageQueue = new ConcurrentLinkedQueue<>();
   private final OumuamuaTransport serverTransport;
   private final OumuamuaCarrier carrier;
@@ -265,12 +267,20 @@ public class OumuamuaServerSession implements ServerSession {
 
   public OumuamuaPacket poll () {
 
-    return messageQueue.poll();
+    OumuamuaPacket packet;
+
+    if (lazyMessageQueue.isEmpty() || ((packet = lazyMessageQueue.poll()) == null)) {
+      packet = messageQueue.poll();
+    }
+
+    return packet;
   }
 
   public void send (OumuamuaPacket packet) {
 
-    if ((metaConnectDeliveryOnly == null) ? serverTransport.isMetaConnectDeliveryOnly() : metaConnectDeliveryOnly) {
+    if (packet.getLazyTimestamp() > 0) {
+      lazyMessageQueue.add(packet);
+    } else if ((metaConnectDeliveryOnly == null) ? serverTransport.isMetaConnectDeliveryOnly() : metaConnectDeliveryOnly) {
       messageQueue.add(packet);
     } else {
       try {
