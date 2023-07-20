@@ -32,18 +32,25 @@
  */
 package org.smallmind.cometd.oumuamua.channel;
 
+import org.smallmind.cometd.oumuamua.OumuamuaServerChannel;
+import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
+
 public class UnsubscribeOperation implements ChannelOperation {
+
+  private final OumuamuaServerSession serverSession;
+
+  public UnsubscribeOperation (OumuamuaServerSession serverSession) {
+
+    this.serverSession = serverSession;
+  }
 
   @Override
   public void operate (ChannelTree channelTree) {
 
-    System.out.println(channelTree.getServerChannel().getId());
-    /*
-    channel listener
-    remove all subscriptions
-    subscription listener
+    OumuamuaServerChannel serverChannel;
 
-    remove from map
-     */
+    if ((serverChannel = channelTree.getServerChannel()) != null) {
+      serverChannel.unsubscribe(serverSession);
+    }
   }
 }

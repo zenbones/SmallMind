@@ -69,6 +69,7 @@ public class Websocket2Test {
     }
 
     bayeuxClient.getChannel("/foobar").subscribe((channel, message) -> System.out.println(message.getData()));
+    bayeuxClient.disconnect();
 
     Thread.sleep(300000);
     System.out.println("Done...");

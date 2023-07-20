@@ -49,6 +49,7 @@ import org.cometd.bayeux.server.BayeuxServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
 import org.smallmind.cometd.oumuamua.channel.ChannelIdCache;
+import org.smallmind.cometd.oumuamua.channel.UnsubscribeOperation;
 import org.smallmind.cometd.oumuamua.context.OumuamuaWebsocketContext;
 import org.smallmind.cometd.oumuamua.message.MapLike;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
@@ -110,56 +111,61 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
   public synchronized void send (OumuamuaServerSession receivingSession, OumuamuaPacket... packets)
     throws IOException, InterruptedException, ExecutionException, TimeoutException {
 
-    StringBuilder sendBuilder = new StringBuilder("[");
-    boolean first = true;
+    if (connected) {
 
-    for (OumuamuaPacket packet : packets) {
-      for (MapLike mapLike : packet.getMessages()) {
-        if (!first) {
-          sendBuilder.append(',');
+      StringBuilder sendBuilder = new StringBuilder("[");
+      boolean first = true;
+
+      for (OumuamuaPacket packet : packets) {
+        for (MapLike mapLike : packet.getMessages()) {
+          if (!first) {
+            sendBuilder.append(',');
+          }
+
+          sendBuilder.append(mapLike.encode());
+          first = false;
         }
-
-        sendBuilder.append(mapLike.encode());
-        first = false;
       }
-    }
-    sendBuilder.append(']');
+      sendBuilder.append(']');
 
-    if (websocketTransport.getAsyncSendTimeoutMilliseconds() > 0) {
-      websocketSession.getAsyncRemote().sendText(sendBuilder.toString()).get(websocketTransport.getAsyncSendTimeoutMilliseconds(), TimeUnit.MILLISECONDS);
-    } else {
-      websocketSession.getBasicRemote().sendText(sendBuilder.toString());
-    }
+      if (websocketTransport.getAsyncSendTimeoutMilliseconds() > 0) {
+        websocketSession.getAsyncRemote().sendText(sendBuilder.toString()).get(websocketTransport.getAsyncSendTimeoutMilliseconds(), TimeUnit.MILLISECONDS);
+      } else {
+        websocketSession.getBasicRemote().sendText(sendBuilder.toString());
+      }
 
-    System.out.println("out:" + sendBuilder.toString());
+      System.out.println("out:" + sendBuilder.toString());
+    }
   }
 
   @Override
   public synchronized void onMessage (String data) {
 
-    System.out.println("in:" + data);
-    try {
-      for (JsonNode messageNode : JsonCodec.readAsJsonNode(data)) {
+    if (connected) {
+      System.out.println("in:" + data);
+      try {
+        for (JsonNode messageNode : JsonCodec.readAsJsonNode(data)) {
 
-        if (messageNode.has("channel")) {
+          if (messageNode.has("channel")) {
 
-          OumuamuaPacket[] packets;
+            OumuamuaPacket[] packets;
 
-          if ((packets = respond(messageNode.get("channel").asText(), messageNode)) != null) {
-            send(serverSession, packets);
+            if ((packets = respond(messageNode.get("channel").asText(), messageNode)) != null) {
+              send(serverSession, packets);
+            }
           }
         }
-      }
 
-      // handle disconnect
-      if (!connected) {
-        websocketSession.close(new CloseReason(CloseReason.CloseCodes.NORMAL_CLOSURE, "Client disconnect"));
+        // handle the disconnect after sending the confirmation
+        if (!connected) {
+          websocketSession.close(new CloseReason(CloseReason.CloseCodes.NORMAL_CLOSURE, "Client disconnect"));
+        }
+      } catch (Exception ioException) {
+        LoggerManager.getLogger(WebSocketEndpoint.class).error(ioException);
+      } finally {
+        // Keep our threads clean and tidy
+        ChannelIdCache.clear();
       }
-    } catch (Exception ioException) {
-      LoggerManager.getLogger(WebSocketEndpoint.class).error(ioException);
-    } finally {
-      // Keep our threads clean and tidy
-      ChannelIdCache.clear();
     }
   }
 
@@ -225,8 +231,11 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
   public synchronized void onClose (Session wsSession, CloseReason closeReason) {
 
     connected = false;
-    //TODO: destroy the server session!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    serverSession = null;
+
+    if (serverSession != null) {
+      oumuamuaServer.operateOnChannels(new UnsubscribeOperation(serverSession));
+      serverSession = null;
+    }
   }
 
   @Override
