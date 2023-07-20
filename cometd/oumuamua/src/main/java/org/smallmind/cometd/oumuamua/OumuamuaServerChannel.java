@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.cometd.bayeux.ChannelId;
 import org.cometd.bayeux.Promise;
 import org.cometd.bayeux.Session;
@@ -51,6 +52,7 @@ import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 public class OumuamuaServerChannel implements ServerChannel {
 
   private final OumuamuaServer oumuamuaServer;
+  private final ReentrantReadWriteLock lifeLock = new ReentrantReadWriteLock();
   private final ConcurrentHashMap<String, OumuamuaServerSession> subscriptionMap = new ConcurrentHashMap<>();
   private final HashMap<String, Object> attributeMap = new HashMap<>();
   private final ConcurrentLinkedQueue<ServerChannelListener> listenerList = new ConcurrentLinkedQueue<>();
@@ -153,22 +155,35 @@ public class OumuamuaServerChannel implements ServerChannel {
   }
 
   @Override
-  public synchronized boolean isPersistent () {
+  public boolean isPersistent () {
 
-    return persistent;
+    lifeLock.readLock().lock();
+
+    try {
+
+      return persistent;
+    } finally {
+      lifeLock.readLock().unlock();
+    }
   }
 
   @Override
-  public synchronized void setPersistent (boolean persistent) {
+  public void setPersistent (boolean persistent) {
 
-    if (persistent != this.persistent) {
-      this.persistent = persistent;
+    lifeLock.writeLock().lock();
 
-      if (persistent) {
-        channelLifetime = -1;
-      } else {
-        checkTimeToLive();
+    try {
+      if (persistent != this.persistent) {
+        this.persistent = persistent;
+
+        if (persistent) {
+          channelLifetime = -1;
+        } else {
+          checkTimeToLive();
+        }
       }
+    } finally {
+      lifeLock.writeLock().unlock();
     }
   }
 
@@ -238,25 +253,37 @@ public class OumuamuaServerChannel implements ServerChannel {
   }
 
   @Override
-  public synchronized void addListener (ServerChannelListener listener) {
+  public void addListener (ServerChannelListener listener) {
 
-    if (ServerChannelListener.Weak.class.isAssignableFrom(listener.getClass())) {
-      weakListenerList.add((ServerChannelListener.Weak)listener);
-    } else {
-      listenerList.add(listener);
-      channelLifetime = 1;
+    lifeLock.writeLock().lock();
+
+    try {
+      if (ServerChannelListener.Weak.class.isAssignableFrom(listener.getClass())) {
+        weakListenerList.add((ServerChannelListener.Weak)listener);
+      } else {
+        listenerList.add(listener);
+        channelLifetime = -1;
+      }
+    } finally {
+      lifeLock.writeLock().unlock();
     }
   }
 
   @Override
-  public synchronized void removeListener (ServerChannelListener listener) {
+  public void removeListener (ServerChannelListener listener) {
 
-    if (ServerChannelListener.Weak.class.isAssignableFrom(listener.getClass())) {
-      weakListenerList.remove(listener);
-    } else if (listenerList.remove(listener)) {
-      if (listenerList.isEmpty()) {
-        checkTimeToLive();
+    lifeLock.writeLock().lock();
+
+    try {
+      if (ServerChannelListener.Weak.class.isAssignableFrom(listener.getClass())) {
+        weakListenerList.remove(listener);
+      } else if (listenerList.remove(listener)) {
+        if (listenerList.isEmpty()) {
+          checkTimeToLive();
+        }
       }
+    } finally {
+      lifeLock.writeLock().unlock();
     }
   }
 
@@ -268,30 +295,42 @@ public class OumuamuaServerChannel implements ServerChannel {
   }
 
   @Override
-  public synchronized boolean subscribe (ServerSession session) {
+  public boolean subscribe (ServerSession session) {
 
-    subscriptionMap.putIfAbsent(session.getId(), (OumuamuaServerSession)session);
-    channelLifetime = -1;
+    lifeLock.writeLock().lock();
 
-    return true;
+    try {
+      subscriptionMap.putIfAbsent(session.getId(), (OumuamuaServerSession)session);
+      channelLifetime = -1;
+
+      return true;
+    } finally {
+      lifeLock.writeLock().unlock();
+    }
   }
 
   @Override
-  public synchronized boolean unsubscribe (ServerSession session) {
+  public boolean unsubscribe (ServerSession session) {
 
-    ServerSession serverSession;
+    lifeLock.writeLock().lock();
 
-    if ((serverSession = subscriptionMap.remove(session.getId())) == null) {
+    try {
+      ServerSession serverSession;
 
-      return false;
-    } else {
-      // TODO: session listener???
+      if ((serverSession = subscriptionMap.remove(session.getId())) == null) {
 
-      if (subscriptionMap.isEmpty()) {
-        checkTimeToLive();
+        return false;
+      } else {
+        // TODO: session listener???
+
+        if (subscriptionMap.isEmpty()) {
+          checkTimeToLive();
+        }
+
+        return true;
       }
-
-      return true;
+    } finally {
+      lifeLock.writeLock().unlock();
     }
   }
 

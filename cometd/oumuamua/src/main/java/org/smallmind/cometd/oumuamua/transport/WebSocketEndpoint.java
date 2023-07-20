@@ -185,7 +185,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
         return (handshakeView = JsonCodec.read(messageNode, HandshakeMessageRequestInView.class)).factory().process(oumuamuaServer, ACTUAL_TRANSPORTS, serverSession, new OumuamuaServerMessage(websocketTransport, context, null, HandshakeMessage.CHANNEL_ID, handshakeView.getId(), null, false, (ObjectNode)messageNode));
       case "/meta/connect":
 
-        return JsonCodec.read(messageNode, ConnectMessageRequestInView.class).factory().process(oumuamuaServer, serverSession);
+        return JsonCodec.read(messageNode, ConnectMessageRequestInView.class).factory().process(serverSession);
       case "/meta/disconnect":
         // disconnect will happen after the response hs been sent
         connected = false;

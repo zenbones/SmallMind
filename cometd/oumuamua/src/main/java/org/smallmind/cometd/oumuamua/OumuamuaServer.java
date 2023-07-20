@@ -35,9 +35,13 @@ package org.smallmind.cometd.oumuamua;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import org.cometd.bayeux.MarkedReference;
@@ -56,12 +60,15 @@ import org.smallmind.cometd.oumuamua.channel.ChannelTree;
 import org.smallmind.cometd.oumuamua.channel.ListOperation;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 import org.smallmind.cometd.oumuamua.transport.OumuamuaTransport;
+import org.smallmind.scribe.pen.LoggerManager;
 
 public class OumuamuaServer implements BayeuxServer {
 
   private final ChannelTree channelTree = new ChannelTree();
+  private final ConcurrentHashMap<String, OumuamuaServerSession> sessionMap = new ConcurrentHashMap<>();
   private final Map<String, OumuamuaTransport> transportMap;
   private final List<String> allowedList;
+  private LazyMessageSifter lazyMessageSifter;
   private int emptyChannelTimeToLiveMinutes = 30;
   private SecurityPolicy securityPolicy;
 
@@ -88,9 +95,17 @@ public class OumuamuaServer implements BayeuxServer {
     for (OumuamuaTransport transport : transportMap.values()) {
       transport.init(this, servletConfig);
     }
+
+    new Thread(lazyMessageSifter = new LazyMessageSifter()).start();
   }
 
   public void stop () {
+
+    try {
+      lazyMessageSifter.stop();
+    } catch (InterruptedException interruptedException) {
+      LoggerManager.getLogger(OumuamuaServer.class).error(interruptedException);
+    }
 
     //TODO: ?????
   }
@@ -195,21 +210,21 @@ public class OumuamuaServer implements BayeuxServer {
   }
 
   @Override
-  public ServerSession getSession (String s) {
+  public ServerSession getSession (String id) {
 
-    return null;
+    return sessionMap.get(id);
   }
 
   @Override
   public List<ServerSession> getSessions () {
 
-    return null;
+    return new LinkedList<>(sessionMap.values());
   }
 
   @Override
   public boolean removeSession (ServerSession serverSession) {
 
-    return false;
+    return sessionMap.remove(serverSession.getId()) != null;
   }
 
   @Override
@@ -274,5 +289,48 @@ public class OumuamuaServer implements BayeuxServer {
   public void removeChannel (ServerChannel channel) {
 
     channelTree.remove(0, channel.getChannelId());
+  }
+
+  private class LazyMessageSifter implements Runnable {
+
+    private final CountDownLatch finishLatch = new CountDownLatch(1);
+    private final CountDownLatch exitLatch = new CountDownLatch(1);
+
+    public void stop ()
+      throws InterruptedException {
+
+      finishLatch.countDown();
+      exitLatch.await();
+    }
+
+    @Override
+    public void run () {
+
+      try {
+        // TODO: Set the pulse time properly
+        while (!finishLatch.await(3, TimeUnit.SECONDS)) {
+
+          long now = System.currentTimeMillis();
+
+          for (OumuamuaServerSession serverSession : sessionMap.values()) {
+
+            LinkedList<OumuamuaPacket> enqueuedPacketList = new LinkedList<>();
+            OumuamuaPacket[] enqueuedPackets;
+
+            while (((enqueuedPackets = serverSession.pollLazy(now)) != null) && (enqueuedPackets.length > 0)) {
+              enqueuedPacketList.addAll(Arrays.asList(enqueuedPackets));
+            }
+
+            if (!enqueuedPacketList.isEmpty()) {
+              serverSession.getCarrier().send(serverSession, enqueuedPacketList.toArray(new OumuamuaPacket[0]));
+            }
+          }
+        }
+      } catch (Exception exception) {
+        LoggerManager.getLogger(OumuamuaServer.class).error(exception);
+      } finally {
+        exitLatch.countDown();
+      }
+    }
   }
 }

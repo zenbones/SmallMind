@@ -33,10 +33,13 @@
 package org.smallmind.cometd.oumuamua;
 
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.locks.ReentrantLock;
 import org.cometd.bayeux.Promise;
 import org.cometd.bayeux.Session;
 import org.cometd.bayeux.server.LocalSession;
@@ -52,8 +55,9 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class OumuamuaServerSession implements ServerSession {
 
+  private final ReentrantLock messagePollLock = new ReentrantLock();
   private final HashMap<String, Object> attributeMap = new HashMap<>();
-  private final PriorityBlockingQueue<OumuamuaPacket> lazyMessageQueue = new PriorityBlockingQueue<>();
+  private final ConcurrentSkipListMap<Long, LinkedList<OumuamuaPacket>> lazyMessageQueue = new ConcurrentSkipListMap<>();
   private final ConcurrentLinkedQueue<OumuamuaPacket> messageQueue = new ConcurrentLinkedQueue<>();
   private final OumuamuaTransport serverTransport;
   private final OumuamuaCarrier carrier;
@@ -81,6 +85,11 @@ public class OumuamuaServerSession implements ServerSession {
   public String getId () {
 
     return id;
+  }
+
+  public OumuamuaCarrier getCarrier () {
+
+    return carrier;
   }
 
   public String[] getNegotiatedTransports () {
@@ -265,21 +274,61 @@ public class OumuamuaServerSession implements ServerSession {
 
   }
 
-  public OumuamuaPacket poll () {
+  public OumuamuaPacket[] poll () {
 
-    OumuamuaPacket packet;
+    messagePollLock.lock();
 
-    if (lazyMessageQueue.isEmpty() || ((packet = lazyMessageQueue.poll()) == null)) {
-      packet = messageQueue.poll();
+    try {
+
+      Map.Entry<Long, LinkedList<OumuamuaPacket>> lazyEntry;
+
+      if ((lazyEntry = lazyMessageQueue.pollFirstEntry()) != null) {
+
+        return lazyEntry.getValue().toArray(new OumuamuaPacket[0]);
+      } else {
+
+        OumuamuaPacket packet;
+
+        return ((packet = messageQueue.poll()) != null) ? new OumuamuaPacket[] {packet} : null;
+      }
+    } finally {
+      messagePollLock.unlock();
     }
+  }
 
-    return packet;
+  public OumuamuaPacket[] pollLazy (long now) {
+
+    messagePollLock.lock();
+
+    try {
+
+      Long firstKey;
+
+      return ((firstKey = lazyMessageQueue.firstKey()) <= now) ? lazyMessageQueue.remove(firstKey).toArray(new OumuamuaPacket[0]) : null;
+    } finally {
+      messagePollLock.unlock();
+    }
   }
 
   public void send (OumuamuaPacket packet) {
 
-    if (packet.getLazyTimestamp() > 0) {
-      lazyMessageQueue.add(packet);
+    long lazyTimestamp;
+
+    if ((lazyTimestamp = packet.getLazyTimestamp()) > 0) {
+      messagePollLock.lock();
+
+      try {
+
+        LinkedList<OumuamuaPacket> packetList;
+
+        if ((packetList = lazyMessageQueue.get(lazyTimestamp)) == null) {
+          lazyMessageQueue.put(lazyTimestamp, packetList = new LinkedList<>());
+        }
+
+        packetList.add(packet);
+      } finally {
+        messagePollLock.unlock();
+      }
     } else if ((metaConnectDeliveryOnly == null) ? serverTransport.isMetaConnectDeliveryOnly() : metaConnectDeliveryOnly) {
       messageQueue.add(packet);
     } else {

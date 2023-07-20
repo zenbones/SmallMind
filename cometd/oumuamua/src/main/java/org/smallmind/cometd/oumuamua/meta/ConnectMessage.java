@@ -32,11 +32,11 @@
  */
 package org.smallmind.cometd.oumuamua.meta;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.cometd.bayeux.ChannelId;
-import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 import org.smallmind.web.json.doppelganger.Doppelganger;
@@ -56,7 +56,7 @@ public class ConnectMessage extends AdvisedMetaMessage {
   @View(idioms = @Idiom(purposes = "request", visibility = IN))
   private String connectionType;
 
-  public OumuamuaPacket[] process (OumuamuaServer oumuamuaServer, OumuamuaServerSession serverSession) {
+  public OumuamuaPacket[] process (OumuamuaServerSession serverSession) {
 
     ObjectNode adviceNode = JsonNodeFactory.instance.objectNode();
 
@@ -72,18 +72,18 @@ public class ConnectMessage extends AdvisedMetaMessage {
       for (String negotiatedTransport : serverSession.getNegotiatedTransports()) {
         if (negotiatedTransport.equalsIgnoreCase(connectionType)) {
 
-          LinkedList<OumuamuaPacket> packetList = new LinkedList<>();
-          OumuamuaPacket enqueuedPacket;
+          LinkedList<OumuamuaPacket> enqueuedPacketList = new LinkedList<>();
+          OumuamuaPacket[] enqueuedPackets;
 
           serverSession.setConnected(true);
           // TODO: Set the 'interval' properly?
           adviceNode.put("interval", 30000);
 
-          while ((enqueuedPacket = serverSession.poll()) != null) {
-            packetList.add(enqueuedPacket);
+          while (((enqueuedPackets = serverSession.poll()) != null) && (enqueuedPackets.length > 0)) {
+            enqueuedPacketList.addAll(Arrays.asList(enqueuedPackets));
           }
 
-          return OumuamuaPacket.asPackets(serverSession, CHANNEL_ID, new ConnectMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(CHANNEL_ID.getId()).setId(getId()).setClientId(serverSession.getId()).setAdvice(adviceNode), packetList.toArray(new OumuamuaPacket[0]));
+          return OumuamuaPacket.asPackets(serverSession, CHANNEL_ID, new ConnectMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(CHANNEL_ID.getId()).setId(getId()).setClientId(serverSession.getId()).setAdvice(adviceNode), enqueuedPacketList.toArray(new OumuamuaPacket[0]));
         }
       }
 
