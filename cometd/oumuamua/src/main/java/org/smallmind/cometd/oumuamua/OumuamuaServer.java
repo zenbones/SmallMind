@@ -56,6 +56,7 @@ import org.smallmind.cometd.oumuamua.channel.ChannelIdCache;
 import org.smallmind.cometd.oumuamua.channel.ChannelIterator;
 import org.smallmind.cometd.oumuamua.channel.ChannelOperation;
 import org.smallmind.cometd.oumuamua.channel.ChannelTree;
+import org.smallmind.cometd.oumuamua.channel.ExpirationOperation;
 import org.smallmind.cometd.oumuamua.channel.ListOperation;
 import org.smallmind.cometd.oumuamua.message.OumuamuaLazyPacket;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
@@ -68,6 +69,7 @@ public class OumuamuaServer implements BayeuxServer {
   private final OumuamuaConfiguration configuration;
   private final ChannelTree channelTree = new ChannelTree();
   private final ConcurrentHashMap<String, OumuamuaServerSession> sessionMap = new ConcurrentHashMap<>();
+  private ExpiredChannelSifter expiredChannelSifter;
   private LazyMessageSifter lazyMessageSifter;
   private SecurityPolicy securityPolicy;
 
@@ -88,6 +90,7 @@ public class OumuamuaServer implements BayeuxServer {
       transport.init(this, servletConfig);
     }
 
+    new Thread(expiredChannelSifter = new ExpiredChannelSifter()).start();
     new Thread(lazyMessageSifter = new LazyMessageSifter()).start();
   }
 
@@ -95,6 +98,11 @@ public class OumuamuaServer implements BayeuxServer {
 
     try {
       lazyMessageSifter.stop();
+    } catch (InterruptedException interruptedException) {
+      LoggerManager.getLogger(OumuamuaServer.class).error(interruptedException);
+    }
+    try {
+      expiredChannelSifter.stop();
     } catch (InterruptedException interruptedException) {
       LoggerManager.getLogger(OumuamuaServer.class).error(interruptedException);
     }
@@ -327,12 +335,43 @@ public class OumuamuaServer implements BayeuxServer {
             }
 
             if (!enqueuedLazyPacketList.isEmpty()) {
-              serverSession.getCarrier().send(serverSession, enqueuedLazyPacketList.toArray(new OumuamuaLazyPacket[0]));
+              try {
+                serverSession.getCarrier().send(serverSession, enqueuedLazyPacketList.toArray(new OumuamuaLazyPacket[0]));
+              } catch (Exception exception) {
+                LoggerManager.getLogger(OumuamuaServer.class).error(exception);
+              }
             }
           }
         }
-      } catch (Exception exception) {
-        LoggerManager.getLogger(OumuamuaServer.class).error(exception);
+      } catch (InterruptedException interruptedException) {
+        LoggerManager.getLogger(OumuamuaServer.class).error(interruptedException);
+      } finally {
+        exitLatch.countDown();
+      }
+    }
+  }
+
+  private class ExpiredChannelSifter implements Runnable {
+
+    private final CountDownLatch finishLatch = new CountDownLatch(1);
+    private final CountDownLatch exitLatch = new CountDownLatch(1);
+
+    public void stop ()
+      throws InterruptedException {
+
+      finishLatch.countDown();
+      exitLatch.await();
+    }
+
+    @Override
+    public void run () {
+
+      try {
+        while (!finishLatch.await(configuration.getExpiredChannelCycleMinutes(), TimeUnit.MINUTES)) {
+          channelTree.walk(new ExpirationOperation(OumuamuaServer.this, System.currentTimeMillis()));
+        }
+      } catch (InterruptedException interruptedException) {
+        LoggerManager.getLogger(OumuamuaServer.class).error(interruptedException);
       } finally {
         exitLatch.countDown();
       }

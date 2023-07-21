@@ -81,6 +81,18 @@ public class OumuamuaServerChannel implements ServerChannel {
     expirationTimestamp = System.currentTimeMillis() + (oumuamuaServer.getConfiguration().getInactiveChannelLifetimeMinutes() * 60 * 1000L);
   }
 
+  public boolean hasExpired (long now) {
+
+    lifeLock.readLock().lock();
+
+    try {
+
+      return (expirationTimestamp > 0) && (expirationTimestamp < now);
+    } finally {
+      lifeLock.readLock().unlock();
+    }
+  }
+
   // Call from synchronized methods only
   private void checkTimeToLive () {
 
