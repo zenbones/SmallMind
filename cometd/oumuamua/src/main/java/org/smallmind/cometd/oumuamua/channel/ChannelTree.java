@@ -75,7 +75,7 @@ public class ChannelTree {
     }
   }
 
-  public MarkedReference<ChannelTree> addIfAbsent (OumuamuaServer oumuamuaServer, int index, ChannelId channelId) {
+  public MarkedReference<ChannelTree> createIfAbsent (OumuamuaServer oumuamuaServer, int index, ChannelId channelId) {
 
     ChannelTree child;
     boolean created = false;
@@ -92,7 +92,7 @@ public class ChannelTree {
       }
     }
 
-    return (index == (channelId.depth() - 1)) ? new MarkedReference<>(child, created) : child.addIfAbsent(oumuamuaServer, index + 1, channelId);
+    return (index == (channelId.depth() - 1)) ? new MarkedReference<>(child, created) : child.createIfAbsent(oumuamuaServer, index + 1, channelId);
   }
 
   public ChannelTree remove (int index, ChannelId channelId) {

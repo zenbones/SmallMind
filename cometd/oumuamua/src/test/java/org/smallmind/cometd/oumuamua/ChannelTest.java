@@ -49,12 +49,12 @@ public class ChannelTest {
 
     ChannelTree t = new ChannelTree();
 
-    t.addIfAbsent(null, 0, new ChannelId("/a"));
-    t.addIfAbsent(null, 0, new ChannelId("/a/**"));
-    t.addIfAbsent(null, 0, new ChannelId("/a/b"));
-    t.addIfAbsent(null, 0, new ChannelId("/a/b/*"));
-    t.addIfAbsent(null, 0, new ChannelId("/a/b/**"));
-    t.addIfAbsent(null, 0, new ChannelId("/a/b/c"));
+    t.createIfAbsent(null, 0, new ChannelId("/a"));
+    t.createIfAbsent(null, 0, new ChannelId("/a/**"));
+    t.createIfAbsent(null, 0, new ChannelId("/a/b"));
+    t.createIfAbsent(null, 0, new ChannelId("/a/b/*"));
+    t.createIfAbsent(null, 0, new ChannelId("/a/b/**"));
+    t.createIfAbsent(null, 0, new ChannelId("/a/b/c"));
 
     ChannelIterator i = new ChannelIterator("/a/b/c");
 

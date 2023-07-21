@@ -257,10 +257,11 @@ public class OumuamuaServer implements BayeuxServer {
   @Override
   public MarkedReference<ServerChannel> createChannelIfAbsent (String id, ConfigurableServerChannel.Initializer... initializers) {
 
+    // Addition and removal of channels should be done only via this method and removeChannel() in this class
     channelChangeLock.lock();
 
     try {
-      MarkedReference<ChannelTree> branchRef = channelTree.addIfAbsent(this, 0, ChannelIdCache.generate(id));
+      MarkedReference<ChannelTree> branchRef = channelTree.createIfAbsent(this, 0, ChannelIdCache.generate(id));
 
       if (branchRef.isMarked() && (initializers != null)) {
         for (ConfigurableServerChannel.Initializer initializer : initializers) {
@@ -286,6 +287,7 @@ public class OumuamuaServer implements BayeuxServer {
 
   public void removeChannel (ServerChannel channel) {
 
+    // Addition and removal of channels should be done only via this method and createChannelIfAbsent() in this class
     channelChangeLock.lock();
 
     try {
