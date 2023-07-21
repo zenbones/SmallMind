@@ -134,38 +134,36 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
         websocketSession.getBasicRemote().sendText(sendBuilder.toString());
       }
 
-      System.out.println("out:" + sendBuilder.toString());
+//      System.out.println("out:" + sendBuilder.toString());
     }
   }
 
   @Override
   public synchronized void onMessage (String data) {
 
-    if (connected) {
-      System.out.println("in:" + data);
-      try {
-        for (JsonNode messageNode : JsonCodec.readAsJsonNode(data)) {
+//    System.out.println("in:" + data);
+    try {
+      for (JsonNode messageNode : JsonCodec.readAsJsonNode(data)) {
 
-          if (messageNode.has("channel")) {
+        if (messageNode.has("channel")) {
 
-            OumuamuaPacket[] packets;
+          OumuamuaPacket[] packets;
 
-            if ((packets = respond(messageNode.get("channel").asText(), messageNode)) != null) {
-              send(serverSession, packets);
-            }
+          if ((packets = respond(messageNode.get("channel").asText(), messageNode)) != null) {
+            send(serverSession, packets);
           }
         }
-
-        // handle the disconnect after sending the confirmation
-        if (!connected) {
-          websocketSession.close(new CloseReason(CloseReason.CloseCodes.NORMAL_CLOSURE, "Client disconnect"));
-        }
-      } catch (Exception ioException) {
-        LoggerManager.getLogger(WebSocketEndpoint.class).error(ioException);
-      } finally {
-        // Keep our threads clean and tidy
-        ChannelIdCache.clear();
       }
+
+      // handle the disconnect after sending the confirmation
+      if (!connected) {
+        websocketSession.close(new CloseReason(CloseReason.CloseCodes.NORMAL_CLOSURE, "Client disconnect"));
+      }
+    } catch (Exception ioException) {
+      LoggerManager.getLogger(WebSocketEndpoint.class).error(ioException);
+    } finally {
+      // Keep our threads clean and tidy
+      ChannelIdCache.clear();
     }
   }
 

@@ -36,19 +36,27 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.websocket.ContainerProvider;
 import javax.websocket.WebSocketContainer;
+import org.cometd.bayeux.client.ClientSessionChannel;
 import org.cometd.client.BayeuxClient;
 import org.cometd.client.transport.ClientTransport;
 import org.cometd.client.websocket.javax.WebSocketTransport;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.testng.annotations.Test;
 
 @Test
-public class Websocket2Test {
+public class WebsocketTest2 {
+
+  /*
+  [{"minimumVersion":"1.0","clientId":"11djxhxdr697ckmu8pk0vogwct",
+  "supportedConnectionTypes":["websocket","long-polling","callback-polling"],
+  "advice":{"interval":0,"timeout":30000,"reconnect":"retry"},
+  "channel":"/meta/handshake","id":"1","version":"1.0","successful":true}]
+  [{"advice":{"interval":0,"timeout":30000,"reconnect":"retry"},"channel":"/meta/connect","id":"2","successful":true}]
+   */
 
   public void test ()
     throws Exception {
 
-    ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("org/smallmind/cometd/oumuamua/oumuamua-grizzly.xml", "org/smallmind/cometd/oumuamua/oumuamua.xml");
+    // ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("org/smallmind/cometd/oumuamua/oumuamua-grizzly.xml", "org/smallmind/cometd/oumuamua/oumuamua.xml");
     ClientTransport wsTransport;
     WebSocketContainer webSocketContainer;
     BayeuxClient bayeuxClient;
@@ -68,10 +76,14 @@ public class Websocket2Test {
       System.out.println("Unable to connect within 5000 milliseconds");
     }
 
-    bayeuxClient.getChannel("/foobar").subscribe((channel, message) -> System.out.println(message.getData()));
-    bayeuxClient.disconnect();
+    ClientSessionChannel channel = bayeuxClient.getChannel("/foobar");
 
-    Thread.sleep(300000);
+    System.out.println(System.currentTimeMillis());
+    for (int i = 0; i < 10000; i++) {
+      channel.publish("{\"x\":1, \"y\":2}");
+    }
+
     System.out.println("Done...");
+    Thread.sleep(300000);
   }
 }
