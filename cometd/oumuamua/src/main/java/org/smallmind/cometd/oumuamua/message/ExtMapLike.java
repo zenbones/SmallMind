@@ -70,7 +70,7 @@ public class ExtMapLike extends MapLike {
     return parentEncodedVersion != parent.getVersion();
   }
 
-  public void resetPrentMutation () {
+  public void resetParentMutation () {
 
     parentEncodedVersion = parent.getVersion();
   }
@@ -242,7 +242,7 @@ public class ExtMapLike extends MapLike {
 
       encodedText = JsonCodec.writeAsString(clonedNode);
       resetMutation();
-      resetPrentMutation();
+      resetParentMutation();
 
       return encodedText;
     } else {
