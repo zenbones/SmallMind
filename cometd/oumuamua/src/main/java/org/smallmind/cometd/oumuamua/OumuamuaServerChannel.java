@@ -47,6 +47,7 @@ import org.cometd.bayeux.server.Authorizer;
 import org.cometd.bayeux.server.ServerChannel;
 import org.cometd.bayeux.server.ServerMessage;
 import org.cometd.bayeux.server.ServerSession;
+import org.smallmind.cometd.oumuamua.message.OumuamuaLazyPacket;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 
 public class OumuamuaServerChannel implements ServerChannel {
@@ -65,7 +66,7 @@ public class OumuamuaServerChannel implements ServerChannel {
   private boolean persistent;
   private boolean broadcastToPublisher;
   private boolean lazy;
-  private long channelLifetime;
+  private long expirationTimestamp;
   private long lazyTimeout = -1;
 
   public OumuamuaServerChannel (OumuamuaServer oumuamuaServer, ChannelId channelId) {
@@ -77,14 +78,14 @@ public class OumuamuaServerChannel implements ServerChannel {
     service = channelId.isService();
     broadcast = !(meta || service);
 
-    channelLifetime = System.currentTimeMillis() + (oumuamuaServer.getEmptyChannelTimeToLiveMinutes() * 60 * 1000L);
+    expirationTimestamp = System.currentTimeMillis() + (oumuamuaServer.getConfiguration().getInactiveChannelLifetimeMinutes() * 60 * 1000L);
   }
 
   // Call from synchronized methods only
   private void checkTimeToLive () {
 
-    if ((channelLifetime < 0) && (!persistent) && subscriptionMap.isEmpty() && listenerList.isEmpty()) {
-      channelLifetime = System.currentTimeMillis() + (oumuamuaServer.getEmptyChannelTimeToLiveMinutes() * 60 * 1000L);
+    if ((expirationTimestamp < 0) && (!persistent) && subscriptionMap.isEmpty() && listenerList.isEmpty()) {
+      expirationTimestamp = System.currentTimeMillis() + (oumuamuaServer.getConfiguration().getInactiveChannelLifetimeMinutes() * 60 * 1000L);
     }
   }
 
@@ -177,7 +178,7 @@ public class OumuamuaServerChannel implements ServerChannel {
         this.persistent = persistent;
 
         if (persistent) {
-          channelLifetime = -1;
+          expirationTimestamp = -1;
         } else {
           checkTimeToLive();
         }
@@ -262,7 +263,7 @@ public class OumuamuaServerChannel implements ServerChannel {
         weakListenerList.add((ServerChannelListener.Weak)listener);
       } else {
         listenerList.add(listener);
-        channelLifetime = -1;
+        expirationTimestamp = -1;
       }
     } finally {
       lifeLock.writeLock().unlock();
@@ -301,7 +302,7 @@ public class OumuamuaServerChannel implements ServerChannel {
 
     try {
       subscriptionMap.putIfAbsent(session.getId(), (OumuamuaServerSession)session);
-      channelLifetime = -1;
+      expirationTimestamp = -1;
 
       return true;
     } finally {
@@ -346,11 +347,16 @@ public class OumuamuaServerChannel implements ServerChannel {
 
   public void send (OumuamuaPacket packet, HashSet<String> sessionIdSet) {
 
-    packet.setLazyTimestamp(lazy ? (lazyTimeout > 0) ? System.currentTimeMillis() + lazyTimeout : 0 : 0);
+    OumuamuaPacket downstreamPacket = null;
 
     for (OumuamuaServerSession serverSession : subscriptionMap.values()) {
       if (sessionIdSet.add(serverSession.getId())) {
-        serverSession.send(packet);
+
+        if (downstreamPacket == null) {
+          downstreamPacket = lazy ? (lazyTimeout > 0) ? new OumuamuaLazyPacket(packet, System.currentTimeMillis() + lazyTimeout) : packet : packet;
+        }
+
+        serverSession.send(downstreamPacket);
       }
     }
   }

@@ -39,8 +39,9 @@ public class OumuamuaConfiguration {
 
   private Map<String, OumuamuaTransport> transportMap;
   private String[] allowedTransports;
+  private int inactiveChannelLifetimeMinutes = 30;
   private long lazyMessageCycleMilliseconds = 3000;
-  private int maximumLayMessageQueueSize = 1000;
+  private int maximumLazyMessageQueueSize = 1000;
 
   public Map<String, OumuamuaTransport> getTransportMap () {
 
@@ -67,18 +68,28 @@ public class OumuamuaConfiguration {
     return lazyMessageCycleMilliseconds;
   }
 
+  public int getInactiveChannelLifetimeMinutes () {
+
+    return inactiveChannelLifetimeMinutes;
+  }
+
+  public void setInactiveChannelLifetimeMinutes (int inactiveChannelLifetimeMinutes) {
+
+    this.inactiveChannelLifetimeMinutes = inactiveChannelLifetimeMinutes;
+  }
+
   public void setLazyMessageCycleMilliseconds (long lazyMessageCycleMilliseconds) {
 
     this.lazyMessageCycleMilliseconds = lazyMessageCycleMilliseconds;
   }
 
-  public int getMaximumLayMessageQueueSize () {
+  public int getMaximumLazyMessageQueueSize () {
 
-    return maximumLayMessageQueueSize;
+    return maximumLazyMessageQueueSize;
   }
 
-  public void setMaximumLayMessageQueueSize (int maximumLayMessageQueueSize) {
+  public void setMaximumLazyMessageQueueSize (int maximumLazyMessageQueueSize) {
 
-    this.maximumLayMessageQueueSize = maximumLayMessageQueueSize;
+    this.maximumLazyMessageQueueSize = maximumLazyMessageQueueSize;
   }
 }

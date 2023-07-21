@@ -23,7 +23,7 @@
             <value>websocket</value>
           </list>
         </property>
-        <property name="maximumLayMessageQueueSize" value="1000"/>
+        <property name="maximumLazyMessageQueueSize" value="1000"/>
       </bean>
     </constructor-arg>
   </bean>

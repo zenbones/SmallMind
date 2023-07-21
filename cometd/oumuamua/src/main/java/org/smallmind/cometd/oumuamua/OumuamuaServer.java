@@ -56,6 +56,7 @@ import org.smallmind.cometd.oumuamua.channel.ChannelIterator;
 import org.smallmind.cometd.oumuamua.channel.ChannelOperation;
 import org.smallmind.cometd.oumuamua.channel.ChannelTree;
 import org.smallmind.cometd.oumuamua.channel.ListOperation;
+import org.smallmind.cometd.oumuamua.message.OumuamuaLazyPacket;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 import org.smallmind.cometd.oumuamua.transport.OumuamuaTransport;
 import org.smallmind.scribe.pen.LoggerManager;
@@ -66,7 +67,6 @@ public class OumuamuaServer implements BayeuxServer {
   private final ChannelTree channelTree = new ChannelTree();
   private final ConcurrentHashMap<String, OumuamuaServerSession> sessionMap = new ConcurrentHashMap<>();
   private LazyMessageSifter lazyMessageSifter;
-  private int emptyChannelTimeToLiveMinutes = 30;
   private SecurityPolicy securityPolicy;
 
   public OumuamuaServer (OumuamuaConfiguration configuration) {
@@ -77,16 +77,6 @@ public class OumuamuaServer implements BayeuxServer {
   public OumuamuaConfiguration getConfiguration () {
 
     return configuration;
-  }
-
-  public int getEmptyChannelTimeToLiveMinutes () {
-
-    return emptyChannelTimeToLiveMinutes;
-  }
-
-  public void setEmptyChannelTimeToLiveMinutes (int emptyChannelTimeToLiveMinutes) {
-
-    this.emptyChannelTimeToLiveMinutes = emptyChannelTimeToLiveMinutes;
   }
 
   public void start (ServletConfig servletConfig)
@@ -313,15 +303,15 @@ public class OumuamuaServer implements BayeuxServer {
 
           for (OumuamuaServerSession serverSession : sessionMap.values()) {
 
-            LinkedList<OumuamuaPacket> enqueuedPacketList = new LinkedList<>();
-            OumuamuaPacket[] enqueuedPackets;
+            LinkedList<OumuamuaLazyPacket> enqueuedLazyPacketList = new LinkedList<>();
+            OumuamuaLazyPacket[] enqueuedLazyPackets;
 
-            while (((enqueuedPackets = serverSession.pollLazy(now)) != null) && (enqueuedPackets.length > 0)) {
-              enqueuedPacketList.addAll(Arrays.asList(enqueuedPackets));
+            while (((enqueuedLazyPackets = serverSession.pollLazy(now)) != null) && (enqueuedLazyPackets.length > 0)) {
+              enqueuedLazyPacketList.addAll(Arrays.asList(enqueuedLazyPackets));
             }
 
-            if (!enqueuedPacketList.isEmpty()) {
-              serverSession.getCarrier().send(serverSession, enqueuedPacketList.toArray(new OumuamuaPacket[0]));
+            if (!enqueuedLazyPacketList.isEmpty()) {
+              serverSession.getCarrier().send(serverSession, enqueuedLazyPacketList.toArray(new OumuamuaLazyPacket[0]));
             }
           }
         }

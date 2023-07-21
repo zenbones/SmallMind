@@ -32,60 +32,33 @@
  */
 package org.smallmind.cometd.oumuamua.message;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.cometd.bayeux.ChannelId;
-import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
-import org.smallmind.web.json.scaffold.util.JsonCodec;
+import java.util.Comparator;
 
-public class OumuamuaPacket {
+public class OumuamuaLazyPacket extends OumuamuaPacket implements Comparator<OumuamuaLazyPacket> {
 
-  private final OumuamuaServerSession sender;
-  // DO NOT directly serialize;
-  private final ChannelId channelId;
-  private final MapLike[] messages;
+  private final long lazyTimestamp;
 
-  public OumuamuaPacket (OumuamuaServerSession sender, ChannelId channelId, MapLike... messages) {
+  public OumuamuaLazyPacket (OumuamuaPacket packet, long lazyTimestamp) {
 
-    this.sender = sender;
-    this.channelId = channelId;
-    this.messages = messages;
+    super(packet.getSender(), packet.getChannelId(), packet.getMessages());
+
+    this.lazyTimestamp = lazyTimestamp;
   }
 
-  public static OumuamuaPacket[] asPackets (OumuamuaServerSession serverSession, ChannelId channelId, Object message, OumuamuaPacket... enqueuedPackets) {
-
-    OumuamuaPacket[] packets = new OumuamuaPacket[1 + ((enqueuedPackets == null) ? 0 : enqueuedPackets.length)];
-
-    packets[0] = new OumuamuaPacket(serverSession, channelId, new MapLike(null, (ObjectNode)JsonCodec.writeAsJsonNode(message)));
-
-    if ((enqueuedPackets != null) && (enqueuedPackets.length > 0)) {
-      System.arraycopy(enqueuedPackets, 0, packets, 1, enqueuedPackets.length);
-    }
-
-    return packets;
-  }
-
+  @Override
   public PacketType getType () {
 
-    return PacketType.STANDARD;
+    return PacketType.LAZY;
   }
 
-  public ChannelId getChannelId () {
+  public long getLazyTimestamp () {
 
-    return channelId;
+    return lazyTimestamp;
   }
 
-  public OumuamuaServerSession getSender () {
+  @Override
+  public int compare (OumuamuaLazyPacket lazyPacket1, OumuamuaLazyPacket lazyPacket2) {
 
-    return sender;
-  }
-
-  public int size () {
-
-    return messages.length;
-  }
-
-  public MapLike[] getMessages () {
-
-    return messages;
+    return Long.compare(lazyPacket1.getLazyTimestamp(), lazyPacket2.getLazyTimestamp());
   }
 }

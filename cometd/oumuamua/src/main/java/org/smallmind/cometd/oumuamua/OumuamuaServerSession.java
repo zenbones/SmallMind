@@ -47,7 +47,9 @@ import org.cometd.bayeux.server.ServerChannel;
 import org.cometd.bayeux.server.ServerMessage;
 import org.cometd.bayeux.server.ServerSession;
 import org.cometd.bayeux.server.ServerTransport;
+import org.smallmind.cometd.oumuamua.message.OumuamuaLazyPacket;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
+import org.smallmind.cometd.oumuamua.message.PacketType;
 import org.smallmind.cometd.oumuamua.transport.OumuamuaCarrier;
 import org.smallmind.cometd.oumuamua.transport.OumuamuaTransport;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
@@ -57,7 +59,7 @@ public class OumuamuaServerSession implements ServerSession {
 
   private final ReentrantLock messagePollLock = new ReentrantLock();
   private final HashMap<String, Object> attributeMap = new HashMap<>();
-  private final ConcurrentSkipListMap<Long, LinkedList<OumuamuaPacket>> lazyMessageQueue = new ConcurrentSkipListMap<>();
+  private final ConcurrentSkipListMap<Long, LinkedList<OumuamuaLazyPacket>> lazyMessageQueue = new ConcurrentSkipListMap<>();
   private final ConcurrentLinkedQueue<OumuamuaPacket> messageQueue = new ConcurrentLinkedQueue<>();
   private final OumuamuaTransport serverTransport;
   private final OumuamuaCarrier carrier;
@@ -283,14 +285,14 @@ public class OumuamuaServerSession implements ServerSession {
 
     try {
 
-      Map.Entry<Long, LinkedList<OumuamuaPacket>> lazyEntry;
+      Map.Entry<Long, LinkedList<OumuamuaLazyPacket>> lazyEntry;
 
       if ((lazyEntry = lazyMessageQueue.pollFirstEntry()) != null) {
 
-        OumuamuaPacket[] lazyPackets = new OumuamuaPacket[lazyEntry.getValue().size()];
+        OumuamuaLazyPacket[] lazyPackets = new OumuamuaLazyPacket[lazyEntry.getValue().size()];
         int index = 0;
 
-        for (OumuamuaPacket lazyPacket : lazyEntry.getValue()) {
+        for (OumuamuaLazyPacket lazyPacket : lazyEntry.getValue()) {
           lazyMessageCount -= lazyPacket.size();
           lazyPackets[index++] = lazyPacket;
         }
@@ -307,7 +309,7 @@ public class OumuamuaServerSession implements ServerSession {
     }
   }
 
-  public OumuamuaPacket[] pollLazy (long now) {
+  public OumuamuaLazyPacket[] pollLazy (long now) {
 
     messagePollLock.lock();
 
@@ -317,14 +319,14 @@ public class OumuamuaServerSession implements ServerSession {
 
       if ((firstKey = lazyMessageQueue.firstKey()) <= now) {
 
-        LinkedList<OumuamuaPacket> lazyPacketList;
+        LinkedList<OumuamuaLazyPacket> lazyPacketList;
 
         if ((lazyPacketList = lazyMessageQueue.remove(firstKey)) != null) {
 
-          OumuamuaPacket[] lazyPackets = new OumuamuaPacket[lazyPacketList.size()];
+          OumuamuaLazyPacket[] lazyPackets = new OumuamuaLazyPacket[lazyPacketList.size()];
           int index = 0;
 
-          for (OumuamuaPacket lazyPacket : lazyPacketList) {
+          for (OumuamuaLazyPacket lazyPacket : lazyPacketList) {
             lazyMessageCount -= lazyPacket.size();
             lazyPackets[index++] = lazyPacket;
           }
@@ -341,14 +343,13 @@ public class OumuamuaServerSession implements ServerSession {
 
   public void send (OumuamuaPacket packet) {
 
-    long lazyTimestamp;
-
-    if ((lazyTimestamp = packet.getLazyTimestamp()) > 0) {
+    if (PacketType.LAZY.equals(packet.getType())) {
       messagePollLock.lock();
 
       try {
 
-        LinkedList<OumuamuaPacket> packetList;
+        LinkedList<OumuamuaLazyPacket> enqueuingLazyPacketList;
+        long lazyTimestamp;
 
         if ((lazyMessageCount += packet.size()) > maximumLayMessageQueueSize) {
 
@@ -356,20 +357,20 @@ public class OumuamuaServerSession implements ServerSession {
 
           while (operating && (lazyMessageCount > maximumLayMessageQueueSize)) {
 
-            LinkedList<OumuamuaPacket> lazyPacketList;
+            LinkedList<OumuamuaLazyPacket> overflowLazyPacketList;
 
-            if (((lazyPacketList = lazyMessageQueue.pollFirstEntry().getValue()) != null) && (!lazyPacketList.isEmpty())) {
+            if (((overflowLazyPacketList = lazyMessageQueue.pollFirstEntry().getValue()) != null) && (!overflowLazyPacketList.isEmpty())) {
 
-              OumuamuaPacket[] lazyPackets = new OumuamuaPacket[lazyPacketList.size()];
+              OumuamuaLazyPacket[] overflowLazyPackets = new OumuamuaLazyPacket[overflowLazyPacketList.size()];
               int index = 0;
 
-              for (OumuamuaPacket lazyPacket : lazyPacketList) {
-                lazyMessageCount -= lazyPacket.size();
-                lazyPackets[index++] = lazyPacket;
+              for (OumuamuaLazyPacket overflowLazyPacket : overflowLazyPacketList) {
+                lazyMessageCount -= overflowLazyPacket.size();
+                overflowLazyPackets[index++] = overflowLazyPacket;
               }
 
               try {
-                carrier.send(this, lazyPackets);
+                carrier.send(this, overflowLazyPackets);
               } catch (Exception exception) {
                 LoggerManager.getLogger(OumuamuaServerSession.class).error(exception);
               }
@@ -379,11 +380,11 @@ public class OumuamuaServerSession implements ServerSession {
           }
         }
 
-        if ((packetList = lazyMessageQueue.get(lazyTimestamp)) == null) {
-          lazyMessageQueue.put(lazyTimestamp, packetList = new LinkedList<>());
+        if ((enqueuingLazyPacketList = lazyMessageQueue.get(lazyTimestamp = ((OumuamuaLazyPacket)packet).getLazyTimestamp())) == null) {
+          lazyMessageQueue.put(lazyTimestamp, enqueuingLazyPacketList = new LinkedList<>());
         }
 
-        packetList.add(packet);
+        enqueuingLazyPacketList.add((OumuamuaLazyPacket)packet);
       } finally {
         messagePollLock.unlock();
       }
