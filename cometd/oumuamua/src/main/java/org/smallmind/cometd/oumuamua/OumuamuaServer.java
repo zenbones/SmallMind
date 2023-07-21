@@ -40,6 +40,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import org.cometd.bayeux.MarkedReference;
@@ -63,6 +64,7 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class OumuamuaServer implements BayeuxServer {
 
+  private final ReentrantLock channelChangeLock = new ReentrantLock();
   private final OumuamuaConfiguration configuration;
   private final ChannelTree channelTree = new ChannelTree();
   private final ConcurrentHashMap<String, OumuamuaServerSession> sessionMap = new ConcurrentHashMap<>();
@@ -255,15 +257,21 @@ public class OumuamuaServer implements BayeuxServer {
   @Override
   public MarkedReference<ServerChannel> createChannelIfAbsent (String id, ConfigurableServerChannel.Initializer... initializers) {
 
-    MarkedReference<ChannelTree> branchRef = channelTree.add(this, 0, ChannelIdCache.generate(id));
+    channelChangeLock.lock();
 
-    if (branchRef.isMarked() && (initializers != null)) {
-      for (ConfigurableServerChannel.Initializer initializer : initializers) {
-        initializer.configureChannel(branchRef.getReference().getServerChannel());
+    try {
+      MarkedReference<ChannelTree> branchRef = channelTree.addIfAbsent(this, 0, ChannelIdCache.generate(id));
+
+      if (branchRef.isMarked() && (initializers != null)) {
+        for (ConfigurableServerChannel.Initializer initializer : initializers) {
+          initializer.configureChannel(branchRef.getReference().getServerChannel());
+        }
       }
-    }
 
-    return new MarkedReference<>(branchRef.getReference().getServerChannel(), branchRef.isMarked());
+      return new MarkedReference<>(branchRef.getReference().getServerChannel(), branchRef.isMarked());
+    } finally {
+      channelChangeLock.unlock();
+    }
   }
 
   public void publishToChannel (String id, OumuamuaPacket packet) {
@@ -278,7 +286,13 @@ public class OumuamuaServer implements BayeuxServer {
 
   public void removeChannel (ServerChannel channel) {
 
-    channelTree.remove(0, channel.getChannelId());
+    channelChangeLock.lock();
+
+    try {
+      channelTree.remove(0, channel.getChannelId());
+    } finally {
+      channelChangeLock.unlock();
+    }
   }
 
   private class LazyMessageSifter implements Runnable {

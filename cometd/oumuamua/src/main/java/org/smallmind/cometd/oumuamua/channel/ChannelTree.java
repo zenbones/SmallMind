@@ -57,11 +57,6 @@ public class ChannelTree {
     this.serverChannel = serverChannel;
   }
 
-  public ChannelTree getParent () {
-
-    return parent;
-  }
-
   public OumuamuaServerChannel getServerChannel () {
 
     return serverChannel;
@@ -80,7 +75,7 @@ public class ChannelTree {
     }
   }
 
-  public MarkedReference<ChannelTree> add (OumuamuaServer oumuamuaServer, int index, ChannelId channelId) {
+  public MarkedReference<ChannelTree> addIfAbsent (OumuamuaServer oumuamuaServer, int index, ChannelId channelId) {
 
     ChannelTree child;
     boolean created = false;
@@ -97,7 +92,7 @@ public class ChannelTree {
       }
     }
 
-    return (index == (channelId.depth() - 1)) ? new MarkedReference<>(child, created) : child.add(oumuamuaServer, index + 1, channelId);
+    return (index == (channelId.depth() - 1)) ? new MarkedReference<>(child, created) : child.addIfAbsent(oumuamuaServer, index + 1, channelId);
   }
 
   public ChannelTree remove (int index, ChannelId channelId) {
