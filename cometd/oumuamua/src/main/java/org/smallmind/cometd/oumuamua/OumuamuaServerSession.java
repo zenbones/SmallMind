@@ -352,16 +352,24 @@ public class OumuamuaServerSession implements ServerSession {
 
         if ((lazyMessageCount += packet.size()) > maximumLayMessageQueueSize) {
 
-          long now = System.currentTimeMillis();
           boolean operating = true;
 
           while (operating && (lazyMessageCount > maximumLayMessageQueueSize)) {
 
-            OumuamuaPacket[] enqueuedPackets;
+            LinkedList<OumuamuaPacket> lazyPacketList;
 
-            if (((enqueuedPackets = pollLazy(now)) != null) && (enqueuedPackets.length > 0)) {
+            if (((lazyPacketList = lazyMessageQueue.pollFirstEntry().getValue()) != null) && (!lazyPacketList.isEmpty())) {
+
+              OumuamuaPacket[] lazyPackets = new OumuamuaPacket[lazyPacketList.size()];
+              int index = 0;
+
+              for (OumuamuaPacket lazyPacket : lazyPacketList) {
+                lazyMessageCount -= lazyPacket.size();
+                lazyPackets[index++] = lazyPacket;
+              }
+
               try {
-                carrier.send(this, enqueuedPackets);
+                carrier.send(this, lazyPackets);
               } catch (Exception exception) {
                 LoggerManager.getLogger(OumuamuaServerSession.class).error(exception);
               }
