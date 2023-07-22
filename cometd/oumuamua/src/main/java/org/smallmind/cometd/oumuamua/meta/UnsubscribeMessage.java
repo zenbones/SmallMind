@@ -81,7 +81,7 @@ public class UnsubscribeMessage extends AdvisedMetaMessage {
 
       ServerChannel serverChannel;
 
-      if ((serverChannel = oumuamuaServer.findChannel(getChannel())) != null) {
+      if ((serverChannel = oumuamuaServer.findChannel(getSubscription())) != null) {
         serverChannel.unsubscribe(serverSession);
       }
 
