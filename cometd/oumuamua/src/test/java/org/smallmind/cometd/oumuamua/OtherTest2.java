@@ -40,32 +40,21 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import org.cometd.client.BayeuxClient;
 import org.cometd.client.transport.ClientTransport;
 import org.cometd.client.websocket.javax.WebSocketTransport;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.testng.annotations.Test;
 
 @Test
-public class OtherTest {
+public class OtherTest2 {
 
   public void test ()
     throws Exception {
 
-    ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("org/smallmind/cometd/oumuamua/oumuamua-grizzly.xml", "org/smallmind/cometd/oumuamua/oumuamua.xml");
     ClientTransport wsTransport;
     WebSocketContainer webSocketContainer;
-    BayeuxClient bayeuxClient1;
+
     BayeuxClient bayeuxClient2;
 
     webSocketContainer = ContainerProvider.getWebSocketContainer();
     wsTransport = new WebSocketTransport(null, null, webSocketContainer);
-
-    bayeuxClient1 = new BayeuxClient("http://localhost:9017/smallmind/cometd", wsTransport);
-
-    Map<String, Object> handshakeMap1 = new HashMap<>();
-
-    bayeuxClient1.handshake(handshakeMap1);
-    if (!bayeuxClient1.waitFor(5000, BayeuxClient.State.CONNECTED)) {
-      System.out.println("Unable to connect within 5000 milliseconds");
-    }
 
     bayeuxClient2 = new BayeuxClient("http://localhost:9017/smallmind/cometd", wsTransport);
 
@@ -75,11 +64,6 @@ public class OtherTest {
     if (!bayeuxClient2.waitFor(5000, BayeuxClient.State.CONNECTED)) {
       System.out.println("Unable to connect within 5000 milliseconds");
     }
-
-    bayeuxClient1.getChannel("/foobar").subscribe((channel, message) -> {
-
-      System.out.println(message.getData());
-    });
 
     bayeuxClient2.getChannel("/foobar").publish(JsonNodeFactory.instance.textNode("hello"));
 

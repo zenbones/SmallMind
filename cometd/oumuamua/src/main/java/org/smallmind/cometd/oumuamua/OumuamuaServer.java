@@ -58,6 +58,7 @@ import org.smallmind.cometd.oumuamua.channel.ChannelOperation;
 import org.smallmind.cometd.oumuamua.channel.ChannelTree;
 import org.smallmind.cometd.oumuamua.channel.ExpirationOperation;
 import org.smallmind.cometd.oumuamua.channel.ListOperation;
+import org.smallmind.cometd.oumuamua.channel.UnsubscribeOperation;
 import org.smallmind.cometd.oumuamua.message.OumuamuaLazyPacket;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 import org.smallmind.cometd.oumuamua.transport.OumuamuaTransport;
@@ -66,6 +67,7 @@ import org.smallmind.scribe.pen.LoggerManager;
 public class OumuamuaServer implements BayeuxServer {
 
   private final ReentrantLock channelChangeLock = new ReentrantLock();
+  private final ReentrantLock sessionChangeLock = new ReentrantLock();
   private final OumuamuaConfiguration configuration;
   private final ChannelTree channelTree = new ChannelTree();
   private final ConcurrentHashMap<String, OumuamuaServerSession> sessionMap = new ConcurrentHashMap<>();
@@ -221,10 +223,29 @@ public class OumuamuaServer implements BayeuxServer {
     return new LinkedList<>(sessionMap.values());
   }
 
+  public void addSession (OumuamuaServerSession serverSession) {
+
+    sessionChangeLock.lock();
+
+    try {
+      sessionMap.put(serverSession.getId(), serverSession);
+    } finally {
+      sessionChangeLock.unlock();
+    }
+  }
+
   @Override
   public boolean removeSession (ServerSession serverSession) {
 
-    return sessionMap.remove(serverSession.getId()) != null;
+    sessionChangeLock.lock();
+
+    try {
+      operateOnChannels(new UnsubscribeOperation((OumuamuaServerSession)serverSession));
+
+      return sessionMap.remove(serverSession.getId()) != null;
+    } finally {
+      sessionChangeLock.unlock();
+    }
   }
 
   @Override

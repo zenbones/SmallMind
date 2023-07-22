@@ -317,7 +317,7 @@ public class OumuamuaServerSession implements ServerSession {
 
       Long firstKey;
 
-      if ((firstKey = lazyMessageQueue.firstKey()) <= now) {
+      if ((!lazyMessageQueue.isEmpty()) && (firstKey = lazyMessageQueue.firstKey()) <= now) {
 
         LinkedList<OumuamuaLazyPacket> lazyPacketList;
 
@@ -355,7 +355,7 @@ public class OumuamuaServerSession implements ServerSession {
 
           boolean operating = true;
 
-          while (operating && (lazyMessageCount > maximumLayMessageQueueSize)) {
+          while (operating && (lazyMessageCount > maximumLayMessageQueueSize) && (!lazyMessageQueue.isEmpty())) {
 
             LinkedList<OumuamuaLazyPacket> overflowLazyPacketList;
 

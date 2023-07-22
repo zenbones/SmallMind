@@ -49,7 +49,6 @@ import org.cometd.bayeux.server.BayeuxServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
 import org.smallmind.cometd.oumuamua.channel.ChannelIdCache;
-import org.smallmind.cometd.oumuamua.channel.UnsubscribeOperation;
 import org.smallmind.cometd.oumuamua.context.OumuamuaWebsocketContext;
 import org.smallmind.cometd.oumuamua.message.MapLike;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
@@ -134,14 +133,14 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
         websocketSession.getBasicRemote().sendText(sendBuilder.toString());
       }
 
-//      System.out.println("out:" + sendBuilder.toString());
+      System.out.println("out:" + sendBuilder.toString());
     }
   }
 
   @Override
   public synchronized void onMessage (String data) {
 
-//    System.out.println("in:" + data);
+    System.out.println("in:" + data);
     try {
       for (JsonNode messageNode : JsonCodec.readAsJsonNode(data)) {
 
@@ -176,7 +175,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
         HandshakeMessageRequestInView handshakeView;
 
         if (serverSession == null) {
-          serverSession = new OumuamuaServerSession(websocketTransport, this, oumuamuaServer.getConfiguration().getMaximumLazyMessageQueueSize());
+          oumuamuaServer.addSession(serverSession = new OumuamuaServerSession(websocketTransport, this, oumuamuaServer.getConfiguration().getMaximumLazyMessageQueueSize()));
           connected = true;
         }
 
@@ -231,7 +230,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
     connected = false;
 
     if (serverSession != null) {
-      oumuamuaServer.operateOnChannels(new UnsubscribeOperation(serverSession));
+      oumuamuaServer.removeSession(serverSession);
       serverSession = null;
     }
   }
