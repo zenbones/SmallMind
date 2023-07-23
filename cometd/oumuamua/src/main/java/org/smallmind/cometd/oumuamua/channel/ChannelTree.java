@@ -36,6 +36,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.cometd.bayeux.ChannelId;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerChannel;
@@ -44,7 +45,7 @@ import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 public class ChannelTree {
 
   private final ReentrantLock treeExpansionLock = new ReentrantLock();
-  private final ReentrantLock channelChangeLock = new ReentrantLock();
+  private final ReentrantReadWriteLock channelChangeLock = new ReentrantReadWriteLock();
   private final ConcurrentHashMap<String, ChannelTree> childMap = new ConcurrentHashMap<>();
   private final ChannelTree parent;
   private OumuamuaServerChannel serverChannel;
@@ -62,31 +63,31 @@ public class ChannelTree {
 
   public OumuamuaServerChannel getServerChannel () {
 
-    channelChangeLock.lock();
+    channelChangeLock.readLock().lock();
 
     try {
       return serverChannel;
     } finally {
-      channelChangeLock.unlock();
+      channelChangeLock.readLock().unlock();
     }
   }
 
   private void send (OumuamuaPacket packet, HashSet<String> sessionIdSet) {
 
-    channelChangeLock.lock();
+    channelChangeLock.readLock().lock();
 
     try {
       if (serverChannel != null) {
         serverChannel.send(packet, sessionIdSet);
       }
     } finally {
-      channelChangeLock.unlock();
+      channelChangeLock.readLock().unlock();
     }
   }
 
   private ChannelTree enforceServerChannel (OumuamuaServer oumuamuaServer, ChannelId channelId) {
 
-    channelChangeLock.lock();
+    channelChangeLock.writeLock().lock();
 
     try {
       if (serverChannel == null) {
@@ -95,21 +96,21 @@ public class ChannelTree {
 
       return this;
     } finally {
-      channelChangeLock.unlock();
+      channelChangeLock.writeLock().unlock();
     }
   }
 
   // Should not actually be used publicly, but called only under the server's change lock, as in ExpirationOperator.operate()
   public ChannelTree removeServerChannel () {
 
-    channelChangeLock.lock();
+    channelChangeLock.writeLock().lock();
 
     try {
       serverChannel = null;
 
       return this;
     } finally {
-      channelChangeLock.unlock();
+      channelChangeLock.writeLock().unlock();
     }
   }
 
