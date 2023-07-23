@@ -300,6 +300,11 @@ public class OumuamuaServerChannel implements ServerChannel {
     }
   }
 
+  public boolean isSubscribed () {
+
+    return !subscriptionMap.isEmpty();
+  }
+
   @Override
   // Do not call this in order to process subscriptions
   public Set<ServerSession> getSubscribers () {
