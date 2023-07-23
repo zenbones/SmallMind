@@ -35,7 +35,6 @@ package org.smallmind.cometd.oumuamua.channel;
 import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
 import org.cometd.bayeux.ChannelId;
-import org.cometd.bayeux.MarkedReference;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerChannel;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
@@ -75,10 +74,9 @@ public class ChannelTree {
     }
   }
 
-  public MarkedReference<ChannelTree> createIfAbsent (OumuamuaServer oumuamuaServer, int index, ChannelId channelId) {
+  public ChannelTree createIfAbsent (OumuamuaServer oumuamuaServer, int index, ChannelId channelId) {
 
     ChannelTree child;
-    boolean created = false;
 
     if ((child = childMap.get(channelId.getSegment(index))) == null) {
       synchronized (this) {
@@ -86,13 +84,12 @@ public class ChannelTree {
 
           ChannelId branchChannelId = (index == (channelId.depth() - 1)) ? channelId : ChannelIdUtility.from(index + 1, channelId);
 
-          created = true;
           childMap.put(channelId.getSegment(index), child = new ChannelTree(this, new OumuamuaServerChannel(oumuamuaServer, branchChannelId)));
         }
       }
     }
 
-    return (index == (channelId.depth() - 1)) ? new MarkedReference<>(child, created) : child.createIfAbsent(oumuamuaServer, index + 1, channelId);
+    return (index == (channelId.depth() - 1)) ? child : child.createIfAbsent(oumuamuaServer, index + 1, channelId);
   }
 
   public ChannelTree remove (int index, ChannelId channelId) {
