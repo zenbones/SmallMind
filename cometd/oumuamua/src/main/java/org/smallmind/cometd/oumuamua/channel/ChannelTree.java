@@ -79,7 +79,7 @@ public class ChannelTree {
 
   public ChannelTree removeServerChannel () {
 
-    // Shoud not actually be used publicly, but called only by ExpirationOperator.operate()
+    // Should not actually be used publicly, but called only under the server's change lock, as in ExpirationOperator.operate()
     if (serverChannel != null) {
       serverChannel = null;
     }
