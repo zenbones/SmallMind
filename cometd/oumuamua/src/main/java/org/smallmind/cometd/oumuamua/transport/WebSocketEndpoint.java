@@ -198,20 +198,10 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
       default:
         if (channel.startsWith("/meta/")) {
 
-          ObjectNode errorNode = JsonNodeFactory.instance.objectNode();
+          return createErrorPacket(channel, messageNode, "Unknown meta channel");
+        } else if (channel.endsWith("/*") || channel.endsWith("/**")) {
 
-          errorNode.put("successful", false);
-          errorNode.put("channel", channel);
-          errorNode.put("error", "Unknown meta channel");
-
-          if (messageNode.has("id")) {
-            errorNode.set("id", messageNode.get("id"));
-          }
-          if (serverSession != null) {
-            errorNode.put("clientId", serverSession.getId());
-          }
-
-          return OumuamuaPacket.asPackets(serverSession, ChannelIdCache.generate(channel), errorNode);
+          return createErrorPacket(channel, messageNode, "Attempt to publish to a wildcard channel");
         } else if (channel.startsWith("/service/")) {
           // TODO: service
           return null;
@@ -222,6 +212,24 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
           return (publishView = JsonCodec.read(messageNode, PublishMessageRequestInView.class)).factory().process(oumuamuaServer, ChannelIdCache.generate(channel), serverSession, new OumuamuaServerMessage(websocketTransport, context, null, ChannelIdCache.generate(channel), publishView.getId(), serverSession.getId(), false, (ObjectNode)messageNode));
         }
     }
+  }
+
+  private OumuamuaPacket[] createErrorPacket (String channel, JsonNode messageNode, String error) {
+
+    ObjectNode errorNode = JsonNodeFactory.instance.objectNode();
+
+    errorNode.put("successful", false);
+    errorNode.put("channel", channel);
+    errorNode.put("error", error);
+
+    if (messageNode.has("id")) {
+      errorNode.set("id", messageNode.get("id"));
+    }
+    if (serverSession != null) {
+      errorNode.put("clientId", serverSession.getId());
+    }
+
+    return OumuamuaPacket.asPackets(serverSession, ChannelIdCache.generate(channel), errorNode);
   }
 
   @Override
