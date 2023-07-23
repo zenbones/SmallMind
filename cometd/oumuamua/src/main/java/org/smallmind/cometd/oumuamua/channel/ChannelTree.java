@@ -35,6 +35,7 @@ package org.smallmind.cometd.oumuamua.channel;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 import org.cometd.bayeux.ChannelId;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerChannel;
@@ -42,6 +43,8 @@ import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 
 public class ChannelTree {
 
+  // Not strictly necessary as we could have just synchronized these methods, but the cost is small end makes the intention explicit
+  private final ReentrantLock channelChangeLock = new ReentrantLock();
   private final ConcurrentHashMap<String, ChannelTree> childMap = new ConcurrentHashMap<>();
   private final ChannelTree parent;
   private OumuamuaServerChannel serverChannel;
@@ -57,35 +60,60 @@ public class ChannelTree {
     this.serverChannel = serverChannel;
   }
 
-  public OumuamuaServerChannel getServerChannel () {
+  public synchronized OumuamuaServerChannel getServerChannel () {
 
-    return serverChannel;
-  }
+    channelChangeLock.lock();
 
-  private void send (OumuamuaPacket packet, HashSet<String> sessionIdSet) {
-
-    if (serverChannel != null) {
-      serverChannel.send(packet, sessionIdSet);
+    try {
+      return serverChannel;
+    } finally {
+      channelChangeLock.unlock();
     }
   }
 
-  private ChannelTree enforceServerChannel (OumuamuaServer oumuamuaServer, ChannelId channelId) {
+  private synchronized void send (OumuamuaPacket packet, HashSet<String> sessionIdSet) {
 
-    if (serverChannel == null) {
-      serverChannel = new OumuamuaServerChannel(oumuamuaServer, channelId);
+    channelChangeLock.lock();
+
+    try {
+      if (serverChannel != null) {
+        serverChannel.send(packet, sessionIdSet);
+      }
+    } finally {
+      channelChangeLock.unlock();
     }
-
-    return this;
   }
 
-  public ChannelTree removeServerChannel () {
+  private synchronized ChannelTree enforceServerChannel (OumuamuaServer oumuamuaServer, ChannelId channelId) {
 
-    // Should not actually be used publicly, but called only under the server's change lock, as in ExpirationOperator.operate()
-    if (serverChannel != null) {
-      serverChannel = null;
+    channelChangeLock.lock();
+
+    try {
+      if (serverChannel == null) {
+        serverChannel = new OumuamuaServerChannel(oumuamuaServer, channelId);
+      }
+
+      return this;
+    } finally {
+      channelChangeLock.unlock();
     }
+  }
 
-    return this;
+  // Should not actually be used publicly, but called only under the server's change lock, as in ExpirationOperator.operate()
+  public synchronized ChannelTree removeServerChannel () {
+
+    channelChangeLock.lock();
+
+    try {
+
+      if (serverChannel != null) {
+        serverChannel = null;
+      }
+
+      return this;
+    } finally {
+      channelChangeLock.unlock();
+    }
   }
 
   private void clipChild (String key) {
@@ -139,7 +167,8 @@ public class ChannelTree {
 
   public void trim (String key) {
 
-    if ((parent != null) && (serverChannel == null) && childMap.isEmpty()) {
+    // Using getServerChannel() to enforce synchronization boundary
+    if ((parent != null) && (getServerChannel() == null) && childMap.isEmpty()) {
       parent.clipChild(key);
     } else {
       for (Map.Entry<String, ChannelTree> childEntry : childMap.entrySet()) {
