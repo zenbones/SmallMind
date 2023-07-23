@@ -43,7 +43,7 @@ import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 
 public class ChannelTree {
 
-  // Not strictly necessary as we could have just synchronized these methods, but the cost is small end makes the intention explicit
+  private final ReentrantLock treeChangeLock = new ReentrantLock();
   private final ReentrantLock channelChangeLock = new ReentrantLock();
   private final ConcurrentHashMap<String, ChannelTree> childMap = new ConcurrentHashMap<>();
   private final ChannelTree parent;
@@ -60,7 +60,7 @@ public class ChannelTree {
     this.serverChannel = serverChannel;
   }
 
-  public synchronized OumuamuaServerChannel getServerChannel () {
+  public OumuamuaServerChannel getServerChannel () {
 
     channelChangeLock.lock();
 
@@ -71,7 +71,7 @@ public class ChannelTree {
     }
   }
 
-  private synchronized void send (OumuamuaPacket packet, HashSet<String> sessionIdSet) {
+  private void send (OumuamuaPacket packet, HashSet<String> sessionIdSet) {
 
     channelChangeLock.lock();
 
@@ -84,7 +84,7 @@ public class ChannelTree {
     }
   }
 
-  private synchronized ChannelTree enforceServerChannel (OumuamuaServer oumuamuaServer, ChannelId channelId) {
+  private ChannelTree enforceServerChannel (OumuamuaServer oumuamuaServer, ChannelId channelId) {
 
     channelChangeLock.lock();
 
@@ -100,15 +100,12 @@ public class ChannelTree {
   }
 
   // Should not actually be used publicly, but called only under the server's change lock, as in ExpirationOperator.operate()
-  public synchronized ChannelTree removeServerChannel () {
+  public ChannelTree removeServerChannel () {
 
     channelChangeLock.lock();
 
     try {
-
-      if (serverChannel != null) {
-        serverChannel = null;
-      }
+      serverChannel = null;
 
       return this;
     } finally {
@@ -139,13 +136,18 @@ public class ChannelTree {
     ChannelTree child;
 
     if ((child = childMap.get(channelId.getSegment(index))) == null) {
-      synchronized (this) {
+
+      treeChangeLock.lock();
+
+      try {
         if ((child = childMap.get(channelId.getSegment(index))) == null) {
 
           ChannelId branchChannelId = (index == (channelId.depth() - 1)) ? channelId : ChannelIdUtility.from(index + 1, channelId);
 
           childMap.put(channelId.getSegment(index), child = new ChannelTree(this, (index == (channelId.depth() - 1)) ? new OumuamuaServerChannel(oumuamuaServer, branchChannelId) : null));
         }
+      } finally {
+        treeChangeLock.unlock();
       }
     }
 
