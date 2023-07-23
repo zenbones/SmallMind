@@ -61,7 +61,14 @@ public class ChannelTree {
     return serverChannel;
   }
 
-  public ChannelTree enforceServerChannel (OumuamuaServer oumuamuaServer, ChannelId channelId) {
+  private void send (OumuamuaPacket packet, HashSet<String> sessionIdSet) {
+
+    if (serverChannel != null) {
+      serverChannel.send(packet, sessionIdSet);
+    }
+  }
+
+  private ChannelTree enforceServerChannel (OumuamuaServer oumuamuaServer, ChannelId channelId) {
 
     if (serverChannel == null) {
       serverChannel = new OumuamuaServerChannel(oumuamuaServer, channelId);
@@ -72,6 +79,7 @@ public class ChannelTree {
 
   public ChannelTree removeServerChannel () {
 
+    // Shoud not actually be used publicly, but called only by ExpirationOperator.operate()
     if (serverChannel != null) {
       serverChannel = null;
     }
@@ -131,7 +139,8 @@ public class ChannelTree {
       ChannelTree nextBranch;
 
       if ((deepWildBranch = childMap.get(ChannelId.DEEPWILD)) != null) {
-        deepWildBranch.getServerChannel().send(packet, sessionIdSet);
+
+        deepWildBranch.send(packet, sessionIdSet);
       }
       if ((nextBranch = childMap.get(channelIterator.next())) != null) {
         nextBranch.publish(channelIterator, packet, sessionIdSet);
@@ -142,11 +151,11 @@ public class ChannelTree {
         ChannelTree wildBranch;
 
         if ((wildBranch = parent.childMap.get(ChannelId.WILD)) != null) {
-          wildBranch.getServerChannel().send(packet, sessionIdSet);
+          wildBranch.send(packet, sessionIdSet);
         }
       }
 
-      getServerChannel().send(packet, sessionIdSet);
+      send(packet, sessionIdSet);
     }
   }
 
