@@ -50,7 +50,7 @@ public class ListOperation implements ChannelOperation {
 
     OumuamuaServerChannel serverChannel;
 
-    if (((serverChannel = channelTree.getServerChannel()) != null) && (serverChannel.isSubscribed())) {
+    if (((serverChannel = channelTree.getServerChannel()) != null) && serverChannel.isInitialized()) {
       channelList.add(serverChannel);
     }
   }

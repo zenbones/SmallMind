@@ -63,6 +63,7 @@ public class OumuamuaServerChannel implements ServerChannel {
   private final boolean meta;
   private final boolean service;
   private final boolean broadcast;
+  private boolean initialized;
   private boolean persistent;
   private boolean broadcastToPublisher;
   private boolean lazy;
@@ -141,6 +142,16 @@ public class OumuamuaServerChannel implements ServerChannel {
   public boolean isDeepWild () {
 
     return channelId.isDeepWild();
+  }
+
+  public boolean isInitialized () {
+
+    return initialized;
+  }
+
+  public void setInitialized (boolean initialized) {
+
+    this.initialized = initialized;
   }
 
   @Override
@@ -298,11 +309,6 @@ public class OumuamuaServerChannel implements ServerChannel {
     } finally {
       lifeLock.writeLock().unlock();
     }
-  }
-
-  public boolean isSubscribed () {
-
-    return !subscriptionMap.isEmpty();
   }
 
   @Override

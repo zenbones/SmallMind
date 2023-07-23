@@ -290,15 +290,23 @@ public class OumuamuaServer implements BayeuxServer {
     channelChangeLock.lock();
 
     try {
-      MarkedReference<ChannelTree> branchRef = channelTree.createIfAbsent(this, 0, ChannelIdCache.generate(id));
 
-      if (branchRef.isMarked() && (initializers != null)) {
-        for (ConfigurableServerChannel.Initializer initializer : initializers) {
-          initializer.configureChannel(branchRef.getReference().getServerChannel());
+      ChannelTree channelBranch = channelTree.createIfAbsent(this, 0, ChannelIdCache.generate(id));
+      boolean created = false;
+
+      if (!channelBranch.getServerChannel().isInitialized()) {
+        created = true;
+
+        if (initializers != null) {
+          for (ConfigurableServerChannel.Initializer initializer : initializers) {
+            initializer.configureChannel(channelBranch.getServerChannel());
+          }
         }
+
+        channelBranch.getServerChannel().setInitialized(true);
       }
 
-      return new MarkedReference<>(branchRef.getReference().getServerChannel(), branchRef.isMarked());
+      return new MarkedReference<>(channelBranch.getServerChannel(), created);
     } finally {
       channelChangeLock.unlock();
     }
