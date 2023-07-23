@@ -32,17 +32,18 @@
  */
 package org.smallmind.cometd.oumuamua.channel;
 
-import org.smallmind.cometd.oumuamua.OumuamuaServer;
+import java.util.concurrent.locks.ReentrantLock;
 import org.smallmind.cometd.oumuamua.OumuamuaServerChannel;
 
 public class ExpirationOperation implements ChannelOperation {
 
-  private final OumuamuaServer oumuamuaServer;
+  private final ReentrantLock channelChangeLock;
+
   private final long now;
 
-  public ExpirationOperation (OumuamuaServer oumuamuaServer, long now) {
+  public ExpirationOperation (ReentrantLock channelChangeLock, long now) {
 
-    this.oumuamuaServer = oumuamuaServer;
+    this.channelChangeLock = channelChangeLock;
     this.now = now;
   }
 
@@ -51,9 +52,15 @@ public class ExpirationOperation implements ChannelOperation {
 
     OumuamuaServerChannel serverChannel;
 
-    if ((serverChannel = channelTree.getServerChannel()) != null) {
-      if (serverChannel.hasExpired(now)) {
-        oumuamuaServer.removeChannel(serverChannel);
+    if (((serverChannel = channelTree.getServerChannel()) != null) && serverChannel.hasExpired(now)) {
+
+      // Addition and removal of channels should be done only via createChannelIfAbsent(), removeChannel() and the ExpirationOperation.operate()
+      channelChangeLock.lock();
+
+      try {
+        channelTree.removeServerChannel();
+      } finally {
+        channelChangeLock.unlock();
       }
     }
   }

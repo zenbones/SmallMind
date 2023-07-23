@@ -43,7 +43,7 @@ public class ChannelTree {
 
   private final ConcurrentHashMap<String, ChannelTree> childMap = new ConcurrentHashMap<>();
   private final ChannelTree parent;
-  private final OumuamuaServerChannel serverChannel;
+  private OumuamuaServerChannel serverChannel;
 
   public ChannelTree () {
 
@@ -61,6 +61,24 @@ public class ChannelTree {
     return serverChannel;
   }
 
+  public ChannelTree enforceServerChannel (OumuamuaServer oumuamuaServer, ChannelId channelId) {
+
+    if (serverChannel == null) {
+      serverChannel = new OumuamuaServerChannel(oumuamuaServer, channelId);
+    }
+
+    return this;
+  }
+
+  public ChannelTree removeServerChannel () {
+
+    if (serverChannel != null) {
+      serverChannel = null;
+    }
+
+    return this;
+  }
+
   public ChannelTree find (int index, ChannelId channelId) {
 
     ChannelTree child;
@@ -70,7 +88,7 @@ public class ChannelTree {
       return null;
     } else {
 
-      return (index == (channelId.depth() - 1)) ? child : find(index + 1, channelId);
+      return (index == (channelId.depth() - 1)) ? child : child.find(index + 1, channelId);
     }
   }
 
@@ -84,24 +102,24 @@ public class ChannelTree {
 
           ChannelId branchChannelId = (index == (channelId.depth() - 1)) ? channelId : ChannelIdUtility.from(index + 1, channelId);
 
-          childMap.put(channelId.getSegment(index), child = new ChannelTree(this, new OumuamuaServerChannel(oumuamuaServer, branchChannelId)));
+          childMap.put(channelId.getSegment(index), child = new ChannelTree(this, (index == (channelId.depth() - 1)) ? new OumuamuaServerChannel(oumuamuaServer, branchChannelId) : null));
         }
       }
     }
 
-    return (index == (channelId.depth() - 1)) ? child : child.createIfAbsent(oumuamuaServer, index + 1, channelId);
+    return (index == (channelId.depth() - 1)) ? child.enforceServerChannel(oumuamuaServer, channelId) : child.createIfAbsent(oumuamuaServer, index + 1, channelId);
   }
 
-  public ChannelTree remove (int index, ChannelId channelId) {
+  public ChannelTree removeIfPresent (int index, ChannelId channelId) {
 
-    if ((index == (channelId.depth() - 1))) {
+    ChannelTree child;
 
-      return childMap.remove(channelId.getSegment(index));
+    if ((child = childMap.get(channelId.getSegment(index))) == null) {
+
+      return null;
     } else {
 
-      ChannelTree child;
-
-      return ((child = childMap.get(channelId.getSegment(index))) == null) ? null : child.remove(index + 1, channelId);
+      return (index == (channelId.depth() - 1)) ? child.removeServerChannel() : child.removeIfPresent(index + 1, channelId);
     }
   }
 
@@ -136,13 +154,8 @@ public class ChannelTree {
 
     operation.operate(this);
 
-    for (ChannelTree channelTree : childMap.values()) {
-      channelTree.walk(operation);
+    for (ChannelTree child : childMap.values()) {
+      child.walk(operation);
     }
-  }
-
-  public void operate (ChannelOperation operation) {
-
-    operation.operate(this);
   }
 }
