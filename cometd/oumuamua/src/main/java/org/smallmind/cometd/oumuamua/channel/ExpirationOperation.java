@@ -54,7 +54,7 @@ public class ExpirationOperation implements ChannelOperation {
 
     if (((serverChannel = channelTree.getServerChannel()) != null) && serverChannel.hasExpired(now)) {
 
-      // Addition and removal of channels should be done only via createChannelIfAbsent(), removeChannel() and the ExpirationOperation.operate()
+      // Addition and removal of channels should be done only via createChannelIfAbsent(), removeChannel() and ExpirationOperation.operate()
       channelChangeLock.lock();
 
       try {

@@ -286,7 +286,7 @@ public class OumuamuaServer implements BayeuxServer {
   @Override
   public MarkedReference<ServerChannel> createChannelIfAbsent (String id, ConfigurableServerChannel.Initializer... initializers) {
 
-    // Addition and removal of channels should be done only via createChannelIfAbsent(), removeChannel() and the ExpirationOperation.operate()
+    // Addition and removal of channels should be done only via createChannelIfAbsent(), removeChannel() and ExpirationOperation.operate()
     channelChangeLock.lock();
 
     try {
@@ -324,7 +324,7 @@ public class OumuamuaServer implements BayeuxServer {
 
   public void removeChannel (ServerChannel channel) {
 
-    // Addition and removal of channels should be done only via createChannelIfAbsent(), removeChannel() and the ExpirationOperation.operate()
+    // Addition and removal of channels should be done only via createChannelIfAbsent(), removeChannel() and ExpirationOperation.operate()
     channelChangeLock.lock();
 
     try {
@@ -398,6 +398,13 @@ public class OumuamuaServer implements BayeuxServer {
       try {
         while (!finishLatch.await(configuration.getExpiredChannelCycleMinutes(), TimeUnit.MINUTES)) {
           channelTree.walk(new ExpirationOperation(channelChangeLock, System.currentTimeMillis()));
+
+          channelChangeLock.lock();
+          try {
+            channelTree.trim(null);
+          } finally {
+            channelChangeLock.unlock();
+          }
         }
       } catch (InterruptedException interruptedException) {
         LoggerManager.getLogger(OumuamuaServer.class).error(interruptedException);

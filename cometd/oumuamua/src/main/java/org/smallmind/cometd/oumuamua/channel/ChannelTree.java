@@ -33,6 +33,7 @@
 package org.smallmind.cometd.oumuamua.channel;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.cometd.bayeux.ChannelId;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
@@ -87,6 +88,11 @@ public class ChannelTree {
     return this;
   }
 
+  private void clipChild (String key) {
+
+    childMap.remove(key);
+  }
+
   public ChannelTree find (int index, ChannelId channelId) {
 
     ChannelTree child;
@@ -128,6 +134,17 @@ public class ChannelTree {
     } else {
 
       return (index == (channelId.depth() - 1)) ? child.removeServerChannel() : child.removeIfPresent(index + 1, channelId);
+    }
+  }
+
+  public void trim (String key) {
+
+    if ((parent != null) && (serverChannel == null) && childMap.isEmpty()) {
+      parent.clipChild(key);
+    } else {
+      for (Map.Entry<String, ChannelTree> childEntry : childMap.entrySet()) {
+        childEntry.getValue().trim(childEntry.getKey());
+      }
     }
   }
 
