@@ -43,7 +43,7 @@ import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 
 public class ChannelTree {
 
-  private final ReentrantLock treeChangeLock = new ReentrantLock();
+  private final ReentrantLock treeExpansionLock = new ReentrantLock();
   private final ReentrantLock channelChangeLock = new ReentrantLock();
   private final ConcurrentHashMap<String, ChannelTree> childMap = new ConcurrentHashMap<>();
   private final ChannelTree parent;
@@ -137,7 +137,7 @@ public class ChannelTree {
 
     if ((child = childMap.get(channelId.getSegment(index))) == null) {
 
-      treeChangeLock.lock();
+      treeExpansionLock.lock();
 
       try {
         if ((child = childMap.get(channelId.getSegment(index))) == null) {
@@ -147,7 +147,7 @@ public class ChannelTree {
           childMap.put(channelId.getSegment(index), child = new ChannelTree(this, (index == (channelId.depth() - 1)) ? new OumuamuaServerChannel(oumuamuaServer, branchChannelId) : null));
         }
       } finally {
-        treeChangeLock.unlock();
+        treeExpansionLock.unlock();
       }
     }
 
