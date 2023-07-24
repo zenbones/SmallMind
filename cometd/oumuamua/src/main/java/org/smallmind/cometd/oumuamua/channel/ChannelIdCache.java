@@ -34,6 +34,10 @@ package org.smallmind.cometd.oumuamua.channel;
 
 import java.util.HashMap;
 import org.cometd.bayeux.ChannelId;
+import org.smallmind.cometd.oumuamua.meta.ConnectMessage;
+import org.smallmind.cometd.oumuamua.meta.HandshakeMessage;
+import org.smallmind.cometd.oumuamua.meta.SubscribeMessage;
+import org.smallmind.cometd.oumuamua.meta.UnsubscribeMessage;
 
 public class ChannelIdCache {
 
@@ -48,13 +52,29 @@ public class ChannelIdCache {
 
   public static ChannelId generate (String id) {
 
-    ChannelId channelId;
+    switch (id) {
+      case "/meta/handshake":
 
-    if ((channelId = CHANNEL_ID_MAP_LOCAL.get().get(id)) == null) {
-      CHANNEL_ID_MAP_LOCAL.get().put(id, channelId = new ChannelId(id));
+        return HandshakeMessage.CHANNEL_ID;
+      case "/meta/connect":
+
+        return ConnectMessage.CHANNEL_ID;
+      case "/meta/subscribe":
+
+        return SubscribeMessage.CHANNEL_ID;
+      case "/meta/unsubscribe":
+
+        return UnsubscribeMessage.CHANNEL_ID;
+      default:
+
+        ChannelId channelId;
+
+        if ((channelId = CHANNEL_ID_MAP_LOCAL.get().get(id)) == null) {
+          CHANNEL_ID_MAP_LOCAL.get().put(id, channelId = new ChannelId(id));
+        }
+
+        return channelId;
     }
-
-    return channelId;
   }
 
   public static void clear () {

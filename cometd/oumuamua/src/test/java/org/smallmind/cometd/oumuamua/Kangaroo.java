@@ -46,7 +46,7 @@ public class Kangaroo {
   public static void main (String... args)
     throws Exception {
 
-    MapLike m = new MapLike(null, JsonNodeFactory.instance.objectNode());
+    MapLike m = new MapLike( JsonNodeFactory.instance.objectNode());
 
     m.put("first", new HashMap<String, Object>());
     System.out.println(m.encode());

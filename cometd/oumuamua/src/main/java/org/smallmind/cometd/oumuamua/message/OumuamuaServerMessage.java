@@ -32,53 +32,70 @@
  */
 package org.smallmind.cometd.oumuamua.message;
 
+import java.util.Collection;
 import java.util.Map;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.util.Set;
 import org.cometd.bayeux.ChannelId;
 import org.cometd.bayeux.server.BayeuxContext;
 import org.cometd.bayeux.server.ServerMessage;
 import org.cometd.bayeux.server.ServerTransport;
+import org.smallmind.cometd.oumuamua.channel.ChannelIdCache;
 import org.smallmind.cometd.oumuamua.transport.OumuamuaTransport;
 
-public class OumuamuaServerMessage extends MapLike implements ServerMessage {
+public class OumuamuaServerMessage implements ServerMessage, ServerMessage.Mutable {
 
+  private final MapLike mapLike;
   private final OumuamuaTransport transport;
   private final BayeuxContext context;
-  private final Mutable associated;
-  private final ChannelId channelId;
-  private final String id;
-  private final String clientId;
-  private final boolean lazy;
+  private Mutable associated;
+  private ChannelId channelId;
+  private boolean lazy;
 
-  public OumuamuaServerMessage (OumuamuaTransport transport, BayeuxContext context, Mutable associated, ChannelId channelId, String id, String clientId, boolean lazy, ObjectNode node) {
-
-    super(null, node);
+  public OumuamuaServerMessage (OumuamuaTransport transport, BayeuxContext context, Mutable associated, ChannelId channelId, boolean lazy, MapLike mapLike) {
 
     this.transport = transport;
     this.context = context;
     this.associated = associated;
     this.channelId = channelId;
-    this.id = id;
-    this.clientId = clientId;
     this.lazy = lazy;
+    this.mapLike = mapLike;
   }
 
   @Override
   public String getId () {
 
-    return id;
+    return get(ID_FIELD).toString();
+  }
+
+  @Override
+  public void setId (String id) {
+
+    put(ID_FIELD, id);
   }
 
   @Override
   public String getClientId () {
 
-    return clientId;
+    return get(CLIENT_ID_FIELD).toString();
+  }
+
+  @Override
+  public void setClientId (String clientId) {
+
+    put(CLIENT_ID_FIELD, clientId);
   }
 
   @Override
   public String getChannel () {
 
     return channelId.getId();
+  }
+
+  @Override
+  public void setChannel (String channel) {
+
+    channelId = ChannelIdCache.generate(channel);
+    put(CHANNEL_FIELD, channel);
   }
 
   @Override
@@ -106,15 +123,33 @@ public class OumuamuaServerMessage extends MapLike implements ServerMessage {
   }
 
   @Override
+  public void setLazy (boolean lazy) {
+
+    this.lazy = lazy;
+  }
+
+  @Override
   public Mutable getAssociated () {
 
     return associated;
   }
 
   @Override
+  public void setAssociated (Mutable associated) {
+
+    this.associated = associated;
+  }
+
+  @Override
   public boolean isSuccessful () {
 
     return Boolean.TRUE.equals(get(SUCCESSFUL_FIELD));
+  }
+
+  @Override
+  public void setSuccessful (boolean successful) {
+
+    mapLike.put(SUCCESSFUL_FIELD, successful);
   }
 
   @Override
@@ -136,20 +171,116 @@ public class OumuamuaServerMessage extends MapLike implements ServerMessage {
   }
 
   @Override
+  public void setData (Object data) {
+
+    put(DATA_FIELD, data);
+  }
+
+  @Override
   public Map<String, Object> getDataAsMap () {
 
-    return getAsMapLike(DATA_FIELD);
+    return mapLike.getAsMapLike(DATA_FIELD);
+  }
+
+  @Override
+  public Map<String, Object> getDataAsMap (boolean create) {
+
+    return create ? mapLike.createIfAbsentMapLike(DATA_FIELD) : getDataAsMap();
   }
 
   @Override
   public Map<String, Object> getAdvice () {
 
-    return getAsMapLike(ADVICE_FIELD);
+    return mapLike.getAsMapLike(ADVICE_FIELD);
+  }
+
+  @Override
+  public Map<String, Object> getAdvice (boolean create) {
+
+    return create ? mapLike.createIfAbsentMapLike(ADVICE_FIELD) : getAdvice();
   }
 
   @Override
   public Map<String, Object> getExt () {
 
-    return getAsMapLike(EXT_FIELD);
+    return mapLike.getAsMapLike(EXT_FIELD);
+  }
+
+  @Override
+  public Map<String, Object> getExt (boolean create) {
+
+    return create ? mapLike.getAsMapLike(EXT_FIELD) : getExt();
+  }
+
+  @Override
+  public int size () {
+
+    return mapLike.size();
+  }
+
+  @Override
+  public boolean isEmpty () {
+
+    return mapLike.isEmpty();
+  }
+
+  @Override
+  public boolean containsKey (Object key) {
+
+    return mapLike.containsKey(key);
+  }
+
+  @Override
+  public boolean containsValue (Object value) {
+
+    return mapLike.containsValue(value);
+  }
+
+  @Override
+  public Object get (Object key) {
+
+    return mapLike.get(key);
+  }
+
+  @Override
+  public Object put (String key, Object value) {
+
+    return mapLike.put(key, value);
+  }
+
+  @Override
+  public Object remove (Object key) {
+
+    return mapLike.remove(key);
+  }
+
+  @Override
+  public void putAll (Map<? extends String, ?> m) {
+
+    mapLike.putAll(m);
+  }
+
+  @Override
+  public void clear () {
+
+    mapLike.clear();
+  }
+
+  @Override
+  public Set<String> keySet () {
+
+    return mapLike.keySet();
+  }
+
+  @Override
+  public Collection<Object> values () {
+
+    return mapLike.values();
+  }
+
+  @Override
+  public Set<Entry<String, Object>> entrySet () {
+
+    return mapLike.entrySet();
   }
 }

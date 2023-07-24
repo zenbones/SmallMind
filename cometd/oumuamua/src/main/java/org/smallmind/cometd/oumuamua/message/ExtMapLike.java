@@ -43,7 +43,7 @@ import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public class ExtMapLike extends MapLike {
 
-  private final MapLike parent;
+  private final MapLike original;
   private JsonNode extNode;
   private String encodedText;
   private boolean altered;
@@ -54,7 +54,7 @@ public class ExtMapLike extends MapLike {
 
     super(null, mapLike.getNode());
 
-    parent = mapLike;
+    original = mapLike;
   }
 
   @Override
@@ -67,12 +67,12 @@ public class ExtMapLike extends MapLike {
 
   public boolean isParentMutated () {
 
-    return parentEncodedVersion != parent.getVersion();
+    return parentEncodedVersion != original.getVersion();
   }
 
   public void resetParentMutation () {
 
-    parentEncodedVersion = parent.getVersion();
+    parentEncodedVersion = original.getVersion();
   }
 
   @Override
@@ -97,12 +97,12 @@ public class ExtMapLike extends MapLike {
           return out(this, extNode = JsonCodec.clone(parentExtNode));
         } else {
 
-          return out(parent, parentExtNode);
+          return out(original, parentExtNode);
         }
       }
     } else {
 
-      return parent.get(key);
+      return original.get(key);
     }
   }
 
@@ -133,7 +133,7 @@ public class ExtMapLike extends MapLike {
       }
     } else {
 
-      return parent.getAsMapLike(key);
+      return original.getAsMapLike(key);
     }
   }
 
@@ -164,7 +164,7 @@ public class ExtMapLike extends MapLike {
       }
     } else {
 
-      return parent.createIfAbsentMapLike(key);
+      return original.createIfAbsentMapLike(key);
     }
   }
 
@@ -190,7 +190,7 @@ public class ExtMapLike extends MapLike {
       return previousValue;
     } else {
 
-      return parent.put(key, value);
+      return original.put(key, value);
     }
   }
 
@@ -219,7 +219,7 @@ public class ExtMapLike extends MapLike {
       return previousValue;
     } else {
 
-      return parent.remove(key);
+      return original.remove(key);
     }
   }
 
@@ -229,10 +229,10 @@ public class ExtMapLike extends MapLike {
 
     if (!(altered || removed)) {
 
-      return parent.encode();
+      return original.encode();
     } else if ((encodedText == null) || isMutated() || isParentMutated()) {
 
-      ObjectNode clonedNode = (ObjectNode)JsonCodec.clone(parent.getNode());
+      ObjectNode clonedNode = (ObjectNode)JsonCodec.clone(original.getNode());
 
       if (removed || JsonNodeType.NULL.equals(extNode.getNodeType())) {
         clonedNode.remove(Message.EXT_FIELD);

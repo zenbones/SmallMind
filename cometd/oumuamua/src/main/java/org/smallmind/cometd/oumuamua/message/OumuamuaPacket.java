@@ -37,10 +37,10 @@ import org.cometd.bayeux.ChannelId;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
+// DO NOT directly serialize;
 public class OumuamuaPacket {
 
   private final OumuamuaServerSession sender;
-  // DO NOT directly serialize;
   private final ChannelId channelId;
   private final MapLike[] messages;
 
@@ -55,7 +55,7 @@ public class OumuamuaPacket {
 
     OumuamuaPacket[] packets = new OumuamuaPacket[1 + ((enqueuedPackets == null) ? 0 : enqueuedPackets.length)];
 
-    packets[0] = new OumuamuaPacket(serverSession, channelId, new MapLike(null, (ObjectNode)JsonCodec.writeAsJsonNode(message)));
+    packets[0] = new OumuamuaPacket(serverSession, channelId, new MapLike((ObjectNode)JsonCodec.writeAsJsonNode(message)));
 
     if ((enqueuedPackets != null) && (enqueuedPackets.length > 0)) {
       System.arraycopy(enqueuedPackets, 0, packets, 1, enqueuedPackets.length);

@@ -44,21 +44,22 @@ import javax.websocket.Session;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.cometd.bayeux.ChannelId;
 import org.cometd.bayeux.server.BayeuxServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
+import org.smallmind.cometd.oumuamua.OumuamuaServerChannel;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
 import org.smallmind.cometd.oumuamua.channel.ChannelIdCache;
 import org.smallmind.cometd.oumuamua.context.OumuamuaWebsocketContext;
+import org.smallmind.cometd.oumuamua.extension.ExtensionNotifier;
 import org.smallmind.cometd.oumuamua.message.MapLike;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
-import org.smallmind.cometd.oumuamua.message.OumuamuaServerMessage;
 import org.smallmind.cometd.oumuamua.meta.ConnectMessageRequestInView;
 import org.smallmind.cometd.oumuamua.meta.DisconnectMessageRequestInView;
-import org.smallmind.cometd.oumuamua.meta.HandshakeMessage;
 import org.smallmind.cometd.oumuamua.meta.HandshakeMessageRequestInView;
 import org.smallmind.cometd.oumuamua.meta.PublishMessageRequestInView;
-import org.smallmind.cometd.oumuamua.meta.SubscribeMessage;
 import org.smallmind.cometd.oumuamua.meta.SubscribeMessageRequestInView;
 import org.smallmind.cometd.oumuamua.meta.UnsubscribeMessageRequestInView;
 import org.smallmind.scribe.pen.LoggerManager;
@@ -132,24 +133,28 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
       } else {
         websocketSession.getBasicRemote().sendText(sendBuilder.toString());
       }
-
-      System.out.println("out:" + sendBuilder.toString());
     }
   }
 
   @Override
   public synchronized void onMessage (String data) {
 
-    System.out.println("in:" + data);
     try {
       for (JsonNode messageNode : JsonCodec.readAsJsonNode(data)) {
 
-        if (messageNode.has("channel")) {
+        if (JsonNodeType.OBJECT.equals(messageNode.getNodeType()) && messageNode.has("channel")) {
 
-          OumuamuaPacket[] packets;
+          String channel = messageNode.get("channel").asText();
+          ChannelId channelId = ChannelIdCache.generate(channel);
+          OumuamuaServerChannel serverChannel = channelId.isMeta() ? null : oumuamuaServer.findChannel(channel);
 
-          if ((packets = respond(messageNode.get("channel").asText(), messageNode)) != null) {
-            send(serverSession, packets);
+          if (ExtensionNotifier.incoming(oumuamuaServer, context, websocketTransport, serverSession, channelId, (serverChannel != null) && serverChannel.isLazy(), (ObjectNode)messageNode)) {
+
+            OumuamuaPacket[] packets;
+
+            if ((packets = respond(serverChannel, channelId, channel, (ObjectNode)messageNode)) != null) {
+              send(serverSession, packets);
+            }
           }
         }
       }
@@ -166,7 +171,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
     }
   }
 
-  private OumuamuaPacket[] respond (String channel, JsonNode messageNode)
+  private OumuamuaPacket[] respond (OumuamuaServerChannel serverChannel, ChannelId channelId, String channel, ObjectNode messageNode)
     throws JsonProcessingException {
 
     switch (channel) {
@@ -179,7 +184,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
           connected = true;
         }
 
-        return (handshakeView = JsonCodec.read(messageNode, HandshakeMessageRequestInView.class)).factory().process(oumuamuaServer, ACTUAL_TRANSPORTS, serverSession, new OumuamuaServerMessage(websocketTransport, context, null, HandshakeMessage.CHANNEL_ID, handshakeView.getId(), null, false, (ObjectNode)messageNode));
+        return (handshakeView = JsonCodec.read(messageNode, HandshakeMessageRequestInView.class)).factory().process(oumuamuaServer, context, websocketTransport, ACTUAL_TRANSPORTS, serverSession, messageNode);
       case "/meta/connect":
 
         return JsonCodec.read(messageNode, ConnectMessageRequestInView.class).factory().process(serverSession);
@@ -192,29 +197,28 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
 
         SubscribeMessageRequestInView subscribeView;
 
-        return (subscribeView = JsonCodec.read(messageNode, SubscribeMessageRequestInView.class)).factory().process(oumuamuaServer, serverSession, new OumuamuaServerMessage(websocketTransport, context, null, SubscribeMessage.CHANNEL_ID, subscribeView.getId(), serverSession.getId(), false, (ObjectNode)messageNode));
+        return (subscribeView = JsonCodec.read(messageNode, SubscribeMessageRequestInView.class)).factory().process(oumuamuaServer, context, websocketTransport, serverSession, messageNode);
       case "/meta/unsubscribe":
+
         return JsonCodec.read(messageNode, UnsubscribeMessageRequestInView.class).factory().process(oumuamuaServer, serverSession);
       default:
         if (channel.startsWith("/meta/")) {
 
-          return createErrorPacket(channel, messageNode, "Unknown meta channel");
+          return createErrorPacket(channelId, channel, messageNode, "Unknown meta channel");
         } else if (channel.endsWith("/*") || channel.endsWith("/**")) {
 
-          return createErrorPacket(channel, messageNode, "Attempt to publish to a wildcard channel");
+          return createErrorPacket(channelId, channel, messageNode, "Attempt to publish to a wildcard channel");
         } else if (channel.startsWith("/service/")) {
           // TODO: service
           return null;
         } else {
 
-          PublishMessageRequestInView publishView;
-
-          return (publishView = JsonCodec.read(messageNode, PublishMessageRequestInView.class)).factory().process(oumuamuaServer, ChannelIdCache.generate(channel), serverSession, new OumuamuaServerMessage(websocketTransport, context, null, ChannelIdCache.generate(channel), publishView.getId(), serverSession.getId(), false, (ObjectNode)messageNode));
+          return JsonCodec.read(messageNode, PublishMessageRequestInView.class).factory().process(oumuamuaServer, context, websocketTransport, serverChannel, channelId, serverSession, messageNode);
         }
     }
   }
 
-  private OumuamuaPacket[] createErrorPacket (String channel, JsonNode messageNode, String error) {
+  private OumuamuaPacket[] createErrorPacket (ChannelId channelId, String channel, JsonNode messageNode, String error) {
 
     ObjectNode errorNode = JsonNodeFactory.instance.objectNode();
 
@@ -229,7 +233,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
       errorNode.put("clientId", serverSession.getId());
     }
 
-    return OumuamuaPacket.asPackets(serverSession, ChannelIdCache.generate(channel), errorNode);
+    return OumuamuaPacket.asPackets(serverSession, channelId, errorNode);
   }
 
   @Override

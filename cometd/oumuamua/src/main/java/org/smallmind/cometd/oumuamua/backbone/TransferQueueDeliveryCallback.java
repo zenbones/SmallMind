@@ -43,7 +43,6 @@ public class TransferQueueDeliveryCallback implements DeliveryCallback {
   public boolean deliver (byte[] data, long timeout, TimeUnit unit)
     throws InterruptedException {
 
-    System.out.println(new String(data));
     return linkedTransferQueue.tryTransfer(data, timeout, TimeUnit.SECONDS);
   }
 

@@ -49,7 +49,12 @@ public class MapLike extends NodeBacked implements Map<String, Object> {
 
   private final ObjectNode node;
 
-  public MapLike (NodeBacked parent, ObjectNode node) {
+  public MapLike (ObjectNode node) {
+
+    this(null, node);
+  }
+
+  protected MapLike (NodeBacked parent, ObjectNode node) {
 
     super(parent);
 

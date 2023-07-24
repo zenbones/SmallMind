@@ -35,11 +35,13 @@ package org.smallmind.cometd.oumuamua.meta;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.cometd.bayeux.ChannelId;
+import org.cometd.bayeux.server.BayeuxContext;
 import org.cometd.bayeux.server.SecurityPolicy;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
+import org.smallmind.cometd.oumuamua.message.MessageUtility;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
-import org.smallmind.cometd.oumuamua.message.OumuamuaServerMessage;
+import org.smallmind.cometd.oumuamua.transport.OumuamuaTransport;
 import org.smallmind.web.json.doppelganger.Doppelganger;
 import org.smallmind.web.json.doppelganger.Idiom;
 import org.smallmind.web.json.doppelganger.View;
@@ -61,12 +63,12 @@ public class HandshakeMessage extends AdvisedMetaMessage {
   @View(idioms = @Idiom(purposes = "success", visibility = OUT))
   private String clientId;
 
-  public OumuamuaPacket[] process (OumuamuaServer oumuamuaServer, String[] actualTransports, OumuamuaServerSession serverSession, OumuamuaServerMessage serverMessage) {
+  public OumuamuaPacket[] process (OumuamuaServer oumuamuaServer, BayeuxContext context, OumuamuaTransport transport, String[] actualTransports, OumuamuaServerSession serverSession, ObjectNode rawMessage) {
 
     SecurityPolicy securityPolicy;
     ObjectNode adviceNode = JsonNodeFactory.instance.objectNode();
 
-    if (((securityPolicy = oumuamuaServer.getSecurityPolicy()) != null) && (!securityPolicy.canHandshake(oumuamuaServer, serverSession, serverMessage))) {
+    if (((securityPolicy = oumuamuaServer.getSecurityPolicy()) != null) && (!securityPolicy.canHandshake(oumuamuaServer, serverSession, MessageUtility.createServerMessage(context, transport, CHANNEL_ID, false, rawMessage)))) {
       adviceNode.put("reconnect", "handshake");
 
       return OumuamuaPacket.asPackets(serverSession, CHANNEL_ID, new HandshakeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setId(getId()).setVersion(oumuamuaServer.getProtocolVersion()).setMinimumVersion(oumuamuaServer.getProtocolVersion()).setError("Unauthorized").setSupportedConnectionTypes(oumuamuaServer.getAllowedTransports().toArray(new String[0])).setAdvice(adviceNode));

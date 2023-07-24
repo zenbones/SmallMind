@@ -32,25 +32,34 @@
  */
 package org.smallmind.cometd.oumuamua.extension;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.cometd.bayeux.ChannelId;
 import org.cometd.bayeux.Promise;
+import org.cometd.bayeux.server.BayeuxContext;
 import org.cometd.bayeux.server.BayeuxServer;
 import org.cometd.bayeux.server.ServerMessage;
 import org.cometd.bayeux.server.ServerSession;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
+import org.smallmind.cometd.oumuamua.message.MessageUtility;
 import org.smallmind.cometd.oumuamua.message.OumuamuaServerMessage;
+import org.smallmind.cometd.oumuamua.transport.OumuamuaTransport;
 
 public class ExtensionNotifier {
 
-  public static boolean incoming (OumuamuaServer oumuamuaServer, OumuamuaServerSession sender, OumuamuaServerMessage.Mutable message) {
+  public static boolean incoming (OumuamuaServer oumuamuaServer, BayeuxContext context, OumuamuaTransport transport, OumuamuaServerSession sender, ChannelId channelId, boolean lazy, ObjectNode rawMessage) {
 
+    OumuamuaServerMessage serverMessage = null;
     boolean processing = true;
 
     for (BayeuxServer.Extension serverExtension : oumuamuaServer.getExtensions()) {
 
       Promise.Completable<Boolean> promise;
 
-      serverExtension.incoming(sender, message, promise = new Promise.Completable<>());
+      if (serverMessage == null) {
+        serverMessage = MessageUtility.createProtectedServerMessage(context, transport, channelId, lazy, rawMessage);
+      }
+      serverExtension.incoming(sender, serverMessage, promise = new Promise.Completable<>());
       if (!promise.join()) {
         processing = false;
         break;
@@ -62,7 +71,10 @@ public class ExtensionNotifier {
 
         Promise.Completable<Boolean> promise;
 
-        sessionExtension.incoming(sender, message, promise = new Promise.Completable<>());
+        if (serverMessage == null) {
+          serverMessage = MessageUtility.createProtectedServerMessage(context, transport, channelId, lazy, rawMessage);
+        }
+        sessionExtension.incoming(sender, serverMessage, promise = new Promise.Completable<>());
         if (!promise.join()) {
           processing = false;
           break;
@@ -73,15 +85,19 @@ public class ExtensionNotifier {
     return processing;
   }
 
-  public static boolean outgoing (OumuamuaServer oumuamuaServer, OumuamuaServerSession sender, OumuamuaServerSession receiver, OumuamuaServerMessage.Mutable message) {
+  public static boolean outgoing (OumuamuaServer oumuamuaServer, BayeuxContext context, OumuamuaTransport transport, OumuamuaServerSession sender, OumuamuaServerSession receiver, ChannelId channelId, boolean lazy, ObjectNode rawMessage) {
 
+    OumuamuaServerMessage serverMessage = null;
     boolean processing = true;
 
     for (BayeuxServer.Extension serverExtension : oumuamuaServer.getExtensions()) {
 
       Promise.Completable<Boolean> promise;
 
-      serverExtension.outgoing(sender, receiver, message, promise = new Promise.Completable<>());
+      if (serverMessage == null) {
+        serverMessage = MessageUtility.createProtectedServerMessage(context, transport, channelId, lazy, rawMessage);
+      }
+      serverExtension.outgoing(sender, receiver, serverMessage, promise = new Promise.Completable<>());
       if (!promise.join()) {
         processing = false;
         break;
@@ -94,7 +110,10 @@ public class ExtensionNotifier {
 
         Promise.Completable<ServerMessage.Mutable> promise;
 
-        sessionExtension.outgoing(sender, receiver, message, promise = new Promise.Completable<>());
+        if (serverMessage == null) {
+          serverMessage = MessageUtility.createProtectedServerMessage(context, transport, channelId, lazy, rawMessage);
+        }
+        sessionExtension.outgoing(sender, receiver, serverMessage, promise = new Promise.Completable<>());
         if (promise.join() == null) {
           processing = false;
           break;

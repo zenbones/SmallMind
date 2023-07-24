@@ -30,34 +30,22 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.cometd.oumuamua;
+package org.smallmind.cometd.oumuamua.message;
 
-import java.util.HashSet;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.cometd.bayeux.ChannelId;
-import org.smallmind.cometd.oumuamua.channel.ChannelIterator;
-import org.smallmind.cometd.oumuamua.channel.ChannelTree;
-import org.smallmind.cometd.oumuamua.message.MapLike;
-import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
-import org.smallmind.cometd.oumuamua.meta.DeliveryMessageSuccessOutView;
-import org.smallmind.web.json.scaffold.util.JsonCodec;
+import org.cometd.bayeux.server.BayeuxContext;
+import org.smallmind.cometd.oumuamua.transport.OumuamuaTransport;
 
-public class ChannelTest {
+public class MessageUtility {
 
-  public static void main (String... args) {
+  public static OumuamuaServerMessage createServerMessage (BayeuxContext context, OumuamuaTransport transport, ChannelId channelId, boolean lazy, ObjectNode rawMessage) {
 
-    ChannelTree t = new ChannelTree();
+    return new OumuamuaServerMessage(transport, context, null, channelId, lazy, new MapLike(rawMessage));
+  }
 
-    t.createIfAbsent(null, 0, new ChannelId("/a"));
-    t.createIfAbsent(null, 0, new ChannelId("/a/**"));
-    t.createIfAbsent(null, 0, new ChannelId("/a/b"));
-    t.createIfAbsent(null, 0, new ChannelId("/a/b/*"));
-    t.createIfAbsent(null, 0, new ChannelId("/a/b/**"));
-    t.createIfAbsent(null, 0, new ChannelId("/a/b/c"));
+  public static OumuamuaServerMessage createProtectedServerMessage (BayeuxContext context, OumuamuaTransport transport, ChannelId channelId, boolean lazy, ObjectNode rawMessage) {
 
-    ChannelIterator i = new ChannelIterator("/a/b/c");
-
-    t.publish(i, new OumuamuaPacket(null, new ChannelId("/foobar"), new MapLike( (ObjectNode)JsonCodec.writeAsJsonNode(new DeliveryMessageSuccessOutView().setData(JsonNodeFactory.instance.textNode("foobar"))))), new HashSet<>());
+    return new OumuamuaServerMessage(transport, context, null, channelId, lazy, new ExtMapLike(new MapLike(rawMessage)));
   }
 }
