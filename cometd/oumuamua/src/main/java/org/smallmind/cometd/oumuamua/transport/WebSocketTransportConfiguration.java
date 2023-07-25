@@ -38,8 +38,8 @@ public class WebSocketTransportConfiguration {
   private long longPollAdvisedIntervalMilliseconds = 30000;
   // use the websocket container default
   private long clientTimeoutMilliseconds = -1;
-  private long lazyMessageMaximumDelayMilliseconds = 30000;
-  // yse synchronous send, and positive integer will use async with timeout
+  private long lazyMessageMaximumDelayMilliseconds = 10000;
+  // a positive integer will use async send with the specified timeout
   private long asyncSendTimeoutMilliseconds = 0;
   // use the websocket container default
   private int maximumTextMessageBufferSize = -1;
