@@ -38,7 +38,7 @@ import org.cometd.bayeux.Message;
 import org.cometd.bayeux.Session;
 import org.cometd.bayeux.server.BayeuxContext;
 import org.cometd.bayeux.server.ServerMessage;
-import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
+import org.smallmind.cometd.oumuamua.SessionUtility;
 import org.smallmind.cometd.oumuamua.channel.ChannelIdCache;
 import org.smallmind.cometd.oumuamua.meta.DeliveryMessageSuccessOutView;
 import org.smallmind.cometd.oumuamua.transport.OumuamuaTransport;
@@ -57,13 +57,13 @@ public class MessageUtility {
 
     mapLike.put(Message.DATA_FIELD, data);
 
-    return new OumuamuaPacket((OumuamuaServerSession)sender, ChannelIdCache.generate(channel), mapLike);
+    return new OumuamuaPacket(SessionUtility.from(sender), ChannelIdCache.generate(channel), mapLike);
   }
 
   public static OumuamuaPacket wrapPacket (Session sender, ServerMessage.Mutable message) {
 
     MapLike mapLike = OumuamuaServerMessage.class.isAssignableFrom(message.getClass()) ? ((OumuamuaServerMessage)message).getMapLike() : new MapLike((ObjectNode)JsonCodec.writeAsJsonNode(message));
 
-    return new OumuamuaPacket((OumuamuaServerSession)sender, ChannelIdCache.generate(message.getChannel()), mapLike);
+    return new OumuamuaPacket(SessionUtility.from(sender), ChannelIdCache.generate(message.getChannel()), mapLike);
   }
 }

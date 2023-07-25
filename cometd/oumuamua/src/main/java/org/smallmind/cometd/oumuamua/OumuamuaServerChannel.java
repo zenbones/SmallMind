@@ -47,6 +47,7 @@ import org.cometd.bayeux.server.Authorizer;
 import org.cometd.bayeux.server.ServerChannel;
 import org.cometd.bayeux.server.ServerMessage;
 import org.cometd.bayeux.server.ServerSession;
+import org.smallmind.cometd.oumuamua.message.MessageUtility;
 import org.smallmind.cometd.oumuamua.message.OumuamuaLazyPacket;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 import org.smallmind.cometd.oumuamua.transport.OumuamuaTransport;
@@ -61,9 +62,6 @@ public class OumuamuaServerChannel implements ServerChannel {
   private final ConcurrentLinkedQueue<ServerChannelListener.Weak> weakListenerList = new ConcurrentLinkedQueue<>();
   private final LinkedList<Authorizer> authorizerList = new LinkedList<>();
   private final ChannelId channelId;
-  private final boolean meta;
-  private final boolean service;
-  private final boolean broadcast;
   private boolean initialized;
   private boolean persistent;
   private boolean broadcastToPublisher;
@@ -75,10 +73,6 @@ public class OumuamuaServerChannel implements ServerChannel {
 
     this.oumuamuaServer = oumuamuaServer;
     this.channelId = channelId;
-
-    meta = channelId.isMeta();
-    service = channelId.isService();
-    broadcast = !(meta || service);
 
     expirationTimestamp = System.currentTimeMillis() + (oumuamuaServer.getConfiguration().getInactiveChannelLifetimeMinutes() * 60 * 1000L);
   }
@@ -118,19 +112,19 @@ public class OumuamuaServerChannel implements ServerChannel {
   @Override
   public boolean isMeta () {
 
-    return meta;
+    return channelId.isMeta();
   }
 
   @Override
   public boolean isService () {
 
-    return service;
+    return channelId.isService();
   }
 
   @Override
   public boolean isBroadcast () {
 
-    return broadcast;
+    return !(channelId.isMeta() || channelId.isService());
   }
 
   @Override
@@ -329,12 +323,12 @@ public class OumuamuaServerChannel implements ServerChannel {
   }
 
   @Override
-  public boolean subscribe (ServerSession session) {
+  public boolean subscribe (ServerSession serverSession) {
 
     lifeLock.writeLock().lock();
 
     try {
-      subscriptionMap.putIfAbsent(session.getId(), (OumuamuaServerSession)session);
+      subscriptionMap.putIfAbsent(serverSession.getId(), (OumuamuaServerSession)serverSession);
       expirationTimestamp = -1;
 
       return true;
@@ -371,25 +365,32 @@ public class OumuamuaServerChannel implements ServerChannel {
   @Override
   public void publish (Session from, ServerMessage.Mutable message, Promise<Boolean> promise) {
 
+    send((OumuamuaTransport)SessionUtility.from(from).getServerTransport(), MessageUtility.wrapPacket(from, message), new HashSet<>());
+    promise.succeed(Boolean.TRUE);
   }
 
   @Override
   public void publish (Session from, Object data, Promise<Boolean> promise) {
 
+    send((OumuamuaTransport)SessionUtility.from(from).getServerTransport(), MessageUtility.wrapPacket(from, getId(), data), new HashSet<>());
+    promise.succeed(Boolean.TRUE);
   }
 
   public void send (OumuamuaTransport transport, OumuamuaPacket packet, HashSet<String> sessionIdSet) {
 
-    OumuamuaPacket downstreamPacket = null;
+    if (packet != null) {
 
-    for (OumuamuaServerSession serverSession : subscriptionMap.values()) {
-      if (sessionIdSet.add(serverSession.getId())) {
+      OumuamuaPacket downstreamPacket = null;
 
-        if (downstreamPacket == null) {
-          downstreamPacket = lazy ? new OumuamuaLazyPacket(packet, System.currentTimeMillis() + ((lazyTimeout <= 0) ? transport.getMaxLazyTimeout() : lazyTimeout)) : packet;
+      for (OumuamuaServerSession serverSession : subscriptionMap.values()) {
+        if (sessionIdSet.add(serverSession.getId())) {
+
+          if (downstreamPacket == null) {
+            downstreamPacket = lazy ? new OumuamuaLazyPacket(packet, System.currentTimeMillis() + ((lazyTimeout <= 0) ? transport.getMaxLazyTimeout() : lazyTimeout)) : packet;
+          }
+
+          serverSession.send(downstreamPacket);
         }
-
-        serverSession.send(downstreamPacket);
       }
     }
   }
