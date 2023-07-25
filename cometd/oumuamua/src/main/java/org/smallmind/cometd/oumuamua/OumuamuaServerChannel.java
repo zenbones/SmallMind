@@ -49,6 +49,7 @@ import org.cometd.bayeux.server.ServerMessage;
 import org.cometd.bayeux.server.ServerSession;
 import org.smallmind.cometd.oumuamua.message.OumuamuaLazyPacket;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
+import org.smallmind.cometd.oumuamua.transport.OumuamuaTransport;
 
 public class OumuamuaServerChannel implements ServerChannel {
 
@@ -176,6 +177,10 @@ public class OumuamuaServerChannel implements ServerChannel {
   public void setLazyTimeout (long lazyTimeout) {
 
     this.lazyTimeout = lazyTimeout;
+
+    if (lazyTimeout > 0) {
+      lazy = true;
+    }
   }
 
   @Override
@@ -368,7 +373,7 @@ public class OumuamuaServerChannel implements ServerChannel {
 
   }
 
-  public void send (OumuamuaPacket packet, HashSet<String> sessionIdSet) {
+  public void send (OumuamuaTransport transport, OumuamuaPacket packet, HashSet<String> sessionIdSet) {
 
     OumuamuaPacket downstreamPacket = null;
 
@@ -376,7 +381,7 @@ public class OumuamuaServerChannel implements ServerChannel {
       if (sessionIdSet.add(serverSession.getId())) {
 
         if (downstreamPacket == null) {
-          downstreamPacket = lazy ? (lazyTimeout > 0) ? new OumuamuaLazyPacket(packet, System.currentTimeMillis() + lazyTimeout) : packet : packet;
+          downstreamPacket = lazy ? new OumuamuaLazyPacket(packet, System.currentTimeMillis() + ((lazyTimeout <= 0) ? transport.getMaxLazyTimeout() : lazyTimeout)) : packet;
         }
 
         serverSession.send(downstreamPacket);

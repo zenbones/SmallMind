@@ -61,7 +61,7 @@ public class PublishMessage extends MetaMessage {
   @View(idioms = @Idiom(purposes = "request", visibility = IN))
   private String clientId;
 
-  public OumuamuaPacket[] process (OumuamuaServer oumuamuaServer, BayeuxContext context, OumuamuaTransport transport, OumuamuaServerChannel serverChannel, ChannelId channelId, OumuamuaServerSession serverSession, ObjectNode rawMessage) {
+  public OumuamuaPacket[] process (OumuamuaServer oumuamuaServer, BayeuxContext context, OumuamuaTransport transport, ChannelId channelId, OumuamuaServerSession serverSession, ObjectNode rawMessage) {
 
     if ((serverSession == null) || (!serverSession.getId().equals(getClientId()))) {
 
@@ -72,26 +72,31 @@ public class PublishMessage extends MetaMessage {
     } else if (!serverSession.isConnected()) {
 
       return OumuamuaPacket.asPackets(serverSession, channelId, new PublishMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(getChannel()).setId(getId()).setError("Connection required"));
-    } else if (serverChannel == null) {
-
-      return OumuamuaPacket.asPackets(serverSession, channelId, new PublishMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(getChannel()).setId(getId()).setError("No such channel"));
     } else {
 
-      SecurityPolicy securityPolicy;
+      OumuamuaServerChannel serverChannel;
 
-      if (((securityPolicy = oumuamuaServer.getSecurityPolicy()) != null) && (!securityPolicy.canPublish(oumuamuaServer, serverSession, serverChannel, MessageUtility.createServerMessage(context, transport, channelId, false, rawMessage)))) {
-        return OumuamuaPacket.asPackets(serverSession, channelId, new PublishMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(getChannel()).setId(getId()).setError("Unauthorized"));
+      if ((serverChannel = oumuamuaServer.findChannel(channelId.getId())) == null) {
+
+        return OumuamuaPacket.asPackets(serverSession, channelId, new PublishMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(getChannel()).setId(getId()).setError("No such channel"));
       } else {
 
-        OumuamuaPacket deliveryPacket;
+        SecurityPolicy securityPolicy;
 
-        oumuamuaServer.publishToChannel(getChannel(), deliveryPacket = new OumuamuaPacket(serverSession, channelId, new MapLike((ObjectNode)JsonCodec.writeAsJsonNode(new DeliveryMessageSuccessOutView().setChannel(getChannel()).setId(getId()).setData(getData())))));
+        if (((securityPolicy = oumuamuaServer.getSecurityPolicy()) != null) && (!securityPolicy.canPublish(oumuamuaServer, serverSession, serverChannel, MessageUtility.createServerMessage(context, transport, channelId, false, new MapLike(rawMessage))))) {
+          return OumuamuaPacket.asPackets(serverSession, channelId, new PublishMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(getChannel()).setId(getId()).setError("Unauthorized"));
+        } else {
 
-        if (serverSession.isBroadcastToPublisher()) {
-          serverSession.send(deliveryPacket);
+          OumuamuaPacket deliveryPacket;
+
+          oumuamuaServer.publishToChannel(transport, getChannel(), deliveryPacket = new OumuamuaPacket(serverSession, channelId, new MapLike((ObjectNode)JsonCodec.writeAsJsonNode(new DeliveryMessageSuccessOutView().setChannel(getChannel()).setId(getId()).setData(getData())))));
+
+          if (serverSession.isBroadcastToPublisher()) {
+            serverSession.send(deliveryPacket);
+          }
+
+          return OumuamuaPacket.asPackets(serverSession, channelId, new PublishMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(getChannel()).setId(getId()));
         }
-
-        return OumuamuaPacket.asPackets(serverSession, channelId, new PublishMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(getChannel()).setId(getId()));
       }
     }
   }

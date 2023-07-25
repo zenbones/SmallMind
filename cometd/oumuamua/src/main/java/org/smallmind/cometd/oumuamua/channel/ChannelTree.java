@@ -41,6 +41,7 @@ import org.cometd.bayeux.ChannelId;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerChannel;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
+import org.smallmind.cometd.oumuamua.transport.OumuamuaTransport;
 
 public class ChannelTree {
 
@@ -72,13 +73,13 @@ public class ChannelTree {
     }
   }
 
-  private void send (OumuamuaPacket packet, HashSet<String> sessionIdSet) {
+  private void send (OumuamuaTransport transport, OumuamuaPacket packet, HashSet<String> sessionIdSet) {
 
     channelChangeLock.readLock().lock();
 
     try {
       if (serverChannel != null) {
-        serverChannel.send(packet, sessionIdSet);
+        serverChannel.send(transport, packet, sessionIdSet);
       }
     } finally {
       channelChangeLock.readLock().unlock();
@@ -180,7 +181,7 @@ public class ChannelTree {
     }
   }
 
-  public void publish (ChannelIterator channelIterator, OumuamuaPacket packet, HashSet<String> sessionIdSet) {
+  public void publish (OumuamuaTransport transport, ChannelIterator channelIterator, OumuamuaPacket packet, HashSet<String> sessionIdSet) {
 
     if (channelIterator.hasNext()) {
 
@@ -189,10 +190,10 @@ public class ChannelTree {
 
       if ((deepWildBranch = childMap.get(ChannelId.DEEPWILD)) != null) {
 
-        deepWildBranch.send(packet, sessionIdSet);
+        deepWildBranch.send(transport, packet, sessionIdSet);
       }
       if ((nextBranch = childMap.get(channelIterator.next())) != null) {
-        nextBranch.publish(channelIterator, packet, sessionIdSet);
+        nextBranch.publish(transport, channelIterator, packet, sessionIdSet);
       }
     } else {
       if (parent != null) {
@@ -200,11 +201,11 @@ public class ChannelTree {
         ChannelTree wildBranch;
 
         if ((wildBranch = parent.childMap.get(ChannelId.WILD)) != null) {
-          wildBranch.send(packet, sessionIdSet);
+          wildBranch.send(transport, packet, sessionIdSet);
         }
       }
 
-      send(packet, sessionIdSet);
+      send(transport, packet, sessionIdSet);
     }
   }
 

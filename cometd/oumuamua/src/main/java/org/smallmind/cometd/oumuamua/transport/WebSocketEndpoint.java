@@ -49,13 +49,14 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.cometd.bayeux.ChannelId;
 import org.cometd.bayeux.server.BayeuxServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
-import org.smallmind.cometd.oumuamua.OumuamuaServerChannel;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
 import org.smallmind.cometd.oumuamua.channel.ChannelIdCache;
 import org.smallmind.cometd.oumuamua.context.OumuamuaWebsocketContext;
 import org.smallmind.cometd.oumuamua.extension.ExtensionNotifier;
+import org.smallmind.cometd.oumuamua.message.ExtMapLike;
 import org.smallmind.cometd.oumuamua.message.MapLike;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
+import org.smallmind.cometd.oumuamua.message.PacketType;
 import org.smallmind.cometd.oumuamua.meta.ConnectMessageRequestInView;
 import org.smallmind.cometd.oumuamua.meta.DisconnectMessageRequestInView;
 import org.smallmind.cometd.oumuamua.meta.HandshakeMessageRequestInView;
@@ -113,25 +114,29 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
 
     if (connected) {
 
-      StringBuilder sendBuilder = new StringBuilder("[");
-      boolean first = true;
+      StringBuilder sendBuilder = null;
 
       for (OumuamuaPacket packet : packets) {
         for (MapLike mapLike : packet.getMessages()) {
-          if (!first) {
-            sendBuilder.append(',');
-          }
+          if (ExtensionNotifier.outgoing(oumuamuaServer, context, websocketTransport, packet.getSender(), receivingSession, packet.getChannelId(), PacketType.LAZY.equals(packet.getType()), new ExtMapLike(mapLike))) {
+            if (sendBuilder == null) {
+              sendBuilder = new StringBuilder("[");
+            } else {
+              sendBuilder.append(',');
+            }
 
-          sendBuilder.append(mapLike.encode());
-          first = false;
+            sendBuilder.append(mapLike.encode());
+          }
         }
       }
-      sendBuilder.append(']');
+      if (sendBuilder != null) {
+        sendBuilder.append(']');
 
-      if (websocketTransport.getAsyncSendTimeoutMilliseconds() > 0) {
-        websocketSession.getAsyncRemote().sendText(sendBuilder.toString()).get(websocketTransport.getAsyncSendTimeoutMilliseconds(), TimeUnit.MILLISECONDS);
-      } else {
-        websocketSession.getBasicRemote().sendText(sendBuilder.toString());
+        if (websocketTransport.getAsyncSendTimeoutMilliseconds() > 0) {
+          websocketSession.getAsyncRemote().sendText(sendBuilder.toString()).get(websocketTransport.getAsyncSendTimeoutMilliseconds(), TimeUnit.MILLISECONDS);
+        } else {
+          websocketSession.getBasicRemote().sendText(sendBuilder.toString());
+        }
       }
     }
   }
@@ -146,13 +151,12 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
 
           String channel = messageNode.get("channel").asText();
           ChannelId channelId = ChannelIdCache.generate(channel);
-          OumuamuaServerChannel serverChannel = channelId.isMeta() ? null : oumuamuaServer.findChannel(channel);
 
-          if (ExtensionNotifier.incoming(oumuamuaServer, context, websocketTransport, serverSession, channelId, (serverChannel != null) && serverChannel.isLazy(), (ObjectNode)messageNode)) {
+          if (ExtensionNotifier.incoming(oumuamuaServer, context, websocketTransport, serverSession, channelId, false, new MapLike((ObjectNode)messageNode))) {
 
             OumuamuaPacket[] packets;
 
-            if ((packets = respond(serverChannel, channelId, channel, (ObjectNode)messageNode)) != null) {
+            if ((packets = respond(channelId, channel, (ObjectNode)messageNode)) != null) {
               send(serverSession, packets);
             }
           }
@@ -171,7 +175,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
     }
   }
 
-  private OumuamuaPacket[] respond (OumuamuaServerChannel serverChannel, ChannelId channelId, String channel, ObjectNode messageNode)
+  private OumuamuaPacket[] respond (ChannelId channelId, String channel, ObjectNode messageNode)
     throws JsonProcessingException {
 
     switch (channel) {
@@ -213,7 +217,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
           return null;
         } else {
 
-          return JsonCodec.read(messageNode, PublishMessageRequestInView.class).factory().process(oumuamuaServer, context, websocketTransport, serverChannel, channelId, serverSession, messageNode);
+          return JsonCodec.read(messageNode, PublishMessageRequestInView.class).factory().process(oumuamuaServer, context, websocketTransport, channelId, serverSession, messageNode);
         }
     }
   }

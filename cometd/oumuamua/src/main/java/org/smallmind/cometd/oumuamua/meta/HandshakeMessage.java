@@ -39,6 +39,7 @@ import org.cometd.bayeux.server.BayeuxContext;
 import org.cometd.bayeux.server.SecurityPolicy;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
+import org.smallmind.cometd.oumuamua.message.MapLike;
 import org.smallmind.cometd.oumuamua.message.MessageUtility;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 import org.smallmind.cometd.oumuamua.transport.OumuamuaTransport;
@@ -68,7 +69,7 @@ public class HandshakeMessage extends AdvisedMetaMessage {
     SecurityPolicy securityPolicy;
     ObjectNode adviceNode = JsonNodeFactory.instance.objectNode();
 
-    if (((securityPolicy = oumuamuaServer.getSecurityPolicy()) != null) && (!securityPolicy.canHandshake(oumuamuaServer, serverSession, MessageUtility.createServerMessage(context, transport, CHANNEL_ID, false, rawMessage)))) {
+    if (((securityPolicy = oumuamuaServer.getSecurityPolicy()) != null) && (!securityPolicy.canHandshake(oumuamuaServer, serverSession, MessageUtility.createServerMessage(context, transport, CHANNEL_ID, false, new MapLike(rawMessage))))) {
       adviceNode.put("reconnect", "handshake");
 
       return OumuamuaPacket.asPackets(serverSession, CHANNEL_ID, new HandshakeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setId(getId()).setVersion(oumuamuaServer.getProtocolVersion()).setMinimumVersion(oumuamuaServer.getProtocolVersion()).setError("Unauthorized").setSupportedConnectionTypes(oumuamuaServer.getAllowedTransports().toArray(new String[0])).setAdvice(adviceNode));

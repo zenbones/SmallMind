@@ -32,20 +32,14 @@
  */
 package org.smallmind.cometd.oumuamua.message;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.cometd.bayeux.ChannelId;
 import org.cometd.bayeux.server.BayeuxContext;
 import org.smallmind.cometd.oumuamua.transport.OumuamuaTransport;
 
 public class MessageUtility {
 
-  public static OumuamuaServerMessage createServerMessage (BayeuxContext context, OumuamuaTransport transport, ChannelId channelId, boolean lazy, ObjectNode rawMessage) {
+  public static OumuamuaServerMessage createServerMessage (BayeuxContext context, OumuamuaTransport transport, ChannelId channelId, boolean lazy, MapLike mapLike) {
 
-    return new OumuamuaServerMessage(transport, context, null, channelId, lazy, new MapLike(rawMessage));
-  }
-
-  public static OumuamuaServerMessage createProtectedServerMessage (BayeuxContext context, OumuamuaTransport transport, ChannelId channelId, boolean lazy, ObjectNode rawMessage) {
-
-    return new OumuamuaServerMessage(transport, context, null, channelId, lazy, new ExtMapLike(new MapLike(rawMessage)));
+    return new OumuamuaServerMessage(transport, context, null, channelId, lazy, mapLike);
   }
 }

@@ -312,9 +312,9 @@ public class OumuamuaServer implements BayeuxServer {
     }
   }
 
-  public void publishToChannel (String id, OumuamuaPacket packet) {
+  public void publishToChannel (OumuamuaTransport transport, String id, OumuamuaPacket packet) {
 
-    channelTree.publish(new ChannelIterator(id), packet, new HashSet<>());
+    channelTree.publish(transport, new ChannelIterator(id), packet, new HashSet<>());
   }
 
   public void operateOnChannels (ChannelOperation operation) {

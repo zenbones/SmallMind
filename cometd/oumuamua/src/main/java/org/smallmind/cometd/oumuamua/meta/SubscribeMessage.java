@@ -40,6 +40,7 @@ import org.cometd.bayeux.server.SecurityPolicy;
 import org.cometd.bayeux.server.ServerChannel;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
+import org.smallmind.cometd.oumuamua.message.MapLike;
 import org.smallmind.cometd.oumuamua.message.MessageUtility;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 import org.smallmind.cometd.oumuamua.message.OumuamuaServerMessage;
@@ -97,7 +98,7 @@ public class SubscribeMessage extends AdvisedMetaMessage {
 
         if ((securityPolicy = oumuamuaServer.getSecurityPolicy()) != null) {
 
-          OumuamuaServerMessage serverMessage = MessageUtility.createServerMessage(context, transport, CHANNEL_ID, false, rawMessage);
+          OumuamuaServerMessage serverMessage = MessageUtility.createServerMessage(context, transport, CHANNEL_ID, false, new MapLike(rawMessage));
 
           if ((serverChannel = oumuamuaServer.findChannel(getChannel())) == null) {
             if (!securityPolicy.canCreate(oumuamuaServer, serverSession, getChannel(), serverMessage)) {
