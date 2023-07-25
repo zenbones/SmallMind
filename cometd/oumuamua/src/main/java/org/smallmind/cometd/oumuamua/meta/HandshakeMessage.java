@@ -75,7 +75,6 @@ public class HandshakeMessage extends AdvisedMetaMessage {
       return OumuamuaPacket.asPackets(serverSession, CHANNEL_ID, new HandshakeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setId(getId()).setVersion(oumuamuaServer.getProtocolVersion()).setMinimumVersion(oumuamuaServer.getProtocolVersion()).setError("Unauthorized").setSupportedConnectionTypes(oumuamuaServer.getAllowedTransports().toArray(new String[0])).setAdvice(adviceNode));
     } else if (serverSession.isHandshook()) {
       adviceNode.put("reconnect", "retry");
-      adviceNode.put("interval", 0);
 
       return OumuamuaPacket.asPackets(serverSession, CHANNEL_ID, new HandshakeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setId(getId()).setVersion(oumuamuaServer.getProtocolVersion()).setMinimumVersion(oumuamuaServer.getProtocolVersion()).setError("Handshake was previously completed").setSupportedConnectionTypes(oumuamuaServer.getAllowedTransports().toArray(new String[0])).setAdvice(adviceNode));
     } else {

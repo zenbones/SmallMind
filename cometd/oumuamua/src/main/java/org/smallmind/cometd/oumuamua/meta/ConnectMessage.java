@@ -39,6 +39,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.cometd.bayeux.ChannelId;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
+import org.smallmind.cometd.oumuamua.transport.OumuamuaTransport;
 import org.smallmind.web.json.doppelganger.Doppelganger;
 import org.smallmind.web.json.doppelganger.Idiom;
 import org.smallmind.web.json.doppelganger.View;
@@ -56,8 +57,9 @@ public class ConnectMessage extends AdvisedMetaMessage {
   @View(idioms = @Idiom(purposes = "request", visibility = IN))
   private String connectionType;
 
-  public OumuamuaPacket[] process (OumuamuaServerSession serverSession) {
+  public OumuamuaPacket[] process (OumuamuaTransport transport, OumuamuaServerSession serverSession) {
 
+    //TODO: In theory there's a way to handle LongPollResponseDelayMilliseconds... but I'm not going to thread sleep, so...
     ObjectNode adviceNode = JsonNodeFactory.instance.objectNode();
 
     if ((serverSession == null) || (!serverSession.getId().equals(getClientId()))) {
@@ -74,10 +76,10 @@ public class ConnectMessage extends AdvisedMetaMessage {
 
           LinkedList<OumuamuaPacket> enqueuedPacketList = new LinkedList<>();
           OumuamuaPacket[] enqueuedPackets;
+          long longPollAdvisedIntervalMilliseconds;
 
           serverSession.setConnected(true);
-          // TODO: Set the 'interval' properly?
-          adviceNode.put("interval", 30000);
+          adviceNode.put("interval", ((longPollAdvisedIntervalMilliseconds = transport.getInterval()) < 0) ? 0 : longPollAdvisedIntervalMilliseconds);
 
           while (((enqueuedPackets = serverSession.poll()) != null) && (enqueuedPackets.length > 0)) {
             enqueuedPacketList.addAll(Arrays.asList(enqueuedPackets));
@@ -88,9 +90,8 @@ public class ConnectMessage extends AdvisedMetaMessage {
       }
 
       adviceNode.put("reconnect", "retry");
-      adviceNode.put("interval", 0);
 
-      return OumuamuaPacket.asPackets(serverSession, CHANNEL_ID, new ConnectMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setId(getId()).setClientId(serverSession.getId()).setError("The requested connection type does match a negotiated coennction type").setAdvice(adviceNode));
+      return OumuamuaPacket.asPackets(serverSession, CHANNEL_ID, new ConnectMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setId(getId()).setClientId(serverSession.getId()).setError("The requested connection type does match one of the negotiated connection type").setAdvice(adviceNode));
     }
   }
 

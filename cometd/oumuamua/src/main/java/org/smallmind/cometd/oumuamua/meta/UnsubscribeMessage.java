@@ -74,7 +74,6 @@ public class UnsubscribeMessage extends AdvisedMetaMessage {
     } else if (!serverSession.isConnected()) {
 
       adviceNode.put("reconnect", "retry");
-      adviceNode.put("interval", 0);
 
       return OumuamuaPacket.asPackets(serverSession, CHANNEL_ID, new UnsubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setClientId(serverSession.getId()).setId(getId()).setError("Connection required").setSubscription(getSubscription()).setAdvice(adviceNode));
     } else {

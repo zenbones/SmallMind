@@ -83,7 +83,6 @@ public class SubscribeMessage extends AdvisedMetaMessage {
       ObjectNode adviceNode = JsonNodeFactory.instance.objectNode();
 
       adviceNode.put("reconnect", "retry");
-      adviceNode.put("interval", 0);
 
       return OumuamuaPacket.asPackets(serverSession, CHANNEL_ID, new SubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setClientId(serverSession.getId()).setId(getId()).setError("Connection required").setSubscription(getSubscription()).setAdvice(adviceNode));
     } else {

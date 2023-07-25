@@ -85,7 +85,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
     oumuamuaServer = (OumuamuaServer)config.getUserProperties().get(BayeuxServer.ATTRIBUTE);
     websocketTransport = (WebSocketTransport)config.getUserProperties().get(WebSocketTransport.ATTRIBUTE);
 
-    if (websocketTransport.getMaxInterval() >= 0) {
+    if (websocketTransport.getMaxInterval() > 0) {
       websocketSession.getContainer().setDefaultMaxSessionIdleTimeout(websocketTransport.getMaxInterval());
     }
     if (websocketTransport.getMaximumTextMessageBufferSize() > 0) {
@@ -188,7 +188,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
         return JsonCodec.read(messageNode, HandshakeMessageRequestInView.class).factory().process(oumuamuaServer, context, websocketTransport, ACTUAL_TRANSPORTS, serverSession, messageNode);
       case "/meta/connect":
 
-        return JsonCodec.read(messageNode, ConnectMessageRequestInView.class).factory().process(serverSession);
+        return JsonCodec.read(messageNode, ConnectMessageRequestInView.class).factory().process(websocketTransport, serverSession);
       case "/meta/disconnect":
         // disconnect will happen after the response hs been sent
         connected = false;
