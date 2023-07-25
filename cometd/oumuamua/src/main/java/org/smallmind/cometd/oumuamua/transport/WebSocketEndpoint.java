@@ -199,9 +199,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
         return JsonCodec.read(messageNode, DisconnectMessageRequestInView.class).factory().process(serverSession);
       case "/meta/subscribe":
 
-        SubscribeMessageRequestInView subscribeView;
-
-        return (subscribeView = JsonCodec.read(messageNode, SubscribeMessageRequestInView.class)).factory().process(oumuamuaServer, context, websocketTransport, serverSession, messageNode);
+        return JsonCodec.read(messageNode, SubscribeMessageRequestInView.class).factory().process(oumuamuaServer, context, websocketTransport, serverSession, messageNode);
       case "/meta/unsubscribe":
 
         return JsonCodec.read(messageNode, UnsubscribeMessageRequestInView.class).factory().process(oumuamuaServer, serverSession);
