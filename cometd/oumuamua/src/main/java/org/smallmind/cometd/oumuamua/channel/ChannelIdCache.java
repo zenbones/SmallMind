@@ -52,28 +52,33 @@ public class ChannelIdCache {
 
   public static ChannelId generate (String id) {
 
-    switch (id) {
-      case "/meta/handshake":
+    if (id == null) {
+      throw new NullPointerException();
+    } else {
 
-        return HandshakeMessage.CHANNEL_ID;
-      case "/meta/connect":
+      switch (id) {
+        case "/meta/handshake":
 
-        return ConnectMessage.CHANNEL_ID;
-      case "/meta/subscribe":
+          return HandshakeMessage.CHANNEL_ID;
+        case "/meta/connect":
 
-        return SubscribeMessage.CHANNEL_ID;
-      case "/meta/unsubscribe":
+          return ConnectMessage.CHANNEL_ID;
+        case "/meta/subscribe":
 
-        return UnsubscribeMessage.CHANNEL_ID;
-      default:
+          return SubscribeMessage.CHANNEL_ID;
+        case "/meta/unsubscribe":
 
-        ChannelId channelId;
+          return UnsubscribeMessage.CHANNEL_ID;
+        default:
 
-        if ((channelId = CHANNEL_ID_MAP_LOCAL.get().get(id)) == null) {
-          CHANNEL_ID_MAP_LOCAL.get().put(id, channelId = new ChannelId(id));
-        }
+          ChannelId channelId;
 
-        return channelId;
+          if ((channelId = CHANNEL_ID_MAP_LOCAL.get().get(id)) == null) {
+            CHANNEL_ID_MAP_LOCAL.get().put(id, channelId = new ChannelId(id));
+          }
+
+          return channelId;
+      }
     }
   }
 

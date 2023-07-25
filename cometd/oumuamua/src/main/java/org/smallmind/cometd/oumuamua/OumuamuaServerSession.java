@@ -49,6 +49,7 @@ import org.cometd.bayeux.server.ServerChannel;
 import org.cometd.bayeux.server.ServerMessage;
 import org.cometd.bayeux.server.ServerSession;
 import org.cometd.bayeux.server.ServerTransport;
+import org.smallmind.cometd.oumuamua.message.MessageUtility;
 import org.smallmind.cometd.oumuamua.message.OumuamuaLazyPacket;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 import org.smallmind.cometd.oumuamua.message.PacketType;
@@ -59,6 +60,7 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class OumuamuaServerSession implements ServerSession {
 
+  private static final ThreadLocal<LinkedList<OumuamuaPacket>> BATCHED_PACKET_LIST_LOCAL = new ThreadLocal<>();
   private final ReentrantLock messagePollLock = new ReentrantLock();
   private final HashMap<String, Object> attributeMap = new HashMap<>();
   private final ConcurrentSkipListMap<Long, LinkedList<OumuamuaLazyPacket>> lazyMessageQueue = new ConcurrentSkipListMap<>();
@@ -285,13 +287,25 @@ public class OumuamuaServerSession implements ServerSession {
   }
 
   @Override
-  public void deliver (Session session, ServerMessage.Mutable mutable, Promise<Boolean> promise) {
+  public void deliver (Session sender, ServerMessage.Mutable message, Promise<Boolean> promise) {
 
+    try {
+      carrier.send(this, MessageUtility.wrapPacket(sender, message));
+      promise.succeed(Boolean.TRUE);
+    } catch (Exception exception) {
+      promise.fail(exception);
+    }
   }
 
   @Override
-  public void deliver (Session session, String s, Object o, Promise<Boolean> promise) {
+  public void deliver (Session sender, String channel, Object data, Promise<Boolean> promise) {
 
+    try {
+      carrier.send(this, MessageUtility.wrapPacket(sender, channel, data));
+      promise.succeed(Boolean.TRUE);
+    } catch (Exception exception) {
+      promise.fail(exception);
+    }
   }
 
   public OumuamuaPacket[] poll () {
@@ -358,7 +372,11 @@ public class OumuamuaServerSession implements ServerSession {
 
   public void send (OumuamuaPacket packet) {
 
-    if (PacketType.LAZY.equals(packet.getType())) {
+    LinkedList<OumuamuaPacket> batchedPacketList;
+
+    if ((batchedPacketList = BATCHED_PACKET_LIST_LOCAL.get()) != null) {
+      batchedPacketList.add(packet);
+    } else if (PacketType.LAZY.equals(packet.getType())) {
       messagePollLock.lock();
 
       try {
@@ -434,17 +452,43 @@ public class OumuamuaServerSession implements ServerSession {
   }
 
   @Override
-  public void batch (Runnable batch) {
+  public synchronized void batch (Runnable batch) {
 
+    new Thread(() -> {
+      startBatch();
+
+      try {
+        batch.run();
+      } finally {
+        endBatch();
+      }
+    }).start();
   }
 
   @Override
-  public void startBatch () {
+  public synchronized void startBatch () {
 
+    if (BATCHED_PACKET_LIST_LOCAL.get() == null) {
+      BATCHED_PACKET_LIST_LOCAL.set(new LinkedList<>());
+    }
   }
 
   @Override
-  public boolean endBatch () {
+  public synchronized boolean endBatch () {
+
+    LinkedList<OumuamuaPacket> batchedPacketList = BATCHED_PACKET_LIST_LOCAL.get();
+
+    if (batchedPacketList != null) {
+      BATCHED_PACKET_LIST_LOCAL.remove();
+
+      if (!batchedPacketList.isEmpty()) {
+        for (OumuamuaPacket batchedPacket : batchedPacketList) {
+          send(batchedPacket);
+        }
+
+        return true;
+      }
+    }
 
     return false;
   }

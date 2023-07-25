@@ -61,6 +61,11 @@ public class OumuamuaServerMessage implements ServerMessage, ServerMessage.Mutab
     this.mapLike = mapLike;
   }
 
+  public MapLike getMapLike () {
+
+    return mapLike;
+  }
+
   @Override
   public String getId () {
 

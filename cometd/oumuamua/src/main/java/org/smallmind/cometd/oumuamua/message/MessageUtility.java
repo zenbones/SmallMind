@@ -32,14 +32,38 @@
  */
 package org.smallmind.cometd.oumuamua.message;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.cometd.bayeux.ChannelId;
+import org.cometd.bayeux.Message;
+import org.cometd.bayeux.Session;
 import org.cometd.bayeux.server.BayeuxContext;
+import org.cometd.bayeux.server.ServerMessage;
+import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
+import org.smallmind.cometd.oumuamua.channel.ChannelIdCache;
+import org.smallmind.cometd.oumuamua.meta.DeliveryMessageSuccessOutView;
 import org.smallmind.cometd.oumuamua.transport.OumuamuaTransport;
+import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public class MessageUtility {
 
   public static OumuamuaServerMessage createServerMessage (BayeuxContext context, OumuamuaTransport transport, ChannelId channelId, boolean lazy, MapLike mapLike) {
 
     return new OumuamuaServerMessage(transport, context, null, channelId, lazy, mapLike);
+  }
+
+  public static OumuamuaPacket wrapPacket (Session sender, String channel, Object data) {
+
+    MapLike mapLike = new MapLike((ObjectNode)JsonCodec.writeAsJsonNode(new DeliveryMessageSuccessOutView().setChannel(channel)));
+
+    mapLike.put(Message.DATA_FIELD, data);
+
+    return new OumuamuaPacket((OumuamuaServerSession)sender, ChannelIdCache.generate(channel), mapLike);
+  }
+
+  public static OumuamuaPacket wrapPacket (Session sender, ServerMessage.Mutable message) {
+
+    MapLike mapLike = OumuamuaServerMessage.class.isAssignableFrom(message.getClass()) ? ((OumuamuaServerMessage)message).getMapLike() : new MapLike((ObjectNode)JsonCodec.writeAsJsonNode(message));
+
+    return new OumuamuaPacket((OumuamuaServerSession)sender, ChannelIdCache.generate(message.getChannel()), mapLike);
   }
 }
