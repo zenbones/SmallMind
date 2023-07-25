@@ -57,7 +57,8 @@ import org.smallmind.cometd.oumuamua.channel.ChannelIterator;
 import org.smallmind.cometd.oumuamua.channel.ChannelOperation;
 import org.smallmind.cometd.oumuamua.channel.ChannelTree;
 import org.smallmind.cometd.oumuamua.channel.ExpirationOperation;
-import org.smallmind.cometd.oumuamua.channel.ListOperation;
+import org.smallmind.cometd.oumuamua.channel.ListChannelsOperation;
+import org.smallmind.cometd.oumuamua.channel.ListSubscriptionsOperation;
 import org.smallmind.cometd.oumuamua.channel.UnsubscribeOperation;
 import org.smallmind.cometd.oumuamua.message.OumuamuaLazyPacket;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
@@ -269,11 +270,20 @@ public class OumuamuaServer implements BayeuxServer {
   @Override
   public List<ServerChannel> getChannels () {
 
-    ListOperation listOperation;
+    ListChannelsOperation listChannelsOperation;
 
-    channelTree.walk(listOperation = new ListOperation());
+    channelTree.walk(listChannelsOperation = new ListChannelsOperation());
 
-    return listOperation.getChannelList();
+    return listChannelsOperation.getChannelList();
+  }
+
+  public Set<ServerChannel> getSubscriptions (OumuamuaServerSession serverSession) {
+
+    ListSubscriptionsOperation listSubscriptionsOperation;
+
+    channelTree.walk(listSubscriptionsOperation = new ListSubscriptionsOperation(serverSession.getId()));
+
+    return listSubscriptionsOperation.getChannelSet();
   }
 
   public OumuamuaServerChannel findChannel (String id) {

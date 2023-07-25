@@ -316,6 +316,11 @@ public class OumuamuaServerChannel implements ServerChannel {
     }
   }
 
+  public boolean isSubscribed (String sessionId) {
+
+    return subscriptionMap.containsKey(sessionId);
+  }
+
   @Override
   // Do not call this in order to process subscriptions
   public Set<ServerSession> getSubscribers () {

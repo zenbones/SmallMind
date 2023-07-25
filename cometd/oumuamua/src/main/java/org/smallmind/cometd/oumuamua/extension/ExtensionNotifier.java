@@ -44,6 +44,7 @@ import org.smallmind.cometd.oumuamua.message.MapLike;
 import org.smallmind.cometd.oumuamua.message.MessageUtility;
 import org.smallmind.cometd.oumuamua.message.OumuamuaServerMessage;
 import org.smallmind.cometd.oumuamua.transport.OumuamuaTransport;
+import org.smallmind.nutsnbolts.util.IterableIterator;
 
 public class ExtensionNotifier {
 
@@ -67,7 +68,7 @@ public class ExtensionNotifier {
     }
 
     if (processing) {
-      for (ServerSession.Extension sessionExtension : sender.getExtensions()) {
+      for (ServerSession.Extension sessionExtension : new IterableIterator<>(sender.iterateExtensions())) {
 
         Promise.Completable<Boolean> promise;
 
@@ -106,7 +107,7 @@ public class ExtensionNotifier {
 
     if (processing) {
 
-      for (ServerSession.Extension sessionExtension : receiver.getExtensions()) {
+      for (ServerSession.Extension sessionExtension : new IterableIterator<>(sender.iterateExtensions())) {
 
         Promise.Completable<ServerMessage.Mutable> promise;
 

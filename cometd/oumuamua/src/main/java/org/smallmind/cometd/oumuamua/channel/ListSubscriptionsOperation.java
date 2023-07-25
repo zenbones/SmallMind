@@ -32,17 +32,23 @@
  */
 package org.smallmind.cometd.oumuamua.channel;
 
-import java.util.LinkedList;
+import java.util.HashSet;
 import org.cometd.bayeux.server.ServerChannel;
 import org.smallmind.cometd.oumuamua.OumuamuaServerChannel;
 
-public class ListOperation implements ChannelOperation {
+public class ListSubscriptionsOperation implements ChannelOperation {
 
-  private final LinkedList<ServerChannel> channelList = new LinkedList<>();
+  private final HashSet<ServerChannel> channelSet = new HashSet<>();
+  private final String sessionId;
 
-  public LinkedList<ServerChannel> getChannelList () {
+  public ListSubscriptionsOperation (String sessionId) {
 
-    return channelList;
+    this.sessionId = sessionId;
+  }
+
+  public HashSet<ServerChannel> getChannelSet () {
+
+    return channelSet;
   }
 
   @Override
@@ -50,8 +56,9 @@ public class ListOperation implements ChannelOperation {
 
     OumuamuaServerChannel serverChannel;
 
-    if (((serverChannel = channelTree.getServerChannel()) != null) && serverChannel.isInitialized()) {
-      channelList.add(serverChannel);
+    if (((serverChannel = channelTree.getServerChannel()) != null) && serverChannel.isInitialized() && serverChannel.isSubscribed(sessionId)) {
+
+      channelSet.add(serverChannel);
     }
   }
 }

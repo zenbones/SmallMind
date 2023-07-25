@@ -34,6 +34,7 @@ package org.smallmind.cometd.oumuamua;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -62,6 +63,9 @@ public class OumuamuaServerSession implements ServerSession {
   private final HashMap<String, Object> attributeMap = new HashMap<>();
   private final ConcurrentSkipListMap<Long, LinkedList<OumuamuaLazyPacket>> lazyMessageQueue = new ConcurrentSkipListMap<>();
   private final ConcurrentLinkedQueue<OumuamuaPacket> messageQueue = new ConcurrentLinkedQueue<>();
+  private final ConcurrentLinkedQueue<Extension> extensionList = new ConcurrentLinkedQueue<>();
+  private final ConcurrentLinkedQueue<ServerSessionListener> listenerList = new ConcurrentLinkedQueue<>();
+  private final OumuamuaServer oumuamuaServer;
   private final OumuamuaTransport serverTransport;
   private final OumuamuaCarrier carrier;
   private final LocalSession localSession;
@@ -77,8 +81,9 @@ public class OumuamuaServerSession implements ServerSession {
   private long maxInterval = -1;
   private int lazyMessageCount;
 
-  public OumuamuaServerSession (OumuamuaTransport serverTransport, OumuamuaCarrier carrier, int maximumLayMessageQueueSize) {
+  public OumuamuaServerSession (OumuamuaServer oumuamuaServer, OumuamuaTransport serverTransport, OumuamuaCarrier carrier, int maximumLayMessageQueueSize) {
 
+    this.oumuamuaServer = oumuamuaServer;
     this.serverTransport = serverTransport;
     this.carrier = carrier;
     this.maximumLayMessageQueueSize = maximumLayMessageQueueSize;
@@ -238,36 +243,45 @@ public class OumuamuaServerSession implements ServerSession {
     return attributeMap.remove(name);
   }
 
-  @Override
-  public void addExtension (Extension extension) {
+  public Iterator<Extension> iterateExtensions () {
 
-  }
-
-  @Override
-  public void removeExtension (Extension extension) {
-
+    return extensionList.iterator();
   }
 
   @Override
   public List<Extension> getExtensions () {
 
-    return null;
+    return new LinkedList<>(extensionList);
+  }
+
+  @Override
+  public void addExtension (Extension extension) {
+
+    extensionList.add(extension);
+  }
+
+  @Override
+  public void removeExtension (Extension extension) {
+
+    extensionList.remove(extension);
   }
 
   @Override
   public void addListener (ServerSessionListener serverSessionListener) {
 
+    listenerList.add(serverSessionListener);
   }
 
   @Override
   public void removeListener (ServerSessionListener serverSessionListener) {
 
+    listenerList.remove(serverSessionListener);
   }
 
   @Override
   public Set<ServerChannel> getSubscriptions () {
 
-    return null;
+    return oumuamuaServer.getSubscriptions(this);
   }
 
   @Override
