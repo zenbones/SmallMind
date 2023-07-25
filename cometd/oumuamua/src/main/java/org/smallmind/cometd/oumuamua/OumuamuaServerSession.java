@@ -32,6 +32,7 @@
  */
 package org.smallmind.cometd.oumuamua;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -354,6 +355,7 @@ public class OumuamuaServerSession implements ServerSession {
         if ((lazyMessageCount += packet.size()) > maximumLayMessageQueueSize) {
 
           boolean operating = true;
+          boolean lostLazyMessages = false;
 
           while (operating && (lazyMessageCount > maximumLayMessageQueueSize) && (!lazyMessageQueue.isEmpty())) {
 
@@ -369,14 +371,22 @@ public class OumuamuaServerSession implements ServerSession {
                 overflowLazyPackets[index++] = overflowLazyPacket;
               }
 
-              try {
-                carrier.send(this, overflowLazyPackets);
-              } catch (Exception exception) {
-                LoggerManager.getLogger(OumuamuaServerSession.class).error(exception);
+              if ((metaConnectDeliveryOnly == null) ? serverTransport.isMetaConnectDeliveryOnly() : metaConnectDeliveryOnly) {
+                lostLazyMessages = true;
+              } else {
+                try {
+                  carrier.send(this, overflowLazyPackets);
+                } catch (Exception exception) {
+                  LoggerManager.getLogger(OumuamuaServerSession.class).error(exception);
+                }
               }
             } else {
               operating = false;
             }
+          }
+
+          if (lostLazyMessages) {
+            LoggerManager.getLogger(OumuamuaServerSession.class).warn("Lay messages lost due to overflow");
           }
         }
 
@@ -402,6 +412,11 @@ public class OumuamuaServerSession implements ServerSession {
   @Override
   public void disconnect () {
 
+    try {
+      carrier.close();
+    } catch (IOException ioException) {
+      LoggerManager.getLogger(OumuamuaServerSession.class).error(ioException);
+    }
   }
 
   @Override

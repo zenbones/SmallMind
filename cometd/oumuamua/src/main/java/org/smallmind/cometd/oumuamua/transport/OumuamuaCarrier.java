@@ -32,6 +32,7 @@
  */
 package org.smallmind.cometd.oumuamua.transport;
 
+import java.io.IOException;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 
@@ -41,4 +42,7 @@ public interface OumuamuaCarrier {
 
   void send (OumuamuaServerSession receivingSession, OumuamuaPacket... packets)
     throws Exception;
+
+  void close ()
+    throws IOException;
 }

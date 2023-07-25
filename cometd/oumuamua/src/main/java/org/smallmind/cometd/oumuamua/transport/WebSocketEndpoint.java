@@ -142,6 +142,13 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
   }
 
   @Override
+  public void close ()
+    throws IOException {
+
+    websocketSession.close(new CloseReason(CloseReason.CloseCodes.NORMAL_CLOSURE, "Server disconnect"));
+  }
+
+  @Override
   public synchronized void onMessage (String data) {
 
     try {
