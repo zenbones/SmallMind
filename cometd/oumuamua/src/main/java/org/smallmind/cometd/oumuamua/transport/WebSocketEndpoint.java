@@ -180,15 +180,12 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
 
     switch (channel) {
       case "/meta/handshake":
-
-        HandshakeMessageRequestInView handshakeView;
-
         if (serverSession == null) {
           oumuamuaServer.addSession(serverSession = new OumuamuaServerSession(websocketTransport, this, oumuamuaServer.getConfiguration().getMaximumLazyMessageQueueSize()));
           connected = true;
         }
 
-        return (handshakeView = JsonCodec.read(messageNode, HandshakeMessageRequestInView.class)).factory().process(oumuamuaServer, context, websocketTransport, ACTUAL_TRANSPORTS, serverSession, messageNode);
+        return JsonCodec.read(messageNode, HandshakeMessageRequestInView.class).factory().process(oumuamuaServer, context, websocketTransport, ACTUAL_TRANSPORTS, serverSession, messageNode);
       case "/meta/connect":
 
         return JsonCodec.read(messageNode, ConnectMessageRequestInView.class).factory().process(serverSession);
