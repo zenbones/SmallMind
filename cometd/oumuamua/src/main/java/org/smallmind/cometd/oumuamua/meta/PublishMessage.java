@@ -84,6 +84,7 @@ public class PublishMessage extends MetaMessage {
         SecurityPolicy securityPolicy;
 
         if (((securityPolicy = oumuamuaServer.getSecurityPolicy()) != null) && (!securityPolicy.canPublish(oumuamuaServer, serverSession, serverChannel, MessageUtility.createServerMessage(context, transport, channelId, false, new MapLike(rawMessage))))) {
+
           return OumuamuaPacket.asPackets(serverSession, channelId, new PublishMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(getChannel()).setId(getId()).setError("Unauthorized"));
         } else {
 

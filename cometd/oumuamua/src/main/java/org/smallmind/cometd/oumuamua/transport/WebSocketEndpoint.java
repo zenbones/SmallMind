@@ -142,6 +142,13 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
   }
 
   @Override
+  public OumuamuaPacket[] inject (ChannelId channelId, ObjectNode messageNode)
+    throws JsonProcessingException {
+
+    return respond(channelId, channelId.getId(), messageNode);
+  }
+
+  @Override
   public void close ()
     throws IOException {
 

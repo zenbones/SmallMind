@@ -36,12 +36,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.cometd.bayeux.client.ClientSession;
 import org.cometd.bayeux.client.ClientSessionChannel;
+import org.smallmind.cometd.oumuamua.message.MapLike;
+import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
+import org.smallmind.cometd.oumuamua.meta.UnsubscribeMessage;
+import org.smallmind.cometd.oumuamua.transport.OumuamuaCarrier;
 
 public class OumuamuaClientSession implements ClientSession {
 
   private final ConcurrentHashMap<String, ClientSessionChannel> channelMap = new ConcurrentHashMap<>();
+  private final OumuamuaCarrier carrier;
+
+  public OumuamuaClientSession (OumuamuaCarrier carrier) {
+
+    this.carrier = carrier;
+  }
 
   @Override
   public String getId () {
@@ -100,6 +112,24 @@ public class OumuamuaClientSession implements ClientSession {
     return null;
   }
 
+  public MapLike inject (ObjectNode messageNode)
+    throws JsonProcessingException {
+
+    OumuamuaPacket[] packets;
+
+    if (((packets = carrier.inject(UnsubscribeMessage.CHANNEL_ID, messageNode)) != null) && (packets.length > 0)) {
+
+      MapLike[] mapLikes;
+
+      if (((mapLikes = packets[0].getMessages()) != null) && (mapLikes.length > 0)) {
+
+        return mapLikes[0];
+      }
+    }
+
+    return null;
+  }
+
   @Override
   public void handshake (Map<String, Object> template, MessageListener callback) {
 
@@ -116,6 +146,11 @@ public class OumuamuaClientSession implements ClientSession {
 //    return channelMap;
 
     return null;
+  }
+
+  public OumuamuaCarrier getCarrier () {
+
+    return carrier;
   }
 
   public void release (String channelName) {

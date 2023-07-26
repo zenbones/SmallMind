@@ -33,6 +33,9 @@
 package org.smallmind.cometd.oumuamua.transport;
 
 import java.io.IOException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.cometd.bayeux.ChannelId;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 
@@ -42,6 +45,9 @@ public interface OumuamuaCarrier {
 
   void send (OumuamuaServerSession receivingSession, OumuamuaPacket... packets)
     throws Exception;
+
+  OumuamuaPacket[] inject (ChannelId channelId, ObjectNode messageNode)
+    throws JsonProcessingException;
 
   void close ()
     throws IOException;

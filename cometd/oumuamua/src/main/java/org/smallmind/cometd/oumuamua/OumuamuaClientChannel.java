@@ -38,10 +38,21 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.ReentrantLock;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.cometd.bayeux.ChannelId;
 import org.cometd.bayeux.Message;
 import org.cometd.bayeux.client.ClientSession;
 import org.cometd.bayeux.client.ClientSessionChannel;
+import org.smallmind.cometd.oumuamua.message.MapLike;
+import org.smallmind.cometd.oumuamua.message.OumuamuaClientMessage;
+import org.smallmind.cometd.oumuamua.meta.SubscribeMessage;
+import org.smallmind.cometd.oumuamua.meta.SubscribeMessageRequestInView;
+import org.smallmind.cometd.oumuamua.meta.UnsubscribeMessage;
+import org.smallmind.cometd.oumuamua.meta.UnsubscribeMessageRequestInView;
+import org.smallmind.scribe.pen.LoggerManager;
+import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public class OumuamuaClientChannel implements ClientSessionChannel {
 
@@ -51,6 +62,7 @@ public class OumuamuaClientChannel implements ClientSessionChannel {
   private final ConcurrentLinkedQueue<ClientSessionChannelListener> listenerList = new ConcurrentLinkedQueue<>();
   private final OumuamuaClientSession clientSession;
   private final ChannelId channelId;
+  private boolean subscribed;
   private boolean released;
 
   public OumuamuaClientChannel (OumuamuaClientSession clientSession, ChannelId channelId) {
@@ -176,13 +188,37 @@ public class OumuamuaClientChannel implements ClientSessionChannel {
 
     releaseLock.lock();
 
-    try {
+    if (!subscriptionList.isEmpty()) {
 
-    } finally {
-      releaseLock.unlock();
+      return subscriptionList.add(listener);
+    } else {
+
+      JsonNode subscribeNode = JsonCodec.writeAsJsonNode((message != null) ? message : new SubscribeMessageRequestInView().setChannel(SubscribeMessage.CHANNEL_ID.getId()).setSubscription(channelId.getId()));
+
+      try {
+
+        MapLike mapLike;
+
+        if ((mapLike = clientSession.inject((ObjectNode)subscribeNode)) != null) {
+          if (callback != null) {
+            callback.onMessage(new OumuamuaClientMessage(mapLike.getNode()));
+          }
+
+          if (Boolean.TRUE.equals(mapLike.getNode().get(Message.SUCCESSFUL_FIELD).asBoolean())) {
+
+            return subscriptionList.add(listener);
+          }
+        }
+
+        return false;
+      } catch (JsonProcessingException jsonProcessingException) {
+        LoggerManager.getLogger(OumuamuaClientSession.class).error(jsonProcessingException);
+
+        return false;
+      } finally {
+        releaseLock.unlock();
+      }
     }
-
-    return false;
   }
 
   @Override
@@ -190,24 +226,46 @@ public class OumuamuaClientChannel implements ClientSessionChannel {
 
     releaseLock.lock();
 
-    try {
+    if (subscriptionList.remove(listener)) {
+      if (!subscriptionList.isEmpty()) {
 
-    } finally {
-      releaseLock.unlock();
+        return true;
+      } else {
+
+        JsonNode unsubscribeNode = JsonCodec.writeAsJsonNode((message != null) ? message : new UnsubscribeMessageRequestInView().setChannel(UnsubscribeMessage.CHANNEL_ID.getId()).setSubscription(channelId.getId()));
+
+        try {
+
+          MapLike mapLike;
+
+          if ((mapLike = clientSession.inject((ObjectNode)unsubscribeNode)) != null) {
+            if (callback != null) {
+              callback.onMessage(new OumuamuaClientMessage(mapLike.getNode()));
+            }
+
+            return Boolean.TRUE.equals(mapLike.getNode().get(Message.SUCCESSFUL_FIELD).asBoolean());
+          }
+
+          return false;
+        } catch (JsonProcessingException jsonProcessingException) {
+          LoggerManager.getLogger(OumuamuaClientSession.class).error(jsonProcessingException);
+
+          return false;
+        } finally {
+          releaseLock.unlock();
+        }
+      }
+    } else {
+
+      return false;
     }
-
-    return false;
   }
 
   @Override
   public void unsubscribe () {
 
-    releaseLock.lock();
-
-    try {
-      subscriptionList.clear();
-    } finally {
-      releaseLock.unlock();
+    for (MessageListener messageListener : subscriptionList) {
+      unsubscribe(messageListener);
     }
   }
 
