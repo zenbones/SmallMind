@@ -62,7 +62,6 @@ public class OumuamuaClientChannel implements ClientSessionChannel {
   private final ConcurrentLinkedQueue<ClientSessionChannelListener> listenerList = new ConcurrentLinkedQueue<>();
   private final OumuamuaClientSession clientSession;
   private final ChannelId channelId;
-  private boolean subscribed;
   private boolean released;
 
   public OumuamuaClientChannel (OumuamuaClientSession clientSession, ChannelId channelId) {
