@@ -42,7 +42,7 @@ public class OumuamuaConfiguration {
   private long expiredChannelCycleMinutes = 5;
   private int inactiveChannelLifetimeMinutes = 30;
   private long lazyMessageCycleMilliseconds = 3000;
-  private int maximumLazyMessageQueueSize = 1000;
+  private int maximumMessageQueueSize = 1000;
 
   public Map<String, OumuamuaTransport> getTransportMap () {
 
@@ -94,13 +94,13 @@ public class OumuamuaConfiguration {
     this.lazyMessageCycleMilliseconds = lazyMessageCycleMilliseconds;
   }
 
-  public int getMaximumLazyMessageQueueSize () {
+  public int getMaximumMessageQueueSize () {
 
-    return maximumLazyMessageQueueSize;
+    return maximumMessageQueueSize;
   }
 
-  public void setMaximumLazyMessageQueueSize (int maximumLazyMessageQueueSize) {
+  public void setMaximumMessageQueueSize (int maximumMessageQueueSize) {
 
-    this.maximumLazyMessageQueueSize = maximumLazyMessageQueueSize;
+    this.maximumMessageQueueSize = maximumMessageQueueSize;
   }
 }

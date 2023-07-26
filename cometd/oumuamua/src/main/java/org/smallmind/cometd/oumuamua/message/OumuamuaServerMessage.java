@@ -93,7 +93,7 @@ public class OumuamuaServerMessage implements ServerMessage, ServerMessage.Mutab
   @Override
   public String getChannel () {
 
-    return channelId.getId();
+    return (channelId == null) ? null : channelId.getId();
   }
 
   @Override
@@ -112,13 +112,13 @@ public class OumuamuaServerMessage implements ServerMessage, ServerMessage.Mutab
   @Override
   public boolean isMeta () {
 
-    return channelId.isMeta();
+    return (channelId != null) && channelId.isMeta();
   }
 
   @Override
   public boolean isPublishReply () {
 
-    return !(channelId.isMeta() || containsKey(DATA_FIELD));
+    return !(isMeta() || containsKey(DATA_FIELD));
   }
 
   @Override

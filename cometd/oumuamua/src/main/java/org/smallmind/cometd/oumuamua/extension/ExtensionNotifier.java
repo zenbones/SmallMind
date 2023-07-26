@@ -53,7 +53,7 @@ public class ExtensionNotifier {
     OumuamuaServerMessage serverMessage = null;
     boolean processing = true;
 
-    for (BayeuxServer.Extension serverExtension : oumuamuaServer.getExtensions()) {
+    for (BayeuxServer.Extension serverExtension : new IterableIterator<>(oumuamuaServer.iterateExtensions())) {
 
       Promise.Completable<Boolean> promise;
 
@@ -91,7 +91,7 @@ public class ExtensionNotifier {
     OumuamuaServerMessage serverMessage = null;
     boolean processing = true;
 
-    for (BayeuxServer.Extension serverExtension : oumuamuaServer.getExtensions()) {
+    for (BayeuxServer.Extension serverExtension : new IterableIterator<>(oumuamuaServer.iterateExtensions())) {
 
       Promise.Completable<Boolean> promise;
 

@@ -188,7 +188,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
     switch (channel) {
       case "/meta/handshake":
         if (serverSession == null) {
-          oumuamuaServer.addSession(serverSession = new OumuamuaServerSession(oumuamuaServer, websocketTransport, this, oumuamuaServer.getConfiguration().getMaximumLazyMessageQueueSize()));
+          oumuamuaServer.addSession(serverSession = new OumuamuaServerSession(oumuamuaServer, websocketTransport, this, oumuamuaServer.getConfiguration().getMaximumMessageQueueSize()));
           connected = true;
         }
 

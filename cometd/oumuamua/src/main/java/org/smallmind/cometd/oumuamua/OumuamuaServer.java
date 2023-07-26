@@ -34,15 +34,18 @@ package org.smallmind.cometd.oumuamua;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import org.cometd.bayeux.MarkedReference;
 import org.cometd.bayeux.Transport;
 import org.cometd.bayeux.server.BayeuxServer;
@@ -60,8 +63,10 @@ import org.smallmind.cometd.oumuamua.channel.ExpirationOperation;
 import org.smallmind.cometd.oumuamua.channel.ListChannelsOperation;
 import org.smallmind.cometd.oumuamua.channel.ListSubscriptionsOperation;
 import org.smallmind.cometd.oumuamua.channel.UnsubscribeOperation;
+import org.smallmind.cometd.oumuamua.message.MapLike;
 import org.smallmind.cometd.oumuamua.message.OumuamuaLazyPacket;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
+import org.smallmind.cometd.oumuamua.message.OumuamuaServerMessage;
 import org.smallmind.cometd.oumuamua.transport.OumuamuaTransport;
 import org.smallmind.scribe.pen.LoggerManager;
 
@@ -72,6 +77,8 @@ public class OumuamuaServer implements BayeuxServer {
   private final OumuamuaConfiguration configuration;
   private final ChannelTree channelTree = new ChannelTree();
   private final ConcurrentHashMap<String, OumuamuaServerSession> sessionMap = new ConcurrentHashMap<>();
+  private final ConcurrentLinkedQueue<Extension> extensionList = new ConcurrentLinkedQueue<>();
+  private final ConcurrentLinkedQueue<BayeuxServerListener> listenerList = new ConcurrentLinkedQueue<>();
   private ExpiredChannelSifter expiredChannelSifter;
   private LazyMessageSifter lazyMessageSifter;
   private SecurityPolicy securityPolicy;
@@ -186,30 +193,39 @@ public class OumuamuaServer implements BayeuxServer {
     return nameSet;
   }
 
-  @Override
-  public void addExtension (Extension extension) {
+  public Iterator<Extension> iterateExtensions () {
 
-  }
-
-  @Override
-  public void removeExtension (Extension extension) {
-
+    return extensionList.iterator();
   }
 
   @Override
   public List<Extension> getExtensions () {
 
-    return null;
+    return new LinkedList<>(extensionList);
+  }
+
+  @Override
+  public void addExtension (Extension extension) {
+
+    extensionList.add(extension);
+  }
+
+  @Override
+  public void removeExtension (Extension extension) {
+
+    extensionList.remove(extension);
   }
 
   @Override
   public void addListener (BayeuxServerListener bayeuxServerListener) {
 
+    listenerList.add(bayeuxServerListener);
   }
 
   @Override
   public void removeListener (BayeuxServerListener bayeuxServerListener) {
 
+    listenerList.remove(bayeuxServerListener);
   }
 
   @Override
@@ -250,7 +266,7 @@ public class OumuamuaServer implements BayeuxServer {
   }
 
   @Override
-  public LocalSession newLocalSession (String s) {
+  public LocalSession newLocalSession (String id) {
 
     return null;
   }
@@ -258,7 +274,7 @@ public class OumuamuaServer implements BayeuxServer {
   @Override
   public ServerMessage.Mutable newMessage () {
 
-    return null;
+    return new OumuamuaServerMessage(null, null, null, null, false, new MapLike(JsonNodeFactory.instance.objectNode()));
   }
 
   @Override
