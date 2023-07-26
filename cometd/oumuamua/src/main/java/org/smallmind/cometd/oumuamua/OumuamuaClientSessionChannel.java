@@ -183,11 +183,15 @@ public class OumuamuaClientSessionChannel implements ClientSessionChannel {
   @Override
   public void publish (Object data, ClientSession.MessageListener callback) {
 
-    if (!(isMeta() || isWild() || isDeepWild())) {
+    if (isMeta() || isWild() || isDeepWild()) {
+      if (callback != null) {
+        callback.onMessage(OumuamuaClientMessage.failed("Not a valid channel for publishing"));
+      }
+    } else {
       try {
 
         MapLike mapLike;
-        PublishMessageRequestInView publishView = new PublishMessageRequestInView().setChannel(channelId.getId()).setClientId(clientSession.getId()).setData(JsonCodec.writeAsJsonNode(data));
+        PublishMessageRequestInView publishView = new PublishMessageRequestInView().setChannel(channelId.getId()).setId(clientSession.nextMessageId()).setClientId(clientSession.getId()).setData(JsonCodec.writeAsJsonNode(data));
 
         if ((mapLike = clientSession.inject((ObjectNode)JsonCodec.writeAsJsonNode(publishView))) != null) {
           if (callback != null) {
@@ -196,6 +200,10 @@ public class OumuamuaClientSessionChannel implements ClientSessionChannel {
         }
       } catch (JsonProcessingException jsonProcessingException) {
         LoggerManager.getLogger(OumuamuaClientSessionChannel.class).error(jsonProcessingException);
+
+        if (callback != null) {
+          callback.onMessage(OumuamuaClientMessage.failed(jsonProcessingException.getMessage()));
+        }
       }
     }
   }
@@ -214,6 +222,10 @@ public class OumuamuaClientSessionChannel implements ClientSessionChannel {
       }
     } catch (JsonProcessingException jsonProcessingException) {
       LoggerManager.getLogger(OumuamuaClientSessionChannel.class).error(jsonProcessingException);
+
+      if (callback != null) {
+        callback.onMessage(OumuamuaClientMessage.failed(jsonProcessingException.getMessage()));
+      }
     }
   }
 
@@ -227,7 +239,7 @@ public class OumuamuaClientSessionChannel implements ClientSessionChannel {
       return subscriptionList.add(listener);
     } else {
 
-      JsonNode subscribeNode = JsonCodec.writeAsJsonNode((message != null) ? message : new SubscribeMessageRequestInView().setChannel(SubscribeMessage.CHANNEL_ID.getId()).setSubscription(channelId.getId()));
+      JsonNode subscribeNode = JsonCodec.writeAsJsonNode((message != null) ? message : new SubscribeMessageRequestInView().setChannel(SubscribeMessage.CHANNEL_ID.getId()).setId(clientSession.nextMessageId()).setClientId(clientSession.getId()).setSubscription(channelId.getId()));
 
       try {
 
@@ -248,6 +260,10 @@ public class OumuamuaClientSessionChannel implements ClientSessionChannel {
       } catch (JsonProcessingException jsonProcessingException) {
         LoggerManager.getLogger(OumuamuaClientSessionChannel.class).error(jsonProcessingException);
 
+        if (callback != null) {
+          callback.onMessage(OumuamuaClientMessage.failed(jsonProcessingException.getMessage()));
+        }
+
         return false;
       } finally {
         releaseLock.unlock();
@@ -266,7 +282,7 @@ public class OumuamuaClientSessionChannel implements ClientSessionChannel {
         return true;
       } else {
 
-        JsonNode unsubscribeNode = JsonCodec.writeAsJsonNode((message != null) ? message : new UnsubscribeMessageRequestInView().setChannel(UnsubscribeMessage.CHANNEL_ID.getId()).setSubscription(channelId.getId()));
+        JsonNode unsubscribeNode = JsonCodec.writeAsJsonNode((message != null) ? message : new UnsubscribeMessageRequestInView().setChannel(UnsubscribeMessage.CHANNEL_ID.getId()).setId(clientSession.nextMessageId()).setClientId(clientSession.getId()).setSubscription(channelId.getId()));
 
         try {
 
@@ -283,6 +299,10 @@ public class OumuamuaClientSessionChannel implements ClientSessionChannel {
           return false;
         } catch (JsonProcessingException jsonProcessingException) {
           LoggerManager.getLogger(OumuamuaClientSessionChannel.class).error(jsonProcessingException);
+
+          if (callback != null) {
+            callback.onMessage(OumuamuaClientMessage.failed(jsonProcessingException.getMessage()));
+          }
 
           return false;
         } finally {

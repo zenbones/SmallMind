@@ -33,6 +33,7 @@
 package org.smallmind.cometd.oumuamua.message;
 
 import java.util.Map;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.cometd.bayeux.ChannelId;
 import org.cometd.bayeux.Message;
@@ -40,9 +41,16 @@ import org.smallmind.cometd.oumuamua.channel.ChannelIdCache;
 
 public class OumuamuaClientMessage extends MapLike implements Message {
 
+  private static final OumuamuaClientMessage FAILED_MESSAGE = new OumuamuaClientMessage(JsonNodeFactory.instance.objectNode().put(Message.SUCCESSFUL_FIELD, false));
+
   public OumuamuaClientMessage (ObjectNode node) {
 
     super(node);
+  }
+
+  public static OumuamuaClientMessage failed (String reason) {
+
+    return new OumuamuaClientMessage(JsonNodeFactory.instance.objectNode().put(Message.SUCCESSFUL_FIELD, false).put(Message.ERROR_FIELD, reason));
   }
 
   @Override

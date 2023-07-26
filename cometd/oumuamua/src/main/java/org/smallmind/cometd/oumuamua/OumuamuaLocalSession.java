@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicLong;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
@@ -52,17 +53,24 @@ import org.smallmind.cometd.oumuamua.channel.ChannelIdCache;
 import org.smallmind.cometd.oumuamua.message.MapLike;
 import org.smallmind.cometd.oumuamua.message.OumuamuaClientMessage;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
+import org.smallmind.cometd.oumuamua.meta.ConnectMessage;
+import org.smallmind.cometd.oumuamua.meta.ConnectMessageRequestInView;
+import org.smallmind.cometd.oumuamua.meta.DisconnectMessageRequestInView;
+import org.smallmind.cometd.oumuamua.meta.HandshakeMessage;
+import org.smallmind.cometd.oumuamua.meta.HandshakeMessageRequestInView;
 import org.smallmind.cometd.oumuamua.meta.UnsubscribeMessage;
 import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public class OumuamuaLocalSession implements LocalSession {
 
+  private static final ThreadLocal<LinkedList<OumuamuaPacket>> BATCHED_PACKET_LIST_LOCAL = new ThreadLocal<>();
   private final ConcurrentHashMap<String, Object> attributeMap = new ConcurrentHashMap<>();
   private final ConcurrentHashMap<String, OumuamuaClientSessionChannel> channelMap = new ConcurrentHashMap<>();
   private final ConcurrentLinkedQueue<ClientSession.Extension> extensionList = new ConcurrentLinkedQueue<>();
   private final ConcurrentLinkedQueue<ServerSession.ServerSessionListener> listenerList = new ConcurrentLinkedQueue<>();
   private final OumuamuaServerSession serverSession;
+  private final AtomicLong messgeId = new AtomicLong(0);
 
   public OumuamuaLocalSession (OumuamuaServerSession serverSession) {
 
@@ -79,6 +87,11 @@ public class OumuamuaLocalSession implements LocalSession {
   public String getId () {
 
     return serverSession.getId();
+  }
+
+  public String nextMessageId () {
+
+    return String.valueOf(messgeId.incrementAndGet());
   }
 
   @Override
@@ -163,17 +176,78 @@ public class OumuamuaLocalSession implements LocalSession {
   @Override
   public void remoteCall (String target, Object data, MessageListener callback) {
 
+    if (callback != null) {
+      callback.onMessage(OumuamuaClientMessage.failed("No matching remote taerget"));
+    }
   }
 
   @Override
   public void handshake (Map<String, Object> template, MessageListener callback) {
 
+    try {
+
+      HandshakeMessageRequestInView handshakeView = new HandshakeMessageRequestInView().setChannel(HandshakeMessage.CHANNEL_ID.getId()).setId(nextMessageId()).setSupportedConnectionTypes(new String[] {"local"});
+      MapLike mapLike;
+
+      if ((mapLike = inject((ObjectNode)JsonCodec.writeAsJsonNode(handshakeView))) != null) {
+        if (callback != null) {
+          callback.onMessage(new OumuamuaClientMessage(mapLike.getNode()));
+        }
+
+        if (Boolean.TRUE.equals(mapLike.getNode().get(Message.SUCCESSFUL_FIELD).asBoolean())) {
+          connect(callback);
+        }
+      }
+    } catch (JsonProcessingException jsonProcessingException) {
+      LoggerManager.getLogger(OumuamuaClientSessionChannel.class).error(jsonProcessingException);
+
+      if (callback != null) {
+        callback.onMessage(OumuamuaClientMessage.failed(jsonProcessingException.getMessage()));
+      }
+    }
   }
 
+  private void connect (MessageListener callback) {
+
+    try {
+
+      ConnectMessageRequestInView connectView = new ConnectMessageRequestInView().setChannel(ConnectMessage.CHANNEL_ID.getId()).setId(nextMessageId()).setClientId(serverSession.getId()).setConnectionType("local");
+      MapLike mapLike;
+
+      if ((mapLike = inject((ObjectNode)JsonCodec.writeAsJsonNode(connectView))) != null) {
+        if (callback != null) {
+          callback.onMessage(new OumuamuaClientMessage(mapLike.getNode()));
+        }
+      }
+    } catch (JsonProcessingException jsonProcessingException) {
+      LoggerManager.getLogger(OumuamuaClientSessionChannel.class).error(jsonProcessingException);
+
+      if (callback != null) {
+        callback.onMessage(OumuamuaClientMessage.failed(jsonProcessingException.getMessage()));
+      }
+    }
+  }
 
   @Override
   public void disconnect (MessageListener callback) {
 
+    try {
+
+      DisconnectMessageRequestInView disconnectView = new DisconnectMessageRequestInView().setChannel(ConnectMessage.CHANNEL_ID.getId()).setId(nextMessageId()).setClientId(serverSession.getId());
+      MapLike mapLike;
+
+      if ((mapLike = inject((ObjectNode)JsonCodec.writeAsJsonNode(disconnectView))) != null) {
+        if (callback != null) {
+          callback.onMessage(new OumuamuaClientMessage(mapLike.getNode()));
+        }
+      }
+    } catch (JsonProcessingException jsonProcessingException) {
+      LoggerManager.getLogger(OumuamuaClientSessionChannel.class).error(jsonProcessingException);
+
+      if (callback != null) {
+        callback.onMessage(OumuamuaClientMessage.failed(jsonProcessingException.getMessage()));
+      }
+    }
   }
 
   public void receive (String text) {
@@ -214,15 +288,47 @@ public class OumuamuaLocalSession implements LocalSession {
   @Override
   public void batch (Runnable batch) {
 
+    new Thread(() -> {
+      startBatch();
+
+      try {
+        batch.run();
+      } finally {
+        endBatch();
+      }
+    }).start();
   }
 
   @Override
-  public void startBatch () {
+  public synchronized void startBatch () {
 
+    if (BATCHED_PACKET_LIST_LOCAL.get() == null) {
+      BATCHED_PACKET_LIST_LOCAL.set(new LinkedList<>());
+    }
   }
 
   @Override
-  public boolean endBatch () {
+  public synchronized boolean endBatch () {
+
+    LinkedList<OumuamuaPacket> batchedPacketList = BATCHED_PACKET_LIST_LOCAL.get();
+
+    if (batchedPacketList != null) {
+      BATCHED_PACKET_LIST_LOCAL.remove();
+
+      if (!batchedPacketList.isEmpty()) {
+        for (OumuamuaPacket batchedPacket : batchedPacketList) {
+          for (MapLike mapLike : batchedPacket.getMessages()) {
+            try {
+              inject(mapLike.getNode());
+            } catch (JsonProcessingException jsonProcessingException) {
+              LoggerManager.getLogger(OumuamuaLocalSession.class).error(jsonProcessingException);
+            }
+          }
+        }
+
+        return true;
+      }
+    }
 
     return false;
   }
