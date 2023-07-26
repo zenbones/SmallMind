@@ -291,7 +291,7 @@ public class OumuamuaServerSession implements ServerSession {
   public void deliver (Session sender, ServerMessage.Mutable message, Promise<Boolean> promise) {
 
     try {
-      carrier.send(this, MessageUtility.wrapPacket(sender, message));
+      carrier.send(this, MessageUtility.wrapDeliveryPacket(sender, message));
       promise.succeed(Boolean.TRUE);
     } catch (Exception exception) {
       promise.fail(exception);
@@ -302,7 +302,7 @@ public class OumuamuaServerSession implements ServerSession {
   public void deliver (Session sender, String channel, Object data, Promise<Boolean> promise) {
 
     try {
-      carrier.send(this, MessageUtility.wrapPacket(sender, channel, data));
+      carrier.send(this, MessageUtility.wrapDeliveryPacket(sender, channel, data));
       promise.succeed(Boolean.TRUE);
     } catch (Exception exception) {
       promise.fail(exception);

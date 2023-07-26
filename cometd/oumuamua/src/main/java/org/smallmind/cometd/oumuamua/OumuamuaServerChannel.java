@@ -32,7 +32,6 @@
  */
 package org.smallmind.cometd.oumuamua;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -365,14 +364,14 @@ public class OumuamuaServerChannel implements ServerChannel {
   @Override
   public void publish (Session from, ServerMessage.Mutable message, Promise<Boolean> promise) {
 
-    send((OumuamuaTransport)SessionUtility.from(from).getServerTransport(), MessageUtility.wrapPacket(from, message), new HashSet<>());
+    send((OumuamuaTransport)SessionUtility.from(from).getServerTransport(), MessageUtility.wrapDeliveryPacket(from, message), new HashSet<>());
     promise.succeed(Boolean.TRUE);
   }
 
   @Override
   public void publish (Session from, Object data, Promise<Boolean> promise) {
 
-    send((OumuamuaTransport)SessionUtility.from(from).getServerTransport(), MessageUtility.wrapPacket(from, getId(), data), new HashSet<>());
+    send((OumuamuaTransport)SessionUtility.from(from).getServerTransport(), MessageUtility.wrapDeliveryPacket(from, getId(), data), new HashSet<>());
     promise.succeed(Boolean.TRUE);
   }
 

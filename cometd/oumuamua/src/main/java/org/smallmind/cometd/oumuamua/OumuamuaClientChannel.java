@@ -47,6 +47,7 @@ import org.cometd.bayeux.client.ClientSession;
 import org.cometd.bayeux.client.ClientSessionChannel;
 import org.smallmind.cometd.oumuamua.message.MapLike;
 import org.smallmind.cometd.oumuamua.message.OumuamuaClientMessage;
+import org.smallmind.cometd.oumuamua.meta.PublishMessageRequestInView;
 import org.smallmind.cometd.oumuamua.meta.SubscribeMessage;
 import org.smallmind.cometd.oumuamua.meta.SubscribeMessageRequestInView;
 import org.smallmind.cometd.oumuamua.meta.UnsubscribeMessage;
@@ -175,11 +176,36 @@ public class OumuamuaClientChannel implements ClientSessionChannel {
   @Override
   public void publish (Object data, ClientSession.MessageListener callback) {
 
+    try {
+
+      MapLike mapLike;
+      PublishMessageRequestInView publishView = new PublishMessageRequestInView().setChannel(channelId.getId()).setClientId(clientSession.getId()).setData(JsonCodec.writeAsJsonNode(data));
+
+      if ((mapLike = clientSession.inject((ObjectNode)JsonCodec.writeAsJsonNode(publishView))) != null) {
+        if (callback != null) {
+          callback.onMessage(new OumuamuaClientMessage(mapLike.getNode()));
+        }
+      }
+    } catch (JsonProcessingException jsonProcessingException) {
+      LoggerManager.getLogger(OumuamuaClientSession.class).error(jsonProcessingException);
+    }
   }
 
   @Override
   public void publish (Message.Mutable message, ClientSession.MessageListener callback) {
 
+    try {
+
+      MapLike mapLike;
+
+      if ((mapLike = clientSession.inject((ObjectNode)JsonCodec.writeAsJsonNode(message))) != null) {
+        if (callback != null) {
+          callback.onMessage(new OumuamuaClientMessage(mapLike.getNode()));
+        }
+      }
+    } catch (JsonProcessingException jsonProcessingException) {
+      LoggerManager.getLogger(OumuamuaClientSession.class).error(jsonProcessingException);
+    }
   }
 
   @Override
