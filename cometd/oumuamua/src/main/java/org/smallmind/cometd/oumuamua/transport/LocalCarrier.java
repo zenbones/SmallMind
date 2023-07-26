@@ -42,6 +42,8 @@ import org.smallmind.cometd.oumuamua.OumuamuaLocalSession;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
 import org.smallmind.cometd.oumuamua.context.OumuamuaLocalContext;
+import org.smallmind.cometd.oumuamua.extension.ExtensionNotifier;
+import org.smallmind.cometd.oumuamua.message.MapLike;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 import org.smallmind.cometd.oumuamua.meta.ConnectMessageRequestInView;
 import org.smallmind.cometd.oumuamua.meta.DisconnectMessageRequestInView;
@@ -119,7 +121,13 @@ public class LocalCarrier implements OumuamuaCarrier {
 
     lastContactMilliseconds = System.currentTimeMillis();
 
-    return respond(channelId, channelId.getId(), messageNode);
+    if (ExtensionNotifier.incoming(oumuamuaServer, LOCAL_CONTEXT, localTransport, serverSession, channelId, false, new MapLike(messageNode))) {
+
+      return respond(channelId, channelId.getId(), messageNode);
+    } else {
+
+      return null;
+    }
   }
 
   @Override
