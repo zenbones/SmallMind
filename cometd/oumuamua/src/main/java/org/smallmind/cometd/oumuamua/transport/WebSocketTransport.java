@@ -39,7 +39,6 @@ import javax.websocket.DeploymentException;
 import javax.websocket.server.ServerContainer;
 import javax.websocket.server.ServerEndpointConfig;
 import org.cometd.bayeux.server.BayeuxServer;
-import org.smallmind.cometd.oumuamua.AbstractOumuamuaTransport;
 import org.smallmind.cometd.oumuamua.FormattedServletException;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 

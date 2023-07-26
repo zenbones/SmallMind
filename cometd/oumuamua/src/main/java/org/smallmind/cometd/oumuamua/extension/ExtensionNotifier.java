@@ -34,10 +34,12 @@ package org.smallmind.cometd.oumuamua.extension;
 
 import org.cometd.bayeux.ChannelId;
 import org.cometd.bayeux.Promise;
+import org.cometd.bayeux.client.ClientSession;
 import org.cometd.bayeux.server.BayeuxContext;
 import org.cometd.bayeux.server.BayeuxServer;
 import org.cometd.bayeux.server.ServerMessage;
 import org.cometd.bayeux.server.ServerSession;
+import org.smallmind.cometd.oumuamua.OumuamuaLocalSession;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
 import org.smallmind.cometd.oumuamua.message.MapLike;
@@ -83,6 +85,22 @@ public class ExtensionNotifier {
       }
     }
 
+    if (processing && sender.isLocalSession()) {
+      for (ClientSession.Extension sessionExtension : new IterableIterator<>(((OumuamuaLocalSession)sender.getLocalSession()).iterateExtensions())) {
+
+        Promise.Completable<Boolean> promise;
+
+        if (serverMessage == null) {
+          serverMessage = MessageUtility.createServerMessage(context, transport, channelId, lazy, mapLike);
+        }
+        sessionExtension.incoming(sender.getLocalSession(), serverMessage, promise = new Promise.Completable<>());
+        if (!promise.join()) {
+          processing = false;
+          break;
+        }
+      }
+    }
+
     return processing;
   }
 
@@ -106,7 +124,6 @@ public class ExtensionNotifier {
     }
 
     if (processing) {
-
       for (ServerSession.Extension sessionExtension : new IterableIterator<>(sender.iterateExtensions())) {
 
         Promise.Completable<ServerMessage.Mutable> promise;
@@ -116,6 +133,22 @@ public class ExtensionNotifier {
         }
         sessionExtension.outgoing(sender, receiver, serverMessage, promise = new Promise.Completable<>());
         if (promise.join() == null) {
+          processing = false;
+          break;
+        }
+      }
+    }
+
+    if (processing && sender.isLocalSession()) {
+      for (ClientSession.Extension sessionExtension : new IterableIterator<>(((OumuamuaLocalSession)sender.getLocalSession()).iterateExtensions())) {
+
+        Promise.Completable<Boolean> promise;
+
+        if (serverMessage == null) {
+          serverMessage = MessageUtility.createServerMessage(context, transport, channelId, lazy, mapLike);
+        }
+        sessionExtension.outgoing(sender.getLocalSession(), serverMessage, promise = new Promise.Completable<>());
+        if (!promise.join()) {
           processing = false;
           break;
         }

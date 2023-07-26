@@ -76,10 +76,9 @@ public class ConnectMessage extends AdvisedMetaMessage {
 
           LinkedList<OumuamuaPacket> enqueuedPacketList = new LinkedList<>();
           OumuamuaPacket[] enqueuedPackets;
-          long longPollAdvisedIntervalMilliseconds;
 
           serverSession.setConnected(true);
-          adviceNode.put("interval", ((longPollAdvisedIntervalMilliseconds = transport.getInterval()) < 0) ? 0 : longPollAdvisedIntervalMilliseconds);
+          adviceNode.put("interval", (serverSession.getInterval() >= 0) ? serverSession.getInterval() : transport.getInterval());
 
           while (((enqueuedPackets = serverSession.poll()) != null) && (enqueuedPackets.length > 0)) {
             enqueuedPacketList.addAll(Arrays.asList(enqueuedPackets));

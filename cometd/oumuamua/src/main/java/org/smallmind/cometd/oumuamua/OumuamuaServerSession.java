@@ -84,7 +84,7 @@ public class OumuamuaServerSession implements ServerSession {
   private int lazyQueueSize;
   private int connectQueueSize;
 
-  public OumuamuaServerSession (OumuamuaServer oumuamuaServer, OumuamuaTransport serverTransport, OumuamuaCarrier carrier, int maximumMessageQueueSize) {
+  public OumuamuaServerSession (OumuamuaServer oumuamuaServer, OumuamuaTransport serverTransport, OumuamuaCarrier carrier, boolean createLocalSession, int maximumMessageQueueSize) {
 
     this.oumuamuaServer = oumuamuaServer;
     this.serverTransport = serverTransport;
@@ -92,7 +92,7 @@ public class OumuamuaServerSession implements ServerSession {
     this.maximumMessageQueueSize = maximumMessageQueueSize;
 
     id = SnowflakeId.newInstance().generateHexEncoding();
-    localSession = null;
+    localSession = (createLocalSession) ? new OumuamuaLocalSession(this) : null;
   }
 
   @Override
@@ -145,18 +145,6 @@ public class OumuamuaServerSession implements ServerSession {
   }
 
   @Override
-  public long getInterval () {
-
-    return interval;
-  }
-
-  @Override
-  public void setInterval (long interval) {
-
-    this.interval = interval;
-  }
-
-  @Override
   public long getTimeout () {
 
     return timeout;
@@ -169,6 +157,18 @@ public class OumuamuaServerSession implements ServerSession {
   }
 
   @Override
+  public long getInterval () {
+
+    return interval;
+  }
+
+  @Override
+  public void setInterval (long interval) {
+
+    this.interval = interval;
+  }
+
+  @Override
   public long getMaxInterval () {
 
     return maxInterval;
@@ -178,6 +178,8 @@ public class OumuamuaServerSession implements ServerSession {
   public void setMaxInterval (long maxInterval) {
 
     this.maxInterval = maxInterval;
+
+    carrier.setMaxSessionIdleTimeout(maxInterval);
   }
 
   @Override
@@ -291,7 +293,7 @@ public class OumuamuaServerSession implements ServerSession {
   public void deliver (Session sender, ServerMessage.Mutable message, Promise<Boolean> promise) {
 
     try {
-      carrier.send(this, MessageUtility.wrapDeliveryPacket(sender, message));
+      carrier.send(MessageUtility.wrapDeliveryPacket(sender, message));
       promise.succeed(Boolean.TRUE);
     } catch (Exception exception) {
       promise.fail(exception);
@@ -302,7 +304,7 @@ public class OumuamuaServerSession implements ServerSession {
   public void deliver (Session sender, String channel, Object data, Promise<Boolean> promise) {
 
     try {
-      carrier.send(this, MessageUtility.wrapDeliveryPacket(sender, channel, data));
+      carrier.send(MessageUtility.wrapDeliveryPacket(sender, channel, data));
       promise.succeed(Boolean.TRUE);
     } catch (Exception exception) {
       promise.fail(exception);
@@ -417,7 +419,7 @@ public class OumuamuaServerSession implements ServerSession {
                   lostLazyMessages = true;
                 } else {
                   try {
-                    carrier.send(this, overflowLazyPackets);
+                    carrier.send(overflowLazyPackets);
                   } catch (Exception exception) {
                     LoggerManager.getLogger(OumuamuaServerSession.class).error(exception);
                   }
@@ -456,7 +458,7 @@ public class OumuamuaServerSession implements ServerSession {
         }
       } else {
         try {
-          carrier.send(this, packet);
+          carrier.send(packet);
         } catch (Exception exception) {
           LoggerManager.getLogger(OumuamuaServerSession.class).error(exception);
         }

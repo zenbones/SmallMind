@@ -35,27 +35,44 @@ package org.smallmind.cometd.oumuamua.transport;
 import javax.servlet.ServletConfig;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 
-public class LongPollingTransport extends AbstractOumuamuaTransport {
+public class LocalTransport extends AbstractOumuamuaTransport {
 
-  public LongPollingTransport () {
 
-    super(0, 0, 0, 0, true);
-  }
+  private final long idleCheckCycleMilliseconds;
+  private OumuamuaServer oumuamuaServer;
 
-  @Override
-  public String getName () {
+  public LocalTransport (LocalTransportConfiguration configuration) {
 
-    return null;
-  }
+    super(configuration.getLongPollResponseDelayMilliseconds(), configuration.getLongPollAdvisedIntervalMilliseconds(), configuration.getClientTimeoutMilliseconds(), configuration.getLazyMessageMaximumDelayMilliseconds(), configuration.isMetaConnectDeliveryOnly());
 
-  @Override
-  public String getOptionPrefix () {
-
-    return "long-polling";
+    idleCheckCycleMilliseconds = configuration.getIdleCheckCycleMilliseconds();
   }
 
   @Override
   public void init (OumuamuaServer oumuamuaServer, ServletConfig servletConfig) {
 
+    this.oumuamuaServer = oumuamuaServer;
+  }
+
+  @Override
+  public String getName () {
+
+    return "local";
+  }
+
+  @Override
+  public String getOptionPrefix () {
+
+    return "local.";
+  }
+
+  public long getIdleCheckCycleMilliseconds () {
+
+    return idleCheckCycleMilliseconds;
+  }
+
+  public LocalCarrier createCarrier () {
+
+    return new LocalCarrier(oumuamuaServer, this);
   }
 }

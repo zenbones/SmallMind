@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.cometd.oumuamua;
+package org.smallmind.cometd.oumuamua.transport;
 
 import java.util.HashMap;
 import java.util.Set;
@@ -45,12 +45,16 @@ public abstract class AbstractOumuamuaTransport implements OumuamuaTransport {
   private final long maxInterval;
   private final long maxLazyTimeout;
 
+  // timeout - long polling response delay milliseconds
+  // interval - long polling advised interval milliseconds
+  // maxInterval - client timeout milliseconds (< 0 leaves it at container default)
+  // maxLazyTimeout - lazy message maximum delay milliseconds
   public AbstractOumuamuaTransport (long timeout, long interval, long maxInterval, long maxLazyTimeout, boolean metaConnectDeliveryOnly) {
 
-    this.timeout = timeout;
-    this.interval = interval;
+    this.timeout = (timeout >= 0) ? timeout : 0;
+    this.interval = (interval >= 0) ? interval : 0;
     this.maxInterval = maxInterval;
-    this.maxLazyTimeout = maxLazyTimeout;
+    this.maxLazyTimeout = (maxLazyTimeout >= 0) ? maxLazyTimeout : 0;
     this.metaConnectDeliveryOnly = metaConnectDeliveryOnly;
   }
 

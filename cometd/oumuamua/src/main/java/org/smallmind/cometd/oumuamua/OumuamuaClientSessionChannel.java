@@ -55,17 +55,17 @@ import org.smallmind.cometd.oumuamua.meta.UnsubscribeMessageRequestInView;
 import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
-public class OumuamuaClientChannel implements ClientSessionChannel {
+public class OumuamuaClientSessionChannel implements ClientSessionChannel {
 
   private final ReentrantLock releaseLock = new ReentrantLock();
   private final ConcurrentHashMap<String, Object> attributeMap = new ConcurrentHashMap<>();
   private final ConcurrentLinkedQueue<MessageListener> subscriptionList = new ConcurrentLinkedQueue<>();
   private final ConcurrentLinkedQueue<ClientSessionChannelListener> listenerList = new ConcurrentLinkedQueue<>();
-  private final OumuamuaClientSession clientSession;
+  private final OumuamuaLocalSession clientSession;
   private final ChannelId channelId;
   private boolean released;
 
-  public OumuamuaClientChannel (OumuamuaClientSession clientSession, ChannelId channelId) {
+  public OumuamuaClientSessionChannel (OumuamuaLocalSession clientSession, ChannelId channelId) {
 
     this.clientSession = clientSession;
     this.channelId = channelId;
@@ -173,21 +173,30 @@ public class OumuamuaClientChannel implements ClientSessionChannel {
     return clientSession;
   }
 
+  protected void receive (OumuamuaClientMessage message) {
+
+    for (MessageListener messageListener : subscriptionList) {
+      messageListener.onMessage(this, message);
+    }
+  }
+
   @Override
   public void publish (Object data, ClientSession.MessageListener callback) {
 
-    try {
+    if (!(isMeta() || isWild() || isDeepWild())) {
+      try {
 
-      MapLike mapLike;
-      PublishMessageRequestInView publishView = new PublishMessageRequestInView().setChannel(channelId.getId()).setClientId(clientSession.getId()).setData(JsonCodec.writeAsJsonNode(data));
+        MapLike mapLike;
+        PublishMessageRequestInView publishView = new PublishMessageRequestInView().setChannel(channelId.getId()).setClientId(clientSession.getId()).setData(JsonCodec.writeAsJsonNode(data));
 
-      if ((mapLike = clientSession.inject((ObjectNode)JsonCodec.writeAsJsonNode(publishView))) != null) {
-        if (callback != null) {
-          callback.onMessage(new OumuamuaClientMessage(mapLike.getNode()));
+        if ((mapLike = clientSession.inject((ObjectNode)JsonCodec.writeAsJsonNode(publishView))) != null) {
+          if (callback != null) {
+            callback.onMessage(new OumuamuaClientMessage(mapLike.getNode()));
+          }
         }
+      } catch (JsonProcessingException jsonProcessingException) {
+        LoggerManager.getLogger(OumuamuaClientSessionChannel.class).error(jsonProcessingException);
       }
-    } catch (JsonProcessingException jsonProcessingException) {
-      LoggerManager.getLogger(OumuamuaClientSession.class).error(jsonProcessingException);
     }
   }
 
@@ -204,7 +213,7 @@ public class OumuamuaClientChannel implements ClientSessionChannel {
         }
       }
     } catch (JsonProcessingException jsonProcessingException) {
-      LoggerManager.getLogger(OumuamuaClientSession.class).error(jsonProcessingException);
+      LoggerManager.getLogger(OumuamuaClientSessionChannel.class).error(jsonProcessingException);
     }
   }
 
@@ -237,7 +246,7 @@ public class OumuamuaClientChannel implements ClientSessionChannel {
 
         return false;
       } catch (JsonProcessingException jsonProcessingException) {
-        LoggerManager.getLogger(OumuamuaClientSession.class).error(jsonProcessingException);
+        LoggerManager.getLogger(OumuamuaClientSessionChannel.class).error(jsonProcessingException);
 
         return false;
       } finally {
@@ -273,7 +282,7 @@ public class OumuamuaClientChannel implements ClientSessionChannel {
 
           return false;
         } catch (JsonProcessingException jsonProcessingException) {
-          LoggerManager.getLogger(OumuamuaClientSession.class).error(jsonProcessingException);
+          LoggerManager.getLogger(OumuamuaClientSessionChannel.class).error(jsonProcessingException);
 
           return false;
         } finally {
@@ -306,9 +315,11 @@ public class OumuamuaClientChannel implements ClientSessionChannel {
     releaseLock.lock();
 
     try {
-      if (listenerList.isEmpty() && subscriptionList.isEmpty()) {
-        clientSession.release(channelId.getId());
-        released = true;
+      if (!released) {
+        if (listenerList.isEmpty() && subscriptionList.isEmpty()) {
+          clientSession.releaseChannel(channelId.getId());
+          released = true;
+        }
       }
 
       return released;

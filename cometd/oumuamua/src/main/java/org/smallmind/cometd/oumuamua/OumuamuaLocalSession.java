@@ -32,19 +32,35 @@
  */
 package org.smallmind.cometd.oumuamua;
 
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeType;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.cometd.bayeux.client.ClientSession;
 import org.cometd.bayeux.client.ClientSessionChannel;
-import org.cometd.bayeux.server.BayeuxServer;
 import org.cometd.bayeux.server.LocalSession;
 import org.cometd.bayeux.server.ServerSession;
+import org.smallmind.cometd.oumuamua.channel.ChannelIdCache;
+import org.smallmind.cometd.oumuamua.message.MapLike;
+import org.smallmind.cometd.oumuamua.message.OumuamuaClientMessage;
+import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
+import org.smallmind.cometd.oumuamua.meta.UnsubscribeMessage;
+import org.smallmind.scribe.pen.LoggerManager;
+import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public class OumuamuaLocalSession implements LocalSession {
 
-  private final ConcurrentLinkedQueue<Extension> extensionList = new ConcurrentLinkedQueue<>();
-  private final ConcurrentLinkedQueue<BayeuxServer.BayeuxServerListener> listenerList = new ConcurrentLinkedQueue<>();
+  private final ConcurrentHashMap<String, Object> attributeMap = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<String, OumuamuaClientSessionChannel> channelMap = new ConcurrentHashMap<>();
+  private final ConcurrentLinkedQueue<ClientSession.Extension> extensionList = new ConcurrentLinkedQueue<>();
+  private final ConcurrentLinkedQueue<ServerSession.ServerSessionListener> listenerList = new ConcurrentLinkedQueue<>();
   private final OumuamuaServerSession serverSession;
 
   public OumuamuaLocalSession (OumuamuaServerSession serverSession) {
@@ -61,64 +77,86 @@ public class OumuamuaLocalSession implements LocalSession {
   @Override
   public String getId () {
 
-    return null;
+    return serverSession.getId();
   }
 
   @Override
   public boolean isConnected () {
 
-    return false;
+    return serverSession.isConnected();
   }
 
   @Override
   public boolean isHandshook () {
 
-    return false;
+    return serverSession.isHandshook();
   }
 
   @Override
   public void setAttribute (String name, Object value) {
 
+    attributeMap.put(name, value);
   }
 
   @Override
   public Object getAttribute (String name) {
 
-    return null;
+    return attributeMap.get(name);
   }
 
   @Override
   public Set<String> getAttributeNames () {
 
-    return null;
+    return attributeMap.keySet();
   }
 
   @Override
   public Object removeAttribute (String name) {
 
-    return null;
+    return attributeMap.remove(name);
+  }
+
+  public Iterator<ClientSession.Extension> iterateExtensions () {
+
+    return extensionList.iterator();
   }
 
   @Override
-  public void addExtension (Extension extension) {
+  public List<ClientSession.Extension> getExtensions () {
 
+    return new LinkedList<>(extensionList);
   }
 
   @Override
-  public void removeExtension (Extension extension) {
+  public void addExtension (ClientSession.Extension extension) {
 
+    extensionList.add(extension);
   }
 
   @Override
-  public List<Extension> getExtensions () {
+  public void removeExtension (ClientSession.Extension extension) {
 
-    return null;
+    extensionList.remove(extension);
   }
 
   @Override
   public ClientSessionChannel getChannel (String channelName) {
 
-    return null;
+    synchronized (channelMap) {
+
+      OumuamuaClientSessionChannel channel;
+
+      if ((channel = channelMap.get(channelName)) == null) {
+        channelMap.put(channelName, channel = new OumuamuaClientSessionChannel(this, ChannelIdCache.generate(channelName)));
+      }
+
+      return channel;
+    }
+  }
+
+  protected void releaseChannel (String channelName) {
+
+    channelMap.remove(channelName);
   }
 
   @Override
@@ -128,6 +166,33 @@ public class OumuamuaLocalSession implements LocalSession {
 
   @Override
   public void handshake (Map<String, Object> template, MessageListener callback) {
+
+  }
+
+  public void receive (String text) {
+
+    try {
+
+      JsonNode node;
+
+      switch ((node = JsonCodec.readAsJsonNode(text)).getNodeType()) {
+        case OBJECT:
+          dispatch(new OumuamuaClientMessage((ObjectNode)node));
+          break;
+        case ARRAY:
+          for (JsonNode item : node) {
+            if (JsonNodeType.OBJECT.equals(item.getNodeType())) {
+              dispatch(new OumuamuaClientMessage((ObjectNode)item));
+            }
+          }
+          break;
+      }
+    } catch (JsonProcessingException jsonProcessingException) {
+      LoggerManager.getLogger(OumuamuaLocalSession.class).error(jsonProcessingException);
+    }
+  }
+
+  private void dispatch (OumuamuaClientMessage message) {
 
   }
 
@@ -150,5 +215,23 @@ public class OumuamuaLocalSession implements LocalSession {
   public boolean endBatch () {
 
     return false;
+  }
+
+  protected MapLike inject (ObjectNode messageNode)
+    throws JsonProcessingException {
+
+    OumuamuaPacket[] packets;
+
+    if (((packets = serverSession.getCarrier().inject(UnsubscribeMessage.CHANNEL_ID, messageNode)) != null) && (packets.length > 0)) {
+
+      MapLike[] mapLikes;
+
+      if (((mapLikes = packets[0].getMessages()) != null) && (mapLikes.length > 0)) {
+
+        return mapLikes[0];
+      }
+    }
+
+    return null;
   }
 }

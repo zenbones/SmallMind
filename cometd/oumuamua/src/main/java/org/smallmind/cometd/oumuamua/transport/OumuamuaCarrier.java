@@ -34,16 +34,28 @@ package org.smallmind.cometd.oumuamua.transport;
 
 import java.io.IOException;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.cometd.bayeux.ChannelId;
+import org.cometd.bayeux.server.BayeuxContext;
+import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
+import org.smallmind.cometd.oumuamua.extension.ExtensionNotifier;
+import org.smallmind.cometd.oumuamua.message.ExtMapLike;
+import org.smallmind.cometd.oumuamua.message.MapLike;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
+import org.smallmind.cometd.oumuamua.message.PacketType;
 
 public interface OumuamuaCarrier {
 
   String getUserAgent ();
 
-  void send (OumuamuaServerSession receivingSession, OumuamuaPacket... packets)
+  public void setMaxSessionIdleTimeout (long maxSessionIdleTimeout);
+
+  void open ();
+
+  void send (OumuamuaPacket... packets)
     throws Exception;
 
   OumuamuaPacket[] inject (ChannelId channelId, ObjectNode messageNode)
@@ -51,4 +63,44 @@ public interface OumuamuaCarrier {
 
   void close ()
     throws IOException;
+
+  default String asText (OumuamuaServer oumuamuaServer, BayeuxContext context, OumuamuaTransport transport, OumuamuaServerSession serverSession, OumuamuaPacket... packets)
+    throws JsonProcessingException {
+
+    StringBuilder sendBuilder = null;
+
+    for (OumuamuaPacket packet : packets) {
+      for (MapLike mapLike : packet.getMessages()) {
+        if (ExtensionNotifier.outgoing(oumuamuaServer, context, transport, packet.getSender(), serverSession, packet.getChannelId(), PacketType.LAZY.equals(packet.getType()), new ExtMapLike(mapLike))) {
+          if (sendBuilder == null) {
+            sendBuilder = new StringBuilder("[");
+          } else {
+            sendBuilder.append(',');
+          }
+
+          sendBuilder.append(mapLike.encode());
+        }
+      }
+    }
+
+    return (sendBuilder == null) ? null : sendBuilder.append(']').toString();
+  }
+
+  default OumuamuaPacket[] createErrorPacket (OumuamuaServerSession serverSession, ChannelId channelId, String channel, JsonNode messageNode, String error) {
+
+    ObjectNode errorNode = JsonNodeFactory.instance.objectNode();
+
+    errorNode.put("successful", false);
+    errorNode.put("channel", channel);
+    errorNode.put("error", error);
+
+    if (messageNode.has("id")) {
+      errorNode.set("id", messageNode.get("id"));
+    }
+    if (serverSession != null) {
+      errorNode.put("clientId", serverSession.getId());
+    }
+
+    return OumuamuaPacket.asPackets(serverSession, channelId, errorNode);
+  }
 }

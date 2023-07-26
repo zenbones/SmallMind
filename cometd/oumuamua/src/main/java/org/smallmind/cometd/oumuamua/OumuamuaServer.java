@@ -391,7 +391,7 @@ public class OumuamuaServer implements BayeuxServer {
 
             if (!enqueuedLazyPacketList.isEmpty()) {
               try {
-                serverSession.getCarrier().send(serverSession, enqueuedLazyPacketList.toArray(new OumuamuaLazyPacket[0]));
+                serverSession.getCarrier().send(enqueuedLazyPacketList.toArray(new OumuamuaLazyPacket[0]));
               } catch (Exception exception) {
                 LoggerManager.getLogger(OumuamuaServer.class).error(exception);
               }
