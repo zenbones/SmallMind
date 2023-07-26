@@ -43,6 +43,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.cometd.bayeux.Message;
 import org.cometd.bayeux.client.ClientSession;
 import org.cometd.bayeux.client.ClientSessionChannel;
 import org.cometd.bayeux.server.LocalSession;
@@ -194,6 +195,14 @@ public class OumuamuaLocalSession implements LocalSession {
 
   private void dispatch (OumuamuaClientMessage message) {
 
+    if (message.getNode().has(Message.CHANNEL_FIELD)) {
+
+      OumuamuaClientSessionChannel channel;
+
+      if ((channel = channelMap.get(message.getNode().get(Message.CHANNEL_FIELD).asText())) != null) {
+        channel.receive(message);
+      }
+    }
   }
 
   @Override
