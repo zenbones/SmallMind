@@ -37,18 +37,21 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.locks.ReentrantLock;
 import org.cometd.bayeux.ChannelId;
 import org.cometd.bayeux.Message;
 import org.cometd.bayeux.client.ClientSession;
 import org.cometd.bayeux.client.ClientSessionChannel;
-import org.cometd.bayeux.server.ServerSession;
 
 public class OumuamuaClientChannel implements ClientSessionChannel {
 
+  private final ReentrantLock releaseLock = new ReentrantLock();
   private final ConcurrentHashMap<String, Object> attributeMap = new ConcurrentHashMap<>();
+  private final ConcurrentLinkedQueue<MessageListener> subscriptionList = new ConcurrentLinkedQueue<>();
   private final ConcurrentLinkedQueue<ClientSessionChannelListener> listenerList = new ConcurrentLinkedQueue<>();
   private final OumuamuaClientSession clientSession;
   private final ChannelId channelId;
+  private boolean released;
 
   public OumuamuaClientChannel (OumuamuaClientSession clientSession, ChannelId channelId) {
 
@@ -125,13 +128,25 @@ public class OumuamuaClientChannel implements ClientSessionChannel {
   @Override
   public void addListener (ClientSessionChannelListener listener) {
 
-    listenerList.add(listener);
+    releaseLock.lock();
+
+    try {
+      listenerList.add(listener);
+    } finally {
+      releaseLock.unlock();
+    }
   }
 
   @Override
   public void removeListener (ClientSessionChannelListener listener) {
 
-    listenerList.remove(listener);
+    releaseLock.lock();
+
+    try {
+      listenerList.remove(listener);
+    } finally {
+      releaseLock.unlock();
+    }
   }
 
   @Override
@@ -159,11 +174,27 @@ public class OumuamuaClientChannel implements ClientSessionChannel {
   @Override
   public boolean subscribe (Message.Mutable message, MessageListener listener, ClientSession.MessageListener callback) {
 
+    releaseLock.lock();
+
+    try {
+
+    } finally {
+      releaseLock.unlock();
+    }
+
     return false;
   }
 
   @Override
   public boolean unsubscribe (Message.Mutable message, MessageListener listener, ClientSession.MessageListener callback) {
+
+    releaseLock.lock();
+
+    try {
+
+    } finally {
+      releaseLock.unlock();
+    }
 
     return false;
   }
@@ -171,23 +202,48 @@ public class OumuamuaClientChannel implements ClientSessionChannel {
   @Override
   public void unsubscribe () {
 
+    releaseLock.lock();
+
+    try {
+      subscriptionList.clear();
+    } finally {
+      releaseLock.unlock();
+    }
   }
 
   @Override
   public List<MessageListener> getSubscribers () {
 
-    return null;
+    return new LinkedList<>(subscriptionList);
   }
 
   @Override
   public boolean release () {
 
-    return false;
+    releaseLock.lock();
+
+    try {
+      if (listenerList.isEmpty() && subscriptionList.isEmpty()) {
+        clientSession.release(channelId.getId());
+        released = true;
+      }
+
+      return released;
+    } finally {
+      releaseLock.unlock();
+    }
   }
 
   @Override
   public boolean isReleased () {
 
-    return false;
+    releaseLock.lock();
+
+    try {
+
+      return released;
+    } finally {
+      releaseLock.unlock();
+    }
   }
 }

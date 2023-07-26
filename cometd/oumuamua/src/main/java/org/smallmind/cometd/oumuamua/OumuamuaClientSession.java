@@ -35,10 +35,13 @@ package org.smallmind.cometd.oumuamua;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import org.cometd.bayeux.client.ClientSession;
 import org.cometd.bayeux.client.ClientSessionChannel;
 
 public class OumuamuaClientSession implements ClientSession {
+
+  private final ConcurrentHashMap<String, ClientSessionChannel> channelMap = new ConcurrentHashMap<>();
 
   @Override
   public String getId () {
@@ -110,7 +113,14 @@ public class OumuamuaClientSession implements ClientSession {
   @Override
   public ClientSessionChannel getChannel (String channelName) {
 
+//    return channelMap;
+
     return null;
+  }
+
+  public void release (String channelName) {
+
+    channelMap.remove(channelName);
   }
 
   @Override
