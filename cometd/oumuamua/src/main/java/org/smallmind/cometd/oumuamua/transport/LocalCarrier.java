@@ -116,18 +116,12 @@ public class LocalCarrier implements OumuamuaCarrier {
   }
 
   @Override
-  public OumuamuaPacket[] inject (ChannelId channelId, ObjectNode messageNode)
+  public synchronized OumuamuaPacket[] inject (ChannelId channelId, ObjectNode messageNode)
     throws JsonProcessingException {
 
     lastContactMilliseconds = System.currentTimeMillis();
 
-    if (ExtensionNotifier.incoming(oumuamuaServer, LOCAL_CONTEXT, localTransport, serverSession, channelId, false, new MapLike(messageNode))) {
-
-      return respond(channelId, channelId.getId(), messageNode);
-    } else {
-
-      return null;
-    }
+    return ExtensionNotifier.incoming(oumuamuaServer, LOCAL_CONTEXT, localTransport, serverSession, channelId, false, new MapLike(messageNode)) ? (connected) ? respond(channelId, channelId.getId(), messageNode) : null : null;
   }
 
   @Override

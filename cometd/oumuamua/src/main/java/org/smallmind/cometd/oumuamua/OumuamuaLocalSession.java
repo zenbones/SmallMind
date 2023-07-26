@@ -170,6 +170,12 @@ public class OumuamuaLocalSession implements LocalSession {
 
   }
 
+
+  @Override
+  public void disconnect (MessageListener callback) {
+
+  }
+
   public void receive (String text) {
 
     try {
@@ -203,11 +209,6 @@ public class OumuamuaLocalSession implements LocalSession {
         channel.receive(message);
       }
     }
-  }
-
-  @Override
-  public void disconnect (MessageListener callback) {
-
   }
 
   @Override

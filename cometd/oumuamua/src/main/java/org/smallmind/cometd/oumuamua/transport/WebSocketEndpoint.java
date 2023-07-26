@@ -141,10 +141,10 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
   }
 
   @Override
-  public OumuamuaPacket[] inject (ChannelId channelId, ObjectNode messageNode)
+  public synchronized OumuamuaPacket[] inject (ChannelId channelId, ObjectNode messageNode)
     throws JsonProcessingException {
 
-    return respond(channelId, channelId.getId(), messageNode);
+    return ExtensionNotifier.incoming(oumuamuaServer, context, websocketTransport, serverSession, channelId, false, new MapLike(messageNode)) ? (connected) ? respond(channelId, channelId.getId(), messageNode) : null : null;
   }
 
   @Override
