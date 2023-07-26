@@ -33,12 +33,12 @@
 package org.smallmind.cometd.oumuamua;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.locks.ReentrantLock;
@@ -62,7 +62,7 @@ public class OumuamuaServerSession implements ServerSession {
 
   private static final ThreadLocal<LinkedList<OumuamuaPacket>> BATCHED_PACKET_LIST_LOCAL = new ThreadLocal<>();
   private final ReentrantLock messagePollLock = new ReentrantLock();
-  private final HashMap<String, Object> attributeMap = new HashMap<>();
+  private final ConcurrentHashMap<String, Object> attributeMap = new ConcurrentHashMap<>();
   private final ConcurrentSkipListMap<Long, LinkedList<OumuamuaLazyPacket>> lazyMessageQueue = new ConcurrentSkipListMap<>();
   private final ConcurrentLinkedQueue<OumuamuaPacket> messageQueue = new ConcurrentLinkedQueue<>();
   private final ConcurrentLinkedQueue<Extension> extensionList = new ConcurrentLinkedQueue<>();
