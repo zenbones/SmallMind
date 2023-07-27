@@ -218,7 +218,6 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
 
           return createErrorPacket(serverSession, channelId, channel, messageNode, "Attempt to publish to a wildcard channel");
         } else if (channel.startsWith("/service/")) {
-          // TODO: service
           return null;
         } else {
 
