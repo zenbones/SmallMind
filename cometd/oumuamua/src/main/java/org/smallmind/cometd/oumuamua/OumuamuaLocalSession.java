@@ -55,6 +55,7 @@ import org.smallmind.cometd.oumuamua.message.OumuamuaClientMessage;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 import org.smallmind.cometd.oumuamua.meta.ConnectMessage;
 import org.smallmind.cometd.oumuamua.meta.ConnectMessageRequestInView;
+import org.smallmind.cometd.oumuamua.meta.DisconnectMessage;
 import org.smallmind.cometd.oumuamua.meta.DisconnectMessageRequestInView;
 import org.smallmind.cometd.oumuamua.meta.HandshakeMessage;
 import org.smallmind.cometd.oumuamua.meta.HandshakeMessageRequestInView;
@@ -233,7 +234,7 @@ public class OumuamuaLocalSession implements LocalSession {
 
     try {
 
-      DisconnectMessageRequestInView disconnectView = new DisconnectMessageRequestInView().setChannel(ConnectMessage.CHANNEL_ID.getId()).setId(nextMessageId()).setClientId(serverSession.getId());
+      DisconnectMessageRequestInView disconnectView = new DisconnectMessageRequestInView().setChannel(DisconnectMessage.CHANNEL_ID.getId()).setId(nextMessageId()).setClientId(serverSession.getId());
       MapLike mapLike;
 
       if ((mapLike = inject((ObjectNode)JsonCodec.writeAsJsonNode(disconnectView))) != null) {
