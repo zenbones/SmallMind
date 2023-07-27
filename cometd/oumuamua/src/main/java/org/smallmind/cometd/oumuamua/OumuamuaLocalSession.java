@@ -32,6 +32,7 @@
  */
 package org.smallmind.cometd.oumuamua;
 
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -188,14 +189,14 @@ public class OumuamuaLocalSession implements LocalSession {
     try {
 
       HandshakeMessageRequestInView handshakeView = new HandshakeMessageRequestInView().setChannel(HandshakeMessage.CHANNEL_ID.getId()).setId(nextMessageId()).setSupportedConnectionTypes(new String[] {"local"});
-      MapLike mapLike;
+      MapLike[] messages;
 
-      if ((mapLike = inject((ObjectNode)JsonCodec.writeAsJsonNode(handshakeView))) != null) {
+      if ((messages = inject((ObjectNode)JsonCodec.writeAsJsonNode(handshakeView))) != null) {
         if (callback != null) {
-          callback.onMessage(new OumuamuaClientMessage(mapLike.getNode()));
+          callback.onMessage(new OumuamuaClientMessage(messages[0].flatten()));
         }
 
-        if (Boolean.TRUE.equals(mapLike.getNode().get(Message.SUCCESSFUL_FIELD).asBoolean())) {
+        if (Boolean.TRUE.equals(messages[0].flatten().get(Message.SUCCESSFUL_FIELD).asBoolean())) {
           connect(callback);
         }
       }
@@ -213,11 +214,13 @@ public class OumuamuaLocalSession implements LocalSession {
     try {
 
       ConnectMessageRequestInView connectView = new ConnectMessageRequestInView().setChannel(ConnectMessage.CHANNEL_ID.getId()).setId(nextMessageId()).setClientId(serverSession.getId()).setConnectionType("local");
-      MapLike mapLike;
+      MapLike[] messages;
 
-      if ((mapLike = inject((ObjectNode)JsonCodec.writeAsJsonNode(connectView))) != null) {
+      if ((messages = inject((ObjectNode)JsonCodec.writeAsJsonNode(connectView))) != null) {
         if (callback != null) {
-          callback.onMessage(new OumuamuaClientMessage(mapLike.getNode()));
+          for (MapLike message : messages) {
+            callback.onMessage(new OumuamuaClientMessage(message.flatten()));
+          }
         }
       }
     } catch (JsonProcessingException jsonProcessingException) {
@@ -235,11 +238,11 @@ public class OumuamuaLocalSession implements LocalSession {
     try {
 
       DisconnectMessageRequestInView disconnectView = new DisconnectMessageRequestInView().setChannel(DisconnectMessage.CHANNEL_ID.getId()).setId(nextMessageId()).setClientId(serverSession.getId());
-      MapLike mapLike;
+      MapLike[] messages;
 
-      if ((mapLike = inject((ObjectNode)JsonCodec.writeAsJsonNode(disconnectView))) != null) {
+      if ((messages = inject((ObjectNode)JsonCodec.writeAsJsonNode(disconnectView))) != null) {
         if (callback != null) {
-          callback.onMessage(new OumuamuaClientMessage(mapLike.getNode()));
+          callback.onMessage(new OumuamuaClientMessage(messages[0].flatten()));
         }
       }
     } catch (JsonProcessingException jsonProcessingException) {
@@ -276,11 +279,11 @@ public class OumuamuaLocalSession implements LocalSession {
 
   private void dispatch (OumuamuaClientMessage message) {
 
-    if (message.getNode().has(Message.CHANNEL_FIELD)) {
+    if (message.flatten().has(Message.CHANNEL_FIELD)) {
 
       OumuamuaClientSessionChannel channel;
 
-      if ((channel = channelMap.get(message.getNode().get(Message.CHANNEL_FIELD).asText())) != null) {
+      if ((channel = channelMap.get(message.flatten().get(Message.CHANNEL_FIELD).asText())) != null) {
         channel.receive(message);
       }
     }
@@ -320,7 +323,7 @@ public class OumuamuaLocalSession implements LocalSession {
         for (OumuamuaPacket batchedPacket : batchedPacketList) {
           for (MapLike mapLike : batchedPacket.getMessages()) {
             try {
-              inject(mapLike.getNode());
+              inject(mapLike.flatten());
             } catch (JsonProcessingException jsonProcessingException) {
               LoggerManager.getLogger(OumuamuaLocalSession.class).error(jsonProcessingException);
             }
@@ -334,18 +337,22 @@ public class OumuamuaLocalSession implements LocalSession {
     return false;
   }
 
-  protected MapLike inject (ObjectNode messageNode)
+  protected MapLike[] inject (ObjectNode messageNode)
     throws JsonProcessingException {
 
     OumuamuaPacket[] packets;
 
     if (((packets = serverSession.getCarrier().inject(UnsubscribeMessage.CHANNEL_ID, messageNode)) != null) && (packets.length > 0)) {
 
-      MapLike[] mapLikes;
+      LinkedList<MapLike> messages = new LinkedList<>();
 
-      if (((mapLikes = packets[0].getMessages()) != null) && (mapLikes.length > 0)) {
+      for (OumuamuaPacket packet : packets) {
+        messages.addAll(Arrays.asList(packet.getMessages()));
+      }
 
-        return mapLikes[0];
+      if (!messages.isEmpty()) {
+
+        return messages.toArray(new MapLike[0]);
       }
     }
 

@@ -190,12 +190,12 @@ public class OumuamuaClientSessionChannel implements ClientSessionChannel {
     } else {
       try {
 
-        MapLike mapLike;
         PublishMessageRequestInView publishView = new PublishMessageRequestInView().setChannel(channelId.getId()).setId(clientSession.nextMessageId()).setClientId(clientSession.getId()).setData(JsonCodec.writeAsJsonNode(data));
+        MapLike[] messages;
 
-        if ((mapLike = clientSession.inject((ObjectNode)JsonCodec.writeAsJsonNode(publishView))) != null) {
+        if ((messages = clientSession.inject((ObjectNode)JsonCodec.writeAsJsonNode(publishView))) != null) {
           if (callback != null) {
-            callback.onMessage(new OumuamuaClientMessage(mapLike.getNode()));
+            callback.onMessage(new OumuamuaClientMessage(messages[0].flatten()));
           }
         }
       } catch (JsonProcessingException jsonProcessingException) {
@@ -213,11 +213,11 @@ public class OumuamuaClientSessionChannel implements ClientSessionChannel {
 
     try {
 
-      MapLike mapLike;
+      MapLike[] messages;
 
-      if ((mapLike = clientSession.inject((ObjectNode)JsonCodec.writeAsJsonNode(message))) != null) {
+      if ((messages = clientSession.inject((ObjectNode)JsonCodec.writeAsJsonNode(message))) != null) {
         if (callback != null) {
-          callback.onMessage(new OumuamuaClientMessage(mapLike.getNode()));
+          callback.onMessage(new OumuamuaClientMessage(messages[0].flatten()));
         }
       }
     } catch (JsonProcessingException jsonProcessingException) {
@@ -243,14 +243,14 @@ public class OumuamuaClientSessionChannel implements ClientSessionChannel {
 
       try {
 
-        MapLike mapLike;
+        MapLike[] messages;
 
-        if ((mapLike = clientSession.inject((ObjectNode)subscribeNode)) != null) {
+        if ((messages = clientSession.inject((ObjectNode)subscribeNode)) != null) {
           if (callback != null) {
-            callback.onMessage(new OumuamuaClientMessage(mapLike.getNode()));
+            callback.onMessage(new OumuamuaClientMessage(messages[0].flatten()));
           }
 
-          if (Boolean.TRUE.equals(mapLike.getNode().get(Message.SUCCESSFUL_FIELD).asBoolean())) {
+          if (Boolean.TRUE.equals(messages[0].flatten().get(Message.SUCCESSFUL_FIELD).asBoolean())) {
 
             return subscriptionList.add(listener);
           }
@@ -286,14 +286,14 @@ public class OumuamuaClientSessionChannel implements ClientSessionChannel {
 
         try {
 
-          MapLike mapLike;
+          MapLike[] messages;
 
-          if ((mapLike = clientSession.inject((ObjectNode)unsubscribeNode)) != null) {
+          if ((messages = clientSession.inject((ObjectNode)unsubscribeNode)) != null) {
             if (callback != null) {
-              callback.onMessage(new OumuamuaClientMessage(mapLike.getNode()));
+              callback.onMessage(new OumuamuaClientMessage(messages[0].flatten()));
             }
 
-            return Boolean.TRUE.equals(mapLike.getNode().get(Message.SUCCESSFUL_FIELD).asBoolean());
+            return Boolean.TRUE.equals(messages[0].flatten().get(Message.SUCCESSFUL_FIELD).asBoolean());
           }
 
           return false;

@@ -37,7 +37,6 @@ import org.smallmind.cometd.oumuamua.OumuamuaServer;
 
 public class LocalTransport extends AbstractOumuamuaTransport {
 
-
   private final long idleCheckCycleMilliseconds;
   private OumuamuaServer oumuamuaServer;
 

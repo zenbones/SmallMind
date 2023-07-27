@@ -34,7 +34,6 @@ package org.smallmind.cometd.oumuamua.transport;
 
 import java.util.HashMap;
 import java.util.Set;
-import org.smallmind.cometd.oumuamua.transport.OumuamuaTransport;
 
 public abstract class AbstractOumuamuaTransport implements OumuamuaTransport {
 

@@ -66,6 +66,11 @@ public class MapLike extends NodeBacked implements Map<String, Object> {
     return node;
   }
 
+  public ObjectNode flatten () {
+
+    return node;
+  }
+
   @Override
   public String writeAsString ()
     throws JsonProcessingException {

@@ -51,7 +51,7 @@ public interface OumuamuaCarrier {
 
   String getUserAgent ();
 
-  public void setMaxSessionIdleTimeout (long maxSessionIdleTimeout);
+  void setMaxSessionIdleTimeout (long maxSessionIdleTimeout);
 
   void open ();
 
