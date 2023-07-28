@@ -38,7 +38,9 @@ public class LocalTransportConfiguration {
   private long longPollAdvisedIntervalMilliseconds = 30000;
   private long clientTimeoutMilliseconds = -1;
   private long lazyMessageMaximumDelayMilliseconds = 10000;
-  private long idleCheckCycleMilliseconds;
+  private long idleCheckCycleMilliseconds = 3000;
+  private long connectCheckCycleMilliseconds = 3000;
+
   private boolean metaConnectDeliveryOnly = false;
 
   public long getLongPollResponseDelayMilliseconds () {
@@ -109,6 +111,18 @@ public class LocalTransportConfiguration {
   public LocalTransportConfiguration setIdleCheckCycleMilliseconds (long idleCheckCycleMilliseconds) {
 
     this.idleCheckCycleMilliseconds = idleCheckCycleMilliseconds;
+
+    return this;
+  }
+
+  public long getConnectCheckCycleMilliseconds () {
+
+    return connectCheckCycleMilliseconds;
+  }
+
+  public LocalTransportConfiguration setConnectCheckCycleMilliseconds (long connectCheckCycleMilliseconds) {
+
+    this.connectCheckCycleMilliseconds = connectCheckCycleMilliseconds;
 
     return this;
   }

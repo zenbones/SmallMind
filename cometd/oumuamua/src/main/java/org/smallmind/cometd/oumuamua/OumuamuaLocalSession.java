@@ -41,6 +41,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantLock;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
@@ -51,6 +52,7 @@ import org.cometd.bayeux.client.ClientSessionChannel;
 import org.cometd.bayeux.server.LocalSession;
 import org.cometd.bayeux.server.ServerSession;
 import org.smallmind.cometd.oumuamua.channel.ChannelIdCache;
+import org.smallmind.cometd.oumuamua.client.ConnectionMonitor;
 import org.smallmind.cometd.oumuamua.message.MapLike;
 import org.smallmind.cometd.oumuamua.message.OumuamuaClientMessage;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
@@ -61,22 +63,27 @@ import org.smallmind.cometd.oumuamua.meta.DisconnectMessageRequestInView;
 import org.smallmind.cometd.oumuamua.meta.HandshakeMessage;
 import org.smallmind.cometd.oumuamua.meta.HandshakeMessageRequestInView;
 import org.smallmind.cometd.oumuamua.meta.UnsubscribeMessage;
+import org.smallmind.cometd.oumuamua.transport.LocalTransport;
 import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public class OumuamuaLocalSession implements LocalSession {
 
   private static final ThreadLocal<LinkedList<OumuamuaPacket>> BATCHED_PACKET_LIST_LOCAL = new ThreadLocal<>();
+  private final ReentrantLock connectLock = new ReentrantLock();
   private final ConcurrentHashMap<String, Object> attributeMap = new ConcurrentHashMap<>();
   private final ConcurrentHashMap<String, OumuamuaClientSessionChannel> channelMap = new ConcurrentHashMap<>();
   private final ConcurrentLinkedQueue<ClientSession.Extension> extensionList = new ConcurrentLinkedQueue<>();
   private final ConcurrentLinkedQueue<ServerSession.ServerSessionListener> listenerList = new ConcurrentLinkedQueue<>();
   private final OumuamuaServerSession serverSession;
-  private final AtomicLong messgeId = new AtomicLong(0);
+  private final ConnectionMonitor connectionMonitor;
+  private final AtomicLong messageId = new AtomicLong(0);
 
   public OumuamuaLocalSession (OumuamuaServerSession serverSession) {
 
     this.serverSession = serverSession;
+
+    connectionMonitor = new ConnectionMonitor((LocalTransport)serverSession.getServerTransport(), this);
   }
 
   @Override
@@ -93,7 +100,7 @@ public class OumuamuaLocalSession implements LocalSession {
 
   public String nextMessageId () {
 
-    return String.valueOf(messgeId.incrementAndGet());
+    return String.valueOf(messageId.incrementAndGet());
   }
 
   @Override
@@ -209,17 +216,32 @@ public class OumuamuaLocalSession implements LocalSession {
     }
   }
 
-  private void connect (MessageListener callback) {
+  public void connect (MessageListener callback) {
+
+    connectLock.lock();
 
     try {
+
+      connectionMonitor.connecting();
 
       ConnectMessageRequestInView connectView = new ConnectMessageRequestInView().setChannel(ConnectMessage.CHANNEL_ID.getId()).setId(nextMessageId()).setClientId(serverSession.getId()).setConnectionType("local");
       MapLike[] messages;
 
       if ((messages = inject((ObjectNode)JsonCodec.writeAsJsonNode(connectView))) != null) {
-        if (callback != null) {
-          for (MapLike message : messages) {
-            callback.onMessage(new OumuamuaClientMessage(message.flatten()));
+        for (MapLike message : messages) {
+
+          ObjectNode node = message.flatten();
+
+          if (callback != null) {
+            callback.onMessage(new OumuamuaClientMessage(node));
+          }
+
+          if (node.has(Message.CHANNEL_FIELD) && ConnectMessage.CHANNEL_ID.getId().equals(node.get(Message.CHANNEL_FIELD).asText())) {
+            if (node.has(Message.SUCCESSFUL_FIELD) && node.get(Message.SUCCESSFUL_FIELD).asBoolean()) {
+              if (node.has(Message.ADVICE_FIELD) && node.get(Message.ADVICE_FIELD).has(Message.INTERVAL_FIELD)) {
+                connectionMonitor.start(node.get(Message.ADVICE_FIELD).get(Message.INTERVAL_FIELD).asLong());
+              }
+            }
           }
         }
       }
@@ -229,11 +251,15 @@ public class OumuamuaLocalSession implements LocalSession {
       if (callback != null) {
         callback.onMessage(OumuamuaClientMessage.failed(jsonProcessingException.getMessage()));
       }
+    } finally {
+      connectLock.unlock();
     }
   }
 
   @Override
   public void disconnect (MessageListener callback) {
+
+    connectLock.lock();
 
     try {
 
@@ -241,8 +267,15 @@ public class OumuamuaLocalSession implements LocalSession {
       MapLike[] messages;
 
       if ((messages = inject((ObjectNode)JsonCodec.writeAsJsonNode(disconnectView))) != null) {
+
+        ObjectNode node = messages[0].flatten();
+
         if (callback != null) {
-          callback.onMessage(new OumuamuaClientMessage(messages[0].flatten()));
+          callback.onMessage(new OumuamuaClientMessage(node));
+        }
+
+        if (node.has(Message.SUCCESSFUL_FIELD) && node.get(Message.SUCCESSFUL_FIELD).asBoolean()) {
+          connectionMonitor.stop();
         }
       }
     } catch (JsonProcessingException jsonProcessingException) {
@@ -251,6 +284,8 @@ public class OumuamuaLocalSession implements LocalSession {
       if (callback != null) {
         callback.onMessage(OumuamuaClientMessage.failed(jsonProcessingException.getMessage()));
       }
+    } finally {
+      connectLock.unlock();
     }
   }
 
@@ -277,7 +312,7 @@ public class OumuamuaLocalSession implements LocalSession {
     }
   }
 
-  private void dispatch (OumuamuaClientMessage message) {
+  public void dispatch (OumuamuaClientMessage message) {
 
     if (message.flatten().has(Message.CHANNEL_FIELD)) {
 

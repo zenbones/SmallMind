@@ -63,8 +63,8 @@ public class WebSocketTransport extends AbstractOumuamuaTransport {
     this.oumuamuaUrl = oumuamuaUrl;
     this.subProtocol = subProtocol;
 
-    asyncSendTimeoutMilliseconds = configuration.getAsyncSendTimeoutMilliseconds();
-    maximumTextMessageBufferSize = configuration.getMaximumTextMessageBufferSize();
+    asyncSendTimeoutMilliseconds = Math.max(configuration.getAsyncSendTimeoutMilliseconds(), 0);
+    maximumTextMessageBufferSize = Math.max(configuration.getMaximumTextMessageBufferSize(), 0);
   }
 
   @Override

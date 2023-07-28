@@ -50,10 +50,10 @@ public abstract class AbstractOumuamuaTransport implements OumuamuaTransport {
   // maxLazyTimeout - lazy message maximum delay milliseconds
   public AbstractOumuamuaTransport (long timeout, long interval, long maxInterval, long maxLazyTimeout, boolean metaConnectDeliveryOnly) {
 
-    this.timeout = (timeout >= 0) ? timeout : 0;
-    this.interval = (interval >= 0) ? interval : 0;
+    this.timeout = Math.max(timeout, 0);
+    this.interval = Math.max(interval, 0);
     this.maxInterval = maxInterval;
-    this.maxLazyTimeout = (maxLazyTimeout >= 0) ? maxLazyTimeout : 0;
+    this.maxLazyTimeout = Math.max(maxLazyTimeout, 0);
     this.metaConnectDeliveryOnly = metaConnectDeliveryOnly;
   }
 

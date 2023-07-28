@@ -46,6 +46,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.cometd.bayeux.ChannelId;
+import org.cometd.bayeux.Message;
 import org.cometd.bayeux.server.BayeuxServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
@@ -160,9 +161,9 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
     try {
       for (JsonNode messageNode : JsonCodec.readAsJsonNode(data)) {
 
-        if (JsonNodeType.OBJECT.equals(messageNode.getNodeType()) && messageNode.has("channel")) {
+        if (JsonNodeType.OBJECT.equals(messageNode.getNodeType()) && messageNode.has(Message.CHANNEL_FIELD)) {
 
-          String channel = messageNode.get("channel").asText();
+          String channel = messageNode.get(Message.CHANNEL_FIELD).asText();
           ChannelId channelId = ChannelIdCache.generate(channel);
 
           if (ExtensionNotifier.incoming(oumuamuaServer, context, websocketTransport, serverSession, channelId, false, new MapLike((ObjectNode)messageNode))) {

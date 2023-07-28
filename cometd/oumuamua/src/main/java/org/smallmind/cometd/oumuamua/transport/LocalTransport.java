@@ -38,13 +38,15 @@ import org.smallmind.cometd.oumuamua.OumuamuaServer;
 public class LocalTransport extends AbstractOumuamuaTransport {
 
   private final long idleCheckCycleMilliseconds;
+  private final long connectCheckCycleMilliseconds;
   private OumuamuaServer oumuamuaServer;
 
   public LocalTransport (LocalTransportConfiguration configuration) {
 
     super(configuration.getLongPollResponseDelayMilliseconds(), configuration.getLongPollAdvisedIntervalMilliseconds(), configuration.getClientTimeoutMilliseconds(), configuration.getLazyMessageMaximumDelayMilliseconds(), configuration.isMetaConnectDeliveryOnly());
 
-    idleCheckCycleMilliseconds = configuration.getIdleCheckCycleMilliseconds();
+    idleCheckCycleMilliseconds = Math.max(configuration.getIdleCheckCycleMilliseconds(), 0);
+    connectCheckCycleMilliseconds = Math.max(configuration.getConnectCheckCycleMilliseconds(), 0);
   }
 
   @Override
@@ -68,6 +70,11 @@ public class LocalTransport extends AbstractOumuamuaTransport {
   public long getIdleCheckCycleMilliseconds () {
 
     return idleCheckCycleMilliseconds;
+  }
+
+  public long getConnectCheckCycleMilliseconds () {
+
+    return connectCheckCycleMilliseconds;
   }
 
   public LocalCarrier createCarrier () {

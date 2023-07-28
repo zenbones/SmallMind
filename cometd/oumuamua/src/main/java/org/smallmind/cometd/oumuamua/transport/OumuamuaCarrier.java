@@ -38,6 +38,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.cometd.bayeux.ChannelId;
+import org.cometd.bayeux.Message;
 import org.cometd.bayeux.server.BayeuxContext;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
@@ -90,15 +91,15 @@ public interface OumuamuaCarrier {
 
     ObjectNode errorNode = JsonNodeFactory.instance.objectNode();
 
-    errorNode.put("successful", false);
-    errorNode.put("channel", channel);
-    errorNode.put("error", error);
+    errorNode.put(Message.SUCCESSFUL_FIELD, false);
+    errorNode.put(Message.CHANNEL_FIELD, channel);
+    errorNode.put(Message.ERROR_FIELD, error);
 
-    if (messageNode.has("id")) {
-      errorNode.set("id", messageNode.get("id"));
+    if (messageNode.has(Message.ID_FIELD)) {
+      errorNode.set(Message.ID_FIELD, messageNode.get(Message.ID_FIELD));
     }
     if (serverSession != null) {
-      errorNode.put("clientId", serverSession.getId());
+      errorNode.put(Message.CLIENT_ID_FIELD, serverSession.getId());
     }
 
     return OumuamuaPacket.asPackets(serverSession, channelId, errorNode);
