@@ -33,6 +33,7 @@
 package org.smallmind.cometd.oumuamua;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -67,6 +68,7 @@ import org.smallmind.cometd.oumuamua.message.MapLike;
 import org.smallmind.cometd.oumuamua.message.OumuamuaLazyPacket;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 import org.smallmind.cometd.oumuamua.message.OumuamuaServerMessage;
+import org.smallmind.cometd.oumuamua.transport.LocalTransport;
 import org.smallmind.cometd.oumuamua.transport.OumuamuaTransport;
 import org.smallmind.scribe.pen.LoggerManager;
 
@@ -76,6 +78,7 @@ public class OumuamuaServer implements BayeuxServer {
   private final ReentrantLock sessionChangeLock = new ReentrantLock();
   private final OumuamuaConfiguration configuration;
   private final ChannelTree channelTree = new ChannelTree();
+  private final HashMap<String, OumuamuaTransport> transportMap = new HashMap<>();
   private final ConcurrentHashMap<String, OumuamuaServerSession> sessionMap = new ConcurrentHashMap<>();
   private final ConcurrentLinkedQueue<Extension> extensionList = new ConcurrentLinkedQueue<>();
   private final ConcurrentLinkedQueue<BayeuxServerListener> listenerList = new ConcurrentLinkedQueue<>();
@@ -96,7 +99,8 @@ public class OumuamuaServer implements BayeuxServer {
   public void start (ServletConfig servletConfig)
     throws ServletException {
 
-    for (OumuamuaTransport transport : configuration.getTransportMap().values()) {
+    for (OumuamuaTransport transport : configuration.getTransports()) {
+      transportMap.put(transport.getName(), transport);
       transport.init(this, servletConfig);
     }
 
@@ -128,13 +132,13 @@ public class OumuamuaServer implements BayeuxServer {
   @Override
   public Set<String> getKnownTransportNames () {
 
-    return configuration.getTransportMap().keySet();
+    return transportMap.keySet();
   }
 
   @Override
   public Transport getTransport (String transport) {
 
-    return configuration.getTransportMap().get(transport);
+    return transportMap.get(transport);
   }
 
   @Override
@@ -158,7 +162,7 @@ public class OumuamuaServer implements BayeuxServer {
   @Override
   public Object getOption (String qualifiedName) {
 
-    for (OumuamuaTransport transport : configuration.getTransportMap().values()) {
+    for (OumuamuaTransport transport : transportMap.values()) {
       if (qualifiedName.startsWith(transport.getOptionPrefix())) {
 
         return transport.getOption(qualifiedName.substring(transport.getOptionPrefix().length()));
@@ -171,7 +175,7 @@ public class OumuamuaServer implements BayeuxServer {
   @Override
   public void setOption (String qualifiedName, Object value) {
 
-    for (OumuamuaTransport transport : configuration.getTransportMap().values()) {
+    for (OumuamuaTransport transport : transportMap.values()) {
       if (qualifiedName.startsWith(transport.getOptionPrefix())) {
 
         transport.setOption(qualifiedName.substring(transport.getOptionPrefix().length()), value);
@@ -184,7 +188,7 @@ public class OumuamuaServer implements BayeuxServer {
 
     HashSet<String> nameSet = new HashSet<>();
 
-    for (OumuamuaTransport transport : configuration.getTransportMap().values()) {
+    for (OumuamuaTransport transport : transportMap.values()) {
       for (String name : transport.getOptionNames()) {
         nameSet.add(transport.getOptionPrefix() + name);
       }
@@ -266,9 +270,16 @@ public class OumuamuaServer implements BayeuxServer {
   }
 
   @Override
-  public LocalSession newLocalSession (String id) {
+  public LocalSession newLocalSession (String idHint) {
 
-    return null;
+    LocalTransport localTransport;
+
+    if ((localTransport = (LocalTransport)transportMap.get("local")) == null) {
+      throw new UnsupportedOperationException("No local transport has been defined in the server configuration");
+    } else {
+
+      return localTransport.createCarrier(idHint).getLocalSession();
+    }
   }
 
   @Override

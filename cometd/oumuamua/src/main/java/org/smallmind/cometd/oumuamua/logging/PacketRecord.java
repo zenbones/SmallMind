@@ -30,55 +30,45 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.cometd.oumuamua.transport;
+package org.smallmind.cometd.oumuamua.logging;
 
-import javax.servlet.ServletConfig;
-import org.smallmind.cometd.oumuamua.OumuamuaServer;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import org.smallmind.cometd.oumuamua.message.MapLike;
+import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 
-public class LocalTransport extends AbstractOumuamuaTransport {
+public class PacketRecord {
 
-  private final long idleCheckCycleMilliseconds;
-  private final long connectCheckCycleMilliseconds;
-  private OumuamuaServer oumuamuaServer;
+  private final OumuamuaPacket[] packets;
+  private final boolean in;
 
-  public LocalTransport (LocalTransportConfiguration configuration) {
+  public PacketRecord (OumuamuaPacket[] packets, boolean in) {
 
-    super(configuration.getLongPollResponseDelayMilliseconds(), configuration.getLongPollAdvisedIntervalMilliseconds(), configuration.getClientTimeoutMilliseconds(), configuration.getLazyMessageMaximumDelayMilliseconds(), configuration.isMetaConnectDeliveryOnly());
-
-    idleCheckCycleMilliseconds = Math.max(configuration.getIdleCheckCycleMilliseconds(), 0);
-    connectCheckCycleMilliseconds = Math.max(configuration.getConnectCheckCycleMilliseconds(), 0);
+    this.packets = packets;
+    this.in = in;
   }
 
   @Override
-  public void init (OumuamuaServer oumuamuaServer, ServletConfig servletConfig) {
+  public String toString () {
 
-    this.oumuamuaServer = oumuamuaServer;
-  }
+    StringBuilder packetsBuilder = new StringBuilder("[");
+    boolean first = true;
 
-  @Override
-  public String getName () {
+    for (OumuamuaPacket packet : packets) {
+      for (MapLike message : packet.getMessages()) {
+        if (!first) {
+          packetsBuilder.append(',');
+        }
 
-    return "local";
-  }
+        try {
+          packetsBuilder.append(message.encode());
+        } catch (JsonProcessingException jsonProcessingException) {
+          throw new RuntimeException(jsonProcessingException);
+        }
 
-  @Override
-  public String getOptionPrefix () {
+        first = false;
+      }
+    }
 
-    return "local.";
-  }
-
-  public long getIdleCheckCycleMilliseconds () {
-
-    return idleCheckCycleMilliseconds;
-  }
-
-  public long getConnectCheckCycleMilliseconds () {
-
-    return connectCheckCycleMilliseconds;
-  }
-
-  public LocalCarrier createCarrier (String idHint) {
-
-    return new LocalCarrier(oumuamuaServer, this, idHint);
+    return ((in) ? "<=" : "=>") + packetsBuilder;
   }
 }

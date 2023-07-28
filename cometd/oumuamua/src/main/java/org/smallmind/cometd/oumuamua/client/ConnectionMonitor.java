@@ -97,7 +97,7 @@ public class ConnectionMonitor {
     public void run () {
 
       try {
-        while (!finishLatch.await(localTransport.getIdleCheckCycleMilliseconds(), TimeUnit.MILLISECONDS)) {
+        while (!finishLatch.await(localTransport.getConnectCheckCycleMilliseconds(), TimeUnit.MILLISECONDS)) {
           if ((advisedInterval > 0) && (lastConnect > 0) && (lastConnect + advisedInterval <= System.currentTimeMillis())) {
             localSession.connect(message -> {
               if (!message.getChannelId().isMeta()) {

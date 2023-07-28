@@ -54,12 +54,10 @@ public interface OumuamuaCarrier {
 
   void setMaxSessionIdleTimeout (long maxSessionIdleTimeout);
 
-  void open ();
-
   void send (OumuamuaPacket... packets)
     throws Exception;
 
-  OumuamuaPacket[] inject (ChannelId channelId, ObjectNode messageNode)
+  OumuamuaPacket[] inject (ObjectNode messageNode)
     throws JsonProcessingException;
 
   void close ()

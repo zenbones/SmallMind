@@ -30,55 +30,22 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.cometd.oumuamua.transport;
+package org.smallmind.cometd.oumuamua.logging;
 
-import javax.servlet.ServletConfig;
-import org.smallmind.cometd.oumuamua.OumuamuaServer;
+public class DataRecord {
 
-public class LocalTransport extends AbstractOumuamuaTransport {
+  private final String data;
+  private final boolean in;
 
-  private final long idleCheckCycleMilliseconds;
-  private final long connectCheckCycleMilliseconds;
-  private OumuamuaServer oumuamuaServer;
+  public DataRecord (String data, boolean in) {
 
-  public LocalTransport (LocalTransportConfiguration configuration) {
-
-    super(configuration.getLongPollResponseDelayMilliseconds(), configuration.getLongPollAdvisedIntervalMilliseconds(), configuration.getClientTimeoutMilliseconds(), configuration.getLazyMessageMaximumDelayMilliseconds(), configuration.isMetaConnectDeliveryOnly());
-
-    idleCheckCycleMilliseconds = Math.max(configuration.getIdleCheckCycleMilliseconds(), 0);
-    connectCheckCycleMilliseconds = Math.max(configuration.getConnectCheckCycleMilliseconds(), 0);
+    this.data = data;
+    this.in = in;
   }
 
   @Override
-  public void init (OumuamuaServer oumuamuaServer, ServletConfig servletConfig) {
+  public String toString () {
 
-    this.oumuamuaServer = oumuamuaServer;
-  }
-
-  @Override
-  public String getName () {
-
-    return "local";
-  }
-
-  @Override
-  public String getOptionPrefix () {
-
-    return "local.";
-  }
-
-  public long getIdleCheckCycleMilliseconds () {
-
-    return idleCheckCycleMilliseconds;
-  }
-
-  public long getConnectCheckCycleMilliseconds () {
-
-    return connectCheckCycleMilliseconds;
-  }
-
-  public LocalCarrier createCarrier (String idHint) {
-
-    return new LocalCarrier(oumuamuaServer, this, idHint);
+    return ((in) ? "<=" : "=>") + data;
   }
 }

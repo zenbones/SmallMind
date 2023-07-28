@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.websocket.ContainerProvider;
 import javax.websocket.WebSocketContainer;
+import org.cometd.bayeux.server.LocalSession;
 import org.cometd.client.BayeuxClient;
 import org.cometd.client.transport.ClientTransport;
 import org.cometd.client.websocket.javax.WebSocketTransport;
@@ -59,11 +60,14 @@ public class WebsocketTest {
 
     bayeuxClient = new BayeuxClient("http://localhost:9017/smallmind/cometd", wsTransport);
 
+    LocalSession localSession = context.getBean("oumuamuaServer", OumuamuaServer.class).newLocalSession(null);
+
     Map<String, Object> handshakeMap = new HashMap<>();
     HashMap<String, Object> tokenMap = new HashMap<>();
 
     // handshakeMap.put("ext", tokenMap);
 
+    /*
     bayeuxClient.handshake(handshakeMap);
     if (!bayeuxClient.waitFor(5000, BayeuxClient.State.CONNECTED)) {
       System.out.println("Unable to connect within 5000 milliseconds");
@@ -72,6 +76,20 @@ public class WebsocketTest {
     Counter counter = new Counter();
 
     bayeuxClient.getChannel("/foobar").subscribe((channel, message) -> {
+
+      int count = counter.incAndGet();
+
+      if (count == 10000) {
+        System.out.println(System.currentTimeMillis());
+      }
+    });
+    */
+
+    localSession.handshake(handshakeMap);
+
+    Counter counter = new Counter();
+
+    localSession.getChannel("/foobar").subscribe((channel, message) -> {
 
       int count = counter.incAndGet();
 

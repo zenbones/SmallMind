@@ -32,26 +32,27 @@
  */
 package org.smallmind.cometd.oumuamua;
 
+import java.util.List;
 import java.util.Map;
 import org.smallmind.cometd.oumuamua.transport.OumuamuaTransport;
 
 public class OumuamuaConfiguration {
 
-  private Map<String, OumuamuaTransport> transportMap;
+  private OumuamuaTransport[] transports;
   private String[] allowedTransports;
   private long expiredChannelCycleMinutes = 5;
   private int inactiveChannelLifetimeMinutes = 30;
   private long lazyMessageCycleMilliseconds = 3000;
   private int maximumMessageQueueSize = 1000;
 
-  public Map<String, OumuamuaTransport> getTransportMap () {
+  public OumuamuaTransport[] getTransports () {
 
-    return transportMap;
+    return transports;
   }
 
-  public void setTransportMap (Map<String, OumuamuaTransport> transportMap) {
+  public void setTransports (OumuamuaTransport[] transports) {
 
-    this.transportMap = transportMap;
+    this.transports = transports;
   }
 
   public String[] getAllowedTransports () {

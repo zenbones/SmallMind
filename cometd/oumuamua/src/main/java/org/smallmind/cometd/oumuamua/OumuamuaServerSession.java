@@ -84,14 +84,14 @@ public class OumuamuaServerSession implements ServerSession {
   private int lazyQueueSize;
   private int connectQueueSize;
 
-  public OumuamuaServerSession (OumuamuaServer oumuamuaServer, OumuamuaTransport serverTransport, OumuamuaCarrier carrier, boolean createLocalSession, int maximumMessageQueueSize) {
+  public OumuamuaServerSession (OumuamuaServer oumuamuaServer, OumuamuaTransport serverTransport, OumuamuaCarrier carrier, boolean createLocalSession, String idHint, int maximumMessageQueueSize) {
 
     this.oumuamuaServer = oumuamuaServer;
     this.serverTransport = serverTransport;
     this.carrier = carrier;
     this.maximumMessageQueueSize = maximumMessageQueueSize;
 
-    id = SnowflakeId.newInstance().generateHexEncoding();
+    id = (idHint == null) ? SnowflakeId.newInstance().generateHexEncoding() : SnowflakeId.newInstance().generateHexEncoding() + "-" + idHint;
     localSession = (createLocalSession) ? new OumuamuaLocalSession(this) : null;
   }
 

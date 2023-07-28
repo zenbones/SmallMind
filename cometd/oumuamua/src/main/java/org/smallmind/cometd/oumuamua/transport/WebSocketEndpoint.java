@@ -53,6 +53,9 @@ import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
 import org.smallmind.cometd.oumuamua.channel.ChannelIdCache;
 import org.smallmind.cometd.oumuamua.context.OumuamuaWebsocketContext;
 import org.smallmind.cometd.oumuamua.extension.ExtensionNotifier;
+import org.smallmind.cometd.oumuamua.logging.DataRecord;
+import org.smallmind.cometd.oumuamua.logging.NodeRecord;
+import org.smallmind.cometd.oumuamua.logging.PacketRecord;
 import org.smallmind.cometd.oumuamua.message.MapLike;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 import org.smallmind.cometd.oumuamua.meta.ConnectMessageRequestInView;
@@ -90,6 +93,9 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
       websocketSession.getContainer().setDefaultMaxTextMessageBufferSize(websocketTransport.getMaximumTextMessageBufferSize());
     }
 
+    oumuamuaServer.addSession(serverSession = new OumuamuaServerSession(oumuamuaServer, websocketTransport, this, false, null, oumuamuaServer.getConfiguration().getMaximumMessageQueueSize()));
+    connected = true;
+
     websocketSession.addMessageHandler(this);
   }
 
@@ -115,15 +121,6 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
   }
 
   @Override
-  public synchronized void open () {
-
-    if (serverSession == null) {
-      oumuamuaServer.addSession(serverSession = new OumuamuaServerSession(oumuamuaServer, websocketTransport, this, false, oumuamuaServer.getConfiguration().getMaximumMessageQueueSize()));
-      connected = true;
-    }
-  }
-
-  @Override
   public synchronized void send (OumuamuaPacket... packets)
     throws IOException, InterruptedException, ExecutionException, TimeoutException {
 
@@ -132,6 +129,10 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
       String text;
 
       if ((text = asText(oumuamuaServer, context, websocketTransport, serverSession, packets)) != null) {
+
+        System.out.println("=>" + text);
+        LoggerManager.getLogger(WebSocketEndpoint.class).debug(new DataRecord(text, false));
+
         if (websocketTransport.getAsyncSendTimeoutMilliseconds() > 0) {
           websocketSession.getAsyncRemote().sendText(text).get(websocketTransport.getAsyncSendTimeoutMilliseconds(), TimeUnit.MILLISECONDS);
         } else {
@@ -142,10 +143,41 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
   }
 
   @Override
-  public synchronized OumuamuaPacket[] inject (ChannelId channelId, ObjectNode messageNode)
+  public synchronized OumuamuaPacket[] inject (ObjectNode messageNode)
     throws JsonProcessingException {
 
-    return ExtensionNotifier.incoming(oumuamuaServer, context, websocketTransport, serverSession, channelId, false, new MapLike(messageNode)) ? (connected) ? respond(channelId, channelId.getId(), messageNode) : null : null;
+    System.out.println("<=" + JsonCodec.writeAsString(messageNode));
+    LoggerManager.getLogger(LocalCarrier.class).debug(new NodeRecord(messageNode, true));
+
+    try {
+
+      String channel = messageNode.get(Message.CHANNEL_FIELD).asText();
+      ChannelId channelId = ChannelIdCache.generate(channel);
+
+      if (ExtensionNotifier.incoming(oumuamuaServer, context, websocketTransport, serverSession, channelId, false, new MapLike(messageNode))) {
+
+        OumuamuaPacket[] packets = respond(channelId, channelId.getId(), messageNode);
+
+        if (!connected) {
+          websocketSession.close(new CloseReason(CloseReason.CloseCodes.NORMAL_CLOSURE, "Client disconnect"));
+        }
+
+        System.out.println(new PacketRecord(packets, false));
+        LoggerManager.getLogger(LocalCarrier.class).debug(new PacketRecord(packets, false));
+
+        return packets;
+      } else {
+
+        return null;
+      }
+    } catch (Exception ioException) {
+      LoggerManager.getLogger(WebSocketEndpoint.class).error(ioException);
+
+      return null;
+    } finally {
+      // Keep our threads clean and tidy
+      ChannelIdCache.clear();
+    }
   }
 
   @Override
@@ -157,6 +189,9 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
 
   @Override
   public synchronized void onMessage (String data) {
+
+    System.out.println("<=" + data);
+    LoggerManager.getLogger(WebSocketEndpoint.class).debug(new DataRecord(data, true));
 
     try {
       for (JsonNode messageNode : JsonCodec.readAsJsonNode(data)) {
@@ -194,7 +229,6 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
 
     switch (channel) {
       case "/meta/handshake":
-        open();
 
         return JsonCodec.read(messageNode, HandshakeMessageRequestInView.class).factory().process(oumuamuaServer, context, websocketTransport, ACTUAL_TRANSPORTS, serverSession, messageNode);
       case "/meta/connect":

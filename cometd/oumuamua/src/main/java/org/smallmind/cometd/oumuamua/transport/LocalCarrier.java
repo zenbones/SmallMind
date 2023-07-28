@@ -38,11 +38,16 @@ import java.util.concurrent.TimeUnit;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.cometd.bayeux.ChannelId;
+import org.cometd.bayeux.Message;
 import org.smallmind.cometd.oumuamua.OumuamuaLocalSession;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
+import org.smallmind.cometd.oumuamua.channel.ChannelIdCache;
 import org.smallmind.cometd.oumuamua.context.OumuamuaLocalContext;
 import org.smallmind.cometd.oumuamua.extension.ExtensionNotifier;
+import org.smallmind.cometd.oumuamua.logging.DataRecord;
+import org.smallmind.cometd.oumuamua.logging.NodeRecord;
+import org.smallmind.cometd.oumuamua.logging.PacketRecord;
 import org.smallmind.cometd.oumuamua.message.MapLike;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 import org.smallmind.cometd.oumuamua.meta.ConnectMessageRequestInView;
@@ -61,19 +66,29 @@ public class LocalCarrier implements OumuamuaCarrier {
   private static final long DEFAULT_MAX_SESSION_IDLE_TIMEOUT = 300000;
   private final OumuamuaServer oumuamuaServer;
   private final LocalTransport localTransport;
+  private final IdleCheck idleCheck;
   private OumuamuaServerSession serverSession;
-  private IdleCheck idleCheck;
   private boolean connected;
   private long lastContactMilliseconds;
   private long maxSessionIdleTimeout;
 
-  public LocalCarrier (OumuamuaServer oumuamuaServer, LocalTransport localTransport) {
+  public LocalCarrier (OumuamuaServer oumuamuaServer, LocalTransport localTransport, String idHint) {
 
     this.oumuamuaServer = oumuamuaServer;
     this.localTransport = localTransport;
 
     lastContactMilliseconds = System.currentTimeMillis();
     maxSessionIdleTimeout = (localTransport.getMaxInterval() > 0) ? localTransport.getMaxInterval() : DEFAULT_MAX_SESSION_IDLE_TIMEOUT;
+
+    oumuamuaServer.addSession(serverSession = new OumuamuaServerSession(oumuamuaServer, localTransport, this, true, idHint, oumuamuaServer.getConfiguration().getMaximumMessageQueueSize()));
+    connected = true;
+
+    new Thread(idleCheck = new IdleCheck()).start();
+  }
+
+  public OumuamuaLocalSession getLocalSession () {
+
+    return (OumuamuaLocalSession)serverSession.getLocalSession();
   }
 
   @Override
@@ -91,17 +106,6 @@ public class LocalCarrier implements OumuamuaCarrier {
   }
 
   @Override
-  public synchronized void open () {
-
-    if (serverSession == null) {
-      oumuamuaServer.addSession(serverSession = new OumuamuaServerSession(oumuamuaServer, localTransport, this, true, oumuamuaServer.getConfiguration().getMaximumMessageQueueSize()));
-      connected = true;
-
-      new Thread(idleCheck = new IdleCheck()).start();
-    }
-  }
-
-  @Override
   public synchronized void send (OumuamuaPacket... packets)
     throws IOException {
 
@@ -110,18 +114,48 @@ public class LocalCarrier implements OumuamuaCarrier {
       String text;
 
       if ((text = asText(oumuamuaServer, LOCAL_CONTEXT, localTransport, serverSession, packets)) != null) {
+        System.out.println("=>" + text);
+        LoggerManager.getLogger(LocalCarrier.class).debug(new DataRecord(text, false));
+
         ((OumuamuaLocalSession)serverSession.getLocalSession()).receive(text);
       }
     }
   }
 
   @Override
-  public synchronized OumuamuaPacket[] inject (ChannelId channelId, ObjectNode messageNode)
+  public synchronized OumuamuaPacket[] inject (ObjectNode messageNode)
     throws JsonProcessingException {
 
-    lastContactMilliseconds = System.currentTimeMillis();
+    System.out.println("<=" + JsonCodec.writeAsString(messageNode));
+    LoggerManager.getLogger(LocalCarrier.class).debug(new NodeRecord(messageNode, true));
 
-    return ExtensionNotifier.incoming(oumuamuaServer, LOCAL_CONTEXT, localTransport, serverSession, channelId, false, new MapLike(messageNode)) ? (connected) ? respond(channelId, channelId.getId(), messageNode) : null : null;
+    try {
+
+      String channel = messageNode.get(Message.CHANNEL_FIELD).asText();
+      ChannelId channelId = ChannelIdCache.generate(channel);
+
+      lastContactMilliseconds = System.currentTimeMillis();
+
+      if (ExtensionNotifier.incoming(oumuamuaServer, LOCAL_CONTEXT, localTransport, serverSession, channelId, false, new MapLike(messageNode))) {
+
+        OumuamuaPacket[] packets = respond(channelId, channelId.getId(), messageNode);
+
+        if (!connected) {
+          close();
+        }
+
+        System.out.println(new PacketRecord(packets, false));
+        LoggerManager.getLogger(LocalCarrier.class).debug(new PacketRecord(packets, false));
+
+        return packets;
+      } else {
+
+        return null;
+      }
+    } finally {
+      // Keep our threads clean and tidy
+      ChannelIdCache.clear();
+    }
   }
 
   @Override
@@ -151,7 +185,6 @@ public class LocalCarrier implements OumuamuaCarrier {
 
     switch (channel) {
       case "/meta/handshake":
-        open();
 
         return JsonCodec.read(messageNode, HandshakeMessageRequestInView.class).factory().process(oumuamuaServer, LOCAL_CONTEXT, localTransport, ACTUAL_TRANSPORTS, serverSession, messageNode);
       case "/meta/connect":
