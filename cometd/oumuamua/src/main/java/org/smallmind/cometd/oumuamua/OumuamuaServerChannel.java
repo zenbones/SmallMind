@@ -57,6 +57,7 @@ public class OumuamuaServerChannel implements ServerChannel {
   private final ReentrantReadWriteLock lifeLock = new ReentrantReadWriteLock();
   private final ConcurrentHashMap<String, OumuamuaServerSession> subscriptionMap = new ConcurrentHashMap<>();
   private final ConcurrentHashMap<String, Object> attributeMap = new ConcurrentHashMap<>();
+  // TODO: Listeners
   private final ConcurrentLinkedQueue<ServerChannelListener> listenerList = new ConcurrentLinkedQueue<>();
   private final ConcurrentLinkedQueue<ServerChannelListener.Weak> weakListenerList = new ConcurrentLinkedQueue<>();
   private final LinkedList<Authorizer> authorizerList = new LinkedList<>();

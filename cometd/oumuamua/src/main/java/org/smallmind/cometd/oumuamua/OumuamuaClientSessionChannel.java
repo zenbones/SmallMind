@@ -60,6 +60,7 @@ public class OumuamuaClientSessionChannel implements ClientSessionChannel {
   private final ReentrantLock releaseLock = new ReentrantLock();
   private final ConcurrentHashMap<String, Object> attributeMap = new ConcurrentHashMap<>();
   private final ConcurrentLinkedQueue<MessageListener> subscriptionList = new ConcurrentLinkedQueue<>();
+  // TODO: Listeners
   private final ConcurrentLinkedQueue<ClientSessionChannelListener> listenerList = new ConcurrentLinkedQueue<>();
   private final OumuamuaLocalSession clientSession;
   private final ChannelId channelId;

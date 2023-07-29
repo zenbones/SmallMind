@@ -73,6 +73,7 @@ public class OumuamuaLocalSession implements LocalSession {
   private final ConcurrentHashMap<String, Object> attributeMap = new ConcurrentHashMap<>();
   private final ConcurrentHashMap<String, OumuamuaClientSessionChannel> channelMap = new ConcurrentHashMap<>();
   private final ConcurrentLinkedQueue<ClientSession.Extension> extensionList = new ConcurrentLinkedQueue<>();
+  // TODO: Listeners
   private final ConcurrentLinkedQueue<ServerSession.ServerSessionListener> listenerList = new ConcurrentLinkedQueue<>();
   private final OumuamuaServerSession serverSession;
   private final ConnectionMonitor connectionMonitor;

@@ -66,6 +66,7 @@ public class OumuamuaServerSession implements ServerSession {
   private final ConcurrentSkipListMap<Long, LinkedList<OumuamuaLazyPacket>> lazyMessageQueue = new ConcurrentSkipListMap<>();
   private final ConcurrentLinkedQueue<OumuamuaPacket> messageQueue = new ConcurrentLinkedQueue<>();
   private final ConcurrentLinkedQueue<Extension> extensionList = new ConcurrentLinkedQueue<>();
+  // TODO: Listeners
   private final ConcurrentLinkedQueue<ServerSessionListener> listenerList = new ConcurrentLinkedQueue<>();
   private final OumuamuaServer oumuamuaServer;
   private final OumuamuaTransport serverTransport;

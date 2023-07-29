@@ -81,6 +81,7 @@ public class OumuamuaServer implements BayeuxServer {
   private final HashMap<String, OumuamuaTransport> transportMap = new HashMap<>();
   private final ConcurrentHashMap<String, OumuamuaServerSession> sessionMap = new ConcurrentHashMap<>();
   private final ConcurrentLinkedQueue<Extension> extensionList = new ConcurrentLinkedQueue<>();
+  // TODO: Listeners
   private final ConcurrentLinkedQueue<BayeuxServerListener> listenerList = new ConcurrentLinkedQueue<>();
   private ExpiredChannelSifter expiredChannelSifter;
   private LazyMessageSifter lazyMessageSifter;
