@@ -47,8 +47,10 @@ import java.util.concurrent.locks.ReentrantLock;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.cometd.bayeux.MarkedReference;
 import org.cometd.bayeux.Transport;
+import org.cometd.bayeux.server.BayeuxContext;
 import org.cometd.bayeux.server.BayeuxServer;
 import org.cometd.bayeux.server.ConfigurableServerChannel;
 import org.cometd.bayeux.server.LocalSession;
@@ -65,9 +67,11 @@ import org.smallmind.cometd.oumuamua.channel.ListChannelsOperation;
 import org.smallmind.cometd.oumuamua.channel.ListSubscriptionsOperation;
 import org.smallmind.cometd.oumuamua.channel.UnsubscribeOperation;
 import org.smallmind.cometd.oumuamua.message.MapLike;
+import org.smallmind.cometd.oumuamua.message.MessageUtility;
 import org.smallmind.cometd.oumuamua.message.OumuamuaLazyPacket;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 import org.smallmind.cometd.oumuamua.message.OumuamuaServerMessage;
+import org.smallmind.cometd.oumuamua.meta.DisconnectMessage;
 import org.smallmind.cometd.oumuamua.transport.LocalTransport;
 import org.smallmind.cometd.oumuamua.transport.OumuamuaTransport;
 import org.smallmind.scribe.pen.LoggerManager;
@@ -256,6 +260,20 @@ public class OumuamuaServer implements BayeuxServer {
     }
   }
 
+  public void onSessionConnected (BayeuxContext context, OumuamuaTransport transport, ServerSession serverSession, ObjectNode messageNode) {
+
+    OumuamuaServerMessage serverMessage = null;
+
+    for (BayeuxListener bayeuxListener : listenerList) {
+      if (SessionListener.class.isAssignableFrom(bayeuxListener.getClass())) {
+        if (serverMessage == null) {
+          serverMessage = MessageUtility.createServerMessage(context, transport, DisconnectMessage.CHANNEL_ID, false, new MapLike(messageNode));
+        }
+        ((SessionListener)bayeuxListener).sessionAdded(serverSession, serverMessage);
+      }
+    }
+  }
+
   @Override
   public boolean removeSession (ServerSession serverSession) {
 
@@ -267,6 +285,20 @@ public class OumuamuaServer implements BayeuxServer {
       return sessionMap.remove(serverSession.getId()) != null;
     } finally {
       sessionChangeLock.unlock();
+    }
+  }
+
+  public void onSessionDisconnected (BayeuxContext context, OumuamuaTransport transport, ServerSession serverSession, ObjectNode messageNode, boolean timeout) {
+
+    OumuamuaServerMessage serverMessage = null;
+
+    for (BayeuxListener bayeuxListener : listenerList) {
+      if (SessionListener.class.isAssignableFrom(bayeuxListener.getClass())) {
+        if ((serverMessage == null) && (messageNode != null)) {
+          serverMessage = MessageUtility.createServerMessage(context, transport, DisconnectMessage.CHANNEL_ID, false, new MapLike(messageNode));
+        }
+        ((SessionListener)bayeuxListener).sessionRemoved(serverSession, serverMessage, timeout);
+      }
     }
   }
 
@@ -324,6 +356,8 @@ public class OumuamuaServer implements BayeuxServer {
   @Override
   public MarkedReference<ServerChannel> createChannelIfAbsent (String id, ConfigurableServerChannel.Initializer... initializers) {
 
+    MarkedReference<ServerChannel> serverChannelRef;
+
     // Addition and removal of channels should be done only via createChannelIfAbsent(), removeChannel() and ExpirationOperation.operate()
     channelChangeLock.lock();
 
@@ -344,10 +378,20 @@ public class OumuamuaServer implements BayeuxServer {
         channelBranch.getServerChannel().setInitialized(true);
       }
 
-      return new MarkedReference<>(channelBranch.getServerChannel(), created);
+      serverChannelRef = new MarkedReference<>(channelBranch.getServerChannel(), created);
     } finally {
       channelChangeLock.unlock();
     }
+
+    if (serverChannelRef.isMarked()) {
+      for (BayeuxListener bayeuxListener : listenerList) {
+        if (ChannelListener.class.isAssignableFrom(bayeuxListener.getClass())) {
+          ((ChannelListener)bayeuxListener).channelAdded(serverChannelRef.getReference());
+        }
+      }
+    }
+
+    return serverChannelRef;
   }
 
   public void publishToChannel (OumuamuaTransport transport, String id, OumuamuaPacket packet) {
@@ -369,6 +413,12 @@ public class OumuamuaServer implements BayeuxServer {
       channelTree.removeIfPresent(0, channel.getChannelId());
     } finally {
       channelChangeLock.unlock();
+    }
+
+    for (BayeuxListener bayeuxListener : listenerList) {
+      if (ChannelListener.class.isAssignableFrom(bayeuxListener.getClass())) {
+        ((ChannelListener)bayeuxListener).channelRemoved(channel.getId());
+      }
     }
   }
 

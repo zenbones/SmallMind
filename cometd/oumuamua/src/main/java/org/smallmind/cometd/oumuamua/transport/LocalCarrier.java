@@ -56,6 +56,7 @@ import org.smallmind.cometd.oumuamua.meta.HandshakeMessageRequestInView;
 import org.smallmind.cometd.oumuamua.meta.PublishMessageRequestInView;
 import org.smallmind.cometd.oumuamua.meta.SubscribeMessageRequestInView;
 import org.smallmind.cometd.oumuamua.meta.UnsubscribeMessageRequestInView;
+import org.smallmind.nutsnbolts.util.Switch;
 import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
@@ -172,12 +173,17 @@ public class LocalCarrier implements OumuamuaCarrier {
 
   private synchronized void finishClosing () {
 
-    connected = false;
-
     if (serverSession != null) {
       oumuamuaServer.removeSession(serverSession);
+
+      if (connected) {
+        oumuamuaServer.onSessionDisconnected(LOCAL_CONTEXT, localTransport, serverSession, null, true);
+      }
+
       serverSession = null;
     }
+
+    connected = false;
   }
 
   private OumuamuaPacket[] respond (ChannelId channelId, String channel, ObjectNode messageNode)
@@ -189,12 +195,26 @@ public class LocalCarrier implements OumuamuaCarrier {
         return JsonCodec.read(messageNode, HandshakeMessageRequestInView.class).factory().process(oumuamuaServer, LOCAL_CONTEXT, localTransport, ACTUAL_TRANSPORTS, serverSession, messageNode);
       case "/meta/connect":
 
-        return JsonCodec.read(messageNode, ConnectMessageRequestInView.class).factory().process(localTransport, serverSession);
-      case "/meta/disconnect":
-        // disconnect will happen after the response hs been sent
-        connected = false;
+        Switch connectSwitch;
+        OumuamuaPacket[] connectResponse = JsonCodec.read(messageNode, ConnectMessageRequestInView.class).factory().process(localTransport, serverSession, connectSwitch = new Switch());
 
-        return JsonCodec.read(messageNode, DisconnectMessageRequestInView.class).factory().process(serverSession);
+        if (connectSwitch.isOn()) {
+          oumuamuaServer.onSessionConnected(LOCAL_CONTEXT, localTransport, serverSession, messageNode);
+        }
+
+        return connectResponse;
+      case "/meta/disconnect":
+
+        Switch disocnnectSwitch;
+        OumuamuaPacket[] disconnectResponse = JsonCodec.read(messageNode, DisconnectMessageRequestInView.class).factory().process(serverSession, disocnnectSwitch = new Switch());
+
+        if (disocnnectSwitch.isOn()) {
+          // disconnect will happen after the response hs been sent
+          connected = false;
+          oumuamuaServer.onSessionDisconnected(LOCAL_CONTEXT, localTransport, serverSession, messageNode, false);
+        }
+
+        return disconnectResponse;
       case "/meta/subscribe":
 
         return JsonCodec.read(messageNode, SubscribeMessageRequestInView.class).factory().process(oumuamuaServer, LOCAL_CONTEXT, localTransport, serverSession, messageNode);

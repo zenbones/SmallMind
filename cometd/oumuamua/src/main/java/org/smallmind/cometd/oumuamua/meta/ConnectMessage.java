@@ -40,6 +40,7 @@ import org.cometd.bayeux.ChannelId;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 import org.smallmind.cometd.oumuamua.transport.OumuamuaTransport;
+import org.smallmind.nutsnbolts.util.Switch;
 import org.smallmind.web.json.doppelganger.Doppelganger;
 import org.smallmind.web.json.doppelganger.Idiom;
 import org.smallmind.web.json.doppelganger.View;
@@ -57,7 +58,7 @@ public class ConnectMessage extends AdvisedMetaMessage {
   @View(idioms = @Idiom(purposes = "request", visibility = IN))
   private String connectionType;
 
-  public OumuamuaPacket[] process (OumuamuaTransport transport, OumuamuaServerSession serverSession) {
+  public OumuamuaPacket[] process (OumuamuaTransport transport, OumuamuaServerSession serverSession, Switch connectSwitch) {
 
     //TODO: In theory there's a way to handle LongPollResponseDelayMilliseconds... but I'm not going to thread sleep, so...
     ObjectNode adviceNode = JsonNodeFactory.instance.objectNode();
@@ -78,7 +79,9 @@ public class ConnectMessage extends AdvisedMetaMessage {
           OumuamuaPacket[] enqueuedPackets;
           long longPollingTimeout = (serverSession.getTimeout() >= 0) ? serverSession.getTimeout() : transport.getTimeout();
 
+          connectSwitch.setState(!serverSession.isConnected());
           serverSession.setConnected(true);
+
           if (longPollingTimeout > 0) {
             adviceNode.put("timeout", longPollingTimeout);
           }

@@ -64,6 +64,7 @@ import org.smallmind.cometd.oumuamua.meta.HandshakeMessageRequestInView;
 import org.smallmind.cometd.oumuamua.meta.PublishMessageRequestInView;
 import org.smallmind.cometd.oumuamua.meta.SubscribeMessageRequestInView;
 import org.smallmind.cometd.oumuamua.meta.UnsubscribeMessageRequestInView;
+import org.smallmind.nutsnbolts.util.Switch;
 import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
@@ -76,7 +77,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
   private Session websocketSession;
   private OumuamuaServerSession serverSession;
   private OumuamuaWebsocketContext context;
-  private boolean connected = false;
+  private boolean connected;
 
   @Override
   public void onOpen (Session websocketSession, EndpointConfig config) {
@@ -233,12 +234,26 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
         return JsonCodec.read(messageNode, HandshakeMessageRequestInView.class).factory().process(oumuamuaServer, context, websocketTransport, ACTUAL_TRANSPORTS, serverSession, messageNode);
       case "/meta/connect":
 
-        return JsonCodec.read(messageNode, ConnectMessageRequestInView.class).factory().process(websocketTransport, serverSession);
-      case "/meta/disconnect":
-        // disconnect will happen after the response hs been sent
-        connected = false;
+        Switch connectSwitch;
+        OumuamuaPacket[] connectResponse = JsonCodec.read(messageNode, ConnectMessageRequestInView.class).factory().process(websocketTransport, serverSession, connectSwitch = new Switch());
 
-        return JsonCodec.read(messageNode, DisconnectMessageRequestInView.class).factory().process(serverSession);
+        if (connectSwitch.isOn()) {
+          oumuamuaServer.onSessionConnected(context, websocketTransport, serverSession, messageNode);
+        }
+
+        return connectResponse;
+      case "/meta/disconnect":
+
+        Switch disconnectSwitch;
+        OumuamuaPacket[] disconnectResponse = JsonCodec.read(messageNode, DisconnectMessageRequestInView.class).factory().process(serverSession, disconnectSwitch = new Switch());
+
+        if (disconnectSwitch.isOn()) {
+          // disconnect will happen after the response hs been sent
+          connected = false;
+          oumuamuaServer.onSessionDisconnected(context, websocketTransport, serverSession, messageNode, false);
+        }
+
+        return disconnectResponse;
       case "/meta/subscribe":
 
         return JsonCodec.read(messageNode, SubscribeMessageRequestInView.class).factory().process(oumuamuaServer, context, websocketTransport, serverSession, messageNode);
@@ -264,12 +279,17 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
   @Override
   public synchronized void onClose (Session wsSession, CloseReason closeReason) {
 
-    connected = false;
-
     if (serverSession != null) {
       oumuamuaServer.removeSession(serverSession);
+
+      if (connected) {
+        oumuamuaServer.onSessionDisconnected(context, websocketTransport, serverSession, null, true);
+      }
+
       serverSession = null;
     }
+
+    connected = false;
   }
 
   @Override

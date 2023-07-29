@@ -35,6 +35,7 @@ package org.smallmind.cometd.oumuamua.meta;
 import org.cometd.bayeux.ChannelId;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
+import org.smallmind.nutsnbolts.util.Switch;
 import org.smallmind.web.json.doppelganger.Doppelganger;
 import org.smallmind.web.json.doppelganger.Idiom;
 import org.smallmind.web.json.doppelganger.View;
@@ -50,7 +51,9 @@ public class DisconnectMessage extends MetaMessage {
   @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
   private String clientId;
 
-  public OumuamuaPacket[] process (OumuamuaServerSession serverSession) {
+  public OumuamuaPacket[] process (OumuamuaServerSession serverSession, Switch disconnectSwitch) {
+
+    disconnectSwitch.setState(true);
 
     return OumuamuaPacket.asPackets(serverSession, CHANNEL_ID, new DisconnectMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(CHANNEL_ID.getId()).setId(getId()));
   }
