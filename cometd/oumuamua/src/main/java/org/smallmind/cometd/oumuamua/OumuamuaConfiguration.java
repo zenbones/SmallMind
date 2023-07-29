@@ -32,8 +32,6 @@
  */
 package org.smallmind.cometd.oumuamua;
 
-import java.util.List;
-import java.util.Map;
 import org.smallmind.cometd.oumuamua.transport.OumuamuaTransport;
 
 public class OumuamuaConfiguration {

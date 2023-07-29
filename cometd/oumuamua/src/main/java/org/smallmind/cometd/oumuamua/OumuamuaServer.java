@@ -315,6 +315,34 @@ public class OumuamuaServer implements BayeuxServer {
     }
   }
 
+  public void onChannelSubscribed (BayeuxContext context, OumuamuaTransport transport, ServerSession serverSession, ServerChannel serverChannel, ObjectNode messageNode) {
+
+    OumuamuaServerMessage serverMessage = null;
+
+    for (BayeuxListener bayeuxListener : listenerList) {
+      if (SubscriptionListener.class.isAssignableFrom(bayeuxListener.getClass())) {
+        if ((serverMessage == null) && (messageNode != null)) {
+          serverMessage = MessageUtility.createServerMessage(context, transport, DisconnectMessage.CHANNEL_ID, false, new MapLike(messageNode));
+        }
+        ((SubscriptionListener)bayeuxListener).subscribed(serverSession, serverChannel, serverMessage);
+      }
+    }
+  }
+
+  public void onChannelUnsubscribed (BayeuxContext context, OumuamuaTransport transport, ServerSession serverSession, ServerChannel serverChannel, ObjectNode messageNode) {
+
+    OumuamuaServerMessage serverMessage = null;
+
+    for (BayeuxListener bayeuxListener : listenerList) {
+      if (SubscriptionListener.class.isAssignableFrom(bayeuxListener.getClass())) {
+        if ((serverMessage == null) && (messageNode != null)) {
+          serverMessage = MessageUtility.createServerMessage(context, transport, DisconnectMessage.CHANNEL_ID, false, new MapLike(messageNode));
+        }
+        ((SubscriptionListener)bayeuxListener).unsubscribed(serverSession, serverChannel, serverMessage);
+      }
+    }
+  }
+
   @Override
   public ServerMessage.Mutable newMessage () {
 

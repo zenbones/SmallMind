@@ -40,6 +40,7 @@ import org.cometd.bayeux.server.SecurityPolicy;
 import org.cometd.bayeux.server.ServerChannel;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
+import org.smallmind.cometd.oumuamua.channel.ChannelNotice;
 import org.smallmind.cometd.oumuamua.message.MapLike;
 import org.smallmind.cometd.oumuamua.message.MessageUtility;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
@@ -62,7 +63,7 @@ public class SubscribeMessage extends AdvisedMetaMessage {
   @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
   private String subscription;
 
-  public OumuamuaPacket[] process (OumuamuaServer oumuamuaServer, BayeuxContext context, OumuamuaTransport transport, OumuamuaServerSession serverSession, ObjectNode rawMessage) {
+  public OumuamuaPacket[] process (OumuamuaServer oumuamuaServer, BayeuxContext context, OumuamuaTransport transport, OumuamuaServerSession serverSession, ObjectNode rawMessage, ChannelNotice subscribeNotice) {
 
     if ((serverSession == null) || (!serverSession.getId().equals(getClientId()))) {
 
@@ -115,7 +116,9 @@ public class SubscribeMessage extends AdvisedMetaMessage {
           serverChannel = oumuamuaServer.createChannelIfAbsent(getSubscription()).getReference();
         }
 
-        serverChannel.subscribe(serverSession);
+        if (serverChannel.subscribe(serverSession)) {
+          subscribeNotice.setChannel(serverChannel);
+        }
 
         return OumuamuaPacket.asPackets(serverSession, CHANNEL_ID, new SubscribeMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(CHANNEL_ID.getId()).setClientId(serverSession.getId()).setId(getId()).setSubscription(getSubscription()));
       }

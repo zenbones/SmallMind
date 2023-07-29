@@ -43,6 +43,7 @@ import org.smallmind.cometd.oumuamua.OumuamuaLocalSession;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
 import org.smallmind.cometd.oumuamua.channel.ChannelIdCache;
+import org.smallmind.cometd.oumuamua.channel.ChannelNotice;
 import org.smallmind.cometd.oumuamua.context.OumuamuaLocalContext;
 import org.smallmind.cometd.oumuamua.extension.ExtensionNotifier;
 import org.smallmind.cometd.oumuamua.logging.DataRecord;
@@ -216,11 +217,24 @@ public class LocalCarrier implements OumuamuaCarrier {
 
         return disconnectResponse;
       case "/meta/subscribe":
+        ChannelNotice subscribeNotice;
+        OumuamuaPacket[] subscribeResponse = JsonCodec.read(messageNode, SubscribeMessageRequestInView.class).factory().process(oumuamuaServer, LOCAL_CONTEXT, localTransport, serverSession, messageNode, subscribeNotice = new ChannelNotice());
 
-        return JsonCodec.read(messageNode, SubscribeMessageRequestInView.class).factory().process(oumuamuaServer, LOCAL_CONTEXT, localTransport, serverSession, messageNode);
+        if (subscribeNotice.isOn()) {
+          oumuamuaServer.onChannelSubscribed(LOCAL_CONTEXT, localTransport, serverSession, subscribeNotice.getChannel(), messageNode);
+        }
+
+        return subscribeResponse;
       case "/meta/unsubscribe":
 
-        return JsonCodec.read(messageNode, UnsubscribeMessageRequestInView.class).factory().process(oumuamuaServer, serverSession);
+        ChannelNotice unsubscribeNotice;
+        OumuamuaPacket[] unsubscribeResponse = JsonCodec.read(messageNode, UnsubscribeMessageRequestInView.class).factory().process(oumuamuaServer, serverSession, unsubscribeNotice = new ChannelNotice());
+
+        if (unsubscribeNotice.isOn()) {
+          oumuamuaServer.onChannelUnsubscribed(LOCAL_CONTEXT, localTransport, serverSession, unsubscribeNotice.getChannel(), messageNode);
+        }
+
+        return unsubscribeResponse;
       default:
         if (channel.startsWith("/meta/")) {
 

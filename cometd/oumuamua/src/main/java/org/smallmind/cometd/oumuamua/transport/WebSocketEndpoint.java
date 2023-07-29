@@ -51,6 +51,7 @@ import org.cometd.bayeux.server.BayeuxServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
 import org.smallmind.cometd.oumuamua.channel.ChannelIdCache;
+import org.smallmind.cometd.oumuamua.channel.ChannelNotice;
 import org.smallmind.cometd.oumuamua.context.OumuamuaWebsocketContext;
 import org.smallmind.cometd.oumuamua.extension.ExtensionNotifier;
 import org.smallmind.cometd.oumuamua.logging.DataRecord;
@@ -256,10 +257,24 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
         return disconnectResponse;
       case "/meta/subscribe":
 
-        return JsonCodec.read(messageNode, SubscribeMessageRequestInView.class).factory().process(oumuamuaServer, context, websocketTransport, serverSession, messageNode);
+        ChannelNotice subscribeNotice;
+        OumuamuaPacket[] subscribeResponse = JsonCodec.read(messageNode, SubscribeMessageRequestInView.class).factory().process(oumuamuaServer, context, websocketTransport, serverSession, messageNode, subscribeNotice = new ChannelNotice());
+
+        if (subscribeNotice.isOn()) {
+          oumuamuaServer.onChannelSubscribed(context, websocketTransport, serverSession, subscribeNotice.getChannel(), messageNode);
+        }
+
+        return subscribeResponse;
       case "/meta/unsubscribe":
 
-        return JsonCodec.read(messageNode, UnsubscribeMessageRequestInView.class).factory().process(oumuamuaServer, serverSession);
+        ChannelNotice unsubscribeNotice;
+        OumuamuaPacket[] unsubscribeResponse = JsonCodec.read(messageNode, UnsubscribeMessageRequestInView.class).factory().process(oumuamuaServer, serverSession, unsubscribeNotice = new ChannelNotice());
+
+        if (unsubscribeNotice.isOn()) {
+          oumuamuaServer.onChannelUnsubscribed(context, websocketTransport, serverSession, unsubscribeNotice.getChannel(), messageNode);
+        }
+
+        return unsubscribeResponse;
       default:
         if (channel.startsWith("/meta/")) {
 

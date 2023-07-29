@@ -32,13 +32,13 @@
  */
 package org.smallmind.cometd.oumuamua.meta;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.cometd.bayeux.ChannelId;
 import org.cometd.bayeux.server.ServerChannel;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
+import org.smallmind.cometd.oumuamua.channel.ChannelNotice;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 import org.smallmind.web.json.doppelganger.Doppelganger;
 import org.smallmind.web.json.doppelganger.Idiom;
@@ -57,8 +57,7 @@ public class UnsubscribeMessage extends AdvisedMetaMessage {
   @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
   private String subscription;
 
-  public OumuamuaPacket[] process (OumuamuaServer oumuamuaServer, OumuamuaServerSession serverSession)
-    throws JsonProcessingException {
+  public OumuamuaPacket[] process (OumuamuaServer oumuamuaServer, OumuamuaServerSession serverSession, ChannelNotice unsubscribeNotice) {
 
     ObjectNode adviceNode = JsonNodeFactory.instance.objectNode();
 
@@ -81,7 +80,9 @@ public class UnsubscribeMessage extends AdvisedMetaMessage {
       ServerChannel serverChannel;
 
       if ((serverChannel = oumuamuaServer.findChannel(getSubscription())) != null) {
-        serverChannel.unsubscribe(serverSession);
+        if (serverChannel.unsubscribe(serverSession)) {
+          unsubscribeNotice.setChannel(serverChannel);
+        }
       }
 
       return OumuamuaPacket.asPackets(serverSession, CHANNEL_ID, new UnsubscribeMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(CHANNEL_ID.getId()).setClientId(serverSession.getId()).setId(getId()).setSubscription(getSubscription()).setAdvice(adviceNode));

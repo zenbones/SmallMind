@@ -325,15 +325,20 @@ public class OumuamuaServerChannel implements ServerChannel {
   @Override
   public boolean subscribe (ServerSession serverSession) {
 
-    lifeLock.writeLock().lock();
+    if (isMeta()) {
 
-    try {
-      subscriptionMap.putIfAbsent(serverSession.getId(), (OumuamuaServerSession)serverSession);
-      expirationTimestamp = -1;
+      return false;
+    } else {
 
-      return true;
-    } finally {
-      lifeLock.writeLock().unlock();
+      lifeLock.writeLock().lock();
+
+      try {
+        expirationTimestamp = -1;
+
+        return subscriptionMap.putIfAbsent(serverSession.getId(), (OumuamuaServerSession)serverSession) == null;
+      } finally {
+        lifeLock.writeLock().unlock();
+      }
     }
   }
 
