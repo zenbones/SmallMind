@@ -42,17 +42,38 @@ import org.cometd.bayeux.Message;
 import org.cometd.bayeux.server.BayeuxContext;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
+import org.smallmind.cometd.oumuamua.channel.ChannelNotice;
 import org.smallmind.cometd.oumuamua.extension.ExtensionNotifier;
-import org.smallmind.cometd.oumuamua.message.ExtMapLike;
+import org.smallmind.cometd.oumuamua.message.ExtMapMessageGenerator;
 import org.smallmind.cometd.oumuamua.message.MapLike;
+import org.smallmind.cometd.oumuamua.message.NodeMessageGenerator;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 import org.smallmind.cometd.oumuamua.message.PacketType;
+import org.smallmind.cometd.oumuamua.meta.ConnectMessage;
+import org.smallmind.cometd.oumuamua.meta.ConnectMessageRequestInView;
+import org.smallmind.cometd.oumuamua.meta.DisconnectMessage;
+import org.smallmind.cometd.oumuamua.meta.DisconnectMessageRequestInView;
+import org.smallmind.cometd.oumuamua.meta.HandshakeMessage;
+import org.smallmind.cometd.oumuamua.meta.HandshakeMessageRequestInView;
+import org.smallmind.cometd.oumuamua.meta.PublishMessageRequestInView;
+import org.smallmind.cometd.oumuamua.meta.SubscribeMessage;
+import org.smallmind.cometd.oumuamua.meta.SubscribeMessageRequestInView;
+import org.smallmind.cometd.oumuamua.meta.UnsubscribeMessage;
+import org.smallmind.cometd.oumuamua.meta.UnsubscribeMessageRequestInView;
+import org.smallmind.nutsnbolts.util.Switch;
+import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public interface OumuamuaCarrier {
+
+  String[] getActualSessions ();
 
   String getUserAgent ();
 
   void setMaxSessionIdleTimeout (long maxSessionIdleTimeout);
+
+  boolean isConnected ();
+
+  void setConnected (boolean connected);
 
   void send (OumuamuaPacket... packets)
     throws Exception;
@@ -63,6 +84,72 @@ public interface OumuamuaCarrier {
   void close ()
     throws IOException;
 
+  default OumuamuaPacket[] respond (OumuamuaServer oumuamuaServer, BayeuxContext context, OumuamuaTransport transport, OumuamuaServerSession serverSession, ChannelId channelId, String channel, ObjectNode messageNode)
+    throws JsonProcessingException {
+
+    switch (channel) {
+      case "/meta/handshake":
+
+        return JsonCodec.read(messageNode, HandshakeMessageRequestInView.class).factory().process(oumuamuaServer, getActualSessions(), serverSession, new NodeMessageGenerator(context, transport, HandshakeMessage.CHANNEL_ID, messageNode, false));
+      case "/meta/connect":
+
+        Switch connectSwitch;
+        OumuamuaPacket[] connectResponse = JsonCodec.read(messageNode, ConnectMessageRequestInView.class).factory().process(transport, serverSession, connectSwitch = new Switch());
+
+        if (connectSwitch.isOn()) {
+          oumuamuaServer.onSessionConnected(serverSession, new NodeMessageGenerator(context, transport, ConnectMessage.CHANNEL_ID, messageNode, false));
+        }
+
+        return connectResponse;
+      case "/meta/disconnect":
+
+        Switch disconnectSwitch;
+        OumuamuaPacket[] disconnectResponse = JsonCodec.read(messageNode, DisconnectMessageRequestInView.class).factory().process(serverSession, disconnectSwitch = new Switch());
+
+        if (disconnectSwitch.isOn()) {
+          // disconnect will happen after the response hs been sent
+          setConnected(false);
+          oumuamuaServer.onSessionDisconnected(serverSession, new NodeMessageGenerator(context, transport, DisconnectMessage.CHANNEL_ID, messageNode, false), false);
+        }
+
+        return disconnectResponse;
+      case "/meta/subscribe":
+
+        ChannelNotice subscribeNotice;
+        NodeMessageGenerator subscribeMessageGenerator;
+        OumuamuaPacket[] subscribeResponse = JsonCodec.read(messageNode, SubscribeMessageRequestInView.class).factory().process(oumuamuaServer, serverSession, subscribeNotice = new ChannelNotice(), subscribeMessageGenerator = new NodeMessageGenerator(context, transport, SubscribeMessage.CHANNEL_ID, messageNode, false));
+
+        if (subscribeNotice.isOn()) {
+          oumuamuaServer.onChannelSubscribed(serverSession, subscribeNotice.getChannel(), subscribeMessageGenerator);
+        }
+
+        return subscribeResponse;
+      case "/meta/unsubscribe":
+
+        ChannelNotice unsubscribeNotice;
+        OumuamuaPacket[] unsubscribeResponse = JsonCodec.read(messageNode, UnsubscribeMessageRequestInView.class).factory().process(oumuamuaServer, serverSession, unsubscribeNotice = new ChannelNotice());
+
+        if (unsubscribeNotice.isOn()) {
+          oumuamuaServer.onChannelUnsubscribed(serverSession, unsubscribeNotice.getChannel(), new NodeMessageGenerator(context, transport, UnsubscribeMessage.CHANNEL_ID, messageNode, false));
+        }
+
+        return unsubscribeResponse;
+      default:
+        if (channel.startsWith("/meta/")) {
+
+          return createErrorPacket(serverSession, channelId, channel, messageNode, "Unknown meta channel");
+        } else if (channel.endsWith("/*") || channel.endsWith("/**")) {
+
+          return createErrorPacket(serverSession, channelId, channel, messageNode, "Attempt to publish to a wildcard channel");
+        } else if (channel.startsWith("/service/")) {
+          return null;
+        } else {
+
+          return JsonCodec.read(messageNode, PublishMessageRequestInView.class).factory().process(oumuamuaServer, context, transport, channelId, serverSession, messageNode);
+        }
+    }
+  }
+
   default String asText (OumuamuaServer oumuamuaServer, BayeuxContext context, OumuamuaTransport transport, OumuamuaServerSession serverSession, OumuamuaPacket... packets)
     throws JsonProcessingException {
 
@@ -70,7 +157,7 @@ public interface OumuamuaCarrier {
 
     for (OumuamuaPacket packet : packets) {
       for (MapLike mapLike : packet.getMessages()) {
-        if (ExtensionNotifier.outgoing(oumuamuaServer, context, transport, packet.getSender(), serverSession, packet.getChannelId(), PacketType.LAZY.equals(packet.getType()), new ExtMapLike(mapLike))) {
+        if (ExtensionNotifier.outgoing(oumuamuaServer, packet.getSender(), serverSession, new ExtMapMessageGenerator(context, transport, packet.getChannelId(), mapLike, PacketType.LAZY.equals(packet.getType())))) {
           if (sendBuilder == null) {
             sendBuilder = new StringBuilder("[");
           } else {

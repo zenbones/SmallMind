@@ -35,17 +35,13 @@ package org.smallmind.cometd.oumuamua.meta;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.cometd.bayeux.ChannelId;
-import org.cometd.bayeux.server.BayeuxContext;
 import org.cometd.bayeux.server.SecurityPolicy;
 import org.cometd.bayeux.server.ServerChannel;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
 import org.smallmind.cometd.oumuamua.channel.ChannelNotice;
-import org.smallmind.cometd.oumuamua.message.MapLike;
-import org.smallmind.cometd.oumuamua.message.MessageUtility;
+import org.smallmind.cometd.oumuamua.message.NodeMessageGenerator;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
-import org.smallmind.cometd.oumuamua.message.OumuamuaServerMessage;
-import org.smallmind.cometd.oumuamua.transport.OumuamuaTransport;
 import org.smallmind.web.json.doppelganger.Doppelganger;
 import org.smallmind.web.json.doppelganger.Idiom;
 import org.smallmind.web.json.doppelganger.View;
@@ -63,7 +59,7 @@ public class SubscribeMessage extends AdvisedMetaMessage {
   @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
   private String subscription;
 
-  public OumuamuaPacket[] process (OumuamuaServer oumuamuaServer, BayeuxContext context, OumuamuaTransport transport, OumuamuaServerSession serverSession, ObjectNode rawMessage, ChannelNotice subscribeNotice) {
+  public OumuamuaPacket[] process (OumuamuaServer oumuamuaServer, OumuamuaServerSession serverSession, ChannelNotice subscribeNotice, NodeMessageGenerator messageGenerator) {
 
     if ((serverSession == null) || (!serverSession.getId().equals(getClientId()))) {
 
@@ -97,11 +93,8 @@ public class SubscribeMessage extends AdvisedMetaMessage {
         ServerChannel serverChannel;
 
         if ((securityPolicy = oumuamuaServer.getSecurityPolicy()) != null) {
-
-          OumuamuaServerMessage serverMessage = MessageUtility.createServerMessage(context, transport, CHANNEL_ID, false, new MapLike(rawMessage));
-
           if ((serverChannel = oumuamuaServer.findChannel(getChannel())) == null) {
-            if (!securityPolicy.canCreate(oumuamuaServer, serverSession, getChannel(), serverMessage)) {
+            if (!securityPolicy.canCreate(oumuamuaServer, serverSession, getChannel(), messageGenerator.generate())) {
 
               return OumuamuaPacket.asPackets(serverSession, CHANNEL_ID, new SubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setClientId(serverSession.getId()).setId(getId()).setError("Unauthorized").setSubscription(getSubscription()));
             } else {
@@ -109,7 +102,7 @@ public class SubscribeMessage extends AdvisedMetaMessage {
             }
           }
 
-          if (!securityPolicy.canSubscribe(oumuamuaServer, serverSession, serverChannel, serverMessage)) {
+          if (!securityPolicy.canSubscribe(oumuamuaServer, serverSession, serverChannel, messageGenerator.generate())) {
             return OumuamuaPacket.asPackets(serverSession, CHANNEL_ID, new SubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setClientId(serverSession.getId()).setId(getId()).setError("Unauthorized").setSubscription(getSubscription()));
           }
         } else {

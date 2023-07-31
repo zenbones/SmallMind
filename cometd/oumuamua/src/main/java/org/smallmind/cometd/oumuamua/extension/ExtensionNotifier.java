@@ -32,37 +32,28 @@
  */
 package org.smallmind.cometd.oumuamua.extension;
 
-import org.cometd.bayeux.ChannelId;
 import org.cometd.bayeux.Promise;
 import org.cometd.bayeux.client.ClientSession;
-import org.cometd.bayeux.server.BayeuxContext;
 import org.cometd.bayeux.server.BayeuxServer;
 import org.cometd.bayeux.server.ServerMessage;
 import org.cometd.bayeux.server.ServerSession;
 import org.smallmind.cometd.oumuamua.OumuamuaLocalSession;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
-import org.smallmind.cometd.oumuamua.message.MapLike;
-import org.smallmind.cometd.oumuamua.message.MessageUtility;
-import org.smallmind.cometd.oumuamua.message.OumuamuaServerMessage;
-import org.smallmind.cometd.oumuamua.transport.OumuamuaTransport;
+import org.smallmind.cometd.oumuamua.message.MessageGenerator;
 import org.smallmind.nutsnbolts.util.IterableIterator;
 
 public class ExtensionNotifier {
 
-  public static boolean incoming (OumuamuaServer oumuamuaServer, BayeuxContext context, OumuamuaTransport transport, OumuamuaServerSession sender, ChannelId channelId, boolean lazy, MapLike mapLike) {
+  public static boolean incoming (OumuamuaServer oumuamuaServer, OumuamuaServerSession sender, MessageGenerator messageGenerator) {
 
-    OumuamuaServerMessage serverMessage = null;
     boolean processing = true;
 
     for (BayeuxServer.Extension serverExtension : new IterableIterator<>(oumuamuaServer.iterateExtensions())) {
 
       Promise.Completable<Boolean> promise;
 
-      if (serverMessage == null) {
-        serverMessage = MessageUtility.createServerMessage(context, transport, channelId, lazy, mapLike);
-      }
-      serverExtension.incoming(sender, serverMessage, promise = new Promise.Completable<>());
+      serverExtension.incoming(sender, messageGenerator.generate(), promise = new Promise.Completable<>());
       if (!promise.join()) {
         processing = false;
         break;
@@ -74,10 +65,7 @@ public class ExtensionNotifier {
 
         Promise.Completable<Boolean> promise;
 
-        if (serverMessage == null) {
-          serverMessage = MessageUtility.createServerMessage(context, transport, channelId, lazy, mapLike);
-        }
-        sessionExtension.incoming(sender, serverMessage, promise = new Promise.Completable<>());
+        sessionExtension.incoming(sender, messageGenerator.generate(), promise = new Promise.Completable<>());
         if (!promise.join()) {
           processing = false;
           break;
@@ -90,10 +78,7 @@ public class ExtensionNotifier {
 
         Promise.Completable<Boolean> promise;
 
-        if (serverMessage == null) {
-          serverMessage = MessageUtility.createServerMessage(context, transport, channelId, lazy, mapLike);
-        }
-        sessionExtension.incoming(sender.getLocalSession(), serverMessage, promise = new Promise.Completable<>());
+        sessionExtension.incoming(sender.getLocalSession(), messageGenerator.generate(), promise = new Promise.Completable<>());
         if (!promise.join()) {
           processing = false;
           break;
@@ -104,19 +89,15 @@ public class ExtensionNotifier {
     return processing;
   }
 
-  public static boolean outgoing (OumuamuaServer oumuamuaServer, BayeuxContext context, OumuamuaTransport transport, OumuamuaServerSession sender, OumuamuaServerSession receiver, ChannelId channelId, boolean lazy, MapLike mapLike) {
+  public static boolean outgoing (OumuamuaServer oumuamuaServer, OumuamuaServerSession sender, OumuamuaServerSession receiver, MessageGenerator messageGenerator) {
 
-    OumuamuaServerMessage serverMessage = null;
     boolean processing = true;
 
     for (BayeuxServer.Extension serverExtension : new IterableIterator<>(oumuamuaServer.iterateExtensions())) {
 
       Promise.Completable<Boolean> promise;
 
-      if (serverMessage == null) {
-        serverMessage = MessageUtility.createServerMessage(context, transport, channelId, lazy, mapLike);
-      }
-      serverExtension.outgoing(sender, receiver, serverMessage, promise = new Promise.Completable<>());
+      serverExtension.outgoing(sender, receiver, messageGenerator.generate(), promise = new Promise.Completable<>());
       if (!promise.join()) {
         processing = false;
         break;
@@ -128,10 +109,7 @@ public class ExtensionNotifier {
 
         Promise.Completable<ServerMessage.Mutable> promise;
 
-        if (serverMessage == null) {
-          serverMessage = MessageUtility.createServerMessage(context, transport, channelId, lazy, mapLike);
-        }
-        sessionExtension.outgoing(sender, receiver, serverMessage, promise = new Promise.Completable<>());
+        sessionExtension.outgoing(sender, receiver, messageGenerator.generate(), promise = new Promise.Completable<>());
         if (promise.join() == null) {
           processing = false;
           break;
@@ -144,10 +122,7 @@ public class ExtensionNotifier {
 
         Promise.Completable<Boolean> promise;
 
-        if (serverMessage == null) {
-          serverMessage = MessageUtility.createServerMessage(context, transport, channelId, lazy, mapLike);
-        }
-        sessionExtension.outgoing(sender.getLocalSession(), serverMessage, promise = new Promise.Completable<>());
+        sessionExtension.outgoing(sender.getLocalSession(), messageGenerator.generate(), promise = new Promise.Completable<>());
         if (!promise.join()) {
           processing = false;
           break;

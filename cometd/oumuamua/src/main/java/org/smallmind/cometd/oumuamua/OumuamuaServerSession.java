@@ -290,6 +290,24 @@ public class OumuamuaServerSession implements ServerSession {
     return oumuamuaServer.getSubscriptions(this);
   }
 
+  public void onConnected (ServerMessage serverMessage) {
+
+    for (ServerSessionListener sessionListener : listenerList) {
+      if (AddedListener.class.isAssignableFrom(sessionListener.getClass())) {
+        ((AddedListener)sessionListener).added(this, serverMessage);
+      }
+    }
+  }
+
+  public void onDisconnected (ServerMessage serverMessage, boolean timeout) {
+
+    for (ServerSessionListener sessionListener : listenerList) {
+      if (RemovedListener.class.isAssignableFrom(sessionListener.getClass())) {
+        ((RemovedListener)sessionListener).removed(this, serverMessage, timeout);
+      }
+    }
+  }
+
   @Override
   public void deliver (Session sender, ServerMessage.Mutable message, Promise<Boolean> promise) {
 

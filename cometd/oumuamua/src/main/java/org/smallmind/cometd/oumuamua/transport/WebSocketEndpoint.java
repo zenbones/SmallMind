@@ -51,21 +51,13 @@ import org.cometd.bayeux.server.BayeuxServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
 import org.smallmind.cometd.oumuamua.channel.ChannelIdCache;
-import org.smallmind.cometd.oumuamua.channel.ChannelNotice;
 import org.smallmind.cometd.oumuamua.context.OumuamuaWebsocketContext;
 import org.smallmind.cometd.oumuamua.extension.ExtensionNotifier;
 import org.smallmind.cometd.oumuamua.logging.DataRecord;
 import org.smallmind.cometd.oumuamua.logging.NodeRecord;
 import org.smallmind.cometd.oumuamua.logging.PacketRecord;
-import org.smallmind.cometd.oumuamua.message.MapLike;
+import org.smallmind.cometd.oumuamua.message.NodeMessageGenerator;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
-import org.smallmind.cometd.oumuamua.meta.ConnectMessageRequestInView;
-import org.smallmind.cometd.oumuamua.meta.DisconnectMessageRequestInView;
-import org.smallmind.cometd.oumuamua.meta.HandshakeMessageRequestInView;
-import org.smallmind.cometd.oumuamua.meta.PublishMessageRequestInView;
-import org.smallmind.cometd.oumuamua.meta.SubscribeMessageRequestInView;
-import org.smallmind.cometd.oumuamua.meta.UnsubscribeMessageRequestInView;
-import org.smallmind.nutsnbolts.util.Switch;
 import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
@@ -96,7 +88,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
     }
 
     oumuamuaServer.addSession(serverSession = new OumuamuaServerSession(oumuamuaServer, websocketTransport, this, false, null, oumuamuaServer.getConfiguration().getMaximumMessageQueueSize()));
-    connected = true;
+    setConnected(true);
 
     websocketSession.addMessageHandler(this);
   }
@@ -106,6 +98,12 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
     context = new OumuamuaWebsocketContext(storedHandshakeRequest);
 
     return this;
+  }
+
+  @Override
+  public String[] getActualSessions () {
+
+    return ACTUAL_TRANSPORTS;
   }
 
   @Override
@@ -123,10 +121,22 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
   }
 
   @Override
+  public boolean isConnected () {
+
+    return connected;
+  }
+
+  @Override
+  public void setConnected (boolean connected) {
+
+    this.connected = connected;
+  }
+
+  @Override
   public synchronized void send (OumuamuaPacket... packets)
     throws IOException, InterruptedException, ExecutionException, TimeoutException {
 
-    if (connected) {
+    if (isConnected()) {
 
       String text;
 
@@ -156,11 +166,11 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
       String channel = messageNode.get(Message.CHANNEL_FIELD).asText();
       ChannelId channelId = ChannelIdCache.generate(channel);
 
-      if (ExtensionNotifier.incoming(oumuamuaServer, context, websocketTransport, serverSession, channelId, false, new MapLike(messageNode))) {
+      if (ExtensionNotifier.incoming(oumuamuaServer, serverSession, new NodeMessageGenerator(context, websocketTransport, channelId, messageNode, false))) {
 
-        OumuamuaPacket[] packets = respond(channelId, channelId.getId(), messageNode);
+        OumuamuaPacket[] packets = respond(oumuamuaServer, context, websocketTransport, serverSession, channelId, channelId.getId(), messageNode);
 
-        if (!connected) {
+        if (!isConnected()) {
           websocketSession.close(new CloseReason(CloseReason.CloseCodes.NORMAL_CLOSURE, "Client disconnect"));
         }
 
@@ -203,11 +213,11 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
           String channel = messageNode.get(Message.CHANNEL_FIELD).asText();
           ChannelId channelId = ChannelIdCache.generate(channel);
 
-          if (ExtensionNotifier.incoming(oumuamuaServer, context, websocketTransport, serverSession, channelId, false, new MapLike((ObjectNode)messageNode))) {
+          if (ExtensionNotifier.incoming(oumuamuaServer, serverSession, new NodeMessageGenerator(context, websocketTransport, channelId, (ObjectNode)messageNode, false))) {
 
             OumuamuaPacket[] packets;
 
-            if ((packets = respond(channelId, channel, (ObjectNode)messageNode)) != null) {
+            if ((packets = respond(oumuamuaServer, context, websocketTransport, serverSession, channelId, channelId.getId(), (ObjectNode)messageNode)) != null) {
               send(packets);
             }
           }
@@ -215,7 +225,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
       }
 
       // handle the disconnect after sending the confirmation
-      if (!connected) {
+      if (!isConnected()) {
         websocketSession.close(new CloseReason(CloseReason.CloseCodes.NORMAL_CLOSURE, "Client disconnect"));
       }
     } catch (Exception ioException) {
@@ -226,85 +236,20 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
     }
   }
 
-  private OumuamuaPacket[] respond (ChannelId channelId, String channel, ObjectNode messageNode)
-    throws JsonProcessingException {
-
-    switch (channel) {
-      case "/meta/handshake":
-
-        return JsonCodec.read(messageNode, HandshakeMessageRequestInView.class).factory().process(oumuamuaServer, context, websocketTransport, ACTUAL_TRANSPORTS, serverSession, messageNode);
-      case "/meta/connect":
-
-        Switch connectSwitch;
-        OumuamuaPacket[] connectResponse = JsonCodec.read(messageNode, ConnectMessageRequestInView.class).factory().process(websocketTransport, serverSession, connectSwitch = new Switch());
-
-        if (connectSwitch.isOn()) {
-          oumuamuaServer.onSessionConnected(context, websocketTransport, serverSession, messageNode);
-        }
-
-        return connectResponse;
-      case "/meta/disconnect":
-
-        Switch disconnectSwitch;
-        OumuamuaPacket[] disconnectResponse = JsonCodec.read(messageNode, DisconnectMessageRequestInView.class).factory().process(serverSession, disconnectSwitch = new Switch());
-
-        if (disconnectSwitch.isOn()) {
-          // disconnect will happen after the response hs been sent
-          connected = false;
-          oumuamuaServer.onSessionDisconnected(context, websocketTransport, serverSession, messageNode, false);
-        }
-
-        return disconnectResponse;
-      case "/meta/subscribe":
-
-        ChannelNotice subscribeNotice;
-        OumuamuaPacket[] subscribeResponse = JsonCodec.read(messageNode, SubscribeMessageRequestInView.class).factory().process(oumuamuaServer, context, websocketTransport, serverSession, messageNode, subscribeNotice = new ChannelNotice());
-
-        if (subscribeNotice.isOn()) {
-          oumuamuaServer.onChannelSubscribed(context, websocketTransport, serverSession, subscribeNotice.getChannel(), messageNode);
-        }
-
-        return subscribeResponse;
-      case "/meta/unsubscribe":
-
-        ChannelNotice unsubscribeNotice;
-        OumuamuaPacket[] unsubscribeResponse = JsonCodec.read(messageNode, UnsubscribeMessageRequestInView.class).factory().process(oumuamuaServer, serverSession, unsubscribeNotice = new ChannelNotice());
-
-        if (unsubscribeNotice.isOn()) {
-          oumuamuaServer.onChannelUnsubscribed(context, websocketTransport, serverSession, unsubscribeNotice.getChannel(), messageNode);
-        }
-
-        return unsubscribeResponse;
-      default:
-        if (channel.startsWith("/meta/")) {
-
-          return createErrorPacket(serverSession, channelId, channel, messageNode, "Unknown meta channel");
-        } else if (channel.endsWith("/*") || channel.endsWith("/**")) {
-
-          return createErrorPacket(serverSession, channelId, channel, messageNode, "Attempt to publish to a wildcard channel");
-        } else if (channel.startsWith("/service/")) {
-          return null;
-        } else {
-
-          return JsonCodec.read(messageNode, PublishMessageRequestInView.class).factory().process(oumuamuaServer, context, websocketTransport, channelId, serverSession, messageNode);
-        }
-    }
-  }
-
   @Override
   public synchronized void onClose (Session wsSession, CloseReason closeReason) {
 
     if (serverSession != null) {
       oumuamuaServer.removeSession(serverSession);
 
-      if (connected) {
-        oumuamuaServer.onSessionDisconnected(context, websocketTransport, serverSession, null, true);
+      if (isConnected()) {
+        oumuamuaServer.onSessionDisconnected(serverSession, null, true);
       }
 
       serverSession = null;
     }
 
-    connected = false;
+    setConnected(false);
   }
 
   @Override

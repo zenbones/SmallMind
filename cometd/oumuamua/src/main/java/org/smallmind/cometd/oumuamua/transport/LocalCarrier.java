@@ -43,21 +43,13 @@ import org.smallmind.cometd.oumuamua.OumuamuaLocalSession;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
 import org.smallmind.cometd.oumuamua.channel.ChannelIdCache;
-import org.smallmind.cometd.oumuamua.channel.ChannelNotice;
 import org.smallmind.cometd.oumuamua.context.OumuamuaLocalContext;
 import org.smallmind.cometd.oumuamua.extension.ExtensionNotifier;
 import org.smallmind.cometd.oumuamua.logging.DataRecord;
 import org.smallmind.cometd.oumuamua.logging.NodeRecord;
 import org.smallmind.cometd.oumuamua.logging.PacketRecord;
-import org.smallmind.cometd.oumuamua.message.MapLike;
+import org.smallmind.cometd.oumuamua.message.NodeMessageGenerator;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
-import org.smallmind.cometd.oumuamua.meta.ConnectMessageRequestInView;
-import org.smallmind.cometd.oumuamua.meta.DisconnectMessageRequestInView;
-import org.smallmind.cometd.oumuamua.meta.HandshakeMessageRequestInView;
-import org.smallmind.cometd.oumuamua.meta.PublishMessageRequestInView;
-import org.smallmind.cometd.oumuamua.meta.SubscribeMessageRequestInView;
-import org.smallmind.cometd.oumuamua.meta.UnsubscribeMessageRequestInView;
-import org.smallmind.nutsnbolts.util.Switch;
 import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
@@ -66,6 +58,7 @@ public class LocalCarrier implements OumuamuaCarrier {
   private static final OumuamuaLocalContext LOCAL_CONTEXT = new OumuamuaLocalContext();
   private static final String[] ACTUAL_TRANSPORTS = new String[] {"local"};
   private static final long DEFAULT_MAX_SESSION_IDLE_TIMEOUT = 300000;
+
   private final OumuamuaServer oumuamuaServer;
   private final LocalTransport localTransport;
   private final IdleCheck idleCheck;
@@ -83,7 +76,7 @@ public class LocalCarrier implements OumuamuaCarrier {
     maxSessionIdleTimeout = (localTransport.getMaxInterval() > 0) ? localTransport.getMaxInterval() : DEFAULT_MAX_SESSION_IDLE_TIMEOUT;
 
     oumuamuaServer.addSession(serverSession = new OumuamuaServerSession(oumuamuaServer, localTransport, this, true, idHint, oumuamuaServer.getConfiguration().getMaximumMessageQueueSize()));
-    connected = true;
+    setConnected(true);
 
     new Thread(idleCheck = new IdleCheck()).start();
   }
@@ -91,6 +84,12 @@ public class LocalCarrier implements OumuamuaCarrier {
   public OumuamuaLocalSession getLocalSession () {
 
     return (OumuamuaLocalSession)serverSession.getLocalSession();
+  }
+
+  @Override
+  public String[] getActualSessions () {
+
+    return ACTUAL_TRANSPORTS;
   }
 
   @Override
@@ -108,10 +107,22 @@ public class LocalCarrier implements OumuamuaCarrier {
   }
 
   @Override
+  public boolean isConnected () {
+
+    return connected;
+  }
+
+  @Override
+  public void setConnected (boolean connected) {
+
+    this.connected = connected;
+  }
+
+  @Override
   public synchronized void send (OumuamuaPacket... packets)
     throws IOException {
 
-    if (connected) {
+    if (isConnected()) {
 
       String text;
 
@@ -138,11 +149,11 @@ public class LocalCarrier implements OumuamuaCarrier {
 
       lastContactMilliseconds = System.currentTimeMillis();
 
-      if (ExtensionNotifier.incoming(oumuamuaServer, LOCAL_CONTEXT, localTransport, serverSession, channelId, false, new MapLike(messageNode))) {
+      if (ExtensionNotifier.incoming(oumuamuaServer, serverSession, new NodeMessageGenerator(LOCAL_CONTEXT, localTransport, channelId, messageNode, false))) {
 
-        OumuamuaPacket[] packets = respond(channelId, channelId.getId(), messageNode);
+        OumuamuaPacket[] packets = respond(oumuamuaServer, LOCAL_CONTEXT, localTransport, serverSession, channelId, channelId.getId(), messageNode);
 
-        if (!connected) {
+        if (!isConnected()) {
           close();
         }
 
@@ -177,78 +188,14 @@ public class LocalCarrier implements OumuamuaCarrier {
     if (serverSession != null) {
       oumuamuaServer.removeSession(serverSession);
 
-      if (connected) {
-        oumuamuaServer.onSessionDisconnected(LOCAL_CONTEXT, localTransport, serverSession, null, true);
+      if (isConnected()) {
+        oumuamuaServer.onSessionDisconnected(serverSession, null, true);
       }
 
       serverSession = null;
     }
 
-    connected = false;
-  }
-
-  private OumuamuaPacket[] respond (ChannelId channelId, String channel, ObjectNode messageNode)
-    throws JsonProcessingException {
-
-    switch (channel) {
-      case "/meta/handshake":
-
-        return JsonCodec.read(messageNode, HandshakeMessageRequestInView.class).factory().process(oumuamuaServer, LOCAL_CONTEXT, localTransport, ACTUAL_TRANSPORTS, serverSession, messageNode);
-      case "/meta/connect":
-
-        Switch connectSwitch;
-        OumuamuaPacket[] connectResponse = JsonCodec.read(messageNode, ConnectMessageRequestInView.class).factory().process(localTransport, serverSession, connectSwitch = new Switch());
-
-        if (connectSwitch.isOn()) {
-          oumuamuaServer.onSessionConnected(LOCAL_CONTEXT, localTransport, serverSession, messageNode);
-        }
-
-        return connectResponse;
-      case "/meta/disconnect":
-
-        Switch disocnnectSwitch;
-        OumuamuaPacket[] disconnectResponse = JsonCodec.read(messageNode, DisconnectMessageRequestInView.class).factory().process(serverSession, disocnnectSwitch = new Switch());
-
-        if (disocnnectSwitch.isOn()) {
-          // disconnect will happen after the response hs been sent
-          connected = false;
-          oumuamuaServer.onSessionDisconnected(LOCAL_CONTEXT, localTransport, serverSession, messageNode, false);
-        }
-
-        return disconnectResponse;
-      case "/meta/subscribe":
-        ChannelNotice subscribeNotice;
-        OumuamuaPacket[] subscribeResponse = JsonCodec.read(messageNode, SubscribeMessageRequestInView.class).factory().process(oumuamuaServer, LOCAL_CONTEXT, localTransport, serverSession, messageNode, subscribeNotice = new ChannelNotice());
-
-        if (subscribeNotice.isOn()) {
-          oumuamuaServer.onChannelSubscribed(LOCAL_CONTEXT, localTransport, serverSession, subscribeNotice.getChannel(), messageNode);
-        }
-
-        return subscribeResponse;
-      case "/meta/unsubscribe":
-
-        ChannelNotice unsubscribeNotice;
-        OumuamuaPacket[] unsubscribeResponse = JsonCodec.read(messageNode, UnsubscribeMessageRequestInView.class).factory().process(oumuamuaServer, serverSession, unsubscribeNotice = new ChannelNotice());
-
-        if (unsubscribeNotice.isOn()) {
-          oumuamuaServer.onChannelUnsubscribed(LOCAL_CONTEXT, localTransport, serverSession, unsubscribeNotice.getChannel(), messageNode);
-        }
-
-        return unsubscribeResponse;
-      default:
-        if (channel.startsWith("/meta/")) {
-
-          return createErrorPacket(serverSession, channelId, channel, messageNode, "Unknown meta channel");
-        } else if (channel.endsWith("/*") || channel.endsWith("/**")) {
-
-          return createErrorPacket(serverSession, channelId, channel, messageNode, "Attempt to publish to a wildcard channel");
-        } else if (channel.startsWith("/service/")) {
-          return null;
-        } else {
-
-          return JsonCodec.read(messageNode, PublishMessageRequestInView.class).factory().process(oumuamuaServer, LOCAL_CONTEXT, localTransport, channelId, serverSession, messageNode);
-        }
-    }
+    setConnected(false);
   }
 
   private class IdleCheck implements Runnable {

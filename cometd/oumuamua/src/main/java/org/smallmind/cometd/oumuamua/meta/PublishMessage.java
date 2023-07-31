@@ -41,7 +41,7 @@ import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerChannel;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
 import org.smallmind.cometd.oumuamua.message.MapLike;
-import org.smallmind.cometd.oumuamua.message.MessageUtility;
+import org.smallmind.cometd.oumuamua.message.NodeMessageGenerator;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 import org.smallmind.cometd.oumuamua.transport.OumuamuaTransport;
 import org.smallmind.web.json.doppelganger.Doppelganger;
@@ -83,7 +83,7 @@ public class PublishMessage extends MetaMessage {
 
         SecurityPolicy securityPolicy;
 
-        if (((securityPolicy = oumuamuaServer.getSecurityPolicy()) != null) && (!securityPolicy.canPublish(oumuamuaServer, serverSession, serverChannel, MessageUtility.createServerMessage(context, transport, channelId, false, new MapLike(rawMessage))))) {
+        if (((securityPolicy = oumuamuaServer.getSecurityPolicy()) != null) && (!securityPolicy.canPublish(oumuamuaServer, serverSession, serverChannel, new NodeMessageGenerator(context, transport, channelId, rawMessage, serverChannel.isLazy()).generate()))) {
 
           return OumuamuaPacket.asPackets(serverSession, channelId, new PublishMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(getChannel()).setId(getId()).setError("Unauthorized"));
         } else {

@@ -47,10 +47,8 @@ import java.util.concurrent.locks.ReentrantLock;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.cometd.bayeux.MarkedReference;
 import org.cometd.bayeux.Transport;
-import org.cometd.bayeux.server.BayeuxContext;
 import org.cometd.bayeux.server.BayeuxServer;
 import org.cometd.bayeux.server.ConfigurableServerChannel;
 import org.cometd.bayeux.server.LocalSession;
@@ -67,11 +65,10 @@ import org.smallmind.cometd.oumuamua.channel.ListChannelsOperation;
 import org.smallmind.cometd.oumuamua.channel.ListSubscriptionsOperation;
 import org.smallmind.cometd.oumuamua.channel.UnsubscribeOperation;
 import org.smallmind.cometd.oumuamua.message.MapLike;
-import org.smallmind.cometd.oumuamua.message.MessageUtility;
+import org.smallmind.cometd.oumuamua.message.NodeMessageGenerator;
 import org.smallmind.cometd.oumuamua.message.OumuamuaLazyPacket;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 import org.smallmind.cometd.oumuamua.message.OumuamuaServerMessage;
-import org.smallmind.cometd.oumuamua.meta.DisconnectMessage;
 import org.smallmind.cometd.oumuamua.transport.LocalTransport;
 import org.smallmind.cometd.oumuamua.transport.OumuamuaTransport;
 import org.smallmind.scribe.pen.LoggerManager;
@@ -257,18 +254,15 @@ public class OumuamuaServer implements BayeuxServer {
     }
   }
 
-  public void onSessionConnected (BayeuxContext context, OumuamuaTransport transport, ServerSession serverSession, ObjectNode messageNode) {
-
-    OumuamuaServerMessage serverMessage = null;
+  public void onSessionConnected (ServerSession serverSession, NodeMessageGenerator messageGenerator) {
 
     for (BayeuxListener bayeuxListener : listenerList) {
       if (SessionListener.class.isAssignableFrom(bayeuxListener.getClass())) {
-        if (serverMessage == null) {
-          serverMessage = MessageUtility.createServerMessage(context, transport, DisconnectMessage.CHANNEL_ID, false, new MapLike(messageNode));
-        }
-        ((SessionListener)bayeuxListener).sessionAdded(serverSession, serverMessage);
+        ((SessionListener)bayeuxListener).sessionAdded(serverSession, messageGenerator.generate());
       }
     }
+
+  //  ((OumuamuaServerSession)serverSession).onConnected();
   }
 
   @Override
@@ -285,16 +279,11 @@ public class OumuamuaServer implements BayeuxServer {
     }
   }
 
-  public void onSessionDisconnected (BayeuxContext context, OumuamuaTransport transport, ServerSession serverSession, ObjectNode messageNode, boolean timeout) {
-
-    OumuamuaServerMessage serverMessage = null;
+  public void onSessionDisconnected (ServerSession serverSession, NodeMessageGenerator messageGenerator, boolean timeout) {
 
     for (BayeuxListener bayeuxListener : listenerList) {
       if (SessionListener.class.isAssignableFrom(bayeuxListener.getClass())) {
-        if ((serverMessage == null) && (messageNode != null)) {
-          serverMessage = MessageUtility.createServerMessage(context, transport, DisconnectMessage.CHANNEL_ID, false, new MapLike(messageNode));
-        }
-        ((SessionListener)bayeuxListener).sessionRemoved(serverSession, serverMessage, timeout);
+        ((SessionListener)bayeuxListener).sessionRemoved(serverSession, (messageGenerator == null) ? null : messageGenerator.generate(), timeout);
       }
     }
   }
@@ -312,30 +301,20 @@ public class OumuamuaServer implements BayeuxServer {
     }
   }
 
-  public void onChannelSubscribed (BayeuxContext context, OumuamuaTransport transport, ServerSession serverSession, ServerChannel serverChannel, ObjectNode messageNode) {
-
-    OumuamuaServerMessage serverMessage = null;
+  public void onChannelSubscribed (ServerSession serverSession, ServerChannel serverChannel, NodeMessageGenerator messageGenerator) {
 
     for (BayeuxListener bayeuxListener : listenerList) {
       if (SubscriptionListener.class.isAssignableFrom(bayeuxListener.getClass())) {
-        if ((serverMessage == null) && (messageNode != null)) {
-          serverMessage = MessageUtility.createServerMessage(context, transport, DisconnectMessage.CHANNEL_ID, false, new MapLike(messageNode));
-        }
-        ((SubscriptionListener)bayeuxListener).subscribed(serverSession, serverChannel, serverMessage);
+        ((SubscriptionListener)bayeuxListener).subscribed(serverSession, serverChannel, messageGenerator.generate());
       }
     }
   }
 
-  public void onChannelUnsubscribed (BayeuxContext context, OumuamuaTransport transport, ServerSession serverSession, ServerChannel serverChannel, ObjectNode messageNode) {
-
-    OumuamuaServerMessage serverMessage = null;
+  public void onChannelUnsubscribed (ServerSession serverSession, ServerChannel serverChannel, NodeMessageGenerator messageGenerator) {
 
     for (BayeuxListener bayeuxListener : listenerList) {
       if (SubscriptionListener.class.isAssignableFrom(bayeuxListener.getClass())) {
-        if ((serverMessage == null) && (messageNode != null)) {
-          serverMessage = MessageUtility.createServerMessage(context, transport, DisconnectMessage.CHANNEL_ID, false, new MapLike(messageNode));
-        }
-        ((SubscriptionListener)bayeuxListener).unsubscribed(serverSession, serverChannel, serverMessage);
+        ((SubscriptionListener)bayeuxListener).unsubscribed(serverSession, serverChannel, messageGenerator.generate());
       }
     }
   }
