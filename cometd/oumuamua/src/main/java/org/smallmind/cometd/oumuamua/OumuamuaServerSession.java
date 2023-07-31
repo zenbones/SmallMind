@@ -75,6 +75,7 @@ public class OumuamuaServerSession implements ServerSession {
   private final LocalSession localSession;
   private final String id;
   private final int maximumMessageQueueSize;
+  private final int maximumUndeliveredLazyMessageCount;
   private String[] negotiatedTransports;
   private Boolean metaConnectDeliveryOnly;
   private boolean handshook;
@@ -86,12 +87,13 @@ public class OumuamuaServerSession implements ServerSession {
   private int lazyQueueSize;
   private int connectQueueSize;
 
-  public OumuamuaServerSession (OumuamuaServer oumuamuaServer, OumuamuaTransport serverTransport, OumuamuaCarrier carrier, boolean createLocalSession, String idHint, int maximumMessageQueueSize) {
+  public OumuamuaServerSession (OumuamuaServer oumuamuaServer, OumuamuaTransport serverTransport, OumuamuaCarrier carrier, boolean createLocalSession, String idHint, int maximumMessageQueueSize, int maximumUndeliveredLazyMessageCount) {
 
     this.oumuamuaServer = oumuamuaServer;
     this.serverTransport = serverTransport;
     this.carrier = carrier;
     this.maximumMessageQueueSize = maximumMessageQueueSize;
+    this.maximumUndeliveredLazyMessageCount = maximumUndeliveredLazyMessageCount;
 
     id = (idHint == null) ? SnowflakeId.newInstance().generateHexEncoding() : SnowflakeId.newInstance().generateHexEncoding() + "-" + idHint;
     localSession = (createLocalSession) ? new OumuamuaLocalSession(this) : null;
@@ -309,6 +311,15 @@ public class OumuamuaServerSession implements ServerSession {
     }
   }
 
+  public void onMessage (OumuamuaServerSession sender, MessageGenerator messageGenerator, Promise<Boolean> promise) {
+
+    for (ServerSessionListener sessionListener : listenerList) {
+      if (MessageListener.class.isAssignableFrom(sessionListener.getClass())) {
+        ((MessageListener)sessionListener).onMessage(this, sender, messageGenerator.generate(), promise);
+      }
+    }
+  }
+
   @Override
   public void deliver (Session sender, ServerMessage.Mutable message, Promise<Boolean> promise) {
 
@@ -416,32 +427,34 @@ public class OumuamuaServerSession implements ServerSession {
           LinkedList<OumuamuaLazyPacket> enqueuingLazyPacketList;
           long lazyTimestamp;
 
-          if (connectQueueSize + (lazyQueueSize += packet.size()) > maximumMessageQueueSize) {
+          if ((lazyQueueSize += packet.size()) > maximumUndeliveredLazyMessageCount) {
 
             boolean operating = true;
             boolean lostLazyMessages = false;
 
-            while (operating && (connectQueueSize + lazyQueueSize > maximumMessageQueueSize) && (!lazyMessageQueue.isEmpty())) {
+            while (operating && (lazyQueueSize > maximumUndeliveredLazyMessageCount) && (!lazyMessageQueue.isEmpty())) {
 
               LinkedList<OumuamuaLazyPacket> overflowLazyPacketList;
 
-              if (((overflowLazyPacketList = lazyMessageQueue.pollFirstEntry().getValue()) != null) && (!overflowLazyPacketList.isEmpty())) {
+              if ((overflowLazyPacketList = lazyMessageQueue.pollFirstEntry().getValue()) != null) {
+                if (!overflowLazyPacketList.isEmpty()) {
 
-                OumuamuaLazyPacket[] overflowLazyPackets = new OumuamuaLazyPacket[overflowLazyPacketList.size()];
-                int index = 0;
+                  OumuamuaLazyPacket[] overflowLazyPackets = new OumuamuaLazyPacket[overflowLazyPacketList.size()];
+                  int index = 0;
 
-                for (OumuamuaLazyPacket overflowLazyPacket : overflowLazyPacketList) {
-                  lazyQueueSize -= overflowLazyPacket.size();
-                  overflowLazyPackets[index++] = overflowLazyPacket;
-                }
+                  for (OumuamuaLazyPacket overflowLazyPacket : overflowLazyPacketList) {
+                    lazyQueueSize -= overflowLazyPacket.size();
+                    overflowLazyPackets[index++] = overflowLazyPacket;
+                  }
 
-                if ((metaConnectDeliveryOnly == null) ? serverTransport.isMetaConnectDeliveryOnly() : metaConnectDeliveryOnly) {
-                  lostLazyMessages = true;
-                } else {
-                  try {
-                    carrier.send(overflowLazyPackets);
-                  } catch (Exception exception) {
-                    LoggerManager.getLogger(OumuamuaServerSession.class).error(exception);
+                  if ((metaConnectDeliveryOnly == null) ? serverTransport.isMetaConnectDeliveryOnly() : metaConnectDeliveryOnly) {
+                    lostLazyMessages = true;
+                  } else {
+                    try {
+                      carrier.send(overflowLazyPackets);
+                    } catch (Exception exception) {
+                      LoggerManager.getLogger(OumuamuaServerSession.class).error(exception);
+                    }
                   }
                 }
               } else {
@@ -466,7 +479,7 @@ public class OumuamuaServerSession implements ServerSession {
         messagePollLock.lock();
 
         try {
-          if (connectQueueSize + lazyQueueSize + packet.size() > maximumMessageQueueSize) {
+          if (connectQueueSize + packet.size() > maximumMessageQueueSize) {
             LoggerManager.getLogger(OumuamuaServerSession.class).warn("Queued messages lost due to overflow");
           } else {
             connectQueueSize += packet.size();
