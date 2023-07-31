@@ -49,6 +49,7 @@ import org.cometd.bayeux.server.ServerChannel;
 import org.cometd.bayeux.server.ServerMessage;
 import org.cometd.bayeux.server.ServerSession;
 import org.cometd.bayeux.server.ServerTransport;
+import org.smallmind.cometd.oumuamua.message.MessageGenerator;
 import org.smallmind.cometd.oumuamua.message.MessageUtility;
 import org.smallmind.cometd.oumuamua.message.OumuamuaLazyPacket;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
@@ -290,20 +291,20 @@ public class OumuamuaServerSession implements ServerSession {
     return oumuamuaServer.getSubscriptions(this);
   }
 
-  public void onConnected (ServerMessage serverMessage) {
+  public void onConnected (MessageGenerator messageGenerator) {
 
     for (ServerSessionListener sessionListener : listenerList) {
       if (AddedListener.class.isAssignableFrom(sessionListener.getClass())) {
-        ((AddedListener)sessionListener).added(this, serverMessage);
+        ((AddedListener)sessionListener).added(this, messageGenerator.generate());
       }
     }
   }
 
-  public void onDisconnected (ServerMessage serverMessage, boolean timeout) {
+  public void onDisconnected (MessageGenerator messageGenerator, boolean timeout) {
 
     for (ServerSessionListener sessionListener : listenerList) {
       if (RemovedListener.class.isAssignableFrom(sessionListener.getClass())) {
-        ((RemovedListener)sessionListener).removed(this, serverMessage, timeout);
+        ((RemovedListener)sessionListener).removed(this, messageGenerator.generate(), timeout);
       }
     }
   }

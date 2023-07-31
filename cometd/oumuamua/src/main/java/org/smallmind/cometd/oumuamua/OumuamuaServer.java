@@ -262,7 +262,7 @@ public class OumuamuaServer implements BayeuxServer {
       }
     }
 
-  //  ((OumuamuaServerSession)serverSession).onConnected();
+    ((OumuamuaServerSession)serverSession).onConnected(messageGenerator);
   }
 
   @Override
@@ -286,6 +286,8 @@ public class OumuamuaServer implements BayeuxServer {
         ((SessionListener)bayeuxListener).sessionRemoved(serverSession, (messageGenerator == null) ? null : messageGenerator.generate(), timeout);
       }
     }
+
+    ((OumuamuaServerSession)serverSession).onDisconnected(messageGenerator, timeout);
   }
 
   @Override
