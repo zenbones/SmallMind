@@ -134,7 +134,7 @@ public class ExtensionNotifier {
 
       Promise.Completable<Boolean> promise;
 
-      receiver.onMessage(sender, messageGenerator, promise = new Promise.Completable<>());
+      receiver.onMessageSent(sender, messageGenerator, promise = new Promise.Completable<>());
       if (!promise.join()) {
         processing = false;
       }

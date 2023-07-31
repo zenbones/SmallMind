@@ -49,6 +49,8 @@ import org.cometd.bayeux.server.ServerChannel;
 import org.cometd.bayeux.server.ServerMessage;
 import org.cometd.bayeux.server.ServerSession;
 import org.cometd.bayeux.server.ServerTransport;
+import org.smallmind.cometd.oumuamua.message.MapLike;
+import org.smallmind.cometd.oumuamua.message.MapMessageGenerator;
 import org.smallmind.cometd.oumuamua.message.MessageGenerator;
 import org.smallmind.cometd.oumuamua.message.MessageUtility;
 import org.smallmind.cometd.oumuamua.message.OumuamuaLazyPacket;
@@ -311,11 +313,29 @@ public class OumuamuaServerSession implements ServerSession {
     }
   }
 
-  public void onMessage (OumuamuaServerSession sender, MessageGenerator messageGenerator, Promise<Boolean> promise) {
+  public void onMessageSent (OumuamuaServerSession sender, MessageGenerator messageGenerator, Promise<Boolean> promise) {
 
     for (ServerSessionListener sessionListener : listenerList) {
       if (MessageListener.class.isAssignableFrom(sessionListener.getClass())) {
         ((MessageListener)sessionListener).onMessage(this, sender, messageGenerator.generate(), promise);
+      }
+    }
+  }
+
+  public void onMessageEnqueued (OumuamuaServerSession sender, MessageGenerator messageGenerator) {
+
+    for (ServerSessionListener sessionListener : listenerList) {
+      if (QueueListener.class.isAssignableFrom(sessionListener.getClass())) {
+        ((QueueListener)sessionListener).queued(sender, messageGenerator.generate());
+      }
+    }
+  }
+
+  public void onMessageDeQueued (OumuamuaServerSession sender, MessageGenerator messageGenerator) {
+
+    for (ServerSessionListener sessionListener : listenerList) {
+      if (DeQueueListener.class.isAssignableFrom(sessionListener.getClass())) {
+        ((DeQueueListener)sessionListener).deQueue();
       }
     }
   }
@@ -483,8 +503,11 @@ public class OumuamuaServerSession implements ServerSession {
             LoggerManager.getLogger(OumuamuaServerSession.class).warn("Queued messages lost due to overflow");
           } else {
             connectQueueSize += packet.size();
-
             messageQueue.add(packet);
+
+            for (MapLike mapLike : packet.getMessages()) {
+              onMessageEnqueued(packet.getSender(), new MapMessageGenerator(carrier.getContext(), serverTransport, packet.getChannelId(), mapLike, false));
+            }
           }
         } finally {
           messagePollLock.unlock();

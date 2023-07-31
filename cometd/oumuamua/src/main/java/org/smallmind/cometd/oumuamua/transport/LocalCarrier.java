@@ -39,6 +39,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.cometd.bayeux.ChannelId;
 import org.cometd.bayeux.Message;
+import org.cometd.bayeux.server.BayeuxContext;
 import org.smallmind.cometd.oumuamua.OumuamuaLocalSession;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
@@ -84,6 +85,12 @@ public class LocalCarrier implements OumuamuaCarrier {
   public OumuamuaLocalSession getLocalSession () {
 
     return (OumuamuaLocalSession)serverSession.getLocalSession();
+  }
+
+  @Override
+  public BayeuxContext getContext () {
+
+    return LOCAL_CONTEXT;
   }
 
   @Override

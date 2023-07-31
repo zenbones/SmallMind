@@ -47,6 +47,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.cometd.bayeux.ChannelId;
 import org.cometd.bayeux.Message;
+import org.cometd.bayeux.server.BayeuxContext;
 import org.cometd.bayeux.server.BayeuxServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
@@ -98,6 +99,12 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
     context = new OumuamuaWebsocketContext(storedHandshakeRequest);
 
     return this;
+  }
+
+  @Override
+  public BayeuxContext getContext () {
+
+    return context;
   }
 
   @Override
@@ -180,7 +187,11 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
         return packets;
       } else {
 
-        return null;
+        OumuamuaPacket[] errorPackets = createErrorPacket(serverSession, channelId, channel, messageNode, "Processing was denied");
+
+        LoggerManager.getLogger(LocalCarrier.class).debug(new PacketRecord(errorPackets, false));
+
+        return errorPackets;
       }
     } catch (Exception ioException) {
       LoggerManager.getLogger(WebSocketEndpoint.class).error(ioException);
@@ -220,6 +231,8 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
             if ((packets = respond(oumuamuaServer, context, websocketTransport, serverSession, channelId, channelId.getId(), (ObjectNode)messageNode)) != null) {
               send(packets);
             }
+          } else {
+            send(createErrorPacket(serverSession, channelId, channel, messageNode, "Processing was denied"));
           }
         }
       }

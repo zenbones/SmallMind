@@ -67,6 +67,8 @@ public interface OumuamuaCarrier {
 
   String[] getActualSessions ();
 
+  BayeuxContext getContext ();
+
   String getUserAgent ();
 
   void setMaxSessionIdleTimeout (long maxSessionIdleTimeout);
