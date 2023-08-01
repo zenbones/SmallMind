@@ -331,11 +331,38 @@ public class OumuamuaServerSession implements ServerSession {
     }
   }
 
-  public void onMessageDeQueued (OumuamuaServerSession sender, MessageGenerator messageGenerator) {
+  public void onMessageDeQueued (OumuamuaServerSession sender) {
 
     for (ServerSessionListener sessionListener : listenerList) {
       if (DeQueueListener.class.isAssignableFrom(sessionListener.getClass())) {
-        ((DeQueueListener)sessionListener).deQueue();
+        ((DeQueueListener)sessionListener).deQueue(sender, null, null);
+      }
+    }
+  }
+
+  public void onQueueMaxed (OumuamuaServerSession sender, MessageGenerator messageGenerator) {
+
+    for (ServerSessionListener sessionListener : listenerList) {
+      if (QueueMaxedListener.class.isAssignableFrom(sessionListener.getClass())) {
+        ((QueueMaxedListener)sessionListener).queueMaxed(this, null, sender, messageGenerator.generate());
+      }
+    }
+  }
+
+  public void onHeartbeatSuspended (OumuamuaServerSession serverSession, MessageGenerator messageGenerator, long timeout) {
+
+    for (ServerSessionListener sessionListener : listenerList) {
+      if (HeartBeatListener.class.isAssignableFrom(sessionListener.getClass())) {
+        ((HeartBeatListener)sessionListener).onSuspended(serverSession, messageGenerator.generate(), timeout);
+      }
+    }
+  }
+
+  public void onHeartbeatResumed (OumuamuaServerSession serverSession, MessageGenerator messageGenerator, boolean timeout) {
+
+    for (ServerSessionListener sessionListener : listenerList) {
+      if (HeartBeatListener.class.isAssignableFrom(sessionListener.getClass())) {
+        ((HeartBeatListener)sessionListener).onResumed(serverSession, messageGenerator.generate(), timeout);
       }
     }
   }
