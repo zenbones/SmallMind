@@ -49,14 +49,29 @@ public class ExtensionNotifier {
 
     boolean processing = true;
 
-    for (BayeuxServer.Extension serverExtension : new IterableIterator<>(oumuamuaServer.iterateExtensions())) {
+    if (sender.isLocalSession()) {
+      for (ClientSession.Extension sessionExtension : new IterableIterator<>(((OumuamuaLocalSession)sender.getLocalSession()).iterateExtensions())) {
 
-      Promise.Completable<Boolean> promise;
+        Promise.Completable<Boolean> promise;
 
-      serverExtension.incoming(sender, messageGenerator.generate(), promise = new Promise.Completable<>());
-      if (!promise.join()) {
-        processing = false;
-        break;
+        sessionExtension.incoming(sender.getLocalSession(), messageGenerator.generate(), promise = new Promise.Completable<>());
+        if (!promise.join()) {
+          processing = false;
+          break;
+        }
+      }
+    }
+
+    if (processing) {
+      for (BayeuxServer.Extension serverExtension : new IterableIterator<>(oumuamuaServer.iterateExtensions())) {
+
+        Promise.Completable<Boolean> promise;
+
+        serverExtension.incoming(sender, messageGenerator.generate(), promise = new Promise.Completable<>());
+        if (!promise.join()) {
+          processing = false;
+          break;
+        }
       }
     }
 
@@ -66,19 +81,6 @@ public class ExtensionNotifier {
         Promise.Completable<Boolean> promise;
 
         sessionExtension.incoming(sender, messageGenerator.generate(), promise = new Promise.Completable<>());
-        if (!promise.join()) {
-          processing = false;
-          break;
-        }
-      }
-    }
-
-    if (processing && sender.isLocalSession()) {
-      for (ClientSession.Extension sessionExtension : new IterableIterator<>(((OumuamuaLocalSession)sender.getLocalSession()).iterateExtensions())) {
-
-        Promise.Completable<Boolean> promise;
-
-        sessionExtension.incoming(sender.getLocalSession(), messageGenerator.generate(), promise = new Promise.Completable<>());
         if (!promise.join()) {
           processing = false;
           break;
