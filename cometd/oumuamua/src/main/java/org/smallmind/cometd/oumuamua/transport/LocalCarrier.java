@@ -170,7 +170,7 @@ public class LocalCarrier implements OumuamuaCarrier {
         return packets;
       } else {
 
-        return null;
+        return createErrorPacket(serverSession, channelId, channel, messageNode, "Processing was denied");
       }
     } finally {
       // Keep our threads clean and tidy
