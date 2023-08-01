@@ -60,7 +60,6 @@ public class ConnectMessage extends AdvisedMetaMessage {
 
   public OumuamuaPacket[] process (OumuamuaTransport transport, OumuamuaServerSession serverSession, Switch connectSwitch) {
 
-    //TODO: In theory there's a way to handle LongPollResponseDelayMilliseconds... but I'm not going to thread sleep, so...
     ObjectNode adviceNode = JsonNodeFactory.instance.objectNode();
 
     if ((serverSession == null) || (!serverSession.getId().equals(getClientId()))) {

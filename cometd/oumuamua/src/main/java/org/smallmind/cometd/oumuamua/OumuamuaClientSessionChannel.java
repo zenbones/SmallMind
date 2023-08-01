@@ -60,7 +60,6 @@ public class OumuamuaClientSessionChannel implements ClientSessionChannel {
   private final ReentrantLock releaseLock = new ReentrantLock();
   private final ConcurrentHashMap<String, Object> attributeMap = new ConcurrentHashMap<>();
   private final ConcurrentLinkedQueue<MessageListener> subscriptionList = new ConcurrentLinkedQueue<>();
-  // TODO: Listeners
   private final ConcurrentLinkedQueue<ClientSessionChannelListener> listenerList = new ConcurrentLinkedQueue<>();
   private final OumuamuaLocalSession clientSession;
   private final ChannelId channelId;
@@ -174,10 +173,21 @@ public class OumuamuaClientSessionChannel implements ClientSessionChannel {
     return clientSession;
   }
 
+  public void onMessageReceived (OumuamuaClientMessage message) {
+
+    for (ClientSessionChannelListener listener : listenerList) {
+      if ((MessageListener.class.isAssignableFrom(listener.getClass()))) {
+        ((MessageListener)listener).onMessage(this, message);
+      }
+    }
+  }
+
   protected void receive (OumuamuaClientMessage message) {
 
     for (MessageListener messageListener : subscriptionList) {
       messageListener.onMessage(this, message);
+      // Seems daft to me but it's not my API
+      onMessageReceived(message);
     }
   }
 
