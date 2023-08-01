@@ -313,6 +313,73 @@ public class OumuamuaServerChannel implements ServerChannel {
     }
   }
 
+  public void onSubscribe (ServerSession serverSession, MessageGenerator messageGenerator) {
+
+    for (ServerChannelListener listener : listenerList) {
+      if (SubscriptionListener.class.isAssignableFrom(listener.getClass())) {
+        ((SubscriptionListener)listener).subscribed(serverSession, this, (messageGenerator == null) ? null : messageGenerator.generate());
+      }
+    }
+  }
+
+  public void onUnsubscribe (ServerSession serverSession, MessageGenerator messageGenerator) {
+
+    for (ServerChannelListener listener : listenerList) {
+      if (SubscriptionListener.class.isAssignableFrom(listener.getClass())) {
+        ((SubscriptionListener)listener).unsubscribed(serverSession, this, messageGenerator.generate());
+      }
+    }
+  }
+
+  public OumuamuaPacket onMessageSent (OumuamuaTransport transport, OumuamuaPacket packet) {
+
+    if (listenerList.isEmpty()) {
+
+      return packet;
+    } else {
+
+      LinkedList<MapLike> messageList = null;
+      int messageIndex = 0;
+
+      for (MapLike mapLike : packet.getMessages()) {
+
+        MessageGenerator messageGenerator = null;
+        boolean promote = true;
+
+        for (ServerChannelListener listener : listenerList) {
+          if (MessageListener.class.isAssignableFrom(listener.getClass())) {
+
+            Promise.Completable<Boolean> promise;
+
+            if (messageGenerator == null) {
+              messageGenerator = new MapMessageGenerator(packet.getSender().getCarrier().getContext(), transport, packet.getChannelId(), mapLike, lazy);
+            }
+            ((MessageListener)listener).onMessage(packet.getSender(), this, messageGenerator.generate(), promise = new Promise.Completable<>());
+            if (!promise.join()) {
+              promote = false;
+              break;
+            }
+          }
+        }
+
+        if (!promote) {
+          if (messageList == null) {
+            messageList = new LinkedList<>();
+            for (int priorIndex = 0; priorIndex < messageIndex; priorIndex++) {
+              messageList.add(packet.getMessages()[priorIndex]);
+            }
+          }
+        } else if (messageList != null) {
+          messageList.add(mapLike);
+        }
+
+        messageIndex++;
+      }
+
+      return (messageList == null) ? packet : messageList.isEmpty() ? null : new OumuamuaPacket(packet.getSender(), packet.getChannelId(), messageList.toArray(new MapLike[0]));
+    }
+  }
+
   public boolean isSubscribed (String sessionId) {
 
     return subscriptionMap.containsKey(sessionId);
@@ -347,11 +414,7 @@ public class OumuamuaServerChannel implements ServerChannel {
         if (subscriptionMap.putIfAbsent(serverSession.getId(), (OumuamuaServerSession)serverSession) == null) {
           updated = true;
 
-          for (ServerChannelListener listener : listenerList) {
-            if (SubscriptionListener.class.isAssignableFrom(listener.getClass())) {
-              ((SubscriptionListener)listener).subscribed(serverSession, this, (messageGenerator == null) ? null : messageGenerator.generate());
-            }
-          }
+          onSubscribe(serverSession, messageGenerator);
         }
 
         expirationTimestamp = -1;
@@ -378,11 +441,7 @@ public class OumuamuaServerChannel implements ServerChannel {
 
         return false;
       } else {
-        for (ServerChannelListener listener : listenerList) {
-          if (SubscriptionListener.class.isAssignableFrom(listener.getClass())) {
-            ((SubscriptionListener)listener).unsubscribed(serverSession, this, messageGenerator.generate());
-          }
-        }
+        onUnsubscribe(serverSession, messageGenerator);
 
         if (subscriptionMap.isEmpty()) {
           checkTimeToLive();
@@ -419,63 +478,14 @@ public class OumuamuaServerChannel implements ServerChannel {
 
     if ((packet != null) && (packet.size() > 0)) {
 
-      OumuamuaPacket promotedPacket = packet;
+      OumuamuaPacket promotedPacket;
       OumuamuaPacket downstreamPacket = null;
 
-      if (!listenerList.isEmpty()) {
-
-        LinkedList<MapLike> messageList = null;
-        int messageIndex = 0;
-
-        for (MapLike mapLike : packet.getMessages()) {
-
-          MessageGenerator messageGenerator = null;
-          boolean promote = true;
-
-          for (ServerChannelListener listener : listenerList) {
-            if (MessageListener.class.isAssignableFrom(listener.getClass())) {
-
-              Promise.Completable<Boolean> promise;
-
-              if (messageGenerator == null) {
-                messageGenerator = new MapMessageGenerator(packet.getSender().getCarrier().getContext(), transport, packet.getChannelId(), mapLike, lazy);
-              }
-              ((MessageListener)listener).onMessage(packet.getSender(), this, messageGenerator.generate(), promise = new Promise.Completable<>());
-              if (!promise.join()) {
-                promote = false;
-                break;
-              }
-            }
-          }
-
-          if (!promote) {
-            if (messageList == null) {
-              messageList = new LinkedList<>();
-              for (int priorIndex = 0; priorIndex < messageIndex; priorIndex++) {
-                messageList.add(packet.getMessages()[priorIndex]);
-              }
-            }
-          } else if (messageList != null) {
-            messageList.add(mapLike);
-          }
-
-          messageIndex++;
-        }
-
-        if (messageList != null) {
-          if (messageList.isEmpty()) {
-            promotedPacket = null;
-          } else {
-            promotedPacket = new OumuamuaPacket(packet.getSender(), packet.getChannelId(), messageList.toArray(new MapLike[0]));
-          }
-        }
-      }
-
-      if (promotedPacket != null) {
+      if ((promotedPacket = onMessageSent(transport, packet)) != null) {
         for (OumuamuaServerSession serverSession : subscriptionMap.values()) {
           if (sessionIdSet.add(serverSession.getId())) {
             if (downstreamPacket == null) {
-              downstreamPacket = lazy ? new OumuamuaLazyPacket(packet, System.currentTimeMillis() + ((lazyTimeout <= 0) ? transport.getMaxLazyTimeout() : lazyTimeout)) : packet;
+              downstreamPacket = lazy ? new OumuamuaLazyPacket(promotedPacket, System.currentTimeMillis() + ((lazyTimeout <= 0) ? transport.getMaxLazyTimeout() : lazyTimeout)) : promotedPacket;
             }
 
             serverSession.send(downstreamPacket);
