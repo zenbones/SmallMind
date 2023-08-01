@@ -391,6 +391,7 @@ public class OumuamuaServerSession implements ServerSession {
         } else {
           connectQueueSize = packet.size();
 
+          // TODO : on message dequeued
           return new OumuamuaPacket[] {packet};
         }
       }
@@ -421,6 +422,7 @@ public class OumuamuaServerSession implements ServerSession {
             lazyPackets[index++] = lazyPacket;
           }
 
+          // TODO : on message dequeued
           return lazyPackets;
         }
       }
@@ -434,6 +436,10 @@ public class OumuamuaServerSession implements ServerSession {
   public void send (OumuamuaPacket packet) {
 
     if ((packet != null) && (packet.size() > 0)) {
+
+      // TODO: extensions outgoing
+      // TODO: on message sent
+      // TODO: on message enqueued
 
       LinkedList<OumuamuaPacket> batchedPacketList;
 
@@ -500,6 +506,7 @@ public class OumuamuaServerSession implements ServerSession {
 
         try {
           if (connectQueueSize + packet.size() > maximumMessageQueueSize) {
+            // TODO: on max message queue
             LoggerManager.getLogger(OumuamuaServerSession.class).warn("Queued messages lost due to overflow");
           } else {
             connectQueueSize += packet.size();
@@ -514,6 +521,7 @@ public class OumuamuaServerSession implements ServerSession {
         }
       } else {
         try {
+          // TODO : on message dequeued
           carrier.send(packet);
         } catch (Exception exception) {
           LoggerManager.getLogger(OumuamuaServerSession.class).error(exception);

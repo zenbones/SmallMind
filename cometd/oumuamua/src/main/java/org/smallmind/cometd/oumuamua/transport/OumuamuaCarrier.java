@@ -43,12 +43,9 @@ import org.cometd.bayeux.server.BayeuxContext;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
 import org.smallmind.cometd.oumuamua.channel.ChannelNotice;
-import org.smallmind.cometd.oumuamua.extension.ExtensionNotifier;
-import org.smallmind.cometd.oumuamua.message.ExtMapMessageGenerator;
 import org.smallmind.cometd.oumuamua.message.MapLike;
 import org.smallmind.cometd.oumuamua.message.NodeMessageGenerator;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
-import org.smallmind.cometd.oumuamua.message.PacketType;
 import org.smallmind.cometd.oumuamua.meta.ConnectMessage;
 import org.smallmind.cometd.oumuamua.meta.ConnectMessageRequestInView;
 import org.smallmind.cometd.oumuamua.meta.DisconnectMessage;
@@ -152,22 +149,20 @@ public interface OumuamuaCarrier {
     }
   }
 
-  default String asText (OumuamuaServer oumuamuaServer, BayeuxContext context, OumuamuaTransport transport, OumuamuaServerSession serverSession, OumuamuaPacket... packets)
+  default String asText (OumuamuaPacket... packets)
     throws JsonProcessingException {
 
     StringBuilder sendBuilder = null;
 
     for (OumuamuaPacket packet : packets) {
       for (MapLike mapLike : packet.getMessages()) {
-        if (ExtensionNotifier.outgoing(oumuamuaServer, packet.getSender(), serverSession, new ExtMapMessageGenerator(context, transport, packet.getChannelId(), mapLike, PacketType.LAZY.equals(packet.getType())))) {
-          if (sendBuilder == null) {
-            sendBuilder = new StringBuilder("[");
-          } else {
-            sendBuilder.append(',');
-          }
-
-          sendBuilder.append(mapLike.encode());
+        if (sendBuilder == null) {
+          sendBuilder = new StringBuilder("[");
+        } else {
+          sendBuilder.append(',');
         }
+
+        sendBuilder.append(mapLike.encode());
       }
     }
 

@@ -147,7 +147,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
 
       String text;
 
-      if ((text = asText(oumuamuaServer, context, websocketTransport, serverSession, packets)) != null) {
+      if ((text = asText(packets)) != null) {
 
         System.out.println("=>" + text);
         LoggerManager.getLogger(WebSocketEndpoint.class).debug(new DataRecord(text, false));

@@ -133,7 +133,7 @@ public class LocalCarrier implements OumuamuaCarrier {
 
       String text;
 
-      if ((text = asText(oumuamuaServer, LOCAL_CONTEXT, localTransport, serverSession, packets)) != null) {
+      if ((text = asText(packets)) != null) {
         System.out.println("=>" + text);
         LoggerManager.getLogger(LocalCarrier.class).debug(new DataRecord(text, false));
 

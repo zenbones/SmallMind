@@ -130,16 +130,6 @@ public class ExtensionNotifier {
       }
     }
 
-    if (processing) {
-
-      Promise.Completable<Boolean> promise;
-
-      receiver.onMessageSent(sender, messageGenerator, promise = new Promise.Completable<>());
-      if (!promise.join()) {
-        processing = false;
-      }
-    }
-
     return processing;
   }
 }
