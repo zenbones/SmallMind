@@ -47,13 +47,18 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchemaGenerator;
 import org.smallmind.nutsnbolts.util.IterableIterator;
 
 public class JsonCodec {
 
-  private static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder().addModule(new JaxbAnnotationModule().setNonNillableInclusion(JsonInclude.Include.NON_NULL)).addModule(new PolymorphicModule()).enable(MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME).build();
+  private static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder()
+                                                      .addModule(new AfterburnerModule())
+                                                      .addModule(new JaxbAnnotationModule().setNonNillableInclusion(JsonInclude.Include.NON_NULL))
+                                                      .addModule(new PolymorphicModule())
+                                                      .enable(MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME).build();
   private static final JsonSchemaGenerator SCHEMA_GENERATOR = new JsonSchemaGenerator(OBJECT_MAPPER);
 
   public static JsonNode readAsJsonNode (byte[] bytes)
