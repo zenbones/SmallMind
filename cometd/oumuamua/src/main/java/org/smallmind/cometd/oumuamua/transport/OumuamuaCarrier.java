@@ -58,7 +58,6 @@ import org.smallmind.cometd.oumuamua.meta.HandshakeMessageRequestInView;
 import org.smallmind.cometd.oumuamua.meta.PublishMessageRequestInView;
 import org.smallmind.cometd.oumuamua.meta.SubscribeMessage;
 import org.smallmind.cometd.oumuamua.meta.SubscribeMessageRequestInView;
-import org.smallmind.cometd.oumuamua.meta.UnsubscribeMessage;
 import org.smallmind.cometd.oumuamua.meta.UnsubscribeMessageRequestInView;
 import org.smallmind.nutsnbolts.util.Switch;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
@@ -129,10 +128,11 @@ public interface OumuamuaCarrier {
       case "/meta/unsubscribe":
 
         ChannelNotice unsubscribeNotice;
-        OumuamuaPacket[] unsubscribeResponse = JsonCodec.read(messageNode, UnsubscribeMessageRequestInView.class).factory().process(oumuamuaServer, serverSession, unsubscribeNotice = new ChannelNotice());
+        NodeMessageGenerator unsubscribeMessageGenerator;
+        OumuamuaPacket[] unsubscribeResponse = JsonCodec.read(messageNode, UnsubscribeMessageRequestInView.class).factory().process(oumuamuaServer, serverSession, unsubscribeNotice = new ChannelNotice(), unsubscribeMessageGenerator = new NodeMessageGenerator(context, transport, SubscribeMessage.CHANNEL_ID, messageNode, false));
 
         if (unsubscribeNotice.isOn()) {
-          oumuamuaServer.onChannelUnsubscribed(serverSession, unsubscribeNotice.getChannel(), new NodeMessageGenerator(context, transport, UnsubscribeMessage.CHANNEL_ID, messageNode, false));
+          oumuamuaServer.onChannelUnsubscribed(serverSession, unsubscribeNotice.getChannel(), unsubscribeMessageGenerator);
         }
 
         return unsubscribeResponse;

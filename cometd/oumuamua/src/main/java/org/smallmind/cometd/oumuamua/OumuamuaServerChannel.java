@@ -46,6 +46,9 @@ import org.cometd.bayeux.server.Authorizer;
 import org.cometd.bayeux.server.ServerChannel;
 import org.cometd.bayeux.server.ServerMessage;
 import org.cometd.bayeux.server.ServerSession;
+import org.smallmind.cometd.oumuamua.message.MapLike;
+import org.smallmind.cometd.oumuamua.message.MapMessageGenerator;
+import org.smallmind.cometd.oumuamua.message.MessageGenerator;
 import org.smallmind.cometd.oumuamua.message.MessageUtility;
 import org.smallmind.cometd.oumuamua.message.OumuamuaLazyPacket;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
@@ -57,9 +60,7 @@ public class OumuamuaServerChannel implements ServerChannel {
   private final ReentrantReadWriteLock lifeLock = new ReentrantReadWriteLock();
   private final ConcurrentHashMap<String, OumuamuaServerSession> subscriptionMap = new ConcurrentHashMap<>();
   private final ConcurrentHashMap<String, Object> attributeMap = new ConcurrentHashMap<>();
-  // TODO: Listeners
   private final ConcurrentLinkedQueue<ServerChannelListener> listenerList = new ConcurrentLinkedQueue<>();
-  private final ConcurrentLinkedQueue<ServerChannelListener.Weak> weakListenerList = new ConcurrentLinkedQueue<>();
   private final LinkedList<Authorizer> authorizerList = new LinkedList<>();
   private final ChannelId channelId;
   private boolean initialized;
@@ -268,11 +269,7 @@ public class OumuamuaServerChannel implements ServerChannel {
   // Do not call this in order to process listeners
   public List<ServerChannelListener> getListeners () {
 
-    LinkedList<ServerChannelListener> joinedList = new LinkedList<>(weakListenerList);
-
-    joinedList.addAll(listenerList);
-
-    return joinedList;
+    return new LinkedList<>(listenerList);
   }
 
   @Override
@@ -281,10 +278,8 @@ public class OumuamuaServerChannel implements ServerChannel {
     lifeLock.writeLock().lock();
 
     try {
-      if (ServerChannelListener.Weak.class.isAssignableFrom(listener.getClass())) {
-        weakListenerList.add((ServerChannelListener.Weak)listener);
-      } else {
-        listenerList.add(listener);
+      listenerList.add(listener);
+      if (!ServerChannelListener.Weak.class.isAssignableFrom(listener.getClass())) {
         expirationTimestamp = -1;
       }
     } finally {
@@ -298,10 +293,18 @@ public class OumuamuaServerChannel implements ServerChannel {
     lifeLock.writeLock().lock();
 
     try {
-      if (ServerChannelListener.Weak.class.isAssignableFrom(listener.getClass())) {
-        weakListenerList.remove(listener);
-      } else if (listenerList.remove(listener)) {
-        if (listenerList.isEmpty()) {
+      if (listenerList.remove(listener)) {
+
+        boolean onlyWeak = true;
+
+        for (ServerChannelListener item : listenerList) {
+          if (!ServerChannelListener.Weak.class.isAssignableFrom(item.getClass())) {
+            onlyWeak = false;
+            break;
+          }
+        }
+
+        if (onlyWeak) {
           checkTimeToLive();
         }
       }
@@ -325,6 +328,11 @@ public class OumuamuaServerChannel implements ServerChannel {
   @Override
   public boolean subscribe (ServerSession serverSession) {
 
+    return subscribe(serverSession, null);
+  }
+
+  public boolean subscribe (ServerSession serverSession, MessageGenerator messageGenerator) {
+
     if (isMeta()) {
 
       return false;
@@ -333,9 +341,22 @@ public class OumuamuaServerChannel implements ServerChannel {
       lifeLock.writeLock().lock();
 
       try {
+
+        boolean updated = false;
+
+        if (subscriptionMap.putIfAbsent(serverSession.getId(), (OumuamuaServerSession)serverSession) == null) {
+          updated = true;
+
+          for (ServerChannelListener listener : listenerList) {
+            if (SubscriptionListener.class.isAssignableFrom(listener.getClass())) {
+              ((SubscriptionListener)listener).subscribed(serverSession, this, (messageGenerator == null) ? null : messageGenerator.generate());
+            }
+          }
+        }
+
         expirationTimestamp = -1;
 
-        return subscriptionMap.putIfAbsent(serverSession.getId(), (OumuamuaServerSession)serverSession) == null;
+        return updated;
       } finally {
         lifeLock.writeLock().unlock();
       }
@@ -343,18 +364,25 @@ public class OumuamuaServerChannel implements ServerChannel {
   }
 
   @Override
-  public boolean unsubscribe (ServerSession session) {
+  public boolean unsubscribe (ServerSession serverSession) {
+
+    return subscribe(serverSession, null);
+  }
+
+  public boolean unsubscribe (ServerSession serverSession, MessageGenerator messageGenerator) {
 
     lifeLock.writeLock().lock();
 
     try {
-      ServerSession serverSession;
-
-      if ((serverSession = subscriptionMap.remove(session.getId())) == null) {
+      if (subscriptionMap.remove(serverSession.getId()) == null) {
 
         return false;
       } else {
-        // TODO: session listener???
+        for (ServerChannelListener listener : listenerList) {
+          if (SubscriptionListener.class.isAssignableFrom(listener.getClass())) {
+            ((SubscriptionListener)listener).unsubscribed(serverSession, this, messageGenerator.generate());
+          }
+        }
 
         if (subscriptionMap.isEmpty()) {
           checkTimeToLive();
@@ -365,6 +393,12 @@ public class OumuamuaServerChannel implements ServerChannel {
     } finally {
       lifeLock.writeLock().unlock();
     }
+  }
+
+  @Override
+  public void remove () {
+
+    oumuamuaServer.removeChannel(this);
   }
 
   @Override
@@ -383,26 +417,71 @@ public class OumuamuaServerChannel implements ServerChannel {
 
   public void send (OumuamuaTransport transport, OumuamuaPacket packet, HashSet<String> sessionIdSet) {
 
-    if (packet != null) {
+    if ((packet != null) && (packet.size() > 0)) {
 
+      OumuamuaPacket promotedPacket = packet;
       OumuamuaPacket downstreamPacket = null;
 
-      for (OumuamuaServerSession serverSession : subscriptionMap.values()) {
-        if (sessionIdSet.add(serverSession.getId())) {
+      if (!listenerList.isEmpty()) {
 
-          if (downstreamPacket == null) {
-            downstreamPacket = lazy ? new OumuamuaLazyPacket(packet, System.currentTimeMillis() + ((lazyTimeout <= 0) ? transport.getMaxLazyTimeout() : lazyTimeout)) : packet;
+        LinkedList<MapLike> messageList = null;
+        int messageIndex = 0;
+
+        for (MapLike mapLike : packet.getMessages()) {
+
+          MessageGenerator messageGenerator = null;
+          boolean promote = true;
+
+          for (ServerChannelListener listener : listenerList) {
+            if (MessageListener.class.isAssignableFrom(listener.getClass())) {
+
+              Promise.Completable<Boolean> promise;
+
+              if (messageGenerator == null) {
+                messageGenerator = new MapMessageGenerator(packet.getSender().getCarrier().getContext(), transport, packet.getChannelId(), mapLike, lazy);
+              }
+              ((MessageListener)listener).onMessage(packet.getSender(), this, messageGenerator.generate(), promise = new Promise.Completable<>());
+              if (!promise.join()) {
+                promote = false;
+                break;
+              }
+            }
           }
 
-          serverSession.send(downstreamPacket);
+          if (!promote) {
+            if (messageList == null) {
+              messageList = new LinkedList<>();
+              for (int priorIndex = 0; priorIndex < messageIndex; priorIndex++) {
+                messageList.add(packet.getMessages()[priorIndex]);
+              }
+            }
+          } else if (messageList != null) {
+            messageList.add(mapLike);
+          }
+
+          messageIndex++;
+        }
+
+        if (messageList != null) {
+          if (messageList.isEmpty()) {
+            promotedPacket = null;
+          } else {
+            promotedPacket = new OumuamuaPacket(packet.getSender(), packet.getChannelId(), messageList.toArray(new MapLike[0]));
+          }
+        }
+      }
+
+      if (promotedPacket != null) {
+        for (OumuamuaServerSession serverSession : subscriptionMap.values()) {
+          if (sessionIdSet.add(serverSession.getId())) {
+            if (downstreamPacket == null) {
+              downstreamPacket = lazy ? new OumuamuaLazyPacket(packet, System.currentTimeMillis() + ((lazyTimeout <= 0) ? transport.getMaxLazyTimeout() : lazyTimeout)) : packet;
+            }
+
+            serverSession.send(downstreamPacket);
+          }
         }
       }
     }
-  }
-
-  @Override
-  public void remove () {
-
-    oumuamuaServer.removeChannel(this);
   }
 }
