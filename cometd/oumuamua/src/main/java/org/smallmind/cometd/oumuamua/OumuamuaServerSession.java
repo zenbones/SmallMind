@@ -314,13 +314,23 @@ public class OumuamuaServerSession implements ServerSession {
     }
   }
 
-  public void onMessageSent (OumuamuaServerSession sender, MessageGenerator messageGenerator, Promise<Boolean> promise) {
+  public boolean onMessageSent (OumuamuaServerSession sender, MessageGenerator messageGenerator) {
 
     for (ServerSessionListener sessionListener : listenerList) {
       if (MessageListener.class.isAssignableFrom(sessionListener.getClass())) {
-        ((MessageListener)sessionListener).onMessage(this, sender, messageGenerator.generate(), promise);
+
+        Promise.Completable<Boolean> promise;
+
+        ((MessageListener)sessionListener).onMessage(this, sender, messageGenerator.generate(), promise = new Promise.Completable<>());
+
+        if (!promise.join()) {
+
+          return false;
+        }
       }
     }
+
+    return true;
   }
 
   public void onMessageEnqueued (OumuamuaServerSession sender, MessageGenerator messageGenerator) {
@@ -473,16 +483,10 @@ public class OumuamuaServerSession implements ServerSession {
 
       if (!ExtensionNotifier.outgoing(oumuamuaServer, packet.getSender(), this, messageGenerator)) {
         promote = false;
+      } else if (!onMessageSent(packet.getSender(), messageGenerator)) {
+        promote = false;
       } else {
-
-        Promise.Completable<Boolean> promise;
-
-        onMessageSent(packet.getSender(), messageGenerator, promise = new Promise.Completable<>());
-        if (!promise.join()) {
-          promote = false;
-        } else {
-          onMessageEnqueued(packet.getSender(), messageGenerator);
-        }
+        onMessageEnqueued(packet.getSender(), messageGenerator);
       }
 
       if (!promote) {

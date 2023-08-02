@@ -80,7 +80,7 @@ public class WebsocketTest2 {
 
     System.out.println(System.currentTimeMillis());
     for (int i = 0; i < 10000; i++) {
-      channel.publish("{\"x\":1, \"y\":2}");
+      channel.publish("{\"x\":1, \"y\":2}", message -> message.toString());
     }
 
     System.out.println("Done...");
