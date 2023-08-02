@@ -575,7 +575,8 @@ public class OumuamuaServerSession implements ServerSession {
 
           try {
             if (connectQueueSize + promotedPacket.size() > maximumMessageQueueSize) {
-              // TODO: on max message queue
+              onQueueMaxed(packet.getSender(), new MapMessageGenerator(carrier.getContext(), serverTransport, packet.getChannelId(), promotedPacket.getMessages()[connectQueueSize + promotedPacket.size() - maximumMessageQueueSize], PacketType.LAZY.equals(packet.getType())));
+
               LoggerManager.getLogger(OumuamuaServerSession.class).warn("Queued messages lost due to overflow");
             } else {
               connectQueueSize += promotedPacket.size();
