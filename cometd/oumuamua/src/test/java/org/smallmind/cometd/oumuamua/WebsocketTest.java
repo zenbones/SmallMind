@@ -67,7 +67,6 @@ public class WebsocketTest {
 
     // handshakeMap.put("ext", tokenMap);
 
-    /*
     bayeuxClient.handshake(handshakeMap);
     if (!bayeuxClient.waitFor(5000, BayeuxClient.State.CONNECTED)) {
       System.out.println("Unable to connect within 5000 milliseconds");
@@ -83,8 +82,8 @@ public class WebsocketTest {
         System.out.println(System.currentTimeMillis());
       }
     });
-    */
 
+    /*
     localSession.handshake(handshakeMap);
 
     Counter counter = new Counter();
@@ -97,6 +96,7 @@ public class WebsocketTest {
         System.out.println(System.currentTimeMillis());
       }
     });
+    */
 
     Thread.sleep(300000);
     System.out.println("Done...");
