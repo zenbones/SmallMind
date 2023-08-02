@@ -46,12 +46,13 @@ import org.cometd.bayeux.server.Authorizer;
 import org.cometd.bayeux.server.ServerChannel;
 import org.cometd.bayeux.server.ServerMessage;
 import org.cometd.bayeux.server.ServerSession;
+import org.smallmind.cometd.oumuamua.message.ExtMapLike;
 import org.smallmind.cometd.oumuamua.message.MapLike;
 import org.smallmind.cometd.oumuamua.message.MapMessageGenerator;
 import org.smallmind.cometd.oumuamua.message.MessageGenerator;
-import org.smallmind.cometd.oumuamua.message.MessageUtility;
 import org.smallmind.cometd.oumuamua.message.OumuamuaLazyPacket;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
+import org.smallmind.cometd.oumuamua.message.PacketUtility;
 import org.smallmind.cometd.oumuamua.transport.OumuamuaTransport;
 
 public class OumuamuaServerChannel implements ServerChannel {
@@ -333,51 +334,35 @@ public class OumuamuaServerChannel implements ServerChannel {
 
   public OumuamuaPacket onMessageSent (OumuamuaTransport transport, OumuamuaPacket packet) {
 
-    if (listenerList.isEmpty()) {
+    LinkedList<ExtMapLike> messageList = new LinkedList<>();
 
-      return packet;
-    } else {
+    for (MapLike mapLike : packet.getMessages()) {
 
-      LinkedList<MapLike> messageList = null;
-      int messageIndex = 0;
+      MessageGenerator messageGenerator = null;
+      boolean promote = true;
 
-      for (MapLike mapLike : packet.getMessages()) {
+      for (ServerChannelListener listener : listenerList) {
+        if (MessageListener.class.isAssignableFrom(listener.getClass())) {
 
-        MessageGenerator messageGenerator = null;
-        boolean promote = true;
+          Promise.Completable<Boolean> promise;
 
-        for (ServerChannelListener listener : listenerList) {
-          if (MessageListener.class.isAssignableFrom(listener.getClass())) {
-
-            Promise.Completable<Boolean> promise;
-
-            if (messageGenerator == null) {
-              messageGenerator = new MapMessageGenerator(packet.getSender().getCarrier().getContext(), transport, packet.getChannelId(), mapLike, lazy);
-            }
-            ((MessageListener)listener).onMessage(packet.getSender(), this, messageGenerator.generate(), promise = new Promise.Completable<>());
-            if (!promise.join()) {
-              promote = false;
-              break;
-            }
+          if (messageGenerator == null) {
+            messageGenerator = new MapMessageGenerator(packet.getSender().getCarrier().getContext(), transport, packet.getChannelId(), mapLike, lazy);
+          }
+          ((MessageListener)listener).onMessage(packet.getSender(), this, messageGenerator.generate(), promise = new Promise.Completable<>());
+          if (!promise.join()) {
+            promote = false;
+            break;
           }
         }
-
-        if (!promote) {
-          if (messageList == null) {
-            messageList = new LinkedList<>();
-            for (int priorIndex = 0; priorIndex < messageIndex; priorIndex++) {
-              messageList.add(packet.getMessages()[priorIndex]);
-            }
-          }
-        } else if (messageList != null) {
-          messageList.add(mapLike);
-        }
-
-        messageIndex++;
       }
 
-      return (messageList == null) ? packet : messageList.isEmpty() ? null : new OumuamuaPacket(packet.getSender(), packet.getChannelId(), messageList.toArray(new MapLike[0]));
+      if (promote) {
+        messageList.add(new ExtMapLike(mapLike));
+      }
     }
+
+    return new OumuamuaPacket(packet.getSender(), packet.getChannelId(), messageList.toArray(new MapLike[0]));
   }
 
   public boolean isSubscribed (String sessionId) {
@@ -463,14 +448,14 @@ public class OumuamuaServerChannel implements ServerChannel {
   @Override
   public void publish (Session from, ServerMessage.Mutable message, Promise<Boolean> promise) {
 
-    send((OumuamuaTransport)SessionUtility.from(from).getServerTransport(), MessageUtility.wrapDeliveryPacket(from, message), new HashSet<>());
+    send((OumuamuaTransport)SessionUtility.from(from).getServerTransport(), PacketUtility.wrapDeliveryPacket(from, message), new HashSet<>());
     promise.succeed(Boolean.TRUE);
   }
 
   @Override
   public void publish (Session from, Object data, Promise<Boolean> promise) {
 
-    send((OumuamuaTransport)SessionUtility.from(from).getServerTransport(), MessageUtility.wrapDeliveryPacket(from, getId(), data), new HashSet<>());
+    send((OumuamuaTransport)SessionUtility.from(from).getServerTransport(), PacketUtility.wrapDeliveryPacket(from, getId(), data), new HashSet<>());
     promise.succeed(Boolean.TRUE);
   }
 

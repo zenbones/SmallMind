@@ -50,20 +50,4 @@ public class MessageUtility {
 
     return new OumuamuaServerMessage(transport, context, null, channelId, lazy, mapLike);
   }
-
-  public static OumuamuaPacket wrapDeliveryPacket (Session sender, String channel, Object data) {
-
-    MapLike mapLike = new MapLike((ObjectNode)JsonCodec.writeAsJsonNode(new DeliveryMessageSuccessOutView().setChannel(channel)));
-
-    mapLike.put(Message.DATA_FIELD, data);
-
-    return new OumuamuaPacket(SessionUtility.from(sender), ChannelIdCache.generate(channel), mapLike);
-  }
-
-  public static OumuamuaPacket wrapDeliveryPacket (Session sender, ServerMessage.Mutable message) {
-
-    MapLike mapLike = OumuamuaServerMessage.class.isAssignableFrom(message.getClass()) ? ((OumuamuaServerMessage)message).getMapLike() : new MapLike((ObjectNode)JsonCodec.writeAsJsonNode(message));
-
-    return new OumuamuaPacket(SessionUtility.from(sender), ChannelIdCache.generate(message.getChannel()), mapLike);
-  }
 }

@@ -218,7 +218,6 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
 
     try {
       for (JsonNode messageNode : JsonCodec.readAsJsonNode(data)) {
-
         if (JsonNodeType.OBJECT.equals(messageNode.getNodeType()) && messageNode.has(Message.CHANNEL_FIELD)) {
 
           String channel = messageNode.get(Message.CHANNEL_FIELD).asText();

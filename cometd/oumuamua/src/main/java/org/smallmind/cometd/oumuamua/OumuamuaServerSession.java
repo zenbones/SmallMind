@@ -49,13 +49,14 @@ import org.cometd.bayeux.server.ServerChannel;
 import org.cometd.bayeux.server.ServerMessage;
 import org.cometd.bayeux.server.ServerSession;
 import org.cometd.bayeux.server.ServerTransport;
+import org.smallmind.cometd.oumuamua.extension.ExtensionNotifier;
 import org.smallmind.cometd.oumuamua.message.MapLike;
 import org.smallmind.cometd.oumuamua.message.MapMessageGenerator;
 import org.smallmind.cometd.oumuamua.message.MessageGenerator;
-import org.smallmind.cometd.oumuamua.message.MessageUtility;
 import org.smallmind.cometd.oumuamua.message.OumuamuaLazyPacket;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 import org.smallmind.cometd.oumuamua.message.PacketType;
+import org.smallmind.cometd.oumuamua.message.PacketUtility;
 import org.smallmind.cometd.oumuamua.transport.OumuamuaCarrier;
 import org.smallmind.cometd.oumuamua.transport.OumuamuaTransport;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
@@ -371,7 +372,7 @@ public class OumuamuaServerSession implements ServerSession {
   public void deliver (Session sender, ServerMessage.Mutable message, Promise<Boolean> promise) {
 
     try {
-      carrier.send(MessageUtility.wrapDeliveryPacket(sender, message));
+      carrier.send(PacketUtility.wrapDeliveryPacket(sender, message));
       promise.succeed(Boolean.TRUE);
     } catch (Exception exception) {
       promise.fail(exception);
@@ -382,7 +383,7 @@ public class OumuamuaServerSession implements ServerSession {
   public void deliver (Session sender, String channel, Object data, Promise<Boolean> promise) {
 
     try {
-      carrier.send(MessageUtility.wrapDeliveryPacket(sender, channel, data));
+      carrier.send(PacketUtility.wrapDeliveryPacket(sender, channel, data));
       promise.succeed(Boolean.TRUE);
     } catch (Exception exception) {
       promise.fail(exception);
@@ -460,98 +461,140 @@ public class OumuamuaServerSession implements ServerSession {
     }
   }
 
+  public OumuamuaPacket processPacket (OumuamuaPacket packet) {
+
+    LinkedList<MapLike> messageList = null;
+    int messageIndex = 0;
+
+    for (MapLike mapLike : packet.getMessages()) {
+
+      MapMessageGenerator messageGenerator = new MapMessageGenerator(carrier.getContext(), serverTransport, packet.getChannelId(), mapLike, PacketType.LAZY.equals(packet.getType()));
+      boolean promote = true;
+
+      if (!ExtensionNotifier.outgoing(oumuamuaServer, packet.getSender(), this, messageGenerator)) {
+        promote = false;
+      } else {
+
+        Promise.Completable<Boolean> promise;
+
+        onMessageSent(packet.getSender(), messageGenerator, promise = new Promise.Completable<>());
+        if (!promise.join()) {
+          promote = false;
+        } else {
+          onMessageEnqueued(packet.getSender(), messageGenerator);
+        }
+      }
+
+      if (!promote) {
+        if (messageList == null) {
+          messageList = new LinkedList<>();
+          for (int priorIndex = 0; priorIndex < messageIndex; priorIndex++) {
+            messageList.add(packet.getMessages()[priorIndex]);
+          }
+        }
+      } else if (messageList != null) {
+        messageList.add(mapLike);
+      }
+
+      messageIndex++;
+    }
+
+    return (messageList == null) ? packet : messageList.isEmpty() ? null : PacketUtility.regenerate(packet, messageList.toArray(new MapLike[0]));
+  }
+
   public void send (OumuamuaPacket packet) {
 
     if ((packet != null) && (packet.size() > 0)) {
 
-      // TODO: extensions outgoing
-      // TODO: on message sent
-      // TODO: on message enqueued
+      OumuamuaPacket promotedPacket;
 
-      LinkedList<OumuamuaPacket> batchedPacketList;
+      if ((promotedPacket = processPacket(packet)) != null) {
 
-      if ((batchedPacketList = BATCHED_PACKET_LIST_LOCAL.get()) != null) {
-        batchedPacketList.add(packet);
-      } else if (PacketType.LAZY.equals(packet.getType())) {
-        messagePollLock.lock();
+        LinkedList<OumuamuaPacket> batchedPacketList;
 
-        try {
+        if ((batchedPacketList = BATCHED_PACKET_LIST_LOCAL.get()) != null) {
+          batchedPacketList.add(promotedPacket);
+        } else if (PacketType.LAZY.equals(promotedPacket.getType())) {
+          messagePollLock.lock();
 
-          LinkedList<OumuamuaLazyPacket> enqueuingLazyPacketList;
-          long lazyTimestamp;
+          try {
 
-          if ((lazyQueueSize += packet.size()) > maximumUndeliveredLazyMessageCount) {
+            LinkedList<OumuamuaLazyPacket> enqueuingLazyPacketList;
+            long lazyTimestamp;
 
-            boolean operating = true;
-            boolean lostLazyMessages = false;
+            if ((lazyQueueSize += promotedPacket.size()) > maximumUndeliveredLazyMessageCount) {
 
-            while (operating && (lazyQueueSize > maximumUndeliveredLazyMessageCount) && (!lazyMessageQueue.isEmpty())) {
+              boolean operating = true;
+              boolean lostLazyMessages = false;
 
-              LinkedList<OumuamuaLazyPacket> overflowLazyPacketList;
+              while (operating && (lazyQueueSize > maximumUndeliveredLazyMessageCount) && (!lazyMessageQueue.isEmpty())) {
 
-              if ((overflowLazyPacketList = lazyMessageQueue.pollFirstEntry().getValue()) != null) {
-                if (!overflowLazyPacketList.isEmpty()) {
+                LinkedList<OumuamuaLazyPacket> overflowLazyPacketList;
 
-                  OumuamuaLazyPacket[] overflowLazyPackets = new OumuamuaLazyPacket[overflowLazyPacketList.size()];
-                  int index = 0;
+                if ((overflowLazyPacketList = lazyMessageQueue.pollFirstEntry().getValue()) != null) {
+                  if (!overflowLazyPacketList.isEmpty()) {
 
-                  for (OumuamuaLazyPacket overflowLazyPacket : overflowLazyPacketList) {
-                    lazyQueueSize -= overflowLazyPacket.size();
-                    overflowLazyPackets[index++] = overflowLazyPacket;
-                  }
+                    OumuamuaLazyPacket[] overflowLazyPackets = new OumuamuaLazyPacket[overflowLazyPacketList.size()];
+                    int index = 0;
 
-                  if ((metaConnectDeliveryOnly == null) ? serverTransport.isMetaConnectDeliveryOnly() : metaConnectDeliveryOnly) {
-                    lostLazyMessages = true;
-                  } else {
-                    try {
-                      carrier.send(overflowLazyPackets);
-                    } catch (Exception exception) {
-                      LoggerManager.getLogger(OumuamuaServerSession.class).error(exception);
+                    for (OumuamuaLazyPacket overflowLazyPacket : overflowLazyPacketList) {
+                      lazyQueueSize -= overflowLazyPacket.size();
+                      overflowLazyPackets[index++] = overflowLazyPacket;
+                    }
+
+                    if ((metaConnectDeliveryOnly == null) ? serverTransport.isMetaConnectDeliveryOnly() : metaConnectDeliveryOnly) {
+                      lostLazyMessages = true;
+                    } else {
+                      try {
+                        carrier.send(overflowLazyPackets);
+                      } catch (Exception exception) {
+                        LoggerManager.getLogger(OumuamuaServerSession.class).error(exception);
+                      }
                     }
                   }
+                } else {
+                  operating = false;
                 }
-              } else {
-                operating = false;
+              }
+
+              if (lostLazyMessages) {
+                LoggerManager.getLogger(OumuamuaServerSession.class).warn("Lazy messages lost due to overflow");
               }
             }
 
-            if (lostLazyMessages) {
-              LoggerManager.getLogger(OumuamuaServerSession.class).warn("Lazy messages lost due to overflow");
+            if ((enqueuingLazyPacketList = lazyMessageQueue.get(lazyTimestamp = ((OumuamuaLazyPacket)promotedPacket).getLazyTimestamp())) == null) {
+              lazyMessageQueue.put(lazyTimestamp, enqueuingLazyPacketList = new LinkedList<>());
             }
+
+            enqueuingLazyPacketList.add((OumuamuaLazyPacket)promotedPacket);
+          } finally {
+            messagePollLock.unlock();
           }
+        } else if ((metaConnectDeliveryOnly == null) ? serverTransport.isMetaConnectDeliveryOnly() : metaConnectDeliveryOnly) {
+          messagePollLock.lock();
 
-          if ((enqueuingLazyPacketList = lazyMessageQueue.get(lazyTimestamp = ((OumuamuaLazyPacket)packet).getLazyTimestamp())) == null) {
-            lazyMessageQueue.put(lazyTimestamp, enqueuingLazyPacketList = new LinkedList<>());
-          }
+          try {
+            if (connectQueueSize + promotedPacket.size() > maximumMessageQueueSize) {
+              // TODO: on max message queue
+              LoggerManager.getLogger(OumuamuaServerSession.class).warn("Queued messages lost due to overflow");
+            } else {
+              connectQueueSize += promotedPacket.size();
+              messageQueue.add(promotedPacket);
 
-          enqueuingLazyPacketList.add((OumuamuaLazyPacket)packet);
-        } finally {
-          messagePollLock.unlock();
-        }
-      } else if ((metaConnectDeliveryOnly == null) ? serverTransport.isMetaConnectDeliveryOnly() : metaConnectDeliveryOnly) {
-        messagePollLock.lock();
-
-        try {
-          if (connectQueueSize + packet.size() > maximumMessageQueueSize) {
-            // TODO: on max message queue
-            LoggerManager.getLogger(OumuamuaServerSession.class).warn("Queued messages lost due to overflow");
-          } else {
-            connectQueueSize += packet.size();
-            messageQueue.add(packet);
-
-            for (MapLike mapLike : packet.getMessages()) {
-              onMessageEnqueued(packet.getSender(), new MapMessageGenerator(carrier.getContext(), serverTransport, packet.getChannelId(), mapLike, false));
+              for (MapLike mapLike : promotedPacket.getMessages()) {
+                onMessageEnqueued(promotedPacket.getSender(), new MapMessageGenerator(carrier.getContext(), serverTransport, promotedPacket.getChannelId(), mapLike, false));
+              }
             }
+          } finally {
+            messagePollLock.unlock();
           }
-        } finally {
-          messagePollLock.unlock();
-        }
-      } else {
-        try {
-          // TODO : on message dequeued
-          carrier.send(packet);
-        } catch (Exception exception) {
-          LoggerManager.getLogger(OumuamuaServerSession.class).error(exception);
+        } else {
+          try {
+            // TODO : on message dequeued
+            carrier.send(promotedPacket);
+          } catch (Exception exception) {
+            LoggerManager.getLogger(OumuamuaServerSession.class).error(exception);
+          }
         }
       }
     }

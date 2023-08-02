@@ -33,6 +33,8 @@
 package org.smallmind.cometd.oumuamua.message;
 
 import java.util.Comparator;
+import org.cometd.bayeux.ChannelId;
+import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
 
 public class OumuamuaLazyPacket extends OumuamuaPacket implements Comparator<OumuamuaLazyPacket> {
 
@@ -40,9 +42,14 @@ public class OumuamuaLazyPacket extends OumuamuaPacket implements Comparator<Oum
 
   public OumuamuaLazyPacket (OumuamuaPacket packet, long lazyTimestamp) {
 
-    super(packet.getSender(), packet.getChannelId(), packet.getMessages());
+    this(packet.getSender(), packet.getChannelId(), lazyTimestamp, packet.getMessages());
+  }
 
-    this.lazyTimestamp = lazyTimestamp;
+  public OumuamuaLazyPacket (OumuamuaServerSession sender, ChannelId channelId, long lzyTimestamp, MapLike... messages) {
+
+    super(sender, channelId, messages);
+
+    this.lazyTimestamp = lzyTimestamp;
   }
 
   @Override
