@@ -61,7 +61,7 @@ import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public interface OumuamuaCarrier {
 
-  String[] getActualSessions ();
+  String[] getActualTransports ();
 
   BayeuxContext getContext ();
 
@@ -88,7 +88,7 @@ public interface OumuamuaCarrier {
     switch (channel) {
       case "/meta/handshake":
 
-        return JsonCodec.read(messageNode, HandshakeMessageRequestInView.class).factory().process(oumuamuaServer, getActualSessions(), serverSession, new NodeMessageGenerator(context, transport, HandshakeMessage.CHANNEL_ID, messageNode, false));
+        return JsonCodec.read(messageNode, HandshakeMessageRequestInView.class).factory().process(oumuamuaServer, getActualTransports(), serverSession, new NodeMessageGenerator(context, transport, HandshakeMessage.CHANNEL_ID, messageNode, false));
       case "/meta/connect":
 
         Switch connectSwitch;

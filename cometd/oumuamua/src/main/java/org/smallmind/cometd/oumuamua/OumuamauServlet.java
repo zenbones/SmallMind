@@ -33,6 +33,7 @@
 package org.smallmind.cometd.oumuamua;
 
 import java.io.IOException;
+import javax.servlet.AsyncContext;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -74,6 +75,32 @@ public class OumuamauServlet extends HttpServlet {
       response.sendError(HttpServletResponse.SC_BAD_REQUEST, "No long polling transport has been configured");
     } else {
 
+      String contentLength;
+
+      if (((contentLength = request.getHeader("Content-Length")) == null) || contentLength.isEmpty()) {
+        response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing content length");
+      } else {
+
+        byte[] contentBuffer;
+        int contentBufferSize = 0;
+
+        try {
+          contentBufferSize = Integer.parseInt(contentLength);
+        } catch (NumberFormatException numberFormatException) {
+          response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid content length");
+        }
+
+        if ((contentBufferSize <= 0) || (request.getInputStream().read(contentBuffer = new byte[contentBufferSize]) < contentBufferSize)) {
+          response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unable to read full content");
+        } else {
+
+          AsyncContext asyncContext = request.startAsync();
+
+          asyncContext.setTimeout(0);
+
+          longPollingTransport.createCarrier(asyncContext);
+        }
+      }
     }
   }
 

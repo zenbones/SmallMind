@@ -108,7 +108,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
   }
 
   @Override
-  public String[] getActualSessions () {
+  public String[] getActualTransports () {
 
     return ACTUAL_TRANSPORTS;
   }
@@ -128,13 +128,13 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
   }
 
   @Override
-  public boolean isConnected () {
+  public synchronized boolean isConnected () {
 
     return connected;
   }
 
   @Override
-  public void setConnected (boolean connected) {
+  public synchronized void setConnected (boolean connected) {
 
     this.connected = connected;
   }

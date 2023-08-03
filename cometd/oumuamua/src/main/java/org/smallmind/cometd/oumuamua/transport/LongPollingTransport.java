@@ -32,6 +32,8 @@
  */
 package org.smallmind.cometd.oumuamua.transport;
 
+import java.io.IOException;
+import javax.servlet.AsyncContext;
 import javax.servlet.ServletConfig;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 
@@ -57,5 +59,11 @@ public class LongPollingTransport extends AbstractOumuamuaTransport {
   @Override
   public void init (OumuamuaServer oumuamuaServer, ServletConfig servletConfig) {
 
+  }
+
+  public LongPollingCarrier createCarrier (AsyncContext asyncContext)
+    throws IOException {
+
+    return new LongPollingCarrier(this, asyncContext);
   }
 }
