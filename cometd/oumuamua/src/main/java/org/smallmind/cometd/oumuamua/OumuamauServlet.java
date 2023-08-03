@@ -39,6 +39,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.cometd.bayeux.server.BayeuxServer;
+import org.smallmind.cometd.oumuamua.transport.LongPollingTransport;
 
 public class OumuamauServlet extends HttpServlet {
 
@@ -64,17 +65,16 @@ public class OumuamauServlet extends HttpServlet {
   }
 
   @Override
-  protected void doGet (HttpServletRequest request, HttpServletResponse response)
-    throws ServletException, IOException {
-
-    super.doGet(request, response);
-  }
-
-  @Override
-  protected void service (HttpServletRequest request, HttpServletResponse response)
+  protected void doPost (HttpServletRequest request, HttpServletResponse response)
     throws IOException {
 
-    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unknown Bayeux Transport");
+    LongPollingTransport longPollingTransport;
+
+    if ((longPollingTransport = (LongPollingTransport)oumuamuaServer.getTransport("long-polling")) == null) {
+      response.sendError(HttpServletResponse.SC_BAD_REQUEST, "No long polling transport has been configured");
+    } else {
+
+    }
   }
 
   @Override

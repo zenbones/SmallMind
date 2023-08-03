@@ -103,7 +103,7 @@
     <jakarta.activation.version>2.1.0-RC1</jakarta.activation.version>
     <jaxb.version>2.3.1</jaxb.version>
     <jersey.version>2.37</jersey.version>
-    <jetty.version>10.0.11</jetty.version>
+    <jetty.version>10.0.14</jetty.version>
     <kafka.version>3.4.1</kafka.version>
     <liquibase.version>4.6.1</liquibase.version>
     <log4j.version>2.17.2</log4j.version>
@@ -452,6 +452,11 @@
       <dependency>
         <groupId>org.cometd.java</groupId>
         <artifactId>cometd-java-client-websocket-javax</artifactId>
+        <version>${cometd.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.cometd.java</groupId>
+        <artifactId>cometd-java-client-http-jetty</artifactId>
         <version>${cometd.version}</version>
       </dependency>
       <dependency>

@@ -57,6 +57,7 @@ import org.smallmind.cometd.oumuamua.message.OumuamuaLazyPacket;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 import org.smallmind.cometd.oumuamua.message.PacketType;
 import org.smallmind.cometd.oumuamua.message.PacketUtility;
+import org.smallmind.cometd.oumuamua.session.BatchController;
 import org.smallmind.cometd.oumuamua.transport.OumuamuaCarrier;
 import org.smallmind.cometd.oumuamua.transport.OumuamuaTransport;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
@@ -64,7 +65,7 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class OumuamuaServerSession implements ServerSession {
 
-  private static final ThreadLocal<LinkedList<OumuamuaPacket>> BATCHED_PACKET_LIST_LOCAL = new ThreadLocal<>();
+  private static final ThreadLocal<BatchController> BATCH_CONTROLLER_LOCAL = new ThreadLocal<>();
   private final ReentrantLock messagePollLock = new ReentrantLock();
   private final ConcurrentHashMap<String, Object> attributeMap = new ConcurrentHashMap<>();
   private final ConcurrentSkipListMap<Long, LinkedList<OumuamuaLazyPacket>> lazyMessageQueue = new ConcurrentSkipListMap<>();
@@ -514,10 +515,10 @@ public class OumuamuaServerSession implements ServerSession {
 
       if ((promotedPacket = processPacket(packet)) != null) {
 
-        LinkedList<OumuamuaPacket> batchedPacketList;
+        BatchController batchController;
 
-        if ((batchedPacketList = BATCHED_PACKET_LIST_LOCAL.get()) != null) {
-          batchedPacketList.add(promotedPacket);
+        if (((batchController = BATCH_CONTROLLER_LOCAL.get()) != null) && (batchController.isActive())) {
+          batchController.addPacket(promotedPacket);
         } else if (PacketType.LAZY.equals(promotedPacket.getType())) {
           messagePollLock.lock();
 
@@ -632,23 +633,23 @@ public class OumuamuaServerSession implements ServerSession {
   @Override
   public synchronized void startBatch () {
 
-    if (BATCHED_PACKET_LIST_LOCAL.get() == null) {
-      BATCHED_PACKET_LIST_LOCAL.set(new LinkedList<>());
+    BatchController batchController;
+
+    if ((batchController = BATCH_CONTROLLER_LOCAL.get()) == null) {
+      BATCH_CONTROLLER_LOCAL.set(batchController = new BatchController());
     }
+
+    batchController.start();
   }
 
   @Override
   public synchronized boolean endBatch () {
 
-    LinkedList<OumuamuaPacket> batchedPacketList = BATCHED_PACKET_LIST_LOCAL.get();
+    BatchController batchController = BATCH_CONTROLLER_LOCAL.get();
 
-    if (batchedPacketList != null) {
-      BATCHED_PACKET_LIST_LOCAL.remove();
-
-      if (!batchedPacketList.isEmpty()) {
-        for (OumuamuaPacket batchedPacket : batchedPacketList) {
-          send(batchedPacket);
-        }
+    if (batchController != null) {
+      if (batchController.end(this)) {
+        BATCH_CONTROLLER_LOCAL.remove();
 
         return true;
       }

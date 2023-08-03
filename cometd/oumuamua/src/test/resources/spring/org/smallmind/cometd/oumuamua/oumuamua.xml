@@ -19,12 +19,18 @@
                 <bean class="org.smallmind.cometd.oumuamua.transport.WebSocketTransportConfiguration"/>
               </constructor-arg>
             </bean>
+            <bean class="org.smallmind.cometd.oumuamua.transport.LongPollingTransport">
+              <constructor-arg index="0" name="configuration">
+                <bean class="org.smallmind.cometd.oumuamua.transport.LongPollingTransportConfiguration"/>
+              </constructor-arg>
+            </bean>
           </list>
         </property>
         <property name="allowedTransports">
           <list>
             <value>local</value>
             <value>websocket</value>
+            <value>long-polling</value>
           </list>
         </property>
         <property name="maximumMessageQueueSize" value="1000"/>

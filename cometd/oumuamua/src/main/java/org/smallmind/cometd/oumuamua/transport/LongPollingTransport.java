@@ -37,15 +37,15 @@ import org.smallmind.cometd.oumuamua.OumuamuaServer;
 
 public class LongPollingTransport extends AbstractOumuamuaTransport {
 
-  public LongPollingTransport () {
+  public LongPollingTransport (LongPollingTransportConfiguration configuration) {
 
-    super(0, 0, 0, 0, true);
+    super(configuration.getLongPollResponseDelayMilliseconds(), configuration.getLongPollAdvisedIntervalMilliseconds(), configuration.getClientTimeoutMilliseconds(), configuration.getLazyMessageMaximumDelayMilliseconds(), configuration.isMetaConnectDeliveryOnly());
   }
 
   @Override
   public String getName () {
 
-    return null;
+    return "long-polling";
   }
 
   @Override
