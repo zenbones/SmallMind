@@ -77,7 +77,7 @@ public class LocalCarrier implements OumuamuaCarrier {
     maxSessionIdleTimeout = (localTransport.getMaxInterval() > 0) ? localTransport.getMaxInterval() : DEFAULT_MAX_SESSION_IDLE_TIMEOUT;
 
     oumuamuaServer.addSession(serverSession = new OumuamuaServerSession(oumuamuaServer, localTransport, this, true, idHint, oumuamuaServer.getConfiguration().getMaximumMessageQueueSize(), oumuamuaServer.getConfiguration().getMaximumUndeliveredLazyMessageCount()));
-    setConnected(true);
+    setConnected(serverSession.getId(), true);
 
     new Thread(idleCheck = new IdleCheck()).start();
   }
@@ -114,13 +114,13 @@ public class LocalCarrier implements OumuamuaCarrier {
   }
 
   @Override
-  public synchronized boolean isConnected () {
+  public synchronized boolean isConnected (String sessionId) {
 
     return connected;
   }
 
   @Override
-  public synchronized void setConnected (boolean connected) {
+  public synchronized void setConnected (String sessionId, boolean connected) {
 
     this.connected = connected;
   }
@@ -129,7 +129,7 @@ public class LocalCarrier implements OumuamuaCarrier {
   public synchronized void send (OumuamuaPacket... packets)
     throws IOException {
 
-    if (isConnected()) {
+    if ((serverSession != null) && isConnected(serverSession.getId())) {
 
       String text;
 
@@ -149,32 +149,37 @@ public class LocalCarrier implements OumuamuaCarrier {
     System.out.println("<=" + JsonCodec.writeAsString(messageNode));
     LoggerManager.getLogger(LocalCarrier.class).debug(new NodeRecord(messageNode, true));
 
-    try {
+    if ((serverSession == null) || (!isConnected(serverSession.getId()))) {
 
-      String channel = messageNode.get(Message.CHANNEL_FIELD).asText();
-      ChannelId channelId = ChannelIdCache.generate(channel);
+      return null;
+    } else {
+      try {
 
-      lastContactMilliseconds = System.currentTimeMillis();
+        String channel = messageNode.get(Message.CHANNEL_FIELD).asText();
+        ChannelId channelId = ChannelIdCache.generate(channel);
 
-      if (ExtensionNotifier.incoming(oumuamuaServer, serverSession, new NodeMessageGenerator(LOCAL_CONTEXT, localTransport, channelId, messageNode, false))) {
+        lastContactMilliseconds = System.currentTimeMillis();
 
-        OumuamuaPacket[] packets = respond(oumuamuaServer, LOCAL_CONTEXT, localTransport, serverSession, channelId, channelId.getId(), messageNode);
+        if (ExtensionNotifier.incoming(oumuamuaServer, serverSession, new NodeMessageGenerator(LOCAL_CONTEXT, localTransport, channelId, messageNode, false))) {
 
-        if (!isConnected()) {
-          close();
+          OumuamuaPacket[] packets = respond(oumuamuaServer, LOCAL_CONTEXT, localTransport, serverSession, channelId, channelId.getId(), messageNode);
+
+          if (!isConnected(serverSession.getId())) {
+            close();
+          }
+
+          System.out.println(new PacketRecord(packets, false));
+          LoggerManager.getLogger(LocalCarrier.class).debug(new PacketRecord(packets, false));
+
+          return packets;
+        } else {
+
+          return createErrorPacket(serverSession, channelId, channel, messageNode, "Processing was denied");
         }
-
-        System.out.println(new PacketRecord(packets, false));
-        LoggerManager.getLogger(LocalCarrier.class).debug(new PacketRecord(packets, false));
-
-        return packets;
-      } else {
-
-        return createErrorPacket(serverSession, channelId, channel, messageNode, "Processing was denied");
+      } finally {
+        // Keep our threads clean and tidy
+        ChannelIdCache.clear();
       }
-    } finally {
-      // Keep our threads clean and tidy
-      ChannelIdCache.clear();
     }
   }
 
@@ -195,14 +200,13 @@ public class LocalCarrier implements OumuamuaCarrier {
     if (serverSession != null) {
       oumuamuaServer.removeSession(serverSession);
 
-      if (isConnected()) {
+      if (isConnected(serverSession.getId())) {
         oumuamuaServer.onSessionDisconnected(serverSession, null, true);
+        setConnected(serverSession.getId(), false);
       }
 
       serverSession = null;
     }
-
-    setConnected(false);
   }
 
   private class IdleCheck implements Runnable {

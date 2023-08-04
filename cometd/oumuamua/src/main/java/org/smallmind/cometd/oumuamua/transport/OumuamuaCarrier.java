@@ -69,11 +69,10 @@ public interface OumuamuaCarrier {
 
   void setMaxSessionIdleTimeout (long maxSessionIdleTimeout);
 
-  boolean isConnected ();
+  boolean isConnected (String sessionId);
 
-  // This is *not* about the session, and this code should not set this value to true.
-  // We need to let the specific implementation do that when and if it has created a session.
-  void setConnected (boolean connected);
+  // This is *not* about the session, and this code should never set this value to true (only false on the disconnect).
+  void setConnected (String sessionId, boolean connected);
 
   void send (OumuamuaPacket... packets)
     throws Exception;
@@ -108,7 +107,7 @@ public interface OumuamuaCarrier {
 
         if (disconnectSwitch.isOn()) {
           // disconnect will happen after the response hs been sent
-          setConnected(false);
+          setConnected(serverSession.getId(), false);
           oumuamuaServer.onSessionDisconnected(serverSession, new NodeMessageGenerator(context, transport, DisconnectMessage.CHANNEL_ID, messageNode, false), false);
         }
 

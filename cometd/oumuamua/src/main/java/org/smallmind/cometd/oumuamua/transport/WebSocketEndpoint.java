@@ -89,7 +89,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
     }
 
     oumuamuaServer.addSession(serverSession = new OumuamuaServerSession(oumuamuaServer, websocketTransport, this, false, null, oumuamuaServer.getConfiguration().getMaximumMessageQueueSize(), oumuamuaServer.getConfiguration().getMaximumUndeliveredLazyMessageCount()));
-    setConnected(true);
+    setConnected(serverSession.getId(), true);
 
     websocketSession.addMessageHandler(this);
   }
@@ -128,13 +128,13 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
   }
 
   @Override
-  public synchronized boolean isConnected () {
+  public synchronized boolean isConnected (String sessionId) {
 
     return connected;
   }
 
   @Override
-  public synchronized void setConnected (boolean connected) {
+  public synchronized void setConnected (String sessionId, boolean connected) {
 
     this.connected = connected;
   }
@@ -143,7 +143,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
   public synchronized void send (OumuamuaPacket... packets)
     throws IOException, InterruptedException, ExecutionException, TimeoutException {
 
-    if (isConnected()) {
+    if ((serverSession != null) && isConnected(serverSession.getId())) {
 
       String text;
 
@@ -168,38 +168,43 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
     System.out.println("<=" + JsonCodec.writeAsString(messageNode));
     LoggerManager.getLogger(LocalCarrier.class).debug(new NodeRecord(messageNode, true));
 
-    try {
-
-      String channel = messageNode.get(Message.CHANNEL_FIELD).asText();
-      ChannelId channelId = ChannelIdCache.generate(channel);
-
-      if (ExtensionNotifier.incoming(oumuamuaServer, serverSession, new NodeMessageGenerator(context, websocketTransport, channelId, messageNode, false))) {
-
-        OumuamuaPacket[] packets = respond(oumuamuaServer, context, websocketTransport, serverSession, channelId, channelId.getId(), messageNode);
-
-        if (!isConnected()) {
-          websocketSession.close(new CloseReason(CloseReason.CloseCodes.NORMAL_CLOSURE, "Client disconnect"));
-        }
-
-        System.out.println(new PacketRecord(packets, false));
-        LoggerManager.getLogger(LocalCarrier.class).debug(new PacketRecord(packets, false));
-
-        return packets;
-      } else {
-
-        OumuamuaPacket[] errorPackets = createErrorPacket(serverSession, channelId, channel, messageNode, "Processing was denied");
-
-        LoggerManager.getLogger(LocalCarrier.class).debug(new PacketRecord(errorPackets, false));
-
-        return errorPackets;
-      }
-    } catch (Exception ioException) {
-      LoggerManager.getLogger(WebSocketEndpoint.class).error(ioException);
+    if ((serverSession == null) || (!isConnected(serverSession.getId()))) {
 
       return null;
-    } finally {
-      // Keep our threads clean and tidy
-      ChannelIdCache.clear();
+    } else {
+      try {
+
+        String channel = messageNode.get(Message.CHANNEL_FIELD).asText();
+        ChannelId channelId = ChannelIdCache.generate(channel);
+
+        if (ExtensionNotifier.incoming(oumuamuaServer, serverSession, new NodeMessageGenerator(context, websocketTransport, channelId, messageNode, false))) {
+
+          OumuamuaPacket[] packets = respond(oumuamuaServer, context, websocketTransport, serverSession, channelId, channelId.getId(), messageNode);
+
+          if (!isConnected(serverSession.getId())) {
+            websocketSession.close(new CloseReason(CloseReason.CloseCodes.NORMAL_CLOSURE, "Client disconnect"));
+          }
+
+          System.out.println(new PacketRecord(packets, false));
+          LoggerManager.getLogger(LocalCarrier.class).debug(new PacketRecord(packets, false));
+
+          return packets;
+        } else {
+
+          OumuamuaPacket[] errorPackets = createErrorPacket(serverSession, channelId, channel, messageNode, "Processing was denied");
+
+          LoggerManager.getLogger(LocalCarrier.class).debug(new PacketRecord(errorPackets, false));
+
+          return errorPackets;
+        }
+      } catch (Exception ioException) {
+        LoggerManager.getLogger(WebSocketEndpoint.class).error(ioException);
+
+        return null;
+      } finally {
+        // Keep our threads clean and tidy
+        ChannelIdCache.clear();
+      }
     }
   }
 
@@ -216,35 +221,37 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
     System.out.println("<=" + data);
     LoggerManager.getLogger(WebSocketEndpoint.class).debug(new DataRecord(data, true));
 
-    try {
-      for (JsonNode messageNode : JsonCodec.readAsJsonNode(data)) {
-        if (JsonNodeType.OBJECT.equals(messageNode.getNodeType()) && messageNode.has(Message.CHANNEL_FIELD)) {
+    if ((serverSession != null) && isConnected(serverSession.getId())) {
+      try {
+        for (JsonNode messageNode : JsonCodec.readAsJsonNode(data)) {
+          if (JsonNodeType.OBJECT.equals(messageNode.getNodeType()) && messageNode.has(Message.CHANNEL_FIELD)) {
 
-          String channel = messageNode.get(Message.CHANNEL_FIELD).asText();
-          ChannelId channelId = ChannelIdCache.generate(channel);
+            String channel = messageNode.get(Message.CHANNEL_FIELD).asText();
+            ChannelId channelId = ChannelIdCache.generate(channel);
 
-          if (ExtensionNotifier.incoming(oumuamuaServer, serverSession, new NodeMessageGenerator(context, websocketTransport, channelId, (ObjectNode)messageNode, false))) {
+            if (ExtensionNotifier.incoming(oumuamuaServer, serverSession, new NodeMessageGenerator(context, websocketTransport, channelId, (ObjectNode)messageNode, false))) {
 
-            OumuamuaPacket[] packets;
+              OumuamuaPacket[] packets;
 
-            if ((packets = respond(oumuamuaServer, context, websocketTransport, serverSession, channelId, channelId.getId(), (ObjectNode)messageNode)) != null) {
-              send(packets);
+              if ((packets = respond(oumuamuaServer, context, websocketTransport, serverSession, channelId, channelId.getId(), (ObjectNode)messageNode)) != null) {
+                send(packets);
+              }
+            } else {
+              send(createErrorPacket(serverSession, channelId, channel, messageNode, "Processing was denied"));
             }
-          } else {
-            send(createErrorPacket(serverSession, channelId, channel, messageNode, "Processing was denied"));
           }
         }
-      }
 
-      // handle the disconnect after sending the confirmation
-      if (!isConnected()) {
-        websocketSession.close(new CloseReason(CloseReason.CloseCodes.NORMAL_CLOSURE, "Client disconnect"));
+        // handle the disconnect after sending the confirmation
+        if (!isConnected(serverSession.getId())) {
+          websocketSession.close(new CloseReason(CloseReason.CloseCodes.NORMAL_CLOSURE, "Client disconnect"));
+        }
+      } catch (Exception ioException) {
+        LoggerManager.getLogger(WebSocketEndpoint.class).error(ioException);
+      } finally {
+        // Keep our threads clean and tidy
+        ChannelIdCache.clear();
       }
-    } catch (Exception ioException) {
-      LoggerManager.getLogger(WebSocketEndpoint.class).error(ioException);
-    } finally {
-      // Keep our threads clean and tidy
-      ChannelIdCache.clear();
     }
   }
 
@@ -254,14 +261,13 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
     if (serverSession != null) {
       oumuamuaServer.removeSession(serverSession);
 
-      if (isConnected()) {
+      if (isConnected(serverSession.getId())) {
         oumuamuaServer.onSessionDisconnected(serverSession, null, true);
+        setConnected(serverSession.getId(), false);
       }
 
       serverSession = null;
     }
-
-    setConnected(false);
   }
 
   @Override

@@ -86,13 +86,13 @@ public class LongPollingCarrier implements OumuamuaCarrier {
   }
 
   @Override
-  public synchronized boolean isConnected () {
+  public synchronized boolean isConnected (String sessionId) {
 
     return connected;
   }
 
   @Override
-  public synchronized void setConnected (boolean connected) {
+  public synchronized void setConnected (String sessionId, boolean connected) {
 
     this.connected = connected;
   }
@@ -100,6 +100,7 @@ public class LongPollingCarrier implements OumuamuaCarrier {
   @Override
   public synchronized void send (OumuamuaPacket... packets)
     throws Exception {
+
   }
 
   @Override
