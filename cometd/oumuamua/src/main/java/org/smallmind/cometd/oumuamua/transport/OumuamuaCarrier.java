@@ -71,6 +71,8 @@ public interface OumuamuaCarrier {
 
   boolean isConnected ();
 
+  // This is *not* about the session, and this code should not set this value to true.
+  // We need to let the specific implementation do that when and if it has created a session.
   void setConnected (boolean connected);
 
   void send (OumuamuaPacket... packets)
