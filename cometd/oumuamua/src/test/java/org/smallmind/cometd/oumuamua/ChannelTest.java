@@ -48,13 +48,16 @@ public class ChannelTest {
   public static void main (String... args) {
 
     ChannelTree t = new ChannelTree();
+    OumuamuaServer oumuamuaServer = new OumuamuaServer(new OumuamuaConfiguration());
 
-    t.createIfAbsent(null, 0, new ChannelId("/a"));
-    t.createIfAbsent(null, 0, new ChannelId("/a/**"));
-    t.createIfAbsent(null, 0, new ChannelId("/a/b"));
-    t.createIfAbsent(null, 0, new ChannelId("/a/b/*"));
-    t.createIfAbsent(null, 0, new ChannelId("/a/b/**"));
-    t.createIfAbsent(null, 0, new ChannelId("/a/b/c"));
+    t.createIfAbsent(oumuamuaServer, 0, new ChannelId("/**"));
+    t.createIfAbsent(oumuamuaServer, 0, new ChannelId("/*"));
+    t.createIfAbsent(oumuamuaServer, 0, new ChannelId("/a"));
+    t.createIfAbsent(oumuamuaServer, 0, new ChannelId("/a/**"));
+    t.createIfAbsent(oumuamuaServer, 0, new ChannelId("/a/b"));
+    t.createIfAbsent(oumuamuaServer, 0, new ChannelId("/a/b/*"));
+    t.createIfAbsent(oumuamuaServer, 0, new ChannelId("/a/b/**"));
+    t.createIfAbsent(oumuamuaServer, 0, new ChannelId("/a/b/c"));
 
     ChannelIterator i = new ChannelIterator("/a/b/c");
 
