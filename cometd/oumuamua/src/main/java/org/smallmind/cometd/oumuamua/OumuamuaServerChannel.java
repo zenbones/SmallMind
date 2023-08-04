@@ -33,6 +33,7 @@
 package org.smallmind.cometd.oumuamua;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -62,7 +63,7 @@ public class OumuamuaServerChannel implements ServerChannel {
   private final ConcurrentHashMap<String, OumuamuaServerSession> subscriptionMap = new ConcurrentHashMap<>();
   private final ConcurrentHashMap<String, Object> attributeMap = new ConcurrentHashMap<>();
   private final ConcurrentLinkedQueue<ServerChannelListener> listenerList = new ConcurrentLinkedQueue<>();
-  private final LinkedList<Authorizer> authorizerList = new LinkedList<>();
+  private final ConcurrentLinkedQueue<Authorizer> authorizerList = new ConcurrentLinkedQueue<>();
   private final ChannelId channelId;
   private boolean initialized;
   private boolean persistent;
@@ -224,10 +225,15 @@ public class OumuamuaServerChannel implements ServerChannel {
     this.broadcastToPublisher = broadcastToPublisher;
   }
 
+  public Iterator<Authorizer> iterateAuthorizers () {
+
+    return authorizerList.iterator();
+  }
+
   @Override
   public List<Authorizer> getAuthorizers () {
 
-    return authorizerList;
+    return new LinkedList<>(authorizerList);
   }
 
   @Override

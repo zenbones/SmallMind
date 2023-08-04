@@ -35,11 +35,13 @@ package org.smallmind.cometd.oumuamua.meta;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.cometd.bayeux.ChannelId;
+import org.cometd.bayeux.server.Authorizer;
 import org.cometd.bayeux.server.SecurityPolicy;
-import org.cometd.bayeux.server.ServerChannel;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerChannel;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
+import org.smallmind.cometd.oumuamua.channel.AuthenticatorUtility;
+import org.smallmind.cometd.oumuamua.channel.ChannelIdCache;
 import org.smallmind.cometd.oumuamua.channel.ChannelNotice;
 import org.smallmind.cometd.oumuamua.message.NodeMessageGenerator;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
@@ -90,27 +92,28 @@ public class SubscribeMessage extends AdvisedMetaMessage {
         return OumuamuaPacket.asPackets(serverSession, CHANNEL_ID, new SubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setClientId(serverSession.getId()).setId(getId()).setError("Attempted subscription to a meta channel").setSubscription(getSubscription()));
       } else {
 
-        SecurityPolicy securityPolicy;
-        ServerChannel serverChannel;
+        SecurityPolicy securityPolicy = oumuamuaServer.getSecurityPolicy();
+        OumuamuaServerChannel serverChannel;
 
-        if ((securityPolicy = oumuamuaServer.getSecurityPolicy()) != null) {
-          if ((serverChannel = oumuamuaServer.findChannel(getChannel())) == null) {
-            if (!securityPolicy.canCreate(oumuamuaServer, serverSession, getChannel(), messageGenerator.generate())) {
+        if ((serverChannel = oumuamuaServer.findChannel(getChannel())) == null) {
+          if ((securityPolicy != null) && (!securityPolicy.canCreate(oumuamuaServer, serverSession, getChannel(), messageGenerator.generate()))) {
 
-              return OumuamuaPacket.asPackets(serverSession, CHANNEL_ID, new SubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setClientId(serverSession.getId()).setId(getId()).setError("Unauthorized").setSubscription(getSubscription()));
-            } else {
-              serverChannel = oumuamuaServer.createChannelIfAbsent(getChannel()).getReference();
-            }
-          }
-
-          if (!securityPolicy.canSubscribe(oumuamuaServer, serverSession, serverChannel, messageGenerator.generate())) {
             return OumuamuaPacket.asPackets(serverSession, CHANNEL_ID, new SubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setClientId(serverSession.getId()).setId(getId()).setError("Unauthorized").setSubscription(getSubscription()));
+          } else if (!AuthenticatorUtility.canOperate(oumuamuaServer, serverSession, null, ChannelIdCache.generate(getChannel()), messageGenerator, Authorizer.Operation.CREATE)) {
+
+            return OumuamuaPacket.asPackets(serverSession, CHANNEL_ID, new SubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setClientId(serverSession.getId()).setId(getId()).setError("Unauthorized").setSubscription(getSubscription()));
+          } else {
+            serverChannel = (OumuamuaServerChannel)oumuamuaServer.createChannelIfAbsent(getSubscription()).getReference();
           }
-        } else {
-          serverChannel = oumuamuaServer.createChannelIfAbsent(getSubscription()).getReference();
         }
 
-        if (((OumuamuaServerChannel)serverChannel).subscribe(serverSession, messageGenerator)) {
+        if ((securityPolicy != null) && (!securityPolicy.canSubscribe(oumuamuaServer, serverSession, serverChannel, messageGenerator.generate()))) {
+
+          return OumuamuaPacket.asPackets(serverSession, CHANNEL_ID, new SubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setClientId(serverSession.getId()).setId(getId()).setError("Unauthorized").setSubscription(getSubscription()));
+        } else if (!AuthenticatorUtility.canOperate(oumuamuaServer, serverSession, serverChannel, ChannelIdCache.generate(getChannel()), messageGenerator, Authorizer.Operation.SUBSCRIBE)) {
+
+          return OumuamuaPacket.asPackets(serverSession, CHANNEL_ID, new SubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(CHANNEL_ID.getId()).setClientId(serverSession.getId()).setId(getId()).setError("Unauthorized").setSubscription(getSubscription()));
+        } else if (serverChannel.subscribe(serverSession, messageGenerator)) {
           subscribeNotice.setChannel(serverChannel);
         }
 

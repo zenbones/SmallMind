@@ -35,12 +35,16 @@ package org.smallmind.cometd.oumuamua.meta;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.cometd.bayeux.ChannelId;
+import org.cometd.bayeux.server.Authorizer;
 import org.cometd.bayeux.server.BayeuxContext;
 import org.cometd.bayeux.server.SecurityPolicy;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerChannel;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
+import org.smallmind.cometd.oumuamua.channel.AuthenticatorUtility;
+import org.smallmind.cometd.oumuamua.channel.ChannelIdCache;
 import org.smallmind.cometd.oumuamua.message.MapLike;
+import org.smallmind.cometd.oumuamua.message.MessageGenerator;
 import org.smallmind.cometd.oumuamua.message.NodeMessageGenerator;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 import org.smallmind.cometd.oumuamua.transport.OumuamuaTransport;
@@ -82,8 +86,12 @@ public class PublishMessage extends MetaMessage {
       } else {
 
         SecurityPolicy securityPolicy;
+        MessageGenerator messageGenerator = new NodeMessageGenerator(context, transport, channelId, rawMessage, serverChannel.isLazy());
 
-        if (((securityPolicy = oumuamuaServer.getSecurityPolicy()) != null) && (!securityPolicy.canPublish(oumuamuaServer, serverSession, serverChannel, new NodeMessageGenerator(context, transport, channelId, rawMessage, serverChannel.isLazy()).generate()))) {
+        if (((securityPolicy = oumuamuaServer.getSecurityPolicy()) != null) && (!securityPolicy.canPublish(oumuamuaServer, serverSession, serverChannel, messageGenerator.generate()))) {
+
+          return OumuamuaPacket.asPackets(serverSession, channelId, new PublishMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(getChannel()).setId(getId()).setError("Unauthorized"));
+        } else if (!AuthenticatorUtility.canOperate(oumuamuaServer, serverSession, serverChannel, ChannelIdCache.generate(getChannel()), messageGenerator, Authorizer.Operation.PUBLISH)) {
 
           return OumuamuaPacket.asPackets(serverSession, channelId, new PublishMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(getChannel()).setId(getId()).setError("Unauthorized"));
         } else {
