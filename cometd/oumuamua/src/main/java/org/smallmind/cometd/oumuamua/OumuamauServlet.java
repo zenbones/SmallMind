@@ -97,8 +97,7 @@ public class OumuamauServlet extends HttpServlet {
           AsyncContext asyncContext = request.startAsync();
 
           asyncContext.setTimeout(0);
-
-          longPollingTransport.createCarrier(asyncContext);
+          longPollingTransport.createCarrier(oumuamuaServer, asyncContext).onMessage(new String(contentBuffer));
         }
       }
     }

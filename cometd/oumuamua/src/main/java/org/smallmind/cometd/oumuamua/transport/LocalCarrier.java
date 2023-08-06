@@ -149,7 +149,7 @@ public class LocalCarrier implements OumuamuaCarrier {
     System.out.println("<=" + JsonCodec.writeAsString(messageNode));
     LoggerManager.getLogger(LocalCarrier.class).debug(new NodeRecord(messageNode, true));
 
-    if ((serverSession == null) || (!isConnected(serverSession.getId()))) {
+    if ((serverSession == null) || (!isConnected(serverSession.getId())) || (!messageNode.has(Message.CHANNEL_FIELD))) {
 
       return null;
     } else {

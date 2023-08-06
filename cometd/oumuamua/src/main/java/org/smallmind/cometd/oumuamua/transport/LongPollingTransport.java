@@ -61,9 +61,9 @@ public class LongPollingTransport extends AbstractOumuamuaTransport {
 
   }
 
-  public LongPollingCarrier createCarrier (AsyncContext asyncContext)
+  public LongPollingCarrier createCarrier (OumuamuaServer oumuamuaServer, AsyncContext asyncContext)
     throws IOException {
 
-    return new LongPollingCarrier(this, asyncContext);
+    return new LongPollingCarrier(oumuamuaServer, this, asyncContext);
   }
 }

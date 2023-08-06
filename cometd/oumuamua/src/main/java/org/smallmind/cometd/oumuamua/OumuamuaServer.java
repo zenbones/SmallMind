@@ -449,19 +449,21 @@ public class OumuamuaServer implements BayeuxServer {
           long now = System.currentTimeMillis();
 
           for (OumuamuaServerSession serverSession : sessionMap.values()) {
+            if (serverSession.isConnected()) {
 
-            LinkedList<OumuamuaLazyPacket> enqueuedLazyPacketList = new LinkedList<>();
-            OumuamuaLazyPacket[] enqueuedLazyPackets;
+              LinkedList<OumuamuaLazyPacket> enqueuedLazyPacketList = new LinkedList<>();
+              OumuamuaLazyPacket[] enqueuedLazyPackets;
 
-            while (((enqueuedLazyPackets = serverSession.pollLazy(now)) != null) && (enqueuedLazyPackets.length > 0)) {
-              enqueuedLazyPacketList.addAll(Arrays.asList(enqueuedLazyPackets));
-            }
+              while (((enqueuedLazyPackets = serverSession.pollLazy(now)) != null) && (enqueuedLazyPackets.length > 0)) {
+                enqueuedLazyPacketList.addAll(Arrays.asList(enqueuedLazyPackets));
+              }
 
-            if (!enqueuedLazyPacketList.isEmpty()) {
-              try {
-                serverSession.getCarrier().send(enqueuedLazyPacketList.toArray(new OumuamuaLazyPacket[0]));
-              } catch (Exception exception) {
-                LoggerManager.getLogger(OumuamuaServer.class).error(exception);
+              if (!enqueuedLazyPacketList.isEmpty()) {
+                try {
+                  serverSession.getCarrier().send(enqueuedLazyPacketList.toArray(new OumuamuaLazyPacket[0]));
+                } catch (Exception exception) {
+                  LoggerManager.getLogger(OumuamuaServer.class).error(exception);
+                }
               }
             }
           }

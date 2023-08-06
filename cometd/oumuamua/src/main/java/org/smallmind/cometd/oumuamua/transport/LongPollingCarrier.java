@@ -35,23 +35,39 @@ package org.smallmind.cometd.oumuamua.transport;
 import java.io.IOException;
 import javax.servlet.AsyncContext;
 import javax.servlet.http.HttpServletRequest;
+import javax.websocket.CloseReason;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.cometd.bayeux.ChannelId;
+import org.cometd.bayeux.Message;
 import org.cometd.bayeux.server.BayeuxContext;
+import org.cometd.bayeux.server.ServerSession;
+import org.smallmind.cometd.oumuamua.OumuamuaServer;
+import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
+import org.smallmind.cometd.oumuamua.channel.ChannelIdCache;
 import org.smallmind.cometd.oumuamua.context.OumuamuaServletContext;
+import org.smallmind.cometd.oumuamua.extension.ExtensionNotifier;
+import org.smallmind.cometd.oumuamua.logging.DataRecord;
+import org.smallmind.cometd.oumuamua.message.NodeMessageGenerator;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
+import org.smallmind.scribe.pen.LoggerManager;
+import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public class LongPollingCarrier implements OumuamuaCarrier {
 
   private static final String[] ACTUAL_TRANSPORTS = new String[] {"long-polling"};
+  private final OumuamuaServer oumuamuaServer;
   private final OumuamuaServletContext context;
   private final LongPollingTransport longPollingTransport;
   private final AsyncContext asyncContext;
   private boolean connected;
 
-  public LongPollingCarrier (LongPollingTransport longPollingTransport, AsyncContext asyncContext)
+  public LongPollingCarrier (OumuamuaServer oumuamuaServer, LongPollingTransport longPollingTransport, AsyncContext asyncContext)
     throws IOException {
 
+    this.oumuamuaServer = oumuamuaServer;
     this.longPollingTransport = longPollingTransport;
     this.asyncContext = asyncContext;
 
@@ -88,13 +104,19 @@ public class LongPollingCarrier implements OumuamuaCarrier {
   @Override
   public synchronized boolean isConnected (String sessionId) {
 
-    return connected;
+    ServerSession serverSession;
+
+    return ((serverSession = oumuamuaServer.getSession(sessionId)) != null) && serverSession.isConnected();
   }
 
   @Override
   public synchronized void setConnected (String sessionId, boolean connected) {
 
-    this.connected = connected;
+    ServerSession serverSession;
+
+    if ((serverSession = oumuamuaServer.getSession(sessionId)) != null) {
+      ((OumuamuaServerSession)serverSession).setConnected(connected);
+    }
   }
 
   @Override
@@ -108,6 +130,56 @@ public class LongPollingCarrier implements OumuamuaCarrier {
     throws JsonProcessingException {
 
     return new OumuamuaPacket[0];
+  }
+
+  public synchronized void onMessage (String data) {
+
+    System.out.println("<=" + data);
+    LoggerManager.getLogger(WebSocketEndpoint.class).debug(new DataRecord(data, true));
+
+    try {
+      for (JsonNode messageNode : JsonCodec.readAsJsonNode(data)) {
+        if (JsonNodeType.OBJECT.equals(messageNode.getNodeType()) && messageNode.has(Message.CHANNEL_FIELD)) {
+
+          ServerSession serverSession;
+
+          if (messageNode.has(Message.CLIENT_ID_FIELD)) {
+            if ((serverSession = oumuamuaServer.getSession(messageNode.get(Message.CLIENT_ID_FIELD).asText())) == null) {
+              serverSession = new OumuamuaServerSession(oumuamuaServer, longPollingTransport, this, false, null, , );
+            }
+          } else {
+          }
+
+          if (!serverSession.isConnected()) {
+          } else {
+
+            String channel = messageNode.get(Message.CHANNEL_FIELD).asText();
+            ChannelId channelId = ChannelIdCache.generate(channel);
+
+            if (ExtensionNotifier.incoming(oumuamuaServer, serverSession, new NodeMessageGenerator(context, longPollingTransport, channelId, (ObjectNode)messageNode, false))) {
+
+              OumuamuaPacket[] packets;
+
+              if ((packets = respond(oumuamuaServer, context, long,serverSession, channelId, channelId.getId(), (ObjectNode)messageNode)) !=null){
+                send(packets);
+              }
+            } else {
+              send(createErrorPacket(serverSession, channelId, channel, messageNode, "Processing was denied"));
+            }
+          }
+        }
+
+        // handle the disconnect after sending the confirmation
+        if (!isConnected(serverSession.getId())) {
+          websocketSession.close(new CloseReason(CloseReason.CloseCodes.NORMAL_CLOSURE, "Client disconnect"));
+        }
+      }
+    } catch (Exception ioException) {
+      LoggerManager.getLogger(WebSocketEndpoint.class).error(ioException);
+    } finally {
+      // Keep our threads clean and tidy
+      ChannelIdCache.clear();
+    }
   }
 
   @Override
