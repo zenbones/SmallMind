@@ -77,7 +77,7 @@ public class LocalCarrier implements OumuamuaCarrier {
     maxSessionIdleTimeout = (localTransport.getMaxInterval() > 0) ? localTransport.getMaxInterval() : DEFAULT_MAX_SESSION_IDLE_TIMEOUT;
 
     oumuamuaServer.addSession(serverSession = new OumuamuaServerSession(oumuamuaServer, localTransport, this, true, idHint, oumuamuaServer.getConfiguration().getMaximumMessageQueueSize(), oumuamuaServer.getConfiguration().getMaximumUndeliveredLazyMessageCount()));
-    setConnected(serverSession.getId(), true);
+    setConnected(true);
 
     new Thread(idleCheck = new IdleCheck()).start();
   }
@@ -85,6 +85,12 @@ public class LocalCarrier implements OumuamuaCarrier {
   public OumuamuaLocalSession getLocalSession () {
 
     return (OumuamuaLocalSession)serverSession.getLocalSession();
+  }
+
+  @Override
+  public CarrierType getType () {
+
+    return CarrierType.LOCAL;
   }
 
   @Override
@@ -114,13 +120,13 @@ public class LocalCarrier implements OumuamuaCarrier {
   }
 
   @Override
-  public synchronized boolean isConnected (String sessionId) {
+  public synchronized boolean isConnected () {
 
     return connected;
   }
 
   @Override
-  public synchronized void setConnected (String sessionId, boolean connected) {
+  public synchronized void setConnected (boolean connected) {
 
     this.connected = connected;
   }
@@ -129,7 +135,7 @@ public class LocalCarrier implements OumuamuaCarrier {
   public synchronized void send (OumuamuaPacket... packets)
     throws IOException {
 
-    if ((serverSession != null) && isConnected(serverSession.getId())) {
+    if ((serverSession != null) && isConnected()) {
 
       String text;
 
@@ -149,7 +155,7 @@ public class LocalCarrier implements OumuamuaCarrier {
     System.out.println("<=" + JsonCodec.writeAsString(messageNode));
     LoggerManager.getLogger(LocalCarrier.class).debug(new NodeRecord(messageNode, true));
 
-    if ((serverSession == null) || (!isConnected(serverSession.getId())) || (!messageNode.has(Message.CHANNEL_FIELD))) {
+    if ((serverSession == null) || (!isConnected()) || (!messageNode.has(Message.CHANNEL_FIELD))) {
 
       return null;
     } else {
@@ -164,7 +170,7 @@ public class LocalCarrier implements OumuamuaCarrier {
 
           OumuamuaPacket[] packets = respond(oumuamuaServer, LOCAL_CONTEXT, localTransport, serverSession, channelId, channelId.getId(), messageNode);
 
-          if (!isConnected(serverSession.getId())) {
+          if (!isConnected()) {
             close();
           }
 
@@ -200,9 +206,9 @@ public class LocalCarrier implements OumuamuaCarrier {
     if (serverSession != null) {
       oumuamuaServer.removeSession(serverSession);
 
-      if (isConnected(serverSession.getId())) {
+      if (isConnected()) {
         oumuamuaServer.onSessionDisconnected(serverSession, null, true);
-        setConnected(serverSession.getId(), false);
+        setConnected(false);
       }
 
       serverSession = null;

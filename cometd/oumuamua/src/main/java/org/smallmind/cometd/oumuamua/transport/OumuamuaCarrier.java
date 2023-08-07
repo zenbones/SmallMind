@@ -61,6 +61,8 @@ import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public interface OumuamuaCarrier {
 
+  CarrierType getType ();
+
   String[] getActualTransports ();
 
   BayeuxContext getContext ();
@@ -69,10 +71,10 @@ public interface OumuamuaCarrier {
 
   void setMaxSessionIdleTimeout (long maxSessionIdleTimeout);
 
-  boolean isConnected (String sessionId);
+  boolean isConnected ();
 
   // This is *not* about the session, and this code should never set this value to true (only false on the disconnect).
-  void setConnected (String sessionId, boolean connected);
+  void setConnected (boolean connected);
 
   void send (OumuamuaPacket... packets)
     throws Exception;
@@ -107,7 +109,7 @@ public interface OumuamuaCarrier {
 
         if (disconnectSwitch.isOn()) {
           // disconnect will happen after the response hs been sent
-          setConnected(serverSession.getId(), false);
+          setConnected(false);
           oumuamuaServer.onSessionDisconnected(serverSession, new NodeMessageGenerator(context, transport, DisconnectMessage.CHANNEL_ID, messageNode, false), false);
         }
 

@@ -43,13 +43,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.cometd.bayeux.ChannelId;
 import org.cometd.bayeux.Message;
 import org.cometd.bayeux.server.BayeuxContext;
-import org.cometd.bayeux.server.ServerSession;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
 import org.smallmind.cometd.oumuamua.channel.ChannelIdCache;
 import org.smallmind.cometd.oumuamua.context.OumuamuaServletContext;
 import org.smallmind.cometd.oumuamua.extension.ExtensionNotifier;
-import org.smallmind.cometd.oumuamua.logging.DataRecord;
 import org.smallmind.cometd.oumuamua.message.NodeMessageGenerator;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 import org.smallmind.scribe.pen.LoggerManager;
@@ -62,6 +60,7 @@ public class LongPollingCarrier implements OumuamuaCarrier {
   private final OumuamuaServletContext context;
   private final LongPollingTransport longPollingTransport;
   private final AsyncContext asyncContext;
+  private OumuamuaServerSession serverSession;
   private boolean connected;
 
   public LongPollingCarrier (OumuamuaServer oumuamuaServer, LongPollingTransport longPollingTransport, AsyncContext asyncContext)
@@ -76,9 +75,21 @@ public class LongPollingCarrier implements OumuamuaCarrier {
   }
 
   @Override
+  public CarrierType getType () {
+
+    return CarrierType.LONG_POLLING;
+  }
+
+  @Override
   public String[] getActualTransports () {
 
     return ACTUAL_TRANSPORTS;
+  }
+
+  public void setServerSession (OumuamuaServerSession serverSession) {
+
+    this.serverSession = serverSession;
+    setConnected(true);
   }
 
   @Override
@@ -102,21 +113,15 @@ public class LongPollingCarrier implements OumuamuaCarrier {
   }
 
   @Override
-  public synchronized boolean isConnected (String sessionId) {
+  public synchronized boolean isConnected () {
 
-    ServerSession serverSession;
-
-    return ((serverSession = oumuamuaServer.getSession(sessionId)) != null) && serverSession.isConnected();
+    return connected;
   }
 
   @Override
-  public synchronized void setConnected (String sessionId, boolean connected) {
+  public synchronized void setConnected (boolean connected) {
 
-    ServerSession serverSession;
-
-    if ((serverSession = oumuamuaServer.getSession(sessionId)) != null) {
-      ((OumuamuaServerSession)serverSession).setConnected(connected);
-    }
+    this.connected = connected;
   }
 
   @Override
@@ -132,26 +137,12 @@ public class LongPollingCarrier implements OumuamuaCarrier {
     return new OumuamuaPacket[0];
   }
 
-  public synchronized void onMessage (String data) {
+  public synchronized void onMessage (JsonNode messageConglomerate) {
 
-    System.out.println("<=" + data);
-    LoggerManager.getLogger(WebSocketEndpoint.class).debug(new DataRecord(data, true));
-
-    try {
-      for (JsonNode messageNode : JsonCodec.readAsJsonNode(data)) {
-        if (JsonNodeType.OBJECT.equals(messageNode.getNodeType()) && messageNode.has(Message.CHANNEL_FIELD)) {
-
-          ServerSession serverSession;
-
-          if (messageNode.has(Message.CLIENT_ID_FIELD)) {
-            if ((serverSession = oumuamuaServer.getSession(messageNode.get(Message.CLIENT_ID_FIELD).asText())) == null) {
-              serverSession = new OumuamuaServerSession(oumuamuaServer, longPollingTransport, this, false, null, , );
-            }
-          } else {
-          }
-
-          if (!serverSession.isConnected()) {
-          } else {
+    if ((serverSession != null) && isConnected()) {
+      try {
+        for (JsonNode messageNode : messageConglomerate) {
+          if (JsonNodeType.OBJECT.equals(messageNode.getNodeType()) && messageNode.has(Message.CHANNEL_FIELD)) {
 
             String channel = messageNode.get(Message.CHANNEL_FIELD).asText();
             ChannelId channelId = ChannelIdCache.generate(channel);
@@ -160,7 +151,7 @@ public class LongPollingCarrier implements OumuamuaCarrier {
 
               OumuamuaPacket[] packets;
 
-              if ((packets = respond(oumuamuaServer, context, long,serverSession, channelId, channelId.getId(), (ObjectNode)messageNode)) !=null){
+              if ((packets = respond(oumuamuaServer, context, longPollingTransport, serverSession, channelId, channelId.getId(), (ObjectNode)messageNode)) != null) {
                 send(packets);
               }
             } else {
@@ -170,15 +161,15 @@ public class LongPollingCarrier implements OumuamuaCarrier {
         }
 
         // handle the disconnect after sending the confirmation
-        if (!isConnected(serverSession.getId())) {
+        if (!isConnected()) {
           websocketSession.close(new CloseReason(CloseReason.CloseCodes.NORMAL_CLOSURE, "Client disconnect"));
         }
+      } catch (Exception ioException) {
+        LoggerManager.getLogger(WebSocketEndpoint.class).error(ioException);
+      } finally {
+        // Keep our threads clean and tidy
+        ChannelIdCache.clear();
       }
-    } catch (Exception ioException) {
-      LoggerManager.getLogger(WebSocketEndpoint.class).error(ioException);
-    } finally {
-      // Keep our threads clean and tidy
-      ChannelIdCache.clear();
     }
   }
 

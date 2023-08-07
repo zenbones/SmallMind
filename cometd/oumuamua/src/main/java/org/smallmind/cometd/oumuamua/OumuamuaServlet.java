@@ -39,8 +39,17 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeType;
+import org.cometd.bayeux.Message;
 import org.cometd.bayeux.server.BayeuxServer;
+import org.smallmind.cometd.oumuamua.logging.NodeRecord;
+import org.smallmind.cometd.oumuamua.transport.CarrierType;
+import org.smallmind.cometd.oumuamua.transport.LongPollingCarrier;
 import org.smallmind.cometd.oumuamua.transport.LongPollingTransport;
+import org.smallmind.cometd.oumuamua.transport.WebSocketEndpoint;
+import org.smallmind.scribe.pen.LoggerManager;
+import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public class OumuamuaServlet extends HttpServlet {
 
@@ -94,10 +103,38 @@ public class OumuamuaServlet extends HttpServlet {
           response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unable to read full content");
         } else {
 
-          AsyncContext asyncContext = request.startAsync();
+          OumuamuaServerSession serverSession;
+          JsonNode messageConglomerate = JsonCodec.readAsJsonNode(new String(contentBuffer));
+          String clientId = null;
 
-          asyncContext.setTimeout(0);
-          longPollingTransport.createCarrier(oumuamuaServer, asyncContext).onMessage(new String(contentBuffer));
+          for (JsonNode messageNode : messageConglomerate) {
+            if (JsonNodeType.OBJECT.equals(messageNode.getNodeType()) && messageNode.has(Message.CLIENT_ID_FIELD)) {
+              clientId = messageNode.get(Message.CLIENT_ID_FIELD).asText();
+              break;
+            }
+          }
+
+          if (clientId == null) {
+
+            LongPollingCarrier longPollingCarrier = new LongPollingCarrier(oumuamuaServer, longPollingTransport, null);
+
+            serverSession = new OumuamuaServerSession(oumuamuaServer, longPollingTransport, longPollingCarrier, false, null, oumuamuaServer.getConfiguration().getMaximumMessageQueueSize(), oumuamuaServer.getConfiguration().getMaximumUndeliveredLazyMessageCount());
+            longPollingCarrier.setServerSession(serverSession);
+            oumuamuaServer.addSession(serverSession);
+          } else if ((serverSession = (OumuamuaServerSession)oumuamuaServer.getSession(clientId)) == null) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unknown client id");
+          } else if (!CarrierType.LONG_POLLING.equals(serverSession.getCarrier().getType())) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Incorrect transport for this session");
+          } else {
+
+            System.out.println("<=" + messageConglomerate);
+            LoggerManager.getLogger(WebSocketEndpoint.class).debug(new NodeRecord(messageConglomerate, true));
+
+            AsyncContext asyncContext = request.startAsync();
+
+            asyncContext.setTimeout(0);
+            ((LongPollingCarrier)serverSession.getCarrier()).onMessage(messageConglomerate);
+          }
         }
       }
     }

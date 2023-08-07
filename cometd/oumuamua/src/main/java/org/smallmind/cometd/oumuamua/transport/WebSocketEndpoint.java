@@ -89,7 +89,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
     }
 
     oumuamuaServer.addSession(serverSession = new OumuamuaServerSession(oumuamuaServer, websocketTransport, this, false, null, oumuamuaServer.getConfiguration().getMaximumMessageQueueSize(), oumuamuaServer.getConfiguration().getMaximumUndeliveredLazyMessageCount()));
-    setConnected(serverSession.getId(), true);
+    setConnected(true);
 
     websocketSession.addMessageHandler(this);
   }
@@ -99,6 +99,12 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
     context = new OumuamuaWebsocketContext(storedHandshakeRequest);
 
     return this;
+  }
+
+  @Override
+  public CarrierType getType () {
+
+    return CarrierType.WEBSOCKET;
   }
 
   @Override
@@ -128,13 +134,13 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
   }
 
   @Override
-  public synchronized boolean isConnected (String sessionId) {
+  public synchronized boolean isConnected () {
 
     return connected;
   }
 
   @Override
-  public synchronized void setConnected (String sessionId, boolean connected) {
+  public synchronized void setConnected (boolean connected) {
 
     this.connected = connected;
   }
@@ -143,7 +149,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
   public synchronized void send (OumuamuaPacket... packets)
     throws IOException, InterruptedException, ExecutionException, TimeoutException {
 
-    if ((serverSession != null) && isConnected(serverSession.getId())) {
+    if ((serverSession != null) && isConnected()) {
 
       String text;
 
@@ -168,7 +174,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
     System.out.println("<=" + JsonCodec.writeAsString(messageNode));
     LoggerManager.getLogger(LocalCarrier.class).debug(new NodeRecord(messageNode, true));
 
-    if ((serverSession == null) || (!isConnected(serverSession.getId()))) {
+    if ((serverSession == null) || (!isConnected())) {
 
       return null;
     } else {
@@ -181,7 +187,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
 
           OumuamuaPacket[] packets = respond(oumuamuaServer, context, websocketTransport, serverSession, channelId, channelId.getId(), messageNode);
 
-          if (!isConnected(serverSession.getId())) {
+          if (!isConnected()) {
             websocketSession.close(new CloseReason(CloseReason.CloseCodes.NORMAL_CLOSURE, "Client disconnect"));
           }
 
@@ -221,7 +227,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
     System.out.println("<=" + data);
     LoggerManager.getLogger(WebSocketEndpoint.class).debug(new DataRecord(data, true));
 
-    if ((serverSession != null) && isConnected(serverSession.getId())) {
+    if ((serverSession != null) && isConnected()) {
       try {
         for (JsonNode messageNode : JsonCodec.readAsJsonNode(data)) {
           if (JsonNodeType.OBJECT.equals(messageNode.getNodeType()) && messageNode.has(Message.CHANNEL_FIELD)) {
@@ -243,7 +249,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
         }
 
         // handle the disconnect after sending the confirmation
-        if (!isConnected(serverSession.getId())) {
+        if (!isConnected()) {
           websocketSession.close(new CloseReason(CloseReason.CloseCodes.NORMAL_CLOSURE, "Client disconnect"));
         }
       } catch (Exception ioException) {
@@ -261,9 +267,9 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
     if (serverSession != null) {
       oumuamuaServer.removeSession(serverSession);
 
-      if (isConnected(serverSession.getId())) {
+      if (isConnected()) {
         oumuamuaServer.onSessionDisconnected(serverSession, null, true);
-        setConnected(serverSession.getId(), false);
+        setConnected(false);
       }
 
       serverSession = null;
