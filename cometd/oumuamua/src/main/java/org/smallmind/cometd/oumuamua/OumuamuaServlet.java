@@ -42,7 +42,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.cometd.bayeux.server.BayeuxServer;
 import org.smallmind.cometd.oumuamua.transport.LongPollingTransport;
 
-public class OumuamauServlet extends HttpServlet {
+public class OumuamuaServlet extends HttpServlet {
 
   private OumuamuaServer oumuamuaServer;
 

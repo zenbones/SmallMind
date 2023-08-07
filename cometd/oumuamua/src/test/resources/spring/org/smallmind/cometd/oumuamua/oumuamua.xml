@@ -50,7 +50,7 @@
   <bean id="cometdServletInstaller" class="org.smallmind.web.grizzly.installer.ServletInstaller">
     <property name="contextPath" value="/smallmind"/>
     <property name="displayName" value="cometd"/>
-    <property name="servletClass" value="org.smallmind.cometd.oumuamua.OumuamauServlet"/>
+    <property name="servletClass" value="org.smallmind.cometd.oumuamua.OumuamuaServlet"/>
     <property name="urlPattern" value="/cometd/*"/>
     <property name="loadOnStartup" value="1"/>
     <property name="asyncSupported" value="true"/>
