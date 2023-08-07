@@ -124,7 +124,7 @@ public class LongPollingCarrier implements OumuamuaCarrier {
   public synchronized void send (OumuamuaPacket... packets)
     throws Exception {
 
-    if ((serverSession != null) && isConnected()) {
+    if (serverSession != null) {
 
       String text;
 

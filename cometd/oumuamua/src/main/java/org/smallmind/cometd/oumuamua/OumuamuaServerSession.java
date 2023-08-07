@@ -428,7 +428,7 @@ public class OumuamuaServerSession implements ServerSession {
 
           return null;
         } else {
-          connectQueueSize = packet.size();
+          connectQueueSize -= packet.size();
 
           // TODO : on message dequeued
           return new OumuamuaPacket[] {packet};
@@ -520,79 +520,103 @@ public class OumuamuaServerSession implements ServerSession {
         if (((batchController = BATCH_CONTROLLER_LOCAL.get()) != null) && (batchController.isActive())) {
           batchController.addPacket(promotedPacket);
         } else if (PacketType.LAZY.equals(promotedPacket.getType())) {
-          messagePollLock.lock();
+          if (promotedPacket.size() > maximumUndeliveredLazyMessageCount) {
+            LoggerManager.getLogger(OumuamuaServerSession.class).warn("Lazy messages lost due to out sized packet");
+          } else {
+            messagePollLock.lock();
 
-          try {
+            try {
 
-            LinkedList<OumuamuaLazyPacket> enqueuingLazyPacketList;
-            long lazyTimestamp;
+              LinkedList<OumuamuaLazyPacket> enqueuingLazyPacketList;
+              long lazyTimestamp;
 
-            if ((lazyQueueSize += promotedPacket.size()) > maximumUndeliveredLazyMessageCount) {
+              if ((lazyQueueSize += promotedPacket.size()) > maximumUndeliveredLazyMessageCount) {
 
-              boolean operating = true;
-              boolean lostLazyMessages = false;
+                boolean operating = true;
+                boolean lostLazyMessages = false;
 
-              while (operating && (lazyQueueSize > maximumUndeliveredLazyMessageCount) && (!lazyMessageQueue.isEmpty())) {
+                while (operating && (lazyQueueSize > maximumUndeliveredLazyMessageCount) && (!lazyMessageQueue.isEmpty())) {
 
-                LinkedList<OumuamuaLazyPacket> overflowLazyPacketList;
+                  LinkedList<OumuamuaLazyPacket> overflowLazyPacketList;
 
-                if ((overflowLazyPacketList = lazyMessageQueue.pollFirstEntry().getValue()) != null) {
-                  if (!overflowLazyPacketList.isEmpty()) {
+                  if ((overflowLazyPacketList = lazyMessageQueue.pollFirstEntry().getValue()) != null) {
+                    if (!overflowLazyPacketList.isEmpty()) {
 
-                    OumuamuaLazyPacket[] overflowLazyPackets = new OumuamuaLazyPacket[overflowLazyPacketList.size()];
-                    int index = 0;
+                      OumuamuaLazyPacket[] overflowLazyPackets = new OumuamuaLazyPacket[overflowLazyPacketList.size()];
+                      int index = 0;
 
-                    for (OumuamuaLazyPacket overflowLazyPacket : overflowLazyPacketList) {
-                      lazyQueueSize -= overflowLazyPacket.size();
-                      overflowLazyPackets[index++] = overflowLazyPacket;
-                    }
+                      for (OumuamuaLazyPacket overflowLazyPacket : overflowLazyPacketList) {
+                        lazyQueueSize -= overflowLazyPacket.size();
+                        overflowLazyPackets[index++] = overflowLazyPacket;
+                      }
 
-                    if ((metaConnectDeliveryOnly == null) ? serverTransport.isMetaConnectDeliveryOnly() : metaConnectDeliveryOnly) {
-                      lostLazyMessages = true;
-                    } else {
-                      try {
-                        carrier.send(overflowLazyPackets);
-                      } catch (Exception exception) {
-                        LoggerManager.getLogger(OumuamuaServerSession.class).error(exception);
+                      if ((metaConnectDeliveryOnly == null) ? serverTransport.isMetaConnectDeliveryOnly() : metaConnectDeliveryOnly) {
+                        lostLazyMessages = true;
+                      } else {
+                        try {
+                          carrier.send(overflowLazyPackets);
+                        } catch (Exception exception) {
+                          LoggerManager.getLogger(OumuamuaServerSession.class).error(exception);
+                        }
                       }
                     }
+                  } else {
+                    operating = false;
                   }
-                } else {
-                  operating = false;
+                }
+
+                if (lostLazyMessages) {
+                  LoggerManager.getLogger(OumuamuaServerSession.class).warn("Lazy messages lost due to overflow");
                 }
               }
 
-              if (lostLazyMessages) {
-                LoggerManager.getLogger(OumuamuaServerSession.class).warn("Lazy messages lost due to overflow");
+              if ((enqueuingLazyPacketList = lazyMessageQueue.get(lazyTimestamp = ((OumuamuaLazyPacket)promotedPacket).getLazyTimestamp())) == null) {
+                lazyMessageQueue.put(lazyTimestamp, enqueuingLazyPacketList = new LinkedList<>());
               }
-            }
 
-            if ((enqueuingLazyPacketList = lazyMessageQueue.get(lazyTimestamp = ((OumuamuaLazyPacket)promotedPacket).getLazyTimestamp())) == null) {
-              lazyMessageQueue.put(lazyTimestamp, enqueuingLazyPacketList = new LinkedList<>());
+              enqueuingLazyPacketList.add((OumuamuaLazyPacket)promotedPacket);
+            } finally {
+              messagePollLock.unlock();
             }
-
-            enqueuingLazyPacketList.add((OumuamuaLazyPacket)promotedPacket);
-          } finally {
-            messagePollLock.unlock();
           }
         } else if ((metaConnectDeliveryOnly == null) ? serverTransport.isMetaConnectDeliveryOnly() : metaConnectDeliveryOnly) {
-          messagePollLock.lock();
+          if (promotedPacket.size() > maximumMessageQueueSize) {
+            LoggerManager.getLogger(OumuamuaServerSession.class).warn("Queued messages lost due to out sized packet");
+          } else {
+            messagePollLock.lock();
 
-          try {
-            if (connectQueueSize + promotedPacket.size() > maximumMessageQueueSize) {
-              onQueueMaxed(packet.getSender(), new MapMessageGenerator(carrier.getContext(), serverTransport, packet.getChannelId(), promotedPacket.getMessages()[connectQueueSize + promotedPacket.size() - maximumMessageQueueSize], PacketType.LAZY.equals(packet.getType())));
+            try {
+              if ((connectQueueSize += promotedPacket.size()) > maximumMessageQueueSize) {
+                onQueueMaxed(promotedPacket.getSender(), new MapMessageGenerator(carrier.getContext(), serverTransport, promotedPacket.getChannelId(), promotedPacket.getMessages()[connectQueueSize - maximumMessageQueueSize], PacketType.LAZY.equals(promotedPacket.getType())));
 
-              LoggerManager.getLogger(OumuamuaServerSession.class).warn("Queued messages lost due to overflow");
-            } else {
-              connectQueueSize += promotedPacket.size();
+                boolean operating = true;
+                boolean lostQueuedMessages = false;
+
+                while (operating && (connectQueueSize > maximumMessageQueueSize) && (!messageQueue.isEmpty())) {
+
+                  OumuamuaPacket overflowPacket;
+
+                  if ((overflowPacket = messageQueue.poll()) != null) {
+                    lostQueuedMessages = true;
+                    connectQueueSize -= overflowPacket.size();
+                  } else {
+                    operating = false;
+                  }
+                }
+
+                if (lostQueuedMessages) {
+                  LoggerManager.getLogger(OumuamuaServerSession.class).warn("Queued messages lost due to overflow");
+                }
+              }
+
               messageQueue.add(promotedPacket);
 
               for (MapLike mapLike : promotedPacket.getMessages()) {
                 onMessageEnqueued(promotedPacket.getSender(), new MapMessageGenerator(carrier.getContext(), serverTransport, promotedPacket.getChannelId(), mapLike, false));
               }
+            } finally {
+              messagePollLock.unlock();
             }
-          } finally {
-            messagePollLock.unlock();
           }
         } else {
           try {
