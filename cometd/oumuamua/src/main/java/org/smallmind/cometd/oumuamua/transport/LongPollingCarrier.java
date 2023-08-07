@@ -89,19 +89,19 @@ public class LongPollingCarrier implements OumuamuaCarrier {
   }
 
   @Override
-  public BayeuxContext getContext () {
+  public synchronized BayeuxContext getContext () {
 
     return context;
   }
 
   @Override
-  public String getUserAgent () {
+  public synchronized String getUserAgent () {
 
     return ((HttpServletRequest)asyncContext.getRequest()).getHeader("User-Agent");
   }
 
   @Override
-  public void setMaxSessionIdleTimeout (long maxSessionIdleTimeout) {
+  public synchronized void setMaxSessionIdleTimeout (long maxSessionIdleTimeout) {
 
     long adjustedIdleTimeout = (maxSessionIdleTimeout >= 0) ? maxSessionIdleTimeout : longPollingTransport.getMaxInterval();
 

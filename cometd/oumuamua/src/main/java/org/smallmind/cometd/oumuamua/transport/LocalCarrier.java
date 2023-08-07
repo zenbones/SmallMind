@@ -70,6 +70,8 @@ public class LocalCarrier implements OumuamuaCarrier {
 
   public LocalCarrier (OumuamuaServer oumuamuaServer, LocalTransport localTransport, String idHint) {
 
+    Thread idleCheckThread;
+
     this.oumuamuaServer = oumuamuaServer;
     this.localTransport = localTransport;
 
@@ -79,7 +81,9 @@ public class LocalCarrier implements OumuamuaCarrier {
     oumuamuaServer.addSession(serverSession = new OumuamuaServerSession(oumuamuaServer, localTransport, this, true, idHint, oumuamuaServer.getConfiguration().getMaximumMessageQueueSize(), oumuamuaServer.getConfiguration().getMaximumUndeliveredLazyMessageCount()));
     setConnected(true);
 
-    new Thread(idleCheck = new IdleCheck()).start();
+    idleCheckThread = new Thread(idleCheck = new IdleCheck());
+    idleCheckThread.setDaemon(true);
+    idleCheckThread.start();
   }
 
   public OumuamuaLocalSession getLocalSession () {
@@ -203,7 +207,13 @@ public class LocalCarrier implements OumuamuaCarrier {
   private synchronized void finishClosing () {
 
     if (serverSession != null) {
+
+      OumuamuaLocalSession localSession;
+
       oumuamuaServer.removeSession(serverSession);
+      if ((localSession = (OumuamuaLocalSession)serverSession.getLocalSession()) != null) {
+        localSession.stop();
+      }
 
       if (isConnected()) {
         oumuamuaServer.onSessionDisconnected(serverSession, null, true);

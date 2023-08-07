@@ -64,7 +64,11 @@ public class ConnectionMonitor {
     this.advisedInterval = advisedInterval;
 
     if (connectHeartbeat == null) {
-      new Thread(connectHeartbeat = new ConnectHeartbeat()).start();
+
+      Thread heartbeatThread = new Thread(connectHeartbeat = new ConnectHeartbeat());
+
+      heartbeatThread.setDaemon(true);
+      heartbeatThread.start();
     }
   }
 

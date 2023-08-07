@@ -85,6 +85,11 @@ public class OumuamuaLocalSession implements LocalSession {
     connectionMonitor = new ConnectionMonitor((LocalTransport)serverSession.getServerTransport(), this);
   }
 
+  public void stop () {
+
+    connectionMonitor.stop();
+  }
+
   @Override
   public ServerSession getServerSession () {
 
