@@ -48,6 +48,7 @@ import org.smallmind.cometd.oumuamua.logging.NodeRecord;
 import org.smallmind.cometd.oumuamua.transport.CarrierType;
 import org.smallmind.cometd.oumuamua.transport.LongPollingCarrier;
 import org.smallmind.cometd.oumuamua.transport.LongPollingTransport;
+import org.smallmind.cometd.oumuamua.transport.OumuamuaCarrier;
 import org.smallmind.cometd.oumuamua.transport.WebSocketEndpoint;
 import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
@@ -104,9 +105,11 @@ public class OumuamuaServlet extends HttpServlet {
           response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unable to read full content");
         } else {
 
+          OumuamuaCarrier carrier;
           OumuamuaServerSession serverSession;
           JsonNode messageConglomerate = JsonCodec.readAsJsonNode(new String(contentBuffer));
           String clientId = null;
+          boolean error = false;
 
           for (JsonNode messageNode : messageConglomerate) {
             if (JsonNodeType.OBJECT.equals(messageNode.getNodeType()) && messageNode.has(Message.CLIENT_ID_FIELD)) {
@@ -116,29 +119,34 @@ public class OumuamuaServlet extends HttpServlet {
           }
 
           if (clientId == null) {
-
-            LongPollingCarrier longPollingCarrier = longPollingTransport.createCarrier(oumuamuaServer);
-
-            serverSession = new OumuamuaServerSession(oumuamuaServer, longPollingTransport, longPollingCarrier, false, null, oumuamuaServer.getConfiguration().getMaximumMessageQueueSize(), oumuamuaServer.getConfiguration().getMaximumUndeliveredLazyMessageCount());
-            longPollingCarrier.setServerSession(serverSession);
+            serverSession = new OumuamuaServerSession(oumuamuaServer, longPollingTransport, carrier = longPollingTransport.createCarrier(oumuamuaServer), false, null, oumuamuaServer.getConfiguration().getMaximumMessageQueueSize(), oumuamuaServer.getConfiguration().getMaximumUndeliveredLazyMessageCount());
+            ((LongPollingCarrier)carrier).setServerSession(serverSession);
             oumuamuaServer.addSession(serverSession);
+
+            respond(request, response, (LongPollingCarrier)carrier, messageConglomerate);
           } else if ((serverSession = (OumuamuaServerSession)oumuamuaServer.getSession(clientId)) == null) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unknown client id");
-          } else if (!CarrierType.LONG_POLLING.equals(serverSession.getCarrier().getType())) {
+          } else if ((carrier = serverSession.getCarrier()) == null) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Session is invalid");
+          } else if (!CarrierType.LONG_POLLING.equals(carrier.getType())) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Incorrect transport for this session");
           } else {
-
-            System.out.println("<=" + messageConglomerate);
-            LoggerManager.getLogger(WebSocketEndpoint.class).debug(new NodeRecord(messageConglomerate, true));
-
-            AsyncContext asyncContext = request.startAsync();
-
-            asyncContext.setTimeout(0);
-            ((LongPollingCarrier)serverSession.getCarrier()).onMessage(messageConglomerate);
+            respond(request, response, (LongPollingCarrier)carrier, messageConglomerate);
           }
         }
       }
     }
+  }
+
+  private void respond (HttpServletRequest request, HttpServletResponse response, LongPollingCarrier carrier, JsonNode messageConglomerate) {
+
+    System.out.println("<=" + messageConglomerate);
+    LoggerManager.getLogger(WebSocketEndpoint.class).debug(new NodeRecord(messageConglomerate, true));
+
+    AsyncContext asyncContext = request.startAsync();
+
+    asyncContext.setTimeout(0);
+    carrier.onMessage(messageConglomerate);
   }
 
   private boolean readStream (InputStream inputStream, byte[] contentBuffer)
