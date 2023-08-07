@@ -45,7 +45,6 @@ import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
 import org.smallmind.cometd.oumuamua.channel.ChannelIdCache;
 import org.smallmind.cometd.oumuamua.context.OumuamuaLongPollingContext;
 import org.smallmind.cometd.oumuamua.extension.ExtensionNotifier;
-import org.smallmind.cometd.oumuamua.logging.DataRecord;
 import org.smallmind.cometd.oumuamua.message.NodeMessageGenerator;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 import org.smallmind.scribe.pen.LoggerManager;
@@ -66,7 +65,7 @@ public class LongPollingCarrier implements OumuamuaCarrier {
     this.oumuamuaServer = oumuamuaServer;
     this.longPollingTransport = longPollingTransport;
 
-    asyncWindow = new AsyncWindow();
+    asyncWindow = new AsyncWindow(this);
     context = new OumuamuaLongPollingContext(asyncWindow);
   }
 
@@ -105,7 +104,7 @@ public class LongPollingCarrier implements OumuamuaCarrier {
 
     long adjustedIdleTimeout = (maxSessionIdleTimeout >= 0) ? maxSessionIdleTimeout : longPollingTransport.getMaxInterval();
 
-    asyncContext.setTimeout(Math.max(adjustedIdleTimeout, 0));
+    // TODO:  asyncContext.setTimeout(Math.max(adjustedIdleTimeout, 0));
   }
 
   @Override
@@ -124,20 +123,7 @@ public class LongPollingCarrier implements OumuamuaCarrier {
   public synchronized void send (OumuamuaPacket... packets)
     throws Exception {
 
-    if (asyncContext != null) {
-
-      String text;
-
-      if ((text = asText(packets)) != null) {
-
-        System.out.println("=>" + text);
-        LoggerManager.getLogger(LongPollingCarrier.class).debug(new DataRecord(text, false));
-
-        asyncContext.getResponse().getOutputStream().print(text);
-        asyncContext.getResponse().flushBuffer();
-        asyncContext.complete();
-      }
-    }
+    asyncWindow.send(packets);
   }
 
   public synchronized void onMessage (AsyncContext asyncContext, JsonNode messageConglomerate) {
@@ -167,7 +153,7 @@ public class LongPollingCarrier implements OumuamuaCarrier {
 
         // handle the disconnect after sending the confirmation
         if (!isConnected()) {
-          //      websocketSession.close(new CloseReason(CloseReason.CloseCodes.NORMAL_CLOSURE, "Client disconnect"));
+          // TODO: websocketSession.close(new CloseReason(CloseReason.CloseCodes.NORMAL_CLOSURE, "Client disconnect"));
         }
       } catch (Exception ioException) {
         LoggerManager.getLogger(LongPollingCarrier.class).error(ioException);
