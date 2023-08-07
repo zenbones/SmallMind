@@ -33,6 +33,7 @@
 package org.smallmind.cometd.oumuamua;
 
 import java.io.IOException;
+import java.io.InputStream;
 import javax.servlet.AsyncContext;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -99,7 +100,7 @@ public class OumuamuaServlet extends HttpServlet {
           response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid content length");
         }
 
-        if ((contentBufferSize <= 0) || (request.getInputStream().read(contentBuffer = new byte[contentBufferSize]) < contentBufferSize)) {
+        if ((contentBufferSize <= 0) || (!readStream(request.getInputStream(), contentBuffer = new byte[contentBufferSize]))) {
           response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unable to read full content");
         } else {
 
@@ -138,6 +139,23 @@ public class OumuamuaServlet extends HttpServlet {
         }
       }
     }
+  }
+
+  private boolean readStream (InputStream inputStream, byte[] contentBuffer)
+    throws IOException {
+
+    int totalBytesRead = 0;
+    int bytesRead;
+
+    while (totalBytesRead < contentBuffer.length) {
+      if ((bytesRead = inputStream.read(contentBuffer, totalBytesRead, contentBuffer.length - totalBytesRead)) < 0) {
+        return false;
+      } else {
+        totalBytesRead += bytesRead;
+      }
+    }
+
+    return true;
   }
 
   @Override

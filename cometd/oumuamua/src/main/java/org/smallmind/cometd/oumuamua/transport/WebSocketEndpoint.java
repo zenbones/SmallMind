@@ -149,7 +149,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
   public synchronized void send (OumuamuaPacket... packets)
     throws IOException, InterruptedException, ExecutionException, TimeoutException {
 
-    if ((serverSession != null) && isConnected()) {
+    if (websocketSession.isOpen()) {
 
       String text;
 

@@ -38,7 +38,6 @@ public class LongPollingTransportConfiguration {
   private long longPollAdvisedIntervalMilliseconds = 30000;
   private long clientTimeoutMilliseconds = -1;
   private long lazyMessageMaximumDelayMilliseconds = 10000;
-  private boolean metaConnectDeliveryOnly = false;
 
   public long getLongPollResponseDelayMilliseconds () {
 
@@ -84,18 +83,6 @@ public class LongPollingTransportConfiguration {
   public LongPollingTransportConfiguration setLazyMessageMaximumDelayMilliseconds (long lazyMessageMaximumDelayMilliseconds) {
 
     this.lazyMessageMaximumDelayMilliseconds = lazyMessageMaximumDelayMilliseconds;
-
-    return this;
-  }
-
-  public boolean isMetaConnectDeliveryOnly () {
-
-    return metaConnectDeliveryOnly;
-  }
-
-  public LongPollingTransportConfiguration setMetaConnectDeliveryOnly (boolean metaConnectDeliveryOnly) {
-
-    this.metaConnectDeliveryOnly = metaConnectDeliveryOnly;
 
     return this;
   }

@@ -314,7 +314,8 @@ public abstract class SSLJerseyTest {
     return DeploymentContext.builder(configure()).build();
   }
 
-  protected TestContainerFactory getTestContainerFactory () throws TestContainerException {
+  protected TestContainerFactory getTestContainerFactory ()
+    throws TestContainerException {
 
     if (testContainerFactory == null) {
       testContainerFactory = getDefaultTestContainerFactory();
@@ -338,7 +339,8 @@ public abstract class SSLJerseyTest {
   }
 
   @Before
-  public void setUp () throws Exception {
+  public void setUp ()
+    throws Exception {
 
     final TestContainer testContainer = createTestContainer(context);
 
@@ -351,7 +353,8 @@ public abstract class SSLJerseyTest {
   }
 
   @After
-  public void tearDown () throws Exception {
+  public void tearDown ()
+    throws Exception {
 
     try {
       TestContainer oldContainer = setTestContainer(null);
@@ -395,13 +398,13 @@ public abstract class SSLJerseyTest {
     // do nothing
   }
 
-  // TODO make final
+  // TODO: make final
   protected URI getBaseUri () {
 
     final TestContainer container = getTestContainer();
 
     if (container != null) {
-      // called from outside of JerseyTest constructor
+      // called from outside the JerseyTest constructor
       return container.getBaseUri();
     }
 
@@ -414,7 +417,7 @@ public abstract class SSLJerseyTest {
     final TestContainer container = getTestContainer();
 
     if (container != null) {
-      // called from outside of JerseyTest constructor
+      // called from outside the JerseyTest constructor
       return container.getBaseUri().getPort();
     }
 
@@ -442,18 +445,16 @@ public abstract class SSLJerseyTest {
 
   public final void close (final Response... responses) {
 
-    if (responses == null || responses.length == 0) {
-      return;
-    }
-
-    for (final Response response : responses) {
-      if (response == null) {
-        continue;
-      }
-      try {
-        response.close();
-      } catch (final Throwable t) {
-        LOGGER.log(Level.WARNING, "Error closing a response.", t);
+    if (responses != null) {
+      for (final Response response : responses) {
+        if (response == null) {
+          continue;
+        }
+        try {
+          response.close();
+        } catch (final Throwable t) {
+          LOGGER.log(Level.WARNING, "Error closing a response.", t);
+        }
       }
     }
   }

@@ -41,7 +41,7 @@ public class LongPollingTransport extends AbstractOumuamuaTransport {
 
   public LongPollingTransport (LongPollingTransportConfiguration configuration) {
 
-    super(configuration.getLongPollResponseDelayMilliseconds(), configuration.getLongPollAdvisedIntervalMilliseconds(), configuration.getClientTimeoutMilliseconds(), configuration.getLazyMessageMaximumDelayMilliseconds(), configuration.isMetaConnectDeliveryOnly());
+    super(configuration.getLongPollResponseDelayMilliseconds(), configuration.getLongPollAdvisedIntervalMilliseconds(), configuration.getClientTimeoutMilliseconds(), configuration.getLazyMessageMaximumDelayMilliseconds(), true);
   }
 
   @Override

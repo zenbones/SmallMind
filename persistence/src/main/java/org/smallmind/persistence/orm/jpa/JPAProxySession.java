@@ -41,7 +41,6 @@ import org.smallmind.persistence.orm.aop.BoundarySet;
 import org.smallmind.persistence.orm.aop.NonTransactionalState;
 import org.smallmind.persistence.orm.aop.RollbackAwareBoundarySet;
 import org.smallmind.persistence.orm.aop.TransactionalState;
-import org.smallmind.scribe.pen.LoggerManager;
 
 public class JPAProxySession extends ProxySession<EntityManagerFactory, EntityManager> {
 
@@ -132,21 +131,6 @@ public class JPAProxySession extends ProxySession<EntityManagerFactory, EntityMa
           sessionSet.add(this);
         } else if (isBoundaryEnforced()) {
           close();
-
-          // TODO: Remove a.s.a.p.
-          // -------Debug
-          StringBuilder traceBuilder = new StringBuilder();
-          boolean first = true;
-
-          for (StackTraceElement element : Thread.currentThread().getStackTrace()) {
-            if (!first) {
-              traceBuilder.append("\n");
-            }
-            traceBuilder.append(element.toString());
-            first = false;
-          }
-          LoggerManager.getLogger(JPAProxySession.class).error(traceBuilder.toString());
-          // -------Debug
 
           throw new SessionEnforcementException("Session was requested outside of any boundary enforcement (@NonTransactional or @Transactional)");
         }

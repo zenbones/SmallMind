@@ -135,7 +135,7 @@ public class LocalCarrier implements OumuamuaCarrier {
   public synchronized void send (OumuamuaPacket... packets)
     throws IOException {
 
-    if ((serverSession != null) && isConnected()) {
+    if (serverSession != null) {
 
       String text;
 

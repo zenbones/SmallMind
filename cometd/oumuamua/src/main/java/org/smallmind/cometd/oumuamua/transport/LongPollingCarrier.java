@@ -33,7 +33,6 @@
 package org.smallmind.cometd.oumuamua.transport;
 
 import java.io.IOException;
-import javax.servlet.AsyncContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.websocket.CloseReason;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -48,30 +47,27 @@ import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
 import org.smallmind.cometd.oumuamua.channel.ChannelIdCache;
 import org.smallmind.cometd.oumuamua.context.OumuamuaServletContext;
 import org.smallmind.cometd.oumuamua.extension.ExtensionNotifier;
+import org.smallmind.cometd.oumuamua.logging.DataRecord;
 import org.smallmind.cometd.oumuamua.message.NodeMessageGenerator;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 import org.smallmind.scribe.pen.LoggerManager;
-import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public class LongPollingCarrier implements OumuamuaCarrier {
 
   private static final String[] ACTUAL_TRANSPORTS = new String[] {"long-polling"};
   private final OumuamuaServer oumuamuaServer;
-  private final OumuamuaServletContext context;
   private final LongPollingTransport longPollingTransport;
-  private final AsyncContext asyncContext;
+  private OumuamuaServletContext context;
   private OumuamuaServerSession serverSession;
   private boolean connected;
 
-  public LongPollingCarrier (OumuamuaServer oumuamuaServer, LongPollingTransport longPollingTransport, AsyncContext asyncContext)
+  public LongPollingCarrier (OumuamuaServer oumuamuaServer, LongPollingTransport longPollingTransport)
     throws IOException {
 
     this.oumuamuaServer = oumuamuaServer;
     this.longPollingTransport = longPollingTransport;
-    this.asyncContext = asyncContext;
 
     context = new OumuamuaServletContext((HttpServletRequest)asyncContext.getRequest());
-    asyncContext.getResponse().getOutputStream().setWriteListener();
   }
 
   @Override
@@ -128,6 +124,19 @@ public class LongPollingCarrier implements OumuamuaCarrier {
   public synchronized void send (OumuamuaPacket... packets)
     throws Exception {
 
+    if ((serverSession != null) && isConnected()) {
+
+      String text;
+
+      if ((text = asText(packets)) != null) {
+
+        System.out.println("=>" + text);
+        LoggerManager.getLogger(LongPollingCarrier.class).debug(new DataRecord(text, false));
+
+        asyncContext.getResponse().getOutputStream().print(text);
+        asyncContext.getResponse().flushBuffer();
+      }
+    }
   }
 
   @Override
@@ -165,7 +174,7 @@ public class LongPollingCarrier implements OumuamuaCarrier {
           websocketSession.close(new CloseReason(CloseReason.CloseCodes.NORMAL_CLOSURE, "Client disconnect"));
         }
       } catch (Exception ioException) {
-        LoggerManager.getLogger(WebSocketEndpoint.class).error(ioException);
+        LoggerManager.getLogger(LongPollingCarrier.class).error(ioException);
       } finally {
         // Keep our threads clean and tidy
         ChannelIdCache.clear();

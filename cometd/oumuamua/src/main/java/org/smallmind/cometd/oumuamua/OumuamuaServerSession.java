@@ -596,7 +596,7 @@ public class OumuamuaServerSession implements ServerSession {
           }
         } else {
           try {
-            // TODO : on message dequeued
+            //TODO : on message dequeued
             carrier.send(promotedPacket);
           } catch (Exception exception) {
             LoggerManager.getLogger(OumuamuaServerSession.class).error(exception);
