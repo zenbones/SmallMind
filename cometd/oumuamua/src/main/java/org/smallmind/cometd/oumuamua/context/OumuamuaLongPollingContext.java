@@ -58,105 +58,137 @@ public class OumuamuaLongPollingContext implements BayeuxContext {
 
     HttpServletRequest request;
 
-    return ((request = asyncWindow.getRequest()) == null) ? protocol : (protocol = request.getProtocol());
+    return ((request = asyncWindow.getRequest()) == null) ? null : request.getProtocol();
   }
 
   @Override
   public String getURL () {
 
+    HttpServletRequest request;
     String query;
 
-    return ((query = request.getQueryString()) == null) ? request.getRequestURL().toString() : request.getRequestURL().append("?").append(query).toString();
+    return ((request = asyncWindow.getRequest()) == null) ? null : ((query = request.getQueryString()) == null) ? request.getRequestURL().toString() : request.getRequestURL().append("?").append(query).toString();
   }
 
   @Override
   public List<Locale> getLocales () {
 
-    return Collections.list(request.getLocales());
+    HttpServletRequest request;
+
+    return ((request = asyncWindow.getRequest()) == null) ? List.of(Locale.getDefault()) : Collections.list(request.getLocales());
   }
 
   @Override
   public boolean isSecure () {
 
-    return request.isSecure();
+    HttpServletRequest request;
+
+    return ((request = asyncWindow.getRequest()) != null) && request.isSecure();
   }
 
   @Override
   public Principal getUserPrincipal () {
 
-    return request.getUserPrincipal();
+    HttpServletRequest request;
+
+    return ((request = asyncWindow.getRequest()) == null) ? null : request.getUserPrincipal();
   }
 
   @Override
   public boolean isUserInRole (String role) {
 
-    return request.isUserInRole(role);
+    HttpServletRequest request;
+
+    return ((request = asyncWindow.getRequest()) != null) && request.isUserInRole(role);
   }
 
   @Override
   public InetSocketAddress getRemoteAddress () {
 
-    return new InetSocketAddress(request.getRemoteHost(), request.getRemotePort());
+    HttpServletRequest request;
+
+    return ((request = asyncWindow.getRequest()) == null) ? null : new InetSocketAddress(request.getRemoteHost(), request.getRemotePort());
   }
 
   @Override
   public InetSocketAddress getLocalAddress () {
 
-    return new InetSocketAddress(request.getLocalName(), request.getLocalPort());
+    HttpServletRequest request;
+
+    return ((request = asyncWindow.getRequest()) == null) ? null : new InetSocketAddress(request.getLocalName(), request.getLocalPort());
   }
 
   @Override
   public String getContextPath () {
 
-    return request.getContextPath();
+    HttpServletRequest request;
+
+    return ((request = asyncWindow.getRequest()) == null) ? null : request.getContextPath();
   }
 
   @Override
   public String getContextInitParameter (String name) {
 
-    return request.getServletContext().getInitParameter(name);
+    HttpServletRequest request;
+
+    return ((request = asyncWindow.getRequest()) == null) ? null : request.getServletContext().getInitParameter(name);
   }
 
   @Override
   public Object getContextAttribute (String name) {
 
-    return request.getServletContext().getAttribute(name);
+    HttpServletRequest request;
+
+    return ((request = asyncWindow.getRequest()) == null) ? null : request.getServletContext().getAttribute(name);
   }
 
   @Override
   public String getHeader (String name) {
 
-    return request.getHeader(name);
+    HttpServletRequest request;
+
+    return ((request = asyncWindow.getRequest()) == null) ? null : request.getHeader(name);
   }
 
   @Override
   public List<String> getHeaderValues (String name) {
 
-    return Collections.list(request.getHeaders(name));
+    HttpServletRequest request;
+
+    return ((request = asyncWindow.getRequest()) == null) ? Collections.emptyList() : Collections.list(request.getHeaders(name));
   }
 
   @Override
   public String getParameter (String name) {
 
-    return request.getParameter(name);
+    HttpServletRequest request;
+
+    return ((request = asyncWindow.getRequest()) == null) ? null : request.getParameter(name);
   }
 
   @Override
   public List<String> getParameterValues (String name) {
 
-    return Arrays.asList(request.getParameterValues(name));
+    HttpServletRequest request;
+
+    return ((request = asyncWindow.getRequest()) == null) ? Collections.emptyList() : Arrays.asList(request.getParameterValues(name));
   }
 
   @Override
   public String getCookie (String name) {
 
-    Cookie[] cookies = request.getCookies();
+    HttpServletRequest request;
 
-    if (cookies != null) {
-      for (Cookie cookie : cookies) {
-        if (cookie.getName().equals(name)) {
+    if ((request = asyncWindow.getRequest()) != null) {
 
-          return cookie.getValue();
+      Cookie[] cookies = request.getCookies();
+
+      if (cookies != null) {
+        for (Cookie cookie : cookies) {
+          if (cookie.getName().equals(name)) {
+
+            return cookie.getValue();
+          }
         }
       }
     }
@@ -167,44 +199,60 @@ public class OumuamuaLongPollingContext implements BayeuxContext {
   @Override
   public Object getRequestAttribute (String name) {
 
-    return request.getAttribute(name);
+    HttpServletRequest request;
+
+    return ((request = asyncWindow.getRequest()) == null) ? null : request.getAttribute(name);
   }
 
   @Override
   public String getHttpSessionId () {
 
     HttpSession httpSession;
+    HttpServletRequest request;
 
-    return ((httpSession = request.getSession(false)) == null) ? null : httpSession.getId();
+    return ((request = asyncWindow.getRequest()) == null) ? null : ((httpSession = request.getSession(false)) == null) ? null : httpSession.getId();
   }
 
   @Override
   public Object getHttpSessionAttribute (String name) {
 
     HttpSession httpSession;
+    HttpServletRequest request;
 
-    return ((httpSession = request.getSession(false)) == null) ? null : httpSession.getAttribute(name);
+    return ((request = asyncWindow.getRequest()) == null) ? null : ((httpSession = request.getSession(false)) == null) ? null : httpSession.getAttribute(name);
   }
 
   @Override
   public void setHttpSessionAttribute (String name, Object value) {
 
-    HttpSession httpSession;
+    HttpServletRequest request;
 
-    if ((httpSession = request.getSession(false)) == null) {
+    if ((request = asyncWindow.getRequest()) == null) {
       throw new IllegalStateException("No http session was created");
     } else {
-      httpSession.setAttribute(name, value);
+
+      HttpSession httpSession;
+
+      if ((httpSession = request.getSession(false)) == null) {
+        throw new IllegalStateException("No http session was created");
+      } else {
+        httpSession.setAttribute(name, value);
+      }
     }
   }
 
   @Override
   public void invalidateHttpSession () {
 
-    HttpSession httpSession;
+    HttpServletRequest request;
 
-    if ((httpSession = request.getSession(false)) != null) {
-      httpSession.invalidate();
+    if ((request = asyncWindow.getRequest()) != null) {
+
+      HttpSession httpSession;
+
+      if ((httpSession = request.getSession(false)) != null) {
+        httpSession.invalidate();
+      }
     }
   }
 }

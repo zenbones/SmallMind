@@ -6,29 +6,29 @@ import javax.servlet.http.HttpServletRequest;
 
 public class AsyncWindow {
 
-  private final AtomicReference<AsyncContext> asyncContextRef = new AtomicReference<>();
+  private final ThreadLocal<AsyncContext> asyncContextThreadLocal = new ThreadLocal<>();
 
   public synchronized void addAsyncContext (AsyncContext asyncContext) {
 
-    asyncContextRef.set(asyncContext);
+    asyncContextThreadLocal.set(asyncContext);
   }
 
   public synchronized void clearAsyncContext () {
 
-    asyncContextRef.set(null);
+    asyncContextThreadLocal.remove();
   }
 
   public synchronized String getUserAgent () {
 
     AsyncContext asyncContext;
 
-    return ((asyncContext = asyncContextRef.get()) == null) ? null : ((HttpServletRequest)asyncContext.getRequest()).getHeader("User-Agent");
+    return ((asyncContext = asyncContextThreadLocal.get()) == null) ? null : ((HttpServletRequest)asyncContext.getRequest()).getHeader("User-Agent");
   }
 
   public HttpServletRequest getRequest () {
 
     AsyncContext asyncContext;
 
-    return ((asyncContext = asyncContextRef.get()) == null) ? null : (HttpServletRequest)asyncContext.getRequest();
+    return ((asyncContext = asyncContextThreadLocal.get()) == null) ? null : (HttpServletRequest)asyncContext.getRequest();
   }
 }
