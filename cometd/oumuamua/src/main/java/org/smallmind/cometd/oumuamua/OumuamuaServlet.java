@@ -109,7 +109,6 @@ public class OumuamuaServlet extends HttpServlet {
           OumuamuaServerSession serverSession;
           JsonNode messageConglomerate = JsonCodec.readAsJsonNode(new String(contentBuffer));
           String clientId = null;
-          boolean error = false;
 
           for (JsonNode messageNode : messageConglomerate) {
             if (JsonNodeType.OBJECT.equals(messageNode.getNodeType()) && messageNode.has(Message.CLIENT_ID_FIELD)) {
