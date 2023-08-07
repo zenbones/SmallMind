@@ -34,7 +34,7 @@ package org.smallmind.cometd.oumuamua.transport;
 
 public class LongPollingTransportConfiguration {
 
-  private long longPollResponseDelayMilliseconds = 0;
+  private long longPollResponseDelayMilliseconds = 5000;
   private long longPollAdvisedIntervalMilliseconds = 30000;
   private long clientTimeoutMilliseconds = -1;
   private long lazyMessageMaximumDelayMilliseconds = 10000;
