@@ -34,8 +34,6 @@ package org.smallmind.cometd.oumuamua.transport;
 
 import java.io.IOException;
 import javax.servlet.AsyncContext;
-import javax.servlet.http.HttpServletRequest;
-import javax.websocket.CloseReason;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -45,7 +43,7 @@ import org.cometd.bayeux.server.BayeuxContext;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
 import org.smallmind.cometd.oumuamua.channel.ChannelIdCache;
-import org.smallmind.cometd.oumuamua.context.OumuamuaServletContext;
+import org.smallmind.cometd.oumuamua.context.OumuamuaLongPollingContext;
 import org.smallmind.cometd.oumuamua.extension.ExtensionNotifier;
 import org.smallmind.cometd.oumuamua.logging.DataRecord;
 import org.smallmind.cometd.oumuamua.message.NodeMessageGenerator;
@@ -55,11 +53,12 @@ import org.smallmind.scribe.pen.LoggerManager;
 public class LongPollingCarrier implements OumuamuaCarrier {
 
   private static final String[] ACTUAL_TRANSPORTS = new String[] {"long-polling"};
+  private static final long DEFAULT_MAX_SESSION_IDLE_TIMEOUT = 90000;
   private final OumuamuaServer oumuamuaServer;
+  private final OumuamuaLongPollingContext context;
   private final LongPollingTransport longPollingTransport;
-  private OumuamuaServletContext context;
+  private final AsyncWindow asyncWindow;
   private OumuamuaServerSession serverSession;
-  private AsyncContext asyncContext;
   private boolean connected;
 
   public LongPollingCarrier (OumuamuaServer oumuamuaServer, LongPollingTransport longPollingTransport) {
@@ -67,7 +66,8 @@ public class LongPollingCarrier implements OumuamuaCarrier {
     this.oumuamuaServer = oumuamuaServer;
     this.longPollingTransport = longPollingTransport;
 
-    // context = new OumuamuaServletContext((HttpServletRequest)asyncContext.getRequest());
+    asyncWindow = new AsyncWindow();
+    context = new OumuamuaLongPollingContext(asyncWindow);
   }
 
   @Override
@@ -89,15 +89,15 @@ public class LongPollingCarrier implements OumuamuaCarrier {
   }
 
   @Override
-  public synchronized BayeuxContext getContext () {
+  public BayeuxContext getContext () {
 
     return context;
   }
 
   @Override
-  public synchronized String getUserAgent () {
+  public String getUserAgent () {
 
-    return ((HttpServletRequest)asyncContext.getRequest()).getHeader("User-Agent");
+    return asyncWindow.getUserAgent();
   }
 
   @Override
@@ -124,7 +124,7 @@ public class LongPollingCarrier implements OumuamuaCarrier {
   public synchronized void send (OumuamuaPacket... packets)
     throws Exception {
 
-    if (serverSession != null) {
+    if (asyncContext != null) {
 
       String text;
 
@@ -135,14 +135,17 @@ public class LongPollingCarrier implements OumuamuaCarrier {
 
         asyncContext.getResponse().getOutputStream().print(text);
         asyncContext.getResponse().flushBuffer();
+        asyncContext.complete();
       }
     }
   }
 
-  public synchronized void onMessage (JsonNode messageConglomerate) {
+  public synchronized void onMessage (AsyncContext asyncContext, JsonNode messageConglomerate) {
 
     if ((serverSession != null) && isConnected()) {
       try {
+        asyncWindow.addAsyncContext(asyncContext);
+
         for (JsonNode messageNode : messageConglomerate) {
           if (JsonNodeType.OBJECT.equals(messageNode.getNodeType()) && messageNode.has(Message.CHANNEL_FIELD)) {
 
@@ -164,11 +167,13 @@ public class LongPollingCarrier implements OumuamuaCarrier {
 
         // handle the disconnect after sending the confirmation
         if (!isConnected()) {
-    //      websocketSession.close(new CloseReason(CloseReason.CloseCodes.NORMAL_CLOSURE, "Client disconnect"));
+          //      websocketSession.close(new CloseReason(CloseReason.CloseCodes.NORMAL_CLOSURE, "Client disconnect"));
         }
       } catch (Exception ioException) {
         LoggerManager.getLogger(LongPollingCarrier.class).error(ioException);
       } finally {
+        asyncWindow.clearAsyncContext();
+        asyncContext.complete();
         // Keep our threads clean and tidy
         ChannelIdCache.clear();
       }

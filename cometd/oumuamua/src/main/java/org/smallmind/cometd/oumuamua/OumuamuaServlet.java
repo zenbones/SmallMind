@@ -145,7 +145,7 @@ public class OumuamuaServlet extends HttpServlet {
     AsyncContext asyncContext = request.startAsync();
 
     asyncContext.setTimeout(0);
-    carrier.onMessage(messageConglomerate);
+    carrier.onMessage(asyncContext, messageConglomerate);
   }
 
   private boolean readStream (InputStream inputStream, byte[] contentBuffer)

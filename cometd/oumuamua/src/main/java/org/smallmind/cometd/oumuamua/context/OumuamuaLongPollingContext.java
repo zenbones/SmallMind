@@ -42,20 +42,23 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import org.cometd.bayeux.server.BayeuxContext;
+import org.smallmind.cometd.oumuamua.transport.AsyncWindow;
 
-public class OumuamuaServletContext implements BayeuxContext {
+public class OumuamuaLongPollingContext implements BayeuxContext {
 
-  private final HttpServletRequest request;
+  private final AsyncWindow asyncWindow;
 
-  public OumuamuaServletContext (HttpServletRequest request) {
+  public OumuamuaLongPollingContext (AsyncWindow asyncWindow) {
 
-    this.request = request;
+    this.asyncWindow = asyncWindow;
   }
 
   @Override
   public String getProtocol () {
 
-    return request.getProtocol();
+    HttpServletRequest request;
+
+    return ((request = asyncWindow.getRequest()) == null) ? protocol : (protocol = request.getProtocol());
   }
 
   @Override
