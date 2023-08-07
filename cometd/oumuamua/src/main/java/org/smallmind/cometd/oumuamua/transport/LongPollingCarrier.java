@@ -33,9 +33,9 @@
 package org.smallmind.cometd.oumuamua.transport;
 
 import java.io.IOException;
+import javax.servlet.AsyncContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.websocket.CloseReason;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -59,15 +59,15 @@ public class LongPollingCarrier implements OumuamuaCarrier {
   private final LongPollingTransport longPollingTransport;
   private OumuamuaServletContext context;
   private OumuamuaServerSession serverSession;
+  private AsyncContext asyncContext;
   private boolean connected;
 
-  public LongPollingCarrier (OumuamuaServer oumuamuaServer, LongPollingTransport longPollingTransport)
-    throws IOException {
+  public LongPollingCarrier (OumuamuaServer oumuamuaServer, LongPollingTransport longPollingTransport) {
 
     this.oumuamuaServer = oumuamuaServer;
     this.longPollingTransport = longPollingTransport;
 
-    context = new OumuamuaServletContext((HttpServletRequest)asyncContext.getRequest());
+    // context = new OumuamuaServletContext((HttpServletRequest)asyncContext.getRequest());
   }
 
   @Override
@@ -139,13 +139,6 @@ public class LongPollingCarrier implements OumuamuaCarrier {
     }
   }
 
-  @Override
-  public synchronized OumuamuaPacket[] inject (ObjectNode messageNode)
-    throws JsonProcessingException {
-
-    return new OumuamuaPacket[0];
-  }
-
   public synchronized void onMessage (JsonNode messageConglomerate) {
 
     if ((serverSession != null) && isConnected()) {
@@ -171,7 +164,7 @@ public class LongPollingCarrier implements OumuamuaCarrier {
 
         // handle the disconnect after sending the confirmation
         if (!isConnected()) {
-          websocketSession.close(new CloseReason(CloseReason.CloseCodes.NORMAL_CLOSURE, "Client disconnect"));
+    //      websocketSession.close(new CloseReason(CloseReason.CloseCodes.NORMAL_CLOSURE, "Client disconnect"));
         }
       } catch (Exception ioException) {
         LoggerManager.getLogger(LongPollingCarrier.class).error(ioException);

@@ -79,9 +79,6 @@ public interface OumuamuaCarrier {
   void send (OumuamuaPacket... packets)
     throws Exception;
 
-  OumuamuaPacket[] inject (ObjectNode messageNode)
-    throws JsonProcessingException;
-
   void close ()
     throws IOException;
 

@@ -62,6 +62,7 @@ import org.smallmind.cometd.oumuamua.meta.DisconnectMessage;
 import org.smallmind.cometd.oumuamua.meta.DisconnectMessageRequestInView;
 import org.smallmind.cometd.oumuamua.meta.HandshakeMessage;
 import org.smallmind.cometd.oumuamua.meta.HandshakeMessageRequestInView;
+import org.smallmind.cometd.oumuamua.transport.LocalCarrier;
 import org.smallmind.cometd.oumuamua.transport.LocalTransport;
 import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
@@ -375,7 +376,7 @@ public class OumuamuaLocalSession implements LocalSession {
 
     OumuamuaPacket[] packets;
 
-    if (((packets = serverSession.getCarrier().inject(messageNode)) != null) && (packets.length > 0)) {
+    if (((packets = ((LocalCarrier)serverSession.getCarrier()).inject(messageNode)) != null) && (packets.length > 0)) {
 
       LinkedList<MapLike> messages = new LinkedList<>();
 

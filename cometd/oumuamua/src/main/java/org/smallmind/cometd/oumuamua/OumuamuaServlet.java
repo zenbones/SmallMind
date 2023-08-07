@@ -117,7 +117,7 @@ public class OumuamuaServlet extends HttpServlet {
 
           if (clientId == null) {
 
-            LongPollingCarrier longPollingCarrier = new LongPollingCarrier(oumuamuaServer, longPollingTransport, null);
+            LongPollingCarrier longPollingCarrier = longPollingTransport.createCarrier(oumuamuaServer);
 
             serverSession = new OumuamuaServerSession(oumuamuaServer, longPollingTransport, longPollingCarrier, false, null, oumuamuaServer.getConfiguration().getMaximumMessageQueueSize(), oumuamuaServer.getConfiguration().getMaximumUndeliveredLazyMessageCount());
             longPollingCarrier.setServerSession(serverSession);

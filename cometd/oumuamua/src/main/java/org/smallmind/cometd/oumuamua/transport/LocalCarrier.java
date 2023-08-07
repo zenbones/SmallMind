@@ -148,7 +148,6 @@ public class LocalCarrier implements OumuamuaCarrier {
     }
   }
 
-  @Override
   public synchronized OumuamuaPacket[] inject (ObjectNode messageNode)
     throws JsonProcessingException {
 
