@@ -32,24 +32,29 @@
  */
 package org.smallmind.cometd.oumuamua;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import org.cometd.bayeux.client.ClientSessionChannel;
 import org.cometd.client.BayeuxClient;
 import org.cometd.client.http.jetty.JettyHttpClientTransport;
 import org.eclipse.jetty.client.HttpClient;
-import org.smallmind.nutsnbolts.util.Counter;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.testng.annotations.Test;
 
 @Test
-public class LongPollingTest {
+public class LongPollingTest2 {
+
+  /*
+  [{"minimumVersion":"1.0","clientId":"11djxhxdr697ckmu8pk0vogwct",
+  "supportedConnectionTypes":["websocket","long-polling","callback-polling"],
+  "advice":{"interval":0,"timeout":30000,"reconnect":"retry"},
+  "channel":"/meta/handshake","id":"1","version":"1.0","successful":true}]
+  [{"advice":{"interval":0,"timeout":30000,"reconnect":"retry"},"channel":"/meta/connect","id":"2","successful":true}]
+   */
 
   public void test ()
     throws Exception {
 
-    ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("org/smallmind/cometd/oumuamua/oumuamua-grizzly.xml", "org/smallmind/cometd/oumuamua/oumuamua.xml");
-
+    // ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("org/smallmind/cometd/oumuamua/oumuamua-grizzly.xml", "org/smallmind/cometd/oumuamua/oumuamua.xml");
     HttpClient httpClient = new HttpClient();
     httpClient.start();
     JettyHttpClientTransport transport = new JettyHttpClientTransport(new HashMap<>(), httpClient);
@@ -63,23 +68,18 @@ public class LongPollingTest {
     // handshakeMap.put("ext", tokenMap);
 
     bayeuxClient.handshake(handshakeMap);
-    if (!bayeuxClient.waitFor(5000, BayeuxClient.State.CONNECTED)) {
+    if (!bayeuxClient.waitFor(500, BayeuxClient.State.CONNECTED)) {
       System.out.println("Unable to connect within 5000 milliseconds");
     }
 
-    Counter counter = new Counter();
+    ClientSessionChannel channel = bayeuxClient.getChannel("/foobar");
 
-    bayeuxClient.getChannel("/foobar").subscribe((channel, message) -> {
+    System.out.println(System.currentTimeMillis());
+    for (int i = 0; i < 10000; i++) {
+      channel.publish("{\"x\":1, \"y\":2}", message -> message.toString());
+    }
 
-      int count = counter.incAndGet();
-
-      System.out.println(count + ":" + message.getId());
-      if (count == 10000) {
-        System.out.println(System.currentTimeMillis());
-      }
-    });
-
-    Thread.sleep(300000);
     System.out.println("Done...");
+    Thread.sleep(300000);
   }
 }

@@ -353,7 +353,6 @@ public class OumuamuaServerSession implements ServerSession {
   }
 
   public void onQueueMaxed (OumuamuaServerSession sender, MessageGenerator messageGenerator) {
-
     for (ServerSessionListener sessionListener : listenerList) {
       if (QueueMaxedListener.class.isAssignableFrom(sessionListener.getClass())) {
         ((QueueMaxedListener)sessionListener).queueMaxed(this, null, sender, messageGenerator.generate());
@@ -587,7 +586,7 @@ public class OumuamuaServerSession implements ServerSession {
 
             try {
               if ((connectQueueSize += promotedPacket.size()) > maximumMessageQueueSize) {
-                onQueueMaxed(promotedPacket.getSender(), new MapMessageGenerator(carrier.getContext(), serverTransport, promotedPacket.getChannelId(), promotedPacket.getMessages()[connectQueueSize - maximumMessageQueueSize], PacketType.LAZY.equals(promotedPacket.getType())));
+                onQueueMaxed(promotedPacket.getSender(), new MapMessageGenerator(carrier.getContext(), serverTransport, promotedPacket.getChannelId(), promotedPacket.getMessages()[connectQueueSize - maximumMessageQueueSize - 1], PacketType.LAZY.equals(promotedPacket.getType())));
 
                 boolean operating = true;
                 boolean lostQueuedMessages = false;
