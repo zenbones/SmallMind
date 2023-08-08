@@ -81,6 +81,6 @@ public class LongPollingTest2 {
     }
 
     System.out.println("Done...");
-    Thread.sleep(600000);
+    Thread.sleep(300000);
   }
 }

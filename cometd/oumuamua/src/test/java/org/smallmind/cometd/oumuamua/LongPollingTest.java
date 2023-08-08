@@ -79,7 +79,7 @@ public class LongPollingTest {
       }
     });
 
-    Thread.sleep(300000);
+    Thread.sleep(600000);
     System.out.println("Done...");
   }
 }
