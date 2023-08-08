@@ -37,6 +37,7 @@ import java.util.LinkedList;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.cometd.bayeux.ChannelId;
+import org.cometd.bayeux.Message;
 import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 import org.smallmind.cometd.oumuamua.transport.OumuamuaTransport;
@@ -76,19 +77,24 @@ public class ConnectMessage extends AdvisedMetaMessage {
 
           LinkedList<OumuamuaPacket> enqueuedPacketList = new LinkedList<>();
           OumuamuaPacket[] enqueuedPackets;
-          long longPollingTimeout = (serverSession.getTimeout() >= 0) ? serverSession.getTimeout() : transport.getTimeout();
+          long longPollAdvisedIntervalMilliseconds = (serverSession.getInterval() >= 0) ? serverSession.getInterval() : transport.getInterval();
+          long longPollingTimeout = ((getAdvice() != null) && getAdvice().has(Message.TIMEOUT_FIELD)) ? getAdvice().get(Message.TIMEOUT_FIELD).asLong() : (serverSession.getTimeout() >= 0) ? serverSession.getTimeout() : transport.getTimeout();
+          long start = System.currentTimeMillis();
+          long remainingTimeout = 0;
 
           connectSwitch.setState(!serverSession.isConnected());
           serverSession.setConnected(true);
 
-          if (longPollingTimeout > 0) {
-            adviceNode.put("timeout", longPollingTimeout);
-          }
-          adviceNode.put("interval", (serverSession.getInterval() >= 0) ? serverSession.getInterval() : transport.getInterval());
+          do {
+            if ((enqueuedPackets = serverSession.poll()) == null) {
+              remainingTimeout = longPollingTimeout + start - System.currentTimeMillis();
+              break;
+            } else if (enqueuedPackets.length > 0) {
+              enqueuedPacketList.addAll(Arrays.asList(enqueuedPackets));
+            }
+          } while ((longPollingTimeout > 0) && ((System.currentTimeMillis() - start) <= longPollingTimeout));
 
-          while (((enqueuedPackets = serverSession.poll()) != null) && (enqueuedPackets.length > 0)) {
-            enqueuedPacketList.addAll(Arrays.asList(enqueuedPackets));
-          }
+          adviceNode.put("interval", Math.max(longPollAdvisedIntervalMilliseconds, remainingTimeout));
 
           return OumuamuaPacket.asPackets(serverSession, CHANNEL_ID, new ConnectMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(CHANNEL_ID.getId()).setId(getId()).setClientId(serverSession.getId()).setAdvice(adviceNode), enqueuedPacketList.toArray(new OumuamuaPacket[0]));
         }

@@ -218,8 +218,8 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
       oumuamuaServer.removeSession(serverSession);
 
       if (isConnected()) {
-        oumuamuaServer.onSessionDisconnected(serverSession, null, true);
         setConnected(false);
+        oumuamuaServer.onSessionDisconnected(serverSession, null, true);
       }
 
       serverSession = null;

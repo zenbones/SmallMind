@@ -32,7 +32,6 @@
  */
 package org.smallmind.cometd.oumuamua.transport;
 
-import java.io.IOException;
 import javax.servlet.AsyncContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
@@ -49,10 +48,9 @@ import org.smallmind.cometd.oumuamua.message.NodeMessageGenerator;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 import org.smallmind.scribe.pen.LoggerManager;
 
-public class LongPollingCarrier implements OumuamuaCarrier {
+public class LongPollingCarrier extends AbstractExpiringCarrier {
 
   private static final String[] ACTUAL_TRANSPORTS = new String[] {"long-polling"};
-  private static final long DEFAULT_MAX_SESSION_IDLE_TIMEOUT = 90000;
   private final OumuamuaServer oumuamuaServer;
   private final OumuamuaLongPollingContext context;
   private final LongPollingTransport longPollingTransport;
@@ -61,6 +59,8 @@ public class LongPollingCarrier implements OumuamuaCarrier {
   private boolean connected;
 
   public LongPollingCarrier (OumuamuaServer oumuamuaServer, LongPollingTransport longPollingTransport) {
+
+    super(longPollingTransport.getMaxInterval(), longPollingTransport.getIdleCheckCycleMilliseconds(), 90000);
 
     this.oumuamuaServer = oumuamuaServer;
     this.longPollingTransport = longPollingTransport;
@@ -97,14 +97,6 @@ public class LongPollingCarrier implements OumuamuaCarrier {
   public String getUserAgent () {
 
     return asyncWindow.getUserAgent();
-  }
-
-  @Override
-  public synchronized void setMaxSessionIdleTimeout (long maxSessionIdleTimeout) {
-
-    long adjustedIdleTimeout = (maxSessionIdleTimeout >= 0) ? maxSessionIdleTimeout : longPollingTransport.getMaxInterval();
-
-    // TODO:  asyncContext.setTimeout(Math.max(adjustedIdleTimeout, 0));
   }
 
   @Override
@@ -153,7 +145,7 @@ public class LongPollingCarrier implements OumuamuaCarrier {
 
         // handle the disconnect after sending the confirmation
         if (!isConnected()) {
-          // TODO: websocketSession.close(new CloseReason(CloseReason.CloseCodes.NORMAL_CLOSURE, "Client disconnect"));
+          close();
         }
       } catch (Exception ioException) {
         LoggerManager.getLogger(LongPollingCarrier.class).error(ioException);
@@ -167,8 +159,17 @@ public class LongPollingCarrier implements OumuamuaCarrier {
   }
 
   @Override
-  public synchronized void close ()
-    throws IOException {
+  public void finishClosing () {
 
+    if (serverSession != null) {
+      oumuamuaServer.removeSession(serverSession);
+
+      if (isConnected()) {
+        setConnected(false);
+        oumuamuaServer.onSessionDisconnected(serverSession, null, true);
+      }
+
+      serverSession = null;
+    }
   }
 }

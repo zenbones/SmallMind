@@ -105,7 +105,7 @@ public interface OumuamuaCarrier {
         OumuamuaPacket[] disconnectResponse = JsonCodec.read(messageNode, DisconnectMessageRequestInView.class).factory().process(serverSession, disconnectSwitch = new Switch());
 
         if (disconnectSwitch.isOn()) {
-          // disconnect will happen after the response hs been sent
+          // disconnect will happen after the response has been sent
           setConnected(false);
           oumuamuaServer.onSessionDisconnected(serverSession, new NodeMessageGenerator(context, transport, DisconnectMessage.CHANNEL_ID, messageNode, false), false);
         }

@@ -37,9 +37,13 @@ import org.smallmind.cometd.oumuamua.OumuamuaServer;
 
 public class LongPollingTransport extends AbstractOumuamuaTransport {
 
+  private final long idleCheckCycleMilliseconds;
+
   public LongPollingTransport (LongPollingTransportConfiguration configuration) {
 
     super(configuration.getLongPollResponseDelayMilliseconds(), configuration.getLongPollAdvisedIntervalMilliseconds(), configuration.getClientTimeoutMilliseconds(), configuration.getLazyMessageMaximumDelayMilliseconds(), true);
+
+    idleCheckCycleMilliseconds = Math.max(configuration.getIdleCheckCycleMilliseconds(), 0);
   }
 
   @Override
@@ -52,6 +56,11 @@ public class LongPollingTransport extends AbstractOumuamuaTransport {
   public String getOptionPrefix () {
 
     return "long-polling";
+  }
+
+  public long getIdleCheckCycleMilliseconds () {
+
+    return idleCheckCycleMilliseconds;
   }
 
   @Override

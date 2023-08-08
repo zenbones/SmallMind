@@ -33,8 +33,6 @@
 package org.smallmind.cometd.oumuamua.transport;
 
 import java.io.IOException;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.cometd.bayeux.ChannelId;
@@ -54,36 +52,25 @@ import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
-public class LocalCarrier implements OumuamuaCarrier {
+public class LocalCarrier extends AbstractExpiringCarrier {
 
   private static final OumuamuaLocalContext LOCAL_CONTEXT = new OumuamuaLocalContext();
   private static final String[] ACTUAL_TRANSPORTS = new String[] {"local"};
-  private static final long DEFAULT_MAX_SESSION_IDLE_TIMEOUT = 300000;
 
   private final OumuamuaServer oumuamuaServer;
   private final LocalTransport localTransport;
-  private final IdleCheck idleCheck;
   private OumuamuaServerSession serverSession;
   private boolean connected;
-  private long lastContactMilliseconds;
-  private long maxSessionIdleTimeout;
 
   public LocalCarrier (OumuamuaServer oumuamuaServer, LocalTransport localTransport, String idHint) {
 
-    Thread idleCheckThread;
+    super(localTransport.getMaxInterval(), localTransport.getIdleCheckCycleMilliseconds(), 300000);
 
     this.oumuamuaServer = oumuamuaServer;
     this.localTransport = localTransport;
 
-    lastContactMilliseconds = System.currentTimeMillis();
-    maxSessionIdleTimeout = (localTransport.getMaxInterval() > 0) ? localTransport.getMaxInterval() : DEFAULT_MAX_SESSION_IDLE_TIMEOUT;
-
     oumuamuaServer.addSession(serverSession = new OumuamuaServerSession(oumuamuaServer, localTransport, this, true, idHint, oumuamuaServer.getConfiguration().getMaximumMessageQueueSize(), oumuamuaServer.getConfiguration().getMaximumUndeliveredLazyMessageCount()));
     setConnected(true);
-
-    idleCheckThread = new Thread(idleCheck = new IdleCheck());
-    idleCheckThread.setDaemon(true);
-    idleCheckThread.start();
   }
 
   public OumuamuaLocalSession getLocalSession () {
@@ -113,14 +100,6 @@ public class LocalCarrier implements OumuamuaCarrier {
   public String getUserAgent () {
 
     return null;
-  }
-
-  @Override
-  public void setMaxSessionIdleTimeout (long maxSessionIdleTimeout) {
-
-    long adjustedIdleTimeout = (maxSessionIdleTimeout >= 0) ? maxSessionIdleTimeout : localTransport.getMaxInterval();
-
-    this.maxSessionIdleTimeout = (adjustedIdleTimeout >= 0) ? adjustedIdleTimeout : DEFAULT_MAX_SESSION_IDLE_TIMEOUT;
   }
 
   @Override
@@ -167,7 +146,7 @@ public class LocalCarrier implements OumuamuaCarrier {
         String channel = messageNode.get(Message.CHANNEL_FIELD).asText();
         ChannelId channelId = ChannelIdCache.generate(channel);
 
-        lastContactMilliseconds = System.currentTimeMillis();
+        updateLastContact();
 
         if (ExtensionNotifier.incoming(oumuamuaServer, serverSession, new NodeMessageGenerator(LOCAL_CONTEXT, localTransport, channelId, messageNode, false))) {
 
@@ -193,18 +172,7 @@ public class LocalCarrier implements OumuamuaCarrier {
   }
 
   @Override
-  public synchronized void close () {
-
-    try {
-      idleCheck.stop();
-    } catch (InterruptedException interruptedException) {
-      LoggerManager.getLogger(LocalCarrier.class).error(interruptedException);
-    } finally {
-      finishClosing();
-    }
-  }
-
-  private synchronized void finishClosing () {
+  public void finishClosing () {
 
     if (serverSession != null) {
 
@@ -216,43 +184,11 @@ public class LocalCarrier implements OumuamuaCarrier {
       }
 
       if (isConnected()) {
-        oumuamuaServer.onSessionDisconnected(serverSession, null, true);
         setConnected(false);
+        oumuamuaServer.onSessionDisconnected(serverSession, null, true);
       }
 
       serverSession = null;
-    }
-  }
-
-  private class IdleCheck implements Runnable {
-
-    private final CountDownLatch finishLatch = new CountDownLatch(1);
-    private final CountDownLatch exitLatch = new CountDownLatch(1);
-
-    public void stop ()
-      throws InterruptedException {
-
-      finishLatch.countDown();
-      exitLatch.await();
-    }
-
-    @Override
-    public void run () {
-
-      try {
-        while (!finishLatch.await(localTransport.getIdleCheckCycleMilliseconds(), TimeUnit.MILLISECONDS)) {
-          if (lastContactMilliseconds > 0) {
-            if (System.currentTimeMillis() > lastContactMilliseconds + maxSessionIdleTimeout) {
-              finishLatch.countDown();
-              finishClosing();
-            }
-          }
-        }
-      } catch (InterruptedException interruptedException) {
-        LoggerManager.getLogger(OumuamuaServer.class).error(interruptedException);
-      } finally {
-        exitLatch.countDown();
-      }
     }
   }
 }

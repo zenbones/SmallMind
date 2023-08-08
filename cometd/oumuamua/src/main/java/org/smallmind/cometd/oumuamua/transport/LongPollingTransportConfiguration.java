@@ -38,6 +38,7 @@ public class LongPollingTransportConfiguration {
   private long longPollAdvisedIntervalMilliseconds = 0;
   private long clientTimeoutMilliseconds = -1;
   private long lazyMessageMaximumDelayMilliseconds = 45000;
+  private long idleCheckCycleMilliseconds = 3000;
 
   public long getLongPollResponseDelayMilliseconds () {
 
@@ -83,6 +84,18 @@ public class LongPollingTransportConfiguration {
   public LongPollingTransportConfiguration setLazyMessageMaximumDelayMilliseconds (long lazyMessageMaximumDelayMilliseconds) {
 
     this.lazyMessageMaximumDelayMilliseconds = lazyMessageMaximumDelayMilliseconds;
+
+    return this;
+  }
+
+  public long getIdleCheckCycleMilliseconds () {
+
+    return idleCheckCycleMilliseconds;
+  }
+
+  public LongPollingTransportConfiguration setIdleCheckCycleMilliseconds (long idleCheckCycleMilliseconds) {
+
+    this.idleCheckCycleMilliseconds = idleCheckCycleMilliseconds;
 
     return this;
   }
