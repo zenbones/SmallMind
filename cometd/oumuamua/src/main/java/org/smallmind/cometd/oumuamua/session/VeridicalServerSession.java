@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.cometd.oumuamua;
+package org.smallmind.cometd.oumuamua.session;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -47,8 +47,8 @@ import org.cometd.bayeux.Session;
 import org.cometd.bayeux.server.LocalSession;
 import org.cometd.bayeux.server.ServerChannel;
 import org.cometd.bayeux.server.ServerMessage;
-import org.cometd.bayeux.server.ServerSession;
 import org.cometd.bayeux.server.ServerTransport;
+import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.extension.ExtensionNotifier;
 import org.smallmind.cometd.oumuamua.message.MapLike;
 import org.smallmind.cometd.oumuamua.message.MapMessageGenerator;
@@ -57,13 +57,12 @@ import org.smallmind.cometd.oumuamua.message.OumuamuaLazyPacket;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 import org.smallmind.cometd.oumuamua.message.PacketType;
 import org.smallmind.cometd.oumuamua.message.PacketUtility;
-import org.smallmind.cometd.oumuamua.session.BatchController;
 import org.smallmind.cometd.oumuamua.transport.OumuamuaCarrier;
 import org.smallmind.cometd.oumuamua.transport.OumuamuaTransport;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.scribe.pen.LoggerManager;
 
-public class OumuamuaServerSession implements ServerSession {
+public class VeridicalServerSession implements OumuamuaServerSession {
 
   private static final ThreadLocal<BatchController> BATCH_CONTROLLER_LOCAL = new ThreadLocal<>();
   private final ReentrantLock messagePollLock = new ReentrantLock();
@@ -91,7 +90,7 @@ public class OumuamuaServerSession implements ServerSession {
   private int lazyQueueSize;
   private int connectQueueSize;
 
-  public OumuamuaServerSession (OumuamuaServer oumuamuaServer, OumuamuaTransport serverTransport, OumuamuaCarrier carrier, boolean createLocalSession, String idHint, int maximumMessageQueueSize, int maximumUndeliveredLazyMessageCount) {
+  public VeridicalServerSession (OumuamuaServer oumuamuaServer, OumuamuaTransport serverTransport, OumuamuaCarrier carrier, boolean createLocalSession, String idHint, int maximumMessageQueueSize, int maximumUndeliveredLazyMessageCount) {
 
     this.oumuamuaServer = oumuamuaServer;
     this.serverTransport = serverTransport;
@@ -256,6 +255,7 @@ public class OumuamuaServerSession implements ServerSession {
     return attributeMap.remove(name);
   }
 
+  @Override
   public Iterator<Extension> iterateExtensions () {
 
     return extensionList.iterator();
@@ -353,6 +353,7 @@ public class OumuamuaServerSession implements ServerSession {
   }
 
   public void onQueueMaxed (OumuamuaServerSession sender, MessageGenerator messageGenerator) {
+
     for (ServerSessionListener sessionListener : listenerList) {
       if (QueueMaxedListener.class.isAssignableFrom(sessionListener.getClass())) {
         ((QueueMaxedListener)sessionListener).queueMaxed(this, null, sender, messageGenerator.generate());
@@ -520,7 +521,7 @@ public class OumuamuaServerSession implements ServerSession {
           batchController.addPacket(promotedPacket);
         } else if (PacketType.LAZY.equals(promotedPacket.getType())) {
           if (promotedPacket.size() > maximumUndeliveredLazyMessageCount) {
-            LoggerManager.getLogger(OumuamuaServerSession.class).warn("Lazy messages lost due to out sized packet");
+            LoggerManager.getLogger(VeridicalServerSession.class).warn("Lazy messages lost due to out sized packet");
           } else {
             messagePollLock.lock();
 
@@ -555,7 +556,7 @@ public class OumuamuaServerSession implements ServerSession {
                         try {
                           carrier.send(overflowLazyPackets);
                         } catch (Exception exception) {
-                          LoggerManager.getLogger(OumuamuaServerSession.class).error(exception);
+                          LoggerManager.getLogger(VeridicalServerSession.class).error(exception);
                         }
                       }
                     }
@@ -565,7 +566,7 @@ public class OumuamuaServerSession implements ServerSession {
                 }
 
                 if (lostLazyMessages) {
-                  LoggerManager.getLogger(OumuamuaServerSession.class).warn("Lazy messages lost due to overflow");
+                  LoggerManager.getLogger(VeridicalServerSession.class).warn("Lazy messages lost due to overflow");
                 }
               }
 
@@ -580,7 +581,7 @@ public class OumuamuaServerSession implements ServerSession {
           }
         } else if ((metaConnectDeliveryOnly == null) ? serverTransport.isMetaConnectDeliveryOnly() : metaConnectDeliveryOnly) {
           if (promotedPacket.size() > maximumMessageQueueSize) {
-            LoggerManager.getLogger(OumuamuaServerSession.class).warn("Queued messages lost due to out sized packet");
+            LoggerManager.getLogger(VeridicalServerSession.class).warn("Queued messages lost due to out sized packet");
           } else {
             messagePollLock.lock();
 
@@ -604,7 +605,7 @@ public class OumuamuaServerSession implements ServerSession {
                 }
 
                 if (lostQueuedMessages) {
-                  LoggerManager.getLogger(OumuamuaServerSession.class).warn("Queued messages lost due to overflow");
+                  LoggerManager.getLogger(VeridicalServerSession.class).warn("Queued messages lost due to overflow");
                 }
               }
 
@@ -622,7 +623,7 @@ public class OumuamuaServerSession implements ServerSession {
             //TODO : on message dequeued
             carrier.send(promotedPacket);
           } catch (Exception exception) {
-            LoggerManager.getLogger(OumuamuaServerSession.class).error(exception);
+            LoggerManager.getLogger(VeridicalServerSession.class).error(exception);
           }
         }
       }
@@ -635,7 +636,7 @@ public class OumuamuaServerSession implements ServerSession {
     try {
       carrier.close();
     } catch (IOException ioException) {
-      LoggerManager.getLogger(OumuamuaServerSession.class).error(ioException);
+      LoggerManager.getLogger(VeridicalServerSession.class).error(ioException);
     }
   }
 

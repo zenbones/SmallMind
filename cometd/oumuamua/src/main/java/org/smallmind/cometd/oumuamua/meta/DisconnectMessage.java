@@ -33,8 +33,8 @@
 package org.smallmind.cometd.oumuamua.meta;
 
 import org.cometd.bayeux.ChannelId;
-import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
+import org.smallmind.cometd.oumuamua.session.OumuamuaServerSession;
 import org.smallmind.nutsnbolts.util.Switch;
 import org.smallmind.web.json.doppelganger.Doppelganger;
 import org.smallmind.web.json.doppelganger.Idiom;

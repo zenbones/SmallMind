@@ -32,8 +32,7 @@
  */
 package org.smallmind.cometd.oumuamua.channel;
 
-import org.smallmind.cometd.oumuamua.OumuamuaServerChannel;
-import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
+import org.smallmind.cometd.oumuamua.session.OumuamuaServerSession;
 
 public class UnsubscribeOperation implements ChannelOperation {
 

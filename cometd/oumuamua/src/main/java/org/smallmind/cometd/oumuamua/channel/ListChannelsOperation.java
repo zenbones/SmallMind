@@ -34,7 +34,6 @@ package org.smallmind.cometd.oumuamua.channel;
 
 import java.util.LinkedList;
 import org.cometd.bayeux.server.ServerChannel;
-import org.smallmind.cometd.oumuamua.OumuamuaServerChannel;
 
 public class ListChannelsOperation implements ChannelOperation {
 

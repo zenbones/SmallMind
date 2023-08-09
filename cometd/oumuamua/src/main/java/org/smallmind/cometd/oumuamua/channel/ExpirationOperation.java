@@ -33,7 +33,6 @@
 package org.smallmind.cometd.oumuamua.channel;
 
 import java.util.concurrent.locks.ReentrantLock;
-import org.smallmind.cometd.oumuamua.OumuamuaServerChannel;
 
 public class ExpirationOperation implements ChannelOperation {
 

@@ -40,12 +40,12 @@ import org.cometd.bayeux.ChannelId;
 import org.cometd.bayeux.Message;
 import org.cometd.bayeux.server.BayeuxContext;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
-import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
 import org.smallmind.cometd.oumuamua.channel.ChannelIdCache;
 import org.smallmind.cometd.oumuamua.context.OumuamuaLongPollingContext;
 import org.smallmind.cometd.oumuamua.extension.ExtensionNotifier;
 import org.smallmind.cometd.oumuamua.message.NodeMessageGenerator;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
+import org.smallmind.cometd.oumuamua.session.OumuamuaServerSession;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class LongPollingCarrier extends AbstractExpiringCarrier {

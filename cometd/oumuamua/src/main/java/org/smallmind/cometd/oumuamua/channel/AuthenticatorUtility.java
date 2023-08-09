@@ -36,9 +36,8 @@ import org.cometd.bayeux.ChannelId;
 import org.cometd.bayeux.Promise;
 import org.cometd.bayeux.server.Authorizer;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
-import org.smallmind.cometd.oumuamua.OumuamuaServerChannel;
-import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
 import org.smallmind.cometd.oumuamua.message.MessageGenerator;
+import org.smallmind.cometd.oumuamua.session.OumuamuaServerSession;
 import org.smallmind.nutsnbolts.util.IterableIterator;
 
 public class AuthenticatorUtility {

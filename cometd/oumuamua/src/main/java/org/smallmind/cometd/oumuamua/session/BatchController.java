@@ -33,7 +33,6 @@
 package org.smallmind.cometd.oumuamua.session;
 
 import java.util.LinkedList;
-import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 
 public class BatchController {

@@ -45,6 +45,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeType;
 import org.cometd.bayeux.Message;
 import org.cometd.bayeux.server.BayeuxServer;
 import org.smallmind.cometd.oumuamua.logging.NodeRecord;
+import org.smallmind.cometd.oumuamua.session.VeridicalServerSession;
 import org.smallmind.cometd.oumuamua.transport.CarrierType;
 import org.smallmind.cometd.oumuamua.transport.LongPollingCarrier;
 import org.smallmind.cometd.oumuamua.transport.LongPollingTransport;
@@ -106,7 +107,7 @@ public class OumuamuaServlet extends HttpServlet {
         } else {
 
           OumuamuaCarrier carrier;
-          OumuamuaServerSession serverSession;
+          VeridicalServerSession serverSession;
           JsonNode messageConglomerate = JsonCodec.readAsJsonNode(new String(contentBuffer));
           String clientId = null;
 
@@ -118,12 +119,12 @@ public class OumuamuaServlet extends HttpServlet {
           }
 
           if (clientId == null) {
-            serverSession = new OumuamuaServerSession(oumuamuaServer, longPollingTransport, carrier = longPollingTransport.createCarrier(oumuamuaServer), false, null, oumuamuaServer.getConfiguration().getMaximumMessageQueueSize(), oumuamuaServer.getConfiguration().getMaximumUndeliveredLazyMessageCount());
+            serverSession = new VeridicalServerSession(oumuamuaServer, longPollingTransport, carrier = longPollingTransport.createCarrier(oumuamuaServer), false, null, oumuamuaServer.getConfiguration().getMaximumMessageQueueSize(), oumuamuaServer.getConfiguration().getMaximumUndeliveredLazyMessageCount());
             ((LongPollingCarrier)carrier).setServerSession(serverSession);
             oumuamuaServer.addSession(serverSession);
 
             respond(request, response, (LongPollingCarrier)carrier, messageConglomerate);
-          } else if ((serverSession = (OumuamuaServerSession)oumuamuaServer.getSession(clientId)) == null) {
+          } else if ((serverSession = (VeridicalServerSession)oumuamuaServer.getSession(clientId)) == null) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unknown client id");
           } else if ((carrier = serverSession.getCarrier()) == null) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Session is invalid");

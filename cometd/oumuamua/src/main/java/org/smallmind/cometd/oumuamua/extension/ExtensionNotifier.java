@@ -37,10 +37,10 @@ import org.cometd.bayeux.client.ClientSession;
 import org.cometd.bayeux.server.BayeuxServer;
 import org.cometd.bayeux.server.ServerMessage;
 import org.cometd.bayeux.server.ServerSession;
-import org.smallmind.cometd.oumuamua.OumuamuaLocalSession;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
-import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
 import org.smallmind.cometd.oumuamua.message.MessageGenerator;
+import org.smallmind.cometd.oumuamua.session.OumuamuaLocalSession;
+import org.smallmind.cometd.oumuamua.session.OumuamuaServerSession;
 import org.smallmind.nutsnbolts.util.IterableIterator;
 
 public class ExtensionNotifier {

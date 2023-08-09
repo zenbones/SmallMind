@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.cometd.oumuamua;
+package org.smallmind.cometd.oumuamua.channel;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -44,9 +44,11 @@ import org.cometd.bayeux.ChannelId;
 import org.cometd.bayeux.Promise;
 import org.cometd.bayeux.Session;
 import org.cometd.bayeux.server.Authorizer;
+import org.cometd.bayeux.server.BayeuxContext;
 import org.cometd.bayeux.server.ServerChannel;
 import org.cometd.bayeux.server.ServerMessage;
 import org.cometd.bayeux.server.ServerSession;
+import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.message.ExtMapLike;
 import org.smallmind.cometd.oumuamua.message.MapLike;
 import org.smallmind.cometd.oumuamua.message.MapMessageGenerator;
@@ -54,6 +56,9 @@ import org.smallmind.cometd.oumuamua.message.MessageGenerator;
 import org.smallmind.cometd.oumuamua.message.OumuamuaLazyPacket;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 import org.smallmind.cometd.oumuamua.message.PacketUtility;
+import org.smallmind.cometd.oumuamua.session.OumuamuaServerSession;
+import org.smallmind.cometd.oumuamua.session.SessionUtility;
+import org.smallmind.cometd.oumuamua.transport.OumuamuaCarrier;
 import org.smallmind.cometd.oumuamua.transport.OumuamuaTransport;
 
 public class OumuamuaServerChannel implements ServerChannel {
@@ -353,7 +358,15 @@ public class OumuamuaServerChannel implements ServerChannel {
           Promise.Completable<Boolean> promise;
 
           if (messageGenerator == null) {
-            messageGenerator = new MapMessageGenerator(packet.getSender().getCarrier().getContext(), transport, packet.getChannelId(), mapLike, lazy);
+
+            BayeuxContext context = null;
+            OumuamuaCarrier carrier;
+
+            if ((carrier = packet.getSender().getCarrier()) != null) {
+              context = carrier.getContext();
+            }
+
+            messageGenerator = new MapMessageGenerator(context, transport, packet.getChannelId(), mapLike, lazy);
           }
           ((MessageListener)listener).onMessage(packet.getSender(), this, messageGenerator.generate(), promise = new Promise.Completable<>());
           if (!promise.join()) {

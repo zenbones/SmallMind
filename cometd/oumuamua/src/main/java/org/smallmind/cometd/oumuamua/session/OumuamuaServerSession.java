@@ -30,34 +30,28 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.cometd.oumuamua.channel;
+package org.smallmind.cometd.oumuamua.session;
 
-import java.util.HashSet;
-import org.cometd.bayeux.server.ServerChannel;
+import java.util.Iterator;
+import org.cometd.bayeux.server.ServerSession;
+import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
+import org.smallmind.cometd.oumuamua.transport.OumuamuaCarrier;
 
-public class ListSubscriptionsOperation implements ChannelOperation {
+public interface OumuamuaServerSession extends ServerSession {
 
-  private final HashSet<ServerChannel> channelSet = new HashSet<>();
-  private final String sessionId;
+  OumuamuaCarrier getCarrier ();
 
-  public ListSubscriptionsOperation (String sessionId) {
+  String[] getNegotiatedTransports ();
 
-    this.sessionId = sessionId;
-  }
+  void setNegotiatedTransports (String[] negotiatedTransports);
 
-  public HashSet<ServerChannel> getChannelSet () {
+  void setHandshook (boolean handshook);
 
-    return channelSet;
-  }
+  void setConnected (boolean connected);
 
-  @Override
-  public void operate (ChannelTree channelTree) {
+  Iterator<Extension> iterateExtensions ();
 
-    OumuamuaServerChannel serverChannel;
+  OumuamuaPacket[] poll ();
 
-    if (((serverChannel = channelTree.getServerChannel()) != null) && serverChannel.isInitialized() && serverChannel.isSubscribed(sessionId)) {
-
-      channelSet.add(serverChannel);
-    }
-  }
+  void send (OumuamuaPacket packet);
 }

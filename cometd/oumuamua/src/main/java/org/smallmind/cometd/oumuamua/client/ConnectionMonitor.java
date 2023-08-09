@@ -34,9 +34,9 @@ package org.smallmind.cometd.oumuamua.client;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import org.smallmind.cometd.oumuamua.OumuamuaLocalSession;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
 import org.smallmind.cometd.oumuamua.message.OumuamuaClientMessage;
+import org.smallmind.cometd.oumuamua.session.OumuamuaLocalSession;
 import org.smallmind.cometd.oumuamua.transport.LocalTransport;
 import org.smallmind.scribe.pen.LoggerManager;
 

@@ -63,12 +63,15 @@ import org.smallmind.cometd.oumuamua.channel.ChannelTree;
 import org.smallmind.cometd.oumuamua.channel.ExpirationOperation;
 import org.smallmind.cometd.oumuamua.channel.ListChannelsOperation;
 import org.smallmind.cometd.oumuamua.channel.ListSubscriptionsOperation;
+import org.smallmind.cometd.oumuamua.channel.OumuamuaServerChannel;
 import org.smallmind.cometd.oumuamua.channel.UnsubscribeOperation;
 import org.smallmind.cometd.oumuamua.message.MapLike;
 import org.smallmind.cometd.oumuamua.message.NodeMessageGenerator;
 import org.smallmind.cometd.oumuamua.message.OumuamuaLazyPacket;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
 import org.smallmind.cometd.oumuamua.message.OumuamuaServerMessage;
+import org.smallmind.cometd.oumuamua.session.OumuamuaServerSession;
+import org.smallmind.cometd.oumuamua.session.VeridicalServerSession;
 import org.smallmind.cometd.oumuamua.transport.LocalTransport;
 import org.smallmind.cometd.oumuamua.transport.OumuamuaTransport;
 import org.smallmind.scribe.pen.LoggerManager;
@@ -80,7 +83,7 @@ public class OumuamuaServer implements BayeuxServer {
   private final OumuamuaConfiguration configuration;
   private final ChannelTree channelTree = new ChannelTree();
   private final HashMap<String, OumuamuaTransport> transportMap = new HashMap<>();
-  private final ConcurrentHashMap<String, OumuamuaServerSession> sessionMap = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<String, VeridicalServerSession> sessionMap = new ConcurrentHashMap<>();
   private final ConcurrentLinkedQueue<Extension> extensionList = new ConcurrentLinkedQueue<>();
   private final ConcurrentLinkedQueue<BayeuxServerListener> listenerList = new ConcurrentLinkedQueue<>();
   private ExpiredChannelSifter expiredChannelSifter;
@@ -243,7 +246,7 @@ public class OumuamuaServer implements BayeuxServer {
     return new LinkedList<>(sessionMap.values());
   }
 
-  public void addSession (OumuamuaServerSession serverSession) {
+  public void addSession (VeridicalServerSession serverSession) {
 
     sessionChangeLock.lock();
 
@@ -262,7 +265,7 @@ public class OumuamuaServer implements BayeuxServer {
       }
     }
 
-    ((OumuamuaServerSession)serverSession).onConnected(messageGenerator);
+    ((VeridicalServerSession)serverSession).onConnected(messageGenerator);
   }
 
   @Override
@@ -287,7 +290,7 @@ public class OumuamuaServer implements BayeuxServer {
       }
     }
 
-    ((OumuamuaServerSession)serverSession).onDisconnected(messageGenerator, timeout);
+    ((VeridicalServerSession)serverSession).onDisconnected(messageGenerator, timeout);
   }
 
   @Override
@@ -448,7 +451,7 @@ public class OumuamuaServer implements BayeuxServer {
 
           long now = System.currentTimeMillis();
 
-          for (OumuamuaServerSession serverSession : sessionMap.values()) {
+          for (VeridicalServerSession serverSession : sessionMap.values()) {
             if (serverSession.isConnected()) {
 
               LinkedList<OumuamuaLazyPacket> enqueuedLazyPacketList = new LinkedList<>();

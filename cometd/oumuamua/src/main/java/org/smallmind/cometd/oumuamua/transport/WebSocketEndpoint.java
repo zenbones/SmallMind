@@ -49,13 +49,13 @@ import org.cometd.bayeux.Message;
 import org.cometd.bayeux.server.BayeuxContext;
 import org.cometd.bayeux.server.BayeuxServer;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
-import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
 import org.smallmind.cometd.oumuamua.channel.ChannelIdCache;
 import org.smallmind.cometd.oumuamua.context.OumuamuaWebsocketContext;
 import org.smallmind.cometd.oumuamua.extension.ExtensionNotifier;
 import org.smallmind.cometd.oumuamua.logging.DataRecord;
 import org.smallmind.cometd.oumuamua.message.NodeMessageGenerator;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
+import org.smallmind.cometd.oumuamua.session.VeridicalServerSession;
 import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
@@ -66,7 +66,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
   private OumuamuaServer oumuamuaServer;
   private WebSocketTransport websocketTransport;
   private Session websocketSession;
-  private OumuamuaServerSession serverSession;
+  private VeridicalServerSession serverSession;
   private OumuamuaWebsocketContext context;
   private boolean connected;
 
@@ -85,7 +85,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
       websocketSession.getContainer().setDefaultMaxTextMessageBufferSize(websocketTransport.getMaximumTextMessageBufferSize());
     }
 
-    oumuamuaServer.addSession(serverSession = new OumuamuaServerSession(oumuamuaServer, websocketTransport, this, false, null, oumuamuaServer.getConfiguration().getMaximumMessageQueueSize(), oumuamuaServer.getConfiguration().getMaximumUndeliveredLazyMessageCount()));
+    oumuamuaServer.addSession(serverSession = new VeridicalServerSession(oumuamuaServer, websocketTransport, this, false, null, oumuamuaServer.getConfiguration().getMaximumMessageQueueSize(), oumuamuaServer.getConfiguration().getMaximumUndeliveredLazyMessageCount()));
     setConnected(true);
 
     websocketSession.addMessageHandler(this);

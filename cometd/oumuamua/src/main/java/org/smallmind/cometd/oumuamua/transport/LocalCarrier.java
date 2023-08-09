@@ -38,9 +38,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.cometd.bayeux.ChannelId;
 import org.cometd.bayeux.Message;
 import org.cometd.bayeux.server.BayeuxContext;
-import org.smallmind.cometd.oumuamua.OumuamuaLocalSession;
 import org.smallmind.cometd.oumuamua.OumuamuaServer;
-import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
 import org.smallmind.cometd.oumuamua.channel.ChannelIdCache;
 import org.smallmind.cometd.oumuamua.context.OumuamuaLocalContext;
 import org.smallmind.cometd.oumuamua.extension.ExtensionNotifier;
@@ -49,6 +47,8 @@ import org.smallmind.cometd.oumuamua.logging.NodeRecord;
 import org.smallmind.cometd.oumuamua.logging.PacketRecord;
 import org.smallmind.cometd.oumuamua.message.NodeMessageGenerator;
 import org.smallmind.cometd.oumuamua.message.OumuamuaPacket;
+import org.smallmind.cometd.oumuamua.session.OumuamuaLocalSession;
+import org.smallmind.cometd.oumuamua.session.VeridicalServerSession;
 import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
@@ -59,7 +59,7 @@ public class LocalCarrier extends AbstractExpiringCarrier {
 
   private final OumuamuaServer oumuamuaServer;
   private final LocalTransport localTransport;
-  private OumuamuaServerSession serverSession;
+  private VeridicalServerSession serverSession;
   private boolean connected;
 
   public LocalCarrier (OumuamuaServer oumuamuaServer, LocalTransport localTransport, String idHint) {
@@ -69,7 +69,7 @@ public class LocalCarrier extends AbstractExpiringCarrier {
     this.oumuamuaServer = oumuamuaServer;
     this.localTransport = localTransport;
 
-    oumuamuaServer.addSession(serverSession = new OumuamuaServerSession(oumuamuaServer, localTransport, this, true, idHint, oumuamuaServer.getConfiguration().getMaximumMessageQueueSize(), oumuamuaServer.getConfiguration().getMaximumUndeliveredLazyMessageCount()));
+    oumuamuaServer.addSession(serverSession = new VeridicalServerSession(oumuamuaServer, localTransport, this, true, idHint, oumuamuaServer.getConfiguration().getMaximumMessageQueueSize(), oumuamuaServer.getConfiguration().getMaximumUndeliveredLazyMessageCount()));
     setConnected(true);
   }
 

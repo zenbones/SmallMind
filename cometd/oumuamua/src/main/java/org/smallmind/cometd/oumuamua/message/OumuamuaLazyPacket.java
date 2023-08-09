@@ -34,7 +34,7 @@ package org.smallmind.cometd.oumuamua.message;
 
 import java.util.Comparator;
 import org.cometd.bayeux.ChannelId;
-import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
+import org.smallmind.cometd.oumuamua.session.OumuamuaServerSession;
 
 public class OumuamuaLazyPacket extends OumuamuaPacket implements Comparator<OumuamuaLazyPacket> {
 

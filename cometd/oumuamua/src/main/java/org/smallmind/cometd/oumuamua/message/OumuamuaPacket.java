@@ -34,7 +34,7 @@ package org.smallmind.cometd.oumuamua.message;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.cometd.bayeux.ChannelId;
-import org.smallmind.cometd.oumuamua.OumuamuaServerSession;
+import org.smallmind.cometd.oumuamua.session.OumuamuaServerSession;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 // DO NOT directly serialize;
