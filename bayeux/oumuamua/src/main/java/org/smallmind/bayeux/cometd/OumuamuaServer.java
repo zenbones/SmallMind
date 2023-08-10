@@ -421,10 +421,12 @@ public class OumuamuaServer implements BayeuxServer {
 
   public void remotePublish (OumuamuaPacket packet) {
 
-    try {
-      serverBackbone.publish(PacketCodec.encode(packet.getSender(), packet));
-    } catch (IOException ioException) {
-      LoggerManager.getLogger(OumuamuaServer.class).error(ioException);
+    if (serverBackbone != null) {
+      try {
+        serverBackbone.publish(PacketCodec.encode(packet.getSender(), packet));
+      } catch (IOException ioException) {
+        LoggerManager.getLogger(OumuamuaServer.class).error(ioException);
+      }
     }
   }
 

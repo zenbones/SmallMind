@@ -34,6 +34,8 @@ package org.smallmind.bayeux.cometd.backbone.kafka;
 
 import java.util.Arrays;
 import java.util.Properties;
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -64,6 +66,24 @@ public class KafkaConnector {
     }
 
     boostrapServers = boostrapBuilder.toString();
+  }
+
+  public <R> R invokeAdminClient (java.util.function.Function<AdminClient, R> clientFunction) {
+
+    Properties props = new Properties();
+
+    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, boostrapServers);
+    props.put(AdminClientConfig.CONNECTIONS_MAX_IDLE_MS_CONFIG, 300000);
+    props.put(AdminClientConfig.REQUEST_TIMEOUT_MS_CONFIG, 3000);
+    // Must be less than or equal to request.timeout.ms
+    props.put(AdminClientConfig.DEFAULT_API_TIMEOUT_MS_CONFIG, 3000);
+    props.put(AdminClientConfig.RETRIES_CONFIG, 0);
+    props.put(AdminClientConfig.CLIENT_ID_CONFIG, "");
+
+    try (AdminClient client = AdminClient.create(props)) {
+
+      return clientFunction.apply(client);
+    }
   }
 
   public Producer<Long, byte[]> createProducer (String clientId) {

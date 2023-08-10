@@ -30,21 +30,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.cometd.backbone.kafka;
+package org.smallmind.bayeux.oumuamua.spi;
 
-public class KafkaAdministrator {
+import org.smallmind.nutsnbolts.lang.FormattedException;
 
-  /*
-      AdminClient client;
+public class OumuamuaException extends FormattedException {
 
-    Properties props = new Properties();
-    props.put("bootstrap.servers", "127.0.0.1:9094");
-    props.put("connections.max.idle.ms", 300000);
-    props.put("request.timeout.ms", 3000);
-    props.put("default.api.timeout.ms", 1500);
-    props.put("retries", 0);
-    props.put("client.id", "");
+  public OumuamuaException (String message, Object... args) {
 
-    client = AdminClient.create(props);
-   */
+    super(message, args);
+  }
 }

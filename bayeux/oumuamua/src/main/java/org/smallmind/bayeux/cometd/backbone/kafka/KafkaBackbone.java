@@ -33,8 +33,10 @@
 package org.smallmind.bayeux.cometd.backbone.kafka;
 
 import java.time.Duration;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import org.apache.kafka.clients.consumer.Consumer;
@@ -43,8 +45,10 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.Node;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
+import org.smallmind.bayeux.cometd.OumuamuaException;
 import org.smallmind.bayeux.cometd.OumuamuaServer;
 import org.smallmind.bayeux.cometd.backbone.ClusteredTransport;
 import org.smallmind.bayeux.cometd.backbone.PacketCodec;
@@ -66,7 +70,8 @@ public class KafkaBackbone implements ServerBackbone {
   private final int concurrencyLimit;
   private ConsumerWorker[] workers;
 
-  public KafkaBackbone (String nodeName, int concurrencyLimit, String topicName, KafkaServer... servers) {
+  public KafkaBackbone (String nodeName, int concurrencyLimit, String topicName, KafkaServer... servers)
+    throws OumuamuaException {
 
     this.nodeName = nodeName;
     this.concurrencyLimit = concurrencyLimit;
@@ -75,6 +80,21 @@ public class KafkaBackbone implements ServerBackbone {
     groupId = SnowflakeId.newInstance().generateHexEncoding();
     connector = new KafkaConnector(servers);
     producer = connector.createProducer(nodeName);
+
+    if (!connector.invokeAdminClient(adminClient -> {
+        try {
+          Collection<Node> nodes = adminClient.describeCluster().nodes().get();
+
+          return (nodes != null) && (!nodes.isEmpty());
+        } catch (ExecutionException | InterruptedException exception) {
+          LoggerManager.getLogger(KafkaBackbone.class).error(exception);
+
+          return false;
+        }
+      }
+    )) {
+      throw new OumuamuaException("Unable to start the kafka backbone service");
+    }
   }
 
   public String getNodeName () {

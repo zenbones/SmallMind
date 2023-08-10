@@ -51,7 +51,7 @@ public class WebsocketTest {
   public void test ()
     throws Exception {
 
-    ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("org/smallmind/cometd/oumuamua/oumuamua-grizzly.xml", "org/smallmind/cometd/oumuamua/oumuamua.xml");
+    ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("org/smallmind/bayeux/oumuamua/oumuamua-grizzly.xml", "org/smallmind/bayeux/oumuamua/oumuamua.xml");
     ClientTransport wsTransport;
     WebSocketContainer webSocketContainer;
     BayeuxClient bayeuxClient;
@@ -79,7 +79,7 @@ public class WebsocketTest {
 
       int count = counter.incAndGet();
 
-      if (count == 10000) {
+      if (count == 10) {
         System.out.println(System.currentTimeMillis());
       }
     });

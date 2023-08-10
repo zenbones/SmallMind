@@ -56,7 +56,7 @@ public class WebsocketTest2 {
   public void test ()
     throws Exception {
 
-    // ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("org/smallmind/cometd/oumuamua/oumuamua-grizzly.xml", "org/smallmind/cometd/oumuamua/oumuamua.xml");
+    // ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("org/smallmind/bayeux/oumuamua/oumuamua-grizzly.xml", "org/smallmind/bayeux/oumuamua/oumuamua.xml");
     ClientTransport wsTransport;
     WebSocketContainer webSocketContainer;
     BayeuxClient bayeuxClient;
@@ -79,7 +79,7 @@ public class WebsocketTest2 {
     ClientSessionChannel channel = bayeuxClient.getChannel("/foobar");
 
     System.out.println(System.currentTimeMillis());
-    for (int i = 0; i < 10000; i++) {
+    for (int i = 0; i < 10; i++) {
       channel.publish("{\"x\":1, \"y\":2}", message -> message.toString());
     }
 
