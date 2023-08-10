@@ -38,27 +38,27 @@ import org.smallmind.bayeux.oumuamua.api.Route;
 
 public interface Channel extends Attributed {
 
-  interface SessionListener {
+  interface Listener {
+
+  }
+
+  interface SessionListener extends Listener {
 
     void onSubscribed (Session session);
 
     void onUnsubscribed (Session session);
   }
 
-  interface MessageListener {
+  interface MessageListener extends Listener {
 
     boolean isPersistent ();
 
     void onDelivery (Message message);
   }
 
-  void addSessionListener (SessionListener sessionListener);
+  void addListener (Listener listener);
 
-  void removeSessionListener (SessionListener sessionListener);
-
-  void addMessageListener (MessageListener messageListener);
-
-  void removeMessageListener (MessageListener messageListener);
+  void removeListener (Listener listener);
 
   boolean isPersistent ();
 

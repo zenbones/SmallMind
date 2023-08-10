@@ -36,17 +36,21 @@ import org.smallmind.bayeux.oumuamua.api.Message;
 
 public interface Session {
 
+  interface Listener {
+
+  }
+
   // Changes to messages in this listener must be seen only on this session, via copy on write or some other means
-  interface MessageListener {
+  interface MessageListener extends Listener {
 
     void onResponse (Message message);
 
     void onDelivery (Message message);
   }
 
-  void addMessageListener (MessageListener messageListener);
+  void addListener (Listener listener);
 
-  void removeMessageListener (MessageListener messageListener);
+  void removeListener (Listener listener);
 
   String getId ();
 

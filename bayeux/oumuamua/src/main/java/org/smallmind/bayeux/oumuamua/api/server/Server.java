@@ -39,21 +39,25 @@ import org.smallmind.bayeux.oumuamua.api.Route;
 
 public interface Server extends Attributed {
 
-  interface SessionListener {
+  interface Listener {
+
+  }
+
+  interface SessionListener extends Listener {
 
     void onConnected (Session session);
 
     void onDisconnected (Session session);
   }
 
-  interface ChannelListener {
+  interface ChannelListener extends Listener {
 
     void onCreated (Channel channel);
 
     void onRemoved (Channel channel);
   }
 
-  interface MessageListener {
+  interface MessageListener extends Listener {
 
     void onRequest (Message message);
 
@@ -62,17 +66,9 @@ public interface Server extends Attributed {
     void onDelivery (Message message);
   }
 
-  void addSessionListener (SessionListener sessionListener);
+  void addListener (Listener listener);
 
-  void removeSessionListener (SessionListener sessionListener);
-
-  void addChannelListener (ChannelListener channelListener);
-
-  void removeChannelListener (ChannelListener channelListener);
-
-  void addMessageListener (MessageListener messageListener);
-
-  void removeMessageListener (MessageListener messageListener);
+  void removeListener (Listener listener);
 
   void setMessageCodec (MessageCodec messageCodec);
 
