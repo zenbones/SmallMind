@@ -32,6 +32,7 @@
  */
 package org.smallmind.bayeux.cometd;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -56,6 +57,7 @@ import org.cometd.bayeux.server.SecurityPolicy;
 import org.cometd.bayeux.server.ServerChannel;
 import org.cometd.bayeux.server.ServerMessage;
 import org.cometd.bayeux.server.ServerSession;
+import org.smallmind.bayeux.cometd.backbone.PacketCodec;
 import org.smallmind.bayeux.cometd.backbone.ServerBackbone;
 import org.smallmind.bayeux.cometd.channel.ChannelIdCache;
 import org.smallmind.bayeux.cometd.channel.ChannelIterator;
@@ -415,6 +417,15 @@ public class OumuamuaServer implements BayeuxServer {
     }
 
     return serverChannelRef;
+  }
+
+  public void remotePublish (OumuamuaPacket packet) {
+
+    try {
+      serverBackbone.publish(PacketCodec.encode(packet.getSender(), packet));
+    } catch (IOException ioException) {
+      LoggerManager.getLogger(OumuamuaServer.class).error(ioException);
+    }
   }
 
   public void publishToChannel (OumuamuaTransport transport, String channel, OumuamuaPacket packet) {

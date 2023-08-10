@@ -39,6 +39,7 @@ import org.cometd.bayeux.server.Authorizer;
 import org.cometd.bayeux.server.BayeuxContext;
 import org.cometd.bayeux.server.SecurityPolicy;
 import org.smallmind.bayeux.cometd.OumuamuaServer;
+import org.smallmind.bayeux.cometd.channel.AuthenticatorUtility;
 import org.smallmind.bayeux.cometd.channel.ChannelIdCache;
 import org.smallmind.bayeux.cometd.channel.OumuamuaServerChannel;
 import org.smallmind.bayeux.cometd.message.MapLike;
@@ -46,10 +47,6 @@ import org.smallmind.bayeux.cometd.message.MessageGenerator;
 import org.smallmind.bayeux.cometd.message.NodeMessageGenerator;
 import org.smallmind.bayeux.cometd.message.OumuamuaPacket;
 import org.smallmind.bayeux.cometd.session.OumuamuaServerSession;
-import org.smallmind.bayeux.cometd.channel.AuthenticatorUtility;
-import org.smallmind.bayeux.cometd.meta.DeliveryMessageSuccessOutView;
-import org.smallmind.bayeux.cometd.meta.PublishMessageErrorOutView;
-import org.smallmind.bayeux.cometd.meta.PublishMessageSuccessOutView;
 import org.smallmind.bayeux.cometd.transport.OumuamuaTransport;
 import org.smallmind.web.json.doppelganger.Doppelganger;
 import org.smallmind.web.json.doppelganger.Idiom;
@@ -102,6 +99,7 @@ public class PublishMessage extends MetaMessage {
           OumuamuaPacket deliveryPacket;
 
           oumuamuaServer.publishToChannel(transport, getChannel(), deliveryPacket = new OumuamuaPacket(serverSession, channelId, new MapLike((ObjectNode)JsonCodec.writeAsJsonNode(new DeliveryMessageSuccessOutView().setChannel(getChannel()).setId(getId()).setData(getData())))));
+          oumuamuaServer.remotePublish(deliveryPacket);
 
           if (serverSession.isBroadcastToPublisher()) {
             serverSession.send(deliveryPacket);
