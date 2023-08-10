@@ -6,7 +6,7 @@
   <bean id="oumuamuaServer" class="org.smallmind.bayeux.cometd.OumuamuaServer">
     <constructor-arg index="0" name="serverBackbone">
       <bean class="org.smallmind.bayeux.cometd.backbone.kafka.KafkaBackbone">
-        <constructor-arg index="0" name="nodeName" value=""/>
+        <constructor-arg index="0" name="nodeName" value="pod"/>
         <constructor-arg index="1" name="concurrencyLimit" value="1"/>
         <constructor-arg index="2" name="topicName" value="oumuamua"/>
         <constructor-arg index="3" name="servers">
