@@ -36,6 +36,7 @@ import org.smallmind.bayeux.oumuamua.api.Attributed;
 import org.smallmind.bayeux.oumuamua.api.Message;
 import org.smallmind.bayeux.oumuamua.api.Protocol;
 import org.smallmind.bayeux.oumuamua.api.Route;
+import org.smallmind.bayeux.oumuamua.api.backbone.Backbone;
 
 public interface Server extends Attributed {
 
@@ -69,6 +70,8 @@ public interface Server extends Attributed {
   void addListener (Listener listener);
 
   void removeListener (Listener listener);
+
+  void setBackbone (Backbone backbone);
 
   void setMessageCodec (MessageCodec messageCodec);
 

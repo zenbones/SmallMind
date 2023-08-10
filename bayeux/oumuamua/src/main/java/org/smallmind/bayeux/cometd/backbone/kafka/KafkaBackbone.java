@@ -35,7 +35,6 @@ package org.smallmind.bayeux.cometd.backbone.kafka;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import org.apache.kafka.clients.consumer.Consumer;
@@ -46,14 +45,18 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
-import org.smallmind.bayeux.cometd.backbone.DeliveryCallback;
+import org.smallmind.bayeux.cometd.OumuamuaServer;
+import org.smallmind.bayeux.cometd.backbone.ClusteredTransport;
+import org.smallmind.bayeux.cometd.backbone.PacketCodec;
 import org.smallmind.bayeux.cometd.backbone.ServerBackbone;
+import org.smallmind.bayeux.cometd.message.OumuamuaPacket;
 import org.smallmind.nutsnbolts.util.ComponentStatus;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.scribe.pen.LoggerManager;
 
-public class KafkaBackbone extends ServerBackbone {
+public class KafkaBackbone implements ServerBackbone {
 
+  private static final ClusteredTransport CLUSTERED_TRANSPORT = new ClusteredTransport();
   private final AtomicReference<ComponentStatus> statusRef = new AtomicReference<>(ComponentStatus.STOPPED);
   private final KafkaConnector connector;
   private final Producer<Long, byte[]> producer;
@@ -63,10 +66,7 @@ public class KafkaBackbone extends ServerBackbone {
   private final int concurrencyLimit;
   private ConsumerWorker[] workers;
 
-  // port 9094 is standard
-  public KafkaBackbone (String nodeName, int concurrencyLimit, String topicName, DeliveryCallback deliveryCallback, KafkaServer... servers) {
-
-    super(deliveryCallback);
+  public KafkaBackbone (String nodeName, int concurrencyLimit, String topicName, KafkaServer... servers) {
 
     this.nodeName = nodeName;
     this.concurrencyLimit = concurrencyLimit;
@@ -82,13 +82,13 @@ public class KafkaBackbone extends ServerBackbone {
     return nodeName;
   }
 
-  public void startUp ()
+  public void startUp (OumuamuaServer oumuamuaServer)
     throws InterruptedException {
 
     if (statusRef.compareAndSet(ComponentStatus.STOPPED, ComponentStatus.STARTING)) {
       workers = new ConsumerWorker[concurrencyLimit];
       for (int index = 0; index < concurrencyLimit; index++) {
-        new Thread(workers[index] = new ConsumerWorker(connector.createConsumer(nodeName, groupId, topicName), getDeliveryCallback())).start();
+        new Thread(workers[index] = new ConsumerWorker(oumuamuaServer, connector.createConsumer(nodeName, groupId, topicName))).start();
       }
       statusRef.set(ComponentStatus.STARTED);
     } else {
@@ -122,13 +122,13 @@ public class KafkaBackbone extends ServerBackbone {
   private static class ConsumerWorker implements Runnable {
 
     private final AtomicBoolean finished = new AtomicBoolean(false);
+    private final OumuamuaServer oumuamuaServer;
     private final Consumer<Long, byte[]> consumer;
-    private final DeliveryCallback deliveryCallback;
 
-    public ConsumerWorker (Consumer<Long, byte[]> consumer, DeliveryCallback deliveryCallback) {
+    public ConsumerWorker (OumuamuaServer oumuamuaServer, Consumer<Long, byte[]> consumer) {
 
+      this.oumuamuaServer = oumuamuaServer;
       this.consumer = consumer;
-      this.deliveryCallback = deliveryCallback;
     }
 
     private void stop () {
@@ -142,17 +142,11 @@ public class KafkaBackbone extends ServerBackbone {
     public void run () {
 
       try {
-
-        long backoffMilliseconds = 0;
-
         while (!finished.get()) {
 
           ConsumerRecords<Long, byte[]> records;
 
-          if (((records = consumer.poll(Duration.ofSeconds(3))) == null) || records.isEmpty()) {
-            backoffMilliseconds = 0;
-          } else {
-
+          if (((records = consumer.poll(Duration.ofSeconds(3))) != null) && (!records.isEmpty())) {
             for (TopicPartition partition : records.partitions()) {
 
               List<ConsumerRecord<Long, byte[]>> recordList;
@@ -160,19 +154,12 @@ public class KafkaBackbone extends ServerBackbone {
 
               for (ConsumerRecord<Long, byte[]> record : recordList = records.records(partition)) {
                 try {
-                  if (deliveryCallback.deliver(record.value(), 3, TimeUnit.MILLISECONDS)) {
-                    backoffMilliseconds = 0;
-                  } else {
-                    backoffMilliseconds += 10;
 
-                    try {
-                      Thread.sleep(backoffMilliseconds);
-                    } catch (InterruptedException interruptedException) {
-                      LoggerManager.getLogger(KafkaBackbone.class).error(interruptedException);
-                    }
-                  }
-                } catch (InterruptedException interruptedException) {
-                  LoggerManager.getLogger(KafkaBackbone.class).error(interruptedException);
+                  OumuamuaPacket packet = PacketCodec.decode(oumuamuaServer, record.value());
+
+                  oumuamuaServer.publishToChannel(CLUSTERED_TRANSPORT, packet.getChannelId().getId(), packet);
+                } catch (Exception exception) {
+                  LoggerManager.getLogger(KafkaBackbone.class).error(exception);
                 }
 
                 lastOffset = record.offset();

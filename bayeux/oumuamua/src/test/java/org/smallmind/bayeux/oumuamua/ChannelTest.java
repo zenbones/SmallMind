@@ -50,7 +50,7 @@ public class ChannelTest {
   public static void main (String... args) {
 
     ChannelTree t = new ChannelTree();
-    OumuamuaServer oumuamuaServer = new OumuamuaServer(new OumuamuaConfiguration());
+    OumuamuaServer oumuamuaServer = new OumuamuaServer(null, new OumuamuaConfiguration());
 
     t.createIfAbsent(oumuamuaServer, 0, new ChannelId("/**"));
     t.createIfAbsent(oumuamuaServer, 0, new ChannelId("/*"));

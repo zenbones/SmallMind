@@ -32,11 +32,75 @@
  */
 package org.smallmind.bayeux.cometd.backbone;
 
-import java.util.concurrent.TimeUnit;
+import java.util.Collections;
+import java.util.Set;
+import javax.servlet.ServletConfig;
+import org.smallmind.bayeux.cometd.OumuamuaServer;
+import org.smallmind.bayeux.cometd.transport.OumuamuaTransport;
 
-@FunctionalInterface
-public interface DeliveryCallback {
+public class ClusteredTransport implements OumuamuaTransport {
 
-  boolean deliver (byte[] data, long timeout, TimeUnit unit)
-    throws InterruptedException;
+  @Override
+  public String getName () {
+
+    return "clustered";
+  }
+
+  @Override
+  public String getOptionPrefix () {
+
+    return "clustered.";
+  }
+
+  @Override
+  public void init (OumuamuaServer oumuamuaServer, ServletConfig servletConfig) {
+
+  }
+
+  @Override
+  public void setOption (String name, Object value) {
+
+  }
+
+  @Override
+  public long getTimeout () {
+
+    return 0;
+  }
+
+  @Override
+  public long getInterval () {
+
+    return 0;
+  }
+
+  @Override
+  public long getMaxInterval () {
+
+    return 0;
+  }
+
+  @Override
+  public long getMaxLazyTimeout () {
+
+    return 5000;
+  }
+
+  @Override
+  public boolean isMetaConnectDeliveryOnly () {
+
+    return false;
+  }
+
+  @Override
+  public Object getOption (String name) {
+
+    return null;
+  }
+
+  @Override
+  public Set<String> getOptionNames () {
+
+    return Collections.emptySet();
+  }
 }

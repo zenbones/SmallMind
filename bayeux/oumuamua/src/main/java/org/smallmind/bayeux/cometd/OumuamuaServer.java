@@ -56,9 +56,7 @@ import org.cometd.bayeux.server.SecurityPolicy;
 import org.cometd.bayeux.server.ServerChannel;
 import org.cometd.bayeux.server.ServerMessage;
 import org.cometd.bayeux.server.ServerSession;
-import org.smallmind.bayeux.cometd.message.OumuamuaLazyPacket;
-import org.smallmind.bayeux.cometd.session.OumuamuaServerSession;
-import org.smallmind.bayeux.cometd.session.VeridicalServerSession;
+import org.smallmind.bayeux.cometd.backbone.ServerBackbone;
 import org.smallmind.bayeux.cometd.channel.ChannelIdCache;
 import org.smallmind.bayeux.cometd.channel.ChannelIterator;
 import org.smallmind.bayeux.cometd.channel.ChannelOperation;
@@ -70,8 +68,11 @@ import org.smallmind.bayeux.cometd.channel.OumuamuaServerChannel;
 import org.smallmind.bayeux.cometd.channel.UnsubscribeOperation;
 import org.smallmind.bayeux.cometd.message.MapLike;
 import org.smallmind.bayeux.cometd.message.NodeMessageGenerator;
+import org.smallmind.bayeux.cometd.message.OumuamuaLazyPacket;
 import org.smallmind.bayeux.cometd.message.OumuamuaPacket;
 import org.smallmind.bayeux.cometd.message.OumuamuaServerMessage;
+import org.smallmind.bayeux.cometd.session.OumuamuaServerSession;
+import org.smallmind.bayeux.cometd.session.VeridicalServerSession;
 import org.smallmind.bayeux.cometd.transport.LocalTransport;
 import org.smallmind.bayeux.cometd.transport.OumuamuaTransport;
 import org.smallmind.scribe.pen.LoggerManager;
@@ -80,6 +81,7 @@ public class OumuamuaServer implements BayeuxServer {
 
   private final ReentrantLock channelChangeLock = new ReentrantLock();
   private final ReentrantLock sessionChangeLock = new ReentrantLock();
+  private final ServerBackbone serverBackbone;
   private final OumuamuaConfiguration configuration;
   private final ChannelTree channelTree = new ChannelTree();
   private final HashMap<String, OumuamuaTransport> transportMap = new HashMap<>();
@@ -90,8 +92,9 @@ public class OumuamuaServer implements BayeuxServer {
   private LazyMessageSifter lazyMessageSifter;
   private SecurityPolicy securityPolicy;
 
-  public OumuamuaServer (OumuamuaConfiguration configuration) {
+  public OumuamuaServer (ServerBackbone serverBackbone, OumuamuaConfiguration configuration) {
 
+    this.serverBackbone = serverBackbone;
     this.configuration = configuration;
   }
 
@@ -102,6 +105,12 @@ public class OumuamuaServer implements BayeuxServer {
 
   public void start (ServletConfig servletConfig)
     throws ServletException {
+
+    try {
+      serverBackbone.startUp(this);
+    } catch (Exception exception) {
+      throw new ServletException(exception);
+    }
 
     for (OumuamuaTransport transport : configuration.getTransports()) {
       transportMap.put(transport.getName(), transport);
@@ -114,6 +123,11 @@ public class OumuamuaServer implements BayeuxServer {
 
   public void stop () {
 
+    try {
+      serverBackbone.shutDown();
+    } catch (InterruptedException interruptedException) {
+      LoggerManager.getLogger(OumuamuaServer.class).error(interruptedException);
+    }
     try {
       lazyMessageSifter.stop();
     } catch (InterruptedException interruptedException) {
@@ -403,9 +417,9 @@ public class OumuamuaServer implements BayeuxServer {
     return serverChannelRef;
   }
 
-  public void publishToChannel (OumuamuaTransport transport, String id, OumuamuaPacket packet) {
+  public void publishToChannel (OumuamuaTransport transport, String channel, OumuamuaPacket packet) {
 
-    channelTree.publish(transport, new ChannelIterator(id), packet, new HashSet<>());
+    channelTree.publish(transport, new ChannelIterator(channel), packet, new HashSet<>());
   }
 
   public void operateOnChannels (ChannelOperation operation) {

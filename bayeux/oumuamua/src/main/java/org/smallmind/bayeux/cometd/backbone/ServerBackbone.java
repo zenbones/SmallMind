@@ -32,19 +32,15 @@
  */
 package org.smallmind.bayeux.cometd.backbone;
 
-public abstract class ServerBackbone {
+import org.smallmind.bayeux.cometd.OumuamuaServer;
 
-  private final DeliveryCallback deliveryCallback;
+public interface ServerBackbone {
 
-  public ServerBackbone (DeliveryCallback deliveryCallback) {
+  void startUp (OumuamuaServer oumuamuaServer)
+    throws Exception;
 
-    this.deliveryCallback = deliveryCallback;
-  }
+  void shutDown ()
+    throws InterruptedException;
 
-  public abstract void publish (byte[] value);
-
-  public DeliveryCallback getDeliveryCallback () {
-
-    return deliveryCallback;
-  }
+  void publish (byte[] value);
 }

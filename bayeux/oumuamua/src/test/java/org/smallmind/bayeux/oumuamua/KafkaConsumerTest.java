@@ -36,7 +36,6 @@ import java.util.Collection;
 import java.util.Properties;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.common.Node;
-import org.smallmind.bayeux.cometd.backbone.TransferQueueDeliveryCallback;
 import org.smallmind.bayeux.cometd.backbone.kafka.KafkaBackbone;
 import org.smallmind.bayeux.cometd.backbone.kafka.KafkaServer;
 
@@ -78,8 +77,8 @@ public class KafkaConsumerTest {
     Collection<Node> nodes = client.describeCluster().nodes().get();
     System.out.println(nodes != null && nodes.size() > 0);
 
-    KafkaBackbone kafkaBackbone = new KafkaBackbone("node", 3, "push", new TransferQueueDeliveryCallback(), new KafkaServer("localhost", 9094));
-    kafkaBackbone.startUp();
+    KafkaBackbone kafkaBackbone = new KafkaBackbone("node", 3, "push", new KafkaServer("localhost", 9094));
+    kafkaBackbone.startUp(null);
 
     Thread.sleep(3000000);
     kafkaBackbone.shutDown();

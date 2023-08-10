@@ -49,8 +49,6 @@ public class KafkaConnector {
 
   private final String boostrapServers;
 
-  private KafkaServer[] servers;
-
   public KafkaConnector (KafkaServer... servers) {
 
     StringBuilder boostrapBuilder = new StringBuilder();
