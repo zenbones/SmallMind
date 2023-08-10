@@ -32,7 +32,9 @@
  */
 package org.smallmind.bayeux.cometd.backbone;
 
+import java.io.IOException;
 import org.smallmind.bayeux.cometd.OumuamuaServer;
+import org.smallmind.bayeux.cometd.message.OumuamuaPacket;
 
 public interface ServerBackbone {
 
@@ -42,5 +44,6 @@ public interface ServerBackbone {
   void shutDown ()
     throws InterruptedException;
 
-  void publish (byte[] value);
+  void publish (OumuamuaPacket packet)
+    throws IOException;
 }

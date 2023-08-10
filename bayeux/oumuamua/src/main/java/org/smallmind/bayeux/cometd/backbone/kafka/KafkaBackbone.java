@@ -32,6 +32,7 @@
  */
 package org.smallmind.bayeux.cometd.backbone.kafka;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
@@ -97,18 +98,13 @@ public class KafkaBackbone implements ServerBackbone {
     }
   }
 
-  public String getNodeName () {
-
-    return nodeName;
-  }
-
   public void startUp (OumuamuaServer oumuamuaServer)
     throws InterruptedException {
 
     if (statusRef.compareAndSet(ComponentStatus.STOPPED, ComponentStatus.STARTING)) {
       workers = new ConsumerWorker[concurrencyLimit];
       for (int index = 0; index < concurrencyLimit; index++) {
-        new Thread(workers[index] = new ConsumerWorker(oumuamuaServer, connector.createConsumer(nodeName, groupId, topicName))).start();
+        new Thread(workers[index] = new ConsumerWorker(oumuamuaServer, nodeName, connector.createConsumer(nodeName + "-" + index, groupId, topicName))).start();
       }
       statusRef.set(ComponentStatus.STARTED);
     } else {
@@ -134,9 +130,10 @@ public class KafkaBackbone implements ServerBackbone {
   }
 
   @Override
-  public void publish (byte[] value) {
+  public void publish (OumuamuaPacket packet)
+    throws IOException {
 
-    producer.send(new ProducerRecord<>(topicName, value));
+    producer.send(new ProducerRecord<>(topicName, PacketCodec.encode(nodeName, packet)));
   }
 
   private static class ConsumerWorker implements Runnable {
@@ -144,10 +141,12 @@ public class KafkaBackbone implements ServerBackbone {
     private final AtomicBoolean finished = new AtomicBoolean(false);
     private final OumuamuaServer oumuamuaServer;
     private final Consumer<Long, byte[]> consumer;
+    private final String nodeName;
 
-    public ConsumerWorker (OumuamuaServer oumuamuaServer, Consumer<Long, byte[]> consumer) {
+    public ConsumerWorker (OumuamuaServer oumuamuaServer, String nodeName, Consumer<Long, byte[]> consumer) {
 
       this.oumuamuaServer = oumuamuaServer;
+      this.nodeName = nodeName;
       this.consumer = consumer;
     }
 
@@ -175,9 +174,11 @@ public class KafkaBackbone implements ServerBackbone {
               for (ConsumerRecord<Long, byte[]> record : recordList = records.records(partition)) {
                 try {
 
-                  OumuamuaPacket packet = PacketCodec.decode(oumuamuaServer, record.value());
+                  OumuamuaPacket packet;
 
-                  oumuamuaServer.publishToChannel(CLUSTERED_TRANSPORT, packet.getChannelId().getId(), packet);
+                  if ((packet = PacketCodec.decode(nodeName, oumuamuaServer, record.value())) != null) {
+                    oumuamuaServer.publishToChannel(CLUSTERED_TRANSPORT, packet.getChannelId().getId(), packet);
+                  }
                 } catch (Exception exception) {
                   LoggerManager.getLogger(KafkaBackbone.class).error(exception);
                 }

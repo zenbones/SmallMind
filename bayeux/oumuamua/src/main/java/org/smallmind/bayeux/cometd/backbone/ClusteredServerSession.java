@@ -32,6 +32,7 @@
  */
 package org.smallmind.bayeux.cometd.backbone;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -218,13 +219,13 @@ public class ClusteredServerSession implements OumuamuaServerSession {
   @Override
   public Iterator<Extension> iterateExtensions () {
 
-    throw new UnsupportedOperationException();
+    return Collections.emptyIterator();
   }
 
   @Override
   public List<Extension> getExtensions () {
 
-    throw new UnsupportedOperationException();
+    return Collections.emptyList();
   }
 
   @Override

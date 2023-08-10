@@ -43,12 +43,11 @@ import org.smallmind.bayeux.cometd.OumuamuaServer;
 import org.smallmind.bayeux.cometd.channel.ChannelIdCache;
 import org.smallmind.bayeux.cometd.message.MapLike;
 import org.smallmind.bayeux.cometd.message.OumuamuaPacket;
-import org.smallmind.bayeux.cometd.session.OumuamuaServerSession;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public class PacketCodec {
 
-  public static byte[] encode (OumuamuaServerSession sender, OumuamuaPacket packet)
+  public static byte[] encode (String nodeName, OumuamuaPacket packet)
     throws IOException {
 
     ByteArrayOutputStream byteArrayOutputStream;
@@ -57,8 +56,9 @@ public class PacketCodec {
 
       MapLike[] messages;
 
-      objectOutputStream.writeUTF(sender.getId());
-      objectOutputStream.writeUTF(sender.getServerTransport().getName());
+      objectOutputStream.writeUTF(nodeName);
+      objectOutputStream.writeUTF(packet.getSender().getId());
+      objectOutputStream.writeUTF(packet.getSender().getServerTransport().getName());
 
       objectOutputStream.writeUTF(packet.getChannelId().getId());
 
@@ -76,29 +76,36 @@ public class PacketCodec {
     return byteArrayOutputStream.toByteArray();
   }
 
-  public static OumuamuaPacket decode (OumuamuaServer oumuamuaServer, byte[] buffer)
+  public static OumuamuaPacket decode (String nodeName, OumuamuaServer oumuamuaServer, byte[] buffer)
     throws IOException {
 
     ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(buffer);
-    ObjectInputStream objectInputStream = new ObjectInputStream(byteArrayInputStream);
+    try (ObjectInputStream objectInputStream = new ObjectInputStream(byteArrayInputStream)) {
 
-    MapLike[] messaages;
-    ChannelId channelId;
-    String sessionId;
-    String transportName;
-    int messageCount = objectInputStream.readInt();
+      if (objectInputStream.readUTF().equals(nodeName)) {
 
-    sessionId = objectInputStream.readUTF();
-    transportName = objectInputStream.readUTF();
+        return null;
+      } else {
 
-    channelId = ChannelIdCache.generate(objectInputStream.readUTF());
+        MapLike[] messaages;
+        ChannelId channelId;
+        String sessionId;
+        String transportName;
+        int messageCount;
 
-    messaages = new MapLike[messageCount];
+        sessionId = objectInputStream.readUTF();
+        transportName = objectInputStream.readUTF();
 
-    for (int index = 0; index < messageCount; index++) {
-      messaages[index++] = new MapLike((ObjectNode)JsonCodec.readAsJsonNode(objectInputStream.readUTF()));
+        channelId = ChannelIdCache.generate(objectInputStream.readUTF());
+
+        messaages = new MapLike[messageCount = objectInputStream.readInt()];
+
+        for (int index = 0; index < messageCount; index++) {
+          messaages[index++] = new MapLike((ObjectNode)JsonCodec.readAsJsonNode(objectInputStream.readUTF()));
+        }
+
+        return new OumuamuaPacket(new ClusteredServerSession(oumuamuaServer, transportName, sessionId), channelId, messaages);
+      }
     }
-
-    return new OumuamuaPacket(new ClusteredServerSession(oumuamuaServer, transportName, sessionId), channelId, messaages);
   }
 }

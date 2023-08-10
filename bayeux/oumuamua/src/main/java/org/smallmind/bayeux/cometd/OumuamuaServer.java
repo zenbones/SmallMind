@@ -57,7 +57,6 @@ import org.cometd.bayeux.server.SecurityPolicy;
 import org.cometd.bayeux.server.ServerChannel;
 import org.cometd.bayeux.server.ServerMessage;
 import org.cometd.bayeux.server.ServerSession;
-import org.smallmind.bayeux.cometd.backbone.PacketCodec;
 import org.smallmind.bayeux.cometd.backbone.ServerBackbone;
 import org.smallmind.bayeux.cometd.channel.ChannelIdCache;
 import org.smallmind.bayeux.cometd.channel.ChannelIterator;
@@ -423,7 +422,7 @@ public class OumuamuaServer implements BayeuxServer {
 
     if (serverBackbone != null) {
       try {
-        serverBackbone.publish(PacketCodec.encode(packet.getSender(), packet));
+        serverBackbone.publish(packet);
       } catch (IOException ioException) {
         LoggerManager.getLogger(OumuamuaServer.class).error(ioException);
       }
