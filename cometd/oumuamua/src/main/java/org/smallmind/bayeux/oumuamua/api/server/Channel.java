@@ -32,17 +32,33 @@
  */
 package org.smallmind.bayeux.oumuamua.api.server;
 
-import org.smallmind.bayeux.oumuamua.api.Route;
+import org.smallmind.bayeux.oumuamua.api.Attributed;
 import org.smallmind.bayeux.oumuamua.api.Message;
+import org.smallmind.bayeux.oumuamua.api.Route;
 
-public interface Channel {
+public interface Channel extends Attributed {
+
+  interface SessionListener {
+
+    void onSubscribed (Session session);
+
+    void onUnsubscribed (Session session);
+  }
 
   interface MessageListener {
 
     void onDelivery (Message message);
   }
 
+  boolean isPersistent ();
+
+  void setPersistent (boolean persistent);
+
   Route getRoute ();
+
+  void subscribe (Session session);
+
+  void unsubscribe (Session session);
 
   void deliver (Message message);
 }

@@ -119,7 +119,7 @@ public class KafkaBackbone extends ServerBackbone {
     producer.send(new ProducerRecord<>(topicName, value));
   }
 
-  private class ConsumerWorker implements Runnable {
+  private static class ConsumerWorker implements Runnable {
 
     private final AtomicBoolean finished = new AtomicBoolean(false);
     private final Consumer<Long, byte[]> consumer;
