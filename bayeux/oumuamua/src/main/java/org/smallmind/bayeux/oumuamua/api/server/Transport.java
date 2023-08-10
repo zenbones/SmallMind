@@ -30,9 +30,11 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.api;
+package org.smallmind.bayeux.oumuamua.api.server;
 
-public interface Transport {
+import org.smallmind.bayeux.oumuamua.api.Attributed;
+
+public interface Transport extends Attributed {
 
   String getName ();
 }

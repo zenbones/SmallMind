@@ -34,6 +34,7 @@ package org.smallmind.bayeux.oumuamua.api.server;
 
 import org.smallmind.bayeux.oumuamua.api.Attributed;
 import org.smallmind.bayeux.oumuamua.api.Message;
+import org.smallmind.bayeux.oumuamua.api.Protocol;
 import org.smallmind.bayeux.oumuamua.api.Route;
 
 public interface Server extends Attributed {
@@ -61,7 +62,21 @@ public interface Server extends Attributed {
     void onDelivery (Message message);
   }
 
+  void addSessionListener (SessionListener sessionListener);
+
+  void removeSessionListener (SessionListener sessionListener);
+
+  void addChannelListener (ChannelListener channelListener);
+
+  void removeChannelListener (ChannelListener channelListener);
+
+  void addMessageListener (MessageListener messageListener);
+
+  void removeMessageListener (MessageListener messageListener);
+
   void setSecurityPolicy (SecurityPolicy securityPolicy);
+
+  Protocol getProtocol (String name);
 
   Channel getChannel (Route route, boolean createIfAbsent);
 

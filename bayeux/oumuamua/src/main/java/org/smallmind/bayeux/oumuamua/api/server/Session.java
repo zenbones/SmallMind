@@ -43,6 +43,10 @@ public interface Session {
     void onDelivery (Message message);
   }
 
+  void addMessageListener (MessageListener messageListener);
+
+  void removeMessageListener (MessageListener messageListener);
+
   String getId ();
 
   boolean isHandshook ();

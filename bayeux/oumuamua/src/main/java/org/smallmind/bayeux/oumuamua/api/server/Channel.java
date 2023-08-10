@@ -47,12 +47,26 @@ public interface Channel extends Attributed {
 
   interface MessageListener {
 
+    boolean isPersistent ();
+
     void onDelivery (Message message);
   }
+
+  void addSessionListener (SessionListener sessionListener);
+
+  void removeSessionListener (SessionListener sessionListener);
+
+  void addMessageListener (MessageListener messageListener);
+
+  void removeMessageListener (MessageListener messageListener);
 
   boolean isPersistent ();
 
   void setPersistent (boolean persistent);
+
+  boolean isReflecting ();
+
+  boolean setReflecting ();
 
   Route getRoute ();
 

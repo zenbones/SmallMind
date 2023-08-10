@@ -32,7 +32,11 @@
  */
 package org.smallmind.bayeux.oumuamua.api;
 
+import org.smallmind.bayeux.oumuamua.api.server.Transport;
+
 public interface Protocol {
 
   String getName ();
+
+  Transport getTransport (String name);
 }
