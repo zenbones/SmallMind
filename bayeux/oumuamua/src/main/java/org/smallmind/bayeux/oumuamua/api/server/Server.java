@@ -74,6 +74,8 @@ public interface Server extends Attributed {
 
   void removeMessageListener (MessageListener messageListener);
 
+  void setMessageCodec (MessageCodec messageCodec);
+
   void setSecurityPolicy (SecurityPolicy securityPolicy);
 
   Protocol getProtocol (String name);

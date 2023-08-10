@@ -34,9 +34,12 @@ package org.smallmind.bayeux.oumuamua.api.server;
 
 import org.smallmind.bayeux.oumuamua.api.Message;
 
+// The serialized format of the message *must* be a byte buffer representing a Bayeux Protocol message, i.e. a conforming json object
+// We recommend keeping the charset of the encoded buffer in UTF-8, but it can be any encoding interpretable by the client
 public interface MessageCodec {
 
-  Message Encode (byte[] buffer);
+  // The message type need not be encoded as it can always be derived from the context on decode
+  byte[] encode (Message message);
 
   Message decode (byte[] buffer);
 }
