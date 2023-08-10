@@ -134,8 +134,8 @@
     <module>ansible</module>
     <module>artifact</module>
     <module>batch</module>
+    <module>bayeux</module>
     <module>claxon</module>
-    <module>cometd</module>
     <module>file</module>
     <module>forge</module>
     <module>foundation</module>
