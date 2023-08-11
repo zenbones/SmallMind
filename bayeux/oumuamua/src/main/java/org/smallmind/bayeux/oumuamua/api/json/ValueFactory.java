@@ -32,27 +32,21 @@
  */
 package org.smallmind.bayeux.oumuamua.api.json;
 
-public interface ValueFactory {
+public interface ValueFactory<V extends Value<V>> {
 
-  ObjectValue objectValue ();
+  ObjectValue<V> objectValue ();
 
-  ArrayValue arrayValue ();
+  ArrayValue<V> arrayValue ();
 
-  StringValue textValue (String text);
+  StringValue<V> textValue (String text);
 
-  NumberValue numberValue (byte b);
+  NumberValue<V> numberValue (int i);
 
-  NumberValue numberValue (short s);
+  NumberValue<V> numberValue (long l);
 
-  NumberValue numberValue (int i);
+  NumberValue<V> numberValue (double d);
 
-  NumberValue numberValue (long l);
+  BooleanValue<V> booleanValue (boolean bool);
 
-  NumberValue numberValue (float f);
-
-  NumberValue numberValue (double d);
-
-  BooleanValue booleanValue (boolean bool);
-
-  NullValue nullValue ();
+  NullValue<V> nullValue ();
 }

@@ -32,6 +32,7 @@
  */
 package org.smallmind.bayeux.oumuamua.spi.json.jackson;
 
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import org.smallmind.bayeux.oumuamua.api.json.ArrayValue;
 import org.smallmind.bayeux.oumuamua.api.json.BooleanValue;
 import org.smallmind.bayeux.oumuamua.api.json.NullValue;
@@ -40,71 +41,55 @@ import org.smallmind.bayeux.oumuamua.api.json.ObjectValue;
 import org.smallmind.bayeux.oumuamua.api.json.StringValue;
 import org.smallmind.bayeux.oumuamua.api.json.ValueFactory;
 
-public class JacksonValueFactory implements ValueFactory {
+public class JacksonValueFactory implements ValueFactory<JacksonValue<?>> {
+
+  private static final JacksonNullValue NULL_VALUE = new JacksonNullValue(JsonNodeFactory.instance.nullNode());
 
   @Override
-  public ObjectValue objectValue () {
+  public ObjectValue<JacksonValue<?>> objectValue () {
 
-    return null;
+    return new JacksonObjectValue(JsonNodeFactory.instance.objectNode());
   }
 
   @Override
-  public ArrayValue arrayValue () {
+  public ArrayValue<JacksonValue<?>> arrayValue () {
 
-    return null;
+    return new JacksonArrayValue(JsonNodeFactory.instance.arrayNode());
   }
 
   @Override
-  public StringValue textValue (String text) {
+  public StringValue<JacksonValue<?>> textValue (String text) {
 
-    return null;
+    return new JacksonStringValue(JsonNodeFactory.instance.textNode(text));
   }
 
   @Override
-  public NumberValue numberValue (byte b) {
+  public NumberValue<JacksonValue<?>> numberValue (int i) {
 
-    return null;
+    return new JacksonNumberValue(JsonNodeFactory.instance.numberNode(i));
   }
 
   @Override
-  public NumberValue numberValue (short s) {
+  public NumberValue<JacksonValue<?>> numberValue (long l) {
 
-    return null;
+    return new JacksonNumberValue(JsonNodeFactory.instance.numberNode(l));
   }
 
   @Override
-  public NumberValue numberValue (int i) {
+  public NumberValue<JacksonValue<?>> numberValue (double d) {
 
-    return null;
+    return new JacksonNumberValue(JsonNodeFactory.instance.numberNode(d));
   }
 
   @Override
-  public NumberValue numberValue (long l) {
+  public BooleanValue<JacksonValue<?>> booleanValue (boolean bool) {
 
-    return null;
+    return new JacksonBooleanValue(JsonNodeFactory.instance.booleanNode(bool));
   }
 
   @Override
-  public NumberValue numberValue (float f) {
+  public NullValue<JacksonValue<?>> nullValue () {
 
-    return null;
-  }
-
-  @Override
-  public NumberValue numberValue (double d) {
-
-    return null;
-  }
-
-  @Override
-  public BooleanValue booleanValue (boolean bool) {
-
-    return null;
-  }
-
-  @Override
-  public NullValue nullValue () {
-
-    return null;
+    return NULL_VALUE;
   }
 }
