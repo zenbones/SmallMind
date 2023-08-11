@@ -34,17 +34,17 @@ package org.smallmind.bayeux.oumuamua.api;
 
 import org.smallmind.bayeux.oumuamua.api.json.ObjectValue;
 
-public abstract class Body extends ObjectValue {
+public interface Body extends ObjectValue {
 
-  public abstract String getId ();
+  String getId ();
 
-  public abstract String getSessionId ();
+  String getSessionId ();
 
-  public abstract Route getRoute ();
+  Route getRoute ();
 
-  public abstract ObjectValue getAdvice ();
+  ObjectValue getAdvice ();
 
-  public abstract ObjectValue getExt ();
+  ObjectValue getExt ();
 
-  public abstract ObjectValue getData ();
+  ObjectValue getData ();
 }

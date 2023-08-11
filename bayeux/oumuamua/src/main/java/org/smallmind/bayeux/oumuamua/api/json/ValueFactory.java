@@ -32,24 +32,27 @@
  */
 package org.smallmind.bayeux.oumuamua.api.json;
 
-import java.util.Map;
+public interface ValueFactory {
 
-public interface ObjectValue<V extends Value<V>> extends Value<V>, Iterable<Map.Entry<String, V>> {
+  ObjectValue objectValue ();
 
-  default ValueType getType () {
+  ArrayValue arrayValue ();
 
-    return ValueType.OBJECT;
-  }
+  StringValue textValue (String text);
 
-  int size ();
+  NumberValue numberValue (byte b);
 
-  boolean isEmpty ();
+  NumberValue numberValue (short s);
 
-  V get (String field);
+  NumberValue numberValue (int i);
 
-  V put (String field, V value);
+  NumberValue numberValue (long l);
 
-  V remove (String field);
+  NumberValue numberValue (float f);
 
-  V removeAll ();
+  NumberValue numberValue (double d);
+
+  BooleanValue booleanValue (boolean bool);
+
+  NullValue nullValue ();
 }

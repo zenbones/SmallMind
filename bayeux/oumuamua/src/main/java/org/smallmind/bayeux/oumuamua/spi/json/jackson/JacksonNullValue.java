@@ -30,26 +30,15 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.api.json;
+package org.smallmind.bayeux.oumuamua.spi.json.jackson;
 
-import java.util.Map;
+import com.fasterxml.jackson.databind.node.NullNode;
+import org.smallmind.bayeux.oumuamua.api.json.NullValue;
 
-public interface ObjectValue<V extends Value<V>> extends Value<V>, Iterable<Map.Entry<String, V>> {
+public class JacksonNullValue extends JacksonValue<NullNode> implements NullValue<JacksonValue<?>> {
 
-  default ValueType getType () {
+  public JacksonNullValue (NullNode node) {
 
-    return ValueType.OBJECT;
+    super(node);
   }
-
-  int size ();
-
-  boolean isEmpty ();
-
-  V get (String field);
-
-  V put (String field, V value);
-
-  V remove (String field);
-
-  V removeAll ();
 }

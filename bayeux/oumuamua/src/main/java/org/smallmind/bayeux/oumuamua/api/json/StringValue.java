@@ -32,24 +32,12 @@
  */
 package org.smallmind.bayeux.oumuamua.api.json;
 
-import java.util.Map;
-
-public interface ObjectValue<V extends Value<V>> extends Value<V>, Iterable<Map.Entry<String, V>> {
+public interface StringValue<V extends Value<V>> extends Value<V> {
 
   default ValueType getType () {
 
-    return ValueType.OBJECT;
+    return ValueType.STRING;
   }
 
-  int size ();
-
-  boolean isEmpty ();
-
-  V get (String field);
-
-  V put (String field, V value);
-
-  V remove (String field);
-
-  V removeAll ();
+  String asText ();
 }

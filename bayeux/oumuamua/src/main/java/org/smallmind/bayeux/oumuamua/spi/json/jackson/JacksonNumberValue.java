@@ -30,26 +30,56 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.api.json;
+package org.smallmind.bayeux.oumuamua.spi.json.jackson;
 
-import java.util.Map;
+import com.fasterxml.jackson.databind.node.NumericNode;
+import org.smallmind.bayeux.oumuamua.api.json.NumberType;
+import org.smallmind.bayeux.oumuamua.api.json.NumberValue;
+import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
-public interface ObjectValue<V extends Value<V>> extends Value<V>, Iterable<Map.Entry<String, V>> {
+public class JacksonNumberValue extends JacksonValue<NumericNode> implements NumberValue<JacksonValue<?>> {
 
-  default ValueType getType () {
+  public JacksonNumberValue (NumericNode node) {
 
-    return ValueType.OBJECT;
+    super(node);
   }
 
-  int size ();
+  @Override
+  public NumberType getNumberType () {
 
-  boolean isEmpty ();
+    switch (getNode().numberType()) {
+      case INT:
+        return NumberType.INTEGER;
+      case LONG:
+        return NumberType.LONG;
+      case DOUBLE:
+        return NumberType.DOUBLE;
+      default:
+        throw new UnknownSwitchCaseException(getNode().numberType().name());
+    }
+  }
 
-  V get (String field);
+  @Override
+  public Number asNumber () {
 
-  V put (String field, V value);
+    return getNode().numberValue();
+  }
 
-  V remove (String field);
+  @Override
+  public int asInt () {
 
-  V removeAll ();
+    return getNode().asInt();
+  }
+
+  @Override
+  public long asLong () {
+
+    return getNode().asLong();
+  }
+
+  @Override
+  public double asDouble () {
+
+    return getNode().asDouble();
+  }
 }

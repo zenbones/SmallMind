@@ -30,26 +30,81 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.api.json;
+package org.smallmind.bayeux.oumuamua.spi.json.jackson;
 
-import java.util.Map;
+import org.smallmind.bayeux.oumuamua.api.json.ArrayValue;
+import org.smallmind.bayeux.oumuamua.api.json.BooleanValue;
+import org.smallmind.bayeux.oumuamua.api.json.NullValue;
+import org.smallmind.bayeux.oumuamua.api.json.NumberValue;
+import org.smallmind.bayeux.oumuamua.api.json.ObjectValue;
+import org.smallmind.bayeux.oumuamua.api.json.StringValue;
+import org.smallmind.bayeux.oumuamua.api.json.ValueFactory;
 
-public interface ObjectValue<V extends Value<V>> extends Value<V>, Iterable<Map.Entry<String, V>> {
+public class JacksonValueFactory implements ValueFactory {
 
-  default ValueType getType () {
+  @Override
+  public ObjectValue objectValue () {
 
-    return ValueType.OBJECT;
+    return null;
   }
 
-  int size ();
+  @Override
+  public ArrayValue arrayValue () {
 
-  boolean isEmpty ();
+    return null;
+  }
 
-  V get (String field);
+  @Override
+  public StringValue textValue (String text) {
 
-  V put (String field, V value);
+    return null;
+  }
 
-  V remove (String field);
+  @Override
+  public NumberValue numberValue (byte b) {
 
-  V removeAll ();
+    return null;
+  }
+
+  @Override
+  public NumberValue numberValue (short s) {
+
+    return null;
+  }
+
+  @Override
+  public NumberValue numberValue (int i) {
+
+    return null;
+  }
+
+  @Override
+  public NumberValue numberValue (long l) {
+
+    return null;
+  }
+
+  @Override
+  public NumberValue numberValue (float f) {
+
+    return null;
+  }
+
+  @Override
+  public NumberValue numberValue (double d) {
+
+    return null;
+  }
+
+  @Override
+  public BooleanValue booleanValue (boolean bool) {
+
+    return null;
+  }
+
+  @Override
+  public NullValue nullValue () {
+
+    return null;
+  }
 }

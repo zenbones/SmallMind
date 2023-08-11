@@ -32,24 +32,30 @@
  */
 package org.smallmind.bayeux.oumuamua.api.json;
 
-import java.util.Map;
+import java.util.Collection;
 
-public interface ObjectValue<V extends Value<V>> extends Value<V>, Iterable<Map.Entry<String, V>> {
+public interface ArrayValue<V extends Value<V>> extends Value<V>, Iterable<V> {
 
   default ValueType getType () {
 
-    return ValueType.OBJECT;
+    return ValueType.ARRAY;
   }
 
   int size ();
 
   boolean isEmpty ();
 
-  V get (String field);
+  V get (int index);
 
-  V put (String field, V value);
+  V add (V value);
 
-  V remove (String field);
+  V addAll (Collection<V> values);
+
+  V set (int index, V value);
+
+  V insert (int index, V value);
+
+  V remove (int index);
 
   V removeAll ();
 }

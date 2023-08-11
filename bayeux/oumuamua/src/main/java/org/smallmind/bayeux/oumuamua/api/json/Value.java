@@ -32,7 +32,7 @@
  */
 package org.smallmind.bayeux.oumuamua.api.json;
 
-public interface Value {
+public interface Value<V extends Value<V>> {
 
   ValueType getType ();
 }

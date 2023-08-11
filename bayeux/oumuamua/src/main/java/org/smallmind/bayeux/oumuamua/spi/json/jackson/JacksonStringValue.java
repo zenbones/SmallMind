@@ -32,12 +32,19 @@
  */
 package org.smallmind.bayeux.oumuamua.spi.json.jackson;
 
-import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
+import com.fasterxml.jackson.databind.node.TextNode;
+import org.smallmind.bayeux.oumuamua.api.json.StringValue;
 
-public class InvalidJsonNodeType extends FormattedRuntimeException {
+public class JacksonStringValue extends JacksonValue<TextNode> implements StringValue<JacksonValue<?>> {
 
-  public InvalidJsonNodeType (String message, Object... args) {
+  public JacksonStringValue (TextNode node) {
 
-    super(message, args);
+    super(node);
+  }
+
+  @Override
+  public String asText () {
+
+    return getNode().asText();
   }
 }

@@ -32,24 +32,7 @@
  */
 package org.smallmind.bayeux.oumuamua.api.json;
 
-import java.util.Map;
+public enum NumberType {
 
-public interface ObjectValue<V extends Value<V>> extends Value<V>, Iterable<Map.Entry<String, V>> {
-
-  default ValueType getType () {
-
-    return ValueType.OBJECT;
-  }
-
-  int size ();
-
-  boolean isEmpty ();
-
-  V get (String field);
-
-  V put (String field, V value);
-
-  V remove (String field);
-
-  V removeAll ();
+  INTEGER, LONG, DOUBLE
 }

@@ -30,26 +30,46 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.api.json;
+package org.smallmind.bayeux.oumuamua.spi.json.jackson;
 
-import java.util.Map;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.BooleanNode;
+import com.fasterxml.jackson.databind.node.NullNode;
+import com.fasterxml.jackson.databind.node.NumericNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
+import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
-public interface ObjectValue<V extends Value<V>> extends Value<V>, Iterable<Map.Entry<String, V>> {
+public class JacksonValueUtility {
 
-  default ValueType getType () {
+  public static JacksonValue<?> to (JsonNode node) {
 
-    return ValueType.OBJECT;
+    if (node == null) {
+
+      return null;
+    } else {
+      switch (node.getNodeType()) {
+        case OBJECT:
+          return new JacksonObjectValue((ObjectNode)node);
+        case ARRAY:
+          return new JacksonArrayValue((ArrayNode)node);
+        case STRING:
+          return new JacksonStringValue((TextNode)node);
+        case NUMBER:
+          return new JacksonNumberValue((NumericNode)node);
+        case BOOLEAN:
+          return new JacksonBooleanValue((BooleanNode)node);
+        case NULL:
+          return new JacksonNullValue((NullNode)node);
+        default:
+          throw new UnknownSwitchCaseException(node.getNodeType().name());
+      }
+    }
   }
 
-  int size ();
+  public static JsonNode from (JacksonValue<?> value) {
 
-  boolean isEmpty ();
-
-  V get (String field);
-
-  V put (String field, V value);
-
-  V remove (String field);
-
-  V removeAll ();
+    return (value == null) ? null : value.getNode();
+  }
 }

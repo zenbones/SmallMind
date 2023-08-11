@@ -34,30 +34,18 @@ package org.smallmind.bayeux.oumuamua.spi.json.jackson;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.smallmind.bayeux.oumuamua.api.json.Value;
-import org.smallmind.bayeux.oumuamua.api.json.ValueType;
 
-public class JacksonValue implements Value {
+public abstract class JacksonValue<N extends JsonNode> implements Value<JacksonValue<?>> {
 
-  private JsonNode node;
+  private final N node;
 
-  @Override
-  public ValueType getType () {
+  public JacksonValue (N node) {
 
-    switch (node.getNodeType()) {
-      case OBJECT:
-        return ValueType.OBJECT;
-      case ARRAY:
-        return ValueType.ARRAY;
-      case STRING:
-        return ValueType.STRING;
-      case NUMBER:
-        return ValueType.NUMBER;
-      case BOOLEAN:
-        return ValueType.BOOLEAN;
-      case NULL:
-        return ValueType.NULL;
-      default:
-        throw new InvalidJsonNodeType(node.getNodeType().name());
-    }
+    this.node = node;
+  }
+
+  public N getNode () {
+
+    return node;
   }
 }

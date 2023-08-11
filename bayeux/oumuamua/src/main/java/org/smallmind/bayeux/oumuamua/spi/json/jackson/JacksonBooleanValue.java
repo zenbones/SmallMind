@@ -30,26 +30,21 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.api.json;
+package org.smallmind.bayeux.oumuamua.spi.json.jackson;
 
-import java.util.Map;
+import com.fasterxml.jackson.databind.node.BooleanNode;
+import org.smallmind.bayeux.oumuamua.api.json.BooleanValue;
 
-public interface ObjectValue<V extends Value<V>> extends Value<V>, Iterable<Map.Entry<String, V>> {
+public class JacksonBooleanValue extends JacksonValue<BooleanNode> implements BooleanValue<JacksonValue<?>> {
 
-  default ValueType getType () {
+  public JacksonBooleanValue (BooleanNode node) {
 
-    return ValueType.OBJECT;
+    super(node);
   }
 
-  int size ();
+  @Override
+  public boolean asBoolean () {
 
-  boolean isEmpty ();
-
-  V get (String field);
-
-  V put (String field, V value);
-
-  V remove (String field);
-
-  V removeAll ();
+    return getNode().asBoolean();
+  }
 }
