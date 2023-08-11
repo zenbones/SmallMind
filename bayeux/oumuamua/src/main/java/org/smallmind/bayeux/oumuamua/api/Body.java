@@ -33,8 +33,9 @@
 package org.smallmind.bayeux.oumuamua.api;
 
 import org.smallmind.bayeux.oumuamua.api.json.ObjectValue;
+import org.smallmind.bayeux.oumuamua.api.json.Value;
 
-public interface Body extends ObjectValue {
+public interface Body<V extends Value<V>> extends ObjectValue<V> {
 
   String getId ();
 
@@ -42,9 +43,9 @@ public interface Body extends ObjectValue {
 
   Route getRoute ();
 
-  ObjectValue getAdvice ();
+  ObjectValue<V> getAdvice ();
 
-  ObjectValue getExt ();
+  ObjectValue<V> getExt ();
 
-  ObjectValue getData ();
+  ObjectValue<V> getData ();
 }
