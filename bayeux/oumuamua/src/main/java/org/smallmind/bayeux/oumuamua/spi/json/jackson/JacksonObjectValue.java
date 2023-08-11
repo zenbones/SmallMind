@@ -37,6 +37,7 @@ import java.util.Map;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.smallmind.bayeux.oumuamua.api.json.ObjectValue;
+import org.smallmind.bayeux.oumuamua.api.json.Value;
 
 public class JacksonObjectValue extends JacksonValue<ObjectNode> implements ObjectValue<JacksonValue<?>> {
 
@@ -64,7 +65,7 @@ public class JacksonObjectValue extends JacksonValue<ObjectNode> implements Obje
   }
 
   @Override
-  public JacksonValue<?> put (String field, JacksonValue<?> value) {
+  public JacksonValue<?> put (String field, Value<JacksonValue<?>> value) {
 
     getNode().set(field, JacksonValueUtility.from(value));
 

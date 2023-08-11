@@ -37,6 +37,7 @@ import java.util.Iterator;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.smallmind.bayeux.oumuamua.api.json.ArrayValue;
+import org.smallmind.bayeux.oumuamua.api.json.Value;
 
 public class JacksonArrayValue extends JacksonValue<ArrayNode> implements ArrayValue<JacksonValue<?>> {
 
@@ -64,7 +65,7 @@ public class JacksonArrayValue extends JacksonValue<ArrayNode> implements ArrayV
   }
 
   @Override
-  public JacksonValue<?> add (JacksonValue<?> value) {
+  public JacksonValue<?> add (Value<JacksonValue<?>> value) {
 
     getNode().add(JacksonValueUtility.from(value));
 
@@ -72,17 +73,7 @@ public class JacksonArrayValue extends JacksonValue<ArrayNode> implements ArrayV
   }
 
   @Override
-  public JacksonValue<?> addAll (Collection<JacksonValue<?>> values) {
-
-    for (JacksonValue<?> value : values) {
-      getNode().add(JacksonValueUtility.from(value));
-    }
-
-    return this;
-  }
-
-  @Override
-  public JacksonValue<?> set (int index, JacksonValue<?> value) {
+  public JacksonValue<?> set (int index, Value<JacksonValue<?>> value) {
 
     getNode().set(index, JacksonValueUtility.from(value));
 
@@ -90,7 +81,7 @@ public class JacksonArrayValue extends JacksonValue<ArrayNode> implements ArrayV
   }
 
   @Override
-  public JacksonValue<?> insert (int index, JacksonValue<?> value) {
+  public JacksonValue<?> insert (int index, Value<JacksonValue<?>> value) {
 
     getNode().insert(index, JacksonValueUtility.from(value));
 
@@ -101,6 +92,16 @@ public class JacksonArrayValue extends JacksonValue<ArrayNode> implements ArrayV
   public JacksonValue<?> remove (int index) {
 
     return JacksonValueUtility.to(getNode().remove(index));
+  }
+
+  @Override
+  public JacksonValue<?> addAll (Collection<JacksonValue<?>> values) {
+
+    for (JacksonValue<?> value : values) {
+      getNode().add(JacksonValueUtility.from(value));
+    }
+
+    return this;
   }
 
   @Override

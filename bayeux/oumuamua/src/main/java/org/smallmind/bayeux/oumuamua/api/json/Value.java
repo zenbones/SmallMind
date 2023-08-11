@@ -34,5 +34,7 @@ package org.smallmind.bayeux.oumuamua.api.json;
 
 public interface Value<V extends Value<V>> {
 
+  ValueFactory<V> getFactory ();
+
   ValueType getType ();
 }

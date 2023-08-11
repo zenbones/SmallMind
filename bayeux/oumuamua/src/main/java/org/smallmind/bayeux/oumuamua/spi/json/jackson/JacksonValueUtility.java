@@ -39,6 +39,7 @@ import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.NumericNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import org.smallmind.bayeux.oumuamua.api.json.Value;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 public class JacksonValueUtility {
@@ -68,8 +69,8 @@ public class JacksonValueUtility {
     }
   }
 
-  public static JsonNode from (JacksonValue<?> value) {
+  public static JsonNode from (Value<JacksonValue<?>> value) {
 
-    return (value == null) ? null : value.getNode();
+    return (value == null) ? null : ((JacksonValue<?>)value).getNode();
   }
 }

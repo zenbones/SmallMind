@@ -41,14 +41,38 @@ public interface ObjectValue<V extends Value<V>> extends Value<V>, Iterable<Map.
     return ValueType.OBJECT;
   }
 
+  default V put (String field, boolean bool) {
+
+    return put(field, getFactory().booleanValue(bool));
+  }
+
+  default V put (String field, int i) {
+
+    return put(field, getFactory().numberValue(i));
+  }
+
+  default V put (String field, long l) {
+
+    return put(field, getFactory().numberValue(l));
+  }
+
+  default V put (String field, double d) {
+
+    return put(field, getFactory().numberValue(d));
+  }
+
+  default V put (String field, String text) {
+
+    return put(field, getFactory().textValue(text));
+  }
+
   int size ();
 
   boolean isEmpty ();
 
   V get (String field);
 
-  V put (String field, V value);
-
+  V put (String field, Value<V> value);
 
   V remove (String field);
 

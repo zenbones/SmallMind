@@ -34,14 +34,29 @@ package org.smallmind.bayeux.oumuamua.spi.json.jackson;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.smallmind.bayeux.oumuamua.api.json.Value;
+import org.smallmind.bayeux.oumuamua.api.json.ValueFactory;
+import org.smallmind.bayeux.oumuamua.api.json.ValueType;
 
 public abstract class JacksonValue<N extends JsonNode> implements Value<JacksonValue<?>> {
 
+  private static final JacksonValueFactory FACTORY = new JacksonValueFactory();
   private final N node;
 
   public JacksonValue (N node) {
 
     this.node = node;
+  }
+
+  @Override
+  public ValueFactory<JacksonValue<?>> getFactory () {
+
+    return FACTORY;
+  }
+
+  @Override
+  public ValueType getType () {
+
+    return null;
   }
 
   public N getNode () {
