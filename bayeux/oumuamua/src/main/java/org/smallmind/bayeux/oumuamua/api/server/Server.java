@@ -34,7 +34,6 @@ package org.smallmind.bayeux.oumuamua.api.server;
 
 import org.smallmind.bayeux.oumuamua.api.Attributed;
 import org.smallmind.bayeux.oumuamua.api.Message;
-import org.smallmind.bayeux.oumuamua.api.Protocol;
 import org.smallmind.bayeux.oumuamua.api.Route;
 import org.smallmind.bayeux.oumuamua.api.backbone.Backbone;
 
@@ -71,13 +70,13 @@ public interface Server extends Attributed {
 
   void removeListener (Listener listener);
 
-  void setBackbone (Backbone backbone);
-
-  void setMessageCodec (MessageCodec messageCodec);
-
-  void setSecurityPolicy (SecurityPolicy securityPolicy);
-
   Protocol getProtocol (String name);
+
+  Backbone getBackbone ();
+
+  SecurityPolicy getSecurityPolicy ();
+
+  MessageCodec getMessageCodec ();
 
   Channel getChannel (Route route, boolean createIfAbsent);
 
