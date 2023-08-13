@@ -32,11 +32,17 @@
  */
 package org.smallmind.bayeux.oumuamua.api.json;
 
+import java.util.List;
+
 public interface ValueFactory<V extends Value<V>> {
 
   ObjectValue<V> objectValue ();
 
+  ObjectValue<V> objectValue (Object object);
+
   ArrayValue<V> arrayValue ();
+
+  ArrayValue<V> arrayValue (List<?> list);
 
   StringValue<V> textValue (String text);
 
