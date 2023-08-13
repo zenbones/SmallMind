@@ -76,9 +76,18 @@ public interface Server extends Attributed {
 
   SecurityPolicy getSecurityPolicy ();
 
+  // Serves as an injection point for implementations that wish to add client configurable additions to the json codec pipeline
   MessageCodec getMessageCodec ();
 
-  Channel getChannel (Route route, boolean createIfAbsent);
+  Channel findChannel (Route route);
+
+  // Initializers will be applied before the channel is returned if this call creates the channel
+  Channel requireChannel (Route route, ChannelInitializer... initializers);
+
+  // It's n error to attempt to remove a persistent channel
+  // All sessions must be unsubscribed (and listeners notified) upon channel removal
+  Channel removeChannel (Channel channel)
+    throws IllegalStateException;
 
   void deliver (Message message);
 }
