@@ -8,7 +8,7 @@
   </parent>
   <artifactId>bayeux-cometd</artifactId>
   <packaging>jar</packaging>
-  <name>Bayeux Cometd</name>
+  <name>Bayeux-Cometd</name>
   <description>ALternate Cometd Implementation</description>
   <dependencies>
     <dependency>

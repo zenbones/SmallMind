@@ -221,6 +221,21 @@
       </dependency>
       <dependency>
         <groupId>org.smallmind</groupId>
+        <artifactId>oumuamua-common-api</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.smallmind</groupId>
+        <artifactId>oumuamua-server-api</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.smallmind</groupId>
+        <artifactId>oumuamua-server-spi</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.smallmind</groupId>
         <artifactId>smallmind-quorum</artifactId>
         <version>${project.version}</version>
       </dependency>
