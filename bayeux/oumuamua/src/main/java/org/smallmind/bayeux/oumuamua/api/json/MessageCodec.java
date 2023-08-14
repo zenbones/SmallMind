@@ -30,13 +30,20 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.api.server;
+package org.smallmind.bayeux.oumuamua.api.json;
 
-public interface Connection {
+import org.smallmind.bayeux.oumuamua.api.Message;
 
-  Protocol getProtocol ();
+// Valid json encodings are all versions of UTF, but this specification uses Java standard UTF-8
+public interface MessageCodec<V extends Value<V>> {
 
-  Session getSession ();
+  byte[] encode (Body<V> body);
 
-  void close ();
+  String toJson (Body<V> body);
+
+  Message<V> decode (MessageType messageType, byte[] buffer);
+
+  Message<V> createMessage (MessageType messageType);
+
+  Message<V> generateMessage (MessageType messageType, Object object);
 }

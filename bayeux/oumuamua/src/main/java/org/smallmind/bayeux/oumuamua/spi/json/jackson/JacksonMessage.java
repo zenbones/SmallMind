@@ -30,13 +30,16 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.api.server;
+package org.smallmind.bayeux.oumuamua.spi.json.jackson;
 
-public interface Connection {
+import org.smallmind.bayeux.oumuamua.api.Message;
+import org.smallmind.bayeux.oumuamua.api.json.Body;
+import org.smallmind.bayeux.oumuamua.api.json.MessageType;
 
-  Protocol getProtocol ();
+public class JacksonMessage extends Message<JacksonValue<?>> {
 
-  Session getSession ();
+  public JacksonMessage (MessageType messageType, Body<JacksonValue<?>> body) {
 
-  void close ();
+    super(messageType, body);
+  }
 }

@@ -30,13 +30,9 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.api.server;
+package org.smallmind.bayeux.oumuamua.api.json;
 
-public interface Connection {
+public enum MessageType {
 
-  Protocol getProtocol ();
-
-  Session getSession ();
-
-  void close ();
+  REQUEST, RESPONSE, DELIVERY
 }

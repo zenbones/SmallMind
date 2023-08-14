@@ -30,13 +30,44 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.api.server;
+package org.smallmind.bayeux.cometd;
 
-public interface Connection {
+import java.util.HashMap;
+import java.util.Map;
+import javax.websocket.ContainerProvider;
+import javax.websocket.WebSocketContainer;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import org.cometd.client.BayeuxClient;
+import org.cometd.client.transport.ClientTransport;
+import org.cometd.client.websocket.javax.WebSocketTransport;
+import org.testng.annotations.Test;
 
-  Protocol getProtocol ();
+@Test
+public class OtherTest2 {
 
-  Session getSession ();
+  public void test ()
+    throws Exception {
 
-  void close ();
+    ClientTransport wsTransport;
+    WebSocketContainer webSocketContainer;
+
+    BayeuxClient bayeuxClient2;
+
+    webSocketContainer = ContainerProvider.getWebSocketContainer();
+    wsTransport = new WebSocketTransport(null, null, webSocketContainer);
+
+    bayeuxClient2 = new BayeuxClient("http://localhost:9017/smallmind/cometd", wsTransport);
+
+    Map<String, Object> handshakeMap2 = new HashMap<>();
+
+    bayeuxClient2.handshake(handshakeMap2);
+    if (!bayeuxClient2.waitFor(5000, BayeuxClient.State.CONNECTED)) {
+      System.out.println("Unable to connect within 5000 milliseconds");
+    }
+
+    bayeuxClient2.getChannel("/foobar").publish(JsonNodeFactory.instance.textNode("hello"));
+
+    Thread.sleep(300000);
+    System.out.println("Done...");
+  }
 }

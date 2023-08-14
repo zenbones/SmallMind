@@ -30,13 +30,41 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.api.server;
+package org.smallmind.bayeux.cometd.meta;
 
-public interface Connection {
+import org.cometd.bayeux.ChannelId;
+import org.smallmind.bayeux.cometd.message.OumuamuaPacket;
+import org.smallmind.bayeux.cometd.session.OumuamuaServerSession;
+import org.smallmind.nutsnbolts.util.Switch;
+import org.smallmind.web.json.doppelganger.Doppelganger;
+import org.smallmind.web.json.doppelganger.Idiom;
+import org.smallmind.web.json.doppelganger.View;
 
-  Protocol getProtocol ();
+import static org.smallmind.web.json.doppelganger.Visibility.IN;
+import static org.smallmind.web.json.doppelganger.Visibility.OUT;
 
-  Session getSession ();
+@Doppelganger
+public class DisconnectMessage extends MetaMessage {
 
-  void close ();
+  public static final ChannelId CHANNEL_ID = new ChannelId("/meta/disconnect");
+
+  @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
+  private String clientId;
+
+  public OumuamuaPacket[] process (OumuamuaServerSession serverSession, Switch disconnectSwitch) {
+
+    disconnectSwitch.setState(true);
+
+    return OumuamuaPacket.asPackets(serverSession, CHANNEL_ID, new DisconnectMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(CHANNEL_ID.getId()).setId(getId()));
+  }
+
+  public String getClientId () {
+
+    return clientId;
+  }
+
+  public void setClientId (String clientId) {
+
+    this.clientId = clientId;
+  }
 }

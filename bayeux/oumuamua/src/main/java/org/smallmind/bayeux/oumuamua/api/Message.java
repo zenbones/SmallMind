@@ -32,9 +32,35 @@
  */
 package org.smallmind.bayeux.oumuamua.api;
 
-public interface Message {
+import org.smallmind.bayeux.oumuamua.api.json.Body;
+import org.smallmind.bayeux.oumuamua.api.json.MessageType;
+import org.smallmind.bayeux.oumuamua.api.json.Value;
 
-  MessageType getType ();
+public abstract class Message<V extends Value<V>> {
 
-  Body getBody ();
+  public static String ID = "id";
+  public static String SESSION_ID = "clientId";
+  public static String CHANNEL = "channel";
+  public static String EXT = "ext";
+  public static String ADVICE = "advice";
+  public static String DATA = "data";
+
+  private final MessageType messageType;
+  private final Body<V> body;
+
+  public Message (MessageType messageType, Body<V> body) {
+
+    this.messageType = messageType;
+    this.body = body;
+  }
+
+  public MessageType getMessageType () {
+
+    return messageType;
+  }
+
+  public Body<V> getBody () {
+
+    return body;
+  }
 }

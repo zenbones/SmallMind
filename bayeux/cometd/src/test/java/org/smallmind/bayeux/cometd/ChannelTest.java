@@ -30,67 +30,37 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.spi.json.jackson;
+package org.smallmind.bayeux.cometd;
 
+import java.util.HashSet;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import org.smallmind.bayeux.oumuamua.api.json.ValueFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.cometd.bayeux.ChannelId;
+import org.smallmind.bayeux.cometd.channel.ChannelIterator;
+import org.smallmind.bayeux.cometd.channel.ChannelTree;
+import org.smallmind.bayeux.cometd.message.MapLike;
+import org.smallmind.bayeux.cometd.message.OumuamuaPacket;
+import org.smallmind.bayeux.cometd.meta.DeliveryMessageSuccessOutView;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
-public class JacksonValueFactory implements ValueFactory<JacksonValue<?>> {
+public class ChannelTest {
 
-  private static final JacksonNullValue NULL_VALUE = new JacksonNullValue(JsonNodeFactory.instance.nullNode());
+  public static void main (String... args) {
 
-  @Override
-  public JacksonValue<?> value (Object object) {
+    ChannelTree t = new ChannelTree();
+    OumuamuaServer oumuamuaServer = new OumuamuaServer(null, new OumuamuaConfiguration());
 
-    return JacksonValueUtility.to(JsonCodec.writeAsJsonNode(object));
-  }
+    t.createIfAbsent(oumuamuaServer, 0, new ChannelId("/**"));
+    t.createIfAbsent(oumuamuaServer, 0, new ChannelId("/*"));
+    t.createIfAbsent(oumuamuaServer, 0, new ChannelId("/a"));
+    t.createIfAbsent(oumuamuaServer, 0, new ChannelId("/a/**"));
+    t.createIfAbsent(oumuamuaServer, 0, new ChannelId("/a/b"));
+    t.createIfAbsent(oumuamuaServer, 0, new ChannelId("/a/b/*"));
+    t.createIfAbsent(oumuamuaServer, 0, new ChannelId("/a/b/**"));
+    t.createIfAbsent(oumuamuaServer, 0, new ChannelId("/a/b/c"));
 
-  @Override
-  public JacksonObjectValue objectValue () {
+    ChannelIterator i = new ChannelIterator("/a/b/c");
 
-    return new JacksonObjectValue(JsonNodeFactory.instance.objectNode());
-  }
-
-  @Override
-  public JacksonArrayValue arrayValue () {
-
-    return new JacksonArrayValue(JsonNodeFactory.instance.arrayNode());
-  }
-
-  @Override
-  public JacksonStringValue textValue (String text) {
-
-    return new JacksonStringValue(JsonNodeFactory.instance.textNode(text));
-  }
-
-  @Override
-  public JacksonNumberValue numberValue (int i) {
-
-    return new JacksonNumberValue(JsonNodeFactory.instance.numberNode(i));
-  }
-
-  @Override
-  public JacksonNumberValue numberValue (long l) {
-
-    return new JacksonNumberValue(JsonNodeFactory.instance.numberNode(l));
-  }
-
-  @Override
-  public JacksonNumberValue numberValue (double d) {
-
-    return new JacksonNumberValue(JsonNodeFactory.instance.numberNode(d));
-  }
-
-  @Override
-  public JacksonBooleanValue booleanValue (boolean bool) {
-
-    return new JacksonBooleanValue(JsonNodeFactory.instance.booleanNode(bool));
-  }
-
-  @Override
-  public JacksonNullValue nullValue () {
-
-    return NULL_VALUE;
+    t.publish(null, i, new OumuamuaPacket(null, new ChannelId("/foobar"), new MapLike((ObjectNode)JsonCodec.writeAsJsonNode(new DeliveryMessageSuccessOutView().setData(JsonNodeFactory.instance.textNode("foobar"))))), new HashSet<>());
   }
 }

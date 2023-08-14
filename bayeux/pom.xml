@@ -11,6 +11,7 @@
   <description>Bayeux Protocol</description>
   <packaging>pom</packaging>
   <modules>
+    <module>cometd</module>
     <module>oumuamua</module>
   </modules>
   <build>

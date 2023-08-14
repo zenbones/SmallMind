@@ -36,6 +36,7 @@ import org.smallmind.bayeux.oumuamua.api.Attributed;
 import org.smallmind.bayeux.oumuamua.api.Message;
 import org.smallmind.bayeux.oumuamua.api.Route;
 import org.smallmind.bayeux.oumuamua.api.backbone.Backbone;
+import org.smallmind.bayeux.oumuamua.api.json.MessageCodec;
 
 public interface Server extends Attributed {
 
@@ -78,6 +79,8 @@ public interface Server extends Attributed {
 
   // Serves as an injection point for implementations that wish to add client configurable additions to the json codec pipeline
   MessageCodec getMessageCodec ();
+
+  Route getRoute (String path);
 
   Channel findChannel (Route route);
 

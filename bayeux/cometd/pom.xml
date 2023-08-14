@@ -6,10 +6,10 @@
     <artifactId>smallmind-bayeux</artifactId>
     <version>5.2.0-SNAPSHOT</version>
   </parent>
-  <artifactId>bayeux-oumuamua</artifactId>
+  <artifactId>bayeux-cometd</artifactId>
   <packaging>jar</packaging>
-  <name>Bayeux Oumuamua</name>
-  <description>Oumuamua Server</description>
+  <name>Bayeux Cometd</name>
+  <description>ALternate Cometd Implementation</description>
   <dependencies>
     <dependency>
       <groupId>javax.annotation</groupId>
@@ -35,6 +35,31 @@
       <groupId>org.apache.kafka</groupId>
       <artifactId>kafka-clients</artifactId>
       <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.cometd.java</groupId>
+      <artifactId>cometd-java-api-server</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.cometd.java</groupId>
+      <artifactId>cometd-java-client-websocket-javax</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.cometd.java</groupId>
+      <artifactId>cometd-java-client-http-jetty</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-util</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-util-ajax</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.smallmind</groupId>
