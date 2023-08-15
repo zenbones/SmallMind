@@ -11,6 +11,11 @@
   <name>Oumuamua-Server-Impl</name>
   <description>Oumuamua Server Reference Implementation</description>
   <dependencies>
+    <dependency>
+      <groupId>org.smallmind</groupId>
+      <artifactId>oumuamua-server-spi</artifactId>
+      <scope>compile</scope>
+    </dependency>
   </dependencies>
   <build>
     <plugins>

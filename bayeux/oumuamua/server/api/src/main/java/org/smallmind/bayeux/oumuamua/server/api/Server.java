@@ -78,7 +78,8 @@ public interface Server extends Attributed {
   // Serves as an injection point for implementations that wish to add client configurable additions to the json codec pipeline
   MessageCodec<?> getMessageCodec ();
 
-  Route getRoute (String path);
+  Route getRoute (String path)
+    throws IllegalPathException;
 
   Channel findChannel (Route route);
 
