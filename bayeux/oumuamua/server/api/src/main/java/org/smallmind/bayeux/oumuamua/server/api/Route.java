@@ -48,7 +48,7 @@ public interface Route extends Iterable<String> {
       throw new IndexOutOfBoundsException("0 >= index < " + size());
     } else {
 
-      return getPath().substring((index == 0) ? 1 : separatorPos(index) + 1, (index < lastIndex()) ? separatorPos(index + 1) : getPath().length());
+      return getPath().substring((index == 0) ? 1 : separatorPos(index - 1) + 1, (index < lastIndex()) ? separatorPos(index) : getPath().length());
     }
   }
 
@@ -58,9 +58,9 @@ public interface Route extends Iterable<String> {
       throw new IndexOutOfBoundsException("0 >= index < " + size());
     } else {
 
-      int startPos = (index == 0) ? 1 : separatorPos(index) + 1;
+      int startPos = (index == 0) ? 1 : separatorPos(index - 1) + 1;
 
-      if ((subPath == null) || (subPath.length() != (((index < lastIndex()) ? separatorPos(index + 1) : getPath().length()) - startPos))) {
+      if ((subPath == null) || (subPath.length() != (((index < lastIndex()) ? separatorPos(index) : getPath().length()) - startPos))) {
 
         return false;
       } else {
@@ -105,7 +105,7 @@ public interface Route extends Iterable<String> {
     throws IllegalPathException {
 
     if ((path == null) || (path.length() < 2) || (path.charAt(0) != '/')) {
-      throw new IllegalPathException("Path(%s) must start with a '/' and specify at least one segment");
+      throw new IllegalPathException("Path(%s) must start with a '/' and specify at least one segment", path);
     } else {
 
       int[] segments;
@@ -128,9 +128,9 @@ public interface Route extends Iterable<String> {
 
         if ((c = path.charAt(pos)) == '/') {
           if ((pos - startPos) == 0) {
-            throw new IllegalPathException("Path(%s) must not contain empty segments");
+            throw new IllegalPathException("Path(%s) must not contain empty segments", path);
           } else if (asterisks > 0) {
-            throw new IllegalPathException("Path(%s) uses an illegal wildcard '*' definition");
+            throw new IllegalPathException("Path(%s) uses an illegal wildcard '*' definition", path);
           } else {
             segments[index++] = pos;
             startPos = pos + 1;
@@ -142,14 +142,14 @@ public interface Route extends Iterable<String> {
                        ((c >= 'a') && (c <= 'z')) ||
                        ((c >= '0') && (c <= '9')) ||
                        (" !#$()+-.@_{}~".indexOf(c) >= 0))) {
-          throw new IllegalPathException("Path(%s) has illegal characters");
+          throw new IllegalPathException("Path(%s) has illegal characters", path);
         }
       }
 
       if ((path.length() - startPos) == 0) {
-        throw new IllegalPathException("Path(%s) must not contain empty segments");
+        throw new IllegalPathException("Path(%s) must not contain empty segments", path);
       } else if (((asterisks > 0) && (asterisks < (path.length() - startPos))) || (asterisks > 2)) {
-        throw new IllegalPathException("Path(%s) uses an illegal wildcard '*' definition");
+        throw new IllegalPathException("Path(%s) uses an illegal wildcard '*' definition", path);
       } else {
 
         return segments;
