@@ -32,8 +32,6 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api;
 
-import java.util.LinkedList;
-
 public interface Route extends Iterable<String> {
 
   String getPath ();
@@ -110,22 +108,32 @@ public interface Route extends Iterable<String> {
       throw new IllegalPathException("Path(%s) must start with a '/' and specify at least one segment");
     } else {
 
-      LinkedList<Integer> segmentList = new LinkedList<>();
-      int startIndex = 1;
+      int[] segments;
+      int index = 0;
+      int startPos = 1;
+      int slashes = 0;
       int asterisks = 0;
 
-      for (int index = 1; index < path.length(); index++) {
+      for (int pos = 1; pos < path.length(); pos++) {
+        if (path.charAt(pos) == '/') {
+          slashes++;
+        }
+      }
+
+      segments = new int[slashes];
+
+      for (int pos = 1; pos < path.length(); pos++) {
 
         char c;
 
-        if ((c = path.charAt(index)) == '/') {
-          if ((index - startIndex) == 0) {
+        if ((c = path.charAt(pos)) == '/') {
+          if ((pos - startPos) == 0) {
             throw new IllegalPathException("Path(%s) must not contain empty segments");
           } else if (asterisks > 0) {
             throw new IllegalPathException("Path(%s) uses an illegal wildcard '*' definition");
           } else {
-            segmentList.add(index);
-            startIndex = index + 1;
+            segments[index++] = pos;
+            startPos = pos + 1;
             asterisks = 0;
           }
         } else if (c == '*') {
@@ -138,18 +146,11 @@ public interface Route extends Iterable<String> {
         }
       }
 
-      if ((path.length() - startIndex) == 0) {
+      if ((path.length() - startPos) == 0) {
         throw new IllegalPathException("Path(%s) must not contain empty segments");
-      } else if (((asterisks > 0) && (asterisks < (path.length() - startIndex))) || (asterisks > 2)) {
+      } else if (((asterisks > 0) && (asterisks < (path.length() - startPos))) || (asterisks > 2)) {
         throw new IllegalPathException("Path(%s) uses an illegal wildcard '*' definition");
       } else {
-
-        int[] segments = new int[segmentList.size()];
-        int index = 0;
-
-        for (int segment : segmentList) {
-          segments[index++] = segment;
-        }
 
         return segments;
       }
