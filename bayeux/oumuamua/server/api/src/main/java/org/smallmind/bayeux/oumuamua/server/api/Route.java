@@ -138,9 +138,9 @@ public interface Route extends Iterable<String> {
           }
         } else if (c == '*') {
           asterisks++;
-        } else if (!((c >= 'A' && c <= 'Z') ||
-                       (c >= 'a' && c <= 'z') ||
-                       (c >= '0' && c <= '9') ||
+        } else if (!(((c >= 'A') && (c <= 'Z')) ||
+                       ((c >= 'a') && (c <= 'z')) ||
+                       ((c >= '0') && (c <= '9')) ||
                        (" !#$()+-.@_{}~".indexOf(c) >= 0))) {
           throw new IllegalPathException("Path(%s) has illegal characters");
         }
