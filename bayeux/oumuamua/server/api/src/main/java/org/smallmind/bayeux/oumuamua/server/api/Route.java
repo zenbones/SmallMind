@@ -32,20 +32,127 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api;
 
-public interface Route {
+import java.util.LinkedList;
+
+public interface Route extends Iterable<String> {
 
   String getPath ();
 
-  boolean isWild ();
+  int size ();
 
-  boolean isDeepWild ();
+  int lastIndex ();
 
-  boolean isMeta ();
+  int separatorPos (int index);
 
-  boolean isService ();
+  default String getSegment (int index) {
+
+    if ((index < 0) || (index > lastIndex())) {
+      throw new IndexOutOfBoundsException("0 >= index < " + size());
+    } else {
+
+      return getPath().substring((index == 0) ? 1 : separatorPos(index) + 1, (index < lastIndex()) ? separatorPos(index + 1) : getPath().length());
+    }
+  }
+
+  default boolean matchesSegment (int index, String subPath) {
+
+    if ((index < 0) || (index > lastIndex())) {
+      throw new IndexOutOfBoundsException("0 >= index < " + size());
+    } else {
+
+      int startPos = (index == 0) ? 1 : separatorPos(index) + 1;
+
+      if ((subPath == null) || (subPath.length() != (((index < lastIndex()) ? separatorPos(index + 1) : getPath().length()) - startPos))) {
+
+        return false;
+      } else {
+        for (int pos = 0; pos < subPath.length(); pos++) {
+          if (subPath.charAt(pos) != getPath().charAt(startPos + pos)) {
+
+            return false;
+          }
+        }
+
+        return true;
+      }
+    }
+  }
+
+  default boolean isWild () {
+
+    return matchesSegment(lastIndex(), "*");
+  }
+
+  default boolean isDeepWild () {
+
+    return matchesSegment(lastIndex(), "**");
+  }
+
+  default boolean isMeta () {
+
+    return matchesSegment(0, "meta");
+  }
+
+  default boolean isService () {
+
+    return matchesSegment(0, "service");
+  }
 
   default boolean isDeliverable () {
 
     return !(isWild() || isDeepWild() || isMeta() || isService());
+  }
+
+  default int[] validate (String path)
+    throws IllegalPathException {
+
+    if ((path == null) || (path.length() < 2) || (path.charAt(0) != '/')) {
+      throw new IllegalPathException("Path(%s) must start with a '/' and specify at least one segment");
+    } else {
+
+      LinkedList<Integer> segmentList = new LinkedList<>();
+      int startIndex = 1;
+      int asterisks = 0;
+
+      for (int index = 1; index < path.length(); index++) {
+
+        char c;
+
+        if ((c = path.charAt(index)) == '/') {
+          if ((index - startIndex) == 0) {
+            throw new IllegalPathException("Path(%s) must not contain empty segments");
+          } else if (asterisks > 0) {
+            throw new IllegalPathException("Path(%s) uses an illegal wildcard '*' definition");
+          } else {
+            segmentList.add(index);
+            startIndex = index + 1;
+            asterisks = 0;
+          }
+        } else if (c == '*') {
+          asterisks++;
+        } else if (!((c >= 'A' && c <= 'Z') ||
+                       (c >= 'a' && c <= 'z') ||
+                       (c >= '0' && c <= '9') ||
+                       (" !#$()+-.@_{}~".indexOf(c) >= 0))) {
+          throw new IllegalPathException("Path(%s) has illegal characters");
+        }
+      }
+
+      if ((path.length() - startIndex) == 0) {
+        throw new IllegalPathException("Path(%s) must not contain empty segments");
+      } else if (((asterisks > 0) && (asterisks < (path.length() - startIndex))) || (asterisks > 2)) {
+        throw new IllegalPathException("Path(%s) uses an illegal wildcard '*' definition");
+      } else {
+
+        int[] segments = new int[segmentList.size()];
+        int index = 0;
+
+        for (int segment : segmentList) {
+          segments[index++] = segment;
+        }
+
+        return segments;
+      }
+    }
   }
 }

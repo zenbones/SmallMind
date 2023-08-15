@@ -32,37 +32,79 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi;
 
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+import org.smallmind.bayeux.oumuamua.server.api.IllegalPathException;
 import org.smallmind.bayeux.oumuamua.server.api.Route;
 
 public class DefaultRoute implements Route {
 
+  private final String path;
+  private final int[] segments;
+
+  public DefaultRoute (String path)
+    throws IllegalPathException {
+
+    this.path = path;
+
+    segments = validate(path);
+  }
+
   @Override
   public String getPath () {
 
-    return null;
+    return path;
   }
 
   @Override
-  public boolean isWild () {
+  public int size () {
 
-    return false;
+    return segments.length + 1;
   }
 
   @Override
-  public boolean isDeepWild () {
+  public int lastIndex () {
 
-    return false;
+    return segments.length;
   }
 
   @Override
-  public boolean isMeta () {
+  public int separatorPos (int index) {
 
-    return false;
+    if ((index < 0) || (index > segments.length)) {
+      throw new IndexOutOfBoundsException("0 >= index < " + (segments.length + 1));
+    } else {
+
+      return segments[index];
+    }
   }
 
   @Override
-  public boolean isService () {
+  public Iterator<String> iterator () {
 
-    return false;
+    return new SegmentIterator();
+  }
+
+  private class SegmentIterator implements Iterator<String> {
+
+    private int index = 0;
+
+    @Override
+    public boolean hasNext () {
+
+      return index < size();
+    }
+
+    @Override
+    public String next () {
+
+      if (index >= size()) {
+
+        throw new NoSuchElementException();
+      } else {
+
+        return getSegment(index++);
+      }
+    }
   }
 }

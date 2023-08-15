@@ -88,7 +88,7 @@ public interface Server extends Attributed {
   // It's n error to attempt to remove a persistent channel
   // All sessions must be unsubscribed (and listeners notified) upon channel removal
   Channel removeChannel (Channel channel)
-    throws IllegalStateException;
+    throws IllegalChannelStateException;
 
   void deliver (Message<?> message);
 }
