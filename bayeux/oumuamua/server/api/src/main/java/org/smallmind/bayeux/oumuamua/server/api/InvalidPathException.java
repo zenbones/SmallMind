@@ -30,81 +30,12 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.spi;
+package org.smallmind.bayeux.oumuamua.server.api;
 
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-import org.smallmind.bayeux.oumuamua.server.api.IllegalPathException;
-import org.smallmind.bayeux.oumuamua.server.api.Route;
+public class InvalidPathException extends OumuamuaException {
 
-public class DefaultRoute implements Route {
+  public InvalidPathException (String message, Object... args) {
 
-  private final String path;
-  private final int[] segments;
-
-  public DefaultRoute (String path)
-    throws IllegalPathException {
-
-    this.path = path;
-
-    segments = validate(path);
-  }
-
-  @Override
-  public String getPath () {
-
-    return path;
-  }
-
-  @Override
-  public int size () {
-
-    return segments.length + 1;
-  }
-
-  @Override
-  public int lastIndex () {
-
-    return segments.length;
-  }
-
-  @Override
-  public int separatorPos (int index) {
-
-    if ((index < 0) || (index > segments.length)) {
-      throw new IndexOutOfBoundsException("0 >= index < " + (segments.length + 1));
-    } else {
-
-      return segments[index];
-    }
-  }
-
-  @Override
-  public Iterator<String> iterator () {
-
-    return new SegmentIterator();
-  }
-
-  private class SegmentIterator implements Iterator<String> {
-
-    private int index = 0;
-
-    @Override
-    public boolean hasNext () {
-
-      return index < size();
-    }
-
-    @Override
-    public String next () {
-
-      if (index >= size()) {
-
-        throw new NoSuchElementException();
-      } else {
-
-        return getSegment(index++);
-      }
-    }
+    super(message, args);
   }
 }

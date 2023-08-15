@@ -30,16 +30,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.spi.json.jackson;
+package org.smallmind.bayeux.oumuamua.server.api;
 
+import java.nio.channels.Channel;
 import org.smallmind.bayeux.oumuamua.common.api.Message;
-import org.smallmind.bayeux.oumuamua.common.api.MessageType;
-import org.smallmind.bayeux.oumuamua.common.api.json.Body;
 
-public class JacksonMessage extends Message {
+public interface Packet {
 
-  public JacksonMessage (MessageType messageType, Body<JacksonValue<?>> body) {
+  Channel getChannel ();
 
-    super(messageType, body);
-  }
+  Message[] getMessages ();
 }

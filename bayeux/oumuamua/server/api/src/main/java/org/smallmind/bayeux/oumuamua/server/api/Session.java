@@ -32,8 +32,6 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api;
 
-import org.smallmind.bayeux.oumuamua.common.api.Message;
-
 public interface Session {
 
   interface Listener {
@@ -41,11 +39,11 @@ public interface Session {
   }
 
   // Changes to messages in this listener must be seen only on this session, via copy on write or some other means
-  interface MessageListener extends Listener {
+  interface PacketListener extends Listener {
 
-    void onResponse (Message<?> message);
+    void onResponse (Packet packet);
 
-    void onDelivery (Message<?> message);
+    void onDelivery (Packet packet);
   }
 
   void addListener (Listener listener);
@@ -58,5 +56,5 @@ public interface Session {
 
   boolean isConnected ();
 
-  void deliver (Message<?> message);
+  void deliver (Packet packet);
 }

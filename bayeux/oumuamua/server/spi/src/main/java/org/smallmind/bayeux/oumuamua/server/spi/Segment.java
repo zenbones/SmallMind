@@ -30,12 +30,29 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.api;
+package org.smallmind.bayeux.oumuamua.server.spi;
 
-public class IllegalChannelStateException extends OumuamuaException {
+public abstract class Segment implements CharSequence {
 
-  public IllegalChannelStateException (String message, Object... args) {
+  public abstract boolean matches (Segment segment);
 
-    super(message, args);
+  public abstract String toString ();
+
+  @Override
+  public int hashCode () {
+
+    int hashCode = 0;
+
+    for (int pos = 0; pos < length(); pos++) {
+      hashCode += (hashCode * 31) + charAt(pos);
+    }
+
+    return hashCode;
+  }
+
+  @Override
+  public boolean equals (Object obj) {
+
+    return (obj instanceof Segment) && matches((Segment)obj);
   }
 }

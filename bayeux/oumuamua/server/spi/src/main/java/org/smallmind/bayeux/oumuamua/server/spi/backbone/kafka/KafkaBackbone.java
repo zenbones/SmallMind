@@ -32,13 +32,13 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.backbone.kafka;
 
-import org.smallmind.bayeux.oumuamua.common.api.Message;
+import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.backbone.Backbone;
 
 public class KafkaBackbone implements Backbone {
 
   @Override
-  public void publish (Message<?> message) {
+  public void publish (Packet packet) {
 
   }
 }

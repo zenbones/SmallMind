@@ -32,7 +32,6 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api;
 
-import org.smallmind.bayeux.oumuamua.common.api.Message;
 import org.smallmind.bayeux.oumuamua.common.api.MessageCodec;
 import org.smallmind.bayeux.oumuamua.server.api.backbone.Backbone;
 
@@ -56,13 +55,13 @@ public interface Server extends Attributed {
     void onRemoved (Channel channel);
   }
 
-  interface MessageListener extends Listener {
+  interface PacketListener extends Listener {
 
-    void onRequest (Message<?> message);
+    void onRequest (Packet packet);
 
-    void onResponse (Message<?> message);
+    void onResponse (Packet packet);
 
-    void onDelivery (Message<?> message);
+    void onDelivery (Packet packet);
   }
 
   void addListener (Listener listener);
@@ -78,18 +77,17 @@ public interface Server extends Attributed {
   // Serves as an injection point for implementations that wish to add client configurable additions to the json codec pipeline
   MessageCodec<?> getMessageCodec ();
 
-  Route getRoute (String path)
-    throws IllegalPathException;
-
-  Channel findChannel (Route route);
+  Channel findChannel (String path)
+    throws InvalidPathException;
 
   // Initializers will be applied before the channel is returned if this call creates the channel
-  Channel requireChannel (Route route, ChannelInitializer... initializers);
+  Channel requireChannel (String path, ChannelInitializer... initializers)
+    throws InvalidPathException;
 
   // It's n error to attempt to remove a persistent channel
   // All sessions must be unsubscribed (and listeners notified) upon channel removal
   Channel removeChannel (Channel channel)
-    throws IllegalChannelStateException;
+    throws ChannelStateException;
 
-  void deliver (Message<?> message);
+  void deliver (Packet packet);
 }

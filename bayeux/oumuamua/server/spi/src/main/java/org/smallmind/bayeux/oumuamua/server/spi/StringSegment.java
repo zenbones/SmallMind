@@ -30,16 +30,75 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.spi.json.jackson;
+package org.smallmind.bayeux.oumuamua.server.spi;
 
 import org.smallmind.bayeux.oumuamua.common.api.Message;
-import org.smallmind.bayeux.oumuamua.common.api.MessageType;
-import org.smallmind.bayeux.oumuamua.common.api.json.Body;
 
-public class JacksonMessage extends Message {
+public class StringSegment extends Segment {
 
-  public JacksonMessage (MessageType messageType, Body<JacksonValue<?>> body) {
+  private static final StringSegment WILD_SEGMENT = new StringSegment(Message.WILD);
+  private static final StringSegment DEEP_WILD_SEGMENT = new StringSegment(Message.DEEP_WILD);
+  private final String name;
 
-    super(messageType, body);
+  public StringSegment (String name) {
+
+    if (name == null) {
+      throw new NullPointerException();
+    } else {
+
+      this.name = name;
+    }
+  }
+
+  public static StringSegment wild () {
+
+    return WILD_SEGMENT;
+  }
+
+  public static StringSegment deepWild () {
+
+    return DEEP_WILD_SEGMENT;
+  }
+
+  @Override
+  public boolean matches (Segment segment) {
+
+    if ((segment == null) || (name.length() != segment.length())) {
+
+      return false;
+    } else {
+      for (int pos = 0; pos < name.length(); pos++) {
+        if (name.charAt(pos) != segment.charAt(pos)) {
+
+          return false;
+        }
+      }
+
+      return true;
+    }
+  }
+
+  @Override
+  public String toString () {
+
+    return name;
+  }
+
+  @Override
+  public int length () {
+
+    return name.length();
+  }
+
+  @Override
+  public char charAt (int index) {
+
+    return name.charAt(index);
+  }
+
+  @Override
+  public CharSequence subSequence (int start, int end) {
+
+    return name.substring(start, end);
   }
 }

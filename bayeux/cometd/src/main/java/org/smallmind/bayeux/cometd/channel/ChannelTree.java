@@ -171,7 +171,7 @@ public class ChannelTree {
   public void trim (String key) {
 
     // Using getServerChannel() to enforce synchronization boundary
-    if ((parent != null) && (getServerChannel() == null) && childMap.isEmpty()) {
+    if ((key != null) && (parent != null) && (getServerChannel() == null) && childMap.isEmpty()) {
       parent.clipChild(key);
     } else {
       for (Map.Entry<String, ChannelTree> childEntry : childMap.entrySet()) {

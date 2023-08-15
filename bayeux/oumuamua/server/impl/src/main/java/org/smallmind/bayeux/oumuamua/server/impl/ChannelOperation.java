@@ -30,12 +30,10 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.api;
+package org.smallmind.bayeux.oumuamua.server.impl;
 
-public class IllegalPathException extends OumuamuaException {
+@FunctionalInterface
+public interface ChannelOperation {
 
-  public IllegalPathException (String message, Object... args) {
-
-    super(message, args);
-  }
+  void operate (ChannelTree channelTree);
 }

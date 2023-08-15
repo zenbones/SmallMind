@@ -32,8 +32,6 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api;
 
-import org.smallmind.bayeux.oumuamua.server.api.Attributed;
-
 public interface Transport extends Attributed {
 
   String getName ();

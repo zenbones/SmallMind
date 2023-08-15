@@ -33,17 +33,24 @@
 package org.smallmind.bayeux.oumuamua.server.impl;
 
 import java.util.Set;
-import org.smallmind.bayeux.oumuamua.common.api.MessageCodec;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
-import org.smallmind.bayeux.oumuamua.server.api.ChannelInitializer;
-import org.smallmind.bayeux.oumuamua.server.api.ChannelStateException;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
-import org.smallmind.bayeux.oumuamua.server.api.Protocol;
-import org.smallmind.bayeux.oumuamua.server.api.SecurityPolicy;
-import org.smallmind.bayeux.oumuamua.server.api.Server;
-import org.smallmind.bayeux.oumuamua.server.api.backbone.Backbone;
+import org.smallmind.bayeux.oumuamua.server.api.Session;
+import org.smallmind.bayeux.oumuamua.server.spi.Route;
 
-public class OumuamuaServer implements Server {
+public class OumuamuaChannel implements Channel {
+
+  private final Route route;
+
+  public OumuamuaChannel (Route route) {
+
+    this.route = route;
+  }
+
+  public Route getRoute () {
+
+    return route;
+  }
 
   @Override
   public Set<String> getAttributeNames () {
@@ -79,46 +86,66 @@ public class OumuamuaServer implements Server {
   }
 
   @Override
-  public Protocol getProtocol (String name) {
+  public boolean isWild () {
 
-    return null;
+    return route.isWild();
   }
 
   @Override
-  public Backbone getBackbone () {
+  public boolean isDeepWild () {
 
-    return null;
+    return route.isDeepWild();
   }
 
   @Override
-  public SecurityPolicy getSecurityPolicy () {
+  public boolean isMeta () {
 
-    return null;
+    return route.isMeta();
   }
 
   @Override
-  public MessageCodec<?> getMessageCodec () {
+  public boolean isService () {
 
-    return null;
+    return route.isService();
   }
 
   @Override
-  public Channel findChannel (String path) {
+  public boolean isDeliverable () {
 
-    return null;
+    return route.isDeliverable();
   }
 
   @Override
-  public Channel requireChannel (String path, ChannelInitializer... initializers) {
+  public boolean isPersistent () {
 
-    return null;
+    return false;
   }
 
   @Override
-  public Channel removeChannel (Channel channel)
-    throws ChannelStateException {
+  public void setPersistent (boolean persistent) {
 
-    return null;
+  }
+
+  @Override
+  public boolean isReflecting () {
+
+    return false;
+  }
+
+  @Override
+  public boolean setReflecting () {
+
+    return false;
+  }
+
+  @Override
+  public void subscribe (Session session) {
+
+  }
+
+  @Override
+  public void unsubscribe (Session session) {
+
   }
 
   @Override

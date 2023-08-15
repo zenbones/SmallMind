@@ -30,16 +30,12 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.spi.json.jackson;
+package org.smallmind.bayeux.oumuamua.server.api;
 
-import org.smallmind.bayeux.oumuamua.common.api.Message;
-import org.smallmind.bayeux.oumuamua.common.api.MessageType;
-import org.smallmind.bayeux.oumuamua.common.api.json.Body;
+public class ChannelStateException extends OumuamuaException {
 
-public class JacksonMessage extends Message {
+  public ChannelStateException (String message, Object... args) {
 
-  public JacksonMessage (MessageType messageType, Body<JacksonValue<?>> body) {
-
-    super(messageType, body);
+    super(message, args);
   }
 }

@@ -32,8 +32,6 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api;
 
-import org.smallmind.bayeux.oumuamua.common.api.Message;
-
 public interface Channel extends Attributed {
 
   interface Listener {
@@ -47,16 +45,26 @@ public interface Channel extends Attributed {
     void onUnsubscribed (Session session);
   }
 
-  interface MessageListener extends Listener {
+  interface PacketListener extends Listener {
 
     boolean isPersistent ();
 
-    void onDelivery (Message<?> message);
+    void onDelivery (Packet packet);
   }
 
   void addListener (Listener listener);
 
   void removeListener (Listener listener);
+
+  boolean isWild ();
+
+  boolean isDeepWild ();
+
+  boolean isMeta ();
+
+  boolean isService ();
+
+  boolean isDeliverable ();
 
   boolean isPersistent ();
 
@@ -66,11 +74,9 @@ public interface Channel extends Attributed {
 
   boolean setReflecting ();
 
-  Route getRoute ();
-
   void subscribe (Session session);
 
   void unsubscribe (Session session);
 
-  void deliver (Message<?> message);
+  void deliver (Packet packet);
 }

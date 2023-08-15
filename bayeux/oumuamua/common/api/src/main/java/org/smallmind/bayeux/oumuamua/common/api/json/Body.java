@@ -47,7 +47,7 @@ public interface Body<V extends Value<V>> extends ObjectValue<V> {
 
     V value;
 
-    return (((value = get(Message.SESSION_ID)) != null) && ValueType.STRING.equals(value.getType())) ?  ((StringValue<V>)value).asText() : null;
+    return (((value = get(Message.SESSION_ID)) != null) && ValueType.STRING.equals(value.getType())) ? ((StringValue<V>)value).asText() : null;
   }
 
   default String getChannel () {

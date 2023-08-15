@@ -32,9 +32,9 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api.backbone;
 
-import org.smallmind.bayeux.oumuamua.common.api.Message;
+import org.smallmind.bayeux.oumuamua.server.api.Packet;
 
 public interface Backbone {
 
-  void publish (Message<?> message);
+  void publish (Packet packet);
 }

@@ -42,9 +42,9 @@ public interface MessageCodec<V extends Value<V>> {
 
   String toJson (Body<V> body);
 
-  Message<V> decode (MessageType messageType, byte[] buffer);
+  Message decode (MessageType messageType, byte[] buffer);
 
-  Message<V> createMessage (MessageType messageType);
+  Message createMessage (MessageType messageType);
 
-  Message<V> generateMessage (MessageType messageType, Object object);
+  Message generateMessage (MessageType messageType, Object object);
 }
