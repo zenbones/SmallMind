@@ -87,6 +87,8 @@ public interface Body<V extends Value<V>> extends ObjectValue<V> {
     return getOrCreate(Message.DATA, createIfAbsent);
   }
 
+  Body<V> from (ObjectValue<V> objectValue);
+
   private ObjectValue<V> getOrCreate (String field, boolean createIfAbsent) {
 
     Value<V> value;

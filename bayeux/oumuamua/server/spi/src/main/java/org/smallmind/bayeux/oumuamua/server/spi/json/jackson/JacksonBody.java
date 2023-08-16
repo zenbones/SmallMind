@@ -34,11 +34,18 @@ package org.smallmind.bayeux.oumuamua.server.spi.json.jackson;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.smallmind.bayeux.oumuamua.common.api.json.Body;
+import org.smallmind.bayeux.oumuamua.common.api.json.ObjectValue;
 
 public class JacksonBody extends JacksonObjectValue implements Body<JacksonValue<?>> {
 
   public JacksonBody (ObjectNode node) {
 
     super(node);
+  }
+
+  @Override
+  public Body<JacksonValue<?>> from (ObjectValue<JacksonValue<?>> objectValue) {
+
+    return new JacksonBody(((JacksonObjectValue)objectValue).getNode());
   }
 }

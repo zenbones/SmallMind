@@ -32,9 +32,9 @@
  */
 package org.smallmind.bayeux.oumuamua.common.api.json;
 
-import java.util.Map;
+import java.util.Iterator;
 
-public interface ObjectValue<V extends Value<V>> extends Value<V>, Iterable<Map.Entry<String, V>> {
+public interface ObjectValue<V extends Value<V>> extends Value<V> {
 
   default ValueType getType () {
 
@@ -69,6 +69,8 @@ public interface ObjectValue<V extends Value<V>> extends Value<V>, Iterable<Map.
   int size ();
 
   boolean isEmpty ();
+
+  Iterator<String> fieldNames ();
 
   V get (String field);
 

@@ -33,8 +33,6 @@
 package org.smallmind.bayeux.oumuamua.server.spi.json.jackson;
 
 import java.util.Iterator;
-import java.util.Map;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.smallmind.bayeux.oumuamua.common.api.json.ObjectValue;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
@@ -56,6 +54,12 @@ public class JacksonObjectValue extends JacksonValue<ObjectNode> implements Obje
   public boolean isEmpty () {
 
     return getNode().isEmpty();
+  }
+
+  @Override
+  public Iterator<String> fieldNames () {
+
+    return getNode().fieldNames();
   }
 
   @Override
@@ -84,61 +88,5 @@ public class JacksonObjectValue extends JacksonValue<ObjectNode> implements Obje
     getNode().removeAll();
 
     return this;
-  }
-
-  @Override
-  public Iterator<Map.Entry<String, JacksonValue<?>>> iterator () {
-
-    return new EntryIterator(getNode().fields());
-  }
-
-  private static class ValueEntry implements Map.Entry<String, JacksonValue<?>> {
-
-    private final Map.Entry<String, JsonNode> entry;
-
-    public ValueEntry (Map.Entry<String, JsonNode> entry) {
-
-      this.entry = entry;
-    }
-
-    @Override
-    public String getKey () {
-
-      return entry.getKey();
-    }
-
-    @Override
-    public JacksonValue<?> getValue () {
-
-      return JacksonValueUtility.to(entry.getValue());
-    }
-
-    @Override
-    public JacksonValue<?> setValue (JacksonValue<?> value) {
-
-      return JacksonValueUtility.to(entry.setValue(JacksonValueUtility.from(value)));
-    }
-  }
-
-  private static class EntryIterator implements Iterator<Map.Entry<String, JacksonValue<?>>> {
-
-    private final Iterator<Map.Entry<String, JsonNode>> nodeIterator;
-
-    public EntryIterator (Iterator<Map.Entry<String, JsonNode>> nodeIterator) {
-
-      this.nodeIterator = nodeIterator;
-    }
-
-    @Override
-    public boolean hasNext () {
-
-      return nodeIterator.hasNext();
-    }
-
-    @Override
-    public Map.Entry<String, JacksonValue<?>> next () {
-
-      return new ValueEntry(nodeIterator.next());
-    }
   }
 }
