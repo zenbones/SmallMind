@@ -34,7 +34,7 @@ package org.smallmind.bayeux.oumuamua.common.api;
 
 import org.smallmind.bayeux.oumuamua.common.api.json.Body;
 
-public abstract class Message {
+public class Message {
 
   public static String ID = "id";
   public static String SESSION_ID = "clientId";

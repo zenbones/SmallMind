@@ -43,14 +43,12 @@ import org.smallmind.nutsnbolts.util.IterableIterator;
 public class BodyDouble<V extends Value<V>> implements Body<V> {
 
   private final Body<V> innerBody;
-  private final Body<V> outerBody;
   private final HashSet<String> removedSet = new HashSet<>();
+  private Body<V> outerBody;
 
   public BodyDouble (Body<V> innerBody) {
 
     this.innerBody = innerBody;
-
-    outerBody = from(innerBody.getFactory().objectValue());
   }
 
   @Override
@@ -63,6 +61,12 @@ public class BodyDouble<V extends Value<V>> implements Body<V> {
   public Body<V> from (ObjectValue<V> objectValue) {
 
     return innerBody.from(objectValue);
+  }
+
+  @Override
+  public String encode () {
+
+
   }
 
   @Override
@@ -92,8 +96,11 @@ public class BodyDouble<V extends Value<V>> implements Body<V> {
         nameSet.add(fieldName);
       }
     }
-    for (String fieldName : new IterableIterator<>(outerBody.fieldNames())) {
-      nameSet.add(fieldName);
+
+    if (outerBody != null) {
+      for (String fieldName : new IterableIterator<>(outerBody.fieldNames())) {
+        nameSet.add(fieldName);
+      }
     }
 
     return nameSet;
@@ -104,13 +111,17 @@ public class BodyDouble<V extends Value<V>> implements Body<V> {
 
     V value;
 
-    return ((value = outerBody.get(field)) == null) ? removedSet.contains(field) ? null : innerBody.get(field) : value;
+    return ((outerBody == null) || ((value = outerBody.get(field)) == null)) ? removedSet.contains(field) ? null : innerBody.get(field) : value;
   }
 
   @Override
   public V put (String field, Value<V> value) {
 
     removedSet.remove(field);
+
+    if (outerBody == null) {
+      outerBody = from(innerBody.getFactory().objectValue());
+    }
 
     return outerBody.put(field, value);
   }
@@ -120,7 +131,7 @@ public class BodyDouble<V extends Value<V>> implements Body<V> {
 
     V value;
 
-    if ((value = outerBody.remove(field)) == null) {
+    if ((outerBody == null) || (value = outerBody.remove(field)) == null) {
       value = innerBody.get(field);
     }
 
@@ -138,7 +149,9 @@ public class BodyDouble<V extends Value<V>> implements Body<V> {
       removedSet.add(fieldName);
     }
 
-    outerBody.removeAll();
+    if (outerBody != null) {
+      outerBody.removeAll();
+    }
 
     return (V)this;
   }

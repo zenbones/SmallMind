@@ -32,10 +32,13 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api;
 
+import java.util.Set;
+
 public interface Channel extends Attributed {
 
   interface Listener {
 
+    boolean isPersistent ();
   }
 
   interface SessionListener extends Listener {
@@ -72,11 +75,13 @@ public interface Channel extends Attributed {
 
   boolean isReflecting ();
 
-  boolean setReflecting ();
+  void setReflecting (boolean reflecting);
 
   void subscribe (Session session);
 
   void unsubscribe (Session session);
 
-  void deliver (Packet packet);
+  boolean isRemovable ();
+
+  void deliver (Packet packet, Set<String> sessionIdSet);
 }

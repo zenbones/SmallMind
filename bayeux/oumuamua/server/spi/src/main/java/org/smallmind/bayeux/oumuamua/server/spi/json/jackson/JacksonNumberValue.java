@@ -35,13 +35,14 @@ package org.smallmind.bayeux.oumuamua.server.spi.json.jackson;
 import com.fasterxml.jackson.databind.node.NumericNode;
 import org.smallmind.bayeux.oumuamua.common.api.json.NumberType;
 import org.smallmind.bayeux.oumuamua.common.api.json.NumberValue;
+import org.smallmind.bayeux.oumuamua.common.api.json.ValueFactory;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 public class JacksonNumberValue extends JacksonValue<NumericNode> implements NumberValue<JacksonValue<?>> {
 
-  public JacksonNumberValue (NumericNode node) {
+  public JacksonNumberValue (NumericNode node, ValueFactory<JacksonValue<?>> factory) {
 
-    super(node);
+    super(node, factory);
   }
 
   @Override

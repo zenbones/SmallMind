@@ -33,18 +33,30 @@
 package org.smallmind.bayeux.oumuamua.server.impl;
 
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
+import org.smallmind.bayeux.oumuamua.server.spi.AbstractAttributed;
 import org.smallmind.bayeux.oumuamua.server.spi.Route;
 
-public class OumuamuaChannel implements Channel {
+public class OumuamuaChannel extends AbstractAttributed implements Channel {
 
   private final Route route;
+  private final ConcurrentHashMap<String, Session> sessionMap = new ConcurrentHashMap<>();
+  private final ConcurrentLinkedQueue<Listener> listenerList = new ConcurrentLinkedQueue<>();
+  private final AtomicBoolean reflecting = new AtomicBoolean();
+  private final long timeToLive;
+  private boolean persistent;
+  private long removableTimestamp;
+  private int persistentListenerCount;
 
-  public OumuamuaChannel (Route route) {
+  public OumuamuaChannel (Route route, long timeToLive) {
 
     this.route = route;
+    this.timeToLive = timeToLive;
   }
 
   public Route getRoute () {
@@ -52,37 +64,50 @@ public class OumuamuaChannel implements Channel {
     return route;
   }
 
-  @Override
-  public Set<String> getAttributeNames () {
+  private void onSubscribed (Session session) {
 
-    return null;
+    for (Listener listener : listenerList) {
+      if (SessionListener.class.isAssignableFrom(listener.getClass())) {
+        ((SessionListener)listener).onSubscribed(session);
+      }
+    }
+  }
+
+  private void onUnsubscribed (Session session) {
+
+    for (Listener listener : listenerList) {
+      if (SessionListener.class.isAssignableFrom(listener.getClass())) {
+        ((SessionListener)listener).onUnsubscribed(session);
+      }
+    }
+  }
+
+  private void onDelivery (Packet packet) {
+
+    for (Listener listener : listenerList) {
+      if (PacketListener.class.isAssignableFrom(listener.getClass())) {
+        ((PacketListener)listener).onDelivery(packet);
+      }
+    }
   }
 
   @Override
-  public Object getAttribute (String name) {
+  public synchronized void addListener (Listener listener) {
 
-    return null;
+    if (listenerList.add(listener) && listener.isPersistent()) {
+      persistentListenerCount++;
+      removableTimestamp = 0;
+    }
   }
 
   @Override
-  public void setAttribute (String name, Object value) {
+  public synchronized void removeListener (Listener listener) {
 
-  }
-
-  @Override
-  public Object removeAttribute (String name) {
-
-    return null;
-  }
-
-  @Override
-  public void addListener (Listener listener) {
-
-  }
-
-  @Override
-  public void removeListener (Listener listener) {
-
+    if (listenerList.remove(listener) && listener.isPersistent()) {
+      if ((--persistentListenerCount <= 0) && sessionMap.isEmpty()) {
+        removableTimestamp = System.currentTimeMillis();
+      }
+    }
   }
 
   @Override
@@ -116,40 +141,68 @@ public class OumuamuaChannel implements Channel {
   }
 
   @Override
-  public boolean isPersistent () {
+  public synchronized boolean isPersistent () {
 
-    return false;
+    return persistent;
   }
 
   @Override
-  public void setPersistent (boolean persistent) {
+  public synchronized void setPersistent (boolean persistent) {
 
+    this.persistent = persistent;
   }
 
   @Override
   public boolean isReflecting () {
 
-    return false;
+    return reflecting.get();
   }
 
   @Override
-  public boolean setReflecting () {
+  public void setReflecting (boolean reflecting) {
 
-    return false;
+    this.reflecting.set(reflecting);
   }
 
   @Override
-  public void subscribe (Session session) {
+  public synchronized void subscribe (Session session) {
 
+    if (sessionMap.putIfAbsent(session.getId(), session) == null) {
+      onSubscribed(session);
+    }
+
+    removableTimestamp = 0;
   }
 
   @Override
-  public void unsubscribe (Session session) {
+  public synchronized void unsubscribe (Session session) {
 
+    if (sessionMap.remove(session.getId()) != null) {
+      onUnsubscribed(session);
+
+      if (sessionMap.isEmpty() && (persistentListenerCount <= 0)) {
+        removableTimestamp = System.currentTimeMillis();
+      }
+    }
   }
 
   @Override
-  public void deliver (Packet packet) {
+  public synchronized boolean isRemovable () {
 
+    return (!persistent) && (removableTimestamp > 0) && ((System.currentTimeMillis() - removableTimestamp) >= timeToLive);
+  }
+
+  @Override
+  public void deliver (Packet packet, Set<String> sessionIdSet) {
+
+    Packet frozenPacket = PacketUtility.freezePacket(packet);
+
+    onDelivery(frozenPacket);
+
+    for (Session session : sessionMap.values()) {
+      if (sessionIdSet.add(session.getId())) {
+        session.deliver(frozenPacket);
+      }
+    }
   }
 }

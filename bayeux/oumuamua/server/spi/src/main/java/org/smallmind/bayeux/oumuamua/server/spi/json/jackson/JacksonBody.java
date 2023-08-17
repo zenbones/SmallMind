@@ -32,20 +32,28 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.json.jackson;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.smallmind.bayeux.oumuamua.common.api.json.Body;
 import org.smallmind.bayeux.oumuamua.common.api.json.ObjectValue;
+import org.smallmind.bayeux.oumuamua.common.api.json.ValueFactory;
 
 public class JacksonBody extends JacksonObjectValue implements Body<JacksonValue<?>> {
 
-  public JacksonBody (ObjectNode node) {
+  public JacksonBody (ObjectNode node, ValueFactory<JacksonValue<?>> factory) {
 
-    super(node);
+    super(node, factory);
   }
 
   @Override
   public Body<JacksonValue<?>> from (ObjectValue<JacksonValue<?>> objectValue) {
 
-    return new JacksonBody(((JacksonObjectValue)objectValue).getNode());
+    return new JacksonBody(((JacksonObjectValue)objectValue).getNode(), objectValue.getFactory());
+  }
+
+  @Override
+  public String encode ()
+    throws JsonProcessingException {
+
   }
 }

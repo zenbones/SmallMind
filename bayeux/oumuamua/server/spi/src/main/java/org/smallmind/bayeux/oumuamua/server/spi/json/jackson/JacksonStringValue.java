@@ -34,12 +34,13 @@ package org.smallmind.bayeux.oumuamua.server.spi.json.jackson;
 
 import com.fasterxml.jackson.databind.node.TextNode;
 import org.smallmind.bayeux.oumuamua.common.api.json.StringValue;
+import org.smallmind.bayeux.oumuamua.common.api.json.ValueFactory;
 
 public class JacksonStringValue extends JacksonValue<TextNode> implements StringValue<JacksonValue<?>> {
 
-  public JacksonStringValue (TextNode node) {
+  public JacksonStringValue (TextNode node, ValueFactory<JacksonValue<?>> factory) {
 
-    super(node);
+    super(node, factory);
   }
 
   @Override

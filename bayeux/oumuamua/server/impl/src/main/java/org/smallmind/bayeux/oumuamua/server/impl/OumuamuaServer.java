@@ -32,7 +32,6 @@
  */
 package org.smallmind.bayeux.oumuamua.server.impl;
 
-import java.util.Set;
 import org.smallmind.bayeux.oumuamua.common.api.MessageCodec;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.ChannelInitializer;
@@ -42,31 +41,9 @@ import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.SecurityPolicy;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.backbone.Backbone;
+import org.smallmind.bayeux.oumuamua.server.spi.AbstractAttributed;
 
-public class OumuamuaServer implements Server {
-
-  @Override
-  public Set<String> getAttributeNames () {
-
-    return null;
-  }
-
-  @Override
-  public Object getAttribute (String name) {
-
-    return null;
-  }
-
-  @Override
-  public void setAttribute (String name, Object value) {
-
-  }
-
-  @Override
-  public Object removeAttribute (String name) {
-
-    return null;
-  }
+public class OumuamuaServer extends AbstractAttributed implements Server {
 
   @Override
   public void addListener (Listener listener) {

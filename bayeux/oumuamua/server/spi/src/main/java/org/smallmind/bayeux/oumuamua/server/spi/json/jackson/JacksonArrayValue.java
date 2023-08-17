@@ -38,12 +38,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.smallmind.bayeux.oumuamua.common.api.json.ArrayValue;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
+import org.smallmind.bayeux.oumuamua.common.api.json.ValueFactory;
 
 public class JacksonArrayValue extends JacksonValue<ArrayNode> implements ArrayValue<JacksonValue<?>> {
 
-  public JacksonArrayValue (ArrayNode node) {
+  public JacksonArrayValue (ArrayNode node, ValueFactory<JacksonValue<?>> factory) {
 
-    super(node);
+    super(node, factory);
   }
 
   @Override
@@ -61,7 +62,7 @@ public class JacksonArrayValue extends JacksonValue<ArrayNode> implements ArrayV
   @Override
   public JacksonValue<?> get (int index) {
 
-    return JacksonValueUtility.to(getNode().get(index));
+    return JacksonValueUtility.to(getNode().get(index), getFactory());
   }
 
   @Override
@@ -91,7 +92,7 @@ public class JacksonArrayValue extends JacksonValue<ArrayNode> implements ArrayV
   @Override
   public JacksonValue<?> remove (int index) {
 
-    return JacksonValueUtility.to(getNode().remove(index));
+    return JacksonValueUtility.to(getNode().remove(index), getFactory());
   }
 
   @Override
@@ -118,7 +119,7 @@ public class JacksonArrayValue extends JacksonValue<ArrayNode> implements ArrayV
     return new ArrayIterator(getNode().iterator());
   }
 
-  private static class ArrayIterator implements Iterator<JacksonValue<?>> {
+  private class ArrayIterator implements Iterator<JacksonValue<?>> {
 
     private final Iterator<JsonNode> nodeIterator;
 
@@ -136,7 +137,7 @@ public class JacksonArrayValue extends JacksonValue<ArrayNode> implements ArrayV
     @Override
     public JacksonValue<?> next () {
 
-      return JacksonValueUtility.to(nodeIterator.next());
+      return JacksonValueUtility.to(nodeIterator.next(), getFactory());
     }
   }
 }

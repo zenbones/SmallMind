@@ -39,18 +39,19 @@ import org.smallmind.bayeux.oumuamua.common.api.json.ValueType;
 
 public abstract class JacksonValue<N extends JsonNode> implements Value<JacksonValue<?>> {
 
-  private static final JacksonValueFactory FACTORY = new JacksonValueFactory();
+  private final ValueFactory<JacksonValue<?>> factory;
   private final N node;
 
-  public JacksonValue (N node) {
+  public JacksonValue (N node, ValueFactory<JacksonValue<?>> factory) {
 
     this.node = node;
+    this.factory = factory;
   }
 
   @Override
   public ValueFactory<JacksonValue<?>> getFactory () {
 
-    return FACTORY;
+    return factory;
   }
 
   @Override

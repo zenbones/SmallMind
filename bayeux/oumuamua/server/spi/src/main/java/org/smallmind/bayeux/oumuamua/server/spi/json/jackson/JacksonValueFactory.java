@@ -38,59 +38,57 @@ import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public class JacksonValueFactory implements ValueFactory<JacksonValue<?>> {
 
-  private static final JacksonNullValue NULL_VALUE = new JacksonNullValue(JsonNodeFactory.instance.nullNode());
-
   @Override
   public JacksonValue<?> value (Object object) {
 
-    return JacksonValueUtility.to(JsonCodec.writeAsJsonNode(object));
+    return JacksonValueUtility.to(JsonCodec.writeAsJsonNode(object), this);
   }
 
   @Override
   public JacksonObjectValue objectValue () {
 
-    return new JacksonObjectValue(JsonNodeFactory.instance.objectNode());
+    return new JacksonObjectValue(JsonNodeFactory.instance.objectNode(), this);
   }
 
   @Override
   public JacksonArrayValue arrayValue () {
 
-    return new JacksonArrayValue(JsonNodeFactory.instance.arrayNode());
+    return new JacksonArrayValue(JsonNodeFactory.instance.arrayNode(), this);
   }
 
   @Override
   public JacksonStringValue textValue (String text) {
 
-    return new JacksonStringValue(JsonNodeFactory.instance.textNode(text));
+    return new JacksonStringValue(JsonNodeFactory.instance.textNode(text), this);
   }
 
   @Override
   public JacksonNumberValue numberValue (int i) {
 
-    return new JacksonNumberValue(JsonNodeFactory.instance.numberNode(i));
+    return new JacksonNumberValue(JsonNodeFactory.instance.numberNode(i), this);
   }
 
   @Override
   public JacksonNumberValue numberValue (long l) {
 
-    return new JacksonNumberValue(JsonNodeFactory.instance.numberNode(l));
+    return new JacksonNumberValue(JsonNodeFactory.instance.numberNode(l), this);
   }
 
   @Override
   public JacksonNumberValue numberValue (double d) {
 
-    return new JacksonNumberValue(JsonNodeFactory.instance.numberNode(d));
+    return new JacksonNumberValue(JsonNodeFactory.instance.numberNode(d), this);
   }
 
   @Override
   public JacksonBooleanValue booleanValue (boolean bool) {
 
-    return new JacksonBooleanValue(JsonNodeFactory.instance.booleanNode(bool));
+    return new JacksonBooleanValue(JsonNodeFactory.instance.booleanNode(bool), this);
   }
 
   @Override
   public JacksonNullValue nullValue () {
 
-    return NULL_VALUE;
+    return new JacksonNullValue(JsonNodeFactory.instance.nullNode(), this);
   }
 }

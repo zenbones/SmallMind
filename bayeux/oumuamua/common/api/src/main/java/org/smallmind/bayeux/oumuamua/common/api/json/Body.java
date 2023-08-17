@@ -89,6 +89,9 @@ public interface Body<V extends Value<V>> extends ObjectValue<V> {
 
   Body<V> from (ObjectValue<V> objectValue);
 
+  String encode ()
+    throws Exception;
+
   private ObjectValue<V> getOrCreate (String field, boolean createIfAbsent) {
 
     Value<V> value;

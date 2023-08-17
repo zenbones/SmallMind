@@ -34,12 +34,13 @@ package org.smallmind.bayeux.oumuamua.server.spi.json.jackson;
 
 import com.fasterxml.jackson.databind.node.BooleanNode;
 import org.smallmind.bayeux.oumuamua.common.api.json.BooleanValue;
+import org.smallmind.bayeux.oumuamua.common.api.json.ValueFactory;
 
 public class JacksonBooleanValue extends JacksonValue<BooleanNode> implements BooleanValue<JacksonValue<?>> {
 
-  public JacksonBooleanValue (BooleanNode node) {
+  public JacksonBooleanValue (BooleanNode node, ValueFactory<JacksonValue<?>> factory) {
 
-    super(node);
+    super(node, factory);
   }
 
   @Override

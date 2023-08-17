@@ -40,11 +40,12 @@ import com.fasterxml.jackson.databind.node.NumericNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
+import org.smallmind.bayeux.oumuamua.common.api.json.ValueFactory;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 public class JacksonValueUtility {
 
-  public static JacksonValue<?> to (JsonNode node) {
+  public static JacksonValue<?> to (JsonNode node, ValueFactory<JacksonValue<?>> factory) {
 
     if (node == null) {
 
@@ -52,17 +53,17 @@ public class JacksonValueUtility {
     } else {
       switch (node.getNodeType()) {
         case OBJECT:
-          return new JacksonObjectValue((ObjectNode)node);
+          return new JacksonObjectValue((ObjectNode)node, factory);
         case ARRAY:
-          return new JacksonArrayValue((ArrayNode)node);
+          return new JacksonArrayValue((ArrayNode)node, factory);
         case STRING:
-          return new JacksonStringValue((TextNode)node);
+          return new JacksonStringValue((TextNode)node, factory);
         case NUMBER:
-          return new JacksonNumberValue((NumericNode)node);
+          return new JacksonNumberValue((NumericNode)node, factory);
         case BOOLEAN:
-          return new JacksonBooleanValue((BooleanNode)node);
+          return new JacksonBooleanValue((BooleanNode)node, factory);
         case NULL:
-          return new JacksonNullValue((NullNode)node);
+          return new JacksonNullValue((NullNode)node, factory);
         default:
           throw new UnknownSwitchCaseException(node.getNodeType().name());
       }

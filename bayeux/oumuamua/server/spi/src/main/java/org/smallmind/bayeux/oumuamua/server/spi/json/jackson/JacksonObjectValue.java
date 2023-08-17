@@ -36,12 +36,13 @@ import java.util.Iterator;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.smallmind.bayeux.oumuamua.common.api.json.ObjectValue;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
+import org.smallmind.bayeux.oumuamua.common.api.json.ValueFactory;
 
 public class JacksonObjectValue extends JacksonValue<ObjectNode> implements ObjectValue<JacksonValue<?>> {
 
-  public JacksonObjectValue (ObjectNode node) {
+  public JacksonObjectValue (ObjectNode node, ValueFactory<JacksonValue<?>> factory) {
 
-    super(node);
+    super(node, factory);
   }
 
   @Override
@@ -65,7 +66,7 @@ public class JacksonObjectValue extends JacksonValue<ObjectNode> implements Obje
   @Override
   public JacksonValue<?> get (String field) {
 
-    return JacksonValueUtility.to(getNode().get(field));
+    return JacksonValueUtility.to(getNode().get(field), getFactory());
   }
 
   @Override
@@ -79,7 +80,7 @@ public class JacksonObjectValue extends JacksonValue<ObjectNode> implements Obje
   @Override
   public JacksonValue<?> remove (String field) {
 
-    return JacksonValueUtility.to(getNode().remove(field));
+    return JacksonValueUtility.to(getNode().remove(field), getFactory());
   }
 
   @Override

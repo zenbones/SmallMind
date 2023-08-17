@@ -34,11 +34,12 @@ package org.smallmind.bayeux.oumuamua.server.spi.json.jackson;
 
 import com.fasterxml.jackson.databind.node.NullNode;
 import org.smallmind.bayeux.oumuamua.common.api.json.NullValue;
+import org.smallmind.bayeux.oumuamua.common.api.json.ValueFactory;
 
 public class JacksonNullValue extends JacksonValue<NullNode> implements NullValue<JacksonValue<?>> {
 
-  public JacksonNullValue (NullNode node) {
+  public JacksonNullValue (NullNode node, ValueFactory<JacksonValue<?>> factory) {
 
-    super(node);
+    super(node, factory);
   }
 }

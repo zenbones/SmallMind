@@ -35,9 +35,24 @@ package org.smallmind.bayeux.oumuamua.server.api;
 import java.nio.channels.Channel;
 import org.smallmind.bayeux.oumuamua.common.api.Message;
 
-public interface Packet {
+public class Packet {
 
-  Channel getChannel ();
+  private final Channel channel;
+  private final Message[] messages;
 
-  Message[] getMessages ();
+  public Packet (Channel channel, Message[] messages) {
+
+    this.channel = channel;
+    this.messages = messages;
+  }
+
+  public Channel getChannel () {
+
+    return channel;
+  }
+
+  public Message[] getMessages () {
+
+    return messages;
+  }
 }
