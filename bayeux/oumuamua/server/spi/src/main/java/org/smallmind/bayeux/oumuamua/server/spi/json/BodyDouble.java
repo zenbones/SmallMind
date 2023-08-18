@@ -64,9 +64,26 @@ public class BodyDouble<V extends Value<V>> implements Body<V> {
   }
 
   @Override
-  public String encode () {
+  public byte[] encode ()
+    throws Exception {
 
-    return null;
+    if (outerBody == null) {
+
+      return innerBody.encode();
+    } else {
+
+      Body<V> encodingBody = outerBody.copy();
+
+      for (String fieldName : new IterableIterator<>(innerBody.fieldNames())) {
+        if (!removedSet.contains(fieldName)) {
+          if (outerBody.get(fieldName) == null) {
+            encodingBody.put(fieldName, innerBody.get(fieldName));
+          }
+        }
+      }
+
+      return encodingBody.encode();
+    }
   }
 
   @Override
@@ -120,7 +137,7 @@ public class BodyDouble<V extends Value<V>> implements Body<V> {
     removedSet.remove(field);
 
     if (outerBody == null) {
-      outerBody = getCodec().toBody(innerBody.getFactory().objectValue());
+      outerBody = getCodec().toBody();
     }
 
     return outerBody.put(field, value);
@@ -154,5 +171,27 @@ public class BodyDouble<V extends Value<V>> implements Body<V> {
     }
 
     return (V)this;
+  }
+
+  @Override
+  public Body<V> copy () {
+
+    if (outerBody == null) {
+
+      return innerBody.copy();
+    } else {
+
+      Body<V> copyingBody = outerBody.copy();
+
+      for (String fieldName : new IterableIterator<>(innerBody.fieldNames())) {
+        if (!removedSet.contains(fieldName)) {
+          if (outerBody.get(fieldName) == null) {
+            copyingBody.put(fieldName, innerBody.get(fieldName));
+          }
+        }
+      }
+
+      return copyingBody;
+    }
   }
 }

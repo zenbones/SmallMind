@@ -33,14 +33,14 @@
 package org.smallmind.bayeux.oumuamua.common.api;
 
 import org.smallmind.bayeux.oumuamua.common.api.json.Body;
-import org.smallmind.bayeux.oumuamua.common.api.json.ObjectValue;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 
 public interface Codec<V extends Value<V>> {
 
-  ObjectValue<V> toValue (Object obj);
+  Body<V> toBody ();
 
-  Body<V> toBody (ObjectValue<V> objectValue);
+  byte[] fromBody (Body<V> body)
+    throws Exception;
 
   Message<V> toMessage (MessageType messageType, Body<?> body);
 }

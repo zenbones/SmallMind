@@ -139,7 +139,7 @@ public class JsonCodec {
     return OBJECT_MAPPER.convertValue(obj, clazz);
   }
 
-  public static JsonNode clone (JsonNode node) {
+  public static JsonNode copy (JsonNode node) {
 
     if (node == null) {
 
@@ -151,7 +151,7 @@ public class JsonCodec {
           ObjectNode objectNode = JsonNodeFactory.instance.objectNode();
 
           for (Map.Entry<String, JsonNode> nodeEntry : new IterableIterator<>(node.fields())) {
-            objectNode.set(nodeEntry.getKey(), clone(nodeEntry.getValue()));
+            objectNode.set(nodeEntry.getKey(), copy(nodeEntry.getValue()));
           }
 
           return objectNode;
@@ -160,7 +160,7 @@ public class JsonCodec {
           ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode(node.size());
 
           for (JsonNode item : node) {
-            arrayNode.add(clone(item));
+            arrayNode.add(copy(item));
           }
 
           return arrayNode;

@@ -30,25 +30,36 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.impl;
+package org.smallmind.bayeux.oumuamua.server.spi.json.jackson;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import org.smallmind.bayeux.oumuamua.common.api.Codec;
 import org.smallmind.bayeux.oumuamua.common.api.Message;
-import org.smallmind.bayeux.oumuamua.common.api.json.Value;
-import org.smallmind.bayeux.oumuamua.server.api.Packet;
-import org.smallmind.bayeux.oumuamua.server.spi.json.BodyDouble;
+import org.smallmind.bayeux.oumuamua.common.api.MessageType;
+import org.smallmind.bayeux.oumuamua.common.api.json.Body;
+import org.smallmind.web.json.scaffold.util.JsonCodec;
 
-public class PacketUtility {
+public class JacksonCodec implements Codec<JacksonValue<?>> {
 
-  public static <V extends Value<V>> Packet<V> freezePacket (Codec<V> codec, Packet<V> packet) {
+  private final JacksonValueFactory FACTORY = new JacksonValueFactory();
 
-    Message<V>[] frozenMessages = new Message[packet.getMessages().length];
-    int index = 0;
+  @Override
+  public Body<JacksonValue<?>> toBody () {
 
-    for (Message<V> message : packet.getMessages()) {
-      frozenMessages[index++] = codec.toMessage(message.getMessageType(), new BodyDouble<V>(message.getBody()));
-    }
+    return new JacksonBody(this, JsonNodeFactory.instance.objectNode(), FACTORY);
+  }
 
-    return new Packet<V>(packet.getChannel(), frozenMessages);
+  @Override
+  public byte[] fromBody (Body<JacksonValue<?>> body)
+    throws JsonProcessingException {
+
+    return JsonCodec.writeAsBytes(((JacksonBody)body).getNode());
+  }
+
+  @Override
+  public Message<JacksonValue<?>> toMessage (MessageType messageType, Body<?> body) {
+
+    return null;
   }
 }

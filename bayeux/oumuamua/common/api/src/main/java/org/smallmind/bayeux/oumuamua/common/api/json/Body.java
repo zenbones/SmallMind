@@ -88,10 +88,15 @@ public interface Body<V extends Value<V>> extends ObjectValue<V> {
     return getOrCreate(Message.DATA, createIfAbsent);
   }
 
+  default byte[] encode ()
+    throws Exception {
+
+    return getCodec().fromBody(this);
+  }
+
   Codec<V> getCodec ();
 
-  String encode ()
-    throws Exception;
+  Body<V> copy ();
 
   private ObjectValue<V> getOrCreate (String field, boolean createIfAbsent) {
 

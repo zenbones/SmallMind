@@ -94,7 +94,7 @@ public class ExtMapLike extends MapLike {
           return null;
         } else if (JsonNodeType.OBJECT.equals(parentExtNode.getNodeType())) {
 
-          return out(this, extNode = JsonCodec.clone(parentExtNode));
+          return out(this, extNode = JsonCodec.copy(parentExtNode));
         } else {
 
           return out(original, parentExtNode);
@@ -125,7 +125,7 @@ public class ExtMapLike extends MapLike {
           return null;
         } else if (JsonNodeType.OBJECT.equals(parentExtNode.getNodeType())) {
 
-          return new MapLike(this, (ObjectNode)(extNode = JsonCodec.clone(parentExtNode)));
+          return new MapLike(this, (ObjectNode)(extNode = JsonCodec.copy(parentExtNode)));
         } else {
 
           return null;
@@ -159,7 +159,7 @@ public class ExtMapLike extends MapLike {
           return new MapLike(this, (ObjectNode)(extNode = JsonNodeFactory.instance.objectNode()));
         } else {
 
-          return new MapLike(this, (ObjectNode)(extNode = JsonCodec.clone(parentExtNode)));
+          return new MapLike(this, (ObjectNode)(extNode = JsonCodec.copy(parentExtNode)));
         }
       }
     } else {
@@ -231,7 +231,7 @@ public class ExtMapLike extends MapLike {
       return original.getNode();
     } else {
 
-      ObjectNode clonedNode = (ObjectNode)JsonCodec.clone(original.getNode());
+      ObjectNode clonedNode = (ObjectNode)JsonCodec.copy(original.getNode());
 
       if (removed || JsonNodeType.NULL.equals(extNode.getNodeType())) {
         clonedNode.remove(Message.EXT_FIELD);
@@ -252,7 +252,7 @@ public class ExtMapLike extends MapLike {
       return original.encode();
     } else if ((encodedText == null) || isMutated() || isParentMutated()) {
 
-      ObjectNode clonedNode = (ObjectNode)JsonCodec.clone(original.getNode());
+      ObjectNode clonedNode = (ObjectNode)JsonCodec.copy(original.getNode());
 
       if (removed || JsonNodeType.NULL.equals(extNode.getNodeType())) {
         clonedNode.remove(Message.EXT_FIELD);
