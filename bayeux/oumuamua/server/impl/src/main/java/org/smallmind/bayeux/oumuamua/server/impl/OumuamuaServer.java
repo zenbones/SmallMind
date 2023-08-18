@@ -32,7 +32,8 @@
  */
 package org.smallmind.bayeux.oumuamua.server.impl;
 
-import org.smallmind.bayeux.oumuamua.common.api.MessageCodec;
+import org.smallmind.bayeux.oumuamua.common.api.Codec;
+import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.ChannelInitializer;
 import org.smallmind.bayeux.oumuamua.server.api.ChannelStateException;
@@ -43,15 +44,15 @@ import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.backbone.Backbone;
 import org.smallmind.bayeux.oumuamua.server.spi.AbstractAttributed;
 
-public class OumuamuaServer extends AbstractAttributed implements Server {
+public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed implements Server<V> {
 
   @Override
-  public void addListener (Listener listener) {
+  public void addListener (Listener<V> listener) {
 
   }
 
   @Override
-  public void removeListener (Listener listener) {
+  public void removeListener (Listener<V> listener) {
 
   }
 
@@ -74,32 +75,32 @@ public class OumuamuaServer extends AbstractAttributed implements Server {
   }
 
   @Override
-  public MessageCodec<?> getMessageCodec () {
+  public Codec<V> getCodec () {
 
     return null;
   }
 
   @Override
-  public Channel findChannel (String path) {
+  public Channel<V> findChannel (String path) {
 
     return null;
   }
 
   @Override
-  public Channel requireChannel (String path, ChannelInitializer... initializers) {
+  public Channel<V> requireChannel (String path, ChannelInitializer... initializers) {
 
     return null;
   }
 
   @Override
-  public Channel removeChannel (Channel channel)
+  public Channel<V> removeChannel (Channel<V> channel)
     throws ChannelStateException {
 
     return null;
   }
 
   @Override
-  public void deliver (Packet packet) {
+  public void deliver (Packet<V> packet) {
 
   }
 }

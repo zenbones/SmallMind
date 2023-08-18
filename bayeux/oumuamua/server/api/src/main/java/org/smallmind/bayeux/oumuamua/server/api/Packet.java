@@ -32,26 +32,26 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api;
 
-import java.nio.channels.Channel;
 import org.smallmind.bayeux.oumuamua.common.api.Message;
+import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 
-public class Packet {
+public class Packet<V extends Value<V>> {
 
-  private final Channel channel;
-  private final Message[] messages;
+  private final Channel<V> channel;
+  private final Message<V>[] messages;
 
-  public Packet (Channel channel, Message[] messages) {
+  public Packet (Channel<V> channel, Message<V>[] messages) {
 
     this.channel = channel;
     this.messages = messages;
   }
 
-  public Channel getChannel () {
+  public Channel<V> getChannel () {
 
     return channel;
   }
 
-  public Message[] getMessages () {
+  public Message<V>[] getMessages () {
 
     return messages;
   }

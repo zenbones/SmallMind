@@ -34,15 +34,8 @@ package org.smallmind.bayeux.oumuamua.server.spi.json.jackson;
 
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import org.smallmind.bayeux.oumuamua.common.api.json.ValueFactory;
-import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public class JacksonValueFactory implements ValueFactory<JacksonValue<?>> {
-
-  @Override
-  public JacksonValue<?> value (Object object) {
-
-    return JacksonValueUtility.to(JsonCodec.writeAsJsonNode(object), this);
-  }
 
   @Override
   public JacksonObjectValue objectValue () {

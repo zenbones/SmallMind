@@ -39,7 +39,6 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -48,8 +47,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
-import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
-import com.fasterxml.jackson.module.jsonSchema.JsonSchemaGenerator;
 import org.smallmind.nutsnbolts.util.IterableIterator;
 
 public class JsonCodec {
@@ -59,7 +56,6 @@ public class JsonCodec {
                                                       .addModule(new JaxbAnnotationModule().setNonNillableInclusion(JsonInclude.Include.NON_NULL))
                                                       .addModule(new PolymorphicModule())
                                                       .enable(MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME).build();
-  private static final JsonSchemaGenerator SCHEMA_GENERATOR = new JsonSchemaGenerator(OBJECT_MAPPER);
 
   public static JsonNode readAsJsonNode (byte[] bytes)
     throws IOException {
@@ -173,11 +169,5 @@ public class JsonCodec {
           return node;
       }
     }
-  }
-
-  public static JsonSchema generateSchema (Class<?> clazz)
-    throws JsonMappingException {
-
-    return SCHEMA_GENERATOR.generateSchema(clazz);
   }
 }

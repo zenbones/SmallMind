@@ -34,8 +34,8 @@ package org.smallmind.bayeux.oumuamua.server.spi.json;
 
 import java.util.HashSet;
 import java.util.Iterator;
+import org.smallmind.bayeux.oumuamua.common.api.Codec;
 import org.smallmind.bayeux.oumuamua.common.api.json.Body;
-import org.smallmind.bayeux.oumuamua.common.api.json.ObjectValue;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.common.api.json.ValueFactory;
 import org.smallmind.nutsnbolts.util.IterableIterator;
@@ -52,21 +52,21 @@ public class BodyDouble<V extends Value<V>> implements Body<V> {
   }
 
   @Override
+  public Codec<V> getCodec () {
+
+    return innerBody.getCodec();
+  }
+
+  @Override
   public ValueFactory<V> getFactory () {
 
     return innerBody.getFactory();
   }
 
   @Override
-  public Body<V> from (ObjectValue<V> objectValue) {
-
-    return innerBody.from(objectValue);
-  }
-
-  @Override
   public String encode () {
 
-
+    return null;
   }
 
   @Override
@@ -120,7 +120,7 @@ public class BodyDouble<V extends Value<V>> implements Body<V> {
     removedSet.remove(field);
 
     if (outerBody == null) {
-      outerBody = from(innerBody.getFactory().objectValue());
+      outerBody = getCodec().toBody(innerBody.getFactory().objectValue());
     }
 
     return outerBody.put(field, value);

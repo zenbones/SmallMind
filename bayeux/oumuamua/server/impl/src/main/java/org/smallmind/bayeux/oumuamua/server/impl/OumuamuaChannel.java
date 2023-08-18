@@ -36,25 +36,29 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.smallmind.bayeux.oumuamua.common.api.Codec;
+import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.bayeux.oumuamua.server.spi.AbstractAttributed;
 import org.smallmind.bayeux.oumuamua.server.spi.Route;
 
-public class OumuamuaChannel extends AbstractAttributed implements Channel {
+public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed implements Channel<V> {
 
+  private final Codec<V> codec;
   private final Route route;
-  private final ConcurrentHashMap<String, Session> sessionMap = new ConcurrentHashMap<>();
-  private final ConcurrentLinkedQueue<Listener> listenerList = new ConcurrentLinkedQueue<>();
+  private final ConcurrentHashMap<String, Session<V>> sessionMap = new ConcurrentHashMap<>();
+  private final ConcurrentLinkedQueue<Listener<V>> listenerList = new ConcurrentLinkedQueue<>();
   private final AtomicBoolean reflecting = new AtomicBoolean();
   private final long timeToLive;
   private boolean persistent;
   private long removableTimestamp;
   private int persistentListenerCount;
 
-  public OumuamuaChannel (Route route, long timeToLive) {
+  public OumuamuaChannel (Codec<V> codec, long timeToLive, Route route) {
 
+    this.codec = codec;
     this.route = route;
     this.timeToLive = timeToLive;
   }
@@ -64,35 +68,35 @@ public class OumuamuaChannel extends AbstractAttributed implements Channel {
     return route;
   }
 
-  private void onSubscribed (Session session) {
+  private void onSubscribed (Session<V> session) {
 
-    for (Listener listener : listenerList) {
+    for (Listener<V> listener : listenerList) {
       if (SessionListener.class.isAssignableFrom(listener.getClass())) {
-        ((SessionListener)listener).onSubscribed(session);
+        ((SessionListener<V>)listener).onSubscribed(session);
       }
     }
   }
 
-  private void onUnsubscribed (Session session) {
+  private void onUnsubscribed (Session<V> session) {
 
-    for (Listener listener : listenerList) {
+    for (Listener<V> listener : listenerList) {
       if (SessionListener.class.isAssignableFrom(listener.getClass())) {
-        ((SessionListener)listener).onUnsubscribed(session);
+        ((SessionListener<V>)listener).onUnsubscribed(session);
       }
     }
   }
 
-  private void onDelivery (Packet packet) {
+  private void onDelivery (Packet<V> packet) {
 
-    for (Listener listener : listenerList) {
+    for (Listener<V> listener : listenerList) {
       if (PacketListener.class.isAssignableFrom(listener.getClass())) {
-        ((PacketListener)listener).onDelivery(packet);
+        ((PacketListener<V>)listener).onDelivery(packet);
       }
     }
   }
 
   @Override
-  public synchronized void addListener (Listener listener) {
+  public synchronized void addListener (Listener<V> listener) {
 
     if (listenerList.add(listener) && listener.isPersistent()) {
       persistentListenerCount++;
@@ -101,7 +105,7 @@ public class OumuamuaChannel extends AbstractAttributed implements Channel {
   }
 
   @Override
-  public synchronized void removeListener (Listener listener) {
+  public synchronized void removeListener (Listener<V> listener) {
 
     if (listenerList.remove(listener) && listener.isPersistent()) {
       if ((--persistentListenerCount <= 0) && sessionMap.isEmpty()) {
@@ -165,7 +169,7 @@ public class OumuamuaChannel extends AbstractAttributed implements Channel {
   }
 
   @Override
-  public synchronized void subscribe (Session session) {
+  public synchronized void subscribe (Session<V> session) {
 
     if (sessionMap.putIfAbsent(session.getId(), session) == null) {
       onSubscribed(session);
@@ -175,7 +179,7 @@ public class OumuamuaChannel extends AbstractAttributed implements Channel {
   }
 
   @Override
-  public synchronized void unsubscribe (Session session) {
+  public synchronized void unsubscribe (Session<V> session) {
 
     if (sessionMap.remove(session.getId()) != null) {
       onUnsubscribed(session);
@@ -193,13 +197,13 @@ public class OumuamuaChannel extends AbstractAttributed implements Channel {
   }
 
   @Override
-  public void deliver (Packet packet, Set<String> sessionIdSet) {
+  public void deliver (Packet<V> packet, Set<String> sessionIdSet) {
 
-    Packet frozenPacket = PacketUtility.freezePacket(packet);
+    Packet<V> frozenPacket = PacketUtility.freezePacket(codec, packet);
 
     onDelivery(frozenPacket);
 
-    for (Session session : sessionMap.values()) {
+    for (Session<V> session : sessionMap.values()) {
       if (sessionIdSet.add(session.getId())) {
         session.deliver(frozenPacket);
       }

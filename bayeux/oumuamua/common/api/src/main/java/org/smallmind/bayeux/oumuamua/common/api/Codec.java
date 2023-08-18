@@ -30,41 +30,17 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.spi.json.jackson;
+package org.smallmind.bayeux.oumuamua.common.api;
 
-import org.smallmind.bayeux.oumuamua.common.api.MessageCodec;
-import org.smallmind.bayeux.oumuamua.common.api.MessageType;
 import org.smallmind.bayeux.oumuamua.common.api.json.Body;
+import org.smallmind.bayeux.oumuamua.common.api.json.ObjectValue;
+import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 
-public class JacksonMessageCodec implements MessageCodec<JacksonValue<?>> {
+public interface Codec<V extends Value<V>> {
 
-  @Override
-  public byte[] encode (Body<JacksonValue<?>> body) {
+  ObjectValue<V> toValue (Object obj);
 
-    return new byte[0];
-  }
+  Body<V> toBody (ObjectValue<V> objectValue);
 
-  @Override
-  public String toJson (Body<JacksonValue<?>> body) {
-
-    return null;
-  }
-
-  @Override
-  public JacksonMessage decode (MessageType messageType, byte[] buffer) {
-
-    return null;
-  }
-
-  @Override
-  public JacksonMessage createMessage (MessageType messageType) {
-
-    return null;
-  }
-
-  @Override
-  public JacksonMessage generateMessage (MessageType messageType, Object object) {
-
-    return null;
-  }
+  Message<V> toMessage (MessageType messageType, Body<?> body);
 }

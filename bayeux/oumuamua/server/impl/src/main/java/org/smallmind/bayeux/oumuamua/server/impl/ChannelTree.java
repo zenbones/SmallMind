@@ -37,32 +37,34 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import org.smallmind.bayeux.oumuamua.common.api.Codec;
+import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.spi.Route;
 import org.smallmind.bayeux.oumuamua.server.spi.Segment;
 import org.smallmind.bayeux.oumuamua.server.spi.StringSegment;
 
-public class ChannelTree {
+public class ChannelTree<V extends Value<V>> {
 
   private final ReentrantLock treeExpansionLock = new ReentrantLock();
   private final ReentrantReadWriteLock channelChangeLock = new ReentrantReadWriteLock();
-  private final ConcurrentHashMap<Segment, ChannelTree> childMap = new ConcurrentHashMap<>();
-  private final ChannelTree parent;
-  private Channel channel;
+  private final ConcurrentHashMap<Segment, ChannelTree<V>> childMap = new ConcurrentHashMap<>();
+  private final ChannelTree<V> parent;
+  private Channel<V> channel;
 
   public ChannelTree () {
 
     this(null, null);
   }
 
-  public ChannelTree (ChannelTree parent, Channel channel) {
+  public ChannelTree (ChannelTree<V> parent, Channel<V> channel) {
 
     this.parent = parent;
     this.channel = channel;
   }
 
-  public Channel getChannel () {
+  public Channel<V> getChannel () {
 
     channelChangeLock.readLock().lock();
 
@@ -74,9 +76,9 @@ public class ChannelTree {
     }
   }
 
-  public ChannelTree find (int index, Route route) {
+  public ChannelTree<V> find (int index, Route route) {
 
-    ChannelTree child;
+    ChannelTree<V> child;
 
     if ((child = childMap.get(route.getSegment(index))) == null) {
 
@@ -87,9 +89,9 @@ public class ChannelTree {
     }
   }
 
-  public ChannelTree createIfAbsent (int index, Route route, long timeToLive) {
+  public ChannelTree<V> createIfAbsent (Codec<V> codec, long timeToLive, int index, Route route) {
 
-    ChannelTree child;
+    ChannelTree<V> child;
     Segment segment;
 
     if ((child = childMap.get(segment = route.getSegment(index))) == null) {
@@ -98,23 +100,23 @@ public class ChannelTree {
 
       try {
         if ((child = childMap.get(segment)) == null) {
-          childMap.put(segment, child = new ChannelTree(this, (index == route.lastIndex()) ? new OumuamuaChannel(route, timeToLive) : null));
+          childMap.put(segment, child = new ChannelTree<V>(this, (index == route.lastIndex()) ? new OumuamuaChannel<V>(codec, timeToLive, route) : null));
         }
       } finally {
         treeExpansionLock.unlock();
       }
     }
 
-    return (index == route.lastIndex()) ? child.enforceChannel(route, timeToLive) : child.createIfAbsent(index + 1, route, timeToLive);
+    return (index == route.lastIndex()) ? child.enforceChannel(codec, timeToLive, route) : child.createIfAbsent(codec, timeToLive, index + 1, route);
   }
 
-  private ChannelTree enforceChannel (Route route, long timeToLive) {
+  private ChannelTree<V> enforceChannel (Codec<V> codec, long timeToLive, Route route) {
 
     channelChangeLock.writeLock().lock();
 
     try {
       if (channel == null) {
-        channel = new OumuamuaChannel(route, timeToLive);
+        channel = new OumuamuaChannel<V>(codec, timeToLive, route);
       }
 
       return this;
@@ -123,9 +125,9 @@ public class ChannelTree {
     }
   }
 
-  public ChannelTree removeIfPresent (int index, Route route) {
+  public ChannelTree<V> removeIfPresent (int index, Route route) {
 
-    ChannelTree child;
+    ChannelTree<V> child;
 
     if ((child = childMap.get(route.getSegment(index))) == null) {
 
@@ -136,7 +138,7 @@ public class ChannelTree {
     }
   }
 
-  private ChannelTree removeChannel () {
+  private ChannelTree<V> removeChannel () {
 
     channelChangeLock.writeLock().lock();
 
@@ -149,24 +151,24 @@ public class ChannelTree {
     }
   }
 
-  public void deliver (int index, Packet packet, Set<String> sessionIdSet) {
+  public void deliver (int index, Packet<V> packet, Set<String> sessionIdSet) {
 
-    if (index < ((OumuamuaChannel)packet.getChannel()).getRoute().lastIndex()) {
+    if (index < ((OumuamuaChannel<V>)packet.getChannel()).getRoute().lastIndex()) {
 
-      ChannelTree deepWildBranch;
-      ChannelTree nextBranch;
+      ChannelTree<V> deepWildBranch;
+      ChannelTree<V> nextBranch;
 
       if ((deepWildBranch = childMap.get(StringSegment.wild())) != null) {
 
         deepWildBranch.deliverToChannel(packet, sessionIdSet);
       }
-      if ((nextBranch = childMap.get(((OumuamuaChannel)packet.getChannel()).getRoute().getSegment(index))) != null) {
+      if ((nextBranch = childMap.get(((OumuamuaChannel<V>)packet.getChannel()).getRoute().getSegment(index))) != null) {
         nextBranch.deliver(index + 1, packet, sessionIdSet);
       }
     } else {
       if (parent != null) {
 
-        ChannelTree wildBranch;
+        ChannelTree<V> wildBranch;
 
         if ((wildBranch = parent.childMap.get(StringSegment.deepWild())) != null) {
           wildBranch.deliverToChannel(packet, sessionIdSet);
@@ -177,7 +179,7 @@ public class ChannelTree {
     }
   }
 
-  private void deliverToChannel (Packet packet, Set<String> sessionIdSet) {
+  private void deliverToChannel (Packet<V> packet, Set<String> sessionIdSet) {
 
     channelChangeLock.readLock().lock();
 
@@ -201,7 +203,7 @@ public class ChannelTree {
     if ((segment != null) && (parent != null) && (getChannel() == null) && childMap.isEmpty()) {
       parent.childMap.remove(segment);
     } else {
-      for (Map.Entry<Segment, ChannelTree> childEntry : childMap.entrySet()) {
+      for (Map.Entry<Segment, ChannelTree<V>> childEntry : childMap.entrySet()) {
         childEntry.getValue().clean(childEntry.getKey());
       }
     }
@@ -211,7 +213,7 @@ public class ChannelTree {
 
     operation.operate(this);
 
-    for (ChannelTree child : childMap.values()) {
+    for (ChannelTree<V> child : childMap.values()) {
       child.walk(operation);
     }
   }

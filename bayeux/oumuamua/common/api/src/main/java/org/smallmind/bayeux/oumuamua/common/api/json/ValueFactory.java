@@ -34,8 +34,6 @@ package org.smallmind.bayeux.oumuamua.common.api.json;
 
 public interface ValueFactory<V extends Value<V>> {
 
-  V value (Object object);
-
   ObjectValue<V> objectValue ();
 
   ArrayValue<V> arrayValue ();

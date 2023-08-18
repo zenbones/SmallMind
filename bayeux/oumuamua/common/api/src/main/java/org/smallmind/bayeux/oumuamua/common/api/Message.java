@@ -33,8 +33,9 @@
 package org.smallmind.bayeux.oumuamua.common.api;
 
 import org.smallmind.bayeux.oumuamua.common.api.json.Body;
+import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 
-public class Message {
+public class Message<V extends Value<V>> {
 
   public static String ID = "id";
   public static String SESSION_ID = "clientId";
@@ -46,9 +47,9 @@ public class Message {
   public static String DEEP_WILD = "**";
 
   private final MessageType messageType;
-  private final Body<?> body;
+  private final Body<V> body;
 
-  public Message (MessageType messageType, Body<?> body) {
+  public Message (MessageType messageType, Body<V> body) {
 
     this.messageType = messageType;
     this.body = body;
@@ -59,7 +60,7 @@ public class Message {
     return messageType;
   }
 
-  public Body<?> getBody () {
+  public Body<V> getBody () {
 
     return body;
   }

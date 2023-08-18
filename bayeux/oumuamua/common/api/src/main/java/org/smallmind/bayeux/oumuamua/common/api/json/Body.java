@@ -32,6 +32,7 @@
  */
 package org.smallmind.bayeux.oumuamua.common.api.json;
 
+import org.smallmind.bayeux.oumuamua.common.api.Codec;
 import org.smallmind.bayeux.oumuamua.common.api.Message;
 
 public interface Body<V extends Value<V>> extends ObjectValue<V> {
@@ -87,7 +88,7 @@ public interface Body<V extends Value<V>> extends ObjectValue<V> {
     return getOrCreate(Message.DATA, createIfAbsent);
   }
 
-  Body<V> from (ObjectValue<V> objectValue);
+  Codec<V> getCodec ();
 
   String encode ()
     throws Exception;

@@ -32,41 +32,42 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api;
 
-import org.smallmind.bayeux.oumuamua.common.api.MessageCodec;
+import org.smallmind.bayeux.oumuamua.common.api.Codec;
+import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.backbone.Backbone;
 
-public interface Server extends Attributed {
+public interface Server<V extends Value<V>> extends Attributed {
 
-  interface Listener {
+  interface Listener<V extends Value<V>> {
 
   }
 
-  interface SessionListener extends Listener {
+  interface SessionListener<V extends Value<V>> extends Listener<V> {
 
-    void onConnected (Session session);
+    void onConnected (Session<V> session);
 
-    void onDisconnected (Session session);
+    void onDisconnected (Session<V> session);
   }
 
-  interface ChannelListener extends Listener {
+  interface ChannelListener<V extends Value<V>> extends Listener<V> {
 
-    void onCreated (Channel channel);
+    void onCreated (Channel<V> channel);
 
-    void onRemoved (Channel channel);
+    void onRemoved (Channel<V> channel);
   }
 
-  interface PacketListener extends Listener {
+  interface PacketListener<V extends Value<V>> extends Listener<V> {
 
-    void onRequest (Packet packet);
+    void onRequest (Packet<V> packet);
 
-    void onResponse (Packet packet);
+    void onResponse (Packet<V> packet);
 
-    void onDelivery (Packet packet);
+    void onDelivery (Packet<V> packet);
   }
 
-  void addListener (Listener listener);
+  void addListener (Listener<V> listener);
 
-  void removeListener (Listener listener);
+  void removeListener (Listener<V> listener);
 
   Protocol getProtocol (String name);
 
@@ -75,19 +76,19 @@ public interface Server extends Attributed {
   SecurityPolicy getSecurityPolicy ();
 
   // Serves as an injection point for implementations that wish to add client configurable additions to the json codec pipeline
-  MessageCodec<?> getMessageCodec ();
+  Codec<?> getCodec ();
 
-  Channel findChannel (String path)
+  Channel<V> findChannel (String path)
     throws InvalidPathException;
 
   // Initializers will be applied before the channel is returned if this call creates the channel
-  Channel requireChannel (String path, ChannelInitializer... initializers)
+  Channel<V> requireChannel (String path, ChannelInitializer... initializers)
     throws InvalidPathException;
 
   // It's n error to attempt to remove a persistent channel
   // All sessions must be unsubscribed (and listeners notified) upon channel removal
-  Channel removeChannel (Channel channel)
+  Channel<V> removeChannel (Channel<V> channel)
     throws ChannelStateException;
 
-  void deliver (Packet packet);
+  void deliver (Packet<V> packet);
 }

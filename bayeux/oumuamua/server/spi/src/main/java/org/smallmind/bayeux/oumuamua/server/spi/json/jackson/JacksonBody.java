@@ -34,11 +34,13 @@ package org.smallmind.bayeux.oumuamua.server.spi.json.jackson;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.smallmind.bayeux.oumuamua.common.api.Codec;
 import org.smallmind.bayeux.oumuamua.common.api.json.Body;
-import org.smallmind.bayeux.oumuamua.common.api.json.ObjectValue;
 import org.smallmind.bayeux.oumuamua.common.api.json.ValueFactory;
 
 public class JacksonBody extends JacksonObjectValue implements Body<JacksonValue<?>> {
+
+  private Codec<JacksonValue<?>> codec;
 
   public JacksonBody (ObjectNode node, ValueFactory<JacksonValue<?>> factory) {
 
@@ -46,14 +48,16 @@ public class JacksonBody extends JacksonObjectValue implements Body<JacksonValue
   }
 
   @Override
-  public Body<JacksonValue<?>> from (ObjectValue<JacksonValue<?>> objectValue) {
+  public Codec<JacksonValue<?>> getCodec () {
 
-    return new JacksonBody(((JacksonObjectValue)objectValue).getNode(), objectValue.getFactory());
+    return codec;
   }
 
   @Override
   public String encode ()
     throws JsonProcessingException {
 
+    //TODO: As if
+    return null;
   }
 }

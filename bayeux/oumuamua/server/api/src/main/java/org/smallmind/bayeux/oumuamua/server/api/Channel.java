@@ -33,31 +33,32 @@
 package org.smallmind.bayeux.oumuamua.server.api;
 
 import java.util.Set;
+import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 
-public interface Channel extends Attributed {
+public interface Channel<V extends Value<V>> extends Attributed {
 
-  interface Listener {
-
-    boolean isPersistent ();
-  }
-
-  interface SessionListener extends Listener {
-
-    void onSubscribed (Session session);
-
-    void onUnsubscribed (Session session);
-  }
-
-  interface PacketListener extends Listener {
+  interface Listener<V extends Value<V>> {
 
     boolean isPersistent ();
-
-    void onDelivery (Packet packet);
   }
 
-  void addListener (Listener listener);
+  interface SessionListener<V extends Value<V>> extends Listener<V> {
 
-  void removeListener (Listener listener);
+    void onSubscribed (Session<V> session);
+
+    void onUnsubscribed (Session<V> session);
+  }
+
+  interface PacketListener<V extends Value<V>> extends Listener<V> {
+
+    boolean isPersistent ();
+
+    void onDelivery (Packet<V> packet);
+  }
+
+  void addListener (Listener<V> listener);
+
+  void removeListener (Listener<V> listener);
 
   boolean isWild ();
 
@@ -77,11 +78,11 @@ public interface Channel extends Attributed {
 
   void setReflecting (boolean reflecting);
 
-  void subscribe (Session session);
+  void subscribe (Session<V> session);
 
-  void unsubscribe (Session session);
+  void unsubscribe (Session<V> session);
 
   boolean isRemovable ();
 
-  void deliver (Packet packet, Set<String> sessionIdSet);
+  void deliver (Packet<V> packet, Set<String> sessionIdSet);
 }
