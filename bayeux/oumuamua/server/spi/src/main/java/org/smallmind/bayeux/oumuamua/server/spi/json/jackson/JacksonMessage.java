@@ -33,7 +33,7 @@
 package org.smallmind.bayeux.oumuamua.server.spi.json.jackson;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.smallmind.bayeux.oumuamua.common.api.Codec;
+import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.common.api.json.Message;
 import org.smallmind.bayeux.oumuamua.common.api.json.ValueFactory;
 import org.smallmind.web.json.scaffold.util.JsonCodec;

@@ -33,25 +33,27 @@
 package org.smallmind.bayeux.oumuamua.server.impl;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
-import org.smallmind.bayeux.oumuamua.common.api.Codec;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.PacketType;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
+import org.smallmind.bayeux.oumuamua.server.api.SessionState;
 import org.smallmind.bayeux.oumuamua.server.spi.AbstractAttributed;
+import org.smallmind.bayeux.oumuamua.server.spi.Connection;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 
 public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed implements Session<V> {
 
   private final ConcurrentLinkedQueue<Session.Listener<V>> listenerList = new ConcurrentLinkedQueue<>();
-  private final Codec<V> codec;
+  private final Connection<V> connection;
   private final String sessionId = SnowflakeId.newInstance().generateHexEncoding();
-  private boolean handshook;
-  private boolean connected;
+  private SessionState state;
 
-  public OumuamuaSession (Codec<V> codec) {
+  public OumuamuaSession (Connection<V> connection) {
 
-    this.codec = codec;
+    this.connection = connection;
+
+    state = SessionState.INITIALIZED;
   }
 
   private void onDelivery (Packet<V> packet) {
@@ -88,30 +90,23 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   }
 
   @Override
-  public synchronized boolean isHandshook () {
+  public SessionState getState () {
 
-    return handshook;
+    return state;
   }
 
-  public synchronized void setHandshook (boolean handshook) {
+  public void setState (SessionState state) {
 
-    this.handshook = handshook;
-  }
-
-  @Override
-  public synchronized boolean isConnected () {
-
-    return connected;
-  }
-
-  public synchronized void setConnected (boolean connected) {
-
-    this.connected = connected;
+    this.state = state;
   }
 
   @Override
   public void deliver (Packet<V> packet) {
 
     Packet<V> frozenPacket = PacketUtility.freezePacket(packet);
+
+    onDelivery(frozenPacket);
+
+    connection.deliver(packet);
   }
 }

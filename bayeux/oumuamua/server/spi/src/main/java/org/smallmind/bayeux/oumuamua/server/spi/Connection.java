@@ -30,15 +30,23 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.common.api;
+package org.smallmind.bayeux.oumuamua.server.spi;
 
-import org.smallmind.bayeux.oumuamua.common.api.json.Message;
+import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
+import org.smallmind.bayeux.oumuamua.server.api.Packet;
+import org.smallmind.bayeux.oumuamua.server.api.Protocol;
+import org.smallmind.bayeux.oumuamua.server.api.Session;
 
-public interface Codec<V extends Value<V>> {
+public interface Connection<V extends Value<V>> {
 
-  Message<V> toMessage ();
+  Protocol getProtocol ();
 
-  byte[] fromMessage (Message<V> message)
-    throws Exception;
+  Codec<V> getCodec ();
+
+  Session<V> getSession ();
+
+  void close ();
+
+  void deliver (Packet<V> packet);
 }

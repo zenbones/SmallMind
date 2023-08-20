@@ -32,8 +32,6 @@
  */
 package org.smallmind.bayeux.oumuamua.common.api.json;
 
-import org.smallmind.bayeux.oumuamua.common.api.Codec;
-
 public interface Message<V extends Value<V>> extends ObjectValue<V> {
 
   String ID = "id";

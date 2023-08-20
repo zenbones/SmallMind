@@ -32,7 +32,7 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api;
 
-import org.smallmind.bayeux.oumuamua.common.api.Codec;
+import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.backbone.Backbone;
 

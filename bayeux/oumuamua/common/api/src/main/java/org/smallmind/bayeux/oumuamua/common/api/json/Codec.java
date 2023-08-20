@@ -30,13 +30,15 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.api;
+package org.smallmind.bayeux.oumuamua.common.api.json;
 
-public interface Connection {
+import org.smallmind.bayeux.oumuamua.common.api.json.Message;
+import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 
-  Protocol getProtocol ();
+public interface Codec<V extends Value<V>> {
 
-  Session getSession ();
+  Message<V> toMessage ();
 
-  void close ();
+  byte[] fromMessage (Message<V> message)
+    throws Exception;
 }

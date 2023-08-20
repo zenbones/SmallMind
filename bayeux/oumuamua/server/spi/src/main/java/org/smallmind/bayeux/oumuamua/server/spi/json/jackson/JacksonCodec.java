@@ -34,7 +34,7 @@ package org.smallmind.bayeux.oumuamua.server.spi.json.jackson;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import org.smallmind.bayeux.oumuamua.common.api.Codec;
+import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.common.api.json.Message;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 

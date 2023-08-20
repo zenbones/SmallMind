@@ -34,7 +34,7 @@ package org.smallmind.bayeux.oumuamua.server.spi.json;
 
 import java.util.HashSet;
 import java.util.Iterator;
-import org.smallmind.bayeux.oumuamua.common.api.Codec;
+import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.common.api.json.Message;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.common.api.json.ValueFactory;

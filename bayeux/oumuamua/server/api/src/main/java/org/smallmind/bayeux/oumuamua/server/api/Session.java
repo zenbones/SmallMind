@@ -54,9 +54,7 @@ public interface Session<V extends Value<V>> {
 
   String getId ();
 
-  boolean isHandshook ();
-
-  boolean isConnected ();
+  SessionState getState ();
 
   void deliver (Packet<V> packet);
 }
