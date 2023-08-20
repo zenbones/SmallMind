@@ -33,29 +33,35 @@
 package org.smallmind.bayeux.oumuamua.common.api.json;
 
 import org.smallmind.bayeux.oumuamua.common.api.Codec;
-import org.smallmind.bayeux.oumuamua.common.api.Message;
 
-public interface Body<V extends Value<V>> extends ObjectValue<V> {
+public interface Message<V extends Value<V>> extends ObjectValue<V> {
+
+  String ID = "id";
+  String SESSION_ID = "clientId";
+  String CHANNEL = "channel";
+  String EXT = "ext";
+  String ADVICE = "advice";
+  String DATA = "data";
 
   default String getId () {
 
     V value;
 
-    return (((value = get(Message.ID)) != null) && ValueType.STRING.equals(value.getType())) ? ((StringValue<V>)value).asText() : null;
+    return (((value = get(ID)) != null) && ValueType.STRING.equals(value.getType())) ? ((StringValue<V>)value).asText() : null;
   }
 
   default String getSessionId () {
 
     V value;
 
-    return (((value = get(Message.SESSION_ID)) != null) && ValueType.STRING.equals(value.getType())) ? ((StringValue<V>)value).asText() : null;
+    return (((value = get(SESSION_ID)) != null) && ValueType.STRING.equals(value.getType())) ? ((StringValue<V>)value).asText() : null;
   }
 
   default String getChannel () {
 
     V value;
 
-    return (((value = get(Message.CHANNEL)) != null) && ValueType.STRING.equals(value.getType())) ? ((StringValue<V>)value).asText() : null;
+    return (((value = get(CHANNEL)) != null) && ValueType.STRING.equals(value.getType())) ? ((StringValue<V>)value).asText() : null;
   }
 
   default ObjectValue<V> getAdvice () {
@@ -65,7 +71,7 @@ public interface Body<V extends Value<V>> extends ObjectValue<V> {
 
   default ObjectValue<V> getAdvice (boolean createIfAbsent) {
 
-    return getOrCreate(Message.ADVICE, createIfAbsent);
+    return getOrCreate(ADVICE, createIfAbsent);
   }
 
   default ObjectValue<V> getExt () {
@@ -75,7 +81,7 @@ public interface Body<V extends Value<V>> extends ObjectValue<V> {
 
   default ObjectValue<V> getExt (boolean createIfAbsent) {
 
-    return getOrCreate(Message.EXT, createIfAbsent);
+    return getOrCreate(EXT, createIfAbsent);
   }
 
   default ObjectValue<V> getData () {
@@ -85,18 +91,18 @@ public interface Body<V extends Value<V>> extends ObjectValue<V> {
 
   default ObjectValue<V> getData (boolean createIfAbsent) {
 
-    return getOrCreate(Message.DATA, createIfAbsent);
+    return getOrCreate(DATA, createIfAbsent);
   }
 
   default byte[] encode ()
     throws Exception {
 
-    return getCodec().fromBody(this);
+    return getCodec().fromMessage(this);
   }
 
   Codec<V> getCodec ();
 
-  Body<V> copy ();
+  Message<V> copy ();
 
   private ObjectValue<V> getOrCreate (String field, boolean createIfAbsent) {
 

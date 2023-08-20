@@ -30,38 +30,9 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.common.api;
+package org.smallmind.bayeux.oumuamua.server.api;
 
-import org.smallmind.bayeux.oumuamua.common.api.json.Body;
-import org.smallmind.bayeux.oumuamua.common.api.json.Value;
+public enum PacketType {
 
-public class Message<V extends Value<V>> {
-
-  public static String ID = "id";
-  public static String SESSION_ID = "clientId";
-  public static String CHANNEL = "channel";
-  public static String EXT = "ext";
-  public static String ADVICE = "advice";
-  public static String DATA = "data";
-  public static String WILD = "*";
-  public static String DEEP_WILD = "**";
-
-  private final MessageType messageType;
-  private final Body<V> body;
-
-  public Message (MessageType messageType, Body<V> body) {
-
-    this.messageType = messageType;
-    this.body = body;
-  }
-
-  public MessageType getMessageType () {
-
-    return messageType;
-  }
-
-  public Body<V> getBody () {
-
-    return body;
-  }
+  REQUEST, RESPONSE, DELIVERY
 }

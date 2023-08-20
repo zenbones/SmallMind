@@ -32,23 +32,22 @@
  */
 package org.smallmind.bayeux.oumuamua.server.impl;
 
-import org.smallmind.bayeux.oumuamua.common.api.Codec;
-import org.smallmind.bayeux.oumuamua.common.api.Message;
+import org.smallmind.bayeux.oumuamua.common.api.json.Message;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
-import org.smallmind.bayeux.oumuamua.server.spi.json.BodyDouble;
+import org.smallmind.bayeux.oumuamua.server.spi.json.MessageDouble;
 
 public class PacketUtility {
 
-  public static <V extends Value<V>> Packet<V> freezePacket (Codec<V> codec, Packet<V> packet) {
+  public static <V extends Value<V>> Packet<V> freezePacket (Packet<V> packet) {
 
     Message<V>[] frozenMessages = new Message[packet.getMessages().length];
     int index = 0;
 
     for (Message<V> message : packet.getMessages()) {
-      frozenMessages[index++] = codec.toMessage(message.getMessageType(), new BodyDouble<V>(message.getBody()));
+      frozenMessages[index++] = new MessageDouble<V>(message);
     }
 
-    return new Packet<V>(packet.getChannel(), frozenMessages);
+    return new Packet<V>(packet.getPacketType(), packet.getChannel(), frozenMessages);
   }
 }

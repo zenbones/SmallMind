@@ -40,6 +40,7 @@ import org.smallmind.bayeux.oumuamua.common.api.Codec;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
+import org.smallmind.bayeux.oumuamua.server.api.PacketType;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.bayeux.oumuamua.server.spi.AbstractAttributed;
 import org.smallmind.bayeux.oumuamua.server.spi.Route;
@@ -88,9 +89,11 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
 
   private void onDelivery (Packet<V> packet) {
 
-    for (Listener<V> listener : listenerList) {
-      if (PacketListener.class.isAssignableFrom(listener.getClass())) {
-        ((PacketListener<V>)listener).onDelivery(packet);
+    if (PacketType.DELIVERY.equals(packet.getPacketType())) {
+      for (Listener<V> listener : listenerList) {
+        if (PacketListener.class.isAssignableFrom(listener.getClass())) {
+          ((PacketListener<V>)listener).onDelivery(packet);
+        }
       }
     }
   }
@@ -199,7 +202,7 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
   @Override
   public void deliver (Packet<V> packet, Set<String> sessionIdSet) {
 
-    Packet<V> frozenPacket = PacketUtility.freezePacket(codec, packet);
+    Packet<V> frozenPacket = PacketUtility.freezePacket(packet);
 
     onDelivery(frozenPacket);
 

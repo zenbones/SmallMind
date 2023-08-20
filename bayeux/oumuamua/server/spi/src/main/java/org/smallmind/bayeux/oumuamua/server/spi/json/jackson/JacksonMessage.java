@@ -32,14 +32,32 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.json.jackson;
 
-import org.smallmind.bayeux.oumuamua.common.api.Message;
-import org.smallmind.bayeux.oumuamua.common.api.MessageType;
-import org.smallmind.bayeux.oumuamua.common.api.json.Body;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.smallmind.bayeux.oumuamua.common.api.Codec;
+import org.smallmind.bayeux.oumuamua.common.api.json.Message;
+import org.smallmind.bayeux.oumuamua.common.api.json.ValueFactory;
+import org.smallmind.web.json.scaffold.util.JsonCodec;
 
-public class JacksonMessage extends Message {
+public class JacksonMessage extends JacksonObjectValue implements Message<JacksonValue<?>> {
 
-  public JacksonMessage (MessageType messageType, Body<JacksonValue<?>> body) {
+  private final Codec<JacksonValue<?>> codec;
 
-    super(messageType, body);
+  public JacksonMessage (Codec<JacksonValue<?>> codec, ObjectNode node, ValueFactory<JacksonValue<?>> factory) {
+
+    super(node, factory);
+
+    this.codec = codec;
+  }
+
+  @Override
+  public Codec<JacksonValue<?>> getCodec () {
+
+    return codec;
+  }
+
+  @Override
+  public Message<JacksonValue<?>> copy () {
+
+    return new JacksonMessage(codec, (ObjectNode)JsonCodec.copy(getNode()), getFactory());
   }
 }

@@ -32,14 +32,14 @@
  */
 package org.smallmind.bayeux.oumuamua.client;
 
-import org.smallmind.bayeux.oumuamua.common.api.Message;
+import org.smallmind.bayeux.oumuamua.common.api.json.Message;
 
 public interface Client {
 
   interface MessageListener {
 
-    void onResponse (Message message);
+    void onResponse (Message<?> message);
 
-    void onDelivery (Message message);
+    void onDelivery (Message<?> message);
   }
 }

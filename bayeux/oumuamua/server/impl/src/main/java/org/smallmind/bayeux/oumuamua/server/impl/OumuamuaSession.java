@@ -32,52 +32,86 @@
  */
 package org.smallmind.bayeux.oumuamua.server.impl;
 
+import java.util.concurrent.ConcurrentLinkedQueue;
 import org.smallmind.bayeux.oumuamua.common.api.Codec;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
+import org.smallmind.bayeux.oumuamua.server.api.PacketType;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.bayeux.oumuamua.server.spi.AbstractAttributed;
+import org.smallmind.nutsnbolts.util.SnowflakeId;
 
 public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed implements Session<V> {
 
+  private final ConcurrentLinkedQueue<Session.Listener<V>> listenerList = new ConcurrentLinkedQueue<>();
   private final Codec<V> codec;
+  private final String sessionId = SnowflakeId.newInstance().generateHexEncoding();
+  private boolean handshook;
+  private boolean connected;
 
   public OumuamuaSession (Codec<V> codec) {
 
     this.codec = codec;
   }
 
+  private void onDelivery (Packet<V> packet) {
+
+    if (PacketType.RESPONSE.equals(packet.getPacketType()) || PacketType.DELIVERY.equals(packet.getPacketType())) {
+      for (Session.Listener<V> listener : listenerList) {
+        if (Session.PacketListener.class.isAssignableFrom(listener.getClass())) {
+          if (PacketType.DELIVERY.equals(packet.getPacketType())) {
+            ((Session.PacketListener<V>)listener).onDelivery(packet);
+          } else {
+            ((Session.PacketListener<V>)listener).onResponse(packet);
+          }
+        }
+      }
+    }
+  }
+
   @Override
   public void addListener (Listener<V> listener) {
 
+    listenerList.add(listener);
   }
 
   @Override
   public void removeListener (Listener<V> listener) {
 
+    listenerList.remove(listener);
   }
 
   @Override
   public String getId () {
 
-    return null;
+    return sessionId;
   }
 
   @Override
-  public boolean isHandshook () {
+  public synchronized boolean isHandshook () {
 
-    return false;
+    return handshook;
+  }
+
+  public synchronized void setHandshook (boolean handshook) {
+
+    this.handshook = handshook;
   }
 
   @Override
-  public boolean isConnected () {
+  public synchronized boolean isConnected () {
 
-    return false;
+    return connected;
+  }
+
+  public synchronized void setConnected (boolean connected) {
+
+    this.connected = connected;
   }
 
   @Override
   public void deliver (Packet<V> packet) {
 
-    Packet<V> frozenPacket = PacketUtility.freezePacket(codec, packet);
+    Packet<V> frozenPacket = PacketUtility.freezePacket(packet);
   }
 }

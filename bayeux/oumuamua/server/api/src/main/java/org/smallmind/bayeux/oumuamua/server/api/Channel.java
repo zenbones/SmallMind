@@ -37,6 +37,9 @@ import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 
 public interface Channel<V extends Value<V>> extends Attributed {
 
+  String WILD = "*";
+  String DEEP_WILD = "**";
+
   interface Listener<V extends Value<V>> {
 
     boolean isPersistent ();

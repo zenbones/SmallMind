@@ -32,18 +32,25 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api;
 
-import org.smallmind.bayeux.oumuamua.common.api.Message;
+import org.smallmind.bayeux.oumuamua.common.api.json.Message;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 
 public class Packet<V extends Value<V>> {
 
+  private final PacketType packetType;
   private final Channel<V> channel;
   private final Message<V>[] messages;
 
-  public Packet (Channel<V> channel, Message<V>[] messages) {
+  public Packet (PacketType packetType, Channel<V> channel, Message<V>[] messages) {
 
+    this.packetType = packetType;
     this.channel = channel;
     this.messages = messages;
+  }
+
+  public PacketType getPacketType () {
+
+    return packetType;
   }
 
   public Channel<V> getChannel () {

@@ -35,9 +35,7 @@ package org.smallmind.bayeux.oumuamua.server.spi.json.jackson;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import org.smallmind.bayeux.oumuamua.common.api.Codec;
-import org.smallmind.bayeux.oumuamua.common.api.Message;
-import org.smallmind.bayeux.oumuamua.common.api.MessageType;
-import org.smallmind.bayeux.oumuamua.common.api.json.Body;
+import org.smallmind.bayeux.oumuamua.common.api.json.Message;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public class JacksonCodec implements Codec<JacksonValue<?>> {
@@ -45,21 +43,15 @@ public class JacksonCodec implements Codec<JacksonValue<?>> {
   private final JacksonValueFactory FACTORY = new JacksonValueFactory();
 
   @Override
-  public Body<JacksonValue<?>> toBody () {
+  public Message<JacksonValue<?>> toMessage () {
 
-    return new JacksonBody(this, JsonNodeFactory.instance.objectNode(), FACTORY);
+    return new JacksonMessage(this, JsonNodeFactory.instance.objectNode(), FACTORY);
   }
 
   @Override
-  public byte[] fromBody (Body<JacksonValue<?>> body)
+  public byte[] fromMessage (Message<JacksonValue<?>> message)
     throws JsonProcessingException {
 
-    return JsonCodec.writeAsBytes(((JacksonBody)body).getNode());
-  }
-
-  @Override
-  public Message<JacksonValue<?>> toMessage (MessageType messageType, Body<?> body) {
-
-    return null;
+    return JsonCodec.writeAsBytes(((JacksonMessage)message).getNode());
   }
 }

@@ -35,54 +35,54 @@ package org.smallmind.bayeux.oumuamua.server.spi.json;
 import java.util.HashSet;
 import java.util.Iterator;
 import org.smallmind.bayeux.oumuamua.common.api.Codec;
-import org.smallmind.bayeux.oumuamua.common.api.json.Body;
+import org.smallmind.bayeux.oumuamua.common.api.json.Message;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.common.api.json.ValueFactory;
 import org.smallmind.nutsnbolts.util.IterableIterator;
 
-public class BodyDouble<V extends Value<V>> implements Body<V> {
+public class MessageDouble<V extends Value<V>> implements Message<V> {
 
-  private final Body<V> innerBody;
+  private final Message<V> innerMessage;
   private final HashSet<String> removedSet = new HashSet<>();
-  private Body<V> outerBody;
+  private Message<V> outerMessage;
 
-  public BodyDouble (Body<V> innerBody) {
+  public MessageDouble (Message<V> innerMessage) {
 
-    this.innerBody = innerBody;
+    this.innerMessage = innerMessage;
   }
 
   @Override
   public Codec<V> getCodec () {
 
-    return innerBody.getCodec();
+    return innerMessage.getCodec();
   }
 
   @Override
   public ValueFactory<V> getFactory () {
 
-    return innerBody.getFactory();
+    return innerMessage.getFactory();
   }
 
   @Override
   public byte[] encode ()
     throws Exception {
 
-    if (outerBody == null) {
+    if (outerMessage == null) {
 
-      return innerBody.encode();
+      return innerMessage.encode();
     } else {
 
-      Body<V> encodingBody = outerBody.copy();
+      Message<V> encodingMessage = outerMessage.copy();
 
-      for (String fieldName : new IterableIterator<>(innerBody.fieldNames())) {
+      for (String fieldName : new IterableIterator<>(innerMessage.fieldNames())) {
         if (!removedSet.contains(fieldName)) {
-          if (outerBody.get(fieldName) == null) {
-            encodingBody.put(fieldName, innerBody.get(fieldName));
+          if (outerMessage.get(fieldName) == null) {
+            encodingMessage.put(fieldName, innerMessage.get(fieldName));
           }
         }
       }
 
-      return encodingBody.encode();
+      return encodingMessage.encode();
     }
   }
 
@@ -108,14 +108,14 @@ public class BodyDouble<V extends Value<V>> implements Body<V> {
 
     HashSet<String> nameSet = new HashSet<>();
 
-    for (String fieldName : new IterableIterator<>(innerBody.fieldNames())) {
+    for (String fieldName : new IterableIterator<>(innerMessage.fieldNames())) {
       if (!removedSet.contains(fieldName)) {
         nameSet.add(fieldName);
       }
     }
 
-    if (outerBody != null) {
-      for (String fieldName : new IterableIterator<>(outerBody.fieldNames())) {
+    if (outerMessage != null) {
+      for (String fieldName : new IterableIterator<>(outerMessage.fieldNames())) {
         nameSet.add(fieldName);
       }
     }
@@ -128,7 +128,7 @@ public class BodyDouble<V extends Value<V>> implements Body<V> {
 
     V value;
 
-    return ((outerBody == null) || ((value = outerBody.get(field)) == null)) ? removedSet.contains(field) ? null : innerBody.get(field) : value;
+    return ((outerMessage == null) || ((value = outerMessage.get(field)) == null)) ? removedSet.contains(field) ? null : innerMessage.get(field) : value;
   }
 
   @Override
@@ -136,11 +136,11 @@ public class BodyDouble<V extends Value<V>> implements Body<V> {
 
     removedSet.remove(field);
 
-    if (outerBody == null) {
-      outerBody = getCodec().toBody();
+    if (outerMessage == null) {
+      outerMessage = getCodec().toMessage();
     }
 
-    return outerBody.put(field, value);
+    return outerMessage.put(field, value);
   }
 
   @Override
@@ -148,8 +148,8 @@ public class BodyDouble<V extends Value<V>> implements Body<V> {
 
     V value;
 
-    if ((outerBody == null) || (value = outerBody.remove(field)) == null) {
-      value = innerBody.get(field);
+    if ((outerMessage == null) || (value = outerMessage.remove(field)) == null) {
+      value = innerMessage.get(field);
     }
 
     if (value != null) {
@@ -162,36 +162,36 @@ public class BodyDouble<V extends Value<V>> implements Body<V> {
   @Override
   public V removeAll () {
 
-    for (String fieldName : new IterableIterator<>(innerBody.fieldNames())) {
+    for (String fieldName : new IterableIterator<>(innerMessage.fieldNames())) {
       removedSet.add(fieldName);
     }
 
-    if (outerBody != null) {
-      outerBody.removeAll();
+    if (outerMessage != null) {
+      outerMessage.removeAll();
     }
 
     return (V)this;
   }
 
   @Override
-  public Body<V> copy () {
+  public Message<V> copy () {
 
-    if (outerBody == null) {
+    if (outerMessage == null) {
 
-      return innerBody.copy();
+      return innerMessage.copy();
     } else {
 
-      Body<V> copyingBody = outerBody.copy();
+      Message<V> copyingMessage = outerMessage.copy();
 
-      for (String fieldName : new IterableIterator<>(innerBody.fieldNames())) {
+      for (String fieldName : new IterableIterator<>(innerMessage.fieldNames())) {
         if (!removedSet.contains(fieldName)) {
-          if (outerBody.get(fieldName) == null) {
-            copyingBody.put(fieldName, innerBody.get(fieldName));
+          if (outerMessage.get(fieldName) == null) {
+            copyingMessage.put(fieldName, innerMessage.get(fieldName));
           }
         }
       }
 
-      return copyingBody;
+      return copyingMessage;
     }
   }
 }

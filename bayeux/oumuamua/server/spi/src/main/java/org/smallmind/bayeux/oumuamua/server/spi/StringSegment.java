@@ -32,12 +32,12 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi;
 
-import org.smallmind.bayeux.oumuamua.common.api.Message;
+import org.smallmind.bayeux.oumuamua.server.api.Channel;
 
 public class StringSegment extends Segment {
 
-  private static final StringSegment WILD_SEGMENT = new StringSegment(Message.WILD);
-  private static final StringSegment DEEP_WILD_SEGMENT = new StringSegment(Message.DEEP_WILD);
+  private static final StringSegment WILD_SEGMENT = new StringSegment(Channel.WILD);
+  private static final StringSegment DEEP_WILD_SEGMENT = new StringSegment(Channel.DEEP_WILD);
   private final String name;
 
   public StringSegment (String name) {
