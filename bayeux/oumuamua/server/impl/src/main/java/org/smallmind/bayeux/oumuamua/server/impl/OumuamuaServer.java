@@ -57,6 +57,24 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   @Override
+  public String getBayeuxVersion () {
+
+    return null;
+  }
+
+  @Override
+  public String getMinimumBayeuxVersion () {
+
+    return null;
+  }
+
+  @Override
+  public String[] getSupportedProtocolNames () {
+
+    return new String[0];
+  }
+
+  @Override
   public Protocol getSupportedProtocol (String name) {
 
     return null;

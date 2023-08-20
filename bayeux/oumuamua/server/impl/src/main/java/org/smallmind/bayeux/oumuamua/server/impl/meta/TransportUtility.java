@@ -30,34 +30,28 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.spi.meta;
+package org.smallmind.bayeux.oumuamua.server.impl.meta;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import org.smallmind.web.json.doppelganger.Doppelganger;
-import org.smallmind.web.json.doppelganger.Hierarchy;
-import org.smallmind.web.json.doppelganger.Idiom;
-import org.smallmind.web.json.doppelganger.Pledge;
-import org.smallmind.web.json.doppelganger.View;
+import java.util.Arrays;
+import java.util.HashSet;
+import org.smallmind.bayeux.oumuamua.server.api.Protocol;
+import org.smallmind.bayeux.oumuamua.server.api.Server;
 
-import static org.smallmind.web.json.doppelganger.Visibility.IN;
-import static org.smallmind.web.json.doppelganger.Visibility.OUT;
+public class TransportUtility {
 
-@Doppelganger(
-  hierarchy = @Hierarchy(subClasses = {HandshakeMessage.class, ConnectMessage.class, SubscribeMessage.class, UnsubscribeMessage.class}),
-  pledges = @Pledge(purposes = "request", visibility = IN)
-)
-public class AdvisedMetaMessage extends MetaMessage {
+  public static String[] accumulateSupportedTransportNames (Server<?> server) {
 
-  @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
-  private JsonNode advice;
+    HashSet<String> supportedTransportSet = new HashSet<>();
 
-  public JsonNode getAdvice () {
+    for (String supportedProtocolName : server.getSupportedProtocolNames()) {
 
-    return advice;
-  }
+      Protocol supportedProtocol;
 
-  public void setAdvice (JsonNode advice) {
+      if ((supportedProtocol = server.getSupportedProtocol(supportedProtocolName)) != null) {
+        supportedTransportSet.addAll(Arrays.asList(supportedProtocol.getSupportedTransportNames()));
+      }
+    }
 
-    this.advice = advice;
+    return supportedTransportSet.toArray(new String[0]);
   }
 }

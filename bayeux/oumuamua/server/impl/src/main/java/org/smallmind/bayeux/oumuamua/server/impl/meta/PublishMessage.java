@@ -30,39 +30,27 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.spi.meta;
+package org.smallmind.bayeux.oumuamua.server.impl.meta;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
-import org.smallmind.bayeux.oumuamua.server.api.InvalidPathException;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
-import org.smallmind.bayeux.oumuamua.server.spi.Route;
-import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 import org.smallmind.web.json.doppelganger.Doppelganger;
 import org.smallmind.web.json.doppelganger.Idiom;
+import org.smallmind.web.json.doppelganger.Pledge;
 import org.smallmind.web.json.doppelganger.View;
 
 import static org.smallmind.web.json.doppelganger.Visibility.IN;
 import static org.smallmind.web.json.doppelganger.Visibility.OUT;
 
-@Doppelganger
-public class SubscribeMessage extends AdvisedMetaMessage {
+@Doppelganger(pledges = @Pledge(purposes = {"success", "error"}, visibility = OUT))
+public class PublishMessage extends MetaMessage {
 
-  public static final Route ROUTE;
-
-  @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
+  @View(idioms = @Idiom(purposes = "request", visibility = IN))
+  private JsonNode data;
+  @View(idioms = @Idiom(purposes = "request", visibility = IN))
   private String clientId;
-  @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
-  private String subscription;
-
-  static {
-
-    try {
-      ROUTE = new Route("/meta/subscribe");
-    } catch (InvalidPathException invalidPathException) {
-      throw new StaticInitializationError(invalidPathException);
-    }
-  }
 
   public <V extends Value<V>> Packet<V> process (Session<V> session) {
 
@@ -79,13 +67,13 @@ public class SubscribeMessage extends AdvisedMetaMessage {
     this.clientId = clientId;
   }
 
-  public String getSubscription () {
+  public JsonNode getData () {
 
-    return subscription;
+    return data;
   }
 
-  public void setSubscription (String subscription) {
+  public void setData (JsonNode data) {
 
-    this.subscription = subscription;
+    this.data = data;
   }
 }

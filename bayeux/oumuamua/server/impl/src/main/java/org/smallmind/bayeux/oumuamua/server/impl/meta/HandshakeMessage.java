@@ -30,21 +30,13 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.spi.meta;
+package org.smallmind.bayeux.oumuamua.server.impl.meta;
 
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.smallmind.bayeux.oumuamua.common.api.json.Message;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.InvalidPathException;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
-import org.smallmind.bayeux.oumuamua.server.api.PacketType;
-import org.smallmind.bayeux.oumuamua.server.api.Protocol;
-import org.smallmind.bayeux.oumuamua.server.api.SecurityPolicy;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
-import org.smallmind.bayeux.oumuamua.server.api.SessionState;
-import org.smallmind.bayeux.oumuamua.server.spi.Advice;
 import org.smallmind.bayeux.oumuamua.server.spi.Route;
 import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 import org.smallmind.web.json.doppelganger.Doppelganger;
@@ -80,6 +72,8 @@ public class HandshakeMessage extends AdvisedMetaMessage {
   public <V extends Value<V>> Packet<V> process (String protocolName, Server<V> server, Session<V> session)
     throws Exception {
 
+    return null;
+    /*
     ObjectNode adviceNode = JsonNodeFactory.instance.objectNode();
 
     if (session.getState().ordinal() > SessionState.INITIALIZED.ordinal()) {
@@ -92,8 +86,7 @@ public class HandshakeMessage extends AdvisedMetaMessage {
       if ((protocol = server.getSupportedProtocol(protocolName)) == null) {
         adviceNode.put(Advice.RECONNECT.getField(), "handshake");
 
-        return new Packet<>(PacketType.RESPONSE, null, new Message[] {new HandshakeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(ROUTE.getPath()).setId(getId()).setVersion(server.getBayeuxVersion()).setMinimumVersion(server.getMinimumBayeuxVersion()).setError("Handshake was previously completed").setSupportedConnectionTypes(TransportUtility.accumulateSupportedTransportNames(server)).setAdvice(adviceNode)).getBytes())})
-        ;
+//        return new Packet<>(PacketType.RESPONSE, null, new Message[] {new HandshakeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(ROUTE.getPath()).setId(getId()).setVersion(server.getBayeuxVersion()).setMinimumVersion(server.getMinimumBayeuxVersion()).setError("Handshake was previously completed").setSupportedConnectionTypes(TransportUtility.accumulateSupportedTransportNames(server)).setAdvice(adviceNode)).getBytes())});
       } else {
 
         SecurityPolicy securityPolicy;
@@ -101,6 +94,8 @@ public class HandshakeMessage extends AdvisedMetaMessage {
         if (((securityPolicy = server.getSecurityPolicy()) != null) && securityPolicy.canHandshake(session, ))
       }
     }
+
+     */
   }
 
   public String[] getSupportedConnectionTypes () {

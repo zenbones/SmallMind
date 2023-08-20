@@ -30,32 +30,26 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.spi.meta;
+package org.smallmind.bayeux.oumuamua.server.impl.meta;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.smallmind.web.json.doppelganger.Doppelganger;
+import org.smallmind.web.json.doppelganger.Hierarchy;
 import org.smallmind.web.json.doppelganger.Idiom;
+import org.smallmind.web.json.doppelganger.Pledge;
 import org.smallmind.web.json.doppelganger.View;
 
+import static org.smallmind.web.json.doppelganger.Visibility.IN;
 import static org.smallmind.web.json.doppelganger.Visibility.OUT;
 
-@Doppelganger
-public class DeliveryMessage extends MetaMessage {
+@Doppelganger(
+  hierarchy = @Hierarchy(subClasses = {HandshakeMessage.class, ConnectMessage.class, SubscribeMessage.class, UnsubscribeMessage.class}),
+  pledges = @Pledge(purposes = "request", visibility = IN)
+)
+public class AdvisedMetaMessage extends MetaMessage {
 
-  @View(idioms = @Idiom(purposes = "success", visibility = OUT))
-  private JsonNode data;
-  @View(idioms = @Idiom(purposes = "success", visibility = OUT))
+  @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
   private JsonNode advice;
-
-  public JsonNode getData () {
-
-    return data;
-  }
-
-  public void setData (JsonNode data) {
-
-    this.data = data;
-  }
 
   public JsonNode getAdvice () {
 

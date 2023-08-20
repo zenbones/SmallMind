@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.spi.meta;
+package org.smallmind.bayeux.oumuamua.server.impl.meta;
 
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.InvalidPathException;
@@ -46,19 +46,17 @@ import static org.smallmind.web.json.doppelganger.Visibility.IN;
 import static org.smallmind.web.json.doppelganger.Visibility.OUT;
 
 @Doppelganger
-public class UnsubscribeMessage extends AdvisedMetaMessage {
+public class DisconnectMessage extends MetaMessage {
 
   public static final Route ROUTE;
 
   @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
   private String clientId;
-  @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
-  private String subscription;
 
   static {
 
     try {
-      ROUTE = new Route("/meta/unsubscribe");
+      ROUTE = new Route("/meta/disconnect");
     } catch (InvalidPathException invalidPathException) {
       throw new StaticInitializationError(invalidPathException);
     }
@@ -77,15 +75,5 @@ public class UnsubscribeMessage extends AdvisedMetaMessage {
   public void setClientId (String clientId) {
 
     this.clientId = clientId;
-  }
-
-  public String getSubscription () {
-
-    return subscription;
-  }
-
-  public void setSubscription (String subscription) {
-
-    this.subscription = subscription;
   }
 }
