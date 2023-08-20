@@ -32,6 +32,28 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api;
 
+import org.smallmind.bayeux.oumuamua.common.api.json.Message;
+import org.smallmind.bayeux.oumuamua.common.api.json.Value;
+
 public interface SecurityPolicy {
 
+  default <V extends Value<V>> boolean canHandshake (Session<V> session, Message<V> message) {
+
+    return false;
+  }
+
+  default <V extends Value<V>> boolean canCreate (Session<V> session, String path, Message<V> message) {
+
+    return false;
+  }
+
+  default <V extends Value<V>> boolean canSubscribe (Session<V> session, Channel<V> channel, Message<V> message) {
+
+    return false;
+  }
+
+  default <V extends Value<V>> boolean canPublish (Session<V> session, Channel<V> channel, Message<V> message) {
+
+    return false;
+  }
 }

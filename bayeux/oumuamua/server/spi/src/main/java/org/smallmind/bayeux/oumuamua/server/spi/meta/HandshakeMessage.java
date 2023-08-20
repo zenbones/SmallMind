@@ -35,6 +35,7 @@ package org.smallmind.bayeux.oumuamua.server.spi.meta;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.InvalidPathException;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
+import org.smallmind.bayeux.oumuamua.server.api.SecurityPolicy;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.bayeux.oumuamua.server.spi.Route;
 import org.smallmind.nutsnbolts.lang.StaticInitializationError;
@@ -68,7 +69,7 @@ public class HandshakeMessage extends AdvisedMetaMessage {
     }
   }
 
-  public <V extends Value<V>> Packet<V> process (Session<V> session) {
+  public <V extends Value<V>> Packet<V> process (SecurityPolicy securityPolicy, Session<V> session) {
 
     return null;
   }
