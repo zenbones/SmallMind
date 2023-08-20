@@ -153,29 +153,34 @@ public class ChannelTree<V extends Value<V>> {
 
   public void deliver (int index, Packet<V> packet, Set<String> sessionIdSet) {
 
-    if (index < ((OumuamuaChannel<V>)packet.getChannel()).getRoute().lastIndex()) {
+    OumuamuaChannel<V> targetChannel;
 
-      ChannelTree<V> deepWildBranch;
-      ChannelTree<V> nextBranch;
+    if ((targetChannel = (OumuamuaChannel<V>)packet.getChannel()) != null) {
 
-      if ((deepWildBranch = childMap.get(StringSegment.wild())) != null) {
+      if (index < targetChannel.getRoute().lastIndex()) {
 
-        deepWildBranch.deliverToChannel(packet, sessionIdSet);
-      }
-      if ((nextBranch = childMap.get(((OumuamuaChannel<V>)packet.getChannel()).getRoute().getSegment(index))) != null) {
-        nextBranch.deliver(index + 1, packet, sessionIdSet);
-      }
-    } else {
-      if (parent != null) {
+        ChannelTree<V> deepWildBranch;
+        ChannelTree<V> nextBranch;
 
-        ChannelTree<V> wildBranch;
+        if ((deepWildBranch = childMap.get(StringSegment.wild())) != null) {
 
-        if ((wildBranch = parent.childMap.get(StringSegment.deepWild())) != null) {
-          wildBranch.deliverToChannel(packet, sessionIdSet);
+          deepWildBranch.deliverToChannel(packet, sessionIdSet);
         }
-      }
+        if ((nextBranch = childMap.get(targetChannel.getRoute().getSegment(index))) != null) {
+          nextBranch.deliver(index + 1, packet, sessionIdSet);
+        }
+      } else {
+        if (parent != null) {
 
-      deliverToChannel(packet, sessionIdSet);
+          ChannelTree<V> wildBranch;
+
+          if ((wildBranch = parent.childMap.get(StringSegment.deepWild())) != null) {
+            wildBranch.deliverToChannel(packet, sessionIdSet);
+          }
+        }
+
+        deliverToChannel(packet, sessionIdSet);
+      }
     }
   }
 

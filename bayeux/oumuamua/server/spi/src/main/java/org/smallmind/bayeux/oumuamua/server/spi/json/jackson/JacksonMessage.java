@@ -36,7 +36,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.common.api.json.Message;
 import org.smallmind.bayeux.oumuamua.common.api.json.ValueFactory;
-import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public class JacksonMessage extends JacksonObjectValue implements Message<JacksonValue<?>> {
 
@@ -53,11 +52,5 @@ public class JacksonMessage extends JacksonObjectValue implements Message<Jackso
   public Codec<JacksonValue<?>> getCodec () {
 
     return codec;
-  }
-
-  @Override
-  public Message<JacksonValue<?>> copy () {
-
-    return new JacksonMessage(codec, (ObjectNode)JsonCodec.copy(getNode()), getFactory());
   }
 }

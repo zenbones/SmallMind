@@ -57,7 +57,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   @Override
-  public Protocol getProtocol (String name) {
+  public Protocol getSupportedProtocol (String name) {
 
     return null;
   }

@@ -35,14 +35,13 @@ package org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356;
 import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
-import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.bayeux.oumuamua.server.spi.Connection;
 
 public class WebsocketConnection<V extends Value<V>> implements Connection<V> {
 
   @Override
-  public Protocol getProtocol () {
+  public String getProtocolName () {
 
     return null;
   }

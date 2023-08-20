@@ -35,12 +35,11 @@ package org.smallmind.bayeux.oumuamua.server.spi;
 import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
-import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
 
 public interface Connection<V extends Value<V>> {
 
-  Protocol getProtocol ();
+  String getProtocolName ();
 
   Codec<V> getCodec ();
 

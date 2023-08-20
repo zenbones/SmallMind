@@ -100,8 +100,6 @@ public interface Message<V extends Value<V>> extends ObjectValue<V> {
 
   Codec<V> getCodec ();
 
-  Message<V> copy ();
-
   private ObjectValue<V> getOrCreate (String field, boolean createIfAbsent) {
 
     Value<V> value;

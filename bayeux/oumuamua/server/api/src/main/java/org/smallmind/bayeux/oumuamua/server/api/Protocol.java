@@ -36,5 +36,7 @@ public interface Protocol {
 
   String getName ();
 
+  String[] getSupportedTransportNames ();
+
   Transport getTransport (String name);
 }

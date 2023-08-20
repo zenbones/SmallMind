@@ -72,7 +72,7 @@ public class MessageDouble<V extends Value<V>> implements Message<V> {
       return innerMessage.encode();
     } else {
 
-      Message<V> encodingMessage = outerMessage.copy();
+      Message<V> encodingMessage = getCodec().copy(outerMessage);
 
       for (String fieldName : new IterableIterator<>(innerMessage.fieldNames())) {
         if (!removedSet.contains(fieldName)) {
@@ -171,27 +171,5 @@ public class MessageDouble<V extends Value<V>> implements Message<V> {
     }
 
     return (V)this;
-  }
-
-  @Override
-  public Message<V> copy () {
-
-    if (outerMessage == null) {
-
-      return innerMessage.copy();
-    } else {
-
-      Message<V> copyingMessage = outerMessage.copy();
-
-      for (String fieldName : new IterableIterator<>(innerMessage.fieldNames())) {
-        if (!removedSet.contains(fieldName)) {
-          if (outerMessage.get(fieldName) == null) {
-            copyingMessage.put(fieldName, innerMessage.get(fieldName));
-          }
-        }
-      }
-
-      return copyingMessage;
-    }
   }
 }

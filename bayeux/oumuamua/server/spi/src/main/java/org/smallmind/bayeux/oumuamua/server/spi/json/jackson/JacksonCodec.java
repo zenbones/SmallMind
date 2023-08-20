@@ -32,15 +32,29 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.json.jackson;
 
+import java.io.IOException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.common.api.json.Message;
-import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public class JacksonCodec implements Codec<JacksonValue<?>> {
 
-  private final JacksonValueFactory FACTORY = new JacksonValueFactory();
+  private static final JacksonValueFactory FACTORY = new JacksonValueFactory();
+  private final JsonSerDes jsonSerDes;
+
+  public JacksonCodec (JsonSerDes jsonSerDes) {
+
+    this.jsonSerDes = jsonSerDes;
+  }
+
+  @Override
+  public byte[] fromMessage (Message<JacksonValue<?>> message)
+    throws JsonProcessingException {
+
+    return jsonSerDes.from(((JacksonMessage)message).getNode());
+  }
 
   @Override
   public Message<JacksonValue<?>> toMessage () {
@@ -49,9 +63,15 @@ public class JacksonCodec implements Codec<JacksonValue<?>> {
   }
 
   @Override
-  public byte[] fromMessage (Message<JacksonValue<?>> message)
-    throws JsonProcessingException {
+  public Message<JacksonValue<?>> toMessage (byte[] buffer)
+    throws IOException {
 
-    return JsonCodec.writeAsBytes(((JacksonMessage)message).getNode());
+    return new JacksonMessage(this, jsonSerDes.to(buffer), FACTORY);
+  }
+
+  @Override
+  public Message<JacksonValue<?>> copy (Message<JacksonValue<?>> message) {
+
+    return new JacksonMessage(this, (ObjectNode)jsonSerDes.copy(((JacksonMessage)message).getNode()), FACTORY);
   }
 }

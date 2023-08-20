@@ -69,14 +69,20 @@ public interface Server<V extends Value<V>> extends Attributed {
 
   void removeListener (Listener<V> listener);
 
-  Protocol getProtocol (String name);
+  String getBayeuxVersion ();
+
+  String getMinimumBayeuxVersion ();
+
+  String[] getSupportedProtocolNames();
+
+  Protocol getSupportedProtocol (String name);
 
   Backbone getBackbone ();
 
   SecurityPolicy getSecurityPolicy ();
 
   // Serves as an injection point for implementations that wish to add client configurable additions to the json codec pipeline
-  Codec<?> getCodec ();
+  Codec<V> getCodec ();
 
   Channel<V> findChannel (String path)
     throws InvalidPathException;
