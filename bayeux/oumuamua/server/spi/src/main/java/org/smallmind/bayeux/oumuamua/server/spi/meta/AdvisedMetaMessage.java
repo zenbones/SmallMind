@@ -30,9 +30,34 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.api;
+package org.smallmind.bayeux.oumuamua.server.spi.meta;
 
-public enum SessionState {
+import com.fasterxml.jackson.databind.JsonNode;
+import org.smallmind.web.json.doppelganger.Doppelganger;
+import org.smallmind.web.json.doppelganger.Hierarchy;
+import org.smallmind.web.json.doppelganger.Idiom;
+import org.smallmind.web.json.doppelganger.Pledge;
+import org.smallmind.web.json.doppelganger.View;
 
-  INITIALIZED, HANDSHOOk, CONNECTED, CLOSED
+import static org.smallmind.web.json.doppelganger.Visibility.IN;
+import static org.smallmind.web.json.doppelganger.Visibility.OUT;
+
+@Doppelganger(
+  hierarchy = @Hierarchy(subClasses = {HandshakeMessage.class, ConnectMessage.class, SubscribeMessage.class, UnsubscribeMessage.class}),
+  pledges = @Pledge(purposes = "request", visibility = IN)
+)
+public class AdvisedMetaMessage extends MetaMessage {
+
+  @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
+  private JsonNode advice;
+
+  public JsonNode getAdvice () {
+
+    return advice;
+  }
+
+  public void setAdvice (JsonNode advice) {
+
+    this.advice = advice;
+  }
 }

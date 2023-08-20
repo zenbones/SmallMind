@@ -30,9 +30,42 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.api;
+package org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356;
 
-public enum SessionState {
+import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
+import org.smallmind.bayeux.oumuamua.common.api.json.Value;
+import org.smallmind.bayeux.oumuamua.server.api.Packet;
+import org.smallmind.bayeux.oumuamua.server.api.Protocol;
+import org.smallmind.bayeux.oumuamua.server.api.Session;
+import org.smallmind.bayeux.oumuamua.server.spi.Connection;
 
-  INITIALIZED, HANDSHOOk, CONNECTED, CLOSED
+public class WebsocketConnection<V extends Value<V>> implements Connection<V> {
+
+  @Override
+  public Protocol getProtocol () {
+
+    return null;
+  }
+
+  @Override
+  public Codec<V> getCodec () {
+
+    return null;
+  }
+
+  @Override
+  public Session<V> getSession () {
+
+    return null;
+  }
+
+  @Override
+  public void close () {
+
+  }
+
+  @Override
+  public void deliver (Packet<V> packet) {
+
+  }
 }

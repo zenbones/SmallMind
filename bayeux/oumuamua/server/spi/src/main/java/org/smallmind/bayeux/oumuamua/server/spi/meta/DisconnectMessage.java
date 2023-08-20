@@ -30,9 +30,50 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.api;
+package org.smallmind.bayeux.oumuamua.server.spi.meta;
 
-public enum SessionState {
+import org.smallmind.bayeux.oumuamua.common.api.json.Value;
+import org.smallmind.bayeux.oumuamua.server.api.InvalidPathException;
+import org.smallmind.bayeux.oumuamua.server.api.Packet;
+import org.smallmind.bayeux.oumuamua.server.api.Session;
+import org.smallmind.bayeux.oumuamua.server.spi.Route;
+import org.smallmind.nutsnbolts.lang.StaticInitializationError;
+import org.smallmind.web.json.doppelganger.Doppelganger;
+import org.smallmind.web.json.doppelganger.Idiom;
+import org.smallmind.web.json.doppelganger.View;
 
-  INITIALIZED, HANDSHOOk, CONNECTED, CLOSED
+import static org.smallmind.web.json.doppelganger.Visibility.IN;
+import static org.smallmind.web.json.doppelganger.Visibility.OUT;
+
+@Doppelganger
+public class DisconnectMessage extends MetaMessage {
+
+  public static final Route ROUTE;
+
+  @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
+  private String clientId;
+
+  static {
+
+    try {
+      ROUTE = new Route("/meta/disconnect");
+    } catch (InvalidPathException invalidPathException) {
+      throw new StaticInitializationError(invalidPathException);
+    }
+  }
+
+  public <V extends Value<V>> Packet<V> process (Session<V> session) {
+
+    return null;
+  }
+
+  public String getClientId () {
+
+    return clientId;
+  }
+
+  public void setClientId (String clientId) {
+
+    this.clientId = clientId;
+  }
 }
