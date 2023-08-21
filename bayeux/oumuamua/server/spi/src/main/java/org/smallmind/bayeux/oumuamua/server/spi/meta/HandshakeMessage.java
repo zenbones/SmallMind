@@ -32,11 +32,19 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.meta;
 
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.smallmind.bayeux.oumuamua.common.api.json.Message;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.InvalidPathException;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
+import org.smallmind.bayeux.oumuamua.server.api.PacketType;
+import org.smallmind.bayeux.oumuamua.server.api.Protocol;
+import org.smallmind.bayeux.oumuamua.server.api.SecurityPolicy;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
+import org.smallmind.bayeux.oumuamua.server.api.SessionState;
+import org.smallmind.bayeux.oumuamua.server.spi.Advice;
 import org.smallmind.bayeux.oumuamua.server.spi.Route;
 import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 import org.smallmind.web.json.doppelganger.Doppelganger;
@@ -69,33 +77,65 @@ public class HandshakeMessage extends AdvisedMetaMessage {
     }
   }
 
-  public <V extends Value<V>> Packet<V> process (String protocolName, Server<V> server, Session<V> session)
+  public <V extends Value<V>> Packet<V> process (String protocolName, Server<V> server, Session<V> session, HandshakeMessageRequestInView view)
     throws Exception {
 
-    return null;
-
-/*
     ObjectNode adviceNode = JsonNodeFactory.instance.objectNode();
+    Protocol protocol;
 
-    if (session.getState().ordinal() > SessionState.INITIALIZED.ordinal()) {
-      adviceNode.put(Advice.RECONNECT.getField(), "retry");
-      adviceNode.put(Advice.INTERVAL.getField(), );
+    if ((protocol = server.getSupportedProtocol(protocolName)) == null) {
+      adviceNode.put(Advice.RECONNECT.getField(), "handshake");
+
+      return new Packet<>(PacketType.RESPONSE, null, new Message[] {toMessage(server.getCodec(), new HandshakeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(ROUTE.getPath()).setId(getId()).setVersion(server.getBayeuxVersion()).setMinimumVersion(server.getMinimumBayeuxVersion()).setError("Handshake attempted on an unsupported protocol").setSupportedConnectionTypes(TransportUtility.accumulateSupportedTransportNames(server)).setAdvice(adviceNode))});
     } else {
 
-      Protocol protocol;
+      SecurityPolicy securityPolicy;
 
-      if ((protocol = server.getSupportedProtocol(protocolName)) == null) {
-        adviceNode.put(Advice.RECONNECT.getField(), "handshake");
+      if (((securityPolicy = server.getSecurityPolicy()) != null) && (!securityPolicy.canHandshake(session, toMessage(server.getCodec(), view)))) {
 
-//        return new Packet<>(PacketType.RESPONSE, null, new Message[] {new HandshakeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(ROUTE.getPath()).setId(getId()).setVersion(server.getBayeuxVersion()).setMinimumVersion(server.getMinimumBayeuxVersion()).setError("Handshake was previously completed").setSupportedConnectionTypes(TransportUtility.accumulateSupportedTransportNames(server)).setAdvice(adviceNode)).getBytes())});
+        return new Packet<>(PacketType.RESPONSE, null, new Message[] {toMessage(server.getCodec(), new HandshakeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(ROUTE.getPath()).setId(getId()).setVersion(server.getBayeuxVersion()).setMinimumVersion(server.getMinimumBayeuxVersion()).setError("Unauthorized").setSupportedConnectionTypes(TransportUtility.accumulateSupportedTransportNames(server)).setAdvice(adviceNode))});
+      } else if (session.getState().ordinal() > SessionState.INITIALIZED.ordinal()) {
+        adviceNode.put(Advice.RECONNECT.getField(), "retry");
+        adviceNode.put(Advice.INTERVAL.getField(), protocol.getLongPollAdvisedIntervalMilliseconds());
+
+        return new Packet<>(PacketType.RESPONSE, null, new Message[] {toMessage(server.getCodec(), new HandshakeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(ROUTE.getPath()).setId(getId()).setVersion(server.getBayeuxVersion()).setMinimumVersion(server.getMinimumBayeuxVersion()).setError("Handshake was previously completed").setSupportedConnectionTypes(TransportUtility.accumulateSupportedTransportNames(server)).setAdvice(adviceNode))});
       } else {
 
-        SecurityPolicy securityPolicy;
+        String connectionType;
 
-        if (((securityPolicy = server.getSecurityPolicy()) != null) && securityPolicy.canHandshake(session, ))
+        if ((connectionType = findConnectionType(protocol)) == null) {
+          adviceNode.put(Advice.RECONNECT.getField(), "handshake");
+
+          return new Packet<>(PacketType.RESPONSE, null, new Message[] {toMessage(server.getCodec(), new HandshakeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(ROUTE.getPath()).setId(getId()).setVersion(server.getBayeuxVersion()).setMinimumVersion(server.getMinimumBayeuxVersion()).setError("Handshake attempted on an unsupported transport").setSupportedConnectionTypes(TransportUtility.accumulateSupportedTransportNames(server)).setAdvice(adviceNode))});
+        } else {
+
+          return null;
+        }
       }
     }
-*/
+  }
+
+  private String findConnectionType (Protocol protocol) {
+
+    if (getSupportedConnectionTypes() != null) {
+      for (String supportedConnectionType : getSupportedConnectionTypes()) {
+        if (supportedConnectionType != null) {
+
+          String[] supportedTransportNames;
+
+          if ((supportedTransportNames = protocol.getSupportedTransportNames()) != null) {
+            for (String supportedTransportName : supportedTransportNames) {
+              if (supportedConnectionType.equals(supportedTransportName)) {
+
+                return supportedConnectionType;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return null;
   }
 
   public String[] getSupportedConnectionTypes () {

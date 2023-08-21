@@ -30,15 +30,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.api;
+package org.smallmind.bayeux.oumuamua.server.spi;
 
-public interface Protocol {
+import org.smallmind.bayeux.oumuamua.server.api.OumuamuaException;
 
-  String getName ();
+public class MetaProcessingException extends OumuamuaException {
 
-  long getLongPollAdvisedIntervalMilliseconds ();
+  public MetaProcessingException (String message, Object... args) {
 
-  String[] getSupportedTransportNames ();
-
-  Transport getTransport (String name);
+    super(message, args);
+  }
 }

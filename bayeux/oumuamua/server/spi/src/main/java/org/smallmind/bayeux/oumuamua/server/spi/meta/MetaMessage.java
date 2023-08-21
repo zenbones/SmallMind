@@ -33,10 +33,17 @@
 package org.smallmind.bayeux.oumuamua.server.spi.meta;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
+import org.smallmind.bayeux.oumuamua.common.api.json.Message;
+import org.smallmind.bayeux.oumuamua.common.api.json.Value;
+import org.smallmind.bayeux.oumuamua.server.spi.MetaProcessingException;
+import org.smallmind.bayeux.oumuamua.server.spi.json.MessageUtility;
 import org.smallmind.web.json.doppelganger.Doppelganger;
 import org.smallmind.web.json.doppelganger.Hierarchy;
 import org.smallmind.web.json.doppelganger.Idiom;
 import org.smallmind.web.json.doppelganger.View;
+import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 import static org.smallmind.web.json.doppelganger.Visibility.IN;
 import static org.smallmind.web.json.doppelganger.Visibility.OUT;
@@ -54,6 +61,24 @@ public class MetaMessage {
   private String error;
   @View(idioms = @Idiom(purposes = {"success", "error"}, visibility = OUT))
   private Boolean successful;
+
+  public <V extends Value<V>> Message<V> toMessage (Codec<V> codec, MetaMessageRequestInView<?> view)
+    throws MetaProcessingException {
+
+    return MessageUtility.convert(codec, (ObjectNode)JsonCodec.writeAsJsonNode(view));
+  }
+
+  public <V extends Value<V>> Message<V> toMessage (Codec<V> codec, MetaMessageSuccessOutView<?> view)
+    throws MetaProcessingException {
+
+    return MessageUtility.convert(codec, (ObjectNode)JsonCodec.writeAsJsonNode(view));
+  }
+
+  public <V extends Value<V>> Message<V> toMessage (Codec<V> codec, MetaMessageErrorOutView<?> view)
+    throws MetaProcessingException {
+
+    return MessageUtility.convert(codec, (ObjectNode)JsonCodec.writeAsJsonNode(view));
+  }
 
   public String getChannel () {
 
