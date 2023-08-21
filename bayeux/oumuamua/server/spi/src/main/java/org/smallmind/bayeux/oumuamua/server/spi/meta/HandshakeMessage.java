@@ -86,31 +86,26 @@ public class HandshakeMessage extends AdvisedMetaMessage {
     if ((protocol = server.getSupportedProtocol(protocolName)) == null) {
       adviceNode.put(Advice.RECONNECT.getField(), "handshake");
 
-      return new Packet<>(PacketType.RESPONSE, null, new Message[] {toMessage(server.getCodec(), new HandshakeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(ROUTE.getPath()).setId(getId()).setVersion(server.getBayeuxVersion()).setMinimumVersion(server.getMinimumBayeuxVersion()).setError("Handshake attempted on an unsupported protocol").setSupportedConnectionTypes(TransportUtility.accumulateSupportedTransportNames(server)).setAdvice(adviceNode))});
+      return new Packet<V>(PacketType.RESPONSE, null, new Message[] {toMessage(server.getCodec(), new HandshakeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(ROUTE.getPath()).setId(getId()).setVersion(server.getBayeuxVersion()).setMinimumVersion(server.getMinimumBayeuxVersion()).setError("Handshake attempted on an unsupported protocol").setSupportedConnectionTypes(TransportUtility.accumulateSupportedTransportNames(server)).setAdvice(adviceNode))});
     } else {
 
       SecurityPolicy securityPolicy;
 
       if (((securityPolicy = server.getSecurityPolicy()) != null) && (!securityPolicy.canHandshake(session, toMessage(server.getCodec(), view)))) {
 
-        return new Packet<>(PacketType.RESPONSE, null, new Message[] {toMessage(server.getCodec(), new HandshakeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(ROUTE.getPath()).setId(getId()).setVersion(server.getBayeuxVersion()).setMinimumVersion(server.getMinimumBayeuxVersion()).setError("Unauthorized").setSupportedConnectionTypes(TransportUtility.accumulateSupportedTransportNames(server)).setAdvice(adviceNode))});
+        return new Packet<V>(PacketType.RESPONSE, null, new Message[] {toMessage(server.getCodec(), new HandshakeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(ROUTE.getPath()).setId(getId()).setVersion(server.getBayeuxVersion()).setMinimumVersion(server.getMinimumBayeuxVersion()).setError("Unauthorized").setSupportedConnectionTypes(TransportUtility.accumulateSupportedTransportNames(server)).setAdvice(adviceNode))});
       } else if (session.getState().ordinal() > SessionState.INITIALIZED.ordinal()) {
         adviceNode.put(Advice.RECONNECT.getField(), "retry");
-        adviceNode.put(Advice.INTERVAL.getField(), protocol.getLongPollAdvisedIntervalMilliseconds());
 
-        return new Packet<>(PacketType.RESPONSE, null, new Message[] {toMessage(server.getCodec(), new HandshakeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(ROUTE.getPath()).setId(getId()).setVersion(server.getBayeuxVersion()).setMinimumVersion(server.getMinimumBayeuxVersion()).setError("Handshake was previously completed").setSupportedConnectionTypes(TransportUtility.accumulateSupportedTransportNames(server)).setAdvice(adviceNode))});
+        return new Packet<V>(PacketType.RESPONSE, null, new Message[] {toMessage(server.getCodec(), new HandshakeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(ROUTE.getPath()).setId(getId()).setVersion(server.getBayeuxVersion()).setMinimumVersion(server.getMinimumBayeuxVersion()).setError("Handshake was previously completed").setSupportedConnectionTypes(TransportUtility.accumulateSupportedTransportNames(server)).setAdvice(adviceNode))});
+      } else if (findConnectionType(protocol) == null) {
+        adviceNode.put(Advice.RECONNECT.getField(), "handshake");
+
+        return new Packet<V>(PacketType.RESPONSE, null, new Message[] {toMessage(server.getCodec(), new HandshakeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(ROUTE.getPath()).setId(getId()).setVersion(server.getBayeuxVersion()).setMinimumVersion(server.getMinimumBayeuxVersion()).setError("Handshake attempted on an unsupported transport").setSupportedConnectionTypes(TransportUtility.accumulateSupportedTransportNames(server)).setAdvice(adviceNode))});
       } else {
+        session.completeHandshake();
 
-        String connectionType;
-
-        if ((connectionType = findConnectionType(protocol)) == null) {
-          adviceNode.put(Advice.RECONNECT.getField(), "handshake");
-
-          return new Packet<>(PacketType.RESPONSE, null, new Message[] {toMessage(server.getCodec(), new HandshakeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(ROUTE.getPath()).setId(getId()).setVersion(server.getBayeuxVersion()).setMinimumVersion(server.getMinimumBayeuxVersion()).setError("Handshake attempted on an unsupported transport").setSupportedConnectionTypes(TransportUtility.accumulateSupportedTransportNames(server)).setAdvice(adviceNode))});
-        } else {
-
-          return null;
-        }
+        return new Packet<V>(PacketType.RESPONSE, null, new Message[] {toMessage(server.getCodec(), new HandshakeMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(ROUTE.getPath()).setId(getId()).setVersion(server.getBayeuxVersion()).setMinimumVersion(server.getMinimumBayeuxVersion()).setClientId(session.getId()).setSupportedConnectionTypes(protocol.getSupportedTransportNames()))});
       }
     }
   }

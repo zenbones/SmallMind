@@ -90,14 +90,27 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   }
 
   @Override
-  public SessionState getState () {
+  public synchronized SessionState getState () {
 
     return state;
   }
 
-  public void setState (SessionState state) {
+  @Override
+  public void completeHandshake () {
 
-    this.state = state;
+    state = SessionState.HANDSHOOK;
+  }
+
+  @Override
+  public void completeConnection () {
+
+    state = SessionState.CONNECTED;
+  }
+
+  @Override
+  public void completeCLose () {
+
+    state = SessionState.CLOSED;
   }
 
   @Override

@@ -56,5 +56,11 @@ public interface Session<V extends Value<V>> {
 
   SessionState getState ();
 
+  void completeHandshake ();
+
+  void completeConnection ();
+
+  void completeCLose ();
+
   void deliver (Packet<V> packet);
 }
