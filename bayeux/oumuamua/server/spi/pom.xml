@@ -12,6 +12,12 @@
   <description>Oumuamua Server Spi</description>
   <dependencies>
     <dependency>
+      <groupId>javax.annotation</groupId>
+      <artifactId>javax.annotation-api</artifactId>
+      <optional>true</optional>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
       <groupId>org.apache.kafka</groupId>
       <artifactId>kafka-clients</artifactId>
       <optional>true</optional>
@@ -31,6 +37,12 @@
     <dependency>
       <groupId>org.smallmind</groupId>
       <artifactId>smallmind-nutsnbolts</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.smallmind</groupId>
+      <artifactId>web-json-doppelganger</artifactId>
+      <optional>true</optional>
       <scope>compile</scope>
     </dependency>
     <dependency>

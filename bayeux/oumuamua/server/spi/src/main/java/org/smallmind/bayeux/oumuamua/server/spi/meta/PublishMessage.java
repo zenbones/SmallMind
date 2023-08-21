@@ -30,22 +30,42 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.impl.meta;
+package org.smallmind.bayeux.oumuamua.server.spi.meta;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.smallmind.bayeux.oumuamua.common.api.json.Value;
+import org.smallmind.bayeux.oumuamua.server.api.Packet;
+import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.web.json.doppelganger.Doppelganger;
 import org.smallmind.web.json.doppelganger.Idiom;
+import org.smallmind.web.json.doppelganger.Pledge;
 import org.smallmind.web.json.doppelganger.View;
 
+import static org.smallmind.web.json.doppelganger.Visibility.IN;
 import static org.smallmind.web.json.doppelganger.Visibility.OUT;
 
-@Doppelganger
-public class DeliveryMessage extends MetaMessage {
+@Doppelganger(pledges = @Pledge(purposes = {"success", "error"}, visibility = OUT))
+public class PublishMessage extends MetaMessage {
 
-  @View(idioms = @Idiom(purposes = "success", visibility = OUT))
+  @View(idioms = @Idiom(purposes = "request", visibility = IN))
   private JsonNode data;
-  @View(idioms = @Idiom(purposes = "success", visibility = OUT))
-  private JsonNode advice;
+  @View(idioms = @Idiom(purposes = "request", visibility = IN))
+  private String clientId;
+
+  public <V extends Value<V>> Packet<V> process (Session<V> session) {
+
+    return null;
+  }
+
+  public String getClientId () {
+
+    return clientId;
+  }
+
+  public void setClientId (String clientId) {
+
+    this.clientId = clientId;
+  }
 
   public JsonNode getData () {
 
@@ -55,15 +75,5 @@ public class DeliveryMessage extends MetaMessage {
   public void setData (JsonNode data) {
 
     this.data = data;
-  }
-
-  public JsonNode getAdvice () {
-
-    return advice;
-  }
-
-  public void setAdvice (JsonNode advice) {
-
-    this.advice = advice;
   }
 }

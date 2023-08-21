@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.impl.meta;
+package org.smallmind.bayeux.oumuamua.server.spi.meta;
 
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.InvalidPathException;
@@ -73,7 +73,8 @@ public class HandshakeMessage extends AdvisedMetaMessage {
     throws Exception {
 
     return null;
-    /*
+
+/*
     ObjectNode adviceNode = JsonNodeFactory.instance.objectNode();
 
     if (session.getState().ordinal() > SessionState.INITIALIZED.ordinal()) {
@@ -94,8 +95,7 @@ public class HandshakeMessage extends AdvisedMetaMessage {
         if (((securityPolicy = server.getSecurityPolicy()) != null) && securityPolicy.canHandshake(session, ))
       }
     }
-
-     */
+*/
   }
 
   public String[] getSupportedConnectionTypes () {

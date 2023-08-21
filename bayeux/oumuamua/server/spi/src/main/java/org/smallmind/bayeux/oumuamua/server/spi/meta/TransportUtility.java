@@ -30,50 +30,28 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.impl.meta;
+package org.smallmind.bayeux.oumuamua.server.spi.meta;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import org.smallmind.bayeux.oumuamua.common.api.json.Value;
-import org.smallmind.bayeux.oumuamua.server.api.Packet;
-import org.smallmind.bayeux.oumuamua.server.api.Session;
-import org.smallmind.web.json.doppelganger.Doppelganger;
-import org.smallmind.web.json.doppelganger.Idiom;
-import org.smallmind.web.json.doppelganger.Pledge;
-import org.smallmind.web.json.doppelganger.View;
+import java.util.Arrays;
+import java.util.HashSet;
+import org.smallmind.bayeux.oumuamua.server.api.Protocol;
+import org.smallmind.bayeux.oumuamua.server.api.Server;
 
-import static org.smallmind.web.json.doppelganger.Visibility.IN;
-import static org.smallmind.web.json.doppelganger.Visibility.OUT;
+public class TransportUtility {
 
-@Doppelganger(pledges = @Pledge(purposes = {"success", "error"}, visibility = OUT))
-public class PublishMessage extends MetaMessage {
+  public static String[] accumulateSupportedTransportNames (Server<?> server) {
 
-  @View(idioms = @Idiom(purposes = "request", visibility = IN))
-  private JsonNode data;
-  @View(idioms = @Idiom(purposes = "request", visibility = IN))
-  private String clientId;
+    HashSet<String> supportedTransportSet = new HashSet<>();
 
-  public <V extends Value<V>> Packet<V> process (Session<V> session) {
+    for (String supportedProtocolName : server.getSupportedProtocolNames()) {
 
-    return null;
-  }
+      Protocol supportedProtocol;
 
-  public String getClientId () {
+      if ((supportedProtocol = server.getSupportedProtocol(supportedProtocolName)) != null) {
+        supportedTransportSet.addAll(Arrays.asList(supportedProtocol.getSupportedTransportNames()));
+      }
+    }
 
-    return clientId;
-  }
-
-  public void setClientId (String clientId) {
-
-    this.clientId = clientId;
-  }
-
-  public JsonNode getData () {
-
-    return data;
-  }
-
-  public void setData (JsonNode data) {
-
-    this.data = data;
+    return supportedTransportSet.toArray(new String[0]);
   }
 }

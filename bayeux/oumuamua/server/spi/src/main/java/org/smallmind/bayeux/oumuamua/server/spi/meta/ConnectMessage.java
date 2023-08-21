@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.impl.meta;
+package org.smallmind.bayeux.oumuamua.server.spi.meta;
 
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.InvalidPathException;
@@ -46,19 +46,19 @@ import static org.smallmind.web.json.doppelganger.Visibility.IN;
 import static org.smallmind.web.json.doppelganger.Visibility.OUT;
 
 @Doppelganger
-public class SubscribeMessage extends AdvisedMetaMessage {
+public class ConnectMessage extends AdvisedMetaMessage {
 
   public static final Route ROUTE;
 
   @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
   private String clientId;
-  @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
-  private String subscription;
+  @View(idioms = @Idiom(purposes = "request", visibility = IN))
+  private String connectionType;
 
   static {
 
     try {
-      ROUTE = new Route("/meta/subscribe");
+      ROUTE = new Route("/meta/connect");
     } catch (InvalidPathException invalidPathException) {
       throw new StaticInitializationError(invalidPathException);
     }
@@ -79,13 +79,13 @@ public class SubscribeMessage extends AdvisedMetaMessage {
     this.clientId = clientId;
   }
 
-  public String getSubscription () {
+  public String getConnectionType () {
 
-    return subscription;
+    return connectionType;
   }
 
-  public void setSubscription (String subscription) {
+  public void setConnectionType (String connectionType) {
 
-    this.subscription = subscription;
+    this.connectionType = connectionType;
   }
 }

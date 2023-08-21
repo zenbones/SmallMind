@@ -30,78 +30,50 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.impl.meta;
+package org.smallmind.bayeux.oumuamua.server.spi.meta;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import org.smallmind.bayeux.oumuamua.common.api.json.Value;
+import org.smallmind.bayeux.oumuamua.server.api.InvalidPathException;
+import org.smallmind.bayeux.oumuamua.server.api.Packet;
+import org.smallmind.bayeux.oumuamua.server.api.Session;
+import org.smallmind.bayeux.oumuamua.server.spi.Route;
+import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 import org.smallmind.web.json.doppelganger.Doppelganger;
-import org.smallmind.web.json.doppelganger.Hierarchy;
 import org.smallmind.web.json.doppelganger.Idiom;
 import org.smallmind.web.json.doppelganger.View;
 
 import static org.smallmind.web.json.doppelganger.Visibility.IN;
 import static org.smallmind.web.json.doppelganger.Visibility.OUT;
 
-@Doppelganger(hierarchy = @Hierarchy(subClasses = {AdvisedMetaMessage.class, DisconnectMessage.class, PublishMessage.class, DeliveryMessage.class}))
-public class MetaMessage {
+@Doppelganger
+public class DisconnectMessage extends MetaMessage {
+
+  public static final Route ROUTE;
 
   @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
-  private JsonNode ext;
-  @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
-  private String channel;
-  @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
-  private String id;
-  @View(idioms = @Idiom(purposes = "error", visibility = OUT))
-  private String error;
-  @View(idioms = @Idiom(purposes = {"success", "error"}, visibility = OUT))
-  private Boolean successful;
+  private String clientId;
 
-  public String getChannel () {
+  static {
 
-    return channel;
+    try {
+      ROUTE = new Route("/meta/disconnect");
+    } catch (InvalidPathException invalidPathException) {
+      throw new StaticInitializationError(invalidPathException);
+    }
   }
 
-  public void setChannel (String channel) {
+  public <V extends Value<V>> Packet<V> process (Session<V> session) {
 
-    this.channel = channel;
+    return null;
   }
 
-  public String getId () {
+  public String getClientId () {
 
-    return id;
+    return clientId;
   }
 
-  public void setId (String id) {
+  public void setClientId (String clientId) {
 
-    this.id = id;
-  }
-
-  public JsonNode getExt () {
-
-    return ext;
-  }
-
-  public void setExt (JsonNode ext) {
-
-    this.ext = ext;
-  }
-
-  public Boolean getSuccessful () {
-
-    return successful;
-  }
-
-  public void setSuccessful (Boolean successful) {
-
-    this.successful = successful;
-  }
-
-  public String getError () {
-
-    return error;
-  }
-
-  public void setError (String error) {
-
-    this.error = error;
+    this.clientId = clientId;
   }
 }

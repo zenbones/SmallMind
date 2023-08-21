@@ -30,62 +30,78 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.impl.meta;
+package org.smallmind.bayeux.oumuamua.server.spi.meta;
 
-import org.smallmind.bayeux.oumuamua.common.api.json.Value;
-import org.smallmind.bayeux.oumuamua.server.api.InvalidPathException;
-import org.smallmind.bayeux.oumuamua.server.api.Packet;
-import org.smallmind.bayeux.oumuamua.server.api.Session;
-import org.smallmind.bayeux.oumuamua.server.spi.Route;
-import org.smallmind.nutsnbolts.lang.StaticInitializationError;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.smallmind.web.json.doppelganger.Doppelganger;
+import org.smallmind.web.json.doppelganger.Hierarchy;
 import org.smallmind.web.json.doppelganger.Idiom;
 import org.smallmind.web.json.doppelganger.View;
 
 import static org.smallmind.web.json.doppelganger.Visibility.IN;
 import static org.smallmind.web.json.doppelganger.Visibility.OUT;
 
-@Doppelganger
-public class UnsubscribeMessage extends AdvisedMetaMessage {
-
-  public static final Route ROUTE;
+@Doppelganger(hierarchy = @Hierarchy(subClasses = {AdvisedMetaMessage.class, DisconnectMessage.class, PublishMessage.class, DeliveryMessage.class}))
+public class MetaMessage {
 
   @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
-  private String clientId;
+  private JsonNode ext;
   @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
-  private String subscription;
+  private String channel;
+  @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
+  private String id;
+  @View(idioms = @Idiom(purposes = "error", visibility = OUT))
+  private String error;
+  @View(idioms = @Idiom(purposes = {"success", "error"}, visibility = OUT))
+  private Boolean successful;
 
-  static {
+  public String getChannel () {
 
-    try {
-      ROUTE = new Route("/meta/unsubscribe");
-    } catch (InvalidPathException invalidPathException) {
-      throw new StaticInitializationError(invalidPathException);
-    }
+    return channel;
   }
 
-  public <V extends Value<V>> Packet<V> process (Session<V> session) {
+  public void setChannel (String channel) {
 
-    return null;
+    this.channel = channel;
   }
 
-  public String getClientId () {
+  public String getId () {
 
-    return clientId;
+    return id;
   }
 
-  public void setClientId (String clientId) {
+  public void setId (String id) {
 
-    this.clientId = clientId;
+    this.id = id;
   }
 
-  public String getSubscription () {
+  public JsonNode getExt () {
 
-    return subscription;
+    return ext;
   }
 
-  public void setSubscription (String subscription) {
+  public void setExt (JsonNode ext) {
 
-    this.subscription = subscription;
+    this.ext = ext;
+  }
+
+  public Boolean getSuccessful () {
+
+    return successful;
+  }
+
+  public void setSuccessful (Boolean successful) {
+
+    this.successful = successful;
+  }
+
+  public String getError () {
+
+    return error;
+  }
+
+  public void setError (String error) {
+
+    this.error = error;
   }
 }
