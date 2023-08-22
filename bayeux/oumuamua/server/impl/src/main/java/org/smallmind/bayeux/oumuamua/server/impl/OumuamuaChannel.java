@@ -43,12 +43,12 @@ import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.PacketType;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.bayeux.oumuamua.server.spi.AbstractAttributed;
-import org.smallmind.bayeux.oumuamua.server.spi.Route;
+import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
 
 public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed implements Channel<V> {
 
   private final Codec<V> codec;
-  private final Route route;
+  private final DefaultRoute route;
   private final ConcurrentHashMap<String, Session<V>> sessionMap = new ConcurrentHashMap<>();
   private final ConcurrentLinkedQueue<Listener<V>> listenerList = new ConcurrentLinkedQueue<>();
   private final AtomicBoolean reflecting = new AtomicBoolean();
@@ -57,14 +57,14 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
   private long removableTimestamp;
   private int persistentListenerCount;
 
-  public OumuamuaChannel (Codec<V> codec, long timeToLive, Route route) {
+  public OumuamuaChannel (Codec<V> codec, long timeToLive, DefaultRoute route) {
 
     this.codec = codec;
     this.route = route;
     this.timeToLive = timeToLive;
   }
 
-  public Route getRoute () {
+  public DefaultRoute getRoute () {
 
     return route;
   }
@@ -207,7 +207,7 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
     onDelivery(frozenPacket);
 
     for (Session<V> session : sessionMap.values()) {
-      if (sessionIdSet.add(session.getId())) {
+      if (sessionIdSet.add(session.getId()) && ((!session.getId().equals(packet.getSenderId())) || reflecting.get())) {
         session.deliver(frozenPacket);
       }
     }

@@ -33,13 +33,14 @@
 package org.smallmind.bayeux.oumuamua.server.spi;
 
 import org.smallmind.bayeux.oumuamua.server.api.InvalidPathException;
+import org.smallmind.bayeux.oumuamua.server.api.Route;
 
-public class Route {
+public class DefaultRoute implements Route {
 
   private final String path;
   private final int[] segments;
 
-  public Route (String path)
+  public DefaultRoute (String path)
     throws InvalidPathException {
 
     this.path = path;
@@ -130,7 +131,7 @@ public class Route {
   @Override
   public boolean equals (Object obj) {
 
-    return (obj instanceof Route) && ((Route)obj).path.equals(path);
+    return (obj instanceof DefaultRoute) && ((DefaultRoute)obj).path.equals(path);
   }
 
   public class RouteSegment extends Segment {
@@ -145,7 +146,7 @@ public class Route {
     @Override
     public boolean matches (Segment segment) {
 
-      return Route.this.matches(index, segment);
+      return DefaultRoute.this.matches(index, segment);
     }
 
     @Override

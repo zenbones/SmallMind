@@ -37,14 +37,16 @@ import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 
 public class Packet<V extends Value<V>> {
 
-  private final PacketType packetType;
-  private final Channel<V> channel;
   private final Message<V>[] messages;
+  private final PacketType packetType;
+  private final Route route;
+  private final String senderId;
 
-  public Packet (PacketType packetType, Channel<V> channel, Message<V>[] messages) {
+  public Packet (PacketType packetType, String senderId, Route route, Message<V>[] messages) {
 
     this.packetType = packetType;
-    this.channel = channel;
+    this.senderId = senderId;
+    this.route = route;
     this.messages = messages;
   }
 
@@ -53,9 +55,14 @@ public class Packet<V extends Value<V>> {
     return packetType;
   }
 
-  public Channel<V> getChannel () {
+  public String getSenderId () {
 
-    return channel;
+    return senderId;
+  }
+
+  public Route getRoute () {
+
+    return route;
   }
 
   public Message<V>[] getMessages () {

@@ -32,15 +32,24 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api;
 
-public interface Protocol {
+public interface Route {
 
-  String getName ();
+  String getPath ();
 
-  long getLongPollIntervalMilliseconds ();
+  int size ();
 
-  long getLongPollTimeoutMilliseconds ();
+  int lastIndex ();
 
-  String[] getSupportedTransportNames ();
+  boolean isWild ();
 
-  Transport getTransport (String name);
+  boolean isDeepWild ();
+
+  boolean isMeta ();
+
+  boolean isService ();
+
+  default boolean isDeliverable () {
+
+    return !(isWild() || isDeepWild() || isMeta() || isService());
+  }
 }

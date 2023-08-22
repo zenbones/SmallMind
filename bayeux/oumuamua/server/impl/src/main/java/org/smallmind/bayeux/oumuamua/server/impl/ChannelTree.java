@@ -41,7 +41,7 @@ import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
-import org.smallmind.bayeux.oumuamua.server.spi.Route;
+import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
 import org.smallmind.bayeux.oumuamua.server.spi.Segment;
 import org.smallmind.bayeux.oumuamua.server.spi.StringSegment;
 
@@ -76,7 +76,7 @@ public class ChannelTree<V extends Value<V>> {
     }
   }
 
-  public ChannelTree<V> find (int index, Route route) {
+  public ChannelTree<V> find (int index, DefaultRoute route) {
 
     ChannelTree<V> child;
 
@@ -89,7 +89,7 @@ public class ChannelTree<V extends Value<V>> {
     }
   }
 
-  public ChannelTree<V> createIfAbsent (Codec<V> codec, long timeToLive, int index, Route route) {
+  public ChannelTree<V> createIfAbsent (Codec<V> codec, long timeToLive, int index, DefaultRoute route) {
 
     ChannelTree<V> child;
     Segment segment;
@@ -110,7 +110,7 @@ public class ChannelTree<V extends Value<V>> {
     return (index == route.lastIndex()) ? child.enforceChannel(codec, timeToLive, route) : child.createIfAbsent(codec, timeToLive, index + 1, route);
   }
 
-  private ChannelTree<V> enforceChannel (Codec<V> codec, long timeToLive, Route route) {
+  private ChannelTree<V> enforceChannel (Codec<V> codec, long timeToLive, DefaultRoute route) {
 
     channelChangeLock.writeLock().lock();
 
@@ -125,7 +125,7 @@ public class ChannelTree<V extends Value<V>> {
     }
   }
 
-  public ChannelTree<V> removeIfPresent (int index, Route route) {
+  public ChannelTree<V> removeIfPresent (int index, DefaultRoute route) {
 
     ChannelTree<V> child;
 
@@ -153,34 +153,29 @@ public class ChannelTree<V extends Value<V>> {
 
   public void deliver (int index, Packet<V> packet, Set<String> sessionIdSet) {
 
-    OumuamuaChannel<V> targetChannel;
+    if (index < packet.getRoute().lastIndex()) {
 
-    if ((targetChannel = (OumuamuaChannel<V>)packet.getChannel()) != null) {
+      ChannelTree<V> deepWildBranch;
+      ChannelTree<V> nextBranch;
 
-      if (index < targetChannel.getRoute().lastIndex()) {
+      if ((deepWildBranch = childMap.get(StringSegment.wild())) != null) {
 
-        ChannelTree<V> deepWildBranch;
-        ChannelTree<V> nextBranch;
-
-        if ((deepWildBranch = childMap.get(StringSegment.wild())) != null) {
-
-          deepWildBranch.deliverToChannel(packet, sessionIdSet);
-        }
-        if ((nextBranch = childMap.get(targetChannel.getRoute().getSegment(index))) != null) {
-          nextBranch.deliver(index + 1, packet, sessionIdSet);
-        }
-      } else {
-        if (parent != null) {
-
-          ChannelTree<V> wildBranch;
-
-          if ((wildBranch = parent.childMap.get(StringSegment.deepWild())) != null) {
-            wildBranch.deliverToChannel(packet, sessionIdSet);
-          }
-        }
-
-        deliverToChannel(packet, sessionIdSet);
+        deepWildBranch.deliverToChannel(packet, sessionIdSet);
       }
+      if ((nextBranch = childMap.get(((DefaultRoute)packet.getRoute()).getSegment(index))) != null) {
+        nextBranch.deliver(index + 1, packet, sessionIdSet);
+      }
+    } else {
+      if (parent != null) {
+
+        ChannelTree<V> wildBranch;
+
+        if ((wildBranch = parent.childMap.get(StringSegment.deepWild())) != null) {
+          wildBranch.deliverToChannel(packet, sessionIdSet);
+        }
+      }
+
+      deliverToChannel(packet, sessionIdSet);
     }
   }
 

@@ -48,6 +48,6 @@ public class PacketUtility {
       frozenMessages[index++] = new MessageDouble<V>(message);
     }
 
-    return new Packet<V>(packet.getPacketType(), packet.getChannel(), frozenMessages);
+    return new Packet<V>(packet.getPacketType(), packet.getSenderId(), packet.getRoute(), frozenMessages);
   }
 }

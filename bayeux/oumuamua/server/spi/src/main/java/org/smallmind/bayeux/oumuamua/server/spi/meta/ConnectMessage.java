@@ -32,11 +32,21 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.meta;
 
+import java.util.concurrent.TimeUnit;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.smallmind.bayeux.oumuamua.common.api.json.Message;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.InvalidPathException;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
+import org.smallmind.bayeux.oumuamua.server.api.PacketType;
+import org.smallmind.bayeux.oumuamua.server.api.Protocol;
+import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
-import org.smallmind.bayeux.oumuamua.server.spi.Route;
+import org.smallmind.bayeux.oumuamua.server.api.SessionState;
+import org.smallmind.bayeux.oumuamua.server.spi.Advice;
+import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
+import org.smallmind.bayeux.oumuamua.server.spi.MetaProcessingException;
 import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 import org.smallmind.web.json.doppelganger.Doppelganger;
 import org.smallmind.web.json.doppelganger.Idiom;
@@ -48,7 +58,7 @@ import static org.smallmind.web.json.doppelganger.Visibility.OUT;
 @Doppelganger
 public class ConnectMessage extends AdvisedMetaMessage {
 
-  public static final Route ROUTE;
+  public static final DefaultRoute ROUTE;
 
   @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
   private String clientId;
@@ -58,15 +68,71 @@ public class ConnectMessage extends AdvisedMetaMessage {
   static {
 
     try {
-      ROUTE = new Route("/meta/connect");
+      ROUTE = new DefaultRoute("/meta/connect");
     } catch (InvalidPathException invalidPathException) {
       throw new StaticInitializationError(invalidPathException);
     }
   }
 
-  public <V extends Value<V>> Packet<V> process (Session<V> session) {
+  public <V extends Value<V>> Packet<V> process (Protocol protocol, Server<V> server, Session<V> session)
+    throws MetaProcessingException {
 
-    return null;
+    ObjectNode adviceNode = JsonNodeFactory.instance.objectNode();
+
+    if (session == null) {
+      adviceNode.put(Advice.RECONNECT.getField(), "handshake");
+
+      return new Packet<V>(PacketType.RESPONSE, null, ROUTE, new Message[] {toMessage(server.getCodec(), new ConnectMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(ROUTE.getPath()).setId(getId()).setError("Handshake required").setAdvice(adviceNode))});
+    } else if ((!session.getId().equals(getClientId())) || session.getState().lt(SessionState.HANDSHOOK)) {
+      adviceNode.put(Advice.RECONNECT.getField(), "handshake");
+
+      return new Packet<V>(PacketType.RESPONSE, getClientId(), ROUTE, new Message[] {toMessage(server.getCodec(), new ConnectMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(ROUTE.getPath()).setId(getId()).setError("Handshake required").setAdvice(adviceNode))});
+    } else if (session.getState().lt(SessionState.CONNECTED) && (!supportsConnectionType(protocol))) {
+      adviceNode.put(Advice.RECONNECT.getField(), "retry");
+
+      return new Packet<V>(PacketType.RESPONSE, session.getId(), ROUTE, new Message[] {toMessage(server.getCodec(), new ConnectMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(ROUTE.getPath()).setId(getId()).setError("Connection requested on an unsupported transport").setAdvice(adviceNode))});
+    } else {
+
+      long longPollingTimeout = ((getAdvice() != null) && getAdvice().has(Advice.TIMEOUT.getField())) ? getAdvice().get(Advice.TIMEOUT.getField()).asLong() : protocol.getLongPollTimeoutMilliseconds();
+      long start = System.currentTimeMillis();
+      long remainingTimeout = longPollingTimeout;
+
+      if (session.getState().lt(SessionState.CONNECTED)) {
+        session.completeConnection();
+      }
+
+      if (longPollingTimeout > 0) {
+        do {
+
+          Packet<V> enqueuedPacket;
+
+          if ((enqueuedPacket = session.poll(remainingTimeout, TimeUnit.MILLISECONDS)) != null) {
+            remainingTimeout = longPollingTimeout + start - System.currentTimeMillis();
+          }
+        } while (remainingTimeout > 0);
+      }
+
+      adviceNode.put("interval", protocol.getLongPollIntervalMilliseconds());
+
+      return null;
+//      return new Packet<V>(PacketType.RESPONSE, session.getId(), ROUTE, new Message[] {toMessage(new ConnectMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(ROUTE.getPath()).setId(getId()).setClientId(session.getId()).setAdvice(adviceNode), enqueuedPacketList.toArray(new OumuamuaPacket[0]))});
+    }
+  }
+
+  private boolean supportsConnectionType (Protocol protocol) {
+
+    String[] supportedTransportNames;
+
+    if (((supportedTransportNames = protocol.getSupportedTransportNames()) != null)) {
+      for (String supportedTransportName : supportedTransportNames) {
+        if ((supportedTransportName != null) && supportedTransportName.equals(getConnectionType())) {
+
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   public String getClientId () {

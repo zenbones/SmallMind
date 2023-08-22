@@ -45,7 +45,8 @@ import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.bayeux.oumuamua.server.api.SessionState;
 import org.smallmind.bayeux.oumuamua.server.spi.Advice;
-import org.smallmind.bayeux.oumuamua.server.spi.Route;
+import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
+import org.smallmind.bayeux.oumuamua.server.spi.MetaProcessingException;
 import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 import org.smallmind.web.json.doppelganger.Doppelganger;
 import org.smallmind.web.json.doppelganger.Idiom;
@@ -57,7 +58,7 @@ import static org.smallmind.web.json.doppelganger.Visibility.OUT;
 @Doppelganger
 public class HandshakeMessage extends AdvisedMetaMessage {
 
-  public static final Route ROUTE;
+  public static final DefaultRoute ROUTE;
 
   @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
   private String[] supportedConnectionTypes;
@@ -71,58 +72,48 @@ public class HandshakeMessage extends AdvisedMetaMessage {
   static {
 
     try {
-      ROUTE = new Route("/meta/handshake");
+      ROUTE = new DefaultRoute("/meta/handshake");
     } catch (InvalidPathException invalidPathException) {
       throw new StaticInitializationError(invalidPathException);
     }
   }
 
-  public <V extends Value<V>> Packet<V> process (String protocolName, Server<V> server, Session<V> session, HandshakeMessageRequestInView view)
-    throws Exception {
+  public <V extends Value<V>> Packet<V> process (Protocol protocol, Server<V> server, Session<V> session, HandshakeMessageRequestInView view)
+    throws MetaProcessingException {
 
     ObjectNode adviceNode = JsonNodeFactory.instance.objectNode();
-    Protocol protocol;
+    SecurityPolicy securityPolicy;
 
-    if ((protocol = server.getSupportedProtocol(protocolName)) == null) {
+    if (((securityPolicy = server.getSecurityPolicy()) != null) && (!securityPolicy.canHandshake(session, toMessage(server.getCodec(), view)))) {
+
+      return new Packet<V>(PacketType.RESPONSE, session.getId(), ROUTE, new Message[] {toMessage(server.getCodec(), new HandshakeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(ROUTE.getPath()).setId(getId()).setVersion(server.getBayeuxVersion()).setMinimumVersion(server.getMinimumBayeuxVersion()).setError("Unauthorized").setSupportedConnectionTypes(TransportUtility.accumulateSupportedTransportNames(server)).setAdvice(adviceNode))});
+    } else if (session.getState().gte(SessionState.HANDSHOOK)) {
+      adviceNode.put(Advice.RECONNECT.getField(), "retry");
+
+      return new Packet<V>(PacketType.RESPONSE, session.getId(), ROUTE, new Message[] {toMessage(server.getCodec(), new HandshakeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(ROUTE.getPath()).setId(getId()).setVersion(server.getBayeuxVersion()).setMinimumVersion(server.getMinimumBayeuxVersion()).setError("Handshake was previously completed").setSupportedConnectionTypes(TransportUtility.accumulateSupportedTransportNames(server)).setAdvice(adviceNode))});
+    } else if (!supportsConnectionType(protocol)) {
       adviceNode.put(Advice.RECONNECT.getField(), "handshake");
 
-      return new Packet<V>(PacketType.RESPONSE, null, new Message[] {toMessage(server.getCodec(), new HandshakeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(ROUTE.getPath()).setId(getId()).setVersion(server.getBayeuxVersion()).setMinimumVersion(server.getMinimumBayeuxVersion()).setError("Handshake attempted on an unsupported protocol").setSupportedConnectionTypes(TransportUtility.accumulateSupportedTransportNames(server)).setAdvice(adviceNode))});
+      return new Packet<V>(PacketType.RESPONSE, session.getId(), ROUTE, new Message[] {toMessage(server.getCodec(), new HandshakeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(ROUTE.getPath()).setId(getId()).setVersion(server.getBayeuxVersion()).setMinimumVersion(server.getMinimumBayeuxVersion()).setError("Handshake attempted on an unsupported transport").setSupportedConnectionTypes(TransportUtility.accumulateSupportedTransportNames(server)).setAdvice(adviceNode))});
     } else {
+      session.completeHandshake();
 
-      SecurityPolicy securityPolicy;
-
-      if (((securityPolicy = server.getSecurityPolicy()) != null) && (!securityPolicy.canHandshake(session, toMessage(server.getCodec(), view)))) {
-
-        return new Packet<V>(PacketType.RESPONSE, null, new Message[] {toMessage(server.getCodec(), new HandshakeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(ROUTE.getPath()).setId(getId()).setVersion(server.getBayeuxVersion()).setMinimumVersion(server.getMinimumBayeuxVersion()).setError("Unauthorized").setSupportedConnectionTypes(TransportUtility.accumulateSupportedTransportNames(server)).setAdvice(adviceNode))});
-      } else if (session.getState().ordinal() > SessionState.INITIALIZED.ordinal()) {
-        adviceNode.put(Advice.RECONNECT.getField(), "retry");
-
-        return new Packet<V>(PacketType.RESPONSE, null, new Message[] {toMessage(server.getCodec(), new HandshakeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(ROUTE.getPath()).setId(getId()).setVersion(server.getBayeuxVersion()).setMinimumVersion(server.getMinimumBayeuxVersion()).setError("Handshake was previously completed").setSupportedConnectionTypes(TransportUtility.accumulateSupportedTransportNames(server)).setAdvice(adviceNode))});
-      } else if (findConnectionType(protocol) == null) {
-        adviceNode.put(Advice.RECONNECT.getField(), "handshake");
-
-        return new Packet<V>(PacketType.RESPONSE, null, new Message[] {toMessage(server.getCodec(), new HandshakeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(ROUTE.getPath()).setId(getId()).setVersion(server.getBayeuxVersion()).setMinimumVersion(server.getMinimumBayeuxVersion()).setError("Handshake attempted on an unsupported transport").setSupportedConnectionTypes(TransportUtility.accumulateSupportedTransportNames(server)).setAdvice(adviceNode))});
-      } else {
-        session.completeHandshake();
-
-        return new Packet<V>(PacketType.RESPONSE, null, new Message[] {toMessage(server.getCodec(), new HandshakeMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(ROUTE.getPath()).setId(getId()).setVersion(server.getBayeuxVersion()).setMinimumVersion(server.getMinimumBayeuxVersion()).setClientId(session.getId()).setSupportedConnectionTypes(protocol.getSupportedTransportNames()))});
-      }
+      return new Packet<V>(PacketType.RESPONSE, session.getId(), ROUTE, new Message[] {toMessage(server.getCodec(), new HandshakeMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(ROUTE.getPath()).setId(getId()).setVersion(server.getBayeuxVersion()).setMinimumVersion(server.getMinimumBayeuxVersion()).setClientId(session.getId()).setSupportedConnectionTypes(protocol.getSupportedTransportNames()))});
     }
   }
 
-  private String findConnectionType (Protocol protocol) {
+  private boolean supportsConnectionType (Protocol protocol) {
 
-    if (getSupportedConnectionTypes() != null) {
-      for (String supportedConnectionType : getSupportedConnectionTypes()) {
-        if (supportedConnectionType != null) {
+    String[] supportedTransportNames;
 
-          String[] supportedTransportNames;
-
-          if ((supportedTransportNames = protocol.getSupportedTransportNames()) != null) {
+    if (((supportedTransportNames = protocol.getSupportedTransportNames()) != null) && (supportedTransportNames.length > 0)) {
+      if (getSupportedConnectionTypes() != null) {
+        for (String supportedConnectionType : getSupportedConnectionTypes()) {
+          if (supportedConnectionType != null) {
             for (String supportedTransportName : supportedTransportNames) {
               if (supportedConnectionType.equals(supportedTransportName)) {
 
-                return supportedConnectionType;
+                return true;
               }
             }
           }
@@ -130,7 +121,7 @@ public class HandshakeMessage extends AdvisedMetaMessage {
       }
     }
 
-    return null;
+    return false;
   }
 
   public String[] getSupportedConnectionTypes () {

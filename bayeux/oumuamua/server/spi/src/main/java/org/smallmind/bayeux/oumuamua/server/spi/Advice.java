@@ -34,7 +34,7 @@ package org.smallmind.bayeux.oumuamua.server.spi;
 
 public enum Advice {
 
-  INTERVAL("interval"), RECONNECT("reconnect");
+  INTERVAL("interval"), RECONNECT("reconnect"), TIMEOUT("timeout");
 
   private final String field;
 

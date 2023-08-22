@@ -36,7 +36,7 @@ import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.InvalidPathException;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
-import org.smallmind.bayeux.oumuamua.server.spi.Route;
+import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
 import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 import org.smallmind.web.json.doppelganger.Doppelganger;
 import org.smallmind.web.json.doppelganger.Idiom;
@@ -48,7 +48,7 @@ import static org.smallmind.web.json.doppelganger.Visibility.OUT;
 @Doppelganger
 public class SubscribeMessage extends AdvisedMetaMessage {
 
-  public static final Route ROUTE;
+  public static final DefaultRoute ROUTE;
 
   @View(idioms = {@Idiom(purposes = "request", visibility = IN), @Idiom(purposes = {"success", "error"}, visibility = OUT)})
   private String clientId;
@@ -58,7 +58,7 @@ public class SubscribeMessage extends AdvisedMetaMessage {
   static {
 
     try {
-      ROUTE = new Route("/meta/subscribe");
+      ROUTE = new DefaultRoute("/meta/subscribe");
     } catch (InvalidPathException invalidPathException) {
       throw new StaticInitializationError(invalidPathException);
     }

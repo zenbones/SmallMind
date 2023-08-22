@@ -34,5 +34,7 @@ package org.smallmind.bayeux.oumuamua.server.api;
 
 public interface Transport extends Attributed {
 
+  Protocol getProtocol ();
+
   String getName ();
 }

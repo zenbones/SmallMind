@@ -34,5 +34,25 @@ package org.smallmind.bayeux.oumuamua.server.api;
 
 public enum SessionState {
 
-  INITIALIZED, HANDSHOOK, CONNECTED, CLOSED
+  INITIALIZED, HANDSHOOK, CONNECTED, CLOSED;
+
+  public boolean lt (SessionState state) {
+
+    return ordinal() < state.ordinal();
+  }
+
+  public boolean lte (SessionState state) {
+
+    return ordinal() <= state.ordinal();
+  }
+
+  public boolean gte (SessionState state) {
+
+    return ordinal() >= state.ordinal();
+  }
+
+  public boolean ge (SessionState state) {
+
+    return ordinal() > state.ordinal();
+  }
 }
