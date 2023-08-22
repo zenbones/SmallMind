@@ -81,9 +81,9 @@ public interface Channel<V extends Value<V>> extends Attributed {
 
   void setReflecting (boolean reflecting);
 
-  void subscribe (Session<V> session);
+  boolean subscribe (Session<V> session);
 
-  void unsubscribe (Session<V> session);
+  boolean unsubscribe (Session<V> session);
 
   boolean isRemovable ();
 

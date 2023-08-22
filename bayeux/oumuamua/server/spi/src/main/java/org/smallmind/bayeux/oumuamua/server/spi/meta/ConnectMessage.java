@@ -80,11 +80,7 @@ public class ConnectMessage extends AdvisedMetaMessage {
 
     ObjectNode adviceNode = JsonNodeFactory.instance.objectNode();
 
-    if (session == null) {
-      adviceNode.put(Advice.RECONNECT.getField(), "handshake");
-
-      return new Packet<V>(PacketType.RESPONSE, null, ROUTE, new Message[] {toMessage(server.getCodec(), new ConnectMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(ROUTE.getPath()).setId(getId()).setError("Handshake required").setAdvice(adviceNode))});
-    } else if ((!session.getId().equals(getClientId())) || session.getState().lt(SessionState.HANDSHOOK)) {
+    if ((!session.getId().equals(getClientId())) || session.getState().lt(SessionState.HANDSHOOK)) {
       adviceNode.put(Advice.RECONNECT.getField(), "handshake");
 
       return new Packet<V>(PacketType.RESPONSE, getClientId(), ROUTE, new Message[] {toMessage(server.getCodec(), new ConnectMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(ROUTE.getPath()).setId(getId()).setError("Handshake required").setAdvice(adviceNode))});
