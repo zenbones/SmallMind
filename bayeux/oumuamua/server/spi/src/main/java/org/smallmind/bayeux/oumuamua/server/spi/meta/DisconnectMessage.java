@@ -32,11 +32,15 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.meta;
 
+import org.smallmind.bayeux.oumuamua.common.api.json.Message;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.InvalidPathException;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
+import org.smallmind.bayeux.oumuamua.server.api.PacketType;
+import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
+import org.smallmind.bayeux.oumuamua.server.spi.MetaProcessingException;
 import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 import org.smallmind.web.json.doppelganger.Doppelganger;
 import org.smallmind.web.json.doppelganger.Idiom;
@@ -62,9 +66,10 @@ public class DisconnectMessage extends MetaMessage {
     }
   }
 
-  public <V extends Value<V>> Packet<V> process (Session<V> session) {
+  public <V extends Value<V>> Packet<V> process (Server<V> server, Session<V> session)
+    throws MetaProcessingException {
 
-    return null;
+    return new Packet<V>(PacketType.RESPONSE, session.getId(), ROUTE, new Message[] {toMessage(server.getCodec(), new DisconnectMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(ROUTE.getPath()).setClientId(getClientId()).setId(getId()))});
   }
 
   public String getClientId () {

@@ -33,13 +33,25 @@
 package org.smallmind.bayeux.oumuamua.server.spi.meta;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.smallmind.bayeux.oumuamua.common.api.json.Message;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
+import org.smallmind.bayeux.oumuamua.server.api.Channel;
+import org.smallmind.bayeux.oumuamua.server.api.InvalidPathException;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
+import org.smallmind.bayeux.oumuamua.server.api.PacketType;
+import org.smallmind.bayeux.oumuamua.server.api.Route;
+import org.smallmind.bayeux.oumuamua.server.api.SecurityPolicy;
+import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
+import org.smallmind.bayeux.oumuamua.server.api.SessionState;
+import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
+import org.smallmind.bayeux.oumuamua.server.spi.MetaProcessingException;
 import org.smallmind.web.json.doppelganger.Doppelganger;
 import org.smallmind.web.json.doppelganger.Idiom;
 import org.smallmind.web.json.doppelganger.Pledge;
 import org.smallmind.web.json.doppelganger.View;
+import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 import static org.smallmind.web.json.doppelganger.Visibility.IN;
 import static org.smallmind.web.json.doppelganger.Visibility.OUT;
@@ -52,9 +64,48 @@ public class PublishMessage extends MetaMessage {
   @View(idioms = @Idiom(purposes = "request", visibility = IN))
   private String clientId;
 
-  public <V extends Value<V>> Packet<V> process (Session<V> session) {
+  public <V extends Value<V>> Packet<V> process (Server<V> server, Session<V> session, SubscribeMessageRequestInView view)
+    throws MetaProcessingException {
 
-    return null;
+    Route route;
+
+    try {
+      route = new DefaultRoute(getChannel());
+    } catch (InvalidPathException invalidPathException) {
+      return new Packet<V>(PacketType.RESPONSE, getClientId(), null, new Message[] {toMessage(server.getCodec(), new PublishMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(getChannel()).setId(getId()).setError(invalidPathException.getMessage()))});
+    }
+
+    if ((!session.getId().equals(getClientId())) || session.getState().lt(SessionState.HANDSHOOK)) {
+
+      return new Packet<V>(PacketType.RESPONSE, getClientId(), route, new Message[] {toMessage(server.getCodec(), new PublishMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(getChannel()).setId(getId()).setError("Handshake required"))});
+    } else if (session.getState().lt(SessionState.CONNECTED)) {
+
+      return new Packet<V>(PacketType.RESPONSE, session.getId(), route, new Message[] {toMessage(server.getCodec(), new PublishMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(getChannel()).setId(getId()).setError("Connection required"))});
+    } else if (getChannel().startsWith("/meta/")) {
+
+      return new Packet<V>(PacketType.RESPONSE, session.getId(), route, new Message[] {toMessage(server.getCodec(), new PublishMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(getChannel()).setId(getId()).setError("Attempted to publish to a meta channel"))});
+    } else {
+
+      SecurityPolicy securityPolicy = server.getSecurityPolicy();
+      Channel<V> channel;
+
+      try {
+        channel = server.findChannel(getChannel());
+      } catch (InvalidPathException invalidPathException) {
+        return new Packet<V>(PacketType.RESPONSE, getClientId(), null, new Message[] {toMessage(server.getCodec(), new PublishMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(getChannel()).setId(getId()).setError(invalidPathException.getMessage()))});
+      }
+
+      if ((securityPolicy != null) && (!securityPolicy.canPublish(session, channel, toMessage(server.getCodec(), view)))) {
+
+        return new Packet<V>(PacketType.RESPONSE, session.getId(), route, new Message[] {toMessage(server.getCodec(), new PublishMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(getChannel()).setId(getId()).setError("Unauthorized"))});
+      } else if (channel.subscribe(session)) {
+        // TODO: needed???
+      }
+
+      server.deliver(new Packet<V>(PacketType.DELIVERY, session.getId(), route, new Message[] {toMessage(server.getCodec(), new DeliveryMessageSuccessOutView().setChannel(getChannel()).setId(getId()).setData(getData()))}));
+
+      return new Packet<V>(PacketType.RESPONSE, session.getId(), route, new Message[] {toMessage(server.getCodec(), new PublishMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(getChannel()).setId(getId()))});
+    }
   }
 
   public String getClientId () {

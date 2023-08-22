@@ -75,7 +75,7 @@ public class SubscribeMessage extends AdvisedMetaMessage {
   }
 
   public <V extends Value<V>> Packet<V> process (Server<V> server, Session<V> session, SubscribeMessageRequestInView view)
-    throws MetaProcessingException, InvalidPathException {
+    throws MetaProcessingException {
 
     ObjectNode adviceNode = JsonNodeFactory.instance.objectNode();
 
@@ -95,13 +95,17 @@ public class SubscribeMessage extends AdvisedMetaMessage {
       SecurityPolicy securityPolicy = server.getSecurityPolicy();
       Channel<V> channel;
 
-      if ((channel = server.findChannel(getChannel())) == null) {
-        if ((securityPolicy != null) && (!securityPolicy.canCreate(session, getChannel(), toMessage(server.getCodec(), view)))) {
+      try {
+        if ((channel = server.findChannel(getChannel())) == null) {
+          if ((securityPolicy != null) && (!securityPolicy.canCreate(session, getChannel(), toMessage(server.getCodec(), view)))) {
 
-          return new Packet<V>(PacketType.RESPONSE, session.getId(), ROUTE, new Message[] {toMessage(server.getCodec(), new SubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(ROUTE.getPath()).setId(getId()).setError("Unauthorized").setSubscription(getSubscription()).setAdvice(adviceNode))});
-        } else {
-          channel = server.requireChannel(getSubscription());
+            return new Packet<V>(PacketType.RESPONSE, session.getId(), ROUTE, new Message[] {toMessage(server.getCodec(), new SubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(ROUTE.getPath()).setId(getId()).setError("Unauthorized").setSubscription(getSubscription()).setAdvice(adviceNode))});
+          } else {
+            channel = server.requireChannel(getSubscription());
+          }
         }
+      } catch (InvalidPathException invalidPathException) {
+        return new Packet<V>(PacketType.RESPONSE, session.getId(), ROUTE, new Message[] {toMessage(server.getCodec(), new SubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(ROUTE.getPath()).setId(getId()).setError(invalidPathException.getMessage()).setSubscription(getSubscription()).setAdvice(adviceNode))});
       }
 
       if ((securityPolicy != null) && (!securityPolicy.canSubscribe(session, channel, toMessage(server.getCodec(), view)))) {
