@@ -138,19 +138,24 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
 
     Packet<V> enqueuedPacket;
 
-    if ((enqueuedPacket = longPollQueue.pollFirst()) != null) {
-      longPollQueueSize.decrementAndGet();
-    }
+    if ((enqueuedPacket = longPollQueue.pollFirst()) == null) {
 
-    return enqueuedPacket;
+      return null;
+    } else {
+
+      Packet<V> frozenPacket;
+
+      longPollQueueSize.decrementAndGet();
+      frozenPacket = PacketUtility.freezePacket(enqueuedPacket);
+
+      onDelivery(frozenPacket);
+
+      return frozenPacket;
+    }
   }
 
   @Override
   public void deliver (Packet<V> packet) {
-
-    Packet<V> frozenPacket = PacketUtility.freezePacket(packet);
-
-    onDelivery(frozenPacket);
 
     if (longPolling) {
       if (longPollQueueSize.incrementAndGet() > maxLongPollQueueSize) {
@@ -161,7 +166,12 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
 
       longPollQueue.add(packet);
     } else {
-      connection.deliver(packet);
+
+      Packet<V> frozenPacket = PacketUtility.freezePacket(packet);
+
+      onDelivery(frozenPacket);
+
+      connection.deliver(frozenPacket);
     }
   }
 }

@@ -217,7 +217,7 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
     onDelivery(frozenPacket);
 
     for (Session<V> session : sessionMap.values()) {
-      if (sessionIdSet.add(session.getId()) && ((!session.getId().equals(packet.getSenderId())) || reflecting.get())) {
+      if (sessionIdSet.add(session.getId()) && ((!session.getId().equals(frozenPacket.getSenderId())) || reflecting.get())) {
         session.deliver(frozenPacket);
       }
     }
