@@ -73,7 +73,7 @@ public interface Server<V extends Value<V>> extends Attributed {
 
   String getMinimumBayeuxVersion ();
 
-  String[] getSupportedProtocolNames();
+  String[] getSupportedProtocolNames ();
 
   Protocol getSupportedProtocol (String name);
 
