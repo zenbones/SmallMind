@@ -32,35 +32,17 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356;
 
-import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
-import org.smallmind.bayeux.oumuamua.server.api.Session;
+import org.smallmind.bayeux.oumuamua.server.api.Transport;
 import org.smallmind.bayeux.oumuamua.server.spi.Connection;
 
 public class WebsocketConnection<V extends Value<V>> implements Connection<V> {
 
   @Override
-  public String getProtocolName () {
+  public Transport getTransport () {
 
     return null;
-  }
-
-  @Override
-  public Codec<V> getCodec () {
-
-    return null;
-  }
-
-  @Override
-  public Session<V> getSession () {
-
-    return null;
-  }
-
-  @Override
-  public void close () {
-
   }
 
   @Override

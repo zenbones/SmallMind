@@ -32,7 +32,8 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.meta;
 
-import java.util.concurrent.TimeUnit;
+import java.util.Arrays;
+import java.util.LinkedList;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.smallmind.bayeux.oumuamua.common.api.json.Message;
@@ -93,29 +94,42 @@ public class ConnectMessage extends AdvisedMetaMessage {
       return new Packet<V>(PacketType.RESPONSE, session.getId(), ROUTE, new Message[] {toMessage(server.getCodec(), new ConnectMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(ROUTE.getPath()).setId(getId()).setError("Connection requested on an unsupported transport").setAdvice(adviceNode))});
     } else {
 
+      Message[] messages;
+      Message<V> responseMessage = toMessage(server.getCodec(), new ConnectMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(ROUTE.getPath()).setId(getId()).setClientId(session.getId()).setAdvice(adviceNode));
+      LinkedList<Message<V>> enqueuedMessageList = null;
       long longPollingTimeout = ((getAdvice() != null) && getAdvice().has(Advice.TIMEOUT.getField())) ? getAdvice().get(Advice.TIMEOUT.getField()).asLong() : protocol.getLongPollTimeoutMilliseconds();
-      long start = System.currentTimeMillis();
-      long remainingTimeout = longPollingTimeout;
 
       if (session.getState().lt(SessionState.CONNECTED)) {
         session.completeConnection();
       }
 
       if (longPollingTimeout > 0) {
+
+        long start = System.currentTimeMillis();
+
         do {
 
           Packet<V> enqueuedPacket;
 
-          if ((enqueuedPacket = session.poll(remainingTimeout, TimeUnit.MILLISECONDS)) != null) {
-            remainingTimeout = longPollingTimeout + start - System.currentTimeMillis();
+          if ((enqueuedPacket = session.poll()) != null) {
+            if (enqueuedMessageList == null) {
+              enqueuedMessageList = new LinkedList<>();
+            }
+            enqueuedMessageList.addAll(Arrays.asList(enqueuedPacket.getMessages()));
           }
-        } while (remainingTimeout > 0);
+        } while (longPollingTimeout + start - System.currentTimeMillis() > 0);
+      }
+
+      if (enqueuedMessageList == null) {
+        messages = new Message[] {responseMessage};
+      } else {
+        enqueuedMessageList.addFirst(responseMessage);
+        messages = enqueuedMessageList.toArray(new Message[0]);
       }
 
       adviceNode.put("interval", protocol.getLongPollIntervalMilliseconds());
 
-      return null;
-//      return new Packet<V>(PacketType.RESPONSE, session.getId(), ROUTE, new Message[] {toMessage(new ConnectMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(ROUTE.getPath()).setId(getId()).setClientId(session.getId()).setAdvice(adviceNode), enqueuedPacketList.toArray(new OumuamuaPacket[0]))});
+      return new Packet<V>(PacketType.RESPONSE, session.getId(), ROUTE, messages);
     }
   }
 

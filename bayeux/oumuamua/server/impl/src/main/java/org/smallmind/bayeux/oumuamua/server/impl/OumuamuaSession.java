@@ -32,7 +32,9 @@
  */
 package org.smallmind.bayeux.oumuamua.server.impl;
 
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.PacketType;
@@ -44,15 +46,21 @@ import org.smallmind.nutsnbolts.util.SnowflakeId;
 
 public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed implements Session<V> {
 
+  private final ConcurrentLinkedDeque<Packet<V>> longPollQueue = new ConcurrentLinkedDeque<>();
   private final ConcurrentLinkedQueue<Session.Listener<V>> listenerList = new ConcurrentLinkedQueue<>();
+  private final AtomicInteger longPollQueueSize = new AtomicInteger(0);
   private final Connection<V> connection;
   private final String sessionId = SnowflakeId.newInstance().generateHexEncoding();
+  private final boolean longPolling;
+  private final int maxLongPollQueueSize;
   private SessionState state;
 
-  public OumuamuaSession (Connection<V> connection) {
+  public OumuamuaSession (Connection<V> connection, int maxLongPollQueueSize) {
 
     this.connection = connection;
+    this.maxLongPollQueueSize = maxLongPollQueueSize;
 
+    longPolling = connection.getTransport().getProtocol().isLongPolling();
     state = SessionState.INITIALIZED;
   }
 
@@ -90,6 +98,18 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   }
 
   @Override
+  public int getMaxLongPollQueueSize () {
+
+    return maxLongPollQueueSize;
+  }
+
+  @Override
+  public boolean isLongPolling () {
+
+    return longPolling;
+  }
+
+  @Override
   public synchronized SessionState getState () {
 
     return state;
@@ -108,9 +128,21 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   }
 
   @Override
-  public void completeCLose () {
+  public void completeClose () {
 
     state = SessionState.CLOSED;
+  }
+
+  @Override
+  public Packet<V> poll () {
+
+    Packet<V> enqueuedPacket;
+
+    if ((enqueuedPacket = longPollQueue.pollFirst()) != null) {
+      longPollQueueSize.decrementAndGet();
+    }
+
+    return enqueuedPacket;
   }
 
   @Override
@@ -120,6 +152,16 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
 
     onDelivery(frozenPacket);
 
-    connection.deliver(packet);
+    if (longPolling) {
+      if (longPollQueueSize.incrementAndGet() > maxLongPollQueueSize) {
+        if (longPollQueue.pollLast() != null) {
+          longPollQueueSize.decrementAndGet();
+        }
+      }
+
+      longPollQueue.add(packet);
+    } else {
+      connection.deliver(packet);
+    }
   }
 }

@@ -55,15 +55,19 @@ public interface Session<V extends Value<V>> {
 
   String getId ();
 
+  boolean isLongPolling ();
+
+  int getMaxLongPollQueueSize ();
+
   SessionState getState ();
 
   void completeHandshake ();
 
   void completeConnection ();
 
-  void completeCLose ();
+  void completeClose ();
 
-  Packet<V> poll (long time, TimeUnit timeUnit);
+  Packet<V> poll ();
 
   void deliver (Packet<V> packet);
 }

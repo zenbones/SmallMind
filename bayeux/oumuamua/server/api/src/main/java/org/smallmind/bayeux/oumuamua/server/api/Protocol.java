@@ -36,11 +36,11 @@ public interface Protocol {
 
   String getName ();
 
+  boolean isLongPolling ();
+
   long getLongPollIntervalMilliseconds ();
 
   long getLongPollTimeoutMilliseconds ();
 
   String[] getSupportedTransportNames ();
-
-  Transport getTransport (String name);
 }
