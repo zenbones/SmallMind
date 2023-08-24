@@ -13,6 +13,7 @@ public class OumuamuaConfiguration {
   private Codec<?> codec = new JacksonCodec(new DefaultSerDes());
   private SecurityPolicy securityPolicy;
   private Protocol[] protocols;
+  private long channelTimeToLiveMinutes = 30;
 
   public Backbone getBackbone () {
 
@@ -52,5 +53,15 @@ public class OumuamuaConfiguration {
   public void setProtocols (Protocol[] protocols) {
 
     this.protocols = protocols;
+  }
+
+  public long getChannelTimeToLiveMinutes () {
+
+    return channelTimeToLiveMinutes;
+  }
+
+  public void setChannelTimeToLiveMinutes (long channelTimeToLiveMinutes) {
+
+    this.channelTimeToLiveMinutes = channelTimeToLiveMinutes;
   }
 }

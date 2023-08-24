@@ -50,15 +50,16 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
   private final ConcurrentHashMap<String, Session<V>> sessionMap = new ConcurrentHashMap<>();
   private final ConcurrentLinkedQueue<Listener<V>> listenerList = new ConcurrentLinkedQueue<>();
   private final AtomicBoolean reflecting = new AtomicBoolean();
-  private final long timeToLive;
+  private final long timeToLiveMilliseconds;
   private boolean persistent;
+  private boolean terminal;
   private long quiescentTimestamp;
   private int persistentListenerCount;
 
-  public OumuamuaChannel (long timeToLive, DefaultRoute route) {
+  public OumuamuaChannel (long timeToLiveMilliseconds, DefaultRoute route) {
 
     this.route = route;
-    this.timeToLive = timeToLive;
+    this.timeToLiveMilliseconds = timeToLiveMilliseconds;
   }
 
   public DefaultRoute getRoute () {
@@ -98,9 +99,11 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
   @Override
   public synchronized void addListener (Listener<V> listener) {
 
-    if (listenerList.add(listener) && listener.isPersistent()) {
-      persistentListenerCount++;
-      quiescentTimestamp = 0;
+    if (!terminal) {
+      if (listenerList.add(listener) && listener.isPersistent()) {
+        persistentListenerCount++;
+        quiescentTimestamp = 0;
+      }
     }
   }
 
@@ -173,12 +176,14 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
 
     boolean success = false;
 
-    if (sessionMap.putIfAbsent(session.getId(), session) == null) {
-      success = true;
-      onSubscribed(session);
-    }
+    if (!terminal) {
+      if (sessionMap.putIfAbsent(session.getId(), session) == null) {
+        success = true;
+        onSubscribed(session);
+      }
 
-    quiescentTimestamp = 0;
+      quiescentTimestamp = 0;
+    }
 
     return success;
   }
@@ -203,7 +208,12 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
   @Override
   public synchronized boolean isRemovable () {
 
-    return (!persistent) && (quiescentTimestamp > 0) && ((System.currentTimeMillis() - quiescentTimestamp) >= timeToLive);
+    return (!persistent) && (quiescentTimestamp > 0) && ((System.currentTimeMillis() - quiescentTimestamp) >= timeToLiveMilliseconds);
+  }
+
+  public synchronized void terminate () {
+
+    terminal = true;
   }
 
   @Override

@@ -187,9 +187,10 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   @Override
-  public Channel<V> requireChannel (String path, ChannelInitializer... initializers) {
+  public Channel<V> requireChannel (String path, ChannelInitializer... initializers)
+    throws InvalidPathException {
 
-    return null;
+    return channelTree.createIfAbsent(configuration.getChannelTimeToLiveMinutes() * 60 * 1000, 0, new DefaultRoute(path), initializers).getChannel();
   }
 
   @Override

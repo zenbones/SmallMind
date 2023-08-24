@@ -32,188 +32,40 @@
  */
 package org.smallmind.bayeux.oumuamua.server.impl;
 
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
-import org.smallmind.bayeux.oumuamua.server.api.Channel;
-import org.smallmind.bayeux.oumuamua.server.api.Packet;
+import org.smallmind.bayeux.oumuamua.server.api.ChannelInitializer;
 import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
-import org.smallmind.bayeux.oumuamua.server.spi.Segment;
-import org.smallmind.bayeux.oumuamua.server.spi.StringSegment;
 
-public class ChannelTree<V extends Value<V>> {
+public class ChannelTree<V extends Value<V>> extends ChannelBranch<V> {
 
-  private final ReentrantLock treeExpansionLock = new ReentrantLock();
-  private final ReentrantReadWriteLock channelChangeLock = new ReentrantReadWriteLock();
-  private final ConcurrentHashMap<Segment, ChannelTree<V>> childMap = new ConcurrentHashMap<>();
-  private final ChannelTree<V> parent;
-  private Channel<V> channel;
+  private final ReentrantLock treeChangeLock = new ReentrantLock();
 
   public ChannelTree () {
 
-    this(null, null);
+    super(null);
   }
 
-  public ChannelTree (ChannelTree<V> parent, Channel<V> channel) {
+  public ChannelBranch<V> createIfAbsent (long timeToLive, int index, DefaultRoute route, ChannelInitializer... initializers) {
 
-    this.parent = parent;
-    this.channel = channel;
-  }
-
-  public Channel<V> getChannel () {
-
-    channelChangeLock.readLock().lock();
+    treeChangeLock.lock();
 
     try {
 
-      return channel;
+      return addChannelAsNecessary(timeToLive, index, route, initializers);
     } finally {
-      channelChangeLock.readLock().unlock();
-    }
-  }
-
-  public ChannelTree<V> find (int index, DefaultRoute route) {
-
-    ChannelTree<V> child;
-
-    if ((child = childMap.get(route.getSegment(index))) == null) {
-
-      return null;
-    } else {
-
-      return (index == route.lastIndex()) ? child : child.find(index + 1, route);
-    }
-  }
-
-  public ChannelTree<V> createIfAbsent (long timeToLive, int index, DefaultRoute route) {
-
-    ChannelTree<V> child;
-    Segment segment;
-
-    if ((child = childMap.get(segment = route.getSegment(index))) == null) {
-
-      treeExpansionLock.lock();
-
-      try {
-        if ((child = childMap.get(segment)) == null) {
-          childMap.put(segment, child = new ChannelTree<V>(this, (index == route.lastIndex()) ? new OumuamuaChannel<V>(timeToLive, route) : null));
-        }
-      } finally {
-        treeExpansionLock.unlock();
-      }
-    }
-
-    return (index == route.lastIndex()) ? child.enforceChannel(timeToLive, route) : child.createIfAbsent(timeToLive, index + 1, route);
-  }
-
-  private ChannelTree<V> enforceChannel (long timeToLive, DefaultRoute route) {
-
-    channelChangeLock.writeLock().lock();
-
-    try {
-      if (channel == null) {
-        channel = new OumuamuaChannel<V>(timeToLive, route);
-      }
-
-      return this;
-    } finally {
-      channelChangeLock.writeLock().unlock();
-    }
-  }
-
-  public ChannelTree<V> removeIfPresent (int index, DefaultRoute route) {
-
-    ChannelTree<V> child;
-
-    if ((child = childMap.get(route.getSegment(index))) == null) {
-
-      return null;
-    } else {
-
-      return (index == route.lastIndex()) ? child.removeChannel() : child.removeIfPresent(index + 1, route);
-    }
-  }
-
-  private ChannelTree<V> removeChannel () {
-
-    channelChangeLock.writeLock().lock();
-
-    try {
-      channel = null;
-
-      return this;
-    } finally {
-      channelChangeLock.writeLock().unlock();
-    }
-  }
-
-  public void deliver (int index, Packet<V> packet, Set<String> sessionIdSet) {
-
-    if (index < packet.getRoute().lastIndex()) {
-
-      ChannelTree<V> deepWildBranch;
-      ChannelTree<V> nextBranch;
-
-      if ((deepWildBranch = childMap.get(StringSegment.wild())) != null) {
-
-        deepWildBranch.deliverToChannel(packet, sessionIdSet);
-      }
-      if ((nextBranch = childMap.get(((DefaultRoute)packet.getRoute()).getSegment(index))) != null) {
-        nextBranch.deliver(index + 1, packet, sessionIdSet);
-      }
-    } else {
-      if (parent != null) {
-
-        ChannelTree<V> wildBranch;
-
-        if ((wildBranch = parent.childMap.get(StringSegment.deepWild())) != null) {
-          wildBranch.deliverToChannel(packet, sessionIdSet);
-        }
-      }
-
-      deliverToChannel(packet, sessionIdSet);
-    }
-  }
-
-  private void deliverToChannel (Packet<V> packet, Set<String> sessionIdSet) {
-
-    channelChangeLock.readLock().lock();
-
-    try {
-      if (channel != null) {
-        channel.deliver(packet, sessionIdSet);
-      }
-    } finally {
-      channelChangeLock.readLock().unlock();
+      treeChangeLock.unlock();
     }
   }
 
   public void clean () {
 
-    clean(null);
-  }
+    treeChangeLock.lock();
 
-  private void clean (Segment segment) {
-
-    // Using getServerChannel() to enforce synchronization boundary
-    if ((segment != null) && (parent != null) && (getChannel() == null) && childMap.isEmpty()) {
-      parent.childMap.remove(segment);
-    } else {
-      for (Map.Entry<Segment, ChannelTree<V>> childEntry : childMap.entrySet()) {
-        childEntry.getValue().clean(childEntry.getKey());
-      }
-    }
-  }
-
-  public void walk (ChannelOperation operation) {
-
-    operation.operate(this);
-
-    for (ChannelTree<V> child : childMap.values()) {
-      child.walk(operation);
+    try {
+      removeDeadLeaves(null);
+    } finally {
+      treeChangeLock.unlock();
     }
   }
 }

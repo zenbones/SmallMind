@@ -35,5 +35,5 @@ package org.smallmind.bayeux.oumuamua.server.impl;
 @FunctionalInterface
 public interface ChannelOperation {
 
-  void operate (ChannelTree channelTree);
+  void operate (ChannelBranch<?> channelBranch);
 }
