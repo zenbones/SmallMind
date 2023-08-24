@@ -216,6 +216,21 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
     terminal = true;
   }
 
+  public synchronized void clearSubscriptions () {
+
+    terminal = true;
+
+    for (Session<V> session : sessionMap.values()) {
+      onUnsubscribed(session);
+    }
+
+    sessionMap.clear();
+
+    if (persistentListenerCount <= 0) {
+      quiescentTimestamp = System.currentTimeMillis();
+    }
+  }
+
   @Override
   public void deliver (Packet<V> packet, Set<String> sessionIdSet) {
 

@@ -39,6 +39,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.ChannelInitializer;
+import org.smallmind.bayeux.oumuamua.server.api.ChannelStateException;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
 import org.smallmind.bayeux.oumuamua.server.spi.Segment;
@@ -114,7 +115,8 @@ public class ChannelBranch<V extends Value<V>> {
     }
   }
 
-  private ChannelBranch<V> removeChannelIfPresent (int index, DefaultRoute route) {
+  public ChannelBranch<V> removeChannelIfPresent (int index, DefaultRoute route)
+    throws ChannelStateException {
 
     ChannelBranch<V> child;
 
@@ -127,12 +129,21 @@ public class ChannelBranch<V extends Value<V>> {
     }
   }
 
-  private ChannelBranch<V> removeChannel () {
+  private ChannelBranch<V> removeChannel ()
+    throws ChannelStateException {
 
     channelChangeLock.writeLock().lock();
 
     try {
-      channel = null;
+      if (channel != null) {
+        if (channel.isPersistent()) {
+          throw new ChannelStateException("ATtempt to remove persistent channel(%s)", ((OumuamuaChannel<V>)channel).getRoute().getPath());
+        } else {
+          ((OumuamuaChannel<V>)channel).clearSubscriptions();
+
+          channel = null;
+        }
+      }
 
       return this;
     } finally {

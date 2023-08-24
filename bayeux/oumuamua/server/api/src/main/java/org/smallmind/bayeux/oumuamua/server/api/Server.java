@@ -93,7 +93,7 @@ public interface Server<V extends Value<V>> extends Attributed {
 
   // It's n error to attempt to remove a persistent channel
   // All sessions must be unsubscribed (and listeners notified) upon channel removal
-  Channel<V> removeChannel (Channel<V> channel)
+  void removeChannel (Channel<V> channel)
     throws ChannelStateException;
 
   void deliver (Packet<V> packet);
