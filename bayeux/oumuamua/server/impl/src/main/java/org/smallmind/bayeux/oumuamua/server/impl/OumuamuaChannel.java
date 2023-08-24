@@ -36,7 +36,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
@@ -47,19 +46,17 @@ import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
 
 public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed implements Channel<V> {
 
-  private final Codec<V> codec;
   private final DefaultRoute route;
   private final ConcurrentHashMap<String, Session<V>> sessionMap = new ConcurrentHashMap<>();
   private final ConcurrentLinkedQueue<Listener<V>> listenerList = new ConcurrentLinkedQueue<>();
   private final AtomicBoolean reflecting = new AtomicBoolean();
   private final long timeToLive;
   private boolean persistent;
-  private long removableTimestamp;
+  private long quiescentTimestamp;
   private int persistentListenerCount;
 
-  public OumuamuaChannel (Codec<V> codec, long timeToLive, DefaultRoute route) {
+  public OumuamuaChannel (long timeToLive, DefaultRoute route) {
 
-    this.codec = codec;
     this.route = route;
     this.timeToLive = timeToLive;
   }
@@ -103,7 +100,7 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
 
     if (listenerList.add(listener) && listener.isPersistent()) {
       persistentListenerCount++;
-      removableTimestamp = 0;
+      quiescentTimestamp = 0;
     }
   }
 
@@ -112,7 +109,7 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
 
     if (listenerList.remove(listener) && listener.isPersistent()) {
       if ((--persistentListenerCount <= 0) && sessionMap.isEmpty()) {
-        removableTimestamp = System.currentTimeMillis();
+        quiescentTimestamp = System.currentTimeMillis();
       }
     }
   }
@@ -181,7 +178,7 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
       onSubscribed(session);
     }
 
-    removableTimestamp = 0;
+    quiescentTimestamp = 0;
 
     return success;
   }
@@ -196,7 +193,7 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
       onUnsubscribed(session);
 
       if (sessionMap.isEmpty() && (persistentListenerCount <= 0)) {
-        removableTimestamp = System.currentTimeMillis();
+        quiescentTimestamp = System.currentTimeMillis();
       }
     }
 
@@ -206,7 +203,7 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
   @Override
   public synchronized boolean isRemovable () {
 
-    return (!persistent) && (removableTimestamp > 0) && ((System.currentTimeMillis() - removableTimestamp) >= timeToLive);
+    return (!persistent) && (quiescentTimestamp > 0) && ((System.currentTimeMillis() - quiescentTimestamp) >= timeToLive);
   }
 
   @Override

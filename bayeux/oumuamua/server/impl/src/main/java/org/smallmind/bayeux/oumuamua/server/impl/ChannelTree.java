@@ -37,7 +37,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
@@ -89,7 +88,7 @@ public class ChannelTree<V extends Value<V>> {
     }
   }
 
-  public ChannelTree<V> createIfAbsent (Codec<V> codec, long timeToLive, int index, DefaultRoute route) {
+  public ChannelTree<V> createIfAbsent (long timeToLive, int index, DefaultRoute route) {
 
     ChannelTree<V> child;
     Segment segment;
@@ -100,23 +99,23 @@ public class ChannelTree<V extends Value<V>> {
 
       try {
         if ((child = childMap.get(segment)) == null) {
-          childMap.put(segment, child = new ChannelTree<V>(this, (index == route.lastIndex()) ? new OumuamuaChannel<V>(codec, timeToLive, route) : null));
+          childMap.put(segment, child = new ChannelTree<V>(this, (index == route.lastIndex()) ? new OumuamuaChannel<V>(timeToLive, route) : null));
         }
       } finally {
         treeExpansionLock.unlock();
       }
     }
 
-    return (index == route.lastIndex()) ? child.enforceChannel(codec, timeToLive, route) : child.createIfAbsent(codec, timeToLive, index + 1, route);
+    return (index == route.lastIndex()) ? child.enforceChannel(timeToLive, route) : child.createIfAbsent(timeToLive, index + 1, route);
   }
 
-  private ChannelTree<V> enforceChannel (Codec<V> codec, long timeToLive, DefaultRoute route) {
+  private ChannelTree<V> enforceChannel (long timeToLive, DefaultRoute route) {
 
     channelChangeLock.writeLock().lock();
 
     try {
       if (channel == null) {
-        channel = new OumuamuaChannel<V>(codec, timeToLive, route);
+        channel = new OumuamuaChannel<V>(timeToLive, route);
       }
 
       return this;

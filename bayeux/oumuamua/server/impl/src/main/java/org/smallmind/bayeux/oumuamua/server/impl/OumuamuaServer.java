@@ -32,76 +32,158 @@
  */
 package org.smallmind.bayeux.oumuamua.server.impl;
 
+import java.util.HashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.ChannelInitializer;
 import org.smallmind.bayeux.oumuamua.server.api.ChannelStateException;
+import org.smallmind.bayeux.oumuamua.server.api.InvalidPathException;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.SecurityPolicy;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
+import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.bayeux.oumuamua.server.api.backbone.Backbone;
 import org.smallmind.bayeux.oumuamua.server.spi.AbstractAttributed;
+import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
+import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed implements Server<V> {
+
+  private final HashMap<String, Protocol> protocolMap = new HashMap<>();
+  private final ConcurrentLinkedQueue<Listener<V>> listenerList = new ConcurrentLinkedQueue<>();
+  private final ChannelTree<V> channelTree = new ChannelTree<>();
+  private final OumuamuaConfiguration configuration;
+  private final String[] protocolNames;
+
+  public OumuamuaServer (OumuamuaConfiguration configuration) {
+
+    this.configuration = configuration;
+
+    for (Protocol protocol : configuration.getProtocols()) {
+      protocolMap.put(protocol.getName(), protocol);
+    }
+    protocolNames = protocolMap.keySet().toArray(new String[0]);
+  }
+
+  private void onConnected (Session<V> session) {
+
+    for (Listener<V> listener : listenerList) {
+      if (SessionListener.class.isAssignableFrom(listener.getClass())) {
+        ((SessionListener<V>)listener).onConnected(session);
+      }
+    }
+  }
+
+  private void onDisconnected (Session<V> session) {
+
+    for (Listener<V> listener : listenerList) {
+      if (SessionListener.class.isAssignableFrom(listener.getClass())) {
+        ((SessionListener<V>)listener).onDisconnected(session);
+      }
+    }
+  }
+
+  private void onCreated (Channel<V> channel) {
+
+    for (Listener<V> listener : listenerList) {
+      if (ChannelListener.class.isAssignableFrom(listener.getClass())) {
+        ((ChannelListener<V>)listener).onCreated(channel);
+      }
+    }
+  }
+
+  private void onRemoved (Channel<V> channel) {
+
+    for (Listener<V> listener : listenerList) {
+      if (ChannelListener.class.isAssignableFrom(listener.getClass())) {
+        ((ChannelListener<V>)listener).onRemoved(channel);
+      }
+    }
+  }
+
+  private void onDelivery (Packet<V> packet) {
+
+    for (Listener<V> listener : listenerList) {
+      if (PacketListener.class.isAssignableFrom(listener.getClass())) {
+        switch (packet.getPacketType()) {
+          case REQUEST:
+            ((PacketListener<V>)listener).onRequest(packet);
+            break;
+          case RESPONSE:
+            ((PacketListener<V>)listener).onResponse(packet);
+            break;
+          case DELIVERY:
+            ((PacketListener<V>)listener).onDelivery(packet);
+            break;
+          default:
+            throw new UnknownSwitchCaseException(packet.getPacketType().name());
+        }
+      }
+    }
+  }
 
   @Override
   public void addListener (Listener<V> listener) {
 
+    listenerList.add(listener);
   }
 
   @Override
   public void removeListener (Listener<V> listener) {
 
+    listenerList.remove(listener);
   }
 
   @Override
   public String getBayeuxVersion () {
 
-    return null;
+    return "1.0";
   }
 
   @Override
   public String getMinimumBayeuxVersion () {
 
-    return null;
+    return "1.0";
   }
 
   @Override
   public String[] getSupportedProtocolNames () {
 
-    return new String[0];
+    return protocolNames;
   }
 
   @Override
   public Protocol getSupportedProtocol (String name) {
 
-    return null;
+    return protocolMap.get(name);
   }
 
   @Override
   public Backbone getBackbone () {
 
-    return null;
+    return configuration.getBackbone();
   }
 
   @Override
   public SecurityPolicy getSecurityPolicy () {
 
-    return null;
+    return configuration.getSecurityPolicy();
   }
 
   @Override
   public Codec<V> getCodec () {
 
-    return null;
+    return (Codec<V>)configuration.getCodec();
   }
 
   @Override
-  public Channel<V> findChannel (String path) {
+  public Channel<V> findChannel (String path)
+    throws InvalidPathException {
 
-    return null;
+    return channelTree.find(0, new DefaultRoute(path)).getChannel();
   }
 
   @Override

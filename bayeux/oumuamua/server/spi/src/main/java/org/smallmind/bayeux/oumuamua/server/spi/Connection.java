@@ -38,6 +38,7 @@ import org.smallmind.bayeux.oumuamua.server.api.Transport;
 
 public interface Connection<V extends Value<V>> {
 
-  Transport getTransport();
+  Transport getTransport ();
+
   void deliver (Packet<V> packet);
 }
