@@ -66,7 +66,7 @@ public class JacksonArrayValue extends JacksonValue<ArrayNode> implements ArrayV
   }
 
   @Override
-  public JacksonValue<?> add (Value<JacksonValue<?>> value) {
+  public <U extends Value<JacksonValue<?>>> ArrayValue<JacksonValue<?>> add (U value) {
 
     getNode().add(JacksonValueUtility.from(value));
 
@@ -74,7 +74,7 @@ public class JacksonArrayValue extends JacksonValue<ArrayNode> implements ArrayV
   }
 
   @Override
-  public JacksonValue<?> set (int index, Value<JacksonValue<?>> value) {
+  public <U extends Value<JacksonValue<?>>> ArrayValue<JacksonValue<?>> set (int index, U value) {
 
     getNode().set(index, JacksonValueUtility.from(value));
 
@@ -82,9 +82,19 @@ public class JacksonArrayValue extends JacksonValue<ArrayNode> implements ArrayV
   }
 
   @Override
-  public JacksonValue<?> insert (int index, Value<JacksonValue<?>> value) {
+  public <U extends Value<JacksonValue<?>>> ArrayValue<JacksonValue<?>> insert (int index, U value) {
 
     getNode().insert(index, JacksonValueUtility.from(value));
+
+    return this;
+  }
+
+  @Override
+  public <U extends Value<JacksonValue<?>>> ArrayValue<JacksonValue<?>> addAll (Collection<U> values) {
+
+    for (U value : values) {
+      getNode().add(JacksonValueUtility.from(value));
+    }
 
     return this;
   }
@@ -96,17 +106,7 @@ public class JacksonArrayValue extends JacksonValue<ArrayNode> implements ArrayV
   }
 
   @Override
-  public JacksonValue<?> addAll (Collection<JacksonValue<?>> values) {
-
-    for (JacksonValue<?> value : values) {
-      getNode().add(JacksonValueUtility.from(value));
-    }
-
-    return this;
-  }
-
-  @Override
-  public JacksonValue<?> removeAll () {
+  public ArrayValue<JacksonValue<?>> removeAll () {
 
     getNode().removeAll();
 

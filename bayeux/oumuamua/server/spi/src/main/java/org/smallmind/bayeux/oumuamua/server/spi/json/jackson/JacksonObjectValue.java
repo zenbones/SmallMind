@@ -70,7 +70,7 @@ public class JacksonObjectValue extends JacksonValue<ObjectNode> implements Obje
   }
 
   @Override
-  public JacksonValue<?> put (String field, Value<JacksonValue<?>> value) {
+  public <U extends Value<JacksonValue<?>>> ObjectValue<JacksonValue<?>> put (String field, U value) {
 
     getNode().set(field, JacksonValueUtility.from(value));
 
@@ -84,7 +84,7 @@ public class JacksonObjectValue extends JacksonValue<ObjectNode> implements Obje
   }
 
   @Override
-  public JacksonValue<?> removeAll () {
+  public ObjectValue<JacksonValue<?>> removeAll () {
 
     getNode().removeAll();
 

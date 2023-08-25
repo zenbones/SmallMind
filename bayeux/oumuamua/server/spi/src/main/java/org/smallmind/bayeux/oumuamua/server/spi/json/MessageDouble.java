@@ -36,6 +36,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.common.api.json.Message;
+import org.smallmind.bayeux.oumuamua.common.api.json.ObjectValue;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.common.api.json.ValueFactory;
 import org.smallmind.nutsnbolts.util.IterableIterator;
@@ -132,7 +133,7 @@ public class MessageDouble<V extends Value<V>> implements Message<V> {
   }
 
   @Override
-  public V put (String field, Value<V> value) {
+  public <U extends Value<V>> ObjectValue<V> put (String field, U value) {
 
     removedSet.remove(field);
 
@@ -160,7 +161,7 @@ public class MessageDouble<V extends Value<V>> implements Message<V> {
   }
 
   @Override
-  public V removeAll () {
+  public ObjectValue<V> removeAll () {
 
     for (String fieldName : new IterableIterator<>(innerMessage.fieldNames())) {
       removedSet.add(fieldName);
@@ -170,6 +171,6 @@ public class MessageDouble<V extends Value<V>> implements Message<V> {
       outerMessage.removeAll();
     }
 
-    return (V)this;
+    return this;
   }
 }

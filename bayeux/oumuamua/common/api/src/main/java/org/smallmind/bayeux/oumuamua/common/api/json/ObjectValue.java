@@ -41,27 +41,27 @@ public interface ObjectValue<V extends Value<V>> extends Value<V> {
     return ValueType.OBJECT;
   }
 
-  default V put (String field, boolean bool) {
+  default ObjectValue<V> put (String field, boolean bool) {
 
     return put(field, getFactory().booleanValue(bool));
   }
 
-  default V put (String field, int i) {
+  default ObjectValue<V> put (String field, int i) {
 
     return put(field, getFactory().numberValue(i));
   }
 
-  default V put (String field, long l) {
+  default ObjectValue<V> put (String field, long l) {
 
     return put(field, getFactory().numberValue(l));
   }
 
-  default V put (String field, double d) {
+  default ObjectValue<V> put (String field, double d) {
 
     return put(field, getFactory().numberValue(d));
   }
 
-  default V put (String field, String text) {
+  default ObjectValue<V> put (String field, String text) {
 
     return put(field, getFactory().textValue(text));
   }
@@ -74,9 +74,9 @@ public interface ObjectValue<V extends Value<V>> extends Value<V> {
 
   V get (String field);
 
-  V put (String field, Value<V> value);
+  <U extends Value<V>> ObjectValue<V> put (String field, U value);
 
   V remove (String field);
 
-  V removeAll ();
+  ObjectValue<V> removeAll ();
 }

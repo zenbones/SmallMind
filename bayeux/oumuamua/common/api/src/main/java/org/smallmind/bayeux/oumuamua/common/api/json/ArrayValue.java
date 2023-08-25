@@ -41,77 +41,77 @@ public interface ArrayValue<V extends Value<V>> extends Value<V>, Iterable<V> {
     return ValueType.ARRAY;
   }
 
-  default V add (boolean bool) {
+  default ArrayValue<V> add (boolean bool) {
 
     return add(getFactory().booleanValue(bool));
   }
 
-  default V set (int index, boolean bool) {
+  default ArrayValue<V> set (int index, boolean bool) {
 
     return set(index, getFactory().booleanValue(bool));
   }
 
-  default V insert (int index, boolean bool) {
+  default ArrayValue<V> insert (int index, boolean bool) {
 
     return insert(index, getFactory().booleanValue(bool));
   }
 
-  default V add (int i) {
+  default ArrayValue<V> add (int i) {
 
     return add(getFactory().numberValue(i));
   }
 
-  default V set (int index, int i) {
+  default ArrayValue<V> set (int index, int i) {
 
     return set(index, getFactory().numberValue(i));
   }
 
-  default V insert (int index, int i) {
+  default ArrayValue<V> insert (int index, int i) {
 
     return insert(index, getFactory().numberValue(i));
   }
 
-  default V add (long l) {
+  default ArrayValue<V> add (long l) {
 
     return add(getFactory().numberValue(l));
   }
 
-  default V set (int index, long l) {
+  default ArrayValue<V> set (int index, long l) {
 
     return set(index, getFactory().numberValue(l));
   }
 
-  default V insert (int index, long l) {
+  default ArrayValue<V> insert (int index, long l) {
 
     return insert(index, getFactory().numberValue(l));
   }
 
-  default V add (double d) {
+  default ArrayValue<V> add (double d) {
 
     return add(getFactory().numberValue(d));
   }
 
-  default V set (int index, double d) {
+  default ArrayValue<V> set (int index, double d) {
 
     return set(index, getFactory().numberValue(d));
   }
 
-  default V insert (int index, double d) {
+  default ArrayValue<V> insert (int index, double d) {
 
     return insert(index, getFactory().numberValue(d));
   }
 
-  default V add (String text) {
+  default ArrayValue<V> add (String text) {
 
     return add(getFactory().textValue(text));
   }
 
-  default V set (int index, String text) {
+  default ArrayValue<V> set (int index, String text) {
 
     return set(index, getFactory().textValue(text));
   }
 
-  default V insert (int index, String text) {
+  default ArrayValue<V> insert (int index, String text) {
 
     return insert(index, getFactory().textValue(text));
   }
@@ -122,15 +122,15 @@ public interface ArrayValue<V extends Value<V>> extends Value<V>, Iterable<V> {
 
   V get (int index);
 
-  V add (Value<V> value);
+  <U extends Value<V>> ArrayValue<V> add (U value);
 
-  V set (int index, Value<V> value);
+  <U extends Value<V>> ArrayValue<V> set (int index, U value);
 
-  V insert (int index, Value<V> value);
+  <U extends Value<V>> ArrayValue<V> insert (int index, U value);
 
   V remove (int index);
 
-  V addAll (Collection<V> values);
+  <U extends Value<V>> ArrayValue<V> addAll (Collection<U> values);
 
-  V removeAll ();
+  ArrayValue<V> removeAll ();
 }
