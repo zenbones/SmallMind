@@ -32,6 +32,7 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.json.jackson;
 
+import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Iterator;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -45,6 +46,17 @@ public class JacksonArrayValue extends JacksonValue<ArrayNode> implements ArrayV
   public JacksonArrayValue (ArrayNode node, ValueFactory<JacksonValue<?>> factory) {
 
     super(node, factory);
+  }
+
+  @Override
+  public JacksonValue<?> copy () {
+
+    return null;
+  }
+
+  @Override
+  public void encode (OutputStream outputStream) {
+
   }
 
   @Override

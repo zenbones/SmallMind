@@ -41,6 +41,4 @@ public interface Codec<V extends Value<V>> {
 
   Message<V> toMessage (byte[] buffer)
     throws Exception;
-
-  Message<V> copy (Message<V> message);
 }

@@ -68,10 +68,4 @@ public class JacksonCodec implements Codec<JacksonValue<?>> {
 
     return new JacksonMessage(this, jsonSerDes.to(buffer), FACTORY);
   }
-
-  @Override
-  public Message<JacksonValue<?>> copy (Message<JacksonValue<?>> message) {
-
-    return new JacksonMessage(this, (ObjectNode)jsonSerDes.copy(((JacksonMessage)message).getNode()), FACTORY);
-  }
 }

@@ -32,6 +32,7 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.json.jackson;
 
+import java.io.OutputStream;
 import com.fasterxml.jackson.databind.node.NullNode;
 import org.smallmind.bayeux.oumuamua.common.api.json.NullValue;
 import org.smallmind.bayeux.oumuamua.common.api.json.ValueFactory;
@@ -41,5 +42,16 @@ public class JacksonNullValue extends JacksonValue<NullNode> implements NullValu
   public JacksonNullValue (NullNode node, ValueFactory<JacksonValue<?>> factory) {
 
     super(node, factory);
+  }
+
+  @Override
+  public JacksonValue<?> copy () {
+
+    return null;
+  }
+
+  @Override
+  public void encode (OutputStream outputStream) {
+
   }
 }

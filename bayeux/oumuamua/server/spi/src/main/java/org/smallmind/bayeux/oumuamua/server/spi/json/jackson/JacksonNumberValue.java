@@ -32,6 +32,7 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.json.jackson;
 
+import java.io.OutputStream;
 import com.fasterxml.jackson.databind.node.NumericNode;
 import org.smallmind.bayeux.oumuamua.common.api.json.NumberType;
 import org.smallmind.bayeux.oumuamua.common.api.json.NumberValue;
@@ -43,6 +44,17 @@ public class JacksonNumberValue extends JacksonValue<NumericNode> implements Num
   public JacksonNumberValue (NumericNode node, ValueFactory<JacksonValue<?>> factory) {
 
     super(node, factory);
+  }
+
+  @Override
+  public JacksonValue<?> copy () {
+
+    return null;
+  }
+
+  @Override
+  public void encode (OutputStream outputStream) {
+
   }
 
   @Override

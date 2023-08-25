@@ -32,9 +32,15 @@
  */
 package org.smallmind.bayeux.oumuamua.common.api.json;
 
+import java.io.OutputStream;
+
 public interface Value<V extends Value<V>> {
 
   ValueFactory<V> getFactory ();
 
   ValueType getType ();
+
+  V copy ();
+
+  void encode (OutputStream outputStream);
 }

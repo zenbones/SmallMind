@@ -32,6 +32,7 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.json;
 
+import java.io.OutputStream;
 import java.util.HashSet;
 import java.util.Iterator;
 import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
@@ -50,6 +51,17 @@ public class MessageDouble<V extends Value<V>> implements Message<V> {
   public MessageDouble (Message<V> innerMessage) {
 
     this.innerMessage = innerMessage;
+  }
+
+  @Override
+  public V copy () {
+
+    return null;
+  }
+
+  @Override
+  public void encode (OutputStream outputStream) {
+
   }
 
   @Override
@@ -73,7 +85,7 @@ public class MessageDouble<V extends Value<V>> implements Message<V> {
       return innerMessage.encode();
     } else {
 
-      Message<V> encodingMessage = getCodec().copy(outerMessage);
+      Message<V> encodingMessage = (Message<V>)outerMessage.copy();
 
       for (String fieldName : new IterableIterator<>(innerMessage.fieldNames())) {
         if (!removedSet.contains(fieldName)) {
