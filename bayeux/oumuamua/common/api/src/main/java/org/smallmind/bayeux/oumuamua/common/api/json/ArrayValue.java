@@ -34,7 +34,7 @@ package org.smallmind.bayeux.oumuamua.common.api.json;
 
 import java.util.Collection;
 
-public interface ArrayValue<V extends Value<V>> extends Value<V>, Iterable<V> {
+public interface ArrayValue<V extends Value<V>> extends Value<V> {
 
   default ValueType getType () {
 

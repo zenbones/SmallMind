@@ -72,11 +72,11 @@ public interface ObjectValue<V extends Value<V>> extends Value<V> {
 
   Iterator<String> fieldNames ();
 
-  V get (String field);
+  Value<V> get (String field);
 
   <U extends Value<V>> ObjectValue<V> put (String field, U value);
 
-  V remove (String field);
+  Value<V> remove (String field);
 
   ObjectValue<V> removeAll ();
 }

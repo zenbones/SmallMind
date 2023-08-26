@@ -34,8 +34,6 @@ package org.smallmind.bayeux.oumuamua.server.spi.json.jackson;
 
 import java.io.OutputStream;
 import java.util.Collection;
-import java.util.Iterator;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.smallmind.bayeux.oumuamua.common.api.json.ArrayValue;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
@@ -123,33 +121,5 @@ public class JacksonArrayValue extends JacksonValue<ArrayNode> implements ArrayV
     getNode().removeAll();
 
     return this;
-  }
-
-  @Override
-  public Iterator<JacksonValue<?>> iterator () {
-
-    return new ArrayIterator(getNode().iterator());
-  }
-
-  private class ArrayIterator implements Iterator<JacksonValue<?>> {
-
-    private final Iterator<JsonNode> nodeIterator;
-
-    public ArrayIterator (Iterator<JsonNode> nodeIterator) {
-
-      this.nodeIterator = nodeIterator;
-    }
-
-    @Override
-    public boolean hasNext () {
-
-      return nodeIterator.hasNext();
-    }
-
-    @Override
-    public JacksonValue<?> next () {
-
-      return JacksonValueUtility.to(nodeIterator.next(), getFactory());
-    }
   }
 }

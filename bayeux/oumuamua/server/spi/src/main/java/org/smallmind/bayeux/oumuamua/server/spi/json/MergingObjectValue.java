@@ -3,6 +3,7 @@ package org.smallmind.bayeux.oumuamua.server.spi.json;
 import java.io.OutputStream;
 import java.util.HashSet;
 import java.util.Iterator;
+import org.smallmind.bayeux.oumuamua.common.api.json.ArrayValue;
 import org.smallmind.bayeux.oumuamua.common.api.json.ObjectValue;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.common.api.json.ValueFactory;
@@ -63,27 +64,89 @@ public class MergingObjectValue<V extends Value<V>> implements ObjectValue<V> {
   }
 
   @Override
-  public V get (String field) {
+  public Value<V> get (String field) {
 
-    return null;
+    Value<V> value;
+
+    if ((outerObjectValue != null) && ((value = outerObjectValue.get(field)) != null)) {
+
+      return value;
+    } else if (((removedSet == null) || (!removedSet.contains(field))) && ((value = innerObjectValue.get(field)) != null)) {
+      switch (value.getType()) {
+        case OBJECT:
+
+          MergingObjectValue<V> mergedValue;
+
+          if (outerObjectValue == null) {
+            outerObjectValue = innerObjectValue.getFactory().objectValue();
+          }
+
+          outerObjectValue.put(field, mergedValue = new MergingObjectValue<>((ObjectValue<V>)value));
+
+          return mergedValue;
+        case ARRAY:
+
+          CopyOnWriteArrayValue<V> copyOnWriteValue;
+
+          if (outerObjectValue == null) {
+            outerObjectValue = innerObjectValue.getFactory().objectValue();
+          }
+
+          outerObjectValue.put(field, copyOnWriteValue = new CopyOnWriteArrayValue<>((ArrayValue<V>)value));
+
+          return copyOnWriteValue;
+        default:
+
+          return value;
+      }
+    } else {
+
+      return null;
+    }
   }
 
   @Override
   public <U extends Value<V>> ObjectValue<V> put (String field, U value) {
 
-    return null;
+    if (outerObjectValue == null) {
+      outerObjectValue = innerObjectValue.getFactory().objectValue();
+    }
+
+    outerObjectValue.put(field, value);
+
+    return this;
   }
 
   @Override
-  public V remove (String field) {
+  public Value<V> remove (String field) {
 
-    return null;
+    Value<V> outerRemovedValue = (outerObjectValue == null) ? null : outerObjectValue.remove(field);
+    Value<V> innerRemovedValue = null;
+
+    if (((removedSet == null) || (!removedSet.contains(field))) && ((innerRemovedValue = innerObjectValue.get(field)) != null)) {
+      if (removedSet == null) {
+        removedSet = new HashSet<>();
+      }
+      removedSet.add(field);
+    }
+
+    return (outerRemovedValue != null) ? outerRemovedValue : innerRemovedValue;
   }
 
   @Override
   public ObjectValue<V> removeAll () {
 
-    return null;
+    if (outerObjectValue != null) {
+      outerObjectValue = null;
+    }
+    if (removedSet == null) {
+      removedSet = new HashSet<>();
+    }
+    for (String fieldName : new IterableIterator<>(innerObjectValue.fieldNames())) {
+      removedSet.add(fieldName);
+    }
+
+    return this;
   }
 
   @Override
