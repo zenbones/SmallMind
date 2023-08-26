@@ -57,6 +57,6 @@ public class OrthodoxCodec implements Codec<OrthodoxValue> {
   public Message<OrthodoxValue> from (byte[] buffer)
     throws Exception {
 
-    return deserializer.from(buffer);
+    return deserializer.from(this, buffer);
   }
 }

@@ -35,17 +35,20 @@ package org.smallmind.bayeux.oumuamua.server.spi.json.jackson;
 import java.io.IOException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.common.api.json.Message;
+import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.OumuamuaException;
 import org.smallmind.bayeux.oumuamua.server.spi.MetaProcessingException;
 import org.smallmind.bayeux.oumuamua.server.spi.json.JsonDeserializer;
-import org.smallmind.bayeux.oumuamua.server.spi.json.orthodox.OrthodoxValue;
+import org.smallmind.bayeux.oumuamua.server.spi.json.MessageUtility;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
-public class JacksonDeserializer implements JsonDeserializer<OrthodoxValue> {
+public class JacksonDeserializer<V extends Value<V>> implements JsonDeserializer<V> {
 
   @Override
-  public Message<OrthodoxValue> from (byte[] buffer)
+  public Message<V> from (Codec<V> codec, byte[] buffer)
     throws IOException, OumuamuaException {
 
     JsonNode node;
@@ -54,7 +57,7 @@ public class JacksonDeserializer implements JsonDeserializer<OrthodoxValue> {
       throw new MetaProcessingException("Json data is not a json object");
     } else {
 
-      return null;
+      return MessageUtility.convert(codec, (ObjectNode)node);
     }
   }
 }
