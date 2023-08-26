@@ -47,17 +47,6 @@ public class JacksonNumberValue extends JacksonValue<NumericNode> implements Num
   }
 
   @Override
-  public JacksonValue<?> copy () {
-
-    return null;
-  }
-
-  @Override
-  public void encode (OutputStream outputStream) {
-
-  }
-
-  @Override
   public NumberType getNumberType () {
 
     switch (getNode().numberType()) {
@@ -94,5 +83,16 @@ public class JacksonNumberValue extends JacksonValue<NumericNode> implements Num
   public double asDouble () {
 
     return getNode().asDouble();
+  }
+
+  @Override
+  public JacksonValue<?> copy () {
+
+    return null;
+  }
+
+  @Override
+  public void encode (OutputStream outputStream) {
+
   }
 }

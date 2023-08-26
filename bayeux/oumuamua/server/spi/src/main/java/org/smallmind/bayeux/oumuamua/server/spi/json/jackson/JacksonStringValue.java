@@ -45,6 +45,12 @@ public class JacksonStringValue extends JacksonValue<TextNode> implements String
   }
 
   @Override
+  public String asText () {
+
+    return getNode().asText();
+  }
+
+  @Override
   public JacksonValue<?> copy () {
 
     return null;
@@ -53,11 +59,5 @@ public class JacksonStringValue extends JacksonValue<TextNode> implements String
   @Override
   public void encode (OutputStream outputStream) {
 
-  }
-
-  @Override
-  public String asText () {
-
-    return getNode().asText();
   }
 }

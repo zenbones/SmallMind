@@ -120,7 +120,7 @@ public interface ArrayValue<V extends Value<V>> extends Value<V> {
 
   boolean isEmpty ();
 
-  V get (int index);
+  Value<V> get (int index);
 
   <U extends Value<V>> ArrayValue<V> add (U value);
 
@@ -128,7 +128,7 @@ public interface ArrayValue<V extends Value<V>> extends Value<V> {
 
   <U extends Value<V>> ArrayValue<V> insert (int index, U value);
 
-  V remove (int index);
+  Value<V> remove (int index);
 
   <U extends Value<V>> ArrayValue<V> addAll (Collection<U> values);
 

@@ -47,17 +47,6 @@ public class JacksonArrayValue extends JacksonValue<ArrayNode> implements ArrayV
   }
 
   @Override
-  public JacksonValue<?> copy () {
-
-    return null;
-  }
-
-  @Override
-  public void encode (OutputStream outputStream) {
-
-  }
-
-  @Override
   public int size () {
 
     return getNode().size();
@@ -121,5 +110,16 @@ public class JacksonArrayValue extends JacksonValue<ArrayNode> implements ArrayV
     getNode().removeAll();
 
     return this;
+  }
+
+  @Override
+  public JacksonValue<?> copy () {
+
+    return null;
+  }
+
+  @Override
+  public void encode (OutputStream outputStream) {
+
   }
 }

@@ -2,8 +2,8 @@ package org.smallmind.bayeux.oumuamua.server.spi.json;
 
 import java.io.OutputStream;
 import java.util.Collection;
-import java.util.Iterator;
 import org.smallmind.bayeux.oumuamua.common.api.json.ArrayValue;
+import org.smallmind.bayeux.oumuamua.common.api.json.ObjectValue;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.common.api.json.ValueFactory;
 
@@ -17,6 +17,16 @@ public class CopyOnWriteArrayValue<V extends Value<V>> implements ArrayValue<V> 
     this.innerArrayValue = innerArrayValue;
   }
 
+  private ArrayValue<V> fill () {
+
+    outerArrayValue = innerArrayValue.getFactory().arrayValue();
+    for (int index = 0; index < innerArrayValue.size(); index++) {
+      outerArrayValue.add(innerArrayValue.get(index));
+    }
+
+    return outerArrayValue;
+  }
+
   @Override
   public ValueFactory<V> getFactory () {
 
@@ -26,7 +36,7 @@ public class CopyOnWriteArrayValue<V extends Value<V>> implements ArrayValue<V> 
   @Override
   public int size () {
 
-    return  (outerArrayValue == null) ? innerArrayValue.size() : outerArrayValue.size();
+    return (outerArrayValue != null) ? outerArrayValue.size() : innerArrayValue.size();
   }
 
   @Override
@@ -36,51 +46,86 @@ public class CopyOnWriteArrayValue<V extends Value<V>> implements ArrayValue<V> 
   }
 
   @Override
-  public V get (int index) {
+  public Value<V> get (int index) {
 
-    return null;
+    if (outerArrayValue != null) {
+
+      return outerArrayValue.get(index);
+    } else {
+
+      Value<V> value;
+
+      if ((value = innerArrayValue.get(index)) != null) {
+        switch (value.getType()) {
+          case OBJECT:
+
+            MergingObjectValue<V> mergedValue;
+
+            fill().set(index, mergedValue = new MergingObjectValue<>((ObjectValue<V>)value));
+
+            return mergedValue;
+          case ARRAY:
+
+            CopyOnWriteArrayValue<V> copyOnWriteValue;
+
+            fill().set(index, copyOnWriteValue = new CopyOnWriteArrayValue<>((ArrayValue<V>)value));
+
+            return copyOnWriteValue;
+          default:
+
+            return value;
+        }
+      } else {
+
+        return null;
+      }
+    }
   }
 
   @Override
   public <U extends Value<V>> ArrayValue<V> add (U value) {
 
-    return null;
+    fill().add(value);
+
+    return this;
   }
 
   @Override
   public <U extends Value<V>> ArrayValue<V> set (int index, U value) {
 
-    return null;
+    fill().set(index, value);
+
+    return this;
   }
 
   @Override
   public <U extends Value<V>> ArrayValue<V> insert (int index, U value) {
 
-    return null;
+     fill().insert(index, value);
+
+     return this;
   }
 
   @Override
-  public V remove (int index) {
+  public Value<V> remove (int index) {
 
-    return null;
+    return fill().remove(index);
   }
 
   @Override
   public <U extends Value<V>> ArrayValue<V> addAll (Collection<U> values) {
 
-    return null;
+    fill().addAll(values);
+
+    return this;
   }
 
   @Override
   public ArrayValue<V> removeAll () {
 
-    return null;
-  }
+    outerArrayValue = innerArrayValue.getFactory().arrayValue();
 
-  @Override
-  public Iterator<V> iterator () {
-
-    return null;
+    return this;
   }
 
   @Override

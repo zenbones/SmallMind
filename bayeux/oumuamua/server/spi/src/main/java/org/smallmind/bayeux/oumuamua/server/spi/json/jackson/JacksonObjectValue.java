@@ -47,17 +47,6 @@ public class JacksonObjectValue extends JacksonValue<ObjectNode> implements Obje
   }
 
   @Override
-  public JacksonValue<?> copy () {
-
-    return null;
-  }
-
-  @Override
-  public void encode (OutputStream outputStream) {
-
-  }
-
-  @Override
   public int size () {
 
     return getNode().size();
@@ -101,5 +90,16 @@ public class JacksonObjectValue extends JacksonValue<ObjectNode> implements Obje
     getNode().removeAll();
 
     return this;
+  }
+
+  @Override
+  public JacksonValue<?> copy () {
+
+    return null;
+  }
+
+  @Override
+  public void encode (OutputStream outputStream) {
+
   }
 }
