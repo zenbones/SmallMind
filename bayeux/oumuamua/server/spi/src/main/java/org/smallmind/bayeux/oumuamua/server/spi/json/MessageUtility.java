@@ -49,7 +49,7 @@ public class MessageUtility {
   public static <V extends Value<V>> Message<V> convert (Codec<V> codec, ObjectNode node)
     throws MetaProcessingException {
 
-    Message<V> message = codec.toMessage();
+    Message<V> message = codec.create();
 
     for (Map.Entry<String, JsonNode> fieldEntry : new IterableIterator<>(node.fields())) {
       message.put(fieldEntry.getKey(), convert(fieldEntry.getValue(), message.getFactory()));

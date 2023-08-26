@@ -30,58 +30,25 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.spi.json.jackson;
+package org.smallmind.bayeux.oumuamua.server.spi.json.orthodox;
 
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import org.smallmind.bayeux.oumuamua.common.api.json.ValueFactory;
+import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
+import org.smallmind.bayeux.oumuamua.common.api.json.Message;
 
-public class JacksonValueFactory implements ValueFactory<JacksonValue<?>> {
+public class OrthodoxMessage extends OrthodoxObjectValue implements Message<OrthodoxValue> {
 
-  @Override
-  public JacksonObjectValue objectValue () {
+  private final OrthodoxCodec codec;
 
-    return new JacksonObjectValue(JsonNodeFactory.instance.objectNode(), this);
+  public OrthodoxMessage (OrthodoxCodec codec, OrthodoxValueFactory factory) {
+
+    super(factory);
+
+    this.codec = codec;
   }
 
   @Override
-  public JacksonArrayValue arrayValue () {
+  public Codec<OrthodoxValue> getCodec () {
 
-    return new JacksonArrayValue(JsonNodeFactory.instance.arrayNode(), this);
-  }
-
-  @Override
-  public JacksonStringValue textValue (String text) {
-
-    return new JacksonStringValue(JsonNodeFactory.instance.textNode(text), this);
-  }
-
-  @Override
-  public JacksonNumberValue numberValue (int i) {
-
-    return new JacksonNumberValue(JsonNodeFactory.instance.numberNode(i), this);
-  }
-
-  @Override
-  public JacksonNumberValue numberValue (long l) {
-
-    return new JacksonNumberValue(JsonNodeFactory.instance.numberNode(l), this);
-  }
-
-  @Override
-  public JacksonNumberValue numberValue (double d) {
-
-    return new JacksonNumberValue(JsonNodeFactory.instance.numberNode(d), this);
-  }
-
-  @Override
-  public JacksonBooleanValue booleanValue (boolean bool) {
-
-    return new JacksonBooleanValue(JsonNodeFactory.instance.booleanNode(bool), this);
-  }
-
-  @Override
-  public JacksonNullValue nullValue () {
-
-    return new JacksonNullValue(JsonNodeFactory.instance.nullNode(), this);
+    return codec;
   }
 }

@@ -30,48 +30,23 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.spi.json.jackson;
+package org.smallmind.bayeux.oumuamua.server.spi.json.orthodox;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.BooleanNode;
-import com.fasterxml.jackson.databind.node.NullNode;
-import com.fasterxml.jackson.databind.node.NumericNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.common.api.json.ValueFactory;
-import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
-public class JacksonValueUtility {
+public abstract class OrthodoxValue implements Value<OrthodoxValue> {
 
-  public static JacksonValue<?> to (JsonNode node, ValueFactory<JacksonValue<?>> factory) {
+  private final OrthodoxValueFactory factory;
 
-    if (node == null) {
+  protected OrthodoxValue (OrthodoxValueFactory factory) {
 
-      return null;
-    } else {
-      switch (node.getNodeType()) {
-        case OBJECT:
-          return new JacksonObjectValue((ObjectNode)node, factory);
-        case ARRAY:
-          return new JacksonArrayValue((ArrayNode)node, factory);
-        case STRING:
-          return new JacksonStringValue((TextNode)node, factory);
-        case NUMBER:
-          return new JacksonNumberValue((NumericNode)node, factory);
-        case BOOLEAN:
-          return new JacksonBooleanValue((BooleanNode)node, factory);
-        case NULL:
-          return new JacksonNullValue((NullNode)node, factory);
-        default:
-          throw new UnknownSwitchCaseException(node.getNodeType().name());
-      }
-    }
+    this.factory = factory;
   }
 
-  public static JsonNode from (Value<JacksonValue<?>> value) {
+  @Override
+  public ValueFactory<OrthodoxValue> getFactory () {
 
-    return (value == null) ? null : ((JacksonValue<?>)value).getNode();
+    return factory;
   }
 }

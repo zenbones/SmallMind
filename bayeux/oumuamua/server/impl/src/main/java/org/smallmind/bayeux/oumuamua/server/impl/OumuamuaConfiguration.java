@@ -36,13 +36,13 @@ import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.SecurityPolicy;
 import org.smallmind.bayeux.oumuamua.server.api.backbone.Backbone;
-import org.smallmind.bayeux.oumuamua.server.spi.json.jackson.DefaultSerDes;
-import org.smallmind.bayeux.oumuamua.server.spi.json.jackson.JacksonCodec;
+import org.smallmind.bayeux.oumuamua.server.spi.json.jackson.JacksonDeserializer;
+import org.smallmind.bayeux.oumuamua.server.spi.json.orthodox.OrthodoxCodec;
 
 public class OumuamuaConfiguration {
 
   private Backbone backbone;
-  private Codec<?> codec = new JacksonCodec(new DefaultSerDes());
+  private Codec<?> codec = new OrthodoxCodec(new JacksonDeserializer());
   private SecurityPolicy securityPolicy;
   private Protocol[] protocols;
   private long channelTimeToLiveMinutes = 30;

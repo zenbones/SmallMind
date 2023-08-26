@@ -30,38 +30,33 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.spi.json.jackson;
+package org.smallmind.bayeux.oumuamua.server.spi.json.orthodox;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import org.smallmind.bayeux.oumuamua.common.api.json.Value;
-import org.smallmind.bayeux.oumuamua.common.api.json.ValueFactory;
-import org.smallmind.bayeux.oumuamua.common.api.json.ValueType;
+import java.io.IOException;
+import java.io.Writer;
+import org.smallmind.bayeux.oumuamua.common.api.json.BooleanValue;
 
-public abstract class JacksonValue<N extends JsonNode> implements Value<JacksonValue<?>> {
+public class OrthodoxBooleanValue extends OrthodoxValue implements BooleanValue<OrthodoxValue> {
 
-  private final ValueFactory<JacksonValue<?>> factory;
-  private final N node;
+  private final boolean value;
 
-  public JacksonValue (N node, ValueFactory<JacksonValue<?>> factory) {
+  protected OrthodoxBooleanValue (OrthodoxValueFactory factory, boolean value) {
 
-    this.node = node;
-    this.factory = factory;
+    super(factory);
+
+    this.value = value;
   }
 
   @Override
-  public ValueFactory<JacksonValue<?>> getFactory () {
+  public boolean asBoolean () {
 
-    return factory;
+    return value;
   }
 
   @Override
-  public ValueType getType () {
+  public void encode (Writer writer)
+    throws IOException {
 
-    return null;
-  }
-
-  public N getNode () {
-
-    return node;
+    writer.write(value ? "true" : "false");
   }
 }

@@ -206,6 +206,8 @@ public class MergingObjectValue<V extends Value<V>> implements ObjectValue<V> {
           writer.write(fieldName);
           writer.write(": ");
           value.encode(writer);
+
+          first = false;
         }
       }
     }
@@ -223,6 +225,8 @@ public class MergingObjectValue<V extends Value<V>> implements ObjectValue<V> {
           writer.write(fieldName);
           writer.write(": ");
           value.encode(writer);
+
+          first = false;
         }
       }
     }

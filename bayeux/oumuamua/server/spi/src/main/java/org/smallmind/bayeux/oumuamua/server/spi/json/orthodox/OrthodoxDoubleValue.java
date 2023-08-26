@@ -30,19 +30,58 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.spi.json.jackson;
+package org.smallmind.bayeux.oumuamua.server.spi.json.orthodox;
 
 import java.io.IOException;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.io.Writer;
+import org.smallmind.bayeux.oumuamua.common.api.json.NumberType;
+import org.smallmind.bayeux.oumuamua.common.api.json.NumberValue;
 
-public interface JsonSerDes {
+public class OrthodoxDoubleValue extends OrthodoxValue implements NumberValue<OrthodoxValue> {
 
-  ObjectNode to (byte[] buffer)
-    throws IOException;
+  private final double value;
 
-  byte[] from (ObjectNode objectNode)
-    throws JsonProcessingException;
+  protected OrthodoxDoubleValue (OrthodoxValueFactory factory, double value) {
 
-  ObjectNode copy (ObjectNode objectNode);
+    super(factory);
+
+    this.value = value;
+  }
+
+  @Override
+  public NumberType getNumberType () {
+
+    return NumberType.DOUBLE;
+  }
+
+  @Override
+  public Number asNumber () {
+
+    return value;
+  }
+
+  @Override
+  public int asInt () {
+
+    return (int)value;
+  }
+
+  @Override
+  public long asLong () {
+
+    return (long)value;
+  }
+
+  @Override
+  public double asDouble () {
+
+    return value;
+  }
+
+  @Override
+  public void encode (Writer writer)
+    throws IOException {
+
+    writer.write(String.valueOf(value));
+  }
 }

@@ -30,41 +30,58 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.spi.json.jackson;
+package org.smallmind.bayeux.oumuamua.server.spi.json.orthodox;
 
 import java.io.IOException;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
-import org.smallmind.bayeux.oumuamua.common.api.json.Message;
+import java.io.Writer;
+import org.smallmind.bayeux.oumuamua.common.api.json.NumberType;
+import org.smallmind.bayeux.oumuamua.common.api.json.NumberValue;
 
-public class JacksonCodec implements Codec<JacksonValue<?>> {
+public class OrthodoxLongValue extends OrthodoxValue implements NumberValue<OrthodoxValue> {
 
-  private static final JacksonValueFactory FACTORY = new JacksonValueFactory();
-  private final JsonSerDes jsonSerDes;
+  private final long value;
 
-  public JacksonCodec (JsonSerDes jsonSerDes) {
+  protected OrthodoxLongValue (OrthodoxValueFactory factory, long value) {
 
-    this.jsonSerDes = jsonSerDes;
+    super(factory);
+
+    this.value = value;
   }
 
   @Override
-  public byte[] fromMessage (Message<JacksonValue<?>> message)
-    throws JsonProcessingException {
+  public NumberType getNumberType () {
 
-    return jsonSerDes.from(((JacksonMessage)message).getNode());
+    return NumberType.LONG;
   }
 
   @Override
-  public Message<JacksonValue<?>> toMessage () {
+  public Number asNumber () {
 
-    return new JacksonMessage(this, JsonNodeFactory.instance.objectNode(), FACTORY);
+    return value;
   }
 
   @Override
-  public Message<JacksonValue<?>> toMessage (byte[] buffer)
+  public int asInt () {
+
+    return (int)value;
+  }
+
+  @Override
+  public long asLong () {
+
+    return value;
+  }
+
+  @Override
+  public double asDouble () {
+
+    return (double)value;
+  }
+
+  @Override
+  public void encode (Writer writer)
     throws IOException {
 
-    return new JacksonMessage(this, jsonSerDes.to(buffer), FACTORY);
+    writer.write(String.valueOf(value));
   }
 }

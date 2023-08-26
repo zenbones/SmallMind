@@ -30,32 +30,13 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.spi.json.jackson;
+package org.smallmind.bayeux.oumuamua.server.spi.json;
 
-import java.io.IOException;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.smallmind.web.json.scaffold.util.JsonCodec;
+import org.smallmind.bayeux.oumuamua.common.api.json.Message;
+import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 
-public class DefaultSerDes implements JsonSerDes {
+public interface JsonDeserializer<V extends Value<V>> {
 
-  @Override
-  public ObjectNode to (byte[] buffer)
-    throws IOException {
-
-    return (ObjectNode)JsonCodec.readAsJsonNode(buffer);
-  }
-
-  @Override
-  public byte[] from (ObjectNode objectNode)
-    throws JsonProcessingException {
-
-    return JsonCodec.writeAsBytes(objectNode);
-  }
-
-  @Override
-  public ObjectNode copy (ObjectNode objectNode) {
-
-    return (ObjectNode)JsonCodec.copy(objectNode);
-  }
+  Message<V> from (byte[] buffer)
+    throws Exception;
 }

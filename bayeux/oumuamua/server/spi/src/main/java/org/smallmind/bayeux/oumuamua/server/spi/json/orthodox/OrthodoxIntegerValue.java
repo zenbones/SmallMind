@@ -30,27 +30,58 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.spi.json.jackson;
+package org.smallmind.bayeux.oumuamua.server.spi.json.orthodox;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
-import org.smallmind.bayeux.oumuamua.common.api.json.Message;
-import org.smallmind.bayeux.oumuamua.common.api.json.ValueFactory;
+import java.io.IOException;
+import java.io.Writer;
+import org.smallmind.bayeux.oumuamua.common.api.json.NumberType;
+import org.smallmind.bayeux.oumuamua.common.api.json.NumberValue;
 
-public class JacksonMessage extends JacksonObjectValue implements Message<JacksonValue<?>> {
+public class OrthodoxIntegerValue extends OrthodoxValue implements NumberValue<OrthodoxValue> {
 
-  private final Codec<JacksonValue<?>> codec;
+  private final int value;
 
-  public JacksonMessage (Codec<JacksonValue<?>> codec, ObjectNode node, ValueFactory<JacksonValue<?>> factory) {
+  protected OrthodoxIntegerValue (OrthodoxValueFactory factory, int value) {
 
-    super(node, factory);
+    super(factory);
 
-    this.codec = codec;
+    this.value = value;
   }
 
   @Override
-  public Codec<JacksonValue<?>> getCodec () {
+  public NumberType getNumberType () {
 
-    return codec;
+    return NumberType.INTEGER;
+  }
+
+  @Override
+  public Number asNumber () {
+
+    return value;
+  }
+
+  @Override
+  public int asInt () {
+
+    return value;
+  }
+
+  @Override
+  public long asLong () {
+
+    return value;
+  }
+
+  @Override
+  public double asDouble () {
+
+    return value;
+  }
+
+  @Override
+  public void encode (Writer writer)
+    throws IOException {
+
+    writer.write(String.valueOf(value));
   }
 }

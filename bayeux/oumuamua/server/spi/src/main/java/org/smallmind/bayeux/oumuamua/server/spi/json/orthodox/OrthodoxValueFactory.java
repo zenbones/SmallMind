@@ -30,28 +30,63 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.spi.json.jackson;
+package org.smallmind.bayeux.oumuamua.server.spi.json.orthodox;
 
-import java.io.Writer;
-import com.fasterxml.jackson.databind.node.TextNode;
+import org.smallmind.bayeux.oumuamua.common.api.json.ArrayValue;
+import org.smallmind.bayeux.oumuamua.common.api.json.BooleanValue;
+import org.smallmind.bayeux.oumuamua.common.api.json.NullValue;
+import org.smallmind.bayeux.oumuamua.common.api.json.NumberValue;
+import org.smallmind.bayeux.oumuamua.common.api.json.ObjectValue;
 import org.smallmind.bayeux.oumuamua.common.api.json.StringValue;
 import org.smallmind.bayeux.oumuamua.common.api.json.ValueFactory;
 
-public class JacksonStringValue extends JacksonValue<TextNode> implements StringValue<JacksonValue<?>> {
+public class OrthodoxValueFactory implements ValueFactory<OrthodoxValue> {
 
-  public JacksonStringValue (TextNode node, ValueFactory<JacksonValue<?>> factory) {
+  @Override
+  public ObjectValue<OrthodoxValue> objectValue () {
 
-    super(node, factory);
+    return new OrthodoxObjectValue(this);
   }
 
   @Override
-  public String asText () {
+  public ArrayValue<OrthodoxValue> arrayValue () {
 
-    return getNode().asText();
+    return new OrthodoxArrayValue(this);
   }
 
   @Override
-  public void encode (Writer writer) {
+  public StringValue<OrthodoxValue> textValue (String text) {
 
+    return new OrthodoxTextValue(this, text);
+  }
+
+  @Override
+  public NumberValue<OrthodoxValue> numberValue (int i) {
+
+    return new OrthodoxIntegerValue(this, i);
+  }
+
+  @Override
+  public NumberValue<OrthodoxValue> numberValue (long l) {
+
+    return new OrthodoxLongValue(this, l);
+  }
+
+  @Override
+  public NumberValue<OrthodoxValue> numberValue (double d) {
+
+    return new OrthodoxDoubleValue(this, d);
+  }
+
+  @Override
+  public BooleanValue<OrthodoxValue> booleanValue (boolean bool) {
+
+    return new OrthodoxBooleanValue(this, bool);
+  }
+
+  @Override
+  public NullValue<OrthodoxValue> nullValue () {
+
+    return new OrthodoxNullValue(this);
   }
 }

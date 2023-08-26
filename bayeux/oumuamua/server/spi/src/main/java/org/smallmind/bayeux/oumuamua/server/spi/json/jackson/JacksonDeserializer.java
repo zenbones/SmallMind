@@ -32,20 +32,29 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.json.jackson;
 
-import java.io.Writer;
-import com.fasterxml.jackson.databind.node.NullNode;
-import org.smallmind.bayeux.oumuamua.common.api.json.NullValue;
-import org.smallmind.bayeux.oumuamua.common.api.json.ValueFactory;
+import java.io.IOException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeType;
+import org.smallmind.bayeux.oumuamua.common.api.json.Message;
+import org.smallmind.bayeux.oumuamua.server.api.OumuamuaException;
+import org.smallmind.bayeux.oumuamua.server.spi.MetaProcessingException;
+import org.smallmind.bayeux.oumuamua.server.spi.json.JsonDeserializer;
+import org.smallmind.bayeux.oumuamua.server.spi.json.orthodox.OrthodoxValue;
+import org.smallmind.web.json.scaffold.util.JsonCodec;
 
-public class JacksonNullValue extends JacksonValue<NullNode> implements NullValue<JacksonValue<?>> {
-
-  public JacksonNullValue (NullNode node, ValueFactory<JacksonValue<?>> factory) {
-
-    super(node, factory);
-  }
+public class JacksonDeserializer implements JsonDeserializer<OrthodoxValue> {
 
   @Override
-  public void encode (Writer writer) {
+  public Message<OrthodoxValue> from (byte[] buffer)
+    throws IOException, OumuamuaException {
 
+    JsonNode node;
+
+    if (!JsonNodeType.OBJECT.equals((node = JsonCodec.readAsJsonNode(buffer)).getNodeType())) {
+      throw new MetaProcessingException("Json data is not a json object");
+    } else {
+
+      return null;
+    }
   }
 }

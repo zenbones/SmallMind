@@ -30,63 +30,23 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.spi.json.jackson;
+package org.smallmind.bayeux.oumuamua.server.spi.json.orthodox;
 
+import java.io.IOException;
 import java.io.Writer;
-import com.fasterxml.jackson.databind.node.NumericNode;
-import org.smallmind.bayeux.oumuamua.common.api.json.NumberType;
-import org.smallmind.bayeux.oumuamua.common.api.json.NumberValue;
-import org.smallmind.bayeux.oumuamua.common.api.json.ValueFactory;
-import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
+import org.smallmind.bayeux.oumuamua.common.api.json.NullValue;
 
-public class JacksonNumberValue extends JacksonValue<NumericNode> implements NumberValue<JacksonValue<?>> {
+public class OrthodoxNullValue extends OrthodoxValue implements NullValue<OrthodoxValue> {
 
-  public JacksonNumberValue (NumericNode node, ValueFactory<JacksonValue<?>> factory) {
+  protected OrthodoxNullValue (OrthodoxValueFactory factory) {
 
-    super(node, factory);
+    super(factory);
   }
 
   @Override
-  public NumberType getNumberType () {
+  public void encode (Writer writer)
+    throws IOException {
 
-    switch (getNode().numberType()) {
-      case INT:
-        return NumberType.INTEGER;
-      case LONG:
-        return NumberType.LONG;
-      case DOUBLE:
-        return NumberType.DOUBLE;
-      default:
-        throw new UnknownSwitchCaseException(getNode().numberType().name());
-    }
-  }
-
-  @Override
-  public Number asNumber () {
-
-    return getNode().numberValue();
-  }
-
-  @Override
-  public int asInt () {
-
-    return getNode().asInt();
-  }
-
-  @Override
-  public long asLong () {
-
-    return getNode().asLong();
-  }
-
-  @Override
-  public double asDouble () {
-
-    return getNode().asDouble();
-  }
-
-  @Override
-  public void encode (Writer writer) {
-
+    writer.write("null");
   }
 }

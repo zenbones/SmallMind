@@ -30,12 +30,35 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.common.api.json;
+package org.smallmind.bayeux.oumuamua.server.spi.json.orthodox;
 
-public interface Codec<V extends Value<V>> {
+import java.io.IOException;
+import java.io.Writer;
+import org.smallmind.bayeux.oumuamua.common.api.json.StringValue;
 
-  Message<V> create ();
+public class OrthodoxTextValue extends OrthodoxValue implements StringValue<OrthodoxValue> {
 
-  Message<V> from (byte[] buffer)
-    throws Exception;
+  private final String text;
+
+  protected OrthodoxTextValue (OrthodoxValueFactory factory, String text) {
+
+    super(factory);
+
+    this.text = text;
+  }
+
+  @Override
+  public String asText () {
+
+    return text;
+  }
+
+  @Override
+  public void encode (Writer writer)
+    throws IOException {
+
+    writer.write('"');
+    writer.write(text);
+    writer.write('"');
+  }
 }

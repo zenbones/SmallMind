@@ -30,28 +30,33 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.spi.json.jackson;
+package org.smallmind.bayeux.oumuamua.server.spi.json.orthodox;
 
-import java.io.Writer;
-import com.fasterxml.jackson.databind.node.BooleanNode;
-import org.smallmind.bayeux.oumuamua.common.api.json.BooleanValue;
-import org.smallmind.bayeux.oumuamua.common.api.json.ValueFactory;
+import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
+import org.smallmind.bayeux.oumuamua.common.api.json.Message;
+import org.smallmind.bayeux.oumuamua.server.spi.json.JsonDeserializer;
 
-public class JacksonBooleanValue extends JacksonValue<BooleanNode> implements BooleanValue<JacksonValue<?>> {
+public class OrthodoxCodec implements Codec<OrthodoxValue> {
 
-  public JacksonBooleanValue (BooleanNode node, ValueFactory<JacksonValue<?>> factory) {
+  private static final OrthodoxValueFactory FACTORY = new OrthodoxValueFactory();
 
-    super(node, factory);
+  private final JsonDeserializer<OrthodoxValue> deserializer;
+
+  public OrthodoxCodec (JsonDeserializer<OrthodoxValue> deserializer) {
+
+    this.deserializer = deserializer;
   }
 
   @Override
-  public boolean asBoolean () {
+  public Message<OrthodoxValue> create () {
 
-    return getNode().asBoolean();
+    return new OrthodoxMessage(this, FACTORY);
   }
 
   @Override
-  public void encode (Writer writer) {
+  public Message<OrthodoxValue> from (byte[] buffer)
+    throws Exception {
 
+    return deserializer.from(buffer);
   }
 }

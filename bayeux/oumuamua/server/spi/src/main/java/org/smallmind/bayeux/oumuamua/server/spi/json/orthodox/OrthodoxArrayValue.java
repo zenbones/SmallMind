@@ -30,70 +30,106 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.spi.json.jackson;
+package org.smallmind.bayeux.oumuamua.server.spi.json.orthodox;
 
+import java.io.IOException;
 import java.io.Writer;
-import java.util.Iterator;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.smallmind.bayeux.oumuamua.common.api.json.ObjectValue;
+import java.util.Collection;
+import java.util.LinkedList;
+import org.smallmind.bayeux.oumuamua.common.api.json.ArrayValue;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
-import org.smallmind.bayeux.oumuamua.common.api.json.ValueFactory;
 
-public class JacksonObjectValue extends JacksonValue<ObjectNode> implements ObjectValue<JacksonValue<?>> {
+public class OrthodoxArrayValue extends OrthodoxValue implements ArrayValue<OrthodoxValue> {
 
-  public JacksonObjectValue (ObjectNode node, ValueFactory<JacksonValue<?>> factory) {
+  private final LinkedList<Value<OrthodoxValue>> valueList = new LinkedList<>();
 
-    super(node, factory);
+  protected OrthodoxArrayValue (OrthodoxValueFactory factory) {
+
+    super(factory);
   }
 
   @Override
   public int size () {
 
-    return getNode().size();
+    return valueList.size();
   }
 
   @Override
   public boolean isEmpty () {
 
-    return getNode().isEmpty();
+    return valueList.isEmpty();
   }
 
   @Override
-  public Iterator<String> fieldNames () {
+  public Value<OrthodoxValue> get (int index) {
 
-    return getNode().fieldNames();
+    return valueList.get(index);
   }
 
   @Override
-  public JacksonValue<?> get (String field) {
+  public <U extends Value<OrthodoxValue>> ArrayValue<OrthodoxValue> add (U value) {
 
-    return JacksonValueUtility.to(getNode().get(field), getFactory());
-  }
-
-  @Override
-  public <U extends Value<JacksonValue<?>>> ObjectValue<JacksonValue<?>> put (String field, U value) {
-
-    getNode().set(field, JacksonValueUtility.from(value));
+    valueList.add(value);
 
     return this;
   }
 
   @Override
-  public JacksonValue<?> remove (String field) {
+  public <U extends Value<OrthodoxValue>> ArrayValue<OrthodoxValue> set (int index, U value) {
 
-    return JacksonValueUtility.to(getNode().remove(field), getFactory());
-  }
-
-  @Override
-  public ObjectValue<JacksonValue<?>> removeAll () {
-
-    getNode().removeAll();
+    valueList.set(index, value);
 
     return this;
   }
 
   @Override
-  public void encode (Writer writer) {
+  public <U extends Value<OrthodoxValue>> ArrayValue<OrthodoxValue> insert (int index, U value) {
 
+    valueList.add(index, value);
+
+    return this;
+  }
+
+  @Override
+  public Value<OrthodoxValue> remove (int index) {
+
+    return valueList.remove(index);
+  }
+
+  @Override
+  public <U extends Value<OrthodoxValue>> ArrayValue<OrthodoxValue> addAll (Collection<U> values) {
+
+    valueList.addAll(values);
+
+    return this;
+  }
+
+  @Override
+  public ArrayValue<OrthodoxValue> removeAll () {
+
+    valueList.clear();
+
+    return this;
+  }
+
+  @Override
+  public void encode (Writer writer)
+    throws IOException {
+
+    boolean first = true;
+
+    writer.write('[');
+    for (Value<OrthodoxValue> value : valueList) {
+      if (value != null) {
+        if (!first) {
+          writer.write(", ");
+        }
+
+        value.encode(writer);
+
+        first = false;
+      }
+    }
+    writer.write(']');
   }
 }
