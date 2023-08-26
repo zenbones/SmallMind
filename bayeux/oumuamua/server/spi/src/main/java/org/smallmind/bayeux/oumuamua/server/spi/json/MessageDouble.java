@@ -32,157 +32,24 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.json;
 
-import java.io.OutputStream;
-import java.util.HashSet;
-import java.util.Iterator;
 import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.common.api.json.Message;
-import org.smallmind.bayeux.oumuamua.common.api.json.ObjectValue;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
-import org.smallmind.bayeux.oumuamua.common.api.json.ValueFactory;
-import org.smallmind.nutsnbolts.util.IterableIterator;
 
-public class MessageDouble<V extends Value<V>> implements Message<V> {
+public class MessageDouble<V extends Value<V>> extends MergingObjectValue<V> implements Message<V> {
 
-  private final Message<V> innerMessage;
-  private final HashSet<String> removedSet = new HashSet<>();
-  private Message<V> outerMessage;
+  private final Codec<V> codec;
 
-  public MessageDouble (Message<V> innerMessage) {
+  public MessageDouble (Message<V> message) {
 
-    this.innerMessage = innerMessage;
-  }
+    super(message);
 
-  @Override
-  public V copy () {
-
-    return null;
-  }
-
-  @Override
-  public void encode (OutputStream outputStream) {
-
+    this.codec = message.getCodec();
   }
 
   @Override
   public Codec<V> getCodec () {
 
-    return innerMessage.getCodec();
-  }
-
-  @Override
-  public ValueFactory<V> getFactory () {
-
-    return innerMessage.getFactory();
-  }
-
-  @Override
-  public byte[] encode ()
-    throws Exception {
-
-    if (outerMessage == null) {
-
-      return innerMessage.encode();
-    } else {
-
-      Message<V> encodingMessage = (Message<V>)outerMessage.copy();
-
-      for (String fieldName : new IterableIterator<>(innerMessage.fieldNames())) {
-        if (!removedSet.contains(fieldName)) {
-          if (outerMessage.get(fieldName) == null) {
-            encodingMessage.put(fieldName, innerMessage.get(fieldName));
-          }
-        }
-      }
-
-      return encodingMessage.encode();
-    }
-  }
-
-  @Override
-  public int size () {
-
-    return fieldNameSet().size();
-  }
-
-  @Override
-  public boolean isEmpty () {
-
-    return size() == 0;
-  }
-
-  @Override
-  public Iterator<String> fieldNames () {
-
-    return fieldNameSet().iterator();
-  }
-
-  private HashSet<String> fieldNameSet () {
-
-    HashSet<String> nameSet = new HashSet<>();
-
-    for (String fieldName : new IterableIterator<>(innerMessage.fieldNames())) {
-      if (!removedSet.contains(fieldName)) {
-        nameSet.add(fieldName);
-      }
-    }
-
-    if (outerMessage != null) {
-      for (String fieldName : new IterableIterator<>(outerMessage.fieldNames())) {
-        nameSet.add(fieldName);
-      }
-    }
-
-    return nameSet;
-  }
-
-  @Override
-  public V get (String field) {
-
-    V value;
-
-    return ((outerMessage == null) || ((value = outerMessage.get(field)) == null)) ? removedSet.contains(field) ? null : innerMessage.get(field) : value;
-  }
-
-  @Override
-  public <U extends Value<V>> ObjectValue<V> put (String field, U value) {
-
-    removedSet.remove(field);
-
-    if (outerMessage == null) {
-      outerMessage = getCodec().toMessage();
-    }
-
-    return outerMessage.put(field, value);
-  }
-
-  @Override
-  public V remove (String field) {
-
-    V value;
-
-    if ((outerMessage == null) || (value = outerMessage.remove(field)) == null) {
-      value = innerMessage.get(field);
-    }
-
-    if (value != null) {
-      removedSet.add(field);
-    }
-
-    return value;
-  }
-
-  @Override
-  public ObjectValue<V> removeAll () {
-
-    for (String fieldName : new IterableIterator<>(innerMessage.fieldNames())) {
-      removedSet.add(fieldName);
-    }
-
-    if (outerMessage != null) {
-      outerMessage.removeAll();
-    }
-
-    return this;
+    return codec;
   }
 }

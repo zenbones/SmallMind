@@ -32,7 +32,8 @@
  */
 package org.smallmind.bayeux.oumuamua.common.api.json;
 
-import java.io.OutputStream;
+import java.io.IOException;
+import java.io.Writer;
 
 public interface Value<V extends Value<V>> {
 
@@ -40,7 +41,6 @@ public interface Value<V extends Value<V>> {
 
   ValueType getType ();
 
-  V copy ();
-
-  void encode (OutputStream outputStream);
+  void encode (Writer writer)
+    throws IOException;
 }

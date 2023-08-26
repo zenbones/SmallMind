@@ -32,7 +32,7 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.json.jackson;
 
-import java.io.OutputStream;
+import java.io.Writer;
 import com.fasterxml.jackson.databind.node.BooleanNode;
 import org.smallmind.bayeux.oumuamua.common.api.json.BooleanValue;
 import org.smallmind.bayeux.oumuamua.common.api.json.ValueFactory;
@@ -51,13 +51,7 @@ public class JacksonBooleanValue extends JacksonValue<BooleanNode> implements Bo
   }
 
   @Override
-  public JacksonValue<?> copy () {
-
-    return null;
-  }
-
-  @Override
-  public void encode (OutputStream outputStream) {
+  public void encode (Writer writer) {
 
   }
 }

@@ -32,7 +32,7 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.json.jackson;
 
-import java.io.OutputStream;
+import java.io.Writer;
 import java.util.Collection;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.smallmind.bayeux.oumuamua.common.api.json.ArrayValue;
@@ -113,13 +113,7 @@ public class JacksonArrayValue extends JacksonValue<ArrayNode> implements ArrayV
   }
 
   @Override
-  public JacksonValue<?> copy () {
-
-    return null;
-  }
-
-  @Override
-  public void encode (OutputStream outputStream) {
+  public void encode (Writer writer) {
 
   }
 }

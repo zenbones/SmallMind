@@ -32,6 +32,9 @@
  */
 package org.smallmind.bayeux.oumuamua.common.api.json;
 
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStreamWriter;
+
 public interface Message<V extends Value<V>> extends ObjectValue<V> {
 
   String ID = "id";
@@ -43,21 +46,21 @@ public interface Message<V extends Value<V>> extends ObjectValue<V> {
 
   default String getId () {
 
-    V value;
+    Value<V> value;
 
     return (((value = get(ID)) != null) && ValueType.STRING.equals(value.getType())) ? ((StringValue<V>)value).asText() : null;
   }
 
   default String getSessionId () {
 
-    V value;
+    Value<V> value;
 
     return (((value = get(SESSION_ID)) != null) && ValueType.STRING.equals(value.getType())) ? ((StringValue<V>)value).asText() : null;
   }
 
   default String getChannel () {
 
-    V value;
+    Value<V> value;
 
     return (((value = get(CHANNEL)) != null) && ValueType.STRING.equals(value.getType())) ? ((StringValue<V>)value).asText() : null;
   }
@@ -95,7 +98,13 @@ public interface Message<V extends Value<V>> extends ObjectValue<V> {
   default byte[] encode ()
     throws Exception {
 
-    return getCodec().fromMessage(this);
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+    try (OutputStreamWriter outputStreamWriter = new OutputStreamWriter(outputStream)) {
+      encode(outputStreamWriter);
+    }
+
+    return outputStream.toByteArray();
   }
 
   Codec<V> getCodec ();
