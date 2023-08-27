@@ -32,13 +32,27 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.backbone.kafka;
 
+import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
+import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.backbone.Backbone;
 
-public class KafkaBackbone implements Backbone {
+public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
 
   @Override
-  public void publish (Packet packet) {
+  public void startUp (Server<V> server)
+    throws Exception {
+
+  }
+
+  @Override
+  public void shutDown ()
+    throws InterruptedException {
+
+  }
+
+  @Override
+  public void publish (Packet<V> packet) {
 
   }
 }

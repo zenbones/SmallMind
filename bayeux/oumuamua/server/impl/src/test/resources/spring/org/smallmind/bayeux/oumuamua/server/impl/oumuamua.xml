@@ -6,6 +6,13 @@
   <bean id="oumuamuaServer" class="org.smallmind.bayeux.oumuamua.server.impl.OumuamuaServer">
     <constructor-arg index="0" name="configuration">
       <bean class="org.smallmind.bayeux.oumuamua.server.impl.OumuamuaConfiguration">
+        <property name="codec">
+          <bean class="org.smallmind.bayeux.oumuamua.server.spi.json.orthodox.OrthodoxCodec">
+            <constructor-arg index="0" name="deserializer">
+              <bean class="org.smallmind.bayeux.oumuamua.server.spi.json.jackson.JacksonDeserializer"/>
+            </constructor-arg>
+          </bean>
+        </property>
         <property name="protocols">
           <list>
             <bean class="org.smallmind.bayeux.oumuamua.server.spi.websocket.WebsocketProtocol"/>

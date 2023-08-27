@@ -32,9 +32,17 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api.backbone;
 
+import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
+import org.smallmind.bayeux.oumuamua.server.api.Server;
 
-public interface Backbone {
+public interface Backbone<V extends Value<V>> {
 
-  void publish (Packet packet);
+  void startUp (Server<V> server)
+    throws Exception;
+
+  void shutDown ()
+    throws InterruptedException;
+
+  void publish (Packet<V> packet);
 }

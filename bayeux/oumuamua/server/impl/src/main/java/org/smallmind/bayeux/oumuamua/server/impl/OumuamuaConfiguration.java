@@ -33,36 +33,35 @@
 package org.smallmind.bayeux.oumuamua.server.impl;
 
 import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
+import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.SecurityPolicy;
 import org.smallmind.bayeux.oumuamua.server.api.backbone.Backbone;
-import org.smallmind.bayeux.oumuamua.server.spi.json.jackson.JacksonDeserializer;
-import org.smallmind.bayeux.oumuamua.server.spi.json.orthodox.OrthodoxCodec;
 
-public class OumuamuaConfiguration {
+public class OumuamuaConfiguration<V extends Value<V>> {
 
-  private Backbone backbone;
-  private Codec<?> codec = new OrthodoxCodec(new JacksonDeserializer<>());
+  private Backbone<V> backbone;
+  private Codec<V> codec;
   private SecurityPolicy securityPolicy;
   private Protocol[] protocols;
   private long channelTimeToLiveMinutes = 30;
 
-  public Backbone getBackbone () {
+  public Backbone<V> getBackbone () {
 
     return backbone;
   }
 
-  public void setBackbone (Backbone backbone) {
+  public void setBackbone (Backbone<V> backbone) {
 
     this.backbone = backbone;
   }
 
-  public Codec<?> getCodec () {
+  public Codec<V> getCodec () {
 
     return codec;
   }
 
-  public void setCodec (Codec<?> codec) {
+  public void setCodec (Codec<V> codec) {
 
     this.codec = codec;
   }

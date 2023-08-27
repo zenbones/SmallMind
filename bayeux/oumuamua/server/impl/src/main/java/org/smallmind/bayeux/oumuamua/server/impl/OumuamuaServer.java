@@ -34,6 +34,8 @@ package org.smallmind.bayeux.oumuamua.server.impl;
 
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
 import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
@@ -50,28 +52,59 @@ import org.smallmind.bayeux.oumuamua.server.api.backbone.Backbone;
 import org.smallmind.bayeux.oumuamua.server.spi.AbstractAttributed;
 import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
+import org.smallmind.scribe.pen.LoggerManager;
 
 public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed implements Server<V> {
 
   private final HashMap<String, Protocol> protocolMap = new HashMap<>();
   private final ConcurrentLinkedQueue<Listener<V>> listenerList = new ConcurrentLinkedQueue<>();
   private final ChannelTree<V> channelTree = new ChannelTree<>();
-  private final OumuamuaConfiguration configuration;
+  private final OumuamuaConfiguration<V> configuration;
   private final String[] protocolNames;
 
-  public OumuamuaServer (OumuamuaConfiguration configuration)
+  public OumuamuaServer (OumuamuaConfiguration<V> configuration)
     throws OumuamuaException {
 
-    this.configuration = configuration;
-
-    if (configuration.getProtocols() == null) {
-      throw new OumuamuaException("No protocols have been defined");
+    if (configuration == null) {
+      throw new OumuamuaException("Missing configuration");
+    } else if (configuration.getCodec() == null) {
+      throw new OumuamuaException("Missing codec");
     } else {
-      for (Protocol protocol : configuration.getProtocols()) {
-        protocolMap.put(protocol.getName(), protocol);
-      }
 
-      protocolNames = protocolMap.keySet().toArray(new String[0]);
+      this.configuration = configuration;
+
+      if (configuration.getProtocols() == null) {
+        throw new OumuamuaException("No protocols have been defined");
+      } else {
+        for (Protocol protocol : configuration.getProtocols()) {
+          protocolMap.put(protocol.getName(), protocol);
+        }
+
+        protocolNames = protocolMap.keySet().toArray(new String[0]);
+      }
+    }
+  }
+
+  public void start (ServletConfig servletConfig)
+    throws ServletException {
+
+    if (getBackbone() != null) {
+      try {
+        getBackbone().startUp(this);
+      } catch (Exception exception) {
+        throw new ServletException(exception);
+      }
+    }
+  }
+
+  public void stop () {
+
+    if (getBackbone() != null) {
+      try {
+        getBackbone().shutDown();
+      } catch (InterruptedException interruptedException) {
+        LoggerManager.getLogger(OumuamuaServer.class).error(interruptedException);
+      }
     }
   }
 
@@ -169,7 +202,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   @Override
-  public Backbone getBackbone () {
+  public Backbone<V> getBackbone () {
 
     return configuration.getBackbone();
   }
@@ -183,7 +216,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   @Override
   public Codec<V> getCodec () {
 
-    return (Codec<V>)configuration.getCodec();
+    return configuration.getCodec();
   }
 
   @Override
