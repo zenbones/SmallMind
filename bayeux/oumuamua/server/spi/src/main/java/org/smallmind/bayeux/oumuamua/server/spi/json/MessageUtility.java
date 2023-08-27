@@ -81,7 +81,7 @@ public class MessageUtility {
 
         return arrayValue;
       case STRING:
-        factory.textValue(node.textValue());
+        return factory.textValue(node.textValue());
       case NUMBER:
         switch (node.numberType()) {
           case LONG:
