@@ -32,11 +32,15 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api;
 
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
 import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.backbone.Backbone;
 
 public interface Server<V extends Value<V>> extends Attributed {
+
+  public static final String ATTRIBUTE = "org.smallmind.bayeux";
 
   interface Listener<V extends Value<V>> {
 
@@ -68,6 +72,11 @@ public interface Server<V extends Value<V>> extends Attributed {
   void addListener (Listener<V> listener);
 
   void removeListener (Listener<V> listener);
+
+  void start (ServletConfig servletConfig)
+    throws ServletException;
+
+  void stop ();
 
   String getBayeuxVersion ();
 

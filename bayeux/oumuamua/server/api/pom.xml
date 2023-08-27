@@ -12,6 +12,11 @@
   <description>Oumuamua Server Api</description>
   <dependencies>
     <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
       <groupId>org.smallmind</groupId>
       <artifactId>oumuamua-common-api</artifactId>
       <scope>compile</scope>

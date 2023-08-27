@@ -12,11 +12,6 @@
   <description>Oumuamua Server Reference Implementation</description>
   <dependencies>
     <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>javax.servlet-api</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
       <groupId>org.smallmind</groupId>
       <artifactId>oumuamua-server-spi</artifactId>
       <scope>compile</scope>
