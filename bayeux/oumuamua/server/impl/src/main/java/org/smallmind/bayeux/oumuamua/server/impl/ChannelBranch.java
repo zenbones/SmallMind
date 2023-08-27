@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Consumer;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.ChannelInitializer;
@@ -82,7 +83,7 @@ public class ChannelBranch<V extends Value<V>> {
     }
   }
 
-  protected ChannelBranch<V> addChannelAsNecessary (long timeToLive, int index, DefaultRoute route, ChannelInitializer... initializers) {
+  protected ChannelBranch<V> addChannelAsNecessary (long timeToLive, int index, DefaultRoute route, Consumer<Channel<V>> channelCallback, ChannelInitializer... initializers) {
 
     ChannelBranch<V> child;
     Segment segment;
@@ -91,22 +92,24 @@ public class ChannelBranch<V extends Value<V>> {
       childMap.put(segment, child = new ChannelBranch<V>(this));
     }
 
-    return (index == route.lastIndex()) ? child.initializeChannel(timeToLive, route, initializers) : child.addChannelAsNecessary(timeToLive, index + 1, route, initializers);
+    return (index == route.lastIndex()) ? child.initializeChannel(timeToLive, route, channelCallback, initializers) : child.addChannelAsNecessary(timeToLive, index + 1, route, channelCallback, initializers);
   }
 
-  private ChannelBranch<V> initializeChannel (long timeToLive, DefaultRoute route, ChannelInitializer... initializers) {
+  private ChannelBranch<V> initializeChannel (long timeToLive, DefaultRoute route, Consumer<Channel<V>> channelCallback, ChannelInitializer... initializers) {
 
     channelChangeLock.writeLock().lock();
 
     try {
       if (channel == null) {
-        channel = new OumuamuaChannel<V>(timeToLive, route);
+        channel = new OumuamuaChannel<>(timeToLive, route);
 
         if (initializers != null) {
           for (ChannelInitializer initializer : initializers) {
             initializer.accept(channel);
           }
         }
+
+        channelCallback.accept(channel);
       }
 
       return this;
@@ -115,7 +118,7 @@ public class ChannelBranch<V extends Value<V>> {
     }
   }
 
-  public ChannelBranch<V> removeChannelIfPresent (int index, DefaultRoute route)
+  public ChannelBranch<V> removeChannelIfPresent (int index, DefaultRoute route, Consumer<Channel<V>> channelCallback)
     throws ChannelStateException {
 
     ChannelBranch<V> child;
@@ -125,11 +128,11 @@ public class ChannelBranch<V extends Value<V>> {
       return null;
     } else {
 
-      return (index == route.lastIndex()) ? child.removeChannel() : child.removeChannelIfPresent(index + 1, route);
+      return (index == route.lastIndex()) ? child.removeChannel(channelCallback) : child.removeChannelIfPresent(index + 1, route, channelCallback);
     }
   }
 
-  private ChannelBranch<V> removeChannel ()
+  private ChannelBranch<V> removeChannel (Consumer<Channel<V>> channelCallback)
     throws ChannelStateException {
 
     channelChangeLock.writeLock().lock();
@@ -142,6 +145,7 @@ public class ChannelBranch<V extends Value<V>> {
           ((OumuamuaChannel<V>)channel).clearSubscriptions();
 
           channel = null;
+          channelCallback.accept(channel);
         }
       }
 

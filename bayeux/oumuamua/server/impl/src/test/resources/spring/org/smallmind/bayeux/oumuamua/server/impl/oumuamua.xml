@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+  <bean id="oumuamuaServer" class="org.smallmind.bayeux.oumuamua.server.impl.OumuamuaServer">
+    <constructor-arg index="0" name="configuration">
+      <bean class="org.smallmind.bayeux.oumuamua.server.impl.OumuamuaConfiguration">
+        <property name="protocols">
+          <list>
+            <bean class="org.smallmind.bayeux.oumuamua.server.spi.websocket.WebsocketProtocol"/>
+          </list>
+        </property>
+      </bean>
+    </constructor-arg>
+  </bean>
+</beans>

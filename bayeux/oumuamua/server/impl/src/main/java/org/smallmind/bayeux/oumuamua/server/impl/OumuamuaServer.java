@@ -40,6 +40,7 @@ import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.ChannelInitializer;
 import org.smallmind.bayeux.oumuamua.server.api.ChannelStateException;
 import org.smallmind.bayeux.oumuamua.server.api.InvalidPathException;
+import org.smallmind.bayeux.oumuamua.server.api.OumuamuaException;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.SecurityPolicy;
@@ -58,14 +59,20 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   private final OumuamuaConfiguration configuration;
   private final String[] protocolNames;
 
-  public OumuamuaServer (OumuamuaConfiguration configuration) {
+  public OumuamuaServer (OumuamuaConfiguration configuration)
+    throws OumuamuaException {
 
     this.configuration = configuration;
 
-    for (Protocol protocol : configuration.getProtocols()) {
-      protocolMap.put(protocol.getName(), protocol);
+    if (configuration.getProtocols() == null) {
+      throw new OumuamuaException("No protocols have been defined");
+    } else {
+      for (Protocol protocol : configuration.getProtocols()) {
+        protocolMap.put(protocol.getName(), protocol);
+      }
+
+      protocolNames = protocolMap.keySet().toArray(new String[0]);
     }
-    protocolNames = protocolMap.keySet().toArray(new String[0]);
   }
 
   private void onConnected (Session<V> session) {
@@ -190,14 +197,14 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   public Channel<V> requireChannel (String path, ChannelInitializer... initializers)
     throws InvalidPathException {
 
-    return channelTree.createIfAbsent(configuration.getChannelTimeToLiveMinutes() * 60 * 1000, 0, new DefaultRoute(path), initializers).getChannel();
+    return channelTree.createIfAbsent(configuration.getChannelTimeToLiveMinutes() * 60 * 1000, 0, new DefaultRoute(path), this::onCreated, initializers).getChannel();
   }
 
   @Override
   public void removeChannel (Channel<V> channel)
     throws ChannelStateException {
 
-    channelTree.removeChannelIfPresent(0, ((OumuamuaChannel<V>)channel).getRoute());
+    channelTree.removeChannelIfPresent(0, ((OumuamuaChannel<V>)channel).getRoute(), this::onRemoved);
   }
 
   @Override

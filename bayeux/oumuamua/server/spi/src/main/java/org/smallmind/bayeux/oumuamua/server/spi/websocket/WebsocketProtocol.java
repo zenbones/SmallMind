@@ -30,70 +30,39 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.impl;
+package org.smallmind.bayeux.oumuamua.server.spi.websocket;
 
-import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.server.api.Protocol;
-import org.smallmind.bayeux.oumuamua.server.api.SecurityPolicy;
-import org.smallmind.bayeux.oumuamua.server.api.backbone.Backbone;
-import org.smallmind.bayeux.oumuamua.server.spi.json.jackson.JacksonDeserializer;
-import org.smallmind.bayeux.oumuamua.server.spi.json.orthodox.OrthodoxCodec;
 
-public class OumuamuaConfiguration {
+public class WebsocketProtocol implements Protocol {
 
-  private Backbone backbone;
-  private Codec<?> codec = new OrthodoxCodec(new JacksonDeserializer<>());
-  private SecurityPolicy securityPolicy;
-  private Protocol[] protocols;
-  private long channelTimeToLiveMinutes = 30;
+  @Override
+  public String getName () {
 
-  public Backbone getBackbone () {
-
-    return backbone;
+    return "websocket";
   }
 
-  public void setBackbone (Backbone backbone) {
+  @Override
+  public boolean isLongPolling () {
 
-    this.backbone = backbone;
+    return false;
   }
 
-  public Codec<?> getCodec () {
+  @Override
+  public long getLongPollIntervalMilliseconds () {
 
-    return codec;
+    return 0;
   }
 
-  public void setCodec (Codec<?> codec) {
+  @Override
+  public long getLongPollTimeoutMilliseconds () {
 
-    this.codec = codec;
+    return 0;
   }
 
-  public SecurityPolicy getSecurityPolicy () {
+  @Override
+  public String[] getSupportedTransportNames () {
 
-    return securityPolicy;
-  }
-
-  public void setSecurityPolicy (SecurityPolicy securityPolicy) {
-
-    this.securityPolicy = securityPolicy;
-  }
-
-  public Protocol[] getProtocols () {
-
-    return protocols;
-  }
-
-  public void setProtocols (Protocol[] protocols) {
-
-    this.protocols = protocols;
-  }
-
-  public long getChannelTimeToLiveMinutes () {
-
-    return channelTimeToLiveMinutes;
-  }
-
-  public void setChannelTimeToLiveMinutes (long channelTimeToLiveMinutes) {
-
-    this.channelTimeToLiveMinutes = channelTimeToLiveMinutes;
+    return new String[] {"websocket"};
   }
 }
