@@ -68,12 +68,13 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
   @Override
   public void onMessage (String message) {
 
+    System.out.println(message);
   }
 
   @Override
-  public Transport getTransport () {
+  public Transport<V> getTransport () {
 
-    return null;
+    return websocketTransport;
   }
 
   @Override
