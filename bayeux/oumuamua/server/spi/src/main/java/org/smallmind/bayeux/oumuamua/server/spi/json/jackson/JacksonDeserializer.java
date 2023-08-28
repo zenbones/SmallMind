@@ -39,8 +39,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.common.api.json.Message;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
-import org.smallmind.bayeux.oumuamua.server.api.OumuamuaException;
-import org.smallmind.bayeux.oumuamua.server.spi.MetaProcessingException;
 import org.smallmind.bayeux.oumuamua.server.spi.json.JsonDeserializer;
 import org.smallmind.bayeux.oumuamua.server.spi.json.MessageUtility;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
@@ -48,16 +46,31 @@ import org.smallmind.web.json.scaffold.util.JsonCodec;
 public class JacksonDeserializer<V extends Value<V>> implements JsonDeserializer<V> {
 
   @Override
-  public Message<V> from (Codec<V> codec, byte[] buffer)
-    throws IOException, OumuamuaException {
+  public Message<V>[] from (Codec<V> codec, byte[] buffer)
+    throws IOException {
 
     JsonNode node;
 
-    if (!JsonNodeType.OBJECT.equals((node = JsonCodec.readAsJsonNode(buffer)).getNodeType())) {
-      throw new MetaProcessingException("Json data is not a json object");
-    } else {
+    switch ((node = JsonCodec.readAsJsonNode(buffer)).getNodeType()) {
+      case ARRAY:
 
-      return MessageUtility.convert(codec, (ObjectNode)node);
+        Message<V>[] messages = new Message[node.size()];
+        int index = 0;
+
+        for (JsonNode item : node) {
+          if (!JsonNodeType.OBJECT.equals(item.getNodeType())) {
+            throw new IOException("All messages must represent json objects");
+          } else {
+            messages[index++] = MessageUtility.convert(codec, (ObjectNode)item);
+          }
+        }
+
+        return messages;
+      case OBJECT:
+
+        return new Message[] {MessageUtility.convert(codec, (ObjectNode)node)};
+      default:
+        throw new IOException("Json data does not represent an object or array");
     }
   }
 }

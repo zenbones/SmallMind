@@ -82,9 +82,9 @@ public interface Server<V extends Value<V>> extends Attributed {
 
   String getMinimumBayeuxVersion ();
 
-  String[] getSupportedProtocolNames ();
+  String[] getProtocolNames ();
 
-  Protocol getSupportedProtocol (String name);
+  Protocol getProtocol (String name);
 
   Backbone getBackbone ();
 

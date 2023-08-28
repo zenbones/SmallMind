@@ -190,13 +190,13 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   @Override
-  public String[] getSupportedProtocolNames () {
+  public String[] getProtocolNames () {
 
     return protocolNames;
   }
 
   @Override
-  public Protocol getSupportedProtocol (String name) {
+  public Protocol getProtocol (String name) {
 
     return protocolMap.get(name);
   }

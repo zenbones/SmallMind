@@ -133,7 +133,7 @@ public class ConnectMessage extends AdvisedMetaMessage {
 
     String[] supportedTransportNames;
 
-    if (((supportedTransportNames = protocol.getSupportedTransportNames()) != null)) {
+    if (((supportedTransportNames = protocol.getTransportNames()) != null)) {
       for (String supportedTransportName : supportedTransportNames) {
         if ((supportedTransportName != null) && supportedTransportName.equals(getConnectionType())) {
 

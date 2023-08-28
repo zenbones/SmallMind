@@ -33,13 +33,16 @@
 package org.smallmind.bayeux.oumuamua.server.spi.websocket;
 
 import org.smallmind.bayeux.oumuamua.server.api.Protocol;
+import org.smallmind.bayeux.oumuamua.server.api.Protocols;
+import org.smallmind.bayeux.oumuamua.server.api.Transport;
+import org.smallmind.bayeux.oumuamua.server.api.Transports;
 
 public class WebsocketProtocol implements Protocol {
 
   @Override
   public String getName () {
 
-    return "websocket";
+    return Protocols.WEBSOCKET.getName();
   }
 
   @Override
@@ -61,8 +64,14 @@ public class WebsocketProtocol implements Protocol {
   }
 
   @Override
-  public String[] getSupportedTransportNames () {
+  public String[] getTransportNames () {
 
-    return new String[] {"websocket"};
+    return new String[] {Transports.LONG_POLLING.getName()};
+  }
+
+  @Override
+  public Transport getTransport (String name) {
+
+    return null;
   }
 }

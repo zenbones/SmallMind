@@ -32,10 +32,12 @@
  */
 package org.smallmind.bayeux.oumuamua.common.api.json;
 
+import java.io.IOException;
+
 public interface Codec<V extends Value<V>> {
 
   Message<V> create ();
 
-  Message<V> from (byte[] buffer)
-    throws Exception;
+  Message<V>[] from (byte[] buffer)
+    throws IOException;
 }

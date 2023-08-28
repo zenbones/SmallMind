@@ -32,12 +32,13 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.json;
 
+import java.io.IOException;
 import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.common.api.json.Message;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 
 public interface JsonDeserializer<V extends Value<V>> {
 
-  Message<V> from (Codec<V> codec, byte[] buffer)
-    throws Exception;
+  Message<V>[] from (Codec<V> codec, byte[] buffer)
+    throws IOException;
 }

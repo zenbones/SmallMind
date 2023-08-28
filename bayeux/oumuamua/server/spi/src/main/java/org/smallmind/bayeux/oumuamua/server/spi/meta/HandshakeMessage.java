@@ -98,7 +98,7 @@ public class HandshakeMessage extends AdvisedMetaMessage {
     } else {
       session.completeHandshake();
 
-      return new Packet<V>(PacketType.RESPONSE, session.getId(), ROUTE, new Message[] {toMessage(server.getCodec(), new HandshakeMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(ROUTE.getPath()).setId(getId()).setVersion(server.getBayeuxVersion()).setMinimumVersion(server.getMinimumBayeuxVersion()).setClientId(session.getId()).setSupportedConnectionTypes(protocol.getSupportedTransportNames()))});
+      return new Packet<V>(PacketType.RESPONSE, session.getId(), ROUTE, new Message[] {toMessage(server.getCodec(), new HandshakeMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(ROUTE.getPath()).setId(getId()).setVersion(server.getBayeuxVersion()).setMinimumVersion(server.getMinimumBayeuxVersion()).setClientId(session.getId()).setSupportedConnectionTypes(protocol.getTransportNames()))});
     }
   }
 
@@ -106,7 +106,7 @@ public class HandshakeMessage extends AdvisedMetaMessage {
 
     String[] supportedTransportNames;
 
-    if (((supportedTransportNames = protocol.getSupportedTransportNames()) != null) && (supportedTransportNames.length > 0)) {
+    if (((supportedTransportNames = protocol.getTransportNames()) != null) && (supportedTransportNames.length > 0)) {
       if (getSupportedConnectionTypes() != null) {
         for (String supportedConnectionType : getSupportedConnectionTypes()) {
           if (supportedConnectionType != null) {

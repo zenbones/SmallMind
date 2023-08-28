@@ -32,6 +32,7 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.json;
 
+import java.io.IOException;
 import java.util.Map;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -41,13 +42,13 @@ import org.smallmind.bayeux.oumuamua.common.api.json.Message;
 import org.smallmind.bayeux.oumuamua.common.api.json.ObjectValue;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.common.api.json.ValueFactory;
-import org.smallmind.bayeux.oumuamua.server.spi.MetaProcessingException;
+import org.smallmind.nutsnbolts.lang.FormattedIOException;
 import org.smallmind.nutsnbolts.util.IterableIterator;
 
 public class MessageUtility {
 
   public static <V extends Value<V>> Message<V> convert (Codec<V> codec, ObjectNode node)
-    throws MetaProcessingException {
+    throws IOException {
 
     Message<V> message = codec.create();
 
@@ -59,7 +60,7 @@ public class MessageUtility {
   }
 
   private static <V extends Value<V>> Value<V> convert (JsonNode node, ValueFactory<V> factory)
-    throws MetaProcessingException {
+    throws IOException {
 
     switch (node.getNodeType()) {
       case OBJECT:
@@ -93,14 +94,14 @@ public class MessageUtility {
           case FLOAT:
             return factory.numberValue(node.doubleValue());
           default:
-            throw new MetaProcessingException("Unknown number type(%s)", node.numberType().name());
+            throw new FormattedIOException("Unknown number type(%s)", node.numberType().name());
         }
       case BOOLEAN:
         return factory.booleanValue(node.booleanValue());
       case NULL:
         return factory.nullValue();
       default:
-        throw new MetaProcessingException("Unknown node type(%s)", node.getNodeType().name());
+        throw new FormattedIOException("Unknown node type(%s)", node.getNodeType().name());
     }
   }
 }

@@ -32,6 +32,7 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.json.orthodox;
 
+import java.io.IOException;
 import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.common.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.spi.json.JsonDeserializer;
@@ -54,8 +55,8 @@ public class OrthodoxCodec implements Codec<OrthodoxValue> {
   }
 
   @Override
-  public Message<OrthodoxValue> from (byte[] buffer)
-    throws Exception {
+  public Message<OrthodoxValue>[] from (byte[] buffer)
+    throws IOException {
 
     return deserializer.from(this, buffer);
   }

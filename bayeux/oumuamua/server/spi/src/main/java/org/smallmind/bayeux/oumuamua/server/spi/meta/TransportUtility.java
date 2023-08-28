@@ -43,12 +43,12 @@ public class TransportUtility {
 
     HashSet<String> supportedTransportSet = new HashSet<>();
 
-    for (String supportedProtocolName : server.getSupportedProtocolNames()) {
+    for (String supportedProtocolName : server.getProtocolNames()) {
 
       Protocol supportedProtocol;
 
-      if ((supportedProtocol = server.getSupportedProtocol(supportedProtocolName)) != null) {
-        supportedTransportSet.addAll(Arrays.asList(supportedProtocol.getSupportedTransportNames()));
+      if ((supportedProtocol = server.getProtocol(supportedProtocolName)) != null) {
+        supportedTransportSet.addAll(Arrays.asList(supportedProtocol.getTransportNames()));
       }
     }
 

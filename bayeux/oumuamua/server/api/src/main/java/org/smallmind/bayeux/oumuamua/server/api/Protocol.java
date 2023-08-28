@@ -42,5 +42,7 @@ public interface Protocol {
 
   long getLongPollTimeoutMilliseconds ();
 
-  String[] getSupportedTransportNames ();
+  String[] getTransportNames ();
+
+  Transport getTransport (String name);
 }
