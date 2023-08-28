@@ -70,7 +70,7 @@ public class ChannelBranch<V extends Value<V>> {
     }
   }
 
-  public ChannelBranch<V> find (int index, DefaultRoute route) {
+  public Channel<V> find (int index, DefaultRoute route) {
 
     ChannelBranch<V> child;
 
@@ -79,11 +79,11 @@ public class ChannelBranch<V extends Value<V>> {
       return null;
     } else {
 
-      return (index == route.lastIndex()) ? child : child.find(index + 1, route);
+      return (index == route.lastIndex()) ? child.getChannel() : child.find(index + 1, route);
     }
   }
 
-  protected ChannelBranch<V> addChannelAsNecessary (long timeToLive, int index, DefaultRoute route, Consumer<Channel<V>> channelCallback, ChannelInitializer... initializers) {
+  protected Channel<V> addChannelAsNecessary (long timeToLive, int index, DefaultRoute route, Consumer<Channel<V>> channelCallback, ChannelInitializer... initializers) {
 
     ChannelBranch<V> child;
     Segment segment;
@@ -95,7 +95,7 @@ public class ChannelBranch<V extends Value<V>> {
     return (index == route.lastIndex()) ? child.initializeChannel(timeToLive, route, channelCallback, initializers) : child.addChannelAsNecessary(timeToLive, index + 1, route, channelCallback, initializers);
   }
 
-  private ChannelBranch<V> initializeChannel (long timeToLive, DefaultRoute route, Consumer<Channel<V>> channelCallback, ChannelInitializer... initializers) {
+  private Channel<V> initializeChannel (long timeToLive, DefaultRoute route, Consumer<Channel<V>> channelCallback, ChannelInitializer... initializers) {
 
     channelChangeLock.writeLock().lock();
 
@@ -112,7 +112,7 @@ public class ChannelBranch<V extends Value<V>> {
         channelCallback.accept(channel);
       }
 
-      return this;
+      return channel;
     } finally {
       channelChangeLock.writeLock().unlock();
     }
@@ -132,7 +132,7 @@ public class ChannelBranch<V extends Value<V>> {
     }
   }
 
-  private ChannelBranch<V> removeChannel (Consumer<Channel<V>> channelCallback)
+  public ChannelBranch<V> removeChannel (Consumer<Channel<V>> channelCallback)
     throws ChannelStateException {
 
     channelChangeLock.writeLock().lock();
@@ -140,7 +140,7 @@ public class ChannelBranch<V extends Value<V>> {
     try {
       if (channel != null) {
         if (channel.isPersistent()) {
-          throw new ChannelStateException("ATtempt to remove persistent channel(%s)", ((OumuamuaChannel<V>)channel).getRoute().getPath());
+          throw new ChannelStateException("Attempt to remove persistent channel(%s)", ((OumuamuaChannel<V>)channel).getRoute().getPath());
         } else {
           ((OumuamuaChannel<V>)channel).clearSubscriptions();
 

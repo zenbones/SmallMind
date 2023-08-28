@@ -207,9 +207,9 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
   }
 
   @Override
-  public synchronized boolean isRemovable () {
+  public synchronized boolean isRemovable (long now) {
 
-    return (!persistent) && (quiescentTimestamp > 0) && ((System.currentTimeMillis() - quiescentTimestamp) >= timeToLiveMilliseconds);
+    return (!persistent) && (quiescentTimestamp > 0) && ((now - quiescentTimestamp) >= timeToLiveMilliseconds);
   }
 
   public synchronized void terminate () {

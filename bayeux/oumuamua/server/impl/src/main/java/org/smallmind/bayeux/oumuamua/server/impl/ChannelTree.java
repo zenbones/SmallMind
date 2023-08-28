@@ -48,7 +48,7 @@ public class ChannelTree<V extends Value<V>> extends ChannelBranch<V> {
     super(null);
   }
 
-  public ChannelBranch<V> createIfAbsent (long timeToLive, int index, DefaultRoute route, Consumer<Channel<V>> channelCallback, ChannelInitializer... initializers) {
+  public Channel<V> createIfAbsent (long timeToLive, int index, DefaultRoute route, Consumer<Channel<V>> channelCallback, ChannelInitializer... initializers) {
 
     treeChangeLock.lock();
 

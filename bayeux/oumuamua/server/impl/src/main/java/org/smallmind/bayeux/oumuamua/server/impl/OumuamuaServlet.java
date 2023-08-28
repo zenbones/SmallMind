@@ -47,7 +47,7 @@ import org.smallmind.bayeux.oumuamua.common.api.json.ValueType;
 import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.Protocols;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
-import org.smallmind.bayeux.oumuamua.server.api.Session;
+import org.smallmind.bayeux.oumuamua.server.api.SessionState;
 import org.smallmind.bayeux.oumuamua.server.api.Transport;
 import org.smallmind.bayeux.oumuamua.server.api.Transports;
 import org.smallmind.bayeux.oumuamua.server.spi.websocket.WebSocketEndpoint;
@@ -55,7 +55,7 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
 
-  private Server<V> server;
+  private OumuamuaServer<V> server;
 
   @Override
   public String getServletInfo () {
@@ -69,7 +69,7 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
 
     super.init(servletConfig);
 
-    if ((server = (Server<V>)servletConfig.getServletContext().getAttribute(Server.ATTRIBUTE)) == null) {
+    if ((server = (OumuamuaServer<V>)servletConfig.getServletContext().getAttribute(Server.ATTRIBUTE)) == null) {
       throw new ServletException("Missing " + OumuamuaServer.class.getSimpleName() + " in the servlet context - was the " + OumuamuaServletContextListener.class.getSimpleName() + " installed?");
     } else {
       server.start(servletConfig);
@@ -112,7 +112,7 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
           } else {
             try {
 
-              Session<V> session;
+              OumuamuaSession<V> session;
               Message<V>[] messages = server.getCodec().from(contentBuffer);
               String sessionId = null;
 
@@ -127,19 +127,21 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
               }
 
               if (sessionId == null) {
+
+                session = new OumuamuaSession<>();
                 serverSession = new VeridicalServerSession(oumuamuaServer, longPollingTransport, carrier = longPollingTransport.createCarrier(oumuamuaServer), false, null, oumuamuaServer.getConfiguration().getMaximumMessageQueueSize(), oumuamuaServer.getConfiguration().getMaximumUndeliveredLazyMessageCount());
                 ((LongPollingCarrier)carrier).setServerSession(serverSession);
                 oumuamuaServer.addSession(serverSession);
 
                 respond(request, response, (LongPollingCarrier)carrier, messageConglomerate);
-              } else if ((session = server.getSession(clientId)) == null) {
+              } else if ((session = server.getSession(sessionId)) == null) {
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unknown client id");
-              } else if ((carrier = serverSession.getCarrier()) == null) {
+              } else if (!SessionState.CONNECTED.equals(session.getState())) {
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Session is invalid");
-              } else if (!CarrierType.LONG_POLLING.equals(carrier.getType())) {
+              } else if (!session.isLongPolling()) {
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Incorrect transport for this session");
               } else {
-                respond(request, response, (LongPollingCarrier)carrier, messageConglomerate);
+                respond(request, response, (LongPollingConnection<V>)session.getConnection(), messages);
               }
             }
           }

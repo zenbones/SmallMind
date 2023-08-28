@@ -134,6 +134,11 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
     state = SessionState.CLOSED;
   }
 
+  protected Connection<V> getConnection () {
+
+    return connection;
+  }
+
   @Override
   public Packet<V> poll () {
 

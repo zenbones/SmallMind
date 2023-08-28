@@ -33,6 +33,7 @@
 package org.smallmind.bayeux.oumuamua.server.impl;
 
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -56,11 +57,14 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed implements Server<V> {
 
+  private final ConcurrentHashMap<String, OumuamuaSession<V>> sessionMap = new ConcurrentHashMap<>();
   private final HashMap<String, Protocol> protocolMap = new HashMap<>();
   private final ConcurrentLinkedQueue<Listener<V>> listenerList = new ConcurrentLinkedQueue<>();
   private final ChannelTree<V> channelTree = new ChannelTree<>();
   private final OumuamuaConfiguration<V> configuration;
   private final String[] protocolNames;
+
+  private ExpiredChannelSifter<V> expiredChannelSifter;
 
   public OumuamuaServer (OumuamuaConfiguration<V> configuration)
     throws OumuamuaException {
@@ -95,6 +99,8 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
         throw new ServletException(exception);
       }
     }
+
+    new Thread(expiredChannelSifter = new ExpiredChannelSifter<>(0, channelTree, this::onRemoved)).start();
   }
 
   public void stop () {
@@ -105,6 +111,12 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
       } catch (InterruptedException interruptedException) {
         LoggerManager.getLogger(OumuamuaServer.class).error(interruptedException);
       }
+    }
+
+    try {
+      expiredChannelSifter.stop();
+    } catch (InterruptedException interruptedException) {
+      LoggerManager.getLogger(OumuamuaServer.class).error(interruptedException);
     }
   }
 
@@ -219,18 +231,23 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
     return configuration.getCodec();
   }
 
+  public OumuamuaSession<V> getSession (String sessionId) {
+
+    return sessionMap.get(sessionId);
+  }
+
   @Override
   public Channel<V> findChannel (String path)
     throws InvalidPathException {
 
-    return channelTree.find(0, new DefaultRoute(path)).getChannel();
+    return channelTree.find(0, new DefaultRoute(path));
   }
 
   @Override
   public Channel<V> requireChannel (String path, ChannelInitializer... initializers)
     throws InvalidPathException {
 
-    return channelTree.createIfAbsent(configuration.getChannelTimeToLiveMinutes() * 60 * 1000, 0, new DefaultRoute(path), this::onCreated, initializers).getChannel();
+    return channelTree.createIfAbsent(configuration.getChannelTimeToLiveMinutes() * 60 * 1000, 0, new DefaultRoute(path), this::onCreated, initializers);
   }
 
   @Override

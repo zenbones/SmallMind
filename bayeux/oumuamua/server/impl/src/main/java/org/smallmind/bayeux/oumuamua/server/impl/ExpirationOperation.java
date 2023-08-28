@@ -30,62 +30,36 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.api;
+package org.smallmind.bayeux.oumuamua.server.impl;
 
-import java.util.Set;
+import java.util.function.Consumer;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
+import org.smallmind.bayeux.oumuamua.server.api.Channel;
+import org.smallmind.bayeux.oumuamua.server.api.ChannelStateException;
+import org.smallmind.scribe.pen.LoggerManager;
 
-public interface Channel<V extends Value<V>> extends Attributed {
+public class ExpirationOperation<V extends Value<V>> implements ChannelOperation<V> {
 
-  String WILD = "*";
-  String DEEP_WILD = "**";
+  private final Consumer<Channel<V>> channelCallback;
+  private final long now;
 
-  interface Listener<V extends Value<V>> {
+  public ExpirationOperation (long now, Consumer<Channel<V>> channelCallback) {
 
-    boolean isPersistent ();
+    this.now = now;
+    this.channelCallback = channelCallback;
   }
 
-  interface SessionListener<V extends Value<V>> extends Listener<V> {
+  @Override
+  public void operate (ChannelBranch<V> channelBranch) {
 
-    void onSubscribed (Session<V> session);
+    Channel<V> channel;
 
-    void onUnsubscribed (Session<V> session);
+    if (((channel = channelBranch.getChannel()) != null) && channel.isRemovable(now)) {
+      try {
+        channelBranch.removeChannel(channelCallback);
+      } catch (ChannelStateException channelStateException) {
+        LoggerManager.getLogger(ExpirationOperation.class).error(channelStateException);
+      }
+    }
   }
-
-  interface PacketListener<V extends Value<V>> extends Listener<V> {
-
-    boolean isPersistent ();
-
-    void onDelivery (Packet<V> packet);
-  }
-
-  void addListener (Listener<V> listener);
-
-  void removeListener (Listener<V> listener);
-
-  boolean isWild ();
-
-  boolean isDeepWild ();
-
-  boolean isMeta ();
-
-  boolean isService ();
-
-  boolean isDeliverable ();
-
-  boolean isPersistent ();
-
-  void setPersistent (boolean persistent);
-
-  boolean isReflecting ();
-
-  void setReflecting (boolean reflecting);
-
-  boolean subscribe (Session<V> session);
-
-  boolean unsubscribe (Session<V> session);
-
-  boolean isRemovable (long now);
-
-  void deliver (Packet<V> packet, Set<String> sessionIdSet);
 }
