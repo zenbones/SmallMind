@@ -34,6 +34,7 @@ package org.smallmind.bayeux.oumuamua.server.impl;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import javax.servlet.AsyncContext;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -50,6 +51,7 @@ import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.SessionState;
 import org.smallmind.bayeux.oumuamua.server.api.Transports;
 import org.smallmind.bayeux.oumuamua.server.spi.websocket.WebSocketEndpoint;
+import org.smallmind.nutsnbolts.util.MutationUtility;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
@@ -128,11 +130,11 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
 
               LongPollingConnection<V> connection;
 
-              session = new OumuamuaSession<>(connection = transport.createConnection(), );
-              connection.setServerSession(session);
+              session = new OumuamuaSession<>(connection = transport.createConnection(), server.getMaxLOngPollQueueSize());
+              connection.setSession(session);
               server.addSession(session);
 
-              respond(request, response, connection, messages);
+              respond(request, response, connection, messages, contentBuffer);
             } else if ((session = server.getSession(sessionId)) == null) {
               response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unknown client id");
             } else if (!SessionState.CONNECTED.equals(session.getState())) {
@@ -140,7 +142,7 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
             } else if (!session.isLongPolling()) {
               response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Incorrect transport for this session");
             } else {
-              respond(request, response, (LongPollingConnection<V>)session.getConnection(), messages);
+              respond(request, response, (LongPollingConnection<V>)session.getConnection(), messages, contentBuffer);
             }
           }
         }
@@ -148,10 +150,10 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
     }
   }
 
-  private void respond (HttpServletRequest request, HttpServletResponse response, LongPollingConnection<V> connection, Message<V>[] messages) {
+  private void respond (HttpServletRequest request, HttpServletResponse response, LongPollingConnection<V> connection, Message<V>[] messages, byte[] contentBuffer) {
 
-    System.out.println("<=" + messageConglomerate);
-    LoggerManager.getLogger(WebSocketEndpoint.class).debug(new NodeRecord(messageConglomerate, true));
+    System.out.println("<=" + Arrays.toString(MutationUtility.toArray(messages, String.class, message -> new String(message.encode()))));
+    LoggerManager.getLogger(WebSocketEndpoint.class).debug(() -> new String(contentBuffer));
 
     AsyncContext asyncContext = request.startAsync();
 
