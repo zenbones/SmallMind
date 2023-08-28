@@ -48,7 +48,6 @@ import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.Protocols;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.SessionState;
-import org.smallmind.bayeux.oumuamua.server.api.Transport;
 import org.smallmind.bayeux.oumuamua.server.api.Transports;
 import org.smallmind.bayeux.oumuamua.server.spi.websocket.WebSocketEndpoint;
 import org.smallmind.scribe.pen.LoggerManager;
@@ -86,9 +85,9 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
       response.sendError(HttpServletResponse.SC_BAD_REQUEST, "No http protocol support has been configured");
     } else {
 
-      Transport transport;
+      LongPollingTransport<V> transport;
 
-      if ((transport = servletProtocol.getTransport(Transports.LONG_POLLING.getName())) == null) {
+      if ((transport = (LongPollingTransport<V>)servletProtocol.getTransport(Transports.LONG_POLLING.getName())) == null) {
         response.sendError(HttpServletResponse.SC_BAD_REQUEST, "No long polling transport support has been configured");
       } else {
 
@@ -110,39 +109,38 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
           if ((contentBufferSize <= 0) || (!readStream(request.getInputStream(), contentBuffer = new byte[contentBufferSize]))) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unable to read full content");
           } else {
-            try {
 
-              OumuamuaSession<V> session;
-              Message<V>[] messages = server.getCodec().from(contentBuffer);
-              String sessionId = null;
+            OumuamuaSession<V> session;
+            Message<V>[] messages = server.getCodec().from(contentBuffer);
+            String sessionId = null;
 
-              for (Message<V> message : messages) {
+            for (Message<V> message : messages) {
 
-                Value<V> sessionIdValue;
+              Value<V> sessionIdValue;
 
-                if (((sessionIdValue = message.get(Message.SESSION_ID)) != null) && ValueType.STRING.equals(sessionIdValue.getType())) {
-                  sessionId = ((StringValue<V>)sessionIdValue).asText();
-                  break;
-                }
+              if (((sessionIdValue = message.get(Message.SESSION_ID)) != null) && ValueType.STRING.equals(sessionIdValue.getType())) {
+                sessionId = ((StringValue<V>)sessionIdValue).asText();
+                break;
               }
+            }
 
-              if (sessionId == null) {
+            if (sessionId == null) {
 
-                session = new OumuamuaSession<>();
-                serverSession = new VeridicalServerSession(oumuamuaServer, longPollingTransport, carrier = longPollingTransport.createCarrier(oumuamuaServer), false, null, oumuamuaServer.getConfiguration().getMaximumMessageQueueSize(), oumuamuaServer.getConfiguration().getMaximumUndeliveredLazyMessageCount());
-                ((LongPollingCarrier)carrier).setServerSession(serverSession);
-                oumuamuaServer.addSession(serverSession);
+              LongPollingConnection<V> connection;
 
-                respond(request, response, (LongPollingCarrier)carrier, messageConglomerate);
-              } else if ((session = server.getSession(sessionId)) == null) {
-                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unknown client id");
-              } else if (!SessionState.CONNECTED.equals(session.getState())) {
-                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Session is invalid");
-              } else if (!session.isLongPolling()) {
-                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Incorrect transport for this session");
-              } else {
-                respond(request, response, (LongPollingConnection<V>)session.getConnection(), messages);
-              }
+              session = new OumuamuaSession<>(connection = transport.createConnection(), );
+              connection.setServerSession(session);
+              server.addSession(session);
+
+              respond(request, response, connection, messages);
+            } else if ((session = server.getSession(sessionId)) == null) {
+              response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unknown client id");
+            } else if (!SessionState.CONNECTED.equals(session.getState())) {
+              response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Session is invalid");
+            } else if (!session.isLongPolling()) {
+              response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Incorrect transport for this session");
+            } else {
+              respond(request, response, (LongPollingConnection<V>)session.getConnection(), messages);
             }
           }
         }

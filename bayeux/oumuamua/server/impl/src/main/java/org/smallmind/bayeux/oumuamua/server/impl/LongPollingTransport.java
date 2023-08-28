@@ -5,7 +5,6 @@ import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.Transport;
 import org.smallmind.bayeux.oumuamua.server.api.Transports;
 import org.smallmind.bayeux.oumuamua.server.spi.AbstractAttributed;
-import org.smallmind.bayeux.oumuamua.server.spi.Connection;
 import org.smallmind.bayeux.oumuamua.server.spi.longpolling.ServletProtocol;
 
 public class LongPollingTransport<V extends Value<V>> extends AbstractAttributed implements Transport {
@@ -29,7 +28,7 @@ public class LongPollingTransport<V extends Value<V>> extends AbstractAttributed
     return Transports.LONG_POLLING.getName();
   }
 
-  protected Connection<V> createConnections () {
+  protected LongPollingConnection<V> createConnection () {
 
     return new LongPollingConnection<>(this);
   }
