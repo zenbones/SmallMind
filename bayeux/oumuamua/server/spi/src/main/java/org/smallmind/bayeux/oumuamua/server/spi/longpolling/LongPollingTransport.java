@@ -33,7 +33,6 @@
 package org.smallmind.bayeux.oumuamua.server.spi.longpolling;
 
 import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
@@ -63,8 +62,7 @@ public class LongPollingTransport<V extends Value<V>> extends AbstractAttributed
   }
 
   @Override
-  public void init (Server<?> server, ServletConfig servletConfig)
-    throws ServletException {
+  public void init (Server<?> server, ServletConfig servletConfig) {
 
   }
 

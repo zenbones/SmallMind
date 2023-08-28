@@ -32,7 +32,6 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.meta;
 
-import org.smallmind.bayeux.oumuamua.common.api.json.Message;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.InvalidPathException;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
@@ -69,7 +68,7 @@ public class DisconnectMessage extends MetaMessage {
   public <V extends Value<V>> Packet<V> process (Server<V> server, Session<V> session)
     throws MetaProcessingException {
 
-    return new Packet<V>(PacketType.RESPONSE, session.getId(), ROUTE, new Message[] {toMessage(server.getCodec(), new DisconnectMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(ROUTE.getPath()).setClientId(getClientId()).setId(getId()))});
+    return new Packet<V>(PacketType.RESPONSE, session.getId(), ROUTE, toMessage(server.getCodec(), new DisconnectMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(ROUTE.getPath()).setClientId(getClientId()).setId(getId())));
   }
 
   public String getClientId () {

@@ -93,6 +93,8 @@ public interface Server<V extends Value<V>> extends Attributed {
   // Serves as an injection point for implementations that wish to add client configurable additions to the json codec pipeline
   Codec<V> getCodec ();
 
+  Session<V> getSession (String sessionId);
+
   Channel<V> findChannel (String path)
     throws InvalidPathException;
 

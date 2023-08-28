@@ -34,7 +34,6 @@ package org.smallmind.bayeux.oumuamua.server.spi.meta;
 
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.smallmind.bayeux.oumuamua.common.api.json.Message;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.InvalidPathException;
@@ -81,16 +80,16 @@ public class UnsubscribeMessage extends AdvisedMetaMessage {
     if ((!session.getId().equals(getClientId())) || session.getState().lt(SessionState.HANDSHOOK)) {
       adviceNode.put(Advice.RECONNECT.getField(), "handshake");
 
-      return new Packet<V>(PacketType.RESPONSE, getClientId(), ROUTE, new Message[] {toMessage(server.getCodec(), new UnsubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(ROUTE.getPath()).setId(getId()).setError("Handshake required").setSubscription(getSubscription()).setAdvice(adviceNode))});
+      return new Packet<V>(PacketType.RESPONSE, getClientId(), ROUTE, toMessage(server.getCodec(), new UnsubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(ROUTE.getPath()).setId(getId()).setError("Handshake required").setSubscription(getSubscription()).setAdvice(adviceNode)));
     } else if (session.getState().lt(SessionState.CONNECTED)) {
       adviceNode.put(Advice.RECONNECT.getField(), "retry");
 
-      return new Packet<V>(PacketType.RESPONSE, session.getId(), ROUTE, new Message[] {toMessage(server.getCodec(), new UnsubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(ROUTE.getPath()).setId(getId()).setError("Connection required").setSubscription(getSubscription()).setAdvice(adviceNode))});
+      return new Packet<V>(PacketType.RESPONSE, session.getId(), ROUTE, toMessage(server.getCodec(), new UnsubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(ROUTE.getPath()).setId(getId()).setError("Connection required").setSubscription(getSubscription()).setAdvice(adviceNode)));
     } else {
 
       if (getSubscription().startsWith("/meta/")) {
 
-        return new Packet<V>(PacketType.RESPONSE, session.getId(), ROUTE, new Message[] {toMessage(server.getCodec(), new UnsubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(ROUTE.getPath()).setId(getId()).setError("Attempted subscription to a meta channel").setSubscription(getSubscription()).setAdvice(adviceNode))});
+        return new Packet<V>(PacketType.RESPONSE, session.getId(), ROUTE, toMessage(server.getCodec(), new UnsubscribeMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(ROUTE.getPath()).setId(getId()).setError("Attempted subscription to a meta channel").setSubscription(getSubscription()).setAdvice(adviceNode)));
       } else {
 
         Channel<V> channel;
@@ -101,7 +100,7 @@ public class UnsubscribeMessage extends AdvisedMetaMessage {
           }
         }
 
-        return new Packet<V>(PacketType.RESPONSE, session.getId(), ROUTE, new Message[] {toMessage(server.getCodec(), new UnsubscribeMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(ROUTE.getPath()).setClientId(session.getId()).setId(getId()).setSubscription(getSubscription()))});
+        return new Packet<V>(PacketType.RESPONSE, session.getId(), ROUTE, toMessage(server.getCodec(), new UnsubscribeMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(ROUTE.getPath()).setClientId(session.getId()).setId(getId()).setSubscription(getSubscription())));
       }
     }
   }

@@ -42,12 +42,17 @@ public class Packet<V extends Value<V>> {
   private final Route route;
   private final String senderId;
 
-  public Packet (PacketType packetType, String senderId, Route route, Message<V>[] messages) {
+  public Packet (PacketType packetType, String senderId, Route route, Message<V> message) {
+
+    this(packetType, senderId, route, new Message[] {message});
+  }
+
+  public Packet (PacketType packetType, String senderId, Route route, Message<V>[] message) {
 
     this.packetType = packetType;
     this.senderId = senderId;
     this.route = route;
-    this.messages = messages;
+    this.messages = message;
   }
 
   public PacketType getPacketType () {

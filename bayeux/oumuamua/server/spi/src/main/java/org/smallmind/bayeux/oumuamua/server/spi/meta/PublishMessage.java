@@ -33,7 +33,6 @@
 package org.smallmind.bayeux.oumuamua.server.spi.meta;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.smallmind.bayeux.oumuamua.common.api.json.Message;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.InvalidPathException;
@@ -70,18 +69,18 @@ public class PublishMessage extends MetaMessage {
     try {
       route = new DefaultRoute(getChannel());
     } catch (InvalidPathException invalidPathException) {
-      return new Packet<V>(PacketType.RESPONSE, getClientId(), null, new Message[] {toMessage(server.getCodec(), new PublishMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(getChannel()).setId(getId()).setError(invalidPathException.getMessage()))});
+      return new Packet<V>(PacketType.RESPONSE, getClientId(), null, toMessage(server.getCodec(), new PublishMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(getChannel()).setId(getId()).setError(invalidPathException.getMessage())));
     }
 
     if ((!session.getId().equals(getClientId())) || session.getState().lt(SessionState.HANDSHOOK)) {
 
-      return new Packet<V>(PacketType.RESPONSE, getClientId(), route, new Message[] {toMessage(server.getCodec(), new PublishMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(getChannel()).setId(getId()).setError("Handshake required"))});
+      return new Packet<V>(PacketType.RESPONSE, getClientId(), route, toMessage(server.getCodec(), new PublishMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(getChannel()).setId(getId()).setError("Handshake required")));
     } else if (session.getState().lt(SessionState.CONNECTED)) {
 
-      return new Packet<V>(PacketType.RESPONSE, session.getId(), route, new Message[] {toMessage(server.getCodec(), new PublishMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(getChannel()).setId(getId()).setError("Connection required"))});
+      return new Packet<V>(PacketType.RESPONSE, session.getId(), route, toMessage(server.getCodec(), new PublishMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(getChannel()).setId(getId()).setError("Connection required")));
     } else if (getChannel().startsWith("/meta/")) {
 
-      return new Packet<V>(PacketType.RESPONSE, session.getId(), route, new Message[] {toMessage(server.getCodec(), new PublishMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(getChannel()).setId(getId()).setError("Attempted to publish to a meta channel"))});
+      return new Packet<V>(PacketType.RESPONSE, session.getId(), route, toMessage(server.getCodec(), new PublishMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(getChannel()).setId(getId()).setError("Attempted to publish to a meta channel")));
     } else {
 
       SecurityPolicy securityPolicy = server.getSecurityPolicy();
@@ -90,19 +89,19 @@ public class PublishMessage extends MetaMessage {
       try {
         channel = server.findChannel(getChannel());
       } catch (InvalidPathException invalidPathException) {
-        return new Packet<V>(PacketType.RESPONSE, getClientId(), null, new Message[] {toMessage(server.getCodec(), new PublishMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(getChannel()).setId(getId()).setError(invalidPathException.getMessage()))});
+        return new Packet<V>(PacketType.RESPONSE, getClientId(), null, toMessage(server.getCodec(), new PublishMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(getChannel()).setId(getId()).setError(invalidPathException.getMessage())));
       }
 
       if ((securityPolicy != null) && (!securityPolicy.canPublish(session, channel, toMessage(server.getCodec(), view)))) {
 
-        return new Packet<V>(PacketType.RESPONSE, session.getId(), route, new Message[] {toMessage(server.getCodec(), new PublishMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(getChannel()).setId(getId()).setError("Unauthorized"))});
+        return new Packet<V>(PacketType.RESPONSE, session.getId(), route, toMessage(server.getCodec(), new PublishMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(getChannel()).setId(getId()).setError("Unauthorized")));
       } else if (channel.subscribe(session)) {
         // TODO: needed???
       }
 
-      server.deliver(new Packet<V>(PacketType.DELIVERY, session.getId(), route, new Message[] {toMessage(server.getCodec(), new DeliveryMessageSuccessOutView().setChannel(getChannel()).setId(getId()).setData(getData()))}));
+      server.deliver(new Packet<V>(PacketType.DELIVERY, session.getId(), route, toMessage(server.getCodec(), new DeliveryMessageSuccessOutView().setChannel(getChannel()).setId(getId()).setData(getData()))));
 
-      return new Packet<V>(PacketType.RESPONSE, session.getId(), route, new Message[] {toMessage(server.getCodec(), new PublishMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(getChannel()).setId(getId()))});
+      return new Packet<V>(PacketType.RESPONSE, session.getId(), route, toMessage(server.getCodec(), new PublishMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(getChannel()).setId(getId())));
     }
   }
 

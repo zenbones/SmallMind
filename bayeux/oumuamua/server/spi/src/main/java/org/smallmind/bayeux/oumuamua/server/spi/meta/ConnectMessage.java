@@ -83,11 +83,11 @@ public class ConnectMessage extends AdvisedMetaMessage {
     if ((!session.getId().equals(getClientId())) || session.getState().lt(SessionState.HANDSHOOK)) {
       adviceNode.put(Advice.RECONNECT.getField(), "handshake");
 
-      return new Packet<V>(PacketType.RESPONSE, getClientId(), ROUTE, new Message[] {toMessage(server.getCodec(), new ConnectMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(ROUTE.getPath()).setId(getId()).setError("Handshake required").setAdvice(adviceNode))});
+      return new Packet<V>(PacketType.RESPONSE, getClientId(), ROUTE, toMessage(server.getCodec(), new ConnectMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(ROUTE.getPath()).setId(getId()).setError("Handshake required").setAdvice(adviceNode)));
     } else if (session.getState().lt(SessionState.CONNECTED) && (!supportsConnectionType(protocol))) {
       adviceNode.put(Advice.RECONNECT.getField(), "retry");
 
-      return new Packet<V>(PacketType.RESPONSE, session.getId(), ROUTE, new Message[] {toMessage(server.getCodec(), new ConnectMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(ROUTE.getPath()).setId(getId()).setError("Connection requested on an unsupported transport").setAdvice(adviceNode))});
+      return new Packet<V>(PacketType.RESPONSE, session.getId(), ROUTE, toMessage(server.getCodec(), new ConnectMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(ROUTE.getPath()).setId(getId()).setError("Connection requested on an unsupported transport").setAdvice(adviceNode)));
     } else {
 
       Message<V>[] messages;
@@ -117,7 +117,7 @@ public class ConnectMessage extends AdvisedMetaMessage {
       }
 
       if (enqueuedMessageList == null) {
-        messages = new Message[] {responseMessage};
+        messages = new Message[]{responseMessage};
       } else {
         enqueuedMessageList.addFirst(responseMessage);
         messages = enqueuedMessageList.toArray(new Message[0]);
