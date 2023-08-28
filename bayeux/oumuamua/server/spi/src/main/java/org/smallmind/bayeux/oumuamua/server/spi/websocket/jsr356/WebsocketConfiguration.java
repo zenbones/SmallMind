@@ -32,21 +32,64 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356;
 
-import org.smallmind.bayeux.oumuamua.common.api.json.Value;
-import org.smallmind.bayeux.oumuamua.server.api.Packet;
-import org.smallmind.bayeux.oumuamua.server.api.Transport;
-import org.smallmind.bayeux.oumuamua.server.spi.Connection;
+public class WebsocketConfiguration {
 
-public class WebsocketConnection<V extends Value<V>> implements Connection<V> {
+  private String oumuamuaUrl;
+  private String subProtocol;
+  // Use the default;
+  private long maxIdleTimeoutMilliseconds = -1;
+  // No timeout
+  private long asyncSendTimeoutMilliseconds = 0;
+  // Use the default
+  private int maximumTextMessageBufferSize = -1;
 
-  @Override
-  public Transport getTransport () {
+  public String getOumuamuaUrl () {
 
-    return null;
+    return oumuamuaUrl;
   }
 
-  @Override
-  public void deliver (Packet<V> packet) {
+  public void setOumuamuaUrl (String oumuamuaUrl) {
 
+    this.oumuamuaUrl = oumuamuaUrl;
+  }
+
+  public String getSubProtocol () {
+
+    return subProtocol;
+  }
+
+  public void setSubProtocol (String subProtocol) {
+
+    this.subProtocol = subProtocol;
+  }
+
+  public long getMaxIdleTimeoutMilliseconds () {
+
+    return maxIdleTimeoutMilliseconds;
+  }
+
+  public void setMaxIdleTimeoutMilliseconds (long maxIdleTimeoutMilliseconds) {
+
+    this.maxIdleTimeoutMilliseconds = maxIdleTimeoutMilliseconds;
+  }
+
+  public long getAsyncSendTimeoutMilliseconds () {
+
+    return asyncSendTimeoutMilliseconds;
+  }
+
+  public void setAsyncSendTimeoutMilliseconds (long asyncSendTimeoutMilliseconds) {
+
+    this.asyncSendTimeoutMilliseconds = asyncSendTimeoutMilliseconds;
+  }
+
+  public int getMaximumTextMessageBufferSize () {
+
+    return maximumTextMessageBufferSize;
+  }
+
+  public void setMaximumTextMessageBufferSize (int maximumTextMessageBufferSize) {
+
+    this.maximumTextMessageBufferSize = maximumTextMessageBufferSize;
   }
 }

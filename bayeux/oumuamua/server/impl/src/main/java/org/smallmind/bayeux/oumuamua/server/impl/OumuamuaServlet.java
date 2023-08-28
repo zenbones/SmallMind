@@ -46,11 +46,11 @@ import org.smallmind.bayeux.oumuamua.common.api.json.StringValue;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.common.api.json.ValueType;
 import org.smallmind.bayeux.oumuamua.server.api.Protocol;
-import org.smallmind.bayeux.oumuamua.server.api.Protocols;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.SessionState;
-import org.smallmind.bayeux.oumuamua.server.api.Transports;
-import org.smallmind.bayeux.oumuamua.server.spi.websocket.WebSocketEndpoint;
+import org.smallmind.bayeux.oumuamua.server.spi.Protocols;
+import org.smallmind.bayeux.oumuamua.server.spi.Transports;
+import org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356.WebSocketEndpoint;
 import org.smallmind.nutsnbolts.util.MutationUtility;
 import org.smallmind.scribe.pen.LoggerManager;
 

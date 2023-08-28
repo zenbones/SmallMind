@@ -32,12 +32,19 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi;
 
-import org.smallmind.bayeux.oumuamua.server.api.OumuamuaException;
+public enum Transports {
 
-public class MetaProcessingException extends OumuamuaException {
+  WEBSOCKET("websocket"), LONG_POLLING("long-polling");
 
-  public MetaProcessingException (Throwable throwable) {
+  private final String name;
 
-    super(throwable);
+  Transports (String name) {
+
+    this.name = name;
+  }
+
+  public String getName () {
+
+    return name;
   }
 }

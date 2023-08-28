@@ -201,6 +201,11 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
     return "1.0";
   }
 
+  public int getMaxLOngPollQueueSize () {
+
+    return configuration.getMaxLongPollQueueSize();
+  }
+
   @Override
   public String[] getProtocolNames () {
 
@@ -234,6 +239,16 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   public OumuamuaSession<V> getSession (String sessionId) {
 
     return sessionMap.get(sessionId);
+  }
+
+  public void addSession (OumuamuaSession<V> session) {
+
+    sessionMap.put(session.getId(), session);
+  }
+
+  public void removeSession (OumuamuaSession<V> session) {
+
+    sessionMap.remove(session.getId());
   }
 
   @Override

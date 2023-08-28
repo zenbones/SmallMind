@@ -32,6 +32,7 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.meta;
 
+import java.io.IOException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
@@ -65,19 +66,31 @@ public class MetaMessage {
   public <V extends Value<V>> Message<V> toMessage (Codec<V> codec, MetaMessageRequestInView<?> view)
     throws MetaProcessingException {
 
-    return MessageUtility.convert(codec, (ObjectNode)JsonCodec.writeAsJsonNode(view));
+    try {
+      return MessageUtility.convert(codec, (ObjectNode)JsonCodec.writeAsJsonNode(view));
+    } catch (IOException ioException) {
+      throw new MetaProcessingException(ioException);
+    }
   }
 
   public <V extends Value<V>> Message<V> toMessage (Codec<V> codec, MetaMessageSuccessOutView<?> view)
     throws MetaProcessingException {
 
-    return MessageUtility.convert(codec, (ObjectNode)JsonCodec.writeAsJsonNode(view));
+    try {
+      return MessageUtility.convert(codec, (ObjectNode)JsonCodec.writeAsJsonNode(view));
+    } catch (IOException ioException) {
+      throw new MetaProcessingException(ioException);
+    }
   }
 
   public <V extends Value<V>> Message<V> toMessage (Codec<V> codec, MetaMessageErrorOutView<?> view)
     throws MetaProcessingException {
 
-    return MessageUtility.convert(codec, (ObjectNode)JsonCodec.writeAsJsonNode(view));
+    try {
+      return MessageUtility.convert(codec, (ObjectNode)JsonCodec.writeAsJsonNode(view));
+    } catch (IOException ioException) {
+      throw new MetaProcessingException(ioException);
+    }
   }
 
   public String getChannel () {

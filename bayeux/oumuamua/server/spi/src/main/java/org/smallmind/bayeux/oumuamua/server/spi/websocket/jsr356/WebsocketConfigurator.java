@@ -30,14 +30,51 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.spi;
+package org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356;
 
-import org.smallmind.bayeux.oumuamua.server.api.OumuamuaException;
+import java.util.List;
+import javax.websocket.Extension;
+import javax.websocket.HandshakeResponse;
+import javax.websocket.server.HandshakeRequest;
+import javax.websocket.server.ServerEndpointConfig;
 
-public class MetaProcessingException extends OumuamuaException {
+public class WebsocketConfigurator extends ServerEndpointConfig.Configurator {
 
-  public MetaProcessingException (Throwable throwable) {
+  private final ServerEndpointConfig.Configurator internal;
 
-    super(throwable);
+  public WebsocketConfigurator (ServerEndpointConfig.Configurator internal) {
+
+    this.internal = internal;
+  }
+
+  @Override
+  public String getNegotiatedSubprotocol (List<String> supported, List<String> requested) {
+
+    return internal.getNegotiatedSubprotocol(supported, requested);
+  }
+
+  @Override
+  public List<Extension> getNegotiatedExtensions (List<Extension> installed, List<Extension> requested) {
+
+    return internal.getNegotiatedExtensions(installed, requested);
+  }
+
+  @Override
+  public boolean checkOrigin (String originHeaderValue) {
+
+    return internal.checkOrigin(originHeaderValue);
+  }
+
+  @Override
+  public void modifyHandshake (ServerEndpointConfig serverEndpointConfig, HandshakeRequest request, HandshakeResponse response) {
+
+    internal.modifyHandshake(serverEndpointConfig, request, response);
+  }
+
+  @Override
+  public <T> T getEndpointInstance (Class<T> endpointClass)
+    throws InstantiationException {
+
+    return endpointClass.cast(internal.getEndpointInstance(endpointClass));
   }
 }

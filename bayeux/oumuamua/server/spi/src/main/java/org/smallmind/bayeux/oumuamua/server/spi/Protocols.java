@@ -30,48 +30,21 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.spi.websocket;
+package org.smallmind.bayeux.oumuamua.server.spi;
 
-import org.smallmind.bayeux.oumuamua.server.api.Protocol;
-import org.smallmind.bayeux.oumuamua.server.api.Protocols;
-import org.smallmind.bayeux.oumuamua.server.api.Transport;
-import org.smallmind.bayeux.oumuamua.server.api.Transports;
+public enum Protocols {
 
-public class WebsocketProtocol implements Protocol {
+  WEBSOCKET("websocket"), SERVLET("servlet");
 
-  @Override
+  private final String name;
+
+  Protocols (String name) {
+
+    this.name = name;
+  }
+
   public String getName () {
 
-    return Protocols.WEBSOCKET.getName();
-  }
-
-  @Override
-  public boolean isLongPolling () {
-
-    return false;
-  }
-
-  @Override
-  public long getLongPollIntervalMilliseconds () {
-
-    return 0;
-  }
-
-  @Override
-  public long getLongPollTimeoutMilliseconds () {
-
-    return 0;
-  }
-
-  @Override
-  public String[] getTransportNames () {
-
-    return new String[] {Transports.LONG_POLLING.getName()};
-  }
-
-  @Override
-  public Transport getTransport (String name) {
-
-    return null;
+    return name;
   }
 }

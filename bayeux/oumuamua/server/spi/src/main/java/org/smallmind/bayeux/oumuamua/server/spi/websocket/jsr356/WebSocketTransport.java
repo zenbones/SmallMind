@@ -30,59 +30,60 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.spi.websocket;
+package org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356;
 
 import java.util.List;
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
 import javax.websocket.DeploymentException;
 import javax.websocket.server.ServerContainer;
 import javax.websocket.server.ServerEndpointConfig;
+import org.smallmind.bayeux.oumuamua.common.api.json.Value;
+import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
+import org.smallmind.bayeux.oumuamua.server.api.Transport;
+import org.smallmind.bayeux.oumuamua.server.spi.AbstractAttributed;
+import org.smallmind.bayeux.oumuamua.server.spi.Transports;
+import org.smallmind.nutsnbolts.servlet.FormattedServletException;
 
-public class WebSocketTransport extends AbstractOumuamuaTransport {
+public class WebSocketTransport<V extends Value<V>> extends AbstractAttributed implements Transport {
 
-  public static final String ATTRIBUTE = "org.smallmind.cometd.oumuamua.transport.WebSocketTransport";
+  public static final String ATTRIBUTE = "org.smallmind.bayeux.oumuamua.transport.websocket";
 
-  private final String oumuamuaUrl;
-  private final String subProtocol;
-  private final long asyncSendTimeoutMilliseconds;
-  private final int maximumTextMessageBufferSize;
+  private final WebsocketProtocol websocketProtocol;
+  private final WebsocketConfiguration websocketConfiguration;
 
-  public WebSocketTransport (String oumuamuaUrl, WebSocketTransportConfiguration configuration) {
+  public WebSocketTransport (WebsocketProtocol websocketProtocol, WebsocketConfiguration websocketConfiguration) {
 
-    this(oumuamuaUrl, null, configuration);
+    this.websocketProtocol = websocketProtocol;
+    this.websocketConfiguration = websocketConfiguration;
   }
 
-  public WebSocketTransport (String oumuamuaUrl, String subProtocol, WebSocketTransportConfiguration configuration) {
+  @Override
+  public Protocol getProtocol () {
 
-    super(configuration.getLongPollResponseDelayMilliseconds(), configuration.getLongPollAdvisedIntervalMilliseconds(), configuration.getClientTimeoutMilliseconds(), configuration.getLazyMessageMaximumDelayMilliseconds(), configuration.isMetaConnectDeliveryOnly());
-
-    this.oumuamuaUrl = oumuamuaUrl;
-    this.subProtocol = subProtocol;
-
-    asyncSendTimeoutMilliseconds = Math.max(configuration.getAsyncSendTimeoutMilliseconds(), 0);
-    maximumTextMessageBufferSize = Math.max(configuration.getMaximumTextMessageBufferSize(), 0);
+    return websocketProtocol;
   }
 
   @Override
   public String getName () {
 
-    return "websocket";
+    return Transports.WEBSOCKET.getName();
   }
 
-  @Override
-  public String getOptionPrefix () {
+  public long getMaxIdleTimeoutMilliseconds () {
 
-    return "websocket.";
+    return websocketConfiguration.getMaxIdleTimeoutMilliseconds();
   }
 
   public long getAsyncSendTimeoutMilliseconds () {
 
-    return asyncSendTimeoutMilliseconds;
+    return websocketConfiguration.getAsyncSendTimeoutMilliseconds();
   }
 
   public int getMaximumTextMessageBufferSize () {
 
-    return maximumTextMessageBufferSize;
+    return websocketConfiguration.getMaximumTextMessageBufferSize();
   }
 
   @Override
@@ -91,12 +92,12 @@ public class WebSocketTransport extends AbstractOumuamuaTransport {
 
     ServerContainer container = (ServerContainer)servletConfig.getServletContext().getAttribute(ServerContainer.class.getName());
     ServerEndpointConfig.Configurator configurator = new ServerEndpointConfig.Configurator();
-    ServerEndpointConfig config = ServerEndpointConfig.Builder.create(WebSocketEndpoint.class, normalizeURL(oumuamuaUrl))
-                                    .subprotocols(subProtocol == null ? null : List.of(subProtocol))
-                                    .configurator(new WebsocketConfigurator(configurator, servletConfig.getServletContext()))
+    ServerEndpointConfig config = ServerEndpointConfig.Builder.create(WebSocketEndpoint.class, normalizeURL(websocketConfiguration.getOumuamuaUrl()))
+                                    .subprotocols(websocketConfiguration.getSubProtocol() == null ? null : List.of(websocketConfiguration.getSubProtocol()))
+                                    .configurator(new WebsocketConfigurator(configurator))
                                     .build();
 
-    config.getUserProperties().put(BayeuxServer.ATTRIBUTE, oumuamuaServer);
+    config.getUserProperties().put(Server.ATTRIBUTE, server);
     config.getUserProperties().put(ATTRIBUTE, this);
 
     try {

@@ -30,31 +30,54 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.impl;
+package org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356;
 
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
+import javax.websocket.Endpoint;
+import javax.websocket.EndpointConfig;
+import javax.websocket.MessageHandler;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
+import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
+import org.smallmind.bayeux.oumuamua.server.api.Transport;
+import org.smallmind.bayeux.oumuamua.server.spi.Connection;
 
-public class OumuamuaServletContextListener<V extends Value<V>> implements ServletContextListener {
+public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements MessageHandler.Whole<String>, Connection<V> {
 
-  private OumuamuaServer<V> oumuamuaServer;
+  private javax.websocket.Session websocketSession;
+  private Server<V> server;
+  private WebSocketTransport<V> websocketTransport;
 
-  public void setOumuamuaServer (OumuamuaServer<V> oumuamuaServer) {
+  @Override
+  public void onOpen (javax.websocket.Session websocketSession, EndpointConfig config) {
 
-    this.oumuamuaServer = oumuamuaServer;
+    this.websocketSession = websocketSession;
+
+    server = (Server<V>)config.getUserProperties().get(Server.ATTRIBUTE);
+    websocketTransport = (WebSocketTransport<V>)config.getUserProperties().get(WebSocketTransport.ATTRIBUTE);
+
+    if (websocketTransport.getMaxIdleTimeoutMilliseconds() >= 0) {
+      websocketSession.setMaxIdleTimeout(websocketTransport.getMaxIdleTimeoutMilliseconds());
+    }
+    if (websocketTransport.getMaximumTextMessageBufferSize() > 0) {
+      websocketSession.getContainer().setDefaultMaxTextMessageBufferSize(websocketTransport.getMaximumTextMessageBufferSize());
+    }
+
+    websocketSession.addMessageHandler(this);
   }
 
   @Override
-  public void contextInitialized (ServletContextEvent servletContextEvent) {
+  public void onMessage (String message) {
 
-    servletContextEvent.getServletContext().setAttribute(Server.ATTRIBUTE, oumuamuaServer);
   }
 
   @Override
-  public void contextDestroyed (ServletContextEvent servletContextEvent) {
+  public Transport getTransport () {
 
-    oumuamuaServer.stop();
+    return null;
+  }
+
+  @Override
+  public void deliver (Packet<V> packet) {
+
   }
 }

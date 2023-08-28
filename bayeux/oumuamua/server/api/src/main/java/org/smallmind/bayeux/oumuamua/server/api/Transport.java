@@ -32,9 +32,15 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api;
 
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
+
 public interface Transport extends Attributed {
 
   Protocol getProtocol ();
 
   String getName ();
+
+  public void init (Server<?> server, ServletConfig servletConfig)
+    throws ServletException;
 }

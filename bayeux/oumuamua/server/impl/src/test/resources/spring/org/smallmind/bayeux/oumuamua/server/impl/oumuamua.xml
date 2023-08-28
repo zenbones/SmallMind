@@ -15,10 +15,28 @@
         </property>
         <property name="protocols">
           <list>
-            <bean class="org.smallmind.bayeux.oumuamua.server.spi.websocket.WebsocketProtocol"/>
+            <bean class="org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356.WebsocketProtocol"/>
           </list>
         </property>
       </bean>
     </constructor-arg>
+  </bean>
+
+  <bean id="oumuamuaServerListenerInstaller" class="org.smallmind.web.grizzly.installer.ListenerInstaller">
+    <property name="contextPath" value="/smallmind"/>
+    <property name="eventListener">
+      <bean class="org.smallmind.bayeux.oumuamua.server.impl.OumuamuaServletContextListener">
+        <property name="oumuamuaServer" ref="oumuamuaServer"/>
+      </bean>
+    </property>
+  </bean>
+
+  <bean id="cometdServletInstaller" class="org.smallmind.web.grizzly.installer.ServletInstaller">
+    <property name="contextPath" value="/smallmind"/>
+    <property name="displayName" value="cometd"/>
+    <property name="servletClass" value="org.smallmind.bayeux.oumuamua.server.impl.OumuamuaServlet"/>
+    <property name="urlPattern" value="/cometd/*"/>
+    <property name="loadOnStartup" value="1"/>
+    <property name="asyncSupported" value="true"/>
   </bean>
 </beans>

@@ -32,7 +32,18 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api;
 
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
+
 public interface Protocol {
+
+  default void init (Server<?> server, ServletConfig servletConfig)
+    throws ServletException {
+
+    for (String transportName : getTransportNames()) {
+      getTransport(transportName).init(server, servletConfig);
+    }
+  }
 
   String getName ();
 

@@ -40,7 +40,7 @@ import org.smallmind.bayeux.oumuamua.server.api.backbone.Backbone;
 
 public interface Server<V extends Value<V>> extends Attributed {
 
-  public static final String ATTRIBUTE = "org.smallmind.bayeux";
+  String ATTRIBUTE = "org.smallmind.bayeux.oumuamua.server";
 
   interface Listener<V extends Value<V>> {
 
@@ -86,7 +86,7 @@ public interface Server<V extends Value<V>> extends Attributed {
 
   Protocol getProtocol (String name);
 
-  Backbone getBackbone ();
+  Backbone<V> getBackbone ();
 
   SecurityPolicy getSecurityPolicy ();
 
