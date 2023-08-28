@@ -43,10 +43,17 @@ import org.smallmind.bayeux.oumuamua.server.spi.Transports;
 
 public class LongPollingTransport<V extends Value<V>> extends AbstractAttributed implements Transport<V> {
 
+  private final ServletProtocol<V> servletProtocol;
+
+  public LongPollingTransport (ServletProtocol<V> servletProtocol) {
+
+    this.servletProtocol = servletProtocol;
+  }
+
   @Override
   public Protocol<V> getProtocol () {
 
-    return null;
+    return servletProtocol;
   }
 
   @Override
@@ -59,5 +66,10 @@ public class LongPollingTransport<V extends Value<V>> extends AbstractAttributed
   public void init (Server<?> server, ServletConfig servletConfig)
     throws ServletException {
 
+  }
+
+  public LongPollingConnection<V> createConnection () {
+
+    return new LongPollingConnection<>(this);
   }
 }

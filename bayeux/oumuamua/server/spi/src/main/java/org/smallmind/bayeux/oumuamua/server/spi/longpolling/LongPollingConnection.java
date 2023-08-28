@@ -30,47 +30,44 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.impl;
+package org.smallmind.bayeux.oumuamua.server.spi.longpolling;
 
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
+import javax.servlet.AsyncContext;
+import org.smallmind.bayeux.oumuamua.common.api.json.Message;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
-import org.smallmind.bayeux.oumuamua.server.api.Protocol;
-import org.smallmind.bayeux.oumuamua.server.api.Server;
+import org.smallmind.bayeux.oumuamua.server.api.Packet;
+import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.bayeux.oumuamua.server.api.Transport;
-import org.smallmind.bayeux.oumuamua.server.spi.AbstractAttributed;
-import org.smallmind.bayeux.oumuamua.server.spi.Transports;
-import org.smallmind.bayeux.oumuamua.server.spi.longpolling.ServletProtocol;
+import org.smallmind.bayeux.oumuamua.server.spi.Connection;
 
-public class LongPollingTransport<V extends Value<V>> extends AbstractAttributed implements Transport<V> {
+public class LongPollingConnection<V extends Value<V>> implements Connection<V> {
 
-  private final ServletProtocol<V> servletProtocol;
+  private final LongPollingTransport<V> longPollingTransport;
+  private Session<V> session;
 
-  public LongPollingTransport (ServletProtocol<V> servletProtocol) {
+  public LongPollingConnection (LongPollingTransport<V> longPollingTransport) {
 
-    this.servletProtocol = servletProtocol;
+    this.longPollingTransport = longPollingTransport;
   }
 
   @Override
-  public Protocol<V> getProtocol () {
+  public Transport<V> getTransport () {
 
-    return servletProtocol;
+    return longPollingTransport;
+  }
+
+  public void setSession (Session<V> session) {
+
+    this.session = session;
   }
 
   @Override
-  public String getName () {
+  public void deliver (Packet<V> packet) {
 
-    return Transports.LONG_POLLING.getName();
+    throw new UnsupportedOperationException();
   }
 
-  @Override
-  public void init (Server<?> server, ServletConfig servletConfig)
-    throws ServletException {
+  public void onMessages (AsyncContext asyncContext, Message<V>[] messages) {
 
-  }
-
-  protected LongPollingConnection<V> createConnection () {
-
-    return new LongPollingConnection<>(this);
   }
 }
