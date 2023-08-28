@@ -43,7 +43,7 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   private Backbone<V> backbone;
   private Codec<V> codec;
   private SecurityPolicy securityPolicy;
-  private Protocol[] protocols;
+  private Protocol<V>[] protocols;
   private long channelTimeToLiveMinutes = 30;
   private int maxLongPollQueueSize = 1000;
 
@@ -77,12 +77,12 @@ public class OumuamuaConfiguration<V extends Value<V>> {
     this.securityPolicy = securityPolicy;
   }
 
-  public Protocol[] getProtocols () {
+  public Protocol<V>[] getProtocols () {
 
     return protocols;
   }
 
-  public void setProtocols (Protocol[] protocols) {
+  public void setProtocols (Protocol<V>[] protocols) {
 
     this.protocols = protocols;
   }

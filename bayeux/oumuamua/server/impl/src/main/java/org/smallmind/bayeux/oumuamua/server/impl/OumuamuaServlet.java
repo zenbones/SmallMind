@@ -81,7 +81,7 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
   protected void doPost (HttpServletRequest request, HttpServletResponse response)
     throws IOException {
 
-    Protocol servletProtocol;
+    Protocol<V> servletProtocol;
 
     if ((servletProtocol = server.getProtocol(Protocols.SERVLET.getName())) == null) {
       response.sendError(HttpServletResponse.SC_BAD_REQUEST, "No http protocol support has been configured");

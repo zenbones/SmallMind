@@ -32,12 +32,20 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356;
 
+import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.Transport;
 import org.smallmind.bayeux.oumuamua.server.spi.Protocols;
 import org.smallmind.bayeux.oumuamua.server.spi.Transports;
 
-public class WebsocketProtocol implements Protocol {
+public class WebsocketProtocol<V extends Value<V>> implements Protocol<V> {
+
+  private final WebSocketTransport<V> webSocketTransport;
+
+  public WebsocketProtocol (WebsocketConfiguration websocketConfiguration) {
+
+    this.webSocketTransport = new WebSocketTransport<>(this, websocketConfiguration);
+  }
 
   @Override
   public String getName () {
@@ -66,12 +74,12 @@ public class WebsocketProtocol implements Protocol {
   @Override
   public String[] getTransportNames () {
 
-    return new String[] {Transports.LONG_POLLING.getName()};
+    return new String[] {Transports.WEBSOCKET.getName()};
   }
 
   @Override
-  public Transport getTransport (String name) {
+  public Transport<V> getTransport (String name) {
 
-    return null;
+    return Transports.WEBSOCKET.getName().equals(name) ? webSocketTransport : null;
   }
 }

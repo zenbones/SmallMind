@@ -58,7 +58,7 @@ import org.smallmind.scribe.pen.LoggerManager;
 public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed implements Server<V> {
 
   private final ConcurrentHashMap<String, OumuamuaSession<V>> sessionMap = new ConcurrentHashMap<>();
-  private final HashMap<String, Protocol> protocolMap = new HashMap<>();
+  private final HashMap<String, Protocol<V>> protocolMap = new HashMap<>();
   private final ConcurrentLinkedQueue<Listener<V>> listenerList = new ConcurrentLinkedQueue<>();
   private final ChannelTree<V> channelTree = new ChannelTree<>();
   private final OumuamuaConfiguration<V> configuration;
@@ -80,7 +80,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
       if (configuration.getProtocols() == null) {
         throw new OumuamuaException("No protocols have been defined");
       } else {
-        for (Protocol protocol : configuration.getProtocols()) {
+        for (Protocol<V> protocol : configuration.getProtocols()) {
           protocolMap.put(protocol.getName(), protocol);
         }
 
@@ -98,6 +98,11 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
       } catch (Exception exception) {
         throw new ServletException(exception);
       }
+    }
+
+    for (Protocol<V> protocol : configuration.getProtocols()) {
+      protocol.init(this, servletConfig);
+      protocolMap.put(protocol.getName(), protocol);
     }
 
     new Thread(expiredChannelSifter = new ExpiredChannelSifter<>(0, channelTree, this::onRemoved)).start();
@@ -213,7 +218,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   @Override
-  public Protocol getProtocol (String name) {
+  public Protocol<V> getProtocol (String name) {
 
     return protocolMap.get(name);
   }

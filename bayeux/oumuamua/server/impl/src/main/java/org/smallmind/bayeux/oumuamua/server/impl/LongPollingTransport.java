@@ -42,17 +42,17 @@ import org.smallmind.bayeux.oumuamua.server.spi.AbstractAttributed;
 import org.smallmind.bayeux.oumuamua.server.spi.Transports;
 import org.smallmind.bayeux.oumuamua.server.spi.longpolling.ServletProtocol;
 
-public class LongPollingTransport<V extends Value<V>> extends AbstractAttributed implements Transport {
+public class LongPollingTransport<V extends Value<V>> extends AbstractAttributed implements Transport<V> {
 
-  private final ServletProtocol servletProtocol;
+  private final ServletProtocol<V> servletProtocol;
 
-  public LongPollingTransport (ServletProtocol servletProtocol) {
+  public LongPollingTransport (ServletProtocol<V> servletProtocol) {
 
     this.servletProtocol = servletProtocol;
   }
 
   @Override
-  public Protocol getProtocol () {
+  public Protocol<V> getProtocol () {
 
     return servletProtocol;
   }

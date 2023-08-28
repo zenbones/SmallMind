@@ -46,21 +46,21 @@ import org.smallmind.bayeux.oumuamua.server.spi.AbstractAttributed;
 import org.smallmind.bayeux.oumuamua.server.spi.Transports;
 import org.smallmind.nutsnbolts.servlet.FormattedServletException;
 
-public class WebSocketTransport<V extends Value<V>> extends AbstractAttributed implements Transport {
+public class WebSocketTransport<V extends Value<V>> extends AbstractAttributed implements Transport<V> {
 
   public static final String ATTRIBUTE = "org.smallmind.bayeux.oumuamua.transport.websocket";
 
-  private final WebsocketProtocol websocketProtocol;
+  private final WebsocketProtocol<V> websocketProtocol;
   private final WebsocketConfiguration websocketConfiguration;
 
-  public WebSocketTransport (WebsocketProtocol websocketProtocol, WebsocketConfiguration websocketConfiguration) {
+  public WebSocketTransport (WebsocketProtocol<V> websocketProtocol, WebsocketConfiguration websocketConfiguration) {
 
     this.websocketProtocol = websocketProtocol;
     this.websocketConfiguration = websocketConfiguration;
   }
 
   @Override
-  public Protocol getProtocol () {
+  public Protocol<V> getProtocol () {
 
     return websocketProtocol;
   }

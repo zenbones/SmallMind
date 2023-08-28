@@ -34,18 +34,19 @@ package org.smallmind.bayeux.oumuamua.server.spi.meta;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
 
 public class TransportUtility {
 
-  public static String[] accumulateSupportedTransportNames (Server<?> server) {
+  public static <V extends Value<V>> String[] accumulateSupportedTransportNames (Server<V> server) {
 
     HashSet<String> supportedTransportSet = new HashSet<>();
 
     for (String supportedProtocolName : server.getProtocolNames()) {
 
-      Protocol supportedProtocol;
+      Protocol<V> supportedProtocol;
 
       if ((supportedProtocol = server.getProtocol(supportedProtocolName)) != null) {
         supportedTransportSet.addAll(Arrays.asList(supportedProtocol.getTransportNames()));

@@ -34,16 +34,17 @@ package org.smallmind.bayeux.oumuamua.server.spi.longpolling;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
+import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.Transport;
 import org.smallmind.bayeux.oumuamua.server.spi.AbstractAttributed;
 import org.smallmind.bayeux.oumuamua.server.spi.Transports;
 
-public class LongPollingTransport extends AbstractAttributed implements Transport {
+public class LongPollingTransport<V extends Value<V>> extends AbstractAttributed implements Transport<V> {
 
   @Override
-  public Protocol getProtocol () {
+  public Protocol<V> getProtocol () {
 
     return null;
   }

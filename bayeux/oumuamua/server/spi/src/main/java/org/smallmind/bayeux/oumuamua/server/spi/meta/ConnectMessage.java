@@ -75,7 +75,7 @@ public class ConnectMessage extends AdvisedMetaMessage {
     }
   }
 
-  public <V extends Value<V>> Packet<V> process (Protocol protocol, Server<V> server, Session<V> session)
+  public <V extends Value<V>> Packet<V> process (Protocol<V> protocol, Server<V> server, Session<V> session)
     throws MetaProcessingException {
 
     ObjectNode adviceNode = JsonNodeFactory.instance.objectNode();
@@ -90,10 +90,10 @@ public class ConnectMessage extends AdvisedMetaMessage {
       return new Packet<V>(PacketType.RESPONSE, session.getId(), ROUTE, new Message[] {toMessage(server.getCodec(), new ConnectMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(ROUTE.getPath()).setId(getId()).setError("Connection requested on an unsupported transport").setAdvice(adviceNode))});
     } else {
 
-      Message[] messages;
+      Message<V>[] messages;
       Message<V> responseMessage = toMessage(server.getCodec(), new ConnectMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(ROUTE.getPath()).setId(getId()).setClientId(session.getId()).setAdvice(adviceNode));
       LinkedList<Message<V>> enqueuedMessageList = null;
-      long longPollingTimeout = ((getAdvice() != null) && getAdvice().has(Advice.TIMEOUT.getField())) ? getAdvice().get(Advice.TIMEOUT.getField()).asLong() : protocol.getLongPollTimeoutMilliseconds();
+      long longPollingTimeout = session.isLongPolling() ? ((getAdvice() != null) && getAdvice().has(Advice.TIMEOUT.getField())) ? getAdvice().get(Advice.TIMEOUT.getField()).asLong() : protocol.getLongPollTimeoutMilliseconds() : 0;
 
       if (session.getState().lt(SessionState.CONNECTED)) {
         session.completeConnection();
@@ -129,7 +129,7 @@ public class ConnectMessage extends AdvisedMetaMessage {
     }
   }
 
-  private boolean supportsConnectionType (Protocol protocol) {
+  private <V extends Value<V>> boolean supportsConnectionType (Protocol<V> protocol) {
 
     String[] supportedTransportNames;
 

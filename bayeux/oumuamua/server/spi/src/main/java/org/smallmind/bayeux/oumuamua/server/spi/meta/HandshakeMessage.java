@@ -78,7 +78,7 @@ public class HandshakeMessage extends AdvisedMetaMessage {
     }
   }
 
-  public <V extends Value<V>> Packet<V> process (Protocol protocol, Server<V> server, Session<V> session, HandshakeMessageRequestInView view)
+  public <V extends Value<V>> Packet<V> process (Protocol<V> protocol, Server<V> server, Session<V> session, HandshakeMessageRequestInView view)
     throws MetaProcessingException {
 
     ObjectNode adviceNode = JsonNodeFactory.instance.objectNode();
@@ -102,7 +102,7 @@ public class HandshakeMessage extends AdvisedMetaMessage {
     }
   }
 
-  private boolean supportsConnectionType (Protocol protocol) {
+  private <V extends Value<V>> boolean supportsConnectionType (Protocol<V> protocol) {
 
     String[] supportedTransportNames;
 

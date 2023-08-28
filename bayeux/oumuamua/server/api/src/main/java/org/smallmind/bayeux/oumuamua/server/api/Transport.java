@@ -34,10 +34,11 @@ package org.smallmind.bayeux.oumuamua.server.api;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
+import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 
-public interface Transport extends Attributed {
+public interface Transport<V extends Value<V>> extends Attributed {
 
-  Protocol getProtocol ();
+  Protocol<V> getProtocol ();
 
   String getName ();
 

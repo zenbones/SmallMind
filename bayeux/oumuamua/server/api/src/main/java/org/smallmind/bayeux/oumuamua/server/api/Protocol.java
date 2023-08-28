@@ -34,10 +34,11 @@ package org.smallmind.bayeux.oumuamua.server.api;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
+import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 
-public interface Protocol {
+public interface Protocol<V extends Value<V>> {
 
-  default void init (Server<?> server, ServletConfig servletConfig)
+  default void init (Server<V> server, ServletConfig servletConfig)
     throws ServletException {
 
     for (String transportName : getTransportNames()) {
@@ -55,5 +56,5 @@ public interface Protocol {
 
   String[] getTransportNames ();
 
-  Transport getTransport (String name);
+  Transport<V> getTransport (String name);
 }

@@ -34,7 +34,7 @@ package org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356;
 
 public class WebsocketConfiguration {
 
-  private String oumuamuaUrl;
+  private final String oumuamuaUrl;
   private String subProtocol;
   // Use the default;
   private long maxIdleTimeoutMilliseconds = -1;
@@ -43,14 +43,14 @@ public class WebsocketConfiguration {
   // Use the default
   private int maximumTextMessageBufferSize = -1;
 
+  public WebsocketConfiguration (String oumuamuaUrl) {
+
+    this.oumuamuaUrl = oumuamuaUrl;
+  }
+
   public String getOumuamuaUrl () {
 
     return oumuamuaUrl;
-  }
-
-  public void setOumuamuaUrl (String oumuamuaUrl) {
-
-    this.oumuamuaUrl = oumuamuaUrl;
   }
 
   public String getSubProtocol () {

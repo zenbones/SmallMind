@@ -84,7 +84,7 @@ public interface Server<V extends Value<V>> extends Attributed {
 
   String[] getProtocolNames ();
 
-  Protocol getProtocol (String name);
+  Protocol<V> getProtocol (String name);
 
   Backbone<V> getBackbone ();
 
