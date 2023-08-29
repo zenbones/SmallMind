@@ -32,6 +32,7 @@
  */
 package org.smallmind.bayeux.oumuamua.server.impl;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -219,13 +220,14 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
 
   public synchronized void clearSubscriptions () {
 
+    HashSet<Session<V>> unsubscribedSet = new HashSet<>(sessionMap.values());
+
     terminal = true;
-
-    for (Session<V> session : sessionMap.values()) {
-      onUnsubscribed(session);
-    }
-
     sessionMap.clear();
+
+    for (Session<V> unsubscribedSession : unsubscribedSet) {
+      onUnsubscribed(unsubscribedSession);
+    }
 
     if (persistentListenerCount <= 0) {
       quiescentTimestamp = System.currentTimeMillis();

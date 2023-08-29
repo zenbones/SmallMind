@@ -30,21 +30,21 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.spi;
+package org.smallmind.bayeux.oumuamua.server.spi.meta;
 
-public enum Advice {
+public enum Reconnect {
 
-  INTERVAL("interval"), RECONNECT("reconnect"), TIMEOUT("timeout");
+  RETRY("retry"), HANDSHAKE("handshake"), NONE("none");
 
-  private final String field;
+  private final String code;
 
-  Advice (String field) {
+  Reconnect (String code) {
 
-    this.field = field;
+    this.code = code;
   }
 
-  public String getField () {
+  public String getCode () {
 
-    return field;
+    return code;
   }
 }

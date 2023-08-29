@@ -37,9 +37,14 @@ import java.io.OutputStreamWriter;
 
 public interface Message<V extends Value<V>> extends ObjectValue<V> {
 
+  String VERSION = "version";
+  String MINIMUM_VERSION = "minimumVersion";
   String ID = "id";
   String SESSION_ID = "clientId";
   String CHANNEL = "channel";
+  String SUCCESSFUL = "successful";
+  String ERROR = "error";
+  String SUPPORTED_CONNECTION_TYPES = "supportedConnectionTypes";
   String EXT = "ext";
   String ADVICE = "advice";
   String DATA = "data";

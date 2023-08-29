@@ -30,19 +30,21 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.spi;
+package org.smallmind.bayeux.oumuamua.server.spi.meta;
 
-import org.smallmind.bayeux.oumuamua.server.api.OumuamuaException;
+public enum Advice {
 
-public class MetaProcessingException extends OumuamuaException {
+  INTERVAL("interval"), RECONNECT("reconnect"), TIMEOUT("timeout");
 
-  public MetaProcessingException (String message, Object... args) {
+  private final String field;
 
-    super(message, args);
+  Advice (String field) {
+
+    this.field = field;
   }
 
-  public MetaProcessingException (Throwable throwable) {
+  public String getField () {
 
-    super(throwable);
+    return field;
   }
 }

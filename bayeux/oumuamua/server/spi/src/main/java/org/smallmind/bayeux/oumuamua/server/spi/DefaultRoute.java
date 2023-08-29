@@ -34,11 +34,30 @@ package org.smallmind.bayeux.oumuamua.server.spi;
 
 import org.smallmind.bayeux.oumuamua.server.api.InvalidPathException;
 import org.smallmind.bayeux.oumuamua.server.api.Route;
+import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 
 public class DefaultRoute implements Route {
 
+  public static final DefaultRoute HANDSHAKE_ROUTE;
+  public static final DefaultRoute CONNECT_ROUTE;
+  public static final DefaultRoute DISCONNECT_ROUTE;
+  public static final DefaultRoute SUBSCRIBE_ROUTE;
+  public static final DefaultRoute UNSUBSCRIBE_ROUTE;
+
   private final String path;
   private final int[] segments;
+
+  static {
+    try {
+      HANDSHAKE_ROUTE = new DefaultRoute("/meta/handshake");
+      CONNECT_ROUTE = new DefaultRoute("/meta/connect");
+      DISCONNECT_ROUTE = new DefaultRoute("/meta/disconnect");
+      SUBSCRIBE_ROUTE = new DefaultRoute("/meta/subscribe");
+      UNSUBSCRIBE_ROUTE = new DefaultRoute("/meta/unsubscribe");
+    } catch (InvalidPathException invalidPathException) {
+      throw new StaticInitializationError(invalidPathException);
+    }
+  }
 
   public DefaultRoute (String path)
     throws InvalidPathException {
