@@ -32,8 +32,14 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.meta;
 
+import java.util.Arrays;
+import java.util.LinkedList;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.smallmind.bayeux.oumuamua.common.api.json.ArrayValue;
 import org.smallmind.bayeux.oumuamua.common.api.json.Message;
+import org.smallmind.bayeux.oumuamua.common.api.json.NumberValue;
+import org.smallmind.bayeux.oumuamua.common.api.json.ObjectValue;
 import org.smallmind.bayeux.oumuamua.common.api.json.StringValue;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.common.api.json.ValueType;
@@ -58,17 +64,17 @@ public enum Meta {
 
       if (((securityPolicy = server.getSecurityPolicy()) != null) && (!securityPolicy.canHandshake(session, request))) {
 
-        return new Packet<V>(PacketType.RESPONSE, session.getId(), getRoute(), constructHandshakeErrorResponse(server, getRoute().getPath(), request.getId(), session.getId(), "Unauthorized", Reconnect.NONE));
+        return new Packet<>(PacketType.RESPONSE, session.getId(), getRoute(), constructHandshakeErrorResponse(server, getRoute().getPath(), request.getId(), session.getId(), "Unauthorized", Reconnect.NONE));
       } else if (session.getState().gte(SessionState.HANDSHOOK)) {
 
-        return new Packet<V>(PacketType.RESPONSE, session.getId(), getRoute(), constructHandshakeErrorResponse(server, getRoute().getPath(), request.getId(), session.getId(), "Handshake was previously completed", Reconnect.RETRY));
+        return new Packet<>(PacketType.RESPONSE, session.getId(), getRoute(), constructHandshakeErrorResponse(server, getRoute().getPath(), request.getId(), session.getId(), "Handshake was previously completed", Reconnect.RETRY));
       } else if (!supportsConnectionType(protocol, request)) {
 
-        return new Packet<V>(PacketType.RESPONSE, session.getId(), getRoute(), constructHandshakeErrorResponse(server, getRoute().getPath(), request.getId(), session.getId(), "Handshake attempted on an unsupported transport", Reconnect.HANDSHAKE));
+        return new Packet<>(PacketType.RESPONSE, session.getId(), getRoute(), constructHandshakeErrorResponse(server, getRoute().getPath(), request.getId(), session.getId(), "Handshake attempted on an unsupported transport", Reconnect.HANDSHAKE));
       } else {
         session.completeHandshake();
 
-        return new Packet<V>(PacketType.RESPONSE, session.getId(), getRoute(), constructHandshakeSuccessResponse(protocol, server, getRoute().getPath(), request.getId(), session.getId()));
+        return new Packet<>(PacketType.RESPONSE, session.getId(), getRoute(), constructHandshakeSuccessResponse(protocol, server, getRoute().getPath(), request.getId(), session.getId()));
       }
     }
 
@@ -118,11 +124,130 @@ public enum Meta {
 
       return false;
     }
-  }, CONNECT(DefaultRoute.CONNECT_ROUTE),
-  DISCONNECT(DefaultRoute.DISCONNECT_ROUTE),
-  SUBSCRIBE(DefaultRoute.SUBSCRIBE_ROUTE),
-  UNSUBSCRIBE(DefaultRoute.UNSUBSCRIBE_ROUTE),
-  PUBLISH(null);
+  }, CONNECT(DefaultRoute.CONNECT_ROUTE) {
+    public <V extends Value<V>> Packet<V> process (Protocol<V> protocol, Server<V> server, Session<V> session, Message<V> request) {
+
+      ObjectNode adviceNode = JsonNodeFactory.instance.objectNode();
+
+      if ((!session.getId().equals(request.getSessionId())) || session.getState().lt(SessionState.HANDSHOOK)) {
+
+        return new Packet<V>(PacketType.RESPONSE, request.getSessionId(), getRoute(), constructConnectErrorResponse(server, getRoute().getPath(), request.getId(), request.getSessionId(), "Handshake required", Reconnect.HANDSHAKE));
+      } else if (session.getState().lt(SessionState.CONNECTED) && (!supportsConnectionType(protocol, request))) {
+
+        return new Packet<>(PacketType.RESPONSE, request.getSessionId(), getRoute(), constructConnectErrorResponse(server, getRoute().getPath(), request.getId(), session.getId(), "Connection requested on an unsupported transport", Reconnect.RETRY));
+      } else {
+
+        LinkedList<Message<V>> enqueuedMessageList = null;
+        Message<V>[] messages;
+        Message<V> responseMessage;
+        long longPollingTimeout = getLongPollingIntervalMilliseconds(protocol, session, request);
+
+        responseMessage = constructConnectSuccessResponse(server, getRoute().getPath(), request.getId(), session.getId(), longPollingTimeout);
+
+        if (session.getState().lt(SessionState.CONNECTED)) {
+          session.completeConnection();
+        }
+
+        if (longPollingTimeout > 0) {
+
+          long start = System.currentTimeMillis();
+
+          do {
+
+            Packet<V> enqueuedPacket;
+
+            if ((enqueuedPacket = session.poll()) != null) {
+              if (enqueuedMessageList == null) {
+                enqueuedMessageList = new LinkedList<>();
+              }
+              enqueuedMessageList.addAll(Arrays.asList(enqueuedPacket.getMessages()));
+            }
+          } while (longPollingTimeout + start - System.currentTimeMillis() > 0);
+        }
+
+        if (enqueuedMessageList == null) {
+          messages = new Message[] {responseMessage};
+        } else {
+          enqueuedMessageList.addFirst(responseMessage);
+          messages = enqueuedMessageList.toArray(new Message[0]);
+        }
+
+        adviceNode.put("interval", protocol.getLongPollIntervalMilliseconds());
+
+        return new Packet<V>(PacketType.RESPONSE, session.getId(), getRoute(), messages);
+      }
+    }
+
+    private <V extends Value<V>> long getLongPollingIntervalMilliseconds (Protocol<V> protocol, Session<V> session, Message<V> request) {
+
+      if (session.isLongPolling()) {
+
+        ObjectValue<V> adviceValue;
+
+        if ((adviceValue = request.getAdvice()) != null) {
+
+          Value<V> timeoutValue;
+
+          if (((timeoutValue = adviceValue.get(Advice.TIMEOUT.getField())) != null) && ValueType.NUMBER.equals(timeoutValue.getType())) {
+
+            return ((NumberValue<V>)timeoutValue).asLong();
+          } else {
+
+            return protocol.getLongPollTimeoutMilliseconds();
+          }
+        }
+      }
+
+      return 0;
+    }
+
+    private <V extends Value<V>> Message<V> constructConnectSuccessResponse (Server<V> server, String path, String id, String sessionId, long longPollingIntervalMilliseconds) {
+
+      Message<V> response;
+
+      return (Message<V>)(response = constructResponse(server, path, id, sessionId)).put(Message.SUCCESSFUL, true).put(Message.ADVICE, response.getFactory().objectValue().put(Advice.INTERVAL.getField(), longPollingIntervalMilliseconds));
+    }
+
+    private <V extends Value<V>> Message<V> constructConnectErrorResponse (Server<V> server, String path, String id, String sessionId, String error, Reconnect reconnect) {
+
+      Message<V> response;
+
+      return (Message<V>)(response = constructResponse(server, path, id, sessionId)).put(Message.SUCCESSFUL, false).put(Message.ERROR, error).put(Message.ADVICE, response.getFactory().objectValue().put(Advice.RECONNECT.getField(), reconnect.getCode()));
+    }
+
+    private <V extends Value<V>> boolean supportsConnectionType (Protocol<V> protocol, Message<V> request) {
+
+      Value<V> connectionTypeValue;
+
+      if (((connectionTypeValue = request.get(Message.CONNECTION_TYPE)) != null) && ValueType.STRING.equals(connectionTypeValue.getType())) {
+
+        String[] supportedTransportNames;
+
+        if (((supportedTransportNames = protocol.getTransportNames()) != null)) {
+          for (String supportedTransportName : supportedTransportNames) {
+            if ((supportedTransportName != null) && supportedTransportName.equals(((StringValue<V>)connectionTypeValue).asText())) {
+
+              return true;
+            }
+          }
+        }
+      }
+
+      return false;
+    }
+  },
+  DISCONNECT(DefaultRoute.DISCONNECT_ROUTE) {
+
+  },
+  SUBSCRIBE(DefaultRoute.SUBSCRIBE_ROUTE) {
+
+  },
+  UNSUBSCRIBE(DefaultRoute.UNSUBSCRIBE_ROUTE) {
+
+  },
+  PUBLISH(null) {
+
+  };
 
   private static final Meta[] COMMANDS = new Meta[] {HANDSHAKE, CONNECT, DISCONNECT, SUBSCRIBE, UNSUBSCRIBE};
   private final Route route;
