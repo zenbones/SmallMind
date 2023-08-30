@@ -92,7 +92,7 @@ public class WebSocketTransport<V extends Value<V>> extends AbstractAttributed i
 
     ServerContainer container = (ServerContainer)servletConfig.getServletContext().getAttribute(ServerContainer.class.getName());
     ServerEndpointConfig.Configurator configurator = new ServerEndpointConfig.Configurator();
-    ServerEndpointConfig config = ServerEndpointConfig.Builder.create(WebSocketEndpoint.class, normalizeURL(websocketConfiguration.getOumuamuaUrl()))
+    ServerEndpointConfig config = ServerEndpointConfig.Builder.create(websocketConfiguration.getEndpointClass(), normalizeURL(websocketConfiguration.getOumuamuaUrl()))
                                     .subprotocols(websocketConfiguration.getSubProtocol() == null ? null : List.of(websocketConfiguration.getSubProtocol()))
                                     .configurator(new WebsocketConfigurator(configurator))
                                     .build();

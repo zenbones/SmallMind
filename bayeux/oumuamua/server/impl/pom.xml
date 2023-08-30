@@ -12,6 +12,12 @@
   <description>Oumuamua Server Reference Implementation</description>
   <dependencies>
     <dependency>
+      <groupId>javax.websocket</groupId>
+      <artifactId>javax.websocket-api</artifactId>
+      <optional>true</optional>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
       <groupId>org.smallmind</groupId>
       <artifactId>oumuamua-server-spi</artifactId>
       <scope>compile</scope>

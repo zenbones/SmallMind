@@ -18,7 +18,8 @@
             <bean class="org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356.WebsocketProtocol">
               <constructor-arg index="0" name="websocketConfiguration">
                 <bean class="org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356.WebsocketConfiguration">
-                  <constructor-arg index="0" name="oumuamuaUrl" value="/cometd/*"/>
+                  <constructor-arg index="0" name="endpointClass" value="org.smallmind.bayeux.oumuamua.server.impl.websocket.WebSocketEndpoint"/>
+                  <constructor-arg index="1" name="oumuamuaUrl" value="/cometd/*"/>
                 </bean>
               </constructor-arg>
             </bean>

@@ -52,7 +52,7 @@ import org.smallmind.bayeux.oumuamua.server.spi.Protocols;
 import org.smallmind.bayeux.oumuamua.server.spi.Transports;
 import org.smallmind.bayeux.oumuamua.server.spi.longpolling.LongPollingConnection;
 import org.smallmind.bayeux.oumuamua.server.spi.longpolling.LongPollingTransport;
-import org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356.WebSocketEndpoint;
+import org.smallmind.bayeux.oumuamua.server.impl.websocket.WebSocketEndpoint;
 import org.smallmind.nutsnbolts.util.MutationUtility;
 import org.smallmind.scribe.pen.LoggerManager;
 
@@ -184,7 +184,6 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
   public void destroy () {
 
     server.stop();
-
     super.destroy();
   }
 }

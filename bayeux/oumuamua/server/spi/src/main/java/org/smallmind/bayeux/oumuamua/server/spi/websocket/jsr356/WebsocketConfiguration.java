@@ -32,9 +32,13 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356;
 
+import javax.websocket.Endpoint;
+
 public class WebsocketConfiguration {
 
+  private final Class<? extends Endpoint> endpointClass;
   private final String oumuamuaUrl;
+
   private String subProtocol;
   // Use the default;
   private long maxIdleTimeoutMilliseconds = -1;
@@ -43,9 +47,15 @@ public class WebsocketConfiguration {
   // Use the default
   private int maximumTextMessageBufferSize = -1;
 
-  public WebsocketConfiguration (String oumuamuaUrl) {
+  public WebsocketConfiguration (Class<? extends Endpoint> endpointClass, String oumuamuaUrl) {
 
+    this.endpointClass = endpointClass;
     this.oumuamuaUrl = oumuamuaUrl;
+  }
+
+  public Class<? extends Endpoint> getEndpointClass () {
+
+    return endpointClass;
   }
 
   public String getOumuamuaUrl () {
