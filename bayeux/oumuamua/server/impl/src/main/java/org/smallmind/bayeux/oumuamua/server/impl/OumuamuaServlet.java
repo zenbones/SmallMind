@@ -34,7 +34,6 @@ package org.smallmind.bayeux.oumuamua.server.impl;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
 import javax.servlet.AsyncContext;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -52,8 +51,6 @@ import org.smallmind.bayeux.oumuamua.server.spi.Protocols;
 import org.smallmind.bayeux.oumuamua.server.spi.Transports;
 import org.smallmind.bayeux.oumuamua.server.spi.longpolling.LongPollingConnection;
 import org.smallmind.bayeux.oumuamua.server.spi.longpolling.LongPollingTransport;
-import org.smallmind.bayeux.oumuamua.server.impl.websocket.WebSocketEndpoint;
-import org.smallmind.nutsnbolts.util.MutationUtility;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
@@ -154,8 +151,8 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
 
   private void respond (HttpServletRequest request, HttpServletResponse response, LongPollingConnection<V> connection, Message<V>[] messages, byte[] contentBuffer) {
 
-    System.out.println("<=" + Arrays.toString(MutationUtility.toArray(messages, String.class, message -> new String(message.encode()))));
-    LoggerManager.getLogger(WebSocketEndpoint.class).debug(() -> new String(contentBuffer));
+    System.out.println("<=" + new String(contentBuffer));
+    LoggerManager.getLogger(OumuamuaServlet.class).debug(() -> "<=" + new String(contentBuffer));
 
     AsyncContext asyncContext = request.startAsync();
 

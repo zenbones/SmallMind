@@ -109,6 +109,7 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
           writer.write(']');
         }
 
+        System.out.println("=>" + builder);
         if (websocketTransport.getAsyncSendTimeoutMilliseconds() > 0) {
           websocketSession.getAsyncRemote().sendText(builder.toString()).get(websocketTransport.getAsyncSendTimeoutMilliseconds(), TimeUnit.MILLISECONDS);
         } else {
@@ -122,6 +123,9 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
 
   @Override
   public synchronized void onMessage (String content) {
+
+    System.out.println("<=" + content);
+    LoggerManager.getLogger(WebSocketEndpoint.class).debug(() -> "<=" + content);
 
     if (session != null) {
       try {
