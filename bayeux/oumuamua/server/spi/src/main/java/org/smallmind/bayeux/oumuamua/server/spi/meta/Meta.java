@@ -230,7 +230,9 @@ public enum Meta {
       return false;
     }
   }, DISCONNECT(DefaultRoute.DISCONNECT_ROUTE) {
-    public <V extends Value<V>> Packet<V> process (Server<V> server, Message<V> request) {
+    public <V extends Value<V>> Packet<V> process (Protocol<V> protocol, Server<V> server, Session<V> session, Message<V> request) {
+
+      session.completeDisconnect();
 
       return new Packet<>(PacketType.RESPONSE, request.getSessionId(), getRoute(), constructDisconnectSuccessResponse(server, getRoute().getPath(), request.getId(), request.getSessionId()));
     }
@@ -240,7 +242,7 @@ public enum Meta {
       return constructSuccessResponse(server, path, id, sessionId);
     }
   }, SUBSCRIBE(DefaultRoute.SUBSCRIBE_ROUTE) {
-    public <V extends Value<V>> Packet<V> process (Server<V> server, Session<V> session, Message<V> request) {
+    public <V extends Value<V>> Packet<V> process (Protocol<V> protocol, Server<V> server, Session<V> session, Message<V> request) {
 
       String subscription;
 
@@ -278,11 +280,13 @@ public enum Meta {
         if ((securityPolicy != null) && (!securityPolicy.canSubscribe(session, channel, request))) {
 
           return new Packet<>(PacketType.RESPONSE, session.getId(), getRoute(), constructSubscribeErrorResponse(server, getRoute().getPath(), request.getId(), request.getSessionId(), "Unauthorized", subscription, null));
-        } else if (channel.subscribe(session)) {
-          // TODO: needed???
-        }
+        } else if (!channel.subscribe(session)) {
 
-        return new Packet<>(PacketType.RESPONSE, session.getId(), getRoute(), constructSubscribeSuccessResponse(server, getRoute().getPath(), request.getId(), request.getSessionId(), subscription));
+          return new Packet<>(PacketType.RESPONSE, session.getId(), getRoute(), constructSubscribeErrorResponse(server, getRoute().getPath(), request.getId(), request.getSessionId(), "Attempted subscription to a closed channel", subscription, null));
+        } else {
+
+          return new Packet<>(PacketType.RESPONSE, session.getId(), getRoute(), constructSubscribeSuccessResponse(server, getRoute().getPath(), request.getId(), request.getSessionId(), subscription));
+        }
       }
     }
 
@@ -303,7 +307,7 @@ public enum Meta {
       return (((subscriptionValue = request.get(Message.SUBSCRIPTION)) != null) && ValueType.STRING.equals(subscriptionValue.getType())) ? ((StringValue<V>)subscriptionValue).asText() : null;
     }
   }, UNSUBSCRIBE(DefaultRoute.UNSUBSCRIBE_ROUTE) {
-    public <V extends Value<V>> Packet<V> process (Server<V> server, Session<V> session, Message<V> request)
+    public <V extends Value<V>> Packet<V> process (Protocol<V> protocol, Server<V> server, Session<V> session, Message<V> request)
       throws InvalidPathException {
 
       String subscription;
@@ -325,9 +329,7 @@ public enum Meta {
         Channel<V> channel;
 
         if ((channel = server.findChannel(subscription)) != null) {
-          if (channel.unsubscribe(session)) {
-            // TODO: needed???
-          }
+          channel.unsubscribe(session);
         }
 
         return new Packet<>(PacketType.RESPONSE, session.getId(), getRoute(), constructUnsubscribeSuccessResponse(server, getRoute().getPath(), request.getId(), request.getSessionId(), subscription));
@@ -351,7 +353,7 @@ public enum Meta {
       return (((subscriptionValue = request.get(Message.SUBSCRIPTION)) != null) && ValueType.STRING.equals(subscriptionValue.getType())) ? ((StringValue<V>)subscriptionValue).asText() : null;
     }
   }, PUBLISH(null) {
-    public <V extends Value<V>> Packet<V> process (Server<V> server, Session<V> session, Message<V> request) {
+    public <V extends Value<V>> Packet<V> process (Protocol<V> protocol, Server<V> server, Session<V> session, Message<V> request) {
 
       String path;
 
@@ -393,13 +395,11 @@ public enum Meta {
           if ((securityPolicy != null) && (!securityPolicy.canPublish(session, channel, request))) {
 
             return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructPublishErrorResponse(server, path, request.getId(), request.getSessionId(), "Unauthorized", null));
-          } else if (channel.subscribe(session)) {
-            // TODO: needed???
+          } else {
+            server.deliver(new Packet<>(PacketType.DELIVERY, session.getId(), route, constructDeliveryMessage(server, path, request.getId(), request.getData(true))));
+
+            return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructPublishSuccessResponse(server, path, request.getId(), session.getId()));
           }
-
-          server.deliver(new Packet<>(PacketType.DELIVERY, session.getId(), route, constructDeliveryMessage(server, path, request.getId(), request.getData(true))));
-
-          return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructPublishSuccessResponse(server, path, request.getId(), session.getId()));
         }
       }
     }
@@ -433,7 +433,7 @@ public enum Meta {
     return (Message<V>)constructResponse(server, path, id, sessionId).put(Message.SUCCESSFUL, true);
   }
 
-  private static <V extends Value<V>> Message<V> constructErrorResponse (Server<V> server, String path, String id, String sessionId, String error, Reconnect reconnect) {
+  public static <V extends Value<V>> Message<V> constructErrorResponse (Server<V> server, String path, String id, String sessionId, String error, Reconnect reconnect) {
 
     Message<V> response = constructResponse(server, path, id, sessionId);
 
@@ -451,12 +451,7 @@ public enum Meta {
     return (Message<V>)server.getCodec().create().put(Message.CHANNEL, path).put(Message.ID, id).put(Message.SESSION_ID, sessionId);
   }
 
-  public Route getRoute () {
-
-    return route;
-  }
-
-  public Meta from (String path)
+  public static Meta from (String path)
     throws MetaProcessingException {
 
     if (path == null) {
@@ -478,4 +473,12 @@ public enum Meta {
       }
     }
   }
+
+  public Route getRoute () {
+
+    return route;
+  }
+
+  public abstract <V extends Value<V>> Packet<V> process (Protocol<V> protocol, Server<V> server, Session<V> session, Message<V> request)
+    throws InvalidPathException;
 }

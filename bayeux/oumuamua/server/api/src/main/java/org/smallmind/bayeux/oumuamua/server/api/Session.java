@@ -64,7 +64,7 @@ public interface Session<V extends Value<V>> {
 
   void completeConnection ();
 
-  void completeClose ();
+  void completeDisconnect ();
 
   Packet<V> poll ();
 

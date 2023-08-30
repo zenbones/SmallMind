@@ -132,7 +132,7 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
 
               LongPollingConnection<V> connection;
 
-              session = new OumuamuaSession<>(connection = transport.createConnection(), server.getMaxLOngPollQueueSize());
+              session = server.createSession(connection = transport.createConnection());
               connection.setSession(session);
               server.addSession(session);
 

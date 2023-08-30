@@ -34,15 +34,25 @@ package org.smallmind.bayeux.oumuamua.server.spi;
 
 import org.smallmind.bayeux.oumuamua.common.api.json.Message;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
+import org.smallmind.bayeux.oumuamua.server.api.InvalidPathException;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
+import org.smallmind.bayeux.oumuamua.server.api.PacketType;
+import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
+import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.bayeux.oumuamua.server.api.Transport;
-import org.smallmind.nutsnbolts.util.Switch;
-import org.smallmind.web.json.scaffold.util.JsonCodec;
+import org.smallmind.bayeux.oumuamua.server.spi.meta.Meta;
 
 public interface Connection<V extends Value<V>> {
 
-  default Packet<V> respond (Server<V> server, Message<V> message) {
+  default Packet<V> respond (Protocol<V> protocol, Server<V> server, Session<V> session, Message<V> request) {
+
+    try {
+
+      return Meta.from(request.getChannel()).process(protocol, server, session, request);
+    } catch (InvalidPathException | MetaProcessingException exception) {
+      return new Packet<>(PacketType.RESPONSE, request.getSessionId(), null, Meta.constructErrorResponse(server, request.getChannel(), request.getId(), request.getSessionId(), exception.getMessage(), null));
+    }
 
     /*
     switch (message.getChannel()) {
@@ -109,7 +119,6 @@ public interface Connection<V extends Value<V>> {
     }
 
      */
-    return null;
   }
 
   Transport<V> getTransport ();

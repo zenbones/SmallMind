@@ -34,7 +34,7 @@ package org.smallmind.bayeux.oumuamua.server.api;
 
 public enum SessionState {
 
-  INITIALIZED, HANDSHOOK, CONNECTED, CLOSED;
+  INITIALIZED, HANDSHOOK, CONNECTED, DISCONNECTED;
 
   public boolean lt (SessionState state) {
 

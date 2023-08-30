@@ -35,6 +35,7 @@ package org.smallmind.bayeux.oumuamua.server.impl;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.PacketType;
@@ -50,14 +51,18 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   private final ConcurrentLinkedDeque<Packet<V>> longPollQueue = new ConcurrentLinkedDeque<>();
   private final ConcurrentLinkedQueue<Session.Listener<V>> listenerList = new ConcurrentLinkedQueue<>();
   private final AtomicInteger longPollQueueSize = new AtomicInteger(0);
+  private final Consumer<Session<V>> onConnectedCallback;
+  private final Consumer<Session<V>> onDisconnectedCallback;
   private final Connection<V> connection;
   private final String sessionId = SnowflakeId.newInstance().generateHexEncoding();
   private final boolean longPolling;
   private final int maxLongPollQueueSize;
   private SessionState state;
 
-  public OumuamuaSession (Connection<V> connection, int maxLongPollQueueSize) {
+  public OumuamuaSession (Consumer<Session<V>> onConnectedCallback, Consumer<Session<V>> onDisonnectedCallback, Connection<V> connection, int maxLongPollQueueSize) {
 
+    this.onConnectedCallback = onConnectedCallback;
+    this.onDisconnectedCallback = onDisonnectedCallback;
     this.connection = connection;
     this.maxLongPollQueueSize = maxLongPollQueueSize;
 
@@ -117,21 +122,23 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   }
 
   @Override
-  public void completeHandshake () {
+  public synchronized void completeHandshake () {
 
     state = SessionState.HANDSHOOK;
   }
 
   @Override
-  public void completeConnection () {
+  public synchronized void completeConnection () {
 
     state = SessionState.CONNECTED;
+    onConnectedCallback.accept(this);
   }
 
   @Override
-  public void completeClose () {
+  public synchronized void completeDisconnect () {
 
-    state = SessionState.CLOSED;
+    state = SessionState.DISCONNECTED;
+    onDisconnectedCallback.accept(this);
   }
 
   protected Connection<V> getConnection () {

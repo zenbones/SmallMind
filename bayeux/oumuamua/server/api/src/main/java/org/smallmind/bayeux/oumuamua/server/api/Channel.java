@@ -83,7 +83,7 @@ public interface Channel<V extends Value<V>> extends Attributed {
 
   boolean subscribe (Session<V> session);
 
-  boolean unsubscribe (Session<V> session);
+  void unsubscribe (Session<V> session);
 
   boolean isRemovable (long now);
 

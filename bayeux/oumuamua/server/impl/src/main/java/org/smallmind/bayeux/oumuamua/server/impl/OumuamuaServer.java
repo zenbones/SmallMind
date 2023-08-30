@@ -33,6 +33,7 @@
 package org.smallmind.bayeux.oumuamua.server.impl;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import javax.servlet.ServletConfig;
@@ -51,6 +52,7 @@ import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.bayeux.oumuamua.server.api.backbone.Backbone;
 import org.smallmind.bayeux.oumuamua.server.spi.AbstractAttributed;
+import org.smallmind.bayeux.oumuamua.server.spi.Connection;
 import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.scribe.pen.LoggerManager;
@@ -206,11 +208,6 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
     return "1.0";
   }
 
-  public int getMaxLOngPollQueueSize () {
-
-    return configuration.getMaxLongPollQueueSize();
-  }
-
   @Override
   public String[] getProtocolNames () {
 
@@ -239,6 +236,11 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   public Codec<V> getCodec () {
 
     return configuration.getCodec();
+  }
+
+  public OumuamuaSession<V> createSession (Connection<V> connection) {
+
+    return new OumuamuaSession<>(this::onConnected, this::onDisconnected, connection, configuration.getMaxLongPollQueueSize());
   }
 
   public OumuamuaSession<V> getSession (String sessionId) {
@@ -280,5 +282,10 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   @Override
   public void deliver (Packet<V> packet) {
 
+    if (packet.getRoute() != null) {
+      onDelivery(packet);
+
+      channelTree.deliver(0, packet, new HashSet<>());
+    }
   }
 }

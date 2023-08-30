@@ -176,35 +176,29 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
   @Override
   public synchronized boolean subscribe (Session<V> session) {
 
-    boolean success = false;
+    if (terminal) {
 
-    if (!terminal) {
-      if (sessionMap.putIfAbsent(session.getId(), session) == null) {
-        success = true;
-        onSubscribed(session);
-      }
-
-      quiescentTimestamp = 0;
+      return false;
+    }
+    if (sessionMap.putIfAbsent(session.getId(), session) == null) {
+      onSubscribed(session);
     }
 
-    return success;
+    quiescentTimestamp = 0;
+
+    return true;
   }
 
   @Override
-  public synchronized boolean unsubscribe (Session<V> session) {
-
-    boolean success = false;
+  public synchronized void unsubscribe (Session<V> session) {
 
     if (sessionMap.remove(session.getId()) != null) {
-      success = true;
       onUnsubscribed(session);
 
       if (sessionMap.isEmpty() && (persistentListenerCount <= 0)) {
         quiescentTimestamp = System.currentTimeMillis();
       }
     }
-
-    return success;
   }
 
   @Override
