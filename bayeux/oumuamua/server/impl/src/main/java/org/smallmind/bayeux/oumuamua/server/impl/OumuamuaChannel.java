@@ -209,11 +209,6 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
 
   public synchronized void terminate () {
 
-    terminal = true;
-  }
-
-  public synchronized void clearSubscriptions () {
-
     HashSet<Session<V>> unsubscribedSet = new HashSet<>(sessionMap.values());
 
     terminal = true;
