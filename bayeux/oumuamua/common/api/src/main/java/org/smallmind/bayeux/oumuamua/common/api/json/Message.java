@@ -46,6 +46,7 @@ public interface Message<V extends Value<V>> extends ObjectValue<V> {
   String ERROR = "error";
   String CONNECTION_TYPE = "connectionType";
   String SUPPORTED_CONNECTION_TYPES = "supportedConnectionTypes";
+  String SUBSCRIPTION = "subscription";
   String EXT = "ext";
   String ADVICE = "advice";
   String DATA = "data";

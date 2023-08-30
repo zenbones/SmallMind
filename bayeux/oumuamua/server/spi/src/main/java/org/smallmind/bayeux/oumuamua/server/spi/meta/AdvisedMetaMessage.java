@@ -43,7 +43,7 @@ import static org.smallmind.web.json.doppelganger.Visibility.IN;
 import static org.smallmind.web.json.doppelganger.Visibility.OUT;
 
 @Doppelganger(
-  hierarchy = @Hierarchy(subClasses = {SubscribeMessage.class, UnsubscribeMessage.class}),
+  hierarchy = @Hierarchy(subClasses = {}),
   pledges = @Pledge(purposes = "request", visibility = IN)
 )
 public class AdvisedMetaMessage extends MetaMessage {

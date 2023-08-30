@@ -34,8 +34,6 @@ package org.smallmind.bayeux.oumuamua.server.spi.meta;
 
 import java.util.Arrays;
 import java.util.LinkedList;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.smallmind.bayeux.oumuamua.common.api.json.ArrayValue;
 import org.smallmind.bayeux.oumuamua.common.api.json.Message;
 import org.smallmind.bayeux.oumuamua.common.api.json.NumberValue;
@@ -43,6 +41,8 @@ import org.smallmind.bayeux.oumuamua.common.api.json.ObjectValue;
 import org.smallmind.bayeux.oumuamua.common.api.json.StringValue;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.common.api.json.ValueType;
+import org.smallmind.bayeux.oumuamua.server.api.Channel;
+import org.smallmind.bayeux.oumuamua.server.api.InvalidPathException;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.PacketType;
 import org.smallmind.bayeux.oumuamua.server.api.Protocol;
@@ -127,8 +127,6 @@ public enum Meta {
   }, CONNECT(DefaultRoute.CONNECT_ROUTE) {
     public <V extends Value<V>> Packet<V> process (Protocol<V> protocol, Server<V> server, Session<V> session, Message<V> request) {
 
-      ObjectNode adviceNode = JsonNodeFactory.instance.objectNode();
-
       if ((!session.getId().equals(request.getSessionId())) || session.getState().lt(SessionState.HANDSHOOK)) {
 
         return new Packet<V>(PacketType.RESPONSE, request.getSessionId(), getRoute(), constructConnectErrorResponse(server, getRoute().getPath(), request.getId(), request.getSessionId(), "Handshake required", Reconnect.HANDSHAKE));
@@ -171,8 +169,6 @@ public enum Meta {
           enqueuedMessageList.addFirst(responseMessage);
           messages = enqueuedMessageList.toArray(new Message[0]);
         }
-
-        adviceNode.put("interval", protocol.getLongPollIntervalMilliseconds());
 
         return new Packet<V>(PacketType.RESPONSE, session.getId(), getRoute(), messages);
       }
@@ -235,18 +231,199 @@ public enum Meta {
 
       return false;
     }
-  },
-  DISCONNECT(DefaultRoute.DISCONNECT_ROUTE) {
+  }, DISCONNECT(DefaultRoute.DISCONNECT_ROUTE) {
+    public <V extends Value<V>> Packet<V> process (Server<V> server, Message<V> request) {
 
-  },
-  SUBSCRIBE(DefaultRoute.SUBSCRIBE_ROUTE) {
+      return new Packet<>(PacketType.RESPONSE, request.getSessionId(), getRoute(), constructDisconnectSuccessResponse(server, getRoute().getPath(), request.getId(), request.getSessionId()));
+    }
 
-  },
-  UNSUBSCRIBE(DefaultRoute.UNSUBSCRIBE_ROUTE) {
+    private <V extends Value<V>> Message<V> constructDisconnectSuccessResponse (Server<V> server, String path, String id, String sessionId) {
 
-  },
-  PUBLISH(null) {
+      return (Message<V>)constructResponse(server, path, id, sessionId).put(Message.SUCCESSFUL, true);
+    }
+  }, SUBSCRIBE(DefaultRoute.SUBSCRIBE_ROUTE) {
+    public <V extends Value<V>> Packet<V> process (Server<V> server, Session<V> session, Message<V> request) {
 
+      String subscription;
+
+      if ((subscription = getSubscription(request)) == null) {
+
+        return new Packet<>(PacketType.RESPONSE, request.getSessionId(), getRoute(), constructSubscribeErrorResponse(server, getRoute().getPath(), request.getId(), request.getSessionId(), "Missing subscription", subscription, Reconnect.RETRY));
+      } else if ((!session.getId().equals(request.getSessionId())) || session.getState().lt(SessionState.HANDSHOOK)) {
+
+        return new Packet<>(PacketType.RESPONSE, request.getSessionId(), getRoute(), constructSubscribeErrorResponse(server, getRoute().getPath(), request.getId(), request.getSessionId(), "Handshake required", subscription, Reconnect.HANDSHAKE));
+      } else if (session.getState().lt(SessionState.CONNECTED)) {
+
+        return new Packet<>(PacketType.RESPONSE, session.getId(), getRoute(), constructSubscribeErrorResponse(server, getRoute().getPath(), request.getId(), request.getSessionId(), "Connection required", subscription, Reconnect.RETRY));
+      } else if (subscription.startsWith("/meta/")) {
+
+        return new Packet<>(PacketType.RESPONSE, session.getId(), getRoute(), constructSubscribeErrorResponse(server, getRoute().getPath(), request.getId(), request.getSessionId(), "Attempted subscription to a meta channel", subscription, null));
+      } else {
+
+        SecurityPolicy securityPolicy = server.getSecurityPolicy();
+        Channel<V> channel;
+
+        try {
+          if ((channel = server.findChannel(request.getChannel())) == null) {
+            if ((securityPolicy != null) && (!securityPolicy.canCreate(session, request.getChannel(), request))) {
+
+              return new Packet<V>(PacketType.RESPONSE, session.getId(), getRoute(), constructSubscribeErrorResponse(server, getRoute().getPath(), request.getId(), request.getSessionId(), "Unauthorized", subscription, null));
+            } else {
+              channel = server.requireChannel(subscription);
+            }
+          }
+        } catch (InvalidPathException invalidPathException) {
+
+          return new Packet<>(PacketType.RESPONSE, session.getId(), getRoute(), constructSubscribeErrorResponse(server, getRoute().getPath(), request.getId(), request.getSessionId(), invalidPathException.getMessage(), subscription, null));
+        }
+
+        if ((securityPolicy != null) && (!securityPolicy.canSubscribe(session, channel, request))) {
+
+          return new Packet<V>(PacketType.RESPONSE, session.getId(), getRoute(), constructSubscribeErrorResponse(server, getRoute().getPath(), request.getId(), request.getSessionId(), "Unauthorized", subscription, null));
+        } else if (channel.subscribe(session)) {
+          // TODO: needed???
+        }
+
+        return new Packet<V>(PacketType.RESPONSE, session.getId(), getRoute(), constructSubscribeSuccessResponse(server, getRoute().getPath(), request.getId(), request.getSessionId(), subscription));
+      }
+    }
+
+    private <V extends Value<V>> Message<V> constructSubscribeSuccessResponse (Server<V> server, String path, String id, String sessionId, String subscription) {
+
+      return (Message<V>)constructResponse(server, path, id, sessionId).put(Message.SUCCESSFUL, true).put(Message.SUBSCRIPTION, subscription);
+    }
+
+    private <V extends Value<V>> Message<V> constructSubscribeErrorResponse (Server<V> server, String path, String id, String sessionId, String error, String subscription, Reconnect reconnect) {
+
+      Message<V> response = constructResponse(server, path, id, sessionId);
+
+      response.put(Message.SUCCESSFUL, false).put(Message.ERROR, error).put(Message.SUBSCRIPTION, subscription).put(Message.ADVICE, response.getFactory().objectValue());
+
+      if (reconnect != null) {
+        response.put(Advice.RECONNECT.getField(), reconnect.getCode());
+      }
+
+      return response;
+    }
+
+    private <V extends Value<V>> String getSubscription (Message<V> request) {
+
+      Value<V> subscriptionValue;
+
+      return (((subscriptionValue = request.get(Message.SUBSCRIPTION)) != null) && ValueType.STRING.equals(subscriptionValue.getType())) ? ((StringValue<V>)subscriptionValue).asText() : null;
+    }
+  }, UNSUBSCRIBE(DefaultRoute.UNSUBSCRIBE_ROUTE) {
+    public <V extends Value<V>> Packet<V> process (Server<V> server, Session<V> session, Message<V> request)
+      throws InvalidPathException {
+
+      String subscription;
+
+      if ((subscription = getSubscription(request)) == null) {
+
+        return new Packet<>(PacketType.RESPONSE, request.getSessionId(), getRoute(), constructUnsubscribeErrorResponse(server, getRoute().getPath(), request.getId(), request.getSessionId(), "Missing subscription", subscription, Reconnect.RETRY));
+      } else if ((!session.getId().equals(request.getSessionId())) || session.getState().lt(SessionState.HANDSHOOK)) {
+
+        return new Packet<>(PacketType.RESPONSE, request.getSessionId(), getRoute(), constructUnsubscribeErrorResponse(server, getRoute().getPath(), request.getId(), request.getSessionId(), "Handshake required", subscription, Reconnect.HANDSHAKE));
+      } else if (session.getState().lt(SessionState.CONNECTED)) {
+
+        return new Packet<>(PacketType.RESPONSE, session.getId(), getRoute(), constructUnsubscribeErrorResponse(server, getRoute().getPath(), request.getId(), request.getSessionId(), "Connection required", subscription, Reconnect.RETRY));
+      } else if (subscription.startsWith("/meta/")) {
+
+        return new Packet<>(PacketType.RESPONSE, session.getId(), getRoute(), constructUnsubscribeErrorResponse(server, getRoute().getPath(), request.getId(), request.getSessionId(), "Attempted subscription to a meta channel", subscription, null));
+      } else {
+
+        Channel<V> channel;
+
+        if ((channel = server.findChannel(subscription)) != null) {
+          if (channel.unsubscribe(session)) {
+            // TODO: needed???
+          }
+        }
+
+        return new Packet<>(PacketType.RESPONSE, session.getId(), getRoute(), constructUnsubscribeSuccessResponse(server, getRoute().getPath(), request.getId(), request.getSessionId(), subscription));
+      }
+    }
+
+    private <V extends Value<V>> Message<V> constructUnsubscribeSuccessResponse (Server<V> server, String path, String id, String sessionId, String subscription) {
+
+      return (Message<V>)constructResponse(server, path, id, sessionId).put(Message.SUCCESSFUL, true).put(Message.SUBSCRIPTION, subscription);
+    }
+
+    private <V extends Value<V>> Message<V> constructUnsubscribeErrorResponse (Server<V> server, String path, String id, String sessionId, String error, String subscription, Reconnect reconnect) {
+
+      Message<V> response = constructResponse(server, path, id, sessionId);
+
+      response.put(Message.SUCCESSFUL, false).put(Message.ERROR, error).put(Message.SUBSCRIPTION, subscription).put(Message.ADVICE, response.getFactory().objectValue());
+
+      if (reconnect != null) {
+        response.put(Advice.RECONNECT.getField(), reconnect.getCode());
+      }
+
+      return response;
+    }
+
+    private <V extends Value<V>> String getSubscription (Message<V> request) {
+
+      Value<V> subscriptionValue;
+
+      return (((subscriptionValue = request.get(Message.SUBSCRIPTION)) != null) && ValueType.STRING.equals(subscriptionValue.getType())) ? ((StringValue<V>)subscriptionValue).asText() : null;
+    }
+  }, PUBLISH(null) {
+    public <V extends Value<V>> Packet<V> process (Server<V> server, Session<V> session, Message<V> request)
+      throws MetaProcessingException {
+
+      Route route;
+
+      try {
+        route = new DefaultRoute(getChannel());
+      } catch (InvalidPathException invalidPathException) {
+        return new Packet<V>(PacketType.RESPONSE, getClientId(), null, toMessage(server.getCodec(), new PublishMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(getChannel()).setId(getId()).setError(invalidPathException.getMessage())));
+      }
+
+      if ((!session.getId().equals(getClientId())) || session.getState().lt(SessionState.HANDSHOOK)) {
+
+        return new Packet<V>(PacketType.RESPONSE, getClientId(), route, toMessage(server.getCodec(), new PublishMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(getChannel()).setId(getId()).setError("Handshake required")));
+      } else if (session.getState().lt(SessionState.CONNECTED)) {
+
+        return new Packet<V>(PacketType.RESPONSE, session.getId(), route, toMessage(server.getCodec(), new PublishMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(getChannel()).setId(getId()).setError("Connection required")));
+      } else if (getChannel().startsWith("/meta/")) {
+
+        return new Packet<V>(PacketType.RESPONSE, session.getId(), route, toMessage(server.getCodec(), new PublishMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(getChannel()).setId(getId()).setError("Attempted to publish to a meta channel")));
+      } else {
+
+        SecurityPolicy securityPolicy = server.getSecurityPolicy();
+        Channel<V> channel;
+
+        try {
+          channel = server.findChannel(getChannel());
+        } catch (InvalidPathException invalidPathException) {
+          return new Packet<V>(PacketType.RESPONSE, getClientId(), null, toMessage(server.getCodec(), new PublishMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(getChannel()).setId(getId()).setError(invalidPathException.getMessage())));
+        }
+
+        if ((securityPolicy != null) && (!securityPolicy.canPublish(session, channel, toMessage(server.getCodec(), view)))) {
+
+          return new Packet<V>(PacketType.RESPONSE, session.getId(), route, toMessage(server.getCodec(), new PublishMessageErrorOutView().setSuccessful(Boolean.FALSE).setChannel(getChannel()).setId(getId()).setError("Unauthorized")));
+        } else if (channel.subscribe(session)) {
+          // TODO: needed???
+        }
+
+        server.deliver(new Packet<V>(PacketType.DELIVERY, session.getId(), route, toMessage(server.getCodec(), new DeliveryMessageSuccessOutView().setChannel(getChannel()).setId(getId()).setData(getData()))));
+
+        return new Packet<V>(PacketType.RESPONSE, session.getId(), route, toMessage(server.getCodec(), new PublishMessageSuccessOutView().setSuccessful(Boolean.TRUE).setChannel(getChannel()).setId(getId())));
+      }
+    }
+
+    private <V extends Value<V>> Message<V> constructPublishSuccessResponse (Server<V> server, String path, String id, String sessionId) {
+
+      return (Message<V>)constructResponse(server, path, id, sessionId).put(Message.SUCCESSFUL, true);
+    }
+
+    private <V extends Value<V>> Message<V> constructPublishErrorResponse (Server<V> server, String path, String id, String sessionId, String error, Reconnect reconnect) {
+
+      Message<V> response;
+
+      return (Message<V>)(response = constructResponse(server, path, id, sessionId)).put(Message.SUCCESSFUL, false).put(Message.ERROR, error).put(Message.ADVICE, response.getFactory().objectValue().put(Advice.RECONNECT.getField(), reconnect.getCode()));
+    }
   };
 
   private static final Meta[] COMMANDS = new Meta[] {HANDSHAKE, CONNECT, DISCONNECT, SUBSCRIBE, UNSUBSCRIBE};
