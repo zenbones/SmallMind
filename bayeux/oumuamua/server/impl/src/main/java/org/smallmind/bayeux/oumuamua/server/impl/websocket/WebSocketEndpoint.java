@@ -134,6 +134,7 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
       } catch (IOException ioException) {
         LoggerManager.getLogger(WebSocketEndpoint.class).error(ioException);
       }
+
       if (SessionState.DISCONNECTED.equals(session.getState())) {
         try {
           websocketSession.close(new CloseReason(CloseReason.CloseCodes.NORMAL_CLOSURE, "Client disconnect"));
