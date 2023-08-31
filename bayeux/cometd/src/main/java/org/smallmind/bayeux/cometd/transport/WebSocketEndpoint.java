@@ -152,7 +152,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
 
       if ((text = asText(packets)) != null) {
 
-        System.out.println(serverSession.getId() + "=>" + text);
+        // System.out.println(serverSession.getId() + "=>" + text);
         LoggerManager.getLogger(WebSocketEndpoint.class).debug(new DataRecord(text, false));
 
         if (websocketTransport.getAsyncSendTimeoutMilliseconds() > 0) {
@@ -174,7 +174,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
   @Override
   public synchronized void onMessage (String data) {
 
-    System.out.println("<=" + data);
+    // System.out.println("<=" + data);
     LoggerManager.getLogger(WebSocketEndpoint.class).debug(new DataRecord(data, true));
 
     if ((serverSession != null) && isConnected()) {

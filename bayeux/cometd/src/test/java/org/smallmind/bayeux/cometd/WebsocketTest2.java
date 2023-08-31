@@ -79,7 +79,7 @@ public class WebsocketTest2 {
     ClientSessionChannel channel = bayeuxClient.getChannel("/foobar");
 
     System.out.println(System.currentTimeMillis());
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 10000; i++) {
       channel.publish("{\"x\":1, \"y\":2}", message -> message.toString());
     }
 

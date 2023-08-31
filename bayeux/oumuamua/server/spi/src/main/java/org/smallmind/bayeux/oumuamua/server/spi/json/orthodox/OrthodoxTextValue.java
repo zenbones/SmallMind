@@ -58,7 +58,15 @@ public class OrthodoxTextValue extends OrthodoxValue implements StringValue<Orth
     throws IOException {
 
     writer.write('"');
-    writer.write(text);
+    for (int index = 0; index < text.length(); index++) {
+
+      char singleChar;
+
+      if (((singleChar = text.charAt(index)) == '\\') || singleChar == '"') {
+        writer.write('\\');
+      }
+      writer.write(singleChar);
+    }
     writer.write('"');
   }
 }

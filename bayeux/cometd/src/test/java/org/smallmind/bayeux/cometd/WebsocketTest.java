@@ -80,8 +80,6 @@ public class WebsocketTest {
 
       if (count == 10000) {
         System.out.println(System.currentTimeMillis());
-      } else {
-        System.out.println("..." + count);
       }
     });
 
