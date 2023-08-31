@@ -101,7 +101,7 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
           writer.write('[');
           for (Message<V> message : packet.getMessages()) {
             if (!first) {
-              writer.write(", ");
+              writer.write(',');
             }
             message.encode(writer);
             first = false;

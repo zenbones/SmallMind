@@ -122,7 +122,7 @@ public class OrthodoxArrayValue extends OrthodoxValue implements ArrayValue<Orth
     for (Value<OrthodoxValue> value : valueList) {
       if (value != null) {
         if (!first) {
-          writer.write(", ");
+          writer.write(',');
         }
 
         value.encode(writer);

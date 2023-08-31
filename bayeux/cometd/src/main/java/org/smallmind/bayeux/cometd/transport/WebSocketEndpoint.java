@@ -152,7 +152,7 @@ public class WebSocketEndpoint extends Endpoint implements MessageHandler.Whole<
 
       if ((text = asText(packets)) != null) {
 
-        System.out.println("=>" + text);
+        System.out.println(serverSession.getId() + "=>" + text);
         LoggerManager.getLogger(WebSocketEndpoint.class).debug(new DataRecord(text, false));
 
         if (websocketTransport.getAsyncSendTimeoutMilliseconds() > 0) {

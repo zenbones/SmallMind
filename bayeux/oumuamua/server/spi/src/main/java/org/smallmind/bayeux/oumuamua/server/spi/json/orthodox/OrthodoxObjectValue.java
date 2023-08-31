@@ -106,12 +106,12 @@ public class OrthodoxObjectValue extends OrthodoxValue implements ObjectValue<Or
     for (Map.Entry<String, Value<OrthodoxValue>> valueEntry : valueMap.entrySet()) {
       if (valueEntry.getValue() != null) {
         if (!first) {
-          writer.write(", ");
+          writer.write(',');
         }
 
-        writer.write("\"");
+        writer.write('"');
         writer.write(valueEntry.getKey());
-        writer.write("\": ");
+        writer.write("\":");
         valueEntry.getValue().encode(writer);
 
         first = false;

@@ -200,11 +200,12 @@ public class MergingObjectValue<V extends Value<V>> implements ObjectValue<V> {
           writtenSet.add(fieldName);
 
           if (!first) {
-            writer.write(", ");
+            writer.write(',');
           }
 
+          writer.write('"');
           writer.write(fieldName);
-          writer.write(": ");
+          writer.write("\":");
           value.encode(writer);
 
           first = false;
@@ -219,12 +220,12 @@ public class MergingObjectValue<V extends Value<V>> implements ObjectValue<V> {
 
         if ((value = innerObjectValue.get(fieldName)) != null) {
           if (!first) {
-            writer.write(", ");
+            writer.write(',');
           }
 
-          writer.write("\"");
+          writer.write('"');
           writer.write(fieldName);
-          writer.write("\": ");
+          writer.write("\":");
           value.encode(writer);
 
           first = false;

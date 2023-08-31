@@ -47,6 +47,7 @@ import org.testng.annotations.Test;
 public class WebsocketTest {
 
   // 0000018a4cdf95f7ca57d86a288a65b88001=>[{"data": "{"x":1, "y":2}", "channel": "/foobar", "id": "10"}]
+  // 0000018a4ce24603ca57d86a288a28848003=>[{"channel":"/foobar","id":"5","data":"{\"x\":1, \"y\":2}"}]
 
   public void test ()
     throws Exception {
