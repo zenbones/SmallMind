@@ -109,8 +109,9 @@ public class OrthodoxObjectValue extends OrthodoxValue implements ObjectValue<Or
           writer.write(", ");
         }
 
+        writer.write("\"");
         writer.write(valueEntry.getKey());
-        writer.write(": ");
+        writer.write("\": ");
         valueEntry.getValue().encode(writer);
 
         first = false;

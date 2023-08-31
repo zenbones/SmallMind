@@ -222,8 +222,9 @@ public class MergingObjectValue<V extends Value<V>> implements ObjectValue<V> {
             writer.write(", ");
           }
 
+          writer.write("\"");
           writer.write(fieldName);
-          writer.write(": ");
+          writer.write("\": ");
           value.encode(writer);
 
           first = false;

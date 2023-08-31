@@ -138,15 +138,15 @@ public enum Meta {
         LinkedList<Message<V>> enqueuedMessageList = null;
         Message<V>[] messages;
         Message<V> responseMessage;
-        long longPollingTimeout = getLongPollingIntervalMilliseconds(protocol, session, request);
+        long longPollTimeoutMilliseconds = getLongPollTimeoutMilliseconds(protocol, session, request);
 
-        responseMessage = constructConnectSuccessResponse(server, getRoute().getPath(), request.getId(), session.getId(), longPollingTimeout);
+        responseMessage = constructConnectSuccessResponse(server, getRoute().getPath(), request.getId(), session.getId(), getLongPollIntervalMilliseconds(protocol, session, request));
 
         if (session.getState().lt(SessionState.CONNECTED)) {
           session.completeConnection();
         }
 
-        if (longPollingTimeout > 0) {
+        if (longPollTimeoutMilliseconds > 0) {
 
           long start = System.currentTimeMillis();
 
@@ -160,7 +160,7 @@ public enum Meta {
               }
               enqueuedMessageList.addAll(Arrays.asList(enqueuedPacket.getMessages()));
             }
-          } while (longPollingTimeout + start - System.currentTimeMillis() > 0);
+          } while (longPollTimeoutMilliseconds + start - System.currentTimeMillis() > 0);
         }
 
         if (enqueuedMessageList == null) {
@@ -174,34 +174,45 @@ public enum Meta {
       }
     }
 
-    private <V extends Value<V>> long getLongPollingIntervalMilliseconds (Protocol<V> protocol, Session<V> session, Message<V> request) {
+    private <V extends Value<V>> long getLongPollTimeoutMilliseconds (Protocol<V> protocol, Session<V> session, Message<V> request) {
 
-      if (session.isLongPolling()) {
+      ObjectValue<V> adviceValue;
 
-        ObjectValue<V> adviceValue;
+      if ((adviceValue = request.getAdvice()) != null) {
 
-        if ((adviceValue = request.getAdvice()) != null) {
+        Value<V> timeoutValue;
 
-          Value<V> timeoutValue;
+        if (((timeoutValue = adviceValue.get(Advice.TIMEOUT.getField())) != null) && ValueType.NUMBER.equals(timeoutValue.getType())) {
 
-          if (((timeoutValue = adviceValue.get(Advice.TIMEOUT.getField())) != null) && ValueType.NUMBER.equals(timeoutValue.getType())) {
-
-            return ((NumberValue<V>)timeoutValue).asLong();
-          } else {
-
-            return protocol.getLongPollTimeoutMilliseconds();
-          }
+          return ((NumberValue<V>)timeoutValue).asLong();
         }
       }
 
-      return 0;
+      return protocol.getLongPollTimeoutMilliseconds();
     }
 
-    private <V extends Value<V>> Message<V> constructConnectSuccessResponse (Server<V> server, String path, String id, String sessionId, long longPollingIntervalMilliseconds) {
+    private <V extends Value<V>> long getLongPollIntervalMilliseconds (Protocol<V> protocol, Session<V> session, Message<V> request) {
+
+      ObjectValue<V> adviceValue;
+
+      if ((adviceValue = request.getAdvice()) != null) {
+
+        Value<V> timeoutValue;
+
+        if (((timeoutValue = adviceValue.get(Advice.INTERVAL.getField())) != null) && ValueType.NUMBER.equals(timeoutValue.getType())) {
+
+          return ((NumberValue<V>)timeoutValue).asLong();
+        }
+      }
+
+      return protocol.getLongPollIntervalMilliseconds();
+    }
+
+    private <V extends Value<V>> Message<V> constructConnectSuccessResponse (Server<V> server, String path, String id, String sessionId, long longPollIntervalMilliseconds) {
 
       Message<V> response;
 
-      return (Message<V>)(response = constructSuccessResponse(server, path, id, sessionId)).put(Message.ADVICE, response.getFactory().objectValue().put(Advice.INTERVAL.getField(), longPollingIntervalMilliseconds));
+      return (Message<V>)(response = constructSuccessResponse(server, path, id, sessionId)).put(Message.ADVICE, response.getFactory().objectValue().put(Advice.INTERVAL.getField(), longPollIntervalMilliseconds));
     }
 
     private <V extends Value<V>> Message<V> constructConnectErrorResponse (Server<V> server, String path, String id, String sessionId, String error, Reconnect reconnect) {
