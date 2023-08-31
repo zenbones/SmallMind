@@ -30,27 +30,25 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.cometd;
+package org.smallmind.bayeux.oumuamua.server.impl;
 
 import java.util.HashMap;
 import java.util.Map;
 import javax.websocket.ContainerProvider;
 import javax.websocket.WebSocketContainer;
-import org.cometd.bayeux.server.LocalSession;
+import org.cometd.bayeux.client.ClientSessionChannel;
 import org.cometd.client.BayeuxClient;
 import org.cometd.client.transport.ClientTransport;
 import org.cometd.client.websocket.javax.WebSocketTransport;
-import org.smallmind.nutsnbolts.util.Counter;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.testng.annotations.Test;
 
 @Test
-public class WebsocketTest {
+public class WebsocketTest2 {
 
   public void test ()
     throws Exception {
 
-    ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("org/smallmind/bayeux/cometd/oumuamua-grizzly.xml", "org/smallmind/bayeux/cometd/oumuamua.xml");
+    // ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("org/smallmind/bayeux/oumuamua/oumuamua-grizzly.xml", "org/smallmind/bayeux/oumuamua/oumuamua.xml");
     ClientTransport wsTransport;
     WebSocketContainer webSocketContainer;
     BayeuxClient bayeuxClient;
@@ -60,30 +58,24 @@ public class WebsocketTest {
 
     bayeuxClient = new BayeuxClient("http://localhost:9017/smallmind/cometd", wsTransport);
 
-    LocalSession localSession = context.getBean("oumuamuaServer", OumuamuaServer.class).newLocalSession(null);
-
     Map<String, Object> handshakeMap = new HashMap<>();
     HashMap<String, Object> tokenMap = new HashMap<>();
 
     // handshakeMap.put("ext", tokenMap);
 
     bayeuxClient.handshake(handshakeMap);
-    if (!bayeuxClient.waitFor(5000, BayeuxClient.State.CONNECTED)) {
+    if (!bayeuxClient.waitFor(500, BayeuxClient.State.CONNECTED)) {
       System.out.println("Unable to connect within 5000 milliseconds");
     }
 
-    Counter counter = new Counter();
+    ClientSessionChannel channel = bayeuxClient.getChannel("/foobar");
 
-    bayeuxClient.getChannel("/foobar").subscribe((channel, message) -> {
+    System.out.println(System.currentTimeMillis());
+    for (int i = 0; i < 10; i++) {
+      channel.publish("{\"x\":1, \"y\":2}");
+    }
 
-      int count = counter.incAndGet();
-
-      if (count == 10000) {
-        System.out.println(System.currentTimeMillis());
-      }
-    });
-
-    Thread.sleep(300000);
     System.out.println("Done...");
+    Thread.sleep(300000);
   }
 }

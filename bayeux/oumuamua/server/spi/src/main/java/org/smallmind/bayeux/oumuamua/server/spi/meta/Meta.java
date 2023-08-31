@@ -407,7 +407,7 @@ public enum Meta {
 
             return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructPublishErrorResponse(server, path, request.getId(), request.getSessionId(), "Unauthorized", null));
           } else {
-            server.deliver(new Packet<>(PacketType.DELIVERY, session.getId(), route, constructDeliveryMessage(server, path, request.getId(), request.getData(true))));
+            server.deliver(new Packet<>(PacketType.DELIVERY, session.getId(), route, constructDeliveryMessage(server, path, request.getId(), request.get(Message.DATA))));
 
             return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructPublishSuccessResponse(server, path, request.getId(), session.getId()));
           }
@@ -415,7 +415,7 @@ public enum Meta {
       }
     }
 
-    private <V extends Value<V>> Message<V> constructDeliveryMessage (Server<V> server, String path, String id, ObjectValue<V> data) {
+    private <V extends Value<V>> Message<V> constructDeliveryMessage (Server<V> server, String path, String id, Value<V> data) {
 
       return (Message<V>)server.getCodec().create().put(Message.CHANNEL, path).put(Message.ID, id).put(Message.DATA, data);
     }

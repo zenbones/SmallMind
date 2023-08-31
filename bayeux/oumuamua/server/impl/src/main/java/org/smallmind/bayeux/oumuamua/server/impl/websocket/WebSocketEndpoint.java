@@ -109,7 +109,7 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
           writer.write(']');
         }
 
-        System.out.println("=>" + builder);
+        System.out.println(session.getId() + "=>" + builder);
         if (websocketTransport.getAsyncSendTimeoutMilliseconds() > 0) {
           websocketSession.getAsyncRemote().sendText(builder.toString()).get(websocketTransport.getAsyncSendTimeoutMilliseconds(), TimeUnit.MILLISECONDS);
         } else {

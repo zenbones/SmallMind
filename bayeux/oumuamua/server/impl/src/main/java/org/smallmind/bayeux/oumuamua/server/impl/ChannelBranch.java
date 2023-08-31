@@ -157,26 +157,24 @@ public class ChannelBranch<V extends Value<V>> {
 
   public void deliver (int index, Packet<V> packet, Set<String> sessionIdSet) {
 
-    if (index < packet.getRoute().lastIndex()) {
+    if (index < packet.getRoute().size()) {
 
       ChannelBranch<V> deepWildBranch;
       ChannelBranch<V> nextBranch;
 
-      if ((deepWildBranch = childMap.get(StringSegment.wild())) != null) {
+      if ((deepWildBranch = childMap.get(StringSegment.deepWild())) != null) {
 
         deepWildBranch.deliverToChannel(packet, sessionIdSet);
       }
       if ((nextBranch = childMap.get(((DefaultRoute)packet.getRoute()).getSegment(index))) != null) {
         nextBranch.deliver(index + 1, packet, sessionIdSet);
       }
-    } else {
-      if (parent != null) {
+    } else if (parent != null) {
 
-        ChannelBranch<V> wildBranch;
+      ChannelBranch<V> wildBranch;
 
-        if ((wildBranch = parent.childMap.get(StringSegment.deepWild())) != null) {
-          wildBranch.deliverToChannel(packet, sessionIdSet);
-        }
+      if ((wildBranch = parent.childMap.get(StringSegment.wild())) != null) {
+        wildBranch.deliverToChannel(packet, sessionIdSet);
       }
 
       deliverToChannel(packet, sessionIdSet);
@@ -207,7 +205,7 @@ public class ChannelBranch<V extends Value<V>> {
     }
   }
 
-  public void walk (ChannelOperation operation) {
+  public void walk (ChannelOperation<V> operation) {
 
     operation.operate(this);
 
