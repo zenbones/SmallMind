@@ -32,22 +32,29 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.longpolling;
 
+import java.io.IOException;
 import javax.servlet.AsyncContext;
 import org.smallmind.bayeux.oumuamua.common.api.json.Message;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
+import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
+import org.smallmind.bayeux.oumuamua.server.api.SessionState;
 import org.smallmind.bayeux.oumuamua.server.api.Transport;
 import org.smallmind.bayeux.oumuamua.server.spi.Connection;
+import org.smallmind.bayeux.oumuamua.server.spi.PacketWriter;
+import org.smallmind.scribe.pen.LoggerManager;
 
 public class LongPollingConnection<V extends Value<V>> implements Connection<V> {
 
   private final LongPollingTransport<V> longPollingTransport;
+  private final Server<V> server;
   private Session<V> session;
 
-  public LongPollingConnection (LongPollingTransport<V> longPollingTransport) {
+  public LongPollingConnection (LongPollingTransport<V> longPollingTransport, Server<V> server) {
 
     this.longPollingTransport = longPollingTransport;
+    this.server = server;
   }
 
   @Override
@@ -64,10 +71,47 @@ public class LongPollingConnection<V extends Value<V>> implements Connection<V> 
   @Override
   public void deliver (Packet<V> packet) {
 
-    throw new UnsupportedOperationException();
   }
 
-  public void onMessages (AsyncContext asyncContext, Message<V>[] messages) {
+  public void spoodle (AsyncContext asyncContext, Packet<V> packet)
+    throws IOException {
 
+    StringBuilder builder = new StringBuilder();
+
+    try (PacketWriter writer = new PacketWriter(builder)) {
+
+      boolean first = true;
+
+      writer.write('[');
+      for (Message<V> message : packet.getMessages()) {
+        if (!first) {
+          writer.write(',');
+        }
+        message.encode(writer);
+        first = false;
+      }
+      writer.write(']');
+    }
+
+    asyncContext.getResponse().getOutputStream().print(builder.toString());
+    asyncContext.getResponse().flushBuffer();
+  }
+
+  public void onMessages (AsyncContext asyncContext, Message<V>[] messages)
+    throws IOException {
+
+    // System.out.println("<=" + content);
+    // TODO: logging stuff
+    LoggerManager.getLogger(LongPollingConnection.class).debug(() -> "<=" + "");
+
+    if (session != null) {
+      for (Message<V> message : messages) {
+        spoodle(asyncContext, respond(getTransport().getProtocol(), server, session, message));
+      }
+
+      if (SessionState.DISCONNECTED.equals(session.getState())) {
+// TODO: close
+      }
+    }
   }
 }

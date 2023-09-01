@@ -50,6 +50,7 @@ import org.smallmind.bayeux.oumuamua.server.api.Transport;
 import org.smallmind.bayeux.oumuamua.server.impl.OumuamuaServer;
 import org.smallmind.bayeux.oumuamua.server.impl.OumuamuaSession;
 import org.smallmind.bayeux.oumuamua.server.spi.Connection;
+import org.smallmind.bayeux.oumuamua.server.spi.PacketWriter;
 import org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356.WebSocketTransport;
 import org.smallmind.scribe.pen.LoggerManager;
 
@@ -94,7 +95,7 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
 
         StringBuilder builder = new StringBuilder();
 
-        try (WebsocketWriter writer = new WebsocketWriter(builder)) {
+        try (PacketWriter writer = new PacketWriter(builder)) {
 
           boolean first = true;
 
@@ -128,22 +129,27 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
     LoggerManager.getLogger(WebSocketEndpoint.class).debug(() -> "<=" + content);
 
     if (session != null) {
+
+      Message<V>[] messages;
+
       try {
-
-        Message<V>[] messages = server.getCodec().from(content.getBytes());
-
-        for (Message<V> message : messages) {
-          deliver(respond(getTransport().getProtocol(), server, session, message));
-        }
+        messages = server.getCodec().from(content.getBytes());
       } catch (IOException ioException) {
+        messages = null;
         LoggerManager.getLogger(WebSocketEndpoint.class).error(ioException);
       }
 
-      if (SessionState.DISCONNECTED.equals(session.getState())) {
-        try {
-          websocketSession.close(new CloseReason(CloseReason.CloseCodes.NORMAL_CLOSURE, "Client disconnect"));
-        } catch (IOException ioException) {
-          LoggerManager.getLogger(WebSocketEndpoint.class).error(ioException);
+      if (messages != null) {
+        for (Message<V> message : messages) {
+          deliver(respond(getTransport().getProtocol(), server, session, message));
+        }
+
+        if (SessionState.DISCONNECTED.equals(session.getState())) {
+          try {
+            websocketSession.close(new CloseReason(CloseReason.CloseCodes.NORMAL_CLOSURE, "Client disconnect"));
+          } catch (IOException ioException) {
+            LoggerManager.getLogger(WebSocketEndpoint.class).error(ioException);
+          }
         }
       }
     }

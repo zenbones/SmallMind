@@ -30,15 +30,15 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.impl.websocket;
+package org.smallmind.bayeux.oumuamua.server.spi;
 
 import java.io.Writer;
 
-public class WebsocketWriter extends Writer {
+public class PacketWriter extends Writer {
 
   private final StringBuilder builder;
 
-  public WebsocketWriter (StringBuilder builder) {
+  public PacketWriter (StringBuilder builder) {
 
     this.builder = builder;
   }
