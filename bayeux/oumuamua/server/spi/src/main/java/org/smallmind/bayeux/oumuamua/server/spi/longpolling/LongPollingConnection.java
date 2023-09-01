@@ -71,6 +71,7 @@ public class LongPollingConnection<V extends Value<V>> implements Connection<V> 
   @Override
   public void deliver (Packet<V> packet) {
 
+    throw new UnsupportedOperationException();
   }
 
   public void spoodle (AsyncContext asyncContext, Packet<V> packet)
@@ -93,20 +94,25 @@ public class LongPollingConnection<V extends Value<V>> implements Connection<V> 
       writer.write(']');
     }
 
+    // System.out.println(session.getId() + "=>" + builder);
+    LoggerManager.getLogger(LongPollingConnection.class).debug(() -> "=>" + builder);
+
     asyncContext.getResponse().getOutputStream().print(builder.toString());
     asyncContext.getResponse().flushBuffer();
   }
 
-  public void onMessages (AsyncContext asyncContext, Message<V>[] messages)
-    throws IOException {
+  public void onMessages (AsyncContext asyncContext, Message<V>[] messages, byte[] contentBuffer) {
 
-    // System.out.println("<=" + content);
-    // TODO: logging stuff
-    LoggerManager.getLogger(LongPollingConnection.class).debug(() -> "<=" + "");
+    // System.out.println("<=" + new String(contentBuffer));
+    LoggerManager.getLogger(LongPollingConnection.class).debug(() -> "<=" + new String(contentBuffer));
 
     if (session != null) {
       for (Message<V> message : messages) {
-        spoodle(asyncContext, respond(getTransport().getProtocol(), server, session, message));
+        try {
+          spoodle(asyncContext, respond(getTransport().getProtocol(), server, session, message));
+        } catch (IOException ioException) {
+          LoggerManager.getLogger(LongPollingConnection.class).error(ioException);
+        }
       }
 
       if (SessionState.DISCONNECTED.equals(session.getState())) {

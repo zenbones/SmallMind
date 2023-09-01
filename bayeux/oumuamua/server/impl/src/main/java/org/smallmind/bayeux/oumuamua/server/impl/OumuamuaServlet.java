@@ -34,6 +34,10 @@ package org.smallmind.bayeux.oumuamua.server.impl;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import javax.servlet.AsyncContext;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -51,10 +55,10 @@ import org.smallmind.bayeux.oumuamua.server.spi.Protocols;
 import org.smallmind.bayeux.oumuamua.server.spi.Transports;
 import org.smallmind.bayeux.oumuamua.server.spi.longpolling.LongPollingConnection;
 import org.smallmind.bayeux.oumuamua.server.spi.longpolling.LongPollingTransport;
-import org.smallmind.scribe.pen.LoggerManager;
 
 public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
 
+  private final ExecutorService executorService = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<>());
   private OumuamuaServer<V> server;
 
   @Override
@@ -129,11 +133,11 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
 
               LongPollingConnection<V> connection;
 
-              session = server.createSession(connection = transport.createConnection());
+              session = server.createSession(connection = transport.createConnection(server));
               connection.setSession(session);
               server.addSession(session);
 
-              respond(request, response, connection, messages, contentBuffer);
+              respond(request, connection, messages,contentBuffer);
             } else if ((session = server.getSession(sessionId)) == null) {
               response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unknown client id");
             } else if (!SessionState.CONNECTED.equals(session.getState())) {
@@ -141,7 +145,7 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
             } else if (!session.isLongPolling()) {
               response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Incorrect transport for this session");
             } else {
-              respond(request, response, (LongPollingConnection<V>)session.getConnection(), messages, contentBuffer);
+              respond(request, (LongPollingConnection<V>)session.getConnection(), messages,contentBuffer);
             }
           }
         }
@@ -149,15 +153,12 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
     }
   }
 
-  private void respond (HttpServletRequest request, HttpServletResponse response, LongPollingConnection<V> connection, Message<V>[] messages, byte[] contentBuffer) {
-
-    System.out.println("<=" + new String(contentBuffer));
-    LoggerManager.getLogger(OumuamuaServlet.class).debug(() -> "<=" + new String(contentBuffer));
+  private void respond (HttpServletRequest request, LongPollingConnection<V> connection, Message<V>[] messages, byte[] contentBuffer) {
 
     AsyncContext asyncContext = request.startAsync();
-
     asyncContext.setTimeout(0);
-    connection.onMessages(asyncContext, messages);
+
+    executorService.submit(() -> connection.onMessages(asyncContext, messages, contentBuffer));
   }
 
   private boolean readStream (InputStream inputStream, byte[] contentBuffer)
@@ -181,6 +182,8 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
   public void destroy () {
 
     server.stop();
+    executorService.shutdown();
+
     super.destroy();
   }
 }

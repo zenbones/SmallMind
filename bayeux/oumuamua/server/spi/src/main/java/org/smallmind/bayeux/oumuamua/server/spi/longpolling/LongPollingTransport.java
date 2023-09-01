@@ -66,8 +66,8 @@ public class LongPollingTransport<V extends Value<V>> extends AbstractAttributed
 
   }
 
-  public LongPollingConnection<V> createConnection () {
+  public LongPollingConnection<V> createConnection (Server<V> server) {
 
-    return new LongPollingConnection<>(this);
+    return new LongPollingConnection<>(this, server);
   }
 }
