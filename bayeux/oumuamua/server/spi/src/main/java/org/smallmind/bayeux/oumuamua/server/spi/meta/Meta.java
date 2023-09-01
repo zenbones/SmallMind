@@ -132,7 +132,7 @@ public enum Meta {
         return new Packet<>(PacketType.RESPONSE, request.getSessionId(), getRoute(), constructConnectErrorResponse(server, getRoute().getPath(), request.getId(), request.getSessionId(), "Handshake required", Reconnect.HANDSHAKE));
       } else if (session.getState().lt(SessionState.CONNECTED) && (!supportsConnectionType(protocol, request))) {
 
-        return new Packet<>(PacketType.RESPONSE, request.getSessionId(), getRoute(), constructConnectErrorResponse(server, getRoute().getPath(), request.getId(), session.getId(), "Connection requested on an unsupported transport", Reconnect.RETRY));
+        return new Packet<>(PacketType.RESPONSE, request.getSessionId(), getRoute(), constructConnectErrorResponse(server, getRoute().getPath(), request.getId(), session.getId(), "Connection requested on an unsupported transport", Reconnect.HANDSHAKE));
       } else {
 
         LinkedList<Message<V>> enqueuedMessageList = null;
@@ -259,7 +259,7 @@ public enum Meta {
 
       if ((subscription = getSubscription(request)) == null) {
 
-        return new Packet<>(PacketType.RESPONSE, request.getSessionId(), getRoute(), constructSubscribeErrorResponse(server, getRoute().getPath(), request.getId(), request.getSessionId(), "Missing subscription", subscription, Reconnect.RETRY));
+        return new Packet<>(PacketType.RESPONSE, request.getSessionId(), getRoute(), constructSubscribeErrorResponse(server, getRoute().getPath(), request.getId(), request.getSessionId(), "Missing subscription", subscription, null));
       } else if ((!session.getId().equals(request.getSessionId())) || session.getState().lt(SessionState.HANDSHOOK)) {
 
         return new Packet<>(PacketType.RESPONSE, request.getSessionId(), getRoute(), constructSubscribeErrorResponse(server, getRoute().getPath(), request.getId(), request.getSessionId(), "Handshake required", subscription, Reconnect.HANDSHAKE));
@@ -278,7 +278,7 @@ public enum Meta {
           if ((channel = server.findChannel(subscription)) == null) {
             if ((securityPolicy != null) && (!securityPolicy.canCreate(session, subscription, request))) {
 
-              return new Packet<>(PacketType.RESPONSE, session.getId(), getRoute(), constructSubscribeErrorResponse(server, getRoute().getPath(), request.getId(), request.getSessionId(), "Unauthorized", subscription, null));
+              return new Packet<>(PacketType.RESPONSE, session.getId(), getRoute(), constructSubscribeErrorResponse(server, getRoute().getPath(), request.getId(), request.getSessionId(), "Unauthorized", subscription, Reconnect.NONE));
             } else {
               channel = server.requireChannel(subscription);
             }
@@ -290,7 +290,7 @@ public enum Meta {
 
         if ((securityPolicy != null) && (!securityPolicy.canSubscribe(session, channel, request))) {
 
-          return new Packet<>(PacketType.RESPONSE, session.getId(), getRoute(), constructSubscribeErrorResponse(server, getRoute().getPath(), request.getId(), request.getSessionId(), "Unauthorized", subscription, null));
+          return new Packet<>(PacketType.RESPONSE, session.getId(), getRoute(), constructSubscribeErrorResponse(server, getRoute().getPath(), request.getId(), request.getSessionId(), "Unauthorized", subscription, Reconnect.NONE));
         } else if (!channel.subscribe(session)) {
 
           return new Packet<>(PacketType.RESPONSE, session.getId(), getRoute(), constructSubscribeErrorResponse(server, getRoute().getPath(), request.getId(), request.getSessionId(), "Attempted subscription to a closed channel", subscription, null));
@@ -325,7 +325,7 @@ public enum Meta {
 
       if ((subscription = getSubscription(request)) == null) {
 
-        return new Packet<>(PacketType.RESPONSE, request.getSessionId(), getRoute(), constructUnsubscribeErrorResponse(server, getRoute().getPath(), request.getId(), request.getSessionId(), "Missing subscription", subscription, Reconnect.RETRY));
+        return new Packet<>(PacketType.RESPONSE, request.getSessionId(), getRoute(), constructUnsubscribeErrorResponse(server, getRoute().getPath(), request.getId(), request.getSessionId(), "Missing subscription", subscription, null));
       } else if ((!session.getId().equals(request.getSessionId())) || session.getState().lt(SessionState.HANDSHOOK)) {
 
         return new Packet<>(PacketType.RESPONSE, request.getSessionId(), getRoute(), constructUnsubscribeErrorResponse(server, getRoute().getPath(), request.getId(), request.getSessionId(), "Handshake required", subscription, Reconnect.HANDSHAKE));
@@ -370,7 +370,7 @@ public enum Meta {
 
       if ((path = request.getChannel()) == null) {
 
-        return new Packet<>(PacketType.RESPONSE, request.getSessionId(), null, constructPublishErrorResponse(server, null, request.getId(), request.getSessionId(), "Missing channel", Reconnect.RETRY));
+        return new Packet<>(PacketType.RESPONSE, request.getSessionId(), null, constructPublishErrorResponse(server, null, request.getId(), request.getSessionId(), "Missing channel", null));
       } else {
 
         Route route;
@@ -387,7 +387,7 @@ public enum Meta {
           return new Packet<>(PacketType.RESPONSE, request.getSessionId(), route, constructPublishErrorResponse(server, path, request.getId(), request.getSessionId(), "Handshake required", Reconnect.HANDSHAKE));
         } else if (session.getState().lt(SessionState.CONNECTED)) {
 
-          return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructPublishErrorResponse(server, path, request.getId(), request.getSessionId(), "Connection required", Reconnect.HANDSHAKE));
+          return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructPublishErrorResponse(server, path, request.getId(), request.getSessionId(), "Connection required", Reconnect.RETRY));
         } else if (path.startsWith("/meta/")) {
 
           return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructPublishErrorResponse(server, path, request.getId(), request.getSessionId(), "Attempted to publish to a meta channel", null));
@@ -405,7 +405,7 @@ public enum Meta {
 
           if ((securityPolicy != null) && (!securityPolicy.canPublish(session, channel, request))) {
 
-            return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructPublishErrorResponse(server, path, request.getId(), request.getSessionId(), "Unauthorized", null));
+            return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructPublishErrorResponse(server, path, request.getId(), request.getSessionId(), "Unauthorized", Reconnect.NONE));
           } else {
             server.deliver(new Packet<>(PacketType.DELIVERY, session.getId(), route, constructDeliveryMessage(server, path, request.getId(), request.get(Message.DATA))));
 
