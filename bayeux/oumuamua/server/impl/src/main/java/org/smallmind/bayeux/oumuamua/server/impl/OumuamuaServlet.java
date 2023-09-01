@@ -53,8 +53,8 @@ import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.SessionState;
 import org.smallmind.bayeux.oumuamua.server.spi.Protocols;
 import org.smallmind.bayeux.oumuamua.server.spi.Transports;
-import org.smallmind.bayeux.oumuamua.server.spi.longpolling.LongPollingConnection;
-import org.smallmind.bayeux.oumuamua.server.spi.longpolling.LongPollingTransport;
+import org.smallmind.bayeux.oumuamua.server.impl.longpolling.LongPollingConnection;
+import org.smallmind.bayeux.oumuamua.server.impl.longpolling.LongPollingTransport;
 
 public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
 

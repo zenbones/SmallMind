@@ -46,7 +46,8 @@ public class WebsocketProtocol<V extends Value<V>> implements Protocol<V> {
   public WebsocketProtocol (long longPollingIntervalMilliseconds, WebsocketConfiguration websocketConfiguration) {
 
     this.longPollingIntervalMilliseconds = longPollingIntervalMilliseconds;
-    this.webSocketTransport = new WebSocketTransport<>(this, websocketConfiguration);
+
+    webSocketTransport = new WebSocketTransport<>(this, websocketConfiguration);
   }
 
   @Override

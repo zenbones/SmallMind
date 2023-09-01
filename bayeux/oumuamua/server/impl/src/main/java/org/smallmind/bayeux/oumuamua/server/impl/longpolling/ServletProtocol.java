@@ -30,44 +30,61 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.spi.longpolling;
+package org.smallmind.bayeux.oumuamua.server.impl.longpolling;
 
-import javax.servlet.ServletConfig;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Protocol;
-import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.Transport;
-import org.smallmind.bayeux.oumuamua.server.spi.AbstractAttributed;
+import org.smallmind.bayeux.oumuamua.server.spi.Protocols;
 import org.smallmind.bayeux.oumuamua.server.spi.Transports;
 
-public class LongPollingTransport<V extends Value<V>> extends AbstractAttributed implements Transport<V> {
+public class ServletProtocol<V extends Value<V>> implements Protocol<V> {
 
-  private final ServletProtocol<V> servletProtocol;
+  private final LongPollingTransport<V> longPollingTransport;
+  private final long longPollingIntervalMilliseconds;
+  private final long longPollingTimeoutMilliseconds;
 
-  public LongPollingTransport (ServletProtocol<V> servletProtocol) {
+  public ServletProtocol (long longPollingIntervalMilliseconds, long longPollingTimeoutMilliseconds) {
 
-    this.servletProtocol = servletProtocol;
-  }
+    this.longPollingIntervalMilliseconds = longPollingIntervalMilliseconds;
+    this.longPollingTimeoutMilliseconds = longPollingTimeoutMilliseconds;
 
-  @Override
-  public Protocol<V> getProtocol () {
-
-    return servletProtocol;
+    longPollingTransport = new LongPollingTransport<>(this);
   }
 
   @Override
   public String getName () {
 
-    return Transports.LONG_POLLING.getName();
+    return Protocols.SERVLET.getName();
   }
 
   @Override
-  public void init (Server<?> server, ServletConfig servletConfig) {
+  public boolean isLongPolling () {
 
+    return true;
   }
 
-  public LongPollingConnection<V> createConnection (Server<V> server) {
+  @Override
+  public long getLongPollIntervalMilliseconds () {
 
-    return new LongPollingConnection<>(this, server);
+    return longPollingIntervalMilliseconds;
+  }
+
+  @Override
+  public long getLongPollTimeoutMilliseconds () {
+
+    return longPollingTimeoutMilliseconds;
+  }
+
+  @Override
+  public String[] getTransportNames () {
+
+    return new String[] {Transports.LONG_POLLING.getName()};
+  }
+
+  @Override
+  public Transport<V> getTransport (String name) {
+
+    return Transports.LONG_POLLING.getName().equals(name) ? longPollingTransport : null;
   }
 }

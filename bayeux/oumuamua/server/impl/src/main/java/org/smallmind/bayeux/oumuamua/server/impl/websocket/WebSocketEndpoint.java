@@ -88,7 +88,7 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
   }
 
   @Override
-  public void deliver (Packet<V> packet) {
+  public synchronized void deliver (Packet<V> packet) {
 
     if (websocketSession.isOpen()) {
       try {
@@ -157,10 +157,14 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
     }
   }
 
+  @Override
   public synchronized void onClose (Session wsSession, CloseReason closeReason) {
 
-    if ((session != null) && (!SessionState.DISCONNECTED.equals(session.getState()))) {
-      session.completeDisconnect();
+    if (session != null) {
+      if (!SessionState.DISCONNECTED.equals(session.getState())) {
+        session.completeDisconnect();
+      }
+
       server.removeSession(session);
       session = null;
     }

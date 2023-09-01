@@ -30,17 +30,17 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.spi.longpolling;
+package org.smallmind.bayeux.oumuamua.server.impl.longpolling;
 
 import java.io.IOException;
 import javax.servlet.AsyncContext;
 import org.smallmind.bayeux.oumuamua.common.api.json.Message;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
-import org.smallmind.bayeux.oumuamua.server.api.Server;
-import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.bayeux.oumuamua.server.api.SessionState;
 import org.smallmind.bayeux.oumuamua.server.api.Transport;
+import org.smallmind.bayeux.oumuamua.server.impl.OumuamuaServer;
+import org.smallmind.bayeux.oumuamua.server.impl.OumuamuaSession;
 import org.smallmind.bayeux.oumuamua.server.spi.Connection;
 import org.smallmind.bayeux.oumuamua.server.spi.PacketWriter;
 import org.smallmind.scribe.pen.LoggerManager;
@@ -48,10 +48,10 @@ import org.smallmind.scribe.pen.LoggerManager;
 public class LongPollingConnection<V extends Value<V>> implements Connection<V> {
 
   private final LongPollingTransport<V> longPollingTransport;
-  private final Server<V> server;
-  private Session<V> session;
+  private final OumuamuaServer<V> server;
+  private OumuamuaSession<V> session;
 
-  public LongPollingConnection (LongPollingTransport<V> longPollingTransport, Server<V> server) {
+  public LongPollingConnection (LongPollingTransport<V> longPollingTransport, OumuamuaServer<V> server) {
 
     this.longPollingTransport = longPollingTransport;
     this.server = server;
@@ -63,7 +63,7 @@ public class LongPollingConnection<V extends Value<V>> implements Connection<V> 
     return longPollingTransport;
   }
 
-  public void setSession (Session<V> session) {
+  public void setSession (OumuamuaSession<V> session) {
 
     this.session = session;
   }
@@ -74,7 +74,7 @@ public class LongPollingConnection<V extends Value<V>> implements Connection<V> 
     throw new UnsupportedOperationException();
   }
 
-  public void spoodle (AsyncContext asyncContext, Packet<V> packet)
+  private void spoodle (AsyncContext asyncContext, Packet<V> packet)
     throws IOException {
 
     StringBuilder builder = new StringBuilder();
@@ -101,7 +101,7 @@ public class LongPollingConnection<V extends Value<V>> implements Connection<V> 
     asyncContext.getResponse().flushBuffer();
   }
 
-  public void onMessages (AsyncContext asyncContext, Message<V>[] messages, byte[] contentBuffer) {
+  public synchronized void onMessages (AsyncContext asyncContext, Message<V>[] messages, byte[] contentBuffer) {
 
     // System.out.println("<=" + new String(contentBuffer));
     LoggerManager.getLogger(LongPollingConnection.class).debug(() -> "<=" + new String(contentBuffer));
@@ -118,6 +118,18 @@ public class LongPollingConnection<V extends Value<V>> implements Connection<V> 
       if (SessionState.DISCONNECTED.equals(session.getState())) {
 // TODO: close
       }
+    }
+  }
+
+  private synchronized void close () {
+
+    if (session != null) {
+      if (!SessionState.DISCONNECTED.equals(session.getState())) {
+        session.completeDisconnect();
+      }
+
+      server.removeSession(session);
+      session = null;
     }
   }
 }
