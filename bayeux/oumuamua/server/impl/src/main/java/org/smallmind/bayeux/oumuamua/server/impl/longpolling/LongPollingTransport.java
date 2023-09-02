@@ -44,10 +44,12 @@ import org.smallmind.bayeux.oumuamua.server.spi.Transports;
 public class LongPollingTransport<V extends Value<V>> extends AbstractAttributed implements Transport<V> {
 
   private final ServletProtocol<V> servletProtocol;
+  private final long maxIdleTimeoutMilliseconds;
 
-  public LongPollingTransport (ServletProtocol<V> servletProtocol) {
+  public LongPollingTransport (ServletProtocol<V> servletProtocol, long maxIdleTimeoutMilliseconds) {
 
     this.servletProtocol = servletProtocol;
+    this.maxIdleTimeoutMilliseconds = maxIdleTimeoutMilliseconds;
   }
 
   @Override
@@ -69,6 +71,6 @@ public class LongPollingTransport<V extends Value<V>> extends AbstractAttributed
 
   public LongPollingConnection<V> createConnection (OumuamuaServer<V> server) {
 
-    return new LongPollingConnection<>(this, server);
+    return new LongPollingConnection<>(this, server, maxIdleTimeoutMilliseconds);
   }
 }

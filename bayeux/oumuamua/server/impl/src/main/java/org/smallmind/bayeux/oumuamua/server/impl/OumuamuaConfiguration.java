@@ -45,6 +45,8 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   private SecurityPolicy securityPolicy;
   private Protocol<V>[] protocols;
   private long channelTimeToLiveMinutes = 30;
+  private int idleChannelCycleMinutes = 5;
+  private int connectionMaintenanceCycleMinutes = 1;
   private int maxLongPollQueueSize = 1000;
 
   public Backbone<V> getBackbone () {
@@ -95,6 +97,26 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   public void setChannelTimeToLiveMinutes (long channelTimeToLiveMinutes) {
 
     this.channelTimeToLiveMinutes = channelTimeToLiveMinutes;
+  }
+
+  public int getIdleChannelCycleMinutes () {
+
+    return idleChannelCycleMinutes;
+  }
+
+  public void setIdleChannelCycleMinutes (int idleChannelCycleMinutes) {
+
+    this.idleChannelCycleMinutes = idleChannelCycleMinutes;
+  }
+
+  public int getConnectionMaintenanceCycleMinutes () {
+
+    return connectionMaintenanceCycleMinutes;
+  }
+
+  public void setConnectionMaintenanceCycleMinutes (int connectionMaintenanceCycleMinutes) {
+
+    this.connectionMaintenanceCycleMinutes = connectionMaintenanceCycleMinutes;
   }
 
   public int getMaxLongPollQueueSize () {

@@ -34,24 +34,22 @@ package org.smallmind.bayeux.oumuamua.server.impl;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
-import org.smallmind.bayeux.oumuamua.server.api.Channel;
+import org.smallmind.bayeux.oumuamua.server.spi.Connection;
+import org.smallmind.nutsnbolts.util.IterableIterator;
 import org.smallmind.scribe.pen.LoggerManager;
 
-public class ExpiredChannelSifter<V extends Value<V>> implements Runnable {
+public class ConnectionMaintenanceHeartbeat<V extends Value<V>> implements Runnable {
 
   private final CountDownLatch finishLatch = new CountDownLatch(1);
   private final CountDownLatch exitLatch = new CountDownLatch(1);
-  private final ChannelTree<V> channelTree;
-  private final Consumer<Channel<V>> channelCallback;
-  private final long expiredChannelCycleMinutes;
+  private final OumuamuaServer<V> server;
+  private final long connectionMaintenanceCycleMinutes;
 
-  public ExpiredChannelSifter (long expiredChannelCycleMinutes, ChannelTree<V> channelTree, Consumer<Channel<V>> channelCallback) {
+  public ConnectionMaintenanceHeartbeat (OumuamuaServer<V> server, long connectionMaintenanceCycleMinutes) {
 
-    this.expiredChannelCycleMinutes = expiredChannelCycleMinutes;
-    this.channelTree = channelTree;
-    this.channelCallback = channelCallback;
+    this.server = server;
+    this.connectionMaintenanceCycleMinutes = connectionMaintenanceCycleMinutes;
   }
 
   public void stop ()
@@ -65,9 +63,15 @@ public class ExpiredChannelSifter<V extends Value<V>> implements Runnable {
   public void run () {
 
     try {
-      while (!finishLatch.await(expiredChannelCycleMinutes, TimeUnit.MINUTES)) {
-        channelTree.walk(new ExpirationOperation<V>(System.currentTimeMillis(), channelCallback));
-        channelTree.clean();
+      while (!finishLatch.await(connectionMaintenanceCycleMinutes, TimeUnit.MINUTES)) {
+        for (OumuamuaSession<V> session : new IterableIterator<OumuamuaSession<V>>(server.iterateSessions())) {
+
+          Connection<V> connection;
+
+          if ((connection = session.getConnection()) != null) {
+            connection.maintenance();
+          }
+        }
       }
     } catch (InterruptedException interruptedException) {
       LoggerManager.getLogger(OumuamuaServer.class).error(interruptedException);

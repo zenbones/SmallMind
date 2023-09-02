@@ -41,11 +41,11 @@ import org.smallmind.bayeux.oumuamua.server.spi.Transports;
 public class WebsocketProtocol<V extends Value<V>> implements Protocol<V> {
 
   private final WebSocketTransport<V> webSocketTransport;
-  private final long longPollingIntervalMilliseconds;
+  private final long longPollIntervalMilliseconds;
 
-  public WebsocketProtocol (long longPollingIntervalMilliseconds, WebsocketConfiguration websocketConfiguration) {
+  public WebsocketProtocol (long longPollIntervalMilliseconds, WebsocketConfiguration websocketConfiguration) {
 
-    this.longPollingIntervalMilliseconds = longPollingIntervalMilliseconds;
+    this.longPollIntervalMilliseconds = longPollIntervalMilliseconds;
 
     webSocketTransport = new WebSocketTransport<>(this, websocketConfiguration);
   }
@@ -65,7 +65,7 @@ public class WebsocketProtocol<V extends Value<V>> implements Protocol<V> {
   @Override
   public long getLongPollIntervalMilliseconds () {
 
-    return longPollingIntervalMilliseconds;
+    return longPollIntervalMilliseconds;
   }
 
   @Override

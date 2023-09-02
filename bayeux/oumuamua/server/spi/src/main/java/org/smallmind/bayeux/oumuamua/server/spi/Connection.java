@@ -57,5 +57,7 @@ public interface Connection<V extends Value<V>> {
 
   Transport<V> getTransport ();
 
+  void maintenance ();
+
   void deliver (Packet<V> packet);
 }

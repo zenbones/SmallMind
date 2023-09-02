@@ -88,6 +88,11 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
   }
 
   @Override
+  public void maintenance () {
+
+  }
+
+  @Override
   public synchronized void deliver (Packet<V> packet) {
 
     if (websocketSession.isOpen()) {

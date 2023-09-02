@@ -30,61 +30,49 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.impl.longpolling;
+package org.smallmind.bayeux.oumuamua.server.impl;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
-import org.smallmind.bayeux.oumuamua.server.api.Protocol;
-import org.smallmind.bayeux.oumuamua.server.api.Transport;
-import org.smallmind.bayeux.oumuamua.server.spi.Protocols;
-import org.smallmind.bayeux.oumuamua.server.spi.Transports;
+import org.smallmind.bayeux.oumuamua.server.api.Channel;
+import org.smallmind.scribe.pen.LoggerManager;
 
-public class ServletProtocol<V extends Value<V>> implements Protocol<V> {
+public class IdleChannelSifter<V extends Value<V>> implements Runnable {
 
-  private final LongPollingTransport<V> longPollingTransport;
-  private final long longPollIntervalMilliseconds;
-  private final long longPollTimeoutMilliseconds;
+  private final CountDownLatch finishLatch = new CountDownLatch(1);
+  private final CountDownLatch exitLatch = new CountDownLatch(1);
+  private final ChannelTree<V> channelTree;
+  private final Consumer<Channel<V>> channelCallback;
+  private final long idleChannelCycleMinutes;
 
-  public ServletProtocol (long longPollIntervalMilliseconds, long longPollTimeoutMilliseconds, long maxIdleTimeoutMilliseconds) {
+  public IdleChannelSifter (long idleChannelCycleMinutes, ChannelTree<V> channelTree, Consumer<Channel<V>> channelCallback) {
 
-    this.longPollIntervalMilliseconds = longPollIntervalMilliseconds;
-    this.longPollTimeoutMilliseconds = longPollTimeoutMilliseconds;
+    this.idleChannelCycleMinutes = idleChannelCycleMinutes;
+    this.channelTree = channelTree;
+    this.channelCallback = channelCallback;
+  }
 
-    longPollingTransport = new LongPollingTransport<>(this, maxIdleTimeoutMilliseconds);
+  public void stop ()
+    throws InterruptedException {
+
+    finishLatch.countDown();
+    exitLatch.await();
   }
 
   @Override
-  public String getName () {
+  public void run () {
 
-    return Protocols.SERVLET.getName();
-  }
-
-  @Override
-  public boolean isLongPolling () {
-
-    return true;
-  }
-
-  @Override
-  public long getLongPollIntervalMilliseconds () {
-
-    return longPollIntervalMilliseconds;
-  }
-
-  @Override
-  public long getLongPollTimeoutMilliseconds () {
-
-    return longPollTimeoutMilliseconds;
-  }
-
-  @Override
-  public String[] getTransportNames () {
-
-    return new String[] {Transports.LONG_POLLING.getName()};
-  }
-
-  @Override
-  public Transport<V> getTransport (String name) {
-
-    return Transports.LONG_POLLING.getName().equals(name) ? longPollingTransport : null;
+    try {
+      while (!finishLatch.await(idleChannelCycleMinutes, TimeUnit.MINUTES)) {
+        channelTree.walk(new ExpirationOperation<V>(System.currentTimeMillis(), channelCallback));
+        channelTree.clean();
+      }
+    } catch (InterruptedException interruptedException) {
+      LoggerManager.getLogger(OumuamuaServer.class).error(interruptedException);
+    } finally {
+      exitLatch.countDown();
+    }
   }
 }

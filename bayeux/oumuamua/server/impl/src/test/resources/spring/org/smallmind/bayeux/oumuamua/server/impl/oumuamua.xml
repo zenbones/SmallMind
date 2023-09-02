@@ -16,13 +16,18 @@
         <property name="protocols">
           <list>
             <bean class="org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356.WebsocketProtocol">
-              <constructor-arg index="0" name="longPollingIntervalMilliseconds" value="30000"/>
+              <constructor-arg index="0" name="longPollIntervalMilliseconds" value="30000"/>
               <constructor-arg index="1" name="websocketConfiguration">
                 <bean class="org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356.WebsocketConfiguration">
                   <constructor-arg index="0" name="endpointClass" value="org.smallmind.bayeux.oumuamua.server.impl.websocket.WebSocketEndpoint"/>
                   <constructor-arg index="1" name="oumuamuaUrl" value="/cometd/*"/>
                 </bean>
               </constructor-arg>
+            </bean>
+            <bean class="org.smallmind.bayeux.oumuamua.server.impl.longpolling.ServletProtocol">
+              <constructor-arg index="0" name="longPollIntervalMilliseconds" value="30000"/>
+              <constructor-arg index="1" name="longPollTimeoutMilliseconds" value="500"/>
+              <constructor-arg index="2" name="maxIdleTimeoutMilliseconds" value="90000"/>
             </bean>
           </list>
         </property>

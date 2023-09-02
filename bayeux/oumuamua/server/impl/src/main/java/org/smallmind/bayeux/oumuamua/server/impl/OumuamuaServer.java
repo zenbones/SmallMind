@@ -34,6 +34,7 @@ package org.smallmind.bayeux.oumuamua.server.impl;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import javax.servlet.ServletConfig;
@@ -66,7 +67,8 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   private final OumuamuaConfiguration<V> configuration;
   private final String[] protocolNames;
 
-  private ExpiredChannelSifter<V> expiredChannelSifter;
+  private IdleChannelSifter<V> idleChannelSifter;
+  private ConnectionMaintenanceHeartbeat connectionMaintenanceHeartbeat;
 
   public OumuamuaServer (OumuamuaConfiguration<V> configuration)
     throws OumuamuaException {
@@ -107,7 +109,8 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
       protocolMap.put(protocol.getName(), protocol);
     }
 
-    new Thread(expiredChannelSifter = new ExpiredChannelSifter<>(0, channelTree, this::onRemoved)).start();
+    new Thread(idleChannelSifter = new IdleChannelSifter<>(configuration.getIdleChannelCycleMinutes(), channelTree, this::onRemoved)).start();
+    new Thread(connectionMaintenanceHeartbeat = new ConnectionMaintenanceHeartbeat<>(this, configuration.getConnectionMaintenanceCycleMinutes())).start();
   }
 
   public void stop () {
@@ -121,7 +124,13 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
     }
 
     try {
-      expiredChannelSifter.stop();
+      connectionMaintenanceHeartbeat.stop();
+    } catch (InterruptedException interruptedException) {
+      LoggerManager.getLogger(OumuamuaServer.class).error(interruptedException);
+    }
+
+    try {
+      idleChannelSifter.stop();
     } catch (InterruptedException interruptedException) {
       LoggerManager.getLogger(OumuamuaServer.class).error(interruptedException);
     }
@@ -256,6 +265,11 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   public void removeSession (OumuamuaSession<V> session) {
 
     sessionMap.remove(session.getId());
+  }
+
+  public Iterator<OumuamuaSession<V>> iterateSessions () {
+
+    return sessionMap.values().iterator();
   }
 
   @Override

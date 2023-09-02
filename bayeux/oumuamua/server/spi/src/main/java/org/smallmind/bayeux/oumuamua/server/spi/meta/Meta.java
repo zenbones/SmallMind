@@ -138,9 +138,9 @@ public enum Meta {
         LinkedList<Message<V>> enqueuedMessageList = null;
         Message<V>[] messages;
         Message<V> responseMessage;
-        long longPollTimeoutMilliseconds = getLongPollTimeoutMilliseconds(protocol, session, request);
+        long longPollTimeoutMilliseconds = getLongPollTimeoutMilliseconds(protocol, request);
 
-        responseMessage = constructConnectSuccessResponse(server, getRoute().getPath(), request.getId(), session.getId(), getLongPollIntervalMilliseconds(protocol, session, request));
+        responseMessage = constructConnectSuccessResponse(server, getRoute().getPath(), request.getId(), session.getId(), getLongPollIntervalMilliseconds(protocol, request));
 
         if (session.getState().lt(SessionState.CONNECTED)) {
           session.completeConnection();
@@ -174,7 +174,7 @@ public enum Meta {
       }
     }
 
-    private <V extends Value<V>> long getLongPollTimeoutMilliseconds (Protocol<V> protocol, Session<V> session, Message<V> request) {
+    private <V extends Value<V>> long getLongPollTimeoutMilliseconds (Protocol<V> protocol, Message<V> request) {
 
       ObjectValue<V> adviceValue;
 
@@ -191,7 +191,7 @@ public enum Meta {
       return protocol.getLongPollTimeoutMilliseconds();
     }
 
-    private <V extends Value<V>> long getLongPollIntervalMilliseconds (Protocol<V> protocol, Session<V> session, Message<V> request) {
+    private <V extends Value<V>> long getLongPollIntervalMilliseconds (Protocol<V> protocol, Message<V> request) {
 
       ObjectValue<V> adviceValue;
 
@@ -259,7 +259,7 @@ public enum Meta {
 
       if ((subscription = getSubscription(request)) == null) {
 
-        return new Packet<>(PacketType.RESPONSE, request.getSessionId(), getRoute(), constructSubscribeErrorResponse(server, getRoute().getPath(), request.getId(), request.getSessionId(), "Missing subscription", subscription, null));
+        return new Packet<>(PacketType.RESPONSE, request.getSessionId(), getRoute(), constructSubscribeErrorResponse(server, getRoute().getPath(), request.getId(), request.getSessionId(), "Missing subscription", null, null));
       } else if ((!session.getId().equals(request.getSessionId())) || session.getState().lt(SessionState.HANDSHOOK)) {
 
         return new Packet<>(PacketType.RESPONSE, request.getSessionId(), getRoute(), constructSubscribeErrorResponse(server, getRoute().getPath(), request.getId(), request.getSessionId(), "Handshake required", subscription, Reconnect.HANDSHAKE));
@@ -325,7 +325,7 @@ public enum Meta {
 
       if ((subscription = getSubscription(request)) == null) {
 
-        return new Packet<>(PacketType.RESPONSE, request.getSessionId(), getRoute(), constructUnsubscribeErrorResponse(server, getRoute().getPath(), request.getId(), request.getSessionId(), "Missing subscription", subscription, null));
+        return new Packet<>(PacketType.RESPONSE, request.getSessionId(), getRoute(), constructUnsubscribeErrorResponse(server, getRoute().getPath(), request.getId(), request.getSessionId(), "Missing subscription", null, null));
       } else if ((!session.getId().equals(request.getSessionId())) || session.getState().lt(SessionState.HANDSHOOK)) {
 
         return new Packet<>(PacketType.RESPONSE, request.getSessionId(), getRoute(), constructUnsubscribeErrorResponse(server, getRoute().getPath(), request.getId(), request.getSessionId(), "Handshake required", subscription, Reconnect.HANDSHAKE));

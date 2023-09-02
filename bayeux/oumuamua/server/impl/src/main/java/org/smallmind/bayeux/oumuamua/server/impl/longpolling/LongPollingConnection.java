@@ -49,12 +49,17 @@ public class LongPollingConnection<V extends Value<V>> implements Connection<V> 
 
   private final LongPollingTransport<V> longPollingTransport;
   private final OumuamuaServer<V> server;
+  private final long maxIdleTimeoutMilliseconds;
   private OumuamuaSession<V> session;
+  private long lastContact;
 
-  public LongPollingConnection (LongPollingTransport<V> longPollingTransport, OumuamuaServer<V> server) {
+  public LongPollingConnection (LongPollingTransport<V> longPollingTransport, OumuamuaServer<V> server, long maxIdleTimeoutMilliseconds) {
 
     this.longPollingTransport = longPollingTransport;
     this.server = server;
+    this.maxIdleTimeoutMilliseconds = maxIdleTimeoutMilliseconds;
+
+    lastContact = System.currentTimeMillis();
   }
 
   @Override
@@ -69,12 +74,22 @@ public class LongPollingConnection<V extends Value<V>> implements Connection<V> 
   }
 
   @Override
+  public synchronized void maintenance () {
+
+    long now = System.currentTimeMillis();
+
+    if ((now - lastContact) > maxIdleTimeoutMilliseconds) {
+      close();
+    }
+  }
+
+  @Override
   public void deliver (Packet<V> packet) {
 
     throw new UnsupportedOperationException();
   }
 
-  private void spoodle (AsyncContext asyncContext, Packet<V> packet)
+  private void emit (AsyncContext asyncContext, Packet<V> packet)
     throws IOException {
 
     StringBuilder builder = new StringBuilder();
@@ -107,16 +122,18 @@ public class LongPollingConnection<V extends Value<V>> implements Connection<V> 
     LoggerManager.getLogger(LongPollingConnection.class).debug(() -> "<=" + new String(contentBuffer));
 
     if (session != null) {
+      lastContact = System.currentTimeMillis();
+
       for (Message<V> message : messages) {
         try {
-          spoodle(asyncContext, respond(getTransport().getProtocol(), server, session, message));
+          emit(asyncContext, respond(getTransport().getProtocol(), server, session, message));
         } catch (IOException ioException) {
           LoggerManager.getLogger(LongPollingConnection.class).error(ioException);
         }
       }
 
       if (SessionState.DISCONNECTED.equals(session.getState())) {
-// TODO: close
+        close();
       }
     }
   }
