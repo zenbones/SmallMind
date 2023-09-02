@@ -109,16 +109,17 @@ public class LongPollingConnection<V extends Value<V>> implements Connection<V> 
       writer.write(']');
     }
 
-    // System.out.println(session.getId() + "=>" + builder);
+    System.out.println(session.getId() + "=>" + builder);
     LoggerManager.getLogger(LongPollingConnection.class).debug(() -> "=>" + builder);
 
     asyncContext.getResponse().getOutputStream().print(builder.toString());
     asyncContext.getResponse().flushBuffer();
+    asyncContext.complete();
   }
 
   public synchronized void onMessages (AsyncContext asyncContext, Message<V>[] messages, byte[] contentBuffer) {
 
-    // System.out.println("<=" + new String(contentBuffer));
+     System.out.println("<=" + new String(contentBuffer));
     LoggerManager.getLogger(LongPollingConnection.class).debug(() -> "<=" + new String(contentBuffer));
 
     if (session != null) {
