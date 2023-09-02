@@ -115,7 +115,7 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
           writer.write(']');
         }
 
-        // System.out.println(session.getId() + "=>" + builder);
+        // System.out.println("=>" + builder);
         LoggerManager.getLogger(WebSocketEndpoint.class).debug(() -> "=>" + builder);
 
         if (websocketTransport.getAsyncSendTimeoutMilliseconds() > 0) {

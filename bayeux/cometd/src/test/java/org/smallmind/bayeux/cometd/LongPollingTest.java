@@ -47,8 +47,7 @@ public class LongPollingTest {
   public void test ()
     throws Exception {
 
-    ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("org/smallmind/bayeux/oumuamua/oumuamua-grizzly.xml", "org/smallmind/bayeux/oumuamua/oumuamua.xml");
-
+    ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("org/smallmind/bayeux/cometd/oumuamua-grizzly.xml", "org/smallmind/bayeux/cometd/oumuamua.xml");
     HttpClient httpClient = new HttpClient();
     httpClient.start();
     JettyHttpClientTransport transport = new JettyHttpClientTransport(new HashMap<>(), httpClient);
@@ -61,7 +60,9 @@ public class LongPollingTest {
 
     // handshakeMap.put("ext", tokenMap);
 
-    bayeuxClient.handshake(handshakeMap);
+    bayeuxClient.handshake(handshakeMap, message -> {
+      System.out.println("1!!!!!!!!!!!!!!!!!:" + message);
+    });
     if (!bayeuxClient.waitFor(5000, BayeuxClient.State.CONNECTED)) {
       System.out.println("Unable to connect within 5000 milliseconds");
     }

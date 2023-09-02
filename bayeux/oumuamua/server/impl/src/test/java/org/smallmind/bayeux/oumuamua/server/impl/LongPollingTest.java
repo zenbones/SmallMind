@@ -44,6 +44,9 @@ import org.testng.annotations.Test;
 @Test
 public class LongPollingTest {
 
+  //0!!!!!!!!!!!!!!!!!:{minimumVersion=1.0, clientId=0000018a578c7a393282b87f526023fc8001, supportedConnectionTypes=[long-polling], channel=/meta/handshake, id=1, version=1.0, successful=true}
+  //1!!!!!!!!!!!!!!!!!:{minimumVersion=1.0, clientId=0000018a578bdf3e3282b87f5260606c8002, supportedConnectionTypes=[long-polling], channel=/meta/handshake, id=1, version=1.0, successful=true}
+
   public void test ()
     throws Exception {
 
@@ -60,7 +63,9 @@ public class LongPollingTest {
 
     // handshakeMap.put("ext", tokenMap);
 
-    bayeuxClient.handshake(handshakeMap);
+    bayeuxClient.handshake(handshakeMap, message -> {
+      System.out.println("0!!!!!!!!!!!!!!!!!:" + message);
+    });
     if (!bayeuxClient.waitFor(5000, BayeuxClient.State.CONNECTED)) {
       System.out.println("Unable to connect within 5000 milliseconds");
     }
