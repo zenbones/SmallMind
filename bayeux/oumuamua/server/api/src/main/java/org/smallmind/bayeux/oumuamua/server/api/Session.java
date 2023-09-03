@@ -32,6 +32,7 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api;
 
+import java.util.concurrent.TimeUnit;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 
 public interface Session<V extends Value<V>> {
@@ -66,7 +67,8 @@ public interface Session<V extends Value<V>> {
 
   void completeDisconnect ();
 
-  Packet<V> poll ();
+  Packet<V> poll (long timeout, TimeUnit unit)
+    throws InterruptedException;
 
   void deliver (Packet<V> packet);
 }

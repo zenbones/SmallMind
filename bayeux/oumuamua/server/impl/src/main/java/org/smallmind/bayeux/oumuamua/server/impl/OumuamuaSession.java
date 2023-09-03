@@ -34,7 +34,10 @@ package org.smallmind.bayeux.oumuamua.server.impl;
 
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
@@ -48,6 +51,8 @@ import org.smallmind.nutsnbolts.util.SnowflakeId;
 
 public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed implements Session<V> {
 
+  private final ReentrantLock longPollLock = new ReentrantLock();
+  private final Condition notEmptyCondition = longPollLock.newCondition();
   private final ConcurrentLinkedDeque<Packet<V>> longPollQueue = new ConcurrentLinkedDeque<>();
   private final ConcurrentLinkedQueue<Session.Listener<V>> listenerList = new ConcurrentLinkedQueue<>();
   private final AtomicInteger longPollQueueSize = new AtomicInteger(0);
@@ -147,23 +152,33 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   }
 
   @Override
-  public Packet<V> poll () {
+  public Packet<V> poll (long timeout, TimeUnit unit)
+    throws InterruptedException {
 
-    Packet<V> enqueuedPacket;
+    long nanosRemaining = unit.toNanos(timeout);
 
-    if ((enqueuedPacket = longPollQueue.pollFirst()) == null) {
+    longPollLock.lock();
 
-      return null;
-    } else {
+    try {
+      Packet<V> enqueuedPacket;
 
-      Packet<V> frozenPacket;
+      do {
+        if ((enqueuedPacket = longPollQueue.pollFirst()) == null) {
+          nanosRemaining = notEmptyCondition.awaitNanos(nanosRemaining);
+        } else {
 
-      longPollQueueSize.decrementAndGet();
-      frozenPacket = PacketUtility.freezePacket(enqueuedPacket);
+          Packet<V> frozenPacket;
 
-      onDelivery(frozenPacket);
+          longPollQueueSize.decrementAndGet();
+          frozenPacket = PacketUtility.freezePacket(enqueuedPacket);
 
-      return frozenPacket;
+          onDelivery(frozenPacket);
+
+          return frozenPacket;
+        }
+      } while (nanosRemaining > 0);
+    } finally {
+      longPollLock.unlock();
     }
   }
 
@@ -171,13 +186,21 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   public void deliver (Packet<V> packet) {
 
     if (longPolling) {
-      if (longPollQueueSize.incrementAndGet() > maxLongPollQueueSize) {
-        if (longPollQueue.pollLast() != null) {
-          longPollQueueSize.decrementAndGet();
-        }
-      }
+      longPollLock.lock();
 
-      longPollQueue.add(packet);
+      try {
+        if (longPollQueueSize.incrementAndGet() > maxLongPollQueueSize) {
+          if (longPollQueue.pollFirst() != null) {
+            longPollQueueSize.decrementAndGet();
+          }
+        }
+
+        longPollQueue.add(packet);
+
+        notEmptyCondition.signal();
+      } finally {
+        longPollLock.unlock();
+      }
     } else {
 
       Packet<V> frozenPacket = PacketUtility.freezePacket(packet);
