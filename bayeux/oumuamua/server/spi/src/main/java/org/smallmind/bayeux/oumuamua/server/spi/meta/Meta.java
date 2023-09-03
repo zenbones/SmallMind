@@ -140,7 +140,7 @@ public enum Meta {
         Message<V> responseMessage;
         long longPollTimeoutMilliseconds = getLongPollTimeoutMilliseconds(protocol, request);
 
-        responseMessage = constructConnectSuccessResponse(server, getRoute().getPath(), request.getId(), session.getId(), getLongPollIntervalMilliseconds(protocol, request));
+        responseMessage = constructConnectSuccessResponse(server, getRoute().getPath(), request.getId(), session.getId(), SessionState.CONNECTED.equals(session.getState()) ? getLongPollIntervalMilliseconds(protocol, request) : 0);
 
         if (session.getState().lt(SessionState.CONNECTED)) {
           session.completeConnection();

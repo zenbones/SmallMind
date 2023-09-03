@@ -109,7 +109,7 @@ public class LongPollingConnection<V extends Value<V>> implements Connection<V> 
       writer.write(']');
     }
 
-    System.out.println("=>" + builder);
+    System.out.println(session.getId() + "=>" + builder);
     LoggerManager.getLogger(LongPollingConnection.class).debug(() -> "=>" + builder);
 
     asyncContext.getResponse().getOutputStream().print(builder.toString());
