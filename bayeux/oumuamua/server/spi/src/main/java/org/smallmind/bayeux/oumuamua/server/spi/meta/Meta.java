@@ -139,12 +139,10 @@ public enum Meta {
 
         Message<V>[] messages;
         Message<V> responseMessage;
+        boolean connected = SessionState.CONNECTED.equals(session.getState());
+        long longPollIntervalMilliseconds = getLongPollIntervalMilliseconds(protocol, request);
 
-        responseMessage = constructConnectSuccessResponse(server, getRoute().getPath(), request.getId(), session.getId(), SessionState.CONNECTED.equals(session.getState()) ? getLongPollIntervalMilliseconds(protocol, request) : 0);
-
-        if (session.getState().lt(SessionState.CONNECTED)) {
-          session.completeConnection();
-        }
+        responseMessage = constructConnectSuccessResponse(server, getRoute().getPath(), request.getId(), session.getId(), connected ? longPollIntervalMilliseconds : 0);
 
         if (protocol.isLongPolling()) {
 
@@ -158,7 +156,7 @@ public enum Meta {
 
             Packet<V> enqueuedPacket;
 
-            if ((enqueuedPacket = session.poll(initial ? protocol.getLongPollIntervalMilliseconds() : remainingMilliseconds, TimeUnit.MILLISECONDS)) != null) {
+            if ((enqueuedPacket = session.poll(connected ? initial ? longPollIntervalMilliseconds : remainingMilliseconds : 0, TimeUnit.MILLISECONDS)) != null) {
               if (enqueuedPacket.getMessages() != null) {
                 if (enqueuedMessageList == null) {
                   enqueuedMessageList = new LinkedList<>();
@@ -168,7 +166,7 @@ public enum Meta {
             }
 
             initial = false;
-          } while ((remainingMilliseconds = longPollTimeoutMilliseconds + start - System.currentTimeMillis()) > 0);
+          } while (connected && ((remainingMilliseconds = longPollTimeoutMilliseconds + start - System.currentTimeMillis()) > 0));
 
           if (enqueuedMessageList == null) {
             messages = new Message[] {responseMessage};
@@ -178,6 +176,10 @@ public enum Meta {
           }
         } else {
           messages = new Message[] {responseMessage};
+        }
+
+        if (session.getState().lt(SessionState.CONNECTED)) {
+          session.completeConnection();
         }
 
         return new Packet<>(PacketType.RESPONSE, session.getId(), getRoute(), messages);
@@ -211,11 +213,11 @@ public enum Meta {
 
         if (((timeoutValue = adviceValue.get(Advice.INTERVAL.getField())) != null) && ValueType.NUMBER.equals(timeoutValue.getType())) {
 
-          return ((NumberValue<V>)timeoutValue).asLong();
+          return Math.max(0, ((NumberValue<V>)timeoutValue).asLong());
         }
       }
 
-      return protocol.getLongPollIntervalMilliseconds();
+      return Math.max(0, protocol.getLongPollIntervalMilliseconds());
     }
 
     private <V extends Value<V>> Message<V> constructConnectSuccessResponse (Server<V> server, String path, String id, String sessionId, long longPollIntervalMilliseconds) {

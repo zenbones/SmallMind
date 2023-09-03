@@ -46,7 +46,7 @@ public class ServletProtocol<V extends Value<V>> implements Protocol<V> {
 
   public ServletProtocol (long longPollIntervalMilliseconds, long longPollTimeoutMilliseconds, long maxIdleTimeoutMilliseconds) {
 
-    this.longPollIntervalMilliseconds = Math.max(0, longPollIntervalMilliseconds);
+    this.longPollIntervalMilliseconds = longPollIntervalMilliseconds;
     this.longPollTimeoutMilliseconds = longPollTimeoutMilliseconds;
 
     longPollingTransport = new LongPollingTransport<>(this, maxIdleTimeoutMilliseconds);
