@@ -34,6 +34,7 @@ package org.smallmind.bayeux.oumuamua.server.spi.meta;
 
 import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.concurrent.TimeUnit;
 import org.smallmind.bayeux.oumuamua.common.api.json.ArrayValue;
 import org.smallmind.bayeux.oumuamua.common.api.json.Message;
 import org.smallmind.bayeux.oumuamua.common.api.json.NumberValue;
@@ -125,7 +126,8 @@ public enum Meta {
       return false;
     }
   }, CONNECT(DefaultRoute.CONNECT_ROUTE) {
-    public <V extends Value<V>> Packet<V> process (Protocol<V> protocol, Server<V> server, Session<V> session, Message<V> request) {
+    public <V extends Value<V>> Packet<V> process (Protocol<V> protocol, Server<V> server, Session<V> session, Message<V> request)
+      throws InterruptedException {
 
       if ((!session.getId().equals(request.getSessionId())) || session.getState().lt(SessionState.HANDSHOOK)) {
 
@@ -135,10 +137,8 @@ public enum Meta {
         return new Packet<>(PacketType.RESPONSE, request.getSessionId(), getRoute(), constructConnectErrorResponse(server, getRoute().getPath(), request.getId(), session.getId(), "Connection requested on an unsupported transport", Reconnect.HANDSHAKE));
       } else {
 
-        LinkedList<Message<V>> enqueuedMessageList = null;
         Message<V>[] messages;
         Message<V> responseMessage;
-        long longPollTimeoutMilliseconds = getLongPollTimeoutMilliseconds(protocol, request);
 
         responseMessage = constructConnectSuccessResponse(server, getRoute().getPath(), request.getId(), session.getId(), SessionState.CONNECTED.equals(session.getState()) ? getLongPollIntervalMilliseconds(protocol, request) : 0);
 
@@ -146,28 +146,38 @@ public enum Meta {
           session.completeConnection();
         }
 
-        if (longPollTimeoutMilliseconds >= 0) {
+        if (protocol.isLongPolling()) {
 
+          LinkedList<Message<V>> enqueuedMessageList = null;
+          boolean initial = true;
+          long longPollTimeoutMilliseconds = getLongPollTimeoutMilliseconds(protocol, request);
+          long remainingMilliseconds = 0;
           long start = System.currentTimeMillis();
 
           do {
 
             Packet<V> enqueuedPacket;
 
-            if ((enqueuedPacket = session.poll()) != null) {
-              if (enqueuedMessageList == null) {
-                enqueuedMessageList = new LinkedList<>();
+            if ((enqueuedPacket = session.poll(initial ? protocol.getLongPollIntervalMilliseconds() : remainingMilliseconds, TimeUnit.MILLISECONDS)) != null) {
+              if (enqueuedPacket.getMessages() != null) {
+                if (enqueuedMessageList == null) {
+                  enqueuedMessageList = new LinkedList<>();
+                }
+                enqueuedMessageList.addAll(Arrays.asList(enqueuedPacket.getMessages()));
               }
-              enqueuedMessageList.addAll(Arrays.asList(enqueuedPacket.getMessages()));
             }
-          } while (longPollTimeoutMilliseconds + start - System.currentTimeMillis() > 0);
-        }
 
-        if (enqueuedMessageList == null) {
-          messages = new Message[] {responseMessage};
+            initial = false;
+          } while ((remainingMilliseconds = longPollTimeoutMilliseconds + start - System.currentTimeMillis()) > 0);
+
+          if (enqueuedMessageList == null) {
+            messages = new Message[] {responseMessage};
+          } else {
+            enqueuedMessageList.addFirst(responseMessage);
+            messages = enqueuedMessageList.toArray(new Message[0]);
+          }
         } else {
-          enqueuedMessageList.addFirst(responseMessage);
-          messages = enqueuedMessageList.toArray(new Message[0]);
+          messages = new Message[] {responseMessage};
         }
 
         return new Packet<>(PacketType.RESPONSE, session.getId(), getRoute(), messages);
@@ -184,11 +194,11 @@ public enum Meta {
 
         if (((timeoutValue = adviceValue.get(Advice.TIMEOUT.getField())) != null) && ValueType.NUMBER.equals(timeoutValue.getType())) {
 
-          return protocol.getLongPollTimeoutMilliseconds() > 0 ? Math.max(protocol.getLongPollTimeoutMilliseconds(), ((NumberValue<V>)timeoutValue).asLong()) : ((NumberValue<V>)timeoutValue).asLong();
+          return protocol.getLongPollTimeoutMilliseconds() > 0 ? Math.max(protocol.getLongPollTimeoutMilliseconds(), ((NumberValue<V>)timeoutValue).asLong()) : Math.max(0, ((NumberValue<V>)timeoutValue).asLong());
         }
       }
 
-      return protocol.getLongPollTimeoutMilliseconds();
+      return Math.max(0, protocol.getLongPollTimeoutMilliseconds());
     }
 
     private <V extends Value<V>> long getLongPollIntervalMilliseconds (Protocol<V> protocol, Message<V> request) {
@@ -491,5 +501,5 @@ public enum Meta {
   }
 
   public abstract <V extends Value<V>> Packet<V> process (Protocol<V> protocol, Server<V> server, Session<V> session, Message<V> request)
-    throws InvalidPathException;
+    throws InterruptedException, InvalidPathException;
 }

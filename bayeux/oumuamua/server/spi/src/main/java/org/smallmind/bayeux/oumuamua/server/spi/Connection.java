@@ -50,7 +50,7 @@ public interface Connection<V extends Value<V>> {
     try {
 
       return Meta.from(request.getChannel()).process(protocol, server, session, request);
-    } catch (InvalidPathException | MetaProcessingException exception) {
+    } catch (InterruptedException | InvalidPathException | MetaProcessingException exception) {
       return new Packet<>(PacketType.RESPONSE, request.getSessionId(), null, Meta.constructErrorResponse(server, request.getChannel(), request.getId(), request.getSessionId(), exception.getMessage(), null));
     }
   }

@@ -164,7 +164,9 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
 
       do {
         if ((enqueuedPacket = longPollQueue.pollFirst()) == null) {
-          nanosRemaining = notEmptyCondition.awaitNanos(nanosRemaining);
+          if (nanosRemaining > 0) {
+            nanosRemaining = notEmptyCondition.awaitNanos(nanosRemaining);
+          }
         } else {
 
           Packet<V> frozenPacket;
@@ -177,6 +179,8 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
           return frozenPacket;
         }
       } while (nanosRemaining > 0);
+
+      return null;
     } finally {
       longPollLock.unlock();
     }
