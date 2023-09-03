@@ -146,7 +146,7 @@ public enum Meta {
           session.completeConnection();
         }
 
-        if (longPollTimeoutMilliseconds > 0) {
+        if (longPollTimeoutMilliseconds >= 0) {
 
           long start = System.currentTimeMillis();
 
@@ -184,7 +184,7 @@ public enum Meta {
 
         if (((timeoutValue = adviceValue.get(Advice.TIMEOUT.getField())) != null) && ValueType.NUMBER.equals(timeoutValue.getType())) {
 
-          return ((NumberValue<V>)timeoutValue).asLong();
+          return protocol.getLongPollTimeoutMilliseconds() > 0 ? Math.max(protocol.getLongPollTimeoutMilliseconds(), ((NumberValue<V>)timeoutValue).asLong()) : ((NumberValue<V>)timeoutValue).asLong();
         }
       }
 
