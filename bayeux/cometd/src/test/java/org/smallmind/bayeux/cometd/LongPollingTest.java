@@ -60,9 +60,7 @@ public class LongPollingTest {
 
     // handshakeMap.put("ext", tokenMap);
 
-    bayeuxClient.handshake(handshakeMap, message -> {
-      System.out.println("1!!!!!!!!!!!!!!!!!:" + message);
-    });
+    bayeuxClient.handshake(handshakeMap);
     if (!bayeuxClient.waitFor(5000, BayeuxClient.State.CONNECTED)) {
       System.out.println("Unable to connect within 5000 milliseconds");
     }

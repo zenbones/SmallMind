@@ -140,8 +140,6 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
               respond(request, connection, messages,contentBuffer);
             } else if ((session = server.getSession(sessionId)) == null) {
               response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unknown client id");
-            } else if (!SessionState.CONNECTED.equals(session.getState())) {
-              response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Session is invalid");
             } else if (!session.isLongPolling()) {
               response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Incorrect transport for this session");
             } else {
