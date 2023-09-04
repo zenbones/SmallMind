@@ -138,16 +138,14 @@ public enum Meta {
       } else {
 
         Message<V>[] messages;
-        Message<V> responseMessage;
-        boolean connected = SessionState.CONNECTED.equals(session.getState());
         long longPollIntervalMilliseconds = getLongPollIntervalMilliseconds(protocol, request);
-
-        responseMessage = constructConnectSuccessResponse(server, getRoute().getPath(), request.getId(), session.getId(), connected ? longPollIntervalMilliseconds : 0);
 
         if (protocol.isLongPolling()) {
 
+          Message<V> responseMessage = constructConnectSuccessResponse(server, getRoute().getPath(), request.getId(), session.getId(), 0);
           LinkedList<Message<V>> enqueuedMessageList = null;
           boolean initial = true;
+          boolean connected = SessionState.CONNECTED.equals(session.getState());
           long longPollTimeoutMilliseconds = getLongPollTimeoutMilliseconds(protocol, request);
           long remainingMilliseconds = 0;
           long start = System.currentTimeMillis();
@@ -175,7 +173,7 @@ public enum Meta {
             messages = enqueuedMessageList.toArray(new Message[0]);
           }
         } else {
-          messages = new Message[] {responseMessage};
+          messages = new Message[] {constructConnectSuccessResponse(server, getRoute().getPath(), request.getId(), session.getId(), longPollIntervalMilliseconds)};
         }
 
         if (session.getState().lt(SessionState.CONNECTED)) {
