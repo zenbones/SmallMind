@@ -33,6 +33,8 @@
 package org.smallmind.bayeux.oumuamua.server.impl.longpolling;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.servlet.AsyncContext;
 import org.smallmind.bayeux.oumuamua.common.api.json.Message;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
@@ -49,9 +51,9 @@ public class LongPollingConnection<V extends Value<V>> implements Connection<V> 
 
   private final LongPollingTransport<V> longPollingTransport;
   private final OumuamuaServer<V> server;
+  private final AtomicReference<OumuamuaSession<V>> sessionRef = new AtomicReference<>();
+  private final AtomicLong lastContact;
   private final long maxIdleTimeoutMilliseconds;
-  private OumuamuaSession<V> session;
-  private long lastContact;
 
   public LongPollingConnection (LongPollingTransport<V> longPollingTransport, OumuamuaServer<V> server, long maxIdleTimeoutMilliseconds) {
 
@@ -59,7 +61,7 @@ public class LongPollingConnection<V extends Value<V>> implements Connection<V> 
     this.server = server;
     this.maxIdleTimeoutMilliseconds = maxIdleTimeoutMilliseconds;
 
-    lastContact = System.currentTimeMillis();
+    lastContact = new AtomicLong(System.currentTimeMillis());
   }
 
   @Override
@@ -70,15 +72,13 @@ public class LongPollingConnection<V extends Value<V>> implements Connection<V> 
 
   public void setSession (OumuamuaSession<V> session) {
 
-    this.session = session;
+    sessionRef.set(session);
   }
 
   @Override
-  public synchronized void maintenance () {
+  public void maintenance () {
 
-    long now = System.currentTimeMillis();
-
-    if ((now - lastContact) > maxIdleTimeoutMilliseconds) {
+    if ((System.currentTimeMillis() - lastContact.get()) > maxIdleTimeoutMilliseconds) {
       close();
     }
   }
@@ -109,7 +109,7 @@ public class LongPollingConnection<V extends Value<V>> implements Connection<V> 
       writer.write(']');
     }
 
-    System.out.println(session.getId() + "=>" + builder);
+    // System.out.println("=>" + builder);
     LoggerManager.getLogger(LongPollingConnection.class).debug(() -> "=>" + builder);
 
     asyncContext.getResponse().getOutputStream().print(builder.toString());
@@ -117,13 +117,15 @@ public class LongPollingConnection<V extends Value<V>> implements Connection<V> 
     asyncContext.complete();
   }
 
-  public synchronized void onMessages (AsyncContext asyncContext, Message<V>[] messages, byte[] contentBuffer) {
+  public void onMessages (AsyncContext asyncContext, Message<V>[] messages, byte[] contentBuffer) {
 
-    System.out.println("<=" + new String(contentBuffer));
+    OumuamuaSession<V> session;
+
+    // System.out.println("<=" + new String(contentBuffer));
     LoggerManager.getLogger(LongPollingConnection.class).debug(() -> "<=" + new String(contentBuffer));
 
-    if (session != null) {
-      lastContact = System.currentTimeMillis();
+    if ((session = sessionRef.get()) != null) {
+      lastContact.set(System.currentTimeMillis());
 
       for (Message<V> message : messages) {
         try {
@@ -141,13 +143,15 @@ public class LongPollingConnection<V extends Value<V>> implements Connection<V> 
 
   private synchronized void close () {
 
-    if (session != null) {
+    OumuamuaSession<V> session;
+
+    if ((session = sessionRef.get()) != null) {
       if (!SessionState.DISCONNECTED.equals(session.getState())) {
         session.completeDisconnect();
       }
 
       server.removeSession(session);
-      session = null;
+      sessionRef.set(null);
     }
   }
 }
