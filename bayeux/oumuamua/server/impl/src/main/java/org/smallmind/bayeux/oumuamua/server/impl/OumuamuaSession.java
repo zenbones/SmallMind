@@ -155,7 +155,7 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   public Packet<V> poll (long timeout, TimeUnit unit)
     throws InterruptedException {
 
-    long nanosRemaining = unit.toNanos(timeout);
+    long remainingNanoseconds = unit.toNanos(timeout);
 
     longPollLock.lock();
 
@@ -164,8 +164,8 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
 
       do {
         if ((enqueuedPacket = longPollQueue.pollFirst()) == null) {
-          if (nanosRemaining > 0) {
-            nanosRemaining = notEmptyCondition.awaitNanos(nanosRemaining);
+          if (remainingNanoseconds > 0) {
+            remainingNanoseconds = notEmptyCondition.awaitNanos(remainingNanoseconds);
           }
         } else {
 
@@ -178,7 +178,7 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
 
           return frozenPacket;
         }
-      } while (nanosRemaining > 0);
+      } while (remainingNanoseconds > 0);
 
       return null;
     } finally {
