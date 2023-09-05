@@ -192,8 +192,10 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
   @Override
   public synchronized void unsubscribe (Session<V> session) {
 
-    if (sessionMap.remove(session.getId()) != null) {
-      onUnsubscribed(session);
+    Session<V> unsubscribedSession;
+
+    if ((unsubscribedSession = sessionMap.remove(session.getId())) != null) {
+      onUnsubscribed(unsubscribedSession);
 
       if (sessionMap.isEmpty() && (persistentListenerCount <= 0)) {
         quiescentTimestamp = System.currentTimeMillis();
@@ -207,7 +209,7 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
     return (!persistent) && (quiescentTimestamp > 0) && ((now - quiescentTimestamp) >= timeToLiveMilliseconds);
   }
 
-  public synchronized void terminate () {
+  public OumuamuaChannel<V> terminate () {
 
     HashSet<Session<V>> unsubscribedSet = new HashSet<>(sessionMap.values());
 
@@ -221,6 +223,8 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
     if (persistentListenerCount <= 0) {
       quiescentTimestamp = System.currentTimeMillis();
     }
+
+    return this;
   }
 
   @Override

@@ -38,12 +38,12 @@ import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.ChannelStateException;
 import org.smallmind.scribe.pen.LoggerManager;
 
-public class ExpirationOperation<V extends Value<V>> implements ChannelOperation<V> {
+public class IdleChannelOperation<V extends Value<V>> implements ChannelOperation<V> {
 
   private final Consumer<Channel<V>> channelCallback;
   private final long now;
 
-  public ExpirationOperation (long now, Consumer<Channel<V>> channelCallback) {
+  public IdleChannelOperation (long now, Consumer<Channel<V>> channelCallback) {
 
     this.now = now;
     this.channelCallback = channelCallback;
@@ -58,7 +58,7 @@ public class ExpirationOperation<V extends Value<V>> implements ChannelOperation
       try {
         channelBranch.removeChannel(channelCallback);
       } catch (ChannelStateException channelStateException) {
-        LoggerManager.getLogger(ExpirationOperation.class).error(channelStateException);
+        LoggerManager.getLogger(IdleChannelOperation.class).error(channelStateException);
       }
     }
   }

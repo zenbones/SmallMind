@@ -68,7 +68,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   private final String[] protocolNames;
 
   private IdleChannelSifter<V> idleChannelSifter;
-  private ConnectionMaintenanceHeartbeat connectionMaintenanceHeartbeat;
+  private ConnectionMaintenanceHeartbeat<V> connectionMaintenanceHeartbeat;
 
   public OumuamuaServer (OumuamuaConfiguration<V> configuration)
     throws OumuamuaException {
@@ -264,7 +264,11 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
 
   public void removeSession (OumuamuaSession<V> session) {
 
-    sessionMap.remove(session.getId());
+    OumuamuaSession<V> removedSession;
+
+    if ((removedSession = sessionMap.remove(session.getId())) != null) {
+      channelTree.walk(new RemovedSessionOperation<>(removedSession));
+    }
   }
 
   public Iterator<OumuamuaSession<V>> iterateSessions () {

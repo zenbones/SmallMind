@@ -142,10 +142,9 @@ public class ChannelBranch<V extends Value<V>> {
         if (channel.isPersistent()) {
           throw new ChannelStateException("Attempt to remove persistent channel(%s)", ((OumuamuaChannel<V>)channel).getRoute().getPath());
         } else {
-          ((OumuamuaChannel<V>)channel).terminate();
+          channelCallback.accept(((OumuamuaChannel<V>)channel).terminate());
 
           channel = null;
-          channelCallback.accept(channel);
         }
       }
 

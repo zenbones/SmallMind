@@ -32,47 +32,26 @@
  */
 package org.smallmind.bayeux.oumuamua.server.impl;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
-import org.smallmind.scribe.pen.LoggerManager;
+import org.smallmind.bayeux.oumuamua.server.api.Session;
 
-public class IdleChannelSifter<V extends Value<V>> implements Runnable {
+public class RemovedSessionOperation<V extends Value<V>> implements ChannelOperation<V> {
 
-  private final CountDownLatch finishLatch = new CountDownLatch(1);
-  private final CountDownLatch exitLatch = new CountDownLatch(1);
-  private final ChannelTree<V> channelTree;
-  private final Consumer<Channel<V>> channelCallback;
-  private final long idleChannelCycleMinutes;
+  private final Session<V> session;
 
-  public IdleChannelSifter (long idleChannelCycleMinutes, ChannelTree<V> channelTree, Consumer<Channel<V>> channelCallback) {
+  public RemovedSessionOperation (Session<V> session) {
 
-    this.idleChannelCycleMinutes = idleChannelCycleMinutes;
-    this.channelTree = channelTree;
-    this.channelCallback = channelCallback;
-  }
-
-  public void stop ()
-    throws InterruptedException {
-
-    finishLatch.countDown();
-    exitLatch.await();
+    this.session = session;
   }
 
   @Override
-  public void run () {
+  public void operate (ChannelBranch<V> channelBranch) {
 
-    try {
-      while (!finishLatch.await(idleChannelCycleMinutes, TimeUnit.MINUTES)) {
-        channelTree.walk(new IdleChannelOperation<V>(System.currentTimeMillis(), channelCallback));
-        channelTree.clean();
-      }
-    } catch (InterruptedException interruptedException) {
-      LoggerManager.getLogger(OumuamuaServer.class).error(interruptedException);
-    } finally {
-      exitLatch.countDown();
+    Channel<V> channel;
+
+    if ((channel = channelBranch.getChannel()) != null) {
+      channel.unsubscribe(session);
     }
   }
 }
