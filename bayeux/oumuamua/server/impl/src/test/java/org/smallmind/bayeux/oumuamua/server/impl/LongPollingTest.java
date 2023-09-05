@@ -71,7 +71,7 @@ public class LongPollingTest {
 
       int count = counter.incAndGet();
 
-      if (count == 100) {
+      if (count == 10000) {
         System.out.println(System.currentTimeMillis());
       }
     });
