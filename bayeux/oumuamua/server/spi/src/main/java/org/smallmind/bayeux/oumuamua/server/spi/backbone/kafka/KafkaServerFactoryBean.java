@@ -30,18 +30,17 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.memcached.utility.spring;
+package org.smallmind.bayeux.oumuamua.server.spi.backbone.kafka;
 
 import java.util.LinkedList;
-import org.smallmind.memcached.utility.MemcachedServer;
 import org.smallmind.nutsnbolts.util.Spread;
 import org.smallmind.nutsnbolts.util.SpreadParserException;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
-public class MemcachedServerFactoryBean implements FactoryBean<MemcachedServer[]>, InitializingBean {
+public class KafkaServerFactoryBean implements FactoryBean<KafkaServer[]>, InitializingBean {
 
-  private MemcachedServer[] serverArray;
+  private KafkaServer[] serverArray;
   private String serverPattern;
   private String serverSpread;
 
@@ -64,11 +63,11 @@ public class MemcachedServerFactoryBean implements FactoryBean<MemcachedServer[]
   @Override
   public Class<?> getObjectType () {
 
-    return MemcachedServer[].class;
+    return KafkaServer[].class;
   }
 
   @Override
-  public MemcachedServer[] getObject () {
+  public KafkaServer[] getObject () {
 
     return serverArray;
   }
@@ -79,27 +78,27 @@ public class MemcachedServerFactoryBean implements FactoryBean<MemcachedServer[]
 
     if ((serverPattern != null) && (!serverPattern.isEmpty())) {
 
-      LinkedList<MemcachedServer> serverList = new LinkedList<>();
+      LinkedList<KafkaServer> serverList = new LinkedList<>();
       int colonPos = serverPattern.indexOf(':');
       int poundPos;
 
       if ((poundPos = serverPattern.indexOf('#')) < 0) {
         if (colonPos >= 0) {
-          serverList.add(new MemcachedServer(serverPattern.substring(0, colonPos), Integer.parseInt(serverPattern.substring(colonPos + 1))));
+          serverList.add(new KafkaServer(serverPattern.substring(0, colonPos), Integer.parseInt(serverPattern.substring(colonPos + 1))));
         } else {
-          serverList.add(new MemcachedServer(serverPattern, 11211));
+          serverList.add(new KafkaServer(serverPattern, 9092));
         }
       } else {
         for (String serverDesignator : Spread.calculate(serverSpread)) {
           if (colonPos >= 0) {
-            serverList.add(new MemcachedServer(serverPattern.substring(0, poundPos) + serverDesignator + serverPattern.substring(poundPos + 1, colonPos), Integer.parseInt(serverPattern.substring(colonPos + 1))));
+            serverList.add(new KafkaServer(serverPattern.substring(0, poundPos) + serverDesignator + serverPattern.substring(poundPos + 1, colonPos), Integer.parseInt(serverPattern.substring(colonPos + 1))));
           } else {
-            serverList.add(new MemcachedServer(serverPattern.substring(0, poundPos) + serverDesignator + serverPattern.substring(poundPos + 1), 11211));
+            serverList.add(new KafkaServer(serverPattern.substring(0, poundPos) + serverDesignator + serverPattern.substring(poundPos + 1), 9092));
           }
         }
       }
 
-      serverArray = new MemcachedServer[serverList.size()];
+      serverArray = new KafkaServer[serverList.size()];
       serverList.toArray(serverArray);
     }
   }

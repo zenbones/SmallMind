@@ -75,7 +75,7 @@ public class WebsocketTest {
 
       int count = counter.incAndGet();
 
-      if (count == 10000) {
+      if (count == 10) {
         System.out.println(System.currentTimeMillis());
       }
     });

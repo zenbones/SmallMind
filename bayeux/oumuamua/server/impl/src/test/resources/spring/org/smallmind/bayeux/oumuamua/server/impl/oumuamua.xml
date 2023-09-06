@@ -31,6 +31,19 @@
             </bean>
           </list>
         </property>
+        <property name="backbone">
+          <bean class="org.smallmind.bayeux.oumuamua.server.spi.backbone.kafka.KafkaBackbone">
+            <constructor-arg index="0" name="nodeName" value="testing"/>
+            <constructor-arg index="1" name="concurrencyLimit" value="1"/>
+            <constructor-arg index="2" name="topicName" value="oumuamua"/>
+            <constructor-arg index="3" name="servers">
+              <bean class="org.smallmind.bayeux.oumuamua.server.spi.backbone.kafka.KafkaServerFactoryBean">
+                <property name="serverPattern" value="localhost:9094"/>
+                <property name="serverSpread" value=""/>
+              </bean>
+            </constructor-arg>
+          </bean>
+        </property>
       </bean>
     </constructor-arg>
   </bean>

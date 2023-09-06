@@ -18,6 +18,11 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka-clients</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
       <groupId>org.smallmind</groupId>
       <artifactId>oumuamua-server-spi</artifactId>
       <scope>compile</scope>
