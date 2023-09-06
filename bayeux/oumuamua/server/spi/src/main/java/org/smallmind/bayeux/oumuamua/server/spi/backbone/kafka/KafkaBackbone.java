@@ -32,27 +32,171 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.backbone.kafka;
 
+import java.time.Duration;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.OffsetAndMetadata;
+import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.Node;
+import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.errors.WakeupException;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
+import org.smallmind.bayeux.oumuamua.server.api.OumuamuaException;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.backbone.Backbone;
+import org.smallmind.nutsnbolts.util.ComponentStatus;
+import org.smallmind.nutsnbolts.util.SnowflakeId;
+import org.smallmind.scribe.pen.LoggerManager;
 
 public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
+
+  private final AtomicReference<ComponentStatus> statusRef = new AtomicReference<>(ComponentStatus.STOPPED);
+  private final KafkaConnector connector;
+  private final Producer<Long, byte[]> producer;
+  private final String nodeName;
+  private final String topicName;
+  private final String groupId;
+  private final int concurrencyLimit;
+  private ConsumerWorker<V>[] workers;
+
+  public KafkaBackbone (String nodeName, int concurrencyLimit, String topicName, KafkaServer... servers)
+    throws OumuamuaException {
+
+    this.nodeName = nodeName;
+    this.concurrencyLimit = concurrencyLimit;
+    this.topicName = topicName;
+
+    groupId = SnowflakeId.newInstance().generateHexEncoding();
+    connector = new KafkaConnector(servers);
+    producer = connector.createProducer(nodeName);
+
+    if (!connector.invokeAdminClient(adminClient -> {
+        try {
+          Collection<Node> nodes = adminClient.describeCluster().nodes().get();
+
+          return (nodes != null) && (!nodes.isEmpty());
+        } catch (ExecutionException | InterruptedException exception) {
+          LoggerManager.getLogger(KafkaBackbone.class).error(exception);
+
+          return false;
+        }
+      }
+    )) {
+      throw new OumuamuaException("Unable to start the kafka backbone service");
+    }
+  }
 
   @Override
   public void startUp (Server<V> server)
     throws Exception {
 
+    if (statusRef.compareAndSet(ComponentStatus.STOPPED, ComponentStatus.STARTING)) {
+      workers = new ConsumerWorker[concurrencyLimit];
+      for (int index = 0; index < concurrencyLimit; index++) {
+        new Thread(workers[index] = new ConsumerWorker<V>(server, nodeName, connector.createConsumer(nodeName + "-" + index, groupId, topicName))).start();
+      }
+      statusRef.set(ComponentStatus.STARTED);
+    } else {
+      while (ComponentStatus.STARTING.equals(statusRef.get())) {
+        Thread.sleep(100);
+      }
+    }
   }
 
   @Override
   public void shutDown ()
     throws InterruptedException {
 
+    if (statusRef.compareAndSet(ComponentStatus.STARTED, ComponentStatus.STOPPING)) {
+      for (ConsumerWorker<V> worker : workers) {
+        worker.stop();
+      }
+      statusRef.set(ComponentStatus.STOPPED);
+    } else {
+      while (ComponentStatus.STOPPING.equals(statusRef.get())) {
+        Thread.sleep(100);
+      }
+    }
   }
 
   @Override
   public void publish (Packet<V> packet) {
 
+    producer.send(new ProducerRecord<>(topicName, PacketCodec.encode(nodeName, packet)));
+  }
+
+  private static class ConsumerWorker<V extends Value<V>> implements Runnable {
+
+    private final AtomicBoolean finished = new AtomicBoolean(false);
+    private final Server<V> server;
+    private final Consumer<Long, byte[]> consumer;
+    private final String nodeName;
+
+    public ConsumerWorker (Server<V> server, String nodeName, Consumer<Long, byte[]> consumer) {
+
+      this.server = server;
+      this.nodeName = nodeName;
+      this.consumer = consumer;
+    }
+
+    private void stop () {
+
+      if (finished.compareAndSet(false, true)) {
+        consumer.wakeup();
+      }
+    }
+
+    @Override
+    public void run () {
+
+      try {
+        while (!finished.get()) {
+
+          ConsumerRecords<Long, byte[]> records;
+
+          if (((records = consumer.poll(Duration.ofSeconds(3))) != null) && (!records.isEmpty())) {
+            for (TopicPartition partition : records.partitions()) {
+
+              List<ConsumerRecord<Long, byte[]>> recordList;
+              long lastOffset = 0;
+
+              for (ConsumerRecord<Long, byte[]> record : recordList = records.records(partition)) {
+                try {
+
+                  Packet<V> packet;
+
+                  if ((packet = PacketCodec.decode(nodeName, server, record.value())) != null) {
+                    server.publishToChannel(CLUSTERED_TRANSPORT, packet.getChannelId().getId(), packet);
+                  }
+                } catch (Exception exception) {
+                  LoggerManager.getLogger(KafkaBackbone.class).error(exception);
+                }
+
+                lastOffset = record.offset();
+              }
+
+              if (!recordList.isEmpty()) {
+                consumer.commitSync(Collections.singletonMap(partition, new OffsetAndMetadata(lastOffset + 1)));
+              }
+            }
+          }
+        }
+      } catch (WakeupException wakeupException) {
+        if (!finished.get()) {
+          LoggerManager.getLogger(KafkaBackbone.class).error(wakeupException);
+        }
+      } finally {
+        consumer.close();
+      }
+    }
   }
 }
