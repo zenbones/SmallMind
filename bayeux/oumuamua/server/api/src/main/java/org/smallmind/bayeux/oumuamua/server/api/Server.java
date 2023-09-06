@@ -107,5 +107,5 @@ public interface Server<V extends Value<V>> extends Attributed {
   void removeChannel (Channel<V> channel)
     throws ChannelStateException;
 
-  void deliver (Packet<V> packet);
+  void deliver (Packet<V> packet, boolean clustered);
 }

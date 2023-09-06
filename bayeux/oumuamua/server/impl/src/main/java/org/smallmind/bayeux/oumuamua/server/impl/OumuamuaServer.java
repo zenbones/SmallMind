@@ -96,9 +96,11 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   public void start (ServletConfig servletConfig)
     throws ServletException {
 
-    if (getBackbone() != null) {
+    Backbone<V> backbone;
+
+    if ((backbone = getBackbone()) != null) {
       try {
-        getBackbone().startUp(this);
+        backbone.startUp(this);
       } catch (Exception exception) {
         throw new ServletException(exception);
       }
@@ -115,9 +117,11 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
 
   public void stop () {
 
-    if (getBackbone() != null) {
+    Backbone<V> backbone;
+
+    if ((backbone = getBackbone()) != null) {
       try {
-        getBackbone().shutDown();
+        backbone.shutDown();
       } catch (InterruptedException interruptedException) {
         LoggerManager.getLogger(OumuamuaServer.class).error(interruptedException);
       }
@@ -298,12 +302,21 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   @Override
-  public void deliver (Packet<V> packet) {
+  public void deliver (Packet<V> packet, boolean clustered) {
 
     if (packet.getRoute() != null) {
       onDelivery(packet);
 
       channelTree.deliver(0, packet, new HashSet<>());
+
+      if (clustered) {
+
+        Backbone<V> backbone;
+
+        if ((backbone = getBackbone()) != null) {
+          backbone.publish(packet);
+        }
+      }
     }
   }
 }

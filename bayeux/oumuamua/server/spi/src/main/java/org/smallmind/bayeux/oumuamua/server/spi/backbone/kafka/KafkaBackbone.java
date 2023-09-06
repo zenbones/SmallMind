@@ -54,6 +54,7 @@ import org.smallmind.bayeux.oumuamua.server.api.OumuamuaException;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.backbone.Backbone;
+import org.smallmind.bayeux.oumuamua.server.spi.backbone.DebonedPacket;
 import org.smallmind.bayeux.oumuamua.server.spi.backbone.RecordUtility;
 import org.smallmind.nutsnbolts.util.ComponentStatus;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
@@ -134,7 +135,7 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
   public void publish (Packet<V> packet) {
 
     try {
-      producer.send(new ProducerRecord<>(topicName, RecordUtility.toBytes(packet)));
+      producer.send(new ProducerRecord<>(topicName, RecordUtility.serialize(nodeName, packet)));
     } catch (IOException ioException) {
       LoggerManager.getLogger(KafkaBackbone.class).error(ioException);
     }
@@ -178,11 +179,11 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
               for (ConsumerRecord<Long, byte[]> record : recordList = records.records(partition)) {
                 try {
 
-                  Packet<V> packet;
+                  DebonedPacket<V> debonedPacket = RecordUtility.deserialize(server.getCodec(), record.value());
 
-                  // if ((packet = PacketCodec.decode(nodeName, server, record.value())) != null) {
-                    // server.publishToChannel(CLUSTERED_TRANSPORT, packet.getChannelId().getId(), packet);
-                  // }
+                  if (!nodeName.equals(debonedPacket.getNodeName())) {
+                    server.deliver(debonedPacket.getPacket(), false);
+                  }
                 } catch (Exception exception) {
                   LoggerManager.getLogger(KafkaBackbone.class).error(exception);
                 }

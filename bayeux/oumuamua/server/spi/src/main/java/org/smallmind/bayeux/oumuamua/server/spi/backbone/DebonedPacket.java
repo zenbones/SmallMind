@@ -30,53 +30,29 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.spi.json;
+package org.smallmind.bayeux.oumuamua.server.spi.backbone;
 
-import java.io.IOException;
-import org.smallmind.bayeux.oumuamua.common.api.json.Message;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
-import org.smallmind.bayeux.oumuamua.server.spi.PacketWriter;
 
-public class PacketUtility {
+public class DebonedPacket<V extends Value<V>> {
 
-  public static <V extends Value<V>> Packet<V> freezePacket (Packet<V> packet) {
+  private final Packet<V> packet;
+  private final String nodeName;
 
-    Message<V>[] frozenMessages = new Message[packet.getMessages().length];
-    int index = 0;
+  public DebonedPacket (String nodeName, Packet<V> packet) {
 
-    for (Message<V> message : packet.getMessages()) {
-      frozenMessages[index++] = new MessageDouble<V>(message);
-    }
-
-    return new Packet<V>(packet.getPacketType(), packet.getSenderId(), packet.getRoute(), frozenMessages);
+    this.nodeName = nodeName;
+    this.packet = packet;
   }
 
-  public static <V extends Value<V>> StringBuilder encode (Packet<V> packet)
-    throws IOException {
+  public Packet<V> getPacket () {
 
-    StringBuilder builder = new StringBuilder();
+    return packet;
+  }
 
-    try (PacketWriter writer = new PacketWriter(builder)) {
+  public String getNodeName () {
 
-      Message<V>[] messages;
-      boolean first = true;
-
-      writer.write('[');
-
-      if ((messages = packet.getMessages()) != null) {
-        for (Message<V> message : messages) {
-          if (!first) {
-            writer.write(',');
-          }
-          message.encode(writer);
-          first = false;
-        }
-      }
-
-      writer.write(']');
-    }
-
-    return builder;
+    return nodeName;
   }
 }
