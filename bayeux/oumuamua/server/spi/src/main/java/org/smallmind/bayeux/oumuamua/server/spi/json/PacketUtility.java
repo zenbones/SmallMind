@@ -32,9 +32,11 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.json;
 
+import java.io.IOException;
 import org.smallmind.bayeux.oumuamua.common.api.json.Message;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
+import org.smallmind.bayeux.oumuamua.server.spi.PacketWriter;
 
 public class PacketUtility {
 
@@ -48,5 +50,28 @@ public class PacketUtility {
     }
 
     return new Packet<V>(packet.getPacketType(), packet.getSenderId(), packet.getRoute(), frozenMessages);
+  }
+
+  public static <V extends Value<V>> StringBuilder encode (Packet<V> packet)
+    throws IOException {
+
+    StringBuilder builder = new StringBuilder();
+
+    try (PacketWriter writer = new PacketWriter(builder)) {
+
+      boolean first = true;
+
+      writer.write('[');
+      for (Message<V> message : packet.getMessages()) {
+        if (!first) {
+          writer.write(',');
+        }
+        message.encode(writer);
+        first = false;
+      }
+      writer.write(']');
+    }
+
+    return builder;
   }
 }

@@ -44,7 +44,7 @@ import org.smallmind.bayeux.oumuamua.server.api.Transport;
 import org.smallmind.bayeux.oumuamua.server.impl.OumuamuaServer;
 import org.smallmind.bayeux.oumuamua.server.impl.OumuamuaSession;
 import org.smallmind.bayeux.oumuamua.server.spi.Connection;
-import org.smallmind.bayeux.oumuamua.server.spi.PacketWriter;
+import org.smallmind.bayeux.oumuamua.server.spi.json.PacketUtility;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class LongPollingConnection<V extends Value<V>> implements Connection<V> {
@@ -92,27 +92,12 @@ public class LongPollingConnection<V extends Value<V>> implements Connection<V> 
   private void emit (AsyncContext asyncContext, Packet<V> packet)
     throws IOException {
 
-    StringBuilder builder = new StringBuilder();
-
-    try (PacketWriter writer = new PacketWriter(builder)) {
-
-      boolean first = true;
-
-      writer.write('[');
-      for (Message<V> message : packet.getMessages()) {
-        if (!first) {
-          writer.write(',');
-        }
-        message.encode(writer);
-        first = false;
-      }
-      writer.write(']');
-    }
+    String encodedPacket = PacketUtility.encode(packet).toString();
 
     // System.out.println("=>" + builder);
-    LoggerManager.getLogger(LongPollingConnection.class).debug(() -> "=>" + builder);
+    LoggerManager.getLogger(LongPollingConnection.class).debug(() -> "=>" + encodedPacket);
 
-    asyncContext.getResponse().getOutputStream().print(builder.toString());
+    asyncContext.getResponse().getOutputStream().print(encodedPacket);
     asyncContext.getResponse().flushBuffer();
     asyncContext.complete();
   }

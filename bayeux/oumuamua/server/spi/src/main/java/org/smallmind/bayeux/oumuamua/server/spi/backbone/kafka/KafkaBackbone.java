@@ -32,6 +32,7 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.backbone.kafka;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
@@ -53,6 +54,7 @@ import org.smallmind.bayeux.oumuamua.server.api.OumuamuaException;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.backbone.Backbone;
+import org.smallmind.bayeux.oumuamua.server.spi.backbone.RecordUtility;
 import org.smallmind.nutsnbolts.util.ComponentStatus;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.scribe.pen.LoggerManager;
@@ -131,7 +133,11 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
   @Override
   public void publish (Packet<V> packet) {
 
-    producer.send(new ProducerRecord<>(topicName, PacketCodec.encode(nodeName, packet)));
+    try {
+      producer.send(new ProducerRecord<>(topicName, RecordUtility.toBytes(packet)));
+    } catch (IOException ioException) {
+      LoggerManager.getLogger(KafkaBackbone.class).error(ioException);
+    }
   }
 
   private static class ConsumerWorker<V extends Value<V>> implements Runnable {
@@ -174,9 +180,9 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
 
                   Packet<V> packet;
 
-                  if ((packet = PacketCodec.decode(nodeName, server, record.value())) != null) {
-                    server.publishToChannel(CLUSTERED_TRANSPORT, packet.getChannelId().getId(), packet);
-                  }
+                  // if ((packet = PacketCodec.decode(nodeName, server, record.value())) != null) {
+                    // server.publishToChannel(CLUSTERED_TRANSPORT, packet.getChannelId().getId(), packet);
+                  // }
                 } catch (Exception exception) {
                   LoggerManager.getLogger(KafkaBackbone.class).error(exception);
                 }

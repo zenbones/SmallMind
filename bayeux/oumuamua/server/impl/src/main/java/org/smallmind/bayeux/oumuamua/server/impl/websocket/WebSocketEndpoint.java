@@ -50,7 +50,7 @@ import org.smallmind.bayeux.oumuamua.server.api.Transport;
 import org.smallmind.bayeux.oumuamua.server.impl.OumuamuaServer;
 import org.smallmind.bayeux.oumuamua.server.impl.OumuamuaSession;
 import org.smallmind.bayeux.oumuamua.server.spi.Connection;
-import org.smallmind.bayeux.oumuamua.server.spi.PacketWriter;
+import org.smallmind.bayeux.oumuamua.server.spi.json.PacketUtility;
 import org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356.WebSocketTransport;
 import org.smallmind.scribe.pen.LoggerManager;
 
@@ -98,30 +98,15 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
     if (websocketSession.isOpen()) {
       try {
 
-        StringBuilder builder = new StringBuilder();
-
-        try (PacketWriter writer = new PacketWriter(builder)) {
-
-          boolean first = true;
-
-          writer.write('[');
-          for (Message<V> message : packet.getMessages()) {
-            if (!first) {
-              writer.write(',');
-            }
-            message.encode(writer);
-            first = false;
-          }
-          writer.write(']');
-        }
+        String encodedPacket = PacketUtility.encode(packet).toString();
 
         // System.out.println("=>" + builder);
-        LoggerManager.getLogger(WebSocketEndpoint.class).debug(() -> "=>" + builder);
+        LoggerManager.getLogger(WebSocketEndpoint.class).debug(() -> "=>" + encodedPacket);
 
         if (websocketTransport.getAsyncSendTimeoutMilliseconds() > 0) {
-          websocketSession.getAsyncRemote().sendText(builder.toString()).get(websocketTransport.getAsyncSendTimeoutMilliseconds(), TimeUnit.MILLISECONDS);
+          websocketSession.getAsyncRemote().sendText(encodedPacket).get(websocketTransport.getAsyncSendTimeoutMilliseconds(), TimeUnit.MILLISECONDS);
         } else {
-          websocketSession.getBasicRemote().sendText(builder.toString());
+          websocketSession.getBasicRemote().sendText(encodedPacket);
         }
       } catch (IOException | InterruptedException | TimeoutException | ExecutionException exception) {
         LoggerManager.getLogger(WebSocketEndpoint.class).error(exception);
