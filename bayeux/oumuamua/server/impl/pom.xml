@@ -72,6 +72,11 @@
       <artifactId>tyrus-extension-deflate</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.smallmind</groupId>
+      <artifactId>web-grizzly</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
   <build>
     <plugins>
