@@ -925,6 +925,11 @@
         <version>${tyrus.version}</version>
       </dependency>
       <dependency>
+        <groupId>org.glassfish.tyrus.ext</groupId>
+        <artifactId>tyrus-extension-deflate</artifactId>
+        <version>${tyrus.version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.glassfish.tyrus</groupId>
         <artifactId>tyrus-container-grizzly-server</artifactId>
         <version>${tyrus.version}</version>

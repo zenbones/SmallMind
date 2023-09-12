@@ -33,12 +33,14 @@
 package org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356;
 
 import javax.websocket.Endpoint;
+import javax.websocket.Extension;
 
 public class WebsocketConfiguration {
 
   private final Class<? extends Endpoint> endpointClass;
   private final String oumuamuaUrl;
 
+  private Extension[] extensions;
   private String subProtocol;
   // Use the default;
   private long maxIdleTimeoutMilliseconds = -1;
@@ -61,6 +63,16 @@ public class WebsocketConfiguration {
   public String getOumuamuaUrl () {
 
     return oumuamuaUrl;
+  }
+
+  public Extension[] getExtensions () {
+
+    return extensions;
+  }
+
+  public void setExtensions (Extension[] extensions) {
+
+    this.extensions = extensions;
   }
 
   public String getSubProtocol () {

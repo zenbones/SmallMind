@@ -63,11 +63,15 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.smallmind</groupId>
-      <artifactId>web-grizzly</artifactId>
+      <groupId>org.glassfish.tyrus</groupId>
+      <artifactId>tyrus-server</artifactId>
       <scope>test</scope>
     </dependency>
-
+    <dependency>
+      <groupId>org.glassfish.tyrus.ext</groupId>
+      <artifactId>tyrus-extension-deflate</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
   <build>
     <plugins>

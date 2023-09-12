@@ -21,6 +21,11 @@
                 <bean class="org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356.WebsocketConfiguration">
                   <constructor-arg index="0" name="endpointClass" value="org.smallmind.bayeux.oumuamua.server.impl.websocket.WebSocketEndpoint"/>
                   <constructor-arg index="1" name="oumuamuaUrl" value="/cometd/*"/>
+                  <property name="extensions">
+                    <list>
+                      <bean class="org.glassfish.tyrus.ext.extension.deflate.PerMessageDeflateExtension"/>
+                    </list>
+                  </property>
                 </bean>
               </constructor-arg>
             </bean>

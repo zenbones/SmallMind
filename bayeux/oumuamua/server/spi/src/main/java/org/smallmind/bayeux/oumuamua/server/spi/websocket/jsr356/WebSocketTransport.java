@@ -32,6 +32,7 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356;
 
+import java.util.Arrays;
 import java.util.List;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -93,8 +94,9 @@ public class WebSocketTransport<V extends Value<V>> extends AbstractAttributed i
     ServerContainer container = (ServerContainer)servletConfig.getServletContext().getAttribute(ServerContainer.class.getName());
     ServerEndpointConfig.Configurator configurator = new ServerEndpointConfig.Configurator();
     ServerEndpointConfig config = ServerEndpointConfig.Builder.create(websocketConfiguration.getEndpointClass(), normalizeURL(websocketConfiguration.getOumuamuaUrl()))
-                                    .subprotocols(websocketConfiguration.getSubProtocol() == null ? null : List.of(websocketConfiguration.getSubProtocol()))
+                                    .subprotocols((websocketConfiguration.getSubProtocol() == null) ? null : List.of(websocketConfiguration.getSubProtocol()))
                                     .configurator(new WebsocketConfigurator(configurator))
+                                    .extensions((websocketConfiguration.getExtensions() == null) ? null : Arrays.asList(websocketConfiguration.getExtensions()))
                                     .build();
 
     config.getUserProperties().put(Server.ATTRIBUTE, server);
