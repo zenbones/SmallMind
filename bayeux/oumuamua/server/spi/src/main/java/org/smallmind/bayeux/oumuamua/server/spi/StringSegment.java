@@ -33,6 +33,7 @@
 package org.smallmind.bayeux.oumuamua.server.spi;
 
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
+import org.smallmind.bayeux.oumuamua.server.api.Segment;
 
 public class StringSegment extends Segment {
 
@@ -61,14 +62,14 @@ public class StringSegment extends Segment {
   }
 
   @Override
-  public boolean matches (Segment segment) {
+  public boolean matches (CharSequence charSequence) {
 
-    if ((segment == null) || (name.length() != segment.length())) {
+    if ((charSequence == null) || (name.length() != charSequence.length())) {
 
       return false;
     } else {
       for (int pos = 0; pos < name.length(); pos++) {
-        if (name.charAt(pos) != segment.charAt(pos)) {
+        if (name.charAt(pos) != charSequence.charAt(pos)) {
 
           return false;
         }

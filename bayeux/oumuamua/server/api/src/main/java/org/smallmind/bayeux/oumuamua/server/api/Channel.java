@@ -63,15 +63,32 @@ public interface Channel<V extends Value<V>> extends Attributed {
 
   void removeListener (Listener<V> listener);
 
-  boolean isWild ();
+  Route getRoute ();
 
-  boolean isDeepWild ();
+  default boolean isWild () {
 
-  boolean isMeta ();
+    return getRoute().isWild();
+  }
 
-  boolean isService ();
+  default boolean isDeepWild () {
 
-  boolean isDeliverable ();
+    return getRoute().isDeepWild();
+  }
+
+  default boolean isMeta () {
+
+    return getRoute().isMeta();
+  }
+
+  default boolean isService () {
+
+    return getRoute().isService();
+  }
+
+  default boolean isDeliverable () {
+
+    return getRoute().isDeliverable();
+  }
 
   boolean isPersistent ();
 

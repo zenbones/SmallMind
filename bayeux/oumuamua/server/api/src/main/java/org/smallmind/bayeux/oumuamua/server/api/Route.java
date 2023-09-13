@@ -40,6 +40,8 @@ public interface Route {
 
   int lastIndex ();
 
+  Segment getSegment (int index);
+
   boolean isWild ();
 
   boolean isDeepWild ();

@@ -30,11 +30,11 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.spi;
+package org.smallmind.bayeux.oumuamua.server.api;
 
 public abstract class Segment implements CharSequence {
 
-  public abstract boolean matches (Segment segment);
+  public abstract boolean matches (CharSequence charSequence);
 
   public abstract String toString ();
 

@@ -41,6 +41,7 @@ import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.PacketType;
+import org.smallmind.bayeux.oumuamua.server.api.Route;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.bayeux.oumuamua.server.spi.AbstractAttributed;
 import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
@@ -62,11 +63,6 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
 
     this.route = route;
     this.timeToLiveMilliseconds = timeToLiveMilliseconds;
-  }
-
-  public DefaultRoute getRoute () {
-
-    return route;
   }
 
   private void onSubscribed (Session<V> session) {
@@ -120,33 +116,9 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
   }
 
   @Override
-  public boolean isWild () {
+  public Route getRoute () {
 
-    return route.isWild();
-  }
-
-  @Override
-  public boolean isDeepWild () {
-
-    return route.isDeepWild();
-  }
-
-  @Override
-  public boolean isMeta () {
-
-    return route.isMeta();
-  }
-
-  @Override
-  public boolean isService () {
-
-    return route.isService();
-  }
-
-  @Override
-  public boolean isDeliverable () {
-
-    return route.isDeliverable();
+    return route;
   }
 
   @Override

@@ -34,6 +34,7 @@ package org.smallmind.bayeux.oumuamua.server.spi;
 
 import org.smallmind.bayeux.oumuamua.server.api.InvalidPathException;
 import org.smallmind.bayeux.oumuamua.server.api.Route;
+import org.smallmind.bayeux.oumuamua.server.api.Segment;
 import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 
 public class DefaultRoute implements Route {
@@ -107,7 +108,7 @@ public class DefaultRoute implements Route {
     return !(isWild() || isDeepWild() || isMeta() || isService());
   }
 
-  public boolean matches (int index, CharSequence name) {
+  protected boolean matches (int index, CharSequence name) {
 
     if ((index < 0) || (index > segments.length)) {
       throw new IndexOutOfBoundsException("0 <= index < " + size());
@@ -131,7 +132,8 @@ public class DefaultRoute implements Route {
     }
   }
 
-  public RouteSegment getSegment (int index) {
+  @Override
+  public Segment getSegment (int index) {
 
     if ((index < 0) || (index > segments.length)) {
       throw new IndexOutOfBoundsException("0 <= index < " + size());
@@ -163,9 +165,9 @@ public class DefaultRoute implements Route {
     }
 
     @Override
-    public boolean matches (Segment segment) {
+    public boolean matches (CharSequence charSequence) {
 
-      return DefaultRoute.this.matches(index, segment);
+      return DefaultRoute.this.matches(index, charSequence);
     }
 
     @Override

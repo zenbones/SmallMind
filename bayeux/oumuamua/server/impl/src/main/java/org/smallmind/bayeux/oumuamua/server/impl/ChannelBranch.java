@@ -42,8 +42,9 @@ import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.ChannelInitializer;
 import org.smallmind.bayeux.oumuamua.server.api.ChannelStateException;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
+import org.smallmind.bayeux.oumuamua.server.api.Route;
 import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
-import org.smallmind.bayeux.oumuamua.server.spi.Segment;
+import org.smallmind.bayeux.oumuamua.server.api.Segment;
 import org.smallmind.bayeux.oumuamua.server.spi.StringSegment;
 
 public class ChannelBranch<V extends Value<V>> {
@@ -118,7 +119,7 @@ public class ChannelBranch<V extends Value<V>> {
     }
   }
 
-  public ChannelBranch<V> removeChannelIfPresent (int index, DefaultRoute route, Consumer<Channel<V>> channelCallback)
+  public ChannelBranch<V> removeChannelIfPresent (int index, Route route, Consumer<Channel<V>> channelCallback)
     throws ChannelStateException {
 
     ChannelBranch<V> child;

@@ -298,7 +298,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   public void removeChannel (Channel<V> channel)
     throws ChannelStateException {
 
-    channelTree.removeChannelIfPresent(0, ((OumuamuaChannel<V>)channel).getRoute(), this::onRemoved);
+    channelTree.removeChannelIfPresent(0, channel.getRoute(), this::onRemoved);
   }
 
   @Override
