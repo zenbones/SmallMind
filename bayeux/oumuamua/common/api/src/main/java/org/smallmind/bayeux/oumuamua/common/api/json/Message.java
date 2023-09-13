@@ -114,8 +114,6 @@ public interface Message<V extends Value<V>> extends ObjectValue<V> {
     return outputStream.toByteArray();
   }
 
-  Codec<V> getCodec ();
-
   private ObjectValue<V> getOrCreate (String field, boolean createIfAbsent) {
 
     Value<V> value;

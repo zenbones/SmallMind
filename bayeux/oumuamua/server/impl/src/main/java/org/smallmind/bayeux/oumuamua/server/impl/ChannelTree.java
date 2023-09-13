@@ -34,6 +34,7 @@ package org.smallmind.bayeux.oumuamua.server.impl;
 
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
+import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.ChannelInitializer;
@@ -42,10 +43,13 @@ import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
 public class ChannelTree<V extends Value<V>> extends ChannelBranch<V> {
 
   private final ReentrantLock treeChangeLock = new ReentrantLock();
+  private final Codec<V> codec;
 
-  public ChannelTree () {
+  public ChannelTree (Codec<V> codec) {
 
     super(null);
+
+    this.codec = codec;
   }
 
   public Channel<V> createIfAbsent (long timeToLive, int index, DefaultRoute route, Consumer<Channel<V>> channelCallback, ChannelInitializer... initializers) {
@@ -54,7 +58,7 @@ public class ChannelTree<V extends Value<V>> extends ChannelBranch<V> {
 
     try {
 
-      return addChannelAsNecessary(timeToLive, index, route, channelCallback, initializers);
+      return addChannelAsNecessary(timeToLive, index, route, codec, channelCallback, initializers);
     } finally {
       treeChangeLock.unlock();
     }

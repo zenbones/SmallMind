@@ -32,24 +32,13 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.json;
 
-import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.common.api.json.Message;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 
 public class MessageDouble<V extends Value<V>> extends MergingObjectValue<V> implements Message<V> {
 
-  private final Codec<V> codec;
-
   public MessageDouble (Message<V> message) {
 
     super(message);
-
-    this.codec = message.getCodec();
-  }
-
-  @Override
-  public Codec<V> getCodec () {
-
-    return codec;
   }
 }

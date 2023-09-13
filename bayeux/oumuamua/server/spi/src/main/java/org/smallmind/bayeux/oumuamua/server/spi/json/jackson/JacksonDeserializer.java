@@ -33,20 +33,25 @@
 package org.smallmind.bayeux.oumuamua.server.spi.json.jackson;
 
 import java.io.IOException;
+import java.util.Map;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.smallmind.bayeux.oumuamua.common.api.json.ArrayValue;
 import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.common.api.json.Message;
+import org.smallmind.bayeux.oumuamua.common.api.json.ObjectValue;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
+import org.smallmind.bayeux.oumuamua.common.api.json.ValueFactory;
 import org.smallmind.bayeux.oumuamua.server.spi.json.JsonDeserializer;
-import org.smallmind.bayeux.oumuamua.server.spi.json.MessageUtility;
+import org.smallmind.nutsnbolts.lang.FormattedIOException;
+import org.smallmind.nutsnbolts.util.IterableIterator;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public class JacksonDeserializer<V extends Value<V>> implements JsonDeserializer<V> {
 
   @Override
-  public Message<V>[] from (Codec<V> codec, byte[] buffer)
+  public Message<V>[] convert (Codec<V> codec, byte[] buffer)
     throws IOException {
 
     JsonNode node;
@@ -61,16 +66,87 @@ public class JacksonDeserializer<V extends Value<V>> implements JsonDeserializer
           if (!JsonNodeType.OBJECT.equals(item.getNodeType())) {
             throw new IOException("All messages must represent json objects");
           } else {
-            messages[index++] = MessageUtility.convert(codec, (ObjectNode)item);
+            messages[index++] = convert(codec, (ObjectNode)item);
           }
         }
 
         return messages;
       case OBJECT:
 
-        return new Message[] {MessageUtility.convert(codec, (ObjectNode)node)};
+        Message<V> message = codec.create();
+
+        for (Map.Entry<String, JsonNode> fieldEntry : new IterableIterator<>(node.fields())) {
+          message.put(fieldEntry.getKey(), convert(message.getFactory(), fieldEntry.getValue()));
+        }
+
+        return new Message[] {message};
       default:
         throw new IOException("Json data does not represent an object or array");
+    }
+  }
+
+  @Override
+  public Value<V> convert (ValueFactory<V> factory, Object object)
+    throws IOException {
+
+    return convert(factory, JsonCodec.writeAsJsonNode(object));
+  }
+
+  private Message<V> convert (Codec<V> codec, ObjectNode node)
+    throws IOException {
+
+    Message<V> message = codec.create();
+
+    for (Map.Entry<String, JsonNode> fieldEntry : new IterableIterator<>(node.fields())) {
+      message.put(fieldEntry.getKey(), convert(message.getFactory(), fieldEntry.getValue()));
+    }
+
+    return message;
+  }
+
+  private Value<V> convert (ValueFactory<V> factory, JsonNode node)
+    throws IOException {
+
+    switch (node.getNodeType()) {
+      case OBJECT:
+
+        ObjectValue<V> objectValue = factory.objectValue();
+
+        for (Map.Entry<String, JsonNode> fieldEntry : new IterableIterator<>(node.fields())) {
+          objectValue.put(fieldEntry.getKey(), convert(factory, fieldEntry.getValue()));
+        }
+
+        return objectValue;
+      case ARRAY:
+
+        ArrayValue<V> arrayValue = factory.arrayValue();
+
+        for (JsonNode item : node) {
+          arrayValue.add(convert(factory, item));
+        }
+
+        return arrayValue;
+      case STRING:
+        return factory.textValue(node.textValue());
+      case NUMBER:
+        switch (node.numberType()) {
+          case LONG:
+            return factory.numberValue(node.longValue());
+          case INT:
+            return factory.numberValue(node.intValue());
+          case DOUBLE:
+            return factory.numberValue(node.doubleValue());
+          case FLOAT:
+            return factory.numberValue(node.doubleValue());
+          default:
+            throw new FormattedIOException("Unknown number type(%s)", node.numberType().name());
+        }
+      case BOOLEAN:
+        return factory.booleanValue(node.booleanValue());
+      case NULL:
+        return factory.nullValue();
+      default:
+        throw new FormattedIOException("Unknown node type(%s)", node.getNodeType().name());
     }
   }
 }

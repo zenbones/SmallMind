@@ -63,8 +63,8 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   private final ConcurrentHashMap<String, OumuamuaSession<V>> sessionMap = new ConcurrentHashMap<>();
   private final HashMap<String, Protocol<V>> protocolMap = new HashMap<>();
   private final ConcurrentLinkedQueue<Listener<V>> listenerList = new ConcurrentLinkedQueue<>();
-  private final ChannelTree<V> channelTree = new ChannelTree<>();
   private final OumuamuaConfiguration<V> configuration;
+  private final ChannelTree<V> channelTree;
   private final String[] protocolNames;
 
   private IdleChannelSifter<V> idleChannelSifter;
@@ -80,6 +80,8 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
     } else {
 
       this.configuration = configuration;
+
+      channelTree = new ChannelTree<>(configuration.getCodec());
 
       if (configuration.getProtocols() == null) {
         throw new OumuamuaException("No protocols have been defined");

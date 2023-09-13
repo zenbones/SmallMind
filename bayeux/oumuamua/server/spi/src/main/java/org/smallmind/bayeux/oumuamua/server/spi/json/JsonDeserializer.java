@@ -36,9 +36,13 @@ import java.io.IOException;
 import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.common.api.json.Message;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
+import org.smallmind.bayeux.oumuamua.common.api.json.ValueFactory;
 
 public interface JsonDeserializer<V extends Value<V>> {
 
-  Message<V>[] from (Codec<V> codec, byte[] buffer)
+  Message<V>[] convert (Codec<V> codec, byte[] buffer)
+    throws IOException;
+
+  Value<V> convert (ValueFactory<V> factory, Object object)
     throws IOException;
 }

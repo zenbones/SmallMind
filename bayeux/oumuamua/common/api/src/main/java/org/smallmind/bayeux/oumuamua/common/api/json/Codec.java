@@ -40,4 +40,7 @@ public interface Codec<V extends Value<V>> {
 
   Message<V>[] from (byte[] buffer)
     throws IOException;
+
+  Value<V> convert (Object object)
+    throws IOException;
 }

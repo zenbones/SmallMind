@@ -37,6 +37,9 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
+import org.smallmind.bayeux.oumuamua.common.api.json.Message;
+import org.smallmind.bayeux.oumuamua.common.api.json.ObjectValue;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
@@ -50,6 +53,7 @@ import org.smallmind.bayeux.oumuamua.server.spi.json.PacketUtility;
 public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed implements Channel<V> {
 
   private final DefaultRoute route;
+  private final Codec<V> codec;
   private final ConcurrentHashMap<String, Session<V>> sessionMap = new ConcurrentHashMap<>();
   private final ConcurrentLinkedQueue<Listener<V>> listenerList = new ConcurrentLinkedQueue<>();
   private final AtomicBoolean reflecting = new AtomicBoolean();
@@ -59,10 +63,11 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
   private long quiescentTimestamp;
   private int persistentListenerCount;
 
-  public OumuamuaChannel (long timeToLiveMilliseconds, DefaultRoute route) {
+  public OumuamuaChannel (long timeToLiveMilliseconds, DefaultRoute route, Codec<V> codec) {
 
-    this.route = route;
     this.timeToLiveMilliseconds = timeToLiveMilliseconds;
+    this.route = route;
+    this.codec = codec;
   }
 
   private void onSubscribed (Session<V> session) {
@@ -207,9 +212,15 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
     onDelivery(frozenPacket);
 
     for (Session<V> session : sessionMap.values()) {
-      if (sessionIdSet.add(session.getId()) && ((!session.getId().equals(frozenPacket.getSenderId())) || reflecting.get())) {
+      if (sessionIdSet.add(session.getId()) && ((frozenPacket.getSenderId() == null) || (!session.getId().equals(frozenPacket.getSenderId())) || reflecting.get())) {
         session.deliver(frozenPacket);
       }
     }
+  }
+
+  @Override
+  public void publish (ObjectValue<V> data) {
+
+    deliver(new Packet<>(PacketType.DELIVERY, null, getRoute(), (Message<V>)codec.create().put(Message.CHANNEL, getRoute().getPath()).put(Message.DATA, data)), new HashSet<>());
   }
 }

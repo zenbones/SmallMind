@@ -37,14 +37,15 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
+import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.ChannelInitializer;
 import org.smallmind.bayeux.oumuamua.server.api.ChannelStateException;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.Route;
-import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
 import org.smallmind.bayeux.oumuamua.server.api.Segment;
+import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
 import org.smallmind.bayeux.oumuamua.server.spi.StringSegment;
 
 public class ChannelBranch<V extends Value<V>> {
@@ -84,7 +85,7 @@ public class ChannelBranch<V extends Value<V>> {
     }
   }
 
-  protected Channel<V> addChannelAsNecessary (long timeToLive, int index, DefaultRoute route, Consumer<Channel<V>> channelCallback, ChannelInitializer... initializers) {
+  protected Channel<V> addChannelAsNecessary (long timeToLive, int index, DefaultRoute route, Codec<V> codec, Consumer<Channel<V>> channelCallback, ChannelInitializer... initializers) {
 
     ChannelBranch<V> child;
     Segment segment;
@@ -93,16 +94,16 @@ public class ChannelBranch<V extends Value<V>> {
       childMap.put(segment, child = new ChannelBranch<V>(this));
     }
 
-    return (index == route.lastIndex()) ? child.initializeChannel(timeToLive, route, channelCallback, initializers) : child.addChannelAsNecessary(timeToLive, index + 1, route, channelCallback, initializers);
+    return (index == route.lastIndex()) ? child.initializeChannel(timeToLive, route, codec, channelCallback, initializers) : child.addChannelAsNecessary(timeToLive, index + 1, route, codec, channelCallback, initializers);
   }
 
-  private Channel<V> initializeChannel (long timeToLive, DefaultRoute route, Consumer<Channel<V>> channelCallback, ChannelInitializer... initializers) {
+  private Channel<V> initializeChannel (long timeToLive, DefaultRoute route, Codec<V> codec, Consumer<Channel<V>> channelCallback, ChannelInitializer... initializers) {
 
     channelChangeLock.writeLock().lock();
 
     try {
       if (channel == null) {
-        channel = new OumuamuaChannel<>(timeToLive, route);
+        channel = new OumuamuaChannel<>(timeToLive, route, codec);
 
         if (initializers != null) {
           for (ChannelInitializer initializer : initializers) {

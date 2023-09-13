@@ -33,6 +33,7 @@
 package org.smallmind.bayeux.oumuamua.server.api;
 
 import java.util.Set;
+import org.smallmind.bayeux.oumuamua.common.api.json.ObjectValue;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 
 public interface Channel<V extends Value<V>> extends Attributed {
@@ -105,4 +106,6 @@ public interface Channel<V extends Value<V>> extends Attributed {
   boolean isRemovable (long now);
 
   void deliver (Packet<V> packet, Set<String> sessionIdSet);
+
+  void publish (ObjectValue<V> data);
 }

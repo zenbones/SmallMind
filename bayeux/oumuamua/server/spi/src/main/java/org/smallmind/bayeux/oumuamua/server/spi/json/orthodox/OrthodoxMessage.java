@@ -32,23 +32,12 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.json.orthodox;
 
-import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.common.api.json.Message;
 
 public class OrthodoxMessage extends OrthodoxObjectValue implements Message<OrthodoxValue> {
 
-  private final OrthodoxCodec codec;
-
   public OrthodoxMessage (OrthodoxCodec codec, OrthodoxValueFactory factory) {
 
     super(factory);
-
-    this.codec = codec;
-  }
-
-  @Override
-  public Codec<OrthodoxValue> getCodec () {
-
-    return codec;
   }
 }

@@ -50,11 +50,10 @@ import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.common.api.json.ValueType;
 import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
-import org.smallmind.bayeux.oumuamua.server.api.SessionState;
-import org.smallmind.bayeux.oumuamua.server.spi.Protocols;
-import org.smallmind.bayeux.oumuamua.server.spi.Transports;
 import org.smallmind.bayeux.oumuamua.server.impl.longpolling.LongPollingConnection;
 import org.smallmind.bayeux.oumuamua.server.impl.longpolling.LongPollingTransport;
+import org.smallmind.bayeux.oumuamua.server.spi.Protocols;
+import org.smallmind.bayeux.oumuamua.server.spi.Transports;
 
 public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
 
@@ -137,13 +136,13 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
               connection.setSession(session);
               server.addSession(session);
 
-              respond(request, connection, messages,contentBuffer);
+              respond(request, connection, messages, contentBuffer);
             } else if ((session = server.getSession(sessionId)) == null) {
               response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unknown client id");
             } else if (!session.isLongPolling()) {
               response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Incorrect transport for this session");
             } else {
-              respond(request, (LongPollingConnection<V>)session.getConnection(), messages,contentBuffer);
+              respond(request, (LongPollingConnection<V>)session.getConnection(), messages, contentBuffer);
             }
           }
         }
