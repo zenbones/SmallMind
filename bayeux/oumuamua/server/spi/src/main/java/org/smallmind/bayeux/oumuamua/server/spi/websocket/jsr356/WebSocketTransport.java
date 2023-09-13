@@ -72,6 +72,12 @@ public class WebSocketTransport<V extends Value<V>> extends AbstractAttributed i
     return Transports.WEBSOCKET.getName();
   }
 
+  @Override
+  public boolean isLocal () {
+
+    return Transports.WEBSOCKET.isLocal();
+  }
+
   public long getMaxIdleTimeoutMilliseconds () {
 
     return websocketConfiguration.getMaxIdleTimeoutMilliseconds();

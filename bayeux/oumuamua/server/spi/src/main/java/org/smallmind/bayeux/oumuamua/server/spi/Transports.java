@@ -34,17 +34,24 @@ package org.smallmind.bayeux.oumuamua.server.spi;
 
 public enum Transports {
 
-  WEBSOCKET("websocket"), LONG_POLLING("long-polling");
+  WEBSOCKET("websocket", false), LONG_POLLING("long-polling", false);
 
   private final String name;
+  private final boolean local;
 
-  Transports (String name) {
+  Transports (String name, boolean local) {
 
     this.name = name;
+    this.local = local;
   }
 
   public String getName () {
 
     return name;
+  }
+
+  public boolean isLocal () {
+
+    return local;
   }
 }

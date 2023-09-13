@@ -115,6 +115,12 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   }
 
   @Override
+  public boolean isLocal () {
+
+    return getConnection().getTransport().isLocal();
+  }
+
+  @Override
   public boolean isLongPolling () {
 
     return longPolling;

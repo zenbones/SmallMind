@@ -42,6 +42,8 @@ public interface Transport<V extends Value<V>> extends Attributed {
 
   String getName ();
 
+  boolean isLocal ();
+
   public void init (Server<?> server, ServletConfig servletConfig)
     throws ServletException;
 }

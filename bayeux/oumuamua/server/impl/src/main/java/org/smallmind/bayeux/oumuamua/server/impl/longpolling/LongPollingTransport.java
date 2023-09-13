@@ -65,6 +65,12 @@ public class LongPollingTransport<V extends Value<V>> extends AbstractAttributed
   }
 
   @Override
+  public boolean isLocal () {
+
+    return Transports.LONG_POLLING.isLocal();
+  }
+
+  @Override
   public void init (Server<?> server, ServletConfig servletConfig) {
 
   }

@@ -55,6 +55,8 @@ public interface Session<V extends Value<V>> extends Attributed {
 
   String getId ();
 
+  boolean isLocal ();
+
   boolean isLongPolling ();
 
   int getMaxLongPollQueueSize ();
