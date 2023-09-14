@@ -159,7 +159,7 @@ public class ChannelBranch<V extends Value<V>> {
     }
   }
 
-  public void deliver (int index, Packet<V> packet, Set<String> sessionIdSet) {
+  public void deliver (Session<V> sender, int index, Packet<V> packet, Set<String> sessionIdSet) {
 
     if (index < packet.getRoute().size()) {
 
@@ -168,30 +168,30 @@ public class ChannelBranch<V extends Value<V>> {
 
       if ((deepWildBranch = childMap.get(StringSegment.deepWild())) != null) {
 
-        deepWildBranch.deliverToChannel(packet, sessionIdSet);
+        deepWildBranch.deliverToChannel(sender, packet, sessionIdSet);
       }
       if ((nextBranch = childMap.get(((DefaultRoute)packet.getRoute()).getSegment(index))) != null) {
-        nextBranch.deliver(index + 1, packet, sessionIdSet);
+        nextBranch.deliver(sender, index + 1, packet, sessionIdSet);
       }
     } else if (parent != null) {
 
       ChannelBranch<V> wildBranch;
 
       if ((wildBranch = parent.childMap.get(StringSegment.wild())) != null) {
-        wildBranch.deliverToChannel(packet, sessionIdSet);
+        wildBranch.deliverToChannel(sender, packet, sessionIdSet);
       }
 
-      deliverToChannel(packet, sessionIdSet);
+      deliverToChannel(sender, packet, sessionIdSet);
     }
   }
 
-  private void deliverToChannel (Packet<V> packet, Set<String> sessionIdSet) {
+  private void deliverToChannel (Session<V> sender, Packet<V> packet, Set<String> sessionIdSet) {
 
     channelChangeLock.readLock().lock();
 
     try {
       if (channel != null) {
-        channel.deliver(packet, sessionIdSet);
+        channel.deliver(sender, packet, sessionIdSet);
       }
     } finally {
       channelChangeLock.readLock().unlock();

@@ -97,12 +97,12 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
     }
   }
 
-  private void onProcessing (Packet<V> packet) {
+  private void onProcessing (Session<V> sender, Packet<V> packet) {
 
     if (PacketType.DELIVERY.equals(packet.getPacketType())) {
       for (Listener<V> listener : listenerList) {
         if (PacketListener.class.isAssignableFrom(listener.getClass())) {
-          ((PacketListener<V>)listener).onDelivery(packet);
+          ((PacketListener<V>)listener).onDelivery(sender, packet);
         }
       }
     }
@@ -214,15 +214,15 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
   }
 
   @Override
-  public void deliver (Packet<V> packet, Set<String> sessionIdSet) {
+  public void deliver (Session<V> sender, Packet<V> packet, Set<String> sessionIdSet) {
 
     Packet<V> frozenPacket = PacketUtility.freezePacket(packet);
 
-    onProcessing(frozenPacket);
+    onProcessing(sender, frozenPacket);
 
     for (Session<V> session : sessionMap.values()) {
       if (sessionIdSet.add(session.getId()) && ((frozenPacket.getSenderId() == null) || (!session.getId().equals(frozenPacket.getSenderId())) || reflecting.get())) {
-        session.deliver(frozenPacket);
+        session.deliver(sender, frozenPacket);
       }
     }
   }
@@ -230,6 +230,6 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
   @Override
   public void publish (ObjectValue<V> data) {
 
-    deliver(new Packet<>(PacketType.DELIVERY, null, getRoute(), (Message<V>)codec.create().put(Message.CHANNEL, getRoute().getPath()).put(Message.DATA, data)), new HashSet<>());
+    deliver(null, new Packet<>(PacketType.DELIVERY, null, getRoute(), (Message<V>)codec.create().put(Message.CHANNEL, getRoute().getPath()).put(Message.DATA, data)), new HashSet<>());
   }
 }

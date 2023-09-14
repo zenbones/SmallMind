@@ -47,13 +47,14 @@ import org.smallmind.bayeux.oumuamua.server.api.SessionState;
 import org.smallmind.bayeux.oumuamua.server.spi.AbstractAttributed;
 import org.smallmind.bayeux.oumuamua.server.spi.Connection;
 import org.smallmind.bayeux.oumuamua.server.spi.json.PacketUtility;
+import org.smallmind.nutsnbolts.util.Pair;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 
 public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed implements Session<V> {
 
   private final ReentrantLock longPollLock = new ReentrantLock();
   private final Condition notEmptyCondition = longPollLock.newCondition();
-  private final ConcurrentLinkedDeque<Packet<V>> longPollQueue = new ConcurrentLinkedDeque<>();
+  private final ConcurrentLinkedDeque<Pair<Session<V>, Packet<V>>> longPollQueue = new ConcurrentLinkedDeque<>();
   private final ConcurrentLinkedQueue<Session.Listener<V>> listenerList = new ConcurrentLinkedQueue<>();
   private final AtomicInteger longPollQueueSize = new AtomicInteger(0);
   private final Consumer<Session<V>> onConnectedCallback;
@@ -75,15 +76,15 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
     state = SessionState.INITIALIZED;
   }
 
-  private void onProcessing (Packet<V> packet) {
+  private void onProcessing (Session<V> sender, Packet<V> packet) {
 
     if (PacketType.RESPONSE.equals(packet.getPacketType()) || PacketType.DELIVERY.equals(packet.getPacketType())) {
       for (Session.Listener<V> listener : listenerList) {
         if (Session.PacketListener.class.isAssignableFrom(listener.getClass())) {
           if (PacketType.DELIVERY.equals(packet.getPacketType())) {
-            ((Session.PacketListener<V>)listener).onDelivery(packet);
+            ((Session.PacketListener<V>)listener).onDelivery(sender, packet);
           } else {
-            ((Session.PacketListener<V>)listener).onResponse(packet);
+            ((Session.PacketListener<V>)listener).onResponse(sender, packet);
           }
         }
       }
@@ -158,9 +159,9 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   }
 
   @Override
-  public void onResponse (Packet<V> packet) {
+  public void onResponse (Session<V> sender, Packet<V> packet) {
 
-    onProcessing(packet);
+    onProcessing(sender, packet);
   }
 
   @Override
@@ -172,10 +173,10 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
     longPollLock.lock();
 
     try {
-      Packet<V> enqueuedPacket;
+      Pair<Session<V>, Packet<V>> enqueuedPair;
 
       do {
-        if ((enqueuedPacket = longPollQueue.pollFirst()) == null) {
+        if ((enqueuedPair = longPollQueue.pollFirst()) == null) {
           if (remainingNanoseconds > 0) {
             remainingNanoseconds = notEmptyCondition.awaitNanos(remainingNanoseconds);
           }
@@ -184,9 +185,9 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
           Packet<V> frozenPacket;
 
           longPollQueueSize.decrementAndGet();
-          frozenPacket = PacketUtility.freezePacket(enqueuedPacket);
+          frozenPacket = PacketUtility.freezePacket(enqueuedPair.getSecond());
 
-          onProcessing(frozenPacket);
+          onProcessing(enqueuedPair.getFirst(), frozenPacket);
 
           return frozenPacket;
         }
@@ -199,7 +200,7 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   }
 
   @Override
-  public void deliver (Packet<V> packet) {
+  public void deliver (Session<V> sender, Packet<V> packet) {
 
     if (longPolling) {
       longPollLock.lock();
@@ -211,7 +212,7 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
           }
         }
 
-        longPollQueue.add(packet);
+        longPollQueue.add(new Pair<>(sender, packet));
 
         notEmptyCondition.signal();
       } finally {
@@ -221,7 +222,7 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
 
       Packet<V> frozenPacket = PacketUtility.freezePacket(packet);
 
-      onProcessing(frozenPacket);
+      onProcessing(sender, frozenPacket);
 
       connection.deliver(frozenPacket);
     }

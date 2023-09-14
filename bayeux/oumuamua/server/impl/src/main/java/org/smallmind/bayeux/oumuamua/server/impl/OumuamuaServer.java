@@ -200,19 +200,19 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
     }
   }
 
-  private void onProcessing (Packet<V> packet) {
+  private void onProcessing (Session<V> sender, Packet<V> packet) {
 
     for (Listener<V> listener : listenerList) {
       if (PacketListener.class.isAssignableFrom(listener.getClass())) {
         switch (packet.getPacketType()) {
           case REQUEST:
-            ((PacketListener<V>)listener).onRequest(packet);
+            ((PacketListener<V>)listener).onRequest(sender, packet);
             break;
           case RESPONSE:
-            ((PacketListener<V>)listener).onResponse(packet);
+            ((PacketListener<V>)listener).onResponse(sender, packet);
             break;
           case DELIVERY:
-            ((PacketListener<V>)listener).onDelivery(packet);
+            ((PacketListener<V>)listener).onDelivery(sender, packet);
             break;
           default:
             throw new UnknownSwitchCaseException(packet.getPacketType().name());
@@ -347,24 +347,24 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   @Override
-  public void onRequest (Packet<V> packet) {
+  public void onRequest (Session<V> sender, Packet<V> packet) {
 
-    onProcessing(packet);
+    onProcessing(sender, packet);
   }
 
   @Override
-  public void onResponse (Packet<V> packet) {
+  public void onResponse (Session<V> sender, Packet<V> packet) {
 
-    onProcessing(packet);
+    onProcessing(sender, packet);
   }
 
   @Override
-  public void deliver (Packet<V> packet, boolean clustered) {
+  public void deliver (Session<V> sender, Packet<V> packet, boolean clustered) {
 
     if (packet.getRoute() != null) {
-      onProcessing(packet);
+      onProcessing(sender, packet);
 
-      channelTree.deliver(0, packet, new HashSet<>());
+      channelTree.deliver(sender, 0, packet, new HashSet<>());
 
       if (clustered) {
 

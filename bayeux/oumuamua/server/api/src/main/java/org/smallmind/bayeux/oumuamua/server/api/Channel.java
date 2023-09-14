@@ -57,7 +57,7 @@ public interface Channel<V extends Value<V>> extends Attributed {
 
     boolean isPersistent ();
 
-    void onDelivery (Packet<V> packet);
+    void onDelivery (Session<V> sender, Packet<V> packet);
   }
 
   void addListener (Listener<V> listener);
@@ -105,7 +105,7 @@ public interface Channel<V extends Value<V>> extends Attributed {
 
   boolean isRemovable (long now);
 
-  void deliver (Packet<V> packet, Set<String> sessionIdSet);
+  void deliver (Session<V> sender, Packet<V> packet, Set<String> sessionIdSet);
 
   void publish (ObjectValue<V> data);
 }

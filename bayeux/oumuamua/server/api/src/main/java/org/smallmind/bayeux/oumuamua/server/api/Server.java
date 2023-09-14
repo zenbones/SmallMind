@@ -69,11 +69,11 @@ public interface Server<V extends Value<V>> extends Attributed {
 
   interface PacketListener<V extends Value<V>> extends Listener<V> {
 
-    void onRequest (Packet<V> packet);
+    void onRequest (Session<V> sender, Packet<V> packet);
 
-    void onResponse (Packet<V> packet);
+    void onResponse (Session<V> sender, Packet<V> packet);
 
-    void onDelivery (Packet<V> packet);
+    void onDelivery (Session<V> sender, Packet<V> packet);
   }
 
   void addListener (Listener<V> listener);
@@ -118,9 +118,9 @@ public interface Server<V extends Value<V>> extends Attributed {
   void removeChannel (Channel<V> channel)
     throws ChannelStateException;
 
-  void onRequest (Packet<V> packet);
+  void onRequest (Session<V> sender, Packet<V> packet);
 
-  void onResponse (Packet<V> packet);
+  void onResponse (Session<V> sender, Packet<V> packet);
 
-  void deliver (Packet<V> packet, boolean clustered);
+  void deliver (Session<V> sender, Packet<V> packet, boolean clustered);
 }

@@ -406,7 +406,7 @@ public enum Meta {
 
           return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructPublishErrorResponse(server, path, request.getId(), request.getSessionId(), "Unauthorized", Reconnect.NONE));
         } else {
-          server.deliver(new Packet<>(PacketType.DELIVERY, session.getId(), route, constructDeliveryMessage(server, path, request.getId(), request.get(Message.DATA))), true);
+          server.deliver(session, new Packet<>(PacketType.DELIVERY, session.getId(), route, constructDeliveryMessage(server, path, request.getId(), request.get(Message.DATA))), true);
 
           return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructPublishSuccessResponse(server, path, request.getId(), session.getId()));
         }

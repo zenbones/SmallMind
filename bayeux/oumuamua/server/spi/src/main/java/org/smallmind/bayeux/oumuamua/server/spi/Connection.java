@@ -55,12 +55,12 @@ public interface Connection<V extends Value<V>> {
       Route route = Meta.PUBLISH.equals(meta) ? new DefaultRoute(path) : meta.getRoute();
       Packet<V> response;
 
-      server.onRequest(new Packet<>(PacketType.REQUEST, session.getId(), route, request));
+      server.onRequest(session, new Packet<>(PacketType.REQUEST, session.getId(), route, request));
 
       response = meta.process(protocol, route, server, session, request);
 
-      server.onResponse(response);
-      session.onResponse(response);
+      server.onResponse(session, response);
+      session.onResponse(session, response);
 
       return response;
     } catch (InterruptedException | InvalidPathException | MetaProcessingException exception) {
