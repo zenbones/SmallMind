@@ -48,7 +48,7 @@ import org.smallmind.nutsnbolts.lang.FormattedIOException;
 import org.smallmind.nutsnbolts.util.IterableIterator;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
-public class JacksonDeserializer<V extends Value<V>> implements JsonDeserializer<V> {
+public class JaxbDeserializer<V extends Value<V>> implements JsonDeserializer<V> {
 
   @Override
   public Message<V>[] convert (Codec<V> codec, byte[] buffer)

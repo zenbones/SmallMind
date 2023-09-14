@@ -36,9 +36,10 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingDeque;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
@@ -308,9 +309,12 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   public Channel<V> requireChannel (String path, ChannelInitializer... initializers)
     throws InvalidPathException {
 
-    LinkedList<ChannelInitializer<V>> combinedInitializers = new LinkedList<>(initializerList);
+    Queue<ChannelInitializer<V>> combinedInitializers;
 
-    if (initializers != null) {
+    if ((initializers == null) || (initializers.length == 0)) {
+      combinedInitializers = initializerList;
+    } else {
+      combinedInitializers = new LinkedBlockingDeque<>(initializerList);
       combinedInitializers.addAll(Arrays.asList((ChannelInitializer<V>[])initializers));
     }
 

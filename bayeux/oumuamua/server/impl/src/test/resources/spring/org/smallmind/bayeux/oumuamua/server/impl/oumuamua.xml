@@ -9,7 +9,7 @@
         <property name="codec">
           <bean class="org.smallmind.bayeux.oumuamua.server.spi.json.orthodox.OrthodoxCodec">
             <constructor-arg index="0" name="deserializer">
-              <bean class="org.smallmind.bayeux.oumuamua.server.spi.json.jackson.JacksonDeserializer"/>
+              <bean class="org.smallmind.bayeux.oumuamua.server.spi.json.jackson.JaxbDeserializer"/>
             </constructor-arg>
           </bean>
         </property>

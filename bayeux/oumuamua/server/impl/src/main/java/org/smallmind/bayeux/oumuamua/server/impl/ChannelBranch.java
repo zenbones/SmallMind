@@ -32,8 +32,8 @@
  */
 package org.smallmind.bayeux.oumuamua.server.impl;
 
-import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -86,7 +86,7 @@ public class ChannelBranch<V extends Value<V>> {
     }
   }
 
-  protected Channel<V> addChannelAsNecessary (long timeToLive, int index, DefaultRoute route, Codec<V> codec, Consumer<Channel<V>> channelCallback, List<ChannelInitializer<V>> initializers) {
+  protected Channel<V> addChannelAsNecessary (long timeToLive, int index, DefaultRoute route, Codec<V> codec, Consumer<Channel<V>> channelCallback, Queue<ChannelInitializer<V>> initializerQueue) {
 
     ChannelBranch<V> child;
     Segment segment;
@@ -95,10 +95,10 @@ public class ChannelBranch<V extends Value<V>> {
       childMap.put(segment, child = new ChannelBranch<V>(this));
     }
 
-    return (index == route.lastIndex()) ? child.initializeChannel(timeToLive, route, codec, channelCallback, initializers) : child.addChannelAsNecessary(timeToLive, index + 1, route, codec, channelCallback, initializers);
+    return (index == route.lastIndex()) ? child.initializeChannel(timeToLive, route, codec, channelCallback, initializerQueue) : child.addChannelAsNecessary(timeToLive, index + 1, route, codec, channelCallback, initializerQueue);
   }
 
-  private Channel<V> initializeChannel (long timeToLive, DefaultRoute route, Codec<V> codec, Consumer<Channel<V>> channelCallback, List<ChannelInitializer<V>> initializers) {
+  private Channel<V> initializeChannel (long timeToLive, DefaultRoute route, Codec<V> codec, Consumer<Channel<V>> channelCallback, Queue<ChannelInitializer<V>> initializerQueue) {
 
     channelChangeLock.writeLock().lock();
 
@@ -106,8 +106,8 @@ public class ChannelBranch<V extends Value<V>> {
       if (channel == null) {
         channel = new OumuamuaChannel<>(timeToLive, route, codec);
 
-        if (initializers != null) {
-          for (ChannelInitializer<V> initializer : initializers) {
+        if (initializerQueue != null) {
+          for (ChannelInitializer<V> initializer : initializerQueue) {
             initializer.accept(channel);
           }
         }
