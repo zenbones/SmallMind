@@ -32,9 +32,11 @@
  */
 package org.smallmind.bayeux.oumuamua.server.impl;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import javax.servlet.ServletConfig;
@@ -63,6 +65,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   private final ConcurrentHashMap<String, OumuamuaSession<V>> sessionMap = new ConcurrentHashMap<>();
   private final HashMap<String, Protocol<V>> protocolMap = new HashMap<>();
   private final ConcurrentLinkedQueue<Listener<V>> listenerList = new ConcurrentLinkedQueue<>();
+  private final ConcurrentLinkedQueue<ChannelInitializer<V>> initializerList = new ConcurrentLinkedQueue<>();
   private final OumuamuaConfiguration<V> configuration;
   private final ChannelTree<V> channelTree;
   private final String[] protocolNames;
@@ -283,6 +286,18 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   @Override
+  public void addInitializer (ChannelInitializer<V> initializer) {
+
+    initializerList.add(initializer);
+  }
+
+  @Override
+  public void removeInitializer (ChannelInitializer<V> initializer) {
+
+    initializerList.remove(initializer);
+  }
+
+  @Override
   public Channel<V> findChannel (String path)
     throws InvalidPathException {
 
@@ -293,7 +308,13 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   public Channel<V> requireChannel (String path, ChannelInitializer... initializers)
     throws InvalidPathException {
 
-    return channelTree.createIfAbsent(configuration.getChannelTimeToLiveMinutes() * 60 * 1000, 0, new DefaultRoute(path), this::onCreated, initializers);
+    LinkedList<ChannelInitializer<V>> combinedInitializers = new LinkedList<>(initializerList);
+
+    if (initializers != null) {
+      combinedInitializers.addAll(Arrays.asList((ChannelInitializer<V>[])initializers));
+    }
+
+    return channelTree.createIfAbsent(configuration.getChannelTimeToLiveMinutes() * 60 * 1000, 0, new DefaultRoute(path), this::onCreated, combinedInitializers);
   }
 
   @Override

@@ -95,6 +95,10 @@ public interface Server<V extends Value<V>> extends Attributed {
 
   Session<V> getSession (String sessionId);
 
+  void addInitializer (ChannelInitializer<V> initializer);
+
+  void removeInitializer (ChannelInitializer<V> initializer);
+
   Channel<V> findChannel (String path)
     throws InvalidPathException;
 

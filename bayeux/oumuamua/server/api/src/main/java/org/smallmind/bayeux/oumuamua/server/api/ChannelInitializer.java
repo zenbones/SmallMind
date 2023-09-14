@@ -33,7 +33,8 @@
 package org.smallmind.bayeux.oumuamua.server.api;
 
 import java.util.function.Consumer;
+import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 
-public interface ChannelInitializer extends Consumer<Channel> {
+public interface ChannelInitializer<V extends Value<V>> extends Consumer<Channel<V>> {
 
 }

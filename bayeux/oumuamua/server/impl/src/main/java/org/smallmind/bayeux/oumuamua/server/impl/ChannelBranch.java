@@ -32,6 +32,7 @@
  */
 package org.smallmind.bayeux.oumuamua.server.impl;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -85,7 +86,7 @@ public class ChannelBranch<V extends Value<V>> {
     }
   }
 
-  protected Channel<V> addChannelAsNecessary (long timeToLive, int index, DefaultRoute route, Codec<V> codec, Consumer<Channel<V>> channelCallback, ChannelInitializer... initializers) {
+  protected Channel<V> addChannelAsNecessary (long timeToLive, int index, DefaultRoute route, Codec<V> codec, Consumer<Channel<V>> channelCallback, List<ChannelInitializer<V>> initializers) {
 
     ChannelBranch<V> child;
     Segment segment;
@@ -97,7 +98,7 @@ public class ChannelBranch<V extends Value<V>> {
     return (index == route.lastIndex()) ? child.initializeChannel(timeToLive, route, codec, channelCallback, initializers) : child.addChannelAsNecessary(timeToLive, index + 1, route, codec, channelCallback, initializers);
   }
 
-  private Channel<V> initializeChannel (long timeToLive, DefaultRoute route, Codec<V> codec, Consumer<Channel<V>> channelCallback, ChannelInitializer... initializers) {
+  private Channel<V> initializeChannel (long timeToLive, DefaultRoute route, Codec<V> codec, Consumer<Channel<V>> channelCallback, List<ChannelInitializer<V>> initializers) {
 
     channelChangeLock.writeLock().lock();
 
@@ -106,7 +107,7 @@ public class ChannelBranch<V extends Value<V>> {
         channel = new OumuamuaChannel<>(timeToLive, route, codec);
 
         if (initializers != null) {
-          for (ChannelInitializer initializer : initializers) {
+          for (ChannelInitializer<V> initializer : initializers) {
             initializer.accept(channel);
           }
         }
