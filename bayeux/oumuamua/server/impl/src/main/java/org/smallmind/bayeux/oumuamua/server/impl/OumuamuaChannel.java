@@ -37,6 +37,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.common.api.json.Message;
 import org.smallmind.bayeux.oumuamua.common.api.json.ObjectValue;
@@ -57,20 +58,26 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
   private final ConcurrentHashMap<String, Session<V>> sessionMap = new ConcurrentHashMap<>();
   private final ConcurrentLinkedQueue<Listener<V>> listenerList = new ConcurrentLinkedQueue<>();
   private final AtomicBoolean reflecting = new AtomicBoolean();
+  private final Consumer<Session<V>> onSubscribedCallback;
+  private final Consumer<Session<V>> onUnsubscribedCallback;
   private final long timeToLiveMilliseconds;
   private boolean persistent;
   private boolean terminal;
   private long quiescentTimestamp;
   private int persistentListenerCount;
 
-  public OumuamuaChannel (long timeToLiveMilliseconds, DefaultRoute route, Codec<V> codec) {
+  public OumuamuaChannel (Consumer<Session<V>> onSubscribedCallback, Consumer<Session<V>> onUnsubscribedCallback, long timeToLiveMilliseconds, DefaultRoute route, Codec<V> codec) {
 
+    this.onSubscribedCallback = onSubscribedCallback;
+    this.onUnsubscribedCallback = onUnsubscribedCallback;
     this.timeToLiveMilliseconds = timeToLiveMilliseconds;
     this.route = route;
     this.codec = codec;
   }
 
   private void onSubscribed (Session<V> session) {
+
+    onSubscribedCallback.accept(session);
 
     for (Listener<V> listener : listenerList) {
       if (SessionListener.class.isAssignableFrom(listener.getClass())) {
@@ -81,6 +88,8 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
 
   private void onUnsubscribed (Session<V> session) {
 
+    onUnsubscribedCallback.accept(session);
+
     for (Listener<V> listener : listenerList) {
       if (SessionListener.class.isAssignableFrom(listener.getClass())) {
         ((SessionListener<V>)listener).onUnsubscribed(session);
@@ -88,7 +97,7 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
     }
   }
 
-  private void onDelivery (Packet<V> packet) {
+  private void onProcessing (Packet<V> packet) {
 
     if (PacketType.DELIVERY.equals(packet.getPacketType())) {
       for (Listener<V> listener : listenerList) {
@@ -209,7 +218,7 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
 
     Packet<V> frozenPacket = PacketUtility.freezePacket(packet);
 
-    onDelivery(frozenPacket);
+    onProcessing(frozenPacket);
 
     for (Session<V> session : sessionMap.values()) {
       if (sessionIdSet.add(session.getId()) && ((frozenPacket.getSenderId() == null) || (!session.getId().equals(frozenPacket.getSenderId())) || reflecting.get())) {

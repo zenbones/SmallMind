@@ -38,6 +38,7 @@ import org.smallmind.bayeux.oumuamua.server.api.InvalidPathException;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.PacketType;
 import org.smallmind.bayeux.oumuamua.server.api.Protocol;
+import org.smallmind.bayeux.oumuamua.server.api.Route;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.bayeux.oumuamua.server.api.Transport;
@@ -49,7 +50,19 @@ public interface Connection<V extends Value<V>> {
 
     try {
 
-      return Meta.from(request.getChannel()).process(protocol, server, session, request);
+      String path;
+      Meta meta = Meta.from(path = request.getChannel());
+      Route route = Meta.PUBLISH.equals(meta) ? new DefaultRoute(path) : meta.getRoute();
+      Packet<V> response;
+
+      server.onRequest(new Packet<>(PacketType.REQUEST, session.getId(), route, request));
+
+      response = meta.process(protocol, route, server, session, request);
+
+      server.onResponse(response);
+      session.onResponse(response);
+
+      return response;
     } catch (InterruptedException | InvalidPathException | MetaProcessingException exception) {
       return new Packet<>(PacketType.RESPONSE, request.getSessionId(), null, Meta.constructErrorResponse(server, request.getChannel(), request.getId(), request.getSessionId(), exception.getMessage(), null));
     }

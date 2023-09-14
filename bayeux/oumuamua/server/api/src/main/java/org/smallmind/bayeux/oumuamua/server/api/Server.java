@@ -51,6 +51,10 @@ public interface Server<V extends Value<V>> extends Attributed {
     void onConnected (Session<V> session);
 
     void onDisconnected (Session<V> session);
+
+    void onSubscribed (Session<V> session);
+
+    void onUnsubscribed (Session<V> session);
   }
 
   interface ChannelListener<V extends Value<V>> extends Listener<V> {
@@ -110,6 +114,10 @@ public interface Server<V extends Value<V>> extends Attributed {
   // All sessions must be unsubscribed (and listeners notified) upon channel removal
   void removeChannel (Channel<V> channel)
     throws ChannelStateException;
+
+  void onRequest (Packet<V> packet);
+
+  void onResponse (Packet<V> packet);
 
   void deliver (Packet<V> packet, boolean clustered);
 }

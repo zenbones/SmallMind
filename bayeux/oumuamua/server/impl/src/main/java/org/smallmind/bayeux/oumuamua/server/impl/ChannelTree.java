@@ -39,6 +39,7 @@ import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.ChannelInitializer;
+import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
 
 public class ChannelTree<V extends Value<V>> extends ChannelBranch<V> {
@@ -53,13 +54,13 @@ public class ChannelTree<V extends Value<V>> extends ChannelBranch<V> {
     this.codec = codec;
   }
 
-  public Channel<V> createIfAbsent (long timeToLive, int index, DefaultRoute route, Consumer<Channel<V>> channelCallback, Queue<ChannelInitializer<V>> initializerQueue) {
+  public Channel<V> createIfAbsent (long timeToLive, int index, DefaultRoute route, Consumer<Channel<V>> channelCallback, Consumer<Session<V>> onSubscribedCallback, Consumer<Session<V>> onUnsubscribedCallback, Queue<ChannelInitializer<V>> initializerQueue) {
 
     treeChangeLock.lock();
 
     try {
 
-      return addChannelAsNecessary(timeToLive, index, route, codec, channelCallback, initializerQueue);
+      return addChannelAsNecessary(timeToLive, index, route, codec, channelCallback, onSubscribedCallback, onUnsubscribedCallback, initializerQueue);
     } finally {
       treeChangeLock.unlock();
     }

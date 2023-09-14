@@ -69,6 +69,8 @@ public interface Session<V extends Value<V>> extends Attributed {
 
   void completeDisconnect ();
 
+  void onResponse (Packet<V> packet);
+
   Packet<V> poll (long timeout, TimeUnit unit)
     throws InterruptedException;
 

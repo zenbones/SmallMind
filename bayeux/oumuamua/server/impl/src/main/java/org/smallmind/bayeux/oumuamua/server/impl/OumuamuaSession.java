@@ -64,10 +64,10 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   private final int maxLongPollQueueSize;
   private SessionState state;
 
-  public OumuamuaSession (Consumer<Session<V>> onConnectedCallback, Consumer<Session<V>> onDisonnectedCallback, Connection<V> connection, int maxLongPollQueueSize) {
+  public OumuamuaSession (Consumer<Session<V>> onConnectedCallback, Consumer<Session<V>> onDisconnectedCallback, Connection<V> connection, int maxLongPollQueueSize) {
 
     this.onConnectedCallback = onConnectedCallback;
-    this.onDisconnectedCallback = onDisonnectedCallback;
+    this.onDisconnectedCallback = onDisconnectedCallback;
     this.connection = connection;
     this.maxLongPollQueueSize = maxLongPollQueueSize;
 
@@ -75,7 +75,7 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
     state = SessionState.INITIALIZED;
   }
 
-  private void onDelivery (Packet<V> packet) {
+  private void onProcessing (Packet<V> packet) {
 
     if (PacketType.RESPONSE.equals(packet.getPacketType()) || PacketType.DELIVERY.equals(packet.getPacketType())) {
       for (Session.Listener<V> listener : listenerList) {
@@ -158,6 +158,12 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   }
 
   @Override
+  public void onResponse (Packet<V> packet) {
+
+    onProcessing(packet);
+  }
+
+  @Override
   public Packet<V> poll (long timeout, TimeUnit unit)
     throws InterruptedException {
 
@@ -180,7 +186,7 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
           longPollQueueSize.decrementAndGet();
           frozenPacket = PacketUtility.freezePacket(enqueuedPacket);
 
-          onDelivery(frozenPacket);
+          onProcessing(frozenPacket);
 
           return frozenPacket;
         }
@@ -215,7 +221,7 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
 
       Packet<V> frozenPacket = PacketUtility.freezePacket(packet);
 
-      onDelivery(frozenPacket);
+      onProcessing(frozenPacket);
 
       connection.deliver(frozenPacket);
     }

@@ -46,6 +46,7 @@ import org.smallmind.bayeux.oumuamua.server.api.ChannelStateException;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.Route;
 import org.smallmind.bayeux.oumuamua.server.api.Segment;
+import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
 import org.smallmind.bayeux.oumuamua.server.spi.StringSegment;
 
@@ -86,7 +87,7 @@ public class ChannelBranch<V extends Value<V>> {
     }
   }
 
-  protected Channel<V> addChannelAsNecessary (long timeToLive, int index, DefaultRoute route, Codec<V> codec, Consumer<Channel<V>> channelCallback, Queue<ChannelInitializer<V>> initializerQueue) {
+  protected Channel<V> addChannelAsNecessary (long timeToLive, int index, DefaultRoute route, Codec<V> codec, Consumer<Channel<V>> channelCallback, Consumer<Session<V>> onSubscribedCallback, Consumer<Session<V>> onUnsubscribedCallback, Queue<ChannelInitializer<V>> initializerQueue) {
 
     ChannelBranch<V> child;
     Segment segment;
@@ -95,16 +96,16 @@ public class ChannelBranch<V extends Value<V>> {
       childMap.put(segment, child = new ChannelBranch<V>(this));
     }
 
-    return (index == route.lastIndex()) ? child.initializeChannel(timeToLive, route, codec, channelCallback, initializerQueue) : child.addChannelAsNecessary(timeToLive, index + 1, route, codec, channelCallback, initializerQueue);
+    return (index == route.lastIndex()) ? child.initializeChannel(timeToLive, route, codec, channelCallback, onSubscribedCallback, onUnsubscribedCallback, initializerQueue) : child.addChannelAsNecessary(timeToLive, index + 1, route, codec, channelCallback, onSubscribedCallback, onUnsubscribedCallback, initializerQueue);
   }
 
-  private Channel<V> initializeChannel (long timeToLive, DefaultRoute route, Codec<V> codec, Consumer<Channel<V>> channelCallback, Queue<ChannelInitializer<V>> initializerQueue) {
+  private Channel<V> initializeChannel (long timeToLive, DefaultRoute route, Codec<V> codec, Consumer<Channel<V>> channelCallback, Consumer<Session<V>> onSubscribedCallback, Consumer<Session<V>> onUnsubscribedCallback, Queue<ChannelInitializer<V>> initializerQueue) {
 
     channelChangeLock.writeLock().lock();
 
     try {
       if (channel == null) {
-        channel = new OumuamuaChannel<>(timeToLive, route, codec);
+        channel = new OumuamuaChannel<>(onSubscribedCallback, onUnsubscribedCallback, timeToLive, route, codec);
 
         if (initializerQueue != null) {
           for (ChannelInitializer<V> initializer : initializerQueue) {

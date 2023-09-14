@@ -164,6 +164,24 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
     }
   }
 
+  private void onSubscribed (Session<V> session) {
+
+    for (Listener<V> listener : listenerList) {
+      if (SessionListener.class.isAssignableFrom(listener.getClass())) {
+        ((SessionListener<V>)listener).onSubscribed(session);
+      }
+    }
+  }
+
+  private void onUnsubscribed (Session<V> session) {
+
+    for (Listener<V> listener : listenerList) {
+      if (SessionListener.class.isAssignableFrom(listener.getClass())) {
+        ((SessionListener<V>)listener).onUnsubscribed(session);
+      }
+    }
+  }
+
   private void onCreated (Channel<V> channel) {
 
     for (Listener<V> listener : listenerList) {
@@ -182,7 +200,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
     }
   }
 
-  private void onDelivery (Packet<V> packet) {
+  private void onProcessing (Packet<V> packet) {
 
     for (Listener<V> listener : listenerList) {
       if (PacketListener.class.isAssignableFrom(listener.getClass())) {
@@ -318,7 +336,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
       combinedInitializers.addAll(Arrays.asList((ChannelInitializer<V>[])initializers));
     }
 
-    return channelTree.createIfAbsent(configuration.getChannelTimeToLiveMinutes() * 60 * 1000, 0, new DefaultRoute(path), this::onCreated, combinedInitializers);
+    return channelTree.createIfAbsent(configuration.getChannelTimeToLiveMinutes() * 60 * 1000, 0, new DefaultRoute(path), this::onCreated, this::onSubscribed, this::onUnsubscribed, combinedInitializers);
   }
 
   @Override
@@ -329,10 +347,22 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   @Override
+  public void onRequest (Packet<V> packet) {
+
+    onProcessing(packet);
+  }
+
+  @Override
+  public void onResponse (Packet<V> packet) {
+
+    onProcessing(packet);
+  }
+
+  @Override
   public void deliver (Packet<V> packet, boolean clustered) {
 
     if (packet.getRoute() != null) {
-      onDelivery(packet);
+      onProcessing(packet);
 
       channelTree.deliver(0, packet, new HashSet<>());
 
