@@ -51,10 +51,6 @@ public interface Server<V extends Value<V>> extends Attributed {
     void onConnected (Session<V> session);
 
     void onDisconnected (Session<V> session);
-
-    void onSubscribed (Session<V> session);
-
-    void onUnsubscribed (Session<V> session);
   }
 
   interface ChannelListener<V extends Value<V>> extends Listener<V> {
@@ -62,6 +58,13 @@ public interface Server<V extends Value<V>> extends Attributed {
     void onCreated (Channel<V> channel);
 
     void onRemoved (Channel<V> channel);
+  }
+
+  interface SubscriptionListener<V extends Value<V>> extends Listener<V> {
+
+    void onSubscribed (Channel<V> channel, Session<V> session);
+
+    void onUnsubscribed (Channel<V> channel, Session<V> session);
   }
 
   interface PacketListener<V extends Value<V>> extends Listener<V> {

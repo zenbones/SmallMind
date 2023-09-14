@@ -164,20 +164,20 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
     }
   }
 
-  private void onSubscribed (Session<V> session) {
+  private void onSubscribed (Channel<V> channel, Session<V> session) {
 
     for (Listener<V> listener : listenerList) {
-      if (SessionListener.class.isAssignableFrom(listener.getClass())) {
-        ((SessionListener<V>)listener).onSubscribed(session);
+      if (SubscriptionListener.class.isAssignableFrom(listener.getClass())) {
+        ((SubscriptionListener<V>)listener).onSubscribed(channel, session);
       }
     }
   }
 
-  private void onUnsubscribed (Session<V> session) {
+  private void onUnsubscribed (Channel<V> channel, Session<V> session) {
 
     for (Listener<V> listener : listenerList) {
-      if (SessionListener.class.isAssignableFrom(listener.getClass())) {
-        ((SessionListener<V>)listener).onUnsubscribed(session);
+      if (SubscriptionListener.class.isAssignableFrom(listener.getClass())) {
+        ((SubscriptionListener<V>)listener).onUnsubscribed(channel, session);
       }
     }
   }

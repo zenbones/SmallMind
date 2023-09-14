@@ -37,7 +37,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.common.api.json.Message;
 import org.smallmind.bayeux.oumuamua.common.api.json.ObjectValue;
@@ -58,15 +58,15 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
   private final ConcurrentHashMap<String, Session<V>> sessionMap = new ConcurrentHashMap<>();
   private final ConcurrentLinkedQueue<Listener<V>> listenerList = new ConcurrentLinkedQueue<>();
   private final AtomicBoolean reflecting = new AtomicBoolean();
-  private final Consumer<Session<V>> onSubscribedCallback;
-  private final Consumer<Session<V>> onUnsubscribedCallback;
+  private final BiConsumer<Channel<V>, Session<V>> onSubscribedCallback;
+  private final BiConsumer<Channel<V>, Session<V>> onUnsubscribedCallback;
   private final long timeToLiveMilliseconds;
   private boolean persistent;
   private boolean terminal;
   private long quiescentTimestamp;
   private int persistentListenerCount;
 
-  public OumuamuaChannel (Consumer<Session<V>> onSubscribedCallback, Consumer<Session<V>> onUnsubscribedCallback, long timeToLiveMilliseconds, DefaultRoute route, Codec<V> codec) {
+  public OumuamuaChannel (BiConsumer<Channel<V>, Session<V>> onSubscribedCallback, BiConsumer<Channel<V>, Session<V>> onUnsubscribedCallback, long timeToLiveMilliseconds, DefaultRoute route, Codec<V> codec) {
 
     this.onSubscribedCallback = onSubscribedCallback;
     this.onUnsubscribedCallback = onUnsubscribedCallback;
@@ -77,7 +77,7 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
 
   private void onSubscribed (Session<V> session) {
 
-    onSubscribedCallback.accept(session);
+    onSubscribedCallback.accept(this, session);
 
     for (Listener<V> listener : listenerList) {
       if (SessionListener.class.isAssignableFrom(listener.getClass())) {
@@ -88,7 +88,7 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
 
   private void onUnsubscribed (Session<V> session) {
 
-    onUnsubscribedCallback.accept(session);
+    onUnsubscribedCallback.accept(this, session);
 
     for (Listener<V> listener : listenerList) {
       if (SessionListener.class.isAssignableFrom(listener.getClass())) {
