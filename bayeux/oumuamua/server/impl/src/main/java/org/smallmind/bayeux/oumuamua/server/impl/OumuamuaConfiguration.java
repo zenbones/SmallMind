@@ -42,7 +42,7 @@ public class OumuamuaConfiguration<V extends Value<V>> {
 
   private Backbone<V> backbone;
   private Codec<V> codec;
-  private SecurityPolicy securityPolicy;
+  private SecurityPolicy<V> securityPolicy;
   private Protocol<V>[] protocols;
   private long channelTimeToLiveMinutes = 30;
   private int idleChannelCycleMinutes = 5;
@@ -69,12 +69,12 @@ public class OumuamuaConfiguration<V extends Value<V>> {
     this.codec = codec;
   }
 
-  public SecurityPolicy getSecurityPolicy () {
+  public SecurityPolicy<V> getSecurityPolicy () {
 
     return securityPolicy;
   }
 
-  public void setSecurityPolicy (SecurityPolicy securityPolicy) {
+  public void setSecurityPolicy (SecurityPolicy<V> securityPolicy) {
 
     this.securityPolicy = securityPolicy;
   }

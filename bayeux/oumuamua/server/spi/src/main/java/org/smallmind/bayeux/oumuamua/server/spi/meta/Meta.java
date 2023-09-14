@@ -281,7 +281,7 @@ public enum Meta {
         return new Packet<>(PacketType.RESPONSE, session.getId(), getRoute(), constructSubscribeErrorResponse(server, getRoute().getPath(), request.getId(), request.getSessionId(), "Attempted subscription to a meta channel", subscription, null));
       } else {
 
-        SecurityPolicy securityPolicy = server.getSecurityPolicy();
+        SecurityPolicy<V> securityPolicy = server.getSecurityPolicy();
         Channel<V> channel;
 
         try {

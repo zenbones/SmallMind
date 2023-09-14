@@ -242,7 +242,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   @Override
-  public SecurityPolicy getSecurityPolicy () {
+  public SecurityPolicy<V> getSecurityPolicy () {
 
     return configuration.getSecurityPolicy();
   }

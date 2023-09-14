@@ -88,7 +88,7 @@ public interface Server<V extends Value<V>> extends Attributed {
 
   Backbone<V> getBackbone ();
 
-  SecurityPolicy getSecurityPolicy ();
+  SecurityPolicy<V> getSecurityPolicy ();
 
   // Serves as an injection point for implementations that wish to add client configurable additions to the json codec pipeline
   Codec<V> getCodec ();
