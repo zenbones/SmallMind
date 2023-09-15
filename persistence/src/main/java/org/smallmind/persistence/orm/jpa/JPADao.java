@@ -308,16 +308,22 @@ public abstract class JPADao<I extends Serializable & Comparable<I>, D extends D
 
   public <T> TypedQuery<T> constructCriteriaQuery (Class<T> criteriaClass, CriteriaQueryDetails<T> criteriaQueryDetails) {
 
-    return getSession().getNativeSession().createQuery(criteriaQueryDetails.completeCriteria(criteriaClass, getSession().getNativeSession().getCriteriaBuilder()));
+    EntityManager entityManager = getSession().getNativeSession();
+
+    return entityManager.createQuery(criteriaQueryDetails.completeCriteria(criteriaClass, entityManager.getCriteriaBuilder()));
   }
 
   public <T> Query constructCriteriaUpdate (Class<T> criteriaClass, CriteriaUpdateDetails<T> criteriaUpdateDetails) {
 
-    return getSession().getNativeSession().createQuery(criteriaUpdateDetails.completeCriteria(criteriaClass, getSession().getNativeSession().getCriteriaBuilder()));
+    EntityManager entityManager = getSession().getNativeSession();
+
+    return entityManager.createQuery(criteriaUpdateDetails.completeCriteria(criteriaClass, entityManager.getCriteriaBuilder()));
   }
 
   public <T> Query constructCriteriaDelete (Class<T> criteriaClass, CriteriaDeleteDetails<T> criteriaDeleteDetails) {
 
-    return getSession().getNativeSession().createQuery(criteriaDeleteDetails.completeCriteria(criteriaClass, getSession().getNativeSession().getCriteriaBuilder()));
+    EntityManager entityManager = getSession().getNativeSession();
+
+    return entityManager.createQuery(criteriaDeleteDetails.completeCriteria(criteriaClass, entityManager.getCriteriaBuilder()));
   }
 }

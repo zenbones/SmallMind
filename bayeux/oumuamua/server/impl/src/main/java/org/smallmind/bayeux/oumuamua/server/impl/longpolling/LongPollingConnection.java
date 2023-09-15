@@ -94,7 +94,6 @@ public class LongPollingConnection<V extends Value<V>> implements Connection<V> 
 
     String encodedPacket = PacketUtility.encode(packet).toString();
 
-    // System.out.println("=>" + builder);
     LoggerManager.getLogger(LongPollingConnection.class).debug(() -> "=>" + encodedPacket);
 
     asyncContext.getResponse().getOutputStream().print(encodedPacket);
@@ -106,7 +105,6 @@ public class LongPollingConnection<V extends Value<V>> implements Connection<V> 
 
     OumuamuaSession<V> session;
 
-    // System.out.println("<=" + new String(contentBuffer));
     LoggerManager.getLogger(LongPollingConnection.class).debug(() -> "<=" + new String(contentBuffer));
 
     if ((session = sessionRef.get()) != null) {

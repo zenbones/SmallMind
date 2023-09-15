@@ -346,10 +346,11 @@ public class QJPADao<I extends Serializable & Comparable<I>, D extends JPADurabl
 
   private <T> JPAQuery<T> constructQuery (JPAQueryDetails<T> queryDetails) {
 
-    JPAQuery<T> query = new JPAQuery<>(getSession().getNativeSession());
+    EntityManager entityManager = getSession().getNativeSession();
+    JPAQuery<T> query = new JPAQuery<>(entityManager);
 
     if (queryDetails.getEntityGraphSetting() != null) {
-      query.setHint(queryDetails.getEntityGraphSetting().getHint().getKey(), getSession().getNativeSession().createEntityGraph(queryDetails.getEntityGraphSetting().getName()));
+      query.setHint(queryDetails.getEntityGraphSetting().getHint().getKey(), entityManager.createEntityGraph(queryDetails.getEntityGraphSetting().getName()));
     }
 
     return queryDetails.completeQuery(query);
