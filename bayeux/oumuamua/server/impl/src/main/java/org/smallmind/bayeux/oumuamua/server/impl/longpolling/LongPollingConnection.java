@@ -33,10 +33,13 @@
 package org.smallmind.bayeux.oumuamua.server.impl.longpolling;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.LinkedList;
 import javax.servlet.AsyncContext;
 import org.smallmind.bayeux.oumuamua.common.api.json.Message;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
+import org.smallmind.bayeux.oumuamua.server.api.PacketType;
 import org.smallmind.bayeux.oumuamua.server.api.Transport;
 import org.smallmind.bayeux.oumuamua.server.impl.OumuamuaConnection;
 import org.smallmind.bayeux.oumuamua.server.impl.OumuamuaServer;
@@ -69,7 +72,7 @@ public class LongPollingConnection<V extends Value<V>> implements OumuamuaConnec
   private void emit (AsyncContext asyncContext, Packet<V> packet)
     throws IOException {
 
-    String encodedPacket = PacketUtility.encode(packet).toString();
+    String encodedPacket = PacketUtility.encode(packet);
 
     LoggerManager.getLogger(LongPollingConnection.class).debug(() -> "=>" + encodedPacket);
 
@@ -80,7 +83,29 @@ public class LongPollingConnection<V extends Value<V>> implements OumuamuaConnec
   public void onMessages (AsyncContext asyncContext, Message<V>[] messages) {
 
     try {
-      process(server, packet -> emit(asyncContext, packet), messages);
+      if ((messages != null) && (messages.length > 0)) {
+        if (messages.length == 1) {
+
+          process(server, packet -> {
+            try {
+              emit(asyncContext, packet);
+            } catch (IOException ioException) {
+              LoggerManager.getLogger(LongPollingConnection.class).error(ioException);
+            }
+          }, messages);
+        } else {
+
+          LinkedList<Message<V>> batchList = new LinkedList<>();
+
+          process(server, packet -> batchList.addAll(Arrays.asList(packet.getMessages())), messages);
+
+          try {
+            emit(asyncContext, new Packet<>(PacketType.RESPONSE, null, null, batchList.toArray(new Message[0])));
+          } catch (IOException ioException) {
+            LoggerManager.getLogger(LongPollingConnection.class).error(ioException);
+          }
+        }
+      }
     } finally {
       asyncContext.complete();
     }

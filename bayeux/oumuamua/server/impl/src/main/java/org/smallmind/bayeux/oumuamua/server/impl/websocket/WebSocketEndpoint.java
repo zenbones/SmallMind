@@ -85,7 +85,7 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
     if (websocketSession.isOpen()) {
       try {
 
-        String encodedPacket = PacketUtility.encode(packet).toString();
+        String encodedPacket = PacketUtility.encode(packet);
 
         LoggerManager.getLogger(WebSocketEndpoint.class).debug(() -> "=>" + encodedPacket);
 

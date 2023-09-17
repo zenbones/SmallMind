@@ -52,7 +52,7 @@ public class PacketUtility {
     return new Packet<V>(packet.getPacketType(), packet.getSenderId(), packet.getRoute(), frozenMessages);
   }
 
-  public static <V extends Value<V>> StringBuilder encode (Packet<V> packet)
+  public static <V extends Value<V>> String encode (Packet<V> packet)
     throws IOException {
 
     StringBuilder builder = new StringBuilder();
@@ -77,6 +77,6 @@ public class PacketUtility {
       writer.write(']');
     }
 
-    return builder;
+    return builder.toString();
   }
 }

@@ -55,7 +55,7 @@ public class RecordUtility {
     try (ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream)) {
       objectOutputStream.writeUTF(nodeName);
       objectOutputStream.writeUTF(packet.getRoute().getPath());
-      objectOutputStream.writeUTF(PacketUtility.encode(packet).toString());
+      objectOutputStream.writeUTF(PacketUtility.encode(packet));
     }
 
     return byteArrayOutputStream.toByteArray();
