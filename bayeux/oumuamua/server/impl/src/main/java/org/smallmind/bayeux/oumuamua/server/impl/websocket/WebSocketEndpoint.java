@@ -46,7 +46,6 @@ import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.Transport;
 import org.smallmind.bayeux.oumuamua.server.impl.OumuamuaConnection;
 import org.smallmind.bayeux.oumuamua.server.impl.OumuamuaServer;
-import org.smallmind.bayeux.oumuamua.server.spi.ResponseConsumer;
 import org.smallmind.bayeux.oumuamua.server.spi.json.PacketUtility;
 import org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356.WebSocketTransport;
 import org.smallmind.scribe.pen.LoggerManager;
@@ -106,7 +105,11 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
 
     LoggerManager.getLogger(WebSocketEndpoint.class).debug(() -> "<=" + content);
 
-    process(getTransport().getProtocol(), server, (ResponseConsumer<V>)this::deliver, server.getCodec().from(content));
+    try {
+      process(server, this::deliver, server.getCodec().from(content));
+    } catch (IOException ioException) {
+      LoggerManager.getLogger(WebSocketEndpoint.class).error(ioException);
+    }
   }
 
   @Override

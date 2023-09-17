@@ -45,19 +45,19 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.smallmind.bayeux.oumuamua.common.api.json.Message;
-import org.smallmind.bayeux.oumuamua.common.api.json.StringValue;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
-import org.smallmind.bayeux.oumuamua.common.api.json.ValueType;
 import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.impl.longpolling.LongPollingConnection;
 import org.smallmind.bayeux.oumuamua.server.impl.longpolling.LongPollingTransport;
 import org.smallmind.bayeux.oumuamua.server.spi.Protocols;
 import org.smallmind.bayeux.oumuamua.server.spi.Transports;
+import org.smallmind.scribe.pen.LoggerManager;
 
 public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
 
   private final ExecutorService executorService = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<>());
+  private LongPollingConnection<V> connection;
   private OumuamuaServer<V> server;
 
   @Override
@@ -75,7 +75,22 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
     if ((server = (OumuamuaServer<V>)servletConfig.getServletContext().getAttribute(Server.ATTRIBUTE)) == null) {
       throw new ServletException("Missing " + OumuamuaServer.class.getSimpleName() + " in the servlet context - was the " + OumuamuaServletContextListener.class.getSimpleName() + " installed?");
     } else {
-      server.start(servletConfig);
+
+      Protocol<V> servletProtocol;
+
+      if ((servletProtocol = server.getProtocol(Protocols.SERVLET.getName())) == null) {
+        throw new ServletException("No http protocol support has been configured");
+      } else {
+
+        LongPollingTransport<V> transport;
+
+        if ((transport = (LongPollingTransport<V>)servletProtocol.getTransport(Transports.LONG_POLLING.getName())) == null) {
+          throw new ServletException("No long polling transport support has been configured");
+        } else {
+          connection = new LongPollingConnection<>(transport, server);
+          server.start(servletConfig);
+        }
+      }
     }
   }
 
@@ -83,79 +98,40 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
   protected void doPost (HttpServletRequest request, HttpServletResponse response)
     throws IOException {
 
-    Protocol<V> servletProtocol;
+    String contentLength;
 
-    if ((servletProtocol = server.getProtocol(Protocols.SERVLET.getName())) == null) {
-      response.sendError(HttpServletResponse.SC_BAD_REQUEST, "No http protocol support has been configured");
+    if (((contentLength = request.getHeader("Content-Length")) == null) || contentLength.isEmpty()) {
+      response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing content length");
     } else {
 
-      LongPollingTransport<V> transport;
+      byte[] contentBuffer;
+      int contentBufferSize = 0;
 
-      if ((transport = (LongPollingTransport<V>)servletProtocol.getTransport(Transports.LONG_POLLING.getName())) == null) {
-        response.sendError(HttpServletResponse.SC_BAD_REQUEST, "No long polling transport support has been configured");
+      try {
+        contentBufferSize = Integer.parseInt(contentLength);
+      } catch (NumberFormatException numberFormatException) {
+        response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid content length");
+      }
+
+      if ((contentBufferSize <= 0) || (!readStream(request.getInputStream(), contentBuffer = new byte[contentBufferSize]))) {
+        response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unable to read full content");
       } else {
 
-        String contentLength;
+        LoggerManager.getLogger(LongPollingConnection.class).debug(() -> "<=" + new String(contentBuffer));
 
-        if (((contentLength = request.getHeader("Content-Length")) == null) || contentLength.isEmpty()) {
-          response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing content length");
-        } else {
+        try {
 
-          byte[] contentBuffer;
-          int contentBufferSize = 0;
+          Message<V>[] messages = server.getCodec().from(contentBuffer);
 
-          try {
-            contentBufferSize = Integer.parseInt(contentLength);
-          } catch (NumberFormatException numberFormatException) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid content length");
-          }
+          AsyncContext asyncContext = request.startAsync();
+          asyncContext.setTimeout(0);
 
-          if ((contentBufferSize <= 0) || (!readStream(request.getInputStream(), contentBuffer = new byte[contentBufferSize]))) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unable to read full content");
-          } else {
-
-            OumuamuaSession<V> session;
-            Message<V>[] messages = server.getCodec().from(contentBuffer);
-            String sessionId = null;
-
-            for (Message<V> message : messages) {
-
-              Value<V> sessionIdValue;
-
-              if (((sessionIdValue = message.get(Message.SESSION_ID)) != null) && ValueType.STRING.equals(sessionIdValue.getType())) {
-                sessionId = ((StringValue<V>)sessionIdValue).asText();
-                break;
-              }
-            }
-
-            if (sessionId == null) {
-
-              LongPollingConnection<V> connection;
-
-              session = server.createSession(connection = transport.createConnection(server));
-              connection.setSession(session);
-              server.addSession(session);
-
-              respond(request, connection, messages, contentBuffer);
-            } else if ((session = server.getSession(sessionId)) == null) {
-              response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unknown client id");
-            } else if (!session.isLongPolling()) {
-              response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Incorrect transport for this session");
-            } else {
-              respond(request, (LongPollingConnection<V>)session.getConnection(), messages, contentBuffer);
-            }
-          }
+          executorService.submit(() -> connection.onMessages(asyncContext, messages));
+        } catch (IOException ioException) {
+          response.sendError(HttpServletResponse.SC_BAD_REQUEST, ioException.getMessage());
         }
       }
     }
-  }
-
-  private void respond (HttpServletRequest request, LongPollingConnection<V> connection, Message<V>[] messages, byte[] contentBuffer) {
-
-    AsyncContext asyncContext = request.startAsync();
-    asyncContext.setTimeout(0);
-
-    executorService.submit(() -> connection.onMessages(asyncContext, messages, contentBuffer));
   }
 
   private boolean readStream (InputStream inputStream, byte[] contentBuffer)

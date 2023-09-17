@@ -40,7 +40,6 @@ import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.Transport;
 import org.smallmind.bayeux.oumuamua.server.impl.OumuamuaConnection;
 import org.smallmind.bayeux.oumuamua.server.impl.OumuamuaServer;
-import org.smallmind.bayeux.oumuamua.server.spi.ResponseConsumer;
 import org.smallmind.bayeux.oumuamua.server.spi.json.PacketUtility;
 import org.smallmind.scribe.pen.LoggerManager;
 
@@ -76,13 +75,14 @@ public class LongPollingConnection<V extends Value<V>> implements OumuamuaConnec
 
     asyncContext.getResponse().getOutputStream().print(encodedPacket);
     asyncContext.getResponse().flushBuffer();
-    asyncContext.complete();
   }
 
-  public void onMessages (AsyncContext asyncContext, Message<V>[] messages, byte[] contentBuffer) {
+  public void onMessages (AsyncContext asyncContext, Message<V>[] messages) {
 
-    LoggerManager.getLogger(LongPollingConnection.class).debug(() -> "<=" + new String(contentBuffer));
-
-    process(getTransport().getProtocol(), server, (ResponseConsumer<V>)packet -> emit(asyncContext, packet), server.getCodec().from(contentBuffer));
+    try {
+      process(server, packet -> emit(asyncContext, packet), messages);
+    } finally {
+      asyncContext.complete();
+    }
   }
 }
