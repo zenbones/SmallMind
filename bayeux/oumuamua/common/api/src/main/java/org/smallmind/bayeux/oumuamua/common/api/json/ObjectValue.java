@@ -63,7 +63,7 @@ public interface ObjectValue<V extends Value<V>> extends Value<V> {
 
   default ObjectValue<V> put (String field, String text) {
 
-    return put(field, getFactory().textValue(text));
+    return put(field, (text == null) ? getFactory().nullValue() : getFactory().textValue(text));
   }
 
   int size ();

@@ -78,12 +78,12 @@ public class JaxbDeserializer<V extends Value<V>> implements JsonDeserializer<V>
           } else {
             messages[index] = codec.create();
 
-            for (Map.Entry<String, JsonNode> fieldEntry : new IterableIterator<>(node.fields())) {
+            for (Map.Entry<String, JsonNode> fieldEntry : new IterableIterator<>(item.fields())) {
               messages[index].put(fieldEntry.getKey(), walk(messages[index].getFactory(), fieldEntry.getValue()));
             }
-
-            index++;
           }
+
+          index++;
         }
 
         return messages;
