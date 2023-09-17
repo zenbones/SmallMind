@@ -63,12 +63,6 @@ public class WebsocketProtocol<V extends Value<V>> implements Protocol<V> {
   }
 
   @Override
-  public long getLongPollIntervalMilliseconds () {
-
-    return longPollIntervalMilliseconds;
-  }
-
-  @Override
   public long getLongPollTimeoutMilliseconds () {
 
     return 0;
