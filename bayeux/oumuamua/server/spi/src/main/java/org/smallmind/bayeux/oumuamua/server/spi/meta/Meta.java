@@ -138,7 +138,7 @@ public enum Meta {
       } else {
 
         Message<V>[] messages;
-        long longPollIntervalMilliseconds = getLongPollIntervalMilliseconds(protocol, request);
+        long sessionConnectIntervalMilliseconds = getSessionConnectIntervalMilliseconds(server, request);
 
         if (protocol.isLongPolling()) {
 
@@ -154,7 +154,7 @@ public enum Meta {
 
             Packet<V> enqueuedPacket;
 
-            if ((enqueuedPacket = session.poll(connected ? initial ? longPollIntervalMilliseconds : remainingMilliseconds : 0, TimeUnit.MILLISECONDS)) != null) {
+            if ((enqueuedPacket = session.poll(connected ? initial ? sessionConnectIntervalMilliseconds : remainingMilliseconds : 0, TimeUnit.MILLISECONDS)) != null) {
               if (enqueuedPacket.getMessages() != null) {
                 if (enqueuedMessageList == null) {
                   enqueuedMessageList = new LinkedList<>();
@@ -173,7 +173,7 @@ public enum Meta {
             messages = enqueuedMessageList.toArray(new Message[0]);
           }
         } else {
-          messages = new Message[] {constructConnectSuccessResponse(server, route.getPath(), request.getId(), session.getId(), longPollIntervalMilliseconds)};
+          messages = new Message[] {constructConnectSuccessResponse(server, route.getPath(), request.getId(), session.getId(), sessionConnectIntervalMilliseconds)};
         }
 
         if (session.getState().lt(SessionState.CONNECTED)) {
@@ -201,7 +201,7 @@ public enum Meta {
       return Math.max(0, protocol.getLongPollTimeoutMilliseconds());
     }
 
-    private <V extends Value<V>> long getLongPollIntervalMilliseconds (Protocol<V> protocol, Message<V> request) {
+    private <V extends Value<V>> long getSessionConnectIntervalMilliseconds (Server<V> server, Message<V> request) {
 
       ObjectValue<V> adviceValue;
 
@@ -215,7 +215,7 @@ public enum Meta {
         }
       }
 
-      return Math.max(0, protocol.getLongPollIntervalMilliseconds());
+      return Math.max(0, server.getSessionConnectionIntervalMilliseconds());
     }
 
     private <V extends Value<V>> Message<V> constructConnectSuccessResponse (Server<V> server, String path, String id, String sessionId, long longPollIntervalMilliseconds) {

@@ -46,9 +46,7 @@ import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.SessionState;
-import org.smallmind.bayeux.oumuamua.server.api.Transport;
 import org.smallmind.bayeux.oumuamua.server.impl.OumuamuaServer;
-import org.smallmind.bayeux.oumuamua.server.impl.OumuamuaSession;
 import org.smallmind.bayeux.oumuamua.server.spi.Connection;
 import org.smallmind.bayeux.oumuamua.server.spi.json.PacketUtility;
 import org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356.WebSocketTransport;
@@ -59,7 +57,6 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
   private javax.websocket.Session websocketSession;
   private OumuamuaServer<V> server;
   private WebSocketTransport<V> websocketTransport;
-  private OumuamuaSession<V> session;
 
   @Override
   public void onOpen (javax.websocket.Session websocketSession, EndpointConfig config) {
@@ -77,22 +74,8 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
     }
 
     websocketSession.addMessageHandler(this);
-
-    server.addSession(session = server.createSession(this));
   }
 
-  @Override
-  public Transport<V> getTransport () {
-
-    return websocketTransport;
-  }
-
-  @Override
-  public void maintenance () {
-
-  }
-
-  @Override
   public synchronized void deliver (Packet<V> packet) {
 
     if (websocketSession.isOpen()) {
@@ -118,6 +101,8 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
 
     LoggerManager.getLogger(WebSocketEndpoint.class).debug(() -> "<=" + content);
 
+    process(getTransport().getProtocol(), server, server.getCodec().from(content));
+
     if (session != null) {
 
       Message<V>[] messages;
@@ -142,19 +127,6 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
           }
         }
       }
-    }
-  }
-
-  @Override
-  public synchronized void onClose (Session wsSession, CloseReason closeReason) {
-
-    if (session != null) {
-      if (!SessionState.DISCONNECTED.equals(session.getState())) {
-        session.completeDisconnect();
-      }
-
-      server.removeSession(session);
-      session = null;
     }
   }
 

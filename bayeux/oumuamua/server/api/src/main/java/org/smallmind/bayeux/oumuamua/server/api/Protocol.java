@@ -50,8 +50,6 @@ public interface Protocol<V extends Value<V>> {
 
   boolean isLongPolling ();
 
-  long getLongPollIntervalMilliseconds ();
-
   long getLongPollTimeoutMilliseconds ();
 
   String[] getTransportNames ();

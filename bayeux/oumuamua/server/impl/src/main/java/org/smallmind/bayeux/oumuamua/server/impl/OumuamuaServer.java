@@ -70,9 +70,10 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   private final OumuamuaConfiguration<V> configuration;
   private final ChannelTree<V> channelTree;
   private final String[] protocolNames;
+  private final long sessionConnectionIntervalMilliseconds;
 
   private IdleChannelSifter<V> idleChannelSifter;
-  private ConnectionMaintenanceHeartbeat<V> connectionMaintenanceHeartbeat;
+  private IdleSessionInspector<V> idleSessionInspector;
 
   public OumuamuaServer (OumuamuaConfiguration<V> configuration)
     throws OumuamuaException {
@@ -85,6 +86,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
 
       this.configuration = configuration;
 
+      sessionConnectionIntervalMilliseconds = configuration.getSessionConnectIntervalSeconds() * 1000L;
       channelTree = new ChannelTree<>(configuration.getCodec());
 
       if (configuration.getProtocols() == null) {
@@ -118,7 +120,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
     }
 
     new Thread(idleChannelSifter = new IdleChannelSifter<>(configuration.getIdleChannelCycleMinutes(), channelTree, this::onRemoved)).start();
-    new Thread(connectionMaintenanceHeartbeat = new ConnectionMaintenanceHeartbeat<>(this, configuration.getConnectionMaintenanceCycleMinutes())).start();
+    new Thread(idleSessionInspector = new IdleSessionInspector<>(this, configuration.getIdleSessionCycleMinutes())).start();
   }
 
   public void stop () {
@@ -134,7 +136,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
     }
 
     try {
-      connectionMaintenanceHeartbeat.stop();
+      idleSessionInspector.stop();
     } catch (InterruptedException interruptedException) {
       LoggerManager.getLogger(OumuamuaServer.class).error(interruptedException);
     }
@@ -275,9 +277,15 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
     return configuration.getCodec();
   }
 
+  @Override
+  public long getSessionConnectionIntervalMilliseconds () {
+
+    return sessionConnectionIntervalMilliseconds;
+  }
+
   public OumuamuaSession<V> createSession (Connection<V> connection) {
 
-    return new OumuamuaSession<>(this::onConnected, this::onDisconnected, connection, configuration.getMaxLongPollQueueSize());
+    return new OumuamuaSession<>(this::onConnected, this::onDisconnected, connection, configuration.getMaxLongPollQueueSize(), configuration.getSessionMaxIdleTimeoutSeconds() * 1000L);
   }
 
   public OumuamuaSession<V> getSession (String sessionId) {

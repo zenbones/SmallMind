@@ -89,6 +89,8 @@ public interface Server<V extends Value<V>> extends Attributed {
 
   String getMinimumBayeuxVersion ();
 
+  long getSessionConnectionIntervalMilliseconds ();
+
   String[] getProtocolNames ();
 
   Protocol<V> getProtocol (String name);

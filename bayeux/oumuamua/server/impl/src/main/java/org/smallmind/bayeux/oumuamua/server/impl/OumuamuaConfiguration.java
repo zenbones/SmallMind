@@ -45,8 +45,10 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   private SecurityPolicy<V> securityPolicy;
   private Protocol<V>[] protocols;
   private long channelTimeToLiveMinutes = 30;
+  private int sessionConnectIntervalSeconds = 30;
+  private int sessionMaxIdleTimeoutSeconds = 90;
   private int idleChannelCycleMinutes = 5;
-  private int connectionMaintenanceCycleMinutes = 1;
+  private int idleSessionCycleMinutes = 1;
   private int maxLongPollQueueSize = 1000;
 
   public Backbone<V> getBackbone () {
@@ -99,6 +101,26 @@ public class OumuamuaConfiguration<V extends Value<V>> {
     this.channelTimeToLiveMinutes = channelTimeToLiveMinutes;
   }
 
+  public int getSessionConnectIntervalSeconds () {
+
+    return sessionConnectIntervalSeconds;
+  }
+
+  public void setSessionConnectIntervalSeconds (int sessionConnectIntervalSeconds) {
+
+    this.sessionConnectIntervalSeconds = sessionConnectIntervalSeconds;
+  }
+
+  public int getSessionMaxIdleTimeoutSeconds () {
+
+    return sessionMaxIdleTimeoutSeconds;
+  }
+
+  public void setSessionMaxIdleTimeoutSeconds (int sessionMaxIdleTimeoutSeconds) {
+
+    this.sessionMaxIdleTimeoutSeconds = sessionMaxIdleTimeoutSeconds;
+  }
+
   public int getIdleChannelCycleMinutes () {
 
     return idleChannelCycleMinutes;
@@ -109,14 +131,14 @@ public class OumuamuaConfiguration<V extends Value<V>> {
     this.idleChannelCycleMinutes = idleChannelCycleMinutes;
   }
 
-  public int getConnectionMaintenanceCycleMinutes () {
+  public int getIdleSessionCycleMinutes () {
 
-    return connectionMaintenanceCycleMinutes;
+    return idleSessionCycleMinutes;
   }
 
-  public void setConnectionMaintenanceCycleMinutes (int connectionMaintenanceCycleMinutes) {
+  public void setIdleSessionCycleMinutes (int idleSessionCycleMinutes) {
 
-    this.connectionMaintenanceCycleMinutes = connectionMaintenanceCycleMinutes;
+    this.idleSessionCycleMinutes = idleSessionCycleMinutes;
   }
 
   public int getMaxLongPollQueueSize () {

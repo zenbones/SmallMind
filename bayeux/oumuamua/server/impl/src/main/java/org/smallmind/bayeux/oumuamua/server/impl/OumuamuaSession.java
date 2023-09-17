@@ -44,6 +44,7 @@ import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.PacketType;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.bayeux.oumuamua.server.api.SessionState;
+import org.smallmind.bayeux.oumuamua.server.api.Transport;
 import org.smallmind.bayeux.oumuamua.server.spi.AbstractAttributed;
 import org.smallmind.bayeux.oumuamua.server.spi.Connection;
 import org.smallmind.bayeux.oumuamua.server.spi.json.PacketUtility;
@@ -62,18 +63,22 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   private final Connection<V> connection;
   private final String sessionId = SnowflakeId.newInstance().generateHexEncoding();
   private final boolean longPolling;
+  private final long maxIdleTimeoutMilliseconds;
   private final int maxLongPollQueueSize;
   private SessionState state;
+  private long lastContactTimestamp;
 
-  public OumuamuaSession (Consumer<Session<V>> onConnectedCallback, Consumer<Session<V>> onDisconnectedCallback, Connection<V> connection, int maxLongPollQueueSize) {
+  public OumuamuaSession (Consumer<Session<V>> onConnectedCallback, Consumer<Session<V>> onDisconnectedCallback, Connection<V> connection, int maxLongPollQueueSize, long maxIdleTimeoutMilliseconds) {
 
     this.onConnectedCallback = onConnectedCallback;
     this.onDisconnectedCallback = onDisconnectedCallback;
     this.connection = connection;
     this.maxLongPollQueueSize = maxLongPollQueueSize;
+    this.maxIdleTimeoutMilliseconds = maxIdleTimeoutMilliseconds;
 
     longPolling = connection.getTransport().getProtocol().isLongPolling();
     state = SessionState.INITIALIZED;
+    lastContactTimestamp = System.currentTimeMillis();
   }
 
   private void onProcessing (Session<V> sender, Packet<V> packet) {
@@ -118,7 +123,7 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   @Override
   public boolean isLocal () {
 
-    return getConnection().getTransport().isLocal();
+    return connection.getTransport().isLocal();
   }
 
   @Override
@@ -153,9 +158,19 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
     onDisconnectedCallback.accept(this);
   }
 
-  protected Connection<V> getConnection () {
+  public Transport<V> getTransport () {
 
-    return connection;
+    return connection.getTransport();
+  }
+
+  public synchronized void contact () {
+
+    lastContactTimestamp = System.currentTimeMillis();
+  }
+
+  public synchronized boolean isRemovable (long now) {
+
+    return (now - lastContactTimestamp) >= maxIdleTimeoutMilliseconds;
   }
 
   @Override

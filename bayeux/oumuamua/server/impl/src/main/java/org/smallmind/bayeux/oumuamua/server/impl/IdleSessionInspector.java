@@ -32,21 +32,20 @@
  */
 package org.smallmind.bayeux.oumuamua.server.impl;
 
+import java.util.Iterator;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
-import org.smallmind.bayeux.oumuamua.server.spi.Connection;
-import org.smallmind.nutsnbolts.util.IterableIterator;
 import org.smallmind.scribe.pen.LoggerManager;
 
-public class ConnectionMaintenanceHeartbeat<V extends Value<V>> implements Runnable {
+public class IdleSessionInspector<V extends Value<V>> implements Runnable {
 
   private final CountDownLatch finishLatch = new CountDownLatch(1);
   private final CountDownLatch exitLatch = new CountDownLatch(1);
   private final OumuamuaServer<V> server;
   private final long connectionMaintenanceCycleMinutes;
 
-  public ConnectionMaintenanceHeartbeat (OumuamuaServer<V> server, long connectionMaintenanceCycleMinutes) {
+  public IdleSessionInspector (OumuamuaServer<V> server, long connectionMaintenanceCycleMinutes) {
 
     this.server = server;
     this.connectionMaintenanceCycleMinutes = connectionMaintenanceCycleMinutes;
@@ -64,12 +63,17 @@ public class ConnectionMaintenanceHeartbeat<V extends Value<V>> implements Runna
 
     try {
       while (!finishLatch.await(connectionMaintenanceCycleMinutes, TimeUnit.MINUTES)) {
-        for (OumuamuaSession<V> session : new IterableIterator<>(server.iterateSessions())) {
 
-          Connection<V> connection;
+        Iterator<OumuamuaSession<V>> sessionIterator = server.iterateSessions();
+        long now = System.currentTimeMillis();
 
-          if ((connection = session.getConnection()) != null) {
-            connection.maintenance();
+        while (sessionIterator.hasNext()) {
+
+          OumuamuaSession<V> session = sessionIterator.next();
+
+          if (session.isRemovable(now)) {
+            session.completeDisconnect();
+            sessionIterator.remove();
           }
         }
       }

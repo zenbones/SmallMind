@@ -37,40 +37,89 @@ import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.InvalidPathException;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.PacketType;
-import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.Route;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
+import org.smallmind.bayeux.oumuamua.server.api.SessionState;
 import org.smallmind.bayeux.oumuamua.server.api.Transport;
 import org.smallmind.bayeux.oumuamua.server.spi.meta.Meta;
 
 public interface Connection<V extends Value<V>> {
 
-  default Packet<V> respond (Protocol<V> protocol, Server<V> server, Session<V> session, Message<V> request) {
+  default void process (Server<V> server, Message<V>[] messages) {
 
-    try {
+    for (Message<V> message : messages) {
 
-      String path= request.getChannel();
+      String path = message.getChannel();
+      String sessionId = message.getSessionId();
       Meta meta = Meta.from(path);
       Route route = Meta.PUBLISH.equals(meta) ? new DefaultRoute(path) : meta.getRoute();
-      Packet<V> response;
 
-      server.onRequest(session, new Packet<>(PacketType.REQUEST, session.getId(), route, request));
+      if (sessionId == null) {
+        if (Meta.HANDSHAKE.equals(meta)) {
 
-      response = meta.process(protocol, route, server, session, request);
+          Session<V> session = createSession();
 
-      server.onResponse(session, response);
-      session.onResponse(session, response);
+          if (SessionState.DISCONNECTED.equals(session.getState())) {
+            // error
+          } else {
+            cycle(meta, route, server, session, message);
+          }
+        } else {
+          // error
+        }
+      } else {
 
-      return response;
-    } catch (InterruptedException | InvalidPathException | MetaProcessingException exception) {
-      return new Packet<>(PacketType.RESPONSE, request.getSessionId(), null, Meta.constructErrorResponse(server, request.getChannel(), request.getId(), request.getSessionId(), exception.getMessage(), null));
+        Session<V> session;
+
+        if ((session = server.getSession(sessionId)) == null) {
+          // error
+        } else if (!validateSession(session)) {
+          // error
+        } else if (SessionState.DISCONNECTED.equals(session.getState())) {
+// error
+        } else {
+          cycle(meta, route, server, session, message);
+        }
+      }
     }
+  }
+
+  private void cycle (Meta meta, Route route, Server<V> server, Session<V> session, Message<V> request)
+    throws InterruptedException, InvalidPathException {
+
+    updateSession(session);
+    deliver(respond(meta, route, server, session, request));
+    // response callback
+    if (SessionState.DISCONNECTED.equals(session.getState())) {
+      onDisconnect(server, session);
+    }
+  }
+
+  private Packet<V> respond (Meta meta, Route route, Server<V> server, Session<V> session, Message<V> request)
+    throws InterruptedException, InvalidPathException {
+
+    Packet<V> response;
+
+    server.onRequest(session, new Packet<>(PacketType.REQUEST, session.getId(), route, request));
+
+    response = meta.process(getTransport().getProtocol(), route, server, session, request);
+
+    server.onResponse(session, response);
+    session.onResponse(session, response);
+
+    return response;
   }
 
   Transport<V> getTransport ();
 
-  void maintenance ();
+  Session<V> createSession (Server<V> server);
+
+  boolean validateSession (Session<V> session)
+
+  void updateSession (Session<V> session);
+
+  void onDisconnect (Server<V> server, Session<V> session);
 
   void deliver (Packet<V> packet);
 }
