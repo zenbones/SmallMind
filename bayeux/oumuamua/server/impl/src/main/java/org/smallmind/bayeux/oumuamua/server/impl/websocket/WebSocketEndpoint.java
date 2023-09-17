@@ -36,23 +36,22 @@ import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import javax.websocket.CloseReason;
 import javax.websocket.Endpoint;
 import javax.websocket.EndpointConfig;
 import javax.websocket.MessageHandler;
 import javax.websocket.Session;
-import org.smallmind.bayeux.oumuamua.common.api.json.Message;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
-import org.smallmind.bayeux.oumuamua.server.api.SessionState;
+import org.smallmind.bayeux.oumuamua.server.api.Transport;
+import org.smallmind.bayeux.oumuamua.server.impl.OumuamuaConnection;
 import org.smallmind.bayeux.oumuamua.server.impl.OumuamuaServer;
-import org.smallmind.bayeux.oumuamua.server.spi.Connection;
+import org.smallmind.bayeux.oumuamua.server.spi.ResponseConsumer;
 import org.smallmind.bayeux.oumuamua.server.spi.json.PacketUtility;
 import org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356.WebSocketTransport;
 import org.smallmind.scribe.pen.LoggerManager;
 
-public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements MessageHandler.Whole<String>, Connection<V> {
+public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements MessageHandler.Whole<String>, OumuamuaConnection<V> {
 
   private javax.websocket.Session websocketSession;
   private OumuamuaServer<V> server;
@@ -74,6 +73,12 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
     }
 
     websocketSession.addMessageHandler(this);
+  }
+
+  @Override
+  public Transport<V> getTransport () {
+
+    return websocketTransport;
   }
 
   public synchronized void deliver (Packet<V> packet) {
@@ -101,33 +106,7 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
 
     LoggerManager.getLogger(WebSocketEndpoint.class).debug(() -> "<=" + content);
 
-    process(getTransport().getProtocol(), server, server.getCodec().from(content));
-
-    if (session != null) {
-
-      Message<V>[] messages;
-
-      try {
-        messages = server.getCodec().from(content);
-      } catch (IOException ioException) {
-        messages = null;
-        LoggerManager.getLogger(WebSocketEndpoint.class).error(ioException);
-      }
-
-      if (messages != null) {
-        for (Message<V> message : messages) {
-          deliver(respond(getTransport().getProtocol(), server, session, message));
-        }
-
-        if (SessionState.DISCONNECTED.equals(session.getState())) {
-          try {
-            websocketSession.close(new CloseReason(CloseReason.CloseCodes.NORMAL_CLOSURE, "Client disconnect"));
-          } catch (IOException ioException) {
-            LoggerManager.getLogger(WebSocketEndpoint.class).error(ioException);
-          }
-        }
-      }
-    }
+    process(getTransport().getProtocol(), server, (ResponseConsumer<V>)this::deliver, server.getCodec().from(content));
   }
 
   @Override

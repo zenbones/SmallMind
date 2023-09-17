@@ -41,15 +41,13 @@ import org.smallmind.bayeux.oumuamua.server.spi.Transports;
 public class ServletProtocol<V extends Value<V>> implements Protocol<V> {
 
   private final LongPollingTransport<V> longPollingTransport;
-  private final long longPollIntervalMilliseconds;
   private final long longPollTimeoutMilliseconds;
 
-  public ServletProtocol (long longPollIntervalMilliseconds, long longPollTimeoutMilliseconds, long maxIdleTimeoutMilliseconds) {
+  public ServletProtocol (long longPollTimeoutMilliseconds) {
 
-    this.longPollIntervalMilliseconds = longPollIntervalMilliseconds;
     this.longPollTimeoutMilliseconds = longPollTimeoutMilliseconds;
 
-    longPollingTransport = new LongPollingTransport<>(this, maxIdleTimeoutMilliseconds);
+    longPollingTransport = new LongPollingTransport<>(this);
   }
 
   @Override
@@ -62,12 +60,6 @@ public class ServletProtocol<V extends Value<V>> implements Protocol<V> {
   public boolean isLongPolling () {
 
     return true;
-  }
-
-  @Override
-  public long getLongPollIntervalMilliseconds () {
-
-    return longPollIntervalMilliseconds;
   }
 
   @Override

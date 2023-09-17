@@ -32,6 +32,7 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi;
 
+import java.io.IOException;
 import org.smallmind.bayeux.oumuamua.common.api.json.Message;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.InvalidPathException;
@@ -46,7 +47,7 @@ import org.smallmind.bayeux.oumuamua.server.spi.meta.Meta;
 
 public interface Connection<V extends Value<V>> {
 
-  default void process (Server<V> server, Message<V>[] messages) {
+  default void process (Server<V> server, ResponseConsumer<V> responseConsumer, Message<V>[] messages) {
 
     for (Message<V> message : messages) {
 
@@ -58,12 +59,12 @@ public interface Connection<V extends Value<V>> {
       if (sessionId == null) {
         if (Meta.HANDSHAKE.equals(meta)) {
 
-          Session<V> session = createSession();
+          Session<V> session = createSession(server);
 
           if (SessionState.DISCONNECTED.equals(session.getState())) {
             // error
           } else {
-            cycle(meta, route, server, session, message);
+            cycle(meta, route, server, session, responseConsumer, message);
           }
         } else {
           // error
@@ -79,18 +80,19 @@ public interface Connection<V extends Value<V>> {
         } else if (SessionState.DISCONNECTED.equals(session.getState())) {
 // error
         } else {
-          cycle(meta, route, server, session, message);
+          cycle(meta, route, server, session, responseConsumer, message);
         }
       }
     }
   }
 
-  private void cycle (Meta meta, Route route, Server<V> server, Session<V> session, Message<V> request)
-    throws InterruptedException, InvalidPathException {
+  private void cycle (Meta meta, Route route, Server<V> server, Session<V> session, ResponseConsumer<V> responseConsumer, Message<V> request)
+    throws IOException, InterruptedException, InvalidPathException {
 
     updateSession(session);
-    deliver(respond(meta, route, server, session, request));
-    // response callback
+
+    responseConsumer.accept(respond(meta, route, server, session, request));
+
     if (SessionState.DISCONNECTED.equals(session.getState())) {
       onDisconnect(server, session);
     }
@@ -115,7 +117,7 @@ public interface Connection<V extends Value<V>> {
 
   Session<V> createSession (Server<V> server);
 
-  boolean validateSession (Session<V> session)
+  boolean validateSession (Session<V> session);
 
   void updateSession (Session<V> session);
 

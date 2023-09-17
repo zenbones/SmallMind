@@ -37,19 +37,16 @@ import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.Transport;
-import org.smallmind.bayeux.oumuamua.server.impl.OumuamuaServer;
 import org.smallmind.bayeux.oumuamua.server.spi.AbstractAttributed;
 import org.smallmind.bayeux.oumuamua.server.spi.Transports;
 
 public class LongPollingTransport<V extends Value<V>> extends AbstractAttributed implements Transport<V> {
 
   private final ServletProtocol<V> servletProtocol;
-  private final long maxIdleTimeoutMilliseconds;
 
-  public LongPollingTransport (ServletProtocol<V> servletProtocol, long maxIdleTimeoutMilliseconds) {
+  public LongPollingTransport (ServletProtocol<V> servletProtocol) {
 
     this.servletProtocol = servletProtocol;
-    this.maxIdleTimeoutMilliseconds = maxIdleTimeoutMilliseconds;
   }
 
   @Override
@@ -73,10 +70,5 @@ public class LongPollingTransport<V extends Value<V>> extends AbstractAttributed
   @Override
   public void init (Server<?> server, ServletConfig servletConfig) {
 
-  }
-
-  public LongPollingConnection<V> createConnection (OumuamuaServer<V> server) {
-
-    return new LongPollingConnection<>(this, server, maxIdleTimeoutMilliseconds);
   }
 }

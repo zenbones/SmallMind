@@ -37,22 +37,28 @@ import javax.servlet.AsyncContext;
 import org.smallmind.bayeux.oumuamua.common.api.json.Message;
 import org.smallmind.bayeux.oumuamua.common.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
-import org.smallmind.bayeux.oumuamua.server.api.SessionState;
+import org.smallmind.bayeux.oumuamua.server.api.Transport;
+import org.smallmind.bayeux.oumuamua.server.impl.OumuamuaConnection;
 import org.smallmind.bayeux.oumuamua.server.impl.OumuamuaServer;
-import org.smallmind.bayeux.oumuamua.server.impl.OumuamuaSession;
-import org.smallmind.bayeux.oumuamua.server.spi.Connection;
+import org.smallmind.bayeux.oumuamua.server.spi.ResponseConsumer;
 import org.smallmind.bayeux.oumuamua.server.spi.json.PacketUtility;
 import org.smallmind.scribe.pen.LoggerManager;
 
-public class LongPollingConnection<V extends Value<V>> implements Connection<V> {
+public class LongPollingConnection<V extends Value<V>> implements OumuamuaConnection<V> {
 
   private final LongPollingTransport<V> longPollingTransport;
   private final OumuamuaServer<V> server;
 
-  public LongPollingConnection (LongPollingTransport<V> longPollingTransport, OumuamuaServer<V> server {
+  public LongPollingConnection (LongPollingTransport<V> longPollingTransport, OumuamuaServer<V> server) {
 
     this.longPollingTransport = longPollingTransport;
     this.server = server;
+  }
+
+  @Override
+  public Transport<V> getTransport () {
+
+    return longPollingTransport;
   }
 
   @Override
@@ -75,35 +81,8 @@ public class LongPollingConnection<V extends Value<V>> implements Connection<V> 
 
   public void onMessages (AsyncContext asyncContext, Message<V>[] messages, byte[] contentBuffer) {
 
-    OumuamuaSession<V> session;
-
     LoggerManager.getLogger(LongPollingConnection.class).debug(() -> "<=" + new String(contentBuffer));
 
-    lastContact.set(System.currentTimeMillis());
-    process(getTransport().getProtocol(), server, server.getCodec().from(content));
-
-    if ((session = sessionRef.get()) != null) {
-
-      for (Message<V> message : messages) {
-        try {
-          emit(asyncContext, respond(getTransport().getProtocol(), server, session, message));
-        } catch (IOException ioException) {
-          LoggerManager.getLogger(LongPollingConnection.class).error(ioException);
-        }
-      }
-
-      if (SessionState.DISCONNECTED.equals(session.getState())) {
-        close();
-      }
-    }
-  }
-
-  private synchronized void close (OumuamuaSession<V> session) {
-
-    if (!SessionState.DISCONNECTED.equals(session.getState())) {
-      session.completeDisconnect();
-    }
-
-    server.removeSession(session);
+    process(getTransport().getProtocol(), server, (ResponseConsumer<V>)packet -> emit(asyncContext, packet), server.getCodec().from(contentBuffer));
   }
 }
