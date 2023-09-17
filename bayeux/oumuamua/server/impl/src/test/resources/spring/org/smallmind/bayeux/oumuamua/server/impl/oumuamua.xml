@@ -30,9 +30,7 @@
               </constructor-arg>
             </bean>
             <bean class="org.smallmind.bayeux.oumuamua.server.impl.longpolling.ServletProtocol">
-              <constructor-arg index="0" name="longPollIntervalMilliseconds" value="30000"/>
-              <constructor-arg index="1" name="longPollTimeoutMilliseconds" value="500"/>
-              <constructor-arg index="2" name="maxIdleTimeoutMilliseconds" value="90000"/>
+              <constructor-arg index="0" name="longPollTimeoutMilliseconds" value="500"/>
             </bean>
           </list>
         </property>
