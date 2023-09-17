@@ -64,7 +64,7 @@ public class ConnectionMaintenanceHeartbeat<V extends Value<V>> implements Runna
 
     try {
       while (!finishLatch.await(connectionMaintenanceCycleMinutes, TimeUnit.MINUTES)) {
-        for (OumuamuaSession<V> session : new IterableIterator<OumuamuaSession<V>>(server.iterateSessions())) {
+        for (OumuamuaSession<V> session : new IterableIterator<>(server.iterateSessions())) {
 
           Connection<V> connection;
 
