@@ -50,8 +50,8 @@ public interface Connection<V extends Value<V>> {
 
     try {
 
-      String path;
-      Meta meta = Meta.from(path = request.getChannel());
+      String path= request.getChannel();
+      Meta meta = Meta.from(path);
       Route route = Meta.PUBLISH.equals(meta) ? new DefaultRoute(path) : meta.getRoute();
       Packet<V> response;
 

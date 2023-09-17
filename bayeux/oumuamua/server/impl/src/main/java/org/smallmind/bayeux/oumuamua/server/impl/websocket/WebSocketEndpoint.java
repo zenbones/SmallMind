@@ -123,7 +123,7 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
       Message<V>[] messages;
 
       try {
-        messages = server.getCodec().from(content.getBytes());
+        messages = server.getCodec().from(content);
       } catch (IOException ioException) {
         messages = null;
         LoggerManager.getLogger(WebSocketEndpoint.class).error(ioException);

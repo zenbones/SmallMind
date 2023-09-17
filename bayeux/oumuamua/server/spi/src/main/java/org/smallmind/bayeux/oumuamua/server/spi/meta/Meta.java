@@ -376,39 +376,34 @@ public enum Meta {
   }, PUBLISH(null) {
     public <V extends Value<V>> Packet<V> process (Protocol<V> protocol, Route route, Server<V> server, Session<V> session, Message<V> request) {
 
-      String path;
+      if ((!session.getId().equals(request.getSessionId())) || session.getState().lt(SessionState.HANDSHOOK)) {
 
-      if ((path = request.getChannel()) == null) {
-
-        return new Packet<>(PacketType.RESPONSE, request.getSessionId(), null, constructPublishErrorResponse(server, null, request.getId(), request.getSessionId(), "Missing channel", null));
-      } else if ((!session.getId().equals(request.getSessionId())) || session.getState().lt(SessionState.HANDSHOOK)) {
-
-        return new Packet<>(PacketType.RESPONSE, request.getSessionId(), route, constructPublishErrorResponse(server, path, request.getId(), request.getSessionId(), "Handshake required", Reconnect.HANDSHAKE));
+        return new Packet<>(PacketType.RESPONSE, request.getSessionId(), route, constructPublishErrorResponse(server, route.getPath(), request.getId(), request.getSessionId(), "Handshake required", Reconnect.HANDSHAKE));
       } else if (session.getState().lt(SessionState.CONNECTED)) {
 
-        return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructPublishErrorResponse(server, path, request.getId(), request.getSessionId(), "Connection required", Reconnect.RETRY));
-      } else if (path.startsWith("/meta/")) {
+        return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructPublishErrorResponse(server, route.getPath(), request.getId(), request.getSessionId(), "Connection required", Reconnect.RETRY));
+      } else if (route.getPath().startsWith("/meta/")) {
 
-        return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructPublishErrorResponse(server, path, request.getId(), request.getSessionId(), "Attempted to publish to a meta channel", null));
+        return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructPublishErrorResponse(server, route.getPath(), request.getId(), request.getSessionId(), "Attempted to publish to a meta channel", null));
       } else {
 
         SecurityPolicy<V> securityPolicy = server.getSecurityPolicy();
         Channel<V> channel;
 
         try {
-          channel = server.findChannel(path);
+          channel = server.findChannel(route.getPath());
         } catch (InvalidPathException invalidPathException) {
 
-          return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructPublishErrorResponse(server, path, request.getId(), request.getSessionId(), invalidPathException.getMessage(), null));
+          return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructPublishErrorResponse(server, route.getPath(), request.getId(), request.getSessionId(), invalidPathException.getMessage(), null));
         }
 
         if ((securityPolicy != null) && (!securityPolicy.canPublish(session, channel, request))) {
 
-          return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructPublishErrorResponse(server, path, request.getId(), request.getSessionId(), "Unauthorized", Reconnect.NONE));
+          return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructPublishErrorResponse(server, route.getPath(), request.getId(), request.getSessionId(), "Unauthorized", Reconnect.NONE));
         } else {
-          server.deliver(session, new Packet<>(PacketType.DELIVERY, session.getId(), route, constructDeliveryMessage(server, path, request.getId(), request.get(Message.DATA))), true);
+          server.deliver(session, new Packet<>(PacketType.DELIVERY, session.getId(), route, constructDeliveryMessage(server, route.getPath(), request.getId(), request.get(Message.DATA))), true);
 
-          return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructPublishSuccessResponse(server, path, request.getId(), session.getId()));
+          return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructPublishSuccessResponse(server, route.getPath(), request.getId(), session.getId()));
         }
       }
     }
@@ -426,6 +421,13 @@ public enum Meta {
     private <V extends Value<V>> Message<V> constructPublishErrorResponse (Server<V> server, String path, String id, String sessionId, String error, Reconnect reconnect) {
 
       return constructErrorResponse(server, path, id, sessionId, error, reconnect);
+    }
+  },
+  SERVICE(null) {
+    @Override
+    public <V extends Value<V>> Packet<V> process (Protocol<V> protocol, Route route, Server<V> server, Session<V> session, Message<V> request) {
+
+      return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructErrorResponse(server, route.getPath(), request.getId(), request.getSessionId(), "Unknown service", null));
     }
   };
 
@@ -474,8 +476,11 @@ public enum Meta {
         }
       }
 
-      if (path.startsWith("/meta")) {
+      if (path.startsWith("/meta/")) {
         throw new MetaProcessingException("Attempt to publish to a meta channel");
+      } else if (path.startsWith("/service/")) {
+
+        return SERVICE;
       } else {
 
         return PUBLISH;
