@@ -40,7 +40,10 @@ import org.smallmind.bayeux.oumuamua.common.api.json.ValueFactory;
 
 public interface JsonDeserializer<V extends Value<V>> {
 
-  Message<V>[] convert (Codec<V> codec, byte[] buffer)
+  Message<V>[] read (Codec<V> codec, byte[] buffer)
+    throws IOException;
+
+  Message<V>[] read (Codec<V> codec, String data)
     throws IOException;
 
   Value<V> convert (ValueFactory<V> factory, Object object)

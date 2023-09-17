@@ -36,7 +36,6 @@ import java.io.IOException;
 import java.util.Map;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.smallmind.bayeux.oumuamua.common.api.json.ArrayValue;
 import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.common.api.json.Message;
@@ -51,12 +50,23 @@ import org.smallmind.web.json.scaffold.util.JsonCodec;
 public class JaxbDeserializer<V extends Value<V>> implements JsonDeserializer<V> {
 
   @Override
-  public Message<V>[] convert (Codec<V> codec, byte[] buffer)
+  public Message<V>[] read (Codec<V> codec, byte[] buffer)
     throws IOException {
 
-    JsonNode node;
+    return read(codec, JsonCodec.readAsJsonNode(buffer));
+  }
 
-    switch ((node = JsonCodec.readAsJsonNode(buffer)).getNodeType()) {
+  @Override
+  public Message<V>[] read (Codec<V> codec, String data)
+    throws IOException {
+
+    return read(codec, JsonCodec.readAsJsonNode(data));
+  }
+
+  private Message<V>[] read (Codec<V> codec, JsonNode node)
+    throws IOException {
+
+    switch (node.getNodeType()) {
       case ARRAY:
 
         Message<V>[] messages = new Message[node.size()];
@@ -66,7 +76,13 @@ public class JaxbDeserializer<V extends Value<V>> implements JsonDeserializer<V>
           if (!JsonNodeType.OBJECT.equals(item.getNodeType())) {
             throw new IOException("All messages must represent json objects");
           } else {
-            messages[index++] = convert(codec, (ObjectNode)item);
+            messages[index] = codec.create();
+
+            for (Map.Entry<String, JsonNode> fieldEntry : new IterableIterator<>(node.fields())) {
+              messages[index].put(fieldEntry.getKey(), walk(messages[index].getFactory(), fieldEntry.getValue()));
+            }
+
+            index++;
           }
         }
 
@@ -76,7 +92,7 @@ public class JaxbDeserializer<V extends Value<V>> implements JsonDeserializer<V>
         Message<V> message = codec.create();
 
         for (Map.Entry<String, JsonNode> fieldEntry : new IterableIterator<>(node.fields())) {
-          message.put(fieldEntry.getKey(), convert(message.getFactory(), fieldEntry.getValue()));
+          message.put(fieldEntry.getKey(), walk(message.getFactory(), fieldEntry.getValue()));
         }
 
         return new Message[] {message};
@@ -89,22 +105,10 @@ public class JaxbDeserializer<V extends Value<V>> implements JsonDeserializer<V>
   public Value<V> convert (ValueFactory<V> factory, Object object)
     throws IOException {
 
-    return convert(factory, JsonCodec.writeAsJsonNode(object));
+    return walk(factory, JsonCodec.writeAsJsonNode(object));
   }
 
-  private Message<V> convert (Codec<V> codec, ObjectNode node)
-    throws IOException {
-
-    Message<V> message = codec.create();
-
-    for (Map.Entry<String, JsonNode> fieldEntry : new IterableIterator<>(node.fields())) {
-      message.put(fieldEntry.getKey(), convert(message.getFactory(), fieldEntry.getValue()));
-    }
-
-    return message;
-  }
-
-  private Value<V> convert (ValueFactory<V> factory, JsonNode node)
+  private Value<V> walk (ValueFactory<V> factory, JsonNode node)
     throws IOException {
 
     switch (node.getNodeType()) {
@@ -113,7 +117,7 @@ public class JaxbDeserializer<V extends Value<V>> implements JsonDeserializer<V>
         ObjectValue<V> objectValue = factory.objectValue();
 
         for (Map.Entry<String, JsonNode> fieldEntry : new IterableIterator<>(node.fields())) {
-          objectValue.put(fieldEntry.getKey(), convert(factory, fieldEntry.getValue()));
+          objectValue.put(fieldEntry.getKey(), walk(factory, fieldEntry.getValue()));
         }
 
         return objectValue;
@@ -122,7 +126,7 @@ public class JaxbDeserializer<V extends Value<V>> implements JsonDeserializer<V>
         ArrayValue<V> arrayValue = factory.arrayValue();
 
         for (JsonNode item : node) {
-          arrayValue.add(convert(factory, item));
+          arrayValue.add(walk(factory, item));
         }
 
         return arrayValue;

@@ -59,7 +59,14 @@ public class OrthodoxCodec implements Codec<OrthodoxValue> {
   public Message<OrthodoxValue>[] from (byte[] buffer)
     throws IOException {
 
-    return deserializer.convert(this, buffer);
+    return deserializer.read(this, buffer);
+  }
+
+  @Override
+  public Message<OrthodoxValue>[] from (String data)
+    throws IOException {
+
+    return deserializer.read(this, data);
   }
 
   @Override
