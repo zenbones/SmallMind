@@ -32,7 +32,7 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.json.orthodox;
 
-import org.smallmind.bayeux.oumuamua.common.api.json.Message;
+import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 
 public class OrthodoxMessage extends OrthodoxObjectValue implements Message<OrthodoxValue> {
 

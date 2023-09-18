@@ -33,9 +33,9 @@
 package org.smallmind.bayeux.oumuamua.server.spi.json.orthodox;
 
 import java.io.IOException;
-import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
-import org.smallmind.bayeux.oumuamua.common.api.json.Message;
-import org.smallmind.bayeux.oumuamua.common.api.json.Value;
+import org.smallmind.bayeux.oumuamua.server.api.json.Codec;
+import org.smallmind.bayeux.oumuamua.server.api.json.Message;
+import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.spi.json.JsonDeserializer;
 
 public class OrthodoxCodec implements Codec<OrthodoxValue> {

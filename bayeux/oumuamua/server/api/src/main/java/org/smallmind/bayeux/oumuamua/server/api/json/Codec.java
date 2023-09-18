@@ -30,53 +30,20 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.common.api.json;
+package org.smallmind.bayeux.oumuamua.server.api.json;
 
-import java.util.Iterator;
+import java.io.IOException;
 
-public interface ObjectValue<V extends Value<V>> extends Value<V> {
+public interface Codec<V extends Value<V>> {
 
-  default ValueType getType () {
+  Message<V> create ();
 
-    return ValueType.OBJECT;
-  }
+  Message<V>[] from (byte[] buffer)
+    throws IOException;
 
-  default ObjectValue<V> put (String field, boolean bool) {
+  Message<V>[] from (String data)
+    throws IOException;
 
-    return put(field, getFactory().booleanValue(bool));
-  }
-
-  default ObjectValue<V> put (String field, int i) {
-
-    return put(field, getFactory().numberValue(i));
-  }
-
-  default ObjectValue<V> put (String field, long l) {
-
-    return put(field, getFactory().numberValue(l));
-  }
-
-  default ObjectValue<V> put (String field, double d) {
-
-    return put(field, getFactory().numberValue(d));
-  }
-
-  default ObjectValue<V> put (String field, String text) {
-
-    return put(field, (text == null) ? getFactory().nullValue() : getFactory().textValue(text));
-  }
-
-  int size ();
-
-  boolean isEmpty ();
-
-  Iterator<String> fieldNames ();
-
-  Value<V> get (String field);
-
-  <U extends Value<V>> ObjectValue<V> put (String field, U value);
-
-  Value<V> remove (String field);
-
-  ObjectValue<V> removeAll ();
+  Value<V> convert (Object object)
+    throws IOException;
 }

@@ -37,8 +37,8 @@ import java.io.Writer;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import org.smallmind.bayeux.oumuamua.common.api.json.ObjectValue;
-import org.smallmind.bayeux.oumuamua.common.api.json.Value;
+import org.smallmind.bayeux.oumuamua.server.api.json.ObjectValue;
+import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
 public class OrthodoxObjectValue extends OrthodoxValue implements ObjectValue<OrthodoxValue> {
 

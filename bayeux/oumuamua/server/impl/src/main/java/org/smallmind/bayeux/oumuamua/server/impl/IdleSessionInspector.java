@@ -35,7 +35,7 @@ package org.smallmind.bayeux.oumuamua.server.impl;
 import java.util.Iterator;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import org.smallmind.bayeux.oumuamua.common.api.json.Value;
+import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class IdleSessionInspector<V extends Value<V>> implements Runnable {

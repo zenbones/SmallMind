@@ -30,23 +30,53 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.common.api.json;
+package org.smallmind.bayeux.oumuamua.server.api.json;
 
-public interface ValueFactory<V extends Value<V>> {
+import java.util.Iterator;
 
-  ObjectValue<V> objectValue ();
+public interface ObjectValue<V extends Value<V>> extends Value<V> {
 
-  ArrayValue<V> arrayValue ();
+  default ValueType getType () {
 
-  StringValue<V> textValue (String text);
+    return ValueType.OBJECT;
+  }
 
-  NumberValue<V> numberValue (int i);
+  default ObjectValue<V> put (String field, boolean bool) {
 
-  NumberValue<V> numberValue (long l);
+    return put(field, getFactory().booleanValue(bool));
+  }
 
-  NumberValue<V> numberValue (double d);
+  default ObjectValue<V> put (String field, int i) {
 
-  BooleanValue<V> booleanValue (boolean bool);
+    return put(field, getFactory().numberValue(i));
+  }
 
-  NullValue<V> nullValue ();
+  default ObjectValue<V> put (String field, long l) {
+
+    return put(field, getFactory().numberValue(l));
+  }
+
+  default ObjectValue<V> put (String field, double d) {
+
+    return put(field, getFactory().numberValue(d));
+  }
+
+  default ObjectValue<V> put (String field, String text) {
+
+    return put(field, (text == null) ? getFactory().nullValue() : getFactory().textValue(text));
+  }
+
+  int size ();
+
+  boolean isEmpty ();
+
+  Iterator<String> fieldNames ();
+
+  Value<V> get (String field);
+
+  <U extends Value<V>> ObjectValue<V> put (String field, U value);
+
+  Value<V> remove (String field);
+
+  ObjectValue<V> removeAll ();
 }

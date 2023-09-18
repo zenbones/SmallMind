@@ -32,8 +32,8 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api;
 
-import org.smallmind.bayeux.oumuamua.common.api.json.Message;
-import org.smallmind.bayeux.oumuamua.common.api.json.Value;
+import org.smallmind.bayeux.oumuamua.server.api.json.Message;
+import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
 public interface SecurityPolicy<V extends Value<V>> {
 

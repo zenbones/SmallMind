@@ -30,20 +30,22 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.common.api.json;
+package org.smallmind.bayeux.oumuamua.server.api.json;
 
-import java.io.IOException;
+public interface NumberValue<V extends Value<V>> extends Value<V> {
 
-public interface Codec<V extends Value<V>> {
+  default ValueType getType () {
 
-  Message<V> create ();
+    return ValueType.NUMBER;
+  }
 
-  Message<V>[] from (byte[] buffer)
-    throws IOException;
+  NumberType getNumberType ();
 
-  Message<V>[] from (String data)
-    throws IOException;
+  Number asNumber ();
 
-  Value<V> convert (Object object)
-    throws IOException;
+  int asInt ();
+
+  long asLong ();
+
+  double asDouble ();
 }

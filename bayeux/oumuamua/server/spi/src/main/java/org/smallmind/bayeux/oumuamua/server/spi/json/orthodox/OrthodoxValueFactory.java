@@ -32,13 +32,13 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.json.orthodox;
 
-import org.smallmind.bayeux.oumuamua.common.api.json.ArrayValue;
-import org.smallmind.bayeux.oumuamua.common.api.json.BooleanValue;
-import org.smallmind.bayeux.oumuamua.common.api.json.NullValue;
-import org.smallmind.bayeux.oumuamua.common.api.json.NumberValue;
-import org.smallmind.bayeux.oumuamua.common.api.json.ObjectValue;
-import org.smallmind.bayeux.oumuamua.common.api.json.StringValue;
-import org.smallmind.bayeux.oumuamua.common.api.json.ValueFactory;
+import org.smallmind.bayeux.oumuamua.server.api.json.ArrayValue;
+import org.smallmind.bayeux.oumuamua.server.api.json.BooleanValue;
+import org.smallmind.bayeux.oumuamua.server.api.json.NullValue;
+import org.smallmind.bayeux.oumuamua.server.api.json.NumberValue;
+import org.smallmind.bayeux.oumuamua.server.api.json.ObjectValue;
+import org.smallmind.bayeux.oumuamua.server.api.json.StringValue;
+import org.smallmind.bayeux.oumuamua.server.api.json.ValueFactory;
 
 public class OrthodoxValueFactory implements ValueFactory<OrthodoxValue> {
 

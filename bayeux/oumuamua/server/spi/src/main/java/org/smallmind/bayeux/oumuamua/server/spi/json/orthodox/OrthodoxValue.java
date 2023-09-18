@@ -34,8 +34,8 @@ package org.smallmind.bayeux.oumuamua.server.spi.json.orthodox;
 
 import java.io.IOException;
 import java.io.StringWriter;
-import org.smallmind.bayeux.oumuamua.common.api.json.Value;
-import org.smallmind.bayeux.oumuamua.common.api.json.ValueFactory;
+import org.smallmind.bayeux.oumuamua.server.api.json.Value;
+import org.smallmind.bayeux.oumuamua.server.api.json.ValueFactory;
 
 public abstract class OrthodoxValue implements Value<OrthodoxValue> {
 

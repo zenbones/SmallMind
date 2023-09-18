@@ -33,7 +33,7 @@
 package org.smallmind.bayeux.oumuamua.server.api;
 
 import java.util.concurrent.TimeUnit;
-import org.smallmind.bayeux.oumuamua.common.api.json.Value;
+import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
 public interface Session<V extends Value<V>> extends Attributed {
 

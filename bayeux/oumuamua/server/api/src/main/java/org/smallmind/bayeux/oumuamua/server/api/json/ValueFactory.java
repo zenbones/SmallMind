@@ -30,9 +30,23 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.common.api.json;
+package org.smallmind.bayeux.oumuamua.server.api.json;
 
-public enum ValueType {
+public interface ValueFactory<V extends Value<V>> {
 
-  OBJECT, ARRAY, STRING, NUMBER, BOOLEAN, NULL
+  ObjectValue<V> objectValue ();
+
+  ArrayValue<V> arrayValue ();
+
+  StringValue<V> textValue (String text);
+
+  NumberValue<V> numberValue (int i);
+
+  NumberValue<V> numberValue (long l);
+
+  NumberValue<V> numberValue (double d);
+
+  BooleanValue<V> booleanValue (boolean bool);
+
+  NullValue<V> nullValue ();
 }

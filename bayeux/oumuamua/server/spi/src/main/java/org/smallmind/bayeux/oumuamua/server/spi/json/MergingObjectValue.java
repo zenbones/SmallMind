@@ -36,10 +36,10 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.HashSet;
 import java.util.Iterator;
-import org.smallmind.bayeux.oumuamua.common.api.json.ArrayValue;
-import org.smallmind.bayeux.oumuamua.common.api.json.ObjectValue;
-import org.smallmind.bayeux.oumuamua.common.api.json.Value;
-import org.smallmind.bayeux.oumuamua.common.api.json.ValueFactory;
+import org.smallmind.bayeux.oumuamua.server.api.json.ArrayValue;
+import org.smallmind.bayeux.oumuamua.server.api.json.ObjectValue;
+import org.smallmind.bayeux.oumuamua.server.api.json.Value;
+import org.smallmind.bayeux.oumuamua.server.api.json.ValueFactory;
 import org.smallmind.nutsnbolts.util.IterableIterator;
 
 public class MergingObjectValue<V extends Value<V>> implements ObjectValue<V> {

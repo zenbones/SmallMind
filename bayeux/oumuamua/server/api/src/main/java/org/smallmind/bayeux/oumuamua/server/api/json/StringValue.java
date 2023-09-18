@@ -30,12 +30,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.common.api.json;
+package org.smallmind.bayeux.oumuamua.server.api.json;
 
-public interface NullValue<V extends Value<V>> extends Value<V> {
+public interface StringValue<V extends Value<V>> extends Value<V> {
 
   default ValueType getType () {
 
-    return ValueType.NULL;
+    return ValueType.STRING;
   }
+
+  String asText ();
 }

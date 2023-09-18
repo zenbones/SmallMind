@@ -35,10 +35,10 @@ package org.smallmind.bayeux.oumuamua.server.spi.json;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Collection;
-import org.smallmind.bayeux.oumuamua.common.api.json.ArrayValue;
-import org.smallmind.bayeux.oumuamua.common.api.json.ObjectValue;
-import org.smallmind.bayeux.oumuamua.common.api.json.Value;
-import org.smallmind.bayeux.oumuamua.common.api.json.ValueFactory;
+import org.smallmind.bayeux.oumuamua.server.api.json.ArrayValue;
+import org.smallmind.bayeux.oumuamua.server.api.json.ObjectValue;
+import org.smallmind.bayeux.oumuamua.server.api.json.Value;
+import org.smallmind.bayeux.oumuamua.server.api.json.ValueFactory;
 
 public class CopyOnWriteArrayValue<V extends Value<V>> implements ArrayValue<V> {
 

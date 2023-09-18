@@ -34,7 +34,7 @@ package org.smallmind.bayeux.oumuamua.server.impl;
 
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
-import org.smallmind.bayeux.oumuamua.common.api.json.Value;
+import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
 
 public class OumuamuaServletContextListener<V extends Value<V>> implements ServletContextListener {

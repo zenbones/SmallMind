@@ -12,7 +12,6 @@
   <packaging>pom</packaging>
   <modules>
     <module>client</module>
-    <module>common</module>
     <module>server</module>
   </modules>
   <build>

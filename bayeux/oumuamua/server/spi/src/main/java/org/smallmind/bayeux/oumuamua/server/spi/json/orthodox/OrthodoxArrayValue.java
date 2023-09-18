@@ -36,8 +36,8 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.Collection;
 import java.util.LinkedList;
-import org.smallmind.bayeux.oumuamua.common.api.json.ArrayValue;
-import org.smallmind.bayeux.oumuamua.common.api.json.Value;
+import org.smallmind.bayeux.oumuamua.server.api.json.ArrayValue;
+import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
 public class OrthodoxArrayValue extends OrthodoxValue implements ArrayValue<OrthodoxValue> {
 

@@ -34,8 +34,8 @@ package org.smallmind.bayeux.oumuamua.server.api;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
-import org.smallmind.bayeux.oumuamua.common.api.json.Codec;
-import org.smallmind.bayeux.oumuamua.common.api.json.Value;
+import org.smallmind.bayeux.oumuamua.server.api.json.Codec;
+import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.backbone.Backbone;
 
 public interface Server<V extends Value<V>> extends Attributed {

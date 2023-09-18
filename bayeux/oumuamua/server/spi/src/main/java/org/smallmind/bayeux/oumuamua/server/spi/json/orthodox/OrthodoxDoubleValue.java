@@ -34,8 +34,8 @@ package org.smallmind.bayeux.oumuamua.server.spi.json.orthodox;
 
 import java.io.IOException;
 import java.io.Writer;
-import org.smallmind.bayeux.oumuamua.common.api.json.NumberType;
-import org.smallmind.bayeux.oumuamua.common.api.json.NumberValue;
+import org.smallmind.bayeux.oumuamua.server.api.json.NumberType;
+import org.smallmind.bayeux.oumuamua.server.api.json.NumberValue;
 
 public class OrthodoxDoubleValue extends OrthodoxValue implements NumberValue<OrthodoxValue> {
 

@@ -32,7 +32,7 @@
  */
 package org.smallmind.bayeux.oumuamua.server.impl;
 
-import org.smallmind.bayeux.oumuamua.common.api.json.Value;
+import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
 @FunctionalInterface
 public interface ChannelOperation<V extends Value<V>> {
