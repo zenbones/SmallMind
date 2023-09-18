@@ -357,7 +357,7 @@ public class GrizzlyInitializingBean implements InitializingBean, DisposableBean
   private String normalizePath (String path) {
 
     if (path != null) {
-      if (path.length() == 0) {
+      if (path.isEmpty()) {
 
         return "/";
       } else if ((path.length() > 1) && path.endsWith("/")) {
