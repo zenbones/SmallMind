@@ -84,8 +84,6 @@ public class LongPollingTest {
         if (idSet.size() < 15) {
           System.out.println("WOOOTHERE-------------------------------------------------------------------------");
           System.out.println(Arrays.asList(idSet.toArray()));
-        } else {
-          System.out.println("ABC:" + idSet.size());
         }
       }
     });
