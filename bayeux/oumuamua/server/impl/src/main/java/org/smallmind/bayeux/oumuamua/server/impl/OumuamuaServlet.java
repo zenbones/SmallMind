@@ -114,7 +114,7 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
       }
 
       if ((contentBufferSize <= 0) || (!readStream(request.getInputStream(), contentBuffer = new byte[contentBufferSize]))) {
-        response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unable to read full content");
+        response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unable to read the full content");
       } else {
 
         LoggerManager.getLogger(LongPollingConnection.class).debug(() -> "<=" + new String(contentBuffer));
@@ -134,21 +134,27 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
     }
   }
 
-  private boolean readStream (InputStream inputStream, byte[] contentBuffer)
-    throws IOException {
+  private boolean readStream (InputStream inputStream, byte[] contentBuffer) {
 
-    int totalBytesRead = 0;
-    int bytesRead;
+    try {
 
-    while (totalBytesRead < contentBuffer.length) {
-      if ((bytesRead = inputStream.read(contentBuffer, totalBytesRead, contentBuffer.length - totalBytesRead)) < 0) {
-        return false;
-      } else {
-        totalBytesRead += bytesRead;
+      int totalBytesRead = 0;
+      int bytesRead;
+
+      while (totalBytesRead < contentBuffer.length) {
+        if ((bytesRead = inputStream.read(contentBuffer, totalBytesRead, contentBuffer.length - totalBytesRead)) < 0) {
+          return false;
+        } else {
+          totalBytesRead += bytesRead;
+        }
       }
-    }
 
-    return true;
+      return true;
+    } catch (IOException ioException) {
+      LoggerManager.getLogger(OumuamuaServlet.class).error(ioException);
+
+      return false;
+    }
   }
 
   @Override

@@ -85,7 +85,6 @@ public class LongPollingConnection<V extends Value<V>> implements OumuamuaConnec
     try {
       if ((messages != null) && (messages.length > 0)) {
         if (messages.length == 1) {
-
           process(server, packet -> {
             try {
               emit(asyncContext, packet);
