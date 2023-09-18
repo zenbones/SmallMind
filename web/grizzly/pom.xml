@@ -63,6 +63,16 @@
     </dependency>
     <dependency>
       <groupId>org.glassfish.grizzly</groupId>
+      <artifactId>grizzly-http2</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.grizzly</groupId>
+      <artifactId>grizzly-npn-bootstrap</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.grizzly</groupId>
       <artifactId>grizzly-framework</artifactId>
       <scope>compile</scope>
     </dependency>

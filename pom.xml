@@ -92,6 +92,7 @@
     <freemarker.version>2.3.31</freemarker.version>
     <google.autoservice.version>1.0.1</google.autoservice.version>
     <grizzly.version>2.4.4</grizzly.version>
+    <grizzly.npn.version>2.0.0</grizzly.npn.version>
     <hdrhistogram.version>2.1.12</hdrhistogram.version>
     <hibernate.version>5.6.1.Final</hibernate.version>
     <hibernate.annotations.version>5.1.2.Final</hibernate.annotations.version>
@@ -893,6 +894,16 @@
         <groupId>org.glassfish.grizzly</groupId>
         <artifactId>grizzly-http</artifactId>
         <version>${grizzly.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.glassfish.grizzly</groupId>
+        <artifactId>grizzly-http2</artifactId>
+        <version>${grizzly.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.glassfish.grizzly</groupId>
+        <artifactId>grizzly-npn-bootstrap</artifactId>
+        <version>${grizzly.npn.version}</version>
       </dependency>
       <dependency>
         <groupId>org.glassfish.grizzly</groupId>

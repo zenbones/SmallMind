@@ -46,6 +46,8 @@ import org.glassfish.grizzly.http.server.HttpHandler;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.grizzly.http.server.NetworkListener;
 import org.glassfish.grizzly.http.server.StaticHttpHandler;
+import org.glassfish.grizzly.http2.Http2AddOn;
+import org.glassfish.grizzly.http2.Http2Configuration;
 import org.glassfish.grizzly.jaxws.JaxwsHandler;
 import org.glassfish.grizzly.servlet.FilterRegistration;
 import org.glassfish.grizzly.servlet.ServletRegistration;
@@ -213,7 +215,14 @@ public class GrizzlyInitializingBean implements InitializingBean, DisposableBean
       throw new GrizzlyInitializationException("Instance is not configured to allow insecure connection, and does not provide any ssl info");
     }
 
-    if ((addOns != null) && (addOns.length > 0)) {
+    Http2Configuration configuration = Http2Configuration.builder().build();
+    Http2AddOn http2Addon = new Http2AddOn(configuration);
+
+    for (NetworkListener networkListener : httpServer.getListeners()) {
+      networkListener.registerAddOn(http2Addon);
+    }
+
+    if (addOns != null) {
       for (AddOn addOn : addOns) {
         for (NetworkListener networkListener : httpServer.getListeners()) {
           networkListener.registerAddOn(addOn);
