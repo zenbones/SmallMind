@@ -105,6 +105,7 @@ public class KafkaConnector {
     props.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, 500);  // > REQUEST_TIMEOUT_MS_CONFIG + LINGER_MS_CONFIG
     props.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, 500); // > replica.lag.time.max.ms
     props.put(ProducerConfig.LINGER_MS_CONFIG, 0); // maybe 20ms or so, up to 500ms at the outside
+    props.put(ProducerConfig.MAX_REQUEST_SIZE_CONFIG, 1024 * 1024); // bytes, default is 1mb = 1024 * 1024
     props.put(ProducerConfig.BATCH_SIZE_CONFIG, 16384); // bytes, default is 16kb = 16384
     props.put(ProducerConfig.MAX_BLOCK_MS_CONFIG, 1000); // how long to block when the send buffer is full (and acks > 0?)
     // props.put(ProducerConfig.MAX_BLOCK_MS_CONFIG, 60000); // how long to block when the send buffer is full (and acks > 0?)
