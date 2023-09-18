@@ -34,7 +34,6 @@
             </bean>
           </list>
         </property>
-        <!--
         <property name="backbone">
           <bean class="org.smallmind.bayeux.oumuamua.server.spi.backbone.kafka.KafkaBackbone">
             <constructor-arg index="0" name="nodeName" value="testing"/>
@@ -48,7 +47,6 @@
             </constructor-arg>
           </bean>
         </property>
-        -->
       </bean>
     </constructor-arg>
   </bean>

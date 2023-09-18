@@ -49,55 +49,53 @@ public interface Connection<V extends Value<V>> {
 
   default void process (Server<V> server, ResponseConsumer<V> responseConsumer, Message<V>[] messages) {
 
-    if (messages != null) {
-      for (Message<V> message : messages) {
+    for (Message<V> message : messages) {
 
-        Packet<V> packet;
-        String path = message.getChannel();
-        String sessionId = message.getSessionId();
+      Packet<V> packet;
+      String path = message.getChannel();
+      String sessionId = message.getSessionId();
 
-        try {
+      try {
 
-          Meta meta = Meta.from(path);
-          Route route = Meta.PUBLISH.equals(meta) ? new DefaultRoute(path) : meta.getRoute();
+        Meta meta = Meta.from(path);
+        Route route = Meta.PUBLISH.equals(meta) ? new DefaultRoute(path) : meta.getRoute();
 
-          if (sessionId == null) {
-            if (Meta.HANDSHAKE.equals(meta)) {
+        if (sessionId == null) {
+          if (Meta.HANDSHAKE.equals(meta)) {
 
-              Session<V> session = createSession(server);
+            Session<V> session = createSession(server);
 
-              if (SessionState.DISCONNECTED.equals(session.getState())) {
-                throw new MetaProcessingException("Session has been disconnected");
-              } else {
-                packet = cycle(meta, route, server, session, responseConsumer, message);
-              }
-            } else {
-              throw new MetaProcessingException("Missing client id");
-            }
-          } else {
-
-            Session<V> session;
-
-            if ((session = server.getSession(sessionId)) == null) {
-              throw new MetaProcessingException("Invalid client id");
-            } else if (!validateSession(session)) {
-              throw new MetaProcessingException("Invalid session type");
-            } else if (SessionState.DISCONNECTED.equals(session.getState())) {
+            if (SessionState.DISCONNECTED.equals(session.getState())) {
               throw new MetaProcessingException("Session has been disconnected");
             } else {
-              packet = cycle(meta, route, server, session, responseConsumer, message);
+              packet = cycle(meta, route, server, session, message);
             }
+          } else {
+            throw new MetaProcessingException("Missing client id");
           }
-        } catch (IOException | InterruptedException | InvalidPathException | MetaProcessingException exception) {
-          packet = new Packet<>(PacketType.RESPONSE, sessionId, null, Meta.constructErrorResponse(server, path, message.getId(), sessionId, exception.getMessage(), null));
-        }
+        } else {
 
-        responseConsumer.accept(packet);
+          Session<V> session;
+
+          if ((session = server.getSession(sessionId)) == null) {
+            throw new MetaProcessingException("Invalid client id");
+          } else if (!validateSession(session)) {
+            throw new MetaProcessingException("Invalid session type");
+          } else if (SessionState.DISCONNECTED.equals(session.getState())) {
+            throw new MetaProcessingException("Session has been disconnected");
+          } else {
+            packet = cycle(meta, route, server, session, message);
+          }
+        }
+      } catch (IOException | InterruptedException | InvalidPathException | MetaProcessingException exception) {
+        packet = new Packet<>(PacketType.RESPONSE, sessionId, null, Meta.constructErrorResponse(server, path, message.getId(), sessionId, exception.getMessage(), null));
       }
+
+      responseConsumer.accept(packet);
     }
   }
 
-  private Packet<V> cycle (Meta meta, Route route, Server<V> server, Session<V> session, ResponseConsumer<V> responseConsumer, Message<V> request)
+  private Packet<V> cycle (Meta meta, Route route, Server<V> server, Session<V> session, Message<V> request)
     throws IOException, InterruptedException, InvalidPathException {
 
     Packet<V> packet;
