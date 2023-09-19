@@ -374,6 +374,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
 
       channelTree.deliver(sender, 0, packet, new HashSet<>());
 
+      // Do *not* redistribute packets from the backbone
       if (clustered) {
 
         Backbone<V> backbone;
