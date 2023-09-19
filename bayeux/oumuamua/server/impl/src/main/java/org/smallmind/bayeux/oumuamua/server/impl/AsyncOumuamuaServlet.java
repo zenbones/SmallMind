@@ -33,32 +33,34 @@
 package org.smallmind.bayeux.oumuamua.server.impl;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import javax.servlet.AsyncContext;
+import javax.servlet.ReadListener;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
+import javax.servlet.ServletInputStream;
+import javax.servlet.WriteListener;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.smallmind.bayeux.oumuamua.server.api.json.Message;
-import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
+import org.smallmind.bayeux.oumuamua.server.api.json.Message;
+import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.impl.longpolling.LongPollingConnection;
 import org.smallmind.bayeux.oumuamua.server.impl.longpolling.LongPollingTransport;
 import org.smallmind.bayeux.oumuamua.server.spi.Protocols;
 import org.smallmind.bayeux.oumuamua.server.spi.Transports;
 import org.smallmind.scribe.pen.LoggerManager;
 
-public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
+public class AsyncOumuamuaServlet<V extends Value<V>> extends HttpServlet {
 
   private final ExecutorService executorService = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<>(), new ThreadPoolExecutor.CallerRunsPolicy());
-  private LongPollingConnection<V> connection;
   private OumuamuaServer<V> server;
+  private LongPollingConnection<V> connection;
 
   @Override
   public String getServletInfo () {
@@ -104,7 +106,6 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
       response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing content length");
     } else {
 
-      byte[] contentBuffer;
       int contentBufferSize = 0;
 
       try {
@@ -113,47 +114,17 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
         response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid content length");
       }
 
-      if ((contentBufferSize <= 0) || (!readStream(request.getInputStream(), contentBuffer = new byte[contentBufferSize]))) {
+      if (contentBufferSize <= 0) {
         response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unable to read the full content");
       } else {
 
-        LoggerManager.getLogger(LongPollingConnection.class).debug(() -> "<=" + new String(contentBuffer));
+        AsyncContext asyncContext = request.startAsync();
+        ServletInputStream inputStream = request.getInputStream();
 
-        try {
-
-          Message<V>[] messages = server.getCodec().from(contentBuffer);
-
-          AsyncContext asyncContext = request.startAsync();
-          asyncContext.setTimeout(0);
-
-          executorService.submit(() -> connection.onMessages(asyncContext, messages));
-        } catch (IOException ioException) {
-          response.sendError(HttpServletResponse.SC_BAD_REQUEST, ioException.getMessage());
-        }
+        asyncContext.setTimeout(0);
+        inputStream.setReadListener(new OumuamuaReadListener<>(executorService, server, connection, asyncContext, inputStream, contentBufferSize));
+        // response.getOutputStream().setWriteListener(new OumuamuaWriteListener());
       }
-    }
-  }
-
-  private boolean readStream (InputStream inputStream, byte[] contentBuffer) {
-
-    try {
-
-      int totalBytesRead = 0;
-      int bytesRead;
-
-      while (totalBytesRead < contentBuffer.length) {
-        if ((bytesRead = inputStream.read(contentBuffer, totalBytesRead, contentBuffer.length - totalBytesRead)) < 0) {
-          return false;
-        } else {
-          totalBytesRead += bytesRead;
-        }
-      }
-
-      return true;
-    } catch (IOException ioException) {
-      LoggerManager.getLogger(OumuamuaServlet.class).error(ioException);
-
-      return false;
     }
   }
 
@@ -164,5 +135,77 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
     executorService.shutdown();
 
     super.destroy();
+  }
+
+  private static class OumuamuaReadListener<V extends Value<V>> implements ReadListener {
+
+    private final ExecutorService executorService;
+    private final Server<V> server;
+    private final LongPollingConnection<V> connection;
+    private final AsyncContext asyncContext;
+    private final ServletInputStream inputStream;
+    private final byte[] contentBuffer;
+    private int index = 0;
+
+    public OumuamuaReadListener (ExecutorService executorService, Server<V> server, LongPollingConnection<V> connection, AsyncContext asyncContext, ServletInputStream inputStream, int contentBufferSize) {
+
+      this.executorService = executorService;
+      this.server = server;
+      this.connection = connection;
+      this.asyncContext = asyncContext;
+      this.inputStream = inputStream;
+
+      contentBuffer = new byte[contentBufferSize];
+    }
+
+    @Override
+    public void onDataAvailable ()
+      throws IOException {
+
+      if (index == contentBuffer.length) {
+        throw new IOException("Available data exceeds the declared content length");
+      } else {
+
+        int bytesRead;
+
+        while (inputStream.isReady() && ((bytesRead = inputStream.read(contentBuffer, index, contentBuffer.length - index)) >= 0)) {
+          index += bytesRead;
+          System.out.println(new String(contentBuffer));
+        }
+      }
+    }
+
+    @Override
+    public void onAllDataRead ()
+      throws IOException {
+
+      LoggerManager.getLogger(OumuamuaServlet.class).debug(() -> "<=" + new String(contentBuffer));
+
+      Message<V>[] messages = server.getCodec().from(contentBuffer);
+
+      executorService.submit(() -> connection.onMessages(asyncContext, messages));
+    }
+
+    @Override
+    public void onError (Throwable throwable) {
+
+      asyncContext.complete();
+
+      LoggerManager.getLogger(OumuamuaReadListener.class).error(throwable);
+    }
+  }
+
+  private static class OumuamuaWriteListener implements WriteListener {
+
+    @Override
+    public void onWritePossible ()
+      throws IOException {
+
+    }
+
+    @Override
+    public void onError (Throwable t) {
+
+    }
   }
 }
