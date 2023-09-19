@@ -55,7 +55,7 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
 
   private final ReentrantLock longPollLock = new ReentrantLock();
   private final Condition notEmptyCondition = longPollLock.newCondition();
-  private final ConcurrentLinkedDeque<Pair<Session<V>, Packet<V>>> longPollQueue = new ConcurrentLinkedDeque<>();
+  private final ConcurrentLinkedDeque<Pair<Session<V>, Packet<V>>> longPollDeque = new ConcurrentLinkedDeque<>();
   private final ConcurrentLinkedQueue<Session.Listener<V>> listenerList = new ConcurrentLinkedQueue<>();
   private final AtomicInteger longPollQueueSize = new AtomicInteger(0);
   private final Consumer<Session<V>> onConnectedCallback;
@@ -191,7 +191,7 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
       Pair<Session<V>, Packet<V>> enqueuedPair;
 
       do {
-        if ((enqueuedPair = longPollQueue.pollFirst()) == null) {
+        if ((enqueuedPair = longPollDeque.pollFirst()) == null) {
           if (remainingNanoseconds > 0) {
             remainingNanoseconds = notEmptyCondition.awaitNanos(remainingNanoseconds);
           }
@@ -222,12 +222,12 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
 
       try {
         if (longPollQueueSize.incrementAndGet() > maxLongPollQueueSize) {
-          if (longPollQueue.pollFirst() != null) {
+          if (longPollDeque.pollFirst() != null) {
             longPollQueueSize.decrementAndGet();
           }
         }
 
-        longPollQueue.add(new Pair<>(sender, packet));
+        longPollDeque.add(new Pair<>(sender, packet));
 
         notEmptyCondition.signal();
       } finally {
