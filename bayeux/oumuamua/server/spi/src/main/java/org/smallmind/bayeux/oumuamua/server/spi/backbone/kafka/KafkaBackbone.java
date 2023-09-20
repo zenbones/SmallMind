@@ -38,6 +38,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import org.apache.kafka.clients.consumer.Consumer;
@@ -49,11 +53,11 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.Node;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
-import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.OumuamuaException;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.backbone.Backbone;
+import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.spi.backbone.DebonedPacket;
 import org.smallmind.bayeux.oumuamua.server.spi.backbone.RecordUtility;
 import org.smallmind.nutsnbolts.util.ComponentStatus;
@@ -62,6 +66,7 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
 
+  private final ExecutorService executorService = new ThreadPoolExecutor(1, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(), new ThreadPoolExecutor.CallerRunsPolicy());
   private final AtomicReference<ComponentStatus> statusRef = new AtomicReference<>(ComponentStatus.STOPPED);
   private final KafkaConnector connector;
   private final Producer<Long, byte[]> producer;
@@ -134,11 +139,13 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
   @Override
   public void publish (Packet<V> packet) {
 
-    try {
-      producer.send(new ProducerRecord<>(topicName, RecordUtility.serialize(nodeName, packet)));
-    } catch (IOException ioException) {
-      LoggerManager.getLogger(KafkaBackbone.class).error(ioException);
-    }
+    executorService.submit(() -> {
+      try {
+        producer.send(new ProducerRecord<>(topicName, RecordUtility.serialize(nodeName, packet)));
+      } catch (IOException ioException) {
+        LoggerManager.getLogger(KafkaBackbone.class).error(ioException);
+      }
+    });
   }
 
   private static class ConsumerWorker<V extends Value<V>> implements Runnable {
