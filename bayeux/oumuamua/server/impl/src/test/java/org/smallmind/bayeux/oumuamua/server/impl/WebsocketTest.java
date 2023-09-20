@@ -72,10 +72,7 @@ public class WebsocketTest {
     Counter counter = new Counter();
 
     bayeuxClient.getChannel("/foobar").subscribe((channel, message) -> {
-
-      int count = counter.incAndGet();
-
-      if (count == 10000) {
+      if (counter.incAndGet() == 10000) {
         System.out.println(System.currentTimeMillis());
       }
     });

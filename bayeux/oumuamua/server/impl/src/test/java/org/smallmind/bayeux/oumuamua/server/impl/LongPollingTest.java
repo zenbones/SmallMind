@@ -32,9 +32,7 @@
  */
 package org.smallmind.bayeux.oumuamua.server.impl;
 
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import org.cometd.client.BayeuxClient;
 import org.cometd.client.http.jetty.JettyHttpClientTransport;
@@ -68,23 +66,10 @@ public class LongPollingTest {
     }
 
     Counter counter = new Counter();
-    HashSet<Integer> idSet = new HashSet<>();
-    for (int i = 4; i < 10005; i++) {
-      idSet.add(i);
-    }
 
     bayeuxClient.getChannel("/foobar").subscribe((channel, message) -> {
-
-      int count = counter.incAndGet();
-
-      if (count == 10000) {
+      if (counter.incAndGet() == 10000) {
         System.out.println(System.currentTimeMillis());
-      } else {
-        idSet.remove(Integer.parseInt(message.getId()));
-        if (idSet.size() < 15) {
-          System.out.println("WOOOTHERE-------------------------------------------------------------------------");
-          System.out.println(Arrays.asList(idSet.toArray()));
-        }
       }
     });
 
