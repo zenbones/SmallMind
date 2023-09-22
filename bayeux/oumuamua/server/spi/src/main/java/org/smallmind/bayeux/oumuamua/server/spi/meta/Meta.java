@@ -140,7 +140,7 @@ public enum Meta {
         Message<V>[] messages;
         long sessionConnectIntervalMilliseconds = getSessionConnectIntervalMilliseconds(server, request);
 
-        if (protocol.isLongPolling()) {
+        if (session.isLongPolling()) {
 
           Message<V> responseMessage = constructConnectSuccessResponse(server, route.getPath(), request.getId(), session.getId(), 0);
           LinkedList<Message<V>> enqueuedMessageList = null;

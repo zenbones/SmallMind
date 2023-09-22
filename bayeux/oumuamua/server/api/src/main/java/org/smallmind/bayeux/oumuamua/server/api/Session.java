@@ -59,6 +59,8 @@ public interface Session<V extends Value<V>> extends Attributed {
 
   boolean isLongPolling ();
 
+  void setLongPolling (boolean longPolling);
+
   int getMaxLongPollQueueSize ();
 
   SessionState getState ();

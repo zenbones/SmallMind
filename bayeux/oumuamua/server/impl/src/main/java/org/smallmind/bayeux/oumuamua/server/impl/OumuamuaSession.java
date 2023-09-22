@@ -35,16 +35,17 @@ package org.smallmind.bayeux.oumuamua.server.impl;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
-import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.PacketType;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.bayeux.oumuamua.server.api.SessionState;
 import org.smallmind.bayeux.oumuamua.server.api.Transport;
+import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.spi.AbstractAttributed;
 import org.smallmind.bayeux.oumuamua.server.spi.Connection;
 import org.smallmind.bayeux.oumuamua.server.spi.json.PacketUtility;
@@ -61,8 +62,8 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   private final Consumer<Session<V>> onConnectedCallback;
   private final Consumer<Session<V>> onDisconnectedCallback;
   private final Connection<V> connection;
+  private final AtomicBoolean longPolling = new AtomicBoolean(false);
   private final String sessionId = SnowflakeId.newInstance().generateHexEncoding();
-  private final boolean longPolling;
   private final long maxIdleTimeoutMilliseconds;
   private final int maxLongPollQueueSize;
   private SessionState state;
@@ -76,9 +77,12 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
     this.maxLongPollQueueSize = maxLongPollQueueSize;
     this.maxIdleTimeoutMilliseconds = maxIdleTimeoutMilliseconds;
 
-    longPolling = connection.getTransport().getProtocol().isLongPolling();
     state = SessionState.INITIALIZED;
     lastContactTimestamp = System.currentTimeMillis();
+
+    if (connection.getTransport().getProtocol().isLongPolling()) {
+      longPolling.set(true);
+    }
   }
 
   private void onProcessing (Session<V> sender, Packet<V> packet) {
@@ -129,7 +133,13 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   @Override
   public boolean isLongPolling () {
 
-    return longPolling;
+    return longPolling.get();
+  }
+
+  @Override
+  public void setLongPolling (boolean longPolling) {
+
+    this.longPolling.set(longPolling);
   }
 
   @Override
@@ -217,7 +227,7 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   @Override
   public void deliver (Session<V> sender, Packet<V> packet) {
 
-    if (longPolling) {
+    if (longPolling.get()) {
       longPollLock.lock();
 
       try {
