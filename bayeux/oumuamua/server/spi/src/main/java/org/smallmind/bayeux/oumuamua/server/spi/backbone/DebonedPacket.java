@@ -32,8 +32,8 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.backbone;
 
-import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
+import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
 public class DebonedPacket<V extends Value<V>> {
 

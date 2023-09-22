@@ -32,9 +32,9 @@
  */
 package org.smallmind.bayeux.oumuamua.server.impl;
 
-import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
+import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
 public class RemovedSessionOperation<V extends Value<V>> implements ChannelOperation<V> {
 

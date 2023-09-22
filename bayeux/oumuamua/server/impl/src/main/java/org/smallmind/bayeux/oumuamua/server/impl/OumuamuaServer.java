@@ -42,23 +42,23 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
-import org.smallmind.bayeux.oumuamua.server.api.json.Codec;
-import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.ChannelInitializer;
 import org.smallmind.bayeux.oumuamua.server.api.ChannelStateException;
 import org.smallmind.bayeux.oumuamua.server.api.InvalidPathException;
 import org.smallmind.bayeux.oumuamua.server.api.OumuamuaException;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
+import org.smallmind.bayeux.oumuamua.server.api.PacketType;
 import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.SecurityPolicy;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.bayeux.oumuamua.server.api.backbone.Backbone;
+import org.smallmind.bayeux.oumuamua.server.api.json.Codec;
+import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.spi.AbstractAttributed;
 import org.smallmind.bayeux.oumuamua.server.spi.Connection;
 import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
-import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed implements Server<V> {
@@ -97,6 +97,12 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
         }
 
         protocolNames = protocolMap.keySet().toArray(new String[0]);
+      }
+
+      if (configuration.getListeners() != null) {
+        for (Listener<V> listener : configuration.getListeners()) {
+          addListener(listener);
+        }
       }
     }
   }
@@ -202,25 +208,27 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
     }
   }
 
-  private void onProcessing (Session<V> sender, Packet<V> packet) {
+  private Packet<V> onProcessing (Session<V> sender, Packet<V> packet) {
 
     for (Listener<V> listener : listenerList) {
       if (PacketListener.class.isAssignableFrom(listener.getClass())) {
-        switch (packet.getPacketType()) {
-          case REQUEST:
-            ((PacketListener<V>)listener).onRequest(sender, packet);
+        if (PacketType.REQUEST.equals(packet.getPacketType())) {
+          if ((packet = ((PacketListener<V>)listener).onRequest(sender, packet)) == null) {
             break;
-          case RESPONSE:
-            ((PacketListener<V>)listener).onResponse(sender, packet);
+          }
+        } else if (PacketType.RESPONSE.equals(packet.getPacketType())) {
+          if ((packet = ((PacketListener<V>)listener).onResponse(sender, packet)) == null) {
             break;
-          case DELIVERY:
-            ((PacketListener<V>)listener).onDelivery(sender, packet);
+          }
+        } else {
+          if ((packet = ((PacketListener<V>)listener).onDelivery(sender, packet)) == null) {
             break;
-          default:
-            throw new UnknownSwitchCaseException(packet.getPacketType().name());
+          }
         }
       }
     }
+
+    return packet;
   }
 
   @Override
@@ -355,32 +363,33 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   @Override
-  public void onRequest (Session<V> sender, Packet<V> packet) {
+  public Packet<V> onRequest (Session<V> sender, Packet<V> packet) {
 
-    onProcessing(sender, packet);
+    return onProcessing(sender, packet);
   }
 
   @Override
-  public void onResponse (Session<V> sender, Packet<V> packet) {
+  public Packet<V> onResponse (Session<V> sender, Packet<V> packet) {
 
-    onProcessing(sender, packet);
+    return onProcessing(sender, packet);
   }
 
   @Override
   public void deliver (Session<V> sender, Packet<V> packet, boolean clustered) {
 
     if (packet.getRoute() != null) {
-      onProcessing(sender, packet);
+      if ((packet = onProcessing(sender, packet)) != null) {
 
-      channelTree.deliver(sender, 0, packet, new HashSet<>());
+        channelTree.deliver(sender, 0, packet, new HashSet<>());
 
-      // Do *not* redistribute packets from the backbone
-      if (clustered) {
+        // Do *not* redistribute packets from the backbone
+        if (clustered) {
 
-        Backbone<V> backbone;
+          Backbone<V> backbone;
 
-        if ((backbone = getBackbone()) != null) {
-          backbone.publish(packet);
+          if ((backbone = getBackbone()) != null) {
+            backbone.publish(packet);
+          }
         }
       }
     }

@@ -44,9 +44,9 @@ public interface Session<V extends Value<V>> extends Attributed {
   // Changes to messages in this listener must be seen only on this session, via copy on write or some other means
   interface PacketListener<V extends Value<V>> extends Listener<V> {
 
-    void onResponse (Session<V> sender, Packet<V> packet);
+    Packet<V> onResponse (Session<V> sender, Packet<V> packet);
 
-    void onDelivery (Session<V> sender, Packet<V> packet);
+    Packet<V> onDelivery (Session<V> sender, Packet<V> packet);
   }
 
   void addListener (Listener<V> listener);
@@ -71,7 +71,7 @@ public interface Session<V extends Value<V>> extends Attributed {
 
   void completeDisconnect ();
 
-  void onResponse (Session<V> sender, Packet<V> packet);
+  Packet<V> onResponse (Session<V> sender, Packet<V> packet);
 
   Packet<V> poll (long timeout, TimeUnit unit)
     throws InterruptedException;

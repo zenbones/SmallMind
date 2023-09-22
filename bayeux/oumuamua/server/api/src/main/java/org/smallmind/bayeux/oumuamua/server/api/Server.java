@@ -34,9 +34,9 @@ package org.smallmind.bayeux.oumuamua.server.api;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
+import org.smallmind.bayeux.oumuamua.server.api.backbone.Backbone;
 import org.smallmind.bayeux.oumuamua.server.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
-import org.smallmind.bayeux.oumuamua.server.api.backbone.Backbone;
 
 public interface Server<V extends Value<V>> extends Attributed {
 
@@ -69,11 +69,11 @@ public interface Server<V extends Value<V>> extends Attributed {
 
   interface PacketListener<V extends Value<V>> extends Listener<V> {
 
-    void onRequest (Session<V> sender, Packet<V> packet);
+    Packet<V> onRequest (Session<V> sender, Packet<V> packet);
 
-    void onResponse (Session<V> sender, Packet<V> packet);
+    Packet<V> onResponse (Session<V> sender, Packet<V> packet);
 
-    void onDelivery (Session<V> sender, Packet<V> packet);
+    Packet<V> onDelivery (Session<V> sender, Packet<V> packet);
   }
 
   void addListener (Listener<V> listener);
@@ -120,9 +120,9 @@ public interface Server<V extends Value<V>> extends Attributed {
   void removeChannel (Channel<V> channel)
     throws ChannelStateException;
 
-  void onRequest (Session<V> sender, Packet<V> packet);
+  Packet<V> onRequest (Session<V> sender, Packet<V> packet);
 
-  void onResponse (Session<V> sender, Packet<V> packet);
+  Packet<V> onResponse (Session<V> sender, Packet<V> packet);
 
   void deliver (Session<V> sender, Packet<V> packet, boolean clustered);
 }

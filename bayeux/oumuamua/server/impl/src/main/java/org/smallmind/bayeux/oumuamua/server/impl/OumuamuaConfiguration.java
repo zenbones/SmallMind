@@ -32,11 +32,12 @@
  */
 package org.smallmind.bayeux.oumuamua.server.impl;
 
-import org.smallmind.bayeux.oumuamua.server.api.json.Codec;
-import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.SecurityPolicy;
+import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.backbone.Backbone;
+import org.smallmind.bayeux.oumuamua.server.api.json.Codec;
+import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
 public class OumuamuaConfiguration<V extends Value<V>> {
 
@@ -44,6 +45,7 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   private Codec<V> codec;
   private SecurityPolicy<V> securityPolicy;
   private Protocol<V>[] protocols;
+  private Server.Listener<V>[] listeners;
   private long channelTimeToLiveMinutes = 30;
   private int sessionConnectIntervalSeconds = 30;
   private int sessionMaxIdleTimeoutSeconds = 90;
@@ -89,6 +91,16 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   public void setProtocols (Protocol<V>[] protocols) {
 
     this.protocols = protocols;
+  }
+
+  public Server.Listener<V>[] getListeners () {
+
+    return listeners;
+  }
+
+  public void setListeners (Server.Listener<V>[] listeners) {
+
+    this.listeners = listeners;
   }
 
   public long getChannelTimeToLiveMinutes () {

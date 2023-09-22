@@ -32,9 +32,9 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api.backbone;
 
-import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
+import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
 public interface Backbone<V extends Value<V>> {
 

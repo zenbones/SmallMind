@@ -51,6 +51,7 @@ import org.smallmind.bayeux.oumuamua.server.spi.Connection;
 import org.smallmind.bayeux.oumuamua.server.spi.json.PacketUtility;
 import org.smallmind.nutsnbolts.util.Pair;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
+import org.smallmind.scribe.pen.LoggerManager;
 
 public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed implements Session<V> {
 
@@ -85,19 +86,23 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
     }
   }
 
-  private void onProcessing (Session<V> sender, Packet<V> packet) {
+  private Packet<V> onProcessing (Session<V> sender, Packet<V> packet) {
 
     if (PacketType.RESPONSE.equals(packet.getPacketType()) || PacketType.DELIVERY.equals(packet.getPacketType())) {
       for (Session.Listener<V> listener : listenerList) {
         if (Session.PacketListener.class.isAssignableFrom(listener.getClass())) {
           if (PacketType.DELIVERY.equals(packet.getPacketType())) {
-            ((Session.PacketListener<V>)listener).onDelivery(sender, packet);
-          } else {
-            ((Session.PacketListener<V>)listener).onResponse(sender, packet);
+            if ((packet = ((Session.PacketListener<V>)listener).onDelivery(sender, packet)) == null) {
+              break;
+            }
+          } else if ((packet = ((Session.PacketListener<V>)listener).onResponse(sender, packet)) == null) {
+            break;
           }
         }
       }
     }
+
+    return packet;
   }
 
   @Override
@@ -184,9 +189,9 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   }
 
   @Override
-  public void onResponse (Session<V> sender, Packet<V> packet) {
+  public Packet<V> onResponse (Session<V> sender, Packet<V> packet) {
 
-    onProcessing(sender, packet);
+    return onProcessing(sender, packet);
   }
 
   @Override
@@ -212,9 +217,7 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
           longPollQueueSize.decrementAndGet();
           frozenPacket = PacketUtility.freezePacket(enqueuedPair.getSecond());
 
-          onProcessing(enqueuedPair.getFirst(), frozenPacket);
-
-          return frozenPacket;
+          return onProcessing(enqueuedPair.getFirst(), frozenPacket);
         }
       } while (remainingNanoseconds > 0);
 
@@ -228,10 +231,13 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   public void deliver (Session<V> sender, Packet<V> packet) {
 
     if (longPolling.get()) {
+      System.exit(3);
       longPollLock.lock();
 
       try {
         if (longPollQueueSize.incrementAndGet() > maxLongPollQueueSize) {
+          LoggerManager.getLogger(OumuamuaSession.class).debug("Session(%s) overflowed the long poll queue", getId());
+
           if (longPollDeque.pollFirst() != null) {
             longPollQueueSize.decrementAndGet();
           }
@@ -247,9 +253,9 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
 
       Packet<V> frozenPacket = PacketUtility.freezePacket(packet);
 
-      onProcessing(sender, frozenPacket);
-
-      connection.deliver(frozenPacket);
+      if ((frozenPacket = onProcessing(sender, frozenPacket)) != null) {
+        connection.deliver(frozenPacket);
+      }
     }
   }
 }

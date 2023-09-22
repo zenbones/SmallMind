@@ -40,10 +40,10 @@ import javax.websocket.Endpoint;
 import javax.websocket.EndpointConfig;
 import javax.websocket.MessageHandler;
 import javax.websocket.Session;
-import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.Transport;
+import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.impl.OumuamuaConnection;
 import org.smallmind.bayeux.oumuamua.server.impl.OumuamuaServer;
 import org.smallmind.bayeux.oumuamua.server.spi.json.PacketUtility;
@@ -87,6 +87,7 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
 
         String encodedPacket = PacketUtility.encode(packet);
 
+        System.out.println("=>" + encodedPacket);
         LoggerManager.getLogger(WebSocketEndpoint.class).debug(() -> "=>" + encodedPacket);
 
         if (websocketTransport.getAsyncSendTimeoutMilliseconds() > 0) {
@@ -103,6 +104,7 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
   @Override
   public synchronized void onMessage (String content) {
 
+    System.out.println("<=" + content);
     LoggerManager.getLogger(WebSocketEndpoint.class).debug(() -> "<=" + content);
 
     try {

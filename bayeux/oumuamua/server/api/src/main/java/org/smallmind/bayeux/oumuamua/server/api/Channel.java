@@ -57,7 +57,7 @@ public interface Channel<V extends Value<V>> extends Attributed {
 
     boolean isPersistent ();
 
-    void onDelivery (Session<V> sender, Packet<V> packet);
+    Packet<V> onDelivery (Session<V> sender, Packet<V> packet);
   }
 
   void addListener (Listener<V> listener);

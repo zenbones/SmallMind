@@ -33,8 +33,6 @@
 package org.smallmind.bayeux.oumuamua.server.spi;
 
 import java.io.IOException;
-import org.smallmind.bayeux.oumuamua.server.api.json.Message;
-import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.InvalidPathException;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.PacketType;
@@ -43,6 +41,8 @@ import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.bayeux.oumuamua.server.api.SessionState;
 import org.smallmind.bayeux.oumuamua.server.api.Transport;
+import org.smallmind.bayeux.oumuamua.server.api.json.Message;
+import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.spi.meta.Meta;
 
 public interface Connection<V extends Value<V>> {
@@ -91,7 +91,9 @@ public interface Connection<V extends Value<V>> {
         packet = new Packet<>(PacketType.RESPONSE, sessionId, null, Meta.constructErrorResponse(server, path, message.getId(), sessionId, exception.getMessage(), null));
       }
 
-      responseConsumer.accept(packet);
+      if (packet != null) {
+        responseConsumer.accept(packet);
+      }
     }
   }
 
@@ -116,12 +118,13 @@ public interface Connection<V extends Value<V>> {
 
     Packet<V> response;
 
-    server.onRequest(session, new Packet<>(PacketType.REQUEST, session.getId(), route, request));
+    if ((response = server.onRequest(session, new Packet<>(PacketType.REQUEST, session.getId(), route, request))) != null) {
+      response = meta.process(getTransport().getProtocol(), route, server, session, request);
 
-    response = meta.process(getTransport().getProtocol(), route, server, session, request);
-
-    server.onResponse(session, response);
-    session.onResponse(session, response);
+      if ((response = server.onResponse(session, response)) != null) {
+        response = session.onResponse(session, response);
+      }
+    }
 
     return response;
   }

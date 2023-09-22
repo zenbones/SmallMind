@@ -51,7 +51,7 @@ public interface Message<V extends Value<V>> extends ObjectValue<V> {
   String ADVICE = "advice";
   String DATA = "data";
 
-  default boolean isSuccessful (){
+  default boolean isSuccessful () {
 
     Value<V> value;
 

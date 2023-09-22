@@ -38,15 +38,15 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
-import org.smallmind.bayeux.oumuamua.server.api.json.Codec;
-import org.smallmind.bayeux.oumuamua.server.api.json.Message;
-import org.smallmind.bayeux.oumuamua.server.api.json.ObjectValue;
-import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.PacketType;
 import org.smallmind.bayeux.oumuamua.server.api.Route;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
+import org.smallmind.bayeux.oumuamua.server.api.json.Codec;
+import org.smallmind.bayeux.oumuamua.server.api.json.Message;
+import org.smallmind.bayeux.oumuamua.server.api.json.ObjectValue;
+import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.spi.AbstractAttributed;
 import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
 import org.smallmind.bayeux.oumuamua.server.spi.json.PacketUtility;
@@ -97,15 +97,19 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
     }
   }
 
-  private void onProcessing (Session<V> sender, Packet<V> packet) {
+  private Packet<V> onProcessing (Session<V> sender, Packet<V> packet) {
 
     if (PacketType.DELIVERY.equals(packet.getPacketType())) {
       for (Listener<V> listener : listenerList) {
         if (PacketListener.class.isAssignableFrom(listener.getClass())) {
-          ((PacketListener<V>)listener).onDelivery(sender, packet);
+          if ((packet = ((PacketListener<V>)listener).onDelivery(sender, packet)) == null) {
+            break;
+          }
         }
       }
     }
+
+    return packet;
   }
 
   @Override
@@ -218,11 +222,11 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
 
     Packet<V> frozenPacket = PacketUtility.freezePacket(packet);
 
-    onProcessing(sender, frozenPacket);
-
-    for (Session<V> session : sessionMap.values()) {
-      if (sessionIdSet.add(session.getId()) && ((frozenPacket.getSenderId() == null) || (!session.getId().equals(frozenPacket.getSenderId())) || reflecting.get())) {
-        session.deliver(sender, frozenPacket);
+    if ((frozenPacket = onProcessing(sender, frozenPacket)) != null) {
+      for (Session<V> session : sessionMap.values()) {
+        if (sessionIdSet.add(session.getId()) && ((frozenPacket.getSenderId() == null) || (!session.getId().equals(frozenPacket.getSenderId())) || reflecting.get())) {
+          session.deliver(sender, frozenPacket);
+        }
       }
     }
   }

@@ -36,11 +36,11 @@ import java.util.Queue;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import org.smallmind.bayeux.oumuamua.server.api.json.Codec;
-import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.ChannelInitializer;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
+import org.smallmind.bayeux.oumuamua.server.api.json.Codec;
+import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
 
 public class ChannelTree<V extends Value<V>> extends ChannelBranch<V> {

@@ -35,8 +35,8 @@ package org.smallmind.bayeux.oumuamua.server.impl;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
+import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class IdleChannelSifter<V extends Value<V>> implements Runnable {
