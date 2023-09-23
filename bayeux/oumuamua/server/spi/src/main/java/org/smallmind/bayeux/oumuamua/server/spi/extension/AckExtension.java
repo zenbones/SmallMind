@@ -54,6 +54,7 @@ public class AckExtension<V extends Value<V>> extends AbstractServerPacketListen
   private static final String ACK_MAP_ATTRIBUTE = "org.smallmind.bayeux.oumuamua.extension.ack.map";
   private final int maxAckQueueSize;
   private final Codec<V> codec;
+  private boolean b = false;
 
   public AckExtension (int maxAckQueueSize, Codec<V> codec) {
 
@@ -150,15 +151,18 @@ public class AckExtension<V extends Value<V>> extends AbstractServerPacketListen
           }
 
           Message<V>[] additional = new Message[packet.getMessages().length + 1];
-          Message<V> extra = codec.create();
+          if (b) {
+            Message<V> extra = codec.create();
 
-          extra.put("channel", "/foobar");
-          extra.getData(true).put("hello", "goodbye");
-          if (ackId != null) {
-            extra.getExt(true).put("ack", ackId);
+            extra.put("channel", "/foobar");
+            extra.put("clientId", sender.getId());
+            extra.getData(true).put("hello", "goodbye");
+            if (ackId != null) {
+              extra.getExt(true).put("ack", ackId);
+            }
+            System.arraycopy(packet.getMessages(), 0, additional, 0, packet.getMessages().length);
+            additional[packet.getMessages().length] = extra;
           }
-          System.arraycopy(packet.getMessages(), 0, additional, 0, packet.getMessages().length);
-          additional[packet.getMessages().length] = extra;
 
           if (ackId != null) {
 
@@ -176,7 +180,10 @@ public class AckExtension<V extends Value<V>> extends AbstractServerPacketListen
             ackMap.put(ackId, packet);
           }
 
-          return new Packet<>(packet.getPacketType(), packet.getSenderId(), packet.getRoute(), additional);
+          if (b) {
+            return new Packet<>(packet.getPacketType(), packet.getSenderId(), packet.getRoute(), additional);
+          }
+          b = true;
         }
       }
     }

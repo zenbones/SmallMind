@@ -47,6 +47,16 @@ import org.testng.annotations.Test;
 @Test
 public class AckExtTest {
 
+  /*
+  <=[{"supportedConnectionTypes":["websocket"],"channel":"/meta/handshake","id":"1","version":"1.0"}]
+=>[{"minimumVersion":"1.0","clientId":"0000018abf6fef2aca57d86a288a15548002","supportedConnectionTypes":["websocket"],"channel":"/meta/handshake","id":"1","version":"1.0","successful":true}]
+<=[{"clientId":"0000018abf6fef2aca57d86a288a15548002","advice":{"timeout":0},"channel":"/meta/connect","id":"2","connectionType":"websocket"}]
+=>[{"clientId":"0000018abf6fef2aca57d86a288a15548002","advice":{"interval":30000},"channel":"/meta/connect","id":"2","successful":true}]
+<=[{"clientId":"0000018abf6fef2aca57d86a288a15548002","channel":"/meta/subscribe","id":"3","subscription":"/foobar"}]
+=>[{"clientId":"0000018abf6fef2aca57d86a288a15548002","channel":"/meta/subscribe","id":"3","subscription":"/foobar","successful":true}]
+
+   */
+
   public void test ()
     throws Exception {
 
