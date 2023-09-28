@@ -48,6 +48,7 @@ public class ServerDefibrillator implements Runnable {
   private final ServerPool serverPool;
   private final long resuscitationSeconds;
   private final int connectionTimeoutMilliseconds;
+  private final int readTimeoutMilliseconds;
 
   public ServerDefibrillator (ConnectionCoordinator connectionCoordinator, CubbyConfiguration configuration, ServerPool serverPool) {
 
@@ -55,6 +56,7 @@ public class ServerDefibrillator implements Runnable {
     this.serverPool = serverPool;
 
     this.connectionTimeoutMilliseconds = (int)configuration.getConnectionTimeoutMilliseconds();
+    this.readTimeoutMilliseconds = (int)configuration.getReadTimeoutMilliseconds();
     this.resuscitationSeconds = configuration.getResuscitationSeconds();
   }
 
@@ -80,6 +82,7 @@ public class ServerDefibrillator implements Runnable {
               // In case disconnection was due to a change in downstream load balancing
               InetSocketAddress constructedAddress;
 
+              socket.setSoTimeout(readTimeoutMilliseconds);
               socket.connect(constructedAddress = hostControl.getMemcachedHost().constructAddress(), connectionTimeoutMilliseconds);
               reconnectionList.add(hostControl.getMemcachedHost().regenerate(constructedAddress));
             } catch (IOException ioException) {
