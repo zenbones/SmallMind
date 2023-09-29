@@ -102,7 +102,7 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
   }
 
   @Override
-  public synchronized void onMessage (String content) {
+  public void onMessage (String content) {
 
     System.out.println("<=" + content);
     LoggerManager.getLogger(WebSocketEndpoint.class).debug(() -> "<=" + content);

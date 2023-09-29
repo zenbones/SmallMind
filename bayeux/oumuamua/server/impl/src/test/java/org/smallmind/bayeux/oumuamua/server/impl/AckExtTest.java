@@ -60,7 +60,7 @@ public class AckExtTest {
   public void test ()
     throws Exception {
 
-    ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("org/smallmind/bayeux/oumuamua/server/impl/oumuamua-grizzly.xml", "org/smallmind/bayeux/oumuamua/server/impl/oumuamua.xml");
+    ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("org/smallmind/bayeux/oumuamua/server/impl/logging.xml", "org/smallmind/bayeux/oumuamua/server/impl/oumuamua-grizzly.xml", "org/smallmind/bayeux/oumuamua/server/impl/oumuamua.xml");
     ClientTransport wsTransport;
     WebSocketContainer webSocketContainer;
     BayeuxClient bayeuxClient;
@@ -69,7 +69,7 @@ public class AckExtTest {
     wsTransport = new WebSocketTransport(null, null, webSocketContainer);
 
     bayeuxClient = new BayeuxClient("http://localhost:9017/smallmind/cometd", wsTransport);
-    // bayeuxClient.addExtension(new AckExtension());
+    bayeuxClient.addExtension(new AckExtension());
 
     Map<String, Object> handshakeMap = new HashMap<>();
     HashMap<String, Object> tokenMap = new HashMap<>();
