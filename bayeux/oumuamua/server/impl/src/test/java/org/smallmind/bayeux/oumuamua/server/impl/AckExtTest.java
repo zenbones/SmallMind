@@ -69,14 +69,14 @@ public class AckExtTest {
     wsTransport = new WebSocketTransport(null, null, webSocketContainer);
 
     bayeuxClient = new BayeuxClient("http://localhost:9017/smallmind/cometd", wsTransport);
-    bayeuxClient.addExtension(new AckExtension());
+    // bayeuxClient.addExtension(new AckExtension());
 
     Map<String, Object> handshakeMap = new HashMap<>();
     HashMap<String, Object> tokenMap = new HashMap<>();
 
     // handshakeMap.put("ext", tokenMap);
 
-    bayeuxClient.handshake(handshakeMap);
+    bayeuxClient.handshake(handshakeMap, System.out::println);
     if (!bayeuxClient.waitFor(5000, BayeuxClient.State.CONNECTED)) {
       System.out.println("Unable to connect within 5000 milliseconds");
     }
@@ -84,8 +84,8 @@ public class AckExtTest {
     Counter counter = new Counter();
 
     bayeuxClient.getChannel("/foobar").subscribe((channel, message) -> {
-      System.out.println("!!!:" + message.getData());
-      if (counter.incAndGet() == 10000) {
+      System.out.println("!!!!!!!!!!!!!!!:" + message);
+      if (counter.incAndGet() == 10) {
         System.out.println(System.currentTimeMillis());
       }
     });
