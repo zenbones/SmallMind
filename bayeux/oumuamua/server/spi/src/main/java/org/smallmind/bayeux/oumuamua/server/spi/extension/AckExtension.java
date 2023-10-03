@@ -32,17 +32,20 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.extension;
 
+import java.util.Iterator;
+import java.util.Map;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicLong;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.bayeux.oumuamua.server.api.json.BooleanValue;
-import org.smallmind.bayeux.oumuamua.server.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.NumberValue;
 import org.smallmind.bayeux.oumuamua.server.api.json.ObjectValue;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.json.ValueType;
+import org.smallmind.bayeux.oumuamua.server.spi.json.PacketUtility;
 import org.smallmind.bayeux.oumuamua.server.spi.meta.Meta;
 import org.smallmind.scribe.pen.LoggerManager;
 
@@ -51,18 +54,17 @@ public class AckExtension<V extends Value<V>> extends AbstractServerPacketListen
   private static final String ACK_FLAG_ATTRIBUTE = "org.smallmind.bayeux.oumuamua.extension.ack.flag";
   private static final String ACK_COUNTER_ATTRIBUTE = "org.smallmind.bayeux.oumuamua.extension.ack.counter";
   private static final String ACK_SIZE_ATTRIBUTE = "org.smallmind.bayeux.oumuamua.extension.ack.size";
-  private static final String ACK_MAP_ATTRIBUTE = "org.smallmind.bayeux.oumuamua.extension.ack.map";
+  private static final String ACK_UNACKNOWLEDGED_MAP_ATTRIBUTE = "org.smallmind.bayeux.oumuamua.extension.ack.unacknowledged_map";
+  private static final String ACK_RESEND_QUEUE_ATTRIBUTE = "org.smallmind.bayeux.oumuamua.extension.ack.resend_queue";
   private final int maxAckQueueSize;
-  private final Codec<V> codec;
 
-  public AckExtension (int maxAckQueueSize, Codec<V> codec) {
+  public AckExtension (int maxAckQueueSize) {
 
     this.maxAckQueueSize = maxAckQueueSize;
-    this.codec = codec;
   }
 
   @Override
-  public Packet<V> onRequest (Session<V> sender, Packet<V> packet) {
+  public Packet<V> onRequest (final Session<V> sender, Packet<V> packet) {
 
     if (sender != null) {
       if (Meta.HANDSHAKE.getRoute().equals(packet.getRoute())) {
@@ -80,7 +82,8 @@ public class AckExtension<V extends Value<V>> extends AbstractServerPacketListen
                   sender.setAttribute(ACK_FLAG_ATTRIBUTE, Boolean.TRUE);
                   sender.setAttribute(ACK_COUNTER_ATTRIBUTE, new AtomicLong(0));
                   sender.setAttribute(ACK_SIZE_ATTRIBUTE, new AtomicLong(0));
-                  sender.setAttribute(ACK_MAP_ATTRIBUTE, new ConcurrentSkipListMap<Long, Packet<V>>());
+                  sender.setAttribute(ACK_UNACKNOWLEDGED_MAP_ATTRIBUTE, new ConcurrentSkipListMap<Long, Packet<V>>());
+                  sender.setAttribute(ACK_RESEND_QUEUE_ATTRIBUTE, new ConcurrentLinkedQueue<Packet<V>>());
                 }
               }
               break;
@@ -110,8 +113,19 @@ public class AckExtension<V extends Value<V>> extends AbstractServerPacketListen
 
           if (ackId != null) {
 
-            ConcurrentSkipListMap<Long, Packet<V>> ackMap = (ConcurrentSkipListMap<Long, Packet<V>>)sender.getAttribute(ACK_MAP_ATTRIBUTE);
+            ConcurrentSkipListMap<Long, Packet<V>> unacknowledgedMap = (ConcurrentSkipListMap<Long, Packet<V>>)sender.getAttribute(ACK_UNACKNOWLEDGED_MAP_ATTRIBUTE);
+            ConcurrentLinkedQueue<Packet<V>> resendQueue = (ConcurrentLinkedQueue<Packet<V>>)sender.getAttribute(ACK_RESEND_QUEUE_ATTRIBUTE);
             AtomicLong ackSize = (AtomicLong)sender.getAttribute(ACK_SIZE_ATTRIBUTE);
+            Iterator<Map.Entry<Long, Packet<V>>> unAckedIter;
+
+            unacknowledgedMap.remove(ackId);
+            ackSize.decrementAndGet();
+
+            unAckedIter = unacknowledgedMap.headMap(ackId).entrySet().iterator();
+            while (unAckedIter.hasNext()) {
+              resendQueue.add(packet);
+              unAckedIter.remove();
+            }
           }
         }
       }
@@ -137,6 +151,7 @@ public class AckExtension<V extends Value<V>> extends AbstractServerPacketListen
       } else if (Meta.CONNECT.getRoute().equals(packet.getRoute())) {
         if (Boolean.TRUE.equals(sender.getAttribute(ACK_FLAG_ATTRIBUTE)) && (packet.getMessages().length > 1)) {
 
+          Iterator<Packet<V>> resendIter;
           Long ackId = null;
 
           for (Message<V> message : packet.getMessages()) {
@@ -149,20 +164,28 @@ public class AckExtension<V extends Value<V>> extends AbstractServerPacketListen
             }
           }
 
+          resendIter = ((ConcurrentLinkedQueue<Packet<V>>)sender.getAttribute(ACK_RESEND_QUEUE_ATTRIBUTE)).iterator();
+          if (resendIter.hasNext()) {
+            while (resendIter.hasNext()) {
+              packet = PacketUtility.merge(packet, resendIter.next());
+              resendIter.remove();
+            }
+          }
+
           if (ackId != null) {
 
-            ConcurrentSkipListMap<Long, Packet<V>> ackMap = (ConcurrentSkipListMap<Long, Packet<V>>)sender.getAttribute(ACK_MAP_ATTRIBUTE);
+            ConcurrentSkipListMap<Long, Packet<V>> unacknowledgedMap = (ConcurrentSkipListMap<Long, Packet<V>>)sender.getAttribute(ACK_UNACKNOWLEDGED_MAP_ATTRIBUTE);
             AtomicLong ackSize = (AtomicLong)sender.getAttribute(ACK_SIZE_ATTRIBUTE);
 
             if (ackSize.incrementAndGet() > maxAckQueueSize) {
               LoggerManager.getLogger(AckExtension.class).debug("Session(%s) overflowed the ack queue", sender.getId());
 
-              if (ackMap.pollLastEntry() != null) {
+              if (unacknowledgedMap.pollLastEntry() != null) {
                 ackSize.decrementAndGet();
               }
             }
 
-            ackMap.put(ackId, packet);
+            unacknowledgedMap.put(ackId, packet);
           }
         }
       }

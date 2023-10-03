@@ -51,13 +51,6 @@
           <list>
             <bean class="org.smallmind.bayeux.oumuamua.server.spi.extension.AckExtension">
               <constructor-arg index="0" name="maxAckQueueSize" value="100"/>
-              <constructor-arg index="1" name="codec">
-                <bean class="org.smallmind.bayeux.oumuamua.server.spi.json.orthodox.OrthodoxCodec">
-                  <constructor-arg index="0" name="deserializer">
-                    <bean class="org.smallmind.bayeux.oumuamua.server.spi.json.jackson.JaxbDeserializer"/>
-                  </constructor-arg>
-                </bean>
-              </constructor-arg>
             </bean>
           </list>
         </property>

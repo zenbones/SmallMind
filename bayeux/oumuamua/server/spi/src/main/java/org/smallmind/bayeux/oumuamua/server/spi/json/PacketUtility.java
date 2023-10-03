@@ -40,6 +40,16 @@ import org.smallmind.bayeux.oumuamua.server.spi.PacketWriter;
 
 public class PacketUtility {
 
+  public static <V extends Value<V>> Packet<V> merge (Packet<V> basePacket, Packet<V> otherPacket) {
+
+    Message<V>[] mergedMessages = new Message[basePacket.getMessages().length + otherPacket.getMessages().length];
+
+    System.arraycopy(basePacket.getMessages(), 0, mergedMessages, 0, basePacket.getMessages().length);
+    System.arraycopy(otherPacket.getMessages(), 0, mergedMessages, basePacket.getMessages().length, otherPacket.getMessages().length);
+
+    return new Packet<>(basePacket.getPacketType(), basePacket.getSenderId(), basePacket.getRoute(), mergedMessages);
+  }
+
   public static <V extends Value<V>> Packet<V> freezePacket (Packet<V> packet) {
 
     Message<V>[] frozenMessages = new Message[packet.getMessages().length];
