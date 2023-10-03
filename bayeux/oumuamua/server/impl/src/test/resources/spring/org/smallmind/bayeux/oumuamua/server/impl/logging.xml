@@ -12,6 +12,17 @@
         <ref bean="logAppender"/>
       </list>
     </property>
+    <property name="level" value="WARN"/>
+  </bean>
+
+  <bean id="cometdTemplate" class="org.smallmind.scribe.pen.ClassNameTemplate" init-method="register">
+    <property name="autoFillLoggerContext" value="true"/>
+    <property name="appenders">
+      <list>
+        <ref bean="logAppender"/>
+      </list>
+    </property>
+    <property name="pattern" value="org.cometd.client.*"/>
     <property name="level" value="DEBUG"/>
   </bean>
 

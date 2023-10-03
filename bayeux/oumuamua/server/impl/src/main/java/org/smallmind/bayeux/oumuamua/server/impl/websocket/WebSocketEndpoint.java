@@ -104,14 +104,17 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
   @Override
   public void onMessage (String content) {
 
-    System.out.println("<=" + content);
-    LoggerManager.getLogger(WebSocketEndpoint.class).debug(() -> "<=" + content);
+    server.getExecutorService().submit(() -> {
 
-    try {
-      process(server, this::deliver, server.getCodec().from(content));
-    } catch (IOException ioException) {
-      LoggerManager.getLogger(WebSocketEndpoint.class).error(ioException);
-    }
+      System.out.println("<=" + content);
+      LoggerManager.getLogger(WebSocketEndpoint.class).debug(() -> "<=" + content);
+
+      try {
+        process(server, this::deliver, server.getCodec().from(content));
+      } catch (IOException ioException) {
+        LoggerManager.getLogger(WebSocketEndpoint.class).error(ioException);
+      }
+    });
   }
 
   @Override

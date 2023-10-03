@@ -39,7 +39,11 @@ import java.util.Iterator;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
@@ -63,6 +67,7 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed implements Server<V> {
 
+  private final ExecutorService executorService = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<>(), new ThreadPoolExecutor.CallerRunsPolicy());
   private final ConcurrentHashMap<String, OumuamuaSession<V>> sessionMap = new ConcurrentHashMap<>();
   private final HashMap<String, Protocol<V>> protocolMap = new HashMap<>();
   private final ConcurrentLinkedQueue<Listener<V>> listenerList = new ConcurrentLinkedQueue<>();
@@ -152,6 +157,13 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
     } catch (InterruptedException interruptedException) {
       LoggerManager.getLogger(OumuamuaServer.class).error(interruptedException);
     }
+
+    executorService.shutdown();
+  }
+
+  public ExecutorService getExecutorService () {
+
+    return executorService;
   }
 
   private void onConnected (Session<V> session) {

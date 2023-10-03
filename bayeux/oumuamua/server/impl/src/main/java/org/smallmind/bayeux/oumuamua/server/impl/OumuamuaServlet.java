@@ -56,8 +56,7 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
 
-  private final ExecutorService executorService = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<>(), new ThreadPoolExecutor.CallerRunsPolicy());
-  private LongPollingConnection<V> connection;
+private LongPollingConnection<V> connection;
   private OumuamuaServer<V> server;
 
   @Override
@@ -126,7 +125,7 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
           AsyncContext asyncContext = request.startAsync();
           asyncContext.setTimeout(0);
 
-          executorService.submit(() -> connection.onMessages(asyncContext, messages));
+          server.getExecutorService().submit(() -> connection.onMessages(asyncContext, messages));
         } catch (IOException ioException) {
           response.sendError(HttpServletResponse.SC_BAD_REQUEST, ioException.getMessage());
         }
@@ -161,7 +160,6 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
   public void destroy () {
 
     server.stop();
-    executorService.shutdown();
 
     super.destroy();
   }

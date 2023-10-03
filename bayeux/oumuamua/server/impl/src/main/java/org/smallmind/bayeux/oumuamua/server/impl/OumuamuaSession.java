@@ -231,7 +231,6 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   public void deliver (Session<V> sender, Packet<V> packet) {
 
     if (longPolling.get()) {
-      System.exit(3);
       longPollLock.lock();
 
       try {

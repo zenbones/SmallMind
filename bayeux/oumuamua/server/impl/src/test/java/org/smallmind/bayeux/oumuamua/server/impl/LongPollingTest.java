@@ -69,7 +69,7 @@ public class LongPollingTest {
 
     bayeuxClient.getChannel("/foobar").subscribe((channel, message) -> {
       System.out.println(message);
-      if (counter.incAndGet() == 10) {
+      if (counter.incAndGet() == 10000) {
         System.out.println(System.currentTimeMillis());
       }
     });
