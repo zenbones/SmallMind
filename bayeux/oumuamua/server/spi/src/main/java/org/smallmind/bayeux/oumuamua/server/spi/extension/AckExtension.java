@@ -156,11 +156,9 @@ public class AckExtension<V extends Value<V>> extends AbstractServerPacketListen
 
           for (Message<V> message : packet.getMessages()) {
             if (message.isSuccessful() && Meta.CONNECT.getRoute().getPath().equals(message.getChannel())) {
-              if (ackId == null) {
-                ackId = ((AtomicLong)sender.getAttribute(ACK_COUNTER_ATTRIBUTE)).incrementAndGet();
-              }
-
+              ackId = ((AtomicLong)sender.getAttribute(ACK_COUNTER_ATTRIBUTE)).incrementAndGet();
               message.getExt(true).put("ack", ackId);
+              break;
             }
           }
 

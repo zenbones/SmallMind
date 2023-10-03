@@ -47,11 +47,14 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   private Protocol<V>[] protocols;
   private Server.Listener<V>[] listeners;
   private long channelTimeToLiveMinutes = 30;
+  private long threadPoolKeepAliveSeconds = 60;
   private int sessionConnectIntervalSeconds = 30;
   private int sessionMaxIdleTimeoutSeconds = 90;
   private int idleChannelCycleMinutes = 5;
   private int idleSessionCycleMinutes = 1;
   private int maxLongPollQueueSize = 1000;
+  private int threadPoolCoreSize = 0;
+  private int threadPoolMaximumSize = Integer.MAX_VALUE;
 
   public Backbone<V> getBackbone () {
 
@@ -161,5 +164,35 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   public void setMaxLongPollQueueSize (int maxLongPollQueueSize) {
 
     this.maxLongPollQueueSize = maxLongPollQueueSize;
+  }
+
+  public long getThreadPoolKeepAliveSeconds () {
+
+    return threadPoolKeepAliveSeconds;
+  }
+
+  public void setThreadPoolKeepAliveSeconds (long threadPoolKeepAliveSeconds) {
+
+    this.threadPoolKeepAliveSeconds = threadPoolKeepAliveSeconds;
+  }
+
+  public int getThreadPoolCoreSize () {
+
+    return threadPoolCoreSize;
+  }
+
+  public void setThreadPoolCoreSize (int threadPoolCoreSize) {
+
+    this.threadPoolCoreSize = threadPoolCoreSize;
+  }
+
+  public int getThreadPoolMaximumSize () {
+
+    return threadPoolMaximumSize;
+  }
+
+  public void setThreadPoolMaximumSize (int threadPoolMaximumSize) {
+
+    this.threadPoolMaximumSize = threadPoolMaximumSize;
   }
 }

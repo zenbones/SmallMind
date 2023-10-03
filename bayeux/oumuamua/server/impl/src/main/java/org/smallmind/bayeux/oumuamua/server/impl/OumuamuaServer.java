@@ -67,7 +67,7 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed implements Server<V> {
 
-  private final ExecutorService executorService = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<>(), new ThreadPoolExecutor.CallerRunsPolicy());
+  private final ExecutorService executorService;
   private final ConcurrentHashMap<String, OumuamuaSession<V>> sessionMap = new ConcurrentHashMap<>();
   private final HashMap<String, Protocol<V>> protocolMap = new HashMap<>();
   private final ConcurrentLinkedQueue<Listener<V>> listenerList = new ConcurrentLinkedQueue<>();
@@ -90,6 +90,8 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
     } else {
 
       this.configuration = configuration;
+
+      executorService = new ThreadPoolExecutor(configuration.getThreadPoolCoreSize(), configuration.getThreadPoolMaximumSize(), configuration.getThreadPoolKeepAliveSeconds(), TimeUnit.SECONDS, new SynchronousQueue<>(), new ThreadPoolExecutor.CallerRunsPolicy());
 
       sessionConnectionIntervalMilliseconds = configuration.getSessionConnectIntervalSeconds() * 1000L;
       channelTree = new ChannelTree<>(configuration.getCodec());
