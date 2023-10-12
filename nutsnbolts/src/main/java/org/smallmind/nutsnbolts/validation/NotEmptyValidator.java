@@ -32,22 +32,39 @@
  */
 package org.smallmind.nutsnbolts.validation;
 
+import java.lang.reflect.Array;
+import java.util.Collection;
+import java.util.Map;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
-public class NotBlankValidator implements ConstraintValidator<NotBlank, String> {
+public class NotEmptyValidator implements ConstraintValidator<NotEmpty, Object> {
 
-  private NotBlank constraintAnnotation;
+  private NotEmpty constraintAnnotation;
 
   @Override
-  public void initialize (NotBlank constraintAnnotation) {
+  public void initialize (NotEmpty constraintAnnotation) {
 
     this.constraintAnnotation = constraintAnnotation;
   }
 
   @Override
-  public boolean isValid (String value, ConstraintValidatorContext context) {
+  public boolean isValid (Object value, ConstraintValidatorContext context) {
 
-    return value == null || value.isBlank();
+    if (value == null) {
+      return true;
+    } else if (value.getClass().isArray()) {
+
+      return Array.getLength(value) > 0;
+    } else if (Collection.class.isAssignableFrom(value.getClass())) {
+
+      return !((Collection<?>)value).isEmpty();
+    } else if (Map.class.isAssignableFrom(value.getClass())) {
+
+      return !((Map<?, ?>)value).isEmpty();
+    } else {
+
+      return false;
+    }
   }
 }
