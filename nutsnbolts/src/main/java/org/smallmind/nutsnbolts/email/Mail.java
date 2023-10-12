@@ -124,9 +124,16 @@ public class Mail {
     return html;
   }
 
+  public Mail setHtml (boolean html) {
+
+    this.html = html;
+
+    return this;
+  }
+
   public Mail setHtml () {
 
-    this.html = true;
+    setHtml(true);
 
     return this;
   }
