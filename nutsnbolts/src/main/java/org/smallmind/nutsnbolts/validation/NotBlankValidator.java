@@ -48,6 +48,6 @@ public class NotBlankValidator implements ConstraintValidator<NotBlank, String> 
   @Override
   public boolean isValid (String value, ConstraintValidatorContext context) {
 
-    return value == null || value.isBlank();
+    return value == null || (!value.isBlank());
   }
 }

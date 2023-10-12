@@ -54,16 +54,12 @@ public class NotEmptyValidator implements ConstraintValidator<NotEmpty, Object> 
     if (value == null) {
       return true;
     } else if (value.getClass().isArray()) {
-
       return Array.getLength(value) > 0;
     } else if (Collection.class.isAssignableFrom(value.getClass())) {
-
       return !((Collection<?>)value).isEmpty();
     } else if (Map.class.isAssignableFrom(value.getClass())) {
-
       return !((Map<?, ?>)value).isEmpty();
     } else {
-
       return false;
     }
   }
