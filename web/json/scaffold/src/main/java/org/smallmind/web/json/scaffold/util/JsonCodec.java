@@ -35,22 +35,27 @@ package org.smallmind.web.json.scaffold.util;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.json.JsonReadFeature;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
-import com.fasterxml.jackson.module.jsonSchema.JsonSchemaGenerator;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
+import org.smallmind.nutsnbolts.util.IterableIterator;
 
 public class JsonCodec {
 
-  private static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder().addModule(new JaxbAnnotationModule().setNonNillableInclusion(JsonInclude.Include.NON_NULL)).addModule(new PolymorphicModule()).enable(MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME).build();
-  private static final JsonSchemaGenerator SCHEMA_GENERATOR = new JsonSchemaGenerator(OBJECT_MAPPER);
+  private static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder()
+                                                      .addModule(new AfterburnerModule())
+                                                      .addModule(new JaxbAnnotationModule().setNonNillableInclusion(JsonInclude.Include.NON_NULL))
+                                                      .addModule(new PolymorphicModule())
+                                                      .enable(MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME).build();
 
   public static JsonNode readAsJsonNode (byte[] bytes)
     throws IOException {
@@ -59,7 +64,7 @@ public class JsonCodec {
   }
 
   public static JsonNode readAsJsonNode (String aString)
-    throws IOException {
+    throws JsonProcessingException {
 
     return OBJECT_MAPPER.readTree(aString);
   }
@@ -83,7 +88,7 @@ public class JsonCodec {
   }
 
   public static <T> T read (String aString, Class<T> clazz)
-    throws IOException {
+    throws JsonProcessingException {
 
     return OBJECT_MAPPER.readValue(aString, clazz);
   }
@@ -98,6 +103,12 @@ public class JsonCodec {
     throws IOException {
 
     return OBJECT_MAPPER.readValue(parser, clazz);
+  }
+
+  public static <T> T read (JsonNode node, Class<T> clazz)
+    throws JsonProcessingException {
+
+    return OBJECT_MAPPER.treeToValue(node, clazz);
   }
 
   public static JsonNode writeAsJsonNode (Object obj) {
@@ -128,9 +139,35 @@ public class JsonCodec {
     return OBJECT_MAPPER.convertValue(obj, clazz);
   }
 
-  public static JsonSchema generateSchema (Class<?> clazz)
-    throws JsonMappingException {
+  public static JsonNode copy (JsonNode node) {
 
-    return SCHEMA_GENERATOR.generateSchema(clazz);
+    if (node == null) {
+
+      return null;
+    } else {
+      switch (node.getNodeType()) {
+        case OBJECT:
+
+          ObjectNode objectNode = JsonNodeFactory.instance.objectNode();
+
+          for (Map.Entry<String, JsonNode> nodeEntry : new IterableIterator<>(node.fields())) {
+            objectNode.set(nodeEntry.getKey(), copy(nodeEntry.getValue()));
+          }
+
+          return objectNode;
+        case ARRAY:
+
+          ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode(node.size());
+
+          for (JsonNode item : node) {
+            arrayNode.add(copy(item));
+          }
+
+          return arrayNode;
+        default:
+
+          return node;
+      }
+    }
   }
 }

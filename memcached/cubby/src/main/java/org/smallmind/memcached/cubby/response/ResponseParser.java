@@ -112,6 +112,9 @@ public class ResponseParser {
           case 'c':
             response.setCas(accumulateLong(joinedBuffer, offset, length));
             break;
+          case 's':
+            response.setSize(accumulateInt(joinedBuffer, offset, length));
+            break;
           case 'W':
             response.setWon(true);
             break;

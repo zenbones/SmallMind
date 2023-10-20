@@ -42,7 +42,9 @@ public class ClassTracker {
 
   private final HashMap<String, Boolean> preCompiledMap = new HashMap<>();
   private final HashMap<TypeElement, PolymorphicInformation> polymorphicInformationMap = new HashMap<>();
+  private final HashMap<TypeElement, HierarchyInformation> hierarchyInformationMap = new HashMap<>();
   private final HashMap<TypeElement, TypeElement> polymorphicBaseClassMap = new HashMap<>();
+  private final HashMap<TypeElement, TypeElement> hierarchyBaseClassMap = new HashMap<>();
 
   public void addPolymorphic (TypeElement typeElement, PolymorphicInformation polymorphicInformation) {
 
@@ -103,6 +105,43 @@ public class ClassTracker {
     return polymorphicBaseClassMap.get(subClassElement);
   }
 
+  public void addHierarchy (TypeElement typeElement, HierarchyInformation hierachyInformation) {
+
+    hierarchyInformationMap.put(typeElement, hierachyInformation);
+    for (TypeElement subClassElement : hierachyInformation.getSubClassList()) {
+      hierarchyBaseClassMap.put(subClassElement, typeElement);
+    }
+  }
+
+  public boolean hasHierarchySubClasses (TypeElement typeElement) {
+
+    HierarchyInformation hierarchyInformation;
+
+    if ((hierarchyInformation = hierarchyInformationMap.get(typeElement)) != null) {
+
+      return !hierarchyInformation.getSubClassList().isEmpty();
+    }
+
+    return false;
+  }
+
+  public List<TypeElement> getHierarchySubclasses (TypeElement typeElement) {
+
+    HierarchyInformation hierarchyInformation;
+
+    if ((hierarchyInformation = hierarchyInformationMap.get(typeElement)) != null) {
+
+      return hierarchyInformation.getSubClassList();
+    }
+
+    return Collections.emptyList();
+  }
+
+  public boolean hasHierarchyBaseClass (TypeElement typeElement) {
+
+    return hierarchyBaseClassMap.containsKey(typeElement);
+  }
+
   public boolean isPreCompiled (TypeElement typeElement) {
 
     return isPreCompiled(typeElement.getQualifiedName().toString());
@@ -115,18 +154,18 @@ public class ClassTracker {
 
   private boolean isPreCompiled (String qualifiedName) {
 
-    Boolean aBoolean;
+    Boolean preCompiled;
 
-    if ((aBoolean = preCompiledMap.get(qualifiedName)) == null) {
+    if ((preCompiled = preCompiledMap.get(qualifiedName)) == null) {
       try {
         Class.forName(qualifiedName);
 
-        preCompiledMap.put(qualifiedName, aBoolean = Boolean.TRUE);
+        preCompiledMap.put(qualifiedName, preCompiled = Boolean.TRUE);
       } catch (ClassNotFoundException classNotFoundException) {
-        preCompiledMap.put(qualifiedName, aBoolean = Boolean.FALSE);
+        preCompiledMap.put(qualifiedName, preCompiled = Boolean.FALSE);
       }
     }
 
-    return aBoolean;
+    return preCompiled;
   }
 }

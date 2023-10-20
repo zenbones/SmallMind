@@ -39,7 +39,7 @@ public class Bytes {
   public static byte[] getBytes (long l) {
 
     ByteBuffer translationBuffer;
-    byte[] byteArray = new byte[8];
+    byte[] byteArray = new byte[Long.BYTES];
 
     translationBuffer = ByteBuffer.wrap(byteArray);
     translationBuffer.putLong(l);
@@ -49,7 +49,7 @@ public class Bytes {
   public static byte[] getBytes (int i) {
 
     ByteBuffer translationBuffer;
-    byte[] byteArray = new byte[4];
+    byte[] byteArray = new byte[Integer.BYTES];
 
     translationBuffer = ByteBuffer.wrap(byteArray);
     translationBuffer.putInt(i);
@@ -59,7 +59,7 @@ public class Bytes {
   public static byte[] getBytes (short s) {
 
     ByteBuffer translationBuffer;
-    byte[] byteArray = new byte[2];
+    byte[] byteArray = new byte[Short.BYTES];
 
     translationBuffer = ByteBuffer.wrap(byteArray);
     translationBuffer.putShort(s);

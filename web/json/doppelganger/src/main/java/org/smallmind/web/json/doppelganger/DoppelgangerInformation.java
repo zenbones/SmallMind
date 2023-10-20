@@ -66,6 +66,7 @@ public class DoppelgangerInformation {
     throws IOException, DefinitionException {
 
     AnnotationMirror polymorphicAnnotationMirror;
+    AnnotationMirror hierarchyAnnotationMirror;
 
     name = AptUtility.extractAnnotationValue(doppelgangerAnnotationMirror, "name", String.class, "");
     namespace = AptUtility.extractAnnotationValue(doppelgangerAnnotationMirror, "namespace", String.class, "http://org.smallmind/web/json/doppelganger");
@@ -142,6 +143,8 @@ public class DoppelgangerInformation {
 
     if ((polymorphicAnnotationMirror = AptUtility.extractAnnotationValue(doppelgangerAnnotationMirror, "polymorphic", AnnotationMirror.class, null)) != null) {
       classTracker.addPolymorphic(classElement, new PolymorphicInformation(processingEnvironment, polymorphicAnnotationMirror));
+    } else if ((hierarchyAnnotationMirror = AptUtility.extractAnnotationValue(doppelgangerAnnotationMirror, "hierarchy", AnnotationMirror.class, null)) != null) {
+      classTracker.addHierarchy(classElement, new HierarchyInformation(processingEnvironment, hierarchyAnnotationMirror));
     }
 
     for (AnnotationMirror pledgeAnnotationMirror : AptUtility.extractAnnotationValueAsList(doppelgangerAnnotationMirror, "pledges", AnnotationMirror.class)) {

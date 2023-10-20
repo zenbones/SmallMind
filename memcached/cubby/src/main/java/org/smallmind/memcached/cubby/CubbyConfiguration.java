@@ -56,6 +56,7 @@ public class CubbyConfiguration {
   private Authentication authentication;
   private long defaultRequestTimeoutMilliseconds = 0;
   private long connectionTimeoutMilliseconds = 3000;
+  private long readTimeoutMilliseconds = 30000;
   private long keepAliveSeconds = 30;
   private long resuscitationSeconds = 10;
   private int connectionsPerHost = 1;
@@ -128,6 +129,18 @@ public class CubbyConfiguration {
   public CubbyConfiguration setConnectionTimeoutMilliseconds (long connectionTimeoutMilliseconds) {
 
     this.connectionTimeoutMilliseconds = connectionTimeoutMilliseconds;
+
+    return this;
+  }
+
+  public long getReadTimeoutMilliseconds () {
+
+    return readTimeoutMilliseconds;
+  }
+
+  public CubbyConfiguration setReadTimeoutMilliseconds (long readTimeoutMilliseconds) {
+
+    this.readTimeoutMilliseconds = readTimeoutMilliseconds;
 
     return this;
   }

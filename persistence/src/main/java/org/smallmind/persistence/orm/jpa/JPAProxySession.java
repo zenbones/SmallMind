@@ -131,6 +131,7 @@ public class JPAProxySession extends ProxySession<EntityManagerFactory, EntityMa
           sessionSet.add(this);
         } else if (isBoundaryEnforced()) {
           close();
+
           throw new SessionEnforcementException("Session was requested outside of any boundary enforcement (@NonTransactional or @Transactional)");
         }
       } else if (!entityManager.isOpen()) {

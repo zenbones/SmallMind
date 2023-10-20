@@ -56,10 +56,28 @@ public class MemcachedServerFactoryBean implements FactoryBean<MemcachedServer[]
   }
 
   @Override
+  public boolean isSingleton () {
+
+    return true;
+  }
+
+  @Override
+  public Class<?> getObjectType () {
+
+    return MemcachedServer[].class;
+  }
+
+  @Override
+  public MemcachedServer[] getObject () {
+
+    return serverArray;
+  }
+
+  @Override
   public void afterPropertiesSet ()
     throws SpreadParserException {
 
-    if ((serverPattern != null) && (serverPattern.length() > 0)) {
+    if ((serverPattern != null) && (!serverPattern.isEmpty())) {
 
       LinkedList<MemcachedServer> serverList = new LinkedList<>();
       int colonPos = serverPattern.indexOf(':');
@@ -84,23 +102,5 @@ public class MemcachedServerFactoryBean implements FactoryBean<MemcachedServer[]
       serverArray = new MemcachedServer[serverList.size()];
       serverList.toArray(serverArray);
     }
-  }
-
-  @Override
-  public MemcachedServer[] getObject () {
-
-    return serverArray;
-  }
-
-  @Override
-  public Class<?> getObjectType () {
-
-    return MemcachedServer[].class;
-  }
-
-  @Override
-  public boolean isSingleton () {
-
-    return true;
   }
 }

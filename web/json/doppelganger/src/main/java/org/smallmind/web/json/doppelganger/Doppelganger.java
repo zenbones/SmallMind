@@ -53,6 +53,9 @@ public @interface Doppelganger {
   // the requirements for polymorphic annotations
   Polymorphic polymorphic () default @Polymorphic();
 
+  // the requirements for hierarchy annotations
+  Hierarchy hierarchy () default @Hierarchy();
+
   // the constraint annotations to be applied to the generated class
   Idiom[] constrainingIdioms () default {};
 
