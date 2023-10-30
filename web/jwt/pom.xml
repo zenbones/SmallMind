@@ -21,5 +21,10 @@
       <artifactId>web-jersey</artifactId>
       <scope>compile</scope>
     </dependency>
+    <dependency>
+      <groupId>org.bitbucket.b_c</groupId>
+      <artifactId>jose4j</artifactId>
+      <scope>compile</scope>
+    </dependency>
   </dependencies>
 </project>
