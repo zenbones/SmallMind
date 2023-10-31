@@ -30,45 +30,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jwt;
+package org.smallmind.web.jwt.jose4j;
 
-import org.jose4j.jws.JsonWebSignature;
-import org.smallmind.web.json.scaffold.util.JsonCodec;
-import org.smallmind.web.jwt.jose4j.JWTConsumer;
+import org.smallmind.nutsnbolts.lang.FormattedException;
 
-public class JWTCodec {
+public class InvalidJWTException extends FormattedException {
 
-  public static String encode (Object claims, JWTKeyMaster keyMaster)
-    throws Exception {
+  public InvalidJWTException (String message, Object... args) {
 
-    return encode(claims, keyMaster, null);
-  }
-
-  public static String encode (Object claims, JWTKeyMaster keyMaster, String keyId)
-    throws Exception {
-
-    JsonWebSignature jws = new JsonWebSignature();
-
-    jws.setPayloadBytes(JsonCodec.writeAsBytes(claims));
-    jws.setKey(keyMaster.getKey());
-    jws.setAlgorithmHeaderValue(keyMaster.getEncryptionAlgorithm().name());
-
-    if (keyId != null) {
-      jws.setKeyIdHeaderValue(keyId);
-    }
-
-    return jws.getCompactSerialization();
-  }
-
-  public static <T> T decode (String jwtToken, JWTKeyMaster keyMaster, Class<T> claimsClass)
-    throws Exception {
-
-    return new JWTConsumer().process(jwtToken, keyMaster.getKey(), claimsClass);
-  }
-
-  public static <T> T decipher (String jwtToken, Class<T> claimsClass)
-    throws Exception {
-
-    return new JWTConsumer().setSkipSignatureVerification(true).process(jwtToken, null, claimsClass);
+    super(message, args);
   }
 }
