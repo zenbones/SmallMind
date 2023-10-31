@@ -43,6 +43,7 @@ public class KafkaConfiguration {
   rack.id - must be set to the data centre ID (ex: AZ ID in AWS)
   replica.selector.class - must be set to org.apache.kafka.common.replica.RackAwareReplicaSelector
   default.replication.factor - 1
+  replica.lag.time.max.ms - default 10000
   num.partitions - default number of partitions (defaults to 1, which may be fine given that each reader will be its own group, but might also be number of nodes)
   log.retention.ms - ttl for messages, should be set in minutes really, there's a hard drive underneath all this
   log.retention.check.interval.ms - should be lower than log.retention.ms, but again not too low (300000?)
