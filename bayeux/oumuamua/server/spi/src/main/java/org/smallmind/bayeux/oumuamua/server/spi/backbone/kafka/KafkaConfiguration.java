@@ -58,9 +58,9 @@ public class KafkaConfiguration {
   log.cleaner.delete.retention.ms=86400000 // (24 hours) the retention time for deleted tombstone markers (as we do not use keys this should make no difference)
   log.cleaner.enable=true // we want this
   log.cleanup.policy=delete // if we were using keys we might use 'compact,delete'
-  log.segment.delete.delay.ms=60000 // maybe not necessary but not harmful
-  log.retention.ms=1680000 // ttl for messages (28 minutes)
   log.retention.check.interval.ms=300000 // (5 minutes) should be lower than log.retention.ms
+  log.retention.ms=1680000 // ttl for messages (28 minutes)
+  log.segment.delete.delay.ms=60000 // maybe not necessary but not harmful
   num.recovery.threads.per.data.dir=1 // general consensus
   unclean.leader.election.enable=true // defaults to false, but if there's no in-sync follower when a leader fails, then no leader can be elected
 
@@ -74,7 +74,6 @@ public class KafkaConfiguration {
   num.network.threads - 3
   num.io.threads - 8
   queued.max.requests - limit the number of requests allowed in the request queue before the network thread is blocked.
-  num.network.threads - 3
   group.initial.rebalance.delay.ms=3000 // default 0 - wait for consumers to join before first re-balance, will also delay when first messages can be received, so a trade-off
   replica.fetch.max.bytes - 1048576?
   message.max.bytes - 1024 * 1024 (1mb)
