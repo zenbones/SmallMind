@@ -77,5 +77,12 @@ public class KafkaConfiguration {
   group.initial.rebalance.delay.ms=3000 // default 0 - wait for consumers to join before first re-balance, will also delay when first messages can be received, so a trade-off
   replica.fetch.max.bytes - 1048576?
   message.max.bytes - 1024 * 1024 (1mb)
+
+  // need to be set?
+  transaction.state.log.replication.factor=3
+  transaction.state.log.min.isr=2
+  offsets.topic.num.partitions=50
+  offsets.topic.replication.factor=3
+  offsets.commit.required.acks=-1
   */
 }
