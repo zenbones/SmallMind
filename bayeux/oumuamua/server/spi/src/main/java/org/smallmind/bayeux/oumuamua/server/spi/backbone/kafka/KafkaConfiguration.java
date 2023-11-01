@@ -36,28 +36,47 @@ public class KafkaConfiguration {
 
   // Should go in a config file (config map for k8s)
   /*
-  min.insync.replicas - 1/2 given 3 nodes (min.insync.replicas=2, acks=all, replication.factor=3 for n/2-1) (min.insync.replicas=1, acks=0, replication.factor=1 for fast and unreplicated)
-  group.min.session.timeout.ms - min session time a consumer can ask for
-  group.max.session.timeout.ms - max session time a consumer can ask for
-  compression.type - none, gzip, lz4, snappy, and zstd (prefer lz4 as fastest if not smallest)
-  rack.id - must be set to the data centre ID (ex: AZ ID in AWS)
-  replica.selector.class - must be set to org.apache.kafka.common.replica.RackAwareReplicaSelector
-  default.replication.factor - 1
-  replica.lag.time.max.ms - default 10000
-  num.partitions - default number of partitions (defaults to 1, which may be fine given that each reader will be its own group, but might also be number of nodes)
-  log.retention.ms - ttl for messages, should be set in minutes really, there's a hard drive underneath all this
-  log.retention.check.interval.ms - should be lower than log.retention.ms, but again not too low (300000?)
-  log.cleaner.backoff.ms - 15000
-  log.cleaner.delete.retention.ms - 900000
-  log.segment.delete.delay.ms - 60000
-  log.cleaner.enable - true
-  log.cleanup.policy - compact,delete (maybe just delete)
+
+  // acks=all
+  num.partitions=24 // as few as 1 might be fine, consumer threads * broker nodes, at a guess (24 is still small)
+  default.replication.factor=3 // default for number of replicas
+  min.insync.replicas=2 // given 3 nodes - min.insync.replicas=2, acks=all, replication.factor=3 for n/2+1
+
+  // acks=0
+  num.partitions=24 // as few as 1 might be fine, consumer threads * broker nodes, at a guess (24 is still small)
+  default.replication.factor=1 // default for number of replicas
+  min.insync.replicas=1 // min.insync.replicas=1, acks=0, replication.factor=1 for fast and un-replicated
+
+  // the best of the rest
+  auto.create.topics.enable=true // must have
+  auto.leader.rebalance.enable=true // allow re-balances
+  compression.type=lz4 // none, gzip, lz4, snappy, and zstd (prefer lz4 as fastest if not smallest)
+  delete.topic.enable=true // seems like we should
+  leader.imbalance.check.interval.seconds=300 // how often to run the re-balance check
+  leader.imbalance.per.broker.percentage=10 // The allowed percentage of partitions for which the broker is not the preferred leader before a re-balance occurs
+  log.cleaner.backoff.ms=15000 // general consensus
+  log.cleaner.delete.retention.ms=86400000 // (24 hours) the retention time for deleted tombstone markers (as we do not use keys this should make no difference)
+  log.cleaner.enable=true // we want this
+  log.cleanup.policy=delete // if we were using keys we might use 'compact,delete'
+  log.segment.delete.delay.ms=60000 // maybe not necessary but not harmful
+  log.retention.ms=1680000 // ttl for messages (28 minutes)
+  log.retention.check.interval.ms=300000 // (5 minutes) should be lower than log.retention.ms
+  num.recovery.threads.per.data.dir=1 // general consensus
+  unclean.leader.election.enable=true // defaults to false, but if there's no in-sync follower when a leader fails, then no leader can be elected
+
+  // if we want to be rack sensitive
+//rack.id - must be set to the data centre ID (ex: AZ ID in AWS)
+//replica.selector.class - must be set to org.apache.kafka.common.replica.RackAwareReplicaSelector
+
+  group.min.session.timeout.ms - min session time a consumer can ask for, should probably be left at default
+  group.max.session.timeout.ms - max session time a consumer can ask for, should probably be left at default
+  replica.lag.time.max.ms - default 10000, upper limit on how long a producer must wait for acknowledgement, lower times will detect failed followers sooner, but may cause followers to be marked out of sync needlessly
   num.network.threads - 3
   num.io.threads - 8
-  num.recovery.threads.per.data.dir - 1
   queued.max.requests - limit the number of requests allowed in the request queue before the network thread is blocked.
-  group.initial.rebalance.delay.ms - 0
-  auto.create.topics.enable - true
-  delete.topic.enable - true
+  num.network.threads - 3
+  group.initial.rebalance.delay.ms=3000 // default 0 - wait for consumers to join before first re-balance, will also delay when first messages can be received, so a trade-off
+  replica.fetch.max.bytes - 1048576?
+  message.max.bytes - 1024 * 1024 (1mb)
   */
 }
