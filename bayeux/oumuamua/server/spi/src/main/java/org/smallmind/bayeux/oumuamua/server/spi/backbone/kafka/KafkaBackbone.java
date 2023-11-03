@@ -85,7 +85,7 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
 
     groupId = SnowflakeId.newInstance().generateHexEncoding();
     connector = new KafkaConnector(servers);
-    producer = connector.createProducer(nodeName);
+    producer = connector.createProducer("producer-" + topicName + "-" + nodeName);
 
     if (!connector.invokeAdminClient(adminClient -> {
         try {
@@ -110,7 +110,7 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
     if (statusRef.compareAndSet(ComponentStatus.STOPPED, ComponentStatus.STARTING)) {
       workers = new ConsumerWorker[concurrencyLimit];
       for (int index = 0; index < concurrencyLimit; index++) {
-        new Thread(workers[index] = new ConsumerWorker<V>(server, nodeName, connector.createConsumer(nodeName + "-" + index, groupId, topicName))).start();
+        new Thread(workers[index] = new ConsumerWorker<V>(server, nodeName, connector.createConsumer("consumer-" + index + "-" + topicName + "-" + nodeName, groupId, topicName))).start();
       }
       statusRef.set(ComponentStatus.STARTED);
     } else {
