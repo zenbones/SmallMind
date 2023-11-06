@@ -52,6 +52,7 @@ public class KafkaConfiguration {
   auto.leader.rebalance.enable=true // allow re-balances
   compression.type=lz4 // none, gzip, lz4, snappy, and zstd (prefer lz4 as fastest if not smallest)
   delete.topic.enable=true // seems like we should
+  group.initial.rebalance.delay.ms=3000 // default 3000 (wait for consumers to join before first re-balance)
   leader.imbalance.check.interval.seconds=300 // how often to run the re-balance check
   leader.imbalance.per.broker.percentage=10 // The allowed percentage of partitions for which the broker is not the preferred leader before a re-balance occurs
   log.cleaner.backoff.ms=15000 // general consensus
@@ -61,24 +62,24 @@ public class KafkaConfiguration {
   log.retention.check.interval.ms=300000 // (5 minutes) should be lower than log.retention.ms
   log.retention.ms=1680000 // ttl for messages (28 minutes)
   log.segment.delete.delay.ms=60000 // maybe not necessary but not harmful
+  message.max.bytes=1048588 // default 1048588 (1mb, but slightly more than replica.fetch.max.bytes)
+  num.io.threads=8 // default 8
+  num.network.threads=3 // default 3
   num.recovery.threads.per.data.dir=1 // general consensus
+  queued.max.requests=500 // default 500 (limit the size of the request queue before the network thread is blocked)
+  replica.fetch.max.bytes=1048576 // default (1mb, but slightly less than message.max.bytes)
+  replica.lag.time.max.ms=10000 // default 30000 (upper limit on how long a producer must wait for acknowledgement, but also how quickly slow queues are removed)
   unclean.leader.election.enable=true // defaults to false, but if there's no in-sync follower when a leader fails, then no leader can be elected
 
+  // no need to change
+  group.min.session.timeout.ms=6000 // default 6000
+  group.max.session.timeout.ms=1800000 // defualt 1800000
+
   // if we want to be rack sensitive
-//rack.id - must be set to the data centre ID (ex: AZ ID in AWS)
-//replica.selector.class - must be set to org.apache.kafka.common.replica.RackAwareReplicaSelector
+  rack.id - must be set to the data centre ID (ex: AZ ID in AWS)
+  replica.selector.class - must be set to org.apache.kafka.common.replica.RackAwareReplicaSelector
 
-  group.min.session.timeout.ms - min session time a consumer can ask for, should probably be left at default
-  group.max.session.timeout.ms - max session time a consumer can ask for, should probably be left at default
-  replica.lag.time.max.ms - default 10000, upper limit on how long a producer must wait for acknowledgement, lower times will detect failed followers sooner, but may cause followers to be marked out of sync needlessly
-  num.network.threads - 3
-  num.io.threads - 8
-  queued.max.requests - limit the number of requests allowed in the request queue before the network thread is blocked.
-  group.initial.rebalance.delay.ms=3000 // default 0 - wait for consumers to join before first re-balance, will also delay when first messages can be received, so a trade-off
-  replica.fetch.max.bytes - 1048576?
-  message.max.bytes - 1024 * 1024 (1mb)
-
-  // need to be set?
+  // in general, do not override
   transaction.state.log.replication.factor=3
   transaction.state.log.min.isr=2
   offsets.topic.num.partitions=50
