@@ -69,7 +69,7 @@ public class RequestMessageRouter extends MessageRouter {
 
   public RequestMessageRouter (RabbitMQConnector connector, NameConfiguration nameConfiguration, RabbitMQRequestTransport requestTransport, SignalCodec signalCodec, String callerId, int index, int ttlSeconds, boolean autoAcknowledge, PublisherConfirmationHandler publisherConfirmationHandler) {
 
-    super(connector, nameConfiguration, publisherConfirmationHandler);
+    super(connector, "wire", nameConfiguration, publisherConfirmationHandler);
 
     this.requestTransport = requestTransport;
     this.signalCodec = signalCodec;

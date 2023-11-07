@@ -52,10 +52,12 @@ public abstract class MessageRouter {
   private final RabbitMQConnector connector;
   private final NameConfiguration nameConfiguration;
   private final PublisherConfirmationHandler publisherConfirmationHandler;
+  private final String prefix;
 
-  public MessageRouter (RabbitMQConnector connector, NameConfiguration nameConfiguration, PublisherConfirmationHandler publisherConfirmationHandler) {
+  public MessageRouter (RabbitMQConnector connector, String prefix, NameConfiguration nameConfiguration, PublisherConfirmationHandler publisherConfirmationHandler) {
 
     this.connector = connector;
+    this.prefix = prefix;
     this.nameConfiguration = nameConfiguration;
     this.publisherConfirmationHandler = publisherConfirmationHandler;
   }
@@ -74,32 +76,32 @@ public abstract class MessageRouter {
 
   public String getRequestExchangeName () {
 
-    return nameConfiguration.getRequestExchange();
+    return prefix + "-" + nameConfiguration.getRequestExchange();
   }
 
   public String getResponseExchangeName () {
 
-    return nameConfiguration.getResponseExchange();
+    return prefix + "-" + nameConfiguration.getResponseExchange();
   }
 
   public String getResponseQueueName () {
 
-    return nameConfiguration.getResponseQueue();
+    return prefix + "-" + nameConfiguration.getResponseQueue();
   }
 
   public String getShoutQueueName () {
 
-    return nameConfiguration.getShoutQueue();
+    return prefix + "-" + nameConfiguration.getShoutQueue();
   }
 
   public String getTalkQueueName () {
 
-    return nameConfiguration.getTalkQueue();
+    return prefix + "-" + nameConfiguration.getTalkQueue();
   }
 
   public String getWhisperQueueName () {
 
-    return nameConfiguration.getWhisperQueue();
+    return prefix + "-" + nameConfiguration.getWhisperQueue();
   }
 
   private void ensureChannel (int stamp)
