@@ -77,8 +77,10 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
   private final int concurrencyLimit;
   private ConsumerWorker<V>[] workers;
 
-  public KafkaBackbone (String nodeName, int concurrencyLimit, String topicName, KafkaServer... servers)
+  public KafkaBackbone (String nodeName, int concurrencyLimit, int startupGracePeriodSeconds, String topicName, KafkaServer... servers)
     throws OumuamuaException {
+
+    long startTimestamp = System.currentTimeMillis();
 
     this.nodeName = nodeName;
     this.concurrencyLimit = concurrencyLimit;
@@ -90,14 +92,26 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
     producer = connector.createProducer("oumuamua-producer-" + topicName + "-" + nodeName);
 
     if (!connector.invokeAdminClient(adminClient -> {
-        try {
-          Collection<Node> nodes = adminClient.describeCluster().nodes().get();
+        while (true) {
+          try {
+            Collection<Node> nodes = adminClient.describeCluster().nodes().get();
 
-          return (nodes != null) && (!nodes.isEmpty());
-        } catch (ExecutionException | InterruptedException exception) {
-          LoggerManager.getLogger(KafkaBackbone.class).error(exception);
+            return (nodes != null) && (!nodes.isEmpty());
+          } catch (ExecutionException | InterruptedException exception) {
+            if ((System.currentTimeMillis() - startTimestamp) < (startupGracePeriodSeconds * 1000L)) {
+              try {
+                Thread.sleep(1000);
+              } catch (InterruptedException interruptedException) {
+                LoggerManager.getLogger(KafkaBackbone.class).error(interruptedException);
 
-          return false;
+                return false;
+              }
+            } else {
+              LoggerManager.getLogger(KafkaBackbone.class).error(exception);
+
+              return false;
+            }
+          }
         }
       }
     )) {
