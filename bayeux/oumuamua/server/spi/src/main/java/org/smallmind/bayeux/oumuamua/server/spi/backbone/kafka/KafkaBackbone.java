@@ -72,6 +72,7 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
   private final Producer<Long, byte[]> producer;
   private final String nodeName;
   private final String topicName;
+  private final String prefixedTopicName;
   private final String groupId;
   private final int concurrencyLimit;
   private ConsumerWorker<V>[] workers;
@@ -85,7 +86,8 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
 
     groupId = SnowflakeId.newInstance().generateHexEncoding();
     connector = new KafkaConnector(servers);
-    producer = connector.createProducer("producer-" + topicName + "-" + nodeName);
+    prefixedTopicName = "oumuamua-" + topicName;
+    producer = connector.createProducer("oumuamua-producer-" + topicName + "-" + nodeName);
 
     if (!connector.invokeAdminClient(adminClient -> {
         try {
@@ -110,7 +112,7 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
     if (statusRef.compareAndSet(ComponentStatus.STOPPED, ComponentStatus.STARTING)) {
       workers = new ConsumerWorker[concurrencyLimit];
       for (int index = 0; index < concurrencyLimit; index++) {
-        new Thread(workers[index] = new ConsumerWorker<V>(server, nodeName, connector.createConsumer("consumer-" + index + "-" + topicName + "-" + nodeName, groupId, topicName))).start();
+        new Thread(workers[index] = new ConsumerWorker<V>(server, nodeName, connector.createConsumer("oumuamua-consumer-" + index + "-" + topicName + "-" + nodeName, groupId, prefixedTopicName))).start();
       }
       statusRef.set(ComponentStatus.STARTED);
     } else {
@@ -141,7 +143,7 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
 
     executorService.submit(() -> {
       try {
-        producer.send(new ProducerRecord<>(topicName, RecordUtility.serialize(nodeName, packet)));
+        producer.send(new ProducerRecord<>(prefixedTopicName, RecordUtility.serialize(nodeName, packet)));
       } catch (IOException ioException) {
         LoggerManager.getLogger(KafkaBackbone.class).error(ioException);
       }
