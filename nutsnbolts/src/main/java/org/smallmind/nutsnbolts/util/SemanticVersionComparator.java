@@ -56,7 +56,7 @@ public class SemanticVersionComparator implements Comparator<String> {
       String[] segments1 = version1.split("\\.");
       String[] segments2 = version2.split("\\.");
 
-      for (int index = 0; index < version1.length(); index++) {
+      for (int index = 0; index < segments1.length; index++) {
         if (index >= segments2.length) {
 
           return 1;
