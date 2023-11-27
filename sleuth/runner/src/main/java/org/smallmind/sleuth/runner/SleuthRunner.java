@@ -121,7 +121,13 @@ public class SleuthRunner {
 
   private boolean inGroups (String[] ours, String[] theirs) {
 
-    if ((ours != null) && (theirs != null)) {
+    if ((theirs == null) || (theirs.length == 0)) {
+
+      return true;
+    } else if ((ours == null) || (ours.length == 0)) {
+
+      return false;
+    } else {
       for (String oneOfTheirs : theirs) {
         for (String oneOfOurs : ours) {
           if ((oneOfOurs != null) && oneOfOurs.equals(oneOfTheirs)) {

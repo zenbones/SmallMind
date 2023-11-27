@@ -32,6 +32,7 @@
  */
 package org.smallmind.sleuth.maven.surefire;
 
+import java.util.Arrays;
 import org.apache.maven.surefire.providerapi.AbstractProvider;
 import org.apache.maven.surefire.providerapi.ProviderParameters;
 import org.apache.maven.surefire.report.ConsoleOutputReceiver;
@@ -79,8 +80,7 @@ public class SleuthProvider extends AbstractProvider {
     RunListener runListener = reporterFactory.createReporter();
     SurefireSleuthEventListener sleuthEventListener;
     StringBuilder testNameBuilder;
-    String[] groups = null;
-    String groupsParameter;
+    String[] groups;
     long startMilliseconds;
     int threadCount = 0;
     int testIndex = 0;
@@ -88,15 +88,8 @@ public class SleuthProvider extends AbstractProvider {
     System.setOut(new ForwardingPrintStream((ConsoleOutputReceiver)runListener, true));
     System.setErr(new ForwardingPrintStream((ConsoleOutputReceiver)runListener, false));
 
-    if (((groupsParameter = providerParameters.getProviderProperties().get("groups")) != null) && (!groupsParameter.isEmpty())) {
-
-      String[] parameterElements = groupsParameter.split(",", -1);
-      int index = 0;
-
-      groups = new String[parameterElements.length];
-      for (String parameterElement : parameterElements) {
-        groups[index++] = parameterElement;
-      }
+    if ((groups = parseGroups(System.getProperty("groups"))) == null) {
+      groups = parseGroups(providerParameters.getProviderProperties().get("groups"));
     }
 
     if (testsToRun == null) {
@@ -127,7 +120,7 @@ public class SleuthProvider extends AbstractProvider {
     sleuthRunner.addListener(sleuthEventListener = new SurefireSleuthEventListener(runListener));
     startMilliseconds = System.currentTimeMillis();
 
-    System.out.println("Sleuth test set starting with thread count(" + threadCount + ") on " + testNameBuilder + "...");
+    System.out.println("Sleuth test set starting with thread count(" + threadCount + ") on groups " + Arrays.toString(groups) + " in " + testNameBuilder + "...");
     runListener.testSetStarting(new SimpleReportEntry("Sleuth Tests", "Test Assay", "test set starting"));
 
     sleuthRunner.execute(groups, new SleuthThreadPool((threadCount <= 0) ? Integer.MAX_VALUE : threadCount), testsToRun);
@@ -142,5 +135,24 @@ public class SleuthProvider extends AbstractProvider {
     }
 
     return runResult;
+  }
+
+  private String[] parseGroups (String groupsParameter) {
+
+    if ((groupsParameter != null) && (!groupsParameter.isEmpty())) {
+
+      String[] groups;
+      String[] parameterElements = groupsParameter.split(",", -1);
+      int index = 0;
+
+      groups = new String[parameterElements.length];
+      for (String parameterElement : parameterElements) {
+        groups[index++] = parameterElement;
+      }
+
+      return groups;
+    }
+
+    return null;
   }
 }
