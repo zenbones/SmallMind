@@ -120,7 +120,7 @@ public class SleuthProvider extends AbstractProvider {
     sleuthRunner.addListener(sleuthEventListener = new SurefireSleuthEventListener(runListener));
     startMilliseconds = System.currentTimeMillis();
 
-    System.out.println("Sleuth test set starting with thread count(" + threadCount + ") on groups " + Arrays.toString(groups) + " in " + testNameBuilder + "...");
+    System.out.println("Sleuth test set starting with thread count(" + threadCount + ") on groups " + ((groups == null) ? "*" : Arrays.toString(groups)) + " in " + testNameBuilder + "...");
     runListener.testSetStarting(new SimpleReportEntry("Sleuth Tests", "Test Assay", "test set starting"));
 
     sleuthRunner.execute(groups, new SleuthThreadPool((threadCount <= 0) ? Integer.MAX_VALUE : threadCount), testsToRun);
@@ -147,7 +147,12 @@ public class SleuthProvider extends AbstractProvider {
 
       groups = new String[parameterElements.length];
       for (String parameterElement : parameterElements) {
-        groups[index++] = parameterElement;
+        if ("*".equals(parameterElement)) {
+
+          return null;
+        } else {
+          groups[index++] = parameterElement;
+        }
       }
 
       return groups;
