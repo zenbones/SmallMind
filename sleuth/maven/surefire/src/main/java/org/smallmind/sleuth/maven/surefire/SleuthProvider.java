@@ -120,10 +120,10 @@ public class SleuthProvider extends AbstractProvider {
     sleuthRunner.addListener(sleuthEventListener = new SurefireSleuthEventListener(runListener));
     startMilliseconds = System.currentTimeMillis();
 
-    System.out.println("Sleuth test set starting with thread count(" + threadCount + ") on groups " + ((groups == null) ? "*" : Arrays.toString(groups)) + " in " + testNameBuilder + "...");
+    System.out.println("Sleuth test set starting with thread count(" + threadCount + ") on groups " + (((groups == null) || (groups.length == 0)) ? "all" : Arrays.toString(groups)) + " in " + testNameBuilder + "...");
     runListener.testSetStarting(new SimpleReportEntry("Sleuth Tests", "Test Assay", "test set starting"));
 
-    sleuthRunner.execute(groups, new SleuthThreadPool((threadCount <= 0) ? Integer.MAX_VALUE : threadCount), testsToRun);
+    sleuthRunner.execute(((groups != null) && (groups.length == 0)) ? null : groups, new SleuthThreadPool((threadCount <= 0) ? Integer.MAX_VALUE : threadCount), testsToRun);
 
     System.out.println("Sleuth test set completed in " + (System.currentTimeMillis() - startMilliseconds) + "ms");
     runListener.testSetCompleted(new SimpleReportEntry("Sleuth Tests", "Test Assay", (int)(System.currentTimeMillis() - startMilliseconds)));
@@ -147,9 +147,9 @@ public class SleuthProvider extends AbstractProvider {
 
       groups = new String[parameterElements.length];
       for (String parameterElement : parameterElements) {
-        if ("*".equals(parameterElement)) {
+        if ("all".equals(parameterElement)) {
 
-          return null;
+          return new String[0];
         } else {
           groups[index++] = parameterElement;
         }
