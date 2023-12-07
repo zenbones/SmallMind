@@ -32,13 +32,14 @@
  */
 package org.smallmind.nutsnbolts.reflection;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import org.smallmind.nutsnbolts.lang.TypeMismatchException;
 
 public interface Overlay<O extends Overlay<O>> {
 
-  default void overliad () {
+  default void overlayed () {
 
   }
 
@@ -76,7 +77,7 @@ public interface Overlay<O extends Overlay<O>> {
 
           excluded = false;
 
-          if ((exclusions != null) && (exclusions.length > 0)) {
+          if (exclusions != null) {
             for (Field exclusion : exclusions) {
               if (!exclusion.getDeclaringClass().isAssignableFrom(this.getClass())) {
                 throw new TypeMismatchException("The type(%s) does not contain the excluded field(%s)", this.getClass().getName(), exclusion.getName());
@@ -100,10 +101,18 @@ public interface Overlay<O extends Overlay<O>> {
                   if ((original = (Overlay)fieldAccessor.get(this)) != null) {
                     fieldAccessor.set(this, fieldAccessor.getType().cast(original.overlay((Overlay)value)));
                   } else {
-                    fieldAccessor.set(this, value);
+                    if (equivalentToNull(fieldAccessor, value)) {
+                      fieldAccessor.set(this, null);
+                    } else {
+                      fieldAccessor.set(this, value);
+                    }
                   }
                 } else {
-                  fieldAccessor.set(this, value);
+                  if (equivalentToNull(fieldAccessor, value)) {
+                    fieldAccessor.set(this, null);
+                  } else {
+                    fieldAccessor.set(this, value);
+                  }
                 }
               }
             } catch (IllegalAccessException | InvocationTargetException exception) {
@@ -114,8 +123,39 @@ public interface Overlay<O extends Overlay<O>> {
       }
     }
 
-    this.overliad();
+    this.overlayed();
 
     return (O)this;
+  }
+
+  private boolean equivalentToNull (FieldAccessor fieldAccessor, Object value)
+    throws OverlayException {
+
+    for (Annotation fieldAnnotation : fieldAccessor.getField().getAnnotations()) {
+
+      OverlayNullifier overlayNullifier;
+
+      if ((overlayNullifier = fieldAnnotation.annotationType().getAnnotation(OverlayNullifier.class)) != null) {
+
+        return internalEquivalentToNull(overlayNullifier, fieldAnnotation, value);
+      }
+    }
+
+    return false;
+  }
+
+  private <A extends Annotation, T> boolean internalEquivalentToNull (OverlayNullifier overlayNullifier, A annotation, T object)
+    throws OverlayException {
+
+    try {
+
+      OverlayNullifierValidator<A, T> overlayNullifierValidator = (OverlayNullifierValidator<A, T>)overlayNullifier.validatedBy().getConstructor().newInstance();
+
+      overlayNullifierValidator.initialize(annotation);
+
+      return overlayNullifierValidator.equivalentToNull(object);
+    } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException exception) {
+      throw new OverlayException(exception);
+    }
   }
 }
