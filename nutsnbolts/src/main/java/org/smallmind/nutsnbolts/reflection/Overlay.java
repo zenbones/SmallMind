@@ -39,7 +39,7 @@ import org.smallmind.nutsnbolts.lang.TypeMismatchException;
 
 public interface Overlay<O extends Overlay<O>> {
 
-  default void overlayed () {
+  default void overlaid () {
 
   }
 
@@ -123,7 +123,7 @@ public interface Overlay<O extends Overlay<O>> {
       }
     }
 
-    this.overlayed();
+    this.overlaid();
 
     return (O)this;
   }
