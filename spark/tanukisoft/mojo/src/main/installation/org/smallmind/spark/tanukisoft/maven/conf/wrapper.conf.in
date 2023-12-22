@@ -54,6 +54,9 @@ wrapper.java.command=java
 #  http://wrapper.tanukisoftware.com/doc/english/integrate.html
 wrapper.java.mainclass=org.tanukisoftware.wrapper.WrapperSimpleApp
 
+# Log level for notices about missing Java Classpath entries.
+wrapper.java.classpath.missing.loglevel=WARN
+
 # Java Classpath (include wrapper.jar)  Add class path elements as
 #  needed starting from 1
 wrapper.java.classpath.1=../lib/wrapper.jar
@@ -97,15 +100,21 @@ wrapper.logfile.format=LPTM
 # Log Level for log file output.  (See docs for log levels)
 wrapper.logfile.loglevel=INFO
 
+# Roll mode of the log file.
+#  SIZE_OR_WRAPPER causes the file to be rolled whenever its size exceeds the
+#  value defined by wrapper.logfile.maxsize, or whenever the Wrapper is
+#  launched.
+wrapper.logfile.rollmode=SIZE_OR_WRAPPER
+
 # Maximum size that the log file will be allowed to grow to before
 #  the log is rolled. Size is specified in bytes.  The default value
 #  of 0, disables log rolling.  May abbreviate with the 'k' (kb) or
 #  'm' (mb) suffix.  For example: 10m = 10 megabytes.
-wrapper.logfile.maxsize=0
+wrapper.logfile.maxsize=10m
 
 # Maximum number of rolled log files which will be allowed before old
 #  files are deleted.  The default value of 0 implies no limit.
-wrapper.logfile.maxfiles=0
+wrapper.logfile.maxfiles=9
 
 # Log Level for sys/event log output.  (See docs for log levels)
 wrapper.syslog.loglevel=NONE
@@ -199,7 +208,8 @@ wrapper.description=@app.description@
 # Service dependencies.  Add dependencies as needed starting from 1
 wrapper.ntservice.dependency.1=
 
-# Mode in which the service is installed.  AUTO_START, DELAY_START or DEMAND_START
+# Mode in which the service is installed.
+#  AUTO_START, DELAY_START (Requires Standard Edition) or DEMAND_START
 wrapper.ntservice.starttype=AUTO_START
 
 # Allow the service to interact with the desktop (Windows NT/2000/XP only).

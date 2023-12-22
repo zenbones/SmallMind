@@ -127,7 +127,7 @@
     <spring.rabbit.version>2.4.5</spring.rabbit.version>
     <sshd.version>2.7.0</sshd.version>
     <syslog4j.version>0.9.30</syslog4j.version>
-    <tanukisoft.version>3.5.43</tanukisoft.version>
+    <tanukisoft.version>3.5.54</tanukisoft.version>
     <testng.version>7.5</testng.version>
     <tyrus.version>1.18</tyrus.version>
   </properties>
