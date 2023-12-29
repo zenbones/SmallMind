@@ -16,7 +16,7 @@ rem
 
 rem -----------------------------------------------------------------------------
 rem These settings can be modified to fit the needs of your application
-rem Optimized for use with version 3.5.54-st of the Wrapper.
+rem Optimized for use with version 3.5.54 of the Wrapper.
 
 rem The base name for the Wrapper binary.
 set _WRAPPER_BASE=wrapper
@@ -154,7 +154,6 @@ if [%_COMMAND%]==[start]        goto args_not_allowed
 if [%_COMMAND%]==[stop]         goto args_not_allowed
 if [%_COMMAND%]==[install]      goto args_allowed
 if [%_COMMAND%]==[installstart] goto args_allowed
-if [%_COMMAND%]==[update]       goto args_allowed
 if [%_COMMAND%]==[pause]        goto args_not_allowed
 if [%_COMMAND%]==[resume]       goto args_not_allowed
 if [%_COMMAND%]==[status]       goto args_not_allowed
@@ -243,8 +242,6 @@ if [%_COMMAND%]==[console] (
     %_WRAPPER_EXE% -i "%_WRAPPER_CONF%" %_PARAMETERS%
 ) else if [%_COMMAND%]==[installstart] (
     %_WRAPPER_EXE% -it "%_WRAPPER_CONF%" %_PARAMETERS%
-) else if [%_COMMAND%]==[update] (
-    %_WRAPPER_EXE% -u "%_WRAPPER_CONF%" %_PARAMETERS%
 ) else if [%_COMMAND%]==[pause] (
     %_WRAPPER_EXE% -a "%_WRAPPER_CONF%"
 ) else if [%_COMMAND%]==[resume] (
@@ -277,7 +274,7 @@ if [%_PASS_THROUGH%]==[app_args] (
 )
 
 if [%_FIXED_COMMAND%]==[] (
-    echo Usage: %_SCRIPT_NAME% [ console%ARGS% : start : stop : restart : pause : resume : status : install%ARGS% : installstart%ARGS% : update%ARGS% : remove : setup : teardown ]
+    echo Usage: %_SCRIPT_NAME% [ console%ARGS% : start : stop : restart : pause : resume : status : install%ARGS% : installstart%ARGS% : remove : setup : teardown ]
     echo.
     echo Commands:
     echo   console      Launch in the current console.
@@ -289,7 +286,6 @@ if [%_FIXED_COMMAND%]==[] (
     echo   status       Query the current status of the Service.
     echo   install      Install the Service.
     echo   installstart Install the Service and then start running it.
-    echo   update       Update an installed Service.
     echo   remove       Uninstall the Service.
     echo   setup        Setup the Wrapper ^(for registration to the Windows Event Log^).
     echo   teardown     Teardown the Wrapper ^(unregister from the Windows Event Log^).
