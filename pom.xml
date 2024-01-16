@@ -118,7 +118,7 @@
     <netty.version>4.1.70.Final</netty.version>
     <quartz.version>2.3.2</quartz.version>
     <querydsl.version>5.0.0</querydsl.version>
-    <shiro.version>1.8.0</shiro.version>
+    <shiro.version>1.13.0</shiro.version>
     <siphash.version>2.0.0</siphash.version>
     <slf4j.version>1.7.32</slf4j.version>
     <snakeyaml.version>1.29</snakeyaml.version>
