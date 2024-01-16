@@ -47,7 +47,7 @@ import org.smallmind.sleuth.runner.event.SkippedSleuthEvent;
 import org.smallmind.sleuth.runner.event.StartSleuthEvent;
 import org.smallmind.sleuth.runner.event.SuccessSleuthEvent;
 
-public class TestRunner implements Runnable {
+public class TestRunner implements TestController {
 
   private final SleuthRunner sleuthRunner;
   private final AnnotationProcessor annotationProcessor;
@@ -127,9 +127,16 @@ public class TestRunner implements Runnable {
 
       testMethodDependency.setCulprit(culprit);
     } finally {
-      threadPool.release(TestTier.TEST);
-      testMethodDependencyQueue.complete(testMethodDependency);
-      testCompletedLatch.countDown();
+
+      complete();
     }
+  }
+
+  @Override
+  public void complete () {
+
+    threadPool.release(TestTier.TEST);
+    testMethodDependencyQueue.complete(testMethodDependency);
+    testCompletedLatch.countDown();
   }
 }

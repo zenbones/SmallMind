@@ -44,7 +44,7 @@ import org.smallmind.sleuth.runner.annotation.Suite;
 import org.smallmind.sleuth.runner.annotation.Test;
 import org.smallmind.sleuth.runner.event.FatalSleuthEvent;
 
-public class SuiteRunner implements Runnable {
+public class SuiteRunner implements TestController {
 
   private final SleuthRunner sleuthRunner;
   private final AnnotationProcessor annotationProcessor;
@@ -131,9 +131,15 @@ public class SuiteRunner implements Runnable {
       }
       sleuthRunner.fire(new FatalSleuthEvent(SuiteRunner.class.getName(), "run", System.currentTimeMillis() - startMilliseconds, exception));
     } finally {
-      threadPool.release(TestTier.SUITE);
-      suiteDependencyQueue.complete(suiteDependency);
-      suiteCompletedLatch.countDown();
+      complete();
     }
+  }
+
+  @Override
+  public void complete () {
+
+    threadPool.release(TestTier.SUITE);
+    suiteDependencyQueue.complete(suiteDependency);
+    suiteCompletedLatch.countDown();
   }
 }

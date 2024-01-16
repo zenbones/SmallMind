@@ -62,7 +62,7 @@ public class SurefireSleuthEventListener implements SleuthEventListener {
   @Override
   public void handle (SleuthEvent event) {
 
-    System.out.println("SUREFIRE: " + event);
+    System.out.println("SUREFIRE [" + event + "]");
 
     switch (event.getType()) {
       case SETUP:
@@ -85,6 +85,7 @@ public class SurefireSleuthEventListener implements SleuthEventListener {
         break;
       case CANCELLED:
         runListener.testSetCompleted(new SimpleReportEntry(event.getClassName(), event.getMethodName(), "Tests have been cancelled"));
+        break;
       case MOOT:
         runListener.testAssumptionFailure(new SimpleReportEntry(event.getClassName(), event.getMethodName(), new SleuthStackTraceWriter(event.getClassName(), event.getMethodName(), ((MootSleuthEvent)event).getThrowable()), (int)((MootSleuthEvent)event).getElapsed()));
         break;

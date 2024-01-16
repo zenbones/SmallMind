@@ -44,7 +44,6 @@ import org.apache.maven.surefire.suite.RunResult;
 import org.apache.maven.surefire.testset.TestSetFailedException;
 import org.apache.maven.surefire.util.TestsToRun;
 import org.smallmind.sleuth.runner.SleuthRunner;
-import org.smallmind.sleuth.runner.SleuthThreadPool;
 
 public class SleuthProvider extends AbstractProvider {
 
@@ -130,7 +129,7 @@ public class SleuthProvider extends AbstractProvider {
     System.out.println("Sleuth test set starting with thread count(" + threadCount + ") on groups " + (((groups == null) || (groups.length == 0)) ? "all" : Arrays.toString(groups)) + " in " + testNameBuilder + "...");
     runListener.testSetStarting(new SimpleReportEntry("Sleuth Tests", "Test Assay", "test set starting"));
 
-    sleuthRunner.execute(((groups != null) && (groups.length == 0)) ? null : groups, new SleuthThreadPool((threadCount <= 0) ? Integer.MAX_VALUE : threadCount), stopOnError, stopOnFailure, testsToRun);
+    sleuthRunner.execute(((groups != null) && (groups.length == 0)) ? null : groups, (threadCount <= 0) ? Integer.MAX_VALUE : threadCount, stopOnError, stopOnFailure, testsToRun);
 
     System.out.println("Sleuth test set completed in " + (System.currentTimeMillis() - startMilliseconds) + "ms");
     runListener.testSetCompleted(new SimpleReportEntry("Sleuth Tests", "Test Assay", (int)(System.currentTimeMillis() - startMilliseconds)));

@@ -32,44 +32,7 @@
  */
 package org.smallmind.sleuth.runner;
 
-import java.util.concurrent.Semaphore;
+public interface TestController extends Runnable {
 
-public class SleuthThreadPool {
-
-  private final SleuthRunner sleuthRunner;
-  private final Semaphore[] semaphores;
-
-  public SleuthThreadPool (SleuthRunner sleuthRunner, int threadCount) {
-
-    this.sleuthRunner = sleuthRunner;
-
-    semaphores = new Semaphore[TestTier.values().length];
-
-    for (TestTier testTier : TestTier.values()) {
-      semaphores[testTier.ordinal()] = new Semaphore(threadCount, true);
-    }
-  }
-
-  public void execute (TestTier testTier, TestController controller)
-    throws InterruptedException {
-
-    semaphores[testTier.ordinal()].acquire();
-
-    if (sleuthRunner.isRunning()) {
-
-      Thread thread = new Thread(controller);
-
-      thread.start();
-      if (thread.isInterrupted()) {
-        throw new InterruptedException();
-      }
-    } else {
-      controller.complete();
-    }
-  }
-
-  public void release (TestTier testTier) {
-
-    semaphores[testTier.ordinal()].release();
-  }
+  void complete ();
 }
