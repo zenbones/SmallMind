@@ -52,8 +52,10 @@ public class SuiteRunner implements Runnable {
   private final DependencyQueue<Suite, Class<?>> suiteDependencyQueue;
   private final Dependency<Suite, Class<?>> suiteDependency;
   private final CountDownLatch suiteCompletedLatch;
+  private final boolean stopOnError;
+  private final boolean stopOnFailure;
 
-  public SuiteRunner (SleuthRunner sleuthRunner, CountDownLatch suiteCompletedLatch, Dependency<Suite, Class<?>> suiteDependency, DependencyQueue<Suite, Class<?>> suiteDependencyQueue, AnnotationProcessor annotationProcessor, SleuthThreadPool threadPool) {
+  public SuiteRunner (SleuthRunner sleuthRunner, CountDownLatch suiteCompletedLatch, Dependency<Suite, Class<?>> suiteDependency, DependencyQueue<Suite, Class<?>> suiteDependencyQueue, AnnotationProcessor annotationProcessor, SleuthThreadPool threadPool, boolean stopOnError, boolean stopOnFailure) {
 
     this.sleuthRunner = sleuthRunner;
     this.suiteCompletedLatch = suiteCompletedLatch;
@@ -61,6 +63,8 @@ public class SuiteRunner implements Runnable {
     this.suiteDependencyQueue = suiteDependencyQueue;
     this.annotationProcessor = annotationProcessor;
     this.threadPool = threadPool;
+    this.stopOnError = stopOnError;
+    this.stopOnFailure = stopOnFailure;
   }
 
   @Override
@@ -103,16 +107,18 @@ public class SuiteRunner implements Runnable {
 
       testMethodDependencyQueue = testMethodAnalysis.calculate();
       testCompletedLatch = new CountDownLatch(testMethodDependencyQueue.size());
-      while ((testMethodDependency = testMethodDependencyQueue.poll()) != null) {
+      while (sleuthRunner.isRunning() && ((testMethodDependency = testMethodDependencyQueue.poll()) != null)) {
         try {
-          threadPool.execute(TestTier.TEST, new TestRunner(sleuthRunner, testCompletedLatch, culprit, suiteDependency.getValue(), instance, testMethodDependency, testMethodDependencyQueue, annotationProcessor, threadPool));
+          threadPool.execute(TestTier.TEST, new TestRunner(sleuthRunner, testCompletedLatch, culprit, suiteDependency.getValue(), instance, testMethodDependency, testMethodDependencyQueue, annotationProcessor, threadPool, stopOnError, stopOnFailure));
         } catch (InterruptedException interruptedException) {
           culprit = new Culprit(SuiteRunner.class.getName(), "run", interruptedException);
           Thread.currentThread().interrupt();
         }
       }
 
-      testCompletedLatch.await();
+      if (sleuthRunner.isRunning()) {
+        testCompletedLatch.await();
+      }
 
       if ((afterSuiteMethodology = annotationDictionary.getAfterSuiteMethodology()) != null) {
         culprit = afterSuiteMethodology.invoke(sleuthRunner, culprit, suiteDependency.getValue(), instance);
@@ -120,6 +126,9 @@ public class SuiteRunner implements Runnable {
 
       suiteDependency.setCulprit(culprit);
     } catch (Exception exception) {
+      if (stopOnError) {
+        sleuthRunner.cancel();
+      }
       sleuthRunner.fire(new FatalSleuthEvent(SuiteRunner.class.getName(), "run", System.currentTimeMillis() - startMilliseconds, exception));
     } finally {
       threadPool.release(TestTier.SUITE);

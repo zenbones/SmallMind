@@ -47,4 +47,10 @@ public abstract class MessageSleuthEvent extends TimedSleuthEvent {
 
     return message;
   }
+
+  @Override
+  public String toString () {
+
+    return getType() + " [className=" + getClassName() + ", methodName=" + getMethodName() + ", elapsed=" + getElapsed() + ", message=" + message + "]";
+  }
 }

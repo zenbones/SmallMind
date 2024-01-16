@@ -57,9 +57,11 @@ public class TestRunner implements Runnable {
   private final CountDownLatch testCompletedLatch;
   private final Class<?> clazz;
   private final Object instance;
+  private final boolean stopOnError;
+  private final boolean stopOnFailure;
   private Culprit culprit;
 
-  public TestRunner (SleuthRunner sleuthRunner, CountDownLatch testCompletedLatch, Culprit culprit, Class<?> clazz, Object instance, Dependency<Test, Method> testMethodDependency, DependencyQueue<Test, Method> testMethodDependencyQueue, AnnotationProcessor annotationProcessor, SleuthThreadPool threadPool) {
+  public TestRunner (SleuthRunner sleuthRunner, CountDownLatch testCompletedLatch, Culprit culprit, Class<?> clazz, Object instance, Dependency<Test, Method> testMethodDependency, DependencyQueue<Test, Method> testMethodDependencyQueue, AnnotationProcessor annotationProcessor, SleuthThreadPool threadPool, boolean stopOnError, boolean stopOnFailure) {
 
     this.sleuthRunner = sleuthRunner;
     this.testCompletedLatch = testCompletedLatch;
@@ -70,6 +72,8 @@ public class TestRunner implements Runnable {
     this.testMethodDependencyQueue = testMethodDependencyQueue;
     this.annotationProcessor = annotationProcessor;
     this.threadPool = threadPool;
+    this.stopOnError = stopOnError;
+    this.stopOnFailure = stopOnFailure;
   }
 
   @Override
@@ -98,11 +102,20 @@ public class TestRunner implements Runnable {
         } catch (InvocationTargetException invocationTargetException) {
           culprit = new Culprit(clazz.getName(), testMethodDependency.getValue().getName(), invocationTargetException.getCause());
           if (invocationTargetException.getCause() instanceof AssertionError) {
+            if (stopOnFailure) {
+              sleuthRunner.cancel();
+            }
             sleuthRunner.fire(new FailureSleuthEvent(clazz.getName(), testMethodDependency.getValue().getName(), System.currentTimeMillis() - startMilliseconds, invocationTargetException.getCause()));
           } else {
+            if (stopOnError) {
+              sleuthRunner.cancel();
+            }
             sleuthRunner.fire(new ErrorSleuthEvent(clazz.getName(), testMethodDependency.getValue().getName(), System.currentTimeMillis() - startMilliseconds, invocationTargetException.getCause()));
           }
         } catch (Exception exception) {
+          if (stopOnError) {
+            sleuthRunner.cancel();
+          }
           culprit = new Culprit(clazz.getName(), testMethodDependency.getValue().getName(), exception);
           sleuthRunner.fire(new ErrorSleuthEvent(clazz.getName(), testMethodDependency.getValue().getName(), System.currentTimeMillis() - startMilliseconds, exception));
         }

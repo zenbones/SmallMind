@@ -54,4 +54,10 @@ public abstract class SleuthEvent {
 
     return methodName;
   }
+
+  @Override
+  public String toString () {
+
+    return getType() + " [className=" + getClassName() + ", methodName=" + getMethodName() + "]";
+  }
 }

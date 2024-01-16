@@ -41,6 +41,7 @@ import org.smallmind.sleuth.runner.annotation.AnnotationProcessor;
 import org.smallmind.sleuth.runner.annotation.NativeAnnotationTranslator;
 import org.smallmind.sleuth.runner.annotation.Suite;
 import org.smallmind.sleuth.runner.annotation.TestNGAnnotationTranslator;
+import org.smallmind.sleuth.runner.event.CancelledSleuthEvent;
 import org.smallmind.sleuth.runner.event.FatalSleuthEvent;
 import org.smallmind.sleuth.runner.event.SleuthEvent;
 import org.smallmind.sleuth.runner.event.SleuthEventListener;
@@ -72,12 +73,17 @@ public class SleuthRunner {
     cancelled.set(true);
   }
 
-  public void execute (String[] groups, SleuthThreadPool threadPool, Class<?>... classes) {
+  public boolean isRunning () {
 
-    execute(groups, threadPool, Arrays.asList(classes));
+    return !cancelled.get();
   }
 
-  public void execute (String[] groups, SleuthThreadPool threadPool, Iterable<Class<?>> classIterable) {
+  public void execute (String[] groups, SleuthThreadPool threadPool, boolean stopOnError, boolean stopOnFailure, Class<?>... classes) {
+
+    execute(groups, threadPool, stopOnError, stopOnFailure, Arrays.asList(classes));
+  }
+
+  public void execute (String[] groups, SleuthThreadPool threadPool, boolean stopOnError, boolean stopOnFailure, Iterable<Class<?>> classIterable) {
 
     if (classIterable != null) {
 
@@ -105,10 +111,11 @@ public class SleuthRunner {
         suiteDependencyQueue = suiteAnalysis.calculate();
         suiteCompletedLatch = new CountDownLatch(suiteDependencyQueue.size());
         while ((!cancelled.get()) && ((suiteDependency = suiteDependencyQueue.poll()) != null)) {
-          threadPool.execute(TestTier.SUITE, new SuiteRunner(this, suiteCompletedLatch, suiteDependency, suiteDependencyQueue, annotationProcessor, threadPool));
+          threadPool.execute(TestTier.SUITE, new SuiteRunner(this, suiteCompletedLatch, suiteDependency, suiteDependencyQueue, annotationProcessor, threadPool, stopOnError, stopOnFailure));
         }
 
         if (cancelled.get()) {
+          fire(new CancelledSleuthEvent(SleuthRunner.class.getName(), "cancelled"));
           throw new InterruptedException();
         }
 

@@ -32,25 +32,16 @@
  */
 package org.smallmind.sleuth.runner.event;
 
-public abstract class TimedSleuthEvent extends SleuthEvent {
+public class SetupSleuthEvent extends SleuthEvent {
 
-  private final long elapsed;
-
-  public TimedSleuthEvent (String className, String methodName, long elapsed) {
+  public SetupSleuthEvent (String className, String methodName) {
 
     super(className, methodName);
-
-    this.elapsed = elapsed;
-  }
-
-  public long getElapsed () {
-
-    return elapsed;
   }
 
   @Override
-  public String toString () {
+  public SleuthEventType getType () {
 
-    return getType() + " [className=" + getClassName() + ", methodName=" + getMethodName() + ", elapsed=" + getElapsed() + ", elapsed=" + getElapsed() + "]";
+    return SleuthEventType.SETUP;
   }
 }

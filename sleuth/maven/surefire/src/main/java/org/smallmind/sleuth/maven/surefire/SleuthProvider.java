@@ -81,6 +81,8 @@ public class SleuthProvider extends AbstractProvider {
     SurefireSleuthEventListener sleuthEventListener;
     StringBuilder testNameBuilder;
     String[] groups;
+    boolean stopOnError = true;
+    boolean stopOnFailure = true;
     long startMilliseconds;
     int threadCount = 0;
     int testIndex = 0;
@@ -108,6 +110,11 @@ public class SleuthProvider extends AbstractProvider {
       threadCount = Integer.parseInt(providerParameters.getProviderProperties().get("threadcount"));
     }
 
+    if (providerParameters.getProviderProperties().get("testFailureIgnore") != null) {
+      stopOnError = !Boolean.parseBoolean(providerParameters.getProviderProperties().get("testFailureIgnore"));
+      stopOnFailure = !Boolean.parseBoolean(providerParameters.getProviderProperties().get("testFailureIgnore"));
+    }
+
     testNameBuilder = new StringBuilder("[");
     for (Class<?> testClass : testsToRun) {
       if (testIndex++ > 0) {
@@ -123,7 +130,7 @@ public class SleuthProvider extends AbstractProvider {
     System.out.println("Sleuth test set starting with thread count(" + threadCount + ") on groups " + (((groups == null) || (groups.length == 0)) ? "all" : Arrays.toString(groups)) + " in " + testNameBuilder + "...");
     runListener.testSetStarting(new SimpleReportEntry("Sleuth Tests", "Test Assay", "test set starting"));
 
-    sleuthRunner.execute(((groups != null) && (groups.length == 0)) ? null : groups, new SleuthThreadPool((threadCount <= 0) ? Integer.MAX_VALUE : threadCount), testsToRun);
+    sleuthRunner.execute(((groups != null) && (groups.length == 0)) ? null : groups, new SleuthThreadPool((threadCount <= 0) ? Integer.MAX_VALUE : threadCount), stopOnError, stopOnFailure, testsToRun);
 
     System.out.println("Sleuth test set completed in " + (System.currentTimeMillis() - startMilliseconds) + "ms");
     runListener.testSetCompleted(new SimpleReportEntry("Sleuth Tests", "Test Assay", (int)(System.currentTimeMillis() - startMilliseconds)));

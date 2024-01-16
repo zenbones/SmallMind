@@ -32,9 +32,9 @@
  */
 package org.smallmind.sleuth.runner.event;
 
-public class BeginSleuthEvent extends SleuthEvent {
+public class CancelledSleuthEvent extends SleuthEvent {
 
-  public BeginSleuthEvent (String className, String methodName) {
+  public CancelledSleuthEvent (String className, String methodName) {
 
     super(className, methodName);
   }
@@ -42,6 +42,6 @@ public class BeginSleuthEvent extends SleuthEvent {
   @Override
   public SleuthEventType getType () {
 
-    return SleuthEventType.START;
+    return SleuthEventType.CANCELLED;
   }
 }

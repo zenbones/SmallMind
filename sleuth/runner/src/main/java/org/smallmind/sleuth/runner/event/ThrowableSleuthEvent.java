@@ -47,4 +47,10 @@ public abstract class ThrowableSleuthEvent extends TimedSleuthEvent {
 
     return throwable;
   }
+
+  @Override
+  public String toString () {
+
+    return getType() + " [className=" + getClassName() + ", methodName=" + getMethodName() + ", elapsed=" + getElapsed() + ", throwable=" + getThrowable() + "]";
+  }
 }

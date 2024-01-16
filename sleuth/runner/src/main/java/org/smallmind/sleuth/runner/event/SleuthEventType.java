@@ -34,5 +34,5 @@ package org.smallmind.sleuth.runner.event;
 
 public enum SleuthEventType {
 
-  START, SUCCESS, FAILURE, ERROR, SKIPPED, MOOT, FATAL
+  SETUP, START, SUCCESS, FAILURE, ERROR, SKIPPED, MOOT, FATAL, CANCELLED
 }
