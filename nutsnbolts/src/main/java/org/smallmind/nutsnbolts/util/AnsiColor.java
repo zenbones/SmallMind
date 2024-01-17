@@ -30,41 +30,38 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.sleuth.runner.event;
+package org.smallmind.nutsnbolts.util;
 
-import org.smallmind.nutsnbolts.util.AnsiColor;
+public enum AnsiColor {
 
-public abstract class SleuthEvent {
+  DEFAULT("\u001B[39m"),
+  BLACK("\u001B[30m"),
+  RED("\u001B[31m"),
+  GREEN("\u001B[32m"),
+  YELLOW("\u001B[33m"),
+  BLUE("\u001B[34m"),
+  MAGENTA("\u001B[35m"),
+  CYAN("\u001B[36m"),
+  WHITE("\u001B[37m"),
+  BRIGHT_BLACK("\u001B[90m"),
+  BRIGHT_RED("\u001B[91m"),
+  BRIGHT_GREEN("\u001B[92m"),
+  BRIGHT_YELLOW("\u001B[93m"),
+  BRIGHT_BLUE("\u001B[94m"),
+  BRIGHT_MAGENTA("\u001B[95m"),
+  BRIGHT_CYAN("\u001B[96m"),
+  BRIGHT_WHITE("\u001B[97m"),
+  RESET("\u001B[0m");
 
-  private final String className;
-  private final String methodName;
+  private final String code;
 
-  public SleuthEvent (String className, String methodName) {
+  AnsiColor (String code) {
 
-    this.className = className;
-    this.methodName = methodName;
+    this.code = code;
   }
 
-  public abstract SleuthEventType getType ();
+  public String getCode () {
 
-  public AnsiColor getColor () {
-
-    return AnsiColor.DEFAULT;
-  }
-
-  public String getClassName () {
-
-    return className;
-  }
-
-  public String getMethodName () {
-
-    return methodName;
-  }
-
-  @Override
-  public String toString () {
-
-    return getColor().getCode() + getType() + AnsiColor.DEFAULT.getCode() + " [className=" + getClassName() + ", methodName=" + getMethodName() + "]";
+    return code;
   }
 }

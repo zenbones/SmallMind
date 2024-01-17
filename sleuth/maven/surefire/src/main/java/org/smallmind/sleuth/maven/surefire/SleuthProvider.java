@@ -43,6 +43,7 @@ import org.apache.maven.surefire.report.SimpleReportEntry;
 import org.apache.maven.surefire.suite.RunResult;
 import org.apache.maven.surefire.testset.TestSetFailedException;
 import org.apache.maven.surefire.util.TestsToRun;
+import org.smallmind.nutsnbolts.util.AnsiColor;
 import org.smallmind.sleuth.runner.SleuthRunner;
 
 public class SleuthProvider extends AbstractProvider {
@@ -126,12 +127,12 @@ public class SleuthProvider extends AbstractProvider {
     sleuthRunner.addListener(sleuthEventListener = new SurefireSleuthEventListener(runListener));
     startMilliseconds = System.currentTimeMillis();
 
-    System.out.println("Sleuth test set starting with thread count(" + threadCount + ") on groups " + (((groups == null) || (groups.length == 0)) ? "all" : Arrays.toString(groups)) + " in " + testNameBuilder + "...");
+    System.out.println(AnsiColor.YELLOW.getCode() + "Sleuth test set starting with thread count(" + threadCount + ") on groups " + (((groups == null) || (groups.length == 0)) ? "all" : Arrays.toString(groups)) + " in " + testNameBuilder + "..." + AnsiColor.DEFAULT.getCode());
     runListener.testSetStarting(new SimpleReportEntry("Sleuth Tests", "Test Assay", "test set starting"));
 
     sleuthRunner.execute(((groups != null) && (groups.length == 0)) ? null : groups, (threadCount <= 0) ? Integer.MAX_VALUE : threadCount, stopOnError, stopOnFailure, testsToRun);
 
-    System.out.println("Sleuth test set completed in " + (System.currentTimeMillis() - startMilliseconds) + "ms");
+    System.out.println(AnsiColor.YELLOW.getCode() + "Sleuth test set completed in " + (System.currentTimeMillis() - startMilliseconds) + "ms" + AnsiColor.DEFAULT.getCode());
     runListener.testSetCompleted(new SimpleReportEntry("Sleuth Tests", "Test Assay", (int)(System.currentTimeMillis() - startMilliseconds)));
 
     runResult = reporterFactory.close();

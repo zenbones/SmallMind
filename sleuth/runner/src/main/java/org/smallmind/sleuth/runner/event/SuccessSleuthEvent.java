@@ -32,6 +32,8 @@
  */
 package org.smallmind.sleuth.runner.event;
 
+import org.smallmind.nutsnbolts.util.AnsiColor;
+
 public class SuccessSleuthEvent extends TimedSleuthEvent {
 
   public SuccessSleuthEvent (String className, String methodName, long elapsed) {
@@ -43,5 +45,11 @@ public class SuccessSleuthEvent extends TimedSleuthEvent {
   public SleuthEventType getType () {
 
     return SleuthEventType.SUCCESS;
+  }
+
+  @Override
+  public AnsiColor getColor () {
+
+    return AnsiColor.GREEN;
   }
 }
