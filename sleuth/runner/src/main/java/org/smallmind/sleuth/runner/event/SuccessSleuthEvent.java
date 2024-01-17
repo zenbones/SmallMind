@@ -50,6 +50,6 @@ public class SuccessSleuthEvent extends TimedSleuthEvent {
   @Override
   public AnsiColor getColor () {
 
-    return AnsiColor.GREEN;
+    return AnsiColor.BRIGHT_GREEN;
   }
 }
