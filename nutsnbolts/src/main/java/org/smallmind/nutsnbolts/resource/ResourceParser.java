@@ -36,20 +36,20 @@ import java.util.HashMap;
 
 public class ResourceParser {
 
-  private final HashMap<ResourceSchemes, ResourceFactory> factoryMap;
+  private final HashMap<ResourceSchemes, ResourceGenerator> factoryMap;
 
-  public ResourceParser (ResourceFactory... factories) {
+  public ResourceParser (ResourceGenerator... factories) {
 
     factoryMap = new HashMap<>();
 
     if (factories != null) {
-      for (ResourceFactory factory : factories) {
+      for (ResourceGenerator factory : factories) {
         addResourceFactory(factory);
       }
     }
   }
 
-  public void addResourceFactory (ResourceFactory factory) {
+  public void addResourceFactory (ResourceGenerator factory) {
 
     synchronized (factoryMap) {
       factoryMap.put(factory.getValidSchemes(), factory);

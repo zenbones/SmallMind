@@ -32,44 +32,51 @@
  */
 package org.smallmind.nutsnbolts.resource;
 
-import org.springframework.beans.factory.FactoryBean;
-import org.springframework.beans.factory.InitializingBean;
+import java.lang.reflect.Constructor;
+import java.util.LinkedList;
 
-public class ResourceFactory implements FactoryBean<Resource>, InitializingBean {
+public class ResourceTypeResourceGenerator implements ResourceGenerator {
 
-  private static final ResourceParser RESOURCE_PARSER = new ResourceParser(new ResourceTypeResourceGenerator());
+  private static final Class[] SIGNATURE = new Class[] {String.class};
 
-  private Resource resource;
-  private String name;
+  private static final ResourceSchemes VALID_SCHEMES;
 
-  public void setName (String name) {
+  static {
 
-    this.name = name;
+    String[] schemes;
+    LinkedList<String> schemeList;
+
+    schemeList = new LinkedList<>();
+    for (ResourceType resourceType : ResourceType.values()) {
+      schemeList.add(resourceType.getResourceScheme());
+    }
+
+    schemes = new String[schemeList.size()];
+    schemeList.toArray(schemes);
+    VALID_SCHEMES = new ResourceSchemes(schemes);
   }
 
-  @Override
-  public boolean isSingleton () {
+  public ResourceSchemes getValidSchemes () {
 
-    return true;
+    return VALID_SCHEMES;
   }
 
-  @Override
-  public Class<?> getObjectType () {
+  public Resource createResource (String scheme, String path)
+    throws ResourceException {
 
-    return Resource.class;
-  }
+    Constructor<? extends Resource> resourceConstructor;
 
-  @Override
-  public Resource getObject ()
-    throws Exception {
+    for (ResourceType resourceType : ResourceType.values()) {
+      if (resourceType.getResourceScheme().equals(scheme)) {
+        try {
+          resourceConstructor = resourceType.getResourceClass().getConstructor(SIGNATURE);
+          return resourceConstructor.newInstance(path);
+        } catch (Exception exception) {
+          throw new ResourceException(exception);
+        }
+      }
+    }
 
-    return resource;
-  }
-
-  @Override
-  public void afterPropertiesSet ()
-    throws Exception {
-
-    resource = RESOURCE_PARSER.parseResource(name);
+    throw new ResourceException("This factory does not handle the references scheme(%s)", scheme);
   }
 }

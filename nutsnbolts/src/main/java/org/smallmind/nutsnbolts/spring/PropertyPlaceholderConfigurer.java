@@ -46,7 +46,7 @@ import org.smallmind.nutsnbolts.property.PropertyExpanderException;
 import org.smallmind.nutsnbolts.resource.Resource;
 import org.smallmind.nutsnbolts.resource.ResourceException;
 import org.smallmind.nutsnbolts.resource.ResourceParser;
-import org.smallmind.nutsnbolts.resource.ResourceTypeResourceFactory;
+import org.smallmind.nutsnbolts.resource.ResourceTypeResourceGenerator;
 import org.smallmind.nutsnbolts.spring.property.PropertyEntry;
 import org.smallmind.nutsnbolts.spring.property.PropertyFileType;
 import org.smallmind.nutsnbolts.spring.property.PropertyHandler;
@@ -149,7 +149,7 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
     PropertyExpander locationExpander;
     BeanDefinitionVisitor beanDefinitionVisitor;
 
-    resourceParser = new ResourceParser(new ResourceTypeResourceFactory());
+    resourceParser = new ResourceParser(new ResourceTypeResourceGenerator());
 
     try {
       locationExpander = new PropertyExpander(true, SystemPropertyMode.OVERRIDE, true);
