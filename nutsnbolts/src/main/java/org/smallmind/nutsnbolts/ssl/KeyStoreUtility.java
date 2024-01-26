@@ -105,14 +105,14 @@ public class KeyStoreUtility {
     try (InputStream inputStream = certResource.getInputStream()) {
 
       TrustManagerFactory trustManagerFactory;
-      X509Certificate ca = (X509Certificate)CertificateFactory.getInstance("X.509").generateCertificate(inputStream);
-      KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+      X509Certificate certificate = (X509Certificate)CertificateFactory.getInstance("X.509").generateCertificate(inputStream);
+      KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
 
-      ks.load(null, null);
-      ks.setCertificateEntry(Integer.toString(1), ca);
+      keyStore.load(null, null);
+      keyStore.setCertificateEntry(Integer.toString(1), certificate);
 
       trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-      trustManagerFactory.init(ks);
+      trustManagerFactory.init(keyStore);
 
       return trustManagerFactory.getTrustManagers();
     }
