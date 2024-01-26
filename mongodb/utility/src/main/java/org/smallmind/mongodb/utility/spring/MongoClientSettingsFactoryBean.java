@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.util.Arrays;
 import javax.net.ssl.SSLContext;
@@ -50,7 +51,7 @@ import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.smallmind.nutsnbolts.resource.Resource;
 import org.smallmind.nutsnbolts.resource.ResourceException;
-import org.smallmind.nutsnbolts.ssl.KeyStoreUtility;
+import org.smallmind.nutsnbolts.ssl.TrustManagerUtility;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
@@ -203,7 +204,7 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
       sslContext = null;
     } else {
       sslContext = SSLContext.getInstance("TLS");
-      sslContext.init(null, KeyStoreUtility.load(certResource), null);
+      sslContext.init(null, TrustManagerUtility.load(certResource), new SecureRandom());
     }
 
     settingsBuilder.applyToSslSettings(builder -> {

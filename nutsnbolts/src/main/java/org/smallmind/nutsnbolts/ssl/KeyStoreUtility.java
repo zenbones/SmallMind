@@ -51,8 +51,6 @@ import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.LinkedList;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
 import org.smallmind.nutsnbolts.resource.Resource;
 import org.smallmind.nutsnbolts.resource.ResourceException;
 
@@ -97,25 +95,6 @@ public class KeyStoreUtility {
     keyStore.store(Files.newOutputStream(keystorePath, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING), passwordArray);
 
     return keyStoreInfo;
-  }
-
-  public static TrustManager[] load (Resource certResource)
-    throws IOException, ResourceException, CertificateException, KeyStoreException, NoSuchAlgorithmException {
-
-    try (InputStream inputStream = certResource.getInputStream()) {
-
-      TrustManagerFactory trustManagerFactory;
-      X509Certificate certificate = (X509Certificate)CertificateFactory.getInstance("X.509").generateCertificate(inputStream);
-      KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-
-      keyStore.load(null, null);
-      keyStore.setCertificateEntry(Integer.toString(1), certificate);
-
-      trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-      trustManagerFactory.init(keyStore);
-
-      return trustManagerFactory.getTrustManagers();
-    }
   }
 
   private static char[] generatePasswordArray (String keystorePassword, KeyStoreInfo keyStoreInfo) {
