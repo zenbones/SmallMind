@@ -204,7 +204,7 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
       sslContext = null;
     } else {
       sslContext = SSLContext.getInstance("TLS");
-      sslContext.init(null, TrustManagerUtility.load(certResource), new SecureRandom());
+      sslContext.init(null, TrustManagerUtility.load("tlsCert", certResource), new SecureRandom());
     }
 
     settingsBuilder.applyToSslSettings(builder -> {

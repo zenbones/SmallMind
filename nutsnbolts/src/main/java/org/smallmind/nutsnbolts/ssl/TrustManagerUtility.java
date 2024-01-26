@@ -48,7 +48,7 @@ import org.smallmind.nutsnbolts.resource.ResourceException;
 
 public class TrustManagerUtility {
 
-  public static TrustManager[] load (Resource certResource)
+  public static TrustManager[] load (String alias, Resource certResource)
     throws IOException, ResourceException, CertificateException, KeyStoreException, NoSuchAlgorithmException {
 
     try (InputStream inputStream = certResource.getInputStream()) {
@@ -58,7 +58,7 @@ public class TrustManagerUtility {
       KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
 
       keyStore.load(null, null);
-      keyStore.setCertificateEntry(Integer.toString(1), certificate);
+      keyStore.setCertificateEntry(alias, certificate);
 
       trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
       trustManagerFactory.init(keyStore);
