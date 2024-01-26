@@ -32,7 +32,13 @@
  */
 package org.smallmind.mongodb.utility.spring;
 
+import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.util.Arrays;
+import javax.net.ssl.SSLContext;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCredential;
 import com.mongodb.ReadConcern;
@@ -42,6 +48,9 @@ import com.mongodb.WriteConcern;
 import org.bson.UuidRepresentation;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.smallmind.nutsnbolts.resource.Resource;
+import org.smallmind.nutsnbolts.resource.ResourceException;
+import org.smallmind.nutsnbolts.ssl.KeyStoreUtility;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
@@ -52,6 +61,7 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
 
   private MongoClientSettings.Builder settingsBuilder;
   private CodecRegistry codecRegistry;
+  private Resource certResource;
   private MongoCredential mongoCredential;
   private ServerAddress[] serverAddresses;
   private ReadPreference readPreference;
@@ -72,6 +82,11 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
   public void setCodecRegistry (CodecRegistry codecRegistry) {
 
     this.codecRegistry = codecRegistry;
+  }
+
+  public void setCertResource (Resource certResource) {
+
+    this.certResource = certResource;
   }
 
   public void setMongoCredential (MongoCredential mongoCredential) {
@@ -173,14 +188,32 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
   }
 
   @Override
-  public void afterPropertiesSet () {
+  public void afterPropertiesSet ()
+    throws IOException, ResourceException, CertificateException, KeyStoreException, NoSuchAlgorithmException, KeyManagementException {
+
+    SSLContext sslContext;
 
     settingsBuilder = MongoClientSettings.builder();
 
     if (socketConnectTimeoutMilliseconds != null) {
       settingsBuilder.applyToSocketSettings(builder -> builder.connectTimeout(socketConnectTimeoutMilliseconds, MILLISECONDS));
     }
-    settingsBuilder.applyToSslSettings(builder -> builder.enabled(Boolean.TRUE.equals(sslEnabled)));
+
+    if (certResource == null) {
+      sslContext = null;
+    } else {
+      sslContext = SSLContext.getDefault();
+      sslContext.init(null, KeyStoreUtility.load(certResource), null);
+    }
+
+    settingsBuilder.applyToSslSettings(builder -> {
+      if (sslContext != null) {
+        builder.context(sslContext);
+      }
+
+      builder.enabled(Boolean.TRUE.equals(sslEnabled));
+    });
+
     settingsBuilder.applyToConnectionPoolSettings(builder -> {
       if (connectionPoolMaxSize != null) {
         builder.maxSize(connectionPoolMaxSize);
