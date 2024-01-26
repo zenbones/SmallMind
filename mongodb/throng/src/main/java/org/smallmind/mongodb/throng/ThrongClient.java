@@ -103,7 +103,7 @@ public class ThrongClient {
 
           entityCodecMap.put(entityClass, entityCodec = new ThrongEntityCodec<>(new ThrongEntity<>(entityClass, entity, CodecRegistries.fromRegistries(CodecRegistries.fromRegistries(CodecRegistries.fromCodecs(new LinkedList<>(embeddedReferences.values()))), driverCodecRegistry), embeddedReferences, options.isStoreNulls())));
           if (options.isCreateIndexes()) {
-            IndexUtility.createIndex(mongoDatabase.getCollection(entityCodec.getCollection()), entityCodec.provideIndexes());
+            IndexUtility.createIndex(mongoDatabase.getCollection(entityCodec.getCollection()), entityCodec.provideIndexes(), options.isIncludeCollation());
           }
         }
       }
