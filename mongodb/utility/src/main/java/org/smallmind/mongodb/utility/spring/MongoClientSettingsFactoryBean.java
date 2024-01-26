@@ -202,7 +202,7 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
     if (certResource == null) {
       sslContext = null;
     } else {
-      sslContext = SSLContext.getDefault();
+      sslContext = SSLContext.getInstance("TLS");
       sslContext.init(null, KeyStoreUtility.load(certResource), null);
     }
 
