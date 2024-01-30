@@ -70,6 +70,6 @@ public class ResourceFactory implements FactoryBean<Resource>, InitializingBean 
   public void afterPropertiesSet ()
     throws Exception {
 
-    resource = RESOURCE_PARSER.parseResource(name);
+    resource = ((name == null) || name.isEmpty()) ? null : RESOURCE_PARSER.parseResource(name);
   }
 }
