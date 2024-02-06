@@ -68,6 +68,11 @@ public class KafkaConnector {
     boostrapServers = boostrapBuilder.toString();
   }
 
+  public String getBoostrapServers () {
+
+    return boostrapServers;
+  }
+
   public <R> R invokeAdminClient (java.util.function.Function<AdminClient, R> clientFunction) {
 
     Properties props = new Properties();
