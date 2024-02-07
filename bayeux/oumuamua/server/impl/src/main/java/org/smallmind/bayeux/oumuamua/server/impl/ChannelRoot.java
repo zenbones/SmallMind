@@ -32,48 +32,34 @@
  */
 package org.smallmind.bayeux.oumuamua.server.impl;
 
-import java.util.Queue;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
-import org.smallmind.bayeux.oumuamua.server.api.ChannelInitializer;
-import org.smallmind.bayeux.oumuamua.server.api.Session;
+import org.smallmind.bayeux.oumuamua.server.api.Packet;
+import org.smallmind.bayeux.oumuamua.server.api.Server;
+import org.smallmind.bayeux.oumuamua.server.api.backbone.Backbone;
+import org.smallmind.bayeux.oumuamua.server.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
-import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
 
-public class ChannelTree<V extends Value<V>> extends ChannelBranch<V> {
+public class ChannelRoot<V extends Value<V>> {
 
-  private final ReentrantLock treeChangeLock = new ReentrantLock();
-  private final ChannelRoot<V> root;
+  private final Server<V> server;
 
-  public ChannelTree (ChannelRoot<V> root) {
+  public ChannelRoot (Server<V> server) {
 
-    super(null);
-
-    this.root = root;
+    this.server = server;
   }
 
-  public Channel<V> createIfAbsent (long timeToLive, int index, DefaultRoute route, Consumer<Channel<V>> channelCallback, BiConsumer<Channel<V>, Session<V>> onSubscribedCallback, BiConsumer<Channel<V>, Session<V>> onUnsubscribedCallback, Queue<ChannelInitializer<V>> initializerQueue) {
+  public Backbone<V> getBackbone () {
 
-    treeChangeLock.lock();
-
-    try {
-
-      return addChannelAsNecessary(timeToLive, index, route, root, channelCallback, onSubscribedCallback, onUnsubscribedCallback, initializerQueue);
-    } finally {
-      treeChangeLock.unlock();
-    }
+    return server.getBackbone();
   }
 
-  public void clean () {
+  public Codec<V> getCodec () {
 
-    treeChangeLock.lock();
+    return server.getCodec();
+  }
 
-    try {
-      removeDeadLeaves(null);
-    } finally {
-      treeChangeLock.unlock();
-    }
+  public void forward (Channel<V> channel, Packet<V> packet) {
+
+    server.forward(channel, packet);
   }
 }

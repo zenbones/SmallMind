@@ -94,7 +94,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
       executorService = new ThreadPoolExecutor(configuration.getThreadPoolCoreSize(), configuration.getThreadPoolMaximumSize(), configuration.getThreadPoolKeepAliveSeconds(), TimeUnit.SECONDS, new SynchronousQueue<>(), new ThreadPoolExecutor.CallerRunsPolicy());
 
       sessionConnectionIntervalMilliseconds = configuration.getSessionConnectIntervalSeconds() * 1000L;
-      channelTree = new ChannelTree<>(configuration.getCodec());
+      channelTree = new ChannelTree<>(new ChannelRoot<>(this));
 
       if (configuration.getProtocols() == null) {
         throw new OumuamuaException("No protocols have been defined");
@@ -404,6 +404,23 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
           if ((backbone = getBackbone()) != null) {
             backbone.publish(packet);
           }
+        }
+      }
+    }
+  }
+
+  @Override
+  public void forward (Channel<V> channel, Packet<V> packet) {
+
+    if (packet.getRoute() != null) {
+      if ((packet = onProcessing(null, packet)) != null) {
+
+        Backbone<V> backbone;
+
+        channel.deliver(null, packet, new HashSet<>());
+
+        if ((backbone = getBackbone()) != null) {
+          backbone.publish(packet);
         }
       }
     }

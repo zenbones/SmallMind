@@ -43,7 +43,6 @@ import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.PacketType;
 import org.smallmind.bayeux.oumuamua.server.api.Route;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
-import org.smallmind.bayeux.oumuamua.server.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.ObjectValue;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
@@ -54,7 +53,7 @@ import org.smallmind.bayeux.oumuamua.server.spi.json.PacketUtility;
 public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed implements Channel<V> {
 
   private final DefaultRoute route;
-  private final Codec<V> codec;
+  private final ChannelRoot<V> root;
   private final ConcurrentHashMap<String, Session<V>> sessionMap = new ConcurrentHashMap<>();
   private final ConcurrentLinkedQueue<Listener<V>> listenerList = new ConcurrentLinkedQueue<>();
   private final AtomicBoolean reflecting = new AtomicBoolean();
@@ -66,13 +65,13 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
   private long quiescentTimestamp;
   private int persistentListenerCount;
 
-  public OumuamuaChannel (BiConsumer<Channel<V>, Session<V>> onSubscribedCallback, BiConsumer<Channel<V>, Session<V>> onUnsubscribedCallback, long timeToLiveMilliseconds, DefaultRoute route, Codec<V> codec) {
+  public OumuamuaChannel (BiConsumer<Channel<V>, Session<V>> onSubscribedCallback, BiConsumer<Channel<V>, Session<V>> onUnsubscribedCallback, long timeToLiveMilliseconds, DefaultRoute route, ChannelRoot<V> root) {
 
     this.onSubscribedCallback = onSubscribedCallback;
     this.onUnsubscribedCallback = onUnsubscribedCallback;
     this.timeToLiveMilliseconds = timeToLiveMilliseconds;
     this.route = route;
-    this.codec = codec;
+    this.root = root;
   }
 
   private void onSubscribed (Session<V> session) {
@@ -234,6 +233,6 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
   @Override
   public void publish (ObjectValue<V> data) {
 
-    deliver(null, new Packet<>(PacketType.DELIVERY, null, getRoute(), (Message<V>)codec.create().put(Message.CHANNEL, getRoute().getPath()).put(Message.DATA, data)), new HashSet<>());
+    root.forward(this, new Packet<>(PacketType.DELIVERY, null, getRoute(), (Message<V>)root.getCodec().create().put(Message.CHANNEL, getRoute().getPath()).put(Message.DATA, data)));
   }
 }
