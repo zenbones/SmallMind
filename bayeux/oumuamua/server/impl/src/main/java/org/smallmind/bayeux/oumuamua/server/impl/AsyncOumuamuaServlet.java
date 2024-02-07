@@ -170,7 +170,6 @@ public class AsyncOumuamuaServlet<V extends Value<V>> extends HttpServlet {
 
         while (inputStream.isReady() && ((bytesRead = inputStream.read(contentBuffer, index, contentBuffer.length - index)) >= 0)) {
           index += bytesRead;
-          System.out.println(new String(contentBuffer));
         }
       }
     }
