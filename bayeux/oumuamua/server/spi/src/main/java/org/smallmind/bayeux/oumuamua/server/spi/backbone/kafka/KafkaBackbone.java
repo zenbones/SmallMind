@@ -89,7 +89,10 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
     groupId = SnowflakeId.newInstance().generateHexEncoding();
     connector = new KafkaConnector(servers);
 
-    LoggerManager.getLogger(KafkaBackbone.class).info("Starting Kafka with boostrap servers(%s)...", connector.getBoostrapServers());
+
+
+
+
 
     prefixedTopicName = "oumuamua-" + topicName;
     producer = connector.createProducer("oumuamua-producer-" + topicName + "-" + nodeName);
