@@ -69,6 +69,7 @@ public class KafkaConfiguration {
   queued.max.requests=500 // default 500 (limit the size of the request queue before the network thread is blocked)
   replica.fetch.max.bytes=1048576 // default (1mb, but slightly less than message.max.bytes)
   replica.lag.time.max.ms=10000 // default 30000 (upper limit on how long a producer must wait for acknowledgement, but also how quickly slow queues are removed)
+  retention.ms=300000 // a message not delivered for 5 minutes should eb
   unclean.leader.election.enable=true // defaults to false, but if there's no in-sync follower when a leader fails, then no leader can be elected
 
   // no need to change
