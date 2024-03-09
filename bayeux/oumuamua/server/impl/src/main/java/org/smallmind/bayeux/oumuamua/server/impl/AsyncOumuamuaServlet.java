@@ -123,7 +123,6 @@ public class AsyncOumuamuaServlet<V extends Value<V>> extends HttpServlet {
 
         asyncContext.setTimeout(0);
         inputStream.setReadListener(new OumuamuaReadListener<>(executorService, server, connection, asyncContext, inputStream, contentBufferSize));
-        // response.getOutputStream().setWriteListener(new OumuamuaWriteListener());
       }
     }
   }
@@ -191,20 +190,6 @@ public class AsyncOumuamuaServlet<V extends Value<V>> extends HttpServlet {
       asyncContext.complete();
 
       LoggerManager.getLogger(OumuamuaReadListener.class).error(throwable);
-    }
-  }
-
-  private static class OumuamuaWriteListener implements WriteListener {
-
-    @Override
-    public void onWritePossible ()
-      throws IOException {
-
-    }
-
-    @Override
-    public void onError (Throwable t) {
-
     }
   }
 }
