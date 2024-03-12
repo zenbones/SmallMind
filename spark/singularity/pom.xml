@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>smallmind-spark</artifactId>
-    <version>5.5.0-SNAPSHOT</version>
+    <version>5.5.0</version>
   </parent>
   <artifactId>spark-singularity</artifactId>
   <name>Spark-Singularity</name>

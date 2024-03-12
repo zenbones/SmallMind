@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>smallmind-bayeux</artifactId>
-    <version>5.5.0-SNAPSHOT</version>
+    <version>5.5.0</version>
   </parent>
   <artifactId>bayeux-oumuamua</artifactId>
   <name>Bayeux-Oumuamua</name>
