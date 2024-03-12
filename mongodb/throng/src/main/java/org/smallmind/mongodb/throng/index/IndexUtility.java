@@ -42,10 +42,10 @@ import org.smallmind.mongodb.throng.index.annotation.IndexOptions;
 
 public class IndexUtility {
 
-  public static void createIndex (MongoCollection<?> mongoCollection, ThrongIndexes throngIndexes) {
+  public static void createIndex (MongoCollection<?> mongoCollection, ThrongIndexes throngIndexes, boolean includeCollation) {
 
     for (IndexedField indexedField : throngIndexes.getIndexedFields()) {
-      mongoCollection.createIndex(indexedField.getIndexed().value().construct(indexedField.getField()), generateIndexOptions(indexedField.getIndexed().options()));
+      mongoCollection.createIndex(indexedField.getIndexed().value().construct(indexedField.getField()), generateIndexOptions(indexedField.getIndexed().options(), includeCollation));
     }
     for (CompoundIndex compoundIndex : throngIndexes.getCompoundIndexes()) {
 
@@ -55,11 +55,11 @@ public class IndexUtility {
         bsonList.add(indexedElement.getIndexType().construct(indexedElement.getField()));
       }
 
-      mongoCollection.createIndex(Indexes.compoundIndex(bsonList), generateIndexOptions(compoundIndex.getIndexOptions()));
+      mongoCollection.createIndex(Indexes.compoundIndex(bsonList), generateIndexOptions(compoundIndex.getIndexOptions(), includeCollation));
     }
   }
 
-  private static com.mongodb.client.model.IndexOptions generateIndexOptions (IndexOptions indexOptionsAnnotation) {
+  private static com.mongodb.client.model.IndexOptions generateIndexOptions (IndexOptions indexOptionsAnnotation, boolean includeCollation) {
 
     com.mongodb.client.model.IndexOptions indexOptions = new com.mongodb.client.model.IndexOptions();
 
@@ -73,7 +73,9 @@ public class IndexUtility {
       indexOptions.bits(indexOptionsAnnotation.bits());
     }
 
-    indexOptions.collation(CollationUtility.generate(indexOptionsAnnotation.collation()));
+    if (includeCollation) {
+      indexOptions.collation(CollationUtility.generate(indexOptionsAnnotation.collation()));
+    }
 
     if (!indexOptionsAnnotation.defaultLanguage().isEmpty()) {
       indexOptions.defaultLanguage(indexOptionsAnnotation.defaultLanguage());

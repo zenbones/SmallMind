@@ -72,12 +72,15 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
   private final Producer<Long, byte[]> producer;
   private final String nodeName;
   private final String topicName;
+  private final String prefixedTopicName;
   private final String groupId;
   private final int concurrencyLimit;
   private ConsumerWorker<V>[] workers;
 
-  public KafkaBackbone (String nodeName, int concurrencyLimit, String topicName, KafkaServer... servers)
+  public KafkaBackbone (String nodeName, int concurrencyLimit, int startupGracePeriodSeconds, String topicName, KafkaServer... servers)
     throws OumuamuaException {
+
+    long startTimestamp = System.currentTimeMillis();
 
     this.nodeName = nodeName;
     this.concurrencyLimit = concurrencyLimit;
@@ -85,17 +88,33 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
 
     groupId = SnowflakeId.newInstance().generateHexEncoding();
     connector = new KafkaConnector(servers);
-    producer = connector.createProducer(nodeName);
+
+    LoggerManager.getLogger(KafkaBackbone.class).info("Starting Kafka with boostrap servers(%s)...", connector.getBoostrapServers());
+
+    prefixedTopicName = "oumuamua-" + topicName;
+    producer = connector.createProducer("oumuamua-producer-" + topicName + "-" + nodeName);
 
     if (!connector.invokeAdminClient(adminClient -> {
-        try {
-          Collection<Node> nodes = adminClient.describeCluster().nodes().get();
+        while (true) {
+          try {
+            Collection<Node> nodes = adminClient.describeCluster().nodes().get();
 
-          return (nodes != null) && (!nodes.isEmpty());
-        } catch (ExecutionException | InterruptedException exception) {
-          LoggerManager.getLogger(KafkaBackbone.class).error(exception);
+            return (nodes != null) && (!nodes.isEmpty());
+          } catch (ExecutionException | InterruptedException exception) {
+            if ((System.currentTimeMillis() - startTimestamp) < (startupGracePeriodSeconds * 1000L)) {
+              try {
+                Thread.sleep(1000);
+              } catch (InterruptedException interruptedException) {
+                LoggerManager.getLogger(KafkaBackbone.class).error(interruptedException);
 
-          return false;
+                return false;
+              }
+            } else {
+              LoggerManager.getLogger(KafkaBackbone.class).error(exception);
+
+              return false;
+            }
+          }
         }
       }
     )) {
@@ -110,7 +129,7 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
     if (statusRef.compareAndSet(ComponentStatus.STOPPED, ComponentStatus.STARTING)) {
       workers = new ConsumerWorker[concurrencyLimit];
       for (int index = 0; index < concurrencyLimit; index++) {
-        new Thread(workers[index] = new ConsumerWorker<V>(server, nodeName, connector.createConsumer(nodeName + "-" + index, groupId, topicName))).start();
+        new Thread(workers[index] = new ConsumerWorker<V>(server, nodeName, connector.createConsumer("oumuamua-consumer-" + index + "-" + topicName + "-" + nodeName, groupId, prefixedTopicName))).start();
       }
       statusRef.set(ComponentStatus.STARTED);
     } else {
@@ -141,7 +160,7 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
 
     executorService.submit(() -> {
       try {
-        producer.send(new ProducerRecord<>(topicName, RecordUtility.serialize(nodeName, packet)));
+        producer.send(new ProducerRecord<>(prefixedTopicName, RecordUtility.serialize(nodeName, packet)));
       } catch (IOException ioException) {
         LoggerManager.getLogger(KafkaBackbone.class).error(ioException);
       }

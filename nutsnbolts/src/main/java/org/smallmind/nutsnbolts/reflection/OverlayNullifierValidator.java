@@ -30,23 +30,15 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.io;
+package org.smallmind.nutsnbolts.reflection;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.util.regex.Pattern;
+import java.lang.annotation.Annotation;
 
-public class WildcardFileFilter implements FileFilter {
+public interface OverlayNullifierValidator<A extends Annotation, T> {
 
-  private final Pattern namePattern;
+  default void initialize (A constraintAnnotation) {
 
-  public WildcardFileFilter (String name) {
-
-    namePattern = Pattern.compile(WilcardRegExTranslator.translate(name));
   }
 
-  public boolean accept (File file) {
-
-    return namePattern.matcher(file.getName()).matches();
-  }
+  boolean equivalentToNull (T obj);
 }

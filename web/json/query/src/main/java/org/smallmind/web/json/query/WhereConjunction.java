@@ -74,6 +74,12 @@ public abstract class WhereConjunction extends WhereCriterion {
     return (criterionList == null) || criterionList.isEmpty();
   }
 
+  @XmlTransient
+  public synchronized int size () {
+
+    return (criterionList == null) ? 0 : criterionList.size();
+  }
+
   @XmlElement(name = "criteria")
   public synchronized WhereCriterion[] getCriteria () {
 

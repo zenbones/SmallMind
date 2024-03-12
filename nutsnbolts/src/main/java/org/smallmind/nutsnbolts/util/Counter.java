@@ -46,6 +46,38 @@ public class Counter {
     this.count = count;
   }
 
+  public int addAndGet (int delta) {
+
+    count += delta;
+
+    return count;
+  }
+
+  public int getAndAdd (int delta) {
+
+    int current = count;
+
+    count += delta;
+
+    return current;
+  }
+
+  public int subtractAndGet (int delta) {
+
+    count -= delta;
+
+    return count;
+  }
+
+  public int getAndSubtract (int delta) {
+
+    int current = count;
+
+    count -= delta;
+
+    return current;
+  }
+
   public int incAndGet () {
 
     return ++count;

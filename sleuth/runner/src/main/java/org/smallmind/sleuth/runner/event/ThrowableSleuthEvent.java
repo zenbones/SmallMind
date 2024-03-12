@@ -32,6 +32,8 @@
  */
 package org.smallmind.sleuth.runner.event;
 
+import org.smallmind.nutsnbolts.util.AnsiColor;
+
 public abstract class ThrowableSleuthEvent extends TimedSleuthEvent {
 
   private final Throwable throwable;
@@ -46,5 +48,11 @@ public abstract class ThrowableSleuthEvent extends TimedSleuthEvent {
   public Throwable getThrowable () {
 
     return throwable;
+  }
+
+  @Override
+  public String toString () {
+
+    return getColor().getCode() + getType() + AnsiColor.DEFAULT.getCode() + " [className=" + getClassName() + ", methodName=" + getMethodName() + ", elapsed=" + getElapsed() + ", throwable=" + getThrowable() + "]";
   }
 }

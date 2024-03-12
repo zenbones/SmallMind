@@ -41,6 +41,7 @@ import org.smallmind.sleuth.runner.annotation.AnnotationProcessor;
 import org.smallmind.sleuth.runner.annotation.NativeAnnotationTranslator;
 import org.smallmind.sleuth.runner.annotation.Suite;
 import org.smallmind.sleuth.runner.annotation.TestNGAnnotationTranslator;
+import org.smallmind.sleuth.runner.event.CancelledSleuthEvent;
 import org.smallmind.sleuth.runner.event.FatalSleuthEvent;
 import org.smallmind.sleuth.runner.event.SleuthEvent;
 import org.smallmind.sleuth.runner.event.SleuthEventListener;
@@ -72,12 +73,17 @@ public class SleuthRunner {
     cancelled.set(true);
   }
 
-  public void execute (String[] groups, SleuthThreadPool threadPool, Class<?>... classes) {
+  public boolean isRunning () {
 
-    execute(groups, threadPool, Arrays.asList(classes));
+    return !cancelled.get();
   }
 
-  public void execute (String[] groups, SleuthThreadPool threadPool, Iterable<Class<?>> classIterable) {
+  public void execute (String[] groups, int threadCount, boolean stopOnError, boolean stopOnFailure, Class<?>... classes) {
+
+    execute(groups, threadCount, stopOnError, stopOnFailure, Arrays.asList(classes));
+  }
+
+  public void execute (String[] groups, int threadCount, boolean stopOnError, boolean stopOnFailure, Iterable<Class<?>> classIterable) {
 
     if (classIterable != null) {
 
@@ -85,6 +91,7 @@ public class SleuthRunner {
 
       try {
 
+        SleuthThreadPool threadPool = new SleuthThreadPool(this, threadCount);
         AnnotationProcessor annotationProcessor = new AnnotationProcessor(new NativeAnnotationTranslator(), new TestNGAnnotationTranslator());
         DependencyAnalysis<Suite, Class<?>> suiteAnalysis = new DependencyAnalysis<>(Suite.class);
         DependencyQueue<Suite, Class<?>> suiteDependencyQueue;
@@ -104,15 +111,15 @@ public class SleuthRunner {
 
         suiteDependencyQueue = suiteAnalysis.calculate();
         suiteCompletedLatch = new CountDownLatch(suiteDependencyQueue.size());
-        while ((!cancelled.get()) && ((suiteDependency = suiteDependencyQueue.poll()) != null)) {
-          threadPool.execute(TestTier.SUITE, new SuiteRunner(this, suiteCompletedLatch, suiteDependency, suiteDependencyQueue, annotationProcessor, threadPool));
+        while (isRunning() && ((suiteDependency = suiteDependencyQueue.poll()) != null)) {
+          threadPool.execute(TestTier.SUITE, new SuiteRunner(this, suiteCompletedLatch, suiteDependency, suiteDependencyQueue, annotationProcessor, threadPool, stopOnError, stopOnFailure));
         }
 
-        if (cancelled.get()) {
-          throw new InterruptedException();
+        if (isRunning()) {
+          suiteCompletedLatch.await();
+        } else {
+          fire(new CancelledSleuthEvent(SleuthRunner.class.getName(), "cancelled"));
         }
-
-        suiteCompletedLatch.await();
       } catch (Exception exception) {
         fire(new FatalSleuthEvent(SleuthRunner.class.getName(), "execute", System.currentTimeMillis() - startMilliseconds, exception));
       }
@@ -121,7 +128,13 @@ public class SleuthRunner {
 
   private boolean inGroups (String[] ours, String[] theirs) {
 
-    if ((ours != null) && (theirs != null)) {
+    if ((theirs == null) || (theirs.length == 0)) {
+
+      return true;
+    } else if ((ours == null) || (ours.length == 0)) {
+
+      return false;
+    } else {
       for (String oneOfTheirs : theirs) {
         for (String oneOfOurs : ours) {
           if ((oneOfOurs != null) && oneOfOurs.equals(oneOfTheirs)) {

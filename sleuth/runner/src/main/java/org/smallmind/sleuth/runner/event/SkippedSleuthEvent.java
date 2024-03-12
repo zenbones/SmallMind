@@ -32,6 +32,8 @@
  */
 package org.smallmind.sleuth.runner.event;
 
+import org.smallmind.nutsnbolts.util.AnsiColor;
+
 public class SkippedSleuthEvent extends MessageSleuthEvent {
 
   public SkippedSleuthEvent (String className, String methodName, long elapsed, String message) {
@@ -43,5 +45,11 @@ public class SkippedSleuthEvent extends MessageSleuthEvent {
   public SleuthEventType getType () {
 
     return SleuthEventType.SKIPPED;
+  }
+
+  @Override
+  public AnsiColor getColor () {
+
+    return AnsiColor.YELLOW;
   }
 }

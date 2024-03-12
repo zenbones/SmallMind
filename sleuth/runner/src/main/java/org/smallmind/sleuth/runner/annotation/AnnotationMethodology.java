@@ -126,4 +126,3 @@ public class AnnotationMethodology<A extends Annotation> implements Iterable<Pai
     }
   }
 }
-

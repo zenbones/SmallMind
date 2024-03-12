@@ -38,11 +38,11 @@ import java.io.Reader;
 import freemarker.cache.TemplateLoader;
 import org.smallmind.nutsnbolts.resource.ResourceException;
 import org.smallmind.nutsnbolts.resource.ResourceParser;
-import org.smallmind.nutsnbolts.resource.ResourceTypeResourceFactory;
+import org.smallmind.nutsnbolts.resource.ResourceTypeResourceGenerator;
 
 public class ResourceTemplateLoader implements TemplateLoader {
 
-  private static final ResourceParser RESOURCE_PARSER = new ResourceParser(new ResourceTypeResourceFactory());
+  private static final ResourceParser RESOURCE_PARSER = new ResourceParser(new ResourceTypeResourceGenerator());
 
   @Override
   public Object findTemplateSource (String name)

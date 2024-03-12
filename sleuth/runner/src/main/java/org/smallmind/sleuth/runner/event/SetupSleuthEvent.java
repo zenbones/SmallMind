@@ -32,9 +32,11 @@
  */
 package org.smallmind.sleuth.runner.event;
 
-public class BeginSleuthEvent extends SleuthEvent {
+import org.smallmind.nutsnbolts.util.AnsiColor;
 
-  public BeginSleuthEvent (String className, String methodName) {
+public class SetupSleuthEvent extends SleuthEvent {
+
+  public SetupSleuthEvent (String className, String methodName) {
 
     super(className, methodName);
   }
@@ -42,6 +44,12 @@ public class BeginSleuthEvent extends SleuthEvent {
   @Override
   public SleuthEventType getType () {
 
-    return SleuthEventType.START;
+    return SleuthEventType.SETUP;
+  }
+
+  @Override
+  public AnsiColor getColor () {
+
+    return AnsiColor.BRIGHT_MAGENTA;
   }
 }

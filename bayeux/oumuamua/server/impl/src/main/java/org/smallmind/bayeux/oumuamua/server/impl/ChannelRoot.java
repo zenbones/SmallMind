@@ -30,53 +30,36 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.resource;
+package org.smallmind.bayeux.oumuamua.server.impl;
 
-import java.lang.reflect.Constructor;
-import java.util.LinkedList;
+import org.smallmind.bayeux.oumuamua.server.api.Channel;
+import org.smallmind.bayeux.oumuamua.server.api.Packet;
+import org.smallmind.bayeux.oumuamua.server.api.Server;
+import org.smallmind.bayeux.oumuamua.server.api.backbone.Backbone;
+import org.smallmind.bayeux.oumuamua.server.api.json.Codec;
+import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
-public class ResourceTypeResourceFactory implements ResourceFactory {
+public class ChannelRoot<V extends Value<V>> {
 
-  private static final Class[] SIGNATURE = new Class[] {String.class};
+  private final Server<V> server;
 
-  private static final ResourceSchemes VALID_SCHEMES;
+  public ChannelRoot (Server<V> server) {
 
-  static {
-
-    String[] schemes;
-    LinkedList<String> schemeList;
-
-    schemeList = new LinkedList<>();
-    for (ResourceType resourceType : ResourceType.values()) {
-      schemeList.add(resourceType.getResourceScheme());
-    }
-
-    schemes = new String[schemeList.size()];
-    schemeList.toArray(schemes);
-    VALID_SCHEMES = new ResourceSchemes(schemes);
+    this.server = server;
   }
 
-  public ResourceSchemes getValidSchemes () {
+  public Backbone<V> getBackbone () {
 
-    return VALID_SCHEMES;
+    return server.getBackbone();
   }
 
-  public Resource createResource (String scheme, String path)
-    throws ResourceException {
+  public Codec<V> getCodec () {
 
-    Constructor<? extends Resource> resourceConstructor;
+    return server.getCodec();
+  }
 
-    for (ResourceType resourceType : ResourceType.values()) {
-      if (resourceType.getResourceScheme().equals(scheme)) {
-        try {
-          resourceConstructor = resourceType.getResourceClass().getConstructor(SIGNATURE);
-          return resourceConstructor.newInstance(path);
-        } catch (Exception exception) {
-          throw new ResourceException(exception);
-        }
-      }
-    }
+  public void forward (Channel<V> channel, Packet<V> packet) {
 
-    throw new ResourceException("This factory does not handle the references scheme(%s)", scheme);
+    server.forward(channel, packet);
   }
 }

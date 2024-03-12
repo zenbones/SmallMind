@@ -36,15 +36,17 @@ public class ThrongOptions {
 
   private boolean storeNulls;
   private boolean createIndexes;
+  private boolean includeCollation;
 
   private ThrongOptions () {
 
   }
 
-  public ThrongOptions (boolean storeNulls, boolean createIndexes) {
+  public ThrongOptions (boolean storeNulls, boolean createIndexes, boolean includeCollation) {
 
     this.storeNulls = storeNulls;
     this.createIndexes = createIndexes;
+    this.includeCollation = includeCollation;
   }
 
   public boolean isStoreNulls () {
@@ -67,6 +69,18 @@ public class ThrongOptions {
   public ThrongOptions setCreateIndexes (boolean createIndexes) {
 
     this.createIndexes = createIndexes;
+
+    return this;
+  }
+
+  public boolean isIncludeCollation () {
+
+    return includeCollation;
+  }
+
+  public ThrongOptions setIncludeCollation (boolean includeCollation) {
+
+    this.includeCollation = includeCollation;
 
     return this;
   }

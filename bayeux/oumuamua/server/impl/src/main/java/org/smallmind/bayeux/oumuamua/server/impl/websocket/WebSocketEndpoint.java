@@ -87,7 +87,6 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
 
         String encodedPacket = PacketUtility.encode(packet);
 
-        System.out.println("=>" + encodedPacket);
         LoggerManager.getLogger(WebSocketEndpoint.class).debug(() -> "=>" + encodedPacket);
 
         if (websocketTransport.getAsyncSendTimeoutMilliseconds() > 0) {
@@ -106,7 +105,6 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
 
     server.getExecutorService().submit(() -> {
 
-      System.out.println("<=" + content);
       LoggerManager.getLogger(WebSocketEndpoint.class).debug(() -> "<=" + content);
 
       try {

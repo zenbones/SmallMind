@@ -32,10 +32,44 @@
  */
 package org.smallmind.nutsnbolts.resource;
 
-public interface ResourceFactory {
+import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.InitializingBean;
 
-  ResourceSchemes getValidSchemes ();
+public class ResourceFactory implements FactoryBean<Resource>, InitializingBean {
 
-  Resource createResource (String scheme, String path)
-    throws ResourceException;
+  private static final ResourceParser RESOURCE_PARSER = new ResourceParser(new ResourceTypeResourceGenerator());
+
+  private Resource resource;
+  private String name;
+
+  public void setName (String name) {
+
+    this.name = name;
+  }
+
+  @Override
+  public boolean isSingleton () {
+
+    return true;
+  }
+
+  @Override
+  public Class<?> getObjectType () {
+
+    return Resource.class;
+  }
+
+  @Override
+  public Resource getObject ()
+    throws Exception {
+
+    return resource;
+  }
+
+  @Override
+  public void afterPropertiesSet ()
+    throws Exception {
+
+    resource = ((name == null) || name.isEmpty()) ? null : RESOURCE_PARSER.parseResource(name);
+  }
 }

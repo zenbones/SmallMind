@@ -32,6 +32,8 @@
  */
 package org.smallmind.sleuth.runner.event;
 
+import org.smallmind.nutsnbolts.util.AnsiColor;
+
 public class FatalSleuthEvent extends ThrowableSleuthEvent {
 
   public FatalSleuthEvent (String className, String methodName, long elapsed, Throwable throwable) {
@@ -43,5 +45,11 @@ public class FatalSleuthEvent extends ThrowableSleuthEvent {
   public SleuthEventType getType () {
 
     return SleuthEventType.FATAL;
+  }
+
+  @Override
+  public AnsiColor getColor () {
+
+    return AnsiColor.BRIGHT_RED;
   }
 }

@@ -39,20 +39,19 @@ import java.util.function.Consumer;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.ChannelInitializer;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
-import org.smallmind.bayeux.oumuamua.server.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
 
 public class ChannelTree<V extends Value<V>> extends ChannelBranch<V> {
 
   private final ReentrantLock treeChangeLock = new ReentrantLock();
-  private final Codec<V> codec;
+  private final ChannelRoot<V> root;
 
-  public ChannelTree (Codec<V> codec) {
+  public ChannelTree (ChannelRoot<V> root) {
 
     super(null);
 
-    this.codec = codec;
+    this.root = root;
   }
 
   public Channel<V> createIfAbsent (long timeToLive, int index, DefaultRoute route, Consumer<Channel<V>> channelCallback, BiConsumer<Channel<V>, Session<V>> onSubscribedCallback, BiConsumer<Channel<V>, Session<V>> onUnsubscribedCallback, Queue<ChannelInitializer<V>> initializerQueue) {
@@ -61,7 +60,7 @@ public class ChannelTree<V extends Value<V>> extends ChannelBranch<V> {
 
     try {
 
-      return addChannelAsNecessary(timeToLive, index, route, codec, channelCallback, onSubscribedCallback, onUnsubscribedCallback, initializerQueue);
+      return addChannelAsNecessary(timeToLive, index, route, root, channelCallback, onSubscribedCallback, onUnsubscribedCallback, initializerQueue);
     } finally {
       treeChangeLock.unlock();
     }

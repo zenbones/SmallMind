@@ -32,6 +32,8 @@
  */
 package org.smallmind.sleuth.runner.event;
 
+import org.smallmind.nutsnbolts.util.AnsiColor;
+
 public abstract class MessageSleuthEvent extends TimedSleuthEvent {
 
   private final String message;
@@ -46,5 +48,11 @@ public abstract class MessageSleuthEvent extends TimedSleuthEvent {
   public String getMessage () {
 
     return message;
+  }
+
+  @Override
+  public String toString () {
+
+    return getColor().getCode() + getType() + AnsiColor.DEFAULT.getCode() + " [className=" + getClassName() + ", methodName=" + getMethodName() + ", elapsed=" + getElapsed() + ", message=" + message + "]";
   }
 }

@@ -32,90 +32,43 @@
  */
 package org.smallmind.web.jwt;
 
-import java.io.UnsupportedEncodingException;
-import java.util.Map;
-import org.smallmind.nutsnbolts.http.Base64Codec;
+import org.jose4j.jws.JsonWebSignature;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
+import org.smallmind.web.jwt.jose4j.JWTConsumer;
 
 public class JWTCodec {
 
   public static String encode (Object claims, JWTKeyMaster keyMaster)
     throws Exception {
 
-    return encode(claims, keyMaster, false, null);
+    return encode(claims, keyMaster, null);
   }
 
-  public static String encode (Object claims, JWTKeyMaster keyMaster, Map<String, String> optionalHeaderMap)
+  public static String encode (Object claims, JWTKeyMaster keyMaster, String keyId)
     throws Exception {
 
-    return encode(claims, keyMaster, false, optionalHeaderMap);
-  }
+    JsonWebSignature jws = new JsonWebSignature();
 
-  public static String encode (Object claims, JWTKeyMaster keyMaster, boolean urlSafe)
-    throws Exception {
+    jws.setPayloadBytes(JsonCodec.writeAsBytes(claims));
+    jws.setKey(keyMaster.getKey());
+    jws.setAlgorithmHeaderValue(keyMaster.getEncryptionAlgorithm().name());
 
-    return encode(claims, keyMaster, urlSafe, null);
-  }
-
-  public static String encode (Object claims, JWTKeyMaster keyMaster, boolean urlSafe, Map<String, String> optionalHeaderMap)
-    throws Exception {
-
-    StringBuilder headerBuilder = new StringBuilder("{\"typ\":\"JWT\",\r\n \"alg\":\"").append(keyMaster.getEncryptionAlgorithm().name()).append('"');
-
-    if ((optionalHeaderMap != null) && (!optionalHeaderMap.isEmpty())) {
-      for (Map.Entry<String, String> optionalHeaderEntry : optionalHeaderMap.entrySet()) {
-        headerBuilder.append(",\"").append(optionalHeaderEntry.getKey()).append("\":\"").append(optionalHeaderEntry.getValue()).append('"');
-      }
+    if (keyId != null) {
+      jws.setKeyIdHeaderValue(keyId);
     }
-    headerBuilder.append('}');
 
-    String encodedHeader = urlSafe ? Base64Codec.urlSafeEncode(headerBuilder.toString()) : Base64Codec.encode(headerBuilder.toString());
-    String encodedClaims = urlSafe ? Base64Codec.urlSafeEncode(JsonCodec.writeAsBytes(claims)) : Base64Codec.encode(JsonCodec.writeAsBytes(claims));
-    String prologue = encodedHeader + '.' + encodedClaims;
-    String epilogue;
-    byte[] encryptedBytes = keyMaster.getEncryptionAlgorithm().encrypt(keyMaster.getKey(), prologue);
-
-    epilogue = urlSafe ? Base64Codec.urlSafeEncode(encryptedBytes) : Base64Codec.encode(encryptedBytes);
-
-    return prologue + '.' + epilogue;
+    return jws.getCompactSerialization();
   }
 
   public static <T> T decode (String jwtToken, JWTKeyMaster keyMaster, Class<T> claimsClass)
     throws Exception {
 
-    return decode(jwtToken, keyMaster, claimsClass, false);
-  }
-
-  public static <T> T decode (String jwtToken, JWTKeyMaster keyMaster, Class<T> claimsClass, boolean urlSafe)
-    throws Exception {
-
-    String[] parts;
-
-    if ((parts = jwtToken.split("\\.", -1)).length != 3) {
-      throw new UnsupportedEncodingException("Not a JWT token");
-    }
-    if (!keyMaster.getEncryptionAlgorithm().verify(keyMaster.getKey(), parts, urlSafe)) {
-      throw new UnsupportedEncodingException("Not a JWT token");
-    }
-
-    return JsonCodec.read(urlSafe ? Base64Codec.urlSafeDecode(parts[1]) : Base64Codec.decode(parts[1]), claimsClass);
+    return new JWTConsumer().process(jwtToken, keyMaster.getKey(), claimsClass);
   }
 
   public static <T> T decipher (String jwtToken, Class<T> claimsClass)
     throws Exception {
 
-    return decipher(jwtToken, claimsClass, false);
-  }
-
-  public static <T> T decipher (String jwtToken, Class<T> claimsClass, boolean urlSafe)
-    throws Exception {
-
-    String[] parts;
-
-    if ((parts = jwtToken.split("\\.", -1)).length != 3) {
-      throw new UnsupportedEncodingException("Not a JWT token");
-    }
-
-    return JsonCodec.read(urlSafe ? Base64Codec.urlSafeDecode(parts[1]) : Base64Codec.decode(parts[1]), claimsClass);
+    return new JWTConsumer().setSkipSignatureVerification(true).process(jwtToken, null, claimsClass);
   }
 }

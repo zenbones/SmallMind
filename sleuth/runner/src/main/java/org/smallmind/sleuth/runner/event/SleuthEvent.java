@@ -32,6 +32,8 @@
  */
 package org.smallmind.sleuth.runner.event;
 
+import org.smallmind.nutsnbolts.util.AnsiColor;
+
 public abstract class SleuthEvent {
 
   private final String className;
@@ -45,6 +47,11 @@ public abstract class SleuthEvent {
 
   public abstract SleuthEventType getType ();
 
+  public AnsiColor getColor () {
+
+    return AnsiColor.DEFAULT;
+  }
+
   public String getClassName () {
 
     return className;
@@ -53,5 +60,11 @@ public abstract class SleuthEvent {
   public String getMethodName () {
 
     return methodName;
+  }
+
+  @Override
+  public String toString () {
+
+    return getColor().getCode() + getType() + AnsiColor.DEFAULT.getCode() + " [className=" + getClassName() + ", methodName=" + getMethodName() + "]";
   }
 }

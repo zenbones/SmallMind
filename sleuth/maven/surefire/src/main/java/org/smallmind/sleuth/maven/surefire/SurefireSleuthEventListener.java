@@ -35,6 +35,7 @@ package org.smallmind.sleuth.maven.surefire;
 import org.apache.maven.surefire.report.RunListener;
 import org.apache.maven.surefire.report.SimpleReportEntry;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
+import org.smallmind.nutsnbolts.util.AnsiColor;
 import org.smallmind.sleuth.runner.event.ErrorSleuthEvent;
 import org.smallmind.sleuth.runner.event.FailureSleuthEvent;
 import org.smallmind.sleuth.runner.event.FatalSleuthEvent;
@@ -62,7 +63,12 @@ public class SurefireSleuthEventListener implements SleuthEventListener {
   @Override
   public void handle (SleuthEvent event) {
 
+    System.out.println("[" + AnsiColor.YELLOW.getCode() + "SUREFIRE" + AnsiColor.DEFAULT.getCode() + "] " + event);
+
     switch (event.getType()) {
+      case SETUP:
+        runListener.testSetStarting(new SimpleReportEntry(event.getClassName(), event.getMethodName()));
+        break;
       case START:
         runListener.testStarting(new SimpleReportEntry(event.getClassName(), event.getMethodName()));
         break;
@@ -77,6 +83,9 @@ public class SurefireSleuthEventListener implements SleuthEventListener {
         break;
       case SKIPPED:
         runListener.testSkipped(new SimpleReportEntry(event.getClassName(), event.getMethodName(), ((SkippedSleuthEvent)event).getMessage()));
+        break;
+      case CANCELLED:
+        runListener.testSetCompleted(new SimpleReportEntry(event.getClassName(), event.getMethodName(), "Tests have been cancelled"));
         break;
       case MOOT:
         runListener.testAssumptionFailure(new SimpleReportEntry(event.getClassName(), event.getMethodName(), new SleuthStackTraceWriter(event.getClassName(), event.getMethodName(), ((MootSleuthEvent)event).getThrowable()), (int)((MootSleuthEvent)event).getElapsed()));

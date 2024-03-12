@@ -125,4 +125,6 @@ public interface Server<V extends Value<V>> extends Attributed {
   Packet<V> onResponse (Session<V> sender, Packet<V> packet);
 
   void deliver (Session<V> sender, Packet<V> packet, boolean clustered);
+
+  void forward (Channel<V> channel, Packet<V> packet);
 }

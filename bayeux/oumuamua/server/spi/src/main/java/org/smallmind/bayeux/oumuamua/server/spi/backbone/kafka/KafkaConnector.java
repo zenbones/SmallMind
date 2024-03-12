@@ -68,11 +68,16 @@ public class KafkaConnector {
     boostrapServers = boostrapBuilder.toString();
   }
 
+  public String getBoostrapServers () {
+
+    return boostrapServers;
+  }
+
   public <R> R invokeAdminClient (java.util.function.Function<AdminClient, R> clientFunction) {
 
     Properties props = new Properties();
 
-    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, boostrapServers);
+    props.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, boostrapServers);
     props.put(AdminClientConfig.CONNECTIONS_MAX_IDLE_MS_CONFIG, 300000);
     props.put(AdminClientConfig.REQUEST_TIMEOUT_MS_CONFIG, 3000);
     // Must be less than or equal to request.timeout.ms

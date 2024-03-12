@@ -36,27 +36,35 @@ import java.util.concurrent.Semaphore;
 
 public class SleuthThreadPool {
 
+  private final SleuthRunner sleuthRunner;
   private final Semaphore[] semaphores;
 
-  public SleuthThreadPool (int maxThreads) {
+  public SleuthThreadPool (SleuthRunner sleuthRunner, int threadCount) {
+
+    this.sleuthRunner = sleuthRunner;
 
     semaphores = new Semaphore[TestTier.values().length];
 
     for (TestTier testTier : TestTier.values()) {
-      semaphores[testTier.ordinal()] = new Semaphore(maxThreads, true);
+      semaphores[testTier.ordinal()] = new Semaphore(threadCount, true);
     }
   }
 
-  public void execute (TestTier testTier, Runnable runnable)
+  public void execute (TestTier testTier, TestController controller)
     throws InterruptedException {
 
     semaphores[testTier.ordinal()].acquire();
 
-    Thread thread = new Thread(runnable);
+    if (sleuthRunner.isRunning()) {
 
-    thread.start();
-    if (thread.isInterrupted()) {
-      throw new InterruptedException();
+      Thread thread = new Thread(controller);
+
+      thread.start();
+      if (thread.isInterrupted()) {
+        throw new InterruptedException();
+      }
+    } else {
+      controller.complete();
     }
   }
 
