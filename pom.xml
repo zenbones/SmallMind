@@ -111,8 +111,9 @@
     <liquibase.version>4.6.1</liquibase.version>
     <log4j.version>2.17.2</log4j.version>
     <maven.version>3.8.6</maven.version>
-    <maven.aether.provider.version>3.3.9</maven.aether.provider.version>
     <maven.plugin.annotations.version>3.6.4</maven.plugin.annotations.version>
+    <maven.resolver.version>1.9.18</maven.resolver.version>
+    <maven.resolver.provider.version>3.9.6</maven.resolver.provider.version>
     <mongodb.driver.version>4.6.1</mongodb.driver.version>
     <mongodb.bson.version>4.6.1</mongodb.bson.version>
     <msgpack.version>0.9.0</msgpack.version>
@@ -334,28 +335,23 @@
       </dependency>
       <dependency>
         <groupId>org.apache.maven</groupId>
-        <artifactId>maven-aether-provider</artifactId>
-        <version>${maven.aether.provider.version}</version>
+        <artifactId>maven-resolver-provider</artifactId>
+        <version>${maven.resolver.provider.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.eclipse.aether</groupId>
-        <artifactId>aether-api</artifactId>
-        <version>${aether.version}</version>
+        <groupId>org.apache.maven.resolver</groupId>
+        <artifactId>maven-resolver-api</artifactId>
+        <version>${maven.resolver.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.eclipse.aether</groupId>
-        <artifactId>aether-impl</artifactId>
-        <version>${aether.version}</version>
+        <groupId>org.apache.maven.resolver</groupId>
+        <artifactId>maven-resolver-impl</artifactId>
+        <version>${maven.resolver.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.eclipse.aether</groupId>
-        <artifactId>aether-util</artifactId>
-        <version>${aether.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.eclipse.aether</groupId>
-        <artifactId>aether-spi</artifactId>
-        <version>${aether.version}</version>
+        <groupId>org.apache.maven.resolver</groupId>
+        <artifactId>maven-resolver-util</artifactId>
+        <version>${maven.resolver.version}</version>
       </dependency>
       <dependency>
         <groupId>org.eclipse.aether</groupId>
@@ -370,11 +366,6 @@
       <dependency>
         <groupId>org.eclipse.aether</groupId>
         <artifactId>aether-transport-file</artifactId>
-        <version>${aether.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.eclipse.aether</groupId>
-        <artifactId>aether-transport-wagon</artifactId>
         <version>${aether.version}</version>
       </dependency>
       <dependency>
