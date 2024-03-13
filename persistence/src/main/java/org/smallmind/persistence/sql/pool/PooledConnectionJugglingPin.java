@@ -33,8 +33,8 @@
 package org.smallmind.persistence.sql.pool;
 
 import java.sql.SQLException;
-import jakarta.sql.ConnectionPoolDataSource;
-import jakarta.sql.PooledConnection;
+import javax.sql.ConnectionPoolDataSource;
+import javax.sql.PooledConnection;
 import org.smallmind.quorum.juggler.AbstractJugglingPin;
 import org.smallmind.quorum.juggler.JugglerResourceException;
 

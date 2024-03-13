@@ -31,20 +31,54 @@
  * version 3.
  */
 package org.smallmind.persistence.orm.hibernate;
-
 import java.sql.Types;
-import org.hibernate.dialect.function.SQLFunctionTemplate;
-import org.hibernate.type.IntegerType;
-import org.hibernate.type.TimestampType;
+import java.util.Date;
+import org.hibernate.query.spi.QueryEngine;
+import org.hibernate.query.sqm.function.SqmFunctionRegistry;
+import org.hibernate.type.BasicType;
+import org.hibernate.type.BasicTypeRegistry;
+import org.hibernate.type.StandardBasicTypes;
+import org.hibernate.type.spi.TypeConfiguration;
+
+import static org.hibernate.query.sqm.produce.function.FunctionParameterType.DATE;
+import static org.hibernate.query.sqm.produce.function.FunctionParameterType.INTEGER;
 
 public class H2Dialect extends org.hibernate.dialect.H2Dialect {
 
   public H2Dialect () {
 
     super();
+  }
 
-    registerColumnType(Types.LONGVARCHAR, "clob");
-    registerFunction("org_smallmind_day_diff", new SQLFunctionTemplate(IntegerType.INSTANCE, "timestampdiff(SQL_TSI_DAY, ?1, ?2)"));
-    registerFunction("org_smallmind_date_sub_minutes", new SQLFunctionTemplate(TimestampType.INSTANCE, "timstampadd(SQL_TSI_MINUTE, -?2, ?1)"));
+  @Override
+  protected String castType (int sqlTypeCode) {
+
+    return (sqlTypeCode == Types.LONGVARCHAR) ? "clob" : super.castType(sqlTypeCode);
+  }
+
+  @Override
+  public void initializeFunctionRegistry (QueryEngine queryEngine) {
+
+    super.initializeFunctionRegistry(queryEngine);
+
+    SqmFunctionRegistry functionRegistry = queryEngine.getSqmFunctionRegistry();
+    TypeConfiguration typeConfiguration = queryEngine.getTypeConfiguration();
+    BasicTypeRegistry basicTypeRegistry = typeConfiguration.getBasicTypeRegistry();
+    BasicType<Date> timestampType = basicTypeRegistry.resolve(StandardBasicTypes.TIMESTAMP);
+    BasicType<Integer> integerType = basicTypeRegistry.resolve(StandardBasicTypes.INTEGER);
+
+    functionRegistry.patternDescriptorBuilder("org_smallmind_day_diff", "timestampdiff(SQL_TSI_DAY, ?1, ?2)")
+      .setInvariantType(integerType)
+      .setExactArgumentCount(2)
+      .setParameterTypes(DATE, DATE)
+      .setArgumentListSignature("(DATE first, DATE second)")
+      .register();
+
+    functionRegistry.patternDescriptorBuilder("org_smallmind_date_sub_minutes", "timestampadd(SQL_TSI_MINUTE, -?2, ?1)")
+      .setInvariantType(timestampType)
+      .setExactArgumentCount(2)
+      .setParameterTypes(DATE, INTEGER)
+      .setArgumentListSignature("(DATE datetime, INTEGER minutes)")
+      .register();
   }
 }

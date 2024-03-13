@@ -38,11 +38,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Currency;
-import org.hibernate.HibernateException;
+import java.util.Objects;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.usertype.UserType;
 
-public class CurrencyUserType implements UserType {
+public class CurrencyUserType implements UserType<Currency> {
 
   @Override
   public boolean isMutable () {
@@ -51,70 +51,70 @@ public class CurrencyUserType implements UserType {
   }
 
   @Override
-  public Class<?> returnedClass () {
+  public Class<Currency> returnedClass () {
 
     return Currency.class;
   }
 
   @Override
-  public int[] sqlTypes () {
+  public int getSqlType () {
 
-    return new int[] {Types.CHAR};
+    return Types.CHAR;
   }
 
   @Override
-  public Object assemble (Serializable cached, Object owner) {
+  public int hashCode (Currency currency) {
 
-    return cached;
+    return Objects.hashCode(currency);
   }
 
   @Override
-  public Serializable disassemble (Object value) {
+  public boolean equals (Currency x, Currency y) {
 
-    return (Currency)value;
+    return Objects.equals(x, y);
   }
 
   @Override
-  public Object deepCopy (Object value) {
+  public Currency deepCopy (Currency value) {
 
     return value;
   }
 
   @Override
-  public Object replace (Object original, Object target, Object owner) {
+  public Currency assemble (Serializable cached, Object owner) {
 
-    return original;
+    return (Currency)cached;
   }
 
   @Override
-  public int hashCode (Object x) {
+  public Serializable disassemble (Currency value) {
 
-    return (x == null) ? 0 : x.hashCode();
-  }
-
-  public boolean equals (Object x, Object y)
-    throws HibernateException {
-
-    return x == y;
+    return value;
   }
 
   @Override
-  public Object nullSafeGet (ResultSet resultSet, String[] names, SharedSessionContractImplementor sharedSessionContractImplementor, Object o)
-    throws HibernateException, SQLException {
+  public Currency replace (Currency detached, Currency managed, Object owner) {
 
-    String code = resultSet.getString(names[0]);
-
-    return resultSet.wasNull() ? null : Currency.getInstance(code);
+    return detached;
   }
 
   @Override
-  public void nullSafeSet (PreparedStatement preparedStatement, Object value, int index, SharedSessionContractImplementor sharedSessionContractImplementor)
-    throws HibernateException, SQLException {
+  public Currency nullSafeGet (ResultSet rs, int position, SharedSessionContractImplementor session, Object owner)
+    throws SQLException {
+
+    String code = rs.getString(position);
+
+    return rs.wasNull() ? null : Currency.getInstance(code);
+  }
+
+  @Override
+  public void nullSafeSet (PreparedStatement st, Currency value, int index, SharedSessionContractImplementor session)
+    throws SQLException {
 
     if (value == null) {
-      preparedStatement.setNull(index, Types.CHAR);
+      st.setNull(index, Types.CHAR);
     } else {
-      preparedStatement.setString(index, ((Currency)value).getCurrencyCode());
+      st.setString(index, value.getCurrencyCode());
     }
   }
 }

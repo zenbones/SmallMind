@@ -42,11 +42,11 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
-import jakarta.sql.CommonDataSource;
-import jakarta.sql.ConnectionEvent;
-import jakarta.sql.ConnectionEventListener;
-import jakarta.sql.PooledConnection;
-import jakarta.sql.StatementEventListener;
+import javax.sql.CommonDataSource;
+import javax.sql.ConnectionEvent;
+import javax.sql.ConnectionEventListener;
+import javax.sql.PooledConnection;
+import javax.sql.StatementEventListener;
 import org.smallmind.nutsnbolts.lang.Existential;
 import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 

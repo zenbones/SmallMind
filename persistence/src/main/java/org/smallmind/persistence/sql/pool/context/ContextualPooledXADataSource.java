@@ -34,8 +34,8 @@ package org.smallmind.persistence.sql.pool.context;
 
 import java.sql.SQLException;
 import java.util.HashMap;
-import jakarta.sql.XAConnection;
-import jakarta.sql.XADataSource;
+import javax.sql.XAConnection;
+import javax.sql.XADataSource;
 import org.smallmind.nutsnbolts.context.ContextFactory;
 import org.smallmind.persistence.sql.pool.AbstractPooledDataSource;
 import org.smallmind.quorum.pool.ComponentPoolException;

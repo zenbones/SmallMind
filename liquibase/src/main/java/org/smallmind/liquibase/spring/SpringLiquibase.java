@@ -42,7 +42,7 @@ import java.sql.SQLException;
 import java.util.Collections;
 import java.util.HashSet;
 import javax.xml.parsers.ParserConfigurationException;
-import jakarta.sql.DataSource;
+import javax.sql.DataSource;
 import liquibase.CatalogAndSchema;
 import liquibase.Liquibase;
 import liquibase.database.Database;

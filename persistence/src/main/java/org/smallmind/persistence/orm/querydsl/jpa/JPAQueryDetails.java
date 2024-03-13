@@ -33,7 +33,6 @@
 package org.smallmind.persistence.orm.querydsl.jpa;
 
 import com.querydsl.jpa.impl.JPAQuery;
-import org.smallmind.persistence.orm.querydsl.hibernate.EntityGraphHint;
 
 public abstract class JPAQueryDetails<T> {
 

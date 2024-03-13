@@ -33,8 +33,8 @@
 package org.smallmind.persistence.sql.pool.spring;
 
 import java.sql.SQLException;
-import jakarta.sql.CommonDataSource;
-import jakarta.sql.PooledConnection;
+import javax.sql.CommonDataSource;
+import javax.sql.PooledConnection;
 import org.smallmind.persistence.sql.pool.ConnectionEndpoint;
 import org.smallmind.persistence.sql.pool.DataSourceComponentInstanceFactory;
 import org.smallmind.persistence.sql.pool.DataSourceFactory;

@@ -40,8 +40,8 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
-import jakarta.sql.StatementEvent;
-import jakarta.sql.StatementEventListener;
+import javax.sql.StatementEvent;
+import javax.sql.StatementEventListener;
 
 public class PooledPreparedStatement implements InvocationHandler {
 

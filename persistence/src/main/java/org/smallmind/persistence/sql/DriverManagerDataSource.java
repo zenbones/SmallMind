@@ -38,7 +38,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.util.logging.Logger;
-import jakarta.sql.DataSource;
+import javax.sql.DataSource;
 
 public class DriverManagerDataSource implements DataSource {
 

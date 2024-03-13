@@ -39,8 +39,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.TreeMap;
-import jakarta.sql.StatementEvent;
-import jakarta.sql.StatementEventListener;
+import javax.sql.StatementEvent;
+import javax.sql.StatementEventListener;
 
 public class PooledPreparedStatementCache implements StatementEventListener {
 

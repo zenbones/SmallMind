@@ -447,11 +447,6 @@
         <version>${maven.resolver.version}</version>
       </dependency>
       <dependency>
-        <groupId>jakarta.activation</groupId>
-        <artifactId>jakarta.activation-api</artifactId>
-        <version>2.1.0-RC1</version>
-      </dependency>
-      <dependency>
         <groupId>org.apache.kafka</groupId>
         <artifactId>kafka-clients</artifactId>
         <version>${kafka.version}</version>
@@ -679,16 +674,18 @@
       <dependency>
         <groupId>com.querydsl</groupId>
         <artifactId>querydsl-apt</artifactId>
+        <classifier>jakarta</classifier>
+        <version>${querydsl.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.querydsl</groupId>
+        <artifactId>querydsl-core</artifactId>
         <version>${querydsl.version}</version>
       </dependency>
       <dependency>
         <groupId>com.querydsl</groupId>
         <artifactId>querydsl-jpa</artifactId>
-        <version>${querydsl.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.querydsl</groupId>
-        <artifactId>querydsl-jpa-codegen</artifactId>
+        <classifier>jakarta</classifier>
         <version>${querydsl.version}</version>
       </dependency>
       <dependency>
@@ -855,11 +852,6 @@
         <groupId>org.glassfish.jersey.test-framework.providers</groupId>
         <artifactId>jersey-test-framework-provider-external</artifactId>
         <version>${jersey.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.sun.xml.ws</groupId>
-        <artifactId>jaxws-rt</artifactId>
-        <version>2.3.5</version>
       </dependency>
       <dependency>
         <groupId>org.glassfish.grizzly</groupId>
@@ -1109,23 +1101,6 @@
               <systemPath>${project.basedir}/pom.xml</systemPath>
             </dependency>
           </dependencies>
-        </plugin>
-        <plugin>
-          <groupId>com.mysema.maven</groupId>
-          <artifactId>apt-maven-plugin</artifactId>
-          <version>${apt.maven.plugin.version}</version>
-          <executions>
-            <execution>
-              <id>jpa</id>
-              <goals>
-                <goal>process</goal>
-              </goals>
-              <configuration>
-                <outputDirectory>target/generated-sources/java</outputDirectory>
-                <processor>com.querydsl.apt.jpa.JPAAnnotationProcessor</processor>
-              </configuration>
-            </execution>
-          </executions>
         </plugin>
         <plugin>
           <groupId>org.smallmind</groupId>

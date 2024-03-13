@@ -32,7 +32,7 @@
  */
 package org.smallmind.persistence.sql.pool.spring;
 
-import jakarta.sql.CommonDataSource;
+import javax.sql.CommonDataSource;
 
 public interface DataSourceLocator {
 

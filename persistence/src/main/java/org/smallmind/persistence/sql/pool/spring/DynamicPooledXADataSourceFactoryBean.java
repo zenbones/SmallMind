@@ -32,7 +32,7 @@
  */
 package org.smallmind.persistence.sql.pool.spring;
 
-import jakarta.sql.XADataSource;
+import javax.sql.XADataSource;
 import org.springframework.beans.factory.FactoryBean;
 
 public class DynamicPooledXADataSourceFactoryBean implements FactoryBean<XADataSource> {

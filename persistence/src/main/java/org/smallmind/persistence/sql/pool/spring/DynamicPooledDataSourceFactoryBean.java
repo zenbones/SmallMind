@@ -32,7 +32,7 @@
  */
 package org.smallmind.persistence.sql.pool.spring;
 
-import jakarta.sql.DataSource;
+import javax.sql.DataSource;
 import org.springframework.beans.factory.FactoryBean;
 
 public class DynamicPooledDataSourceFactoryBean implements FactoryBean<DataSource> {

@@ -34,8 +34,8 @@ package org.smallmind.persistence.sql;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import jakarta.sql.PooledConnection;
-import jakarta.sql.StatementEvent;
+import javax.sql.PooledConnection;
+import javax.sql.StatementEvent;
 
 public class PooledPreparedStatementEvent extends StatementEvent {
 

@@ -33,8 +33,8 @@
 package org.smallmind.persistence.sql.pool;
 
 import java.sql.SQLException;
-import jakarta.sql.XAConnection;
-import jakarta.sql.XADataSource;
+import javax.sql.XAConnection;
+import javax.sql.XADataSource;
 import org.smallmind.persistence.sql.DataSourceManager;
 import org.smallmind.quorum.pool.ComponentPoolException;
 import org.smallmind.quorum.pool.complex.ComponentPool;
