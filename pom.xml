@@ -78,27 +78,27 @@
   <properties>
     <maven.compiler.release>11</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <amqp.client.version>5.13.1</amqp.client.version>
+    <amqp.client.version>5.20.0</amqp.client.version>
     <apt.maven.plugin.version>1.1.3</apt.maven.plugin.version>
-    <asm.version>9.3</asm.version>
-    <aspectj.version>1.9.19</aspectj.version>
-    <aspectj.maven.plugin.version>1.14.0</aspectj.maven.plugin.version>
-    <aws.version>2.4.13</aws.version>
-    <bouncycastle.version>1.70</bouncycastle.version>
-    <cometd.version>6.0.10</cometd.version>
-    <commons.net.version>3.8.0</commons.net.version>
-    <dogstatsd.client.version>3.0.0</dogstatsd.client.version>
-    <ehcache.version>3.9.7</ehcache.version>
-    <freemarker.version>2.3.31</freemarker.version>
-    <google.autoservice.version>1.0.1</google.autoservice.version>
-    <grizzly.version>2.4.4</grizzly.version>
+    <asm.version>9.6</asm.version>
+    <aspectj.version>1.9.21.1</aspectj.version>
+    <aspectj.maven.plugin.version>1.15.0</aspectj.maven.plugin.version>
+    <aws.version>2.25.7</aws.version>
+    <bouncycastle.version>1.77</bouncycastle.version>
+    <cometd.version>7.0.12</cometd.version>
+    <commons.net.version>3.10.0</commons.net.version>
+    <dogstatsd.client.version>4.3.0</dogstatsd.client.version>
+    <ehcache.version>3.10.8</ehcache.version>
+    <freemarker.version>2.3.32</freemarker.version>
+    <google.autoservice.version>1.1.1</google.autoservice.version>
+    <grizzly.version>4.0.2</grizzly.version>
     <grizzly.npn.version>2.0.0</grizzly.npn.version>
     <hdrhistogram.version>2.1.12</hdrhistogram.version>
-    <hibernate.version>5.6.1.Final</hibernate.version>
-    <hibernate.annotations.version>5.1.2.Final</hibernate.annotations.version>
-    <hibernate.validator.version>6.2.0.Final</hibernate.validator.version>
-    <hibernate.enhance.maven.plugin.version>5.6.1.Final</hibernate.enhance.maven.plugin.version>
-    <hsqldb.version>2.6.1</hsqldb.version>
+    <hibernate.version>6.4.4.Final</hibernate.version>
+    <hibernate.annotations.version>6.0.6.Final</hibernate.annotations.version>
+    <hibernate.validator.version>8.0.1.Final</hibernate.validator.version>
+    <hibernate.enhance.maven.plugin.version>6.4.4.Final</hibernate.enhance.maven.plugin.version>
+    <httpcomponents5.version>5.2.4</httpcomponents5.version>
     <httpcomponents.version>4.4.14</httpcomponents.version>
     <jackson.version>2.13.4</jackson.version>
     <jakarta.activation.version>2.1.0-RC1</jakarta.activation.version>
@@ -544,7 +544,7 @@
       </dependency>
       <dependency>
         <groupId>org.bouncycastle</groupId>
-        <artifactId>bcprov-jdk15on</artifactId>
+        <artifactId>bcprov-jdk18on</artifactId>
         <version>${bouncycastle.version}</version>
       </dependency>
       <dependency>
@@ -628,23 +628,13 @@
         <version>${shiro.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.hsqldb</groupId>
-        <artifactId>hsqldb</artifactId>
-        <version>${hsqldb.version}</version>
-      </dependency>
-      <dependency>
         <groupId>org.liquibase</groupId>
         <artifactId>liquibase-core</artifactId>
         <version>${liquibase.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.hibernate</groupId>
+        <groupId>org.hibernate.orm</groupId>
         <artifactId>hibernate-core</artifactId>
-        <version>${hibernate.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.hibernate</groupId>
-        <artifactId>hibernate-entitymanager</artifactId>
         <version>${hibernate.version}</version>
       </dependency>
       <dependency>
@@ -716,16 +706,6 @@
         <groupId>commons-net</groupId>
         <artifactId>commons-net</artifactId>
         <version>${commons.net.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.httpcomponents</groupId>
-        <artifactId>httpcore</artifactId>
-        <version>${httpcomponents.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.httpcomponents</groupId>
-        <artifactId>httpcore-nio</artifactId>
-        <version>${httpcomponents.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.httpcomponents</groupId>
