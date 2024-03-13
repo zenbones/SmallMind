@@ -33,6 +33,7 @@
 package org.smallmind.persistence.orm.hibernate;
 import java.sql.Types;
 import java.util.Date;
+import org.hibernate.boot.model.FunctionContributions;
 import org.hibernate.query.spi.QueryEngine;
 import org.hibernate.query.sqm.function.SqmFunctionRegistry;
 import org.hibernate.type.BasicType;
@@ -57,12 +58,12 @@ public class H2Dialect extends org.hibernate.dialect.H2Dialect {
   }
 
   @Override
-  public void initializeFunctionRegistry (QueryEngine queryEngine) {
+  public void initializeFunctionRegistry (FunctionContributions functionContributions) {
 
-    super.initializeFunctionRegistry(queryEngine);
+    super.initializeFunctionRegistry(functionContributions);
 
-    SqmFunctionRegistry functionRegistry = queryEngine.getSqmFunctionRegistry();
-    TypeConfiguration typeConfiguration = queryEngine.getTypeConfiguration();
+    SqmFunctionRegistry functionRegistry = functionContributions.getFunctionRegistry();
+    TypeConfiguration typeConfiguration = functionContributions.getTypeConfiguration();
     BasicTypeRegistry basicTypeRegistry = typeConfiguration.getBasicTypeRegistry();
     BasicType<Date> timestampType = basicTypeRegistry.resolve(StandardBasicTypes.TIMESTAMP);
     BasicType<Integer> integerType = basicTypeRegistry.resolve(StandardBasicTypes.INTEGER);

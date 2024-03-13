@@ -48,7 +48,6 @@ import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.jpa.impl.JPADeleteClause;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAUpdateClause;
-import jakarta.persistence.EntityGraph;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import org.smallmind.nutsnbolts.util.EmptyIterable;
@@ -349,9 +348,10 @@ public class QJPADao<I extends Serializable & Comparable<I>, D extends JPADurabl
 
     EntityManager entityManager = getSession().getNativeSession();
     JPAQuery<T> query = new JPAQuery<>(entityManager);
+    String graph;
 
-    if (queryDetails.getEntityGraphSetting() != null) {
-      query.setHint(queryDetails.getEntityGraphSetting().getHint().getKey(), entityManager.createEntityGraph(queryDetails.getEntityGraphSetting().getName()));
+    if ((graph = queryDetails.getGraph()) != null) {
+      query.setHint("jakarta.persistence.fetchgraph", entityManager.getEntityGraph(graph));
     }
 
     return queryDetails.completeQuery(query);

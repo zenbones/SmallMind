@@ -32,12 +32,11 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356;
 
-import jakarta.websocket.Endpoint;
+import jakarta.websocket.server.ServerEndpoint;
 import jakarta.websocket.Extension;
-
 public class WebsocketConfiguration {
 
-  private final Class<? extends Endpoint> endpointClass;
+  private final Class<? extends ServerEndpoint> endpointClass;
   private final String oumuamuaUrl;
 
   private Extension[] extensions;
@@ -49,13 +48,13 @@ public class WebsocketConfiguration {
   // Use the default
   private int maximumTextMessageBufferSize = -1;
 
-  public WebsocketConfiguration (Class<? extends Endpoint> endpointClass, String oumuamuaUrl) {
+  public WebsocketConfiguration (Class<? extends ServerEndpoint> endpointClass, String oumuamuaUrl) {
 
     this.endpointClass = endpointClass;
     this.oumuamuaUrl = oumuamuaUrl;
   }
 
-  public Class<? extends Endpoint> getEndpointClass () {
+  public Class<? extends ServerEndpoint> getEndpointClass () {
 
     return endpointClass;
   }

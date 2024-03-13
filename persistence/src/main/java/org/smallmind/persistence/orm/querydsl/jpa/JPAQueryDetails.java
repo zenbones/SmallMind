@@ -36,20 +36,20 @@ import com.querydsl.jpa.impl.JPAQuery;
 
 public abstract class JPAQueryDetails<T> {
 
-  private EntityGraphSetting entityGraphSetting;
+  private String graph;
 
   public JPAQueryDetails () {
 
   }
 
-  public JPAQueryDetails (EntityGraphHint hint, String name) {
+  public JPAQueryDetails (String graph) {
 
-    entityGraphSetting = new EntityGraphSetting(hint, name);
+    this.graph = graph;
   }
 
-  public EntityGraphSetting getEntityGraphSetting () {
+  public String getGraph () {
 
-    return entityGraphSetting;
+    return graph;
   }
 
   public abstract JPAQuery<T> completeQuery (JPAQuery<T> query);

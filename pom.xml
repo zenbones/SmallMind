@@ -1081,6 +1081,13 @@
             </execution>
           </executions>
           <configuration>
+            <sources>
+              <source>
+                <excludes>
+                  <exclude>**/generated-sources/**/Q*.java</exclude>
+                </excludes>
+              </source>
+            </sources>
             <verbose>true</verbose>
             <source>${maven.compiler.release}</source>
             <target>${maven.compiler.release}</target>
