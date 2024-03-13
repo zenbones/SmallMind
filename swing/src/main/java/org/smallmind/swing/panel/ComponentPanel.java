@@ -36,9 +36,9 @@ import java.awt.Dimension;
 import java.awt.LayoutManager;
 import java.awt.Point;
 import java.awt.Rectangle;
-import javax.swing.JPanel;
-import javax.swing.JViewport;
-import javax.swing.Scrollable;
+import jakarta.swing.JPanel;
+import jakarta.swing.JViewport;
+import jakarta.swing.Scrollable;
 
 public class ComponentPanel extends JPanel implements Scrollable {
 

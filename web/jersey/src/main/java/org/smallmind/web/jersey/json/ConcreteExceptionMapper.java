@@ -32,7 +32,7 @@
  */
 package org.smallmind.web.jersey.json;
 
-import javax.ws.rs.ext.ExceptionMapper;
+import jakarta.ws.rs.ext.ExceptionMapper;
 
 public abstract class ConcreteExceptionMapper<T extends Throwable> implements ExceptionMapper<T> {
 

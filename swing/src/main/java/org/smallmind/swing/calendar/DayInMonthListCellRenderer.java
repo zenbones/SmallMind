@@ -39,11 +39,11 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.SystemColor;
-import javax.swing.BorderFactory;
-import javax.swing.JLabel;
-import javax.swing.JList;
-import javax.swing.JPanel;
-import javax.swing.ListCellRenderer;
+import jakarta.swing.BorderFactory;
+import jakarta.swing.JLabel;
+import jakarta.swing.JList;
+import jakarta.swing.JPanel;
+import jakarta.swing.ListCellRenderer;
 import org.smallmind.nutsnbolts.time.CalendarUtility;
 import org.smallmind.swing.ComponentUtility;
 

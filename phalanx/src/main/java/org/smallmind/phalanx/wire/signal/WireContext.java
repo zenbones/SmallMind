@@ -32,8 +32,8 @@
  */
 package org.smallmind.phalanx.wire.signal;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
 import org.smallmind.nutsnbolts.context.Context;
 
 @XmlAccessorType(XmlAccessType.PROPERTY)

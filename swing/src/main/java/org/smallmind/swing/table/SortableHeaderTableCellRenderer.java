@@ -34,9 +34,9 @@ package org.smallmind.swing.table;
 
 import java.awt.Component;
 import java.util.HashMap;
-import javax.swing.JLabel;
-import javax.swing.JTable;
-import javax.swing.table.TableCellRenderer;
+import jakarta.swing.JLabel;
+import jakarta.swing.JTable;
+import jakarta.swing.table.TableCellRenderer;
 import org.smallmind.swing.label.PlainLabel;
 
 public class SortableHeaderTableCellRenderer<E extends Enum> implements TableCellRenderer {

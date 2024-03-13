@@ -35,9 +35,9 @@ package org.smallmind.swing.file;
 import java.io.File;
 import java.util.Iterator;
 import java.util.List;
-import javax.swing.ListModel;
-import javax.swing.event.ListDataEvent;
-import javax.swing.event.ListDataListener;
+import jakarta.swing.ListModel;
+import jakarta.swing.event.ListDataEvent;
+import jakarta.swing.event.ListDataListener;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 
 public class DirectoryManagerListModel implements ListModel {

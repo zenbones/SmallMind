@@ -34,8 +34,8 @@ package org.smallmind.swing.spinner;
 
 import java.awt.Component;
 import java.awt.SystemColor;
-import javax.swing.BorderFactory;
-import javax.swing.JLabel;
+import jakarta.swing.BorderFactory;
+import jakarta.swing.JLabel;
 
 public class DefaultSpinnerRenderer implements SpinnerRenderer {
 

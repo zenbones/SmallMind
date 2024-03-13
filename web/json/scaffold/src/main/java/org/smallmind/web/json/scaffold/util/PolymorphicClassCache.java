@@ -33,7 +33,7 @@
 package org.smallmind.web.json.scaffold.util;
 
 import java.util.HashMap;
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
 import org.smallmind.nutsnbolts.lang.LoaderAwareClassCache;
 
 public class PolymorphicClassCache {

@@ -33,7 +33,7 @@
 package org.smallmind.file.ephemeral;
 
 import java.nio.file.attribute.GroupPrincipal;
-import javax.security.auth.Subject;
+import jakarta.security.auth.Subject;
 
 public class EphemeralGroupPrincipal implements GroupPrincipal {
 

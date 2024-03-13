@@ -6,7 +6,7 @@ Doppelganger is a set of annotations, and an APT (Annotation Processing Tool) co
 
 == Install
 
-The annotation processing system will pick up on Doppelganger annotated classes during compilation given the following included dependencies. Besides Doppelganger itself, you'll need the annotation subsystem (currently in javax.* but moving to the jakarta.* namespace), and our JSON scaffolding helper classes.
+The annotation processing system will pick up on Doppelganger annotated classes during compilation given the following included dependencies. Besides Doppelganger itself, you'll need the annotation subsystem, and our JSON scaffolding helper classes.
 
 .Doppelganger
 [source,xml]
@@ -102,9 +102,9 @@ A description of a set of interfaces which should be adopted into the *implement
 [[doppelganger-constraint, Constraint]]
 ==== @Constraint
 
-A representation of a `javax.validation.Constraint` annotation instance which should be added to the generated class or property.
+A representation of a `jakarta.validation.Constraint` annotation instance which should be added to the generated class or property.
 
-* `Class<?> value ()` - The class of the `javax.validation.Constraint` annotation to be applied.
+* `Class<?> value ()` - The class of the `jakarta.validation.Constraint` annotation to be applied.
 * `String arguments () default ""` - The arguments to the validation constraint, given as the text which would otherwise be placed within the *()* of the annotation, were it used in a more natural context.
 +
 [TIP]
@@ -190,7 +190,7 @@ Simply holds a string which may be used by other tools creation automated descri
 
 The following is a simplified, but still plausible, example of how the Doppelganger annotations might be used. We'll refrain from reproducing the generated sources here, but you can take the following code and generate them for yourself. It may be instructive to try the resulting constructors and factory methods.
 
-[source, java]
+[source,java]
 ----
 public enum Biome {
 

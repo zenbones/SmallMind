@@ -38,9 +38,9 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.smallmind.mongodb.throng.ThrongMappingException;
 import org.smallmind.mongodb.throng.ThrongRuntimeException;
-import org.smallmind.mongodb.throng.mapping.annotation.Polymorphic;
 import org.smallmind.mongodb.throng.index.IndexProvider;
 import org.smallmind.mongodb.throng.index.ThrongIndexes;
+import org.smallmind.mongodb.throng.mapping.annotation.Polymorphic;
 
 public class ThrongPropertiesMultiplexer<T> implements IndexProvider {
 

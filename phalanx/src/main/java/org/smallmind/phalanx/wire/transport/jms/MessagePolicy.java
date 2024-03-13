@@ -32,8 +32,8 @@
  */
 package org.smallmind.phalanx.wire.transport.jms;
 
-import javax.jms.JMSException;
-import javax.jms.MessageProducer;
+import jakarta.jms.JMSException;
+import jakarta.jms.MessageProducer;
 
 public class MessagePolicy {
 

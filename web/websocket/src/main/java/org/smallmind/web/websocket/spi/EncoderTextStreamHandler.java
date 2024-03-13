@@ -35,8 +35,8 @@ package org.smallmind.web.websocket.spi;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import javax.websocket.EncodeException;
-import javax.websocket.Encoder;
+import jakarta.websocket.EncodeException;
+import jakarta.websocket.Encoder;
 
 public class EncoderTextStreamHandler<T> implements EncoderHandler<T> {
 

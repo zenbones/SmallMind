@@ -41,8 +41,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.HashMap;
-import javax.swing.AbstractAction;
-import javax.swing.Action;
+import jakarta.swing.AbstractAction;
+import jakarta.swing.Action;
 
 public class ClipboardManager implements ClipboardOwner, FocusListener {
 

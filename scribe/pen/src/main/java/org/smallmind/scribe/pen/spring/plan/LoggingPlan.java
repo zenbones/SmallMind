@@ -65,7 +65,8 @@ public abstract class LoggingPlan implements InitializingBean {
   }
 
   @Override
-  public void afterPropertiesSet () throws Exception {
+  public void afterPropertiesSet ()
+    throws Exception {
 
     Appender asynchronousAppender;
 
@@ -80,4 +81,3 @@ public abstract class LoggingPlan implements InitializingBean {
     }
   }
 }
-

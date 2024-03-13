@@ -71,7 +71,8 @@ public class DynamicClassNameTemplateInitializingBean implements InitializingBea
   }
 
   @Override
-  public void afterPropertiesSet () throws Exception {
+  public void afterPropertiesSet ()
+    throws Exception {
 
     HashMap<String, String> templateMap = new HashMap<>();
     HashMap<String, String> levelMap = new HashMap<>();

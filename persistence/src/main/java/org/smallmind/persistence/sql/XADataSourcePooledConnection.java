@@ -33,10 +33,10 @@
 package org.smallmind.persistence.sql;
 
 import java.sql.SQLException;
-import javax.sql.ConnectionEvent;
-import javax.sql.XAConnection;
-import javax.sql.XADataSource;
-import javax.transaction.xa.XAResource;
+import jakarta.sql.ConnectionEvent;
+import jakarta.sql.XAConnection;
+import jakarta.sql.XADataSource;
+import jakarta.transaction.xa.XAResource;
 
 public class XADataSourcePooledConnection extends AbstractPooledConnection<XADataSource> implements XAConnection {
 

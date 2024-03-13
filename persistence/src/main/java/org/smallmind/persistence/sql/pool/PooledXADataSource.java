@@ -33,8 +33,8 @@
 package org.smallmind.persistence.sql.pool;
 
 import java.sql.SQLException;
-import javax.sql.XAConnection;
-import javax.sql.XADataSource;
+import jakarta.sql.XAConnection;
+import jakarta.sql.XADataSource;
 import org.smallmind.persistence.sql.DataSourceManager;
 import org.smallmind.quorum.pool.ComponentPoolException;
 import org.smallmind.quorum.pool.complex.ComponentPool;
@@ -79,7 +79,8 @@ public class PooledXADataSource extends AbstractPooledDataSource<XADataSource, X
   }
 
   @Override
-  public XAConnection getXAConnection (String user, String password) throws SQLException {
+  public XAConnection getXAConnection (String user, String password)
+    throws SQLException {
 
     throw new UnsupportedOperationException("Please properly configure the underlying resource managed by the pool which is represented by this DataSource");
   }

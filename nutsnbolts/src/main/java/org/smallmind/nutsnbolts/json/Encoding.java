@@ -41,7 +41,8 @@ public enum Encoding {
 
   HEX {
     @Override
-    public String encode (byte[] bytes) throws Exception {
+    public String encode (byte[] bytes)
+      throws Exception {
 
       return HexCodec.hexEncode(bytes);
     }

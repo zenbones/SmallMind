@@ -97,9 +97,9 @@ public class JsonTargetFactory {
     sslSocketFactory = new SSLConnectionSocketFactory(sslContext, new NaiveHostNameVerifier());
 
     socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create()
-      .register("http", PlainConnectionSocketFactory.getSocketFactory())
-      .register("https", sslSocketFactory)
-      .build();
+                              .register("http", PlainConnectionSocketFactory.getSocketFactory())
+                              .register("https", sslSocketFactory)
+                              .build();
 
     connectionManager = new PoolingHttpClientConnectionManager(socketFactoryRegistry);
     connectionManager.setDefaultConnectionConfig(ConnectionConfig.custom().setCharset(StandardCharsets.UTF_8).build());

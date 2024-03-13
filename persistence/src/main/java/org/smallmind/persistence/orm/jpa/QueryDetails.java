@@ -32,7 +32,7 @@
  */
 package org.smallmind.persistence.orm.jpa;
 
-import javax.persistence.Query;
+import jakarta.persistence.Query;
 
 public abstract class QueryDetails {
 

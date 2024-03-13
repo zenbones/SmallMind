@@ -35,8 +35,8 @@ package org.smallmind.nutsnbolts.validation;
 import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.Map;
-import javax.validation.ConstraintValidator;
-import javax.validation.ConstraintValidatorContext;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
 
 public class NotEmptyValidator implements ConstraintValidator<NotEmpty, Object> {
 

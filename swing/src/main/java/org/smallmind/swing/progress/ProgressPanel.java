@@ -33,8 +33,8 @@
 package org.smallmind.swing.progress;
 
 import java.awt.GridLayout;
-import javax.swing.JPanel;
-import javax.swing.JProgressBar;
+import jakarta.swing.JPanel;
+import jakarta.swing.JProgressBar;
 
 public class ProgressPanel extends JPanel {
 

@@ -34,8 +34,8 @@ package org.smallmind.web.jersey.aop;
 
 import java.lang.reflect.Constructor;
 import java.util.Map;
-import javax.xml.bind.annotation.adapters.XmlAdapter;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import jakarta.xml.bind.annotation.adapters.XmlAdapter;
+import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 

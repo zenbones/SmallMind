@@ -33,8 +33,8 @@
 package org.smallmind.nutsnbolts.validation;
 
 import java.util.regex.Pattern;
-import javax.validation.ConstraintValidator;
-import javax.validation.ConstraintValidatorContext;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
 
 public class EmailValidator implements ConstraintValidator<Email, String> {
 

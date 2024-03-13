@@ -32,26 +32,13 @@
  */
 package org.smallmind.nutsnbolts.security;
 
-import java.math.BigInteger;
-import java.security.KeyFactory;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.Signature;
-// import java.security.spec.EdECPoint;
-// import java.security.spec.EdECPrivateKeySpec;
-// import java.security.spec.EdECPublicKeySpec;
-import java.security.spec.NamedParameterSpec;
-import org.bouncycastle.util.Arrays;
-import org.smallmind.nutsnbolts.http.Base64Codec;
-
 //TODO: We await java 17
 public class Ed25519Utility {
 
   private static final String OPENSSH_KEY_V1 = "openssh-key-v1";
 
-  public static void main (String... args) throws Exception {
+  public static void main (String... args)
+    throws Exception {
     /*
 
     String pub = "AAAAC3NzaC1lZDI1NTE5AAAAIJ7cvxjZ1uYYJ1JAHGwcxj7GrHcSE4/+gFPiJmtWImLI";

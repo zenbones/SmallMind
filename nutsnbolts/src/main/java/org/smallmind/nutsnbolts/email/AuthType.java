@@ -32,8 +32,8 @@
  */
 package org.smallmind.nutsnbolts.email;
 
-import javax.mail.Authenticator;
-import javax.mail.PasswordAuthentication;
+import jakarta.mail.Authenticator;
+import jakarta.mail.PasswordAuthentication;
 
 public enum AuthType {
 

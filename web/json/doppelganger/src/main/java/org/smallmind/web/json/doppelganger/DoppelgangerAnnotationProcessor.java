@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import com.google.auto.service.AutoService;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
@@ -60,7 +61,6 @@ import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
-import com.google.auto.service.AutoService;
 import org.smallmind.nutsnbolts.apt.AptUtility;
 import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
 import org.smallmind.web.json.doppelganger.translator.TranslatorFactory;
@@ -287,23 +287,23 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
         // imports
         writer.write("import java.util.Objects;");
         writer.newLine();
-        writer.write("import javax.annotation.Generated;");
+        writer.write("import jakarta.annotation.Generated;");
         writer.newLine();
         if ((nearestViewSuperclass == null)) {
-          writer.write("import javax.xml.bind.annotation.XmlAccessType;");
+          writer.write("import jakarta.xml.bind.annotation.XmlAccessType;");
           writer.newLine();
-          writer.write("import javax.xml.bind.annotation.XmlAccessorType;");
+          writer.write("import jakarta.xml.bind.annotation.XmlAccessorType;");
           writer.newLine();
         }
-        writer.write("import javax.xml.bind.annotation.XmlElement;");
+        writer.write("import jakarta.xml.bind.annotation.XmlElement;");
         writer.newLine();
         if (!classElement.getModifiers().contains(Modifier.ABSTRACT)) {
-          writer.write("import javax.xml.bind.annotation.XmlRootElement;");
+          writer.write("import jakarta.xml.bind.annotation.XmlRootElement;");
           writer.newLine();
         }
-        writer.write("import javax.xml.bind.annotation.XmlAnyElement;");
+        writer.write("import jakarta.xml.bind.annotation.XmlAnyElement;");
         writer.newLine();
-        writer.write("import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;");
+        writer.write("import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;");
         writer.newLine();
         if (propertyLexicon.hasAs()) {
           writer.write("import org.smallmind.web.json.scaffold.util.As;");
@@ -943,7 +943,7 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
         writer.newLine();
 
         // imports
-        writer.write("import javax.annotation.Generated;");
+        writer.write("import jakarta.annotation.Generated;");
         writer.newLine();
         writer.write("import org.smallmind.web.json.scaffold.util.");
         if (usePolymorphicAttribute) {

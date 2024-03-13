@@ -38,7 +38,7 @@ import java.security.SecureRandom;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
-import javax.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.ClientBuilder;
 import org.smallmind.nutsnbolts.ssl.NaiveHostNameVerifier;
 import org.smallmind.nutsnbolts.ssl.NaiveTrustManager;
 

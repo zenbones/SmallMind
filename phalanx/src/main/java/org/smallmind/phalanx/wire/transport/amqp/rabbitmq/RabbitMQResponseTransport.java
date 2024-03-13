@@ -92,7 +92,8 @@ public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, Rab
   }
 
   @Override
-  public String register (Class<?> serviceInterface, WiredService targetService) throws Exception {
+  public String register (Class<?> serviceInterface, WiredService targetService)
+    throws Exception {
 
     invocationCircuit.register(serviceInterface, targetService);
 
@@ -138,7 +139,8 @@ public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, Rab
   }
 
   @Override
-  public void transmit (String callerId, String correlationId, boolean error, String nativeType, Object result) throws Throwable {
+  public void transmit (String callerId, String correlationId, boolean error, String nativeType, Object result)
+    throws Throwable {
 
     ResponseMessageRouter responseMessageRouter;
 

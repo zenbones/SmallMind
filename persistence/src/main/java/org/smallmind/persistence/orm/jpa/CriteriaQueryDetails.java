@@ -32,8 +32,8 @@
  */
 package org.smallmind.persistence.orm.jpa;
 
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
 
 public abstract class CriteriaQueryDetails<T> {
 

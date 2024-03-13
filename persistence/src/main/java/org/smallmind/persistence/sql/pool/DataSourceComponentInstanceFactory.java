@@ -34,9 +34,9 @@ package org.smallmind.persistence.sql.pool;
 
 import java.lang.reflect.Array;
 import java.sql.SQLException;
-import javax.sql.CommonDataSource;
-import javax.sql.ConnectionPoolDataSource;
-import javax.sql.PooledConnection;
+import jakarta.sql.CommonDataSource;
+import jakarta.sql.ConnectionPoolDataSource;
+import jakarta.sql.PooledConnection;
 import org.smallmind.persistence.sql.OmnivorousConnectionPoolDataSource;
 
 public class DataSourceComponentInstanceFactory<D extends CommonDataSource, P extends PooledConnection> extends PooledConnectionComponentInstanceFactory<P> {

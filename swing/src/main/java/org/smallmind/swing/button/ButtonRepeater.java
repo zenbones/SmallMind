@@ -37,10 +37,10 @@ import java.awt.event.ActionListener;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import javax.swing.JButton;
-import javax.swing.SwingUtilities;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
+import jakarta.swing.JButton;
+import jakarta.swing.SwingUtilities;
+import jakarta.swing.event.ChangeEvent;
+import jakarta.swing.event.ChangeListener;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 import org.smallmind.scribe.pen.LoggerManager;
 

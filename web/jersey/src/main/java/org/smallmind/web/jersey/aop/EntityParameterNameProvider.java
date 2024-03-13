@@ -37,7 +37,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.LinkedList;
 import java.util.List;
-import javax.validation.ParameterNameProvider;
+import jakarta.validation.ParameterNameProvider;
 
 public class EntityParameterNameProvider implements ParameterNameProvider {
 

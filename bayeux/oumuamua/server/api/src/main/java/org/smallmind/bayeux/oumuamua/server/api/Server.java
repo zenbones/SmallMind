@@ -32,8 +32,8 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api;
 
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletConfig;
+import jakarta.servlet.ServletException;
 import org.smallmind.bayeux.oumuamua.server.api.backbone.Backbone;
 import org.smallmind.bayeux.oumuamua.server.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;

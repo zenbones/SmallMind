@@ -36,11 +36,11 @@ import java.awt.Color;
 import java.awt.Component;
 import java.io.File;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
-import javax.swing.JLabel;
-import javax.swing.JList;
-import javax.swing.ListCellRenderer;
+import jakarta.swing.BorderFactory;
+import jakarta.swing.ImageIcon;
+import jakarta.swing.JLabel;
+import jakarta.swing.JList;
+import jakarta.swing.ListCellRenderer;
 import org.smallmind.swing.ColorUtility;
 
 public class FilePickListCellRenderer implements ListCellRenderer {

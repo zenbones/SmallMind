@@ -41,7 +41,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.websocket.Extension;
+import jakarta.websocket.Extension;
 import org.smallmind.nutsnbolts.http.Base64Codec;
 import org.smallmind.nutsnbolts.security.EncryptionUtility;
 import org.smallmind.nutsnbolts.security.HashAlgorithm;

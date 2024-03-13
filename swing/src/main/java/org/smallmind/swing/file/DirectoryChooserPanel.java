@@ -41,20 +41,20 @@ import java.awt.event.ItemListener;
 import java.io.File;
 import java.util.Iterator;
 import java.util.LinkedList;
-import javax.swing.GroupLayout;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextField;
-import javax.swing.JTree;
-import javax.swing.LayoutStyle;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.TreeSelectionModel;
+import jakarta.swing.GroupLayout;
+import jakarta.swing.JButton;
+import jakarta.swing.JComboBox;
+import jakarta.swing.JLabel;
+import jakarta.swing.JPanel;
+import jakarta.swing.JScrollPane;
+import jakarta.swing.JTextField;
+import jakarta.swing.JTree;
+import jakarta.swing.LayoutStyle;
+import jakarta.swing.event.DocumentEvent;
+import jakarta.swing.event.DocumentListener;
+import jakarta.swing.event.TreeSelectionEvent;
+import jakarta.swing.event.TreeSelectionListener;
+import jakarta.swing.tree.TreeSelectionModel;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 import org.smallmind.swing.tree.AttachmentTreeModel;
 
@@ -121,16 +121,16 @@ public class DirectoryChooserPanel extends JPanel implements ActionListener, Ite
     layout.setAutoCreateContainerGaps(true);
 
     layout.setHorizontalGroup(layout.createParallelGroup(GroupLayout.Alignment.TRAILING)
-      .addGroup(layout.createSequentialGroup().addComponent(rootLabel).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(rootComboBox))
-      .addComponent(directoryTreeScrollPane)
-      .addGroup(layout.createSequentialGroup().addComponent(directoryLabel).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(directoryTextField))
-      .addGroup(layout.createSequentialGroup().addComponent(selectButton).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(cancelButton)));
+                                .addGroup(layout.createSequentialGroup().addComponent(rootLabel).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(rootComboBox))
+                                .addComponent(directoryTreeScrollPane)
+                                .addGroup(layout.createSequentialGroup().addComponent(directoryLabel).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(directoryTextField))
+                                .addGroup(layout.createSequentialGroup().addComponent(selectButton).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(cancelButton)));
 
     layout.setVerticalGroup(layout.createSequentialGroup()
-      .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(rootLabel).addComponent(rootComboBox, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE))
-      .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addComponent(directoryTreeScrollPane).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-      .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(directoryLabel).addComponent(directoryTextField, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE))
-      .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addGroup(layout.createParallelGroup().addComponent(selectButton).addComponent(cancelButton)));
+                              .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(rootLabel).addComponent(rootComboBox, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE))
+                              .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addComponent(directoryTreeScrollPane).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                              .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(directoryLabel).addComponent(directoryTextField, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE))
+                              .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addGroup(layout.createParallelGroup().addComponent(selectButton).addComponent(cancelButton)));
 
     rootComboBox.addItemListener(this);
     directoryTextField.getDocument().addDocumentListener(this);

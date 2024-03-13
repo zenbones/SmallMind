@@ -34,11 +34,11 @@ package org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356;
 
 import java.util.Arrays;
 import java.util.List;
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
-import javax.websocket.DeploymentException;
-import javax.websocket.server.ServerContainer;
-import javax.websocket.server.ServerEndpointConfig;
+import jakarta.servlet.ServletConfig;
+import jakarta.servlet.ServletException;
+import jakarta.websocket.DeploymentException;
+import jakarta.websocket.server.ServerContainer;
+import jakarta.websocket.server.ServerEndpointConfig;
 import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.Transport;

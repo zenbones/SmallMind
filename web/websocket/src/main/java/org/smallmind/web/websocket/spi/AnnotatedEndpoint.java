@@ -36,15 +36,15 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.websocket.ClientEndpoint;
-import javax.websocket.ClientEndpointConfig;
-import javax.websocket.Decoder;
-import javax.websocket.DeploymentException;
-import javax.websocket.Encoder;
-import javax.websocket.Endpoint;
-import javax.websocket.EndpointConfig;
-import javax.websocket.Extension;
-import javax.websocket.Session;
+import jakarta.websocket.ClientEndpoint;
+import jakarta.websocket.ClientEndpointConfig;
+import jakarta.websocket.Decoder;
+import jakarta.websocket.DeploymentException;
+import jakarta.websocket.Encoder;
+import jakarta.websocket.Endpoint;
+import jakarta.websocket.EndpointConfig;
+import jakarta.websocket.Extension;
+import jakarta.websocket.Session;
 
 public class AnnotatedEndpoint extends Endpoint {
 

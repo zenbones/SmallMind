@@ -35,8 +35,8 @@ package org.smallmind.swing;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.SystemColor;
-import javax.swing.JComponent;
-import javax.swing.SwingConstants;
+import jakarta.swing.JComponent;
+import jakarta.swing.SwingConstants;
 
 public class Separator extends JComponent {
 

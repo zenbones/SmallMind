@@ -32,8 +32,8 @@
  */
 package org.smallmind.swing.signal;
 
-import javax.swing.ImageIcon;
-import javax.swing.JLabel;
+import jakarta.swing.ImageIcon;
+import jakarta.swing.JLabel;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 public class IndicatorBall extends JLabel {

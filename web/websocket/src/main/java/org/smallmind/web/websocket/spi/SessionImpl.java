@@ -47,16 +47,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.websocket.ClientEndpointConfig;
-import javax.websocket.CloseReason;
-import javax.websocket.Decoder;
-import javax.websocket.Endpoint;
-import javax.websocket.Extension;
-import javax.websocket.MessageHandler;
-import javax.websocket.PongMessage;
-import javax.websocket.RemoteEndpoint;
-import javax.websocket.Session;
-import javax.websocket.WebSocketContainer;
+import jakarta.websocket.ClientEndpointConfig;
+import jakarta.websocket.CloseReason;
+import jakarta.websocket.Decoder;
+import jakarta.websocket.Endpoint;
+import jakarta.websocket.Extension;
+import jakarta.websocket.MessageHandler;
+import jakarta.websocket.PongMessage;
+import jakarta.websocket.RemoteEndpoint;
+import jakarta.websocket.Session;
+import jakarta.websocket.WebSocketContainer;
 import org.smallmind.nutsnbolts.http.HTTPCodec;
 import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
@@ -418,7 +418,7 @@ public class SessionImpl implements Session, CloseListener {
   @Override
   public void onClose (int code, String reason) {
 
-    endpoint.onClose(this, new CloseReason(javax.websocket.CloseReason.CloseCodes.getCloseCode(code), reason));
+    endpoint.onClose(this, new CloseReason(jakarta.websocket.CloseReason.CloseCodes.getCloseCode(code), reason));
   }
 
   @Override

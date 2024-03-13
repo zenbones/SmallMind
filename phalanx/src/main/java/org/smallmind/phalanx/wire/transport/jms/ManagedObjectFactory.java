@@ -32,8 +32,8 @@
  */
 package org.smallmind.phalanx.wire.transport.jms;
 
-import javax.jms.Connection;
-import javax.jms.Destination;
+import jakarta.jms.Connection;
+import jakarta.jms.Destination;
 import org.smallmind.phalanx.wire.TransportException;
 
 public interface ManagedObjectFactory {

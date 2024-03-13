@@ -37,7 +37,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
-import javax.swing.JPanel;
+import jakarta.swing.JPanel;
 
 public class TabPanel extends JPanel {
 

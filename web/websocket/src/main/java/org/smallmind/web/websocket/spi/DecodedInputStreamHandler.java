@@ -34,10 +34,10 @@ package org.smallmind.web.websocket.spi;
 
 import java.io.IOException;
 import java.io.InputStream;
-import javax.websocket.DecodeException;
-import javax.websocket.Decoder;
-import javax.websocket.Endpoint;
-import javax.websocket.MessageHandler;
+import jakarta.websocket.DecodeException;
+import jakarta.websocket.Decoder;
+import jakarta.websocket.Endpoint;
+import jakarta.websocket.MessageHandler;
 
 public class DecodedInputStreamHandler<T> implements MessageHandler.Whole<InputStream> {
 

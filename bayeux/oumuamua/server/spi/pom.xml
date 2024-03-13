@@ -12,14 +12,14 @@
   <description>Oumuamua Server Spi</description>
   <dependencies>
     <dependency>
-      <groupId>javax.annotation</groupId>
-      <artifactId>javax.annotation-api</artifactId>
+      <groupId>jakarta.annotation</groupId>
+      <artifactId>jakarta.annotation-api</artifactId>
       <optional>true</optional>
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>javax.websocket</groupId>
-      <artifactId>javax.websocket-api</artifactId>
+      <groupId>jakarta.websocket</groupId>
+      <artifactId>jakarta.websocket-api</artifactId>
       <optional>true</optional>
       <scope>compile</scope>
     </dependency>

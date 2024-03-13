@@ -35,7 +35,7 @@ package org.smallmind.bayeux.oumuamua.server.impl.longpolling;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.LinkedList;
-import javax.servlet.AsyncContext;
+import jakarta.servlet.AsyncContext;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.PacketType;
 import org.smallmind.bayeux.oumuamua.server.api.Transport;

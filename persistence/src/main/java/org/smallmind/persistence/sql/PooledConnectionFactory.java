@@ -33,10 +33,10 @@
 package org.smallmind.persistence.sql;
 
 import java.sql.SQLException;
-import javax.sql.CommonDataSource;
-import javax.sql.DataSource;
-import javax.sql.PooledConnection;
-import javax.sql.XADataSource;
+import jakarta.sql.CommonDataSource;
+import jakarta.sql.DataSource;
+import jakarta.sql.PooledConnection;
+import jakarta.sql.XADataSource;
 
 public class PooledConnectionFactory {
 

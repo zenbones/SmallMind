@@ -87,7 +87,8 @@ public class JsonEntityResourceProxyFactoryBean implements FactoryBean<Proxy>, I
   }
 
   @Override
-  public void afterPropertiesSet () throws Exception {
+  public void afterPropertiesSet ()
+    throws Exception {
 
     proxy = JsonEntityResourceProxyFactory.generateProxy(target, versionPrefix, serviceVersion, serviceName, resourceInterface, level, headerInjectors);
   }
@@ -105,7 +106,8 @@ public class JsonEntityResourceProxyFactoryBean implements FactoryBean<Proxy>, I
   }
 
   @Override
-  public Proxy getObject () throws Exception {
+  public Proxy getObject ()
+    throws Exception {
 
     return proxy;
   }

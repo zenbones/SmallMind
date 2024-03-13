@@ -44,7 +44,8 @@ public class PolymorphicAttributeNameInitializingBean implements InitializingBea
   }
 
   @Override
-  public void afterPropertiesSet () throws Exception {
+  public void afterPropertiesSet ()
+    throws Exception {
 
     PolymorphicAttributeManager.setPolymorphicAttributeName(polymorphicAttributeName);
   }

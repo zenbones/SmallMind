@@ -49,9 +49,9 @@ public class ThrongEmbeddedCodec<T> extends ThrongPropertiesCodec<T> {
   public T decode (BsonReader reader, DecoderContext decoderContext) {
 
     if (BsonType.NULL.equals(reader.getCurrentBsonType())) {
-     reader.readNull();
+      reader.readNull();
 
-     return null;
+      return null;
     } else {
 
       T instance;

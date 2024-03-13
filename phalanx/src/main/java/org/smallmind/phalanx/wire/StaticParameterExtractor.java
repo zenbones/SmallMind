@@ -46,7 +46,8 @@ public class StaticParameterExtractor<T> implements ParameterExtractor<T> {
   }
 
   @Override
-  public T getParameter (Method method, HashMap<String, Object> argumentMap, WireContext... wireContexts) throws MissingInstanceIdException {
+  public T getParameter (Method method, HashMap<String, Object> argumentMap, WireContext... wireContexts)
+    throws MissingInstanceIdException {
 
     return parameter;
   }

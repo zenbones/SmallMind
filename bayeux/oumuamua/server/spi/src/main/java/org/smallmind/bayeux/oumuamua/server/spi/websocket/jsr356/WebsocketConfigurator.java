@@ -33,10 +33,10 @@
 package org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356;
 
 import java.util.List;
-import javax.websocket.Extension;
-import javax.websocket.HandshakeResponse;
-import javax.websocket.server.HandshakeRequest;
-import javax.websocket.server.ServerEndpointConfig;
+import jakarta.websocket.Extension;
+import jakarta.websocket.HandshakeResponse;
+import jakarta.websocket.server.HandshakeRequest;
+import jakarta.websocket.server.ServerEndpointConfig;
 
 public class WebsocketConfigurator extends ServerEndpointConfig.Configurator {
 

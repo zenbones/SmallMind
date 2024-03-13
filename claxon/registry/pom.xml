@@ -12,8 +12,8 @@
   <description>Code Instrumentation Framework</description>
   <dependencies>
     <dependency>
-      <groupId>javax.annotation</groupId>
-      <artifactId>javax.annotation-api</artifactId>
+      <groupId>jakarta.annotation</groupId>
+      <artifactId>jakarta.annotation-api</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>

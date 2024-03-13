@@ -32,8 +32,8 @@
  */
 package org.smallmind.swing.banner;
 
-import javax.swing.ListModel;
-import javax.swing.event.ListDataListener;
+import jakarta.swing.ListModel;
+import jakarta.swing.event.ListDataListener;
 
 public class BannerListModel implements ListModel {
 

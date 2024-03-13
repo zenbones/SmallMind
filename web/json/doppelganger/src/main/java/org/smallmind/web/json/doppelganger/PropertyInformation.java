@@ -101,4 +101,3 @@ public class PropertyInformation {
     return (required != null) && required;
   }
 }
-

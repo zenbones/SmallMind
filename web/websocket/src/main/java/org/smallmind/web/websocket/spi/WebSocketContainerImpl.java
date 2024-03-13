@@ -39,12 +39,12 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import javax.websocket.ClientEndpointConfig;
-import javax.websocket.DeploymentException;
-import javax.websocket.Endpoint;
-import javax.websocket.Extension;
-import javax.websocket.Session;
-import javax.websocket.WebSocketContainer;
+import jakarta.websocket.ClientEndpointConfig;
+import jakarta.websocket.DeploymentException;
+import jakarta.websocket.Endpoint;
+import jakarta.websocket.Extension;
+import jakarta.websocket.Session;
+import jakarta.websocket.WebSocketContainer;
 import org.smallmind.web.websocket.WebSocketException;
 
 public class WebSocketContainerImpl implements WebSocketContainer {

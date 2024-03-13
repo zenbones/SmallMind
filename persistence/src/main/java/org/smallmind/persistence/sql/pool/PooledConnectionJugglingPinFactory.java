@@ -32,8 +32,8 @@
  */
 package org.smallmind.persistence.sql.pool;
 
-import javax.sql.ConnectionPoolDataSource;
-import javax.sql.PooledConnection;
+import jakarta.sql.ConnectionPoolDataSource;
+import jakarta.sql.PooledConnection;
 import org.smallmind.quorum.juggler.JugglingPin;
 import org.smallmind.quorum.juggler.JugglingPinFactory;
 

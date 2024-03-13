@@ -32,7 +32,7 @@
  */
 package org.smallmind.web.websocket;
 
-import javax.websocket.Extension;
+import jakarta.websocket.Extension;
 
 public class ExtensionParameter implements Extension.Parameter {
 

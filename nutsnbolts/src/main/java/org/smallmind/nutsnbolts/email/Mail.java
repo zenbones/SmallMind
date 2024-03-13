@@ -34,7 +34,7 @@ package org.smallmind.nutsnbolts.email;
 
 import java.io.Reader;
 import java.io.StringReader;
-import javax.activation.DataSource;
+import jakarta.activation.DataSource;
 
 public class Mail {
 

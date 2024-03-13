@@ -12,8 +12,8 @@
 
   <dependencies>
     <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>javax.servlet-api</artifactId>
+      <groupId>jakarta.servlet</groupId>
+      <artifactId>jakarta.servlet-api</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -52,8 +52,8 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>javax.xml.ws</groupId>
-      <artifactId>jaxws-api</artifactId>
+      <groupId>jakarta.xml.ws</groupId>
+      <artifactId>jakarta.xml.ws-api</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>

@@ -35,8 +35,8 @@ package org.smallmind.persistence.sql.pool;
 import java.io.PrintWriter;
 import java.sql.SQLFeatureNotSupportedException;
 import java.util.logging.Logger;
-import javax.sql.CommonDataSource;
-import javax.sql.PooledConnection;
+import jakarta.sql.CommonDataSource;
+import jakarta.sql.PooledConnection;
 import org.smallmind.quorum.pool.ComponentPoolException;
 
 public abstract class AbstractPooledDataSource<D extends CommonDataSource, P extends PooledConnection> implements CommonDataSource {
@@ -69,7 +69,8 @@ public abstract class AbstractPooledDataSource<D extends CommonDataSource, P ext
     return pooledConnectionClass;
   }
 
-  public Logger getParentLogger () throws SQLFeatureNotSupportedException {
+  public Logger getParentLogger ()
+    throws SQLFeatureNotSupportedException {
 
     throw new SQLFeatureNotSupportedException();
   }

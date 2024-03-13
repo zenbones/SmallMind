@@ -59,8 +59,8 @@ import java.util.jar.Manifest;
 public class SingularityClassLoader extends ClassLoader {
 
   private static final PermissionCollection ALL_PERMISSION_COLLECTION;
-  private static final String[] INOPERABLE_NAMESPACES = new String[] {"javax.xml.", "org.xml.", "org.w3c."};
-  private static final String[] OPERABLE_NAMESPACES = new String[] {"javax.xml.bind."};
+  private static final String[] INOPERABLE_NAMESPACES = new String[] {"jakarta.xml.", "org.xml.", "org.w3c."};
+  private static final String[] OPERABLE_NAMESPACES = new String[] {"jakarta.xml.bind."};
   private final HashMap<String, URL> urlMap = new HashMap<>();
   private final HashSet<String> packageSet = new HashSet<>();
   private final URL sealBase;
@@ -366,6 +366,3 @@ public class SingularityClassLoader extends ClassLoader {
     }
   }
 }
-
-
-

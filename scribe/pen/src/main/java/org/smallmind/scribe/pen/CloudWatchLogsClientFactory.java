@@ -81,7 +81,8 @@ public class CloudWatchLogsClientFactory implements FactoryBean<CloudWatchLogsCl
   }
 
   @Override
-  public void afterPropertiesSet () throws Exception {
+  public void afterPropertiesSet ()
+    throws Exception {
 
     AwsCredentialsProvider credentialsProvider = StaticCredentialsProvider.create(AwsBasicCredentials.create(awsAccessKey, awsSecretKey));
 

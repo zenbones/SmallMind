@@ -71,7 +71,8 @@ public class RMIRegistryFactoryBean implements FactoryBean<Registry>, Initializi
   }
 
   @Override
-  public Registry getObject () throws Exception {
+  public Registry getObject ()
+    throws Exception {
 
     return registry;
   }

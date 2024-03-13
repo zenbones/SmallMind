@@ -34,10 +34,10 @@ package org.smallmind.web.jersey.aop;
 
 import java.util.Arrays;
 import java.util.Set;
-import javax.validation.ConstraintViolation;
-import javax.validation.Path;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Path;
 
-public class EntityValidationException extends javax.validation.ValidationException {
+public class EntityValidationException extends jakarta.validation.ValidationException {
 
   public <T> EntityValidationException (Set<ConstraintViolation<T>> constraintViolationSet) {
 

@@ -34,11 +34,11 @@ package org.smallmind.swing.file;
 
 import java.awt.Color;
 import java.awt.Component;
-import javax.swing.BorderFactory;
-import javax.swing.JLabel;
-import javax.swing.JList;
-import javax.swing.ListCellRenderer;
-import javax.swing.filechooser.FileFilter;
+import jakarta.swing.BorderFactory;
+import jakarta.swing.JLabel;
+import jakarta.swing.JList;
+import jakarta.swing.ListCellRenderer;
+import jakarta.swing.filechooser.FileFilter;
 import org.smallmind.swing.ColorUtility;
 
 public class FilterListCellRenderer implements ListCellRenderer {

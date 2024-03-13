@@ -34,8 +34,8 @@ package org.smallmind.persistence.sql.pool;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import javax.sql.DataSource;
-import javax.sql.PooledConnection;
+import jakarta.sql.DataSource;
+import jakarta.sql.PooledConnection;
 import org.smallmind.nutsnbolts.lang.StackTrace;
 import org.smallmind.persistence.sql.DataSourceManager;
 import org.smallmind.quorum.pool.ComponentPoolException;

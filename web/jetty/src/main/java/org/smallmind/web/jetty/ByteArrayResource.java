@@ -114,13 +114,15 @@ public class ByteArrayResource extends Resource {
   }
 
   @Override
-  public boolean delete () throws SecurityException {
+  public boolean delete ()
+    throws SecurityException {
 
     return false;
   }
 
   @Override
-  public boolean renameTo (Resource resource) throws SecurityException {
+  public boolean renameTo (Resource resource)
+    throws SecurityException {
 
     return false;
   }

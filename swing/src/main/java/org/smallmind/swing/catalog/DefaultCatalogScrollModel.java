@@ -35,7 +35,7 @@ package org.smallmind.swing.catalog;
 import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Rectangle;
-import javax.swing.JViewport;
+import jakarta.swing.JViewport;
 
 public class DefaultCatalogScrollModel implements CatalogScrollModel {
 

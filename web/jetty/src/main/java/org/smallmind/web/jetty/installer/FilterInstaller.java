@@ -33,7 +33,7 @@
 package org.smallmind.web.jetty.installer;
 
 import java.util.Map;
-import javax.servlet.Filter;
+import jakarta.servlet.Filter;
 
 public class FilterInstaller extends JettyInstaller {
 

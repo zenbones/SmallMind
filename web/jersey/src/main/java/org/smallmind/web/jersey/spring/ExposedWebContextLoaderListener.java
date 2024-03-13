@@ -32,7 +32,7 @@
  */
 package org.smallmind.web.jersey.spring;
 
-import javax.servlet.ServletContextEvent;
+import jakarta.servlet.ServletContextEvent;
 import org.smallmind.nutsnbolts.spring.web.WebContextLoaderListener;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 

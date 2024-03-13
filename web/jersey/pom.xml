@@ -13,8 +13,8 @@
 
   <dependencies>
     <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>javax.servlet-api</artifactId>
+      <groupId>jakarta.servlet</groupId>
+      <artifactId>jakarta.servlet-api</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -43,13 +43,13 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>org.glassfish</groupId>
-      <artifactId>javax.el</artifactId>
+      <groupId>jakarta.el</groupId>
+      <artifactId>jakarta.el-api</artifactId>
       <scope>runtime</scope>
     </dependency>
     <dependency>
-      <groupId>javax.enterprise</groupId>
-      <artifactId>cdi-api</artifactId>
+      <groupId>jakarta.enterprise</groupId>
+      <artifactId>jakarta.enterprise.cdi-api</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>

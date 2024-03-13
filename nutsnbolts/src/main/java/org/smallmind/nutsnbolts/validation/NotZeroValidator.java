@@ -34,8 +34,8 @@ package org.smallmind.nutsnbolts.validation;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import javax.validation.ConstraintValidator;
-import javax.validation.ConstraintValidatorContext;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
 
 public class NotZeroValidator implements ConstraintValidator<NotZero, Number> {
 

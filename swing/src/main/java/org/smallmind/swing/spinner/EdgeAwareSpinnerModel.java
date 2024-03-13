@@ -32,7 +32,7 @@
  */
 package org.smallmind.swing.spinner;
 
-import javax.swing.SpinnerModel;
+import jakarta.swing.SpinnerModel;
 
 public interface EdgeAwareSpinnerModel extends SpinnerModel {
 

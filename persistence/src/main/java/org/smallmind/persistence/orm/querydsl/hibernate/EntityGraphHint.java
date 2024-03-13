@@ -34,7 +34,7 @@ package org.smallmind.persistence.orm.querydsl.hibernate;
 
 public enum EntityGraphHint {
 
-  FETCH_GRAPH("javax.persistence.fetchgraph"), LOAD_GRAPH("javax.persistence.loadgraph");
+  FETCH_GRAPH("jakarta.persistence.fetchgraph"), LOAD_GRAPH("jakarta.persistence.loadgraph");
 
   private final String key;
 

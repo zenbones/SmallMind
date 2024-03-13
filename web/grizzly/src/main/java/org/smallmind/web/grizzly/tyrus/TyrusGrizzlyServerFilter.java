@@ -40,7 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.RejectedExecutionException;
-import javax.websocket.CloseReason;
+import jakarta.websocket.CloseReason;
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.CloseListener;
 import org.glassfish.grizzly.Connection;
@@ -79,7 +79,7 @@ public class TyrusGrizzlyServerFilter extends BaseFilter {
       .createAttribute(TyrusGrizzlyServerFilter.class.getName() + ".Connection");
 
   private static final Attribute<TaskProcessor> TASK_PROCESSOR = Grizzly.DEFAULT_ATTRIBUTE_BUILDER
-    .createAttribute(TaskProcessor.class.getName() + ".TaskProcessor");
+                                                                   .createAttribute(TaskProcessor.class.getName() + ".TaskProcessor");
 
   private final ServerContainer serverContainer;
   private final String contextPath;
@@ -109,13 +109,13 @@ public class TyrusGrizzlyServerFilter extends BaseFilter {
     }
 
     final RequestContext requestContext = RequestContext.Builder.create()
-      .requestURI(
-        URI.create(requestPacket.getRequestURI()))
-      .queryString(requestPacket.getQueryString())
-      .parameterMap(parameterMap)
-      .secure(requestPacket.isSecure())
-      .remoteAddr(requestPacket.getRemoteAddress())
-      .build();
+                                            .requestURI(
+                                              URI.create(requestPacket.getRequestURI()))
+                                            .queryString(requestPacket.getQueryString())
+                                            .parameterMap(parameterMap)
+                                            .secure(requestPacket.isSecure())
+                                            .remoteAddr(requestPacket.getRemoteAddress())
+                                            .build();
 
     for (String name : requestPacket.getHeaders().names()) {
       for (String headerValue : requestPacket.getHeaders().values(name)) {
@@ -254,8 +254,8 @@ public class TyrusGrizzlyServerFilter extends BaseFilter {
         write(ctx, upgradeResponse);
 
         final org.glassfish.tyrus.spi.Connection connection = upgradeInfo
-          .createConnection(new GrizzlyWriter(ctx.getConnection()),
-            reason -> grizzlyConnection.close());
+                                                                .createConnection(new GrizzlyWriter(ctx.getConnection()),
+                                                                  reason -> grizzlyConnection.close());
 
         TYRUS_CONNECTION.set(grizzlyConnection, connection);
         TASK_PROCESSOR.set(grizzlyConnection, new TaskProcessor());

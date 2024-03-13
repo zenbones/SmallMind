@@ -68,8 +68,8 @@ public class InstrumentedAspect {
       builder = new InstrumentedLazyBuilder(instrumented.parser(), instrumented.json());
 
       return Instrument.with(caller, builder, tags)
-        .as(instrumented.timeUnit())
-        .on((WithResultExecutable<Object>)thisJoinPoint::proceed);
+               .as(instrumented.timeUnit())
+               .on((WithResultExecutable<Object>)thisJoinPoint::proceed);
     }
   }
 }

@@ -37,7 +37,7 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
-import javax.swing.Icon;
+import jakarta.swing.Icon;
 
 public class VerticalTextIcon implements Icon {
 

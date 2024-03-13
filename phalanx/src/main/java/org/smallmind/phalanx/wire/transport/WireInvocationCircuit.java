@@ -88,7 +88,7 @@ public class WireInvocationCircuit {
         }
 
         methodology = methodInvoker.getMethodology(invocationFunction);
-        arguments = ArgumentRectifier.constructArray(signalCodec,invocationSignal,invocationFunction, methodology);
+        arguments = ArgumentRectifier.constructArray(signalCodec, invocationSignal, invocationFunction, methodology);
         nativeType = invocationFunction.getNativeType();
 
         result = methodInvoker.remoteInvocation(invocationSignal.getContexts(), invocationFunction, arguments);

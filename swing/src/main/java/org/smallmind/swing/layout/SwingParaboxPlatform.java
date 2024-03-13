@@ -34,10 +34,10 @@ package org.smallmind.swing.layout;
 
 import java.awt.ComponentOrientation;
 import java.util.Locale;
-import javax.swing.JButton;
-import javax.swing.JTextField;
-import javax.swing.LayoutStyle;
-import javax.swing.SwingConstants;
+import jakarta.swing.JButton;
+import jakarta.swing.JTextField;
+import jakarta.swing.LayoutStyle;
+import jakarta.swing.SwingConstants;
 import org.smallmind.nutsnbolts.layout.Bias;
 import org.smallmind.nutsnbolts.layout.Flow;
 import org.smallmind.nutsnbolts.layout.Orientation;

@@ -33,8 +33,8 @@
 package org.smallmind.web.websocket.spi;
 
 import java.nio.charset.StandardCharsets;
-import javax.websocket.EncodeException;
-import javax.websocket.Encoder;
+import jakarta.websocket.EncodeException;
+import jakarta.websocket.Encoder;
 
 public class EncoderTextHandler<T> implements EncoderHandler<T> {
 

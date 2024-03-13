@@ -34,7 +34,7 @@ package org.smallmind.swing.file;
 
 import java.util.Comparator;
 import java.util.Enumeration;
-import javax.swing.tree.TreeNode;
+import jakarta.swing.tree.TreeNode;
 import org.smallmind.swing.tree.AttachmentTreeNode;
 
 public class DirectoryTreeNode extends AttachmentTreeNode {

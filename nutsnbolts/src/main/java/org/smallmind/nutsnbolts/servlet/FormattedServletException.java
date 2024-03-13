@@ -32,7 +32,7 @@
  */
 package org.smallmind.nutsnbolts.servlet;
 
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletException;
 
 public class FormattedServletException extends ServletException {
 

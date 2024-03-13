@@ -38,7 +38,7 @@ import java.nio.file.Paths;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
-import javax.servlet.DispatcherType;
+import jakarta.servlet.DispatcherType;
 import org.glassfish.grizzly.IOStrategy;
 import org.glassfish.grizzly.http.server.AddOn;
 import org.glassfish.grizzly.http.server.CLStaticHttpHandler;

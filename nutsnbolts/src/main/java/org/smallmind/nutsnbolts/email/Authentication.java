@@ -32,7 +32,7 @@
  */
 package org.smallmind.nutsnbolts.email;
 
-import javax.mail.Authenticator;
+import jakarta.mail.Authenticator;
 
 public class Authentication {
 

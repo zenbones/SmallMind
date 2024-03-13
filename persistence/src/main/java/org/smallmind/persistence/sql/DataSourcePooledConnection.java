@@ -33,9 +33,9 @@
 package org.smallmind.persistence.sql;
 
 import java.sql.SQLException;
-import javax.sql.ConnectionEvent;
-import javax.sql.DataSource;
-import javax.sql.PooledConnection;
+import jakarta.sql.ConnectionEvent;
+import jakarta.sql.DataSource;
+import jakarta.sql.PooledConnection;
 
 public class DataSourcePooledConnection extends AbstractPooledConnection<DataSource> implements PooledConnection {
 

@@ -52,6 +52,5 @@ public class CodeContentSelfDestructive implements SelfDestructive {
   @Override
   public void destroy (Stint timeoutStint) {
 
-
   }
 }

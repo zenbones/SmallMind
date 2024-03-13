@@ -32,7 +32,7 @@
  */
 package org.smallmind.phalanx.wire.transport.jms;
 
-import javax.jms.Destination;
+import jakarta.jms.Destination;
 
 public interface SessionEmployer {
 

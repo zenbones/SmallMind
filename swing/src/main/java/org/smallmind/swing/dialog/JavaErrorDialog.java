@@ -46,16 +46,16 @@ import java.awt.event.WindowListener;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Iterator;
-import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JDialog;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.KeyStroke;
+import jakarta.swing.BorderFactory;
+import jakarta.swing.ImageIcon;
+import jakarta.swing.JButton;
+import jakarta.swing.JComponent;
+import jakarta.swing.JDialog;
+import jakarta.swing.JLabel;
+import jakarta.swing.JPanel;
+import jakarta.swing.JScrollPane;
+import jakarta.swing.JTextArea;
+import jakarta.swing.KeyStroke;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 
 public class JavaErrorDialog extends JDialog implements ActionListener, WindowListener {

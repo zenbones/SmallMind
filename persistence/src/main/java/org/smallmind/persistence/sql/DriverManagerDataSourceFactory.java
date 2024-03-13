@@ -33,8 +33,8 @@
 package org.smallmind.persistence.sql;
 
 import java.sql.SQLException;
-import javax.sql.DataSource;
-import javax.sql.PooledConnection;
+import jakarta.sql.DataSource;
+import jakarta.sql.PooledConnection;
 import org.smallmind.persistence.sql.pool.DataSourceFactory;
 
 public class DriverManagerDataSourceFactory implements DataSourceFactory<DataSource, PooledConnection> {

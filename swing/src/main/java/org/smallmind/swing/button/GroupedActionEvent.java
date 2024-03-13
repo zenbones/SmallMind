@@ -33,7 +33,7 @@
 package org.smallmind.swing.button;
 
 import java.awt.event.ActionEvent;
-import javax.swing.ButtonGroup;
+import jakarta.swing.ButtonGroup;
 
 public class GroupedActionEvent extends ActionEvent {
 

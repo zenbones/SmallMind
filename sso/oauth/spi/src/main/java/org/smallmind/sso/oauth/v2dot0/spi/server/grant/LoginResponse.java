@@ -32,8 +32,8 @@
  */
 package org.smallmind.sso.oauth.v2dot0.spi.server.grant;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
 
 @XmlAccessorType(XmlAccessType.PROPERTY)
 public abstract class LoginResponse {

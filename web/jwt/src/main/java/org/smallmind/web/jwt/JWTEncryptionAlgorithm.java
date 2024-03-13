@@ -48,7 +48,8 @@ public enum JWTEncryptionAlgorithm {
     }
 
     @Override
-    public boolean verify (Key key, String[] pieces, boolean urlSafe) throws Exception {
+    public boolean verify (Key key, String[] pieces, boolean urlSafe)
+      throws Exception {
 
       return HMACSigningAlgorithm.HMAC_SHA_256.verify(key, pieces, urlSafe);
     }
@@ -62,7 +63,8 @@ public enum JWTEncryptionAlgorithm {
     }
 
     @Override
-    public boolean verify (Key key, String[] pieces, boolean urlSafe) throws Exception {
+    public boolean verify (Key key, String[] pieces, boolean urlSafe)
+      throws Exception {
 
       return RSASigningAlgorithm.SHA_256_WITH_RSA.verify(key, pieces, urlSafe);
     }

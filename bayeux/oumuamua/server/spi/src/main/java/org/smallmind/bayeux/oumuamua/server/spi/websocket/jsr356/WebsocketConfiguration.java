@@ -32,8 +32,8 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356;
 
-import javax.websocket.Endpoint;
-import javax.websocket.Extension;
+import jakarta.websocket.Endpoint;
+import jakarta.websocket.Extension;
 
 public class WebsocketConfiguration {
 

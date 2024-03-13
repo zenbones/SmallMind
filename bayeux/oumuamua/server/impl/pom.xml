@@ -12,8 +12,8 @@
   <description>Oumuamua Server Reference Implementation</description>
   <dependencies>
     <dependency>
-      <groupId>javax.websocket</groupId>
-      <artifactId>javax.websocket-api</artifactId>
+      <groupId>jakarta.websocket</groupId>
+      <artifactId>jakarta.websocket-api</artifactId>
       <optional>true</optional>
       <scope>compile</scope>
     </dependency>
@@ -54,7 +54,7 @@
     </dependency>
     <dependency>
       <groupId>org.cometd.java</groupId>
-      <artifactId>cometd-java-client-websocket-javax</artifactId>
+      <artifactId>cometd-java-client-websocket-jakarta</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>

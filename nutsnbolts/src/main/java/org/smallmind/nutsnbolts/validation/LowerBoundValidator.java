@@ -32,8 +32,8 @@
  */
 package org.smallmind.nutsnbolts.validation;
 
-import javax.validation.ConstraintValidator;
-import javax.validation.ConstraintValidatorContext;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
 import org.smallmind.nutsnbolts.reflection.bean.BeanAccessException;
 import org.smallmind.nutsnbolts.reflection.bean.BeanInvocationException;
 import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;

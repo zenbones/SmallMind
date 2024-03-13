@@ -34,13 +34,12 @@ package org.smallmind.bayeux.oumuamua.server.impl;
 
 import java.util.HashMap;
 import java.util.Map;
-import javax.websocket.ContainerProvider;
-import javax.websocket.WebSocketContainer;
+import jakarta.websocket.ContainerProvider;
+import jakarta.websocket.WebSocketContainer;
 import org.cometd.bayeux.client.ClientSessionChannel;
 import org.cometd.client.BayeuxClient;
-import org.cometd.client.ext.AckExtension;
 import org.cometd.client.transport.ClientTransport;
-import org.cometd.client.websocket.javax.WebSocketTransport;
+import org.cometd.client.websocket.jakarta.WebSocketTransport;
 import org.testng.annotations.Test;
 
 @Test

@@ -79,7 +79,8 @@ public class SystemPropertyInitializingBean implements BeanFactoryPostProcessor,
 
   @Override
   // We exist as a post processor merely to get into the first 'special' initialization phase
-  public void postProcessBeanFactory (ConfigurableListableBeanFactory beanFactory) throws BeansException {
+  public void postProcessBeanFactory (ConfigurableListableBeanFactory beanFactory)
+    throws BeansException {
 
     for (Map.Entry<String, String> propertyEntry : propertyMap.entrySet()) {
       if (override || ((System.getProperty(propertyEntry.getKey()) == null) && (System.getenv(propertyEntry.getKey()) == null))) {

@@ -33,14 +33,14 @@
 package org.smallmind.phalanx.wire.transport.rest;
 
 import java.util.concurrent.atomic.AtomicReference;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.ForbiddenException;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.ForbiddenException;
+import jakarta.ws.rs.HeaderParam;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Tag;
 import org.smallmind.claxon.registry.meter.LazyBuilder;
@@ -75,7 +75,8 @@ public class RestResponseTransport implements ResponseTransport {
   }
 
   @Override
-  public String register (Class<?> serviceInterface, WiredService targetService) throws Exception {
+  public String register (Class<?> serviceInterface, WiredService targetService)
+    throws Exception {
 
     invocationCircuit.register(serviceInterface, targetService);
 
@@ -94,7 +95,8 @@ public class RestResponseTransport implements ResponseTransport {
   }
 
   @Override
-  public void pause () throws Exception {
+  public void pause ()
+    throws Exception {
 
     throw new UnsupportedOperationException();
   }

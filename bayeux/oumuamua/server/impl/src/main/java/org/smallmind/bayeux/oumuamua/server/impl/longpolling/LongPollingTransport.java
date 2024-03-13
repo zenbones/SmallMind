@@ -32,7 +32,7 @@
  */
 package org.smallmind.bayeux.oumuamua.server.impl.longpolling;
 
-import javax.servlet.ServletConfig;
+import jakarta.servlet.ServletConfig;
 import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.Transport;

@@ -33,9 +33,9 @@
 package org.smallmind.persistence.orm.spring.hibernate;
 
 import java.lang.annotation.Annotation;
-import javax.persistence.Embeddable;
-import javax.persistence.Entity;
-import javax.persistence.MappedSuperclass;
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.Entity;
+import jakarta.persistence.MappedSuperclass;
 import org.smallmind.persistence.ManagedDao;
 import org.smallmind.persistence.orm.hibernate.HibernateDao;
 import org.smallmind.persistence.orm.querydsl.hibernate.QHibernateDao;

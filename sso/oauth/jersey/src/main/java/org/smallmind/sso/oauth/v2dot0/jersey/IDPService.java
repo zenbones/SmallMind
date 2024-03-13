@@ -34,8 +34,8 @@ package org.smallmind.sso.oauth.v2dot0.jersey;
 
 import java.io.IOException;
 import java.net.URI;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.sso.oauth.v2dot0.spi.InvalidClientIdException;

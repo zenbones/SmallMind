@@ -33,7 +33,7 @@
 package org.smallmind.swing.spinner;
 
 import java.awt.event.ActionEvent;
-import javax.swing.AbstractAction;
+import jakarta.swing.AbstractAction;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 import org.smallmind.swing.EditorEvent;
 import org.smallmind.swing.EditorListener;

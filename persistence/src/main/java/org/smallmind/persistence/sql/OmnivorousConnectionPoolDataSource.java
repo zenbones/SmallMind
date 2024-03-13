@@ -36,9 +36,9 @@ import java.io.PrintWriter;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.util.logging.Logger;
-import javax.sql.CommonDataSource;
-import javax.sql.ConnectionPoolDataSource;
-import javax.sql.PooledConnection;
+import jakarta.sql.CommonDataSource;
+import jakarta.sql.ConnectionPoolDataSource;
+import jakarta.sql.PooledConnection;
 
 public class OmnivorousConnectionPoolDataSource<D extends CommonDataSource, P extends PooledConnection> implements ConnectionPoolDataSource {
 
@@ -71,7 +71,8 @@ public class OmnivorousConnectionPoolDataSource<D extends CommonDataSource, P ex
     return pooledConnectionClass.cast(PooledConnectionFactory.createPooledConnection(dataSource, user, password, maxStatements));
   }
 
-  public Logger getParentLogger () throws SQLFeatureNotSupportedException {
+  public Logger getParentLogger ()
+    throws SQLFeatureNotSupportedException {
 
     throw new SQLFeatureNotSupportedException();
   }

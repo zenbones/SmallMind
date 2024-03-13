@@ -39,11 +39,11 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
-import javax.websocket.DeploymentException;
-import javax.websocket.Extension;
-import javax.websocket.server.ServerEndpointConfig;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
+import jakarta.websocket.DeploymentException;
+import jakarta.websocket.Extension;
+import jakarta.websocket.server.ServerEndpointConfig;
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBException;
 import org.glassfish.grizzly.http.Method;
 import org.glassfish.grizzly.http.server.HttpHandler;
 import org.glassfish.grizzly.http.server.HttpServer;
@@ -95,15 +95,15 @@ public class TyrusGrizzlyServerContainer extends TyrusServerContainer {
     final DebugContext.TracingThreshold tracingThreshold = Utils.getProperty(localProperties, TyrusWebSocketEngine.TRACING_THRESHOLD, DebugContext.TracingThreshold.class, DebugContext.TracingThreshold.TRACE);
 
     webSocketEngine = TyrusWebSocketEngine.builder(this)
-      .incomingBufferSize(incomingBufferSize)
-      .clusterContext(clusterContext)
-      .applicationEventListener(applicationEventListener)
-      .maxSessionsPerApp(maxSessionsPerApp)
-      .maxSessionsPerRemoteAddr(maxSessionsPerRemoteAddr)
-      .parallelBroadcastEnabled(parallelBroadcastEnabled)
-      .tracingType(tracingType)
-      .tracingThreshold(tracingThreshold)
-      .build();
+                        .incomingBufferSize(incomingBufferSize)
+                        .clusterContext(clusterContext)
+                        .applicationEventListener(applicationEventListener)
+                        .maxSessionsPerApp(maxSessionsPerApp)
+                        .maxSessionsPerRemoteAddr(maxSessionsPerRemoteAddr)
+                        .parallelBroadcastEnabled(parallelBroadcastEnabled)
+                        .tracingType(tracingType)
+                        .tracingThreshold(tracingThreshold)
+                        .build();
 
     // idle timeout set to indefinite.
     networkListener.getKeepAlive().setIdleTimeoutInSeconds(-1);
@@ -114,7 +114,7 @@ public class TyrusGrizzlyServerContainer extends TyrusServerContainer {
     }
 
     contextPath = webappContext.getContextPath();
-    webappContext.setAttribute("javax.websocket.server.ServerContainer", this);
+    webappContext.setAttribute("jakarta.websocket.server.ServerContainer", this);
   }
 
   @Override
@@ -124,13 +124,15 @@ public class TyrusGrizzlyServerContainer extends TyrusServerContainer {
   }
 
   @Override
-  public void register (Class<?> endpointClass) throws DeploymentException {
+  public void register (Class<?> endpointClass)
+    throws DeploymentException {
 
     webSocketEngine.register(endpointClass, contextPath);
   }
 
   @Override
-  public void register (ServerEndpointConfig serverEndpointConfig) throws DeploymentException {
+  public void register (ServerEndpointConfig serverEndpointConfig)
+    throws DeploymentException {
 
     webSocketEngine.register(mergeExtensions(serverEndpointConfig), contextPath);
   }
@@ -155,11 +157,11 @@ public class TyrusGrizzlyServerContainer extends TyrusServerContainer {
             addedExtensionList.addAll(serverEndpointConfig.getExtensions());
 
             return ServerEndpointConfig.Builder.create(serverEndpointConfig.getEndpointClass(), serverEndpointConfig.getPath())
-              .configurator(serverEndpointConfig.getConfigurator())
-              .decoders(serverEndpointConfig.getDecoders())
-              .encoders(serverEndpointConfig.getEncoders())
-              .extensions(addedExtensionList)
-              .subprotocols(serverEndpointConfig.getSubprotocols()).build();
+                     .configurator(serverEndpointConfig.getConfigurator())
+                     .decoders(serverEndpointConfig.getDecoders())
+                     .encoders(serverEndpointConfig.getEncoders())
+                     .extensions(addedExtensionList)
+                     .subprotocols(serverEndpointConfig.getSubprotocols()).build();
           }
         }
       }

@@ -86,37 +86,43 @@ public class NaiveSSLSocketFactory extends SSLSocketFactory {
   }
 
   @Override
-  public Socket createSocket () throws IOException {
+  public Socket createSocket ()
+    throws IOException {
 
     return internalSSLSocketFactory.createSocket();
   }
 
   @Override
-  public Socket createSocket (Socket s, String host, int port, boolean autoClose) throws IOException {
+  public Socket createSocket (Socket s, String host, int port, boolean autoClose)
+    throws IOException {
 
     return internalSSLSocketFactory.createSocket(s, host, port, autoClose);
   }
 
   @Override
-  public Socket createSocket (String host, int port) throws IOException {
+  public Socket createSocket (String host, int port)
+    throws IOException {
 
     return internalSSLSocketFactory.createSocket(host, port);
   }
 
   @Override
-  public Socket createSocket (String host, int port, InetAddress localHost, int localPort) throws IOException {
+  public Socket createSocket (String host, int port, InetAddress localHost, int localPort)
+    throws IOException {
 
     return internalSSLSocketFactory.createSocket(host, port, localHost, localPort);
   }
 
   @Override
-  public Socket createSocket (InetAddress host, int port) throws IOException {
+  public Socket createSocket (InetAddress host, int port)
+    throws IOException {
 
     return internalSSLSocketFactory.createSocket(host, port);
   }
 
   @Override
-  public Socket createSocket (InetAddress address, int port, InetAddress localAddress, int localPort) throws IOException {
+  public Socket createSocket (InetAddress address, int port, InetAddress localAddress, int localPort)
+    throws IOException {
 
     return internalSSLSocketFactory.createSocket(address, port, localAddress, localPort);
   }

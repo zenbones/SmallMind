@@ -65,7 +65,8 @@ public class ClientAuthProxyFilter extends BaseFilter {
     this.proxyMode = proxyMode;
   }
 
-  public NextAction handleRead (FilterChainContext ctx) throws IOException {
+  public NextAction handleRead (FilterChainContext ctx)
+    throws IOException {
 
     if (HttpPacket.isHttp(ctx.getMessage())) {
       HttpContent httpContent = ctx.getMessage();

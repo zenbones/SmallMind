@@ -33,7 +33,7 @@
 package org.smallmind.web.websocket.spi;
 
 import java.io.IOException;
-import javax.websocket.EncodeException;
+import jakarta.websocket.EncodeException;
 
 public interface EncoderHandler<T> {
 

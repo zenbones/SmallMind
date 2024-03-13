@@ -32,8 +32,8 @@
  */
 package org.smallmind.phalanx.wire.transport.jms;
 
-import javax.jms.BytesMessage;
-import javax.jms.Message;
+import jakarta.jms.BytesMessage;
+import jakarta.jms.Message;
 import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Tag;
 import org.smallmind.claxon.registry.meter.LazyBuilder;

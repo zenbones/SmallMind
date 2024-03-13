@@ -50,7 +50,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.SSLSocketFactory;
-import javax.websocket.Extension;
+import jakarta.websocket.Extension;
 import org.smallmind.nutsnbolts.http.Base64Codec;
 import org.smallmind.nutsnbolts.io.ByteArrayIOStream;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;

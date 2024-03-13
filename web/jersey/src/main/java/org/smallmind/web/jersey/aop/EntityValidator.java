@@ -34,9 +34,9 @@ package org.smallmind.web.jersey.aop;
 
 import java.lang.reflect.Method;
 import java.util.Set;
-import javax.validation.ConstraintViolation;
-import javax.validation.Validation;
-import javax.validation.executable.ExecutableValidator;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.executable.ExecutableValidator;
 import org.hibernate.validator.HibernateValidator;
 
 public class EntityValidator {

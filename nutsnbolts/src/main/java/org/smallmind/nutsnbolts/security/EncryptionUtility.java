@@ -231,5 +231,3 @@ public class EncryptionUtility {
     return cipher.doFinal(toBeDecrypted);
   }
 }
-
-

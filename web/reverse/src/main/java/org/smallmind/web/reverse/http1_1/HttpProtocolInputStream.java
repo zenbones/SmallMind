@@ -55,7 +55,8 @@ public class HttpProtocolInputStream extends InputStream {
   }
 
   @Override
-  public synchronized void reset () throws IOException {
+  public synchronized void reset ()
+    throws IOException {
 
     byteArrayInputStream.reset();
   }

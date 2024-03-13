@@ -50,4 +50,3 @@ public class NaiveTrustManager implements X509TrustManager {
     return new X509Certificate[0];
   }
 }
-

@@ -34,11 +34,11 @@ package org.smallmind.web.json.scaffold.fault;
 
 import java.io.IOException;
 import java.io.Serializable;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
 import org.smallmind.scribe.pen.LoggerManager;
 
 @XmlRootElement(name = "fault", namespace = "http://org.smallmind/web/json/scaffold/fault")

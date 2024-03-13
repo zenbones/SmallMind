@@ -53,10 +53,10 @@ public class WindowsGrantUserPermissionsFileManipulation implements FileManipula
     UserPrincipalLookupService upls = path.getFileSystem().getUserPrincipalLookupService();
     UserPrincipal user = upls.lookupPrincipalByName(System.getProperty("user.name"));
     AclEntry aclEntry = AclEntry.newBuilder()
-      .setPermissions(AclEntryPermission.READ_DATA, AclEntryPermission.EXECUTE, AclEntryPermission.READ_ACL, AclEntryPermission.READ_ATTRIBUTES, AclEntryPermission.READ_NAMED_ATTRS, AclEntryPermission.WRITE_ACL, AclEntryPermission.DELETE)
-      .setPrincipal(user)
-      .setType(AclEntryType.ALLOW)
-      .build();
+                          .setPermissions(AclEntryPermission.READ_DATA, AclEntryPermission.EXECUTE, AclEntryPermission.READ_ACL, AclEntryPermission.READ_ATTRIBUTES, AclEntryPermission.READ_NAMED_ATTRS, AclEntryPermission.WRITE_ACL, AclEntryPermission.DELETE)
+                          .setPrincipal(user)
+                          .setType(AclEntryType.ALLOW)
+                          .build();
     List<AclEntry> acl = aclAttrView.getAcl();
 
     Files.setOwner(path, user);

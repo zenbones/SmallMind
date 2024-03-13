@@ -35,8 +35,8 @@ package org.smallmind.swing.dialog;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import javax.swing.JLabel;
-import javax.swing.JProgressBar;
+import jakarta.swing.JLabel;
+import jakarta.swing.JProgressBar;
 import org.smallmind.swing.ComponentUtility;
 import org.smallmind.swing.panel.OptionPanel;
 

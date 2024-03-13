@@ -35,11 +35,11 @@ package org.smallmind.swing.file;
 import java.awt.Color;
 import java.awt.Component;
 import java.io.File;
-import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
-import javax.swing.JLabel;
-import javax.swing.JTable;
-import javax.swing.table.TableCellRenderer;
+import jakarta.swing.BorderFactory;
+import jakarta.swing.ImageIcon;
+import jakarta.swing.JLabel;
+import jakarta.swing.JTable;
+import jakarta.swing.table.TableCellRenderer;
 import org.smallmind.swing.ColorUtility;
 
 public class DirectoryTableCellRenderer implements TableCellRenderer {

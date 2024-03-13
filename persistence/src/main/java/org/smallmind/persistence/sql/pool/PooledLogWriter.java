@@ -34,7 +34,6 @@ package org.smallmind.persistence.sql.pool;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.nio.charset.StandardCharsets;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerManager;
 

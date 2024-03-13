@@ -32,8 +32,8 @@
  */
 package org.smallmind.phalanx.wire.transport.rest;
 
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.smallmind.phalanx.wire.signal.ResultSignal;
 import org.smallmind.phalanx.wire.transport.ResponseTransmitter;
 

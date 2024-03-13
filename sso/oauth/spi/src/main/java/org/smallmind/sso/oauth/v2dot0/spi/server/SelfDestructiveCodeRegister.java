@@ -37,8 +37,6 @@ import org.smallmind.nutsnbolts.util.SelfDestructive;
 
 public class SelfDestructiveCodeRegister implements SelfDestructive {
 
-
-
   @Override
   public void destroy (Stint timeoutStint) {
 

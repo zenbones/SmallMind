@@ -35,9 +35,9 @@ package org.smallmind.swing.menu;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
-import javax.swing.Action;
-import javax.swing.JFrame;
 import javax.xml.parsers.ParserConfigurationException;
+import jakarta.swing.Action;
+import jakarta.swing.JFrame;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 

@@ -36,10 +36,10 @@ import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import javax.websocket.Endpoint;
-import javax.websocket.EndpointConfig;
-import javax.websocket.MessageHandler;
-import javax.websocket.Session;
+import jakarta.websocket.Endpoint;
+import jakarta.websocket.EndpointConfig;
+import jakarta.websocket.MessageHandler;
+import jakarta.websocket.Session;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.Transport;
@@ -52,12 +52,12 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements MessageHandler.Whole<String>, OumuamuaConnection<V> {
 
-  private javax.websocket.Session websocketSession;
+  private jakarta.websocket.Session websocketSession;
   private OumuamuaServer<V> server;
   private WebSocketTransport<V> websocketTransport;
 
   @Override
-  public void onOpen (javax.websocket.Session websocketSession, EndpointConfig config) {
+  public void onOpen (jakarta.websocket.Session websocketSession, EndpointConfig config) {
 
     this.websocketSession = websocketSession;
 

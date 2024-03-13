@@ -32,8 +32,8 @@
  */
 package org.smallmind.phalanx.wire;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
 import org.smallmind.phalanx.wire.signal.WireContext;
 
 @XmlRootElement(name = "test", namespace = "http://org.smallmind/phalanx/wire")

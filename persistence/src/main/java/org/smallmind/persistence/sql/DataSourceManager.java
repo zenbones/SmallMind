@@ -33,8 +33,8 @@
 package org.smallmind.persistence.sql;
 
 import java.util.concurrent.ConcurrentHashMap;
-import javax.sql.CommonDataSource;
-import javax.sql.DataSource;
+import jakarta.sql.CommonDataSource;
+import jakarta.sql.DataSource;
 import org.smallmind.nutsnbolts.lang.PerApplicationContext;
 import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
 import org.smallmind.persistence.orm.ORMInitializationException;

@@ -32,9 +32,9 @@
  */
 package org.smallmind.phalanx.wire.transport.jms;
 
-import javax.jms.ConnectionFactory;
-import javax.jms.Queue;
-import javax.jms.Topic;
+import jakarta.jms.ConnectionFactory;
+import jakarta.jms.Queue;
+import jakarta.jms.Topic;
 
 public interface MessageBroker {
 

@@ -32,7 +32,7 @@
  */
 package org.smallmind.persistence.orm.jpa;
 
-import javax.persistence.EntityTransaction;
+import jakarta.persistence.EntityTransaction;
 import org.smallmind.nutsnbolts.lang.ThrowableUtility;
 import org.smallmind.persistence.orm.ProxyTransaction;
 import org.smallmind.persistence.orm.ProxyTransactionException;

@@ -47,8 +47,8 @@ import java.awt.dnd.DragSourceEvent;
 import java.awt.dnd.DragSourceListener;
 import java.awt.dnd.DragSourceMotionListener;
 import java.awt.image.BufferedImage;
-import javax.swing.Icon;
-import javax.swing.SwingUtilities;
+import jakarta.swing.Icon;
+import jakarta.swing.SwingUtilities;
 
 public abstract class DragHandler implements DragSourceListener, DragSourceMotionListener, DragGestureListener {
 

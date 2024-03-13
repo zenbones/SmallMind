@@ -36,9 +36,9 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.concurrent.ConcurrentHashMap;
-import javax.ws.rs.Path;
-import javax.xml.bind.annotation.adapters.XmlAdapter;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import jakarta.ws.rs.Path;
+import jakarta.xml.bind.annotation.adapters.XmlAdapter;
+import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.web.jersey.aop.Argument;
 import org.smallmind.web.jersey.aop.EntityParam;
@@ -67,7 +67,8 @@ public class JsonEntityInvocationHandler implements InvocationHandler {
   }
 
   @Override
-  public Object invoke (Object proxy, Method method, Object[] args) throws Throwable {
+  public Object invoke (Object proxy, Method method, Object[] args)
+    throws Throwable {
 
     JsonTarget rectifiedTarget;
     Path pathAnnotation = method.getAnnotation(Path.class);

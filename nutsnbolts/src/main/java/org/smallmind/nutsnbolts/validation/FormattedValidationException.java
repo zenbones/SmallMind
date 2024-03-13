@@ -32,7 +32,7 @@
  */
 package org.smallmind.nutsnbolts.validation;
 
-import javax.validation.ValidationException;
+import jakarta.validation.ValidationException;
 
 public class FormattedValidationException extends ValidationException {
 
