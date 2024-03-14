@@ -33,7 +33,7 @@
 package org.smallmind.swing;
 
 import java.awt.Color;
-import jakarta.swing.UIManager;
+import javax.swing.UIManager;
 
 public class ColorUtility {
 

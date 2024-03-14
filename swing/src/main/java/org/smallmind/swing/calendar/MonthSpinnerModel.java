@@ -32,8 +32,8 @@
  */
 package org.smallmind.swing.calendar;
 
-import jakarta.swing.event.ChangeEvent;
-import jakarta.swing.event.ChangeListener;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import org.smallmind.nutsnbolts.time.CalendarUtility;
 import org.smallmind.nutsnbolts.time.Month;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;

@@ -35,7 +35,7 @@ package org.smallmind.swing.spinner;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import jakarta.swing.JComponent;
+import javax.swing.JComponent;
 
 public class SpinnerRubberStamp extends JComponent {
 

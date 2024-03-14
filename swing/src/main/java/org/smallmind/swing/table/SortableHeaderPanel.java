@@ -35,11 +35,11 @@ package org.smallmind.swing.table;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.SystemColor;
-import jakarta.swing.BorderFactory;
-import jakarta.swing.ImageIcon;
-import jakarta.swing.JComponent;
-import jakarta.swing.JLabel;
-import jakarta.swing.JPanel;
+import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.swing.label.PlainLabel;
 

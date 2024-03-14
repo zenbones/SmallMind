@@ -34,8 +34,8 @@ package org.smallmind.swing.banner;
 
 import java.awt.Component;
 import java.awt.SystemColor;
-import jakarta.swing.BorderFactory;
-import jakarta.swing.JLabel;
+import javax.swing.BorderFactory;
+import javax.swing.JLabel;
 
 public class DefaultBannerRenderer implements BannerCellRenderer {
 

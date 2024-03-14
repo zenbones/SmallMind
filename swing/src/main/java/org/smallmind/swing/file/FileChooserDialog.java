@@ -36,8 +36,8 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Window;
 import java.io.File;
-import jakarta.swing.JDialog;
-import jakarta.swing.filechooser.FileFilter;
+import javax.swing.JDialog;
+import javax.swing.filechooser.FileFilter;
 
 public class FileChooserDialog extends JDialog implements FileChoiceListener {
 

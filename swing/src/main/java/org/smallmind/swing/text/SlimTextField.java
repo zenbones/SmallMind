@@ -33,7 +33,7 @@
 package org.smallmind.swing.text;
 
 import java.awt.Dimension;
-import jakarta.swing.JTextField;
+import javax.swing.JTextField;
 
 public class SlimTextField extends JTextField {
 

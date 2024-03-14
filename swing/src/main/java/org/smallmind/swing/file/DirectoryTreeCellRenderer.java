@@ -33,14 +33,14 @@
 package org.smallmind.swing.file;
 
 import java.awt.Component;
-import jakarta.swing.BorderFactory;
-import jakarta.swing.ImageIcon;
-import jakarta.swing.JLabel;
-import jakarta.swing.JTree;
-import jakarta.swing.SwingConstants;
-import jakarta.swing.UIManager;
-import jakarta.swing.border.Border;
-import jakarta.swing.tree.TreeCellRenderer;
+import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
+import javax.swing.JLabel;
+import javax.swing.JTree;
+import javax.swing.SwingConstants;
+import javax.swing.UIManager;
+import javax.swing.border.Border;
+import javax.swing.tree.TreeCellRenderer;
 import org.smallmind.swing.ColorUtility;
 
 public class DirectoryTreeCellRenderer implements TreeCellRenderer {

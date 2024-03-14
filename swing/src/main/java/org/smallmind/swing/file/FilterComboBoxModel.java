@@ -33,10 +33,10 @@
 package org.smallmind.swing.file;
 
 import java.util.LinkedList;
-import jakarta.swing.ComboBoxModel;
-import jakarta.swing.event.ListDataEvent;
-import jakarta.swing.event.ListDataListener;
-import jakarta.swing.filechooser.FileFilter;
+import javax.swing.ComboBoxModel;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
+import javax.swing.filechooser.FileFilter;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 
 public class FilterComboBoxModel implements ComboBoxModel {

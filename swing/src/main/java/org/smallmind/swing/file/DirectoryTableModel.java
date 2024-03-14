@@ -34,8 +34,8 @@ package org.smallmind.swing.file;
 
 import java.io.File;
 import java.util.ArrayList;
-import jakarta.swing.event.TableModelListener;
-import jakarta.swing.table.TableModel;
+import javax.swing.event.TableModelListener;
+import javax.swing.table.TableModel;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 
 public class DirectoryTableModel implements TableModel {

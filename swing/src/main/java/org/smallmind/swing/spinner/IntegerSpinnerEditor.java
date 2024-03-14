@@ -32,7 +32,7 @@
  */
 package org.smallmind.swing.spinner;
 
-import jakarta.swing.JTextField;
+import javax.swing.JTextField;
 
 public class IntegerSpinnerEditor extends DefaultSpinnerEditor {
 

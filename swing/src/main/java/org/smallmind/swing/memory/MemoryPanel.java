@@ -33,8 +33,8 @@
 package org.smallmind.swing.memory;
 
 import java.awt.GridLayout;
-import jakarta.swing.JPanel;
-import jakarta.swing.JProgressBar;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 
 public class MemoryPanel extends JPanel implements MemoryUsageListener {
 

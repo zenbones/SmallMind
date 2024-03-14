@@ -37,7 +37,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.image.BufferedImage;
-import jakarta.swing.JPanel;
+import javax.swing.JPanel;
 
 public class GhostPanel extends JPanel {
 

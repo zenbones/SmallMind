@@ -32,7 +32,7 @@
  */
 package org.smallmind.swing.table;
 
-import jakarta.swing.table.TableModel;
+import javax.swing.table.TableModel;
 
 public interface SortableTableModel<E extends Enum> extends TableModel {
 

@@ -34,13 +34,13 @@ package org.smallmind.swing.file;
 
 import java.awt.Component;
 import java.io.File;
-import jakarta.swing.BorderFactory;
-import jakarta.swing.ImageIcon;
-import jakarta.swing.JLabel;
-import jakarta.swing.JList;
-import jakarta.swing.ListCellRenderer;
-import jakarta.swing.SwingConstants;
-import jakarta.swing.UIManager;
+import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.ListCellRenderer;
+import javax.swing.SwingConstants;
+import javax.swing.UIManager;
 
 public class RootListCellRenderer implements ListCellRenderer {
 

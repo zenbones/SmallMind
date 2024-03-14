@@ -36,7 +36,7 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Window;
 import java.io.File;
-import jakarta.swing.JDialog;
+import javax.swing.JDialog;
 
 public class DirectoryChooserDialog extends JDialog implements DirectoryChoiceListener {
 

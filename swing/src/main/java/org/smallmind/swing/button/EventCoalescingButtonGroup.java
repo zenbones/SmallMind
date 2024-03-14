@@ -34,8 +34,8 @@ package org.smallmind.swing.button;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import jakarta.swing.AbstractButton;
-import jakarta.swing.ButtonGroup;
+import javax.swing.AbstractButton;
+import javax.swing.ButtonGroup;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 
 public class EventCoalescingButtonGroup extends ButtonGroup implements ActionListener {

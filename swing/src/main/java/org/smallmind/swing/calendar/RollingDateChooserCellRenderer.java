@@ -32,7 +32,7 @@
  */
 package org.smallmind.swing.calendar;
 
-import jakarta.swing.table.TableCellRenderer;
+import javax.swing.table.TableCellRenderer;
 
 public interface RollingDateChooserCellRenderer extends TableCellRenderer {
 

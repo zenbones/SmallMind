@@ -35,9 +35,9 @@ package org.smallmind.swing.table;
 import java.awt.Component;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import jakarta.swing.JTable;
-import jakarta.swing.table.JTableHeader;
-import jakarta.swing.table.TableColumn;
+import javax.swing.JTable;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableColumn;
 
 public class SortableTable<E extends Enum> extends JTable implements MouseListener {
 

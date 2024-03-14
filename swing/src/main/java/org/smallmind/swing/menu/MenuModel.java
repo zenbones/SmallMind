@@ -34,8 +34,8 @@ package org.smallmind.swing.menu;
 
 import java.util.HashMap;
 import java.util.LinkedList;
-import jakarta.swing.JMenuBar;
-import jakarta.swing.JMenuItem;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 
 public class MenuModel {
 

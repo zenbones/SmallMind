@@ -35,7 +35,7 @@ package org.smallmind.swing.icon;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
-import jakarta.swing.Icon;
+import javax.swing.Icon;
 
 public class SwatchIcon implements Icon {
 

@@ -35,8 +35,8 @@ package org.smallmind.swing.text;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import jakarta.swing.text.BadLocationException;
-import jakarta.swing.text.Document;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
 
 public class DocumentOutputStream extends OutputStream {
 

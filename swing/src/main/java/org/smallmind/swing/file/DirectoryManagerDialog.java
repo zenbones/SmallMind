@@ -45,13 +45,13 @@ import java.awt.event.WindowListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import jakarta.swing.AbstractAction;
-import jakarta.swing.Action;
-import jakarta.swing.JButton;
-import jakarta.swing.JComponent;
-import jakarta.swing.JDialog;
-import jakarta.swing.JPanel;
-import jakarta.swing.KeyStroke;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JPanel;
+import javax.swing.KeyStroke;
 
 public class DirectoryManagerDialog extends JDialog implements WindowListener {
 

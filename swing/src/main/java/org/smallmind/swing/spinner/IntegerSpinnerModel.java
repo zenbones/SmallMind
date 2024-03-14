@@ -32,8 +32,8 @@
  */
 package org.smallmind.swing.spinner;
 
-import jakarta.swing.event.ChangeEvent;
-import jakarta.swing.event.ChangeListener;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 
 public class IntegerSpinnerModel implements EdgeAwareSpinnerModel {

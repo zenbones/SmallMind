@@ -33,7 +33,7 @@
 package org.smallmind.swing;
 
 import java.awt.Dimension;
-import jakarta.swing.JComponent;
+import javax.swing.JComponent;
 
 public class ComponentUtility {
 

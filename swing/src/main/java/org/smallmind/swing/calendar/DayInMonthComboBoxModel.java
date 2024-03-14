@@ -32,9 +32,9 @@
  */
 package org.smallmind.swing.calendar;
 
-import jakarta.swing.ComboBoxModel;
-import jakarta.swing.event.ListDataEvent;
-import jakarta.swing.event.ListDataListener;
+import javax.swing.ComboBoxModel;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
 import org.smallmind.nutsnbolts.time.CalendarUtility;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 

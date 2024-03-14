@@ -35,9 +35,9 @@ package org.smallmind.swing.catalog;
 import java.awt.Component;
 import java.awt.GridLayout;
 import java.awt.SystemColor;
-import jakarta.swing.BorderFactory;
-import jakarta.swing.JLabel;
-import jakarta.swing.JPanel;
+import javax.swing.BorderFactory;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 
 public class DefaultCatalogCellRenderer implements CatalogCellRenderer {
 

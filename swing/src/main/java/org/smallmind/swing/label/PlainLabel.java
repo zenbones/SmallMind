@@ -33,8 +33,8 @@
 package org.smallmind.swing.label;
 
 import java.awt.Font;
-import jakarta.swing.Icon;
-import jakarta.swing.JLabel;
+import javax.swing.Icon;
+import javax.swing.JLabel;
 
 public class PlainLabel extends JLabel {
 

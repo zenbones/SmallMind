@@ -33,10 +33,10 @@
 package org.smallmind.swing.tree;
 
 import java.util.Iterator;
-import jakarta.swing.event.TreeModelEvent;
-import jakarta.swing.event.TreeModelListener;
-import jakarta.swing.tree.TreeModel;
-import jakarta.swing.tree.TreePath;
+import javax.swing.event.TreeModelEvent;
+import javax.swing.event.TreeModelListener;
+import javax.swing.tree.TreeModel;
+import javax.swing.tree.TreePath;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 
 public class AttachmentTreeModel extends Tree implements TreeModel {

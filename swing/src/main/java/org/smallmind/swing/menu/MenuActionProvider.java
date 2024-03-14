@@ -33,7 +33,7 @@
 package org.smallmind.swing.menu;
 
 import java.awt.event.ActionListener;
-import jakarta.swing.Action;
+import javax.swing.Action;
 
 public interface MenuActionProvider {
 

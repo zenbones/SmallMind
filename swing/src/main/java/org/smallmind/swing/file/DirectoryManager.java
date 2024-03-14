@@ -41,18 +41,18 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.List;
-import jakarta.swing.AbstractAction;
-import jakarta.swing.Action;
-import jakarta.swing.Box;
-import jakarta.swing.BoxLayout;
-import jakarta.swing.ImageIcon;
-import jakarta.swing.JButton;
-import jakarta.swing.JComponent;
-import jakarta.swing.JList;
-import jakarta.swing.JPanel;
-import jakarta.swing.JScrollPane;
-import jakarta.swing.KeyStroke;
-import jakarta.swing.ListSelectionModel;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.KeyStroke;
+import javax.swing.ListSelectionModel;
 
 public class DirectoryManager extends JPanel {
 

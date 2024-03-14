@@ -34,10 +34,10 @@ package org.smallmind.swing.file;
 
 import java.io.File;
 import java.util.Arrays;
-import jakarta.swing.ListModel;
-import jakarta.swing.event.ListDataEvent;
-import jakarta.swing.event.ListDataListener;
-import jakarta.swing.filechooser.FileFilter;
+import javax.swing.ListModel;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
+import javax.swing.filechooser.FileFilter;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 
 public class FilePickListModel implements ListModel {

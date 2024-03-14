@@ -33,7 +33,7 @@
 package org.smallmind.swing.panel;
 
 import java.awt.LayoutManager;
-import jakarta.swing.JPanel;
+import javax.swing.JPanel;
 import org.smallmind.swing.dialog.DialogState;
 import org.smallmind.swing.dialog.OptionDialog;
 

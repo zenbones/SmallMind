@@ -38,9 +38,9 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.LinkedList;
-import jakarta.swing.tree.MutableTreeNode;
-import jakarta.swing.tree.TreeNode;
-import jakarta.swing.tree.TreePath;
+import javax.swing.tree.MutableTreeNode;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 
 public class AttachmentTreeNode implements Serializable, MutableTreeNode {
 
