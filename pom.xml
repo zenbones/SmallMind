@@ -81,7 +81,7 @@
     <amqp.client.version>5.20.0</amqp.client.version>
     <asm.version>9.6</asm.version>
     <aspectj.version>1.9.21.1</aspectj.version>
-    <aspectj.maven.plugin.version>1.15.0</aspectj.maven.plugin.version>
+    <aspectj.maven.plugin.version>1.14</aspectj.maven.plugin.version>
     <aws.version>2.25.7</aws.version>
     <bouncycastle.version>1.77</bouncycastle.version>
     <cometd.version>7.0.12</cometd.version>
@@ -1073,43 +1073,41 @@
           </executions>
         </plugin>
         <plugin>
-          <groupId>org.codehaus.mojo</groupId>
+          <groupId>dev.aspectj</groupId>
           <artifactId>aspectj-maven-plugin</artifactId>
           <version>${aspectj.maven.plugin.version}</version>
           <executions>
             <execution>
+              <id>aspect</id>
               <goals>
                 <goal>compile</goal>
+              </goals>
+              <phase>process-classes</phase>
+            </execution>
+            <execution>
+              <id>aspect-tests</id>
+              <goals>
                 <goal>test-compile</goal>
               </goals>
+              <phase>process-test-classes</phase>
             </execution>
           </executions>
           <configuration>
-            <sources>
-              <source>
-                <excludes>
-                  <exclude>**/generated-sources/**/Q*.java</exclude>
-                </excludes>
-              </source>
-            </sources>
-            <verbose>true</verbose>
-            <source>${maven.compiler.release}</source>
-            <target>${maven.compiler.release}</target>
             <complianceLevel>${maven.compiler.release}</complianceLevel>
+            <proc>none</proc>
             <showWeaveInfo>true</showWeaveInfo>
+            <verbose>true</verbose>
           </configuration>
           <dependencies>
             <dependency>
               <groupId>org.aspectj</groupId>
-              <artifactId>aspectjtools</artifactId>
+              <artifactId>aspectjrt</artifactId>
               <version>${aspectj.version}</version>
             </dependency>
             <dependency>
-              <groupId>com.sun</groupId>
-              <artifactId>tools</artifactId>
-              <version>${java.version}</version>
-              <scope>system</scope>
-              <systemPath>${project.basedir}/pom.xml</systemPath>
+              <groupId>org.aspectj</groupId>
+              <artifactId>aspectjtools</artifactId>
+              <version>${aspectj.version}</version>
             </dependency>
           </dependencies>
         </plugin>
