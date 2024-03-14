@@ -31,6 +31,7 @@
  * version 3.
  */
 package org.smallmind.persistence.orm.hibernate;
+
 import java.sql.Types;
 import java.util.Date;
 import org.hibernate.boot.model.FunctionContributions;
