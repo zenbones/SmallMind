@@ -118,25 +118,25 @@
     <jose4j.version>0.9.6</jose4j.version>
     <kafka.version>3.7.0</kafka.version>
     <liquibase.version>4.26.0</liquibase.version>
-    <log4j.version>2.17.2</log4j.version>
-    <maven.version>3.8.6</maven.version>
-    <maven.plugin.annotations.version>3.6.4</maven.plugin.annotations.version>
+    <log4j.version>2.23.1</log4j.version>
+    <maven.version>3.9.6</maven.version>
+    <maven.plugin.annotations.version>3.11.0</maven.plugin.annotations.version>
     <maven.resolver.version>1.9.18</maven.resolver.version>
     <maven.resolver.provider.version>3.9.6</maven.resolver.provider.version>
-    <mongodb.driver.version>4.6.1</mongodb.driver.version>
-    <mongodb.bson.version>4.6.1</mongodb.bson.version>
-    <msgpack.version>0.9.0</msgpack.version>
-    <netty.version>4.1.70.Final</netty.version>
+    <mongodb.driver.version>5.0.0</mongodb.driver.version>
+    <mongodb.bson.version>5.0.0</mongodb.bson.version>
+    <msgpack.version>0.9.8</msgpack.version>
+    <netty.version>4.1.107.Final</netty.version>
     <quartz.version>2.3.2</quartz.version>
-    <querydsl.version>5.0.0</querydsl.version>
-    <shiro.version>1.8.0</shiro.version>
+    <querydsl.version>5.1.0</querydsl.version>
+    <shiro.version>2.0.0</shiro.version>
     <siphash.version>2.0.0</siphash.version>
-    <slf4j.version>1.7.32</slf4j.version>
-    <snakeyaml.version>1.29</snakeyaml.version>
+    <slf4j.version>2.0.12</slf4j.version>
+    <snakeyaml.version>2.2</snakeyaml.version>
     <spring.version>6.1.4</spring.version>
-    <spring.batch.version>4.3.6</spring.batch.version>
-    <spring.rabbit.version>2.4.5</spring.rabbit.version>
-    <sshd.version>2.7.0</sshd.version>
+    <spring.batch.version>5.1.1</spring.batch.version>
+    <spring.rabbit.version>3.1.2</spring.rabbit.version>
+    <sshd.version>2.12.1</sshd.version>
     <sun.mail.version>2.0.1</sun.mail.version>
     <sun.xml.bind.version>4.0.5</sun.xml.bind.version>
     <sun.xml.ws.version>4.0.2</sun.xml.ws.version>
