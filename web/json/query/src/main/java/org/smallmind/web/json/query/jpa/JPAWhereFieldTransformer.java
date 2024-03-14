@@ -39,6 +39,7 @@ import org.smallmind.web.json.query.WhereFieldTransformer;
 
 public class JPAWhereFieldTransformer extends WhereFieldTransformer<Root<?>, Path<?>> {
 
+
   public JPAWhereFieldTransformer (WhereFieldTransform<Root<?>, Path<?>> transform) {
 
     super(transform);
