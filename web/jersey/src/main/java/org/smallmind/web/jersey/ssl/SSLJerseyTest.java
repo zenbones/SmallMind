@@ -58,8 +58,8 @@ import org.glassfish.jersey.test.TestProperties;
 import org.glassfish.jersey.test.spi.TestContainer;
 import org.glassfish.jersey.test.spi.TestContainerException;
 import org.glassfish.jersey.test.spi.TestContainerFactory;
-import org.junit.After;
-import org.junit.Before;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 
 /*
   @Override
@@ -338,7 +338,7 @@ public abstract class SSLJerseyTest {
     return getClient();
   }
 
-  @Before
+  @BeforeClass
   public void setUp ()
     throws Exception {
 
@@ -352,7 +352,7 @@ public abstract class SSLJerseyTest {
     setClient(getClient(testContainer.getClientConfig()));
   }
 
-  @After
+  @AfterClass
   public void tearDown ()
     throws Exception {
 

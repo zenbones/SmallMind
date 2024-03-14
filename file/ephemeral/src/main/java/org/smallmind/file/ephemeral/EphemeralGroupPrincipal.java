@@ -33,11 +33,11 @@
 package org.smallmind.file.ephemeral;
 
 import java.nio.file.attribute.GroupPrincipal;
-import jakarta.security.auth.Subject;
+import javax.security.auth.Subject;
 
 public class EphemeralGroupPrincipal implements GroupPrincipal {
 
-  private String name;
+  private final String name;
 
   public EphemeralGroupPrincipal (String name) {
 
@@ -47,7 +47,7 @@ public class EphemeralGroupPrincipal implements GroupPrincipal {
   @Override
   public String getName () {
 
-    return null;
+    return name;
   }
 
   @Override

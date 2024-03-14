@@ -32,10 +32,12 @@
  */
 package org.smallmind.web.websocket.spi;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.net.ssl.SSLContext;
 import jakarta.websocket.ClientEndpoint;
 import jakarta.websocket.ClientEndpointConfig;
 import jakarta.websocket.Decoder;
@@ -61,12 +63,12 @@ public class AnnotatedEndpoint extends Endpoint {
 
     try {
       endpointConfig = new AnnotatedClientEndpointConfig(clientEndpointAnnotation);
-    } catch (InstantiationException | IllegalAccessException exception) {
+    } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException exception) {
       throw new DeploymentException("Unable to to instantiate the client endpoint configuration", exception);
     }
   }
 
-  public AnnotatedClientEndpointConfig getEndpointConfig () {
+  AnnotatedClientEndpointConfig getEndpointConfig () {
 
     return endpointConfig;
   }
@@ -76,18 +78,24 @@ public class AnnotatedEndpoint extends Endpoint {
 
   }
 
-  private class AnnotatedClientEndpointConfig implements ClientEndpointConfig {
+  private static class AnnotatedClientEndpointConfig implements ClientEndpointConfig {
 
     private final ClientEndpoint clientEndpoint;
     private final Configurator configurator;
     private final HashMap<String, Object> userProperties = new HashMap<>();
 
     public AnnotatedClientEndpointConfig (ClientEndpoint clientEndpoint)
-      throws InstantiationException, IllegalAccessException {
+      throws InstantiationException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
 
       this.clientEndpoint = clientEndpoint;
 
-      configurator = clientEndpoint.configurator().newInstance();
+      configurator = clientEndpoint.configurator().getConstructor().newInstance();
+    }
+
+    @Override
+    public SSLContext getSSLContext () {
+
+      return null;
     }
 
     @Override
