@@ -43,7 +43,6 @@ import org.apache.hc.client5.http.auth.UsernamePasswordCredentials;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.client5.http.impl.io.BasicHttpClientConnectionManager;
 import org.apache.hc.client5.http.io.HttpClientConnectionManager;
@@ -52,6 +51,7 @@ import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
 import org.apache.hc.core5.http.HttpHost;
 import org.apache.hc.core5.http.config.Registry;
 import org.apache.hc.core5.http.config.RegistryBuilder;
+import org.apache.hc.core5.http.io.HttpClientResponseHandler;
 import org.apache.hc.core5.ssl.SSLContexts;
 
 public class NexusDownloader {
@@ -63,7 +63,6 @@ public class NexusDownloader {
     Registry<ConnectionSocketFactory> registry = RegistryBuilder.<ConnectionSocketFactory>create().register("https", sslConnectionSocketFactory).build();
     HttpClientConnectionManager connectionManager = new BasicHttpClientConnectionManager(registry);
     BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-
     HttpHost target;
     StringBuilder getBuilder;
 
@@ -74,7 +73,7 @@ public class NexusDownloader {
     }
 
     try (CloseableHttpClient httpclient = HttpClients.custom().setConnectionManager(connectionManager).setDefaultCredentialsProvider(credentialsProvider).build()) {
-      try (CloseableHttpResponse response = httpclient.execute(target, new HttpGet(getBuilder.toString()))) {
+      httpclient.execute(target, new HttpGet(getBuilder.toString()), (HttpClientResponseHandler<Void>)response -> {
 
         if (response.getCode() != 200) {
           throw new IOException("Could not locate requested artifact");
@@ -106,7 +105,9 @@ public class NexusDownloader {
 
           downloadProgressBar.update(bytesAvailable);
         }
-      }
+
+        return null;
+      });
     }
   }
 
