@@ -35,17 +35,17 @@ package org.smallmind.web.json.scaffold.util;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.Module;
-import com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector;
-import com.fasterxml.jackson.module.jaxb.PackageVersion;
+import com.fasterxml.jackson.module.jakarta.xmlbind.JakartaXmlBindAnnotationIntrospector;
+import com.fasterxml.jackson.module.jakarta.xmlbind.PackageVersion;
 
-public class JaxbAnnotationModule extends Module {
+public class JakartaXmlBindAnnotationModule extends Module {
 
   public enum Priority {PRIMARY, SECONDARY}
 
   protected Priority _priority = Priority.PRIMARY;
   protected JsonInclude.Include _nonNillableInclusion = JsonInclude.Include.ALWAYS;
 
-  public JaxbAnnotationModule () {
+  public JakartaXmlBindAnnotationModule () {
 
   }
 
@@ -64,7 +64,7 @@ public class JaxbAnnotationModule extends Module {
   @Override
   public void setupModule (SetupContext context) {
 
-    JaxbAnnotationIntrospector intr = new JaxbAnnotationIntrospector(context.getTypeFactory());
+    JakartaXmlBindAnnotationIntrospector intr = new JakartaXmlBindAnnotationIntrospector(context.getTypeFactory());
 
     intr.setNonNillableInclusion(_nonNillableInclusion);
     switch (_priority) {
@@ -82,7 +82,7 @@ public class JaxbAnnotationModule extends Module {
     return _priority;
   }
 
-  public JaxbAnnotationModule setPriority (Priority p) {
+  public JakartaXmlBindAnnotationModule setPriority (Priority p) {
 
     _priority = p;
     return this;
@@ -93,11 +93,10 @@ public class JaxbAnnotationModule extends Module {
     return _nonNillableInclusion;
   }
 
-  public JaxbAnnotationModule setNonNillableInclusion (JsonInclude.Include nonNillableInclusion) {
+  public JakartaXmlBindAnnotationModule setNonNillableInclusion (JsonInclude.Include nonNillableInclusion) {
 
     _nonNillableInclusion = nonNillableInclusion;
 
     return this;
   }
 }
-

@@ -53,7 +53,7 @@ public class JsonCodec {
 
   private static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder()
                                                       .addModule(new AfterburnerModule())
-                                                      .addModule(new JaxbAnnotationModule().setNonNillableInclusion(JsonInclude.Include.NON_NULL))
+                                                      .addModule(new JakartaXmlBindAnnotationModule().setNonNillableInclusion(JsonInclude.Include.NON_NULL))
                                                       .addModule(new PolymorphicModule())
                                                       .enable(MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME).build();
 
