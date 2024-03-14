@@ -38,22 +38,21 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import org.apache.http.HttpHost;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.config.Registry;
-import org.apache.http.config.RegistryBuilder;
-import org.apache.http.conn.HttpClientConnectionManager;
-import org.apache.http.conn.socket.ConnectionSocketFactory;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.impl.conn.BasicHttpClientConnectionManager;
-import org.apache.http.ssl.SSLContexts;
+import org.apache.hc.client5.http.auth.AuthScope;
+import org.apache.hc.client5.http.auth.UsernamePasswordCredentials;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.client5.http.impl.io.BasicHttpClientConnectionManager;
+import org.apache.hc.client5.http.io.HttpClientConnectionManager;
+import org.apache.hc.client5.http.socket.ConnectionSocketFactory;
+import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
+import org.apache.hc.core5.http.HttpHost;
+import org.apache.hc.core5.http.config.Registry;
+import org.apache.hc.core5.http.config.RegistryBuilder;
+import org.apache.hc.core5.ssl.SSLContexts;
 
 public class NexusDownloader {
 
@@ -63,50 +62,50 @@ public class NexusDownloader {
     SSLConnectionSocketFactory sslConnectionSocketFactory = new SSLConnectionSocketFactory(SSLContexts.createSystemDefault());
     Registry<ConnectionSocketFactory> registry = RegistryBuilder.<ConnectionSocketFactory>create().register("https", sslConnectionSocketFactory).build();
     HttpClientConnectionManager connectionManager = new BasicHttpClientConnectionManager(registry);
-    CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-    CloseableHttpClient httpclient;
+    BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+
     HttpHost target;
     StringBuilder getBuilder;
 
-    credentialsProvider.setCredentials(new AuthScope(target = new HttpHost(nexusHost, 443, "https")), new UsernamePasswordCredentials(nexusUser, nexusPassword));
-    httpclient = HttpClients.custom().setConnectionManager(connectionManager).setDefaultCredentialsProvider(credentialsProvider).build();
-
+    credentialsProvider.setCredentials(new AuthScope(target = new HttpHost("https", nexusHost, 443)), new UsernamePasswordCredentials(nexusUser, nexusPassword.toCharArray()));
     getBuilder = new StringBuilder("/repository/service/local/artifact/maven/redirect?r=").append(repository.getCode()).append("&g=").append(groupId).append("&a=").append(artifactId).append("&v=").append(calculateVersion(repository, version)).append("&e=").append(extension);
     if (classifier != null) {
       getBuilder.append("&c=").append(classifier);
     }
 
-    try (CloseableHttpResponse response = httpclient.execute(target, new HttpGet(getBuilder.toString()))) {
+    try (CloseableHttpClient httpclient = HttpClients.custom().setConnectionManager(connectionManager).setDefaultCredentialsProvider(credentialsProvider).build()) {
+      try (CloseableHttpResponse response = httpclient.execute(target, new HttpGet(getBuilder.toString()))) {
 
-      if (response.getStatusLine().getStatusCode() != 200) {
-        throw new IOException("Could not locate requested artifact");
-      }
+        if (response.getCode() != 200) {
+          throw new IOException("Could not locate requested artifact");
+        }
 
-      Files.createDirectories(filePath.getParent());
+        Files.createDirectories(filePath.getParent());
 
-      long bytesAvailable = response.getEntity().getContentLength();
-      byte[] buffer = new byte[2048];
+        long bytesAvailable = response.getEntity().getContentLength();
+        byte[] buffer = new byte[2048];
 
-      try (InputStream inputStream = response.getEntity().getContent(); OutputStream fileOutputStream = Files.newOutputStream(filePath, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+        try (InputStream inputStream = response.getEntity().getContent(); OutputStream fileOutputStream = Files.newOutputStream(filePath, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
 
-        TextProgressBar downloadProgressBar;
-        long bytesWritten = 0;
-        int bytesRead;
+          TextProgressBar downloadProgressBar;
+          long bytesWritten = 0;
+          int bytesRead;
 
-        downloadProgressBar = new TextProgressBar(bytesAvailable, "bytes", 2, progressBar);
-        downloadProgressBar.update(0);
+          downloadProgressBar = new TextProgressBar(bytesAvailable, "bytes", 2, progressBar);
+          downloadProgressBar.update(0);
 
-        do {
-          if ((bytesRead = inputStream.read(buffer)) < 0) {
-            throw new IOException("Unexpected end of stream");
-          } else {
-            fileOutputStream.write(buffer, 0, bytesRead);
-            bytesWritten += bytesRead;
-            downloadProgressBar.update(bytesWritten);
-          }
-        } while (bytesWritten < bytesAvailable);
+          do {
+            if ((bytesRead = inputStream.read(buffer)) < 0) {
+              throw new IOException("Unexpected end of stream");
+            } else {
+              fileOutputStream.write(buffer, 0, bytesRead);
+              bytesWritten += bytesRead;
+              downloadProgressBar.update(bytesWritten);
+            }
+          } while (bytesWritten < bytesAvailable);
 
-        downloadProgressBar.update(bytesAvailable);
+          downloadProgressBar.update(bytesAvailable);
+        }
       }
     }
   }
