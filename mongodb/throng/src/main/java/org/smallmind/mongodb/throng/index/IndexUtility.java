@@ -65,10 +65,6 @@ public class IndexUtility {
 
     indexOptions.background(indexOptionsAnnotation.background());
 
-    if (indexOptionsAnnotation.bucketSize() > 0) {
-      indexOptions.bucketSize(indexOptionsAnnotation.bucketSize());
-    }
-
     if (indexOptionsAnnotation.bits() > 0) {
       indexOptions.bits(indexOptionsAnnotation.bits());
     }

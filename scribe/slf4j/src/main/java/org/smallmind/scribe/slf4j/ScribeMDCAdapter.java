@@ -33,7 +33,9 @@
 package org.smallmind.scribe.slf4j;
 
 import java.io.Serializable;
+import java.util.Deque;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
 import org.slf4j.spi.MDCAdapter;
 import org.smallmind.scribe.pen.Parameter;
@@ -45,6 +47,74 @@ public class ScribeMDCAdapter implements MDCAdapter {
   public void put (String key, String val) {
 
     Parameters.getInstance().put(key, val);
+  }
+
+  @Override
+  public void pushByKey (String key, String val) {
+
+    Serializable serializable;
+
+    if (((serializable = Parameters.getInstance().get(key)) == null) || (!Deque.class.isAssignableFrom(serializable.getClass()))) {
+
+      LinkedList<Serializable> deque = new LinkedList<>();
+
+      deque.add(val);
+      Parameters.getInstance().put(key, deque);
+    } else {
+      ((Deque)serializable).add(val);
+    }
+  }
+
+  @Override
+  public String popByKey (String key) {
+
+    Serializable value;
+
+    if ((value = Parameters.getInstance().get(key)) == null) {
+
+      return null;
+    } else if (Deque.class.isAssignableFrom(value.getClass())) {
+      if (((Deque)value).isEmpty()) {
+
+        return null;
+      } else {
+
+        Object obj;
+
+        return ((obj = ((Deque)value).pop()) == null) ? null : obj.toString();
+      }
+    } else {
+
+      Parameters.getInstance().remove(key);
+
+      return null;
+    }
+  }
+
+  @Override
+  public void clearDequeByKey (String key) {
+
+    Parameters.getInstance().put(key, new LinkedList<Serializable>());
+  }
+
+  @Override
+  public Deque<String> getCopyOfDequeByKey (String key) {
+
+    Serializable value;
+
+    if (((value = Parameters.getInstance().get(key)) == null) || (!Deque.class.isAssignableFrom(value.getClass()))) {
+
+      return null;
+    } else {
+
+      LinkedList<String> dequeueCopy = new LinkedList<>();
+
+      for (Object obj : (Deque)value) {
+        dequeueCopy.add(obj.toString());
+      }
+
+      return dequeueCopy;
+    }
   }
 
   @Override

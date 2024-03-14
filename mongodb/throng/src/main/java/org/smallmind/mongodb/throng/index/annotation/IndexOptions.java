@@ -69,8 +69,6 @@ public @interface IndexOptions {
 
   double max () default 360;
 
-  double bucketSize () default 0;
-
   String storageEngine () default "";
 
   String partialFilterExpression () default "";
