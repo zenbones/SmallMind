@@ -38,7 +38,6 @@ import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Arrays;
 
@@ -65,8 +64,7 @@ public abstract class AnnotationLiteral<A extends Annotation> implements Annotat
 
     if (superClazz.equals(Object.class)) {
       throw new RuntimeException("Super class must be A parametrized type!");
-    } else if (superClazz instanceof ParameterizedType) {
-      ParameterizedType paramType = (ParameterizedType)superClazz;
+    } else if (superClazz instanceof ParameterizedType paramType) {
       Type[] actualArgs = paramType.getActualTypeArguments();
 
       if (actualArgs.length == 1) {
@@ -90,7 +88,7 @@ public abstract class AnnotationLiteral<A extends Annotation> implements Annotat
   @Override
   public boolean equals (Object obj) {
 
-    Method[] methods = AccessController.doPrivileged((PrivilegedAction<Method[]>)() -> annotationType.getDeclaredMethods());
+    Method[] methods = annotationType.getDeclaredMethods();
 
     if (obj == this) {
       return true;
@@ -99,9 +97,7 @@ public abstract class AnnotationLiteral<A extends Annotation> implements Annotat
       return false;
     }
 
-    if (obj instanceof Annotation) {
-
-      Annotation other = (Annotation)obj;
+    if (obj instanceof Annotation other) {
 
       if (this.annotationType().equals(other.annotationType())) {
         for (Method method : methods) {
@@ -119,10 +115,8 @@ public abstract class AnnotationLiteral<A extends Annotation> implements Annotat
             Class<?> otherValueClass = otherValue.getClass();
 
             if (thisValueClass.isPrimitive() && otherValueClass.isPrimitive()) {
-              if ((thisValueClass != Float.TYPE && otherValue != Float.TYPE) || (thisValueClass != Double.TYPE && otherValue != Double.TYPE)) {
-                if (thisValue != otherValue) {
-                  return false;
-                }
+              if (thisValue != otherValue) {
+                return false;
               }
             } else if (thisValueClass.isArray() && otherValueClass.isArray()) {
               Class<?> type = thisValueClass.getComponentType();
@@ -182,25 +176,25 @@ public abstract class AnnotationLiteral<A extends Annotation> implements Annotat
 
   private Object callMethod (Object instance, Method method) {
 
-    boolean access = method.isAccessible();
+    boolean access = method.canAccess(instance);
 
     try {
-      if (!method.isAccessible()) {
-        AccessController.doPrivileged(new PrivilegedActionForAccessibleObject(method, true));
+      if (!access) {
+        new PrivilegedActionForAccessibleObject(method, true);
       }
 
       return method.invoke(instance, EMPTY_OBJECT_ARRAY);
     } catch (Exception e) {
       throw new RuntimeException("Exception in method call : " + method.getName(), e);
     } finally {
-      AccessController.doPrivileged(new PrivilegedActionForAccessibleObject(method, access));
+      new PrivilegedActionForAccessibleObject(method, access);
     }
   }
 
   @Override
   public int hashCode () {
 
-    Method[] methods = AccessController.doPrivileged((PrivilegedAction<Method[]>)() -> annotationType.getDeclaredMethods());
+    Method[] methods = annotationType.getDeclaredMethods();
 
     int hashCode = 0;
     for (Method method : methods) {
@@ -245,7 +239,7 @@ public abstract class AnnotationLiteral<A extends Annotation> implements Annotat
   @Override
   public String toString () {
 
-    Method[] methods = AccessController.doPrivileged((PrivilegedAction<Method[]>)() -> annotationType.getDeclaredMethods());
+    Method[] methods = annotationType.getDeclaredMethods();
     StringBuilder sb = new StringBuilder("@" + annotationType().getName() + "(");
     int length = methods.length;
 
@@ -281,4 +275,3 @@ public abstract class AnnotationLiteral<A extends Annotation> implements Annotat
     }
   }
 }
-

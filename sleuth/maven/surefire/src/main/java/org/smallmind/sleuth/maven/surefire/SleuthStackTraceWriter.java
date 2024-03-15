@@ -32,8 +32,8 @@
  */
 package org.smallmind.sleuth.maven.surefire;
 
-import org.apache.maven.surefire.report.SafeThrowable;
-import org.apache.maven.surefire.report.StackTraceWriter;
+import org.apache.maven.surefire.api.report.SafeThrowable;
+import org.apache.maven.surefire.api.report.StackTraceWriter;
 import org.smallmind.nutsnbolts.lang.StackTraceUtility;
 import org.smallmind.sleuth.runner.Culprit;
 

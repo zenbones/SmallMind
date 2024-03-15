@@ -239,7 +239,6 @@
         <groupId>jakarta.servlet</groupId>
         <artifactId>jakarta.servlet-api</artifactId>
         <version>${jakarta.servlet.version}</version>
-        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>jakarta.validation</groupId>
@@ -1124,7 +1123,7 @@
         </plugin>
         <plugin>
           <groupId>org.smallmind</groupId>
-          <artifactId>smallmind-license-plugin</artifactId>
+          <artifactId>smallmind-license-maven-plugin</artifactId>
           <version>${project.version}</version>
           <executions>
             <execution>

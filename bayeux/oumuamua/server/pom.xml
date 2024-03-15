@@ -19,7 +19,7 @@
     <plugins>
       <plugin>
         <groupId>org.smallmind</groupId>
-        <artifactId>smallmind-license-plugin</artifactId>
+        <artifactId>smallmind-license-maven-plugin</artifactId>
       </plugin>
     </plugins>
   </build>

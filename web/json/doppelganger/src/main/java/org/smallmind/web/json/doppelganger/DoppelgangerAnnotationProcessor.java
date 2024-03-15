@@ -66,7 +66,7 @@ import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
 import org.smallmind.web.json.doppelganger.translator.TranslatorFactory;
 
 @SupportedAnnotationTypes("org.smallmind.web.json.doppelganger.Doppelganger")
-@SupportedSourceVersion(SourceVersion.RELEASE_11)
+@SupportedSourceVersion(SourceVersion.RELEASE_17)
 @SupportedOptions("prefix")
 @AutoService(Processor.class)
 public class DoppelgangerAnnotationProcessor extends AbstractProcessor {

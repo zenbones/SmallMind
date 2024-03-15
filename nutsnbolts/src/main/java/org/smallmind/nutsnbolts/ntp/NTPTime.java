@@ -34,6 +34,8 @@ package org.smallmind.nutsnbolts.ntp;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.concurrent.ThreadLocalRandom;
 import org.apache.commons.net.ntp.NTPUDPClient;
 import org.apache.commons.net.ntp.TimeInfo;
@@ -51,24 +53,20 @@ public final class NTPTime {
     this.hostNames = hostNames;
   }
 
-  public final long getOffset (int timeoutMillis)
+  public long getOffset (int timeoutMillis)
     throws IOException {
 
-    NTPUDPClient client = new NTPUDPClient();
-    client.setDefaultTimeout(timeoutMillis);
-
-    client.open();
-
-    try {
+    try (NTPUDPClient client = new NTPUDPClient()) {
 
       TimeInfo timeInfo;
+
+      client.setDefaultTimeout(Duration.of(timeoutMillis, ChronoUnit.MILLIS));
+      client.open();
 
       timeInfo = client.getTime(InetAddress.getByName(hostNames[ThreadLocalRandom.current().nextInt(hostNames.length)]));
       timeInfo.computeDetails();
 
       return timeInfo.getOffset();
-    } finally {
-      client.close();
     }
   }
 }

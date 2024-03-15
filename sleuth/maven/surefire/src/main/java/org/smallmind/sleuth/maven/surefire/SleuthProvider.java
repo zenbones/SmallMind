@@ -33,16 +33,17 @@
 package org.smallmind.sleuth.maven.surefire;
 
 import java.util.Arrays;
-import org.apache.maven.surefire.providerapi.AbstractProvider;
-import org.apache.maven.surefire.providerapi.ProviderParameters;
-import org.apache.maven.surefire.report.ConsoleOutputReceiver;
-import org.apache.maven.surefire.report.ReporterException;
-import org.apache.maven.surefire.report.ReporterFactory;
-import org.apache.maven.surefire.report.RunListener;
-import org.apache.maven.surefire.report.SimpleReportEntry;
-import org.apache.maven.surefire.suite.RunResult;
-import org.apache.maven.surefire.testset.TestSetFailedException;
-import org.apache.maven.surefire.util.TestsToRun;
+import org.apache.maven.surefire.api.provider.AbstractProvider;
+import org.apache.maven.surefire.api.provider.ProviderParameters;
+import org.apache.maven.surefire.api.report.ConsoleOutputReceiverForCurrentThread;
+import org.apache.maven.surefire.api.report.ReporterException;
+import org.apache.maven.surefire.api.report.ReporterFactory;
+import org.apache.maven.surefire.api.report.RunListener;
+import org.apache.maven.surefire.api.report.RunMode;
+import org.apache.maven.surefire.api.report.SimpleReportEntry;
+import org.apache.maven.surefire.api.suite.RunResult;
+import org.apache.maven.surefire.api.testset.TestSetFailedException;
+import org.apache.maven.surefire.api.util.TestsToRun;
 import org.smallmind.nutsnbolts.util.AnsiColor;
 import org.smallmind.sleuth.runner.SleuthRunner;
 
@@ -77,7 +78,7 @@ public class SleuthProvider extends AbstractProvider {
 
     ReporterFactory reporterFactory = providerParameters.getReporterFactory();
     RunResult runResult;
-    RunListener runListener = reporterFactory.createReporter();
+    RunListener runListener = reporterFactory.createTestReportListener();
     SurefireSleuthEventListener sleuthEventListener;
     StringBuilder testNameBuilder;
     String[] groups;
@@ -87,8 +88,8 @@ public class SleuthProvider extends AbstractProvider {
     int threadCount = 0;
     int testIndex = 0;
 
-    System.setOut(new ForwardingPrintStream((ConsoleOutputReceiver)runListener, true));
-    System.setErr(new ForwardingPrintStream((ConsoleOutputReceiver)runListener, false));
+    System.setOut(new ForwardingPrintStream(ConsoleOutputReceiverForCurrentThread.get(), true));
+    System.setErr(new ForwardingPrintStream(ConsoleOutputReceiverForCurrentThread.get(), false));
 
     if ((groups = parseGroups(System.getProperty("groups"))) == null) {
       groups = parseGroups(providerParameters.getProviderProperties().get("groups"));
@@ -128,12 +129,12 @@ public class SleuthProvider extends AbstractProvider {
     startMilliseconds = System.currentTimeMillis();
 
     System.out.println(AnsiColor.YELLOW.getCode() + "Sleuth test set starting with thread count(" + threadCount + ") on groups " + (((groups == null) || (groups.length == 0)) ? "all" : Arrays.toString(groups)) + " in " + testNameBuilder + "..." + AnsiColor.DEFAULT.getCode());
-    runListener.testSetStarting(new SimpleReportEntry("Sleuth Tests", "Test Assay", "test set starting"));
+    runListener.testSetStarting(new SimpleReportEntry(RunMode.NORMAL_RUN, 0L, "mememe", "Sleuth Tests", "Test Assay", "test set starting"));
 
     sleuthRunner.execute(((groups != null) && (groups.length == 0)) ? null : groups, (threadCount <= 0) ? Integer.MAX_VALUE : threadCount, stopOnError, stopOnFailure, testsToRun);
 
     System.out.println(AnsiColor.YELLOW.getCode() + "Sleuth test set completed in " + (System.currentTimeMillis() - startMilliseconds) + "ms" + AnsiColor.DEFAULT.getCode());
-    runListener.testSetCompleted(new SimpleReportEntry("Sleuth Tests", "Test Assay", (int)(System.currentTimeMillis() - startMilliseconds)));
+    runListener.testSetCompleted(new SimpleReportEntry(RunMode.NORMAL_RUN, 0L, "mememe", "Sleuth Tests", "Test Assay", "nameText", (int)(System.currentTimeMillis() - startMilliseconds)));
 
     runResult = reporterFactory.close();
 

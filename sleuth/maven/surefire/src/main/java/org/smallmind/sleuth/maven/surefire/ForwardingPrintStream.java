@@ -35,33 +35,33 @@ package org.smallmind.sleuth.maven.surefire;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
-import org.apache.maven.surefire.report.ConsoleOutputReceiver;
+import org.apache.maven.surefire.api.report.TestOutputReceiver;
 
 public class ForwardingPrintStream extends PrintStream {
 
   private static final String LINE_SEPARATOR = System.getProperty("line.separator");
 
-  private final ConsoleOutputReceiver consoleOutputReceiver;
+  private final TestOutputReceiver testOutputReceiver;
   private final boolean isStdOut;
 
-  ForwardingPrintStream (ConsoleOutputReceiver consoleOutputReceiver, boolean isStdOut) {
+  ForwardingPrintStream (TestOutputReceiver testOutputReceiver, boolean isStdOut) {
 
     super(new ByteArrayOutputStream());
 
-    this.consoleOutputReceiver = consoleOutputReceiver;
+    this.testOutputReceiver = testOutputReceiver;
     this.isStdOut = isStdOut;
   }
 
   @Override
   public void write (byte[] buf, int off, int len) {
 
-    consoleOutputReceiver.writeTestOutput(buf, off, len, isStdOut);
+    //  testOutputReceiver.writeTestOutput();
   }
 
   @Override
   public void write (byte[] b) {
 
-    consoleOutputReceiver.writeTestOutput(b, 0, b.length, isStdOut);
+    // testOutputReceiver.writeTestOutput();
   }
 
   @Override
@@ -75,7 +75,7 @@ public class ForwardingPrintStream extends PrintStream {
 
     byte[] bytes = (((s == null) ? "null" : s) + LINE_SEPARATOR).getBytes(StandardCharsets.UTF_8);
 
-    consoleOutputReceiver.writeTestOutput(bytes, 0, bytes.length, isStdOut);
+    // consoleOutputReceiver.writeTestOutput(bytes, 0, bytes.length, isStdOut);
   }
 
   @Override
