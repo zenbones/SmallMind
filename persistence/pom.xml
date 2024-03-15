@@ -100,13 +100,6 @@
       <optional>true</optional>
     </dependency>
     <dependency>
-      <groupId>com.querydsl</groupId>
-      <artifactId>querydsl-jpa</artifactId>
-      <classifier>jakarta</classifier>
-      <scope>compile</scope>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
       <groupId>org.ehcache</groupId>
       <artifactId>ehcache</artifactId>
       <scope>compile</scope>
