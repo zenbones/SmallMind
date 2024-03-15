@@ -44,13 +44,5 @@
     -->
   </bean>
 
-  <!--
-  <bean class="org.smallmind.web.grizzly.installer.ServletInstaller">
-    <property name="displayName" value="Jolokia Agent"/>
-    <property name="servletClass" value="org.jolokia.http.AgentServlet"/>
-    <property name="urlPattern" value="/jolokia/*"/>
-  </bean>
-  -->
-
   <!-- WebSocketEngine.getEngine().register("/websocket", "/myapp/*", new ChannelWebSocketApplication()); -->
 </beans>
