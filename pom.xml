@@ -85,6 +85,7 @@
     <aws.version>2.25.7</aws.version>
     <bouncycastle.version>1.77</bouncycastle.version>
     <cometd.version>7.0.12</cometd.version>
+    <commons.logging.version>1.3.0</commons.logging.version>
     <commons.net.version>3.10.0</commons.net.version>
     <dogstatsd.client.version>4.3.0</dogstatsd.client.version>
     <ehcache.version>3.10.8</ehcache.version>
@@ -114,18 +115,27 @@
     <jakarta.xml.ws.version>4.0.1</jakarta.xml.ws.version>
     <jersey.version>3.1.5</jersey.version>
     <jetty.version>11.0.20</jetty.version>
+    <jfextras.labs.version>9.0-r1</jfextras.labs.version>
     <jose4j.version>0.9.6</jose4j.version>
     <kafka.version>3.7.0</kafka.version>
     <liquibase.version>4.26.0</liquibase.version>
     <log4j.version>2.23.1</log4j.version>
     <maven.version>3.9.6</maven.version>
+    <maven.compiler.plugin.version>3.12.1</maven.compiler.plugin.version>
+    <maven.gpg.plugin.version>3.2.0</maven.gpg.plugin.version>
+    <maven.javadoc.plugin.version>3.6.3</maven.javadoc.plugin.version>
     <maven.plugin.annotations.version>3.11.0</maven.plugin.annotations.version>
+    <maven.plugin.plugin.version>3.11.0</maven.plugin.plugin.version>
     <maven.resolver.version>1.9.18</maven.resolver.version>
     <maven.resolver.provider.version>3.9.6</maven.resolver.provider.version>
+    <maven.source.plugin.version>3.3.0</maven.source.plugin.version>
+    <maven.surefire.plugin.version>3.2.5</maven.surefire.plugin.version>
     <mongodb.driver.version>5.0.0</mongodb.driver.version>
     <mongodb.bson.version>5.0.0</mongodb.bson.version>
     <msgpack.version>0.9.8</msgpack.version>
     <netty.version>4.1.107.Final</netty.version>
+    <nexus.staging.plugin>1.6.13</nexus.staging.plugin>
+    <openjfx.version>23-ea+3</openjfx.version>
     <quartz.version>2.3.2</quartz.version>
     <querydsl.version>5.1.0</querydsl.version>
     <shiro.version>2.0.0</shiro.version>
@@ -139,6 +149,7 @@
     <sun.mail.version>2.0.1</sun.mail.version>
     <sun.xml.bind.version>4.0.5</sun.xml.bind.version>
     <sun.xml.ws.version>4.0.2</sun.xml.ws.version>
+    <surefire.version>3.2.5</surefire.version>
     <syslog4j.version>0.9.30</syslog4j.version>
     <tanukisoft.version>3.5.54</tanukisoft.version>
     <testng.version>7.9.0</testng.version>
@@ -483,17 +494,17 @@
       <dependency>
         <groupId>org.openjfx</groupId>
         <artifactId>javafx-base</artifactId>
-        <version>15-ea+6</version>
+        <version>${openjfx.version}</version>
       </dependency>
       <dependency>
         <groupId>org.openjfx</groupId>
         <artifactId>javafx-controls</artifactId>
-        <version>15-ea+6</version>
+        <version>${openjfx.version}</version>
       </dependency>
       <dependency>
         <groupId>org.jfxtras</groupId>
         <artifactId>jfxtras-labs</artifactId>
-        <version>8.0-r5</version>
+        <version>${jfextras.labs.version}</version>
       </dependency>
       <dependency>
         <groupId>tanukisoft</groupId>
@@ -508,7 +519,7 @@
       <dependency>
         <groupId>org.apache.maven.surefire</groupId>
         <artifactId>surefire-api</artifactId>
-        <version>2.22.2</version>
+        <version>${surefire.version}</version>
       </dependency>
       <dependency>
         <groupId>software.amazon.awssdk</groupId>
@@ -628,7 +639,7 @@
       <dependency>
         <groupId>commons-logging</groupId>
         <artifactId>commons-logging</artifactId>
-        <version>1.2</version>
+        <version>${commons.logging.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.logging.log4j</groupId>
@@ -978,7 +989,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>2.22.2</version>
+          <version>${maven.surefire.plugin.version}</version>
           <configuration>
             <useSystemClassLoader>false</useSystemClassLoader>
             <groups>unit</groups>
@@ -987,7 +998,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-source-plugin</artifactId>
-          <version>3.2.1</version>
+          <version>${maven.source.plugin.version}</version>
           <executions>
             <execution>
               <id>attach-sources</id>
@@ -1000,7 +1011,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-javadoc-plugin</artifactId>
-          <version>3.6.3</version>
+          <version>${maven.javadoc.plugin.version}</version>
           <executions>
             <execution>
               <id>attach-javadocs</id>
@@ -1018,7 +1029,7 @@
         <plugin>
           <groupId>org.sonatype.plugins</groupId>
           <artifactId>nexus-staging-maven-plugin</artifactId>
-          <version>1.6.8</version>
+          <version>${nexus.staging.plugin}</version>
         </plugin>
         <plugin>
           <groupId>org.hibernate.orm.tooling</groupId>
@@ -1040,7 +1051,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-plugin-plugin</artifactId>
-          <version>3.6.1</version>
+          <version>${maven.plugin.plugin.version}</version>
           <executions>
             <execution>
               <id>default-descriptor</id>
@@ -1061,7 +1072,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-gpg-plugin</artifactId>
-          <version>3.0.1</version>
+          <version>${maven.gpg.plugin.version}</version>
           <executions>
             <execution>
               <id>sign-artifacts</id>
@@ -1162,7 +1173,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.8.1</version>
+        <version>${maven.compiler.plugin.version}</version>
         <configuration>
           <source>${maven.compiler.release}</source>
           <target>${maven.compiler.release}</target>
