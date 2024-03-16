@@ -35,8 +35,7 @@ package org.smallmind.bayeux.oumuamua.server.spi.backbone.kafka;
 public class KafkaServer {
 
   private String host;
-  // for docker images 9094 seems to be standard
-  private int port = 9092;
+  private int port = 9094;
 
   public KafkaServer () {
 
