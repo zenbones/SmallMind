@@ -32,7 +32,6 @@
  */
 package org.smallmind.persistence.orm.hibernate;
 
-import java.sql.Types;
 import java.util.Date;
 import org.hibernate.boot.model.FunctionContributions;
 import org.hibernate.query.sqm.function.SqmFunctionRegistry;
@@ -45,12 +44,6 @@ import static org.hibernate.query.sqm.produce.function.FunctionParameterType.DAT
 import static org.hibernate.query.sqm.produce.function.FunctionParameterType.INTEGER;
 
 public class H2Dialect extends org.hibernate.dialect.H2Dialect {
-
-  @Override
-  protected String castType (int sqlTypeCode) {
-
-    return (sqlTypeCode == Types.LONGVARCHAR) ? "clob" : super.castType(sqlTypeCode);
-  }
 
   @Override
   public void initializeFunctionRegistry (FunctionContributions functionContributions) {
