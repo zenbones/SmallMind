@@ -68,28 +68,28 @@ public class SurefireSleuthEventListener implements SleuthEventListener {
 
     switch (event.getType()) {
       case SETUP:
-        runListener.testSetStarting(new SimpleReportEntry(RunMode.NORMAL_RUN, 0L, "mememe", event.getClassName(), event.getMethodName(), "nameText"));
+        runListener.testSetStarting(new SimpleReportEntry(RunMode.NORMAL_RUN, 0L, event.getClassName(), "source text", event.getMethodName(), "nameText"));
         break;
       case START:
-        runListener.testStarting(new SimpleReportEntry(RunMode.NORMAL_RUN, 0L, "mememe", event.getClassName(), event.getMethodName(), "nameText"));
+        runListener.testStarting(new SimpleReportEntry(RunMode.NORMAL_RUN, 0L, event.getClassName(), "source text", event.getMethodName(), "nameText"));
         break;
       case SUCCESS:
-        runListener.testSucceeded(new SimpleReportEntry(RunMode.NORMAL_RUN, 0L, "mememe", event.getClassName(), event.getMethodName(), "nameText", (int)((SuccessSleuthEvent)event).getElapsed()));
+        runListener.testSucceeded(new SimpleReportEntry(RunMode.NORMAL_RUN, 0L, event.getClassName(), "source text", event.getMethodName(), "nameText", (int)((SuccessSleuthEvent)event).getElapsed()));
         break;
       case FAILURE:
-        runListener.testFailed(new SimpleReportEntry(RunMode.NORMAL_RUN, 0L, "mememe", event.getClassName(), event.getMethodName(), "nameText", new SleuthStackTraceWriter(event.getClassName(), event.getMethodName(), ((FailureSleuthEvent)event).getThrowable()), (int)((FailureSleuthEvent)event).getElapsed()));
+        runListener.testFailed(new SimpleReportEntry(RunMode.NORMAL_RUN, 0L, event.getClassName(), "source text", event.getMethodName(), "nameText", new SleuthStackTraceWriter(event.getClassName(), event.getMethodName(), ((FailureSleuthEvent)event).getThrowable()), (int)((FailureSleuthEvent)event).getElapsed()));
         break;
       case ERROR:
-        runListener.testError(new SimpleReportEntry(RunMode.NORMAL_RUN, 0L, "mememe", event.getClassName(), event.getMethodName(), "nameText", new SleuthStackTraceWriter(event.getClassName(), event.getMethodName(), ((ErrorSleuthEvent)event).getThrowable()), (int)((ErrorSleuthEvent)event).getElapsed()));
+        runListener.testError(new SimpleReportEntry(RunMode.NORMAL_RUN, 0L, event.getClassName(), "source text", event.getMethodName(), "nameText", new SleuthStackTraceWriter(event.getClassName(), event.getMethodName(), ((ErrorSleuthEvent)event).getThrowable()), (int)((ErrorSleuthEvent)event).getElapsed()));
         break;
       case SKIPPED:
-        runListener.testSkipped(new SimpleReportEntry(RunMode.NORMAL_RUN, 0L, "mememe", event.getClassName(), event.getMethodName(), ((SkippedSleuthEvent)event).getMessage()));
+        runListener.testSkipped(new SimpleReportEntry(RunMode.NORMAL_RUN, 0L, event.getClassName(), "source text", event.getMethodName(), ((SkippedSleuthEvent)event).getMessage()));
         break;
       case CANCELLED:
-        runListener.testSetCompleted(new SimpleReportEntry(RunMode.NORMAL_RUN, 0L, "mememe", event.getClassName(), event.getMethodName(), "Tests have been cancelled"));
+        runListener.testSetCompleted(new SimpleReportEntry(RunMode.NORMAL_RUN, 0L, event.getClassName(), "source text", event.getMethodName(), "Tests have been cancelled"));
         break;
       case MOOT:
-        runListener.testAssumptionFailure(new SimpleReportEntry(RunMode.NORMAL_RUN, 0L, "mememe", event.getClassName(), event.getMethodName(), "nameText", new SleuthStackTraceWriter(event.getClassName(), event.getMethodName(), ((MootSleuthEvent)event).getThrowable()), (int)((MootSleuthEvent)event).getElapsed()));
+        runListener.testAssumptionFailure(new SimpleReportEntry(RunMode.NORMAL_RUN, 0L, event.getClassName(), "source text", event.getMethodName(), "nameText", new SleuthStackTraceWriter(event.getClassName(), event.getMethodName(), ((MootSleuthEvent)event).getThrowable()), (int)((MootSleuthEvent)event).getElapsed()));
         break;
       case FATAL:
         throwable = ((FatalSleuthEvent)event).getThrowable();
