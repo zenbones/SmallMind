@@ -35,39 +35,40 @@ package org.smallmind.sleuth.maven.surefire;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import org.apache.maven.surefire.api.report.OutputReportEntry;
 import org.apache.maven.surefire.api.report.TestOutputReceiver;
 
 public class ForwardingPrintStream extends PrintStream {
 
   private static final String LINE_SEPARATOR = System.getProperty("line.separator");
 
-  private final TestOutputReceiver testOutputReceiver;
-  private final boolean isStdOut;
+  private final TestOutputReceiver<OutputReportEntry> testOutputReceiver;
+  private final boolean stdOut;
 
-  ForwardingPrintStream (TestOutputReceiver testOutputReceiver, boolean isStdOut) {
+  ForwardingPrintStream (TestOutputReceiver<OutputReportEntry> testOutputReceiver, boolean stdOut) {
 
     super(new ByteArrayOutputStream());
 
     this.testOutputReceiver = testOutputReceiver;
-    this.isStdOut = isStdOut;
+    this.stdOut = stdOut;
   }
 
   @Override
   public void write (byte[] buf, int off, int len) {
 
-    //  testOutputReceiver.writeTestOutput();
+    testOutputReceiver.writeTestOutput(new ConsoleOutputReportEntry(new String(buf, off, len), stdOut));
   }
 
   @Override
-  public void write (byte[] b) {
+  public void write (byte[] buf) {
 
-    // testOutputReceiver.writeTestOutput();
+    testOutputReceiver.writeTestOutput(new ConsoleOutputReportEntry(new String(buf), stdOut));
   }
 
   @Override
   public void write (int b) {
 
-    write(new byte[] {(byte)b});
+    testOutputReceiver.writeTestOutput(new ConsoleOutputReportEntry(new String(new byte[] {(byte)b}), stdOut));
   }
 
   @Override
@@ -75,7 +76,7 @@ public class ForwardingPrintStream extends PrintStream {
 
     byte[] bytes = (((s == null) ? "null" : s) + LINE_SEPARATOR).getBytes(StandardCharsets.UTF_8);
 
-    // consoleOutputReceiver.writeTestOutput(bytes, 0, bytes.length, isStdOut);
+    testOutputReceiver.writeTestOutput(new ConsoleOutputReportEntry(new String(bytes), stdOut));
   }
 
   @Override
