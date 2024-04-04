@@ -103,15 +103,7 @@ public interface Connection<V extends Value<V>> {
     Packet<V> packet;
 
     updateSession(session);
-
-    // The client sends following messages without waiting for a connect response, which will fail on an initially unconnected session
-    if (!SessionState.CONNECTED.equals(session.getState())) {
-      synchronized (session) {
-        packet = respond(meta, route, server, session, request);
-      }
-    } else {
-      packet = respond(meta, route, server, session, request);
-    }
+    packet = respond(meta, route, server, session, request);
 
     if (SessionState.DISCONNECTED.equals(session.getState())) {
       onDisconnect(server, session);
@@ -126,7 +118,14 @@ public interface Connection<V extends Value<V>> {
     Packet<V> response;
 
     if ((response = server.onRequest(session, new Packet<>(PacketType.REQUEST, session.getId(), route, request))) != null) {
-      response = meta.process(getTransport().getProtocol(), route, server, session, request);
+      // The client sends following messages without waiting for a connect response, which will fail on an initially unconnected session
+      if (!SessionState.CONNECTED.equals(session.getState())) {
+        synchronized (session) {
+          response = meta.process(getTransport().getProtocol(), route, server, session, request);
+        }
+      } else {
+        response = meta.process(getTransport().getProtocol(), route, server, session, request);
+      }
 
       if ((response = server.onResponse(session, response)) != null) {
         response = session.onResponse(session, response);
