@@ -104,7 +104,14 @@ public interface Connection<V extends Value<V>> {
 
     updateSession(session);
 
-    packet = respond(meta, route, server, session, request);
+    // The client sends following messages without waiting for a connect response, which will fail on an initially unconnected session
+    if (!SessionState.CONNECTED.equals(session.getState())) {
+      synchronized (session) {
+        packet = respond(meta, route, server, session, request);
+      }
+    } else {
+      packet = respond(meta, route, server, session, request);
+    }
 
     if (SessionState.DISCONNECTED.equals(session.getState())) {
       onDisconnect(server, session);
