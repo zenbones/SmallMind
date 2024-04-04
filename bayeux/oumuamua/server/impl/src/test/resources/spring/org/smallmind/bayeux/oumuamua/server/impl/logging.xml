@@ -15,6 +15,17 @@
     <property name="level" value="WARN"/>
   </bean>
 
+  <bean id="oumuamuaTemplate" class="org.smallmind.scribe.pen.ClassNameTemplate" init-method="register">
+    <property name="autoFillLoggerContext" value="true"/>
+    <property name="appenders">
+      <list>
+        <ref bean="logAppender"/>
+      </list>
+    </property>
+    <property name="pattern" value="org.smallmind.bayeux.oumuamua.*"/>
+    <property name="level" value="DEBUG"/>
+  </bean>
+
   <bean id="cometdTemplate" class="org.smallmind.scribe.pen.ClassNameTemplate" init-method="register">
     <property name="autoFillLoggerContext" value="true"/>
     <property name="appenders">

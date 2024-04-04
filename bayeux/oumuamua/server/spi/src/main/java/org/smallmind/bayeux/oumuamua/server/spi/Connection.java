@@ -118,14 +118,7 @@ public interface Connection<V extends Value<V>> {
     Packet<V> response;
 
     if ((response = server.onRequest(session, new Packet<>(PacketType.REQUEST, session.getId(), route, request))) != null) {
-      // The client sends following messages without waiting for a connect response, which will fail on an initially unconnected session
-      if (!SessionState.CONNECTED.equals(session.getState())) {
-        synchronized (session) {
-          response = meta.process(getTransport().getProtocol(), route, server, session, request);
-        }
-      } else {
-        response = meta.process(getTransport().getProtocol(), route, server, session, request);
-      }
+      response = meta.process(getTransport().getProtocol(), route, server, session, request);
 
       if ((response = server.onResponse(session, response)) != null) {
         response = session.onResponse(session, response);
