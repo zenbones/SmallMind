@@ -103,7 +103,6 @@ public interface Connection<V extends Value<V>> {
     Packet<V> packet;
 
     updateSession(session);
-
     packet = respond(meta, route, server, session, request);
 
     if (SessionState.DISCONNECTED.equals(session.getState())) {
