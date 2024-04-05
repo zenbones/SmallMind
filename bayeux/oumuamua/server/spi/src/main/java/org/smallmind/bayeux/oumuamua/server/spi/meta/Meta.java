@@ -148,7 +148,8 @@ public enum Meta {
           boolean connected = SessionState.CONNECTED.equals(session.getState());
           long longPollTimeoutMilliseconds = getLongPollTimeoutMilliseconds(protocol, request);
           long remainingMilliseconds = 0;
-          long start = System.currentTimeMillis();
+          long connectStartTime = System.currentTimeMillis();
+          long firstPollTime = connectStartTime;
 
           do {
 
@@ -158,13 +159,14 @@ public enum Meta {
               if (enqueuedPacket.getMessages() != null) {
                 if (enqueuedMessageList == null) {
                   enqueuedMessageList = new LinkedList<>();
+                  firstPollTime = System.currentTimeMillis();
                 }
                 enqueuedMessageList.addAll(Arrays.asList(enqueuedPacket.getMessages()));
               }
             }
 
             initial = false;
-          } while (connected && ((remainingMilliseconds = longPollTimeoutMilliseconds + start - System.currentTimeMillis()) > 0));
+          } while (connected && ((remainingMilliseconds = (enqueuedMessageList.isEmpty() ? sessionConnectIntervalMilliseconds + connectStartTime : longPollTimeoutMilliseconds + firstPollTime) - System.currentTimeMillis()) > 0));
 
           if (enqueuedMessageList == null) {
             messages = new Message[] {responseMessage};
@@ -190,11 +192,11 @@ public enum Meta {
 
       if ((adviceValue = request.getAdvice()) != null) {
 
-        Value<V> timeoutValue;
+        Value<V> clientTimeoutValue;
 
-        if (((timeoutValue = adviceValue.get(Advice.TIMEOUT.getField())) != null) && ValueType.NUMBER.equals(timeoutValue.getType())) {
+        if (((clientTimeoutValue = adviceValue.get(Advice.TIMEOUT.getField())) != null) && ValueType.NUMBER.equals(clientTimeoutValue.getType())) {
 
-          return protocol.getLongPollTimeoutMilliseconds() > 0 ? Math.max(protocol.getLongPollTimeoutMilliseconds(), ((NumberValue<V>)timeoutValue).asLong()) : Math.max(0, ((NumberValue<V>)timeoutValue).asLong());
+          return protocol.getLongPollTimeoutMilliseconds() > 0 ? Math.max(protocol.getLongPollTimeoutMilliseconds(), ((NumberValue<V>)clientTimeoutValue).asLong()) : Math.max(0, ((NumberValue<V>)clientTimeoutValue).asLong());
         }
       }
 
@@ -207,11 +209,11 @@ public enum Meta {
 
       if ((adviceValue = request.getAdvice()) != null) {
 
-        Value<V> timeoutValue;
+        Value<V> clientIntervalValue;
 
-        if (((timeoutValue = adviceValue.get(Advice.INTERVAL.getField())) != null) && ValueType.NUMBER.equals(timeoutValue.getType())) {
+        if (((clientIntervalValue = adviceValue.get(Advice.INTERVAL.getField())) != null) && ValueType.NUMBER.equals(clientIntervalValue.getType())) {
 
-          return Math.max(0, ((NumberValue<V>)timeoutValue).asLong());
+          return Math.max(0, ((NumberValue<V>)clientIntervalValue).asLong());
         }
       }
 
