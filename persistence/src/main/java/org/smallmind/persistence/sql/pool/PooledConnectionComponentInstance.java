@@ -65,7 +65,7 @@ public class PooledConnectionComponentInstance<P extends PooledConnection> imple
 
     this(componentPool, pooledConnection);
 
-    if ((validationQuery != null) && (validationQuery.length() > 0)) {
+    if ((validationQuery != null) && (!validationQuery.isEmpty())) {
       validationStatement = pooledConnection.getConnection().prepareStatement(validationQuery);
     } else {
       validationStatement = null;
