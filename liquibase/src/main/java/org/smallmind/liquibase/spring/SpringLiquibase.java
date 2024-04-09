@@ -32,19 +32,17 @@
  */
 package org.smallmind.liquibase.spring;
 
-import java.io.IOException;
+import java.io.FileNotFoundException;
+import java.io.OutputStream;
 import java.io.PrintStream;
-import java.io.PrintWriter;
-import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.sql.SQLException;
 import java.util.Collections;
 import java.util.HashSet;
-import javax.xml.parsers.ParserConfigurationException;
 import javax.sql.DataSource;
 import liquibase.CatalogAndSchema;
-import liquibase.Liquibase;
+import liquibase.Scope;
+import liquibase.command.CommandScope;
 import liquibase.database.Database;
 import liquibase.database.DatabaseFactory;
 import liquibase.database.jvm.JdbcConnection;
@@ -53,9 +51,8 @@ import liquibase.diff.DiffResult;
 import liquibase.diff.compare.CompareControl;
 import liquibase.diff.output.DiffOutputControl;
 import liquibase.diff.output.changelog.DiffToChangeLog;
-import liquibase.exception.LiquibaseException;
 import liquibase.resource.ClassLoaderResourceAccessor;
-import liquibase.resource.FileSystemResourceAccessor;
+import liquibase.resource.DirectoryResourceAccessor;
 import liquibase.resource.ResourceAccessor;
 import liquibase.snapshot.DatabaseSnapshot;
 import liquibase.snapshot.SnapshotControl;
@@ -71,7 +68,7 @@ public class SpringLiquibase implements InitializingBean {
   private DataSource dataSource;
   private ResourceAccessor resourceAccessor;
   private Goal goal;
-  private Writer previewWriter;
+  private OutputStream previewStream;
   private ChangeLog[] changeLogs;
   private String contexts;
   private String outputDir;
@@ -91,11 +88,12 @@ public class SpringLiquibase implements InitializingBean {
     this.dataSource = dataSource;
   }
 
-  public void setSource (Source source) {
+  public void setSource (Source source)
+    throws FileNotFoundException {
 
     switch (source) {
       case FILE:
-        resourceAccessor = new FileSystemResourceAccessor();
+        resourceAccessor = new DirectoryResourceAccessor(Paths.get(System.getProperty("user.home")));
         break;
       case CLASSPATH:
         resourceAccessor = new ClassLoaderResourceAccessor(classloader);
@@ -110,9 +108,9 @@ public class SpringLiquibase implements InitializingBean {
     this.goal = goal;
   }
 
-  public void setPreviewWriter (Writer previewWriter) {
+  public void setPreviewStream (OutputStream previewStream) {
 
-    this.previewWriter = previewWriter;
+    this.previewStream = previewStream;
   }
 
   public void setChangeLogs (ChangeLog[] changeLogs) {
@@ -132,7 +130,7 @@ public class SpringLiquibase implements InitializingBean {
 
   @Transactional
   public void afterPropertiesSet ()
-    throws IOException, ParserConfigurationException, SQLException, LiquibaseException {
+    throws Exception {
 
     if (!goal.equals(Goal.NONE)) {
 
@@ -140,28 +138,56 @@ public class SpringLiquibase implements InitializingBean {
 
       for (ChangeLog changeLog : changeLogs) {
 
-        JdbcConnection connection = new JdbcConnection(dataSource.getConnection());
+        try (JdbcConnection connection = new JdbcConnection(dataSource.getConnection())) {
 
-        try {
-
-          Liquibase liquibase = new Liquibase(changeLog.getInput(), resourceAccessor, connection);
+          Database database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(connection);
 
           switch (goal) {
             case PREVIEW:
-              liquibase.update(contexts, (previewWriter == null) ? new PrintWriter(System.out) : previewWriter);
+              Scope.child(Scope.Attr.resourceAccessor, resourceAccessor, () -> {
+
+                CommandScope update = new CommandScope("update");
+
+                update.addArgumentValue("contexts", contexts);
+                update.addArgumentValue("database", database);
+                update.addArgumentValue("changelogFile", changeLog.getInput());
+
+                update.setOutput((previewStream == null) ? System.out : previewStream);
+
+                update.execute();
+              });
               break;
             case UPDATE:
-              liquibase.update(contexts);
+              Scope.child(Scope.Attr.resourceAccessor, resourceAccessor, () -> {
+
+                CommandScope update = new CommandScope("update");
+
+                update.addArgumentValue("contexts", contexts);
+                update.addArgumentValue("database", database);
+                update.addArgumentValue("changelogFile", changeLog.getInput());
+
+                update.execute();
+              });
               break;
             case DOCUMENT:
-              liquibase.generateDocumentation(((outputDir == null) || outputDir.isEmpty()) ? System.getProperty("java.io.tmpdir") : outputDir, contexts);
+              Scope.child(Scope.Attr.resourceAccessor, resourceAccessor, () -> {
+
+                CommandScope update = new CommandScope("dbDoc");
+
+                update.addArgumentValue("contexts", contexts);
+                update.addArgumentValue("database", database);
+                update.addArgumentValue("changelogFile", changeLog.getInput());
+                update.addArgumentValue("outputDirectory", ((outputDir == null) || outputDir.isEmpty()) ? System.getProperty("java.io.tmpdir") : outputDir);
+
+                update.execute();
+              });
+
               break;
             case GENERATE:
 
-              Database database;
               String catalog;
 
-              if (catalogSet.add(catalog = (database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(connection)).getDefaultCatalogName())) {
+              if (catalogSet.add(catalog = (database).getDefaultCatalogName())) {
 
                 SnapshotControl snapshotControl;
                 CompareControl compareControl;
@@ -189,8 +215,6 @@ public class SpringLiquibase implements InitializingBean {
             default:
               throw new UnknownSwitchCaseException(goal.name());
           }
-        } finally {
-          connection.close();
         }
       }
     }
