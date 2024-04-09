@@ -161,10 +161,10 @@ public class SpringLiquibase implements InitializingBean {
             case PREVIEW:
               Scope.child(Scope.Attr.resourceAccessor, resourceAccessor, () -> {
 
-                CommandScope update = new CommandScope("update");
+                CommandScope update = new CommandScope("updateSql");
 
                 update.addArgumentValue("contexts", contexts);
-                update.addArgumentValue("database", database);
+                update.addArgumentValue("url", "offline:" + database.getDisplayName());
                 update.addArgumentValue("changelogFile", changeLog.getInput());
 
                 update.setOutput((previewStream == null) ? System.out : previewStream);
@@ -202,7 +202,7 @@ public class SpringLiquibase implements InitializingBean {
 
               String catalog;
 
-              if (catalogSet.add(catalog = (database).getDefaultCatalogName())) {
+              if (catalogSet.add(catalog = database.getDefaultCatalogName())) {
 
                 SnapshotControl snapshotControl;
                 CompareControl compareControl;
