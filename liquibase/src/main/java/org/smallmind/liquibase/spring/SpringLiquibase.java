@@ -46,6 +46,8 @@ import liquibase.command.CommandScope;
 import liquibase.database.Database;
 import liquibase.database.DatabaseFactory;
 import liquibase.database.jvm.JdbcConnection;
+import liquibase.datatype.DataTypeFactory;
+import liquibase.datatype.LiquibaseDataType;
 import liquibase.diff.DiffGeneratorFactory;
 import liquibase.diff.DiffResult;
 import liquibase.diff.compare.CompareControl;
@@ -70,6 +72,7 @@ public class SpringLiquibase implements InitializingBean {
   private Goal goal;
   private OutputStream previewStream;
   private ChangeLog[] changeLogs;
+  private LiquibaseDataType[] dataTypes;
   private String contexts;
   private String outputDir;
 
@@ -118,6 +121,11 @@ public class SpringLiquibase implements InitializingBean {
     this.changeLogs = changeLogs;
   }
 
+  public void setDataTypes (LiquibaseDataType[] dataTypes) {
+
+    this.dataTypes = dataTypes;
+  }
+
   public void setContexts (String contexts) {
 
     this.contexts = contexts;
@@ -131,6 +139,13 @@ public class SpringLiquibase implements InitializingBean {
   @Transactional
   public void afterPropertiesSet ()
     throws Exception {
+
+    if (dataTypes != null) {
+      for (LiquibaseDataType dataType : dataTypes) {
+        DataTypeFactory.getInstance().unregister(dataType.getName());
+        DataTypeFactory.getInstance().register(dataType);
+      }
+    }
 
     if (!goal.equals(Goal.NONE)) {
 
