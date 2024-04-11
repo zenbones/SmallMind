@@ -95,10 +95,12 @@
     <grizzly.version>4.0.2</grizzly.version>
     <grizzly.npn.version>2.0.0</grizzly.npn.version>
     <hdrhistogram.version>2.1.12</hdrhistogram.version>
-    <hibernate.version>6.4.4.Final</hibernate.version>
+    <hibernate.version>6.2.24.Final</hibernate.version>
+    <!-- <hibernate.version>6.4.4.Final</hibernate.version> -->
     <hibernate.annotations.version>6.0.6.Final</hibernate.annotations.version>
     <hibernate.validator.version>8.0.1.Final</hibernate.validator.version>
-    <hibernate.enhance.maven.plugin.version>6.4.4.Final</hibernate.enhance.maven.plugin.version>
+    <hibernate.enhance.maven.plugin.version>6.2.24.Final</hibernate.enhance.maven.plugin.version>
+    <!-- <hibernate.enhance.maven.plugin.version>6.4.4.Final</hibernate.enhance.maven.plugin.version> -->
     <httpcomponents5.client.version>5.3.1</httpcomponents5.client.version>
     <jackson.version>2.17.0</jackson.version>
     <jakarta.activation.version>2.1.3</jakarta.activation.version>
