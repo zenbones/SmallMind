@@ -37,6 +37,7 @@ import org.apache.maven.surefire.api.report.RunMode;
 import org.apache.maven.surefire.api.report.SimpleReportEntry;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.nutsnbolts.util.AnsiColor;
+import org.smallmind.sleuth.runner.TestIdentifier;
 import org.smallmind.sleuth.runner.event.ErrorSleuthEvent;
 import org.smallmind.sleuth.runner.event.FailureSleuthEvent;
 import org.smallmind.sleuth.runner.event.FatalSleuthEvent;
@@ -66,32 +67,33 @@ public class SurefireSleuthEventListener implements SleuthEventListener {
   @Override
   public void handle (SleuthEvent event) {
 
+
     System.out.println("[" + AnsiColor.YELLOW.getCode() + "SUREFIRE" + AnsiColor.DEFAULT.getCode() + "] " + event);
 
     switch (event.getType()) {
       case SETUP:
-        runListener.testSetStarting(new SimpleReportEntry(runMode, 0L, event.getClassName(), "source text", event.getMethodName(), "nameText"));
+        runListener.testSetStarting(new SimpleReportEntry(runMode, TestIdentifier.getTestIdentifier(), event.getClassName(), "source text", event.getMethodName(), "nameText"));
         break;
       case START:
-        runListener.testStarting(new SimpleReportEntry(runMode, 0L, event.getClassName(), "source text", event.getMethodName(), "nameText"));
+        runListener.testStarting(new SimpleReportEntry(runMode, TestIdentifier.getTestIdentifier(), event.getClassName(), "source text", event.getMethodName(), "nameText"));
         break;
       case SUCCESS:
-        runListener.testSucceeded(new SimpleReportEntry(runMode, 0L, event.getClassName(), "source text", event.getMethodName(), "nameText", (int)((SuccessSleuthEvent)event).getElapsed()));
+        runListener.testSucceeded(new SimpleReportEntry(runMode, TestIdentifier.getTestIdentifier(), event.getClassName(), "source text", event.getMethodName(), "nameText", (int)((SuccessSleuthEvent)event).getElapsed()));
         break;
       case FAILURE:
-        runListener.testFailed(new SimpleReportEntry(runMode, 0L, event.getClassName(), "source text", event.getMethodName(), "nameText", new SleuthStackTraceWriter(event.getClassName(), event.getMethodName(), ((FailureSleuthEvent)event).getThrowable()), (int)((FailureSleuthEvent)event).getElapsed()));
+        runListener.testFailed(new SimpleReportEntry(runMode, TestIdentifier.getTestIdentifier(), event.getClassName(), "source text", event.getMethodName(), "nameText", new SleuthStackTraceWriter(event.getClassName(), event.getMethodName(), ((FailureSleuthEvent)event).getThrowable()), (int)((FailureSleuthEvent)event).getElapsed()));
         break;
       case ERROR:
-        runListener.testError(new SimpleReportEntry(runMode, 0L, event.getClassName(), "source text", event.getMethodName(), "nameText", new SleuthStackTraceWriter(event.getClassName(), event.getMethodName(), ((ErrorSleuthEvent)event).getThrowable()), (int)((ErrorSleuthEvent)event).getElapsed()));
+        runListener.testError(new SimpleReportEntry(runMode, TestIdentifier.getTestIdentifier(), event.getClassName(), "source text", event.getMethodName(), "nameText", new SleuthStackTraceWriter(event.getClassName(), event.getMethodName(), ((ErrorSleuthEvent)event).getThrowable()), (int)((ErrorSleuthEvent)event).getElapsed()));
         break;
       case SKIPPED:
-        runListener.testSkipped(new SimpleReportEntry(runMode, 0L, event.getClassName(), "source text", event.getMethodName(), ((SkippedSleuthEvent)event).getMessage()));
+        runListener.testSkipped(new SimpleReportEntry(runMode, TestIdentifier.getTestIdentifier(), event.getClassName(), "source text", event.getMethodName(), ((SkippedSleuthEvent)event).getMessage()));
         break;
       case CANCELLED:
-        runListener.testSetCompleted(new SimpleReportEntry(runMode, 0L, event.getClassName(), "source text", event.getMethodName(), "Tests have been cancelled"));
+        runListener.testSetCompleted(new SimpleReportEntry(runMode, TestIdentifier.getTestIdentifier(), event.getClassName(), "source text", event.getMethodName(), "Tests have been cancelled"));
         break;
       case MOOT:
-        runListener.testAssumptionFailure(new SimpleReportEntry(runMode, 0L, event.getClassName(), "source text", event.getMethodName(), "nameText", new SleuthStackTraceWriter(event.getClassName(), event.getMethodName(), ((MootSleuthEvent)event).getThrowable()), (int)((MootSleuthEvent)event).getElapsed()));
+        runListener.testAssumptionFailure(new SimpleReportEntry(runMode, TestIdentifier.getTestIdentifier(), event.getClassName(), "source text", event.getMethodName(), "nameText", new SleuthStackTraceWriter(event.getClassName(), event.getMethodName(), ((MootSleuthEvent)event).getThrowable()), (int)((MootSleuthEvent)event).getElapsed()));
         break;
       case FATAL:
         throwable = ((FatalSleuthEvent)event).getThrowable();

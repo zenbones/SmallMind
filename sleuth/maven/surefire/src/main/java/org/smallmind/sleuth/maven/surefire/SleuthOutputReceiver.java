@@ -37,6 +37,7 @@ import org.apache.maven.surefire.api.report.RunMode;
 import org.apache.maven.surefire.api.report.TestOutputReceiver;
 import org.apache.maven.surefire.api.report.TestOutputReportEntry;
 import org.apache.maven.surefire.api.report.TestReportListener;
+import org.smallmind.sleuth.runner.TestIdentifier;
 
 public class SleuthOutputReceiver implements TestOutputReceiver<OutputReportEntry> {
 
@@ -52,6 +53,6 @@ public class SleuthOutputReceiver implements TestOutputReceiver<OutputReportEntr
   @Override
   public void writeTestOutput (OutputReportEntry reportEntry) {
 
-    reportListener.writeTestOutput(new TestOutputReportEntry(reportEntry, runMode, 1L));
+    reportListener.writeTestOutput(new TestOutputReportEntry(reportEntry, runMode, TestIdentifier.getTestIdentifier()));
   }
 }

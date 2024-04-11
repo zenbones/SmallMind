@@ -112,6 +112,8 @@ public class SleuthRunner {
         suiteDependencyQueue = suiteAnalysis.calculate();
         suiteCompletedLatch = new CountDownLatch(suiteDependencyQueue.size());
         while (isRunning() && ((suiteDependency = suiteDependencyQueue.poll()) != null)) {
+          TestIdentifier.updateIdentifier(suiteDependency.getValue().getName(), null);
+
           threadPool.execute(TestTier.SUITE, new SuiteRunner(this, suiteCompletedLatch, suiteDependency, suiteDependencyQueue, annotationProcessor, threadPool, stopOnError, stopOnFailure));
         }
 

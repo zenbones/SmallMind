@@ -42,7 +42,7 @@ public class SleuthReportEntry implements OutputReportEntry {
 
   public SleuthReportEntry (String message, boolean stdOut) {
 
-    this(message, stdOut, true);
+    this(message, stdOut, false);
   }
 
   public SleuthReportEntry (String message, boolean stdOut, boolean newLine) {

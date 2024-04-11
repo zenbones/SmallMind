@@ -79,6 +79,8 @@ public class TestRunner implements TestController {
   @Override
   public void run () {
 
+    TestIdentifier.updateIdentifier(clazz.getName(), testMethodDependency.getValue().getName());
+
     try {
 
       AnnotationDictionary annotationDictionary = annotationProcessor.process(clazz);
