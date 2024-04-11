@@ -132,7 +132,7 @@ public class SleuthProvider extends AbstractProvider {
       }
       testNameBuilder.append(']');
 
-      sleuthRunner.addListener(sleuthEventListener = new SurefireSleuthEventListener(reportListener));
+      sleuthRunner.addListener(sleuthEventListener = new SurefireSleuthEventListener(reportListener, RunMode.NORMAL_RUN));
       startMilliseconds = System.currentTimeMillis();
 
       System.out.println(AnsiColor.YELLOW.getCode() + "Sleuth test set starting with thread count(" + threadCount + ") on groups " + (((groups == null) || (groups.length == 0)) ? "all" : Arrays.toString(groups)) + " in " + testNameBuilder + "..." + AnsiColor.DEFAULT.getCode());
