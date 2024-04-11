@@ -35,17 +35,20 @@ package org.smallmind.sleuth.maven.surefire;
 import java.util.Arrays;
 import org.apache.maven.surefire.api.provider.AbstractProvider;
 import org.apache.maven.surefire.api.provider.ProviderParameters;
-import org.apache.maven.surefire.api.report.ConsoleOutputReceiverForCurrentThread;
 import org.apache.maven.surefire.api.report.ReporterException;
 import org.apache.maven.surefire.api.report.ReporterFactory;
-import org.apache.maven.surefire.api.report.RunListener;
 import org.apache.maven.surefire.api.report.RunMode;
 import org.apache.maven.surefire.api.report.SimpleReportEntry;
+import org.apache.maven.surefire.api.report.TestOutputReportEntry;
+import org.apache.maven.surefire.api.report.TestReportListener;
 import org.apache.maven.surefire.api.suite.RunResult;
 import org.apache.maven.surefire.api.testset.TestSetFailedException;
 import org.apache.maven.surefire.api.util.TestsToRun;
 import org.smallmind.nutsnbolts.util.AnsiColor;
 import org.smallmind.sleuth.runner.SleuthRunner;
+
+import static java.lang.System.setErr;
+import static java.lang.System.setOut;
 
 public class SleuthProvider extends AbstractProvider {
 
@@ -77,69 +80,74 @@ public class SleuthProvider extends AbstractProvider {
     throws TestSetFailedException, ReporterException {
 
     ReporterFactory reporterFactory = providerParameters.getReporterFactory();
+    TestReportListener<TestOutputReportEntry> reportListener = reporterFactory.createTestReportListener();
     RunResult runResult;
-    RunListener runListener = reporterFactory.createTestReportListener();
-    SurefireSleuthEventListener sleuthEventListener;
-    StringBuilder testNameBuilder;
-    String[] groups;
-    boolean stopOnError = true;
-    boolean stopOnFailure = true;
-    long startMilliseconds;
-    int threadCount = 0;
-    int testIndex = 0;
 
-    System.setOut(new ForwardingPrintStream(ConsoleOutputReceiverForCurrentThread.get(), true));
-    System.setErr(new ForwardingPrintStream(ConsoleOutputReceiverForCurrentThread.get(), false));
+    try {
 
-    if ((groups = parseGroups(System.getProperty("groups"))) == null) {
-      groups = parseGroups(providerParameters.getProviderProperties().get("groups"));
-    }
+      SleuthOutputReceiver sleuthOutputReceiver = new SleuthOutputReceiver(reportListener, RunMode.NORMAL_RUN);
+      SurefireSleuthEventListener sleuthEventListener;
+      StringBuilder testNameBuilder;
+      String[] groups;
+      boolean stopOnError = true;
+      boolean stopOnFailure = true;
+      long startMilliseconds;
+      int threadCount = 0;
+      int testIndex = 0;
 
-    if (testsToRun == null) {
-      if (forkTestSet instanceof TestsToRun) {
-        testsToRun = (TestsToRun)forkTestSet;
-      } else if (forkTestSet instanceof Class) {
-        testsToRun = TestsToRun.fromClass((Class<?>)forkTestSet);
-      } else {
-        testsToRun = providerParameters.getScanResult().applyFilter(null, providerParameters.getTestClassLoader());
+      setOut(new ForwardingPrintStream(sleuthOutputReceiver, true));
+      setErr(new ForwardingPrintStream(sleuthOutputReceiver, false));
+
+      if ((groups = parseGroups(System.getProperty("groups"))) == null) {
+        groups = parseGroups(providerParameters.getProviderProperties().get("groups"));
       }
-    }
 
-    if (providerParameters.getProviderProperties().get("threadCount") != null) {
-      threadCount = Integer.parseInt(providerParameters.getProviderProperties().get("threadCount"));
-    } else if (providerParameters.getProviderProperties().get("threadcount") != null) {
-      threadCount = Integer.parseInt(providerParameters.getProviderProperties().get("threadcount"));
-    }
-
-    if (providerParameters.getProviderProperties().get("testFailureIgnore") != null) {
-      stopOnError = !Boolean.parseBoolean(providerParameters.getProviderProperties().get("testFailureIgnore"));
-      stopOnFailure = !Boolean.parseBoolean(providerParameters.getProviderProperties().get("testFailureIgnore"));
-    }
-
-    testNameBuilder = new StringBuilder("[");
-    for (Class<?> testClass : testsToRun) {
-      if (testIndex++ > 0) {
-        testNameBuilder.append(',');
+      if (testsToRun == null) {
+        if (forkTestSet instanceof TestsToRun) {
+          testsToRun = (TestsToRun)forkTestSet;
+        } else if (forkTestSet instanceof Class) {
+          testsToRun = TestsToRun.fromClass((Class<?>)forkTestSet);
+        } else {
+          testsToRun = providerParameters.getScanResult().applyFilter(null, providerParameters.getTestClassLoader());
+        }
       }
-      testNameBuilder.append(testClass.getSimpleName());
-    }
-    testNameBuilder.append(']');
 
-    sleuthRunner.addListener(sleuthEventListener = new SurefireSleuthEventListener(runListener));
-    startMilliseconds = System.currentTimeMillis();
+      if (providerParameters.getProviderProperties().get("threadCount") != null) {
+        threadCount = Integer.parseInt(providerParameters.getProviderProperties().get("threadCount"));
+      } else if (providerParameters.getProviderProperties().get("threadcount") != null) {
+        threadCount = Integer.parseInt(providerParameters.getProviderProperties().get("threadcount"));
+      }
 
-    System.out.println(AnsiColor.YELLOW.getCode() + "Sleuth test set starting with thread count(" + threadCount + ") on groups " + (((groups == null) || (groups.length == 0)) ? "all" : Arrays.toString(groups)) + " in " + testNameBuilder + "..." + AnsiColor.DEFAULT.getCode());
-    runListener.testSetStarting(new SimpleReportEntry(RunMode.NORMAL_RUN, 0L, testNameBuilder.toString(), "Sleuth Tests", "Test Assay", "Name Text", "super message 0"));
+      if (providerParameters.getProviderProperties().get("testFailureIgnore") != null) {
+        stopOnError = !Boolean.parseBoolean(providerParameters.getProviderProperties().get("testFailureIgnore"));
+        stopOnFailure = !Boolean.parseBoolean(providerParameters.getProviderProperties().get("testFailureIgnore"));
+      }
 
-    sleuthRunner.execute(((groups != null) && (groups.length == 0)) ? null : groups, (threadCount <= 0) ? Integer.MAX_VALUE : threadCount, stopOnError, stopOnFailure, testsToRun);
+      testNameBuilder = new StringBuilder("[");
+      for (Class<?> testClass : testsToRun) {
+        if (testIndex++ > 0) {
+          testNameBuilder.append(',');
+        }
+        testNameBuilder.append(testClass.getSimpleName());
+      }
+      testNameBuilder.append(']');
 
-    System.out.println(AnsiColor.YELLOW.getCode() + "Sleuth test set completed in " + (System.currentTimeMillis() - startMilliseconds) + "ms" + AnsiColor.DEFAULT.getCode());
-    runListener.testSetCompleted(new SimpleReportEntry(RunMode.NORMAL_RUN, 0L, testNameBuilder.toString(), "Sleuth Tests", "Test Assay", "nameText", (int)(System.currentTimeMillis() - startMilliseconds)));
+      sleuthRunner.addListener(sleuthEventListener = new SurefireSleuthEventListener(reportListener));
+      startMilliseconds = System.currentTimeMillis();
 
-    runResult = reporterFactory.close();
+      System.out.println(AnsiColor.YELLOW.getCode() + "Sleuth test set starting with thread count(" + threadCount + ") on groups " + (((groups == null) || (groups.length == 0)) ? "all" : Arrays.toString(groups)) + " in " + testNameBuilder + "..." + AnsiColor.DEFAULT.getCode());
+      reportListener.testSetStarting(new SimpleReportEntry(RunMode.NORMAL_RUN, 0L, testNameBuilder.toString(), "Sleuth Tests", "Test Assay", "Name Text", "super message 0"));
 
-    if (sleuthEventListener.getThrowable() != null) {
-      throw new TestSetFailedException(sleuthEventListener.getThrowable());
+      sleuthRunner.execute(((groups != null) && (groups.length == 0)) ? null : groups, (threadCount <= 0) ? Integer.MAX_VALUE : threadCount, stopOnError, stopOnFailure, testsToRun);
+
+      System.out.println(AnsiColor.YELLOW.getCode() + "Sleuth test set completed in " + (System.currentTimeMillis() - startMilliseconds) + "ms" + AnsiColor.DEFAULT.getCode());
+      reportListener.testSetCompleted(new SimpleReportEntry(RunMode.NORMAL_RUN, 0L, testNameBuilder.toString(), "Sleuth Tests", "Test Assay", "nameText", (int)(System.currentTimeMillis() - startMilliseconds)));
+
+      if (sleuthEventListener.getThrowable() != null) {
+        throw new TestSetFailedException(sleuthEventListener.getThrowable());
+      }
+    } finally {
+      runResult = reporterFactory.close();
     }
 
     return runResult;

@@ -33,40 +33,25 @@
 package org.smallmind.sleuth.maven.surefire;
 
 import org.apache.maven.surefire.api.report.OutputReportEntry;
+import org.apache.maven.surefire.api.report.RunMode;
+import org.apache.maven.surefire.api.report.TestOutputReceiver;
+import org.apache.maven.surefire.api.report.TestOutputReportEntry;
+import org.apache.maven.surefire.api.report.TestReportListener;
 
-public class ConsoleOutputReportEntry implements OutputReportEntry {
+public class SleuthOutputReceiver implements TestOutputReceiver<OutputReportEntry> {
 
-  private final String message;
-  private final boolean stdOut;
-  private final boolean newLine;
+  private final TestReportListener<TestOutputReportEntry> reportListener;
+  private final RunMode runMode;
 
-  public ConsoleOutputReportEntry (String message, boolean stdOut) {
+  public SleuthOutputReceiver (TestReportListener<TestOutputReportEntry> reportListener, RunMode runMode) {
 
-    this(message, stdOut, true);
-  }
-
-  public ConsoleOutputReportEntry (String message, boolean stdOut, boolean newLine) {
-
-    this.message = message;
-    this.stdOut = stdOut;
-    this.newLine = newLine;
+    this.reportListener = reportListener;
+    this.runMode = runMode;
   }
 
   @Override
-  public String getLog () {
+  public void writeTestOutput (OutputReportEntry reportEntry) {
 
-    return message;
-  }
-
-  @Override
-  public boolean isStdOut () {
-
-    return stdOut;
-  }
-
-  @Override
-  public boolean isNewLine () {
-
-    return newLine;
+    reportListener.writeTestOutput(new TestOutputReportEntry(reportEntry, runMode, 1L));
   }
 }

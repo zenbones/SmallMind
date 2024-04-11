@@ -32,60 +32,41 @@
  */
 package org.smallmind.sleuth.maven.surefire;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.nio.charset.StandardCharsets;
 import org.apache.maven.surefire.api.report.OutputReportEntry;
-import org.apache.maven.surefire.api.report.TestOutputReceiver;
 
-public class ForwardingPrintStream extends PrintStream {
+public class SleuthReportEntry implements OutputReportEntry {
 
-  private static final String LINE_SEPARATOR = System.lineSeparator();
-
-  private final TestOutputReceiver<OutputReportEntry> testOutputReceiver;
+  private final String message;
   private final boolean stdOut;
+  private final boolean newLine;
 
-  ForwardingPrintStream (TestOutputReceiver<OutputReportEntry> testOutputReceiver, boolean stdOut) {
+  public SleuthReportEntry (String message, boolean stdOut) {
 
-    super(new ByteArrayOutputStream());
+    this(message, stdOut, true);
+  }
 
-    this.testOutputReceiver = testOutputReceiver;
+  public SleuthReportEntry (String message, boolean stdOut, boolean newLine) {
+
+    this.message = message;
     this.stdOut = stdOut;
+    this.newLine = newLine;
   }
 
   @Override
-  public void write (byte[] buf, int off, int len) {
+  public String getLog () {
 
-    testOutputReceiver.writeTestOutput(new SleuthReportEntry(new String(buf, off, len), stdOut));
+    return message;
   }
 
   @Override
-  public void write (byte[] buf) {
+  public boolean isStdOut () {
 
-    testOutputReceiver.writeTestOutput(new SleuthReportEntry(new String(buf), stdOut));
+    return stdOut;
   }
 
   @Override
-  public void write (int b) {
+  public boolean isNewLine () {
 
-    testOutputReceiver.writeTestOutput(new SleuthReportEntry(new String(new byte[] {(byte)b}), stdOut));
-  }
-
-  @Override
-  public void println (String s) {
-
-    byte[] bytes = (((s == null) ? "null" : s) + LINE_SEPARATOR).getBytes(StandardCharsets.UTF_8);
-
-    testOutputReceiver.writeTestOutput(new SleuthReportEntry(new String(bytes), stdOut));
-  }
-
-  @Override
-  public void close () {
-
-  }
-
-  @Override
-  public void flush () {
-
+    return newLine;
   }
 }
