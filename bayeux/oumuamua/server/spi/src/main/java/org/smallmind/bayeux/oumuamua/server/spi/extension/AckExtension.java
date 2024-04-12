@@ -123,7 +123,7 @@ public class AckExtension<V extends Value<V>> extends AbstractServerPacketListen
 
             unAckedIter = unacknowledgedMap.headMap(ackId).entrySet().iterator();
             while (unAckedIter.hasNext()) {
-              resendQueue.add(packet);
+              resendQueue.add(unAckedIter.next().getValue());
               unAckedIter.remove();
             }
           }
