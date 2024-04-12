@@ -1,7 +1,7 @@
 <?xml version="1.1" encoding="UTF-8" standalone="no"?>
 <databaseChangeLog xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
-  <changeSet author="auto.generated" id="1546478984608-1">
+  <changeSet author="auto.generated" id="1712884845061-1">
     <createTable tableName="BATCH_JOB_EXECUTION">
       <column name="JOB_EXECUTION_ID" type="BIGINT">
         <constraints primaryKey="true"/>
@@ -19,10 +19,9 @@
       <column name="EXIT_CODE" type="VARCHAR(2500)"/>
       <column name="EXIT_MESSAGE" type="VARCHAR(2500)"/>
       <column name="LAST_UPDATED" type="datetime"/>
-      <column name="JOB_CONFIGURATION_LOCATION" type="VARCHAR(2500)"/>
     </createTable>
   </changeSet>
-  <changeSet author="auto.generated" id="1546478984608-2">
+  <changeSet author="auto.generated" id="1712884845061-2">
     <createTable tableName="BATCH_JOB_EXECUTION_CONTEXT">
       <column name="JOB_EXECUTION_ID" type="BIGINT">
         <constraints primaryKey="true"/>
@@ -33,27 +32,24 @@
       <column name="SERIALIZED_CONTEXT" type="TEXT"/>
     </createTable>
   </changeSet>
-  <changeSet author="auto.generated" id="1546478984608-3">
+  <changeSet author="auto.generated" id="1712884845061-3">
     <createTable tableName="BATCH_JOB_EXECUTION_PARAMS">
       <column name="JOB_EXECUTION_ID" type="BIGINT">
         <constraints nullable="false"/>
       </column>
-      <column name="TYPE_CD" type="VARCHAR(6)">
+      <column name="PARAMETER_NAME" type="VARCHAR(100)">
         <constraints nullable="false"/>
       </column>
-      <column name="KEY_NAME" type="VARCHAR(100)">
+      <column name="PARAMETER_TYPE" type="VARCHAR(100)">
         <constraints nullable="false"/>
       </column>
-      <column name="STRING_VAL" type="VARCHAR(250)"/>
-      <column name="DATE_VAL" type="datetime"/>
-      <column name="LONG_VAL" type="BIGINT"/>
-      <column name="DOUBLE_VAL" type="DOUBLE"/>
+      <column name="PARAMETER_VALUE" type="VARCHAR(2500)"/>
       <column name="IDENTIFYING" type="CHAR(1)">
         <constraints nullable="false"/>
       </column>
     </createTable>
   </changeSet>
-  <changeSet author="auto.generated" id="1546478984608-4">
+  <changeSet author="auto.generated" id="1712884845061-4">
     <createTable tableName="BATCH_JOB_EXECUTION_SEQ">
       <column name="ID" type="BIGINT">
         <constraints nullable="false"/>
@@ -63,7 +59,7 @@
       </column>
     </createTable>
   </changeSet>
-  <changeSet author="auto.generated" id="1546478984608-5">
+  <changeSet author="auto.generated" id="1712884845061-5">
     <createTable tableName="BATCH_JOB_INSTANCE">
       <column name="JOB_INSTANCE_ID" type="BIGINT">
         <constraints primaryKey="true"/>
@@ -77,7 +73,7 @@
       </column>
     </createTable>
   </changeSet>
-  <changeSet author="auto.generated" id="1546478984608-6">
+  <changeSet author="auto.generated" id="1712884845061-6">
     <createTable tableName="BATCH_JOB_SEQ">
       <column name="ID" type="BIGINT">
         <constraints nullable="false"/>
@@ -87,7 +83,7 @@
       </column>
     </createTable>
   </changeSet>
-  <changeSet author="auto.generated" id="1546478984608-7">
+  <changeSet author="auto.generated" id="1712884845061-7">
     <createTable tableName="BATCH_STEP_EXECUTION">
       <column name="STEP_EXECUTION_ID" type="BIGINT">
         <constraints primaryKey="true"/>
@@ -101,9 +97,10 @@
       <column name="JOB_EXECUTION_ID" type="BIGINT">
         <constraints nullable="false"/>
       </column>
-      <column name="START_TIME" type="datetime">
+      <column name="CREATE_TIME" type="datetime">
         <constraints nullable="false"/>
       </column>
+      <column name="START_TIME" type="datetime"/>
       <column name="END_TIME" type="datetime"/>
       <column name="STATUS" type="VARCHAR(10)"/>
       <column name="COMMIT_COUNT" type="BIGINT"/>
@@ -119,7 +116,7 @@
       <column name="LAST_UPDATED" type="datetime"/>
     </createTable>
   </changeSet>
-  <changeSet author="auto.generated" id="1546478984608-8">
+  <changeSet author="auto.generated" id="1712884845061-8">
     <createTable tableName="BATCH_STEP_EXECUTION_CONTEXT">
       <column name="STEP_EXECUTION_ID" type="BIGINT">
         <constraints primaryKey="true"/>
@@ -130,7 +127,7 @@
       <column name="SERIALIZED_CONTEXT" type="TEXT"/>
     </createTable>
   </changeSet>
-  <changeSet author="auto.generated" id="1546478984608-9">
+  <changeSet author="auto.generated" id="1712884845061-9">
     <createTable tableName="BATCH_STEP_EXECUTION_SEQ">
       <column name="ID" type="BIGINT">
         <constraints nullable="false"/>
@@ -140,43 +137,43 @@
       </column>
     </createTable>
   </changeSet>
-  <changeSet author="auto.generated" id="1546478984608-10">
+  <changeSet author="auto.generated" id="1712884845061-10">
     <addUniqueConstraint columnNames="JOB_NAME, JOB_KEY" constraintName="JOB_INST_UN" tableName="BATCH_JOB_INSTANCE"/>
   </changeSet>
-  <changeSet author="auto.generated" id="1546478984608-11">
+  <changeSet author="auto.generated" id="1712884845061-11">
     <createIndex indexName="JOB_EXEC_PARAMS_FK" tableName="BATCH_JOB_EXECUTION_PARAMS">
       <column name="JOB_EXECUTION_ID"/>
     </createIndex>
   </changeSet>
-  <changeSet author="auto.generated" id="1546478984608-12">
+  <changeSet author="auto.generated" id="1712884845061-12">
     <createIndex indexName="JOB_EXEC_STEP_FK" tableName="BATCH_STEP_EXECUTION">
       <column name="JOB_EXECUTION_ID"/>
     </createIndex>
   </changeSet>
-  <changeSet author="auto.generated" id="1546478984608-13">
+  <changeSet author="auto.generated" id="1712884845061-13">
     <createIndex indexName="JOB_INST_EXEC_FK" tableName="BATCH_JOB_EXECUTION">
       <column name="JOB_INSTANCE_ID"/>
     </createIndex>
   </changeSet>
-  <changeSet author="auto.generated" id="1546478984608-14">
+  <changeSet author="auto.generated" id="1712884845061-14">
     <addForeignKeyConstraint baseColumnNames="JOB_EXECUTION_ID" baseTableName="BATCH_JOB_EXECUTION_CONTEXT" constraintName="JOB_EXEC_CTX_FK" deferrable="false" initiallyDeferred="false"
-                             onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="JOB_EXECUTION_ID" referencedTableCatalogName="batch" referencedTableName="BATCH_JOB_EXECUTION" validate="true"/>
+                             onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="JOB_EXECUTION_ID" referencedTableName="BATCH_JOB_EXECUTION" validate="true"/>
   </changeSet>
-  <changeSet author="auto.generated" id="1546478984608-15">
+  <changeSet author="auto.generated" id="1712884845061-15">
     <addForeignKeyConstraint baseColumnNames="JOB_EXECUTION_ID" baseTableName="BATCH_JOB_EXECUTION_PARAMS" constraintName="JOB_EXEC_PARAMS_FK" deferrable="false" initiallyDeferred="false"
-                             onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="JOB_EXECUTION_ID" referencedTableCatalogName="batch" referencedTableName="BATCH_JOB_EXECUTION" validate="true"/>
+                             onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="JOB_EXECUTION_ID" referencedTableName="BATCH_JOB_EXECUTION" validate="true"/>
   </changeSet>
-  <changeSet author="auto.generated" id="1546478984608-16">
+  <changeSet author="auto.generated" id="1712884845061-16">
     <addForeignKeyConstraint baseColumnNames="JOB_EXECUTION_ID" baseTableName="BATCH_STEP_EXECUTION" constraintName="JOB_EXEC_STEP_FK" deferrable="false" initiallyDeferred="false"
-                             onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="JOB_EXECUTION_ID" referencedTableCatalogName="batch" referencedTableName="BATCH_JOB_EXECUTION" validate="true"/>
+                             onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="JOB_EXECUTION_ID" referencedTableName="BATCH_JOB_EXECUTION" validate="true"/>
   </changeSet>
-  <changeSet author="auto.generated" id="1546478984608-17">
+  <changeSet author="auto.generated" id="1712884845061-17">
     <addForeignKeyConstraint baseColumnNames="JOB_INSTANCE_ID" baseTableName="BATCH_JOB_EXECUTION" constraintName="JOB_INST_EXEC_FK" deferrable="false" initiallyDeferred="false"
-                             onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="JOB_INSTANCE_ID" referencedTableCatalogName="batch" referencedTableName="BATCH_JOB_INSTANCE" validate="true"/>
+                             onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="JOB_INSTANCE_ID" referencedTableName="BATCH_JOB_INSTANCE" validate="true"/>
   </changeSet>
-  <changeSet author="auto.generated" id="1546478984608-18">
+  <changeSet author="auto.generated" id="1712884845061-18">
     <addForeignKeyConstraint baseColumnNames="STEP_EXECUTION_ID" baseTableName="BATCH_STEP_EXECUTION_CONTEXT" constraintName="STEP_EXEC_CTX_FK" deferrable="false" initiallyDeferred="false"
-                             onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="STEP_EXECUTION_ID" referencedTableCatalogName="batch" referencedTableName="BATCH_STEP_EXECUTION" validate="true"/>
+                             onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="STEP_EXECUTION_ID" referencedTableName="BATCH_STEP_EXECUTION" validate="true"/>
   </changeSet>
   <changeSet id="1" author="anonymous">
     <createIndex indexName="IDX_BATCH_JOB_INSTANCE_JOB_NAME" tableName="BATCH_JOB_INSTANCE">
@@ -204,7 +201,6 @@
       <column name="STEP_EXECUTION_ID"/>
     </createIndex>
   </changeSet>
-
   <changeSet id="2" author="anonymous">
     <insert tableName="BATCH_JOB_SEQ">
       <column name="ID" valueNumeric="0"/>
@@ -219,5 +215,4 @@
       <column name="UNIQUE_KEY" valueNumeric="0"/>
     </insert>
   </changeSet>
-
 </databaseChangeLog>
