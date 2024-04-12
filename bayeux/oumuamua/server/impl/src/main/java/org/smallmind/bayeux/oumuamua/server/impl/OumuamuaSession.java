@@ -230,6 +230,8 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   @Override
   public void deliver (Session<V> sender, Packet<V> packet) {
 
+    LoggerManager.getLogger(OumuamuaChannel.class).debug(() -> "Delivery to session(" + getId() + ") on channel(" + packet.getRoute() + ")...");
+
     if (longPolling.get()) {
       longPollLock.lock();
 
