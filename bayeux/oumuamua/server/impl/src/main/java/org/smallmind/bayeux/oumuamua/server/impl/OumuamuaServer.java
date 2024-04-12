@@ -325,8 +325,13 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
     OumuamuaSession<V> removedSession;
 
     if ((removedSession = sessionMap.remove(session.getId())) != null) {
-      channelTree.walk(new RemovedSessionOperation<>(removedSession));
+      departChannels(removedSession);
     }
+  }
+
+  public void departChannels (OumuamuaSession<V> session) {
+
+    channelTree.walk(new RemovedSessionOperation<>(session));
   }
 
   public Iterator<OumuamuaSession<V>> iterateSessions () {

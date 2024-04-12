@@ -74,6 +74,7 @@ public class IdleSessionInspector<V extends Value<V>> implements Runnable {
           if (session.isRemovable(now)) {
             session.completeDisconnect();
             sessionIterator.remove();
+            server.departChannels(session);
           }
         }
       }
