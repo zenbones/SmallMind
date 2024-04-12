@@ -166,7 +166,7 @@ public enum Meta {
             }
 
             initial = false;
-          } while (connected && ((remainingMilliseconds = (enqueuedMessageList.isEmpty() ? sessionConnectIntervalMilliseconds + connectStartTime : longPollTimeoutMilliseconds + firstPollTime) - System.currentTimeMillis()) > 0));
+          } while (connected && ((remainingMilliseconds = (((enqueuedMessageList == null) || enqueuedMessageList.isEmpty()) ? sessionConnectIntervalMilliseconds + connectStartTime : longPollTimeoutMilliseconds + firstPollTime) - System.currentTimeMillis()) > 0));
 
           if (enqueuedMessageList == null) {
             messages = new Message[] {responseMessage};
@@ -196,7 +196,7 @@ public enum Meta {
 
         if (((clientTimeoutValue = adviceValue.get(Advice.TIMEOUT.getField())) != null) && ValueType.NUMBER.equals(clientTimeoutValue.getType())) {
 
-          return protocol.getLongPollTimeoutMilliseconds() > 0 ? Math.max(protocol.getLongPollTimeoutMilliseconds(), ((NumberValue<V>)clientTimeoutValue).asLong()) : Math.max(0, ((NumberValue<V>)clientTimeoutValue).asLong());
+          return Math.max(Math.max(0, protocol.getLongPollTimeoutMilliseconds()), ((NumberValue<V>)clientTimeoutValue).asLong());
         }
       }
 
