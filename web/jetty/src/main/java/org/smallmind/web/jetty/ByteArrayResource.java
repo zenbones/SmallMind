@@ -33,10 +33,9 @@
 package org.smallmind.web.jetty;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.InputStream;
 import java.net.URI;
-import java.nio.channels.ReadableByteChannel;
+import java.nio.file.Path;
 import org.eclipse.jetty.util.resource.Resource;
 
 public class ByteArrayResource extends Resource {
@@ -49,14 +48,15 @@ public class ByteArrayResource extends Resource {
   }
 
   @Override
-  public boolean isContainedIn (Resource resource) {
+  public boolean isReadable () {
 
-    return false;
+    return true;
   }
 
   @Override
-  public void close () {
+  public boolean isContainedIn (Resource resource) {
 
+    return false;
   }
 
   @Override
@@ -72,25 +72,13 @@ public class ByteArrayResource extends Resource {
   }
 
   @Override
-  public long lastModified () {
-
-    return -1;
-  }
-
-  @Override
-  public long length () {
-
-    return bytes.length;
-  }
-
-  @Override
-  public URI getURI () {
+  public Path getPath () {
 
     return null;
   }
 
   @Override
-  public File getFile () {
+  public URI getURI () {
 
     return null;
   }
@@ -102,40 +90,26 @@ public class ByteArrayResource extends Resource {
   }
 
   @Override
-  public InputStream getInputStream () {
+  public String getFileName () {
+
+    return null;
+  }
+
+  @Override
+  public Resource resolve (String subUriPath) {
+
+    return null;
+  }
+
+  @Override
+  public long length () {
+
+    return bytes.length;
+  }
+
+  @Override
+  public InputStream newInputStream () {
 
     return new ByteArrayInputStream(bytes);
-  }
-
-  @Override
-  public ReadableByteChannel getReadableByteChannel () {
-
-    return null;
-  }
-
-  @Override
-  public boolean delete ()
-    throws SecurityException {
-
-    return false;
-  }
-
-  @Override
-  public boolean renameTo (Resource resource)
-    throws SecurityException {
-
-    return false;
-  }
-
-  @Override
-  public String[] list () {
-
-    return new String[0];
-  }
-
-  @Override
-  public Resource addPath (String s) {
-
-    return null;
   }
 }

@@ -116,7 +116,7 @@
     <jakarta.xml.bind.version>4.0.2</jakarta.xml.bind.version>
     <jakarta.xml.ws.version>4.0.1</jakarta.xml.ws.version>
     <jersey.version>3.1.5</jersey.version>
-    <jetty.version>11.0.20</jetty.version>
+    <jetty.version>12.0.8</jetty.version>
     <jfextras.labs.version>9.0-r1</jfextras.labs.version>
     <jose4j.version>0.9.6</jose4j.version>
     <kafka.version>3.7.0</kafka.version>
@@ -931,11 +931,6 @@
       </dependency>
       <dependency>
         <groupId>org.eclipse.jetty</groupId>
-        <artifactId>jetty-servlet</artifactId>
-        <version>${jetty.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-http-spi</artifactId>
         <version>${jetty.version}</version>
       </dependency>
@@ -960,8 +955,13 @@
         <version>${jetty.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.eclipse.jetty.websocket</groupId>
-        <artifactId>websocket-jakarta-server</artifactId>
+        <groupId>org.eclipse.jetty.ee10</groupId>
+        <artifactId>jetty-ee10-servlet</artifactId>
+        <version>${jetty.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.jetty.ee10.websocket</groupId>
+        <artifactId>jetty-ee10-websocket-jakarta-server</artifactId>
         <version>${jetty.version}</version>
       </dependency>
     </dependencies>

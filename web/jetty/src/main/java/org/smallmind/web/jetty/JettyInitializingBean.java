@@ -40,6 +40,10 @@ import java.util.Map;
 import com.sun.net.httpserver.HttpContext;
 import jakarta.servlet.DispatcherType;
 import jakarta.xml.ws.Endpoint;
+import org.eclipse.jetty.ee10.servlet.FilterHolder;
+import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
+import org.eclipse.jetty.ee10.servlet.ServletHolder;
+import org.eclipse.jetty.ee10.websocket.jakarta.server.config.JakartaWebSocketServletContainerInitializer;
 import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.http.spi.JettyHttpServer;
 import org.eclipse.jetty.server.HttpConfiguration;
@@ -51,14 +55,9 @@ import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.ResourceHandler;
-import org.eclipse.jetty.servlet.FilterHolder;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.util.resource.PathResource;
-import org.eclipse.jetty.util.resource.Resource;
+import org.eclipse.jetty.util.resource.ResourceFactory;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
-import org.eclipse.jetty.websocket.jakarta.server.config.JakartaWebSocketServletContainerInitializer;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.smallmind.nutsnbolts.lang.web.PerApplicationContextFilter;
 import org.smallmind.nutsnbolts.resource.ResourceException;
@@ -260,7 +259,7 @@ public class JettyInitializingBean implements InitializingBean, DisposableBean, 
         ContextHandler staticContextHandler = new ContextHandler(combinePaths(webApplicationOption.getContextPath(), webApplicationOption.getClassLoaderResourceOption().getStaticPath()));
         ResourceHandler staticResourceHandler = new ResourceHandler();
 
-        staticResourceHandler.setBaseResource(Resource.newClassPathResource("/"));
+        staticResourceHandler.setBaseResource(ResourceFactory.of(staticResourceHandler).newClassLoaderResource("/", false));
         staticContextHandler.setHandler(staticResourceHandler);
         contextHandlerCollection.addHandler(staticContextHandler);
       }
@@ -271,7 +270,7 @@ public class JettyInitializingBean implements InitializingBean, DisposableBean, 
           ContextHandler documentContextHandler = new ContextHandler(combinePaths(combinePaths(webApplicationOption.getContextPath(), webApplicationOption.getDocumentRootOption().getDocumentPath()), normalizePath(documentRootEntry.getKey())));
           ResourceHandler documentResourceHandler = new ResourceHandler();
 
-          documentResourceHandler.setBaseResource(new PathResource(Paths.get(documentRootEntry.getValue())));
+          documentResourceHandler.setBaseResource(ResourceFactory.of(documentResourceHandler).newResource(Paths.get(documentRootEntry.getValue())));
           documentContextHandler.setHandler(documentContextHandler);
 
           contextHandlerCollection.addHandler(documentContextHandler);
