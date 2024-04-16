@@ -206,6 +206,7 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
       Pair<Session<V>, Packet<V>> enqueuedPair;
 
       do {
+        LoggerManager.getLogger(OumuamuaChannel.class).debug(() -> "Polling on session(" + getId() + ") queue(" + longPollDeque.size() + ")...");
         if ((enqueuedPair = longPollDeque.pollFirst()) == null) {
           if (remainingNanoseconds > 0) {
             remainingNanoseconds = notEmptyCondition.awaitNanos(remainingNanoseconds);
@@ -217,6 +218,7 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
           longPollQueueSize.decrementAndGet();
           frozenPacket = PacketUtility.freezePacket(enqueuedPair.getSecond());
 
+          LoggerManager.getLogger(OumuamuaChannel.class).debug(() -> "Polled packet from session(" + getId() + ") queue(" + longPollDeque.size() + ")...");
           return onProcessing(enqueuedPair.getFirst(), frozenPacket);
         }
       } while (remainingNanoseconds > 0);
@@ -245,6 +247,7 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
         }
 
         longPollDeque.add(new Pair<>(sender, packet));
+        LoggerManager.getLogger(OumuamuaChannel.class).debug(() -> "Added to session(" + getId() + ") queue(" + longPollDeque.size() + ")...");
 
         notEmptyCondition.signal();
       } finally {
