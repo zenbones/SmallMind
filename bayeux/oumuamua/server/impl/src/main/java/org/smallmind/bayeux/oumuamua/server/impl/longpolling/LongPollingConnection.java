@@ -44,17 +44,27 @@ import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.impl.OumuamuaConnection;
 import org.smallmind.bayeux.oumuamua.server.impl.OumuamuaServer;
 import org.smallmind.bayeux.oumuamua.server.spi.json.PacketUtility;
+import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class LongPollingConnection<V extends Value<V>> implements OumuamuaConnection<V> {
 
   private final LongPollingTransport<V> longPollingTransport;
   private final OumuamuaServer<V> server;
+  private final String connectionId;
 
   public LongPollingConnection (LongPollingTransport<V> longPollingTransport, OumuamuaServer<V> server) {
 
     this.longPollingTransport = longPollingTransport;
     this.server = server;
+
+    connectionId = SnowflakeId.newInstance().generateHexEncoding();
+  }
+
+  @Override
+  public String getId () {
+
+    return connectionId;
   }
 
   @Override

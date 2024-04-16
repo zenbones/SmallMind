@@ -128,6 +128,8 @@ public interface Connection<V extends Value<V>> {
     return response;
   }
 
+  String getId ();
+
   Transport<V> getTransport ();
 
   Session<V> createSession (Server<V> server);

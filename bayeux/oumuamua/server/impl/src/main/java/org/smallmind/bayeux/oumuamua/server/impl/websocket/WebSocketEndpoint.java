@@ -75,6 +75,12 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
   }
 
   @Override
+  public String getId () {
+
+    return websocketSession.getId();
+  }
+
+  @Override
   public Transport<V> getTransport () {
 
     return websocketTransport;
