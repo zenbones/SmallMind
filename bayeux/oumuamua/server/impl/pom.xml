@@ -60,7 +60,7 @@
     </dependency>
     <dependency>
       <groupId>org.cometd.java</groupId>
-      <artifactId>cometd-java-client-websocket-jakarta</artifactId>
+      <artifactId>cometd-java-client-common</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -69,13 +69,18 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-util</artifactId>
+      <groupId>org.cometd.java</groupId>
+      <artifactId>cometd-java-client-websocket-jakarta</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-util-ajax</artifactId>
+      <artifactId>jetty-client</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-http</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>

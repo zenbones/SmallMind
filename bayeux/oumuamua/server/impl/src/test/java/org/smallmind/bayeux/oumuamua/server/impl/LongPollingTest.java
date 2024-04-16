@@ -36,10 +36,10 @@ import java.util.HashMap;
 import java.util.Map;
 import org.cometd.client.BayeuxClient;
 import org.cometd.client.http.jetty.JettyHttpClientTransport;
-import org.eclipse.jetty.client.HttpClient;
 import org.smallmind.nutsnbolts.util.Counter;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.testng.annotations.Test;
+import org.eclipse.jetty.client.HttpClient;
 
 @Test
 public class LongPollingTest {
