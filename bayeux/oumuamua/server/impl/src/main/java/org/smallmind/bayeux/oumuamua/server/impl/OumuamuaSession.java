@@ -200,6 +200,12 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   }
 
   @Override
+  public void forward (Packet<V> packet) {
+
+    connection.deliver(packet);
+  }
+
+  @Override
   public Packet<V> poll (long timeout, TimeUnit unit)
     throws InterruptedException {
 

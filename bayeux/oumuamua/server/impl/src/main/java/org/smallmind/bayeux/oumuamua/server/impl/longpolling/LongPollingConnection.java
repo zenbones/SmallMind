@@ -95,7 +95,7 @@ public class LongPollingConnection<V extends Value<V>> implements OumuamuaConnec
     try {
       if ((messages != null) && (messages.length > 0)) {
         if (messages.length == 1) {
-          process(server, packet -> {
+          process(server, (session, packet) -> {
             try {
               emit(asyncContext, packet);
             } catch (IOException ioException) {
@@ -106,7 +106,7 @@ public class LongPollingConnection<V extends Value<V>> implements OumuamuaConnec
 
           LinkedList<Message<V>> batchList = new LinkedList<>();
 
-          process(server, packet -> batchList.addAll(Arrays.asList(packet.getMessages())), messages);
+          process(server, (session, packet) -> batchList.addAll(Arrays.asList(packet.getMessages())), messages);
 
           try {
             emit(asyncContext, new Packet<>(PacketType.RESPONSE, null, null, batchList.toArray(new Message[0])));
