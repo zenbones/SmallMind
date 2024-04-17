@@ -62,11 +62,11 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   private final AtomicInteger longPollQueueSize = new AtomicInteger(0);
   private final Consumer<Session<V>> onConnectedCallback;
   private final Consumer<Session<V>> onDisconnectedCallback;
-  private final Connection<V> connection;
   private final AtomicBoolean longPolling = new AtomicBoolean(false);
   private final String sessionId = SnowflakeId.newInstance().generateHexEncoding();
   private final long maxIdleTimeoutMilliseconds;
   private final int maxLongPollQueueSize;
+  private Connection<V> connection;
   private SessionState state;
   private long lastContactTimestamp;
 
@@ -127,6 +127,11 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   public int getMaxLongPollQueueSize () {
 
     return maxLongPollQueueSize;
+  }
+
+  public void hijack (Connection<V> connection) {
+
+    this.connection = connection;
   }
 
   @Override
@@ -206,7 +211,6 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
       Pair<Session<V>, Packet<V>> enqueuedPair;
 
       do {
-        LoggerManager.getLogger(OumuamuaChannel.class).debug(() -> "Polling on session(" + getId() + ") queue(" + longPollDeque.size() + ")...");
         if ((enqueuedPair = longPollDeque.pollFirst()) == null) {
           if (remainingNanoseconds > 0) {
             remainingNanoseconds = notEmptyCondition.awaitNanos(remainingNanoseconds);
@@ -232,8 +236,6 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   @Override
   public void deliver (Session<V> sender, Packet<V> packet) {
 
-    LoggerManager.getLogger(OumuamuaChannel.class).debug(() -> "Delivery to session(" + getId() + ") on channel(" + packet.getRoute() + ")...");
-
     if (longPolling.get()) {
       longPollLock.lock();
 
@@ -247,8 +249,6 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
         }
 
         longPollDeque.add(new Pair<>(sender, packet));
-        LoggerManager.getLogger(OumuamuaChannel.class).debug(() -> "Added to session(" + getId() + ") queue(" + longPollDeque.size() + ")...");
-
         notEmptyCondition.signal();
       } finally {
         longPollLock.unlock();

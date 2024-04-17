@@ -84,6 +84,12 @@ public interface Connection<V extends Value<V>> {
           } else if (SessionState.DISCONNECTED.equals(session.getState())) {
             throw new MetaProcessingException("Session has been disconnected");
           } else {
+            // The cometd clients ignores the specification when using the reload extension, and just steals the session without a new handshake,
+            // and just sends subscribe followed by connect. As subscribe is sent much less often, we'll allow the hiack on that.
+            if (Meta.SUBSCRIBE.equals(meta)) {
+              hijackSession(session);
+            }
+
             packet = cycle(meta, route, server, session, message);
           }
         }
@@ -137,6 +143,8 @@ public interface Connection<V extends Value<V>> {
   boolean validateSession (Session<V> session);
 
   void updateSession (Session<V> session);
+
+  void hijackSession (Session<V> session);
 
   void onDisconnect (Server<V> server, Session<V> session);
 

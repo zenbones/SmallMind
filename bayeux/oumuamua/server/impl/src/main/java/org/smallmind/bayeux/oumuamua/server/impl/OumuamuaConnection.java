@@ -50,6 +50,12 @@ public interface OumuamuaConnection<V extends Value<V>> extends Connection<V> {
   }
 
   @Override
+  default void hijackSession (Session<V> session) {
+
+    ((OumuamuaSession<V>)session).hijack(this);
+  }
+
+  @Override
   default boolean validateSession (Session<V> session) {
 
     return getTransport().getProtocol().getName().equals(((OumuamuaSession<V>)session).getTransport().getProtocol().getName())
