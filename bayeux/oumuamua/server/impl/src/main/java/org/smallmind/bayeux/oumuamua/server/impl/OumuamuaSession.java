@@ -229,7 +229,6 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
           longPollQueueSize.decrementAndGet();
           frozenPacket = PacketUtility.freezePacket(enqueuedPair.getSecond());
 
-          LoggerManager.getLogger(OumuamuaChannel.class).debug(() -> "Polled packet from session(" + getId() + ") queue(" + longPollDeque.size() + ")...");
           return onProcessing(enqueuedPair.getFirst(), frozenPacket);
         }
       } while (remainingNanoseconds > 0);
