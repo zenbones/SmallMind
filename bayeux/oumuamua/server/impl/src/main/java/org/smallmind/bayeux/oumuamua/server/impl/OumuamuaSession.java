@@ -37,6 +37,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
@@ -59,6 +60,7 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   private final Condition notEmptyCondition = longPollLock.newCondition();
   private final ConcurrentLinkedDeque<Pair<Session<V>, Packet<V>>> longPollDeque = new ConcurrentLinkedDeque<>();
   private final ConcurrentLinkedQueue<Session.Listener<V>> listenerList = new ConcurrentLinkedQueue<>();
+  private final AtomicReference<Connection<V>> connectionRef = new AtomicReference<>();
   private final AtomicInteger longPollQueueSize = new AtomicInteger(0);
   private final Consumer<Session<V>> onConnectedCallback;
   private final Consumer<Session<V>> onDisconnectedCallback;
@@ -66,7 +68,6 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   private final String sessionId = SnowflakeId.newInstance().generateHexEncoding();
   private final long maxIdleTimeoutMilliseconds;
   private final int maxLongPollQueueSize;
-  private Connection<V> connection;
   private SessionState state;
   private long lastContactTimestamp;
 
@@ -74,10 +75,10 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
 
     this.onConnectedCallback = onConnectedCallback;
     this.onDisconnectedCallback = onDisconnectedCallback;
-    this.connection = connection;
     this.maxLongPollQueueSize = maxLongPollQueueSize;
     this.maxIdleTimeoutMilliseconds = maxIdleTimeoutMilliseconds;
 
+    connectionRef.set(connection);
     state = SessionState.INITIALIZED;
     lastContactTimestamp = System.currentTimeMillis();
 
@@ -131,13 +132,13 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
 
   public void hijack (Connection<V> connection) {
 
-    this.connection = connection;
+    connectionRef.set(connection);
   }
 
   @Override
   public boolean isLocal () {
 
-    return connection.getTransport().isLocal();
+    return connectionRef.get().getTransport().isLocal();
   }
 
   @Override
@@ -180,7 +181,7 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
 
   public Transport<V> getTransport () {
 
-    return connection.getTransport();
+    return connectionRef.get().getTransport();
   }
 
   public synchronized void contact () {
@@ -202,7 +203,7 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   @Override
   public void forward (Packet<V> packet) {
 
-    connection.deliver(packet);
+    connectionRef.get().deliver(packet);
   }
 
   @Override
@@ -264,7 +265,7 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
       Packet<V> frozenPacket = PacketUtility.freezePacket(packet);
 
       if ((frozenPacket = onProcessing(sender, frozenPacket)) != null) {
-        connection.deliver(frozenPacket);
+        connectionRef.get().deliver(frozenPacket);
       }
     }
   }
