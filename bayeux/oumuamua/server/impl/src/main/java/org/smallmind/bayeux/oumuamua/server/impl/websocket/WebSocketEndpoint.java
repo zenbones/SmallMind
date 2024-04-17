@@ -75,6 +75,12 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
   }
 
   @Override
+  public String getId () {
+
+    return websocketSession.getId();
+  }
+
+  @Override
   public Transport<V> getTransport () {
 
     return websocketTransport;
@@ -108,7 +114,13 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
       LoggerManager.getLogger(WebSocketEndpoint.class).debug(() -> "<=" + content);
 
       try {
-        process(server, this::deliver, server.getCodec().from(content));
+        process(server, (session, packet) -> {
+          if (session == null) {
+            deliver(packet);
+          } else {
+            session.forward(packet);
+          }
+        }, server.getCodec().from(content));
       } catch (IOException ioException) {
         LoggerManager.getLogger(WebSocketEndpoint.class).error(ioException);
       }

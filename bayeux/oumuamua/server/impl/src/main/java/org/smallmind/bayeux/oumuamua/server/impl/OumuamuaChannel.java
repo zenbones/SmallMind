@@ -46,11 +46,9 @@ import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.ObjectValue;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
-import org.smallmind.bayeux.oumuamua.server.impl.websocket.WebSocketEndpoint;
 import org.smallmind.bayeux.oumuamua.server.spi.AbstractAttributed;
 import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
 import org.smallmind.bayeux.oumuamua.server.spi.json.PacketUtility;
-import org.smallmind.scribe.pen.LoggerManager;
 
 public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed implements Channel<V> {
 
@@ -220,8 +218,6 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
 
   @Override
   public void deliver (Session<V> sender, Packet<V> packet, Set<String> sessionIdSet) {
-
-    LoggerManager.getLogger(OumuamuaChannel.class).debug(() -> "Delivery on channel(" + route + ")...");
 
     Packet<V> frozenPacket = PacketUtility.freezePacket(packet);
 

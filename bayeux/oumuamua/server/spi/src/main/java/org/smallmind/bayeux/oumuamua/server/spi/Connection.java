@@ -51,6 +51,7 @@ public interface Connection<V extends Value<V>> {
 
     for (Message<V> message : messages) {
 
+      Session<V> session = null;
       Packet<V> packet;
       String path = message.getChannel();
       String sessionId = message.getSessionId();
@@ -62,8 +63,7 @@ public interface Connection<V extends Value<V>> {
 
         if (sessionId == null) {
           if (Meta.HANDSHAKE.equals(meta)) {
-
-            Session<V> session = createSession(server);
+            session = createSession(server);
 
             if (SessionState.DISCONNECTED.equals(session.getState())) {
               throw new MetaProcessingException("Session has been disconnected");
@@ -73,26 +73,26 @@ public interface Connection<V extends Value<V>> {
           } else {
             throw new MetaProcessingException("Missing client id");
           }
+        } else if ((session = server.getSession(sessionId)) == null) {
+          throw new MetaProcessingException("Invalid client id");
+        } else if (!validateSession(session)) {
+          throw new MetaProcessingException("Invalid session type");
+        } else if (SessionState.DISCONNECTED.equals(session.getState())) {
+          throw new MetaProcessingException("Session has been disconnected");
         } else {
-
-          Session<V> session;
-
-          if ((session = server.getSession(sessionId)) == null) {
-            throw new MetaProcessingException("Invalid client id");
-          } else if (!validateSession(session)) {
-            throw new MetaProcessingException("Invalid session type");
-          } else if (SessionState.DISCONNECTED.equals(session.getState())) {
-            throw new MetaProcessingException("Session has been disconnected");
-          } else {
-            packet = cycle(meta, route, server, session, message);
+          // The cometd clients ignores the specification when using the reload extension, and just steals the session without a new handshake.
+          if (Meta.CONNECT.equals(meta) || Meta.SUBSCRIBE.equals(meta)) {
+            hijackSession(session);
           }
+
+          packet = cycle(meta, route, server, session, message);
         }
       } catch (IOException | InterruptedException | InvalidPathException | MetaProcessingException exception) {
         packet = new Packet<>(PacketType.RESPONSE, sessionId, null, Meta.constructErrorResponse(server, path, message.getId(), sessionId, exception.getMessage(), null));
       }
 
       if (packet != null) {
-        responseConsumer.accept(packet);
+        responseConsumer.accept(session, packet);
       }
     }
   }
@@ -128,6 +128,8 @@ public interface Connection<V extends Value<V>> {
     return response;
   }
 
+  String getId ();
+
   Transport<V> getTransport ();
 
   Session<V> createSession (Server<V> server);
@@ -135,6 +137,8 @@ public interface Connection<V extends Value<V>> {
   boolean validateSession (Session<V> session);
 
   void updateSession (Session<V> session);
+
+  void hijackSession (Session<V> session);
 
   void onDisconnect (Server<V> server, Session<V> session);
 

@@ -32,11 +32,12 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi;
 
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
+import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
 @FunctionalInterface
-public interface ResponseConsumer<V extends Value<V>> extends Consumer<Packet<V>> {
+public interface ResponseConsumer<V extends Value<V>> extends BiConsumer<Session<V>, Packet<V>> {
 
 }
