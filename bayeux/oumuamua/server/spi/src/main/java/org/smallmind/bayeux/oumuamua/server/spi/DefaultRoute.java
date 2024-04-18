@@ -103,9 +103,25 @@ public class DefaultRoute implements Route {
     return matches(0, "service");
   }
 
-  public boolean isDeliverable () {
+  @Override
+  public boolean matches (String... matchingSegments) {
 
-    return !(isWild() || isDeepWild() || isMeta() || isService());
+    if ((matchingSegments == null) || (matchingSegments.length != (segments.length + 1))) {
+
+      return false;
+    } else {
+
+      int index = 0;
+
+      for (String matchingSegment : matchingSegments) {
+        if ((!"*".equals(matchingSegment)) && (!matches(index++, matchingSegment))) {
+
+          return false;
+        }
+      }
+
+      return true;
+    }
   }
 
   protected boolean matches (int index, CharSequence name) {

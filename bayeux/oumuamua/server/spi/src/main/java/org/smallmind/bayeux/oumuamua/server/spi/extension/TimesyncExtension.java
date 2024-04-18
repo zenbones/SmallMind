@@ -48,7 +48,7 @@ public class TimesyncExtension<V extends Value<V>> extends AbstractServerPacketL
   @Override
   public Packet<V> onRequest (Session<V> sender, Packet<V> packet) {
 
-    if (Meta.HANDSHAKE.getRoute().equals(packet.getRoute()) || Meta.CONNECT.getRoute().equals(packet.getRoute())) {
+    if ((Meta.HANDSHAKE.getRoute().equals(packet.getRoute()) || Meta.CONNECT.getRoute().equals(packet.getRoute())) && (!isBlackListed(packet.getRoute()))) {
       for (Message<V> message : packet.getMessages()) {
 
         String messageId;
@@ -89,7 +89,7 @@ public class TimesyncExtension<V extends Value<V>> extends AbstractServerPacketL
   @Override
   public Packet<V> onResponse (Session<V> sender, Packet<V> packet) {
 
-    if (Meta.HANDSHAKE.getRoute().equals(packet.getRoute()) || Meta.CONNECT.getRoute().equals(packet.getRoute())) {
+    if ((Meta.HANDSHAKE.getRoute().equals(packet.getRoute()) || Meta.CONNECT.getRoute().equals(packet.getRoute())) && (!isBlackListed(packet.getRoute()))) {
 
       TimeSync timeSync;
 

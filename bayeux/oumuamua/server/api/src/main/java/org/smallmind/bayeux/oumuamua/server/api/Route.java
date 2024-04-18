@@ -50,6 +50,8 @@ public interface Route {
 
   boolean isService ();
 
+  boolean matches (String... segments);
+
   default boolean isDeliverable () {
 
     return !(isWild() || isDeepWild() || isMeta() || isService());

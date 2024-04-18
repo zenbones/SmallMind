@@ -66,7 +66,7 @@ public class AckExtension<V extends Value<V>> extends AbstractServerPacketListen
   @Override
   public Packet<V> onRequest (final Session<V> sender, Packet<V> packet) {
 
-    if (sender != null) {
+    if ((sender != null) && (!isBlackListed(packet.getRoute()))) {
       if (Meta.HANDSHAKE.getRoute().equals(packet.getRoute())) {
         for (Message<V> message : packet.getMessages()) {
 
@@ -137,7 +137,7 @@ public class AckExtension<V extends Value<V>> extends AbstractServerPacketListen
   @Override
   public Packet<V> onResponse (Session<V> sender, Packet<V> packet) {
 
-    if (sender != null) {
+    if ((sender != null) && (!isBlackListed(packet.getRoute()))) {
       if (Meta.HANDSHAKE.getRoute().equals(packet.getRoute())) {
         if (Boolean.TRUE.equals(sender.getAttribute(ACK_FLAG_ATTRIBUTE))) {
           sender.setLongPolling(true);
