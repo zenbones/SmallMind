@@ -55,6 +55,7 @@ import org.smallmind.bayeux.oumuamua.server.api.json.ValueType;
 import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
 import org.smallmind.bayeux.oumuamua.server.spi.MetaProcessingException;
 import org.smallmind.nutsnbolts.util.MutationUtility;
+import org.smallmind.scribe.pen.LoggerManager;
 
 public enum Meta {
 
@@ -393,9 +394,15 @@ public enum Meta {
 
           return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructPublishErrorResponse(server, route.getPath(), request.getId(), request.getSessionId(), "Unauthorized", Reconnect.NONE));
         } else {
-          server.deliver(session, new Packet<>(PacketType.DELIVERY, session.getId(), route, constructDeliveryMessage(server, route.getPath(), request.getId(), request.get(Message.DATA))), true);
+          try {
+            server.deliver(session, new Packet<>(PacketType.DELIVERY, session.getId(), route, constructDeliveryMessage(server, route.getPath(), request.getId(), request.get(Message.DATA))), true);
 
-          return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructPublishSuccessResponse(server, route.getPath(), request.getId(), session.getId()));
+            return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructPublishSuccessResponse(server, route.getPath(), request.getId(), session.getId()));
+          } catch (Exception exception) {
+            LoggerManager.getLogger(Meta.class).error(exception);
+
+            return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructPublishErrorResponse(server, route.getPath(), request.getId(), request.getSessionId(), exception.getMessage(), null));
+          }
         }
       }
     }
