@@ -46,6 +46,7 @@ import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.bayeux.oumuamua.server.api.SessionState;
 import org.smallmind.bayeux.oumuamua.server.api.json.ArrayValue;
+import org.smallmind.bayeux.oumuamua.server.api.json.BooleanValue;
 import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.NumberValue;
 import org.smallmind.bayeux.oumuamua.server.api.json.ObjectValue;
@@ -395,9 +396,14 @@ public enum Meta {
           return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructPublishErrorResponse(server, route.getPath(), request.getId(), request.getSessionId(), "Unauthorized", Reconnect.NONE));
         } else {
           try {
+
             server.deliver(session, new Packet<>(PacketType.DELIVERY, session.getId(), route, constructDeliveryMessage(server, route.getPath(), request.getId(), request.get(Message.DATA))), true);
 
-            return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructPublishSuccessResponse(server, route.getPath(), request.getId(), session.getId()));
+            if (getOumuamuaReflectiveFlag(request)) {
+              return new Packet<V>(PacketType.RESPONSE, session.getId(), route, new Message[] {constructPublishSuccessResponse(server, route.getPath(), request.getId(), session.getId()), request});
+            } else {
+              return new Packet<V>(PacketType.RESPONSE, session.getId(), route, constructPublishSuccessResponse(server, route.getPath(), request.getId(), session.getId()));
+            }
           } catch (Exception exception) {
             LoggerManager.getLogger(Meta.class).error(exception);
 
@@ -405,6 +411,15 @@ public enum Meta {
           }
         }
       }
+    }
+
+    private <V extends Value<V>> boolean getOumuamuaReflectiveFlag (Message<V> request) {
+
+      ObjectValue<V> ext;
+      ObjectValue<V> oumuamua;
+      BooleanValue<V> reflective;
+
+      return ((reflective = ((oumuamua = ((ext = request.getExt()) == null) ? null : (ObjectValue<V>)ext.get("oumaumau")) == null) ? null : (BooleanValue<V>)oumuamua.get("reflective")) == null) || reflective.asBoolean();
     }
 
     private <V extends Value<V>> Message<V> constructDeliveryMessage (Server<V> server, String path, String id, Value<V> data) {
