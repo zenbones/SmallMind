@@ -85,7 +85,7 @@ public enum Meta {
 
       Message<V> response;
 
-      return (Message<V>)(response = constructSuccessResponse(server, path, id, sessionId)).put(Message.VERSION, server.getBayeuxVersion()).put(Message.MINIMUM_VERSION, server.getMinimumBayeuxVersion()).put(Message.SUPPORTED_CONNECTION_TYPES, response.getFactory().arrayValue().addAll(MutationUtility.toList(protocol.getTransportNames(), text -> response.getFactory().textValue(text))));
+      return (Message<V>)(response = constructSuccessResponse(server, path, id, sessionId, null)).put(Message.VERSION, server.getBayeuxVersion()).put(Message.MINIMUM_VERSION, server.getMinimumBayeuxVersion()).put(Message.SUPPORTED_CONNECTION_TYPES, response.getFactory().arrayValue().addAll(MutationUtility.toList(protocol.getTransportNames(), text -> response.getFactory().textValue(text))));
     }
 
     private <V extends Value<V>> Message<V> constructHandshakeErrorResponse (Server<V> server, String path, String id, String sessionId, String error, Reconnect reconnect) {
@@ -216,7 +216,7 @@ public enum Meta {
 
       Message<V> response;
 
-      return (Message<V>)(response = constructSuccessResponse(server, path, id, sessionId)).put(Message.ADVICE, response.getFactory().objectValue().put(Advice.INTERVAL.getField(), longPollIntervalMilliseconds));
+      return (Message<V>)(response = constructSuccessResponse(server, path, id, sessionId, null)).put(Message.ADVICE, response.getFactory().objectValue().put(Advice.INTERVAL.getField(), longPollIntervalMilliseconds));
     }
 
     private <V extends Value<V>> Message<V> constructConnectErrorResponse (Server<V> server, String path, String id, String sessionId, String error, Reconnect reconnect) {
@@ -254,7 +254,7 @@ public enum Meta {
 
     private <V extends Value<V>> Message<V> constructDisconnectSuccessResponse (Server<V> server, String path, String id, String sessionId) {
 
-      return constructSuccessResponse(server, path, id, sessionId);
+      return constructSuccessResponse(server, path, id, sessionId, Reconnect.NONE);
     }
   }, SUBSCRIBE(DefaultRoute.SUBSCRIBE_ROUTE) {
     public <V extends Value<V>> Packet<V> process (Protocol<V> protocol, Route route, Server<V> server, Session<V> session, Message<V> request) {
@@ -307,7 +307,7 @@ public enum Meta {
 
     private <V extends Value<V>> Message<V> constructSubscribeSuccessResponse (Server<V> server, String path, String id, String sessionId, String subscription) {
 
-      return (Message<V>)constructSuccessResponse(server, path, id, sessionId).put(Message.SUBSCRIPTION, subscription);
+      return (Message<V>)constructSuccessResponse(server, path, id, sessionId, null).put(Message.SUBSCRIPTION, subscription);
     }
 
     private <V extends Value<V>> Message<V> constructSubscribeErrorResponse (Server<V> server, String path, String id, String sessionId, String error, String subscription, Reconnect reconnect) {
@@ -353,7 +353,7 @@ public enum Meta {
 
     private <V extends Value<V>> Message<V> constructUnsubscribeSuccessResponse (Server<V> server, String path, String id, String sessionId, String subscription) {
 
-      return (Message<V>)constructSuccessResponse(server, path, id, sessionId).put(Message.SUBSCRIPTION, subscription);
+      return (Message<V>)constructSuccessResponse(server, path, id, sessionId, null).put(Message.SUBSCRIPTION, subscription);
     }
 
     private <V extends Value<V>> Message<V> constructUnsubscribeErrorResponse (Server<V> server, String path, String id, String sessionId, String error, String subscription, Reconnect reconnect) {
@@ -429,7 +429,7 @@ public enum Meta {
 
     private <V extends Value<V>> Message<V> constructPublishSuccessResponse (Server<V> server, String path, String id, String sessionId) {
 
-      return constructSuccessResponse(server, path, id, sessionId);
+      return constructSuccessResponse(server, path, id, sessionId, null);
     }
 
     private <V extends Value<V>> Message<V> constructPublishErrorResponse (Server<V> server, String path, String id, String sessionId, String error, Reconnect reconnect) {
@@ -453,9 +453,17 @@ public enum Meta {
     this.route = route;
   }
 
-  private static <V extends Value<V>> Message<V> constructSuccessResponse (Server<V> server, String path, String id, String sessionId) {
+  private static <V extends Value<V>> Message<V> constructSuccessResponse (Server<V> server, String path, String id, String sessionId, Reconnect reconnect) {
 
-    return (Message<V>)constructResponse(server, path, id, sessionId).put(Message.SUCCESSFUL, true);
+    Message<V> response = (Message<V>)constructResponse(server, path, id, sessionId);
+
+    response.put(Message.SUCCESSFUL, true);
+
+    if (reconnect != null) {
+      response.put(Message.ADVICE, response.getFactory().objectValue().put(Advice.RECONNECT.getField(), reconnect.getCode()));
+    }
+
+    return response;
   }
 
   public static <V extends Value<V>> Message<V> constructErrorResponse (Server<V> server, String path, String id, String sessionId, String error, Reconnect reconnect) {
