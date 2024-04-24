@@ -75,6 +75,7 @@ public class IdleSessionInspector<V extends Value<V>> implements Runnable {
             session.completeDisconnect();
             sessionIterator.remove();
             server.departChannels(session);
+            session.onCleanUp();
           }
         }
       }

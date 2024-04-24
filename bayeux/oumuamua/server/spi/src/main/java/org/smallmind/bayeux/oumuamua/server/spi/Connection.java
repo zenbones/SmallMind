@@ -142,5 +142,7 @@ public interface Connection<V extends Value<V>> {
 
   void onDisconnect (Server<V> server, Session<V> session);
 
+  void onCleanUp ();
+
   void deliver (Packet<V> packet);
 }

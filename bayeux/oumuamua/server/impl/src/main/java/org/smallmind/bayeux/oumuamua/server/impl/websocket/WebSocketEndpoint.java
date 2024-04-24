@@ -123,11 +123,7 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
             session.forward(packet);
 
             if (SessionState.DISCONNECTED.equals(session.getState())) {
-              try {
-                websocketSession.close();
-              } catch (IOException ioException) {
-                LoggerManager.getLogger(WebSocketEndpoint.class).error(ioException);
-              }
+              onCleanUp();
             }
           }
         }, server.getCodec().from(content));
@@ -141,5 +137,17 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
   public synchronized void onError (Session wsSession, Throwable failure) {
 
     LoggerManager.getLogger(WebSocketEndpoint.class).error(failure);
+  }
+
+  @Override
+  public synchronized void onCleanUp () {
+
+    if (websocketSession.isOpen()) {
+      try {
+        websocketSession.close();
+      } catch (IOException ioException) {
+        LoggerManager.getLogger(WebSocketEndpoint.class).error(ioException);
+      }
+    }
   }
 }

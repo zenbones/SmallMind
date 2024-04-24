@@ -119,4 +119,9 @@ public class LongPollingConnection<V extends Value<V>> implements OumuamuaConnec
       asyncContext.complete();
     }
   }
+
+  @Override
+  public void onCleanUp () {
+
+  }
 }
