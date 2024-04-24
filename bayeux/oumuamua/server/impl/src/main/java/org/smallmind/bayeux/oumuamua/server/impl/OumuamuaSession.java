@@ -195,7 +195,9 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
 
   public synchronized void contact () {
 
-    lastContactTimestamp = System.currentTimeMillis();
+    if (!SessionState.DISCONNECTED.equals(state)) {
+      lastContactTimestamp = System.currentTimeMillis();
+    }
   }
 
   public synchronized boolean isRemovable (long now) {
