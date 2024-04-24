@@ -114,9 +114,11 @@ public class DefaultRoute implements Route {
       int index = 0;
 
       for (String matchingSegment : matchingSegments) {
-        if ((!"*".equals(matchingSegment)) && (!matches(index++, matchingSegment))) {
+        if ((!"*".equals(matchingSegment)) && (!matches(index, matchingSegment))) {
 
           return false;
+        } else {
+          index++;
         }
       }
 

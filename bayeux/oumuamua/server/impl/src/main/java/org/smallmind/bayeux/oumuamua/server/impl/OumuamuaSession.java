@@ -135,6 +135,15 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
     connectionRef.set(connection);
   }
 
+  public void onCleanUp () {
+
+    Connection<V> connection;
+
+    if ((connection = connectionRef.get()) != null) {
+      connection.onCleanUp();
+    }
+  }
+
   @Override
   public boolean isLocal () {
 
@@ -186,7 +195,9 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
 
   public synchronized void contact () {
 
-    lastContactTimestamp = System.currentTimeMillis();
+    if (!SessionState.DISCONNECTED.equals(state)) {
+      lastContactTimestamp = System.currentTimeMillis();
+    }
   }
 
   public synchronized boolean isRemovable (long now) {

@@ -42,6 +42,7 @@ import jakarta.websocket.MessageHandler;
 import jakarta.websocket.Session;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
+import org.smallmind.bayeux.oumuamua.server.api.SessionState;
 import org.smallmind.bayeux.oumuamua.server.api.Transport;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.impl.OumuamuaConnection;
@@ -118,7 +119,12 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
           if (session == null) {
             deliver(packet);
           } else {
+            // The cometd clients ignore the specification when using the reload extension, and just steals the session without a new handshake.
             session.forward(packet);
+
+            if (SessionState.DISCONNECTED.equals(session.getState())) {
+              onCleanUp();
+            }
           }
         }, server.getCodec().from(content));
       } catch (IOException ioException) {
@@ -131,5 +137,17 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
   public synchronized void onError (Session wsSession, Throwable failure) {
 
     LoggerManager.getLogger(WebSocketEndpoint.class).error(failure);
+  }
+
+  @Override
+  public synchronized void onCleanUp () {
+
+    if (websocketSession.isOpen()) {
+      try {
+        websocketSession.close();
+      } catch (IOException ioException) {
+        LoggerManager.getLogger(WebSocketEndpoint.class).error(ioException);
+      }
+    }
   }
 }
