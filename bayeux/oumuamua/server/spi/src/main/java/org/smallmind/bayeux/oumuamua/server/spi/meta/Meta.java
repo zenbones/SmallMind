@@ -147,6 +147,7 @@ public enum Meta {
           Message<V> responseMessage = constructConnectSuccessResponse(server, route.getPath(), request.getId(), session.getId(), 0);
           LinkedList<Message<V>> enqueuedMessageList = null;
           boolean initial = true;
+          boolean timeoutAdvised = false;
           boolean connected = SessionState.CONNECTED.equals(session.getState());
           long longPollTimeoutMilliseconds = getLongPollTimeoutMilliseconds(request);
           long remainingMilliseconds = 0;
@@ -156,14 +157,14 @@ public enum Meta {
           if (longPollTimeoutMilliseconds < 0) {
             longPollTimeoutMilliseconds = Math.max(0, protocol.getLongPollTimeoutMilliseconds());
           } else {
-            sessionConnectIntervalMilliseconds = longPollTimeoutMilliseconds;
+            timeoutAdvised = true;
           }
 
           do {
 
             Packet<V> enqueuedPacket;
 
-            if ((enqueuedPacket = session.poll(connected ? initial ? sessionConnectIntervalMilliseconds : remainingMilliseconds : 0, TimeUnit.MILLISECONDS)) != null) {
+            if ((enqueuedPacket = session.poll(connected ? initial ? timeoutAdvised ? longPollTimeoutMilliseconds : sessionConnectIntervalMilliseconds : remainingMilliseconds : 0, TimeUnit.MILLISECONDS)) != null) {
               if (enqueuedPacket.getMessages() != null) {
                 if (enqueuedMessageList == null) {
                   enqueuedMessageList = new LinkedList<>();
@@ -174,7 +175,7 @@ public enum Meta {
             }
 
             initial = false;
-          } while (connected && ((remainingMilliseconds = (((enqueuedMessageList == null) || enqueuedMessageList.isEmpty()) ? sessionConnectIntervalMilliseconds + connectStartTime : longPollTimeoutMilliseconds + firstPollTime) - System.currentTimeMillis()) > 0));
+          } while (connected && ((remainingMilliseconds = (timeoutAdvised ? longPollTimeoutMilliseconds + connectStartTime : ((enqueuedMessageList == null) || enqueuedMessageList.isEmpty()) ? sessionConnectIntervalMilliseconds + connectStartTime : longPollTimeoutMilliseconds + firstPollTime) - System.currentTimeMillis()) > 0));
 
           if (enqueuedMessageList == null) {
             messages = new Message[] {responseMessage};
