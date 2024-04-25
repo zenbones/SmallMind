@@ -148,7 +148,7 @@ public enum Meta {
           LinkedList<Message<V>> enqueuedMessageList = null;
           boolean initial = true;
           boolean connected = SessionState.CONNECTED.equals(session.getState());
-          long longPollTimeoutMilliseconds = getLongPollTimeoutMilliseconds(protocol, request);
+          long longPollTimeoutMilliseconds = getLongPollTimeoutMilliseconds(request);
           long remainingMilliseconds = 0;
           long connectStartTime = System.currentTimeMillis();
           long firstPollTime = connectStartTime;
@@ -156,7 +156,6 @@ public enum Meta {
           if (longPollTimeoutMilliseconds < 0) {
             longPollTimeoutMilliseconds = Math.max(0, protocol.getLongPollTimeoutMilliseconds());
           } else {
-            longPollTimeoutMilliseconds = Math.max(protocol.getLongPollTimeoutMilliseconds(), longPollTimeoutMilliseconds);
             sessionConnectIntervalMilliseconds = longPollTimeoutMilliseconds;
           }
 
@@ -195,7 +194,7 @@ public enum Meta {
       }
     }
 
-    private <V extends Value<V>> long getLongPollTimeoutMilliseconds (Protocol<V> protocol, Message<V> request) {
+    private <V extends Value<V>> long getLongPollTimeoutMilliseconds (Message<V> request) {
 
       ObjectValue<V> adviceValue;
 
