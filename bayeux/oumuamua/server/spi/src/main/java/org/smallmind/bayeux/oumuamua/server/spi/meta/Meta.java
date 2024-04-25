@@ -419,7 +419,7 @@ public enum Meta {
       ObjectValue<V> oumuamua;
       BooleanValue<V> reflective;
 
-      return ((reflective = ((oumuamua = ((ext = request.getExt()) == null) ? null : (ObjectValue<V>)ext.get("oumaumau")) == null) ? null : (BooleanValue<V>)oumuamua.get("reflective")) == null) || reflective.asBoolean();
+      return ((reflective = ((oumuamua = ((ext = request.getExt()) == null) ? null : (ObjectValue<V>)ext.get("oumuamua")) == null) ? null : (BooleanValue<V>)oumuamua.get("reflective")) == null) || reflective.asBoolean();
     }
 
     private <V extends Value<V>> Message<V> constructDeliveryMessage (Server<V> server, String path, String id, Value<V> data) {
