@@ -212,11 +212,11 @@ public enum Meta {
       return -1;
     }
 
-    private <V extends Value<V>> Message<V> constructConnectSuccessResponse (Server<V> server, String path, String id, String sessionId, long longPollIntervalMilliseconds) {
+    private <V extends Value<V>> Message<V> constructConnectSuccessResponse (Server<V> server, String path, String id, String sessionId, long sessionConnectIntervalMilliseconds) {
 
       Message<V> response;
 
-      return (Message<V>)(response = constructSuccessResponse(server, path, id, sessionId, null)).put(Message.ADVICE, response.getFactory().objectValue().put(Advice.INTERVAL.getField(), longPollIntervalMilliseconds));
+      return (Message<V>)(response = constructSuccessResponse(server, path, id, sessionId, null)).put(Message.ADVICE, response.getFactory().objectValue().put(Advice.INTERVAL.getField(), sessionConnectIntervalMilliseconds));
     }
 
     private <V extends Value<V>> Message<V> constructConnectErrorResponse (Server<V> server, String path, String id, String sessionId, String error, Reconnect reconnect) {
