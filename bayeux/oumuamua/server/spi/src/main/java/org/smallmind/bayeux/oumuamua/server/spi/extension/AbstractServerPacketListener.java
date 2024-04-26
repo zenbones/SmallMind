@@ -32,48 +32,12 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.extension;
 
-import java.util.LinkedList;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
-import org.smallmind.bayeux.oumuamua.server.api.Route;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
 public abstract class AbstractServerPacketListener<V extends Value<V>> implements Server.PacketListener<V> {
-
-  private String[][] blacklistedPaths;
-
-  public void setBlacklist (String[] blacklist) {
-
-    LinkedList<String[]> blacklistList = new LinkedList<>();
-
-    if (blacklist != null) {
-      for (String path : blacklist) {
-        if ((path != null) && (!path.isEmpty())) {
-          blacklistList.add((path.charAt(0) == '/') ? path.substring(1).split("/", -1) : path.split("/", -1));
-        }
-      }
-    }
-
-    blacklistedPaths = new String[blacklistList.size()][];
-    blacklistList.toArray(blacklistedPaths);
-  }
-
-  public boolean isBlackListed (Route route) {
-
-    if (route != null) {
-      if (blacklistedPaths != null) {
-        for (String[] blacklistPath : blacklistedPaths) {
-          if (route.matches(blacklistPath)) {
-
-            return true;
-          }
-        }
-      }
-    }
-
-    return false;
-  }
 
   @Override
   public Packet<V> onRequest (Session<V> sender, Packet<V> packet) {

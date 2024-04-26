@@ -41,6 +41,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
+import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.PacketType;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
@@ -251,9 +252,16 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   }
 
   @Override
-  public void deliver (Session<V> sender, Packet<V> packet) {
+  public void deliver (Channel<V> fromChannel, Session<V> sender, Packet<V> packet) {
 
-    if (longPolling.get()) {
+    if (fromChannel.isStreaming() && (!connectionRef.get().getTransport().getProtocol().isLongPolling())) {
+
+      Packet<V> frozenPacket = PacketUtility.freezePacket(packet);
+
+      if ((frozenPacket = onProcessing(sender, frozenPacket)) != null) {
+        connectionRef.get().deliver(frozenPacket);
+      }
+    } else if (longPolling.get()) {
       longPollLock.lock();
 
       try {

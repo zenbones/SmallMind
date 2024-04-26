@@ -78,5 +78,5 @@ public interface Session<V extends Value<V>> extends Attributed {
   Packet<V> poll (long timeout, TimeUnit unit)
     throws InterruptedException;
 
-  void deliver (Session<V> sender, Packet<V> packet);
+  void deliver (Channel<V> fromChannel, Session<V> sender, Packet<V> packet);
 }

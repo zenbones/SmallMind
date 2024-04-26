@@ -57,6 +57,7 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
   private final ConcurrentHashMap<String, Session<V>> sessionMap = new ConcurrentHashMap<>();
   private final ConcurrentLinkedQueue<Listener<V>> listenerList = new ConcurrentLinkedQueue<>();
   private final AtomicBoolean reflecting = new AtomicBoolean();
+  private final AtomicBoolean streaming = new AtomicBoolean();
   private final BiConsumer<Channel<V>, Session<V>> onSubscribedCallback;
   private final BiConsumer<Channel<V>, Session<V>> onUnsubscribedCallback;
   private final long timeToLiveMilliseconds;
@@ -163,6 +164,18 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
   }
 
   @Override
+  public boolean isStreaming () {
+
+    return streaming.get();
+  }
+
+  @Override
+  public void setStreaming (boolean streaming) {
+
+    this.streaming.set(streaming);
+  }
+
+  @Override
   public synchronized boolean subscribe (Session<V> session) {
 
     if (terminal) {
@@ -224,7 +237,7 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
     if ((frozenPacket = onProcessing(sender, frozenPacket)) != null) {
       for (Session<V> session : sessionMap.values()) {
         if (sessionIdSet.add(session.getId()) && ((frozenPacket.getSenderId() == null) || (!session.getId().equals(frozenPacket.getSenderId())) || reflecting.get())) {
-          session.deliver(sender, frozenPacket);
+          session.deliver(this, sender, frozenPacket);
         }
       }
     }
