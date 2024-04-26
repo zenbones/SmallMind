@@ -78,13 +78,13 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
     this.maxLongPollQueueSize = maxLongPollQueueSize;
     this.maxIdleTimeoutMilliseconds = maxIdleTimeoutMilliseconds;
 
-    connectionRef.set(connection);
-    state = SessionState.INITIALIZED;
-    lastContactTimestamp = System.currentTimeMillis();
-
     if (connection.getTransport().getProtocol().isLongPolling()) {
       longPolling.set(true);
     }
+
+    connectionRef.set(connection);
+    state = SessionState.INITIALIZED;
+    lastContactTimestamp = System.currentTimeMillis();
   }
 
   private Packet<V> onProcessing (Session<V> sender, Packet<V> packet) {
@@ -212,7 +212,7 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   }
 
   @Override
-  public void forward (Packet<V> packet) {
+  public void dispatch (Packet<V> packet) {
 
     connectionRef.get().deliver(packet);
   }

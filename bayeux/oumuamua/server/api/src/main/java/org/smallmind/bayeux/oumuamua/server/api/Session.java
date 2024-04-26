@@ -73,7 +73,7 @@ public interface Session<V extends Value<V>> extends Attributed {
 
   Packet<V> onResponse (Session<V> sender, Packet<V> packet);
 
-  void forward (Packet<V> packet);
+  void dispatch (Packet<V> packet);
 
   Packet<V> poll (long timeout, TimeUnit unit)
     throws InterruptedException;
