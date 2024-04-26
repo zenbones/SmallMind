@@ -34,6 +34,7 @@ package org.smallmind.bayeux.oumuamua.server.impl;
 
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
+import org.smallmind.bayeux.oumuamua.server.api.Route;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.backbone.Backbone;
 import org.smallmind.bayeux.oumuamua.server.api.json.Codec;
@@ -56,6 +57,16 @@ public class ChannelRoot<V extends Value<V>> {
   public Codec<V> getCodec () {
 
     return server.getCodec();
+  }
+
+  public boolean isReflective (Route route) {
+
+    return server.isReflective(route);
+  }
+
+  public boolean isStreaming (Route route) {
+
+    return server.isStreaming(route);
   }
 
   public void forward (Channel<V> channel, Packet<V> packet) {

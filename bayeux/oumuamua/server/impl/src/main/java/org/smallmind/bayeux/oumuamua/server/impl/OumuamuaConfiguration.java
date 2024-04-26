@@ -32,7 +32,9 @@
  */
 package org.smallmind.bayeux.oumuamua.server.impl;
 
+import java.util.LinkedList;
 import org.smallmind.bayeux.oumuamua.server.api.Protocol;
+import org.smallmind.bayeux.oumuamua.server.api.Route;
 import org.smallmind.bayeux.oumuamua.server.api.SecurityPolicy;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.backbone.Backbone;
@@ -46,6 +48,8 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   private SecurityPolicy<V> securityPolicy;
   private Protocol<V>[] protocols;
   private Server.Listener<V>[] listeners;
+  private String[][] reflectivePaths;
+  private String[][] streamingPaths;
   private long channelTimeToLiveMinutes = 30;
   private long threadPoolKeepAliveSeconds = 60;
   private int sessionConnectIntervalSeconds = 30;
@@ -194,5 +198,60 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   public void setThreadPoolMaximumSize (int threadPoolMaximumSize) {
 
     this.threadPoolMaximumSize = threadPoolMaximumSize;
+  }
+
+  public void setReflectivePaths (String[] paths) {
+
+    LinkedList<String[]> reflectivePathList = decomposePaths(paths);
+
+    reflectivePaths = new String[reflectivePathList.size()][];
+    reflectivePathList.toArray(reflectivePaths);
+  }
+
+  public boolean isReflective (Route route) {
+
+    return matchesPaths(reflectivePaths, route);
+  }
+
+  public void setStreamingPaths (String[] paths) {
+
+    LinkedList<String[]> streamingPathList = decomposePaths(paths);
+
+    streamingPaths = new String[streamingPathList.size()][];
+    streamingPathList.toArray(streamingPaths);
+  }
+
+  public boolean isStreaming (Route route) {
+
+    return matchesPaths(streamingPaths, route);
+  }
+
+  private LinkedList<String[]> decomposePaths (String[] paths) {
+
+    LinkedList<String[]> pathList = new LinkedList<>();
+
+    if (paths != null) {
+      for (String path : paths) {
+        if ((path != null) && (!path.isEmpty())) {
+          pathList.add((path.charAt(0) == '/') ? path.substring(1).split("/", -1) : path.split("/", -1));
+        }
+      }
+    }
+
+    return pathList;
+  }
+
+  public boolean matchesPaths (String[][] paths, Route route) {
+
+    if ((route != null) && (paths != null)) {
+      for (String[] reflectivePath : paths) {
+        if (route.matches(reflectivePath)) {
+
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 }

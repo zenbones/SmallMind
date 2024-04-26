@@ -73,6 +73,9 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
     this.timeToLiveMilliseconds = timeToLiveMilliseconds;
     this.route = route;
     this.root = root;
+
+    reflecting.set(root.isReflective(route));
+    streaming.set(root.isStreaming(route));
   }
 
   private void onSubscribed (Session<V> session) {
