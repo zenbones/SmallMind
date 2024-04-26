@@ -102,6 +102,10 @@ public interface Server<V extends Value<V>> extends Attributed {
   // Serves as an injection point for implementations that wish to add client configurable additions to the json codec pipeline
   Codec<V> getCodec ();
 
+  boolean isReflective (Route route);
+
+  boolean isStreaming (Route route);
+
   Session<V> getSession (String sessionId);
 
   void addInitializer (ChannelInitializer<V> initializer);

@@ -120,7 +120,7 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
             deliver(packet);
           } else {
             // The cometd clients ignore the specification when using the reload extension, and just steals the session without a new handshake.
-            session.forward(packet);
+            session.dispatch(packet);
 
             if (SessionState.DISCONNECTED.equals(session.getState())) {
               onCleanUp();

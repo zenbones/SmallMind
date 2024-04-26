@@ -99,6 +99,10 @@ public interface Channel<V extends Value<V>> extends Attributed {
 
   void setReflecting (boolean reflecting);
 
+  boolean isStreaming ();
+
+  void setStreaming (boolean streaming);
+
   boolean subscribe (Session<V> session);
 
   void unsubscribe (Session<V> session);

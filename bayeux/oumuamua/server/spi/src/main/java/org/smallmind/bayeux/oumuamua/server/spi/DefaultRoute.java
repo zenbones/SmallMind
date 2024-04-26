@@ -106,7 +106,7 @@ public class DefaultRoute implements Route {
   @Override
   public boolean matches (String... matchingSegments) {
 
-    if ((matchingSegments == null) || (matchingSegments.length != (segments.length + 1))) {
+    if ((matchingSegments == null) || (matchingSegments.length > (segments.length + 1))) {
 
       return false;
     } else {
@@ -114,7 +114,10 @@ public class DefaultRoute implements Route {
       int index = 0;
 
       for (String matchingSegment : matchingSegments) {
-        if ((!"*".equals(matchingSegment)) && (!matches(index, matchingSegment))) {
+        if ("**".equals(matchingSegment)) {
+
+          return true;
+        } else if ((!"*".equals(matchingSegment)) && (!matches(index, matchingSegment))) {
 
           return false;
         } else {

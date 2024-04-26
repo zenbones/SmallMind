@@ -54,6 +54,7 @@ import org.smallmind.bayeux.oumuamua.server.api.OumuamuaException;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.PacketType;
 import org.smallmind.bayeux.oumuamua.server.api.Protocol;
+import org.smallmind.bayeux.oumuamua.server.api.Route;
 import org.smallmind.bayeux.oumuamua.server.api.SecurityPolicy;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
@@ -303,6 +304,18 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   public long getSessionConnectionIntervalMilliseconds () {
 
     return sessionConnectionIntervalMilliseconds;
+  }
+
+  @Override
+  public boolean isReflective (Route route) {
+
+    return configuration.isReflective(route);
+  }
+
+  @Override
+  public boolean isStreaming (Route route) {
+
+    return configuration.isStreaming(route);
   }
 
   public OumuamuaSession<V> createSession (Connection<V> connection) {
