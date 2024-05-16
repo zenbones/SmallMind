@@ -40,6 +40,7 @@ import org.smallmind.batch.base.JobFactory;
 import org.smallmind.batch.base.LongBatchParameter;
 import org.smallmind.batch.base.StringBatchParameter;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
+import org.smallmind.scribe.pen.LoggerManager;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobInstance;
 import org.springframework.batch.core.JobParametersBuilder;
@@ -82,10 +83,34 @@ public class BatchJobFactory implements JobFactory {
   }
 
   @Override
-  public Long create (String logicalName, Map<String, BatchParameter<?>> parameterMap)
+  public Long create (String logicalName, Map<String, BatchParameter<?>> parameterMap, String reason)
     throws NoSuchJobException, JobParametersInvalidException, JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException {
 
+    LoggerManager.getLogger(BatchJobFactory.class).info("Batch(%s) for reason(%s) with parameters(%s)", logicalName, (reason == null) ? "unknown" : reason, parametersAsString(parameterMap));
+
     return start(logicalName, parameterMap);
+  }
+
+  private String parametersAsString (Map<String, BatchParameter<?>> parameterMap) {
+
+    if ((parameterMap == null) || parameterMap.isEmpty()) {
+
+      return "none";
+    } else {
+
+      StringBuilder parameterBuilder = new StringBuilder("{");
+      boolean first = true;
+
+      for (Map.Entry<String, BatchParameter<?>> parameterEntry : parameterMap.entrySet()) {
+        if (!first) {
+          parameterBuilder.append(',');
+        }
+        parameterBuilder.append(parameterEntry.getKey()).append(": [type=").append(parameterEntry.getValue().getType()).append(",value=").append(parameterEntry.getValue().getValue()).append(']');
+        first = false;
+      }
+
+      return parameterBuilder.append('}').toString();
+    }
   }
 
   @Override
