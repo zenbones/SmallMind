@@ -1196,7 +1196,7 @@
         </plugin>
         <plugin>
           <groupId>org.smallmind</groupId>
-          <artifactId>spark-singularity-mojo</artifactId>
+          <artifactId>spark-singularity-maven-plugin</artifactId>
           <version>${project.version}</version>
         </plugin>
       </plugins>
