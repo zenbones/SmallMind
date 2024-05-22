@@ -125,6 +125,7 @@ public class AckExtension<V extends Value<V>> extends AbstractServerPacketListen
             while (unAckedIter.hasNext()) {
               resendQueue.add(unAckedIter.next().getValue());
               unAckedIter.remove();
+              ackSize.decrementAndGet();
             }
           }
         }
@@ -149,24 +150,26 @@ public class AckExtension<V extends Value<V>> extends AbstractServerPacketListen
           }
         }
       } else if (Meta.CONNECT.getRoute().equals(packet.getRoute())) {
-        if (Boolean.TRUE.equals(sender.getAttribute(ACK_FLAG_ATTRIBUTE)) && (packet.getMessages().length > 1)) {
+        if (Boolean.TRUE.equals(sender.getAttribute(ACK_FLAG_ATTRIBUTE)) && (packet.getMessages() != null) && (packet.getMessages().length > 0)) {
 
           Iterator<Packet<V>> resendIter;
           Long ackId = null;
-
-          for (Message<V> message : packet.getMessages()) {
-            if (message.isSuccessful() && Meta.CONNECT.getRoute().getPath().equals(message.getChannel())) {
-              ackId = ((AtomicLong)sender.getAttribute(ACK_COUNTER_ATTRIBUTE)).incrementAndGet();
-              message.getExt(true).put("ack", ackId);
-              break;
-            }
-          }
 
           resendIter = ((ConcurrentLinkedQueue<Packet<V>>)sender.getAttribute(ACK_RESEND_QUEUE_ATTRIBUTE)).iterator();
           if (resendIter.hasNext()) {
             while (resendIter.hasNext()) {
               packet = PacketUtility.merge(packet, resendIter.next());
               resendIter.remove();
+            }
+          }
+
+          if (packet.getMessages().length > 1) {
+            for (Message<V> message : packet.getMessages()) {
+              if (message.isSuccessful() && Meta.CONNECT.getRoute().getPath().equals(message.getChannel())) {
+                ackId = ((AtomicLong)sender.getAttribute(ACK_COUNTER_ATTRIBUTE)).incrementAndGet();
+                message.getExt(true).put("ack", ackId);
+                break;
+              }
             }
           }
 
