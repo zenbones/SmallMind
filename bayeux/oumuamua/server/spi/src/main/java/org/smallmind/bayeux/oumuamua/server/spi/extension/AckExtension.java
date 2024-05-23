@@ -153,17 +153,19 @@ public class AckExtension<V extends Value<V>> extends AbstractServerPacketListen
         if (Boolean.TRUE.equals(sender.getAttribute(ACK_FLAG_ATTRIBUTE)) && (packet.getMessages() != null) && (packet.getMessages().length > 0)) {
 
           Iterator<Packet<V>> resendIter;
-          Long ackId = null;
 
           resendIter = ((ConcurrentLinkedQueue<Packet<V>>)sender.getAttribute(ACK_RESEND_QUEUE_ATTRIBUTE)).iterator();
           if (resendIter.hasNext()) {
             while (resendIter.hasNext()) {
-              packet = PacketUtility.merge(packet, resendIter.next());
+              packet = PacketUtility.merge(packet, resendIter.next(), Meta.CONNECT.getRoute());
               resendIter.remove();
             }
           }
 
           if (packet.getMessages().length > 1) {
+
+            Long ackId = null;
+
             for (Message<V> message : packet.getMessages()) {
               if (message.isSuccessful() && Meta.CONNECT.getRoute().getPath().equals(message.getChannel())) {
                 ackId = ((AtomicLong)sender.getAttribute(ACK_COUNTER_ATTRIBUTE)).incrementAndGet();
@@ -171,22 +173,22 @@ public class AckExtension<V extends Value<V>> extends AbstractServerPacketListen
                 break;
               }
             }
-          }
 
-          if (ackId != null) {
+            if (ackId != null) {
 
-            ConcurrentSkipListMap<Long, Packet<V>> unacknowledgedMap = (ConcurrentSkipListMap<Long, Packet<V>>)sender.getAttribute(ACK_UNACKNOWLEDGED_MAP_ATTRIBUTE);
-            AtomicLong ackSize = (AtomicLong)sender.getAttribute(ACK_SIZE_ATTRIBUTE);
+              ConcurrentSkipListMap<Long, Packet<V>> unacknowledgedMap = (ConcurrentSkipListMap<Long, Packet<V>>)sender.getAttribute(ACK_UNACKNOWLEDGED_MAP_ATTRIBUTE);
+              AtomicLong ackSize = (AtomicLong)sender.getAttribute(ACK_SIZE_ATTRIBUTE);
 
-            if (ackSize.incrementAndGet() > maxAckQueueSize) {
-              LoggerManager.getLogger(AckExtension.class).debug("Session(%s) overflowed the ack queue", sender.getId());
+              if (ackSize.incrementAndGet() > maxAckQueueSize) {
+                LoggerManager.getLogger(AckExtension.class).debug("Session(%s) overflowed the ack queue", sender.getId());
 
-              if (unacknowledgedMap.pollLastEntry() != null) {
-                ackSize.decrementAndGet();
+                if (unacknowledgedMap.pollLastEntry() != null) {
+                  ackSize.decrementAndGet();
+                }
               }
-            }
 
-            unacknowledgedMap.put(ackId, packet);
+              unacknowledgedMap.put(ackId, packet);
+            }
           }
         }
       }

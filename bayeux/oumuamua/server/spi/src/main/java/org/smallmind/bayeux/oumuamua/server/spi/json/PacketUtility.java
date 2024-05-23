@@ -33,21 +33,37 @@
 package org.smallmind.bayeux.oumuamua.server.spi.json;
 
 import java.io.IOException;
+import java.util.LinkedList;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
+import org.smallmind.bayeux.oumuamua.server.api.Route;
 import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.spi.PacketWriter;
 
 public class PacketUtility {
 
-  public static <V extends Value<V>> Packet<V> merge (Packet<V> basePacket, Packet<V> otherPacket) {
+  public static <V extends Value<V>> Packet<V> merge (Packet<V> basePacket, Packet<V> otherPacket, Route filteredRoute) {
 
-    Message<V>[] mergedMessages = new Message[basePacket.getMessages().length + otherPacket.getMessages().length];
+    LinkedList<Message<V>> otherPacketMessageList = new LinkedList<>();
 
-    System.arraycopy(basePacket.getMessages(), 0, mergedMessages, 0, basePacket.getMessages().length);
-    System.arraycopy(otherPacket.getMessages(), 0, mergedMessages, basePacket.getMessages().length, otherPacket.getMessages().length);
+    for (Message<V> otherPacketMessage : otherPacket.getMessages()) {
+      if ((filteredRoute == null) || (!filteredRoute.getPath().equals(otherPacketMessage.getChannel()))) {
+        otherPacketMessageList.add(otherPacketMessage);
+      }
+    }
 
-    return new Packet<>(basePacket.getPacketType(), basePacket.getSenderId(), basePacket.getRoute(), mergedMessages);
+    if (otherPacketMessageList.isEmpty()) {
+
+      return basePacket;
+    } else {
+
+      Message<V>[] mergedMessages = new Message[basePacket.getMessages().length + otherPacketMessageList.size()];
+
+      System.arraycopy(basePacket.getMessages(), 0, mergedMessages, 0, basePacket.getMessages().length);
+      System.arraycopy(otherPacketMessageList.toArray(new Message[0]), 0, mergedMessages, basePacket.getMessages().length, otherPacket.getMessages().length);
+
+      return new Packet<>(basePacket.getPacketType(), basePacket.getSenderId(), basePacket.getRoute(), mergedMessages);
+    }
   }
 
   public static <V extends Value<V>> Packet<V> freezePacket (Packet<V> packet) {
