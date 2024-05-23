@@ -136,7 +136,7 @@
     <mongodb.bson.version>5.0.0</mongodb.bson.version>
     <msgpack.version>0.9.8</msgpack.version>
     <netty.version>4.1.109.Final</netty.version>
-    <nexus.staging.plugin>1.6.13</nexus.staging.plugin>
+    <nexus.staging.plugin.version>1.6.13</nexus.staging.plugin.version>
     <openjfx.version>23-ea+3</openjfx.version>
     <quartz.version>2.3.2</quartz.version>
     <querydsl.version>5.1.0</querydsl.version>
@@ -1042,7 +1042,7 @@
         <plugin>
           <groupId>org.sonatype.plugins</groupId>
           <artifactId>nexus-staging-maven-plugin</artifactId>
-          <version>${nexus.staging.plugin}</version>
+          <version>${nexus.staging.plugin.version}</version>
         </plugin>
         <plugin>
           <groupId>org.hibernate.orm.tooling</groupId>
