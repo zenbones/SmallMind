@@ -60,7 +60,7 @@ public class PacketUtility {
       Message<V>[] mergedMessages = new Message[basePacket.getMessages().length + otherPacketMessageList.size()];
 
       System.arraycopy(basePacket.getMessages(), 0, mergedMessages, 0, basePacket.getMessages().length);
-      System.arraycopy(otherPacketMessageList.toArray(new Message[0]), 0, mergedMessages, basePacket.getMessages().length, otherPacket.getMessages().length);
+      System.arraycopy(otherPacketMessageList.toArray(new Message[0]), 0, mergedMessages, basePacket.getMessages().length, otherPacketMessageList.size());
 
       return new Packet<>(basePacket.getPacketType(), basePacket.getSenderId(), basePacket.getRoute(), mergedMessages);
     }
