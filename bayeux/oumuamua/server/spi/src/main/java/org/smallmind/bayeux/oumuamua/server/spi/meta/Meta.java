@@ -398,7 +398,7 @@ public enum Meta {
 
             server.deliver(session, new Packet<>(PacketType.DELIVERY, session.getId(), route, constructDeliveryMessage(server, route.getPath(), request.getId(), request.get(Message.DATA))), true);
 
-            if (!channel.isReflecting()) {
+            if (channel.isReflecting()) {
               return new Packet<V>(PacketType.RESPONSE, session.getId(), route, new Message[] {constructPublishSuccessResponse(server, route.getPath(), request.getId(), session.getId()), request});
             } else {
               return new Packet<V>(PacketType.RESPONSE, session.getId(), route, constructPublishSuccessResponse(server, route.getPath(), request.getId(), session.getId()));
