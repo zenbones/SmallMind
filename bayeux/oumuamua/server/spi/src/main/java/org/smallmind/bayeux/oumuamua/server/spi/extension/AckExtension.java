@@ -116,16 +116,18 @@ public class AckExtension<V extends Value<V>> extends AbstractServerPacketListen
             ConcurrentSkipListMap<Long, Packet<V>> unacknowledgedMap = (ConcurrentSkipListMap<Long, Packet<V>>)sender.getAttribute(ACK_UNACKNOWLEDGED_MAP_ATTRIBUTE);
             ConcurrentLinkedQueue<Packet<V>> resendQueue = (ConcurrentLinkedQueue<Packet<V>>)sender.getAttribute(ACK_RESEND_QUEUE_ATTRIBUTE);
             AtomicLong ackSize = (AtomicLong)sender.getAttribute(ACK_SIZE_ATTRIBUTE);
-            Iterator<Map.Entry<Long, Packet<V>>> unAckedIter;
+            Iterator<Map.Entry<Long, Packet<V>>> unackedIter;
+            Packet<V> unacknowledgedPacket;
 
-            unacknowledgedMap.remove(ackId);
-            ackSize.decrementAndGet();
+            if ((unacknowledgedPacket = unacknowledgedMap.remove(ackId)) != null) {
+              ackSize.accumulateAndGet(unacknowledgedPacket.getMessages().length, (x, y) -> x - y);
+            }
 
-            unAckedIter = unacknowledgedMap.headMap(ackId).entrySet().iterator();
-            while (unAckedIter.hasNext()) {
-              resendQueue.add(unAckedIter.next().getValue());
-              unAckedIter.remove();
-              ackSize.decrementAndGet();
+            unackedIter = unacknowledgedMap.headMap(ackId).entrySet().iterator();
+            while (unackedIter.hasNext()) {
+              resendQueue.add(unacknowledgedPacket = unackedIter.next().getValue());
+              unackedIter.remove();
+              ackSize.accumulateAndGet(unacknowledgedPacket.getMessages().length, (x, y) -> x - y);
             }
           }
         }
@@ -178,13 +180,19 @@ public class AckExtension<V extends Value<V>> extends AbstractServerPacketListen
 
               ConcurrentSkipListMap<Long, Packet<V>> unacknowledgedMap = (ConcurrentSkipListMap<Long, Packet<V>>)sender.getAttribute(ACK_UNACKNOWLEDGED_MAP_ATTRIBUTE);
               AtomicLong ackSize = (AtomicLong)sender.getAttribute(ACK_SIZE_ATTRIBUTE);
+              long accumulatedSize;
 
-              if (ackSize.incrementAndGet() > maxAckQueueSize) {
+              if ((accumulatedSize = ackSize.accumulateAndGet(packet.getMessages().length, Long::sum)) > maxAckQueueSize) {
+
+                Map.Entry<Long, Packet<V>> unacknowledgedEntry;
+
                 LoggerManager.getLogger(AckExtension.class).debug("Session(%s) overflowed the ack queue", sender.getId());
 
-                if (unacknowledgedMap.pollLastEntry() != null) {
-                  ackSize.decrementAndGet();
-                }
+                do {
+                  if ((unacknowledgedEntry = unacknowledgedMap.pollLastEntry()) != null) {
+                    accumulatedSize = ackSize.accumulateAndGet(unacknowledgedEntry.getValue().getMessages().length, (x, y) -> x - y);
+                  }
+                } while ((unacknowledgedEntry != null) && (accumulatedSize > maxAckQueueSize));
               }
 
               unacknowledgedMap.put(ackId, packet);
