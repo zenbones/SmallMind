@@ -42,7 +42,7 @@ import org.smallmind.bayeux.oumuamua.server.spi.PacketWriter;
 
 public class PacketUtility {
 
-  public static <V extends Value<V>> Packet<V> merge (Packet<V> basePacket, Packet<V> otherPacket, Route filteredRoute) {
+  public static <V extends Value<V>> Packet<V> merge (Packet<V> basePacket, Packet<V> otherPacket, Route filteredRoute, boolean prepend) {
 
     LinkedList<Message<V>> otherPacketMessageList = new LinkedList<>();
 
@@ -59,8 +59,19 @@ public class PacketUtility {
 
       Message<V>[] mergedMessages = new Message[basePacket.getMessages().length + otherPacketMessageList.size()];
 
-      System.arraycopy(basePacket.getMessages(), 0, mergedMessages, 0, basePacket.getMessages().length);
-      System.arraycopy(otherPacketMessageList.toArray(new Message[0]), 0, mergedMessages, basePacket.getMessages().length, otherPacketMessageList.size());
+      if (prepend) {
+
+        int prolog = Math.max(basePacket.getMessages().length, 1);
+
+        System.arraycopy(basePacket.getMessages(), 0, mergedMessages, 0, prolog);
+        System.arraycopy(otherPacketMessageList.toArray(new Message[0]), 0, mergedMessages, prolog, otherPacketMessageList.size());
+        if (basePacket.getMessages().length > 1) {
+          System.arraycopy(basePacket.getMessages(), 1, mergedMessages, otherPacketMessageList.size() + 1, basePacket.getMessages().length - 1);
+        }
+      } else {
+        System.arraycopy(basePacket.getMessages(), 0, mergedMessages, 0, basePacket.getMessages().length);
+        System.arraycopy(otherPacketMessageList.toArray(new Message[0]), 0, mergedMessages, basePacket.getMessages().length, otherPacketMessageList.size());
+      }
 
       return new Packet<>(basePacket.getPacketType(), basePacket.getSenderId(), basePacket.getRoute(), mergedMessages);
     }

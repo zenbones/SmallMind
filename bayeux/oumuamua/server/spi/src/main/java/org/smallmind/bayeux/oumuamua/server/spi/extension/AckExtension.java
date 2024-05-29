@@ -157,7 +157,7 @@ public class AckExtension<V extends Value<V>> extends AbstractServerPacketListen
           resendIter = ((ConcurrentLinkedQueue<Packet<V>>)sender.getAttribute(ACK_RESEND_QUEUE_ATTRIBUTE)).iterator();
           if (resendIter.hasNext()) {
             while (resendIter.hasNext()) {
-              packet = PacketUtility.merge(packet, resendIter.next(), Meta.CONNECT.getRoute());
+              packet = PacketUtility.merge(packet, resendIter.next(), Meta.CONNECT.getRoute(), true);
               resendIter.remove();
             }
           }
