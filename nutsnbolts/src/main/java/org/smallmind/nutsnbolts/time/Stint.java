@@ -56,6 +56,11 @@ public class Stint {
     return NONE;
   }
 
+  public static Stint of (long time, TimeUnit timeUnit) {
+
+    return new Stint(time, timeUnit);
+  }
+
   public long getTime () {
 
     return time;
