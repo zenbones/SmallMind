@@ -61,7 +61,7 @@ public enum AsymmetricKeyType {
     public Key generateKey (SecurityAlgorithm algorithm, SecurityProvider provider, String raw)
       throws IOException, NoSuchProviderException, NoSuchAlgorithmException, InvalidKeySpecException {
 
-      return AsymmetricKeyType.keyFactoryInstance(algorithm, provider).generatePrivate(new OpenSSHPrivateKeySpec(new PemReader(new StringReader(raw)).readPemObject().getContent()));
+      return AsymmetricKeyType.keyFactoryInstance(algorithm, provider).generatePrivate(new OpenSSHPrivateKeySpec(new PemReader(new StringReader(raw.startsWith("-----") ? raw : "-----BEGIN PRIVATE KEY-----\n" + raw + "\n-----END PRIVATE KEY-----\n")).readPemObject().getContent()));
     }
   };
 
