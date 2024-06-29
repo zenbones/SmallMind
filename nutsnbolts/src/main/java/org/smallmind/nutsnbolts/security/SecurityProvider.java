@@ -32,19 +32,19 @@
  */
 package org.smallmind.nutsnbolts.security;
 
-public enum AsymmetricAlgorithm implements SecurityAlgorithm {
+public enum SecurityProvider {
 
-  RSA("RSA"), ED25519("ED25519");
+  DEFAULT(null), BOUNCY_CASTLE("BC");
 
-  private final String algorithmName;
+  private final String providerName;
 
-  AsymmetricAlgorithm (String algorithmName) {
+  SecurityProvider (String providerName) {
 
-    this.algorithmName = algorithmName;
+    this.providerName = providerName;
   }
 
-  public String getAlgorithmName () {
+  public String getProviderName () {
 
-    return algorithmName;
+    return providerName;
   }
 }

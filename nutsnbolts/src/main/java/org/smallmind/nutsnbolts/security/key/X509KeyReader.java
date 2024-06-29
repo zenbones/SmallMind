@@ -45,7 +45,8 @@ public class X509KeyReader implements KeyReader {
 
   private final KeyFactors keyFactors;
 
-  public X509KeyReader (String raw) throws IOException, KeyParseException {
+  public X509KeyReader (String raw)
+    throws IOException, KeyParseException {
 
     StringBuilder strippedRawBuilder = new StringBuilder();
 

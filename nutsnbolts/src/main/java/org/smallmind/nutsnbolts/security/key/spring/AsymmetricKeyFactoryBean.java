@@ -32,26 +32,43 @@
  */
 package org.smallmind.nutsnbolts.security.key.spring;
 
+import java.io.IOException;
 import java.security.Key;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.spec.InvalidKeySpecException;
+import org.smallmind.nutsnbolts.security.AsymmetricAlgorithm;
+import org.smallmind.nutsnbolts.security.SecurityProvider;
 import org.smallmind.nutsnbolts.security.key.AsymmetricKeyType;
-import org.smallmind.nutsnbolts.security.key.KeyReader;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
 public class AsymmetricKeyFactoryBean implements FactoryBean<Key>, InitializingBean {
 
   private Key key;
+  private AsymmetricAlgorithm algorithm;
+  private SecurityProvider provider;
   private AsymmetricKeyType keyType;
-  private KeyReader keyReader;
+  private String raw;
+
+  public void setAlgorithm (AsymmetricAlgorithm algorithm) {
+
+    this.algorithm = algorithm;
+  }
+
+  public void setProvider (SecurityProvider provider) {
+
+    this.provider = provider;
+  }
 
   public void setKeyType (AsymmetricKeyType keyType) {
 
     this.keyType = keyType;
   }
 
-  public void setKeyReader (KeyReader keyReader) {
+  public void setRaw (String raw) {
 
-    this.keyReader = keyReader;
+    this.raw = raw;
   }
 
   @Override
@@ -68,9 +85,9 @@ public class AsymmetricKeyFactoryBean implements FactoryBean<Key>, InitializingB
 
   @Override
   public void afterPropertiesSet ()
-    throws Exception {
+    throws IOException, NoSuchProviderException, NoSuchAlgorithmException, InvalidKeySpecException {
 
-    key = keyType.generateKey(keyReader);
+    key = keyType.generateKey(algorithm, provider, raw);
   }
 
   @Override

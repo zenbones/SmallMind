@@ -32,36 +32,45 @@
  */
 package org.smallmind.nutsnbolts.security.key;
 
+import java.io.IOException;
+import java.io.StringReader;
 import java.security.Key;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.security.spec.InvalidKeySpecException;
-import java.security.spec.RSAPrivateKeySpec;
-import java.security.spec.RSAPublicKeySpec;
+import org.bouncycastle.jcajce.spec.OpenSSHPrivateKeySpec;
+import org.bouncycastle.jcajce.spec.OpenSSHPublicKeySpec;
+import org.bouncycastle.util.io.pem.PemReader;
+import org.smallmind.nutsnbolts.http.Base64Codec;
+import org.smallmind.nutsnbolts.security.SecurityAlgorithm;
+import org.smallmind.nutsnbolts.security.SecurityProvider;
 
 public enum AsymmetricKeyType {
 
   PUBLIC {
     @Override
-    public Key generateKey (KeyReader keyReader)
-      throws NoSuchAlgorithmException, InvalidKeySpecException {
+    public Key generateKey (SecurityAlgorithm algorithm, SecurityProvider provider, String raw)
+      throws IOException, NoSuchProviderException, NoSuchAlgorithmException, InvalidKeySpecException {
 
-      KeyFactors keyFactors = keyReader.extractFactors();
-
-      return KeyFactory.getInstance("RSA").generatePublic(new RSAPublicKeySpec(keyFactors.getModulus(), keyFactors.getExponent()));
+      return AsymmetricKeyType.keyFactoryInstance(algorithm, provider).generatePublic(new OpenSSHPublicKeySpec(Base64Codec.decode(raw)));
     }
   },
   PRIVATE {
     @Override
-    public Key generateKey (KeyReader keyReader)
-      throws NoSuchAlgorithmException, InvalidKeySpecException {
+    public Key generateKey (SecurityAlgorithm algorithm, SecurityProvider provider, String raw)
+      throws IOException, NoSuchProviderException, NoSuchAlgorithmException, InvalidKeySpecException {
 
-      KeyFactors keyFactors = keyReader.extractFactors();
-
-      return KeyFactory.getInstance("RSA").generatePrivate(new RSAPrivateKeySpec(keyFactors.getModulus(), keyFactors.getExponent()));
+      return AsymmetricKeyType.keyFactoryInstance(algorithm, provider).generatePrivate(new OpenSSHPrivateKeySpec(new PemReader(new StringReader(raw)).readPemObject().getContent()));
     }
   };
 
-  public abstract Key generateKey (KeyReader keyReader)
-    throws NoSuchAlgorithmException, InvalidKeySpecException;
+  private static KeyFactory keyFactoryInstance (SecurityAlgorithm algorithm, SecurityProvider provider)
+    throws NoSuchAlgorithmException, NoSuchProviderException {
+
+    return SecurityProvider.DEFAULT.equals(provider) ? KeyFactory.getInstance(algorithm.getAlgorithmName()) : KeyFactory.getInstance(algorithm.getAlgorithmName(), provider.getProviderName());
+  }
+
+  public abstract Key generateKey (SecurityAlgorithm algorithm, SecurityProvider provider, String raw)
+    throws IOException, NoSuchProviderException, NoSuchAlgorithmException, InvalidKeySpecException;
 }
