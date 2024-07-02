@@ -47,7 +47,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.Security;
 import java.security.Signature;
 import java.security.SignatureException;
 import java.security.spec.AlgorithmParameterSpec;
@@ -57,14 +56,8 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyGenerator;
 import javax.crypto.Mac;
 import javax.crypto.NoSuchPaddingException;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 public class EncryptionUtility {
-
-  static {
-
-    Security.addProvider(new BouncyCastleProvider());
-  }
 
   public static byte[] hash (HashAlgorithm algorithm, byte[] toBeHashed)
     throws NoSuchAlgorithmException {
