@@ -32,18 +32,8 @@
  */
 package org.smallmind.web.jwt;
 
-import java.security.PrivateKey;
-import java.security.PublicKey;
 import java.security.Security;
-import java.security.Signature;
-import java.security.interfaces.RSAPublicKey;
-import org.bouncycastle.jcajce.interfaces.EdDSAPublicKey;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.smallmind.nutsnbolts.http.Base64Codec;
-import org.smallmind.nutsnbolts.security.AsymmetricAlgorithm;
-import org.smallmind.nutsnbolts.security.SecurityProvider;
-import org.smallmind.nutsnbolts.security.key.AsymmetricKeyType;
-import org.smallmind.nutsnbolts.security.key.KeyFactors;
 import org.smallmind.nutsnbolts.security.key.KeyParser;
 import org.smallmind.nutsnbolts.security.key.OpenSSHPubicKeyUtility;
 import org.smallmind.nutsnbolts.security.key.X509KeyParser;
@@ -57,52 +47,7 @@ public class Wombat {
   public static void main (String... args)
     throws Exception {
 
-    String openssh;
-
-    KeyParser keyParser = new X509KeyParser("MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzVZf2eeD6AInl3wgyZcHr8FlDDfG3mwXpqXXmM5B6rX4lN09fxAjhM9AAUm8KNanNLV5MrSdQZq4wqTXDyOhcuFYal3mzi4qZ/LpM3MiX1BMU7WHrjRUw4M9G6PQGgty6xE8tdDb8ywRpiuvS1L4Uw52P/sCBh8lVzbL+JinIpZLh+9Azs1/nPkKHr/+SuyIG/zdD24reU02YvdXdIsQTzMSkzssiFDaIvsx7ribTC2EPgylUOCFpRZYWVpPdveSE7ttQsm4+Lv4rXjPWl8C/NXN/z9pxj4hnHy/i8fC1y/0f30BRB8Qnb11oKwOdewTnSVF65J69lwCC5G2ig44gwIDAQAB");
-    System.out.println(openssh = OpenSSHPubicKeyUtility.convert(keyParser.extractFactors()));
-
-    RSAPublicKey key = (RSAPublicKey)AsymmetricKeyType.PUBLIC.generateKey(AsymmetricAlgorithm.RSA, SecurityProvider.BOUNCY_CASTLE, openssh);
-
-    KeyFactors keyFactors = new KeyFactors(key.getModulus(), key.getPublicExponent());
-    System.out.println(key.getAlgorithm());
-    System.out.println(key.getFormat());
-
-    EdDSAPublicKey pubkey = (EdDSAPublicKey)AsymmetricKeyType.PUBLIC.generateKey(AsymmetricAlgorithm.ED25519, SecurityProvider.BOUNCY_CASTLE, "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBa/L+1f0SRlLPAxBeQU2UG7zgKzBcNIyqqCXq3fyG0p root@ops-dev-build-1t");
-
-    System.out.println(pubkey.getAlgorithm());
-    System.out.println(pubkey.getFormat());
-    System.out.println(Base64Codec.urlSafeEncode(pubkey.getPointEncoding()));
-
-    PrivateKey privKey = (PrivateKey)AsymmetricKeyType.PRIVATE.generateKey(AsymmetricAlgorithm.ED25519, SecurityProvider.BOUNCY_CASTLE, "-----BEGIN OPENSSH PRIVATE KEY-----\n" +
-                                                                                                                                          "b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW\n" +
-                                                                                                                                          "QyNTUxOQAAACAWvy/tX9EkZSzwMQXkFNlBu84CswXDSMqqgl6t38htKQAAAJinA8axpwPG\n" +
-                                                                                                                                          "sQAAAAtzc2gtZWQyNTUxOQAAACAWvy/tX9EkZSzwMQXkFNlBu84CswXDSMqqgl6t38htKQ\n" +
-                                                                                                                                          "AAAEAP0kAMIeXi8thWh+nasvyjRdvpE2DMPTrBPDvyNCmmARa/L+1f0SRlLPAxBeQU2UG7\n" +
-                                                                                                                                          "zgKzBcNIyqqCXq3fyG0pAAAAFHJvb3RAb3BzLWRldi1idWlsZC0xAQ==\n" +
-                                                                                                                                          "-----END OPENSSH PRIVATE KEY-----");
-
-    String jwt = JWTCodec.encode("hooptyfrood", new AsymmetricJWTKeyMaster(privKey));
-    System.out.println(jwt);
-    System.out.println(JWTCodec.decipher(jwt, String.class));
-    System.out.println(JWTCodec.decode(jwt, new AsymmetricJWTKeyMaster(pubkey), String.class));
-
-    foo(privKey, pubkey, null, "hooptyfrood".getBytes());
-  }
-
-  public static void foo (PrivateKey privKey, PublicKey pubKey, String specificAlgorithm, byte[] toBeEncrypted)
-    throws Exception {
-
-    Signature sig1 = Signature.getInstance((specificAlgorithm == null) ? privKey.getAlgorithm() : specificAlgorithm);
-    sig1.initSign(privKey);
-    sig1.update(toBeEncrypted);
-
-    byte[] stuff = sig1.sign();
-
-    Signature sig2 = Signature.getInstance((specificAlgorithm == null) ? pubKey.getAlgorithm() : specificAlgorithm);
-    sig2.initVerify(pubKey);
-    sig2.update(toBeEncrypted);
-
-    System.out.println(sig2.verify(stuff));
+    KeyParser keyParser = new X509KeyParser("MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzKBgQnYA3f6v68uFMcVDiwrZCMztj1duPSLyK4Q3C+7qPnDYiOzxL9IwacRnllDFN+iR1QMDLZrzcu4vwU7fwBsrAmoJtZ0GMECEPcbmx2VhT9acKpa/GMsiUzfQWGauY4Q3/Z9K8YwuOmzQcMyxRYj2DkWD682QrZYbIuz+pQwZc0IOkJA4ExvqBnW72oiW0o9k2Pio7nWx506Lcp4FXmE3F6ixrSgsEK7dwuLeiOIoboTyyPWcLDWmi7k3GDETyOUPY4dG9LxNSHgnL2xUWotxY2vu1MFIK+Cdw8IWkci/lHvgHPa1GwJtioUNg7LnYHx4ng6R41llfbYPmADS8QIDAQAB");
+    System.out.println(OpenSSHPubicKeyUtility.convert(keyParser.extractFactors()));
   }
 }
