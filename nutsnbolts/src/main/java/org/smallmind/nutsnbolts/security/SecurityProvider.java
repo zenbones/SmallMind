@@ -30,44 +30,21 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jwt;
+package org.smallmind.nutsnbolts.security;
 
-import java.io.IOException;
-import java.math.BigInteger;
-import com.fasterxml.jackson.databind.JsonNode;
-import org.smallmind.nutsnbolts.http.Base64Codec;
-import org.smallmind.nutsnbolts.security.key.KeyFactors;
-import org.smallmind.nutsnbolts.security.key.KeyParseException;
-import org.smallmind.nutsnbolts.security.key.KeyReader;
-import org.smallmind.web.json.scaffold.util.JsonCodec;
+public enum SecurityProvider {
 
-public class JWKKeyReader implements KeyReader {
+  DEFAULT(null), BOUNCY_CASTLE("BC");
 
-  private final KeyFactors keyFactors;
+  private final String providerName;
 
-  public JWKKeyReader (String raw)
-    throws IOException, KeyParseException {
+  SecurityProvider (String providerName) {
 
-    this(JsonCodec.readAsJsonNode(raw));
+    this.providerName = providerName;
   }
 
-  public JWKKeyReader (JsonNode rawNode)
-    throws IOException, KeyParseException {
+  public String getProviderName () {
 
-    if (!(rawNode.has("n") && rawNode.has("e"))) {
-      throw new KeyParseException("JWK is missing attribute 'n' or 'e'");
-    } else {
-
-      String n = rawNode.get("n").asText();
-      String e = rawNode.get("e").asText();
-
-      keyFactors = new KeyFactors(new BigInteger(1, Base64Codec.urlSafeDecode(n)), new BigInteger(1, Base64Codec.urlSafeDecode(e)));
-    }
-  }
-
-  @Override
-  public KeyFactors extractFactors () {
-
-    return keyFactors;
+    return providerName;
   }
 }

@@ -34,12 +34,13 @@ package org.smallmind.web.jwt;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
+import org.smallmind.nutsnbolts.security.ECDSASigningAlgorithm;
 import org.smallmind.nutsnbolts.security.HMACSigningAlgorithm;
 import org.smallmind.nutsnbolts.security.RSASigningAlgorithm;
 
 public enum JWTEncryptionAlgorithm {
 
-  HS256 {
+  HS256("HS256") {
     @Override
     public byte[] encrypt (Key key, String prologue)
       throws Exception {
@@ -54,7 +55,7 @@ public enum JWTEncryptionAlgorithm {
       return HMACSigningAlgorithm.HMAC_SHA_256.verify(key, pieces, urlSafe);
     }
   },
-  RS256 {
+  RS256("RS256") {
     @Override
     public byte[] encrypt (Key key, String prologue)
       throws Exception {
@@ -68,7 +69,34 @@ public enum JWTEncryptionAlgorithm {
 
       return RSASigningAlgorithm.SHA_256_WITH_RSA.verify(key, pieces, urlSafe);
     }
+  },
+  EDDSA("EdDSA") {
+    @Override
+    public byte[] encrypt (Key key, String prologue)
+      throws Exception {
+
+      return ECDSASigningAlgorithm.ECDSA_USING_SHA_ALGORITHM.sign(key, prologue.getBytes(StandardCharsets.UTF_8));
+    }
+
+    @Override
+    public boolean verify (Key key, String[] pieces, boolean urlSafe)
+      throws Exception {
+
+      return ECDSASigningAlgorithm.ECDSA_USING_SHA_ALGORITHM.verify(key, pieces, urlSafe);
+    }
   };
+
+  private final String code;
+
+  JWTEncryptionAlgorithm (String code) {
+
+    this.code = code;
+  }
+
+  public String getCode () {
+
+    return code;
+  }
 
   public abstract byte[] encrypt (Key key, String prologue)
     throws Exception;

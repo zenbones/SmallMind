@@ -32,7 +32,46 @@
  */
 package org.smallmind.nutsnbolts.security.key;
 
-public interface KeyReader {
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import org.smallmind.nutsnbolts.http.Base64Codec;
 
-  KeyFactors extractFactors ();
+public class PKCS8KeyParser implements KeyParser {
+
+  private final KeyFactors keyFactors;
+
+  public PKCS8KeyParser (String raw)
+    throws IOException, KeyParseException {
+
+    try (DataInputStream dataInputStream = new DataInputStream(new ByteArrayInputStream(Base64Codec.decode(raw)))) {
+
+      if (!"ssh-rsa".equals(new String(readBytes(dataInputStream), StandardCharsets.UTF_8))) {
+        throw new KeyParseException("Missing RFC-416 'ssh-rsa' prologue");
+      }
+
+      byte[] exponentBytes = readBytes(dataInputStream);
+      byte[] modulusBytes = readBytes(dataInputStream);
+
+      keyFactors = new KeyFactors(new BigInteger(modulusBytes), new BigInteger(exponentBytes));
+    }
+  }
+
+  @Override
+  public KeyFactors extractFactors () {
+
+    return keyFactors;
+  }
+
+  private byte[] readBytes (DataInputStream dataInputStream)
+    throws IOException {
+
+    byte[] bytes = new byte[dataInputStream.readInt()];
+
+    dataInputStream.readFully(bytes);
+
+    return bytes;
+  }
 }

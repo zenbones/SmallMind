@@ -36,17 +36,30 @@ import java.security.Key;
 
 public class AsymmetricJWTKeyMaster implements JWTKeyMaster {
 
+  private final JWTEncryptionAlgorithm encryptionAlgorithm;
   private final Key key;
 
-  public AsymmetricJWTKeyMaster (Key key) {
+  public AsymmetricJWTKeyMaster (Key key)
+    throws UnknownAlgorithmException {
 
     this.key = key;
+
+    switch (key.getAlgorithm()) {
+      case "RSA":
+        encryptionAlgorithm = JWTEncryptionAlgorithm.RS256;
+        break;
+      case "Ed25519":
+        encryptionAlgorithm = JWTEncryptionAlgorithm.EDDSA;
+        break;
+      default:
+        throw new UnknownAlgorithmException(key.getAlgorithm());
+    }
   }
 
   @Override
   public JWTEncryptionAlgorithm getEncryptionAlgorithm () {
 
-    return JWTEncryptionAlgorithm.RS256;
+    return encryptionAlgorithm;
   }
 
   @Override

@@ -34,7 +34,7 @@ package org.smallmind.nutsnbolts.security;
 
 public enum AsymmetricAlgorithm implements SecurityAlgorithm {
 
-  DSA("DSA"), RSA("RSA"), EC("EC"), X25519("X25519"), ECDSA("ECDSA");
+  RSA("RSA"), ED25519("ED25519");
 
   private final String algorithmName;
 

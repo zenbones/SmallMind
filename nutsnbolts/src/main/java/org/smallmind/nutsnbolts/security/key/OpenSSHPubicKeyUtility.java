@@ -32,46 +32,32 @@
  */
 package org.smallmind.nutsnbolts.security.key;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-import java.io.IOException;
-import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.security.KeyFactory;
+import java.security.interfaces.RSAPublicKey;
+import java.security.spec.RSAPublicKeySpec;
 import org.smallmind.nutsnbolts.http.Base64Codec;
 
-public class PKCS8KeyReader implements KeyReader {
+public class OpenSSHPubicKeyUtility {
 
-  private final KeyFactors keyFactors;
+  public static String convert (KeyFactors keyFactors)
+    throws Exception {
 
-  public PKCS8KeyReader (String raw)
-    throws IOException, KeyParseException {
+    RSAPublicKey rsaPublicKey = (RSAPublicKey)KeyFactory.getInstance("RSA", "BC").generatePublic(new RSAPublicKeySpec(keyFactors.getModulus(), keyFactors.getExponent()));
 
-    try (DataInputStream dataInputStream = new DataInputStream(new ByteArrayInputStream(Base64Codec.decode(raw)))) {
+    try (ByteArrayOutputStream buffer = new ByteArrayOutputStream()) {
+      try (DataOutputStream output = new DataOutputStream(buffer)) {
 
-      if (!"ssh-rsa".equals(new String(readBytes(dataInputStream), StandardCharsets.UTF_8))) {
-        throw new KeyParseException("Missing RFC-416 'ssh-rsa' prologue");
+        output.writeInt("ssh-rsa".getBytes().length);
+        output.write("ssh-rsa".getBytes());
+        output.writeInt(rsaPublicKey.getPublicExponent().toByteArray().length);
+        output.write(rsaPublicKey.getPublicExponent().toByteArray());
+        output.writeInt(rsaPublicKey.getModulus().toByteArray().length);
+        output.write(rsaPublicKey.getModulus().toByteArray());
+
+        return "ssh-rsa " + Base64Codec.encode(buffer.toByteArray());
       }
-
-      byte[] exponentBytes = readBytes(dataInputStream);
-      byte[] modulusBytes = readBytes(dataInputStream);
-
-      keyFactors = new KeyFactors(new BigInteger(modulusBytes), new BigInteger(exponentBytes));
     }
-  }
-
-  @Override
-  public KeyFactors extractFactors () {
-
-    return keyFactors;
-  }
-
-  private byte[] readBytes (DataInputStream dataInputStream)
-    throws IOException {
-
-    byte[] bytes = new byte[dataInputStream.readInt()];
-
-    dataInputStream.readFully(bytes);
-
-    return bytes;
   }
 }

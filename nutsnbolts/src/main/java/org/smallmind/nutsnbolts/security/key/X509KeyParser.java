@@ -41,11 +41,11 @@ import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.DEROctetString;
 import org.smallmind.nutsnbolts.http.Base64Codec;
 
-public class X509KeyReader implements KeyReader {
+public class X509KeyParser implements KeyParser {
 
   private final KeyFactors keyFactors;
 
-  public X509KeyReader (String raw)
+  public X509KeyParser (String raw)
     throws IOException, KeyParseException {
 
     StringBuilder strippedRawBuilder = new StringBuilder();
