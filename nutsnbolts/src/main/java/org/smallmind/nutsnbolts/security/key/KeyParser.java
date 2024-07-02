@@ -30,45 +30,9 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.security;
+package org.smallmind.nutsnbolts.security.key;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.security.InvalidKeyException;
-import java.security.Key;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.SignatureException;
-import org.smallmind.nutsnbolts.http.Base64Codec;
+public interface KeyParser {
 
-public enum ECDSASigningAlgorithm implements SecurityAlgorithm, SigningAlgorithm {
-
-  ECDSA_USING_SHA_ALGORITHM("EcdsaUsingShaAlgorithm");
-
-  private final String algorithmName;
-
-  ECDSASigningAlgorithm (String algorithmName) {
-
-    this.algorithmName = algorithmName;
-  }
-
-  public String getAlgorithmName () {
-
-    return algorithmName;
-  }
-
-  @Override
-  public byte[] sign (Key key, byte[] data)
-    throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
-
-    return EncryptionUtility.sign(this, (PrivateKey)key, data);
-  }
-
-  @Override
-  public boolean verify (Key key, String[] parts, boolean urlSafe)
-    throws IOException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
-
-    return EncryptionUtility.verify(this, (PublicKey)key, (parts[0] + "." + parts[1]).getBytes(StandardCharsets.UTF_8), urlSafe ? Base64Codec.urlSafeDecode(parts[2]) : Base64Codec.decode(parts[2]));
-  }
+  KeyFactors extractFactors ();
 }

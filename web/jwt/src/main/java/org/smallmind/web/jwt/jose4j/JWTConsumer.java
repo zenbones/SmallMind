@@ -41,9 +41,12 @@ import org.jose4j.jwx.JsonWebStructure;
 import org.jose4j.keys.KeyPersuasion;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
+import static org.jose4j.jws.AlgorithmIdentifiers.NONE;
+
 public class JWTConsumer {
 
   private boolean skipSignatureVerification;
+  private boolean skipVerificationKeyResolutionOnNone;
   private boolean requireSignature = true;
   private boolean requireEncryption;
   private boolean requireIntegrity;
@@ -51,6 +54,13 @@ public class JWTConsumer {
   public JWTConsumer setSkipSignatureVerification (boolean skipSignatureVerification) {
 
     this.skipSignatureVerification = skipSignatureVerification;
+
+    return this;
+  }
+
+  public JWTConsumer setSkipVerificationKeyResolutionOnNone (boolean skipVerificationKeyResolutionOnNone) {
+
+    this.skipVerificationKeyResolutionOnNone = skipVerificationKeyResolutionOnNone;
 
     return this;
   }
@@ -85,7 +95,9 @@ public class JWTConsumer {
 
     while (jwtClaims == null) {
 
-      JsonWebStructure joseObject = JsonWebStructure.fromCompactSerialization(workingJwt);
+      JsonWebStructure joseObject;
+
+      joseObject = JsonWebStructure.fromCompactSerialization(workingJwt);
       String payload;
 
       if (joseObject instanceof JsonWebSignature) {
@@ -98,6 +110,7 @@ public class JWTConsumer {
         JsonWebEncryption jwe = (JsonWebEncryption)joseObject;
 
         jwe.setKey(decryptionKey);
+
         payload = jwe.getPayload();
       }
 
@@ -115,23 +128,28 @@ public class JWTConsumer {
     return jwtClaims;
   }
 
-  private void processContext (String jwt, Key verificationKey, LinkedList<JsonWebStructure> joseObjects)
+  public void processContext (String jwt, Key verificationKey, LinkedList<JsonWebStructure> joseObjects)
     throws Exception {
 
-    ArrayList<JsonWebStructure> originalJoseObjects = new ArrayList<>(joseObjects);
     boolean hasSignature = false;
     boolean hasEncryption = false;
     boolean hasSymmetricEncryption = false;
 
-    for (int idx = originalJoseObjects.size() - 1; idx >= 0; --idx) {
+    ArrayList<JsonWebStructure> originalJoseObjects = new ArrayList<>(joseObjects);
+
+    for (int idx = originalJoseObjects.size() - 1; idx >= 0; idx--) {
 
       JsonWebStructure currentJoseObject = originalJoseObjects.get(idx);
 
       if (currentJoseObject instanceof JsonWebSignature) {
+
         JsonWebSignature jws = (JsonWebSignature)currentJoseObject;
-        boolean isNoneAlg = "none".equals(jws.getAlgorithmHeaderValue());
-        if (!this.skipSignatureVerification) {
-          if (!isNoneAlg) {
+        boolean isNoneAlg = NONE.equals(jws.getAlgorithmHeaderValue());
+
+        if (!skipSignatureVerification) {
+
+          if (!isNoneAlg || !skipVerificationKeyResolutionOnNone) {
+
             jws.setKey(verificationKey);
           }
 
@@ -147,6 +165,7 @@ public class JWTConsumer {
         JsonWebEncryption jwe = (JsonWebEncryption)currentJoseObject;
 
         hasEncryption = true;
+
         hasSymmetricEncryption = jwe.getKeyManagementModeAlgorithm().getKeyPersuasion() == KeyPersuasion.SYMMETRIC;
       }
     }

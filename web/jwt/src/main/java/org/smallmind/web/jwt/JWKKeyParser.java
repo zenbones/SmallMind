@@ -30,45 +30,44 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.security;
+package org.smallmind.web.jwt;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.security.InvalidKeyException;
-import java.security.Key;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.SignatureException;
+import java.math.BigInteger;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.smallmind.nutsnbolts.http.Base64Codec;
+import org.smallmind.nutsnbolts.security.key.KeyFactors;
+import org.smallmind.nutsnbolts.security.key.KeyParseException;
+import org.smallmind.nutsnbolts.security.key.KeyParser;
+import org.smallmind.web.json.scaffold.util.JsonCodec;
 
-public enum ECDSASigningAlgorithm implements SecurityAlgorithm, SigningAlgorithm {
+public class JWKKeyParser implements KeyParser {
 
-  ECDSA_USING_SHA_ALGORITHM("EcdsaUsingShaAlgorithm");
+  private final KeyFactors keyFactors;
 
-  private final String algorithmName;
+  public JWKKeyParser (String raw)
+    throws IOException, KeyParseException {
 
-  ECDSASigningAlgorithm (String algorithmName) {
-
-    this.algorithmName = algorithmName;
+    this(JsonCodec.readAsJsonNode(raw));
   }
 
-  public String getAlgorithmName () {
+  public JWKKeyParser (JsonNode rawNode)
+    throws IOException, KeyParseException {
 
-    return algorithmName;
+    if (!(rawNode.has("n") && rawNode.has("e"))) {
+      throw new KeyParseException("JWK is missing attribute 'n' or 'e'");
+    } else {
+
+      String n = rawNode.get("n").asText();
+      String e = rawNode.get("e").asText();
+
+      keyFactors = new KeyFactors(new BigInteger(1, Base64Codec.urlSafeDecode(n)), new BigInteger(1, Base64Codec.urlSafeDecode(e)));
+    }
   }
 
   @Override
-  public byte[] sign (Key key, byte[] data)
-    throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+  public KeyFactors extractFactors () {
 
-    return EncryptionUtility.sign(this, (PrivateKey)key, data);
-  }
-
-  @Override
-  public boolean verify (Key key, String[] parts, boolean urlSafe)
-    throws IOException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
-
-    return EncryptionUtility.verify(this, (PublicKey)key, (parts[0] + "." + parts[1]).getBytes(StandardCharsets.UTF_8), urlSafe ? Base64Codec.urlSafeDecode(parts[2]) : Base64Codec.decode(parts[2]));
+    return keyFactors;
   }
 }

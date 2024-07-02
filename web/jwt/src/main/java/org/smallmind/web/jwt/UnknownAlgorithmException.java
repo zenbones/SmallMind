@@ -32,42 +32,12 @@
  */
 package org.smallmind.web.jwt;
 
-import java.io.IOException;
-import java.math.BigInteger;
-import com.fasterxml.jackson.databind.JsonNode;
-import org.smallmind.nutsnbolts.http.Base64Codec;
-import org.smallmind.nutsnbolts.security.key.KeyFactors;
-import org.smallmind.nutsnbolts.security.key.KeyParseException;
-import org.smallmind.nutsnbolts.security.key.KeyReader;
-import org.smallmind.web.json.scaffold.util.JsonCodec;
+import org.smallmind.nutsnbolts.lang.FormattedException;
 
-public class JWKKeyReader implements KeyReader {
+public class UnknownAlgorithmException extends FormattedException {
 
-  private final KeyFactors keyFactors;
+  public UnknownAlgorithmException (String message, Object... args) {
 
-  public JWKKeyReader (String raw)
-    throws IOException, KeyParseException {
-
-    this(JsonCodec.readAsJsonNode(raw));
-  }
-
-  public JWKKeyReader (JsonNode rawNode)
-    throws IOException, KeyParseException {
-
-    if (!(rawNode.has("n") && rawNode.has("e"))) {
-      throw new KeyParseException("JWK is missing attribute 'n' or 'e'");
-    } else {
-
-      String n = rawNode.get("n").asText();
-      String e = rawNode.get("e").asText();
-
-      keyFactors = new KeyFactors(new BigInteger(1, Base64Codec.urlSafeDecode(n)), new BigInteger(1, Base64Codec.urlSafeDecode(e)));
-    }
-  }
-
-  @Override
-  public KeyFactors extractFactors () {
-
-    return keyFactors;
+    super(message, args);
   }
 }

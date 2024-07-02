@@ -51,7 +51,7 @@ public class JWTCodec {
 
     jws.setPayloadBytes(JsonCodec.writeAsBytes(claims));
     jws.setKey(keyMaster.getKey());
-    jws.setAlgorithmHeaderValue(keyMaster.getEncryptionAlgorithm().name());
+    jws.setAlgorithmHeaderValue(keyMaster.getEncryptionAlgorithm().getCode());
 
     if (keyId != null) {
       jws.setKeyIdHeaderValue(keyId);

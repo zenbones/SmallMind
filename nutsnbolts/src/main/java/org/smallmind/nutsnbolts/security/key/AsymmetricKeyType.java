@@ -53,6 +53,23 @@ public enum AsymmetricKeyType {
     public Key generateKey (SecurityAlgorithm algorithm, SecurityProvider provider, String raw)
       throws IOException, NoSuchProviderException, NoSuchAlgorithmException, InvalidKeySpecException {
 
+      int lastSpacePos;
+
+      if (raw.startsWith("ssh-")) {
+
+        int firstSpacePos;
+
+        if ((firstSpacePos = raw.indexOf(' ')) <= 0) {
+          throw new IOException("The raw key requires a space separator after the shh prologue");
+        } else {
+          raw = raw.substring(firstSpacePos + 1);
+        }
+      }
+
+      if ((lastSpacePos = raw.lastIndexOf(' ')) >= 0) {
+        raw = raw.substring(0, lastSpacePos);
+      }
+
       return AsymmetricKeyType.keyFactoryInstance(algorithm, provider).generatePublic(new OpenSSHPublicKeySpec(Base64Codec.decode(raw)));
     }
   },
