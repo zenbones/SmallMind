@@ -33,16 +33,14 @@
 package org.smallmind.nutsnbolts.security.key;
 
 import java.io.IOException;
-import java.io.StringReader;
 import java.security.Key;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.spec.InvalidKeySpecException;
-import java.security.spec.PKCS8EncodedKeySpec;
-import org.bouncycastle.jcajce.spec.OpenSSHPublicKeySpec;
-import org.bouncycastle.util.io.pem.PemReader;
-import org.smallmind.nutsnbolts.http.Base64Codec;
+import org.smallmind.nutsnbolts.security.AsymmetricAlgorithm;
+import org.smallmind.nutsnbolts.security.AsymmetricKeySpec;
+import org.smallmind.nutsnbolts.security.InappropriateKeySpecException;
 import org.smallmind.nutsnbolts.security.SecurityAlgorithm;
 import org.smallmind.nutsnbolts.security.SecurityProvider;
 
@@ -50,36 +48,18 @@ public enum AsymmetricKeyType {
 
   PUBLIC {
     @Override
-    public Key generateKey (SecurityAlgorithm algorithm, SecurityProvider provider, String raw)
-      throws IOException, NoSuchProviderException, NoSuchAlgorithmException, InvalidKeySpecException {
+    public Key generateKey (AsymmetricAlgorithm algorithm, AsymmetricKeySpec spec, SecurityProvider provider, String raw)
+      throws IOException, NoSuchProviderException, NoSuchAlgorithmException, InvalidKeySpecException, InappropriateKeySpecException {
 
-      int lastSpacePos;
-
-      if (raw.startsWith("ssh-")) {
-
-        int firstSpacePos;
-
-        if ((firstSpacePos = raw.indexOf(' ')) <= 0) {
-          throw new IOException("The raw key requires a space separator after the shh prologue");
-        } else {
-          raw = raw.substring(firstSpacePos + 1);
-        }
-      }
-
-      if ((lastSpacePos = raw.lastIndexOf(' ')) >= 0) {
-        raw = raw.substring(0, lastSpacePos);
-      }
-
-      return AsymmetricKeyType.keyFactoryInstance(algorithm, provider).generatePublic(new OpenSSHPublicKeySpec(Base64Codec.decode(raw)));
+      return AsymmetricKeyType.keyFactoryInstance(algorithm, provider).generatePublic(spec.generateKeySpec(this, raw));
     }
   },
   PRIVATE {
     @Override
-    public Key generateKey (SecurityAlgorithm algorithm, SecurityProvider provider, String raw)
-      throws IOException, NoSuchProviderException, NoSuchAlgorithmException, InvalidKeySpecException {
+    public Key generateKey (AsymmetricAlgorithm algorithm, AsymmetricKeySpec spec, SecurityProvider provider, String raw)
+      throws IOException, NoSuchProviderException, NoSuchAlgorithmException, InvalidKeySpecException, InappropriateKeySpecException {
 
-      return AsymmetricKeyType.keyFactoryInstance(algorithm, provider).generatePrivate(new PKCS8EncodedKeySpec(new PemReader(new StringReader(raw.startsWith("-----") ? raw : "-----BEGIN PRIVATE KEY-----\n" + raw + "\n-----END PRIVATE KEY-----\n")).readPemObject().getContent()));
-//      return AsymmetricKeyType.keyFactoryInstance(algorithm, provider).generatePrivate(new OpenSSHPrivateKeySpec(new PemReader(new StringReader(raw.startsWith("-----") ? raw : "-----BEGIN PRIVATE KEY-----\n" + raw + "\n-----END PRIVATE KEY-----\n")).readPemObject().getContent()));
+      return AsymmetricKeyType.keyFactoryInstance(algorithm, provider).generatePrivate(spec.generateKeySpec(this, raw));
     }
   };
 
@@ -89,6 +69,6 @@ public enum AsymmetricKeyType {
     return SecurityProvider.DEFAULT.equals(provider) ? KeyFactory.getInstance(algorithm.getAlgorithmName()) : KeyFactory.getInstance(algorithm.getAlgorithmName(), provider.getProviderName());
   }
 
-  public abstract Key generateKey (SecurityAlgorithm algorithm, SecurityProvider provider, String raw)
-    throws IOException, NoSuchProviderException, NoSuchAlgorithmException, InvalidKeySpecException;
+  public abstract Key generateKey (AsymmetricAlgorithm algorithm, AsymmetricKeySpec spec, SecurityProvider provider, String raw)
+    throws IOException, NoSuchProviderException, NoSuchAlgorithmException, InvalidKeySpecException, InappropriateKeySpecException;
 }
