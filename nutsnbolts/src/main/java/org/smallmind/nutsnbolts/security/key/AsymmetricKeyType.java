@@ -39,7 +39,7 @@ import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.spec.InvalidKeySpecException;
-import org.bouncycastle.jcajce.spec.OpenSSHPrivateKeySpec;
+import java.security.spec.PKCS8EncodedKeySpec;
 import org.bouncycastle.jcajce.spec.OpenSSHPublicKeySpec;
 import org.bouncycastle.util.io.pem.PemReader;
 import org.smallmind.nutsnbolts.http.Base64Codec;
@@ -78,7 +78,8 @@ public enum AsymmetricKeyType {
     public Key generateKey (SecurityAlgorithm algorithm, SecurityProvider provider, String raw)
       throws IOException, NoSuchProviderException, NoSuchAlgorithmException, InvalidKeySpecException {
 
-      return AsymmetricKeyType.keyFactoryInstance(algorithm, provider).generatePrivate(new OpenSSHPrivateKeySpec(new PemReader(new StringReader(raw.startsWith("-----") ? raw : "-----BEGIN PRIVATE KEY-----\n" + raw + "\n-----END PRIVATE KEY-----\n")).readPemObject().getContent()));
+      return AsymmetricKeyType.keyFactoryInstance(algorithm, provider).generatePrivate(new PKCS8EncodedKeySpec(new PemReader(new StringReader(raw.startsWith("-----") ? raw : "-----BEGIN PRIVATE KEY-----\n" + raw + "\n-----END PRIVATE KEY-----\n")).readPemObject().getContent()));
+//      return AsymmetricKeyType.keyFactoryInstance(algorithm, provider).generatePrivate(new OpenSSHPrivateKeySpec(new PemReader(new StringReader(raw.startsWith("-----") ? raw : "-----BEGIN PRIVATE KEY-----\n" + raw + "\n-----END PRIVATE KEY-----\n")).readPemObject().getContent()));
     }
   };
 
