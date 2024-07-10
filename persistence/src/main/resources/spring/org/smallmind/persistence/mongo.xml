@@ -21,6 +21,7 @@
           </bean>
         </property>
         <property name="sslEnabled" value="${mongo.ssl_enabled}"/>
+        <property name="writeConcernEnabled" value="${mongo.write_concern.enabled}"/>
         <property name="writeConcern">
           <bean class="org.smallmind.mongodb.utility.MongoWriteConcern">
             <property name="acknowledgment" value="${mongo.write_concern.acknowledgment}"/>
