@@ -71,6 +71,7 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
   private Boolean retryReads;
   private Boolean retryWrites;
   private Boolean sslEnabled;
+  private Boolean writeConcernEnabled;
   private Integer socketConnectTimeoutMilliseconds;
   private Integer serverSelectionTimeoutMilliseconds;
   private Integer connectionPoolMinSize;
@@ -113,6 +114,11 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
   public void setWriteConcern (WriteConcern writeConcern) {
 
     this.writeConcern = writeConcern;
+  }
+
+  public void setWriteConcernEnabled (Boolean writeConcernEnabled) {
+
+    this.writeConcernEnabled = writeConcernEnabled;
   }
 
   public void setRetryReads (Boolean retryReads) {
@@ -251,7 +257,7 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
     if (retryReads != null) {
       settingsBuilder.retryReads(retryReads);
     }
-    if (writeConcern != null) {
+    if ((writeConcern != null) && (!Boolean.FALSE.equals(writeConcernEnabled))) {
       settingsBuilder.writeConcern(writeConcern);
     }
     if (retryWrites != null) {
