@@ -216,7 +216,7 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
     return (!persistent) && (quiescentTimestamp > 0) && ((now - quiescentTimestamp) >= timeToLiveMilliseconds);
   }
 
-  public OumuamuaChannel<V> terminate () {
+  public synchronized OumuamuaChannel<V> terminate () {
 
     HashSet<Session<V>> unsubscribedSet = new HashSet<>(sessionMap.values());
 
