@@ -384,7 +384,14 @@ public enum Meta {
         Channel<V> channel;
 
         try {
-          channel = server.findChannel(route.getPath());
+          if ((channel = server.findChannel(route.getPath())) == null) {
+            if ((securityPolicy != null) && (!securityPolicy.canCreate(session, route.getPath(), request))) {
+
+              return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructPublishErrorResponse(server, route.getPath(), request.getId(), request.getSessionId(), "Unauthorized", Reconnect.NONE));
+            } else {
+              channel = server.requireChannel(route.getPath());
+            }
+          }
         } catch (InvalidPathException invalidPathException) {
 
           return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructPublishErrorResponse(server, route.getPath(), request.getId(), request.getSessionId(), invalidPathException.getMessage(), null));
