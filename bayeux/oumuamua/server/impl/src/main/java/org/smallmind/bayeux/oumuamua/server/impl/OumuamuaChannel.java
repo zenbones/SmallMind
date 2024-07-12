@@ -76,6 +76,8 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
 
     reflecting.set(root.isReflective(route));
     streaming.set(root.isStreaming(route));
+
+    quiescentTimestamp = System.currentTimeMillis();
   }
 
   private void onSubscribed (Session<V> session) {
