@@ -124,7 +124,7 @@ public enum AsymmetricKeySpec {
           }
         }
 
-        return new X509EncodedKeySpec(Base64Codec.decode(raw.replace("\n", "")));
+        return new X509EncodedKeySpec(Base64Codec.decode(raw.replaceAll("\\s", "")));
       } else {
         throw new InappropriateKeySpecException(type.name());
       }
