@@ -13,6 +13,7 @@
 
   <modules>
     <module>deploy</module>
+     <module>style</module>
   </modules>
   <build>
     <plugins>
