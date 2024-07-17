@@ -39,10 +39,12 @@ import java.util.Collections;
 import java.util.LinkedList;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import javax.xml.transform.stream.StreamSource;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -55,37 +57,59 @@ public class DependencyOrganizer {
 
     DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
     DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-    Document doc = dBuilder.parse(Files.newInputStream(Paths.get("C:/Users/david/Desktop/pom.xml")));
-
+    Document doc = dBuilder.parse(Files.newInputStream(Paths.get("C:/Users/david/Documents/Nutshell/empyrean/aeon/pantheon/com/forio/epicenter/pom.xml")));
     NodeList projectNodeList = doc.getElementsByTagName("project");
 
     if (projectNodeList.getLength() > 0) {
 
       Node projectNode = projectNodeList.item(0);
       NodeList dependencyManagementNodelist = ((Element)projectNode).getElementsByTagName("dependencyManagement");
+      NodeList dependenciesNodeList = ((Element)projectNode).getElementsByTagName("dependencies");
 
       if (dependencyManagementNodelist.getLength() > 0) {
 
         Node dependencyManagementNode = dependencyManagementNodelist.item(0);
-        NodeList dependenciesNodeList = ((Element)dependencyManagementNode).getElementsByTagName("dependencies");
+        NodeList managedDependenciesNodeList = ((Element)dependencyManagementNode).getElementsByTagName("dependencies");
 
-        if (dependenciesNodeList.getLength() > 0) {
+        if (managedDependenciesNodeList.getLength() > 0) {
 
-          Node dependenciesNode = dependenciesNodeList.item(0);
+          Node dependenciesNode = managedDependenciesNodeList.item(0);
+
+          dependencyManagementNode.replaceChild(sortDependencies(dependenciesNode), dependenciesNode);
+        }
+      }
+
+      if (dependenciesNodeList.getLength() > 0) {
+        for (int dependenciesIndex = 0; dependenciesIndex < dependenciesNodeList.getLength(); dependenciesIndex++) {
+
+          Node dependenciesNode;
+
+          if ((dependenciesNode = dependenciesNodeList.item(dependenciesIndex)).getParentNode().equals(projectNode)) {
+            projectNode.replaceChild(sortDependencies(dependenciesNode), dependenciesNode);
+            break;
+          }
         }
       }
     }
 
     TransformerFactory transformerFactory = TransformerFactory.newInstance();
-    Transformer transformer = transformerFactory.newTransformer();
+    Transformer transformer = transformerFactory.newTransformer(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream("org/smallmind/forge/style/pretty-print.xslt")));
+//    Transformer transformer = transformerFactory.newTransformer();
     DOMSource source = new DOMSource(doc);
-    StreamResult result = new StreamResult(new File("C:/Users/david/Desktop/pom2.xml"));
+    StreamResult result = new StreamResult(new File("C:/Users/david/Documents/Nutshell/empyrean/aeon/pantheon/com/forio/epicenter/pom.xml"));
+
+    transformer.setOutputProperty(OutputKeys.STANDALONE, "no");
+//    transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+//    transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+//    transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
     transformer.transform(source, result);
   }
 
-  private Node sortDependencies (Node parentNode) {
+  private static Node sortDependencies (Node parentNode)
+    throws Exception {
 
     Node replacementParentNode = parentNode.cloneNode(false);
+
     NodeList dependencyNodeList = ((Element)parentNode).getElementsByTagName("dependency");
     LinkedList<DependencyWrapper> dependencyWrapperList = new LinkedList<>();
 

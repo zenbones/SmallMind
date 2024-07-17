@@ -75,7 +75,7 @@ public class DependencyWrapper implements Comparable<DependencyWrapper> {
 
     String[] firstSegements = first.split(separator);
     String[] secondSegments = second.split(separator);
-    int comparableSegments = Math.max(firstSegements.length, secondSegments.length);
+    int comparableSegments = Math.min(firstSegements.length, secondSegments.length);
 
     for (int segmentIndex = 0; segmentIndex < comparableSegments; segmentIndex++) {
 
