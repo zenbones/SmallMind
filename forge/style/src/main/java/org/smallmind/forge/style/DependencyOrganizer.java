@@ -32,15 +32,21 @@
  */
 package org.smallmind.forge.style;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
 import java.util.LinkedList;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
@@ -49,15 +55,43 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 public class DependencyOrganizer {
 
   public static void main (String... args)
-    throws Exception {
+    throws IOException {
+
+    walkProject(Paths.get(args[0]));
+  }
+
+  public static void walkProject (Path projectPath)
+    throws IOException {
+
+    Files.walkFileTree(projectPath, new SimpleFileVisitor<>() {
+
+      @Override
+      public FileVisitResult visitFile (Path file, BasicFileAttributes attrs) {
+
+        if ("pom.xml".equals(file.getFileName().toString())) {
+          try {
+            rewritePom(file);
+          } catch (IOException | SAXException | ParserConfigurationException | TransformerException exception) {
+            throw new RuntimeException(exception);
+          }
+        }
+
+        return FileVisitResult.CONTINUE;
+      }
+    });
+  }
+
+  private static void rewritePom (Path pomPath)
+    throws IOException, SAXException, ParserConfigurationException, TransformerException {
 
     DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
     DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-    Document doc = dBuilder.parse(Files.newInputStream(Paths.get("C:/Users/david/Documents/Nutshell/empyrean/aeon/pantheon/com/forio/epicenter/pom.xml")));
+    Document doc = dBuilder.parse(Files.newInputStream(pomPath));
     NodeList projectNodeList = doc.getElementsByTagName("project");
 
     if (projectNodeList.getLength() > 0) {
@@ -96,7 +130,7 @@ public class DependencyOrganizer {
     Transformer transformer = transformerFactory.newTransformer(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream("org/smallmind/forge/style/pretty-print.xslt")));
 //    Transformer transformer = transformerFactory.newTransformer();
     DOMSource source = new DOMSource(doc);
-    StreamResult result = new StreamResult(new File("C:/Users/david/Documents/Nutshell/empyrean/aeon/pantheon/com/forio/epicenter/pom.xml"));
+    StreamResult result = new StreamResult(Files.newOutputStream(pomPath));
 
     transformer.setOutputProperty(OutputKeys.STANDALONE, "no");
 //    transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
@@ -105,8 +139,7 @@ public class DependencyOrganizer {
     transformer.transform(source, result);
   }
 
-  private static Node sortDependencies (Node parentNode)
-    throws Exception {
+  private static Node sortDependencies (Node parentNode) {
 
     Node replacementParentNode = parentNode.cloneNode(false);
 
