@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
@@ -9,7 +10,6 @@
   <name>Forge-Deploy</name>
   <description>Deployment Automation</description>
   <packaging>jar</packaging>
-
   <dependencies>
     <dependency>
       <groupId>org.apache.httpcomponents.client5</groupId>
@@ -28,17 +28,17 @@
     </dependency>
   </dependencies>
   <!--
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.smallmind</groupId>
-        <artifactId>spark-singularity-plugin</artifactId>
-        <extensions>true</extensions>
-        <configuration>
-          <mainClass>org.smallmind.forge.deploy.cli.ApplicationUpdaterCLI</mainClass>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
-  -->
+<build>
+  <plugins>
+    <plugin>
+      <groupId>org.smallmind</groupId>
+      <artifactId>spark-singularity-plugin</artifactId>
+      <extensions>true</extensions>
+      <configuration>
+        <mainClass>org.smallmind.forge.deploy.cli.ApplicationUpdaterCLI</mainClass>
+      </configuration>
+    </plugin>
+  </plugins>
+</build>
+-->
 </project>

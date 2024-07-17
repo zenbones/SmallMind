@@ -67,7 +67,6 @@ public class SurefireSleuthEventListener implements SleuthEventListener {
   @Override
   public void handle (SleuthEvent event) {
 
-
     System.out.println("[" + AnsiColor.YELLOW.getCode() + "SUREFIRE" + AnsiColor.DEFAULT.getCode() + "] " + event);
 
     switch (event.getType()) {

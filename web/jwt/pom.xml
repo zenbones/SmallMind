@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
@@ -9,18 +10,7 @@
   <packaging>jar</packaging>
   <name>Web-JWT</name>
   <description>JWT Token API</description>
-
   <dependencies>
-    <dependency>
-      <groupId>org.smallmind</groupId>
-      <artifactId>smallmind-nutsnbolts</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.smallmind</groupId>
-      <artifactId>web-jersey</artifactId>
-      <scope>compile</scope>
-    </dependency>
     <dependency>
       <groupId>org.bitbucket.b_c</groupId>
       <artifactId>jose4j</artifactId>
@@ -31,6 +21,16 @@
       <artifactId>bcprov-jdk18on</artifactId>
       <scope>compile</scope>
       <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.smallmind</groupId>
+      <artifactId>smallmind-nutsnbolts</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.smallmind</groupId>
+      <artifactId>web-jersey</artifactId>
+      <scope>compile</scope>
     </dependency>
   </dependencies>
 </project>

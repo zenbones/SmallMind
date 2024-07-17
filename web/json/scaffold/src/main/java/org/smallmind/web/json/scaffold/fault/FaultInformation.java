@@ -33,12 +33,12 @@
 package org.smallmind.web.json.scaffold.fault;
 
 import java.io.Serializable;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlTransient;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 @XmlRootElement(name = "information", namespace = "http://org.smallmind/web/json/scaffold/fault")

@@ -1,6 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>smallmind</artifactId>
@@ -10,12 +10,12 @@
   <name>Smalmind-Phalanx</name>
   <description>Clustering and Coordination Frameworks</description>
   <packaging>jar</packaging>
-
   <dependencies>
     <dependency>
-      <groupId>jakarta.xml.bind</groupId>
-      <artifactId>jakarta.xml.bind-api</artifactId>
+      <groupId>com.rabbitmq</groupId>
+      <artifactId>amqp-client</artifactId>
       <scope>compile</scope>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>com.sun.xml.bind</groupId>
@@ -23,9 +23,10 @@
       <scope>runtime</scope>
     </dependency>
     <dependency>
-      <groupId>org.glassfish.jaxb</groupId>
-      <artifactId>jaxb-runtime</artifactId>
-      <scope>runtime</scope>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-all</artifactId>
+      <scope>compile</scope>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>jakarta.jms</groupId>
@@ -33,13 +34,23 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>org.smallmind</groupId>
-      <artifactId>scribe-pen</artifactId>
+      <groupId>jakarta.xml.bind</groupId>
+      <artifactId>jakarta.xml.bind-api</artifactId>
       <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.jaxb</groupId>
+      <artifactId>jaxb-runtime</artifactId>
+      <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>org.smallmind</groupId>
       <artifactId>claxon-registry</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.smallmind</groupId>
+      <artifactId>scribe-pen</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -61,18 +72,6 @@
       <groupId>org.springframework</groupId>
       <artifactId>spring-context</artifactId>
       <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty-all</artifactId>
-      <scope>compile</scope>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>com.rabbitmq</groupId>
-      <artifactId>amqp-client</artifactId>
-      <scope>compile</scope>
-      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.springframework.amqp</groupId>

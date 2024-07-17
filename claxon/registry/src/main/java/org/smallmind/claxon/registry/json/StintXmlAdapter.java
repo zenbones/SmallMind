@@ -33,10 +33,10 @@
 package org.smallmind.claxon.registry.json;
 
 import java.util.concurrent.TimeUnit;
+import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 import org.smallmind.nutsnbolts.time.Stint;
 
 public class StintXmlAdapter extends XmlAdapter<JsonNode, Stint> {

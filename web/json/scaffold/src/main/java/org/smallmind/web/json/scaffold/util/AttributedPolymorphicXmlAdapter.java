@@ -32,12 +32,12 @@
  */
 package org.smallmind.web.json.scaffold.util;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.smallmind.nutsnbolts.reflection.AnnotationFilter;
 import org.smallmind.nutsnbolts.reflection.OffloadingInvocationHandler;
 import org.smallmind.nutsnbolts.reflection.PassType;

@@ -1,7 +1,6 @@
-<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-
   <groupId>org.smallmind</groupId>
   <artifactId>smallmind</artifactId>
   <version>6.0.0-SNAPSHOT</version>
@@ -33,7 +32,6 @@
       <email>david.berkman@grenadefish.net</email>
     </developer>
   </developers>
-
   <profiles>
     <profile>
       <id>oss</id>
@@ -61,7 +59,6 @@
       </build>
     </profile>
   </profiles>
-
   <distributionManagement>
     <repository>
       <id>${nexus.releases.id}</id>
@@ -74,7 +71,6 @@
       <url>${nexus.snapshots.url}</url>
     </snapshotRepository>
   </distributionManagement>
-
   <properties>
     <maven.compiler.release>17</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -157,7 +153,6 @@
     <testng.version>7.9.0</testng.version>
     <tyrus.version>2.1.5</tyrus.version>
   </properties>
-
   <modules>
     <module>ansible</module>
     <module>artifact</module>
@@ -184,7 +179,6 @@
     <module>swing</module>
     <module>web</module>
   </modules>
-
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -531,11 +525,6 @@
       </dependency>
       <dependency>
         <groupId>org.glassfish.grizzly</groupId>
-        <artifactId>grizzly-http2</artifactId>
-        <version>${grizzly.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.glassfish.grizzly</groupId>
         <artifactId>grizzly-http-server</artifactId>
         <version>${grizzly.version}</version>
       </dependency>
@@ -552,6 +541,11 @@
       <dependency>
         <groupId>org.glassfish.grizzly</groupId>
         <artifactId>grizzly-http-servlet-server</artifactId>
+        <version>${grizzly.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.glassfish.grizzly</groupId>
+        <artifactId>grizzly-http2</artifactId>
         <version>${grizzly.version}</version>
       </dependency>
       <dependency>
@@ -645,13 +639,13 @@
         <version>${tyrus.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.glassfish.tyrus.ext</groupId>
-        <artifactId>tyrus-extension-deflate</artifactId>
+        <groupId>org.glassfish.tyrus</groupId>
+        <artifactId>tyrus-server</artifactId>
         <version>${tyrus.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.glassfish.tyrus</groupId>
-        <artifactId>tyrus-server</artifactId>
+        <groupId>org.glassfish.tyrus.ext</groupId>
+        <artifactId>tyrus-extension-deflate</artifactId>
         <version>${tyrus.version}</version>
       </dependency>
       <dependency>
@@ -786,21 +780,6 @@
       </dependency>
       <dependency>
         <groupId>org.smallmind</groupId>
-        <artifactId>smallmind-persistence</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.smallmind</groupId>
-        <artifactId>smallmind-phalanx</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.smallmind</groupId>
-        <artifactId>smallmind-quorum</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.smallmind</groupId>
         <artifactId>schedule-base</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -811,12 +790,12 @@
       </dependency>
       <dependency>
         <groupId>org.smallmind</groupId>
-        <artifactId>scribe-pen</artifactId>
+        <artifactId>scribe-ink-indigenous</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.smallmind</groupId>
-        <artifactId>scribe-ink-indigenous</artifactId>
+        <artifactId>scribe-pen</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -842,6 +821,21 @@
       <dependency>
         <groupId>org.smallmind</groupId>
         <artifactId>smallmind-nutsnbolts</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.smallmind</groupId>
+        <artifactId>smallmind-persistence</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.smallmind</groupId>
+        <artifactId>smallmind-phalanx</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.smallmind</groupId>
+        <artifactId>smallmind-quorum</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -890,11 +884,6 @@
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.springframework.batch</groupId>
-        <artifactId>spring-batch-core</artifactId>
-        <version>${spring.batch.version}</version>
-      </dependency>
-      <dependency>
         <groupId>org.springframework</groupId>
         <artifactId>spring-beans</artifactId>
         <version>${spring.version}</version>
@@ -940,6 +929,11 @@
         <version>${spring.rabbit.version}</version>
       </dependency>
       <dependency>
+        <groupId>org.springframework.batch</groupId>
+        <artifactId>spring-batch-core</artifactId>
+        <version>${spring.batch.version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.syslog4j</groupId>
         <artifactId>syslog4j</artifactId>
         <version>${syslog4j.version}</version>
@@ -979,13 +973,13 @@
       <optional>true</optional>
     </dependency>
     <dependency>
-      <groupId>org.testng</groupId>
-      <artifactId>testng</artifactId>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-test</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.springframework</groupId>
-      <artifactId>spring-test</artifactId>
+      <groupId>org.testng</groupId>
+      <artifactId>testng</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -1034,10 +1028,10 @@
             </execution>
           </executions>
           <!--
-          <configuration>
-            <failOnError>false</failOnError>
-          </configuration>
-          -->
+<configuration>
+  <failOnError>false</failOnError>
+</configuration>
+-->
         </plugin>
         <plugin>
           <groupId>org.sonatype.plugins</groupId>

@@ -34,10 +34,10 @@ package org.smallmind.web.json.doppelganger;
 
 import java.io.Serializable;
 import java.util.List;
-import com.fasterxml.jackson.databind.JsonNode;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.type.TypeMirror;
 import jakarta.validation.constraints.NotNull;
+import com.fasterxml.jackson.databind.JsonNode;
 
 public class UsefulTypeMirrors {
 

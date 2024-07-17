@@ -33,7 +33,6 @@
 package org.smallmind.sso.oauth.v2dot0.jersey;
 
 import java.io.IOException;
-import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.FormParam;
 import jakarta.ws.rs.GET;
@@ -44,6 +43,7 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.smallmind.sso.oauth.v2dot0.spi.InvalidClientIdException;
 import org.smallmind.sso.oauth.v2dot0.spi.InvalidRedirectUriException;
 import org.smallmind.sso.oauth.v2dot0.spi.MismatchingRedirectUriException;
