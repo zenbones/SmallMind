@@ -35,6 +35,8 @@ package org.smallmind.forge.style;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.LinkedList;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.Transformer;
@@ -70,16 +72,6 @@ public class DependencyOrganizer {
         if (dependenciesNodeList.getLength() > 0) {
 
           Node dependenciesNode = dependenciesNodeList.item(0);
-          Node replacementDepenenciesNode = dependenciesNode.cloneNode(false);
-          NodeList dependencyNodeList = ((Element)dependenciesNode).getElementsByTagName("dependency");
-
-          if (dependencyNodeList.getLength() > 0) {
-            for (int dependencyIndex = 0; dependencyIndex < dependencyNodeList.getLength(); dependencyIndex++) {
-
-              Node dependencyNode = dependencyNodeList.item(dependencyIndex);
-              DependencyWrapper dependencyWrapper = new DependencyWrapper(dependencyNode);
-            }
-          }
         }
       }
     }
@@ -89,5 +81,29 @@ public class DependencyOrganizer {
     DOMSource source = new DOMSource(doc);
     StreamResult result = new StreamResult(new File("C:/Users/david/Desktop/pom2.xml"));
     transformer.transform(source, result);
+  }
+
+  private Node sortDependencies (Node parentNode) {
+
+    Node replacementParentNode = parentNode.cloneNode(false);
+    NodeList dependencyNodeList = ((Element)parentNode).getElementsByTagName("dependency");
+    LinkedList<DependencyWrapper> dependencyWrapperList = new LinkedList<>();
+
+    if (dependencyNodeList.getLength() > 0) {
+      for (int dependencyIndex = 0; dependencyIndex < dependencyNodeList.getLength(); dependencyIndex++) {
+
+        Node dependencyNode = dependencyNodeList.item(dependencyIndex);
+
+        dependencyWrapperList.add(new DependencyWrapper(dependencyNode));
+      }
+
+      Collections.sort(dependencyWrapperList);
+
+      for (DependencyWrapper dependencyWrapper : dependencyWrapperList) {
+        replacementParentNode.appendChild(dependencyWrapper.getDependencyNode());
+      }
+    }
+
+    return replacementParentNode;
   }
 }

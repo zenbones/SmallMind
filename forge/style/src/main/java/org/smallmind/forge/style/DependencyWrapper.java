@@ -32,10 +32,13 @@
  */
 package org.smallmind.forge.style;
 
+import org.smallmind.nutsnbolts.util.AlphaNumericComparator;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
-public class DependencyWrapper {
+public class DependencyWrapper implements Comparable<DependencyWrapper> {
+
+  private static final AlphaNumericComparator<String> ALPHA_NUMERIC_COMPARATOR = new AlphaNumericComparator<>();
 
   private final Node dependencyNode;
   private final String groupId;
@@ -47,5 +50,43 @@ public class DependencyWrapper {
 
     groupId = ((Element)dependencyNode).getElementsByTagName("groupId").item(0).getTextContent();
     artifactId = ((Element)dependencyNode).getElementsByTagName("artifactId").item(0).getTextContent();
+  }
+
+  public Node getDependencyNode () {
+
+    return dependencyNode;
+  }
+
+  @Override
+  public int compareTo (DependencyWrapper otherWrapper) {
+
+    int comparison;
+
+    if ((comparison = subCompare(groupId, otherWrapper.groupId, "\\.")) != 0) {
+
+      return comparison;
+    } else {
+
+      return subCompare(artifactId, otherWrapper.artifactId, "-");
+    }
+  }
+
+  private int subCompare (String first, String second, String separator) {
+
+    String[] firstSegements = first.split(separator);
+    String[] secondSegments = second.split(separator);
+    int comparableSegments = Math.max(firstSegements.length, secondSegments.length);
+
+    for (int segmentIndex = 0; segmentIndex < comparableSegments; segmentIndex++) {
+
+      int comparison;
+
+      if ((comparison = ALPHA_NUMERIC_COMPARATOR.compare(firstSegements[segmentIndex], secondSegments[segmentIndex])) != 0) {
+
+        return comparison;
+      }
+    }
+
+    return Integer.compare(firstSegements.length, secondSegments.length);
   }
 }
