@@ -67,7 +67,7 @@ import org.xml.sax.SAXException;
 
 public class DependencyReducer {
 
-  private enum ParseState {IGNORED, USED_UNDECLARED, UNUSED_DECLARED}
+  private enum ParseState {IGNORED, USED_UNDECLARED, UNUSED_DECLARED, NON_TEST_SCOPED_TEST_ONLY}
 
   public static void main (final String... args)
     throws IOException {
@@ -90,6 +90,7 @@ public class DependencyReducer {
 
             LinkedList<DependencyReference> usedUndeclaredList = new LinkedList<>();
             LinkedList<DependencyReference> unusedDeclaredList = new LinkedList<>();
+            LinkedList<DependencyReference> nonTestScopedTestOnlyList = new LinkedList<>();
             ByteArrayOutputStream buffer = bufferProcessOutput(dir, mvnPath, "dependency:analyze", "-N");
 
             System.out.println(dir);
@@ -103,19 +104,23 @@ public class DependencyReducer {
                   state = ParseState.USED_UNDECLARED;
                 } else if (singleLine.endsWith("Unused declared dependencies found:")) {
                   state = ParseState.UNUSED_DECLARED;
+                } else if (singleLine.endsWith("Non-test scoped test only dependencies found:")) {
+                  state = ParseState.NON_TEST_SCOPED_TEST_ONLY;
                 } else if (singleLine.endsWith("------------------------------------------------------------------------")) {
                   break;
                 } else if (ParseState.USED_UNDECLARED.equals(state)) {
                   usedUndeclaredList.add(new DependencyReference(singleLine.substring("[WARNING]    ".length())));
                 } else if (ParseState.UNUSED_DECLARED.equals(state)) {
                   unusedDeclaredList.add(new DependencyReference(singleLine.substring("[WARNING]    ".length())));
+                } else if (ParseState.NON_TEST_SCOPED_TEST_ONLY.equals(state)) {
+                  nonTestScopedTestOnlyList.add(new DependencyReference(singleLine.substring("[WARNING]    ".length())));
                 }
               }
             }
 
-            if ((!usedUndeclaredList.isEmpty()) || (!unusedDeclaredList.isEmpty())) {
+            if ((!usedUndeclaredList.isEmpty()) || (!unusedDeclaredList.isEmpty()) || (!nonTestScopedTestOnlyList.isEmpty())) {
               try {
-                rewritePom(dir.resolve("pom.xml"), usedUndeclaredList, unusedDeclaredList);
+                rewritePom(dir.resolve("pom.xml"), usedUndeclaredList, unusedDeclaredList, nonTestScopedTestOnlyList);
               } catch (SAXException | ParserConfigurationException | TransformerException exception) {
                 throw new RuntimeException(exception);
               }
@@ -183,7 +188,7 @@ public class DependencyReducer {
     return buffer;
   }
 
-  private static void rewritePom (Path pomPath, List<DependencyReference> usedUndeclaredList, LinkedList<DependencyReference> unusedDeclaredList)
+  private static void rewritePom (Path pomPath, List<DependencyReference> usedUndeclaredList, LinkedList<DependencyReference> unusedDeclaredList, LinkedList<DependencyReference> nonTestScopedTestOnlyList)
     throws IOException, SAXException, ParserConfigurationException, TransformerException {
 
     DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
@@ -206,7 +211,7 @@ public class DependencyReducer {
 
             Node adjustedDepenenciesNode;
 
-            if ((adjustedDepenenciesNode = adjustDependencies(dependenciesNode, usedUndeclaredList, unusedDeclaredList)) != null) {
+            if ((adjustedDepenenciesNode = adjustDependencies(dependenciesNode, usedUndeclaredList, unusedDeclaredList, nonTestScopedTestOnlyList)) != null) {
               changed = true;
 
               if (adjustedDepenenciesNode.hasChildNodes()) {
@@ -234,7 +239,7 @@ public class DependencyReducer {
     }
   }
 
-  private static Node adjustDependencies (Node parentNode, List<DependencyReference> usedUndeclaredList, LinkedList<DependencyReference> unusedDeclaredList) {
+  private static Node adjustDependencies (Node parentNode, List<DependencyReference> usedUndeclaredList, LinkedList<DependencyReference> unusedDeclaredList, LinkedList<DependencyReference> nonTestScopedTestOnlyList) {
 
     Node replacementParentNode = parentNode.cloneNode(false);
     boolean changed = false;
@@ -270,6 +275,29 @@ public class DependencyReducer {
     for (DependencyReference usedUndeclaredReference : usedUndeclaredList) {
       changed = true;
       dependencyWrapperList.add(new DependencyWrapper(createDependencyElement(parentNode.getOwnerDocument(), usedUndeclaredReference)));
+    }
+
+    for (DependencyReference nonTestScopedTestOnlyReference : nonTestScopedTestOnlyList) {
+      for (DependencyWrapper definedWrapper : dependencyWrapperList) {
+        if (definedWrapper.getGroupId().equals(nonTestScopedTestOnlyReference.getGroupId()) && definedWrapper.getArtifactId().equals(nonTestScopedTestOnlyReference.getArtifactId())) {
+
+          NodeList scopeNodeList = ((Element)definedWrapper.getDependencyNode()).getElementsByTagName("scope");
+
+          changed = true;
+
+          if (scopeNodeList.getLength() > 0) {
+            scopeNodeList.item(0).setTextContent("test");
+          } else {
+
+            Element scopeElement = parentNode.getOwnerDocument().createElement("scope");
+
+            scopeElement.setTextContent("test");
+            definedWrapper.getDependencyNode().appendChild(scopeElement);
+          }
+
+          break;
+        }
+      }
     }
 
     if (!changed) {
