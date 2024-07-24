@@ -44,6 +44,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -189,6 +190,7 @@ public class DependencyReducer {
     DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
     Document doc = dBuilder.parse(Files.newInputStream(pomPath));
     NodeList projectNodeList = doc.getElementsByTagName("project");
+    boolean changed = false;
 
     if (projectNodeList.getLength() > 0) {
 
@@ -201,25 +203,41 @@ public class DependencyReducer {
           Node dependenciesNode;
 
           if ((dependenciesNode = dependenciesNodeList.item(dependenciesIndex)).getParentNode().equals(projectNode)) {
-            projectNode.replaceChild(adjustDependencies(dependenciesNode, usedUndeclaredList, unusedDeclaredList), dependenciesNode);
+
+            Node adjustedDepenenciesNode;
+
+            if ((adjustedDepenenciesNode = adjustDependencies(dependenciesNode, usedUndeclaredList, unusedDeclaredList)) != null) {
+              changed = true;
+
+              if (adjustedDepenenciesNode.hasChildNodes()) {
+                projectNode.replaceChild(adjustedDepenenciesNode, dependenciesNode);
+              } else {
+                projectNode.removeChild(dependenciesNode);
+              }
+            }
+
             break;
           }
         }
       }
     }
 
-    TransformerFactory transformerFactory = TransformerFactory.newInstance();
-    Transformer transformer = transformerFactory.newTransformer(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream("org/smallmind/forge/style/pretty-print.xslt")));
-    DOMSource source = new DOMSource(doc);
-    StreamResult result = new StreamResult(Files.newOutputStream(pomPath));
+    if (changed) {
 
-    transformer.setOutputProperty(OutputKeys.STANDALONE, "no");
-    transformer.transform(source, result);
+      TransformerFactory transformerFactory = TransformerFactory.newInstance();
+      Transformer transformer = transformerFactory.newTransformer(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream("org/smallmind/forge/style/pretty-print.xslt")));
+      DOMSource source = new DOMSource(doc);
+      StreamResult result = new StreamResult(Files.newOutputStream(pomPath));
+
+      transformer.setOutputProperty(OutputKeys.STANDALONE, "no");
+      transformer.transform(source, result);
+    }
   }
 
   private static Node adjustDependencies (Node parentNode, List<DependencyReference> usedUndeclaredList, LinkedList<DependencyReference> unusedDeclaredList) {
 
     Node replacementParentNode = parentNode.cloneNode(false);
+    boolean changed = false;
 
     NodeList dependencyNodeList = ((Element)parentNode).getElementsByTagName("dependency");
     LinkedList<DependencyWrapper> dependencyWrapperList = new LinkedList<>();
@@ -233,23 +251,57 @@ public class DependencyReducer {
       }
     }
 
-    for (DependencyReference dependencyReference : usedUndeclaredList) {
+    for (DependencyReference unusedDeclaredReference : unusedDeclaredList) {
 
-      Element addedDependency = parentNode.getOwnerDocument().createElement("dependency");
+      Iterator<DependencyWrapper> definedDependencyIter = dependencyWrapperList.iterator();
 
-      addedDependency.setAttribute("groupId", dependencyReference.getGroupId());
-      addedDependency.setAttribute("artifactId", dependencyReference.getArtifactId());
-      addedDependency.setAttribute("scope", dependencyReference.getScope());
+      while (definedDependencyIter.hasNext()) {
 
-      dependencyWrapperList.add(new DependencyWrapper(addedDependency));
+        DependencyWrapper definedWrapper = definedDependencyIter.next();
+
+        if (definedWrapper.getGroupId().equals(unusedDeclaredReference.getGroupId()) && definedWrapper.getArtifactId().equals(unusedDeclaredReference.getArtifactId())) {
+          changed = true;
+          definedDependencyIter.remove();
+          break;
+        }
+      }
     }
 
-    Collections.sort(dependencyWrapperList);
-
-    for (DependencyWrapper dependencyWrapper : dependencyWrapperList) {
-      replacementParentNode.appendChild(dependencyWrapper.getDependencyNode());
+    for (DependencyReference usedUndeclaredReference : usedUndeclaredList) {
+      changed = true;
+      dependencyWrapperList.add(new DependencyWrapper(createDependencyElement(parentNode.getOwnerDocument(), usedUndeclaredReference)));
     }
 
-    return replacementParentNode;
+    if (!changed) {
+
+      return null;
+    } else {
+
+      Collections.sort(dependencyWrapperList);
+
+      for (DependencyWrapper dependencyWrapper : dependencyWrapperList) {
+        replacementParentNode.appendChild(dependencyWrapper.getDependencyNode());
+      }
+
+      return replacementParentNode;
+    }
+  }
+
+  private static Element createDependencyElement (Document document, DependencyReference dependencyReference) {
+
+    Element addedDependency = document.createElement("dependency");
+    Element groupIdElement = document.createElement("groupId");
+    Element artifactElement = document.createElement("artifactId");
+    Element scopeElement = document.createElement("scope");
+
+    groupIdElement.setTextContent(dependencyReference.getGroupId());
+    artifactElement.setTextContent(dependencyReference.getArtifactId());
+    scopeElement.setTextContent(dependencyReference.getScope());
+
+    addedDependency.appendChild(groupIdElement);
+    addedDependency.appendChild(artifactElement);
+    addedDependency.appendChild(scopeElement);
+
+    return addedDependency;
   }
 }

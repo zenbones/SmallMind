@@ -52,6 +52,16 @@ public class DependencyWrapper implements Comparable<DependencyWrapper> {
     artifactId = ((Element)dependencyNode).getElementsByTagName("artifactId").item(0).getTextContent();
   }
 
+  public String getGroupId () {
+
+    return groupId;
+  }
+
+  public String getArtifactId () {
+
+    return artifactId;
+  }
+
   public Node getDependencyNode () {
 
     return dependencyNode;
