@@ -45,6 +45,7 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.util.Collections;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -84,7 +85,7 @@ public class DependencyReducer {
         public FileVisitResult postVisitDirectory (Path dir, IOException exc)
           throws IOException {
 
-          if ((!dottedPath(dir)) && Files.exists(dir.resolve("pom.xml"))) {
+          if ((!dir.equals(root)) && (!dottedPath(dir)) && Files.exists(dir.resolve("pom.xml"))) {
 
             LinkedList<DependencyReference> usedUndeclaredList = new LinkedList<>();
             LinkedList<DependencyReference> unusedDeclaredList = new LinkedList<>();
@@ -111,7 +112,13 @@ public class DependencyReducer {
               }
             }
 
-            //   rewritePom();
+            if ((!usedUndeclaredList.isEmpty()) || (!unusedDeclaredList.isEmpty())) {
+              try {
+                rewritePom(dir.resolve("pom.xml"), usedUndeclaredList, unusedDeclaredList);
+              } catch (SAXException | ParserConfigurationException | TransformerException exception) {
+                throw new RuntimeException(exception);
+              }
+            }
           }
 
           return FileVisitResult.CONTINUE;
@@ -175,7 +182,7 @@ public class DependencyReducer {
     return buffer;
   }
 
-  private static void rewritePom (Path pomPath)
+  private static void rewritePom (Path pomPath, List<DependencyReference> usedUndeclaredList, LinkedList<DependencyReference> unusedDeclaredList)
     throws IOException, SAXException, ParserConfigurationException, TransformerException {
 
     DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
@@ -194,7 +201,7 @@ public class DependencyReducer {
           Node dependenciesNode;
 
           if ((dependenciesNode = dependenciesNodeList.item(dependenciesIndex)).getParentNode().equals(projectNode)) {
-            projectNode.replaceChild(trimDependencies(dependenciesNode), dependenciesNode);
+            projectNode.replaceChild(adjustDependencies(dependenciesNode, usedUndeclaredList, unusedDeclaredList), dependenciesNode);
             break;
           }
         }
@@ -210,7 +217,7 @@ public class DependencyReducer {
     transformer.transform(source, result);
   }
 
-  private static Node trimDependencies (Node parentNode) {
+  private static Node adjustDependencies (Node parentNode, List<DependencyReference> usedUndeclaredList, LinkedList<DependencyReference> unusedDeclaredList) {
 
     Node replacementParentNode = parentNode.cloneNode(false);
 
@@ -224,12 +231,23 @@ public class DependencyReducer {
 
         dependencyWrapperList.add(new DependencyWrapper(dependencyNode));
       }
+    }
 
-      Collections.sort(dependencyWrapperList);
+    for (DependencyReference dependencyReference : usedUndeclaredList) {
 
-      for (DependencyWrapper dependencyWrapper : dependencyWrapperList) {
-        replacementParentNode.appendChild(dependencyWrapper.getDependencyNode());
-      }
+      Element addedDependency = parentNode.getOwnerDocument().createElement("dependency");
+
+      addedDependency.setAttribute("groupId", dependencyReference.getGroupId());
+      addedDependency.setAttribute("artifactId", dependencyReference.getArtifactId());
+      addedDependency.setAttribute("scope", dependencyReference.getScope());
+
+      dependencyWrapperList.add(new DependencyWrapper(addedDependency));
+    }
+
+    Collections.sort(dependencyWrapperList);
+
+    for (DependencyWrapper dependencyWrapper : dependencyWrapperList) {
+      replacementParentNode.appendChild(dependencyWrapper.getDependencyNode());
     }
 
     return replacementParentNode;

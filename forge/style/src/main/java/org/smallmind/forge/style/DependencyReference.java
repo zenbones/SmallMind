@@ -38,7 +38,7 @@ public class DependencyReference {
   private final String artifactId;
   private final String version;
   private final String classifier;
-  private final String type;
+  private final String scope;
 
   public DependencyReference (String reference) {
 
@@ -48,7 +48,7 @@ public class DependencyReference {
     artifactId = split[1];
     classifier = split[2];
     version = split[3];
-    type = split[4];
+    scope = split[4];
   }
 
   public String getGroupId () {
@@ -71,8 +71,8 @@ public class DependencyReference {
     return classifier;
   }
 
-  public String getType () {
+  public String getScope () {
 
-    return type;
+    return scope;
   }
 }
