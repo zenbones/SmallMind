@@ -128,14 +128,10 @@ public class DependencyOrganizer {
 
     TransformerFactory transformerFactory = TransformerFactory.newInstance();
     Transformer transformer = transformerFactory.newTransformer(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream("org/smallmind/forge/style/pretty-print.xslt")));
-//    Transformer transformer = transformerFactory.newTransformer();
     DOMSource source = new DOMSource(doc);
     StreamResult result = new StreamResult(Files.newOutputStream(pomPath));
 
     transformer.setOutputProperty(OutputKeys.STANDALONE, "no");
-//    transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-//    transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-//    transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
     transformer.transform(source, result);
   }
 
