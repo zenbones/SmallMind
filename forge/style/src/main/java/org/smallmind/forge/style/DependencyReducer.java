@@ -69,24 +69,28 @@ public class DependencyReducer {
 
   private enum ParseState {IGNORED, USED_UNDECLARED, UNUSED_DECLARED, NON_TEST_SCOPED_TEST_ONLY}
 
-  public static void main (final String... args)
+  public static void main (String... args)
     throws IOException {
 
-    Path root = Paths.get("C:/Users/david/Documents/Nutshell/empyrean/aeon/pantheon/com/forio/epicenter");
+    walkProject(Paths.get(args[0]));
+  }
+
+  public static void walkProject (Path projectPath)
+    throws IOException {
 
     String mvnPath;
 
-    if ((mvnPath = findMvn(root)) == null) {
+    if ((mvnPath = findMvn(projectPath)) == null) {
       throw new RuntimeException("Unable to locate 'mvn.cmd'");
     } else {
 
-      Files.walkFileTree(root, new SimpleFileVisitor<>() {
+      Files.walkFileTree(projectPath, new SimpleFileVisitor<>() {
 
         @Override
         public FileVisitResult postVisitDirectory (Path dir, IOException exc)
           throws IOException {
 
-          if ((!dir.equals(root)) && (!dottedPath(dir)) && Files.exists(dir.resolve("pom.xml"))) {
+          if ((!dir.equals(projectPath)) && (!dottedPath(dir)) && Files.exists(dir.resolve("pom.xml"))) {
 
             LinkedList<DependencyReference> usedUndeclaredList = new LinkedList<>();
             LinkedList<DependencyReference> unusedDeclaredList = new LinkedList<>();
