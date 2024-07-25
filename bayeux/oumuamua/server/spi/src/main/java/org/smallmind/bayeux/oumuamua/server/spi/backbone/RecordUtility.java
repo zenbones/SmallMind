@@ -35,8 +35,7 @@ package org.smallmind.bayeux.oumuamua.server.spi.backbone;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.nio.charset.StandardCharsets;
 import org.smallmind.bayeux.oumuamua.server.api.InvalidPathException;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.PacketType;
@@ -44,6 +43,7 @@ import org.smallmind.bayeux.oumuamua.server.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
 import org.smallmind.bayeux.oumuamua.server.spi.json.PacketUtility;
+import org.smallmind.nutsnbolts.util.Bytes;
 
 public class RecordUtility {
 
@@ -51,12 +51,14 @@ public class RecordUtility {
     throws IOException {
 
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+    String encodedPacket = PacketUtility.encode(packet);
 
-    try (ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream)) {
-      objectOutputStream.writeUTF(nodeName);
-      objectOutputStream.writeUTF(packet.getRoute().getPath());
-      objectOutputStream.writeUTF(PacketUtility.encode(packet));
-    }
+    byteArrayOutputStream.write(Bytes.getBytes(nodeName.length()));
+    byteArrayOutputStream.write(nodeName.getBytes(StandardCharsets.UTF_8));
+    byteArrayOutputStream.write(Bytes.getBytes(packet.getRoute().getPath().length()));
+    byteArrayOutputStream.write(packet.getRoute().getPath().getBytes(StandardCharsets.UTF_8));
+    byteArrayOutputStream.write(Bytes.getBytes(encodedPacket.length()));
+    byteArrayOutputStream.write(encodedPacket.getBytes(StandardCharsets.UTF_8));
 
     return byteArrayOutputStream.toByteArray();
   }
@@ -65,10 +67,24 @@ public class RecordUtility {
     throws IOException, InvalidPathException {
 
     ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(buffer);
+    byte[] lengthBuffer = new byte[Integer.BYTES];
+    String nodeName = new String(readStringBuffer(byteArrayInputStream, lengthBuffer), StandardCharsets.UTF_8);
+    String path = new String(readStringBuffer(byteArrayInputStream, lengthBuffer), StandardCharsets.UTF_8);
+    byte[] encodedPacketBuffer = readStringBuffer(byteArrayInputStream, lengthBuffer);
 
-    try (ObjectInputStream objectInputStream = new ObjectInputStream(byteArrayInputStream)) {
+    return new DebonedPacket<>(nodeName, new Packet<>(PacketType.DELIVERY, null, new DefaultRoute(path), codec.from(encodedPacketBuffer)));
+  }
 
-      return new DebonedPacket<>(objectInputStream.readUTF(), new Packet<>(PacketType.DELIVERY, null, new DefaultRoute(objectInputStream.readUTF()), codec.from(objectInputStream.readUTF().getBytes())));
-    }
+  private static byte[] readStringBuffer (ByteArrayInputStream byteArrayInputStream, byte[] lengthBuffer) {
+
+    byte[] contentBuffer;
+    int length;
+
+    byteArrayInputStream.readNBytes(lengthBuffer, 0, Integer.BYTES);
+    length = Bytes.getInt(lengthBuffer);
+    contentBuffer = new byte[length];
+    byteArrayInputStream.readNBytes(contentBuffer, 0, length);
+
+    return contentBuffer;
   }
 }
