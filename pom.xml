@@ -112,7 +112,7 @@
     <jakarta.xml.bind.version>4.0.2</jakarta.xml.bind.version>
     <jakarta.xml.ws.version>4.0.1</jakarta.xml.ws.version>
     <jersey.version>3.1.5</jersey.version>
-    <jetty.version>12.0.8</jetty.version>
+    <jetty.version>12.0.11</jetty.version>
     <jfextras.labs.version>9.0-r1</jfextras.labs.version>
     <jose4j.version>0.9.6</jose4j.version>
     <kafka.version>3.7.0</kafka.version>
