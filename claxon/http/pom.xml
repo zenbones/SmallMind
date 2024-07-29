@@ -12,8 +12,8 @@
   <description>Http Pull Endpoint</description>
   <dependencies>
     <dependency>
-      <groupId>org.glassfish.jersey.core</groupId>
-      <artifactId>jersey-server</artifactId>
+      <groupId>jakarta.ws.rs</groupId>
+      <artifactId>jakarta.ws.rs-api</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>

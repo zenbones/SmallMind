@@ -12,19 +12,18 @@
   <packaging>jar</packaging>
   <dependencies>
     <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-core</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
       <groupId>com.rabbitmq</groupId>
       <artifactId>amqp-client</artifactId>
-      <scope>compile</scope>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>com.sun.xml.bind</groupId>
-      <artifactId>jaxb-impl</artifactId>
-      <scope>runtime</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty-all</artifactId>
       <scope>compile</scope>
       <optional>true</optional>
     </dependency>
@@ -34,18 +33,23 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
+      <groupId>jakarta.ws.rs</groupId>
+      <artifactId>jakarta.ws.rs-api</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
       <groupId>jakarta.xml.bind</groupId>
       <artifactId>jakarta.xml.bind-api</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>org.glassfish.jaxb</groupId>
-      <artifactId>jaxb-runtime</artifactId>
-      <scope>runtime</scope>
+      <groupId>org.smallmind</groupId>
+      <artifactId>claxon-registry</artifactId>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.smallmind</groupId>
-      <artifactId>claxon-registry</artifactId>
+      <artifactId>scribe-ink-indigenous</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -60,6 +64,11 @@
     </dependency>
     <dependency>
       <groupId>org.smallmind</groupId>
+      <artifactId>smallmind-nutsnbolts</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.smallmind</groupId>
       <artifactId>smallmind-quorum</artifactId>
       <scope>compile</scope>
     </dependency>
@@ -69,15 +78,19 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>org.springframework</groupId>
-      <artifactId>spring-context</artifactId>
+      <groupId>org.smallmind</groupId>
+      <artifactId>web-json-scaffold</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>org.springframework.amqp</groupId>
-      <artifactId>spring-rabbit</artifactId>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-beans</artifactId>
       <scope>compile</scope>
-      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-context</artifactId>
+      <scope>test</scope>
     </dependency>
   </dependencies>
   <build>

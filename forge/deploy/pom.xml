@@ -17,6 +17,11 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
+      <groupId>org.apache.httpcomponents.core5</groupId>
+      <artifactId>httpcore5</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
       <groupId>org.freemarker</groupId>
       <artifactId>freemarker</artifactId>
       <scope>compile</scope>
@@ -29,16 +34,16 @@
   </dependencies>
   <!--
 <build>
-  <plugins>
-    <plugin>
-      <groupId>org.smallmind</groupId>
-      <artifactId>spark-singularity-plugin</artifactId>
-      <extensions>true</extensions>
-      <configuration>
-        <mainClass>org.smallmind.forge.deploy.cli.ApplicationUpdaterCLI</mainClass>
-      </configuration>
-    </plugin>
-  </plugins>
+<plugins>
+  <plugin>
+    <groupId>org.smallmind</groupId>
+    <artifactId>spark-singularity-plugin</artifactId>
+    <extensions>true</extensions>
+    <configuration>
+      <mainClass>org.smallmind.forge.deploy.cli.ApplicationUpdaterCLI</mainClass>
+    </configuration>
+  </plugin>
+</plugins>
 </build>
 -->
 </project>

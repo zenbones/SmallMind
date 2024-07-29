@@ -13,7 +13,7 @@
   <dependencies>
     <dependency>
       <groupId>org.jfxtras</groupId>
-      <artifactId>jfxtras-labs</artifactId>
+      <artifactId>jfxtras-all</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -27,14 +27,19 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-graphics</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
       <groupId>org.smallmind</groupId>
       <artifactId>scribe-pen</artifactId>
-      <version>${project.version}</version>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.smallmind</groupId>
       <artifactId>smallmind-nutsnbolts</artifactId>
-      <version>${project.version}</version>
+      <scope>compile</scope>
     </dependency>
   </dependencies>
   <build>

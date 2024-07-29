@@ -30,65 +30,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.proxy.spring;
+package org.smallmind.web.http;
 
-import java.net.URISyntaxException;
-import org.smallmind.web.jersey.proxy.HttpProtocol;
-import org.smallmind.web.jersey.proxy.JsonTarget;
-import org.smallmind.web.jersey.proxy.JsonTargetFactory;
-import org.springframework.beans.factory.FactoryBean;
-import org.springframework.beans.factory.InitializingBean;
+import org.smallmind.nutsnbolts.lang.FormattedException;
 
-public class JsonTargetFactoryBean implements FactoryBean<JsonTarget>, InitializingBean {
+public class HttpRequestCancelledException extends FormattedException {
 
-  private JsonTarget target;
-  private HttpProtocol protocol;
-  private String host;
-  private String context;
-  private int port;
+  public HttpRequestCancelledException (String message, Object... args) {
 
-  public void setProtocol (HttpProtocol protocol) {
-
-    this.protocol = protocol;
-  }
-
-  public void setHost (String host) {
-
-    this.host = host;
-  }
-
-  public void setPort (int port) {
-
-    this.port = port;
-  }
-
-  public void setContext (String context) {
-
-    this.context = context;
-  }
-
-  @Override
-  public boolean isSingleton () {
-
-    return true;
-  }
-
-  @Override
-  public Class<?> getObjectType () {
-
-    return JsonTarget.class;
-  }
-
-  @Override
-  public void afterPropertiesSet ()
-    throws URISyntaxException {
-
-    target = JsonTargetFactory.manufacture(protocol, host, port, context);
-  }
-
-  @Override
-  public JsonTarget getObject () {
-
-    return target;
+    super(message, args);
   }
 }

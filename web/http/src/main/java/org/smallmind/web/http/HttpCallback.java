@@ -30,65 +30,58 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.proxy.spring;
+package org.smallmind.web.http;
 
-import java.net.URISyntaxException;
-import org.smallmind.web.jersey.proxy.HttpProtocol;
-import org.smallmind.web.jersey.proxy.JsonTarget;
-import org.smallmind.web.jersey.proxy.JsonTargetFactory;
-import org.springframework.beans.factory.FactoryBean;
-import org.springframework.beans.factory.InitializingBean;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import org.apache.hc.core5.concurrent.FutureCallback;
 
-public class JsonTargetFactoryBean implements FactoryBean<JsonTarget>, InitializingBean {
+public abstract class HttpCallback<V> implements FutureCallback<V> {
 
-  private JsonTarget target;
-  private HttpProtocol protocol;
-  private String host;
-  private String context;
-  private int port;
+  private final CountDownLatch executedLatch = new CountDownLatch(1);
 
-  public void setProtocol (HttpProtocol protocol) {
+  public abstract void onCompleted (V v);
 
-    this.protocol = protocol;
-  }
+  public abstract void onFailed (Exception exception);
 
-  public void setHost (String host) {
+  public abstract void onCancelled ();
 
-    this.host = host;
-  }
+  public void await (long timeout, TimeUnit timeUnit)
+    throws InterruptedException, TimeoutException {
 
-  public void setPort (int port) {
-
-    this.port = port;
-  }
-
-  public void setContext (String context) {
-
-    this.context = context;
+    if (!executedLatch.await(timeout, timeUnit)) {
+      throw new TimeoutException();
+    }
   }
 
   @Override
-  public boolean isSingleton () {
+  public void completed (V v) {
 
-    return true;
+    try {
+      onCompleted(v);
+    } finally {
+      executedLatch.countDown();
+    }
   }
 
   @Override
-  public Class<?> getObjectType () {
+  public void failed (Exception e) {
 
-    return JsonTarget.class;
+    try {
+      onFailed(e);
+    } finally {
+      executedLatch.countDown();
+    }
   }
 
   @Override
-  public void afterPropertiesSet ()
-    throws URISyntaxException {
+  public void cancelled () {
 
-    target = JsonTargetFactory.manufacture(protocol, host, port, context);
-  }
-
-  @Override
-  public JsonTarget getObject () {
-
-    return target;
+    try {
+      onCancelled();
+    } finally {
+      executedLatch.countDown();
+    }
   }
 }

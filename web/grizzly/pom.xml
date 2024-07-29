@@ -12,23 +12,33 @@
   <description>Grizzly Bootstrapping</description>
   <dependencies>
     <dependency>
-      <groupId>com.sun.xml.ws</groupId>
-      <artifactId>jaxws-rt</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
       <groupId>jakarta.servlet</groupId>
       <artifactId>jakarta.servlet-api</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>jakarta.xml.ws</groupId>
-      <artifactId>jakarta.xml.ws-api</artifactId>
+      <groupId>jakarta.websocket</groupId>
+      <artifactId>jakarta.websocket-api</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>jakarta.websocket</groupId>
+      <artifactId>jakarta.websocket-client-api</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>jakarta.xml.bind</groupId>
+      <artifactId>jakarta.xml.bind-api</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.glassfish.grizzly</groupId>
       <artifactId>grizzly-framework</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.grizzly</groupId>
+      <artifactId>grizzly-http</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -52,11 +62,6 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>org.glassfish.grizzly</groupId>
-      <artifactId>grizzly-npn-bootstrap</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
       <groupId>org.glassfish.jersey.containers</groupId>
       <artifactId>jersey-container-servlet-core</artifactId>
       <scope>compile</scope>
@@ -68,12 +73,27 @@
     </dependency>
     <dependency>
       <groupId>org.glassfish.tyrus</groupId>
-      <artifactId>tyrus-container-grizzly-server</artifactId>
+      <artifactId>tyrus-container-grizzly-client</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.tyrus</groupId>
+      <artifactId>tyrus-core</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.glassfish.tyrus</groupId>
       <artifactId>tyrus-server</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.tyrus</groupId>
+      <artifactId>tyrus-spi</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.smallmind</groupId>
+      <artifactId>scribe-pen</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -83,22 +103,22 @@
     </dependency>
     <dependency>
       <groupId>org.smallmind</groupId>
-      <artifactId>smallmind-phalanx</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.smallmind</groupId>
       <artifactId>web-jersey</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>org.smallmind</groupId>
-      <artifactId>web-websocket</artifactId>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-beans</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-context</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-web</artifactId>
       <scope>compile</scope>
     </dependency>
   </dependencies>

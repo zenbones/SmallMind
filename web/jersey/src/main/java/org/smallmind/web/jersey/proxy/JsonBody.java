@@ -32,73 +32,30 @@
  */
 package org.smallmind.web.jersey.proxy;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.apache.http.Header;
-import org.apache.http.entity.AbstractHttpEntity;
-import org.apache.http.message.BasicHeader;
+import org.apache.hc.core5.http.ContentType;
+import org.smallmind.web.jersey.aop.Envelope;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
-public class JsonHttpEntity extends AbstractHttpEntity {
+public class JsonBody {
 
-  private static final Header CONTENT_TYPE_HEADER = new BasicHeader("Content-type", "application/json");
-  private final byte[] bytes;
+  private final byte[] bodyAsBytes;
+  private final ContentType contentType;
 
-  public JsonHttpEntity (Object obj)
+  public JsonBody (Envelope envelope)
     throws JsonProcessingException {
 
-    bytes = JsonCodec.writeAsBytes(obj);
+    this.bodyAsBytes = JsonCodec.writeAsBytes(envelope);
+    this.contentType = ContentType.APPLICATION_JSON;
   }
 
-  public static JsonHttpEntity entity (Object obj)
-    throws JsonProcessingException {
+  public ContentType getContentType () {
 
-    return new JsonHttpEntity(obj);
+    return contentType;
   }
 
-  @Override
-  public boolean isRepeatable () {
+  public byte[] getBodyAsBytes () {
 
-    return true;
-  }
-
-  @Override
-  public long getContentLength () {
-
-    return bytes.length;
-  }
-
-  @Override
-  public Header getContentType () {
-
-    return CONTENT_TYPE_HEADER;
-  }
-
-  @Override
-  public boolean isChunked () {
-
-    return true;
-  }
-
-  @Override
-  public InputStream getContent () {
-
-    return new ByteArrayInputStream(bytes);
-  }
-
-  @Override
-  public void writeTo (OutputStream outstream)
-    throws IOException {
-
-    outstream.write(bytes);
-  }
-
-  @Override
-  public boolean isStreaming () {
-
-    return false;
+    return bodyAsBytes;
   }
 }

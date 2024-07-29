@@ -32,83 +32,31 @@
  */
 package org.smallmind.web.jersey.proxy;
 
-import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.X509Certificate;
-import javax.net.ssl.SSLContext;
-import org.apache.http.config.ConnectionConfig;
-import org.apache.http.config.Registry;
-import org.apache.http.config.RegistryBuilder;
-import org.apache.http.config.SocketConfig;
-import org.apache.http.conn.socket.ConnectionSocketFactory;
-import org.apache.http.conn.socket.PlainConnectionSocketFactory;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.apache.http.ssl.SSLContextBuilder;
-import org.smallmind.nutsnbolts.ssl.NaiveHostNameVerifier;
 
 public class JsonTargetFactory {
 
-  public static JsonTarget manufacture (String host, int concurrencyLevel, int timeout)
-    throws NoSuchAlgorithmException, MalformedURLException, URISyntaxException, KeyStoreException, KeyManagementException {
+  public static JsonTarget manufacture (String host)
+    throws URISyntaxException {
 
-    return manufacture(HttpProtocol.HTTP, host, 0, null, concurrencyLevel, timeout);
+    return manufacture(HttpProtocol.HTTP, host, 0, null);
   }
 
-  public static JsonTarget manufacture (HttpProtocol protocol, String host, int concurrencyLevel, int timeout)
-    throws NoSuchAlgorithmException, MalformedURLException, URISyntaxException, KeyStoreException, KeyManagementException {
+  public static JsonTarget manufacture (HttpProtocol protocol, String host)
+    throws URISyntaxException {
 
-    return manufacture(protocol, host, 0, null, concurrencyLevel, timeout);
+    return manufacture(protocol, host, 0, null);
   }
 
-  public static JsonTarget manufacture (HttpProtocol protocol, String host, int port, int concurrencyLevel, int timeout)
-    throws NoSuchAlgorithmException, MalformedURLException, URISyntaxException, KeyStoreException, KeyManagementException {
+  public static JsonTarget manufacture (HttpProtocol protocol, String host, int port)
+    throws URISyntaxException {
 
-    return manufacture(protocol, host, port, null, concurrencyLevel, timeout);
+    return manufacture(protocol, host, port, null);
   }
 
-  public static JsonTarget manufacture (HttpProtocol protocol, String host, String context, int concurrencyLevel, int timeout)
-    throws NoSuchAlgorithmException, MalformedURLException, URISyntaxException, KeyStoreException, KeyManagementException {
+  public static JsonTarget manufacture (HttpProtocol protocol, String host, int port, String context)
+    throws URISyntaxException {
 
-    return manufacture(protocol, host, 0, context, concurrencyLevel, timeout);
-  }
-
-  public static JsonTarget manufacture (HttpProtocol protocol, String host, int port, String context, int concurrencyLevel, int timeout)
-    throws NoSuchAlgorithmException, MalformedURLException, URISyntaxException, KeyStoreException, KeyManagementException {
-
-    HttpClientBuilder clientBuilder = HttpClientBuilder.create();
-    PoolingHttpClientConnectionManager connectionManager;
-    Registry<ConnectionSocketFactory> socketFactoryRegistry;
-    SSLConnectionSocketFactory sslSocketFactory;
-    SSLContext sslContext;
-    CloseableHttpClient httpClient;
-
-    sslContext = SSLContextBuilder.create().loadTrustMaterial(null, (X509Certificate[] arg0, String arg1) -> true).build();
-    clientBuilder.setSSLContext(sslContext);
-
-    // use SSLConnectionSocketFactory.getDefaultHostnameVerifier(), if you don't want to weaken
-    sslSocketFactory = new SSLConnectionSocketFactory(sslContext, new NaiveHostNameVerifier());
-
-    socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create()
-                              .register("http", PlainConnectionSocketFactory.getSocketFactory())
-                              .register("https", sslSocketFactory)
-                              .build();
-
-    connectionManager = new PoolingHttpClientConnectionManager(socketFactoryRegistry);
-    connectionManager.setDefaultConnectionConfig(ConnectionConfig.custom().setCharset(StandardCharsets.UTF_8).build());
-    connectionManager.setDefaultSocketConfig(SocketConfig.copy(SocketConfig.DEFAULT).setSoTimeout(timeout).setTcpNoDelay(true).build());
-    connectionManager.setDefaultMaxPerRoute(concurrencyLevel);
-    connectionManager.setMaxTotal(concurrencyLevel);
-
-    httpClient = clientBuilder.setConnectionManager(connectionManager).setRedirectStrategy(new ExtraLaxRedirectStrategy()).build();
-
-    return new JsonTarget(httpClient, URI.create(protocol.getScheme() + "://" + host + ((port > 0) ? ":" + port : "") + ((context != null) ? context : "")));
+    return new JsonTarget(protocol.getScheme() + "://" + host + ((port > 0) ? ":" + port : "") + ((context != null) ? context : ""));
   }
 }

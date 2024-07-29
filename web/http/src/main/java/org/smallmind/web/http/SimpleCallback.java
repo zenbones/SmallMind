@@ -30,65 +30,43 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.proxy.spring;
+package org.smallmind.web.http;
 
-import java.net.URISyntaxException;
-import org.smallmind.web.jersey.proxy.HttpProtocol;
-import org.smallmind.web.jersey.proxy.JsonTarget;
-import org.smallmind.web.jersey.proxy.JsonTargetFactory;
-import org.springframework.beans.factory.FactoryBean;
-import org.springframework.beans.factory.InitializingBean;
+import java.util.concurrent.atomic.AtomicReference;
+import org.apache.hc.client5.http.async.methods.SimpleHttpResponse;
 
-public class JsonTargetFactoryBean implements FactoryBean<JsonTarget>, InitializingBean {
+public class SimpleCallback extends HttpCallback<SimpleHttpResponse> {
 
-  private JsonTarget target;
-  private HttpProtocol protocol;
-  private String host;
-  private String context;
-  private int port;
+  private final AtomicReference<SimpleHttpResponse> responseRef = new AtomicReference<>();
+  private final AtomicReference<Exception> exceptionRef = new AtomicReference<>();
 
-  public void setProtocol (HttpProtocol protocol) {
+  public SimpleHttpResponse getResponse ()
+    throws Exception {
 
-    this.protocol = protocol;
-  }
+    Exception exception;
 
-  public void setHost (String host) {
-
-    this.host = host;
-  }
-
-  public void setPort (int port) {
-
-    this.port = port;
-  }
-
-  public void setContext (String context) {
-
-    this.context = context;
+    if ((exception = exceptionRef.get()) != null) {
+      throw exception;
+    } else {
+      return responseRef.get();
+    }
   }
 
   @Override
-  public boolean isSingleton () {
+  public void onCompleted (SimpleHttpResponse response) {
 
-    return true;
+    responseRef.set(response);
   }
 
   @Override
-  public Class<?> getObjectType () {
+  public void onFailed (Exception exception) {
 
-    return JsonTarget.class;
+    exceptionRef.set(exception);
   }
 
   @Override
-  public void afterPropertiesSet ()
-    throws URISyntaxException {
+  public void onCancelled () {
 
-    target = JsonTargetFactory.manufacture(protocol, host, port, context);
-  }
-
-  @Override
-  public JsonTarget getObject () {
-
-    return target;
+    exceptionRef.set(new HttpRequestCancelledException("The http request was cancelled before completion"));
   }
 }

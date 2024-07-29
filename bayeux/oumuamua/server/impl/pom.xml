@@ -12,21 +12,25 @@
   <description>Oumuamua Server Reference Implementation</description>
   <dependencies>
     <dependency>
-      <groupId>jakarta.websocket</groupId>
-      <artifactId>jakarta.websocket-api</artifactId>
-      <optional>true</optional>
+      <groupId>jakarta.servlet</groupId>
+      <artifactId>jakarta.servlet-api</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>jakarta.websocket</groupId>
       <artifactId>jakarta.websocket-client-api</artifactId>
-      <optional>true</optional>
       <scope>compile</scope>
+      <optional>true</optional>
     </dependency>
     <dependency>
-      <groupId>org.apache.kafka</groupId>
-      <artifactId>kafka-clients</artifactId>
-      <scope>compile</scope>
+      <groupId>org.cometd.java</groupId>
+      <artifactId>cometd-java-api-client</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.cometd.java</groupId>
+      <artifactId>cometd-java-api-common</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.cometd.java</groupId>
@@ -49,24 +53,9 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-http</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.glassfish.tyrus</groupId>
-      <artifactId>tyrus-server</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.glassfish.tyrus.ext</groupId>
-      <artifactId>tyrus-extension-deflate</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-      <scope>test</scope>
+      <groupId>org.smallmind</groupId>
+      <artifactId>oumuamua-server-api</artifactId>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.smallmind</groupId>
@@ -75,23 +64,13 @@
     </dependency>
     <dependency>
       <groupId>org.smallmind</groupId>
-      <artifactId>scribe-ink-indigenous</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.smallmind</groupId>
       <artifactId>scribe-pen</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.smallmind</groupId>
-      <artifactId>scribe-slf4j</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.smallmind</groupId>
-      <artifactId>web-grizzly</artifactId>
-      <scope>test</scope>
+      <artifactId>smallmind-nutsnbolts</artifactId>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.springframework</groupId>

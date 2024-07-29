@@ -18,20 +18,9 @@
       <optional>true</optional>
     </dependency>
     <dependency>
-      <groupId>org.bouncycastle</groupId>
-      <artifactId>bcprov-jdk18on</artifactId>
-      <scope>runtime</scope>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
       <groupId>org.smallmind</groupId>
       <artifactId>memcached-utility</artifactId>
       <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.smallmind</groupId>
-      <artifactId>scribe-ink-indigenous</artifactId>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.smallmind</groupId>

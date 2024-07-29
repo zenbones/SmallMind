@@ -13,12 +13,12 @@
   <dependencies>
     <dependency>
       <groupId>org.smallmind</groupId>
-      <artifactId>scribe-ink-indigenous</artifactId>
-      <scope>test</scope>
+      <artifactId>scribe-pen</artifactId>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.smallmind</groupId>
-      <artifactId>scribe-pen</artifactId>
+      <artifactId>smallmind-nutsnbolts</artifactId>
       <scope>compile</scope>
     </dependency>
   </dependencies>

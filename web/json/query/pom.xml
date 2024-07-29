@@ -12,9 +12,18 @@
   <description>Json Query Framework</description>
   <dependencies>
     <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-core</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
       <groupId>com.querydsl</groupId>
-      <artifactId>querydsl-jpa</artifactId>
-      <classifier>jakarta</classifier>
+      <artifactId>querydsl-core</artifactId>
       <scope>compile</scope>
       <optional>true</optional>
     </dependency>
@@ -26,6 +35,11 @@
     <dependency>
       <groupId>jakarta.validation</groupId>
       <artifactId>jakarta.validation-api</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>jakarta.xml.bind</groupId>
+      <artifactId>jakarta.xml.bind-api</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>

@@ -32,78 +32,48 @@
  */
 package org.smallmind.web.jersey.proxy;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
 import java.net.URISyntaxException;
 import jakarta.ws.rs.WebApplicationException;
-import org.apache.http.Header;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
-import org.apache.http.StatusLine;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPatch;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.util.EntityUtils;
+import org.apache.hc.client5.http.async.methods.SimpleBody;
+import org.apache.hc.client5.http.async.methods.SimpleHttpRequest;
+import org.apache.hc.client5.http.async.methods.SimpleHttpResponse;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpHost;
+import org.apache.hc.core5.http.Method;
 import org.smallmind.nutsnbolts.http.HttpMethod;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.nutsnbolts.util.Pair;
 import org.smallmind.nutsnbolts.util.Tuple;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerManager;
+import org.smallmind.web.http.HttpClient;
+import org.smallmind.web.http.SimpleCallback;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public class JsonTarget {
 
-  private final CloseableHttpClient httpClient;
-  private final URI uri;
+  private final HttpHost httpHost;
   private Tuple<String, String> headers;
   private Tuple<String, String> queryParameters;
   private Level level = Level.OFF;
+  private String path;
 
-  public JsonTarget (CloseableHttpClient httpClient, URI uri) {
+  public JsonTarget (String host)
+    throws URISyntaxException {
 
-    this.httpClient = httpClient;
-    this.uri = uri;
+    httpHost = HttpHost.create(host);
+  }
+
+  private JsonTarget (HttpHost httpHost, String path) {
+
+    this.httpHost = httpHost;
+    this.path = path;
   }
 
   public JsonTarget path (String path)
     throws URISyntaxException {
 
-    URIBuilder uriBuilder = new URIBuilder().setScheme(uri.getScheme()).setUserInfo(uri.getUserInfo()).setHost(uri.getHost()).setPort(uri.getPort()).setPath(uri.getPath()).setCustomQuery(uri.getQuery()).setFragment(uri.getFragment());
-    URI pathURI = URI.create(path);
-
-    if (pathURI.getScheme() != null) {
-      uriBuilder.setScheme(pathURI.getScheme());
-    }
-    if (pathURI.getUserInfo() != null) {
-      uriBuilder.setUserInfo(pathURI.getUserInfo());
-    }
-    if (pathURI.getHost() != null) {
-      uriBuilder.setHost(pathURI.getHost());
-    }
-    if (pathURI.getPort() > 0) {
-      uriBuilder.setPort(pathURI.getPort());
-    }
-    if (pathURI.getPath() != null) {
-      uriBuilder.setPath((uri.getPath() == null) ? pathURI.getPath() : uri.getPath() + pathURI.getPath());
-    }
-    if (pathURI.getRawQuery() != null) {
-      uriBuilder.setCustomQuery((uri.getRawQuery() == null) ? pathURI.getQuery() : uri.getQuery() + "&" + pathURI.getQuery());
-    }
-    if (pathURI.getFragment() != null) {
-      uriBuilder.setFragment(pathURI.getFragment());
-    }
-
-    return new JsonTarget(httpClient, uriBuilder.build());
+    return new JsonTarget(httpHost, path);
   }
 
   public JsonTarget header (String key, String value) {
@@ -134,143 +104,127 @@ public class JsonTarget {
   }
 
   public <T> T get (Class<T> responseClass)
-    throws IOException, URISyntaxException {
+    throws Exception {
 
-    HttpGet httpGet = ((HttpGet)createHttpRequest(HttpMethod.GET, null));
+    SimpleHttpRequest httpRequest = createHttpRequest(HttpMethod.GET, null);
+    SimpleCallback callback;
 
-    LoggerManager.getLogger(JsonTarget.class).log(level, new RequestDebugCollector(httpGet, null));
+    LoggerManager.getLogger(JsonTarget.class).log(level, new RequestDebugCollector(httpRequest));
 
-    try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
-      return convertEntity(response, responseClass);
-    }
+    HttpClient.execute(httpRequest, callback = new SimpleCallback(), 10);
+
+    return convertEntity(callback.getResponse(), responseClass);
   }
 
-  public <T> T put (HttpEntity entity, Class<T> responseClass)
-    throws IOException, URISyntaxException {
+  public <T> T put (JsonBody jsonBody, Class<T> responseClass)
+    throws Exception {
 
-    HttpPut httpPut = ((HttpPut)createHttpRequest(HttpMethod.PUT, entity));
+    SimpleHttpRequest httpRequest = createHttpRequest(HttpMethod.PUT, jsonBody);
+    SimpleCallback callback;
 
-    httpPut.setEntity(entity);
-    LoggerManager.getLogger(JsonTarget.class).log(level, new RequestDebugCollector(httpPut, entity));
+    LoggerManager.getLogger(JsonTarget.class).log(level, new RequestDebugCollector(httpRequest));
 
-    try (CloseableHttpResponse response = httpClient.execute(httpPut)) {
-      return convertEntity(response, responseClass);
-    }
+    HttpClient.execute(httpRequest, callback = new SimpleCallback(), 10);
+
+    return convertEntity(callback.getResponse(), responseClass);
   }
 
-  public <T> T post (HttpEntity entity, Class<T> responseClass)
-    throws IOException, URISyntaxException {
+  public <T> T post (JsonBody jsonBody, Class<T> responseClass)
+    throws Exception {
 
-    HttpPost httpPost = ((HttpPost)createHttpRequest(HttpMethod.POST, entity));
+    SimpleHttpRequest httpRequest = createHttpRequest(HttpMethod.POST, jsonBody);
+    SimpleCallback callback;
 
-    httpPost.setEntity(entity);
-    LoggerManager.getLogger(JsonTarget.class).log(level, new RequestDebugCollector(httpPost, entity));
+    LoggerManager.getLogger(JsonTarget.class).log(level, new RequestDebugCollector(httpRequest));
 
-    try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
-      return convertEntity(response, responseClass);
-    }
+    HttpClient.execute(httpRequest, callback = new SimpleCallback(), 10);
+
+    return convertEntity(callback.getResponse(), responseClass);
   }
 
-  public <T> T patch (HttpEntity entity, Class<T> responseClass)
-    throws IOException, URISyntaxException {
+  public <T> T patch (JsonBody jsonBody, Class<T> responseClass)
+    throws Exception {
 
-    HttpPatch httpPatch = ((HttpPatch)createHttpRequest(HttpMethod.PATCH, entity));
+    SimpleHttpRequest httpRequest = createHttpRequest(HttpMethod.PATCH, jsonBody);
+    SimpleCallback callback;
 
-    httpPatch.setEntity(entity);
-    LoggerManager.getLogger(JsonTarget.class).log(level, new RequestDebugCollector(httpPatch, entity));
+    LoggerManager.getLogger(JsonTarget.class).log(level, new RequestDebugCollector(httpRequest));
 
-    try (CloseableHttpResponse response = httpClient.execute(httpPatch)) {
-      return convertEntity(response, responseClass);
-    }
+    HttpClient.execute(httpRequest, callback = new SimpleCallback(), 10);
+
+    return convertEntity(callback.getResponse(), responseClass);
   }
 
   public <T> T delete (Class<T> responseClass)
-    throws IOException, URISyntaxException {
+    throws Exception {
 
-    HttpDelete httpDelete = ((HttpDelete)createHttpRequest(HttpMethod.DELETE, null));
+    SimpleHttpRequest httpRequest = createHttpRequest(HttpMethod.DELETE, null);
+    SimpleCallback callback;
 
-    LoggerManager.getLogger(JsonTarget.class).log(level, new RequestDebugCollector(httpDelete, null));
+    LoggerManager.getLogger(JsonTarget.class).log(level, new RequestDebugCollector(httpRequest));
 
-    try (CloseableHttpResponse response = httpClient.execute(httpDelete)) {
-      return convertEntity(response, responseClass);
-    }
+    HttpClient.execute(httpRequest, callback = new SimpleCallback(), 10);
+
+    return convertEntity(callback.getResponse(), responseClass);
   }
 
-  private <T> T convertEntity (HttpResponse response, Class<T> responseClass)
-    throws IOException {
+  private <T> T convertEntity (SimpleHttpResponse response, Class<T> responseClass) {
 
-    HttpEntity entity;
-    InputStreamHolder entityInputStreamHolder;
+    SimpleBody body;
+    byte[] bodyContent;
 
-    if (((entity = response.getEntity()) == null) || (entity.getContentLength() == 0) || (entityInputStreamHolder = new InputStreamHolder(entity.getContent())).isEmpty()) {
-
-      StatusLine statusLine;
-
-      if (((statusLine = response.getStatusLine()) == null) || ((statusLine.getStatusCode() >= 200) && statusLine.getStatusCode() < 300)) {
+    if (((body = response.getBody()) == null) || ((bodyContent = body.getBodyBytes()) == null) || (bodyContent.length == 0)) {
+      if ((response.getCode() >= 200) && (response.getCode() < 300)) {
 
         return null;
       }
 
-      throw new WebApplicationException(statusLine.getReasonPhrase(), statusLine.getStatusCode());
+      throw new WebApplicationException(response.getReasonPhrase(), response.getCode());
     }
 
-    LoggerManager.getLogger(JsonTarget.class).log(level, new ResponseDebugCollector(response, entityInputStreamHolder));
+    LoggerManager.getLogger(JsonTarget.class).log(level, new ResponseDebugCollector(response));
 
-    return JsonCodec.read(entityInputStreamHolder.getInputStream(), responseClass);
+    return JsonCodec.convert(bodyContent, responseClass);
   }
 
-  private HttpRequest createHttpRequest (HttpMethod httpMethod, HttpEntity entity)
-    throws URISyntaxException {
+  private SimpleHttpRequest createHttpRequest (HttpMethod httpMethod, JsonBody jsonBody) {
 
-    HttpRequest httpRequest;
+    SimpleHttpRequest httpRequest;
 
-    if (queryParameters == null) {
-      switch (httpMethod) {
-        case GET:
-          httpRequest = new HttpGet(uri);
-          break;
-        case PUT:
-          httpRequest = new HttpPut(uri);
-          break;
-        case POST:
-          httpRequest = new HttpPost(uri);
-          break;
-        case PATCH:
-          httpRequest = new HttpPatch(uri);
-          break;
-        case DELETE:
-          httpRequest = new HttpDelete(uri);
-          break;
-        default:
-          throw new UnknownSwitchCaseException(httpMethod.name());
-      }
-    } else {
+    if (queryParameters != null) {
 
-      URIBuilder uriBuilder = new URIBuilder(uri);
+      StringBuilder queryBuilder = new StringBuilder("?");
+      boolean first = true;
 
       for (Pair<String, String> queryPair : queryParameters) {
-        uriBuilder.addParameter(queryPair.getFirst(), queryPair.getSecond());
+        if (!first) {
+          queryBuilder.append('&');
+        }
+        queryBuilder.append(queryPair.getFirst()).append('=').append(queryPair.getSecond());
+        first = false;
       }
 
-      switch (httpMethod) {
-        case GET:
-          httpRequest = new HttpGet(uriBuilder.build());
-          break;
-        case PUT:
-          httpRequest = new HttpPut(uriBuilder.build());
-          break;
-        case POST:
-          httpRequest = new HttpPost(uriBuilder.build());
-          break;
-        case PATCH:
-          httpRequest = new HttpPatch(uriBuilder.build());
-          break;
-        case DELETE:
-          httpRequest = new HttpDelete(uriBuilder.build());
-          break;
-        default:
-          throw new UnknownSwitchCaseException(httpMethod.name());
-      }
+      path = path + queryBuilder;
+    }
+
+    switch (httpMethod) {
+      case GET:
+        httpRequest = SimpleHttpRequest.create(Method.GET, httpHost, path);
+        break;
+      case PUT:
+        httpRequest = SimpleHttpRequest.create(Method.PUT, httpHost, path);
+        break;
+      case POST:
+        httpRequest = SimpleHttpRequest.create(Method.POST, httpHost, path);
+        break;
+      case PATCH:
+        httpRequest = SimpleHttpRequest.create(Method.PATCH, httpHost, path);
+        break;
+      case DELETE:
+        httpRequest = SimpleHttpRequest.create(Method.DELETE, httpHost, path);
+        break;
+      default:
+        throw new UnknownSwitchCaseException(httpMethod.name());
     }
 
     if (headers != null) {
@@ -279,52 +233,46 @@ public class JsonTarget {
       }
     }
 
-    if (entity != null) {
-
-      Header contentTypeHeader;
-
-      if ((contentTypeHeader = entity.getContentType()) != null) {
-        httpRequest.setHeader(contentTypeHeader.getName(), contentTypeHeader.getValue());
-      }
+    if (jsonBody != null) {
+      httpRequest.setBody(jsonBody.getBodyAsBytes(), jsonBody.getContentType());
     }
 
     return httpRequest;
   }
 
-  private class InputStreamHolder {
+  private static class ResponseDebugCollector {
 
-    private InputStream inputStream;
+    private final SimpleHttpResponse response;
 
-    private InputStreamHolder (InputStream inputStream) {
+    private ResponseDebugCollector (SimpleHttpResponse response) {
 
-      this.inputStream = inputStream;
+      this.response = response;
     }
 
-    private InputStream getInputStream () {
+    @Override
+    public String toString () {
 
-      return inputStream;
-    }
+      StringBuilder debugBuilder = new StringBuilder();
 
-    private void setInputStream (InputStream inputStream) {
+      debugBuilder.append("Receiving client response\n");
+      debugBuilder.append("< ").append(response.getCode()).append('\n');
+      for (Header header : response.getHeaders()) {
+        debugBuilder.append("< ").append(header.getName()).append(": ").append(header.getValue()).append('\n');
+      }
 
-      this.inputStream = inputStream;
-    }
+      debugBuilder.append(response.getBodyText()).append('\n');
 
-    public boolean isEmpty () {
-
-      return inputStream == null;
+      return debugBuilder.toString();
     }
   }
 
-  private class RequestDebugCollector {
+  private static class RequestDebugCollector {
 
-    private final HttpRequest httpRequest;
-    private final HttpEntity entity;
+    private final SimpleHttpRequest httpRequest;
 
-    private RequestDebugCollector (HttpRequest httpRequest, HttpEntity entity) {
+    private RequestDebugCollector (SimpleHttpRequest httpRequest) {
 
       this.httpRequest = httpRequest;
-      this.entity = entity;
     }
 
     @Override
@@ -333,60 +281,14 @@ public class JsonTarget {
       StringBuilder debugBuilder = new StringBuilder();
 
       debugBuilder.append("Sending client request\n");
-      debugBuilder.append("< ").append(httpRequest.getRequestLine()).append('\n');
-      for (Header header : httpRequest.getAllHeaders()) {
+      debugBuilder.append("< ").append(httpRequest.getRequestUri()).append('\n');
+      for (Header header : httpRequest.getHeaders()) {
         debugBuilder.append("< ").append(header.getName()).append(": ").append(header.getValue()).append('\n');
       }
 
-      if (entity != null) {
-        try {
-          debugBuilder.append(EntityUtils.toString(entity)).append('\n');
-        } catch (IOException ioException) {
-          throw new RuntimeException(ioException);
-        }
+      if (httpRequest.getBody() != null) {
+        debugBuilder.append(httpRequest.getBody().getBodyText()).append('\n');
       }
-
-      return debugBuilder.toString();
-    }
-  }
-
-  private class ResponseDebugCollector {
-
-    private final HttpResponse response;
-    private final InputStreamHolder entityInputStreamHolder;
-
-    private ResponseDebugCollector (HttpResponse response, InputStreamHolder entityInputStreamHolder) {
-
-      this.response = response;
-      this.entityInputStreamHolder = entityInputStreamHolder;
-    }
-
-    @Override
-    public String toString () {
-
-      StringBuilder debugBuilder = new StringBuilder();
-      InputStream entityInputStream = entityInputStreamHolder.getInputStream();
-      ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-      int singleByte;
-
-      debugBuilder.append("Receiving client response\n");
-      debugBuilder.append("< ").append(response.getStatusLine().getStatusCode()).append('\n');
-      for (Header header : response.getAllHeaders()) {
-        debugBuilder.append("< ").append(header.getName()).append(": ").append(header.getValue()).append('\n');
-      }
-
-      try {
-        while ((singleByte = entityInputStream.read()) >= 0) {
-          byteArrayOutputStream.write(singleByte);
-        }
-
-        byteArrayOutputStream.close();
-      } catch (IOException ioException) {
-        throw new RuntimeException(ioException);
-      }
-
-      entityInputStreamHolder.setInputStream(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()));
-      debugBuilder.append(byteArrayOutputStream).append('\n');
 
       return debugBuilder.toString();
     }

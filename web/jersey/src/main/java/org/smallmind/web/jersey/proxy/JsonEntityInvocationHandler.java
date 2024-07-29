@@ -100,7 +100,7 @@ public class JsonEntityInvocationHandler implements InvocationHandler {
       }
     }
 
-    return rectifiedTarget.debug(level).post(new JsonHttpEntity(new Envelope(arguments)), method.getReturnType());
+    return rectifiedTarget.debug(level).post(new JsonBody(new Envelope(arguments)), method.getReturnType());
   }
 
   private JsonArgument[] constructJsonArguments (Method method)

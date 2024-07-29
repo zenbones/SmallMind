@@ -12,6 +12,7 @@
   <description>Web Application Services</description>
   <modules>
     <module>grizzly</module>
+    <module>http</module>
     <module>jersey</module>
     <module>jetty</module>
     <module>json</module>

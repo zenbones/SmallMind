@@ -14,6 +14,13 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-core</artifactId>
+      <scope>compile</scope>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <scope>compile</scope>
       <optional>true</optional>
     </dependency>
     <dependency>
@@ -25,6 +32,7 @@
     <dependency>
       <groupId>org.msgpack</groupId>
       <artifactId>jackson-dataformat-msgpack</artifactId>
+      <scope>compile</scope>
       <optional>true</optional>
     </dependency>
     <dependency>
@@ -46,7 +54,25 @@
     </dependency>
     <dependency>
       <groupId>software.amazon.awssdk</groupId>
+      <artifactId>auth</artifactId>
+      <scope>compile</scope>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>aws-core</artifactId>
+      <scope>compile</scope>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>software.amazon.awssdk</groupId>
       <artifactId>cloudwatchlogs</artifactId>
+      <scope>compile</scope>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>regions</artifactId>
       <scope>compile</scope>
       <optional>true</optional>
     </dependency>

@@ -12,18 +12,23 @@
   <description>MongoDB ORM</description>
   <dependencies>
     <dependency>
-      <groupId>org.smallmind</groupId>
-      <artifactId>mongodb-utility</artifactId>
+      <groupId>org.mongodb</groupId>
+      <artifactId>bson</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mongodb</groupId>
+      <artifactId>mongodb-driver-core</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mongodb</groupId>
+      <artifactId>mongodb-driver-sync</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.smallmind</groupId>
-      <artifactId>scribe-pen</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework</groupId>
-      <artifactId>spring-beans</artifactId>
+      <artifactId>smallmind-nutsnbolts</artifactId>
       <scope>compile</scope>
     </dependency>
   </dependencies>

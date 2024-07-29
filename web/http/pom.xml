@@ -6,24 +6,24 @@
     <artifactId>smallmind-web</artifactId>
     <version>6.0.0-SNAPSHOT</version>
   </parent>
-  <artifactId>schema-validation-maven-plugin</artifactId>
-  <name>schema-validation-maven-plugin</name>
-  <description>XSD Schema Validating Maven Plugin</description>
-  <packaging>maven-plugin</packaging>
+  <artifactId>web-http</artifactId>
+  <packaging>jar</packaging>
+  <name>Web-Http</name>
+  <description>Http Clent Framework</description>
   <dependencies>
     <dependency>
-      <groupId>org.apache.maven</groupId>
-      <artifactId>maven-model</artifactId>
-      <scope>provided</scope>
+      <groupId>org.apache.httpcomponents.client5</groupId>
+      <artifactId>httpclient5</artifactId>
+      <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>org.apache.maven</groupId>
-      <artifactId>maven-plugin-api</artifactId>
-      <scope>provided</scope>
+      <groupId>org.apache.httpcomponents.core5</groupId>
+      <artifactId>httpcore5</artifactId>
+      <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>org.apache.maven.plugin-tools</groupId>
-      <artifactId>maven-plugin-annotations</artifactId>
+      <groupId>org.smallmind</groupId>
+      <artifactId>smallmind-nutsnbolts</artifactId>
       <scope>compile</scope>
     </dependency>
   </dependencies>
