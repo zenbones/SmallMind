@@ -9,7 +9,7 @@
   <artifactId>web-http</artifactId>
   <packaging>jar</packaging>
   <name>Web-Http</name>
-  <description>Http Clent Framework</description>
+  <description>Http Client Framework</description>
   <dependencies>
     <dependency>
       <groupId>org.apache.httpcomponents.client5</groupId>

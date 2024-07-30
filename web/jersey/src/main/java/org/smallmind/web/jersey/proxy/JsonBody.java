@@ -42,10 +42,23 @@ public class JsonBody {
   private final byte[] bodyAsBytes;
   private final ContentType contentType;
 
+  public JsonBody (String json) {
+
+    this.bodyAsBytes = json.getBytes();
+    this.contentType = ContentType.APPLICATION_JSON;
+  }
+
   public JsonBody (Envelope envelope)
     throws JsonProcessingException {
 
     this.bodyAsBytes = JsonCodec.writeAsBytes(envelope);
+    this.contentType = ContentType.APPLICATION_JSON;
+  }
+
+  public JsonBody (Object obj)
+    throws JsonProcessingException {
+
+    this.bodyAsBytes = JsonCodec.writeAsBytes(obj);
     this.contentType = ContentType.APPLICATION_JSON;
   }
 
