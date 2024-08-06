@@ -32,6 +32,7 @@
  */
 package org.smallmind.claxon.registry;
 
+import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 import org.smallmind.nutsnbolts.time.Stint;
 
@@ -40,6 +41,7 @@ public class ClaxonConfiguration {
   private Clock clock = SystemClock.instance();
   private Stint collectionStint = new Stint(2, TimeUnit.SECONDS);
   private Tag[] registryTags = new Tag[0];
+  private HashMap<String, Tag[]> meterTags;
   private NamingStrategy namingStrategy = new ImpliedNamingStrategy();
 
   public ClaxonConfiguration () {
@@ -100,5 +102,44 @@ public class ClaxonConfiguration {
   public void setNamingStrategy (NamingStrategy namingStrategy) {
 
     this.namingStrategy = namingStrategy;
+  }
+
+  public void setMeterTags (HashMap<String, Tag[]> meterTags) {
+
+    this.meterTags = meterTags;
+  }
+
+  public Tag[] forMeter (String name) {
+
+    return (meterTags == null) ? null : meterTags.get(name);
+  }
+
+  public Tag[] calculateTags (String name, Tag... instanceTags) {
+
+    Tag[] meterTags = forMeter(name);
+    int tagCount = ((registryTags == null) ? 0 : registryTags.length) + ((meterTags == null) ? 0 : meterTags.length) + ((instanceTags == null) ? 0 : instanceTags.length);
+
+    if (tagCount == 0) {
+
+      return null;
+    } else {
+
+      Tag[] mergedTags = new Tag[tagCount];
+      int index = 0;
+
+      if ((registryTags != null) && (registryTags.length > 0)) {
+        System.arraycopy(registryTags, 0, mergedTags, 0, registryTags.length);
+        index += registryTags.length;
+      }
+      if ((meterTags != null) && (meterTags.length > 0)) {
+        System.arraycopy(meterTags, 0, mergedTags, index, meterTags.length);
+        index += meterTags.length;
+      }
+      if ((instanceTags != null) && (instanceTags.length > 0)) {
+        System.arraycopy(instanceTags, 0, mergedTags, index, instanceTags.length);
+      }
+
+      return mergedTags;
+    }
   }
 }

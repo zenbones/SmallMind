@@ -169,22 +169,9 @@ public class ClaxonRegistry {
 
             if ((quantities != null) && (quantities.length > 0)) {
 
-              Tag[] mergedTags;
-              Tag[] meterTags = namedMeterEntry.getKey().getTags();
-
-              if ((configuration.getRegistryTags() == null) || (configuration.getRegistryTags().length == 0)) {
-                mergedTags = meterTags;
-              } else if ((meterTags == null) || (meterTags.length == 0)) {
-                mergedTags = configuration.getRegistryTags();
-              } else {
-                mergedTags = new Tag[configuration.getRegistryTags().length + meterTags.length];
-                System.arraycopy(configuration.getRegistryTags(), 0, mergedTags, 0, configuration.getRegistryTags().length);
-                System.arraycopy(meterTags, 0, mergedTags, configuration.getRegistryTags().length, meterTags.length);
-              }
-
               for (Emitter emitter : emitterMap.values()) {
                 try {
-                  emitter.record(namedMeterEntry.getValue().getName(), mergedTags, quantities);
+                  emitter.record(namedMeterEntry.getValue().getName(), configuration.calculateTags(namedMeterEntry.getValue().getName(), namedMeterEntry.getKey().getTags()), quantities);
                 } catch (Exception exception) {
                   LoggerManager.getLogger(ClaxonRegistry.class).error(exception);
                 }
