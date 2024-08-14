@@ -181,7 +181,6 @@
     <module>scribe</module>
     <module>sleuth</module>
     <module>spark</module>
-    <module>sso</module>
     <module>swing</module>
     <module>web</module>
   </modules>
