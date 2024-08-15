@@ -525,17 +525,17 @@
       </dependency>
       <dependency>
         <groupId>org.cometd.java</groupId>
-        <artifactId>cometd-java-client-common</artifactId>
-        <version>${cometd.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.cometd.java</groupId>
         <artifactId>cometd-java-api-client</artifactId>
         <version>${cometd.version}</version>
       </dependency>
       <dependency>
         <groupId>org.cometd.java</groupId>
         <artifactId>cometd-java-api-common</artifactId>
+        <version>${cometd.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.cometd.java</groupId>
+        <artifactId>cometd-java-client-common</artifactId>
         <version>${cometd.version}</version>
       </dependency>
       <dependency>
@@ -1282,7 +1282,7 @@
         <plugin>
           <groupId>org.smallmind</groupId>
           <artifactId>smallmind-license-maven-plugin</artifactId>
-          <version>${project.version}</version>
+          <version>${smallmind.version}</version>
           <executions>
             <execution>
               <id>generate</id>
@@ -1318,11 +1318,6 @@
               </rule>
             </rules>
           </configuration>
-        </plugin>
-        <plugin>
-          <groupId>org.smallmind</groupId>
-          <artifactId>spark-singularity-mojo</artifactId>
-          <version>${project.version}</version>
         </plugin>
       </plugins>
     </pluginManagement>
