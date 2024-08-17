@@ -43,6 +43,12 @@ import javax.sql.DataSource;
 import liquibase.CatalogAndSchema;
 import liquibase.Scope;
 import liquibase.command.CommandScope;
+import liquibase.command.CommonArgumentNames;
+import liquibase.command.core.DbDocCommandStep;
+import liquibase.command.core.UpdateCommandStep;
+import liquibase.command.core.UpdateSqlCommandStep;
+import liquibase.command.core.helpers.DatabaseChangelogCommandStep;
+import liquibase.command.core.helpers.DbUrlConnectionArgumentsCommandStep;
 import liquibase.database.Database;
 import liquibase.database.DatabaseFactory;
 import liquibase.database.jvm.JdbcConnection;
@@ -152,7 +158,6 @@ public class SpringLiquibase implements InitializingBean {
       HashSet<String> catalogSet = new HashSet<>();
 
       for (ChangeLog changeLog : changeLogs) {
-
         try (JdbcConnection connection = new JdbcConnection(dataSource.getConnection())) {
 
           Database database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(connection);
@@ -161,25 +166,25 @@ public class SpringLiquibase implements InitializingBean {
             case PREVIEW:
               Scope.child(Scope.Attr.resourceAccessor, resourceAccessor, () -> {
 
-                CommandScope update = new CommandScope("updateSql");
+                CommandScope peview = new CommandScope(UpdateSqlCommandStep.COMMAND_NAME);
 
-                update.addArgumentValue("contexts", contexts);
-                update.addArgumentValue("url", "offline:" + database.getDisplayName());
-                update.addArgumentValue("changelogFile", changeLog.getInput());
+                peview.addArgumentValue(UpdateSqlCommandStep.CONTEXTS_ARG, contexts);
+                peview.addArgumentValue(CommonArgumentNames.URL.getArgumentName(), "offline:" + database.getDisplayName());
+                peview.addArgumentValue(UpdateSqlCommandStep.CHANGELOG_FILE_ARG, changeLog.getInput());
 
-                update.setOutput((previewStream == null) ? System.out : previewStream);
+                peview.setOutput((previewStream == null) ? System.out : previewStream);
 
-                update.execute();
+                peview.execute();
               });
               break;
             case UPDATE:
               Scope.child(Scope.Attr.resourceAccessor, resourceAccessor, () -> {
 
-                CommandScope update = new CommandScope("update");
+                CommandScope update = new CommandScope(UpdateCommandStep.COMMAND_NAME);
 
-                update.addArgumentValue("contexts", contexts);
-                update.addArgumentValue("database", database);
-                update.addArgumentValue("changelogFile", changeLog.getInput());
+                update.addArgumentValue(UpdateCommandStep.CONTEXTS_ARG, contexts);
+                update.addArgumentValue(DbUrlConnectionArgumentsCommandStep.DATABASE_ARG, database);
+                update.addArgumentValue(UpdateCommandStep.CHANGELOG_FILE_ARG, changeLog.getInput());
 
                 update.execute();
               });
@@ -187,14 +192,14 @@ public class SpringLiquibase implements InitializingBean {
             case DOCUMENT:
               Scope.child(Scope.Attr.resourceAccessor, resourceAccessor, () -> {
 
-                CommandScope update = new CommandScope("dbDoc");
+                CommandScope document = new CommandScope(DbDocCommandStep.COMMAND_NAME);
 
-                update.addArgumentValue("contexts", contexts);
-                update.addArgumentValue("database", database);
-                update.addArgumentValue("changelogFile", changeLog.getInput());
-                update.addArgumentValue("outputDirectory", ((outputDir == null) || outputDir.isEmpty()) ? System.getProperty("java.io.tmpdir") : outputDir);
+                document.addArgumentValue(DatabaseChangelogCommandStep.CONTEXTS_ARG, contexts);
+                document.addArgumentValue(DbUrlConnectionArgumentsCommandStep.DATABASE_ARG, database);
+                document.addArgumentValue(CommonArgumentNames.CHANGELOG_FILE.getArgumentName(), changeLog.getInput());
+                document.addArgumentValue(DbDocCommandStep.OUTPUT_DIRECTORY_ARG, ((outputDir == null) || outputDir.isEmpty()) ? System.getProperty("java.io.tmpdir") : outputDir);
 
-                update.execute();
+                document.execute();
               });
 
               break;
