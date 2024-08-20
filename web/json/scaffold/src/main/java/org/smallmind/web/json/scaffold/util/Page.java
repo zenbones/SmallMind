@@ -49,7 +49,7 @@ public class Page<T> implements Iterable<T> {
 
   private T[] values;
   private long totalResults;
-  private int firstResult;
+  private long firstResult;
   private int maxResults;
   private int resultSize;
 
@@ -57,12 +57,12 @@ public class Page<T> implements Iterable<T> {
 
   }
 
-  public Page (List<T> listOfValues, int firstResult, int maxResults, long totalResults) {
+  public Page (List<T> listOfValues, long firstResult, int maxResults, long totalResults) {
 
     this(fromList(listOfValues), firstResult, maxResults, totalResults);
   }
 
-  public Page (T[] values, int firstResult, int maxResults, long totalResults) {
+  public Page (T[] values, long firstResult, int maxResults, long totalResults) {
 
     this.values = values;
     this.firstResult = firstResult;
@@ -126,12 +126,12 @@ public class Page<T> implements Iterable<T> {
   }
 
   @XmlElement(name = "firstResult", required = true, nillable = false)
-  public int getFirstResult () {
+  public long getFirstResult () {
 
     return firstResult;
   }
 
-  public void setFirstResult (int firstResult) {
+  public void setFirstResult (long firstResult) {
 
     this.firstResult = firstResult;
   }

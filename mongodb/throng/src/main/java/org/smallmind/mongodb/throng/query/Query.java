@@ -41,7 +41,7 @@ public class Query {
   private Filter filter;
   private Sort sort;
   private Projections projections;
-  private int skip = 0;
+  private long skip = 0;
   private int limit = 0;
   private int batchSize = 0;
 
@@ -76,7 +76,7 @@ public class Query {
     return this;
   }
 
-  public Query skip (int skip) {
+  public Query skip (long skip) {
 
     this.skip = skip;
 
@@ -109,7 +109,8 @@ public class Query {
       findIterable.projection(projections.toBsonDocument(documentClass, codecRegistry));
     }
     if (skip > 0) {
-      findIterable.skip(skip);
+      //TODO: Mongo should be allowing long here, and maybe someday they will...
+      findIterable.skip((int)skip);
     }
     if (limit > 0) {
       findIterable.limit(limit);
