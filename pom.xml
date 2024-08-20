@@ -121,7 +121,7 @@
     <jfextras.labs.version>9.0-r1</jfextras.labs.version>
     <jose4j.version>0.9.6</jose4j.version>
     <kafka.version>3.7.0</kafka.version>
-    <liquibase.version>4.27.0</liquibase.version>
+    <liquibase.version>4.29.1</liquibase.version>
     <log4j.version>2.23.1</log4j.version>
     <maven.version>3.9.6</maven.version>
     <maven.compiler.plugin.version>3.12.1</maven.compiler.plugin.version>
