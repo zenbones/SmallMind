@@ -57,6 +57,7 @@ public class LoggingBlueprintFactory {
 
       LinkedList<String> implementationList = new LinkedList<>();
 
+      implementationList.add(LOGGING_BLUEPRINT.getClass().getName());
       while (blueprintsIter.hasNext()) {
         implementationList.add(blueprintsIter.next().getClass().getName());
       }
