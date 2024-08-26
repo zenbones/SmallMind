@@ -125,7 +125,7 @@
     <jetty.version>12.0.11</jetty.version>
     <jfextras.labs.version>9.0-r1</jfextras.labs.version>
     <jose4j.version>0.9.6</jose4j.version>
-    <kafka.version>3.7.0</kafka.version>
+    <kafka.version>3.8.0</kafka.version>
     <liquibase.version>4.27.0</liquibase.version>
     <!-- 4.29.0 breaks H2, allowing the db to close -->
     <!-- <liquibase.version>4.29.1</liquibase.version> -->
