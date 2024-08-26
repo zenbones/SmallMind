@@ -45,6 +45,7 @@ public class TestIdentifier {
       return 1L;
     }
   };
+
   private static final HashMap<TestKey, Long> IDENTIFIER_MAP = new HashMap<>();
   private static final AtomicLong IDENTIFIER_COUNTER = new AtomicLong(0);
 

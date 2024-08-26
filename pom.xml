@@ -91,12 +91,17 @@
     <grizzly.version>4.0.2</grizzly.version>
     <grizzly.npn.version>2.0.0</grizzly.npn.version>
     <hdrhistogram.version>2.1.12</hdrhistogram.version>
+    <!-- older hibernate -->
     <hibernate.version>6.2.24.Final</hibernate.version>
-    <!-- <hibernate.version>6.4.4.Final</hibernate.version> -->
     <hibernate.annotations.version>6.0.6.Final</hibernate.annotations.version>
     <hibernate.validator.version>8.0.1.Final</hibernate.validator.version>
     <hibernate.enhance.maven.plugin.version>6.2.24.Final</hibernate.enhance.maven.plugin.version>
-    <!-- <hibernate.enhance.maven.plugin.version>6.4.4.Final</hibernate.enhance.maven.plugin.version> -->
+    <!--
+    <hibernate.version>6.6.0.Final</hibernate.version>
+    <hibernate.annotations.version>7.0.1.Final</hibernate.annotations.version>
+    <hibernate.validator.version>8.0.1.Final</hibernate.validator.version>
+    <hibernate.enhance.maven.plugin.version>6.6.0.Final</hibernate.enhance.maven.plugin.version>
+    -->
     <httpcomponents5.client.version>5.3.1</httpcomponents5.client.version>
     <httpcomponents5.core.version>5.2.5</httpcomponents5.core.version>
     <jackson.version>2.17.2</jackson.version>
@@ -121,7 +126,9 @@
     <jfextras.labs.version>9.0-r1</jfextras.labs.version>
     <jose4j.version>0.9.6</jose4j.version>
     <kafka.version>3.7.0</kafka.version>
-    <liquibase.version>4.29.1</liquibase.version>
+    <liquibase.version>4.27.0</liquibase.version>
+    <!-- 4.29.0 breaks H2, allowing the db to close -->
+    <!-- <liquibase.version>4.29.1</liquibase.version> -->
     <log4j.version>2.23.1</log4j.version>
     <maven.version>3.9.6</maven.version>
     <maven.compiler.plugin.version>3.12.1</maven.compiler.plugin.version>
