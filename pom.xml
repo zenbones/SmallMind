@@ -76,7 +76,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <amqp.client.version>5.20.0</amqp.client.version>
     <asm.version>9.7</asm.version>
-    <aspectj.version>1.9.22</aspectj.version>
+    <aspectj.version>1.9.22.1</aspectj.version>
     <aspectj.maven.plugin.version>1.14</aspectj.maven.plugin.version>
     <aws.version>2.25.7</aws.version>
     <bouncycastle.version>1.77</bouncycastle.version>
@@ -91,17 +91,10 @@
     <grizzly.version>4.0.2</grizzly.version>
     <grizzly.npn.version>2.0.0</grizzly.npn.version>
     <hdrhistogram.version>2.1.12</hdrhistogram.version>
-    <!-- older hibernate -->
-    <hibernate.version>6.2.24.Final</hibernate.version>
-    <hibernate.annotations.version>6.0.6.Final</hibernate.annotations.version>
-    <hibernate.validator.version>8.0.1.Final</hibernate.validator.version>
-    <hibernate.enhance.maven.plugin.version>6.2.24.Final</hibernate.enhance.maven.plugin.version>
-    <!--
     <hibernate.version>6.6.0.Final</hibernate.version>
     <hibernate.annotations.version>7.0.1.Final</hibernate.annotations.version>
     <hibernate.validator.version>8.0.1.Final</hibernate.validator.version>
     <hibernate.enhance.maven.plugin.version>6.6.0.Final</hibernate.enhance.maven.plugin.version>
-    -->
     <httpcomponents5.client.version>5.3.1</httpcomponents5.client.version>
     <httpcomponents5.core.version>5.2.5</httpcomponents5.core.version>
     <jackson.version>2.17.2</jackson.version>
