@@ -387,6 +387,11 @@
         <version>${httpcomponents5.core.version}</version>
       </dependency>
       <dependency>
+        <groupId>org.apache.httpcomponents.core5</groupId>
+        <artifactId>httpcore5-h2</artifactId>
+        <version>${httpcomponents5.core.version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.apache.kafka</groupId>
         <artifactId>kafka-clients</artifactId>
         <version>${kafka.version}</version>
