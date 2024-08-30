@@ -58,6 +58,9 @@
         </plugins>
       </build>
     </profile>
+    <profile>
+      <id>nexus</id>
+    </profile>
   </profiles>
   <distributionManagement>
     <repository>
