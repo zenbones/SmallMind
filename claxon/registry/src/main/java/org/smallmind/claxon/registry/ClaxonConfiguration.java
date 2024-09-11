@@ -116,8 +116,8 @@ public class ClaxonConfiguration {
 
   public Tag[] calculateTags (String name, Tag... instanceTags) {
 
-    Tag[] meterTags = forMeter(name);
-    int tagCount = ((registryTags == null) ? 0 : registryTags.length) + ((meterTags == null) ? 0 : meterTags.length) + ((instanceTags == null) ? 0 : instanceTags.length);
+    Tag[] tagsForMeter = forMeter(name);
+    int tagCount = ((registryTags == null) ? 0 : registryTags.length) + ((tagsForMeter == null) ? 0 : tagsForMeter.length) + ((instanceTags == null) ? 0 : instanceTags.length);
 
     if (tagCount == 0) {
 
@@ -131,9 +131,9 @@ public class ClaxonConfiguration {
         System.arraycopy(registryTags, 0, mergedTags, 0, registryTags.length);
         index += registryTags.length;
       }
-      if ((meterTags != null) && (meterTags.length > 0)) {
-        System.arraycopy(meterTags, 0, mergedTags, index, meterTags.length);
-        index += meterTags.length;
+      if ((tagsForMeter != null) && (tagsForMeter.length > 0)) {
+        System.arraycopy(tagsForMeter, 0, mergedTags, index, tagsForMeter.length);
+        index += tagsForMeter.length;
       }
       if ((instanceTags != null) && (instanceTags.length > 0)) {
         System.arraycopy(instanceTags, 0, mergedTags, index, instanceTags.length);
