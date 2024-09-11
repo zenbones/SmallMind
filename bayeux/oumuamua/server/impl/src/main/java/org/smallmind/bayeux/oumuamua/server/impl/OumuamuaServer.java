@@ -46,6 +46,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletException;
+import org.smallmind.bayeux.oumuamua.server.api.BayeuxService;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.ChannelInitializer;
 import org.smallmind.bayeux.oumuamua.server.api.ChannelStateException;
@@ -71,6 +72,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   private final ExecutorService executorService;
   private final ConcurrentHashMap<String, OumuamuaSession<V>> sessionMap = new ConcurrentHashMap<>();
   private final HashMap<String, Protocol<V>> protocolMap = new HashMap<>();
+  private final ConcurrentHashMap<Route, BayeuxService> serviceMap = new ConcurrentHashMap<>();
   private final ConcurrentLinkedQueue<Listener<V>> listenerList = new ConcurrentLinkedQueue<>();
   private final ConcurrentLinkedQueue<ChannelInitializer<V>> initializerList = new ConcurrentLinkedQueue<>();
   private final OumuamuaConfiguration<V> configuration;
@@ -105,6 +107,12 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
         }
 
         protocolNames = protocolMap.keySet().toArray(new String[0]);
+      }
+
+      if (configuration.getServices() != null) {
+        for (BayeuxService service : configuration.getServices()) {
+          serviceMap.put(service.getBoundRoute(), service);
+        }
       }
 
       if (configuration.getListeners() != null) {
@@ -244,6 +252,24 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
     }
 
     return packet;
+  }
+
+  @Override
+  public void addService (BayeuxService service) {
+
+    serviceMap.put(service.getBoundRoute(), service);
+  }
+
+  @Override
+  public void removeService (Route route) {
+
+    serviceMap.remove(route);
+  }
+
+  @Override
+  public BayeuxService getService (Route route) {
+
+    return serviceMap.get(route);
   }
 
   @Override

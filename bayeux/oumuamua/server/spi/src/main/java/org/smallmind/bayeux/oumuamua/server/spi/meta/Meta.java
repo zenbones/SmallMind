@@ -35,6 +35,7 @@ package org.smallmind.bayeux.oumuamua.server.spi.meta;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;
+import org.smallmind.bayeux.oumuamua.server.api.BayeuxService;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.InvalidPathException;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
@@ -438,7 +439,14 @@ public enum Meta {
     @Override
     public <V extends Value<V>> Packet<V> process (Protocol<V> protocol, Route route, Server<V> server, Session<V> session, Message<V> request) {
 
-      return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructErrorResponse(server, route.getPath(), request.getId(), request.getSessionId(), "Unknown service", null));
+      BayeuxService service;
+
+      if ((service = server.getService(route)) == null) {
+        return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructErrorResponse(server, route.getPath(), request.getId(), request.getSessionId(), "Unknown service", null));
+      } else {
+
+        return service.process(protocol, route, server, session, request);
+      }
     }
   };
 

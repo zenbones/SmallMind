@@ -33,6 +33,7 @@
 package org.smallmind.bayeux.oumuamua.server.impl;
 
 import java.util.LinkedList;
+import org.smallmind.bayeux.oumuamua.server.api.BayeuxService;
 import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.Route;
 import org.smallmind.bayeux.oumuamua.server.api.SecurityPolicy;
@@ -47,6 +48,7 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   private Codec<V> codec;
   private SecurityPolicy<V> securityPolicy;
   private Protocol<V>[] protocols;
+  private BayeuxService[] services;
   private Server.Listener<V>[] listeners;
   private String[][] reflectivePaths;
   private String[][] streamingPaths;
@@ -98,6 +100,16 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   public void setProtocols (Protocol<V>[] protocols) {
 
     this.protocols = protocols;
+  }
+
+  public BayeuxService[] getServices () {
+
+    return services;
+  }
+
+  public void setServices (BayeuxService[] services) {
+
+    this.services = services;
   }
 
   public Server.Listener<V>[] getListeners () {
