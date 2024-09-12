@@ -423,12 +423,14 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   @Override
   public Packet<V> onRequest (Session<V> sender, Packet<V> packet) {
 
+    // No need to freeze the packet as changes generated here should be by all further processing, including the response to the sender
     return onProcessing(sender, packet);
   }
 
   @Override
   public Packet<V> onResponse (Session<V> sender, Packet<V> packet) {
 
+    // No need to freeze the packet as any changes generated here are specifically for, and seen only by, the sender
     return onProcessing(sender, packet);
   }
 
@@ -436,6 +438,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   public void deliver (Session<V> sender, Packet<V> packet, boolean clustered) {
 
     if (packet.getRoute() != null) {
+      // Packet is not frozen as all channels should see these changes
       if ((packet = onProcessing(sender, packet)) != null) {
 
         channelTree.deliver(sender, 0, packet, new HashSet<>());
@@ -457,6 +460,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   public void forward (Channel<V> channel, Packet<V> packet) {
 
     if (packet.getRoute() != null) {
+      // Packet is not frozen as all channels should see these changes
       if ((packet = onProcessing(null, packet)) != null) {
 
         Backbone<V> backbone;

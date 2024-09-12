@@ -41,11 +41,13 @@ public interface Session<V extends Value<V>> extends Attributed {
 
   }
 
-  // Changes to messages in this listener must be seen only on this session, via copy on write or some other means
+  // Messages are frozen when delivered from the channel to the session, guaranteeing changes generated here are seen only in the sending session
   interface PacketListener<V extends Value<V>> extends Listener<V> {
 
+    // For responses from META commands delivered to the sender
     Packet<V> onResponse (Session<V> sender, Packet<V> packet);
 
+    // For published messages delivered to receivers
     Packet<V> onDelivery (Session<V> sender, Packet<V> packet);
   }
 

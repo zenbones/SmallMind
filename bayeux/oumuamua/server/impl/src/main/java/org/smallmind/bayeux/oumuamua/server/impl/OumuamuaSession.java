@@ -235,13 +235,10 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
             remainingNanoseconds = notEmptyCondition.awaitNanos(remainingNanoseconds);
           }
         } else {
-
-          Packet<V> frozenPacket;
-
           longPollQueueSize.decrementAndGet();
-          frozenPacket = PacketUtility.freezePacket(enqueuedPair.getSecond());
 
-          return onProcessing(enqueuedPair.getFirst(), frozenPacket);
+          // No need to re-freeze these packets, as they were frozen upon entering this session, and will be seen only by this connection
+          return onProcessing(enqueuedPair.getFirst(), enqueuedPair.getSecond());
         }
       } while (remainingNanoseconds > 0);
 
@@ -256,10 +253,11 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
 
     if (fromChannel.isStreaming() && (!connectionRef.get().getTransport().getProtocol().isLongPolling())) {
 
-      Packet<V> frozenPacket = PacketUtility.freezePacket(packet);
+      Packet<V> processedPacket;
 
-      if ((frozenPacket = onProcessing(sender, frozenPacket)) != null) {
-        connectionRef.get().deliver(frozenPacket);
+      // No need to re-freeze these packets, as they were frozen upon entering this session, and will be seen only by this connection
+      if ((processedPacket = onProcessing(sender, packet)) != null) {
+        connectionRef.get().deliver(processedPacket);
       }
     } else if (longPolling.get()) {
       longPollLock.lock();
@@ -280,10 +278,11 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
       }
     } else {
 
-      Packet<V> frozenPacket = PacketUtility.freezePacket(packet);
+      Packet<V> processedPacket;
 
-      if ((frozenPacket = onProcessing(sender, frozenPacket)) != null) {
-        connectionRef.get().deliver(frozenPacket);
+      // No need to re-freeze these packets, as they were frozen upon entering this session, and will be seen only by this connection
+      if ((processedPacket = onProcessing(sender, packet)) != null) {
+        connectionRef.get().deliver(processedPacket);
       }
     }
   }
