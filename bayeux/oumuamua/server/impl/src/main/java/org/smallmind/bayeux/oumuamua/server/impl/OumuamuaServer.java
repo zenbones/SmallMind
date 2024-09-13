@@ -111,7 +111,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
 
       if (configuration.getServices() != null) {
         for (BayeuxService service : configuration.getServices()) {
-          serviceMap.put(service.getBoundRoute(), service);
+          addService(service);
         }
       }
 
@@ -257,7 +257,13 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   @Override
   public void addService (BayeuxService service) {
 
-    serviceMap.put(service.getBoundRoute(), service);
+    Route[] boundRoutes;
+
+    if ((boundRoutes = service.getBoundRoutes()) != null) {
+      for (Route boundRoute : boundRoutes) {
+        serviceMap.put(boundRoute, service);
+      }
+    }
   }
 
   @Override

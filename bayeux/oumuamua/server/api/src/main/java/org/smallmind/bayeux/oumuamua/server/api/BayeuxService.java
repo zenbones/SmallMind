@@ -37,7 +37,7 @@ import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
 public interface BayeuxService {
 
-  Route getBoundRoute ();
+  Route[] getBoundRoutes ();
 
   <V extends Value<V>> Packet<V> process (Protocol<V> protocol, Route route, Server<V> server, Session<V> session, Message<V> request);
 }
