@@ -92,9 +92,11 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
       throw new OumuamuaException("Missing codec");
     } else {
 
+      ExecutorService configuredExecutorService;
+
       this.configuration = configuration;
 
-      executorService = new ThreadPoolExecutor(configuration.getThreadPoolCoreSize(), configuration.getThreadPoolMaximumSize(), configuration.getThreadPoolKeepAliveSeconds(), TimeUnit.SECONDS, new SynchronousQueue<>(), new ThreadPoolExecutor.CallerRunsPolicy());
+      executorService = ((configuredExecutorService = configuration.getExecutorService()) != null) ? configuredExecutorService : new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60, TimeUnit.SECONDS, new SynchronousQueue<>(), new ThreadPoolExecutor.CallerRunsPolicy());
 
       sessionConnectionIntervalMilliseconds = configuration.getSessionConnectIntervalSeconds() * 1000L;
       channelTree = new ChannelTree<>(new ChannelRoot<>(this));

@@ -33,6 +33,7 @@
 package org.smallmind.bayeux.oumuamua.server.impl;
 
 import java.util.LinkedList;
+import java.util.concurrent.ExecutorService;
 import org.smallmind.bayeux.oumuamua.server.api.BayeuxService;
 import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.Route;
@@ -46,6 +47,7 @@ public class OumuamuaConfiguration<V extends Value<V>> {
 
   private Backbone<V> backbone;
   private Codec<V> codec;
+  private ExecutorService executorService;
   private SecurityPolicy<V> securityPolicy;
   private Protocol<V>[] protocols;
   private BayeuxService[] services;
@@ -53,14 +55,11 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   private String[][] reflectivePaths;
   private String[][] streamingPaths;
   private long channelTimeToLiveMinutes = 30;
-  private long threadPoolKeepAliveSeconds = 60;
   private int sessionConnectIntervalSeconds = 30;
   private int sessionMaxIdleTimeoutSeconds = 90;
   private int idleChannelCycleMinutes = 5;
   private int idleSessionCycleMinutes = 1;
   private int maxLongPollQueueSize = 1000;
-  private int threadPoolCoreSize = 0;
-  private int threadPoolMaximumSize = Integer.MAX_VALUE;
 
   public Backbone<V> getBackbone () {
 
@@ -80,6 +79,16 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   public void setCodec (Codec<V> codec) {
 
     this.codec = codec;
+  }
+
+  public ExecutorService getExecutorService () {
+
+    return executorService;
+  }
+
+  public void setExecutorService (ExecutorService executorService) {
+
+    this.executorService = executorService;
   }
 
   public SecurityPolicy<V> getSecurityPolicy () {
@@ -180,36 +189,6 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   public void setMaxLongPollQueueSize (int maxLongPollQueueSize) {
 
     this.maxLongPollQueueSize = maxLongPollQueueSize;
-  }
-
-  public long getThreadPoolKeepAliveSeconds () {
-
-    return threadPoolKeepAliveSeconds;
-  }
-
-  public void setThreadPoolKeepAliveSeconds (long threadPoolKeepAliveSeconds) {
-
-    this.threadPoolKeepAliveSeconds = threadPoolKeepAliveSeconds;
-  }
-
-  public int getThreadPoolCoreSize () {
-
-    return threadPoolCoreSize;
-  }
-
-  public void setThreadPoolCoreSize (int threadPoolCoreSize) {
-
-    this.threadPoolCoreSize = threadPoolCoreSize;
-  }
-
-  public int getThreadPoolMaximumSize () {
-
-    return threadPoolMaximumSize;
-  }
-
-  public void setThreadPoolMaximumSize (int threadPoolMaximumSize) {
-
-    this.threadPoolMaximumSize = threadPoolMaximumSize;
   }
 
   public void setReflectivePaths (String[] paths) {
