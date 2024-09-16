@@ -32,6 +32,7 @@
  */
 package org.smallmind.web.grizzly.installer;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.EventListener;
 import java.util.Map;
 
@@ -48,9 +49,9 @@ public class ListenerInstaller extends GrizzlyInstaller {
   }
 
   public EventListener getListener ()
-    throws InstantiationException, IllegalAccessException {
+    throws NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
 
-    return (eventListener != null) ? eventListener : listenerClass.newInstance();
+    return (eventListener != null) ? eventListener : listenerClass.getDeclaredConstructor().newInstance();
   }
 
   public void setEventListener (EventListener eventListener) {

@@ -33,6 +33,7 @@
 package org.smallmind.web.jetty;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Paths;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -298,8 +299,16 @@ public class JettyInitializingBean implements InitializingBean, DisposableBean, 
 
         for (ListenerInstaller listenerInstaller : webAppState.getListenerInstallerList()) {
           try {
+
+            Map<String, String> contextParameters;
+
             servletContextHandler.addEventListener(listenerInstaller.getListener());
-          } catch (IllegalAccessException | InstantiationException exception) {
+            if ((contextParameters = listenerInstaller.getContextParameters()) != null) {
+              for (Map.Entry<String, String> parameterEntry : contextParameters.entrySet()) {
+                servletContextHandler.setInitParameter(parameterEntry.getKey(), parameterEntry.getValue());
+              }
+            }
+          } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException exception) {
             throw new JettyInitializationException(exception);
           }
         }
