@@ -54,6 +54,7 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   private Server.Listener<V>[] listeners;
   private String[][] reflectivePaths;
   private String[][] streamingPaths;
+  private boolean warnOnOverflow = false;
   private long channelTimeToLiveMinutes = 30;
   private int sessionConnectIntervalSeconds = 30;
   private int sessionMaxIdleTimeoutSeconds = 90;
@@ -129,6 +130,16 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   public void setListeners (Server.Listener<V>[] listeners) {
 
     this.listeners = listeners;
+  }
+
+  public boolean isWarnOnOverflow () {
+
+    return warnOnOverflow;
+  }
+
+  public void setWarnOnOverflow (boolean warnOnOverflow) {
+
+    this.warnOnOverflow = warnOnOverflow;
   }
 
   public long getChannelTimeToLiveMinutes () {

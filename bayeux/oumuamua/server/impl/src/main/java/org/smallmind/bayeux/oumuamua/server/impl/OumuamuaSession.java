@@ -52,6 +52,7 @@ import org.smallmind.bayeux.oumuamua.server.spi.AbstractAttributed;
 import org.smallmind.bayeux.oumuamua.server.spi.Connection;
 import org.smallmind.nutsnbolts.util.Pair;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
+import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed implements Session<V> {
@@ -66,15 +67,17 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   private final Consumer<Session<V>> onDisconnectedCallback;
   private final AtomicBoolean longPolling = new AtomicBoolean(false);
   private final String sessionId = SnowflakeId.newInstance().generateHexEncoding();
+  private final boolean warnOnOverflow;
   private final long maxIdleTimeoutMilliseconds;
   private final int maxLongPollQueueSize;
   private SessionState state;
   private long lastContactTimestamp;
 
-  public OumuamuaSession (Consumer<Session<V>> onConnectedCallback, Consumer<Session<V>> onDisconnectedCallback, Connection<V> connection, int maxLongPollQueueSize, long maxIdleTimeoutMilliseconds) {
+  public OumuamuaSession (Consumer<Session<V>> onConnectedCallback, Consumer<Session<V>> onDisconnectedCallback, Connection<V> connection, boolean warnOnOverflow, int maxLongPollQueueSize, long maxIdleTimeoutMilliseconds) {
 
     this.onConnectedCallback = onConnectedCallback;
     this.onDisconnectedCallback = onDisconnectedCallback;
+    this.warnOnOverflow = warnOnOverflow;
     this.maxLongPollQueueSize = maxLongPollQueueSize;
     this.maxIdleTimeoutMilliseconds = maxIdleTimeoutMilliseconds;
 
@@ -263,7 +266,7 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
 
       try {
         if (longPollQueueSize.incrementAndGet() > maxLongPollQueueSize) {
-          LoggerManager.getLogger(OumuamuaSession.class).debug("Session(%s) overflowed the long poll queue", getId());
+          LoggerManager.getLogger(OumuamuaSession.class).log(warnOnOverflow ? Level.WARN : Level.DEBUG, "Session(%s) overflowed the long poll queue", getId());
 
           if (longPollDeque.pollFirst() != null) {
             longPollQueueSize.decrementAndGet();
