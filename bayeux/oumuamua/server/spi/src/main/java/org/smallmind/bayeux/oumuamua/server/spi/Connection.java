@@ -60,7 +60,10 @@ public interface Connection<V extends Value<V>> {
       try {
 
         Meta meta = Meta.from(path);
-        Route route = Meta.PUBLISH.equals(meta) ? new DefaultRoute(path) : meta.getRoute();
+        Route route = switch (meta) {
+          case PUBLISH, SERVICE -> new DefaultRoute(path);
+          default -> meta.getRoute();
+        };
 
         if (sessionId == null) {
           if (Meta.HANDSHAKE.equals(meta)) {
