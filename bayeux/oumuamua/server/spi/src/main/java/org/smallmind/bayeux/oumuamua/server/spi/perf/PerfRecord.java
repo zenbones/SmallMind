@@ -37,10 +37,13 @@ import org.HdrHistogram.Recorder;
 public class PerfRecord {
 
   private final Recorder recorder = new Recorder(1, 3600000L, 2);
-  private PerfAttribute maximum;
-  private PerfAttribute minimum;
 
-  public void store (String sessionId, String messageId, long timeInTransit) {
+  public void reset () {
+
+    recorder.reset();
+  }
+
+  public void store (long timeInTransit) {
 
     recorder.recordValue(timeInTransit);
   }

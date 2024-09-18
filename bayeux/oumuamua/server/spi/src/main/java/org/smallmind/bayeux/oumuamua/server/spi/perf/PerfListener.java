@@ -46,6 +46,12 @@ public class PerfListener<V extends Value<V>> implements Transport.TransportList
   private final PerfRecord localPerfRecord = new PerfRecord();
   private final PerfRecord remotePerfRecord = new PerfRecord();
 
+  public void reset () {
+
+    localPerfRecord.reset();
+    remotePerfRecord.reset();
+  }
+
   @Override
   public void onReceipt (Message<V>[] incomingMessages) {
 
@@ -81,9 +87,9 @@ public class PerfListener<V extends Value<V>> implements Transport.TransportList
             long timeInTransit = now - ((NumberValue<V>)timestampValue).asLong();
 
             if (isRemote(extValue)) {
-              remotePerfRecord.store(message.getSessionId(), message.getId(), timeInTransit);
+              remotePerfRecord.store(timeInTransit);
             } else {
-              localPerfRecord.store(message.getSessionId(), message.getId(), timeInTransit);
+              localPerfRecord.store(timeInTransit);
             }
           }
         }
