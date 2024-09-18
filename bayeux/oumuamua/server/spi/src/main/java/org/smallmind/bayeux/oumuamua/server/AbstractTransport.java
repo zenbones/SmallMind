@@ -30,44 +30,53 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.impl.longpolling;
+package org.smallmind.bayeux.oumuamua.server;
 
-import jakarta.servlet.ServletConfig;
-import org.smallmind.bayeux.oumuamua.server.AbstractTransport;
-import org.smallmind.bayeux.oumuamua.server.api.Protocol;
-import org.smallmind.bayeux.oumuamua.server.api.Server;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import org.smallmind.bayeux.oumuamua.server.api.Transport;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
-import org.smallmind.bayeux.oumuamua.server.spi.Transports;
+import org.smallmind.bayeux.oumuamua.server.spi.AbstractAttributed;
 
-public class LongPollingTransport<V extends Value<V>> extends AbstractTransport<V> {
+public abstract class AbstractTransport<V extends Value<V>> extends AbstractAttributed implements Transport<V> {
 
-  private final ServletProtocol<V> servletProtocol;
+  private final ConcurrentLinkedQueue<Listener<V>> listenerList = new ConcurrentLinkedQueue<>();
 
-  public LongPollingTransport (ServletProtocol<V> servletProtocol) {
+  public void onReceipt (byte[] incoming) {
 
-    this.servletProtocol = servletProtocol;
+    for (Listener<V> listener : listenerList) {
+      if (TransportListener.class.isAssignableFrom(listener.getClass())) {
+        ((TransportListener<V>)listener).onReceipt(incoming);
+      }
+    }
+  }
+
+  public void onReceipt (String incoming) {
+
+    for (Listener<V> listener : listenerList) {
+      if (TransportListener.class.isAssignableFrom(listener.getClass())) {
+        ((TransportListener<V>)listener).onReceipt(incoming);
+      }
+    }
+  }
+
+  public void onDelivery (String outgoing) {
+
+    for (Listener<V> listener : listenerList) {
+      if (TransportListener.class.isAssignableFrom(listener.getClass())) {
+        ((TransportListener<V>)listener).onDelivery(outgoing);
+      }
+    }
   }
 
   @Override
-  public Protocol<V> getProtocol () {
+  public void addListener (Listener<V> listener) {
 
-    return servletProtocol;
+    listenerList.add(listener);
   }
 
   @Override
-  public String getName () {
+  public void removeListener (Listener<V> listener) {
 
-    return Transports.LONG_POLLING.getName();
-  }
-
-  @Override
-  public boolean isLocal () {
-
-    return Transports.LONG_POLLING.isLocal();
-  }
-
-  @Override
-  public void init (Server<?> server, ServletConfig servletConfig) {
-
+    listenerList.remove(listener);
   }
 }

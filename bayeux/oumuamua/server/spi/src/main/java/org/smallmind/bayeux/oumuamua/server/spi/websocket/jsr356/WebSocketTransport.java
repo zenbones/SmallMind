@@ -39,15 +39,14 @@ import jakarta.servlet.ServletException;
 import jakarta.websocket.DeploymentException;
 import jakarta.websocket.server.ServerContainer;
 import jakarta.websocket.server.ServerEndpointConfig;
+import org.smallmind.bayeux.oumuamua.server.AbstractTransport;
 import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
-import org.smallmind.bayeux.oumuamua.server.api.Transport;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
-import org.smallmind.bayeux.oumuamua.server.spi.AbstractAttributed;
 import org.smallmind.bayeux.oumuamua.server.spi.Transports;
 import org.smallmind.nutsnbolts.servlet.FormattedServletException;
 
-public class WebSocketTransport<V extends Value<V>> extends AbstractAttributed implements Transport<V> {
+public class WebSocketTransport<V extends Value<V>> extends AbstractTransport<V> {
 
   public static final String ATTRIBUTE = "org.smallmind.bayeux.oumuamua.transport.websocket";
 

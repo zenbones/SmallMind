@@ -101,6 +101,8 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
         } else {
           websocketSession.getBasicRemote().sendText(encodedPacket);
         }
+
+        websocketTransport.onDelivery(encodedPacket);
       } catch (IOException | InterruptedException | TimeoutException | ExecutionException exception) {
         LoggerManager.getLogger(WebSocketEndpoint.class).error(exception);
       }
@@ -113,6 +115,8 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
     server.getExecutorService().submit(() -> {
 
       LoggerManager.getLogger(WebSocketEndpoint.class).debug(() -> "<=" + content);
+
+      websocketTransport.onReceipt(content);
 
       try {
         process(server, (session, packet) -> {
