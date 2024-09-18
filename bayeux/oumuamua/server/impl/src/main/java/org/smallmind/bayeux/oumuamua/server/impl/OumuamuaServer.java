@@ -354,7 +354,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
 
   public OumuamuaSession<V> createSession (Connection<V> connection) {
 
-    return new OumuamuaSession<>(this::onConnected, this::onDisconnected, connection, configuration.isWarnOnOverflow(), configuration.getMaxLongPollQueueSize(), configuration.getSessionMaxIdleTimeoutSeconds() * 1000L);
+    return new OumuamuaSession<>(this::onConnected, this::onDisconnected, connection, configuration.getMaxLongPollQueueSize(), configuration.getSessionMaxIdleTimeoutSeconds() * 1000L, configuration.getOverflowLogLevel());
   }
 
   public OumuamuaSession<V> getSession (String sessionId) {

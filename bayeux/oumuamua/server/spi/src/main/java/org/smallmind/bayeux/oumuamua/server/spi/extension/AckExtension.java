@@ -57,18 +57,18 @@ public class AckExtension<V extends Value<V>> extends AbstractServerPacketListen
   private static final String ACK_SIZE_ATTRIBUTE = "org.smallmind.bayeux.oumuamua.extension.ack.size";
   private static final String ACK_UNACKNOWLEDGED_MAP_ATTRIBUTE = "org.smallmind.bayeux.oumuamua.extension.ack.unacknowledged_map";
   private static final String ACK_RESEND_QUEUE_ATTRIBUTE = "org.smallmind.bayeux.oumuamua.extension.ack.resend_queue";
-  private final boolean warnOnOverflow;
+  private final Level overflowLogLevel;
   private final int maxAckQueueSize;
 
   public AckExtension (int maxAckQueueSize) {
 
-    this(maxAckQueueSize, false);
+    this(maxAckQueueSize, Level.DEBUG);
   }
 
-  public AckExtension (int maxAckQueueSize, boolean warnOnOverflow) {
+  public AckExtension (int maxAckQueueSize, Level overflowLogLevel) {
 
     this.maxAckQueueSize = maxAckQueueSize;
-    this.warnOnOverflow = warnOnOverflow;
+    this.overflowLogLevel = (overflowLogLevel == null) ? Level.OFF : overflowLogLevel;
   }
 
   @Override
@@ -194,7 +194,7 @@ public class AckExtension<V extends Value<V>> extends AbstractServerPacketListen
 
                 Map.Entry<Long, Packet<V>> unacknowledgedEntry;
 
-                LoggerManager.getLogger(AckExtension.class).log(warnOnOverflow ? Level.WARN : Level.DEBUG, "Session(%s) overflowed the ack queue", sender.getId());
+                LoggerManager.getLogger(AckExtension.class).log(overflowLogLevel, "Session(%s) overflowed the ack queue", sender.getId());
 
                 do {
                   if ((unacknowledgedEntry = unacknowledgedMap.pollLastEntry()) != null) {

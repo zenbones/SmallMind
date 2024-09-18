@@ -66,20 +66,20 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   private final Consumer<Session<V>> onConnectedCallback;
   private final Consumer<Session<V>> onDisconnectedCallback;
   private final AtomicBoolean longPolling = new AtomicBoolean(false);
+  private final Level overflowLogLevel;
   private final String sessionId = SnowflakeId.newInstance().generateHexEncoding();
-  private final boolean warnOnOverflow;
   private final long maxIdleTimeoutMilliseconds;
   private final int maxLongPollQueueSize;
   private SessionState state;
   private long lastContactTimestamp;
 
-  public OumuamuaSession (Consumer<Session<V>> onConnectedCallback, Consumer<Session<V>> onDisconnectedCallback, Connection<V> connection, boolean warnOnOverflow, int maxLongPollQueueSize, long maxIdleTimeoutMilliseconds) {
+  public OumuamuaSession (Consumer<Session<V>> onConnectedCallback, Consumer<Session<V>> onDisconnectedCallback, Connection<V> connection, int maxLongPollQueueSize, long maxIdleTimeoutMilliseconds, Level overflowLogLevel) {
 
     this.onConnectedCallback = onConnectedCallback;
     this.onDisconnectedCallback = onDisconnectedCallback;
-    this.warnOnOverflow = warnOnOverflow;
     this.maxLongPollQueueSize = maxLongPollQueueSize;
     this.maxIdleTimeoutMilliseconds = maxIdleTimeoutMilliseconds;
+    this.overflowLogLevel = (overflowLogLevel == null) ? Level.OFF : overflowLogLevel;
 
     if (connection.getTransport().getProtocol().isLongPolling()) {
       longPolling.set(true);
@@ -266,7 +266,7 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
 
       try {
         if (longPollQueueSize.incrementAndGet() > maxLongPollQueueSize) {
-          LoggerManager.getLogger(OumuamuaSession.class).log(warnOnOverflow ? Level.WARN : Level.DEBUG, "Session(%s) overflowed the long poll queue", getId());
+          LoggerManager.getLogger(OumuamuaSession.class).log(overflowLogLevel, "Session(%s) overflowed the long poll queue", getId());
 
           if (longPollDeque.pollFirst() != null) {
             longPollQueueSize.decrementAndGet();

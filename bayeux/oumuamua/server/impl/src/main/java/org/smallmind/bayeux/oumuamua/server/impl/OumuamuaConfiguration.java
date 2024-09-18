@@ -42,6 +42,7 @@ import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.backbone.Backbone;
 import org.smallmind.bayeux.oumuamua.server.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
+import org.smallmind.scribe.pen.Level;
 
 public class OumuamuaConfiguration<V extends Value<V>> {
 
@@ -54,7 +55,7 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   private Server.Listener<V>[] listeners;
   private String[][] reflectivePaths;
   private String[][] streamingPaths;
-  private boolean warnOnOverflow = false;
+  private Level overflowLogLevel = Level.DEBUG;
   private long channelTimeToLiveMinutes = 30;
   private int sessionConnectIntervalSeconds = 30;
   private int sessionMaxIdleTimeoutSeconds = 90;
@@ -132,14 +133,14 @@ public class OumuamuaConfiguration<V extends Value<V>> {
     this.listeners = listeners;
   }
 
-  public boolean isWarnOnOverflow () {
+  public Level getOverflowLogLevel () {
 
-    return warnOnOverflow;
+    return overflowLogLevel;
   }
 
-  public void setWarnOnOverflow (boolean warnOnOverflow) {
+  public void setOverflowLogLevel (Level overflowLogLevel) {
 
-    this.warnOnOverflow = warnOnOverflow;
+    this.overflowLogLevel = overflowLogLevel;
   }
 
   public long getChannelTimeToLiveMinutes () {
