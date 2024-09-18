@@ -44,6 +44,7 @@ import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.SessionState;
 import org.smallmind.bayeux.oumuamua.server.api.Transport;
+import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.impl.OumuamuaConnection;
 import org.smallmind.bayeux.oumuamua.server.impl.OumuamuaServer;
@@ -102,7 +103,7 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
           websocketSession.getBasicRemote().sendText(encodedPacket);
         }
 
-        websocketTransport.onDelivery(encodedPacket);
+        websocketTransport.onDelivery(packet);
       } catch (IOException | InterruptedException | TimeoutException | ExecutionException exception) {
         LoggerManager.getLogger(WebSocketEndpoint.class).error(exception);
       }
@@ -116,9 +117,12 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
 
       LoggerManager.getLogger(WebSocketEndpoint.class).debug(() -> "<=" + content);
 
-      websocketTransport.onReceipt(content);
-
       try {
+
+        Message<V>[] messages = server.getCodec().from(content);
+
+        websocketTransport.onReceipt(messages);
+
         process(server, (session, packet) -> {
           if (session == null) {
             deliver(packet);
@@ -130,7 +134,7 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
               onCleanUp();
             }
           }
-        }, server.getCodec().from(content));
+        }, messages);
       } catch (IOException ioException) {
         LoggerManager.getLogger(WebSocketEndpoint.class).error(ioException);
       }

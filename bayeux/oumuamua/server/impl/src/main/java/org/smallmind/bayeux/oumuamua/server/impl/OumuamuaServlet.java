@@ -114,12 +114,11 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
 
         LoggerManager.getLogger(LongPollingConnection.class).debug(() -> "<=" + new String(contentBuffer));
 
-        ((LongPollingTransport<V>)connection.getTransport()).onReceipt(contentBuffer);
-
         try {
 
           Message<V>[] messages = server.getCodec().from(contentBuffer);
 
+          ((LongPollingTransport<V>)connection.getTransport()).onReceipt(messages);
           AsyncContext asyncContext = request.startAsync();
           asyncContext.setTimeout(0);
 

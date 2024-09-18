@@ -34,6 +34,7 @@ package org.smallmind.bayeux.oumuamua.server.api;
 
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletException;
+import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
 public interface Transport<V extends Value<V>> extends Attributed {
@@ -44,11 +45,9 @@ public interface Transport<V extends Value<V>> extends Attributed {
 
   interface TransportListener<V extends Value<V>> extends Listener<V> {
 
-    void onReceipt (byte[] incoming);
+    void onReceipt (Message<V>[] incomingMessages);
 
-    void onReceipt (String incoming);
-
-    void onDelivery (String outgoing);
+    void onDelivery (Packet<V> outgoingPacket);
   }
 
   Protocol<V> getProtocol ();

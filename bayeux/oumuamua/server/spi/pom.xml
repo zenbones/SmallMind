@@ -47,6 +47,12 @@
       <optional>true</optional>
     </dependency>
     <dependency>
+      <groupId>org.hdrhistogram</groupId>
+      <artifactId>HdrHistogram</artifactId>
+      <scope>compile</scope>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
       <groupId>org.smallmind</groupId>
       <artifactId>oumuamua-server-api</artifactId>
       <scope>compile</scope>
