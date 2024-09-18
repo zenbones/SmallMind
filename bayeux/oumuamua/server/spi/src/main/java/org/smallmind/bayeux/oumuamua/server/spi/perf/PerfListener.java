@@ -32,29 +32,76 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.perf;
 
-import org.HdrHistogram.Recorder;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.Transport;
+import org.smallmind.bayeux.oumuamua.server.api.json.BooleanValue;
 import org.smallmind.bayeux.oumuamua.server.api.json.Message;
+import org.smallmind.bayeux.oumuamua.server.api.json.NumberValue;
+import org.smallmind.bayeux.oumuamua.server.api.json.ObjectValue;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
+import org.smallmind.bayeux.oumuamua.server.api.json.ValueType;
 
 public class PerfListener<V extends Value<V>> implements Transport.TransportListener<V> {
 
-  private final Recorder recorder;
-
-  public PerfListener (Recorder writeRecorder) {
-
-    recorder = new Recorder(1, 3600000L, 2);
-  }
+  private final PerfRecord localPerfRecord = new PerfRecord();
+  private final PerfRecord remotePerfRecord = new PerfRecord();
 
   @Override
   public void onReceipt (Message<V>[] incomingMessages) {
 
+    long now = System.nanoTime();
 
+    for (Message<V> message : incomingMessages) {
+
+      ObjectValue<V> perfValue = message.getFactory().objectValue();
+
+      message.getExt(true).put("perf", perfValue.put("timestamp", now));
+    }
   }
 
   @Override
   public void onDelivery (Packet<V> outgoingPacket) {
 
+    long now = System.nanoTime();
+
+    for (Message<V> message : outgoingPacket.getMessages()) {
+
+      ObjectValue<V> extValue;
+
+      if ((extValue = message.getExt()) != null) {
+
+        Value<V> perfValue;
+
+        if (((perfValue = extValue.get("perf")) != null) && ValueType.OBJECT.equals(perfValue.getType())) {
+
+          Value<V> timestampValue;
+
+          if (((timestampValue = ((ObjectValue<V>)perfValue).get("timestamp")) != null) && ValueType.NUMBER.equals(timestampValue.getType())) {
+
+            long timeInTransit = now - ((NumberValue<V>)timestampValue).asLong();
+
+            if (isRemote(extValue)) {
+              remotePerfRecord.store(message.getSessionId(), message.getId(), timeInTransit);
+            } else {
+              localPerfRecord.store(message.getSessionId(), message.getId(), timeInTransit);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private boolean isRemote (ObjectValue<V> extValue) {
+
+    Value<V> backboneValue;
+
+    if (((backboneValue = extValue.get("backbone")) != null) && ValueType.OBJECT.equals(backboneValue.getType())) {
+
+      Value<V> remoteValue;
+
+      return ((remoteValue = ((ObjectValue<V>)backboneValue).get("remote")) != null) && ValueType.BOOLEAN.equals(remoteValue.getType()) && ((BooleanValue<V>)remoteValue).asBoolean();
+    }
+
+    return false;
   }
 }

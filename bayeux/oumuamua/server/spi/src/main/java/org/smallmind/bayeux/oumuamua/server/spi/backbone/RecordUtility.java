@@ -40,6 +40,8 @@ import org.smallmind.bayeux.oumuamua.server.api.InvalidPathException;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.PacketType;
 import org.smallmind.bayeux.oumuamua.server.api.json.Codec;
+import org.smallmind.bayeux.oumuamua.server.api.json.Message;
+import org.smallmind.bayeux.oumuamua.server.api.json.ObjectValue;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
 import org.smallmind.bayeux.oumuamua.server.spi.json.PacketUtility;
@@ -71,8 +73,19 @@ public class RecordUtility {
     String nodeName = new String(readStringBuffer(byteArrayInputStream, lengthBuffer), StandardCharsets.UTF_8);
     String path = new String(readStringBuffer(byteArrayInputStream, lengthBuffer), StandardCharsets.UTF_8);
     byte[] encodedPacketBuffer = readStringBuffer(byteArrayInputStream, lengthBuffer);
+    Message<V>[] decodedMessages = codec.from(encodedPacketBuffer);
 
-    return new DebonedPacket<>(nodeName, new Packet<>(PacketType.DELIVERY, null, new DefaultRoute(path), codec.from(encodedPacketBuffer)));
+    for (Message<V> decodedMessage : decodedMessages) {
+
+      ObjectValue<V> backboneValue = decodedMessage.getFactory().objectValue();
+
+      backboneValue.put("remote", true);
+      backboneValue.put("type", "kafka");
+
+      decodedMessage.getExt(true).put("backbone", backboneValue);
+    }
+
+    return new DebonedPacket<>(nodeName, new Packet<>(PacketType.DELIVERY, null, new DefaultRoute(path), decodedMessages));
   }
 
   private static byte[] readStringBuffer (ByteArrayInputStream byteArrayInputStream, byte[] lengthBuffer) {
