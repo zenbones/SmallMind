@@ -39,7 +39,7 @@ import jakarta.servlet.ServletException;
 import jakarta.websocket.DeploymentException;
 import jakarta.websocket.server.ServerContainer;
 import jakarta.websocket.server.ServerEndpointConfig;
-import org.smallmind.bayeux.oumuamua.server.AbstractTransport;
+import org.smallmind.bayeux.oumuamua.server.spi.AbstractTransport;
 import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;

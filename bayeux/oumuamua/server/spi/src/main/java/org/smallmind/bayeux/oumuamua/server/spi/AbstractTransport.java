@@ -30,12 +30,11 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server;
+package org.smallmind.bayeux.oumuamua.server.spi;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 import org.smallmind.bayeux.oumuamua.server.api.Transport;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
-import org.smallmind.bayeux.oumuamua.server.spi.AbstractAttributed;
 
 public abstract class AbstractTransport<V extends Value<V>> extends AbstractAttributed implements Transport<V> {
 

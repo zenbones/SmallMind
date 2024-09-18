@@ -33,7 +33,7 @@
 package org.smallmind.bayeux.oumuamua.server.impl.longpolling;
 
 import jakarta.servlet.ServletConfig;
-import org.smallmind.bayeux.oumuamua.server.AbstractTransport;
+import org.smallmind.bayeux.oumuamua.server.spi.AbstractTransport;
 import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
