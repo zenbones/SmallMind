@@ -130,6 +130,9 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
 
     Backbone<V> backbone;
 
+    LoggerManager.getLogger(OumuamuaServer.class).info("Ouumuamua Server starting...");
+    LoggerManager.getLogger(OumuamuaServer.class).info(configuration);
+
     if ((backbone = getBackbone()) != null) {
       try {
         backbone.startUp(this);
@@ -145,11 +148,15 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
 
     new Thread(idleChannelSifter = new IdleChannelSifter<>(configuration.getIdleChannelCycleMinutes(), channelTree, this::onRemoved)).start();
     new Thread(idleSessionInspector = new IdleSessionInspector<>(this, configuration.getIdleSessionCycleMinutes())).start();
+
+    LoggerManager.getLogger(OumuamuaServer.class).info("Ouumuamua Server started...");
   }
 
   public void stop () {
 
     Backbone<V> backbone;
+
+    LoggerManager.getLogger(OumuamuaServer.class).info("Ouumuamua Server stopping...");
 
     if ((backbone = getBackbone()) != null) {
       try {
@@ -172,6 +179,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
     }
 
     executorService.shutdown();
+    LoggerManager.getLogger(OumuamuaServer.class).info("Ouumuamua Server stopped...");
   }
 
   public ExecutorService getExecutorService () {

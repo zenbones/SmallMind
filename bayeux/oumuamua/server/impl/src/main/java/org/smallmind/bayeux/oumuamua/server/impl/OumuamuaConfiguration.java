@@ -32,6 +32,7 @@
  */
 package org.smallmind.bayeux.oumuamua.server.impl;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.concurrent.ExecutorService;
 import org.smallmind.bayeux.oumuamua.server.api.BayeuxService;
@@ -42,6 +43,7 @@ import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.backbone.Backbone;
 import org.smallmind.bayeux.oumuamua.server.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
+import org.smallmind.nutsnbolts.util.MutationUtility;
 import org.smallmind.scribe.pen.Level;
 
 public class OumuamuaConfiguration<V extends Value<V>> {
@@ -256,5 +258,67 @@ public class OumuamuaConfiguration<V extends Value<V>> {
     }
 
     return false;
+  }
+
+  @Override
+  public String toString () {
+
+    StringBuilder builder = new StringBuilder("\n{\n");
+
+    if (backbone != null) {
+      builder.append("  backbone: ").append(backbone.getClass().getName()).append(System.lineSeparator());
+    }
+    if (codec != null) {
+      builder.append("  codec: ").append(codec.getClass().getName()).append(System.lineSeparator());
+    }
+    if (executorService != null) {
+      builder.append("  executorService: ").append(executorService.getClass().getName()).append(System.lineSeparator());
+    }
+    if (securityPolicy != null) {
+      builder.append("  securityPolicy: ").append(securityPolicy.getClass().getName()).append(System.lineSeparator());
+    }
+    if (protocols != null) {
+      builder.append("  protocols: ").append(Arrays.toString(MutationUtility.toArray(protocols, String.class, protocol -> protocol.getClass().getName()))).append(System.lineSeparator());
+    }
+    if (services != null) {
+      builder.append("  services: ").append(Arrays.toString(MutationUtility.toArray(services, String.class, service -> service.getClass().getName()))).append(System.lineSeparator());
+    }
+    if (listeners != null) {
+      builder.append("  listeners: ").append(Arrays.toString(MutationUtility.toArray(listeners, String.class, listener -> listener.getClass().getName()))).append(System.lineSeparator());
+    }
+    if (reflectivePaths != null) {
+      builder.append("  reflectivePaths: ").append(fromRoutes(reflectivePaths)).append(System.lineSeparator());
+    }
+    if (streamingPaths != null) {
+      builder.append("  streamingPaths: ").append(fromRoutes(streamingPaths)).append(System.lineSeparator());
+    }
+    if (overflowLogLevel != null) {
+      builder.append("  overflowLogLevel: ").append(overflowLogLevel.name()).append(System.lineSeparator());
+    }
+    builder.append("  channelTimeToLiveMinutes: ").append(channelTimeToLiveMinutes).append(System.lineSeparator());
+    builder.append("  sessionConnectIntervalSeconds: ").append(sessionConnectIntervalSeconds).append(System.lineSeparator());
+    builder.append("  sessionMaxIdleTimeoutSeconds: ").append(sessionMaxIdleTimeoutSeconds).append(System.lineSeparator());
+    builder.append("  idleChannelCycleMinutes: ").append(idleChannelCycleMinutes).append(System.lineSeparator());
+    builder.append("  idleSessionCycleMinutes: ").append(idleSessionCycleMinutes).append(System.lineSeparator());
+    builder.append("  maxLongPollQueueSize: ").append(maxLongPollQueueSize).append(System.lineSeparator());
+
+    return builder.append("}").toString();
+  }
+
+  private String fromRoutes (String[][] arrayOfArray) {
+
+    StringBuilder builder = new StringBuilder("[");
+    boolean first = true;
+
+    for (String[] array : arrayOfArray) {
+      if (!first) {
+        builder.append(",");
+      }
+
+      builder.append("/").append(String.join("/", array));
+      first = false;
+    }
+
+    return builder.append("]").toString();
   }
 }
