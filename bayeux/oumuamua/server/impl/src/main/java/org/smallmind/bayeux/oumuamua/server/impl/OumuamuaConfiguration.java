@@ -43,26 +43,45 @@ import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.backbone.Backbone;
 import org.smallmind.bayeux.oumuamua.server.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
+import org.smallmind.bayeux.oumuamua.server.impl.json.ClassNameXmlAdapter;
 import org.smallmind.nutsnbolts.util.MutationUtility;
 import org.smallmind.scribe.pen.Level;
+import org.smallmind.scribe.pen.json.LevelEnumXmlAdapter;
+import org.smallmind.web.json.doppelganger.Doppelganger;
+import org.smallmind.web.json.doppelganger.Idiom;
+import org.smallmind.web.json.doppelganger.View;
 
+import static org.smallmind.web.json.doppelganger.Visibility.OUT;
+
+@Doppelganger
 public class OumuamuaConfiguration<V extends Value<V>> {
 
+  @View(adapter = ClassNameXmlAdapter.class, idioms = @Idiom(visibility = OUT))
   private Backbone<V> backbone;
+  @View(adapter = ClassNameXmlAdapter.class, idioms = @Idiom(visibility = OUT))
   private Codec<V> codec;
+  @View(adapter = ClassNameXmlAdapter.class, idioms = @Idiom(visibility = OUT))
   private ExecutorService executorService;
+  @View(adapter = ClassNameXmlAdapter.class, idioms = @Idiom(visibility = OUT))
   private SecurityPolicy<V> securityPolicy;
   private Protocol<V>[] protocols;
   private BayeuxService[] services;
   private Server.Listener<V>[] listeners;
   private String[][] reflectivePaths;
   private String[][] streamingPaths;
+  @View(adapter = LevelEnumXmlAdapter.class, idioms = @Idiom(visibility = OUT))
   private Level overflowLogLevel = Level.DEBUG;
+  @View(idioms = @Idiom(visibility = OUT))
   private long channelTimeToLiveMinutes = 30;
+  @View(idioms = @Idiom(visibility = OUT))
   private int sessionConnectIntervalSeconds = 30;
+  @View(idioms = @Idiom(visibility = OUT))
   private int sessionMaxIdleTimeoutSeconds = 90;
+  @View(idioms = @Idiom(visibility = OUT))
   private int idleChannelCycleMinutes = 5;
+  @View(idioms = @Idiom(visibility = OUT))
   private int idleSessionCycleMinutes = 1;
+  @View(idioms = @Idiom(visibility = OUT))
   private int maxLongPollQueueSize = 1000;
 
   public Backbone<V> getBackbone () {

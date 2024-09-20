@@ -128,6 +128,12 @@ public class JsonCodec {
     return OBJECT_MAPPER.writeValueAsString(obj);
   }
 
+  public static String writeAsPrettyPrintedString (Object obj)
+    throws JsonProcessingException {
+
+    return OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(obj);
+  }
+
   public static void writeToStream (OutputStream outputStream, Object obj)
     throws IOException {
 

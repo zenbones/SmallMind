@@ -46,6 +46,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.smallmind.bayeux.oumuamua.server.api.BayeuxService;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.ChannelInitializer;
@@ -66,6 +67,7 @@ import org.smallmind.bayeux.oumuamua.server.spi.AbstractAttributed;
 import org.smallmind.bayeux.oumuamua.server.spi.Connection;
 import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
 import org.smallmind.scribe.pen.LoggerManager;
+import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed implements Server<V> {
 
@@ -130,8 +132,13 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
 
     Backbone<V> backbone;
 
-    LoggerManager.getLogger(OumuamuaServer.class).info("Ouumuamua Server starting...");
-    LoggerManager.getLogger(OumuamuaServer.class).info(configuration);
+    LoggerManager.getLogger(OumuamuaServer.class).info("Oumuamua Server starting...");
+
+    try {
+      LoggerManager.getLogger(OumuamuaServer.class).info("\n" + JsonCodec.writeAsPrettyPrintedString(OumuamuaConfigurationOutView.instance(configuration)));
+    } catch (JsonProcessingException jsonProcessingException) {
+      throw new ServletException(jsonProcessingException);
+    }
 
     if ((backbone = getBackbone()) != null) {
       try {
@@ -149,14 +156,14 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
     new Thread(idleChannelSifter = new IdleChannelSifter<>(configuration.getIdleChannelCycleMinutes(), channelTree, this::onRemoved)).start();
     new Thread(idleSessionInspector = new IdleSessionInspector<>(this, configuration.getIdleSessionCycleMinutes())).start();
 
-    LoggerManager.getLogger(OumuamuaServer.class).info("Ouumuamua Server started...");
+    LoggerManager.getLogger(OumuamuaServer.class).info("Oumuamua Server started...");
   }
 
   public void stop () {
 
     Backbone<V> backbone;
 
-    LoggerManager.getLogger(OumuamuaServer.class).info("Ouumuamua Server stopping...");
+    LoggerManager.getLogger(OumuamuaServer.class).info("Oumuamua Server stopping...");
 
     if ((backbone = getBackbone()) != null) {
       try {
@@ -179,7 +186,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
     }
 
     executorService.shutdown();
-    LoggerManager.getLogger(OumuamuaServer.class).info("Ouumuamua Server stopped...");
+    LoggerManager.getLogger(OumuamuaServer.class).info("Oumuamua Server stopped...");
   }
 
   public ExecutorService getExecutorService () {
