@@ -35,6 +35,7 @@ package org.smallmind.web.json.scaffold.util;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.LinkedList;
 import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonParser;
@@ -42,28 +43,22 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
+import org.smallmind.nutsnbolts.util.AlphaNumericComparator;
 import org.smallmind.nutsnbolts.util.IterableIterator;
 
 public class JsonCodec {
 
+  private static final AlphaNumericComparator<String> ALPHA_NUMERIC_COMPARATOR = new AlphaNumericComparator<>();
   private static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder()
                                                       .addModule(new AfterburnerModule())
                                                       .addModule(new JakartaXmlBindAnnotationModule().setNonNillableInclusion(JsonInclude.Include.NON_NULL))
                                                       .addModule(new PolymorphicModule())
                                                       .enable(MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME).build();
-
-  private static final ObjectMapper SORTED_OBJECT_MAPPER = JsonMapper.builder()
-                                                             .configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true)
-                                                             .addModule(new AfterburnerModule())
-                                                             .addModule(new JakartaXmlBindAnnotationModule().setNonNillableInclusion(JsonInclude.Include.NON_NULL))
-                                                             .addModule(new PolymorphicModule())
-                                                             .enable(MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME).build();
 
   public static JsonNode readAsJsonNode (byte[] bytes)
     throws IOException {
@@ -139,7 +134,7 @@ public class JsonCodec {
   public static String writeAsPrettyPrintedString (Object obj)
     throws JsonProcessingException {
 
-    return SORTED_OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(obj);
+    return OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(sort(OBJECT_MAPPER.valueToTree(obj)));
   }
 
   public static void writeToStream (OutputStream outputStream, Object obj)
@@ -182,6 +177,33 @@ public class JsonCodec {
 
           return node;
       }
+    }
+  }
+
+  private static JsonNode sort (JsonNode node) {
+
+    if (node == null) {
+
+      return null;
+    } else if (node.isObject()) {
+
+      ObjectNode objectNode = JsonNodeFactory.instance.objectNode();
+      LinkedList<String> sortedFieldNameList = new LinkedList<>();
+
+      for (String fieldName : new IterableIterator<>(node.fieldNames())) {
+        sortedFieldNameList.add(fieldName);
+      }
+
+      sortedFieldNameList.sort(ALPHA_NUMERIC_COMPARATOR);
+
+      for (String sortedFieldName : sortedFieldNameList) {
+        objectNode.set(sortedFieldName, sort(node.get(sortedFieldName)));
+      }
+
+      return objectNode;
+    } else {
+
+      return node;
     }
   }
 }
