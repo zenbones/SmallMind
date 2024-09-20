@@ -61,6 +61,7 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   private final Condition notEmptyCondition = longPollLock.newCondition();
   private final ConcurrentLinkedDeque<Pair<Session<V>, Packet<V>>> longPollDeque = new ConcurrentLinkedDeque<>();
   private final ConcurrentLinkedQueue<Session.Listener<V>> listenerList = new ConcurrentLinkedQueue<>();
+  private final AtomicReference<SessionState> stateRef = new AtomicReference<>(SessionState.INITIALIZED);
   private final AtomicReference<Connection<V>> connectionRef = new AtomicReference<>();
   private final AtomicInteger longPollQueueSize = new AtomicInteger(0);
   private final Consumer<Session<V>> onConnectedCallback;
@@ -70,7 +71,6 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   private final String sessionId = SnowflakeId.newInstance().generateHexEncoding();
   private final long maxIdleTimeoutMilliseconds;
   private final int maxLongPollQueueSize;
-  private SessionState state;
   private long lastContactTimestamp;
 
   public OumuamuaSession (Consumer<Session<V>> onConnectedCallback, Consumer<Session<V>> onDisconnectedCallback, Connection<V> connection, int maxLongPollQueueSize, long maxIdleTimeoutMilliseconds, Level overflowLogLevel) {
@@ -86,7 +86,6 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
     }
 
     connectionRef.set(connection);
-    state = SessionState.INITIALIZED;
     lastContactTimestamp = System.currentTimeMillis();
   }
 
@@ -168,26 +167,26 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   @Override
   public synchronized SessionState getState () {
 
-    return state;
+    return stateRef.get();
   }
 
   @Override
   public synchronized void completeHandshake () {
 
-    state = SessionState.HANDSHOOK;
+    stateRef.set(SessionState.HANDSHOOK);
   }
 
   @Override
   public synchronized void completeConnection () {
 
-    state = SessionState.CONNECTED;
+    stateRef.set(SessionState.CONNECTED);
     onConnectedCallback.accept(this);
   }
 
   @Override
   public synchronized void completeDisconnect () {
 
-    state = SessionState.DISCONNECTED;
+    stateRef.set(SessionState.DISCONNECTED);
     onDisconnectedCallback.accept(this);
   }
 
@@ -198,7 +197,7 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
 
   public synchronized void contact () {
 
-    if (!SessionState.DISCONNECTED.equals(state)) {
+    if (!SessionState.DISCONNECTED.equals(stateRef.get())) {
       lastContactTimestamp = System.currentTimeMillis();
     }
   }
@@ -253,38 +252,40 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   @Override
   public void deliver (Channel<V> fromChannel, Session<V> sender, Packet<V> packet) {
 
-    if (fromChannel.isStreaming() && (!connectionRef.get().getTransport().getProtocol().isLongPolling())) {
+    if (SessionState.CONNECTED.equals(stateRef.get())) {
+      if (fromChannel.isStreaming() && (!connectionRef.get().getTransport().getProtocol().isLongPolling())) {
 
-      Packet<V> processedPacket;
+        Packet<V> processedPacket;
 
-      // No need to re-freeze these packets, as they were frozen upon entering this session, and will be seen only by this connection
-      if ((processedPacket = onProcessing(sender, packet)) != null) {
-        connectionRef.get().deliver(processedPacket);
-      }
-    } else if (longPolling.get()) {
-      longPollLock.lock();
-
-      try {
-        if (longPollQueueSize.incrementAndGet() > maxLongPollQueueSize) {
-          LoggerManager.getLogger(OumuamuaSession.class).log(overflowLogLevel, "Session(%s) overflowed the long poll queue", getId());
-
-          if (longPollDeque.pollFirst() != null) {
-            longPollQueueSize.decrementAndGet();
-          }
+        // No need to re-freeze these packets, as they were frozen upon entering this session, and will be seen only by this connection
+        if ((processedPacket = onProcessing(sender, packet)) != null) {
+          connectionRef.get().deliver(processedPacket);
         }
+      } else if (longPolling.get()) {
+        longPollLock.lock();
 
-        longPollDeque.add(new Pair<>(sender, packet));
-        notEmptyCondition.signal();
-      } finally {
-        longPollLock.unlock();
-      }
-    } else {
+        try {
+          if (longPollQueueSize.incrementAndGet() > maxLongPollQueueSize) {
+            LoggerManager.getLogger(OumuamuaSession.class).log(overflowLogLevel, "Session(%s) overflowed the long poll queue", getId());
 
-      Packet<V> processedPacket;
+            if (longPollDeque.pollFirst() != null) {
+              longPollQueueSize.decrementAndGet();
+            }
+          }
 
-      // No need to re-freeze these packets, as they were frozen upon entering this session, and will be seen only by this connection
-      if ((processedPacket = onProcessing(sender, packet)) != null) {
-        connectionRef.get().deliver(processedPacket);
+          longPollDeque.add(new Pair<>(sender, packet));
+          notEmptyCondition.signal();
+        } finally {
+          longPollLock.unlock();
+        }
+      } else {
+
+        Packet<V> processedPacket;
+
+        // No need to re-freeze these packets, as they were frozen upon entering this session, and will be seen only by this connection
+        if ((processedPacket = onProcessing(sender, packet)) != null) {
+          connectionRef.get().deliver(processedPacket);
+        }
       }
     }
   }
