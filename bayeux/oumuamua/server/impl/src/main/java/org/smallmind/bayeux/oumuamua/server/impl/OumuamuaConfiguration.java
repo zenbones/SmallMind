@@ -32,7 +32,6 @@
  */
 package org.smallmind.bayeux.oumuamua.server.impl;
 
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.concurrent.ExecutorService;
 import org.smallmind.bayeux.oumuamua.server.api.BayeuxService;
@@ -43,8 +42,9 @@ import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.backbone.Backbone;
 import org.smallmind.bayeux.oumuamua.server.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
+import org.smallmind.bayeux.oumuamua.server.impl.json.ClassNameArrayXmlAdapter;
 import org.smallmind.bayeux.oumuamua.server.impl.json.ClassNameXmlAdapter;
-import org.smallmind.nutsnbolts.util.MutationUtility;
+import org.smallmind.bayeux.oumuamua.server.impl.json.DoubleStringArrayXmlAdapter;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.json.LevelEnumXmlAdapter;
 import org.smallmind.web.json.doppelganger.Doppelganger;
@@ -64,11 +64,16 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   private ExecutorService executorService;
   @View(adapter = ClassNameXmlAdapter.class, idioms = @Idiom(visibility = OUT))
   private SecurityPolicy<V> securityPolicy;
+  @View(adapter = ClassNameArrayXmlAdapter.class, idioms = @Idiom(visibility = OUT))
   private Protocol<V>[] protocols;
+  @View(adapter = ClassNameArrayXmlAdapter.class, idioms = @Idiom(visibility = OUT))
   private BayeuxService[] services;
+  @View(adapter = ClassNameArrayXmlAdapter.class, idioms = @Idiom(visibility = OUT))
   private Server.Listener<V>[] listeners;
-  private String[][] reflectivePaths;
-  private String[][] streamingPaths;
+  @View(adapter = DoubleStringArrayXmlAdapter.class, name = "reflectivePaths", idioms = @Idiom(visibility = OUT))
+  private String[][] parsedReflectivePaths;
+  @View(adapter = DoubleStringArrayXmlAdapter.class, name = "streamingPaths", idioms = @Idiom(visibility = OUT))
+  private String[][] parsedStreamingPaths;
   @View(adapter = LevelEnumXmlAdapter.class, idioms = @Idiom(visibility = OUT))
   private Level overflowLogLevel = Level.DEBUG;
   @View(idioms = @Idiom(visibility = OUT))
@@ -224,30 +229,50 @@ public class OumuamuaConfiguration<V extends Value<V>> {
     this.maxLongPollQueueSize = maxLongPollQueueSize;
   }
 
+  public String[][] getParsedReflectivePaths () {
+
+    return parsedReflectivePaths;
+  }
+
+  protected void setParsedReflectivePaths (String[][] parsedReflectivePaths) {
+
+    this.parsedReflectivePaths = parsedReflectivePaths;
+  }
+
   public void setReflectivePaths (String[] paths) {
 
     LinkedList<String[]> reflectivePathList = decomposePaths(paths);
 
-    reflectivePaths = new String[reflectivePathList.size()][];
-    reflectivePathList.toArray(reflectivePaths);
+    parsedReflectivePaths = new String[reflectivePathList.size()][];
+    reflectivePathList.toArray(parsedReflectivePaths);
   }
 
   public boolean isReflective (Route route) {
 
-    return matchesPaths(reflectivePaths, route);
+    return matchesPaths(parsedReflectivePaths, route);
+  }
+
+  public String[][] getParsedStreamingPaths () {
+
+    return parsedStreamingPaths;
+  }
+
+  protected void setParsedStreamingPaths (String[][] parsedStreamingPaths) {
+
+    this.parsedStreamingPaths = parsedStreamingPaths;
   }
 
   public void setStreamingPaths (String[] paths) {
 
     LinkedList<String[]> streamingPathList = decomposePaths(paths);
 
-    streamingPaths = new String[streamingPathList.size()][];
-    streamingPathList.toArray(streamingPaths);
+    parsedStreamingPaths = new String[streamingPathList.size()][];
+    streamingPathList.toArray(parsedStreamingPaths);
   }
 
   public boolean isStreaming (Route route) {
 
-    return matchesPaths(streamingPaths, route);
+    return matchesPaths(parsedStreamingPaths, route);
   }
 
   private LinkedList<String[]> decomposePaths (String[] paths) {
@@ -277,67 +302,5 @@ public class OumuamuaConfiguration<V extends Value<V>> {
     }
 
     return false;
-  }
-
-  @Override
-  public String toString () {
-
-    StringBuilder builder = new StringBuilder("\n{\n");
-
-    if (backbone != null) {
-      builder.append("  backbone: ").append(backbone.getClass().getName()).append(System.lineSeparator());
-    }
-    if (codec != null) {
-      builder.append("  codec: ").append(codec.getClass().getName()).append(System.lineSeparator());
-    }
-    if (executorService != null) {
-      builder.append("  executorService: ").append(executorService.getClass().getName()).append(System.lineSeparator());
-    }
-    if (securityPolicy != null) {
-      builder.append("  securityPolicy: ").append(securityPolicy.getClass().getName()).append(System.lineSeparator());
-    }
-    if (protocols != null) {
-      builder.append("  protocols: ").append(Arrays.toString(MutationUtility.toArray(protocols, String.class, protocol -> protocol.getClass().getName()))).append(System.lineSeparator());
-    }
-    if (services != null) {
-      builder.append("  services: ").append(Arrays.toString(MutationUtility.toArray(services, String.class, service -> service.getClass().getName()))).append(System.lineSeparator());
-    }
-    if (listeners != null) {
-      builder.append("  listeners: ").append(Arrays.toString(MutationUtility.toArray(listeners, String.class, listener -> listener.getClass().getName()))).append(System.lineSeparator());
-    }
-    if (reflectivePaths != null) {
-      builder.append("  reflectivePaths: ").append(fromRoutes(reflectivePaths)).append(System.lineSeparator());
-    }
-    if (streamingPaths != null) {
-      builder.append("  streamingPaths: ").append(fromRoutes(streamingPaths)).append(System.lineSeparator());
-    }
-    if (overflowLogLevel != null) {
-      builder.append("  overflowLogLevel: ").append(overflowLogLevel.name()).append(System.lineSeparator());
-    }
-    builder.append("  channelTimeToLiveMinutes: ").append(channelTimeToLiveMinutes).append(System.lineSeparator());
-    builder.append("  sessionConnectIntervalSeconds: ").append(sessionConnectIntervalSeconds).append(System.lineSeparator());
-    builder.append("  sessionMaxIdleTimeoutSeconds: ").append(sessionMaxIdleTimeoutSeconds).append(System.lineSeparator());
-    builder.append("  idleChannelCycleMinutes: ").append(idleChannelCycleMinutes).append(System.lineSeparator());
-    builder.append("  idleSessionCycleMinutes: ").append(idleSessionCycleMinutes).append(System.lineSeparator());
-    builder.append("  maxLongPollQueueSize: ").append(maxLongPollQueueSize).append(System.lineSeparator());
-
-    return builder.append("}").toString();
-  }
-
-  private String fromRoutes (String[][] arrayOfArray) {
-
-    StringBuilder builder = new StringBuilder("[");
-    boolean first = true;
-
-    for (String[] array : arrayOfArray) {
-      if (!first) {
-        builder.append(",");
-      }
-
-      builder.append("/").append(String.join("/", array));
-      first = false;
-    }
-
-    return builder.append("]").toString();
   }
 }

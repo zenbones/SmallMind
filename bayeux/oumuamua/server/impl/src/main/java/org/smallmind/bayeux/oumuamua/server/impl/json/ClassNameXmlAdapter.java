@@ -45,6 +45,6 @@ public class ClassNameXmlAdapter extends XmlAdapter<String, Object> {
   @Override
   public String marshal (Object obj) {
 
-    return obj.getClass().getName();
+    return (obj == null) ? null : obj.getClass().getName();
   }
 }

@@ -42,6 +42,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -56,6 +57,13 @@ public class JsonCodec {
                                                       .addModule(new JakartaXmlBindAnnotationModule().setNonNillableInclusion(JsonInclude.Include.NON_NULL))
                                                       .addModule(new PolymorphicModule())
                                                       .enable(MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME).build();
+
+  private static final ObjectMapper SORTED_OBJECT_MAPPER = JsonMapper.builder()
+                                                             .configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true)
+                                                             .addModule(new AfterburnerModule())
+                                                             .addModule(new JakartaXmlBindAnnotationModule().setNonNillableInclusion(JsonInclude.Include.NON_NULL))
+                                                             .addModule(new PolymorphicModule())
+                                                             .enable(MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME).build();
 
   public static JsonNode readAsJsonNode (byte[] bytes)
     throws IOException {
@@ -131,7 +139,7 @@ public class JsonCodec {
   public static String writeAsPrettyPrintedString (Object obj)
     throws JsonProcessingException {
 
-    return OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(obj);
+    return SORTED_OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(obj);
   }
 
   public static void writeToStream (OutputStream outputStream, Object obj)
