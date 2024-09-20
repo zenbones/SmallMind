@@ -36,7 +36,7 @@ import org.HdrHistogram.Recorder;
 
 public class PerfRecord {
 
-  private final Recorder recorder = new Recorder(1, 3600000L, 2);
+  private final Recorder recorder = new Recorder(1, 3600000000000L, 2);
 
   public void reset () {
 
