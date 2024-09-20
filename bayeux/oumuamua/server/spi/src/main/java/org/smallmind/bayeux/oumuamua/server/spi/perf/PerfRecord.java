@@ -45,6 +45,8 @@ public class PerfRecord {
 
   public void store (long timeInTransit) {
 
-    recorder.recordValue(timeInTransit);
+    if (timeInTransit >= 0) {
+      recorder.recordValue(timeInTransit + 1);
+    }
   }
 }
