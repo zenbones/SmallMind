@@ -35,28 +35,18 @@ package org.smallmind.bayeux.oumuamua.server.impl.longpolling;
 import jakarta.servlet.ServletConfig;
 import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
+import org.smallmind.bayeux.oumuamua.server.api.Transport;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
-import org.smallmind.bayeux.oumuamua.server.spi.AbstractTransport;
+import org.smallmind.bayeux.oumuamua.server.spi.AbstractAttributed;
 import org.smallmind.bayeux.oumuamua.server.spi.Transports;
 
-public class LongPollingTransport<V extends Value<V>> extends AbstractTransport<V> {
+public class LongPollingTransport<V extends Value<V>> extends AbstractAttributed implements Transport<V> {
 
   private final ServletProtocol<V> servletProtocol;
 
   public LongPollingTransport (ServletProtocol<V> servletProtocol) {
 
-    this(servletProtocol, null);
-  }
-
-  public LongPollingTransport (ServletProtocol<V> servletProtocol, TransportListener<V>[] listeners) {
-
     this.servletProtocol = servletProtocol;
-
-    if (listeners != null) {
-      for (TransportListener<V> listener : listeners) {
-        addListener(listener);
-      }
-    }
   }
 
   @Override

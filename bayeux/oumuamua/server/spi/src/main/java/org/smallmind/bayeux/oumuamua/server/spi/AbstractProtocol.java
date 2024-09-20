@@ -34,19 +34,19 @@ package org.smallmind.bayeux.oumuamua.server.spi;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
-import org.smallmind.bayeux.oumuamua.server.api.Transport;
+import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
-public abstract class AbstractTransport<V extends Value<V>> extends AbstractAttributed implements Transport<V> {
+public abstract class AbstractProtocol<V extends Value<V>> implements Protocol<V> {
 
   private final ConcurrentLinkedQueue<Listener<V>> listenerList = new ConcurrentLinkedQueue<>();
 
   public void onReceipt (Message<V>[] incomingMessages) {
 
     for (Listener<V> listener : listenerList) {
-      if (TransportListener.class.isAssignableFrom(listener.getClass())) {
-        ((TransportListener<V>)listener).onReceipt(incomingMessages);
+      if (ProtocolListener.class.isAssignableFrom(listener.getClass())) {
+        ((ProtocolListener<V>)listener).onReceipt(incomingMessages);
       }
     }
   }
@@ -54,8 +54,8 @@ public abstract class AbstractTransport<V extends Value<V>> extends AbstractAttr
   public void onDelivery (Packet<V> outgoingPacket) {
 
     for (Listener<V> listener : listenerList) {
-      if (TransportListener.class.isAssignableFrom(listener.getClass())) {
-        ((TransportListener<V>)listener).onDelivery(outgoingPacket);
+      if (ProtocolListener.class.isAssignableFrom(listener.getClass())) {
+        ((ProtocolListener<V>)listener).onDelivery(outgoingPacket);
       }
     }
   }

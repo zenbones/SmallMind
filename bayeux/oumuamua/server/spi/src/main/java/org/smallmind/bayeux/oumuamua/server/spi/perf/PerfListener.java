@@ -33,7 +33,7 @@
 package org.smallmind.bayeux.oumuamua.server.spi.perf;
 
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
-import org.smallmind.bayeux.oumuamua.server.api.Transport;
+import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.json.BooleanValue;
 import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.NumberValue;
@@ -41,7 +41,7 @@ import org.smallmind.bayeux.oumuamua.server.api.json.ObjectValue;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.json.ValueType;
 
-public class PerfListener<V extends Value<V>> implements Transport.TransportListener<V> {
+public class PerfListener<V extends Value<V>> implements Protocol.ProtocolListener<V> {
 
   private final PerfRecord localPerfRecord = new PerfRecord();
   private final PerfRecord remotePerfRecord = new PerfRecord();

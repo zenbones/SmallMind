@@ -51,6 +51,7 @@ import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.impl.longpolling.LongPollingConnection;
 import org.smallmind.bayeux.oumuamua.server.impl.longpolling.LongPollingTransport;
+import org.smallmind.bayeux.oumuamua.server.impl.longpolling.ServletProtocol;
 import org.smallmind.bayeux.oumuamua.server.spi.Protocols;
 import org.smallmind.bayeux.oumuamua.server.spi.Transports;
 import org.smallmind.scribe.pen.LoggerManager;
@@ -180,7 +181,7 @@ public class AsyncOumuamuaServlet<V extends Value<V>> extends HttpServlet {
 
       Message<V>[] messages = server.getCodec().from(contentBuffer);
 
-      ((LongPollingTransport<V>)connection.getTransport()).onReceipt(messages);
+      ((ServletProtocol<V>)connection.getTransport().getProtocol()).onReceipt(messages);
       executorService.submit(() -> connection.onMessages(asyncContext, messages));
     }
 

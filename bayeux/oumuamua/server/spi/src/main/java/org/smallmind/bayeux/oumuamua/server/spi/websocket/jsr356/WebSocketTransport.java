@@ -41,12 +41,13 @@ import jakarta.websocket.server.ServerContainer;
 import jakarta.websocket.server.ServerEndpointConfig;
 import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
+import org.smallmind.bayeux.oumuamua.server.api.Transport;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
-import org.smallmind.bayeux.oumuamua.server.spi.AbstractTransport;
+import org.smallmind.bayeux.oumuamua.server.spi.AbstractAttributed;
 import org.smallmind.bayeux.oumuamua.server.spi.Transports;
 import org.smallmind.nutsnbolts.servlet.FormattedServletException;
 
-public class WebSocketTransport<V extends Value<V>> extends AbstractTransport<V> {
+public class WebSocketTransport<V extends Value<V>> extends AbstractAttributed implements Transport<V> {
 
   public static final String ATTRIBUTE = "org.smallmind.bayeux.oumuamua.transport.websocket";
 
@@ -55,19 +56,8 @@ public class WebSocketTransport<V extends Value<V>> extends AbstractTransport<V>
 
   public WebSocketTransport (WebsocketProtocol<V> websocketProtocol, WebsocketConfiguration websocketConfiguration) {
 
-    this(websocketProtocol, websocketConfiguration, null);
-  }
-
-  public WebSocketTransport (WebsocketProtocol<V> websocketProtocol, WebsocketConfiguration websocketConfiguration, TransportListener<V>[] listeners) {
-
     this.websocketProtocol = websocketProtocol;
     this.websocketConfiguration = websocketConfiguration;
-
-    if (listeners != null) {
-      for (TransportListener<V> listener : listeners) {
-        addListener(listener);
-      }
-    }
   }
 
   @Override

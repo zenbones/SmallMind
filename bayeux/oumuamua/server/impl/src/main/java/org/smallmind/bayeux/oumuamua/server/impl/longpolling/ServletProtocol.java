@@ -32,22 +32,33 @@
  */
 package org.smallmind.bayeux.oumuamua.server.impl.longpolling;
 
-import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.Transport;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
+import org.smallmind.bayeux.oumuamua.server.spi.AbstractProtocol;
 import org.smallmind.bayeux.oumuamua.server.spi.Protocols;
 import org.smallmind.bayeux.oumuamua.server.spi.Transports;
 
-public class ServletProtocol<V extends Value<V>> implements Protocol<V> {
+public class ServletProtocol<V extends Value<V>> extends AbstractProtocol<V> {
 
   private final LongPollingTransport<V> longPollingTransport;
   private final long longPollTimeoutMilliseconds;
 
   public ServletProtocol (long longPollTimeoutMilliseconds) {
 
+    this(longPollTimeoutMilliseconds, null);
+  }
+
+  public ServletProtocol (long longPollTimeoutMilliseconds, ProtocolListener<V>[] listeners) {
+
     this.longPollTimeoutMilliseconds = longPollTimeoutMilliseconds;
 
     longPollingTransport = new LongPollingTransport<>(this);
+
+    if (listeners != null) {
+      for (ProtocolListener<V> listener : listeners) {
+        addListener(listener);
+      }
+    }
   }
 
   @Override

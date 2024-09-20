@@ -50,6 +50,7 @@ import org.smallmind.bayeux.oumuamua.server.impl.OumuamuaConnection;
 import org.smallmind.bayeux.oumuamua.server.impl.OumuamuaServer;
 import org.smallmind.bayeux.oumuamua.server.spi.json.PacketUtility;
 import org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356.WebSocketTransport;
+import org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356.WebsocketProtocol;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements MessageHandler.Whole<String>, OumuamuaConnection<V> {
@@ -103,7 +104,7 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
           websocketSession.getBasicRemote().sendText(encodedPacket);
         }
 
-        websocketTransport.onDelivery(packet);
+        ((WebsocketProtocol<V>)websocketTransport.getProtocol()).onDelivery(packet);
       } catch (IOException | InterruptedException | TimeoutException | ExecutionException exception) {
         LoggerManager.getLogger(WebSocketEndpoint.class).error(exception);
       }
@@ -121,7 +122,7 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
 
         Message<V>[] messages = server.getCodec().from(content);
 
-        websocketTransport.onReceipt(messages);
+        ((WebsocketProtocol<V>)websocketTransport.getProtocol()).onReceipt(messages);
 
         process(server, (session, packet) -> {
           if (session == null) {
