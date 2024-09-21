@@ -34,13 +34,15 @@ package org.smallmind.nutsnbolts.perf;
 
 public class InitialState extends PerfState {
 
-  private long nanosecondTimestamp;
-  private long processCPUTime;
-  private long youngCollectionCount;
-  private long youngCollectionTime;
-  private long oldCollectionCount;
-  private long oldCollectionTime;
-  private long compilationTime;
+  private final long freeMemorySize;
+  private final long heapMemoryUsed;
+  private final long nanosecondTimestamp;
+  private final long processCPUTime;
+  private final long youngCollectionCount;
+  private final long youngCollectionTime;
+  private final long oldCollectionCount;
+  private final long oldCollectionTime;
+  private final long compilationTime;
 
   public InitialState () {
 
@@ -48,6 +50,9 @@ public class InitialState extends PerfState {
 
     nanosecondTimestamp = System.nanoTime();
     processCPUTime = getOsFacts().getProcessCpuTime();
+
+    freeMemorySize = getOsFacts().getFreeMemorySize();
+    heapMemoryUsed = getCompilationAndHeapFacts().getHeapMemoryUsage().getUsed();
 
     youngCollectionTime = getGarbageFacts().getYoungCollectionTime();
     youngCollectionCount = getGarbageFacts().getYoungCollectionCount();

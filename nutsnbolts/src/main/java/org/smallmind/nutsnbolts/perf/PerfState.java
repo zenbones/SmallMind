@@ -36,22 +36,19 @@ public class PerfState {
 
   private static final MemoryPools MEMORY_POOLS = new MemoryPools();
   private static final OSFacts OS_FACTS = new OSFacts();
+  private static final JVMFacts JVM_FACTS = new JVMFacts();
   private static final GarbageFacts GARBAGE_FACTS = new GarbageFacts();
   private static final CompilationAndHeapFacts COMPILATION_AND_HEAP_FACTS = new CompilationAndHeapFacts();
   private final long millisecondTimestamp;
-  private long totalMemorySize;
-  private long freeMemorySize;
-  private long heapMemoryMax;
-  private long heapMemoryUsed;
-  private long tenuredMemoryMax;
+  private final long totalMemorySize;
+  private final long heapMemoryMax;
+  private final long tenuredMemoryMax;
 
   public PerfState () {
 
     millisecondTimestamp = System.currentTimeMillis();
     totalMemorySize = OS_FACTS.getTotalMemorySize();
-    freeMemorySize = OS_FACTS.getFreeMemorySize();
     heapMemoryMax = COMPILATION_AND_HEAP_FACTS.getHeapMemoryUsage().getMax();
-    heapMemoryUsed = COMPILATION_AND_HEAP_FACTS.getHeapMemoryUsage().getUsed();
     tenuredMemoryMax = MEMORY_POOLS.getTenuredMemoryUsage().getMax();
   }
 
@@ -65,6 +62,11 @@ public class PerfState {
     return OS_FACTS;
   }
 
+  public JVMFacts getJvmFacts () {
+
+    return JVM_FACTS;
+  }
+
   public GarbageFacts getGarbageFacts () {
 
     return GARBAGE_FACTS;
@@ -73,5 +75,53 @@ public class PerfState {
   public CompilationAndHeapFacts getCompilationAndHeapFacts () {
 
     return COMPILATION_AND_HEAP_FACTS;
+  }
+
+
+  /*
+      builder.append("System Memory: ").append(percent(totalMemory - freeMemory, totalMemory))
+        .append("% used of ").append(gibiBytes(totalMemory))
+        .append(" GiB").append(EOL);
+      builder.append("Used Heap Size: ").append(mebiBytes(heap.getUsed()))
+        .append(" MiB").append(EOL);
+      builder.append("Max Heap Size: ").append(mebiBytes(heap.getMax()))
+        .append(" MiB").append(EOL);
+      builder.append("Young Generation Heap Size: ").append(mebiBytes(heap.getMax() - tenured.getMax()))
+        .append(" MiB").append(EOL);
+   */
+
+  public long getMillisecondTimestamp () {
+
+    return millisecondTimestamp;
+  }
+
+  public String getOsDescription () {
+
+    return OS_FACTS.getDescription();
+  }
+
+  public String getJvmDescription () {
+
+    return JVM_FACTS.getDescription();
+  }
+
+  public int getCores () {
+
+    return OS_FACTS.getCores();
+  }
+
+  public long getTotalMemorySize () {
+
+    return totalMemorySize;
+  }
+
+  public long getHeapMemoryMax () {
+
+    return heapMemoryMax;
+  }
+
+  public long getYoungGenerationHeapSize () {
+
+    return heapMemoryMax - tenuredMemoryMax;
   }
 }

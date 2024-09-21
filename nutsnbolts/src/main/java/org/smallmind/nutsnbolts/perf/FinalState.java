@@ -34,36 +34,75 @@ package org.smallmind.nutsnbolts.perf;
 
 public class FinalState extends PerfState {
 
-  private long totalClockNanoseconds;
+  private long freeMemorySize;
+  private long heapMemoryUsed;
+  private long elapsedClockNanoseconds;
   private long totalProcessCPUTime;
   private long totalYoungCollectionCount;
   private long totalYoungCollectionTime;
   private long totalOldCollectionCount;
   private long totalOldCollectionTime;
   private long totalCompilationTime;
-  private long lastEden;
-  private long lastSurvivor;
-  private long lastTenured;
+  private long lastEdenMemoryUsed;
+  private long lastSurvivorMemoryUsed;
+  private long lastTenuredMemoryUsed;
+  private long edenBytesConsumed;
+  private long survivorBytesConsumed;
+  private long tenuredBytesConsumed;
 
   public FinalState () {
 
-    lastEden = getMemoryPools().getEdenMemoryUsage().getUsed();
-    lastSurvivor = getMemoryPools().getSurvivorMemoryUsage().getUsed();
-    lastTenured = getMemoryPools().getTenuredMemoryUsage().getUsed();
+    lastEdenMemoryUsed = getMemoryPools().getEdenMemoryUsage().getUsed();
+    lastSurvivorMemoryUsed = getMemoryPools().getSurvivorMemoryUsage().getUsed();
+    lastTenuredMemoryUsed = getMemoryPools().getTenuredMemoryUsage().getUsed();
+  }
+
+  public void update () {
+
+    long currentEdenMemoryUsed = getMemoryPools().getEdenMemoryUsage().getUsed();
+    long currentSurvivorMemoryUsed = getMemoryPools().getSurvivorMemoryUsage().getUsed();
+    long currentTenuredMemoryUsed = getMemoryPools().getTenuredMemoryUsage().getUsed();
+
+    if (lastEdenMemoryUsed < currentEdenMemoryUsed) {
+      edenBytesConsumed += currentEdenMemoryUsed - this.lastEdenMemoryUsed;
+    }
+    if (this.lastSurvivorMemoryUsed < currentSurvivorMemoryUsed) {
+      survivorBytesConsumed += currentSurvivorMemoryUsed - this.lastSurvivorMemoryUsed;
+    }
+    if (this.lastTenuredMemoryUsed <= currentTenuredMemoryUsed) {
+      tenuredBytesConsumed += currentTenuredMemoryUsed - this.lastTenuredMemoryUsed;
+    }
+
+    this.lastEdenMemoryUsed = currentEdenMemoryUsed;
+    this.lastSurvivorMemoryUsed = currentSurvivorMemoryUsed;
+    this.lastTenuredMemoryUsed = currentTenuredMemoryUsed;
   }
 
   public void stop (InitialState initialState) {
 
     long initialProcessCPUTime;
 
-    totalClockNanoseconds = System.nanoTime() - initialState.getNanosecondTimestamp();
+    elapsedClockNanoseconds = System.nanoTime() - initialState.getNanosecondTimestamp();
     totalProcessCPUTime = ((initialProcessCPUTime = initialState.getProcessCPUTime()) < 0) ? -1 : getOsFacts().getProcessCpuTime() - initialProcessCPUTime;
+
+    totalCompilationTime = getCompilationAndHeapFacts().getCompilationTime() - initialState.getCompilationTime();
+
+    freeMemorySize = getOsFacts().getFreeMemorySize();
+    heapMemoryUsed = getCompilationAndHeapFacts().getHeapMemoryUsage().getUsed();
 
     totalYoungCollectionTime = getGarbageFacts().getYoungCollectionTime() - initialState.getYoungCollectionTime();
     totalYoungCollectionCount = getGarbageFacts().getYoungCollectionCount() - initialState.getYoungCollectionCount();
     totalOldCollectionTime = getGarbageFacts().getOldCollectionTime() - initialState.getOldCollectionTime();
     totalOldCollectionCount = getGarbageFacts().getOldCollectionCount() - initialState.getOldCollectionCount();
+  }
 
-    totalCompilationTime = getCompilationAndHeapFacts().getCompilationTime() - initialState.getCompilationTime();
+  public double getUsedMemoryPercent () {
+
+    return (getTotalMemorySize() - freeMemorySize) * 100.0 / getTotalMemorySize();
+  }
+
+  public double getCPUUtilizationPercent () {
+
+    return totalProcessCPUTime * 100.0 / elapsedClockNanoseconds;
   }
 }

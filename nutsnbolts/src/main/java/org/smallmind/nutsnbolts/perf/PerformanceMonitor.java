@@ -32,184 +32,42 @@
  */
 package org.smallmind.nutsnbolts.perf;
 
-import java.lang.management.CompilationMXBean;
-import java.lang.management.GarbageCollectorMXBean;
-import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryMXBean;
-import java.lang.management.MemoryUsage;
-import java.lang.management.OperatingSystemMXBean;
-import java.util.Date;
-import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class PerformanceMonitor {
 
-/*
-
-  private final AtomicInteger starts = new AtomicInteger();
+  private InitialState initialState;
+  private FinalState finalState;
   private ScheduledFuture<?> memoryPoller;
   private ScheduledExecutorService scheduler;
   private long memoryPollInterval = 250;
-  private Stop stop;
 
-  public PerformanceMonitor () {
+  public PerformanceMonitor (long memoryPollInterval) {
 
+    this.memoryPollInterval = memoryPollInterval;
+  }
 
-    // on start
+  public InitialState start () {
+
+    initialState = new InitialState();
+    finalState = new FinalState();
+
     scheduler = Executors.newSingleThreadScheduledExecutor();
-    memoryPoller = scheduler.scheduleWithFixedDelay(this, memoryPollInterval, memoryPollInterval, TimeUnit.MILLISECONDS);
+    memoryPoller = scheduler.scheduleWithFixedDelay(finalState::update, memoryPollInterval, memoryPollInterval, TimeUnit.MILLISECONDS);
 
-    // --------------------------------------------------------------
+    return initialState;
   }
 
+  public FinalState stop () {
 
+    finalState.stop(initialState);
 
-  public long getMemoryPollInterval () {
+    memoryPoller.cancel(false);
+    scheduler.shutdown();
 
-    return memoryPollInterval;
+    return finalState;
   }
-
-  public void setMemoryPollInterval (long gcPollInterval) {
-
-    this.memoryPollInterval = gcPollInterval;
-  }
-
-  public void run () {
-
-    long eden = memoryPools.getEdenMemoryUsage().getUsed();
-    long survivor = memoryPools.getSurvivorMemoryUsage().getUsed();
-    long tenured = memoryPools.getTenuredMemoryUsage().getUsed();
-
-    if (lastEden < eden)
-      stop.edenBytes += eden - lastEden;
-    if (lastSurvivor < survivor)
-      stop.survivorBytes += survivor - lastSurvivor;
-    if (lastTenured <= tenured)
-      stop.tenuredBytes += tenured - lastTenured;
-
-    lastEden = eden;
-    lastSurvivor = survivor;
-    lastTenured = tenured;
-  }
-
-
-  public Start start () {
-
-    synchronized (this) {
-      if (starts.incrementAndGet() > 1)
-        return null;
-
-      Start start = new Start();
-      stop = new Stop();
-
-      System.gc();
-
-      start.heap = heapMemory.getHeapMemoryUsage();
-      start.eden = memoryPools.getEdenMemoryUsage();
-      start.survivor = memoryPools.getSurvivorMemoryUsage();
-      start.tenured = memoryPools.getTenuredMemoryUsage();
-
-      return start;
-    }
-  }
-
-
-  public Stop stop () {
-
-    synchronized (this) {
-      if (starts.decrementAndGet() > 0)
-        return null;
-
-
-      memoryPoller.cancel(false);
-      scheduler.shutdown();
-
-      return stop;
-    }
-  }
-
-  private static class Base {
-
-    public String EOL = System.lineSeparator();
-
-    public float percent (long dividend, long divisor) {
-
-      if (divisor != 0)
-        return (float)dividend * 100 / divisor;
-      return Float.NaN;
-    }
-
-    public float mebiBytes (long bytes) {
-
-      return (float)bytes / 1024 / 1024;
-    }
-
-    public float gibiBytes (long bytes) {
-
-      return (float)bytes / 1024 / 1024 / 1024;
-    }
-  }
-
-  public static class Start extends Base {
-
-
-
-    @Override
-    public String toString () {
-
-      StringBuilder builder = new StringBuilder();
-      builder.append("========================================").append(EOL);
-      builder.append("Monitoring Started at ").append(new Date(date)).append(EOL);
-      builder.append("Operative System: ").append(os).append(EOL);
-      builder.append("JVM: ").append(jvm).append(EOL);
-      builder.append("Processors: ").append(cores).append(EOL);
-      builder.append("System Memory: ").append(percent(totalMemory - freeMemory, totalMemory))
-        .append("% used of ").append(gibiBytes(totalMemory))
-        .append(" GiB").append(EOL);
-      builder.append("Used Heap Size: ").append(mebiBytes(heap.getUsed()))
-        .append(" MiB").append(EOL);
-      builder.append("Max Heap Size: ").append(mebiBytes(heap.getMax()))
-        .append(" MiB").append(EOL);
-      builder.append("Young Generation Heap Size: ").append(mebiBytes(heap.getMax() - tenured.getMax()))
-        .append(" MiB").append(EOL);
-      builder.append("- - - - - - - - - - - - - - - - - - - - ");
-      return builder.toString();
-    }
-  }
-
-  public static class Stop extends Base {
-
-    public long edenBytes;
-    public long survivorBytes;
-    public long tenuredBytes;
-
-    @Override
-    public String toString () {
-
-      StringBuilder builder = new StringBuilder();
-      builder.append("- - - - - - - - - - - - - - - - - - - - ").append(EOL);
-      builder.append("Monitoring Ended at ").append(new Date(date)).append(EOL);
-      builder.append("Elapsed Time: ").append(TimeUnit.NANOSECONDS.toMillis(time)).append(" ms").append(EOL);
-      builder.append("\tTime in JIT Compilation: ").append(jitTime).append(" ms").append(EOL);
-      builder.append("\tTime in Young GC: ").append(youngTime).append(" ms (")
-        .append(youngCount).append(" collections)").append(EOL);
-      builder.append("\tTime in Old GC: ").append(oldTime).append(" ms (")
-        .append(oldCount).append(" collections)").append(EOL);
-      builder.append("Garbage Generated in Eden Space: ").append(mebiBytes(edenBytes))
-        .append(" MiB").append(EOL);
-      builder.append("Garbage Generated in Survivor Space: ").append(mebiBytes(survivorBytes))
-        .append(" MiB").append(EOL);
-      builder.append("Garbage Generated in Tenured Space: ").append(mebiBytes(tenuredBytes))
-        .append(" MiB").append(EOL);
-      builder.append("Average CPU Load: ").append(percent(cpuTime, time)).append("/")
-        .append(100 * cores).append(EOL);
-      builder.append("========================================");
-      return builder.toString();
-    }
-  }
-  */
 }
