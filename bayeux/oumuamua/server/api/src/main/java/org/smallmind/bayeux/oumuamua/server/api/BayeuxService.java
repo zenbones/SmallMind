@@ -35,9 +35,16 @@ package org.smallmind.bayeux.oumuamua.server.api;
 import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
-public interface BayeuxService {
+public interface BayeuxService<V extends Value<V>> {
+
+  default Message<V> createResponse (Route route, Server<V> server, Session<V> session, Message<V> request) {
+
+    Message<V> response = (Message<V>)server.getCodec().create().put(Message.CHANNEL, route.getPath()).put(Message.ID, request.getId()).put(Message.SESSION_ID, session.getId());
+
+    return response;
+  }
 
   Route[] getBoundRoutes ();
 
-  <V extends Value<V>> Packet<V> process (Protocol<V> protocol, Route route, Server<V> server, Session<V> session, Message<V> request);
+  Packet<V> process (Protocol<V> protocol, Route route, Server<V> server, Session<V> session, Message<V> request);
 }

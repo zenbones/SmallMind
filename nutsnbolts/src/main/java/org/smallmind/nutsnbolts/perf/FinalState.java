@@ -32,6 +32,10 @@
  */
 package org.smallmind.nutsnbolts.perf;
 
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
+
+@XmlRootElement(name = "final")
 public class FinalState extends PerfState {
 
   private long freeMemorySize;
@@ -96,71 +100,85 @@ public class FinalState extends PerfState {
     totalOldCollectionCount = getGarbageFacts().getOldCollectionCount() - initialState.getOldCollectionCount();
   }
 
+  @XmlElement
   public long getFreeMemorySize () {
 
     return freeMemorySize;
   }
 
+  @XmlElement
   public long getHeapMemoryUsed () {
 
     return heapMemoryUsed;
   }
 
+  @XmlElement
   public long getElapsedClockNanoseconds () {
 
     return elapsedClockNanoseconds;
   }
 
+  @XmlElement
   public long getTotalProcessCPUTime () {
 
     return totalProcessCPUTime;
   }
 
+  @XmlElement
   public long getTotalYoungCollectionCount () {
 
     return totalYoungCollectionCount;
   }
 
+  @XmlElement
   public long getTotalYoungCollectionTime () {
 
     return totalYoungCollectionTime;
   }
 
+  @XmlElement
   public long getTotalOldCollectionCount () {
 
     return totalOldCollectionCount;
   }
 
+  @XmlElement
   public long getTotalOldCollectionTime () {
 
     return totalOldCollectionTime;
   }
 
+  @XmlElement
   public long getTotalCompilationTime () {
 
     return totalCompilationTime;
   }
 
+  @XmlElement
   public long getEdenBytesConsumed () {
 
     return edenBytesConsumed;
   }
 
+  @XmlElement
   public long getSurvivorBytesConsumed () {
 
     return survivorBytesConsumed;
   }
 
+  @XmlElement
   public long getTenuredBytesConsumed () {
 
     return tenuredBytesConsumed;
   }
 
+  @XmlElement
   public double getUsedMemoryPercent () {
 
     return (getTotalMemorySize() - freeMemorySize) * 100.0 / getTotalMemorySize();
   }
 
+  @XmlElement
   public double getCPUUtilizationPercent () {
 
     return totalProcessCPUTime * 100.0 / elapsedClockNanoseconds;

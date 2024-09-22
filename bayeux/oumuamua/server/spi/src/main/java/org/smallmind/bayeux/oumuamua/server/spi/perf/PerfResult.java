@@ -33,26 +33,25 @@
 package org.smallmind.bayeux.oumuamua.server.spi.perf;
 
 import org.HdrHistogram.Histogram;
-import org.HdrHistogram.Recorder;
 
-public class PerfRecord {
+public class PerfResult {
 
-  private final Recorder recorder = new Recorder(1, 3600000000000L, 2);
+  private final Histogram localHistogram;
+  private final Histogram remoteHistogram;
 
-  public void reset () {
+  public PerfResult (Histogram localHistogram, Histogram remoteHistogram) {
 
-    recorder.reset();
+    this.localHistogram = localHistogram;
+    this.remoteHistogram = remoteHistogram;
   }
 
-  public Histogram gather () {
+  public Histogram getLocalHistogram () {
 
-    return recorder.getIntervalHistogram();
+    return localHistogram;
   }
 
-  public void store (long timeInTransit) {
+  public Histogram getRemoteHistogram () {
 
-    if (timeInTransit >= 0) {
-      recorder.recordValue(timeInTransit + 1);
-    }
+    return remoteHistogram;
   }
 }

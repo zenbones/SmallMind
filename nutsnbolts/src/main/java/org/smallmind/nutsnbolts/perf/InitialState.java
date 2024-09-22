@@ -32,6 +32,10 @@
  */
 package org.smallmind.nutsnbolts.perf;
 
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
+
+@XmlRootElement(name = "initial")
 public class InitialState extends PerfState {
 
   private final long freeMemorySize;
@@ -62,46 +66,55 @@ public class InitialState extends PerfState {
     compilationTime = getCompilationAndHeapFacts().getCompilationTime();
   }
 
+  @XmlElement
   public long getFreeMemorySize () {
 
     return freeMemorySize;
   }
 
+  @XmlElement
   public long getHeapMemoryUsed () {
 
     return heapMemoryUsed;
   }
 
+  @XmlElement
   public long getNanosecondTimestamp () {
 
     return nanosecondTimestamp;
   }
 
+  @XmlElement
   public long getProcessCPUTime () {
 
     return processCPUTime;
   }
 
+  @XmlElement
   public long getYoungCollectionCount () {
 
     return youngCollectionCount;
   }
 
+  @XmlElement
   public long getYoungCollectionTime () {
 
     return youngCollectionTime;
   }
 
+  @XmlElement
   public long getOldCollectionCount () {
 
     return oldCollectionCount;
   }
 
+  @XmlElement
   public long getOldCollectionTime () {
 
     return oldCollectionTime;
   }
 
+  @XmlElement
   public long getCompilationTime () {
 
     return compilationTime;

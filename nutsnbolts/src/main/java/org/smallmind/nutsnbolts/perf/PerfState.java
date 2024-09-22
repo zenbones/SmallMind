@@ -32,6 +32,12 @@
  */
 package org.smallmind.nutsnbolts.perf;
 
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlTransient;
+
+@XmlAccessorType(XmlAccessType.PROPERTY)
 public class PerfState {
 
   private static final MemoryPools MEMORY_POOLS = new MemoryPools();
@@ -52,61 +58,73 @@ public class PerfState {
     tenuredMemoryMax = MEMORY_POOLS.getTenuredMemoryUsage().getMax();
   }
 
+  @XmlTransient
   public MemoryPools getMemoryPools () {
 
     return MEMORY_POOLS;
   }
 
+  @XmlTransient
   public OSFacts getOsFacts () {
 
     return OS_FACTS;
   }
 
+  @XmlTransient
   public JVMFacts getJvmFacts () {
 
     return JVM_FACTS;
   }
 
+  @XmlTransient
   public GarbageFacts getGarbageFacts () {
 
     return GARBAGE_FACTS;
   }
 
+  @XmlTransient
   public CompilationAndHeapFacts getCompilationAndHeapFacts () {
 
     return COMPILATION_AND_HEAP_FACTS;
   }
 
+  @XmlTransient
   public String getOsDescription () {
 
     return OS_FACTS.getDescription();
   }
 
+  @XmlTransient
   public String getJvmDescription () {
 
     return JVM_FACTS.getDescription();
   }
 
+  @XmlTransient
   public int getCores () {
 
     return OS_FACTS.getCores();
   }
 
+  @XmlElement
   public long getMillisecondTimestamp () {
 
     return millisecondTimestamp;
   }
 
+  @XmlElement
   public long getTotalMemorySize () {
 
     return totalMemorySize;
   }
 
+  @XmlElement
   public long getHeapMemoryMax () {
 
     return heapMemoryMax;
   }
 
+  @XmlElement
   public long getYoungGenerationHeapSize () {
 
     return heapMemoryMax - tenuredMemoryMax;

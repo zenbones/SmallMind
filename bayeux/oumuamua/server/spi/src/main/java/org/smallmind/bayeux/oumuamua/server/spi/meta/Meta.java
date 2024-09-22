@@ -460,7 +460,7 @@ public enum Meta {
 
   private static <V extends Value<V>> Message<V> constructSuccessResponse (Server<V> server, String path, String id, String sessionId, Reconnect reconnect) {
 
-    Message<V> response = (Message<V>)constructResponse(server, path, id, sessionId);
+    Message<V> response = constructResponse(server, path, id, sessionId);
 
     response.put(Message.SUCCESSFUL, true);
 

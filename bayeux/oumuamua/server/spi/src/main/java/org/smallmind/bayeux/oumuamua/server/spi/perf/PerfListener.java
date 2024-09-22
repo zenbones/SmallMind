@@ -52,6 +52,15 @@ public class PerfListener<V extends Value<V>> implements Protocol.ProtocolListen
     remotePerfRecord.reset();
   }
 
+  public PerfResult gatherAndReset () {
+
+    PerfResult perfResult = new PerfResult(localPerfRecord.gather(), remotePerfRecord.gather());
+
+    reset();
+
+    return perfResult;
+  }
+
   @Override
   public void onReceipt (Message<V>[] incomingMessages) {
 
