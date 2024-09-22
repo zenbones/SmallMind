@@ -60,14 +60,16 @@ public class InitialState extends PerfState {
     oldCollectionCount = getGarbageFacts().getOldCollectionCount();
 
     compilationTime = getCompilationAndHeapFacts().getCompilationTime();
+  }
 
-    /*
-    start.heap = heapMemory.getHeapMemoryUsage();
-    start.eden = edenMemoryPool.get();
-    start.survivor = survivorMemoryPool.get();
-    start.tenured = tenuredMemoryPool.get();
+  public long getFreeMemorySize () {
 
-     */
+    return freeMemorySize;
+  }
+
+  public long getHeapMemoryUsed () {
+
+    return heapMemoryUsed;
   }
 
   public long getNanosecondTimestamp () {

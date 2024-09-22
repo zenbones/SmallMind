@@ -77,24 +77,6 @@ public class PerfState {
     return COMPILATION_AND_HEAP_FACTS;
   }
 
-
-  /*
-      builder.append("System Memory: ").append(percent(totalMemory - freeMemory, totalMemory))
-        .append("% used of ").append(gibiBytes(totalMemory))
-        .append(" GiB").append(EOL);
-      builder.append("Used Heap Size: ").append(mebiBytes(heap.getUsed()))
-        .append(" MiB").append(EOL);
-      builder.append("Max Heap Size: ").append(mebiBytes(heap.getMax()))
-        .append(" MiB").append(EOL);
-      builder.append("Young Generation Heap Size: ").append(mebiBytes(heap.getMax() - tenured.getMax()))
-        .append(" MiB").append(EOL);
-   */
-
-  public long getMillisecondTimestamp () {
-
-    return millisecondTimestamp;
-  }
-
   public String getOsDescription () {
 
     return OS_FACTS.getDescription();
@@ -108,6 +90,11 @@ public class PerfState {
   public int getCores () {
 
     return OS_FACTS.getCores();
+  }
+
+  public long getMillisecondTimestamp () {
+
+    return millisecondTimestamp;
   }
 
   public long getTotalMemorySize () {

@@ -96,6 +96,66 @@ public class FinalState extends PerfState {
     totalOldCollectionCount = getGarbageFacts().getOldCollectionCount() - initialState.getOldCollectionCount();
   }
 
+  public long getFreeMemorySize () {
+
+    return freeMemorySize;
+  }
+
+  public long getHeapMemoryUsed () {
+
+    return heapMemoryUsed;
+  }
+
+  public long getElapsedClockNanoseconds () {
+
+    return elapsedClockNanoseconds;
+  }
+
+  public long getTotalProcessCPUTime () {
+
+    return totalProcessCPUTime;
+  }
+
+  public long getTotalYoungCollectionCount () {
+
+    return totalYoungCollectionCount;
+  }
+
+  public long getTotalYoungCollectionTime () {
+
+    return totalYoungCollectionTime;
+  }
+
+  public long getTotalOldCollectionCount () {
+
+    return totalOldCollectionCount;
+  }
+
+  public long getTotalOldCollectionTime () {
+
+    return totalOldCollectionTime;
+  }
+
+  public long getTotalCompilationTime () {
+
+    return totalCompilationTime;
+  }
+
+  public long getEdenBytesConsumed () {
+
+    return edenBytesConsumed;
+  }
+
+  public long getSurvivorBytesConsumed () {
+
+    return survivorBytesConsumed;
+  }
+
+  public long getTenuredBytesConsumed () {
+
+    return tenuredBytesConsumed;
+  }
+
   public double getUsedMemoryPercent () {
 
     return (getTotalMemorySize() - freeMemorySize) * 100.0 / getTotalMemorySize();
