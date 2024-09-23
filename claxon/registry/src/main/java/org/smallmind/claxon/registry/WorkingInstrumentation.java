@@ -32,7 +32,6 @@
  */
 package org.smallmind.claxon.registry;
 
-import java.util.Observable;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import org.smallmind.claxon.registry.meter.Meter;
@@ -43,12 +42,12 @@ import org.smallmind.nutsnbolts.util.WithResultExecutable;
 public class WorkingInstrumentation implements Instrumentation {
 
   private final ClaxonRegistry registry;
-  private final MeterBuilder<?> builder;
+  private final MeterBuilder<? extends Meter> builder;
   private final Tag[] tags;
   private final Class<?> caller;
   private TimeUnit timeUnit = TimeUnit.MILLISECONDS;
 
-  public WorkingInstrumentation (ClaxonRegistry registry, Class<?> caller, MeterBuilder<?> builder, Tag... tags) {
+  public WorkingInstrumentation (ClaxonRegistry registry, Class<?> caller, MeterBuilder<? extends Meter> builder, Tag... tags) {
 
     this.registry = registry;
     this.caller = caller;
@@ -61,11 +60,6 @@ public class WorkingInstrumentation implements Instrumentation {
     this.timeUnit = timeUnit;
 
     return this;
-  }
-
-  public <O extends Observable> O track (O observable) {
-
-    return (observable == null) ? null : registry.track(caller, builder, observable, tags);
   }
 
   public <T> T track (T measured, Function<T, Long> measurement) {

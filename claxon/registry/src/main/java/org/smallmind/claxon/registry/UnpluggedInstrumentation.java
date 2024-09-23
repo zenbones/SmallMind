@@ -32,7 +32,6 @@
  */
 package org.smallmind.claxon.registry;
 
-import java.util.Observable;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import org.smallmind.nutsnbolts.util.SansResultExecutable;
@@ -44,12 +43,6 @@ public class UnpluggedInstrumentation implements Instrumentation {
   public Instrumentation as (TimeUnit timeUnit) {
 
     return this;
-  }
-
-  @Override
-  public <O extends Observable> O track (O observable) {
-
-    return observable;
   }
 
   @Override

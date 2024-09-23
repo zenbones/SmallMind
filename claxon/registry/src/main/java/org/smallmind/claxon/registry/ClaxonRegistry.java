@@ -32,9 +32,7 @@
  */
 package org.smallmind.claxon.registry;
 
-import java.util.Arrays;
 import java.util.Map;
-import java.util.Observable;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -46,10 +44,9 @@ import org.smallmind.scribe.pen.LoggerManager;
 public class ClaxonRegistry {
 
   private final ConcurrentHashMap<String, Emitter> emitterMap = new ConcurrentHashMap<>();
-  private final ConcurrentHashMap<RegistryKey, NamedMeter<?>> meterMap = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<RegistryKey, NamedMeter<? extends Meter>> meterMap = new ConcurrentHashMap<>();
   private final Set<RegistryKey> noopSet = ConcurrentHashMap.newKeySet();
   private final MeasurableTracker measurableTracker;
-  private final ObservableTracker observableTracker;
   private final CollectionWorker collectionWorker;
   private final ClaxonConfiguration configuration;
 
@@ -60,7 +57,6 @@ public class ClaxonRegistry {
     this.configuration = configuration;
 
     measurableTracker = new MeasurableTracker(this);
-    observableTracker = new ObservableTracker(this);
 
     workerThread.setDaemon(true);
     workerThread.start();
@@ -94,7 +90,7 @@ public class ClaxonRegistry {
     return this;
   }
 
-  public <M extends Meter> M register (Class<?> caller, MeterBuilder<M> builder, Tag... tags) {
+  public Meter register (Class<?> caller, MeterBuilder<? extends Meter> builder, Tag... tags) {
 
     RegistryKey key = new RegistryKey(caller, tags);
 
@@ -103,7 +99,7 @@ public class ClaxonRegistry {
       return NoOpMeter.instance();
     } else {
 
-      NamedMeter<?> namedMeter;
+      NamedMeter<? extends Meter> namedMeter;
 
       if ((namedMeter = meterMap.get(key)) == null) {
 
@@ -115,15 +111,20 @@ public class ClaxonRegistry {
           return NoOpMeter.instance();
         } else {
 
-          NamedMeter<?> previousNamedMeter;
+          NamedMeter<? extends Meter> previousNamedMeter;
 
           if ((previousNamedMeter = meterMap.putIfAbsent(key, namedMeter = new NamedMeter<>(meterName, builder.build(configuration.getClock())))) != null) {
-            namedMeter = previousNamedMeter;
+
+            return previousNamedMeter.meter();
+          } else {
+
+            return namedMeter.meter();
           }
         }
-      }
+      } else {
 
-      return (M)namedMeter.getMeter();
+        return namedMeter.meter();
+      }
     }
   }
 
@@ -132,12 +133,7 @@ public class ClaxonRegistry {
     meterMap.remove(new RegistryKey(caller, tags));
   }
 
-  public <O extends Observable> O track (Class<?> caller, MeterBuilder<?> builder, O observable, Tag... tags) {
-
-    return observableTracker.track(caller, builder, observable, tags);
-  }
-
-  public <T> T track (Class<?> caller, MeterBuilder<?> builder, T measured, Function<T, Long> measurement, Tag... tags) {
+  public <T> T track (Class<?> caller, MeterBuilder<? extends Meter> builder, T measured, Function<T, Long> measurement, Tag... tags) {
 
     return measurableTracker.track(caller, builder, measured, measurement, tags);
   }
@@ -161,17 +157,16 @@ public class ClaxonRegistry {
         while (!finishLatch.await(configuration.getCollectionStint().getTime(), configuration.getCollectionStint().getTimeUnit())) {
 
           measurableTracker.sweepAndUpdate();
-          observableTracker.sweep();
 
-          for (Map.Entry<RegistryKey, NamedMeter<?>> namedMeterEntry : meterMap.entrySet()) {
+          for (Map.Entry<RegistryKey, NamedMeter<? extends Meter>> namedMeterEntry : meterMap.entrySet()) {
 
-            Quantity[] quantities = namedMeterEntry.getValue().getMeter().record();
+            Quantity[] quantities = namedMeterEntry.getValue().meter().record();
 
             if ((quantities != null) && (quantities.length > 0)) {
 
               for (Emitter emitter : emitterMap.values()) {
                 try {
-                  emitter.record(namedMeterEntry.getValue().getName(), configuration.calculateTags(namedMeterEntry.getValue().getName(), namedMeterEntry.getKey().getTags()), quantities);
+                  emitter.record(namedMeterEntry.getValue().name(), configuration.calculateTags(namedMeterEntry.getValue().name(), namedMeterEntry.getKey().tags()), quantities);
                 } catch (Exception exception) {
                   LoggerManager.getLogger(ClaxonRegistry.class).error(exception);
                 }
@@ -188,59 +183,11 @@ public class ClaxonRegistry {
     }
   }
 
-  private static class RegistryKey {
+  private record RegistryKey(Class<?> caller, Tag... tags) {
 
-    private final Class<?> caller;
-    private final Tag[] tags;
-
-    public RegistryKey (Class<?> caller, Tag... tags) {
-
-      this.caller = caller;
-      this.tags = tags;
-    }
-
-    public Class<?> getCaller () {
-
-      return caller;
-    }
-
-    public Tag[] getTags () {
-
-      return tags;
-    }
-
-    @Override
-    public int hashCode () {
-
-      return (caller.hashCode() * 31) + ((tags == null) ? 0 : Arrays.hashCode(tags));
-    }
-
-    @Override
-    public boolean equals (Object obj) {
-
-      return (obj instanceof RegistryKey) && ((RegistryKey)obj).getCaller().equals(caller) && Arrays.equals(((RegistryKey)obj).getTags(), tags);
-    }
   }
 
-  private static class NamedMeter<M extends Meter> {
+  private record NamedMeter<M extends Meter>(String name, M meter) {
 
-    private final String name;
-    private final M meter;
-
-    public NamedMeter (String name, M meter) {
-
-      this.name = name;
-      this.meter = meter;
-    }
-
-    public String getName () {
-
-      return name;
-    }
-
-    public M getMeter () {
-
-      return meter;
-    }
   }
 }

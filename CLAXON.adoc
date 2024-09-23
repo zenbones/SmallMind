@@ -92,17 +92,11 @@ Many metric warehouses are capable of storing and querying multi-dimensional dat
 
 You should probably avoid unregistering and re-registering a meter, but if you know that a meter will no longer be used, and should be available for garbage collection, you can call this method.
 
-=== Track _Observable_
-
-[small]#`<O extends Observable> O track(Class<?> caller, MeterBuilder<?> builder, O observable, Tag... tags)`#
-
-Registers a meter that will track changes in an Observable. The Observable instance is only weakly referenced by the meter, so that if the meter is the only remaining reference to the Observable instance, the meter will be unregistered and both the Observable instance and the meter will be available for garbage collection.
-
 === Track _Lambda_
 
-[small]#`<T> T track(Class<?> caller, MeterBuilder<?> builder, T measured, Function<T, Long> measurement, Tag... tags)`#
+[small]#`<T> T track(Class<?> caller, MeterBuilder<? extends Meter> builder, T measured, Function<T, Long> measurement, Tag... tags)`#
 
-Registers a meter that will poll the state of a 'measured' instance on the registry's collection interval using the supplied measurement function. Much like the tracking of Observables above, the measured instance is weakly held, such that if the meter is the only remaining reference, the meter will be unregistered and both the measured instance and the meter will be available for garbage collection.
+Registers a meter that will poll the state of a 'measured' instance on the registry's collection interval using the supplied measurement function. The measured instance is weakly held, such that if the meter is the only remaining reference, the meter will be unregistered and both the measured instance and the meter will be available for garbage collection.
 
 [[claxon-configuration, Configuration]]
 === Configuration
@@ -177,7 +171,7 @@ The provided `org.smallmind.claxon.registry.spring.ClaxonRegistryFactoryBean` do
 
 ==== With
 
-[small]#`Instrumentation with (Class<?> caller, MeterBuilder<?> builder, Tag... tags)`#
+[small]#`Instrumentation with (Class<?> caller, MeterBuilder<? extends Meter> builder, Tag... tags)`#
 
 The prerequisites taken care of, Instrument functionality is accessed through its `with()` method. This method takes the same _caller_, _builder_ and _tags_ parameters as the `register()` method discussed previously (see <<claxon-registry-register>> above), but returns an instance of the Instrumentation (`org.smallmind.claxon.registry.Instrumentation`) interface. Through this interface you can...
 

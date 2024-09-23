@@ -37,6 +37,7 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Tag;
+import org.smallmind.claxon.registry.meter.Meter;
 import org.smallmind.claxon.registry.meter.MeterBuilder;
 import org.smallmind.nutsnbolts.reflection.aop.AOPUtility;
 import org.smallmind.nutsnbolts.util.WithResultExecutable;
@@ -45,7 +46,7 @@ import org.smallmind.nutsnbolts.util.WithResultExecutable;
 public class InstrumentedAspect {
 
   @Around(value = "(execution(@Instrumented * * (..)) || initialization(@Instrumented new(..))) && @annotation(instrumented)", argNames = "thisJoinPoint, instrumented")
-  public Object aroundInstrumentedMethod (ProceedingJoinPoint thisJoinPoint, Instrumented instrumented)
+  public  Object   aroundInstrumentedMethod (ProceedingJoinPoint thisJoinPoint, Instrumented instrumented)
     throws Throwable {
 
     if (!instrumented.active()) {
@@ -53,7 +54,7 @@ public class InstrumentedAspect {
       return thisJoinPoint.proceed();
     } else {
 
-      MeterBuilder<?> builder;
+      MeterBuilder<? extends Meter> builder;
       Tag[] tags = new Tag[instrumented.constants().length + instrumented.parameters().length];
       Class<?> caller = Instrumented.class.equals(instrumented.caller()) ? thisJoinPoint.getStaticPart().getSourceLocation().getWithinType() : instrumented.caller();
       int index = 0;

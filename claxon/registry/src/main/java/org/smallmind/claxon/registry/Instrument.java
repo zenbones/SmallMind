@@ -32,6 +32,7 @@
  */
 package org.smallmind.claxon.registry;
 
+import org.smallmind.claxon.registry.meter.Meter;
 import org.smallmind.claxon.registry.meter.MeterBuilder;
 import org.smallmind.nutsnbolts.lang.PerApplicationContext;
 import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
@@ -50,7 +51,7 @@ public class Instrument implements PerApplicationDataManager {
     return PerApplicationContext.getPerApplicationData(Instrument.class, ClaxonRegistry.class);
   }
 
-  public static Instrumentation with (Class<?> caller, MeterBuilder<?> builder, Tag... tags) {
+  public static Instrumentation with (Class<?> caller, MeterBuilder<? extends Meter> builder, Tag... tags) {
 
     ClaxonRegistry registry;
 

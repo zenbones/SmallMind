@@ -38,6 +38,7 @@ import java.lang.ref.WeakReference;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
+import org.smallmind.claxon.registry.meter.Meter;
 import org.smallmind.claxon.registry.meter.MeterBuilder;
 
 public class MeasurableTracker {
@@ -51,7 +52,7 @@ public class MeasurableTracker {
     this.registry = registry;
   }
 
-  public <T> T track (Class<?> caller, MeterBuilder<?> builder, T measured, Function<T, Long> measurement, Tag... tags) {
+  public <T> T track (Class<?> caller, MeterBuilder<? extends Meter> builder, T measured, Function<T, Long> measurement, Tag... tags) {
 
     measurableMap.put(new WeakReference<>(measured, referenceQueue), new Measurable(caller, builder, measurement, tags));
 
@@ -83,12 +84,12 @@ public class MeasurableTracker {
 
   private static class Measurable {
 
-    private final MeterBuilder<?> builder;
+    private final MeterBuilder<? extends Meter> builder;
     private final Tag[] tags;
     private final Function<Object, Long> measurement;
     private final Class<?> caller;
 
-    public Measurable (Class<?> caller, MeterBuilder<?> builder, Function<?, Long> measurement, Tag... tags) {
+    public Measurable (Class<?> caller, MeterBuilder<? extends Meter> builder, Function<?, Long> measurement, Tag... tags) {
 
       this.caller = caller;
       this.builder = builder;
@@ -106,7 +107,7 @@ public class MeasurableTracker {
       return tags;
     }
 
-    public MeterBuilder<?> getBuilder () {
+    public MeterBuilder<? extends Meter> getBuilder () {
 
       return builder;
     }

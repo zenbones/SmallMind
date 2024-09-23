@@ -37,6 +37,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.concurrent.TimeUnit;
+import org.smallmind.claxon.registry.meter.Meter;
 
 @Target({ElementType.CONSTRUCTOR, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
@@ -44,7 +45,7 @@ public @interface Instrumented {
 
   Class<?> caller () default Instrumented.class;
 
-  Class<? extends InstrumentedParser<?>> parser ();
+  Class<? extends InstrumentedParser<? extends Meter>> parser ();
 
   String json () default "{}";
 

@@ -42,9 +42,9 @@ public class NoOpMeter implements Meter {
 
   }
 
-  public static <M extends Meter> M instance () {
+  public static NoOpMeter instance () {
 
-    return (M)INSTANCE;
+    return INSTANCE;
   }
 
   @Override
