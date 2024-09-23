@@ -72,7 +72,7 @@ public class Histogram implements Meter {
     int index = 0;
 
     System.arraycopy(basicQuantities, 0, allQuantities, 0, basicQuantities.length);
-    if ((percentiles != null) && (percentiles.length > 0)) {
+    if (percentiles != null) {
       for (Percentile percentile : percentiles) {
         allQuantities[basicQuantities.length + (index++)] = new Quantity(percentile.getName(), snapshot.getHistogram().getValueAtPercentile(percentile.getValue()));
       }
