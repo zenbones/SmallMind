@@ -39,7 +39,7 @@ import org.smallmind.claxon.registry.Window;
 public class TraceBuilder implements MeterBuilder<Trace> {
 
   private static final Window[] DEFAULT_WINDOWS = new Window[] {new Window("m1", 1), new Window("m5", 5), new Window("m15", 15)};
-
+  // order is important here, leave the construction as the last static
   private static final TraceBuilder DEFAULT_BUILDER = new TraceBuilder();
   private TimeUnit windowTimeUnit = TimeUnit.MINUTES;
   private Window[] windows = DEFAULT_WINDOWS;

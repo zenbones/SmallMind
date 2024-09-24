@@ -32,6 +32,7 @@
  */
 package org.smallmind.claxon.registry;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -205,6 +206,17 @@ public class ClaxonRegistry {
 
   private record RegistryKey(Class<?> caller, Tag... tags) {
 
+    @Override
+    public int hashCode () {
+
+      return (caller.hashCode() * 31) + ((tags == null) ? 0 : Arrays.hashCode(tags));
+    }
+
+    @Override
+    public boolean equals (Object obj) {
+
+      return (obj instanceof RegistryKey) && ((RegistryKey)obj).caller().equals(caller) && Arrays.equals(((RegistryKey)obj).tags(), tags);
+    }
   }
 
   private static class NamedMeter<M extends Meter> {

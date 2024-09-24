@@ -38,8 +38,9 @@ import org.smallmind.nutsnbolts.time.Stint;
 
 public class TachometerBuilder implements MeterBuilder<Tachometer> {
 
-  private static final TachometerBuilder DEFAULT_BUILDER = new TachometerBuilder();
   private static final Stint ONE_SECOND_STINT = new Stint(1, TimeUnit.SECONDS);
+  // order is important here, leave the construction as the last static
+  private static final TachometerBuilder DEFAULT_BUILDER = new TachometerBuilder();
 
   private Stint resolutionStint = ONE_SECOND_STINT;
 
