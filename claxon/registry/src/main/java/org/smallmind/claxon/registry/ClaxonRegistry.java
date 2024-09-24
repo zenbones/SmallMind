@@ -116,7 +116,7 @@ public class ClaxonRegistry {
 
           NamedMeter<? extends Meter> previousNamedMeter;
 
-          if ((previousNamedMeter = meterMap.putIfAbsent(key, namedMeter = new NamedMeter<>(meterName, builder, configuration.getClock()))) != null) {
+          if ((previousNamedMeter = meterMap.putIfAbsent(key, namedMeter = new NamedMeter<>(meterName, builder))) != null) {
 
             return previousNamedMeter.getMeter();
           } else {
@@ -204,33 +204,16 @@ public class ClaxonRegistry {
     }
   }
 
-  private record RegistryKey(Class<?> caller, Tag... tags) {
-
-    @Override
-    public int hashCode () {
-
-      return (caller.hashCode() * 31) + ((tags == null) ? 0 : Arrays.hashCode(tags));
-    }
-
-    @Override
-    public boolean equals (Object obj) {
-
-      return (obj instanceof RegistryKey) && ((RegistryKey)obj).caller().equals(caller) && Arrays.equals(((RegistryKey)obj).tags(), tags);
-    }
-  }
-
-  private static class NamedMeter<M extends Meter> {
+  private class NamedMeter<M extends Meter> {
 
     private final String name;
     private final MeterBuilder<M> builder;
-    private final Clock clock;
     private final AtomicReference<M> meterRef = new AtomicReference<>();
 
-    public NamedMeter (String name, MeterBuilder<M> builder, Clock clock) {
+    public NamedMeter (String name, MeterBuilder<M> builder) {
 
       this.name = name;
       this.builder = builder;
-      this.clock = clock;
     }
 
     public String getName () {
@@ -245,12 +228,27 @@ public class ClaxonRegistry {
       if ((meter = meterRef.get()) == null) {
         synchronized (meterRef) {
           if ((meter = meterRef.get()) == null) {
-            meterRef.set(meter = builder.build(clock));
+            meterRef.set(meter = builder.build(configuration.getClock()));
           }
         }
       }
 
       return meter;
+    }
+  }
+
+  private record RegistryKey(Class<?> caller, Tag... tags) {
+
+    @Override
+    public int hashCode () {
+
+      return (caller.hashCode() * 31) + ((tags == null) ? 0 : Arrays.hashCode(tags));
+    }
+
+    @Override
+    public boolean equals (Object obj) {
+
+      return (obj instanceof RegistryKey) && ((RegistryKey)obj).caller().equals(caller) && Arrays.equals(((RegistryKey)obj).tags(), tags);
     }
   }
 }
