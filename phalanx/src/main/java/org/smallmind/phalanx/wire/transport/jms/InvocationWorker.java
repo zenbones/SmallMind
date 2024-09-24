@@ -36,7 +36,6 @@ import jakarta.jms.BytesMessage;
 import jakarta.jms.Message;
 import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Tag;
-import org.smallmind.claxon.registry.meter.LazyBuilder;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.phalanx.wire.TransportException;
 import org.smallmind.phalanx.wire.signal.InvocationSignal;
@@ -79,7 +78,7 @@ public class InvocationWorker extends Worker<Message> {
       ((BytesMessage)message).readBytes(buffer);
       invocationSignal = signalCodec.decode(buffer, 0, (int)((BytesMessage)message).getBodyLength(), InvocationSignal.class);
 
-      Instrument.with(InvocationWorker.class, LazyBuilder.instance(SpeedometerBuilder::new), new Tag("operation", "invoke"), new Tag("service", invocationSignal.getRoute().getService()), new Tag("method", invocationSignal.getRoute().getFunction().getName())).on(
+      Instrument.with(InvocationWorker.class, SpeedometerBuilder.instance(), new Tag("operation", "invoke"), new Tag("service", invocationSignal.getRoute().getService()), new Tag("method", invocationSignal.getRoute().getFunction().getName())).on(
         () -> invocationCircuit.handle(responseTransmitter, signalCodec, message.getStringProperty(WireProperty.CALLER_ID.getKey()), message.getJMSMessageID(), invocationSignal)
       );
     }

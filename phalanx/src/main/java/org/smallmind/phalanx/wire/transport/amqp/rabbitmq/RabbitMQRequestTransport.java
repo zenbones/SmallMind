@@ -40,7 +40,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Tag;
-import org.smallmind.claxon.registry.meter.LazyBuilder;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.ConversationType;
@@ -103,7 +102,7 @@ public class RabbitMQRequestTransport extends AbstractRequestTransport {
 
       messageId = requestMessageRouter.publish(inOnly, (String)voice.getServiceGroup(), voice, route, arguments, contexts);
 
-      return Instrument.with(RabbitMQRequestTransport.class, LazyBuilder.instance(SpeedometerBuilder::new), new Tag("event", ClaxonTag.ACQUIRE_RESULT.getDisplay())).on(
+      return Instrument.with(RabbitMQRequestTransport.class, SpeedometerBuilder.instance(), new Tag("event", ClaxonTag.ACQUIRE_RESULT.getDisplay())).on(
         () -> acquireResult(signalCodec, route, voice, messageId, inOnly)
       );
     } finally {
@@ -114,7 +113,7 @@ public class RabbitMQRequestTransport extends AbstractRequestTransport {
   private RequestMessageRouter acquireRequestMessageRouter ()
     throws Throwable {
 
-    return Instrument.with(RabbitMQRequestTransport.class, LazyBuilder.instance(SpeedometerBuilder::new), new Tag("event", ClaxonTag.ACQUIRE_REQUEST_TRANSPORT.getDisplay())).on(() -> {
+    return Instrument.with(RabbitMQRequestTransport.class, SpeedometerBuilder.instance(), new Tag("event", ClaxonTag.ACQUIRE_REQUEST_TRANSPORT.getDisplay())).on(() -> {
 
       RequestMessageRouter messageTransmitter;
 

@@ -39,6 +39,7 @@ import org.smallmind.nutsnbolts.time.Stint;
 
 public class HistogramBuilder implements MeterBuilder<Histogram> {
 
+  private static final HistogramBuilder DEFAULT_BUILDER = new HistogramBuilder();
   private static final Stint ONE_SECOND_STINT = new Stint(1, TimeUnit.SECONDS);
   private static final Percentile[] DEFAULT_PERCENTILES = new Percentile[] {new Percentile("p75", 75.0), new Percentile("p95", 95.0), new Percentile("p98", 98.0), new Percentile("p99", 99.0), new Percentile("p999", 99.9)};
 
@@ -48,9 +49,9 @@ public class HistogramBuilder implements MeterBuilder<Histogram> {
   private long highestTrackableValue = 3600000L;
   private int numberOfSignificantValueDigits = 2;
 
-  public HistogramBuilder () {
+  public static HistogramBuilder instance () {
 
-    System.out.println("hello");
+    return DEFAULT_BUILDER;
   }
 
   public MeterBuilder<Histogram> lowestDiscernibleValue (long lowestDiscernibleValue) {
@@ -91,6 +92,7 @@ public class HistogramBuilder implements MeterBuilder<Histogram> {
   @Override
   public Histogram build (Clock clock) {
 
+    System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
     return new Histogram(clock, lowestDiscernibleValue, highestTrackableValue, numberOfSignificantValueDigits, resolutionStint, percentiles);
   }
 }

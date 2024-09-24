@@ -35,7 +35,6 @@ package org.smallmind.phalanx.wire.transport.amqp.rabbitmq;
 import java.util.Map;
 import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Tag;
-import org.smallmind.claxon.registry.meter.LazyBuilder;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.phalanx.wire.signal.InvocationSignal;
 import org.smallmind.phalanx.wire.signal.SignalCodec;
@@ -68,7 +67,7 @@ public class InvocationWorker extends Worker<RabbitMQMessage> {
 
     InvocationSignal invocationSignal = signalCodec.decode(message.getBody(), 0, message.getBody().length, InvocationSignal.class);
 
-    Instrument.with(InvocationWorker.class, LazyBuilder.instance(SpeedometerBuilder::new), new Tag("operation", "invoke"), new Tag("service", invocationSignal.getRoute().getService()), new Tag("method", invocationSignal.getRoute().getFunction().getName()), new Tag("version", Integer.toString(invocationSignal.getRoute().getVersion()))).on(
+    Instrument.with(InvocationWorker.class, SpeedometerBuilder.instance(), new Tag("operation", "invoke"), new Tag("service", invocationSignal.getRoute().getService()), new Tag("method", invocationSignal.getRoute().getFunction().getName()), new Tag("version", Integer.toString(invocationSignal.getRoute().getVersion()))).on(
       () -> invocationCircuit.handle(responseTransmitter, signalCodec, getCallerId(message.getProperties().getHeaders()), message.getProperties().getMessageId(), invocationSignal)
     );
   }

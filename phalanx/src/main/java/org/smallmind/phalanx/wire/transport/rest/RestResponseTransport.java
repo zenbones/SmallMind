@@ -43,7 +43,6 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Tag;
-import org.smallmind.claxon.registry.meter.LazyBuilder;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.signal.InvocationSignal;
@@ -109,7 +108,7 @@ public class RestResponseTransport implements ResponseTransport {
     throws Throwable {
 
     if (TransportState.PLAYING.equals(stateRef.get())) {
-      return Instrument.with(RestResponseTransport.class, LazyBuilder.instance(SpeedometerBuilder::new), new Tag("operation", "invoke"), new Tag("service", invocationSignal.getRoute().getService()), new Tag("method", invocationSignal.getRoute().getFunction().getName())).on(
+      return Instrument.with(RestResponseTransport.class, SpeedometerBuilder.instance(), new Tag("operation", "invoke"), new Tag("service", invocationSignal.getRoute().getService()), new Tag("method", invocationSignal.getRoute().getFunction().getName())).on(
         () -> {
 
           RestResponseTransmitter responseTransmitter;

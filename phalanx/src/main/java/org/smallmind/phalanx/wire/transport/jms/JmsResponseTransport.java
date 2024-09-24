@@ -41,7 +41,6 @@ import jakarta.jms.Message;
 import jakarta.jms.Topic;
 import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Tag;
-import org.smallmind.claxon.registry.meter.LazyBuilder;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.ServiceDefinitionException;
@@ -194,7 +193,7 @@ public class JmsResponseTransport extends WorkManager<InvocationWorker, Message>
   private Message constructMessage (final String callerId, final String correlationId, final TopicOperator topicOperator, final ResultSignal resultSignal)
     throws Throwable {
 
-    return Instrument.with(InvocationWorker.class, LazyBuilder.instance(SpeedometerBuilder::new), new Tag("event", ClaxonTag.CONSTRUCT_MESSAGE.getDisplay())).on(() -> {
+    return Instrument.with(InvocationWorker.class, SpeedometerBuilder.instance(), new Tag("event", ClaxonTag.CONSTRUCT_MESSAGE.getDisplay())).on(() -> {
 
       BytesMessage responseMessage;
 

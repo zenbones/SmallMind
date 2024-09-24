@@ -43,7 +43,6 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Tag;
-import org.smallmind.claxon.registry.meter.LazyBuilder;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.persistence.AbstractVectorAwareManagedDao;
 import org.smallmind.persistence.Durable;
@@ -148,7 +147,7 @@ public class CacheCoherentAspect {
           executedMethod = ((MethodSignature)thisJoinPoint.getSignature()).getMethod();
         }
 
-        Instrument.with(thisJoinPoint.getStaticPart().getSourceLocation().getWithinType(), LazyBuilder.instance(SpeedometerBuilder::new), new Tag("durable", durableDao.getManagedClass().getSimpleName()), new Tag("method", executedMethod.getName()), new Tag("source", durableDao.getMetricSource())).update(stop - start, TimeUnit.NANOSECONDS);
+        Instrument.with(thisJoinPoint.getStaticPart().getSourceLocation().getWithinType(), SpeedometerBuilder.instance(), new Tag("durable", durableDao.getManagedClass().getSimpleName()), new Tag("method", executedMethod.getName()), new Tag("source", durableDao.getMetricSource())).update(stop - start, TimeUnit.NANOSECONDS);
       }
     }
   }

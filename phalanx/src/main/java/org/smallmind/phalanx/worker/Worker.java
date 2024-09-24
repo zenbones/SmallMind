@@ -37,7 +37,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Tag;
-import org.smallmind.claxon.registry.meter.LazyBuilder;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.scribe.pen.LoggerManager;
 
@@ -86,7 +85,7 @@ public abstract class Worker<T> implements Runnable {
           final T transfer;
 
           if ((transfer = workQueue.poll(1, TimeUnit.SECONDS)) != null) {
-            Instrument.with(Worker.class, LazyBuilder.instance(SpeedometerBuilder::new), new Tag("event", ClaxonTag.WORKER_IDLE.getDisplay())).update(System.nanoTime() - idleStart, TimeUnit.NANOSECONDS);
+            Instrument.with(Worker.class, SpeedometerBuilder.instance(), new Tag("event", ClaxonTag.WORKER_IDLE.getDisplay())).update(System.nanoTime() - idleStart, TimeUnit.NANOSECONDS);
 
             engageWork(transfer);
           }

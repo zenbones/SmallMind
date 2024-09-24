@@ -43,7 +43,6 @@ import org.smallmind.bayeux.oumuamua.server.api.json.ValueType;
 import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Tag;
 import org.smallmind.claxon.registry.meter.HistogramBuilder;
-import org.smallmind.claxon.registry.meter.LazyBuilder;
 
 public class InstrumentedLatencyListener<V extends Value<V>> implements Protocol.ProtocolListener<V> {
 
@@ -81,7 +80,7 @@ public class InstrumentedLatencyListener<V extends Value<V>> implements Protocol
 
             long timeInTransit = now - ((NumberValue<V>)timestampValue).asLong();
 
-            Instrument.with(InstrumentedLatencyListener.class, LazyBuilder.instance(HistogramBuilder::new), new Tag("remote", Boolean.toString(isRemote(extValue)))).update(timeInTransit);
+            Instrument.with(InstrumentedLatencyListener.class, HistogramBuilder.instance(), new Tag("remote", Boolean.toString(isRemote(extValue)))).update(timeInTransit);
           }
         }
       }

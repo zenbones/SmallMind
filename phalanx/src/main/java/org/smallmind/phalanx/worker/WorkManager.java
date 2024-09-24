@@ -37,7 +37,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Tag;
-import org.smallmind.claxon.registry.meter.LazyBuilder;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.nutsnbolts.util.ComponentStatus;
 import org.smallmind.scribe.pen.LoggerManager;
@@ -96,7 +95,7 @@ public class WorkManager<W extends Worker<T>, T> {
       throw new WorkManagerException("%s is not in the 'started' state", WorkManager.class.getSimpleName());
     }
 
-    Instrument.with(WorkManager.class, LazyBuilder.instance(SpeedometerBuilder::new), new Tag("event", ClaxonTag.ACQUIRE_WORKER.getDisplay())).on(() -> {
+    Instrument.with(WorkManager.class, SpeedometerBuilder.instance(), new Tag("event", ClaxonTag.ACQUIRE_WORKER.getDisplay())).on(() -> {
 
       boolean success;
 

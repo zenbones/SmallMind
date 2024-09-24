@@ -38,9 +38,15 @@ import org.smallmind.nutsnbolts.time.Stint;
 
 public class SpeedometerBuilder implements MeterBuilder<Speedometer> {
 
+  private static final SpeedometerBuilder DEFAULT_BUILDER = new SpeedometerBuilder();
   private static final Stint ONE_SECOND_STINT = new Stint(1, TimeUnit.SECONDS);
 
   private Stint resolutionStint = ONE_SECOND_STINT;
+
+  public static SpeedometerBuilder instance () {
+
+    return DEFAULT_BUILDER;
+  }
 
   public MeterBuilder<Speedometer> resolution (Stint resolutionStint) {
 

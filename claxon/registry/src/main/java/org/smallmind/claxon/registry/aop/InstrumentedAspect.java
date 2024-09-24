@@ -46,7 +46,7 @@ import org.smallmind.nutsnbolts.util.WithResultExecutable;
 public class InstrumentedAspect {
 
   @Around(value = "(execution(@Instrumented * * (..)) || initialization(@Instrumented new(..))) && @annotation(instrumented)", argNames = "thisJoinPoint, instrumented")
-  public  Object   aroundInstrumentedMethod (ProceedingJoinPoint thisJoinPoint, Instrumented instrumented)
+  public Object aroundInstrumentedMethod (ProceedingJoinPoint thisJoinPoint, Instrumented instrumented)
     throws Throwable {
 
     if (!instrumented.active()) {
@@ -66,7 +66,7 @@ public class InstrumentedAspect {
         tags[index++] = new Tag(parameterTag.key(), AOPUtility.getParameterValue(thisJoinPoint, parameterTag.parameter(), false).toString());
       }
 
-      builder = new InstrumentedLazyBuilder(instrumented.parser(), instrumented.json());
+      builder = instrumented.parser().getConstructor().newInstance().parse(instrumented.json());
 
       return Instrument.with(caller, builder, tags)
                .as(instrumented.timeUnit())

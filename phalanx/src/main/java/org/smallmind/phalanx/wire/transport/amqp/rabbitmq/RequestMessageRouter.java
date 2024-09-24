@@ -42,7 +42,6 @@ import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Tag;
-import org.smallmind.claxon.registry.meter.LazyBuilder;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.VocalMode;
@@ -108,9 +107,9 @@ public class RequestMessageRouter extends MessageRouter {
             long timeInTopic = System.currentTimeMillis() - getTimestamp(properties);
 
             LoggerManager.getLogger(ResponseMessageRouter.class).debug("response message received(%s) in %d ms...", properties.getMessageId(), timeInTopic);
-            Instrument.with(RequestMessageRouter.class, LazyBuilder.instance(SpeedometerBuilder::new), new Tag("queue", ClaxonTag.RESPONSE_TRANSIT_TIME.getDisplay())).update((timeInTopic >= 0) ? timeInTopic : 0, TimeUnit.MILLISECONDS);
+            Instrument.with(RequestMessageRouter.class, SpeedometerBuilder.instance(), new Tag("queue", ClaxonTag.RESPONSE_TRANSIT_TIME.getDisplay())).update((timeInTopic >= 0) ? timeInTopic : 0, TimeUnit.MILLISECONDS);
 
-            Instrument.with(RequestMessageRouter.class, LazyBuilder.instance(SpeedometerBuilder::new), new Tag("event", ClaxonTag.COMPLETE_CALLBACK.getDisplay())).on(
+            Instrument.with(RequestMessageRouter.class, SpeedometerBuilder.instance(), new Tag("event", ClaxonTag.COMPLETE_CALLBACK.getDisplay())).on(
               () -> requestTransport.completeCallback(properties.getCorrelationId(), signalCodec.decode(body, 0, body.length, ResultSignal.class))
             );
           } catch (Throwable throwable) {
@@ -147,7 +146,7 @@ public class RequestMessageRouter extends MessageRouter {
   private RabbitMQMessage constructMessage (final boolean inOnly, final Route route, final Map<String, Object> arguments, final WireContext... contexts)
     throws Throwable {
 
-    return Instrument.with(RequestMessageRouter.class, LazyBuilder.instance(SpeedometerBuilder::new), new Tag("event", ClaxonTag.CONSTRUCT_MESSAGE.getDisplay())).on(() -> {
+    return Instrument.with(RequestMessageRouter.class, SpeedometerBuilder.instance(), new Tag("event", ClaxonTag.CONSTRUCT_MESSAGE.getDisplay())).on(() -> {
 
       HashMap<String, Object> headerMap = new HashMap<>();
 

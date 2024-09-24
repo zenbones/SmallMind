@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import org.smallmind.claxon.registry.feature.Feature;
 import org.smallmind.claxon.registry.meter.Meter;
@@ -114,17 +115,17 @@ public class ClaxonRegistry {
 
           NamedMeter<? extends Meter> previousNamedMeter;
 
-          if ((previousNamedMeter = meterMap.putIfAbsent(key, namedMeter = new NamedMeter<>(meterName, builder.build(configuration.getClock())))) != null) {
+          if ((previousNamedMeter = meterMap.putIfAbsent(key, namedMeter = new NamedMeter<>(meterName, builder, configuration.getClock()))) != null) {
 
-            return previousNamedMeter.meter();
+            return previousNamedMeter.getMeter();
           } else {
 
-            return namedMeter.meter();
+            return namedMeter.getMeter();
           }
         }
       } else {
 
-        return namedMeter.meter();
+        return namedMeter.getMeter();
       }
     }
   }
@@ -180,12 +181,12 @@ public class ClaxonRegistry {
 
           for (Map.Entry<RegistryKey, NamedMeter<? extends Meter>> namedMeterEntry : meterMap.entrySet()) {
 
-            Quantity[] quantities = namedMeterEntry.getValue().meter().record();
+            Quantity[] quantities = namedMeterEntry.getValue().getMeter().record();
 
             if ((quantities != null) && (quantities.length > 0)) {
               for (Emitter emitter : emitterMap.values()) {
                 try {
-                  emitter.record(namedMeterEntry.getValue().name(), configuration.calculateTags(namedMeterEntry.getValue().name(), namedMeterEntry.getKey().tags()), quantities);
+                  emitter.record(namedMeterEntry.getValue().getName(), configuration.calculateTags(namedMeterEntry.getValue().getName(), namedMeterEntry.getKey().tags()), quantities);
                 } catch (Exception exception) {
                   LoggerManager.getLogger(ClaxonRegistry.class).error(exception);
                 }
@@ -206,7 +207,38 @@ public class ClaxonRegistry {
 
   }
 
-  private record NamedMeter<M extends Meter>(String name, M meter) {
+  private static class NamedMeter<M extends Meter> {
 
+    private final String name;
+    private final MeterBuilder<M> builder;
+    private final Clock clock;
+    private final AtomicReference<M> meterRef = new AtomicReference<>();
+
+    public NamedMeter (String name, MeterBuilder<M> builder, Clock clock) {
+
+      this.name = name;
+      this.builder = builder;
+      this.clock = clock;
+    }
+
+    public String getName () {
+
+      return name;
+    }
+
+    public M getMeter () {
+
+      M meter;
+
+      if ((meter = meterRef.get()) == null) {
+        synchronized (meterRef) {
+          if ((meter = meterRef.get()) == null) {
+            meterRef.set(meter = builder.build(clock));
+          }
+        }
+      }
+
+      return meter;
+    }
   }
 }

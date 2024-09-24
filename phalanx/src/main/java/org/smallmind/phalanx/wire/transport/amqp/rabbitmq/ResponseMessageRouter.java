@@ -41,7 +41,6 @@ import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Tag;
-import org.smallmind.claxon.registry.meter.LazyBuilder;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.VocalMode;
@@ -145,7 +144,7 @@ public class ResponseMessageRouter extends MessageRouter {
           long timeInQueue = System.currentTimeMillis() - getTimestamp(properties);
 
           LoggerManager.getLogger(QueueOperator.class).debug("request message received(%s) in %d ms...", properties.getMessageId(), timeInQueue);
-          Instrument.with(ResponseMessageRouter.class, LazyBuilder.instance(SpeedometerBuilder::new), new Tag("queue", ClaxonTag.REQUEST_TRANSIT_TIME.getDisplay())).update((timeInQueue >= 0) ? timeInQueue : 0, TimeUnit.MILLISECONDS);
+          Instrument.with(ResponseMessageRouter.class, SpeedometerBuilder.instance(), new Tag("queue", ClaxonTag.REQUEST_TRANSIT_TIME.getDisplay())).update((timeInQueue >= 0) ? timeInQueue : 0, TimeUnit.MILLISECONDS);
 
           responseTransport.execute(new RabbitMQMessage(properties, body));
         } catch (Throwable throwable) {
@@ -176,7 +175,7 @@ public class ResponseMessageRouter extends MessageRouter {
   private RabbitMQMessage constructMessage (final String correlationId, final boolean error, final String nativeType, final Object result)
     throws Throwable {
 
-    return Instrument.with(ResponseMessageRouter.class, LazyBuilder.instance(SpeedometerBuilder::new), new Tag("event", ClaxonTag.CONSTRUCT_MESSAGE.getDisplay())).on(() -> {
+    return Instrument.with(ResponseMessageRouter.class, SpeedometerBuilder.instance(), new Tag("event", ClaxonTag.CONSTRUCT_MESSAGE.getDisplay())).on(() -> {
 
       AMQP.BasicProperties properties =
         new AMQP.BasicProperties.Builder()

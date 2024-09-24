@@ -43,7 +43,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Tag;
-import org.smallmind.claxon.registry.meter.LazyBuilder;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.claxon.registry.meter.TachometerBuilder;
 import org.smallmind.nutsnbolts.lang.StackTrace;
@@ -404,13 +403,13 @@ public class ComponentPinManager<C> {
 
     int freeSize;
 
-    Instrument.with(ComponentPinManager.class, LazyBuilder.instance(SpeedometerBuilder::new), new Tag("pool", componentPool.getPoolName()), new Tag("size", ClaxonTag.FREE.getDisplay())).update(freeSize = getFreeSize());
-    Instrument.with(ComponentPinManager.class, LazyBuilder.instance(SpeedometerBuilder::new), new Tag("pool", componentPool.getPoolName()), new Tag("size", ClaxonTag.PROCESSING.getDisplay())).update(getPoolSize() - freeSize);
+    Instrument.with(ComponentPinManager.class, SpeedometerBuilder.instance(), new Tag("pool", componentPool.getPoolName()), new Tag("size", ClaxonTag.FREE.getDisplay())).update(freeSize = getFreeSize());
+    Instrument.with(ComponentPinManager.class, SpeedometerBuilder.instance(), new Tag("pool", componentPool.getPoolName()), new Tag("size", ClaxonTag.PROCESSING.getDisplay())).update(getPoolSize() - freeSize);
   }
 
   private void trackTimeout () {
 
-    Instrument.with(ComponentPinManager.class, LazyBuilder.instance(TachometerBuilder::new), new Tag("pool", componentPool.getPoolName()), new Tag("event", ClaxonTag.TIMEOUT.getDisplay())).update(1);
+    Instrument.with(ComponentPinManager.class, new TachometerBuilder(), new Tag("pool", componentPool.getPoolName()), new Tag("event", ClaxonTag.TIMEOUT.getDisplay())).update(1);
   }
 
   public StackTrace[] getExistentialStackTraces () {
