@@ -114,7 +114,7 @@ public class DotNotation {
 
           if (translationState.equals(TranslationState.NORMAL)) {
             patternBuilder.append(')');
-            value += Math.pow(2, ++segment);
+            value += (int)Math.pow(2, ++segment);
           }
 
           patternBuilder.append("(\\.|\\$)");
@@ -133,7 +133,7 @@ public class DotNotation {
           patternBuilder.append("(.+)");
           translationState = TranslationState.WILD;
           wildState = WildState.STAR;
-          value += Math.pow(2, ++segment) - 1;
+          value += (int)(Math.pow(2, ++segment) - 1);
 
           break;
         case '?':
@@ -148,7 +148,7 @@ public class DotNotation {
           patternBuilder.append("([^.$]+)");
           translationState = TranslationState.WILD;
           wildState = WildState.QUESTION;
-          value += Math.pow(2, ++segment) - 1;
+          value += (int)(Math.pow(2, ++segment) - 1);
 
           break;
         default:
@@ -172,7 +172,7 @@ public class DotNotation {
       throw new DotNotationException("The pattern can not end with '.'");
     } else if (translationState.equals(TranslationState.NORMAL)) {
       patternBuilder.append(')');
-      value += Math.pow(2, ++segment);
+      value += (int)Math.pow(2, ++segment);
     }
 
     patternBuilder.append('$');
