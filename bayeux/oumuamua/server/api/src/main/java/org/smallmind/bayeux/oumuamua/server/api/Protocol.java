@@ -47,6 +47,8 @@ public interface Protocol<V extends Value<V>> {
 
     void onReceipt (Message<V>[] incomingMessages);
 
+    void onPublish (Message<V> originatingMessage, Message<V> outgoingMessage);
+
     void onDelivery (Packet<V> outgoingPacket);
   }
 

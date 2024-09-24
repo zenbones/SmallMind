@@ -33,6 +33,7 @@
 package org.smallmind.bayeux.oumuamua.server.spi.ltency;
 
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
+import org.smallmind.bayeux.oumuamua.server.api.PacketType;
 import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.json.BooleanValue;
 import org.smallmind.bayeux.oumuamua.server.api.json.Message;
@@ -50,7 +51,7 @@ public class InstrumentedLatencyListener<V extends Value<V>> implements Protocol
   @Override
   public void onReceipt (Message<V>[] incomingMessages) {
 
-    long now = System.nanoTime();
+    long now = System.currentTimeMillis();
 
     for (Message<V> message : incomingMessages) {
 
@@ -61,9 +62,24 @@ public class InstrumentedLatencyListener<V extends Value<V>> implements Protocol
   }
 
   @Override
+  public void onPublish (Message<V> originatingMessage, Message<V> outgoingMessage) {
+
+    ObjectValue<V> extValue;
+
+    if ((extValue = originatingMessage.getExt()) != null) {
+
+      Value<V> latencyValue;
+
+      if (((latencyValue = extValue.get("latency")) != null) && ValueType.OBJECT.equals(latencyValue.getType())) {
+        outgoingMessage.getExt(true).put("latency", latencyValue);
+      }
+    }
+  }
+
+  @Override
   public void onDelivery (Packet<V> outgoingPacket) {
 
-    long now = System.nanoTime();
+    long now = System.currentTimeMillis();
 
     for (Message<V> message : outgoingPacket.getMessages()) {
 
@@ -81,7 +97,10 @@ public class InstrumentedLatencyListener<V extends Value<V>> implements Protocol
 
             long timeInTransit = now - ((NumberValue<V>)timestampValue).asLong();
 
-            Instrument.with(InstrumentedLatencyListener.class, MeterFactory.instance(HistogramBuilder::new), new Tag("remote", Boolean.toString(isRemote(extValue)))).update(timeInTransit);
+            if (timeInTransit >= 0) {
+
+              Instrument.with(InstrumentedLatencyListener.class, MeterFactory.instance(HistogramBuilder::new), new Tag("delivery", Boolean.toString(PacketType.DELIVERY.equals(outgoingPacket.getPacketType()))), new Tag("remote", Boolean.toString(isRemote(extValue)))).update(timeInTransit + 1);
+            }
           }
         }
       }

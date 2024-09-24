@@ -53,6 +53,7 @@ import org.smallmind.bayeux.oumuamua.server.api.json.ObjectValue;
 import org.smallmind.bayeux.oumuamua.server.api.json.StringValue;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.json.ValueType;
+import org.smallmind.bayeux.oumuamua.server.spi.AbstractProtocol;
 import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
 import org.smallmind.bayeux.oumuamua.server.spi.MetaProcessingException;
 import org.smallmind.nutsnbolts.util.MutationUtility;
@@ -404,7 +405,10 @@ public enum Meta {
         } else {
           try {
 
-            server.deliver(session, new Packet<>(PacketType.DELIVERY, session.getId(), route, constructDeliveryMessage(server, route.getPath(), request.getId(), request.get(Message.DATA))), true);
+            Message<V> deliveryMessage = constructDeliveryMessage(server, route.getPath(), request.getId(), request.get(Message.DATA));
+
+            ((AbstractProtocol<V>)protocol).onPublish(request, deliveryMessage);
+            server.deliver(session, new Packet<>(PacketType.DELIVERY, session.getId(), route, deliveryMessage), true);
 
             if (channel.isReflecting()) {
               return new Packet<V>(PacketType.RESPONSE, session.getId(), route, new Message[] {constructPublishSuccessResponse(server, route.getPath(), request.getId(), session.getId()), request});

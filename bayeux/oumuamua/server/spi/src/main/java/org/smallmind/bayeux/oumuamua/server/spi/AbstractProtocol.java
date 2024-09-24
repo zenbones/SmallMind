@@ -51,6 +51,15 @@ public abstract class AbstractProtocol<V extends Value<V>> implements Protocol<V
     }
   }
 
+  public void onPublish (Message<V> originatingMessage, Message<V> outgoingMessage) {
+
+    for (Listener<V> listener : listenerList) {
+      if (ProtocolListener.class.isAssignableFrom(listener.getClass())) {
+        ((ProtocolListener<V>)listener).onPublish(originatingMessage, outgoingMessage);
+      }
+    }
+  }
+
   public void onDelivery (Packet<V> outgoingPacket) {
 
     for (Listener<V> listener : listenerList) {
