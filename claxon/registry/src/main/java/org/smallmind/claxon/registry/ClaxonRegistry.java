@@ -37,6 +37,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Function;
+import org.smallmind.claxon.registry.feature.Feature;
 import org.smallmind.claxon.registry.meter.Meter;
 import org.smallmind.claxon.registry.meter.MeterBuilder;
 import org.smallmind.scribe.pen.LoggerManager;
@@ -156,14 +157,32 @@ public class ClaxonRegistry {
       try {
         while (!finishLatch.await(configuration.getCollectionStint().getTime(), configuration.getCollectionStint().getTimeUnit())) {
 
+          Feature[] features;
+
           measurableTracker.sweepAndUpdate();
+
+          if ((features = configuration.getFeatures()) != null) {
+            for (Feature feature : features) {
+
+              Quantity[] quantities = feature.record();
+
+              if ((quantities != null) && (quantities.length > 0)) {
+                for (Emitter emitter : emitterMap.values()) {
+                  try {
+                    emitter.record(feature.getName(), configuration.calculateTags(feature.getName(), feature.getTags()), quantities);
+                  } catch (Exception exception) {
+                    LoggerManager.getLogger(ClaxonRegistry.class).error(exception);
+                  }
+                }
+              }
+            }
+          }
 
           for (Map.Entry<RegistryKey, NamedMeter<? extends Meter>> namedMeterEntry : meterMap.entrySet()) {
 
             Quantity[] quantities = namedMeterEntry.getValue().meter().record();
 
             if ((quantities != null) && (quantities.length > 0)) {
-
               for (Emitter emitter : emitterMap.values()) {
                 try {
                   emitter.record(namedMeterEntry.getValue().name(), configuration.calculateTags(namedMeterEntry.getValue().name(), namedMeterEntry.getKey().tags()), quantities);

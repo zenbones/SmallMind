@@ -30,25 +30,45 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.perf;
+package org.smallmind.claxon.exotic.jvm;
 
-import java.lang.management.CompilationMXBean;
 import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryMXBean;
-import java.lang.management.MemoryUsage;
+import java.lang.management.OperatingSystemMXBean;
 
-public class CompilationAndHeapFacts {
+public class OSFacts {
 
-  private final CompilationMXBean compilationMXBean = ManagementFactory.getCompilationMXBean();
-  private final MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
+  private final OperatingSystemMXBean operatingSystemMXBean = ManagementFactory.getOperatingSystemMXBean();
+  private final String description;
+  private final int cores;
 
-  public long getCompilationTime () {
+  public OSFacts () {
 
-    return compilationMXBean.getTotalCompilationTime();
+    cores = operatingSystemMXBean.getAvailableProcessors();
+    description = String.format("%s %s %s", operatingSystemMXBean.getName(), operatingSystemMXBean.getVersion(), operatingSystemMXBean.getArch());
   }
 
-  public MemoryUsage getHeapMemoryUsage () {
+  public int getCores () {
 
-    return memoryMXBean.getHeapMemoryUsage();
+    return cores;
+  }
+
+  public String getDescription () {
+
+    return description;
+  }
+
+  public long getProcessCpuTime () {
+
+    return (operatingSystemMXBean instanceof com.sun.management.OperatingSystemMXBean) ? ((com.sun.management.OperatingSystemMXBean)operatingSystemMXBean).getProcessCpuTime() : -1;
+  }
+
+  public long getTotalMemorySize () {
+
+    return (operatingSystemMXBean instanceof com.sun.management.OperatingSystemMXBean) ? ((com.sun.management.OperatingSystemMXBean)operatingSystemMXBean).getTotalMemorySize() : -1;
+  }
+
+  public long getFreeMemorySize () {
+
+    return (operatingSystemMXBean instanceof com.sun.management.OperatingSystemMXBean) ? ((com.sun.management.OperatingSystemMXBean)operatingSystemMXBean).getFreeMemorySize() : -1;
   }
 }

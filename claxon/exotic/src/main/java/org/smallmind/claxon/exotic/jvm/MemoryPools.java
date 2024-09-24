@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.perf;
+package org.smallmind.claxon.exotic.jvm;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;

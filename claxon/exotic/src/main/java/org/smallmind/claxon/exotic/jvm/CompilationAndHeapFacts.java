@@ -30,29 +30,25 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.spi.perf;
+package org.smallmind.claxon.exotic.jvm;
 
-import org.HdrHistogram.Histogram;
-import org.HdrHistogram.Recorder;
+import java.lang.management.CompilationMXBean;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
+import java.lang.management.MemoryUsage;
 
-public class PerfRecord {
+public class CompilationAndHeapFacts {
 
-  private final Recorder recorder = new Recorder(1, 3600000000000L, 2);
+  private final CompilationMXBean compilationMXBean = ManagementFactory.getCompilationMXBean();
+  private final MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
 
-  public void reset () {
+  public long getCompilationTime () {
 
-    recorder.reset();
+    return compilationMXBean.getTotalCompilationTime();
   }
 
-  public Histogram gather () {
+  public MemoryUsage getHeapMemoryUsage () {
 
-    return recorder.getIntervalHistogram();
-  }
-
-  public void store (long timeInTransit) {
-
-    if (timeInTransit >= 0) {
-      recorder.recordValue(timeInTransit + 1);
-    }
+    return memoryMXBean.getHeapMemoryUsage();
   }
 }

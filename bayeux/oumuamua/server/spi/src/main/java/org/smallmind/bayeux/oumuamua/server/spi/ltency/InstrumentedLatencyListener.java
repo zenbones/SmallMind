@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.spi.perf;
+package org.smallmind.bayeux.oumuamua.server.spi.ltency;
 
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.Protocol;
@@ -40,26 +40,12 @@ import org.smallmind.bayeux.oumuamua.server.api.json.NumberValue;
 import org.smallmind.bayeux.oumuamua.server.api.json.ObjectValue;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.json.ValueType;
+import org.smallmind.claxon.registry.Instrument;
+import org.smallmind.claxon.registry.Tag;
+import org.smallmind.claxon.registry.meter.HistogramBuilder;
+import org.smallmind.claxon.registry.meter.LazyBuilder;
 
-public class PerfListener<V extends Value<V>> implements Protocol.ProtocolListener<V> {
-
-  private final PerfRecord localPerfRecord = new PerfRecord();
-  private final PerfRecord remotePerfRecord = new PerfRecord();
-
-  public void reset () {
-
-    localPerfRecord.reset();
-    remotePerfRecord.reset();
-  }
-
-  public PerfResult gatherAndReset () {
-
-    PerfResult perfResult = new PerfResult(localPerfRecord.gather(), remotePerfRecord.gather());
-
-    reset();
-
-    return perfResult;
-  }
+public class InstrumentedLatencyListener<V extends Value<V>> implements Protocol.ProtocolListener<V> {
 
   @Override
   public void onReceipt (Message<V>[] incomingMessages) {
@@ -68,9 +54,9 @@ public class PerfListener<V extends Value<V>> implements Protocol.ProtocolListen
 
     for (Message<V> message : incomingMessages) {
 
-      ObjectValue<V> perfValue = message.getFactory().objectValue();
+      ObjectValue<V> latencyValue = message.getFactory().objectValue();
 
-      message.getExt(true).put("perf", perfValue.put("timestamp", now));
+      message.getExt(true).put("latency", latencyValue.put("timestamp", now));
     }
   }
 
@@ -85,21 +71,17 @@ public class PerfListener<V extends Value<V>> implements Protocol.ProtocolListen
 
       if ((extValue = message.getExt()) != null) {
 
-        Value<V> perfValue;
+        Value<V> latencyValue;
 
-        if (((perfValue = extValue.get("perf")) != null) && ValueType.OBJECT.equals(perfValue.getType())) {
+        if (((latencyValue = extValue.get("latency")) != null) && ValueType.OBJECT.equals(latencyValue.getType())) {
 
           Value<V> timestampValue;
 
-          if (((timestampValue = ((ObjectValue<V>)perfValue).get("timestamp")) != null) && ValueType.NUMBER.equals(timestampValue.getType())) {
+          if (((timestampValue = ((ObjectValue<V>)latencyValue).get("timestamp")) != null) && ValueType.NUMBER.equals(timestampValue.getType())) {
 
             long timeInTransit = now - ((NumberValue<V>)timestampValue).asLong();
 
-            if (isRemote(extValue)) {
-              remotePerfRecord.store(timeInTransit);
-            } else {
-              localPerfRecord.store(timeInTransit);
-            }
+            Instrument.with(InstrumentedLatencyListener.class, LazyBuilder.instance(HistogramBuilder::new), new Tag("remote", Boolean.toString(isRemote(extValue)))).update(timeInTransit);
           }
         }
       }

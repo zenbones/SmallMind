@@ -30,44 +30,16 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.perf;
+package org.smallmind.claxon.registry.feature;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import org.smallmind.claxon.registry.Quantity;
+import org.smallmind.claxon.registry.Tag;
 
-public class PerformanceMonitor {
+public interface Feature {
 
-  private InitialState initialState;
-  private FinalState finalState;
-  private ScheduledFuture<?> memoryPoller;
-  private ScheduledExecutorService scheduler;
-  private long memoryPollInterval = 250;
+  String getName ();
 
-  public PerformanceMonitor (long memoryPollInterval) {
+  Tag[] getTags ();
 
-    this.memoryPollInterval = memoryPollInterval;
-  }
-
-  public InitialState start () {
-
-    initialState = new InitialState();
-    finalState = new FinalState();
-
-    scheduler = Executors.newSingleThreadScheduledExecutor();
-    memoryPoller = scheduler.scheduleWithFixedDelay(finalState::update, memoryPollInterval, memoryPollInterval, TimeUnit.MILLISECONDS);
-
-    return initialState;
-  }
-
-  public FinalState stop () {
-
-    finalState.stop(initialState);
-
-    memoryPoller.cancel(false);
-    scheduler.shutdown();
-
-    return finalState;
-  }
+  Quantity[] record ();
 }

@@ -33,22 +33,25 @@
 package org.smallmind.claxon.registry;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import org.smallmind.claxon.registry.feature.Feature;
 import org.smallmind.nutsnbolts.time.Stint;
 
 public class ClaxonConfiguration {
 
   private Clock clock = SystemClock.instance();
   private Stint collectionStint = new Stint(2, TimeUnit.SECONDS);
+  private Feature[] features;
   private Tag[] registryTags = new Tag[0];
-  private HashMap<String, Tag[]> meterTags;
+  private Map<String, Tag[]> meterTags;
   private NamingStrategy namingStrategy = new ImpliedNamingStrategy();
 
   public ClaxonConfiguration () {
 
   }
 
-  public ClaxonConfiguration (Clock clock, Stint collectionStint, Tag[] registryTags, NamingStrategy namingStrategy) {
+  public ClaxonConfiguration (Clock clock, Stint collectionStint, Feature[] features, Tag[] registryTags, Map<String, Tag[]> meterTags, NamingStrategy namingStrategy) {
 
     if (clock != null) {
       this.clock = clock;
@@ -56,8 +59,14 @@ public class ClaxonConfiguration {
     if (collectionStint != null) {
       this.collectionStint = collectionStint;
     }
+    if (features != null) {
+      this.features = features;
+    }
     if (registryTags != null) {
       this.registryTags = registryTags;
+    }
+    if (meterTags != null) {
+      this.meterTags = meterTags;
     }
     if (namingStrategy != null) {
       this.namingStrategy = namingStrategy;
@@ -82,6 +91,16 @@ public class ClaxonConfiguration {
   public void setCollectionStint (Stint collectionStint) {
 
     this.collectionStint = collectionStint;
+  }
+
+  public Feature[] getFeatures () {
+
+    return features;
+  }
+
+  public void setFeatures (Feature[] features) {
+
+    this.features = features;
   }
 
   public Tag[] getRegistryTags () {
