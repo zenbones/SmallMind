@@ -41,19 +41,12 @@ public class HistogramBuilder implements MeterBuilder<Histogram> {
 
   private static final Stint ONE_SECOND_STINT = new Stint(1, TimeUnit.SECONDS);
   private static final Percentile[] DEFAULT_PERCENTILES = new Percentile[] {new Percentile("p75", 75.0), new Percentile("p95", 95.0), new Percentile("p98", 98.0), new Percentile("p99", 99.0), new Percentile("p999", 99.9)};
-  // order is important here, leave the construction as the last static
-  private static final HistogramBuilder DEFAULT_BUILDER = new HistogramBuilder();
 
   private final Stint resolutionStint = ONE_SECOND_STINT;
   private Percentile[] percentiles = DEFAULT_PERCENTILES;
   private long lowestDiscernibleValue = 1;
   private long highestTrackableValue = 3600000L;
   private int numberOfSignificantValueDigits = 2;
-
-  public static HistogramBuilder instance () {
-
-    return DEFAULT_BUILDER;
-  }
 
   public MeterBuilder<Histogram> lowestDiscernibleValue (long lowestDiscernibleValue) {
 
@@ -85,7 +78,7 @@ public class HistogramBuilder implements MeterBuilder<Histogram> {
 
   public MeterBuilder<Histogram> resolution (Stint resolutionStint) {
 
-   // this.resolutionStint = resolutionStint;
+    // this.resolutionStint = resolutionStint;
 
     return this;
   }

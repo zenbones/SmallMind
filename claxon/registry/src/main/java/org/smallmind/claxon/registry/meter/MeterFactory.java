@@ -32,8 +32,25 @@
  */
 package org.smallmind.claxon.registry.meter;
 
-@FunctionalInterface
-public interface BuilderFactory<M extends Meter> {
+import org.smallmind.claxon.registry.Clock;
 
-  MeterBuilder<M> construct ();
+public class MeterFactory<M extends Meter> implements MeterBuilder<M> {
+
+  private final BuilderConstructor<M> factory;
+
+  public MeterFactory (BuilderConstructor<M> factory) {
+
+    this.factory = factory;
+  }
+
+  public static <M extends Meter> MeterFactory<M> instance (BuilderConstructor<M> factory) {
+
+    return new MeterFactory<>(factory);
+  }
+
+  @Override
+  public M build (Clock clock) {
+
+    return factory.construct().build(clock);
+  }
 }

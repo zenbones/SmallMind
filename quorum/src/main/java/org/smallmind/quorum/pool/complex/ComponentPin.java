@@ -36,6 +36,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Tag;
+import org.smallmind.claxon.registry.meter.MeterFactory;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 
 public class ComponentPin<C> {
@@ -85,7 +86,7 @@ public class ComponentPin<C> {
       componentPool.reportLeaseTimeNanos(leaseTime);
     }
 
-    Instrument.with(ComponentPin.class, SpeedometerBuilder.instance(), new Tag("pool", componentPool.getPoolName()), new Tag("event", ClaxonTag.RELEASED.getDisplay())).update(leaseTime, TimeUnit.NANOSECONDS);
+    Instrument.with(ComponentPin.class, MeterFactory.instance(SpeedometerBuilder::new), new Tag("pool", componentPool.getPoolName()), new Tag("event", ClaxonTag.RELEASED.getDisplay())).update(leaseTime, TimeUnit.NANOSECONDS);
 
     if (deconstructionCoordinator != null) {
       deconstructionCoordinator.free();

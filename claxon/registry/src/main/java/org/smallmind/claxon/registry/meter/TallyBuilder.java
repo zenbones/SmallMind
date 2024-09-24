@@ -36,13 +36,6 @@ import org.smallmind.claxon.registry.Clock;
 
 public class TallyBuilder implements MeterBuilder<Tally> {
 
-  private static final TallyBuilder DEFAULT_BUILDER = new TallyBuilder();
-
-  public static TallyBuilder instance () {
-
-    return DEFAULT_BUILDER;
-  }
-
   @Override
   public Tally build (Clock clock) {
 

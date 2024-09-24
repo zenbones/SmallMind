@@ -32,26 +32,8 @@
  */
 package org.smallmind.claxon.registry.meter;
 
-import java.util.concurrent.TimeUnit;
-import org.smallmind.claxon.registry.Clock;
-import org.smallmind.nutsnbolts.time.Stint;
+@FunctionalInterface
+public interface BuilderConstructor<M extends Meter> {
 
-public class TachometerBuilder implements MeterBuilder<Tachometer> {
-
-  private static final Stint ONE_SECOND_STINT = new Stint(1, TimeUnit.SECONDS);
-
-  private Stint resolutionStint = ONE_SECOND_STINT;
-
-  public MeterBuilder<Tachometer> resolution (Stint resolutionStint) {
-
-    this.resolutionStint = resolutionStint;
-
-    return this;
-  }
-
-  @Override
-  public Tachometer build (Clock clock) {
-
-    return new Tachometer(clock, resolutionStint);
-  }
+  MeterBuilder<M> construct ();
 }

@@ -203,7 +203,7 @@ Instrument.with(MyClass.class, new GaugeBuilder(), new Tag("event", "myevent")).
 ====
 [source,java]
 ----
-Instrument.with(MyClass.class, SpeedometerBuilder.instance()(), new Tag("event", "myevent"),new Tag("service", "myservice")).on(() -> {
+Instrument.with(MyClass.class, new SpeedometerBuilder(), new Tag("event", "myevent"),new Tag("service", "myservice")).on(() -> {
   ...
   instrumented code
   ...

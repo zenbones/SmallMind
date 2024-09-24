@@ -42,6 +42,7 @@ import jakarta.jms.MessageListener;
 import jakarta.jms.Topic;
 import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Tag;
+import org.smallmind.claxon.registry.meter.MeterFactory;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.phalanx.wire.TransportException;
 import org.smallmind.phalanx.wire.signal.ResultSignal;
@@ -103,9 +104,9 @@ public class ResponseListener implements SessionEmployer, MessageListener {
       long timeInTopic = System.currentTimeMillis() - message.getLongProperty(WireProperty.CLOCK.getKey());
 
       LoggerManager.getLogger(ResponseListener.class).debug("response message received(%s) in %d ms...", message.getJMSMessageID(), timeInTopic);
-      Instrument.with(ResponseListener.class, SpeedometerBuilder.instance(), new Tag("queue", ClaxonTag.RESPONSE_TRANSIT_TIME.getDisplay())).update((timeInTopic >= 0) ? timeInTopic : 0, TimeUnit.MILLISECONDS);
+      Instrument.with(ResponseListener.class, MeterFactory.instance(SpeedometerBuilder::new), new Tag("queue", ClaxonTag.RESPONSE_TRANSIT_TIME.getDisplay())).update((timeInTopic >= 0) ? timeInTopic : 0, TimeUnit.MILLISECONDS);
 
-      Instrument.with(ResponseListener.class, SpeedometerBuilder.instance(), new Tag("event", ClaxonTag.COMPLETE_CALLBACK.getDisplay())).on(() -> {
+      Instrument.with(ResponseListener.class, MeterFactory.instance(SpeedometerBuilder::new), new Tag("event", ClaxonTag.COMPLETE_CALLBACK.getDisplay())).on(() -> {
 
         if (((BytesMessage)message).getBodyLength() > buffer.length) {
           throw new TransportException("Message length exceeds maximum capacity %d > %d", ((BytesMessage)message).getBodyLength(), buffer.length);

@@ -40,6 +40,7 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Tag;
+import org.smallmind.claxon.registry.meter.MeterFactory;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.persistence.AbstractVectorAwareManagedDao;
 
@@ -75,7 +76,7 @@ public class TimerAspect {
         executedMethod = ((MethodSignature)thisJoinPoint.getSignature()).getMethod();
         metricSource = durableDao.getMetricSource();
 
-        Instrument.with(thisJoinPoint.getStaticPart().getSourceLocation().getWithinType(), SpeedometerBuilder.instance(), new Tag("durable", durableDao.getManagedClass().getSimpleName()), new Tag("method", executedMethod.getName()), new Tag("source", metricSource)).update(stop - start, TimeUnit.NANOSECONDS);
+        Instrument.with(thisJoinPoint.getStaticPart().getSourceLocation().getWithinType(), MeterFactory.instance(SpeedometerBuilder::new), new Tag("durable", durableDao.getManagedClass().getSimpleName()), new Tag("method", executedMethod.getName()), new Tag("source", metricSource)).update(stop - start, TimeUnit.NANOSECONDS);
       }
     }
   }

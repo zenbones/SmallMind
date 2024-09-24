@@ -35,6 +35,7 @@ package org.smallmind.quorum.pool.complex;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Tag;
+import org.smallmind.claxon.registry.meter.MeterFactory;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.nutsnbolts.lang.StackTrace;
 import org.smallmind.quorum.pool.ComponentPoolException;
@@ -162,7 +163,7 @@ public class ComponentPool<C> extends Pool {
 
     try {
 
-      return Instrument.with(ComponentPool.class, SpeedometerBuilder.instance(), new Tag("pool", getPoolName()), new Tag("event", ClaxonTag.WAITED.getDisplay())).on(
+      return Instrument.with(ComponentPool.class, MeterFactory.instance(SpeedometerBuilder::new), new Tag("pool", getPoolName()), new Tag("event", ClaxonTag.WAITED.getDisplay())).on(
         () -> componentPinManager.serve().serve()
       );
     } catch (Throwable throwable) {

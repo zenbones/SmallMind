@@ -43,6 +43,7 @@ import jakarta.jms.Queue;
 import jakarta.jms.Topic;
 import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Tag;
+import org.smallmind.claxon.registry.meter.MeterFactory;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.ConversationType;
@@ -130,7 +131,7 @@ public class JmsRequestTransport extends AbstractRequestTransport {
       messageHandler.send(requestMessage = constructMessage(messageHandler, inOnly, (String)voice.getServiceGroup(), voice.getMode().equals(VocalMode.WHISPER) ? (String)voice.getInstanceId() : null, route, arguments, contexts));
       messageId = requestMessage.getJMSMessageID();
 
-      return Instrument.with(JmsRequestTransport.class, SpeedometerBuilder.instance(), new Tag("event", ClaxonTag.ACQUIRE_RESULT.getDisplay())).on(
+      return Instrument.with(JmsRequestTransport.class, MeterFactory.instance(SpeedometerBuilder::new), new Tag("event", ClaxonTag.ACQUIRE_RESULT.getDisplay())).on(
         () -> acquireResult(signalCodec, route, voice, messageId, inOnly)
       );
     } finally {
@@ -141,7 +142,7 @@ public class JmsRequestTransport extends AbstractRequestTransport {
   private MessageHandler acquireMessageHandler (final LinkedBlockingQueue<MessageHandler> messageHandlerQueue)
     throws Throwable {
 
-    return Instrument.with(JmsRequestTransport.class, SpeedometerBuilder.instance(), new Tag("event", ClaxonTag.ACQUIRE_REQUEST_TRANSPORT.getDisplay())).on(() -> {
+    return Instrument.with(JmsRequestTransport.class, MeterFactory.instance(SpeedometerBuilder::new), new Tag("event", ClaxonTag.ACQUIRE_REQUEST_TRANSPORT.getDisplay())).on(() -> {
 
       MessageHandler messageHandler;
 
@@ -160,7 +161,7 @@ public class JmsRequestTransport extends AbstractRequestTransport {
   private Message constructMessage (final MessageHandler messageHandler, final boolean inOnly, final String serviceGroup, final String instanceId, final Route route, final Map<String, Object> arguments, final WireContext... contexts)
     throws Throwable {
 
-    return Instrument.with(JmsRequestTransport.class, SpeedometerBuilder.instance(), new Tag("event", ClaxonTag.CONSTRUCT_MESSAGE.getDisplay())).on(() -> {
+    return Instrument.with(JmsRequestTransport.class, MeterFactory.instance(SpeedometerBuilder::new), new Tag("event", ClaxonTag.CONSTRUCT_MESSAGE.getDisplay())).on(() -> {
 
       BytesMessage requestMessage;
 

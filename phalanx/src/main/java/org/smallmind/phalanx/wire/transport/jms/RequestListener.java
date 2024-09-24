@@ -40,6 +40,7 @@ import jakarta.jms.Message;
 import jakarta.jms.MessageListener;
 import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Tag;
+import org.smallmind.claxon.registry.meter.MeterFactory;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.phalanx.wire.transport.ClaxonTag;
 import org.smallmind.phalanx.wire.transport.WireProperty;
@@ -106,7 +107,7 @@ public class RequestListener implements SessionEmployer, MessageListener {
       long timeInQueue = System.currentTimeMillis() - message.getLongProperty(WireProperty.CLOCK.getKey());
 
       LoggerManager.getLogger(QueueOperator.class).debug("request message received(%s) in %d ms...", message.getJMSMessageID(), timeInQueue);
-      Instrument.with(RequestListener.class, SpeedometerBuilder.instance(), new Tag("queue", ClaxonTag.REQUEST_TRANSIT_TIME.getDisplay())).update((timeInQueue >= 0) ? timeInQueue : 0, TimeUnit.MILLISECONDS);
+      Instrument.with(RequestListener.class, MeterFactory.instance(SpeedometerBuilder::new), new Tag("queue", ClaxonTag.REQUEST_TRANSIT_TIME.getDisplay())).update((timeInQueue >= 0) ? timeInQueue : 0, TimeUnit.MILLISECONDS);
 
       jmsResponseTransport.execute(message);
     } catch (Throwable throwable) {

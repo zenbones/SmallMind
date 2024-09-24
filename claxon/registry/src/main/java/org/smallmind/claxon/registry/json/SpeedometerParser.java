@@ -46,7 +46,7 @@ public class SpeedometerParser implements InstrumentedParser<Speedometer> {
     throws IOException {
 
     SpeedometerProperties properties = JsonCodec.read(json, SpeedometerPropertiesInView.class).factory();
-    SpeedometerBuilder builder = SpeedometerBuilder.instance();
+    SpeedometerBuilder builder = new SpeedometerBuilder();
 
     if (properties.getResolutionStint() != null) {
       builder.resolution(properties.getResolutionStint());
