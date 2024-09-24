@@ -32,6 +32,8 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.ltency;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.PacketType;
 import org.smallmind.bayeux.oumuamua.server.api.Protocol;
@@ -47,6 +49,16 @@ import org.smallmind.claxon.registry.meter.HistogramBuilder;
 import org.smallmind.claxon.registry.meter.MeterFactory;
 
 public class InstrumentedLatencyListener<V extends Value<V>> implements Protocol.ProtocolListener<V> {
+
+  private final String hostName;
+
+  public InstrumentedLatencyListener ()
+    throws UnknownHostException {
+
+    InetAddress localHost = InetAddress.getLocalHost();
+
+    hostName = localHost.getHostName();
+  }
 
   @Override
   public void onReceipt (Message<V>[] incomingMessages) {
@@ -99,7 +111,7 @@ public class InstrumentedLatencyListener<V extends Value<V>> implements Protocol
 
             if (timeInTransit >= 0) {
 
-              Instrument.with(InstrumentedLatencyListener.class, MeterFactory.instance(HistogramBuilder::new), new Tag("delivery", Boolean.toString(PacketType.DELIVERY.equals(outgoingPacket.getPacketType()))), new Tag("remote", Boolean.toString(isRemote(extValue)))).update(timeInTransit + 1);
+              Instrument.with(InstrumentedLatencyListener.class, MeterFactory.instance(HistogramBuilder::new), new Tag("host", hostName), new Tag("delivery", Boolean.toString(PacketType.DELIVERY.equals(outgoingPacket.getPacketType()))), new Tag("remote", Boolean.toString(isRemote(extValue)))).update(timeInTransit + 1);
             }
           }
         }

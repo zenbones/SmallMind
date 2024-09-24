@@ -32,22 +32,41 @@
  */
 package org.smallmind.claxon.exotic.jvm;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import org.smallmind.claxon.registry.Quantity;
 import org.smallmind.claxon.registry.Tag;
 import org.smallmind.claxon.registry.feature.Feature;
 
 public class ProfileFeature implements Feature {
 
-  private final String name;
   private final Tag[] tags;
+  private final String name;
   private final Long minimumRecordingDelayMilliseconds;
   private long lastRecordingTimestamp = -1;
 
-  public ProfileFeature (String name, Long minimumRecordingDelayMilliseconds, Tag... tags) {
+  public ProfileFeature (String name, Long minimumRecordingDelayMilliseconds, boolean addHostNameTag, Tag... tags)
+    throws UnknownHostException {
 
     this.name = name;
     this.minimumRecordingDelayMilliseconds = minimumRecordingDelayMilliseconds;
-    this.tags = tags;
+
+    if (!addHostNameTag) {
+      this.tags = tags;
+    } else {
+
+      InetAddress localHost = InetAddress.getLocalHost();
+      String hostName = localHost.getHostName();
+
+      if ((tags == null) || (tags.length == 0)) {
+        this.tags = new Tag[] {new Tag("host", hostName)};
+      } else {
+        this.tags = new Tag[tags.length + 1];
+
+        this.tags[0] = new Tag("host", hostName);
+        System.arraycopy(tags, 0, this.tags, 1, tags.length);
+      }
+    }
   }
 
   @Override
