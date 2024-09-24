@@ -49,12 +49,26 @@ public class PerApplicationContext {
 
   public static void setPerApplicationData (Class<? extends PerApplicationDataManager> clazz, Object data) {
 
-    PER_APPLICATION_MAP_LOCAL.get().put(clazz, data);
+    ConcurrentHashMap<Class<? extends PerApplicationDataManager>, Object> perApplicationMap;
+
+    if ((perApplicationMap = PER_APPLICATION_MAP_LOCAL.get()) == null) {
+      throw new MissingPerApplicationContextException("No per-application context has been set in this thread environment");
+    } else {
+
+      perApplicationMap.put(clazz, data);
+    }
   }
 
   public static <K> K getPerApplicationData (Class<? extends PerApplicationDataManager> clazz, Class<K> type) {
 
-    return type.cast(PER_APPLICATION_MAP_LOCAL.get().get(clazz));
+    ConcurrentHashMap<Class<? extends PerApplicationDataManager>, Object> perApplicationMap;
+
+    if ((perApplicationMap = PER_APPLICATION_MAP_LOCAL.get()) == null) {
+      throw new MissingPerApplicationContextException("No per-application context has been set in this thread environment");
+    } else {
+
+      return type.cast(perApplicationMap.get(clazz));
+    }
   }
 
   public void prepareThread () {

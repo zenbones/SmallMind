@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd"
+       profile="default">
+
+  <bean id="claxonEmitterResource" class="org.smallmind.claxon.http.EmitterResource">
+    <property name="registry" ref="claxonRegistry"/>
+  </bean>
+
+  <beans>
+    <bean id="claxonRegistry" class="org.smallmind.claxon.registry.spring.ClaxonRegistryFactoryBean">
+      <property name="configuration">
+        <bean class="org.smallmind.claxon.registry.ClaxonConfiguration">
+          <property name="collectionStint">
+            <bean class="org.smallmind.claxon.registry.spring.StintFactoryBean">
+              <property name="time" value="120"/>
+              <property name="timeUnit" value="SECONDS"/>
+            </bean>
+          </property>
+          <property name="registryTags">
+            <list>
+              <list>
+                <bean class="org.smallmind.claxon.registry.Tag">
+                  <constructor-arg index="0" name="key" value="registryWideTag"/>
+                  <constructor-arg index="1" name="value" value="registryWideValue"/>
+                </bean>
+              </list>
+            </list>
+          </property>
+          <property name="meterTags">
+            <map>
+              <entry key="org.smalmind.som.tag.some.namespace">
+                <list>
+                  <bean class="org.smallmind.claxon.registry.Tag">
+                    <constructor-arg index="0" name="key" value="someMeterSpecificTag"/>
+                    <constructor-arg index="1" name="value" value="someMeterSpecificValue"/>
+                  </bean>
+                </list>
+              </entry>
+            </map>
+          </property>
+          <property name="namingStrategy">
+            <bean class="org.smallmind.claxon.registry.ImpliedNamingStrategy">
+              <property name="prefixMap">
+                <map>
+                  <entry value="org.smalmind.some.tag.namespace">
+                    <key>
+                      <bean class="org.smallmind.nutsnbolts.util.DotNotation">
+                        <property name="notation" value="org.smallmind.specific.package.name.*"/>
+                      </bean>
+                    </key>
+                  </entry>
+                  <entry value="org.smalmind.some.tag.unknown">
+                    <key>
+                      <bean class="org.smallmind.nutsnbolts.util.DotNotation">
+                        <property name="notation" value="*"/>
+                      </bean>
+                    </key>
+                  </entry>
+                </map>
+              </property>
+            </bean>
+          </property>
+        </bean>
+      </property>
+      <property name="emitterMap">
+        <map>
+          <entry key="message">
+            <bean class="org.smallmind.claxon.emitter.message.MessageEmitter"/>
+          </entry>
+        </map>
+      </property>
+    </bean>
+  </beans>
+</beans>
