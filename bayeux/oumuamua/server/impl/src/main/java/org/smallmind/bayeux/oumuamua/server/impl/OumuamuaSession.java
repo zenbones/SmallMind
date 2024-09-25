@@ -253,6 +253,7 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   public void deliver (Channel<V> fromChannel, Session<V> sender, Packet<V> packet) {
 
     if (SessionState.CONNECTED.equals(stateRef.get())) {
+      // steaming ignores the ack extension, *if* the protocol does not require long polling
       if (fromChannel.isStreaming() && (!connectionRef.get().getTransport().getProtocol().isLongPolling())) {
 
         Packet<V> processedPacket;
