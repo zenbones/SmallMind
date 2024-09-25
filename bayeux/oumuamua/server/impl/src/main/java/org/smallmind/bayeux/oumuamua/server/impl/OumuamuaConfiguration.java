@@ -71,8 +71,10 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   @View(adapter = ClassNameArrayXmlAdapter.class, idioms = @Idiom(visibility = OUT))
   private Server.Listener<V>[] listeners;
   @View(adapter = DoubleStringArrayXmlAdapter.class, name = "reflectivePaths", idioms = @Idiom(visibility = OUT))
+  // send the request back to the sender as part of the success/failure response
   private String[][] parsedReflectivePaths;
   @View(adapter = DoubleStringArrayXmlAdapter.class, name = "streamingPaths", idioms = @Idiom(visibility = OUT))
+  // ignore the ack extension (or other forced long polling), *if* the protocol does not require long polling
   private String[][] parsedStreamingPaths;
   @View(adapter = LevelEnumXmlAdapter.class, idioms = @Idiom(visibility = OUT))
   private Level overflowLogLevel = Level.DEBUG;
