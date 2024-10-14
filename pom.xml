@@ -103,7 +103,7 @@
     <jackson.version>2.13.4</jackson.version>
     <jaxb.version>2.3.1</jaxb.version>
     <jersey.version>2.37</jersey.version>
-    <jetty.version>10.0.14</jetty.version>
+    <jetty.version>12.0.12</jetty.version>
     <jose4j.version>0.9.6</jose4j.version>
     <kafka.version>3.4.1</kafka.version>
     <liquibase.version>4.6.1</liquibase.version>
