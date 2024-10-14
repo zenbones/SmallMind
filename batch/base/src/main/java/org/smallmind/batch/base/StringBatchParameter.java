@@ -34,9 +34,9 @@ package org.smallmind.batch.base;
 
 public class StringBatchParameter extends BatchParameter<String> {
 
-  public StringBatchParameter (String value) {
+  public StringBatchParameter (String value, boolean identifying) {
 
-    super(value);
+    super(value, identifying);
   }
 
   @Override

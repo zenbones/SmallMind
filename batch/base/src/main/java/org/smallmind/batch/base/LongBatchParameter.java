@@ -34,9 +34,9 @@ package org.smallmind.batch.base;
 
 public class LongBatchParameter extends BatchParameter<Long> {
 
-  public LongBatchParameter (Long value) {
+  public LongBatchParameter (Long value, boolean identifying) {
 
-    super(value);
+    super(value, identifying);
   }
 
   @Override
@@ -45,4 +45,3 @@ public class LongBatchParameter extends BatchParameter<Long> {
     return ParameterType.LONG;
   }
 }
-

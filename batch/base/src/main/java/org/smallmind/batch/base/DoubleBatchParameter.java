@@ -34,9 +34,9 @@ package org.smallmind.batch.base;
 
 public class DoubleBatchParameter extends BatchParameter<Double> {
 
-  public DoubleBatchParameter (Double value) {
+  public DoubleBatchParameter (Double value, boolean identifying) {
 
-    super(value);
+    super(value, identifying);
   }
 
   @Override
@@ -45,4 +45,3 @@ public class DoubleBatchParameter extends BatchParameter<Double> {
     return ParameterType.DOUBLE;
   }
 }
-

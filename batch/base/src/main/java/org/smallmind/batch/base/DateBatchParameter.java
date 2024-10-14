@@ -36,9 +36,9 @@ import java.util.Date;
 
 public class DateBatchParameter extends BatchParameter<Date> {
 
-  public DateBatchParameter (Date value) {
+  public DateBatchParameter (Date value, boolean identifying) {
 
-    super(value);
+    super(value, identifying);
   }
 
   @Override
@@ -47,4 +47,3 @@ public class DateBatchParameter extends BatchParameter<Date> {
     return ParameterType.DATE;
   }
 }
-

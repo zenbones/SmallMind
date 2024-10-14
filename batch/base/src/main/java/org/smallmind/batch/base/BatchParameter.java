@@ -35,10 +35,12 @@ package org.smallmind.batch.base;
 public abstract class BatchParameter<T> {
 
   private final T value;
+  private final boolean identifying;
 
-  public BatchParameter (T value) {
+  public BatchParameter (T value, boolean identifying) {
 
     this.value = value;
+    this.identifying = identifying;
   }
 
   public abstract ParameterType getType ();
@@ -46,5 +48,10 @@ public abstract class BatchParameter<T> {
   public T getValue () {
 
     return value;
+  }
+
+  public boolean isIdentifying () {
+
+    return identifying;
   }
 }

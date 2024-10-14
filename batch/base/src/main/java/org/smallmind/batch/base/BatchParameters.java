@@ -37,23 +37,23 @@ import java.util.HashMap;
 
 public class BatchParameters extends HashMap<String, BatchParameter<?>> {
 
-  public void putDate (String key, Date aDate) {
+  public void putDate (String key, Date aDate, boolean identifying) {
 
-    put(key, new DateBatchParameter(aDate));
+    put(key, new DateBatchParameter(aDate, identifying));
   }
 
-  public void putDouble (String key, Double aDouble) {
+  public void putDouble (String key, Double aDouble, boolean identifying) {
 
-    put(key, new DoubleBatchParameter(aDouble));
+    put(key, new DoubleBatchParameter(aDouble, identifying));
   }
 
-  public void putLong (String key, Long aLong) {
+  public void putLong (String key, Long aLong, boolean identifying) {
 
-    put(key, new LongBatchParameter(aLong));
+    put(key, new LongBatchParameter(aLong, identifying));
   }
 
-  public void putString (String key, String aString) {
+  public void putString (String key, String aString, boolean identifying) {
 
-    put(key, new StringBatchParameter(aString));
+    put(key, new StringBatchParameter(aString, identifying));
   }
 }
