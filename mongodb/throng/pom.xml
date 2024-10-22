@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>smallmind-mongodb</artifactId>
-    <version>6.0.0</version>
+    <version>6.1.0-SNAPSHOT</version>
   </parent>
   <artifactId>mongodb-throng</artifactId>
   <packaging>jar</packaging>
