@@ -38,7 +38,7 @@ import java.nio.file.attribute.FileTime;
 
 public class EphemeralBasicFileAttributeView implements BasicFileAttributeView {
 
-  private EphemeralBasicFileAttributes attributes;
+  private final EphemeralBasicFileAttributes attributes;
 
   public EphemeralBasicFileAttributeView (EphemeralBasicFileAttributes attributes) {
 

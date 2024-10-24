@@ -162,16 +162,11 @@ public class EphemeralFileSystem extends FileSystem {
 
         String syntax;
 
-        switch (syntax = syntaxAndPattern.substring(0, colonPos)) {
-          case "glob":
-
-            return new RegexPathMatcher(Glob.toRegexPattern(EphemeralPath.getSeparatorChar(), syntaxAndPattern.substring(colonPos + 1)));
-          case "regex":
-
-            return new RegexPathMatcher(Pattern.compile(syntaxAndPattern.substring(colonPos + 1)));
-          default:
-            throw new UnsupportedOperationException(syntax);
-        }
+        return switch (syntax = syntaxAndPattern.substring(0, colonPos)) {
+          case "glob" -> new RegexPathMatcher(Glob.toRegexPattern(EphemeralPath.getSeparatorChar(), syntaxAndPattern.substring(colonPos + 1)));
+          case "regex" -> new RegexPathMatcher(Pattern.compile(syntaxAndPattern.substring(colonPos + 1)));
+          default -> throw new UnsupportedOperationException(syntax);
+        };
       }
     }
   }
