@@ -47,6 +47,7 @@ public class Wombat {
   public static void main (String... args)
     throws Exception {
 
+    System.setProperty("java.nio.file.spi.DefaultFileSystemProvider", EphemeralFileSystemProvider.class.getName());
     System.out.println(".........................................");
     System.out.println(FileSystems.getDefault());
     Path ps = Paths.get("C:\\Users\\david\\Documents\\response.txt");
@@ -54,6 +55,9 @@ public class Wombat {
     System.out.println(Files.readString(ps, StandardCharsets.UTF_8));
     System.out.println(".........................................");
     Path pe = Paths.get("/opt/epicenter/twimble/farkle");
+    System.out.println(pe.getClass());
+    Path pes = pe.resolve("sparkle.txt");
+    System.out.println(pes.getClass());
     Files.createDirectories(pe);
     try (SeekableByteChannel bc = Files.newByteChannel(pe.resolve("sparkle.txt"), Set.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE))) {
       ByteBuffer bb = ByteBuffer.allocate(1024);
