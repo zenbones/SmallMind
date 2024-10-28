@@ -285,6 +285,15 @@ public class GrizzlyInitializingBean implements InitializingBean, DisposableBean
         webAppState.getWebAppContext().addListener(new GrizzlyRequestContextListener());
       }
 
+      if (webAppState.getTyrusGrizzlyServerContainer() != null) {
+        webAppState.getTyrusGrizzlyServerContainer().doneDeployment();
+        try {
+          webAppState.getTyrusGrizzlyServerContainer().start();
+        } catch (Exception exception) {
+          throw new GrizzlyInitializationException(exception);
+        }
+      }
+
       for (ListenerInstaller listenerInstaller : webAppState.getListenerInstallerList()) {
         try {
 
@@ -349,15 +358,6 @@ public class GrizzlyInitializingBean implements InitializingBean, DisposableBean
       }
 
       webAppState.getWebAppContext().deploy(httpServer);
-
-      if (webAppState.getTyrusGrizzlyServerContainer() != null) {
-        webAppState.getTyrusGrizzlyServerContainer().doneDeployment();
-        try {
-          webAppState.getTyrusGrizzlyServerContainer().start();
-        } catch (Exception exception) {
-          throw new GrizzlyInitializationException(exception);
-        }
-      }
     }
 
     LoggerManager.getLogger(GrizzlyInitializingBean.class).info("Grizzly service started...");

@@ -160,7 +160,7 @@
     <syslog4j.version>0.9.30</syslog4j.version>
     <tanukisoft.version>3.5.54</tanukisoft.version>
     <testng.version>7.9.0</testng.version>
-    <tyrus.version>2.1.5</tyrus.version>
+    <tyrus.version>2.2.0</tyrus.version>
   </properties>
   <modules>
     <module>ansible</module>
