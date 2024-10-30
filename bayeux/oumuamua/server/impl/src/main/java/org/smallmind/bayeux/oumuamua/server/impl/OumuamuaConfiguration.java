@@ -67,7 +67,7 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   @View(adapter = ClassNameArrayXmlAdapter.class, idioms = @Idiom(visibility = OUT))
   private Protocol<V>[] protocols;
   @View(adapter = ClassNameArrayXmlAdapter.class, idioms = @Idiom(visibility = OUT))
-  private BayeuxService[] services;
+  private BayeuxService<V>[] services;
   @View(adapter = ClassNameArrayXmlAdapter.class, idioms = @Idiom(visibility = OUT))
   private Server.Listener<V>[] listeners;
   @View(adapter = DoubleStringArrayXmlAdapter.class, name = "reflectivePaths", idioms = @Idiom(visibility = OUT))
@@ -141,12 +141,12 @@ public class OumuamuaConfiguration<V extends Value<V>> {
     this.protocols = protocols;
   }
 
-  public BayeuxService[] getServices () {
+  public BayeuxService<V>[] getServices () {
 
     return services;
   }
 
-  public void setServices (BayeuxService[] services) {
+  public void setServices (BayeuxService<V>[] services) {
 
     this.services = services;
   }

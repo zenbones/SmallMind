@@ -74,7 +74,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   private final ExecutorService executorService;
   private final ConcurrentHashMap<String, OumuamuaSession<V>> sessionMap = new ConcurrentHashMap<>();
   private final HashMap<String, Protocol<V>> protocolMap = new HashMap<>();
-  private final ConcurrentHashMap<Route, BayeuxService> serviceMap = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<Route, BayeuxService<V>> serviceMap = new ConcurrentHashMap<>();
   private final ConcurrentLinkedQueue<Listener<V>> listenerList = new ConcurrentLinkedQueue<>();
   private final ConcurrentLinkedQueue<ChannelInitializer<V>> initializerList = new ConcurrentLinkedQueue<>();
   private final OumuamuaConfiguration<V> configuration;
@@ -114,7 +114,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
       }
 
       if (configuration.getServices() != null) {
-        for (BayeuxService service : configuration.getServices()) {
+        for (BayeuxService<V> service : configuration.getServices()) {
           addService(service);
         }
       }
@@ -272,7 +272,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   @Override
-  public void addService (BayeuxService service) {
+  public void addService (BayeuxService<V> service) {
 
     Route[] boundRoutes;
 
@@ -290,7 +290,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   @Override
-  public BayeuxService getService (Route route) {
+  public BayeuxService<V> getService (Route route) {
 
     return serviceMap.get(route);
   }

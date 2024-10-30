@@ -76,11 +76,11 @@ public interface Server<V extends Value<V>> extends Attributed {
     Packet<V> onDelivery (Session<V> sender, Packet<V> packet);
   }
 
-  void addService (BayeuxService service);
+  void addService (BayeuxService<V> service);
 
   void removeService (Route route);
 
-  BayeuxService getService (Route route);
+  BayeuxService<V> getService (Route route);
 
   void addListener (Listener<V> listener);
 
