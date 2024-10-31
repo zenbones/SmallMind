@@ -356,9 +356,9 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   @Override
-  public boolean isReflective (Route route) {
+  public boolean isReflecting (Route route) {
 
-    return configuration.isReflective(route);
+    return configuration.isReflecting(route);
   }
 
   @Override

@@ -70,9 +70,9 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   private BayeuxService<V>[] services;
   @View(adapter = ClassNameArrayXmlAdapter.class, idioms = @Idiom(visibility = OUT))
   private Server.Listener<V>[] listeners;
-  @View(adapter = DoubleStringArrayXmlAdapter.class, name = "reflectivePaths", idioms = @Idiom(visibility = OUT))
+  @View(adapter = DoubleStringArrayXmlAdapter.class, name = "reflectingPaths", idioms = @Idiom(visibility = OUT))
   // send the request back to the sender as part of the success/failure response
-  private String[][] parsedReflectivePaths;
+  private String[][] parsedReflectingPaths;
   @View(adapter = DoubleStringArrayXmlAdapter.class, name = "streamingPaths", idioms = @Idiom(visibility = OUT))
   // ignore the ack extension (or other forced long polling), *if* the protocol does not require long polling
   private String[][] parsedStreamingPaths;
@@ -231,27 +231,27 @@ public class OumuamuaConfiguration<V extends Value<V>> {
     this.maxLongPollQueueSize = maxLongPollQueueSize;
   }
 
-  public String[][] getParsedReflectivePaths () {
+  public String[][] getParsedReflectingPaths () {
 
-    return parsedReflectivePaths;
+    return parsedReflectingPaths;
   }
 
-  protected void setParsedReflectivePaths (String[][] parsedReflectivePaths) {
+  protected void setParsedReflectingPaths (String[][] parsedReflectingPaths) {
 
-    this.parsedReflectivePaths = parsedReflectivePaths;
+    this.parsedReflectingPaths = parsedReflectingPaths;
   }
 
-  public void setReflectivePaths (String[] paths) {
+  public void setReflectingPaths (String[] paths) {
 
-    LinkedList<String[]> reflectivePathList = decomposePaths(paths);
+    LinkedList<String[]> reflectingPathList = decomposePaths(paths);
 
-    parsedReflectivePaths = new String[reflectivePathList.size()][];
-    reflectivePathList.toArray(parsedReflectivePaths);
+    parsedReflectingPaths = new String[reflectingPathList.size()][];
+    reflectingPathList.toArray(parsedReflectingPaths);
   }
 
-  public boolean isReflective (Route route) {
+  public boolean isReflecting (Route route) {
 
-    return matchesPaths(parsedReflectivePaths, route);
+    return matchesPaths(parsedReflectingPaths, route);
   }
 
   public String[][] getParsedStreamingPaths () {
@@ -295,8 +295,8 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   public boolean matchesPaths (String[][] paths, Route route) {
 
     if ((route != null) && (paths != null)) {
-      for (String[] reflectivePath : paths) {
-        if (route.matches(reflectivePath)) {
+      for (String[] reflectingPath : paths) {
+        if (route.matches(reflectingPath)) {
 
           return true;
         }

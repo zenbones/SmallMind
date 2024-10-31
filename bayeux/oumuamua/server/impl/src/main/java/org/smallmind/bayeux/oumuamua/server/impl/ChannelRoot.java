@@ -59,9 +59,9 @@ public class ChannelRoot<V extends Value<V>> {
     return server.getCodec();
   }
 
-  public boolean isReflective (Route route) {
+  public boolean isReflecting (Route route) {
 
-    return server.isReflective(route);
+    return server.isReflecting(route);
   }
 
   public boolean isStreaming (Route route) {
