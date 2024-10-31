@@ -75,7 +75,6 @@ public class TimesyncExtension<V extends Value<V>> extends AbstractServerPacketL
                   sender.setAttribute(TIME_SYNC_VALUE_ATTRIBUTE, new TimeSync(messageId, ((NumberValue<V>)tcValue).asLong(), ((NumberValue<V>)lValue).asLong(), ((NumberValue<V>)oValue).asLong()));
                 }
               }
-
               break;
             }
           }
@@ -108,6 +107,7 @@ public class TimesyncExtension<V extends Value<V>> extends AbstractServerPacketL
             timesyncValue.put("p", System.currentTimeMillis() - timeSync.getTs());
             timesyncValue.put("a", timeSync.getTc() + timeSync.getO() + timeSync.getL() - timeSync.getTs());
 
+            extValue.put("timesync", timesyncValue);
             break;
           }
         }
