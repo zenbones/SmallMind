@@ -34,14 +34,14 @@ package org.smallmind.web.json.scaffold.util;
 
 import java.util.HashMap;
 import jakarta.xml.bind.annotation.XmlRootElement;
-import org.smallmind.nutsnbolts.lang.LoaderAwareClassCache;
+import org.smallmind.nutsnbolts.lang.ClassLoaderAwareCache;
 
 public class PolymorphicClassCache {
 
   //TODO: ClassLoader aware caching done correctly (for reference)
-  private static final LoaderAwareClassCache<Class<?>> TO_PROXY_CLASS_CACHE = new LoaderAwareClassCache<>();
-  private static final LoaderAwareClassCache<Class<?>> FROM_PROXY_CLASS_CACHE = new LoaderAwareClassCache<>();
-  private static final LoaderAwareClassCache<HashMap<String, Class<?>>> SUB_CLASS_MAP_CACHE = new LoaderAwareClassCache<>();
+  private static final ClassLoaderAwareCache<Class<?>, Class<?>> TO_PROXY_CLASS_CACHE = new ClassLoaderAwareCache<>(Class::getClassLoader);
+  private static final ClassLoaderAwareCache<Class<?>, Class<?>> FROM_PROXY_CLASS_CACHE = new ClassLoaderAwareCache<>(Class::getClassLoader);
+  private static final ClassLoaderAwareCache<Class<?>, HashMap<String, Class<?>>> SUB_CLASS_MAP_CACHE = new ClassLoaderAwareCache<>(Class::getClassLoader);
 
   public static Class<?> getPolymorphicSubClass (Class<?> baseClass, String polymorphicKey) {
 

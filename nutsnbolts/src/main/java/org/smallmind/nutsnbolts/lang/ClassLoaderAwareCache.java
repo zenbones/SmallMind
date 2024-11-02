@@ -36,55 +36,62 @@ import java.lang.ref.PhantomReference;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
-public class LoaderAwareClassCache<T> {
+public class ClassLoaderAwareCache<K, V> {
 
   private final ReferenceQueue<ClassLoader> referenceQueue = new ReferenceQueue<>();
-  private final ConcurrentHashMap<LoaderKey, ConcurrentHashMap<Class<?>, T>> loaderMap = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<LoaderKey, ConcurrentHashMap<K, V>> loaderMap = new ConcurrentHashMap<>();
+  private final Function<K, ClassLoader> loaderExtractor;
 
-  public T get (Class<?> clazz) {
+  public ClassLoaderAwareCache (Function<K, ClassLoader> loaderExtractor) {
 
-    return getClassMap(clazz).get(clazz);
+    this.loaderExtractor = loaderExtractor;
   }
 
-  public T put (Class<?> clazz, T value) {
+  public V get (K key) {
+
+    return getMap(key).get(key);
+  }
+
+  public V put (K key, V value) {
 
     clearExpiredReferences();
 
-    return getClassMap(clazz).put(clazz, value);
+    return getMap(key).put(key, value);
   }
 
-  public T putIfAbsent (Class<?> clazz, T value) {
+  public V putIfAbsent (K key, V value) {
 
     clearExpiredReferences();
 
-    return getClassMap(clazz).putIfAbsent(clazz, value);
+    return getMap(key).putIfAbsent(key, value);
   }
 
-  private ConcurrentHashMap<Class<?>, T> getClassMap (Class<?> clazz) {
+  private ConcurrentHashMap<K, V> getMap (K key) {
 
-    ConcurrentHashMap<Class<?>, T> classMap;
-    LoaderKey loaderKey = new LoaderKey(clazz.getClassLoader());
+    ConcurrentHashMap<K, V> map;
+    LoaderKey loaderKey = new LoaderKey(loaderExtractor.apply(key));
 
-    if ((classMap = loaderMap.get(loaderKey)) == null) {
+    if ((map = loaderMap.get(loaderKey)) == null) {
 
-      ConcurrentHashMap<Class<?>, T> priorClassMap;
+      ConcurrentHashMap<K, V> priorMap;
 
-      if ((priorClassMap = loaderMap.putIfAbsent(loaderKey, classMap = new ConcurrentHashMap<>())) != null) {
-        classMap = priorClassMap;
+      if ((priorMap = loaderMap.putIfAbsent(loaderKey, map = new ConcurrentHashMap<>())) != null) {
+        map = priorMap;
       }
     }
 
-    return classMap;
+    return map;
   }
 
   private void clearExpiredReferences () {
 
-    Reference<?> reference;
+    Reference<? extends ClassLoader> reference;
 
     while ((reference = referenceQueue.poll()) != null) {
-      if (reference instanceof LoaderAwareClassCache.LoaderKey) {
-        loaderMap.remove((LoaderAwareClassCache<T>.LoaderKey)reference);
+      if (reference instanceof ClassLoaderAwareCache.LoaderKey) {
+        loaderMap.remove(reference);
       }
     }
   }
@@ -109,7 +116,7 @@ public class LoaderAwareClassCache<T> {
     @Override
     public boolean equals (Object obj) {
 
-      return (obj instanceof LoaderAwareClassCache.LoaderKey) && (identityHashCode == obj.hashCode());
+      return (obj instanceof ClassLoaderAwareCache.LoaderKey) && (identityHashCode == obj.hashCode());
     }
   }
 }

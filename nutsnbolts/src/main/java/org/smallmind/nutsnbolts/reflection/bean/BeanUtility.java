@@ -36,15 +36,14 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
-import java.util.concurrent.ConcurrentHashMap;
+import org.smallmind.nutsnbolts.lang.ClassLoaderAwareCache;
 import org.smallmind.nutsnbolts.reflection.type.TypeUtility;
 
 public class BeanUtility {
 
-  //TODO: ClassLoader aware caching?
-  private static final ConcurrentHashMap<MethodKey, Method> GETTER_MAP = new ConcurrentHashMap<>();
-  private static final ConcurrentHashMap<MethodKey, Method> SETTER_MAP = new ConcurrentHashMap<>();
-  private static final ConcurrentHashMap<MethodKey, Method> METHOD_MAP = new ConcurrentHashMap<>();
+  private static final ClassLoaderAwareCache<MethodKey, Method> GETTER_MAP = new ClassLoaderAwareCache<>(methodKey -> methodKey.getMethodClass().getClassLoader());
+  private static final ClassLoaderAwareCache<MethodKey, Method> SETTER_MAP = new ClassLoaderAwareCache<>(methodKey -> methodKey.getMethodClass().getClassLoader());
+  private static final ClassLoaderAwareCache<MethodKey, Method> METHOD_MAP = new ClassLoaderAwareCache<>(methodKey -> methodKey.getMethodClass().getClassLoader());
 
   public static Class<?> getParameterClass (Method setterMethod) {
 
