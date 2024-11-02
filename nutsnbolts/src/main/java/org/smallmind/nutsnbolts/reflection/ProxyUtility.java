@@ -39,6 +39,7 @@ import java.util.LinkedList;
 
 public class ProxyUtility {
 
+  //TODO: ClassLoader aware caching?
   private static final HashMap<String, Method> METHOD_MAP = new HashMap<>();
   private static final HashMap<String, Class<?>> SIGNATURE_MAP = new HashMap<>();
 

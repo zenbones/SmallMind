@@ -38,6 +38,7 @@ import org.smallmind.web.json.scaffold.fault.Fault;
 
 public class SignatureUtility {
 
+  //TODO: ClassLoader aware caching?
   private static final ConcurrentHashMap<String, Class<?>> SIGNATURE_MAP = new ConcurrentHashMap<>();
 
   public static String neutralEncode (Class<?> clazz) {

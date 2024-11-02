@@ -46,6 +46,7 @@ import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 public class ResourceMethodFilter implements ContainerRequestFilter, ContainerResponseFilter {
 
+  //TODO: ClassLoader aware caching?
   private static final ConcurrentHashMap<Class<? extends XmlAdapter>, XmlAdapter> ADAPTER_MAP = new ConcurrentHashMap<>();
 
   @Context
