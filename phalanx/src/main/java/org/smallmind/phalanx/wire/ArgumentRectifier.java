@@ -44,6 +44,7 @@ import org.smallmind.phalanx.wire.transport.ArgumentInfo;
 
 public class ArgumentRectifier {
 
+  //TODO: ClassLoader aware caching?
   private static final ConcurrentHashMap<Class<? extends WireAdapter<?, ?>>, WireAdapter<?, ?>> ADAPTER_INSTANCE_MAP = new ConcurrentHashMap<>();
 
   private static WireAdapter<?, ?> getAdapter (Class<? extends WireAdapter<?, ?>> adapterClass)
@@ -154,4 +155,3 @@ public class ArgumentRectifier {
     return arguments;
   }
 }
-

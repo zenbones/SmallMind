@@ -49,6 +49,7 @@ import org.smallmind.persistence.orm.ORMDao;
 @Aspect
 public class CachedWithAspect {
 
+  //TODO: ClassLoader aware caching?
   private static final ConcurrentHashMap<MethodKey, Method> METHOD_MAP = new ConcurrentHashMap<>();
 
   @Around(value = "(execution(* persist (org.smallmind.persistence.Durable+)) || execution(@Persist * * (org.smallmind.persistence.Durable+))) && @within(CachedWith) && this(ormDao)", argNames = "thisJoinPoint, ormDao")

@@ -41,6 +41,7 @@ import org.smallmind.nutsnbolts.reflection.type.TypeUtility;
 
 public class BeanUtility {
 
+  //TODO: ClassLoader aware caching?
   private static final ConcurrentHashMap<MethodKey, Method> GETTER_MAP = new ConcurrentHashMap<>();
   private static final ConcurrentHashMap<MethodKey, Method> SETTER_MAP = new ConcurrentHashMap<>();
   private static final ConcurrentHashMap<MethodKey, Method> METHOD_MAP = new ConcurrentHashMap<>();
