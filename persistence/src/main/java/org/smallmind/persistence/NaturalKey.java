@@ -41,8 +41,8 @@ import org.smallmind.nutsnbolts.reflection.type.TypeUtility;
 
 public class NaturalKey<D extends Durable<? extends Comparable>> {
 
-  private static final ConcurrentHashMap<Class<? extends Durable>, Field[]> NATURAL_KEY_MAP = new ConcurrentHashMap<Class<? extends Durable>, Field[]>();
-  private static final ConcurrentHashMap<Class<? extends Durable>, Field[]> NON_KEY_MAP = new ConcurrentHashMap<Class<? extends Durable>, Field[]>();
+  private static final ConcurrentHashMap<Class<? extends Durable>, Field[]> NATURAL_KEY_MAP = new ConcurrentHashMap<>();
+  private static final ConcurrentHashMap<Class<? extends Durable>, Field[]> NON_KEY_MAP = new ConcurrentHashMap<>();
 
   private final Class<? extends Durable> durableClass;
   private final Object[] naturalKeyFieldValues;
