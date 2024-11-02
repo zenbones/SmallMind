@@ -45,7 +45,7 @@ public class BeanUtility {
   private static final ConcurrentHashMap<MethodKey, Method> SETTER_MAP = new ConcurrentHashMap<>();
   private static final ConcurrentHashMap<MethodKey, Method> METHOD_MAP = new ConcurrentHashMap<>();
 
-  public static Class getParameterClass (Method setterMethod) {
+  public static Class<?> getParameterClass (Method setterMethod) {
 
     Annotation[][] parameterAnnotations;
 
@@ -307,16 +307,16 @@ public class BeanUtility {
 
   private static class MethodKey {
 
-    private final Class methodClass;
+    private final Class<?> methodClass;
     private final String methodName;
 
-    private MethodKey (Class methodClass, String methodName) {
+    private MethodKey (Class<?> methodClass, String methodName) {
 
       this.methodClass = methodClass;
       this.methodName = methodName;
     }
 
-    private Class getMethodClass () {
+    private Class<?> getMethodClass () {
 
       return methodClass;
     }
