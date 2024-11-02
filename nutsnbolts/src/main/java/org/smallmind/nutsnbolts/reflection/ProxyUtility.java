@@ -39,8 +39,8 @@ import java.util.LinkedList;
 
 public class ProxyUtility {
 
-  private static final HashMap<String, Method> METHOD_MAP = new HashMap<String, Method>();
-  private static final HashMap<String, Class> SIGNATURE_MAP = new HashMap<String, Class>();
+  private static final HashMap<String, Method> METHOD_MAP = new HashMap<>();
+  private static final HashMap<String, Class<?>> SIGNATURE_MAP = new HashMap<>();
 
   public static Object invoke (Object proxy, InvocationHandler invocationHandler, boolean isSubclass, String methodCode, String methodName, String resultSignature, String[] signatures, Object... args)
     throws Throwable {
@@ -51,7 +51,7 @@ public class ProxyUtility {
       synchronized (METHOD_MAP) {
         if ((proxyMethod = METHOD_MAP.get(methodCode)) == null) {
 
-          Class methodContainer = (isSubclass) ? proxy.getClass().getSuperclass() : proxy.getClass();
+          Class<?> methodContainer = (isSubclass) ? proxy.getClass().getSuperclass() : proxy.getClass();
 
           METHOD_MAP.put(methodCode, proxyMethod = methodContainer.getMethod(methodName, assembleSignature(signatures)));
         }
@@ -93,7 +93,7 @@ public class ProxyUtility {
   private static Class[] assembleSignature (String[] signatures) {
 
     Class[] parsedSignature;
-    LinkedList<Class> parsedList;
+    LinkedList<Class<?>> parsedList;
 
     parsedList = new LinkedList<>();
     for (String signature : signatures) {
@@ -139,9 +139,9 @@ public class ProxyUtility {
     return parsedSignature;
   }
 
-  private static Class getObjectType (String type) {
+  private static Class<?> getObjectType (String type) {
 
-    Class objectType;
+    Class<?> objectType;
 
     if ((objectType = SIGNATURE_MAP.get(type)) == null) {
       synchronized (SIGNATURE_MAP) {
