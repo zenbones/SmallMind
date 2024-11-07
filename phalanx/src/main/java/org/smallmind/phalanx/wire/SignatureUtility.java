@@ -38,7 +38,6 @@ import org.smallmind.web.json.scaffold.fault.Fault;
 
 public class SignatureUtility {
 
-  //TODO: ClassLoader aware caching?
   private static final ConcurrentHashMap<String, Class<?>> SIGNATURE_MAP = new ConcurrentHashMap<>();
 
   public static String neutralEncode (Class<?> clazz) {
@@ -141,32 +140,20 @@ public class SignatureUtility {
   public static Class<?> nativeDecode (String type)
     throws ClassNotFoundException {
 
-    switch (type.charAt(0)) {
-      case 'V':
-        return Void.class;
-      case 'Z':
-        return boolean.class;
-      case 'B':
-        return byte.class;
-      case 'C':
-        return char.class;
-      case 'S':
-        return short.class;
-      case 'I':
-        return int.class;
-      case 'J':
-        return long.class;
-      case 'F':
-        return float.class;
-      case 'D':
-        return (double.class);
-      case 'L':
-        return getObjectType(type.substring(1, type.length() - 1).replace('/', '.'));
-      case '[':
-        return getObjectType(type.replace('/', '.'));
-      default:
-        throw new ClassNotFoundException("Unknown format for parameter signature(" + type + ")");
-    }
+    return switch (type.charAt(0)) {
+      case 'V' -> Void.class;
+      case 'Z' -> boolean.class;
+      case 'B' -> byte.class;
+      case 'C' -> char.class;
+      case 'S' -> short.class;
+      case 'I' -> int.class;
+      case 'J' -> long.class;
+      case 'F' -> float.class;
+      case 'D' -> (double.class);
+      case 'L' -> getObjectType(type.substring(1, type.length() - 1).replace('/', '.'));
+      case '[' -> getObjectType(type.replace('/', '.'));
+      default -> throw new ClassNotFoundException("Unknown format for parameter signature(" + type + ")");
+    };
   }
 
   private static Class<?> getObjectType (String type)

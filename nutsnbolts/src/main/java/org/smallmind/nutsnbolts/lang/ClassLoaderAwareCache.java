@@ -68,10 +68,11 @@ public class ClassLoaderAwareCache<K, V> {
     return getMap(key).putIfAbsent(key, value);
   }
 
-  private ConcurrentHashMap<K, V> getMap (K key) {
+  private synchronized ConcurrentHashMap<K, V> getMap (K key) {
 
     ConcurrentHashMap<K, V> map;
-    LoaderKey loaderKey = new LoaderKey(loaderExtractor.apply(key));
+    ClassLoader extractedClassLoader;
+    LoaderKey loaderKey = new LoaderKey(((extractedClassLoader = loaderExtractor.apply(key)) == null) ? ClassLoader.getSystemClassLoader() : extractedClassLoader);
 
     if ((map = loaderMap.get(loaderKey)) == null) {
 

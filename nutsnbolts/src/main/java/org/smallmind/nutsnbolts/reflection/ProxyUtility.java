@@ -39,7 +39,6 @@ import java.util.LinkedList;
 
 public class ProxyUtility {
 
-  //TODO: ClassLoader aware caching?
   private static final HashMap<String, Method> METHOD_MAP = new HashMap<>();
   private static final HashMap<String, Class<?>> SIGNATURE_MAP = new HashMap<>();
 
@@ -60,32 +59,20 @@ public class ProxyUtility {
     }
 
     if (invocationHandler == null) {
-      switch (resultSignature.charAt(0)) {
-        case 'V':
-          return null;
-        case 'Z':
-          return false;
-        case 'B':
-          return 0;
-        case 'C':
-          return (char)0;
-        case 'S':
-          return 0;
-        case 'I':
-          return 0;
-        case 'J':
-          return 0L;
-        case 'F':
-          return 0.0F;
-        case 'D':
-          return 0.0D;
-        case 'L':
-          return null;
-        case '[':
-          return null;
-        default:
-          throw new ByteCodeManipulationException("Unknown format for result signature(%s)", resultSignature);
-      }
+      return switch (resultSignature.charAt(0)) {
+        case 'V' -> null;
+        case 'Z' -> false;
+        case 'B' -> 0;
+        case 'C' -> (char)0;
+        case 'S' -> 0;
+        case 'I' -> 0;
+        case 'J' -> 0L;
+        case 'F' -> 0.0F;
+        case 'D' -> 0.0D;
+        case 'L' -> null;
+        case '[' -> null;
+        default -> throw new ByteCodeManipulationException("Unknown format for result signature(%s)", resultSignature);
+      };
     }
 
     return invocationHandler.invoke(proxy, proxyMethod, args);

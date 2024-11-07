@@ -38,7 +38,6 @@ import org.smallmind.nutsnbolts.lang.ClassLoaderAwareCache;
 
 public class PolymorphicClassCache {
 
-  //TODO: ClassLoader aware caching done correctly (for reference)
   private static final ClassLoaderAwareCache<Class<?>, Class<?>> TO_PROXY_CLASS_CACHE = new ClassLoaderAwareCache<>(Class::getClassLoader);
   private static final ClassLoaderAwareCache<Class<?>, Class<?>> FROM_PROXY_CLASS_CACHE = new ClassLoaderAwareCache<>(Class::getClassLoader);
   private static final ClassLoaderAwareCache<Class<?>, HashMap<String, Class<?>>> SUB_CLASS_MAP_CACHE = new ClassLoaderAwareCache<>(Class::getClassLoader);

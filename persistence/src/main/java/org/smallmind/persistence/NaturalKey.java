@@ -41,7 +41,6 @@ import org.smallmind.nutsnbolts.reflection.type.TypeUtility;
 
 public class NaturalKey<D extends Durable<? extends Comparable>> {
 
-  //TODO: ClassLoader aware caching?
   private static final ConcurrentHashMap<Class<? extends Durable>, Field[]> NATURAL_KEY_MAP = new ConcurrentHashMap<>();
   private static final ConcurrentHashMap<Class<? extends Durable>, Field[]> NON_KEY_MAP = new ConcurrentHashMap<>();
 
