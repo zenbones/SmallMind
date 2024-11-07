@@ -105,7 +105,7 @@ public class BatchJobFactory implements JobFactory {
         if (!first) {
           parameterBuilder.append(',');
         }
-        parameterBuilder.append(parameterEntry.getKey()).append(": [type=").append(parameterEntry.getValue().getType()).append(",value=").append(parameterEntry.getValue().getValue()).append(']');
+        parameterBuilder.append(parameterEntry.getKey()).append(": [type=").append(parameterEntry.getValue().getType()).append(",value=").append(parameterEntry.getValue().getValue()).append(",identifying=").append(parameterEntry.getValue().isIdentifying()).append(']');
         first = false;
       }
 
@@ -153,16 +153,16 @@ public class BatchJobFactory implements JobFactory {
       for (Map.Entry<String, BatchParameter<?>> parameterEntry : parameterMap.entrySet()) {
         switch (parameterEntry.getValue().getType()) {
           case DATE:
-            jobParametersBuilder.addDate(parameterEntry.getKey(), ((DateBatchParameter)parameterEntry.getValue()).getValue());
+            jobParametersBuilder.addDate(parameterEntry.getKey(), ((DateBatchParameter)parameterEntry.getValue()).getValue(), parameterEntry.getValue().isIdentifying());
             break;
           case DOUBLE:
-            jobParametersBuilder.addDouble(parameterEntry.getKey(), ((DoubleBatchParameter)parameterEntry.getValue()).getValue());
+            jobParametersBuilder.addDouble(parameterEntry.getKey(), ((DoubleBatchParameter)parameterEntry.getValue()).getValue(), parameterEntry.getValue().isIdentifying());
             break;
           case LONG:
-            jobParametersBuilder.addLong(parameterEntry.getKey(), ((LongBatchParameter)parameterEntry.getValue()).getValue());
+            jobParametersBuilder.addLong(parameterEntry.getKey(), ((LongBatchParameter)parameterEntry.getValue()).getValue(), parameterEntry.getValue().isIdentifying());
             break;
           case STRING:
-            jobParametersBuilder.addString(parameterEntry.getKey(), ((StringBatchParameter)parameterEntry.getValue()).getValue());
+            jobParametersBuilder.addString(parameterEntry.getKey(), ((StringBatchParameter)parameterEntry.getValue()).getValue(), parameterEntry.getValue().isIdentifying());
             break;
           default:
             throw new UnknownSwitchCaseException(parameterEntry.getValue().getType().name());
