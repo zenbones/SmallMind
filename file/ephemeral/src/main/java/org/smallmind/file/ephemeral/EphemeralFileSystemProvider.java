@@ -56,6 +56,7 @@ import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 
 /*
  -Djava.nio.file.spi.DefaultFileSystemProvider=org.smallmind.file.ephemeral.EphemeralFileSystemProvider
@@ -67,6 +68,7 @@ import java.util.Set;
 
 public class EphemeralFileSystemProvider extends FileSystemProvider {
 
+  private static final CountDownLatch INITIALIZATION_LATCH = new CountDownLatch(1);
   private final EphemeralFileSystem ephemeralFileSystem;
   private final String scheme;
   private FileSystem nativeFileSystem;
@@ -88,6 +90,13 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
     this.scheme = scheme;
 
     ephemeralFileSystem = new EphemeralFileSystem(this, new EphemeralFileSystemConfiguration());
+    INITIALIZATION_LATCH.countDown();
+  }
+
+  public static void waitForInitialization ()
+    throws InterruptedException {
+
+    INITIALIZATION_LATCH.await();
   }
 
   public boolean isDefault () {

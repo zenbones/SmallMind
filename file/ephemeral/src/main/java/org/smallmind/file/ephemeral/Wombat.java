@@ -35,7 +35,6 @@ package org.smallmind.file.ephemeral;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -48,8 +47,8 @@ public class Wombat {
     throws Exception {
 
     System.setProperty("java.nio.file.spi.DefaultFileSystemProvider", EphemeralFileSystemProvider.class.getName());
-    System.out.println(".........................................");
-    System.out.println(FileSystems.getDefault());
+    EphemeralFileSystemProvider.waitForInitialization();
+
     Path ps = Paths.get("C:\\Users\\david\\Documents\\response.txt");
     System.out.println(Files.isRegularFile(ps));
     System.out.println(Files.readString(ps, StandardCharsets.UTF_8));
