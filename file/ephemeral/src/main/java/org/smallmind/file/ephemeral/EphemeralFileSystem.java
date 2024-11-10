@@ -62,6 +62,11 @@ public class EphemeralFileSystem extends FileSystem {
     rootPath = new EphemeralPath(this);
   }
 
+  public void clear () {
+
+    fileStore.clear();
+  }
+
   @Override
   public EphemeralFileSystemProvider provider () {
 

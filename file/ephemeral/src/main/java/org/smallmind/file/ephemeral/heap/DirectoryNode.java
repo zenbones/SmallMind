@@ -60,6 +60,11 @@ public class DirectoryNode extends HeapNode {
     return children.isEmpty();
   }
 
+  public synchronized void clear () {
+
+    children.clear();
+  }
+
   public synchronized boolean exists (String name) {
 
     return children.containsKey(name);

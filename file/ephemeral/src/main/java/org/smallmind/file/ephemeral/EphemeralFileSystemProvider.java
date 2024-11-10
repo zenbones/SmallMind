@@ -57,6 +57,8 @@ import java.nio.file.spi.FileSystemProvider;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /*
  -Djava.nio.file.spi.DefaultFileSystemProvider=org.smallmind.file.ephemeral.EphemeralFileSystemProvider
@@ -93,10 +95,12 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
     INITIALIZATION_LATCH.countDown();
   }
 
-  public static void waitForInitialization ()
-    throws InterruptedException {
+  public static void waitForInitialization (long timeout, TimeUnit unit)
+    throws InterruptedException, TimeoutException {
 
-    INITIALIZATION_LATCH.await();
+    if (!INITIALIZATION_LATCH.await(timeout, unit)) {
+      throw new TimeoutException();
+    }
   }
 
   public boolean isDefault () {

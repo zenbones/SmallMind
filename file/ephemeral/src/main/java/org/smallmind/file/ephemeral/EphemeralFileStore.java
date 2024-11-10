@@ -86,6 +86,11 @@ public class EphemeralFileStore extends FileStore {
     this.blockSize = blockSize;
   }
 
+  public void clear () {
+
+    rootNode.clear();
+  }
+
   @Override
   public String name () {
 

@@ -35,19 +35,24 @@ package org.smallmind.file.ephemeral;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import org.testng.annotations.Test;
 
-public class Wombat {
+@Test
+public class EphemeralFileSystemTest {
 
-  public static void main (String... args)
+  @Test
+  public void test ()
     throws Exception {
 
     System.setProperty("java.nio.file.spi.DefaultFileSystemProvider", EphemeralFileSystemProvider.class.getName());
-    EphemeralFileSystemProvider.waitForInitialization();
+    EphemeralFileSystemProvider.waitForInitialization(3, TimeUnit.SECONDS);
 
     Path ps = Paths.get("C:\\Users\\david\\Documents\\response.txt");
     System.out.println(Files.isRegularFile(ps));
@@ -65,5 +70,6 @@ public class Wombat {
       bc.write(bb);
     }
     System.out.println(new String(Files.readAllBytes(pe.resolve("sparkle.txt"))));
+    ((EphemeralFileSystem)FileSystems.getDefault()).clear();
   }
 }
