@@ -34,17 +34,40 @@ package org.smallmind.nutsnbolts.security;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.io.StringWriter;
+import java.security.Key;
+import java.security.PublicKey;
 import java.security.spec.KeySpec;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
+import org.bouncycastle.crypto.util.OpenSSHPublicKeyUtil;
+import org.bouncycastle.crypto.util.PublicKeyFactory;
 import org.bouncycastle.jcajce.spec.OpenSSHPublicKeySpec;
+import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemReader;
+import org.bouncycastle.util.io.pem.PemWriter;
 import org.smallmind.nutsnbolts.http.Base64Codec;
 import org.smallmind.nutsnbolts.security.key.AsymmetricKeyType;
 
 public enum AsymmetricKeySpec {
 
   OPENSSH {
+    @Override
+    public String fromKey (Key key)
+      throws IOException, InappropriateKeySpecException {
+
+      if (key instanceof PublicKey) {
+
+        String keyAlgorithm;
+        String sshCode = "EdDSA".equals(keyAlgorithm = key.getAlgorithm()) ? "ed25519" : keyAlgorithm.toLowerCase();
+
+        return "ssh-" + sshCode + " " + Base64.getEncoder().encodeToString(OpenSSHPublicKeyUtil.encodePublicKey(PublicKeyFactory.createKey(key.getEncoded())));
+      } else {
+        throw new InappropriateKeySpecException(key.getAlgorithm());
+      }
+    }
+
     @Override
     public KeySpec generateKeySpec (AsymmetricKeyType type, String raw)
       throws IOException, InappropriateKeySpecException {
@@ -77,6 +100,24 @@ public enum AsymmetricKeySpec {
   },
   PKCS8 {
     @Override
+    public String fromKey (Key key)
+      throws IOException, InappropriateKeySpecException {
+
+      if (key instanceof PublicKey) {
+        throw new InappropriateKeySpecException(key.getAlgorithm());
+      } else {
+
+        StringWriter stringWriter;
+        PemWriter pemWriter = new PemWriter(stringWriter = new StringWriter());
+
+        pemWriter.writeObject(new PemObject("PRIVATE KEY", key.getEncoded()));
+        pemWriter.flush();
+
+        return stringWriter.getBuffer().toString();
+      }
+    }
+
+    @Override
     public KeySpec generateKeySpec (AsymmetricKeyType type, String raw)
       throws IOException, InappropriateKeySpecException {
 
@@ -97,6 +138,17 @@ public enum AsymmetricKeySpec {
     }
   },
   X509 {
+    @Override
+    public String fromKey (Key key)
+      throws IOException, InappropriateKeySpecException {
+
+      if (key instanceof PublicKey) {
+        throw new InappropriateKeySpecException(key.getAlgorithm());
+      } else {
+        throw new InappropriateKeySpecException(key.getAlgorithm());
+      }
+    }
+
     @Override
     public KeySpec generateKeySpec (AsymmetricKeyType type, String raw)
       throws IOException, InappropriateKeySpecException {
@@ -133,5 +185,8 @@ public enum AsymmetricKeySpec {
   };
 
   public abstract KeySpec generateKeySpec (AsymmetricKeyType type, String raw)
+    throws IOException, InappropriateKeySpecException;
+
+  public abstract String fromKey (Key key)
     throws IOException, InappropriateKeySpecException;
 }
