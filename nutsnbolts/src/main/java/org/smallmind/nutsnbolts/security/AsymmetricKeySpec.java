@@ -64,6 +64,7 @@ public enum AsymmetricKeySpec {
           }
         }
 
+        // remove the email address cooment
         if ((lastSpacePos = raw.lastIndexOf(' ')) >= 0) {
           raw = raw.substring(0, lastSpacePos);
         }
