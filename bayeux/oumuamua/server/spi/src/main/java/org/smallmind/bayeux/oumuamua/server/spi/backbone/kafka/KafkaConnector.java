@@ -34,6 +34,7 @@ package org.smallmind.bayeux.oumuamua.server.spi.backbone.kafka;
 
 import java.util.Arrays;
 import java.util.Properties;
+import java.util.function.Function;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.consumer.Consumer;
@@ -73,7 +74,7 @@ public class KafkaConnector {
     return boostrapServers;
   }
 
-  public <R> R invokeAdminClient (java.util.function.Function<AdminClient, R> clientFunction) {
+  public <R> R invokeAdminClient (Function<AdminClient, R> clientFunction) {
 
     Properties props = new Properties();
 
