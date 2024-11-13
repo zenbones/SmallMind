@@ -30,9 +30,10 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.mongodb.utility;
+package org.smallmind.mongodb.utility.spring;
 
 import com.mongodb.WriteConcern;
+import org.smallmind.mongodb.utility.MongoAcknowledgment;
 import org.springframework.beans.factory.FactoryBean;
 
 public class MongoWriteConcern implements FactoryBean<WriteConcern> {
