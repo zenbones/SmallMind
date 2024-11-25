@@ -287,14 +287,7 @@ public class TyrusGrizzlyServerFilter extends BaseFilter {
 
         final org.glassfish.tyrus.spi.Connection connection = upgradeInfo
                                                                 .createConnection(new GrizzlyWriter(ctx.getConnection()),
-                                                                  new org.glassfish.tyrus.spi.Connection.CloseListener() {
-
-                                                                    @Override
-                                                                    public void close (CloseReason reason) {
-
-                                                                      grizzlyConnection.close();
-                                                                    }
-                                                                  });
+                                                                  reason -> grizzlyConnection.close());
 
         TYRUS_CONNECTION.set(grizzlyConnection, connection);
         TASK_PROCESSOR.set(grizzlyConnection, new TaskProcessor());
@@ -333,7 +326,6 @@ public class TyrusGrizzlyServerFilter extends BaseFilter {
     }
 
     // TODO: responsePacket.setReasonPhrase(response.getReasonPhrase());
-
     for (Map.Entry<String, List<String>> entry : response.getHeaders().entrySet()) {
       responsePacket.setHeader(entry.getKey(), Utils.getHeaderFromList(entry.getValue()));
     }
