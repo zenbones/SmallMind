@@ -101,7 +101,7 @@ public class TyrusGrizzlyServerContainer extends TyrusServerContainer {
 
     // idle timeout set to indefinite.
     networkListener.getKeepAlive().setIdleTimeoutInSeconds(-1);
-    networkListener.registerAddOn(new TyrusWebSocketAddOn(this, webappContext.getContextPath()));
+    networkListener.registerAddOn(new TyrusWebSocketAddOn(this, webappContext.getContextPath(), new HashMap<>()));
 
     if (includeWsadlSupport) {
       httpServer.getServerConfiguration().addHttpHandler(new WsadlHttpHandler(engine, staticHttpHandler));

@@ -32,6 +32,7 @@
  */
 package org.smallmind.web.grizzly.tyrus;
 
+import java.util.Map;
 import org.glassfish.grizzly.filterchain.FilterChainBuilder;
 import org.glassfish.grizzly.http.server.AddOn;
 import org.glassfish.grizzly.http.server.HttpServerFilter;
@@ -42,12 +43,14 @@ import org.smallmind.web.grizzly.GrizzlyInitializationException;
 public class TyrusWebSocketAddOn implements AddOn {
 
   private final ServerContainer serverContainer;
+  private final Map<String, Object> tyrusUpgradeRequestProperties;
   private final String contextPath;
 
-  public TyrusWebSocketAddOn (ServerContainer serverContainer, String contextPath) {
+  public TyrusWebSocketAddOn (ServerContainer serverContainer, String contextPath, Map<String, Object> tyrusUpgradeRequestProperties) {
 
     this.serverContainer = serverContainer;
     this.contextPath = contextPath;
+    this.tyrusUpgradeRequestProperties = tyrusUpgradeRequestProperties;
   }
 
   @Override
@@ -59,7 +62,7 @@ public class TyrusWebSocketAddOn implements AddOn {
       throw new GrizzlyInitializationException("Missing http servlet filter in the available filter chain");
     } else {
       // Insert the WebSocketFilter right before HttpServerFilter
-      filterChainBuilder.add(httpServerFilterIndex, new TyrusGrizzlyServerFilter(serverContainer, contextPath));
+      filterChainBuilder.add(httpServerFilterIndex, new TyrusGrizzlyServerFilter(serverContainer, contextPath, tyrusUpgradeRequestProperties));
     }
   }
 }

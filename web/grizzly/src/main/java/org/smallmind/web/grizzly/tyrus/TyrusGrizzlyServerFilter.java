@@ -86,10 +86,10 @@ import org.smallmind.scribe.pen.LoggerManager;
 public class TyrusGrizzlyServerFilter extends BaseFilter {
 
   private static final Attribute<org.glassfish.tyrus.spi.Connection> TYRUS_CONNECTION = Grizzly.DEFAULT_ATTRIBUTE_BUILDER.createAttribute(TyrusGrizzlyServerFilter.class.getName() + ".Connection");
-
   private static final Attribute<TaskProcessor> TASK_PROCESSOR = Grizzly.DEFAULT_ATTRIBUTE_BUILDER.createAttribute(TaskProcessor.class.getName() + ".TaskProcessor");
 
   private final ServerContainer serverContainer;
+  private final Map<String, Object> tyrusUpgradeRequestProperties;
   private final String contextPath;
 
   // ------------------------------------------------------------ Constructors
@@ -101,15 +101,16 @@ public class TyrusGrizzlyServerFilter extends BaseFilter {
    * @param contextPath     the context path of the deployed application. If the value is "" or "/", a request URI
    *                        "/a" will be divided into context path "" and url-pattern "/a".
    */
-  public TyrusGrizzlyServerFilter (ServerContainer serverContainer, String contextPath) {
+  public TyrusGrizzlyServerFilter (ServerContainer serverContainer, String contextPath, Map<String, Object> tyrusUpgradeRequestProperties) {
 
     this.serverContainer = serverContainer;
     this.contextPath = contextPath.endsWith("/") ? contextPath : contextPath + "/";
+    this.tyrusUpgradeRequestProperties = tyrusUpgradeRequestProperties;
   }
 
   // ----------------------------------------------------- Methods from Filter
 
-  private static UpgradeRequest createWebSocketRequest (final HttpContent requestContent) {
+  private static UpgradeRequest createWebSocketRequest (final HttpContent requestContent, Map<String, Object> propertyMap) {
 
     final HttpRequestPacket requestPacket = (HttpRequestPacket)requestContent.getHttpHeader();
 
@@ -118,7 +119,7 @@ public class TyrusGrizzlyServerFilter extends BaseFilter {
     parameters.setQuery(requestPacket.getQueryStringDC());
     parameters.setQueryStringEncoding(Charsets.UTF8_CHARSET);
 
-    Map<String, String[]> parameterMap = new HashMap<String, String[]>();
+    Map<String, String[]> parameterMap = new HashMap<>();
 
     for (String paramName : parameters.getParameterNames()) {
       parameterMap.put(paramName, parameters.getParameterValues(paramName));
@@ -133,7 +134,7 @@ public class TyrusGrizzlyServerFilter extends BaseFilter {
         .remoteAddr(requestPacket.getRemoteAddress())
         .serverAddr(requestPacket.getLocalHost() == null ? requestPacket.getLocalAddress() : requestPacket.getLocalHost())
         .serverPort(requestPacket.getLocalPort())
-        .tyrusProperties(new HashMap<>())
+        .tyrusProperties(propertyMap)
         .build();
 
     for (String name : requestPacket.getHeaders().names()) {
@@ -269,7 +270,7 @@ public class TyrusGrizzlyServerFilter extends BaseFilter {
    */
   private NextAction handleHandshake (final FilterChainContext ctx, HttpContent content) {
 
-    final UpgradeRequest upgradeRequest = createWebSocketRequest(content);
+    final UpgradeRequest upgradeRequest = createWebSocketRequest(content, tyrusUpgradeRequestProperties);
 
     if (!upgradeRequest.getRequestURI().getPath().startsWith(contextPath)) {
       // the request is not for the deployed application
