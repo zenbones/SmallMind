@@ -43,7 +43,7 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public abstract class Worker<T> implements Runnable {
 
-  private static final long MINIMUM_REPORTED_IDLE_TIME = 10;
+  private static final long MINIMUM_REPORTED_IDLE_TIME = 0;
 
   private final AtomicBoolean stopped = new AtomicBoolean(false);
   private final CountDownLatch exitLatch = new CountDownLatch(1);
