@@ -43,6 +43,8 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public abstract class Worker<T> implements Runnable {
 
+  private static final long MINIMUM_REPORTED_IDLE_TIME = 10;
+
   private final AtomicBoolean stopped = new AtomicBoolean(false);
   private final CountDownLatch exitLatch = new CountDownLatch(1);
   private final WorkQueue<T> workQueue;
@@ -86,7 +88,12 @@ public abstract class Worker<T> implements Runnable {
           final T transfer;
 
           if ((transfer = workQueue.poll(1, TimeUnit.SECONDS)) != null) {
-            Instrument.with(Worker.class, MeterFactory.instance(SpeedometerBuilder::new), new Tag("event", ClaxonTag.WORKER_IDLE.getDisplay())).update(System.nanoTime() - idleStart, TimeUnit.NANOSECONDS);
+
+            long idleTime;
+
+            if ((idleTime = System.nanoTime() - idleStart) >= MINIMUM_REPORTED_IDLE_TIME) {
+              Instrument.with(Worker.class, MeterFactory.instance(SpeedometerBuilder::new), new Tag("event", ClaxonTag.WORKER_IDLE.getDisplay())).update(idleTime, TimeUnit.NANOSECONDS);
+            }
 
             engageWork(transfer);
           }
