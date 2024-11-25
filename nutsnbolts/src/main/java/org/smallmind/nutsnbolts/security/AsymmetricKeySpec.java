@@ -87,7 +87,7 @@ public enum AsymmetricKeySpec {
           }
         }
 
-        // remove the email address cooment
+        // remove the email address comment at the tail of the ssh key
         if ((lastSpacePos = raw.lastIndexOf(' ')) >= 0) {
           raw = raw.substring(0, lastSpacePos);
         }
