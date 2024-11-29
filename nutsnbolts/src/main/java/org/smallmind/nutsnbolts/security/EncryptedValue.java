@@ -1,19 +1,13 @@
 package org.smallmind.nutsnbolts.security;
 
-import java.security.InvalidKeyException;
-import java.security.Key;
-import java.security.NoSuchAlgorithmException;
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
 public class EncryptedValue implements FactoryBean<String>, InitializingBean {
 
-  public Key key;
-  public String value;
-  public String decryptedValue;
+  private Decryptor decryptor;
+  private String value;
+  private String decryptedValue;
 
   @Override
   public Class<?> getObjectType () {
@@ -21,9 +15,9 @@ public class EncryptedValue implements FactoryBean<String>, InitializingBean {
     return String.class;
   }
 
-  public void setKey (Key key) {
+  public void setDecryptor (Decryptor decryptor) {
 
-    this.key = key;
+    this.decryptor = decryptor;
   }
 
   public void setValue (String value) {
@@ -33,9 +27,9 @@ public class EncryptedValue implements FactoryBean<String>, InitializingBean {
 
   @Override
   public void afterPropertiesSet ()
-    throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+    throws Exception {
 
-    decryptedValue = new String(EncryptionUtility.decrypt(key, value.getBytes()));
+    decryptedValue = new String(decryptor.decrypt(value.getBytes()));
   }
 
   @Override
