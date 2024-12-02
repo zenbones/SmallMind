@@ -61,7 +61,7 @@ public class EncryptedValue implements FactoryBean<String>, InitializingBean {
   public void afterPropertiesSet ()
     throws Exception {
 
-    decryptedValue = new String(decryptor.decrypt(value.getBytes()));
+    decryptedValue = (decryptor == null) ? value : new String(decryptor.decrypt(value.getBytes()));
   }
 
   @Override
