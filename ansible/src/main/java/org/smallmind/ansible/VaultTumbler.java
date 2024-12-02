@@ -53,40 +53,46 @@ public class VaultTumbler {
 
   private static final String AES_ALGORITHM = "AES/CTR/PKCS7Padding";
 
-  private final Mac mac = Mac.getInstance("HmacSHA256");
+  private final Mac mac;
   private final SecretKeySpec aesKey;
   private final byte[] iv = new byte[16];
   private final byte[] salt;
 
   public VaultTumbler (String password)
-    throws NoSuchAlgorithmException, InvalidKeySpecException, InvalidKeyException {
+    throws VaultCodecException {
 
     this(password, generateSalt());
   }
 
   public VaultTumbler (String password, byte[] salt)
-    throws NoSuchAlgorithmException, InvalidKeySpecException, InvalidKeyException {
+    throws VaultCodecException {
 
-    SecretKey pbkdf2Key;
-    SecretKeyFactory pbkdf2KeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
-    SecretKeySpec hmacKey;
-    byte[] pbkdf2KeyBytes;
-    byte[] aesKeyBytes = new byte[32];
-    byte[] hmacKeyBytes = new byte[32];
+    try {
 
-    this.salt = salt;
+      SecretKey pbkdf2Key;
+      SecretKeyFactory pbkdf2KeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+      SecretKeySpec hmacKey;
+      byte[] pbkdf2KeyBytes;
+      byte[] aesKeyBytes = new byte[32];
+      byte[] hmacKeyBytes = new byte[32];
 
-    pbkdf2Key = pbkdf2KeyFactory.generateSecret(new PBEKeySpec(password.toCharArray(), salt, 10000, 640));
-    pbkdf2KeyBytes = pbkdf2Key.getEncoded();
+      this.salt = salt;
 
-    System.arraycopy(pbkdf2KeyBytes, 0, aesKeyBytes, 0, 32);
-    System.arraycopy(pbkdf2KeyBytes, 32, hmacKeyBytes, 0, 32);
-    System.arraycopy(pbkdf2KeyBytes, 64, iv, 0, 16);
+      pbkdf2Key = pbkdf2KeyFactory.generateSecret(new PBEKeySpec(password.toCharArray(), salt, 10000, 640));
+      pbkdf2KeyBytes = pbkdf2Key.getEncoded();
 
-    aesKey = new SecretKeySpec(aesKeyBytes, "AES");
-    hmacKey = new SecretKeySpec(hmacKeyBytes, "HmacSHA256");
+      System.arraycopy(pbkdf2KeyBytes, 0, aesKeyBytes, 0, 32);
+      System.arraycopy(pbkdf2KeyBytes, 32, hmacKeyBytes, 0, 32);
+      System.arraycopy(pbkdf2KeyBytes, 64, iv, 0, 16);
 
-    mac.init(hmacKey);
+      aesKey = new SecretKeySpec(aesKeyBytes, "AES");
+      hmacKey = new SecretKeySpec(hmacKeyBytes, "HmacSHA256");
+
+      mac = Mac.getInstance("HmacSHA256");
+      mac.init(hmacKey);
+    } catch (NoSuchAlgorithmException | InvalidKeySpecException | InvalidKeyException exception) {
+      throw new VaultCodecException(exception);
+    }
   }
 
   private static byte[] generateSalt () {
@@ -99,21 +105,30 @@ public class VaultTumbler {
   }
 
   public VaultCake encrypt (byte[] original)
-    throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+    throws VaultCodecException {
 
-    byte[] encrypted = EncryptionUtility.encrypt(aesKey, AES_ALGORITHM, original, new IvParameterSpec(iv));
+    try {
 
-    return new VaultCake(salt, mac.doFinal(encrypted), encrypted);
+      byte[] encrypted = EncryptionUtility.encrypt(aesKey, AES_ALGORITHM, original, new IvParameterSpec(iv));
+
+      return new VaultCake(salt, mac.doFinal(encrypted), encrypted);
+    } catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException exception) {
+      throw new VaultCodecException(exception);
+    }
   }
 
   public byte[] decrypt (byte[] hmac, byte[] encrypted)
-    throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, VaultPasswordException {
+    throws VaultCodecException {
 
     if (!Arrays.equals(hmac, mac.doFinal(encrypted))) {
       throw new VaultPasswordException("Wrong password");
     } else {
+      try {
 
-      return EncryptionUtility.decrypt(aesKey, AES_ALGORITHM, encrypted, new IvParameterSpec(iv));
+        return EncryptionUtility.decrypt(aesKey, AES_ALGORITHM, encrypted, new IvParameterSpec(iv));
+      } catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException exception) {
+        throw new VaultCodecException(exception);
+      }
     }
   }
 }

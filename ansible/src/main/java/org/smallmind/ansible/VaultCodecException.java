@@ -40,4 +40,9 @@ public class VaultCodecException extends FormattedException {
 
     super(message, args);
   }
+
+  public VaultCodecException (Throwable throwable) {
+
+    super(throwable);
+  }
 }

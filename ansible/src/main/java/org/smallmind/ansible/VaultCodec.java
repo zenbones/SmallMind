@@ -36,25 +36,18 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import org.smallmind.nutsnbolts.security.HexCodec;
 
 public class VaultCodec {
 
   public static String encrypt (InputStream inputStream, String password)
-    throws IOException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, InvalidKeySpecException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+    throws IOException, VaultCodecException {
 
     return encrypt(inputStream, password, null);
   }
 
   public static String encrypt (InputStream inputStream, String password, String id)
-    throws IOException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, InvalidKeySpecException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+    throws IOException, VaultCodecException {
 
     StringBuilder encryptedBuilder = new StringBuilder();
     VaultCake vaultCake;
@@ -91,7 +84,7 @@ public class VaultCodec {
   }
 
   public static byte[] decrypt (InputStream inputStream, String password)
-    throws IOException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, InvalidKeySpecException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, VaultCodecException {
+    throws IOException, VaultCodecException {
 
     String header = readLine(inputStream);
     String[] headerParts = header.split(";", -1);
