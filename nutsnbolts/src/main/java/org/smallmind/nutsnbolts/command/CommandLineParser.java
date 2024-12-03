@@ -104,7 +104,7 @@ public class CommandLineParser {
             break;
           case ENUMERATED:
             if (!(((EnumeratedArgument)matchingOption.getArgument()).matches(matchingArgument = obtainArgument(null, argCounter, args)))) {
-              throw new CommandLineException("Argument for the option with flag(%s) is not within its bound %s", matchingOption.getFlag().toString(), Arrays.toString(((EnumeratedArgument)matchingOption.getArgument()).getValues()));
+              throw new CommandLineException("Argument for the option(%s) is not within its bound %s", matchingOption.getName(), Arrays.toString(((EnumeratedArgument)matchingOption.getArgument()).getValues()));
             }
 
             optionSet.addArgument(matchingOption.getName(), matchingArgument);
@@ -187,7 +187,7 @@ public class CommandLineParser {
     for (Option usedOption : usedSet) {
       if (usedOption.getParent() != null) {
         if (!usedSet.contains(usedOption.getParent())) {
-          throw new CommandLineException("User of dependent option '%s' without specifying its parent '%s'", getOptionName(usedOption), getOptionName(usedOption.getParent()));
+          throw new CommandLineException("Use of dependent option '%s' without specifying its parent '%s'", getOptionName(usedOption), getOptionName(usedOption.getParent()));
         }
       }
     }

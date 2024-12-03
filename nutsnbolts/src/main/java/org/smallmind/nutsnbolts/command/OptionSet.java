@@ -144,7 +144,7 @@ public class OptionSet {
     boolean first = true;
 
     for (Map.Entry<String, LinkedList<String>> optionEntry : optionMap.entrySet()) {
-      if (first) {
+      if (!first) {
         lineBuilder.append(", ");
       }
 
@@ -159,7 +159,7 @@ public class OptionSet {
 
           lineBuilder.append('[');
           for (String argument : optionEntry.getValue()) {
-            if (innerFirst) {
+            if (!innerFirst) {
               lineBuilder.append(", ");
             }
 

@@ -199,6 +199,10 @@ public class Template {
             lineBuilder.append(((EnumeratedArgument)option.getArgument()).getValues()[index]);
           }
           lineBuilder.append(')');
+          break;
+        case MULTIPLE:
+          lineBuilder.append(' ').append(((MultipleArgument)option.getArgument()).getDescription());
+          break;
         default:
           throw new UnknownSwitchCaseException(option.getArgument().getType().name());
       }
