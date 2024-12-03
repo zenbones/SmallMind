@@ -32,6 +32,7 @@
  */
 package org.smallmind.nutsnbolts.command.template;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 
 public class Option {
@@ -48,6 +49,14 @@ public class Option {
     this.name = name;
     this.flag = flag;
     this.required = required;
+
+    if (children != null) {
+      this.children = new LinkedList<>(Arrays.asList(children));
+
+      for (Option childOption : this.children) {
+        childOption.setParent(this);
+      }
+    }
   }
 
   public Option (String name, Character flag, boolean required, Argument argument, Option... children) {

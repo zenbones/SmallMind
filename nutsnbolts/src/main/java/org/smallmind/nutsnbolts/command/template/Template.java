@@ -109,10 +109,10 @@ public class Template {
   public synchronized void addOptions (Option... options)
     throws CommandLineException {
 
-    addOptions(Arrays.asList(options));
+    addOptions(Arrays.asList(options), false);
   }
 
-  public synchronized void addOptions (List<Option> optionList)
+  public synchronized void addOptions (List<Option> optionList, boolean sublist)
     throws CommandLineException {
 
     for (Option option : optionList) {
@@ -139,11 +139,13 @@ public class Template {
       optionSet.add(option);
 
       if (option.getChildren() != null) {
-        addOptions(option.getChildren());
+        addOptions(option.getChildren(), true);
       }
     }
 
-    this.optionList.addAll(optionList);
+    if (!sublist) {
+      this.optionList.addAll(optionList);
+    }
   }
 
   public synchronized String toString () {
@@ -176,7 +178,7 @@ public class Template {
       }
       if (option.getFlag() != null) {
         if (named) {
-          lineBuilder.append(", ");
+          lineBuilder.append("|");
         }
         lineBuilder.append('-').append(option.getFlag());
       }
@@ -201,7 +203,7 @@ public class Template {
           lineBuilder.append(')');
           break;
         case MULTIPLE:
-          lineBuilder.append(' ').append(((MultipleArgument)option.getArgument()).getDescription());
+          lineBuilder.append("... ").append(((MultipleArgument)option.getArgument()).getDescription());
           break;
         default:
           throw new UnknownSwitchCaseException(option.getArgument().getType().name());
