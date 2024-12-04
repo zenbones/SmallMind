@@ -48,8 +48,7 @@ public class AckExtTest2 {
   public void test ()
     throws Exception {
 
-    // ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("org/smallmind/bayeux/oumuamua/oumuamua-grizzly.xml", "org/smallmind/bayeux/oumuamua/oumuamua.xml");
-    ClientTransport wsTransport;
+   ClientTransport wsTransport;
     WebSocketContainer webSocketContainer;
     BayeuxClient bayeuxClient;
 
