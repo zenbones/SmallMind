@@ -32,6 +32,7 @@
  */
 package org.smallmind.nutsnbolts.security;
 
+import org.smallmind.nutsnbolts.http.Base64Codec;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
@@ -61,7 +62,7 @@ public class EncryptedValue implements FactoryBean<String>, InitializingBean {
   public void afterPropertiesSet ()
     throws Exception {
 
-    decryptedValue = (decryptor == null) ? value : new String(decryptor.decrypt(value.getBytes()));
+    decryptedValue = (decryptor == null) ? value : new String(decryptor.decrypt(Base64Codec.decode(value)));
   }
 
   @Override
