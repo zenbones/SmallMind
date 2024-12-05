@@ -30,10 +30,45 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.security;
+package org.smallmind.nutsnbolts.security.kms;
 
-public interface Decryptor {
+import org.smallmind.nutsnbolts.http.Base64Codec;
+import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.InitializingBean;
 
-  byte[] decrypt (byte[] encrypted)
-    throws Exception;
+public class EncryptedValue implements FactoryBean<String>, InitializingBean {
+
+  private Decryptor decryptor;
+  private String value;
+  private String decryptedValue;
+
+  @Override
+  public Class<?> getObjectType () {
+
+    return String.class;
+  }
+
+  public void setDecryptor (Decryptor decryptor) {
+
+    this.decryptor = decryptor;
+  }
+
+  public void setValue (String value) {
+
+    this.value = value;
+  }
+
+  @Override
+  public void afterPropertiesSet ()
+    throws Exception {
+
+    decryptedValue = (decryptor == null) ? value : new String(decryptor.decrypt(Base64Codec.decode(value)));
+  }
+
+  @Override
+  public String getObject ()
+    throws Exception {
+
+    return decryptedValue;
+  }
 }
