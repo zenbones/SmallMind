@@ -431,6 +431,7 @@ public enum Meta {
       ObjectValue<V> oumuamua;
       BooleanValue<V> echo;
 
+      // cometd echoes by default, so that's what we do here
       return ((echo = ((oumuamua = ((ext = request.getExt()) == null) ? null : (ObjectValue<V>)ext.get("oumuamua")) == null) ? null : (BooleanValue<V>)oumuamua.get("echo")) == null) || echo.asBoolean();
     }
 
