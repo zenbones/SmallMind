@@ -62,7 +62,7 @@ public class EncryptedValue implements FactoryBean<String>, InitializingBean {
   public void afterPropertiesSet ()
     throws Exception {
 
-    decryptedValue = (decryptor == null) ? value : new String(decryptor.decrypt(Base64Codec.decode(value)));
+    decryptedValue = (decryptor == null) ? value : decryptor.decrypt(value);
   }
 
   @Override

@@ -34,6 +34,6 @@ package org.smallmind.nutsnbolts.security.kms;
 
 public interface Decryptor {
 
-  byte[] decrypt (byte[] encrypted)
+  String decrypt (String encrypted)
     throws Exception;
 }
