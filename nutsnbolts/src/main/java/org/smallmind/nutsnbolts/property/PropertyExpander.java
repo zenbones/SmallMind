@@ -35,54 +35,28 @@ package org.smallmind.nutsnbolts.property;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
+import org.smallmind.nutsnbolts.security.kms.Decryptor;
 import org.smallmind.nutsnbolts.util.SystemPropertyMode;
 
 public class PropertyExpander {
 
+  private final PropertyClosure propertyClosure;
   private final SystemPropertyMode systemPropertyMode;
-  private final String prefix;
-  private final String suffix;
   private final boolean ignoreUnresolvableProperties;
   private final boolean searchSystemEnvironment;
 
   public PropertyExpander ()
     throws PropertyExpanderException {
 
-    this("${", "}", false, SystemPropertyMode.FALLBACK, true);
+    this(new PropertyClosure(), false, SystemPropertyMode.FALLBACK, true);
   }
 
-  public PropertyExpander (boolean ignoreUnresolvableProperties)
-    throws PropertyExpanderException {
+  public PropertyExpander (PropertyClosure propertyClosure, boolean ignoreUnresolvableProperties, SystemPropertyMode systemPropertyMode, boolean searchSystemEnvironment) {
 
-    this("${", "}", ignoreUnresolvableProperties, SystemPropertyMode.FALLBACK, true);
-  }
-
-  public PropertyExpander (SystemPropertyMode systemPropertyMode, boolean searchSystemEnvironment)
-    throws PropertyExpanderException {
-
-    this("${", "}", false, systemPropertyMode, searchSystemEnvironment);
-  }
-
-  public PropertyExpander (boolean ignoreUnresolvableProperties, SystemPropertyMode systemPropertyMode, boolean searchSystemEnvironment)
-    throws PropertyExpanderException {
-
-    this("${", "}", ignoreUnresolvableProperties, systemPropertyMode, searchSystemEnvironment);
-  }
-
-  public PropertyExpander (String prefix, String suffix, boolean ignoreUnresolvableProperties, SystemPropertyMode systemPropertyMode, boolean searchSystemEnvironment)
-    throws PropertyExpanderException {
-
-    this.prefix = prefix;
-    this.suffix = suffix;
+    this.propertyClosure = propertyClosure;
     this.ignoreUnresolvableProperties = ignoreUnresolvableProperties;
     this.systemPropertyMode = systemPropertyMode;
     this.searchSystemEnvironment = searchSystemEnvironment;
-
-    for (int pos = 0; pos < prefix.length(); pos++) {
-      if (suffix.indexOf(prefix.charAt(pos)) >= 0) {
-        throw new PropertyExpanderException("The prefix(%s) and suffix(%s) should have no characters in common", prefix, suffix);
-      }
-    }
   }
 
   public String expand (String expansion)
@@ -101,30 +75,30 @@ public class PropertyExpander {
     throws PropertyExpanderException {
 
     HashSet<String> encounteredKeySet;
+    PropertyPrologue prologue;
+    PropertyPrologue nextPrologue;
     String expansionKey;
     Object expansionValue;
     int arabesqueCount = 0;
     int parsePos = 0;
-    int prefixPos;
-    int nextPrefixPos;
     int suffixPos;
     int markerPos = -1;
 
     encounteredKeySet = new HashSet<>();
-    while ((prefixPos = expansionBuilder.indexOf(prefix, parsePos)) >= 0) {
+    while ((prologue = propertyClosure.nextPrologue(expansionBuilder, parsePos)).getPos() >= 0) {
       arabesqueCount++;
-      parsePos = prefixPos + prefix.length();
+      parsePos = prologue.getPos() + prologue.getPrefix().length();
       do {
-        if ((suffixPos = expansionBuilder.indexOf(suffix, parsePos)) < 0) {
+        if ((suffixPos = expansionBuilder.indexOf(propertyClosure.getSuffix(), parsePos)) < 0) {
           throw new PropertyExpanderException("Unclosed property prefix within the expansion sub-template(%s)", expansionBuilder.toString());
         }
 
-        if (((nextPrefixPos = expansionBuilder.indexOf(prefix, parsePos)) >= 0) && (nextPrefixPos < suffixPos)) {
+        if (((nextPrologue = propertyClosure.nextPrologue(expansionBuilder, parsePos)).getPos() >= 0) && (nextPrologue.getPos() < suffixPos)) {
           arabesqueCount++;
-          parsePos = nextPrefixPos + prefix.length();
+          parsePos = nextPrologue.getPos() + nextPrologue.getPrefix().length();
         } else {
           arabesqueCount--;
-          parsePos = suffixPos + suffix.length();
+          parsePos = suffixPos + propertyClosure.getSuffix().length();
         }
       } while (arabesqueCount > 0);
 
@@ -133,7 +107,7 @@ public class PropertyExpander {
       }
       markerPos = parsePos;
 
-      expansionKey = expand(originalExpansion, new StringBuilder(expansionBuilder.substring(prefixPos + prefix.length(), suffixPos)), expansionMap).toString();
+      expansionKey = expand(originalExpansion, new StringBuilder(expansionBuilder.substring(prologue.getPos() + prologue.getPrefix().length(), suffixPos)), expansionMap).toString();
 
       if ((!systemPropertyMode.equals(SystemPropertyMode.OVERRIDE)) || ((expansionValue = System.getProperty(expansionKey)) == null)) {
         if ((!(systemPropertyMode.equals(SystemPropertyMode.OVERRIDE) && searchSystemEnvironment)) || ((expansionValue = System.getenv(expansionKey)) == null)) {
@@ -144,20 +118,20 @@ public class PropertyExpander {
 
                   String subExpansion;
 
-                  if (originalExpansion.equals(subExpansion = expansionBuilder.substring(prefixPos, suffixPos + suffix.length()))) {
-                    if (originalExpansion.equals(prefix + expansionKey + suffix)) {
+                  if (originalExpansion.equals(subExpansion = expansionBuilder.substring(prologue.getPos(), suffixPos + propertyClosure.getSuffix().length()))) {
+                    if (originalExpansion.equals(prologue.getPrefix() + expansionKey + propertyClosure.getSuffix())) {
                       throw new PropertyExpanderException("Could find no mapping for property(%s)", originalExpansion);
                     } else {
-                      throw new PropertyExpanderException("Could find no mapping for property(%s%s%s) within the expansion (%s)", prefix, expansionKey, suffix, originalExpansion);
+                      throw new PropertyExpanderException("Could find no mapping for property(%s%s%s) within the expansion (%s)", prologue.getPrefix(), expansionKey, propertyClosure.getSuffix(), originalExpansion);
                     }
-                  } else if (subExpansion.equals(prefix + expansionKey + suffix)) {
+                  } else if (subExpansion.equals(prologue.getPrefix() + expansionKey + propertyClosure.getSuffix())) {
                     throw new PropertyExpanderException("Could find no mapping for property(%s) within the expansion (%s)", subExpansion, originalExpansion);
                   } else {
-                    throw new PropertyExpanderException("Could find no mapping for property(%s%s%s) within the expansion sub-template(%s) of (%s)", prefix, expansionKey, suffix, subExpansion, originalExpansion);
+                    throw new PropertyExpanderException("Could find no mapping for property(%s%s%s) within the expansion sub-template(%s) of (%s)", prologue.getPrefix(), expansionKey, propertyClosure.getSuffix(), subExpansion, originalExpansion);
                   }
                 } else {
-                  expansionBuilder.replace(prefixPos + prefix.length(), suffixPos, expansionKey);
-                  parsePos += expansionKey.length() - (suffixPos - (prefixPos + prefix.length()));
+                  expansionBuilder.replace(prologue.getPos() + prologue.getPrefix().length(), suffixPos, expansionKey);
+                  parsePos += expansionKey.length() - (suffixPos - (prologue.getPos() + prologue.getPrefix().length()));
                 }
               }
             }
@@ -167,16 +141,27 @@ public class PropertyExpander {
 
       if (expansionValue != null) {
 
-        String expansionValueAsString = expansionValue.toString();
+        Decryptor decryptor;
+        String expansionValueAsString;
+
+        if ((decryptor = prologue.getDecryptor()) == null) {
+          expansionValueAsString = expansionValue.toString();
+        } else {
+          try {
+            expansionValueAsString = decryptor.decrypt(expansionValue.toString());
+          } catch (Exception exception) {
+            throw new PropertyExpanderException(exception);
+          }
+        }
 
         if (encounteredKeySet.contains(expansionKey)) {
-          throw new PropertyExpanderException("Circular reference to property(%s%s%s) within the expansion sub-template(%s)", prefix, expansionKey, suffix, expansionBuilder.toString());
+          throw new PropertyExpanderException("Circular reference to property(%s%s%s) within the expansion sub-template(%s)", prologue.getPrefix(), expansionKey, propertyClosure.getSuffix(), expansionBuilder.toString());
         }
 
         encounteredKeySet.add(expansionKey);
-        expansionBuilder.replace(prefixPos, suffixPos + suffix.length(), expansionValueAsString);
-        parsePos = prefixPos;
-        markerPos += expansionValueAsString.length() - (suffixPos + suffix.length() - prefixPos);
+        expansionBuilder.replace(prologue.getPos(), suffixPos + propertyClosure.getSuffix().length(), expansionValueAsString);
+        parsePos = prologue.getPos();
+        markerPos += expansionValueAsString.length() - (suffixPos + propertyClosure.getSuffix().length() - prologue.getPos());
       }
     }
 

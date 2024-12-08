@@ -41,12 +41,14 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import org.smallmind.nutsnbolts.property.PropertyClosure;
 import org.smallmind.nutsnbolts.property.PropertyExpander;
 import org.smallmind.nutsnbolts.property.PropertyExpanderException;
 import org.smallmind.nutsnbolts.resource.Resource;
 import org.smallmind.nutsnbolts.resource.ResourceException;
 import org.smallmind.nutsnbolts.resource.ResourceParser;
 import org.smallmind.nutsnbolts.resource.ResourceTypeResourceGenerator;
+import org.smallmind.nutsnbolts.security.kms.Decryptor;
 import org.smallmind.nutsnbolts.spring.property.PropertyEntry;
 import org.smallmind.nutsnbolts.spring.property.PropertyFileType;
 import org.smallmind.nutsnbolts.spring.property.PropertyHandler;
@@ -75,6 +77,7 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
 
   private BeanFactory beanFactory;
   private KeyDebugger keyDebugger;
+  private Decryptor decryptor;
   private String beanName;
   private SystemPropertyMode systemPropertyMode = SystemPropertyMode.FALLBACK;
   private boolean ignoreResourceNotFound = false;
@@ -106,6 +109,11 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
   public void setOrder (int order) {
 
     this.order = order;
+  }
+
+  public void setDecryptor (Decryptor decryptor) {
+
+    this.decryptor = decryptor;
   }
 
   public void setSystemPropertyMode (SystemPropertyMode systemPropertyMode) {
@@ -152,7 +160,7 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
     resourceParser = new ResourceParser(new ResourceTypeResourceGenerator());
 
     try {
-      locationExpander = new PropertyExpander(true, SystemPropertyMode.OVERRIDE, true);
+      locationExpander = new PropertyExpander(new PropertyClosure(decryptor), true, SystemPropertyMode.OVERRIDE, true);
     } catch (PropertyExpanderException propertyExpanderException) {
       throw new RuntimeBeansException(propertyExpanderException);
     }
@@ -206,7 +214,15 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
     }
     System.out.println("--------------------------------------------------");
 
-    SpringPropertyAccessorManager.register(new SpringPropertyAccessor(valueResolver = new PropertyPlaceholderStringValueResolver(propertyMap, ignoreUnresolvableProperties, systemPropertyMode, searchSystemEnvironment)));
+    PropertyExpander fullPropertyExpander;
+
+    try {
+      fullPropertyExpander = new PropertyExpander(new PropertyClosure(decryptor), ignoreUnresolvableProperties, systemPropertyMode, searchSystemEnvironment);
+    } catch (PropertyExpanderException propertyExpanderException) {
+      throw new RuntimeBeansException(propertyExpanderException);
+    }
+
+    SpringPropertyAccessorManager.register(new SpringPropertyAccessor(valueResolver = new PropertyPlaceholderStringValueResolver(fullPropertyExpander, propertyMap)));
 
     if ((keyDebugger != null) && keyDebugger.willDebug()) {
       for (Map.Entry<String, Object> propertyEntry : propertyMap.entrySet()) {

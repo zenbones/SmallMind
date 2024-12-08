@@ -30,41 +30,33 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.spring;
+package org.smallmind.nutsnbolts.property;
 
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
-import org.smallmind.nutsnbolts.property.PropertyExpander;
-import org.smallmind.nutsnbolts.property.PropertyExpanderException;
-import org.springframework.beans.BeansException;
-import org.springframework.util.StringValueResolver;
+import org.smallmind.nutsnbolts.security.kms.Decryptor;
 
-public class PropertyPlaceholderStringValueResolver implements StringValueResolver {
+public class EncryptedVariation {
 
-  private final PropertyExpander propertyExpander;
-  private final Map<String, Object> propertyMap;
+  private final Decryptor decryptor;
+  private final String prefix;
 
-  public PropertyPlaceholderStringValueResolver (PropertyExpander propertyExpander, Map<String, Object> propertyMap)
-    throws BeansException {
+  public EncryptedVariation (Decryptor decryptor) {
 
-    this.propertyExpander = propertyExpander;
-    this.propertyMap = propertyMap;
+    this(decryptor, "!{");
   }
 
-  public Set<String> getKeySet () {
+  public EncryptedVariation (Decryptor decryptor, String prefix) {
 
-    return Collections.unmodifiableSet(propertyMap.keySet());
+    this.decryptor = decryptor;
+    this.prefix = prefix;
   }
 
-  public String resolveStringValue (String property)
-    throws BeansException {
+  public Decryptor getDecryptor () {
 
-    try {
+    return decryptor;
+  }
 
-      return propertyExpander.expand(property, propertyMap);
-    } catch (PropertyExpanderException propertyExpanderException) {
-      throw new RuntimeBeansException(propertyExpanderException);
-    }
+  public String getPrefix () {
+
+    return prefix;
   }
 }

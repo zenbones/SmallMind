@@ -30,45 +30,35 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.security.kms;
+package org.smallmind.nutsnbolts.property;
 
-import org.smallmind.nutsnbolts.http.Base64Codec;
-import org.springframework.beans.factory.FactoryBean;
-import org.springframework.beans.factory.InitializingBean;
+import org.smallmind.nutsnbolts.security.kms.Decryptor;
 
-public class EncryptedValue implements FactoryBean<String>, InitializingBean {
+public class PropertyPrologue {
 
-  private Decryptor decryptor;
-  private String value;
-  private String decryptedValue;
+  private final Decryptor decryptor;
+  private final String prefix;
+  private final int pos;
 
-  @Override
-  public Class<?> getObjectType () {
-
-    return String.class;
-  }
-
-  public void setDecryptor (Decryptor decryptor) {
+  public PropertyPrologue (Decryptor decryptor, String prefix, int pos) {
 
     this.decryptor = decryptor;
+    this.prefix = prefix;
+    this.pos = pos;
   }
 
-  public void setValue (String value) {
+  public Decryptor getDecryptor () {
 
-    this.value = value;
+    return decryptor;
   }
 
-  @Override
-  public void afterPropertiesSet ()
-    throws Exception {
+  public String getPrefix () {
 
-    decryptedValue = (decryptor == null) ? value : decryptor.decrypt(value);
+    return prefix;
   }
 
-  @Override
-  public String getObject ()
-    throws Exception {
+  public int getPos () {
 
-    return decryptedValue;
+    return pos;
   }
 }

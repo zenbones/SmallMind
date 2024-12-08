@@ -35,6 +35,7 @@ package org.smallmind.spark.tanukisoft.integration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.property.PropertyClosure;
 import org.smallmind.nutsnbolts.property.PropertyExpander;
 import org.smallmind.nutsnbolts.util.SystemPropertyMode;
 import org.tanukisoftware.wrapper.WrapperListener;
@@ -72,12 +73,12 @@ public abstract class AbstractWrapperListener extends PerApplicationContext impl
       modifiedArgs[0] = (startupTimeoutSeconds == null) ? DEFAULT_TIMEOUT_SECONDS : startupTimeoutSeconds;
       System.arraycopy(args, 1, modifiedArgs, 1, args.length - 1);
 
-      propertyExpander = new PropertyExpander(false, SystemPropertyMode.FALLBACK, true);
+      propertyExpander = new PropertyExpander(new PropertyClosure(), false, SystemPropertyMode.FALLBACK, true);
       for (int count = 0; count < modifiedArgs.length; count++) {
         modifiedArgs[count] = propertyExpander.expand(modifiedArgs[count]);
       }
 
-      WrapperManager.start((WrapperListener)Class.forName(args[0]).newInstance(), modifiedArgs);
+      WrapperManager.start((WrapperListener)Class.forName(args[0]).getConstructor().newInstance(), modifiedArgs);
     }
   }
 
