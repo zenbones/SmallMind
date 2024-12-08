@@ -160,7 +160,7 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
     resourceParser = new ResourceParser(new ResourceTypeResourceGenerator());
 
     try {
-      locationExpander = new PropertyExpander(new PropertyClosure(decryptor), true, SystemPropertyMode.OVERRIDE, true);
+      locationExpander = new PropertyExpander(new PropertyClosure(), true, SystemPropertyMode.OVERRIDE, true);
     } catch (PropertyExpanderException propertyExpanderException) {
       throw new RuntimeBeansException(propertyExpanderException);
     }
