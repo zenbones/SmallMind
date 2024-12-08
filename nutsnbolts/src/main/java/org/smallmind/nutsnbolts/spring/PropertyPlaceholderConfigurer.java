@@ -217,7 +217,7 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
     PropertyExpander fullPropertyExpander;
 
     try {
-      fullPropertyExpander = new PropertyExpander(new PropertyClosure(decryptor), ignoreUnresolvableProperties, systemPropertyMode, searchSystemEnvironment);
+      fullPropertyExpander = new PropertyExpander((decryptor == null) ? new PropertyClosure() : new PropertyClosure(decryptor), ignoreUnresolvableProperties, systemPropertyMode, searchSystemEnvironment);
     } catch (PropertyExpanderException propertyExpanderException) {
       throw new RuntimeBeansException(propertyExpanderException);
     }

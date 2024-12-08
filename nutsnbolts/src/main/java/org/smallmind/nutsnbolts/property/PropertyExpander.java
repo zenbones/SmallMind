@@ -85,7 +85,7 @@ public class PropertyExpander {
     int markerPos = -1;
 
     encounteredKeySet = new HashSet<>();
-    while ((prologue = propertyClosure.nextPrologue(expansionBuilder, parsePos)).getPos() >= 0) {
+    while ((prologue = propertyClosure.findPrologue(expansionBuilder, parsePos)).getPos() >= 0) {
       arabesqueCount++;
       parsePos = prologue.getPos() + prologue.getPrefix().length();
       do {
@@ -93,7 +93,7 @@ public class PropertyExpander {
           throw new PropertyExpanderException("Unclosed property prefix within the expansion sub-template(%s)", expansionBuilder.toString());
         }
 
-        if (((nextPrologue = propertyClosure.nextPrologue(expansionBuilder, parsePos)).getPos() >= 0) && (nextPrologue.getPos() < suffixPos)) {
+        if (((nextPrologue = propertyClosure.findPrologue(expansionBuilder, parsePos)).getPos() >= 0) && (nextPrologue.getPos() < suffixPos)) {
           arabesqueCount++;
           parsePos = nextPrologue.getPos() + nextPrologue.getPrefix().length();
         } else {

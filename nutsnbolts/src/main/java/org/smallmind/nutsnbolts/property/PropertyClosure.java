@@ -71,6 +71,12 @@ public class PropertyClosure {
     this.prefix = prefix;
     this.suffix = suffix;
 
+    if ((prefix == null) || (suffix == null)) {
+      throw new PropertyExpanderException();
+    } else if (prefix.isBlank() || suffix.isBlank()) {
+      throw new PropertyExpanderException("Neither the prefix nor suffix may be blank");
+    }
+
     for (int pos = 0; pos < prefix.length(); pos++) {
       if (suffix.indexOf(prefix.charAt(pos)) >= 0) {
         throw new PropertyExpanderException("The prefix(%s) and suffix(%s) should have no characters in common", prefix, suffix);
@@ -90,7 +96,7 @@ public class PropertyClosure {
     return suffix;
   }
 
-  public PropertyPrologue nextPrologue (StringBuilder expansionBuilder, int parsePos) {
+  public PropertyPrologue findPrologue (StringBuilder expansionBuilder, int parsePos) {
 
     int prefixPos = expansionBuilder.indexOf(prefix, parsePos);
     int encryptedPrefixPos = (encryptedVariation == null) ? -1 : expansionBuilder.indexOf(encryptedVariation.getPrefix(), parsePos);

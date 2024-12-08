@@ -39,12 +39,20 @@ public class EncryptedVariation {
   private final Decryptor decryptor;
   private final String prefix;
 
-  public EncryptedVariation (Decryptor decryptor) {
+  public EncryptedVariation (Decryptor decryptor)
+    throws PropertyExpanderException {
 
     this(decryptor, "!{");
   }
 
-  public EncryptedVariation (Decryptor decryptor, String prefix) {
+  public EncryptedVariation (Decryptor decryptor, String prefix)
+    throws PropertyExpanderException {
+
+    if ((decryptor == null) || (prefix == null)) {
+      throw new NullPointerException();
+    } else if (prefix.isBlank()) {
+      throw new PropertyExpanderException("The prefix may not be blank");
+    }
 
     this.decryptor = decryptor;
     this.prefix = prefix;
