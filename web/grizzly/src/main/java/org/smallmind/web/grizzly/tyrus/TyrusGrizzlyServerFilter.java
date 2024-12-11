@@ -38,6 +38,7 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.RejectedExecutionException;
 import jakarta.websocket.CloseReason;
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.CloseListener;
@@ -276,19 +277,16 @@ public class TyrusGrizzlyServerFilter extends BaseFilter {
       // the request is not for the deployed application
       return ctx.getInvokeAction();
     }
-    // TODO: final UpgradeResponse upgradeResponse = GrizzlyUpgradeResponse(HttpResponsePacket)
+
     final UpgradeResponse upgradeResponse = new TyrusUpgradeResponse();
-    final WebSocketEngine.UpgradeInfo upgradeInfo =
-      serverContainer.getWebSocketEngine().upgrade(upgradeRequest, upgradeResponse);
+    final WebSocketEngine.UpgradeInfo upgradeInfo = serverContainer.getWebSocketEngine().upgrade(upgradeRequest, upgradeResponse);
 
     switch (upgradeInfo.getStatus()) {
       case SUCCESS:
         final Connection<?> grizzlyConnection = ctx.getConnection();
         write(ctx, upgradeResponse);
 
-        final org.glassfish.tyrus.spi.Connection connection = upgradeInfo
-                                                                .createConnection(new GrizzlyWriter(ctx.getConnection()),
-                                                                  reason -> grizzlyConnection.close());
+        final org.glassfish.tyrus.spi.Connection connection = upgradeInfo.createConnection(new GrizzlyWriter(ctx.getConnection()), reason -> grizzlyConnection.close());
 
         TYRUS_CONNECTION.set(grizzlyConnection, connection);
         TASK_PROCESSOR.set(grizzlyConnection, new TaskProcessor());
@@ -318,15 +316,16 @@ public class TyrusGrizzlyServerFilter extends BaseFilter {
 
   private void write (FilterChainContext ctx, UpgradeResponse response) {
 
-    final HttpResponsePacket responsePacket =
-      ((HttpRequestPacket)((HttpContent)ctx.getMessage()).getHttpHeader()).getResponse();
+    final HttpResponsePacket responsePacket = ((HttpRequestPacket)((HttpContent)ctx.getMessage()).getHttpHeader()).getResponse();
+    String reasonPhrase;
+
     responsePacket.setProtocol(Protocol.HTTP_1_1);
     responsePacket.setStatus(response.getStatus());
-    if (response.getReasonPhrase() != null) {
-      responsePacket.setReasonPhrase(response.getReasonPhrase());
+
+    if ((reasonPhrase = response.getReasonPhrase()) != null) {
+      responsePacket.setReasonPhrase(reasonPhrase);
     }
 
-    // TODO: responsePacket.setReasonPhrase(response.getReasonPhrase());
     for (Map.Entry<String, List<String>> entry : response.getHeaders().entrySet()) {
       responsePacket.setHeader(entry.getKey(), Utils.getHeaderFromList(entry.getValue()));
     }
@@ -336,8 +335,7 @@ public class TyrusGrizzlyServerFilter extends BaseFilter {
 
   private void writeTraceHeaders (FilterChainContext ctx, UpgradeResponse upgradeResponse) {
 
-    final HttpResponsePacket responsePacket =
-      ((HttpRequestPacket)((HttpContent)ctx.getMessage()).getHttpHeader()).getResponse();
+    final HttpResponsePacket responsePacket = ((HttpRequestPacket)((HttpContent)ctx.getMessage()).getHttpHeader()).getResponse();
 
     for (Map.Entry<String, List<String>> entry : upgradeResponse.getHeaders().entrySet()) {
       if (entry.getKey().contains(UpgradeResponse.TRACING_HEADER_PREFIX)) {
@@ -360,7 +358,11 @@ public class TyrusGrizzlyServerFilter extends BaseFilter {
     @Override
     public void execute () {
 
-      readHandler.handle(buffer);
+      try {
+        readHandler.handle(buffer);
+      } catch (RejectedExecutionException rejectedExecutionException) {
+        LoggerManager.getLogger(TyrusGrizzlyServerFilter.class).warn(rejectedExecutionException.getMessage());
+      }
     }
   }
 
