@@ -35,6 +35,7 @@ package org.smallmind.bayeux.oumuamua.server.spi.meta;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;
+import org.smallmind.bayeux.oumuamua.server.api.BayeuxService;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.InvalidPathException;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
@@ -46,12 +47,14 @@ import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.bayeux.oumuamua.server.api.SessionState;
 import org.smallmind.bayeux.oumuamua.server.api.json.ArrayValue;
+import org.smallmind.bayeux.oumuamua.server.api.json.BooleanValue;
 import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.NumberValue;
 import org.smallmind.bayeux.oumuamua.server.api.json.ObjectValue;
 import org.smallmind.bayeux.oumuamua.server.api.json.StringValue;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.json.ValueType;
+import org.smallmind.bayeux.oumuamua.server.spi.AbstractProtocol;
 import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
 import org.smallmind.bayeux.oumuamua.server.spi.MetaProcessingException;
 import org.smallmind.nutsnbolts.util.MutationUtility;
@@ -403,9 +406,12 @@ public enum Meta {
         } else {
           try {
 
-            server.deliver(session, new Packet<>(PacketType.DELIVERY, session.getId(), route, constructDeliveryMessage(server, route.getPath(), request.getId(), request.get(Message.DATA))), true);
+            Message<V> deliveryMessage = constructDeliveryMessage(server, route.getPath(), request.getId(), request.get(Message.DATA));
 
-            if (channel.isReflecting()) {
+            ((AbstractProtocol<V>)protocol).onPublish(request, deliveryMessage);
+            server.deliver(session, new Packet<>(PacketType.DELIVERY, session.getId(), route, deliveryMessage), true);
+
+            if (getEchoFlag(request)) {
               return new Packet<V>(PacketType.RESPONSE, session.getId(), route, new Message[] {constructPublishSuccessResponse(server, route.getPath(), request.getId(), session.getId()), request});
             } else {
               return new Packet<V>(PacketType.RESPONSE, session.getId(), route, constructPublishSuccessResponse(server, route.getPath(), request.getId(), session.getId()));
@@ -417,6 +423,16 @@ public enum Meta {
           }
         }
       }
+    }
+
+    private <V extends Value<V>> boolean getEchoFlag (Message<V> request) {
+
+      ObjectValue<V> ext;
+      ObjectValue<V> oumuamua;
+      BooleanValue<V> echo;
+
+      // cometd echoes by default, so that's what we do here
+      return ((echo = ((oumuamua = ((ext = request.getExt()) == null) ? null : (ObjectValue<V>)ext.get("oumuamua")) == null) ? null : (BooleanValue<V>)oumuamua.get("echo")) == null) || echo.asBoolean();
     }
 
     private <V extends Value<V>> Message<V> constructDeliveryMessage (Server<V> server, String path, String id, Value<V> data) {
@@ -438,7 +454,14 @@ public enum Meta {
     @Override
     public <V extends Value<V>> Packet<V> process (Protocol<V> protocol, Route route, Server<V> server, Session<V> session, Message<V> request) {
 
-      return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructErrorResponse(server, route.getPath(), request.getId(), request.getSessionId(), "Unknown service", null));
+      BayeuxService<V> service;
+
+      if ((service = server.getService(route)) == null) {
+        return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructErrorResponse(server, route.getPath(), request.getId(), request.getSessionId(), "Unknown service", null));
+      } else {
+
+        return service.process(protocol, route, server, session, request);
+      }
     }
   };
 
@@ -452,7 +475,7 @@ public enum Meta {
 
   private static <V extends Value<V>> Message<V> constructSuccessResponse (Server<V> server, String path, String id, String sessionId, Reconnect reconnect) {
 
-    Message<V> response = (Message<V>)constructResponse(server, path, id, sessionId);
+    Message<V> response = constructResponse(server, path, id, sessionId);
 
     response.put(Message.SUCCESSFUL, true);
 

@@ -34,9 +34,23 @@ package org.smallmind.bayeux.oumuamua.server.api;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
+import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
 public interface Protocol<V extends Value<V>> {
+
+  interface Listener<V extends Value<V>> {
+
+  }
+
+  interface ProtocolListener<V extends Value<V>> extends Listener<V> {
+
+    void onReceipt (Message<V>[] incomingMessages);
+
+    void onPublish (Message<V> originatingMessage, Message<V> outgoingMessage);
+
+    void onDelivery (Packet<V> outgoingPacket);
+  }
 
   default void init (Server<V> server, ServletConfig servletConfig)
     throws ServletException {
@@ -55,4 +69,8 @@ public interface Protocol<V extends Value<V>> {
   String[] getTransportNames ();
 
   Transport<V> getTransport (String name);
+
+  void addListener (Listener<V> listener);
+
+  void removeListener (Listener<V> listener);
 }

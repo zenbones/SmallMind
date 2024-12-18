@@ -38,7 +38,6 @@ import javax.websocket.ContainerProvider;
 import javax.websocket.WebSocketContainer;
 import org.cometd.bayeux.client.ClientSessionChannel;
 import org.cometd.client.BayeuxClient;
-import org.cometd.client.ext.AckExtension;
 import org.cometd.client.transport.ClientTransport;
 import org.cometd.client.websocket.javax.WebSocketTransport;
 import org.testng.annotations.Test;
@@ -49,7 +48,6 @@ public class AckExtTest2 {
   public void test ()
     throws Exception {
 
-    // ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("org/smallmind/bayeux/oumuamua/oumuamua-grizzly.xml", "org/smallmind/bayeux/oumuamua/oumuamua.xml");
     ClientTransport wsTransport;
     WebSocketContainer webSocketContainer;
     BayeuxClient bayeuxClient;

@@ -35,6 +35,7 @@ package org.smallmind.web.json.scaffold.util;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.LinkedList;
 import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonParser;
@@ -47,10 +48,12 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
+import org.smallmind.nutsnbolts.util.AlphaNumericComparator;
 import org.smallmind.nutsnbolts.util.IterableIterator;
 
 public class JsonCodec {
 
+  private static final AlphaNumericComparator<String> ALPHA_NUMERIC_COMPARATOR = new AlphaNumericComparator<>();
   private static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder()
                                                       .addModule(new AfterburnerModule())
                                                       .addModule(new JaxbAnnotationModule().setNonNillableInclusion(JsonInclude.Include.NON_NULL))
@@ -128,6 +131,12 @@ public class JsonCodec {
     return OBJECT_MAPPER.writeValueAsString(obj);
   }
 
+  public static String writeAsPrettyPrintedString (Object obj)
+    throws JsonProcessingException {
+
+    return OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(sort(OBJECT_MAPPER.valueToTree(obj)));
+  }
+
   public static void writeToStream (OutputStream outputStream, Object obj)
     throws IOException {
 
@@ -168,6 +177,33 @@ public class JsonCodec {
 
           return node;
       }
+    }
+  }
+
+  private static JsonNode sort (JsonNode node) {
+
+    if (node == null) {
+
+      return null;
+    } else if (node.isObject()) {
+
+      ObjectNode objectNode = JsonNodeFactory.instance.objectNode();
+      LinkedList<String> sortedFieldNameList = new LinkedList<>();
+
+      for (String fieldName : new IterableIterator<>(node.fieldNames())) {
+        sortedFieldNameList.add(fieldName);
+      }
+
+      sortedFieldNameList.sort(ALPHA_NUMERIC_COMPARATOR);
+
+      for (String sortedFieldName : sortedFieldNameList) {
+        objectNode.set(sortedFieldName, sort(node.get(sortedFieldName)));
+      }
+
+      return objectNode;
+    } else {
+
+      return node;
     }
   }
 }

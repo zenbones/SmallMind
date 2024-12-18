@@ -46,6 +46,8 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import org.smallmind.bayeux.oumuamua.server.api.BayeuxService;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.ChannelInitializer;
 import org.smallmind.bayeux.oumuamua.server.api.ChannelStateException;
@@ -65,12 +67,14 @@ import org.smallmind.bayeux.oumuamua.server.spi.AbstractAttributed;
 import org.smallmind.bayeux.oumuamua.server.spi.Connection;
 import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
 import org.smallmind.scribe.pen.LoggerManager;
+import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed implements Server<V> {
 
   private final ExecutorService executorService;
   private final ConcurrentHashMap<String, OumuamuaSession<V>> sessionMap = new ConcurrentHashMap<>();
   private final HashMap<String, Protocol<V>> protocolMap = new HashMap<>();
+  private final ConcurrentHashMap<Route, BayeuxService<V>> serviceMap = new ConcurrentHashMap<>();
   private final ConcurrentLinkedQueue<Listener<V>> listenerList = new ConcurrentLinkedQueue<>();
   private final ConcurrentLinkedQueue<ChannelInitializer<V>> initializerList = new ConcurrentLinkedQueue<>();
   private final OumuamuaConfiguration<V> configuration;
@@ -90,9 +94,11 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
       throw new OumuamuaException("Missing codec");
     } else {
 
+      ExecutorService configuredExecutorService;
+
       this.configuration = configuration;
 
-      executorService = new ThreadPoolExecutor(configuration.getThreadPoolCoreSize(), configuration.getThreadPoolMaximumSize(), configuration.getThreadPoolKeepAliveSeconds(), TimeUnit.SECONDS, new SynchronousQueue<>(), new ThreadPoolExecutor.CallerRunsPolicy());
+      executorService = ((configuredExecutorService = configuration.getExecutorService()) != null) ? configuredExecutorService : new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60, TimeUnit.SECONDS, new SynchronousQueue<>(), new ThreadPoolExecutor.CallerRunsPolicy());
 
       sessionConnectionIntervalMilliseconds = configuration.getSessionConnectIntervalSeconds() * 1000L;
       channelTree = new ChannelTree<>(new ChannelRoot<>(this));
@@ -107,6 +113,12 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
         protocolNames = protocolMap.keySet().toArray(new String[0]);
       }
 
+      if (configuration.getServices() != null) {
+        for (BayeuxService<V> service : configuration.getServices()) {
+          addService(service);
+        }
+      }
+
       if (configuration.getListeners() != null) {
         for (Listener<V> listener : configuration.getListeners()) {
           addListener(listener);
@@ -119,6 +131,14 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
     throws ServletException {
 
     Backbone<V> backbone;
+
+    LoggerManager.getLogger(OumuamuaServer.class).info("Oumuamua Server starting...");
+
+    try {
+      LoggerManager.getLogger(OumuamuaServer.class).info("\n" + JsonCodec.writeAsPrettyPrintedString(OumuamuaConfigurationOutView.instance(configuration)));
+    } catch (JsonProcessingException jsonProcessingException) {
+      throw new ServletException(jsonProcessingException);
+    }
 
     if ((backbone = getBackbone()) != null) {
       try {
@@ -135,11 +155,15 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
 
     new Thread(idleChannelSifter = new IdleChannelSifter<>(configuration.getIdleChannelCycleMinutes(), channelTree, this::onRemoved)).start();
     new Thread(idleSessionInspector = new IdleSessionInspector<>(this, configuration.getIdleSessionCycleMinutes())).start();
+
+    LoggerManager.getLogger(OumuamuaServer.class).info("Oumuamua Server started...");
   }
 
   public void stop () {
 
     Backbone<V> backbone;
+
+    LoggerManager.getLogger(OumuamuaServer.class).info("Oumuamua Server stopping...");
 
     if ((backbone = getBackbone()) != null) {
       try {
@@ -162,6 +186,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
     }
 
     executorService.shutdown();
+    LoggerManager.getLogger(OumuamuaServer.class).info("Oumuamua Server stopped...");
   }
 
   public ExecutorService getExecutorService () {
@@ -247,6 +272,30 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   @Override
+  public void addService (BayeuxService<V> service) {
+
+    Route[] boundRoutes;
+
+    if ((boundRoutes = service.getBoundRoutes()) != null) {
+      for (Route boundRoute : boundRoutes) {
+        serviceMap.put(boundRoute, service);
+      }
+    }
+  }
+
+  @Override
+  public void removeService (Route route) {
+
+    serviceMap.remove(route);
+  }
+
+  @Override
+  public BayeuxService<V> getService (Route route) {
+
+    return serviceMap.get(route);
+  }
+
+  @Override
   public void addListener (Listener<V> listener) {
 
     listenerList.add(listener);
@@ -307,9 +356,9 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   @Override
-  public boolean isReflective (Route route) {
+  public boolean isReflecting (Route route) {
 
-    return configuration.isReflective(route);
+    return configuration.isReflecting(route);
   }
 
   @Override
@@ -320,7 +369,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
 
   public OumuamuaSession<V> createSession (Connection<V> connection) {
 
-    return new OumuamuaSession<>(this::onConnected, this::onDisconnected, connection, configuration.getMaxLongPollQueueSize(), configuration.getSessionMaxIdleTimeoutSeconds() * 1000L);
+    return new OumuamuaSession<>(this::onConnected, this::onDisconnected, connection, configuration.getMaxLongPollQueueSize(), configuration.getSessionMaxIdleTimeoutSeconds() * 1000L, configuration.getOverflowLogLevel());
   }
 
   public OumuamuaSession<V> getSession (String sessionId) {
@@ -397,12 +446,14 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   @Override
   public Packet<V> onRequest (Session<V> sender, Packet<V> packet) {
 
+    // No need to freeze the packet as changes generated here should be by all further processing, including the response to the sender
     return onProcessing(sender, packet);
   }
 
   @Override
   public Packet<V> onResponse (Session<V> sender, Packet<V> packet) {
 
+    // No need to freeze the packet as any changes generated here are specifically for, and seen only by, the sender
     return onProcessing(sender, packet);
   }
 
@@ -410,6 +461,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   public void deliver (Session<V> sender, Packet<V> packet, boolean clustered) {
 
     if (packet.getRoute() != null) {
+      // Packet is not frozen as all channels should see these changes
       if ((packet = onProcessing(sender, packet)) != null) {
 
         channelTree.deliver(sender, 0, packet, new HashSet<>());
@@ -431,6 +483,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   public void forward (Channel<V> channel, Packet<V> packet) {
 
     if (packet.getRoute() != null) {
+      // Packet is not frozen as all channels should see these changes
       if ((packet = onProcessing(null, packet)) != null) {
 
         Backbone<V> backbone;

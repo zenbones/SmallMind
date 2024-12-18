@@ -30,55 +30,23 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.api;
+package org.smallmind.bayeux.oumuamua.server.impl.json;
 
-import java.util.concurrent.TimeUnit;
-import org.smallmind.bayeux.oumuamua.server.api.json.Value;
+import java.util.Arrays;
+import javax.xml.bind.annotation.adapters.XmlAdapter;
+import org.smallmind.nutsnbolts.util.MutationUtility;
 
-public interface Session<V extends Value<V>> extends Attributed {
+public class ClassNameArrayXmlAdapter extends XmlAdapter<String, Object[]> {
 
-  interface Listener<V extends Value<V>> {
+  @Override
+  public Object[] unmarshal (String s) {
 
+    throw new UnsupportedOperationException();
   }
 
-  // Messages are frozen when delivered from the channel to the session, guaranteeing changes generated here are seen only in the sending session
-  interface PacketListener<V extends Value<V>> extends Listener<V> {
+  @Override
+  public String marshal (Object[] objArray) {
 
-    // For responses from META commands delivered to the sender
-    Packet<V> onResponse (Session<V> sender, Packet<V> packet);
-
-    // For published messages delivered to receivers
-    Packet<V> onDelivery (Session<V> sender, Packet<V> packet);
+    return (objArray == null) ? null : Arrays.toString(MutationUtility.toArray(objArray, String.class, obj -> obj.getClass().getName()));
   }
-
-  void addListener (Listener<V> listener);
-
-  void removeListener (Listener<V> listener);
-
-  String getId ();
-
-  boolean isLocal ();
-
-  boolean isLongPolling ();
-
-  void setLongPolling (boolean longPolling);
-
-  int getMaxLongPollQueueSize ();
-
-  SessionState getState ();
-
-  void completeHandshake ();
-
-  void completeConnection ();
-
-  void completeDisconnect ();
-
-  Packet<V> onResponse (Session<V> sender, Packet<V> packet);
-
-  void dispatch (Packet<V> packet);
-
-  Packet<V> poll (long timeout, TimeUnit unit)
-    throws InterruptedException;
-
-  void deliver (Channel<V> fromChannel, Session<V> sender, Packet<V> packet);
 }

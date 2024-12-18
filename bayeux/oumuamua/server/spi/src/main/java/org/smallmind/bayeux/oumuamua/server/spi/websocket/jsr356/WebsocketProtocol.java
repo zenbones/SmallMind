@@ -32,22 +32,33 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356;
 
-import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.Transport;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
+import org.smallmind.bayeux.oumuamua.server.spi.AbstractProtocol;
 import org.smallmind.bayeux.oumuamua.server.spi.Protocols;
 import org.smallmind.bayeux.oumuamua.server.spi.Transports;
 
-public class WebsocketProtocol<V extends Value<V>> implements Protocol<V> {
+public class WebsocketProtocol<V extends Value<V>> extends AbstractProtocol<V> {
 
   private final WebSocketTransport<V> webSocketTransport;
   private final long longPollTimeoutMilliseconds;
 
   public WebsocketProtocol (long longPollTimeoutMilliseconds, WebsocketConfiguration websocketConfiguration) {
 
+    this(longPollTimeoutMilliseconds, websocketConfiguration, null);
+  }
+
+  public WebsocketProtocol (long longPollTimeoutMilliseconds, WebsocketConfiguration websocketConfiguration, ProtocolListener<V>[] listeners) {
+
     this.longPollTimeoutMilliseconds = longPollTimeoutMilliseconds;
 
     webSocketTransport = new WebSocketTransport<>(this, websocketConfiguration);
+
+    if (listeners != null) {
+      for (ProtocolListener<V> listener : listeners) {
+        addListener(listener);
+      }
+    }
   }
 
   @Override

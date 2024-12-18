@@ -68,7 +68,7 @@
     </property>
   </bean>
 
-  <bean id="cometdServletInstaller" class="org.smallmind.web.grizzly.installer.ServletInstaller">
+  <bean id="oumuamuaServletInstaller" class="org.smallmind.web.grizzly.installer.ServletInstaller">
     <property name="contextPath" value="/smallmind"/>
     <property name="displayName" value="cometd"/>
     <property name="servletClass" value="org.smallmind.bayeux.oumuamua.server.impl.OumuamuaServlet"/>

@@ -32,53 +32,19 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api;
 
-import java.util.concurrent.TimeUnit;
+import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
-public interface Session<V extends Value<V>> extends Attributed {
+public interface BayeuxService<V extends Value<V>> {
 
-  interface Listener<V extends Value<V>> {
+  default Message<V> createResponse (Route route, Server<V> server, Session<V> session, Message<V> request) {
 
+    Message<V> response = (Message<V>)server.getCodec().create().put(Message.CHANNEL, route.getPath()).put(Message.ID, request.getId()).put(Message.SESSION_ID, session.getId());
+
+    return response;
   }
 
-  // Messages are frozen when delivered from the channel to the session, guaranteeing changes generated here are seen only in the sending session
-  interface PacketListener<V extends Value<V>> extends Listener<V> {
+  Route[] getBoundRoutes ();
 
-    // For responses from META commands delivered to the sender
-    Packet<V> onResponse (Session<V> sender, Packet<V> packet);
-
-    // For published messages delivered to receivers
-    Packet<V> onDelivery (Session<V> sender, Packet<V> packet);
-  }
-
-  void addListener (Listener<V> listener);
-
-  void removeListener (Listener<V> listener);
-
-  String getId ();
-
-  boolean isLocal ();
-
-  boolean isLongPolling ();
-
-  void setLongPolling (boolean longPolling);
-
-  int getMaxLongPollQueueSize ();
-
-  SessionState getState ();
-
-  void completeHandshake ();
-
-  void completeConnection ();
-
-  void completeDisconnect ();
-
-  Packet<V> onResponse (Session<V> sender, Packet<V> packet);
-
-  void dispatch (Packet<V> packet);
-
-  Packet<V> poll (long timeout, TimeUnit unit)
-    throws InterruptedException;
-
-  void deliver (Channel<V> fromChannel, Session<V> sender, Packet<V> packet);
+  Packet<V> process (Protocol<V> protocol, Route route, Server<V> server, Session<V> session, Message<V> request);
 }

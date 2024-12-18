@@ -30,47 +30,54 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.impl;
+package org.smallmind.bayeux.oumuamua.server.spi;
 
-import org.smallmind.bayeux.oumuamua.server.api.Channel;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
-import org.smallmind.bayeux.oumuamua.server.api.Route;
-import org.smallmind.bayeux.oumuamua.server.api.Server;
-import org.smallmind.bayeux.oumuamua.server.api.backbone.Backbone;
-import org.smallmind.bayeux.oumuamua.server.api.json.Codec;
+import org.smallmind.bayeux.oumuamua.server.api.Protocol;
+import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
-public class ChannelRoot<V extends Value<V>> {
+public abstract class AbstractProtocol<V extends Value<V>> implements Protocol<V> {
 
-  private final Server<V> server;
+  private final ConcurrentLinkedQueue<Listener<V>> listenerList = new ConcurrentLinkedQueue<>();
 
-  public ChannelRoot (Server<V> server) {
+  public void onReceipt (Message<V>[] incomingMessages) {
 
-    this.server = server;
+    for (Listener<V> listener : listenerList) {
+      if (ProtocolListener.class.isAssignableFrom(listener.getClass())) {
+        ((ProtocolListener<V>)listener).onReceipt(incomingMessages);
+      }
+    }
   }
 
-  public Backbone<V> getBackbone () {
+  public void onPublish (Message<V> originatingMessage, Message<V> outgoingMessage) {
 
-    return server.getBackbone();
+    for (Listener<V> listener : listenerList) {
+      if (ProtocolListener.class.isAssignableFrom(listener.getClass())) {
+        ((ProtocolListener<V>)listener).onPublish(originatingMessage, outgoingMessage);
+      }
+    }
   }
 
-  public Codec<V> getCodec () {
+  public void onDelivery (Packet<V> outgoingPacket) {
 
-    return server.getCodec();
+    for (Listener<V> listener : listenerList) {
+      if (ProtocolListener.class.isAssignableFrom(listener.getClass())) {
+        ((ProtocolListener<V>)listener).onDelivery(outgoingPacket);
+      }
+    }
   }
 
-  public boolean isReflecting (Route route) {
+  @Override
+  public void addListener (Listener<V> listener) {
 
-    return server.isReflecting(route);
+    listenerList.add(listener);
   }
 
-  public boolean isStreaming (Route route) {
+  @Override
+  public void removeListener (Listener<V> listener) {
 
-    return server.isStreaming(route);
-  }
-
-  public void forward (Channel<V> channel, Packet<V> packet) {
-
-    server.forward(channel, packet);
+    listenerList.remove(listener);
   }
 }

@@ -47,6 +47,7 @@ import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.json.ValueType;
 import org.smallmind.bayeux.oumuamua.server.spi.json.PacketUtility;
 import org.smallmind.bayeux.oumuamua.server.spi.meta.Meta;
+import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class AckExtension<V extends Value<V>> extends AbstractServerPacketListener<V> {
@@ -56,11 +57,18 @@ public class AckExtension<V extends Value<V>> extends AbstractServerPacketListen
   private static final String ACK_SIZE_ATTRIBUTE = "org.smallmind.bayeux.oumuamua.extension.ack.size";
   private static final String ACK_UNACKNOWLEDGED_MAP_ATTRIBUTE = "org.smallmind.bayeux.oumuamua.extension.ack.unacknowledged_map";
   private static final String ACK_RESEND_QUEUE_ATTRIBUTE = "org.smallmind.bayeux.oumuamua.extension.ack.resend_queue";
+  private final Level overflowLogLevel;
   private final int maxAckQueueSize;
 
   public AckExtension (int maxAckQueueSize) {
 
+    this(maxAckQueueSize, Level.DEBUG);
+  }
+
+  public AckExtension (int maxAckQueueSize, Level overflowLogLevel) {
+
     this.maxAckQueueSize = maxAckQueueSize;
+    this.overflowLogLevel = (overflowLogLevel == null) ? Level.OFF : overflowLogLevel;
   }
 
   @Override
@@ -186,7 +194,7 @@ public class AckExtension<V extends Value<V>> extends AbstractServerPacketListen
 
                 Map.Entry<Long, Packet<V>> unacknowledgedEntry;
 
-                LoggerManager.getLogger(AckExtension.class).debug("Session(%s) overflowed the ack queue", sender.getId());
+                LoggerManager.getLogger(AckExtension.class).log(overflowLogLevel, "Session(%s) overflowed the ack queue", sender.getId());
 
                 do {
                   if ((unacknowledgedEntry = unacknowledgedMap.pollLastEntry()) != null) {

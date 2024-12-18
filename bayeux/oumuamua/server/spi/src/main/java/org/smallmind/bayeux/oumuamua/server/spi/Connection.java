@@ -43,6 +43,7 @@ import org.smallmind.bayeux.oumuamua.server.api.SessionState;
 import org.smallmind.bayeux.oumuamua.server.api.Transport;
 import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
+import org.smallmind.bayeux.oumuamua.server.spi.json.PacketUtility;
 import org.smallmind.bayeux.oumuamua.server.spi.meta.Meta;
 
 public interface Connection<V extends Value<V>> {
@@ -59,7 +60,18 @@ public interface Connection<V extends Value<V>> {
       try {
 
         Meta meta = Meta.from(path);
-        Route route = Meta.PUBLISH.equals(meta) ? new DefaultRoute(path) : meta.getRoute();
+        Route route;
+        switch (meta) {
+          case PUBLISH:
+            route = new DefaultRoute(path);
+            break;
+          case SERVICE:
+            route = new DefaultRoute(path);
+            break;
+          default:
+            route = meta.getRoute();
+            break;
+        }
 
         if (sessionId == null) {
           if (Meta.HANDSHAKE.equals(meta)) {
@@ -115,17 +127,30 @@ public interface Connection<V extends Value<V>> {
   private Packet<V> respond (Meta meta, Route route, Server<V> server, Session<V> session, Message<V> request)
     throws InterruptedException, InvalidPathException {
 
-    Packet<V> response;
+    Packet<V> processedRequestPacket;
 
-    if ((response = server.onRequest(session, new Packet<>(PacketType.REQUEST, session.getId(), route, request))) != null) {
-      response = meta.process(getTransport().getProtocol(), route, server, session, request);
+    if ((processedRequestPacket = server.onRequest(session, new Packet<>(PacketType.REQUEST, session.getId(), route, request))) == null) {
 
-      if ((response = server.onResponse(session, response)) != null) {
-        response = session.onResponse(session, response);
+      return null;
+    } else {
+
+      Packet<V> mergedResponsePacket = null;
+
+      for (Message<V> processedRequestMessage : processedRequestPacket.getMessages()) {
+
+        Packet<V> processedResponsePacket;
+
+        if ((processedResponsePacket = server.onResponse(session, meta.process(getTransport().getProtocol(), route, server, session, processedRequestMessage))) != null) {
+          if (mergedResponsePacket == null) {
+            mergedResponsePacket = processedResponsePacket;
+          } else {
+            mergedResponsePacket = PacketUtility.merge(mergedResponsePacket, processedResponsePacket, null, false);
+          }
+        }
       }
-    }
 
-    return response;
+      return mergedResponsePacket;
+    }
   }
 
   String getId ();

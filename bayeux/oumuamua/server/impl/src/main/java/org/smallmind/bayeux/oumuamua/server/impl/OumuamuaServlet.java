@@ -34,10 +34,6 @@ package org.smallmind.bayeux.oumuamua.server.impl;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import javax.servlet.AsyncContext;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -50,13 +46,14 @@ import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.impl.longpolling.LongPollingConnection;
 import org.smallmind.bayeux.oumuamua.server.impl.longpolling.LongPollingTransport;
+import org.smallmind.bayeux.oumuamua.server.impl.longpolling.ServletProtocol;
 import org.smallmind.bayeux.oumuamua.server.spi.Protocols;
 import org.smallmind.bayeux.oumuamua.server.spi.Transports;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
 
-private LongPollingConnection<V> connection;
+  private LongPollingConnection<V> connection;
   private OumuamuaServer<V> server;
 
   @Override
@@ -122,6 +119,7 @@ private LongPollingConnection<V> connection;
 
           Message<V>[] messages = server.getCodec().from(contentBuffer);
 
+          ((ServletProtocol<V>)connection.getTransport().getProtocol()).onReceipt(messages);
           AsyncContext asyncContext = request.startAsync();
           asyncContext.setTimeout(0);
 

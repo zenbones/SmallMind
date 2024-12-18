@@ -44,11 +44,13 @@ import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.SessionState;
 import org.smallmind.bayeux.oumuamua.server.api.Transport;
+import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.impl.OumuamuaConnection;
 import org.smallmind.bayeux.oumuamua.server.impl.OumuamuaServer;
 import org.smallmind.bayeux.oumuamua.server.spi.json.PacketUtility;
 import org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356.WebSocketTransport;
+import org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356.WebsocketProtocol;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements MessageHandler.Whole<String>, OumuamuaConnection<V> {
@@ -101,6 +103,8 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
         } else {
           websocketSession.getBasicRemote().sendText(encodedPacket);
         }
+
+        ((WebsocketProtocol<V>)websocketTransport.getProtocol()).onDelivery(packet);
       } catch (IOException | InterruptedException | TimeoutException | ExecutionException exception) {
         LoggerManager.getLogger(WebSocketEndpoint.class).error(exception);
       }
@@ -115,6 +119,11 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
       LoggerManager.getLogger(WebSocketEndpoint.class).debug(() -> "<=" + content);
 
       try {
+
+        Message<V>[] messages = server.getCodec().from(content);
+
+        ((WebsocketProtocol<V>)websocketTransport.getProtocol()).onReceipt(messages);
+
         process(server, (session, packet) -> {
           if (session == null) {
             deliver(packet);
@@ -126,7 +135,7 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
               onCleanUp();
             }
           }
-        }, server.getCodec().from(content));
+        }, messages);
       } catch (IOException ioException) {
         LoggerManager.getLogger(WebSocketEndpoint.class).error(ioException);
       }

@@ -1,6 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>oumuamua-server</artifactId>
@@ -12,32 +12,54 @@
   <description>Oumuamua Server Spi</description>
   <dependencies>
     <dependency>
-      <groupId>javax.annotation</groupId>
-      <artifactId>javax.annotation-api</artifactId>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-core</artifactId>
+      <scope>compile</scope>
       <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <scope>compile</scope>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>javax.websocket</groupId>
       <artifactId>javax.websocket-api</artifactId>
-      <optional>true</optional>
       <scope>compile</scope>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>javax.websocket</groupId>
+      <artifactId>javax.websocket-client-api</artifactId>
+      <scope>compile</scope>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.apache.kafka</groupId>
       <artifactId>kafka-clients</artifactId>
-      <optional>true</optional>
       <scope>compile</scope>
+      <optional>true</optional>
     </dependency>
     <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
-      <optional>true</optional>
+      <groupId>org.smallmind</groupId>
+      <artifactId>claxon-registry</artifactId>
       <scope>compile</scope>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.smallmind</groupId>
       <artifactId>oumuamua-server-api</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.smallmind</groupId>
+      <artifactId>scribe-pen</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -47,15 +69,15 @@
     </dependency>
     <dependency>
       <groupId>org.smallmind</groupId>
-      <artifactId>web-json-doppelganger</artifactId>
-      <optional>true</optional>
+      <artifactId>web-json-scaffold</artifactId>
       <scope>compile</scope>
+      <optional>true</optional>
     </dependency>
     <dependency>
-      <groupId>org.smallmind</groupId>
-      <artifactId>web-json-scaffold</artifactId>
-      <optional>true</optional>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-beans</artifactId>
       <scope>compile</scope>
+      <optional>true</optional>
     </dependency>
   </dependencies>
   <build>

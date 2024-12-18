@@ -44,6 +44,6 @@ public interface Transport<V extends Value<V>> extends Attributed {
 
   boolean isLocal ();
 
-  public void init (Server<?> server, ServletConfig servletConfig)
+  void init (Server<?> server, ServletConfig servletConfig)
     throws ServletException;
 }

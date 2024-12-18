@@ -30,55 +30,37 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.api;
+package org.smallmind.bayeux.oumuamua.server.spi;
 
-import java.util.concurrent.TimeUnit;
+import org.smallmind.bayeux.oumuamua.server.api.Channel;
+import org.smallmind.bayeux.oumuamua.server.api.SecurityPolicy;
+import org.smallmind.bayeux.oumuamua.server.api.Session;
+import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
-public interface Session<V extends Value<V>> extends Attributed {
+public class OpenSecurityPolicy<V extends Value<V>> implements SecurityPolicy<V> {
 
-  interface Listener<V extends Value<V>> {
+  @Override
+  public boolean canHandshake (Session<V> session, Message<V> message) {
 
+    return true;
   }
 
-  // Messages are frozen when delivered from the channel to the session, guaranteeing changes generated here are seen only in the sending session
-  interface PacketListener<V extends Value<V>> extends Listener<V> {
+  @Override
+  public boolean canCreate (Session<V> session, String path, Message<V> message) {
 
-    // For responses from META commands delivered to the sender
-    Packet<V> onResponse (Session<V> sender, Packet<V> packet);
-
-    // For published messages delivered to receivers
-    Packet<V> onDelivery (Session<V> sender, Packet<V> packet);
+    return true;
   }
 
-  void addListener (Listener<V> listener);
+  @Override
+  public boolean canSubscribe (Session<V> session, Channel<V> channel, Message<V> message) {
 
-  void removeListener (Listener<V> listener);
+    return true;
+  }
 
-  String getId ();
+  @Override
+  public boolean canPublish (Session<V> session, Channel<V> channel, Message<V> message) {
 
-  boolean isLocal ();
-
-  boolean isLongPolling ();
-
-  void setLongPolling (boolean longPolling);
-
-  int getMaxLongPollQueueSize ();
-
-  SessionState getState ();
-
-  void completeHandshake ();
-
-  void completeConnection ();
-
-  void completeDisconnect ();
-
-  Packet<V> onResponse (Session<V> sender, Packet<V> packet);
-
-  void dispatch (Packet<V> packet);
-
-  Packet<V> poll (long timeout, TimeUnit unit)
-    throws InterruptedException;
-
-  void deliver (Channel<V> fromChannel, Session<V> sender, Packet<V> packet);
+    return true;
+  }
 }

@@ -33,6 +33,8 @@
 package org.smallmind.bayeux.oumuamua.server.impl;
 
 import java.util.LinkedList;
+import java.util.concurrent.ExecutorService;
+import org.smallmind.bayeux.oumuamua.server.api.BayeuxService;
 import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.Route;
 import org.smallmind.bayeux.oumuamua.server.api.SecurityPolicy;
@@ -40,25 +42,54 @@ import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.backbone.Backbone;
 import org.smallmind.bayeux.oumuamua.server.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
+import org.smallmind.bayeux.oumuamua.server.impl.json.ClassNameArrayXmlAdapter;
+import org.smallmind.bayeux.oumuamua.server.impl.json.ClassNameXmlAdapter;
+import org.smallmind.bayeux.oumuamua.server.impl.json.DoubleStringArrayXmlAdapter;
+import org.smallmind.scribe.pen.Level;
+import org.smallmind.scribe.pen.json.LevelEnumXmlAdapter;
+import org.smallmind.web.json.doppelganger.Doppelganger;
+import org.smallmind.web.json.doppelganger.Idiom;
+import org.smallmind.web.json.doppelganger.View;
 
+import static org.smallmind.web.json.doppelganger.Visibility.OUT;
+
+@Doppelganger
 public class OumuamuaConfiguration<V extends Value<V>> {
 
+  @View(adapter = ClassNameXmlAdapter.class, idioms = @Idiom(visibility = OUT))
   private Backbone<V> backbone;
+  @View(adapter = ClassNameXmlAdapter.class, idioms = @Idiom(visibility = OUT))
   private Codec<V> codec;
+  @View(adapter = ClassNameXmlAdapter.class, idioms = @Idiom(visibility = OUT))
+  private ExecutorService executorService;
+  @View(adapter = ClassNameXmlAdapter.class, idioms = @Idiom(visibility = OUT))
   private SecurityPolicy<V> securityPolicy;
+  @View(adapter = ClassNameArrayXmlAdapter.class, idioms = @Idiom(visibility = OUT))
   private Protocol<V>[] protocols;
+  @View(adapter = ClassNameArrayXmlAdapter.class, idioms = @Idiom(visibility = OUT))
+  private BayeuxService<V>[] services;
+  @View(adapter = ClassNameArrayXmlAdapter.class, idioms = @Idiom(visibility = OUT))
   private Server.Listener<V>[] listeners;
-  private String[][] reflectivePaths;
-  private String[][] streamingPaths;
+  @View(adapter = DoubleStringArrayXmlAdapter.class, name = "reflectingPaths", idioms = @Idiom(visibility = OUT))
+  // send the request back to the sender as part of the success/failure response
+  private String[][] parsedReflectingPaths;
+  @View(adapter = DoubleStringArrayXmlAdapter.class, name = "streamingPaths", idioms = @Idiom(visibility = OUT))
+  // ignore the ack extension (or other forced long polling), *if* the protocol does not require long polling
+  private String[][] parsedStreamingPaths;
+  @View(adapter = LevelEnumXmlAdapter.class, idioms = @Idiom(visibility = OUT))
+  private Level overflowLogLevel = Level.DEBUG;
+  @View(idioms = @Idiom(visibility = OUT))
   private long channelTimeToLiveMinutes = 30;
-  private long threadPoolKeepAliveSeconds = 60;
+  @View(idioms = @Idiom(visibility = OUT))
   private int sessionConnectIntervalSeconds = 30;
+  @View(idioms = @Idiom(visibility = OUT))
   private int sessionMaxIdleTimeoutSeconds = 90;
+  @View(idioms = @Idiom(visibility = OUT))
   private int idleChannelCycleMinutes = 5;
+  @View(idioms = @Idiom(visibility = OUT))
   private int idleSessionCycleMinutes = 1;
+  @View(idioms = @Idiom(visibility = OUT))
   private int maxLongPollQueueSize = 1000;
-  private int threadPoolCoreSize = 0;
-  private int threadPoolMaximumSize = Integer.MAX_VALUE;
 
   public Backbone<V> getBackbone () {
 
@@ -78,6 +109,16 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   public void setCodec (Codec<V> codec) {
 
     this.codec = codec;
+  }
+
+  public ExecutorService getExecutorService () {
+
+    return executorService;
+  }
+
+  public void setExecutorService (ExecutorService executorService) {
+
+    this.executorService = executorService;
   }
 
   public SecurityPolicy<V> getSecurityPolicy () {
@@ -100,6 +141,16 @@ public class OumuamuaConfiguration<V extends Value<V>> {
     this.protocols = protocols;
   }
 
+  public BayeuxService<V>[] getServices () {
+
+    return services;
+  }
+
+  public void setServices (BayeuxService<V>[] services) {
+
+    this.services = services;
+  }
+
   public Server.Listener<V>[] getListeners () {
 
     return listeners;
@@ -108,6 +159,16 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   public void setListeners (Server.Listener<V>[] listeners) {
 
     this.listeners = listeners;
+  }
+
+  public Level getOverflowLogLevel () {
+
+    return overflowLogLevel;
+  }
+
+  public void setOverflowLogLevel (Level overflowLogLevel) {
+
+    this.overflowLogLevel = overflowLogLevel;
   }
 
   public long getChannelTimeToLiveMinutes () {
@@ -170,60 +231,50 @@ public class OumuamuaConfiguration<V extends Value<V>> {
     this.maxLongPollQueueSize = maxLongPollQueueSize;
   }
 
-  public long getThreadPoolKeepAliveSeconds () {
+  public String[][] getParsedReflectingPaths () {
 
-    return threadPoolKeepAliveSeconds;
+    return parsedReflectingPaths;
   }
 
-  public void setThreadPoolKeepAliveSeconds (long threadPoolKeepAliveSeconds) {
+  protected void setParsedReflectingPaths (String[][] parsedReflectingPaths) {
 
-    this.threadPoolKeepAliveSeconds = threadPoolKeepAliveSeconds;
+    this.parsedReflectingPaths = parsedReflectingPaths;
   }
 
-  public int getThreadPoolCoreSize () {
+  public void setReflectingPaths (String[] paths) {
 
-    return threadPoolCoreSize;
+    LinkedList<String[]> reflectingPathList = decomposePaths(paths);
+
+    parsedReflectingPaths = new String[reflectingPathList.size()][];
+    reflectingPathList.toArray(parsedReflectingPaths);
   }
 
-  public void setThreadPoolCoreSize (int threadPoolCoreSize) {
+  public boolean isReflecting (Route route) {
 
-    this.threadPoolCoreSize = threadPoolCoreSize;
+    return matchesPaths(parsedReflectingPaths, route);
   }
 
-  public int getThreadPoolMaximumSize () {
+  public String[][] getParsedStreamingPaths () {
 
-    return threadPoolMaximumSize;
+    return parsedStreamingPaths;
   }
 
-  public void setThreadPoolMaximumSize (int threadPoolMaximumSize) {
+  protected void setParsedStreamingPaths (String[][] parsedStreamingPaths) {
 
-    this.threadPoolMaximumSize = threadPoolMaximumSize;
-  }
-
-  public void setReflectivePaths (String[] paths) {
-
-    LinkedList<String[]> reflectivePathList = decomposePaths(paths);
-
-    reflectivePaths = new String[reflectivePathList.size()][];
-    reflectivePathList.toArray(reflectivePaths);
-  }
-
-  public boolean isReflective (Route route) {
-
-    return matchesPaths(reflectivePaths, route);
+    this.parsedStreamingPaths = parsedStreamingPaths;
   }
 
   public void setStreamingPaths (String[] paths) {
 
     LinkedList<String[]> streamingPathList = decomposePaths(paths);
 
-    streamingPaths = new String[streamingPathList.size()][];
-    streamingPathList.toArray(streamingPaths);
+    parsedStreamingPaths = new String[streamingPathList.size()][];
+    streamingPathList.toArray(parsedStreamingPaths);
   }
 
   public boolean isStreaming (Route route) {
 
-    return matchesPaths(streamingPaths, route);
+    return matchesPaths(parsedStreamingPaths, route);
   }
 
   private LinkedList<String[]> decomposePaths (String[] paths) {
@@ -244,8 +295,8 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   public boolean matchesPaths (String[][] paths, Route route) {
 
     if ((route != null) && (paths != null)) {
-      for (String[] reflectivePath : paths) {
-        if (route.matches(reflectivePath)) {
+      for (String[] reflectingPath : paths) {
+        if (route.matches(reflectingPath)) {
 
           return true;
         }

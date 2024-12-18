@@ -76,6 +76,12 @@ public interface Server<V extends Value<V>> extends Attributed {
     Packet<V> onDelivery (Session<V> sender, Packet<V> packet);
   }
 
+  void addService (BayeuxService<V> service);
+
+  void removeService (Route route);
+
+  BayeuxService<V> getService (Route route);
+
   void addListener (Listener<V> listener);
 
   void removeListener (Listener<V> listener);
@@ -102,7 +108,7 @@ public interface Server<V extends Value<V>> extends Attributed {
   // Serves as an injection point for implementations that wish to add client configurable additions to the json codec pipeline
   Codec<V> getCodec ();
 
-  boolean isReflective (Route route);
+  boolean isReflecting (Route route);
 
   boolean isStreaming (Route route);
 

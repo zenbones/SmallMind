@@ -53,10 +53,12 @@ public interface Channel<V extends Value<V>> extends Attributed {
     void onUnsubscribed (Session<V> session);
   }
 
+  // Messages are frozen before this call, guaranteeing that all sessions in this delivery stream, but not others, see any changes generated here
   interface PacketListener<V extends Value<V>> extends Listener<V> {
 
     boolean isPersistent ();
 
+    // For published messages delivered to receivers
     Packet<V> onDelivery (Session<V> sender, Packet<V> packet);
   }
 

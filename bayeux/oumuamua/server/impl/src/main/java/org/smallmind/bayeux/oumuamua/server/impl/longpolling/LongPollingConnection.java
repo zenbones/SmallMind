@@ -88,6 +88,8 @@ public class LongPollingConnection<V extends Value<V>> implements OumuamuaConnec
 
     asyncContext.getResponse().getOutputStream().print(encodedPacket);
     asyncContext.getResponse().flushBuffer();
+
+    ((ServletProtocol<V>)longPollingTransport.getProtocol()).onDelivery(packet);
   }
 
   public void onMessages (AsyncContext asyncContext, Message<V>[] messages) {

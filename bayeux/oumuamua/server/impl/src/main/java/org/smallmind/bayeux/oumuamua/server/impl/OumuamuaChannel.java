@@ -74,7 +74,7 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
     this.route = route;
     this.root = root;
 
-    reflecting.set(root.isReflective(route));
+    reflecting.set(root.isReflecting(route));
     streaming.set(root.isStreaming(route));
 
     quiescentTimestamp = System.currentTimeMillis();
@@ -237,12 +237,15 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
   @Override
   public void deliver (Session<V> sender, Packet<V> packet, Set<String> sessionIdSet) {
 
-    Packet<V> frozenPacket = PacketUtility.freezePacket(packet);
+    Packet<V> processedPacket;
 
-    if ((frozenPacket = onProcessing(sender, frozenPacket)) != null) {
+    // Changes by channel listeners here will be seen only by sessions in this delivery stream
+    if ((processedPacket = onProcessing(sender, PacketUtility.freezePacket(packet))) != null) {
+
       for (Session<V> session : sessionMap.values()) {
-        if (sessionIdSet.add(session.getId()) && ((frozenPacket.getSenderId() == null) || (!session.getId().equals(frozenPacket.getSenderId())) || reflecting.get())) {
-          session.deliver(this, sender, frozenPacket);
+        if (sessionIdSet.add(session.getId()) && ((processedPacket.getSenderId() == null) || (!session.getId().equals(processedPacket.getSenderId())) || reflecting.get())) {
+          // Changes made by session listeners further down the line will be seen only by the hosting session
+          session.deliver(this, sender, PacketUtility.freezePacket(processedPacket));
         }
       }
     }
