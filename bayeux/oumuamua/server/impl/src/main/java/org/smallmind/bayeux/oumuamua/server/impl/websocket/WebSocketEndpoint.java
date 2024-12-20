@@ -96,7 +96,7 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
 
         String encodedPacket = PacketUtility.encode(packet);
 
-        LoggerManager.getLogger(WebSocketEndpoint.class).debug(() -> "=>" + encodedPacket);
+        LoggerManager.getLogger(WebSocketEndpoint.class).log(server.getMessageLogLevel(), () -> "=>" + encodedPacket);
 
         if (websocketTransport.getAsyncSendTimeoutMilliseconds() > 0) {
           websocketSession.getAsyncRemote().sendText(encodedPacket).get(websocketTransport.getAsyncSendTimeoutMilliseconds(), TimeUnit.MILLISECONDS);
@@ -116,7 +116,7 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
 
     server.getExecutorService().submit(() -> {
 
-      LoggerManager.getLogger(WebSocketEndpoint.class).debug(() -> "<=" + content);
+      LoggerManager.getLogger(WebSocketEndpoint.class).log(server.getMessageLogLevel(), () -> "<=" + content);
 
       try {
 
@@ -132,7 +132,7 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
             session.dispatch(packet);
 
             if (SessionState.DISCONNECTED.equals(session.getState())) {
-              onCleanUp();
+              onCleanup();
             }
           }
         }, messages);
@@ -149,7 +149,7 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
   }
 
   @Override
-  public synchronized void onCleanUp () {
+  public synchronized void onCleanup () {
 
     if (websocketSession.isOpen()) {
       try {

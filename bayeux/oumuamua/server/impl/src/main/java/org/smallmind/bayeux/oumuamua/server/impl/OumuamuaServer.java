@@ -66,6 +66,7 @@ import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.spi.AbstractAttributed;
 import org.smallmind.bayeux.oumuamua.server.spi.Connection;
 import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
+import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
@@ -153,8 +154,8 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
       protocolMap.put(protocol.getName(), protocol);
     }
 
-    new Thread(idleChannelSifter = new IdleChannelSifter<>(configuration.getIdleChannelCycleMinutes(), channelTree, this::onRemoved)).start();
-    new Thread(idleSessionInspector = new IdleSessionInspector<>(this, configuration.getIdleSessionCycleMinutes())).start();
+    new Thread(idleChannelSifter = new IdleChannelSifter<>(configuration.getIdleChannelCycleMinutes(), configuration.getIdleCleanupLogLevel(), channelTree, this::onRemoved)).start();
+    new Thread(idleSessionInspector = new IdleSessionInspector<>(this, configuration.getIdleSessionCycleMinutes(), configuration.getIdleCleanupLogLevel())).start();
 
     LoggerManager.getLogger(OumuamuaServer.class).info("Oumuamua Server started...");
   }
@@ -365,6 +366,11 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   public boolean isStreaming (Route route) {
 
     return configuration.isStreaming(route);
+  }
+
+  public Level getMessageLogLevel () {
+
+    return configuration.getMessageLogLevel();
   }
 
   public OumuamuaSession<V> createSession (Connection<V> connection) {

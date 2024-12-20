@@ -137,12 +137,12 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
     connectionRef.set(connection);
   }
 
-  public void onCleanUp () {
+  public void onCleanup () {
 
     Connection<V> connection;
 
     if ((connection = connectionRef.get()) != null) {
-      connection.onCleanUp();
+      connection.onCleanup();
     }
   }
 

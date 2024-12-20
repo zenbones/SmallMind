@@ -113,7 +113,7 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
         response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unable to read the full content");
       } else {
 
-        LoggerManager.getLogger(LongPollingConnection.class).debug(() -> "<=" + new String(contentBuffer));
+        LoggerManager.getLogger(LongPollingConnection.class).log(server.getMessageLogLevel(), () -> "<=" + new String(contentBuffer));
 
         try {
 

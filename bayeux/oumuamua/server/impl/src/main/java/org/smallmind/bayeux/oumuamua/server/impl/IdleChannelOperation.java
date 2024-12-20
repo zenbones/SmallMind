@@ -36,16 +36,19 @@ import java.util.function.Consumer;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.ChannelStateException;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
+import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class IdleChannelOperation<V extends Value<V>> implements ChannelOperation<V> {
 
   private final Consumer<Channel<V>> channelCallback;
+  private final Level idleChannelLogLevel;
   private final long now;
 
-  public IdleChannelOperation (long now, Consumer<Channel<V>> channelCallback) {
+  public IdleChannelOperation (long now, Level idleChannelLogLevel, Consumer<Channel<V>> channelCallback) {
 
     this.now = now;
+    this.idleChannelLogLevel = idleChannelLogLevel;
     this.channelCallback = channelCallback;
   }
 
@@ -56,6 +59,8 @@ public class IdleChannelOperation<V extends Value<V>> implements ChannelOperatio
 
     if (((channel = channelBranch.getChannel()) != null) && channel.isRemovable(now)) {
       try {
+        LoggerManager.getLogger(IdleChannelOperation.class).log(idleChannelLogLevel, "Idle channel termination(%s)", channel.getRoute().getPath());
+
         channelBranch.removeChannel(channelCallback);
       } catch (ChannelStateException channelStateException) {
         LoggerManager.getLogger(IdleChannelOperation.class).error(channelStateException);

@@ -77,6 +77,10 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   // ignore the ack extension (or other forced long polling), *if* the protocol does not require long polling
   private String[][] parsedStreamingPaths;
   @View(adapter = LevelEnumXmlAdapter.class, idioms = @Idiom(visibility = OUT))
+  private Level messageLogLevel = Level.TRACE;
+  @View(adapter = LevelEnumXmlAdapter.class, idioms = @Idiom(visibility = OUT))
+  private Level idleCleanupLogLevel = Level.DEBUG;
+  @View(adapter = LevelEnumXmlAdapter.class, idioms = @Idiom(visibility = OUT))
   private Level overflowLogLevel = Level.DEBUG;
   @View(idioms = @Idiom(visibility = OUT))
   private long channelTimeToLiveMinutes = 30;
@@ -159,6 +163,26 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   public void setListeners (Server.Listener<V>[] listeners) {
 
     this.listeners = listeners;
+  }
+
+  public Level getMessageLogLevel () {
+
+    return messageLogLevel;
+  }
+
+  public void setMessageLogLevel (Level messageLogLevel) {
+
+    this.messageLogLevel = messageLogLevel;
+  }
+
+  public Level getIdleCleanupLogLevel () {
+
+    return idleCleanupLogLevel;
+  }
+
+  public void setIdleCleanupLogLevel (Level idleCleanupLogLevel) {
+
+    this.idleCleanupLogLevel = idleCleanupLogLevel;
   }
 
   public Level getOverflowLogLevel () {

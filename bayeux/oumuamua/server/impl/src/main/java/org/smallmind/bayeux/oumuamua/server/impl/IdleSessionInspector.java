@@ -36,6 +36,7 @@ import java.util.Iterator;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
+import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class IdleSessionInspector<V extends Value<V>> implements Runnable {
@@ -43,12 +44,14 @@ public class IdleSessionInspector<V extends Value<V>> implements Runnable {
   private final CountDownLatch finishLatch = new CountDownLatch(1);
   private final CountDownLatch exitLatch = new CountDownLatch(1);
   private final OumuamuaServer<V> server;
+  private final Level idleSessionLogLevel;
   private final long connectionMaintenanceCycleMinutes;
 
-  public IdleSessionInspector (OumuamuaServer<V> server, long connectionMaintenanceCycleMinutes) {
+  public IdleSessionInspector (OumuamuaServer<V> server, long connectionMaintenanceCycleMinutes, Level idleSessionLogLevel) {
 
     this.server = server;
     this.connectionMaintenanceCycleMinutes = connectionMaintenanceCycleMinutes;
+    this.idleSessionLogLevel = idleSessionLogLevel;
   }
 
   public void stop ()
@@ -72,10 +75,12 @@ public class IdleSessionInspector<V extends Value<V>> implements Runnable {
           OumuamuaSession<V> session = sessionIterator.next();
 
           if (session.isRemovable(now)) {
+            LoggerManager.getLogger(IdleSessionInspector.class).log(idleSessionLogLevel, "Idle session termination(%s)", session.getId());
+
             session.completeDisconnect();
             sessionIterator.remove();
             server.departChannels(session);
-            session.onCleanUp();
+            session.onCleanup();
           }
         }
       }
