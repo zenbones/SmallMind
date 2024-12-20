@@ -43,6 +43,7 @@ import org.smallmind.bayeux.oumuamua.server.api.PacketType;
 import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.Route;
 import org.smallmind.bayeux.oumuamua.server.api.SecurityPolicy;
+import org.smallmind.bayeux.oumuamua.server.api.SecurityRejection;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.bayeux.oumuamua.server.api.SessionState;
@@ -66,10 +67,11 @@ public enum Meta {
     public <V extends Value<V>> Packet<V> process (Protocol<V> protocol, Route route, Server<V> server, Session<V> session, Message<V> request) {
 
       SecurityPolicy<V> securityPolicy;
+      SecurityRejection rejection;
 
-      if (((securityPolicy = server.getSecurityPolicy()) != null) && (!securityPolicy.canHandshake(session, request))) {
+      if (((securityPolicy = server.getSecurityPolicy()) != null) && ((rejection = securityPolicy.canHandshake(session, request)) != null)) {
 
-        return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructHandshakeErrorResponse(server, route.getPath(), request.getId(), session.getId(), "Unauthorized", Reconnect.NONE));
+        return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructHandshakeErrorResponse(server, route.getPath(), request.getId(), session.getId(), rejection.hasReason() ? "Unauthorized: " + rejection.getReason() : "Unauthorized", Reconnect.NONE));
       } else if (session.getState().gte(SessionState.HANDSHOOK)) {
 
         return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructHandshakeErrorResponse(server, route.getPath(), request.getId(), session.getId(), "Handshake was previously completed", Reconnect.RETRY));
@@ -278,13 +280,15 @@ public enum Meta {
       } else {
 
         SecurityPolicy<V> securityPolicy = server.getSecurityPolicy();
+        SecurityRejection rejection;
         Channel<V> channel;
 
         try {
           if ((channel = server.findChannel(subscription)) == null) {
-            if ((securityPolicy != null) && (!securityPolicy.canCreate(session, subscription, request))) {
 
-              return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructSubscribeErrorResponse(server, route.getPath(), request.getId(), request.getSessionId(), "Unauthorized", subscription, Reconnect.NONE));
+            if ((securityPolicy != null) && ((rejection = securityPolicy.canCreate(session, subscription, request)) != null)) {
+
+              return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructSubscribeErrorResponse(server, route.getPath(), request.getId(), request.getSessionId(), rejection.hasReason() ? "Unauthorized: " + rejection.getReason() : "Unauthorized", subscription, Reconnect.NONE));
             } else {
               channel = server.requireChannel(subscription);
             }
@@ -294,9 +298,9 @@ public enum Meta {
           return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructSubscribeErrorResponse(server, route.getPath(), request.getId(), request.getSessionId(), invalidPathException.getMessage(), subscription, null));
         }
 
-        if ((securityPolicy != null) && (!securityPolicy.canSubscribe(session, channel, request))) {
+        if ((securityPolicy != null) && ((rejection = securityPolicy.canSubscribe(session, channel, request)) != null)) {
 
-          return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructSubscribeErrorResponse(server, route.getPath(), request.getId(), request.getSessionId(), "Unauthorized", subscription, Reconnect.NONE));
+          return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructSubscribeErrorResponse(server, route.getPath(), request.getId(), request.getSessionId(), rejection.hasReason() ? "Unauthorized: " + rejection.getReason() : "Unauthorized", subscription, Reconnect.NONE));
         } else if (!channel.subscribe(session)) {
 
           return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructSubscribeErrorResponse(server, route.getPath(), request.getId(), request.getSessionId(), "Attempted subscription to a closed channel", subscription, null));
@@ -384,13 +388,14 @@ public enum Meta {
       } else {
 
         SecurityPolicy<V> securityPolicy = server.getSecurityPolicy();
+        SecurityRejection rejection;
         Channel<V> channel;
 
         try {
           if ((channel = server.findChannel(route.getPath())) == null) {
-            if ((securityPolicy != null) && (!securityPolicy.canCreate(session, route.getPath(), request))) {
+            if ((securityPolicy != null) && ((rejection = securityPolicy.canCreate(session, route.getPath(), request)) != null)) {
 
-              return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructPublishErrorResponse(server, route.getPath(), request.getId(), request.getSessionId(), "Unauthorized", Reconnect.NONE));
+              return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructPublishErrorResponse(server, route.getPath(), request.getId(), request.getSessionId(), rejection.hasReason() ? "Unauthorized: " + rejection.getReason() : "Unauthorized", Reconnect.NONE));
             } else {
               channel = server.requireChannel(route.getPath());
             }
@@ -400,9 +405,9 @@ public enum Meta {
           return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructPublishErrorResponse(server, route.getPath(), request.getId(), request.getSessionId(), invalidPathException.getMessage(), null));
         }
 
-        if ((securityPolicy != null) && (!securityPolicy.canPublish(session, channel, request))) {
+        if ((securityPolicy != null) && ((rejection = securityPolicy.canPublish(session, channel, request)) != null)) {
 
-          return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructPublishErrorResponse(server, route.getPath(), request.getId(), request.getSessionId(), "Unauthorized", Reconnect.NONE));
+          return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructPublishErrorResponse(server, route.getPath(), request.getId(), request.getSessionId(), rejection.hasReason() ? "Unauthorized: " + rejection.getReason() : "Unauthorized", Reconnect.NONE));
         } else {
           try {
 
