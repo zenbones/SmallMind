@@ -139,14 +139,14 @@ public class AsyncOumuamuaServlet<V extends Value<V>> extends HttpServlet {
   private static class OumuamuaReadListener<V extends Value<V>> implements ReadListener {
 
     private final ExecutorService executorService;
-    private final Server<V> server;
+    private final OumuamuaServer<V> server;
     private final LongPollingConnection<V> connection;
     private final AsyncContext asyncContext;
     private final ServletInputStream inputStream;
     private final byte[] contentBuffer;
     private int index = 0;
 
-    public OumuamuaReadListener (ExecutorService executorService, Server<V> server, LongPollingConnection<V> connection, AsyncContext asyncContext, ServletInputStream inputStream, int contentBufferSize) {
+    public OumuamuaReadListener (ExecutorService executorService, OumuamuaServer<V> server, LongPollingConnection<V> connection, AsyncContext asyncContext, ServletInputStream inputStream, int contentBufferSize) {
 
       this.executorService = executorService;
       this.server = server;
@@ -177,7 +177,7 @@ public class AsyncOumuamuaServlet<V extends Value<V>> extends HttpServlet {
     public void onAllDataRead ()
       throws IOException {
 
-      LoggerManager.getLogger(OumuamuaServlet.class).debug(() -> "<=" + new String(contentBuffer));
+      LoggerManager.getLogger(OumuamuaServlet.class).log(server.getMessageLogLevel(), () -> "<=" + new String(contentBuffer));
 
       Message<V>[] messages = server.getCodec().from(contentBuffer);
 

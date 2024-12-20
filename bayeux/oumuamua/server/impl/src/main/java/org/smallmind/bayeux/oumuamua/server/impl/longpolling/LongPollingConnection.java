@@ -84,7 +84,7 @@ public class LongPollingConnection<V extends Value<V>> implements OumuamuaConnec
 
     String encodedPacket = PacketUtility.encode(packet);
 
-    LoggerManager.getLogger(LongPollingConnection.class).debug(() -> "=>" + encodedPacket);
+    LoggerManager.getLogger(LongPollingConnection.class).log(server.getMessageLogLevel(), () -> "=>" + encodedPacket);
 
     asyncContext.getResponse().getOutputStream().print(encodedPacket);
     asyncContext.getResponse().flushBuffer();

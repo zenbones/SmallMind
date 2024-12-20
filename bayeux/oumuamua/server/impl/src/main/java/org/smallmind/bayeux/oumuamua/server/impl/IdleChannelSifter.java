@@ -37,6 +37,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
+import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class IdleChannelSifter<V extends Value<V>> implements Runnable {
@@ -45,11 +46,13 @@ public class IdleChannelSifter<V extends Value<V>> implements Runnable {
   private final CountDownLatch exitLatch = new CountDownLatch(1);
   private final ChannelTree<V> channelTree;
   private final Consumer<Channel<V>> channelCallback;
+  private final Level idleChannelLogLevel;
   private final long idleChannelCycleMinutes;
 
-  public IdleChannelSifter (long idleChannelCycleMinutes, ChannelTree<V> channelTree, Consumer<Channel<V>> channelCallback) {
+  public IdleChannelSifter (long idleChannelCycleMinutes, Level idleChannelLogLevel, ChannelTree<V> channelTree, Consumer<Channel<V>> channelCallback) {
 
     this.idleChannelCycleMinutes = idleChannelCycleMinutes;
+    this.idleChannelLogLevel = idleChannelLogLevel;
     this.channelTree = channelTree;
     this.channelCallback = channelCallback;
   }
@@ -66,7 +69,7 @@ public class IdleChannelSifter<V extends Value<V>> implements Runnable {
 
     try {
       while (!finishLatch.await(idleChannelCycleMinutes, TimeUnit.MINUTES)) {
-        channelTree.walk(new IdleChannelOperation<V>(System.currentTimeMillis(), channelCallback));
+        channelTree.walk(new IdleChannelOperation<V>(System.currentTimeMillis(), idleChannelLogLevel, channelCallback));
         channelTree.clean();
       }
     } catch (InterruptedException interruptedException) {
