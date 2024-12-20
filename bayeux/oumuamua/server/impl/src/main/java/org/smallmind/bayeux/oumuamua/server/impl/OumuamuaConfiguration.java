@@ -79,7 +79,7 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   @View(adapter = LevelEnumXmlAdapter.class, idioms = @Idiom(visibility = OUT))
   private Level messageLogLevel = Level.TRACE;
   @View(adapter = LevelEnumXmlAdapter.class, idioms = @Idiom(visibility = OUT))
-  private Level idleCleanUpLogLevel = Level.DEBUG;
+  private Level idleCleanupLogLevel = Level.DEBUG;
   @View(adapter = LevelEnumXmlAdapter.class, idioms = @Idiom(visibility = OUT))
   private Level overflowLogLevel = Level.DEBUG;
   @View(idioms = @Idiom(visibility = OUT))
@@ -175,14 +175,14 @@ public class OumuamuaConfiguration<V extends Value<V>> {
     this.messageLogLevel = messageLogLevel;
   }
 
-  public Level getIdleCleanUpLogLevel () {
+  public Level getIdleCleanupLogLevel () {
 
-    return idleCleanUpLogLevel;
+    return idleCleanupLogLevel;
   }
 
-  public void setIdleCleanUpLogLevel (Level idleCleanUpLogLevel) {
+  public void setIdleCleanupLogLevel (Level idleCleanupLogLevel) {
 
-    this.idleCleanUpLogLevel = idleCleanUpLogLevel;
+    this.idleCleanupLogLevel = idleCleanupLogLevel;
   }
 
   public Level getOverflowLogLevel () {

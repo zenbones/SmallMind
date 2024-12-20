@@ -154,8 +154,8 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
       protocolMap.put(protocol.getName(), protocol);
     }
 
-    new Thread(idleChannelSifter = new IdleChannelSifter<>(configuration.getIdleChannelCycleMinutes(), configuration.getIdleCleanUpLogLevel(), channelTree, this::onRemoved)).start();
-    new Thread(idleSessionInspector = new IdleSessionInspector<>(this, configuration.getIdleSessionCycleMinutes(), configuration.getIdleCleanUpLogLevel())).start();
+    new Thread(idleChannelSifter = new IdleChannelSifter<>(configuration.getIdleChannelCycleMinutes(), configuration.getIdleCleanupLogLevel(), channelTree, this::onRemoved)).start();
+    new Thread(idleSessionInspector = new IdleSessionInspector<>(this, configuration.getIdleSessionCycleMinutes(), configuration.getIdleCleanupLogLevel())).start();
 
     LoggerManager.getLogger(OumuamuaServer.class).info("Oumuamua Server started...");
   }

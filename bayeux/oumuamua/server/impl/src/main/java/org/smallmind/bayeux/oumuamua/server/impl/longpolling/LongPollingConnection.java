@@ -123,7 +123,7 @@ public class LongPollingConnection<V extends Value<V>> implements OumuamuaConnec
   }
 
   @Override
-  public void onCleanUp () {
+  public void onCleanup () {
 
   }
 }

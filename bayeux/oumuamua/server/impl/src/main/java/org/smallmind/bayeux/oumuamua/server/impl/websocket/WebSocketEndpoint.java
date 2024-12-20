@@ -132,7 +132,7 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
             session.dispatch(packet);
 
             if (SessionState.DISCONNECTED.equals(session.getState())) {
-              onCleanUp();
+              onCleanup();
             }
           }
         }, messages);
@@ -149,7 +149,7 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
   }
 
   @Override
-  public synchronized void onCleanUp () {
+  public synchronized void onCleanup () {
 
     if (websocketSession.isOpen()) {
       try {
