@@ -37,23 +37,23 @@ import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
 public interface SecurityPolicy<V extends Value<V>> {
 
-  default boolean canHandshake (Session<V> session, Message<V> message) {
+  default SecurityRejection canHandshake (Session<V> session, Message<V> message) {
 
-    return false;
+    return SecurityRejection.noReason();
   }
 
-  default boolean canCreate (Session<V> session, String path, Message<V> message) {
+  default SecurityRejection canCreate (Session<V> session, String path, Message<V> message) {
 
-    return false;
+    return SecurityRejection.noReason();
   }
 
-  default boolean canSubscribe (Session<V> session, Channel<V> channel, Message<V> message) {
+  default SecurityRejection canSubscribe (Session<V> session, Channel<V> channel, Message<V> message) {
 
-    return false;
+    return SecurityRejection.noReason();
   }
 
-  default boolean canPublish (Session<V> session, Channel<V> channel, Message<V> message) {
+  default SecurityRejection canPublish (Session<V> session, Channel<V> channel, Message<V> message) {
 
-    return false;
+    return SecurityRejection.noReason();
   }
 }

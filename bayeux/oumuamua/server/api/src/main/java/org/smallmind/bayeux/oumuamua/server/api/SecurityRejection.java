@@ -30,38 +30,35 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.spi;
+package org.smallmind.bayeux.oumuamua.server.api;
 
-import org.smallmind.bayeux.oumuamua.server.api.Channel;
-import org.smallmind.bayeux.oumuamua.server.api.SecurityPolicy;
-import org.smallmind.bayeux.oumuamua.server.api.SecurityRejection;
-import org.smallmind.bayeux.oumuamua.server.api.Session;
-import org.smallmind.bayeux.oumuamua.server.api.json.Message;
-import org.smallmind.bayeux.oumuamua.server.api.json.Value;
+public class SecurityRejection {
 
-public class OpenSecurityPolicy<V extends Value<V>> implements SecurityPolicy<V> {
+  private static final SecurityRejection NO_REASON = new SecurityRejection(null);
+  private final String reason;
 
-  @Override
-  public SecurityRejection canHandshake (Session<V> session, Message<V> message) {
+  private SecurityRejection (String reason) {
 
-    return null;
+    this.reason = reason;
   }
 
-  @Override
-  public SecurityRejection canCreate (Session<V> session, String path, Message<V> message) {
+  public static SecurityRejection noReason () {
 
-    return null;
+    return NO_REASON;
   }
 
-  @Override
-  public SecurityRejection canSubscribe (Session<V> session, Channel<V> channel, Message<V> message) {
+  public static SecurityRejection reason (String reason) {
 
-    return null;
+    return new SecurityRejection(reason);
   }
 
-  @Override
-  public SecurityRejection canPublish (Session<V> session, Channel<V> channel, Message<V> message) {
+  public boolean hasReason () {
 
-    return null;
+    return reason != null;
+  }
+
+  public String getReason () {
+
+    return reason;
   }
 }
