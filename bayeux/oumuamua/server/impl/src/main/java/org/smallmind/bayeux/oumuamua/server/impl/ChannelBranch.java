@@ -93,7 +93,7 @@ public class ChannelBranch<V extends Value<V>> {
     Segment segment;
 
     if ((child = childMap.get(segment = route.getSegment(index))) == null) {
-      childMap.put(segment, child = new ChannelBranch<V>(this));
+      childMap.put(segment, child = new ChannelBranch<>(this));
     }
 
     return (index == route.lastIndex()) ? child.initializeChannel(timeToLive, route, root, channelCallback, onSubscribedCallback, onUnsubscribedCallback, initializerQueue) : child.addChannelAsNecessary(timeToLive, index + 1, route, root, channelCallback, onSubscribedCallback, onUnsubscribedCallback, initializerQueue);
