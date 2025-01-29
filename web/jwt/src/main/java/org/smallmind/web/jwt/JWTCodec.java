@@ -33,6 +33,7 @@
 package org.smallmind.web.jwt;
 
 import org.jose4j.jws.JsonWebSignature;
+import org.jose4j.jwx.HeaderParameterNames;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 import org.smallmind.web.jwt.jose4j.JWTConsumer;
 
@@ -50,6 +51,7 @@ public class JWTCodec {
     JsonWebSignature jws = new JsonWebSignature();
 
     jws.setPayloadBytes(JsonCodec.writeAsBytes(claims));
+    jws.setHeader(HeaderParameterNames.TYPE, "JWT");
     jws.setKey(keyMaster.getKey());
     jws.setAlgorithmHeaderValue(keyMaster.getEncryptionAlgorithm().getCode());
 
