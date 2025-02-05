@@ -83,6 +83,8 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   @View(adapter = LevelEnumXmlAdapter.class, idioms = @Idiom(visibility = OUT))
   private Level overflowLogLevel = Level.DEBUG;
   @View(idioms = @Idiom(visibility = OUT))
+  private boolean allowsImplicitConnection;
+  @View(idioms = @Idiom(visibility = OUT))
   private long channelTimeToLiveMinutes = 30;
   @View(idioms = @Idiom(visibility = OUT))
   private int sessionConnectIntervalSeconds = 30;
@@ -193,6 +195,16 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   public void setOverflowLogLevel (Level overflowLogLevel) {
 
     this.overflowLogLevel = overflowLogLevel;
+  }
+
+  public boolean isAllowsImplicitConnection () {
+
+    return allowsImplicitConnection;
+  }
+
+  public void setAllowsImplicitConnection (boolean allowsImplicitConnection) {
+
+    this.allowsImplicitConnection = allowsImplicitConnection;
   }
 
   public long getChannelTimeToLiveMinutes () {

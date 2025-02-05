@@ -97,6 +97,8 @@ public interface Server<V extends Value<V>> extends Attributed {
 
   long getSessionConnectionIntervalMilliseconds ();
 
+  boolean allowsImplicitConnection ();
+
   String[] getProtocolNames ();
 
   Protocol<V> getProtocol (String name);
