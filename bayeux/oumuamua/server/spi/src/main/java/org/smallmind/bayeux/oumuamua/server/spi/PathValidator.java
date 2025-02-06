@@ -65,7 +65,7 @@ public class PathValidator {
           if ((pos - startPos) == 0) {
             throw new InvalidPathException("Path(%s) must not contain empty segments", path);
           } else if (asterisks > 0) {
-            throw new InvalidPathException("Path(%s) uses an illegal wildcard '*' definition", path);
+            throw new InvalidPathException("Path(%s) uses an illegal wild card '*' definition", path);
           } else {
             segments[index++] = pos;
             startPos = pos + 1;
@@ -84,7 +84,7 @@ public class PathValidator {
       if ((path.length() - startPos) == 0) {
         throw new InvalidPathException("Path(%s) must not contain empty segments", path);
       } else if (((asterisks > 0) && (asterisks < (path.length() - startPos))) || (asterisks > 2)) {
-        throw new InvalidPathException("Path(%s) uses an illegal wildcard '*' definition", path);
+        throw new InvalidPathException("Path(%s) uses an illegal wild card '*' definition", path);
       } else {
 
         return segments;

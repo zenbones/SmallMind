@@ -63,7 +63,7 @@ public class WildcardUtility {
 
       if (!allowNonTerminalWildcards) {
         if (transformed.indexOf('%') < (transformed.length() - 1)) {
-          throw new NonTerminalWildcardException("Non-terminal wildcards are prohibited");
+          throw new NonTerminalWildcardException("Non-terminal wild cards are prohibited");
         }
       }
 

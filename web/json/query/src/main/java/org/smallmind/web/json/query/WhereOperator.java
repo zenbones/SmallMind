@@ -185,7 +185,7 @@ public enum WhereOperator {
                 return op1.get().equals(DOUBLE_WILDCARD) || (((String)op1.get()).charAt(0) == WILDCARD_CHAR) ? ((String)op2.get()).endsWith(((String)op1.get()).substring(1)) : (((String)op1.get()).charAt(1) == WILDCARD_CHAR) ? ((String)op2.get()).startsWith(((String)op1.get()).substring(0, 1)) : op2.get().equals(op1.get());
               default:
                 if (((String)op1.get()).substring(1, ((String)op1.get()).length() - 1).indexOf(WILDCARD_CHAR) >= 0) {
-                  throw new QueryProcessingException("The operation(%s) allows wildcards(%s) only at the  start or end of the operand", name(), SINGLE_WILDCARD);
+                  throw new QueryProcessingException("The operation(%s) allows wild cards(%s) only at the  start or end of the operand", name(), SINGLE_WILDCARD);
                 } else if (((String)op1.get()).startsWith(SINGLE_WILDCARD) && ((String)op1.get()).endsWith(SINGLE_WILDCARD)) {
 
                   return ((String)op2.get()).contains(((String)op1.get()).substring(1, ((String)op1.get()).length() - 1));

@@ -88,7 +88,7 @@ A description of a set of imports which should be added to the generated classes
 
 * `Visibility visibility () default Visibility.BOTH` - The visibility for which these imports should be added, defaults to both _in_ and _out_ views.
 * `String[] purposes () default {}` - Any purposes for which these imports should be added. If empty then only the default (un-named) purpose will be enforced.
-* `String[] value()` - An array of imports as valid class names or wildcard import specifications.
+* `String[] value()` - An array of imports as valid class names or wild card import specifications.
 
 [[doppelganger-implementation, Implementation]]
 ==== @Implementation

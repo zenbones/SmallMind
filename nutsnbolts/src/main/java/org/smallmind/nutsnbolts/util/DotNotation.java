@@ -127,7 +127,7 @@ public class DotNotation {
           } else if (translationState.equals(TranslationState.NORMAL)) {
             throw new DotNotationException("Wildcards must either start the pattern or be preceded by '.'");
           } else if (!wildState.equals(WildState.TAME)) {
-            throw new DotNotationException("Any wildcard followed by '*' is redundant");
+            throw new DotNotationException("Any wild card followed by '*' is redundant");
           }
 
           patternBuilder.append("(.+)");

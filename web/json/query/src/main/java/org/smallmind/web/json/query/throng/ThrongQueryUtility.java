@@ -155,7 +155,7 @@ public class ThrongQueryUtility {
               return likeValue.equals(DOUBLE_WILDCARD) ? Filter.where(fieldName).exists(true) : (((String)likeValue).charAt(0) == WILDCARD_CHAR) ? Filter.where(fieldName).regex(Pattern.compile(".*" + ((String)likeValue).substring(1))) : (((String)likeValue).charAt(1) == WILDCARD_CHAR) ? Filter.where(fieldName).regex(Pattern.compile(((String)likeValue).charAt(0) + ".*")) : Filter.where(fieldName).eq(likeValue);
             default:
               if (((String)likeValue).substring(1, ((String)likeValue).length() - 1).indexOf(WILDCARD_CHAR) >= 0) {
-                throw new QueryProcessingException("The operation(%s) allows wildcards(%s) only at the start or end of the operand", WhereOperator.LIKE.name(), SINGLE_WILDCARD);
+                throw new QueryProcessingException("The operation(%s) allows wild cards(%s) only at the start or end of the operand", WhereOperator.LIKE.name(), SINGLE_WILDCARD);
               } else if (((String)likeValue).startsWith(SINGLE_WILDCARD) && ((String)likeValue).endsWith(SINGLE_WILDCARD)) {
 
                 return Filter.where(fieldName).regex(Pattern.compile(".*" + ((String)likeValue).substring(1, ((String)likeValue).length() - 1) + ".*"));
@@ -191,7 +191,7 @@ public class ThrongQueryUtility {
               return unlikeValue.equals(DOUBLE_WILDCARD) ? Filter.where(fieldName).exists(false) : (((String)unlikeValue).charAt(0) == WILDCARD_CHAR) ? Filter.where(fieldName).regex(Pattern.compile(".*" + ((String)unlikeValue).substring(1))).not() : (((String)unlikeValue).charAt(1) == WILDCARD_CHAR) ? Filter.where(fieldName).regex(Pattern.compile(((String)unlikeValue).charAt(0) + ".*")).not() : Filter.where(fieldName).ne(unlikeValue);
             default:
               if (((String)unlikeValue).substring(1, ((String)unlikeValue).length() - 1).indexOf(WILDCARD_CHAR) >= 0) {
-                throw new QueryProcessingException("The operation(%s) allows wildcards(%s) only at the start or end of the operand", WhereOperator.UNLIKE.name(), SINGLE_WILDCARD);
+                throw new QueryProcessingException("The operation(%s) allows wild cards(%s) only at the start or end of the operand", WhereOperator.UNLIKE.name(), SINGLE_WILDCARD);
               } else if (((String)unlikeValue).startsWith(SINGLE_WILDCARD) && ((String)unlikeValue).endsWith(SINGLE_WILDCARD)) {
 
                 return Filter.where(fieldName).regex(Pattern.compile(".*" + ((String)unlikeValue).substring(1, ((String)unlikeValue).length() - 1) + ".*")).not();
