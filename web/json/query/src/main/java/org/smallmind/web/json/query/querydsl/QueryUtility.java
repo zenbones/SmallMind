@@ -60,7 +60,7 @@ import org.smallmind.web.json.query.WildcardUtility;
 
 public class QueryUtility {
 
-  public static Product<Path<?>, Predicate> apply (Where where, WhereFieldTransformer<Path<?>, Path<?>> fieldTransformer) {
+  public static Product<Path<?>, Predicate> apply (Where where, WhereFieldTransformer<Path<?>, Path<?>> fieldTransformer, boolean allowNonTerminalWildcards) {
 
     if (where == null) {
 
@@ -70,7 +70,7 @@ public class QueryUtility {
       Set<Path<?>> rootSet = new HashSet<>();
       Predicate predicate;
 
-      if ((predicate = walkConjunction(rootSet, where.getRootConjunction(), fieldTransformer)) == null) {
+      if ((predicate = walkConjunction(rootSet, where.getRootConjunction(), fieldTransformer, allowNonTerminalWildcards)) == null) {
 
         return NoneProduct.none();
       }
@@ -79,7 +79,7 @@ public class QueryUtility {
     }
   }
 
-  private static Predicate walkConjunction (Set<Path<?>> rootSet, WhereConjunction whereConjunction, WhereFieldTransformer<Path<?>, Path<?>> fieldTransformer) {
+  private static Predicate walkConjunction (Set<Path<?>> rootSet, WhereConjunction whereConjunction, WhereFieldTransformer<Path<?>, Path<?>> fieldTransformer, boolean allowNonTerminalWildcards) {
 
     if ((whereConjunction == null) || whereConjunction.isEmpty()) {
 
@@ -94,12 +94,12 @@ public class QueryUtility {
 
       switch (whereCriterion.getCriterionType()) {
         case CONJUNCTION:
-          if ((walkedPredicate = walkConjunction(rootSet, (WhereConjunction)whereCriterion, fieldTransformer)) != null) {
+          if ((walkedPredicate = walkConjunction(rootSet, (WhereConjunction)whereCriterion, fieldTransformer, allowNonTerminalWildcards)) != null) {
             predicateList.add(walkedPredicate);
           }
           break;
         case FIELD:
-          if ((walkedPredicate = walkField(rootSet, (WhereField)whereCriterion, fieldTransformer)) != null) {
+          if ((walkedPredicate = walkField(rootSet, (WhereField)whereCriterion, fieldTransformer, allowNonTerminalWildcards)) != null) {
             predicateList.add(walkedPredicate);
           }
           break;
@@ -132,7 +132,7 @@ public class QueryUtility {
     }
   }
 
-  private static Predicate walkField (Set<Path<?>> rootSet, WhereField whereField, WhereFieldTransformer<Path<?>, Path<?>> fieldTransformer) {
+  private static Predicate walkField (Set<Path<?>> rootSet, WhereField whereField, WhereFieldTransformer<Path<?>, Path<?>> fieldTransformer, boolean allowNonTerminalWildcards) {
 
     Object fieldValue = whereField.getOperand().get();
     WherePath<Path<?>, Path<?>> wherePath = fieldTransformer.transform(whereField.getEntity(), whereField.getName());
@@ -162,9 +162,9 @@ public class QueryUtility {
       case EXISTS:
         return Boolean.TRUE.equals(fieldValue) ? Expressions.predicate(Ops.IS_NOT_NULL, wherePath.getPath()) : Expressions.predicate(Ops.IS_NULL, wherePath.getPath());
       case LIKE:
-        return Expressions.predicate(Ops.LIKE, wherePath.getPath(), Expressions.constant(WildcardUtility.swapWithSqlWildcard((String)fieldValue)));
+        return Expressions.predicate(Ops.LIKE, wherePath.getPath(), Expressions.constant(WildcardUtility.swapWithSqlWildcard((String)fieldValue, allowNonTerminalWildcards)));
       case UNLIKE:
-        return Expressions.predicate(Ops.NOT, Expressions.predicate(Ops.LIKE, wherePath.getPath(), Expressions.constant(WildcardUtility.swapWithSqlWildcard((String)fieldValue))));
+        return Expressions.predicate(Ops.NOT, Expressions.predicate(Ops.LIKE, wherePath.getPath(), Expressions.constant(WildcardUtility.swapWithSqlWildcard((String)fieldValue, allowNonTerminalWildcards))));
       case IN:
 
         int arrayLength;

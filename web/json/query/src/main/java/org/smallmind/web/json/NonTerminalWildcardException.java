@@ -30,44 +30,18 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.json.query;
+package org.smallmind.web.json;
 
-import org.smallmind.web.json.NonTerminalWildcardException;
+import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
-public class WildcardUtility {
+public class NonTerminalWildcardException extends FormattedRuntimeException {
 
-  public static String swapWithSqlWildcard (String original, boolean allowNonTerminalWildcards) {
+  public NonTerminalWildcardException () {
 
-    StringBuilder transformBuilder = null;
+  }
 
-    for (int index = 0; index < original.length(); index++) {
-      if (original.charAt(index) == '*') {
-        if (transformBuilder == null) {
-          transformBuilder = new StringBuilder(original.substring(0, index));
-        }
-        transformBuilder.append('%');
-      } else {
+  public NonTerminalWildcardException (String message, Object... args) {
 
-        if (transformBuilder != null) {
-          transformBuilder.append(original.charAt(index));
-        }
-      }
-    }
-
-    if (transformBuilder == null) {
-
-      return original;
-    } else {
-
-      String transformed = transformBuilder.toString();
-
-      if (!allowNonTerminalWildcards) {
-        if (transformed.indexOf('%') < (transformed.length() - 1)) {
-          throw new NonTerminalWildcardException("Non-terminal wildcards are prohibited");
-        }
-      }
-
-      return transformed;
-    }
+    super(message, args);
   }
 }

@@ -58,7 +58,7 @@ import org.smallmind.web.json.query.WildcardUtility;
 
 public class JPAQueryUtility {
 
-  public static Product<Root<?>, Predicate> apply (CriteriaBuilder criteriaBuilder, Where where, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer) {
+  public static Product<Root<?>, Predicate> apply (CriteriaBuilder criteriaBuilder, Where where, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer, boolean allowNonTerminalWildcards) {
 
     if (where == null) {
 
@@ -68,7 +68,7 @@ public class JPAQueryUtility {
       Set<Root<?>> rootSet = new HashSet<>();
       Predicate predicate;
 
-      if ((predicate = walkConjunction(criteriaBuilder, rootSet, where.getRootConjunction(), fieldTransformer)) == null) {
+      if ((predicate = walkConjunction(criteriaBuilder, rootSet, where.getRootConjunction(), fieldTransformer, allowNonTerminalWildcards)) == null) {
 
         return NoneProduct.none();
       }
@@ -77,7 +77,7 @@ public class JPAQueryUtility {
     }
   }
 
-  private static Predicate walkConjunction (CriteriaBuilder criteriaBuilder, Set<Root<?>> rootSet, WhereConjunction whereConjunction, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer) {
+  private static Predicate walkConjunction (CriteriaBuilder criteriaBuilder, Set<Root<?>> rootSet, WhereConjunction whereConjunction, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer, boolean allowNonTerminalWildcards) {
 
     if ((whereConjunction == null) || whereConjunction.isEmpty()) {
 
@@ -92,12 +92,12 @@ public class JPAQueryUtility {
 
           Predicate walkedPredicate;
 
-          if ((walkedPredicate = walkConjunction(criteriaBuilder, rootSet, (WhereConjunction)whereCriterion, fieldTransformer)) != null) {
+          if ((walkedPredicate = walkConjunction(criteriaBuilder, rootSet, (WhereConjunction)whereCriterion, fieldTransformer, allowNonTerminalWildcards)) != null) {
             predicateList.add(walkedPredicate);
           }
           break;
         case FIELD:
-          predicateList.add(walkField(criteriaBuilder, rootSet, (WhereField)whereCriterion, fieldTransformer));
+          predicateList.add(walkField(criteriaBuilder, rootSet, (WhereField)whereCriterion, fieldTransformer, allowNonTerminalWildcards));
           break;
         default:
           throw new UnknownSwitchCaseException(whereCriterion.getCriterionType().name());
@@ -123,7 +123,7 @@ public class JPAQueryUtility {
     }
   }
 
-  private static Predicate walkField (CriteriaBuilder criteriaBuilder, Set<Root<?>> rootSet, WhereField whereField, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer) {
+  private static Predicate walkField (CriteriaBuilder criteriaBuilder, Set<Root<?>> rootSet, WhereField whereField, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer, boolean allowNonTerminalWildcards) {
 
     Object fieldValue = whereField.getOperand().get();
     WherePath<Root<?>, Path<?>> wherePath = fieldTransformer.transform(whereField.getEntity(), whereField.getName());
@@ -153,9 +153,9 @@ public class JPAQueryUtility {
       case EXISTS:
         return Boolean.TRUE.equals(fieldValue) ? criteriaBuilder.isNotNull(wherePath.getPath()) : criteriaBuilder.isNull(wherePath.getPath());
       case LIKE:
-        return criteriaBuilder.like((Path<String>)wherePath.getPath(), WildcardUtility.swapWithSqlWildcard((String)fieldValue));
+        return criteriaBuilder.like((Path<String>)wherePath.getPath(), WildcardUtility.swapWithSqlWildcard((String)fieldValue, allowNonTerminalWildcards));
       case UNLIKE:
-        return criteriaBuilder.notLike((Path<String>)wherePath.getPath(), WildcardUtility.swapWithSqlWildcard((String)fieldValue));
+        return criteriaBuilder.notLike((Path<String>)wherePath.getPath(), WildcardUtility.swapWithSqlWildcard((String)fieldValue, allowNonTerminalWildcards));
       case IN:
         return criteriaBuilder.in((Path<?>)wherePath.getPath()).in(fieldValue);
       default:
