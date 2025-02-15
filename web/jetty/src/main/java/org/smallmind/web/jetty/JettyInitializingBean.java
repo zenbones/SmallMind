@@ -59,13 +59,12 @@ import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.util.resource.ResourceFactory;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
+import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.smallmind.nutsnbolts.lang.web.PerApplicationContextFilter;
 import org.smallmind.nutsnbolts.resource.ResourceException;
 import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.web.jersey.spring.ExposedApplicationContext;
-import org.smallmind.web.jersey.spring.JerseyResourceConfig;
-import org.smallmind.web.jersey.spring.ResourceConfigExtension;
 import org.smallmind.web.jetty.installer.FilterInstaller;
 import org.smallmind.web.jetty.installer.ListenerInstaller;
 import org.smallmind.web.jetty.installer.ServletInstaller;
@@ -83,7 +82,7 @@ public class JettyInitializingBean implements InitializingBean, DisposableBean, 
 
   private final HashMap<String, JettyWebAppState> webAppStateMap = new HashMap<>();
   private Server server;
-  private ResourceConfigExtension[] resourceConfigExtensions;
+  private ResourceConfig resourceConfig;
   private WebApplicationOption[] webApplicationOptions;
   private SSLInfo sslInfo;
   private String host;
@@ -109,9 +108,9 @@ public class JettyInitializingBean implements InitializingBean, DisposableBean, 
     this.sslInfo = sslInfo;
   }
 
-  public void setResourceConfigExtensions (ResourceConfigExtension[] resourceConfigExtensions) {
+  public void setResourceConfig (ResourceConfig resourceConfig) {
 
-    this.resourceConfigExtensions = resourceConfigExtensions;
+    this.resourceConfig = resourceConfig;
   }
 
   public void setWebApplicationOptions (WebApplicationOption[] webApplicationOptions) {
@@ -358,7 +357,7 @@ public class JettyInitializingBean implements InitializingBean, DisposableBean, 
 
         if (webApplicationOption.getJaxRSOption() != null) {
 
-          ServletHolder jerseyServletHolder = new ServletHolder(new ServletContainer(new JerseyResourceConfig(ExposedApplicationContext.getApplicationContext(), resourceConfigExtensions)));
+          ServletHolder jerseyServletHolder = new ServletHolder(new ServletContainer(resourceConfig));
           FilterHolder jerseyFilterHolder = new FilterHolder(new PerApplicationContextFilter());
 
           jerseyServletHolder.setName("JAX-RS Application");

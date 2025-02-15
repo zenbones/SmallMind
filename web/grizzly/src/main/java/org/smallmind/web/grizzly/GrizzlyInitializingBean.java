@@ -55,6 +55,7 @@ import org.glassfish.grizzly.servlet.WebappContext;
 import org.glassfish.grizzly.ssl.SSLContextConfigurator;
 import org.glassfish.grizzly.ssl.SSLEngineConfigurator;
 import org.glassfish.grizzly.threadpool.ThreadPoolProbe;
+import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.smallmind.nutsnbolts.io.PathUtility;
 import org.smallmind.nutsnbolts.lang.web.PerApplicationContextFilter;
@@ -68,8 +69,6 @@ import org.smallmind.web.grizzly.installer.WebSocketExtensionInstaller;
 import org.smallmind.web.grizzly.option.WebApplicationOption;
 import org.smallmind.web.grizzly.tyrus.TyrusGrizzlyServerContainer;
 import org.smallmind.web.jersey.spring.ExposedApplicationContext;
-import org.smallmind.web.jersey.spring.JerseyResourceConfig;
-import org.smallmind.web.jersey.spring.ResourceConfigExtension;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.config.BeanPostProcessor;
@@ -84,7 +83,7 @@ public class GrizzlyInitializingBean implements InitializingBean, DisposableBean
   private HttpServer httpServer;
   private IOStrategy ioStrategy;
   private ThreadPoolProbe threadPoolProbe;
-  private ResourceConfigExtension[] resourceConfigExtensions;
+  private ResourceConfig resourceConfig;
   private AddOn[] addOns;
   private WebApplicationOption[] webApplicationOptions;
   private SSLInfo sslInfo;
@@ -136,9 +135,9 @@ public class GrizzlyInitializingBean implements InitializingBean, DisposableBean
     this.sslInfo = sslInfo;
   }
 
-  public void setResourceConfigExtensions (ResourceConfigExtension[] resourceConfigExtensions) {
+  public void setResourceConfig (ResourceConfig resourceConfig) {
 
-    this.resourceConfigExtensions = resourceConfigExtensions;
+    this.resourceConfig = resourceConfig;
   }
 
   public void setAddOns (AddOn[] addOns) {
@@ -277,7 +276,7 @@ public class GrizzlyInitializingBean implements InitializingBean, DisposableBean
       GrizzlyWebAppState webAppState = webAppStateFor(webApplicationOption.getContextPath());
 
       if (webApplicationOption.getJaxRSOption() != null) {
-        webAppState.getWebAppContext().addServlet("JAX-RS Application", new ServletContainer(new JerseyResourceConfig(ExposedApplicationContext.getApplicationContext(), resourceConfigExtensions))).addMapping(webApplicationOption.getJaxRSOption().getRestPath() + "/*");
+        webAppState.getWebAppContext().addServlet("JAX-RS Application", new ServletContainer(resourceConfig)).addMapping(webApplicationOption.getJaxRSOption().getRestPath() + "/*");
         webAppState.getWebAppContext().addFilter("per-application-data", new PerApplicationContextFilter()).addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), webApplicationOption.getJaxRSOption().getRestPath() + "/*");
       }
 

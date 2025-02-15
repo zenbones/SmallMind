@@ -3,24 +3,35 @@
        xmlns="http://www.springframework.org/schema/beans"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-  <bean id="resourceBeanPostProcessor" class="org.smallmind.web.jersey.spring.ResourceBeanPostProcessor"/>
-
-  <bean id="restHttpServer" class="org.smallmind.web.grizzly.GrizzlyInitializingBean">
-    <property name="host" value="${grizzly.host}"/>
-    <property name="port" value="${grizzly.port}"/>
-    <property name="contextPath" value="${grizzly.context_path}"/>
-    <property name="soapPath" value="${grizzly.soap_path}"/>
-    <property name="jaxRSOption">
-      <bean class="org.smallmind.web.grizzly.option.JaxRSOption">
-        <property name="restPath" value="${grizzly.rest_path}"/>
-      </bean>
-    </property>
+  <bean id="jerseyResourceConfig" class="org.smallmind.web.jersey.spring.JerseyResourceConfig">
     <property name="resourceConfigExtensions">
       <list>
         <bean class="org.smallmind.web.jersey.aop.EntityParamExtension"/>
         <bean class="org.smallmind.web.jersey.json.XmlAdapterParamExtension"/>
         <bean class="org.smallmind.web.jersey.json.ThrowableExceptionExtension"/>
       </list>
+    </property>
+  </bean>
+
+  <bean id="restHttpServer" class="org.smallmind.web.grizzly.GrizzlyInitializingBean">
+    <property name="host" value="${grizzly.host}"/>
+    <property name="port" value="${grizzly.port}"/>
+    <property name="webApplicationOptions">
+      <bean class="org.smallmind.web.grizzly.option.WebApplicationOption">
+        <property name="contextPath" value="${grizzly.context_path}"/>
+        <property name="soapPath" value="${grizzly.soap_path}"/>
+        <property name="jaxRSOption">
+          <bean class="org.smallmind.web.grizzly.option.JaxRSOption">
+            <property name="restPath" value="${grizzly.rest_path}"/>
+          </bean>
+        </property>
+        <property name="springSupportOption">
+          <bean class="org.smallmind.web.grizzly.option.SpringSupportOption"/>
+        </property>
+        <property name="webSocketOption">
+          <bean class="org.smallmind.web.grizzly.option.WebSocketOption"/>
+        </property>
+      </bean>
     </property>
     <!--
     <property name="sslInfo">

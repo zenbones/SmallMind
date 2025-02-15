@@ -32,33 +32,35 @@
  */
 package org.smallmind.web.jersey.spring;
 
+import jakarta.ws.rs.Path;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.smallmind.web.jersey.json.JsonProvider;
-import org.springframework.context.ApplicationContext;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.config.BeanPostProcessor;
 
-public class JerseyResourceConfig extends ResourceConfig {
+public class JerseyResourceConfig extends ResourceConfig implements BeanPostProcessor {
 
-  public JerseyResourceConfig (ApplicationContext applicationContext, ResourceConfigExtension[] extensions) {
+  private ResourceConfigExtension[] resourceConfigExtensions;
 
-    if (applicationContext == null) {
-      throw new SpringIntegrationException("Spring application context must not be 'null'");
-    } else {
+  public void setResourceConfigExtensions (ResourceConfigExtension[] extensions) {
 
-      ResourceBeanPostProcessor resourceBeanPostProcessor;
+    register(JsonProvider.class);
 
-      if ((resourceBeanPostProcessor = applicationContext.getBean(ResourceBeanPostProcessor.class)) == null) {
-        throw new SpringIntegrationException("Spring application context must include the %s", ResourceBeanPostProcessor.class.getSimpleName());
+    if (extensions != null) {
+      for (ResourceConfigExtension extension : extensions) {
+        extension.apply(this);
       }
-
-      register(JsonProvider.class);
-
-      if (extensions != null) {
-        for (ResourceConfigExtension extension : extensions) {
-          extension.apply(this);
-        }
-      }
-
-      resourceBeanPostProcessor.registerResources(this);
     }
+  }
+
+  @Override
+  public synchronized Object postProcessAfterInitialization (Object bean, String beanName)
+    throws BeansException {
+
+    if (bean.getClass().getAnnotation(Path.class) != null) {
+      register(bean);
+    }
+
+    return bean;
   }
 }

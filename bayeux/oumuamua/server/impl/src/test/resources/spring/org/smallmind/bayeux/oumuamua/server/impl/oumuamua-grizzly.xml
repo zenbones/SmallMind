@@ -3,7 +3,16 @@
        xmlns="http://www.springframework.org/schema/beans"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-  <bean id="resourceBeanPostProcessor" class="org.smallmind.web.jersey.spring.ResourceBeanPostProcessor"/>
+  <bean id="jerseyResourceConfig" class="org.smallmind.web.jersey.spring.JerseyResourceConfig">
+    <property name="resourceConfigExtensions">
+      <list>
+        <bean class="org.smallmind.web.jersey.spring.ResourceConfigProperty">
+          <property name="name" value="jersey.config.beanValidation.disable.server"/>
+          <property name="value" value="true"/>
+        </bean>
+      </list>
+    </property>
+  </bean>
 
   <bean id="grizzlyHttpServer" class="org.smallmind.web.grizzly.GrizzlyInitializingBean">
     <property name="host" value="0.0.0.0"/>
@@ -11,6 +20,7 @@
     <property name="maxHttpHeaderSize" value="65536"/>
     <property name="initialWorkerPoolSize" value="64"/>
     <property name="maximumWorkerPoolSize" value="64"/>
+    <property name="resourceConfig" ref="jerseyResourceConfig"/>
     <property name="webApplicationOptions">
       <bean class="org.smallmind.web.grizzly.option.WebApplicationOption">
         <property name="contextPath" value="/smallmind"/>
@@ -27,14 +37,6 @@
           <bean class="org.smallmind.web.grizzly.option.WebSocketOption"/>
         </property>
       </bean>
-    </property>
-    <property name="resourceConfigExtensions">
-      <list>
-        <bean class="org.smallmind.web.jersey.spring.ResourceConfigProperty">
-          <property name="name" value="jersey.config.beanValidation.disable.server"/>
-          <property name="value" value="true"/>
-        </bean>
-      </list>
     </property>
   </bean>
 </beans>
