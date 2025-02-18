@@ -34,24 +34,10 @@ package org.smallmind.web.jersey.spring;
 
 import jakarta.ws.rs.Path;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.smallmind.web.jersey.json.JsonProvider;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 
-public class JerseyResourceConfig extends ResourceConfig implements BeanPostProcessor {
-
-  private ResourceConfigExtension[] resourceConfigExtensions;
-
-  public void setResourceConfigExtensions (ResourceConfigExtension[] extensions) {
-
-    register(JsonProvider.class);
-
-    if (extensions != null) {
-      for (ResourceConfigExtension extension : extensions) {
-        extension.apply(this);
-      }
-    }
-  }
+public class JerseyPostProcessor extends ResourceConfig implements BeanPostProcessor {
 
   @Override
   public synchronized Object postProcessAfterInitialization (Object bean, String beanName)
@@ -59,6 +45,8 @@ public class JerseyResourceConfig extends ResourceConfig implements BeanPostProc
 
     if (bean.getClass().getAnnotation(Path.class) != null) {
       register(bean);
+    } else if (bean instanceof ResourceConfigExtension) {
+      ((ResourceConfigExtension)bean).apply(this);
     }
 
     return bean;

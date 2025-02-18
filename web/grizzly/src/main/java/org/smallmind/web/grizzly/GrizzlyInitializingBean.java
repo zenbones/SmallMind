@@ -71,13 +71,12 @@ import org.smallmind.web.grizzly.tyrus.TyrusGrizzlyServerContainer;
 import org.smallmind.web.jersey.spring.ExposedApplicationContext;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 
-public class GrizzlyInitializingBean implements InitializingBean, DisposableBean, ApplicationContextAware, ApplicationListener<ContextRefreshedEvent>, BeanPostProcessor {
+public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, InitializingBean, DisposableBean, ApplicationContextAware, ApplicationListener<ContextRefreshedEvent> {
 
   private final HashMap<String, GrizzlyWebAppState> webAppStateMap = new HashMap<>();
   private HttpServer httpServer;
@@ -172,7 +171,8 @@ public class GrizzlyInitializingBean implements InitializingBean, DisposableBean
     }
   }
 
-  private GrizzlyWebAppState webAppStateFor (String context) {
+  @Override
+  public synchronized GrizzlyWebAppState webAppStateFor (String context) {
 
     if ((context == null) || context.isEmpty()) {
       throw new GrizzlyInitializationException("Missing context path");
@@ -389,26 +389,6 @@ public class GrizzlyInitializingBean implements InitializingBean, DisposableBean
   public void setApplicationContext (ApplicationContext applicationContext) {
 
     ExposedApplicationContext.register(applicationContext);
-  }
-
-  @Override
-  public Object postProcessAfterInitialization (Object bean, String beanName) {
-
-    ServicePath servicePath;
-
-    if (bean instanceof WebSocketExtensionInstaller) {
-      webAppStateFor(((WebSocketExtensionInstaller)bean).getContextPath()).addWebSocketExtensionInstaller((WebSocketExtensionInstaller)bean);
-    } else if (bean instanceof ListenerInstaller) {
-      webAppStateFor(((ListenerInstaller)bean).getContextPath()).addListenerInstaller((ListenerInstaller)bean);
-    } else if (bean instanceof FilterInstaller) {
-      webAppStateFor(((FilterInstaller)bean).getContextPath()).addFilterInstaller((FilterInstaller)bean);
-    } else if (bean instanceof ServletInstaller) {
-      webAppStateFor(((ServletInstaller)bean).getContextPath()).addServletInstaller((ServletInstaller)bean);
-    } else if ((servicePath = bean.getClass().getAnnotation(ServicePath.class)) != null) {
-      webAppStateFor(servicePath.contextPath()).addWebServiceInstaller(new WebServiceInstaller(servicePath.value(), bean));
-    }
-
-    return bean;
   }
 
   @Override

@@ -3,19 +3,19 @@
        xmlns="http://www.springframework.org/schema/beans"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-  <bean id="jerseyResourceConfig" class="org.smallmind.web.jersey.spring.JerseyResourceConfig">
-    <property name="resourceConfigExtensions">
-      <list>
-        <bean class="org.smallmind.web.jersey.aop.EntityParamExtension"/>
-        <bean class="org.smallmind.web.jersey.json.XmlAdapterParamExtension"/>
-        <bean class="org.smallmind.web.jersey.json.ThrowableExceptionExtension"/>
-      </list>
-    </property>
-  </bean>
+  <bean id="jerseyPostProcessor" class="org.smallmind.web.jersey.spring.JerseyPostProcessor"/>
 
-  <bean id="restHttpServer" class="org.smallmind.web.grizzly.GrizzlyInitializingBean">
+  <!-- Resource Config Extensions -->
+  <bean class="org.smallmind.web.jersey.aop.EntityParamExtension"/>
+  <bean class="org.smallmind.web.jersey.json.XmlAdapterParamExtension"/>
+  <bean class="org.smallmind.web.jersey.json.ThrowableExceptionExtension"/>
+
+  <bean id="grizzlyPostProcessor" class="org.smallmind.web.grizzly.GrizzlyPostProcessor"/>
+
+  <bean id="grizzlyHttpServer" class="org.smallmind.web.grizzly.GrizzlyInitializingBean">
     <property name="host" value="${grizzly.host}"/>
     <property name="port" value="${grizzly.port}"/>
+    <property name="resourceConfig" ref="jerseyPostProcessor"/>
     <property name="webApplicationOptions">
       <bean class="org.smallmind.web.grizzly.option.WebApplicationOption">
         <property name="contextPath" value="${grizzly.context_path}"/>

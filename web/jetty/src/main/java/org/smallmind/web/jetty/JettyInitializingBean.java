@@ -72,13 +72,12 @@ import org.smallmind.web.jetty.installer.WebServiceInstaller;
 import org.smallmind.web.jetty.option.WebApplicationOption;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 
-public class JettyInitializingBean implements InitializingBean, DisposableBean, ApplicationContextAware, ApplicationListener<ContextRefreshedEvent>, BeanPostProcessor {
+public class JettyInitializingBean implements JettyWebAppStateLocator, InitializingBean, DisposableBean, ApplicationContextAware, ApplicationListener<ContextRefreshedEvent> {
 
   private final HashMap<String, JettyWebAppState> webAppStateMap = new HashMap<>();
   private Server server;
@@ -155,7 +154,8 @@ public class JettyInitializingBean implements InitializingBean, DisposableBean, 
     }
   }
 
-  private JettyWebAppState webAppStateFor (String context) {
+  @Override
+  public JettyWebAppState webAppStateFor (String context) {
 
     if ((context == null) || context.isEmpty()) {
       throw new JettyInitializationException("Missing context path");
@@ -416,24 +416,6 @@ public class JettyInitializingBean implements InitializingBean, DisposableBean, 
   private String combinePaths (String contextPath, String extensionPath) {
 
     return ((extensionPath == null) || (extensionPath.isEmpty()) || "/".equals(extensionPath)) ? contextPath : ((contextPath == null) || (contextPath.isEmpty()) || "/".equals(contextPath)) ? extensionPath : contextPath + extensionPath;
-  }
-
-  @Override
-  public Object postProcessAfterInitialization (Object bean, String beanName) {
-
-    ServicePath servicePath;
-
-    if (bean instanceof ListenerInstaller) {
-      webAppStateFor(((ListenerInstaller)bean).getContextPath()).addListenerInstaller((ListenerInstaller)bean);
-    } else if (bean instanceof FilterInstaller) {
-      webAppStateFor(((FilterInstaller)bean).getContextPath()).addFilterInstaller((FilterInstaller)bean);
-    } else if (bean instanceof ServletInstaller) {
-      webAppStateFor(((ServletInstaller)bean).getContextPath()).addServletInstaller((ServletInstaller)bean);
-    } else if ((servicePath = bean.getClass().getAnnotation(ServicePath.class)) != null) {
-      webAppStateFor(servicePath.context()).addWebServiceInstaller(new WebServiceInstaller(servicePath.value(), bean));
-    }
-
-    return bean;
   }
 
   @Override
