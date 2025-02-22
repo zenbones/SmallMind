@@ -141,7 +141,7 @@ public enum AsymmetricKeySpec {
         if (!(epilogMatcher = PKCS8_EPILOG_PATTERN.matcher(raw)).find()) {
           raw = raw + "\n-----END PRIVATE KEY-----";
         } else if (!epilogMatcher.group(1).equals("\n")) {
-          raw = raw.substring(raw.length() - (26 + (raw.endsWith("\n") ? 1 : 0))) + "\n-----END PRIVATE KEY-----";
+          raw = raw.substring(0, raw.length() - (26 + (raw.endsWith("\n") ? 1 : 0))) + "\n-----END PRIVATE KEY-----";
         }
 
         return new PKCS8EncodedKeySpec(new PemReader(new StringReader(raw)).readPemObject().getContent());
