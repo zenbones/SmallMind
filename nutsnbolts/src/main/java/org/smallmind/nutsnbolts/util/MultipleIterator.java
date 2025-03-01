@@ -32,67 +32,62 @@
  */
 package org.smallmind.nutsnbolts.util;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.NoSuchElementException;
 
 public class MultipleIterator<T> implements Iterator<T>, Iterable<T> {
 
-  private final Iterator<T>[] iterators;
-  private int index = 0;
+    private final ArrayList<Iterator<T>> iteratorList = new ArrayList<>();
+    private int index = 0;
 
-  public MultipleIterator (Iterable<T>... iterables) {
+    public void add(Iterator<T> iterator) {
 
-    iterators = new Iterator[iterables.length];
-    for (int count = 0; count < iterables.length; count++) {
-      iterators[count] = iterables[count].iterator();
+        iteratorList.add(iterator);
     }
 
-    moveIndex();
-  }
+    public void done() {
 
-  public MultipleIterator (Iterator<T>... iterators) {
-
-    this.iterators = iterators;
-
-    moveIndex();
-  }
-
-  private void moveIndex () {
-
-    while ((index < iterators.length) && (!iterators[index].hasNext())) {
-      index++;
-    }
-  }
-
-  public Iterator<T> iterator () {
-
-    return this;
-  }
-
-  public boolean hasNext () {
-
-    return index < iterators.length;
-  }
-
-  public T next () {
-
-    if (!hasNext()) {
-      throw new NoSuchElementException();
+        moveIndex();
     }
 
-    try {
-      return iterators[index].next();
-    } finally {
-      moveIndex();
-    }
-  }
+    private void moveIndex() {
 
-  public void remove () {
-
-    if (!(index < iterators.length)) {
-      throw new IllegalStateException("The next() method has not been called");
+        while ((index < iteratorList.size()) && (!iteratorList.get(index).hasNext())) {
+            index++;
+        }
     }
 
-    iterators[index].remove();
-  }
+    public Iterator<T> iterator() {
+
+        return this;
+    }
+
+    public boolean hasNext() {
+
+        return index < iteratorList.size();
+    }
+
+    public T next() {
+
+        if (!hasNext()) {
+            throw new NoSuchElementException();
+        }
+
+        try {
+            return iteratorList.get(index).next();
+        } finally {
+            moveIndex();
+        }
+    }
+
+    public void remove() {
+
+        if (!(index < iteratorList.size())) {
+            throw new IllegalStateException("The next() method has not been called");
+        }
+
+        iteratorList.get(index).remove();
+    }
 }
