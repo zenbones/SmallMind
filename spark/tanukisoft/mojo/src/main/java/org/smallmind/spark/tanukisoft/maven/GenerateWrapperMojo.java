@@ -86,6 +86,8 @@ public class GenerateWrapperMojo extends AbstractMojo {
   private String applicationName;
   @Parameter(property = "project.name")
   private String applicationLongName;
+  @Parameter
+  private String classifier;
   @Parameter(property = "project.description")
   private String applicationDescription;
   @Parameter
@@ -416,8 +418,8 @@ public class GenerateWrapperMojo extends AbstractMojo {
       nameBuilder.append('-').append(project.getVersion());
     }
 
-    if (project.getArtifact().getClassifier() != null) {
-      nameBuilder.append('-').append(project.getArtifact().getClassifier());
+    if (classifier != null) {
+      nameBuilder.append('-').append(classifier);
     }
 
     if (aggregateArtifact) {

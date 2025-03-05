@@ -58,6 +58,8 @@ public class InstallWrapperMojo extends AbstractMojo {
   private ArtifactRepository localRepository;
   @Parameter(property = "project.artifactId")
   private String applicationName;
+  @Parameter
+  private String classifier;
   @Parameter(defaultValue = "zip")
   private String compression;
   @Parameter(defaultValue = "false")
@@ -82,12 +84,12 @@ public class InstallWrapperMojo extends AbstractMojo {
         throw new MojoExecutionException(String.format("Unknown compression type(%s) - valid choices are %s", compression, Arrays.toString(CompressionType.values())), exception);
       }
 
-      applicationArtifact = artifactFactory.createArtifactWithClassifier(project.getGroupId(), project.getArtifactId(), project.getVersion(), compressionType.getExtension(), (project.getArtifact().getClassifier() == null) ? "app" : project.getArtifact().getClassifier() + "-app");
+      applicationArtifact = artifactFactory.createArtifactWithClassifier(project.getGroupId(), project.getArtifactId(), project.getVersion(), compressionType.getExtension(), (classifier == null) ? "app" : classifier + "-app");
       nameBuilder = new StringBuilder(applicationName).append('-').append(project.getVersion());
 
-      if (project.getArtifact().getClassifier() != null) {
+      if (classifier != null) {
         nameBuilder.append('-');
-        nameBuilder.append(project.getArtifact().getClassifier());
+        nameBuilder.append(classifier);
       }
 
       nameBuilder.append("-app").append('.').append(compressionType.getExtension());
