@@ -86,10 +86,10 @@ public class DeployWrapperMojo extends AbstractMojo {
         throw new MojoExecutionException(String.format("Unknown compression type(%s) - valid choices are %s", compression, Arrays.toString(CompressionType.values())), exception);
       }
 
-      applicationArtifact = artifactFactory.createArtifactWithClassifier(project.getGroupId(), project.getArtifactId(), project.getVersion(), compressionType.getExtension(), (classifier == null) ? "app" : classifier + "-app");
+      applicationArtifact = artifactFactory.createArtifactWithClassifier(project.getGroupId(), project.getArtifactId(), project.getVersion(), compressionType.getExtension(), ((classifier == null) || classifier.isEmpty()) ? "app" : classifier + "-app");
       nameBuilder = new StringBuilder(applicationName).append('-').append(project.getVersion());
 
-      if (classifier != null) {
+      if ((classifier != null) && (!classifier.isEmpty())) {
         nameBuilder.append('-');
         nameBuilder.append(classifier);
       }

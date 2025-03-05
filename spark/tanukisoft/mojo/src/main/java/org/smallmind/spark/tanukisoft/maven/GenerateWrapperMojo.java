@@ -418,7 +418,7 @@ public class GenerateWrapperMojo extends AbstractMojo {
       nameBuilder.append('-').append(project.getVersion());
     }
 
-    if (classifier != null) {
+    if ((classifier != null) && (!classifier.isEmpty())) {
       nameBuilder.append('-').append(classifier);
     }
 
