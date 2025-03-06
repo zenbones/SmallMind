@@ -41,6 +41,8 @@ import java.security.spec.KeySpec;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.bouncycastle.crypto.util.OpenSSHPublicKeyUtil;
 import org.bouncycastle.crypto.util.PublicKeyFactory;
 import org.bouncycastle.jcajce.spec.OpenSSHPublicKeySpec;
@@ -124,16 +126,22 @@ public enum AsymmetricKeySpec {
       if (AsymmetricKeyType.PUBLIC.equals(type)) {
         throw new InappropriateKeySpecException(type.name());
       } else {
-        raw = raw.trim().replaceAll("\\s+", "\n");
 
-        if (!raw.startsWith("-----BEGIN PRIVATE KEY-----\n")) {
-          raw = "-----BEGIN PRIVATE KEY-----\n" + raw;
+        Matcher prologMatcher;
+        Matcher epilogMatcher;
+        int start = 0;
+        int end = raw.length();
+
+        raw = raw.trim();
+
+        if (!(prologMatcher = PKCS8_PROLOG_PATTERN.matcher(raw)).find()) {
+          start = prologMatcher.end();
         }
-        if (!raw.endsWith("\n-----END PRIVATE KEY-----")) {
-          raw = raw + "\n-----END PRIVATE KEY-----";
+        if (!(epilogMatcher = PKCS8_EPILOG_PATTERN.matcher(raw)).find()) {
+          end = epilogMatcher.start();
         }
 
-        return new PKCS8EncodedKeySpec(new PemReader(new StringReader(raw)).readPemObject().getContent());
+        return new PKCS8EncodedKeySpec(new PemReader(new StringReader("-----BEGIN PRIVATE KEY-----\n" + raw.substring(start, end).replaceAll("\\s", "\n") + "\n-----END PRIVATE KEY-----")).readPemObject().getContent());
       }
     }
   },
@@ -183,6 +191,9 @@ public enum AsymmetricKeySpec {
       }
     }
   };
+
+  private static final Pattern PKCS8_PROLOG_PATTERN = Pattern.compile("^-----BEGIN PRIVATE KEY-----\\s+");
+  private static final Pattern PKCS8_EPILOG_PATTERN = Pattern.compile("\\s+-----END PRIVATE KEY-----$");
 
   public abstract KeySpec generateKeySpec (AsymmetricKeyType type, String raw)
     throws IOException, InappropriateKeySpecException;
