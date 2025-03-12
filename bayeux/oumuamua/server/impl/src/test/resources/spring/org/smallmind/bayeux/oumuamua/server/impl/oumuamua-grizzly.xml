@@ -6,6 +6,7 @@
   <bean id="jerseyPostProcessor" class="org.smallmind.web.jersey.spring.JerseyPostProcessor"/>
 
   <!-- Resource Config Extensions -->
+  <bean class="org.smallmind.web.jersey.json.JsonProviderExtension"/>
   <bean class="org.smallmind.web.jersey.spring.ResourceConfigProperty">
     <property name="name" value="jersey.config.beanValidation.disable.server"/>
     <property name="value" value="true"/>
