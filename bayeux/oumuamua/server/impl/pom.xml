@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>oumuamua-server</artifactId>
-    <version>6.5.0-SNAPSHOT</version>
+    <version>6.5.0</version>
   </parent>
   <artifactId>oumuamua-server-impl</artifactId>
   <packaging>jar</packaging>
