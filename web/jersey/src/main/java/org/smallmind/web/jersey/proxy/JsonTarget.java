@@ -46,8 +46,8 @@ import org.smallmind.nutsnbolts.util.Pair;
 import org.smallmind.nutsnbolts.util.Tuple;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerManager;
-import org.smallmind.web.http.HttpClient;
-import org.smallmind.web.http.SimpleCallback;
+import org.smallmind.web.http.apache.HttpClient;
+import org.smallmind.web.http.apache.SimpleCallback;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public class JsonTarget {
