@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>smallmind-claxon</artifactId>
-    <version>5.12.0</version>
+    <version>5.13.0</version>
   </parent>
   <artifactId>claxon-emitter</artifactId>
   <name>Claxon-Emitter</name>

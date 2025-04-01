@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>smallmind-web</artifactId>
-    <version>5.12.0</version>
+    <version>5.13.0</version>
   </parent>
   <artifactId>web-websocket</artifactId>
   <packaging>jar</packaging>

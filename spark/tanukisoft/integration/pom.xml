@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>spark-tanukisoft</artifactId>
-    <version>5.12.0</version>
+    <version>5.13.0</version>
   </parent>
   <artifactId>spark-tanukisoft-integration</artifactId>
   <packaging>jar</packaging>

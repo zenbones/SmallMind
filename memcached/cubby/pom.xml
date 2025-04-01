@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>smallmind-memcached</artifactId>
-    <version>5.12.0</version>
+    <version>5.13.0</version>
   </parent>
   <artifactId>memcached-cubby</artifactId>
   <packaging>jar</packaging>
