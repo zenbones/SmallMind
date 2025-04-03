@@ -56,7 +56,7 @@ public class NumericSpread {
       int index = 0;
 
       for (String zone : zones) {
-        if (zone.trim().length() == 0) {
+        if (zone.trim().isEmpty()) {
           throw new SpreadParserException("Empty elements are not allowed");
         }
 
