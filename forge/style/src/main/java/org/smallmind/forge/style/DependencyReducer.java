@@ -148,7 +148,7 @@ public class DependencyReducer {
       return null;
     } else {
 
-      return result.trim();
+      return result.strip();
     }
   }
 

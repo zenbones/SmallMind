@@ -132,7 +132,7 @@ public enum AsymmetricKeySpec {
         int start = 0;
         int end = raw.length();
 
-        raw = raw.trim();
+        raw = raw.strip();
 
         if ((prologMatcher = PKCS8_PROLOG_PATTERN.matcher(raw)).find()) {
           start = prologMatcher.end();
@@ -162,7 +162,7 @@ public enum AsymmetricKeySpec {
       throws IOException, InappropriateKeySpecException {
 
       if (AsymmetricKeyType.PUBLIC.equals(type)) {
-        raw = raw.trim();
+        raw = raw.strip();
 
         if (raw.startsWith("-----")) {
 

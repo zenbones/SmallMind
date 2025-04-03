@@ -64,7 +64,7 @@ public class EmailValidator implements ConstraintValidator<Email, String> {
 
       for (int index = 0; index < value.length(); index++) {
         if (value.charAt(index) == constraintAnnotation.separator()) {
-          if (!isAnEmail(value.substring(lastIndex, index).trim())) {
+          if (!isAnEmail(value.substring(lastIndex, index).strip())) {
 
             return false;
           }
@@ -73,7 +73,7 @@ public class EmailValidator implements ConstraintValidator<Email, String> {
         }
       }
 
-      return isAnEmail(value.substring(lastIndex).trim());
+      return isAnEmail(value.substring(lastIndex).strip());
     }
   }
 

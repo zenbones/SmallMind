@@ -56,13 +56,13 @@ public class NumericSpread {
       int index = 0;
 
       for (String zone : zones) {
-        if (zone.trim().isEmpty()) {
+        if (zone.strip().isEmpty()) {
           throw new SpreadParserException("Empty elements are not allowed");
         }
 
-        if ((zoneMatcher = NUMBER_PATTERN.matcher(zone.trim())).matches()) {
+        if ((zoneMatcher = NUMBER_PATTERN.matcher(zone.strip())).matches()) {
           numberList.add(Integer.parseInt(zoneMatcher.group()));
-        } else if ((zoneMatcher = SPREAD_PATTERN.matcher(zone.trim())).matches()) {
+        } else if ((zoneMatcher = SPREAD_PATTERN.matcher(zone.strip())).matches()) {
 
           int start = Integer.parseInt(zoneMatcher.group(1));
           int end = Integer.parseInt(zoneMatcher.group(2));

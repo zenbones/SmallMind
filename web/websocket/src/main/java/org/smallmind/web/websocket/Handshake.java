@@ -202,7 +202,7 @@ public class Handshake {
             ExtensionParameter[] parameters;
             String extensionName;
 
-            if ((extensionName = splitParameterValues[0].trim()).isEmpty()) {
+            if ((extensionName = splitParameterValues[0].strip()).isEmpty()) {
               throw new SyntaxException("The 'Sec-WebSocket-Extensions' contains an empty extension name");
             }
 
@@ -216,10 +216,10 @@ public class Handshake {
                   String parameterName;
                   String parameterValue;
 
-                  if ((parameterName = splitParameterValues[index].substring(0, equalsPos).trim()).isEmpty()) {
+                  if ((parameterName = splitParameterValues[index].substring(0, equalsPos).strip()).isEmpty()) {
                     throw new SyntaxException("The 'Sec-WebSocket-Extensions' contains an empty parameter name");
                   }
-                  if ((parameterValue = splitParameterValues[index].substring(equalsPos + 1).trim()).isEmpty()) {
+                  if ((parameterValue = splitParameterValues[index].substring(equalsPos + 1).strip()).isEmpty()) {
                     throw new SyntaxException("The 'Sec-WebSocket-Extensions' contains an empty parameter value");
                   }
 

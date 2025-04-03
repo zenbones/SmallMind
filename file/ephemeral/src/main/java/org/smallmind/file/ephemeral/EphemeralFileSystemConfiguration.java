@@ -100,7 +100,7 @@ public class EphemeralFileSystemConfiguration {
 
       String[] rawNames;
       String[] translatedNames;
-      String trimmedRootsEnvVar = rootsEnvVar.trim();
+      String trimmedRootsEnvVar = rootsEnvVar.strip();
 
       if (trimmedRootsEnvVar.startsWith("[") && trimmedRootsEnvVar.endsWith("]")) {
         rawNames = trimmedRootsEnvVar.substring(1, trimmedRootsEnvVar.length() - 1).split(",");
@@ -111,7 +111,7 @@ public class EphemeralFileSystemConfiguration {
       translatedNames = new String[rawNames.length];
       for (int index = 0; index < rawNames.length; index++) {
 
-        String trimmedName = rawNames[index].trim();
+        String trimmedName = rawNames[index].strip();
 
         translatedNames[index] = trimmedName.startsWith("/") ? trimmedName : "/" + trimmedName;
       }

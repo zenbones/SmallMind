@@ -87,7 +87,7 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
 
   public void setPrefix (String prefix) {
 
-    this.prefix = (prefix == null) ? null : prefix.trim();
+    this.prefix = (prefix == null) ? null : prefix.strip();
   }
 
   public CommonDataSource getDataSource (String dataSourceKey) {

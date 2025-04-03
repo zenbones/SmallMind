@@ -116,7 +116,7 @@ public class LdapNameTranslator extends NameTranslator {
         if (count > 0) {
           internalBuilder.insert(insertPos, '/');
         }
-        internalBuilder.insert(insertPos, parsedName.substring(equalsPos + 1).trim());
+        internalBuilder.insert(insertPos, parsedName.substring(equalsPos + 1).strip());
       } else {
         throw new InvalidNameException("Parameter (" + externalName + ") is not a proper distinguished Ldap name");
       }

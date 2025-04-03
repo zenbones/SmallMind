@@ -101,7 +101,7 @@ public class Postman {
     Multipart multipart = new MimeMultipart();
 
     try {
-      message.setFrom(new InternetAddress(mail.getFrom().trim()));
+      message.setFrom(new InternetAddress(mail.getFrom().strip()));
 
       if (mail.getReplyTo() != null) {
         message.setReplyTo(new Address[] {new InternetAddress(mail.getReplyTo())});
@@ -180,7 +180,7 @@ public class Postman {
     throws MessagingException {
 
     for (String address : addresses.split(",")) {
-      message.addRecipient(type, new InternetAddress(address.trim()));
+      message.addRecipient(type, new InternetAddress(address.strip()));
     }
   }
 

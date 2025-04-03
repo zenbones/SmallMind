@@ -143,9 +143,9 @@ public class TyrusGrizzlyServerFilter extends BaseFilter {
 
         final List<String> values = requestContext.getHeaders().get(name);
         if (values == null) {
-          requestContext.getHeaders().put(name, Utils.parseHeaderValue(headerValue.trim()));
+          requestContext.getHeaders().put(name, Utils.parseHeaderValue(headerValue.strip()));
         } else {
-          values.addAll(Utils.parseHeaderValue(headerValue.trim()));
+          values.addAll(Utils.parseHeaderValue(headerValue.strip()));
         }
       }
     }

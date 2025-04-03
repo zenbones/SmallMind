@@ -171,7 +171,7 @@ public class ComponentParser {
           case START_SUBSCRIPT:
             if (methodChain.charAt(index) == ']') {
               try {
-                component.addSubscript(methodChain.substring(mark, index).trim());
+                component.addSubscript(methodChain.substring(mark, index).strip());
               } catch (NumberFormatException numberFormatException) {
                 throw new BeanAccessException("Illegal subscript at index(%d) in method chain(%s)", mark, methodChain);
               }

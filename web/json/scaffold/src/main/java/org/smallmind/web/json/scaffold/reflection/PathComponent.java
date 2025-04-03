@@ -60,7 +60,7 @@ public class PathComponent {
   public void createArguments (String argumentSubPath)
     throws IOException {
 
-    arguments = JsonCodec.read('[' + argumentSubPath.trim() + ']', Object[].class);
+    arguments = JsonCodec.read('[' + argumentSubPath.strip() + ']', Object[].class);
   }
 
   public int[] getSubscripts () {
@@ -86,6 +86,6 @@ public class PathComponent {
     if (subscriptList == null) {
       subscriptList = new LinkedList<>();
     }
-    subscriptList.add(Integer.parseInt(subscriptSubPath.trim()));
+    subscriptList.add(Integer.parseInt(subscriptSubPath.strip()));
   }
 }

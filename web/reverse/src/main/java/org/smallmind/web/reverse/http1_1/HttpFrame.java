@@ -68,11 +68,11 @@ public abstract class HttpFrame {
       if ((colonPos = line.indexOf(':')) < 0) {
         throw new ProtocolException(CannedResponse.BAD_REQUEST);
       }
-      if ((header = headerMap.get(normalizeName = normalizeHeaderName(line.substring(0, colonPos).trim()))) == null) {
+      if ((header = headerMap.get(normalizeName = normalizeHeaderName(line.substring(0, colonPos).strip()))) == null) {
         headerMap.put(normalizeName, header = new HttpHeader(normalizeName));
       }
 
-      header.addValue(line.substring(colonPos + 1).trim());
+      header.addValue(line.substring(colonPos + 1).strip());
     }
 
     return new LinkedList<>(headerMap.values());
@@ -108,7 +108,7 @@ public abstract class HttpFrame {
 
   public HttpHeader getHeader (String name) {
 
-    String normalizedName = normalizeHeaderName(name.trim());
+    String normalizedName = normalizeHeaderName(name.strip());
 
     for (HttpHeader header : headerList) {
       if (header.getName().equals(normalizedName)) {
@@ -137,7 +137,7 @@ public abstract class HttpFrame {
   public HttpHeader removeHeader (String name) {
 
     Iterator<HttpHeader> headerIter = headerList.iterator();
-    String normalizedName = normalizeHeaderName(name.trim());
+    String normalizedName = normalizeHeaderName(name.strip());
 
     while (headerIter.hasNext()) {
 

@@ -56,13 +56,13 @@ public class AlphaSpread {
       int index = 0;
 
       for (String zone : zones) {
-        if (zone.trim().isEmpty()) {
+        if (zone.strip().isEmpty()) {
           throw new SpreadParserException("Empty elements are not allowed");
         }
 
-        if ((zoneMatcher = LETTER_PATTERN.matcher(zone.trim())).matches()) {
+        if ((zoneMatcher = LETTER_PATTERN.matcher(zone.strip())).matches()) {
           letterList.add(zoneMatcher.group().charAt(0));
-        } else if ((zoneMatcher = SPREAD_PATTERN.matcher(zone.trim())).matches()) {
+        } else if ((zoneMatcher = SPREAD_PATTERN.matcher(zone.strip())).matches()) {
 
           char start = zoneMatcher.group(1).charAt(0);
           char end = zoneMatcher.group(2).charAt(0);

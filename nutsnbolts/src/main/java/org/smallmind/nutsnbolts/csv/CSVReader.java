@@ -185,7 +185,7 @@ public class CSVReader implements AutoCloseable {
 
   private void appendField (LinkedList<String> fieldList, boolean trimFields) {
 
-    fieldList.add((trimFields) ? fieldBuilder.toString().trim() : fieldBuilder.toString());
+    fieldList.add((trimFields) ? fieldBuilder.toString().strip() : fieldBuilder.toString());
     fieldBuilder.setLength(0);
   }
 
