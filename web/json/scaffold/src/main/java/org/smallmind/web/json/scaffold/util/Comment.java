@@ -39,6 +39,7 @@ import java.lang.annotation.Target;
 
 @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
+// a hint for tools that may process classes, use to indicate a comment to be processed for display purposes
 public @interface Comment {
 
   String value ();

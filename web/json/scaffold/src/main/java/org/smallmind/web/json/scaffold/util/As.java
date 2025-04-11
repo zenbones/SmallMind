@@ -39,6 +39,7 @@ import java.lang.annotation.Target;
 
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
+// a hint for tools that may process classes, to note that a method return value should be wrapped in a transform to the indicated class
 public @interface As {
 
   Class<?> value ();

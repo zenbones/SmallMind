@@ -32,6 +32,14 @@
  */
 package org.smallmind.web.json.scaffold.util;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+@Target({ElementType.METHOD})
+@Retention(RetentionPolicy.RUNTIME)
+// a hint for tools that may process classes, to note use of an OverlayNullifier on an associated bean conforming field
 public @interface NullifiedBy {
 
   String value ();
