@@ -44,6 +44,7 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeKind;
+import javax.tools.Diagnostic;
 import org.smallmind.nutsnbolts.apt.AptUtility;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
@@ -74,7 +75,7 @@ public class ClassWalker {
           String fieldName = Character.toLowerCase(methodName.charAt(2)) + methodName.substring(3);
 
           if ((viewAnnotationMirror = AptUtility.extractAnnotationMirror(processingEnvironment, enclosedElement, usefulTypeMirrors.getViewTypeMirror())) != null) {
-            for (PropertyBox propertyBox : new PropertyParser(processingEnvironment, usefulTypeMirrors, viewAnnotationMirror, ((ExecutableElement)enclosedElement).getReturnType(), false)) {
+            for (PropertyBox propertyBox : new PropertyParser(processingEnvironment, usefulTypeMirrors, viewAnnotationMirror, ((ExecutableElement)enclosedElement).getReturnType(), null, false)) {
               if (Visibility.IN.equals(propertyBox.getVisibility())) {
                 throw new DefinitionException("The 'is' method(%s) found in class(%s) can't be annotated as 'IN' only", enclosedElement.getSimpleName(), classElement.getQualifiedName());
               }
@@ -91,7 +92,7 @@ public class ClassWalker {
           String fieldName = Character.toLowerCase(methodName.charAt(3)) + methodName.substring(4);
 
           if ((viewAnnotationMirror = AptUtility.extractAnnotationMirror(processingEnvironment, enclosedElement, usefulTypeMirrors.getViewTypeMirror())) != null) {
-            for (PropertyBox propertyBox : new PropertyParser(processingEnvironment, usefulTypeMirrors, viewAnnotationMirror, ((ExecutableElement)enclosedElement).getReturnType(), false)) {
+            for (PropertyBox propertyBox : new PropertyParser(processingEnvironment, usefulTypeMirrors, viewAnnotationMirror, ((ExecutableElement)enclosedElement).getReturnType(), null, false)) {
               if (Visibility.IN.equals(propertyBox.getVisibility())) {
                 throw new DefinitionException("The 'get' method(%s) found in class(%s) can't be annotated as 'IN' only", enclosedElement.getSimpleName(), classElement.getQualifiedName());
               }
@@ -109,7 +110,7 @@ public class ClassWalker {
           String fieldName = Character.toLowerCase(methodName.charAt(3)) + methodName.substring(4);
 
           if ((viewAnnotationMirror = AptUtility.extractAnnotationMirror(processingEnvironment, enclosedElement, usefulTypeMirrors.getViewTypeMirror())) != null) {
-            for (PropertyBox propertyBox : new PropertyParser(processingEnvironment, usefulTypeMirrors, viewAnnotationMirror, ((ExecutableElement)enclosedElement).getParameters().get(0).asType(), false)) {
+            for (PropertyBox propertyBox : new PropertyParser(processingEnvironment, usefulTypeMirrors, viewAnnotationMirror, ((ExecutableElement)enclosedElement).getParameters().get(0).asType(), null, false)) {
               if (!Visibility.IN.equals(propertyBox.getVisibility())) {
                 throw new DefinitionException("The 'set' method(%s) found in class(%s) must be annotated as 'IN' only", enclosedElement.getSimpleName(), classElement.getQualifiedName());
               }
@@ -132,7 +133,10 @@ public class ClassWalker {
 
       if ((viewAnnotationMirror = AptUtility.extractAnnotationMirror(processingEnvironment, enclosedElement, usefulTypeMirrors.getViewTypeMirror())) != null) {
         if (ElementKind.FIELD.equals(enclosedElement.getKind())) {
-          for (PropertyBox propertyBox : new PropertyParser(processingEnvironment, usefulTypeMirrors, viewAnnotationMirror, enclosedElement.asType(), false)) {
+
+          AnnotationMirror nullifierAnnotationMirror = AptUtility.extractAnnotationMirrorAnnotatedBy(processingEnvironment, enclosedElement, usefulTypeMirrors.getOverlayNullifierTypeMirror());
+
+          for (PropertyBox propertyBox : new PropertyParser(processingEnvironment, usefulTypeMirrors, viewAnnotationMirror, enclosedElement.asType(), nullifierAnnotationMirror, false)) {
             switch (propertyBox.getVisibility()) {
               case IN:
                 addInField(classElement, doppelgangerInformation, setMethodMap, enclosedElement.getSimpleName().toString(), propertyBox);
@@ -153,7 +157,7 @@ public class ClassWalker {
           String methodName = enclosedElement.getSimpleName().toString();
           String fieldName = methodName.startsWith("is") ? Character.toLowerCase(methodName.charAt(2)) + methodName.substring(3) : Character.toLowerCase(methodName.charAt(3)) + methodName.substring(4);
 
-          for (PropertyBox propertyBox : new PropertyParser(processingEnvironment, usefulTypeMirrors, viewAnnotationMirror, ((ExecutableElement)enclosedElement).getReturnType(), false)) {
+          for (PropertyBox propertyBox : new PropertyParser(processingEnvironment, usefulTypeMirrors, viewAnnotationMirror, ((ExecutableElement)enclosedElement).getReturnType(), null, false)) {
             if (Visibility.BOTH.equals(propertyBox.getVisibility())) {
               if (!setMethodMap.containsKey(fieldName)) {
                 throw new DefinitionException("The 'getter' method(%s) found in class(%s) must have a corresponding 'setter'", enclosedElement.getSimpleName(), classElement.getQualifiedName());

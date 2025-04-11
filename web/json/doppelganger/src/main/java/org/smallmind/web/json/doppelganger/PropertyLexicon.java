@@ -104,6 +104,20 @@ public class PropertyLexicon {
     return false;
   }
 
+  public boolean hasNullifier () {
+
+    if (!realMap.isEmpty()) {
+      for (PropertyInformation propertyInformation : realMap.values()) {
+        if (propertyInformation.getNullifierAnnotationName() != null) {
+
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
   public boolean containsKey (String key) {
 
     return realMap.containsKey(key) || virtualMap.containsKey(key);

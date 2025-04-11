@@ -57,30 +57,18 @@ public class AptUtility {
     return null;
   }
 
-  public static AnnotationMirror[] extractAnnotationMirrors (ProcessingEnvironment processingEnv, Element element, TypeMirror annotationCollectionTypeMirror, TypeMirror annotationTypeMirror) {
-
-    AnnotationMirror[] annotationMirrors;
-    LinkedList<AnnotationMirror> annotationMirrorList = new LinkedList<>();
+  public static AnnotationMirror extractAnnotationMirrorAnnotatedBy (ProcessingEnvironment processingEnv, Element element, TypeMirror annotationTypeMirror) {
 
     for (AnnotationMirror annotationMirror : element.getAnnotationMirrors()) {
-      if (processingEnv.getTypeUtils().isSameType(annotationTypeMirror, annotationMirror.getAnnotationType())) {
-        annotationMirrorList.add(annotationMirror);
-      } else if ((annotationCollectionTypeMirror != null) && processingEnv.getTypeUtils().isSameType(annotationCollectionTypeMirror, annotationMirror.getAnnotationType())) {
+      for (AnnotationMirror subAnnotationMirror : annotationMirror.getAnnotationType().asElement().getAnnotationMirrors()) {
+        if (processingEnv.getTypeUtils().isSameType(annotationTypeMirror, subAnnotationMirror.getAnnotationType())) {
 
-        List<AnnotationValue> childAnnotationValueList;
-
-        if ((childAnnotationValueList = extractAnnotationValue(annotationMirror, "value", List.class, null)) != null) {
-          for (AnnotationValue childAnnotationValue : childAnnotationValueList) {
-            annotationMirrorList.add((AnnotationMirror)childAnnotationValue.getValue());
-          }
+          return annotationMirror;
         }
       }
     }
 
-    annotationMirrors = new AnnotationMirror[annotationMirrorList.size()];
-    annotationMirrorList.toArray(annotationMirrors);
-
-    return annotationMirrors;
+    return null;
   }
 
   public static <T> T extractAnnotationValue (AnnotationMirror annotationMirror, String valueName, Class<T> clazz, T defaultValue) {

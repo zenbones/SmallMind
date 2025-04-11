@@ -44,8 +44,9 @@ public class PropertyParser implements Iterable<PropertyBox> {
 
   private final LinkedList<PropertyBox> entryList = new LinkedList<>();
 
-  public PropertyParser (ProcessingEnvironment processingEnvironment, UsefulTypeMirrors usefulTypeMirrors, AnnotationMirror propertyAnnotationMirror, TypeMirror type, boolean virtual) {
+  public PropertyParser (ProcessingEnvironment processingEnvironment, UsefulTypeMirrors usefulTypeMirrors, AnnotationMirror propertyAnnotationMirror, TypeMirror type, AnnotationMirror nullifierAnnotationMirror, boolean virtual) {
 
+    String nullifierAnnotationName = (nullifierAnnotationMirror == null) ? null : nullifierAnnotationMirror.getAnnotationType().asElement().getSimpleName().toString();
     boolean hasIdioms = false;
 
     for (AnnotationMirror idiomAnnotationMirror : AptUtility.extractAnnotationValueAsList(propertyAnnotationMirror, "idioms", AnnotationMirror.class)) {
@@ -54,15 +55,15 @@ public class PropertyParser implements Iterable<PropertyBox> {
 
       hasIdioms = true;
       if (idiomInformation.getPurposeList().isEmpty()) {
-        entryList.add(new PropertyBox(idiomInformation.getVisibility(), "", new PropertyInformation(propertyAnnotationMirror, idiomInformation.getConstraintList(), idiomInformation.isRequired(), type, virtual)));
+        entryList.add(new PropertyBox(idiomInformation.getVisibility(), "", new PropertyInformation(propertyAnnotationMirror, idiomInformation.getConstraintList(), idiomInformation.isRequired(), type, nullifierAnnotationName, virtual)));
       } else {
         for (String purpose : idiomInformation.getPurposeList()) {
-          entryList.add(new PropertyBox(idiomInformation.getVisibility(), purpose, new PropertyInformation(propertyAnnotationMirror, idiomInformation.getConstraintList(), idiomInformation.isRequired(), type, virtual)));
+          entryList.add(new PropertyBox(idiomInformation.getVisibility(), purpose, new PropertyInformation(propertyAnnotationMirror, idiomInformation.getConstraintList(), idiomInformation.isRequired(), type, nullifierAnnotationName, virtual)));
         }
       }
     }
     if (!hasIdioms) {
-      entryList.add(new PropertyBox(Visibility.BOTH, "", new PropertyInformation(propertyAnnotationMirror, Collections.emptyList(), false, type, virtual)));
+      entryList.add(new PropertyBox(Visibility.BOTH, "", new PropertyInformation(propertyAnnotationMirror, Collections.emptyList(), false, type, nullifierAnnotationName, virtual)));
     }
   }
 

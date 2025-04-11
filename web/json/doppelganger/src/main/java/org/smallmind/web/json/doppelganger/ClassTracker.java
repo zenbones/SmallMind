@@ -149,7 +149,7 @@ public class ClassTracker {
 
   public boolean isPreCompiled (ProcessingEnvironment processingEnvironment, String purpose, Direction direction, TypeElement typeElement) {
 
-    return isPreCompiled(new StringBuilder(NameUtility.getPackageName(processingEnvironment, typeElement)).append('.').append(NameUtility.getSimpleName(processingEnvironment, purpose, direction, typeElement)).toString());
+    return isPreCompiled(NameUtility.getPackageName(processingEnvironment, typeElement) + '.' + NameUtility.getSimpleName(processingEnvironment, purpose, direction, typeElement));
   }
 
   private boolean isPreCompiled (String qualifiedName) {

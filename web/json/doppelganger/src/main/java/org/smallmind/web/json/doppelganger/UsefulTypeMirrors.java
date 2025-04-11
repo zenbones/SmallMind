@@ -38,11 +38,13 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.type.TypeMirror;
 import jakarta.validation.constraints.NotNull;
 import com.fasterxml.jackson.databind.JsonNode;
+import org.smallmind.nutsnbolts.reflection.OverlayNullifier;
 
 public class UsefulTypeMirrors {
 
   private final TypeMirror serializableTypeMirror;
   private final TypeMirror viewTypeMirror;
+  private final TypeMirror overlayNullifierTypeMirror;
   private final TypeMirror notNullTypeMirror;
   private final TypeMirror listTypeMirror;
   private final TypeMirror jsonNodeTypeMirror;
@@ -52,6 +54,7 @@ public class UsefulTypeMirrors {
 
     serializableTypeMirror = processingEnvironment.getElementUtils().getTypeElement(Serializable.class.getName()).asType();
     viewTypeMirror = processingEnvironment.getElementUtils().getTypeElement(View.class.getName()).asType();
+    overlayNullifierTypeMirror = processingEnvironment.getElementUtils().getTypeElement(OverlayNullifier.class.getName()).asType();
     notNullTypeMirror = processingEnvironment.getElementUtils().getTypeElement(NotNull.class.getName()).asType();
     listTypeMirror = processingEnvironment.getElementUtils().getTypeElement(List.class.getName()).asType();
     jsonNodeTypeMirror = processingEnvironment.getElementUtils().getTypeElement(JsonNode.class.getName()).asType();
@@ -66,6 +69,11 @@ public class UsefulTypeMirrors {
   public TypeMirror getViewTypeMirror () {
 
     return viewTypeMirror;
+  }
+
+  public TypeMirror getOverlayNullifierTypeMirror () {
+
+    return overlayNullifierTypeMirror;
   }
 
   public TypeMirror getNotNullTypeMirror () {

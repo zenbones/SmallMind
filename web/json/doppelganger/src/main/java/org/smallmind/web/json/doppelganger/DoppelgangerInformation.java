@@ -41,6 +41,8 @@ import java.util.Map;
 import java.util.Objects;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.TypeKind;
@@ -161,7 +163,7 @@ public class DoppelgangerInformation {
 
       String fieldName = AptUtility.extractAnnotationValue(virtualAnnotationMirror, "field", String.class, null);
 
-      for (PropertyBox propertyBox : new PropertyParser(processingEnvironment, usefulTypeMirrors, virtualAnnotationMirror, extractType(classElement, fieldName, processingEnvironment, virtualAnnotationMirror), true)) {
+      for (PropertyBox propertyBox : new PropertyParser(processingEnvironment, usefulTypeMirrors, virtualAnnotationMirror, extractType(classElement, fieldName, processingEnvironment, virtualAnnotationMirror), null, true)) {
 
         doppelgangerAnnotationProcessor.processTypeMirror(propertyBox.getPropertyInformation().getType());
 
@@ -185,8 +187,15 @@ public class DoppelgangerInformation {
     for (AnnotationMirror realAnnotationMirror : AptUtility.extractAnnotationValueAsList(doppelgangerAnnotationMirror, "real", AnnotationMirror.class)) {
 
       String fieldName = AptUtility.extractAnnotationValue(realAnnotationMirror, "field", String.class, null);
+      TypeMirror fieldTypeMirror = extractType(classElement, fieldName, processingEnvironment, realAnnotationMirror);
+      AnnotationMirror nullifierAnnotationMirror = null;
+      Element fieldElement;
 
-      for (PropertyBox propertyBox : new PropertyParser(processingEnvironment, usefulTypeMirrors, realAnnotationMirror, extractType(classElement, fieldName, processingEnvironment, realAnnotationMirror), false)) {
+      if ((fieldElement = extractFieldElement(classElement, fieldName)) != null) {
+        nullifierAnnotationMirror = AptUtility.extractAnnotationMirrorAnnotatedBy(processingEnvironment, fieldElement, usefulTypeMirrors.getOverlayNullifierTypeMirror());
+      }
+
+      for (PropertyBox propertyBox : new PropertyParser(processingEnvironment, usefulTypeMirrors, realAnnotationMirror, fieldTypeMirror, nullifierAnnotationMirror, false)) {
 
         doppelgangerAnnotationProcessor.processTypeMirror(propertyBox.getPropertyInformation().getType());
 
@@ -232,6 +241,18 @@ public class DoppelgangerInformation {
     } catch (Exception exception) {
       throw new DefinitionException(exception, "Illegal type definition in field(%s) of class(%s)", fieldName, classElement);
     }
+  }
+
+  private Element extractFieldElement (TypeElement classElement, String fieldName) {
+
+    for (Element enclosedElement : classElement.getEnclosedElements()) {
+      if (ElementKind.FIELD.equals(enclosedElement.getKind()) && fieldName.equals(enclosedElement.getSimpleName().toString())) {
+
+        return enclosedElement;
+      }
+    }
+
+    return null;
   }
 
   public void update (TypeElement classElement, VisibilityTracker visibilityTracker) {

@@ -309,6 +309,10 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
           writer.write("import org.smallmind.web.json.scaffold.util.As;");
           writer.newLine();
         }
+        if (propertyLexicon.hasNullifier()) {
+          writer.write("import org.smallmind.web.json.scaffold.util.NullifiedBy;");
+          writer.newLine();
+        }
         if ((!doppelgangerInformation.getComment().isEmpty()) || propertyLexicon.hasComment()) {
           writer.write("import org.smallmind.web.json.scaffold.util.Comment;");
           writer.newLine();
@@ -758,6 +762,12 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
       writer.write("  @As(");
       writer.write(propertyInformationEntry.getValue().getAs().toString());
       writer.write(".class)");
+      writer.newLine();
+    }
+    if (propertyInformationEntry.getValue().getNullifierAnnotationName() != null) {
+      writer.write("  @NullifiedBy(\"");
+      writer.write(propertyInformationEntry.getValue().getNullifierAnnotationName());
+      writer.write("\")");
       writer.newLine();
     }
     if (propertyInformationEntry.getValue().getAdapter() != null) {
