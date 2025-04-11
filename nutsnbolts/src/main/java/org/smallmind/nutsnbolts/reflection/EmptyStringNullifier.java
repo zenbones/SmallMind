@@ -45,4 +45,5 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @OverlayNullifier(validatedBy = EmptyStringNullifierValidator.class)
 public @interface EmptyStringNullifier {
 
+  String message () default "empty string";
 }

@@ -47,14 +47,14 @@ public class PropertyInformation {
   private final String comment;
   private final Boolean required;
   private final boolean virtual;
-  private final String nullifierAnnotationName;
+  private final String nullifierMessage;
 
-  public PropertyInformation (AnnotationMirror propertyAnnotationMirror, List<ConstraintInformation> constraintList, boolean idiomRequired, TypeMirror type, String nullifierAnnotationName, boolean virtual) {
+  public PropertyInformation (AnnotationMirror propertyAnnotationMirror, List<ConstraintInformation> constraintList, boolean idiomRequired, TypeMirror type, String nullifierMessage, boolean virtual) {
 
     this.type = type;
     this.virtual = virtual;
     this.constraintList = constraintList;
-    this.nullifierAnnotationName = nullifierAnnotationName;
+    this.nullifierMessage = nullifierMessage;
 
     adapter = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "adapter", TypeMirror.class, null);
     as = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "as", TypeMirror.class, null);
@@ -93,9 +93,9 @@ public class PropertyInformation {
     return comment;
   }
 
-  public String getNullifierAnnotationName () {
+  public String getNullifierMessage () {
 
-    return nullifierAnnotationName;
+    return nullifierMessage;
   }
 
   public Iterable<ConstraintInformation> constraints () {

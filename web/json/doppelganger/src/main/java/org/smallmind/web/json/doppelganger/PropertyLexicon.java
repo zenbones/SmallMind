@@ -108,7 +108,7 @@ public class PropertyLexicon {
 
     if (!realMap.isEmpty()) {
       for (PropertyInformation propertyInformation : realMap.values()) {
-        if (propertyInformation.getNullifierAnnotationName() != null) {
+        if (propertyInformation.getNullifierMessage() != null) {
 
           return true;
         }

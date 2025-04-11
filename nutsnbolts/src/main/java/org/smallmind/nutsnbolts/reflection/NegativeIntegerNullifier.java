@@ -45,4 +45,5 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @OverlayNullifier(validatedBy = NegativeIntegerNullifierValidator.class)
 public @interface NegativeIntegerNullifier {
 
+  String message () default "< 0";
 }

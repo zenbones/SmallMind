@@ -764,9 +764,9 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
       writer.write(".class)");
       writer.newLine();
     }
-    if (propertyInformationEntry.getValue().getNullifierAnnotationName() != null) {
+    if (propertyInformationEntry.getValue().getNullifierMessage() != null) {
       writer.write("  @NullifiedBy(\"");
-      writer.write(propertyInformationEntry.getValue().getNullifierAnnotationName());
+      writer.write(propertyInformationEntry.getValue().getNullifierMessage());
       writer.write("\")");
       writer.newLine();
     }
