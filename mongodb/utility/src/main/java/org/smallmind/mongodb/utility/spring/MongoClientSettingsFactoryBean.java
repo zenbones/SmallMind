@@ -71,6 +71,7 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
   private Boolean retryReads;
   private Boolean retryWrites;
   private Boolean sslEnabled;
+  private Boolean allowInvalidHostNames;
   private Boolean writeConcernEnabled;
   private Integer socketConnectTimeoutMilliseconds;
   private Integer serverSelectionTimeoutMilliseconds;
@@ -134,6 +135,11 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
   public void setSslEnabled (Boolean sslEnabled) {
 
     this.sslEnabled = sslEnabled;
+  }
+
+  public void setAllowInvalidHostNames (Boolean allowInvalidHostNames) {
+
+    this.allowInvalidHostNames = allowInvalidHostNames;
   }
 
   public void setSocketConnectTimeoutMilliseconds (Integer socketConnectTimeoutMilliseconds) {
@@ -218,7 +224,7 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
         builder.context(sslContext);
       }
 
-      builder.enabled(Boolean.TRUE.equals(sslEnabled));
+      builder.enabled(Boolean.TRUE.equals(sslEnabled)).invalidHostNameAllowed(Boolean.TRUE.equals(allowInvalidHostNames));
     });
 
     settingsBuilder.applyToConnectionPoolSettings(builder -> {
