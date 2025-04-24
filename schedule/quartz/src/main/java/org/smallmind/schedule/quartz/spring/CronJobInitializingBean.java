@@ -97,7 +97,7 @@ public class CronJobInitializingBean implements InitializingBean {
 
       return false;
     }
-    if (jobDetail.isConcurrentExectionDisallowed() != installedJobDetail.isConcurrentExectionDisallowed()) {
+    if (jobDetail.isConcurrentExecutionDisallowed() != installedJobDetail.isConcurrentExecutionDisallowed()) {
 
       return false;
     }
