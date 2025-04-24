@@ -76,7 +76,7 @@
   <properties>
     <maven.compiler.release>17</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <amqp.client.version>5.20.0</amqp.client.version>
+    <amqp.client.version>5.25.0</amqp.client.version>
     <asm.version>9.7</asm.version>
     <aspectj.version>1.9.22.1</aspectj.version>
     <aspectj.maven.plugin.version>1.14</aspectj.maven.plugin.version>
@@ -93,10 +93,10 @@
     <grizzly.version>4.0.2</grizzly.version>
     <grizzly.npn.version>2.0.0</grizzly.npn.version>
     <hdrhistogram.version>2.1.12</hdrhistogram.version>
-    <hibernate.version>6.6.2.Final</hibernate.version>
+    <hibernate.version>6.6.13.Final</hibernate.version>
     <hibernate.annotations.version>7.0.3.Final</hibernate.annotations.version>
-    <hibernate.validator.version>8.0.1.Final</hibernate.validator.version>
-    <hibernate.enhance.maven.plugin.version>6.6.2.Final</hibernate.enhance.maven.plugin.version>
+    <hibernate.validator.version>8.0.2.Final</hibernate.validator.version>
+    <hibernate.enhance.maven.plugin.version>6.6.13.Final</hibernate.enhance.maven.plugin.version>
     <httpcomponents5.client.version>5.3.1</httpcomponents5.client.version>
     <httpcomponents5.core.version>5.2.5</httpcomponents5.core.version>
     <jackson.version>2.18.3</jackson.version>
@@ -108,6 +108,8 @@
     <jakarta.jms.version>3.1.0</jakarta.jms.version>
     <jakarta.mail.version>2.1.3</jakarta.mail.version>
     <jakarta.persistence.version>3.1.0</jakarta.persistence.version>
+    <!-- 3.2.0 breaks spring/hibernate -->
+    <!-- <jakarta.persistence.version>3.2.0</jakarta.persistence.version> -->
     <jakarta.servlet.version>6.0.0</jakarta.servlet.version>
     <jakarta.validation.version>3.0.2</jakarta.validation.version>
     <jakarta.websocket.version>2.1.1</jakarta.websocket.version>
@@ -147,9 +149,9 @@
     <siphash.version>2.0.0</siphash.version>
     <slf4j.version>2.0.12</slf4j.version>
     <snakeyaml.version>2.2</snakeyaml.version>
-    <spring.version>6.1.5</spring.version>
+    <spring.version>6.2.6</spring.version>
     <spring.batch.version>5.2.2</spring.batch.version>
-    <spring.rabbit.version>3.1.2</spring.rabbit.version>
+    <spring.rabbit.version>3.2.5</spring.rabbit.version>
     <sshd.version>2.12.1</sshd.version>
     <sun.mail.version>2.0.1</sun.mail.version>
     <sun.xml.bind.version>4.0.5</sun.xml.bind.version>

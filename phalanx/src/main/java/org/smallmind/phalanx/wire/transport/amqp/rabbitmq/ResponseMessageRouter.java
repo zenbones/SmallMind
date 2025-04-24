@@ -34,7 +34,6 @@ package org.smallmind.phalanx.wire.transport.amqp.rabbitmq;
 
 import java.io.IOException;
 import java.util.Date;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
@@ -54,25 +53,25 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class ResponseMessageRouter extends MessageRouter {
 
+  private final QueueContractor queueContractor;
   private final RabbitMQResponseTransport responseTransport;
   private final SignalCodec signalCodec;
   private final String serviceGroup;
   private final String instanceId;
   private final boolean autoAcknowledge;
   private final int index;
-  private final int replicationCount;
   private final int ttlSeconds;
 
-  public ResponseMessageRouter (RabbitMQConnector connector, NameConfiguration nameConfiguration, RabbitMQResponseTransport responseTransport, SignalCodec signalCodec, String serviceGroup, String instanceId, int index,int replicationCount, int ttlSeconds, boolean autoAcknowledge, PublisherConfirmationHandler publisherConfirmationHandler) {
+  public ResponseMessageRouter (RabbitMQConnector connector, QueueContractor queueContractor, NameConfiguration nameConfiguration, RabbitMQResponseTransport responseTransport, SignalCodec signalCodec, String serviceGroup, String instanceId, int index, int ttlSeconds, boolean autoAcknowledge, PublisherConfirmationHandler publisherConfirmationHandler) {
 
     super(connector, "wire", nameConfiguration, publisherConfirmationHandler);
 
+    this.queueContractor = queueContractor;
     this.responseTransport = responseTransport;
     this.signalCodec = signalCodec;
     this.serviceGroup = serviceGroup;
     this.instanceId = instanceId;
     this.index = index;
-    this.replicationCount = replicationCount;
     this.ttlSeconds = ttlSeconds;
     this.autoAcknowledge = autoAcknowledge;
   }
@@ -87,13 +86,13 @@ public class ResponseMessageRouter extends MessageRouter {
       String talkQueueName;
       String whisperQueueName;
 
-      channel.queueDeclare(shoutQueueName = getShoutQueueName() + "-" + serviceGroup + "[" + instanceId + "]", false, false, true, Map.of("x-queue-type", "quorum", "x-quorum-initial-group-size", replicationCount));
+      queueContractor.declare(channel, shoutQueueName = getShoutQueueName() + "-" + serviceGroup + "[" + instanceId + "]", true);
       channel.queueBind(shoutQueueName, getRequestExchangeName(), VocalMode.SHOUT.getName() + "-" + serviceGroup);
 
-      channel.queueDeclare(talkQueueName = getTalkQueueName() + "-" + serviceGroup, false, false, false, Map.of("x-queue-type", "quorum", "x-quorum-initial-group-size", replicationCount));
+      queueContractor.declare(channel, talkQueueName = getTalkQueueName() + "-" + serviceGroup, false);
       channel.queueBind(talkQueueName, getRequestExchangeName(), VocalMode.TALK.getName() + "-" + serviceGroup);
 
-      channel.queueDeclare(whisperQueueName = getWhisperQueueName() + "-" + serviceGroup + "[" + instanceId + "]", false, false, true, Map.of("x-queue-type", "quorum", "x-quorum-initial-group-size", replicationCount));
+      queueContractor.declare(channel, whisperQueueName = getWhisperQueueName() + "-" + serviceGroup + "[" + instanceId + "]", true);
       channel.queueBind(whisperQueueName, getRequestExchangeName(), VocalMode.WHISPER.getName() + "-" + serviceGroup + "[" + instanceId + "]");
     });
   }
