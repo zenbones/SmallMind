@@ -128,14 +128,16 @@ public class KafkaConnector {
     props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, boostrapServers);
     props.put(ConsumerConfig.CLIENT_ID_CONFIG, clientId);
     props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
-//    props.put(ConsumerConfig.GROUP_INSTANCE_ID_CONFIG, instanceId);
+    // props.put(ConsumerConfig.GROUP_INSTANCE_ID_CONFIG, instanceId);
     props.put(ConsumerConfig.GROUP_PROTOCOL_CONFIG, "consumer");
     props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, LongDeserializer.class);
     props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class);
 
-    props.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, 3000);
+    // Can't be set when the group protocol is set to 'consumer'
     // props.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, 3000);
-    props.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, 15000);
+    // props.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, 3000);
+    // Can't be set when the group protocol is set to 'consumer'
+    // props.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, 15000);
     // props.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, 45000);
     props.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, 300000);
     props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 500);
