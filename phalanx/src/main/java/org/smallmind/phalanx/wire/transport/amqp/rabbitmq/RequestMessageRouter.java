@@ -65,9 +65,10 @@ public class RequestMessageRouter extends MessageRouter {
   private final String callerId;
   private final boolean autoAcknowledge;
   private final int index;
+  private final int replicationCount;
   private final int ttlSeconds;
 
-  public RequestMessageRouter (RabbitMQConnector connector, NameConfiguration nameConfiguration, RabbitMQRequestTransport requestTransport, SignalCodec signalCodec, String callerId, int index, int ttlSeconds, boolean autoAcknowledge, PublisherConfirmationHandler publisherConfirmationHandler) {
+  public RequestMessageRouter (RabbitMQConnector connector, NameConfiguration nameConfiguration, RabbitMQRequestTransport requestTransport, SignalCodec signalCodec, String callerId, int index, int replicationCount, int ttlSeconds, boolean autoAcknowledge, PublisherConfirmationHandler publisherConfirmationHandler) {
 
     super(connector, "wire", nameConfiguration, publisherConfirmationHandler);
 
@@ -75,6 +76,7 @@ public class RequestMessageRouter extends MessageRouter {
     this.signalCodec = signalCodec;
     this.callerId = callerId;
     this.index = index;
+    this.replicationCount = replicationCount;
     this.ttlSeconds = ttlSeconds;
     this.autoAcknowledge = autoAcknowledge;
   }
@@ -87,7 +89,7 @@ public class RequestMessageRouter extends MessageRouter {
 
       String queueName;
 
-      channel.queueDeclare(queueName = getResponseQueueName() + "-" + callerId, false, false, true, null);
+      channel.queueDeclare(queueName = getResponseQueueName() + "-" + callerId, false, false, true, Map.of("x-queue-type", "quorum", "x-quorum-initial-group-size", replicationCount));
       channel.queueBind(queueName, getResponseExchangeName(), "response-" + callerId);
     });
   }
