@@ -129,6 +129,7 @@ public class KafkaConnector {
     props.put(ConsumerConfig.CLIENT_ID_CONFIG, clientId);
     props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
 //    props.put(ConsumerConfig.GROUP_INSTANCE_ID_CONFIG, instanceId);
+    props.put(ConsumerConfig.GROUP_PROTOCOL_CONFIG, "consumer");
     props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, LongDeserializer.class);
     props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class);
 
