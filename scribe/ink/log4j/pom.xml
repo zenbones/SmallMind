@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>scribe-ink</artifactId>
-    <version>5.13.0</version>
+    <version>5.14.0</version>
   </parent>
   <artifactId>scribe-ink-log4j</artifactId>
   <name>Scribe-Ink-Log4J</name>

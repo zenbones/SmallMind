@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>sleuth-maven</artifactId>
-    <version>5.13.0</version>
+    <version>5.14.0</version>
   </parent>
   <artifactId>surefire-sleuth-provider</artifactId>
   <name>Surefire-Sleuth-Provider</name>
