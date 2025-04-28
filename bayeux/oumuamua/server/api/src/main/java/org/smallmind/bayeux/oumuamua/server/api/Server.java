@@ -127,7 +127,7 @@ public interface Server<V extends Value<V>> extends Attributed {
   Channel<V> requireChannel (String path, ChannelInitializer... initializers)
     throws InvalidPathException;
 
-  // It's n error to attempt to remove a persistent channel
+  // It's an error to attempt to remove a persistent channel
   // All sessions must be unsubscribed (and listeners notified) upon channel removal
   void removeChannel (Channel<V> channel)
     throws ChannelStateException;
