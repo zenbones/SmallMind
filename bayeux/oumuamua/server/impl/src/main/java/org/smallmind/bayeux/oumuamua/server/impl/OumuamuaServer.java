@@ -81,6 +81,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   private final OumuamuaConfiguration<V> configuration;
   private final ChannelTree<V> channelTree;
   private final String[] protocolNames;
+  private final boolean allowsImplicitConnection;
   private final long sessionConnectionIntervalMilliseconds;
 
   private IdleChannelSifter<V> idleChannelSifter;
@@ -101,6 +102,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
 
       executorService = ((configuredExecutorService = configuration.getExecutorService()) != null) ? configuredExecutorService : new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60, TimeUnit.SECONDS, new SynchronousQueue<>(), new ThreadPoolExecutor.CallerRunsPolicy());
 
+      allowsImplicitConnection = configuration.isAllowsImplicitConnection();
       sessionConnectionIntervalMilliseconds = configuration.getSessionConnectIntervalSeconds() * 1000L;
       channelTree = new ChannelTree<>(new ChannelRoot<>(this));
 
@@ -348,6 +350,12 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   public Codec<V> getCodec () {
 
     return configuration.getCodec();
+  }
+
+  @Override
+  public boolean allowsImplicitConnection () {
+
+    return allowsImplicitConnection;
   }
 
   @Override
