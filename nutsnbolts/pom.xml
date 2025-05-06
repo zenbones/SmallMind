@@ -135,11 +135,18 @@
         <artifactId>aspectj-maven-plugin</artifactId>
       </plugin>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
+        <groupId>org.moditect</groupId>
+        <artifactId>moditect-maven-plugin</artifactId>
         <configuration>
-          <source>15</source>
-          <target>15</target>
+          <modules>
+            <module>
+              <artifact>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>${project.artifactId}</artifactId>
+                <version>${project.version}</version>
+              </artifact>
+            </module>
+          </modules>
         </configuration>
       </plugin>
     </plugins>
