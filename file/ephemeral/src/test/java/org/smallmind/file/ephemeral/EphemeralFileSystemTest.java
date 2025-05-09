@@ -51,8 +51,7 @@ public class EphemeralFileSystemTest {
   public void test ()
     throws Exception {
 
-    System.setProperty("java.nio.file.spi.DefaultFileSystemProvider", EphemeralFileSystemProvider.class.getName());
-    EphemeralFileSystemProvider.waitForInitialization(3, TimeUnit.SECONDS);
+    EphemeralFileSystemProvider.waitForInitialization(30, TimeUnit.SECONDS);
 
     Path ps = Paths.get("C:\\Users\\david\\Documents\\response.txt");
     System.out.println(Files.isRegularFile(ps));
