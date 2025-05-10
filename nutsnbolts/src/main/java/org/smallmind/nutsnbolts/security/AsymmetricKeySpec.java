@@ -34,17 +34,42 @@ package org.smallmind.nutsnbolts.security;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.io.StringWriter;
+import java.security.Key;
+import java.security.PublicKey;
 import java.security.spec.KeySpec;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import org.bouncycastle.crypto.util.OpenSSHPublicKeyUtil;
+import org.bouncycastle.crypto.util.PublicKeyFactory;
 import org.bouncycastle.jcajce.spec.OpenSSHPublicKeySpec;
+import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemReader;
+import org.bouncycastle.util.io.pem.PemWriter;
 import org.smallmind.nutsnbolts.http.Base64Codec;
 import org.smallmind.nutsnbolts.security.key.AsymmetricKeyType;
 
 public enum AsymmetricKeySpec {
 
   OPENSSH {
+    @Override
+    public String fromKey (Key key)
+      throws IOException, InappropriateKeySpecException {
+
+      if (key instanceof PublicKey) {
+
+        String keyAlgorithm;
+        String sshCode = "EdDSA".equals(keyAlgorithm = key.getAlgorithm()) ? "ed25519" : keyAlgorithm.toLowerCase();
+
+        return "ssh-" + sshCode + " " + Base64.getEncoder().encodeToString(OpenSSHPublicKeyUtil.encodePublicKey(PublicKeyFactory.createKey(key.getEncoded())));
+      } else {
+        throw new InappropriateKeySpecException(key.getAlgorithm());
+      }
+    }
+
     @Override
     public KeySpec generateKeySpec (AsymmetricKeyType type, String raw)
       throws IOException, InappropriateKeySpecException {
@@ -64,6 +89,7 @@ public enum AsymmetricKeySpec {
           }
         }
 
+        // remove the email address comment at the tail of the ssh key
         if ((lastSpacePos = raw.lastIndexOf(' ')) >= 0) {
           raw = raw.substring(0, lastSpacePos);
         }
@@ -76,32 +102,67 @@ public enum AsymmetricKeySpec {
   },
   PKCS8 {
     @Override
+    public String fromKey (Key key)
+      throws IOException, InappropriateKeySpecException {
+
+      if (key instanceof PublicKey) {
+        throw new InappropriateKeySpecException(key.getAlgorithm());
+      } else {
+
+        StringWriter stringWriter;
+        PemWriter pemWriter = new PemWriter(stringWriter = new StringWriter());
+
+        pemWriter.writeObject(new PemObject("PRIVATE KEY", key.getEncoded()));
+        pemWriter.flush();
+
+        return stringWriter.getBuffer().toString();
+      }
+    }
+
+    @Override
     public KeySpec generateKeySpec (AsymmetricKeyType type, String raw)
       throws IOException, InappropriateKeySpecException {
 
       if (AsymmetricKeyType.PUBLIC.equals(type)) {
         throw new InappropriateKeySpecException(type.name());
       } else {
-        raw = raw.trim();
 
-        if (!raw.startsWith("-----")) {
-          raw = "-----BEGIN PRIVATE KEY-----\n" + raw;
+        Matcher prologMatcher;
+        Matcher epilogMatcher;
+        int start = 0;
+        int end = raw.length();
+
+        raw = raw.strip();
+
+        if ((prologMatcher = PKCS8_PROLOG_PATTERN.matcher(raw)).find()) {
+          start = prologMatcher.end();
         }
-        if (!raw.endsWith("-----")) {
-          raw = raw + "\n-----END PRIVATE KEY-----";
+        if ((epilogMatcher = PKCS8_EPILOG_PATTERN.matcher(raw)).find()) {
+          end = epilogMatcher.start();
         }
 
-        return new PKCS8EncodedKeySpec(new PemReader(new StringReader(raw)).readPemObject().getContent());
+        return new PKCS8EncodedKeySpec(new PemReader(new StringReader("-----BEGIN PRIVATE KEY-----\n" + raw.substring(start, end).replaceAll("\\s", "\n") + "\n-----END PRIVATE KEY-----")).readPemObject().getContent());
       }
     }
   },
   X509 {
     @Override
+    public String fromKey (Key key)
+      throws IOException, InappropriateKeySpecException {
+
+      if (key instanceof PublicKey) {
+        throw new InappropriateKeySpecException(key.getAlgorithm());
+      } else {
+        throw new InappropriateKeySpecException(key.getAlgorithm());
+      }
+    }
+
+    @Override
     public KeySpec generateKeySpec (AsymmetricKeyType type, String raw)
       throws IOException, InappropriateKeySpecException {
 
       if (AsymmetricKeyType.PUBLIC.equals(type)) {
-        raw = raw.trim();
+        raw = raw.strip();
 
         if (raw.startsWith("-----")) {
 
@@ -131,6 +192,12 @@ public enum AsymmetricKeySpec {
     }
   };
 
+  private static final Pattern PKCS8_PROLOG_PATTERN = Pattern.compile("^-----BEGIN PRIVATE KEY-----\\s+");
+  private static final Pattern PKCS8_EPILOG_PATTERN = Pattern.compile("\\s+-----END PRIVATE KEY-----$");
+
   public abstract KeySpec generateKeySpec (AsymmetricKeyType type, String raw)
+    throws IOException, InappropriateKeySpecException;
+
+  public abstract String fromKey (Key key)
     throws IOException, InappropriateKeySpecException;
 }
