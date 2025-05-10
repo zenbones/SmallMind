@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>smallmind-web</artifactId>
-    <version>5.14.0</version>
+    <version>5.15.0</version>
   </parent>
   <artifactId>schema-validation-plugin</artifactId>
   <name>Schema-Validation-Plugin</name>

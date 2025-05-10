@@ -4,7 +4,7 @@
 
   <groupId>org.smallmind</groupId>
   <artifactId>smallmind</artifactId>
-  <version>5.14.0</version>
+  <version>5.15.0</version>
   <packaging>pom</packaging>
   <name>Parent</name>
   <description>Parent POM</description>
