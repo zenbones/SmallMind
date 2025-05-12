@@ -38,6 +38,11 @@ public class EnumUtility {
 
   public static String toEnumName (String anyCase) {
 
+    return toEnumName(anyCase, true);
+  }
+
+  public static String toEnumName (String anyCase, boolean prefixDigits) {
+
     StringBuilder fieldBuilder = new StringBuilder();
     LetterState prevState = LetterState.NONE;
     int stateCount = 0;
@@ -57,7 +62,7 @@ public class EnumUtility {
       }
 
       if (!(state.equals(LetterState.WHITESPACE) || ((count > 0) && (anyCase.charAt(count) == '_') && (fieldBuilder.charAt(fieldBuilder.length() - 1) == '_')))) {
-        if ((count > 0) && (!state.equals(prevState)) && (anyCase.charAt(count) != '_') && (fieldBuilder.charAt(fieldBuilder.length() - 1) != '_') && (!(prevState.equals(LetterState.UPPER_LETTER) && state.equals(LetterState.LOWER_LETTER)))) {
+        if ((count > 0) && (!state.equals(prevState)) && (anyCase.charAt(count) != '_') && (fieldBuilder.charAt(fieldBuilder.length() - 1) != '_') && (!(prevState.equals(LetterState.UPPER_LETTER) && state.equals(LetterState.LOWER_LETTER))) && ((!state.equals(LetterState.DIGIT)) || prefixDigits)) {
           fieldBuilder.append('_');
         }
         if (!state.equals(LetterState.OTHER)) {
