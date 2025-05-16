@@ -80,9 +80,9 @@
     <asm.version>9.8</asm.version>
     <aspectj.version>1.9.24</aspectj.version>
     <aspectj.maven.plugin.version>1.14.1</aspectj.maven.plugin.version>
-    <aws.version>2.31.30</aws.version>
+    <aws.version>2.31.45</aws.version>
     <bouncycastle.version>1.80</bouncycastle.version>
-    <cometd.version>8.0.7</cometd.version>
+    <cometd.version>8.0.8</cometd.version>
     <commons.logging.version>1.3.5</commons.logging.version>
     <commons.net.version>3.10.0</commons.net.version>
     <dogstatsd.client.version>4.3.0</dogstatsd.client.version>
@@ -92,11 +92,11 @@
     <google.autoservice.version>1.1.1</google.autoservice.version>
     <grizzly.version>4.0.2</grizzly.version>
     <grizzly.npn.version>2.0.0</grizzly.npn.version>
-    <hdrhistogram.version>2.1.12</hdrhistogram.version>
-    <hibernate.version>6.6.13.Final</hibernate.version>
+    <hdrhistogram.version>2.2.2</hdrhistogram.version>
+    <hibernate.version>6.6.15.Final</hibernate.version>
     <hibernate.annotations.version>7.0.3.Final</hibernate.annotations.version>
     <hibernate.validator.version>8.0.2.Final</hibernate.validator.version>
-    <hibernate.enhance.maven.plugin.version>6.6.13.Final</hibernate.enhance.maven.plugin.version>
+    <hibernate.enhance.maven.plugin.version>6.6.15.Final</hibernate.enhance.maven.plugin.version>
     <httpcomponents5.client.version>5.4.4</httpcomponents5.client.version>
     <httpcomponents5.core.version>5.3.4</httpcomponents5.core.version>
     <jackson.version>2.19.0</jackson.version>
@@ -118,7 +118,7 @@
     <jakarta.xml.soap.version>3.0.2</jakarta.xml.soap.version>
     <jakarta.xml.ws.version>4.0.2</jakarta.xml.ws.version>
     <jersey.version>3.1.10</jersey.version>
-    <jetty.version>12.0.19</jetty.version>
+    <jetty.version>12.0.21</jetty.version>
     <jfextras.labs.version>9.0-r1</jfextras.labs.version>
     <jose4j.version>0.9.6</jose4j.version>
     <kafka.version>4.0.0</kafka.version>
@@ -130,16 +130,16 @@
     <maven.javadoc.plugin.version>3.6.3</maven.javadoc.plugin.version>
     <maven.plugin.annotations.version>3.15.1</maven.plugin.annotations.version>
     <maven.plugin.plugin.version>3.15.1</maven.plugin.plugin.version>
-    <maven.resolver.version>1.9.22</maven.resolver.version>
+    <maven.resolver.version>2.0.8</maven.resolver.version>
     <!-- Missing DefaultServiceProvider, marked deprecated but simply deleted -->
     <!-- <maven.resolver.version>2.0.8</maven.resolver.version> -->
-    <maven.resolver.transport.http.version>1.9.22</maven.resolver.transport.http.version>
+    <maven.resolver.transport.http.version>1.9.23</maven.resolver.transport.http.version>
     <maven.source.plugin.version>3.3.1</maven.source.plugin.version>
     <maven.surefire.plugin.version>3.5.3</maven.surefire.plugin.version>
-    <mongodb.driver.version>5.4.0</mongodb.driver.version>
-    <mongodb.bson.version>5.4.0</mongodb.bson.version>
+    <mongodb.driver.version>5.5.0</mongodb.driver.version>
+    <mongodb.bson.version>5.5.0</mongodb.bson.version>
     <msgpack.version>0.9.9</msgpack.version>
-    <netty.version>4.2.0.Final</netty.version>
+    <netty.version>4.2.1.Final</netty.version>
     <!--
         <openjfx.version>25-ea+11</openjfx.version>
     -->
@@ -150,13 +150,13 @@
     <siphash.version>2.0.0</siphash.version>
     <slf4j.version>2.0.17</slf4j.version>
     <snakeyaml.version>2.4</snakeyaml.version>
-    <spring.version>6.2.6</spring.version>
+    <spring.version>6.2.7</spring.version>
     <spring.batch.version>5.2.2</spring.batch.version>
     <spring.rabbit.version>3.2.5</spring.rabbit.version>
     <sshd.version>2.15.0</sshd.version>
     <sun.mail.version>2.0.1</sun.mail.version>
     <sun.xml.bind.version>4.0.5</sun.xml.bind.version>
-    <sun.xml.ws.version>4.0.2</sun.xml.ws.version>
+    <sun.xml.ws.version>4.0.3</sun.xml.ws.version>
     <surefire.version>3.5.3</surefire.version>
     <syslog4j.version>0.9.30</syslog4j.version>
     <tanukisoft.version>3.5.54</tanukisoft.version>
