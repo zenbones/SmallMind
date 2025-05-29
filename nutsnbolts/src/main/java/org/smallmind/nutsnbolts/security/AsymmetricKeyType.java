@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.security.key;
+package org.smallmind.nutsnbolts.security;
 
 import java.io.IOException;
 import java.security.Key;
@@ -38,28 +38,23 @@ import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.spec.InvalidKeySpecException;
-import org.smallmind.nutsnbolts.security.AsymmetricAlgorithm;
-import org.smallmind.nutsnbolts.security.AsymmetricKeySpec;
-import org.smallmind.nutsnbolts.security.InappropriateKeySpecException;
-import org.smallmind.nutsnbolts.security.SecurityAlgorithm;
-import org.smallmind.nutsnbolts.security.SecurityProvider;
 
 public enum AsymmetricKeyType {
 
   PUBLIC {
     @Override
-    public Key generateKey (AsymmetricAlgorithm algorithm, AsymmetricKeySpec spec, SecurityProvider provider, String raw)
+    public Key constructKey (AsymmetricAlgorithm algorithm, AsymmetricKeySpec spec, SecurityProvider provider, String raw)
       throws IOException, NoSuchProviderException, NoSuchAlgorithmException, InvalidKeySpecException, InappropriateKeySpecException {
 
-      return AsymmetricKeyType.keyFactoryInstance(algorithm, provider).generatePublic(spec.generateKeySpec(this, raw));
+      return AsymmetricKeyType.keyFactoryInstance(algorithm, provider).generatePublic(spec.constructKeySpec(this, raw));
     }
   },
   PRIVATE {
     @Override
-    public Key generateKey (AsymmetricAlgorithm algorithm, AsymmetricKeySpec spec, SecurityProvider provider, String raw)
+    public Key constructKey (AsymmetricAlgorithm algorithm, AsymmetricKeySpec spec, SecurityProvider provider, String raw)
       throws IOException, NoSuchProviderException, NoSuchAlgorithmException, InvalidKeySpecException, InappropriateKeySpecException {
 
-      return AsymmetricKeyType.keyFactoryInstance(algorithm, provider).generatePrivate(spec.generateKeySpec(this, raw));
+      return AsymmetricKeyType.keyFactoryInstance(algorithm, provider).generatePrivate(spec.constructKeySpec(this, raw));
     }
   };
 
@@ -69,6 +64,6 @@ public enum AsymmetricKeyType {
     return SecurityProvider.DEFAULT.equals(provider) ? KeyFactory.getInstance(algorithm.getAlgorithmName()) : KeyFactory.getInstance(algorithm.getAlgorithmName(), provider.getProviderName());
   }
 
-  public abstract Key generateKey (AsymmetricAlgorithm algorithm, AsymmetricKeySpec spec, SecurityProvider provider, String raw)
+  public abstract Key constructKey (AsymmetricAlgorithm algorithm, AsymmetricKeySpec spec, SecurityProvider provider, String raw)
     throws IOException, NoSuchProviderException, NoSuchAlgorithmException, InvalidKeySpecException, InappropriateKeySpecException;
 }

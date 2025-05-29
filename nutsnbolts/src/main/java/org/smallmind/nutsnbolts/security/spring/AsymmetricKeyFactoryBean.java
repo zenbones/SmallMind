@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.security.key.spring;
+package org.smallmind.nutsnbolts.security.spring;
 
 import java.io.IOException;
 import java.security.Key;
@@ -41,7 +41,7 @@ import org.smallmind.nutsnbolts.security.AsymmetricAlgorithm;
 import org.smallmind.nutsnbolts.security.AsymmetricKeySpec;
 import org.smallmind.nutsnbolts.security.InappropriateKeySpecException;
 import org.smallmind.nutsnbolts.security.SecurityProvider;
-import org.smallmind.nutsnbolts.security.key.AsymmetricKeyType;
+import org.smallmind.nutsnbolts.security.AsymmetricKeyType;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
@@ -95,7 +95,7 @@ public class AsymmetricKeyFactoryBean implements FactoryBean<Key>, InitializingB
   public void afterPropertiesSet ()
     throws IOException, NoSuchProviderException, NoSuchAlgorithmException, InvalidKeySpecException, InappropriateKeySpecException {
 
-    key = keyType.generateKey(algorithm, spec, provider, raw);
+    key = keyType.constructKey(algorithm, spec, provider, raw);
   }
 
   @Override

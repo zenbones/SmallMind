@@ -50,7 +50,6 @@ import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemReader;
 import org.bouncycastle.util.io.pem.PemWriter;
 import org.smallmind.nutsnbolts.http.Base64Codec;
-import org.smallmind.nutsnbolts.security.key.AsymmetricKeyType;
 
 public enum AsymmetricKeySpec {
 
@@ -71,7 +70,7 @@ public enum AsymmetricKeySpec {
     }
 
     @Override
-    public KeySpec generateKeySpec (AsymmetricKeyType type, String raw)
+    public KeySpec constructKeySpec (AsymmetricKeyType type, String raw)
       throws IOException, InappropriateKeySpecException {
 
       if (AsymmetricKeyType.PUBLIC.equals(type)) {
@@ -120,7 +119,7 @@ public enum AsymmetricKeySpec {
     }
 
     @Override
-    public KeySpec generateKeySpec (AsymmetricKeyType type, String raw)
+    public KeySpec constructKeySpec (AsymmetricKeyType type, String raw)
       throws IOException, InappropriateKeySpecException {
 
       if (AsymmetricKeyType.PUBLIC.equals(type)) {
@@ -158,7 +157,7 @@ public enum AsymmetricKeySpec {
     }
 
     @Override
-    public KeySpec generateKeySpec (AsymmetricKeyType type, String raw)
+    public KeySpec constructKeySpec (AsymmetricKeyType type, String raw)
       throws IOException, InappropriateKeySpecException {
 
       if (AsymmetricKeyType.PUBLIC.equals(type)) {
@@ -195,7 +194,7 @@ public enum AsymmetricKeySpec {
   private static final Pattern PKCS8_PROLOG_PATTERN = Pattern.compile("^-----BEGIN PRIVATE KEY-----\\s+");
   private static final Pattern PKCS8_EPILOG_PATTERN = Pattern.compile("\\s+-----END PRIVATE KEY-----$");
 
-  public abstract KeySpec generateKeySpec (AsymmetricKeyType type, String raw)
+  public abstract KeySpec constructKeySpec (AsymmetricKeyType type, String raw)
     throws IOException, InappropriateKeySpecException;
 
   public abstract String fromKey (Key key)

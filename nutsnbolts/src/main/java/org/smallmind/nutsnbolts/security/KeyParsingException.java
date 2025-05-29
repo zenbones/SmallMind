@@ -30,9 +30,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.security.key;
+package org.smallmind.nutsnbolts.security;
 
-public interface KeyParser {
+import org.smallmind.nutsnbolts.lang.FormattedException;
 
-  KeyFactors extractFactors ();
+public class KeyParsingException extends FormattedException {
+
+  public KeyParsingException (String message, Object... args) {
+
+    super(message, args);
+  }
 }
