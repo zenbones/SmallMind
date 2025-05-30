@@ -147,7 +147,7 @@ public enum AsymmetricKeySpec {
   X509 {
     @Override
     public String fromKey (Key key)
-      throws IOException, InappropriateKeySpecException {
+      throws InappropriateKeySpecException {
 
       if (key instanceof PublicKey) {
         throw new InappropriateKeySpecException(key.getAlgorithm());
