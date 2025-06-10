@@ -32,16 +32,10 @@
  */
 package org.smallmind.nutsnbolts.security;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.security.InvalidKeyException;
 import java.security.Key;
-import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
 import javax.crypto.spec.SecretKeySpec;
-import org.smallmind.nutsnbolts.http.Base64Codec;
 
-public enum HMACSigningAlgorithm implements SecurityAlgorithm, SigningAlgorithm {
+public enum HMACSigningAlgorithm implements SigningAlgorithm {
 
   HMAC_MD5("HmacMD5"), HMAC_SHA_1("HmacSHA1"), HMAC_SHA_256("HmacSHA256");
 
@@ -60,19 +54,5 @@ public enum HMACSigningAlgorithm implements SecurityAlgorithm, SigningAlgorithm 
   public Key generateKey (byte[] secret) {
 
     return new SecretKeySpec(secret, this.getAlgorithmName());
-  }
-
-  @Override
-  public byte[] sign (Key key, byte[] data)
-    throws NoSuchAlgorithmException, InvalidKeyException {
-
-    return EncryptionUtility.sign(this, key, data);
-  }
-
-  @Override
-  public boolean verify (Key key, String[] parts, boolean urlSafe)
-    throws IOException, NoSuchAlgorithmException, InvalidKeyException {
-
-    return Arrays.equals(EncryptionUtility.sign(this, key, (parts[0] + "." + parts[1]).getBytes(StandardCharsets.UTF_8)), urlSafe ? Base64Codec.urlSafeDecode(parts[2]) : Base64Codec.decode(parts[2]));
   }
 }

@@ -32,17 +32,7 @@
  */
 package org.smallmind.nutsnbolts.security;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.security.InvalidKeyException;
-import java.security.Key;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.SignatureException;
-import org.smallmind.nutsnbolts.http.Base64Codec;
-
-public enum RSASigningAlgorithm implements SecurityAlgorithm, SigningAlgorithm {
+public enum RSASigningAlgorithm implements SigningAlgorithm {
 
   SHA_256_WITH_RSA("SHA256withRSA");
 
@@ -56,19 +46,5 @@ public enum RSASigningAlgorithm implements SecurityAlgorithm, SigningAlgorithm {
   public String getAlgorithmName () {
 
     return algorithmName;
-  }
-
-  @Override
-  public byte[] sign (Key key, byte[] data)
-    throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
-
-    return EncryptionUtility.sign(this, (PrivateKey)key, data);
-  }
-
-  @Override
-  public boolean verify (Key key, String[] parts, boolean urlSafe)
-    throws IOException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
-
-    return EncryptionUtility.verify(this, (PublicKey)key, (parts[0] + "." + parts[1]).getBytes(StandardCharsets.UTF_8), urlSafe ? Base64Codec.urlSafeDecode(parts[2]) : Base64Codec.decode(parts[2]));
   }
 }

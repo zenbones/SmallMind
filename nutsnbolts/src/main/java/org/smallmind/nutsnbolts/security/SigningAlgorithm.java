@@ -32,19 +32,26 @@
  */
 package org.smallmind.nutsnbolts.security;
 
-import java.security.Key;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.SignatureException;
+import java.util.Arrays;
+import org.smallmind.nutsnbolts.http.Base64Codec;
 
-public interface SigningAlgorithm {
+public interface SigningAlgorithm extends SecurityAlgorithm {
 
-  byte[] sign (Key key, byte[] data)
-    throws Exception;
+  default byte[] sign (PrivateKey key, byte[] data)
+    throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
 
-  default boolean verify (Key key, final String[] parts)
-    throws Exception {
-
-    return verify(key, parts, false);
+    return EncryptionUtility.sign(this, key, data);
   }
 
-  boolean verify (Key key, final String[] parts, boolean urlSafe)
-    throws Exception;
+  default boolean verify (PrivateKey key, String[] parts, boolean urlSafe)
+    throws IOException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+
+    return Arrays.equals(EncryptionUtility.sign(this, key, (parts[0] + "." + parts[1]).getBytes(StandardCharsets.UTF_8)), urlSafe ? Base64Codec.urlSafeDecode(parts[2]) : Base64Codec.decode(parts[2]));
+  }
 }
