@@ -79,7 +79,7 @@ public class CertificateUtility {
     certificateBuilder.addExtension(Extension.keyUsage, true, new KeyUsage(KeyUsage.digitalSignature + KeyUsage.keyEncipherment));
     certificateBuilder.addExtension(Extension.extendedKeyUsage, false, new ExtendedKeyUsage(new KeyPurposeId[] {KeyPurposeId.id_kp_serverAuth, KeyPurposeId.id_kp_clientAuth}));
 
-    X509Certificate certificate = new JcaX509CertificateConverter().setProvider("BC").getCertificate(certificateBuilder.build(new JcaContentSignerBuilder("SHA256withECDSA").build(keyPair.getPrivate())));
+    X509Certificate certificate = new JcaX509CertificateConverter().setProvider("BC").getCertificate(certificateBuilder.build(new JcaContentSignerBuilder(signingAlgorithm.getAlgorithmName()).build(keyPair.getPrivate())));
 
     try (StringWriter certificateWriter = new StringWriter()) {
       try (PemWriter pemWriter = new PemWriter(certificateWriter)) {
