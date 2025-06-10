@@ -36,24 +36,20 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.math.BigInteger;
 import java.security.KeyPair;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.Security;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Date;
-import java.util.concurrent.TimeUnit;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.BasicConstraints;
 import org.bouncycastle.asn1.x509.ExtendedKeyUsage;
 import org.bouncycastle.asn1.x509.Extension;
+import org.bouncycastle.asn1.x509.GeneralName;
+import org.bouncycastle.asn1.x509.GeneralNames;
 import org.bouncycastle.asn1.x509.KeyPurposeId;
 import org.bouncycastle.asn1.x509.KeyUsage;
-import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.cert.X509v3CertificateBuilder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.bouncycastle.util.io.pem.PemObject;
@@ -64,7 +60,7 @@ public class CertificateUtility {
   /*
   "CN=server.mycompany.com,OU=My Company Dev Team,O=My Company,C=US,ST=California,L=San Francisco"
   */
-  public static String constructCertificate (String cn, String ou, String o, String c, String st, String l, Date notBefore, Date now, Date notAfter, AsymmetricAlgorithm algorithm, KeyPair keyPair)
+  public static String constructCertificate (String cn, String ou, String o, String c, String st, String l, Date notBefore, Date now, Date notAfter, String domainName, AsymmetricAlgorithm algorithm, KeyPair keyPair)
     throws OperatorCreationException, CertificateException, IOException {
 
     X500Name x500Name = new X500Name("CN=%s,OU=%s,O=%s,C=%s,ST=%s,L=%s".formatted(cn, ou, o, c, st, l));
@@ -75,10 +71,11 @@ public class CertificateUtility {
       notBefore,
       notAfter,
       x500Name,
-      SubjectPublicKeyInfo.getInstance(keyPair.getPublic().getEncoded())
+      keyPair.getPublic()
     );
 
-    certificateBuilder.addExtension(Extension.basicConstraints, true, new BasicConstraints(false));
+    certificateBuilder.addExtension(Extension.basicConstraints, true, new BasicConstraints(true));
+    certificateBuilder.addExtension(Extension.subjectAlternativeName, false, new GeneralNames(new GeneralName(GeneralName.dNSName, domainName)));
     certificateBuilder.addExtension(Extension.keyUsage, true, new KeyUsage(KeyUsage.digitalSignature + KeyUsage.keyEncipherment));
     certificateBuilder.addExtension(Extension.extendedKeyUsage, false, new ExtendedKeyUsage(new KeyPurposeId[] {KeyPurposeId.id_kp_serverAuth, KeyPurposeId.id_kp_clientAuth}));
 

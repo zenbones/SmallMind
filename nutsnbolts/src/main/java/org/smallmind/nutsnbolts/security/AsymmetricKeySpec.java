@@ -136,7 +136,7 @@ public enum AsymmetricKeySpec {
         if ((prologMatcher = PKCS8_PROLOG_PATTERN.matcher(raw)).find()) {
           start = prologMatcher.end();
         }
-        if ((epilogMatcher = PKCS8_EPILOG_PATTERN.matcher(raw)).find()) {
+        if ((epilogMatcher = PKCS8_EPILOG_PATTERN.matcher(raw)).find(start)) {
           end = epilogMatcher.start();
         }
 
