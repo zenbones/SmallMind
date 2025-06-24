@@ -74,7 +74,7 @@ public class EphemeralURIUtility {
         throw new IllegalArgumentException("URI has a query component");
       }
 
-      return new EphemeralPath(ephemeralFileSystem, uri.getPath());
+      return ephemeralFileSystem.getPath(uri);
     }
   }
 }

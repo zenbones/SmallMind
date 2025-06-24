@@ -77,7 +77,7 @@ public class EphemeralPath implements Path {
 
       split(nameList, first, absolute);
 
-      if ((more != null) && (more.length > 0)) {
+      if (more != null) {
         for (String another : more) {
           split(nameList, another, false);
         }
@@ -118,14 +118,14 @@ public class EphemeralPath implements Path {
 
   private void split (LinkedList<String> nameList, String text, boolean absolute) {
 
-    if (text.length() == 0) {
+    if (text.isEmpty()) {
       throw new InvalidPathException(text, "Empty path component");
     } else {
 
       int index = 0;
 
       for (String segment : text.split(SEPARATOR, -1)) {
-        if (segment.length() == 0) {
+        if (segment.isEmpty()) {
           if ((!absolute) || (index > 0)) {
             throw new InvalidPathException(text, "Empty path component");
           }
@@ -408,7 +408,7 @@ public class EphemeralPath implements Path {
     StringBuilder pathBuilder = new StringBuilder();
 
     for (String name : names) {
-      if (absolute || (pathBuilder.length() > 0)) {
+      if (absolute || (!pathBuilder.isEmpty())) {
         pathBuilder.append(SEPARATOR);
       }
       pathBuilder.append(name);

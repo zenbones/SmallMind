@@ -32,6 +32,7 @@
  */
 package org.smallmind.file.ephemeral;
 
+import java.net.URI;
 import java.nio.file.ClosedFileSystemException;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
@@ -149,6 +150,24 @@ public class EphemeralFileSystem extends FileSystem {
     } else {
 
       return new NativePath(this, provider.getNativeFileSystem().getPath(first, more));
+    }
+  }
+
+  public Path getPath (URI uri) {
+
+    if (closed) {
+      throw new ClosedFileSystemException();
+    } else {
+
+      String uriAsString = uri.toString();
+
+      if (configuration.isOurs(uriAsString)) {
+
+        return new EphemeralPath(this, uriAsString);
+      } else {
+
+        return new NativePath(this, provider.getNativeFileSystem().provider().getPath(uri));
+      }
     }
   }
 
