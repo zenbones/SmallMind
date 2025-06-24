@@ -171,4 +171,10 @@ public class NativePath implements Path {
 
     return nativePath.compareTo((other instanceof NativePath) ? ((NativePath)other).nativePath : other);
   }
+
+  @Override
+  public String toString () {
+
+    return nativePath.toString();
+  }
 }

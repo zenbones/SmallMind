@@ -40,7 +40,6 @@ import java.nio.channels.SeekableByteChannel;
 import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
 import java.nio.file.DirectoryStream;
-import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystemAlreadyExistsException;
@@ -149,6 +148,9 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
 
     if (!EphemeralFileSystem.class.isAssignableFrom(path.getFileSystem().getClass())) {
       throw new ProviderMismatchException("The path(" + path + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
+    } else if (path instanceof NativePath) {
+
+      return ((NativePath)path).getNativeFileSystem().provider().newByteChannel(((NativePath)path).getNativePath(), options, attrs);
     } else {
 
       EphemeralPath normalizedPath = (EphemeralPath)path.normalize();
@@ -171,9 +173,21 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
 
   @Override
   public synchronized DirectoryStream<Path> newDirectoryStream (Path dir, DirectoryStream.Filter<? super Path> filter)
-    throws NoSuchFileException, NotDirectoryException {
+    throws IOException {
 
-    return newDirectoryStream(dir, filter, new LinkOption[0]);
+    if (!EphemeralFileSystem.class.isAssignableFrom(dir.getFileSystem().getClass())) {
+      throw new ProviderMismatchException("The path(" + dir + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
+    } else if (dir instanceof NativePath) {
+
+      return ((NativePath)dir).getNativeFileSystem().provider().newDirectoryStream(((NativePath)dir).getNativePath(), filter);
+    } else {
+
+      EphemeralPath normalizedDir = (EphemeralPath)dir.normalize();
+
+      internalCheckAccess(normalizedDir, AccessMode.READ);
+
+      return ((EphemeralFileSystem)normalizedDir.getFileSystem()).getFileStore().newDirectoryStream(normalizedDir, filter);
+    }
   }
 
   public synchronized SecureDirectoryStream<Path> newDirectoryStream (Path dir, DirectoryStream.Filter<? super Path> filter, LinkOption... options)
@@ -193,10 +207,13 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
 
   @Override
   public synchronized void createDirectory (Path dir, FileAttribute<?>... attrs)
-    throws NoSuchFileException, FileAlreadyExistsException {
+    throws IOException {
 
     if (!EphemeralFileSystem.class.isAssignableFrom(dir.getFileSystem().getClass())) {
       throw new ProviderMismatchException("The path(" + dir + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
+    } else if (dir instanceof NativePath) {
+
+      ((NativePath)dir).getNativeFileSystem().provider().createDirectory(((NativePath)dir).getNativePath(), attrs);
     } else {
 
       EphemeralPath normalizedDir = (EphemeralPath)dir.normalize();
@@ -215,6 +232,9 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
 
     if (!EphemeralFileSystem.class.isAssignableFrom(path.getFileSystem().getClass())) {
       throw new ProviderMismatchException("The path(" + path + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
+    } else if (path instanceof NativePath) {
+
+      ((NativePath)path).getNativeFileSystem().provider().delete(((NativePath)path).getNativePath());
     } else {
 
       EphemeralPath normalizedPath = (EphemeralPath)path.normalize();
@@ -233,6 +253,11 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
       throw new ProviderMismatchException("The path(" + source + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
     } else if (!EphemeralFileSystem.class.isAssignableFrom(target.getFileSystem().getClass())) {
       throw new ProviderMismatchException("The path(" + target + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
+    } else if (!source.getFileSystem().equals(target.getFileSystem())) {
+      throw new ProviderMismatchException("The source and target are associated with different file systems");
+    } else if (source instanceof NativePath) {
+
+      ((NativePath)source).getNativeFileSystem().provider().copy(((NativePath)source).getNativePath(), ((NativePath)target).getNativePath(), options);
     } else {
 
       EphemeralPath normalizedSource = (EphemeralPath)source.normalize();
@@ -253,6 +278,11 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
       throw new ProviderMismatchException("The path(" + source + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
     } else if (!EphemeralFileSystem.class.isAssignableFrom(target.getFileSystem().getClass())) {
       throw new ProviderMismatchException("The path(" + target + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
+    } else if (!source.getFileSystem().equals(target.getFileSystem())) {
+      throw new ProviderMismatchException("The source and target are associated with different file systems");
+    } else if (source instanceof NativePath) {
+
+      ((NativePath)source).getNativeFileSystem().provider().move(((NativePath)source).getNativePath(), ((NativePath)target).getNativePath(), options);
     } else {
 
       EphemeralPath normalizedSource = (EphemeralPath)source.normalize();
@@ -267,12 +297,18 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
 
   @Override
   public synchronized boolean isSameFile (Path source, Path target)
-    throws NoSuchFileException {
+    throws IOException {
 
     if (!EphemeralFileSystem.class.isAssignableFrom(source.getFileSystem().getClass())) {
       throw new ProviderMismatchException("The path(" + source + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
     } else if (!EphemeralFileSystem.class.isAssignableFrom(target.getFileSystem().getClass())) {
       throw new ProviderMismatchException("The path(" + target + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
+    } else if (!source.getFileSystem().equals(target.getFileSystem())) {
+
+      return false;
+    } else if (source instanceof NativePath) {
+
+      return ((NativePath)source).getNativeFileSystem().provider().isSameFile(((NativePath)source).getNativePath(), ((NativePath)target).getNativePath());
     } else {
 
       EphemeralPath normalizedSource = (EphemeralPath)source.normalize();
@@ -299,10 +335,13 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
 
   @Override
   public synchronized void checkAccess (Path path, AccessMode... modes)
-    throws NoSuchFileException {
+    throws IOException {
 
     if (!EphemeralFileSystem.class.isAssignableFrom(path.getFileSystem().getClass())) {
       throw new ProviderMismatchException("The path(" + path + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
+    } else if (path instanceof NativePath) {
+
+      ((NativePath)path).getNativeFileSystem().provider().checkAccess(((NativePath)path).getNativePath(), modes);
     } else {
 
       EphemeralPath normalizedPath = (EphemeralPath)path.normalize();
@@ -322,6 +361,9 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
 
     if (!EphemeralFileSystem.class.isAssignableFrom(path.getFileSystem().getClass())) {
       throw new ProviderMismatchException("The path(" + path + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
+    } else if (path instanceof NativePath) {
+
+      return ((NativePath)path).getNativeFileSystem().provider().getFileAttributeView(((NativePath)path).getNativePath(), type, options);
     } else {
 
       EphemeralPath normalizedPath = (EphemeralPath)path.normalize();
@@ -339,10 +381,13 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
 
   @Override
   public synchronized <A extends BasicFileAttributes> A readAttributes (Path path, Class<A> type, LinkOption... options)
-    throws NoSuchFileException {
+    throws IOException {
 
     if (!EphemeralFileSystem.class.isAssignableFrom(path.getFileSystem().getClass())) {
       throw new ProviderMismatchException("The path(" + path + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
+    } else if (path instanceof NativePath) {
+
+      return ((NativePath)path).getNativeFileSystem().provider().readAttributes(((NativePath)path).getNativePath(), type, options);
     } else {
 
       EphemeralPath normalizedPath = (EphemeralPath)path.normalize();
@@ -355,10 +400,13 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
 
   @Override
   public synchronized Map<String, Object> readAttributes (Path path, String attributes, LinkOption... options)
-    throws NoSuchFileException {
+    throws IOException {
 
     if (!EphemeralFileSystem.class.isAssignableFrom(path.getFileSystem().getClass())) {
       throw new ProviderMismatchException("The path(" + path + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
+    } else if (path instanceof NativePath) {
+
+      return ((NativePath)path).getNativeFileSystem().provider().readAttributes(((NativePath)path).getNativePath(), attributes, options);
     } else {
 
       EphemeralPath normalizedPath = (EphemeralPath)path.normalize();
@@ -371,10 +419,13 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
 
   @Override
   public synchronized void setAttribute (Path path, String attribute, Object value, LinkOption... options)
-    throws NoSuchFileException {
+    throws IOException {
 
     if (!EphemeralFileSystem.class.isAssignableFrom(path.getFileSystem().getClass())) {
       throw new ProviderMismatchException("The path(" + path + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
+    } else if (path instanceof NativePath) {
+
+      ((NativePath)path).getNativeFileSystem().provider().setAttribute(((NativePath)path).getNativePath(), attribute, value, options);
     } else {
 
       EphemeralPath normalizedPath = (EphemeralPath)path.normalize();
