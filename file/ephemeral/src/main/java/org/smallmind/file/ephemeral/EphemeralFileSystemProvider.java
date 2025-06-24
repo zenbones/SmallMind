@@ -264,7 +264,11 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
       EphemeralPath normalizedTarget = (EphemeralPath)target.normalize();
 
       internalCheckAccess(normalizedSource, AccessMode.READ);
-      internalCheckAccess(normalizedTarget, AccessMode.WRITE);
+      if (exists(normalizedTarget)) {
+        internalCheckAccess(normalizedTarget, AccessMode.WRITE);
+      } else {
+        internalCheckAccess(normalizedTarget.getParent(), AccessMode.WRITE);
+      }
 
       ((EphemeralFileSystem)normalizedSource.getFileSystem()).getFileStore().copy(normalizedSource, normalizedTarget, options);
     }
