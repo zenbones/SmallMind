@@ -148,7 +148,7 @@ public class EphemeralFileSystem extends FileSystem {
       return new EphemeralPath(this, first, more);
     } else {
 
-      return provider.getNativeFileSystem().getPath(first, more);
+      return new NativePath(this, provider.getNativeFileSystem().getPath(first, more));
     }
   }
 

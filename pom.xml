@@ -74,7 +74,7 @@
     </snapshotRepository>
   </distributionManagement>
   <properties>
-    <maven.compiler.release>17</maven.compiler.release>
+    <maven.compiler.release>21</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <amqp.client.version>5.25.0</amqp.client.version>
     <asm.version>9.8</asm.version>

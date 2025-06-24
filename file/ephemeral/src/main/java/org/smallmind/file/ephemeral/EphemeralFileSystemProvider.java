@@ -34,6 +34,8 @@ package org.smallmind.file.ephemeral;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.channels.AsynchronousFileChannel;
+import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
@@ -57,6 +59,7 @@ import java.nio.file.spi.FileSystemProvider;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -379,6 +382,28 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
       internalCheckAccess(normalizedPath, AccessMode.WRITE);
 
       ((EphemeralFileSystem)normalizedPath.getFileSystem()).getFileStore().setAttribute(normalizedPath, attribute, value, options);
+    }
+  }
+
+  public FileChannel newFileChannel (Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs)
+    throws IOException {
+
+    if (path instanceof NativePath) {
+
+      return ((NativePath)path).getNativeFileSystem().provider().newFileChannel(((NativePath)path).getNativePath(), options, attrs);
+    } else {
+      throw new UnsupportedOperationException();
+    }
+  }
+
+  public AsynchronousFileChannel newAsynchronousFileChannel (Path path, Set<? extends OpenOption> options, ExecutorService executor, FileAttribute<?>... attrs)
+    throws IOException {
+
+    if (path instanceof NativePath) {
+
+      return ((NativePath)path).getNativeFileSystem().provider().newAsynchronousFileChannel(((NativePath)path).getNativePath(), options, executor, attrs);
+    } else {
+      throw new UnsupportedOperationException();
     }
   }
 }
