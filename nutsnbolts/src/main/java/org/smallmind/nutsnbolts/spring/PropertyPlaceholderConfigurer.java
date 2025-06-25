@@ -282,8 +282,8 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
           propertyFileType = PropertyFileType.PROPERTIES;
         }
 
-        propertyHandler = propertyFileType.getPropertyHandler(inputStream);
         System.out.println("[" + propertyFileType.name() + ":" + locationResource.getPath() + "]");
+        propertyHandler = propertyFileType.getPropertyHandler(inputStream);
         for (PropertyEntry propertyEntry : propertyHandler) {
           propertyMap.put(propertyEntry.getKey(), propertyEntry.getValue());
         }
