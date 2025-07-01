@@ -93,10 +93,10 @@
     <grizzly.version>4.0.2</grizzly.version>
     <grizzly.npn.version>2.0.0</grizzly.npn.version>
     <hdrhistogram.version>2.2.2</hdrhistogram.version>
-    <hibernate.version>6.6.15.Final</hibernate.version>
+    <hibernate.version>6.6.18.Final</hibernate.version>
     <hibernate.annotations.version>7.0.3.Final</hibernate.annotations.version>
     <hibernate.validator.version>8.0.2.Final</hibernate.validator.version>
-    <hibernate.enhance.maven.plugin.version>6.6.15.Final</hibernate.enhance.maven.plugin.version>
+    <hibernate.enhance.maven.plugin.version>6.6.18.Final</hibernate.enhance.maven.plugin.version>
     <httpcomponents5.client.version>5.4.4</httpcomponents5.client.version>
     <httpcomponents5.core.version>5.3.4</httpcomponents5.core.version>
     <jackson.version>2.19.1</jackson.version>
@@ -118,13 +118,13 @@
     <jakarta.xml.soap.version>3.0.2</jakarta.xml.soap.version>
     <jakarta.xml.ws.version>4.0.2</jakarta.xml.ws.version>
     <jersey.version>3.1.10</jersey.version>
-    <jetty.version>12.0.21</jetty.version>
+    <jetty.version>12.0.22</jetty.version>
     <jfextras.labs.version>9.0-r1</jfextras.labs.version>
     <jose4j.version>0.9.6</jose4j.version>
     <kafka.version>4.0.0</kafka.version>
     <liquibase.version>4.31.1</liquibase.version>
-    <log4j.version>2.24.3</log4j.version>
-    <maven.version>3.9.9</maven.version>
+    <log4j.version>2.25.0</log4j.version>
+    <maven.version>3.9.10</maven.version>
     <maven.compiler.plugin.version>3.14.0</maven.compiler.plugin.version>
     <maven.gpg.plugin.version>3.2.7</maven.gpg.plugin.version>
     <maven.javadoc.plugin.version>3.6.3</maven.javadoc.plugin.version>
@@ -136,10 +136,10 @@
     <maven.resolver.transport.http.version>1.9.24</maven.resolver.transport.http.version>
     <maven.source.plugin.version>3.3.1</maven.source.plugin.version>
     <maven.surefire.plugin.version>3.5.3</maven.surefire.plugin.version>
-    <mongodb.driver.version>5.5.0</mongodb.driver.version>
-    <mongodb.bson.version>5.5.0</mongodb.bson.version>
+    <mongodb.driver.version>5.5.1</mongodb.driver.version>
+    <mongodb.bson.version>5.5.1</mongodb.bson.version>
     <msgpack.version>0.9.9</msgpack.version>
-    <netty.version>4.2.1.Final</netty.version>
+    <netty.version>4.2.2.Final</netty.version>
     <!--
         <openjfx.version>25-ea+11</openjfx.version>
     -->
@@ -150,7 +150,7 @@
     <siphash.version>2.0.0</siphash.version>
     <slf4j.version>2.0.17</slf4j.version>
     <snakeyaml.version>2.4</snakeyaml.version>
-    <spring.version>6.2.7</spring.version>
+    <spring.version>6.2.8</spring.version>
     <spring.batch.version>5.2.2</spring.batch.version>
     <spring.rabbit.version>3.2.5</spring.rabbit.version>
     <sshd.version>2.15.0</sshd.version>
