@@ -118,7 +118,7 @@
     <jakarta.xml.soap.version>3.0.2</jakarta.xml.soap.version>
     <jakarta.xml.ws.version>4.0.2</jakarta.xml.ws.version>
     <jersey.version>3.1.10</jersey.version>
-    <jetty.version>12.0.22</jetty.version>
+    <jetty.version>12.0.23</jetty.version>
     <jfextras.labs.version>9.0-r1</jfextras.labs.version>
     <jose4j.version>0.9.6</jose4j.version>
     <kafka.version>4.0.0</kafka.version>
