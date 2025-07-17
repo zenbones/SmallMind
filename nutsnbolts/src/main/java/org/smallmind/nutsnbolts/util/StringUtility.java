@@ -104,6 +104,21 @@ public class StringUtility {
     return fieldBuilder.toString();
   }
 
+  public static String trimWithElipses (String text, int maxLength) {
+
+    int length = text.length();
+
+    if (length < 4) {
+      throw new IllegalArgumentException("maxLength < 4");
+    } else if (length <= maxLength) {
+
+      return text;
+    } else {
+
+      return text.substring(0, maxLength - 3) + "...";
+    }
+  }
+
   public static boolean isJavaIdentifier (String anyName) {
 
     for (int count = 0; count < anyName.length(); count++) {
