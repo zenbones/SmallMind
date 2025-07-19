@@ -78,8 +78,8 @@ public class JaxbDeserializer<V extends Value<V>> implements JsonDeserializer<V>
           } else {
             messages[index] = codec.create();
 
-            for (Map.Entry<String, JsonNode> fieldEntry : new IterableIterator<>(item.fields())) {
-              messages[index].put(fieldEntry.getKey(), walk(messages[index].getFactory(), fieldEntry.getValue()));
+            for (Map.Entry<String, JsonNode> propertyEntry : item.properties()) {
+              messages[index].put(propertyEntry.getKey(), walk(messages[index].getFactory(), propertyEntry.getValue()));
             }
           }
 
@@ -91,8 +91,8 @@ public class JaxbDeserializer<V extends Value<V>> implements JsonDeserializer<V>
 
         Message<V> message = codec.create();
 
-        for (Map.Entry<String, JsonNode> fieldEntry : new IterableIterator<>(node.fields())) {
-          message.put(fieldEntry.getKey(), walk(message.getFactory(), fieldEntry.getValue()));
+        for (Map.Entry<String, JsonNode> propertyEntry : node.properties()) {
+          message.put(propertyEntry.getKey(), walk(message.getFactory(), propertyEntry.getValue()));
         }
 
         return new Message[] {message};
@@ -116,8 +116,8 @@ public class JaxbDeserializer<V extends Value<V>> implements JsonDeserializer<V>
 
         ObjectValue<V> objectValue = factory.objectValue();
 
-        for (Map.Entry<String, JsonNode> fieldEntry : new IterableIterator<>(node.fields())) {
-          objectValue.put(fieldEntry.getKey(), walk(factory, fieldEntry.getValue()));
+        for (Map.Entry<String, JsonNode> propertyEntry : node.properties()) {
+          objectValue.put(propertyEntry.getKey(), walk(factory, propertyEntry.getValue()));
         }
 
         return objectValue;

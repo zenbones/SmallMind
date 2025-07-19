@@ -55,7 +55,7 @@ public abstract class SimpleMapXmlAdapter<M extends Map<String, V>, V> extends X
 
         M map = getEmptyMap();
 
-        for (Map.Entry<String, JsonNode> entry : new IterableIterator<>(node.fields())) {
+        for (Map.Entry<String, JsonNode> entry : node.properties()) {
           map.put("null".equals(entry.getKey()) ? null : entry.getKey(), JsonCodec.convert(entry.getValue(), getValueClass()));
         }
 

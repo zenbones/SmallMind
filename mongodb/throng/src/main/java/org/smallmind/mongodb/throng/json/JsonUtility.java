@@ -61,8 +61,8 @@ public class JsonUtility {
 
         BsonDocument bsonDocument = new BsonDocument();
 
-        for (Map.Entry<String, JsonNode> fieldEntry : new IterableIterator<>(jsonNode.fields())) {
-          bsonDocument.append(fieldEntry.getKey(), fromJson(fieldEntry.getValue()));
+        for (Map.Entry<String, JsonNode> propertyEntry : jsonNode.properties()) {
+          bsonDocument.append(propertyEntry.getKey(), fromJson(propertyEntry.getValue()));
         }
 
         return bsonDocument;
@@ -201,9 +201,9 @@ public class JsonUtility {
       case OBJECT:
         writer.writeStartDocument();
 
-        for (Map.Entry<String, JsonNode> fieldEntry : new IterableIterator<>(jsonNode.fields())) {
-          writer.writeName(fieldEntry.getKey());
-          write(writer, fieldEntry.getValue());
+        for (Map.Entry<String, JsonNode> propertyEntry : jsonNode.properties()) {
+          writer.writeName(propertyEntry.getKey());
+          write(writer, propertyEntry.getValue());
         }
 
         writer.writeEndDocument();

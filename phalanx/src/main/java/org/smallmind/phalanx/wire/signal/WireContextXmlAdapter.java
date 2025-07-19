@@ -57,7 +57,7 @@ public class WireContextXmlAdapter extends XmlAdapter<JsonNode, WireContext[]> {
       for (JsonNode elementNode : new IterableIterator<>(node.elements())) {
         if (elementNode.size() == 1) {
 
-          Map.Entry<String, JsonNode> topEntry = elementNode.fields().next();
+          Map.Entry<String, JsonNode> topEntry = elementNode.properties().iterator().next();
           Class<? extends WireContext> contextClass;
 
           if ((contextClass = WireContextManager.getContextClass(topEntry.getKey())) != null) {
