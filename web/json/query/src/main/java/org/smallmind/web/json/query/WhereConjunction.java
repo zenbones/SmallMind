@@ -52,9 +52,11 @@ public abstract class WhereConjunction extends WhereCriterion {
 
     criterionList = new LinkedList<>();
 
-    for (WhereCriterion criterion : criteria) {
-      if (criterion != null) {
-        criterionList.add(criterion);
+    if (criteria != null) {
+      for (WhereCriterion criterion : criteria) {
+        if (criterion != null) {
+          criterionList.add(criterion);
+        }
       }
     }
   }
