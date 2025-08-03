@@ -32,7 +32,7 @@
  */
 package org.smallmind.nutsnbolts.security;
 
-public enum RSASigningAlgorithm implements SigningAlgorithm {
+public enum RSASigningAlgorithm implements AsymmetricSigningAlgorithm {
 
   SHA_256_WITH_RSA("SHA256withRSA");
 

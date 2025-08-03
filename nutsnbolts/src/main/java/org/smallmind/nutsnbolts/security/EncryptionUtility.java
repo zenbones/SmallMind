@@ -50,6 +50,7 @@ import java.security.PublicKey;
 import java.security.Signature;
 import java.security.SignatureException;
 import java.security.spec.AlgorithmParameterSpec;
+import java.util.Arrays;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
@@ -65,7 +66,7 @@ public class EncryptionUtility {
     return MessageDigest.getInstance(algorithm.getAlgorithmName()).digest(toBeHashed);
   }
 
-  public static byte[] sign (HMACSigningAlgorithm algorithm, Key secretKey, byte[] data)
+  public static byte[] sign (SymmetricSigningAlgorithm algorithm, Key secretKey, byte[] data)
     throws NoSuchAlgorithmException, InvalidKeyException {
 
     Mac mac = Mac.getInstance(algorithm.getAlgorithmName());
@@ -75,7 +76,17 @@ public class EncryptionUtility {
     return mac.doFinal(data);
   }
 
-  public static byte[] sign (SecurityAlgorithm algorithm, PrivateKey privateKey, byte[] data)
+  public static boolean verify (SymmetricSigningAlgorithm algorithm, Key secretKey, byte[] data, byte[] signedData)
+    throws NoSuchAlgorithmException, InvalidKeyException {
+
+    Mac mac = Mac.getInstance(algorithm.getAlgorithmName());
+
+    mac.init(secretKey);
+
+    return Arrays.equals(mac.doFinal(data), signedData);
+  }
+
+  public static byte[] sign (AsymmetricSigningAlgorithm algorithm, PrivateKey privateKey, byte[] data)
     throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
 
     Signature signature = Signature.getInstance(algorithm.getAlgorithmName());
@@ -86,7 +97,7 @@ public class EncryptionUtility {
     return signature.sign();
   }
 
-  public static boolean verify (SecurityAlgorithm algorithm, PublicKey publicKey, byte[] data, byte[] signedData)
+  public static boolean verify (AsymmetricSigningAlgorithm algorithm, PublicKey publicKey, byte[] data, byte[] signedData)
     throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
 
     Signature signature = Signature.getInstance(algorithm.getAlgorithmName());

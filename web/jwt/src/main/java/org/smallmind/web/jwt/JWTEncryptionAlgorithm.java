@@ -34,6 +34,7 @@ package org.smallmind.web.jwt;
 
 import java.nio.charset.StandardCharsets;
 import java.security.PrivateKey;
+import java.security.PublicKey;
 import org.smallmind.nutsnbolts.security.ECDSASigningAlgorithm;
 import org.smallmind.nutsnbolts.security.HMACSigningAlgorithm;
 import org.smallmind.nutsnbolts.security.RSASigningAlgorithm;
@@ -42,47 +43,47 @@ public enum JWTEncryptionAlgorithm {
 
   HS256("HS256") {
     @Override
-    public byte[] encrypt (PrivateKey key, String prologue)
+    public byte[] sign (PrivateKey privateKey, String prologue)
       throws Exception {
 
-      return HMACSigningAlgorithm.HMAC_SHA_256.sign(key, prologue.getBytes(StandardCharsets.UTF_8));
+      return HMACSigningAlgorithm.HMAC_SHA_256.sign(privateKey, prologue.getBytes(StandardCharsets.UTF_8));
     }
 
     @Override
-    public boolean verify (PrivateKey key, String[] pieces, boolean urlSafe)
+    public boolean verify (PublicKey publicKey, String[] pieces, boolean urlSafe)
       throws Exception {
 
-      return HMACSigningAlgorithm.HMAC_SHA_256.verify(key, pieces, urlSafe);
+      return HMACSigningAlgorithm.HMAC_SHA_256.verify(publicKey, pieces, urlSafe);
     }
   },
   RS256("RS256") {
     @Override
-    public byte[] encrypt (PrivateKey key, String prologue)
+    public byte[] sign (PrivateKey privateKey, String prologue)
       throws Exception {
 
-      return RSASigningAlgorithm.SHA_256_WITH_RSA.sign(key, prologue.getBytes(StandardCharsets.UTF_8));
+      return RSASigningAlgorithm.SHA_256_WITH_RSA.sign(privateKey, prologue.getBytes(StandardCharsets.UTF_8));
     }
 
     @Override
-    public boolean verify (PrivateKey key, String[] pieces, boolean urlSafe)
+    public boolean verify (PublicKey publicKey, String[] pieces, boolean urlSafe)
       throws Exception {
 
-      return RSASigningAlgorithm.SHA_256_WITH_RSA.verify(key, pieces, urlSafe);
+      return RSASigningAlgorithm.SHA_256_WITH_RSA.verify(publicKey, pieces, urlSafe);
     }
   },
   EDDSA("EdDSA") {
     @Override
-    public byte[] encrypt (PrivateKey key, String prologue)
+    public byte[] sign (PrivateKey privateKey, String prologue)
       throws Exception {
 
-      return ECDSASigningAlgorithm.ECDSA_USING_SHA_ALGORITHM.sign(key, prologue.getBytes(StandardCharsets.UTF_8));
+      return ECDSASigningAlgorithm.ECDSA_USING_SHA_ALGORITHM.sign(privateKey, prologue.getBytes(StandardCharsets.UTF_8));
     }
 
     @Override
-    public boolean verify (PrivateKey key, String[] pieces, boolean urlSafe)
+    public boolean verify (PublicKey publicKey, String[] pieces, boolean urlSafe)
       throws Exception {
 
-      return ECDSASigningAlgorithm.ECDSA_USING_SHA_ALGORITHM.verify(key, pieces, urlSafe);
+      return ECDSASigningAlgorithm.ECDSA_USING_SHA_ALGORITHM.verify(publicKey, pieces, urlSafe);
     }
   };
 
@@ -98,9 +99,9 @@ public enum JWTEncryptionAlgorithm {
     return code;
   }
 
-  public abstract byte[] encrypt (PrivateKey key, String prologue)
+  public abstract byte[] sign (PrivateKey privateKey, String prologue)
     throws Exception;
 
-  public abstract boolean verify (PrivateKey key, String[] pieces, boolean urlSafe)
+  public abstract boolean verify (PublicKey publicKey, String[] pieces, boolean urlSafe)
     throws Exception;
 }

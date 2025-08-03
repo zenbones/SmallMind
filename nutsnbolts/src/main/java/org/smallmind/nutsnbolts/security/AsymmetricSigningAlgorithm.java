@@ -37,21 +37,21 @@ import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.SignatureException;
-import java.util.Arrays;
 import org.smallmind.nutsnbolts.http.Base64Codec;
 
-public interface SigningAlgorithm extends SecurityAlgorithm {
+public interface AsymmetricSigningAlgorithm extends SecurityAlgorithm {
 
-  default byte[] sign (PrivateKey key, byte[] data)
+  default byte[] sign (PrivateKey privateKey, byte[] data)
     throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
 
-    return EncryptionUtility.sign(this, key, data);
+    return EncryptionUtility.sign(this, privateKey, data);
   }
 
-  default boolean verify (PrivateKey key, String[] parts, boolean urlSafe)
+  default boolean verify (PublicKey key, String[] parts, boolean urlSafe)
     throws IOException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
 
-    return Arrays.equals(EncryptionUtility.sign(this, key, (parts[0] + "." + parts[1]).getBytes(StandardCharsets.UTF_8)), urlSafe ? Base64Codec.urlSafeDecode(parts[2]) : Base64Codec.decode(parts[2]));
+    return EncryptionUtility.verify(this, key, (parts[0] + "." + parts[1]).getBytes(StandardCharsets.UTF_8), urlSafe ? Base64Codec.urlSafeDecode(parts[2]) : Base64Codec.decode(parts[2]));
   }
 }

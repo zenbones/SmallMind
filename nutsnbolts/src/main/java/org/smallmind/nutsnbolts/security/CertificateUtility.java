@@ -60,7 +60,7 @@ public class CertificateUtility {
   /*
   "CN=server.mycompany.com,OU=My Company Dev Team,O=My Company,C=US,ST=California,L=San Francisco"
   */
-  public static String constructCertificate (String cn, String ou, String o, String c, String st, String l, Date notBefore, Date now, Date notAfter, String domainName, SigningAlgorithm signingAlgorithm, KeyPair keyPair)
+  public static String constructCertificate (String cn, String ou, String o, String c, String st, String l, Date notBefore, Date now, Date notAfter, String domainName, AsymmetricSigningAlgorithm asymmetricSigningAlgorithm, KeyPair keyPair)
     throws OperatorCreationException, CertificateException, IOException {
 
     X500Name x500Name = new X500Name("CN=%s,OU=%s,O=%s,C=%s,ST=%s,L=%s".formatted(cn, ou, o, c, st, l));
@@ -79,7 +79,7 @@ public class CertificateUtility {
     certificateBuilder.addExtension(Extension.keyUsage, true, new KeyUsage(KeyUsage.digitalSignature + KeyUsage.keyEncipherment));
     certificateBuilder.addExtension(Extension.extendedKeyUsage, false, new ExtendedKeyUsage(new KeyPurposeId[] {KeyPurposeId.id_kp_serverAuth, KeyPurposeId.id_kp_clientAuth}));
 
-    X509Certificate certificate = new JcaX509CertificateConverter().setProvider("BC").getCertificate(certificateBuilder.build(new JcaContentSignerBuilder(signingAlgorithm.getAlgorithmName()).build(keyPair.getPrivate())));
+    X509Certificate certificate = new JcaX509CertificateConverter().setProvider("BC").getCertificate(certificateBuilder.build(new JcaContentSignerBuilder(asymmetricSigningAlgorithm.getAlgorithmName()).build(keyPair.getPrivate())));
 
     try (StringWriter certificateWriter = new StringWriter()) {
       try (PemWriter pemWriter = new PemWriter(certificateWriter)) {
