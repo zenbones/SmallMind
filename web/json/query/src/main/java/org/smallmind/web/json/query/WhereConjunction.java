@@ -50,9 +50,10 @@ public abstract class WhereConjunction extends WhereCriterion {
 
   public WhereConjunction (WhereCriterion... criteria) {
 
-    criterionList = new LinkedList<>();
+    if ((criteria != null) && (criteria.length > 0)) {
 
-    if (criteria != null) {
+      criterionList = new LinkedList<>();
+
       for (WhereCriterion criterion : criteria) {
         if (criterion != null) {
           criterionList.add(criterion);
