@@ -46,7 +46,7 @@ public class PropertyParser implements Iterable<PropertyBox> {
 
   public PropertyParser (ProcessingEnvironment processingEnvironment, UsefulTypeMirrors usefulTypeMirrors, AnnotationMirror propertyAnnotationMirror, TypeMirror type, AnnotationMirror nullifierAnnotationMirror, boolean virtual) {
 
-    String nullifierMessage = (nullifierAnnotationMirror == null) ? null : AptUtility.extractAnnotationValue(nullifierAnnotationMirror, "message", String.class, nullifierAnnotationMirror.getAnnotationType().asElement().getSimpleName().toString());
+    String nullifierMessage = (nullifierAnnotationMirror == null) ? null : AptUtility.extractAnnotationValueWithDefault(processingEnvironment, nullifierAnnotationMirror, "message", String.class);
     boolean hasIdioms = false;
 
     for (AnnotationMirror idiomAnnotationMirror : AptUtility.extractAnnotationValueAsList(propertyAnnotationMirror, "idioms", AnnotationMirror.class)) {

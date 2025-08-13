@@ -89,6 +89,24 @@ public class AptUtility {
     return defaultValue;
   }
 
+  public static <T> T extractAnnotationValueWithDefault (ProcessingEnvironment processingEnvironment, AnnotationMirror annotationMirror, String valueName, Class<T> clazz) {
+
+    for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> valueEntry : processingEnvironment.getElementUtils().getElementValuesWithDefaults(annotationMirror).entrySet()) {
+      if (valueEntry.getKey().getSimpleName().contentEquals(valueName)) {
+
+        if (clazz.isEnum()) {
+
+          return (T)Enum.valueOf((Class<Enum>)clazz, valueEntry.getValue().getValue().toString());
+        } else {
+
+          return clazz.cast(valueEntry.getValue().getValue());
+        }
+      }
+    }
+
+    return null;
+  }
+
   public static <T> List<T> extractAnnotationValueAsList (AnnotationMirror annotationMirror, String valueName, Class<T> itemClass) {
 
     List<T> extractedList = new LinkedList<>();
