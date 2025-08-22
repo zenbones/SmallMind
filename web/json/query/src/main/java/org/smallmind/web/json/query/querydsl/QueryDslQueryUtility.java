@@ -44,7 +44,6 @@ import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Path;
 import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.Expressions;
-import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.web.json.query.NoneProduct;
 import org.smallmind.web.json.query.Product;
 import org.smallmind.web.json.query.SomeProduct;
@@ -58,7 +57,7 @@ import org.smallmind.web.json.query.WhereFieldTransformer;
 import org.smallmind.web.json.query.WherePath;
 import org.smallmind.web.json.query.WildcardUtility;
 
-public class QueryUtility {
+public class QueryDslQueryUtility {
 
   public static Product<Path<?>, Predicate> apply (Where where, WhereFieldTransformer<Path<?>, Path<?>> fieldTransformer, boolean allowNonTerminalWildcards) {
 
@@ -93,18 +92,16 @@ public class QueryUtility {
       Predicate walkedPredicate;
 
       switch (whereCriterion.getCriterionType()) {
-        case CONJUNCTION:
+        case CONJUNCTION -> {
           if ((walkedPredicate = walkConjunction(rootSet, (WhereConjunction)whereCriterion, fieldTransformer, allowNonTerminalWildcards)) != null) {
             predicateList.add(walkedPredicate);
           }
-          break;
-        case FIELD:
+        }
+        case FIELD -> {
           if ((walkedPredicate = walkField(rootSet, (WhereField)whereCriterion, fieldTransformer, allowNonTerminalWildcards)) != null) {
             predicateList.add(walkedPredicate);
           }
-          break;
-        default:
-          throw new UnknownSwitchCaseException(whereCriterion.getCriterionType().name());
+        }
       }
     }
 
@@ -115,20 +112,22 @@ public class QueryUtility {
 
       BooleanBuilder booleanBuilder = new BooleanBuilder();
 
-      switch (whereConjunction.getConjunctionType()) {
-        case AND:
+      return switch (whereConjunction.getConjunctionType()) {
+        case AND -> {
           for (Predicate predicate : predicateList) {
             booleanBuilder.and(predicate);
           }
-          return booleanBuilder;
-        case OR:
+
+          yield booleanBuilder;
+        }
+        case OR -> {
           for (Predicate predicate : predicateList) {
             booleanBuilder.or(predicate);
           }
-          return booleanBuilder;
-        default:
-          throw new UnknownSwitchCaseException(whereConjunction.getConjunctionType().name());
-      }
+
+          yield booleanBuilder;
+        }
+      };
     }
   }
 
@@ -138,40 +137,37 @@ public class QueryUtility {
     WherePath<Path<?>, Path<?>> wherePath = fieldTransformer.transform(whereField.getEntity(), whereField.getName());
 
     rootSet.add(wherePath.getRoot());
-    switch (whereField.getOperator()) {
-      case LT:
-        return Expressions.predicate(Ops.LT, wherePath.getPath(), Expressions.constant(fieldValue));
-      case LE:
-        return Expressions.predicate(Ops.LOE, wherePath.getPath(), Expressions.constant(fieldValue));
-      case EQ:
+
+    return switch (whereField.getOperator()) {
+      case LT -> Expressions.predicate(Ops.LT, wherePath.getPath(), Expressions.constant(fieldValue));
+      case LE -> Expressions.predicate(Ops.LOE, wherePath.getPath(), Expressions.constant(fieldValue));
+      case EQ -> {
         if (fieldValue == null) {
-          return Expressions.predicate(Ops.IS_NULL, wherePath.getPath());
+          yield Expressions.predicate(Ops.IS_NULL, wherePath.getPath());
         } else {
-          return Expressions.predicate(Ops.EQ, wherePath.getPath(), Expressions.constant(fieldValue));
+          yield Expressions.predicate(Ops.EQ, wherePath.getPath(), Expressions.constant(fieldValue));
         }
-      case NE:
+      }
+      case NE -> {
         if (fieldValue == null) {
-          return Expressions.predicate(Ops.IS_NOT_NULL, wherePath.getPath());
+          yield Expressions.predicate(Ops.IS_NOT_NULL, wherePath.getPath());
         } else {
-          return Expressions.predicate(Ops.NE, wherePath.getPath(), Expressions.constant(fieldValue));
+          yield Expressions.predicate(Ops.NE, wherePath.getPath(), Expressions.constant(fieldValue));
         }
-      case GE:
-        return Expressions.predicate(Ops.GOE, wherePath.getPath(), Expressions.constant(fieldValue));
-      case GT:
-        return Expressions.predicate(Ops.GT, wherePath.getPath(), Expressions.constant(fieldValue));
-      case EXISTS:
-        return Boolean.TRUE.equals(fieldValue) ? Expressions.predicate(Ops.IS_NOT_NULL, wherePath.getPath()) : Expressions.predicate(Ops.IS_NULL, wherePath.getPath());
-      case LIKE:
-        return Expressions.predicate(Ops.LIKE, wherePath.getPath(), Expressions.constant(WildcardUtility.swapWithSqlWildcard((String)fieldValue, allowNonTerminalWildcards)));
-      case UNLIKE:
-        return Expressions.predicate(Ops.NOT, Expressions.predicate(Ops.LIKE, wherePath.getPath(), Expressions.constant(WildcardUtility.swapWithSqlWildcard((String)fieldValue, allowNonTerminalWildcards))));
-      case IN:
+      }
+      case GE -> Expressions.predicate(Ops.GOE, wherePath.getPath(), Expressions.constant(fieldValue));
+      case GT -> Expressions.predicate(Ops.GT, wherePath.getPath(), Expressions.constant(fieldValue));
+      case EXISTS -> Boolean.TRUE.equals(fieldValue) ? Expressions.predicate(Ops.IS_NOT_NULL, wherePath.getPath()) : Expressions.predicate(Ops.IS_NULL, wherePath.getPath());
+      case LIKE -> Expressions.predicate(Ops.LIKE, wherePath.getPath(), Expressions.constant(WildcardUtility.swapWithSqlWildcard((String)fieldValue, allowNonTerminalWildcards)));
+      case UNLIKE -> Expressions.predicate(Ops.NOT, Expressions.predicate(Ops.LIKE, wherePath.getPath(), Expressions.constant(WildcardUtility.swapWithSqlWildcard((String)fieldValue, allowNonTerminalWildcards))));
+      case MATCH -> Expressions.booleanTemplate("match({0},{1})", wherePath.getPath(), Expressions.constant(fieldValue));
+      case IN -> {
 
         int arrayLength;
 
         if ((arrayLength = Array.getLength(fieldValue)) == 0) {
 
-          return null;
+          yield null;
         } else {
 
           Expression<?> collectionExpression = Expressions.collectionOperation(fieldValue.getClass().getComponentType(), Ops.SINGLETON, Expressions.constant(Array.get(fieldValue, 0)));
@@ -182,11 +178,10 @@ public class QueryUtility {
             }
           }
 
-          return Expressions.predicate(Ops.IN, wherePath.getPath(), collectionExpression);
+          yield Expressions.predicate(Ops.IN, wherePath.getPath(), collectionExpression);
         }
-      default:
-        throw new UnknownSwitchCaseException(whereField.getOperator().name());
-    }
+      }
+    };
   }
 
   public static Product<Path<?>, OrderSpecifier[]> apply (Sort sort, WhereFieldTransformer<Path<?>, Path<?>> fieldTransformer) {
@@ -202,16 +197,10 @@ public class QueryUtility {
         WherePath<Path<?>, Path<?>> wherePath = fieldTransformer.transform(sortField.getEntity(), sortField.getName());
 
         rootSet.add(wherePath.getRoot());
-        switch (sortField.getDirection()) {
-          case ASC:
-            orderSpecifierList.add(new OrderSpecifier(Order.ASC, wherePath.getPath()));
-            break;
-          case DESC:
-            orderSpecifierList.add(new OrderSpecifier(Order.DESC, wherePath.getPath()));
-            break;
-          default:
-            throw new UnknownSwitchCaseException(sortField.getDirection().name());
-        }
+        orderSpecifierList.add(switch (sortField.getDirection()) {
+          case ASC -> new OrderSpecifier(Order.ASC, wherePath.getPath());
+          case DESC -> new OrderSpecifier(Order.DESC, wherePath.getPath());
+        });
       }
 
       orderSpecifiers = new OrderSpecifier[orderSpecifierList.size()];

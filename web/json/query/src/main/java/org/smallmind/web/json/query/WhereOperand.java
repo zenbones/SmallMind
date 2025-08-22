@@ -50,47 +50,33 @@ public abstract class WhereOperand<I> {
       case BOOLEAN:
         return new BooleanWhereOperand(node.booleanValue());
       case NUMBER:
-        switch (node.numberType()) {
-          case DOUBLE:
-            return new DoubleWhereOperand(node.doubleValue());
-          case FLOAT:
-            return new FloatWhereOperand(node.floatValue());
-          case INT:
-            return new IntegerWhereOperand(node.intValue());
-          case LONG:
-            return new LongWhereOperand(node.longValue());
-          default:
-            throw new QueryProcessingException("Unable to convert json number type(%s) to operand", node.numberType().name());
-        }
+        return switch (node.numberType()) {
+          case DOUBLE -> new DoubleWhereOperand(node.doubleValue());
+          case FLOAT -> new FloatWhereOperand(node.floatValue());
+          case INT -> new IntegerWhereOperand(node.intValue());
+          case LONG -> new LongWhereOperand(node.longValue());
+          default -> throw new QueryProcessingException("Unable to convert json number type(%s) to operand", node.numberType().name());
+        };
       case STRING:
         return new StringWhereOperand(node.textValue());
       case NULL:
         return NullWhereOperand.instance();
       case ARRAY:
-        if (node.size() == 0) {
+        if (node.isEmpty()) {
           throw new QueryProcessingException("Unable to convert an empty array");
         } else {
-          switch (node.get(0).getNodeType()) {
-            case BOOLEAN:
-              return new ArrayWhereOperand(new ComponentHint(ComponentType.BOOLEAN), (ArrayNode)node);
-            case NUMBER:
-              switch (node.numberType()) {
-                case DOUBLE:
-                  return new ArrayWhereOperand(new ComponentHint(ComponentType.DOUBLE), (ArrayNode)node);
-                case FLOAT:
-                  return new ArrayWhereOperand(new ComponentHint(ComponentType.FLOAT), (ArrayNode)node);
-                case INT:
-                  return new ArrayWhereOperand(new ComponentHint(ComponentType.INTEGER), (ArrayNode)node);
-                case LONG:
-                  return new ArrayWhereOperand(new ComponentHint(ComponentType.LONG), (ArrayNode)node);
-                default:
-                  throw new QueryProcessingException("Unable to convert json array of number type(%s) to operand", node.numberType().name());
-              }
-            case STRING:
-              return new ArrayWhereOperand(new ComponentHint(ComponentType.STRING), (ArrayNode)node);
-            default:
-              throw new QueryProcessingException("Unable to convert json array of type(%s) to operand", node.getNodeType().name());
-          }
+          return switch (node.get(0).getNodeType()) {
+            case BOOLEAN -> new ArrayWhereOperand(new ComponentHint(ComponentType.BOOLEAN), (ArrayNode)node);
+            case NUMBER -> switch (node.numberType()) {
+              case DOUBLE -> new ArrayWhereOperand(new ComponentHint(ComponentType.DOUBLE), (ArrayNode)node);
+              case FLOAT -> new ArrayWhereOperand(new ComponentHint(ComponentType.FLOAT), (ArrayNode)node);
+              case INT -> new ArrayWhereOperand(new ComponentHint(ComponentType.INTEGER), (ArrayNode)node);
+              case LONG -> new ArrayWhereOperand(new ComponentHint(ComponentType.LONG), (ArrayNode)node);
+              default -> throw new QueryProcessingException("Unable to convert json array of number type(%s) to operand", node.numberType().name());
+            };
+            case STRING -> new ArrayWhereOperand(new ComponentHint(ComponentType.STRING), (ArrayNode)node);
+            default -> throw new QueryProcessingException("Unable to convert json array of type(%s) to operand", node.getNodeType().name());
+          };
         }
       default:
         throw new QueryProcessingException("Unable to convert json node type(%s) to operand", node.getNodeType().name());

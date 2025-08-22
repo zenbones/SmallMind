@@ -41,7 +41,6 @@ import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
-import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.web.json.query.NoneProduct;
 import org.smallmind.web.json.query.OperandType;
 import org.smallmind.web.json.query.Product;
@@ -88,19 +87,15 @@ public class JPAQueryUtility {
 
     for (WhereCriterion whereCriterion : whereConjunction.getCriteria()) {
       switch (whereCriterion.getCriterionType()) {
-        case CONJUNCTION:
+        case CONJUNCTION -> {
 
           Predicate walkedPredicate;
 
           if ((walkedPredicate = walkConjunction(criteriaBuilder, rootSet, (WhereConjunction)whereCriterion, fieldTransformer, allowNonTerminalWildcards)) != null) {
             predicateList.add(walkedPredicate);
           }
-          break;
-        case FIELD:
-          predicateList.add(walkField(criteriaBuilder, rootSet, (WhereField)whereCriterion, fieldTransformer, allowNonTerminalWildcards));
-          break;
-        default:
-          throw new UnknownSwitchCaseException(whereCriterion.getCriterionType().name());
+        }
+        case FIELD -> predicateList.add(walkField(criteriaBuilder, rootSet, (WhereField)whereCriterion, fieldTransformer, allowNonTerminalWildcards));
       }
     }
 
@@ -112,14 +107,10 @@ public class JPAQueryUtility {
       Predicate[] predicates = new Predicate[predicateList.size()];
 
       predicateList.toArray(predicates);
-      switch (whereConjunction.getConjunctionType()) {
-        case AND:
-          return criteriaBuilder.and(predicates);
-        case OR:
-          return criteriaBuilder.or(predicates);
-        default:
-          throw new UnknownSwitchCaseException(whereConjunction.getConjunctionType().name());
-      }
+      return switch (whereConjunction.getConjunctionType()) {
+        case AND -> criteriaBuilder.and(predicates);
+        case OR -> criteriaBuilder.or(predicates);
+      };
     }
   }
 
@@ -129,38 +120,33 @@ public class JPAQueryUtility {
     WherePath<Root<?>, Path<?>> wherePath = fieldTransformer.transform(whereField.getEntity(), whereField.getName());
 
     rootSet.add(wherePath.getRoot());
-    switch (whereField.getOperator()) {
-      case LT:
-        return OperandType.DATE.equals(whereField.getOperand().getOperandType()) ? criteriaBuilder.lessThan((Path<Date>)wherePath.getPath(), (Date)fieldValue) : criteriaBuilder.lt((Path<Number>)wherePath.getPath(), (Number)fieldValue);
-      case LE:
-        return OperandType.DATE.equals(whereField.getOperand().getOperandType()) ? criteriaBuilder.lessThanOrEqualTo((Path<Date>)wherePath.getPath(), (Date)fieldValue) : criteriaBuilder.le((Path<Number>)wherePath.getPath(), (Number)fieldValue);
-      case EQ:
+
+    return switch (whereField.getOperator()) {
+      case LT -> OperandType.DATE.equals(whereField.getOperand().getOperandType()) ? criteriaBuilder.lessThan((Path<Date>)wherePath.getPath(), (Date)fieldValue) : criteriaBuilder.lt((Path<Number>)wherePath.getPath(), (Number)fieldValue);
+      case LE -> OperandType.DATE.equals(whereField.getOperand().getOperandType()) ? criteriaBuilder.lessThanOrEqualTo((Path<Date>)wherePath.getPath(), (Date)fieldValue) : criteriaBuilder.le((Path<Number>)wherePath.getPath(), (Number)fieldValue);
+      case EQ -> {
         if (fieldValue == null) {
-          return criteriaBuilder.isNull(wherePath.getPath());
+          yield criteriaBuilder.isNull(wherePath.getPath());
         } else {
-          return criteriaBuilder.equal(wherePath.getPath(), fieldValue);
+          yield criteriaBuilder.equal(wherePath.getPath(), fieldValue);
         }
-      case NE:
+      }
+      case NE -> {
         if (fieldValue == null) {
-          return criteriaBuilder.isNotNull(wherePath.getPath());
+          yield criteriaBuilder.isNotNull(wherePath.getPath());
         } else {
-          return criteriaBuilder.notEqual(wherePath.getPath(), fieldValue);
+          yield criteriaBuilder.notEqual(wherePath.getPath(), fieldValue);
         }
-      case GE:
-        return OperandType.DATE.equals(whereField.getOperand().getOperandType()) ? criteriaBuilder.greaterThanOrEqualTo((Path<Date>)wherePath.getPath(), (Date)fieldValue) : criteriaBuilder.ge((Path<Number>)wherePath.getPath(), (Number)fieldValue);
-      case GT:
-        return OperandType.DATE.equals(whereField.getOperand().getOperandType()) ? criteriaBuilder.greaterThan((Path<Date>)wherePath.getPath(), (Date)fieldValue) : criteriaBuilder.gt((Path<Number>)wherePath.getPath(), (Number)fieldValue);
-      case EXISTS:
-        return Boolean.TRUE.equals(fieldValue) ? criteriaBuilder.isNotNull(wherePath.getPath()) : criteriaBuilder.isNull(wherePath.getPath());
-      case LIKE:
-        return criteriaBuilder.like((Path<String>)wherePath.getPath(), WildcardUtility.swapWithSqlWildcard((String)fieldValue, allowNonTerminalWildcards));
-      case UNLIKE:
-        return criteriaBuilder.notLike((Path<String>)wherePath.getPath(), WildcardUtility.swapWithSqlWildcard((String)fieldValue, allowNonTerminalWildcards));
-      case IN:
-        return criteriaBuilder.in((Path<?>)wherePath.getPath()).in(fieldValue);
-      default:
-        throw new UnknownSwitchCaseException(whereField.getOperator().name());
-    }
+      }
+      case GE -> OperandType.DATE.equals(whereField.getOperand().getOperandType()) ? criteriaBuilder.greaterThanOrEqualTo((Path<Date>)wherePath.getPath(), (Date)fieldValue) : criteriaBuilder.ge((Path<Number>)wherePath.getPath(), (Number)fieldValue);
+      case GT -> OperandType.DATE.equals(whereField.getOperand().getOperandType()) ? criteriaBuilder.greaterThan((Path<Date>)wherePath.getPath(), (Date)fieldValue) : criteriaBuilder.gt((Path<Number>)wherePath.getPath(), (Number)fieldValue);
+      case EXISTS -> Boolean.TRUE.equals(fieldValue) ? criteriaBuilder.isNotNull(wherePath.getPath()) : criteriaBuilder.isNull(wherePath.getPath());
+      case LIKE -> criteriaBuilder.like((Path<String>)wherePath.getPath(), WildcardUtility.swapWithSqlWildcard((String)fieldValue, allowNonTerminalWildcards));
+      case UNLIKE -> criteriaBuilder.notLike((Path<String>)wherePath.getPath(), WildcardUtility.swapWithSqlWildcard((String)fieldValue, allowNonTerminalWildcards));
+      // Assumes the database has a 'match' function
+      case MATCH -> criteriaBuilder.isTrue(criteriaBuilder.function("match", Boolean.class, wherePath.getPath(), criteriaBuilder.parameter(String.class, (String)fieldValue)));
+      case IN -> criteriaBuilder.in((Path<?>)wherePath.getPath()).in(fieldValue);
+    };
   }
 
   public static Product<Root<?>, Order[]> apply (CriteriaBuilder criteriaBuilder, Sort sort, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer) {
@@ -176,16 +162,10 @@ public class JPAQueryUtility {
         WherePath<Root<?>, Path<?>> wherePath = fieldTransformer.transform(sortField.getEntity(), sortField.getName());
 
         rootSet.add(wherePath.getRoot());
-        switch (sortField.getDirection()) {
-          case ASC:
-            orderList.add(criteriaBuilder.asc(wherePath.getPath()));
-            break;
-          case DESC:
-            orderList.add(criteriaBuilder.desc(wherePath.getPath()));
-            break;
-          default:
-            throw new UnknownSwitchCaseException(sortField.getDirection().name());
-        }
+        orderList.add(switch (sortField.getDirection()) {
+          case ASC -> criteriaBuilder.asc(wherePath.getPath());
+          case DESC -> criteriaBuilder.desc(wherePath.getPath());
+        });
       }
 
       orders = new Order[orderList.size()];

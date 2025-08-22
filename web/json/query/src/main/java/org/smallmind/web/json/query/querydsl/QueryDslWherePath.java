@@ -37,23 +37,23 @@ import com.querydsl.core.types.dsl.PathBuilder;
 import org.smallmind.persistence.Durable;
 import org.smallmind.web.json.query.WherePath;
 
-public class QWherePath extends WherePath<Path<?>, Path<?>> {
+public class QueryDslWherePath extends WherePath<Path<?>, Path<?>> {
 
   private final Path<?> root;
   private final Path<?> path;
   private final String field;
 
-  public QWherePath (Path<?> path) {
+  public QueryDslWherePath (Path<?> path) {
 
     this(path.getRoot(), path, path.toString().substring(path.getRoot().toString().length() + 1));
   }
 
-  public QWherePath (Path<? extends Durable<?>> path, String field) {
+  public QueryDslWherePath (Path<? extends Durable<?>> path, String field) {
 
     this(path, new PathBuilder<>(path.getType(), path.toString()).get(field), field);
   }
 
-  public QWherePath (Path<?> root, Path<?> path, String field) {
+  public QueryDslWherePath (Path<?> root, Path<?> path, String field) {
 
     this.root = root;
     this.path = path;

@@ -214,6 +214,14 @@ public enum WhereOperator {
       return !LIKE.isTrue(op1, op2);
     }
   },
+  MATCH {
+    @Override
+    public boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2) {
+
+      // This is a natural language query using the 'match' database function that can't be replicated outside the database
+      throw new UnsupportedOperationException("The 'match' operator can't be emulated outside a supporting database");
+    }
+  },
   IN {
     @Override
     public boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2) {
