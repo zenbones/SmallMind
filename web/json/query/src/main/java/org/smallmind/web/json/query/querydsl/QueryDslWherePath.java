@@ -30,28 +30,51 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.security;
+package org.smallmind.web.json.query.querydsl;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.SignatureException;
-import java.util.Arrays;
-import org.smallmind.nutsnbolts.http.Base64Codec;
+import com.querydsl.core.types.Path;
+import com.querydsl.core.types.dsl.PathBuilder;
+import org.smallmind.persistence.Durable;
+import org.smallmind.web.json.query.WherePath;
 
-public interface SigningAlgorithm extends SecurityAlgorithm {
+public class QueryDslWherePath extends WherePath<Path<?>, Path<?>> {
 
-  default byte[] sign (PrivateKey key, byte[] data)
-    throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+  private final Path<?> root;
+  private final Path<?> path;
+  private final String field;
 
-    return EncryptionUtility.sign(this, key, data);
+  public QueryDslWherePath (Path<?> path) {
+
+    this(path.getRoot(), path, path.toString().substring(path.getRoot().toString().length() + 1));
   }
 
-  default boolean verify (PrivateKey key, String[] parts, boolean urlSafe)
-    throws IOException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+  public QueryDslWherePath (Path<? extends Durable<?>> path, String field) {
 
-    return Arrays.equals(EncryptionUtility.sign(this, key, (parts[0] + "." + parts[1]).getBytes(StandardCharsets.UTF_8)), urlSafe ? Base64Codec.urlSafeDecode(parts[2]) : Base64Codec.decode(parts[2]));
+    this(path, new PathBuilder<>(path.getType(), path.toString()).get(field), field);
+  }
+
+  public QueryDslWherePath (Path<?> root, Path<?> path, String field) {
+
+    this.root = root;
+    this.path = path;
+    this.field = field;
+  }
+
+  @Override
+  public Path<?> getRoot () {
+
+    return root;
+  }
+
+  @Override
+  public Path<?> getPath () {
+
+    return path;
+  }
+
+  @Override
+  public String getField () {
+
+    return field;
   }
 }

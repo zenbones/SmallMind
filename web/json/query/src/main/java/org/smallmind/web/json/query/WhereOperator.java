@@ -33,7 +33,6 @@
 package org.smallmind.web.json.query;
 
 import java.util.Date;
-import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.nutsnbolts.util.NumberComparator;
 
 public enum WhereOperator {
@@ -78,18 +77,11 @@ public enum WhereOperator {
         } else if (ElementType.NULL.equals(op2.getElementType())) {
           return false;
         } else if (op1.getElementType().equals(op2.getElementType())) {
-          switch (op1.getElementType()) {
-            case BOOLEAN:
-              return op1.get().equals(op2.get());
-            case NUMBER:
-              return NUMBER_COMPARATOR.compare((Number)op1.get(), (Number)op2.get()) == 0;
-            case STRING:
-              return op1.get().equals(op2.get());
-            case DATE:
-              return op1.get().equals(op2.get());
-            default:
-              throw new QueryProcessingException(new UnknownSwitchCaseException(op1.getElementType().name()));
-          }
+          return switch (op1.getElementType()) {
+            case BOOLEAN, DATE, STRING -> op1.get().equals(op2.get());
+            case NUMBER -> NUMBER_COMPARATOR.compare((Number)op1.get(), (Number)op2.get()) == 0;
+            case NULL -> true;
+          };
         }
       }
 
@@ -106,18 +98,11 @@ public enum WhereOperator {
         } else if (ElementType.NULL.equals(op2.getElementType())) {
           return true;
         } else if (op1.getElementType().equals(op2.getElementType())) {
-          switch (op1.getElementType()) {
-            case BOOLEAN:
-              return !op1.get().equals(op2.get());
-            case NUMBER:
-              return NUMBER_COMPARATOR.compare((Number)op1.get(), (Number)op2.get()) != 0;
-            case STRING:
-              return !op1.get().equals(op2.get());
-            case DATE:
-              return !op1.get().equals(op2.get());
-            default:
-              throw new QueryProcessingException(new UnknownSwitchCaseException(op1.getElementType().name()));
-          }
+          return switch (op1.getElementType()) {
+            case BOOLEAN, DATE, STRING -> !op1.get().equals(op2.get());
+            case NUMBER -> NUMBER_COMPARATOR.compare((Number)op1.get(), (Number)op2.get()) != 0;
+            case NULL -> false;
+          };
         }
       }
 
@@ -225,28 +210,16 @@ public enum WhereOperator {
           } else {
             for (Object element : (Object[])op1.get()) {
               switch (op2.getElementType()) {
-                case BOOLEAN:
+                case BOOLEAN, DATE, STRING -> {
                   if (op2.get().equals(element)) {
                     return true;
                   }
-                  break;
-                case NUMBER:
+                }
+                case NUMBER -> {
                   if (NUMBER_COMPARATOR.compare((Number)element, (Number)op2.get()) == 0) {
                     return true;
                   }
-                  break;
-                case STRING:
-                  if (op2.get().equals(element)) {
-                    return true;
-                  }
-                  break;
-                case DATE:
-                  if (op2.get().equals(element)) {
-                    return true;
-                  }
-                  break;
-                default:
-                  throw new QueryProcessingException(new UnknownSwitchCaseException(op1.getElementType().name()));
+                }
               }
             }
 

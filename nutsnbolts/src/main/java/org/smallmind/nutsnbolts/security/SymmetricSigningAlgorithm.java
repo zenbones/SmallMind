@@ -32,19 +32,26 @@
  */
 package org.smallmind.nutsnbolts.security;
 
-public enum ECDSASigningAlgorithm implements AsymmetricSigningAlgorithm {
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
+import java.security.Key;
+import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
+import java.security.SignatureException;
+import org.smallmind.nutsnbolts.http.Base64Codec;
 
-  ECDSA_USING_SHA_ALGORITHM("EcdsaUsingShaAlgorithm");
+public interface SymmetricSigningAlgorithm extends SecurityAlgorithm {
 
-  private final String algorithmName;
+  default byte[] sign (Key key, byte[] data)
+    throws NoSuchAlgorithmException, InvalidKeyException {
 
-  ECDSASigningAlgorithm (String algorithmName) {
-
-    this.algorithmName = algorithmName;
+    return EncryptionUtility.sign(this, key, data);
   }
 
-  public String getAlgorithmName () {
+  default boolean verify (Key key, String[] parts, boolean urlSafe)
+    throws IOException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
 
-    return algorithmName;
+    return EncryptionUtility.verify(this, key, (parts[0] + "." + parts[1]).getBytes(StandardCharsets.UTF_8), urlSafe ? Base64Codec.urlSafeDecode(parts[2]) : Base64Codec.decode(parts[2]));
   }
 }

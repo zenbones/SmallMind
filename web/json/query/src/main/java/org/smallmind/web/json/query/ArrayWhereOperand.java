@@ -120,37 +120,15 @@ public class ArrayWhereOperand extends WhereOperand<Object[]> {
   @XmlTransient
   public ElementType getElementType () {
 
-    switch (hint.getHintType()) {
-      case COMPONENT:
-        switch (((ComponentHint)hint).getType()) {
-          case BOOLEAN:
-            return ElementType.BOOLEAN;
-          case BYTE:
-            return ElementType.NUMBER;
-          case CHARACTER:
-            return ElementType.STRING;
-          case DATE:
-            return ElementType.DATE;
-          case DOUBLE:
-            return ElementType.NUMBER;
-          case FLOAT:
-            return ElementType.NUMBER;
-          case INTEGER:
-            return ElementType.NUMBER;
-          case LONG:
-            return ElementType.NUMBER;
-          case SHORT:
-            return ElementType.NUMBER;
-          case STRING:
-            return ElementType.STRING;
-          default:
-            throw new UnknownSwitchCaseException(((ComponentHint)hint).getType().name());
-        }
-      case ENUM:
-        return ElementType.STRING;
-      default:
-        throw new UnknownSwitchCaseException(hint.getHintType().name());
-    }
+    return switch (hint.getHintType()) {
+      case COMPONENT -> switch (((ComponentHint)hint).getType()) {
+        case BOOLEAN -> ElementType.BOOLEAN;
+        case DOUBLE, FLOAT, LONG, INTEGER, SHORT, BYTE -> ElementType.NUMBER;
+        case CHARACTER, STRING -> ElementType.STRING;
+        case DATE -> ElementType.DATE;
+      };
+      case ENUM -> ElementType.STRING;
+    };
   }
 
   @Override
@@ -196,7 +174,7 @@ public class ArrayWhereOperand extends WhereOperand<Object[]> {
 
                 String string;
 
-                characterArray[index] = (value.get(index) == null) ? null : ((string = JsonCodec.convert(value.get(index), String.class)).length() == 0) ? null : string.charAt(0);
+                characterArray[index] = (value.get(index) == null) ? null : (string = JsonCodec.convert(value.get(index), String.class)).isEmpty() ? null : string.charAt(0);
               }
 
               return characterArray;

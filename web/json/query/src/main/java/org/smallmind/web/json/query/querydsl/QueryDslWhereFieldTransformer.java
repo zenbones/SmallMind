@@ -39,41 +39,41 @@ import com.querydsl.core.types.dsl.PathBuilder;
 import org.smallmind.persistence.Durable;
 import org.smallmind.web.json.query.WhereFieldTransformer;
 
-public class QWhereFieldTransformer extends WhereFieldTransformer<Path<?>, Path<?>> {
+public class QueryDslWhereFieldTransformer extends WhereFieldTransformer<Path<?>, Path<?>> {
 
-  public QWhereFieldTransformer (Path<? extends Durable<?>> path) {
+  public QueryDslWhereFieldTransformer (Path<? extends Durable<?>> path) {
 
-    super((String entity, String name) -> new QWherePath(path, new PathBuilder<>(path.getType(), path.toString()).get(name), name));
+    super((String entity, String name) -> new QueryDslWherePath(path, new PathBuilder<>(path.getType(), path.toString()).get(name), name));
   }
 
-  public QWhereFieldTransformer (Path<? extends Durable<?>> path, UnaryOperator<String> nameOperator) {
+  public QueryDslWhereFieldTransformer (Path<? extends Durable<?>> path, UnaryOperator<String> nameOperator) {
 
     super((String entity, String name) -> {
 
       String transformedName = nameOperator.apply(name);
 
-      return new QWherePath(path, new PathBuilder<>(path.getType(), path.toString()).get(transformedName), transformedName);
+      return new QueryDslWherePath(path, new PathBuilder<>(path.getType(), path.toString()).get(transformedName), transformedName);
     });
   }
 
-  public QWhereFieldTransformer (BiFunction<String, String, Path<? extends Durable<?>>> pathFunction, BiFunction<String, String, String> nameFunction) {
+  public QueryDslWhereFieldTransformer (BiFunction<String, String, Path<? extends Durable<?>>> pathFunction, BiFunction<String, String, String> nameFunction) {
 
     super((String entity, String name) -> {
 
       Path<? extends Durable<?>> transformedPath = pathFunction.apply(entity, name);
       String transformedName = nameFunction.apply(entity, name);
 
-      return new QWherePath(transformedPath, new PathBuilder<>(transformedPath.getType(), transformedPath.toString()).get(transformedName), transformedName);
+      return new QueryDslWherePath(transformedPath, new PathBuilder<>(transformedPath.getType(), transformedPath.toString()).get(transformedName), transformedName);
     });
   }
 
-  public QWhereFieldTransformer (BiFunction<String, String, Path<?>> pathFunction) {
+  public QueryDslWhereFieldTransformer (BiFunction<String, String, Path<?>> pathFunction) {
 
     super((String entity, String name) -> {
 
       Path<?> transformedPath = pathFunction.apply(entity, name);
 
-      return new QWherePath(transformedPath.getRoot(), transformedPath, transformedPath.toString().substring(transformedPath.getRoot().toString().length() + 1));
+      return new QueryDslWherePath(transformedPath.getRoot(), transformedPath, transformedPath.toString().substring(transformedPath.getRoot().toString().length() + 1));
     });
   }
 }

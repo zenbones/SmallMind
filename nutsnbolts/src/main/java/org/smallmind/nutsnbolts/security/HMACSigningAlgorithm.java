@@ -35,7 +35,7 @@ package org.smallmind.nutsnbolts.security;
 import java.security.Key;
 import javax.crypto.spec.SecretKeySpec;
 
-public enum HMACSigningAlgorithm implements SigningAlgorithm {
+public enum HMACSigningAlgorithm implements SymmetricSigningAlgorithm {
 
   HMAC_MD5("HmacMD5"), HMAC_SHA_1("HmacSHA1"), HMAC_SHA_256("HmacSHA256");
 
