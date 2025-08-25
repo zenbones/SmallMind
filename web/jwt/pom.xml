@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>smallmind-web</artifactId>
-    <version>6.8.0-SNAPSHOT</version>
+    <version>6.8.0</version>
   </parent>
   <artifactId>web-jwt</artifactId>
   <packaging>jar</packaging>
