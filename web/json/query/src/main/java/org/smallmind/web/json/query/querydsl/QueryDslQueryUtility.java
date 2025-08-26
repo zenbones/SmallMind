@@ -160,7 +160,6 @@ public class QueryDslQueryUtility {
       case EXISTS -> Boolean.TRUE.equals(fieldValue) ? Expressions.predicate(Ops.IS_NOT_NULL, wherePath.getPath()) : Expressions.predicate(Ops.IS_NULL, wherePath.getPath());
       case LIKE -> Expressions.predicate(Ops.LIKE, wherePath.getPath(), Expressions.constant(WildcardUtility.swapWithSqlWildcard((String)fieldValue, allowNonTerminalWildcards)));
       case UNLIKE -> Expressions.predicate(Ops.NOT, Expressions.predicate(Ops.LIKE, wherePath.getPath(), Expressions.constant(WildcardUtility.swapWithSqlWildcard((String)fieldValue, allowNonTerminalWildcards))));
-      case MATCH -> Expressions.booleanTemplate("match({0},{1})", wherePath.getPath(), Expressions.constant(fieldValue));
       case IN -> {
 
         int arrayLength;
