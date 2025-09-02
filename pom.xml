@@ -136,6 +136,7 @@
     <maven.resolver.transport.http.version>1.9.24</maven.resolver.transport.http.version>
     <maven.source.plugin.version>3.3.1</maven.source.plugin.version>
     <maven.surefire.plugin.version>3.5.3</maven.surefire.plugin.version>
+    <moditect.version>1.3.0.Final</moditect.version>
     <mongodb.driver.version>5.5.1</mongodb.driver.version>
     <mongodb.bson.version>5.5.1</mongodb.bson.version>
     <msgpack.version>0.9.9</msgpack.version>
@@ -149,12 +150,12 @@
     <shiro.version>2.0.0</shiro.version>
     <siphash.version>2.0.0</siphash.version>
     <slf4j.version>2.0.17</slf4j.version>
-    <snakeyaml.version>2.4</snakeyaml.version>
+    <snakeyaml.version>2.5</snakeyaml.version>
     <spring.version>6.2.8</spring.version>
     <spring.batch.version>5.2.2</spring.batch.version>
     <spring.rabbit.version>3.2.5</spring.rabbit.version>
     <sshd.version>2.15.0</sshd.version>
-    <sun.mail.version>2.0.1</sun.mail.version>
+    <sun.mail.version>2.0.2</sun.mail.version>
     <sun.xml.bind.version>4.0.5</sun.xml.bind.version>
     <sun.xml.ws.version>4.0.3</sun.xml.ws.version>
     <surefire.version>3.5.3</surefire.version>
@@ -1290,6 +1291,11 @@
               <version>${aspectj.version}</version>
             </dependency>
           </dependencies>
+        </plugin>
+        <plugin>
+          <groupId>org.moditect</groupId>
+          <artifactId>moditect-maven-plugin</artifactId>
+          <version>${moditect.version}</version>
         </plugin>
         <plugin>
           <groupId>org.smallmind</groupId>
