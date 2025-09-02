@@ -53,7 +53,8 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class ResponseMessageRouter extends MessageRouter {
 
-  private final QueueContractor queueContractor;
+  private final QueueContractor enduringQueueContractor;
+  private final QueueContractor ephemeralQueueContractor;
   private final RabbitMQResponseTransport responseTransport;
   private final SignalCodec signalCodec;
   private final String serviceGroup;
@@ -62,11 +63,12 @@ public class ResponseMessageRouter extends MessageRouter {
   private final int index;
   private final int ttlSeconds;
 
-  public ResponseMessageRouter (RabbitMQConnector connector, QueueContractor queueContractor, NameConfiguration nameConfiguration, RabbitMQResponseTransport responseTransport, SignalCodec signalCodec, String serviceGroup, String instanceId, int index, int ttlSeconds, boolean autoAcknowledge, PublisherConfirmationHandler publisherConfirmationHandler) {
+  public ResponseMessageRouter (RabbitMQConnector connector, QueueContractor enduringQueueContractor, QueueContractor ephemeralQueueContractor, NameConfiguration nameConfiguration, RabbitMQResponseTransport responseTransport, SignalCodec signalCodec, String serviceGroup, String instanceId, int index, int ttlSeconds, boolean autoAcknowledge, PublisherConfirmationHandler publisherConfirmationHandler) {
 
     super(connector, "wire", nameConfiguration, publisherConfirmationHandler);
 
-    this.queueContractor = queueContractor;
+    this.enduringQueueContractor = enduringQueueContractor;
+    this.ephemeralQueueContractor = ephemeralQueueContractor;
     this.responseTransport = responseTransport;
     this.signalCodec = signalCodec;
     this.serviceGroup = serviceGroup;
@@ -86,13 +88,13 @@ public class ResponseMessageRouter extends MessageRouter {
       String talkQueueName;
       String whisperQueueName;
 
-      queueContractor.declare(channel, shoutQueueName = getShoutQueueName() + "-" + serviceGroup + "[" + instanceId + "]", true);
+      ephemeralQueueContractor.declare(channel, shoutQueueName = getShoutQueueName() + "-" + serviceGroup + "[" + instanceId + "]", true);
       channel.queueBind(shoutQueueName, getRequestExchangeName(), VocalMode.SHOUT.getName() + "-" + serviceGroup);
 
-      queueContractor.declare(channel, talkQueueName = getTalkQueueName() + "-" + serviceGroup, false);
+      enduringQueueContractor.declare(channel, talkQueueName = getTalkQueueName() + "-" + serviceGroup, false);
       channel.queueBind(talkQueueName, getRequestExchangeName(), VocalMode.TALK.getName() + "-" + serviceGroup);
 
-      queueContractor.declare(channel, whisperQueueName = getWhisperQueueName() + "-" + serviceGroup + "[" + instanceId + "]", true);
+      ephemeralQueueContractor.declare(channel, whisperQueueName = getWhisperQueueName() + "-" + serviceGroup + "[" + instanceId + "]", true);
       channel.queueBind(whisperQueueName, getRequestExchangeName(), VocalMode.WHISPER.getName() + "-" + serviceGroup + "[" + instanceId + "]");
     });
   }

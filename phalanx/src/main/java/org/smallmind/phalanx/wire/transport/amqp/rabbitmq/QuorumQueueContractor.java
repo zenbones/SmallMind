@@ -46,6 +46,12 @@ public class QuorumQueueContractor implements QueueContractor {
   }
 
   @Override
+  public QueueType getQueueType () {
+
+    return QueueType.QUORUM;
+  }
+
+  @Override
   public void declare (Channel channel, String queueName, boolean autoDelete)
     throws IOException {
 

@@ -32,21 +32,7 @@
  */
 package org.smallmind.phalanx.wire.transport.amqp.rabbitmq;
 
-import java.io.IOException;
-import com.rabbitmq.client.Channel;
+public enum QueueType {
 
-public class ClassicQueueContractor implements QueueContractor {
-
-  @Override
-  public QueueType getQueueType () {
-
-    return QueueType.CLASSIC;
-  }
-
-  @Override
-  public void declare (Channel channel, String queueName, boolean autoDelete)
-    throws IOException {
-
-    channel.queueDeclare(queueName, false, false, autoDelete, null);
-  }
+  CLASSIC, QUORUM
 }

@@ -37,6 +37,8 @@ import com.rabbitmq.client.Channel;
 
 public interface QueueContractor {
 
+  QueueType getQueueType();
+
   void declare (Channel channel, String queueName, boolean autoDelete)
     throws IOException;
 }

@@ -60,7 +60,7 @@ public class RequestMessageRouter extends MessageRouter {
 
   private static final String CALLER_ID_AMQP_KEY = "x-opt-" + WireProperty.CALLER_ID.getKey();
 
-  private final QueueContractor queueContractor;
+  private final QueueContractor ephemeralQueueContractor;
   private final RabbitMQRequestTransport requestTransport;
   private final SignalCodec signalCodec;
   private final String callerId;
@@ -68,11 +68,11 @@ public class RequestMessageRouter extends MessageRouter {
   private final int index;
   private final int ttlSeconds;
 
-  public RequestMessageRouter (RabbitMQConnector connector, QueueContractor queueContractor, NameConfiguration nameConfiguration, RabbitMQRequestTransport requestTransport, SignalCodec signalCodec, String callerId, int index, int ttlSeconds, boolean autoAcknowledge, PublisherConfirmationHandler publisherConfirmationHandler) {
+  public RequestMessageRouter (RabbitMQConnector connector, QueueContractor ephemeralQueueContractor, NameConfiguration nameConfiguration, RabbitMQRequestTransport requestTransport, SignalCodec signalCodec, String callerId, int index, int ttlSeconds, boolean autoAcknowledge, PublisherConfirmationHandler publisherConfirmationHandler) {
 
     super(connector, "wire", nameConfiguration, publisherConfirmationHandler);
 
-    this.queueContractor = queueContractor;
+    this.ephemeralQueueContractor = ephemeralQueueContractor;
     this.requestTransport = requestTransport;
     this.signalCodec = signalCodec;
     this.callerId = callerId;
@@ -89,7 +89,7 @@ public class RequestMessageRouter extends MessageRouter {
 
       String queueName;
 
-      queueContractor.declare(channel, queueName = getResponseQueueName() + "-" + callerId, true);
+      ephemeralQueueContractor.declare(channel, queueName = getResponseQueueName() + "-" + callerId, true);
       channel.queueBind(queueName, getResponseExchangeName(), "response-" + callerId);
     });
   }
