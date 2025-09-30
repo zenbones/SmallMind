@@ -54,13 +54,16 @@ public class RecordUtility {
 
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     String encodedPacket = PacketUtility.encode(packet);
+    byte[] nodeNameBytes = nodeName.getBytes(StandardCharsets.UTF_8);
+    byte[] pathBytes = packet.getRoute().getPath().getBytes(StandardCharsets.UTF_8);
+    byte[] encodedPacketBytes = encodedPacket.getBytes(StandardCharsets.UTF_8);
 
-    byteArrayOutputStream.write(Bytes.getBytes(nodeName.length()));
-    byteArrayOutputStream.write(nodeName.getBytes(StandardCharsets.UTF_8));
-    byteArrayOutputStream.write(Bytes.getBytes(packet.getRoute().getPath().length()));
-    byteArrayOutputStream.write(packet.getRoute().getPath().getBytes(StandardCharsets.UTF_8));
-    byteArrayOutputStream.write(Bytes.getBytes(encodedPacket.length()));
-    byteArrayOutputStream.write(encodedPacket.getBytes(StandardCharsets.UTF_8));
+    byteArrayOutputStream.write(Bytes.getBytes(nodeNameBytes.length));
+    byteArrayOutputStream.write(nodeNameBytes);
+    byteArrayOutputStream.write(Bytes.getBytes(pathBytes.length));
+    byteArrayOutputStream.write(pathBytes);
+    byteArrayOutputStream.write(Bytes.getBytes(encodedPacketBytes.length));
+    byteArrayOutputStream.write(encodedPacketBytes);
 
     return byteArrayOutputStream.toByteArray();
   }
