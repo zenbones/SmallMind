@@ -73,9 +73,9 @@ public class RecordUtility {
 
     ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(buffer);
     byte[] lengthBuffer = new byte[Integer.BYTES];
-    String nodeName = new String(readStringBuffer(byteArrayInputStream, lengthBuffer), StandardCharsets.UTF_8);
-    String path = new String(readStringBuffer(byteArrayInputStream, lengthBuffer), StandardCharsets.UTF_8);
-    byte[] encodedPacketBuffer = readStringBuffer(byteArrayInputStream, lengthBuffer);
+    String nodeName = new String(readRecordBuffer(byteArrayInputStream, lengthBuffer), StandardCharsets.UTF_8);
+    String path = new String(readRecordBuffer(byteArrayInputStream, lengthBuffer), StandardCharsets.UTF_8);
+    byte[] encodedPacketBuffer = readRecordBuffer(byteArrayInputStream, lengthBuffer);
     Message<V>[] decodedMessages = codec.from(encodedPacketBuffer);
 
     for (Message<V> decodedMessage : decodedMessages) {
@@ -91,7 +91,7 @@ public class RecordUtility {
     return new DebonedPacket<>(nodeName, new Packet<>(PacketType.DELIVERY, null, new DefaultRoute(path), decodedMessages));
   }
 
-  private static byte[] readStringBuffer (ByteArrayInputStream byteArrayInputStream, byte[] lengthBuffer) {
+  private static byte[] readRecordBuffer (ByteArrayInputStream byteArrayInputStream, byte[] lengthBuffer) {
 
     byte[] contentBuffer;
     int length;
