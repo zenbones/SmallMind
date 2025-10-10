@@ -33,6 +33,7 @@
 package org.smallmind.web.jersey.aop;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.concurrent.ConcurrentHashMap;
 import jakarta.ws.rs.container.ContainerRequestContext;
@@ -82,8 +83,8 @@ public class ResourceMethodFilter implements ContainerRequestFilter, ContainerRe
             synchronized (ADAPTER_MAP) {
               if ((xmlAdapter = ADAPTER_MAP.get(xmlAdapterClass)) == null) {
                 try {
-                  ADAPTER_MAP.put(xmlAdapterClass, xmlAdapter = xmlAdapterClass.newInstance());
-                } catch (InstantiationException | IllegalAccessException exception) {
+                  ADAPTER_MAP.put(xmlAdapterClass, xmlAdapter = xmlAdapterClass.getConstructor().newInstance());
+                } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException exception) {
                   throw new IOException(exception);
                 }
               }
