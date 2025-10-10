@@ -37,6 +37,7 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -122,14 +123,20 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
     }
   }
 
+  private Consumer<Long, byte[]> createConsumer (int index) {
+
+    return connector.createConsumer("oumuamua-consumer-" + index + "-" + topicName + "-" + nodeName, groupId, prefixedTopicName);
+  }
+
   @Override
   public void startUp (Server<V> server)
     throws Exception {
 
     if (statusRef.compareAndSet(ComponentStatus.STOPPED, ComponentStatus.STARTING)) {
       workers = new ConsumerWorker[concurrencyLimit];
+
       for (int index = 0; index < concurrencyLimit; index++) {
-        new Thread(workers[index] = new ConsumerWorker<V>(server, nodeName, connector.createConsumer("oumuamua-consumer-" + index + "-" + topicName + "-" + nodeName, groupId, prefixedTopicName))).start();
+        new Thread(workers[index] = new ConsumerWorker<V>(server, nodeName, index)).start();
       }
       statusRef.set(ComponentStatus.STARTED);
     } else {
@@ -167,24 +174,31 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
     });
   }
 
-  private static class ConsumerWorker<V extends Value<V>> implements Runnable {
+  private class ConsumerWorker<V extends Value<V>> implements Runnable {
 
+    private final CountDownLatch exitLatch = new CountDownLatch(1);
     private final AtomicBoolean finished = new AtomicBoolean(false);
     private final Server<V> server;
-    private final Consumer<Long, byte[]> consumer;
     private final String nodeName;
+    private final int index;
+    private Consumer<Long, byte[]> consumer;
 
-    public ConsumerWorker (Server<V> server, String nodeName, Consumer<Long, byte[]> consumer) {
+    public ConsumerWorker (Server<V> server, String nodeName, int index) {
 
       this.server = server;
       this.nodeName = nodeName;
-      this.consumer = consumer;
+      this.index = index;
+
+      consumer = createConsumer(index);
     }
 
-    private void stop () {
+    private void stop ()
+      throws InterruptedException {
 
       if (finished.compareAndSet(false, true)) {
         consumer.wakeup();
+
+        exitLatch.await();
       }
     }
 
@@ -193,33 +207,43 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
 
       try {
         while (!finished.get()) {
+          try {
 
-          ConsumerRecords<Long, byte[]> records;
+            ConsumerRecords<Long, byte[]> records;
 
-          if (((records = consumer.poll(Duration.ofSeconds(3))) != null) && (!records.isEmpty())) {
-            for (TopicPartition partition : records.partitions()) {
+            if (((records = consumer.poll(Duration.ofSeconds(3))) != null) && (!records.isEmpty())) {
+              for (TopicPartition partition : records.partitions()) {
 
-              List<ConsumerRecord<Long, byte[]>> recordList;
-              long lastOffset = 0;
+                List<ConsumerRecord<Long, byte[]>> recordList;
+                long lastOffset = 0;
 
-              for (ConsumerRecord<Long, byte[]> record : recordList = records.records(partition)) {
-                try {
+                for (ConsumerRecord<Long, byte[]> record : recordList = records.records(partition)) {
+                  try {
 
-                  DebonedPacket<V> debonedPacket = RecordUtility.deserialize(server.getCodec(), record.value());
+                    DebonedPacket<V> debonedPacket = RecordUtility.deserialize(server.getCodec(), record.value());
 
-                  if (!nodeName.equals(debonedPacket.getNodeName())) {
-                    server.deliver(null, debonedPacket.getPacket(), false);
+                    if (!nodeName.equals(debonedPacket.getNodeName())) {
+                      server.deliver(null, debonedPacket.getPacket(), false);
+                    }
+                  } catch (Exception exception) {
+                    LoggerManager.getLogger(KafkaBackbone.class).error(exception);
                   }
-                } catch (Exception exception) {
-                  LoggerManager.getLogger(KafkaBackbone.class).error(exception);
+
+                  lastOffset = record.offset();
                 }
 
-                lastOffset = record.offset();
+                if (!recordList.isEmpty()) {
+                  consumer.commitSync(Collections.singletonMap(partition, new OffsetAndMetadata(lastOffset + 1)));
+                }
               }
+            }
+          } catch (Exception exception) {
+            LoggerManager.getLogger(KafkaBackbone.class).error(exception);
 
-              if (!recordList.isEmpty()) {
-                consumer.commitSync(Collections.singletonMap(partition, new OffsetAndMetadata(lastOffset + 1)));
-              }
+            try {
+              consumer.close();
+            } finally {
+              consumer = createConsumer(index);
             }
           }
         }
@@ -228,7 +252,11 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
           LoggerManager.getLogger(KafkaBackbone.class).error(wakeupException);
         }
       } finally {
-        consumer.close();
+        try {
+          consumer.close();
+        } finally {
+          exitLatch.countDown();
+        }
       }
     }
   }
