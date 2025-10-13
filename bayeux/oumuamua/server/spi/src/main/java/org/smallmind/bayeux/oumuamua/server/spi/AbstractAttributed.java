@@ -32,18 +32,19 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi;
 
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import org.smallmind.bayeux.oumuamua.server.api.Attributed;
 
 public class AbstractAttributed implements Attributed {
 
-  private final HashMap<String, Object> attributeMap = new HashMap<>();
+  private final ConcurrentHashMap<String, Object> attributeMap = new ConcurrentHashMap<>();
 
   @Override
   public synchronized Set<String> getAttributeNames () {
 
-    return attributeMap.keySet();
+    return new HashSet<>(attributeMap.keySet());
   }
 
   @Override
