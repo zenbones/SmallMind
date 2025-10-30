@@ -100,7 +100,7 @@
     <httpcomponents5.client.version>5.5.1</httpcomponents5.client.version>
     <httpcomponents5.core.version>5.3.6</httpcomponents5.core.version>
     <jackson.version>2.20.0</jackson.version>
-    <jackson.annotataions.version>2.20</jackson.annotataions.version>
+    <jackson.annotations.version>2.20</jackson.annotations.version>
     <jakarta.activation.version>2.1.4</jakarta.activation.version>
     <jakarta.annotation.version>3.0.0</jakarta.annotation.version>
     <jakarta.el.version>6.0.1</jakarta.el.version>
@@ -196,7 +196,7 @@
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-annotations</artifactId>
-        <version>${jackson.annotataions.version}</version>
+        <version>${jackson.annotations.version}</version>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
