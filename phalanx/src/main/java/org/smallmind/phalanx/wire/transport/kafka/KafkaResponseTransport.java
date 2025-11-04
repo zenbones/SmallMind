@@ -32,7 +32,9 @@
  */
 package org.smallmind.phalanx.wire.transport.kafka;
 
+import java.util.concurrent.ConcurrentHashMap;
 import jakarta.jms.Message;
+import org.apache.kafka.clients.consumer.Consumer;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.transport.ResponseTransmitter;
 import org.smallmind.phalanx.wire.transport.ResponseTransport;
@@ -45,11 +47,18 @@ import org.smallmind.phalanx.worker.WorkerFactory;
 
 public class KafkaResponseTransport extends WorkManager<InvocationWorker, Message> implements WorkerFactory<InvocationWorker, Message>, ResponseTransport, ResponseTransmitter {
 
+  private final ConcurrentHashMap<String, Consumer<Long, byte[]>> consumerMap = new ConcurrentHashMap<>();
   private final String instanceId = SnowflakeId.newInstance().generateDottedString();
 
   public KafkaResponseTransport (Class<InvocationWorker> workerClass, int concurrencyLimit, WorkQueue<Message> workQueue) {
 
     super(workerClass, concurrencyLimit, workQueue);
+  }
+
+  private Consumer<Long, byte[]> createConsumer (String topic, int index, String groupId) {
+
+   // return consumerMap.computeIfAbsent(topic + "-" + index, key -> connector.createConsumer("wire-consumer-" + index + "-" + key + "-" + nodeName, groupId, key));
+    return null;
   }
 
   @Override

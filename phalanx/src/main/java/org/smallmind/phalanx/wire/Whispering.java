@@ -57,7 +57,7 @@ public class Whispering implements Voice<String, String> {
     return VocalMode.WHISPER;
   }
 
-  public Conversation getConversation () {
+  public Conversation<?> getConversation () {
 
     return twoWayConversation;
   }

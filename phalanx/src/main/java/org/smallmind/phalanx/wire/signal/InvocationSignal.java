@@ -47,7 +47,6 @@ public class InvocationSignal implements Signal {
   private Route route;
   private Map<String, Object> arguments;
   private WireContext[] contexts;
-  private String signalId;
   private boolean inOnly;
 
   public InvocationSignal () {
@@ -60,24 +59,6 @@ public class InvocationSignal implements Signal {
     this.route = route;
     this.arguments = arguments;
     this.contexts = contexts;
-  }
-
-  public InvocationSignal (String signalId, boolean inOnly, Route route, Map<String, Object> arguments, WireContext... contexts) {
-
-    this(inOnly, route, arguments, contexts);
-
-    this.signalId = signalId;
-  }
-
-  @XmlElement(name = "signalId")
-  public String getSignalId () {
-
-    return signalId;
-  }
-
-  public void setSignalId (String signalId) {
-
-    this.signalId = signalId;
   }
 
   @XmlElement(name = "inOnly")

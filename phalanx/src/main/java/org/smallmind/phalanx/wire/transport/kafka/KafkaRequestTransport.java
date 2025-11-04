@@ -34,7 +34,8 @@ package org.smallmind.phalanx.wire.transport.kafka;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import org.apache.kafka.clients.consumer.Consumer;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.smallmind.claxon.registry.Instrument;
@@ -44,21 +45,22 @@ import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.ConversationType;
 import org.smallmind.phalanx.wire.Voice;
+import org.smallmind.phalanx.wire.Whispering;
 import org.smallmind.phalanx.wire.signal.InvocationSignal;
 import org.smallmind.phalanx.wire.signal.Route;
 import org.smallmind.phalanx.wire.signal.SignalCodec;
 import org.smallmind.phalanx.wire.signal.WireContext;
 import org.smallmind.phalanx.wire.transport.AbstractRequestTransport;
 import org.smallmind.phalanx.wire.transport.ClaxonTag;
-import org.smallmind.phalanx.wire.transport.amqp.rabbitmq.RabbitMQRequestTransport;
 
 public class KafkaRequestTransport extends AbstractRequestTransport {
 
+  private final ReentrantReadWriteLock producerLock = new ReentrantReadWriteLock();
+  private final AtomicBoolean closed = new AtomicBoolean(false);
   private final KafkaConnector connector;
   private final SignalCodec signalCodec;
   private final TopicNames topicNames;
   private final ConcurrentHashMap<String, Producer<Long, byte[]>> producerMap = new ConcurrentHashMap<>();
-  private final ConcurrentHashMap<String, Consumer<Long, byte[]>> consumerMap = new ConcurrentHashMap<>();
   private final String nodeName;
   private final String callerId = SnowflakeId.newInstance().generateDottedString();
 
@@ -81,37 +83,57 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
 
   private Producer<Long, byte[]> getProducer (String topic) {
 
-    return producerMap.computeIfAbsent(topic, key -> connector.createProducer("wire-producer-" + key + "-" + nodeName));
-  }
-
-  private Consumer<Long, byte[]> createConsumer (String topic, int index, String groupId) {
-
-    return consumerMap.computeIfAbsent(topic + "-" + index, key -> connector.createConsumer("wire-consumer-" + index + "-" + key + "-" + nodeName, groupId, key));
+    producerLock.readLock().lock();
+    try {
+      return closed.get() ? null : producerMap.computeIfAbsent(topic, key -> connector.createProducer("wire-producer-" + key + "-" + nodeName));
+    } finally {
+      producerLock.readLock().unlock();
+    }
   }
 
   @Override
   public Object transmit (Voice<?, ?> voice, Route route, Map<String, Object> arguments, WireContext... contexts)
     throws Throwable {
 
+    Producer<Long, byte[]> producer;
     String messageId = SnowflakeId.newInstance().generateDottedString();
     boolean inOnly = voice.getConversation().getConversationType().equals(ConversationType.IN_ONLY);
 
     String topic = switch (voice.getMode()) {
       case SHOUT -> topicNames.getShoutTopicName((String)voice.getServiceGroup());
       case TALK -> topicNames.getTalkTopicName((String)voice.getServiceGroup());
-      case WHISPER -> topicNames.getWhisperTopicName((String)voice.getServiceGroup(), callerId);
+      case WHISPER -> topicNames.getWhisperTopicName((String)voice.getServiceGroup(), ((Whispering)voice).getInstanceId());
     };
 
-    getProducer(topic).send(new ProducerRecord<>(topic, signalCodec.encode(new InvocationSignal(messageId, inOnly, route, arguments, contexts))));
+    if ((producer = getProducer(topic)) == null) {
+      throw new AlreadyClosedException();
+    } else {
 
-    return Instrument.with(RabbitMQRequestTransport.class, MeterFactory.instance(SpeedometerBuilder::new), new Tag("event", ClaxonTag.ACQUIRE_RESULT.getDisplay())).on(
-      () -> acquireResult(signalCodec, route, voice, messageId, inOnly)
-    );
+      ProducerRecord<Long, byte[]> record = new ProducerRecord<>(topic, signalCodec.encode(new InvocationSignal(inOnly, route, arguments, contexts)));
+
+      record.headers().add("messageId", messageId.getBytes());
+      record.headers().add("callerId", callerId.getBytes());
+      producer.send(record);
+
+      return Instrument.with(KafkaRequestTransport.class, MeterFactory.instance(SpeedometerBuilder::new), new Tag("event", ClaxonTag.ACQUIRE_RESULT.getDisplay())).on(
+        () -> acquireResult(signalCodec, route, voice, messageId, inOnly)
+      );
+    }
   }
 
   @Override
   public void close ()
     throws Exception {
 
+    producerLock.writeLock().lock();
+    try {
+      if (closed.compareAndExchange(false, true)) {
+        for (Producer<Long, byte[]> producer : producerMap.values()) {
+          producer.close();
+        }
+      }
+    } finally {
+      producerLock.writeLock().unlock();
+    }
   }
 }
