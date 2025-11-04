@@ -117,7 +117,7 @@ public class WireInvocationHandler implements InvocationHandler {
 
     HashMap<String, Object> argumentMap;
     Context[] filteredContexts;
-    WireContext[] wireContexts = null;
+    WireContext[] wireContexts;
     Voice<?, ?> voice;
     String[] argumentNames;
     int index = 0;
