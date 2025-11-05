@@ -136,12 +136,12 @@ public class SleuthProvider extends AbstractProvider {
       startMilliseconds = System.currentTimeMillis();
 
       System.out.println(AnsiColor.YELLOW.getCode() + "Sleuth test set starting with thread count(" + threadCount + ") on groups " + (((groups == null) || (groups.length == 0)) ? "all" : Arrays.toString(groups)) + " in " + testNameBuilder + "..." + AnsiColor.DEFAULT.getCode());
-      reportListener.testSetStarting(new SimpleReportEntry(RunMode.NORMAL_RUN, 0L, testNameBuilder.toString(), "Sleuth Tests", "Test Assay", "Name Text", "super message 0"));
+      reportListener.testSetStarting(new SimpleReportEntry(RunMode.NORMAL_RUN, 0L, "sleuth_test"/*testNameBuilder.toString()*/, "Sleuth Tests", "Test Assay", "Name Text", "super message 0"));
 
       sleuthRunner.execute(((groups != null) && (groups.length == 0)) ? null : groups, (threadCount <= 0) ? Integer.MAX_VALUE : threadCount, stopOnError, stopOnFailure, testsToRun);
 
       System.out.println(AnsiColor.YELLOW.getCode() + "Sleuth test set completed in " + (System.currentTimeMillis() - startMilliseconds) + "ms" + AnsiColor.DEFAULT.getCode());
-      reportListener.testSetCompleted(new SimpleReportEntry(RunMode.NORMAL_RUN, 0L, testNameBuilder.toString(), "Sleuth Tests", "Test Assay", "nameText", (int)(System.currentTimeMillis() - startMilliseconds)));
+      reportListener.testSetCompleted(new SimpleReportEntry(RunMode.NORMAL_RUN, 0L, "sleuth_test"/*testNameBuilder.toString()*/, "Sleuth Tests", "Test Assay", "nameText", (int)(System.currentTimeMillis() - startMilliseconds)));
 
       if (sleuthEventListener.getThrowable() != null) {
         throw new TestSetFailedException(sleuthEventListener.getThrowable());

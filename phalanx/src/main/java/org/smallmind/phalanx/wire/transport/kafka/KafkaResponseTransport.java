@@ -33,38 +33,50 @@
 package org.smallmind.phalanx.wire.transport.kafka;
 
 import java.util.concurrent.ConcurrentHashMap;
-import jakarta.jms.Message;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
+import org.smallmind.phalanx.wire.signal.SignalCodec;
 import org.smallmind.phalanx.wire.transport.ResponseTransmitter;
 import org.smallmind.phalanx.wire.transport.ResponseTransport;
 import org.smallmind.phalanx.wire.transport.TransportState;
+import org.smallmind.phalanx.wire.transport.WireInvocationCircuit;
 import org.smallmind.phalanx.wire.transport.WiredService;
-import org.smallmind.phalanx.wire.transport.jms.InvocationWorker;
 import org.smallmind.phalanx.worker.WorkManager;
 import org.smallmind.phalanx.worker.WorkQueue;
 import org.smallmind.phalanx.worker.WorkerFactory;
 
-public class KafkaResponseTransport extends WorkManager<InvocationWorker, Message> implements WorkerFactory<InvocationWorker, Message>, ResponseTransport, ResponseTransmitter {
+public class KafkaResponseTransport extends WorkManager<InvocationWorker, ConsumerRecords<Long, byte[]>> implements WorkerFactory<InvocationWorker, ConsumerRecords<Long, byte[]>>, ResponseTransport, ResponseTransmitter {
 
+  private final AtomicBoolean closed = new AtomicBoolean(false);
+  private final AtomicReference<TransportState> transportStateRef = new AtomicReference<>(TransportState.PLAYING);
+  private final SignalCodec signalCodec;
+  private final WireInvocationCircuit invocationCircuit = new WireInvocationCircuit();
   private final ConcurrentHashMap<String, Consumer<Long, byte[]>> consumerMap = new ConcurrentHashMap<>();
   private final String instanceId = SnowflakeId.newInstance().generateDottedString();
 
-  public KafkaResponseTransport (Class<InvocationWorker> workerClass, int concurrencyLimit, WorkQueue<Message> workQueue) {
+  public KafkaResponseTransport (Class<InvocationWorker> workerClass, SignalCodec signalCodec, String serviceGroup, int clusterSize, int concurrencyLimit) {
 
-    super(workerClass, concurrencyLimit, workQueue);
+    super(workerClass, concurrencyLimit);
+
+    this.signalCodec = signalCodec;
   }
 
   private Consumer<Long, byte[]> createConsumer (String topic, int index, String groupId) {
 
-   // return consumerMap.computeIfAbsent(topic + "-" + index, key -> connector.createConsumer("wire-consumer-" + index + "-" + key + "-" + nodeName, groupId, key));
+    // return consumerMap.computeIfAbsent(topic + "-" + index, key -> connector.createConsumer("wire-consumer-" + index + "-" + key + "-" + nodeName, groupId, key));
     return null;
   }
 
   @Override
-  public void transmit (String callerId, String correlationId, boolean error, String nativeType, Object result)
-    throws Throwable {
+  public String register (Class<?> serviceInterface, WiredService targetService)
+    throws Exception {
 
+    invocationCircuit.register(serviceInterface, targetService);
+
+    return instanceId;
   }
 
   @Override
@@ -74,16 +86,21 @@ public class KafkaResponseTransport extends WorkManager<InvocationWorker, Messag
   }
 
   @Override
-  public String register (Class<?> serviceInterface, WiredService targetService)
-    throws Exception {
+  public InvocationWorker createWorker (WorkQueue<ConsumerRecords<Long, byte[]>> workQueue) {
 
-    return "";
+    return new InvocationWorker(workQueue, this, invocationCircuit, signalCodec);
   }
 
   @Override
   public TransportState getState () {
 
     return null;
+  }
+
+  @Override
+  public void transmit (String callerId, String correlationId, boolean error, String nativeType, Object result)
+    throws Throwable {
+
   }
 
   @Override
@@ -102,11 +119,5 @@ public class KafkaResponseTransport extends WorkManager<InvocationWorker, Messag
   public void close ()
     throws Exception {
 
-  }
-
-  @Override
-  public InvocationWorker createWorker (WorkQueue<Message> workQueue) {
-
-    return null;
   }
 }
