@@ -73,6 +73,16 @@ public class TimeUtility {
     return (date == null) ? allowNull ? null : ZonedDateTime.now() : ZonedDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
   }
 
+  public static ZonedDateTime fromLocalDateTime (LocalDateTime localDateTime) {
+
+    return fromLocalDateTime(localDateTime, false);
+  }
+
+  public static ZonedDateTime fromLocalDateTime (LocalDateTime localDateTime, boolean allowNull) {
+
+    return (localDateTime == null) ? allowNull ? null : ZonedDateTime.now() : localDateTime.atZone(ZoneId.systemDefault());
+  }
+
   public static ZonedDateTime fromCalendar (Calendar calendar) {
 
     return fromCalendar(calendar, false);
