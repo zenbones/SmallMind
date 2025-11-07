@@ -90,6 +90,7 @@ public class JettyInitializingBean implements JettyWebAppStateLocator, Initializ
   private Integer maximumWorkerPoolSize;
   private int port = 80;
   private boolean allowInsecure = true;
+  private boolean suppressConnectionClosedException;
   private boolean debug = false;
 
   public void setHost (String host) {
@@ -135,6 +136,11 @@ public class JettyInitializingBean implements JettyWebAppStateLocator, Initializ
   public void setAllowInsecure (boolean allowInsecure) {
 
     this.allowInsecure = allowInsecure;
+  }
+
+  public void setSuppressConnectionClosedException (boolean suppressConnectionClosedException) {
+
+    this.suppressConnectionClosedException = suppressConnectionClosedException;
   }
 
   public void setDebug (boolean debug) {
@@ -358,7 +364,7 @@ public class JettyInitializingBean implements JettyWebAppStateLocator, Initializ
         if (webApplicationOption.getJaxRSOption() != null) {
 
           ServletHolder jerseyServletHolder = new ServletHolder(new ServletContainer(resourceConfig));
-          FilterHolder jerseyFilterHolder = new FilterHolder(new PerApplicationContextFilter());
+          FilterHolder jerseyFilterHolder = new FilterHolder(new PerApplicationContextFilter(suppressConnectionClosedException));
 
           jerseyServletHolder.setName("JAX-RS Application");
           jerseyServletHolder.setDisplayName("JAX-RS Application");

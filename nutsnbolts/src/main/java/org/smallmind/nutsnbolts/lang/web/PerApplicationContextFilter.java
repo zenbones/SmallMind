@@ -44,6 +44,23 @@ import org.smallmind.nutsnbolts.lang.PerApplicationContext;
 public class PerApplicationContextFilter implements Filter {
 
   private PerApplicationContext perApplicationContext;
+  private boolean suppressConnectionClosedException;
+
+  public PerApplicationContextFilter () {
+
+  }
+
+  public PerApplicationContextFilter (boolean suppressConnectionClosedException) {
+
+    this.suppressConnectionClosedException = suppressConnectionClosedException;
+  }
+
+  public PerApplicationContextFilter setSuppressConnectionClosedException (boolean suppressConnectionClosedException) {
+
+    this.suppressConnectionClosedException = suppressConnectionClosedException;
+
+    return this;
+  }
 
   @Override
   public void init (FilterConfig filterConfig) {
@@ -57,8 +74,14 @@ public class PerApplicationContextFilter implements Filter {
   public void doFilter (ServletRequest request, ServletResponse response, FilterChain chain)
     throws IOException, ServletException {
 
-    perApplicationContext.prepareThread();
-    chain.doFilter(request, response);
+    try {
+      perApplicationContext.prepareThread();
+      chain.doFilter(request, response);
+    } catch (IOException ioException) {
+      if ((!suppressConnectionClosedException) || (!"Connection is closed".equals(ioException.getMessage()))) {
+        throw ioException;
+      }
+    }
   }
 
   @Override

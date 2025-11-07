@@ -92,6 +92,7 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
   private Integer maximumWorkerPoolSize;
   private int port = 80;
   private boolean allowInsecure = true;
+  private boolean suppressConnectionClosedException;
   private boolean debug = false;
 
   public void setIoStrategy (IOStrategy ioStrategy) {
@@ -152,6 +153,11 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
   public void setAllowInsecure (boolean allowInsecure) {
 
     this.allowInsecure = allowInsecure;
+  }
+
+  public void setSuppressConnectionClosedException (boolean suppressConnectionClosedException) {
+
+    this.suppressConnectionClosedException = suppressConnectionClosedException;
   }
 
   public void setDebug (boolean debug) {
@@ -277,7 +283,7 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
 
       if (webApplicationOption.getJaxRSOption() != null) {
         webAppState.getWebAppContext().addServlet("JAX-RS Application", new ServletContainer(resourceConfig)).addMapping(webApplicationOption.getJaxRSOption().getRestPath() + "/*");
-        webAppState.getWebAppContext().addFilter("per-application-data", new PerApplicationContextFilter()).addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), webApplicationOption.getJaxRSOption().getRestPath() + "/*");
+        webAppState.getWebAppContext().addFilter("per-application-data", new PerApplicationContextFilter(suppressConnectionClosedException)).addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), webApplicationOption.getJaxRSOption().getRestPath() + "/*");
       }
 
       if (webApplicationOption.getSpringSupportOption() != null) {
