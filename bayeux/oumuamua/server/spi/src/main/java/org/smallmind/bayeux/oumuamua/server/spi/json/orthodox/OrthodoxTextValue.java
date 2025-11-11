@@ -34,9 +34,8 @@ package org.smallmind.bayeux.oumuamua.server.spi.json.orthodox;
 
 import java.io.IOException;
 import java.io.Writer;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.core.io.JsonStringEncoder;
 import org.smallmind.bayeux.oumuamua.server.api.json.StringValue;
-import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public class OrthodoxTextValue extends OrthodoxValue implements StringValue<OrthodoxValue> {
 
@@ -59,7 +58,8 @@ public class OrthodoxTextValue extends OrthodoxValue implements StringValue<Orth
   public void encode (Writer writer)
     throws IOException {
 
-    // encoding strings with proper json escapes (control-codes, utf8 escapes, etc.) is best done by a full json codec
-    writer.write(JsonCodec.writeAsString(JsonNodeFactory.instance.textNode(text)));
+    writer.write('"');
+    writer.write(JsonStringEncoder.getInstance().quoteAsString(text));
+    writer.write('"');
   }
 }
