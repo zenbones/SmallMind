@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.phalanx.wire.transport.kafka;
+package org.smallmind.kafka.utility;
 
 import java.util.LinkedList;
 import org.smallmind.nutsnbolts.util.Spread;

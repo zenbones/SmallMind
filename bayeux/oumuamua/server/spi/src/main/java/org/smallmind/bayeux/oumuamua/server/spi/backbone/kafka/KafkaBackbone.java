@@ -34,11 +34,9 @@ package org.smallmind.bayeux.oumuamua.server.spi.backbone.kafka;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -51,16 +49,17 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.Node;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
-import org.smallmind.bayeux.oumuamua.server.api.OumuamuaException;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.backbone.Backbone;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.spi.backbone.DebonedPacket;
 import org.smallmind.bayeux.oumuamua.server.spi.backbone.RecordUtility;
+import org.smallmind.kafka.utility.KafkaConnectionException;
+import org.smallmind.kafka.utility.KafkaConnector;
+import org.smallmind.kafka.utility.KafkaServer;
 import org.smallmind.nutsnbolts.util.ComponentStatus;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.scribe.pen.LoggerManager;
@@ -79,45 +78,17 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
   private ConsumerWorker<V>[] workers;
 
   public KafkaBackbone (String nodeName, int concurrencyLimit, int startupGracePeriodSeconds, String topicName, KafkaServer... servers)
-    throws OumuamuaException {
-
-    long startTimestamp = System.currentTimeMillis();
+    throws KafkaConnectionException {
 
     this.nodeName = nodeName;
     this.concurrencyLimit = concurrencyLimit;
     this.topicName = topicName;
 
     groupId = SnowflakeId.newInstance().generateHexEncoding();
-    connector = new KafkaConnector(servers);
 
-    LoggerManager.getLogger(KafkaBackbone.class).info("Starting Kafka with boostrap servers(%s)...", connector.getBoostrapServers());
-
-    if (!connector.invokeAdminClient(adminClient -> {
-        while (true) {
-          try {
-            Collection<Node> nodes = adminClient.describeCluster().nodes().get();
-
-            return (nodes != null) && (!nodes.isEmpty());
-          } catch (ExecutionException | InterruptedException exception) {
-            if ((System.currentTimeMillis() - startTimestamp) < (startupGracePeriodSeconds * 1000L)) {
-              try {
-                Thread.sleep(1000);
-              } catch (InterruptedException interruptedException) {
-                LoggerManager.getLogger(KafkaBackbone.class).error(interruptedException);
-
-                return false;
-              }
-            } else {
-              LoggerManager.getLogger(KafkaBackbone.class).error(exception);
-
-              return false;
-            }
-          }
-        }
-      }
-    )) {
-      throw new OumuamuaException("Unable to start the kafka backbone service");
-    }
+    LoggerManager.getLogger(KafkaBackbone.class).info("Starting Kafka backbone...");
+    connector = new KafkaConnector(startupGracePeriodSeconds, servers);
+    LoggerManager.getLogger(KafkaBackbone.class).info("Started Kafka backbone with bootstrap servers(%s)...", connector.getBoostrapServers());
 
     prefixedTopicName = "oumuamua-" + topicName;
     producer = connector.createProducer("oumuamua-producer-" + topicName + "-" + nodeName);

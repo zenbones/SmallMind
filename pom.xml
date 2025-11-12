@@ -150,9 +150,9 @@
     <siphash.version>2.0.0</siphash.version>
     <slf4j.version>2.0.17</slf4j.version>
     <snakeyaml.version>2.4</snakeyaml.version>
-    <spring.version>6.2.8</spring.version>
-    <spring.batch.version>5.2.2</spring.batch.version>
-    <spring.rabbit.version>3.2.5</spring.rabbit.version>
+    <spring.version>6.2.12</spring.version>
+    <spring.batch.version>5.2.4</spring.batch.version>
+    <spring.rabbit.version>3.2.8</spring.rabbit.version>
     <sshd.version>2.15.0</sshd.version>
     <sun.mail.version>2.0.1</sun.mail.version>
     <sun.xml.bind.version>4.0.5</sun.xml.bind.version>
@@ -173,6 +173,7 @@
     <module>forge</module>
     <module>foundation</module>
     <module>javafx</module>
+    <module>kafka</module>
     <module>license</module>
     <module>liquibase</module>
     <module>memcached</module>
@@ -894,6 +895,11 @@
       <dependency>
         <groupId>org.smallmind</groupId>
         <artifactId>file-jailed</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.smallmind</groupId>
+        <artifactId>kafka-utility</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

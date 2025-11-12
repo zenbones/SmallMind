@@ -44,7 +44,6 @@ import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.json.ValueFactory;
 import org.smallmind.bayeux.oumuamua.server.spi.json.JsonDeserializer;
 import org.smallmind.nutsnbolts.lang.FormattedIOException;
-import org.smallmind.nutsnbolts.util.IterableIterator;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public class JaxbDeserializer<V extends Value<V>> implements JsonDeserializer<V> {

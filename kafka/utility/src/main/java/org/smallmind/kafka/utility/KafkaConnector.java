@@ -30,10 +30,12 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.spi.backbone.kafka;
+package org.smallmind.kafka.utility;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Properties;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
@@ -43,18 +45,22 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.Node;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.LongDeserializer;
 import org.apache.kafka.common.serialization.LongSerializer;
+import org.smallmind.scribe.pen.LoggerManager;
 
 public class KafkaConnector {
 
   private final String boostrapServers;
 
-  public KafkaConnector (KafkaServer... servers) {
+  public KafkaConnector (int startupGracePeriodSeconds, KafkaServer... servers)
+    throws KafkaConnectionException {
 
     StringBuilder boostrapBuilder = new StringBuilder();
+    long startTimestamp;
     boolean first = true;
 
     for (KafkaServer server : servers) {
@@ -67,6 +73,34 @@ public class KafkaConnector {
     }
 
     boostrapServers = boostrapBuilder.toString();
+
+    startTimestamp = System.currentTimeMillis();
+    if (!invokeAdminClient(adminClient -> {
+        while (true) {
+          try {
+            Collection<Node> nodes = adminClient.describeCluster().nodes().get();
+
+            return (nodes != null) && (!nodes.isEmpty());
+          } catch (ExecutionException | InterruptedException exception) {
+            if ((System.currentTimeMillis() - startTimestamp) < (startupGracePeriodSeconds * 1000L)) {
+              try {
+                Thread.sleep(1000);
+              } catch (InterruptedException interruptedException) {
+                LoggerManager.getLogger(KafkaConnector.class).error(interruptedException);
+
+                return false;
+              }
+            } else {
+              LoggerManager.getLogger(KafkaConnector.class).error(exception);
+
+              return false;
+            }
+          }
+        }
+      }
+    )) {
+      throw new KafkaConnectionException("Unable to prove kafka nodes are available with boostrap servers(%s)...", boostrapServers);
+    }
   }
 
   public String getBoostrapServers () {

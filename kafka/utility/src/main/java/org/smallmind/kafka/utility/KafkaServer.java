@@ -30,9 +30,9 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.phalanx.wire.transport.kafka;
+package org.smallmind.kafka.utility;
 
-public class KafkaServer {
+public class KafkaServer implements Comparable<KafkaServer> {
 
   private String host;
   private int port = 9094;
@@ -65,5 +65,13 @@ public class KafkaServer {
   public void setPort (int port) {
 
     this.port = port;
+  }
+
+  @Override
+  public int compareTo (KafkaServer server) {
+
+    int comparison;
+
+    return ((comparison = host.compareTo(server.host)) == 0) ? port - server.getPort() : comparison;
   }
 }

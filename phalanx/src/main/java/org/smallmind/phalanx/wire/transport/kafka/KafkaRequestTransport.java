@@ -42,6 +42,9 @@ import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Tag;
 import org.smallmind.claxon.registry.meter.MeterFactory;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
+import org.smallmind.kafka.utility.KafkaConnectionException;
+import org.smallmind.kafka.utility.KafkaConnector;
+import org.smallmind.kafka.utility.KafkaServer;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.ConversationType;
 import org.smallmind.phalanx.wire.Voice;
@@ -64,7 +67,8 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
   private final String nodeName;
   private final String callerId = SnowflakeId.newInstance().generateDottedString();
 
-  public KafkaRequestTransport (String nodeName, SignalCodec signalCodec, long defaultTimeoutSeconds, KafkaServer... servers) {
+  public KafkaRequestTransport (String nodeName, SignalCodec signalCodec, long defaultTimeoutSeconds, int startupGracePeriodSeconds, KafkaServer... servers)
+    throws KafkaConnectionException {
 
     super(defaultTimeoutSeconds);
 
@@ -72,7 +76,7 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
     this.nodeName = nodeName;
 
     topicNames = new TopicNames("wire");
-    connector = new KafkaConnector(servers);
+    connector = new KafkaConnector(startupGracePeriodSeconds, servers);
   }
 
   @Override

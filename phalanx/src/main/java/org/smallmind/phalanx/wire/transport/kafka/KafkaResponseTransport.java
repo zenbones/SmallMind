@@ -39,6 +39,9 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.smallmind.kafka.utility.KafkaConnectionException;
+import org.smallmind.kafka.utility.KafkaConnector;
+import org.smallmind.kafka.utility.KafkaServer;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.signal.ResultSignal;
 import org.smallmind.phalanx.wire.signal.SignalCodec;
@@ -65,7 +68,8 @@ public class KafkaResponseTransport extends WorkManager<InvocationWorker, Consum
   private final String serviceGroup;
   private final String instanceId = SnowflakeId.newInstance().generateDottedString();
 
-  public KafkaResponseTransport (String nodeName, String serviceGroup, Class<InvocationWorker> workerClass, SignalCodec signalCodec, int clusterSize, int concurrencyLimit, KafkaServer... servers) {
+  public KafkaResponseTransport (String nodeName, String serviceGroup, Class<InvocationWorker> workerClass, SignalCodec signalCodec, int clusterSize, int concurrencyLimit, int startupGracePeriodSeconds, KafkaServer... servers)
+    throws KafkaConnectionException {
 
     super(workerClass, concurrencyLimit);
 
@@ -74,7 +78,7 @@ public class KafkaResponseTransport extends WorkManager<InvocationWorker, Consum
     this.signalCodec = signalCodec;
 
     topicNames = new TopicNames("wire");
-    connector = new KafkaConnector(servers);
+    connector = new KafkaConnector(startupGracePeriodSeconds, servers);
   }
 
   @Override

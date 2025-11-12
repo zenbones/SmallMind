@@ -30,40 +30,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.spi.backbone.kafka;
+package org.smallmind.kafka.utility;
 
-public class KafkaServer {
+import org.smallmind.nutsnbolts.lang.FormattedException;
 
-  private String host;
-  private int port = 9094;
+public class KafkaConnectionException extends FormattedException {
 
-  public KafkaServer () {
+  public KafkaConnectionException (String message, Object... args) {
 
-  }
-
-  public KafkaServer (String host, int port) {
-
-    this.host = host;
-    this.port = port;
-  }
-
-  public String getHost () {
-
-    return host;
-  }
-
-  public void setHost (String host) {
-
-    this.host = host;
-  }
-
-  public int getPort () {
-
-    return port;
-  }
-
-  public void setPort (int port) {
-
-    this.port = port;
+    super(message, args);
   }
 }
