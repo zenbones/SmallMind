@@ -36,7 +36,7 @@ public interface Voice<G, I> {
 
   VocalMode getMode ();
 
-  Conversation getConversation ();
+  Conversation<?> getConversation ();
 
   G getServiceGroup ();
 

@@ -52,13 +52,13 @@ public class TopicNames {
     return prefix + "-talk-" + serviceGroup;
   }
 
-  public String getWhisperTopicName (String serviceGroup, String clusterId) {
+  public String getWhisperTopicName (String serviceGroup, String instanceId) {
 
-    return prefix + "-whisper-" + serviceGroup + "-" + clusterId;
+    return prefix + "-whisper-" + serviceGroup + "-" + instanceId;
   }
 
-  public String getResponseTopicName (String serviceGroup, String clusterId) {
+  public String getResponseTopicName (String serviceGroup, String instanceId) {
 
-    return prefix + "-response-" + serviceGroup + "-" + clusterId;
+    return prefix + "-response-" + serviceGroup + "-" + instanceId;
   }
 }

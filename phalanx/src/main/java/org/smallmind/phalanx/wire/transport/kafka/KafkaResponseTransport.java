@@ -35,9 +35,12 @@ package org.smallmind.phalanx.wire.transport.kafka;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import org.apache.kafka.clients.consumer.Consumer;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
+import org.smallmind.phalanx.wire.signal.ResultSignal;
 import org.smallmind.phalanx.wire.signal.SignalCodec;
 import org.smallmind.phalanx.wire.transport.ResponseTransmitter;
 import org.smallmind.phalanx.wire.transport.ResponseTransport;
@@ -48,26 +51,30 @@ import org.smallmind.phalanx.worker.WorkManager;
 import org.smallmind.phalanx.worker.WorkQueue;
 import org.smallmind.phalanx.worker.WorkerFactory;
 
-public class KafkaResponseTransport extends WorkManager<InvocationWorker, ConsumerRecords<Long, byte[]>> implements WorkerFactory<InvocationWorker, ConsumerRecords<Long, byte[]>>, ResponseTransport, ResponseTransmitter {
+public class KafkaResponseTransport extends WorkManager<InvocationWorker, ConsumerRecord<Long, byte[]>> implements WorkerFactory<InvocationWorker, ConsumerRecord<Long, byte[]>>, ResponseTransport, ResponseTransmitter {
 
+  private final ReentrantReadWriteLock producerLock = new ReentrantReadWriteLock();
   private final AtomicBoolean closed = new AtomicBoolean(false);
+  private final KafkaConnector connector;
   private final AtomicReference<TransportState> transportStateRef = new AtomicReference<>(TransportState.PLAYING);
   private final SignalCodec signalCodec;
   private final WireInvocationCircuit invocationCircuit = new WireInvocationCircuit();
-  private final ConcurrentHashMap<String, Consumer<Long, byte[]>> consumerMap = new ConcurrentHashMap<>();
+  private final TopicNames topicNames;
+  private final ConcurrentHashMap<String, Producer<Long, byte[]>> producerMap = new ConcurrentHashMap<>();
+  private final String nodeName;
+  private final String serviceGroup;
   private final String instanceId = SnowflakeId.newInstance().generateDottedString();
 
-  public KafkaResponseTransport (Class<InvocationWorker> workerClass, SignalCodec signalCodec, String serviceGroup, int clusterSize, int concurrencyLimit) {
+  public KafkaResponseTransport (String nodeName, String serviceGroup, Class<InvocationWorker> workerClass, SignalCodec signalCodec, int clusterSize, int concurrencyLimit, KafkaServer... servers) {
 
     super(workerClass, concurrencyLimit);
 
+    this.nodeName = nodeName;
+    this.serviceGroup = serviceGroup;
     this.signalCodec = signalCodec;
-  }
 
-  private Consumer<Long, byte[]> createConsumer (String topic, int index, String groupId) {
-
-    // return consumerMap.computeIfAbsent(topic + "-" + index, key -> connector.createConsumer("wire-consumer-" + index + "-" + key + "-" + nodeName, groupId, key));
-    return null;
+    topicNames = new TopicNames("wire");
+    connector = new KafkaConnector(servers);
   }
 
   @Override
@@ -86,7 +93,7 @@ public class KafkaResponseTransport extends WorkManager<InvocationWorker, Consum
   }
 
   @Override
-  public InvocationWorker createWorker (WorkQueue<ConsumerRecords<Long, byte[]>> workQueue) {
+  public InvocationWorker createWorker (WorkQueue<ConsumerRecord<Long, byte[]>> workQueue) {
 
     return new InvocationWorker(workQueue, this, invocationCircuit, signalCodec);
   }
@@ -94,13 +101,7 @@ public class KafkaResponseTransport extends WorkManager<InvocationWorker, Consum
   @Override
   public TransportState getState () {
 
-    return null;
-  }
-
-  @Override
-  public void transmit (String callerId, String correlationId, boolean error, String nativeType, Object result)
-    throws Throwable {
-
+    return transportStateRef.get();
   }
 
   @Override
@@ -115,9 +116,50 @@ public class KafkaResponseTransport extends WorkManager<InvocationWorker, Consum
 
   }
 
+  private Producer<Long, byte[]> getProducer (String topic) {
+
+    producerLock.readLock().lock();
+    try {
+      return closed.get() ? null : producerMap.computeIfAbsent(topic, alsoTopic -> connector.createProducer("wire-producer-" + alsoTopic + "-" + nodeName));
+    } finally {
+      producerLock.readLock().unlock();
+    }
+  }
+
+  @Override
+  public void transmit (String callerId, String correlationId, boolean error, String nativeType, Object result)
+    throws Throwable {
+
+    Producer<Long, byte[]> responseProducer;
+    String topic;
+
+    if ((responseProducer = getProducer(topic = topicNames.getResponseTopicName(serviceGroup, callerId))) == null) {
+      throw new AlreadyClosedException();
+    } else {
+
+      ProducerRecord<Long, byte[]> record = new ProducerRecord<>(topic, signalCodec.encode(new ResultSignal(error, nativeType, result)));
+      String messageId = SnowflakeId.newInstance().generateDottedString();
+
+      record.headers().add("messageId", messageId.getBytes());
+      record.headers().add("correlationId", correlationId.getBytes());
+
+      responseProducer.send(record);
+    }
+  }
+
   @Override
   public void close ()
     throws Exception {
 
+    producerLock.writeLock().lock();
+    try {
+      if (closed.compareAndExchange(false, true)) {
+        for (Producer<Long, byte[]> producer : producerMap.values()) {
+          producer.close();
+        }
+      }
+    } finally {
+      producerLock.writeLock().unlock();
+    }
   }
 }

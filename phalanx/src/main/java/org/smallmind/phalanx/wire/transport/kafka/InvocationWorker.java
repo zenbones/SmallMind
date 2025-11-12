@@ -32,8 +32,8 @@
  */
 package org.smallmind.phalanx.wire.transport.kafka;
 
-import java.util.Map;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.common.header.Header;
 import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Tag;
 import org.smallmind.claxon.registry.meter.MeterFactory;
@@ -42,20 +42,16 @@ import org.smallmind.phalanx.wire.signal.InvocationSignal;
 import org.smallmind.phalanx.wire.signal.SignalCodec;
 import org.smallmind.phalanx.wire.transport.ResponseTransmitter;
 import org.smallmind.phalanx.wire.transport.WireInvocationCircuit;
-import org.smallmind.phalanx.wire.transport.WireProperty;
-import org.smallmind.phalanx.wire.transport.amqp.rabbitmq.RabbitMQMessage;
 import org.smallmind.phalanx.worker.WorkQueue;
 import org.smallmind.phalanx.worker.Worker;
 
-public class InvocationWorker extends Worker<ConsumerRecords<Long, byte[]>> {
-
-  private static final String CALLER_ID_AMQP_KEY = "x-opt-" + WireProperty.CALLER_ID.getKey();
+public class InvocationWorker extends Worker<ConsumerRecord<Long, byte[]>> {
 
   private final ResponseTransmitter responseTransmitter;
   private final WireInvocationCircuit invocationCircuit;
   private final SignalCodec signalCodec;
 
-  public InvocationWorker (WorkQueue<ConsumerRecords<Long, byte[]>> workQueue, ResponseTransmitter responseTransmitter, WireInvocationCircuit invocationCircuit, SignalCodec signalCodec) {
+  public InvocationWorker (WorkQueue<ConsumerRecord<Long, byte[]>> workQueue, ResponseTransmitter responseTransmitter, WireInvocationCircuit invocationCircuit, SignalCodec signalCodec) {
 
     super(workQueue);
 
@@ -65,21 +61,22 @@ public class InvocationWorker extends Worker<ConsumerRecords<Long, byte[]>> {
   }
 
   @Override
-  public void engageWork (final ConsumerRecords<Long, byte[]> consumerRecord)
+  public void engageWork (final ConsumerRecord<Long, byte[]> record)
     throws Throwable {
 
-//    InvocationSignal invocationSignal = signalCodec.decode(message.getBody(), 0, message.getBody().length, InvocationSignal.class);
+    InvocationSignal invocationSignal = signalCodec.decode(record.value(), 0, record.value().length, InvocationSignal.class);
 
-  //  Instrument.with(InvocationWorker.class, MeterFactory.instance(SpeedometerBuilder::new), new Tag("operation", "invoke"), new Tag("service", invocationSignal.getRoute().getService()), new Tag("method", invocationSignal.getRoute().getFunction().getName()), new Tag("version", Integer.toString(invocationSignal.getRoute().getVersion()))).on(
- //     () -> invocationCircuit.handle(responseTransmitter, signalCodec, getCallerId(message.getProperties().getHeaders()), message.getProperties().getMessageId(), invocationSignal)
- //   );
+    Instrument.with(InvocationWorker.class, MeterFactory.instance(SpeedometerBuilder::new), new Tag("operation", "invoke"), new Tag("service", invocationSignal.getRoute().getService()), new Tag("method", invocationSignal.getRoute().getFunction().getName()), new Tag("version", Integer.toString(invocationSignal.getRoute().getVersion()))).on(
+      () -> invocationCircuit.handle(responseTransmitter, signalCodec, getHeader(record, "callerId"), getHeader(record, "messageId"), invocationSignal)
+    );
   }
 
-  private String getCallerId (Map<String, Object> headers) {
+  private String getHeader (ConsumerRecord<Long, byte[]> record, String headerName) {
 
-    if ((headers != null) && (headers.containsKey(CALLER_ID_AMQP_KEY))) {
-
-      return headers.get(CALLER_ID_AMQP_KEY).toString();
+    for (Header header : record.headers()) {
+      if (header.key().equals(headerName)) {
+        return new String(header.value());
+      }
     }
 
     return null;

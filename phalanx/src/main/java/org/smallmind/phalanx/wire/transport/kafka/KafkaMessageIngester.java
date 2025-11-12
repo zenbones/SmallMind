@@ -1,36 +1,4 @@
-/*
- * Copyright (c) 2007 through 2024 David Berkman
- *
- * This file is part of the SmallMind Code Project.
- *
- * The SmallMind Code Project is free software, you can redistribute
- * it and/or modify it under either, at your discretion...
- *
- * 1) The terms of GNU Affero General Public License as published by the
- * Free Software Foundation, either version 3 of the License, or (at
- * your option) any later version.
- *
- * ...or...
- *
- * 2) The terms of the Apache License, Version 2.0.
- *
- * The SmallMind Code Project is distributed in the hope that it will
- * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * General Public License or Apache License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * and the Apache License along with the SmallMind Code Project. If not, see
- * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
- *
- * Additional permission under the GNU Affero GPL version 3 section 7
- * ------------------------------------------------------------------
- * If you modify this Program, or any covered work, by linking or
- * combining it with other code, such other code is not for that reason
- * alone subject to any of the requirements of the GNU Affero GPL
- * version 3.
- */
-package org.smallmind.bayeux.oumuamua.server.spi.backbone.kafka;
+package org.smallmind.phalanx.wire.transport.kafka;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -54,43 +22,33 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.Node;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
-import org.smallmind.bayeux.oumuamua.server.api.OumuamuaException;
-import org.smallmind.bayeux.oumuamua.server.api.Packet;
-import org.smallmind.bayeux.oumuamua.server.api.Server;
-import org.smallmind.bayeux.oumuamua.server.api.backbone.Backbone;
-import org.smallmind.bayeux.oumuamua.server.api.json.Value;
-import org.smallmind.bayeux.oumuamua.server.spi.backbone.DebonedPacket;
-import org.smallmind.bayeux.oumuamua.server.spi.backbone.RecordUtility;
+import org.glassfish.jersey.internal.util.collection.Value;
 import org.smallmind.nutsnbolts.util.ComponentStatus;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
+import org.smallmind.phalanx.wire.VocalMode;
 import org.smallmind.scribe.pen.LoggerManager;
 
-public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
-
+public class KafkaMessageIngester {
+/*
   private final ExecutorService executorService = new ThreadPoolExecutor(1, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(), new ThreadPoolExecutor.CallerRunsPolicy());
   private final AtomicReference<ComponentStatus> statusRef = new AtomicReference<>(ComponentStatus.STOPPED);
   private final KafkaConnector connector;
   private final Producer<Long, byte[]> producer;
   private final String nodeName;
   private final String topicName;
-  private final String prefixedTopicName;
   private final String groupId;
   private final int concurrencyLimit;
   private ConsumerWorker<V>[] workers;
 
-  public KafkaBackbone (String nodeName, int concurrencyLimit, int startupGracePeriodSeconds, String topicName, KafkaServer... servers)
-    throws OumuamuaException {
+  public KafkaMessageIngester (String nodeName, VocalMode vocalMode, String serviceGroup, String instanceId, int concurrencyLimit, int startupGracePeriodSeconds, KafkaServer... servers) {
 
     long startTimestamp = System.currentTimeMillis();
 
     this.nodeName = nodeName;
     this.concurrencyLimit = concurrencyLimit;
-    this.topicName = topicName;
 
-    groupId = SnowflakeId.newInstance().generateHexEncoding();
+
     connector = new KafkaConnector(servers);
-
-    LoggerManager.getLogger(KafkaBackbone.class).info("Starting Kafka with boostrap servers(%s)...", connector.getBoostrapServers());
 
     if (!connector.invokeAdminClient(adminClient -> {
         while (true) {
@@ -103,12 +61,12 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
               try {
                 Thread.sleep(1000);
               } catch (InterruptedException interruptedException) {
-                LoggerManager.getLogger(KafkaBackbone.class).error(interruptedException);
+                LoggerManager.getLogger(KafkaMessageIngester.class).error(interruptedException);
 
                 return false;
               }
             } else {
-              LoggerManager.getLogger(KafkaBackbone.class).error(exception);
+              LoggerManager.getLogger(KafkaMessageIngester.class).error(exception);
 
               return false;
             }
@@ -118,9 +76,6 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
     )) {
       throw new OumuamuaException("Unable to start the kafka backbone service");
     }
-
-    prefixedTopicName = "oumuamua-" + topicName;
-    producer = connector.createProducer("oumuamua-producer-" + topicName + "-" + nodeName);
   }
 
   private Consumer<Long, byte[]> createConsumer (int index) {
@@ -160,18 +115,6 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
         Thread.sleep(100);
       }
     }
-  }
-
-  @Override
-  public void publish (Packet<V> packet) {
-
-    executorService.submit(() -> {
-      try {
-        producer.send(new ProducerRecord<>(prefixedTopicName, RecordUtility.serialize(nodeName, packet)));
-      } catch (IOException ioException) {
-        LoggerManager.getLogger(KafkaBackbone.class).error(ioException);
-      }
-    });
   }
 
   private class ConsumerWorker<V extends Value<V>> implements Runnable {
@@ -260,4 +203,6 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
       }
     }
   }
+
+ */
 }

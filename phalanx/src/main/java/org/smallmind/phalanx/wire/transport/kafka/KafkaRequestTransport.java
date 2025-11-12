@@ -85,7 +85,7 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
 
     producerLock.readLock().lock();
     try {
-      return closed.get() ? null : producerMap.computeIfAbsent(topic, key -> connector.createProducer("wire-producer-" + key + "-" + nodeName));
+      return closed.get() ? null : producerMap.computeIfAbsent(topic, alsoTopic -> connector.createProducer("wire-producer-" + alsoTopic + "-" + nodeName));
     } finally {
       producerLock.readLock().unlock();
     }
@@ -95,7 +95,7 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
   public Object transmit (Voice<?, ?> voice, Route route, Map<String, Object> arguments, WireContext... contexts)
     throws Throwable {
 
-    Producer<Long, byte[]> producer;
+    Producer<Long, byte[]> requestProducer;
     String messageId = SnowflakeId.newInstance().generateDottedString();
     boolean inOnly = voice.getConversation().getConversationType().equals(ConversationType.IN_ONLY);
 
@@ -105,7 +105,7 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
       case WHISPER -> topicNames.getWhisperTopicName((String)voice.getServiceGroup(), ((Whispering)voice).getInstanceId());
     };
 
-    if ((producer = getProducer(topic)) == null) {
+    if ((requestProducer = getProducer(topic)) == null) {
       throw new AlreadyClosedException();
     } else {
 
@@ -113,7 +113,7 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
 
       record.headers().add("messageId", messageId.getBytes());
       record.headers().add("callerId", callerId.getBytes());
-      producer.send(record);
+      requestProducer.send(record);
 
       return Instrument.with(KafkaRequestTransport.class, MeterFactory.instance(SpeedometerBuilder::new), new Tag("event", ClaxonTag.ACQUIRE_RESULT.getDisplay())).on(
         () -> acquireResult(signalCodec, route, voice, messageId, inOnly)
