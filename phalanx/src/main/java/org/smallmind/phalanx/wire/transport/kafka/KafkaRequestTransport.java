@@ -76,7 +76,7 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
     this.nodeName = nodeName;
 
     topicNames = new TopicNames("wire");
-    connector = new KafkaConnector(startupGracePeriodSeconds, servers);
+    connector = new KafkaConnector(servers).check(startupGracePeriodSeconds);
   }
 
   @Override

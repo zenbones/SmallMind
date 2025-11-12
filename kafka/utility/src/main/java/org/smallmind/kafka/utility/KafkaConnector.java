@@ -56,11 +56,10 @@ public class KafkaConnector {
 
   private final String boostrapServers;
 
-  public KafkaConnector (int startupGracePeriodSeconds, KafkaServer... servers)
-    throws KafkaConnectionException {
+  public KafkaConnector (KafkaServer... servers) {
 
     StringBuilder boostrapBuilder = new StringBuilder();
-    long startTimestamp;
+
     boolean first = true;
 
     for (KafkaServer server : servers) {
@@ -73,8 +72,18 @@ public class KafkaConnector {
     }
 
     boostrapServers = boostrapBuilder.toString();
+  }
 
-    startTimestamp = System.currentTimeMillis();
+  public String getBoostrapServers () {
+
+    return boostrapServers;
+  }
+
+  public KafkaConnector check (int startupGracePeriodSeconds)
+    throws KafkaConnectionException {
+
+    long startTimestamp = System.currentTimeMillis();
+
     if (!invokeAdminClient(adminClient -> {
         while (true) {
           try {
@@ -100,12 +109,10 @@ public class KafkaConnector {
       }
     )) {
       throw new KafkaConnectionException("Unable to prove kafka nodes are available with boostrap servers(%s)...", boostrapServers);
+    } else {
+
+      return this;
     }
-  }
-
-  public String getBoostrapServers () {
-
-    return boostrapServers;
   }
 
   public <R> R invokeAdminClient (Function<AdminClient, R> clientFunction) {

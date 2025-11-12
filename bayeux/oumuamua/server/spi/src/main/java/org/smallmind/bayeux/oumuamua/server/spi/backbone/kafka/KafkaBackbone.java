@@ -87,7 +87,7 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
     groupId = SnowflakeId.newInstance().generateHexEncoding();
 
     LoggerManager.getLogger(KafkaBackbone.class).info("Starting Kafka backbone...");
-    connector = new KafkaConnector(startupGracePeriodSeconds, servers);
+    connector = new KafkaConnector(servers).check(startupGracePeriodSeconds);
     LoggerManager.getLogger(KafkaBackbone.class).info("Started Kafka backbone with bootstrap servers(%s)...", connector.getBoostrapServers());
 
     prefixedTopicName = "oumuamua-" + topicName;

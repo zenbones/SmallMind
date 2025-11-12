@@ -78,7 +78,7 @@ public class KafkaResponseTransport extends WorkManager<InvocationWorker, Consum
     this.signalCodec = signalCodec;
 
     topicNames = new TopicNames("wire");
-    connector = new KafkaConnector(startupGracePeriodSeconds, servers);
+    connector = new KafkaConnector(servers).check(startupGracePeriodSeconds);
   }
 
   @Override
