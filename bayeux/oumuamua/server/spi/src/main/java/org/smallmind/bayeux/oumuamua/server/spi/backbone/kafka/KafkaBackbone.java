@@ -212,6 +212,7 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
             LoggerManager.getLogger(KafkaBackbone.class).error(exception);
 
             try {
+              consumer.unsubscribe();
               consumer.close();
             } finally {
               consumer = createConsumer(index);
@@ -224,6 +225,7 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
         }
       } finally {
         try {
+          consumer.unsubscribe();
           consumer.close();
         } finally {
           exitLatch.countDown();

@@ -195,7 +195,9 @@ public class KafkaConnector {
     final Consumer<Long, byte[]> consumer = new KafkaConsumer<>(props);
 
     // Subscribe to the topic.
-    consumer.subscribe(Arrays.asList(topics));
+    if ((topics != null) && (topics.length > 0)) {
+      consumer.subscribe(Arrays.asList(topics));
+    }
 
     return consumer;
   }

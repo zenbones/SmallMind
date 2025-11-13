@@ -121,15 +121,25 @@ public class KafkaResponseTransport extends WorkManager<InvocationWorker, Consum
   }
 
   @Override
-  public void play ()
+  public synchronized void play ()
     throws Exception {
 
+    if (transportStateRef.compareAndSet(TransportState.PAUSED, TransportState.PLAYING)) {
+      whisperMessageIngester.play();
+      talkMessageIngester.play();
+      shoutMessageIngester.play();
+    }
   }
 
   @Override
-  public void pause ()
+  public synchronized void pause ()
     throws Exception {
 
+    if (transportStateRef.compareAndSet(TransportState.PLAYING, TransportState.PAUSED)) {
+      whisperMessageIngester.pause();
+      talkMessageIngester.pause();
+      shoutMessageIngester.pause();
+    }
   }
 
   private Producer<Long, byte[]> getProducer (String topic) {
@@ -164,8 +174,10 @@ public class KafkaResponseTransport extends WorkManager<InvocationWorker, Consum
   }
 
   @Override
-  public void close ()
+  public synchronized void close ()
     throws Exception {
+
+    transportStateRef.set(TransportState.CLOSED);
 
     producerLock.writeLock().lock();
     try {

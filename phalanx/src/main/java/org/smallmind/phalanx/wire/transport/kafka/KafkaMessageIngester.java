@@ -69,19 +69,19 @@ public class KafkaMessageIngester {
     this.concurrencyLimit = concurrencyLimit;
   }
 
-  private Consumer<Long, byte[]> createConsumer (int index) {
+  private Consumer<Long, byte[]> createConsumer (int index, boolean paused) {
 
-    return connector.createConsumer("wire-consumer-" + index + "-" + topicName + "-" + nodeName, groupId, topicName);
+    return connector.createConsumer("wire-consumer-" + index + "-" + topicName + "-" + nodeName, groupId, paused ? null : topicName);
   }
 
-  public KafkaMessageIngester startUp ()
+  public synchronized KafkaMessageIngester startUp ()
     throws InterruptedException {
 
     if (statusRef.compareAndSet(ComponentStatus.STOPPED, ComponentStatus.STARTING)) {
       workers = new ConsumerWorker[concurrencyLimit];
 
       for (int index = 0; index < concurrencyLimit; index++) {
-        new Thread(workers[index] = new ConsumerWorker(nodeName, index)).start();
+        new Thread(workers[index] = new ConsumerWorker(index)).start();
       }
       statusRef.set(ComponentStatus.STARTED);
     } else {
@@ -93,7 +93,25 @@ public class KafkaMessageIngester {
     return this;
   }
 
-  public void shutDown ()
+  public synchronized void play () {
+
+    if (ComponentStatus.STARTED.equals(statusRef.get())) {
+      for (ConsumerWorker worker : workers) {
+        worker.play();
+      }
+    }
+  }
+
+  public synchronized void pause () {
+
+    if (ComponentStatus.STARTED.equals(statusRef.get())) {
+      for (ConsumerWorker worker : workers) {
+        worker.pause();
+      }
+    }
+  }
+
+  public synchronized void shutDown ()
     throws InterruptedException {
 
     if (statusRef.compareAndSet(ComponentStatus.STARTED, ComponentStatus.STOPPING)) {
@@ -114,12 +132,13 @@ public class KafkaMessageIngester {
     private final AtomicBoolean finished = new AtomicBoolean(false);
     private final int index;
     private Consumer<Long, byte[]> consumer;
+    private boolean paused = false;
 
-    public ConsumerWorker (String nodeName, int index) {
+    public ConsumerWorker (int index) {
 
       this.index = index;
 
-      consumer = createConsumer(index);
+      consumer = createConsumer(index, false);
     }
 
     private void stop ()
@@ -130,6 +149,18 @@ public class KafkaMessageIngester {
 
         exitLatch.await();
       }
+    }
+
+    public synchronized void play () {
+
+      consumer.subscribe(Collections.singleton(topicName));
+      paused = false;
+    }
+
+    public synchronized void pause () {
+
+      consumer.unsubscribe();
+      paused = true;
     }
 
     @Override
@@ -165,10 +196,13 @@ public class KafkaMessageIngester {
           } catch (Exception exception) {
             LoggerManager.getLogger(KafkaMessageIngester.class).error(exception);
 
-            try {
-              consumer.close();
-            } finally {
-              consumer = createConsumer(index);
+            synchronized (this) {
+              try {
+                consumer.unsubscribe();
+                consumer.close();
+              } finally {
+                consumer = createConsumer(index, paused);
+              }
             }
           }
         }
@@ -178,6 +212,7 @@ public class KafkaMessageIngester {
         }
       } finally {
         try {
+          consumer.unsubscribe();
           consumer.close();
         } finally {
           exitLatch.countDown();
