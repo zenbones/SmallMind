@@ -85,9 +85,9 @@ public class KafkaResponseTransport extends WorkManager<InvocationWorker, Consum
     topicNames = new TopicNames("wire");
     connector = new KafkaConnector(servers).check(startupGracePeriodSeconds);
 
-    String whisperRequestTopic = topicNames.getWhisperTopicName(serviceGroup, instanceId);
-    String talkRequestTopic = topicNames.getTalkTopicName(serviceGroup);
-    String shoutRequestTopic = topicNames.getShoutTopicName(serviceGroup);
+    new KafkaMessageIngester(nodeName, instanceId, topicNames.getWhisperTopicName(serviceGroup, instanceId), connector, null, concurrencyLimit);
+    new KafkaMessageIngester(nodeName, "wire-talk", topicNames.getTalkTopicName(serviceGroup), connector, null, concurrencyLimit);
+    new KafkaMessageIngester(nodeName, instanceId, topicNames.getShoutTopicName(serviceGroup), connector, null, concurrencyLimit);
   }
 
   @Override

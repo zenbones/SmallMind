@@ -72,7 +72,7 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
   private final String nodeName;
   private final String callerId = SnowflakeId.newInstance().generateDottedString();
 
-  public KafkaRequestTransport (String nodeName, SignalCodec signalCodec, long defaultTimeoutSeconds, int startupGracePeriodSeconds, KafkaServer... servers)
+  public KafkaRequestTransport (String nodeName, SignalCodec signalCodec, int concurrencyLimit, long defaultTimeoutSeconds, int startupGracePeriodSeconds, KafkaServer... servers)
     throws KafkaConnectionException {
 
     super(defaultTimeoutSeconds);
@@ -83,7 +83,7 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
     topicNames = new TopicNames("wire");
     connector = new KafkaConnector(servers).check(startupGracePeriodSeconds);
 
-    String responseTopic = topicNames.getResponseTopicName(callerId);
+    new KafkaMessageIngester(nodeName, callerId, topicNames.getResponseTopicName(callerId), connector, null, concurrencyLimit);
   }
 
   @Override
