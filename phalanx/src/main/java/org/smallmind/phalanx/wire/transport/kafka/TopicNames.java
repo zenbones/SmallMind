@@ -57,8 +57,8 @@ public class TopicNames {
     return prefix + "-whisper-" + serviceGroup + "-" + instanceId;
   }
 
-  public String getResponseTopicName (String serviceGroup, String instanceId) {
+  public String getResponseTopicName (String instanceId) {
 
-    return prefix + "-response-" + serviceGroup + "-" + instanceId;
+    return prefix + "-response-" + instanceId;
   }
 }

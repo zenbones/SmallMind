@@ -32,70 +32,56 @@
  */
 package org.smallmind.phalanx.wire.transport.kafka;
 
+import java.time.Duration;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.OffsetAndMetadata;
+import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.errors.WakeupException;
+import org.smallmind.kafka.utility.KafkaConnector;
+import org.smallmind.nutsnbolts.util.ComponentStatus;
+import org.smallmind.scribe.pen.LoggerManager;
+
 public class KafkaMessageIngester {
-/*
-  private final ExecutorService executorService = new ThreadPoolExecutor(1, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(), new ThreadPoolExecutor.CallerRunsPolicy());
+
   private final AtomicReference<ComponentStatus> statusRef = new AtomicReference<>(ComponentStatus.STOPPED);
   private final KafkaConnector connector;
-  private final Producer<Long, byte[]> producer;
+  private final java.util.function.Consumer<ConsumerRecord<Long, byte[]>> callback;
   private final String nodeName;
-  private final String topicName;
   private final String groupId;
+  private final String topicName;
   private final int concurrencyLimit;
-  private ConsumerWorker<V>[] workers;
+  private ConsumerWorker[] workers;
 
-  public KafkaMessageIngester (String nodeName, VocalMode vocalMode, String serviceGroup, String instanceId, int concurrencyLimit, int startupGracePeriodSeconds, KafkaServer... servers) {
-
-    long startTimestamp = System.currentTimeMillis();
+  public KafkaMessageIngester (String nodeName, String groupId, String topicName, KafkaConnector connector, java.util.function.Consumer<ConsumerRecord<Long, byte[]>> callback, int concurrencyLimit) {
 
     this.nodeName = nodeName;
+    this.groupId = groupId;
+    this.topicName = topicName;
+    this.connector = connector;
+    this.callback = callback;
     this.concurrencyLimit = concurrencyLimit;
-
-
-    connector = new KafkaConnector(servers);
-
-    if (!connector.invokeAdminClient(adminClient -> {
-        while (true) {
-          try {
-            Collection<Node> nodes = adminClient.describeCluster().nodes().get();
-
-            return (nodes != null) && (!nodes.isEmpty());
-          } catch (ExecutionException | InterruptedException exception) {
-            if ((System.currentTimeMillis() - startTimestamp) < (startupGracePeriodSeconds * 1000L)) {
-              try {
-                Thread.sleep(1000);
-              } catch (InterruptedException interruptedException) {
-                LoggerManager.getLogger(KafkaMessageIngester.class).error(interruptedException);
-
-                return false;
-              }
-            } else {
-              LoggerManager.getLogger(KafkaMessageIngester.class).error(exception);
-
-              return false;
-            }
-          }
-        }
-      }
-    )) {
-      throw new OumuamuaException("Unable to start the kafka backbone service");
-    }
   }
 
   private Consumer<Long, byte[]> createConsumer (int index) {
 
-    return connector.createConsumer("oumuamua-consumer-" + index + "-" + topicName + "-" + nodeName, groupId, prefixedTopicName);
+    return connector.createConsumer("wire-consumer-" + index + "-" + topicName + "-" + nodeName, groupId, topicName);
   }
 
-  @Override
-  public void startUp (Server<V> server)
+  public void startUp ()
     throws Exception {
 
     if (statusRef.compareAndSet(ComponentStatus.STOPPED, ComponentStatus.STARTING)) {
       workers = new ConsumerWorker[concurrencyLimit];
 
       for (int index = 0; index < concurrencyLimit; index++) {
-        new Thread(workers[index] = new ConsumerWorker<V>(server, nodeName, index)).start();
+        new Thread(workers[index] = new ConsumerWorker(nodeName, index)).start();
       }
       statusRef.set(ComponentStatus.STARTED);
     } else {
@@ -105,12 +91,11 @@ public class KafkaMessageIngester {
     }
   }
 
-  @Override
   public void shutDown ()
     throws InterruptedException {
 
     if (statusRef.compareAndSet(ComponentStatus.STARTED, ComponentStatus.STOPPING)) {
-      for (ConsumerWorker<V> worker : workers) {
+      for (ConsumerWorker worker : workers) {
         worker.stop();
       }
       statusRef.set(ComponentStatus.STOPPED);
@@ -121,19 +106,15 @@ public class KafkaMessageIngester {
     }
   }
 
-  private class ConsumerWorker<V extends Value<V>> implements Runnable {
+  private class ConsumerWorker implements Runnable {
 
     private final CountDownLatch exitLatch = new CountDownLatch(1);
     private final AtomicBoolean finished = new AtomicBoolean(false);
-    private final Server<V> server;
-    private final String nodeName;
     private final int index;
     private Consumer<Long, byte[]> consumer;
 
-    public ConsumerWorker (Server<V> server, String nodeName, int index) {
+    public ConsumerWorker (String nodeName, int index) {
 
-      this.server = server;
-      this.nodeName = nodeName;
       this.index = index;
 
       consumer = createConsumer(index);
@@ -166,14 +147,9 @@ public class KafkaMessageIngester {
 
                 for (ConsumerRecord<Long, byte[]> record : recordList = records.records(partition)) {
                   try {
-
-                    DebonedPacket<V> debonedPacket = RecordUtility.deserialize(server.getCodec(), record.value());
-
-                    if (!nodeName.equals(debonedPacket.getNodeName())) {
-                      server.deliver(null, debonedPacket.getPacket(), false);
-                    }
+                    callback.accept(record);
                   } catch (Exception exception) {
-                    LoggerManager.getLogger(KafkaBackbone.class).error(exception);
+                    LoggerManager.getLogger(KafkaMessageIngester.class).error(exception);
                   }
 
                   lastOffset = record.offset();
@@ -185,7 +161,7 @@ public class KafkaMessageIngester {
               }
             }
           } catch (Exception exception) {
-            LoggerManager.getLogger(KafkaBackbone.class).error(exception);
+            LoggerManager.getLogger(KafkaMessageIngester.class).error(exception);
 
             try {
               consumer.close();
@@ -196,7 +172,7 @@ public class KafkaMessageIngester {
         }
       } catch (WakeupException wakeupException) {
         if (!finished.get()) {
-          LoggerManager.getLogger(KafkaBackbone.class).error(wakeupException);
+          LoggerManager.getLogger(KafkaMessageIngester.class).error(wakeupException);
         }
       } finally {
         try {
@@ -207,6 +183,4 @@ public class KafkaMessageIngester {
       }
     }
   }
-
- */
 }

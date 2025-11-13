@@ -33,6 +33,10 @@
 package org.smallmind.phalanx.wire.transport.kafka;
 
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -56,6 +60,7 @@ import org.smallmind.phalanx.worker.WorkerFactory;
 
 public class KafkaResponseTransport extends WorkManager<InvocationWorker, ConsumerRecord<Long, byte[]>> implements WorkerFactory<InvocationWorker, ConsumerRecord<Long, byte[]>>, ResponseTransport, ResponseTransmitter {
 
+  private final ExecutorService executorService = new ThreadPoolExecutor(1, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(), new ThreadPoolExecutor.CallerRunsPolicy());
   private final ReentrantReadWriteLock producerLock = new ReentrantReadWriteLock();
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final KafkaConnector connector;
@@ -79,6 +84,10 @@ public class KafkaResponseTransport extends WorkManager<InvocationWorker, Consum
 
     topicNames = new TopicNames("wire");
     connector = new KafkaConnector(servers).check(startupGracePeriodSeconds);
+
+    String whisperRequestTopic = topicNames.getWhisperTopicName(serviceGroup, instanceId);
+    String talkRequestTopic = topicNames.getTalkTopicName(serviceGroup);
+    String shoutRequestTopic = topicNames.getShoutTopicName(serviceGroup);
   }
 
   @Override
@@ -137,7 +146,7 @@ public class KafkaResponseTransport extends WorkManager<InvocationWorker, Consum
     Producer<Long, byte[]> responseProducer;
     String topic;
 
-    if ((responseProducer = getProducer(topic = topicNames.getResponseTopicName(serviceGroup, callerId))) == null) {
+    if ((responseProducer = getProducer(topic = topicNames.getResponseTopicName(callerId))) == null) {
       throw new AlreadyClosedException();
     } else {
 
@@ -147,7 +156,7 @@ public class KafkaResponseTransport extends WorkManager<InvocationWorker, Consum
       record.headers().add("messageId", messageId.getBytes());
       record.headers().add("correlationId", correlationId.getBytes());
 
-      responseProducer.send(record);
+      executorService.submit(() -> responseProducer.send(record));
     }
   }
 

@@ -34,6 +34,10 @@ package org.smallmind.phalanx.wire.transport.kafka;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.apache.kafka.clients.producer.Producer;
@@ -58,6 +62,7 @@ import org.smallmind.phalanx.wire.transport.ClaxonTag;
 
 public class KafkaRequestTransport extends AbstractRequestTransport {
 
+  private final ExecutorService executorService = new ThreadPoolExecutor(1, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(), new ThreadPoolExecutor.CallerRunsPolicy());
   private final ReentrantReadWriteLock producerLock = new ReentrantReadWriteLock();
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final KafkaConnector connector;
@@ -77,6 +82,8 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
 
     topicNames = new TopicNames("wire");
     connector = new KafkaConnector(servers).check(startupGracePeriodSeconds);
+
+    String responseTopic = topicNames.getResponseTopicName(callerId);
   }
 
   @Override
@@ -117,7 +124,8 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
 
       record.headers().add("messageId", messageId.getBytes());
       record.headers().add("callerId", callerId.getBytes());
-      requestProducer.send(record);
+
+      executorService.submit(() -> requestProducer.send(record));
 
       return Instrument.with(KafkaRequestTransport.class, MeterFactory.instance(SpeedometerBuilder::new), new Tag("event", ClaxonTag.ACQUIRE_RESULT.getDisplay())).on(
         () -> acquireResult(signalCodec, route, voice, messageId, inOnly)
