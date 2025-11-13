@@ -43,17 +43,23 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.smallmind.claxon.registry.Instrument;
+import org.smallmind.claxon.registry.Tag;
+import org.smallmind.claxon.registry.meter.MeterFactory;
+import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.kafka.utility.KafkaConnectionException;
 import org.smallmind.kafka.utility.KafkaConnector;
 import org.smallmind.kafka.utility.KafkaServer;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.signal.ResultSignal;
 import org.smallmind.phalanx.wire.signal.SignalCodec;
+import org.smallmind.phalanx.wire.transport.ClaxonTag;
 import org.smallmind.phalanx.wire.transport.ResponseTransmitter;
 import org.smallmind.phalanx.wire.transport.ResponseTransport;
 import org.smallmind.phalanx.wire.transport.TransportState;
 import org.smallmind.phalanx.wire.transport.WireInvocationCircuit;
 import org.smallmind.phalanx.wire.transport.WiredService;
+import org.smallmind.phalanx.wire.transport.amqp.rabbitmq.RequestMessageRouter;
 import org.smallmind.phalanx.worker.WorkManager;
 import org.smallmind.phalanx.worker.WorkQueue;
 import org.smallmind.phalanx.worker.WorkerFactory;
@@ -73,24 +79,24 @@ public class KafkaResponseTransport extends WorkManager<InvocationWorker, Consum
   private final KafkaMessageIngester shoutMessageIngester;
   private final ConcurrentHashMap<String, Producer<Long, byte[]>> producerMap = new ConcurrentHashMap<>();
   private final String nodeName;
-  private final String serviceGroup;
   private final String instanceId = SnowflakeId.newInstance().generateDottedString();
 
-  public KafkaResponseTransport (String nodeName, String serviceGroup, Class<InvocationWorker> workerClass, SignalCodec signalCodec, int clusterSize, int concurrencyLimit, int startupGracePeriodSeconds, KafkaServer... servers)
+  public KafkaResponseTransport (String nodeName, String serviceGroup, Class<InvocationWorker> workerClass, SignalCodec signalCodec, int concurrencyLimit, int startupGracePeriodSeconds, KafkaServer... servers)
     throws KafkaConnectionException, InterruptedException {
 
     super(workerClass, concurrencyLimit);
 
+    ResponseCallback responseCallback = new ResponseCallback(this);
+
     this.nodeName = nodeName;
-    this.serviceGroup = serviceGroup;
     this.signalCodec = signalCodec;
 
     topicNames = new TopicNames("wire");
     connector = new KafkaConnector(servers).check(startupGracePeriodSeconds);
 
-    whisperMessageIngester = new KafkaMessageIngester(nodeName, instanceId, topicNames.getWhisperTopicName(serviceGroup, instanceId), connector, null, concurrencyLimit).startUp();
-    talkMessageIngester = new KafkaMessageIngester(nodeName, "wire-talk", topicNames.getTalkTopicName(serviceGroup), connector, null, concurrencyLimit).startUp();
-    shoutMessageIngester = new KafkaMessageIngester(nodeName, instanceId, topicNames.getShoutTopicName(serviceGroup), connector, null, concurrencyLimit).startUp();
+    whisperMessageIngester = new KafkaMessageIngester(nodeName, instanceId, topicNames.getWhisperTopicName(serviceGroup, instanceId), connector, responseCallback, concurrencyLimit).startUp();
+    talkMessageIngester = new KafkaMessageIngester(nodeName, "wire-talk", topicNames.getTalkTopicName(serviceGroup), connector, responseCallback, concurrencyLimit).startUp();
+    shoutMessageIngester = new KafkaMessageIngester(nodeName, instanceId, topicNames.getShoutTopicName(serviceGroup), connector, responseCallback, concurrencyLimit).startUp();
   }
 
   @Override
@@ -163,11 +169,13 @@ public class KafkaResponseTransport extends WorkManager<InvocationWorker, Consum
       throw new AlreadyClosedException();
     } else {
 
-      ProducerRecord<Long, byte[]> record = new ProducerRecord<>(topic, signalCodec.encode(new ResultSignal(error, nativeType, result)));
+      ProducerRecord<Long, byte[]> record = Instrument.with(RequestMessageRouter.class, MeterFactory.instance(SpeedometerBuilder::new), new Tag("event", ClaxonTag.CONSTRUCT_MESSAGE.getDisplay())).on(
+        () -> new ProducerRecord<>(topic, signalCodec.encode(new ResultSignal(error, nativeType, result)))
+      );
       String messageId = SnowflakeId.newInstance().generateDottedString();
 
-      record.headers().add("messageId", messageId.getBytes());
-      record.headers().add("correlationId", correlationId.getBytes());
+      record.headers().add(HeaderUtility.MESSAGE_ID, messageId.getBytes());
+      record.headers().add(HeaderUtility.CORRELATION_ID, correlationId.getBytes());
 
       executorService.submit(() -> responseProducer.send(record));
     }

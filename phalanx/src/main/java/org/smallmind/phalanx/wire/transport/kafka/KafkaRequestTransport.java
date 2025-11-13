@@ -59,6 +59,7 @@ import org.smallmind.phalanx.wire.signal.SignalCodec;
 import org.smallmind.phalanx.wire.signal.WireContext;
 import org.smallmind.phalanx.wire.transport.AbstractRequestTransport;
 import org.smallmind.phalanx.wire.transport.ClaxonTag;
+import org.smallmind.phalanx.wire.transport.amqp.rabbitmq.RequestMessageRouter;
 
 public class KafkaRequestTransport extends AbstractRequestTransport {
 
@@ -84,7 +85,7 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
     topicNames = new TopicNames("wire");
     connector = new KafkaConnector(servers).check(startupGracePeriodSeconds);
 
-    responseMessageIngester = new KafkaMessageIngester(nodeName, callerId, topicNames.getResponseTopicName(callerId), connector, null, concurrencyLimit).startUp();
+    responseMessageIngester = new KafkaMessageIngester(nodeName, callerId, topicNames.getResponseTopicName(callerId), connector, new RequestCallback(this, signalCodec), concurrencyLimit).startUp();
   }
 
   @Override
@@ -121,10 +122,12 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
       throw new AlreadyClosedException();
     } else {
 
-      ProducerRecord<Long, byte[]> record = new ProducerRecord<>(topic, signalCodec.encode(new InvocationSignal(inOnly, route, arguments, contexts)));
+      ProducerRecord<Long, byte[]> record = Instrument.with(RequestMessageRouter.class, MeterFactory.instance(SpeedometerBuilder::new), new Tag("event", ClaxonTag.CONSTRUCT_MESSAGE.getDisplay())).on(
+        () -> new ProducerRecord<>(topic, signalCodec.encode(new InvocationSignal(inOnly, route, arguments, contexts)))
+      );
 
-      record.headers().add("messageId", messageId.getBytes());
-      record.headers().add("callerId", callerId.getBytes());
+      record.headers().add(HeaderUtility.MESSAGE_ID, messageId.getBytes());
+      record.headers().add(HeaderUtility.CALLER_ID, callerId.getBytes());
 
       executorService.submit(() -> requestProducer.send(record));
 

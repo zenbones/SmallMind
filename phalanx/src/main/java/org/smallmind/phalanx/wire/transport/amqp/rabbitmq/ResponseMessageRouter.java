@@ -48,7 +48,6 @@ import org.smallmind.phalanx.wire.VocalMode;
 import org.smallmind.phalanx.wire.signal.ResultSignal;
 import org.smallmind.phalanx.wire.signal.SignalCodec;
 import org.smallmind.phalanx.wire.transport.ClaxonTag;
-import org.smallmind.phalanx.wire.transport.jms.QueueOperator;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class ResponseMessageRouter extends MessageRouter {
@@ -148,7 +147,7 @@ public class ResponseMessageRouter extends MessageRouter {
 
           long timeInQueue = System.currentTimeMillis() - getTimestamp(properties);
 
-          LoggerManager.getLogger(QueueOperator.class).debug("request message received(%s) in %d ms...", properties.getMessageId(), timeInQueue);
+          LoggerManager.getLogger(ResponseMessageRouter.class).debug("request message received(%s) in %d ms...", properties.getMessageId(), timeInQueue);
           Instrument.with(ResponseMessageRouter.class, MeterFactory.instance(SpeedometerBuilder::new), new Tag("queue", ClaxonTag.REQUEST_TRANSIT_TIME.getDisplay())).update((timeInQueue >= 0) ? timeInQueue : 0, TimeUnit.MILLISECONDS);
 
           responseTransport.execute(new RabbitMQMessage(properties, body));
@@ -167,14 +166,12 @@ public class ResponseMessageRouter extends MessageRouter {
     });
   }
 
-  public String publish (String callerId, String correlationId, boolean error, String nativeType, Object result)
+  public void publish (String callerId, String correlationId, boolean error, String nativeType, Object result)
     throws Throwable {
 
     RabbitMQMessage rabbitMQMessage = constructMessage(correlationId, error, nativeType, result);
 
     send("response-" + callerId, getResponseExchangeName(), rabbitMQMessage.getProperties(), rabbitMQMessage.getBody());
-
-    return rabbitMQMessage.getProperties().getMessageId();
   }
 
   private RabbitMQMessage constructMessage (final String correlationId, final boolean error, final String nativeType, final Object result)

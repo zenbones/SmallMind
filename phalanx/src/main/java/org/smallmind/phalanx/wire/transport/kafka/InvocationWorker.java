@@ -33,7 +33,6 @@
 package org.smallmind.phalanx.wire.transport.kafka;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.common.header.Header;
 import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Tag;
 import org.smallmind.claxon.registry.meter.MeterFactory;
@@ -67,19 +66,8 @@ public class InvocationWorker extends Worker<ConsumerRecord<Long, byte[]>> {
     InvocationSignal invocationSignal = signalCodec.decode(record.value(), 0, record.value().length, InvocationSignal.class);
 
     Instrument.with(InvocationWorker.class, MeterFactory.instance(SpeedometerBuilder::new), new Tag("operation", "invoke"), new Tag("service", invocationSignal.getRoute().getService()), new Tag("method", invocationSignal.getRoute().getFunction().getName()), new Tag("version", Integer.toString(invocationSignal.getRoute().getVersion()))).on(
-      () -> invocationCircuit.handle(responseTransmitter, signalCodec, getHeader(record, "callerId"), getHeader(record, "messageId"), invocationSignal)
+      () -> invocationCircuit.handle(responseTransmitter, signalCodec, HeaderUtility.getHeader(record, "callerId"), HeaderUtility.getHeader(record, HeaderUtility.MESSAGE_ID), invocationSignal)
     );
-  }
-
-  private String getHeader (ConsumerRecord<Long, byte[]> record, String headerName) {
-
-    for (Header header : record.headers()) {
-      if (header.key().equals(headerName)) {
-        return new String(header.value());
-      }
-    }
-
-    return null;
   }
 
   @Override
