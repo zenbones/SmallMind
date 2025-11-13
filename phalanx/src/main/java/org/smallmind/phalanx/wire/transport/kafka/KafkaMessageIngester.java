@@ -74,8 +74,8 @@ public class KafkaMessageIngester {
     return connector.createConsumer("wire-consumer-" + index + "-" + topicName + "-" + nodeName, groupId, topicName);
   }
 
-  public void startUp ()
-    throws Exception {
+  public KafkaMessageIngester startUp ()
+    throws InterruptedException {
 
     if (statusRef.compareAndSet(ComponentStatus.STOPPED, ComponentStatus.STARTING)) {
       workers = new ConsumerWorker[concurrencyLimit];
@@ -89,6 +89,8 @@ public class KafkaMessageIngester {
         Thread.sleep(100);
       }
     }
+
+    return this;
   }
 
   public void shutDown ()

@@ -68,12 +68,13 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
   private final KafkaConnector connector;
   private final SignalCodec signalCodec;
   private final TopicNames topicNames;
+  private final KafkaMessageIngester responseMessageIngester;
   private final ConcurrentHashMap<String, Producer<Long, byte[]>> producerMap = new ConcurrentHashMap<>();
   private final String nodeName;
   private final String callerId = SnowflakeId.newInstance().generateDottedString();
 
   public KafkaRequestTransport (String nodeName, SignalCodec signalCodec, int concurrencyLimit, long defaultTimeoutSeconds, int startupGracePeriodSeconds, KafkaServer... servers)
-    throws KafkaConnectionException {
+    throws KafkaConnectionException, InterruptedException {
 
     super(defaultTimeoutSeconds);
 
@@ -83,7 +84,7 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
     topicNames = new TopicNames("wire");
     connector = new KafkaConnector(servers).check(startupGracePeriodSeconds);
 
-    new KafkaMessageIngester(nodeName, callerId, topicNames.getResponseTopicName(callerId), connector, null, concurrencyLimit);
+    responseMessageIngester = new KafkaMessageIngester(nodeName, callerId, topicNames.getResponseTopicName(callerId), connector, null, concurrencyLimit).startUp();
   }
 
   @Override
@@ -147,5 +148,7 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
     } finally {
       producerLock.writeLock().unlock();
     }
+
+    responseMessageIngester.shutDown();
   }
 }

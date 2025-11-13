@@ -68,13 +68,16 @@ public class KafkaResponseTransport extends WorkManager<InvocationWorker, Consum
   private final SignalCodec signalCodec;
   private final WireInvocationCircuit invocationCircuit = new WireInvocationCircuit();
   private final TopicNames topicNames;
+  private final KafkaMessageIngester whisperMessageIngester;
+  private final KafkaMessageIngester talkMessageIngester;
+  private final KafkaMessageIngester shoutMessageIngester;
   private final ConcurrentHashMap<String, Producer<Long, byte[]>> producerMap = new ConcurrentHashMap<>();
   private final String nodeName;
   private final String serviceGroup;
   private final String instanceId = SnowflakeId.newInstance().generateDottedString();
 
   public KafkaResponseTransport (String nodeName, String serviceGroup, Class<InvocationWorker> workerClass, SignalCodec signalCodec, int clusterSize, int concurrencyLimit, int startupGracePeriodSeconds, KafkaServer... servers)
-    throws KafkaConnectionException {
+    throws KafkaConnectionException, InterruptedException {
 
     super(workerClass, concurrencyLimit);
 
@@ -85,9 +88,9 @@ public class KafkaResponseTransport extends WorkManager<InvocationWorker, Consum
     topicNames = new TopicNames("wire");
     connector = new KafkaConnector(servers).check(startupGracePeriodSeconds);
 
-    new KafkaMessageIngester(nodeName, instanceId, topicNames.getWhisperTopicName(serviceGroup, instanceId), connector, null, concurrencyLimit);
-    new KafkaMessageIngester(nodeName, "wire-talk", topicNames.getTalkTopicName(serviceGroup), connector, null, concurrencyLimit);
-    new KafkaMessageIngester(nodeName, instanceId, topicNames.getShoutTopicName(serviceGroup), connector, null, concurrencyLimit);
+    whisperMessageIngester = new KafkaMessageIngester(nodeName, instanceId, topicNames.getWhisperTopicName(serviceGroup, instanceId), connector, null, concurrencyLimit).startUp();
+    talkMessageIngester = new KafkaMessageIngester(nodeName, "wire-talk", topicNames.getTalkTopicName(serviceGroup), connector, null, concurrencyLimit).startUp();
+    shoutMessageIngester = new KafkaMessageIngester(nodeName, instanceId, topicNames.getShoutTopicName(serviceGroup), connector, null, concurrencyLimit).startUp();
   }
 
   @Override
@@ -174,5 +177,9 @@ public class KafkaResponseTransport extends WorkManager<InvocationWorker, Consum
     } finally {
       producerLock.writeLock().unlock();
     }
+
+    whisperMessageIngester.shutDown();
+    talkMessageIngester.shutDown();
+    shoutMessageIngester.shutDown();
   }
 }

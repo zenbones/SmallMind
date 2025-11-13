@@ -101,7 +101,7 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
 
   @Override
   public void startUp (Server<V> server)
-    throws Exception {
+    throws InterruptedException {
 
     if (statusRef.compareAndSet(ComponentStatus.STOPPED, ComponentStatus.STARTING)) {
       workers = new ConsumerWorker[concurrencyLimit];
