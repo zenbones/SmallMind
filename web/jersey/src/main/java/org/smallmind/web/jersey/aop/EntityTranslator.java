@@ -74,5 +74,6 @@ public class EntityTranslator {
   public static void clearEntity () {
 
     JSON_ENTITY_LOCAL.remove();
+    JSON_ENTITY_CLASS_LOCAL.remove();
   }
 }
