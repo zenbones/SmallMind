@@ -60,10 +60,11 @@ public class FluentBitAppender extends AbstractAppender implements InitializingB
   private RecordElement[] recordElements = RecordElement.values();
   private String newLine = System.lineSeparator();
   private String host;
+  private long batchGracePeriodMilliseconds = 3000;
   private int port;
   private int retryAttempts = 3;
   private int concurrencyLimit = 1;
-  private int batch = 1;
+  private int batchSize = 1;
 
   public FluentBitAppender (String name) {
 
@@ -107,17 +108,22 @@ public class FluentBitAppender extends AbstractAppender implements InitializingB
 
   public void setRetryAttempts (int retryAttempts) {
 
-    this.retryAttempts = retryAttempts;
+    this.retryAttempts = Math.max(1, retryAttempts);
   }
 
   public void setConcurrencyLimit (int concurrencyLimit) {
 
-    this.concurrencyLimit = concurrencyLimit;
+    this.concurrencyLimit = Math.max(1, concurrencyLimit);
   }
 
-  public void setBatch (int batch) {
+  public void setBatchSize (int batchSize) {
 
-    this.batch = batch;
+    this.batchSize = Math.max(1, batchSize);
+  }
+
+  public void setBatchGracePeriodMilliseconds (long batchGracePeriodMilliseconds) {
+
+    this.batchGracePeriodMilliseconds = Math.max(1000L, batchGracePeriodMilliseconds);
   }
 
   @Override
@@ -159,7 +165,7 @@ public class FluentBitAppender extends AbstractAppender implements InitializingB
 
     private final CountDownLatch finishedLatch;
     private Socket socket;
-    private ArrayNode entriesNode = JsonNodeFactory.instance.arrayNode(batch);
+    private ArrayNode entriesNode = JsonNodeFactory.instance.arrayNode(batchSize);
 
     public FluentBitWorker (CountDownLatch finishedLatch) {
 
@@ -194,11 +200,11 @@ public class FluentBitAppender extends AbstractAppender implements InitializingB
               entryNode.add(record.getMillis() / 1000);
               entryNode.add(messageNode);
 
-              if ((entriesNode.add(entryNode).size() >= batch) || (System.currentTimeMillis() - lastSentMillis >= 3000)) {
+              if ((entriesNode.add(entryNode).size() >= batchSize) || ((System.currentTimeMillis()) - lastSentMillis >= batchGracePeriodMilliseconds)) {
                 lastSentMillis = System.currentTimeMillis();
                 send();
               }
-            } else if ((!entriesNode.isEmpty()) && (System.currentTimeMillis() - lastSentMillis >= 3000)) {
+            } else if ((!entriesNode.isEmpty()) && ((System.currentTimeMillis() - lastSentMillis) >= batchGracePeriodMilliseconds)) {
               lastSentMillis = System.currentTimeMillis();
               send();
             }
@@ -233,7 +239,7 @@ public class FluentBitAppender extends AbstractAppender implements InitializingB
 
         ThreadLocalRandom.current().nextBytes(chunk);
         optionNode.put("chunk", Base64Codec.encode(chunk));
-        optionNode.put("size", batch);
+        optionNode.put("size", batchSize);
 
         eventNode.add(getName());
         eventNode.add(entriesNode);
@@ -256,8 +262,9 @@ public class FluentBitAppender extends AbstractAppender implements InitializingB
             }
           }
         } while (socket == null);
+        System.out.println(objectMapper.writeValueAsString(eventNode));
       } finally {
-        entriesNode = JsonNodeFactory.instance.arrayNode(batch);
+        entriesNode = JsonNodeFactory.instance.arrayNode(batchSize);
       }
     }
 
