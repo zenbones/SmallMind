@@ -35,7 +35,10 @@ package org.smallmind.scribe.pen;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -47,18 +50,19 @@ import org.springframework.beans.factory.InitializingBean;
 
 public class FluentBitAppender extends AbstractAppender implements InitializingBean {
 
-  private final AtomicBoolean finished = new AtomicBoolean(false);
+  private final AtomicBoolean closed = new AtomicBoolean(false);
   private final ObjectMapper objectMapper = new ObjectMapper(new MessagePackFactory());
+  private final SynchronousQueue<Record<?>> recordQueue = new SynchronousQueue<>();
+  private CountDownLatch finishedLatch;
   private MessagePackFormatter formatter;
-  private Socket socket;
   private Map<String, String> additionalEventData;
   private Timestamp timestamp = DateFormatTimestamp.getDefaultInstance();
   private RecordElement[] recordElements = RecordElement.values();
-  private ArrayNode entriesNode;
-  private String newLine = System.getProperty("line.separator");
+  private String newLine = System.lineSeparator();
   private String host;
   private int port;
   private int retryAttempts = 3;
+  private int concurrencyLimit = 1;
   private int batch = 1;
 
   public FluentBitAppender (String name) {
@@ -106,6 +110,11 @@ public class FluentBitAppender extends AbstractAppender implements InitializingB
     this.retryAttempts = retryAttempts;
   }
 
+  public void setConcurrencyLimit (int concurrencyLimit) {
+
+    this.concurrencyLimit = concurrencyLimit;
+  }
+
   public void setBatch (int batch) {
 
     this.batch = batch;
@@ -115,92 +124,149 @@ public class FluentBitAppender extends AbstractAppender implements InitializingB
   public void afterPropertiesSet () {
 
     formatter = new MessagePackFormatter(timestamp, recordElements, newLine);
-    entriesNode = JsonNodeFactory.instance.arrayNode(batch);
+    finishedLatch = new CountDownLatch(concurrencyLimit);
+
+    for (int index = 0; index < concurrencyLimit; index++) {
+      new Thread(new FluentBitWorker(finishedLatch)).start();
+    }
+  }
+
+  @Override
+  public synchronized void handleOutput (Record<?> record)
+    throws LoggerException, InterruptedException {
+
+    if (closed.get()) {
+      throw new LoggerException("%s has been previously closed", this.getClass().getSimpleName());
+    } else {
+      recordQueue.put(record);
+    }
   }
 
   @Override
   public synchronized void close ()
     throws LoggerException {
 
-    if (finished.compareAndSet(false, true)) {
-      if (socket != null) {
-        try {
-          socket.close();
-        } catch (IOException ioException) {
-          throw new LoggerException(ioException);
-        }
+    if (closed.compareAndSet(false, true)) {
+      try {
+        finishedLatch.await();
+      } catch (InterruptedException interruptedException) {
+        throw new LoggerException(interruptedException);
       }
     }
   }
 
-  @Override
-  public synchronized void handleOutput (Record<?> record)
-    throws IOException, LoggerException {
+  private class FluentBitWorker implements Runnable {
 
-    if (finished.get()) {
-      throw new LoggerException("%s has been previously closed", this.getClass().getSimpleName());
-    } else {
+    private final CountDownLatch finishedLatch;
+    private Socket socket;
+    private ArrayNode entriesNode = JsonNodeFactory.instance.arrayNode(batch);
 
-      ArrayNode entryNode = JsonNodeFactory.instance.arrayNode();
-      ObjectNode messageNode = JsonNodeFactory.instance.objectNode();
-      ObjectNode recordNode = formatter.format(record);
+    public FluentBitWorker (CountDownLatch finishedLatch) {
 
-      if ((additionalEventData != null) && (!additionalEventData.isEmpty())) {
-        for (Map.Entry<String, String> additionalDataEntry : additionalEventData.entrySet()) {
-          recordNode.put(additionalDataEntry.getKey(), additionalDataEntry.getValue());
-        }
-      }
+      this.finishedLatch = finishedLatch;
+    }
 
-      messageNode.set("message", recordNode);
-      entryNode.add(record.getMillis() / 1000);
-      entryNode.add(messageNode);
+    @Override
+    public void run () {
 
-      if (entriesNode.add(entryNode).size() >= batch) {
-        try {
+      try {
 
-          ArrayNode eventNode = JsonNodeFactory.instance.arrayNode();
-          ObjectNode optionNode = JsonNodeFactory.instance.objectNode();
-          byte[] chunk = new byte[16];
-          int retry = 0;
+        long lastSentMillis = System.currentTimeMillis();
 
-          ThreadLocalRandom.current().nextBytes(chunk);
-          optionNode.put("chunk", Base64Codec.encode(chunk));
-          optionNode.put("size", batch);
+        while (!closed.get()) {
+          try {
 
-          eventNode.add(getName());
-          eventNode.add(entriesNode);
-          eventNode.add(optionNode);
+            Record<?> record;
 
-          do {
-            try {
-              if (socket == null) {
-                connect();
-              } else if (socket.isClosed() || (!socket.isConnected())) {
-                socket.close();
-                connect();
+            if ((record = recordQueue.poll(1, TimeUnit.SECONDS)) != null) {
+
+              ArrayNode entryNode = JsonNodeFactory.instance.arrayNode();
+              ObjectNode messageNode = JsonNodeFactory.instance.objectNode();
+              ObjectNode recordNode = formatter.format(record);
+
+              if ((additionalEventData != null) && (!additionalEventData.isEmpty())) {
+                for (Map.Entry<String, String> additionalDataEntry : additionalEventData.entrySet()) {
+                  recordNode.put(additionalDataEntry.getKey(), additionalDataEntry.getValue());
+                }
               }
 
-              socket.getOutputStream().write(objectMapper.writeValueAsBytes(eventNode));
-            } catch (IOException ioException) {
-              socket = null;
-              if (++retry > retryAttempts) {
-                throw new FluentBitConnectionException(ioException, "Failed to connect to host(%s:%d)", host, port);
+              messageNode.set("message", recordNode);
+              entryNode.add(record.getMillis() / 1000);
+              entryNode.add(messageNode);
+
+              if ((entriesNode.add(entryNode).size() >= batch) || (System.currentTimeMillis() - lastSentMillis >= 3000)) {
+                lastSentMillis = System.currentTimeMillis();
+                send();
               }
+            } else if ((!entriesNode.isEmpty()) && (System.currentTimeMillis() - lastSentMillis >= 3000)) {
+              lastSentMillis = System.currentTimeMillis();
+              send();
             }
-          } while (socket == null);
-        } finally {
-          entriesNode = JsonNodeFactory.instance.arrayNode(batch);
+          } catch (IOException | LoggerException | InterruptedException exception) {
+            LoggerManager.getLogger(FluentBitAppender.class).error(exception);
+          }
         }
+
+        try {
+          if (socket != null) {
+            socket.close();
+          }
+        } catch (IOException ioException) {
+          LoggerManager.getLogger(FluentBitAppender.class).error(ioException);
+        }
+      } catch (Throwable throwable) {
+        // Just in case, we should know something bad has happened
+        LoggerManager.getLogger(FluentBitAppender.class).fatal(throwable);
+      } finally {
+        finishedLatch.countDown();
       }
     }
-  }
 
-  private void connect ()
-    throws IOException {
+    public void send ()
+      throws IOException, LoggerException {
 
-    socket = new Socket(host, port);
-    socket.setTcpNoDelay(true);
-    socket.setSoTimeout(1000);
+      try {
+        ArrayNode eventNode = JsonNodeFactory.instance.arrayNode();
+        ObjectNode optionNode = JsonNodeFactory.instance.objectNode();
+        byte[] chunk = new byte[16];
+        int retry = 0;
+
+        ThreadLocalRandom.current().nextBytes(chunk);
+        optionNode.put("chunk", Base64Codec.encode(chunk));
+        optionNode.put("size", batch);
+
+        eventNode.add(getName());
+        eventNode.add(entriesNode);
+        eventNode.add(optionNode);
+
+        do {
+          try {
+            if (socket == null) {
+              connect();
+            } else if (socket.isClosed() || (!socket.isConnected())) {
+              socket.close();
+              connect();
+            }
+
+            socket.getOutputStream().write(objectMapper.writeValueAsBytes(eventNode));
+          } catch (IOException ioException) {
+            socket = null;
+            if (++retry > retryAttempts) {
+              throw new FluentBitConnectionException(ioException, "Failed to connect to host(%s:%d)", host, port);
+            }
+          }
+        } while (socket == null);
+      } finally {
+        entriesNode = JsonNodeFactory.instance.arrayNode(batch);
+      }
+    }
+
+    private void connect ()
+      throws IOException {
+
+      socket = new Socket(host, port);
+      socket.setTcpNoDelay(true);
+      socket.setSoTimeout(1000);
+    }
   }
 }
-
