@@ -35,8 +35,11 @@ package org.smallmind.nutsnbolts.http;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import org.smallmind.nutsnbolts.io.ByteBufferInputStream;
 
 public final class Base64Codec {
 
@@ -54,10 +57,16 @@ public final class Base64Codec {
     return encode(bytes, false, '-', '_');
   }
 
-  public static String urlSafeEncode (ByteArrayInputStream byteInputStream)
+  public static String urlSafeEncode (ByteBuffer buffer)
     throws IOException {
 
-    return encode(byteInputStream, false, '-', '_');
+    return encode(buffer, false, '-', '_');
+  }
+
+  public static String urlSafeEncode (InputStream inputStream)
+    throws IOException {
+
+    return encode(inputStream, false, '-', '_');
   }
 
   public static String encode (String original)
@@ -108,20 +117,56 @@ public final class Base64Codec {
     return encode(new ByteArrayInputStream(bytes), includePadding, char62, char63);
   }
 
-  public static String encode (ByteArrayInputStream byteInputStream, char char62, char char63)
+  public static String encode (ByteBuffer buffer)
     throws IOException {
 
-    return encode(byteInputStream, true, char62, char63);
+    return encode(new ByteBufferInputStream(buffer), true, '+', '/');
   }
 
-  public static String encode (ByteArrayInputStream byteInputStream, boolean includePadding, char char62, char char63)
+  public static String encode (ByteBuffer buffer, boolean includePadding)
+    throws IOException {
+
+    return encode(new ByteBufferInputStream(buffer), includePadding, '+', '/');
+  }
+
+  public static String encode (ByteBuffer buffer, char char62, char char63)
+    throws IOException {
+
+    return encode(new ByteBufferInputStream(buffer), true, char62, char63);
+  }
+
+  public static String encode (ByteBuffer buffer, boolean includePadding, char char62, char char63)
+    throws IOException {
+
+    return encode(new ByteBufferInputStream(buffer), includePadding, char62, char63);
+  }
+
+  public static String encode (InputStream inputStream)
+    throws IOException {
+
+    return encode(inputStream, true, '+', '/');
+  }
+
+  public static String encode (InputStream inputStream, boolean includePadding)
+    throws IOException {
+
+    return encode(inputStream, includePadding, '+', '/');
+  }
+
+  public static String encode (InputStream inputStream, char char62, char char63)
+    throws IOException {
+
+    return encode(inputStream, true, char62, char63);
+  }
+
+  public static String encode (InputStream inputStream, boolean includePadding, char char62, char char63)
     throws IOException {
 
     StringBuilder encodeBuilder = new StringBuilder();
     byte[] triplet = new byte[3];
     int bytesRead;
 
-    while ((bytesRead = byteInputStream.read(triplet)) >= 0) {
+    while ((bytesRead = inputStream.read(triplet)) >= 0) {
       for (int index = 0; index < bytesRead; index++) {
         switch (index) {
           case 0:
@@ -165,10 +210,10 @@ public final class Base64Codec {
     return decode(bytes, false, '-', '_');
   }
 
-  public static byte[] urlSafeDecode (ByteArrayInputStream byteInputStream)
+  public static byte[] urlSafeDecode (InputStream inputStream)
     throws IOException {
 
-    return decode(byteInputStream, false, '-', '_');
+    return decode(inputStream, false, '-', '_');
   }
 
   public static byte[] decode (String encoded)
@@ -219,25 +264,49 @@ public final class Base64Codec {
     return decode(new ByteArrayInputStream(bytes), strict, char62, char63);
   }
 
-  public static byte[] decode (ByteArrayInputStream byteInputStream)
+  public static byte[] decode (ByteBuffer buffer)
     throws IOException {
 
-    return decode(byteInputStream, true, '+', '/');
+    return decode(new ByteBufferInputStream(buffer), true, '+', '/');
   }
 
-  public static byte[] decode (ByteArrayInputStream byteInputStream, boolean strict)
+  public static byte[] decode (ByteBuffer buffer, boolean strict)
     throws IOException {
 
-    return decode(byteInputStream, strict, '+', '/');
+    return decode(new ByteBufferInputStream(buffer), strict, '+', '/');
   }
 
-  public static byte[] decode (ByteArrayInputStream byteInputStream, char char62, char char63)
+  public static byte[] decode (ByteBuffer buffer, char char62, char char63)
     throws IOException {
 
-    return decode(byteInputStream, true, char62, char63);
+    return decode(new ByteBufferInputStream(buffer), true, char62, char63);
   }
 
-  public static byte[] decode (ByteArrayInputStream byteInputStream, boolean strict, char char62, char char63)
+  public static byte[] decode (ByteBuffer buffer, boolean strict, char char62, char char63)
+    throws IOException {
+
+    return decode(new ByteBufferInputStream(buffer), strict, char62, char63);
+  }
+
+  public static byte[] decode (InputStream inputStream)
+    throws IOException {
+
+    return decode(inputStream, true, '+', '/');
+  }
+
+  public static byte[] decode (InputStream inputStream, boolean strict)
+    throws IOException {
+
+    return decode(inputStream, strict, '+', '/');
+  }
+
+  public static byte[] decode (InputStream inputStream, char char62, char char63)
+    throws IOException {
+
+    return decode(inputStream, true, char62, char63);
+  }
+
+  public static byte[] decode (InputStream inputStream, boolean strict, char char62, char char63)
     throws IOException {
 
     ByteArrayOutputStream byteOutputStream;
@@ -248,7 +317,7 @@ public final class Base64Codec {
     byteOutputStream = new ByteArrayOutputStream();
 
     do {
-      endOfStream = fillBuffer(byteInputStream, buffer, strict);
+      endOfStream = fillBuffer(inputStream, buffer, strict);
       if ((!endOfStream) || (buffer[0] != '=') || (buffer[1] != '=') || (buffer[2] != '=') || (buffer[3] != '=')) {
         if ((buffer[0] == '=') || (buffer[1] == '=') || ((buffer[2] == '=') && (buffer[3] != '='))) {
           throw new UnsupportedEncodingException("Not a base64 encoded stream");
@@ -273,14 +342,14 @@ public final class Base64Codec {
     return byteOutputStream.toByteArray();
   }
 
-  private static boolean fillBuffer (ByteArrayInputStream byteInputStream, byte[] buffer, boolean strict)
+  private static boolean fillBuffer (InputStream inputStream, byte[] buffer, boolean strict)
     throws IOException {
 
     int bytesRead;
     int offset = 0;
 
     do {
-      bytesRead = byteInputStream.read(buffer, offset, buffer.length - offset);
+      bytesRead = inputStream.read(buffer, offset, buffer.length - offset);
     } while ((bytesRead >= 0) && ((offset += bytesRead) < buffer.length));
 
     if (strict && (offset > 0) && (offset < buffer.length)) {
