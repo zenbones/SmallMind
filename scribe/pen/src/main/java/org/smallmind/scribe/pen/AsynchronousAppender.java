@@ -70,8 +70,7 @@ public class AsynchronousAppender extends AbstractWrappedAppender {
     try {
       if (finished.get()) {
         throw new LoggerException("%s has been previously closed", this.getClass().getSimpleName());
-      }
-      if (!publishQueue.offer(record)) {
+      } else if (!publishQueue.offer(record)) {
         throw new LoggerException("Buffer exceeded(%d) on %s", bufferSize, AsynchronousAppender.class.getSimpleName());
       }
     } catch (Exception exception) {
