@@ -74,11 +74,7 @@ public class AsynchronousAppender extends AbstractWrappedAppender {
         throw new LoggerException("Buffer exceeded(%d) on %s", bufferSize, AsynchronousAppender.class.getSimpleName());
       }
     } catch (Exception exception) {
-      if (getErrorHandler() == null) {
-        exception.printStackTrace();
-      } else {
-        getErrorHandler().process(record, exception, "Unable to publish message from appender(%s)", (getName() != null) ? getName() : this.getClass().getCanonicalName());
-      }
+      handleError(record, exception);
     }
   }
 
@@ -88,6 +84,15 @@ public class AsynchronousAppender extends AbstractWrappedAppender {
     publishWorker.finish();
 
     super.close();
+  }
+
+  private void handleError (Record<?> record, Exception exception) {
+
+    if (getErrorHandler() == null) {
+      exception.printStackTrace();
+    } else {
+      getErrorHandler().process(record, exception, "Unable to publish message from appender(%s)", (getName() != null) ? getName() : this.getClass().getCanonicalName());
+    }
   }
 
   private class PublishWorker implements Runnable {
@@ -110,17 +115,21 @@ public class AsynchronousAppender extends AbstractWrappedAppender {
         runnableThread = Thread.currentThread();
 
         while (!finished.get()) {
+
+          Record<?> record = null;
+
           try {
-
-            Record<?> record;
-
             if ((record = publishQueue.poll(1, TimeUnit.SECONDS)) != null) {
               publishToWrappedAppender(record);
             }
           } catch (InterruptedException interruptedException) {
             finished.set(true);
           } catch (Exception exception) {
-            LoggerManager.getLogger(AsynchronousAppender.class).error(exception);
+            if (record == null) {
+              exception.printStackTrace();
+            } else {
+              handleError(record, exception);
+            }
           }
         }
       } finally {
