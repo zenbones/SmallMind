@@ -50,18 +50,20 @@ public class Log4JLoggingBlueprint extends LoggingBlueprint<LogEvent> {
     LoggerManager.addLoggingPackagePrefix("org.apache.log4j.");
   }
 
+  @Override
   public LoggerAdapter getLoggingAdapter (String name) {
 
     return new Log4JLoggerAdapter((Logger)LogManager.getLogger(name));
   }
 
-  public Record<LogEvent> errorRecord (Record<LogEvent> record, Throwable throwable, String message, Object... args) {
+  @Override
+  public Record<LogEvent> errorRecord (String loggerName, Throwable throwable, String message, Object... args) {
 
     LoggerContext loggerContext;
 
     loggerContext = new DefaultLoggerContext();
     loggerContext.fillIn();
 
-    return new Log4JRecordSubverter(record.getNativeLogEntry().getLoggerName(), record.getNativeLogEntry().getLoggerFqcn(), Level.FATAL, loggerContext, throwable, message, args).getRecord();
+    return new Log4JRecordSubverter(loggerName, loggerName, Level.FATAL, loggerContext, throwable, message, args).getRecord();
   }
 }

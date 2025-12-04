@@ -53,9 +53,16 @@ public class DefaultErrorHandler implements ErrorHandler {
     this.appender = appender;
   }
 
-  public void process (Record<?> record, Exception exception, String errorMessage, Object... args) {
+  @Override
+  public void process (String loggerName, Throwable throwable, String errorMessage, Object... args) {
 
-    appender.publish(LoggingBlueprintFactory.getLoggingBlueprint().errorRecord(record, exception, errorMessage, args));
+    appender.publish(LoggingBlueprintFactory.getLoggingBlueprint().errorRecord(loggerName, throwable, errorMessage, args));
+  }
+
+  @Override
+  public void process (Record<?> record, Throwable throwable, String errorMessage, Object... args) {
+
+    process(record.getLoggerName(), throwable, errorMessage, args);
     appender.publish(record);
   }
 }

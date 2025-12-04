@@ -60,6 +60,28 @@ public interface Appender {
 
   void publish (Record<?> record);
 
+  default void handleError (String loggerName, Throwable throwable) {
+
+    ErrorHandler errorHandler;
+
+    if ((errorHandler = getErrorHandler()) == null) {
+      throwable.printStackTrace();
+    } else {
+      errorHandler.process(loggerName, throwable, "Error in appender(%s)", (getName() != null) ? getName() : this.getClass().getCanonicalName());
+    }
+  }
+
+  default void handleError (Record<?> record, Throwable throwable) {
+
+    ErrorHandler errorHandler;
+
+    if ((errorHandler = getErrorHandler()) == null) {
+      throwable.printStackTrace();
+    } else {
+      errorHandler.process(record, throwable, "Publishing error in appender(%s)", (getName() != null) ? getName() : this.getClass().getCanonicalName());
+    }
+  }
+
   void close ()
     throws InterruptedException, LoggerException;
 }

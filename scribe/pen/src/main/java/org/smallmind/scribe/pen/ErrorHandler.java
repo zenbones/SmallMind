@@ -34,5 +34,7 @@ package org.smallmind.scribe.pen;
 
 public interface ErrorHandler {
 
-  void process (Record<?> record, Exception exception, String errorMessage, Object... args);
+  void process (String loggerName, Throwable throwable, String errorMessage, Object... args);
+
+  void process (Record<?> record, Throwable throwable, String errorMessage, Object... args);
 }

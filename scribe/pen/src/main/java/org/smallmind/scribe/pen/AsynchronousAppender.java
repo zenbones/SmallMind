@@ -53,10 +53,10 @@ public class AsynchronousAppender extends AbstractWrappedAppender {
 
     super(internalAppender);
 
-    this.bufferSize = bufferSize;
+    this.bufferSize = Math.max(1, bufferSize);
 
-    publishQueue = new LinkedBlockingQueue<>(bufferSize);
-    publishWorkers = new PublishWorker[concurrencyLimit];
+    publishQueue = new LinkedBlockingQueue<>(this.bufferSize);
+    publishWorkers = new PublishWorker[Math.max(1, concurrencyLimit)];
 
     for (int index = 0; index < publishWorkers.length; index++) {
 
@@ -75,7 +75,7 @@ public class AsynchronousAppender extends AbstractWrappedAppender {
       if (finished.get()) {
         throw new LoggerException("%s has been previously closed", this.getClass().getSimpleName());
       } else if (!publishQueue.offer(record)) {
-        throw new LoggerException("Buffer exceeded(%d) on %s",bufferSize, AsynchronousAppender.class.getSimpleName());
+        throw new LoggerException("Buffer exceeded(%d) on %s", bufferSize, AsynchronousAppender.class.getSimpleName());
       }
     } catch (Exception exception) {
       handleError(record, exception);
@@ -90,15 +90,6 @@ public class AsynchronousAppender extends AbstractWrappedAppender {
     }
 
     super.close();
-  }
-
-  private void handleError (Record<?> record, Exception exception) {
-
-    if (getErrorHandler() == null) {
-      exception.printStackTrace();
-    } else {
-      getErrorHandler().process(record, exception, "Unable to publish message from appender(%s)", (getName() != null) ? getName() : this.getClass().getCanonicalName());
-    }
   }
 
   private class PublishWorker implements Runnable {
@@ -132,7 +123,7 @@ public class AsynchronousAppender extends AbstractWrappedAppender {
             finished.set(true);
           } catch (Exception exception) {
             if (record == null) {
-              exception.printStackTrace();
+              handleError(Logger.unknown(), exception);
             } else {
               handleError(record, exception);
             }

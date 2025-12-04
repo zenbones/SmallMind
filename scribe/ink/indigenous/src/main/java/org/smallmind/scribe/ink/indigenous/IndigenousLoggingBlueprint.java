@@ -41,17 +41,19 @@ import org.smallmind.scribe.pen.adapter.LoggingBlueprint;
 
 public class IndigenousLoggingBlueprint extends LoggingBlueprint<IndigenousRecord> {
 
+  @Override
   public LoggerAdapter getLoggingAdapter (String name) {
 
     return new IndigenousLoggerAdapter(name);
   }
 
-  public Record<IndigenousRecord> errorRecord (Record<IndigenousRecord> record, Throwable throwable, String message, Object... args) {
+  @Override
+  public Record<IndigenousRecord> errorRecord (String loggerName, Throwable throwable, String message, Object... args) {
 
     IndigenousRecord indigenousRecord;
     LoggerContext loggerContext;
 
-    indigenousRecord = new IndigenousRecord(record.getLoggerName(), Level.FATAL, throwable, message, args);
+    indigenousRecord = new IndigenousRecord(loggerName, Level.FATAL, throwable, message, args);
     loggerContext = new DefaultLoggerContext();
     loggerContext.fillIn();
     indigenousRecord.setLoggerContext(loggerContext);

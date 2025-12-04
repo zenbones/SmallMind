@@ -38,5 +38,5 @@ public abstract class LoggingBlueprint<N> {
 
   public abstract LoggerAdapter getLoggingAdapter (String name);
 
-  public abstract Record<N> errorRecord (Record<N> record, Throwable throwable, String message, Object... args);
+  public abstract Record<N> errorRecord (String loggerName, Throwable throwable, String message, Object... args);
 }

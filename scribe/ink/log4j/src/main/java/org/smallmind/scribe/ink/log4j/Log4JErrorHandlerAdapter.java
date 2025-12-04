@@ -51,8 +51,15 @@ public class Log4JErrorHandlerAdapter implements ErrorHandler {
     return errorHandler;
   }
 
-  public void process (Record<?> record, Exception exception, String errorMessage, Object... args) {
+  @Override
+  public void process (String loggerName, Throwable throwable, String errorMessage, Object... args) {
 
-    errorHandler.error(MessageTranslator.translateMessage(errorMessage, args), (LogEvent)record.getNativeLogEntry(), exception);
+    errorHandler.error(MessageTranslator.translateMessage(errorMessage, args), null, throwable);
+  }
+
+  @Override
+  public void process (Record<?> record, Throwable throwable, String errorMessage, Object... args) {
+
+    errorHandler.error(MessageTranslator.translateMessage(errorMessage, args), (LogEvent)record.getNativeLogEntry(), throwable);
   }
 }

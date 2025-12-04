@@ -51,8 +51,19 @@ public class JDKErrorHandlerAdapter implements ErrorHandler {
     return errorManager;
   }
 
-  public void process (Record<?> record, Exception exception, String errorMessage, Object... args) {
+  @Override
+  public void process (String loggerName, Throwable throwable, String errorMessage, Object... args) {
 
-    errorManager.error(MessageTranslator.translateMessage(errorMessage, args), exception, 0);
+    if (throwable instanceof Exception) {
+      errorManager.error(MessageTranslator.translateMessage(errorMessage, args), (Exception)throwable, 0);
+    } else {
+      throwable.printStackTrace();
+    }
+  }
+
+  @Override
+  public void process (Record<?> record, Throwable throwable, String errorMessage, Object... args) {
+
+    process(record.getLoggerName(), throwable, errorMessage, args);
   }
 }

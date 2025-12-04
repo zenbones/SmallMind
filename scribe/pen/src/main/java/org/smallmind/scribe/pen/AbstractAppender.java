@@ -63,11 +63,6 @@ public abstract class AbstractAppender implements Appender {
   public abstract void handleOutput (Record<?> record)
     throws Exception;
 
-  public void handleError (ErrorHandler errorHandler, Record<?> record, Exception exception) {
-
-    errorHandler.process(record, exception, "Fatal error in appender(%s)", this.getClass().getCanonicalName());
-  }
-
   @Override
   public String getName () {
 
@@ -153,11 +148,7 @@ public abstract class AbstractAppender implements Appender {
 
       handleOutput(record);
     } catch (Exception exception) {
-      if (errorHandler == null) {
-        exception.printStackTrace();
-      } else {
-        handleError(errorHandler, record, exception);
-      }
+      handleError(record, exception);
     }
   }
 

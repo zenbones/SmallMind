@@ -51,6 +51,11 @@ public class Logger {
     loggerAdapter = LoggingBlueprintFactory.getLoggingBlueprint().getLoggingAdapter(name);
   }
 
+  public static String unknown () {
+
+    return "unknown";
+  }
+
   public String getName () {
 
     return loggerAdapter.getName();

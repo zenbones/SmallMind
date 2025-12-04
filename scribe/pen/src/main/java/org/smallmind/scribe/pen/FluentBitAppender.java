@@ -208,8 +208,8 @@ public class FluentBitAppender extends AbstractAppender implements InitializingB
               lastSentMillis = System.currentTimeMillis();
               send();
             }
-          } catch (IOException | LoggerException | InterruptedException exception) {
-            LoggerManager.getLogger(FluentBitAppender.class).error(exception);
+          } catch (InterruptedException interruptedException) {
+            handleError(Logger.unknown(), interruptedException);
           }
         }
 
@@ -218,18 +218,17 @@ public class FluentBitAppender extends AbstractAppender implements InitializingB
             socket.close();
           }
         } catch (IOException ioException) {
-          LoggerManager.getLogger(FluentBitAppender.class).error(ioException);
+          handleError(Logger.unknown(), ioException);
         }
       } catch (Throwable throwable) {
         // Just in case, we should know something bad has happened
-        LoggerManager.getLogger(FluentBitAppender.class).fatal(throwable);
+        handleError(Logger.unknown(), throwable);
       } finally {
         finishedLatch.countDown();
       }
     }
 
-    public void send ()
-      throws IOException, LoggerException {
+    private void send () {
 
       try {
         ArrayNode eventNode = JsonNodeFactory.instance.arrayNode();
@@ -262,7 +261,8 @@ public class FluentBitAppender extends AbstractAppender implements InitializingB
             }
           }
         } while (socket == null);
-        System.out.println(objectMapper.writeValueAsString(eventNode));
+      } catch (IOException ioException) {
+        handleError(Logger.unknown(), ioException);
       } finally {
         entriesNode = JsonNodeFactory.instance.arrayNode(batchSize);
       }

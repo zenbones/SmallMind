@@ -49,18 +49,20 @@ public class JDKLoggingBlueprint extends LoggingBlueprint<LogRecord> {
     LoggerManager.addLoggingPackagePrefix("java.util.logging.");
   }
 
+  @Override
   public LoggerAdapter getLoggingAdapter (String name) {
 
     return new JDKLoggerAdapter(Logger.getLogger(name));
   }
 
-  public Record<LogRecord> errorRecord (Record<LogRecord> record, Throwable throwable, String message, Object... args) {
+  @Override
+  public Record<LogRecord> errorRecord (String loggerName, Throwable throwable, String message, Object... args) {
 
     LoggerContext loggerContext;
 
     loggerContext = new DefaultLoggerContext();
     loggerContext.fillIn();
 
-    return new JDKRecordSubverter((record.getNativeLogEntry()).getLoggerName(), Level.FATAL, loggerContext, throwable, message, args).getRecord();
+    return new JDKRecordSubverter(loggerName, Level.FATAL, loggerContext, throwable, message, args).getRecord();
   }
 }
