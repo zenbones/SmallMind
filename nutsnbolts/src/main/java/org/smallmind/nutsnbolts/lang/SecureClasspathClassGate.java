@@ -33,6 +33,7 @@
 package org.smallmind.nutsnbolts.lang;
 
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.security.CodeSource;
 import java.security.cert.Certificate;
@@ -68,7 +69,7 @@ public class SecureClasspathClassGate extends ClasspathClassGate {
     }
     urlSpecBuilder.append("/-");
 
-    codeSource = new CodeSource(new URL(urlSpecBuilder.toString()), (Certificate[])null);
+    codeSource = new CodeSource(URI.create(urlSpecBuilder.toString()).toURL(), (Certificate[])null);
   }
 
   @Override

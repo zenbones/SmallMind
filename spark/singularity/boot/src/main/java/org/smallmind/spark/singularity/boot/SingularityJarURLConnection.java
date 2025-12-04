@@ -36,16 +36,17 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
 
 public class SingularityJarURLConnection extends URLConnection {
 
-  private static final AtomicReference<CachedJarFile> CACHED_JAR_FILE_REFERENCE = new AtomicReference<>();
+  private static final ConcurrentHashMap<String, CachedJarFile> CACHED_JAR_FILE_MAP = new ConcurrentHashMap<>();
 
   public SingularityJarURLConnection (URL url) {
 
@@ -61,7 +62,6 @@ public class SingularityJarURLConnection extends URLConnection {
   public InputStream getInputStream ()
     throws IOException {
 
-    JarFile jarFile;
     JarEntry jarEntry;
     String outerEntryName;
     String innerEntryName;
@@ -70,36 +70,38 @@ public class SingularityJarURLConnection extends URLConnection {
     if ((atPos = url.getPath().indexOf("@/")) < 0) {
       throw new MalformedURLException("no @/ found in url spec:" + url.getPath());
     } else {
+      try (JarFile jarFile = new JarFile(URI.create(url.getPath().substring(0, atPos)).toURL().getFile())) {
 
-      int bangPos;
+        int bangPos;
 
-      jarFile = new JarFile(new URL(url.getPath().substring(0, atPos)).getFile());
+        if ((bangPos = url.getPath().indexOf("!/", atPos + 3)) < 0) {
 
-      if ((bangPos = url.getPath().indexOf("!/", atPos + 3)) < 0) {
+          if ((jarEntry = jarFile.getJarEntry(url.getPath().substring(atPos + 2))) != null) {
+            return jarFile.getInputStream(jarEntry);
+          }
+        } else {
 
-        if ((jarEntry = jarFile.getJarEntry(url.getPath().substring(atPos + 2))) != null) {
-          return jarFile.getInputStream(jarEntry);
-        }
-      } else {
+          outerEntryName = url.getPath().substring(atPos + 2, bangPos);
+          innerEntryName = url.getPath().substring(bangPos + 2);
 
-        outerEntryName = url.getPath().substring(atPos + 2, bangPos);
-        innerEntryName = url.getPath().substring(bangPos + 2);
+          if ((jarEntry = jarFile.getJarEntry(outerEntryName)) != null) {
 
-        if ((jarEntry = jarFile.getJarEntry(outerEntryName)) != null) {
+            CachedJarFile cachedJarFile;
 
-          CachedJarFile cachedJarFile;
-          InputStream cachedInputStream;
+            InputStream cachedInputStream;
 
-          if (((cachedJarFile = CACHED_JAR_FILE_REFERENCE.get()) == null) || (!cachedJarFile.getEntryName().equals(outerEntryName))) {
-            synchronized (CACHED_JAR_FILE_REFERENCE) {
-              if (((cachedJarFile = CACHED_JAR_FILE_REFERENCE.get()) == null) || (!cachedJarFile.getEntryName().equals(outerEntryName))) {
-                CACHED_JAR_FILE_REFERENCE.set(cachedJarFile = new CachedJarFile(outerEntryName, new JarInputStream(jarFile.getInputStream(jarEntry))));
+            if ((cachedJarFile = CACHED_JAR_FILE_MAP.get(outerEntryName)) == null) {
+              synchronized (CACHED_JAR_FILE_MAP) {
+                if ((cachedJarFile = CACHED_JAR_FILE_MAP.get(outerEntryName)) == null) {
+                  CACHED_JAR_FILE_MAP.put(outerEntryName, cachedJarFile = new CachedJarFile(outerEntryName, new JarInputStream(jarFile.getInputStream(jarEntry))));
+                }
               }
             }
-          }
-          if ((cachedInputStream = cachedJarFile.getInputStream(innerEntryName)) != null) {
 
-            return cachedInputStream;
+            if ((cachedInputStream = cachedJarFile.getInputStream(innerEntryName)) != null) {
+
+              return cachedInputStream;
+            }
           }
         }
       }

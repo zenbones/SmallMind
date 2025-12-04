@@ -34,6 +34,8 @@ package org.smallmind.spark.singularity.boot;
 
 import java.io.Serializable;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -94,9 +96,9 @@ public class SingularityIndex implements Serializable {
 
         String fileName = fileNameIter.next();
 
-        return new URLEntry(fileName, new URL("jar", null, parentJarUrlPart + "!/" + fileName));
-      } catch (MalformedURLException malformedURLException) {
-        throw new RuntimeException(malformedURLException);
+        return new URLEntry(fileName, new URI("jar", parentJarUrlPart + "!/" + fileName, null).toURL());
+      } catch (URISyntaxException | MalformedURLException exception) {
+        throw new RuntimeException(exception);
       }
     }
 
@@ -136,9 +138,9 @@ public class SingularityIndex implements Serializable {
 
         Map.Entry<String, String> inverseEntry = inverseEntryIter.next();
 
-        return new URLEntry(inverseEntry.getKey(), new URL("singularity", null, parentJarUrlPart + "@/META-INF/singularity/lib/" + inverseEntry.getValue() + "!/" + inverseEntry.getKey()));
-      } catch (MalformedURLException malformedURLException) {
-        throw new RuntimeException(malformedURLException);
+        return new URLEntry(inverseEntry.getKey(), new URI("singularity", parentJarUrlPart + "@/META-INF/singularity/lib/" + inverseEntry.getValue() + "!/" + inverseEntry.getKey(), null).toURL());
+      } catch (URISyntaxException | MalformedURLException exception) {
+        throw new RuntimeException(exception);
       }
     }
 
@@ -149,25 +151,7 @@ public class SingularityIndex implements Serializable {
     }
   }
 
-  public static class URLEntry {
+  public record URLEntry(String entryName, URL entryURL) {
 
-    private final URL entryURL;
-    private final String entryName;
-
-    public URLEntry (String entryName, URL entryURL) {
-
-      this.entryName = entryName;
-      this.entryURL = entryURL;
-    }
-
-    public String getEntryName () {
-
-      return entryName;
-    }
-
-    public URL getEntryURL () {
-
-      return entryURL;
-    }
   }
 }

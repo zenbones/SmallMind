@@ -35,6 +35,7 @@ package org.smallmind.nutsnbolts.resource;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URL;
 
 public class URLResource extends AbstractResource {
@@ -54,7 +55,7 @@ public class URLResource extends AbstractResource {
 
     try {
 
-      return new BufferedInputStream(new URL(getPath()).openStream());
+      return new BufferedInputStream(URI.create(getPath()).toURL().openStream());
     } catch (IOException ioException) {
       throw new ResourceException(ioException);
     }

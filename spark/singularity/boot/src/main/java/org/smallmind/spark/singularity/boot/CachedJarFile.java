@@ -39,6 +39,8 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
+import java.util.zip.DeflaterOutputStream;
+import java.util.zip.InflaterInputStream;
 
 public class CachedJarFile {
 
@@ -49,20 +51,22 @@ public class CachedJarFile {
     throws IOException {
 
     JarEntry innerJarEntry;
-    byte[] buffer = new byte[8192];
 
     this.entryName = entryName;
 
     while ((innerJarEntry = jarInputStream.getNextJarEntry()) != null) {
+      try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
+        try (DeflaterOutputStream deflaterOutputStream = new DeflaterOutputStream(byteArrayOutputStream)) {
 
-      int bytesRead;
+          byte[] buffer = new byte[8192];
+          int bytesRead;
 
-      try (ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream()) {
-        while ((bytesRead = jarInputStream.read(buffer)) >= 0) {
-          byteOutputStream.write(buffer, 0, bytesRead);
+          while ((bytesRead = jarInputStream.read(buffer)) >= 0) {
+            deflaterOutputStream.write(buffer, 0, bytesRead);
+          }
         }
 
-        entryMap.put(innerJarEntry.getName(), byteOutputStream.toByteArray());
+        entryMap.put(innerJarEntry.getName(), byteArrayOutputStream.toByteArray());
       }
     }
   }
@@ -78,7 +82,7 @@ public class CachedJarFile {
 
     if ((contents = entryMap.get(name)) != null) {
 
-      return new ByteArrayInputStream(contents);
+      return new InflaterInputStream(new ByteArrayInputStream(contents));
     }
 
     return null;

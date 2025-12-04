@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.security.AllPermission;
 import java.security.CodeSource;
@@ -61,7 +62,7 @@ public class SingularityClassLoader extends ClassLoader {
   private static final PermissionCollection ALL_PERMISSION_COLLECTION;
   private static final String[] INOPERABLE_NAMESPACES = new String[] {"jakarta.xml.", "org.xml.", "org.w3c."};
   private static final String[] OPERABLE_NAMESPACES = new String[] {"jakarta.xml.bind."};
-  private final HashMap<String, URL> urlMap = new HashMap<>();
+  private final Map<String, URL> urlMap;
   private final HashSet<String> packageSet = new HashSet<>();
   private final URL sealBase;
   private final String specificationTitle;
@@ -87,6 +88,7 @@ public class SingularityClassLoader extends ClassLoader {
 
     super(parent);
 
+    HashMap<String, URL> underConstructionMap = new HashMap<>();
     SingularityIndex singularityIndex = null;
     Attributes mainAttributes = manifest.getMainAttributes();
     JarEntry jarEntry;
@@ -117,10 +119,10 @@ public class SingularityClassLoader extends ClassLoader {
     }
 
     for (SingularityIndex.URLEntry urlEntry : singularityIndex.getJarURLEntryIterable(jarURL.toExternalForm())) {
-      urlMap.put(urlEntry.getEntryName(), urlEntry.getEntryURL());
+      underConstructionMap.put(urlEntry.entryName(), urlEntry.entryURL());
     }
     for (SingularityIndex.URLEntry urlEntry : singularityIndex.getSingularityURLEntryIterable(jarURL.toExternalForm())) {
-      urlMap.put(urlEntry.getEntryName(), urlEntry.getEntryURL());
+      underConstructionMap.put(urlEntry.entryName(), urlEntry.entryURL());
     }
 
     specificationTitle = mainAttributes.getValue(Attributes.Name.SPECIFICATION_TITLE);
@@ -139,10 +141,12 @@ public class SingularityClassLoader extends ClassLoader {
     } else {
       sealBase = null;
     }
+
+    urlMap = Collections.unmodifiableMap(underConstructionMap);
   }
 
   @Override
-  public synchronized Class<?> loadClass (String name, boolean resolve)
+  protected synchronized Class<?> loadClass (String name, boolean resolve)
     throws ClassNotFoundException {
 
     Class<?> singularityClass;
@@ -167,7 +171,7 @@ public class SingularityClassLoader extends ClassLoader {
   }
 
   @Override
-  public synchronized Class<?> findClass (String name)
+  protected Class<?> findClass (String name)
     throws ClassNotFoundException {
 
     if (isOperableNamespace(name)) {
@@ -186,15 +190,15 @@ public class SingularityClassLoader extends ClassLoader {
               int jarBangSlashIndex;
 
               if ((jarBangSlashIndex = classURLExternalForm.indexOf("!/")) < 0) {
-                codeSourceUrl = new URL(classURLExternalForm + "!/");
+                codeSourceUrl = URI.create(classURLExternalForm + "!/").toURL();
               } else {
-                codeSourceUrl = new URL(classURLExternalForm.substring(0, jarBangSlashIndex + 2));
+                codeSourceUrl = URI.create(classURLExternalForm.substring(0, jarBangSlashIndex + 2)).toURL();
               }
               break;
             case "singularity":
               // javax.crypto.JarVerifier will encase this URL in 'jar:<code source url>!/ (it incorrectly assumes any protocol not 'jar:' is 'file:'),
               // which then gets stripped again by JarUrlConnection, which will let SingularityJarURLConnection respond correctly...
-              codeSourceUrl = new URL(classURLExternalForm.substring(0, classURLExternalForm.indexOf("!/")));
+              codeSourceUrl = URI.create(classURLExternalForm.substring(0, classURLExternalForm.indexOf("!/"))).toURL();
               break;
             default:
               throw new MalformedURLException("Unknown class url protocol(" + classURL.getProtocol() + ")");
@@ -221,6 +225,15 @@ public class SingularityClassLoader extends ClassLoader {
     throw new ClassNotFoundException(name);
   }
 
+  //TODO: Implement to load classes in modules (return null on not found)
+  /*
+  @Override
+  protected Class<?> findClass (String moduleName, String name) {
+
+    return super.findClass(moduleName, name);
+  }
+  */
+
   private boolean isOperableNamespace (String name) {
 
     for (String operableNamespace : OPERABLE_NAMESPACES) {
@@ -239,7 +252,7 @@ public class SingularityClassLoader extends ClassLoader {
     return true;
   }
 
-  private void definePackage (String name) {
+  private synchronized void definePackage (String name) {
 
     String packageName;
     int lastDotPos = name.lastIndexOf('.');
@@ -264,7 +277,7 @@ public class SingularityClassLoader extends ClassLoader {
   }
 
   @Override
-  public URL findResource (String name) {
+  protected URL findResource (String name) {
 
     if ((name == null) || name.isEmpty()) {
 
@@ -273,6 +286,16 @@ public class SingularityClassLoader extends ClassLoader {
       return urlMap.get((name.charAt(0) == '/') ? name.substring(1) : name);
     }
   }
+
+  //TODO: Implement to find resources in modules
+  /*
+  @Override
+  protected URL findResource (String moduleName, String name)
+    throws IOException {
+
+    return super.findResource(moduleName, name);
+  }
+  */
 
   @Override
   protected Enumeration<URL> findResources (String name) {
@@ -354,13 +377,13 @@ public class SingularityClassLoader extends ClassLoader {
     }
 
     @Override
-    public synchronized boolean hasMoreElements () {
+    public boolean hasMoreElements () {
 
       return index < values.length;
     }
 
     @Override
-    public synchronized T nextElement () {
+    public T nextElement () {
 
       return values[index++];
     }

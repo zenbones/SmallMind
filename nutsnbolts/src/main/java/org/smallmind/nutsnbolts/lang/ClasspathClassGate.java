@@ -35,6 +35,7 @@ package org.smallmind.nutsnbolts.lang;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -134,14 +135,14 @@ public class ClasspathClassGate implements ClassGate {
       if (pathComponent.endsWith(".jar")) {
         if ((jarLocator = findJarLocator(pathComponent, path)) != null) {
 
-          return new URL("jar:file://" + rectifyPath(pathComponent) + "!/" + jarLocator.getJarEntry().getName());
+          return URI.create("jar:file://" + rectifyPath(pathComponent) + "!/" + jarLocator.getJarEntry().getName()).toURL();
         }
       } else {
 
         Path resourcePath;
 
         if ((resourcePath = findPath(pathComponent, path)) != null) {
-          return new URL("file://" + rectifyPath(PathUtility.asNormalizedString(resourcePath)));
+          return URI.create("file://" + rectifyPath(PathUtility.asNormalizedString(resourcePath))).toURL();
         }
       }
     }
