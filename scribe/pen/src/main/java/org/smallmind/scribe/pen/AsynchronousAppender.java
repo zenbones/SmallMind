@@ -41,27 +41,31 @@ public class AsynchronousAppender extends AbstractWrappedAppender {
 
   private final AtomicBoolean finished = new AtomicBoolean(false);
   private final LinkedBlockingQueue<Record<?>> publishQueue;
-  private final PublishWorker publishWorker;
+  private final PublishWorker[] publishWorkers;
   private final int bufferSize;
 
   public AsynchronousAppender (Appender internalAppender) {
 
-    this(internalAppender, Integer.MAX_VALUE);
+    this(internalAppender, 1, 1);
   }
 
-  public AsynchronousAppender (Appender internalAppender, int bufferSize) {
+  public AsynchronousAppender (Appender internalAppender, int bufferSize, int concurrencyLimit) {
 
     super(internalAppender);
-
-    Thread publishThread;
 
     this.bufferSize = bufferSize;
 
     publishQueue = new LinkedBlockingQueue<>(bufferSize);
+    publishWorkers = new PublishWorker[concurrencyLimit];
 
-    publishThread = new Thread(publishWorker = new PublishWorker());
-    publishThread.setDaemon(true);
-    publishThread.start();
+    for (int index = 0; index < publishWorkers.length; index++) {
+
+      Thread publishThread;
+
+      publishThread = new Thread(publishWorkers[index] = new PublishWorker());
+      publishThread.setDaemon(true);
+      publishThread.start();
+    }
   }
 
   @Override
@@ -71,7 +75,7 @@ public class AsynchronousAppender extends AbstractWrappedAppender {
       if (finished.get()) {
         throw new LoggerException("%s has been previously closed", this.getClass().getSimpleName());
       } else if (!publishQueue.offer(record)) {
-        throw new LoggerException("Buffer exceeded(%d) on %s", bufferSize, AsynchronousAppender.class.getSimpleName());
+        throw new LoggerException("Buffer exceeded(%d) on %s",bufferSize, AsynchronousAppender.class.getSimpleName());
       }
     } catch (Exception exception) {
       handleError(record, exception);
@@ -81,7 +85,9 @@ public class AsynchronousAppender extends AbstractWrappedAppender {
   public void close ()
     throws InterruptedException, LoggerException {
 
-    publishWorker.finish();
+    for (PublishWorker publishWorker : publishWorkers) {
+      publishWorker.finish();
+    }
 
     super.close();
   }

@@ -45,6 +45,7 @@ public abstract class LoggingPlan implements InitializingBean {
   private Log[] logs;
   private Level defaultLogLevel = Level.INFO;
   private int logRecordBufferSize = 400;
+  private int concurrencyLimit = 1;
 
   public abstract Appender getAppender ()
     throws IOException;
@@ -59,6 +60,11 @@ public abstract class LoggingPlan implements InitializingBean {
     this.logRecordBufferSize = logRecordBufferSize;
   }
 
+  public void setConcurrencyLimit (int concurrencyLimit) {
+
+    this.concurrencyLimit = concurrencyLimit;
+  }
+
   public void setLogs (Log[] logs) {
 
     this.logs = logs;
@@ -70,11 +76,11 @@ public abstract class LoggingPlan implements InitializingBean {
 
     Appender asynchronousAppender;
 
-    asynchronousAppender = new AsynchronousAppender(getAppender(), logRecordBufferSize);
+    asynchronousAppender = new AsynchronousAppender(getAppender(), logRecordBufferSize, concurrencyLimit);
 
     new DefaultTemplate(defaultLogLevel, true, asynchronousAppender).register();
 
-    if ((logs != null) && (logs.length > 0)) {
+    if ((logs != null)) {
       for (Log log : logs) {
         new ClassNameTemplate(log.getLevel(), true, log.getPattern(), asynchronousAppender).register();
       }
