@@ -35,6 +35,7 @@ package org.smallmind.spark.singularity.boot;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.ref.SoftReference;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -46,7 +47,7 @@ import java.util.jar.JarInputStream;
 
 public class SingularityJarURLConnection extends URLConnection {
 
-  private static final ConcurrentHashMap<String, CachedJarFile> CACHED_JAR_FILE_MAP = new ConcurrentHashMap<>();
+  private static final ConcurrentHashMap<String, SoftReference<CachedJarFile>> CACHED_JAR_FILE_MAP = new ConcurrentHashMap<>();
 
   public SingularityJarURLConnection (URL url) {
 
@@ -70,6 +71,7 @@ public class SingularityJarURLConnection extends URLConnection {
     if ((atPos = url.getPath().indexOf("@/")) < 0) {
       throw new MalformedURLException("no @/ found in url spec:" + url.getPath());
     } else {
+
       try (JarFile jarFile = new JarFile(URI.create(url.getPath().substring(0, atPos)).toURL().getFile())) {
 
         int bangPos;
@@ -86,18 +88,18 @@ public class SingularityJarURLConnection extends URLConnection {
 
           if ((jarEntry = jarFile.getJarEntry(outerEntryName)) != null) {
 
+            SoftReference<CachedJarFile> cachedJarFileReference;
             CachedJarFile cachedJarFile;
 
             InputStream cachedInputStream;
 
-            if ((cachedJarFile = CACHED_JAR_FILE_MAP.get(outerEntryName)) == null) {
+            if (((cachedJarFileReference = CACHED_JAR_FILE_MAP.get(outerEntryName)) == null) || ((cachedJarFile = cachedJarFileReference.get()) == null)) {
               synchronized (CACHED_JAR_FILE_MAP) {
-                if ((cachedJarFile = CACHED_JAR_FILE_MAP.get(outerEntryName)) == null) {
-                  CACHED_JAR_FILE_MAP.put(outerEntryName, cachedJarFile = new CachedJarFile(outerEntryName, new JarInputStream(jarFile.getInputStream(jarEntry))));
+                if (((cachedJarFileReference = CACHED_JAR_FILE_MAP.get(outerEntryName)) == null) || ((cachedJarFile = cachedJarFileReference.get()) == null))  {
+                  CACHED_JAR_FILE_MAP.put(outerEntryName, new SoftReference<>(cachedJarFile = new CachedJarFile(outerEntryName, new JarInputStream(jarFile.getInputStream(jarEntry)))));
                 }
               }
             }
-
             if ((cachedInputStream = cachedJarFile.getInputStream(innerEntryName)) != null) {
 
               return cachedInputStream;
