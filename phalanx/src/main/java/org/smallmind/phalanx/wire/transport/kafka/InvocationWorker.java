@@ -44,12 +44,26 @@ import org.smallmind.phalanx.wire.transport.WireInvocationCircuit;
 import org.smallmind.phalanx.worker.WorkQueue;
 import org.smallmind.phalanx.worker.Worker;
 
+/**
+ * Processes invocation requests consumed from Kafka and routes them through the invocation circuit.
+ * <p>
+ * Each worker decodes the incoming {@link org.smallmind.phalanx.wire.signal.InvocationSignal} and hands it off to the
+ * {@link WireInvocationCircuit} for execution, recording metrics about the invocation lifecycle along the way.
+ */
 public class InvocationWorker extends Worker<ConsumerRecord<Long, byte[]>> {
 
   private final ResponseTransmitter responseTransmitter;
   private final WireInvocationCircuit invocationCircuit;
   private final SignalCodec signalCodec;
 
+  /**
+   * Creates a worker capable of decoding invocation signals and invoking the configured circuit.
+   *
+   * @param workQueue           the queue supplying Kafka records to be processed
+   * @param responseTransmitter transmitter used to send responses back to the caller
+   * @param invocationCircuit   circuit responsible for locating and invoking the target service
+   * @param signalCodec         codec used to decode invocation signals from the Kafka record payload
+   */
   public InvocationWorker (WorkQueue<ConsumerRecord<Long, byte[]>> workQueue, ResponseTransmitter responseTransmitter, WireInvocationCircuit invocationCircuit, SignalCodec signalCodec) {
 
     super(workQueue);
@@ -60,6 +74,12 @@ public class InvocationWorker extends Worker<ConsumerRecord<Long, byte[]>> {
   }
 
   @Override
+  /**
+   * Decodes the invocation signal and dispatches it to the invocation circuit while capturing metrics about the call.
+   *
+   * @param record the Kafka record containing an encoded {@link org.smallmind.phalanx.wire.signal.InvocationSignal}
+   * @throws Throwable if the invocation circuit throws an error while handling the request
+   */
   public void engageWork (final ConsumerRecord<Long, byte[]> record)
     throws Throwable {
 
@@ -71,6 +91,9 @@ public class InvocationWorker extends Worker<ConsumerRecord<Long, byte[]>> {
   }
 
   @Override
+  /**
+   * No-op close implementation because the worker does not own external resources.
+   */
   public void close () {
 
   }

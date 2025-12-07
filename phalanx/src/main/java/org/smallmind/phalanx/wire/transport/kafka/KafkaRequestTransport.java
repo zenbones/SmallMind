@@ -61,6 +61,13 @@ import org.smallmind.phalanx.wire.transport.AbstractRequestTransport;
 import org.smallmind.phalanx.wire.transport.ClaxonTag;
 import org.smallmind.phalanx.wire.transport.amqp.rabbitmq.RequestMessageRouter;
 
+/**
+ * Kafka implementation of {@link org.smallmind.phalanx.wire.transport.RequestTransport} that publishes invocation requests and
+ * listens for responses.
+ * <p>
+ * Requests are encoded with a {@link SignalCodec} and routed to whisper, talk or shout topics depending on the selected
+ * {@link Voice} mode. Responses are ingested on the caller-specific response topic and forwarded back to waiting callers.
+ */
 public class KafkaRequestTransport extends AbstractRequestTransport {
 
   private final ExecutorService executorService = new ThreadPoolExecutor(1, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(), new ThreadPoolExecutor.CallerRunsPolicy());
@@ -74,6 +81,18 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
   private final String nodeName;
   private final String callerId = SnowflakeId.newInstance().generateDottedString();
 
+  /**
+   * Creates a request transport capable of sending invocation signals and listening for responses.
+   *
+   * @param nodeName                  logical node identifier used for producer naming
+   * @param signalCodec               codec used to encode invocations and decode responses
+   * @param concurrencyLimit          number of consumer workers to ingest responses
+   * @param defaultTimeoutSeconds     default timeout for awaiting responses
+   * @param startupGracePeriodSeconds grace period for establishing Kafka connectivity
+   * @param servers                   Kafka server definitions used to create connections
+   * @throws KafkaConnectionException if Kafka connectivity cannot be established
+   * @throws InterruptedException     if startup is interrupted while waiting for consumers
+   */
   public KafkaRequestTransport (String nodeName, SignalCodec signalCodec, int concurrencyLimit, long defaultTimeoutSeconds, int startupGracePeriodSeconds, KafkaServer... servers)
     throws KafkaConnectionException, InterruptedException {
 
@@ -89,11 +108,20 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
   }
 
   @Override
+  /**
+   * @return the unique caller identifier used to build the response topic name
+   */
   public String getCallerId () {
 
     return callerId;
   }
 
+  /**
+   * Retrieves or creates a producer for the given topic unless the transport has been closed.
+   *
+   * @param topic topic for which a producer is required
+   * @return a producer if the transport is open, otherwise {@code null}
+   */
   private Producer<Long, byte[]> getProducer (String topic) {
 
     producerLock.readLock().lock();
@@ -105,6 +133,16 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
   }
 
   @Override
+  /**
+   * Publishes an invocation request to the appropriate topic and optionally waits for a response.
+   *
+   * @param voice     descriptor that determines service group, delivery mode and conversation type
+   * @param route     invocation route pointing to the target service and method
+   * @param arguments invocation arguments to encode and send
+   * @param contexts  optional contextual objects propagated with the invocation
+   * @return the result of the invocation for request/reply conversations, or {@code null} for in-only requests
+   * @throws Throwable if the transport is closed, message encoding fails, or waiting for the result produces an error
+   */
   public Object transmit (Voice<?, ?> voice, Route route, Map<String, Object> arguments, WireContext... contexts)
     throws Throwable {
 
@@ -138,6 +176,11 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
   }
 
   @Override
+  /**
+   * Closes the transport, preventing additional requests from being sent and shutting down the response ingester.
+   *
+   * @throws Exception if shutting down the ingester or producers fails
+   */
   public void close ()
     throws Exception {
 

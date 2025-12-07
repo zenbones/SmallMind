@@ -35,12 +35,22 @@ package org.smallmind.phalanx.wire.transport.kafka;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.header.Header;
 
+/**
+ * Utility methods and constants for working with Kafka message headers used by the wire transport.
+ */
 public class HeaderUtility {
 
   public static final String MESSAGE_ID = "messageId";
   public static final String CALLER_ID = "callerId";
   public static final String CORRELATION_ID = "correlationId";
 
+  /**
+   * Retrieves a header value from the provided Kafka record.
+   *
+   * @param record     Kafka record containing headers
+   * @param headerName name of the header to retrieve
+   * @return the header value as a string, or {@code null} when not present
+   */
   public static String getHeader (ConsumerRecord<Long, byte[]> record, String headerName) {
 
     for (Header header : record.headers()) {

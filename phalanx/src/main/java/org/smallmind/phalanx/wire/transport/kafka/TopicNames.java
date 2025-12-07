@@ -32,31 +32,54 @@
  */
 package org.smallmind.phalanx.wire.transport.kafka;
 
+/**
+ * Utility for constructing standardized Kafka topic names used by the wire transport.
+ */
 public class TopicNames {
 
   // prefix = "wire"
   private final String prefix;
 
+  /**
+   * @param prefix prefix applied to all topic names to namespace them for a deployment
+   */
   public TopicNames (String prefix) {
 
     this.prefix = prefix;
   }
 
+  /**
+   * @param serviceGroup the service group receiving the shout message
+   * @return topic name for broadcasting shout requests
+   */
   public String getShoutTopicName (String serviceGroup) {
 
     return prefix + "-shout-" + serviceGroup;
   }
 
+  /**
+   * @param serviceGroup the service group targeted by the talk message
+   * @return topic name for distributing talk requests
+   */
   public String getTalkTopicName (String serviceGroup) {
 
     return prefix + "-talk-" + serviceGroup;
   }
 
+  /**
+   * @param serviceGroup the service group addressed by the whisper message
+   * @param instanceId   identifier of the specific instance to receive the whisper
+   * @return topic name for direct whisper requests to the instance
+   */
   public String getWhisperTopicName (String serviceGroup, String instanceId) {
 
     return prefix + "-whisper-" + serviceGroup + "-" + instanceId;
   }
 
+  /**
+   * @param instanceId caller or responder instance identifier
+   * @return topic name for responses directed to the instance
+   */
   public String getResponseTopicName (String instanceId) {
 
     return prefix + "-response-" + instanceId;
