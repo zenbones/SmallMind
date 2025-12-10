@@ -37,41 +37,82 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Marks a domain class for Doppelganger processing. The processor generates DTO-style JAXB/Jackson compatible
+ * views for inbound and outbound directions according to the declared virtual/real properties, idioms,
+ * polymorphism/hierarchy, and supplemental metadata.
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface Doppelganger {
 
+  /**
+   * @return the list of virtual properties (not backed by real fields) to inject into generated views
+   */
   // the list of virtual properties to be added to the generated class
   Virtual[] virtual () default {};
 
+  /**
+   * @return the list of actual class fields that should be exposed with alternate metadata
+   */
   // the list of real properties to be added to the generated class
   Real[] real () default {};
 
+  /**
+   * @return the set of pledges that force generation of specific purpose/visibility views even when empty
+   */
   // the list of conditions under which to guarantee a class is generated (should be used only when the class would otherwise not be generated)
   Pledge[] pledges () default {};
 
+  /**
+   * @return polymorphic handling details for the annotated class
+   */
   // the requirements for polymorphic annotations
   Polymorphic polymorphic () default @Polymorphic();
 
+  /**
+   * @return inheritance hierarchy handling details for the annotated class
+   */
   // the requirements for hierarchy annotations
   Hierarchy hierarchy () default @Hierarchy();
 
+  /**
+   * @return idiom-level constraints to apply at the class level for selected purposes/directions
+   */
   // the constraint annotations to be applied to the generated class
   Idiom[] constrainingIdioms () default {};
 
+  /**
+   * @return additional interfaces the generated view classes should implement
+   */
   // Additional interfaces that the generated class should be marked as implementing
   Implementation[] implementations () default {};
 
+  /**
+   * @return additional imports to be injected into generated view source
+   */
   // Additional imports to be added to the generated class
   Import[] imports () default {};
 
+  /**
+   * @return explicit XML element name for the generated root (defaults to decapitalized class name)
+   */
   // the xml root element name
   String name () default "";
 
+  /**
+   * @return XML namespace for the generated root element
+   */
   String namespace () default "http://org.smallmind/web/json/doppelganger";
 
+  /**
+   * @return whether generated views should implement {@link java.io.Serializable}
+   */
   boolean serializable () default false;
 
+  /**
+   * @return text to include in a generated {@code @Comment} annotation for every view
+   */
   // The text for a generated @Comment annotation
   String comment () default "";
 }

@@ -45,6 +45,9 @@ import org.smallmind.web.json.doppelganger.TypeElementIterable;
 import org.smallmind.web.json.doppelganger.UsefulTypeMirrors;
 import org.smallmind.web.json.doppelganger.VisibilityTracker;
 
+/**
+ * Factory that selects the appropriate {@link Translator} implementation for a property type.
+ */
 public class TranslatorFactory {
 
   private static final ArrayTranslator ARRAY_TRANSLATOR = new ArrayTranslator();
@@ -52,6 +55,19 @@ public class TranslatorFactory {
   private static final ListTranslator LIST_TRANSLATOR = new ListTranslator();
   private static final NoopTranslator NOOP_TRANSLATOR = new NoopTranslator();
 
+  /**
+   * Chooses a translator based on whether the property type is visible as a generated view and its structure
+   * (array, list, or plain class). Falls back to {@link NoopTranslator} when no conversion is required.
+   *
+   * @param processingEnvironment current processing environment
+   * @param usefulTypeMirrors     cached type mirrors
+   * @param visibilityTracker     visibility tracker for generated views
+   * @param classTracker          tracker for polymorphic/hierarchy classes
+   * @param purpose               idiom purpose
+   * @param direction             view direction
+   * @param typeMirror            property type
+   * @return translator capable of emitting the proper conversion code
+   */
   public static Translator create (ProcessingEnvironment processingEnvironment, UsefulTypeMirrors usefulTypeMirrors, VisibilityTracker visibilityTracker, ClassTracker classTracker, String purpose, Direction direction, TypeMirror typeMirror) {
 
     boolean visible = false;

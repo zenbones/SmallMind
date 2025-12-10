@@ -43,10 +43,16 @@ import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
 import org.smallmind.web.json.scaffold.property.ListMutator;
 import org.smallmind.web.json.scaffold.property.PropertyException;
 
+/**
+ * Translator for {@link java.util.List} properties, delegating element conversion to {@link ListMutator}.
+ */
 public class ListTranslator implements Translator {
 
   private static final String LIST_MUTATOR_NAME = ListMutator.class.getCanonicalName();
 
+  /**
+   * Emits code to convert an entity list into a view list using {@link ListMutator#toViewType(Class, Class, java.util.List)}.
+   */
   @Override
   public void writeRightSideOfEquals (BufferedWriter writer, ProcessingEnvironment processingEnvironment, String entityInstanceName, String entityFieldName, TypeMirror entityFieldTypeMirror, String viewFieldQualifiedTypeName)
     throws IOException {
@@ -63,6 +69,9 @@ public class ListTranslator implements Translator {
     writer.write("());");
   }
 
+  /**
+   * Emits code to convert a view list back into an entity list.
+   */
   @Override
   public void writeInsideOfSet (BufferedWriter writer, ProcessingEnvironment processingEnvironment, TypeMirror entityFieldTypeMirror, String viewFieldQualifiedTypeName, String viewFieldName)
     throws IOException {
@@ -73,6 +82,13 @@ public class ListTranslator implements Translator {
     writer.write(")");
   }
 
+  /**
+   * Extracts the element type name from a parameterized list type string (e.g., {@code java.util.List<com.foo.Bar>}).
+   *
+   * @param qualifiedListTypeName fully qualified parameterized list name
+   * @return the element type name
+   * @throws PropertyException if the name cannot be parsed
+   */
   private String extractViewTypeName (String qualifiedListTypeName) {
 
     int leftAnglePos;

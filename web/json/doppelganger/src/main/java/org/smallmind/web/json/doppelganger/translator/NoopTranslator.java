@@ -39,8 +39,14 @@ import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
 
+/**
+ * Translator for simple fields that require no conversion beyond direct access.
+ */
 public class NoopTranslator implements Translator {
 
+  /**
+   * Emits a direct getter call for the entity field.
+   */
   @Override
   public void writeRightSideOfEquals (BufferedWriter writer, ProcessingEnvironment processingEnvironment, String entityInstanceName, String entityFieldName, TypeMirror entityFieldTypeMirror, String viewFieldQualifiedTypeName)
     throws IOException {
@@ -51,6 +57,9 @@ public class NoopTranslator implements Translator {
     writer.write("();");
   }
 
+  /**
+   * Emits the view-side value directly when setting the entity.
+   */
   @Override
   public void writeInsideOfSet (BufferedWriter writer, ProcessingEnvironment processingEnvironment, TypeMirror entityFieldTypeMirror, String viewFieldQualifiedTypeName, String viewFieldName)
     throws IOException {

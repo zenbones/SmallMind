@@ -39,8 +39,14 @@ import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
 
+/**
+ * Translator for class properties that themselves have generated view representations.
+ */
 public class ClassTranslator implements Translator {
 
+  /**
+   * Emits a null-safe construction of a view from an entity instance.
+   */
   @Override
   public void writeRightSideOfEquals (BufferedWriter writer, ProcessingEnvironment processingEnvironment, String entityInstanceName, String entityFieldName, TypeMirror entityFieldTypeMirror, String viewFieldQualifiedTypeName)
     throws IOException {
@@ -58,6 +64,9 @@ public class ClassTranslator implements Translator {
     writer.write("());");
   }
 
+  /**
+   * Emits a null-safe conversion from a view back to the entity using {@code factory()}.
+   */
   @Override
   public void writeInsideOfSet (BufferedWriter writer, ProcessingEnvironment processingEnvironment, TypeMirror entityFieldTypeMirror, String viewFieldQualifiedTypeName, String viewFieldName)
     throws IOException {

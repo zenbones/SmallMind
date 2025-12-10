@@ -37,10 +37,18 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Declares a simple inheritance hierarchy for generated views. Unlike {@link Polymorphic},
+ * the hierarchy does not produce polymorphic adapters but allows generated subclasses to be
+ * referenced in a type-safe way.
+ */
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.TYPE)
 public @interface Hierarchy {
 
+  /**
+   * @return the subclasses participating in the hierarchy for which views should be generated
+   */
   // the list of subclasses which will be generated with generic types
   Class[] subClasses () default {};
 }

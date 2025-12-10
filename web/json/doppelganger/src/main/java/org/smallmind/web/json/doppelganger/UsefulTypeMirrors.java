@@ -40,6 +40,9 @@ import jakarta.validation.constraints.NotNull;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.smallmind.nutsnbolts.reflection.OverlayNullifier;
 
+/**
+ * Caches commonly used {@link TypeMirror} instances to avoid repeated lookups during processing.
+ */
 public class UsefulTypeMirrors {
 
   private final TypeMirror serializableTypeMirror;
@@ -50,6 +53,11 @@ public class UsefulTypeMirrors {
   private final TypeMirror jsonNodeTypeMirror;
   private final TypeMirror objectTypeMirror;
 
+  /**
+   * Initializes cached type mirrors from the processing environment.
+   *
+   * @param processingEnvironment current processing environment
+   */
   public UsefulTypeMirrors (ProcessingEnvironment processingEnvironment) {
 
     serializableTypeMirror = processingEnvironment.getElementUtils().getTypeElement(Serializable.class.getName()).asType();
@@ -61,36 +69,57 @@ public class UsefulTypeMirrors {
     objectTypeMirror = processingEnvironment.getElementUtils().getTypeElement(Object.class.getName()).asType();
   }
 
+  /**
+   * @return {@link Serializable} type mirror
+   */
   public TypeMirror getSerializableTypeMirror () {
 
     return serializableTypeMirror;
   }
 
+  /**
+   * @return {@link View} annotation type mirror
+   */
   public TypeMirror getViewTypeMirror () {
 
     return viewTypeMirror;
   }
 
+  /**
+   * @return {@link OverlayNullifier} annotation type mirror
+   */
   public TypeMirror getOverlayNullifierTypeMirror () {
 
     return overlayNullifierTypeMirror;
   }
 
+  /**
+   * @return {@link NotNull} annotation type mirror
+   */
   public TypeMirror getNotNullTypeMirror () {
 
     return notNullTypeMirror;
   }
 
+  /**
+   * @return {@link List} raw type mirror
+   */
   public TypeMirror getListTypeMirror () {
 
     return listTypeMirror;
   }
 
+  /**
+   * @return {@link JsonNode} type mirror
+   */
   public TypeMirror getJsonNodeTypeMirror () {
 
     return jsonNodeTypeMirror;
   }
 
+  /**
+   * @return {@link Object} type mirror
+   */
   public TypeMirror getObjectTypeMirror () {
 
     return objectTypeMirror;

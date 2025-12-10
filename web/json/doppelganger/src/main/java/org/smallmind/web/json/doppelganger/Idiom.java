@@ -36,19 +36,35 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Declares an idiom (purpose plus visibility) for a property or class, optionally attaching constraints
+ * and required flags. Idioms control which generated views include the annotated element.
+ */
 @Retention(RetentionPolicy.SOURCE)
 @Target({})
 public @interface Idiom {
 
+  /**
+   * @return constraints to apply for this idiom
+   */
   // the constraint annotations to be applied to the property within this idiom
   Constraint[] constraints () default {};
 
+  /**
+   * @return visibility to which this idiom applies (IN/OUT/BOTH)
+   */
   // the visibility of the property within this idiom (IN, OUT or BOTH)
   Visibility visibility () default Visibility.BOTH;
 
+  /**
+   * @return names identifying this idiom (e.g. "create", "update")
+   */
   // the name(s) of this idiom (a short descriptive string such as 'create' or 'internal')
   String[] purposes () default {};
 
+  /**
+   * @return whether the value is required when this idiom is active
+   */
   // if the xml element is required in this idiom, if false may overridden by use of a NotNull constraint
   boolean required () default false;
 }

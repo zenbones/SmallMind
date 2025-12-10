@@ -48,8 +48,24 @@ import javax.tools.Diagnostic;
 import org.smallmind.nutsnbolts.apt.AptUtility;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
+/**
+ * Inspects a {@link Doppelganger}-annotated class and collects property metadata from fields and accessor methods.
+ * Detected properties are forwarded to {@link DoppelgangerInformation} so views can be generated.
+ */
 public class ClassWalker {
 
+  /**
+   * Traverses the enclosed elements of the provided class, validating and registering properties according
+   * to {@link View} annotations and naming conventions.
+   *
+   * @param processingEnvironment           current annotation processing environment
+   * @param doppelgangerAnnotationProcessor the processor coordinating generation
+   * @param classElement                    the class being inspected
+   * @param doppelgangerInformation         accumulator for property and idiom details
+   * @param usefulTypeMirrors               cached type mirrors for commonly used annotations
+   * @throws IOException           if parsing nested types requires IO
+   * @throws DefinitionException   if the class structure or annotations violate processing rules
+   */
   public static void walk (ProcessingEnvironment processingEnvironment, DoppelgangerAnnotationProcessor doppelgangerAnnotationProcessor, TypeElement classElement, DoppelgangerInformation doppelgangerInformation, UsefulTypeMirrors usefulTypeMirrors)
     throws IOException, DefinitionException {
 
@@ -172,6 +188,16 @@ public class ClassWalker {
     }
   }
 
+  /**
+   * Registers an inbound property, ensuring a setter exists.
+   *
+   * @param classElement            the owning class
+   * @param doppelgangerInformation accumulator for property registration
+   * @param setMethodMap            map of discovered setters keyed by field name
+   * @param fieldName               the logical field name
+   * @param propertyBox             parsed property metadata
+   * @throws DefinitionException if no matching setter exists
+   */
   private static void addInField (TypeElement classElement, DoppelgangerInformation doppelgangerInformation, HashMap<String, ExecutableElement> setMethodMap, String fieldName, PropertyBox propertyBox)
     throws DefinitionException {
 
@@ -182,6 +208,17 @@ public class ClassWalker {
     }
   }
 
+  /**
+   * Registers an outbound property, ensuring a getter exists.
+   *
+   * @param classElement            the owning class
+   * @param doppelgangerInformation accumulator for property registration
+   * @param getFieldNameSet         names of fields with {@code getXxx} accessors
+   * @param isFieldNameSet          names of boolean fields with {@code isXxx} accessors
+   * @param fieldName               the logical field name
+   * @param propertyBox             parsed property metadata
+   * @throws DefinitionException if no matching getter exists
+   */
   private static void addOutField (TypeElement classElement, DoppelgangerInformation doppelgangerInformation, HashSet<String> getFieldNameSet, HashSet<String> isFieldNameSet, String fieldName, PropertyBox propertyBox)
     throws DefinitionException {
 

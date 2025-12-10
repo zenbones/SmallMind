@@ -34,11 +34,20 @@ package org.smallmind.web.json.doppelganger;
 
 import java.util.HashMap;
 
+/**
+ * Holds the set of properties belonging to a particular purpose/direction, split into real and virtual fields.
+ */
 public class PropertyLexicon {
 
   private final HashMap<String, PropertyInformation> realMap = new HashMap<>();
   private final HashMap<String, PropertyInformation> virtualMap = new HashMap<>();
 
+  /**
+   * Adds a property keyed by its logical name, routing to the real or virtual map.
+   *
+   * @param key                 logical property name
+   * @param propertyInformation property metadata
+   */
   public void put (String key, PropertyInformation propertyInformation) {
 
     if (propertyInformation.isVirtual()) {
@@ -50,16 +59,27 @@ public class PropertyLexicon {
     }
   }
 
+  /**
+   * @return {@code true} if at least one real property exists
+   */
   public boolean isReal () {
 
     return !realMap.isEmpty();
   }
 
+  /**
+   * @return {@code true} if at least one virtual property exists
+   */
   public boolean isVirtual () {
 
     return !virtualMap.isEmpty();
   }
 
+  /**
+   * Checks whether any property carries comment text.
+   *
+   * @return {@code true} if comments are present
+   */
   public boolean hasComment () {
 
     if (!realMap.isEmpty()) {
@@ -82,6 +102,11 @@ public class PropertyLexicon {
     return false;
   }
 
+  /**
+   * Checks whether any property uses an {@code @As} override.
+   *
+   * @return {@code true} if such overrides are present
+   */
   public boolean hasAs () {
 
     if (!realMap.isEmpty()) {
@@ -104,6 +129,11 @@ public class PropertyLexicon {
     return false;
   }
 
+  /**
+   * Checks whether any real property has a nullifier message.
+   *
+   * @return {@code true} if a nullifier exists
+   */
   public boolean hasNullifier () {
 
     if (!realMap.isEmpty()) {
@@ -118,16 +148,28 @@ public class PropertyLexicon {
     return false;
   }
 
+  /**
+   * Determines whether the lexicon already contains the supplied key in either map.
+   *
+   * @param key property key to test
+   * @return {@code true} if present
+   */
   public boolean containsKey (String key) {
 
     return realMap.containsKey(key) || virtualMap.containsKey(key);
   }
 
+  /**
+   * @return map of real properties keyed by name
+   */
   public HashMap<String, PropertyInformation> getRealMap () {
 
     return realMap;
   }
 
+  /**
+   * @return map of virtual properties keyed by name
+   */
   public HashMap<String, PropertyInformation> getVirtualMap () {
 
     return virtualMap;

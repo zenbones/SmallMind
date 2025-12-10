@@ -32,12 +32,22 @@
  */
 package org.smallmind.web.json.doppelganger;
 
+/**
+ * Container bundling a property's visibility, purpose, and extracted metadata.
+ */
 public class PropertyBox {
 
   private final PropertyInformation propertyInformation;
   private final Visibility visibility;
   private final String purpose;
 
+  /**
+   * Constructs a box wrapping property metadata with its targeting information.
+   *
+   * @param visibility          visibility in which the property participates
+   * @param purpose             idiom purpose for the property
+   * @param propertyInformation parsed property metadata
+   */
   public PropertyBox (Visibility visibility, String purpose, PropertyInformation propertyInformation) {
 
     this.visibility = visibility;
@@ -45,16 +55,25 @@ public class PropertyBox {
     this.propertyInformation = propertyInformation;
   }
 
+  /**
+   * @return the visibility of the property
+   */
   public Visibility getVisibility () {
 
     return visibility;
   }
 
+  /**
+   * @return the purpose/idiom identifier
+   */
   public String getPurpose () {
 
     return purpose;
   }
 
+  /**
+   * @return detailed metadata for the property
+   */
   public PropertyInformation getPropertyInformation () {
 
     return propertyInformation;

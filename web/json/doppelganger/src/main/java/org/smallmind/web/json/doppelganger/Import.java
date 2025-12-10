@@ -32,14 +32,26 @@
  */
 package org.smallmind.web.json.doppelganger;
 
+/**
+ * Declares extra import statements that should be injected into generated view classes for specific purposes/visibilities.
+ */
 public @interface Import {
 
+  /**
+   * @return the visibility to which these imports apply (IN/OUT/BOTH)
+   */
   // the visibility of these imports (IN, OUT or BOTH)
   Visibility visibility () default Visibility.BOTH;
 
+  /**
+   * @return list of purposes that should receive the additional imports (empty applies to the default idiom)
+   */
   // the name(s) of the idioms to which these imports apply
   String[] purposes () default {};
 
+  /**
+   * @return the fully qualified class names or wildcard import strings to add
+   */
   // An array of imports (java class names or other valid import specifications, such as 'com.mystuff.*')
   String[] value ();
 }

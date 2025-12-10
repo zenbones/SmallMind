@@ -37,31 +37,58 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 
+/**
+ * Declares a virtual (non-existent) field to be injected into generated views with specified metadata.
+ */
 @Retention(RetentionPolicy.SOURCE)
 @Target({})
 public @interface Virtual {
 
+  /**
+   * @return idioms that override the default inclusion rules for this virtual property
+   */
   // the list of alternate idioms in which this property should be included (overrides the default idiom)
   Idiom[] idioms () default {};
 
+  /**
+   * @return JAXB adapter to apply on the generated virtual property
+   */
   // the xml adapter to be used for this property
   Class<? extends XmlAdapter> adapter () default NullXmlAdapter.class;
 
+  /**
+   * @return type hint for tools (mapped to {@link org.smallmind.web.json.scaffold.util.As})
+   */
   // a type hint for tools which may process generated classes
   Class<?> as () default Void.class;
 
+  /**
+   * @return explicit type definition for the virtual field
+   */
   // the type information for the generated property
   Type type ();
 
+  /**
+   * @return the logical field name to use in generated views
+   */
   // the field name of the generated property
   String field ();
 
+  /**
+   * @return XML element name override for this property
+   */
   // the xml element name
   String name () default "";
 
+  /**
+   * @return whether the property is required in the default idiom
+   */
   // if the xml element is required, may be overridden by an idiom if false
   boolean required () default false;
 
+  /**
+   * @return comment text to attach to the generated property
+   */
   // The text for a generated @Comment annotation
   String comment () default "";
 }

@@ -37,13 +37,23 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Declares polymorphic handling for generated views, producing adapters capable of serializing
+ * subtypes with discriminator-based resolution.
+ */
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.TYPE)
 public @interface Polymorphic {
 
+  /**
+   * @return subclasses that participate in the polymorphic graph
+   */
   // the list of subclasses which will be generated with polymorphic annotations
   Class[] subClasses () default {};
 
+  /**
+   * @return whether the polymorphic discriminator should be emitted as an XML attribute instead of an element
+   */
   // if true, will generate json with an object type attribute
   boolean useAttribute () default false;
 }

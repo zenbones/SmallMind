@@ -40,10 +40,23 @@ import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.type.TypeMirror;
 import org.smallmind.nutsnbolts.apt.AptUtility;
 
+/**
+ * Parses property annotations into one or more {@link PropertyBox} entries, expanding idioms as necessary.
+ */
 public class PropertyParser implements Iterable<PropertyBox> {
 
   private final LinkedList<PropertyBox> entryList = new LinkedList<>();
 
+  /**
+   * Builds a parser for a property annotation, generating entries per idiom/purpose.
+   *
+   * @param processingEnvironment    current processing environment
+   * @param usefulTypeMirrors        cached type mirrors for common annotations
+   * @param propertyAnnotationMirror property annotation to parse
+   * @param type                     resolved property type
+   * @param nullifierAnnotationMirror optional nullifier annotation mirror
+   * @param virtual                  whether the property is virtual
+   */
   public PropertyParser (ProcessingEnvironment processingEnvironment, UsefulTypeMirrors usefulTypeMirrors, AnnotationMirror propertyAnnotationMirror, TypeMirror type, AnnotationMirror nullifierAnnotationMirror, boolean virtual) {
 
     String nullifierMessage = (nullifierAnnotationMirror == null) ? null : AptUtility.extractAnnotationValueWithDefault(processingEnvironment, nullifierAnnotationMirror, "message", String.class);
@@ -67,6 +80,9 @@ public class PropertyParser implements Iterable<PropertyBox> {
     }
   }
 
+  /**
+   * @return iterator over parsed property entries
+   */
   @Override
   public Iterator<PropertyBox> iterator () {
 

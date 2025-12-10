@@ -32,6 +32,10 @@
  */
 package org.smallmind.web.json.doppelganger;
 
+/**
+ * Indicates whether a generated view is intended for inbound (deserialization) or outbound (serialization) use.
+ * Each direction carries a short code and the matching {@link Visibility}.
+ */
 public enum Direction {
 
   IN("In", Visibility.IN), OUT("Out", Visibility.OUT);
@@ -45,11 +49,21 @@ public enum Direction {
     this.visibility = visibility;
   }
 
+  /**
+   * Returns the suffix used when constructing generated class names (e.g. {@code In} or {@code Out}).
+   *
+   * @return the name code for this direction
+   */
   public String getCode () {
 
     return code;
   }
 
+  /**
+   * Returns the {@link Visibility} that corresponds to this direction.
+   *
+   * @return the matched visibility
+   */
   public Visibility getVisibility () {
 
     return visibility;

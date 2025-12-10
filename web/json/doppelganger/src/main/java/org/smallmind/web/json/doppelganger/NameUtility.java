@@ -41,13 +41,32 @@ import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 
+/**
+ * Utility methods for creating generated view class names and rendering type mirrors in generated source.
+ */
 public class NameUtility {
 
+  /**
+   * Resolves the package name for a type element.
+   *
+   * @param processingEnvironment current processing environment
+   * @param typeElement           type whose package is requested
+   * @return fully qualified package name
+   */
   public static String getPackageName (ProcessingEnvironment processingEnvironment, TypeElement typeElement) {
 
     return processingEnvironment.getElementUtils().getPackageOf(typeElement).getQualifiedName().toString();
   }
 
+  /**
+   * Builds the simple name for a generated view class based on purpose and direction.
+   *
+   * @param processingEnvironment current processing environment (for prefix option)
+   * @param purpose               idiom purpose (may be empty)
+   * @param direction             direction suffix
+   * @param typeElement           original annotated type
+   * @return simple view class name (no package)
+   */
   public static String getSimpleName (ProcessingEnvironment processingEnvironment, String purpose, Direction direction, TypeElement typeElement) {
 
     StringBuilder viewNameBuilder = new StringBuilder((processingEnvironment.getOptions().get("prefix") == null) ? "" : processingEnvironment.getOptions().get("prefix")).append(typeElement.getSimpleName());
@@ -59,6 +78,18 @@ public class NameUtility {
     return viewNameBuilder.append(direction.getCode()).append("View").toString();
   }
 
+  /**
+   * Renders a {@link TypeMirror} into a string suitable for inclusion in generated source, substituting
+   * generated view types for Doppelganger-annotated classes when visible.
+   *
+   * @param processingEnvironment current processing environment
+   * @param visibilityTracker     tracker for resolved visibility information
+   * @param classTracker          tracker for polymorphic/hierarchy relationships
+   * @param purpose               idiom purpose
+   * @param direction             view direction
+   * @param typeMirror            type to render
+   * @return string representation of the type
+   */
   public static String processTypeMirror (ProcessingEnvironment processingEnvironment, VisibilityTracker visibilityTracker, ClassTracker classTracker, String purpose, Direction direction, TypeMirror typeMirror) {
 
     StringBuilder nameBuilder = new StringBuilder();
@@ -68,6 +99,18 @@ public class NameUtility {
     return nameBuilder.toString();
   }
 
+  /**
+   * Recursively walks a {@link TypeMirror} building a rendered representation, handling arrays, generics,
+   * and substitution of generated view names.
+   *
+   * @param nameBuilder           the buffer to append to
+   * @param processingEnvironment current processing environment
+   * @param visibilityTracker     tracker of class visibility
+   * @param classTracker          tracker for polymorphic/hierarchy classes
+   * @param purpose               idiom purpose
+   * @param direction             view direction
+   * @param typeMirror            type to render
+   */
   private static void walkTypeMirror (StringBuilder nameBuilder, ProcessingEnvironment processingEnvironment, VisibilityTracker visibilityTracker, ClassTracker classTracker, String purpose, Direction direction, TypeMirror typeMirror) {
 
     switch (typeMirror.getKind()) {

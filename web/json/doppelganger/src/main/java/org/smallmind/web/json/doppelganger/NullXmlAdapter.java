@@ -34,14 +34,24 @@ package org.smallmind.web.json.doppelganger;
 
 import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 
+/**
+ * Placeholder JAXB adapter that is never intended to be used directly. Any invocation throws
+ * {@link UnsupportedOperationException}, serving only as a marker in generated code.
+ */
 public class NullXmlAdapter extends XmlAdapter<Object, Object> {
 
+  /**
+   * Always throws {@link UnsupportedOperationException}.
+   */
   @Override
   public Object unmarshal (Object v) {
 
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * Always throws {@link UnsupportedOperationException}.
+   */
   @Override
   public Object marshal (Object v) {
 

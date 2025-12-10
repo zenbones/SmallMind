@@ -40,9 +40,20 @@ import java.lang.annotation.Target;
 @Target({})
 public @interface Constraint {
 
+  /**
+   * Declares the validation constraint annotation type that should be applied to the generated field.
+   *
+   * @return the annotation class representing the constraint to add
+   */
   // validation constraint annotation class
   Class<?> value ();
 
+  /**
+   * Supplies the raw argument string that will be appended inside the constraint annotation.
+   * The string is emitted verbatim and should match the target annotation signature.
+   *
+   * @return arguments for the constraint annotation, or an empty string when none are required
+   */
   // arguments to the validation constraint annotation
   String arguments () default "";
 }

@@ -44,15 +44,30 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
+/**
+ * Iterates over all class {@link TypeElement}s reachable from a given {@link TypeMirror}, including generic parameters.
+ */
 public class TypeElementIterable implements Iterable<TypeElement> {
 
   private final LinkedList<TypeElement> typeElementList = new LinkedList<>();
 
+  /**
+   * Collects type elements present in the supplied mirror.
+   *
+   * @param processingEnvironment current processing environment
+   * @param typeMirror            the starting type mirror
+   */
   public TypeElementIterable (ProcessingEnvironment processingEnvironment, TypeMirror typeMirror) {
 
     pushTypeMirror(processingEnvironment, typeMirror);
   }
 
+  /**
+   * Recursively inspects a type mirror, collecting declared types and their arguments.
+   *
+   * @param processingEnvironment current processing environment
+   * @param typeMirror            type to inspect
+   */
   private void pushTypeMirror (ProcessingEnvironment processingEnvironment, TypeMirror typeMirror) {
 
     if (TypeKind.ARRAY.equals(typeMirror.getKind())) {
@@ -71,6 +86,12 @@ public class TypeElementIterable implements Iterable<TypeElement> {
     }
   }
 
+  /**
+   * Recursively inspects a type element and any type parameters.
+   *
+   * @param processingEnvironment current processing environment
+   * @param typeElement           element to inspect
+   */
   private void pushTypeElement (ProcessingEnvironment processingEnvironment, TypeElement typeElement) {
 
     if (ElementKind.CLASS.equals(typeElement.getKind())) {
@@ -82,6 +103,9 @@ public class TypeElementIterable implements Iterable<TypeElement> {
     }
   }
 
+  /**
+   * @return iterator over all collected type elements
+   */
   @Override
   public Iterator<TypeElement> iterator () {
 

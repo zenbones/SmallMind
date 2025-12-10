@@ -42,10 +42,16 @@ import javax.lang.model.type.TypeMirror;
 import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
 import org.smallmind.web.json.scaffold.property.ArrayMutator;
 
+/**
+ * Translator for array properties, delegating element-wise conversion to {@link ArrayMutator}.
+ */
 public class ArrayTranslator implements Translator {
 
   private static final String ARRAY_MUTATOR_NAME = ArrayMutator.class.getCanonicalName();
 
+  /**
+   * Generates code to convert an entity array into a view array using {@link ArrayMutator#toViewType(Class, Class, Object[])}.
+   */
   @Override
   public void writeRightSideOfEquals (BufferedWriter writer, ProcessingEnvironment processingEnvironment, String entityInstanceName, String entityFieldName, TypeMirror entityFieldTypeMirror, String viewFieldQualifiedTypeName)
     throws IOException {
@@ -62,6 +68,9 @@ public class ArrayTranslator implements Translator {
     writer.write("());");
   }
 
+  /**
+   * Generates code to convert a view array back into an entity array using {@link ArrayMutator#toEntityType(Class, Object[])}.
+   */
   @Override
   public void writeInsideOfSet (BufferedWriter writer, ProcessingEnvironment processingEnvironment, TypeMirror entityFieldTypeMirror, String viewFieldQualifiedTypeName, String viewFieldName)
     throws IOException {

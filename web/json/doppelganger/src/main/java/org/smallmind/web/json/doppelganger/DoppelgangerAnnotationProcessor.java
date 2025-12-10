@@ -65,6 +65,11 @@ import org.smallmind.nutsnbolts.apt.AptUtility;
 import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
 import org.smallmind.web.json.doppelganger.translator.TranslatorFactory;
 
+/**
+ * Annotation processor that scans {@link Doppelganger}-annotated classes and generates JAXB/Jackson friendly
+ * view classes for inbound and outbound JSON/XML serialization. The processor also emits polymorphic adapters
+ * when needed and validates annotation usage.
+ */
 @SupportedAnnotationTypes("org.smallmind.web.json.doppelganger.Doppelganger")
 @SupportedSourceVersion(SourceVersion.RELEASE_21)
 @SupportedOptions("prefix")
@@ -75,6 +80,14 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
   private final ClassTracker classTracker = new ClassTracker();
   private final HashSet<TypeElement> processedSet = new HashSet<>();
 
+  /**
+   * Entrypoint invoked by the compiler for each processing round. Collects all {@link Doppelganger} elements
+   * and generates corresponding views.
+   *
+   * @param annotations annotation types requested for processing
+   * @param roundEnv    environment for the current round
+   * @return {@code true} to indicate the annotations are fully handled
+   */
   @Override
   public boolean process (Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
 
@@ -89,6 +102,13 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
     return true;
   }
 
+  /**
+   * Ensures that any referenced types are also processed for generated views.
+   *
+   * @param typeMirror the referenced type to inspect
+   * @throws IOException           if source generation fails
+   * @throws DefinitionException   if referenced definitions are invalid
+   */
   public void processTypeMirror (TypeMirror typeMirror)
     throws IOException, DefinitionException {
 
@@ -97,6 +117,13 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
     }
   }
 
+  /**
+   * Generates views for a specific {@link Doppelganger}-annotated class (and any hierarchical/ polymorphic relatives).
+   *
+   * @param classElement the root class to process
+   * @throws IOException         if writing a generated source fails
+   * @throws DefinitionException if the class definition violates processing rules
+   */
   private void generate (TypeElement classElement)
     throws IOException, DefinitionException {
 
@@ -177,6 +204,18 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
     }
   }
 
+  /**
+   * Writes an inbound view for a purpose and records fulfillment.
+   *
+   * @param doppelgangerInformation accumulated metadata for the class
+   * @param usefulTypeMirrors       cached type mirrors
+   * @param classElement            the class being processed
+   * @param nearestViewSuperclass   nearest ancestor view to extend, if any
+   * @param purpose                 idiom purpose value
+   * @param propertyLexicon         properties to include
+   * @throws IOException         if source generation fails
+   * @throws DefinitionException if configuration is invalid
+   */
   private void processIn (DoppelgangerInformation doppelgangerInformation, UsefulTypeMirrors usefulTypeMirrors, TypeElement classElement, TypeElement nearestViewSuperclass, String purpose, PropertyLexicon propertyLexicon)
     throws IOException, DefinitionException {
 
@@ -185,6 +224,18 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
     doppelgangerInformation.denotePurpose(purpose, Direction.IN);
   }
 
+  /**
+   * Writes an outbound view for a purpose and records fulfillment.
+   *
+   * @param doppelgangerInformation accumulated metadata for the class
+   * @param usefulTypeMirrors       cached type mirrors
+   * @param classElement            the class being processed
+   * @param nearestViewSuperclass   nearest ancestor view to extend, if any
+   * @param purpose                 idiom purpose value
+   * @param propertyLexicon         properties to include
+   * @throws IOException         if source generation fails
+   * @throws DefinitionException if configuration is invalid
+   */
   private void processOut (DoppelgangerInformation doppelgangerInformation, UsefulTypeMirrors usefulTypeMirrors, TypeElement classElement, TypeElement nearestViewSuperclass, String purpose, PropertyLexicon propertyLexicon)
     throws IOException, DefinitionException {
 
@@ -193,11 +244,23 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
     doppelgangerInformation.denotePurpose(purpose, Direction.OUT);
   }
 
+  /**
+   * Converts a type name into a Java-friendly member name (lowercase first character).
+   *
+   * @param name the original simple name
+   * @return the decapitalized member name
+   */
   private String asMemberName (Name name) {
 
     return Character.toLowerCase(name.charAt(0)) + name.subSequence(1, name.length()).toString();
   }
 
+  /**
+   * Finds the closest superclass that is itself annotated with {@link Doppelganger}.
+   *
+   * @param classElement the class whose ancestors should be examined
+   * @return the nearest annotated superclass, or {@code null} if none exist
+   */
   private TypeElement getNearestViewSuperclass (TypeElement classElement) {
 
     TypeElement currentClassElement = classElement;
@@ -212,6 +275,13 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
     return null;
   }
 
+  /**
+   * Checks if a purpose string is present in a list, treating {@code null}/empty purpose as matching the empty list.
+   *
+   * @param purpose     purpose text to test
+   * @param purposeList list of purposes in an idiom
+   * @return {@code true} if the purpose should be considered present
+   */
   private boolean hasPurpose (String purpose, List<String> purposeList) {
 
     if ((purpose == null) || purpose.isEmpty()) {
@@ -223,6 +293,19 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
     }
   }
 
+  /**
+   * Generates a concrete view class for a direction/purpose combination.
+   *
+   * @param doppelgangerInformation accumulated metadata for the class
+   * @param usefulTypeMirrors       cached type mirrors
+   * @param classElement            the class being processed
+   * @param nearestViewSuperclass   nearest ancestor view to extend, if any
+   * @param purpose                 idiom purpose value
+   * @param direction               IN or OUT
+   * @param propertyLexicon         properties to include
+   * @throws IOException         if writing a generated source fails
+   * @throws DefinitionException if invalid configuration is detected
+   */
   private void writeView (DoppelgangerInformation doppelgangerInformation, UsefulTypeMirrors usefulTypeMirrors, TypeElement classElement, TypeElement nearestViewSuperclass, String purpose, Direction direction, PropertyLexicon propertyLexicon)
     throws IOException, DefinitionException {
 
@@ -696,6 +779,15 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
     }
   }
 
+  /**
+   * Writes the default construction path inside the generated {@code instance(...)} method.
+   *
+   * @param writer       destination for source output
+   * @param classElement the originating entity class
+   * @param purpose      current purpose
+   * @param direction    current direction
+   * @throws IOException if writing fails
+   */
   private void writeSelfConstruction (BufferedWriter writer, TypeElement classElement, String purpose, Direction direction)
     throws IOException {
 
@@ -707,6 +799,15 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
     writer.newLine();
   }
 
+  /**
+   * Emits a field declaration for a generated view, including constraint annotations.
+   *
+   * @param writer                   destination for source output
+   * @param purpose                  current purpose
+   * @param direction                current direction
+   * @param propertyInformationEntry property name and metadata to emit
+   * @throws IOException if writing fails
+   */
   private void writeField (BufferedWriter writer, String purpose, Direction direction, Map.Entry<String, PropertyInformation> propertyInformationEntry)
     throws IOException {
 
@@ -719,6 +820,15 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
     writer.newLine();
   }
 
+  /**
+   * Writes class-level constraint annotations that apply to the current purpose/direction pair.
+   *
+   * @param writer             destination for source output
+   * @param purpose            current purpose
+   * @param direction          current direction
+   * @param constrainingIdioms iterable of idioms that may carry constraints
+   * @throws IOException if writing fails
+   */
   private void writeConstrainingIdioms (BufferedWriter writer, String purpose, Direction direction, Iterable<IdiomInformation> constrainingIdioms)
     throws IOException {
 
@@ -729,6 +839,14 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
     }
   }
 
+  /**
+   * Emits a list of constraint annotations with indentation.
+   *
+   * @param writer      destination for source output
+   * @param constraints constraints to render
+   * @param indent      number of spaces to indent before each annotation
+   * @throws IOException if writing fails
+   */
   private void writeConstraints (BufferedWriter writer, Iterable<ConstraintInformation> constraints, int indent)
     throws IOException {
 
@@ -747,6 +865,19 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
     }
   }
 
+  /**
+   * Generates getter and fluent setter pairs for a property.
+   *
+   * @param writer                   destination for source output
+   * @param classElement             the originating entity class
+   * @param purpose                  current purpose
+   * @param direction                current direction
+   * @param propertyInformationEntry property name and metadata
+   * @param getterList               collection of getter names to feed equality/hashCode generation
+   * @param hasPolymorphicSubclasses whether the view supports polymorphic subclasses
+   * @param hasHierarchySubclasses   whether the view supports hierarchy subclasses
+   * @throws IOException if writing fails
+   */
   private void writeGettersAndSetters (BufferedWriter writer, TypeElement classElement, String purpose, Direction direction, Map.Entry<String, PropertyInformation> propertyInformationEntry, LinkedList<String> getterList, boolean hasPolymorphicSubclasses, boolean hasHierarchySubclasses)
     throws IOException {
 
@@ -829,6 +960,15 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
     writer.newLine();
   }
 
+  /**
+   * Emits {@code hashCode} and {@code equals} implementations that consider the generated getters and optional superclass.
+   *
+   * @param writer         destination for source output
+   * @param simpleClassName simple name of the view class
+   * @param getterList     ordered getters to include in equality logic
+   * @param hasSuperClass  whether the view extends another generated view
+   * @throws IOException if writing fails
+   */
   private void writeHashCodeAndEquals (BufferedWriter writer, String simpleClassName, LinkedList<String> getterList, boolean hasSuperClass)
     throws IOException {
 
@@ -929,6 +1069,15 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
     writer.newLine();
   }
 
+  /**
+   * Generates an XML adapter class to handle polymorphic serialization for the specified view.
+   *
+   * @param classElement            the polymorphic base class
+   * @param purpose                 current purpose
+   * @param direction               current direction
+   * @param usePolymorphicAttribute whether the adapter should encode type information as an attribute
+   * @throws IOException if source generation fails
+   */
   private void writePolymorphicAdapter (TypeElement classElement, String purpose, Direction direction, boolean usePolymorphicAttribute)
     throws IOException {
 

@@ -39,22 +39,37 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 import org.smallmind.nutsnbolts.apt.AptUtility;
 
+/**
+ * Parsed representation of a {@link Polymorphic} declaration.
+ */
 public class PolymorphicInformation {
 
   private final List<TypeElement> subClassList;
   private final boolean useAttribute;
 
+  /**
+   * Extracts polymorphic subclass list and discriminator placement from the annotation.
+   *
+   * @param processingEnvironment      current processing environment
+   * @param polymorphicAnnotationMirror polymorphic annotation to parse
+   */
   public PolymorphicInformation (ProcessingEnvironment processingEnvironment, AnnotationMirror polymorphicAnnotationMirror) {
 
     subClassList = AptUtility.toConcreteList(processingEnvironment, AptUtility.extractAnnotationValueAsList(polymorphicAnnotationMirror, "subClasses", TypeMirror.class));
     useAttribute = AptUtility.extractAnnotationValue(polymorphicAnnotationMirror, "useAttribute", Boolean.class, false);
   }
 
+  /**
+   * @return subclasses in the polymorphic hierarchy
+   */
   public List<TypeElement> getSubClassList () {
 
     return subClassList;
   }
 
+  /**
+   * @return {@code true} if the discriminator should be emitted as an XML attribute
+   */
   public boolean isUseAttribute () {
 
     return useAttribute;

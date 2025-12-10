@@ -36,22 +36,36 @@ import java.util.List;
 import javax.lang.model.element.AnnotationMirror;
 import org.smallmind.nutsnbolts.apt.AptUtility;
 
+/**
+ * Parsed representation of a {@link Pledge} declaration.
+ */
 public class PledgeInformation {
 
   private final List<String> purposeList;
   private final Visibility visibility;
 
+  /**
+   * Extracts pledge visibility and purposes from the annotation.
+   *
+   * @param pledgeAnnotationMirror pledge annotation to parse
+   */
   public PledgeInformation (AnnotationMirror pledgeAnnotationMirror) {
 
     visibility = AptUtility.extractAnnotationValue(pledgeAnnotationMirror, "visibility", Visibility.class, Visibility.BOTH);
     purposeList = AptUtility.extractAnnotationValueAsList(pledgeAnnotationMirror, "purposes", String.class);
   }
 
+  /**
+   * @return visibility enforced by the pledge
+   */
   public Visibility getVisibility () {
 
     return visibility;
   }
 
+  /**
+   * @return purposes that must be generated
+   */
   public List<String> getPurposeList () {
 
     return purposeList;

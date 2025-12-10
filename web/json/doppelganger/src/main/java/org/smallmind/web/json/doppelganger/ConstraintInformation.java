@@ -36,22 +36,36 @@ import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.type.TypeMirror;
 import org.smallmind.nutsnbolts.apt.AptUtility;
 
+/**
+ * Extracted constraint metadata from {@link Constraint} annotations used on properties or idioms.
+ */
 public class ConstraintInformation {
 
   private final TypeMirror type;
   private final String arguments;
 
+  /**
+   * Parses a {@link Constraint} annotation to concrete type and argument strings.
+   *
+   * @param constraintAnnotationMirror the annotation mirror describing the constraint
+   */
   public ConstraintInformation (AnnotationMirror constraintAnnotationMirror) {
 
     type = AptUtility.extractAnnotationValue(constraintAnnotationMirror, "value", TypeMirror.class, null);
     arguments = AptUtility.extractAnnotationValue(constraintAnnotationMirror, "arguments", String.class, "");
   }
 
+  /**
+   * @return the constraint annotation type to emit
+   */
   public TypeMirror getType () {
 
     return type;
   }
 
+  /**
+   * @return raw arguments to include inside the annotation, or empty when none
+   */
   public String getArguments () {
 
     return arguments;

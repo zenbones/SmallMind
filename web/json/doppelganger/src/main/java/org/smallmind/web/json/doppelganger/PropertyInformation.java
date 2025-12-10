@@ -37,6 +37,10 @@ import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.type.TypeMirror;
 import org.smallmind.nutsnbolts.apt.AptUtility;
 
+/**
+ * Captures metadata for a single property appearing in a generated view, including constraints,
+ * naming overrides, adapters, and nullifier comments.
+ */
 public class PropertyInformation {
 
   private final List<ConstraintInformation> constraintList;
@@ -49,6 +53,16 @@ public class PropertyInformation {
   private final boolean virtual;
   private final String nullifierMessage;
 
+  /**
+   * Extracts property metadata from a {@link View}, {@link Virtual}, or {@link Real} annotation.
+   *
+   * @param propertyAnnotationMirror the annotation describing the property
+   * @param constraintList           constraints to apply
+   * @param idiomRequired            whether the idiom marks the property as required
+   * @param type                     resolved property type
+   * @param nullifierMessage         optional nullifier message string
+   * @param virtual                  whether the property is virtual (not backed by a real field)
+   */
   public PropertyInformation (AnnotationMirror propertyAnnotationMirror, List<ConstraintInformation> constraintList, boolean idiomRequired, TypeMirror type, String nullifierMessage, boolean virtual) {
 
     this.type = type;
@@ -63,46 +77,73 @@ public class PropertyInformation {
     required = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "required", Boolean.class, Boolean.FALSE) || idiomRequired;
   }
 
+  /**
+   * @return {@code true} when the property is virtual (not present on the entity)
+   */
   public boolean isVirtual () {
 
     return virtual;
   }
 
+  /**
+   * @return adapter type to apply on the generated view property, or {@code null} if none was specified
+   */
   public TypeMirror getAdapter () {
 
     return adapter;
   }
 
+  /**
+   * @return override target class for {@link org.smallmind.web.json.scaffold.util.As}, or {@code null}
+   */
   public TypeMirror getAs () {
 
     return as;
   }
 
+  /**
+   * @return the resolved type of the property
+   */
   public TypeMirror getType () {
 
     return type;
   }
 
+  /**
+   * @return custom element name override for serialization, or empty when defaulting to field name
+   */
   public String getName () {
 
     return name;
   }
 
+  /**
+   * @return comment text to apply to the generated property, or empty when none
+   */
   public String getComment () {
 
     return comment;
   }
 
+  /**
+   * @return nullifier message set on the property (may be {@code null})
+   */
   public String getNullifierMessage () {
 
     return nullifierMessage;
   }
 
+  /**
+   * @return constraints applied to this property
+   */
   public Iterable<ConstraintInformation> constraints () {
 
     return constraintList;
   }
 
+  /**
+   * @return {@code true} if the property is required in the current idiom
+   */
   public boolean isRequired () {
 
     return (required != null) && required;

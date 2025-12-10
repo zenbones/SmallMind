@@ -38,6 +38,9 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.AnnotationMirror;
 import org.smallmind.nutsnbolts.apt.AptUtility;
 
+/**
+ * Parsed representation of an {@link Idiom} definition, including constraints, purposes, visibility, and requirement.
+ */
 public class IdiomInformation {
 
   private final List<ConstraintInformation> constraintList = new LinkedList<>();
@@ -45,6 +48,13 @@ public class IdiomInformation {
   private final Visibility visibility;
   private Boolean required;
 
+  /**
+   * Extracts idiom details from an {@link Idiom} annotation.
+   *
+   * @param processingEnvironment current processing environment
+   * @param usefulTypeMirrors     cached type mirrors for common annotations
+   * @param idiomAnnotationMirror idiom annotation to parse
+   */
   public IdiomInformation (ProcessingEnvironment processingEnvironment, UsefulTypeMirrors usefulTypeMirrors, AnnotationMirror idiomAnnotationMirror) {
 
     visibility = AptUtility.extractAnnotationValue(idiomAnnotationMirror, "visibility", Visibility.class, Visibility.BOTH);
@@ -69,16 +79,25 @@ public class IdiomInformation {
     return visibility;
   }
 
+  /**
+   * @return the purposes this idiom applies to
+   */
   public List<String> getPurposeList () {
 
     return purposeList;
   }
 
+  /**
+   * @return constraints that should be applied under this idiom
+   */
   public List<ConstraintInformation> getConstraintList () {
 
     return constraintList;
   }
 
+  /**
+   * @return whether this idiom marks the property as required
+   */
   public boolean isRequired () {
 
     return (required != null) && required;

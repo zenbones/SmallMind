@@ -36,16 +36,33 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Holds the properties to include in generated views for a particular {@link Direction}.
+ * Each purpose maps to a {@link PropertyLexicon} containing the per-field metadata.
+ */
 public class DirectionalGuide {
 
   private final HashMap<String, PropertyLexicon> lexiconMap = new HashMap<>();
   private final Direction direction;
 
+  /**
+   * Creates a guide for the supplied direction.
+   *
+   * @param direction whether the guide tracks inbound or outbound properties
+   */
   public DirectionalGuide (Direction direction) {
 
     this.direction = direction;
   }
 
+  /**
+   * Registers a property for the given purpose and field name.
+   *
+   * @param purpose             the idiom/purpose bucket
+   * @param fieldName           the source field name
+   * @param propertyInformation metadata describing the property
+   * @throws DefinitionException if the purpose is not a legal Java identifier fragment or a duplicate entry is detected
+   */
   public void put (String purpose, String fieldName, PropertyInformation propertyInformation)
     throws DefinitionException {
 
@@ -66,11 +83,22 @@ public class DirectionalGuide {
     }
   }
 
+  /**
+   * Returns all entries keyed by purpose for iteration.
+   *
+   * @return map entries of purpose to lexicon
+   */
   public Set<Map.Entry<String, PropertyLexicon>> lexiconEntrySet () {
 
     return lexiconMap.entrySet();
   }
 
+  /**
+   * Validates that the supplied purpose contains only Java identifier parts.
+   *
+   * @param purpose the purpose text to validate
+   * @return {@code true} when valid; {@code false} otherwise
+   */
   private boolean isJavaNameFragment (String purpose) {
 
     for (int index = 0; index < purpose.length(); index++) {

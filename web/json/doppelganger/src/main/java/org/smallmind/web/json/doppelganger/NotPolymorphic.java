@@ -32,6 +32,9 @@
  */
 package org.smallmind.web.json.doppelganger;
 
+/**
+ * Marker used to indicate that polymorphic handling is not applicable.
+ */
 public class NotPolymorphic {
 
 }
