@@ -34,7 +34,15 @@ package org.smallmind.artifact.maven;
 
 import java.util.EventListener;
 
+/**
+ * Listener notified when the {@link MavenScanner} detects artifact changes.
+ */
 public interface MavenScannerListener extends EventListener {
 
+  /**
+   * Invoked when one or more monitored artifacts have changed.
+   *
+   * @param event event describing the changes and providing access to the updated class loader.
+   */
   void artifactChange (MavenScannerEvent event);
 }

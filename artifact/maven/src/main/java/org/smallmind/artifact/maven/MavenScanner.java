@@ -49,6 +49,10 @@ import org.smallmind.nutsnbolts.time.Stint;
 import org.smallmind.nutsnbolts.util.ComponentStatus;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Periodically polls configured Maven coordinates for updates and notifies listeners when new artifacts or versions are detected.
+ * Each scan resolves dependencies, builds a class loader over updated artifacts, and emits a {@link MavenScannerEvent}.
+ */
 public class MavenScanner {
 
   private final LinkedList<MavenScannerListener> listenerList = new LinkedList<>();
@@ -59,18 +63,45 @@ public class MavenScanner {
   private ScannerWorker scannerWorker;
   private ComponentStatus status = ComponentStatus.STOPPED;
 
+  /**
+   * Creates a scanner using the default settings directory.
+   *
+   * @param repositoryId identifier for outbound repository requests.
+   * @param offline whether remote repositories should be contacted.
+   * @param cycleStint interval between scans.
+   * @param mavenCoordinates coordinates to monitor for updates.
+   * @throws SettingsBuildingException if settings cannot be loaded.
+   */
   public MavenScanner (String repositoryId, boolean offline, Stint cycleStint, MavenCoordinate... mavenCoordinates)
     throws SettingsBuildingException {
 
     this(new MavenRepository(repositoryId, offline), cycleStint, mavenCoordinates);
   }
 
+  /**
+   * Creates a scanner with an explicit settings directory.
+   *
+   * @param settingsDirectory directory containing {@code settings.xml}; defaults to {@code ~/.m2} when null or empty.
+   * @param repositoryId identifier for outbound repository requests.
+   * @param offline whether remote repositories should be contacted.
+   * @param cycleStint interval between scans.
+   * @param mavenCoordinates coordinates to monitor for updates.
+   * @throws SettingsBuildingException if settings cannot be loaded.
+   */
   public MavenScanner (String settingsDirectory, String repositoryId, boolean offline, Stint cycleStint, MavenCoordinate... mavenCoordinates)
     throws SettingsBuildingException {
 
     this(new MavenRepository(settingsDirectory, repositoryId, offline), cycleStint, mavenCoordinates);
   }
 
+  /**
+   * Internal constructor used by public variants.
+   *
+   * @param mavenRepository backing repository used for resolution.
+   * @param cycleStint interval between scans.
+   * @param mavenCoordinates coordinates to monitor for updates.
+   * @throws IllegalArgumentException if stint or coordinates are missing.
+   */
   private MavenScanner (MavenRepository mavenRepository, Stint cycleStint, MavenCoordinate... mavenCoordinates) {
 
     if (cycleStint == null) {
@@ -87,16 +118,33 @@ public class MavenScanner {
     artifactTags = new ArtifactTag[mavenCoordinates.length];
   }
 
+  /**
+   * Registers a listener that will be invoked when artifacts change.
+   *
+   * @param listener listener to register.
+   */
   public synchronized void addMavenScannerListener (MavenScannerListener listener) {
 
     listenerList.add(listener);
   }
 
+  /**
+   * Unregisters a previously added listener.
+   *
+   * @param listener listener to remove.
+   */
   public synchronized void removeMavenScannerListener (MavenScannerListener listener) {
 
     listenerList.remove(listener);
   }
 
+  /**
+   * Starts periodic scanning if the component is stopped. Immediately performs an initial scan before scheduling repeats.
+   *
+   * @throws DependencyCollectionException if dependency metadata cannot be collected.
+   * @throws DependencyResolutionException if any dependency fails to resolve during the initial scan.
+   * @throws ArtifactResolutionException if any monitored artifact cannot be resolved during the initial scan.
+   */
   public synchronized void start ()
     throws DependencyCollectionException, DependencyResolutionException, ArtifactResolutionException {
 
@@ -114,6 +162,11 @@ public class MavenScanner {
     }
   }
 
+  /**
+   * Stops periodic scanning and waits for the worker to exit if currently running.
+   *
+   * @throws InterruptedException if interrupted while waiting for the worker to stop.
+   */
   public synchronized void stop ()
     throws InterruptedException {
 
@@ -126,6 +179,13 @@ public class MavenScanner {
     }
   }
 
+  /**
+   * Performs a single scan cycle: resolves each coordinate, detects changes, builds a new class loader, and notifies listeners.
+   *
+   * @throws DependencyCollectionException if dependency metadata cannot be collected.
+   * @throws DependencyResolutionException if any dependency fails to resolve.
+   * @throws ArtifactResolutionException if a monitored artifact fails to resolve.
+   */
   private synchronized void updateArtifact ()
     throws DependencyCollectionException, DependencyResolutionException, ArtifactResolutionException {
 
@@ -171,11 +231,19 @@ public class MavenScanner {
     }
   }
 
+  /**
+   * Worker that performs repeated scans at the configured interval until signaled to stop.
+   */
   private class ScannerWorker implements Runnable {
 
     private final CountDownLatch finishLatch = new CountDownLatch(1);
     private final CountDownLatch exitLatch = new CountDownLatch(1);
 
+    /**
+     * Signals the worker to finish and waits for confirmation of exit.
+     *
+     * @throws InterruptedException if interrupted while awaiting termination.
+     */
     public void stop ()
       throws InterruptedException {
 
@@ -183,6 +251,9 @@ public class MavenScanner {
       exitLatch.await();
     }
 
+    /**
+     * Executes scan cycles until stopped or interrupted, logging and continuing past individual scan errors.
+     */
     @Override
     public void run () {
 

@@ -32,6 +32,10 @@
  */
 package org.smallmind.artifact.maven;
 
+/**
+ * Mutable representation of a Maven coordinate (groupId, artifactId, classifier, extension, version).
+ * Coordinates are used when requesting artifacts from a {@link MavenRepository}.
+ */
 public class MavenCoordinate {
 
   private String groupId;
@@ -40,10 +44,20 @@ public class MavenCoordinate {
   private String extension = "jar";
   private String version;
 
+  /**
+   * Creates an empty coordinate that can be populated via setters.
+   */
   public MavenCoordinate () {
 
   }
 
+  /**
+   * Constructs coordinates for a standard jar artifact.
+   *
+   * @param groupId the group identifier.
+   * @param artifactId the artifact identifier.
+   * @param version the version string.
+   */
   public MavenCoordinate (String groupId, String artifactId, String version) {
 
     this.groupId = groupId;
@@ -51,6 +65,14 @@ public class MavenCoordinate {
     this.version = version;
   }
 
+  /**
+   * Constructs coordinates including a classifier.
+   *
+   * @param groupId the group identifier.
+   * @param artifactId the artifact identifier.
+   * @param classifier optional classifier for the artifact.
+   * @param version the version string.
+   */
   public MavenCoordinate (String groupId, String artifactId, String classifier, String version) {
 
     this(groupId, artifactId, version);
@@ -58,6 +80,15 @@ public class MavenCoordinate {
     this.classifier = classifier;
   }
 
+  /**
+   * Constructs fully specified coordinates including classifier and extension.
+   *
+   * @param groupId the group identifier.
+   * @param artifactId the artifact identifier.
+   * @param classifier optional classifier for the artifact.
+   * @param extension artifact packaging/extension (defaults to {@code jar}).
+   * @param version the version string.
+   */
   public MavenCoordinate (String groupId, String artifactId, String classifier, String extension, String version) {
 
     this(groupId, artifactId, classifier, version);
@@ -65,56 +96,91 @@ public class MavenCoordinate {
     this.extension = extension;
   }
 
+  /**
+   * @return the group identifier.
+   */
   public String getGroupId () {
 
     return groupId;
   }
 
+  /**
+   * @param groupId the group identifier.
+   */
   public void setGroupId (String groupId) {
 
     this.groupId = groupId;
   }
 
+  /**
+   * @return the artifact identifier.
+   */
   public String getArtifactId () {
 
     return artifactId;
   }
 
+  /**
+   * @param artifactId the artifact identifier.
+   */
   public void setArtifactId (String artifactId) {
 
     this.artifactId = artifactId;
   }
 
+  /**
+   * @return classifier or {@code null} when not applicable.
+   */
   public String getClassifier () {
 
     return classifier;
   }
 
+  /**
+   * @param classifier optional classifier for the artifact.
+   */
   public void setClassifier (String classifier) {
 
     this.classifier = classifier;
   }
 
+  /**
+   * @return artifact packaging/extension (defaults to {@code jar}).
+   */
   public String getExtension () {
 
     return extension;
   }
 
+  /**
+   * @param extension artifact packaging/extension.
+   */
   public void setExtension (String extension) {
 
     this.extension = extension;
   }
 
+  /**
+   * @return version string.
+   */
   public String getVersion () {
 
     return version;
   }
 
+  /**
+   * @param version version string.
+   */
   public void setVersion (String version) {
 
     this.version = version;
   }
 
+  /**
+   * Calculates a hash code using all coordinate parts.
+   *
+   * @return hash suitable for map/set use.
+   */
   @Override
   public int hashCode () {
 
@@ -128,6 +194,12 @@ public class MavenCoordinate {
     return result;
   }
 
+  /**
+   * Coordinates are equal when all parts (including optional classifier and extension) match.
+   *
+   * @param obj object to compare.
+   * @return {@code true} when the coordinates describe the same artifact.
+   */
   @Override
   public boolean equals (Object obj) {
 

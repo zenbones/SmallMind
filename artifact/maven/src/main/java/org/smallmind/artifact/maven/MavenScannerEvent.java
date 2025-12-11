@@ -36,12 +36,24 @@ import java.util.EventObject;
 import java.util.Map;
 import org.eclipse.aether.artifact.Artifact;
 
+/**
+ * Event delivered to {@link MavenScannerListener}s describing detected artifact updates and providing
+ * a class loader capable of loading the newly resolved artifacts.
+ */
 public class MavenScannerEvent extends EventObject {
 
   private final ClassLoader classLoader;
   private final Map<Artifact, Artifact> artifactDeltaMap;
   private final Artifact[] artifacts;
 
+  /**
+   * Constructs a new event with the changed artifacts and associated class loader.
+   *
+   * @param source scanner that produced the event.
+   * @param artifactDeltaMap mapping of newly resolved artifacts to their previous versions (value is {@code null} on first discovery).
+   * @param artifactTags current tags for each monitored coordinate.
+   * @param classLoader class loader that can load the updated artifacts and their dependencies.
+   */
   public MavenScannerEvent (Object source, Map<Artifact, Artifact> artifactDeltaMap, ArtifactTag[] artifactTags, ClassLoader classLoader) {
 
     super(source);
@@ -55,16 +67,31 @@ public class MavenScannerEvent extends EventObject {
     }
   }
 
+  /**
+   * Provides a mapping of current artifacts to the prior artifacts they replace.
+   *
+   * @return map of artifact deltas; values may be {@code null} for newly observed artifacts.
+   */
   public Map<Artifact, Artifact> getArtifactDeltaMap () {
 
     return artifactDeltaMap;
   }
 
+  /**
+   * Returns the current artifacts tracked by the scanner in coordinate order.
+   *
+   * @return array containing the latest artifact for each coordinate (entries may be {@code null} before first resolution).
+   */
   public Artifact[] getArtifacts () {
 
     return artifacts;
   }
 
+  /**
+   * Returns a class loader that can load the updated artifacts and their dependencies.
+   *
+   * @return class loader tied to this event's resolved artifacts.
+   */
   public ClassLoader getClassLoader () {
 
     return classLoader;
