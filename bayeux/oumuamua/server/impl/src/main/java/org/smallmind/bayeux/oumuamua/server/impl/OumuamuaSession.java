@@ -81,12 +81,12 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   /**
    * Constructs a session bound to the supplied connection.
    *
-   * @param onConnectedCallback callback invoked when the session reaches CONNECTED
-   * @param onDisconnectedCallback callback invoked when the session disconnects
-   * @param connection initial connection
-   * @param maxLongPollQueueSize maximum queued responses for long polling
+   * @param onConnectedCallback        callback invoked when the session reaches CONNECTED
+   * @param onDisconnectedCallback     callback invoked when the session disconnects
+   * @param connection                 initial connection
+   * @param maxLongPollQueueSize       maximum queued responses for long polling
    * @param maxIdleTimeoutMilliseconds idle timeout before termination
-   * @param overflowLogLevel log level for long-poll overflow
+   * @param overflowLogLevel           log level for long-poll overflow
    */
   public OumuamuaSession (Consumer<Session<V>> onConnectedCallback, Consumer<Session<V>> onDisconnectedCallback, Connection<V> connection, int maxLongPollQueueSize, long maxIdleTimeoutMilliseconds, Level overflowLogLevel) {
 
@@ -316,7 +316,7 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
    * Polls the long-poll queue for the next packet, waiting up to the provided timeout.
    *
    * @param timeout wait duration
-   * @param unit unit for timeout
+   * @param unit    unit for timeout
    * @return packet or {@code null} if none available before timeout
    * @throws InterruptedException if interrupted while waiting
    */
@@ -354,8 +354,8 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
    * Delivers a packet to this session, enqueueing or streaming based on configuration.
    *
    * @param fromChannel channel originating the delivery
-   * @param sender session that published the packet
-   * @param packet packet to deliver
+   * @param sender      session that published the packet
+   * @param packet      packet to deliver
    */
   @Override
   public void deliver (Channel<V> fromChannel, Session<V> sender, Packet<V> packet) {

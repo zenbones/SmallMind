@@ -47,7 +47,7 @@ public class TransportUtility {
    * Aggregates all transport names supported by the server's protocols.
    *
    * @param server server to inspect
-   * @param <V> value type
+   * @param <V>    value type
    * @return array of distinct transport names
    */
   public static <V extends Value<V>> String[] accumulateSupportedTransportNames (Server<V> server) {

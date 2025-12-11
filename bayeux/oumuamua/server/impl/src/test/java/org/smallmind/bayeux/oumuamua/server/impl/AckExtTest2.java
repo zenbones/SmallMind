@@ -48,7 +48,7 @@ public class AckExtTest2 {
   public void test ()
     throws Exception {
 
-   ClientTransport wsTransport;
+    ClientTransport wsTransport;
     WebSocketContainer webSocketContainer;
     BayeuxClient bayeuxClient;
 

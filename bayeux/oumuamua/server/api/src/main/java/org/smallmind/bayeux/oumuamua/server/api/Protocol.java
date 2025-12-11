@@ -67,7 +67,7 @@ public interface Protocol<V extends Value<V>> {
      * Invoked when a published message is created from an incoming message.
      *
      * @param originatingMessage the message supplied by the client
-     * @param outgoingMessage the message to be delivered to subscribers
+     * @param outgoingMessage    the message to be delivered to subscribers
      */
     void onPublish (Message<V> originatingMessage, Message<V> outgoingMessage);
 
@@ -82,7 +82,7 @@ public interface Protocol<V extends Value<V>> {
   /**
    * Initializes the protocol and its transports using servlet configuration.
    *
-   * @param server the hosting server
+   * @param server        the hosting server
    * @param servletConfig the servlet configuration
    * @throws ServletException if transport initialization fails
    */

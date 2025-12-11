@@ -68,7 +68,7 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
    * Initializes the endpoint when a websocket is opened.
    *
    * @param websocketSession websocket session
-   * @param config endpoint configuration
+   * @param config           endpoint configuration
    */
   @Override
   public void onOpen (jakarta.websocket.Session websocketSession, EndpointConfig config) {
@@ -174,7 +174,7 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
    * Handles websocket errors by logging the failure.
    *
    * @param wsSession websocket session
-   * @param failure failure encountered
+   * @param failure   failure encountered
    */
   @Override
   public synchronized void onError (Session wsSession, Throwable failure) {

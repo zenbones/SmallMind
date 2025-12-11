@@ -106,8 +106,8 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
    * Ensures that any referenced types are also processed for generated views.
    *
    * @param typeMirror the referenced type to inspect
-   * @throws IOException           if source generation fails
-   * @throws DefinitionException   if referenced definitions are invalid
+   * @throws IOException         if source generation fails
+   * @throws DefinitionException if referenced definitions are invalid
    */
   public void processTypeMirror (TypeMirror typeMirror)
     throws IOException, DefinitionException {
@@ -963,10 +963,10 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
   /**
    * Emits {@code hashCode} and {@code equals} implementations that consider the generated getters and optional superclass.
    *
-   * @param writer         destination for source output
+   * @param writer          destination for source output
    * @param simpleClassName simple name of the view class
-   * @param getterList     ordered getters to include in equality logic
-   * @param hasSuperClass  whether the view extends another generated view
+   * @param getterList      ordered getters to include in equality logic
+   * @param hasSuperClass   whether the view extends another generated view
    * @throws IOException if writing fails
    */
   private void writeHashCodeAndEquals (BufferedWriter writer, String simpleClassName, LinkedList<String> getterList, boolean hasSuperClass)

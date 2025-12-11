@@ -65,8 +65,8 @@ public class PacketWriter extends Writer {
    * Writes a range of characters from an array.
    *
    * @param cbuf source buffer
-   * @param off offset in the buffer
-   * @param len number of characters to write
+   * @param off  offset in the buffer
+   * @param len  number of characters to write
    */
   public void write (char cbuf[], int off, int len) {
 

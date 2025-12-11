@@ -48,11 +48,11 @@ public class PacketUtility {
   /**
    * Merges two packets, optionally filtering out a route and prepending merged messages.
    *
-   * @param basePacket base packet to merge into
-   * @param otherPacket packet whose messages are merged
+   * @param basePacket    base packet to merge into
+   * @param otherPacket   packet whose messages are merged
    * @param filteredRoute route to exclude when merging, or {@code null} to include all
-   * @param prepend {@code true} to insert messages immediately after the first base message
-   * @param <V> value type
+   * @param prepend       {@code true} to insert messages immediately after the first base message
+   * @param <V>           value type
    * @return merged packet, or the base packet if no messages remain after filtering
    */
   public static <V extends Value<V>> Packet<V> merge (Packet<V> basePacket, Packet<V> otherPacket, Route filteredRoute, boolean prepend) {
@@ -94,7 +94,7 @@ public class PacketUtility {
    * Wraps all messages in the packet with copy-on-write doubles to prevent mutation.
    *
    * @param packet packet to freeze
-   * @param <V> value type
+   * @param <V>    value type
    * @return packet containing wrapped messages
    */
   public static <V extends Value<V>> Packet<V> freezePacket (Packet<V> packet) {
@@ -113,7 +113,7 @@ public class PacketUtility {
    * Encodes a packet to its JSON string representation.
    *
    * @param packet packet to encode
-   * @param <V> value type
+   * @param <V>    value type
    * @return encoded packet string
    * @throws IOException if encoding fails
    */

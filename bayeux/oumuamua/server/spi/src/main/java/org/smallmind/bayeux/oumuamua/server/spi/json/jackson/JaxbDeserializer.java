@@ -56,7 +56,7 @@ public class JaxbDeserializer<V extends Value<V>> implements JsonDeserializer<V>
   /**
    * Deserializes a byte buffer into messages.
    *
-   * @param codec codec providing factories
+   * @param codec  codec providing factories
    * @param buffer encoded payload
    * @return array of messages
    * @throws IOException if parsing fails
@@ -72,7 +72,7 @@ public class JaxbDeserializer<V extends Value<V>> implements JsonDeserializer<V>
    * Deserializes string data into messages.
    *
    * @param codec codec providing factories
-   * @param data encoded payload
+   * @param data  encoded payload
    * @return array of messages
    * @throws IOException if parsing fails
    */
@@ -87,7 +87,7 @@ public class JaxbDeserializer<V extends Value<V>> implements JsonDeserializer<V>
    * Deserializes the supplied JSON node into message structures.
    *
    * @param codec codec providing factories
-   * @param node parsed JSON tree
+   * @param node  parsed JSON tree
    * @return array of messages
    * @throws IOException if parsing fails or JSON is not object/array
    */
@@ -133,7 +133,7 @@ public class JaxbDeserializer<V extends Value<V>> implements JsonDeserializer<V>
    * Converts an arbitrary object into a {@link Value} via JSON serialization.
    *
    * @param factory value factory
-   * @param object object to convert
+   * @param object  object to convert
    * @return value representing the object
    * @throws IOException if conversion fails
    */
@@ -148,7 +148,7 @@ public class JaxbDeserializer<V extends Value<V>> implements JsonDeserializer<V>
    * Recursively walks a JSON node to construct a {@link Value} hierarchy.
    *
    * @param factory value factory
-   * @param node JSON node to convert
+   * @param node    JSON node to convert
    * @return value representation
    * @throws IOException if encountering unknown node types
    */

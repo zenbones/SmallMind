@@ -70,7 +70,7 @@ public class AbstractAttributed implements Attributed {
   /**
    * Associates a value with the provided name.
    *
-   * @param name attribute key
+   * @param name  attribute key
    * @param value value to store
    */
   @Override

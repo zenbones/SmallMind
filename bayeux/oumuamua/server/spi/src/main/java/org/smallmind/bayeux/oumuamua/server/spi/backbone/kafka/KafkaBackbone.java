@@ -85,11 +85,11 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
   /**
    * Creates a backbone using the given Kafka configuration.
    *
-   * @param nodeName unique identifier for this node
-   * @param concurrencyLimit number of consumer threads
+   * @param nodeName                  unique identifier for this node
+   * @param concurrencyLimit          number of consumer threads
    * @param startupGracePeriodSeconds time to wait for Kafka readiness
-   * @param topicName logical topic name (prefixed internally)
-   * @param servers Kafka bootstrap servers
+   * @param topicName                 logical topic name (prefixed internally)
+   * @param servers                   Kafka bootstrap servers
    * @throws KafkaConnectionException if Kafka connectivity fails
    */
   public KafkaBackbone (String nodeName, int concurrencyLimit, int startupGracePeriodSeconds, String topicName, KafkaServer... servers)
@@ -197,9 +197,9 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
     /**
      * Creates a consumer worker for a partition group.
      *
-     * @param server owning server
+     * @param server   owning server
      * @param nodeName name of this node
-     * @param index worker index
+     * @param index    worker index
      */
     public ConsumerWorker (Server<V> server, String nodeName, int index) {
 
@@ -211,10 +211,10 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
     }
 
     /**
-    * Initiates worker shutdown and waits for completion.
-    *
-    * @throws InterruptedException if interrupted while awaiting exit
-    */
+     * Initiates worker shutdown and waits for completion.
+     *
+     * @throws InterruptedException if interrupted while awaiting exit
+     */
     private void stop ()
       throws InterruptedException {
 

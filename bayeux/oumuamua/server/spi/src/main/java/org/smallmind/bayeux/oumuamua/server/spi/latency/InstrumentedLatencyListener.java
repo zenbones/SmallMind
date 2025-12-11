@@ -92,7 +92,7 @@ public class InstrumentedLatencyListener<V extends Value<V>> implements Protocol
    * Copies latency metadata from the originating message to the outgoing message so it survives publish.
    *
    * @param originatingMessage original message from the client
-   * @param outgoingMessage message being delivered
+   * @param outgoingMessage    message being delivered
    */
   @Override
   public void onPublish (Message<V> originatingMessage, Message<V> outgoingMessage) {

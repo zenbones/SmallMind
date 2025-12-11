@@ -48,7 +48,7 @@ public interface JsonDeserializer<V extends Value<V>> {
   /**
    * Deserializes a buffer into an array of messages.
    *
-   * @param codec codec supplying value factory information
+   * @param codec  codec supplying value factory information
    * @param buffer encoded payload
    * @return decoded messages
    * @throws IOException if decoding fails
@@ -60,7 +60,7 @@ public interface JsonDeserializer<V extends Value<V>> {
    * Deserializes string data into an array of messages.
    *
    * @param codec codec supplying value factory information
-   * @param data encoded payload
+   * @param data  encoded payload
    * @return decoded messages
    * @throws IOException if decoding fails
    */
@@ -71,7 +71,7 @@ public interface JsonDeserializer<V extends Value<V>> {
    * Converts an arbitrary object into a {@link Value} using the supplied factory.
    *
    * @param factory value factory
-   * @param object source object
+   * @param object  source object
    * @return converted value
    * @throws IOException if conversion fails
    */

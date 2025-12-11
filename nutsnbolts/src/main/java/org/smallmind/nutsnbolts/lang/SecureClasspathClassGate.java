@@ -34,7 +34,6 @@ package org.smallmind.nutsnbolts.lang;
 
 import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URL;
 import java.security.CodeSource;
 import java.security.cert.Certificate;
 

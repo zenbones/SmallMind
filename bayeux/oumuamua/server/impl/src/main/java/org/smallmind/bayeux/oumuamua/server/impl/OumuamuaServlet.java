@@ -107,7 +107,7 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
   /**
    * Handles posted Bayeux envelopes, reading the payload and dispatching to the server.
    *
-   * @param request HTTP request containing the Bayeux payload
+   * @param request  HTTP request containing the Bayeux payload
    * @param response response used for error handling
    * @throws IOException if the payload cannot be read
    */
@@ -155,7 +155,7 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
   /**
    * Attempts to fully read the request body into the provided buffer.
    *
-   * @param inputStream request input stream
+   * @param inputStream   request input stream
    * @param contentBuffer destination buffer sized to the content length
    * @return {@code true} if the entire payload was read
    */

@@ -75,7 +75,6 @@ public class StringSegment extends Segment {
     return DEEP_WILD_SEGMENT;
   }
 
-
   /**
    * Compares the segment to a character sequence for equality.
    *
@@ -99,7 +98,6 @@ public class StringSegment extends Segment {
       return true;
     }
   }
-
 
   /**
    * @return the literal value of the segment
@@ -135,7 +133,7 @@ public class StringSegment extends Segment {
    * Returns a subsequence of the segment text.
    *
    * @param start start offset
-   * @param end end offset
+   * @param end   end offset
    * @return subsequence text
    */
   @Override

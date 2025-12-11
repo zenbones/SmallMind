@@ -52,7 +52,7 @@ public class WebsocketProtocol<V extends Value<V>> extends AbstractProtocol<V> {
    * Creates the protocol with default listeners.
    *
    * @param longPollTimeoutMilliseconds timeout value retained for compatibility
-   * @param websocketConfiguration websocket configuration
+   * @param websocketConfiguration      websocket configuration
    */
   public WebsocketProtocol (long longPollTimeoutMilliseconds, WebsocketConfiguration websocketConfiguration) {
 
@@ -63,8 +63,8 @@ public class WebsocketProtocol<V extends Value<V>> extends AbstractProtocol<V> {
    * Creates the protocol with optional listeners.
    *
    * @param longPollTimeoutMilliseconds timeout value retained for compatibility
-   * @param websocketConfiguration websocket configuration
-   * @param listeners optional protocol listeners to register
+   * @param websocketConfiguration      websocket configuration
+   * @param listeners                   optional protocol listeners to register
    */
   public WebsocketProtocol (long longPollTimeoutMilliseconds, WebsocketConfiguration websocketConfiguration, ProtocolListener<V>[] listeners) {
 

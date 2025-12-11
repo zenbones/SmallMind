@@ -48,7 +48,7 @@ public class OrthodoxDoubleValue extends OrthodoxValue implements NumberValue<Or
    * Creates a double value.
    *
    * @param factory owning factory
-   * @param value numeric value
+   * @param value   numeric value
    */
   protected OrthodoxDoubleValue (OrthodoxValueFactory factory, double value) {
 

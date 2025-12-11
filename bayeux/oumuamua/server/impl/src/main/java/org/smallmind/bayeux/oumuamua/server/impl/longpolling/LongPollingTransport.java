@@ -91,7 +91,7 @@ public class LongPollingTransport<V extends Value<V>> extends AbstractAttributed
   /**
    * Initializes the transport in the servlet context.
    *
-   * @param server owning server
+   * @param server        owning server
    * @param servletConfig servlet configuration
    */
   @Override

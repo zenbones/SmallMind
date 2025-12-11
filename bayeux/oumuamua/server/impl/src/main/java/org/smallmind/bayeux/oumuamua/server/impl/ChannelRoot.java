@@ -101,7 +101,7 @@ public class ChannelRoot<V extends Value<V>> {
    * Forwards a packet to the server backbone for delivery.
    *
    * @param channel channel originating the packet
-   * @param packet packet to forward
+   * @param packet  packet to forward
    */
   public void forward (Channel<V> channel, Packet<V> packet) {
 

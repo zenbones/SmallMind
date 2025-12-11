@@ -50,7 +50,6 @@ import org.bson.BsonString;
 import org.bson.BsonType;
 import org.bson.BsonValue;
 import org.bson.BsonWriter;
-import org.smallmind.nutsnbolts.util.IterableIterator;
 
 public class JsonUtility {
 

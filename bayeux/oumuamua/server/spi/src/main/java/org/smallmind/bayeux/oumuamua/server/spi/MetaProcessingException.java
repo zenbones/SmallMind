@@ -43,7 +43,7 @@ public class MetaProcessingException extends OumuamuaException {
    * Creates an exception with a formatted message.
    *
    * @param message message template describing the problem
-   * @param args optional formatting arguments
+   * @param args    optional formatting arguments
    */
   public MetaProcessingException (String message, Object... args) {
 

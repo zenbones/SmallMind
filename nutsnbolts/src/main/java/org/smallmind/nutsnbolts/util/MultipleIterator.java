@@ -34,60 +34,59 @@ package org.smallmind.nutsnbolts.util;
 
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.NoSuchElementException;
 
 public class MultipleIterator<T> implements Iterator<T>, Iterable<T> {
 
-    private final ArrayList<Iterator<T>> iteratorList = new ArrayList<>();
-    private int index = 0;
+  private final ArrayList<Iterator<T>> iteratorList = new ArrayList<>();
+  private int index = 0;
 
-    public void add(Iterator<T> iterator) {
+  public void add (Iterator<T> iterator) {
 
-        iteratorList.add(iterator);
+    iteratorList.add(iterator);
+  }
+
+  public void done () {
+
+    moveIndex();
+  }
+
+  private void moveIndex () {
+
+    while ((index < iteratorList.size()) && (!iteratorList.get(index).hasNext())) {
+      index++;
+    }
+  }
+
+  public Iterator<T> iterator () {
+
+    return this;
+  }
+
+  public boolean hasNext () {
+
+    return index < iteratorList.size();
+  }
+
+  public T next () {
+
+    if (!hasNext()) {
+      throw new NoSuchElementException();
     }
 
-    public void done() {
+    try {
+      return iteratorList.get(index).next();
+    } finally {
+      moveIndex();
+    }
+  }
 
-        moveIndex();
+  public void remove () {
+
+    if (!(index < iteratorList.size())) {
+      throw new IllegalStateException("The next() method has not been called");
     }
 
-    private void moveIndex() {
-
-        while ((index < iteratorList.size()) && (!iteratorList.get(index).hasNext())) {
-            index++;
-        }
-    }
-
-    public Iterator<T> iterator() {
-
-        return this;
-    }
-
-    public boolean hasNext() {
-
-        return index < iteratorList.size();
-    }
-
-    public T next() {
-
-        if (!hasNext()) {
-            throw new NoSuchElementException();
-        }
-
-        try {
-            return iteratorList.get(index).next();
-        } finally {
-            moveIndex();
-        }
-    }
-
-    public void remove() {
-
-        if (!(index < iteratorList.size())) {
-            throw new IllegalStateException("The next() method has not been called");
-        }
-
-        iteratorList.get(index).remove();
-    }
+    iteratorList.get(index).remove();
+  }
 }

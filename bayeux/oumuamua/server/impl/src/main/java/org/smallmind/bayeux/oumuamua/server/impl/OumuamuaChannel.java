@@ -74,11 +74,11 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
   /**
    * Creates a channel for the given route.
    *
-   * @param onSubscribedCallback callback invoked when a session subscribes
+   * @param onSubscribedCallback   callback invoked when a session subscribes
    * @param onUnsubscribedCallback callback invoked when a session unsubscribes
    * @param timeToLiveMilliseconds idle timeout before removal
-   * @param route bound route
-   * @param root server adapter
+   * @param route                  bound route
+   * @param root                   server adapter
    */
   public OumuamuaChannel (BiConsumer<Channel<V>, Session<V>> onSubscribedCallback, BiConsumer<Channel<V>, Session<V>> onUnsubscribedCallback, long timeToLiveMilliseconds, DefaultRoute route, ChannelRoot<V> root) {
 
@@ -327,8 +327,8 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
   /**
    * Delivers a packet to all subscribed sessions while applying listener hooks and reflection rules.
    *
-   * @param sender originating session
-   * @param packet packet to deliver
+   * @param sender       originating session
+   * @param packet       packet to deliver
    * @param sessionIdSet set tracking recipients to avoid duplicates
    */
   @Override

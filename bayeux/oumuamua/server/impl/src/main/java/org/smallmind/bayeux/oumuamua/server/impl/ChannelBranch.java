@@ -112,14 +112,14 @@ public class ChannelBranch<V extends Value<V>> {
   /**
    * Creates intermediate branches and the channel as necessary to satisfy the route.
    *
-   * @param timeToLive channel ttl in milliseconds
-   * @param index current segment index
-   * @param route route being constructed
-   * @param root root container for all channels
-   * @param channelCallback callback invoked when a channel is created
-   * @param onSubscribedCallback callback invoked on subscription
+   * @param timeToLive             channel ttl in milliseconds
+   * @param index                  current segment index
+   * @param route                  route being constructed
+   * @param root                   root container for all channels
+   * @param channelCallback        callback invoked when a channel is created
+   * @param onSubscribedCallback   callback invoked on subscription
    * @param onUnsubscribedCallback callback invoked on unsubscription
-   * @param initializerQueue initializers applied to a newly created channel
+   * @param initializerQueue       initializers applied to a newly created channel
    * @return resulting channel instance
    */
   protected Channel<V> addChannelAsNecessary (long timeToLive, int index, DefaultRoute route, ChannelRoot<V> root, Consumer<Channel<V>> channelCallback, BiConsumer<Channel<V>, Session<V>> onSubscribedCallback, BiConsumer<Channel<V>, Session<V>> onUnsubscribedCallback, Queue<ChannelInitializer<V>> initializerQueue) {
@@ -137,13 +137,13 @@ public class ChannelBranch<V extends Value<V>> {
   /**
    * Initializes a channel on this branch if absent.
    *
-   * @param timeToLive channel ttl in milliseconds
-   * @param route channel route
-   * @param root root container
-   * @param channelCallback callback invoked after creation
-   * @param onSubscribedCallback callback invoked on subscription
+   * @param timeToLive             channel ttl in milliseconds
+   * @param route                  channel route
+   * @param root                   root container
+   * @param channelCallback        callback invoked after creation
+   * @param onSubscribedCallback   callback invoked on subscription
    * @param onUnsubscribedCallback callback invoked on unsubscription
-   * @param initializerQueue initializers to apply to the channel
+   * @param initializerQueue       initializers to apply to the channel
    * @return created or existing channel
    */
   private Channel<V> initializeChannel (long timeToLive, DefaultRoute route, ChannelRoot<V> root, Consumer<Channel<V>> channelCallback, BiConsumer<Channel<V>, Session<V>> onSubscribedCallback, BiConsumer<Channel<V>, Session<V>> onUnsubscribedCallback, Queue<ChannelInitializer<V>> initializerQueue) {
@@ -172,8 +172,8 @@ public class ChannelBranch<V extends Value<V>> {
   /**
    * Removes the channel at the route if present, returning the branch holding it.
    *
-   * @param index current segment index
-   * @param route route to remove
+   * @param index           current segment index
+   * @param route           route to remove
    * @param channelCallback callback invoked when a channel is removed
    * @return branch containing the removed channel, or {@code null} if not found
    * @throws ChannelStateException if a persistent channel is targeted for removal
@@ -224,9 +224,9 @@ public class ChannelBranch<V extends Value<V>> {
   /**
    * Delivers a packet to matching child channels based on the route.
    *
-   * @param sender originating session
-   * @param index current route index
-   * @param packet packet to deliver
+   * @param sender       originating session
+   * @param index        current route index
+   * @param packet       packet to deliver
    * @param sessionIdSet set used to track delivery to avoid duplicates
    */
   public void deliver (Session<V> sender, int index, Packet<V> packet, Set<String> sessionIdSet) {
@@ -258,8 +258,8 @@ public class ChannelBranch<V extends Value<V>> {
   /**
    * Delivers the packet to the channel at this branch if present.
    *
-   * @param sender originating session
-   * @param packet packet to deliver
+   * @param sender       originating session
+   * @param packet       packet to deliver
    * @param sessionIdSet set tracking delivered session ids
    */
   private void deliverToChannel (Session<V> sender, Packet<V> packet, Set<String> sessionIdSet) {

@@ -62,7 +62,7 @@ public class LongPollingConnection<V extends Value<V>> implements OumuamuaConnec
    * Creates a new connection bound to the provided transport and server.
    *
    * @param longPollingTransport owning transport
-   * @param server hosting server
+   * @param server               hosting server
    */
   public LongPollingConnection (LongPollingTransport<V> longPollingTransport, OumuamuaServer<V> server) {
 
@@ -106,7 +106,7 @@ public class LongPollingConnection<V extends Value<V>> implements OumuamuaConnec
    * Encodes and writes the packet to the servlet response, notifying the protocol of delivery.
    *
    * @param asyncContext async context to write to
-   * @param packet packet to emit
+   * @param packet       packet to emit
    * @throws IOException if writing the response fails
    */
   private void emit (AsyncContext asyncContext, Packet<V> packet)
@@ -126,7 +126,7 @@ public class LongPollingConnection<V extends Value<V>> implements OumuamuaConnec
    * Processes inbound messages and writes responses using the async context.
    *
    * @param asyncContext async context associated with the request
-   * @param messages decoded inbound messages
+   * @param messages     decoded inbound messages
    */
   public void onMessages (AsyncContext asyncContext, Message<V>[] messages) {
 

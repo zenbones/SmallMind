@@ -56,9 +56,9 @@ public interface Connection<V extends Value<V>> {
   /**
    * Processes a batch of incoming messages, routing them through the meta lifecycle and sending results to the response consumer.
    *
-   * @param server server handling the messages
+   * @param server           server handling the messages
    * @param responseConsumer callback for generated packets
-   * @param messages incoming messages
+   * @param messages         incoming messages
    */
   default void process (Server<V> server, ResponseConsumer<V> responseConsumer, Message<V>[] messages) {
 
@@ -116,13 +116,13 @@ public interface Connection<V extends Value<V>> {
   /**
    * Executes the full meta cycle for a message.
    *
-   * @param meta meta operation represented by the message
-   * @param route resolved route
-   * @param server hosting server
+   * @param meta    meta operation represented by the message
+   * @param route   resolved route
+   * @param server  hosting server
    * @param session session associated with the message
    * @param request the incoming message
    * @return resulting packet or {@code null} if nothing should be sent
-   * @throws IOException if encoding fails
+   * @throws IOException          if encoding fails
    * @throws InterruptedException if waiting for responses is interrupted
    * @throws InvalidPathException if the route is invalid
    */
@@ -144,9 +144,9 @@ public interface Connection<V extends Value<V>> {
   /**
    * Routes the request through protocol handlers and aggregates the response.
    *
-   * @param meta meta operation represented by the message
-   * @param route resolved route
-   * @param server hosting server
+   * @param meta    meta operation represented by the message
+   * @param route   resolved route
+   * @param server  hosting server
    * @param session session associated with the message
    * @param request processed request message
    * @return response packet or {@code null} when none should be returned
@@ -225,7 +225,7 @@ public interface Connection<V extends Value<V>> {
   /**
    * Callback invoked when a session transitions to disconnected.
    *
-   * @param server hosting server
+   * @param server  hosting server
    * @param session disconnected session
    */
   void onDisconnect (Server<V> server, Session<V> session);

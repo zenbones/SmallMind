@@ -64,7 +64,7 @@ public interface ArrayValue<V extends Value<V>> extends Value<V> {
    * Sets a boolean at the given index.
    *
    * @param index position to set
-   * @param bool boolean to store
+   * @param bool  boolean to store
    * @return this array
    */
   default ArrayValue<V> set (int index, boolean bool) {
@@ -76,7 +76,7 @@ public interface ArrayValue<V extends Value<V>> extends Value<V> {
    * Inserts a boolean before the given index.
    *
    * @param index position to insert at
-   * @param bool boolean to insert
+   * @param bool  boolean to insert
    * @return this array
    */
   default ArrayValue<V> insert (int index, boolean bool) {
@@ -99,7 +99,7 @@ public interface ArrayValue<V extends Value<V>> extends Value<V> {
    * Sets an int at the given index.
    *
    * @param index position to set
-   * @param i integer to store
+   * @param i     integer to store
    * @return this array
    */
   default ArrayValue<V> set (int index, int i) {
@@ -111,7 +111,7 @@ public interface ArrayValue<V extends Value<V>> extends Value<V> {
    * Inserts an int before the given index.
    *
    * @param index position to insert at
-   * @param i integer to insert
+   * @param i     integer to insert
    * @return this array
    */
   default ArrayValue<V> insert (int index, int i) {
@@ -134,7 +134,7 @@ public interface ArrayValue<V extends Value<V>> extends Value<V> {
    * Sets a long at the given index.
    *
    * @param index position to set
-   * @param l long to store
+   * @param l     long to store
    * @return this array
    */
   default ArrayValue<V> set (int index, long l) {
@@ -146,7 +146,7 @@ public interface ArrayValue<V extends Value<V>> extends Value<V> {
    * Inserts a long before the given index.
    *
    * @param index position to insert at
-   * @param l long to insert
+   * @param l     long to insert
    * @return this array
    */
   default ArrayValue<V> insert (int index, long l) {
@@ -169,7 +169,7 @@ public interface ArrayValue<V extends Value<V>> extends Value<V> {
    * Sets a double at the given index.
    *
    * @param index position to set
-   * @param d double to store
+   * @param d     double to store
    * @return this array
    */
   default ArrayValue<V> set (int index, double d) {
@@ -181,7 +181,7 @@ public interface ArrayValue<V extends Value<V>> extends Value<V> {
    * Inserts a double before the given index.
    *
    * @param index position to insert at
-   * @param d double to insert
+   * @param d     double to insert
    * @return this array
    */
   default ArrayValue<V> insert (int index, double d) {
@@ -204,7 +204,7 @@ public interface ArrayValue<V extends Value<V>> extends Value<V> {
    * Sets a string at the given index.
    *
    * @param index position to set
-   * @param text text to store
+   * @param text  text to store
    * @return this array
    */
   default ArrayValue<V> set (int index, String text) {
@@ -216,7 +216,7 @@ public interface ArrayValue<V extends Value<V>> extends Value<V> {
    * Inserts a string before the given index.
    *
    * @param index position to insert at
-   * @param text text to insert
+   * @param text  text to insert
    * @return this array
    */
   default ArrayValue<V> insert (int index, String text) {
@@ -280,7 +280,7 @@ public interface ArrayValue<V extends Value<V>> extends Value<V> {
    * Appends a collection of values.
    *
    * @param values values to add
-   * @param <U> value subtype
+   * @param <U>    value subtype
    * @return this array
    */
   <U extends Value<V>> ArrayValue<V> addAll (Collection<U> values);

@@ -301,7 +301,7 @@ public interface Server<V extends Value<V>> extends Attributed {
   /**
    * Locates or creates a channel for the given path, applying any initializers.
    *
-   * @param path channel path
+   * @param path         channel path
    * @param initializers optional initializers applied when creating the channel
    * @return the existing or new channel
    * @throws InvalidPathException if the path is invalid
@@ -342,8 +342,8 @@ public interface Server<V extends Value<V>> extends Attributed {
   /**
    * Delivers a packet to the appropriate transport(s).
    *
-   * @param sender the originating session
-   * @param packet the packet to deliver
+   * @param sender    the originating session
+   * @param packet    the packet to deliver
    * @param clustered {@code true} when forwarding across backbone
    */
   void deliver (Session<V> sender, Packet<V> packet, boolean clustered);
@@ -352,7 +352,7 @@ public interface Server<V extends Value<V>> extends Attributed {
    * Forwards a packet to listeners on a channel without invoking transports.
    *
    * @param channel target channel
-   * @param packet packet to forward
+   * @param packet  packet to forward
    */
   void forward (Channel<V> channel, Packet<V> packet);
 }

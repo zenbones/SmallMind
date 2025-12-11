@@ -53,7 +53,7 @@ public class ClassTracker {
   /**
    * Registers a class annotated with {@link Polymorphic} and its subclasses.
    *
-   * @param typeElement           the polymorphic base class
+   * @param typeElement            the polymorphic base class
    * @param polymorphicInformation parsed information for the annotation
    */
   public void addPolymorphic (TypeElement typeElement, PolymorphicInformation polymorphicInformation) {
@@ -154,7 +154,7 @@ public class ClassTracker {
   /**
    * Registers a class annotated with {@link Hierarchy} and its subclasses.
    *
-   * @param typeElement        the base of the hierarchy
+   * @param typeElement         the base of the hierarchy
    * @param hierachyInformation parsed hierarchy metadata
    */
   public void addHierarchy (TypeElement typeElement, HierarchyInformation hierachyInformation) {

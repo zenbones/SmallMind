@@ -50,7 +50,7 @@ public class PolymorphicInformation {
   /**
    * Extracts polymorphic subclass list and discriminator placement from the annotation.
    *
-   * @param processingEnvironment      current processing environment
+   * @param processingEnvironment       current processing environment
    * @param polymorphicAnnotationMirror polymorphic annotation to parse
    */
   public PolymorphicInformation (ProcessingEnvironment processingEnvironment, AnnotationMirror polymorphicAnnotationMirror) {

@@ -58,7 +58,7 @@ public interface SecurityPolicy<V extends Value<V>> {
    * Checks whether the client can create the requested channel path.
    *
    * @param session the requesting session
-   * @param path the channel path to create
+   * @param path    the channel path to create
    * @param message the create message
    * @return a rejection with the reason, or {@link SecurityRejection#noReason()} when allowed
    */

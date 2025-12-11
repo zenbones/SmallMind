@@ -95,7 +95,7 @@ public class SingularityJarURLConnection extends URLConnection {
 
             if (((cachedJarFileReference = CACHED_JAR_FILE_MAP.get(outerEntryName)) == null) || ((cachedJarFile = cachedJarFileReference.get()) == null)) {
               synchronized (CACHED_JAR_FILE_MAP) {
-                if (((cachedJarFileReference = CACHED_JAR_FILE_MAP.get(outerEntryName)) == null) || ((cachedJarFile = cachedJarFileReference.get()) == null))  {
+                if (((cachedJarFileReference = CACHED_JAR_FILE_MAP.get(outerEntryName)) == null) || ((cachedJarFile = cachedJarFileReference.get()) == null)) {
                   CACHED_JAR_FILE_MAP.put(outerEntryName, new SoftReference<>(cachedJarFile = new CachedJarFile(outerEntryName, new JarInputStream(jarFile.getInputStream(jarEntry)))));
                 }
               }

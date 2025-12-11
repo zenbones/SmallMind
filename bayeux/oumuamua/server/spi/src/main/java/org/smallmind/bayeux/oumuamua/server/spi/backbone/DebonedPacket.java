@@ -49,7 +49,7 @@ public class DebonedPacket<V extends Value<V>> {
    * Creates the wrapper.
    *
    * @param nodeName identifier of the sending node
-   * @param packet packet being propagated
+   * @param packet   packet being propagated
    */
   public DebonedPacket (String nodeName, Packet<V> packet) {
 

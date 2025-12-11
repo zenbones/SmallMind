@@ -53,9 +53,9 @@ public class IdleChannelOperation<V extends Value<V>> implements ChannelOperatio
   /**
    * Creates an operation that removes idle channels older than the supplied timestamp.
    *
-   * @param now reference time used to determine idleness
+   * @param now                 reference time used to determine idleness
    * @param idleChannelLogLevel log level for termination events
-   * @param channelCallback callback invoked when a channel is removed
+   * @param channelCallback     callback invoked when a channel is removed
    */
   public IdleChannelOperation (long now, Level idleChannelLogLevel, Consumer<Channel<V>> channelCallback) {
 

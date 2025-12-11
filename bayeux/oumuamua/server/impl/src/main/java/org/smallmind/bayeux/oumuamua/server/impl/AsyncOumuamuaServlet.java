@@ -113,7 +113,7 @@ public class AsyncOumuamuaServlet<V extends Value<V>> extends HttpServlet {
   /**
    * Handles inbound Bayeux envelopes posted by clients using async IO.
    *
-   * @param request http request carrying the payload
+   * @param request  http request carrying the payload
    * @param response http response for error handling
    * @throws IOException if the payload cannot be read
    */
@@ -178,11 +178,11 @@ public class AsyncOumuamuaServlet<V extends Value<V>> extends HttpServlet {
     /**
      * Creates a read listener to accumulate the incoming payload.
      *
-     * @param executorService executor used to process messages
-     * @param server owning server
-     * @param connection long-poll connection used to deliver responses
-     * @param asyncContext async context for this request
-     * @param inputStream input stream for the request body
+     * @param executorService   executor used to process messages
+     * @param server            owning server
+     * @param connection        long-poll connection used to deliver responses
+     * @param asyncContext      async context for this request
+     * @param inputStream       input stream for the request body
      * @param contentBufferSize declared content length
      */
     public OumuamuaReadListener (ExecutorService executorService, OumuamuaServer<V> server, LongPollingConnection<V> connection, AsyncContext asyncContext, ServletInputStream inputStream, int contentBufferSize) {

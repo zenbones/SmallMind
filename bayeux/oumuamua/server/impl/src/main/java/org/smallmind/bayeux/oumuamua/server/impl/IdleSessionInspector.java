@@ -55,9 +55,9 @@ public class IdleSessionInspector<V extends Value<V>> implements Runnable {
   /**
    * Constructs an inspector that periodically evaluates sessions for idleness.
    *
-   * @param server owning server
+   * @param server                            owning server
    * @param connectionMaintenanceCycleMinutes cadence for maintenance checks
-   * @param idleSessionLogLevel log level used when terminating idle sessions
+   * @param idleSessionLogLevel               log level used when terminating idle sessions
    */
   public IdleSessionInspector (OumuamuaServer<V> server, long connectionMaintenanceCycleMinutes, Level idleSessionLogLevel) {
 

@@ -51,9 +51,9 @@ public class Packet<V extends Value<V>> {
    * Creates a packet containing a single message.
    *
    * @param packetType the type of packet being sent
-   * @param senderId the session identifier of the sender
-   * @param route the target route
-   * @param message the message to include
+   * @param senderId   the session identifier of the sender
+   * @param route      the target route
+   * @param message    the message to include
    */
   public Packet (PacketType packetType, String senderId, Route route, Message<V> message) {
 
@@ -64,9 +64,9 @@ public class Packet<V extends Value<V>> {
    * Creates a packet with multiple messages.
    *
    * @param packetType the type of packet being sent
-   * @param senderId the session identifier of the sender
-   * @param route the target route
-   * @param message the messages to include
+   * @param senderId   the session identifier of the sender
+   * @param route      the target route
+   * @param message    the messages to include
    */
   public Packet (PacketType packetType, String senderId, Route route, Message<V>[] message) {
 

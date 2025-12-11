@@ -169,7 +169,7 @@ public class DefaultRoute implements Route {
    * Tests whether the segment at the given index matches the supplied name.
    *
    * @param index segment index
-   * @param name comparison text
+   * @param name  comparison text
    * @return {@code true} if the segment matches exactly
    */
   protected boolean matches (int index, CharSequence name) {
@@ -282,7 +282,7 @@ public class DefaultRoute implements Route {
      * Returns a subsequence of the segment.
      *
      * @param start start offset
-     * @param end end offset (exclusive)
+     * @param end   end offset (exclusive)
      * @return requested subsequence
      */
     @Override

@@ -37,7 +37,6 @@ import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.smallmind.nutsnbolts.util.IterableIterator;
 
 public abstract class SimpleMapXmlAdapter<M extends Map<String, V>, V> extends XmlAdapter<JsonNode, M> {
 

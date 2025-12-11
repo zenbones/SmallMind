@@ -80,6 +80,7 @@ public interface Channel<V extends Value<V>> extends Attributed {
   }
 
   // Messages are frozen before this call, guaranteeing that all sessions in this delivery stream, but not others, see any changes generated here
+
   /**
    * Listener that can react to packet delivery events.
    */
@@ -93,6 +94,7 @@ public interface Channel<V extends Value<V>> extends Attributed {
     boolean isPersistent ();
 
     // For published messages delivered to receivers
+
     /**
      * Called when a packet is being delivered to channel subscribers.
      *
@@ -242,8 +244,8 @@ public interface Channel<V extends Value<V>> extends Attributed {
   /**
    * Delivers a packet to channel subscribers.
    *
-   * @param sender the session sending the packet
-   * @param packet the packet to deliver
+   * @param sender       the session sending the packet
+   * @param packet       the packet to deliver
    * @param sessionIdSet a set of session identifiers that should receive the packet
    */
   void deliver (Session<V> sender, Packet<V> packet, Set<String> sessionIdSet);

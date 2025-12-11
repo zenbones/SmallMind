@@ -617,7 +617,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   /**
    * Retrieves a channel, creating it (and applying initializers) if absent.
    *
-   * @param path channel path
+   * @param path         channel path
    * @param initializers optional initializers to apply
    * @return channel instance
    * @throws InvalidPathException if the path is invalid
@@ -682,8 +682,8 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   /**
    * Delivers a packet to subscribers and optionally across the cluster.
    *
-   * @param sender originating session
-   * @param packet packet to deliver
+   * @param sender    originating session
+   * @param packet    packet to deliver
    * @param clustered {@code true} to forward through the backbone
    */
   @Override
@@ -712,7 +712,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
    * Forwards a packet via the backbone.
    *
    * @param channel originating channel
-   * @param packet packet to forward
+   * @param packet  packet to forward
    */
   @Override
   public void forward (Channel<V> channel, Packet<V> packet) {

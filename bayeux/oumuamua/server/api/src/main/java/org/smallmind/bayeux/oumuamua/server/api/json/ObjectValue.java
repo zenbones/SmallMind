@@ -53,7 +53,7 @@ public interface ObjectValue<V extends Value<V>> extends Value<V> {
    * Adds or replaces a boolean field.
    *
    * @param field field name
-   * @param bool value to store
+   * @param bool  value to store
    * @return this object
    */
   default ObjectValue<V> put (String field, boolean bool) {
@@ -65,7 +65,7 @@ public interface ObjectValue<V extends Value<V>> extends Value<V> {
    * Adds or replaces an integer field.
    *
    * @param field field name
-   * @param i value to store
+   * @param i     value to store
    * @return this object
    */
   default ObjectValue<V> put (String field, int i) {
@@ -77,7 +77,7 @@ public interface ObjectValue<V extends Value<V>> extends Value<V> {
    * Adds or replaces a long field.
    *
    * @param field field name
-   * @param l value to store
+   * @param l     value to store
    * @return this object
    */
   default ObjectValue<V> put (String field, long l) {
@@ -89,7 +89,7 @@ public interface ObjectValue<V extends Value<V>> extends Value<V> {
    * Adds or replaces a double field.
    *
    * @param field field name
-   * @param d value to store
+   * @param d     value to store
    * @return this object
    */
   default ObjectValue<V> put (String field, double d) {
@@ -101,7 +101,7 @@ public interface ObjectValue<V extends Value<V>> extends Value<V> {
    * Adds or replaces a string field (or null).
    *
    * @param field field name
-   * @param text value to store; {@code null} results in a JSON null
+   * @param text  value to store; {@code null} results in a JSON null
    * @return this object
    */
   default ObjectValue<V> put (String field, String text) {

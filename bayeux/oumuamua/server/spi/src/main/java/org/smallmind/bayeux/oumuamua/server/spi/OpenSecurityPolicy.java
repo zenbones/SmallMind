@@ -61,7 +61,7 @@ public class OpenSecurityPolicy<V extends Value<V>> implements SecurityPolicy<V>
    * Always permits channel creation.
    *
    * @param session the requesting session
-   * @param path path to create
+   * @param path    path to create
    * @param message create message
    * @return {@code null} to indicate no rejection
    */

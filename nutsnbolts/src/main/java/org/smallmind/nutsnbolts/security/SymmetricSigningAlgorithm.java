@@ -37,7 +37,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
-import java.security.PublicKey;
 import java.security.SignatureException;
 import org.smallmind.nutsnbolts.http.Base64Codec;
 

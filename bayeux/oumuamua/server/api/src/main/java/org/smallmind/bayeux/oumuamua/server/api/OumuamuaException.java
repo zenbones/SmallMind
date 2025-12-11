@@ -43,7 +43,7 @@ public class OumuamuaException extends FormattedException {
    * Creates an exception with a formatted message.
    *
    * @param message message template describing the error
-   * @param args optional arguments substituted into the message
+   * @param args    optional arguments substituted into the message
    */
   public OumuamuaException (String message, Object... args) {
 
@@ -54,8 +54,8 @@ public class OumuamuaException extends FormattedException {
    * Creates an exception with a cause and formatted message.
    *
    * @param throwable the underlying cause
-   * @param message message template describing the error
-   * @param args optional arguments substituted into the message
+   * @param message   message template describing the error
+   * @param args      optional arguments substituted into the message
    */
   public OumuamuaException (Throwable throwable, String message, Object... args) {
 

@@ -47,7 +47,7 @@ public class OrthodoxBooleanValue extends OrthodoxValue implements BooleanValue<
    * Creates a boolean value.
    *
    * @param factory owning factory
-   * @param value primitive value
+   * @param value   primitive value
    */
   protected OrthodoxBooleanValue (OrthodoxValueFactory factory, boolean value) {
 

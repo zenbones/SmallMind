@@ -41,7 +41,7 @@ public class ChannelStateException extends OumuamuaException {
    * Constructs the exception with a formatted detail message.
    *
    * @param message message pattern describing the state error
-   * @param args optional arguments to format into the message
+   * @param args    optional arguments to format into the message
    */
   public ChannelStateException (String message, Object... args) {
 

@@ -98,7 +98,7 @@ public interface OumuamuaConnection<V extends Value<V>> extends Connection<V> {
   /**
    * Removes the session from the server on disconnect.
    *
-   * @param server owning server
+   * @param server  owning server
    * @param session session that disconnected
    */
   @Override

@@ -79,7 +79,7 @@ public class AckExtension<V extends Value<V>> extends AbstractServerPacketListen
   /**
    * Creates the extension with custom overflow logging.
    *
-   * @param maxAckQueueSize maximum number of messages that may be awaiting acknowledgment
+   * @param maxAckQueueSize  maximum number of messages that may be awaiting acknowledgment
    * @param overflowLogLevel log level used when the ack queue is trimmed; {@code null} disables logging
    */
   public AckExtension (int maxAckQueueSize, Level overflowLogLevel) {

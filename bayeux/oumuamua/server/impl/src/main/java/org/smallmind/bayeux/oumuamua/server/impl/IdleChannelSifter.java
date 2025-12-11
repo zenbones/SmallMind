@@ -58,9 +58,9 @@ public class IdleChannelSifter<V extends Value<V>> implements Runnable {
    * Creates a sifter configured with scan cadence and logging.
    *
    * @param idleChannelCycleMinutes frequency at which idle channels are checked
-   * @param idleChannelLogLevel log level used for removal messages
-   * @param channelTree channel tree to inspect
-   * @param channelCallback callback invoked when a channel is removed
+   * @param idleChannelLogLevel     log level used for removal messages
+   * @param channelTree             channel tree to inspect
+   * @param channelCallback         callback invoked when a channel is removed
    */
   public IdleChannelSifter (long idleChannelCycleMinutes, Level idleChannelLogLevel, ChannelTree<V> channelTree, Consumer<Channel<V>> channelCallback) {
 

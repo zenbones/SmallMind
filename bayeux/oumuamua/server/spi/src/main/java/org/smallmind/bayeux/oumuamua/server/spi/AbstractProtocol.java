@@ -65,7 +65,7 @@ public abstract class AbstractProtocol<V extends Value<V>> implements Protocol<V
    * Notifies listeners when a message is published.
    *
    * @param originatingMessage message supplied by the client
-   * @param outgoingMessage message produced for delivery
+   * @param outgoingMessage    message produced for delivery
    */
   public void onPublish (Message<V> originatingMessage, Message<V> outgoingMessage) {
 

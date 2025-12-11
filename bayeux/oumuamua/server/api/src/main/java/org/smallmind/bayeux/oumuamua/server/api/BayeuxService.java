@@ -45,8 +45,8 @@ public interface BayeuxService<V extends Value<V>> {
   /**
    * Creates a basic response message that mirrors request metadata and binds to the route.
    *
-   * @param route the route being processed
-   * @param server the hosting server instance
+   * @param route   the route being processed
+   * @param server  the hosting server instance
    * @param session the client session issuing the request
    * @param request the incoming message that triggered the response
    * @return a new response message pre-populated with channel, id, and session identifiers
@@ -69,10 +69,10 @@ public interface BayeuxService<V extends Value<V>> {
    * Processes an incoming message for the given route.
    *
    * @param protocol the transport protocol in use
-   * @param route the target route
-   * @param server the owning server
-   * @param session the current client session
-   * @param request the incoming message
+   * @param route    the target route
+   * @param server   the owning server
+   * @param session  the current client session
+   * @param request  the incoming message
    * @return a packet response to send back to the client
    */
   Packet<V> process (Protocol<V> protocol, Route route, Server<V> server, Session<V> session, Message<V> request);

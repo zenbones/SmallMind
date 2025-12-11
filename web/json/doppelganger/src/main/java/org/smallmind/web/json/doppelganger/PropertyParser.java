@@ -50,12 +50,12 @@ public class PropertyParser implements Iterable<PropertyBox> {
   /**
    * Builds a parser for a property annotation, generating entries per idiom/purpose.
    *
-   * @param processingEnvironment    current processing environment
-   * @param usefulTypeMirrors        cached type mirrors for common annotations
-   * @param propertyAnnotationMirror property annotation to parse
-   * @param type                     resolved property type
+   * @param processingEnvironment     current processing environment
+   * @param usefulTypeMirrors         cached type mirrors for common annotations
+   * @param propertyAnnotationMirror  property annotation to parse
+   * @param type                      resolved property type
    * @param nullifierAnnotationMirror optional nullifier annotation mirror
-   * @param virtual                  whether the property is virtual
+   * @param virtual                   whether the property is virtual
    */
   public PropertyParser (ProcessingEnvironment processingEnvironment, UsefulTypeMirrors usefulTypeMirrors, AnnotationMirror propertyAnnotationMirror, TypeMirror type, AnnotationMirror nullifierAnnotationMirror, boolean virtual) {
 

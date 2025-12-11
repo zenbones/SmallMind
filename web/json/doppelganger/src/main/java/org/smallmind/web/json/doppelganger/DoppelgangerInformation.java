@@ -447,11 +447,11 @@ public class DoppelgangerInformation {
     private final String purpose;
 
     /**
-      * Builds a key combining direction and purpose for lookup in maps.
-      *
-      * @param direction direction in which a view is generated
-      * @param purpose   idiom purpose identifier (empty for default)
-      */
+     * Builds a key combining direction and purpose for lookup in maps.
+     *
+     * @param direction direction in which a view is generated
+     * @param purpose   idiom purpose identifier (empty for default)
+     */
     public IdiomKey (Direction direction, String purpose) {
 
       this.direction = direction;

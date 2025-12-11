@@ -49,7 +49,7 @@ public class HierarchyInformation {
   /**
    * Extracts the declared subclasses from a {@link Hierarchy} annotation.
    *
-   * @param processingEnvironment    current processing environment
+   * @param processingEnvironment     current processing environment
    * @param hierarchyAnnotationMirror annotation mirror describing the hierarchy
    */
   public HierarchyInformation (ProcessingEnvironment processingEnvironment, AnnotationMirror hierarchyAnnotationMirror) {

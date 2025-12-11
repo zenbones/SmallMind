@@ -56,7 +56,7 @@ public class WebsocketConfiguration {
    * Creates a configuration with the mandatory endpoint class and base URL.
    *
    * @param endpointClass websocket endpoint implementation
-   * @param oumuamuaUrl base URL for the Oumuamua endpoint
+   * @param oumuamuaUrl   base URL for the Oumuamua endpoint
    */
   public WebsocketConfiguration (Class<? extends Endpoint> endpointClass, String oumuamuaUrl) {
 

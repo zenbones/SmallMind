@@ -45,11 +45,11 @@ public interface Translator {
   /**
    * Writes the right-hand side of a view field assignment when constructing a view instance from an entity.
    *
-   * @param writer                  destination for generated source
-   * @param processingEnvironment   current processing environment
-   * @param entityInstanceName      variable name holding the source entity
-   * @param entityFieldName         field name on the entity
-   * @param entityFieldTypeMirror   entity field type
+   * @param writer                     destination for generated source
+   * @param processingEnvironment      current processing environment
+   * @param entityInstanceName         variable name holding the source entity
+   * @param entityFieldName            field name on the entity
+   * @param entityFieldTypeMirror      entity field type
    * @param viewFieldQualifiedTypeName fully qualified view field type name
    * @throws IOException if writing fails
    */
@@ -59,11 +59,11 @@ public interface Translator {
   /**
    * Writes the code inside a setter call that transfers a view property back to the entity.
    *
-   * @param writer                destination for generated source
-   * @param processingEnvironment current processing environment
-   * @param entityFieldTypeMirror entity field type
+   * @param writer                     destination for generated source
+   * @param processingEnvironment      current processing environment
+   * @param entityFieldTypeMirror      entity field type
    * @param viewFieldQualifiedTypeName fully qualified view field type name
-   * @param dtoFieldName          name of the view field
+   * @param dtoFieldName               name of the view field
    * @throws IOException if writing fails
    */
   void writeInsideOfSet (BufferedWriter writer, ProcessingEnvironment processingEnvironment, TypeMirror entityFieldTypeMirror, String viewFieldQualifiedTypeName, String dtoFieldName)

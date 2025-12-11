@@ -62,7 +62,7 @@ public class ServletProtocol<V extends Value<V>> extends AbstractProtocol<V> {
    * Creates a protocol with the supplied timeout and listeners.
    *
    * @param longPollTimeoutMilliseconds maximum long-poll timeout in milliseconds
-   * @param listeners protocol listeners
+   * @param listeners                   protocol listeners
    */
   public ServletProtocol (long longPollTimeoutMilliseconds, ProtocolListener<V>[] listeners) {
 

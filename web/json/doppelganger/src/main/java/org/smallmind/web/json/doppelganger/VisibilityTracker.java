@@ -67,10 +67,10 @@ public class VisibilityTracker {
   /**
    * Records visibility for a purpose when real or virtual properties are present.
    *
-   * @param classElement      class being processed
-   * @param purpose           purpose identifier
-   * @param visibility        visibility to record
-   * @param propertyLexicon   property metadata informing whether fields exist
+   * @param classElement    class being processed
+   * @param purpose         purpose identifier
+   * @param visibility      visibility to record
+   * @param propertyLexicon property metadata informing whether fields exist
    */
   public void add (TypeElement classElement, String purpose, Visibility visibility, PropertyLexicon propertyLexicon) {
 

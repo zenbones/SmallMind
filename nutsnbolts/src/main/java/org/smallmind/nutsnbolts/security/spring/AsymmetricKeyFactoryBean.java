@@ -39,9 +39,9 @@ import java.security.NoSuchProviderException;
 import java.security.spec.InvalidKeySpecException;
 import org.smallmind.nutsnbolts.security.AsymmetricAlgorithm;
 import org.smallmind.nutsnbolts.security.AsymmetricKeySpec;
+import org.smallmind.nutsnbolts.security.AsymmetricKeyType;
 import org.smallmind.nutsnbolts.security.InappropriateKeySpecException;
 import org.smallmind.nutsnbolts.security.SecurityProvider;
-import org.smallmind.nutsnbolts.security.AsymmetricKeyType;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 

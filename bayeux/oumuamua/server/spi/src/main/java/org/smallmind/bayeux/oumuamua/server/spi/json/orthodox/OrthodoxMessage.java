@@ -42,7 +42,7 @@ public class OrthodoxMessage extends OrthodoxObjectValue implements Message<Orth
   /**
    * Creates an empty message.
    *
-   * @param codec owning codec (unused but retained for symmetry)
+   * @param codec   owning codec (unused but retained for symmetry)
    * @param factory value factory
    */
   public OrthodoxMessage (OrthodoxCodec codec, OrthodoxValueFactory factory) {

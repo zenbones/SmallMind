@@ -48,7 +48,7 @@ public class OrthodoxLongValue extends OrthodoxValue implements NumberValue<Orth
    * Creates a long value.
    *
    * @param factory owning factory
-   * @param value numeric value
+   * @param value   numeric value
    */
   protected OrthodoxLongValue (OrthodoxValueFactory factory, long value) {
 

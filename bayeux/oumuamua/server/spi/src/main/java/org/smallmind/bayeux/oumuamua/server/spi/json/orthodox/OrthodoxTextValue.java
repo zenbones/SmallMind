@@ -48,7 +48,7 @@ public class OrthodoxTextValue extends OrthodoxValue implements StringValue<Orth
    * Creates a string value.
    *
    * @param factory owning factory
-   * @param text text to store
+   * @param text    text to store
    */
   protected OrthodoxTextValue (OrthodoxValueFactory factory, String text) {
 

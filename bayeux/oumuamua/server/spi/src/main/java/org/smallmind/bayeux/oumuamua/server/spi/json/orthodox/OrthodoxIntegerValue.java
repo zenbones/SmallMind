@@ -48,7 +48,7 @@ public class OrthodoxIntegerValue extends OrthodoxValue implements NumberValue<O
    * Creates an integer value.
    *
    * @param factory owning factory
-   * @param value numeric value
+   * @param value   numeric value
    */
   protected OrthodoxIntegerValue (OrthodoxValueFactory factory, int value) {
 

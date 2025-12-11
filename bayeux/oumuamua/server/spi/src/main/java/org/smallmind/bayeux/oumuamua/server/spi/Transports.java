@@ -45,7 +45,7 @@ public enum Transports {
   /**
    * Associates a transport name with a locality flag.
    *
-   * @param name transport negotiation name
+   * @param name  transport negotiation name
    * @param local {@code true} if the transport should not be clustered
    */
   Transports (String name, boolean local) {

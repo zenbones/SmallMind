@@ -152,8 +152,8 @@ public class TimesyncExtension<V extends Value<V>> extends AbstractServerPacketL
      *
      * @param id message identifier
      * @param tc client timestamp
-     * @param l network latency estimate
-     * @param o client clock offset
+     * @param l  network latency estimate
+     * @param o  client clock offset
      */
     public TimeSync (String id, long tc, long l, long o) {
 

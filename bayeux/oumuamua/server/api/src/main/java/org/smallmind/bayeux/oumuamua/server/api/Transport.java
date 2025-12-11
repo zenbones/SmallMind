@@ -61,7 +61,7 @@ public interface Transport<V extends Value<V>> extends Attributed {
   /**
    * Initializes the transport with servlet configuration.
    *
-   * @param server the hosting server
+   * @param server        the hosting server
    * @param servletConfig servlet configuration
    * @throws ServletException if initialization fails
    */

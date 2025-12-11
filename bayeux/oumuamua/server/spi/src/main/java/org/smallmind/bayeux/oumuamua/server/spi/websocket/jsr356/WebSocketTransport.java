@@ -62,7 +62,7 @@ public class WebSocketTransport<V extends Value<V>> extends AbstractAttributed i
   /**
    * Creates the transport for a given protocol and configuration.
    *
-   * @param websocketProtocol owning protocol
+   * @param websocketProtocol      owning protocol
    * @param websocketConfiguration configuration parameters
    */
   public WebSocketTransport (WebsocketProtocol<V> websocketProtocol, WebsocketConfiguration websocketConfiguration) {
@@ -125,7 +125,7 @@ public class WebSocketTransport<V extends Value<V>> extends AbstractAttributed i
   /**
    * Registers the websocket endpoint with the servlet container.
    *
-   * @param server owning server
+   * @param server        owning server
    * @param servletConfig servlet configuration
    * @throws ServletException if endpoint deployment fails
    */
