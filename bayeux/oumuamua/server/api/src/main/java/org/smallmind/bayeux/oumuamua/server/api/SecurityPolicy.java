@@ -35,23 +35,59 @@ package org.smallmind.bayeux.oumuamua.server.api;
 import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
+/**
+ * Defines access control hooks for Bayeux handshake, channel creation, subscription, and publishing.
+ *
+ * @param <V> concrete {@link Value} implementation used for message payloads
+ */
 public interface SecurityPolicy<V extends Value<V>> {
 
+  /**
+   * Checks whether a handshake request is permitted.
+   *
+   * @param session the requesting session
+   * @param message the handshake message
+   * @return a rejection with the reason, or {@link SecurityRejection#noReason()} when allowed
+   */
   default SecurityRejection canHandshake (Session<V> session, Message<V> message) {
 
     return SecurityRejection.noReason();
   }
 
+  /**
+   * Checks whether the client can create the requested channel path.
+   *
+   * @param session the requesting session
+   * @param path the channel path to create
+   * @param message the create message
+   * @return a rejection with the reason, or {@link SecurityRejection#noReason()} when allowed
+   */
   default SecurityRejection canCreate (Session<V> session, String path, Message<V> message) {
 
     return SecurityRejection.noReason();
   }
 
+  /**
+   * Checks whether the client can subscribe to the channel.
+   *
+   * @param session the requesting session
+   * @param channel the channel being subscribed to
+   * @param message the subscribe message
+   * @return a rejection with the reason, or {@link SecurityRejection#noReason()} when allowed
+   */
   default SecurityRejection canSubscribe (Session<V> session, Channel<V> channel, Message<V> message) {
 
     return SecurityRejection.noReason();
   }
 
+  /**
+   * Checks whether the client can publish to the channel.
+   *
+   * @param session the requesting session
+   * @param channel the channel being published to
+   * @param message the publish message
+   * @return a rejection with the reason, or {@link SecurityRejection#noReason()} when allowed
+   */
   default SecurityRejection canPublish (Session<V> session, Channel<V> channel, Message<V> message) {
 
     return SecurityRejection.noReason();

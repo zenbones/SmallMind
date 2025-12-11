@@ -32,21 +32,65 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api.json;
 
+/**
+ * Factory for constructing JSON value instances used in Bayeux messages.
+ *
+ * @param <V> concrete value subtype produced
+ */
 public interface ValueFactory<V extends Value<V>> {
 
+  /**
+   * @return a new empty object value
+   */
   ObjectValue<V> objectValue ();
 
+  /**
+   * @return a new empty array value
+   */
   ArrayValue<V> arrayValue ();
 
+  /**
+   * Creates a text value.
+   *
+   * @param text text content
+   * @return a new string value
+   */
   StringValue<V> textValue (String text);
 
+  /**
+   * Creates a numeric value from an integer.
+   *
+   * @param i integer content
+   * @return a numeric value
+   */
   NumberValue<V> numberValue (int i);
 
+  /**
+   * Creates a numeric value from a long.
+   *
+   * @param l long content
+   * @return a numeric value
+   */
   NumberValue<V> numberValue (long l);
 
+  /**
+   * Creates a numeric value from a double.
+   *
+   * @param d double content
+   * @return a numeric value
+   */
   NumberValue<V> numberValue (double d);
 
+  /**
+   * Creates a boolean value.
+   *
+   * @param bool boolean content
+   * @return a boolean value
+   */
   BooleanValue<V> booleanValue (boolean bool);
 
+  /**
+   * @return the singleton null value
+   */
   NullValue<V> nullValue ();
 }

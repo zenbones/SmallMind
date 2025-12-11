@@ -35,8 +35,22 @@ package org.smallmind.bayeux.oumuamua.server.api;
 import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
+/**
+ * Service contract for handling Bayeux messages routed to the server.
+ *
+ * @param <V> concrete {@link Value} implementation used to represent JSON payloads
+ */
 public interface BayeuxService<V extends Value<V>> {
 
+  /**
+   * Creates a basic response message that mirrors request metadata and binds to the route.
+   *
+   * @param route the route being processed
+   * @param server the hosting server instance
+   * @param session the client session issuing the request
+   * @param request the incoming message that triggered the response
+   * @return a new response message pre-populated with channel, id, and session identifiers
+   */
   default Message<V> createResponse (Route route, Server<V> server, Session<V> session, Message<V> request) {
 
     Message<V> response = (Message<V>)server.getCodec().create().put(Message.CHANNEL, route.getPath()).put(Message.ID, request.getId()).put(Message.SESSION_ID, session.getId());
@@ -44,7 +58,22 @@ public interface BayeuxService<V extends Value<V>> {
     return response;
   }
 
+  /**
+   * Provides the channel routes this service is bound to handle.
+   *
+   * @return an array of bound routes
+   */
   Route[] getBoundRoutes ();
 
+  /**
+   * Processes an incoming message for the given route.
+   *
+   * @param protocol the transport protocol in use
+   * @param route the target route
+   * @param server the owning server
+   * @param session the current client session
+   * @param request the incoming message
+   * @return a packet response to send back to the client
+   */
   Packet<V> process (Protocol<V> protocol, Route route, Server<V> server, Session<V> session, Message<V> request);
 }

@@ -37,6 +37,9 @@ import org.smallmind.bayeux.oumuamua.server.api.Route;
 import org.smallmind.bayeux.oumuamua.server.api.Segment;
 import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 
+/**
+ * Default {@link Route} implementation backed by a validated path string.
+ */
 public class DefaultRoute implements Route {
 
   public static final DefaultRoute HANDSHAKE_ROUTE;
@@ -60,6 +63,12 @@ public class DefaultRoute implements Route {
     }
   }
 
+  /**
+   * Constructs a route for the supplied path and validates its segments.
+   *
+   * @param path channel path beginning with '/'
+   * @throws InvalidPathException if the path does not conform to channel rules
+   */
   public DefaultRoute (String path)
     throws InvalidPathException {
 
@@ -68,41 +77,68 @@ public class DefaultRoute implements Route {
     segments = PathValidator.validate(path);
   }
 
+  /**
+   * @return the full path string
+   */
   public String getPath () {
 
     return path;
   }
 
+  /**
+   * @return number of segments contained in the path
+   */
   public int size () {
 
     return segments.length + 1;
   }
 
+  /**
+   * @return index of the last segment
+   */
   public int lastIndex () {
 
     return segments.length;
   }
 
+  /**
+   * @return {@code true} if the final segment is a single-level wildcard
+   */
   public boolean isWild () {
 
     return matches(segments.length, "*");
   }
 
+  /**
+   * @return {@code true} if the final segment is a deep wildcard
+   */
   public boolean isDeepWild () {
 
     return matches(segments.length, "**");
   }
 
+  /**
+   * @return {@code true} if this path represents a meta channel
+   */
   public boolean isMeta () {
 
     return matches(0, "meta");
   }
 
+  /**
+   * @return {@code true} if this path represents a service channel
+   */
   public boolean isService () {
 
     return matches(0, "service");
   }
 
+  /**
+   * Compares the path to a set of provided segments, honoring wildcards.
+   *
+   * @param matchingSegments segments to test against
+   * @return {@code true} if the supplied segments match this route
+   */
   @Override
   public boolean matches (String... matchingSegments) {
 
@@ -129,6 +165,13 @@ public class DefaultRoute implements Route {
     }
   }
 
+  /**
+   * Tests whether the segment at the given index matches the supplied name.
+   *
+   * @param index segment index
+   * @param name comparison text
+   * @return {@code true} if the segment matches exactly
+   */
   protected boolean matches (int index, CharSequence name) {
 
     if ((index < 0) || (index > segments.length)) {
@@ -153,6 +196,12 @@ public class DefaultRoute implements Route {
     }
   }
 
+  /**
+   * Provides a segment view for the given index.
+   *
+   * @param index requested segment index
+   * @return segment implementation
+   */
   @Override
   public Segment getSegment (int index) {
 
@@ -176,6 +225,9 @@ public class DefaultRoute implements Route {
     return (obj instanceof DefaultRoute) && ((DefaultRoute)obj).path.equals(path);
   }
 
+  /**
+   * Segment implementation that references the parent route.
+   */
   public class RouteSegment extends Segment {
 
     private final int index;
@@ -185,18 +237,33 @@ public class DefaultRoute implements Route {
       this.index = index;
     }
 
+    /**
+     * Delegates to the parent route for matching.
+     *
+     * @param charSequence value to match
+     * @return {@code true} if the segment matches the supplied text
+     */
     @Override
     public boolean matches (CharSequence charSequence) {
 
       return DefaultRoute.this.matches(index, charSequence);
     }
 
+    /**
+     * @return length of this segment
+     */
     @Override
     public int length () {
 
       return ((index < segments.length) ? segments[index] : path.length()) - ((index == 0) ? 1 : segments[index - 1] + 1);
     }
 
+    /**
+     * Retrieves a character within the segment.
+     *
+     * @param pos character position
+     * @return character at the position
+     */
     @Override
     public char charAt (int pos) {
 
@@ -211,6 +278,13 @@ public class DefaultRoute implements Route {
       }
     }
 
+    /**
+     * Returns a subsequence of the segment.
+     *
+     * @param start start offset
+     * @param end end offset (exclusive)
+     * @return requested subsequence
+     */
     @Override
     public CharSequence subSequence (int start, int end) {
 
@@ -225,6 +299,9 @@ public class DefaultRoute implements Route {
       }
     }
 
+    /**
+     * @return string representation of this segment
+     */
     @Override
     public String toString () {
 

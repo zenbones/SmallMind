@@ -34,49 +34,125 @@ package org.smallmind.bayeux.oumuamua.server.api.json;
 
 import java.util.Iterator;
 
+/**
+ * Mutable JSON object value with helpers for primitive assignment.
+ */
 public interface ObjectValue<V extends Value<V>> extends Value<V> {
 
+  /**
+   * Identifies this value as an object.
+   *
+   * @return {@link ValueType#OBJECT}
+   */
   default ValueType getType () {
 
     return ValueType.OBJECT;
   }
 
+  /**
+   * Adds or replaces a boolean field.
+   *
+   * @param field field name
+   * @param bool value to store
+   * @return this object
+   */
   default ObjectValue<V> put (String field, boolean bool) {
 
     return put(field, getFactory().booleanValue(bool));
   }
 
+  /**
+   * Adds or replaces an integer field.
+   *
+   * @param field field name
+   * @param i value to store
+   * @return this object
+   */
   default ObjectValue<V> put (String field, int i) {
 
     return put(field, getFactory().numberValue(i));
   }
 
+  /**
+   * Adds or replaces a long field.
+   *
+   * @param field field name
+   * @param l value to store
+   * @return this object
+   */
   default ObjectValue<V> put (String field, long l) {
 
     return put(field, getFactory().numberValue(l));
   }
 
+  /**
+   * Adds or replaces a double field.
+   *
+   * @param field field name
+   * @param d value to store
+   * @return this object
+   */
   default ObjectValue<V> put (String field, double d) {
 
     return put(field, getFactory().numberValue(d));
   }
 
+  /**
+   * Adds or replaces a string field (or null).
+   *
+   * @param field field name
+   * @param text value to store; {@code null} results in a JSON null
+   * @return this object
+   */
   default ObjectValue<V> put (String field, String text) {
 
     return put(field, (text == null) ? getFactory().nullValue() : getFactory().textValue(text));
   }
 
+  /**
+   * @return number of fields present
+   */
   int size ();
 
+  /**
+   * @return {@code true} if no fields are present
+   */
   boolean isEmpty ();
 
+  /**
+   * @return iterator over field names
+   */
   Iterator<String> fieldNames ();
 
+  /**
+   * Retrieves a field value.
+   *
+   * @param field field name
+   * @return the stored value or {@code null} if missing
+   */
   Value<V> get (String field);
 
+  /**
+   * Adds or replaces a field with a value.
+   *
+   * @param field field name
+   * @param value value to store
+   * @return this object
+   */
   <U extends Value<V>> ObjectValue<V> put (String field, U value);
 
+  /**
+   * Removes a field.
+   *
+   * @param field field name to remove
+   * @return the removed value or {@code null} if absent
+   */
   Value<V> remove (String field);
 
+  /**
+   * Removes all fields from this object.
+   *
+   * @return this object
+   */
   ObjectValue<V> removeAll ();
 }

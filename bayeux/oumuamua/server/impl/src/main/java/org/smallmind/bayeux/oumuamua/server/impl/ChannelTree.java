@@ -42,11 +42,21 @@ import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
 
+/**
+ * Rooted channel tree that coordinates concurrent channel creation and cleanup.
+ *
+ * @param <V> value representation
+ */
 public class ChannelTree<V extends Value<V>> extends ChannelBranch<V> {
 
   private final ReentrantLock treeChangeLock = new ReentrantLock();
   private final ChannelRoot<V> root;
 
+  /**
+   * Creates a channel tree anchored to the provided root.
+   *
+   * @param root shared server adapter
+   */
   public ChannelTree (ChannelRoot<V> root) {
 
     super(null);
@@ -54,6 +64,18 @@ public class ChannelTree<V extends Value<V>> extends ChannelBranch<V> {
     this.root = root;
   }
 
+  /**
+   * Lazily creates the channel defined by the route, including intermediate branches.
+   *
+   * @param timeToLive channel ttl in milliseconds
+   * @param index starting route index
+   * @param route target route
+   * @param channelCallback callback invoked when a channel is created
+   * @param onSubscribedCallback callback invoked on subscription
+   * @param onUnsubscribedCallback callback invoked on unsubscription
+   * @param initializerQueue channel initializers to run
+   * @return created or existing channel
+   */
   public Channel<V> createIfAbsent (long timeToLive, int index, DefaultRoute route, Consumer<Channel<V>> channelCallback, BiConsumer<Channel<V>, Session<V>> onSubscribedCallback, BiConsumer<Channel<V>, Session<V>> onUnsubscribedCallback, Queue<ChannelInitializer<V>> initializerQueue) {
 
     treeChangeLock.lock();
@@ -66,6 +88,9 @@ public class ChannelTree<V extends Value<V>> extends ChannelBranch<V> {
     }
   }
 
+  /**
+   * Removes empty branches from the tree.
+   */
   public void clean () {
 
     treeChangeLock.lock();

@@ -37,10 +37,19 @@ import java.io.Writer;
 import org.smallmind.bayeux.oumuamua.server.api.json.NumberType;
 import org.smallmind.bayeux.oumuamua.server.api.json.NumberValue;
 
+/**
+ * Numeric value representing a long in the orthodox codec.
+ */
 public class OrthodoxLongValue extends OrthodoxValue implements NumberValue<OrthodoxValue> {
 
   private final long value;
 
+  /**
+   * Creates a long value.
+   *
+   * @param factory owning factory
+   * @param value numeric value
+   */
   protected OrthodoxLongValue (OrthodoxValueFactory factory, long value) {
 
     super(factory);
@@ -48,36 +57,57 @@ public class OrthodoxLongValue extends OrthodoxValue implements NumberValue<Orth
     this.value = value;
   }
 
+  /**
+   * @return {@link NumberType#LONG}
+   */
   @Override
   public NumberType getNumberType () {
 
     return NumberType.LONG;
   }
 
+  /**
+   * @return boxed number
+   */
   @Override
   public Number asNumber () {
 
     return value;
   }
 
+  /**
+   * @return value coerced to int
+   */
   @Override
   public int asInt () {
 
     return (int)value;
   }
 
+  /**
+   * @return primitive long
+   */
   @Override
   public long asLong () {
 
     return value;
   }
 
+  /**
+   * @return value coerced to double
+   */
   @Override
   public double asDouble () {
 
     return (double)value;
   }
 
+  /**
+   * Encodes the numeric literal.
+   *
+   * @param writer destination writer
+   * @throws IOException if writing fails
+   */
   @Override
   public void encode (Writer writer)
     throws IOException {

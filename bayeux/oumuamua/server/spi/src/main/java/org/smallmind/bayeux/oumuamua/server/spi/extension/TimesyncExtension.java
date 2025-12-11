@@ -41,10 +41,22 @@ import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.json.ValueType;
 import org.smallmind.bayeux.oumuamua.server.spi.meta.Meta;
 
+/**
+ * Implements the Bayeux timesync extension for latency/offset calculation between client and server.
+ *
+ * @param <V> concrete value type used in messages
+ */
 public class TimesyncExtension<V extends Value<V>> extends AbstractServerPacketListener<V> {
 
   private static final String TIME_SYNC_VALUE_ATTRIBUTE = "org.smallmind.bayeux.oumuamua.extension.timesync.value";
 
+  /**
+   * Records timing data supplied by the client on handshake/connect requests.
+   *
+   * @param sender originating session
+   * @param packet incoming packet
+   * @return the original packet
+   */
   @Override
   public Packet<V> onRequest (Session<V> sender, Packet<V> packet) {
 
@@ -85,6 +97,13 @@ public class TimesyncExtension<V extends Value<V>> extends AbstractServerPacketL
     return packet;
   }
 
+  /**
+   * Adds timesync response data for the matching request message.
+   *
+   * @param sender originating session
+   * @param packet outgoing packet
+   * @return the original packet
+   */
   @Override
   public Packet<V> onResponse (Session<V> sender, Packet<V> packet) {
 
@@ -117,6 +136,9 @@ public class TimesyncExtension<V extends Value<V>> extends AbstractServerPacketL
     return packet;
   }
 
+  /**
+   * Captures timing metrics sent by the client.
+   */
   private static class TimeSync {
 
     private final String id;
@@ -125,6 +147,14 @@ public class TimesyncExtension<V extends Value<V>> extends AbstractServerPacketL
     private final long l;
     private final long o;
 
+    /**
+     * Captures a measurement based on client supplied values and the current server timestamp.
+     *
+     * @param id message identifier
+     * @param tc client timestamp
+     * @param l network latency estimate
+     * @param o client clock offset
+     */
     public TimeSync (String id, long tc, long l, long o) {
 
       ts = System.currentTimeMillis();
@@ -135,26 +165,41 @@ public class TimesyncExtension<V extends Value<V>> extends AbstractServerPacketL
       this.o = o;
     }
 
+    /**
+     * @return associated message id
+     */
     public String getId () {
 
       return id;
     }
 
+    /**
+     * @return server timestamp recorded when the message was received
+     */
     public long getTs () {
 
       return ts;
     }
 
+    /**
+     * @return client timestamp
+     */
     public long getTc () {
 
       return tc;
     }
 
+    /**
+     * @return estimated network latency
+     */
     public long getL () {
 
       return l;
     }
 
+    /**
+     * @return client clock offset
+     */
     public long getO () {
 
       return o;

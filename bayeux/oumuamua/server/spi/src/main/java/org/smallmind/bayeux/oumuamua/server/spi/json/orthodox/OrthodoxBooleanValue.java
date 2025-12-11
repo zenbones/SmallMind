@@ -36,10 +36,19 @@ import java.io.IOException;
 import java.io.Writer;
 import org.smallmind.bayeux.oumuamua.server.api.json.BooleanValue;
 
+/**
+ * Boolean value implementation for the orthodox codec.
+ */
 public class OrthodoxBooleanValue extends OrthodoxValue implements BooleanValue<OrthodoxValue> {
 
   private final boolean value;
 
+  /**
+   * Creates a boolean value.
+   *
+   * @param factory owning factory
+   * @param value primitive value
+   */
   protected OrthodoxBooleanValue (OrthodoxValueFactory factory, boolean value) {
 
     super(factory);
@@ -47,12 +56,21 @@ public class OrthodoxBooleanValue extends OrthodoxValue implements BooleanValue<
     this.value = value;
   }
 
+  /**
+   * @return primitive boolean
+   */
   @Override
   public boolean asBoolean () {
 
     return value;
   }
 
+  /**
+   * Encodes the boolean literal.
+   *
+   * @param writer destination writer
+   * @throws IOException if writing fails
+   */
   @Override
   public void encode (Writer writer)
     throws IOException {

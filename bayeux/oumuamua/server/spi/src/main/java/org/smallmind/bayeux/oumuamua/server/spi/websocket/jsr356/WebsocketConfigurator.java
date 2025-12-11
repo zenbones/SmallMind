@@ -38,39 +38,62 @@ import jakarta.websocket.HandshakeResponse;
 import jakarta.websocket.server.HandshakeRequest;
 import jakarta.websocket.server.ServerEndpointConfig;
 
+/**
+ * Delegating configurator that forwards websocket negotiation callbacks to an internal configurator.
+ */
 public class WebsocketConfigurator extends ServerEndpointConfig.Configurator {
 
   private final ServerEndpointConfig.Configurator internal;
 
+  /**
+   * Wraps an existing configurator.
+   *
+   * @param internal delegate configurator
+   */
   public WebsocketConfigurator (ServerEndpointConfig.Configurator internal) {
 
     this.internal = internal;
   }
 
+  /**
+   * Delegates subprotocol negotiation.
+   */
   @Override
   public String getNegotiatedSubprotocol (List<String> supported, List<String> requested) {
 
     return internal.getNegotiatedSubprotocol(supported, requested);
   }
 
+  /**
+   * Delegates extension negotiation.
+   */
   @Override
   public List<Extension> getNegotiatedExtensions (List<Extension> installed, List<Extension> requested) {
 
     return internal.getNegotiatedExtensions(installed, requested);
   }
 
+  /**
+   * Delegates origin checking.
+   */
   @Override
   public boolean checkOrigin (String originHeaderValue) {
 
     return internal.checkOrigin(originHeaderValue);
   }
 
+  /**
+   * Delegates handshake modification.
+   */
   @Override
   public void modifyHandshake (ServerEndpointConfig serverEndpointConfig, HandshakeRequest request, HandshakeResponse response) {
 
     internal.modifyHandshake(serverEndpointConfig, request, response);
   }
 
+  /**
+   * Delegates endpoint instance creation.
+   */
   @Override
   public <T> T getEndpointInstance (Class<T> endpointClass)
     throws InstantiationException {

@@ -37,21 +37,41 @@ import jakarta.servlet.ServletContextListener;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
+/**
+ * Bootstraps the Oumuamua server within a servlet context.
+ *
+ * @param <V> value representation
+ */
 public class OumuamuaServletContextListener<V extends Value<V>> implements ServletContextListener {
 
   private OumuamuaServer<V> oumuamuaServer;
 
+  /**
+   * Provides a preconstructed server instance.
+   *
+   * @param oumuamuaServer server to install in the context
+   */
   public void setOumuamuaServer (OumuamuaServer<V> oumuamuaServer) {
 
     this.oumuamuaServer = oumuamuaServer;
   }
 
+  /**
+   * Starts the server and exposes it in the servlet context.
+   *
+   * @param servletContextEvent context initialization event
+   */
   @Override
   public void contextInitialized (ServletContextEvent servletContextEvent) {
 
     servletContextEvent.getServletContext().setAttribute(Server.ATTRIBUTE, oumuamuaServer);
   }
 
+  /**
+   * Cleans up the server when the context is destroyed.
+   *
+   * @param servletContextEvent destruction event
+   */
   @Override
   public void contextDestroyed (ServletContextEvent servletContextEvent) {
 

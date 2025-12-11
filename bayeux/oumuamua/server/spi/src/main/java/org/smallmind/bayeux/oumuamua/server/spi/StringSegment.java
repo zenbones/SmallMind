@@ -35,12 +35,20 @@ package org.smallmind.bayeux.oumuamua.server.spi;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.Segment;
 
+/**
+ * Concrete {@link Segment} backed by a string literal.
+ */
 public class StringSegment extends Segment {
 
   private static final StringSegment WILD_SEGMENT = new StringSegment(Channel.WILD);
   private static final StringSegment DEEP_WILD_SEGMENT = new StringSegment(Channel.DEEP_WILD);
   private final String name;
 
+  /**
+   * Creates a segment with the provided text.
+   *
+   * @param name segment text
+   */
   public StringSegment (String name) {
 
     if (name == null) {
@@ -51,16 +59,29 @@ public class StringSegment extends Segment {
     }
   }
 
+  /**
+   * @return shared instance representing a single-level wildcard
+   */
   public static StringSegment wild () {
 
     return WILD_SEGMENT;
   }
 
+  /**
+   * @return shared instance representing a deep wildcard
+   */
   public static StringSegment deepWild () {
 
     return DEEP_WILD_SEGMENT;
   }
 
+
+  /**
+   * Compares the segment to a character sequence for equality.
+   *
+   * @param charSequence sequence to match
+   * @return {@code true} if identical
+   */
   @Override
   public boolean matches (CharSequence charSequence) {
 
@@ -79,24 +100,44 @@ public class StringSegment extends Segment {
     }
   }
 
+
+  /**
+   * @return the literal value of the segment
+   */
   @Override
   public String toString () {
 
     return name;
   }
 
+  /**
+   * @return length of the segment
+   */
   @Override
   public int length () {
 
     return name.length();
   }
 
+  /**
+   * Retrieves a character by index.
+   *
+   * @param index character index
+   * @return character at the index
+   */
   @Override
   public char charAt (int index) {
 
     return name.charAt(index);
   }
 
+  /**
+   * Returns a subsequence of the segment text.
+   *
+   * @param start start offset
+   * @param end end offset
+   * @return subsequence text
+   */
   @Override
   public CharSequence subSequence (int start, int end) {
 

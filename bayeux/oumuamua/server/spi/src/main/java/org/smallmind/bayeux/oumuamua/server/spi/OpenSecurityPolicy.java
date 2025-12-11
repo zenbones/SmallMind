@@ -39,26 +39,60 @@ import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
+/**
+ * Security policy that permits all operations.
+ */
 public class OpenSecurityPolicy<V extends Value<V>> implements SecurityPolicy<V> {
 
+  /**
+   * Always permits handshake requests.
+   *
+   * @param session the requesting session
+   * @param message handshake message
+   * @return {@code null} to indicate no rejection
+   */
   @Override
   public SecurityRejection canHandshake (Session<V> session, Message<V> message) {
 
     return null;
   }
 
+  /**
+   * Always permits channel creation.
+   *
+   * @param session the requesting session
+   * @param path path to create
+   * @param message create message
+   * @return {@code null} to indicate no rejection
+   */
   @Override
   public SecurityRejection canCreate (Session<V> session, String path, Message<V> message) {
 
     return null;
   }
 
+  /**
+   * Always permits channel subscription.
+   *
+   * @param session the requesting session
+   * @param channel target channel
+   * @param message subscribe message
+   * @return {@code null} to indicate no rejection
+   */
   @Override
   public SecurityRejection canSubscribe (Session<V> session, Channel<V> channel, Message<V> message) {
 
     return null;
   }
 
+  /**
+   * Always permits publishing to any channel.
+   *
+   * @param session the requesting session
+   * @param channel target channel
+   * @param message publish message
+   * @return {@code null} to indicate no rejection
+   */
   @Override
   public SecurityRejection canPublish (Session<V> session, Channel<V> channel, Message<V> message) {
 

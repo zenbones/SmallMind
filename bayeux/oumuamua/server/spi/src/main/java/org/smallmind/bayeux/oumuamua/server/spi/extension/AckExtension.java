@@ -50,6 +50,12 @@ import org.smallmind.bayeux.oumuamua.server.spi.meta.Meta;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Bayeux server extension implementing the ack extension used by cometd clients.
+ * Tracks unacknowledged messages per session and resends missed packets until acknowledged.
+ *
+ * @param <V> concrete value type used in messages
+ */
 public class AckExtension<V extends Value<V>> extends AbstractServerPacketListener<V> {
 
   private static final String ACK_FLAG_ATTRIBUTE = "org.smallmind.bayeux.oumuamua.extension.ack.flag";
@@ -60,17 +66,35 @@ public class AckExtension<V extends Value<V>> extends AbstractServerPacketListen
   private final Level overflowLogLevel;
   private final int maxAckQueueSize;
 
+  /**
+   * Creates the extension with the given maximum queue size and a default debug overflow log level.
+   *
+   * @param maxAckQueueSize maximum number of messages that may be awaiting acknowledgment
+   */
   public AckExtension (int maxAckQueueSize) {
 
     this(maxAckQueueSize, Level.DEBUG);
   }
 
+  /**
+   * Creates the extension with custom overflow logging.
+   *
+   * @param maxAckQueueSize maximum number of messages that may be awaiting acknowledgment
+   * @param overflowLogLevel log level used when the ack queue is trimmed; {@code null} disables logging
+   */
   public AckExtension (int maxAckQueueSize, Level overflowLogLevel) {
 
     this.maxAckQueueSize = maxAckQueueSize;
     this.overflowLogLevel = (overflowLogLevel == null) ? Level.OFF : overflowLogLevel;
   }
 
+  /**
+   * Handles ack negotiation during handshake and incoming ack ids during connect requests.
+   *
+   * @param sender originating session
+   * @param packet inbound request packet
+   * @return the original packet
+   */
   @Override
   public Packet<V> onRequest (final Session<V> sender, Packet<V> packet) {
 
@@ -145,6 +169,13 @@ public class AckExtension<V extends Value<V>> extends AbstractServerPacketListen
     return packet;
   }
 
+  /**
+   * Adds ack metadata to responses and manages the resend/unacknowledged queues.
+   *
+   * @param sender originating session
+   * @param packet outbound response packet
+   * @return the possibly merged response packet
+   */
   @Override
   public Packet<V> onResponse (Session<V> sender, Packet<V> packet) {
 

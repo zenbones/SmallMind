@@ -32,6 +32,9 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api;
 
+/**
+ * Identifies how a packet is used within the Bayeux exchange.
+ */
 public enum PacketType {
 
   REQUEST, RESPONSE, DELIVERY

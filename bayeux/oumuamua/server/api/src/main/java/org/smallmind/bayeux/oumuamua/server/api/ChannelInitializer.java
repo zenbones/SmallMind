@@ -35,6 +35,11 @@ package org.smallmind.bayeux.oumuamua.server.api;
 import java.util.function.Consumer;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
+/**
+ * Initializes a {@link Channel} instance before it is registered with the server.
+ *
+ * @param <V> concrete {@link Value} implementation used for message payloads
+ */
 public interface ChannelInitializer<V extends Value<V>> extends Consumer<Channel<V>> {
 
 }

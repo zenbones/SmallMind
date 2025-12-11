@@ -32,6 +32,9 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api.json;
 
+/**
+ * Distinguishes the backing representation of numeric values.
+ */
 public enum NumberType {
 
   INTEGER, LONG, DOUBLE

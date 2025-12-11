@@ -55,6 +55,11 @@ import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Session implementation that tracks state, transport, and queued long-poll messages.
+ *
+ * @param <V> value representation
+ */
 public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed implements Session<V> {
 
   private final ReentrantLock longPollLock = new ReentrantLock();
@@ -73,6 +78,16 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   private final int maxLongPollQueueSize;
   private long lastContactTimestamp;
 
+  /**
+   * Constructs a session bound to the supplied connection.
+   *
+   * @param onConnectedCallback callback invoked when the session reaches CONNECTED
+   * @param onDisconnectedCallback callback invoked when the session disconnects
+   * @param connection initial connection
+   * @param maxLongPollQueueSize maximum queued responses for long polling
+   * @param maxIdleTimeoutMilliseconds idle timeout before termination
+   * @param overflowLogLevel log level for long-poll overflow
+   */
   public OumuamuaSession (Consumer<Session<V>> onConnectedCallback, Consumer<Session<V>> onDisconnectedCallback, Connection<V> connection, int maxLongPollQueueSize, long maxIdleTimeoutMilliseconds, Level overflowLogLevel) {
 
     this.onConnectedCallback = onConnectedCallback;
@@ -89,6 +104,13 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
     lastContactTimestamp = System.currentTimeMillis();
   }
 
+  /**
+   * Applies session listeners to an outbound packet, allowing transformation or rejection.
+   *
+   * @param sender originating session
+   * @param packet packet to process
+   * @return potentially modified packet, or {@code null} to cancel delivery
+   */
   private Packet<V> onProcessing (Session<V> sender, Packet<V> packet) {
 
     if (PacketType.RESPONSE.equals(packet.getPacketType()) || PacketType.DELIVERY.equals(packet.getPacketType())) {
@@ -108,35 +130,59 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
     return packet;
   }
 
+  /**
+   * Adds a session listener.
+   *
+   * @param listener listener to register
+   */
   @Override
   public void addListener (Listener<V> listener) {
 
     listenerList.add(listener);
   }
 
+  /**
+   * Removes a session listener.
+   *
+   * @param listener listener to remove
+   */
   @Override
   public void removeListener (Listener<V> listener) {
 
     listenerList.remove(listener);
   }
 
+  /**
+   * @return session identifier
+   */
   @Override
   public String getId () {
 
     return sessionId;
   }
 
+  /**
+   * @return maximum size of the long-poll queue
+   */
   @Override
   public int getMaxLongPollQueueSize () {
 
     return maxLongPollQueueSize;
   }
 
+  /**
+   * Replaces the underlying connection, typically after reconnection.
+   *
+   * @param connection new connection
+   */
   public void hijack (Connection<V> connection) {
 
     connectionRef.set(connection);
   }
 
+  /**
+   * Invoked during cleanup to notify the connection.
+   */
   public void onCleanup () {
 
     Connection<V> connection;
@@ -146,36 +192,56 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
     }
   }
 
+  /**
+   * @return {@code true} when the connection transport is local
+   */
   @Override
   public boolean isLocal () {
 
     return connectionRef.get().getTransport().isLocal();
   }
 
+  /**
+   * @return whether the session is currently using long polling
+   */
   @Override
   public boolean isLongPolling () {
 
     return longPolling.get();
   }
 
+  /**
+   * Sets long-polling mode explicitly.
+   *
+   * @param longPolling {@code true} when the session should long-poll
+   */
   @Override
   public void setLongPolling (boolean longPolling) {
 
     this.longPolling.set(longPolling);
   }
 
+  /**
+   * @return current session state
+   */
   @Override
   public synchronized SessionState getState () {
 
     return stateRef.get();
   }
 
+  /**
+   * Marks the session as handshook.
+   */
   @Override
   public synchronized void completeHandshake () {
 
     stateRef.set(SessionState.HANDSHOOK);
   }
 
+  /**
+   * Marks the session connected and invokes the connected callback.
+   */
   @Override
   public synchronized void completeConnection () {
 
@@ -183,6 +249,9 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
     onConnectedCallback.accept(this);
   }
 
+  /**
+   * Marks the session disconnected and invokes the disconnected callback.
+   */
   @Override
   public synchronized void completeDisconnect () {
 
@@ -190,11 +259,17 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
     onDisconnectedCallback.accept(this);
   }
 
+  /**
+   * @return transport currently associated with the session
+   */
   public Transport<V> getTransport () {
 
     return connectionRef.get().getTransport();
   }
 
+  /**
+   * Updates the last-contact timestamp if not disconnected.
+   */
   public synchronized void contact () {
 
     if (!SessionState.DISCONNECTED.equals(stateRef.get())) {
@@ -202,23 +277,49 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
     }
   }
 
+  /**
+   * Checks whether the session has exceeded its idle timeout.
+   *
+   * @param now current timestamp
+   * @return {@code true} if the session should be removed
+   */
   public synchronized boolean isRemovable (long now) {
 
     return (now - lastContactTimestamp) >= maxIdleTimeoutMilliseconds;
   }
 
+  /**
+   * Applies listeners to response packets.
+   *
+   * @param sender originating session
+   * @param packet packet to process
+   * @return processed packet or {@code null} to cancel
+   */
   @Override
   public Packet<V> onResponse (Session<V> sender, Packet<V> packet) {
 
     return onProcessing(sender, packet);
   }
 
+  /**
+   * Sends the packet using the active connection.
+   *
+   * @param packet packet to dispatch
+   */
   @Override
   public void dispatch (Packet<V> packet) {
 
     connectionRef.get().deliver(packet);
   }
 
+  /**
+   * Polls the long-poll queue for the next packet, waiting up to the provided timeout.
+   *
+   * @param timeout wait duration
+   * @param unit unit for timeout
+   * @return packet or {@code null} if none available before timeout
+   * @throws InterruptedException if interrupted while waiting
+   */
   @Override
   public Packet<V> poll (long timeout, TimeUnit unit)
     throws InterruptedException {
@@ -249,6 +350,13 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
     }
   }
 
+  /**
+   * Delivers a packet to this session, enqueueing or streaming based on configuration.
+   *
+   * @param fromChannel channel originating the delivery
+   * @param sender session that published the packet
+   * @param packet packet to deliver
+   */
   @Override
   public void deliver (Channel<V> fromChannel, Session<V> sender, Packet<V> packet) {
 

@@ -32,8 +32,17 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api;
 
+/**
+ * Indicates that a channel or route path is invalid.
+ */
 public class InvalidPathException extends OumuamuaException {
 
+  /**
+   * Constructs the exception with a formatted detail message.
+   *
+   * @param message message pattern describing the invalid path
+   * @param args optional arguments to format into the message
+   */
   public InvalidPathException (String message, Object... args) {
 
     super(message, args);

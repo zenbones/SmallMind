@@ -40,33 +40,60 @@ import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.spi.AbstractAttributed;
 import org.smallmind.bayeux.oumuamua.server.spi.Transports;
 
+/**
+ * Long-polling transport implementation for servlet environments.
+ *
+ * @param <V> value representation
+ */
 public class LongPollingTransport<V extends Value<V>> extends AbstractAttributed implements Transport<V> {
 
   private final ServletProtocol<V> servletProtocol;
 
+  /**
+   * Creates a long-polling transport bound to its protocol.
+   *
+   * @param servletProtocol owning protocol
+   */
   public LongPollingTransport (ServletProtocol<V> servletProtocol) {
 
     this.servletProtocol = servletProtocol;
   }
 
+  /**
+   * @return owning protocol
+   */
   @Override
   public Protocol<V> getProtocol () {
 
     return servletProtocol;
   }
 
+  /**
+   * @return transport name
+   */
   @Override
   public String getName () {
 
     return Transports.LONG_POLLING.getName();
   }
 
+  /**
+   * Long-poll transport is remote (not local).
+   *
+   * @return {@code false}
+   */
   @Override
   public boolean isLocal () {
 
     return Transports.LONG_POLLING.isLocal();
   }
 
+  /**
+   * Initializes the transport in the servlet context.
+   *
+   * @param server owning server
+   * @param servletConfig servlet configuration
+   */
   @Override
   public void init (Server<?> server, ServletConfig servletConfig) {
 

@@ -47,8 +47,20 @@ import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
 import org.smallmind.bayeux.oumuamua.server.spi.json.PacketUtility;
 import org.smallmind.nutsnbolts.util.Bytes;
 
+/**
+ * Utilities for serializing and deserializing packets transmitted over a backbone transport.
+ */
 public class RecordUtility {
 
+  /**
+   * Serializes a packet with its originating node name and route into a byte array.
+   *
+   * @param nodeName name of the node emitting the packet
+   * @param packet packet to serialize
+   * @param <V> value type used in the packet
+   * @return serialized representation
+   * @throws IOException if writing fails
+   */
   public static <V extends Value<V>> byte[] serialize (String nodeName, Packet<V> packet)
     throws IOException {
 
@@ -68,6 +80,16 @@ public class RecordUtility {
     return byteArrayOutputStream.toByteArray();
   }
 
+  /**
+   * Deserializes a packet record produced by {@link #serialize(String, Packet)}.
+   *
+   * @param codec codec used to decode message payloads
+   * @param buffer serialized bytes
+   * @param <V> value type used in the packet
+   * @return packet with node metadata restored
+   * @throws IOException if decoding fails
+   * @throws InvalidPathException if the recorded route is invalid
+   */
   public static <V extends Value<V>> DebonedPacket<V> deserialize (Codec<V> codec, byte[] buffer)
     throws IOException, InvalidPathException {
 
@@ -91,6 +113,13 @@ public class RecordUtility {
     return new DebonedPacket<>(nodeName, new Packet<>(PacketType.DELIVERY, null, new DefaultRoute(path), decodedMessages));
   }
 
+  /**
+   * Reads a length-prefixed buffer from the stream.
+   *
+   * @param byteArrayInputStream source stream
+   * @param lengthBuffer reusable buffer for reading the length prefix
+   * @return content bytes
+   */
   private static byte[] readRecordBuffer (ByteArrayInputStream byteArrayInputStream, byte[] lengthBuffer) {
 
     byte[] contentBuffer;

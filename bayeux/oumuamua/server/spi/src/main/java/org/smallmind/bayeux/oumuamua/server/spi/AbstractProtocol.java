@@ -38,10 +38,20 @@ import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
+/**
+ * Base {@link Protocol} implementation that dispatches lifecycle events to registered listeners.
+ *
+ * @param <V> concrete value type used in messages
+ */
 public abstract class AbstractProtocol<V extends Value<V>> implements Protocol<V> {
 
   private final ConcurrentLinkedQueue<Listener<V>> listenerList = new ConcurrentLinkedQueue<>();
 
+  /**
+   * Notifies protocol listeners of received messages.
+   *
+   * @param incomingMessages messages received from a client
+   */
   public void onReceipt (Message<V>[] incomingMessages) {
 
     for (Listener<V> listener : listenerList) {
@@ -51,6 +61,12 @@ public abstract class AbstractProtocol<V extends Value<V>> implements Protocol<V
     }
   }
 
+  /**
+   * Notifies listeners when a message is published.
+   *
+   * @param originatingMessage message supplied by the client
+   * @param outgoingMessage message produced for delivery
+   */
   public void onPublish (Message<V> originatingMessage, Message<V> outgoingMessage) {
 
     for (Listener<V> listener : listenerList) {
@@ -60,6 +76,11 @@ public abstract class AbstractProtocol<V extends Value<V>> implements Protocol<V
     }
   }
 
+  /**
+   * Notifies listeners when a packet is delivered.
+   *
+   * @param outgoingPacket the packet to be delivered
+   */
   public void onDelivery (Packet<V> outgoingPacket) {
 
     for (Listener<V> listener : listenerList) {
@@ -69,12 +90,22 @@ public abstract class AbstractProtocol<V extends Value<V>> implements Protocol<V
     }
   }
 
+  /**
+   * Adds a listener to the protocol.
+   *
+   * @param listener listener to add
+   */
   @Override
   public void addListener (Listener<V> listener) {
 
     listenerList.add(listener);
   }
 
+  /**
+   * Removes a listener from the protocol.
+   *
+   * @param listener listener to remove
+   */
   @Override
   public void removeListener (Listener<V> listener) {
 

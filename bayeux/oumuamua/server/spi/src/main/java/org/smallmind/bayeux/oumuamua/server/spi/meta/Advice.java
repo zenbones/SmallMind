@@ -32,17 +32,28 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.meta;
 
+/**
+ * Enumerates standard Bayeux advice fields.
+ */
 public enum Advice {
 
   INTERVAL("interval"), RECONNECT("reconnect"), TIMEOUT("timeout");
 
   private final String field;
 
+  /**
+   * Associates an advice entry with its JSON field name.
+   *
+   * @param field field name
+   */
   Advice (String field) {
 
     this.field = field;
   }
 
+  /**
+   * @return JSON field name for the advice entry
+   */
   public String getField () {
 
     return field;

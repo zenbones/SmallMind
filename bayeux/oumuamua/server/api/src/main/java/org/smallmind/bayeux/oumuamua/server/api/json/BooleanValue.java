@@ -32,12 +32,23 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api.json;
 
+/**
+ * Boolean JSON value wrapper.
+ */
 public interface BooleanValue<V extends Value<V>> extends Value<V> {
 
+  /**
+   * Identifies this value as a boolean.
+   *
+   * @return {@link ValueType#BOOLEAN}
+   */
   default ValueType getType () {
 
     return ValueType.BOOLEAN;
   }
 
+  /**
+   * @return the primitive boolean represented by this value
+   */
   boolean asBoolean ();
 }

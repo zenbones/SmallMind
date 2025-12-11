@@ -40,6 +40,11 @@ import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Background task that periodically removes idle channels from the channel tree.
+ *
+ * @param <V> value representation
+ */
 public class IdleChannelSifter<V extends Value<V>> implements Runnable {
 
   private final CountDownLatch finishLatch = new CountDownLatch(1);
@@ -49,6 +54,14 @@ public class IdleChannelSifter<V extends Value<V>> implements Runnable {
   private final Level idleChannelLogLevel;
   private final long idleChannelCycleMinutes;
 
+  /**
+   * Creates a sifter configured with scan cadence and logging.
+   *
+   * @param idleChannelCycleMinutes frequency at which idle channels are checked
+   * @param idleChannelLogLevel log level used for removal messages
+   * @param channelTree channel tree to inspect
+   * @param channelCallback callback invoked when a channel is removed
+   */
   public IdleChannelSifter (long idleChannelCycleMinutes, Level idleChannelLogLevel, ChannelTree<V> channelTree, Consumer<Channel<V>> channelCallback) {
 
     this.idleChannelCycleMinutes = idleChannelCycleMinutes;
@@ -57,6 +70,11 @@ public class IdleChannelSifter<V extends Value<V>> implements Runnable {
     this.channelCallback = channelCallback;
   }
 
+  /**
+   * Requests shutdown and waits for the worker thread to exit.
+   *
+   * @throws InterruptedException if interrupted while waiting
+   */
   public void stop ()
     throws InterruptedException {
 
@@ -64,6 +82,9 @@ public class IdleChannelSifter<V extends Value<V>> implements Runnable {
     exitLatch.await();
   }
 
+  /**
+   * Periodically walks the tree to terminate idle channels until stopped.
+   */
   @Override
   public void run () {
 

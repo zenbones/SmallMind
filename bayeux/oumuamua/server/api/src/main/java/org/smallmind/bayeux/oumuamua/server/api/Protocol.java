@@ -37,21 +37,55 @@ import jakarta.servlet.ServletException;
 import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
+/**
+ * Abstraction for a Bayeux protocol implementation that owns one or more transports.
+ *
+ * @param <V> concrete {@link Value} implementation used for JSON payloads
+ */
 public interface Protocol<V extends Value<V>> {
 
+  /**
+   * Marker for protocol listeners.
+   */
   interface Listener<V extends Value<V>> {
 
   }
 
+  /**
+   * Listener for protocol-level events such as message receipt and delivery.
+   */
   interface ProtocolListener<V extends Value<V>> extends Listener<V> {
 
+    /**
+     * Invoked when incoming messages are received from a client.
+     *
+     * @param incomingMessages the messages received in a batch
+     */
     void onReceipt (Message<V>[] incomingMessages);
 
+    /**
+     * Invoked when a published message is created from an incoming message.
+     *
+     * @param originatingMessage the message supplied by the client
+     * @param outgoingMessage the message to be delivered to subscribers
+     */
     void onPublish (Message<V> originatingMessage, Message<V> outgoingMessage);
 
+    /**
+     * Invoked when an outgoing packet is delivered to transports.
+     *
+     * @param outgoingPacket the packet being sent
+     */
     void onDelivery (Packet<V> outgoingPacket);
   }
 
+  /**
+   * Initializes the protocol and its transports using servlet configuration.
+   *
+   * @param server the hosting server
+   * @param servletConfig the servlet configuration
+   * @throws ServletException if transport initialization fails
+   */
   default void init (Server<V> server, ServletConfig servletConfig)
     throws ServletException {
 
@@ -60,17 +94,45 @@ public interface Protocol<V extends Value<V>> {
     }
   }
 
+  /**
+   * @return the protocol name used for registration
+   */
   String getName ();
 
+  /**
+   * @return {@code true} if the protocol operates using long polling
+   */
   boolean isLongPolling ();
 
+  /**
+   * @return timeout in milliseconds for long poll connections
+   */
   long getLongPollTimeoutMilliseconds ();
 
+  /**
+   * @return names of transports supported by this protocol
+   */
   String[] getTransportNames ();
 
+  /**
+   * Retrieves a transport by name.
+   *
+   * @param name the transport name
+   * @return the associated transport
+   */
   Transport<V> getTransport (String name);
 
+  /**
+   * Adds a protocol listener.
+   *
+   * @param listener listener to register
+   */
   void addListener (Listener<V> listener);
 
+  /**
+   * Removes a previously registered listener.
+   *
+   * @param listener listener to remove
+   */
   void removeListener (Listener<V> listener);
 }

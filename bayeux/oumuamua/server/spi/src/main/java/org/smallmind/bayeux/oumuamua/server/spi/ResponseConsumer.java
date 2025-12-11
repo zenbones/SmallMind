@@ -37,6 +37,11 @@ import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
+/**
+ * Functional interface used to consume responses produced while processing messages.
+ *
+ * @param <V> concrete value type used in messages
+ */
 @FunctionalInterface
 public interface ResponseConsumer<V extends Value<V>> extends BiConsumer<Session<V>, Packet<V>> {
 

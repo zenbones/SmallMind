@@ -32,26 +32,67 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api;
 
+/**
+ * Defines a channel route broken into path segments with matching helpers.
+ */
 public interface Route {
 
+  /**
+   * @return the channel path string
+   */
   String getPath ();
 
+  /**
+   * @return number of segments in the route
+   */
   int size ();
 
+  /**
+   * @return the last valid segment index
+   */
   int lastIndex ();
 
+  /**
+   * Retrieves a segment by index.
+   *
+   * @param index position of the segment
+   * @return the segment at the given index
+   */
   Segment getSegment (int index);
 
+  /**
+   * @return {@code true} if the route ends in a single-level wildcard
+   */
   boolean isWild ();
 
+  /**
+   * @return {@code true} if the route ends in a deep wildcard
+   */
   boolean isDeepWild ();
 
+  /**
+   * @return {@code true} if the route references a meta channel
+   */
   boolean isMeta ();
 
+  /**
+   * @return {@code true} if the route references a service channel
+   */
   boolean isService ();
 
+  /**
+   * Evaluates whether the provided path segments match this route.
+   *
+   * @param segments the segments to test
+   * @return {@code true} if they match
+   */
   boolean matches (String... segments);
 
+  /**
+   * Indicates whether the route can accept user messages.
+   *
+   * @return {@code true} when deliverable
+   */
   default boolean isDeliverable () {
 
     return !(isWild() || isDeepWild() || isMeta() || isService());

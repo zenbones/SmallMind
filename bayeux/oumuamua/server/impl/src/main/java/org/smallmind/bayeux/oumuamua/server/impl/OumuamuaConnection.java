@@ -37,8 +37,19 @@ import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.spi.Connection;
 
+/**
+ * Connection contract specialized for the Oumuamua server, providing default session lifecycle hooks.
+ *
+ * @param <V> value representation
+ */
 public interface OumuamuaConnection<V extends Value<V>> extends Connection<V> {
 
+  /**
+   * Creates and registers a new session with the server for this connection.
+   *
+   * @param server server creating the session
+   * @return newly created session
+   */
   @Override
   default Session<V> createSession (Server<V> server) {
 
@@ -49,12 +60,23 @@ public interface OumuamuaConnection<V extends Value<V>> extends Connection<V> {
     return session;
   }
 
+  /**
+   * Rebinds an existing session to this connection.
+   *
+   * @param session session being hijacked
+   */
   @Override
   default void hijackSession (Session<V> session) {
 
     ((OumuamuaSession<V>)session).hijack(this);
   }
 
+  /**
+   * Validates that the supplied session belongs to the same protocol and transport.
+   *
+   * @param session session to validate
+   * @return {@code true} if compatible
+   */
   @Override
   default boolean validateSession (Session<V> session) {
 
@@ -62,12 +84,23 @@ public interface OumuamuaConnection<V extends Value<V>> extends Connection<V> {
              && getTransport().getName().equals(((OumuamuaSession<V>)session).getTransport().getName());
   }
 
+  /**
+   * Updates the session's last-contact time.
+   *
+   * @param session session to refresh
+   */
   @Override
   default void updateSession (Session<V> session) {
 
     ((OumuamuaSession<V>)session).contact();
   }
 
+  /**
+   * Removes the session from the server on disconnect.
+   *
+   * @param server owning server
+   * @param session session that disconnected
+   */
   @Override
   default void onDisconnect (Server<V> server, Session<V> session) {
 

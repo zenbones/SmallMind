@@ -37,21 +37,37 @@ import java.io.StringWriter;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.json.ValueFactory;
 
+/**
+ * Base class for orthodox value implementations, wiring in the shared factory.
+ */
 public abstract class OrthodoxValue implements Value<OrthodoxValue> {
 
   private final OrthodoxValueFactory factory;
 
+  /**
+   * Associates the value with its factory.
+   *
+   * @param factory owning factory
+   */
   protected OrthodoxValue (OrthodoxValueFactory factory) {
 
     this.factory = factory;
   }
 
+  /**
+   * @return the factory that created this value
+   */
   @Override
   public ValueFactory<OrthodoxValue> getFactory () {
 
     return factory;
   }
 
+  /**
+   * Encodes the value to a string for debugging.
+   *
+   * @return encoded representation
+   */
   @Override
   public String toString () {
 

@@ -32,25 +32,52 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api;
 
+/**
+ * Lifecycle states for a session along with comparison helpers.
+ */
 public enum SessionState {
 
   INITIALIZED, HANDSHOOK, CONNECTED, DISCONNECTED;
 
+  /**
+   * Tests whether this state occurs before the provided state.
+   *
+   * @param state the state to compare against
+   * @return {@code true} if this state ordinal is less than the provided state
+   */
   public boolean lt (SessionState state) {
 
     return ordinal() < state.ordinal();
   }
 
+  /**
+   * Tests whether this state occurs before or at the provided state.
+   *
+   * @param state the state to compare against
+   * @return {@code true} if this state ordinal is less than or equal to the provided state
+   */
   public boolean lte (SessionState state) {
 
     return ordinal() <= state.ordinal();
   }
 
+  /**
+   * Tests whether this state occurs at or after the provided state.
+   *
+   * @param state the state to compare against
+   * @return {@code true} if this state ordinal is greater than or equal to the provided state
+   */
   public boolean gte (SessionState state) {
 
     return ordinal() >= state.ordinal();
   }
 
+  /**
+   * Tests whether this state occurs after the provided state.
+   *
+   * @param state the state to compare against
+   * @return {@code true} if this state ordinal is greater than the provided state
+   */
   public boolean ge (SessionState state) {
 
     return ordinal() > state.ordinal();

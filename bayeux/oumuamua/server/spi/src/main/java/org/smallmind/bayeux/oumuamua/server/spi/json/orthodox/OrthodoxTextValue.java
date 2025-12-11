@@ -37,10 +37,19 @@ import java.io.Writer;
 import com.fasterxml.jackson.core.io.JsonStringEncoder;
 import org.smallmind.bayeux.oumuamua.server.api.json.StringValue;
 
+/**
+ * Text value implementation for the orthodox codec.
+ */
 public class OrthodoxTextValue extends OrthodoxValue implements StringValue<OrthodoxValue> {
 
   private final String text;
 
+  /**
+   * Creates a string value.
+   *
+   * @param factory owning factory
+   * @param text text to store
+   */
   protected OrthodoxTextValue (OrthodoxValueFactory factory, String text) {
 
     super(factory);
@@ -48,12 +57,21 @@ public class OrthodoxTextValue extends OrthodoxValue implements StringValue<Orth
     this.text = text;
   }
 
+  /**
+   * @return underlying text
+   */
   @Override
   public String asText () {
 
     return text;
   }
 
+  /**
+   * Encodes the text with proper JSON escaping.
+   *
+   * @param writer destination writer
+   * @throws IOException if writing fails
+   */
   @Override
   public void encode (Writer writer)
     throws IOException {

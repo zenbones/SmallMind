@@ -32,12 +32,23 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api.json;
 
+/**
+ * String JSON value wrapper.
+ */
 public interface StringValue<V extends Value<V>> extends Value<V> {
 
+  /**
+   * Identifies this value as a string.
+   *
+   * @return {@link ValueType#STRING}
+   */
   default ValueType getType () {
 
     return ValueType.STRING;
   }
 
+  /**
+   * @return the underlying text content
+   */
   String asText ();
 }

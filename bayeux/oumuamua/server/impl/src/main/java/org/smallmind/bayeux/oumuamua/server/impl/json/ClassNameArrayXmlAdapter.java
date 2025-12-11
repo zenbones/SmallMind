@@ -36,14 +36,30 @@ import java.util.Arrays;
 import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 import org.smallmind.nutsnbolts.util.MutationUtility;
 
+/**
+ * JAXB adapter that serializes arrays by emitting the class names of each element.
+ */
 public class ClassNameArrayXmlAdapter extends XmlAdapter<String, Object[]> {
 
+  /**
+   * Unmarshalling is not supported for class name arrays.
+   *
+   * @param s serialized value
+   * @return never returns normally
+   * @throws UnsupportedOperationException always thrown
+   */
   @Override
   public Object[] unmarshal (String s) {
 
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * Converts the supplied array to a string of class names.
+   *
+   * @param objArray array to inspect
+   * @return string representation or {@code null} when the array is {@code null}
+   */
   @Override
   public String marshal (Object[] objArray) {
 

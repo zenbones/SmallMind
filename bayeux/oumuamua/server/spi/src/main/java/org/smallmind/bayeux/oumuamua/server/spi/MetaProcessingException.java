@@ -34,13 +34,27 @@ package org.smallmind.bayeux.oumuamua.server.spi;
 
 import org.smallmind.bayeux.oumuamua.server.api.OumuamuaException;
 
+/**
+ * Indicates a failure while processing a Bayeux meta message.
+ */
 public class MetaProcessingException extends OumuamuaException {
 
+  /**
+   * Creates an exception with a formatted message.
+   *
+   * @param message message template describing the problem
+   * @param args optional formatting arguments
+   */
   public MetaProcessingException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * Creates an exception that wraps another throwable.
+   *
+   * @param throwable underlying cause
+   */
   public MetaProcessingException (Throwable throwable) {
 
     super(throwable);

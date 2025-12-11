@@ -32,12 +32,29 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api;
 
+/**
+ * Represents a segment of a channel route with matching rules.
+ */
 public abstract class Segment implements CharSequence {
 
+  /**
+   * Determines whether this segment matches the provided character sequence.
+   *
+   * @param charSequence the sequence to test
+   * @return {@code true} if the segment matches
+   */
   public abstract boolean matches (CharSequence charSequence);
 
+  /**
+   * @return the literal representation of the segment
+   */
   public abstract String toString ();
 
+  /**
+   * Computes a hash code based on the characters in the segment.
+   *
+   * @return hash code for the segment
+   */
   @Override
   public int hashCode () {
 
@@ -50,6 +67,12 @@ public abstract class Segment implements CharSequence {
     return hashCode;
   }
 
+  /**
+   * Compares another object for equality based on segment matching rules.
+   *
+   * @param obj object to compare
+   * @return {@code true} if the object is a segment with equivalent content
+   */
   @Override
   public boolean equals (Object obj) {
 

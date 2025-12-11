@@ -42,41 +42,68 @@ import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.json.ValueFactory;
 import org.smallmind.nutsnbolts.util.IterableIterator;
 
+/**
+ * Object value wrapper that supports overlay mutations while preserving the original backing object.
+ *
+ * @param <V> concrete value type used in messages
+ */
 public class MergingObjectValue<V extends Value<V>> implements ObjectValue<V> {
 
   private final ObjectValue<V> innerObjectValue;
   private ObjectValue<V> outerObjectValue;
   private HashSet<String> removedSet;
 
+  /**
+   * Wraps an existing object value for copy-on-write style updates.
+   *
+   * @param innerObjectValue underlying object to wrap
+   */
   public MergingObjectValue (ObjectValue<V> innerObjectValue) {
 
     this.innerObjectValue = innerObjectValue;
   }
 
+  /**
+   * @return factory associated with the underlying object
+   */
   @Override
   public ValueFactory<V> getFactory () {
 
     return innerObjectValue.getFactory();
   }
 
+  /**
+   * @return number of visible fields
+   */
   @Override
   public int size () {
 
     return fieldNameSet().size();
   }
 
+  /**
+   * @return {@code true} when no fields are visible
+   */
   @Override
   public boolean isEmpty () {
 
     return size() == 0;
   }
 
+  /**
+   * @return iterator over visible field names
+   */
   @Override
   public Iterator<String> fieldNames () {
 
     return fieldNameSet().iterator();
   }
 
+  /**
+   * Computes the merged set of field names considering removals and additions.
+   *
+   * @return set of field names
+   */
   private HashSet<String> fieldNameSet () {
 
     HashSet<String> nameSet = new HashSet<>();
@@ -96,6 +123,12 @@ public class MergingObjectValue<V extends Value<V>> implements ObjectValue<V> {
     return nameSet;
   }
 
+  /**
+   * Retrieves a field value, creating wrappers for nested structures when necessary.
+   *
+   * @param field field name
+   * @return value or {@code null} if removed or missing
+   */
   @Override
   public Value<V> get (String field) {
 
@@ -138,6 +171,13 @@ public class MergingObjectValue<V extends Value<V>> implements ObjectValue<V> {
     }
   }
 
+  /**
+   * Puts or replaces a field in the overlay object.
+   *
+   * @param field field name
+   * @param value value to store
+   * @return this object
+   */
   @Override
   public <U extends Value<V>> ObjectValue<V> put (String field, U value) {
 
@@ -150,6 +190,12 @@ public class MergingObjectValue<V extends Value<V>> implements ObjectValue<V> {
     return this;
   }
 
+  /**
+   * Removes a field from both overlay and base objects.
+   *
+   * @param field field name to remove
+   * @return removed value if present
+   */
   @Override
   public Value<V> remove (String field) {
 
@@ -166,6 +212,11 @@ public class MergingObjectValue<V extends Value<V>> implements ObjectValue<V> {
     return (outerRemovedValue != null) ? outerRemovedValue : innerRemovedValue;
   }
 
+  /**
+   * Removes all visible fields.
+   *
+   * @return this object
+   */
   @Override
   public ObjectValue<V> removeAll () {
 
@@ -182,6 +233,12 @@ public class MergingObjectValue<V extends Value<V>> implements ObjectValue<V> {
     return this;
   }
 
+  /**
+   * Encodes the merged view of overlay and base objects.
+   *
+   * @param writer destination writer
+   * @throws IOException if encoding fails
+   */
   @Override
   public void encode (Writer writer)
     throws IOException {

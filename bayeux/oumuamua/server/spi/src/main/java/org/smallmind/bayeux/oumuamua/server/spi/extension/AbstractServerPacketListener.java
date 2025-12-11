@@ -37,20 +37,46 @@ import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
+/**
+ * No-op server packet listener that simply forwards packets unchanged.
+ *
+ * @param <V> concrete value type used in messages
+ */
 public abstract class AbstractServerPacketListener<V extends Value<V>> implements Server.PacketListener<V> {
 
+  /**
+   * Returns the request packet unchanged.
+   *
+   * @param sender originating session
+   * @param packet request packet
+   * @return the same packet instance
+   */
   @Override
   public Packet<V> onRequest (Session<V> sender, Packet<V> packet) {
 
     return packet;
   }
 
+  /**
+   * Returns the response packet unchanged.
+   *
+   * @param sender originating session
+   * @param packet response packet
+   * @return the same packet instance
+   */
   @Override
   public Packet<V> onResponse (Session<V> sender, Packet<V> packet) {
 
     return packet;
   }
 
+  /**
+   * Returns the delivery packet unchanged.
+   *
+   * @param sender originating session
+   * @param packet delivery packet
+   * @return the same packet instance
+   */
   @Override
   public Packet<V> onDelivery (Session<V> sender, Packet<V> packet) {
 

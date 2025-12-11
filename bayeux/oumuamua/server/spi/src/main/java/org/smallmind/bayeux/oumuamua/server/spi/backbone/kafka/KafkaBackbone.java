@@ -64,6 +64,11 @@ import org.smallmind.nutsnbolts.util.ComponentStatus;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Kafka-based {@link Backbone} implementation that distributes packets across clustered nodes.
+ *
+ * @param <V> concrete value type used in Bayeux messages
+ */
 public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
 
   private final ExecutorService executorService = new ThreadPoolExecutor(1, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(), new ThreadPoolExecutor.CallerRunsPolicy());
@@ -77,6 +82,16 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
   private final int concurrencyLimit;
   private ConsumerWorker<V>[] workers;
 
+  /**
+   * Creates a backbone using the given Kafka configuration.
+   *
+   * @param nodeName unique identifier for this node
+   * @param concurrencyLimit number of consumer threads
+   * @param startupGracePeriodSeconds time to wait for Kafka readiness
+   * @param topicName logical topic name (prefixed internally)
+   * @param servers Kafka bootstrap servers
+   * @throws KafkaConnectionException if Kafka connectivity fails
+   */
   public KafkaBackbone (String nodeName, int concurrencyLimit, int startupGracePeriodSeconds, String topicName, KafkaServer... servers)
     throws KafkaConnectionException {
 
@@ -94,11 +109,23 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
     producer = connector.createProducer("oumuamua-producer-" + topicName + "-" + nodeName);
   }
 
+  /**
+   * Creates a consumer instance for the given index.
+   *
+   * @param index worker index
+   * @return configured consumer
+   */
   private Consumer<Long, byte[]> createConsumer (int index) {
 
     return connector.createConsumer("oumuamua-consumer-" + index + "-" + topicName + "-" + nodeName, groupId, prefixedTopicName);
   }
 
+  /**
+   * Starts consumer workers and transitions the backbone to STARTED.
+   *
+   * @param server owning server instance
+   * @throws InterruptedException if interrupted while waiting on startup synchronization
+   */
   @Override
   public void startUp (Server<V> server)
     throws InterruptedException {
@@ -117,6 +144,11 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
     }
   }
 
+  /**
+   * Signals consumer workers to stop and waits for shutdown.
+   *
+   * @throws InterruptedException if interrupted during shutdown
+   */
   @Override
   public void shutDown ()
     throws InterruptedException {
@@ -133,6 +165,11 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
     }
   }
 
+  /**
+   * Publishes a packet asynchronously to Kafka.
+   *
+   * @param packet packet to distribute
+   */
   @Override
   public void publish (Packet<V> packet) {
 
@@ -145,6 +182,9 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
     });
   }
 
+  /**
+   * Worker that consumes records from Kafka and hands them to the server.
+   */
   private class ConsumerWorker<V extends Value<V>> implements Runnable {
 
     private final CountDownLatch exitLatch = new CountDownLatch(1);
@@ -154,6 +194,13 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
     private final int index;
     private Consumer<Long, byte[]> consumer;
 
+    /**
+     * Creates a consumer worker for a partition group.
+     *
+     * @param server owning server
+     * @param nodeName name of this node
+     * @param index worker index
+     */
     public ConsumerWorker (Server<V> server, String nodeName, int index) {
 
       this.server = server;
@@ -163,6 +210,11 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
       consumer = createConsumer(index);
     }
 
+    /**
+    * Initiates worker shutdown and waits for completion.
+    *
+    * @throws InterruptedException if interrupted while awaiting exit
+    */
     private void stop ()
       throws InterruptedException {
 
@@ -173,6 +225,9 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
       }
     }
 
+    /**
+     * Polls Kafka for records, deserializes packets, and delivers them to the server.
+     */
     @Override
     public void run () {
 

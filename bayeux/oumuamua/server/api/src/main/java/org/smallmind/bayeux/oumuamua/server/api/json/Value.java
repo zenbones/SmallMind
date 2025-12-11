@@ -35,12 +35,29 @@ package org.smallmind.bayeux.oumuamua.server.api.json;
 import java.io.IOException;
 import java.io.Writer;
 
+/**
+ * Base representation for JSON value types used by the server codec.
+ *
+ * @param <V> concrete value subtype
+ */
 public interface Value<V extends Value<V>> {
 
+  /**
+   * @return the factory capable of producing values of this type
+   */
   ValueFactory<V> getFactory ();
 
+  /**
+   * @return the enum type describing this value
+   */
   ValueType getType ();
 
+  /**
+   * Encodes the value to the provided writer.
+   *
+   * @param writer destination writer
+   * @throws IOException if writing fails
+   */
   void encode (Writer writer)
     throws IOException;
 }

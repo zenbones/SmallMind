@@ -46,8 +46,21 @@ import org.smallmind.bayeux.oumuamua.server.spi.json.JsonDeserializer;
 import org.smallmind.nutsnbolts.lang.FormattedIOException;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
+/**
+ * Jackson-based deserializer that converts JSON payloads into Bayeux message/value structures.
+ *
+ * @param <V> concrete value type produced
+ */
 public class JaxbDeserializer<V extends Value<V>> implements JsonDeserializer<V> {
 
+  /**
+   * Deserializes a byte buffer into messages.
+   *
+   * @param codec codec providing factories
+   * @param buffer encoded payload
+   * @return array of messages
+   * @throws IOException if parsing fails
+   */
   @Override
   public Message<V>[] read (Codec<V> codec, byte[] buffer)
     throws IOException {
@@ -55,6 +68,14 @@ public class JaxbDeserializer<V extends Value<V>> implements JsonDeserializer<V>
     return read(codec, JsonCodec.readAsJsonNode(buffer));
   }
 
+  /**
+   * Deserializes string data into messages.
+   *
+   * @param codec codec providing factories
+   * @param data encoded payload
+   * @return array of messages
+   * @throws IOException if parsing fails
+   */
   @Override
   public Message<V>[] read (Codec<V> codec, String data)
     throws IOException {
@@ -62,6 +83,14 @@ public class JaxbDeserializer<V extends Value<V>> implements JsonDeserializer<V>
     return read(codec, JsonCodec.readAsJsonNode(data));
   }
 
+  /**
+   * Deserializes the supplied JSON node into message structures.
+   *
+   * @param codec codec providing factories
+   * @param node parsed JSON tree
+   * @return array of messages
+   * @throws IOException if parsing fails or JSON is not object/array
+   */
   private Message<V>[] read (Codec<V> codec, JsonNode node)
     throws IOException {
 
@@ -100,6 +129,14 @@ public class JaxbDeserializer<V extends Value<V>> implements JsonDeserializer<V>
     }
   }
 
+  /**
+   * Converts an arbitrary object into a {@link Value} via JSON serialization.
+   *
+   * @param factory value factory
+   * @param object object to convert
+   * @return value representing the object
+   * @throws IOException if conversion fails
+   */
   @Override
   public Value<V> convert (ValueFactory<V> factory, Object object)
     throws IOException {
@@ -107,6 +144,14 @@ public class JaxbDeserializer<V extends Value<V>> implements JsonDeserializer<V>
     return walk(factory, JsonCodec.writeAsJsonNode(object));
   }
 
+  /**
+   * Recursively walks a JSON node to construct a {@link Value} hierarchy.
+   *
+   * @param factory value factory
+   * @param node JSON node to convert
+   * @return value representation
+   * @throws IOException if encountering unknown node types
+   */
   private Value<V> walk (ValueFactory<V> factory, JsonNode node)
     throws IOException {
 

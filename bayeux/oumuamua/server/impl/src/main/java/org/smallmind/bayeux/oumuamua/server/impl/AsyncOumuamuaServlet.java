@@ -56,18 +56,32 @@ import org.smallmind.bayeux.oumuamua.server.spi.Protocols;
 import org.smallmind.bayeux.oumuamua.server.spi.Transports;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Async servlet endpoint that receives Bayeux messages over long-polling HTTP.
+ *
+ * @param <V> value representation
+ */
 public class AsyncOumuamuaServlet<V extends Value<V>> extends HttpServlet {
 
   private final ExecutorService executorService = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<>(), new ThreadPoolExecutor.CallerRunsPolicy());
   private OumuamuaServer<V> server;
   private LongPollingConnection<V> connection;
 
+  /**
+   * @return servlet information string from the parent implementation
+   */
   @Override
   public String getServletInfo () {
 
     return super.getServletInfo();
   }
 
+  /**
+   * Initializes the servlet, wiring the Bayeux server, protocol, and transport.
+   *
+   * @param servletConfig servlet configuration
+   * @throws ServletException if the server, protocol, or transport is missing
+   */
   @Override
   public void init (ServletConfig servletConfig)
     throws ServletException {
@@ -96,6 +110,13 @@ public class AsyncOumuamuaServlet<V extends Value<V>> extends HttpServlet {
     }
   }
 
+  /**
+   * Handles inbound Bayeux envelopes posted by clients using async IO.
+   *
+   * @param request http request carrying the payload
+   * @param response http response for error handling
+   * @throws IOException if the payload cannot be read
+   */
   @Override
   protected void doPost (HttpServletRequest request, HttpServletResponse response)
     throws IOException {
@@ -127,6 +148,9 @@ public class AsyncOumuamuaServlet<V extends Value<V>> extends HttpServlet {
     }
   }
 
+  /**
+   * Shuts down the server and executor when the servlet is destroyed.
+   */
   @Override
   public void destroy () {
 
@@ -136,6 +160,11 @@ public class AsyncOumuamuaServlet<V extends Value<V>> extends HttpServlet {
     super.destroy();
   }
 
+  /**
+   * Asynchronous read listener that consumes the request body and forwards messages.
+   *
+   * @param <V> value representation
+   */
   private static class OumuamuaReadListener<V extends Value<V>> implements ReadListener {
 
     private final ExecutorService executorService;
@@ -146,6 +175,16 @@ public class AsyncOumuamuaServlet<V extends Value<V>> extends HttpServlet {
     private final byte[] contentBuffer;
     private int index = 0;
 
+    /**
+     * Creates a read listener to accumulate the incoming payload.
+     *
+     * @param executorService executor used to process messages
+     * @param server owning server
+     * @param connection long-poll connection used to deliver responses
+     * @param asyncContext async context for this request
+     * @param inputStream input stream for the request body
+     * @param contentBufferSize declared content length
+     */
     public OumuamuaReadListener (ExecutorService executorService, OumuamuaServer<V> server, LongPollingConnection<V> connection, AsyncContext asyncContext, ServletInputStream inputStream, int contentBufferSize) {
 
       this.executorService = executorService;
@@ -157,6 +196,11 @@ public class AsyncOumuamuaServlet<V extends Value<V>> extends HttpServlet {
       contentBuffer = new byte[contentBufferSize];
     }
 
+    /**
+     * Reads available data into the content buffer as it arrives.
+     *
+     * @throws IOException if more data is received than expected
+     */
     @Override
     public void onDataAvailable ()
       throws IOException {
@@ -173,6 +217,11 @@ public class AsyncOumuamuaServlet<V extends Value<V>> extends HttpServlet {
       }
     }
 
+    /**
+     * Triggered once the entire payload has been read; deserializes and processes messages.
+     *
+     * @throws IOException if the content cannot be parsed
+     */
     @Override
     public void onAllDataRead ()
       throws IOException {
@@ -185,6 +234,11 @@ public class AsyncOumuamuaServlet<V extends Value<V>> extends HttpServlet {
       executorService.submit(() -> connection.onMessages(asyncContext, messages));
     }
 
+    /**
+     * Handles read errors by completing the async context and logging the failure.
+     *
+     * @param throwable encountered error
+     */
     @Override
     public void onError (Throwable throwable) {
 

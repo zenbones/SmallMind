@@ -38,16 +38,32 @@ import org.smallmind.bayeux.oumuamua.server.spi.AbstractProtocol;
 import org.smallmind.bayeux.oumuamua.server.spi.Protocols;
 import org.smallmind.bayeux.oumuamua.server.spi.Transports;
 
+/**
+ * Protocol implementation backing servlet-based long-polling communication.
+ *
+ * @param <V> value representation
+ */
 public class ServletProtocol<V extends Value<V>> extends AbstractProtocol<V> {
 
   private final LongPollingTransport<V> longPollingTransport;
   private final long longPollTimeoutMilliseconds;
 
+  /**
+   * Creates a protocol with the supplied timeout and no listeners.
+   *
+   * @param longPollTimeoutMilliseconds maximum long-poll timeout in milliseconds
+   */
   public ServletProtocol (long longPollTimeoutMilliseconds) {
 
     this(longPollTimeoutMilliseconds, null);
   }
 
+  /**
+   * Creates a protocol with the supplied timeout and listeners.
+   *
+   * @param longPollTimeoutMilliseconds maximum long-poll timeout in milliseconds
+   * @param listeners protocol listeners
+   */
   public ServletProtocol (long longPollTimeoutMilliseconds, ProtocolListener<V>[] listeners) {
 
     this.longPollTimeoutMilliseconds = longPollTimeoutMilliseconds;
@@ -61,30 +77,50 @@ public class ServletProtocol<V extends Value<V>> extends AbstractProtocol<V> {
     }
   }
 
+  /**
+   * @return protocol name
+   */
   @Override
   public String getName () {
 
     return Protocols.SERVLET.getName();
   }
 
+  /**
+   * Servlet protocol uses long-polling semantics.
+   *
+   * @return {@code true}
+   */
   @Override
   public boolean isLongPolling () {
 
     return true;
   }
 
+  /**
+   * @return configured maximum long-poll timeout in milliseconds
+   */
   @Override
   public long getLongPollTimeoutMilliseconds () {
 
     return longPollTimeoutMilliseconds;
   }
 
+  /**
+   * @return available transport names (long polling only)
+   */
   @Override
   public String[] getTransportNames () {
 
     return new String[] {Transports.LONG_POLLING.getName()};
   }
 
+  /**
+   * Retrieves the long-polling transport by name.
+   *
+   * @param name transport name
+   * @return long-polling transport, or {@code null} if name mismatched
+   */
   @Override
   public Transport<V> getTransport (String name) {
 

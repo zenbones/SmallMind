@@ -32,17 +32,28 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi;
 
+/**
+ * Supported protocol names for transport negotiation.
+ */
 public enum Protocols {
 
   WEBSOCKET("websocket"), SERVLET("servlet");
 
   private final String name;
 
+  /**
+   * Associates an enum value with a string name.
+   *
+   * @param name protocol name
+   */
   Protocols (String name) {
 
     this.name = name;
   }
 
+  /**
+   * @return protocol name used in negotiation
+   */
   public String getName () {
 
     return name;

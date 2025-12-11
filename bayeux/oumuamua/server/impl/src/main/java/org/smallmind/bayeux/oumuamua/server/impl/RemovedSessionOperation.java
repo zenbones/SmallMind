@@ -36,15 +36,28 @@ import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
+/**
+ * {@link ChannelOperation} that removes a departed session from every channel.
+ *
+ * @param <V> value representation
+ */
 public class RemovedSessionOperation<V extends Value<V>> implements ChannelOperation<V> {
 
   private final Session<V> session;
 
+  /**
+   * @param session session that has been removed from the server
+   */
   public RemovedSessionOperation (Session<V> session) {
 
     this.session = session;
   }
 
+  /**
+   * Unsubscribes the removed session from the channel attached to the branch.
+   *
+   * @param channelBranch branch whose channel should be updated
+   */
   @Override
   public void operate (ChannelBranch<V> channelBranch) {
 

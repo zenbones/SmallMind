@@ -32,17 +32,28 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.meta;
 
+/**
+ * Advice reconnect options enumerated by the Bayeux protocol.
+ */
 public enum Reconnect {
 
   RETRY("retry"), HANDSHAKE("handshake"), NONE("none");
 
   private final String code;
 
+  /**
+   * Associates the enum value with its wire code.
+   *
+   * @param code reconnect code string
+   */
   Reconnect (String code) {
 
     this.code = code;
   }
 
+  /**
+   * @return reconnect code used in advice
+   */
   public String getCode () {
 
     return code;

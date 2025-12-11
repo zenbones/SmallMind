@@ -34,8 +34,18 @@ package org.smallmind.bayeux.oumuamua.server.spi;
 
 import org.smallmind.bayeux.oumuamua.server.api.InvalidPathException;
 
+/**
+ * Validates Bayeux channel path strings and returns segment boundaries.
+ */
 public class PathValidator {
 
+  /**
+   * Validates the given path, ensuring proper formatting and wildcard usage.
+   *
+   * @param path channel path to validate
+   * @return array of slash positions delimiting segments
+   * @throws InvalidPathException if validation fails
+   */
   public static int[] validate (String path)
     throws InvalidPathException {
 

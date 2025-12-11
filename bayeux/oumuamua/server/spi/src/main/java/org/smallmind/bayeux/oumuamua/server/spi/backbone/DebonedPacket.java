@@ -35,22 +35,39 @@ package org.smallmind.bayeux.oumuamua.server.spi.backbone;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
+/**
+ * Wrapper used by backbones to tag packets with the originating node.
+ *
+ * @param <V> concrete value type used in messages
+ */
 public class DebonedPacket<V extends Value<V>> {
 
   private final Packet<V> packet;
   private final String nodeName;
 
+  /**
+   * Creates the wrapper.
+   *
+   * @param nodeName identifier of the sending node
+   * @param packet packet being propagated
+   */
   public DebonedPacket (String nodeName, Packet<V> packet) {
 
     this.nodeName = nodeName;
     this.packet = packet;
   }
 
+  /**
+   * @return the wrapped packet
+   */
   public Packet<V> getPacket () {
 
     return packet;
   }
 
+  /**
+   * @return name of the node that created the packet
+   */
   public String getNodeName () {
 
     return nodeName;

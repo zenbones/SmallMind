@@ -36,13 +36,34 @@ import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
+/**
+ * Transport-independent backbone used to fan out packets across clustered nodes.
+ *
+ * @param <V> concrete {@link Value} implementation used for message payloads
+ */
 public interface Backbone<V extends Value<V>> {
 
+  /**
+   * Starts the backbone and binds it to a server.
+   *
+   * @param server the hosting server
+   * @throws Exception if startup fails
+   */
   void startUp (Server<V> server)
     throws Exception;
 
+  /**
+   * Shuts down the backbone, releasing resources.
+   *
+   * @throws InterruptedException if shutdown is interrupted
+   */
   void shutDown ()
     throws InterruptedException;
 
+  /**
+   * Publishes a packet to other nodes.
+   *
+   * @param packet packet to distribute
+   */
   void publish (Packet<V> packet);
 }

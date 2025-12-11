@@ -34,16 +34,47 @@ package org.smallmind.bayeux.oumuamua.server.api.json;
 
 import java.io.IOException;
 
+/**
+ * Encodes and decodes Bayeux messages to and from transport representations.
+ *
+ * @param <V> concrete value subtype used within messages
+ */
 public interface Codec<V extends Value<V>> {
 
+  /**
+   * Creates an empty message bound to this codec's factory.
+   *
+   * @return new message instance
+   */
   Message<V> create ();
 
+  /**
+   * Parses messages from a byte buffer.
+   *
+   * @param buffer encoded payload
+   * @return decoded messages
+   * @throws IOException if parsing fails
+   */
   Message<V>[] from (byte[] buffer)
     throws IOException;
 
+  /**
+   * Parses messages from a string.
+   *
+   * @param data encoded payload
+   * @return decoded messages
+   * @throws IOException if parsing fails
+   */
   Message<V>[] from (String data)
     throws IOException;
 
+  /**
+   * Converts an arbitrary object into a {@link Value} representation.
+   *
+   * @param object object to convert
+   * @return converted value
+   * @throws IOException if conversion fails
+   */
   Value<V> convert (Object object)
     throws IOException;
 }

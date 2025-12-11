@@ -35,8 +35,18 @@ package org.smallmind.bayeux.oumuamua.server.spi.json;
 import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
+/**
+ * Copy-on-write wrapper around a {@link Message}, allowing merged updates without modifying the original.
+ *
+ * @param <V> concrete value type used in messages
+ */
 public class MessageDouble<V extends Value<V>> extends MergingObjectValue<V> implements Message<V> {
 
+  /**
+   * Wraps an existing message for merging behavior.
+   *
+   * @param message source message to wrap
+   */
   public MessageDouble (Message<V> message) {
 
     super(message);

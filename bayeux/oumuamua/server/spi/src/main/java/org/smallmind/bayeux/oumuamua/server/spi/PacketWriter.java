@@ -34,20 +34,40 @@ package org.smallmind.bayeux.oumuamua.server.spi;
 
 import java.io.Writer;
 
+/**
+ * Simple {@link Writer} that appends all output to a provided {@link StringBuilder}.
+ */
 public class PacketWriter extends Writer {
 
   private final StringBuilder builder;
 
+  /**
+   * Creates a writer that appends to the supplied builder.
+   *
+   * @param builder destination builder
+   */
   public PacketWriter (StringBuilder builder) {
 
     this.builder = builder;
   }
 
+  /**
+   * Writes a single character to the builder.
+   *
+   * @param c character to write
+   */
   public void write (int c) {
 
     builder.append((char)c);
   }
 
+  /**
+   * Writes a range of characters from an array.
+   *
+   * @param cbuf source buffer
+   * @param off offset in the buffer
+   * @param len number of characters to write
+   */
   public void write (char cbuf[], int off, int len) {
 
     if (cbuf == null) {
@@ -61,6 +81,11 @@ public class PacketWriter extends Writer {
     }
   }
 
+  /**
+   * Writes a complete string.
+   *
+   * @param str string to write
+   */
   public void write (String str) {
 
     if (str == null) {
@@ -70,6 +95,13 @@ public class PacketWriter extends Writer {
     }
   }
 
+  /**
+   * Writes a substring.
+   *
+   * @param str source string
+   * @param off starting offset
+   * @param len number of characters
+   */
   public void write (String str, int off, int len) {
 
     if (str == null) {
@@ -79,16 +111,25 @@ public class PacketWriter extends Writer {
     }
   }
 
+  /**
+   * No-op flush because data is kept in memory.
+   */
   @Override
   public void flush () {
 
   }
 
+  /**
+   * No-op close because there are no external resources.
+   */
   @Override
   public void close () {
 
   }
 
+  /**
+   * @return string representation of buffered data
+   */
   public String toString () {
 
     return builder.toString();

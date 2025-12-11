@@ -32,8 +32,16 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api.json;
 
+/**
+ * JSON null value wrapper.
+ */
 public interface NullValue<V extends Value<V>> extends Value<V> {
 
+  /**
+   * Identifies this value as null.
+   *
+   * @return {@link ValueType#NULL}
+   */
   default ValueType getType () {
 
     return ValueType.NULL;

@@ -32,31 +32,58 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api;
 
+/**
+ * Describes a decision to reject an operation for security reasons.
+ */
 public class SecurityRejection {
 
   private static final SecurityRejection NO_REASON = new SecurityRejection(null);
   private final String reason;
 
+  /**
+   * Creates a rejection with a textual reason.
+   *
+   * @param reason explanation for the rejection; may be {@code null} to indicate no rejection
+   */
   private SecurityRejection (String reason) {
 
     this.reason = reason;
   }
 
+  /**
+   * Produces a value indicating the action is permitted.
+   *
+   * @return an instance without a rejection reason
+   */
   public static SecurityRejection noReason () {
 
     return NO_REASON;
   }
 
+  /**
+   * Produces a rejection describing why the action is denied.
+   *
+   * @param reason explanation for the denial
+   * @return a new rejection instance
+   */
   public static SecurityRejection reason (String reason) {
 
     return new SecurityRejection(reason);
   }
 
+  /**
+   * Indicates whether a reason exists.
+   *
+   * @return {@code true} if a rejection reason has been set
+   */
   public boolean hasReason () {
 
     return reason != null;
   }
 
+  /**
+   * @return the rejection reason, or {@code null} if none
+   */
   public String getReason () {
 
     return reason;

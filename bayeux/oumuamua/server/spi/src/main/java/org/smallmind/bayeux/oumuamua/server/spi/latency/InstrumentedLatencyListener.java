@@ -48,10 +48,20 @@ import org.smallmind.claxon.registry.Tag;
 import org.smallmind.claxon.registry.meter.HistogramBuilder;
 import org.smallmind.claxon.registry.meter.MeterFactory;
 
+/**
+ * Protocol listener that measures end-to-end latency between message receipt and delivery.
+ *
+ * @param <V> concrete value type used in messages
+ */
 public class InstrumentedLatencyListener<V extends Value<V>> implements Protocol.ProtocolListener<V> {
 
   private final String hostName;
 
+  /**
+   * Builds the listener, capturing the local host name for tagging metrics.
+   *
+   * @throws UnknownHostException if the local host cannot be resolved
+   */
   public InstrumentedLatencyListener ()
     throws UnknownHostException {
 
@@ -60,6 +70,11 @@ public class InstrumentedLatencyListener<V extends Value<V>> implements Protocol
     hostName = localHost.getHostName();
   }
 
+  /**
+   * Stamps incoming messages with the current timestamp for later latency calculation.
+   *
+   * @param incomingMessages messages received from the transport
+   */
   @Override
   public void onReceipt (Message<V>[] incomingMessages) {
 
@@ -73,6 +88,12 @@ public class InstrumentedLatencyListener<V extends Value<V>> implements Protocol
     }
   }
 
+  /**
+   * Copies latency metadata from the originating message to the outgoing message so it survives publish.
+   *
+   * @param originatingMessage original message from the client
+   * @param outgoingMessage message being delivered
+   */
   @Override
   public void onPublish (Message<V> originatingMessage, Message<V> outgoingMessage) {
 
@@ -88,6 +109,11 @@ public class InstrumentedLatencyListener<V extends Value<V>> implements Protocol
     }
   }
 
+  /**
+   * Computes delivery latency metrics and records them via Claxon.
+   *
+   * @param outgoingPacket packet being delivered
+   */
   @Override
   public void onDelivery (Packet<V> outgoingPacket) {
 
@@ -119,6 +145,12 @@ public class InstrumentedLatencyListener<V extends Value<V>> implements Protocol
     }
   }
 
+  /**
+   * Determines whether the packet originated from a remote backbone hop.
+   *
+   * @param extValue extension object holding backbone metadata
+   * @return {@code true} if the packet was received from another node
+   */
   private boolean isRemote (ObjectValue<V> extValue) {
 
     Value<V> backboneValue;

@@ -32,6 +32,9 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi;
 
+/**
+ * Enumeration of transport names and whether they operate locally.
+ */
 public enum Transports {
 
   WEBSOCKET("websocket", false), LONG_POLLING("long-polling", false);
@@ -39,17 +42,29 @@ public enum Transports {
   private final String name;
   private final boolean local;
 
+  /**
+   * Associates a transport name with a locality flag.
+   *
+   * @param name transport negotiation name
+   * @param local {@code true} if the transport should not be clustered
+   */
   Transports (String name, boolean local) {
 
     this.name = name;
     this.local = local;
   }
 
+  /**
+   * @return transport name
+   */
   public String getName () {
 
     return name;
   }
 
+  /**
+   * @return {@code true} if the transport is local-only
+   */
   public boolean isLocal () {
 
     return local;

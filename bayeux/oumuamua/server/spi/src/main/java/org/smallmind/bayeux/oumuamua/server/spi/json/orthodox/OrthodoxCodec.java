@@ -38,23 +38,41 @@ import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.spi.json.JsonDeserializer;
 
+/**
+ * Codec implementation using the orthodox value model and an injected JSON deserializer.
+ */
 public class OrthodoxCodec implements Codec<OrthodoxValue> {
 
   private static final OrthodoxValueFactory FACTORY = new OrthodoxValueFactory();
 
   private final JsonDeserializer<OrthodoxValue> deserializer;
 
+  /**
+   * Creates the codec using the provided deserializer.
+   *
+   * @param deserializer JSON deserializer to use
+   */
   public OrthodoxCodec (JsonDeserializer<OrthodoxValue> deserializer) {
 
     this.deserializer = deserializer;
   }
 
+  /**
+   * @return a new empty message
+   */
   @Override
   public Message<OrthodoxValue> create () {
 
     return new OrthodoxMessage(this, FACTORY);
   }
 
+  /**
+   * Parses messages from a byte buffer.
+   *
+   * @param buffer encoded payload
+   * @return decoded messages
+   * @throws IOException if parsing fails
+   */
   @Override
   public Message<OrthodoxValue>[] from (byte[] buffer)
     throws IOException {
@@ -62,6 +80,13 @@ public class OrthodoxCodec implements Codec<OrthodoxValue> {
     return deserializer.read(this, buffer);
   }
 
+  /**
+   * Parses messages from string data.
+   *
+   * @param data encoded payload
+   * @return decoded messages
+   * @throws IOException if parsing fails
+   */
   @Override
   public Message<OrthodoxValue>[] from (String data)
     throws IOException {
@@ -69,6 +94,13 @@ public class OrthodoxCodec implements Codec<OrthodoxValue> {
     return deserializer.read(this, data);
   }
 
+  /**
+   * Converts an arbitrary object to a value using the shared factory.
+   *
+   * @param object object to convert
+   * @return converted value
+   * @throws IOException if conversion fails
+   */
   @Override
   public Value<OrthodoxValue> convert (Object object)
     throws IOException {

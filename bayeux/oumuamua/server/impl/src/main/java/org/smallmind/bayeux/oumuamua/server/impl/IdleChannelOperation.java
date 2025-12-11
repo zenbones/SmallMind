@@ -39,12 +39,24 @@ import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * {@link ChannelOperation} that prunes idle, non-persistent channels from the tree.
+ *
+ * @param <V> value representation
+ */
 public class IdleChannelOperation<V extends Value<V>> implements ChannelOperation<V> {
 
   private final Consumer<Channel<V>> channelCallback;
   private final Level idleChannelLogLevel;
   private final long now;
 
+  /**
+   * Creates an operation that removes idle channels older than the supplied timestamp.
+   *
+   * @param now reference time used to determine idleness
+   * @param idleChannelLogLevel log level for termination events
+   * @param channelCallback callback invoked when a channel is removed
+   */
   public IdleChannelOperation (long now, Level idleChannelLogLevel, Consumer<Channel<V>> channelCallback) {
 
     this.now = now;
@@ -52,6 +64,11 @@ public class IdleChannelOperation<V extends Value<V>> implements ChannelOperatio
     this.channelCallback = channelCallback;
   }
 
+  /**
+   * Removes the channel from the supplied branch when it has expired.
+   *
+   * @param channelBranch branch to inspect
+   */
   @Override
   public void operate (ChannelBranch<V> channelBranch) {
 

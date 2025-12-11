@@ -37,28 +37,54 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import org.smallmind.bayeux.oumuamua.server.api.Attributed;
 
+/**
+ * Thread-safe {@link Attributed} implementation backed by a concurrent map.
+ */
 public class AbstractAttributed implements Attributed {
 
   private final ConcurrentHashMap<String, Object> attributeMap = new ConcurrentHashMap<>();
 
+  /**
+   * Returns a snapshot of the stored attribute names.
+   *
+   * @return copy of the attribute name set
+   */
   @Override
   public synchronized Set<String> getAttributeNames () {
 
     return new HashSet<>(attributeMap.keySet());
   }
 
+  /**
+   * Looks up an attribute by name.
+   *
+   * @param name attribute key
+   * @return stored value or {@code null}
+   */
   @Override
   public synchronized Object getAttribute (String name) {
 
     return attributeMap.get(name);
   }
 
+  /**
+   * Associates a value with the provided name.
+   *
+   * @param name attribute key
+   * @param value value to store
+   */
   @Override
   public synchronized void setAttribute (String name, Object value) {
 
     attributeMap.put(name, value);
   }
 
+  /**
+   * Removes a named attribute.
+   *
+   * @param name attribute key
+   * @return previous value or {@code null}
+   */
   @Override
   public synchronized Object removeAttribute (String name) {
 

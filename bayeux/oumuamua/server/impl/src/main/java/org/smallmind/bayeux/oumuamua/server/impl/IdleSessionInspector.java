@@ -39,6 +39,11 @@ import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Background inspector that disconnects and cleans up idle sessions.
+ *
+ * @param <V> value representation
+ */
 public class IdleSessionInspector<V extends Value<V>> implements Runnable {
 
   private final CountDownLatch finishLatch = new CountDownLatch(1);
@@ -47,6 +52,13 @@ public class IdleSessionInspector<V extends Value<V>> implements Runnable {
   private final Level idleSessionLogLevel;
   private final long connectionMaintenanceCycleMinutes;
 
+  /**
+   * Constructs an inspector that periodically evaluates sessions for idleness.
+   *
+   * @param server owning server
+   * @param connectionMaintenanceCycleMinutes cadence for maintenance checks
+   * @param idleSessionLogLevel log level used when terminating idle sessions
+   */
   public IdleSessionInspector (OumuamuaServer<V> server, long connectionMaintenanceCycleMinutes, Level idleSessionLogLevel) {
 
     this.server = server;
@@ -54,6 +66,11 @@ public class IdleSessionInspector<V extends Value<V>> implements Runnable {
     this.idleSessionLogLevel = idleSessionLogLevel;
   }
 
+  /**
+   * Requests shutdown and waits for the worker to exit.
+   *
+   * @throws InterruptedException if interrupted while waiting
+   */
   public void stop ()
     throws InterruptedException {
 
@@ -61,6 +78,9 @@ public class IdleSessionInspector<V extends Value<V>> implements Runnable {
     exitLatch.await();
   }
 
+  /**
+   * Loops until stopped, terminating idle sessions and cleaning up their channels.
+   */
   @Override
   public void run () {
 

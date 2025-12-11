@@ -35,6 +35,9 @@ package org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356;
 import jakarta.websocket.Endpoint;
 import jakarta.websocket.Extension;
 
+/**
+ * Configuration holder for the JSR-356 websocket transport.
+ */
 public class WebsocketConfiguration {
 
   private final Class<? extends Endpoint> endpointClass;
@@ -49,67 +52,119 @@ public class WebsocketConfiguration {
   // Use the default
   private int maximumTextMessageBufferSize = -1;
 
+  /**
+   * Creates a configuration with the mandatory endpoint class and base URL.
+   *
+   * @param endpointClass websocket endpoint implementation
+   * @param oumuamuaUrl base URL for the Oumuamua endpoint
+   */
   public WebsocketConfiguration (Class<? extends Endpoint> endpointClass, String oumuamuaUrl) {
 
     this.endpointClass = endpointClass;
     this.oumuamuaUrl = oumuamuaUrl;
   }
 
+  /**
+   * @return endpoint class to register
+   */
   public Class<? extends Endpoint> getEndpointClass () {
 
     return endpointClass;
   }
 
+  /**
+   * @return configured Oumuamua URL
+   */
   public String getOumuamuaUrl () {
 
     return oumuamuaUrl;
   }
 
+  /**
+   * @return configured websocket extensions
+   */
   public Extension[] getExtensions () {
 
     return extensions;
   }
 
+  /**
+   * Sets extensions to register with the endpoint.
+   *
+   * @param extensions websocket extensions
+   */
   public void setExtensions (Extension[] extensions) {
 
     this.extensions = extensions;
   }
 
+  /**
+   * @return negotiated subprotocol
+   */
   public String getSubProtocol () {
 
     return subProtocol;
   }
 
+  /**
+   * Sets the subprotocol to request.
+   *
+   * @param subProtocol subprotocol name
+   */
   public void setSubProtocol (String subProtocol) {
 
     this.subProtocol = subProtocol;
   }
 
+  /**
+   * @return maximum idle timeout in milliseconds (-1 for default)
+   */
   public long getMaxIdleTimeoutMilliseconds () {
 
     return maxIdleTimeoutMilliseconds;
   }
 
+  /**
+   * Sets the maximum idle timeout.
+   *
+   * @param maxIdleTimeoutMilliseconds timeout in milliseconds
+   */
   public void setMaxIdleTimeoutMilliseconds (long maxIdleTimeoutMilliseconds) {
 
     this.maxIdleTimeoutMilliseconds = maxIdleTimeoutMilliseconds;
   }
 
+  /**
+   * @return async send timeout in milliseconds
+   */
   public long getAsyncSendTimeoutMilliseconds () {
 
     return asyncSendTimeoutMilliseconds;
   }
 
+  /**
+   * Sets the async send timeout.
+   *
+   * @param asyncSendTimeoutMilliseconds timeout in milliseconds
+   */
   public void setAsyncSendTimeoutMilliseconds (long asyncSendTimeoutMilliseconds) {
 
     this.asyncSendTimeoutMilliseconds = asyncSendTimeoutMilliseconds;
   }
 
+  /**
+   * @return maximum text message buffer size (-1 for default)
+   */
   public int getMaximumTextMessageBufferSize () {
 
     return maximumTextMessageBufferSize;
   }
 
+  /**
+   * Sets the maximum text message buffer size.
+   *
+   * @param maximumTextMessageBufferSize buffer size in characters
+   */
   public void setMaximumTextMessageBufferSize (int maximumTextMessageBufferSize) {
 
     this.maximumTextMessageBufferSize = maximumTextMessageBufferSize;

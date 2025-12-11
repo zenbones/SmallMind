@@ -32,20 +32,43 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api.json;
 
+/**
+ * Numeric JSON value wrapper.
+ */
 public interface NumberValue<V extends Value<V>> extends Value<V> {
 
+  /**
+   * Identifies this value as numeric.
+   *
+   * @return {@link ValueType#NUMBER}
+   */
   default ValueType getType () {
 
     return ValueType.NUMBER;
   }
 
+  /**
+   * @return the numeric type representation
+   */
   NumberType getNumberType ();
 
+  /**
+   * @return the boxed number value
+   */
   Number asNumber ();
 
+  /**
+   * @return value coerced to int
+   */
   int asInt ();
 
+  /**
+   * @return value coerced to long
+   */
   long asLong ();
 
+  /**
+   * @return value coerced to double
+   */
   double asDouble ();
 }

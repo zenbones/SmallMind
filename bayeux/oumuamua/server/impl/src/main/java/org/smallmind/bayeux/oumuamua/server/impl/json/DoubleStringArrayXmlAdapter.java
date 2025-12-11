@@ -34,14 +34,30 @@ package org.smallmind.bayeux.oumuamua.server.impl.json;
 
 import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 
+/**
+ * JAXB adapter that marshals a two-dimensional string array into a readable path list.
+ */
 public class DoubleStringArrayXmlAdapter extends XmlAdapter<String, String[][]> {
 
+  /**
+   * Unmarshalling is not supported for the encoded path list.
+   *
+   * @param s serialized value
+   * @return never returns normally
+   * @throws UnsupportedOperationException always thrown
+   */
   @Override
   public String[][] unmarshal (String s) {
 
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * Serializes the array of path segments into a human-readable string.
+   *
+   * @param doubleArray array of path segments
+   * @return serialized representation, or {@code null} when the input is {@code null}
+   */
   @Override
   public String marshal (String[][] doubleArray) {
 

@@ -38,14 +38,43 @@ import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.json.ValueFactory;
 
+/**
+ * SPI for decoding inbound JSON structures into Bayeux {@link Message} and {@link Value} objects.
+ *
+ * @param <V> concrete value type produced
+ */
 public interface JsonDeserializer<V extends Value<V>> {
 
+  /**
+   * Deserializes a buffer into an array of messages.
+   *
+   * @param codec codec supplying value factory information
+   * @param buffer encoded payload
+   * @return decoded messages
+   * @throws IOException if decoding fails
+   */
   Message<V>[] read (Codec<V> codec, byte[] buffer)
     throws IOException;
 
+  /**
+   * Deserializes string data into an array of messages.
+   *
+   * @param codec codec supplying value factory information
+   * @param data encoded payload
+   * @return decoded messages
+   * @throws IOException if decoding fails
+   */
   Message<V>[] read (Codec<V> codec, String data)
     throws IOException;
 
+  /**
+   * Converts an arbitrary object into a {@link Value} using the supplied factory.
+   *
+   * @param factory value factory
+   * @param object source object
+   * @return converted value
+   * @throws IOException if conversion fails
+   */
   Value<V> convert (ValueFactory<V> factory, Object object)
     throws IOException;
 }

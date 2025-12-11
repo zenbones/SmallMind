@@ -36,14 +36,35 @@ import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletException;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
+/**
+ * Represents a specific transport mechanism (e.g., long-polling or websocket) for a protocol.
+ *
+ * @param <V> concrete {@link Value} implementation used for message payloads
+ */
 public interface Transport<V extends Value<V>> extends Attributed {
 
+  /**
+   * @return the owning protocol
+   */
   Protocol<V> getProtocol ();
 
+  /**
+   * @return transport name used for negotiation
+   */
   String getName ();
 
+  /**
+   * @return {@code true} if the transport operates only locally
+   */
   boolean isLocal ();
 
+  /**
+   * Initializes the transport with servlet configuration.
+   *
+   * @param server the hosting server
+   * @param servletConfig servlet configuration
+   * @throws ServletException if initialization fails
+   */
   void init (Server<?> server, ServletConfig servletConfig)
     throws ServletException;
 }

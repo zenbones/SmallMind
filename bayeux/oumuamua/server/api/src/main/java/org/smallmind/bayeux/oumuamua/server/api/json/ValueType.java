@@ -32,6 +32,9 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api.json;
 
+/**
+ * Enumeration of supported JSON value kinds.
+ */
 public enum ValueType {
 
   OBJECT, ARRAY, STRING, NUMBER, BOOLEAN, NULL

@@ -47,12 +47,23 @@ import org.smallmind.bayeux.oumuamua.server.spi.json.PacketUtility;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Long-poll transport connection that emits packets via servlet async contexts.
+ *
+ * @param <V> value representation
+ */
 public class LongPollingConnection<V extends Value<V>> implements OumuamuaConnection<V> {
 
   private final LongPollingTransport<V> longPollingTransport;
   private final OumuamuaServer<V> server;
   private final String connectionId;
 
+  /**
+   * Creates a new connection bound to the provided transport and server.
+   *
+   * @param longPollingTransport owning transport
+   * @param server hosting server
+   */
   public LongPollingConnection (LongPollingTransport<V> longPollingTransport, OumuamuaServer<V> server) {
 
     this.longPollingTransport = longPollingTransport;
@@ -61,24 +72,43 @@ public class LongPollingConnection<V extends Value<V>> implements OumuamuaConnec
     connectionId = SnowflakeId.newInstance().generateHexEncoding();
   }
 
+  /**
+   * @return connection identifier
+   */
   @Override
   public String getId () {
 
     return connectionId;
   }
 
+  /**
+   * @return underlying transport
+   */
   @Override
   public Transport<V> getTransport () {
 
     return longPollingTransport;
   }
 
+  /**
+   * Not supported because long-polling writes directly to the async response.
+   *
+   * @param packet packet to deliver
+   * @throws UnsupportedOperationException always thrown
+   */
   @Override
   public void deliver (Packet<V> packet) {
 
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * Encodes and writes the packet to the servlet response, notifying the protocol of delivery.
+   *
+   * @param asyncContext async context to write to
+   * @param packet packet to emit
+   * @throws IOException if writing the response fails
+   */
   private void emit (AsyncContext asyncContext, Packet<V> packet)
     throws IOException {
 
@@ -92,6 +122,12 @@ public class LongPollingConnection<V extends Value<V>> implements OumuamuaConnec
     ((ServletProtocol<V>)longPollingTransport.getProtocol()).onDelivery(packet);
   }
 
+  /**
+   * Processes inbound messages and writes responses using the async context.
+   *
+   * @param asyncContext async context associated with the request
+   * @param messages decoded inbound messages
+   */
   public void onMessages (AsyncContext asyncContext, Message<V>[] messages) {
 
     try {
@@ -122,6 +158,9 @@ public class LongPollingConnection<V extends Value<V>> implements OumuamuaConnec
     }
   }
 
+  /**
+   * No-op cleanup hook for compatibility.
+   */
   @Override
   public void onCleanup () {
 

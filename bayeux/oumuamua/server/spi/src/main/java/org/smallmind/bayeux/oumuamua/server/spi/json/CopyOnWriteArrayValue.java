@@ -40,16 +40,31 @@ import org.smallmind.bayeux.oumuamua.server.api.json.ObjectValue;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.json.ValueFactory;
 
+/**
+ * Array wrapper that defers copying until mutation occurs, sharing the original array for reads.
+ *
+ * @param <V> concrete value type used in messages
+ */
 public class CopyOnWriteArrayValue<V extends Value<V>> implements ArrayValue<V> {
 
   private final ArrayValue<V> innerArrayValue;
   private ArrayValue<V> outerArrayValue;
 
+  /**
+   * Wraps an existing array value.
+   *
+   * @param innerArrayValue array to wrap
+   */
   public CopyOnWriteArrayValue (ArrayValue<V> innerArrayValue) {
 
     this.innerArrayValue = innerArrayValue;
   }
 
+  /**
+   * Realizes a copy of the inner array to allow safe mutation.
+   *
+   * @return the mutable copy
+   */
   private ArrayValue<V> fill () {
 
     outerArrayValue = innerArrayValue.getFactory().arrayValue();
@@ -60,24 +75,39 @@ public class CopyOnWriteArrayValue<V extends Value<V>> implements ArrayValue<V> 
     return outerArrayValue;
   }
 
+  /**
+   * @return the value factory associated with the underlying array
+   */
   @Override
   public ValueFactory<V> getFactory () {
 
     return innerArrayValue.getFactory();
   }
 
+  /**
+   * @return current array size, reading from the copy if it exists
+   */
   @Override
   public int size () {
 
     return (outerArrayValue != null) ? outerArrayValue.size() : innerArrayValue.size();
   }
 
+  /**
+   * @return {@code true} when the array is empty
+   */
   @Override
   public boolean isEmpty () {
 
     return size() == 0;
   }
 
+  /**
+   * Retrieves a value, creating defensive wrappers for nested objects/arrays when needed.
+   *
+   * @param index index to retrieve
+   * @return the value at the index or {@code null}
+   */
   @Override
   public Value<V> get (int index) {
 
@@ -115,6 +145,12 @@ public class CopyOnWriteArrayValue<V extends Value<V>> implements ArrayValue<V> 
     }
   }
 
+  /**
+   * Appends a value, realizing the copy if necessary.
+   *
+   * @param value value to add
+   * @return this array
+   */
   @Override
   public <U extends Value<V>> ArrayValue<V> add (U value) {
 
@@ -123,6 +159,13 @@ public class CopyOnWriteArrayValue<V extends Value<V>> implements ArrayValue<V> 
     return this;
   }
 
+  /**
+   * Sets a value at the index, realizing the copy if necessary.
+   *
+   * @param index index to set
+   * @param value value to store
+   * @return this array
+   */
   @Override
   public <U extends Value<V>> ArrayValue<V> set (int index, U value) {
 
@@ -131,6 +174,13 @@ public class CopyOnWriteArrayValue<V extends Value<V>> implements ArrayValue<V> 
     return this;
   }
 
+  /**
+   * Inserts a value before the index, realizing the copy if necessary.
+   *
+   * @param index position to insert
+   * @param value value to insert
+   * @return this array
+   */
   @Override
   public <U extends Value<V>> ArrayValue<V> insert (int index, U value) {
 
@@ -139,12 +189,24 @@ public class CopyOnWriteArrayValue<V extends Value<V>> implements ArrayValue<V> 
     return this;
   }
 
+  /**
+   * Removes a value at the index, realizing the copy if necessary.
+   *
+   * @param index index to remove
+   * @return removed value
+   */
   @Override
   public Value<V> remove (int index) {
 
     return fill().remove(index);
   }
 
+  /**
+   * Appends a collection of values, realizing the copy if necessary.
+   *
+   * @param values values to add
+   * @return this array
+   */
   @Override
   public <U extends Value<V>> ArrayValue<V> addAll (Collection<U> values) {
 
@@ -153,6 +215,11 @@ public class CopyOnWriteArrayValue<V extends Value<V>> implements ArrayValue<V> 
     return this;
   }
 
+  /**
+   * Clears all values by replacing with a new array instance.
+   *
+   * @return this array
+   */
   @Override
   public ArrayValue<V> removeAll () {
 
@@ -161,6 +228,12 @@ public class CopyOnWriteArrayValue<V extends Value<V>> implements ArrayValue<V> 
     return this;
   }
 
+  /**
+   * Encodes either the original array or the realized copy.
+   *
+   * @param writer destination writer
+   * @throws IOException if encoding fails
+   */
   @Override
   public void encode (Writer writer)
     throws IOException {

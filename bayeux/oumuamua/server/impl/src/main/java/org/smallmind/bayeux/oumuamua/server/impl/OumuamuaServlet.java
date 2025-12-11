@@ -51,17 +51,31 @@ import org.smallmind.bayeux.oumuamua.server.spi.Protocols;
 import org.smallmind.bayeux.oumuamua.server.spi.Transports;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Synchronous servlet entry point for Bayeux long-polling traffic.
+ *
+ * @param <V> value representation
+ */
 public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
 
   private LongPollingConnection<V> connection;
   private OumuamuaServer<V> server;
 
+  /**
+   * @return servlet metadata supplied by the base class
+   */
   @Override
   public String getServletInfo () {
 
     return super.getServletInfo();
   }
 
+  /**
+   * Initializes the servlet, wiring in the server, protocol, and long-poll transport.
+   *
+   * @param servletConfig servlet configuration
+   * @throws ServletException if required components are missing
+   */
   @Override
   public void init (ServletConfig servletConfig)
     throws ServletException {
@@ -90,6 +104,13 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
     }
   }
 
+  /**
+   * Handles posted Bayeux envelopes, reading the payload and dispatching to the server.
+   *
+   * @param request HTTP request containing the Bayeux payload
+   * @param response response used for error handling
+   * @throws IOException if the payload cannot be read
+   */
   @Override
   protected void doPost (HttpServletRequest request, HttpServletResponse response)
     throws IOException {
@@ -131,6 +152,13 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
     }
   }
 
+  /**
+   * Attempts to fully read the request body into the provided buffer.
+   *
+   * @param inputStream request input stream
+   * @param contentBuffer destination buffer sized to the content length
+   * @return {@code true} if the entire payload was read
+   */
   private boolean readStream (InputStream inputStream, byte[] contentBuffer) {
 
     try {
@@ -154,6 +182,9 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
     }
   }
 
+  /**
+   * Shuts down the server when the servlet is destroyed.
+   */
   @Override
   public void destroy () {
 

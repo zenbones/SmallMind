@@ -40,35 +40,69 @@ import org.smallmind.bayeux.oumuamua.server.api.backbone.Backbone;
 import org.smallmind.bayeux.oumuamua.server.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
+/**
+ * Adapter that exposes server-level behavior to channel instances.
+ *
+ * @param <V> value representation
+ */
 public class ChannelRoot<V extends Value<V>> {
 
   private final Server<V> server;
 
+  /**
+   * Creates a new root facade for the given server.
+   *
+   * @param server owning server
+   */
   public ChannelRoot (Server<V> server) {
 
     this.server = server;
   }
 
+  /**
+   * @return backbone used to distribute messages across nodes
+   */
   public Backbone<V> getBackbone () {
 
     return server.getBackbone();
   }
 
+  /**
+   * @return codec used to create and manipulate messages
+   */
   public Codec<V> getCodec () {
 
     return server.getCodec();
   }
 
+  /**
+   * Determines whether the route should reflect messages to the publishing session.
+   *
+   * @param route channel route
+   * @return {@code true} if reflections are enabled
+   */
   public boolean isReflecting (Route route) {
 
     return server.isReflecting(route);
   }
 
+  /**
+   * Determines whether the route should stream data to subscribers.
+   *
+   * @param route channel route
+   * @return {@code true} if streaming is enabled
+   */
   public boolean isStreaming (Route route) {
 
     return server.isStreaming(route);
   }
 
+  /**
+   * Forwards a packet to the server backbone for delivery.
+   *
+   * @param channel channel originating the packet
+   * @param packet packet to forward
+   */
   public void forward (Channel<V> channel, Packet<V> packet) {
 
     server.forward(channel, packet);

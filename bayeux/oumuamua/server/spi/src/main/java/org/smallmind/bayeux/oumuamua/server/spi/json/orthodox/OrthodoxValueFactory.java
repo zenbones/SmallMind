@@ -40,50 +40,92 @@ import org.smallmind.bayeux.oumuamua.server.api.json.ObjectValue;
 import org.smallmind.bayeux.oumuamua.server.api.json.StringValue;
 import org.smallmind.bayeux.oumuamua.server.api.json.ValueFactory;
 
+/**
+ * Factory for constructing orthodox JSON value implementations.
+ */
 public class OrthodoxValueFactory implements ValueFactory<OrthodoxValue> {
 
+  /**
+   * @return new object value
+   */
   @Override
   public ObjectValue<OrthodoxValue> objectValue () {
 
     return new OrthodoxObjectValue(this);
   }
 
+  /**
+   * @return new array value
+   */
   @Override
   public ArrayValue<OrthodoxValue> arrayValue () {
 
     return new OrthodoxArrayValue(this);
   }
 
+  /**
+   * Creates a string value.
+   *
+   * @param text text to wrap
+   * @return new string value
+   */
   @Override
   public StringValue<OrthodoxValue> textValue (String text) {
 
     return new OrthodoxTextValue(this, text);
   }
 
+  /**
+   * Creates an integer value.
+   *
+   * @param i integer to wrap
+   * @return new number value
+   */
   @Override
   public NumberValue<OrthodoxValue> numberValue (int i) {
 
     return new OrthodoxIntegerValue(this, i);
   }
 
+  /**
+   * Creates a long value.
+   *
+   * @param l long to wrap
+   * @return new number value
+   */
   @Override
   public NumberValue<OrthodoxValue> numberValue (long l) {
 
     return new OrthodoxLongValue(this, l);
   }
 
+  /**
+   * Creates a double value.
+   *
+   * @param d double to wrap
+   * @return new number value
+   */
   @Override
   public NumberValue<OrthodoxValue> numberValue (double d) {
 
     return new OrthodoxDoubleValue(this, d);
   }
 
+  /**
+   * Creates a boolean value.
+   *
+   * @param bool boolean to wrap
+   * @return new boolean value
+   */
   @Override
   public BooleanValue<OrthodoxValue> booleanValue (boolean bool) {
 
     return new OrthodoxBooleanValue(this, bool);
   }
 
+  /**
+   * @return the null value instance
+   */
   @Override
   public NullValue<OrthodoxValue> nullValue () {
 

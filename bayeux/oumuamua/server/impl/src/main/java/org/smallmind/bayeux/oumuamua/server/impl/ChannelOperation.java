@@ -34,8 +34,18 @@ package org.smallmind.bayeux.oumuamua.server.impl;
 
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
+/**
+ * Work unit that operates on a branch of the channel tree.
+ *
+ * @param <V> value representation
+ */
 @FunctionalInterface
 public interface ChannelOperation<V extends Value<V>> {
 
+  /**
+   * Performs an operation against the supplied branch.
+   *
+   * @param channelBranch target branch within the channel hierarchy
+   */
   void operate (ChannelBranch<V> channelBranch);
 }

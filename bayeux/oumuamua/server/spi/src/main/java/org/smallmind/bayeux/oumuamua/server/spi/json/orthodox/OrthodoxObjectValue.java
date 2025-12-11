@@ -40,39 +40,69 @@ import java.util.Map;
 import org.smallmind.bayeux.oumuamua.server.api.json.ObjectValue;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
+/**
+ * Map-backed object value for the orthodox codec.
+ */
 public class OrthodoxObjectValue extends OrthodoxValue implements ObjectValue<OrthodoxValue> {
 
   private final HashMap<String, Value<OrthodoxValue>> valueMap = new HashMap<>();
 
+  /**
+   * Creates an empty object value.
+   *
+   * @param factory owning factory
+   */
   protected OrthodoxObjectValue (OrthodoxValueFactory factory) {
 
     super(factory);
   }
 
+  /**
+   * @return number of stored fields
+   */
   @Override
   public int size () {
 
     return valueMap.size();
   }
 
+  /**
+   * @return {@code true} if no fields exist
+   */
   @Override
   public boolean isEmpty () {
 
     return valueMap.isEmpty();
   }
 
+  /**
+   * @return iterator over field names
+   */
   @Override
   public Iterator<String> fieldNames () {
 
     return valueMap.keySet().iterator();
   }
 
+  /**
+   * Retrieves a field value.
+   *
+   * @param field field name
+   * @return stored value or {@code null}
+   */
   @Override
   public Value<OrthodoxValue> get (String field) {
 
     return valueMap.get(field);
   }
 
+  /**
+   * Adds or replaces a field.
+   *
+   * @param field field name
+   * @param value value to store
+   * @return this object
+   */
   @Override
   public <U extends Value<OrthodoxValue>> ObjectValue<OrthodoxValue> put (String field, U value) {
 
@@ -81,12 +111,23 @@ public class OrthodoxObjectValue extends OrthodoxValue implements ObjectValue<Or
     return this;
   }
 
+  /**
+   * Removes a field by name.
+   *
+   * @param field field to remove
+   * @return removed value or {@code null}
+   */
   @Override
   public Value<OrthodoxValue> remove (String field) {
 
     return valueMap.remove(field);
   }
 
+  /**
+   * Clears all fields.
+   *
+   * @return this object
+   */
   @Override
   public ObjectValue<OrthodoxValue> removeAll () {
 
@@ -95,6 +136,12 @@ public class OrthodoxObjectValue extends OrthodoxValue implements ObjectValue<Or
     return this;
   }
 
+  /**
+   * Encodes the object to JSON.
+   *
+   * @param writer destination writer
+   * @throws IOException if writing fails
+   */
   @Override
   public void encode (Writer writer)
     throws IOException {

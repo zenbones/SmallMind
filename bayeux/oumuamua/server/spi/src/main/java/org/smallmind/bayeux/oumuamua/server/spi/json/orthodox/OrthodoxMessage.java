@@ -34,8 +34,17 @@ package org.smallmind.bayeux.oumuamua.server.spi.json.orthodox;
 
 import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 
+/**
+ * Concrete {@link Message} implementation for the orthodox codec.
+ */
 public class OrthodoxMessage extends OrthodoxObjectValue implements Message<OrthodoxValue> {
 
+  /**
+   * Creates an empty message.
+   *
+   * @param codec owning codec (unused but retained for symmetry)
+   * @param factory value factory
+   */
   public OrthodoxMessage (OrthodoxCodec codec, OrthodoxValueFactory factory) {
 
     super(factory);

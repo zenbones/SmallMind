@@ -35,6 +35,11 @@ package org.smallmind.bayeux.oumuamua.server.api;
 import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
+/**
+ * Represents a bundle of Bayeux messages grouped for delivery on a route.
+ *
+ * @param <V> concrete {@link Value} implementation used to represent message payloads
+ */
 public class Packet<V extends Value<V>> {
 
   private final Message<V>[] messages;
@@ -42,11 +47,27 @@ public class Packet<V extends Value<V>> {
   private final Route route;
   private final String senderId;
 
+  /**
+   * Creates a packet containing a single message.
+   *
+   * @param packetType the type of packet being sent
+   * @param senderId the session identifier of the sender
+   * @param route the target route
+   * @param message the message to include
+   */
   public Packet (PacketType packetType, String senderId, Route route, Message<V> message) {
 
     this(packetType, senderId, route, new Message[] {message});
   }
 
+  /**
+   * Creates a packet with multiple messages.
+   *
+   * @param packetType the type of packet being sent
+   * @param senderId the session identifier of the sender
+   * @param route the target route
+   * @param message the messages to include
+   */
   public Packet (PacketType packetType, String senderId, Route route, Message<V>[] message) {
 
     this.packetType = packetType;
@@ -55,21 +76,33 @@ public class Packet<V extends Value<V>> {
     this.messages = message;
   }
 
+  /**
+   * @return the packet classification
+   */
   public PacketType getPacketType () {
 
     return packetType;
   }
 
+  /**
+   * @return the identifier of the sender session, or {@code null} if not associated
+   */
   public String getSenderId () {
 
     return senderId;
   }
 
+  /**
+   * @return the route the packet targets
+   */
   public Route getRoute () {
 
     return route;
   }
 
+  /**
+   * @return messages contained in this packet
+   */
   public Message<V>[] getMessages () {
 
     return messages;

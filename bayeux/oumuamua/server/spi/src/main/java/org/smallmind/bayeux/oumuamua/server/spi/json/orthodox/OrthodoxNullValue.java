@@ -36,13 +36,27 @@ import java.io.IOException;
 import java.io.Writer;
 import org.smallmind.bayeux.oumuamua.server.api.json.NullValue;
 
+/**
+ * Null value representation for the orthodox codec.
+ */
 public class OrthodoxNullValue extends OrthodoxValue implements NullValue<OrthodoxValue> {
 
+  /**
+   * Creates the singleton null value.
+   *
+   * @param factory owning factory
+   */
   protected OrthodoxNullValue (OrthodoxValueFactory factory) {
 
     super(factory);
   }
 
+  /**
+   * Encodes the literal {@code null}.
+   *
+   * @param writer destination writer
+   * @throws IOException if writing fails
+   */
   @Override
   public void encode (Writer writer)
     throws IOException {

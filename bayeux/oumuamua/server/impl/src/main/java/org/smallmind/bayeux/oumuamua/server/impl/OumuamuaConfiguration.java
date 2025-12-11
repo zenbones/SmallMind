@@ -53,6 +53,11 @@ import org.smallmind.web.json.doppelganger.View;
 
 import static org.smallmind.web.json.doppelganger.Visibility.OUT;
 
+/**
+ * Aggregates configurable components and tunables for the Oumuamua server.
+ *
+ * @param <V> value representation
+ */
 @Doppelganger
 public class OumuamuaConfiguration<V extends Value<V>> {
 
@@ -97,186 +102,335 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   @View(idioms = @Idiom(visibility = OUT))
   private int maxLongPollQueueSize = 1000;
 
+  /**
+   * @return configured backbone implementation
+   */
   public Backbone<V> getBackbone () {
 
     return backbone;
   }
 
+  /**
+   * Sets the backbone used to distribute messages across nodes.
+   *
+   * @param backbone backbone implementation
+   */
   public void setBackbone (Backbone<V> backbone) {
 
     this.backbone = backbone;
   }
 
+  /**
+   * @return codec used to create and parse JSON messages
+   */
   public Codec<V> getCodec () {
 
     return codec;
   }
 
+  /**
+   * Sets the codec implementation used for message handling.
+   *
+   * @param codec codec implementation
+   */
   public void setCodec (Codec<V> codec) {
 
     this.codec = codec;
   }
 
+  /**
+   * @return executor service used for asynchronous work
+   */
   public ExecutorService getExecutorService () {
 
     return executorService;
   }
 
+  /**
+   * Assigns the executor service used for background processing.
+   *
+   * @param executorService executor service
+   */
   public void setExecutorService (ExecutorService executorService) {
 
     this.executorService = executorService;
   }
 
+  /**
+   * @return security policy applied to Bayeux operations
+   */
   public SecurityPolicy<V> getSecurityPolicy () {
 
     return securityPolicy;
   }
 
+  /**
+   * Sets the security policy that authorizes operations.
+   *
+   * @param securityPolicy security policy implementation
+   */
   public void setSecurityPolicy (SecurityPolicy<V> securityPolicy) {
 
     this.securityPolicy = securityPolicy;
   }
 
+  /**
+   * @return supported protocols
+   */
   public Protocol<V>[] getProtocols () {
 
     return protocols;
   }
 
+  /**
+   * Defines the set of supported Bayeux protocols.
+   *
+   * @param protocols protocol implementations
+   */
   public void setProtocols (Protocol<V>[] protocols) {
 
     this.protocols = protocols;
   }
 
+  /**
+   * @return configured Bayeux services
+   */
   public BayeuxService<V>[] getServices () {
 
     return services;
   }
 
+  /**
+   * Sets the collection of server-side services.
+   *
+   * @param services Bayeux services
+   */
   public void setServices (BayeuxService<V>[] services) {
 
     this.services = services;
   }
 
+  /**
+   * @return server listeners
+   */
   public Server.Listener<V>[] getListeners () {
 
     return listeners;
   }
 
+  /**
+   * Assigns listeners that observe server lifecycle events.
+   *
+   * @param listeners server listeners
+   */
   public void setListeners (Server.Listener<V>[] listeners) {
 
     this.listeners = listeners;
   }
 
+  /**
+   * @return log level used for message handling diagnostics
+   */
   public Level getMessageLogLevel () {
 
     return messageLogLevel;
   }
 
+  /**
+   * Sets the log level used when processing messages.
+   *
+   * @param messageLogLevel log level
+   */
   public void setMessageLogLevel (Level messageLogLevel) {
 
     this.messageLogLevel = messageLogLevel;
   }
 
+  /**
+   * @return log level for idle cleanup operations
+   */
   public Level getIdleCleanupLogLevel () {
 
     return idleCleanupLogLevel;
   }
 
+  /**
+   * Sets the log level used when pruning idle resources.
+   *
+   * @param idleCleanupLogLevel log level
+   */
   public void setIdleCleanupLogLevel (Level idleCleanupLogLevel) {
 
     this.idleCleanupLogLevel = idleCleanupLogLevel;
   }
 
+  /**
+   * @return log level used when queues overflow
+   */
   public Level getOverflowLogLevel () {
 
     return overflowLogLevel;
   }
 
+  /**
+   * Configures the log level emitted when long-poll queues overflow.
+   *
+   * @param overflowLogLevel log level
+   */
   public void setOverflowLogLevel (Level overflowLogLevel) {
 
     this.overflowLogLevel = overflowLogLevel;
   }
 
+  /**
+   * @return whether implicit connection is allowed before explicit connect calls
+   */
   public boolean isAllowsImplicitConnection () {
 
     return allowsImplicitConnection;
   }
 
+  /**
+   * Enables or disables implicit connection handling.
+   *
+   * @param allowsImplicitConnection {@code true} to allow implicit connects
+   */
   public void setAllowsImplicitConnection (boolean allowsImplicitConnection) {
 
     this.allowsImplicitConnection = allowsImplicitConnection;
   }
 
+  /**
+   * @return minutes a channel may remain idle before removal
+   */
   public long getChannelTimeToLiveMinutes () {
 
     return channelTimeToLiveMinutes;
   }
 
+  /**
+   * Sets the idle time-to-live for ephemeral channels.
+   *
+   * @param channelTimeToLiveMinutes ttl in minutes
+   */
   public void setChannelTimeToLiveMinutes (long channelTimeToLiveMinutes) {
 
     this.channelTimeToLiveMinutes = channelTimeToLiveMinutes;
   }
 
+  /**
+   * @return interval advised to clients between connect calls
+   */
   public int getSessionConnectIntervalSeconds () {
 
     return sessionConnectIntervalSeconds;
   }
 
+  /**
+   * Configures the session connect interval advice.
+   *
+   * @param sessionConnectIntervalSeconds interval in seconds
+   */
   public void setSessionConnectIntervalSeconds (int sessionConnectIntervalSeconds) {
 
     this.sessionConnectIntervalSeconds = sessionConnectIntervalSeconds;
   }
 
+  /**
+   * @return maximum idle time before a session is terminated
+   */
   public int getSessionMaxIdleTimeoutSeconds () {
 
     return sessionMaxIdleTimeoutSeconds;
   }
 
+  /**
+   * Sets the maximum allowed session idle time.
+   *
+   * @param sessionMaxIdleTimeoutSeconds idle timeout in seconds
+   */
   public void setSessionMaxIdleTimeoutSeconds (int sessionMaxIdleTimeoutSeconds) {
 
     this.sessionMaxIdleTimeoutSeconds = sessionMaxIdleTimeoutSeconds;
   }
 
+  /**
+   * @return minutes between idle channel scans
+   */
   public int getIdleChannelCycleMinutes () {
 
     return idleChannelCycleMinutes;
   }
 
+  /**
+   * Sets the cadence for cleaning idle channels.
+   *
+   * @param idleChannelCycleMinutes minutes between scans
+   */
   public void setIdleChannelCycleMinutes (int idleChannelCycleMinutes) {
 
     this.idleChannelCycleMinutes = idleChannelCycleMinutes;
   }
 
+  /**
+   * @return minutes between idle session inspections
+   */
   public int getIdleSessionCycleMinutes () {
 
     return idleSessionCycleMinutes;
   }
 
+  /**
+   * Sets the cadence for inspecting idle sessions.
+   *
+   * @param idleSessionCycleMinutes minutes between inspections
+   */
   public void setIdleSessionCycleMinutes (int idleSessionCycleMinutes) {
 
     this.idleSessionCycleMinutes = idleSessionCycleMinutes;
   }
 
+  /**
+   * @return maximum number of queued responses for long-polling sessions
+   */
   public int getMaxLongPollQueueSize () {
 
     return maxLongPollQueueSize;
   }
 
+  /**
+   * Sets the maximum queue size for long-poll connections before overflow handling.
+   *
+   * @param maxLongPollQueueSize maximum queue length
+   */
   public void setMaxLongPollQueueSize (int maxLongPollQueueSize) {
 
     this.maxLongPollQueueSize = maxLongPollQueueSize;
   }
 
+  /**
+   * @return parsed reflecting path patterns
+   */
   public String[][] getParsedReflectingPaths () {
 
     return parsedReflectingPaths;
   }
 
+  /**
+   * Allows subclasses or frameworks to set parsed reflecting paths.
+   *
+   * @param parsedReflectingPaths parsed path segments
+   */
   protected void setParsedReflectingPaths (String[][] parsedReflectingPaths) {
 
     this.parsedReflectingPaths = parsedReflectingPaths;
   }
 
+  /**
+   * Configures channel paths that should reflect messages back to the publisher.
+   *
+   * @param paths raw channel path patterns
+   */
   public void setReflectingPaths (String[] paths) {
 
     LinkedList<String[]> reflectingPathList = decomposePaths(paths);
@@ -285,21 +439,40 @@ public class OumuamuaConfiguration<V extends Value<V>> {
     reflectingPathList.toArray(parsedReflectingPaths);
   }
 
+  /**
+   * Indicates whether the route should reflect messages.
+   *
+   * @param route route to check
+   * @return {@code true} if reflection is enabled for the route
+   */
   public boolean isReflecting (Route route) {
 
     return matchesPaths(parsedReflectingPaths, route);
   }
 
+  /**
+   * @return parsed streaming path patterns
+   */
   public String[][] getParsedStreamingPaths () {
 
     return parsedStreamingPaths;
   }
 
+  /**
+   * Allows subclasses or frameworks to set parsed streaming paths.
+   *
+   * @param parsedStreamingPaths parsed path segments
+   */
   protected void setParsedStreamingPaths (String[][] parsedStreamingPaths) {
 
     this.parsedStreamingPaths = parsedStreamingPaths;
   }
 
+  /**
+   * Configures paths that should always stream data.
+   *
+   * @param paths raw channel path patterns
+   */
   public void setStreamingPaths (String[] paths) {
 
     LinkedList<String[]> streamingPathList = decomposePaths(paths);
@@ -308,11 +481,23 @@ public class OumuamuaConfiguration<V extends Value<V>> {
     streamingPathList.toArray(parsedStreamingPaths);
   }
 
+  /**
+   * Indicates whether the route should stream data.
+   *
+   * @param route route to check
+   * @return {@code true} if streaming is enabled
+   */
   public boolean isStreaming (Route route) {
 
     return matchesPaths(parsedStreamingPaths, route);
   }
 
+  /**
+   * Breaks the provided path strings into segment arrays.
+   *
+   * @param paths raw path strings
+   * @return list of decomposed paths
+   */
   private LinkedList<String[]> decomposePaths (String[] paths) {
 
     LinkedList<String[]> pathList = new LinkedList<>();
@@ -328,6 +513,13 @@ public class OumuamuaConfiguration<V extends Value<V>> {
     return pathList;
   }
 
+  /**
+   * Tests whether the route matches any of the provided patterns.
+   *
+   * @param paths parsed path patterns
+   * @param route route to evaluate
+   * @return {@code true} if the route matches a pattern
+   */
   public boolean matchesPaths (String[][] paths, Route route) {
 
     if ((route != null) && (paths != null)) {

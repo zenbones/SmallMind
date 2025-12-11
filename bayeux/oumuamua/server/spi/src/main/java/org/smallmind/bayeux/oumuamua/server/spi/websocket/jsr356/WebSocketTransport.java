@@ -47,6 +47,11 @@ import org.smallmind.bayeux.oumuamua.server.spi.AbstractAttributed;
 import org.smallmind.bayeux.oumuamua.server.spi.Transports;
 import org.smallmind.nutsnbolts.servlet.FormattedServletException;
 
+/**
+ * JSR-356 websocket transport implementation.
+ *
+ * @param <V> concrete value type used in messages
+ */
 public class WebSocketTransport<V extends Value<V>> extends AbstractAttributed implements Transport<V> {
 
   public static final String ATTRIBUTE = "org.smallmind.bayeux.oumuamua.transport.websocket";
@@ -54,45 +59,76 @@ public class WebSocketTransport<V extends Value<V>> extends AbstractAttributed i
   private final WebsocketProtocol<V> websocketProtocol;
   private final WebsocketConfiguration websocketConfiguration;
 
+  /**
+   * Creates the transport for a given protocol and configuration.
+   *
+   * @param websocketProtocol owning protocol
+   * @param websocketConfiguration configuration parameters
+   */
   public WebSocketTransport (WebsocketProtocol<V> websocketProtocol, WebsocketConfiguration websocketConfiguration) {
 
     this.websocketProtocol = websocketProtocol;
     this.websocketConfiguration = websocketConfiguration;
   }
 
+  /**
+   * @return owning protocol
+   */
   @Override
   public Protocol<V> getProtocol () {
 
     return websocketProtocol;
   }
 
+  /**
+   * @return transport name
+   */
   @Override
   public String getName () {
 
     return Transports.WEBSOCKET.getName();
   }
 
+  /**
+   * @return whether this transport is local-only
+   */
   @Override
   public boolean isLocal () {
 
     return Transports.WEBSOCKET.isLocal();
   }
 
+  /**
+   * @return configured idle timeout
+   */
   public long getMaxIdleTimeoutMilliseconds () {
 
     return websocketConfiguration.getMaxIdleTimeoutMilliseconds();
   }
 
+  /**
+   * @return configured async send timeout
+   */
   public long getAsyncSendTimeoutMilliseconds () {
 
     return websocketConfiguration.getAsyncSendTimeoutMilliseconds();
   }
 
+  /**
+   * @return configured maximum text buffer size
+   */
   public int getMaximumTextMessageBufferSize () {
 
     return websocketConfiguration.getMaximumTextMessageBufferSize();
   }
 
+  /**
+   * Registers the websocket endpoint with the servlet container.
+   *
+   * @param server owning server
+   * @param servletConfig servlet configuration
+   * @throws ServletException if endpoint deployment fails
+   */
   @Override
   public void init (Server<?> server, ServletConfig servletConfig)
     throws ServletException {
@@ -115,11 +151,23 @@ public class WebSocketTransport<V extends Value<V>> extends AbstractAttributed i
     }
   }
 
+  /**
+   * Ensures the configured URL begins with '/' and strips wildcards.
+   *
+   * @param url configured URL
+   * @return normalized URL path
+   */
   private String normalizeURL (String url) {
 
     return url.startsWith("/") ? stripWildcard(url) : "/" + stripWildcard(url);
   }
 
+  /**
+   * Removes trailing wildcard tokens.
+   *
+   * @param url URL to adjust
+   * @return cleaned URL
+   */
   private String stripWildcard (String url) {
 
     return url.endsWith("/*") ? url.substring(0, url.length() - 2) : url;

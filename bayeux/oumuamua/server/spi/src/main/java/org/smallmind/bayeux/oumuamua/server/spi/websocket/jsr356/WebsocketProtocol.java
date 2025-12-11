@@ -38,16 +38,34 @@ import org.smallmind.bayeux.oumuamua.server.spi.AbstractProtocol;
 import org.smallmind.bayeux.oumuamua.server.spi.Protocols;
 import org.smallmind.bayeux.oumuamua.server.spi.Transports;
 
+/**
+ * Protocol implementation for websocket-based Bayeux messaging.
+ *
+ * @param <V> concrete value type used in messages
+ */
 public class WebsocketProtocol<V extends Value<V>> extends AbstractProtocol<V> {
 
   private final WebSocketTransport<V> webSocketTransport;
   private final long longPollTimeoutMilliseconds;
 
+  /**
+   * Creates the protocol with default listeners.
+   *
+   * @param longPollTimeoutMilliseconds timeout value retained for compatibility
+   * @param websocketConfiguration websocket configuration
+   */
   public WebsocketProtocol (long longPollTimeoutMilliseconds, WebsocketConfiguration websocketConfiguration) {
 
     this(longPollTimeoutMilliseconds, websocketConfiguration, null);
   }
 
+  /**
+   * Creates the protocol with optional listeners.
+   *
+   * @param longPollTimeoutMilliseconds timeout value retained for compatibility
+   * @param websocketConfiguration websocket configuration
+   * @param listeners optional protocol listeners to register
+   */
   public WebsocketProtocol (long longPollTimeoutMilliseconds, WebsocketConfiguration websocketConfiguration, ProtocolListener<V>[] listeners) {
 
     this.longPollTimeoutMilliseconds = longPollTimeoutMilliseconds;
@@ -61,30 +79,50 @@ public class WebsocketProtocol<V extends Value<V>> extends AbstractProtocol<V> {
     }
   }
 
+  /**
+   * @return protocol name
+   */
   @Override
   public String getName () {
 
     return Protocols.WEBSOCKET.getName();
   }
 
+  /**
+   * Websocket protocol is not long-polling.
+   *
+   * @return false
+   */
   @Override
   public boolean isLongPolling () {
 
     return false;
   }
 
+  /**
+   * @return configured long poll timeout value
+   */
   @Override
   public long getLongPollTimeoutMilliseconds () {
 
     return longPollTimeoutMilliseconds;
   }
 
+  /**
+   * @return supported transport names
+   */
   @Override
   public String[] getTransportNames () {
 
     return new String[] {Transports.WEBSOCKET.getName()};
   }
 
+  /**
+   * Resolves the websocket transport by name.
+   *
+   * @param name transport name
+   * @return websocket transport or {@code null} if name differs
+   */
   @Override
   public Transport<V> getTransport (String name) {
 

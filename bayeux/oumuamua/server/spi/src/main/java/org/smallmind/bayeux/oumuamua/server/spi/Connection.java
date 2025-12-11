@@ -46,8 +46,20 @@ import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.spi.json.PacketUtility;
 import org.smallmind.bayeux.oumuamua.server.spi.meta.Meta;
 
+/**
+ * Represents a logical connection capable of processing inbound Bayeux messages and producing packets.
+ *
+ * @param <V> concrete value type used in messages
+ */
 public interface Connection<V extends Value<V>> {
 
+  /**
+   * Processes a batch of incoming messages, routing them through the meta lifecycle and sending results to the response consumer.
+   *
+   * @param server server handling the messages
+   * @param responseConsumer callback for generated packets
+   * @param messages incoming messages
+   */
   default void process (Server<V> server, ResponseConsumer<V> responseConsumer, Message<V>[] messages) {
 
     for (Message<V> message : messages) {
@@ -101,6 +113,19 @@ public interface Connection<V extends Value<V>> {
     }
   }
 
+  /**
+   * Executes the full meta cycle for a message.
+   *
+   * @param meta meta operation represented by the message
+   * @param route resolved route
+   * @param server hosting server
+   * @param session session associated with the message
+   * @param request the incoming message
+   * @return resulting packet or {@code null} if nothing should be sent
+   * @throws IOException if encoding fails
+   * @throws InterruptedException if waiting for responses is interrupted
+   * @throws InvalidPathException if the route is invalid
+   */
   private Packet<V> cycle (Meta meta, Route route, Server<V> server, Session<V> session, Message<V> request)
     throws IOException, InterruptedException, InvalidPathException {
 
@@ -116,6 +141,18 @@ public interface Connection<V extends Value<V>> {
     return packet;
   }
 
+  /**
+   * Routes the request through protocol handlers and aggregates the response.
+   *
+   * @param meta meta operation represented by the message
+   * @param route resolved route
+   * @param server hosting server
+   * @param session session associated with the message
+   * @param request processed request message
+   * @return response packet or {@code null} when none should be returned
+   * @throws InterruptedException if waiting for responses is interrupted
+   * @throws InvalidPathException if the route is invalid
+   */
   private Packet<V> respond (Meta meta, Route route, Server<V> server, Session<V> session, Message<V> request)
     throws InterruptedException, InvalidPathException {
 
@@ -145,21 +182,63 @@ public interface Connection<V extends Value<V>> {
     }
   }
 
+  /**
+   * @return unique identifier for this connection
+   */
   String getId ();
 
+  /**
+   * @return the transport backing this connection
+   */
   Transport<V> getTransport ();
 
+  /**
+   * Creates a new session associated with the connection.
+   *
+   * @param server hosting server
+   * @return newly created session
+   */
   Session<V> createSession (Server<V> server);
 
+  /**
+   * Validates that the supplied session is compatible with this connection.
+   *
+   * @param session session to validate
+   * @return {@code true} when acceptable
+   */
   boolean validateSession (Session<V> session);
 
+  /**
+   * Updates session state prior to processing a request.
+   *
+   * @param session session to update
+   */
   void updateSession (Session<V> session);
 
+  /**
+   * Claims a session that may have been previously associated with another connection.
+   *
+   * @param session session to hijack
+   */
   void hijackSession (Session<V> session);
 
+  /**
+   * Callback invoked when a session transitions to disconnected.
+   *
+   * @param server hosting server
+   * @param session disconnected session
+   */
   void onDisconnect (Server<V> server, Session<V> session);
 
+  /**
+   * Performs any cleanup when the connection is being discarded.
+   */
   void onCleanup ();
 
+  /**
+   * Delivers an outgoing packet to the connection.
+   *
+   * @param packet packet to send
+   */
   void deliver (Packet<V> packet);
 }

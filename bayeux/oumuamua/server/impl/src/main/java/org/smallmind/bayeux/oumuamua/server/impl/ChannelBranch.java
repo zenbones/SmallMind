@@ -50,6 +50,11 @@ import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
 import org.smallmind.bayeux.oumuamua.server.spi.StringSegment;
 
+/**
+ * Node in the channel tree that holds a channel and any child branches.
+ *
+ * @param <V> value representation
+ */
 public class ChannelBranch<V extends Value<V>> {
 
   private final ReentrantReadWriteLock channelChangeLock = new ReentrantReadWriteLock();
@@ -57,11 +62,21 @@ public class ChannelBranch<V extends Value<V>> {
   private final ChannelBranch<V> parent;
   private Channel<V> channel;
 
+  /**
+   * Creates a branch with an optional parent branch.
+   *
+   * @param parent parent branch in the channel hierarchy, or {@code null} for the root
+   */
   public ChannelBranch (ChannelBranch<V> parent) {
 
     this.parent = parent;
   }
 
+  /**
+   * Retrieves the channel associated with this branch.
+   *
+   * @return the channel, or {@code null} when not yet created
+   */
   public Channel<V> getChannel () {
 
     channelChangeLock.readLock().lock();
@@ -74,6 +89,13 @@ public class ChannelBranch<V extends Value<V>> {
     }
   }
 
+  /**
+   * Recursively finds a channel using the provided route segments.
+   *
+   * @param index current segment index
+   * @param route route to traverse
+   * @return channel at the route location, or {@code null} if not found
+   */
   public Channel<V> find (int index, DefaultRoute route) {
 
     ChannelBranch<V> child;
@@ -87,6 +109,19 @@ public class ChannelBranch<V extends Value<V>> {
     }
   }
 
+  /**
+   * Creates intermediate branches and the channel as necessary to satisfy the route.
+   *
+   * @param timeToLive channel ttl in milliseconds
+   * @param index current segment index
+   * @param route route being constructed
+   * @param root root container for all channels
+   * @param channelCallback callback invoked when a channel is created
+   * @param onSubscribedCallback callback invoked on subscription
+   * @param onUnsubscribedCallback callback invoked on unsubscription
+   * @param initializerQueue initializers applied to a newly created channel
+   * @return resulting channel instance
+   */
   protected Channel<V> addChannelAsNecessary (long timeToLive, int index, DefaultRoute route, ChannelRoot<V> root, Consumer<Channel<V>> channelCallback, BiConsumer<Channel<V>, Session<V>> onSubscribedCallback, BiConsumer<Channel<V>, Session<V>> onUnsubscribedCallback, Queue<ChannelInitializer<V>> initializerQueue) {
 
     ChannelBranch<V> child;
@@ -99,6 +134,18 @@ public class ChannelBranch<V extends Value<V>> {
     return (index == route.lastIndex()) ? child.initializeChannel(timeToLive, route, root, channelCallback, onSubscribedCallback, onUnsubscribedCallback, initializerQueue) : child.addChannelAsNecessary(timeToLive, index + 1, route, root, channelCallback, onSubscribedCallback, onUnsubscribedCallback, initializerQueue);
   }
 
+  /**
+   * Initializes a channel on this branch if absent.
+   *
+   * @param timeToLive channel ttl in milliseconds
+   * @param route channel route
+   * @param root root container
+   * @param channelCallback callback invoked after creation
+   * @param onSubscribedCallback callback invoked on subscription
+   * @param onUnsubscribedCallback callback invoked on unsubscription
+   * @param initializerQueue initializers to apply to the channel
+   * @return created or existing channel
+   */
   private Channel<V> initializeChannel (long timeToLive, DefaultRoute route, ChannelRoot<V> root, Consumer<Channel<V>> channelCallback, BiConsumer<Channel<V>, Session<V>> onSubscribedCallback, BiConsumer<Channel<V>, Session<V>> onUnsubscribedCallback, Queue<ChannelInitializer<V>> initializerQueue) {
 
     channelChangeLock.writeLock().lock();
@@ -122,6 +169,15 @@ public class ChannelBranch<V extends Value<V>> {
     }
   }
 
+  /**
+   * Removes the channel at the route if present, returning the branch holding it.
+   *
+   * @param index current segment index
+   * @param route route to remove
+   * @param channelCallback callback invoked when a channel is removed
+   * @return branch containing the removed channel, or {@code null} if not found
+   * @throws ChannelStateException if a persistent channel is targeted for removal
+   */
   public ChannelBranch<V> removeChannelIfPresent (int index, Route route, Consumer<Channel<V>> channelCallback)
     throws ChannelStateException {
 
@@ -136,6 +192,13 @@ public class ChannelBranch<V extends Value<V>> {
     }
   }
 
+  /**
+   * Removes the channel from this branch, respecting persistence rules.
+   *
+   * @param channelCallback callback invoked after channel termination
+   * @return this branch instance
+   * @throws ChannelStateException if the channel is persistent and cannot be removed
+   */
   public ChannelBranch<V> removeChannel (Consumer<Channel<V>> channelCallback)
     throws ChannelStateException {
 
@@ -158,6 +221,14 @@ public class ChannelBranch<V extends Value<V>> {
     }
   }
 
+  /**
+   * Delivers a packet to matching child channels based on the route.
+   *
+   * @param sender originating session
+   * @param index current route index
+   * @param packet packet to deliver
+   * @param sessionIdSet set used to track delivery to avoid duplicates
+   */
   public void deliver (Session<V> sender, int index, Packet<V> packet, Set<String> sessionIdSet) {
 
     if (index < packet.getRoute().size()) {
@@ -184,6 +255,13 @@ public class ChannelBranch<V extends Value<V>> {
     }
   }
 
+  /**
+   * Delivers the packet to the channel at this branch if present.
+   *
+   * @param sender originating session
+   * @param packet packet to deliver
+   * @param sessionIdSet set tracking delivered session ids
+   */
   private void deliverToChannel (Session<V> sender, Packet<V> packet, Set<String> sessionIdSet) {
 
     channelChangeLock.readLock().lock();
@@ -197,6 +275,11 @@ public class ChannelBranch<V extends Value<V>> {
     }
   }
 
+  /**
+   * Removes empty branches from the tree to keep the structure compact.
+   *
+   * @param segment segment used to remove this branch from the parent
+   */
   protected void removeDeadLeaves (Segment segment) {
 
     if ((segment != null) && (parent != null) && (getChannel() == null) && childMap.isEmpty()) {
@@ -208,6 +291,11 @@ public class ChannelBranch<V extends Value<V>> {
     }
   }
 
+  /**
+   * Walks the branch hierarchy depth-first, invoking the supplied operation.
+   *
+   * @param operation callback applied to each branch
+   */
   public void walk (ChannelOperation<V> operation) {
 
     operation.operate(this);

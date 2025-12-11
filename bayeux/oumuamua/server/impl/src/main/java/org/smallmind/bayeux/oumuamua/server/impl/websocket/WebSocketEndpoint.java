@@ -53,12 +53,23 @@ import org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356.WebSocketTransp
 import org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356.WebsocketProtocol;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * JSR-356 endpoint bridging websocket connections into Oumuamua sessions.
+ *
+ * @param <V> value representation
+ */
 public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements MessageHandler.Whole<String>, OumuamuaConnection<V> {
 
   private jakarta.websocket.Session websocketSession;
   private OumuamuaServer<V> server;
   private WebSocketTransport<V> websocketTransport;
 
+  /**
+   * Initializes the endpoint when a websocket is opened.
+   *
+   * @param websocketSession websocket session
+   * @param config endpoint configuration
+   */
   @Override
   public void onOpen (jakarta.websocket.Session websocketSession, EndpointConfig config) {
 
@@ -77,18 +88,30 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
     websocketSession.addMessageHandler(this);
   }
 
+  /**
+   * @return connection identifier derived from the websocket session
+   */
   @Override
   public String getId () {
 
     return websocketSession.getId();
   }
 
+  /**
+   * @return backing websocket transport
+   */
   @Override
   public Transport<V> getTransport () {
 
     return websocketTransport;
   }
 
+  /**
+   * Sends a packet over the websocket session.
+   *
+   * @param packet packet to deliver
+   */
+  @Override
   public synchronized void deliver (Packet<V> packet) {
 
     if (websocketSession.isOpen()) {
@@ -111,6 +134,11 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
     }
   }
 
+  /**
+   * Handles inbound text messages from the websocket client.
+   *
+   * @param content message payload
+   */
   @Override
   public void onMessage (String content) {
 
@@ -142,12 +170,21 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
     });
   }
 
+  /**
+   * Handles websocket errors by logging the failure.
+   *
+   * @param wsSession websocket session
+   * @param failure failure encountered
+   */
   @Override
   public synchronized void onError (Session wsSession, Throwable failure) {
 
     LoggerManager.getLogger(WebSocketEndpoint.class).error(failure);
   }
 
+  /**
+   * Closes the websocket session if still open.
+   */
   @Override
   public synchronized void onCleanup () {
 
