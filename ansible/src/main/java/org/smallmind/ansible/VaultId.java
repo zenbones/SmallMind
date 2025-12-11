@@ -34,11 +34,20 @@ package org.smallmind.ansible;
 
 import org.smallmind.nutsnbolts.command.CommandLineException;
 
+/**
+ * Represents a vault id specification of the form {@code <id>@<file|prompt>} supplied on the command line.
+ */
 public class VaultId {
 
   private final String id;
   private final String fileOrPrompt;
 
+  /**
+   * Parses a vault id specification.
+   *
+   * @param spec text in the format {@code id@file} or {@code id@prompt}
+   * @throws CommandLineException if the spec is missing the separator, the id is empty, or the file/prompt segment is empty
+   */
   public VaultId (String spec)
     throws CommandLineException {
 
@@ -56,11 +65,17 @@ public class VaultId {
     }
   }
 
+  /**
+   * @return the vault identifier portion
+   */
   public String getId () {
 
     return id;
   }
 
+  /**
+   * @return the vault password source, either a file path or the literal {@code prompt}
+   */
   public String getFileOrPrompt () {
 
     return fileOrPrompt;

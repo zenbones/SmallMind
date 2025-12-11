@@ -32,12 +32,23 @@
  */
 package org.smallmind.ansible;
 
+/**
+ * Simple value object that holds the components of an Ansible vault payload:
+ * the salt used to derive keys, the HMAC used to validate integrity, and the encrypted bytes.
+ */
 public class VaultCake {
 
   private final byte[] salt;
   private final byte[] hmac;
   private final byte[] encrypted;
 
+  /**
+   * Creates a new vault payload container.
+   *
+   * @param salt the random salt used to derive encryption and HMAC keys
+   * @param hmac the calculated HMAC for the encrypted content
+   * @param encrypted the encrypted payload bytes
+   */
   public VaultCake (byte[] salt, byte[] hmac, byte[] encrypted) {
 
     this.salt = salt;
@@ -45,16 +56,25 @@ public class VaultCake {
     this.encrypted = encrypted;
   }
 
+  /**
+   * @return the salt used during PBKDF2 key derivation
+   */
   public byte[] getSalt () {
 
     return salt;
   }
 
+  /**
+   * @return the HMAC for the encrypted content
+   */
   public byte[] getHmac () {
 
     return hmac;
   }
 
+  /**
+   * @return the encrypted payload bytes
+   */
   public byte[] getEncrypted () {
 
     return encrypted;

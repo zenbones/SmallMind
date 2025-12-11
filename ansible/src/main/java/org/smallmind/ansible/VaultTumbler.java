@@ -49,6 +49,10 @@ import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import org.smallmind.nutsnbolts.security.EncryptionUtility;
 
+/**
+ * Performs encryption/decryption and integrity validation for Ansible vault payloads.
+ * Uses PBKDF2WithHmacSHA256 to derive AES-CTR and HMAC keys, mirroring Ansible's vault 1.1/1.2 format.
+ */
 public class VaultTumbler {
 
   private static final String AES_ALGORITHM = "AES/CTR/PKCS7Padding";
@@ -58,12 +62,25 @@ public class VaultTumbler {
   private final byte[] iv = new byte[16];
   private final byte[] salt;
 
+  /**
+   * Constructs a tumbler with a newly generated salt.
+   *
+   * @param password vault password
+   * @throws VaultCodecException if key derivation fails
+   */
   public VaultTumbler (String password)
     throws VaultCodecException {
 
     this(password, generateSalt());
   }
 
+  /**
+   * Constructs a tumbler using the provided salt.
+   *
+   * @param password vault password
+   * @param salt 32-byte salt used for PBKDF2 key derivation
+   * @throws VaultCodecException if key derivation fails
+   */
   public VaultTumbler (String password, byte[] salt)
     throws VaultCodecException {
 
@@ -95,6 +112,11 @@ public class VaultTumbler {
     }
   }
 
+  /**
+   * Generates a random 32-byte salt using {@link ThreadLocalRandom}.
+   *
+   * @return new random salt
+   */
   private static byte[] generateSalt () {
 
     byte[] salt = new byte[32];
@@ -104,6 +126,13 @@ public class VaultTumbler {
     return salt;
   }
 
+  /**
+   * Encrypts plaintext bytes, returning the vault payload components.
+   *
+   * @param original plaintext bytes to encrypt
+   * @return container holding the salt, HMAC, and encrypted bytes
+   * @throws VaultCodecException if encryption or MAC calculation fails
+   */
   public VaultCake encrypt (byte[] original)
     throws VaultCodecException {
 
@@ -117,6 +146,15 @@ public class VaultTumbler {
     }
   }
 
+  /**
+   * Decrypts ciphertext after verifying the provided HMAC.
+   *
+   * @param hmac expected HMAC for the encrypted payload
+   * @param encrypted encrypted payload bytes
+   * @return decrypted plaintext bytes
+   * @throws VaultPasswordException if the supplied password does not validate against the HMAC
+   * @throws VaultCodecException if decryption fails for other reasons
+   */
   public byte[] decrypt (byte[] hmac, byte[] encrypted)
     throws VaultCodecException {
 

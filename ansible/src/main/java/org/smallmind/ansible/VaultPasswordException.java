@@ -32,8 +32,17 @@
  */
 package org.smallmind.ansible;
 
+/**
+ * Exception thrown when vault password validation fails.
+ */
 public class VaultPasswordException extends VaultCodecException {
 
+  /**
+   * Creates an exception with a formatted message.
+   *
+   * @param message message template describing the validation problem
+   * @param args message arguments
+   */
   public VaultPasswordException (String message, Object... args) {
 
     super(message, args);

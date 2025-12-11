@@ -34,13 +34,27 @@ package org.smallmind.ansible;
 
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
+/**
+ * Exception signaling errors encountered while encoding or decoding Ansible vault content.
+ */
 public class VaultCodecException extends FormattedException {
 
+  /**
+   * Creates an exception with a formatted message.
+   *
+   * @param message message template
+   * @param args message arguments
+   */
   public VaultCodecException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * Wraps a lower-level cause.
+   *
+   * @param throwable root cause
+   */
   public VaultCodecException (Throwable throwable) {
 
     super(throwable);

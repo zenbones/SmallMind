@@ -38,14 +38,37 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import org.smallmind.nutsnbolts.security.HexCodec;
 
+/**
+ * Codec for encoding and decoding content compatible with Ansible vault files.
+ * Supports vault formats 1.1 and 1.2 (the latter carrying an optional id) using AES256 encryption.
+ */
 public class VaultCodec {
 
+  /**
+   * Encrypts the supplied stream into an Ansible vault string using the supplied password.
+   *
+   * @param inputStream stream containing the plaintext to encrypt; the stream is fully read but not closed
+   * @param password vault password used for PBKDF2 key derivation
+   * @return vault-formatted text containing headers and hex-encoded content
+   * @throws IOException if reading from the input stream fails
+   * @throws VaultCodecException if encryption fails
+   */
   public static String encrypt (InputStream inputStream, String password)
     throws IOException, VaultCodecException {
 
     return encrypt(inputStream, password, null);
   }
 
+  /**
+   * Encrypts the supplied stream into an Ansible vault string using the supplied password and optional id.
+   *
+   * @param inputStream stream containing the plaintext to encrypt; the stream is fully read but not closed
+   * @param password vault password used for PBKDF2 key derivation
+   * @param id optional vault id inserted into the header when using format 1.2
+   * @return vault-formatted text containing headers and hex-encoded content
+   * @throws IOException if reading from the input stream fails
+   * @throws VaultCodecException if encryption fails
+   */
   public static String encrypt (InputStream inputStream, String password, String id)
     throws IOException, VaultCodecException {
 
@@ -83,6 +106,15 @@ public class VaultCodec {
     return encryptedBuilder.toString();
   }
 
+  /**
+   * Decrypts an Ansible vault stream using the supplied password.
+   *
+   * @param inputStream stream containing the vault text; the stream is fully read but not closed
+   * @param password vault password used for PBKDF2 key derivation
+   * @return decrypted plaintext bytes
+   * @throws IOException if reading from the input stream fails
+   * @throws VaultCodecException if the header is unrecognized, the cipher is unsupported, or password validation fails
+   */
   public static byte[] decrypt (InputStream inputStream, String password)
     throws IOException, VaultCodecException {
 
@@ -101,6 +133,13 @@ public class VaultCodec {
     }
   }
 
+  /**
+   * Consumes the expected line separator marker ("0a") from the encoded stream.
+   *
+   * @param inputStream encoded stream positioned at the start of a line separator token
+   * @throws IOException if reading fails
+   * @throws VaultCodecException if the expected token is not present
+   */
   private static void skip0A (InputStream inputStream)
     throws IOException, VaultCodecException {
 
@@ -109,6 +148,15 @@ public class VaultCodec {
     }
   }
 
+  /**
+   * Reads a fixed number of bytes from the encoded stream, consuming the trailing line separator.
+   *
+   * @param inputStream encoded stream positioned at the start of a block
+   * @param length number of decoded bytes expected
+   * @return decoded bytes after reversing the double-hex encoding
+   * @throws IOException if reading fails
+   * @throws VaultCodecException if insufficient bytes are available or the separator is missing
+   */
   private static byte[] readBytes (InputStream inputStream, int length)
     throws IOException, VaultCodecException {
 
@@ -136,6 +184,13 @@ public class VaultCodec {
     }
   }
 
+  /**
+   * Reads the remaining encoded bytes on the stream (excluding newlines) and decodes them.
+   *
+   * @param inputStream encoded stream positioned at the start of the final block
+   * @return decoded bytes after reversing the double-hex encoding
+   * @throws IOException if reading fails
+   */
   private static byte[] readBytes (InputStream inputStream)
     throws IOException {
 
@@ -153,6 +208,13 @@ public class VaultCodec {
     }
   }
 
+  /**
+   * Reads a single line from the stream (excluding the trailing newline).
+   *
+   * @param inputStream stream positioned at the start of a line
+   * @return the line text without the newline terminator
+   * @throws IOException if reading fails
+   */
   private static String readLine (InputStream inputStream)
     throws IOException {
 
