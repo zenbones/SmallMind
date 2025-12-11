@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 through 2024 David Berkman
+ * Copyright (c) 2007 through 2026 David Berkman
  *
  * This file is part of the SmallMind Code Project.
  *
