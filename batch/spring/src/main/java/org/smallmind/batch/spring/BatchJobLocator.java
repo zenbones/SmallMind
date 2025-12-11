@@ -44,29 +44,54 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 
+/**
+ * Job locator that captures Spring Batch job beans during context initialization and exposes them to the framework.
+ */
 public class BatchJobLocator implements ListableJobLocator, ApplicationListener<ContextRefreshedEvent>, BeanFactoryPostProcessor {
 
   private final HashSet<String> jobNameSet = new HashSet<>();
   private ApplicationContext applicationContext;
 
+  /**
+   * Stores the refreshed application context so jobs can be retrieved later.
+   *
+   * @param event the context refreshed event
+   */
   @Override
   public void onApplicationEvent (ContextRefreshedEvent event) {
 
     applicationContext = event.getApplicationContext();
   }
 
+  /**
+   * Retrieves a job bean by name from the application context.
+   *
+   * @param name the bean name corresponding to a {@link Job}
+   * @return the resolved job instance
+   */
   @Override
   public Job getJob (String name) {
 
     return applicationContext.getBean(name, Job.class);
   }
 
+  /**
+   * Returns all discovered job names.
+   *
+   * @return an unmodifiable collection of job names
+   */
   @Override
   public Collection<String> getJobNames () {
 
     return Collections.unmodifiableSet(jobNameSet);
   }
 
+  /**
+   * Captures all {@link Job} bean names during bean factory post processing.
+   *
+   * @param configurableListableBeanFactory the bean factory being processed
+   * @throws BeansException if the bean factory cannot be inspected
+   */
   @Override
   public void postProcessBeanFactory (ConfigurableListableBeanFactory configurableListableBeanFactory)
     throws BeansException {
@@ -83,4 +108,3 @@ public class BatchJobLocator implements ListableJobLocator, ApplicationListener<
     }
   }
 }
-

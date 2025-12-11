@@ -37,19 +37,40 @@ public abstract class BatchParameter<T> {
   private final T value;
   private final boolean identifying;
 
+  /**
+   * Constructs a batch parameter wrapper.
+   *
+   * @param value the parameter value to be supplied to a job
+   * @param identifying {@code true} if the parameter participates in the identity of a job instance
+   */
   public BatchParameter (T value, boolean identifying) {
 
     this.value = value;
     this.identifying = identifying;
   }
 
+  /**
+   * Identifies the underlying parameter type so that it can be translated to Spring Batch.
+   *
+   * @return the declared {@link ParameterType}
+   */
   public abstract ParameterType getType ();
 
+  /**
+   * Provides the raw value stored for the parameter.
+   *
+   * @return the parameter value
+   */
   public T getValue () {
 
     return value;
   }
 
+  /**
+   * Indicates whether this parameter should be treated as part of the job instance identity.
+   *
+   * @return {@code true} if identifying, otherwise {@code false}
+   */
   public boolean isIdentifying () {
 
     return identifying;

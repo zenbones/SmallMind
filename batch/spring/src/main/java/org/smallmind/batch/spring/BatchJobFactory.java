@@ -55,6 +55,10 @@ import org.springframework.batch.core.repository.JobExecutionAlreadyRunningExcep
 import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
 import org.springframework.batch.core.repository.JobRestartException;
 
+/**
+ * Spring Batch backed implementation of {@link org.smallmind.batch.base.JobFactory} that translates the project level
+ * parameter wrappers into Spring {@link org.springframework.batch.core.JobParameters} and launches jobs.
+ */
 public class BatchJobFactory implements JobFactory {
 
   private JobLocator jobLocator;
@@ -62,26 +66,59 @@ public class BatchJobFactory implements JobFactory {
   private JobOperator jobOperator;
   private JobExplorer jobExplorer;
 
+  /**
+   * Injects the {@link JobLocator} used to resolve jobs by logical name.
+   *
+   * @param jobLocator the locator to use
+   */
   public void setJobLocator (JobLocator jobLocator) {
 
     this.jobLocator = jobLocator;
   }
 
+  /**
+   * Injects the {@link JobLauncher} used to run jobs.
+   *
+   * @param jobLauncher the launcher to use
+   */
   public void setJobLauncher (JobLauncher jobLauncher) {
 
     this.jobLauncher = jobLauncher;
   }
 
+  /**
+   * Injects the {@link JobOperator} used to restart jobs.
+   *
+   * @param jobOperator the operator to use
+   */
   public void setJobOperator (JobOperator jobOperator) {
 
     this.jobOperator = jobOperator;
   }
 
+  /**
+   * Injects the {@link JobExplorer} used to introspect job executions.
+   *
+   * @param jobExplorer the explorer to use
+   */
   public void setJobExplorer (JobExplorer jobExplorer) {
 
     this.jobExplorer = jobExplorer;
   }
 
+  /**
+   * Launches a job while logging the invocation reason and parameters.
+   *
+   * @param logicalName the logical job name
+   * @param parameterMap parameters supplied to the job
+   * @param reason optional text describing why the job is starting (used only for logging)
+   * @return the id of the resulting job execution
+   * @throws NoSuchJobException if the logical name cannot be resolved
+   * @throws JobParametersInvalidException if required parameters are missing or invalid
+   * @throws JobExecutionAlreadyRunningException if an execution of the job is already running and cannot overlap
+   * @throws JobRestartException if a restartable job cannot be restarted
+   * @throws JobInstanceAlreadyCompleteException if the specified parameters map to a job instance that already completed
+   */
   @Override
   public Long create (String logicalName, Map<String, BatchParameter<?>> parameterMap, String reason)
     throws NoSuchJobException, JobParametersInvalidException, JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException {
@@ -91,6 +128,12 @@ public class BatchJobFactory implements JobFactory {
     return start(logicalName, parameterMap);
   }
 
+  /**
+   * Produces a readable representation of the parameter map for logging.
+   *
+   * @param parameterMap the parameters to describe
+   * @return a formatted string describing the parameters, or {@code "none"} if the map is empty
+   */
   private String parametersAsString (Map<String, BatchParameter<?>> parameterMap) {
 
     if ((parameterMap == null) || parameterMap.isEmpty()) {
@@ -113,6 +156,16 @@ public class BatchJobFactory implements JobFactory {
     }
   }
 
+  /**
+   * Restarts a previously executed job by id.
+   *
+   * @param executionId the job execution id
+   * @throws NoSuchJobException if the job cannot be found
+   * @throws NoSuchJobExecutionException if the execution id does not exist
+   * @throws JobParametersInvalidException if stored parameters are invalid for restart
+   * @throws JobRestartException if the job cannot be restarted
+   * @throws JobInstanceAlreadyCompleteException if the execution corresponds to a completed instance
+   */
   @Override
   public void restart (long executionId)
     throws NoSuchJobException, NoSuchJobExecutionException, JobParametersInvalidException, JobRestartException, JobInstanceAlreadyCompleteException {
@@ -120,11 +173,24 @@ public class BatchJobFactory implements JobFactory {
     jobOperator.restart(executionId);
   }
 
+  /**
+   * Creates a monitor for the given job id.
+   *
+   * @param jobId the job id to monitor
+   * @return a monitor that can await specific exit states
+   */
   public BatchJobMonitor monitor (Long jobId) {
 
     return new BatchJobMonitor(jobExplorer, jobId);
   }
 
+  /**
+   * Creates a monitor for the most recent execution of the named job.
+   *
+   * @param logicalName the job name
+   * @return a monitor targeting the latest job execution
+   * @throws MissingJobException if no job instance or execution can be found
+   */
   public BatchJobMonitor monitorLatest (String logicalName) {
 
     JobInstance jobInstance;
@@ -144,6 +210,18 @@ public class BatchJobFactory implements JobFactory {
     }
   }
 
+  /**
+   * Launches a job with the supplied parameters.
+   *
+   * @param logicalName the logical job name to resolve
+   * @param parameterMap the parameters to pass to the job
+   * @return the id of the created job execution
+   * @throws NoSuchJobException if the job name cannot be resolved
+   * @throws JobParametersInvalidException if the parameter map fails Spring Batch validation
+   * @throws JobExecutionAlreadyRunningException if the job is already running with the same parameters
+   * @throws JobRestartException if the job cannot be restarted with the provided parameters
+   * @throws JobInstanceAlreadyCompleteException if the parameters map to a completed job instance
+   */
   public Long start (String logicalName, Map<String, BatchParameter<?>> parameterMap)
     throws NoSuchJobException, JobParametersInvalidException, JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException {
 

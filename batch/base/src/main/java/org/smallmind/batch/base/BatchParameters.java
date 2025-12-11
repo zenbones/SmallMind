@@ -35,23 +35,54 @@ package org.smallmind.batch.base;
 import java.util.Date;
 import java.util.HashMap;
 
+/**
+ * Mutable collection of batch parameters keyed by name, with helpers to add typed entries.
+ */
 public class BatchParameters extends HashMap<String, BatchParameter<?>> {
 
+  /**
+   * Adds a {@link Date} parameter.
+   *
+   * @param key the parameter name expected by the job
+   * @param aDate the date value to supply
+   * @param identifying whether the value helps identify the job instance
+   */
   public void putDate (String key, Date aDate, boolean identifying) {
 
     put(key, new DateBatchParameter(aDate, identifying));
   }
 
+  /**
+   * Adds a {@link Double} parameter.
+   *
+   * @param key the parameter name expected by the job
+   * @param aDouble the numeric value to supply
+   * @param identifying whether the value helps identify the job instance
+   */
   public void putDouble (String key, Double aDouble, boolean identifying) {
 
     put(key, new DoubleBatchParameter(aDouble, identifying));
   }
 
+  /**
+   * Adds a {@link Long} parameter.
+   *
+   * @param key the parameter name expected by the job
+   * @param aLong the numeric value to supply
+   * @param identifying whether the value helps identify the job instance
+   */
   public void putLong (String key, Long aLong, boolean identifying) {
 
     put(key, new LongBatchParameter(aLong, identifying));
   }
 
+  /**
+   * Adds a {@link String} parameter.
+   *
+   * @param key the parameter name expected by the job
+   * @param aString the string value to supply
+   * @param identifying whether the value helps identify the job instance
+   */
   public void putString (String key, String aString, boolean identifying) {
 
     put(key, new StringBatchParameter(aString, identifying));

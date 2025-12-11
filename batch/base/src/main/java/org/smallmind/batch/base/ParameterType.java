@@ -32,6 +32,9 @@
  */
 package org.smallmind.batch.base;
 
+/**
+ * Enumerates the supported parameter types accepted by the job factory helpers.
+ */
 public enum ParameterType {
 
   DATE, DOUBLE, LONG, STRING

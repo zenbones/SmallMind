@@ -35,8 +35,14 @@ package org.smallmind.batch.spring;
 import java.util.concurrent.Executors;
 import org.springframework.core.task.support.TaskExecutorAdapter;
 
+/**
+ * Simple {@link org.springframework.core.task.TaskExecutor} wrapper that runs batch jobs on a dedicated single thread.
+ */
 public class BatchJobExecutor extends TaskExecutorAdapter {
 
+  /**
+   * Builds an executor backed by a single-threaded pool suitable for sequential batch execution.
+   */
   public BatchJobExecutor () {
 
     super(Executors.newSingleThreadExecutor());

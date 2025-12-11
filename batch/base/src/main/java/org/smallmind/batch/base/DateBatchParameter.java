@@ -34,13 +34,25 @@ package org.smallmind.batch.base;
 
 import java.util.Date;
 
+/**
+ * {@link Date} implementation of {@link BatchParameter}.
+ */
 public class DateBatchParameter extends BatchParameter<Date> {
 
+  /**
+   * Creates a date parameter wrapper.
+   *
+   * @param value the date to pass to the batch job
+   * @param identifying whether the value should contribute to job identity
+   */
   public DateBatchParameter (Date value, boolean identifying) {
 
     super(value, identifying);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public ParameterType getType () {
 

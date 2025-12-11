@@ -34,8 +34,17 @@ package org.smallmind.batch.spring;
 
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
+/**
+ * Runtime exception thrown when an expected job or execution cannot be located.
+ */
 public class MissingJobException extends FormattedRuntimeException {
 
+  /**
+   * Constructs a missing job exception with a formatted message.
+   *
+   * @param message the format string explaining what is missing
+   * @param args values referenced by the format string
+   */
   public MissingJobException (String message, Object... args) {
 
     super(message, args);
