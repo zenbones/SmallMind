@@ -32,13 +32,28 @@
  */
 package org.smallmind.claxon.registry;
 
+/**
+ * Base class for emitters that are polled for readings rather than pushed to.
+ *
+ * @param <T> the type returned when emitting
+ */
 public abstract class PullEmitter<T> implements Emitter {
 
+  /**
+   * Pull emitters always identify themselves as {@link EmitterMethod#PULL}.
+   *
+   * @return the pull method indicator
+   */
   @Override
   public EmitterMethod getEmitterMethod () {
 
     return EmitterMethod.PULL;
   }
 
+  /**
+   * Produces the payload to be emitted when the registry is polled.
+   *
+   * @return payload specific to the emitter implementation
+   */
   public abstract T emit ();
 }

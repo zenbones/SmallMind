@@ -40,6 +40,9 @@ import org.smallmind.web.json.doppelganger.View;
 
 import static org.smallmind.web.json.doppelganger.Visibility.IN;
 
+/**
+ * JSON-mapped properties for configuring a trace meter.
+ */
 @Doppelganger(namespace = "http://org.smallmind/claxon/registry")
 public class TraceProperties {
 
@@ -48,21 +51,37 @@ public class TraceProperties {
   @View(idioms = @Idiom(visibility = IN))
   private Window[] windows = new Window[] {new Window("m1", 1), new Window("m5", 5), new Window("m15", 15)};
 
+  /**
+   * @return time unit applied to window definitions
+   */
   public TimeUnit getWindowTimeUnit () {
 
     return windowTimeUnit;
   }
 
+  /**
+   * Sets the time unit applied to window definitions.
+   *
+   * @param windowTimeUnit window time unit
+   */
   public void setWindowTimeUnit (TimeUnit windowTimeUnit) {
 
     this.windowTimeUnit = windowTimeUnit;
   }
 
+  /**
+   * @return array of configured windows
+   */
   public Window[] getWindows () {
 
     return windows;
   }
 
+  /**
+   * Replaces the configured windows.
+   *
+   * @param windows window definitions
+   */
   public void setWindows (Window[] windows) {
 
     this.windows = windows;

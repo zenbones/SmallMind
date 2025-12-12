@@ -36,6 +36,9 @@ import java.util.concurrent.TimeUnit;
 import org.smallmind.claxon.registry.Clock;
 import org.smallmind.claxon.registry.Window;
 
+/**
+ * Builder for {@link Trace} meters.
+ */
 public class TraceBuilder implements MeterBuilder<Trace> {
 
   private static final Window[] DEFAULT_WINDOWS = new Window[] {new Window("m1", 1), new Window("m5", 5), new Window("m15", 15)};
@@ -43,6 +46,12 @@ public class TraceBuilder implements MeterBuilder<Trace> {
   private TimeUnit windowTimeUnit = TimeUnit.MINUTES;
   private Window[] windows = DEFAULT_WINDOWS;
 
+  /**
+   * Sets the time unit applied to each window definition.
+   *
+   * @param windowTimeUnit window time unit
+   * @return this builder
+   */
   public MeterBuilder<Trace> windowTimeUnit (TimeUnit windowTimeUnit) {
 
     this.windowTimeUnit = windowTimeUnit;
@@ -57,6 +66,12 @@ public class TraceBuilder implements MeterBuilder<Trace> {
     return this;
   }
 
+  /**
+   * Builds a trace meter with the configured windows.
+   *
+   * @param clock registry clock
+   * @return configured trace meter
+   */
   @Override
   public Trace build (Clock clock) {
 

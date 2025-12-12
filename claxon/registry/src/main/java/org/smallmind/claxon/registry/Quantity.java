@@ -32,17 +32,33 @@
  */
 package org.smallmind.claxon.registry;
 
+/**
+ * Represents a single measured value (e.g., count, rate, percentile) optionally classified by type.
+ */
 public class Quantity {
 
   private final QuantityType type;
   private final String name;
   private final double value;
 
+  /**
+   * Builds a quantity without a specific {@link QuantityType}.
+   *
+   * @param name  logical name for the measurement
+   * @param value numeric value captured
+   */
   public Quantity (String name, double value) {
 
     this(name, value, QuantityType.NONE);
   }
 
+  /**
+   * Builds a quantity with an explicit type classification.
+   *
+   * @param name  logical name for the measurement
+   * @param value numeric value captured
+   * @param type  type classification for the measurement
+   */
   public Quantity (String name, double value, QuantityType type) {
 
     this.name = name;
@@ -50,16 +66,25 @@ public class Quantity {
     this.type = type;
   }
 
+  /**
+   * @return logical name of the measurement
+   */
   public String getName () {
 
     return name;
   }
 
+  /**
+   * @return numeric value of the measurement
+   */
   public double getValue () {
 
     return value;
   }
 
+  /**
+   * @return classification for the measurement
+   */
   public QuantityType getType () {
 
     return type;

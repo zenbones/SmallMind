@@ -36,11 +36,20 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Declares a static tag to be attached to instrumented metrics.
+ */
 @Target({})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ConstantTag {
 
+  /**
+   * @return tag key
+   */
   String key ();
 
+  /**
+   * @return constant tag value
+   */
   String constant ();
 }

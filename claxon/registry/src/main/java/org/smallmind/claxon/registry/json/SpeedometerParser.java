@@ -39,8 +39,18 @@ import org.smallmind.claxon.registry.meter.Speedometer;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
+/**
+ * Parses speedometer configuration from JSON into a {@link SpeedometerBuilder}.
+ */
 public class SpeedometerParser implements InstrumentedParser<Speedometer> {
 
+  /**
+   * Parses the JSON string and produces a configured speedometer builder.
+   *
+   * @param json JSON configuration
+   * @return configured speedometer builder
+   * @throws IOException when parsing fails
+   */
   @Override
   public MeterBuilder<Speedometer> parse (String json)
     throws IOException {

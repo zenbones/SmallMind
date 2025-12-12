@@ -41,40 +41,69 @@ import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
+/**
+ * Spring factory bean that wires a {@link ClaxonRegistry} with configuration and emitters.
+ */
 public class ClaxonRegistryFactoryBean implements FactoryBean<ClaxonRegistry>, InitializingBean, DisposableBean {
 
   private ClaxonRegistry registry;
   private ClaxonConfiguration configuration = new ClaxonConfiguration();
   private Map<String, Emitter> emitterMap = new HashMap<>();
 
+  /**
+   * Sets the registry configuration to use.
+   *
+   * @param configuration registry configuration
+   */
   public void setConfiguration (ClaxonConfiguration configuration) {
 
     this.configuration = configuration;
   }
 
+  /**
+   * Sets the emitters to bind, keyed by name.
+   *
+   * @param emitterMap emitter map
+   */
   public void setEmitterMap (Map<String, Emitter> emitterMap) {
 
     this.emitterMap = emitterMap;
   }
 
+  /**
+   * Registry bean is a singleton.
+   *
+   * @return always true
+   */
   @Override
   public boolean isSingleton () {
 
     return true;
   }
 
+  /**
+   * @return produced object type ({@link ClaxonRegistry})
+   */
   @Override
   public Class<?> getObjectType () {
 
     return ClaxonRegistry.class;
   }
 
+  /**
+   * @return the constructed registry
+   */
   @Override
   public ClaxonRegistry getObject () {
 
     return registry;
   }
 
+  /**
+   * Stops the registry when the Spring context is shutting down.
+   *
+   * @throws InterruptedException if interrupted during shutdown
+   */
   @Override
   public void destroy ()
     throws InterruptedException {
@@ -84,6 +113,9 @@ public class ClaxonRegistryFactoryBean implements FactoryBean<ClaxonRegistry>, I
     }
   }
 
+  /**
+   * Builds and initializes the registry after properties are set.
+   */
   @Override
   public void afterPropertiesSet () {
 

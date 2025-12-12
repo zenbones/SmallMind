@@ -32,8 +32,16 @@
  */
 package org.smallmind.claxon.registry.aop;
 
+/**
+ * Indicates a problem configuring or applying instrumentation via AOP.
+ */
 public class InstrumentationException extends RuntimeException {
 
+  /**
+   * Wraps the underlying cause of the instrumentation failure.
+   *
+   * @param cause root exception
+   */
   public InstrumentationException (Throwable cause) {
 
     super(cause);

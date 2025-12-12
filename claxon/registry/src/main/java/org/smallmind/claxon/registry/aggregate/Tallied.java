@@ -34,31 +34,53 @@ package org.smallmind.claxon.registry.aggregate;
 
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * Aggregate that maintains a running tally using atomic arithmetic.
+ */
 public class Tallied implements Aggregate {
 
   private final AtomicLong count = new AtomicLong();
 
+  /**
+   * Increments the tally by one.
+   */
   public void inc () {
 
     add(1);
   }
 
+  /**
+   * Decrements the tally by one.
+   */
   public void dec () {
 
     add(-1);
   }
 
+  /**
+   * Adjusts the tally by a delta.
+   *
+   * @param delta delta to add (negative to subtract)
+   */
   public void add (long delta) {
 
     count.addAndGet(delta);
   }
 
+  /**
+   * Adds the value to the tally.
+   *
+   * @param value value to add
+   */
   @Override
   public void update (long value) {
 
     add(value);
   }
 
+  /**
+   * @return current tally value
+   */
   public long getCount () {
 
     return count.get();

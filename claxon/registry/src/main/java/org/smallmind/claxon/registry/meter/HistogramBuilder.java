@@ -37,6 +37,9 @@ import org.smallmind.claxon.registry.Clock;
 import org.smallmind.claxon.registry.Percentile;
 import org.smallmind.nutsnbolts.time.Stint;
 
+/**
+ * Fluent builder for {@link Histogram} meters.
+ */
 public class HistogramBuilder implements MeterBuilder<Histogram> {
 
   private static final Stint ONE_SECOND_STINT = new Stint(1, TimeUnit.SECONDS);
@@ -48,6 +51,12 @@ public class HistogramBuilder implements MeterBuilder<Histogram> {
   private long highestTrackableValue = 3600000L;
   private int numberOfSignificantValueDigits = 2;
 
+  /**
+   * Sets the smallest value the histogram should track.
+   *
+   * @param lowestDiscernibleValue minimum trackable value
+   * @return this builder
+   */
   public MeterBuilder<Histogram> lowestDiscernibleValue (long lowestDiscernibleValue) {
 
     this.lowestDiscernibleValue = lowestDiscernibleValue;
@@ -62,6 +71,12 @@ public class HistogramBuilder implements MeterBuilder<Histogram> {
     return this;
   }
 
+  /**
+   * Sets the number of significant value digits for histogram precision.
+   *
+   * @param numberOfSignificantValueDigits precision digits
+   * @return this builder
+   */
   public MeterBuilder<Histogram> numberOfSignificantValueDigits (int numberOfSignificantValueDigits) {
 
     this.numberOfSignificantValueDigits = numberOfSignificantValueDigits;
@@ -69,6 +84,12 @@ public class HistogramBuilder implements MeterBuilder<Histogram> {
     return this;
   }
 
+  /**
+   * Configures the percentiles to be emitted with each recording.
+   *
+   * @param percentiles percentile definitions
+   * @return this builder
+   */
   public MeterBuilder<Histogram> percentiles (Percentile... percentiles) {
 
     this.percentiles = percentiles;
@@ -76,6 +97,12 @@ public class HistogramBuilder implements MeterBuilder<Histogram> {
     return this;
   }
 
+  /**
+   * Sets the duration of histogram intervals.
+   *
+   * @param resolutionStint interval duration
+   * @return this builder
+   */
   public MeterBuilder<Histogram> resolution (Stint resolutionStint) {
 
     this.resolutionStint = resolutionStint;
@@ -83,6 +110,12 @@ public class HistogramBuilder implements MeterBuilder<Histogram> {
     return this;
   }
 
+  /**
+   * Builds a histogram with the configured parameters.
+   *
+   * @param clock clock provided by the registry
+   * @return configured histogram
+   */
   @Override
   public Histogram build (Clock clock) {
 

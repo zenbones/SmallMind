@@ -32,8 +32,18 @@
  */
 package org.smallmind.claxon.registry.meter;
 
+/**
+ * Supplier that constructs a {@link MeterBuilder} instance.
+ *
+ * @param <M> meter type
+ */
 @FunctionalInterface
 public interface BuilderConstructor<M extends Meter> {
 
+  /**
+   * Constructs a new meter builder.
+   *
+   * @return meter builder
+   */
   MeterBuilder<M> construct ();
 }

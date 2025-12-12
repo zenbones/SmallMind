@@ -40,6 +40,9 @@ import org.smallmind.claxon.registry.Quantity;
 import org.smallmind.claxon.registry.Tag;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
+/**
+ * Pull emitter that exposes metrics in Prometheus exposition format.
+ */
 public class PrometheusEmitter extends PullEmitter<String> {
 
   private enum Letter {UPPER, LOWER, DIGIT, PUNCTUATION, UNKNOWN}
@@ -53,6 +56,13 @@ public class PrometheusEmitter extends PullEmitter<String> {
   # Comment that's not parsed by prometheus
   http_requests_total{method="post",code="400"}  3   1395066363000
   */
+  /**
+   * Stores the latest quantity values keyed by meter, tags, and quantity name.
+   *
+   * @param meterName meter name
+   * @param tags      associated tags (may be null)
+   * @param quantities measured values
+   */
   @Override
   public void record (String meterName, Tag[] tags, Quantity[] quantities) {
 
@@ -61,6 +71,11 @@ public class PrometheusEmitter extends PullEmitter<String> {
     }
   }
 
+  /**
+   * Atomically swaps buffers and renders all stored metrics in Prometheus text format.
+   *
+   * @return rendered metrics as a string
+   */
   @Override
   public synchronized String emit () {
 
@@ -96,6 +111,13 @@ public class PrometheusEmitter extends PullEmitter<String> {
     }
   }
 
+  /**
+   * Formats a Prometheus metric line (name, tags) into the output builder.
+   *
+   * @param outputBuilder builder to append to
+   * @param prometheusKey key containing name and tags
+   * @return the same builder for chaining
+   */
   private StringBuilder format (StringBuilder outputBuilder, PrometheusKey prometheusKey) {
 
     mangle(outputBuilder, prometheusKey.getMeterName()).append(':');
@@ -121,6 +143,13 @@ public class PrometheusEmitter extends PullEmitter<String> {
   }
 
   // Being Golang, Prometheus can't handle unicode strings like most frameworks, but only a very simple set of characters.
+  /**
+   * Normalizes metric and tag names to Prometheus-friendly snake_case, handling digits and punctuation.
+   *
+   * @param outputBuilder builder to append to
+   * @param original      original string
+   * @return the same builder for chaining
+   */
   private StringBuilder mangle (StringBuilder outputBuilder, String original) {
 
     Letter state = Letter.UNKNOWN;
@@ -177,6 +206,13 @@ public class PrometheusEmitter extends PullEmitter<String> {
     private final String meterName;
     private final String quantityName;
 
+    /**
+     * Constructs a key for a metric quantity and tags.
+     *
+     * @param meterName    meter name
+     * @param tags         associated tags (may be null)
+     * @param quantityName quantity name
+     */
     public PrometheusKey (String meterName, Tag[] tags, String quantityName) {
 
       this.meterName = meterName;
@@ -184,16 +220,25 @@ public class PrometheusEmitter extends PullEmitter<String> {
       this.quantityName = quantityName;
     }
 
+    /**
+     * @return meter name
+     */
     public String getMeterName () {
 
       return meterName;
     }
 
+    /**
+     * @return associated tags
+     */
     public Tag[] getTags () {
 
       return tags;
     }
 
+    /**
+     * @return quantity name
+     */
     public String getQuantityName () {
 
       return quantityName;

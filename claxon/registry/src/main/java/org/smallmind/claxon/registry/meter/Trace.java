@@ -38,11 +38,21 @@ import org.smallmind.claxon.registry.Quantity;
 import org.smallmind.claxon.registry.Window;
 import org.smallmind.claxon.registry.aggregate.Pursued;
 
+/**
+ * Meter that reports multiple exponentially weighted moving averages over configured windows.
+ */
 public class Trace implements Meter {
 
   private final Pursued pursued;
   private final Window[] windows;
 
+  /**
+   * Creates a trace meter using the provided windows.
+   *
+   * @param clock          clock providing monotonic time
+   * @param windowTimeUnit unit applied to each window
+   * @param windows        window definitions and names
+   */
   public Trace (Clock clock, TimeUnit windowTimeUnit, Window... windows) {
 
     long[] windowTimes = new long[windows.length];
@@ -57,12 +67,22 @@ public class Trace implements Meter {
     pursued = new Pursued(clock, windowTimeUnit, windowTimes);
   }
 
+  /**
+   * Updates the moving averages with the provided value.
+   *
+   * @param value value to include
+   */
   @Override
   public void update (long value) {
 
     pursued.update(value);
   }
 
+  /**
+   * Returns quantities for each configured window using the current moving averages.
+   *
+   * @return array of window quantities
+   */
   @Override
   public Quantity[] record () {
 

@@ -35,9 +35,21 @@ package org.smallmind.claxon.registry.aop;
 import org.smallmind.claxon.registry.meter.Meter;
 import org.smallmind.claxon.registry.meter.MeterBuilder;
 
+/**
+ * Parses JSON configuration into a meter builder for AOP instrumentation.
+ *
+ * @param <M> meter type
+ */
 @FunctionalInterface
 public interface InstrumentedParser<M extends Meter> {
 
+  /**
+   * Parses the JSON representation and produces a meter builder.
+   *
+   * @param json JSON configuration
+   * @return configured meter builder
+   * @throws Exception on parse errors
+   */
   MeterBuilder<M> parse (String json)
     throws Exception;
 }

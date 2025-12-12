@@ -35,6 +35,9 @@ package org.smallmind.claxon.registry.aggregate;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.LongAccumulator;
 
+/**
+ * Tracks minimum and maximum values using double-buffered accumulators to avoid contention during reads.
+ */
 public class Bounded implements Aggregate {
 
   private final LongAccumulator flipMaxAccumulator = new LongAccumulator(Long::max, Long.MIN_VALUE);
@@ -44,6 +47,12 @@ public class Bounded implements Aggregate {
   private final AtomicBoolean maxFlag = new AtomicBoolean();
   private final AtomicBoolean minFlag = new AtomicBoolean();
 
+  /**
+   * Incorporates a new value into both min and max tracking.
+   *
+   * @param value value to add
+   */
+  @Override
   public void update (long value) {
 
     if (!maxFlag.get()) {
@@ -59,6 +68,11 @@ public class Bounded implements Aggregate {
     }
   }
 
+  /**
+   * Returns the current maximum and resets the accumulator for the next window.
+   *
+   * @return maximum value seen since the last call
+   */
   public synchronized long getMaximum () {
 
     boolean currentFlag = maxFlag.get();
@@ -68,6 +82,11 @@ public class Bounded implements Aggregate {
     return (!currentFlag) ? flipMaxAccumulator.getThenReset() : flopMaxAccumulator.getThenReset();
   }
 
+  /**
+   * Returns the current minimum and resets the accumulator for the next window.
+   *
+   * @return minimum value seen since the last call
+   */
   public long getMinimum () {
 
     boolean currentFlag = minFlag.get();

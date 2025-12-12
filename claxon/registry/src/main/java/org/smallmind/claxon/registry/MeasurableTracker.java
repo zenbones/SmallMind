@@ -41,17 +41,36 @@ import java.util.function.Function;
 import org.smallmind.claxon.registry.meter.Meter;
 import org.smallmind.claxon.registry.meter.MeterBuilder;
 
+/**
+ * Tracks weakly referenced measured objects and updates meters while removing entries when the objects are collected.
+ */
 public class MeasurableTracker {
 
   private final ConcurrentHashMap<Reference<?>, Measurable> measurableMap = new ConcurrentHashMap<>();
   private final ReferenceQueue<Object> referenceQueue = new ReferenceQueue<>();
   private final ClaxonRegistry registry;
 
+  /**
+   * Creates a tracker tied to a registry.
+   *
+   * @param registry registry used to register and unregister meters for tracked objects
+   */
   public MeasurableTracker (ClaxonRegistry registry) {
 
     this.registry = registry;
   }
 
+  /**
+   * Starts tracking a measured object with a builder and measurement function.
+   *
+   * @param caller      calling class for naming
+   * @param builder     meter builder to construct the meter
+   * @param measured    object being tracked
+   * @param measurement function to compute a measurement from the object
+   * @param tags        tags associated with the meter
+   * @param <T>         measured type
+   * @return the measured object for fluent usage
+   */
   public <T> T track (Class<?> caller, MeterBuilder<? extends Meter> builder, T measured, Function<T, Long> measurement, Tag... tags) {
 
     measurableMap.put(new WeakReference<>(measured, referenceQueue), new Measurable(caller, builder, measurement, tags));
@@ -59,6 +78,9 @@ public class MeasurableTracker {
     return measured;
   }
 
+  /**
+   * Removes meters whose measured objects have been collected and updates remaining meters with fresh measurements.
+   */
   public void sweepAndUpdate () {
 
     Reference<?> sweptReference;
@@ -89,6 +111,14 @@ public class MeasurableTracker {
     private final Function<Object, Long> measurement;
     private final Class<?> caller;
 
+    /**
+     * Captures measurement metadata for a tracked object.
+     *
+     * @param caller      calling class for naming
+     * @param builder     meter builder to create meters
+     * @param measurement measurement function applied to the tracked object
+     * @param tags        tags associated with the meter
+     */
     public Measurable (Class<?> caller, MeterBuilder<? extends Meter> builder, Function<?, Long> measurement, Tag... tags) {
 
       this.caller = caller;
@@ -97,21 +127,33 @@ public class MeasurableTracker {
       this.measurement = (Function<Object, Long>)measurement;
     }
 
+    /**
+     * @return the calling class used for meter naming
+     */
     public Class<?> getCaller () {
 
       return caller;
     }
 
+    /**
+     * @return tags associated with the tracked meter
+     */
     public Tag[] getTags () {
 
       return tags;
     }
 
+    /**
+     * @return builder used to create the meter
+     */
     public MeterBuilder<? extends Meter> getBuilder () {
 
       return builder;
     }
 
+    /**
+     * @return function used to compute measurements
+     */
     public Function<Object, Long> getMeasurement () {
 
       return measurement;

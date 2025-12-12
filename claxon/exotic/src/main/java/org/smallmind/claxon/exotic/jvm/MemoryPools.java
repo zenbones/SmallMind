@@ -38,6 +38,9 @@ import java.lang.management.MemoryUsage;
 import java.util.List;
 import java.util.function.Supplier;
 
+/**
+ * Provides access to memory pool usage (eden, survivor, tenured), defaulting to zero usage when unavailable.
+ */
 public class MemoryPools {
 
   private static final MemoryUsage ZERO_MEMORY_USAGE = new MemoryUsage(0, 0, 0, 0);
@@ -46,6 +49,9 @@ public class MemoryPools {
   private final Supplier<MemoryUsage> survivorMemoryPool;
   private final Supplier<MemoryUsage> tenuredMemoryPool;
 
+  /**
+   * Discovers memory pools from the JVM and wires suppliers for their usages.
+   */
   public MemoryPools () {
 
     List<MemoryPoolMXBean> memoryPoolMXBeans = ManagementFactory.getMemoryPoolMXBeans();
@@ -66,16 +72,25 @@ public class MemoryPools {
     tenuredMemoryPool = oldMempryPoolMXBean == null ? () -> ZERO_MEMORY_USAGE : oldMempryPoolMXBean::getUsage;
   }
 
+  /**
+   * @return eden space usage or zero when unavailable
+   */
   public MemoryUsage getEdenMemoryUsage () {
 
     return edenMemoryPool.get();
   }
 
+  /**
+   * @return survivor space usage or zero when unavailable
+   */
   public MemoryUsage getSurvivorMemoryUsage () {
 
     return survivorMemoryPool.get();
   }
 
+  /**
+   * @return tenured space usage or zero when unavailable
+   */
   public MemoryUsage getTenuredMemoryUsage () {
 
     return tenuredMemoryPool.get();

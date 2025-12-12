@@ -38,6 +38,9 @@ import org.smallmind.claxon.registry.Clock;
 import org.smallmind.nutsnbolts.time.Stint;
 import org.smallmind.nutsnbolts.time.StintUtility;
 
+/**
+ * Sliding-window aggregate backed by HdrHistogram that produces time-normalized histograms.
+ */
 public class Stratified implements Aggregate {
 
   private final Clock clock;
@@ -46,21 +49,49 @@ public class Stratified implements Aggregate {
   private Recorder readRecorder;
   private long markTime;
 
+  /**
+   * Creates a stratified histogram with default histogram bounds and a one-second window.
+   *
+   * @param clock clock providing monotonic time
+   */
   public Stratified (Clock clock) {
 
     this(clock, 1, 3600000L, 2, new Stint(1, TimeUnit.SECONDS));
   }
 
+  /**
+   * Creates a stratified histogram with default bounds and a custom window.
+   *
+   * @param clock       clock providing monotonic time
+   * @param windowStint window duration
+   */
   public Stratified (Clock clock, Stint windowStint) {
 
     this(clock, 1, 3600000L, 2, windowStint);
   }
 
+  /**
+   * Creates a stratified histogram with custom histogram bounds and precision using a one-second window.
+   *
+   * @param clock                           clock providing monotonic time
+   * @param lowestDiscernibleValue          smallest value to track
+   * @param highestTrackableValue           largest value to track
+   * @param numberOfSignificantValueDigits  histogram precision
+   */
   public Stratified (Clock clock, long lowestDiscernibleValue, long highestTrackableValue, int numberOfSignificantValueDigits) {
 
     this(clock, lowestDiscernibleValue, highestTrackableValue, numberOfSignificantValueDigits, new Stint(1, TimeUnit.SECONDS));
   }
 
+  /**
+   * Creates a stratified histogram with full customization of bounds, precision, and window.
+   *
+   * @param clock                           clock providing monotonic time
+   * @param lowestDiscernibleValue          smallest value to track
+   * @param highestTrackableValue           largest value to track
+   * @param numberOfSignificantValueDigits  histogram precision
+   * @param windowStint                     window duration
+   */
   public Stratified (Clock clock, long lowestDiscernibleValue, long highestTrackableValue, int numberOfSignificantValueDigits, Stint windowStint) {
 
     this.clock = clock;
@@ -71,12 +102,22 @@ public class Stratified implements Aggregate {
     markTime = clock.monotonicTime();
   }
 
+  /**
+   * Records a value into the current histogram.
+   *
+   * @param value value to record
+   */
   @Override
   public void update (long value) {
 
     writeRecorder.recordValue(value);
   }
 
+  /**
+   * Returns the histogram for the last window and resets tracking for the next interval.
+   *
+   * @return histogram with time-scaling information
+   */
   public synchronized HistogramTime get () {
 
     Recorder recorder;

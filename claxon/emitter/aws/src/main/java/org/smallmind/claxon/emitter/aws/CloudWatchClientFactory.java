@@ -40,6 +40,9 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.cloudwatch.CloudWatchClient;
 
+/**
+ * Spring factory bean that builds a singleton {@link CloudWatchClient} using static credentials and a region.
+ */
 public class CloudWatchClientFactory implements FactoryBean<CloudWatchClient>, InitializingBean {
 
   private CloudWatchClient client;
@@ -47,39 +50,66 @@ public class CloudWatchClientFactory implements FactoryBean<CloudWatchClient>, I
   private String awsAccessKey;
   private String awsSecretKey;
 
+  /**
+   * Sets the AWS access key.
+   *
+   * @param awsAccessKey access key
+   */
   public void setAwsAccessKey (String awsAccessKey) {
 
     this.awsAccessKey = awsAccessKey;
   }
 
+  /**
+   * Sets the AWS secret key.
+   *
+   * @param awsSecretKey secret key
+   */
   public void setAwsSecretKey (String awsSecretKey) {
 
     this.awsSecretKey = awsSecretKey;
   }
 
+  /**
+   * Sets the AWS region for the client.
+   *
+   * @param region AWS region
+   */
   public void setRegion (Region region) {
 
     this.region = region;
   }
 
+  /**
+   * @return true; client is singleton
+   */
   @Override
   public boolean isSingleton () {
 
     return true;
   }
 
+  /**
+   * @return produced object type ({@link CloudWatchClient})
+   */
   @Override
   public Class<?> getObjectType () {
 
     return CloudWatchClient.class;
   }
 
+  /**
+   * @return built CloudWatch client
+   */
   @Override
   public CloudWatchClient getObject () {
 
     return client;
   }
 
+  /**
+   * Builds the CloudWatch client after properties are set.
+   */
   @Override
   public void afterPropertiesSet () {
 

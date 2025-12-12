@@ -40,6 +40,9 @@ import org.smallmind.web.json.doppelganger.View;
 
 import static org.smallmind.web.json.doppelganger.Visibility.IN;
 
+/**
+ * JSON-mapped properties for configuring a histogram meter.
+ */
 @Doppelganger(namespace = "http://org.smallmind/claxon/registry")
 public class HistogramProperties {
 
@@ -54,51 +57,91 @@ public class HistogramProperties {
   @View(idioms = @Idiom(visibility = IN))
   private Integer numberOfSignificantValueDigits;
 
+  /**
+   * @return configured resolution stint
+   */
   public Stint getResolutionStint () {
 
     return resolutionStint;
   }
 
+  /**
+   * Sets the histogram resolution stint.
+   *
+   * @param resolutionStint resolution window
+   */
   public void setResolutionStint (Stint resolutionStint) {
 
     this.resolutionStint = resolutionStint;
   }
 
+  /**
+   * @return percentiles to emit
+   */
   public Percentile[] getPercentiles () {
 
     return percentiles;
   }
 
+  /**
+   * Sets the percentiles to emit.
+   *
+   * @param percentiles percentile definitions
+   */
   public void setPercentiles (Percentile[] percentiles) {
 
     this.percentiles = percentiles;
   }
 
+  /**
+   * @return lowest discernible histogram value
+   */
   public Long getLowestDiscernibleValue () {
 
     return lowestDiscernibleValue;
   }
 
+  /**
+   * Sets the lowest discernible histogram value.
+   *
+   * @param lowestDiscernibleValue minimum value
+   */
   public void setLowestDiscernibleValue (Long lowestDiscernibleValue) {
 
     this.lowestDiscernibleValue = lowestDiscernibleValue;
   }
 
+  /**
+   * @return highest trackable histogram value
+   */
   public Long getHighestTrackableValue () {
 
     return highestTrackableValue;
   }
 
+  /**
+   * Sets the highest trackable histogram value.
+   *
+   * @param highestTrackableValue maximum value
+   */
   public void setHighestTrackableValue (Long highestTrackableValue) {
 
     this.highestTrackableValue = highestTrackableValue;
   }
 
+  /**
+   * @return number of significant value digits
+   */
   public Integer getNumberOfSignificantValueDigits () {
 
     return numberOfSignificantValueDigits;
   }
 
+  /**
+   * Sets histogram precision.
+   *
+   * @param numberOfSignificantValueDigits precision digits
+   */
   public void setNumberOfSignificantValueDigits (Integer numberOfSignificantValueDigits) {
 
     this.numberOfSignificantValueDigits = numberOfSignificantValueDigits;

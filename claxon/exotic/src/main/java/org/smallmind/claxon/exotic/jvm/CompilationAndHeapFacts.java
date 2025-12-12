@@ -37,16 +37,25 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 import java.lang.management.MemoryUsage;
 
+/**
+ * Provides access to JVM compilation time and heap memory usage.
+ */
 public class CompilationAndHeapFacts {
 
   private final CompilationMXBean compilationMXBean = ManagementFactory.getCompilationMXBean();
   private final MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
 
+  /**
+   * @return total compilation time in milliseconds
+   */
   public long getCompilationTime () {
 
     return compilationMXBean.getTotalCompilationTime();
   }
 
+  /**
+   * @return current heap memory usage
+   */
   public MemoryUsage getHeapMemoryUsage () {
 
     return memoryMXBean.getHeapMemoryUsage();

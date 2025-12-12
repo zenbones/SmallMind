@@ -38,6 +38,10 @@ import java.util.concurrent.TimeUnit;
 import org.smallmind.claxon.registry.feature.Feature;
 import org.smallmind.nutsnbolts.time.Stint;
 
+/**
+ * Encapsulates registry configuration defaults such as timing, tags, and naming strategies.
+ * Instances can be built manually or populated via configuration to customize how the registry operates.
+ */
 public class ClaxonConfiguration {
 
   private Clock clock = SystemClock.instance();
@@ -47,10 +51,23 @@ public class ClaxonConfiguration {
   private Map<String, Tag[]> meterTags;
   private NamingStrategy namingStrategy = new ImpliedNamingStrategy();
 
+  /**
+   * Creates a configuration with default values.
+   */
   public ClaxonConfiguration () {
 
   }
 
+  /**
+   * Creates a configuration overriding selected defaults.
+   *
+   * @param clock           the clock to use for timing calculations, defaults to {@link SystemClock} when {@code null}
+   * @param collectionStint cadence for collection, defaults to two seconds when {@code null}
+   * @param features        optional registry features to enable
+   * @param registryTags    default tags applied to every meter
+   * @param meterTags       per-meter tags keyed by meter name
+   * @param namingStrategy  strategy to use when generating meter names, defaults to {@link ImpliedNamingStrategy}
+   */
   public ClaxonConfiguration (Clock clock, Stint collectionStint, Feature[] features, Tag[] registryTags, Map<String, Tag[]> meterTags, NamingStrategy namingStrategy) {
 
     if (clock != null) {
@@ -73,66 +90,134 @@ public class ClaxonConfiguration {
     }
   }
 
+  /**
+   * Returns the clock used for timing calculations.
+   *
+   * @return the configured {@link Clock}
+   */
   public Clock getClock () {
 
     return clock;
   }
 
+  /**
+   * Replaces the clock used for timing calculations.
+   *
+   * @param clock the new {@link Clock}
+   */
   public void setClock (Clock clock) {
 
     this.clock = clock;
   }
 
+  /**
+   * Returns the collection cadence for periodic emitters.
+   *
+   * @return the configured {@link Stint}
+   */
   public Stint getCollectionStint () {
 
     return collectionStint;
   }
 
+  /**
+   * Sets the collection cadence for periodic emitters.
+   *
+   * @param collectionStint the new {@link Stint}
+   */
   public void setCollectionStint (Stint collectionStint) {
 
     this.collectionStint = collectionStint;
   }
 
+  /**
+   * Returns any optional features configured for the registry.
+   *
+   * @return feature array or {@code null}
+   */
   public Feature[] getFeatures () {
 
     return features;
   }
 
+  /**
+   * Sets optional features to enable in the registry.
+   *
+   * @param features the features to enable
+   */
   public void setFeatures (Feature[] features) {
 
     this.features = features;
   }
 
+  /**
+   * Returns tags applied to every meter registered with the registry.
+   *
+   * @return array of default tags, possibly empty
+   */
   public Tag[] getRegistryTags () {
 
     return registryTags;
   }
 
+  /**
+   * Sets tags applied to every meter registered with the registry.
+   *
+   * @param registryTags default registry tags
+   */
   public void setRegistryTags (Tag[] registryTags) {
 
     this.registryTags = registryTags;
   }
 
+  /**
+   * Returns the naming strategy used to derive meter identifiers.
+   *
+   * @return the configured {@link NamingStrategy}
+   */
   public NamingStrategy getNamingStrategy () {
 
     return namingStrategy;
   }
 
+  /**
+   * Sets the naming strategy used to derive meter identifiers.
+   *
+   * @param namingStrategy the new strategy
+   */
   public void setNamingStrategy (NamingStrategy namingStrategy) {
 
     this.namingStrategy = namingStrategy;
   }
 
+  /**
+   * Sets meter-specific tags keyed by meter name.
+   *
+   * @param meterTags per-meter tags
+   */
   public void setMeterTags (HashMap<String, Tag[]> meterTags) {
 
     this.meterTags = meterTags;
   }
 
+  /**
+   * Looks up tags configured for a specific meter name.
+   *
+   * @param name meter name
+   * @return tags for the meter or {@code null} when none are defined
+   */
   public Tag[] forMeter (String name) {
 
     return (meterTags == null) ? null : meterTags.get(name);
   }
 
+  /**
+   * Combines registry-level, meter-level, and instance-level tags for a particular meter.
+   *
+   * @param name         meter name
+   * @param instanceTags instance-specific tags provided by the caller
+   * @return merged tags array or {@code null} if no tags exist
+   */
   public Tag[] calculateTags (String name, Tag... instanceTags) {
 
     Tag[] tagsForMeter = forMeter(name);

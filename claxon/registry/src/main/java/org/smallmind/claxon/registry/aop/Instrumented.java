@@ -39,21 +39,45 @@ import java.lang.annotation.Target;
 import java.util.concurrent.TimeUnit;
 import org.smallmind.claxon.registry.meter.Meter;
 
+/**
+ * Annotation for methods or constructors to be instrumented via AOP, providing meter configuration and tags.
+ */
 @Target({ElementType.CONSTRUCTOR, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Instrumented {
 
+  /**
+   * @return class used to derive meter names; defaults to the declaring class
+   */
   Class<?> caller () default Instrumented.class;
 
+  /**
+   * @return parser that converts JSON configuration into a meter builder
+   */
   Class<? extends InstrumentedParser<? extends Meter>> parser ();
 
+  /**
+   * @return JSON string passed to the parser to build the meter
+   */
   String json () default "{}";
 
+  /**
+   * @return static tags applied to the meter
+   */
   ConstantTag[] constants () default {};
 
+  /**
+   * @return parameter-derived tags applied to the meter
+   */
   ParameterTag[] parameters () default {};
 
+  /**
+   * @return time unit used when recording timing metrics
+   */
   TimeUnit timeUnit () default TimeUnit.MILLISECONDS;
 
+  /**
+   * @return whether instrumentation is active
+   */
   boolean active () default true;
 }

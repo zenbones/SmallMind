@@ -32,9 +32,22 @@
  */
 package org.smallmind.claxon.registry;
 
+/**
+ * Abstraction over time sources to allow monotonic and wall-clock access.
+ */
 public interface Clock {
 
+  /**
+   * Returns current wall-clock time in milliseconds since the epoch.
+   *
+   * @return epoch milliseconds
+   */
   long wallTime ();
 
+  /**
+   * Returns a monotonic time suitable for measuring durations.
+   *
+   * @return monotonic nanoseconds
+   */
   long monotonicTime ();
 }

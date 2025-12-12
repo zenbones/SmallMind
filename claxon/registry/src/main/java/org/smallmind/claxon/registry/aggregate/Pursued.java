@@ -35,15 +35,30 @@ package org.smallmind.claxon.registry.aggregate;
 import java.util.concurrent.TimeUnit;
 import org.smallmind.claxon.registry.Clock;
 
+/**
+ * Tracks multiple exponentially weighted moving averages across configurable windows.
+ */
 public class Pursued implements Aggregate {
 
   private final ExponentiallyWeightedMovingAverage[] movingAverages;
 
+  /**
+   * Creates moving averages for 1, 5, and 15 minute windows using the provided clock.
+   *
+   * @param clock clock providing monotonic time
+   */
   public Pursued (Clock clock) {
 
     this(clock, TimeUnit.MINUTES, 1, 5, 15);
   }
 
+  /**
+   * Creates moving averages for the provided window durations.
+   *
+   * @param clock          clock providing monotonic time
+   * @param windowTimeUnit time unit applied to each window duration
+   * @param windowTimes    window durations to track
+   */
   public Pursued (Clock clock, TimeUnit windowTimeUnit, long... windowTimes) {
 
     int index = 0;
@@ -66,6 +81,11 @@ public class Pursued implements Aggregate {
     return values;
   }
 
+  /**
+   * Updates all tracked moving averages with the supplied value.
+   *
+   * @param value value to include
+   */
   @Override
   public void update (long value) {
 

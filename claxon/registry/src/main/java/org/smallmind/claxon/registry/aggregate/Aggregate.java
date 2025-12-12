@@ -32,7 +32,15 @@
  */
 package org.smallmind.claxon.registry.aggregate;
 
+/**
+ * Represents an aggregation strategy that can accept raw updates and maintain derived statistics.
+ */
 public interface Aggregate {
 
+  /**
+   * Incorporates a new value into the aggregate.
+   *
+   * @param value value to add
+   */
   void update (long value);
 }

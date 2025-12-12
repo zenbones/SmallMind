@@ -32,7 +32,17 @@
  */
 package org.smallmind.claxon.registry;
 
+/**
+ * Identifies how an emitter obtains measurements from the registry.
+ */
 public enum EmitterMethod {
 
-  PUSH, PULL
+  /**
+   * The registry pushes data to the emitter on each collection interval.
+   */
+  PUSH,
+  /**
+   * The emitter pulls data from the registry on demand.
+   */
+  PULL
 }

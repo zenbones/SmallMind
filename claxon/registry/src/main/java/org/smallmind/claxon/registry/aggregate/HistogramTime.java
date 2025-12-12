@@ -34,22 +34,37 @@ package org.smallmind.claxon.registry.aggregate;
 
 import org.HdrHistogram.Histogram;
 
+/**
+ * Wraps an HdrHistogram with the time normalization factor used during collection.
+ */
 public class HistogramTime {
 
   private final Histogram histogram;
   private final double timeFactor;
 
+  /**
+   * Creates a timed histogram wrapper.
+   *
+   * @param histogram  histogram snapshot
+   * @param timeFactor factor representing window duration vs. collection span
+   */
   public HistogramTime (Histogram histogram, double timeFactor) {
 
     this.histogram = histogram;
     this.timeFactor = timeFactor;
   }
 
+  /**
+   * @return the histogram snapshot
+   */
   public Histogram getHistogram () {
 
     return histogram;
   }
 
+  /**
+   * @return scaling factor to normalize counts to the configured window
+   */
   public double getTimeFactor () {
 
     return timeFactor;

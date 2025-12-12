@@ -39,6 +39,9 @@ import org.smallmind.claxon.registry.meter.MeterBuilder;
 import org.smallmind.nutsnbolts.util.SansResultExecutable;
 import org.smallmind.nutsnbolts.util.WithResultExecutable;
 
+/**
+ * Active instrumentation that registers meters with the registry and records updates or timings.
+ */
 public class WorkingInstrumentation implements Instrumentation {
 
   private final ClaxonRegistry registry;
@@ -47,6 +50,14 @@ public class WorkingInstrumentation implements Instrumentation {
   private final Class<?> caller;
   private TimeUnit timeUnit = TimeUnit.MILLISECONDS;
 
+  /**
+   * Creates an instrumentation tied to a registry, caller, meter builder, and tags.
+   *
+   * @param registry registry used to register meters
+   * @param caller   class requesting metrics
+   * @param builder  builder that constructs meters
+   * @param tags     tags to attach to the meter
+   */
   public WorkingInstrumentation (ClaxonRegistry registry, Class<?> caller, MeterBuilder<? extends Meter> builder, Tag... tags) {
 
     this.registry = registry;
@@ -55,6 +66,13 @@ public class WorkingInstrumentation implements Instrumentation {
     this.tags = tags;
   }
 
+  /**
+   * Uses a custom time unit for subsequent updates.
+   *
+   * @param timeUnit desired time unit for updates
+   * @return this instrumentation for chaining
+   */
+  @Override
   public WorkingInstrumentation as (TimeUnit timeUnit) {
 
     this.timeUnit = timeUnit;
@@ -62,21 +80,50 @@ public class WorkingInstrumentation implements Instrumentation {
     return this;
   }
 
+  /**
+   * Registers a meter for the measured object and schedules updates via the supplied measurement function.
+   *
+   * @param measured    object to measure
+   * @param measurement function converting the object into a long value
+   * @param <T>         measured type
+   * @return the measured object
+   */
+  @Override
   public <T> T track (T measured, Function<T, Long> measurement) {
 
     return (measurement == null) ? measured : registry.track(caller, builder, measured, measurement, tags);
   }
 
+  /**
+   * Records a value using the current time unit.
+   *
+   * @param value value to record
+   */
+  @Override
   public void update (long value) {
 
     registry.register(caller, builder, tags).update(value);
   }
 
+  /**
+   * Records a value while converting from the provided time unit to the configured one.
+   *
+   * @param value         value to record
+   * @param valueTimeUnit time unit associated with the value
+   */
+  @Override
   public void update (long value, TimeUnit valueTimeUnit) {
 
     registry.register(caller, builder, tags).update(timeUnit.convert(value, valueTimeUnit));
   }
 
+  /**
+   * Executes code while recording the execution duration.
+   *
+   * @param sansResultExecutable executable to run
+   * @throws Throwable propagated from the executable
+   */
+  @Override
   public void on (SansResultExecutable sansResultExecutable)
     throws Throwable {
 
@@ -91,6 +138,15 @@ public class WorkingInstrumentation implements Instrumentation {
     }
   }
 
+  /**
+   * Executes code while recording the execution duration and returning the result.
+   *
+   * @param withResultExecutable executable to run
+   * @param <T>                  result type
+   * @return the executable result or {@code null} when the executable is absent
+   * @throws Throwable propagated from the executable
+   */
+  @Override
   public <T> T on (WithResultExecutable<T> withResultExecutable)
     throws Throwable {
 

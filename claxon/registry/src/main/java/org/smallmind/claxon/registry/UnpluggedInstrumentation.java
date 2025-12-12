@@ -37,30 +37,64 @@ import java.util.function.Function;
 import org.smallmind.nutsnbolts.util.SansResultExecutable;
 import org.smallmind.nutsnbolts.util.WithResultExecutable;
 
+/**
+ * No-op instrumentation that executes the provided work without recording metrics.
+ */
 public class UnpluggedInstrumentation implements Instrumentation {
 
+  /**
+   * Returns this instance because no configuration is needed for the no-op implementation.
+   *
+   * @param timeUnit ignored
+   * @return this instrumentation
+   */
   @Override
   public Instrumentation as (TimeUnit timeUnit) {
 
     return this;
   }
 
+  /**
+   * Returns the measured object without performing any tracking.
+   *
+   * @param measured    the object being measured
+   * @param measurement measurement function
+   * @param <T>         measured type
+   * @return the measured object
+   */
   @Override
   public <T> T track (T measured, Function<T, Long> measurement) {
 
     return measured;
   }
 
+  /**
+   * Ignores the supplied value.
+   *
+   * @param value unused
+   */
   @Override
   public void update (long value) {
 
   }
 
+  /**
+   * Ignores the supplied value and time unit.
+   *
+   * @param value         unused
+   * @param valueTimeUnit unused
+   */
   @Override
   public void update (long value, TimeUnit valueTimeUnit) {
 
   }
 
+  /**
+   * Executes the code without recording timing.
+   *
+   * @param sansResultExecutable executable to run
+   * @throws Throwable propagated from the executable
+   */
   @Override
   public void on (SansResultExecutable sansResultExecutable)
     throws Throwable {
@@ -68,6 +102,14 @@ public class UnpluggedInstrumentation implements Instrumentation {
     sansResultExecutable.execute();
   }
 
+  /**
+   * Executes the code without recording timing and returns its result.
+   *
+   * @param withResultExecutable executable to run
+   * @param <T>                  result type
+   * @return the executable result
+   * @throws Throwable propagated from the executable
+   */
   @Override
   public <T> T on (WithResultExecutable<T> withResultExecutable)
     throws Throwable {

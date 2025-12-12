@@ -37,40 +37,65 @@ import org.smallmind.scribe.pen.Level;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
+/**
+ * Spring factory bean creating a singleton {@link ScribeLoggerConsumer} with configurable caller and level.
+ */
 public class ScribeLoggerConsumerFactoryBean implements FactoryBean<ScribeLoggerConsumer>, InitializingBean {
 
   private ScribeLoggerConsumer scribeLoggerConsumer;
   private Class<?> caller;
   private Level level = Level.DEBUG;
 
+  /**
+   * Sets the caller class whose logger will be used.
+   *
+   * @param caller logger owner class
+   */
   public void setCaller (Class<?> caller) {
 
     this.caller = caller;
   }
 
+  /**
+   * Sets the log level.
+   *
+   * @param level log level
+   */
   public void setLevel (Level level) {
 
     this.level = level;
   }
 
+  /**
+   * @return always true; consumer is singleton
+   */
   @Override
   public boolean isSingleton () {
 
     return true;
   }
 
+  /**
+   * @return produced object type ({@link ScribeLoggerConsumer})
+   */
   @Override
   public Class<?> getObjectType () {
 
     return ScribeLoggerConsumer.class;
   }
 
+  /**
+   * @return the configured consumer
+   */
   @Override
   public ScribeLoggerConsumer getObject () {
 
     return scribeLoggerConsumer;
   }
 
+  /**
+   * Instantiates the consumer after properties are set.
+   */
   @Override
   public void afterPropertiesSet () {
 

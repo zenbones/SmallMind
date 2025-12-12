@@ -36,12 +36,21 @@ import java.util.concurrent.TimeUnit;
 import org.smallmind.claxon.registry.Clock;
 import org.smallmind.nutsnbolts.time.Stint;
 
+/**
+ * Builder for {@link Speedometer} meters.
+ */
 public class SpeedometerBuilder implements MeterBuilder<Speedometer> {
 
   private static final Stint ONE_SECOND_STINT = new Stint(1, TimeUnit.SECONDS);
 
   private Stint resolutionStint = ONE_SECOND_STINT;
 
+  /**
+   * Sets the window resolution for rate calculations.
+   *
+   * @param resolutionStint window duration
+   * @return this builder
+   */
   public MeterBuilder<Speedometer> resolution (Stint resolutionStint) {
 
     this.resolutionStint = resolutionStint;
@@ -49,6 +58,12 @@ public class SpeedometerBuilder implements MeterBuilder<Speedometer> {
     return this;
   }
 
+  /**
+   * Builds a speedometer with the configured window.
+   *
+   * @param clock registry clock
+   * @return configured speedometer
+   */
   @Override
   public Speedometer build (Clock clock) {
 

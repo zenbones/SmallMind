@@ -36,11 +36,20 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Declares a tag whose value is extracted from a method parameter.
+ */
 @Target({})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ParameterTag {
 
+  /**
+   * @return tag key
+   */
   String key ();
 
+  /**
+   * @return parameter name or index expression used to derive the tag value
+   */
   String parameter ();
 }

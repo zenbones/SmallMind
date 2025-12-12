@@ -34,8 +34,17 @@ package org.smallmind.claxon.registry;
 
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
+/**
+ * Indicates a configured emitter cannot be created or does not support the requested operation.
+ */
 public class InvalidEmitterException extends FormattedException {
 
+  /**
+   * Creates the exception with a formatted message.
+   *
+   * @param message message template
+   * @param args    template arguments
+   */
   public InvalidEmitterException (String message, Object... args) {
 
     super(message, args);

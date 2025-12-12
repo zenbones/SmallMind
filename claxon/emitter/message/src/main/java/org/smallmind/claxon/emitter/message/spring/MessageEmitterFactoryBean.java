@@ -37,34 +37,54 @@ import org.smallmind.claxon.emitter.message.MessageEmitter;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
+/**
+ * Spring factory bean producing a singleton {@link MessageEmitter} with a configurable consumer.
+ */
 public class MessageEmitterFactoryBean implements FactoryBean<MessageEmitter>, InitializingBean {
 
   private org.smallmind.claxon.emitter.message.MessageEmitter emitter;
   private Consumer<String> messageConsumer;
 
+  /**
+   * Sets the consumer that will receive formatted metric messages.
+   *
+   * @param messageConsumer consumer to use
+   */
   public void setMessageConsumer (Consumer<String> messageConsumer) {
 
     this.messageConsumer = messageConsumer;
   }
 
+  /**
+   * @return always true; emitter is a singleton
+   */
   @Override
   public boolean isSingleton () {
 
     return true;
   }
 
+  /**
+   * @return produced object type ({@link MessageEmitter})
+   */
   @Override
   public Class<?> getObjectType () {
 
     return org.smallmind.claxon.emitter.message.MessageEmitter.class;
   }
 
+  /**
+   * @return the configured message emitter
+   */
   @Override
   public org.smallmind.claxon.emitter.message.MessageEmitter getObject () {
 
     return emitter;
   }
 
+  /**
+   * Instantiates the emitter after properties are set.
+   */
   @Override
   public void afterPropertiesSet () {
 

@@ -47,15 +47,36 @@ import org.smallmind.claxon.registry.PushEmitter;
 import org.smallmind.claxon.registry.Quantity;
 import org.smallmind.claxon.registry.Tag;
 
+/**
+ * Push emitter that exposes metrics as JMX MBeans and updates their attributes.
+ */
 public class JMXEmitter extends PushEmitter {
 
   private final MBeanServer server;
 
+  /**
+   * Creates a JMX emitter bound to the provided MBeanServer.
+   *
+   * @param server MBeanServer to register and update meters on
+   */
   public JMXEmitter (MBeanServer server) {
 
     this.server = server;
   }
 
+  /**
+   * Registers a dynamic MBean for the meter if necessary and updates quantity attributes.
+   *
+   * @param meterName  meter name used as the JMX object name domain
+   * @param tags       tags translated to object name properties
+   * @param quantities quantities mapped to attributes
+   * @throws MalformedObjectNameException   when the object name is invalid
+   * @throws NotCompliantMBeanException     when the dynamic MBean does not comply
+   * @throws MBeanRegistrationException     when registration fails
+   * @throws InstanceAlreadyExistsException when the MBean already exists unexpectedly
+   * @throws InstanceNotFoundException      when the MBean cannot be found during update
+   * @throws ReflectionException            when attribute setting fails reflectively
+   */
   @Override
   public void record (String meterName, Tag[] tags, Quantity[] quantities)
     throws MalformedObjectNameException, NotCompliantMBeanException, MBeanRegistrationException, InstanceAlreadyExistsException, InstanceNotFoundException, ReflectionException {

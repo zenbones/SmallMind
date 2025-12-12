@@ -40,11 +40,24 @@ import org.smallmind.claxon.registry.aggregate.HistogramTime;
 import org.smallmind.claxon.registry.aggregate.Stratified;
 import org.smallmind.nutsnbolts.time.Stint;
 
+/**
+ * Meter backed by an HdrHistogram that reports count, rate, min, max, mean, and configurable percentiles.
+ */
 public class Histogram implements Meter {
 
   private final Stratified stratified;
   private final Percentile[] percentiles;
 
+  /**
+   * Creates a histogram meter.
+   *
+   * @param clock                          clock supplying monotonic time
+   * @param lowestDiscernibleValue         smallest value to track
+   * @param highestTrackableValue          largest value to track
+   * @param numberOfSignificantValueDigits histogram precision
+   * @param resolutionStint                collection window for histogram intervals
+   * @param percentiles                    optional percentiles to report
+   */
   public Histogram (Clock clock, long lowestDiscernibleValue, long highestTrackableValue, int numberOfSignificantValueDigits, Stint resolutionStint, Percentile... percentiles) {
 
     this.percentiles = percentiles;
@@ -52,12 +65,22 @@ public class Histogram implements Meter {
     stratified = new Stratified(clock, lowestDiscernibleValue, highestTrackableValue, numberOfSignificantValueDigits, resolutionStint);
   }
 
+  /**
+   * Records a value in the histogram.
+   *
+   * @param value value to record
+   */
   @Override
   public void update (long value) {
 
     stratified.update(value);
   }
 
+  /**
+   * Produces quantities for count, rate, min, max, mean, and configured percentiles.
+   *
+   * @return array of histogram-derived quantities
+   */
   @Override
   public Quantity[] record () {
 

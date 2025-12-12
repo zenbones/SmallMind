@@ -32,21 +32,33 @@
  */
 package org.smallmind.claxon.registry;
 
+/**
+ * {@link Clock} implementation that delegates to the JVM system time utilities.
+ */
 public class SystemClock implements Clock {
 
   private static final SystemClock SYSTEM_CLOCK = new SystemClock();
 
+  /**
+   * @return singleton instance of the system clock
+   */
   public static SystemClock instance () {
 
     return SYSTEM_CLOCK;
   }
 
+  /**
+   * @return current wall time in milliseconds from {@link System#currentTimeMillis()}
+   */
   @Override
   public long wallTime () {
 
     return System.currentTimeMillis();
   }
 
+  /**
+   * @return monotonic time in nanoseconds from {@link System#nanoTime()}
+   */
   @Override
   public long monotonicTime () {
 

@@ -35,38 +35,59 @@ package org.smallmind.claxon.exotic.jvm;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
 
+/**
+ * Accessor for OS-level metrics such as CPU count, description, CPU time, and memory sizes.
+ */
 public class OSFacts {
 
   private final OperatingSystemMXBean operatingSystemMXBean = ManagementFactory.getOperatingSystemMXBean();
   private final String description;
   private final int cores;
 
+  /**
+   * Captures static OS facts at construction time.
+   */
   public OSFacts () {
 
     cores = operatingSystemMXBean.getAvailableProcessors();
     description = String.format("%s %s %s", operatingSystemMXBean.getName(), operatingSystemMXBean.getVersion(), operatingSystemMXBean.getArch());
   }
 
+  /**
+   * @return available processor count
+   */
   public int getCores () {
 
     return cores;
   }
 
+  /**
+   * @return formatted OS description
+   */
   public String getDescription () {
 
     return description;
   }
 
+  /**
+   * @return process CPU time in nanoseconds, or -1 if unsupported
+   */
   public long getProcessCpuTime () {
 
     return (operatingSystemMXBean instanceof com.sun.management.OperatingSystemMXBean) ? ((com.sun.management.OperatingSystemMXBean)operatingSystemMXBean).getProcessCpuTime() : -1;
   }
 
+  /**
+   * @return total physical memory size, or -1 if unsupported
+   */
   public long getTotalMemorySize () {
 
     return (operatingSystemMXBean instanceof com.sun.management.OperatingSystemMXBean) ? ((com.sun.management.OperatingSystemMXBean)operatingSystemMXBean).getTotalMemorySize() : -1;
   }
 
+  /**
+   * @return free physical memory size, or -1 if unsupported
+   */
   public long getFreeMemorySize () {
 
     return (operatingSystemMXBean instanceof com.sun.management.OperatingSystemMXBean) ? ((com.sun.management.OperatingSystemMXBean)operatingSystemMXBean).getFreeMemorySize() : -1;

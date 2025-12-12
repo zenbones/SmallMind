@@ -34,24 +34,46 @@ package org.smallmind.claxon.registry;
 
 import org.smallmind.claxon.registry.meter.Meter;
 
+/**
+ * Meter implementation that discards updates and produces empty readings.
+ * Used when no registry is available to avoid null checks.
+ */
 public class NoOpMeter implements Meter {
 
   private static final NoOpMeter INSTANCE = new NoOpMeter();
 
+  /**
+   * Hidden constructor for singleton usage.
+   */
   private NoOpMeter () {
 
   }
 
+  /**
+   * Returns the singleton instance.
+   *
+   * @return the no-op meter
+   */
   public static NoOpMeter instance () {
 
     return INSTANCE;
   }
 
+  /**
+   * Ignores the supplied value.
+   *
+   * @param value ignored update
+   */
   @Override
   public void update (long value) {
 
   }
 
+  /**
+   * Returns an empty quantity set because no data is tracked.
+   *
+   * @return empty quantity array
+   */
   @Override
   public Quantity[] record () {
 

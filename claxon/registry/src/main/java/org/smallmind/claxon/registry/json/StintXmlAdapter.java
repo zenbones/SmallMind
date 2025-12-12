@@ -39,8 +39,17 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.smallmind.nutsnbolts.time.Stint;
 
+/**
+ * JAXB/Jackson adapter for serializing and deserializing {@link Stint}.
+ */
 public class StintXmlAdapter extends XmlAdapter<JsonNode, Stint> {
 
+  /**
+   * Serializes a stint to a JSON object with time and timeUnit fields.
+   *
+   * @param stint stint to serialize
+   * @return JSON node or {@code null} when input is null
+   */
   @Override
   public JsonNode marshal (Stint stint) {
 
@@ -58,6 +67,12 @@ public class StintXmlAdapter extends XmlAdapter<JsonNode, Stint> {
     }
   }
 
+  /**
+   * Deserializes a JSON node to a stint.
+   *
+   * @param node JSON node containing time and timeUnit
+   * @return constructed stint or {@code null} when node is null
+   */
   @Override
   public Stint unmarshal (JsonNode node) {
 

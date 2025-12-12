@@ -43,25 +43,49 @@ import org.smallmind.claxon.registry.InvalidEmitterException;
 import org.smallmind.claxon.registry.PullEmitter;
 import org.smallmind.claxon.registry.UnknownEmitterException;
 
+/**
+ * JAX-RS resource that exposes pull emitters over HTTP.
+ */
 @Path("/org/smallmind/claxon/emitter")
 public class EmitterResource {
 
   private ClaxonRegistry registry;
 
+  /**
+   * Default constructor for dependency injection frameworks.
+   */
   public EmitterResource () {
 
   }
 
+  /**
+   * Creates a resource bound to the given registry.
+   *
+   * @param registry registry to query for emitters
+   */
   public EmitterResource (ClaxonRegistry registry) {
 
     this.registry = registry;
   }
 
+  /**
+   * Sets the registry used to resolve emitters.
+   *
+   * @param registry registry reference
+   */
   public void setRegistry (ClaxonRegistry registry) {
 
     this.registry = registry;
   }
 
+  /**
+   * Fetches the output of a pull emitter by name.
+   *
+   * @param name emitter name
+   * @return HTTP response containing the emitter payload
+   * @throws UnknownEmitterException when the emitter is not registered
+   * @throws InvalidEmitterException when the emitter is not a pull emitter
+   */
   @GET
   @Path("/{name}")
   public Response get (@PathParam("name") String name)

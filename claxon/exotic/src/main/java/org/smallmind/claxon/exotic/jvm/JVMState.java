@@ -32,6 +32,9 @@
  */
 package org.smallmind.claxon.exotic.jvm;
 
+/**
+ * Static facade for accessing JVM and OS metrics used by profile features.
+ */
 public class JVMState {
 
   private static final MemoryPools MEMORY_POOLS = new MemoryPools();
@@ -39,6 +42,9 @@ public class JVMState {
   private static final GarbageFacts GARBAGE_FACTS = new GarbageFacts();
   private static final CompilationAndHeapFacts COMPILATION_AND_HEAP_FACTS = new CompilationAndHeapFacts();
 
+  /**
+   * @return total physical memory size
+   */
   public static long getTotalMemorySize () {
 
     return OS_FACTS.getTotalMemorySize();
@@ -49,6 +55,9 @@ public class JVMState {
     return OS_FACTS.getFreeMemorySize();
   }
 
+  /**
+   * @return maximum heap memory
+   */
   public static long getHeapMemoryMax () {
 
     return COMPILATION_AND_HEAP_FACTS.getHeapMemoryUsage().getMax();
@@ -59,6 +68,9 @@ public class JVMState {
     return COMPILATION_AND_HEAP_FACTS.getHeapMemoryUsage().getUsed();
   }
 
+  /**
+   * @return process CPU time in nanoseconds
+   */
   public static long getProcessCPUTime () {
 
     return OS_FACTS.getProcessCpuTime();
@@ -69,6 +81,9 @@ public class JVMState {
     return COMPILATION_AND_HEAP_FACTS.getCompilationTime();
   }
 
+  /**
+   * @return young generation GC count
+   */
   public static long getYoungCollectionCount () {
 
     return GARBAGE_FACTS.getYoungCollectionCount();
@@ -79,6 +94,9 @@ public class JVMState {
     return GARBAGE_FACTS.getYoungCollectionTime();
   }
 
+  /**
+   * @return old generation GC count
+   */
   public static long getOldCollectionCount () {
 
     return GARBAGE_FACTS.getOldCollectionCount();
@@ -89,6 +107,9 @@ public class JVMState {
     return GARBAGE_FACTS.getOldCollectionTime();
   }
 
+  /**
+   * @return eden space used memory
+   */
   public static long getEdenMemoryUsed () {
 
     return MEMORY_POOLS.getEdenMemoryUsage().getUsed();
@@ -99,6 +120,9 @@ public class JVMState {
     return MEMORY_POOLS.getSurvivorMemoryUsage().getUsed();
   }
 
+  /**
+   * @return tenured space max memory
+   */
   public static long getTenuredMemoryMax () {
 
     return MEMORY_POOLS.getTenuredMemoryUsage().getMax();

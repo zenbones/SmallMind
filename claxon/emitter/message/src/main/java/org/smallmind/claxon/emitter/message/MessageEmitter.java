@@ -37,20 +37,38 @@ import org.smallmind.claxon.registry.PushEmitter;
 import org.smallmind.claxon.registry.Quantity;
 import org.smallmind.claxon.registry.Tag;
 
+/**
+ * Push emitter that formats metrics into strings and delegates to a consumer (defaults to stdout).
+ */
 public class MessageEmitter extends PushEmitter {
 
   private final Consumer<String> output;
 
+  /**
+   * Creates a message emitter that prints to standard out.
+   */
   public MessageEmitter () {
 
     this(System.out::println);
   }
 
+  /**
+   * Creates a message emitter with a custom output consumer.
+   *
+   * @param output consumer to receive formatted metric lines
+   */
   public MessageEmitter (Consumer<String> output) {
 
     this.output = output;
   }
 
+  /**
+   * Formats meter, tags, and quantities into strings and sends them to the consumer.
+   *
+   * @param meterName  meter name
+   * @param tags       associated tags
+   * @param quantities measurements to emit
+   */
   @Override
   public void record (String meterName, Tag[] tags, Quantity[] quantities) {
 

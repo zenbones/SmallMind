@@ -38,6 +38,9 @@ import org.smallmind.web.json.doppelganger.View;
 
 import static org.smallmind.web.json.doppelganger.Visibility.IN;
 
+/**
+ * Represents a percentile value with a human-friendly name for serialization.
+ */
 @Doppelganger(namespace = "http://org.smallmind/claxon/registry")
 public class Percentile {
 
@@ -50,27 +53,49 @@ public class Percentile {
 
   }
 
+  /**
+   * Constructs a percentile with the supplied name and numeric value.
+   *
+   * @param name  label for the percentile (e.g., "p95")
+   * @param value percentile measurement
+   */
   public Percentile (String name, double value) {
 
     this.name = name;
     this.value = value;
   }
 
+  /**
+   * @return the percentile name
+   */
   public String getName () {
 
     return name;
   }
 
+  /**
+   * Sets the percentile name.
+   *
+   * @param name label such as p99
+   */
   public void setName (String name) {
 
     this.name = name;
   }
 
+  /**
+   * @return the percentile measurement
+   */
   public double getValue () {
 
     return value;
   }
 
+  /**
+   * Sets the percentile measurement.
+   *
+   * @param value numeric percentile
+   */
   public void setValue (double value) {
 
     this.value = value;

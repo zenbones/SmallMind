@@ -39,16 +39,31 @@ import org.smallmind.claxon.registry.Quantity;
 import org.smallmind.claxon.registry.QuantityType;
 import org.smallmind.claxon.registry.Tag;
 
+/**
+ * Push emitter that forwards metrics to Datadog via the StatsD client.
+ */
 public class DataDogEmitter extends PushEmitter {
 
   private final StatsDClient statsdClient;
   private final boolean countAsCount;
 
+  /**
+   * Creates a Datadog emitter with localhost defaults and count-as-count enabled.
+   */
   public DataDogEmitter () {
 
     this(null, "localhost", 8125, true, null);
   }
 
+  /**
+   * Creates a Datadog emitter with custom connection and tagging options.
+   *
+   * @param prefix        metric name prefix (may be null)
+   * @param hostName      statsd host
+   * @param port          statsd port
+   * @param countAsCount  whether quantities of type COUNT are sent as counters instead of gauges
+   * @param constantTags  tags applied to every emission
+   */
   public DataDogEmitter (String prefix, String hostName, int port, boolean countAsCount, Tag... constantTags) {
 
     this.countAsCount = countAsCount;
@@ -56,6 +71,13 @@ public class DataDogEmitter extends PushEmitter {
     statsdClient = new NonBlockingStatsDClientBuilder().prefix(prefix).hostname(hostName).port(port).constantTags(translateTags(constantTags)).build();
   }
 
+  /**
+   * Sends each quantity as either a counter or gauge with translated tags.
+   *
+   * @param meterName  meter name
+   * @param tags       associated tags
+   * @param quantities measurements to emit
+   */
   @Override
   public void record (String meterName, Tag[] tags, Quantity[] quantities) {
 

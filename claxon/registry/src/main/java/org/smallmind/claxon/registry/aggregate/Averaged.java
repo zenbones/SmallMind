@@ -36,6 +36,9 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * Computes a simple arithmetic average across updates, batching work to reduce contention.
+ */
 public class Averaged implements Aggregate {
 
   private final ReentrantLock lock = new ReentrantLock();
@@ -44,6 +47,12 @@ public class Averaged implements Aggregate {
   private long accumulatedValue;
   private int accumulatedCount;
 
+  /**
+   * Adds a value to the average, processing immediately when the lock is available or queuing otherwise.
+   *
+   * @param value value to include
+   */
+  @Override
   public void update (long value) {
 
     if (lock.tryLock()) {
@@ -61,6 +70,9 @@ public class Averaged implements Aggregate {
     }
   }
 
+  /**
+   * Processes any queued updates that could not be acquired due to contention.
+   */
   public void sweep () {
 
     int cap = size.get();
@@ -81,6 +93,11 @@ public class Averaged implements Aggregate {
     }
   }
 
+  /**
+   * Returns the arithmetic average for all processed values and resets the accumulator.
+   *
+   * @return average of recorded values
+   */
   public double getAverage () {
 
     lock.lock();

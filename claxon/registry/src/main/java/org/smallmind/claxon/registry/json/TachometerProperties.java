@@ -39,17 +39,28 @@ import org.smallmind.web.json.doppelganger.View;
 
 import static org.smallmind.web.json.doppelganger.Visibility.IN;
 
+/**
+ * JSON-mapped properties for configuring a tachometer meter.
+ */
 @Doppelganger
 public class TachometerProperties {
 
   @View(adapter = StintXmlAdapter.class, idioms = @Idiom(visibility = IN))
   private Stint resolutionStint;
 
+  /**
+   * @return resolution stint for rate calculations
+   */
   public Stint getResolutionStint () {
 
     return resolutionStint;
   }
 
+  /**
+   * Sets the resolution stint.
+   *
+   * @param resolutionStint window duration
+   */
   public void setResolutionStint (Stint resolutionStint) {
 
     this.resolutionStint = resolutionStint;

@@ -36,12 +36,22 @@ import org.smallmind.claxon.registry.PushEmitter;
 import org.smallmind.claxon.registry.Quantity;
 import org.smallmind.claxon.registry.Tag;
 
+/**
+ * Push emitter that ignores all incoming metrics.
+ */
 public class NoopEmitter extends PushEmitter {
 
   public NoopEmitter () {
 
   }
 
+  /**
+   * Discards all recorded quantities.
+   *
+   * @param meterName meter name
+   * @param tags      associated tags
+   * @param quantities values to discard
+   */
   @Override
   public void record (String meterName, Tag[] tags, Quantity[] quantities) {
 

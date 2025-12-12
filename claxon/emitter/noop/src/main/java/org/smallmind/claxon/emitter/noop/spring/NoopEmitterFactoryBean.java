@@ -36,28 +36,43 @@ import org.smallmind.claxon.emitter.noop.NoopEmitter;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
+/**
+ * Spring factory bean producing a singleton {@link NoopEmitter}.
+ */
 public class NoopEmitterFactoryBean implements FactoryBean<NoopEmitter>, InitializingBean {
 
   private NoopEmitter emitter;
 
+  /**
+   * @return always true, emitter is a singleton
+   */
   @Override
   public boolean isSingleton () {
 
     return true;
   }
 
+  /**
+   * @return produced object type ({@link NoopEmitter})
+   */
   @Override
   public Class<?> getObjectType () {
 
     return NoopEmitter.class;
   }
 
+  /**
+   * @return the created emitter
+   */
   @Override
   public NoopEmitter getObject () {
 
     return emitter;
   }
 
+  /**
+   * Instantiates the no-op emitter after properties are set.
+   */
   @Override
   public void afterPropertiesSet () {
 

@@ -36,12 +36,21 @@ import java.util.concurrent.TimeUnit;
 import org.smallmind.claxon.registry.Clock;
 import org.smallmind.nutsnbolts.time.Stint;
 
+/**
+ * Builder for {@link Tachometer} meters.
+ */
 public class TachometerBuilder implements MeterBuilder<Tachometer> {
 
   private static final Stint ONE_SECOND_STINT = new Stint(1, TimeUnit.SECONDS);
 
   private Stint resolutionStint = ONE_SECOND_STINT;
 
+  /**
+   * Sets the window resolution for the tachometer.
+   *
+   * @param resolutionStint window duration
+   * @return this builder
+   */
   public MeterBuilder<Tachometer> resolution (Stint resolutionStint) {
 
     this.resolutionStint = resolutionStint;
@@ -49,6 +58,12 @@ public class TachometerBuilder implements MeterBuilder<Tachometer> {
     return this;
   }
 
+  /**
+   * Builds a tachometer with the configured window.
+   *
+   * @param clock registry clock
+   * @return configured tachometer
+   */
   @Override
   public Tachometer build (Clock clock) {
 

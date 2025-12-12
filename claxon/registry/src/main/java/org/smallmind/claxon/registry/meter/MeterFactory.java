@@ -34,20 +34,43 @@ package org.smallmind.claxon.registry.meter;
 
 import org.smallmind.claxon.registry.Clock;
 
+/**
+ * Adapter that builds meters by first constructing a builder and then invoking it.
+ *
+ * @param <M> meter type
+ */
 public class MeterFactory<M extends Meter> implements MeterBuilder<M> {
 
   private final BuilderConstructor<M> factory;
 
+  /**
+   * Creates a factory that will delegate to the provided builder constructor.
+   *
+   * @param factory constructor producing meter builders
+   */
   public MeterFactory (BuilderConstructor<M> factory) {
 
     this.factory = factory;
   }
 
+  /**
+   * Convenience method to create a factory.
+   *
+   * @param factory constructor producing meter builders
+   * @param <M>     meter type
+   * @return new meter factory
+   */
   public static <M extends Meter> MeterFactory<M> instance (BuilderConstructor<M> factory) {
 
     return new MeterFactory<>(factory);
   }
 
+  /**
+   * Builds a meter by constructing a builder then delegating to it.
+   *
+   * @param clock clock provided by the registry
+   * @return built meter
+   */
   @Override
   public M build (Clock clock) {
 

@@ -34,8 +34,19 @@ package org.smallmind.claxon.registry.meter;
 
 import org.smallmind.claxon.registry.Clock;
 
+/**
+ * Factory abstraction for creating meters using a registry-provided clock.
+ *
+ * @param <M> meter type
+ */
 @FunctionalInterface
 public interface MeterBuilder<M extends Meter> {
 
+  /**
+   * Builds a meter using the supplied clock.
+   *
+   * @param clock clock to use for time-sensitive meters
+   * @return constructed meter
+   */
   M build (Clock clock);
 }

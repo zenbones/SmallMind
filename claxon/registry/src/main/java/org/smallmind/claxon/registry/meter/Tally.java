@@ -36,21 +36,37 @@ import org.smallmind.claxon.registry.Quantity;
 import org.smallmind.claxon.registry.QuantityType;
 import org.smallmind.claxon.registry.aggregate.Tallied;
 
+/**
+ * Meter that tracks a running count.
+ */
 public class Tally implements Meter {
 
   private final Tallied tallied;
 
+  /**
+   * Creates a tally meter.
+   */
   public Tally () {
 
     tallied = new Tallied();
   }
 
+  /**
+   * Adds the supplied value to the tally.
+   *
+   * @param value delta to add
+   */
   @Override
   public void update (long value) {
 
     tallied.update(value);
   }
 
+  /**
+   * Returns the current count as a quantity.
+   *
+   * @return single count quantity
+   */
   @Override
   public Quantity[] record () {
 

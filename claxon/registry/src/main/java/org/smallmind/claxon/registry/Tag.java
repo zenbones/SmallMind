@@ -32,11 +32,21 @@
  */
 package org.smallmind.claxon.registry;
 
+/**
+ * Represents a key/value pair attached to meter readings.
+ */
 public class Tag {
 
   private final String key;
   private final String value;
 
+  /**
+   * Creates a tag ensuring the key and value are non-empty.
+   *
+   * @param key   tag key
+   * @param value tag value
+   * @throws IllegalArgumentException if either argument is null or empty
+   */
   public Tag (String key, String value) {
 
     if ((key == null) || key.isEmpty() || (value == null) || value.isEmpty()) {
@@ -52,23 +62,42 @@ public class Tag {
     return key;
   }
 
+  /**
+   * @return the tag value
+   */
   public String getValue () {
 
     return value;
   }
 
+  /**
+   * Formats the tag as key=value.
+   *
+   * @return string representation
+   */
   @Override
   public String toString () {
 
     return key + "=" + value;
   }
 
+  /**
+   * Computes a hash using both key and value.
+   *
+   * @return hash code
+   */
   @Override
   public int hashCode () {
 
     return (key.hashCode() * 31) + value.hashCode();
   }
 
+  /**
+   * Compares tags by key and value.
+   *
+   * @param obj object to compare
+   * @return {@code true} when keys and values match
+   */
   @Override
   public boolean equals (Object obj) {
 

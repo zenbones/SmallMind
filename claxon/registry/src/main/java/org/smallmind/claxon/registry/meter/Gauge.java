@@ -36,17 +36,28 @@ import org.smallmind.claxon.registry.Quantity;
 import org.smallmind.claxon.registry.aggregate.Averaged;
 import org.smallmind.claxon.registry.aggregate.Bounded;
 
+/**
+ * Meter that reports minimum, maximum, and average values over the collection interval.
+ */
 public class Gauge implements Meter {
 
   private final Bounded bounded;
   private final Averaged averaged;
 
+  /**
+   * Creates a gauge with bounded and averaged aggregates.
+   */
   public Gauge () {
 
     bounded = new Bounded();
     averaged = new Averaged();
   }
 
+  /**
+   * Updates both min/max and average with the supplied value.
+   *
+   * @param value value to incorporate
+   */
   @Override
   public void update (long value) {
 
@@ -54,6 +65,11 @@ public class Gauge implements Meter {
     averaged.update(value);
   }
 
+  /**
+   * Records minimum, maximum, and average quantities for the current window.
+   *
+   * @return array containing available quantities
+   */
   @Override
   public Quantity[] record () {
 

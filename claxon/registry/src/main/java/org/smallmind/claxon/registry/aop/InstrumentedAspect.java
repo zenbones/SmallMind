@@ -42,9 +42,20 @@ import org.smallmind.claxon.registry.meter.MeterBuilder;
 import org.smallmind.nutsnbolts.reflection.aop.AOPUtility;
 import org.smallmind.nutsnbolts.util.WithResultExecutable;
 
+/**
+ * Aspect that applies instrumentation around annotated methods or constructors.
+ */
 @Aspect
 public class InstrumentedAspect {
 
+  /**
+   * Wraps instrumented join points, building meters from the declared parser and recording execution time.
+   *
+   * @param thisJoinPoint the intercepted join point
+   * @param instrumented  instrumentation annotation with configuration
+   * @return result of the intercepted method/constructor
+   * @throws Throwable propagated from the join point or parsing/reflective failures
+   */
   @Around(value = "(execution(@Instrumented * * (..)) || initialization(@Instrumented new(..))) && @annotation(instrumented)", argNames = "thisJoinPoint, instrumented")
   public Object aroundInstrumentedMethod (ProceedingJoinPoint thisJoinPoint, Instrumented instrumented)
     throws Throwable {

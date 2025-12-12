@@ -32,7 +32,16 @@
  */
 package org.smallmind.claxon.registry;
 
+/**
+ * Defines how a meter name or prefix is derived from a calling class.
+ */
 public interface NamingStrategy {
 
+  /**
+   * Generates a name component for the given caller.
+   *
+   * @param caller class requesting a meter
+   * @return the derived name or {@code null} if none can be determined
+   */
   String from (Class<?> caller);
 }

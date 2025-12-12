@@ -37,6 +37,9 @@ import org.smallmind.claxon.registry.Tag;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
+/**
+ * Spring factory bean that creates a singleton {@link DataDogEmitter} with configurable connection and tags.
+ */
 public class DataDogEmitterFactoryBean implements FactoryBean<DataDogEmitter>, InitializingBean {
 
   private DataDogEmitter emitter;
@@ -46,49 +49,86 @@ public class DataDogEmitterFactoryBean implements FactoryBean<DataDogEmitter>, I
   private boolean countAsCount = true;
   private int port = 8125;
 
+  /**
+   * Sets an optional metric prefix.
+   *
+   * @param prefix prefix to prepend to metric names
+   */
   public void setPrefix (String prefix) {
 
     this.prefix = prefix;
   }
 
+  /**
+   * Sets the StatsD host name.
+   *
+   * @param hostName host name
+   */
   public void setHostName (String hostName) {
 
     this.hostName = hostName;
   }
 
+  /**
+   * Sets the StatsD port.
+   *
+   * @param port port number
+   */
   public void setPort (int port) {
 
     this.port = port;
   }
 
+  /**
+   * Controls whether count quantities are emitted as counters instead of gauges.
+   *
+   * @param countAsCount true to send counts as counters
+   */
   public void setCountAsCount (boolean countAsCount) {
 
     this.countAsCount = countAsCount;
   }
 
+  /**
+   * Sets constant tags applied to every emission.
+   *
+   * @param constantTags constant tags
+   */
   public void setConstantTags (Tag[] constantTags) {
 
     this.constantTags = constantTags;
   }
 
+  /**
+   * @return always true; emitter is singleton
+   */
   @Override
   public boolean isSingleton () {
 
     return true;
   }
 
+  /**
+   * @return produced object type ({@link DataDogEmitter})
+   */
   @Override
   public Class<?> getObjectType () {
 
     return DataDogEmitter.class;
   }
 
+  /**
+   * @return the constructed emitter
+   */
   @Override
   public DataDogEmitter getObject () {
 
     return emitter;
   }
 
+  /**
+   * Builds the emitter after properties are set.
+   */
   @Override
   public void afterPropertiesSet () {
 

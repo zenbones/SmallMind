@@ -35,11 +35,25 @@ package org.smallmind.claxon.registry.feature;
 import org.smallmind.claxon.registry.Quantity;
 import org.smallmind.claxon.registry.Tag;
 
+/**
+ * Represents a periodically recorded metric source managed by the registry.
+ */
 public interface Feature {
 
+  /**
+   * @return logical name for the feature's meter
+   */
   String getName ();
 
+  /**
+   * @return tags applied to all quantities emitted by this feature
+   */
   Tag[] getTags ();
 
+  /**
+   * Captures the current measurements for this feature.
+   *
+   * @return measured quantities, possibly empty
+   */
   Quantity[] record ();
 }

@@ -39,6 +39,9 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.smallmind.claxon.registry.Clock;
 import org.smallmind.nutsnbolts.time.StintUtility;
 
+/**
+ * Calculates an exponentially weighted moving average over a configured time window.
+ */
 public class ExponentiallyWeightedMovingAverage {
 
   private final ReentrantLock lock = new ReentrantLock();
@@ -49,6 +52,13 @@ public class ExponentiallyWeightedMovingAverage {
   private double average = 0;
   private long markTime;
 
+  /**
+   * Creates a moving average using the provided window size.
+   *
+   * @param clock          clock providing monotonic time
+   * @param window         window length
+   * @param windowTimeUnit time unit for the window
+   */
   public ExponentiallyWeightedMovingAverage (Clock clock, long window, TimeUnit windowTimeUnit) {
 
     this.clock = clock;
@@ -57,6 +67,11 @@ public class ExponentiallyWeightedMovingAverage {
     markTime = clock.monotonicTime();
   }
 
+  /**
+   * Adds a new value to the moving average, attempting to process immediately or queueing if contended.
+   *
+   * @param value value to include
+   */
   public void update (long value) {
 
     if (lock.tryLock()) {
@@ -71,6 +86,13 @@ public class ExponentiallyWeightedMovingAverage {
     }
   }
 
+  /**
+   * Processes any queued updates and recomputes the moving average.
+   *
+   * @param initialValue initial value to include
+   * @param initialCount count contribution for the initial value
+   * @return the updated moving average
+   */
   private double sweep (long initialValue, int initialCount) {
 
     Long unprocessed;
@@ -100,6 +122,11 @@ public class ExponentiallyWeightedMovingAverage {
     return average;
   }
 
+  /**
+   * Returns the current moving average, flushing queued updates.
+   *
+   * @return current moving average
+   */
   public double getMovingAverage () {
 
     lock.lock();

@@ -34,9 +34,22 @@ package org.smallmind.claxon.registry.meter;
 
 import org.smallmind.claxon.registry.Quantity;
 
+/**
+ * Base contract for meter implementations that can receive updates and produce recorded quantities.
+ */
 public interface Meter {
 
+  /**
+   * Updates the meter with a new value.
+   *
+   * @param value value to incorporate
+   */
   void update (long value);
 
+  /**
+   * Captures the current measurements for emission.
+   *
+   * @return array of quantities representing the current state
+   */
   Quantity[] record ();
 }

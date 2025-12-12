@@ -37,40 +37,67 @@ import org.smallmind.nutsnbolts.time.Stint;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
+/**
+ * Spring factory bean producing a singleton {@link Stint} from configured time and unit.
+ */
 public class StintFactoryBean implements FactoryBean<Stint>, InitializingBean {
 
   private Stint stint;
   private TimeUnit timeUnit;
   private long time;
 
+  /**
+   * Sets the time value for the stint.
+   *
+   * @param time duration quantity
+   */
   public void setTime (long time) {
 
     this.time = time;
   }
 
+  /**
+   * Sets the time unit for the stint.
+   *
+   * @param timeUnit duration unit
+   */
   public void setTimeUnit (TimeUnit timeUnit) {
 
     this.timeUnit = timeUnit;
   }
 
+  /**
+   * Stints are singletons for a given factory bean configuration.
+   *
+   * @return always true
+   */
   @Override
   public boolean isSingleton () {
 
     return true;
   }
 
+  /**
+   * @return produced object type ({@link Stint})
+   */
   @Override
   public Class<?> getObjectType () {
 
     return Stint.class;
   }
 
+  /**
+   * @return the constructed stint
+   */
   @Override
   public Stint getObject () {
 
     return stint;
   }
 
+  /**
+   * Builds the stint after Spring injects properties.
+   */
   @Override
   public void afterPropertiesSet () {
 

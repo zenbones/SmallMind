@@ -39,8 +39,18 @@ import org.smallmind.claxon.registry.meter.Trace;
 import org.smallmind.claxon.registry.meter.TraceBuilder;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
+/**
+ * Parses trace meter configuration from JSON into a {@link TraceBuilder}.
+ */
 public class TraceParser implements InstrumentedParser<Trace> {
 
+  /**
+   * Parses the JSON string into trace properties and produces a builder.
+   *
+   * @param json JSON configuration
+   * @return configured trace builder
+   * @throws IOException when JSON cannot be read
+   */
   @Override
   public MeterBuilder<Trace> parse (String json)
     throws IOException {

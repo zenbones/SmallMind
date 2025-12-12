@@ -32,7 +32,17 @@
  */
 package org.smallmind.claxon.registry;
 
+/**
+ * Classifies quantities to aid emitters in interpreting values.
+ */
 public enum QuantityType {
 
-  NONE, COUNT
+  /**
+   * Quantity has no special type.
+   */
+  NONE,
+  /**
+   * Quantity represents a count.
+   */
+  COUNT
 }

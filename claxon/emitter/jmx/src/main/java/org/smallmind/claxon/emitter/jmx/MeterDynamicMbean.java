@@ -44,12 +44,22 @@ import javax.management.MBeanInfo;
 import org.smallmind.claxon.registry.Quantity;
 import org.smallmind.claxon.registry.Tag;
 
+/**
+ * Dynamic MBean representing a meter; attributes correspond to meter quantities.
+ */
 public class MeterDynamicMbean implements DynamicMBean {
 
   private final MBeanInfo mBeanInfo;
   private final HashSet<String> attributeNameSet = new HashSet<>();
   private final ConcurrentHashMap<String, Double> valueMap = new ConcurrentHashMap<>();
 
+  /**
+   * Builds an MBean definition from the meter name, tags, and quantities.
+   *
+   * @param name       meter name
+   * @param tags       associated tags for description purposes
+   * @param quantities quantities defining the exposed attributes
+   */
   public MeterDynamicMbean (String name, Tag[] tags, Quantity[] quantities) {
 
     MBeanAttributeInfo[] attributeInfos = new MBeanAttributeInfo[(quantities == null) ? 0 : quantities.length];
@@ -82,6 +92,13 @@ public class MeterDynamicMbean implements DynamicMBean {
     mBeanInfo = new MBeanInfo(MeterDynamicMbean.class.getName(), descriptionBuilder.toString(), attributeInfos, null, null, null);
   }
 
+  /**
+   * Returns the value of a single attribute or throws if unknown.
+   *
+   * @param attribute attribute name
+   * @return attribute value (defaults to 0 when unset)
+   * @throws AttributeNotFoundException when the attribute is not defined
+   */
   @Override
   public Object getAttribute (String attribute)
     throws AttributeNotFoundException {
@@ -96,6 +113,13 @@ public class MeterDynamicMbean implements DynamicMBean {
     }
   }
 
+  /**
+   * Sets a single attribute value, accepting numeric or string representations.
+   *
+   * @param attribute attribute to set
+   * @throws AttributeNotFoundException   when the attribute is not defined
+   * @throws InvalidAttributeValueException when the value cannot be converted to double
+   */
   @Override
   public void setAttribute (Attribute attribute)
     throws AttributeNotFoundException, InvalidAttributeValueException {
@@ -113,6 +137,12 @@ public class MeterDynamicMbean implements DynamicMBean {
     }
   }
 
+  /**
+   * Returns a list of the requested attributes that currently have values.
+   *
+   * @param attributes attribute names
+   * @return list of attributes with values
+   */
   @Override
   public AttributeList getAttributes (String[] attributes) {
 
@@ -130,6 +160,12 @@ public class MeterDynamicMbean implements DynamicMBean {
     return attributeList;
   }
 
+  /**
+   * Sets multiple attributes, ignoring unknown names and returning those applied.
+   *
+   * @param attributes attributes to set
+   * @return list of attributes that were applied
+   */
   @Override
   public AttributeList setAttributes (AttributeList attributes) {
 
@@ -153,12 +189,20 @@ public class MeterDynamicMbean implements DynamicMBean {
     return setAttributeList;
   }
 
+  /**
+   * Invoking operations is not supported.
+   *
+   * @throws UnsupportedOperationException always
+   */
   @Override
   public Object invoke (String actionName, Object[] params, String[] signature) {
 
     throw new UnsupportedOperationException(actionName);
   }
 
+  /**
+   * @return metadata describing this MBean
+   */
   @Override
   public MBeanInfo getMBeanInfo () {
 

@@ -38,21 +38,40 @@ import org.smallmind.claxon.registry.QuantityType;
 import org.smallmind.claxon.registry.aggregate.Paced;
 import org.smallmind.nutsnbolts.time.Stint;
 
+/**
+ * Meter that tracks event counts and rates over a sliding window.
+ */
 public class Tachometer implements Meter {
 
   private final Paced paced;
 
+  /**
+   * Creates a tachometer using the supplied clock and window.
+   *
+   * @param clock       clock providing monotonic time
+   * @param windowStint window over which counts and rates are computed
+   */
   public Tachometer (Clock clock, Stint windowStint) {
 
     paced = new Paced(clock, windowStint);
   }
 
+  /**
+   * Increments the count by one for each invocation.
+   *
+   * @param value ignored input; each call counts as one event
+   */
   @Override
   public void update (long value) {
 
     paced.update(1);
   }
 
+  /**
+   * Returns count and rate quantities for the current window.
+   *
+   * @return count and rate measurements
+   */
   @Override
   public Quantity[] record () {
 

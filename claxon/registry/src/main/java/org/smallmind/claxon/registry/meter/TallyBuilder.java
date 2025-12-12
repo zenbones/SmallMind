@@ -34,8 +34,17 @@ package org.smallmind.claxon.registry.meter;
 
 import org.smallmind.claxon.registry.Clock;
 
+/**
+ * Builder for {@link Tally} meters.
+ */
 public class TallyBuilder implements MeterBuilder<Tally> {
 
+  /**
+   * Builds a new tally. Clock is unused but accepted for interface compliance.
+   *
+   * @param clock registry clock
+   * @return new tally meter
+   */
   @Override
   public Tally build (Clock clock) {
 

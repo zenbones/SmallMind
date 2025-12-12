@@ -32,10 +32,26 @@
  */
 package org.smallmind.claxon.registry;
 
+/**
+ * Emits collected meter readings to an external system.
+ */
 public interface Emitter {
 
+  /**
+   * Indicates whether the emitter pulls measurements or is pushed to.
+   *
+   * @return the emitter method
+   */
   EmitterMethod getEmitterMethod ();
 
+  /**
+   * Records the supplied quantities for the named meter.
+   *
+   * @param meterName  logical name of the meter being emitted
+   * @param tags       tags associated with the measurement, may be {@code null}
+   * @param quantities measured quantities to emit
+   * @throws Exception if the emitter fails to transmit the data
+   */
   void record (String meterName, Tag[] tags, Quantity[] quantities)
     throws Exception;
 }

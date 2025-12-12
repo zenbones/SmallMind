@@ -38,6 +38,9 @@ import org.smallmind.claxon.registry.Quantity;
 import org.smallmind.claxon.registry.Tag;
 import org.smallmind.claxon.registry.feature.Feature;
 
+/**
+ * Feature that reports JVM memory and GC profile metrics, optionally tagging with hostname and rate-limiting emissions.
+ */
 public class ProfileFeature implements Feature {
 
   private final Tag[] tags;
@@ -45,6 +48,15 @@ public class ProfileFeature implements Feature {
   private final Long minimumRecordingDelayMilliseconds;
   private long lastRecordingTimestamp = -1;
 
+  /**
+   * Creates a JVM profile feature.
+   *
+   * @param name                             meter name
+   * @param minimumRecordingDelayMilliseconds optional minimum delay between emissions (ms)
+   * @param addHostNameTag                   whether to add the host name tag
+   * @param tags                             additional tags to include
+   * @throws UnknownHostException when the host name cannot be resolved
+   */
   public ProfileFeature (String name, Long minimumRecordingDelayMilliseconds, boolean addHostNameTag, Tag... tags)
     throws UnknownHostException {
 
@@ -69,18 +81,29 @@ public class ProfileFeature implements Feature {
     }
   }
 
+  /**
+   * @return feature name
+   */
   @Override
   public String getName () {
 
     return name;
   }
 
+  /**
+   * @return tags associated with this feature
+   */
   @Override
   public Tag[] getTags () {
 
     return tags;
   }
 
+  /**
+   * Records JVM memory and GC metrics unless the minimum delay has not elapsed.
+   *
+   * @return array of JVM quantities or {@code null} when throttled
+   */
   @Override
   public Quantity[] record () {
 

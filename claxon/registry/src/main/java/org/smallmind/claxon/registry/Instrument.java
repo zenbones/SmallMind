@@ -37,20 +37,43 @@ import org.smallmind.claxon.registry.meter.MeterBuilder;
 import org.smallmind.nutsnbolts.lang.PerApplicationContext;
 import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
 
+/**
+ * Entry point for code that wants to emit metrics without wiring the registry explicitly.
+ * Uses {@link PerApplicationContext} to hold a {@link ClaxonRegistry} and produces {@link Instrumentation} instances.
+ */
 public class Instrument implements PerApplicationDataManager {
 
   private static final UnpluggedInstrumentation UNPLUGGED_INSTRUMENTATION = new UnpluggedInstrumentation();
 
+  /**
+   * Registers the supplied registry in the per-application context so that subsequent instrumentation calls can find it.
+   *
+   * @param registry the registry to register
+   */
   public static void register (ClaxonRegistry registry) {
 
     PerApplicationContext.setPerApplicationData(Instrument.class, registry);
   }
 
+  /**
+   * Retrieves the registry previously registered for the current application.
+   *
+   * @return the current {@link ClaxonRegistry}, or {@code null} if none is registered
+   */
   public static ClaxonRegistry getRegistry () {
 
     return PerApplicationContext.getPerApplicationData(Instrument.class, ClaxonRegistry.class);
   }
 
+  /**
+   * Creates instrumentation for a caller using the given meter builder and tags.
+   * If no registry has been registered, returns a no-op instrumentation to avoid failures.
+   *
+   * @param caller  the calling class to use for naming
+   * @param builder the meter builder describing how to build the meter
+   * @param tags    optional tags to associate with the meter
+   * @return an active instrumentation if a registry exists, otherwise a no-op instrumentation
+   */
   public static Instrumentation with (Class<?> caller, MeterBuilder<? extends Meter> builder, Tag... tags) {
 
     ClaxonRegistry registry;

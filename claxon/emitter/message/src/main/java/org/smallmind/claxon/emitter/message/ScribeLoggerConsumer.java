@@ -37,16 +37,30 @@ import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.Logger;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Message consumer that forwards strings to a Scribe logger at a configured level.
+ */
 public class ScribeLoggerConsumer implements Consumer<String> {
 
   private final Logger logger;
   private final Level level;
 
+  /**
+   * Creates a consumer that logs via the default logger for this class.
+   *
+   * @param level log level to use
+   */
   public ScribeLoggerConsumer (Level level) {
 
     this(null, level);
   }
 
+  /**
+   * Creates a consumer that logs via the provided caller's logger.
+   *
+   * @param caller class whose logger should be used
+   * @param level  log level to use
+   */
   public ScribeLoggerConsumer (Class<?> caller, Level level) {
 
     this.level = level;
@@ -54,6 +68,11 @@ public class ScribeLoggerConsumer implements Consumer<String> {
     logger = LoggerManager.getLogger((caller == null) ? ScribeLoggerConsumer.class : caller);
   }
 
+  /**
+   * Logs the message at the configured level.
+   *
+   * @param message message to log
+   */
   @Override
   public void accept (String message) {
 

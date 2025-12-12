@@ -42,17 +42,33 @@ import software.amazon.awssdk.services.cloudwatch.model.MetricDatum;
 import software.amazon.awssdk.services.cloudwatch.model.PutMetricDataRequest;
 import software.amazon.awssdk.services.cloudwatch.model.StandardUnit;
 
+/**
+ * Push emitter that sends metrics to AWS CloudWatch under a given namespace.
+ */
 public class AWSEmitter extends PushEmitter {
 
   private final CloudWatchClient client;
   private final String namespace;
 
+  /**
+   * Creates an AWS emitter using an existing CloudWatch client and namespace.
+   *
+   * @param client    CloudWatch client
+   * @param namespace CloudWatch namespace for metrics
+   */
   public AWSEmitter (CloudWatchClient client, String namespace) {
 
     this.client = client;
     this.namespace = namespace;
   }
 
+  /**
+   * Transforms quantities and tags into CloudWatch metric data and publishes them.
+   *
+   * @param meterName  meter name (used for dimension grouping)
+   * @param tags       tags translated to dimensions
+   * @param quantities quantities to send
+   */
   @Override
   public void record (String meterName, Tag[] tags, Quantity[] quantities) {
 

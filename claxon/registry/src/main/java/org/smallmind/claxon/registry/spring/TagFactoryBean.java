@@ -36,40 +36,67 @@ import org.smallmind.claxon.registry.Tag;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
+/**
+ * Spring factory bean producing a singleton {@link Tag} from configured key/value properties.
+ */
 public class TagFactoryBean implements FactoryBean<Tag>, InitializingBean {
 
   private Tag tag;
   private String key;
   private String value;
 
+  /**
+   * Sets the tag key.
+   *
+   * @param key tag key
+   */
   public void setKey (String key) {
 
     this.key = key;
   }
 
+  /**
+   * Sets the tag value.
+   *
+   * @param value tag value
+   */
   public void setValue (String value) {
 
     this.value = value;
   }
 
+  /**
+   * Tags are singletons for a given factory bean configuration.
+   *
+   * @return always true
+   */
   @Override
   public boolean isSingleton () {
 
     return true;
   }
 
+  /**
+   * @return the produced object type ({@link Tag})
+   */
   @Override
   public Class<?> getObjectType () {
 
     return Tag.class;
   }
 
+  /**
+   * @return the constructed tag
+   */
   @Override
   public Tag getObject () {
 
     return tag;
   }
 
+  /**
+   * Builds the tag after Spring injects properties.
+   */
   @Override
   public void afterPropertiesSet () {
 

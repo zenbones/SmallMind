@@ -36,19 +36,36 @@ import java.util.HashSet;
 import java.util.Set;
 import org.smallmind.nutsnbolts.util.DotNotation;
 
+/**
+ * Naming strategy that returns the fully qualified class name when it matches a whitelist.
+ */
 public class ObviousNamingStrategy implements NamingStrategy {
 
   private Set<DotNotation> whiteListSet = new HashSet<>();
 
+  /**
+   * Creates a strategy with an empty whitelist.
+   */
   public ObviousNamingStrategy () {
 
   }
 
+  /**
+   * Creates a strategy using the provided whitelist.
+   *
+   * @param whiteListSet allowed caller patterns
+   */
   public ObviousNamingStrategy (Set<DotNotation> whiteListSet) {
 
     this.whiteListSet = whiteListSet;
   }
 
+  /**
+   * Replaces the whitelist of allowed caller patterns.
+   *
+   * @param whiteListSet new whitelist
+   * @return this strategy for chaining
+   */
   public ObviousNamingStrategy setWhiteListSet (Set<DotNotation> whiteListSet) {
 
     this.whiteListSet = whiteListSet;
@@ -56,6 +73,12 @@ public class ObviousNamingStrategy implements NamingStrategy {
     return this;
   }
 
+  /**
+   * Returns the caller class name when the whitelist includes a matching pattern.
+   *
+   * @param caller class requesting a meter name
+   * @return fully qualified class name or {@code null} if not permitted
+   */
   @Override
   public String from (Class<?> caller) {
 

@@ -35,14 +35,26 @@ package org.smallmind.claxon.registry;
 import java.util.Map;
 import org.smallmind.nutsnbolts.util.DotNotation;
 
+/**
+ * A naming strategy that infers a meter prefix by matching the caller's class name against dot-notated patterns.
+ */
 public class ImpliedNamingStrategy implements NamingStrategy {
 
   private Map<DotNotation, String> prefixMap;
 
+  /**
+   * Creates a strategy with no predefined prefixes.
+   */
   public ImpliedNamingStrategy () {
 
   }
 
+  /**
+   * Supplies a map of {@link DotNotation} patterns to prefixes for later lookup.
+   *
+   * @param prefixMap map of patterns to prefixes
+   * @return this strategy for chaining
+   */
   public ImpliedNamingStrategy setPrefixMap (Map<DotNotation, String> prefixMap) {
 
     this.prefixMap = prefixMap;
@@ -50,6 +62,12 @@ public class ImpliedNamingStrategy implements NamingStrategy {
     return this;
   }
 
+  /**
+   * Resolves a prefix for the given caller based on the configured pattern map.
+   *
+   * @param caller the class requesting a name
+   * @return a prefix when a pattern matches, otherwise {@code null}
+   */
   @Override
   public String from (Class<?> caller) {
 

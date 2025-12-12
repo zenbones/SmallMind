@@ -36,11 +36,17 @@ import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.util.List;
 
+/**
+ * Collects GC statistics for young and old collectors when available.
+ */
 public class GarbageFacts {
 
   private final GarbageStatistics youngGarbageStatistics;
   private final GarbageStatistics oldGarbageStatistics;
 
+  /**
+   * Initializes GC statistics by inspecting available MXBeans.
+   */
   public GarbageFacts () {
 
     List<GarbageCollectorMXBean> garbageCollectorMXBeans = ManagementFactory.getGarbageCollectorMXBeans();
@@ -64,6 +70,12 @@ public class GarbageFacts {
 
     };
 
+    /**
+     * Builds a statistics adapter from an MXBean.
+     *
+     * @param mxBean GC MXBean
+     * @return statistics adapter
+     */
     static GarbageStatistics from (GarbageCollectorMXBean mxBean) {
 
       return new GarbageStatistics() {
@@ -82,32 +94,50 @@ public class GarbageFacts {
       };
     }
 
+    /**
+     * @return collection count (default 0)
+     */
     default long getCollectionCount () {
 
       return 0;
     }
 
+    /**
+     * @return collection time in milliseconds (default 0)
+     */
     default long getCollectionTime () {
 
       return 0;
     }
   }
 
+  /**
+   * @return collection time for the young generation GC in milliseconds
+   */
   public long getYoungCollectionTime () {
 
     return youngGarbageStatistics.getCollectionTime();
   }
 
+  /**
+   * @return collection count for the young generation GC
+   */
   public long getYoungCollectionCount () {
 
     return youngGarbageStatistics.getCollectionCount();
   }
 
+  /**
+   * @return collection time for the old generation GC in milliseconds
+   */
   public long getOldCollectionTime () {
 
     return oldGarbageStatistics.getCollectionTime();
   }
 
+  /**
+   * @return collection count for the old generation GC
+   */
   public long getOldCollectionCount () {
 
     return oldGarbageStatistics.getCollectionCount();

@@ -35,6 +35,9 @@ package org.smallmind.claxon.registry.json;
 import java.util.concurrent.TimeUnit;
 import org.smallmind.nutsnbolts.json.EnumXmlAdapter;
 
+/**
+ * JSON/XML adapter for {@link TimeUnit} enums.
+ */
 public class TimeUnitEnumXmlAdapter extends EnumXmlAdapter<TimeUnit> {
 
 }

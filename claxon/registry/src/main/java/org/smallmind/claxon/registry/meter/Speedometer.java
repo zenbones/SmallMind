@@ -39,17 +39,31 @@ import org.smallmind.claxon.registry.aggregate.Bounded;
 import org.smallmind.claxon.registry.aggregate.Paced;
 import org.smallmind.nutsnbolts.time.Stint;
 
+/**
+ * Meter that combines min/max value tracking with event counts and rates.
+ */
 public class Speedometer implements Meter {
 
   private final Bounded bounded;
   private final Paced paced;
 
+  /**
+   * Creates a speedometer using the given clock and window.
+   *
+   * @param clock       clock providing monotonic time
+   * @param windowStint window duration for rate calculations
+   */
   public Speedometer (Clock clock, Stint windowStint) {
 
     bounded = new Bounded();
     paced = new Paced(clock, windowStint);
   }
 
+  /**
+   * Updates the min/max with the provided value and increments the count.
+   *
+   * @param value value to incorporate
+   */
   @Override
   public void update (long value) {
 
@@ -57,6 +71,11 @@ public class Speedometer implements Meter {
     paced.update(1);
   }
 
+  /**
+   * Returns min, max (when available), count, and rate quantities.
+   *
+   * @return array of speed-related quantities
+   */
   @Override
   public Quantity[] record () {
 

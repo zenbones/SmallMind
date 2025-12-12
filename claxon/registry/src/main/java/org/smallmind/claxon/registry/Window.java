@@ -38,6 +38,9 @@ import org.smallmind.web.json.doppelganger.View;
 
 import static org.smallmind.web.json.doppelganger.Visibility.IN;
 
+/**
+ * Represents a named snapshot window of measurements for serialization.
+ */
 @Doppelganger(namespace = "http://org.smallmind/claxon/registry")
 public class Window {
 
@@ -56,21 +59,37 @@ public class Window {
     this.value = value;
   }
 
+  /**
+   * @return the window name
+   */
   public String getName () {
 
     return name;
   }
 
+  /**
+   * Sets the window name.
+   *
+   * @param name name describing the window or bucket
+   */
   public void setName (String name) {
 
     this.name = name;
   }
 
+  /**
+   * @return the window value
+   */
   public long getValue () {
 
     return value;
   }
 
+  /**
+   * Sets the window value.
+   *
+   * @param value measured value for the window
+   */
   public void setValue (long value) {
 
     this.value = value;

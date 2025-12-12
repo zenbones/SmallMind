@@ -38,6 +38,9 @@ import org.smallmind.claxon.registry.Clock;
 import org.smallmind.nutsnbolts.time.Stint;
 import org.smallmind.nutsnbolts.time.StintUtility;
 
+/**
+ * Aggregate that counts occurrences and calculates rate over a sliding time window.
+ */
 public class Paced implements Aggregate {
 
   private final Clock clock;
@@ -45,11 +48,22 @@ public class Paced implements Aggregate {
   private final double nanosecondsInWindow;
   private long markTime;
 
+  /**
+   * Creates a paced aggregate using a one-second window.
+   *
+   * @param clock clock providing monotonic time
+   */
   public Paced (Clock clock) {
 
     this(clock, new Stint(1, TimeUnit.SECONDS));
   }
 
+  /**
+   * Creates a paced aggregate using the supplied window duration.
+   *
+   * @param clock       clock providing monotonic time
+   * @param windowStint window duration
+   */
   public Paced (Clock clock, Stint windowStint) {
 
     this.clock = clock;
@@ -63,6 +77,12 @@ public class Paced implements Aggregate {
     add(1);
   }
 
+  /**
+   * Adds a non-negative delta to the count.
+   *
+   * @param delta amount to add
+   * @throws IllegalArgumentException when delta is negative
+   */
   public void add (long delta) {
 
     if (delta < 0) {
@@ -72,12 +92,22 @@ public class Paced implements Aggregate {
     }
   }
 
+  /**
+   * Updates the count by the given value.
+   *
+   * @param value value to add
+   */
   @Override
   public void update (long value) {
 
     add(value);
   }
 
+  /**
+   * Returns the total count and calculated rate for the last window, then resets the counters.
+   *
+   * @return array containing count and rate per window
+   */
   public synchronized double[] getMeasurements () {
 
     double rate;
