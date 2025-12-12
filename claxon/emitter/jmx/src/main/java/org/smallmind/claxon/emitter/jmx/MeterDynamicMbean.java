@@ -117,7 +117,7 @@ public class MeterDynamicMbean implements DynamicMBean {
    * Sets a single attribute value, accepting numeric or string representations.
    *
    * @param attribute attribute to set
-   * @throws AttributeNotFoundException   when the attribute is not defined
+   * @throws AttributeNotFoundException     when the attribute is not defined
    * @throws InvalidAttributeValueException when the value cannot be converted to double
    */
   @Override

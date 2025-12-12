@@ -56,11 +56,12 @@ public class PrometheusEmitter extends PullEmitter<String> {
   # Comment that's not parsed by prometheus
   http_requests_total{method="post",code="400"}  3   1395066363000
   */
+
   /**
    * Stores the latest quantity values keyed by meter, tags, and quantity name.
    *
-   * @param meterName meter name
-   * @param tags      associated tags (may be null)
+   * @param meterName  meter name
+   * @param tags       associated tags (may be null)
    * @param quantities measured values
    */
   @Override
@@ -143,6 +144,7 @@ public class PrometheusEmitter extends PullEmitter<String> {
   }
 
   // Being Golang, Prometheus can't handle unicode strings like most frameworks, but only a very simple set of characters.
+
   /**
    * Normalizes metric and tag names to Prometheus-friendly snake_case, handling digits and punctuation.
    *

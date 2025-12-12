@@ -73,10 +73,10 @@ public class Stratified implements Aggregate {
   /**
    * Creates a stratified histogram with custom histogram bounds and precision using a one-second window.
    *
-   * @param clock                           clock providing monotonic time
-   * @param lowestDiscernibleValue          smallest value to track
-   * @param highestTrackableValue           largest value to track
-   * @param numberOfSignificantValueDigits  histogram precision
+   * @param clock                          clock providing monotonic time
+   * @param lowestDiscernibleValue         smallest value to track
+   * @param highestTrackableValue          largest value to track
+   * @param numberOfSignificantValueDigits histogram precision
    */
   public Stratified (Clock clock, long lowestDiscernibleValue, long highestTrackableValue, int numberOfSignificantValueDigits) {
 
@@ -86,11 +86,11 @@ public class Stratified implements Aggregate {
   /**
    * Creates a stratified histogram with full customization of bounds, precision, and window.
    *
-   * @param clock                           clock providing monotonic time
-   * @param lowestDiscernibleValue          smallest value to track
-   * @param highestTrackableValue           largest value to track
-   * @param numberOfSignificantValueDigits  histogram precision
-   * @param windowStint                     window duration
+   * @param clock                          clock providing monotonic time
+   * @param lowestDiscernibleValue         smallest value to track
+   * @param highestTrackableValue          largest value to track
+   * @param numberOfSignificantValueDigits histogram precision
+   * @param windowStint                    window duration
    */
   public Stratified (Clock clock, long lowestDiscernibleValue, long highestTrackableValue, int numberOfSignificantValueDigits, Stint windowStint) {
 

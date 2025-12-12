@@ -58,11 +58,11 @@ public class DataDogEmitter extends PushEmitter {
   /**
    * Creates a Datadog emitter with custom connection and tagging options.
    *
-   * @param prefix        metric name prefix (may be null)
-   * @param hostName      statsd host
-   * @param port          statsd port
-   * @param countAsCount  whether quantities of type COUNT are sent as counters instead of gauges
-   * @param constantTags  tags applied to every emission
+   * @param prefix       metric name prefix (may be null)
+   * @param hostName     statsd host
+   * @param port         statsd port
+   * @param countAsCount whether quantities of type COUNT are sent as counters instead of gauges
+   * @param constantTags tags applied to every emission
    */
   public DataDogEmitter (String prefix, String hostName, int port, boolean countAsCount, Tag... constantTags) {
 

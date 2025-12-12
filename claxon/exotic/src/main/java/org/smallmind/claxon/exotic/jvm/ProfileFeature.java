@@ -51,10 +51,10 @@ public class ProfileFeature implements Feature {
   /**
    * Creates a JVM profile feature.
    *
-   * @param name                             meter name
+   * @param name                              meter name
    * @param minimumRecordingDelayMilliseconds optional minimum delay between emissions (ms)
-   * @param addHostNameTag                   whether to add the host name tag
-   * @param tags                             additional tags to include
+   * @param addHostNameTag                    whether to add the host name tag
+   * @param tags                              additional tags to include
    * @throws UnknownHostException when the host name cannot be resolved
    */
   public ProfileFeature (String name, Long minimumRecordingDelayMilliseconds, boolean addHostNameTag, Tag... tags)

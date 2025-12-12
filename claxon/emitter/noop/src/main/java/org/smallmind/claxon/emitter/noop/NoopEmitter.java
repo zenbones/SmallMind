@@ -48,8 +48,8 @@ public class NoopEmitter extends PushEmitter {
   /**
    * Discards all recorded quantities.
    *
-   * @param meterName meter name
-   * @param tags      associated tags
+   * @param meterName  meter name
+   * @param tags       associated tags
    * @param quantities values to discard
    */
   @Override
