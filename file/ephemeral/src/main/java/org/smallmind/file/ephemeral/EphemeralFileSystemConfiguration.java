@@ -32,6 +32,9 @@
  */
 package org.smallmind.file.ephemeral;
 
+/**
+ * Configuration holder for the ephemeral file system, optionally derived from system properties.
+ */
 public class EphemeralFileSystemConfiguration {
 
   private static final String CAPACITY_PROPERTY = "org.smallmind.file.ephemeral.configuration.capacity";
@@ -41,11 +44,22 @@ public class EphemeralFileSystemConfiguration {
   private final long capacity;
   private final int blockSize;
 
+  /**
+   * Builds a configuration using the values provided by system properties or sensible defaults.
+   */
   public EphemeralFileSystemConfiguration () {
 
     this(deriveCapacity(), deriveBlockSize(), deriveRoots());
   }
 
+  /**
+   * Builds a configuration with explicit values.
+   *
+   * @param capacity  the total capacity to expose
+   * @param blockSize the allocation unit size
+   * @param roots     the permitted root paths (must start with '/')
+   * @throws IllegalArgumentException if supplied values are invalid
+   */
   public EphemeralFileSystemConfiguration (long capacity, int blockSize, String... roots) {
 
     if ((capacity <= 0) || (blockSize <= 0)) {
@@ -66,6 +80,9 @@ public class EphemeralFileSystemConfiguration {
     }
   }
 
+  /**
+   * @return the capacity derived from the {@value CAPACITY_PROPERTY} property or {@link Long#MAX_VALUE}
+   */
   private static long deriveCapacity () {
 
     String capacityEnvVar;
@@ -79,6 +96,9 @@ public class EphemeralFileSystemConfiguration {
     }
   }
 
+  /**
+   * @return the block size derived from the {@value BLOCK_SIZ_PROPERTY} property or {@code 1024}
+   */
   private static int deriveBlockSize () {
 
     String blockSizeEnvVar;
@@ -92,6 +112,9 @@ public class EphemeralFileSystemConfiguration {
     }
   }
 
+  /**
+   * @return the root list derived from {@value ROOTS_PROPERTY} or a single {@code "/"} entry
+   */
   private static String[] deriveRoots () {
 
     String rootsEnvVar;
@@ -123,21 +146,37 @@ public class EphemeralFileSystemConfiguration {
     }
   }
 
+  /**
+   * @return configured roots
+   */
   public String[] getRoots () {
 
     return roots;
   }
 
+  /**
+   * @return configured capacity
+   */
   public long getCapacity () {
 
     return capacity;
   }
 
+  /**
+   * @return configured block size
+   */
   public int getBlockSize () {
 
     return blockSize;
   }
 
+  /**
+   * Indicates whether the provided path segments belong to a declared root.
+   *
+   * @param first the first path segment
+   * @param more  optional additional segments
+   * @return {@code true} if the supplied segments start with one of the configured roots
+   */
   public boolean isOurs (String first, String... more) {
 
     for (String root : roots) {

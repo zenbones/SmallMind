@@ -43,6 +43,9 @@ import java.nio.file.WatchService;
 import java.util.Arrays;
 import java.util.LinkedList;
 
+/**
+ * {@link Path} implementation that enforces jailed path semantics and performs minimal parsing for segment operations.
+ */
 public class JailedPath implements Path {
 
   protected static final char SEPARATOR = '/';
@@ -52,6 +55,14 @@ public class JailedPath implements Path {
   private final char[] text;
   private final boolean hasRoot;
 
+  /**
+   * Internal constructor used once components have been parsed.
+   *
+   * @param jailedFileSystem owning file system
+   * @param text             raw path text
+   * @param hasRoot          whether the path is absolute
+   * @param segments         parsed path segments
+   */
   protected JailedPath (JailedFileSystem jailedFileSystem, char[] text, boolean hasRoot, Segment... segments) {
 
     this.jailedFileSystem = jailedFileSystem;
@@ -60,6 +71,12 @@ public class JailedPath implements Path {
     this.segments = segments;
   }
 
+  /**
+   * Creates a path from raw text characters.
+   *
+   * @param jailedFileSystem owning file system
+   * @param text             raw path characters
+   */
   public JailedPath (JailedFileSystem jailedFileSystem, char... text) {
 
     this.jailedFileSystem = jailedFileSystem;
@@ -69,11 +86,22 @@ public class JailedPath implements Path {
     segments = divideAndConquer();
   }
 
+  /**
+   * Creates a path from a text value.
+   *
+   * @param jailedFileSystem owning file system
+   * @param text             string representation of the path
+   */
   public JailedPath (JailedFileSystem jailedFileSystem, String text) {
 
     this(jailedFileSystem, text.toCharArray());
   }
 
+  /**
+   * Parses the raw text into discrete path segments separated by the jail separator.
+   *
+   * @return parsed segments
+   */
   private Segment[] divideAndConquer () {
 
     Segment[] segments;
@@ -124,6 +152,9 @@ public class JailedPath implements Path {
     return segments;
   }
 
+  /**
+   * Compares a local segment to another path's segment.
+   */
   private boolean sameSegment (char[] otherText, Segment otherSegment, int segmentIndex) {
 
     Segment segment = segments[segmentIndex];
@@ -148,6 +179,9 @@ public class JailedPath implements Path {
     return constructPath(null, null, text, hasRoot, segments);
   }
 
+  /**
+   * Constructs a new path from existing prologue segments and additional segments.
+   */
   private Path constructPath (char[] prologueText, Segment[] prologueSegments, char[] text, boolean hasRoot, Segment... segments) {
 
     int prologueSegmentCount = (prologueSegments == null) ? 0 : prologueSegments.length;
@@ -181,30 +215,45 @@ public class JailedPath implements Path {
     return new JailedPath(jailedFileSystem, translatedText, hasRoot, translatedSegments);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public FileSystem getFileSystem () {
 
     return jailedFileSystem;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean isAbsolute () {
 
     return hasRoot;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Path getRoot () {
 
     return hasRoot ? new JailedPath(jailedFileSystem, new char[] {SEPARATOR}, true) : null;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Path getFileName () {
 
     return (segments.length == 0) ? null : constructPath(text, false, segments[segments.length - 1]);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Path getParent () {
 
@@ -224,12 +273,18 @@ public class JailedPath implements Path {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int getNameCount () {
 
     return segments.length;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Path getName (int index) {
 
@@ -241,6 +296,9 @@ public class JailedPath implements Path {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Path subpath (int beginIndex, int endIndex) {
 
@@ -256,6 +314,9 @@ public class JailedPath implements Path {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean startsWith (Path other) {
 
@@ -278,6 +339,9 @@ public class JailedPath implements Path {
     return false;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean endsWith (Path other) {
 
@@ -300,6 +364,9 @@ public class JailedPath implements Path {
     return false;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Path normalize () {
 
@@ -339,6 +406,9 @@ public class JailedPath implements Path {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Path resolve (Path other) {
 
@@ -356,6 +426,9 @@ public class JailedPath implements Path {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Path relativize (Path other) {
 
@@ -394,6 +467,9 @@ public class JailedPath implements Path {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Path toAbsolutePath () {
 
@@ -406,12 +482,18 @@ public class JailedPath implements Path {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Path toRealPath (LinkOption... options) {
 
     return normalize().toAbsolutePath();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int compareTo (Path other) {
 
@@ -443,6 +525,9 @@ public class JailedPath implements Path {
     }
   }
 
+  /**
+   * Compares two segments lexicographically.
+   */
   private int compareSegment (Segment segment, char[] otherText, Segment otherSegment) {
 
     int segmentLength = segment.length();
@@ -467,6 +552,9 @@ public class JailedPath implements Path {
     return 0;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public URI toUri () {
 
@@ -477,39 +565,61 @@ public class JailedPath implements Path {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public WatchKey register (WatchService watcher, WatchEvent.Kind<?>[] events, WatchEvent.Modifier... modifiers) {
 
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String toString () {
 
     return String.valueOf(text);
   }
 
+  /**
+   * Simple representation of a path segment's bounds within the raw char array.
+   */
   protected static class Segment {
 
     private final int begin;
     private final int end;
 
+    /**
+     * @param begin inclusive start index in the raw text
+     * @param end   exclusive end index in the raw text
+     */
     public Segment (int begin, int end) {
 
       this.begin = begin;
       this.end = end;
     }
 
+    /**
+     * @return the inclusive start index
+     */
     public int getBegin () {
 
       return begin;
     }
 
+    /**
+     * @return the exclusive end index
+     */
     public int getEnd () {
 
       return end;
     }
 
+    /**
+     * @return the segment length
+     */
     public int length () {
 
       return end - begin;

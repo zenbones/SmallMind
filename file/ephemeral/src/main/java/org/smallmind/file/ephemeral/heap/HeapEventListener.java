@@ -34,7 +34,15 @@ package org.smallmind.file.ephemeral.heap;
 
 import java.util.EventListener;
 
+/**
+ * Listener notified of {@link HeapEvent}s emitted from the ephemeral file-system heap.
+ */
 public interface HeapEventListener extends EventListener {
 
+  /**
+   * Handles an event that bubbled up from a heap node.
+   *
+   * @param heapEvent the emitted event describing the type of change and its path
+   */
   void handle (HeapEvent heapEvent);
 }

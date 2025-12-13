@@ -36,14 +36,23 @@ import java.nio.file.attribute.GroupPrincipal;
 import java.nio.file.attribute.UserPrincipal;
 import java.nio.file.attribute.UserPrincipalLookupService;
 
+/**
+ * Lookup service that returns ephemeral user and group principals.
+ */
 public class EphemeralUserPrincipalLookupService extends UserPrincipalLookupService {
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public UserPrincipal lookupPrincipalByName (String name) {
 
     return new EphemeralUserPrincipal(name);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public GroupPrincipal lookupPrincipalByGroupName (String group) {
 

@@ -34,10 +34,20 @@ package org.smallmind.file.ephemeral.heap;
 
 import org.smallmind.nutsnbolts.io.ByteArrayIOBuffer;
 
+/**
+ * Represents a heap-backed file storing its bytes in a {@link ByteArrayIOBuffer}.
+ */
 public class FileNode extends HeapNode {
 
   private final ByteArrayIOBuffer segmentBuffer;
 
+  /**
+   * Constructs a file node with a newly allocated buffer.
+   *
+   * @param parent     the containing directory
+   * @param name       the file name
+   * @param allocation initial allocation size for the backing buffer
+   */
   public FileNode (DirectoryNode parent, String name, int allocation) {
 
     super(parent, name);
@@ -45,6 +55,13 @@ public class FileNode extends HeapNode {
     segmentBuffer = new ByteArrayIOBuffer(allocation);
   }
 
+  /**
+   * Constructs a file node using an existing buffer.
+   *
+   * @param parent        the containing directory
+   * @param name          the file name
+   * @param segmentBuffer the buffer that stores file contents
+   */
   public FileNode (DirectoryNode parent, String name, ByteArrayIOBuffer segmentBuffer) {
 
     super(parent, name);
@@ -52,17 +69,26 @@ public class FileNode extends HeapNode {
     this.segmentBuffer = segmentBuffer;
   }
 
+  /**
+   * @return {@link HeapNodeType#FILE}
+   */
   @Override
   public HeapNodeType getType () {
 
     return HeapNodeType.FILE;
   }
 
+  /**
+   * @return the buffer holding the file bytes
+   */
   public ByteArrayIOBuffer getSegmentBuffer () {
 
     return segmentBuffer;
   }
 
+  /**
+   * @return the current file length in bytes
+   */
   @Override
   public long size () {
 

@@ -34,12 +34,24 @@ package org.smallmind.file.ephemeral.watch;
 
 import java.nio.file.WatchEvent;
 
+/**
+ * Simple watch event implementation used by the ephemeral watch service.
+ *
+ * @param <T> the context type supplied with the event
+ */
 public class EphemeralWatchEvent<T> implements WatchEvent<T> {
 
   private final Kind<T> kind;
   private final T context;
   private final int count;
 
+  /**
+   * Creates a new event.
+   *
+   * @param kind    the event kind that occurred
+   * @param count   the number of times the event was coalesced
+   * @param context the context for the event, such as the affected path segment
+   */
   public EphemeralWatchEvent (Kind<T> kind, int count, T context) {
 
     this.kind = kind;
@@ -47,18 +59,27 @@ public class EphemeralWatchEvent<T> implements WatchEvent<T> {
     this.context = context;
   }
 
+  /**
+   * @return the kind of watch event
+   */
   @Override
   public Kind<T> kind () {
 
     return kind;
   }
 
+  /**
+   * @return the number of occurrences that have been coalesced
+   */
   @Override
   public int count () {
 
     return count;
   }
 
+  /**
+   * @return the event context
+   */
   @Override
   public T context () {
 

@@ -45,6 +45,9 @@ import java.util.regex.Pattern;
 import org.smallmind.file.ephemeral.watch.EphemeralWatchService;
 import org.smallmind.nutsnbolts.util.SingleItemIterable;
 
+/**
+ * {@link FileSystem} implementation providing an in-memory ephemeral store with optional delegation to a native file system for non-owned paths.
+ */
 public class EphemeralFileSystem extends FileSystem {
 
   private static final EphemeralUserPrincipalLookupService USER_PRINCIPAL_LOOKUP_SERVICE = new EphemeralUserPrincipalLookupService();
@@ -54,6 +57,12 @@ public class EphemeralFileSystem extends FileSystem {
   private final EphemeralPath rootPath;
   private volatile boolean closed;
 
+  /**
+   * Constructs a file system using the provided provider and configuration.
+   *
+   * @param provider      the owning provider
+   * @param configuration configuration describing capacity, block size, and roots
+   */
   public EphemeralFileSystem (EphemeralFileSystemProvider provider, EphemeralFileSystemConfiguration configuration) {
 
     this.provider = provider;
@@ -63,11 +72,17 @@ public class EphemeralFileSystem extends FileSystem {
     rootPath = new EphemeralPath(this);
   }
 
+  /**
+   * Clears all contents of the underlying file store.
+   */
   public void clear () {
 
     fileStore.clear();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public EphemeralFileSystemProvider provider () {
 
@@ -83,30 +98,46 @@ public class EphemeralFileSystem extends FileSystem {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public synchronized boolean isOpen () {
 
     return !closed;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean isReadOnly () {
 
     return false;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String getSeparator () {
 
     return EphemeralPath.getSeparator();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Iterable<Path> getRootDirectories () {
 
     return rootPath;
   }
 
+  /**
+   * @return the underlying file store
+   * @throws ClosedFileSystemException if the system is closed
+   */
   public EphemeralFileStore getFileStore () {
 
     if (closed) {
@@ -117,6 +148,9 @@ public class EphemeralFileSystem extends FileSystem {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Iterable<FileStore> getFileStores () {
 
@@ -128,6 +162,9 @@ public class EphemeralFileSystem extends FileSystem {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Set<String> supportedFileAttributeViews () {
 
@@ -139,6 +176,9 @@ public class EphemeralFileSystem extends FileSystem {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Path getPath (String first, String... more) {
 
@@ -153,6 +193,13 @@ public class EphemeralFileSystem extends FileSystem {
     }
   }
 
+  /**
+   * Resolves a path from a URI associated with this provider.
+   *
+   * @param uri the URI to convert
+   * @return the resulting path
+   * @throws ClosedFileSystemException if the file system is closed
+   */
   public Path getPath (URI uri) {
 
     if (closed) {
@@ -171,6 +218,9 @@ public class EphemeralFileSystem extends FileSystem {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public PathMatcher getPathMatcher (String syntaxAndPattern) {
 
@@ -195,6 +245,9 @@ public class EphemeralFileSystem extends FileSystem {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public UserPrincipalLookupService getUserPrincipalLookupService () {
 
@@ -206,6 +259,9 @@ public class EphemeralFileSystem extends FileSystem {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public WatchService newWatchService () {
 

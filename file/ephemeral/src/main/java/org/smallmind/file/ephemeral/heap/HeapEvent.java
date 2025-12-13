@@ -35,11 +35,21 @@ package org.smallmind.file.ephemeral.heap;
 import java.util.EventObject;
 import org.smallmind.file.ephemeral.EphemeralPath;
 
+/**
+ * Event propagated by heap nodes when a path changes and used to drive watch key delivery.
+ */
 public class HeapEvent extends EventObject {
 
   private final HeapEventType type;
   private final EphemeralPath path;
 
+  /**
+   * Constructs a new heap event.
+   *
+   * @param source the object that generated the event
+   * @param path   the ephemeral path impacted by the change
+   * @param type   the type of change
+   */
   public HeapEvent (Object source, EphemeralPath path, HeapEventType type) {
 
     super(source);
@@ -48,11 +58,17 @@ public class HeapEvent extends EventObject {
     this.type = type;
   }
 
+  /**
+   * @return the kind of heap change that occurred
+   */
   public HeapEventType getType () {
 
     return type;
   }
 
+  /**
+   * @return the path associated with the change
+   */
   public EphemeralPath getPath () {
 
     return path;

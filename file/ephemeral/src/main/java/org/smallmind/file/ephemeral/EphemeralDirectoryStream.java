@@ -48,6 +48,9 @@ import java.util.Iterator;
 import java.util.Set;
 import org.smallmind.file.ephemeral.heap.DirectoryNode;
 
+/**
+ * {@link SecureDirectoryStream} implementation over the ephemeral file-system heap.
+ */
 public class EphemeralDirectoryStream implements SecureDirectoryStream<Path> {
 
   private final EphemeralFileSystemProvider provider;
@@ -56,6 +59,14 @@ public class EphemeralDirectoryStream implements SecureDirectoryStream<Path> {
   private final DirectoryStream.Filter<? super Path> filter;
   private boolean closed = false;
 
+  /**
+   * Creates a directory stream for the specified path and directory node.
+   *
+   * @param provider      the provider to delegate new operations to
+   * @param streamPath    the path backing this stream
+   * @param directoryNode the heap node for the directory
+   * @param filter        optional filter to apply when iterating
+   */
   public EphemeralDirectoryStream (EphemeralFileSystemProvider provider, EphemeralPath streamPath, DirectoryNode directoryNode, DirectoryStream.Filter<? super Path> filter) {
 
     this.provider = provider;
@@ -64,12 +75,18 @@ public class EphemeralDirectoryStream implements SecureDirectoryStream<Path> {
     this.filter = filter;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public synchronized void close () {
 
     closed = true;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public synchronized Iterator<Path> iterator () {
 
@@ -81,6 +98,9 @@ public class EphemeralDirectoryStream implements SecureDirectoryStream<Path> {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public synchronized SecureDirectoryStream<Path> newDirectoryStream (Path path, LinkOption... options)
     throws NoSuchFileException, NotDirectoryException {
@@ -93,6 +113,9 @@ public class EphemeralDirectoryStream implements SecureDirectoryStream<Path> {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public synchronized SeekableByteChannel newByteChannel (Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs)
     throws IOException {
@@ -105,6 +128,9 @@ public class EphemeralDirectoryStream implements SecureDirectoryStream<Path> {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public synchronized void deleteFile (Path path)
     throws IOException {
@@ -116,6 +142,9 @@ public class EphemeralDirectoryStream implements SecureDirectoryStream<Path> {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public synchronized void deleteDirectory (Path path)
     throws IOException {
@@ -127,6 +156,9 @@ public class EphemeralDirectoryStream implements SecureDirectoryStream<Path> {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public synchronized void move (Path src, SecureDirectoryStream<Path> target, Path targetpath)
     throws IOException {
@@ -138,6 +170,9 @@ public class EphemeralDirectoryStream implements SecureDirectoryStream<Path> {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public synchronized <V extends FileAttributeView> V getFileAttributeView (Class<V> type) {
 
@@ -145,10 +180,13 @@ public class EphemeralDirectoryStream implements SecureDirectoryStream<Path> {
       throw new ClosedDirectoryStreamException();
     } else {
 
+      return null;
     }
-    return null;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public synchronized <V extends FileAttributeView> V getFileAttributeView (Path path, Class<V> type, LinkOption... options) {
 
@@ -156,7 +194,7 @@ public class EphemeralDirectoryStream implements SecureDirectoryStream<Path> {
       throw new ClosedDirectoryStreamException();
     } else {
 
+      return provider.getFileAttributeView(path, type, options);
     }
-    return null;
   }
 }

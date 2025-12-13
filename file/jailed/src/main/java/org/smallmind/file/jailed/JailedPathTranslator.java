@@ -36,13 +36,34 @@ import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
 
+/**
+ * Translates between jailed paths and paths on a backing native file system.
+ */
 public interface JailedPathTranslator {
 
+  /**
+   * @return the native file system being constrained
+   */
   FileSystem getNativeFileSystem ();
 
+  /**
+   * Wraps a native path as a jailed path visible to clients.
+   *
+   * @param jailedFileSystem the jail file system
+   * @param nativePath       the native path to wrap
+   * @return the jailed path
+   * @throws IOException if translation fails
+   */
   Path wrapPath (JailedFileSystem jailedFileSystem, Path nativePath)
     throws IOException;
 
+  /**
+   * Converts a jailed path back to the native representation.
+   *
+   * @param jailedPath the jailed path
+   * @return the native path
+   * @throws IOException if translation fails
+   */
   Path unwrapPath (Path jailedPath)
     throws IOException;
 }

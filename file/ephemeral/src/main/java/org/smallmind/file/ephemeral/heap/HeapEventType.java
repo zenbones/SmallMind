@@ -35,6 +35,9 @@ package org.smallmind.file.ephemeral.heap;
 import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 
+/**
+ * Maps heap-level changes to the {@link java.nio.file.WatchEvent.Kind} values understood by watch services.
+ */
 public enum HeapEventType {
 
   CREATE(StandardWatchEventKinds.ENTRY_CREATE), DELETE(StandardWatchEventKinds.ENTRY_DELETE), MODIFY(StandardWatchEventKinds.ENTRY_MODIFY);
@@ -46,6 +49,9 @@ public enum HeapEventType {
     this.kind = kind;
   }
 
+  /**
+   * @return the corresponding {@link WatchEvent.Kind} for this heap event
+   */
   public WatchEvent.Kind<?> getKind () {
 
     return kind;

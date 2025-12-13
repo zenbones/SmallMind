@@ -35,6 +35,9 @@ package org.smallmind.file.ephemeral;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+/**
+ * Utility for translating glob expressions into equivalent regular expressions.
+ */
 public class Glob {
 
   private enum State {NORMAL, ESCAPED, BRACKETED, RANGED, GROUPED}
@@ -42,6 +45,14 @@ public class Glob {
   private static final String GLOBAL_META = "\\*?[{";
   private static final String REGEX_META = ".^$+{[]|()";
 
+  /**
+   * Converts a glob expression into a compiled {@link Pattern}.
+   *
+   * @param separator   the path separator that must not be matched by single-segment tokens
+   * @param globPattern the glob expression to translate
+   * @return a regex pattern equivalent to the supplied glob
+   * @throws PatternSyntaxException if the glob is malformed
+   */
   public static Pattern toRegexPattern (char separator, String globPattern) {
 
     StringBuilder regex = new StringBuilder("^");

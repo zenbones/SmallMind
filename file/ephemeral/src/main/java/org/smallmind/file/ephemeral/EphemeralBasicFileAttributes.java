@@ -38,6 +38,9 @@ import org.smallmind.file.ephemeral.heap.HeapNode;
 import org.smallmind.file.ephemeral.heap.HeapNodeType;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 
+/**
+ * Basic file attributes held for ephemeral heap nodes.
+ */
 public class EphemeralBasicFileAttributes implements BasicFileAttributes {
 
   private final String id = SnowflakeId.newInstance().generateHexEncoding();
@@ -50,6 +53,11 @@ public class EphemeralBasicFileAttributes implements BasicFileAttributes {
   private FileTime lastAccessTime;
   private FileTime creationTime;
 
+  /**
+   * Initializes attributes based on the provided heap node type and current time.
+   *
+   * @param heapNode the node whose attributes are being tracked
+   */
   public EphemeralBasicFileAttributes (HeapNode heapNode) {
 
     this.heapNode = heapNode;
@@ -64,69 +72,111 @@ public class EphemeralBasicFileAttributes implements BasicFileAttributes {
     other = false;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public FileTime lastModifiedTime () {
 
     return lastModifiedTime;
   }
 
+  /**
+   * Updates the recorded last modified time.
+   *
+   * @param lastModifiedTime the new timestamp
+   */
   public void setLastModifiedTime (FileTime lastModifiedTime) {
 
     this.lastModifiedTime = lastModifiedTime;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public FileTime lastAccessTime () {
 
     return lastAccessTime;
   }
 
+  /**
+   * Updates the recorded last access time.
+   *
+   * @param lastAccessTime the new timestamp
+   */
   public void setLastAccessTime (FileTime lastAccessTime) {
 
     this.lastAccessTime = lastAccessTime;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public FileTime creationTime () {
 
     return creationTime;
   }
 
+  /**
+   * Updates the recorded creation time.
+   *
+   * @param creationTime the new timestamp
+   */
   public void setCreationTime (FileTime creationTime) {
 
     this.creationTime = creationTime;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean isRegularFile () {
 
     return regularFile;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean isDirectory () {
 
     return directory;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean isSymbolicLink () {
 
     return symbolicLink;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean isOther () {
 
     return other;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public long size () {
 
     return heapNode.size();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Object fileKey () {
 

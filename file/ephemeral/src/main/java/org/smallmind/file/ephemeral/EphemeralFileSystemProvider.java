@@ -67,9 +67,12 @@ import java.util.concurrent.TimeoutException;
 
   -Dorg.smallmind.file.ephemeral.configuration.capacity=<Long.MAX_VALUE>
   -Dorg.smallmind.file.ephemeral.configuration.blockSize=<1024>
-  -Dorg.smallmind.file.ephemeral.configuration.roots=/overlay/file/system,/any/other/path
+ -Dorg.smallmind.file.ephemeral.configuration.roots=/overlay/file/system,/any/other/path
 */
 
+/**
+ * {@link FileSystemProvider} for the ephemeral in-memory file system with optional delegation to a native provider.
+ */
 public class EphemeralFileSystemProvider extends FileSystemProvider {
 
   private static final CountDownLatch INITIALIZATION_LATCH = new CountDownLatch(1);
@@ -77,11 +80,19 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
   private final String scheme;
   private FileSystem nativeFileSystem;
 
+  /**
+   * Builds a provider using the default {@code "ephemeral"} scheme.
+   */
   public EphemeralFileSystemProvider () {
 
     this("ephemeral");
   }
 
+  /**
+   * Builds a provider that mirrors the scheme of another provider and delegates native access to it.
+   *
+   * @param fileSystemProvider the provider to mirror
+   */
   public EphemeralFileSystemProvider (FileSystemProvider fileSystemProvider) {
 
     this(fileSystemProvider.getScheme());
@@ -89,6 +100,11 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
     nativeFileSystem = fileSystemProvider.getFileSystem(URI.create(fileSystemProvider.getScheme() + ":///"));
   }
 
+  /**
+   * Builds a provider using the supplied scheme.
+   *
+   * @param scheme the URI scheme to expose
+   */
   public EphemeralFileSystemProvider (String scheme) {
 
     this.scheme = scheme;
@@ -97,6 +113,14 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
     INITIALIZATION_LATCH.countDown();
   }
 
+  /**
+   * Waits for the provider to finish initializing.
+   *
+   * @param timeout duration to wait
+   * @param unit    time unit of the timeout
+   * @throws InterruptedException if interrupted while waiting
+   * @throws TimeoutException     if initialization does not complete in time
+   */
   public static void waitForInitialization (long timeout, TimeUnit unit)
     throws InterruptedException, TimeoutException {
 
@@ -105,22 +129,34 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
     }
   }
 
+  /**
+   * @return {@code true} when this provider is masquerading as the default {@code file} scheme
+   */
   public boolean isDefault () {
 
     return "file".equals(scheme);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String getScheme () {
 
     return scheme;
   }
 
+  /**
+   * @return the delegated native file system, when configured
+   */
   public FileSystem getNativeFileSystem () {
 
     return nativeFileSystem;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public FileSystem newFileSystem (URI uri, Map<String, ?> env) {
 
@@ -128,6 +164,9 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
     throw new FileSystemAlreadyExistsException();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public FileSystem getFileSystem (URI uri) {
 
@@ -136,12 +175,19 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
     return ephemeralFileSystem;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Path getPath (URI uri) {
 
     return EphemeralURIUtility.fromUri(ephemeralFileSystem, uri);
   }
 
+  /**
+   * {@inheritDoc}
+   * Delegates to native paths when the supplied path is a {@link NativePath}; otherwise routes to the ephemeral store.
+   */
   @Override
   public synchronized SeekableByteChannel newByteChannel (Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs)
     throws IOException {
@@ -171,6 +217,10 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   * Delegates to native paths when appropriate.
+   */
   @Override
   public synchronized DirectoryStream<Path> newDirectoryStream (Path dir, DirectoryStream.Filter<? super Path> filter)
     throws IOException {
@@ -190,6 +240,16 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
     }
   }
 
+  /**
+   * Opens a secure directory stream within the ephemeral store.
+   *
+   * @param dir     the directory to open
+   * @param filter  optional filter
+   * @param options link options (unused)
+   * @return the secure directory stream
+   * @throws NoSuchFileException   if the directory does not exist
+   * @throws NotDirectoryException if the path is not a directory
+   */
   public synchronized SecureDirectoryStream<Path> newDirectoryStream (Path dir, DirectoryStream.Filter<? super Path> filter, LinkOption... options)
     throws NoSuchFileException, NotDirectoryException {
 
@@ -205,6 +265,9 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public synchronized void createDirectory (Path dir, FileAttribute<?>... attrs)
     throws IOException {
@@ -226,6 +289,9 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public synchronized void delete (Path path)
     throws IOException {
@@ -245,6 +311,9 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public synchronized void copy (Path source, Path target, CopyOption... options)
     throws IOException {
@@ -274,6 +343,9 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public synchronized void move (Path source, Path target, CopyOption... options)
     throws IOException {
@@ -299,6 +371,9 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public synchronized boolean isSameFile (Path source, Path target)
     throws IOException {
@@ -325,18 +400,27 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean isHidden (Path path) {
 
     return false;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public FileStore getFileStore (Path path) {
 
     return path.getFileSystem().getFileStores().iterator().next();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public synchronized void checkAccess (Path path, AccessMode... modes)
     throws IOException {
@@ -354,12 +438,22 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
     }
   }
 
+  /**
+   * Ensures the supplied path exists within the ephemeral store.
+   *
+   * @param path  path to check
+   * @param modes access modes requested (unused, existence is sufficient)
+   * @throws NoSuchFileException if the path does not exist
+   */
   private void internalCheckAccess (EphemeralPath path, AccessMode... modes)
     throws NoSuchFileException {
 
     ((EphemeralFileSystem)path.getFileSystem()).getFileStore().checkAccess(path);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public synchronized <V extends FileAttributeView> V getFileAttributeView (Path path, Class<V> type, LinkOption... options) {
 
@@ -383,6 +477,9 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public synchronized <A extends BasicFileAttributes> A readAttributes (Path path, Class<A> type, LinkOption... options)
     throws IOException {
@@ -402,6 +499,9 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public synchronized Map<String, Object> readAttributes (Path path, String attributes, LinkOption... options)
     throws IOException {
@@ -421,6 +521,9 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public synchronized void setAttribute (Path path, String attribute, Object value, LinkOption... options)
     throws IOException {
@@ -440,6 +543,9 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
     }
   }
 
+  /**
+   * Opens a {@link FileChannel} on a native path; ephemeral paths are unsupported.
+   */
   public FileChannel newFileChannel (Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs)
     throws IOException {
 
@@ -451,6 +557,9 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
     }
   }
 
+  /**
+   * Opens an {@link AsynchronousFileChannel} on a native path; ephemeral paths are unsupported.
+   */
   public AsynchronousFileChannel newAsynchronousFileChannel (Path path, Set<? extends OpenOption> options, ExecutorService executor, FileAttribute<?>... attrs)
     throws IOException {
 

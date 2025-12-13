@@ -35,15 +35,28 @@ package org.smallmind.file.ephemeral.watch;
 import org.smallmind.file.ephemeral.heap.HeapEvent;
 import org.smallmind.file.ephemeral.heap.HeapEventListener;
 
+/**
+ * Bridges heap events to the watch service so that file system listeners receive notifications.
+ */
 public class EphemeralHeapEventListener implements HeapEventListener {
 
   private final EphemeralWatchService watchService;
 
+  /**
+   * Creates a listener bound to a watch service.
+   *
+   * @param watchService the owning watch service to notify
+   */
   public EphemeralHeapEventListener (EphemeralWatchService watchService) {
 
     this.watchService = watchService;
   }
 
+  /**
+   * Forwards the heap event to the watch service using the mapped {@link java.nio.file.WatchEvent.Kind}.
+   *
+   * @param heapEvent the event emitted from the heap
+   */
   @Override
   public void handle (HeapEvent heapEvent) {
 

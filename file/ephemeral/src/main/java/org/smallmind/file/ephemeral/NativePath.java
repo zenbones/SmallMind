@@ -41,117 +41,178 @@ import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 
+/**
+ * Path adapter that delegates to a native platform path while reporting the ephemeral file system.
+ */
 public class NativePath implements Path {
 
   private final EphemeralFileSystem ephemeralFileSystem;
   private final Path nativePath;
 
+  /**
+   * @param ephemeralFileSystem the ephemeral file system to expose
+   * @param nativePath          the underlying platform path to delegate to
+   */
   public NativePath (EphemeralFileSystem ephemeralFileSystem, Path nativePath) {
 
     this.ephemeralFileSystem = ephemeralFileSystem;
     this.nativePath = nativePath;
   }
 
+  /**
+   * @return the native file system backing this path
+   */
   public FileSystem getNativeFileSystem () {
 
     return nativePath.getFileSystem();
   }
 
+  /**
+   * @return the underlying platform path
+   */
   public Path getNativePath () {
 
     return nativePath;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public FileSystem getFileSystem () {
 
     return ephemeralFileSystem;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean isAbsolute () {
 
     return nativePath.isAbsolute();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Path getRoot () {
 
     return new NativePath(ephemeralFileSystem, nativePath.getRoot());
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Path getFileName () {
 
     return new NativePath(ephemeralFileSystem, nativePath.getFileName());
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Path getParent () {
 
     return new NativePath(ephemeralFileSystem, nativePath.getParent());
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int getNameCount () {
 
     return nativePath.getNameCount();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Path getName (int index) {
 
     return new NativePath(ephemeralFileSystem, nativePath.getName(index));
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Path subpath (int beginIndex, int endIndex) {
 
     return new NativePath(ephemeralFileSystem, nativePath.subpath(beginIndex, endIndex));
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean startsWith (Path other) {
 
     return nativePath.startsWith((other instanceof NativePath) ? ((NativePath)other).nativePath : other);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean endsWith (Path other) {
 
     return nativePath.endsWith((other instanceof NativePath) ? ((NativePath)other).nativePath : other);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Path normalize () {
 
     return new NativePath(ephemeralFileSystem, nativePath.normalize());
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Path resolve (Path other) {
 
     return new NativePath(ephemeralFileSystem, nativePath.resolve((other instanceof NativePath) ? ((NativePath)other).nativePath : other));
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Path relativize (Path other) {
 
     return new NativePath(ephemeralFileSystem, nativePath.relativize((other instanceof NativePath) ? ((NativePath)other).nativePath : other));
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public URI toUri () {
 
     return nativePath.toUri();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Path toAbsolutePath () {
 
     return new NativePath(ephemeralFileSystem, nativePath.toAbsolutePath());
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Path toRealPath (LinkOption... options)
     throws IOException {
@@ -159,6 +220,9 @@ public class NativePath implements Path {
     return new NativePath(ephemeralFileSystem, nativePath.toRealPath(options));
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public WatchKey register (WatchService watcher, WatchEvent.Kind<?>[] events, WatchEvent.Modifier... modifiers)
     throws IOException {
@@ -166,12 +230,18 @@ public class NativePath implements Path {
     return nativePath.register(watcher, events, modifiers);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int compareTo (Path other) {
 
     return nativePath.compareTo((other instanceof NativePath) ? ((NativePath)other).nativePath : other);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String toString () {
 

@@ -36,15 +36,24 @@ import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.util.regex.Pattern;
 
+/**
+ * Path matcher backed by a compiled regular expression.
+ */
 public class RegexPathMatcher implements PathMatcher {
 
   Pattern pattern;
 
+  /**
+   * @param pattern the regular expression used for matching
+   */
   public RegexPathMatcher (Pattern pattern) {
 
     this.pattern = pattern;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean matches (Path path) {
 

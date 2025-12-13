@@ -40,41 +40,77 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import org.smallmind.file.ephemeral.EphemeralPath;
 
+/**
+ * Represents an in-memory directory in the ephemeral heap, maintaining children and aggregating size information.
+ */
 public class DirectoryNode extends HeapNode {
 
   private final HashMap<String, HeapNode> children = new HashMap<>();
 
+  /**
+   * Creates a directory node.
+   *
+   * @param parent the parent directory, or {@code null} when this is the root
+   * @param name   the directory name
+   */
   public DirectoryNode (DirectoryNode parent, String name) {
 
     super(parent, name);
   }
 
+  /**
+   * @return {@link HeapNodeType#DIRECTORY}
+   */
   @Override
   public HeapNodeType getType () {
 
     return HeapNodeType.DIRECTORY;
   }
 
+  /**
+   * @return {@code true} when the directory holds no children
+   */
   public synchronized boolean isEmpty () {
 
     return children.isEmpty();
   }
 
+  /**
+   * Removes all children from this directory.
+   */
   public synchronized void clear () {
 
     children.clear();
   }
 
+  /**
+   * Tests whether a child name exists.
+   *
+   * @param name the name to check
+   * @return {@code true} if a child with the supplied name exists
+   */
   public synchronized boolean exists (String name) {
 
     return children.containsKey(name);
   }
 
+  /**
+   * Returns a child node by name.
+   *
+   * @param name the child name
+   * @return the node or {@code null} if absent
+   */
   public synchronized HeapNode get (String name) {
 
     return children.get(name);
   }
 
+  /**
+   * Adds or replaces a child node.
+   *
+   * @param heapNode the node to add
+   * @return this directory for chaining
+   */
   public synchronized DirectoryNode put (HeapNode heapNode) {
 
     children.put(heapNode.getName(), heapNode);
@@ -82,11 +118,24 @@ public class DirectoryNode extends HeapNode {
     return this;
   }
 
+  /**
+   * Removes the child with the provided name.
+   *
+   * @param name the child name
+   * @return the removed node or {@code null} if no such child exists
+   */
   public synchronized HeapNode remove (String name) {
 
     return children.remove(name);
   }
 
+  /**
+   * Builds an iterator of child paths that satisfy the provided filter.
+   *
+   * @param path   the parent path to resolve each child against
+   * @param filter optional filter to apply to children
+   * @return an iterator over accepted child paths
+   */
   public synchronized Iterator<Path> iterator (EphemeralPath path, DirectoryStream.Filter<? super Path> filter) {
 
     LinkedList<Path> pathList = new LinkedList<>();
@@ -107,6 +156,9 @@ public class DirectoryNode extends HeapNode {
     return pathList.iterator();
   }
 
+  /**
+   * @return the aggregated size of all children
+   */
   @Override
   public synchronized long size () {
 

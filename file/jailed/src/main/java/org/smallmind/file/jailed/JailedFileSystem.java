@@ -43,6 +43,9 @@ import java.nio.file.spi.FileSystemProvider;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * {@link FileSystem} wrapper that constrains access through a {@link JailedPathTranslator}.
+ */
 public class JailedFileSystem extends FileSystem {
 
   private static final String SEPARATOR = Character.toString(JailedPath.SEPARATOR);
@@ -50,6 +53,9 @@ public class JailedFileSystem extends FileSystem {
   private final JailedFileSystemProvider jailedFileSystemProvider;
   private final JailedPath rootPath;
 
+  /**
+   * @param jailedFileSystemProvider the provider this file system belongs to
+   */
   public JailedFileSystem (JailedFileSystemProvider jailedFileSystemProvider) {
 
     this.jailedFileSystemProvider = jailedFileSystemProvider;
@@ -62,17 +68,26 @@ public class JailedFileSystem extends FileSystem {
     return jailedFileSystemProvider;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void close () {
 
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean isOpen () {
 
     return jailedFileSystemProvider.getJailedPathTranslator().getNativeFileSystem().isOpen();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean isReadOnly () {
 
@@ -85,24 +100,36 @@ public class JailedFileSystem extends FileSystem {
     return SEPARATOR;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Iterable<Path> getRootDirectories () {
 
     return List.of(rootPath);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Iterable<FileStore> getFileStores () {
 
     return jailedFileSystemProvider.getJailedPathTranslator().getNativeFileSystem().getFileStores();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Set<String> supportedFileAttributeViews () {
 
     return jailedFileSystemProvider.getJailedPathTranslator().getNativeFileSystem().supportedFileAttributeViews();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Path getPath (String first, String... more) {
 
@@ -115,6 +142,9 @@ public class JailedFileSystem extends FileSystem {
     return jailedFileSystemProvider.getJailedPathTranslator().getNativeFileSystem().getPathMatcher(syntaxAndPattern);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public UserPrincipalLookupService getUserPrincipalLookupService () {
 

@@ -35,6 +35,9 @@ package org.smallmind.file.ephemeral.heap;
 import java.util.LinkedList;
 import org.smallmind.file.ephemeral.EphemeralBasicFileAttributes;
 
+/**
+ * Base class for nodes held in the in-memory ephemeral file-system tree, providing common metadata and event plumbing.
+ */
 public abstract class HeapNode {
 
   private final EphemeralBasicFileAttributes attributes;
@@ -42,6 +45,12 @@ public abstract class HeapNode {
   private final String name;
   private LinkedList<HeapEventListener> listenerList;
 
+  /**
+   * Creates a heap node attached to the given parent with the supplied name.
+   *
+   * @param parent the parent directory node, or {@code null} for the root
+   * @param name   the simple name of this node
+   */
   public HeapNode (DirectoryNode parent, String name) {
 
     this.parent = parent;
@@ -50,25 +59,45 @@ public abstract class HeapNode {
     attributes = new EphemeralBasicFileAttributes(this);
   }
 
+  /**
+   * @return the node type identifier
+   */
   public abstract HeapNodeType getType ();
 
+  /**
+   * @return the aggregate size represented by this node
+   */
   public abstract long size ();
 
+  /**
+   * @return the parent directory or {@code null} if this node is the root
+   */
   public DirectoryNode getParent () {
 
     return parent;
   }
 
+  /**
+   * @return the node name relative to its parent
+   */
   public String getName () {
 
     return name;
   }
 
+  /**
+   * @return the file attributes structure maintained for this node
+   */
   public EphemeralBasicFileAttributes getAttributes () {
 
     return attributes;
   }
 
+  /**
+   * Registers a listener to receive events bubbled from this node and its descendants.
+   *
+   * @param eventListener the listener to notify
+   */
   public synchronized void registerListener (HeapEventListener eventListener) {
 
     if (listenerList == null) {
@@ -78,11 +107,21 @@ public abstract class HeapNode {
     listenerList.add(eventListener);
   }
 
+  /**
+   * Removes a previously registered event listener.
+   *
+   * @param eventListener the listener to stop notifying
+   */
   public synchronized void unregisterListener (HeapEventListener eventListener) {
 
     listenerList.remove(eventListener);
   }
 
+  /**
+   * Propagates an event to local listeners and up the directory tree.
+   *
+   * @param event the event to deliver
+   */
   public synchronized void bubble (HeapEvent event) {
 
     if (listenerList != null) {

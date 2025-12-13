@@ -46,6 +46,9 @@ import org.smallmind.file.ephemeral.EphemeralFileStore;
 import org.smallmind.file.ephemeral.EphemeralPath;
 import org.smallmind.file.ephemeral.heap.HeapEventListener;
 
+/**
+ * In-memory {@link WatchService} implementation that consumes heap events and presents them to registered clients.
+ */
 public class EphemeralWatchService implements WatchService {
 
   private final EphemeralFileStore ephemeralFileStore;
@@ -54,6 +57,11 @@ public class EphemeralWatchService implements WatchService {
   private final LinkedBlockingQueue<EphemeralWatchKey> watchKeyQueue = new LinkedBlockingQueue<>();
   private volatile boolean closed = false;
 
+  /**
+   * Creates a watch service backed by the provided file store.
+   *
+   * @param ephemeralFileStore the file store whose heap events will drive this watcher
+   */
   public EphemeralWatchService (EphemeralFileStore ephemeralFileStore) {
 
     this.ephemeralFileStore = ephemeralFileStore;
@@ -61,11 +69,17 @@ public class EphemeralWatchService implements WatchService {
     heapEventListener = new EphemeralHeapEventListener(this);
   }
 
+  /**
+   * @return {@code true} when the service has been closed
+   */
   public boolean isClosed () {
 
     return closed;
   }
 
+  /**
+   * Closes the watch service and cancels all keys.
+   */
   @Override
   public synchronized void close () {
 
@@ -80,6 +94,13 @@ public class EphemeralWatchService implements WatchService {
     }
   }
 
+  /**
+   * Registers a new watch key, ensuring the heap listener is attached to the path.
+   *
+   * @param ephemeralWatchKey the key to register
+   * @throws NoSuchFileException   if the path does not exist
+   * @throws NotDirectoryException if the path is not a directory
+   */
   public synchronized void register (EphemeralWatchKey ephemeralWatchKey)
     throws NoSuchFileException, NotDirectoryException {
 
@@ -98,6 +119,12 @@ public class EphemeralWatchService implements WatchService {
     }
   }
 
+  /**
+   * Removes a watch key and detaches heap listeners when no keys remain for the path.
+   *
+   * @param ephemeralWatchKey the key to remove
+   * @throws NoSuchFileException if the path does not exist
+   */
   public synchronized void unregister (EphemeralWatchKey ephemeralWatchKey)
     throws NoSuchFileException {
 
@@ -115,6 +142,12 @@ public class EphemeralWatchService implements WatchService {
     }
   }
 
+  /**
+   * Fires an event to all keys registered for the supplied path.
+   *
+   * @param path  the path whose listeners should be notified
+   * @param event the event kind that occurred
+   */
   public synchronized void fire (EphemeralPath path, WatchEvent.Kind<?> event) {
 
     if (!closed) {
@@ -131,6 +164,11 @@ public class EphemeralWatchService implements WatchService {
     }
   }
 
+  /**
+   * Re-enqueues a signalled key whose events have been processed.
+   *
+   * @param watchKey the key to requeue
+   */
   public synchronized void requeue (EphemeralWatchKey watchKey) {
 
     if (!closed) {
@@ -138,6 +176,9 @@ public class EphemeralWatchService implements WatchService {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public WatchKey poll () {
 
@@ -148,6 +189,9 @@ public class EphemeralWatchService implements WatchService {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public WatchKey poll (long timeout, TimeUnit unit)
     throws InterruptedException {
@@ -184,6 +228,9 @@ public class EphemeralWatchService implements WatchService {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public WatchKey take ()
     throws InterruptedException {

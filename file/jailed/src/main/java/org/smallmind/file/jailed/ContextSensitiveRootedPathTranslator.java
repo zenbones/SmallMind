@@ -37,21 +37,34 @@ import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import org.smallmind.nutsnbolts.context.ContextFactory;
 
+/**
+ * Translator that determines the jail root from {@link RootedFileSystemContext} held in the current context.
+ */
 public class ContextSensitiveRootedPathTranslator extends AbstractJailedPathTranslator {
 
   private final FileSystem nativeFileSystem;
 
+  /**
+   * @param nativeFileSystem the backing native file system
+   */
   public ContextSensitiveRootedPathTranslator (FileSystem nativeFileSystem) {
 
     this.nativeFileSystem = nativeFileSystem;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public FileSystem getNativeFileSystem () {
 
     return nativeFileSystem;
   }
 
+  /**
+   * {@inheritDoc}
+   * Derives the jail root from the current {@link RootedFileSystemContext}.
+   */
   @Override
   public Path wrapPath (JailedFileSystem jailedFileSystem, Path nativePath) {
 
@@ -66,6 +79,10 @@ public class ContextSensitiveRootedPathTranslator extends AbstractJailedPathTran
     }
   }
 
+  /**
+   * {@inheritDoc}
+   * Uses the context-derived root to resolve the underlying native path.
+   */
   @Override
   public Path unwrapPath (Path jailedPath) {
 

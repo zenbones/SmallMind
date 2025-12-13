@@ -35,8 +35,18 @@ package org.smallmind.file.jailed;
 import java.net.URI;
 import java.nio.file.Path;
 
+/**
+ * URI helpers for the jailed file system provider.
+ */
 public class JailedURIUtility {
 
+  /**
+   * Validates the supplied URI for compatibility with the jailed provider.
+   *
+   * @param scheme expected scheme
+   * @param uri    URI to validate
+   * @throws IllegalArgumentException if unsupported components are present
+   */
   public static void checkUri (String scheme, URI uri) {
 
     if (!uri.getScheme().equalsIgnoreCase(scheme)) {
@@ -54,6 +64,14 @@ public class JailedURIUtility {
     }
   }
 
+  /**
+   * Converts a provider URI into a jailed path.
+   *
+   * @param jailedFileSystem the file system handling the URI
+   * @param uri              the URI to convert
+   * @return the resulting jailed path
+   * @throws IllegalArgumentException if the URI is invalid for this provider
+   */
   public static Path fromUri (JailedFileSystem jailedFileSystem, URI uri) {
 
     if (!uri.isAbsolute()) {

@@ -34,8 +34,20 @@ package org.smallmind.file.jailed;
 
 import java.nio.file.Path;
 
+/**
+ * Base translator that maps between jailed paths and native paths relative to a root.
+ */
 public abstract class AbstractJailedPathTranslator implements JailedPathTranslator {
 
+  /**
+   * Wraps a native path in a jailed path relative to the configured root.
+   *
+   * @param rootPath         the root path that bounds the jail
+   * @param jailedFileSystem the jailed file system to create paths for
+   * @param nativePath       the native path to wrap
+   * @return the resulting jailed path
+   * @throws SecurityException if the native path escapes the jail root
+   */
   public Path wrapPath (Path rootPath, JailedFileSystem jailedFileSystem, Path nativePath) {
 
     if (nativePath.isAbsolute()) {
@@ -63,6 +75,13 @@ public abstract class AbstractJailedPathTranslator implements JailedPathTranslat
     }
   }
 
+  /**
+   * Converts a jailed path back into its native path representation.
+   *
+   * @param rootPath   the jail root
+   * @param jailedPath the jailed path to unwrap
+   * @return the resolved native path
+   */
   public Path unwrapPath (Path rootPath, Path jailedPath) {
 
     StringBuilder pathBuilder = new StringBuilder();

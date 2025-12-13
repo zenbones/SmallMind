@@ -53,17 +53,28 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * File system provider that exposes a jailed view of an underlying native file system via a {@link JailedPathTranslator}.
+ */
 public class JailedFileSystemProvider extends FileSystemProvider {
 
   private final JailedFileSystem jailedFileSystem;
   private final JailedPathTranslator jailedPathTranslator;
   private final String scheme;
 
+  /**
+   * Creates a provider with the default scheme and a context-sensitive translator rooted at the default file system.
+   */
   public JailedFileSystemProvider () {
 
     this("jailed", new ContextSensitiveRootedPathTranslator(FileSystems.getDefault()));
   }
 
+  /**
+   * Creates a provider sharing the scheme of another provider.
+   *
+   * @param fileSystemProvider the provider whose scheme will be mirrored
+   */
   public JailedFileSystemProvider (FileSystemProvider fileSystemProvider) {
 
     this("jailed", new ContextSensitiveRootedPathTranslator(fileSystemProvider.getFileSystem(URI.create(fileSystemProvider.getScheme() + ":///"))));
@@ -77,17 +88,26 @@ public class JailedFileSystemProvider extends FileSystemProvider {
     jailedFileSystem = new JailedFileSystem(this);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String getScheme () {
 
     return scheme;
   }
 
+  /**
+   * @return the translator used to map between jailed and native paths
+   */
   public JailedPathTranslator getJailedPathTranslator () {
 
     return jailedPathTranslator;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public FileSystem newFileSystem (URI uri, Map<String, ?> env) {
 
@@ -95,6 +115,9 @@ public class JailedFileSystemProvider extends FileSystemProvider {
     throw new FileSystemAlreadyExistsException();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public FileSystem getFileSystem (URI uri) {
 
@@ -103,12 +126,18 @@ public class JailedFileSystemProvider extends FileSystemProvider {
     return jailedFileSystem;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Path getPath (URI uri) {
 
     return JailedURIUtility.fromUri(jailedFileSystem, uri);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public SeekableByteChannel newByteChannel (Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs)
     throws IOException {
@@ -116,6 +145,10 @@ public class JailedFileSystemProvider extends FileSystemProvider {
     return jailedPathTranslator.getNativeFileSystem().provider().newByteChannel(jailedPathTranslator.unwrapPath(path), options, attrs);
   }
 
+  /**
+   * {@inheritDoc}
+   * Wraps entries returned by the native provider back into jailed paths.
+   */
   @Override
   public DirectoryStream<Path> newDirectoryStream (Path dir, DirectoryStream.Filter<? super Path> filter)
     throws IOException {
@@ -165,6 +198,9 @@ public class JailedFileSystemProvider extends FileSystemProvider {
     };
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void createDirectory (Path dir, FileAttribute<?>... attrs)
     throws IOException {
@@ -172,6 +208,9 @@ public class JailedFileSystemProvider extends FileSystemProvider {
     jailedPathTranslator.getNativeFileSystem().provider().createDirectory(jailedPathTranslator.unwrapPath(dir), attrs);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void delete (Path path)
     throws IOException {
@@ -179,6 +218,9 @@ public class JailedFileSystemProvider extends FileSystemProvider {
     jailedPathTranslator.getNativeFileSystem().provider().delete(jailedPathTranslator.unwrapPath(path));
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void copy (Path source, Path target, CopyOption... options)
     throws IOException {
@@ -186,6 +228,9 @@ public class JailedFileSystemProvider extends FileSystemProvider {
     jailedPathTranslator.getNativeFileSystem().provider().copy(jailedPathTranslator.unwrapPath(source), jailedPathTranslator.unwrapPath(target), options);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void move (Path source, Path target, CopyOption... options)
     throws IOException {
@@ -193,6 +238,9 @@ public class JailedFileSystemProvider extends FileSystemProvider {
     jailedPathTranslator.getNativeFileSystem().provider().move(jailedPathTranslator.unwrapPath(source), jailedPathTranslator.unwrapPath(target), options);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean isSameFile (Path path, Path path2)
     throws IOException {
@@ -200,6 +248,9 @@ public class JailedFileSystemProvider extends FileSystemProvider {
     return jailedPathTranslator.getNativeFileSystem().provider().isSameFile(jailedPathTranslator.unwrapPath(path), jailedPathTranslator.unwrapPath(path));
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean isHidden (Path path)
     throws IOException {
@@ -207,6 +258,9 @@ public class JailedFileSystemProvider extends FileSystemProvider {
     return jailedPathTranslator.getNativeFileSystem().provider().isHidden(jailedPathTranslator.unwrapPath(path));
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public FileStore getFileStore (Path path)
     throws IOException {
@@ -214,6 +268,9 @@ public class JailedFileSystemProvider extends FileSystemProvider {
     return jailedPathTranslator.getNativeFileSystem().provider().getFileStore(jailedPathTranslator.unwrapPath(path));
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void checkAccess (Path path, AccessMode... modes)
     throws IOException {
@@ -221,6 +278,9 @@ public class JailedFileSystemProvider extends FileSystemProvider {
     jailedPathTranslator.getNativeFileSystem().provider().checkAccess(jailedPathTranslator.unwrapPath(path), modes);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public <V extends FileAttributeView> V getFileAttributeView (Path path, Class<V> type, LinkOption... options) {
 
@@ -231,6 +291,9 @@ public class JailedFileSystemProvider extends FileSystemProvider {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public <A extends BasicFileAttributes> A readAttributes (Path path, Class<A> type, LinkOption... options)
     throws IOException {
@@ -238,6 +301,9 @@ public class JailedFileSystemProvider extends FileSystemProvider {
     return jailedPathTranslator.getNativeFileSystem().provider().readAttributes(jailedPathTranslator.unwrapPath(path), type, options);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Map<String, Object> readAttributes (Path path, String attributes, LinkOption... options)
     throws IOException {
@@ -245,6 +311,9 @@ public class JailedFileSystemProvider extends FileSystemProvider {
     return jailedPathTranslator.getNativeFileSystem().provider().readAttributes(jailedPathTranslator.unwrapPath(path), attributes, options);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void setAttribute (Path path, String attribute, Object value, LinkOption... options)
     throws IOException {

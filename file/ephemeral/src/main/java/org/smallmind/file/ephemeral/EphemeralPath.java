@@ -47,6 +47,9 @@ import java.util.LinkedList;
 import org.smallmind.file.ephemeral.watch.EphemeralWatchKey;
 import org.smallmind.file.ephemeral.watch.EphemeralWatchService;
 
+/**
+ * {@link Path} implementation representing locations within the ephemeral file system.
+ */
 public class EphemeralPath implements Path {
 
   private static final String[] NO_NAMES = new String[0];
@@ -55,6 +58,11 @@ public class EphemeralPath implements Path {
   private final String[] names;
   private final boolean absolute;
 
+  /**
+   * Creates the root path for the file system.
+   *
+   * @param fileSystem the owning file system
+   */
   protected EphemeralPath (EphemeralFileSystem fileSystem) {
 
     this.fileSystem = fileSystem;
@@ -63,6 +71,15 @@ public class EphemeralPath implements Path {
     names = NO_NAMES;
   }
 
+  /**
+   * Builds a path from the provided components.
+   *
+   * @param fileSystem the owning file system
+   * @param first      the first path segment, which may include separators
+   * @param more       additional segments
+   * @throws NullPointerException if {@code first} is null
+   * @throws InvalidPathException if any segment is empty
+   */
   public EphemeralPath (EphemeralFileSystem fileSystem, String first, String... more) {
 
     this.fileSystem = fileSystem;
@@ -99,6 +116,13 @@ public class EphemeralPath implements Path {
     }
   }
 
+  /**
+   * Constructs a new path from pre-parsed components.
+   *
+   * @param fileSystem the owning file system
+   * @param names      parsed name components
+   * @param absolute   whether the path is absolute
+   */
   private EphemeralPath (EphemeralFileSystem fileSystem, String[] names, boolean absolute) {
 
     this.fileSystem = fileSystem;
@@ -106,16 +130,30 @@ public class EphemeralPath implements Path {
     this.absolute = absolute;
   }
 
+  /**
+   * @return the separator character used by this file system
+   */
   public static char getSeparatorChar () {
 
     return SEPARATOR.charAt(0);
   }
 
+  /**
+   * @return the path separator string used by this file system
+   */
   public static String getSeparator () {
 
     return SEPARATOR;
   }
 
+  /**
+   * Splits text into path components, enforcing separator rules.
+   *
+   * @param nameList the list to append components to
+   * @param text     the raw path text
+   * @param absolute whether the path is absolute
+   * @throws InvalidPathException if a component is empty
+   */
   private void split (LinkedList<String> nameList, String text, boolean absolute) {
 
     if (text.isEmpty()) {
@@ -142,42 +180,63 @@ public class EphemeralPath implements Path {
     return names;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public FileSystem getFileSystem () {
 
     return fileSystem;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean isAbsolute () {
 
     return absolute;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public EphemeralPath getRoot () {
 
     return absolute ? new EphemeralPath(fileSystem) : null;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public EphemeralPath getFileName () {
 
     return (names.length == 0) ? null : new EphemeralPath(fileSystem, names[names.length - 1]);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public EphemeralPath getParent () {
 
     return (names.length == 0) ? null : (names.length > 1) ? new EphemeralPath(this, 0, names.length - 1) : absolute ? new EphemeralPath(fileSystem) : null;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int getNameCount () {
 
     return names.length;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public EphemeralPath getName (int index) {
 
@@ -188,6 +247,9 @@ public class EphemeralPath implements Path {
     return new EphemeralPath(fileSystem, names[index]);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public EphemeralPath subpath (int beginIndex, int endIndex) {
 
@@ -199,6 +261,9 @@ public class EphemeralPath implements Path {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean startsWith (Path other) {
 
@@ -216,6 +281,9 @@ public class EphemeralPath implements Path {
     return false;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean endsWith (Path other) {
 
@@ -240,6 +308,9 @@ public class EphemeralPath implements Path {
     return false;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public EphemeralPath normalize () {
 
@@ -272,6 +343,9 @@ public class EphemeralPath implements Path {
     return (namesList == null) ? this : new EphemeralPath(fileSystem, namesList.toArray(new String[0]), absolute);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Path resolve (Path other) {
 
@@ -294,6 +368,9 @@ public class EphemeralPath implements Path {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public EphemeralPath relativize (Path other) {
 
@@ -331,18 +408,27 @@ public class EphemeralPath implements Path {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public URI toUri () {
 
     return URI.create(fileSystem.provider().getScheme() + "://" + toAbsolutePath());
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public EphemeralPath toAbsolutePath () {
 
     return absolute ? this : new EphemeralPath(fileSystem, names, true);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public EphemeralPath toRealPath (LinkOption... options) {
 
@@ -350,6 +436,9 @@ public class EphemeralPath implements Path {
     return normalize().toAbsolutePath();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public WatchKey register (WatchService watcher, WatchEvent.Kind<?>[] events, WatchEvent.Modifier... modifiers)
     throws NoSuchFileException, NotDirectoryException {
@@ -367,6 +456,9 @@ public class EphemeralPath implements Path {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int compareTo (Path other) {
 
@@ -390,18 +482,27 @@ public class EphemeralPath implements Path {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int hashCode () {
 
     return (Arrays.hashCode(names) * 31) + (absolute ? Boolean.TRUE.hashCode() : Boolean.FALSE.hashCode());
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean equals (Object obj) {
 
     return (obj instanceof EphemeralPath) && (((EphemeralPath)obj).isAbsolute() == absolute) && Arrays.equals(((EphemeralPath)obj).getNames(), names);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String toString () {
 

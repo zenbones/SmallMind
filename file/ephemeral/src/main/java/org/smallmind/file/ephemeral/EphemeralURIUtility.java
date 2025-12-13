@@ -35,8 +35,18 @@ package org.smallmind.file.ephemeral;
 import java.net.URI;
 import java.nio.file.Path;
 
+/**
+ * URI helpers for validating and converting URIs associated with the ephemeral provider.
+ */
 public class EphemeralURIUtility {
 
+  /**
+   * Ensures the supplied URI conforms to the expected scheme and is limited to a root path.
+   *
+   * @param scheme the scheme the URI must match
+   * @param uri    the URI to check
+   * @throws IllegalArgumentException if the URI contains unsupported components
+   */
   public static void checkUri (String scheme, URI uri) {
 
     if (!uri.getScheme().equalsIgnoreCase(scheme)) {
@@ -54,6 +64,14 @@ public class EphemeralURIUtility {
     }
   }
 
+  /**
+   * Resolves an ephemeral path from a URI belonging to the provider.
+   *
+   * @param ephemeralFileSystem the file system handling the path
+   * @param uri                 the URI to convert
+   * @return the resulting path
+   * @throws IllegalArgumentException when the URI is invalid for this provider
+   */
   public static Path fromUri (EphemeralFileSystem ephemeralFileSystem, URI uri) {
 
     if (!uri.isAbsolute()) {

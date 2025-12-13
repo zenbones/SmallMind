@@ -35,27 +35,42 @@ package org.smallmind.file.jailed;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
 
+/**
+ * Translator that confines jailed paths to a single native root.
+ */
 public class RootedPathTranslator extends AbstractJailedPathTranslator {
 
   private final Path rootPath;
 
+  /**
+   * @param rootPath the native root that defines the jail boundary
+   */
   public RootedPathTranslator (Path rootPath) {
 
     this.rootPath = rootPath;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public FileSystem getNativeFileSystem () {
 
     return rootPath.getFileSystem();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Path wrapPath (JailedFileSystem jailedFileSystem, Path nativePath) {
 
     return wrapPath(rootPath, jailedFileSystem, nativePath);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Path unwrapPath (Path jailedPath) {
 

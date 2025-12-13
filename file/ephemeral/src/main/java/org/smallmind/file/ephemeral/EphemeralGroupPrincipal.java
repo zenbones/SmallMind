@@ -35,21 +35,33 @@ package org.smallmind.file.ephemeral;
 import java.nio.file.attribute.GroupPrincipal;
 import javax.security.auth.Subject;
 
+/**
+ * Simple in-memory {@link GroupPrincipal} implementation used by the ephemeral file system.
+ */
 public class EphemeralGroupPrincipal implements GroupPrincipal {
 
   private final String name;
 
+  /**
+   * @param name the group name
+   */
   public EphemeralGroupPrincipal (String name) {
 
     this.name = name;
   }
 
+  /**
+   * @return the group name
+   */
   @Override
   public String getName () {
 
     return name;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean implies (Subject subject) {
 

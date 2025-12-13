@@ -42,6 +42,9 @@ import java.nio.file.attribute.FileTime;
 import org.smallmind.file.ephemeral.heap.FileNode;
 import org.smallmind.nutsnbolts.io.ByteArrayIOStream;
 
+/**
+ * Seekable byte channel backed by an in-memory {@link FileNode}.
+ */
 public class EphemeralSeekableByteChannel implements SeekableByteChannel {
 
   private final EphemeralFileStore fileStore;
@@ -51,6 +54,17 @@ public class EphemeralSeekableByteChannel implements SeekableByteChannel {
   private final boolean read;
   private final boolean deleteOnClose;
 
+  /**
+   * Opens a new channel over the supplied file node.
+   *
+   * @param fileStore     the owning file store
+   * @param fileNode      the heap node providing bytes
+   * @param filePath      the logical path of the file
+   * @param read          whether the channel is read-only
+   * @param append        whether to advance to end before writing
+   * @param deleteOnClose whether to delete the file after closing
+   * @throws IOException if the channel cannot be created
+   */
   public EphemeralSeekableByteChannel (EphemeralFileStore fileStore, FileNode fileNode, EphemeralPath filePath, boolean read, boolean append, boolean deleteOnClose)
     throws IOException {
 
@@ -68,6 +82,9 @@ public class EphemeralSeekableByteChannel implements SeekableByteChannel {
     fileNode.getAttributes().setLastAccessTime(FileTime.fromMillis(System.currentTimeMillis()));
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public synchronized int read (ByteBuffer dst)
     throws IOException {
@@ -91,6 +108,9 @@ public class EphemeralSeekableByteChannel implements SeekableByteChannel {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public synchronized int write (ByteBuffer src)
     throws IOException {
@@ -118,6 +138,9 @@ public class EphemeralSeekableByteChannel implements SeekableByteChannel {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public synchronized long position ()
     throws IOException {
@@ -128,6 +151,9 @@ public class EphemeralSeekableByteChannel implements SeekableByteChannel {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public synchronized SeekableByteChannel position (long newPosition)
     throws IOException {
@@ -141,6 +167,9 @@ public class EphemeralSeekableByteChannel implements SeekableByteChannel {
     return this;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public synchronized long size ()
     throws IOException {
@@ -150,6 +179,9 @@ public class EphemeralSeekableByteChannel implements SeekableByteChannel {
     return stream.size();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public synchronized SeekableByteChannel truncate (long size)
     throws IOException {
@@ -162,12 +194,18 @@ public class EphemeralSeekableByteChannel implements SeekableByteChannel {
     return this;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public synchronized boolean isOpen () {
 
     return !stream.isClosed();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public synchronized void close ()
     throws IOException {

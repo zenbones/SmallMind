@@ -38,18 +38,27 @@ import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import org.smallmind.nutsnbolts.context.Context;
 
+/**
+ * Context object that carries the jailed root path used by {@link ContextSensitiveRootedPathTranslator}.
+ */
 @XmlAccessorType(XmlAccessType.PROPERTY)
 @XmlRootElement(name = "test", namespace = "http://org.smallmind/file/jailed")
 public class RootedFileSystemContext implements Context {
 
   private String root;
 
+  /**
+   * @return the configured root directory for the current context
+   */
   @XmlElement(name = "root")
   public String getRoot () {
 
     return root;
   }
 
+  /**
+   * @param root the root directory to set for the current context
+   */
   public void setRoot (String root) {
 
     this.root = root;

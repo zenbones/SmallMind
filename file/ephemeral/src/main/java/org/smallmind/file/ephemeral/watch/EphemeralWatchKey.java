@@ -41,6 +41,9 @@ import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import org.smallmind.file.ephemeral.EphemeralPath;
 
+/**
+ * Watch key implementation that queues events for a single ephemeral path.
+ */
 public class EphemeralWatchKey implements WatchKey {
 
   private final EphemeralWatchService watchService;
@@ -50,6 +53,13 @@ public class EphemeralWatchKey implements WatchKey {
   private boolean valid = true;
   private boolean signalled = false;
 
+  /**
+   * Creates a watch key for the supplied path.
+   *
+   * @param watchService the backing watch service
+   * @param events       the event kinds to listen for
+   * @param path         the path being monitored
+   */
   public EphemeralWatchKey (EphemeralWatchService watchService, WatchEvent.Kind<?>[] events, EphemeralPath path) {
 
     this.watchService = watchService;
@@ -57,17 +67,29 @@ public class EphemeralWatchKey implements WatchKey {
     this.path = path;
   }
 
+  /**
+   * @return the path being watched
+   */
   public EphemeralPath getPath () {
 
     return path;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public synchronized boolean isValid () {
 
     return valid && (!watchService.isClosed());
   }
 
+  /**
+   * Queues a fired event if it matches the subscribed kinds.
+   *
+   * @param firedEvent the event kind that occurred
+   * @return {@code true} when the watch service should be signalled
+   */
   public synchronized boolean fire (WatchEvent.Kind<?> firedEvent) {
 
     if (valid) {
@@ -90,6 +112,9 @@ public class EphemeralWatchKey implements WatchKey {
     return false;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public List<WatchEvent<?>> pollEvents () {
 
@@ -103,6 +128,9 @@ public class EphemeralWatchKey implements WatchKey {
     return eventList;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public synchronized boolean reset () {
 
@@ -121,12 +149,20 @@ public class EphemeralWatchKey implements WatchKey {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public synchronized void cancel () {
 
     cancel(true);
   }
 
+  /**
+   * Cancels the key and optionally deregisters it from the watch service.
+   *
+   * @param deregister whether to remove from the watch service as well
+   */
   public synchronized void cancel (boolean deregister) {
 
     valid = false;
@@ -140,6 +176,9 @@ public class EphemeralWatchKey implements WatchKey {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Watchable watchable () {
 

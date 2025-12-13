@@ -36,27 +36,42 @@ import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 
+/**
+ * Basic file attribute view backed by an {@link EphemeralBasicFileAttributes} instance.
+ */
 public class EphemeralBasicFileAttributeView implements BasicFileAttributeView {
 
   private final EphemeralBasicFileAttributes attributes;
 
+  /**
+   * @param attributes the backing attributes to expose and mutate
+   */
   public EphemeralBasicFileAttributeView (EphemeralBasicFileAttributes attributes) {
 
     this.attributes = attributes;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String name () {
 
     return "basic";
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public BasicFileAttributes readAttributes () {
 
     return attributes;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void setTimes (FileTime lastModifiedTime, FileTime lastAccessTime, FileTime createTime) {
 
