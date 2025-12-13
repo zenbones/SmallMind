@@ -39,6 +39,9 @@ import javafx.beans.property.BooleanProperty;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.StackedAreaChart;
 
+/**
+ * Stacked area chart that visualizes latency dispersion percentiles over time.
+ */
 public class SigmaChart extends StackedAreaChart<Long, Number> {
 
   private static final String[] SERIES_NAMES = new String[] {"Median", "75th pctl", "95th pctl", "98th pctl", "99th pctl", "99.9th pctl"};
@@ -47,6 +50,11 @@ public class SigmaChart extends StackedAreaChart<Long, Number> {
   private final Series<Long, Number>[] seriesArray = new Series[6];
   private final AtomicBoolean hasData = new AtomicBoolean(false);
 
+  /**
+   * Creates the chart showing the supplied span.
+   *
+   * @param spanInMilliseconds the width of the time window
+   */
   public SigmaChart (long spanInMilliseconds) {
 
     this(new TimeAxis(spanInMilliseconds));
@@ -67,21 +75,39 @@ public class SigmaChart extends StackedAreaChart<Long, Number> {
     getStylesheets().add(SigmaChart.class.getResource("SigmaChart.css").toExternalForm());
   }
 
+  /**
+   * @return property indicating whether updates are paused
+   */
   public BooleanProperty pausedProperty () {
 
     return timeAxis.pausedProperty();
   }
 
+  /**
+   * @return whether updates are paused
+   */
   public boolean isPaused () {
 
     return timeAxis.getPaused();
   }
 
+  /**
+   * Toggles whether the chart accepts new data.
+   *
+   * @param paused {@code true} to halt updates
+   */
   public void setPaused (boolean paused) {
 
     timeAxis.setPaused(paused);
   }
 
+  /**
+   * Adds a dispersion sample to the chart across all percentile series, removing stale data beyond the visible window.
+   * Execution is marshalled to the JavaFX application thread.
+   *
+   * @param milliseconds the timestamp for the sample
+   * @param dispersion   percentile data to plot
+   */
   public void addDispersion (final long milliseconds, final Dispersion dispersion) {
 
     Platform.runLater(new Runnable() {
@@ -103,16 +129,19 @@ public class SigmaChart extends StackedAreaChart<Long, Number> {
           }
         }
 
-        seriesArray[0].getData().add(new Data<Long, Number>(milliseconds, dispersion.getMedian()));
-        seriesArray[1].getData().add(new Data<Long, Number>(milliseconds, dispersion.getPercentile_75() - dispersion.getMedian()));
-        seriesArray[2].getData().add(new Data<Long, Number>(milliseconds, dispersion.getPercentile_95() - dispersion.getPercentile_75()));
-        seriesArray[3].getData().add(new Data<Long, Number>(milliseconds, dispersion.getPercentile_98() - dispersion.getPercentile_95()));
-        seriesArray[4].getData().add(new Data<Long, Number>(milliseconds, dispersion.getPercentile_99() - dispersion.getPercentile_98()));
-        seriesArray[5].getData().add(new Data<Long, Number>(milliseconds, dispersion.getPercentile_999() - dispersion.getPercentile_99()));
+        seriesArray[0].getData().add(new Data<Long, Number>(milliseconds, dispersion.median()));
+        seriesArray[1].getData().add(new Data<Long, Number>(milliseconds, dispersion.percentile_75() - dispersion.median()));
+        seriesArray[2].getData().add(new Data<Long, Number>(milliseconds, dispersion.percentile_95() - dispersion.percentile_75()));
+        seriesArray[3].getData().add(new Data<Long, Number>(milliseconds, dispersion.percentile_98() - dispersion.percentile_95()));
+        seriesArray[4].getData().add(new Data<Long, Number>(milliseconds, dispersion.percentile_99() - dispersion.percentile_98()));
+        seriesArray[5].getData().add(new Data<Long, Number>(milliseconds, dispersion.percentile_999() - dispersion.percentile_99()));
       }
     });
   }
 
+  /**
+   * Stops the underlying time axis scheduler.
+   */
   public void stop () {
 
     timeAxis.stop();

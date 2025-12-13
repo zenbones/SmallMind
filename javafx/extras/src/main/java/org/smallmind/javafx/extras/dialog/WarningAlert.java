@@ -38,10 +38,18 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 
+/**
+ * Simple warning alert that applies a custom icon and provides a static helper to show it.
+ */
 public class WarningAlert extends Alert {
 
   private static final Image WARNING_IMAGE = new Image(Thread.currentThread().getContextClassLoader().getResourceAsStream("org/smallmind/javafx/extras/dialog/dialog_warning.png"));
 
+  /**
+   * Constructs the alert with the provided warning text.
+   *
+   * @param warningText the text to display inside the alert
+   */
   public WarningAlert (String warningText) {
 
     super(AlertType.WARNING, warningText, ButtonType.CLOSE);
@@ -49,6 +57,12 @@ public class WarningAlert extends Alert {
     setGraphic(new ImageView(WARNING_IMAGE));
   }
 
+  /**
+   * Displays the warning alert in a blocking fashion.
+   *
+   * @param warningText the warning message to display
+   * @return an {@link Optional} containing the button pressed by the user
+   */
   public static Optional<ButtonType> showWarningAlert (String warningText) {
 
     WarningAlert warningAlert = new WarningAlert(warningText);

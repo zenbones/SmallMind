@@ -34,8 +34,20 @@ package org.smallmind.javafx.extras.table;
 
 import javafx.util.StringConverter;
 
+/**
+ * Base converter that intentionally does not support parsing from a string, useful for read-only display values.
+ *
+ * @param <T> the value type
+ */
 public abstract class IndecipherableStringConverter<T> extends StringConverter<T> {
 
+  /**
+   * Always throws {@link UnsupportedOperationException} because decoding is not supported.
+   *
+   * @param string ignored
+   * @return never returns normally
+   * @throws UnsupportedOperationException always
+   */
   @Override
   public T fromString (String string) {
 

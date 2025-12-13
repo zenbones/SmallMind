@@ -36,19 +36,36 @@ import java.util.regex.Pattern;
 import javafx.scene.control.IndexRange;
 import javafx.scene.control.TextField;
 
+/**
+ * {@link TextField} that restricts edits to those matching a supplied {@link Pattern}.
+ */
 public class PatternTextField extends TextField {
 
   private Pattern pattern;
 
+  /**
+   * Creates an unrestricted text field.
+   */
   public PatternTextField () {
 
   }
 
+  /**
+   * Creates a text field that enforces the supplied pattern.
+   *
+   * @param pattern pattern used to validate edits
+   */
   public PatternTextField (Pattern pattern) {
 
     this.pattern = pattern;
   }
 
+  /**
+   * Creates a text field with an initial value and enforcement pattern.
+   *
+   * @param pattern pattern used to validate edits
+   * @param text    initial value
+   */
   public PatternTextField (Pattern pattern, String text) {
 
     super(text);
@@ -56,6 +73,12 @@ public class PatternTextField extends TextField {
     this.pattern = pattern;
   }
 
+  /**
+   * Sets the validation pattern.
+   *
+   * @param pattern the new pattern
+   * @return this field for chaining
+   */
   public synchronized PatternTextField setPattern (Pattern pattern) {
 
     this.pattern = pattern;
@@ -63,6 +86,13 @@ public class PatternTextField extends TextField {
     return this;
   }
 
+  /**
+   * Replaces a range of text only if the resulting value matches the configured pattern.
+   *
+   * @param start start index
+   * @param end   end index
+   * @param text  replacement text
+   */
   @Override
   public synchronized void replaceText (int start, int end, String text) {
 
@@ -73,6 +103,11 @@ public class PatternTextField extends TextField {
     }
   }
 
+  /**
+   * Replaces the current selection only if the resulting value matches the configured pattern.
+   *
+   * @param text replacement text
+   */
   @Override
   public synchronized void replaceSelection (String text) {
 

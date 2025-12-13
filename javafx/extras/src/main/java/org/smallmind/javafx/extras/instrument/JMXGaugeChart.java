@@ -45,6 +45,9 @@ import javafx.application.Platform;
 import org.smallmind.javafx.extras.dialog.JavaErrorDialog;
 import org.smallmind.nutsnbolts.util.StringUtility;
 
+/**
+ * {@link GaugeChart} that polls a JMX MBean for rate metrics and plots the values.
+ */
 public class JMXGaugeChart extends GaugeChart {
 
   private static final String[] DISTRIBUTION_ATTRIBUTES = new String[] {"AverageRate", "OneMinuteAvgRate", "FiveMinuteAvgRate", "FifteenMinuteAvgRate"};
@@ -64,6 +67,14 @@ public class JMXGaugeChart extends GaugeChart {
   private final ObjectName objectName;
   private final ScheduledFuture<?> future;
 
+  /**
+   * Constructs the chart and begins polling the specified MBean for rate metrics.
+   *
+   * @param spanInMilliseconds    the time span to display
+   * @param mBeanServerConnection the MBean server connection used for polling
+   * @param objectName            the object name of the MBean exposing rate attributes
+   * @throws IllegalStateException if the velocity time unit attribute cannot be retrieved
+   */
   public JMXGaugeChart (long spanInMilliseconds, MBeanServerConnection mBeanServerConnection, ObjectName objectName) {
 
     super(spanInMilliseconds);
@@ -96,6 +107,10 @@ public class JMXGaugeChart extends GaugeChart {
     }, 1, 15, TimeUnit.SECONDS);
   }
 
+  /**
+   * Retrieves gauge measurements from the MBean and adds them to the chart. On error, polling is paused and a
+   * {@link JavaErrorDialog} is displayed on the JavaFX thread.
+   */
   private void collectData () {
 
     if (!isPaused()) {
@@ -119,6 +134,9 @@ public class JMXGaugeChart extends GaugeChart {
     }
   }
 
+  /**
+   * Cancels polling and stops the chart's time axis.
+   */
   @Override
   public void stop () {
 

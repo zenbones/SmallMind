@@ -44,6 +44,9 @@ import javax.management.ObjectName;
 import javafx.application.Platform;
 import org.smallmind.javafx.extras.dialog.JavaErrorDialog;
 
+/**
+ * {@link SigmaChart} that polls a JMX MBean for dispersion metrics and plots the values.
+ */
 public class JMXSigmaChart extends SigmaChart {
 
   private static final String[] DISTRIBUTION_ATTRIBUTES = new String[] {"Median", "75thPercentile", "95thPercentile", "98thPercentile", "99thPercentile", "999thPercentile"};
@@ -64,6 +67,13 @@ public class JMXSigmaChart extends SigmaChart {
   private final ObjectName objectName;
   private final ScheduledFuture<?> future;
 
+  /**
+   * Constructs the chart and begins polling the specified MBean for percentile metrics.
+   *
+   * @param spanInMilliseconds    the time span to display
+   * @param mBeanServerConnection the MBean server connection used for polling
+   * @param objectName            the object name of the MBean exposing dispersion attributes
+   */
   public JMXSigmaChart (long spanInMilliseconds, MBeanServerConnection mBeanServerConnection, ObjectName objectName) {
 
     super(spanInMilliseconds);
@@ -85,6 +95,10 @@ public class JMXSigmaChart extends SigmaChart {
     }, 1, 15, TimeUnit.SECONDS);
   }
 
+  /**
+   * Retrieves dispersion data from the MBean and adds it to the chart. On error, polling is paused and a
+   * {@link JavaErrorDialog} is displayed on the JavaFX thread.
+   */
   private void collectData () {
 
     if (!isPaused()) {
@@ -108,6 +122,9 @@ public class JMXSigmaChart extends SigmaChart {
     }
   }
 
+  /**
+   * Cancels polling and stops the chart's time axis.
+   */
   @Override
   public void stop () {
 

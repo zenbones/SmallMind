@@ -44,6 +44,9 @@ import javax.management.ObjectName;
 import javafx.application.Platform;
 import org.smallmind.javafx.extras.dialog.JavaErrorDialog;
 
+/**
+ * {@link VelocityChart} that polls a JMX MBean for velocity metrics and plots the values.
+ */
 public class JMXVelocityChart extends VelocityChart {
 
   private static final String[] DISTRIBUTION_ATTRIBUTES = new String[] {"AverageVelocity", "OneMinuteAvgVelocity", "OneMinuteAvgVelocity", "OneMinuteAvgVelocity"};
@@ -63,6 +66,13 @@ public class JMXVelocityChart extends VelocityChart {
   private final ObjectName objectName;
   private final ScheduledFuture<?> future;
 
+  /**
+   * Constructs the chart and begins polling the specified MBean for velocity attributes.
+   *
+   * @param spanInMilliseconds    the time span to display
+   * @param mBeanServerConnection the MBean server connection used for polling
+   * @param objectName            the object name of the MBean exposing the velocity attributes
+   */
   public JMXVelocityChart (long spanInMilliseconds, MBeanServerConnection mBeanServerConnection, ObjectName objectName) {
 
     super(spanInMilliseconds);
@@ -84,6 +94,10 @@ public class JMXVelocityChart extends VelocityChart {
     }, 1, 15, TimeUnit.SECONDS);
   }
 
+  /**
+   * Retrieves the latest velocity measurements from the MBean and adds them to the chart. If an error occurs, polling
+   * is paused and a {@link JavaErrorDialog} is shown on the JavaFX thread.
+   */
   private void collectData () {
 
     if (!isPaused()) {
@@ -107,6 +121,9 @@ public class JMXVelocityChart extends VelocityChart {
     }
   }
 
+  /**
+   * Cancels polling and stops the chart's time axis.
+   */
   @Override
   public void stop () {
 

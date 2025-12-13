@@ -40,25 +40,60 @@ import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.util.Callback;
 import javafx.util.StringConverter;
 
+/**
+ * {@link TableColumn} configured to display and optionally convert a named JavaBean property from the row item.
+ *
+ * @param <S> the table row type
+ * @param <T> the property type
+ */
 public class PropertyTableColumn<S, T> extends TableColumn<S, T> {
 
   private final String propertyName;
 
+  /**
+   * Creates a column with the supplied header text and bean property name using default alignment.
+   *
+   * @param text         the column header
+   * @param propertyName the name of the bean property to display
+   */
   public PropertyTableColumn (String text, String propertyName) {
 
     this(text, propertyName, null, Pos.CENTER_LEFT);
   }
 
+  /**
+   * Creates a column with a custom converter.
+   *
+   * @param text         the column header
+   * @param propertyName the name of the bean property to display
+   * @param converter    converter used to render the property
+   */
   public PropertyTableColumn (String text, String propertyName, StringConverter<T> converter) {
 
     this(text, propertyName, converter, Pos.CENTER_LEFT);
   }
 
+  /**
+   * Creates a column with a specific alignment.
+   *
+   * @param text         the column header
+   * @param propertyName the name of the bean property to display
+   * @param position     desired alignment for the cell content
+   */
   public PropertyTableColumn (String text, String propertyName, Pos position) {
 
     this(text, propertyName, null, position);
   }
 
+  /**
+   * Creates a column with a converter and alignment, and sets a cell factory that applies the converter outside of
+   * editing mode. The column value is sourced from the provided bean property name.
+   *
+   * @param text         the column header
+   * @param propertyName the name of the bean property to display
+   * @param converter    converter used to render the property (nullable)
+   * @param position     desired alignment for the cell content
+   */
   public PropertyTableColumn (String text, String propertyName, final StringConverter<T> converter, final Pos position) {
 
     super(text);
@@ -90,6 +125,9 @@ public class PropertyTableColumn<S, T> extends TableColumn<S, T> {
     setCellValueFactory(new PropertyValueFactory<S, T>(this.propertyName = propertyName));
   }
 
+  /**
+   * @return the bean property name used by the column
+   */
   public String getPropertyName () {
 
     return propertyName;

@@ -38,29 +38,44 @@ import org.smallmind.nutsnbolts.layout.Orientation;
 import org.smallmind.nutsnbolts.layout.ParaboxPlatform;
 import org.smallmind.nutsnbolts.layout.Perimeter;
 
+/**
+ * JavaFX-specific implementation of {@link ParaboxPlatform} providing default gaps, padding, and orientation.
+ */
 public class JavaFxParaboxPlatform implements ParaboxPlatform {
 
   private static final Perimeter PERIMETER = new Perimeter(10.0D, 10.0D, 10.0D, 10.0D);
   private static final Orientation ORIENTATION = new Orientation(Bias.HORIZONTAL, Flow.FIRST_TO_LAST);
 
+  /**
+   * @return the pixel gap for related components
+   */
   @Override
   public double getRelatedGap () {
 
     return 5.0D;
   }
 
+  /**
+   * @return the pixel gap for unrelated components
+   */
   @Override
   public double getUnrelatedGap () {
 
     return 10.0D;
   }
 
+  /**
+   * @return the default frame padding applied to layouts
+   */
   @Override
   public Perimeter getFramePerimeter () {
 
     return PERIMETER;
   }
 
+  /**
+   * @return the default orientation (horizontal bias, first-to-last flow)
+   */
   @Override
   public Orientation getOrientation () {
 

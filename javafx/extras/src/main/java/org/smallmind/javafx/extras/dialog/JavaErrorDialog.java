@@ -48,10 +48,19 @@ import org.smallmind.nutsnbolts.layout.Alignment;
 import org.smallmind.nutsnbolts.layout.Constraint;
 import org.smallmind.nutsnbolts.layout.Gap;
 
+/**
+ * Dialog that renders a stack trace for a thrown exception and fires an {@link ErrorEvent} when hidden.
+ */
 public class JavaErrorDialog extends Dialog<ButtonType> {
 
   private static final Image BUG_IMAGE = new Image(Thread.currentThread().getContextClassLoader().getResourceAsStream("org/smallmind/javafx/extras/dialog/dialog_bug.png"));
 
+  /**
+   * Creates the dialog pre-populated with the provided exception details.
+   *
+   * @param source    the logical source associated with the exception
+   * @param throwable the exception to display
+   */
   public JavaErrorDialog (final Object source, final Throwable throwable) {
 
     ParaboxPane root = new ParaboxPane();
@@ -85,6 +94,13 @@ public class JavaErrorDialog extends Dialog<ButtonType> {
     onHidingProperty().set(event -> JavaErrorDialog.this.getDialogPane().fireEvent(new ErrorEvent(ErrorEvent.OCCURRED, source, throwable)));
   }
 
+  /**
+   * Convenience method to construct and display the dialog in a blocking fashion.
+   *
+   * @param source    the logical source associated with the exception
+   * @param throwable the exception to display
+   * @return an {@link Optional} containing the button pressed by the user
+   */
   public static Optional<ButtonType> showJavaErrorDialog (Object source, Throwable throwable) {
 
     JavaErrorDialog errorDialog = new JavaErrorDialog(source, throwable);

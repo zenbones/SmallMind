@@ -42,6 +42,13 @@ import javafx.beans.value.ObservableValue;
 import jfxtras.util.PlatformUtil;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Consolidates rapid bursts of {@link ChangeListener#changed(ObservableValue, Object, Object)} callbacks into
+ * a single update delivered after a configurable quiet period. This is useful when reacting to noisy or high-frequency
+ * change streams where intermediate states are unimportant.
+ *
+ * @param <T> the observed value type
+ */
 public class ConsolidatingChangeListener<T> implements ChangeListener<T>, Comparable<ConsolidatingChangeListener<?>> {
 
   private static final CountDownLatch stopLatch = new CountDownLatch(1);
@@ -58,36 +65,68 @@ public class ConsolidatingChangeListener<T> implements ChangeListener<T>, Compar
     thread.start();
   }
 
+  /**
+   * Creates a listener wrapper that will coalesce change notifications occurring within the supplied time window.
+   *
+   * @param consolidationTimeMillis the minimum quiet period in milliseconds before a change is forwarded
+   * @param innerChangeListener     the listener that ultimately receives the consolidated change notification
+   */
   public ConsolidatingChangeListener (long consolidationTimeMillis, ChangeListener<T> innerChangeListener) {
 
     this.consolidationTimeMillis = consolidationTimeMillis;
     this.innerChangeListener = innerChangeListener;
   }
 
+  /**
+   * @return the wrapped listener that receives consolidated callbacks
+   */
   private ChangeListener<T> getInnerChangeListener () {
 
     return innerChangeListener;
   }
 
+  /**
+   * @return the latest generation number used to identify the most recent change submitted
+   */
   private synchronized int getGeneration () {
 
     return generation;
   }
 
+  /**
+   * Queues the observed change and schedules it to be delivered after the consolidation window expires. Any subsequent
+   * changes before expiry supersede earlier ones.
+   *
+   * @param observableValue the observed value
+   * @param initialValue    the previous value
+   * @param currentValue    the new value
+   */
   @Override
   public synchronized final void changed (ObservableValue<? extends T> observableValue, T initialValue, T currentValue) {
 
     LOOSE_CHANGE_MAP.put(new ConsolidatingKey<>(this, ++generation, consolidationTimeMillis), new LooseChange<>(observableValue, initialValue, currentValue));
   }
 
+  /**
+   * Compares listeners by identity to provide ordering within the consolidation map.
+   *
+   * @param listener another listener to compare
+   * @return a positive, negative or zero result based on the instance hash codes
+   */
   @Override
   public int compareTo (ConsolidatingChangeListener<?> listener) {
 
     return hashCode() - listener.hashCode();
   }
 
+  /**
+   * Drains expired entries from the queue and delivers the last change for each listener generation on the JavaFX thread.
+   */
   private static class ConsolidationWorker implements Runnable {
 
+    /**
+     * Polls for expired entries until signalled to stop, dispatching consolidated changes for each listener generation.
+     */
     @Override
     public void run () {
 
@@ -112,7 +151,7 @@ public class ConsolidatingChangeListener<T> implements ChangeListener<T>, Compar
                     @Override
                     public void run () {
 
-                      key.getListener().getInnerChangeListener().changed(change.getObservableValue(), change.getInitialValue(), change.getCurrentValue());
+                      key.getListener().getInnerChangeListener().changed(change.observableValue(), change.initialValue(), change.currentValue());
                     }
                   });
                 }
@@ -126,17 +165,32 @@ public class ConsolidatingChangeListener<T> implements ChangeListener<T>, Compar
     }
   }
 
+  /**
+   * Key used to order pending changes by expiration time and listener identity.
+   *
+   * @param <U> the observed value type
+   */
   private static class ConsolidatingKey<U> implements Comparable<ConsolidatingKey<U>> {
 
     private final ConsolidatingChangeListener<U> listener;
     private final long expiration;
     private final int generation;
 
+    /**
+     * Constructs a sentinel key with no listener used to query the head map for expired entries.
+     */
     private ConsolidatingKey () {
 
       this(null, 0, 0);
     }
 
+    /**
+     * Constructs a key representing a scheduled change.
+     *
+     * @param listener                the listener associated with the change
+     * @param generation              the generation number of the change
+     * @param consolidationTimeMillis the delay before the change should be emitted
+     */
     private ConsolidatingKey (ConsolidatingChangeListener<U> listener, int generation, long consolidationTimeMillis) {
 
       this.listener = listener;
@@ -145,21 +199,36 @@ public class ConsolidatingChangeListener<T> implements ChangeListener<T>, Compar
       expiration = System.currentTimeMillis() + consolidationTimeMillis;
     }
 
+    /**
+     * @return the listener that will receive the consolidated change
+     */
     private ConsolidatingChangeListener<?> getListener () {
 
       return listener;
     }
 
+    /**
+     * @return the generation number for the scheduled change
+     */
     private int getGeneration () {
 
       return generation;
     }
 
+    /**
+     * @return the epoch time in milliseconds when this change expires
+     */
     private long getExpiration () {
 
       return expiration;
     }
 
+    /**
+     * Orders keys by expiration time, then by listener identity to maintain a deterministic ordering.
+     *
+     * @param key another key
+     * @return comparison result suitable for sorted map usage
+     */
     @Override
     public int compareTo (ConsolidatingKey key) {
 
@@ -174,32 +243,49 @@ public class ConsolidatingChangeListener<T> implements ChangeListener<T>, Compar
     }
   }
 
-  private static class LooseChange<U> {
+  /**
+     * Encapsulates the change state captured for consolidation.
+     *
+     * @param <U> the observed value type
+     */
+    private record LooseChange<U>(ObservableValue<? extends U> observableValue, U initialValue, U currentValue) {
 
-    private final ObservableValue<? extends U> observableValue;
-    private final U initialValue;
-    private final U currentValue;
+    /**
+     * Captures a single change instance.
+     *
+     * @param observableValue the observable that triggered the change
+     * @param initialValue    the prior value
+     * @param currentValue    the updated value
+     */
+    private LooseChange {
 
-    private LooseChange (ObservableValue<? extends U> observableValue, U initialValue, U currentValue) {
-
-      this.observableValue = observableValue;
-      this.initialValue = initialValue;
-      this.currentValue = currentValue;
     }
 
-    private ObservableValue<? extends U> getObservableValue () {
+      /**
+       * @return the observable associated with the change
+       */
+      @Override
+      public ObservableValue<? extends U> observableValue () {
 
-      return observableValue;
+        return observableValue;
+      }
+
+      /**
+       * @return the value prior to the change
+       */
+      @Override
+      public U initialValue () {
+
+        return initialValue;
+      }
+
+      /**
+       * @return the latest value captured
+       */
+      @Override
+      public U currentValue () {
+
+        return currentValue;
+      }
     }
-
-    private U getInitialValue () {
-
-      return initialValue;
-    }
-
-    private U getCurrentValue () {
-
-      return currentValue;
-    }
-  }
 }

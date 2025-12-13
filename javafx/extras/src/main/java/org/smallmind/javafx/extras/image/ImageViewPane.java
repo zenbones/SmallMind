@@ -41,10 +41,19 @@ import javafx.geometry.VPos;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.Region;
 
+/**
+ * A {@link Region} that hosts a single {@link ImageView} and resizes it to fill the available space while preserving
+ * the pane's layout semantics.
+ */
 public class ImageViewPane extends Region {
 
   private final ObjectProperty<ImageView> imageViewProperty = new SimpleObjectProperty<>();
 
+  /**
+   * Creates a pane hosting the provided image view.
+   *
+   * @param imageView the image view to manage
+   */
   public ImageViewPane (ImageView imageView) {
 
     imageViewProperty.addListener(new ChangeListener<ImageView>() {
@@ -63,21 +72,35 @@ public class ImageViewPane extends Region {
     this.imageViewProperty.set(imageView);
   }
 
+  /**
+   * @return the property representing the contained {@link ImageView}
+   */
   public ObjectProperty<ImageView> imageViewProperty () {
 
     return imageViewProperty;
   }
 
+  /**
+   * @return the managed {@link ImageView}
+   */
   public ImageView getImageView () {
 
     return imageViewProperty.get();
   }
 
+  /**
+   * Replaces the hosted image view, removing the old one from the scene graph.
+   *
+   * @param imageView the new image view to display
+   */
   public void setImageView (ImageView imageView) {
 
     this.imageViewProperty.set(imageView);
   }
 
+  /**
+   * Resizes and positions the hosted image view to occupy the full pane bounds.
+   */
   @Override
   protected void layoutChildren () {
 

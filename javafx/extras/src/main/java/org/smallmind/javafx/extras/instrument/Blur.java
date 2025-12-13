@@ -32,37 +32,55 @@
  */
 package org.smallmind.javafx.extras.instrument;
 
-public class Blur {
+/**
+ * Represents velocity averages across multiple rolling windows.
+ */
+public record Blur(double avgVelocity, double avgVelocity_1, double avgVelocity_5, double avgVelocity_15) {
 
-  private final double avgVelocity;
-  private final double avgVelocity_1;
-  private final double avgVelocity_5;
-  private final double avgVelocity_15;
+  /**
+   * Creates a blur instance with the supplied averages.
+   *
+   * @param avgVelocity    lifetime average velocity
+   * @param avgVelocity_1  one minute average velocity
+   * @param avgVelocity_5  five minute average velocity
+   * @param avgVelocity_15 fifteen minute average velocity
+   */
+  public Blur {
 
-  public Blur (double avgVelocity, double avgVelocity_1, double avgVelocity_5, double avgVelocity_15) {
-
-    this.avgVelocity = avgVelocity;
-    this.avgVelocity_1 = avgVelocity_1;
-    this.avgVelocity_5 = avgVelocity_5;
-    this.avgVelocity_15 = avgVelocity_15;
   }
 
-  public double getAvgVelocity () {
+  /**
+   * @return the lifetime average velocity
+   */
+  @Override
+  public double avgVelocity () {
 
     return avgVelocity;
   }
 
-  public double getAvgVelocity_1 () {
+  /**
+   * @return the one minute average velocity
+   */
+  @Override
+  public double avgVelocity_1 () {
 
     return avgVelocity_1;
   }
 
-  public double getAvgVelocity_5 () {
+  /**
+   * @return the five minute average velocity
+   */
+  @Override
+  public double avgVelocity_5 () {
 
     return avgVelocity_5;
   }
 
-  public double getAvgVelocity_15 () {
+  /**
+   * @return the fifteen minute average velocity
+   */
+  @Override
+  public double avgVelocity_15 () {
 
     return avgVelocity_15;
   }

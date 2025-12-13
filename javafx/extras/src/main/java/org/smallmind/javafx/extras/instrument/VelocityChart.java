@@ -39,6 +39,9 @@ import javafx.beans.property.BooleanProperty;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 
+/**
+ * Line chart that plots velocity statistics across time windows using a {@link TimeAxis}.
+ */
 public class VelocityChart extends LineChart<Long, Number> {
 
   private static final String[] SERIES_NAMES = new String[] {"Inception", "15 minute", "5 minute", "1 minute"};
@@ -46,6 +49,11 @@ public class VelocityChart extends LineChart<Long, Number> {
   private final Series<Long, Number>[] seriesArray = new Series[4];
   private final AtomicBoolean hasData = new AtomicBoolean(false);
 
+  /**
+   * Creates a chart displaying the supplied time span.
+   *
+   * @param spanInMilliseconds the width of the time window to display
+   */
   public VelocityChart (long spanInMilliseconds) {
 
     this(new TimeAxis(spanInMilliseconds));
@@ -66,21 +74,39 @@ public class VelocityChart extends LineChart<Long, Number> {
     getStylesheets().add(VelocityChart.class.getResource("VelocityChart.css").toExternalForm());
   }
 
+  /**
+   * @return property indicating whether updates are paused
+   */
   public BooleanProperty pausedProperty () {
 
     return timeAxis.pausedProperty();
   }
 
+  /**
+   * @return whether updates are paused
+   */
   public boolean isPaused () {
 
     return timeAxis.getPaused();
   }
 
+  /**
+   * Toggles whether the chart accepts new data.
+   *
+   * @param paused {@code true} to halt updates
+   */
   public void setPaused (boolean paused) {
 
     timeAxis.setPaused(paused);
   }
 
+  /**
+   * Adds a new velocity data point across all series, removing stale points beyond the visible window. Execution
+   * is marshalled onto the JavaFX application thread.
+   *
+   * @param milliseconds the timestamp for the sample
+   * @param blur         the velocity data to plot
+   */
   public void addBlur (final long milliseconds, final Blur blur) {
 
     Platform.runLater(new Runnable() {
@@ -102,14 +128,17 @@ public class VelocityChart extends LineChart<Long, Number> {
           }
         }
 
-        seriesArray[0].getData().add(new Data<Long, Number>(milliseconds, blur.getAvgVelocity()));
-        seriesArray[1].getData().add(new Data<Long, Number>(milliseconds, blur.getAvgVelocity_15()));
-        seriesArray[2].getData().add(new Data<Long, Number>(milliseconds, blur.getAvgVelocity_5()));
-        seriesArray[3].getData().add(new Data<Long, Number>(milliseconds, blur.getAvgVelocity_1()));
+        seriesArray[0].getData().add(new Data<Long, Number>(milliseconds, blur.avgVelocity()));
+        seriesArray[1].getData().add(new Data<Long, Number>(milliseconds, blur.avgVelocity_15()));
+        seriesArray[2].getData().add(new Data<Long, Number>(milliseconds, blur.avgVelocity_5()));
+        seriesArray[3].getData().add(new Data<Long, Number>(milliseconds, blur.avgVelocity_1()));
       }
     });
   }
 
+  /**
+   * Stops the underlying time axis scheduler.
+   */
   public void stop () {
 
     timeAxis.stop();

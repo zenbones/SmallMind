@@ -33,64 +33,93 @@
 package org.smallmind.javafx.extras.layout;
 
 import javafx.scene.Node;
-import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.nutsnbolts.layout.Bias;
 import org.smallmind.nutsnbolts.layout.ComponentParaboxElement;
 import org.smallmind.nutsnbolts.layout.Constraint;
 import org.smallmind.nutsnbolts.layout.Pair;
+import org.smallmind.nutsnbolts.layout.ParaboxLayout;
 
+/**
+ * {@link ComponentParaboxElement} implementation for JavaFX {@link Node} instances, supplying measurement and layout
+ * information to the parabox layout engine.
+ */
 public class JavaFxParaboxElement extends ComponentParaboxElement<Node> {
 
+  /**
+   * Wraps a JavaFX node with the specified constraint for use in a {@link ParaboxLayout}.
+   *
+   * @param node       the JavaFX node to wrap
+   * @param constraint the constraint describing how the node should be sized and positioned
+   */
   public JavaFxParaboxElement (Node node, Constraint constraint) {
 
     super(node, constraint);
   }
 
+  /**
+   * Returns the minimum size along the given axis by querying the underlying node.
+   *
+   * @param bias the axis being measured
+   * @return the minimum size reported by the node
+   */
   @Override
   public double getComponentMinimumMeasurement (Bias bias) {
 
-    switch (bias) {
-      case HORIZONTAL:
-        return getPart().minWidth(-1);
-      case VERTICAL:
-        return getPart().minHeight(-1);
-      default:
-        throw new UnknownSwitchCaseException(bias.name());
-    }
+    return switch (bias) {
+      case HORIZONTAL -> getPart().minWidth(-1);
+      case VERTICAL -> getPart().minHeight(-1);
+    };
   }
 
+  /**
+   * Returns the preferred size along the given axis by querying the underlying node.
+   *
+   * @param bias the axis being measured
+   * @return the preferred size reported by the node
+   */
   @Override
   public double getComponentPreferredMeasurement (Bias bias) {
 
-    switch (bias) {
-      case HORIZONTAL:
-        return getPart().prefWidth(-1);
-      case VERTICAL:
-        return getPart().prefHeight(-1);
-      default:
-        throw new UnknownSwitchCaseException(bias.name());
-    }
+    return switch (bias) {
+      case HORIZONTAL -> getPart().prefWidth(-1);
+      case VERTICAL -> getPart().prefHeight(-1);
+    };
   }
 
+  /**
+   * Returns the maximum size along the given axis by querying the underlying node.
+   *
+   * @param bias the axis being measured
+   * @return the maximum size reported by the node
+   */
   @Override
   public double getComponentMaximumMeasurement (Bias bias) {
 
-    switch (bias) {
-      case HORIZONTAL:
-        return getPart().maxWidth(-1);
-      case VERTICAL:
-        return getPart().maxHeight(-1);
-      default:
-        throw new UnknownSwitchCaseException(bias.name());
-    }
+    return switch (bias) {
+      case HORIZONTAL -> getPart().maxWidth(-1);
+      case VERTICAL -> getPart().maxHeight(-1);
+    };
   }
 
+  /**
+   * Calculates the baseline for the node based on the supplied axis and measurement.
+   *
+   * @param bias        the axis being measured
+   * @param measurement the measurement supplied by the layout
+   * @return the baseline offset for vertical bias, or preferred height for horizontal bias
+   */
   @Override
   public double getBaseline (Bias bias, double measurement) {
 
     return bias.equals(Bias.VERTICAL) ? getPart().getBaselineOffset() : getPart().prefHeight(-1);
   }
 
+  /**
+   * Applies the computed location and size to the underlying node.
+   *
+   * @param location the top-left coordinate
+   * @param size     the width and height to apply
+   */
   @Override
   public void applyLayout (Pair location, Pair size) {
 

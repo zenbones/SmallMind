@@ -35,6 +35,9 @@ package org.smallmind.javafx.extras.dialog;
 import javafx.event.Event;
 import javafx.event.EventType;
 
+/**
+ * Event fired when an error dialog is dismissed, exposing the originating source and throwable.
+ */
 public class ErrorEvent extends Event {
 
   public static final EventType<ErrorEvent> ANY = new EventType<>(Event.ANY, "ERROR_ANY");
@@ -43,6 +46,13 @@ public class ErrorEvent extends Event {
   private final Object exceptionSource;
   private final Throwable throwable;
 
+  /**
+   * Creates a new error event carrying the originating source object and the thrown exception.
+   *
+   * @param eventType       the specific error event type
+   * @param exceptionSource the source object associated with the error
+   * @param throwable       the exception that was raised
+   */
   protected ErrorEvent (EventType<ErrorEvent> eventType, Object exceptionSource, Throwable throwable) {
 
     super(eventType);
@@ -51,11 +61,17 @@ public class ErrorEvent extends Event {
     this.throwable = throwable;
   }
 
+  /**
+   * @return the object that produced or is associated with the exception
+   */
   public Object getExceptionSource () {
 
     return exceptionSource;
   }
 
+  /**
+   * @return the throwable that triggered the dialog
+   */
   public Throwable getThrowable () {
 
     return throwable;

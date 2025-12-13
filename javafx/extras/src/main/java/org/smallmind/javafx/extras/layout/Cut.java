@@ -32,6 +32,9 @@
  */
 package org.smallmind.javafx.extras.layout;
 
+/**
+ * Enumeration describing which dimensional hint should be calculated.
+ */
 public enum Cut {
 
   MINIMUM, PREFERRED, MAXIMUM

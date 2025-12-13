@@ -43,16 +43,37 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+/**
+ * Servlet that rewrites the {@code href} attribute of a requested JNLP file so it points to the current request URL,
+ * enabling deployment behind arbitrary servlet paths.
+ */
 public class DynamicWebstartServlet extends HttpServlet {
 
   private static final Pattern JNLP_HREF_PATTERN = Pattern.compile("<jnlp .*href\\s*=\\s*\"([^\"]*)\"\\s*>");
 
+  /**
+   * Initializes the servlet by delegating to the parent implementation.
+   *
+   * @param config servlet configuration
+   * @throws ServletException if initialization fails
+   */
+  @Override
   public void init (ServletConfig config)
     throws ServletException {
 
     super.init(config);
   }
 
+  /**
+   * Streams the requested JNLP file, rewriting the {@code href} attribute to the current request URL so that subsequent
+   * resource requests resolve correctly.
+   *
+   * @param req the incoming HTTP request
+   * @param res the response used to return the rewritten JNLP
+   * @throws ServletException on servlet errors
+   * @throws IOException      if the JNLP resource cannot be read or written
+   */
+  @Override
   protected void service (HttpServletRequest req, HttpServletResponse res)
     throws ServletException, IOException {
 

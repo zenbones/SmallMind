@@ -32,23 +32,37 @@
  */
 package org.smallmind.javafx.extras.instrument;
 
-public class EndPoints<T> {
+/**
+ * Simple container for a low/high value pair.
+ *
+ * @param <T> value type
+ */
+public record EndPoints<T>(T low, T high) {
 
-  private final T low;
-  private final T high;
+  /**
+   * Creates an endpoint pair.
+   *
+   * @param low  the lower bound
+   * @param high the upper bound
+   */
+  public EndPoints {
 
-  public EndPoints (T low, T high) {
-
-    this.low = low;
-    this.high = high;
   }
 
-  public T getLow () {
+  /**
+   * @return the lower endpoint
+   */
+  @Override
+  public T low () {
 
     return low;
   }
 
-  public T getHigh () {
+  /**
+   * @return the upper endpoint
+   */
+  @Override
+  public T high () {
 
     return high;
   }

@@ -42,25 +42,55 @@ import org.smallmind.nutsnbolts.util.AlphaNumericComparator;
 import org.smallmind.nutsnbolts.util.AlphaNumericConverter;
 import org.smallmind.nutsnbolts.util.StringUtility;
 
+/**
+ * {@link ChoiceBox} pre-populated with the constants of an {@link Enum} type. Values are displayed using a
+ * human-friendly converter and can optionally omit certain enum constants or select a default value.
+ *
+ * @param <E> the enum type displayed by this choice box
+ */
 public class EnumChoiceBox<E extends Enum<E>> extends ChoiceBox<E> {
 
   private final Class<E> enumClass;
 
+  /**
+   * Constructs the choice box showing all enum constants and selects the first value.
+   *
+   * @param enumClass the enum type to display
+   */
   public EnumChoiceBox (Class<E> enumClass) {
 
     this(enumClass, null, null);
   }
 
+  /**
+   * Constructs the choice box showing all enum constants and selects the provided value.
+   *
+   * @param enumClass    the enum type to display
+   * @param selectedEnum the value to select initially, or {@code null} to select the first entry
+   */
   public EnumChoiceBox (Class<E> enumClass, E selectedEnum) {
 
     this(enumClass, selectedEnum, null);
   }
 
+  /**
+   * Constructs the choice box excluding the provided enum constants and selecting the first remaining value.
+   *
+   * @param enumClass   the enum type to display
+   * @param exemptEnums constants that should not appear in the list
+   */
   public EnumChoiceBox (Class<E> enumClass, List<E> exemptEnums) {
 
     this(enumClass, null, exemptEnums);
   }
 
+  /**
+   * Constructs the choice box, allowing both a default value and a list of excluded constants.
+   *
+   * @param enumClass    the enum type to display
+   * @param selectedEnum the value to select initially, or {@code null} to select the first available
+   * @param exemptEnums  constants that should be removed from the available options
+   */
   public EnumChoiceBox (Class<E> enumClass, E selectedEnum, List<E> exemptEnums) {
 
     LinkedList<E> availableEnums = new LinkedList<E>(Arrays.asList(enumClass.getEnumConstants()));
@@ -101,6 +131,9 @@ public class EnumChoiceBox<E extends Enum<E>> extends ChoiceBox<E> {
     setValue((selectedEnum != null) ? selectedEnum : availableEnums.getFirst());
   }
 
+  /**
+   * @return the enum class rendered by this choice box
+   */
   public Class<E> getEnumClass () {
 
     return enumClass;

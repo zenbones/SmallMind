@@ -35,21 +35,42 @@ package org.smallmind.javafx.extras.table;
 import javafx.util.StringConverter;
 import org.smallmind.nutsnbolts.util.StringUtility;
 
+/**
+ * {@link StringConverter} that renders enum constants using display case while parsing using the enum name.
+ *
+ * @param <E> the enum type
+ */
 public class EnumStringConverter<E extends Enum<E>> extends StringConverter<E> {
 
   private final Class<E> enumClass;
 
+  /**
+   * @param enumClass the enum type this converter supports
+   */
   public EnumStringConverter (Class<E> enumClass) {
 
     this.enumClass = enumClass;
   }
 
+  /**
+   * Converts an enum constant to a display-friendly string.
+   *
+   * @param item the enum value
+   * @return display-cased name
+   */
   @Override
   public String toString (E item) {
 
     return StringUtility.toDisplayCase(item.name(), '_');
   }
 
+  /**
+   * Parses the provided string to an enum constant using {@link Enum#valueOf(Class, String)}.
+   *
+   * @param string the string representation
+   * @return matching enum constant
+   * @throws IllegalArgumentException if the string does not match an enum constant
+   */
   @Override
   public E fromString (String string) {
 

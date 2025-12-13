@@ -32,51 +32,75 @@
  */
 package org.smallmind.javafx.extras.instrument;
 
-public class Dispersion {
+/**
+ * Represents latency distribution percentiles captured at a point in time.
+ */
+public record Dispersion(double median, double percentile_75, double percentile_95, double percentile_98, double percentile_99, double percentile_999) {
 
-  private final double median;
-  private final double percentile_75;
-  private final double percentile_95;
-  private final double percentile_98;
-  private final double percentile_99;
-  private final double percentile_999;
+  /**
+   * Creates a dispersion snapshot.
+   *
+   * @param median         median latency
+   * @param percentile_75  75th percentile latency
+   * @param percentile_95  95th percentile latency
+   * @param percentile_98  98th percentile latency
+   * @param percentile_99  99th percentile latency
+   * @param percentile_999 99.9th percentile latency
+   */
+  public Dispersion {
 
-  public Dispersion (double median, double percentile_75, double percentile_95, double percentile_98, double percentile_99, double percentile_999) {
-
-    this.median = median;
-    this.percentile_75 = percentile_75;
-    this.percentile_95 = percentile_95;
-    this.percentile_98 = percentile_98;
-    this.percentile_99 = percentile_99;
-    this.percentile_999 = percentile_999;
   }
 
-  public double getMedian () {
+  /**
+   * @return the median value
+   */
+  @Override
+  public double median () {
 
     return median;
   }
 
-  public double getPercentile_75 () {
+  /**
+   * @return the 75th percentile value
+   */
+  @Override
+  public double percentile_75 () {
 
     return percentile_75;
   }
 
-  public double getPercentile_95 () {
+  /**
+   * @return the 95th percentile value
+   */
+  @Override
+  public double percentile_95 () {
 
     return percentile_95;
   }
 
-  public double getPercentile_98 () {
+  /**
+   * @return the 98th percentile value
+   */
+  @Override
+  public double percentile_98 () {
 
     return percentile_98;
   }
 
-  public double getPercentile_99 () {
+  /**
+   * @return the 99th percentile value
+   */
+  @Override
+  public double percentile_99 () {
 
     return percentile_99;
   }
 
-  public double getPercentile_999 () {
+  /**
+   * @return the 99.9th percentile value
+   */
+  @Override
+  public double percentile_999 () {
 
     return percentile_999;
   }

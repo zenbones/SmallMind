@@ -42,6 +42,12 @@ import javafx.event.EventHandler;
 import jfxtras.util.PlatformUtil;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Consolidates rapid {@link EventHandler#handle(Event)} invocations into a single dispatch after a quiet period.
+ * This allows filtering high-frequency events while still processing the most recent occurrence.
+ *
+ * @param <T> the event type handled
+ */
 public class ConsolidatingEventHandler<T extends Event> implements EventHandler<T>, Comparable<ConsolidatingEventHandler<?>> {
 
   private static final CountDownLatch stopLatch = new CountDownLatch(1);
@@ -58,36 +64,65 @@ public class ConsolidatingEventHandler<T extends Event> implements EventHandler<
     thread.start();
   }
 
+  /**
+   * Creates an event handler that delays and consolidates event notifications.
+   *
+   * @param consolidationTimeMillis the quiet period in milliseconds used to coalesce events
+   * @param innerEventHandler       the handler that will receive the consolidated event
+   */
   public ConsolidatingEventHandler (long consolidationTimeMillis, EventHandler<T> innerEventHandler) {
 
     this.consolidationTimeMillis = consolidationTimeMillis;
     this.innerEventHandler = innerEventHandler;
   }
 
+  /**
+   * @return the wrapped event handler to invoke after consolidation
+   */
   private EventHandler<T> getInnerEventHandler () {
 
     return innerEventHandler;
   }
 
+  /**
+   * @return the current generation counter used to identify the latest queued event
+   */
   private synchronized int getGeneration () {
 
     return generation;
   }
 
+  /**
+   * Enqueues the event for delivery after the consolidation window, replacing any previously queued event.
+   *
+   * @param event the event that occurred
+   */
   @Override
-  public synchronized final void handle (T event) {
+  public synchronized void handle (T event) {
 
     LOOSE_EVENT_MAP.put(new ConsolidatingKey<>(this, ++generation, consolidationTimeMillis), event);
   }
 
+  /**
+   * Compares handlers by identity for ordering in the consolidation map.
+   *
+   * @param handler the handler to compare to
+   * @return comparison result based on instance hash codes
+   */
   @Override
   public int compareTo (ConsolidatingEventHandler<?> handler) {
 
     return hashCode() - handler.hashCode();
   }
 
+  /**
+   * Drains expired events and dispatches the latest generation on the JavaFX thread.
+   */
   private static class ConsolidationWorker implements Runnable {
 
+    /**
+     * Polls periodically for expired events until stopped and dispatches them.
+     */
     @Override
     public void run () {
 
@@ -126,17 +161,32 @@ public class ConsolidatingEventHandler<T extends Event> implements EventHandler<
     }
   }
 
+  /**
+   * Key used to order pending events by expiration and handler identity.
+   *
+   * @param <U> the event type
+   */
   private static class ConsolidatingKey<U extends Event> implements Comparable<ConsolidatingKey<U>> {
 
     private final ConsolidatingEventHandler<U> handler;
     private final long expiration;
     private final int generation;
 
+    /**
+     * Creates a sentinel key for head map searches.
+     */
     private ConsolidatingKey () {
 
       this(null, 0, 0);
     }
 
+    /**
+     * Constructs a key representing a scheduled event notification.
+     *
+     * @param handler                 the handler that will receive the event
+     * @param generation              the generation of the queued event
+     * @param consolidationTimeMillis the delay before dispatching
+     */
     private ConsolidatingKey (ConsolidatingEventHandler<U> handler, int generation, long consolidationTimeMillis) {
 
       this.handler = handler;
@@ -145,21 +195,36 @@ public class ConsolidatingEventHandler<T extends Event> implements EventHandler<
       expiration = System.currentTimeMillis() + consolidationTimeMillis;
     }
 
+    /**
+     * @return the handler to dispatch to
+     */
     private ConsolidatingEventHandler<?> getEventHandler () {
 
       return handler;
     }
 
+    /**
+     * @return the generation identifier
+     */
     private int getGeneration () {
 
       return generation;
     }
 
+    /**
+     * @return expiration time in milliseconds
+     */
     private long getExpiration () {
 
       return expiration;
     }
 
+    /**
+     * Orders keys by expiration time then handler identity to ensure consistent ordering.
+     *
+     * @param key another key
+     * @return comparison result
+     */
     @Override
     public int compareTo (ConsolidatingKey key) {
 

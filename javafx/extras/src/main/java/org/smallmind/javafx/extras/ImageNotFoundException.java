@@ -34,8 +34,16 @@ package org.smallmind.javafx.extras;
 
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
+/**
+ * Runtime exception thrown when an expected image resource cannot be located or loaded.
+ */
 public class ImageNotFoundException extends FormattedRuntimeException {
 
+  /**
+   * Constructs the exception with the underlying cause.
+   *
+   * @param exception the originating exception that prevented image loading
+   */
   public ImageNotFoundException (Exception exception) {
 
     super(exception);

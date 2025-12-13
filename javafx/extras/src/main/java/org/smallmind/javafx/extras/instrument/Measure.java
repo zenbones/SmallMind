@@ -32,37 +32,55 @@
  */
 package org.smallmind.javafx.extras.instrument;
 
-public class Measure {
+/**
+ * Represents averaged rate measurements for a meter over multiple rolling windows.
+ */
+public record Measure(double avgRate, double avgRate_1, double avgRate_5, double avgRate_15) {
 
-  private final double avgRate;
-  private final double avgRate_1;
-  private final double avgRate_5;
-  private final double avgRate_15;
+  /**
+   * Creates a measurement with the provided averages.
+   *
+   * @param avgRate    lifetime average rate
+   * @param avgRate_1  one minute average rate
+   * @param avgRate_5  five minute average rate
+   * @param avgRate_15 fifteen minute average rate
+   */
+  public Measure {
 
-  public Measure (double avgRate, double avgRate_1, double avgRate_5, double avgRate_15) {
-
-    this.avgRate = avgRate;
-    this.avgRate_1 = avgRate_1;
-    this.avgRate_5 = avgRate_5;
-    this.avgRate_15 = avgRate_15;
   }
 
-  public double getAvgRate () {
+  /**
+   * @return the lifetime average rate
+   */
+  @Override
+  public double avgRate () {
 
     return avgRate;
   }
 
-  public double getAvgRate_1 () {
+  /**
+   * @return the one minute average rate
+   */
+  @Override
+  public double avgRate_1 () {
 
     return avgRate_1;
   }
 
-  public double getAvgRate_5 () {
+  /**
+   * @return the five minute average rate
+   */
+  @Override
+  public double avgRate_5 () {
 
     return avgRate_5;
   }
 
-  public double getAvgRate_15 () {
+  /**
+   * @return the fifteen minute average rate
+   */
+  @Override
+  public double avgRate_15 () {
 
     return avgRate_15;
   }
