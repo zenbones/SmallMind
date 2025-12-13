@@ -32,41 +32,79 @@
  */
 package org.smallmind.kafka.utility;
 
+/**
+ * Simple value object describing a Kafka broker host/port pair.
+ */
 public class KafkaServer implements Comparable<KafkaServer> {
 
   private String host;
   private int port = 9094;
 
+  /**
+   * Creates an empty broker descriptor with the default port {@code 9094}.
+   */
   public KafkaServer () {
 
   }
 
+  /**
+   * Creates a broker descriptor.
+   *
+   * @param host broker host name or address
+   * @param port broker listener port
+   */
   public KafkaServer (String host, int port) {
 
     this.host = host;
     this.port = port;
   }
 
+  /**
+   * Returns the broker host name or address.
+   *
+   * @return host value
+   */
   public String getHost () {
 
     return host;
   }
 
+  /**
+   * Updates the broker host name or address.
+   *
+   * @param host host value
+   */
   public void setHost (String host) {
 
     this.host = host;
   }
 
+  /**
+   * Returns the configured broker port.
+   *
+   * @return port value
+   */
   public int getPort () {
 
     return port;
   }
 
+  /**
+   * Updates the broker port.
+   *
+   * @param port port value
+   */
   public void setPort (int port) {
 
     this.port = port;
   }
 
+  /**
+   * Orders brokers lexicographically by host, then numerically by port.
+   *
+   * @param server the broker to compare against
+   * @return negative if this broker sorts before {@code server}, zero if equal, positive otherwise
+   */
   @Override
   public int compareTo (KafkaServer server) {
 

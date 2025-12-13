@@ -38,40 +38,76 @@ import org.smallmind.nutsnbolts.util.SpreadParserException;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
+/**
+ * Spring factory bean that materializes an array of {@link KafkaServer} instances from either a
+ * single explicit host/port or a spread pattern (e.g., {@code kafka-#}.example.com).
+ * This allows configuring multiple brokers via a compact property string.
+ */
 public class KafkaServerFactoryBean implements FactoryBean<KafkaServer[]>, InitializingBean {
 
   private KafkaServer[] serverArray;
   private String serverPattern;
   private String serverSpread;
 
+  /**
+   * Sets the pattern representing broker addresses. A {@code #} character will be replaced with
+   * values from the configured spread, and an optional port may follow a colon.
+   *
+   * @param serverPattern pattern describing the brokers
+   */
   public void setServerPattern (String serverPattern) {
 
     this.serverPattern = serverPattern;
   }
 
+  /**
+   * Sets the spread expression used to expand {@code serverPattern} when it contains {@code #}.
+   *
+   * @param serverSpread spread descriptor understood by {@link Spread#calculate(String)}
+   */
   public void setServerSpread (String serverSpread) {
 
     this.serverSpread = serverSpread;
   }
 
+  /**
+   * Always produces a singleton array.
+   *
+   * @return {@code true}
+   */
   @Override
   public boolean isSingleton () {
 
     return true;
   }
 
+  /**
+   * Declares the object type managed by this factory.
+   *
+   * @return {@link KafkaServer} array class
+   */
   @Override
   public Class<?> getObjectType () {
 
     return KafkaServer[].class;
   }
 
+  /**
+   * Returns the broker array constructed during initialization.
+   *
+   * @return configured {@link KafkaServer} array or {@code null} if not initialized
+   */
   @Override
   public KafkaServer[] getObject () {
 
     return serverArray;
   }
 
+  /**
+   * Parses the provided pattern and spread into an array of {@link KafkaServer} objects.
+   *
+   * @throws SpreadParserException if the spread expression cannot be parsed
+   */
   @Override
   public void afterPropertiesSet ()
     throws SpreadParserException {

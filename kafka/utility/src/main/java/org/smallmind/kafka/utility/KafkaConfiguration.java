@@ -32,6 +32,12 @@
  */
 package org.smallmind.kafka.utility;
 
+/**
+ * Placeholder for broker configuration guidance.
+ * Currently documents recommended Kafka broker defaults and options in comments so they can
+ * be copied into external configuration (for example a Kubernetes config map) without tying
+ * the values to compiled code.
+ */
 public class KafkaConfiguration {
 
   // Should go in a config file (config map for k8s)

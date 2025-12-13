@@ -52,10 +52,19 @@ import org.apache.kafka.common.serialization.LongDeserializer;
 import org.apache.kafka.common.serialization.LongSerializer;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Utility for constructing Kafka clients (admin, producer, consumer) with a shared bootstrap server list.
+ * Provides convenience methods for creating clients with sensible defaults and verifying cluster availability.
+ */
 public class KafkaConnector {
 
   private final String boostrapServers;
 
+  /**
+   * Builds a connector from one or more broker descriptors.
+   *
+   * @param servers Kafka brokers that should appear in the bootstrap server string
+   */
   public KafkaConnector (KafkaServer... servers) {
 
     StringBuilder boostrapBuilder = new StringBuilder();
@@ -74,11 +83,23 @@ public class KafkaConnector {
     boostrapServers = boostrapBuilder.toString();
   }
 
+  /**
+   * Returns the comma-separated bootstrap server string generated from the configured brokers.
+   *
+   * @return bootstrap server list in {@code host:port,host:port} format
+   */
   public String getBoostrapServers () {
 
     return boostrapServers;
   }
 
+  /**
+   * Verifies that at least one Kafka node is reachable within the supplied grace period.
+   *
+   * @param startupGracePeriodSeconds number of seconds to keep retrying cluster discovery
+   * @return this connector for call chaining
+   * @throws KafkaConnectionException if no nodes can be confirmed before the grace period elapses
+   */
   public KafkaConnector check (int startupGracePeriodSeconds)
     throws KafkaConnectionException {
 
@@ -115,6 +136,13 @@ public class KafkaConnector {
     }
   }
 
+  /**
+   * Executes an operation with a short-lived {@link AdminClient}, closing it afterward.
+   *
+   * @param clientFunction function that receives an {@link AdminClient} and returns a result
+   * @param <R>            type of the result produced by the supplied function
+   * @return the value returned by {@code clientFunction}
+   */
   public <R> R invokeAdminClient (Function<AdminClient, R> clientFunction) {
 
     Properties props = new Properties();
@@ -133,6 +161,13 @@ public class KafkaConnector {
     }
   }
 
+  /**
+   * Creates a Kafka {@link Producer} that publishes {@code Long} keys and byte array values.
+   * The producer is tuned for low-latency fire-and-forget semantics (acks=0, no retries).
+   *
+   * @param clientId client identifier passed to Kafka for tracing and metrics
+   * @return configured {@link Producer} instance
+   */
   public Producer<Long, byte[]> createProducer (String clientId) {
 
     Properties props = new Properties();
@@ -162,6 +197,15 @@ public class KafkaConnector {
     return new KafkaProducer<>(props);
   }
 
+  /**
+   * Creates a Kafka {@link Consumer} that reads {@code Long} keys and byte array values and optionally subscribes to topics.
+   * Offsets are not auto-committed; callers are responsible for committing once messages are handled.
+   *
+   * @param clientId consumer client identifier
+   * @param groupId  consumer group identifier
+   * @param topics   optional list of topics to subscribe to immediately
+   * @return configured {@link Consumer}
+   */
   public Consumer<Long, byte[]> createConsumer (String clientId, String groupId, String... topics) {
 
     Properties props = new Properties();
