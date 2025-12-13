@@ -57,14 +57,29 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+/**
+ * Utility that sorts dependency declarations within Maven pom files to provide consistent ordering.
+ */
 public class DependencyOrganizer {
 
+  /**
+   * Entry point that accepts the root path of a Maven project to organize.
+   *
+   * @param args command line arguments; the first argument is the project root
+   * @throws IOException if traversal fails
+   */
   public static void main (String... args)
     throws IOException {
 
     walkProject(Paths.get(args[0]));
   }
 
+  /**
+   * Walk the project tree and rewrite each {@code pom.xml} to sort dependencies.
+   *
+   * @param projectPath the path to traverse
+   * @throws IOException if traversal fails
+   */
   public static void walkProject (Path projectPath)
     throws IOException {
 
@@ -86,6 +101,15 @@ public class DependencyOrganizer {
     });
   }
 
+  /**
+   * Rewrite the provided pom with dependencies sorted by group id and artifact id.
+   *
+   * @param pomPath the pom to rewrite
+   * @throws IOException                  if the pom cannot be read or written
+   * @throws SAXException                 if the pom cannot be parsed
+   * @throws ParserConfigurationException if a parser cannot be created
+   * @throws TransformerException         if the rewritten pom cannot be emitted
+   */
   private static void rewritePom (Path pomPath)
     throws IOException, SAXException, ParserConfigurationException, TransformerException {
 
@@ -135,6 +159,12 @@ public class DependencyOrganizer {
     transformer.transform(source, result);
   }
 
+  /**
+   * Sort dependency nodes within a dependencies element.
+   *
+   * @param parentNode the dependencies node to sort
+   * @return a new dependencies node with sorted children
+   */
   private static Node sortDependencies (Node parentNode) {
 
     Node replacementParentNode = parentNode.cloneNode(false);

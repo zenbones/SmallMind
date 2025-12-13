@@ -34,8 +34,30 @@ package org.smallmind.forge.deploy;
 
 import java.nio.file.Path;
 
+/**
+ * Hook for performing platform or environment specific updates after an application is deployed.
+ * Implementations may create service wrappers, configuration files, or any other installation side-effects.
+ */
 public interface Decorator {
 
+  /**
+   * Apply a decoration step to the extracted installation.
+   *
+   * @param operatingSystem the target operating system
+   * @param appUser         the system user that should own the installation
+   * @param installPath     the root installation directory
+   * @param nexusHost       the Nexus host that supplied the artifact
+   * @param nexusUser       the Nexus user
+   * @param nexusPassword   the Nexus password
+   * @param repository      the repository from which the artifact was retrieved
+   * @param groupId         the artifact group id
+   * @param artifactId      the artifact id
+   * @param version         the artifact version
+   * @param classifier      the artifact classifier, or {@code null}
+   * @param extension       the artifact extension (e.g. {@code jar})
+   * @param envVars         optional environment variable declarations to apply
+   * @throws Exception if any decoration step fails; implementations may throw IO or templating exceptions
+   */
   void decorate (OperatingSystem operatingSystem, String appUser, Path installPath, String nexusHost, String nexusUser, String nexusPassword, Repository repository, String groupId, String artifactId, String version, String classifier, String extension, String... envVars)
     throws Exception;
 }

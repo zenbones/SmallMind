@@ -54,8 +54,29 @@ import org.apache.hc.core5.http.config.RegistryBuilder;
 import org.apache.hc.core5.http.io.HttpClientResponseHandler;
 import org.apache.hc.core5.ssl.SSLContexts;
 
+/**
+ * Utility for retrieving artifacts from a Nexus repository via the redirect API.
+ * The downloader authenticates with basic credentials, streams the artifact to disk,
+ * and optionally emits a progress bar while writing the file.
+ */
 public class NexusDownloader {
 
+  /**
+   * Download an artifact from Nexus to the given path.
+   *
+   * @param filePath      the destination on disk for the downloaded artifact
+   * @param nexusHost     the Nexus host name (without scheme or port)
+   * @param nexusUser     the user name used for basic authentication
+   * @param nexusPassword the password used for basic authentication
+   * @param repository    the repository (releases or snapshots) to query
+   * @param groupId       the Maven groupId of the artifact
+   * @param artifactId    the Maven artifactId of the artifact
+   * @param version       the version to request (raw value or LATEST/RELEASE)
+   * @param classifier    the classifier to request, or {@code null} if none
+   * @param extension     the artifact extension (e.g. {@code jar} or {@code zip})
+   * @param progressBar   whether to display a textual progress bar while downloading
+   * @throws IOException if authentication fails, the artifact cannot be found, the stream ends unexpectedly, or the file cannot be written
+   */
   public static void download (Path filePath, String nexusHost, String nexusUser, String nexusPassword, Repository repository, String groupId, String artifactId, String version, String classifier, String extension, boolean progressBar)
     throws IOException {
 
@@ -111,6 +132,13 @@ public class NexusDownloader {
     }
   }
 
+  /**
+   * Translate a requested version into the Nexus-specific value for the selected repository.
+   *
+   * @param repository the repository being addressed
+   * @param version    the requested version string
+   * @return {@code version} unchanged when targeting releases or LATEST/RELEASE, otherwise a snapshot-suffixed version
+   */
   private static String calculateVersion (Repository repository, String version) {
 
     if (version.equals("LATEST") || version.equals("RELEASE")) {

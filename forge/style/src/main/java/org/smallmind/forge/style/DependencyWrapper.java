@@ -36,6 +36,9 @@ import org.smallmind.nutsnbolts.util.AlphaNumericComparator;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
+/**
+ * Wrapper that exposes Maven dependency elements in a comparable form for sorting.
+ */
 public class DependencyWrapper implements Comparable<DependencyWrapper> {
 
   private static final AlphaNumericComparator<String> ALPHA_NUMERIC_COMPARATOR = new AlphaNumericComparator<>();
@@ -44,6 +47,11 @@ public class DependencyWrapper implements Comparable<DependencyWrapper> {
   private final String groupId;
   private final String artifactId;
 
+  /**
+   * Construct a wrapper around a Maven dependency DOM node.
+   *
+   * @param dependencyNode the DOM element representing the dependency
+   */
   public DependencyWrapper (Node dependencyNode) {
 
     this.dependencyNode = dependencyNode;
@@ -52,21 +60,33 @@ public class DependencyWrapper implements Comparable<DependencyWrapper> {
     artifactId = ((Element)dependencyNode).getElementsByTagName("artifactId").item(0).getTextContent();
   }
 
+  /**
+   * @return the group id of the wrapped dependency
+   */
   public String getGroupId () {
 
     return groupId;
   }
 
+  /**
+   * @return the artifact id of the wrapped dependency
+   */
   public String getArtifactId () {
 
     return artifactId;
   }
 
+  /**
+   * @return the underlying dependency DOM node
+   */
   public Node getDependencyNode () {
 
     return dependencyNode;
   }
 
+  /**
+   * Compare two dependencies by group id (dot-delimited) and then by artifact id (dash-delimited).
+   */
   @Override
   public int compareTo (DependencyWrapper otherWrapper) {
 
@@ -81,6 +101,14 @@ public class DependencyWrapper implements Comparable<DependencyWrapper> {
     }
   }
 
+  /**
+   * Compare two delimited strings in a segment-aware alphanumeric fashion.
+   *
+   * @param first     the first string
+   * @param second    the second string
+   * @param separator the separator regex used to split the strings into segments
+   * @return negative, zero, or positive if the first string is lexically less than, equal to, or greater than the second
+   */
   private int subCompare (String first, String second, String separator) {
 
     String[] firstSegements = first.split(separator);

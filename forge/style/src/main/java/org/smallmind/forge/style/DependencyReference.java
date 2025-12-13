@@ -32,6 +32,9 @@
  */
 package org.smallmind.forge.style;
 
+/**
+ * Immutable value object representing a Maven dependency reference parsed from text.
+ */
 public class DependencyReference {
 
   private final String groupId;
@@ -40,6 +43,11 @@ public class DependencyReference {
   private final String classifier;
   private final String scope;
 
+  /**
+   * Parse a colon-delimited dependency reference of the form {@code groupId:artifactId:classifier:version:scope}.
+   *
+   * @param reference the textual representation of a dependency
+   */
   public DependencyReference (String reference) {
 
     String[] split = reference.split(":");
@@ -51,26 +59,41 @@ public class DependencyReference {
     scope = split[4];
   }
 
+  /**
+   * @return the group id portion of the reference
+   */
   public String getGroupId () {
 
     return groupId;
   }
 
+  /**
+   * @return the artifact id portion of the reference
+   */
   public String getArtifactId () {
 
     return artifactId;
   }
 
+  /**
+   * @return the version portion of the reference
+   */
   public String getVersion () {
 
     return version;
   }
 
+  /**
+   * @return the classifier portion of the reference
+   */
   public String getClassifier () {
 
     return classifier;
   }
 
+  /**
+   * @return the dependency scope
+   */
   public String getScope () {
 
     return scope;

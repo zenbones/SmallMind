@@ -32,6 +32,9 @@
  */
 package org.smallmind.forge.deploy;
 
+/**
+ * Console-based progress indicator that prints percentage or a simple ASCII bar.
+ */
 public class TextProgressBar {
 
   private final String measure;
@@ -42,6 +45,14 @@ public class TextProgressBar {
   private boolean done = false;
   private int previousSegment = -1;
 
+  /**
+   * Create a progress bar for a fixed amount of work.
+   *
+   * @param total           the total number of units to complete
+   * @param measure         the text label describing the units (e.g. {@code bytes})
+   * @param segmentPercent  the percentage increment that triggers an update
+   * @param emulateGraphics when {@code true}, renders a single-line ASCII bar; otherwise prints line by line percentages
+   */
   public TextProgressBar (long total, String measure, int segmentPercent, boolean emulateGraphics) {
 
     this.emulateGraphics = emulateGraphics;
@@ -53,6 +64,9 @@ public class TextProgressBar {
     numberOfSegments = (100 / segmentPercent) + ((100 % segmentPercent == 0) ? 0 : 1);
   }
 
+  /**
+   * Finish rendering the progress bar, emitting a line break if rendering was graphical.
+   */
   public synchronized void close () {
 
     if (!done) {
@@ -63,6 +77,12 @@ public class TextProgressBar {
     }
   }
 
+  /**
+   * Update the displayed progress.
+   *
+   * @param current the amount of work completed so far
+   * @throws IllegalArgumentException if {@code current} exceeds {@code total}
+   */
   public synchronized void update (long current) {
 
     if (current > total) {

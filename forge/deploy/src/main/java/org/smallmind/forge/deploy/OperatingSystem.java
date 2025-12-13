@@ -39,6 +39,9 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * Supported operating systems and their associated behaviors for deployment artifacts.
+ */
 public enum OperatingSystem {
 
   LINUX("linux", ".sh") {
@@ -81,6 +84,12 @@ public enum OperatingSystem {
     this.batchExtension = batchExtension;
   }
 
+  /**
+   * Resolve an operating system from its short code.
+   *
+   * @param code the string representation (e.g. {@code linux} or {@code windows})
+   * @return the matching operating system, or {@code null} if the code is not recognized
+   */
   public static OperatingSystem fromCode (String code) {
 
     for (OperatingSystem operatingSystem : OperatingSystem.values()) {
@@ -93,14 +102,26 @@ public enum OperatingSystem {
     return null;
   }
 
+  /**
+   * Ensure the supplied file is executable on the target operating system.
+   *
+   * @param path the file that should be executable
+   * @throws IOException if permissions cannot be set
+   */
   public abstract void makeExecutable (Path path)
     throws IOException;
 
+  /**
+   * @return the identifier used to select the operating system (e.g. {@code linux})
+   */
   public String getCode () {
 
     return code;
   }
 
+  /**
+   * @return the batch/script extension associated with the operating system
+   */
   public String getBatchExtension () {
 
     return batchExtension;

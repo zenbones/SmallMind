@@ -45,8 +45,32 @@ import java.nio.file.attribute.UserPrincipal;
 import org.smallmind.nutsnbolts.io.FileUtility;
 import org.smallmind.nutsnbolts.zip.CompressionType;
 
+/**
+ * Drives end-to-end application updates: downloads the artifact, replaces the existing installation,
+ * applies decorators, and re-installs the service wrapper.
+ */
 public class ApplicationUpdater {
 
+  /**
+   * Download and deploy an application archive from Nexus, optionally running decoration steps and service lifecycle commands.
+   *
+   * @param operatingSystem the target operating system
+   * @param appUser         the system user that should own the installation
+   * @param installPath     the root installation directory
+   * @param progressBar     whether to display download progress
+   * @param nexusHost       the Nexus host name
+   * @param nexusUser       the Nexus user name
+   * @param nexusPassword   the Nexus password
+   * @param repository      the repository to download from
+   * @param groupId         the artifact group id
+   * @param artifactId      the artifact id
+   * @param version         the artifact version
+   * @param classifier      the artifact classifier, or {@code null}
+   * @param extension       the artifact extension
+   * @param envVars         environment variables to pass to decorators
+   * @param decorators      optional decorators to run after extraction
+   * @throws Exception if downloading, extracting, decorating, permission changes, or process execution fails
+   */
   public static void update (OperatingSystem operatingSystem, String appUser, Path installPath, boolean progressBar, String nexusHost, String nexusUser, String nexusPassword, Repository repository, String groupId, String artifactId, String version, String classifier, String extension, String[] envVars, Decorator... decorators)
     throws Exception {
 

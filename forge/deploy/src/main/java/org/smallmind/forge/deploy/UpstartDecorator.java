@@ -44,6 +44,9 @@ import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 
+/**
+ * Decorator that generates Upstart installation scripts for Linux deployments.
+ */
 public class UpstartDecorator implements Decorator {
 
   private static final Template UPSTART_TEMPLATE;
@@ -61,6 +64,25 @@ public class UpstartDecorator implements Decorator {
     }
   }
 
+  /**
+   * Generate the Upstart installation script when targeting Linux, interpolating the application metadata.
+   *
+   * @param operatingSystem the target operating system
+   * @param appUser         the user that should own the installation
+   * @param installPath     the installation root directory
+   * @param nexusHost       the Nexus host used for downloads
+   * @param nexusUser       the Nexus user name
+   * @param nexusPassword   the Nexus password
+   * @param repository      the repository used to retrieve artifacts
+   * @param groupId         the application group id
+   * @param artifactId      the application artifact id
+   * @param version         the application version
+   * @param classifier      the classifier, or {@code null} if none
+   * @param extension       the artifact extension
+   * @param envVars         environment variable declarations to inject into the Upstart script
+   * @throws IOException       if the script cannot be written
+   * @throws TemplateException if template interpolation fails
+   */
   public void decorate (OperatingSystem operatingSystem, String appUser, Path installPath, String nexusHost, String nexusUser, String nexusPassword, Repository repository, String groupId, String artifactId, String version, String classifier, String extension, String... envVars)
     throws IOException, TemplateException {
 

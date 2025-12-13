@@ -43,8 +43,17 @@ import org.smallmind.nutsnbolts.command.CommandLineParser;
 import org.smallmind.nutsnbolts.command.OptionSet;
 import org.smallmind.nutsnbolts.command.template.Template;
 
+/**
+ * Command line entry point for invoking {@link ApplicationUpdater}.
+ */
 public class ApplicationUpdaterCLI {
 
+  /**
+   * Parse command line arguments, build a decorator chain, and launch the update process.
+   *
+   * @param args CLI arguments matching {@link Template} metadata
+   * @throws Exception if argument parsing or update execution fails
+   */
   public static void main (String... args)
     throws Exception {
 

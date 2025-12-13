@@ -65,16 +65,35 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+/**
+ * Tooling that consumes {@code mvn dependency:analyze} output to remove unused dependencies,
+ * add used but undeclared dependencies, and fix scopes, rewriting affected {@code pom.xml} files.
+ */
 public class DependencyReducer {
 
+  /**
+   * States used while parsing the output of {@code mvn dependency:analyze}.
+   */
   private enum ParseState {IGNORED, USED_UNDECLARED, UNUSED_DECLARED, NON_TEST_SCOPED_TEST_ONLY}
 
+  /**
+   * Entry point that accepts the root of a Maven project tree to process.
+   *
+   * @param args command line arguments; the first argument must be the project root path
+   * @throws IOException if file traversal or process execution fails
+   */
   public static void main (String... args)
     throws IOException {
 
     walkProject(Paths.get(args[0]));
   }
 
+  /**
+   * Walk the project tree, running {@code mvn dependency:analyze} for each module and applying the results.
+   *
+   * @param projectPath the root path to inspect
+   * @throws IOException if file traversal or process execution fails
+   */
   public static void walkProject (Path projectPath)
     throws IOException {
 
@@ -137,6 +156,13 @@ public class DependencyReducer {
     }
   }
 
+  /**
+   * Locate {@code mvn.cmd} starting from the supplied directory.
+   *
+   * @param commandDir the working directory used to run the {@code where} command
+   * @return the path to {@code mvn.cmd}, or {@code null} if it cannot be found
+   * @throws IOException if the lookup command cannot be executed
+   */
   private static String findMvn (Path commandDir)
     throws IOException {
 
@@ -152,6 +178,12 @@ public class DependencyReducer {
     }
   }
 
+  /**
+   * Determine whether the path includes any hidden (dot-prefixed) elements.
+   *
+   * @param path the path to test
+   * @return {@code true} when any segment begins with '.', otherwise {@code false}
+   */
   private static boolean dottedPath (Path path) {
 
     for (int index = 0; index < path.getNameCount(); index++) {
@@ -164,6 +196,14 @@ public class DependencyReducer {
     return false;
   }
 
+  /**
+   * Execute a command and buffer its standard output.
+   *
+   * @param commandDir the working directory for the process
+   * @param commands   the command and arguments to run
+   * @return the buffered output
+   * @throws IOException if the process cannot be started, its output cannot be read, or it fails to exit within the timeout
+   */
   private static ByteArrayOutputStream bufferProcessOutput (Path commandDir, String... commands)
     throws IOException {
 
@@ -192,6 +232,18 @@ public class DependencyReducer {
     return buffer;
   }
 
+  /**
+   * Rewrite a pom to reflect dependency analysis: remove unused, add missing, and adjust scopes.
+   *
+   * @param pomPath                   path to the pom file
+   * @param usedUndeclaredList        dependencies detected as used but undeclared
+   * @param unusedDeclaredList        dependencies declared but unused
+   * @param nonTestScopedTestOnlyList dependencies that should be marked as test scope
+   * @throws IOException                  if the pom cannot be read or written
+   * @throws SAXException                 if XML parsing fails
+   * @throws ParserConfigurationException if a document builder cannot be created
+   * @throws TransformerException         if the updated document cannot be written
+   */
   private static void rewritePom (Path pomPath, List<DependencyReference> usedUndeclaredList, LinkedList<DependencyReference> unusedDeclaredList, LinkedList<DependencyReference> nonTestScopedTestOnlyList)
     throws IOException, SAXException, ParserConfigurationException, TransformerException {
 
@@ -243,6 +295,15 @@ public class DependencyReducer {
     }
   }
 
+  /**
+   * Apply dependency adjustments to a single dependencies node.
+   *
+   * @param parentNode                the dependencies node being modified
+   * @param usedUndeclaredList        dependencies detected as used but undeclared
+   * @param unusedDeclaredList        dependencies declared but unused
+   * @param nonTestScopedTestOnlyList dependencies that should be marked as test scope
+   * @return a replacement node reflecting the adjustments, or {@code null} if no changes are needed
+   */
   private static Node adjustDependencies (Node parentNode, List<DependencyReference> usedUndeclaredList, LinkedList<DependencyReference> unusedDeclaredList, LinkedList<DependencyReference> nonTestScopedTestOnlyList) {
 
     Node replacementParentNode = parentNode.cloneNode(false);
@@ -319,6 +380,13 @@ public class DependencyReducer {
     }
   }
 
+  /**
+   * Create a dependency element from a parsed reference.
+   *
+   * @param document            the owning document
+   * @param dependencyReference the reference describing the dependency
+   * @return a populated dependency element
+   */
   private static Element createDependencyElement (Document document, DependencyReference dependencyReference) {
 
     Element addedDependency = document.createElement("dependency");
