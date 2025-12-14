@@ -32,12 +32,20 @@
  */
 package org.smallmind.memcached.cubby;
 
+/**
+ * Generates monotonically increasing opaque tokens suitable for CAS identifiers.
+ */
 public class TokenGenerator {
 
   private static final String ALPHABET = "!#$%&()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_abcdefghijklmnopqrstuvwxyz{|}~";
 
   private final byte[] counter = new byte[32];
 
+  /**
+   * Produces the next token value.
+   *
+   * @return next token string
+   */
   public synchronized String next () {
 
     StringBuilder countBuilder = new StringBuilder();

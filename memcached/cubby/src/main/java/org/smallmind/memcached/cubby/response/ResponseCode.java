@@ -32,6 +32,9 @@
  */
 package org.smallmind.memcached.cubby.response;
 
+/**
+ * Enumerates memcached response status codes used by the Cubby binary protocol variant.
+ */
 public enum ResponseCode {
 
   // (NOOP), returned by the noop command
@@ -49,11 +52,20 @@ public enum ResponseCode {
   // (NOT_STORED), to indicate the data was not stored, but not because of an error
   NS;
 
+  /**
+   * @param first  first response byte
+   * @param second second response byte
+   * @return {@code true} if the bytes match the start of this code
+   */
   public boolean begins (byte first, byte second) {
 
     return (first == name().charAt(0)) && (second == name().charAt(1));
   }
 
+  /**
+   * @param codes set of codes to check membership against
+   * @return {@code true} if this code is contained in the list
+   */
   public boolean in (ResponseCode... codes) {
 
     for (ResponseCode code : codes) {

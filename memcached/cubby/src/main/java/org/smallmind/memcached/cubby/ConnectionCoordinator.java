@@ -43,6 +43,9 @@ import org.smallmind.memcached.cubby.response.Response;
 import org.smallmind.nutsnbolts.util.ComponentStatus;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Coordinates a set of connections to memcached hosts, handling lifecycle and routing updates.
+ */
 public class ConnectionCoordinator {
 
   private final AtomicReference<ComponentStatus> status = new AtomicReference<>(ComponentStatus.STOPPED);
@@ -52,6 +55,12 @@ public class ConnectionCoordinator {
   private final HashMap<String, CubbyConnection> connectionMap = new HashMap<>();
   private ServerDefibrillator serverDefibrillator;
 
+  /**
+   * Builds a coordinator for the provided hosts and configuration.
+   *
+   * @param configuration  runtime configuration including routing and connection settings
+   * @param memcachedHosts target hosts to manage
+   */
   public ConnectionCoordinator (CubbyConfiguration configuration, MemcachedHost... memcachedHosts) {
 
     this.configuration = configuration;
@@ -59,6 +68,13 @@ public class ConnectionCoordinator {
     serverPool = new ServerPool(memcachedHosts);
   }
 
+  /**
+   * Starts the coordinator by constructing connections and launching the defibrillator monitor.
+   *
+   * @throws InterruptedException    if interrupted while connecting
+   * @throws IOException             if sockets cannot be opened
+   * @throws CubbyOperationException if initialization fails
+   */
   public synchronized void start ()
     throws InterruptedException, IOException, CubbyOperationException {
 
@@ -87,6 +103,12 @@ public class ConnectionCoordinator {
     }
   }
 
+  /**
+   * Stops the coordinator, shutting down health monitoring and active connections.
+   *
+   * @throws InterruptedException if interrupted while closing
+   * @throws IOException          if a connection cannot be closed
+   */
   public synchronized void stop ()
     throws InterruptedException, IOException {
 
@@ -112,12 +134,30 @@ public class ConnectionCoordinator {
     }
   }
 
+  /**
+   * Sends a command over the connection mapped to its key.
+   *
+   * @param command        command to dispatch
+   * @param timeoutSeconds optional timeout in seconds; {@code null} uses configured default
+   * @return response returned by the server
+   * @throws InterruptedException    if interrupted while waiting
+   * @throws IOException             if network communication fails
+   * @throws CubbyOperationException if routing fails or the server reports an error
+   */
   public Response send (Command command, Long timeoutSeconds)
     throws InterruptedException, IOException, CubbyOperationException {
 
     return getConnection(command).send(command, timeoutSeconds);
   }
 
+  /**
+   * Resolves the connection associated with the supplied command key.
+   *
+   * @param command command whose key determines routing
+   * @return an active connection for the key
+   * @throws IOException             if routing table access fails
+   * @throws CubbyOperationException if the coordinator is stopped or a connection is missing
+   */
   private CubbyConnection getConnection (Command command)
     throws IOException, CubbyOperationException {
 
@@ -142,6 +182,11 @@ public class ConnectionCoordinator {
     }
   }
 
+  /**
+   * Marks the host as inactive and triggers routing table recalculation.
+   *
+   * @param memcachedHost host to mark disconnected
+   */
   public void disconnect (MemcachedHost memcachedHost) {
 
     lock.writeLock().lock();
@@ -162,6 +207,14 @@ public class ConnectionCoordinator {
     }
   }
 
+  /**
+   * Reconnects a host, rebuilding its connection and re-enabling routing.
+   *
+   * @param memcachedHost host to reconnect
+   * @throws InterruptedException    if interrupted while reconnecting
+   * @throws IOException             if network I/O fails
+   * @throws CubbyOperationException if connection construction fails
+   */
   public void reconnect (MemcachedHost memcachedHost)
     throws InterruptedException, IOException, CubbyOperationException {
 
@@ -184,6 +237,14 @@ public class ConnectionCoordinator {
     }
   }
 
+  /**
+   * Builds a new connection to the host, replacing any existing connection.
+   *
+   * @param memcachedHost host to connect to
+   * @throws InterruptedException    if interrupted while opening
+   * @throws IOException             if socket creation fails
+   * @throws CubbyOperationException if initialization fails
+   */
   private void constructConnection (MemcachedHost memcachedHost)
     throws InterruptedException, IOException, CubbyOperationException {
 

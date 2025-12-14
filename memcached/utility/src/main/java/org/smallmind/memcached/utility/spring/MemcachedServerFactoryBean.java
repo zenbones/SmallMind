@@ -39,40 +39,75 @@ import org.smallmind.nutsnbolts.util.SpreadParserException;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
+/**
+ * Spring FactoryBean that expands server patterns into an array of {@link MemcachedServer} instances.
+ */
 public class MemcachedServerFactoryBean implements FactoryBean<MemcachedServer[]>, InitializingBean {
 
   private MemcachedServer[] serverArray;
   private String serverPattern;
   private String serverSpread;
 
+  /**
+   * Sets the server pattern (supports # placeholders and optional host:port).
+   *
+   * @param serverPattern pattern string
+   */
   public void setServerPattern (String serverPattern) {
 
     this.serverPattern = serverPattern;
   }
 
+  /**
+   * Sets the spread specification used to replace # placeholders.
+   *
+   * @param serverSpread spread value (e.g., 1-3)
+   */
   public void setServerSpread (String serverSpread) {
 
     this.serverSpread = serverSpread;
   }
 
+  /**
+   * Indicates that this factory bean is a singleton.
+   *
+   * @return {@code true} always
+   */
   @Override
   public boolean isSingleton () {
 
     return true;
   }
 
+  /**
+   * Returns the produced object type.
+   *
+   * @return {@link MemcachedServer} array class
+   */
   @Override
   public Class<?> getObjectType () {
 
     return MemcachedServer[].class;
   }
 
+  /**
+   * Provides the configured {@link MemcachedServer} array.
+   *
+   * @return array of servers, or {@code null} if not yet initialized
+   */
   @Override
   public MemcachedServer[] getObject () {
 
     return serverArray;
   }
 
+  /**
+   * Parses the pattern/spread settings to create the server array.
+   *
+   * <p>Expands `#` tokens using the spread and applies default port 11211 when none is provided.</p>
+   *
+   * @throws SpreadParserException if the spread cannot be parsed
+   */
   @Override
   public void afterPropertiesSet ()
     throws SpreadParserException {

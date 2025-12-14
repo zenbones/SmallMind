@@ -34,6 +34,9 @@ package org.smallmind.memcached.cubby;
 
 import org.smallmind.nutsnbolts.lang.FormattedIOException;
 
+/**
+ * Thrown when routing cannot identify an active memcached host for a request.
+ */
 public class NoAvailableHostException extends FormattedIOException {
 
 }

@@ -40,6 +40,9 @@ import org.smallmind.memcached.cubby.response.Response;
 import org.smallmind.memcached.cubby.response.ResponseCode;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
 
+/**
+ * Implements the memcached set, add, replace, append and prepend operations along with CAS support.
+ */
 public class SetCommand extends Command {
 
   private static final Long ZERO = 0L;
@@ -52,12 +55,21 @@ public class SetCommand extends Command {
   private Integer expiration;
   private Long cas;
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String getKey () {
 
     return key;
   }
 
+  /**
+   * Assigns the cache key.
+   *
+   * @param key cache key
+   * @return this command for chaining
+   */
   public SetCommand setKey (String key) {
 
     this.key = key;
@@ -65,6 +77,12 @@ public class SetCommand extends Command {
     return this;
   }
 
+  /**
+   * Supplies the serialized value payload.
+   *
+   * @param value encoded value bytes
+   * @return this command for chaining
+   */
   public SetCommand setValue (byte[] value) {
 
     this.value = value;
@@ -72,6 +90,12 @@ public class SetCommand extends Command {
     return this;
   }
 
+  /**
+   * Sets the operation mode (set/add/replace/append/prepend).
+   *
+   * @param mode set mode token
+   * @return this command for chaining
+   */
   public SetCommand setMode (SetMode mode) {
 
     this.mode = mode;
@@ -79,6 +103,12 @@ public class SetCommand extends Command {
     return this;
   }
 
+  /**
+   * Adds a CAS token to guard the mutation.
+   *
+   * @param cas compare-and-swap token
+   * @return this command for chaining
+   */
   public SetCommand setCas (Long cas) {
 
     this.cas = cas;
@@ -86,6 +116,12 @@ public class SetCommand extends Command {
     return this;
   }
 
+  /**
+   * Sets the expiration in seconds for the value.
+   *
+   * @param expiration expiration time in seconds
+   * @return this command for chaining
+   */
   public SetCommand setExpiration (Integer expiration) {
 
     this.expiration = expiration;
@@ -93,6 +129,12 @@ public class SetCommand extends Command {
     return this;
   }
 
+  /**
+   * Enables creation of a previously absent key when appending or prepending.
+   *
+   * @param vivify {@code true} to create the key if missing
+   * @return this command for chaining
+   */
   public SetCommand setVivify (boolean vivify) {
 
     this.vivify = vivify;
@@ -100,6 +142,12 @@ public class SetCommand extends Command {
     return this;
   }
 
+  /**
+   * Attaches an opaque token echoed by the server in responses.
+   *
+   * @param opaqueToken token to include
+   * @return this command for chaining
+   */
   public SetCommand setOpaqueToken (String opaqueToken) {
 
     this.opaqueToken = opaqueToken;
@@ -107,6 +155,9 @@ public class SetCommand extends Command {
     return this;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public byte[] construct (KeyTranslator keyTranslator)
     throws IOException, CubbyOperationException {
@@ -155,6 +206,9 @@ public class SetCommand extends Command {
     return bytes;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Result process (Response response)
     throws UnexpectedResponseException {

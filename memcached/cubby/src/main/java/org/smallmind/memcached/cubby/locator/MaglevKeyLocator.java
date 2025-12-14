@@ -51,6 +51,9 @@ import org.smallmind.memcached.cubby.ServerPool;
 import org.smallmind.nutsnbolts.security.EncryptionUtility;
 import org.smallmind.nutsnbolts.security.HashAlgorithm;
 
+/**
+ * Implements Maglev consistent hashing to provide stable, balanced key distribution.
+ */
 public class MaglevKeyLocator implements KeyLocator {
 
   private static final SipHasherContainer SIPHASH = SipHasher.container("0123456789ABCDEF".getBytes(StandardCharsets.UTF_8));
@@ -62,16 +65,30 @@ public class MaglevKeyLocator implements KeyLocator {
   private int permutationSize;
   private long longerPermutationSize;
 
+  /**
+   * Uses a default virtual host count of 100.
+   */
   public MaglevKeyLocator () {
 
     this(100);
   }
 
+  /**
+   * Creates a locator with the supplied virtual host count per real host.
+   *
+   * @param virtualHostCount number of virtual nodes per host to improve balance
+   */
   public MaglevKeyLocator (int virtualHostCount) {
 
     this.virtualHostCount = virtualHostCount;
   }
 
+  /**
+   * Computes the Maglev lookup table for active hosts.
+   *
+   * @param serverPool pool of hosts to route across
+   * @return mapping of slot index to host name
+   */
   private HashMap<Integer, String> generateRoutingMap (ServerPool serverPool) {
 
     HashMap<Integer, String> routingMap = new HashMap<>();
@@ -124,6 +141,14 @@ public class MaglevKeyLocator implements KeyLocator {
     return routingMap;
   }
 
+  /**
+   * Pre-computes per-host permutation tables and initializes routing for the active pool.
+   *
+   * <p>Uses distinct hash functions to derive the offset and skip values required by Maglev.</p>
+   *
+   * @param serverPool pool of hosts used to build permutations and routing
+   * @throws CubbyOperationException if hashing algorithms are unavailable
+   */
   @Override
   public void installRouting (ServerPool serverPool)
     throws CubbyOperationException {
@@ -150,6 +175,11 @@ public class MaglevKeyLocator implements KeyLocator {
     updateRouting(serverPool);
   }
 
+  /**
+   * Rebuilds the routing map when the active host list changes.
+   *
+   * @param serverPool pool used to derive the latest active host set
+   */
   @Override
   public void updateRouting (ServerPool serverPool) {
 
@@ -163,6 +193,16 @@ public class MaglevKeyLocator implements KeyLocator {
     }
   }
 
+  /**
+   * Resolves the {@link MemcachedHost} that should service the provided key.
+   *
+   * <p>Uses SipHash for fast, well-distributed hashing of the key before consulting the Maglev table.</p>
+   *
+   * @param serverPool pool for looking up host details
+   * @param key cache key to route
+   * @return active host for the key
+   * @throws IOException if no host is available
+   */
   @Override
   public MemcachedHost find (ServerPool serverPool, String key)
     throws IOException {

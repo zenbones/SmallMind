@@ -35,42 +35,89 @@ package org.smallmind.memcached.utility;
 import java.util.Collection;
 import java.util.Map;
 
+/**
+ * Minimal client abstraction used by implementations such as Cubby and in-memory clients.
+ */
 public interface ProxyMemcachedClient {
 
+  /**
+   * @return default request timeout in milliseconds
+   */
   long getDefaultTimeout ();
 
+  /**
+   * Wraps a value and CAS token.
+   *
+   * @param cas   compare-and-swap token
+   * @param value decoded value
+   * @param <T>   value type
+   * @return CAS response wrapper
+   */
   <T> ProxyCASResponse<T> createCASResponse (long cas, T value);
 
+  /**
+   * Retrieves a value by key.
+   */
   <T> T get (String key)
     throws Exception;
 
+  /**
+   * Retrieves multiple values by key.
+   */
   <T> Map<String, T> get (Collection<String> keys)
     throws Exception;
 
+  /**
+   * Retrieves a value along with its CAS token.
+   */
   <T> ProxyCASResponse<T> casGet (String key)
     throws Exception;
 
+  /**
+   * Stores a value with an expiration.
+   */
   <T> boolean set (String key, int expiration, T value)
     throws Exception;
 
+  /**
+   * Stores a value conditionally using a CAS token.
+   */
   <T> boolean casSet (String key, int expiration, T value, long cas)
     throws Exception;
 
+  /**
+   * Deletes the entry for the key.
+   */
   boolean delete (String key)
     throws Exception;
 
+  /**
+   * Deletes the entry only if the CAS token matches.
+   */
   boolean casDelete (String key, long cas)
     throws Exception;
 
+  /**
+   * Updates a key's expiration without returning the value.
+   */
   boolean touch (String key, int expiration)
     throws Exception;
 
+  /**
+   * Retrieves and updates the expiration for a key.
+   */
   <T> T getAndTouch (String key, int expiration)
     throws Exception;
 
+  /**
+   * Clears all entries.
+   */
   void clear ()
     throws Exception;
 
+  /**
+   * Shuts down the client and releases resources.
+   */
   void shutdown ()
     throws Exception;
 }

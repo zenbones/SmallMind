@@ -32,22 +32,37 @@
  */
 package org.smallmind.memcached.utility;
 
+/**
+ * In-memory implementation of {@link ProxyCASResponse}.
+ */
 public class InMemoryCASResponse<T> implements ProxyCASResponse<T> {
 
   private final T value;
   private final long cas;
 
+  /**
+   * Constructs a CAS response wrapper.
+   *
+   * @param cas   compare-and-swap token
+   * @param value decoded value
+   */
   public InMemoryCASResponse (long cas, T value) {
 
     this.value = value;
     this.cas = cas;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public T getValue () {
 
     return value;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public long getCas () {
 
     return cas;

@@ -32,22 +32,37 @@
  */
 package org.smallmind.memcached.cubby.connection;
 
+/**
+ * Encapsulates a serialized command along with its write sequence index.
+ */
 public class CommandBuffer {
 
   private final byte[] request;
   private final long index;
 
+  /**
+   * Creates a buffered command.
+   *
+   * @param index   ordinal indicating write order
+   * @param request serialized command bytes
+   */
   public CommandBuffer (long index, byte[] request) {
 
     this.index = index;
     this.request = request;
   }
 
+  /**
+   * @return write-order index for this command
+   */
   public long getIndex () {
 
     return index;
   }
 
+  /**
+   * @return serialized request bytes
+   */
   public byte[] getRequest () {
 
     return request;

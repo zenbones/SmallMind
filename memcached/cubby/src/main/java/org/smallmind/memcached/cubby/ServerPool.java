@@ -37,10 +37,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Maintains a mapping of memcached hosts to their control metadata and supports quick lookups.
+ */
 public class ServerPool {
 
   private final HashMap<String, HostControl> hostMap = new HashMap<>();
 
+  /**
+   * Builds a pool from the supplied host list.
+   *
+   * @param memcachedHosts hosts to track
+   */
   public ServerPool (MemcachedHost... memcachedHosts) {
 
     for (MemcachedHost memcachedHost : memcachedHosts) {
@@ -48,26 +56,47 @@ public class ServerPool {
     }
   }
 
+  /**
+   * @return number of hosts in the pool
+   */
   public int size () {
 
     return hostMap.size();
   }
 
+  /**
+   * Retrieves the control object for the named host.
+   *
+   * @param name host name
+   * @return control metadata or {@code null} if missing
+   */
   public HostControl get (String name) {
 
     return hostMap.get(name);
   }
 
+  /**
+   * @return set of host names in the pool
+   */
   public Set<String> keySet () {
 
     return hostMap.keySet();
   }
 
+  /**
+   * @return collection of control records
+   */
   public Collection<HostControl> values () {
 
     return hostMap.values();
   }
 
+  /**
+   * Tests whether the pool exactly matches the supplied list of active hosts.
+   *
+   * @param hostList hosts to compare against
+   * @return {@code true} if the pool and list represent the same active hosts
+   */
   public boolean representsHosts (List<MemcachedHost> hostList) {
 
     if (hostMap.size() != hostList.size()) {

@@ -39,10 +39,19 @@ import org.smallmind.memcached.cubby.CubbyOperationException;
 import org.smallmind.memcached.cubby.response.Response;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
 
+/**
+ * Issues an authentication request carrying SASL credentials.
+ */
 public class AuthenticationCommand extends Command {
 
   private Authentication authentication;
 
+  /**
+   * Sets the credentials to send.
+   *
+   * @param authentication username/password pair
+   * @return this command for chaining
+   */
   public AuthenticationCommand setAuthentication (Authentication authentication) {
 
     this.authentication = authentication;
@@ -50,6 +59,9 @@ public class AuthenticationCommand extends Command {
     return this;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String getKey ()
     throws CubbyOperationException {
@@ -57,6 +69,9 @@ public class AuthenticationCommand extends Command {
     throw new CubbyOperationException("Authentication can't be used in the normal request/response cycle");
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public byte[] construct (KeyTranslator keyTranslator)
     throws IOException, CubbyOperationException {
@@ -77,6 +92,9 @@ public class AuthenticationCommand extends Command {
     return bytes;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Result process (Response response) {
 

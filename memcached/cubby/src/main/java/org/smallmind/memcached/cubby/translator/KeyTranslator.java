@@ -35,8 +35,19 @@ package org.smallmind.memcached.cubby.translator;
 import java.io.IOException;
 import org.smallmind.memcached.cubby.CubbyOperationException;
 
+/**
+ * Translates cache keys to forms accepted by memcached servers.
+ */
 public interface KeyTranslator {
 
+  /**
+   * Encodes the provided key, enforcing size and character restrictions.
+   *
+   * @param key original cache key
+   * @return translated key
+   * @throws IOException             if translation requires I/O and fails
+   * @throws CubbyOperationException if the key cannot be translated
+   */
   String encode (String key)
     throws IOException, CubbyOperationException;
 }

@@ -37,8 +37,20 @@ import java.nio.charset.StandardCharsets;
 import org.smallmind.memcached.cubby.IncomprehensibleRequestException;
 import org.smallmind.memcached.cubby.IncomprehensibleResponseException;
 
+/**
+ * Parses raw protocol lines into structured {@link Response} objects.
+ */
 public class ResponseParser {
 
+  /**
+   * Parses the provided buffer window into a response.
+   *
+   * @param joinedBuffer buffer spanning accumulated and newly read bytes
+   * @param offset       starting offset
+   * @param length       number of bytes representing the response line
+   * @return parsed response
+   * @throws IOException if parsing fails or the buffer is malformed
+   */
   public static Response parse (JoinedBuffer joinedBuffer, int offset, int length)
     throws IOException {
 
@@ -84,6 +96,13 @@ public class ResponseParser {
     }
   }
 
+  /**
+   * Determines whether the current buffer window represents an ERROR response.
+   *
+   * @param joinedBuffer buffer positioned at response start
+   * @param length length of the response line
+   * @return {@code true} if the line is exactly "ERROR"
+   */
   private static boolean isError (JoinedBuffer joinedBuffer, int length) {
 
     try {
@@ -98,6 +117,15 @@ public class ResponseParser {
     }
   }
 
+  /**
+   * Parses optional flags in a response line and populates the {@link Response}.
+   *
+   * @param response     response to update
+   * @param joinedBuffer buffer positioned after the response code
+   * @param offset       offset where the response line begins
+   * @param length       total response line length
+   * @throws IOException if the format is invalid
+   */
   private static void parseFlags (Response response, JoinedBuffer joinedBuffer, int offset, int length)
     throws IOException {
 
@@ -131,6 +159,15 @@ public class ResponseParser {
     }
   }
 
+  /**
+   * Parses an integer flag value from the buffer.
+   *
+   * @param joinedBuffer buffer containing the value
+   * @param offset       offset where the response line begins
+   * @param length       total response line length
+   * @return parsed integer
+   * @throws IOException if the token is not a number or the format is invalid
+   */
   private static int accumulateInt (JoinedBuffer joinedBuffer, int offset, int length)
     throws IOException {
 
@@ -141,6 +178,15 @@ public class ResponseParser {
     }
   }
 
+  /**
+   * Parses a long flag value from the buffer.
+   *
+   * @param joinedBuffer buffer containing the value
+   * @param offset       offset where the response line begins
+   * @param length       total response line length
+   * @return parsed long
+   * @throws IOException if the token is not a number or the format is invalid
+   */
   private static long accumulateLong (JoinedBuffer joinedBuffer, int offset, int length)
     throws IOException {
 
@@ -151,6 +197,14 @@ public class ResponseParser {
     }
   }
 
+  /**
+   * Extracts a token up to the next space or end of the response line.
+   *
+   * @param joinedBuffer buffer containing the token
+   * @param offset       offset where the response line begins
+   * @param length       total response line length
+   * @return token string
+   */
   private static String accumulateToken (JoinedBuffer joinedBuffer, int offset, int length) {
 
     int index = 0;
@@ -167,6 +221,13 @@ public class ResponseParser {
     return new String(joinedBuffer.get(new byte[index]), StandardCharsets.UTF_8);
   }
 
+  /**
+   * Builds an {@link IncomprehensibleResponseException} using the current response slice.
+   *
+   * @param joinedBuffer buffer positioned at the start of the response
+   * @param length       length of the response line
+   * @return exception populated with the offending response text
+   */
   private static IncomprehensibleResponseException createIncomprehensibleResponseException (JoinedBuffer joinedBuffer, int length) {
 
     byte[] slice = new byte[length];

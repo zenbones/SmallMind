@@ -38,6 +38,9 @@ import java.io.IOException;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
+/**
+ * Codec decorator that compresses large serialized payloads using GZIP before storage.
+ */
 public class LargeValueCompressingCodec implements CubbyCodec {
 
   private static final int DEFAULT_COMPRESSION_THRESHOLD = 16384;
@@ -45,17 +48,31 @@ public class LargeValueCompressingCodec implements CubbyCodec {
   private final CubbyCodec codec;
   private final int compressionThreshold;
 
+  /**
+   * Wraps the supplied codec with a default compression threshold.
+   *
+   * @param codec delegate codec to serialize and deserialize values
+   */
   public LargeValueCompressingCodec (CubbyCodec codec) {
 
     this(codec, DEFAULT_COMPRESSION_THRESHOLD);
   }
 
+  /**
+   * Wraps the supplied codec using the provided compression threshold.
+   *
+   * @param codec                delegate codec
+   * @param compressionThreshold minimum payload size in bytes to trigger compression
+   */
   public LargeValueCompressingCodec (CubbyCodec codec, int compressionThreshold) {
 
     this.codec = codec;
     this.compressionThreshold = compressionThreshold;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public byte[] serialize (Object obj)
     throws IOException {
@@ -77,6 +94,9 @@ public class LargeValueCompressingCodec implements CubbyCodec {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Object deserialize (byte[] bytes)
     throws IOException, ClassNotFoundException {

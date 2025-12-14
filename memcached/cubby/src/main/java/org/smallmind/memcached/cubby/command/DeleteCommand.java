@@ -40,18 +40,30 @@ import org.smallmind.memcached.cubby.response.Response;
 import org.smallmind.memcached.cubby.response.ResponseCode;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
 
+/**
+ * Encapsulates the memcached delete operation with optional CAS protection.
+ */
 public class DeleteCommand extends Command {
 
   private String key;
   private String opaqueToken;
   private Long cas;
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String getKey () {
 
     return key;
   }
 
+  /**
+   * Sets the key to delete.
+   *
+   * @param key cache key
+   * @return this command for chaining
+   */
   public DeleteCommand setKey (String key) {
 
     this.key = key;
@@ -59,6 +71,12 @@ public class DeleteCommand extends Command {
     return this;
   }
 
+  /**
+   * Adds a CAS token to guard deletion.
+   *
+   * @param cas compare-and-swap token
+   * @return this command for chaining
+   */
   public DeleteCommand setCas (Long cas) {
 
     this.cas = cas;
@@ -66,6 +84,12 @@ public class DeleteCommand extends Command {
     return this;
   }
 
+  /**
+   * Sets an opaque token echoed back by the server.
+   *
+   * @param opaqueToken token value
+   * @return this command for chaining
+   */
   public DeleteCommand setOpaqueToken (String opaqueToken) {
 
     this.opaqueToken = opaqueToken;
@@ -73,6 +97,9 @@ public class DeleteCommand extends Command {
     return this;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public byte[] construct (KeyTranslator keyTranslator)
     throws IOException, CubbyOperationException {
@@ -89,6 +116,9 @@ public class DeleteCommand extends Command {
     return line.append("\r\n").toString().getBytes(StandardCharsets.UTF_8);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Result process (Response response)
     throws UnexpectedResponseException {

@@ -58,6 +58,9 @@ import org.smallmind.memcached.cubby.response.Response;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * NIO-based implementation of a memcached connection managing read/write loops and health checks.
+ */
 public class NIOCubbyConnection implements CubbyConnection {
 
   private final CountDownLatch terminationLatch = new CountDownLatch(1);
@@ -79,6 +82,13 @@ public class NIOCubbyConnection implements CubbyConnection {
   private RequestWriter requestWriter;
   private ResponseReader responseReader;
 
+  /**
+   * Creates a new non-blocking connection to the supplied host.
+   *
+   * @param connectionCoordinator coordinator to notify about connectivity changes
+   * @param configuration         connection-related settings
+   * @param memcachedHost         destination host
+   */
   public NIOCubbyConnection (ConnectionCoordinator connectionCoordinator, CubbyConfiguration configuration, MemcachedHost memcachedHost) {
 
     this.connectionCoordinator = connectionCoordinator;
@@ -91,6 +101,13 @@ public class NIOCubbyConnection implements CubbyConnection {
     defaultRequestTimeoutMilliseconds = configuration.getDefaultRequestTimeoutMilliseconds();
   }
 
+  /**
+   * Opens the socket channel, configures NIO structures and authenticates if required.
+   *
+   * @throws InterruptedException    if interrupted while waiting for connection establishment
+   * @throws IOException             if the socket cannot be opened or registered
+   * @throws CubbyOperationException if authentication dispatch fails
+   */
   @Override
   public void start ()
     throws InterruptedException, IOException, CubbyOperationException {
@@ -125,6 +142,11 @@ public class NIOCubbyConnection implements CubbyConnection {
     }
   }
 
+  /**
+   * Signals termination and waits for the selector loop to finish before closing resources.
+   *
+   * @throws InterruptedException if interrupted while waiting for shutdown
+   */
   @Override
   public void stop ()
     throws InterruptedException {
@@ -135,6 +157,11 @@ public class NIOCubbyConnection implements CubbyConnection {
     shutdown(false);
   }
 
+  /**
+   * Closes selector and socket resources, optionally notifying the coordinator of an unexpected loss.
+   *
+   * @param unexpected whether the shutdown was triggered by an error
+   */
   private void shutdown (boolean unexpected) {
 
     if (disconnected.compareAndSet(false, true)) {
@@ -158,6 +185,9 @@ public class NIOCubbyConnection implements CubbyConnection {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Response send (Command command, Long timeoutSeconds)
     throws InterruptedException, IOException, CubbyOperationException {
@@ -173,6 +203,12 @@ public class NIOCubbyConnection implements CubbyConnection {
     return requestCallback.getResult((timeoutSeconds == null) ? defaultRequestTimeoutMilliseconds : timeoutSeconds);
   }
 
+  /**
+   * Retrieves the next pending request awaiting a response.
+   *
+   * @return pairing of callback and buffer
+   * @throws CubbyOperationException if the connection state is out of sync
+   */
   private MissingLink retrieveMissingLink ()
     throws CubbyOperationException {
 
@@ -185,6 +221,9 @@ public class NIOCubbyConnection implements CubbyConnection {
     return missingLink;
   }
 
+  /**
+   * Main selector loop handling read/write readiness, keep-alive probes and response dispatch.
+   */
   @Override
   public void run () {
 

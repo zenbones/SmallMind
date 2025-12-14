@@ -40,8 +40,14 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.ObjectStreamClass;
 
+/**
+ * Codec implementation using standard Java object streams for serialization.
+ */
 public class ObjectStreamCubbyCodec implements CubbyCodec {
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public byte[] serialize (Object obj)
     throws IOException {
@@ -60,6 +66,9 @@ public class ObjectStreamCubbyCodec implements CubbyCodec {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Object deserialize (byte[] bytes)
     throws IOException, ClassNotFoundException {
@@ -72,6 +81,12 @@ public class ObjectStreamCubbyCodec implements CubbyCodec {
 
   private static final class ResolvingObjectInputStream extends ObjectInputStream {
 
+    /**
+     * Creates a new resolving input stream that favors the context class loader.
+     *
+     * @param in input stream providing serialized bytes
+     * @throws IOException if the stream cannot be created
+     */
     public ResolvingObjectInputStream (InputStream in)
       throws IOException {
 

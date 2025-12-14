@@ -40,22 +40,42 @@ import org.smallmind.nutsnbolts.util.SpreadParserException;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
+/**
+ * Spring FactoryBean that parses server patterns into a map of named {@link MemcachedServer} instances.
+ */
 public class MemcachedServerMapFactoryBean implements FactoryBean<Map<String, MemcachedServer>>, InitializingBean {
 
   private Map<String, MemcachedServer> serverMap;
   private String serverPattern;
   private String serverSpread;
 
+  /**
+   * Sets the server pattern (supports # for spreads and optional host:port).
+   *
+   * @param serverPattern pattern string
+   */
   public void setServerPattern (String serverPattern) {
 
     this.serverPattern = serverPattern;
   }
 
+  /**
+   * Sets the spread specification applied to # placeholders.
+   *
+   * @param serverSpread spread value (e.g., 1-3)
+   */
   public void setServerSpread (String serverSpread) {
 
     this.serverSpread = serverSpread;
   }
 
+  /**
+   * Parses the configured pattern and spread into a map of {@link MemcachedServer} instances.
+   *
+   * <p>Expands {@code #} tokens via the spread and defaults the port to 11211 when unspecified.</p>
+   *
+   * @throws SpreadParserException if the spread cannot be parsed
+   */
   @Override
   public void afterPropertiesSet ()
     throws SpreadParserException {
@@ -85,18 +105,33 @@ public class MemcachedServerMapFactoryBean implements FactoryBean<Map<String, Me
     }
   }
 
+  /**
+   * Returns the built server map.
+   *
+   * @return map of server name to {@link MemcachedServer}
+   */
   @Override
   public Map<String, MemcachedServer> getObject () {
 
     return serverMap;
   }
 
+  /**
+   * Declares the object type produced by this factory.
+   *
+   * @return {@link Map} class
+   */
   @Override
   public Class<?> getObjectType () {
 
     return Map.class;
   }
 
+  /**
+   * Indicates this factory bean is a singleton.
+   *
+   * @return {@code true} always
+   */
   @Override
   public boolean isSingleton () {
 

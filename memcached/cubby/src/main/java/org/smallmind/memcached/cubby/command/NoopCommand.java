@@ -38,18 +38,30 @@ import org.smallmind.memcached.cubby.response.Response;
 import org.smallmind.memcached.cubby.response.ResponseCode;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
 
+/**
+ * Issues a no-op command used for connection liveness checks.
+ */
 public class NoopCommand extends Command {
 
   private static final byte[] BYTES = "mn\r\n".getBytes(StandardCharsets.UTF_8);
 
   private String key;
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String getKey () {
 
     return key;
   }
 
+  /**
+   * Sets the arbitrary key used only for routing.
+   *
+   * @param key cache key
+   * @return this command for chaining
+   */
   public NoopCommand setKey (String key) {
 
     this.key = key;
@@ -57,12 +69,18 @@ public class NoopCommand extends Command {
     return this;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public byte[] construct (KeyTranslator keyTranslator) {
 
     return BYTES;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Result process (Response response)
     throws UnexpectedResponseException {

@@ -32,6 +32,9 @@
  */
 package org.smallmind.memcached.cubby.response;
 
+/**
+ * Represents a parsed memcached response including status code, flags, CAS token and value payload.
+ */
 public class Response {
 
   private final ResponseCode code;
@@ -44,91 +47,147 @@ public class Response {
   private int valueLength = -1;
   private byte[] value;
 
+  /**
+   * Creates a response with the given status code.
+   *
+   * @param code response status
+   */
   public Response (ResponseCode code) {
 
     this.code = code;
   }
 
+  /**
+   * @return response status code
+   */
   public ResponseCode getCode () {
 
     return code;
   }
 
+  /**
+   * @return opaque token echoed by the server
+   */
   public String getToken () {
 
     return token;
   }
 
+  /**
+   * @param token opaque token echoed by the server
+   */
   public void setToken (String token) {
 
     this.token = token;
   }
 
+  /**
+   * @return length of the value payload, or -1 if absent
+   */
   public int getValueLength () {
 
     return valueLength;
   }
 
+  /**
+   * @param valueLength length of the value payload
+   */
   public void setValueLength (int valueLength) {
 
     this.valueLength = valueLength;
   }
 
+  /**
+   * @return value bytes, or {@code null} when no value was returned
+   */
   public byte[] getValue () {
 
     return value;
   }
 
+  /**
+   * @param value value payload
+   */
   public void setValue (byte[] value) {
 
     this.value = value;
   }
 
+  /**
+   * @return CAS token returned by the server
+   */
   public long getCas () {
 
     return cas;
   }
 
+  /**
+   * @param cas CAS token returned by the server
+   */
   public void setCas (long cas) {
 
     this.cas = cas;
   }
 
+  /**
+   * @return size of the object on the server, when provided
+   */
   public int getSize () {
 
     return size;
   }
 
+  /**
+   * @param size size of the object on the server
+   */
   public void setSize (int size) {
 
     this.size = size;
   }
 
+  /**
+   * @return {@code true} if the server indicates ownership of the record
+   */
   public boolean isWon () {
 
     return won;
   }
 
+  /**
+   * @param won ownership flag
+   */
   public void setWon (boolean won) {
 
     this.won = won;
   }
 
+  /**
+   * @return {@code true} if another server also claims the record
+   */
   public boolean isAlsoWon () {
 
     return alsoWon;
   }
 
+  /**
+   * @param alsoWon flag indicating multiple winners
+   */
   public void setAlsoWon (boolean alsoWon) {
 
     this.alsoWon = alsoWon;
   }
 
+  /**
+   * @return {@code true} if the value is marked as stale
+   */
   public boolean isStale () {
 
     return stale;
   }
 
+  /**
+   * @param stale stale indicator
+   */
   public void setStale (boolean stale) {
 
     this.stale = stale;

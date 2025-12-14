@@ -34,17 +34,26 @@ package org.smallmind.memcached.cubby.spring;
 
 import org.smallmind.memcached.cubby.CubbyConfiguration;
 
+/**
+ * Named presets for Cubby configuration objects.
+ */
 public enum CubbyConfigurations {
 
   DEFAULT(CubbyConfiguration.DEFAULT), OPTIMAL(CubbyConfiguration.OPTIMAL);
 
   private final CubbyConfiguration configuration;
 
+  /**
+   * @param configuration backing configuration instance
+   */
   CubbyConfigurations (CubbyConfiguration configuration) {
 
     this.configuration = configuration;
   }
 
+  /**
+   * @return configuration associated with the preset
+   */
   public CubbyConfiguration getConfiguration () {
 
     return configuration;

@@ -34,6 +34,9 @@ package org.smallmind.memcached.cubby;
 
 import org.smallmind.nutsnbolts.lang.FormattedIOException;
 
+/**
+ * Raised when a selector key used by the NIO client is no longer valid.
+ */
 public class InvalidSelectionKeyException extends FormattedIOException {
 
 }

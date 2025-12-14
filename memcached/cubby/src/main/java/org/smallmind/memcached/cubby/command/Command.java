@@ -38,14 +38,36 @@ import org.smallmind.memcached.cubby.UnexpectedResponseException;
 import org.smallmind.memcached.cubby.response.Response;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
 
+/**
+ * Base abstraction for a memcached protocol command.
+ */
 public abstract class Command {
 
+  /**
+   * @return the key associated with this command
+   * @throws CubbyOperationException if the key cannot be determined
+   */
   public abstract String getKey ()
     throws CubbyOperationException;
 
+  /**
+   * Renders the command into the wire protocol.
+   *
+   * @param keyTranslator translator used to sanitize and encode keys
+   * @return serialized command bytes
+   * @throws IOException             if encoding fails
+   * @throws CubbyOperationException if construction cannot proceed
+   */
   public abstract byte[] construct (KeyTranslator keyTranslator)
     throws IOException, CubbyOperationException;
 
+  /**
+   * Parses a response corresponding to this command.
+   *
+   * @param response decoded response
+   * @return result object describing success, value and CAS token
+   * @throws UnexpectedResponseException if the response type does not match expectations
+   */
   public abstract Result process (Response response)
     throws UnexpectedResponseException;
 }

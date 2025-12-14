@@ -42,6 +42,10 @@ import org.smallmind.memcached.cubby.translator.DefaultKeyTranslator;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
 import org.smallmind.memcached.cubby.translator.LargeKeyHashingTranslator;
 
+/**
+ * Configuration holder for Cubby clients, covering codec selection, routing, authentication and
+ * timeout behavior.
+ */
 public class CubbyConfiguration {
 
   public static final CubbyConfiguration DEFAULT = new CubbyConfiguration();
@@ -61,11 +65,20 @@ public class CubbyConfiguration {
   private long resuscitationSeconds = 10;
   private int connectionsPerHost = 1;
 
+  /**
+   * @return the codec used to serialize values
+   */
   public CubbyCodec getCodec () {
 
     return codec;
   }
 
+  /**
+   * Sets the codec used to serialize and deserialize values.
+   *
+   * @param codec codec implementation
+   * @return this configuration for chaining
+   */
   public CubbyConfiguration setCodec (CubbyCodec codec) {
 
     this.codec = codec;
@@ -73,11 +86,20 @@ public class CubbyConfiguration {
     return this;
   }
 
+  /**
+   * @return the key locator responsible for mapping keys to hosts
+   */
   public KeyLocator getKeyLocator () {
 
     return keyLocator;
   }
 
+  /**
+   * Sets the key locator responsible for routing requests.
+   *
+   * @param keyLocator locator implementation
+   * @return this configuration for chaining
+   */
   public CubbyConfiguration setKeyLocator (KeyLocator keyLocator) {
 
     this.keyLocator = keyLocator;
@@ -85,11 +107,20 @@ public class CubbyConfiguration {
     return this;
   }
 
+  /**
+   * @return the key translator used to normalize keys before routing
+   */
   public KeyTranslator getKeyTranslator () {
 
     return keyTranslator;
   }
 
+  /**
+   * Sets the key translator used to normalize and constrain keys.
+   *
+   * @param keyTranslator translator implementation
+   * @return this configuration for chaining
+   */
   public CubbyConfiguration setKeyTranslator (KeyTranslator keyTranslator) {
 
     this.keyTranslator = keyTranslator;
@@ -97,11 +128,20 @@ public class CubbyConfiguration {
     return this;
   }
 
+  /**
+   * @return configured authentication credentials, or {@code null} when unauthenticated
+   */
   public Authentication getAuthentication () {
 
     return authentication;
   }
 
+  /**
+   * Sets the authentication credentials used for SASL.
+   *
+   * @param authentication username/password pair
+   * @return this configuration for chaining
+   */
   public CubbyConfiguration setAuthentication (Authentication authentication) {
 
     this.authentication = authentication;
@@ -109,11 +149,20 @@ public class CubbyConfiguration {
     return this;
   }
 
+  /**
+   * @return default request timeout in milliseconds
+   */
   public long getDefaultRequestTimeoutMilliseconds () {
 
     return defaultRequestTimeoutMilliseconds;
   }
 
+  /**
+   * Sets the default request timeout.
+   *
+   * @param defaultRequestTimeoutMilliseconds timeout in milliseconds
+   * @return this configuration for chaining
+   */
   public CubbyConfiguration setDefaultRequestTimeoutMilliseconds (long defaultRequestTimeoutMilliseconds) {
 
     this.defaultRequestTimeoutMilliseconds = defaultRequestTimeoutMilliseconds;
@@ -121,11 +170,20 @@ public class CubbyConfiguration {
     return this;
   }
 
+  /**
+   * @return connection establishment timeout in milliseconds
+   */
   public long getConnectionTimeoutMilliseconds () {
 
     return connectionTimeoutMilliseconds;
   }
 
+  /**
+   * Sets the connection establishment timeout.
+   *
+   * @param connectionTimeoutMilliseconds timeout in milliseconds
+   * @return this configuration for chaining
+   */
   public CubbyConfiguration setConnectionTimeoutMilliseconds (long connectionTimeoutMilliseconds) {
 
     this.connectionTimeoutMilliseconds = connectionTimeoutMilliseconds;
@@ -133,11 +191,20 @@ public class CubbyConfiguration {
     return this;
   }
 
+  /**
+   * @return read timeout in milliseconds
+   */
   public long getReadTimeoutMilliseconds () {
 
     return readTimeoutMilliseconds;
   }
 
+  /**
+   * Sets the read timeout.
+   *
+   * @param readTimeoutMilliseconds timeout in milliseconds
+   * @return this configuration for chaining
+   */
   public CubbyConfiguration setReadTimeoutMilliseconds (long readTimeoutMilliseconds) {
 
     this.readTimeoutMilliseconds = readTimeoutMilliseconds;
@@ -145,11 +212,20 @@ public class CubbyConfiguration {
     return this;
   }
 
+  /**
+   * @return keep-alive heartbeat interval in seconds
+   */
   public long getKeepAliveSeconds () {
 
     return keepAliveSeconds;
   }
 
+  /**
+   * Sets the keep-alive heartbeat interval.
+   *
+   * @param keepAliveSeconds heartbeat interval in seconds
+   * @return this configuration for chaining
+   */
   public CubbyConfiguration setKeepAliveSeconds (long keepAliveSeconds) {
 
     this.keepAliveSeconds = keepAliveSeconds;
@@ -157,11 +233,20 @@ public class CubbyConfiguration {
     return this;
   }
 
+  /**
+   * @return delay between reconnection attempts in seconds
+   */
   public long getResuscitationSeconds () {
 
     return resuscitationSeconds;
   }
 
+  /**
+   * Sets the delay between reconnection attempts for unhealthy hosts.
+   *
+   * @param resuscitationSeconds delay in seconds
+   * @return this configuration for chaining
+   */
   public CubbyConfiguration setResuscitationSeconds (long resuscitationSeconds) {
 
     this.resuscitationSeconds = resuscitationSeconds;
@@ -169,11 +254,20 @@ public class CubbyConfiguration {
     return this;
   }
 
+  /**
+   * @return number of connections to create per host
+   */
   public int getConnectionsPerHost () {
 
     return connectionsPerHost;
   }
 
+  /**
+   * Sets the number of connections to create per host.
+   *
+   * @param connectionsPerHost number of connections per host
+   * @return this configuration for chaining
+   */
   public CubbyConfiguration setConnectionsPerHost (int connectionsPerHost) {
 
     this.connectionsPerHost = connectionsPerHost;

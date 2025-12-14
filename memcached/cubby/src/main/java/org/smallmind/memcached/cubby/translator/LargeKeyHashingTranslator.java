@@ -40,15 +40,24 @@ import org.smallmind.nutsnbolts.http.Base64Codec;
 import org.smallmind.nutsnbolts.security.EncryptionUtility;
 import org.smallmind.nutsnbolts.security.HashAlgorithm;
 
+/**
+ * Wraps another translator to hash overly long keys, keeping them within memcached limits.
+ */
 public class LargeKeyHashingTranslator implements KeyTranslator {
 
   private final KeyTranslator keyTranslator;
 
+  /**
+   * @param keyTranslator delegate used before hashing long keys
+   */
   public LargeKeyHashingTranslator (KeyTranslator keyTranslator) {
 
     this.keyTranslator = keyTranslator;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String encode (String key)
     throws IOException, CubbyOperationException {

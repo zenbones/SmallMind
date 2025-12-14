@@ -32,6 +32,9 @@
  */
 package org.smallmind.memcached.cubby.locator;
 
+/**
+ * Utility methods for generating prime numbers used in hashing schemes.
+ */
 public class PrimeGenerator {
 
   private static boolean isPrime (int n) {
@@ -59,6 +62,12 @@ public class PrimeGenerator {
     }
   }
 
+  /**
+   * Finds the next prime greater than the provided value.
+   *
+   * @param n lower bound
+   * @return next prime number
+   */
   public static int nextPrime (int n) {
 
     if (n <= 1) {

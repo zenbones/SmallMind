@@ -34,22 +34,34 @@ package org.smallmind.memcached.cubby.command;
 
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
+/**
+ * Enumerates arithmetic operations supported by memcached.
+ */
 public enum ArithmeticMode {
 
   INCREMENT('I'), DECREMENT('D');
 
   private final char token;
 
+  /**
+   * @param token protocol token for the operation
+   */
   ArithmeticMode (char token) {
 
     this.token = token;
   }
 
+  /**
+   * @return protocol token representing the operation
+   */
   public char getToken () {
 
     return token;
   }
 
+  /**
+   * @return the opposite arithmetic operation
+   */
   public ArithmeticMode flip () {
 
     switch (this) {

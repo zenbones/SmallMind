@@ -37,22 +37,46 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * In-memory implementation of {@link ProxyMemcachedClient} for testing without a server.
+ */
 public class InMemoryMemcachedClient implements ProxyMemcachedClient {
 
   private final HashMap<String, Holder<?>> internalMap = new HashMap<>();
   private final AtomicLong counter = new AtomicLong(0);
 
+  /**
+   * Returns the default timeout for in-memory operations.
+   *
+   * <p>In-memory calls are immediate, but we mirror the real client behavior by exposing a timeout.</p>
+   *
+   * @return default timeout in milliseconds
+   */
   public long getDefaultTimeout () {
 
     return 5000L;
   }
 
+  /**
+   * Wraps a value and cas into an in-memory {@link ProxyCASResponse}.
+   *
+   * @param cas   compare-and-swap token
+   * @param value cached value
+   * @return in-memory CAS response wrapper
+   */
   @Override
   public <T> ProxyCASResponse<T> createCASResponse (long cas, T value) {
 
     return new InMemoryCASResponse<>(cas, value);
   }
 
+  /**
+   * Retrieves a value for the given key if it exists and is not expired.
+   *
+   * @param key cache key
+   * @param <T> expected value type
+   * @return cached value or {@code null} if missing or expired
+   */
   @Override
   public synchronized <T> T get (String key) {
 
@@ -66,6 +90,13 @@ public class InMemoryMemcachedClient implements ProxyMemcachedClient {
     return holder.getValue();
   }
 
+  /**
+   * Retrieves multiple values, skipping missing or expired entries.
+   *
+   * @param keys collection of cache keys
+   * @param <T>  expected value type
+   * @return map of keys to values for entries that were found
+   */
   @Override
   public synchronized <T> Map<String, T> get (Collection<String> keys) {
 
@@ -83,6 +114,13 @@ public class InMemoryMemcachedClient implements ProxyMemcachedClient {
     return resultMap;
   }
 
+  /**
+   * Retrieves a value and its CAS token if present and unexpired.
+   *
+   * @param key cache key
+   * @param <T> expected value type
+   * @return CAS response or {@code null} when absent or expired
+   */
   @Override
   public synchronized <T> ProxyCASResponse<T> casGet (String key) {
 
@@ -96,6 +134,15 @@ public class InMemoryMemcachedClient implements ProxyMemcachedClient {
     return new InMemoryCASResponse<T>(holder.getCas(), holder.getValue());
   }
 
+  /**
+   * Stores a value with an expiration, overwriting any existing entry.
+   *
+   * @param key        cache key
+   * @param expiration expiration in seconds (0 for no expiry)
+   * @param value      value to store
+   * @param <T>        value type
+   * @return {@code true} always (matches client contract)
+   */
   @Override
   public synchronized <T> boolean set (String key, int expiration, T value) {
 
@@ -104,6 +151,16 @@ public class InMemoryMemcachedClient implements ProxyMemcachedClient {
     return true;
   }
 
+  /**
+   * Stores a value only if the supplied CAS matches the current entry.
+   *
+   * @param key        cache key
+   * @param expiration expiration in seconds (0 for no expiry)
+   * @param value      value to store
+   * @param cas        expected CAS token
+   * @param <T>        value type
+   * @return {@code true} on insert or successful CAS update; {@code false} on CAS mismatch
+   */
   @Override
   public synchronized <T> boolean casSet (String key, int expiration, T value, long cas) {
 
@@ -122,6 +179,12 @@ public class InMemoryMemcachedClient implements ProxyMemcachedClient {
     return false;
   }
 
+  /**
+   * Unconditionally removes a key.
+   *
+   * @param key cache key
+   * @return {@code true} always (matches client contract)
+   */
   @Override
   public synchronized boolean delete (String key) {
 
@@ -130,6 +193,13 @@ public class InMemoryMemcachedClient implements ProxyMemcachedClient {
     return true;
   }
 
+  /**
+   * Removes a key only if the supplied CAS matches the stored entry.
+   *
+   * @param key cache key
+   * @param cas expected CAS token
+   * @return {@code true} on successful removal or when already absent/expired; {@code false} on CAS mismatch
+   */
   @Override
   public synchronized boolean casDelete (String key, long cas) {
 
@@ -147,6 +217,13 @@ public class InMemoryMemcachedClient implements ProxyMemcachedClient {
     return false;
   }
 
+  /**
+   * Updates the expiration for an existing, unexpired entry.
+   *
+   * @param key        cache key
+   * @param expiration new expiration in seconds
+   * @return {@code true} if touched; {@code false} if missing or expired
+   */
   @Override
   public synchronized boolean touch (String key, int expiration) {
 
@@ -162,6 +239,14 @@ public class InMemoryMemcachedClient implements ProxyMemcachedClient {
     return true;
   }
 
+  /**
+   * Retrieves a value and updates its expiration in a single operation.
+   *
+   * @param key        cache key
+   * @param expiration new expiration in seconds
+   * @param <T>        value type
+   * @return cached value or {@code null} if missing or expired
+   */
   @Override
   public synchronized <T> T getAndTouch (String key, int expiration) {
 
@@ -177,12 +262,18 @@ public class InMemoryMemcachedClient implements ProxyMemcachedClient {
     return holder.getValue();
   }
 
+  /**
+   * Clears all stored entries.
+   */
   @Override
   public void clear () {
 
     internalMap.clear();
   }
 
+  /**
+   * Shuts down the client. No-op for the in-memory implementation.
+   */
   @Override
   public void shutdown () {
 
@@ -195,6 +286,12 @@ public class InMemoryMemcachedClient implements ProxyMemcachedClient {
     private long creation;
     private int expiration;
 
+    /**
+     * Creates a holder for a value with an expiration policy.
+     *
+     * @param expiration expiration in seconds (0 for no expiry)
+     * @param value      value to store
+     */
     public Holder (int expiration, T value) {
 
       if (expiration < 0) {
@@ -208,16 +305,31 @@ public class InMemoryMemcachedClient implements ProxyMemcachedClient {
       creation = System.currentTimeMillis();
     }
 
+    /**
+     * Returns the stored value.
+     *
+     * @return cached value
+     */
     public T getValue () {
 
       return value;
     }
 
+    /**
+     * Returns the CAS token associated with this value.
+     *
+     * @return CAS token
+     */
     public long getCas () {
 
       return cas;
     }
 
+    /**
+     * Updates the expiration and refreshes the creation time.
+     *
+     * @param expiration new expiration in seconds
+     */
     public void touch (int expiration) {
 
       this.expiration = expiration;
@@ -225,6 +337,11 @@ public class InMemoryMemcachedClient implements ProxyMemcachedClient {
       creation = System.currentTimeMillis();
     }
 
+    /**
+     * Determines whether the entry has expired.
+     *
+     * @return {@code true} if expired; otherwise {@code false}
+     */
     public boolean isExpired () {
 
       return (expiration > 0) && System.currentTimeMillis() >= creation + (expiration * 1000);

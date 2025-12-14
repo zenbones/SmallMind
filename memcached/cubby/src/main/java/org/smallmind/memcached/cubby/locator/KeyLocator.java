@@ -37,13 +37,36 @@ import org.smallmind.memcached.cubby.CubbyOperationException;
 import org.smallmind.memcached.cubby.MemcachedHost;
 import org.smallmind.memcached.cubby.ServerPool;
 
+/**
+ * Strategy for mapping keys to memcached hosts.
+ */
 public interface KeyLocator {
 
+  /**
+   * Initializes routing state for the provided server pool.
+   *
+   * @param serverPool pool of available hosts
+   * @throws CubbyOperationException if routing cannot be installed
+   */
   void installRouting (ServerPool serverPool)
     throws CubbyOperationException;
 
+  /**
+   * Updates routing after host availability changes.
+   *
+   * @param serverPool pool of available hosts
+   */
   void updateRouting (ServerPool serverPool);
 
+  /**
+   * Finds the host responsible for the given key.
+   *
+   * @param serverPool pool of available hosts
+   * @param key        normalized cache key
+   * @return host assigned to the key
+   * @throws IOException             if routing requires I/O and fails
+   * @throws CubbyOperationException if routing cannot be determined
+   */
   MemcachedHost find (ServerPool serverPool, String key)
     throws IOException, CubbyOperationException;
 }

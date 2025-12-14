@@ -40,6 +40,9 @@ import org.smallmind.memcached.cubby.ResponseTimeoutException;
 import org.smallmind.memcached.cubby.command.Command;
 import org.smallmind.memcached.cubby.response.Response;
 
+/**
+ * Callback used by client-issued commands to await a response or failure.
+ */
 public class ClientRequestCallback implements RequestCallback {
 
   private final CountDownLatch resultLatch = new CountDownLatch(1);
@@ -47,11 +50,24 @@ public class ClientRequestCallback implements RequestCallback {
   private final AtomicReference<IOException> exceptionRef = new AtomicReference<>();
   private final Command command;
 
+  /**
+   * Creates a callback bound to the originating command.
+   *
+   * @param command command awaiting a response
+   */
   public ClientRequestCallback (Command command) {
 
     this.command = command;
   }
 
+  /**
+   * Waits for the response to arrive or throws if the wait exceeds the timeout.
+   *
+   * @param timeoutMilliseconds wait duration; zero means wait indefinitely
+   * @return the received response
+   * @throws InterruptedException if interrupted while waiting
+   * @throws IOException          if an I/O error occurred or the wait timed out
+   */
   public Response getResult (long timeoutMilliseconds)
     throws InterruptedException, IOException {
 
@@ -81,12 +97,18 @@ public class ClientRequestCallback implements RequestCallback {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public void setResult (Response response) {
 
     resultRef.set(response);
     resultLatch.countDown();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public void setException (IOException ioException) {
 
     exceptionRef.set(ioException);

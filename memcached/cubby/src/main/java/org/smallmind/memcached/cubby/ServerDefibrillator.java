@@ -40,6 +40,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Monitors inactive hosts and attempts periodic reconnection, re-enabling routing when successful.
+ */
 public class ServerDefibrillator implements Runnable {
 
   private final CountDownLatch finishedLatch = new CountDownLatch(1);
@@ -50,6 +53,13 @@ public class ServerDefibrillator implements Runnable {
   private final int connectionTimeoutMilliseconds;
   private final int readTimeoutMilliseconds;
 
+  /**
+   * Creates a new defibrillator.
+   *
+   * @param connectionCoordinator coordinator used to rebuild connections
+   * @param configuration         runtime configuration including timeouts
+   * @param serverPool            hosts to monitor
+   */
   public ServerDefibrillator (ConnectionCoordinator connectionCoordinator, CubbyConfiguration configuration, ServerPool serverPool) {
 
     this.connectionCoordinator = connectionCoordinator;
@@ -60,6 +70,11 @@ public class ServerDefibrillator implements Runnable {
     this.resuscitationSeconds = configuration.getResuscitationSeconds();
   }
 
+  /**
+   * Requests shutdown and waits for the monitoring loop to terminate.
+   *
+   * @throws InterruptedException if interrupted while awaiting termination
+   */
   public void stop ()
     throws InterruptedException {
 
@@ -67,6 +82,9 @@ public class ServerDefibrillator implements Runnable {
     terminatedLatch.await();
   }
 
+  /**
+   * Periodically probes inactive hosts and reconnects any that respond.
+   */
   @Override
   public void run () {
 

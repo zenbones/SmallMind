@@ -32,6 +32,9 @@
  */
 package org.smallmind.memcached.utility;
 
+/**
+ * Simple value object representing a memcached server address.
+ */
 public class MemcachedServer {
 
   private String host;
@@ -41,27 +44,49 @@ public class MemcachedServer {
 
   }
 
+  /**
+   * Constructs a server descriptor.
+   *
+   * @param host hostname or IP
+   * @param port memcached port
+   */
   public MemcachedServer (String host, int port) {
 
     this.host = host;
     this.port = port;
   }
 
+  /**
+   * @return host name
+   */
   public String getHost () {
 
     return host;
   }
 
+  /**
+   * Sets the hostname or IP.
+   *
+   * @param host host name
+   */
   public void setHost (String host) {
 
     this.host = host;
   }
 
+  /**
+   * @return port number
+   */
   public int getPort () {
 
     return port;
   }
 
+  /**
+   * Sets the port number.
+   *
+   * @param port memcached port
+   */
   public void setPort (int port) {
 
     this.port = port;

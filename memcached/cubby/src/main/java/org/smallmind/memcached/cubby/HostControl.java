@@ -32,26 +32,45 @@
  */
 package org.smallmind.memcached.cubby;
 
+/**
+ * Tracks the active status of a memcached host and exposes access to its definition.
+ */
 public class HostControl {
 
   private final MemcachedHost memcachedHost;
   private boolean active = true;
 
+  /**
+   * Wraps the provided host with active state.
+   *
+   * @param memcachedHost host definition
+   */
   public HostControl (MemcachedHost memcachedHost) {
 
     this.memcachedHost = memcachedHost;
   }
 
+  /**
+   * @return the underlying memcached host
+   */
   public MemcachedHost getMemcachedHost () {
 
     return memcachedHost;
   }
 
+  /**
+   * @return {@code true} when the host is considered healthy
+   */
   public boolean isActive () {
 
     return active;
   }
 
+  /**
+   * Updates the health indicator for this host.
+   *
+   * @param active {@code true} if the host is reachable
+   */
   public void setActive (boolean active) {
 
     this.active = active;

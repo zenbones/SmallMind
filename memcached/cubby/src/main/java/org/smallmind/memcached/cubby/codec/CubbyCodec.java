@@ -34,11 +34,29 @@ package org.smallmind.memcached.cubby.codec;
 
 import java.io.IOException;
 
+/**
+ * Strategy interface for serializing and deserializing values stored in memcached.
+ */
 public interface CubbyCodec {
 
+  /**
+   * Serializes the supplied object.
+   *
+   * @param obj object to serialize
+   * @return encoded bytes
+   * @throws IOException if serialization fails
+   */
   byte[] serialize (Object obj)
     throws IOException;
 
+  /**
+   * Deserializes the provided bytes into an object.
+   *
+   * @param bytes serialized bytes
+   * @return deserialized object
+   * @throws IOException            if deserialization fails
+   * @throws ClassNotFoundException if the target class cannot be resolved
+   */
   Object deserialize (byte[] bytes)
     throws IOException, ClassNotFoundException;
 }

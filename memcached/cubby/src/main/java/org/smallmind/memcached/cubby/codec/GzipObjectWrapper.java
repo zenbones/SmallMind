@@ -34,15 +34,26 @@ package org.smallmind.memcached.cubby.codec;
 
 import java.io.Serializable;
 
+/**
+ * Serializable wrapper used to mark values that have been compressed with GZIP.
+ */
 public class GzipObjectWrapper implements Serializable {
 
   private final byte[] compressedBytes;
 
+  /**
+   * Creates a new wrapper around compressed bytes.
+   *
+   * @param bytes compressed payload
+   */
   public GzipObjectWrapper (byte[] bytes) {
 
     this.compressedBytes = bytes;
   }
 
+  /**
+   * @return compressed value bytes
+   */
   public byte[] getCompressedBytes () {
 
     return compressedBytes;

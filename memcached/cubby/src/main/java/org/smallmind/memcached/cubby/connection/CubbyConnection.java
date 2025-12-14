@@ -37,14 +37,40 @@ import org.smallmind.memcached.cubby.CubbyOperationException;
 import org.smallmind.memcached.cubby.command.Command;
 import org.smallmind.memcached.cubby.response.Response;
 
+/**
+ * Represents a live connection capable of sending commands to a memcached server.
+ */
 public interface CubbyConnection extends Runnable {
 
+  /**
+   * Opens the connection and prepares any resources.
+   *
+   * @throws InterruptedException    if interrupted while starting
+   * @throws IOException             if socket setup fails
+   * @throws CubbyOperationException if initialization encounters a logical error
+   */
   void start ()
     throws InterruptedException, IOException, CubbyOperationException;
 
+  /**
+   * Closes the connection and releases resources.
+   *
+   * @throws InterruptedException if interrupted while shutting down
+   * @throws IOException          if closing the socket fails
+   */
   void stop ()
     throws InterruptedException, IOException;
 
+  /**
+   * Sends a command to the server, optionally waiting with a timeout.
+   *
+   * @param command        command to send
+   * @param timeoutSeconds optional timeout in seconds, or {@code null} to use defaults
+   * @return parsed response
+   * @throws InterruptedException    if interrupted while waiting
+   * @throws IOException             if network I/O fails
+   * @throws CubbyOperationException if the command cannot be routed or processed
+   */
   Response send (Command command, Long timeoutSeconds)
     throws InterruptedException, IOException, CubbyOperationException;
 }

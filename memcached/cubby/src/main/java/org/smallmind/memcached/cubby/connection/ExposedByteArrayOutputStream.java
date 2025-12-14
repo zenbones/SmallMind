@@ -34,13 +34,24 @@ package org.smallmind.memcached.cubby.connection;
 
 import java.io.ByteArrayOutputStream;
 
+/**
+ * ByteArrayOutputStream exposing its internal buffer for zero-copy operations.
+ */
 public class ExposedByteArrayOutputStream extends ByteArrayOutputStream {
 
+  /**
+   * Constructs the stream with an initial buffer size.
+   *
+   * @param size initial buffer size
+   */
   public ExposedByteArrayOutputStream (int size) {
 
     super(size);
   }
 
+  /**
+   * @return the internal buffer backing this stream
+   */
   public byte[] getBuffer () {
 
     return buf;

@@ -40,6 +40,9 @@ import org.smallmind.memcached.cubby.response.JoinedBuffer;
 import org.smallmind.memcached.cubby.response.Response;
 import org.smallmind.memcached.cubby.response.ResponseParser;
 
+/**
+ * Reads and parses responses from the memcached socket channel.
+ */
 public class ResponseReader {
 
   private final SocketChannel socketChannel;
@@ -48,6 +51,11 @@ public class ResponseReader {
   private JoinedBuffer joinedBuffer;
   private Response partialResponse;
 
+  /**
+   * Creates a reader for the provided channel.
+   *
+   * @param socketChannel channel to read from
+   */
   public ResponseReader (SocketChannel socketChannel) {
 
     this.socketChannel = socketChannel;
@@ -56,6 +64,12 @@ public class ResponseReader {
     accumulatingStream = new ExposedByteArrayOutputStream(1024);
   }
 
+  /**
+   * Attempts to read from the channel into the internal buffer.
+   *
+   * @return {@code true} if data was read and parsing should be attempted
+   * @throws IOException if the socket is closed or an I/O error occurs
+   */
   public boolean read ()
     throws IOException {
 
@@ -74,6 +88,13 @@ public class ResponseReader {
     }
   }
 
+  /**
+   * Shifts remaining unread bytes to the start of the accumulation buffer.
+   *
+   * <p>Clears buffers when fully consumed; otherwise preserves unread data for the next read cycle.</p>
+   *
+   * @throws IOException if writing to the accumulation stream fails
+   */
   private void shiftRemaining ()
     throws IOException {
 
@@ -94,6 +115,12 @@ public class ResponseReader {
     }
   }
 
+  /**
+   * Parses a complete response from the buffered data if available.
+   *
+   * @return parsed response or {@code null} when incomplete
+   * @throws IOException if parsing fails or I/O errors occur
+   */
   public Response extract ()
     throws IOException {
 
@@ -151,6 +178,12 @@ public class ResponseReader {
     }
   }
 
+  /**
+   * Locates the CRLF terminating the current response line.
+   *
+   * @param joinedBuffer buffer to scan
+   * @return number of bytes up to and including the line terminator, or -1 if not found
+   */
   private int findLineEnd (JoinedBuffer joinedBuffer) {
 
     boolean completed = false;

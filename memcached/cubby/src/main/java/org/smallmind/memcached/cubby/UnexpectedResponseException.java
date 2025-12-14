@@ -34,8 +34,17 @@ package org.smallmind.memcached.cubby;
 
 import org.smallmind.nutsnbolts.lang.FormattedIOException;
 
+/**
+ * Signals that a response from the memcached server could not be parsed or matched to a request.
+ */
 public class UnexpectedResponseException extends FormattedIOException {
 
+  /**
+   * Constructs the exception with a formatted message.
+   *
+   * @param message message format string
+   * @param args    arguments applied to the format string
+   */
   public UnexpectedResponseException (String message, Object... args) {
 
     super(message, args);

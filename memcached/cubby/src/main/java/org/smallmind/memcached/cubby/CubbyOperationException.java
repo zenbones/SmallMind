@@ -34,22 +34,46 @@ package org.smallmind.memcached.cubby;
 
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
+/**
+ * Base exception for errors encountered while executing memcached operations.
+ */
 public class CubbyOperationException extends FormattedException {
 
+  /**
+   * Creates the exception without a message or cause.
+   */
   public CubbyOperationException () {
 
   }
 
+  /**
+   * Creates the exception with a formatted message.
+   *
+   * @param message message format string
+   * @param args    arguments applied to the format string
+   */
   public CubbyOperationException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * Creates the exception with a cause and formatted message.
+   *
+   * @param throwable underlying cause
+   * @param message   message format string
+   * @param args      arguments applied to the format string
+   */
   public CubbyOperationException (Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);
   }
 
+  /**
+   * Creates the exception with a cause.
+   *
+   * @param throwable underlying cause
+   */
   public CubbyOperationException (Throwable throwable) {
 
     super(throwable);

@@ -45,6 +45,9 @@ import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
+/**
+ * Spring FactoryBean that builds and manages the lifecycle of a {@link CubbyMemcachedClient}.
+ */
 public class CubbyMemcachedClientFactoryBean implements FactoryBean<CubbyMemcachedClient>, InitializingBean, DisposableBean {
 
   private CubbyMemcachedClient memcachedClient;
@@ -52,16 +55,31 @@ public class CubbyMemcachedClientFactoryBean implements FactoryBean<CubbyMemcach
   private Map<String, MemcachedServer> servers;
   private boolean enabled = true;
 
+  /**
+   * Enables or disables client creation.
+   *
+   * @param enabled whether the client should start
+   */
   public void setEnabled (boolean enabled) {
 
     this.enabled = enabled;
   }
 
+  /**
+   * Supplies the configuration to use when creating the client.
+   *
+   * @param configuration client configuration
+   */
   public void setConfiguration (CubbyConfiguration configuration) {
 
     this.configuration = configuration;
   }
 
+  /**
+   * Defines the memcached servers to connect to.
+   *
+   * @param servers map of logical name to server definition
+   */
   public void setServers (Map<String, MemcachedServer> servers) {
 
     this.servers = servers;

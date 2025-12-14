@@ -37,10 +37,19 @@ import java.util.concurrent.ThreadLocalRandom;
 import org.smallmind.memcached.cubby.command.Command;
 import org.smallmind.memcached.cubby.response.Response;
 
+/**
+ * Distributes memcached commands across a pool of connection coordinators to balance load.
+ */
 public class ConnectionMultiplexer {
 
   private final ConnectionCoordinator[] connectionCoordinators;
 
+  /**
+   * Creates a multiplexer managing a configurable number of connections per host.
+   *
+   * @param configuration  runtime settings for connections and routing
+   * @param memcachedHosts target memcached hosts
+   */
   public ConnectionMultiplexer (CubbyConfiguration configuration, MemcachedHost... memcachedHosts) {
 
     connectionCoordinators = new ConnectionCoordinator[configuration.getConnectionsPerHost()];
@@ -50,6 +59,13 @@ public class ConnectionMultiplexer {
     }
   }
 
+  /**
+   * Starts each managed coordinator, opening their respective connections.
+   *
+   * @throws InterruptedException    if interrupted while connecting
+   * @throws IOException             if sockets cannot be opened
+   * @throws CubbyOperationException if initialization fails
+   */
   public synchronized void start ()
     throws InterruptedException, IOException, CubbyOperationException {
 
@@ -58,6 +74,12 @@ public class ConnectionMultiplexer {
     }
   }
 
+  /**
+   * Stops each managed coordinator, closing open connections.
+   *
+   * @throws InterruptedException if interrupted while closing
+   * @throws IOException          if closing sockets fails
+   */
   public synchronized void stop ()
     throws InterruptedException, IOException {
 
@@ -66,6 +88,16 @@ public class ConnectionMultiplexer {
     }
   }
 
+  /**
+   * Sends a command via a randomly selected coordinator.
+   *
+   * @param command        command to dispatch
+   * @param timeoutSeconds optional timeout in seconds; {@code null} uses configured default
+   * @return server response parsed by the coordinator
+   * @throws InterruptedException    if interrupted while awaiting completion
+   * @throws IOException             if network I/O fails
+   * @throws CubbyOperationException if routing or server processing fails
+   */
   public Response send (Command command, Long timeoutSeconds)
     throws InterruptedException, IOException, CubbyOperationException {
 

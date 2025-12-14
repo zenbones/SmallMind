@@ -37,6 +37,9 @@ import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
+/**
+ * Buffers and writes serialized commands to the memcached socket channel.
+ */
 public class RequestWriter {
 
   private final SocketChannel socketChannel;
@@ -45,6 +48,11 @@ public class RequestWriter {
   private boolean draining = false;
   private int unfinishedCommandIndex = 0;
 
+  /**
+   * Creates a writer tied to the provided channel and sized to its send buffer.
+   *
+   * @param socketChannel channel to write to
+   */
   public RequestWriter (SocketChannel socketChannel) {
 
     int sendBufferSize;
@@ -60,6 +68,11 @@ public class RequestWriter {
     writeBuffer = ByteBuffer.allocate(sendBufferSize);
   }
 
+  /**
+   * Prepares the write buffer for accepting additional commands.
+   *
+   * @return {@code true} if additional commands can be added to the buffer
+   */
   public boolean prepare () {
 
     if (draining) {
@@ -91,6 +104,12 @@ public class RequestWriter {
     }
   }
 
+  /**
+   * Attempts to queue the given command into the buffer.
+   *
+   * @param commandBuffer serialized command data
+   * @return {@code true} if the command fully fit in the buffer
+   */
   public boolean add (CommandBuffer commandBuffer) {
 
     if ((!draining) && (writeBuffer.remaining() > 0)) {
@@ -117,6 +136,11 @@ public class RequestWriter {
     }
   }
 
+  /**
+   * Writes buffered commands to the channel.
+   *
+   * @throws IOException if the channel fails while writing
+   */
   public void write ()
     throws IOException {
 

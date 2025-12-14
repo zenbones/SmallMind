@@ -34,12 +34,24 @@ package org.smallmind.memcached.cubby;
 
 import org.smallmind.nutsnbolts.lang.FormattedIOException;
 
+/**
+ * Thrown when an outbound request cannot be encoded into the memcached protocol.
+ */
 public class IncomprehensibleRequestException extends FormattedIOException {
 
+  /**
+   * Creates the exception without a detail message.
+   */
   public IncomprehensibleRequestException () {
 
   }
 
+  /**
+   * Creates the exception with a formatted message.
+   *
+   * @param message message format string
+   * @param args    arguments applied to the format string
+   */
   public IncomprehensibleRequestException (String message, Object... args) {
 
     super(message, args);

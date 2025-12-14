@@ -36,6 +36,9 @@ import java.nio.ByteBuffer;
 import org.smallmind.memcached.cubby.connection.ExposedByteArrayOutputStream;
 import org.smallmind.nutsnbolts.lang.FormattedIllegalArgumentException;
 
+/**
+ * Presents a contiguous view over the accumulated bytes and the current read buffer while parsing responses.
+ */
 public class JoinedBuffer {
 
   private static final byte[] NO_BYTES = new byte[0];
@@ -46,6 +49,12 @@ public class JoinedBuffer {
   private int position = 0;
   private int mark = -1;
 
+  /**
+   * Joins an accumulation buffer with the current read buffer.
+   *
+   * @param accumulatingStream stream containing bytes from previous reads
+   * @param readBuffer         buffer containing newly read bytes
+   */
   public JoinedBuffer (ExposedByteArrayOutputStream accumulatingStream, ByteBuffer readBuffer) {
 
     this.readBuffer = readBuffer;
@@ -55,11 +64,20 @@ public class JoinedBuffer {
     limit = accumulatingStream.size() + readBuffer.limit();
   }
 
+  /**
+   * @param index offset from the current position
+   * @return byte at the specified offset without advancing
+   */
   public byte peek (int index) {
 
     return get(position() + index);
   }
 
+  /**
+   * Reads a single byte advancing the position.
+   *
+   * @return next byte
+   */
   public byte get () {
 
     if (position++ < accumulatingBuffer.limit()) {
@@ -69,6 +87,12 @@ public class JoinedBuffer {
     }
   }
 
+  /**
+   * Retrieves a byte at an absolute index without moving the current position.
+   *
+   * @param index absolute index
+   * @return byte at the index
+   */
   public byte get (int index) {
 
     if (index < accumulatingBuffer.limit()) {
@@ -78,6 +102,12 @@ public class JoinedBuffer {
     }
   }
 
+  /**
+   * Reads into the provided buffer advancing the position.
+   *
+   * @param buffer destination array
+   * @return the same buffer populated with data
+   */
   public byte[] get (byte[] buffer) {
 
     int bytesRead = 0;
@@ -94,16 +124,28 @@ public class JoinedBuffer {
     return buffer;
   }
 
+  /**
+   * @return total readable limit across buffers
+   */
   public int limit () {
 
     return limit;
   }
 
+  /**
+   * @return current read position
+   */
   public int position () {
 
     return position;
   }
 
+  /**
+   * Increments the position by the given delta.
+   *
+   * @param delta amount to move forward
+   * @return new position
+   */
   public int incPosition (int delta) {
 
     position(position + delta);
@@ -111,6 +153,11 @@ public class JoinedBuffer {
     return position;
   }
 
+  /**
+   * Sets the current position across the joined buffers.
+   *
+   * @param position absolute position
+   */
   public void position (int position) {
 
     if (position < 0) {
@@ -136,11 +183,17 @@ public class JoinedBuffer {
     }
   }
 
+  /**
+   * @return number of bytes remaining to be read
+   */
   public int remaining () {
 
     return limit - position;
   }
 
+  /**
+   * Marks the current position for later reset.
+   */
   public void mark () {
 
     if (position < accumulatingBuffer.limit()) {
@@ -152,6 +205,9 @@ public class JoinedBuffer {
     mark = position;
   }
 
+  /**
+   * Resets to the previously marked position if any.
+   */
   public void reset () {
 
     if (mark >= 0) {

@@ -40,6 +40,9 @@ import org.smallmind.memcached.cubby.translator.KeyTranslator;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
+/**
+ * Spring FactoryBean that constructs a {@link CubbyConfiguration} from optional overrides.
+ */
 public class CubbyConfigurationFactoryBean implements FactoryBean<CubbyConfiguration>, InitializingBean {
 
   private CubbyConfiguration configuration;
@@ -72,51 +75,101 @@ public class CubbyConfigurationFactoryBean implements FactoryBean<CubbyConfigura
     return configuration;
   }
 
+  /**
+   * Selects a baseline configuration preset.
+   *
+   * @param initial preset value
+   */
   public void setInitial (CubbyConfigurations initial) {
 
     this.initial = initial;
   }
 
+  /**
+   * Sets a custom codec.
+   *
+   * @param codec codec to use
+   */
   public void setCodec (CubbyCodec codec) {
 
     this.codec = codec;
   }
 
+  /**
+   * Sets a custom key locator.
+   *
+   * @param keyLocator locator implementation
+   */
   public void setKeyLocator (KeyLocator keyLocator) {
 
     this.keyLocator = keyLocator;
   }
 
+  /**
+   * Sets a custom key translator.
+   *
+   * @param keyTranslator translator implementation
+   */
   public void setKeyTranslator (KeyTranslator keyTranslator) {
 
     this.keyTranslator = keyTranslator;
   }
 
+  /**
+   * Supplies authentication credentials for SASL.
+   *
+   * @param authentication username/password credentials
+   */
   public void setAuthentication (Authentication authentication) {
 
     this.authentication = authentication;
   }
 
+  /**
+   * Overrides the default request timeout.
+   *
+   * @param defaultRequestTimeoutMilliseconds timeout in milliseconds
+   */
   public void setDefaultRequestTimeoutMilliseconds (Long defaultRequestTimeoutMilliseconds) {
 
     this.defaultRequestTimeoutMilliseconds = defaultRequestTimeoutMilliseconds;
   }
 
+  /**
+   * Overrides the connection timeout.
+   *
+   * @param connectionTimeoutMilliseconds timeout in milliseconds
+   */
   public void setConnectionTimeoutMilliseconds (Long connectionTimeoutMilliseconds) {
 
     this.connectionTimeoutMilliseconds = connectionTimeoutMilliseconds;
   }
 
+  /**
+   * Overrides the keep-alive heartbeat interval.
+   *
+   * @param keepAliveSeconds heartbeat interval in seconds
+   */
   public void setKeepAliveSeconds (Long keepAliveSeconds) {
 
     this.keepAliveSeconds = keepAliveSeconds;
   }
 
+  /**
+   * Overrides the resuscitation delay used when reconnecting hosts.
+   *
+   * @param resuscitationSeconds delay in seconds
+   */
   public void setResuscitationSeconds (Long resuscitationSeconds) {
 
     this.resuscitationSeconds = resuscitationSeconds;
   }
 
+  /**
+   * Overrides number of connections to open per host.
+   *
+   * @param connectionsPerHost connections per host
+   */
   public void setConnectionsPerHost (Integer connectionsPerHost) {
 
     this.connectionsPerHost = connectionsPerHost;

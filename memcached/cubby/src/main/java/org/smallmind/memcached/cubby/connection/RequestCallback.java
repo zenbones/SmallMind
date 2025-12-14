@@ -35,9 +35,22 @@ package org.smallmind.memcached.cubby.connection;
 import java.io.IOException;
 import org.smallmind.memcached.cubby.response.Response;
 
+/**
+ * Callback for receiving responses or errors for a sent command.
+ */
 public interface RequestCallback {
 
+  /**
+   * Supplies the received response.
+   *
+   * @param response parsed response
+   */
   void setResult (Response response);
 
+  /**
+   * Supplies an I/O exception that occurred while sending or receiving.
+   *
+   * @param ioException encountered exception
+   */
   void setException (IOException ioException);
 }

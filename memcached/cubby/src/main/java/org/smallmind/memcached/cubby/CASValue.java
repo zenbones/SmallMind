@@ -37,29 +37,54 @@ import org.smallmind.memcached.cubby.codec.CubbyCodec;
 import org.smallmind.memcached.cubby.command.Result;
 import org.smallmind.memcached.utility.ProxyCASResponse;
 
+/**
+ * Holder for a value and its associated CAS token returned by memcached.
+ *
+ * @param <T> value type
+ */
 public class CASValue<T> implements ProxyCASResponse<T> {
 
   private final T value;
   private final long cas;
 
+  /**
+   * Constructs a CASValue by decoding a raw memcached result.
+   *
+   * @param result command result containing serialized bytes and CAS token
+   * @param codec  codec used to deserialize the payload
+   * @throws IOException            if deserialization fails due to I/O
+   * @throws ClassNotFoundException if the value class cannot be resolved
+   */
   public CASValue (Result result, CubbyCodec codec)
     throws IOException, ClassNotFoundException {
 
     this(result.getCas(), (T)codec.deserialize(result.getValue()));
   }
 
+  /**
+   * Constructs a CASValue with an already decoded value.
+   *
+   * @param cas   compare-and-swap token from memcached
+   * @param value decoded value
+   */
   public CASValue (long cas, T value) {
 
     this.cas = cas;
     this.value = value;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public long getCas () {
 
     return cas;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public T getValue () {
 

@@ -32,9 +32,18 @@
  */
 package org.smallmind.memcached.utility;
 
+/**
+ * CAS-aware wrapper containing a value and its associated token.
+ */
 public interface ProxyCASResponse<T> {
 
+  /**
+   * @return decoded value
+   */
   T getValue ();
 
+  /**
+   * @return compare-and-swap token
+   */
   long getCas ();
 }

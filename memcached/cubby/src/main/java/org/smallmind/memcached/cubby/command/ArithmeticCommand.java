@@ -40,6 +40,9 @@ import org.smallmind.memcached.cubby.response.Response;
 import org.smallmind.memcached.cubby.response.ResponseCode;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
 
+/**
+ * Implements memcached increment/decrement semantics with optional initialization and CAS guards.
+ */
 public class ArithmeticCommand extends Command {
 
   private ArithmeticMode mode = ArithmeticMode.INCREMENT;
@@ -50,12 +53,21 @@ public class ArithmeticCommand extends Command {
   private Integer expiration;
   private Long cas;
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String getKey () {
 
     return key;
   }
 
+  /**
+   * Sets the target cache key.
+   *
+   * @param key cache key to update
+   * @return this command for chaining
+   */
   public ArithmeticCommand setKey (String key) {
 
     this.key = key;
@@ -63,6 +75,12 @@ public class ArithmeticCommand extends Command {
     return this;
   }
 
+  /**
+   * Sets whether to increment or decrement.
+   *
+   * @param mode arithmetic mode
+   * @return this command for chaining
+   */
   public ArithmeticCommand setMode (ArithmeticMode mode) {
 
     this.mode = mode;
@@ -70,6 +88,12 @@ public class ArithmeticCommand extends Command {
     return this;
   }
 
+  /**
+   * Supplies a CAS token for conditional updates.
+   *
+   * @param cas compare-and-swap token
+   * @return this command for chaining
+   */
   public ArithmeticCommand setCas (Long cas) {
 
     this.cas = cas;
@@ -77,6 +101,12 @@ public class ArithmeticCommand extends Command {
     return this;
   }
 
+  /**
+   * Sets the initial value to use when the key is absent.
+   *
+   * @param initial initial value
+   * @return this command for chaining
+   */
   public ArithmeticCommand setInitial (Integer initial) {
 
     this.initial = initial;
@@ -84,6 +114,12 @@ public class ArithmeticCommand extends Command {
     return this;
   }
 
+  /**
+   * Specifies the amount to add or subtract.
+   *
+   * @param delta increment/decrement delta
+   * @return this command for chaining
+   */
   public ArithmeticCommand setDelta (Integer delta) {
 
     this.delta = delta;
@@ -91,6 +127,12 @@ public class ArithmeticCommand extends Command {
     return this;
   }
 
+  /**
+   * Sets the expiration in seconds for the key when initializing.
+   *
+   * @param expiration expiration time in seconds
+   * @return this command for chaining
+   */
   public ArithmeticCommand setExpiration (Integer expiration) {
 
     this.expiration = expiration;
@@ -98,6 +140,12 @@ public class ArithmeticCommand extends Command {
     return this;
   }
 
+  /**
+   * Attaches an opaque token echoed in responses.
+   *
+   * @param opaqueToken token to include
+   * @return this command for chaining
+   */
   public ArithmeticCommand setOpaqueToken (String opaqueToken) {
 
     this.opaqueToken = opaqueToken;
@@ -105,6 +153,9 @@ public class ArithmeticCommand extends Command {
     return this;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public byte[] construct (KeyTranslator keyTranslator)
     throws IOException, CubbyOperationException {
@@ -139,6 +190,9 @@ public class ArithmeticCommand extends Command {
     return line.append("\r\n").toString().getBytes(StandardCharsets.UTF_8);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Result process (Response response)
     throws UnexpectedResponseException {

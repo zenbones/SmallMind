@@ -32,22 +32,37 @@
  */
 package org.smallmind.memcached.cubby;
 
+/**
+ * Immutable credentials for authenticating against SASL-enabled memcached servers.
+ */
 public class Authentication {
 
   private final String username;
   private final String password;
 
+  /**
+   * Builds a new credential pair.
+   *
+   * @param username SASL username
+   * @param password SASL password
+   */
   public Authentication (String username, String password) {
 
     this.username = username;
     this.password = password;
   }
 
+  /**
+   * @return the configured username
+   */
   public String getUsername () {
 
     return username;
   }
 
+  /**
+   * @return the configured password
+   */
   public String getPassword () {
 
     return password;

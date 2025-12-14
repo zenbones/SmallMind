@@ -40,6 +40,9 @@ import org.smallmind.memcached.cubby.response.Response;
 import org.smallmind.memcached.cubby.response.ResponseCode;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
 
+/**
+ * Encapsulates get and touch-style operations including CAS retrieval.
+ */
 public class GetCommand extends Command {
 
   private String key;
@@ -48,12 +51,21 @@ public class GetCommand extends Command {
   private boolean value = true;
   private Integer expiration;
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String getKey () {
 
     return key;
   }
 
+  /**
+   * Sets the cache key to retrieve.
+   *
+   * @param key cache key
+   * @return this command for chaining
+   */
   public GetCommand setKey (String key) {
 
     this.key = key;
@@ -61,6 +73,12 @@ public class GetCommand extends Command {
     return this;
   }
 
+  /**
+   * Requests that the server return the CAS token with the value.
+   *
+   * @param cas {@code true} to include CAS token
+   * @return this command for chaining
+   */
   public GetCommand setCas (boolean cas) {
 
     this.cas = cas;
@@ -68,6 +86,12 @@ public class GetCommand extends Command {
     return this;
   }
 
+  /**
+   * Sets an expiration to apply (used for get-and-touch).
+   *
+   * @param expiration expiration in seconds
+   * @return this command for chaining
+   */
   public GetCommand setExpiration (Integer expiration) {
 
     this.expiration = expiration;
@@ -75,6 +99,12 @@ public class GetCommand extends Command {
     return this;
   }
 
+  /**
+   * Attaches an opaque token echoed by the server.
+   *
+   * @param opaqueToken token to include
+   * @return this command for chaining
+   */
   public GetCommand setOpaqueToken (String opaqueToken) {
 
     this.opaqueToken = opaqueToken;
@@ -82,6 +112,12 @@ public class GetCommand extends Command {
     return this;
   }
 
+  /**
+   * Controls whether to return the value body; disables fetch for touch-only operations.
+   *
+   * @param value {@code true} to fetch the value
+   * @return this command for chaining
+   */
   public GetCommand setValue (boolean value) {
 
     this.value = value;
@@ -89,6 +125,9 @@ public class GetCommand extends Command {
     return this;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public byte[] construct (KeyTranslator keyTranslator)
     throws IOException, CubbyOperationException {
@@ -111,6 +150,9 @@ public class GetCommand extends Command {
     return line.append("\r\n").toString().getBytes(StandardCharsets.UTF_8);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Result process (Response response)
     throws UnexpectedResponseException {

@@ -36,13 +36,22 @@ import java.io.IOException;
 import org.smallmind.memcached.cubby.response.Response;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Callback used for server-originated maintenance requests where no client waits on the response.
+ */
 public class ServerRequestCallback implements RequestCallback {
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void setResult (Response response) {
 
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void setException (IOException ioException) {
 

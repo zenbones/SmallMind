@@ -41,12 +41,21 @@ import org.smallmind.memcached.cubby.MemcachedHost;
 import org.smallmind.memcached.cubby.NoAvailableHostException;
 import org.smallmind.memcached.cubby.ServerPool;
 
+/**
+ * Simple locator that hashes keys and evenly distributes them across active hosts.
+ */
 public class DefaultKeyLocator implements KeyLocator {
 
   private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
   private LinkedList<MemcachedHost> currentHostList;
   private String[] routingArray;
 
+  /**
+   * Builds a sorted routing table of active host names.
+   *
+   * @param serverPool pool of hosts to route across
+   * @return ordered host name array
+   */
   private String[] generateRoutingArray (ServerPool serverPool) {
 
     LinkedList<String> activeNameList = new LinkedList<>();
@@ -73,12 +82,24 @@ public class DefaultKeyLocator implements KeyLocator {
     }
   }
 
+  /**
+   * Initializes the routing information for the pool.
+   *
+   * @param serverPool pool that supplies host entries
+   */
   @Override
   public void installRouting (ServerPool serverPool) {
 
     updateRouting(serverPool);
   }
 
+  /**
+   * Rebuilds the routing table if the underlying host list has changed.
+   *
+   * <p>Uses a write lock to ensure the routing array and host list are updated atomically.</p>
+   *
+   * @param serverPool pool that may have updated host state
+   */
   @Override
   public void updateRouting (ServerPool serverPool) {
 
@@ -92,6 +113,16 @@ public class DefaultKeyLocator implements KeyLocator {
     }
   }
 
+  /**
+   * Resolves the host responsible for the supplied cache key.
+   *
+   * <p>The routing array is read under a shared lock and the key hash is used to choose an active host.</p>
+   *
+   * @param serverPool pool that provides host lookups by name
+   * @param key cache key to route
+   * @return active {@link MemcachedHost} that should service the key
+   * @throws IOException if no active host is available
+   */
   @Override
   public MemcachedHost find (ServerPool serverPool, String key)
     throws IOException {

@@ -32,17 +32,26 @@
  */
 package org.smallmind.memcached.cubby.command;
 
+/**
+ * Enumerates the set mutation variants supported by memcached.
+ */
 public enum SetMode {
 
   ADD('E'), APPEND('A'), PREPEND('P'), REPLACE('R'), SET('S');
 
   private final char token;
 
+  /**
+   * @param token protocol token representing the set mode
+   */
   SetMode (char token) {
 
     this.token = token;
   }
 
+  /**
+   * @return protocol token for the mode
+   */
   public char getToken () {
 
     return token;

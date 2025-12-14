@@ -34,6 +34,9 @@ package org.smallmind.memcached.cubby;
 
 import org.smallmind.nutsnbolts.lang.FormattedIOException;
 
+/**
+ * Indicates that a connection attempt to a memcached host exceeded the configured timeout.
+ */
 public class ConnectionTimeoutException extends FormattedIOException {
 
 }

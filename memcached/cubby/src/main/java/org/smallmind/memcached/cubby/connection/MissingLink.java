@@ -32,22 +32,37 @@
  */
 package org.smallmind.memcached.cubby.connection;
 
+/**
+ * Couples a serialized command with its callback while in-flight on the connection.
+ */
 public class MissingLink {
 
   private final RequestCallback requestCallback;
   private final CommandBuffer commandBuffer;
 
+  /**
+   * Constructs a link entry for the given request.
+   *
+   * @param requestCallback callback expecting the response
+   * @param commandBuffer   serialized command buffer
+   */
   public MissingLink (RequestCallback requestCallback, CommandBuffer commandBuffer) {
 
     this.requestCallback = requestCallback;
     this.commandBuffer = commandBuffer;
   }
 
+  /**
+   * @return callback to notify when a response arrives
+   */
   public RequestCallback getRequestCallback () {
 
     return requestCallback;
   }
 
+  /**
+   * @return serialized command buffer
+   */
   public CommandBuffer getCommandBuffer () {
 
     return commandBuffer;

@@ -35,8 +35,14 @@ package org.smallmind.memcached.cubby.translator;
 import java.io.IOException;
 import org.smallmind.nutsnbolts.http.Base64Codec;
 
+/**
+ * Encodes keys using Base64 to ensure protocol-safe characters.
+ */
 public class DefaultKeyTranslator implements KeyTranslator {
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String encode (String key)
     throws IOException {

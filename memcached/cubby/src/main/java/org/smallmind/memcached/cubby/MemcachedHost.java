@@ -35,6 +35,9 @@ package org.smallmind.memcached.cubby;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 
+/**
+ * Immutable definition of a memcached host including its name and network address.
+ */
 public class MemcachedHost {
 
   private final String name;
@@ -42,6 +45,13 @@ public class MemcachedHost {
   private final int port;
   private SocketAddress address;
 
+  /**
+   * Constructs a host definition.
+   *
+   * @param name     unique name used for routing
+   * @param hostName hostname or IP address
+   * @param port     memcached port
+   */
   public MemcachedHost (String name, String hostName, int port) {
 
     this.name = name;
@@ -51,11 +61,22 @@ public class MemcachedHost {
     address = new InetSocketAddress(hostName, port);
   }
 
+  /**
+   * Creates a fresh socket address for the host.
+   *
+   * @return constructed socket address
+   */
   protected InetSocketAddress constructAddress () {
 
     return new InetSocketAddress(hostName, port);
   }
 
+  /**
+   * Updates the stored address after a reconnect attempt.
+   *
+   * @param address new socket address
+   * @return this host for chaining
+   */
   protected MemcachedHost regenerate (InetSocketAddress address) {
 
     this.address = address;
@@ -63,11 +84,17 @@ public class MemcachedHost {
     return this;
   }
 
+  /**
+   * @return host routing name
+   */
   public String getName () {
 
     return name;
   }
 
+  /**
+   * @return current socket address for the host
+   */
   public SocketAddress getAddress () {
 
     return address;
