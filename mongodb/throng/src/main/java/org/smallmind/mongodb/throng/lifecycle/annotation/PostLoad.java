@@ -41,6 +41,9 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 // public method () {}
 // Only usable in @Entity classes
+/**
+ * Marks an instance method to run after an entity has been loaded from BSON.
+ */
 public @interface PostLoad {
 
 }

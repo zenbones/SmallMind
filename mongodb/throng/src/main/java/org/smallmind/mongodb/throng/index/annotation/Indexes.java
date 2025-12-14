@@ -41,9 +41,18 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 @Repeatable(AllIndexes.class)
+/**
+ * Declares a compound index composed of one or more {@link Index} elements along with shared options.
+ */
 public @interface Indexes {
 
+  /**
+   * @return index elements that make up the compound index
+   */
   Index[] value ();
 
+  /**
+   * @return index options applied to the compound index
+   */
   IndexOptions options () default @IndexOptions();
 }

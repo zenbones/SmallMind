@@ -34,27 +34,46 @@ package org.smallmind.mongodb.throng.index;
 
 import org.smallmind.mongodb.throng.index.annotation.Indexed;
 
+/**
+ * Captures a field annotated for indexing along with its {@link Indexed} metadata.
+ */
 public class IndexedField {
 
   private final Indexed indexed;
   private final String field;
 
+  /**
+   * @param field   the field path designated for indexing
+   * @param indexed annotation describing index parameters
+   */
   public IndexedField (String field, Indexed indexed) {
 
     this.field = field;
     this.indexed = indexed;
   }
 
+  /**
+   * Prefixes the field path with the given prolog.
+   *
+   * @param prolog prefix to add to the field path
+   * @return new {@link IndexedField} with adjusted path
+   */
   public IndexedField accumulate (String prolog) {
 
     return new IndexedField((prolog == null || prolog.isEmpty()) ? field : prolog + "." + field, indexed);
   }
 
+  /**
+   * @return the field path marked for indexing
+   */
   public String getField () {
 
     return field;
   }
 
+  /**
+   * @return the {@link Indexed} annotation associated with the field
+   */
   public Indexed getIndexed () {
 
     return indexed;

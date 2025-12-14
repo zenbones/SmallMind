@@ -32,27 +32,46 @@
  */
 package org.smallmind.mongodb.throng.index;
 
+/**
+ * Represents a single field that participates in an index along with its type (ascending, descending, hashed, etc.).
+ */
 public class IndexedElement {
 
   private final String field;
   private final IndexType indexType;
 
+  /**
+   * @param field     the field path being indexed
+   * @param indexType the direction or index type
+   */
   public IndexedElement (String field, IndexType indexType) {
 
     this.field = field;
     this.indexType = indexType;
   }
 
+  /**
+   * Creates a new {@link IndexedElement} with the field path prefixed by the provided prolog.
+   *
+   * @param prolog prefix to add to the field path
+   * @return new indexed element with adjusted field path
+   */
   public IndexedElement accumulate (String prolog) {
 
     return new IndexedElement((prolog == null || prolog.isEmpty()) ? field : prolog + "." + field, indexType);
   }
 
+  /**
+   * @return the indexed field path
+   */
   public String getField () {
 
     return field;
   }
 
+  /**
+   * @return the index type applied to the field
+   */
   public IndexType getIndexType () {
 
     return indexType;

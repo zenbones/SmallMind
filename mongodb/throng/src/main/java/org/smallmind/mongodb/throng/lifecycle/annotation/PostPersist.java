@@ -41,6 +41,9 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 // public method (BsonDocument bsonDocument) {}
 // Only usable in @Entity classes
+/**
+ * Marks an instance method to run after an entity has been encoded to BSON. Signature must accept a {@code BsonDocument}.
+ */
 public @interface PostPersist {
 
 }

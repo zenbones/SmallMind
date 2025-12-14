@@ -41,6 +41,9 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 // public method () {}
 // Only usable in @Entity classes
+/**
+ * Marks an instance method to run before an entity is persisted to BSON.
+ */
 public @interface PrePersist {
 
 }

@@ -42,33 +42,55 @@ import org.smallmind.mongodb.throng.ThrongRuntimeException;
 import org.smallmind.mongodb.throng.index.IndexProvider;
 import org.smallmind.mongodb.throng.index.ThrongIndexes;
 
+/**
+ * Codec that encodes/decodes polymorphic types using a discriminator key and a {@link ThrongPropertiesMultiplexer}.
+ *
+ * @param <T> base type of the polymorphic hierarchy
+ */
 public class ThrongPropertiesMultiplexerCodec<T> implements Codec<T>, IndexProvider {
 
   private final ThrongPropertiesMultiplexer<T> throngPropertiesMultiplexer;
 
+  /**
+   * @param throngPropertiesMultiplexer multiplexer describing subtype codecs
+   */
   public ThrongPropertiesMultiplexerCodec (ThrongPropertiesMultiplexer<T> throngPropertiesMultiplexer) {
 
     this.throngPropertiesMultiplexer = throngPropertiesMultiplexer;
   }
 
   @Override
+  /**
+   * {@inheritDoc}
+   */
   public Class<T> getEncoderClass () {
 
     return throngPropertiesMultiplexer.getEntityClass();
   }
 
+  /**
+   * @return whether {@code null} values are preserved
+   */
   public boolean isStoreNulls () {
 
     return throngPropertiesMultiplexer.isStoreNulls();
   }
 
   @Override
+  /**
+   * {@inheritDoc}
+   */
   public ThrongIndexes provideIndexes () {
 
     return throngPropertiesMultiplexer.provideIndexes();
   }
 
   @Override
+  /**
+   * Decodes a polymorphic value by reading the discriminator key and delegating to the subtype codec.
+   *
+   * @throws ThrongRuntimeException if the discriminator field is missing or unknown
+   */
   public T decode (BsonReader reader, DecoderContext decoderContext) {
 
     if (BsonType.NULL.equals(reader.getCurrentBsonType())) {
@@ -93,6 +115,9 @@ public class ThrongPropertiesMultiplexerCodec<T> implements Codec<T>, IndexProvi
   }
 
   @Override
+  /**
+   * Encodes a polymorphic value by writing the discriminator key and delegating to the subtype codec.
+   */
   public void encode (BsonWriter writer, T value, EncoderContext encoderContext) {
 
     if ((value != null) || throngPropertiesMultiplexer.isStoreNulls()) {
@@ -108,6 +133,16 @@ public class ThrongPropertiesMultiplexerCodec<T> implements Codec<T>, IndexProvi
   }
 
   // Due to the fact that object is not of type 'capture of ?'
+
+  /**
+   * Re-encodes a value with the provided codec, avoiding wildcard capture issues.
+   *
+   * @param writer         destination writer
+   * @param codec          codec to use
+   * @param stuff          value to encode
+   * @param encoderContext encoder context
+   * @param <U>            value type
+   */
   protected <U> void reEncode (BsonWriter writer, Codec<U> codec, Object stuff, EncoderContext encoderContext) {
 
     codec.encode(writer, (U)stuff, encoderContext);

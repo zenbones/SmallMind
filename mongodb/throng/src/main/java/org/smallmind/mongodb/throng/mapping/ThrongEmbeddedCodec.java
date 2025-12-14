@@ -38,14 +38,25 @@ import org.bson.BsonWriter;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 
+/**
+ * Codec for embedded objects that wraps {@link ThrongPropertiesCodec} with null-handling and document boundaries.
+ *
+ * @param <T> embedded type
+ */
 public class ThrongEmbeddedCodec<T> extends ThrongPropertiesCodec<T> {
 
+  /**
+   * @param throngProperties property metadata describing the embedded type
+   */
   public ThrongEmbeddedCodec (ThrongProperties<T> throngProperties) {
 
     super(throngProperties);
   }
 
   @Override
+  /**
+   * Decodes an embedded document or {@code null} value.
+   */
   public T decode (BsonReader reader, DecoderContext decoderContext) {
 
     if (BsonType.NULL.equals(reader.getCurrentBsonType())) {
@@ -65,6 +76,9 @@ public class ThrongEmbeddedCodec<T> extends ThrongPropertiesCodec<T> {
   }
 
   @Override
+  /**
+   * Encodes the embedded value as a document, optionally writing {@code null} when configured.
+   */
   public void encode (BsonWriter writer, T value, EncoderContext encoderContext) {
 
     if (value != null) {

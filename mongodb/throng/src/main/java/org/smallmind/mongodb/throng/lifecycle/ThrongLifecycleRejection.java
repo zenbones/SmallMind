@@ -39,8 +39,17 @@ import org.smallmind.mongodb.throng.lifecycle.annotation.PostPersist;
 import org.smallmind.mongodb.throng.lifecycle.annotation.PreLoad;
 import org.smallmind.mongodb.throng.lifecycle.annotation.PrePersist;
 
+/**
+ * Validates that lifecycle annotations are not used on embedded classes, throwing exceptions when found.
+ */
 public class ThrongLifecycleRejection {
 
+  /**
+   * Scans the embedded class and throws if any lifecycle annotations are present.
+   *
+   * @param embeddedClass embedded class to validate
+   * @throws ThrongMappingException if a lifecycle annotation is detected
+   */
   public static void reject (Class<?> embeddedClass)
     throws ThrongMappingException {
 

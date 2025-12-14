@@ -39,41 +39,62 @@ import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
+/**
+ * Spring factory bean that builds and manages a {@link MongoClient} from provided {@link MongoClientSettings}.
+ */
 public class MongoClientFactoryBean implements FactoryBean<MongoClient>, InitializingBean, DisposableBean {
 
   private MongoClient mongoClient;
   private MongoClientSettings clientSettings;
 
+  /**
+   * @param clientSettings settings used to create the Mongo client
+   */
   public void setClientSettings (MongoClientSettings clientSettings) {
 
     this.clientSettings = clientSettings;
   }
 
   @Override
+  /**
+   * {@inheritDoc}
+   */
   public void afterPropertiesSet () {
 
     mongoClient = MongoClients.create(clientSettings);
   }
 
   @Override
+  /**
+   * {@inheritDoc}
+   */
   public boolean isSingleton () {
 
     return true;
   }
 
   @Override
+  /**
+   * {@inheritDoc}
+   */
   public Class<?> getObjectType () {
 
     return MongoClient.class;
   }
 
   @Override
+  /**
+   * {@inheritDoc}
+   */
   public MongoClient getObject () {
 
     return mongoClient;
   }
 
   @Override
+  /**
+   * Closes the created client when the bean is destroyed.
+   */
   public void destroy () {
 
     if (mongoClient != null) {

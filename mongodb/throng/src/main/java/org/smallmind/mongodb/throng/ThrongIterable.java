@@ -39,17 +39,33 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCursor;
 import org.smallmind.mongodb.throng.mapping.ThrongEntityCodec;
 
+/**
+ * Iterable wrapper that decodes {@link ThrongDocument} results into entity instances on iteration.
+ *
+ * @param <T> entity type
+ */
 public class ThrongIterable<T> implements Iterable<T> {
 
   private final FindIterable<ThrongDocument> findIterable;
   private final ThrongEntityCodec<T> codec;
 
+  /**
+   * Constructs a new iterable over the provided driver iterable using the supplied codec.
+   *
+   * @param findIterable driver iterable that yields {@link ThrongDocument} values
+   * @param codec        codec for translating documents into entities
+   */
   public ThrongIterable (FindIterable<ThrongDocument> findIterable, ThrongEntityCodec<T> codec) {
 
     this.findIterable = findIterable;
     this.codec = codec;
   }
 
+  /**
+   * Materializes all results into a list of entities.
+   *
+   * @return list of decoded entity instances
+   */
   public List<T> asList () {
 
     LinkedList<T> list = new LinkedList<>();
@@ -60,27 +76,44 @@ public class ThrongIterable<T> implements Iterable<T> {
   }
 
   @Override
+  /**
+   * {@inheritDoc}
+   */
   public Iterator<T> iterator () {
 
     return new ThrongIterator(findIterable.iterator());
   }
 
+  /**
+   * Iterator that decodes results one-by-one from the driver cursor.
+   */
   private class ThrongIterator implements Iterator<T> {
 
     private final MongoCursor<ThrongDocument> mongoCursor;
 
+    /**
+     * Creates a new iterator that wraps the given driver cursor.
+     *
+     * @param mongoCursor cursor over {@link ThrongDocument} results
+     */
     public ThrongIterator (MongoCursor<ThrongDocument> mongoCursor) {
 
       this.mongoCursor = mongoCursor;
     }
 
     @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean hasNext () {
 
       return mongoCursor.hasNext();
     }
 
     @Override
+    /**
+     * {@inheritDoc}
+     */
     public T next () {
 
       return TranslationUtility.fromBson(codec, mongoCursor.next().getBsonDocument());

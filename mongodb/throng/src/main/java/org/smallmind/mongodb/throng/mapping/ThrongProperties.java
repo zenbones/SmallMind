@@ -49,6 +49,11 @@ import org.smallmind.mongodb.throng.mapping.annotation.Property;
 import org.smallmind.nutsnbolts.reflection.FieldAccessor;
 import org.smallmind.nutsnbolts.reflection.FieldUtility;
 
+/**
+ * Collects property metadata for an entity or embedded type, including codecs, index declarations, and property name mappings.
+ *
+ * @param <T> owning class type
+ */
 public class ThrongProperties<T> extends TreeMap<String, ThrongProperty> implements IndexProvider {
 
   private final Class<T> entityClass;
@@ -56,6 +61,19 @@ public class ThrongProperties<T> extends TreeMap<String, ThrongProperty> impleme
   private final HashMap<String, String> propertyNameMap = new HashMap<>();
   private final boolean storeNulls;
 
+  /**
+   * Introspects the class for {@link Property} annotations, resolving codecs and indexes for each field.
+   *
+   * @param entityClass        class to inspect
+   * @param codecRegistry      registry for resolving codecs
+   * @param embeddedReferences cache of generated embedded codecs
+   * @param storeNulls         whether null values should be encoded
+   * @throws ThrongMappingException    if codecs cannot be resolved or properties conflict
+   * @throws NoSuchMethodException     if codec instantiation fails
+   * @throws InstantiationException    if codec instantiation fails
+   * @throws IllegalAccessException    if reflection cannot access constructors
+   * @throws InvocationTargetException if codec constructors throw exceptions
+   */
   public ThrongProperties (Class<T> entityClass, CodecRegistry codecRegistry, EmbeddedReferences embeddedReferences, boolean storeNulls)
     throws ThrongMappingException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
 
@@ -135,16 +153,28 @@ public class ThrongProperties<T> extends TreeMap<String, ThrongProperty> impleme
     }
   }
 
+  /**
+   * @return entity or embedded class represented by this metadata
+   */
   public Class<T> getEntityClass () {
 
     return entityClass;
   }
 
+  /**
+   * @return whether {@code null} values should be stored when encoding
+   */
   public boolean isStoreNulls () {
 
     return storeNulls;
   }
 
+  /**
+   * Retrieves a property by its persisted name rather than the Java field name.
+   *
+   * @param propertyName persisted property name
+   * @return matching {@link ThrongProperty} or {@code null} if none match
+   */
   public ThrongProperty getByPropertyName (String propertyName) {
 
     String fieldName;
@@ -153,6 +183,9 @@ public class ThrongProperties<T> extends TreeMap<String, ThrongProperty> impleme
   }
 
   @Override
+  /**
+   * {@inheritDoc}
+   */
   public ThrongIndexes provideIndexes () {
 
     return throngIndexes;

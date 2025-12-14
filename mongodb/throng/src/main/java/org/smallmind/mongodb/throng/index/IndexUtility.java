@@ -40,8 +40,18 @@ import com.mongodb.client.model.Indexes;
 import org.bson.conversions.Bson;
 import org.smallmind.mongodb.throng.index.annotation.IndexOptions;
 
+/**
+ * Utilities for creating MongoDB indexes from Throng index metadata.
+ */
 public class IndexUtility {
 
+  /**
+   * Creates single-field and compound indexes defined by the provided {@link ThrongIndexes}.
+   *
+   * @param mongoCollection  the collection on which to create indexes
+   * @param throngIndexes    index definitions harvested from entity metadata
+   * @param includeCollation whether to apply collation options from the definitions
+   */
   public static void createIndex (MongoCollection<?> mongoCollection, ThrongIndexes throngIndexes, boolean includeCollation) {
 
     for (IndexedField indexedField : throngIndexes.getIndexedFields()) {
@@ -59,6 +69,13 @@ public class IndexUtility {
     }
   }
 
+  /**
+   * Converts {@link IndexOptions} annotation values into driver {@link com.mongodb.client.model.IndexOptions}.
+   *
+   * @param indexOptionsAnnotation annotation describing index options
+   * @param includeCollation       whether collation information should be applied
+   * @return populated driver index options
+   */
   private static com.mongodb.client.model.IndexOptions generateIndexOptions (IndexOptions indexOptionsAnnotation, boolean includeCollation) {
 
     com.mongodb.client.model.IndexOptions indexOptions = new com.mongodb.client.model.IndexOptions();

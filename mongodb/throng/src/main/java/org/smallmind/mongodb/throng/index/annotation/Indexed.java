@@ -40,9 +40,18 @@ import org.smallmind.mongodb.throng.index.IndexType;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
+/**
+ * Marks a field for the creation of a single-field index.
+ */
 public @interface Indexed {
 
+  /**
+   * @return index type to apply to the field
+   */
   IndexType value () default IndexType.ASCENDING;
 
+  /**
+   * @return additional index options
+   */
   IndexOptions options () default @IndexOptions();
 }

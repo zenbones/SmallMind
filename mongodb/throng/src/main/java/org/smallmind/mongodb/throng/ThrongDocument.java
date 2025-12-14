@@ -35,25 +35,48 @@ package org.smallmind.mongodb.throng;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
 
+/**
+ * Simple wrapper around a {@link BsonDocument} that provides fluent helpers for Throng operations.
+ */
 public class ThrongDocument {
 
   private final BsonDocument bsonDocument;
 
+  /**
+   * Creates an empty underlying {@link BsonDocument}.
+   */
   public ThrongDocument () {
 
     bsonDocument = new BsonDocument();
   }
 
+  /**
+   * Wraps the supplied {@link BsonDocument}.
+   *
+   * @param bsonDocument backing document instance
+   */
   public ThrongDocument (BsonDocument bsonDocument) {
 
     this.bsonDocument = bsonDocument;
   }
 
+  /**
+   * Exposes the raw {@link BsonDocument}.
+   *
+   * @return the backing document
+   */
   public BsonDocument getBsonDocument () {
 
     return bsonDocument;
   }
 
+  /**
+   * Adds a key/value pair to the document and returns this wrapper for chaining.
+   *
+   * @param key   field name
+   * @param value field value
+   * @return this instance for fluent chaining
+   */
   public ThrongDocument add (String key, BsonValue value) {
 
     bsonDocument.put(key, value);

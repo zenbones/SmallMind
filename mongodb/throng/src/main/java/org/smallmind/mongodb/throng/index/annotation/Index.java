@@ -40,9 +40,18 @@ import org.smallmind.mongodb.throng.index.IndexType;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.ANNOTATION_TYPE)
+/**
+ * Declares a single field and index type used within a compound index definition.
+ */
 public @interface Index {
 
+  /**
+   * @return field path to include in the index
+   */
   String value ();
 
+  /**
+   * @return index type applied to the field
+   */
   IndexType type () default IndexType.ASCENDING;
 }

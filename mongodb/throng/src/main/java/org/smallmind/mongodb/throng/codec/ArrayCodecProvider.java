@@ -36,15 +36,29 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 
+/**
+ * Codec provider that supplies {@link ArrayCodec} instances for Java array types.
+ */
 public class ArrayCodecProvider implements CodecProvider {
 
   private final boolean storeNulls;
 
+  /**
+   * @param storeNulls whether {@code null} array values should be encoded explicitly
+   */
   public ArrayCodecProvider (boolean storeNulls) {
 
     this.storeNulls = storeNulls;
   }
 
+  /**
+   * Provides an {@link ArrayCodec} when the requested type is an array and the registry can supply a codec for its component class.
+   *
+   * @param clazz    target type requested from the registry
+   * @param registry registry for resolving component codecs
+   * @param <T>      requested type
+   * @return an {@link ArrayCodec} for the array type, or {@code null} when unsupported
+   */
   @Override
   public <T> Codec<T> get (Class<T> clazz, CodecRegistry registry) {
 

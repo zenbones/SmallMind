@@ -34,12 +34,20 @@ package org.smallmind.mongodb.throng.mapping;
 
 import org.smallmind.nutsnbolts.reflection.FieldAccessor;
 
+/**
+ * Holds mapping metadata for a single property, including its accessor, codec, and persisted name.
+ */
 public class ThrongProperty {
 
   private final FieldAccessor fieldAccessor;
   private final org.bson.codecs.Codec<?> codec;
   private final String name;
 
+  /**
+   * @param fieldAccessor accessor for the backing Java field
+   * @param codec         codec used to encode/decode the field
+   * @param name          persisted field name
+   */
   public ThrongProperty (FieldAccessor fieldAccessor, org.bson.codecs.Codec<?> codec, String name) {
 
     this.fieldAccessor = fieldAccessor;
@@ -47,16 +55,25 @@ public class ThrongProperty {
     this.name = name;
   }
 
+  /**
+   * @return accessor for the Java field
+   */
   public FieldAccessor getFieldAccessor () {
 
     return fieldAccessor;
   }
 
+  /**
+   * @return codec used to encode/decode the field
+   */
   public org.bson.codecs.Codec<?> getCodec () {
 
     return codec;
   }
 
+  /**
+   * @return persisted property name
+   */
   public String getName () {
 
     return name;

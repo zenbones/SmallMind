@@ -38,14 +38,25 @@ import org.bson.BsonWriter;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 
+/**
+ * Codec for polymorphic embedded types that multiplexes between multiple property sets based on discriminator fields.
+ *
+ * @param <T> embedded base type
+ */
 public class ThrongPolymorphicEmbeddedCodec<T> extends ThrongPropertiesMultiplexerCodec<T> {
 
+  /**
+   * @param throngPropertiesMultiplexer multiplexer describing subtype codecs and discriminators
+   */
   public ThrongPolymorphicEmbeddedCodec (ThrongPropertiesMultiplexer<T> throngPropertiesMultiplexer) {
 
     super(throngPropertiesMultiplexer);
   }
 
   @Override
+  /**
+   * Decodes a polymorphic embedded document or {@code null}.
+   */
   public T decode (BsonReader reader, DecoderContext decoderContext) {
 
     if (BsonType.NULL.equals(reader.getCurrentBsonType())) {
@@ -65,6 +76,9 @@ public class ThrongPolymorphicEmbeddedCodec<T> extends ThrongPropertiesMultiplex
   }
 
   @Override
+  /**
+   * Encodes the polymorphic embedded value, or {@code null} when permitted.
+   */
   public void encode (BsonWriter writer, T value, EncoderContext encoderContext) {
 
     if (value != null) {

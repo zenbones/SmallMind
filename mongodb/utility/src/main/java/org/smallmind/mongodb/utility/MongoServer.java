@@ -32,36 +32,58 @@
  */
 package org.smallmind.mongodb.utility;
 
+/**
+ * Simple value object describing a MongoDB server host and port.
+ */
 public class MongoServer {
 
   private String host;
   private int port = 27017;
 
+  /**
+   * Creates an uninitialized server definition.
+   */
   public MongoServer () {
 
   }
 
+  /**
+   * @param host hostname or IP address
+   * @param port port number, typically 27017
+   */
   public MongoServer (String host, int port) {
 
     this.host = host;
     this.port = port;
   }
 
+  /**
+   * @return server host
+   */
   public String getHost () {
 
     return host;
   }
 
+  /**
+   * @param host server host
+   */
   public void setHost (String host) {
 
     this.host = host;
   }
 
+  /**
+   * @return server port
+   */
   public int getPort () {
 
     return port;
   }
 
+  /**
+   * @param port server port
+   */
   public void setPort (int port) {
 
     this.port = port;

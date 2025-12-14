@@ -42,6 +42,11 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 
+/**
+ * Codec that converts Java array types to and from BSON arrays while delegating element encoding to a component codec.
+ *
+ * @param <T> the array type being encoded/decoded
+ */
 public class ArrayCodec<T> implements Codec<T> {
 
   private final Codec<?> itemCodec;
@@ -49,6 +54,14 @@ public class ArrayCodec<T> implements Codec<T> {
   private final Class<?> componentClass;
   private final boolean storeNulls;
 
+  /**
+   * Constructs an array codec.
+   *
+   * @param arrayClass     the array class being handled (e.g. {@code String[].class})
+   * @param componentClass the component type contained in the array
+   * @param itemCodec      codec for encoding/decoding each array element
+   * @param storeNulls     whether {@code null} array values should be written explicitly
+   */
   public ArrayCodec (Class<T> arrayClass, Class<?> componentClass, Codec<?> itemCodec, boolean storeNulls) {
 
     this.arrayClass = arrayClass;
@@ -58,12 +71,22 @@ public class ArrayCodec<T> implements Codec<T> {
   }
 
   @Override
+  /**
+   * {@inheritDoc}
+   */
   public Class<T> getEncoderClass () {
 
     return arrayClass;
   }
 
   @Override
+  /**
+   * Decodes a BSON array into a Java array of the configured component type.
+   *
+   * @param reader source reader positioned at the array
+   * @param decoderContext decoder context
+   * @return decoded Java array or {@code null} when the BSON value is {@code null}
+   */
   public T decode (BsonReader reader, DecoderContext decoderContext) {
 
     if (BsonType.NULL.equals(reader.getCurrentBsonType())) {
@@ -91,6 +114,13 @@ public class ArrayCodec<T> implements Codec<T> {
   }
 
   @Override
+  /**
+   * Encodes a Java array into a BSON array using the configured element codec.
+   *
+   * @param writer destination writer
+   * @param value array to encode
+   * @param encoderContext encoder context
+   */
   public void encode (BsonWriter writer, T value, EncoderContext encoderContext) {
 
     if (value != null) {
@@ -108,6 +138,16 @@ public class ArrayCodec<T> implements Codec<T> {
   }
 
   // Due to the fact that object is not of type 'capture of ?'
+
+  /**
+   * Performs encoding of a single element using the provided codec, sidestepping wildcard capture limitations.
+   *
+   * @param writer         destination writer
+   * @param codec          codec to use for the value
+   * @param stuff          element to encode
+   * @param encoderContext encoder context
+   * @param <U>            element type
+   */
   protected <U> void reEncode (BsonWriter writer, Codec<U> codec, Object stuff, EncoderContext encoderContext) {
 
     codec.encode(writer, (U)stuff, encoderContext);

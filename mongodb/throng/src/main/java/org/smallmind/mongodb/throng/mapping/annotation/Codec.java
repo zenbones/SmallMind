@@ -39,7 +39,13 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
+/**
+ * Declares a specific codec implementation to use when encoding/decoding the annotated field.
+ */
 public @interface Codec {
 
+  /**
+   * @return codec class to instantiate for the field
+   */
   Class<? extends org.bson.codecs.Codec<?>> value ();
 }

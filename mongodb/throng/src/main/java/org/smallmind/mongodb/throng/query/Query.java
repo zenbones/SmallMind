@@ -36,6 +36,9 @@ import com.mongodb.client.FindIterable;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.smallmind.mongodb.throng.ThrongDocument;
 
+/**
+ * Fluent builder for configuring MongoDB find queries including filters, sorting, projections, and paging.
+ */
 public class Query {
 
   private Filter filter;
@@ -45,16 +48,28 @@ public class Query {
   private int limit = 0;
   private int batchSize = 0;
 
+  /**
+   * @return new query builder
+   */
   public static Query with () {
 
     return new Query();
   }
 
+  /**
+   * @return query with an empty filter
+   */
   public static Query empty () {
 
     return new Query().filter(Filter.empty());
   }
 
+  /**
+   * Applies a filter to the query.
+   *
+   * @param filter filter to apply
+   * @return this builder for chaining
+   */
   public Query filter (Filter filter) {
 
     this.filter = filter;
@@ -62,6 +77,12 @@ public class Query {
     return this;
   }
 
+  /**
+   * Applies a sort definition.
+   *
+   * @param sort sort specification
+   * @return this builder for chaining
+   */
   public Query sort (Sort sort) {
 
     this.sort = sort;
@@ -69,6 +90,12 @@ public class Query {
     return this;
   }
 
+  /**
+   * Applies projection definitions.
+   *
+   * @param projections projection builder
+   * @return this builder for chaining
+   */
   public Query projection (Projections projections) {
 
     this.projections = projections;
@@ -76,6 +103,12 @@ public class Query {
     return this;
   }
 
+  /**
+   * Configures how many documents to skip.
+   *
+   * @param skip number of documents to skip
+   * @return this builder for chaining
+   */
   public Query skip (long skip) {
 
     this.skip = skip;
@@ -83,6 +116,12 @@ public class Query {
     return this;
   }
 
+  /**
+   * Sets the maximum number of documents to return.
+   *
+   * @param limit maximum documents
+   * @return this builder for chaining
+   */
   public Query limit (int limit) {
 
     this.limit = limit;
@@ -90,6 +129,12 @@ public class Query {
     return this;
   }
 
+  /**
+   * Sets the batch size for the cursor.
+   *
+   * @param batchSize batch size
+   * @return this builder for chaining
+   */
   public Query batchSize (int batchSize) {
 
     this.batchSize = batchSize;
@@ -97,6 +142,15 @@ public class Query {
     return this;
   }
 
+  /**
+   * Applies the configured query options to the driver iterable.
+   *
+   * @param findIterable  driver find iterable
+   * @param documentClass document class used for BSON conversion
+   * @param codecRegistry codec registry used by the driver
+   * @param <T>           document type
+   * @return updated iterable with query options applied
+   */
   public <T> FindIterable<ThrongDocument> apply (FindIterable<ThrongDocument> findIterable, Class<T> documentClass, CodecRegistry codecRegistry) {
 
     if (filter != null) {

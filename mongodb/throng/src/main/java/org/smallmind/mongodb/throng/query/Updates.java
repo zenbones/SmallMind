@@ -36,15 +36,24 @@ import java.util.LinkedList;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
+/**
+ * Fluent builder for MongoDB update operations.
+ */
 public class Updates {
 
   private final LinkedList<Bson> updateList = new LinkedList<>();
 
+  /**
+   * @return new updates builder
+   */
   public static Updates of () {
 
     return new Updates();
   }
 
+  /**
+   * Sets a field to the given value.
+   */
   public Updates set (String fieldName, Object value) {
 
     updateList.add(com.mongodb.client.model.Updates.set(fieldName, value));
@@ -52,6 +61,9 @@ public class Updates {
     return this;
   }
 
+  /**
+   * Removes the specified field.
+   */
   public Updates unset (String fieldName) {
 
     updateList.add(com.mongodb.client.model.Updates.unset(fieldName));
@@ -59,6 +71,9 @@ public class Updates {
     return this;
   }
 
+  /**
+   * Sets a field only when the document is inserted.
+   */
   public Updates setOnInsert (String fieldName, Object value) {
 
     updateList.add(com.mongodb.client.model.Updates.setOnInsert(fieldName, value));
@@ -66,6 +81,9 @@ public class Updates {
     return this;
   }
 
+  /**
+   * Increments a numeric field.
+   */
   public Updates inc (String fieldName, Number number) {
 
     updateList.add(com.mongodb.client.model.Updates.inc(fieldName, number));
@@ -73,6 +91,9 @@ public class Updates {
     return this;
   }
 
+  /**
+   * Multiplies a numeric field.
+   */
   public Updates mul (String fieldName, Number number) {
 
     updateList.add(com.mongodb.client.model.Updates.mul(fieldName, number));
@@ -80,6 +101,9 @@ public class Updates {
     return this;
   }
 
+  /**
+   * Applies a max comparison update.
+   */
   public Updates max (String fieldName, Object value) {
 
     updateList.add(com.mongodb.client.model.Updates.max(fieldName, value));
@@ -87,6 +111,9 @@ public class Updates {
     return this;
   }
 
+  /**
+   * Applies a min comparison update.
+   */
   public Updates min (String fieldName, Object value) {
 
     updateList.add(com.mongodb.client.model.Updates.min(fieldName, value));
@@ -94,6 +121,9 @@ public class Updates {
     return this;
   }
 
+  /**
+   * Pushes a value onto an array field.
+   */
   public Updates push (String fieldName, Object value) {
 
     updateList.add(com.mongodb.client.model.Updates.push(fieldName, value));
@@ -101,6 +131,9 @@ public class Updates {
     return this;
   }
 
+  /**
+   * Adds a value to a set if it is not already present.
+   */
   public Updates addToSet (String fieldName, Object value) {
 
     updateList.add(com.mongodb.client.model.Updates.addToSet(fieldName, value));
@@ -108,6 +141,9 @@ public class Updates {
     return this;
   }
 
+  /**
+   * Removes matching elements from an array field.
+   */
   public Updates pull (String fieldName, Object value) {
 
     updateList.add(com.mongodb.client.model.Updates.pull(fieldName, value));
@@ -115,6 +151,9 @@ public class Updates {
     return this;
   }
 
+  /**
+   * Pops the first element from an array field.
+   */
   public Updates popFirst (String fieldName) {
 
     updateList.add(com.mongodb.client.model.Updates.popFirst(fieldName));
@@ -122,6 +161,9 @@ public class Updates {
     return this;
   }
 
+  /**
+   * Pops the last element from an array field.
+   */
   public Updates popLast (String fieldName) {
 
     updateList.add(com.mongodb.client.model.Updates.popLast(fieldName));
@@ -129,6 +171,9 @@ public class Updates {
     return this;
   }
 
+  /**
+   * Renames a field.
+   */
   public Updates rename (String fieldName, String updatedFieldName) {
 
     updateList.add(com.mongodb.client.model.Updates.rename(fieldName, updatedFieldName));
@@ -136,6 +181,13 @@ public class Updates {
     return this;
   }
 
+  /**
+   * Combines the accumulated updates into a single BSON document.
+   *
+   * @param documentClass target document class
+   * @param codecRegistry driver codec registry
+   * @return BSON representation of the updates
+   */
   public Bson toBsonDocument (Class<?> documentClass, CodecRegistry codecRegistry) {
 
     return com.mongodb.client.model.Updates.combine(updateList).toBsonDocument(documentClass, codecRegistry);

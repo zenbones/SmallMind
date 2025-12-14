@@ -39,7 +39,13 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
+/**
+ * Identifies the primary identifier field for an entity.
+ */
 public @interface Id {
 
+  /**
+   * @return persisted name of the id field, defaults to the Java field name when empty
+   */
   String value () default "_id";
 }

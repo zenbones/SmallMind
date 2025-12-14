@@ -36,15 +36,27 @@ import java.util.LinkedList;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
+/**
+ * Fluent builder for MongoDB projection specifications.
+ */
 public class Projections {
 
   private final LinkedList<Bson> projectionList = new LinkedList<>();
 
+  /**
+   * @return new projection builder
+   */
   public static Projections with () {
 
     return new Projections();
   }
 
+  /**
+   * Includes the given field names in the result set.
+   *
+   * @param fieldNames fields to include
+   * @return this builder for chaining
+   */
   public Projections include (String... fieldNames) {
 
     projectionList.add(com.mongodb.client.model.Projections.include(fieldNames));
@@ -52,6 +64,12 @@ public class Projections {
     return this;
   }
 
+  /**
+   * Excludes the given field names from the result set.
+   *
+   * @param fieldNames fields to exclude
+   * @return this builder for chaining
+   */
   public Projections exclude (String... fieldNames) {
 
     projectionList.add(com.mongodb.client.model.Projections.exclude(fieldNames));
@@ -59,6 +77,13 @@ public class Projections {
     return this;
   }
 
+  /**
+   * Builds the BSON projection document for use with driver queries.
+   *
+   * @param documentClass target document class
+   * @param codecRegistry registry used by the driver
+   * @return BSON projection document
+   */
   public Bson toBsonDocument (Class<?> documentClass, CodecRegistry codecRegistry) {
 
     return com.mongodb.client.model.Projections.fields(projectionList).toBsonDocument(documentClass, codecRegistry);

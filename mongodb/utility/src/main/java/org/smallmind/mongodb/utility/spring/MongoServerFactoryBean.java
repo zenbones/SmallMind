@@ -39,41 +39,64 @@ import org.smallmind.nutsnbolts.util.SpreadParserException;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
+/**
+ * Spring factory bean that constructs an array of {@link ServerAddress} instances from template patterns or spreads.
+ */
 public class MongoServerFactoryBean implements InitializingBean, FactoryBean<ServerAddress[]> {
 
   private ServerAddress[] serverAddresses;
   private String serverPattern;
   private String serverSpread;
 
+  /**
+   * @param serverPattern pattern describing hostnames (optionally with port) and containing '#' placeholders for spreads
+   */
   public void setServerPattern (String serverPattern) {
 
     this.serverPattern = serverPattern;
   }
 
+  /**
+   * @param serverSpread spread expression used to expand '#' placeholders in the server pattern
+   */
   public void setServerSpread (String serverSpread) {
 
     this.serverSpread = serverSpread;
   }
 
   @Override
+  /**
+   * {@inheritDoc}
+   */
   public boolean isSingleton () {
 
     return true;
   }
 
   @Override
+  /**
+   * {@inheritDoc}
+   */
   public Class<?> getObjectType () {
 
     return ServerAddress[].class;
   }
 
   @Override
+  /**
+   * {@inheritDoc}
+   */
   public ServerAddress[] getObject () {
 
     return serverAddresses;
   }
 
   @Override
+  /**
+   * Parses the configured pattern/spread to produce the array of server addresses.
+   *
+   * @throws SpreadParserException if the spread expression cannot be parsed
+   */
   public void afterPropertiesSet ()
     throws SpreadParserException {
 

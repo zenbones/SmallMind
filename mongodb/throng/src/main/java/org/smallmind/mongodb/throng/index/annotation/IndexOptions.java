@@ -39,43 +39,103 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.ANNOTATION_TYPE)
+/**
+ * Describes index creation options that mirror the MongoDB driver's {@code IndexOptions}.
+ */
 public @interface IndexOptions {
 
+  /**
+   * @return whether the index build runs in the background
+   */
   boolean background () default false;
 
+  /**
+   * @return whether the index enforces uniqueness
+   */
   boolean unique () default false;
 
+  /**
+   * @return explicit name for the index
+   */
   String name () default "";
 
+  /**
+   * @return whether documents missing the indexed field are omitted
+   */
   boolean sparse () default false;
 
+  /**
+   * @return TTL for documents in seconds
+   */
   long expireAfterSeconds () default 0;
 
+  /**
+   * @return index version
+   */
   int version () default 0;
 
+  /**
+   * @return weighting document for text indexes (JSON format)
+   */
   String weights () default "";
 
+  /**
+   * @return language for text index string processing
+   */
   String defaultLanguage () default "";
 
+  /**
+   * @return field name that overrides the default language
+   */
   String languageOverride () default "";
 
+  /**
+   * @return text index version
+   */
   int textVersion () default 0;
 
+  /**
+   * @return 2dsphere index version
+   */
   int sphereVersion () default 0;
 
+  /**
+   * @return number of precision bits for geo indexes
+   */
   int bits () default 0;
 
+  /**
+   * @return minimum boundary for geo indexes
+   */
   double min () default -360;
 
+  /**
+   * @return maximum boundary for geo indexes
+   */
   double max () default 360;
 
+  /**
+   * @return storage engine options as JSON
+   */
   String storageEngine () default "";
 
+  /**
+   * @return partial filter expression in JSON
+   */
   String partialFilterExpression () default "";
 
+  /**
+   * @return collation settings for the index
+   */
   Collation collation () default @Collation();
 
+  /**
+   * @return wildcard projection document as JSON
+   */
   String wildcardProjection () default "";
 
+  /**
+   * @return whether the index remains hidden from the query planner
+   */
   boolean hidden () default false;
 }

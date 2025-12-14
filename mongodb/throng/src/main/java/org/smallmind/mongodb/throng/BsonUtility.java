@@ -50,8 +50,18 @@ import org.bson.BsonValue;
 import org.bson.BsonWriter;
 import org.smallmind.nutsnbolts.util.IterableIterator;
 
+/**
+ * Utility helpers for translating between streaming BSON readers/writers and {@link BsonValue} trees.
+ */
 public class BsonUtility {
 
+  /**
+   * Recursively reads the current value from the provided {@link BsonReader}, materializing it into a {@link BsonValue}.
+   *
+   * @param reader the reader positioned at the value to decode
+   * @return the decoded {@link BsonValue} tree rooted at the current position
+   * @throws DocumentParsingException if the BSON node type is unknown or unsupported
+   */
   public static BsonValue read (BsonReader reader) {
 
     BsonType bsonType;
@@ -104,6 +114,13 @@ public class BsonUtility {
     }
   }
 
+  /**
+   * Writes the given {@link BsonValue} tree to the supplied {@link BsonWriter}, honoring nested documents and arrays.
+   *
+   * @param writer    the destination writer
+   * @param bsonValue the value to serialize
+   * @throws DocumentParsingException if the BSON type is not recognized
+   */
   public static void write (BsonWriter writer, BsonValue bsonValue) {
 
     switch (bsonValue.getBsonType()) {

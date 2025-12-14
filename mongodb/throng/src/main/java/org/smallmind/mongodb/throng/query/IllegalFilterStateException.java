@@ -34,8 +34,15 @@ package org.smallmind.mongodb.throng.query;
 
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
+/**
+ * Thrown when an invalid combination of filter operations is requested.
+ */
 public class IllegalFilterStateException extends FormattedRuntimeException {
 
+  /**
+   * @param message message template
+   * @param args    template arguments
+   */
   public IllegalFilterStateException (String message, Object... args) {
 
     super(message, args);

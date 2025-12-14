@@ -36,27 +36,47 @@ import java.util.LinkedList;
 import org.smallmind.mongodb.throng.index.annotation.Indexed;
 import org.smallmind.mongodb.throng.index.annotation.Indexes;
 
+/**
+ * Aggregates index definitions derived from entity and embedded class annotations.
+ */
 public class ThrongIndexes {
 
   private final LinkedList<IndexedField> indexedFieldList = new LinkedList<>();
   private final LinkedList<CompoundIndex> compoundIndexList = new LinkedList<>();
 
+  /**
+   * @return single-field index declarations
+   */
   public IndexedField[] getIndexedFields () {
 
     return indexedFieldList.toArray(new IndexedField[0]);
   }
 
+  /**
+   * @return compound index declarations
+   */
   public CompoundIndex[] getCompoundIndexes () {
 
     return compoundIndexList.toArray(new CompoundIndex[0]);
   }
 
+  /**
+   * Adds all index definitions from the given container.
+   *
+   * @param throngIndexes index container to merge
+   */
   public void add (ThrongIndexes throngIndexes) {
 
     indexedFieldList.addAll(throngIndexes.indexedFieldList);
     compoundIndexList.addAll(throngIndexes.compoundIndexList);
   }
 
+  /**
+   * Adds all index definitions from the supplied container, prefixing their field paths with the provided prolog.
+   *
+   * @param prolog        field prefix to apply
+   * @param throngIndexes index container to merge
+   */
   public void accumulate (String prolog, ThrongIndexes throngIndexes) {
 
     for (IndexedField indexedField : throngIndexes.indexedFieldList) {
@@ -67,11 +87,22 @@ public class ThrongIndexes {
     }
   }
 
+  /**
+   * Adds a single-field index.
+   *
+   * @param field   field path to index
+   * @param indexed metadata describing the index
+   */
   public void addIndexed (String field, Indexed indexed) {
 
     indexedFieldList.add(new IndexedField(field, indexed));
   }
 
+  /**
+   * Adds compound index definitions.
+   *
+   * @param indexesArray array of {@link Indexes} annotations
+   */
   public void addIndexes (Indexes[] indexesArray) {
 
     for (Indexes indexes : indexesArray) {

@@ -36,34 +36,52 @@ import com.mongodb.WriteConcern;
 import org.smallmind.mongodb.utility.MongoAcknowledgment;
 import org.springframework.beans.factory.FactoryBean;
 
+/**
+ * Factory bean that constructs {@link WriteConcern} values from a {@link MongoAcknowledgment} selection with optional journaling.
+ */
 public class MongoWriteConcern implements FactoryBean<WriteConcern> {
 
   private MongoAcknowledgment acknowledgment;
   private boolean journaled;
 
+  /**
+   * @param acknowledgment write concern level to use
+   */
   public void setAcknowledgment (MongoAcknowledgment acknowledgment) {
 
     this.acknowledgment = acknowledgment;
   }
 
+  /**
+   * @param journaled whether journaling is requested when supported
+   */
   public void setJournaled (boolean journaled) {
 
     this.journaled = journaled;
   }
 
   @Override
+  /**
+   * {@inheritDoc}
+   */
   public boolean isSingleton () {
 
     return false;
   }
 
   @Override
+  /**
+   * {@inheritDoc}
+   */
   public Class<?> getObjectType () {
 
     return WriteConcern.class;
   }
 
   @Override
+  /**
+   * Builds the {@link WriteConcern} based on the configured acknowledgment and journaling flag.
+   */
   public WriteConcern getObject () {
 
     WriteConcern writeConcern = acknowledgment.getWriteConcern();

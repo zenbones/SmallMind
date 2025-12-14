@@ -38,8 +38,19 @@ import org.smallmind.mongodb.throng.ThrongRuntimeException;
 import org.smallmind.nutsnbolts.reflection.FieldAccessor;
 import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
 
+/**
+ * Helper methods for resolving concrete types needed for codec generation.
+ */
 public class CodecUtility {
 
+  /**
+   * Attempts to resolve a generic field's concrete type by inspecting the parent class's type arguments.
+   *
+   * @param parentClass   entity class declaring the field
+   * @param fieldAccessor reflection accessor for the field
+   * @return the concrete class for the field
+   * @throws ThrongRuntimeException if the type parameter cannot be resolved
+   */
   public static Class<?> getReifiedType (Class<?> parentClass, FieldAccessor fieldAccessor) {
 
     Type genericType;

@@ -34,8 +34,17 @@ package org.smallmind.mongodb.throng;
 
 import com.mongodb.MongoWriteException;
 
+/**
+ * Helper for detecting duplicate key failures produced by the MongoDB driver.
+ */
 public class DuplicateKeyUtility {
 
+  /**
+   * Tests whether the supplied {@link MongoWriteException} represents a duplicate key violation (error code 11000).
+   *
+   * @param writeException the write exception returned by the driver
+   * @return {@code true} if the error code is for duplicate keys, otherwise {@code false}
+   */
   public static boolean idDuplicateKeyException (MongoWriteException writeException) {
 
     return writeException.getError().getCode() == 11000;

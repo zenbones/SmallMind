@@ -32,6 +32,9 @@
  */
 package org.smallmind.mongodb.throng;
 
+/**
+ * Mutable configuration for Throng client behavior such as null storage and index creation.
+ */
 public class ThrongOptions {
 
   private boolean storeNulls;
@@ -42,6 +45,13 @@ public class ThrongOptions {
 
   }
 
+  /**
+   * Creates a new options instance.
+   *
+   * @param storeNulls       whether null values are persisted
+   * @param createIndexes    whether indexes are created automatically
+   * @param includeCollation whether index creation includes collation details
+   */
   public ThrongOptions (boolean storeNulls, boolean createIndexes, boolean includeCollation) {
 
     this.storeNulls = storeNulls;
@@ -49,11 +59,20 @@ public class ThrongOptions {
     this.includeCollation = includeCollation;
   }
 
+  /**
+   * @return {@code true} if null values should be persisted
+   */
   public boolean isStoreNulls () {
 
     return storeNulls;
   }
 
+  /**
+   * Sets whether null values should be stored.
+   *
+   * @param storeNulls flag indicating null storage
+   * @return this options instance for chaining
+   */
   public ThrongOptions setStoreNulls (boolean storeNulls) {
 
     this.storeNulls = storeNulls;
@@ -61,11 +80,20 @@ public class ThrongOptions {
     return this;
   }
 
+  /**
+   * @return {@code true} if indexes are created automatically for entities
+   */
   public boolean isCreateIndexes () {
 
     return createIndexes;
   }
 
+  /**
+   * Sets automatic index creation behavior.
+   *
+   * @param createIndexes whether to create indexes
+   * @return this options instance for chaining
+   */
   public ThrongOptions setCreateIndexes (boolean createIndexes) {
 
     this.createIndexes = createIndexes;
@@ -73,11 +101,20 @@ public class ThrongOptions {
     return this;
   }
 
+  /**
+   * @return {@code true} if collation information should be included when creating indexes
+   */
   public boolean isIncludeCollation () {
 
     return includeCollation;
   }
 
+  /**
+   * Sets whether collation is included in index creation.
+   *
+   * @param includeCollation flag indicating inclusion of collation
+   * @return this options instance for chaining
+   */
   public ThrongOptions setIncludeCollation (boolean includeCollation) {
 
     this.includeCollation = includeCollation;

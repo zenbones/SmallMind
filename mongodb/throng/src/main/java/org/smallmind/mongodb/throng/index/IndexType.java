@@ -35,6 +35,9 @@ package org.smallmind.mongodb.throng.index;
 import com.mongodb.client.model.Indexes;
 import org.bson.conversions.Bson;
 
+/**
+ * Supported index types and factories for building driver {@link Bson} index specifications.
+ */
 public enum IndexType {
 
   ASCENDING {
@@ -80,5 +83,11 @@ public enum IndexType {
     }
   };
 
+  /**
+   * Constructs a BSON index specification for the given field based on the index type.
+   *
+   * @param field the field path to index
+   * @return BSON value describing the index
+   */
   public abstract Bson construct (String field);
 }

@@ -34,40 +34,66 @@ package org.smallmind.mongodb.throng;
 
 import org.bson.BsonValue;
 
+/**
+ * Wrapper around the MongoDB driver's {@link com.mongodb.client.result.UpdateResult} with a convenience helper.
+ */
 public class UpdateResult {
 
   private final com.mongodb.client.result.UpdateResult updateResult;
 
+  /**
+   * Creates a wrapper around the supplied driver result.
+   *
+   * @param updateResult underlying update result
+   */
   public UpdateResult (com.mongodb.client.result.UpdateResult updateResult) {
 
     this.updateResult = updateResult;
   }
 
+  /**
+   * @return an {@link UpdateResult} representing an unacknowledged write
+   */
   public static UpdateResult unacknowledged () {
 
     return new UpdateResult(com.mongodb.client.result.UpdateResult.unacknowledged());
   }
 
+  /**
+   * @return whether the write was acknowledged by the server
+   */
   public boolean wasAcknowledged () {
 
     return updateResult.wasAcknowledged();
   }
 
+  /**
+   * @return the number of documents matched by the filter
+   */
   public long getMatchedCount () {
 
     return updateResult.getMatchedCount();
   }
 
+  /**
+   * @return the number of documents modified
+   */
   public long getModifiedCount () {
 
     return updateResult.getModifiedCount();
   }
 
+  /**
+   * @return the identifier of an upserted document, if any
+   */
   public BsonValue getUpsertedId () {
 
     return updateResult.getUpsertedId();
   }
 
+  /**
+   * @return the total number of modified documents plus one if an upsert occurred
+   */
   public long getModifiedPlusInsertedCount () {
 
     return getModifiedCount() + ((getUpsertedId()) == null ? 0 : 1);

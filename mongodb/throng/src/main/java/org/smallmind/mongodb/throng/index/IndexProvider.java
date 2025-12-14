@@ -32,7 +32,13 @@
  */
 package org.smallmind.mongodb.throng.index;
 
+/**
+ * Implemented by classes capable of describing index requirements for their collections.
+ */
 public interface IndexProvider {
 
+  /**
+   * @return the set of index definitions that should exist for the collection
+   */
   ThrongIndexes provideIndexes ();
 }

@@ -39,8 +39,19 @@ import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.smallmind.mongodb.throng.mapping.ThrongEntityCodec;
 
+/**
+ * Utilities for translating between entity instances and BSON documents while honoring lifecycle callbacks.
+ */
 public class TranslationUtility {
 
+  /**
+   * Decodes a BSON document into an entity using the supplied codec, invoking lifecycle callbacks when present.
+   *
+   * @param entityCodec  codec for the entity
+   * @param bsonDocument BSON document to decode
+   * @param <T>          entity type
+   * @return decoded entity instance, possibly {@code null}
+   */
   public static <T> T fromBson (ThrongEntityCodec<T> entityCodec, BsonDocument bsonDocument) {
 
     T instance;
@@ -56,6 +67,14 @@ public class TranslationUtility {
     return instance;
   }
 
+  /**
+   * Encodes an entity into a BSON document, running lifecycle callbacks before and after persistence.
+   *
+   * @param entity      entity instance to encode
+   * @param entityCodec codec for the entity
+   * @param <T>         entity type
+   * @return resulting BSON document
+   */
   public static <T> BsonDocument toBson (T entity, ThrongEntityCodec<T> entityCodec) {
 
     BsonDocument bsonDocument;

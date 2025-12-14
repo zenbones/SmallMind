@@ -43,23 +43,53 @@ import com.mongodb.client.model.CollationStrength;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.ANNOTATION_TYPE)
+/**
+ * Describes collation settings to be applied to an index.
+ */
 public @interface Collation {
 
+  /**
+   * @return locale identifier for the collation; defaults to the simple binary collation
+   */
   String locale () default "simple";
 
+  /**
+   * @return whether case comparisons are performed at an extra level
+   */
   boolean caseLevel () default false;
 
+  /**
+   * @return ordering preference for upper or lower case when strength is set accordingly
+   */
   CollationCaseFirst caseFirst () default CollationCaseFirst.OFF;
 
+  /**
+   * @return comparison strength indicating sensitivity to case, diacritics, etc.
+   */
   CollationStrength strength () default CollationStrength.TERTIARY;
 
+  /**
+   * @return whether numeric strings are ordered by numeric value
+   */
   boolean numericOrdering () default false;
 
+  /**
+   * @return whether spaces and punctuation are considered ignorable
+   */
   CollationAlternate alternate () default CollationAlternate.NON_IGNORABLE;
 
+  /**
+   * @return which characters are affected by {@link #alternate()}
+   */
   CollationMaxVariable maxVariable () default CollationMaxVariable.PUNCT;
 
+  /**
+   * @return whether text is normalized before comparison
+   */
   boolean normalization () default false;
 
+  /**
+   * @return whether secondary comparisons are reversed (for certain languages)
+   */
   boolean backwards () default false;
 }

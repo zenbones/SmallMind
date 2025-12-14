@@ -39,9 +39,18 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
+/**
+ * Marks a class as a top-level entity mapped to a MongoDB collection.
+ */
 public @interface Entity {
 
+  /**
+   * @return collection name backing the entity
+   */
   String value ();
 
+  /**
+   * @return optional polymorphic configuration for the entity hierarchy
+   */
   Polymorphic polymorphic () default @Polymorphic();
 }

@@ -44,12 +44,31 @@ import org.smallmind.mongodb.throng.mapping.annotation.Polymorphic;
 import org.smallmind.nutsnbolts.reflection.FieldAccessor;
 import org.smallmind.nutsnbolts.reflection.FieldUtility;
 
+/**
+ * Represents an entity mapped to a MongoDB collection, including lifecycle hooks and id metadata.
+ *
+ * @param <T> entity type
+ */
 public class ThrongEntity<T> extends ThrongProperties<T> {
 
   private final ThrongLifecycle<T> lifecycle;
   private final String collection;
   private ThrongProperty idProperty;
 
+  /**
+   * Builds metadata for an entity, registering its id property and lifecycle callbacks.
+   *
+   * @param entityClass        concrete entity class
+   * @param entityAnnotation   entity annotation with collection information
+   * @param codecRegistry      registry for resolving codecs
+   * @param embeddedReferences cache of embedded codecs
+   * @param storeNulls         whether null values should be stored
+   * @throws ThrongMappingException    if id fields are missing or invalid, or annotations are misused
+   * @throws NoSuchMethodException     if reflective codec construction fails
+   * @throws InstantiationException    if codec construction fails
+   * @throws IllegalAccessException    if reflection cannot access members
+   * @throws InvocationTargetException if construction of codecs throws
+   */
   public ThrongEntity (Class<T> entityClass, Entity entityAnnotation, CodecRegistry codecRegistry, EmbeddedReferences embeddedReferences, boolean storeNulls)
     throws ThrongMappingException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
 
@@ -94,16 +113,25 @@ public class ThrongEntity<T> extends ThrongProperties<T> {
     }
   }
 
+  /**
+   * @return MongoDB collection name for the entity
+   */
   public String getCollection () {
 
     return collection;
   }
 
+  /**
+   * @return property representing the id field
+   */
   public ThrongProperty getIdProperty () {
 
     return idProperty;
   }
 
+  /**
+   * @return lifecycle handler for the entity
+   */
   public ThrongLifecycle<T> getLifecycle () {
 
     return lifecycle;

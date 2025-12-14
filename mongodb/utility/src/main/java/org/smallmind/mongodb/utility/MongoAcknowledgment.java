@@ -34,6 +34,9 @@ package org.smallmind.mongodb.utility;
 
 import com.mongodb.WriteConcern;
 
+/**
+ * Enumerates write concern levels with an indicator for whether journaling can be enabled.
+ */
 public enum MongoAcknowledgment {
 
   ZERO(WriteConcern.UNACKNOWLEDGED, false), ONE(WriteConcern.W1, true), TWO(WriteConcern.W2, true), THREE(WriteConcern.W3, true), MAJORITY(WriteConcern.MAJORITY, true);
@@ -41,17 +44,27 @@ public enum MongoAcknowledgment {
   private final WriteConcern writeConcern;
   private final boolean journable;
 
+  /**
+   * @param writeConcern driver write concern corresponding to the enumeration
+   * @param journable    whether journaling can accompany this concern
+   */
   MongoAcknowledgment (WriteConcern writeConcern, boolean journable) {
 
     this.writeConcern = writeConcern;
     this.journable = journable;
   }
 
+  /**
+   * @return the driver write concern value
+   */
   public WriteConcern getWriteConcern () {
 
     return writeConcern;
   }
 
+  /**
+   * @return true if journal acknowledgement may be requested
+   */
   public boolean isJournable () {
 
     return journable;

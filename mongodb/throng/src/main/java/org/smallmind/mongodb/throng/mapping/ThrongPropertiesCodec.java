@@ -43,33 +43,55 @@ import org.smallmind.mongodb.throng.ThrongRuntimeException;
 import org.smallmind.mongodb.throng.index.IndexProvider;
 import org.smallmind.mongodb.throng.index.ThrongIndexes;
 
+/**
+ * Generic codec that encodes and decodes objects based on {@link ThrongProperties} metadata.
+ *
+ * @param <T> type being encoded/decoded
+ */
 public class ThrongPropertiesCodec<T> implements Codec<T>, IndexProvider {
 
   private final ThrongProperties<T> throngProperties;
 
+  /**
+   * @param throngProperties metadata describing fields and codecs for the type
+   */
   public ThrongPropertiesCodec (ThrongProperties<T> throngProperties) {
 
     this.throngProperties = throngProperties;
   }
 
   @Override
+  /**
+   * {@inheritDoc}
+   */
   public Class<T> getEncoderClass () {
 
     return throngProperties.getEntityClass();
   }
 
+  /**
+   * @return whether null values should be stored when encoding
+   */
   public boolean isStoreNulls () {
 
     return throngProperties.isStoreNulls();
   }
 
   @Override
+  /**
+   * {@inheritDoc}
+   */
   public ThrongIndexes provideIndexes () {
 
     return throngProperties.provideIndexes();
   }
 
   @Override
+  /**
+   * Decodes a BSON document into an instance of the mapped class using configured property codecs.
+   *
+   * @throws ThrongRuntimeException if the instance cannot be constructed or fields cannot be set
+   */
   public T decode (BsonReader reader, DecoderContext decoderContext) {
 
     if (BsonType.NULL.equals(reader.getCurrentBsonType())) {
@@ -103,6 +125,11 @@ public class ThrongPropertiesCodec<T> implements Codec<T>, IndexProvider {
   }
 
   @Override
+  /**
+   * Encodes an object by iterating its mapped properties and writing names/values to the writer.
+   *
+   * @throws ThrongRuntimeException if property values cannot be accessed
+   */
   public void encode (BsonWriter writer, T value, EncoderContext encoderContext) {
 
     for (ThrongProperty throngProperty : throngProperties.values()) {
@@ -126,6 +153,16 @@ public class ThrongPropertiesCodec<T> implements Codec<T>, IndexProvider {
   }
 
   // Due to the fact that object is not of type 'capture of ?'
+
+  /**
+   * Performs encoding of a value with the given codec, avoiding wildcard capture issues.
+   *
+   * @param writer         destination writer
+   * @param codec          codec to use for encoding
+   * @param stuff          value to encode
+   * @param encoderContext encoder context
+   * @param <U>            value type
+   */
   protected <U> void reEncode (BsonWriter writer, Codec<U> codec, Object stuff, EncoderContext encoderContext) {
 
     codec.encode(writer, (U)stuff, encoderContext);

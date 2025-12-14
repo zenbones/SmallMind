@@ -51,8 +51,18 @@ import org.bson.BsonType;
 import org.bson.BsonValue;
 import org.bson.BsonWriter;
 
+/**
+ * Utility methods for converting between Jackson {@link JsonNode} trees and BSON values or readers/writers.
+ */
 public class JsonUtility {
 
+  /**
+   * Converts a {@link JsonNode} into its {@link BsonValue} equivalent.
+   *
+   * @param jsonNode JSON node to convert
+   * @return BSON representation of the node
+   * @throws BSONParsingException if the node type is unsupported
+   */
   public static BsonValue fromJson (JsonNode jsonNode) {
 
     switch (jsonNode.getNodeType()) {
@@ -99,6 +109,13 @@ public class JsonUtility {
     }
   }
 
+  /**
+   * Converts a {@link BsonValue} into a Jackson {@link JsonNode}.
+   *
+   * @param bsonValue BSON value to convert
+   * @return JSON representation of the value
+   * @throws BSONParsingException if the BSON type is not handled
+   */
   public static JsonNode toJson (BsonValue bsonValue) {
 
     switch (bsonValue.getBsonType()) {
@@ -149,6 +166,13 @@ public class JsonUtility {
     }
   }
 
+  /**
+   * Reads the current value from a {@link BsonReader} and materializes it as a {@link JsonNode}.
+   *
+   * @param reader reader positioned at the value to decode
+   * @return decoded JSON node
+   * @throws BSONParsingException if the BSON node type is unknown
+   */
   public static JsonNode read (BsonReader reader) {
 
     BsonType bsonType;
@@ -194,6 +218,13 @@ public class JsonUtility {
     }
   }
 
+  /**
+   * Writes the supplied {@link JsonNode} to a {@link BsonWriter}.
+   *
+   * @param writer   destination writer
+   * @param jsonNode node to serialize
+   * @throws BSONParsingException if an unsupported JSON node type is encountered
+   */
   public static void write (BsonWriter writer, JsonNode jsonNode) {
 
     switch (jsonNode.getNodeType()) {

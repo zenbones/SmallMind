@@ -42,6 +42,11 @@ import org.smallmind.mongodb.throng.index.IndexProvider;
 import org.smallmind.mongodb.throng.index.ThrongIndexes;
 import org.smallmind.mongodb.throng.mapping.annotation.Polymorphic;
 
+/**
+ * Maintains a set of property codecs for polymorphic subtypes and exposes lookup by discriminator key.
+ *
+ * @param <T> base type of the polymorphic hierarchy
+ */
 public class ThrongPropertiesMultiplexer<T> implements IndexProvider {
 
   private final HashMap<String, ThrongPropertiesCodec<?>> polymorphicCodecMap = new HashMap<>();
@@ -49,6 +54,20 @@ public class ThrongPropertiesMultiplexer<T> implements IndexProvider {
   private final String key;
   private final boolean storeNulls;
 
+  /**
+   * Builds a multiplexer for the given polymorphic annotation, validating subtype compatibility and preparing codecs.
+   *
+   * @param entityClass        declaring class for the polymorphic relationship
+   * @param polymorphic        annotation describing subtypes and discriminator key
+   * @param codecRegistry      registry for resolving codecs
+   * @param embeddedReferences cache of embedded codecs
+   * @param storeNulls         whether null values should be encoded
+   * @throws ThrongMappingException    if subtypes are incompatible or codecs cannot be resolved
+   * @throws NoSuchMethodException     if codec construction fails
+   * @throws InstantiationException    if codec construction fails
+   * @throws IllegalAccessException    if reflection cannot access constructors
+   * @throws InvocationTargetException if codec constructors throw exceptions
+   */
   public ThrongPropertiesMultiplexer (Class<T> entityClass, Polymorphic polymorphic, CodecRegistry codecRegistry, EmbeddedReferences embeddedReferences, boolean storeNulls)
     throws ThrongMappingException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
 
@@ -66,21 +85,37 @@ public class ThrongPropertiesMultiplexer<T> implements IndexProvider {
     }
   }
 
+  /**
+   * @return base entity class for this multiplexer
+   */
   public Class<T> getEntityClass () {
 
     return entityClass;
   }
 
+  /**
+   * @return whether null values are stored during encoding
+   */
   public boolean isStoreNulls () {
 
     return storeNulls;
   }
 
+  /**
+   * @return discriminator key name used to identify subtypes
+   */
   public String getKey () {
 
     return key;
   }
 
+  /**
+   * Retrieves the codec for the subtype identified by the fully qualified class name.
+   *
+   * @param polymorphicClassName fully qualified class name of the subtype
+   * @return codec able to encode/decode the subtype
+   * @throws ThrongRuntimeException if no codec is registered for the name
+   */
   public Codec<?> getCodec (String polymorphicClassName) {
 
     Codec<?> polymorphicCodec;
@@ -94,6 +129,9 @@ public class ThrongPropertiesMultiplexer<T> implements IndexProvider {
   }
 
   @Override
+  /**
+   * Combines index definitions from all registered subtype codecs.
+   */
   public ThrongIndexes provideIndexes () {
 
     ThrongIndexes throngIndexes = new ThrongIndexes();

@@ -40,9 +40,18 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 // Only usable in @Embedded classes
+/**
+ * Declares that an embedded class participates in a polymorphic hierarchy, listing allowed subtypes and the discriminator key.
+ */
 public @interface Polymorphic {
 
+  /**
+   * @return list of permissible subtype classes
+   */
   Class[] value () default {};
 
+  /**
+   * @return discriminator key used to store the subtype name
+   */
   String key () default "";
 }

@@ -35,6 +35,9 @@ package org.smallmind.mongodb.throng.mapping;
 import java.util.HashMap;
 import org.bson.codecs.Codec;
 
+/**
+ * Map of embedded class types to their generated codecs, used to resolve embedded references during mapping.
+ */
 public class EmbeddedReferences extends HashMap<Class<?>, Codec<?>> {
 
 }

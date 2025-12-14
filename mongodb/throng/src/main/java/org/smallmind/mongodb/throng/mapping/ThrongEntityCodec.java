@@ -40,6 +40,11 @@ import org.bson.codecs.EncoderContext;
 import org.smallmind.mongodb.throng.ThrongRuntimeException;
 import org.smallmind.mongodb.throng.lifecycle.ThrongLifecycle;
 
+/**
+ * Codec for top-level entities that handles id fields and lifecycle callbacks in addition to property mapping.
+ *
+ * @param <T> entity type
+ */
 public class ThrongEntityCodec<T> extends ThrongPropertiesCodec<T> {
 
   private final ThrongLifecycle<T> lifecycle;
@@ -47,6 +52,11 @@ public class ThrongEntityCodec<T> extends ThrongPropertiesCodec<T> {
   private final ThrongProperty idProperty;
   private final String collection;
 
+  /**
+   * Creates an entity codec from the given entity metadata.
+   *
+   * @param throngEntity entity metadata
+   */
   public ThrongEntityCodec (ThrongEntity<T> throngEntity) {
 
     super(throngEntity);
@@ -57,22 +67,36 @@ public class ThrongEntityCodec<T> extends ThrongPropertiesCodec<T> {
     lifecycle = throngEntity.getLifecycle();
   }
 
+  /**
+   * @return entity class handled by this codec
+   */
   public Class<T> getEntityClass () {
 
     return entityClass;
   }
 
+  /**
+   * @return collection name associated with the entity
+   */
   public String getCollection () {
 
     return collection;
   }
 
+  /**
+   * @return lifecycle handler for the entity
+   */
   public ThrongLifecycle<T> getLifecycle () {
 
     return lifecycle;
   }
 
   @Override
+  /**
+   * Decodes a BSON document into an entity, ensuring the id field appears first and is applied to the instance.
+   *
+   * @throws ThrongRuntimeException if the id field is missing or mismatched, or reflection fails
+   */
   public T decode (BsonReader reader, DecoderContext decoderContext) {
 
     T instance;
@@ -101,6 +125,11 @@ public class ThrongEntityCodec<T> extends ThrongPropertiesCodec<T> {
   }
 
   @Override
+  /**
+   * Encodes an entity into a BSON document, writing its id before the remaining properties.
+   *
+   * @throws ThrongRuntimeException if the id value cannot be accessed
+   */
   public void encode (BsonWriter writer, T value, EncoderContext encoderContext) {
 
     if (value != null) {

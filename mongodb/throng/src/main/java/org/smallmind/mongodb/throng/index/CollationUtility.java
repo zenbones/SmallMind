@@ -34,8 +34,17 @@ package org.smallmind.mongodb.throng.index;
 
 import org.smallmind.mongodb.throng.index.annotation.Collation;
 
+/**
+ * Converts {@link Collation} annotations into driver {@link com.mongodb.client.model.Collation} instances.
+ */
 public class CollationUtility {
 
+  /**
+   * Builds a MongoDB collation from the supplied annotation values.
+   *
+   * @param collationAnnotation annotation describing the desired collation
+   * @return constructed driver collation
+   */
   public static com.mongodb.client.model.Collation generate (Collation collationAnnotation) {
 
     com.mongodb.client.model.Collation.Builder builder = com.mongodb.client.model.Collation.builder();

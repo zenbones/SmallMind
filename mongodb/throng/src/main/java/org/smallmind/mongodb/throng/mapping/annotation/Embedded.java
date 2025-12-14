@@ -39,7 +39,13 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
+/**
+ * Marks a class as embeddable within another document and optionally configures polymorphic behavior.
+ */
 public @interface Embedded {
 
+  /**
+   * @return polymorphic configuration for the embedded type
+   */
   Polymorphic polymorphic () default @Polymorphic();
 }

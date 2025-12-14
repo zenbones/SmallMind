@@ -44,6 +44,11 @@ import org.smallmind.mongodb.throng.lifecycle.annotation.PostPersist;
 import org.smallmind.mongodb.throng.lifecycle.annotation.PreLoad;
 import org.smallmind.mongodb.throng.lifecycle.annotation.PrePersist;
 
+/**
+ * Discovers and executes lifecycle callback methods on entity classes using Throng lifecycle annotations.
+ *
+ * @param <T> entity type
+ */
 public class ThrongLifecycle<T> {
 
   private final LinkedList<Method> preLoadMethods = new LinkedList<>();
@@ -51,6 +56,12 @@ public class ThrongLifecycle<T> {
   private final LinkedList<Method> prePersistMethods = new LinkedList<>();
   private final LinkedList<Method> postPersistMethods = new LinkedList<>();
 
+  /**
+   * Scans the entity class for lifecycle annotations and records the appropriate methods.
+   *
+   * @param entityClass entity class to introspect
+   * @throws ThrongMappingException if lifecycle methods violate required static/non-static constraints
+   */
   public ThrongLifecycle (Class<T> entityClass)
     throws ThrongMappingException {
 
@@ -86,6 +97,12 @@ public class ThrongLifecycle<T> {
     }
   }
 
+  /**
+   * Executes all {@link PreLoad} callbacks, passing the BSON document being loaded.
+   *
+   * @param entityClass  the entity class on which static callbacks are invoked
+   * @param bsonDocument document being materialized
+   */
   public void executePreLoad (Class<T> entityClass, BsonDocument bsonDocument) {
 
     for (Method method : preLoadMethods) {
@@ -97,6 +114,11 @@ public class ThrongLifecycle<T> {
     }
   }
 
+  /**
+   * Executes all {@link PostLoad} callbacks after decoding an entity.
+   *
+   * @param value loaded entity instance
+   */
   public void executePostLoad (T value) {
 
     for (Method method : postLoadMethods) {
@@ -108,6 +130,11 @@ public class ThrongLifecycle<T> {
     }
   }
 
+  /**
+   * Executes all {@link PrePersist} callbacks before encoding an entity.
+   *
+   * @param value entity instance being persisted
+   */
   public void executePrePersist (T value) {
 
     for (Method method : prePersistMethods) {
@@ -119,6 +146,12 @@ public class ThrongLifecycle<T> {
     }
   }
 
+  /**
+   * Executes all {@link PostPersist} callbacks after encoding an entity.
+   *
+   * @param value        persisted entity instance
+   * @param bsonDocument BSON document that was generated
+   */
   public void executePostPersist (T value, BsonDocument bsonDocument) {
 
     for (Method method : postPersistMethods) {

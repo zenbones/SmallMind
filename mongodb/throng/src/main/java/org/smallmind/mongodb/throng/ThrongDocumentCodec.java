@@ -41,15 +41,29 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 
+/**
+ * Codec that bridges {@link ThrongDocument} instances to and from the MongoDB driver's streaming API.
+ */
 public class ThrongDocumentCodec implements Codec<ThrongDocument> {
 
   @Override
+  /**
+   * {@inheritDoc}
+   */
   public Class<ThrongDocument> getEncoderClass () {
 
     return ThrongDocument.class;
   }
 
   @Override
+  /**
+   * Decodes the current BSON value into a {@link ThrongDocument}, expecting the root to be a document node.
+   *
+   * @param reader the source reader
+   * @param decoderContext decoder context from the driver
+   * @return the decoded {@link ThrongDocument}
+   * @throws DocumentParsingException if the root BSON type is not a document
+   */
   public ThrongDocument decode (BsonReader reader, DecoderContext decoderContext) {
 
     BsonValue bsonValue = BsonUtility.read(reader);
@@ -63,6 +77,14 @@ public class ThrongDocumentCodec implements Codec<ThrongDocument> {
   }
 
   @Override
+  /**
+   * Encodes the supplied {@link ThrongDocument} to the writer.
+   *
+   * @param writer destination writer
+   * @param document document to encode
+   * @param encoderContext driver encoder context
+   * @throws DocumentParsingException if an unsupported BSON type is encountered
+   */
   public void encode (BsonWriter writer, ThrongDocument document, EncoderContext encoderContext)
     throws DocumentParsingException {
 

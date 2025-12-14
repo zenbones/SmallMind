@@ -37,15 +37,27 @@ import com.mongodb.client.model.Sorts;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
+/**
+ * Fluent builder for MongoDB sort specifications.
+ */
 public class Sort {
 
   private final LinkedList<Bson> sortList = new LinkedList<>();
 
+  /**
+   * @return new sort builder
+   */
   public static Sort on () {
 
     return new Sort();
   }
 
+  /**
+   * Adds an ascending sort on the given field.
+   *
+   * @param fieldName field name to sort ascending
+   * @return this builder for chaining
+   */
   public Sort asc (String fieldName) {
 
     sortList.add(Sorts.ascending(fieldName));
@@ -53,6 +65,12 @@ public class Sort {
     return this;
   }
 
+  /**
+   * Adds a descending sort on the given field.
+   *
+   * @param fieldName field name to sort descending
+   * @return this builder for chaining
+   */
   public Sort desc (String fieldName) {
 
     sortList.add(Sorts.descending(fieldName));
@@ -60,6 +78,13 @@ public class Sort {
     return this;
   }
 
+  /**
+   * Builds the BSON sort document for use with driver queries.
+   *
+   * @param documentClass target document class
+   * @param codecRegistry registry used by the driver
+   * @return BSON sort document
+   */
   public Bson toBsonDocument (Class<?> documentClass, CodecRegistry codecRegistry) {
 
     return Sorts.orderBy(sortList).toBsonDocument(documentClass, codecRegistry);

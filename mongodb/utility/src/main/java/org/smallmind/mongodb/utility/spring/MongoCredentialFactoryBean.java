@@ -36,6 +36,9 @@ import com.mongodb.MongoCredential;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
+/**
+ * Spring factory bean that produces {@link MongoCredential} instances from configured username/password/source.
+ */
 public class MongoCredentialFactoryBean implements InitializingBean, FactoryBean<MongoCredential> {
 
   private MongoCredential mongoCredential;
@@ -43,40 +46,61 @@ public class MongoCredentialFactoryBean implements InitializingBean, FactoryBean
   private String password;
   private String source;
 
+  /**
+   * @param user username used for authentication
+   */
   public void setUser (String user) {
 
     this.user = user;
   }
 
+  /**
+   * @param password authentication password
+   */
   public void setPassword (String password) {
 
     this.password = password;
   }
 
+  /**
+   * @param source authentication database
+   */
   public void setSource (String source) {
 
     this.source = source;
   }
 
   @Override
+  /**
+   * {@inheritDoc}
+   */
   public boolean isSingleton () {
 
     return true;
   }
 
   @Override
+  /**
+   * {@inheritDoc}
+   */
   public Class<?> getObjectType () {
 
     return MongoCredential.class;
   }
 
   @Override
+  /**
+   * {@inheritDoc}
+   */
   public MongoCredential getObject () {
 
     return mongoCredential;
   }
 
   @Override
+  /**
+   * Builds the credential after properties have been set.
+   */
   public void afterPropertiesSet () {
 
     mongoCredential = MongoCredential.createScramSha1Credential(user, source, password.toCharArray());

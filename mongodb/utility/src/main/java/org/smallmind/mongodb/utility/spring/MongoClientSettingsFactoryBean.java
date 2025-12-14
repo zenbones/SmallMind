@@ -58,6 +58,9 @@ import org.springframework.beans.factory.InitializingBean;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
+/**
+ * Spring factory bean for constructing {@link MongoClientSettings} with convenient setters for common options.
+ */
 public class MongoClientSettingsFactoryBean implements InitializingBean, FactoryBean<MongoClientSettings> {
 
   private MongoClientSettings.Builder settingsBuilder;
@@ -82,125 +85,197 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
   private Integer connectionPoolMaxConnectionLifeTimeSeconds;
   private Integer connectionPoolMaxConnectionIdleTimeSeconds;
 
+  /**
+   * @param codecRegistry additional codec registry to merge with the driver's defaults
+   */
   public void setCodecRegistry (CodecRegistry codecRegistry) {
 
     this.codecRegistry = codecRegistry;
   }
 
+  /**
+   * @param certResource TLS certificate resource used to build the SSL context
+   */
   public void setCertResource (Resource certResource) {
 
     this.certResource = certResource;
   }
 
+  /**
+   * @param mongoCredential credentials to authenticate with the server
+   */
   public void setMongoCredential (MongoCredential mongoCredential) {
 
     this.mongoCredential = mongoCredential;
   }
 
+  /**
+   * @param serverAddresses list of server addresses to configure the cluster
+   */
   public void setServerAddresses (ServerAddress[] serverAddresses) {
 
     this.serverAddresses = serverAddresses;
   }
 
+  /**
+   * @param readPreference read preference to apply
+   */
   public void setReadPreference (ReadPreference readPreference) {
 
     this.readPreference = readPreference;
   }
 
+  /**
+   * @param readConcern read concern to apply
+   */
   public void setReadConcern (ReadConcern readConcern) {
 
     this.readConcern = readConcern;
   }
 
+  /**
+   * @param writeConcern write concern to apply
+   */
   public void setWriteConcern (WriteConcern writeConcern) {
 
     this.writeConcern = writeConcern;
   }
 
+  /**
+   * @param writeConcernEnabled flag controlling whether the configured write concern is honored
+   */
   public void setWriteConcernEnabled (Boolean writeConcernEnabled) {
 
     this.writeConcernEnabled = writeConcernEnabled;
   }
 
+  /**
+   * @param retryReads whether retryable reads are enabled
+   */
   public void setRetryReads (Boolean retryReads) {
 
     this.retryReads = retryReads;
   }
 
+  /**
+   * @param retryWrites whether retryable writes are enabled
+   */
   public void setRetryWrites (Boolean retryWrites) {
 
     this.retryWrites = retryWrites;
   }
 
+  /**
+   * @param sslEnabled whether SSL/TLS is enabled
+   */
   public void setSslEnabled (Boolean sslEnabled) {
 
     this.sslEnabled = sslEnabled;
   }
 
+  /**
+   * @param allowInvalidHostNames whether to allow invalid host names when SSL is enabled
+   */
   public void setAllowInvalidHostNames (Boolean allowInvalidHostNames) {
 
     this.allowInvalidHostNames = allowInvalidHostNames;
   }
 
+  /**
+   * @param socketConnectTimeoutMilliseconds socket connection timeout in milliseconds
+   */
   public void setSocketConnectTimeoutMilliseconds (Integer socketConnectTimeoutMilliseconds) {
 
     this.socketConnectTimeoutMilliseconds = socketConnectTimeoutMilliseconds;
   }
 
+  /**
+   * @param serverSelectionTimeoutMilliseconds server selection timeout in milliseconds
+   */
   public void setServerSelectionTimeoutMilliseconds (Integer serverSelectionTimeoutMilliseconds) {
 
     this.serverSelectionTimeoutMilliseconds = serverSelectionTimeoutMilliseconds;
   }
 
+  /**
+   * @param connectionPoolMinSize minimum number of pooled connections
+   */
   public void setConnectionPoolMinSize (Integer connectionPoolMinSize) {
 
     this.connectionPoolMinSize = connectionPoolMinSize;
   }
 
+  /**
+   * @param connectionPoolMaxSize maximum number of pooled connections
+   */
   public void setConnectionPoolMaxSize (Integer connectionPoolMaxSize) {
 
     this.connectionPoolMaxSize = connectionPoolMaxSize;
   }
 
+  /**
+   * @param connectionPoolMaxConnecting maximum number of concurrent connecting threads
+   */
   public void setConnectionPoolMaxConnecting (Integer connectionPoolMaxConnecting) {
 
     this.connectionPoolMaxConnecting = connectionPoolMaxConnecting;
   }
 
+  /**
+   * @param connectionPoolMaxWaitTimeMilliseconds maximum time to wait for a pooled connection in milliseconds
+   */
   public void setConnectionPoolMaxWaitTimeMilliseconds (Integer connectionPoolMaxWaitTimeMilliseconds) {
 
     this.connectionPoolMaxWaitTimeMilliseconds = connectionPoolMaxWaitTimeMilliseconds;
   }
 
+  /**
+   * @param connectionPoolMaxConnectionLifeTimeSeconds maximum lifetime for pooled connections in seconds
+   */
   public void setConnectionPoolMaxConnectionLifeTimeSeconds (Integer connectionPoolMaxConnectionLifeTimeSeconds) {
 
     this.connectionPoolMaxConnectionLifeTimeSeconds = connectionPoolMaxConnectionLifeTimeSeconds;
   }
 
+  /**
+   * @param connectionPoolMaxConnectionIdleTimeSeconds maximum idle time for pooled connections in seconds
+   */
   public void setConnectionPoolMaxConnectionIdleTimeSeconds (Integer connectionPoolMaxConnectionIdleTimeSeconds) {
 
     this.connectionPoolMaxConnectionIdleTimeSeconds = connectionPoolMaxConnectionIdleTimeSeconds;
   }
 
   @Override
+  /**
+   * {@inheritDoc}
+   */
   public boolean isSingleton () {
 
     return true;
   }
 
   @Override
+  /**
+   * {@inheritDoc}
+   */
   public Class<?> getObjectType () {
 
     return MongoClientSettings.class;
   }
 
   @Override
+  /**
+   * {@inheritDoc}
+   */
   public MongoClientSettings getObject () {
 
     return settingsBuilder.build();
   }
 
   @Override
+  /**
+   * Builds the {@link MongoClientSettings} instance from the configured properties.
+   */
   public void afterPropertiesSet ()
     throws IOException, ResourceException, CertificateException, KeyStoreException, NoSuchAlgorithmException, KeyManagementException {
 

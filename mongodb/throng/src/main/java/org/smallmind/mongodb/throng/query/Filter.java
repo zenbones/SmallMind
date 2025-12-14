@@ -37,11 +37,20 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 import org.smallmind.nutsnbolts.util.MutationUtility;
 
+/**
+ * Fluent builder for MongoDB filters that wraps driver filters while preventing invalid states.
+ */
 public class Filter {
 
   private final String fieldName;
   private Bson bson;
 
+  /**
+   * Internal constructor used for composed filters.
+   *
+   * @param filterName descriptive name for error reporting
+   * @param bson       underlying BSON filter
+   */
   private Filter (String filterName, Bson bson) {
 
     this(filterName);
@@ -49,21 +58,42 @@ public class Filter {
     this.bson = bson;
   }
 
+  /**
+   * Creates a filter builder scoped to a specific field.
+   *
+   * @param fieldName field to compare
+   */
   public Filter (String fieldName) {
 
     this.fieldName = fieldName;
   }
 
+  /**
+   * Starts a filter builder for the provided field name.
+   *
+   * @param fieldName field to compare
+   * @return new {@link Filter}
+   */
   public static Filter where (String fieldName) {
 
     return new Filter(fieldName);
   }
 
+  /**
+   * @return an empty filter that matches all documents
+   */
   public static Filter empty () {
 
     return new Filter("empty", com.mongodb.client.model.Filters.empty());
   }
 
+  /**
+   * Combines multiple filters with a logical AND.
+   *
+   * @param filters filters to combine
+   * @return composed filter
+   * @throws IllegalFilterStateException if any filter is incomplete
+   */
   public static Filter and (Filter... filters) {
 
     if ((filters == null) || (filters.length == 0)) {
@@ -90,6 +120,13 @@ public class Filter {
     }
   }
 
+  /**
+   * Combines multiple filters with a logical OR.
+   *
+   * @param filters filters to combine
+   * @return composed filter
+   * @throws IllegalFilterStateException if any filter is incomplete
+   */
   public static Filter or (Filter... filters) {
 
     if ((filters == null) || (filters.length == 0)) {
@@ -116,6 +153,13 @@ public class Filter {
     }
   }
 
+  /**
+   * Adds an equals comparison for the field.
+   *
+   * @param value value to compare against
+   * @return this filter for chaining
+   * @throws IllegalFilterStateException if the filter has already been finalized
+   */
   public Filter eq (Object value) {
 
     if (bson != null) {
@@ -128,6 +172,13 @@ public class Filter {
     }
   }
 
+  /**
+   * Adds a not-equals comparison for the field.
+   *
+   * @param value value to compare against
+   * @return this filter for chaining
+   * @throws IllegalFilterStateException if the filter has already been finalized
+   */
   public Filter ne (Object value) {
 
     if (bson != null) {
@@ -140,6 +191,13 @@ public class Filter {
     }
   }
 
+  /**
+   * Adds a greater-than comparison.
+   *
+   * @param value lower bound value
+   * @return this filter for chaining
+   * @throws IllegalFilterStateException if the filter has already been finalized
+   */
   public Filter gt (Object value) {
 
     if (bson != null) {
@@ -152,6 +210,13 @@ public class Filter {
     }
   }
 
+  /**
+   * Adds a greater-than-or-equal comparison.
+   *
+   * @param value lower bound value
+   * @return this filter for chaining
+   * @throws IllegalFilterStateException if the filter has already been finalized
+   */
   public Filter gte (Object value) {
 
     if (bson != null) {
@@ -164,6 +229,13 @@ public class Filter {
     }
   }
 
+  /**
+   * Adds a less-than comparison.
+   *
+   * @param value upper bound value
+   * @return this filter for chaining
+   * @throws IllegalFilterStateException if the filter has already been finalized
+   */
   public Filter lt (Object value) {
 
     if (bson != null) {
@@ -176,6 +248,13 @@ public class Filter {
     }
   }
 
+  /**
+   * Adds a less-than-or-equal comparison.
+   *
+   * @param value upper bound value
+   * @return this filter for chaining
+   * @throws IllegalFilterStateException if the filter has already been finalized
+   */
   public Filter lte (Object value) {
 
     if (bson != null) {
@@ -188,6 +267,13 @@ public class Filter {
     }
   }
 
+  /**
+   * Adds an existence check for the field.
+   *
+   * @param exists whether the field must exist
+   * @return this filter for chaining
+   * @throws IllegalFilterStateException if the filter has already been finalized
+   */
   public Filter exists (boolean exists) {
 
     if (bson != null) {
@@ -200,6 +286,13 @@ public class Filter {
     }
   }
 
+  /**
+   * Adds an inclusion check against an iterable of values.
+   *
+   * @param iterable values to match
+   * @return this filter for chaining
+   * @throws IllegalFilterStateException if the filter has already been finalized
+   */
   public Filter in (Iterable<?> iterable) {
 
     if (bson != null) {
@@ -212,6 +305,13 @@ public class Filter {
     }
   }
 
+  /**
+   * Adds an inclusion check against provided values.
+   *
+   * @param values values to match
+   * @return this filter for chaining
+   * @throws IllegalFilterStateException if the filter has already been finalized
+   */
   public Filter in (Object... values) {
 
     if (bson != null) {
@@ -224,6 +324,13 @@ public class Filter {
     }
   }
 
+  /**
+   * Adds a not-in comparison.
+   *
+   * @param values values to exclude
+   * @return this filter for chaining
+   * @throws IllegalFilterStateException if the filter has already been finalized
+   */
   public Filter nin (Object... values) {
 
     if (bson != null) {
@@ -236,6 +343,13 @@ public class Filter {
     }
   }
 
+  /**
+   * Adds a regular expression comparison for the field.
+   *
+   * @param pattern pattern to match
+   * @return this filter for chaining
+   * @throws IllegalFilterStateException if the filter has already been finalized
+   */
   public Filter regex (Pattern pattern) {
 
     if (bson != null) {
@@ -248,6 +362,12 @@ public class Filter {
     }
   }
 
+  /**
+   * Negates the current filter.
+   *
+   * @return this filter for chaining
+   * @throws IllegalFilterStateException if the filter has not been initialized
+   */
   public Filter not () {
 
     if (bson == null) {
@@ -260,6 +380,14 @@ public class Filter {
     }
   }
 
+  /**
+   * Converts the built filter into a BSON document suitable for driver operations.
+   *
+   * @param documentClass class of the target document
+   * @param codecRegistry registry for encoding values
+   * @return BSON representation of the filter
+   * @throws UnsupportedOperationException if the filter has not been finalized
+   */
   public Bson toBsonDocument (Class<?> documentClass, CodecRegistry codecRegistry) {
 
     if (bson == null) {

@@ -40,8 +40,26 @@ import org.smallmind.mongodb.throng.lifecycle.ThrongLifecycleRejection;
 import org.smallmind.mongodb.throng.mapping.annotation.Embedded;
 import org.smallmind.mongodb.throng.mapping.annotation.Polymorphic;
 
+/**
+ * Utility for generating and caching codecs for embedded types.
+ */
 public class ThrongEmbeddedUtility {
 
+  /**
+   * Creates or retrieves a codec for the given embedded type, rejecting lifecycle annotations and honoring polymorphic configuration.
+   *
+   * @param embeddedType       embedded class requiring a codec
+   * @param embedded           annotation describing embedded behavior
+   * @param codecRegistry      registry for resolving dependent codecs
+   * @param embeddedReferences cache of embedded codecs
+   * @param storeNulls         whether null values should be encoded
+   * @return codec for the embedded type
+   * @throws ThrongMappingException    if lifecycle annotations are misused
+   * @throws NoSuchMethodException     if reflective construction fails
+   * @throws InstantiationException    if codec construction fails
+   * @throws IllegalAccessException    if codec construction is not permitted
+   * @throws InvocationTargetException if a constructor throws an exception
+   */
   public static Codec<?> generateEmbeddedCodec (Class<?> embeddedType, Embedded embedded, CodecRegistry codecRegistry, EmbeddedReferences embeddedReferences, boolean storeNulls)
     throws ThrongMappingException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
 

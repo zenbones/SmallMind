@@ -39,7 +39,13 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
+/**
+ * Marks a field to be persisted as a document property, optionally overriding the stored name.
+ */
 public @interface Property {
 
+  /**
+   * @return persisted property name; defaults to the field name when empty
+   */
   String value () default "";
 }

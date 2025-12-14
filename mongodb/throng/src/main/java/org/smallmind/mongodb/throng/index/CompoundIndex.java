@@ -37,11 +37,19 @@ import org.smallmind.mongodb.throng.index.annotation.Index;
 import org.smallmind.mongodb.throng.index.annotation.IndexOptions;
 import org.smallmind.mongodb.throng.index.annotation.Indexes;
 
+/**
+ * Represents a compound index definition built from {@link Indexes} annotations, including shared options.
+ */
 public class CompoundIndex {
 
   private final IndexOptions indexOptions;
   private final LinkedList<IndexedElement> indexedElementList = new LinkedList<>();
 
+  /**
+   * Creates a compound index definition from the {@link Indexes} annotation.
+   *
+   * @param indexes collection of index elements and options
+   */
   public CompoundIndex (Indexes indexes) {
 
     indexOptions = indexes.options();
@@ -58,6 +66,12 @@ public class CompoundIndex {
     this.indexedElementList.addAll(indexedElementList);
   }
 
+  /**
+   * Prefixes each indexed element's field path with the provided prolog, returning a new compound definition.
+   *
+   * @param prolog field path prefix to apply
+   * @return new compound index with adjusted field paths
+   */
   public CompoundIndex accumulate (String prolog) {
 
     LinkedList<IndexedElement> indexedElementList = new LinkedList<>();
@@ -69,11 +83,17 @@ public class CompoundIndex {
     return new CompoundIndex(indexedElementList, indexOptions);
   }
 
+  /**
+   * @return array of indexed elements that make up the compound index
+   */
   public IndexedElement[] getIndexedElements () {
 
     return indexedElementList.toArray(new IndexedElement[0]);
   }
 
+  /**
+   * @return options applied to this compound index
+   */
   public IndexOptions getIndexOptions () {
 
     return indexOptions;
