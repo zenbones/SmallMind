@@ -37,21 +37,40 @@ import liquibase.logging.core.AbstractLogger;
 import org.smallmind.scribe.pen.Logger;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Bridges Liquibase logging into the SmallMind Scribe logging system.
+ */
 public class ScribeLiquibaseLogger extends AbstractLogger {
 
   private final Logger scribeLogger;
 
+  /**
+   * @param clazz originating class so logs are tagged consistently
+   */
   public ScribeLiquibaseLogger (Class<?> clazz) {
 
     scribeLogger = LoggerManager.getLogger(clazz);
   }
 
+  /**
+   * Logs a Liquibase message at the translated Scribe level.
+   *
+   * @param level   java.util.logging level supplied by Liquibase
+   * @param message log message to emit
+   * @param e       optional exception to attach to the log entry
+   */
   @Override
   public void log (Level level, String message, Throwable e) {
 
     scribeLogger.log(translateLevel(level), e, message);
   }
 
+  /**
+   * Converts JUL levels to their Scribe equivalents.
+   *
+   * @param level java.util.logging level
+   * @return mapped Scribe level, or {@code null} when no level is supplied
+   */
   private org.smallmind.scribe.pen.Level translateLevel (java.util.logging.Level level) {
 
     if (level == null) {

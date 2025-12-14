@@ -32,7 +32,17 @@
  */
 package org.smallmind.liquibase.spring;
 
+/**
+ * Identifies where change log resources are resolved from.
+ */
 public enum Source {
 
-  FILE, CLASSPATH
+  /**
+   * Resolve change logs from the user's home directory.
+   */
+  FILE,
+  /**
+   * Resolve change logs from the configured class loader.
+   */
+  CLASSPATH
 }

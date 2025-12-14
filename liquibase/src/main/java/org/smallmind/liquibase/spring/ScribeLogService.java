@@ -35,14 +35,24 @@ package org.smallmind.liquibase.spring;
 import liquibase.logging.Logger;
 import liquibase.logging.core.AbstractLogService;
 
+/**
+ * Registers the {@link ScribeLiquibaseLogger} with Liquibase.
+ */
 public class ScribeLogService extends AbstractLogService {
 
+  /**
+   * @return priority slightly above default so Scribe logging is preferred
+   */
   @Override
   public int getPriority () {
 
     return PRIORITY_DEFAULT + 1;
   }
 
+  /**
+   * @param clazz class for which the logger is requested
+   * @return new {@link ScribeLiquibaseLogger} bound to the requesting class
+   */
   @Override
   public Logger getLog (Class clazz) {
 

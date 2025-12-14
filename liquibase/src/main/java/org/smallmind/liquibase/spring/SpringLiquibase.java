@@ -69,6 +69,11 @@ import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.persistence.orm.aop.Transactional;
 import org.springframework.beans.factory.InitializingBean;
 
+/**
+ * Spring-friendly Liquibase runner that executes a configurable goal after properties are set.
+ * Supports previewing SQL, applying change sets, generating documentation, or deriving change logs
+ * while registering custom data types and resolving resources from the file system or classpath.
+ */
 public class SpringLiquibase implements InitializingBean {
 
   private final ClassLoader classloader;
@@ -82,21 +87,36 @@ public class SpringLiquibase implements InitializingBean {
   private String contexts;
   private String outputDir;
 
+  /**
+   * Constructs an instance using the current thread context class loader for resource resolution.
+   */
   public SpringLiquibase () {
 
     this(Thread.currentThread().getContextClassLoader());
   }
 
+  /**
+   * @param classLoader class loader used when resolving classpath-based change logs
+   */
   public SpringLiquibase (ClassLoader classLoader) {
 
     this.classloader = classLoader;
   }
 
+  /**
+   * @param dataSource JDBC data source that Liquibase will operate against
+   */
   public void setDataSource (DataSource dataSource) {
 
     this.dataSource = dataSource;
   }
 
+  /**
+   * Selects where change log resources are read from.
+   *
+   * @param source indicates file system or classpath resolution
+   * @throws FileNotFoundException if the chosen accessor cannot be created
+   */
   public void setSource (Source source)
     throws FileNotFoundException {
 
@@ -112,36 +132,59 @@ public class SpringLiquibase implements InitializingBean {
     }
   }
 
+  /**
+   * @param goal action Liquibase should perform once properties are initialized
+   */
   public void setGoal (Goal goal) {
 
     this.goal = goal;
   }
 
+  /**
+   * @param previewStream destination for SQL preview output; defaults to {@link System#out} when null
+   */
   public void setPreviewStream (OutputStream previewStream) {
 
     this.previewStream = previewStream;
   }
 
+  /**
+   * @param changeLogs ordered list of change logs to process
+   */
   public void setChangeLogs (ChangeLog[] changeLogs) {
 
     this.changeLogs = changeLogs;
   }
 
+  /**
+   * @param dataTypes custom Liquibase data types to register before execution
+   */
   public void setDataTypes (LiquibaseDataType[] dataTypes) {
 
     this.dataTypes = dataTypes;
   }
 
+  /**
+   * @param contexts comma-delimited Liquibase contexts used for filtering change sets
+   */
   public void setContexts (String contexts) {
 
     this.contexts = contexts;
   }
 
+  /**
+   * @param outputDir directory for generated documentation or change logs; defaults to system temp directory when blank
+   */
   public void setOutputDir (String outputDir) {
 
     this.outputDir = outputDir;
   }
 
+  /**
+   * Registers custom data types and executes the configured Liquibase goal against each change log.
+   *
+   * @throws Exception if Liquibase operations fail or when an unsupported goal is encountered
+   */
   @Transactional
   public void afterPropertiesSet ()
     throws Exception {

@@ -32,26 +32,42 @@
  */
 package org.smallmind.liquibase.spring;
 
+/**
+ * Describes the change log files used by {@link SpringLiquibase}.
+ * A change log specifies Liquibase changesets to preview, execute or document.
+ */
 public class ChangeLog {
 
   private String input;
   private String output;
 
+  /**
+   * @return path or classpath location for the source change log to process
+   */
   public String getInput () {
 
     return input;
   }
 
+  /**
+   * @param input path or classpath location for the change log to read
+   */
   public void setInput (String input) {
 
     this.input = input;
   }
 
+  /**
+   * @return destination path for generated change log output when applicable
+   */
   public String getOutput () {
 
     return output;
   }
 
+  /**
+   * @param output destination path for generated change log output when applicable
+   */
   public void setOutput (String output) {
 
     this.output = output;

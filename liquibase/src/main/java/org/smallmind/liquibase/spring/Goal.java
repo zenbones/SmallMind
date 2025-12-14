@@ -32,7 +32,29 @@
  */
 package org.smallmind.liquibase.spring;
 
+/**
+ * Enumerates the supported Liquibase actions that {@link SpringLiquibase} can execute.
+ */
 public enum Goal {
 
-  NONE, PREVIEW, UPDATE, GENERATE, DOCUMENT
+  /**
+   * Do nothing beyond optional type registration.
+   */
+  NONE,
+  /**
+   * Generate SQL for the requested change logs without executing.
+   */
+  PREVIEW,
+  /**
+   * Apply change sets to the target database.
+   */
+  UPDATE,
+  /**
+   * Generate a change log from the current database state.
+   */
+  GENERATE,
+  /**
+   * Produce database documentation for the supplied change log.
+   */
+  DOCUMENT
 }
