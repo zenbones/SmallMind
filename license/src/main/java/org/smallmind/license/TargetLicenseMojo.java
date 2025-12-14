@@ -12,7 +12,9 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 
-// Installs license files for inclusion in distribution artifacts
+/**
+ * Mojo that copies configured license files into the build output directory for distribution artifacts.
+ */
 @Mojo(name = "install-license-files", defaultPhase = LifecyclePhase.PREPARE_PACKAGE, threadSafe = true)
 public class TargetLicenseMojo extends AbstractMojo {
 
@@ -27,6 +29,12 @@ public class TargetLicenseMojo extends AbstractMojo {
   @Parameter(defaultValue = "false")
   private boolean verbose;
 
+  /**
+   * Copies each configured license file into the project's output directory, resolving files relative to the root
+   * project when necessary.
+   *
+   * @throws MojoExecutionException if a license file cannot be copied to the output directory
+   */
   @Override
   public void execute ()
     throws MojoExecutionException {

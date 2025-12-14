@@ -22,10 +22,16 @@ import org.apache.maven.project.MavenProject;
 import org.smallmind.license.stencil.JavaDocStencil;
 import org.smallmind.license.stencil.Stencil;
 
-// Generates and/or replaces notice headers in source files
+/**
+ * Mojo that inserts or removes license notices in source and resource files according to configured rules and
+ * formatting stencils.
+ */
 @Mojo(name = "generate-notice-headers", defaultPhase = LifecyclePhase.PROCESS_SOURCES, threadSafe = true)
 public class SourceNoticeMojo extends AbstractMojo {
 
+  /**
+   * Tracks the position of the notice while scanning an existing file.
+   */
   private enum NoticeState {
 
     FIRST, LAST, COMPLETED, TERMINATED
@@ -53,6 +59,13 @@ public class SourceNoticeMojo extends AbstractMojo {
 
   //TODO: Excludes, Seek/Process Optimization
 
+  /**
+   * Executes the mojo by applying each configured rule to project sources, scripts, and optionally resources and test
+   * assets. Notices are added, replaced, or removed depending on the rule configuration.
+   *
+   * @throws MojoExecutionException if rule validation fails or a stencil cannot be found
+   * @throws MojoFailureException   if notice processing encounters an unrecoverable error
+   */
   @Override
   public void execute ()
     throws MojoExecutionException, MojoFailureException {
@@ -146,6 +159,17 @@ public class SourceNoticeMojo extends AbstractMojo {
     }
   }
 
+  /**
+   * Walks the provided directory and applies or removes the notice text for every file accepted by the supplied path
+   * filters using the given stencil.
+   *
+   * @param stencil     the stencil that formats notice text for target files
+   * @param noticeArray the notice contents split into lines, or {@code null} to remove existing notices
+   * @param buffer      reusable character buffer for stream copying
+   * @param directory   the directory root to traverse
+   * @param pathFilters file acceptance criteria determining which files are processed
+   * @throws MojoFailureException if I/O issues occur while updating files
+   */
   private void updateNotice (Stencil stencil, String[] noticeArray, char[] buffer, String directory, PathFilter... pathFilters)
     throws MojoFailureException {
 
@@ -214,6 +238,13 @@ public class SourceNoticeMojo extends AbstractMojo {
     }
   }
 
+  /**
+   * Evaluates the supplied path against the configured filters.
+   *
+   * @param path        the path to evaluate
+   * @param pathFilters filters determining acceptable files
+   * @return {@code true} if no filters are provided or any filter accepts the path; otherwise {@code false}
+   */
   private boolean accept (Path path, PathFilter... pathFilters) {
 
     if ((pathFilters != null) && (pathFilters.length > 0)) {
@@ -230,6 +261,12 @@ public class SourceNoticeMojo extends AbstractMojo {
     return true;
   }
 
+  /**
+   * Reads the file at the provided path into an array of lines.
+   *
+   * @param noticePath the path to the notice file
+   * @return an array of file lines, or {@code null} if the file cannot be read
+   */
   private String[] getFileAsLineArray (Path noticePath) {
 
     LinkedList<String> lineList;
@@ -254,6 +291,19 @@ public class SourceNoticeMojo extends AbstractMojo {
     return lineArray;
   }
 
+  /**
+   * Scans through the input file to locate and skip over an existing notice, writing any skipped content to the
+   * provided writer as needed.
+   *
+   * @param stencil        the stencil describing expected notice boundaries
+   * @param skipPattern    an optional pattern to bypass lines that should not be considered part of the notice
+   * @param fileReader     source reader for the file being processed
+   * @param fileWriter     destination writer receiving preserved content
+   * @param lineTerminator helper supplying the correct line separator
+   * @return the first line after the located notice, or {@code null} if the end of file is reached
+   * @throws IOException          if an I/O error occurs while reading or writing
+   * @throws MojoFailureException if an unexpected notice seeking state is encountered
+   */
   private String seekNotice (Stencil stencil, Pattern skipPattern, BufferedReader fileReader, BufferedWriter fileWriter, LineTerminator lineTerminator)
     throws IOException, MojoFailureException {
 
@@ -296,6 +346,15 @@ public class SourceNoticeMojo extends AbstractMojo {
     return singleLine;
   }
 
+  /**
+   * Writes the notice text to the output using the supplied stencil formatting and line termination.
+   *
+   * @param stencil        the stencil describing how the notice should be delimited and prefixed
+   * @param noticeArray    the notice text lines to write
+   * @param fileWriter     the destination writer receiving the notice
+   * @param lineTerminator helper supplying the correct line separator
+   * @throws IOException if writing to the output fails
+   */
   private void applyNotice (Stencil stencil, String[] noticeArray, BufferedWriter fileWriter, LineTerminator lineTerminator)
     throws IOException {
 
