@@ -64,39 +64,39 @@ public class MongoServerFactoryBean implements InitializingBean, FactoryBean<Ser
     this.serverSpread = serverSpread;
   }
 
-  @Override
   /**
    * {@inheritDoc}
    */
+  @Override
   public boolean isSingleton () {
 
     return true;
   }
 
-  @Override
   /**
    * {@inheritDoc}
    */
+  @Override
   public Class<?> getObjectType () {
 
     return ServerAddress[].class;
   }
 
-  @Override
   /**
    * {@inheritDoc}
    */
+  @Override
   public ServerAddress[] getObject () {
 
     return serverAddresses;
   }
 
-  @Override
   /**
    * Parses the configured pattern/spread to produce the array of server addresses.
    *
    * @throws SpreadParserException if the spread expression cannot be parsed
    */
+  @Override
   public void afterPropertiesSet ()
     throws SpreadParserException {
 

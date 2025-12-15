@@ -36,6 +36,9 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
 
+/**
+ * Fluent builder for configuring recursive copy operations via {@link FileUtility#copyTree}.
+ */
 public class CopyTreeConfigurationBuilder {
 
   private final Path source;
@@ -44,12 +47,22 @@ public class CopyTreeConfigurationBuilder {
   private FileAttribute<?>[] fileAttributes;
   private boolean includeSourceDirectory = false;
 
+  /**
+   * @param source      root path to copy
+   * @param destination destination root
+   */
   public CopyTreeConfigurationBuilder (Path source, Path destination) {
 
     this.source = source;
     this.destination = destination;
   }
 
+  /**
+   * Sets filters to apply while walking the tree.
+   *
+   * @param pathFilters optional filters; all must accept for inclusion
+   * @return this builder
+   */
   public CopyTreeConfigurationBuilder filter (PathFilter... pathFilters) {
 
     this.pathFilters = pathFilters;
@@ -57,6 +70,12 @@ public class CopyTreeConfigurationBuilder {
     return this;
   }
 
+  /**
+   * Sets file attributes to apply to created directories/files.
+   *
+   * @param fileAttributes attributes to apply
+   * @return this builder
+   */
   public CopyTreeConfigurationBuilder attributes (FileAttribute<?>... fileAttributes) {
 
     this.fileAttributes = fileAttributes;
@@ -64,6 +83,12 @@ public class CopyTreeConfigurationBuilder {
     return this;
   }
 
+  /**
+   * Configures whether the source directory itself should be replicated.
+   *
+   * @param includeSourceDirectory {@code true} to include the source dir as the top-level entry
+   * @return this builder
+   */
   public CopyTreeConfigurationBuilder includeSourceDirectory (boolean includeSourceDirectory) {
 
     this.includeSourceDirectory = includeSourceDirectory;
@@ -71,6 +96,11 @@ public class CopyTreeConfigurationBuilder {
     return this;
   }
 
+  /**
+   * Executes the copy with the configured options.
+   *
+   * @throws IOException if traversal or copying fails
+   */
   public void build ()
     throws IOException {
 

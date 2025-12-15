@@ -45,23 +45,41 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+/**
+ * Bean Validation constraint requiring a numeric value to be non-zero.
+ */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({FIELD, PARAMETER, METHOD, LOCAL_VARIABLE})
 @Constraint(validatedBy = NotZeroValidator.class)
 public @interface NotZero {
 
+  /**
+   * Allows multiple {@link NotZero} annotations on the same element.
+   */
   @Target({FIELD, PARAMETER, METHOD, LOCAL_VARIABLE})
   @Retention(RUNTIME)
   @Documented
   @interface List {
 
+    /**
+     * @return array of {@link NotZero} constraints
+     */
     NotZero[] value ();
   }
 
+  /**
+   * @return message when the value is zero
+   */
   String message () default "must be not be zero";
 
+  /**
+   * @return validation groups this constraint belongs to
+   */
   Class<?>[] groups () default {};
 
+  /**
+   * @return payload for Bean Validation clients
+   */
   Class<? extends Payload>[] payload () default {};
 }

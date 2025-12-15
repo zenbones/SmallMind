@@ -42,14 +42,34 @@ import org.smallmind.nutsnbolts.command.template.Template;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.nutsnbolts.util.Counter;
 
+/**
+ * Parses arguments according to a {@link Template}, supporting GNU-style long options and single-character flags.
+ */
 public class CommandLineParser {
 
+  /**
+   * Parses a command line using the supplied template.
+   *
+   * @param template template describing valid options and arguments
+   * @param args     raw command line arguments
+   * @return populated {@link OptionSet}
+   * @throws CommandLineException if parsing fails or required options are missing
+   */
   public static OptionSet parseCommands (Template template, String[] args)
     throws CommandLineException {
 
     return parseCommands(template, args, false);
   }
 
+  /**
+   * Parses a command line with an option to allow undeclared trailing arguments.
+   *
+   * @param template        template describing valid options and arguments
+   * @param args            raw command line arguments
+   * @param allowUndeclared when {@code true}, non-option arguments are preserved rather than rejected
+   * @return populated {@link OptionSet}
+   * @throws CommandLineException if parsing fails or required options are missing
+   */
   public static OptionSet parseCommands (Template template, String[] args, boolean allowUndeclared)
     throws CommandLineException {
 
@@ -195,11 +215,17 @@ public class CommandLineParser {
     return optionSet;
   }
 
+  /**
+   * Formats an option for error messages, preferring long names over flags.
+   */
   private static String getOptionName (Option option) {
 
     return ((option.getName() != null) && (!option.getName().isEmpty())) ? "--" + option.getName() : "-" + option.getFlag().toString();
   }
 
+  /**
+   * Collects a variable-length list of arguments until the next token begins with a dash.
+   */
   private static String[] obtainArguments (String currentString, Counter argCounter, String[] args)
     throws CommandLineException {
 
@@ -216,6 +242,9 @@ public class CommandLineParser {
     return arguments;
   }
 
+  /**
+   * Obtains a single argument, respecting quoted values that may span multiple tokens.
+   */
   private static String obtainArgument (String currentString, Counter argCounter, String[] args)
     throws CommandLineException {
 
@@ -248,6 +277,9 @@ public class CommandLineParser {
     }
   }
 
+  /**
+   * Finds an unused option matching a flag, removing it from the unused set.
+   */
   private static Option findUnusedOptionByFlag (HashSet<Option> unusedSet, Character flag) {
 
     for (Option option : unusedSet) {
@@ -261,6 +293,9 @@ public class CommandLineParser {
     return null;
   }
 
+  /**
+   * Finds an unused option matching a long name, removing it from the unused set.
+   */
   private static Option findUnusedOptionByName (HashSet<Option> unusedSet, String name) {
 
     for (Option option : unusedSet) {
@@ -274,6 +309,9 @@ public class CommandLineParser {
     return null;
   }
 
+  /**
+   * Looks for an already-used option by flag, without modifying the set.
+   */
   private static Option findUsedOptionByFlag (HashSet<Option> usedSet, Character flag) {
 
     for (Option option : usedSet) {
@@ -286,6 +324,9 @@ public class CommandLineParser {
     return null;
   }
 
+  /**
+   * Looks for an already-used option by long name, without modifying the set.
+   */
   private static Option findUsedOptionByName (HashSet<Option> usedSet, String name) {
 
     for (Option option : usedSet) {

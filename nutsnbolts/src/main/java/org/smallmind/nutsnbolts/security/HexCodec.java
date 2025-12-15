@@ -35,13 +35,30 @@ package org.smallmind.nutsnbolts.security;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 
+/**
+ * Hex encoder/decoder for binary data.
+ */
 public class HexCodec {
 
+  /**
+   * Encodes an entire byte array to a lowercase hex string.
+   *
+   * @param bytes the data to encode
+   * @return a hex string
+   */
   public static String hexEncode (byte[] bytes) {
 
     return hexEncode(bytes, 0, bytes.length);
   }
 
+  /**
+   * Encodes a slice of a byte array to lowercase hex.
+   *
+   * @param bytes  the data to encode
+   * @param offset starting offset
+   * @param length number of bytes to encode
+   * @return a hex string
+   */
   public static String hexEncode (byte[] bytes, int offset, int length) {
 
     StringBuilder encodingBuilder;
@@ -57,12 +74,26 @@ public class HexCodec {
     return encodingBuilder.toString();
   }
 
+  /**
+   * Decodes a hex string into bytes.
+   *
+   * @param toBeDecoded the hex string
+   * @return the decoded bytes
+   * @throws UnsupportedEncodingException if the input is not valid hex
+   */
   public static byte[] hexDecode (String toBeDecoded)
     throws UnsupportedEncodingException {
 
     return hexDecode(toBeDecoded.getBytes(StandardCharsets.UTF_8));
   }
 
+  /**
+   * Decodes hex-encoded bytes into the original byte array.
+   *
+   * @param toBeDecoded the hex characters as bytes
+   * @return the decoded bytes
+   * @throws UnsupportedEncodingException if the input is not valid hex
+   */
   public static byte[] hexDecode (byte[] toBeDecoded)
     throws UnsupportedEncodingException {
 
@@ -84,6 +115,12 @@ public class HexCodec {
     }
   }
 
+  /**
+   * Tests whether the supplied byte represents a hex digit character.
+   *
+   * @param singleChar the character to test
+   * @return {@code true} if the character is 0-9, a-f, or A-F
+   */
   private static boolean isHexDigit (byte singleChar) {
 
     return ((singleChar >= '0') && (singleChar <= '9')) || ((singleChar >= 'A') && (singleChar <= 'F')) || ((singleChar >= 'a') && (singleChar <= 'f'));

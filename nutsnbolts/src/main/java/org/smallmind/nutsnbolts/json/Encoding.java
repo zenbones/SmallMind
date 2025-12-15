@@ -37,9 +37,13 @@ import java.io.UnsupportedEncodingException;
 import org.smallmind.nutsnbolts.http.Base64Codec;
 import org.smallmind.nutsnbolts.security.HexCodec;
 
+/**
+ * Encodes and decodes binary content so it can be represented as text for transport or storage.
+ */
 public enum Encoding {
 
   HEX {
+    /** {@inheritDoc} */
     @Override
     public String encode (byte[] bytes)
       throws Exception {
@@ -47,6 +51,7 @@ public enum Encoding {
       return HexCodec.hexEncode(bytes);
     }
 
+    /** {@inheritDoc} */
     @Override
     public byte[] decode (String encoded)
       throws UnsupportedEncodingException {
@@ -55,6 +60,7 @@ public enum Encoding {
     }
   },
   BASE_64 {
+    /** {@inheritDoc} */
     @Override
     public String encode (byte[] bytes)
       throws IOException {
@@ -62,6 +68,7 @@ public enum Encoding {
       return Base64Codec.encode(bytes);
     }
 
+    /** {@inheritDoc} */
     @Override
     public byte[] decode (String encoded)
       throws IOException {
@@ -70,9 +77,23 @@ public enum Encoding {
     }
   };
 
+  /**
+   * Converts raw bytes to a textual representation.
+   *
+   * @param bytes the bytes to encode
+   * @return the encoded string
+   * @throws Exception if encoding fails
+   */
   public abstract String encode (byte[] bytes)
     throws Exception;
 
+  /**
+   * Reconstructs the raw bytes from their textual representation.
+   *
+   * @param encoded the encoded string
+   * @return the decoded bytes
+   * @throws Exception if decoding fails
+   */
   public abstract byte[] decode (String encoded)
     throws Exception;
 }

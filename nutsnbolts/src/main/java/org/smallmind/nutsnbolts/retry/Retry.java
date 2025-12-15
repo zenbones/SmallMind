@@ -32,8 +32,22 @@
  */
 package org.smallmind.nutsnbolts.retry;
 
+/**
+ * Executes a {@link RetryCall} with configurable retry attempts and delays.
+ */
 public class Retry {
 
+  /**
+   * Executes the supplied call in a separate thread until it completes without throwing or
+   * the retry limit is exhausted.
+   *
+   * @param retryCall   the operation to execute
+   * @param retries     the maximum number of retries allowed after the initial attempt
+   * @param delay       the base delay, in milliseconds, between attempts
+   * @param exponential when {@code true}, increases the delay linearly by attempt count; otherwise uses a constant delay
+   * @return {@code true} if the call completes without throwing an exception
+   * @throws InterruptedException if the retry loop is interrupted while waiting between attempts
+   */
   public static boolean execute (RetryCall retryCall, int retries, long delay, boolean exponential)
     throws InterruptedException {
 

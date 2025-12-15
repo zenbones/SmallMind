@@ -245,37 +245,37 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
     this.connectionPoolMaxConnectionIdleTimeSeconds = connectionPoolMaxConnectionIdleTimeSeconds;
   }
 
-  @Override
   /**
    * {@inheritDoc}
    */
+  @Override
   public boolean isSingleton () {
 
     return true;
   }
 
-  @Override
   /**
    * {@inheritDoc}
    */
+  @Override
   public Class<?> getObjectType () {
 
     return MongoClientSettings.class;
   }
 
-  @Override
   /**
    * {@inheritDoc}
    */
+  @Override
   public MongoClientSettings getObject () {
 
     return settingsBuilder.build();
   }
 
-  @Override
   /**
    * Builds the {@link MongoClientSettings} instance from the configured properties.
    */
+  @Override
   public void afterPropertiesSet ()
     throws IOException, ResourceException, CertificateException, KeyStoreException, NoSuchAlgorithmException, KeyManagementException {
 

@@ -38,25 +38,46 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Iterates over nested YAML structures, flattening them into dot-notated {@link YamlPropertyEntry} instances.
+ */
 public class YamlPropertyHandler implements PropertyHandler<YamlPropertyEntry> {
 
   private final Map<String, Object> yamlMap;
 
+  /**
+   * Creates a handler backed by the provided YAML content.
+   *
+   * @param yamlMap root YAML map parsed by SnakeYAML
+   */
   public YamlPropertyHandler (Map<String, Object> yamlMap) {
 
     this.yamlMap = yamlMap;
   }
 
+  /**
+   * Returns an iterator that flattens the YAML structure into sequential {@link YamlPropertyEntry} items.
+   *
+   * @return iterator producing flattened property entries
+   */
   @Override
   public Iterator<YamlPropertyEntry> iterator () {
 
     return new YamlPropertyEntryIterator(yamlMap);
   }
 
+  /**
+   * Iterator that walks nested maps/lists to produce flat dot-notated keys.
+   */
   private static class YamlPropertyEntryIterator implements Iterator<YamlPropertyEntry> {
 
     private final LinkedList<NamedIteration> namedIterationList = new LinkedList<>();
 
+    /**
+     * Creates the iterator seeded with the root map.
+     *
+     * @param yamlMap root YAML map
+     */
     private YamlPropertyEntryIterator (Map<String, Object> yamlMap) {
 
       if ((yamlMap != null) && (!yamlMap.isEmpty())) {
@@ -64,6 +85,11 @@ public class YamlPropertyHandler implements PropertyHandler<YamlPropertyEntry> {
       }
     }
 
+    /**
+     * Indicates whether additional flattened entries remain.
+     *
+     * @return {@code true} if another entry is available
+     */
     @Override
     public boolean hasNext () {
 
@@ -79,6 +105,11 @@ public class YamlPropertyHandler implements PropertyHandler<YamlPropertyEntry> {
       return false;
     }
 
+    /**
+     * Produces the next flattened property entry by walking nested maps and lists.
+     *
+     * @return the next {@link YamlPropertyEntry}
+     */
     @Override
     public YamlPropertyEntry next () {
 
@@ -119,6 +150,11 @@ public class YamlPropertyHandler implements PropertyHandler<YamlPropertyEntry> {
       }
     }
 
+    /**
+     * Removal is not supported.
+     *
+     * @throws UnsupportedOperationException always
+     */
     @Override
     public void remove () {
 
@@ -126,6 +162,9 @@ public class YamlPropertyHandler implements PropertyHandler<YamlPropertyEntry> {
     }
   }
 
+  /**
+   * Tracks iteration state for a nested map and the key segment name.
+   */
   private static class NamedIteration {
 
     private final Iterator<Map.Entry<String, Object>> iterator;
@@ -136,16 +175,31 @@ public class YamlPropertyHandler implements PropertyHandler<YamlPropertyEntry> {
       this.iterator = iterator;
     }
 
+    /**
+     * Retrieves the current path segment name associated with the iterator.
+     *
+     * @return the current path segment
+     */
     private String getName () {
 
       return name;
     }
 
+    /**
+     * Updates the path segment name associated with the iterator.
+     *
+     * @param name current path segment
+     */
     private void setName (String name) {
 
       this.name = name;
     }
 
+    /**
+     * Accessor for the iterator over the current map level.
+     *
+     * @return iterator over map entries
+     */
     private Iterator<Map.Entry<String, Object>> getIterator () {
 
       return iterator;

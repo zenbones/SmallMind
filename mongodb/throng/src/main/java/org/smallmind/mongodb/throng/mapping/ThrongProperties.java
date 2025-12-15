@@ -182,10 +182,10 @@ public class ThrongProperties<T> extends TreeMap<String, ThrongProperty> impleme
     return ((fieldName = propertyNameMap.get(propertyName)) != null) ? get(fieldName) : null;
   }
 
-  @Override
   /**
    * {@inheritDoc}
    */
+  @Override
   public ThrongIndexes provideIndexes () {
 
     return throngIndexes;

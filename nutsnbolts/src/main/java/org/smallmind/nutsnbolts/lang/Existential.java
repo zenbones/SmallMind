@@ -32,7 +32,15 @@
  */
 package org.smallmind.nutsnbolts.lang;
 
+/**
+ * Marker for types that capture the stack trace present at creation or another existential moment.
+ */
 public interface Existential {
 
+  /**
+   * Returns the stored stack trace.
+   *
+   * @return the captured stack trace elements
+   */
   StackTraceElement[] getExistentialStackTrace ();
 }

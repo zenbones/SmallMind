@@ -39,10 +39,17 @@ import java.security.Permissions;
 import java.util.Enumeration;
 import java.util.PropertyPermission;
 
+/**
+ * {@link PermissionCollection} providing a baseline set of minimal permissions commonly
+ * required by sandboxed code. Additional permissions can be added as needed.
+ */
 public class MinimalPermissions extends PermissionCollection {
 
   private final Permissions permissions = new Permissions();
 
+  /**
+   * Initializes the collection with basic socket and property read permissions.
+   */
   public MinimalPermissions () {
 
     permissions.add(new SocketPermission("localhost:0", "listen"));
@@ -72,18 +79,27 @@ public class MinimalPermissions extends PermissionCollection {
     permissions.add(new PropertyPermission("java.vm.name", "read"));
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void add (Permission permission) {
 
     permissions.add(permission);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean implies (Permission permission) {
 
     return permissions.implies(permission);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Enumeration<Permission> elements () {
 

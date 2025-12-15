@@ -32,8 +32,21 @@
  */
 package org.smallmind.nutsnbolts.layout;
 
+/**
+ * {@link ParaboxElement} wrapper for platform components. Validates that each bias reports
+ * non-decreasing minimum, preferred, and maximum measurements.
+ *
+ * @param <C> the component type
+ */
 public abstract class ComponentParaboxElement<C> extends ParaboxElement<C> implements PlanarPart {
 
+  /**
+   * Creates the wrapper, ensuring measurement consistency across all axes.
+   *
+   * @param component  the component being wrapped
+   * @param constraint the constraint governing the component
+   * @throws LayoutException if minimum &gt; preferred or preferred &gt; maximum for any bias
+   */
   public ComponentParaboxElement (C component, Constraint constraint) {
 
     super(component, constraint);
@@ -53,36 +66,69 @@ public abstract class ComponentParaboxElement<C> extends ParaboxElement<C> imple
     }
   }
 
+  /**
+   * Returns the minimum measurement of the component along the given axis.
+   *
+   * @param bias the axis of measurement
+   * @return the minimum size
+   */
   public abstract double getComponentMinimumMeasurement (Bias bias);
 
+  /**
+   * Returns the preferred measurement of the component along the given axis.
+   *
+   * @param bias the axis of measurement
+   * @return the preferred size
+   */
   public abstract double getComponentPreferredMeasurement (Bias bias);
 
+  /**
+   * Returns the maximum measurement of the component along the given axis.
+   *
+   * @param bias the axis of measurement
+   * @return the maximum size
+   */
   public abstract double getComponentMaximumMeasurement (Bias bias);
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean isNativeComponent () {
 
     return true;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Dimensionality getDimensionality () {
 
     return Dimensionality.PLANE;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public double getPartMinimumMeasurement (Bias bias, LayoutTailor tailor) {
 
     return getComponentMinimumMeasurement(bias);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public double getPartPreferredMeasurement (Bias bias, LayoutTailor tailor) {
 
     return getComponentPreferredMeasurement(bias);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public double getPartMaximumMeasurement (Bias bias, LayoutTailor tailor) {
 

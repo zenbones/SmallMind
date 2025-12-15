@@ -48,22 +48,40 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import org.smallmind.nutsnbolts.io.PathUtility;
 
+/**
+ * {@link ClassGate} implementation that resolves classes and resources from a set of
+ * classpath components (directories or JARs). Provides streams to class bytes as well
+ * as resource URLs and timestamps for file-backed entries.
+ */
 public class ClasspathClassGate implements ClassGate {
 
   private final HashMap<String, Path> filePathMap;
 
   private final String[] pathComponents;
 
+  /**
+   * Builds a gate that uses the JVM {@code java.class.path} system property.
+   */
   public ClasspathClassGate () {
 
     this(System.getProperty("java.class.path"));
   }
 
+  /**
+   * Builds a gate using a raw class path string delimited by the platform path separator.
+   *
+   * @param classPath the class path string (directories or JARs)
+   */
   public ClasspathClassGate (String classPath) {
 
     this(classPath.split(System.getProperty("path.separator"), -1));
   }
 
+  /**
+   * Builds a gate from explicit path components.
+   *
+   * @param pathComponents directories or JAR files used for resolution
+   */
   public ClasspathClassGate (String... pathComponents) {
 
     this.pathComponents = pathComponents;
@@ -71,6 +89,13 @@ public class ClasspathClassGate implements ClassGate {
     filePathMap = new HashMap<>();
   }
 
+  /**
+   * Returns the last modification date for a previously located class.
+   *
+   * @param name the fully qualified class name
+   * @return the timestamp in milliseconds, or {@link #STATIC_CLASS} when unknown
+   * @throws IOException if file metadata cannot be read
+   */
   public long getLastModDate (String name)
     throws IOException {
 
@@ -86,12 +111,22 @@ public class ClasspathClassGate implements ClassGate {
     return ClassGate.STATIC_CLASS;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public CodeSource getCodeSource () {
 
     return null;
   }
 
+  /**
+   * Locates a class on the configured path components and returns a stream ticket to it.
+   *
+   * @param name the fully qualified class name
+   * @return a {@link ClassStreamTicket} containing the stream and timestamp, or {@code null} if not found
+   * @throws Exception if a resource access error occurs
+   */
   public ClassStreamTicket getTicket (String name)
     throws Exception {
 
@@ -125,6 +160,9 @@ public class ClasspathClassGate implements ClassGate {
     return null;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public URL getResource (String path)
     throws IOException {
 
@@ -150,6 +188,12 @@ public class ClasspathClassGate implements ClassGate {
     return null;
   }
 
+  /**
+   * Normalizes a file path for use in URI construction, ensuring forward slashes and a leading slash.
+   *
+   * @param path the path to normalize
+   * @return a URI-safe path string
+   */
   private String rectifyPath (String path) {
 
     String rectifiedPath = path.replace('\\', '/');
@@ -157,6 +201,9 @@ public class ClasspathClassGate implements ClassGate {
     return (rectifiedPath.charAt(0) == '/') ? rectifiedPath : '/' + rectifiedPath;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public InputStream getResourceAsStream (String path)
     throws IOException {
 
@@ -181,6 +228,14 @@ public class ClasspathClassGate implements ClassGate {
     return null;
   }
 
+  /**
+   * Attempts to locate a resource within a JAR file and returns an input stream if found.
+   *
+   * @param jarComponentPath the JAR file path
+   * @param path             the entry path to locate
+   * @return a buffered input stream to the entry, or {@code null} if not present
+   * @throws IOException if the JAR cannot be read
+   */
   private InputStream findJarStream (String jarComponentPath, String path)
     throws IOException {
 
@@ -193,6 +248,14 @@ public class ClasspathClassGate implements ClassGate {
     return null;
   }
 
+  /**
+   * Searches a JAR for a matching entry.
+   *
+   * @param jarComponentPath the JAR file path
+   * @param path             the entry name to locate
+   * @return a locator containing the JAR and entry, or {@code null} if not found
+   * @throws IOException if the JAR cannot be read
+   */
   private JarLocator findJarLocator (String jarComponentPath, String path)
     throws IOException {
 
@@ -211,6 +274,13 @@ public class ClasspathClassGate implements ClassGate {
     return null;
   }
 
+  /**
+   * Resolves a file within a class path directory.
+   *
+   * @param fileComponentPath the directory in the class path
+   * @param path              the relative resource path
+   * @return the resolved {@link Path} if it exists as a file, otherwise {@code null}
+   */
   private Path findPath (String fileComponentPath, String path) {
 
     Path completePath;
@@ -224,22 +294,42 @@ public class ClasspathClassGate implements ClassGate {
     return null;
   }
 
+  /**
+   * Lightweight holder for a JAR and one of its entries, providing access to the entry stream.
+   */
   private static class JarLocator {
 
     private final JarFile jarFile;
     private final JarEntry jarEntry;
 
+    /**
+     * Creates a locator for the provided JAR and entry.
+     *
+     * @param jarFile  the containing JAR
+     * @param jarEntry the entry within the JAR
+     */
     private JarLocator (JarFile jarFile, JarEntry jarEntry) {
 
       this.jarFile = jarFile;
       this.jarEntry = jarEntry;
     }
 
+    /**
+     * Returns the resolved JAR entry.
+     *
+     * @return the entry found in the JAR
+     */
     private JarEntry getJarEntry () {
 
       return jarEntry;
     }
 
+    /**
+     * Opens an input stream for the held entry.
+     *
+     * @return an input stream to the entry bytes
+     * @throws IOException if the entry cannot be read
+     */
     public InputStream getInputStream ()
       throws IOException {
 

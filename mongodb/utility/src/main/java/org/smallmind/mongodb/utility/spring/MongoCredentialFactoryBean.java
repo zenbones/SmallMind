@@ -70,37 +70,37 @@ public class MongoCredentialFactoryBean implements InitializingBean, FactoryBean
     this.source = source;
   }
 
-  @Override
   /**
    * {@inheritDoc}
    */
+  @Override
   public boolean isSingleton () {
 
     return true;
   }
 
-  @Override
   /**
    * {@inheritDoc}
    */
+  @Override
   public Class<?> getObjectType () {
 
     return MongoCredential.class;
   }
 
-  @Override
   /**
    * {@inheritDoc}
    */
+  @Override
   public MongoCredential getObject () {
 
     return mongoCredential;
   }
 
-  @Override
   /**
    * Builds the credential after properties have been set.
    */
+  @Override
   public void afterPropertiesSet () {
 
     mongoCredential = MongoCredential.createScramSha1Credential(user, source, password.toCharArray());

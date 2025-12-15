@@ -30,9 +30,8 @@ public class JavaDocStencil extends StaticStencil {
   /**
    * Returns the closing delimiter for a JavaDoc comment.
    *
-   * @return {@code " */"}
-                          */
-
+   * @return {@code " *\/"}
+   */
   @Override
   public String getLastLine () {
 

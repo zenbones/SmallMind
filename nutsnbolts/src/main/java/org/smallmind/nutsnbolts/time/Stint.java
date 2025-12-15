@@ -34,6 +34,9 @@ package org.smallmind.nutsnbolts.time;
 
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Represents a non-negative duration measured in a specific {@link TimeUnit}.
+ */
 public class Stint {
 
   private static final Stint NONE = new Stint(0, TimeUnit.SECONDS);
@@ -41,6 +44,13 @@ public class Stint {
   private final TimeUnit timeUnit;
   private final long time;
 
+  /**
+   * Creates a new duration.
+   *
+   * @param time     duration value; must be non-negative
+   * @param timeUnit unit of the duration; must not be {@code null}
+   * @throws IllegalArgumentException if the time is negative or the unit is {@code null}
+   */
   public Stint (long time, TimeUnit timeUnit) {
 
     if ((time < 0) || (timeUnit == null)) {
@@ -51,26 +61,49 @@ public class Stint {
     this.timeUnit = timeUnit;
   }
 
+  /**
+   * Returns a shared representation of a zero-length duration.
+   *
+   * @return zero stint instance
+   */
   public static Stint none () {
 
     return NONE;
   }
 
+  /**
+   * Factory method mirroring the constructor.
+   *
+   * @param time     duration value; must be non-negative
+   * @param timeUnit unit of the duration; must not be {@code null}
+   * @return newly created stint
+   */
   public static Stint of (long time, TimeUnit timeUnit) {
 
     return new Stint(time, timeUnit);
   }
 
+  /**
+   * @return numeric duration value
+   */
   public long getTime () {
 
     return time;
   }
 
+  /**
+   * @return unit associated with the duration value
+   */
   public TimeUnit getTimeUnit () {
 
     return timeUnit;
   }
 
+  /**
+   * Converts the duration into milliseconds.
+   *
+   * @return duration expressed in milliseconds
+   */
   public long toMilliseconds () {
 
     return timeUnit.toMillis(time);

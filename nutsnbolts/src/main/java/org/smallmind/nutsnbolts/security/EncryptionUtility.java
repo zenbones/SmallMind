@@ -58,14 +58,35 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.Mac;
 import javax.crypto.NoSuchPaddingException;
 
+/**
+ * Convenience methods for hashing, signing, encryption, and key serialization.
+ */
 public class EncryptionUtility {
 
+  /**
+   * Computes a digest for the supplied bytes.
+   *
+   * @param algorithm  the hash algorithm
+   * @param toBeHashed the data to hash
+   * @return the digest
+   * @throws NoSuchAlgorithmException if the digest algorithm is unavailable
+   */
   public static byte[] hash (HashAlgorithm algorithm, byte[] toBeHashed)
     throws NoSuchAlgorithmException {
 
     return MessageDigest.getInstance(algorithm.getAlgorithmName()).digest(toBeHashed);
   }
 
+  /**
+   * Produces a MAC using a symmetric signing algorithm.
+   *
+   * @param algorithm the MAC algorithm
+   * @param secretKey the key to use
+   * @param data      the data to sign
+   * @return the MAC bytes
+   * @throws NoSuchAlgorithmException if the algorithm is unavailable
+   * @throws InvalidKeyException      if the key is invalid
+   */
   public static byte[] sign (SymmetricSigningAlgorithm algorithm, Key secretKey, byte[] data)
     throws NoSuchAlgorithmException, InvalidKeyException {
 
@@ -76,6 +97,17 @@ public class EncryptionUtility {
     return mac.doFinal(data);
   }
 
+  /**
+   * Verifies a MAC produced by {@link #sign(SymmetricSigningAlgorithm, Key, byte[])}.
+   *
+   * @param algorithm  the MAC algorithm
+   * @param secretKey  the key to use
+   * @param data       the original data
+   * @param signedData the expected MAC
+   * @return {@code true} if the MACs match
+   * @throws NoSuchAlgorithmException if the algorithm is unavailable
+   * @throws InvalidKeyException      if the key is invalid
+   */
   public static boolean verify (SymmetricSigningAlgorithm algorithm, Key secretKey, byte[] data, byte[] signedData)
     throws NoSuchAlgorithmException, InvalidKeyException {
 
@@ -86,6 +118,17 @@ public class EncryptionUtility {
     return Arrays.equals(mac.doFinal(data), signedData);
   }
 
+  /**
+   * Signs data using an asymmetric algorithm.
+   *
+   * @param algorithm  the signature algorithm
+   * @param privateKey the private key
+   * @param data       data to sign
+   * @return the signature
+   * @throws NoSuchAlgorithmException if the algorithm is unavailable
+   * @throws InvalidKeyException      if the key is invalid
+   * @throws SignatureException       if signing fails
+   */
   public static byte[] sign (AsymmetricSigningAlgorithm algorithm, PrivateKey privateKey, byte[] data)
     throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
 
@@ -97,6 +140,18 @@ public class EncryptionUtility {
     return signature.sign();
   }
 
+  /**
+   * Verifies a signature produced by {@link #sign(AsymmetricSigningAlgorithm, PrivateKey, byte[])}.
+   *
+   * @param algorithm  the signature algorithm
+   * @param publicKey  the public key
+   * @param data       original data
+   * @param signedData the signature to verify
+   * @return {@code true} if verification succeeds
+   * @throws NoSuchAlgorithmException if the algorithm is unavailable
+   * @throws InvalidKeyException      if the key is invalid
+   * @throws SignatureException       if verification fails
+   */
   public static boolean verify (AsymmetricSigningAlgorithm algorithm, PublicKey publicKey, byte[] data, byte[] signedData)
     throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
 
@@ -108,6 +163,13 @@ public class EncryptionUtility {
     return signature.verify(signedData);
   }
 
+  /**
+   * Generates a symmetric key for the given algorithm.
+   *
+   * @param algorithm the symmetric algorithm
+   * @return a newly generated key
+   * @throws NoSuchAlgorithmException if the algorithm is unavailable
+   */
   public static Key generateKey (SymmetricAlgorithm algorithm)
     throws NoSuchAlgorithmException {
 
@@ -117,6 +179,13 @@ public class EncryptionUtility {
     return keyGenerator.generateKey();
   }
 
+  /**
+   * Generates an asymmetric key pair for the given algorithm.
+   *
+   * @param algorithm the asymmetric algorithm
+   * @return a newly generated key pair
+   * @throws NoSuchAlgorithmException if the algorithm is unavailable
+   */
   public static KeyPair generateKeyPair (AsymmetricAlgorithm algorithm)
     throws NoSuchAlgorithmException {
 
@@ -126,6 +195,13 @@ public class EncryptionUtility {
     return keyPairGenerator.generateKeyPair();
   }
 
+  /**
+   * Serializes a key using {@link java.security.KeyRep} for later reconstruction.
+   *
+   * @param key the key to serialize
+   * @return the serialized bytes
+   * @throws IOException if serialization fails
+   */
   public static byte[] serializeKey (Key key)
     throws IOException {
 
@@ -145,6 +221,14 @@ public class EncryptionUtility {
     }
   }
 
+  /**
+   * Reconstructs a key from the bytes produced by {@link #serializeKey(Key)}.
+   *
+   * @param keyBytes serialized key bytes
+   * @return the deserialized key
+   * @throws IOException            if deserialization fails
+   * @throws ClassNotFoundException if the key type cannot be resolved
+   */
   public static Key deserializeKey (byte[] keyBytes)
     throws IOException, ClassNotFoundException {
 
@@ -161,12 +245,37 @@ public class EncryptionUtility {
     }
   }
 
+  /**
+   * Encrypts data with the supplied key using the key's algorithm.
+   *
+   * @param key           the key to use
+   * @param toBeEncrypted the plaintext
+   * @return ciphertext
+   * @throws NoSuchAlgorithmException  if the algorithm is unavailable
+   * @throws NoSuchPaddingException    if the padding scheme is unavailable
+   * @throws InvalidKeyException       if the key is invalid
+   * @throws IllegalBlockSizeException if the data size is invalid for the cipher
+   * @throws BadPaddingException       if padding is incorrect
+   */
   public static byte[] encrypt (Key key, byte[] toBeEncrypted)
     throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
 
     return encrypt(key, null, toBeEncrypted);
   }
 
+  /**
+   * Encrypts data with a specific algorithm override.
+   *
+   * @param key               the key to use
+   * @param specificAlgorithm optional algorithm name; defaults to the key's algorithm when {@code null}
+   * @param toBeEncrypted     the plaintext
+   * @return ciphertext
+   * @throws NoSuchAlgorithmException  if the algorithm is unavailable
+   * @throws NoSuchPaddingException    if the padding scheme is unavailable
+   * @throws InvalidKeyException       if the key is invalid
+   * @throws IllegalBlockSizeException if the data size is invalid for the cipher
+   * @throws BadPaddingException       if padding is incorrect
+   */
   public static byte[] encrypt (Key key, String specificAlgorithm, byte[] toBeEncrypted)
     throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
 
@@ -181,12 +290,41 @@ public class EncryptionUtility {
     return cipher.doFinal(data);
   }
 
+  /**
+   * Encrypts data with algorithm parameters (e.g., IV).
+   *
+   * @param key                    the key to use
+   * @param toBeEncrypted          the plaintext
+   * @param algorithmParameterSpec additional algorithm parameters
+   * @return ciphertext
+   * @throws NoSuchAlgorithmException           if the algorithm is unavailable
+   * @throws InvalidAlgorithmParameterException if the parameters are invalid
+   * @throws NoSuchPaddingException             if the padding scheme is unavailable
+   * @throws InvalidKeyException                if the key is invalid
+   * @throws IllegalBlockSizeException          if the data size is invalid for the cipher
+   * @throws BadPaddingException                if padding is incorrect
+   */
   public static byte[] encrypt (Key key, byte[] toBeEncrypted, AlgorithmParameterSpec algorithmParameterSpec)
     throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
 
     return encrypt(key, null, toBeEncrypted, algorithmParameterSpec);
   }
 
+  /**
+   * Encrypts data with algorithm parameters and an explicit cipher name.
+   *
+   * @param key                    the key to use
+   * @param specificAlgorithm      optional algorithm name; defaults to the key's algorithm when {@code null}
+   * @param toBeEncrypted          the plaintext
+   * @param algorithmParameterSpec additional algorithm parameters
+   * @return ciphertext
+   * @throws NoSuchAlgorithmException           if the algorithm is unavailable
+   * @throws InvalidAlgorithmParameterException if the parameters are invalid
+   * @throws NoSuchPaddingException             if the padding scheme is unavailable
+   * @throws InvalidKeyException                if the key is invalid
+   * @throws IllegalBlockSizeException          if the data size is invalid for the cipher
+   * @throws BadPaddingException                if padding is incorrect
+   */
   public static byte[] encrypt (Key key, String specificAlgorithm, byte[] toBeEncrypted, AlgorithmParameterSpec algorithmParameterSpec)
     throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
 
@@ -201,12 +339,37 @@ public class EncryptionUtility {
     return cipher.doFinal(data);
   }
 
+  /**
+   * Decrypts data using the key's algorithm.
+   *
+   * @param key           the key to use
+   * @param toBeDecrypted the ciphertext
+   * @return plaintext
+   * @throws NoSuchAlgorithmException  if the algorithm is unavailable
+   * @throws NoSuchPaddingException    if the padding scheme is unavailable
+   * @throws InvalidKeyException       if the key is invalid
+   * @throws IllegalBlockSizeException if the data size is invalid for the cipher
+   * @throws BadPaddingException       if padding is incorrect
+   */
   public static byte[] decrypt (Key key, byte[] toBeDecrypted)
     throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
 
     return decrypt(key, null, toBeDecrypted);
   }
 
+  /**
+   * Decrypts data using an explicit algorithm name.
+   *
+   * @param key               the key to use
+   * @param specificAlgorithm optional algorithm name; defaults to the key's algorithm when {@code null}
+   * @param toBeDecrypted     the ciphertext
+   * @return plaintext
+   * @throws NoSuchAlgorithmException  if the algorithm is unavailable
+   * @throws NoSuchPaddingException    if the padding scheme is unavailable
+   * @throws InvalidKeyException       if the key is invalid
+   * @throws IllegalBlockSizeException if the data size is invalid for the cipher
+   * @throws BadPaddingException       if padding is incorrect
+   */
   public static byte[] decrypt (Key key, String specificAlgorithm, byte[] toBeDecrypted)
     throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
 
@@ -218,12 +381,41 @@ public class EncryptionUtility {
     return cipher.doFinal(toBeDecrypted);
   }
 
+  /**
+   * Decrypts data using algorithm parameters (e.g., IV).
+   *
+   * @param key                    the key to use
+   * @param toBeDecrypted          the ciphertext
+   * @param algorithmParameterSpec additional algorithm parameters
+   * @return plaintext
+   * @throws NoSuchAlgorithmException           if the algorithm is unavailable
+   * @throws InvalidAlgorithmParameterException if the parameters are invalid
+   * @throws NoSuchPaddingException             if the padding scheme is unavailable
+   * @throws InvalidKeyException                if the key is invalid
+   * @throws IllegalBlockSizeException          if the data size is invalid for the cipher
+   * @throws BadPaddingException                if padding is incorrect
+   */
   public static byte[] decrypt (Key key, byte[] toBeDecrypted, AlgorithmParameterSpec algorithmParameterSpec)
     throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
 
     return decrypt(key, null, toBeDecrypted, algorithmParameterSpec);
   }
 
+  /**
+   * Decrypts data using algorithm parameters and an explicit cipher name.
+   *
+   * @param key                    the key to use
+   * @param specificAlgorithm      optional algorithm name; defaults to the key's algorithm when {@code null}
+   * @param toBeDecrypted          the ciphertext
+   * @param algorithmParameterSpec additional algorithm parameters
+   * @return plaintext
+   * @throws NoSuchAlgorithmException           if the algorithm is unavailable
+   * @throws InvalidAlgorithmParameterException if the parameters are invalid
+   * @throws NoSuchPaddingException             if the padding scheme is unavailable
+   * @throws InvalidKeyException                if the key is invalid
+   * @throws IllegalBlockSizeException          if the data size is invalid for the cipher
+   * @throws BadPaddingException                if padding is incorrect
+   */
   public static byte[] decrypt (Key key, String specificAlgorithm, byte[] toBeDecrypted, AlgorithmParameterSpec algorithmParameterSpec)
     throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
 

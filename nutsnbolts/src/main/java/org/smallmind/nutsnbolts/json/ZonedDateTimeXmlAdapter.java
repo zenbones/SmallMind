@@ -36,14 +36,29 @@ import java.time.ZonedDateTime;
 import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 import org.smallmind.nutsnbolts.time.TimeUtility;
 
+/**
+ * JAXB adapter converting {@link ZonedDateTime} values to and from ISO-8601 formatted strings.
+ */
 public class ZonedDateTimeXmlAdapter extends XmlAdapter<String, ZonedDateTime> {
 
+  /**
+   * Parses an ISO-8601 string into a {@link ZonedDateTime}.
+   *
+   * @param value the formatted value
+   * @return parsed {@link ZonedDateTime}, or {@code null} when parsing fails
+   */
   @Override
   public ZonedDateTime unmarshal (String value) {
 
     return TimeUtility.parse(value);
   }
 
+  /**
+   * Formats a {@link ZonedDateTime} into an ISO-8601 string.
+   *
+   * @param zonedDateTime the value to format
+   * @return formatted string, or {@code null} when the input is {@code null}
+   */
   @Override
   public String marshal (ZonedDateTime zonedDateTime) {
 

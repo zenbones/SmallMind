@@ -70,16 +70,15 @@ public class ArrayCodec<T> implements Codec<T> {
     this.storeNulls = storeNulls;
   }
 
-  @Override
   /**
    * {@inheritDoc}
    */
+  @Override
   public Class<T> getEncoderClass () {
 
     return arrayClass;
   }
 
-  @Override
   /**
    * Decodes a BSON array into a Java array of the configured component type.
    *
@@ -87,6 +86,7 @@ public class ArrayCodec<T> implements Codec<T> {
    * @param decoderContext decoder context
    * @return decoded Java array or {@code null} when the BSON value is {@code null}
    */
+  @Override
   public T decode (BsonReader reader, DecoderContext decoderContext) {
 
     if (BsonType.NULL.equals(reader.getCurrentBsonType())) {
@@ -113,7 +113,6 @@ public class ArrayCodec<T> implements Codec<T> {
     }
   }
 
-  @Override
   /**
    * Encodes a Java array into a BSON array using the configured element codec.
    *
@@ -121,6 +120,7 @@ public class ArrayCodec<T> implements Codec<T> {
    * @param value array to encode
    * @param encoderContext encoder context
    */
+  @Override
   public void encode (BsonWriter writer, T value, EncoderContext encoderContext) {
 
     if (value != null) {

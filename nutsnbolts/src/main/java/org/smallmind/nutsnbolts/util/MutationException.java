@@ -34,8 +34,14 @@ package org.smallmind.nutsnbolts.util;
 
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
+/**
+ * Wraps exceptions thrown during mutation transformations.
+ */
 public class MutationException extends FormattedRuntimeException {
 
+  /**
+   * @param throwable underlying cause
+   */
   public MutationException (Throwable throwable) {
 
     super(throwable);

@@ -32,15 +32,28 @@
  */
 package org.smallmind.nutsnbolts.lang;
 
+/**
+ * Simple wrapper around an array of {@link StackTraceElement}s.
+ */
 public class StackTrace {
 
   private final StackTraceElement[] stackTraceElements;
 
+  /**
+   * Constructs the wrapper with the provided stack trace elements.
+   *
+   * @param stackTraceElements the elements to wrap
+   */
   public StackTrace (StackTraceElement[] stackTraceElements) {
 
     this.stackTraceElements = stackTraceElements;
   }
 
+  /**
+   * Returns the wrapped stack trace.
+   *
+   * @return the stack trace elements
+   */
   public StackTraceElement[] getStackTraceElements () {
 
     return stackTraceElements;

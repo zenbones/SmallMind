@@ -32,26 +32,44 @@
  */
 package org.smallmind.nutsnbolts.command.template;
 
+/**
+ * Argument whose value must match one of a predefined set of strings.
+ */
 public class EnumeratedArgument extends Argument {
 
   private final String[] values;
 
+  /**
+   * @param values allowed argument values
+   */
   public EnumeratedArgument (String[] values) {
 
     this.values = values;
   }
 
+  /**
+   * @return {@link ArgumentType#ENUMERATED}
+   */
   @Override
   public ArgumentType getType () {
 
     return ArgumentType.ENUMERATED;
   }
 
+  /**
+   * @return allowed values in declaration order
+   */
   public String[] getValues () {
 
     return values;
   }
 
+  /**
+   * Tests whether an argument value is within the allowed set.
+   *
+   * @param argument candidate value
+   * @return {@code true} if the argument matches
+   */
   public boolean matches (String argument) {
 
     for (String value : values) {

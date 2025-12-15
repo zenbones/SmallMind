@@ -37,8 +37,21 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
+/**
+ * Creates dynamic proxies for {@link Closeable} objects that emit {@link CloseEvent}s on close.
+ */
 public class CloseableProxyFactory {
 
+  /**
+   * Wraps a closeable instance with a proxy that forwards all calls and notifies the listener after close.
+   *
+   * @param clazz    interface implemented by the closeable
+   * @param instance instance to wrap
+   * @param listener listener invoked after {@code close()} completes
+   * @param <C>      closeable type
+   * @return proxied closeable
+   * @throws NoSuchMethodException if the close method cannot be found
+   */
   public static <C extends Closeable> C createProxy (Class<C> clazz, C instance, CloseListener listener)
     throws NoSuchMethodException {
 
@@ -51,6 +64,11 @@ public class CloseableProxyFactory {
     private final Closeable closeable;
     private final CloseListener listener;
 
+    /**
+     * @param closeable wrapped instance
+     * @param listener  notified after successful close
+     * @throws NoSuchMethodException if close cannot be resolved
+     */
     public CloseableInvocationHandler (Closeable closeable, CloseListener listener)
       throws NoSuchMethodException {
 
@@ -60,6 +78,9 @@ public class CloseableProxyFactory {
       closeMethod = closeable.getClass().getMethod("close");
     }
 
+    /**
+     * Forwards invocation to the wrapped instance and triggers the listener after close.
+     */
     @Override
     public Object invoke (Object proxy, Method method, Object[] args)
       throws Throwable {

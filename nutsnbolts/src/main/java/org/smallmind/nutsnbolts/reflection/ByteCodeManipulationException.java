@@ -34,23 +34,47 @@ package org.smallmind.nutsnbolts.reflection;
 
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
+/**
+ * Runtime wrapper used when ASM-based byte code parsing or generation fails.
+ */
 public class ByteCodeManipulationException extends FormattedRuntimeException {
 
+  /**
+   * Creates an exception with no detail message.
+   */
   public ByteCodeManipulationException () {
 
     super();
   }
 
+  /**
+   * Creates an exception with a formatted detail message.
+   *
+   * @param message a {@link java.util.Formatter}-style message
+   * @param args    values interpolated into the message
+   */
   public ByteCodeManipulationException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * Creates an exception with a formatted detail message and a cause.
+   *
+   * @param throwable the underlying failure
+   * @param message   a {@link java.util.Formatter}-style message
+   * @param args      values interpolated into the message
+   */
   public ByteCodeManipulationException (Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);
   }
 
+  /**
+   * Creates an exception with a cause and no message.
+   *
+   * @param throwable the underlying failure
+   */
   public ByteCodeManipulationException (Throwable throwable) {
 
     super(throwable);

@@ -34,26 +34,43 @@ package org.smallmind.nutsnbolts.util;
 
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
+/**
+ * Thrown when parsing or translating dot-notation patterns fails.
+ */
 public class DotNotationException extends FormattedException {
 
+  /**
+   * Constructs an empty exception.
+   */
   public DotNotationException () {
 
     super();
   }
 
+  /**
+   * @param message formatted error message
+   * @param args    message arguments
+   */
   public DotNotationException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * @param throwable underlying cause
+   * @param message   formatted error message
+   * @param args      message arguments
+   */
   public DotNotationException (Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);
   }
 
+  /**
+   * @param throwable underlying cause
+   */
   public DotNotationException (Throwable throwable) {
 
     super(throwable);
   }
 }
-

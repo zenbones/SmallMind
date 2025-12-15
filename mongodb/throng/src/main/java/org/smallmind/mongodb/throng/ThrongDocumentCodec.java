@@ -46,16 +46,15 @@ import org.bson.codecs.EncoderContext;
  */
 public class ThrongDocumentCodec implements Codec<ThrongDocument> {
 
-  @Override
   /**
    * {@inheritDoc}
    */
+  @Override
   public Class<ThrongDocument> getEncoderClass () {
 
     return ThrongDocument.class;
   }
 
-  @Override
   /**
    * Decodes the current BSON value into a {@link ThrongDocument}, expecting the root to be a document node.
    *
@@ -64,6 +63,7 @@ public class ThrongDocumentCodec implements Codec<ThrongDocument> {
    * @return the decoded {@link ThrongDocument}
    * @throws DocumentParsingException if the root BSON type is not a document
    */
+  @Override
   public ThrongDocument decode (BsonReader reader, DecoderContext decoderContext) {
 
     BsonValue bsonValue = BsonUtility.read(reader);
@@ -76,7 +76,6 @@ public class ThrongDocumentCodec implements Codec<ThrongDocument> {
     }
   }
 
-  @Override
   /**
    * Encodes the supplied {@link ThrongDocument} to the writer.
    *
@@ -85,6 +84,7 @@ public class ThrongDocumentCodec implements Codec<ThrongDocument> {
    * @param encoderContext driver encoder context
    * @throws DocumentParsingException if an unsupported BSON type is encountered
    */
+  @Override
   public void encode (BsonWriter writer, ThrongDocument document, EncoderContext encoderContext)
     throws DocumentParsingException {
 

@@ -35,15 +35,46 @@ package org.smallmind.nutsnbolts.xml.sax;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
+/**
+ * Extension point for handling SAX element events with custom logic.
+ */
 public interface ElementExtender extends SAXExtender {
 
+  /**
+   * Injects the document extender managing the parse.
+   *
+   * @param documentExtender owning document extender
+   */
   void setDocumentExtender (DocumentExtender documentExtender);
 
+  /**
+   * Sets the parent extender in the element stack.
+   *
+   * @param parent parent extender
+   */
   void setParent (SAXExtender parent);
 
+  /**
+   * Callback invoked at the start of the element.
+   *
+   * @param namespaceURI namespace URI
+   * @param localName    local name
+   * @param qName        qualified name
+   * @param atts         element attributes
+   * @throws SAXException if processing fails
+   */
   void startElement (String namespaceURI, String localName, String qName, Attributes atts)
     throws SAXException;
 
+  /**
+   * Callback invoked at the end of the element with accumulated character content.
+   *
+   * @param namespaceURI namespace URI
+   * @param localName    local name
+   * @param qName        qualified name
+   * @param content      aggregated character content for the element
+   * @throws SAXException if processing fails
+   */
   void endElement (String namespaceURI, String localName, String qName, StringBuilder content)
     throws SAXException;
 }

@@ -32,27 +32,55 @@
  */
 package org.smallmind.nutsnbolts.time;
 
+/**
+ * Utilities for working with numeric calendar components without bringing in full {@code java.util.Calendar} logic.
+ */
 public class CalendarUtility {
 
   //   year month[1-12] day[1-31] weekday[1-7](SUNDAY-SATURDAY) hour[0-23] minute[0-59]
 
   private static final int[] DAYS_IN_MONTH = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
+  /**
+   * Converts a 1-based month index to the {@link Month} enum.
+   *
+   * @param month 1-based month value (1 = January)
+   * @return matching {@link Month}
+   */
   public static Month getMonth (int month) {
 
     return Month.values()[month - 1];
   }
 
+  /**
+   * Converts a 1-based day-of-week index to the {@link Day} enum.
+   *
+   * @param dayOfWeek 1-based day-of-week value (1 = Sunday)
+   * @return matching {@link Day}
+   */
   public static Day getDay (int dayOfWeek) {
 
     return Day.values()[dayOfWeek - 1];
   }
 
+  /**
+   * Calculates the number of days in the provided year using a simple leap-year rule.
+   *
+   * @param year four-digit year
+   * @return 366 for leap years divisible by 4; otherwise 365
+   */
   public static int getDaysInYear (int year) {
 
     return ((year % 4) == 0) ? 366 : 365;
   }
 
+  /**
+   * Returns the number of days in a given month for the provided year.
+   *
+   * @param year  four-digit year
+   * @param month 1-based month value (1 = January)
+   * @return number of days in the month (accounts for leap-year February)
+   */
   public static int getDaysInMonth (int year, int month) {
 
     if (month == 2) {
@@ -64,6 +92,14 @@ public class CalendarUtility {
     return DAYS_IN_MONTH[month - 1];
   }
 
+  /**
+   * Computes the 1-based day-of-week for a given date using Zeller's congruence variant.
+   *
+   * @param year  four-digit year
+   * @param month 1-based month value (1 = January)
+   * @param day   1-based day of month
+   * @return day of week where 1 = Sunday through 7 = Saturday
+   */
   public static int getDayOfWeek (int year, int month, int day) {
 
     int weekday;

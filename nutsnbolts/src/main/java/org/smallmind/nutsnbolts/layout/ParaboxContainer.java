@@ -32,13 +32,40 @@
  */
 package org.smallmind.nutsnbolts.layout;
 
+/**
+ * Abstraction for platform-specific containers that can host components laid out by {@link ParaboxLayout}.
+ *
+ * @param <C> the component type used by the platform
+ */
 public interface ParaboxContainer<C> {
 
+  /**
+   * Returns the platform abstraction providing gap and metric data.
+   *
+   * @return the platform
+   */
   ParaboxPlatform getPlatform ();
 
+  /**
+   * Wraps a platform component in a {@link ParaboxElement} using the provided constraint.
+   *
+   * @param component  the platform component
+   * @param constraint sizing and alignment constraint
+   * @return a new element wrapper
+   */
   ParaboxElement<C> constructElement (C component, Constraint constraint);
 
+  /**
+   * Adds a component to the native container.
+   *
+   * @param component the component to add
+   */
   void nativelyAddComponent (C component);
 
+  /**
+   * Removes a component from the native container.
+   *
+   * @param component the component to remove
+   */
   void nativelyRemoveComponent (C component);
 }

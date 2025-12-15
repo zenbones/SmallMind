@@ -34,10 +34,17 @@ package org.smallmind.nutsnbolts.io;
 
 import java.util.EventObject;
 
+/**
+ * Event carrying text emitted by a {@link StenographWriter}.
+ */
 public class StenographEvent extends EventObject {
 
   private final String output;
 
+  /**
+   * @param source event source
+   * @param output text that was written
+   */
   public StenographEvent (Object source, String output) {
 
     super(source);
@@ -45,6 +52,9 @@ public class StenographEvent extends EventObject {
     this.output = output;
   }
 
+  /**
+   * @return text output associated with the event
+   */
   public String getOutput () {
 
     return output;

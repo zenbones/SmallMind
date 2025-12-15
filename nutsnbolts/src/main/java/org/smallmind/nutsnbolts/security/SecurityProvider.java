@@ -32,17 +32,26 @@
  */
 package org.smallmind.nutsnbolts.security;
 
+/**
+ * Known security providers used by the library.
+ */
 public enum SecurityProvider {
 
   DEFAULT(null), BOUNCY_CASTLE("BC");
 
   private final String providerName;
 
+  /**
+   * @param providerName the registered provider name, or {@code null} for default
+   */
   SecurityProvider (String providerName) {
 
     this.providerName = providerName;
   }
 
+  /**
+   * @return the provider name understood by JCA/JCE APIs
+   */
   public String getProviderName () {
 
     return providerName;

@@ -32,30 +32,51 @@
  */
 package org.smallmind.nutsnbolts.layout;
 
-public class Orientation {
+/**
+ * Describes the orientation of a layout using a {@link Bias} axis and {@link Flow} direction.
+ */
+public record Orientation(Bias bias, Flow flow) {
 
   private static final Orientation DEFAULT = new Orientation(Bias.HORIZONTAL, Flow.FIRST_TO_LAST);
 
-  private final Bias bias;
-  private final Flow flow;
+  /**
+   * Creates an orientation from the supplied axis and flow direction.
+   *
+   * @param bias the primary axis
+   * @param flow the direction along that axis
+   */
+  public Orientation {
 
-  public Orientation (Bias bias, Flow flow) {
-
-    this.bias = bias;
-    this.flow = flow;
   }
 
+  /**
+   * Returns the default orientation (horizontal, first-to-last).
+   *
+   * @return the default orientation
+   */
   public static Orientation getDefaultOrientation () {
 
     return DEFAULT;
   }
 
-  public Bias getBias () {
+  /**
+   * Returns the axis bias.
+   *
+   * @return the bias
+   */
+  @Override
+  public Bias bias () {
 
     return bias;
   }
 
-  public Flow getFlow () {
+  /**
+   * Returns the flow direction.
+   *
+   * @return the flow
+   */
+  @Override
+  public Flow flow () {
 
     return flow;
   }

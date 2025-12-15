@@ -40,6 +40,9 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
 
+/**
+ * Manages thread-local stacks of {@link Context} instances, supporting inheritance across child threads.
+ */
 public class ContextFactory {
 
   private static final InheritableThreadLocal<Map<Class<? extends Context>, LinkedList<? extends Context>>> CONTEXT_MAP_LOCAL = new InheritableThreadLocal<>() {
@@ -57,6 +60,13 @@ public class ContextFactory {
     }
   };
 
+  /**
+   * Pushes a series of contexts into the current thread's stack for the specified type.
+   *
+   * @param contextClass context class key
+   * @param contexts     contexts to import in order
+   * @param <C>          context type
+   */
   public static <C extends Context> void importContextTrace (Class<C> contextClass, C... contexts) {
 
     LinkedList<C> contextStack;
@@ -73,6 +83,13 @@ public class ContextFactory {
     }
   }
 
+  /**
+   * Exports and clears the context stack for the specified type, returning the contexts in push order.
+   *
+   * @param contextClass context class key
+   * @param <C>          context type
+   * @return array of contexts from bottom to top
+   */
   public static <C extends Context> C[] exportContextTrace (Class<C> contextClass) {
 
     C[] contexts;
@@ -93,6 +110,12 @@ public class ContextFactory {
     return contexts;
   }
 
+  /**
+   * Removes all contexts for the specified type from the current thread.
+   *
+   * @param contextClass context class key
+   * @param <C>          context type
+   */
   public static <C extends Context> void clearContextTrace (Class<C> contextClass) {
 
     LinkedList<C> contextStack;
@@ -102,6 +125,13 @@ public class ContextFactory {
     }
   }
 
+  /**
+   * Determines whether any context is present for the given type.
+   *
+   * @param contextClass context class key
+   * @param <C>          context type
+   * @return {@code true} if a context is available
+   */
   public static <C extends Context> boolean exists (Class<C> contextClass) {
 
     LinkedList<C> contextStack;
@@ -109,6 +139,14 @@ public class ContextFactory {
     return ((contextStack = (LinkedList<C>)CONTEXT_MAP_LOCAL.get().get(contextClass)) != null) && (!contextStack.isEmpty());
   }
 
+  /**
+   * Retrieves the current context for the given type without removing it.
+   *
+   * @param contextClass context class key
+   * @param <C>          context type
+   * @return top of the stack or {@code null} if none
+   * @throws ContextException if resolution fails
+   */
   public static <C extends Context> C getContext (Class<C> contextClass)
     throws ContextException {
 
@@ -123,11 +161,25 @@ public class ContextFactory {
     return context;
   }
 
+  /**
+   * Filters the available contexts for the supplied method using {@link ExpectedContexts} and returns all matches.
+   *
+   * @param method method being invoked
+   * @return contexts matching {@link Context} type
+   */
   public static Context[] filterContextsOn (Method method) {
 
     return filterContextsOn(method, Context.class);
   }
 
+  /**
+   * Filters the available contexts for the supplied method using {@link ExpectedContexts} and the provided type filters.
+   *
+   * @param method        method being invoked
+   * @param filterClasses context supertypes to include
+   * @return contexts matching the filter types
+   * @throws ContextException if required contexts are missing
+   */
   public static Context[] filterContextsOn (Method method, Class... filterClasses)
     throws ContextException {
 
@@ -165,6 +217,12 @@ public class ContextFactory {
     return contexts;
   }
 
+  /**
+   * Pushes a context onto the stack keyed by its concrete class.
+   *
+   * @param context context to push
+   * @param <C>     context type
+   */
   public static <C extends Context> void pushContext (C context) {
 
     LinkedList<C> contextStack;
@@ -176,6 +234,13 @@ public class ContextFactory {
     contextStack.push(context);
   }
 
+  /**
+   * Pops the current context for the supplied type.
+   *
+   * @param contextClass context class key
+   * @param <C>          context type
+   * @return removed context or {@code null} if none
+   */
   public static <C extends Context> C popContext (Class<C> contextClass) {
 
     LinkedList<C> contextStack;
@@ -189,6 +254,12 @@ public class ContextFactory {
     return null;
   }
 
+  /**
+   * Removes a specific context instance from its stack if present.
+   *
+   * @param context context to remove
+   * @return removed context or {@code null} if it was not found
+   */
   public static Context removeContext (Context context) {
 
     LinkedList<? extends Context> contextStack;
@@ -203,6 +274,11 @@ public class ContextFactory {
     return null;
   }
 
+  /**
+   * @param contextClass context class key
+   * @param <C>          context type
+   * @return number of contexts currently on the stack for the type
+   */
   public static <C extends Context> int sizeFor (Class<C> contextClass) {
 
     LinkedList<C> contextStack;

@@ -36,33 +36,64 @@ import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
+/**
+ * SAX {@link ErrorHandler} that converts warnings/errors into exceptions with location details.
+ * Singleton instance is provided for reuse.
+ */
 public class XMLErrorHandler implements ErrorHandler {
 
   private static final XMLErrorHandler ERROR_HANDLER = new XMLErrorHandler();
 
+  /**
+   * @return shared instance suitable for wiring into SAX parsers
+   */
   public static XMLErrorHandler getInstance () {
 
     return ERROR_HANDLER;
   }
 
+  /**
+   * Treats parser warnings as errors and raises a {@link SAXException}.
+   *
+   * @param saxParseException warning encountered
+   * @throws SAXException always thrown with location context
+   */
   public void warning (SAXParseException saxParseException)
     throws SAXException {
 
     throw handleException(saxParseException);
   }
 
+  /**
+   * Handles recoverable parser errors by throwing a {@link SAXException}.
+   *
+   * @param saxParseException error encountered
+   * @throws SAXException always thrown with location context
+   */
   public void error (SAXParseException saxParseException)
     throws SAXException {
 
     throw handleException(saxParseException);
   }
 
+  /**
+   * Handles fatal parser errors by throwing a {@link SAXException}.
+   *
+   * @param saxParseException fatal error encountered
+   * @throws SAXException always thrown with location context
+   */
   public void fatalError (SAXParseException saxParseException)
     throws SAXException {
 
     throw handleException(saxParseException);
   }
 
+  /**
+   * Formats the parser exception with public/system ids and line/column numbers.
+   *
+   * @param saxParseException exception reported by the parser
+   * @return wrapped {@link SAXException} including location context
+   */
   private SAXException handleException (SAXParseException saxParseException) {
 
     SAXException saxException;

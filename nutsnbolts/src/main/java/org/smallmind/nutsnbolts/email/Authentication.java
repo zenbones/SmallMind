@@ -34,6 +34,10 @@ package org.smallmind.nutsnbolts.email;
 
 import jakarta.mail.Authenticator;
 
+/**
+ * Encapsulates the authentication strategy and credentials required to connect to a mail server.
+ * Instances carry the {@link AuthType} to use and any credential data needed by that strategy.
+ */
 public class Authentication {
 
   public static final Authentication NONE = new Authentication(AuthType.NONE);
@@ -41,6 +45,9 @@ public class Authentication {
   private AuthType type;
   private String[] data;
 
+  /**
+   * Creates an empty authentication descriptor. Configure via setters before use.
+   */
   public Authentication () {
 
   }
@@ -51,16 +58,31 @@ public class Authentication {
     this.data = data;
   }
 
+  /**
+   * Selects the authentication mechanism to use.
+   *
+   * @param type authentication type
+   */
   public void setType (AuthType type) {
 
     this.type = type;
   }
 
+  /**
+   * Sets credential data used by the {@link AuthType} (e.g., username/password).
+   *
+   * @param data ordered credentials expected by the auth type
+   */
   public void setData (String[] data) {
 
     this.data = data;
   }
 
+  /**
+   * Builds a Jakarta Mail {@link Authenticator} for the configured authentication type.
+   *
+   * @return authenticator or {@code null} when {@link AuthType#NONE}
+   */
   public Authenticator getAuthenticator () {
 
     return type.getAuthenticator(data);

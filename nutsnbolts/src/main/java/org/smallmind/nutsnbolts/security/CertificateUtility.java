@@ -55,11 +55,35 @@ import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemWriter;
 
+/**
+ * Utilities for generating self-signed X.509 certificates.
+ */
 public class CertificateUtility {
 
   /*
   "CN=server.mycompany.com,OU=My Company Dev Team,O=My Company,C=US,ST=California,L=San Francisco"
   */
+
+  /**
+   * Builds a PEM-encoded X.509 certificate using the supplied subject fields and key pair.
+   *
+   * @param cn                         common name
+   * @param ou                         organizational unit
+   * @param o                          organization
+   * @param c                          country code
+   * @param st                         state or province
+   * @param l                          locality/city
+   * @param notBefore                  certificate validity start
+   * @param now                        serial number seed
+   * @param notAfter                   certificate validity end
+   * @param domainName                 subject alternative name (DNS)
+   * @param asymmetricSigningAlgorithm the signing algorithm to use
+   * @param keyPair                    key pair containing the public key to embed and private key to sign with
+   * @return PEM string containing the certificate
+   * @throws OperatorCreationException if the signer cannot be created
+   * @throws CertificateException      if certificate creation fails
+   * @throws IOException               if the certificate cannot be encoded
+   */
   public static String constructCertificate (String cn, String ou, String o, String c, String st, String l, Date notBefore, Date now, Date notAfter, String domainName, AsymmetricSigningAlgorithm asymmetricSigningAlgorithm, KeyPair keyPair)
     throws OperatorCreationException, CertificateException, IOException {
 

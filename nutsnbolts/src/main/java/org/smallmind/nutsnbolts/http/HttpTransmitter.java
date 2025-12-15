@@ -37,32 +37,77 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
+/**
+ * Convenience factory for emitting simple HTTP requests using {@link HttpURLConnection}.
+ * Creates an {@link HttpPipe} configured for the requested verb and I/O direction.
+ */
 public class HttpTransmitter {
 
+  /**
+   * Opens a GET request.
+   *
+   * @param url        target URL
+   * @param openReader {@code true} to read the response body
+   * @return configured {@link HttpPipe}
+   * @throws IOException if the connection cannot be opened
+   */
   public static HttpPipe emitGetRequest (URL url, boolean openReader)
     throws IOException {
 
     return emitHttpRequest(HttpMethod.GET, url, openReader);
   }
 
+  /**
+   * Opens a PUT request.
+   *
+   * @param url        target URL
+   * @param openReader {@code true} to read the response body
+   * @return configured {@link HttpPipe}
+   * @throws IOException if the connection cannot be opened
+   */
   public static HttpPipe emitPutRequest (URL url, boolean openReader)
     throws IOException {
 
     return emitHttpRequest(HttpMethod.PUT, url, openReader);
   }
 
+  /**
+   * Opens a POST request.
+   *
+   * @param url        target URL
+   * @param openReader {@code true} to read the response body
+   * @return configured {@link HttpPipe}
+   * @throws IOException if the connection cannot be opened
+   */
   public static HttpPipe emitPostRequest (URL url, boolean openReader)
     throws IOException {
 
     return emitHttpRequest(HttpMethod.POST, url, openReader);
   }
 
+  /**
+   * Opens a DELETE request.
+   *
+   * @param url        target URL
+   * @param openReader {@code true} to read the response body
+   * @return configured {@link HttpPipe}
+   * @throws IOException if the connection cannot be opened
+   */
   public static HttpPipe emitDeleteRequest (URL url, boolean openReader)
     throws IOException {
 
     return emitHttpRequest(HttpMethod.DELETE, url, openReader);
   }
 
+  /**
+   * Opens an HTTP request using the supplied method.
+   *
+   * @param method     HTTP verb to issue
+   * @param url        target URL
+   * @param openReader {@code true} to request an input stream
+   * @return configured {@link HttpPipe}
+   * @throws IOException if the connection cannot be opened
+   */
   public static HttpPipe emitHttpRequest (HttpMethod method, URL url, boolean openReader)
     throws IOException {
 

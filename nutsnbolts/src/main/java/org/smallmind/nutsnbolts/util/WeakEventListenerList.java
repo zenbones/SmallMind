@@ -42,6 +42,11 @@ import java.util.LinkedList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * Maintains event listeners as weak references so they may be garbage collected; includes a background scrubber thread to remove cleared references.
+ *
+ * @param <E> listener type
+ */
 public class WeakEventListenerList<E extends EventListener> implements Iterable<E> {
 
   private static final Scrubber SCRUBBER;
@@ -56,11 +61,19 @@ public class WeakEventListenerList<E extends EventListener> implements Iterable<
     scrubberThread.start();
   }
 
+  /**
+   * Creates an empty weak listener list.
+   */
   public WeakEventListenerList () {
 
     referenceList = new LinkedList<>();
   }
 
+  /**
+   * Returns strong references to all currently live listeners.
+   *
+   * @return iterator over live listeners
+   */
   public Iterator<E> getListeners () {
 
     LinkedList<E> listenerList;
@@ -81,6 +94,11 @@ public class WeakEventListenerList<E extends EventListener> implements Iterable<
     return listenerList.iterator();
   }
 
+  /**
+   * Adds a listener tracked via weak reference.
+   *
+   * @param eventListener listener to add
+   */
   public void addListener (E eventListener) {
 
     synchronized (referenceList) {
@@ -88,6 +106,9 @@ public class WeakEventListenerList<E extends EventListener> implements Iterable<
     }
   }
 
+  /**
+   * Removes all listeners (clears internal references).
+   */
   public void removeAllListeners () {
 
     synchronized (referenceList) {
@@ -95,6 +116,11 @@ public class WeakEventListenerList<E extends EventListener> implements Iterable<
     }
   }
 
+  /**
+   * Removes a specific listener instance if present.
+   *
+   * @param eventListener listener to remove
+   */
   public void removeListener (E eventListener) {
 
     Iterator<WeakReference<E>> referenceIter;
@@ -116,6 +142,9 @@ public class WeakEventListenerList<E extends EventListener> implements Iterable<
     }
   }
 
+  /**
+   * Returns an iterator over live listeners, equivalent to {@link #getListeners()}.
+   */
   public Iterator<E> iterator () {
 
     return getListeners();
@@ -128,6 +157,9 @@ public class WeakEventListenerList<E extends EventListener> implements Iterable<
     private final HashMap<WeakReference<? extends EventListener>, WeakEventListenerList> parentMap;
     private final AtomicBoolean finished = new AtomicBoolean(false);
 
+    /**
+     * Initializes the scrubber thread state.
+     */
     public Scrubber () {
 
       referenceQueue = new ReferenceQueue<>();
@@ -136,6 +168,13 @@ public class WeakEventListenerList<E extends EventListener> implements Iterable<
       exitLatch = new CountDownLatch(1);
     }
 
+    /**
+     * Creates a weak reference for the given listener and remembers its parent list for cleanup.
+     *
+     * @param parent        owning list
+     * @param eventListener listener to wrap
+     * @return weak reference linked to this scrubber's queue
+     */
     public <E extends EventListener> WeakReference<E> createReference (WeakEventListenerList parent, E eventListener) {
 
       WeakReference<E> reference;
@@ -146,6 +185,11 @@ public class WeakEventListenerList<E extends EventListener> implements Iterable<
       return reference;
     }
 
+    /**
+     * Requests the scrubber to stop and waits for exit.
+     *
+     * @throws InterruptedException if interrupted while waiting
+     */
     public void finish ()
       throws InterruptedException {
 
@@ -153,6 +197,9 @@ public class WeakEventListenerList<E extends EventListener> implements Iterable<
       exitLatch.await();
     }
 
+    /**
+     * Continuously polls for cleared listener references and removes them from their parent lists until stopped.
+     */
     public void run () {
 
       Reference<? extends EventListener> reference;

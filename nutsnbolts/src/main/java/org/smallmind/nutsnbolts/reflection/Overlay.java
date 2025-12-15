@@ -37,17 +37,39 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import org.smallmind.nutsnbolts.lang.TypeMismatchException;
 
+/**
+ * Supports copying non-null values from one instance to another, optionally recursing into nested overlays
+ * and honoring {@link OverlayNullifier} markers that map sentinel values to {@code null}.
+ *
+ * @param <O> the concrete overlay type
+ */
 public interface Overlay<O extends Overlay<O>> {
 
+  /**
+   * Hook invoked after an overlay operation completes. Default is a no-op.
+   */
   default void overlaid () {
 
   }
 
+  /**
+   * Applies an array of overlay objects sequentially, skipping {@code null} entries.
+   *
+   * @param overlays the candidate overlays
+   * @return the updated receiver
+   */
   default O overlay (O[] overlays) {
 
     return overlay(overlays, null);
   }
 
+  /**
+   * Applies an array of overlay objects sequentially, skipping excluded fields.
+   *
+   * @param overlays   the candidate overlays
+   * @param exclusions fields that should not be overlaid
+   * @return the updated receiver
+   */
   default O overlay (O[] overlays, Field[] exclusions) {
 
     if ((overlays != null) && (overlays.length > 0)) {
@@ -59,11 +81,26 @@ public interface Overlay<O extends Overlay<O>> {
     return (O)this;
   }
 
+  /**
+   * Overlays the receiver with the supplied object, honoring overlay nullifiers.
+   *
+   * @param overlay the source of updates
+   * @return the updated receiver
+   */
   default O overlay (O overlay) {
 
     return overlay(overlay, null);
   }
 
+  /**
+   * Overlays the receiver with the supplied object, omitting the provided fields.
+   *
+   * @param overlay    the source of updates
+   * @param exclusions fields on the receiver that must not be overwritten
+   * @return the updated receiver
+   * @throws TypeMismatchException if the overlay type is incompatible or exclusions target other classes
+   * @throws OverlayException      if reflection calls fail
+   */
   default O overlay (O overlay, Field[] exclusions) {
 
     if (overlay != null) {
@@ -128,6 +165,14 @@ public interface Overlay<O extends Overlay<O>> {
     return (O)this;
   }
 
+  /**
+   * Tests whether a field value should be treated as {@code null} based on configured validators.
+   *
+   * @param fieldAccessor accessor for the target field
+   * @param value         the value obtained from the overlay
+   * @return {@code true} if the value should be nullified
+   * @throws OverlayException if validator execution fails
+   */
   private boolean equivalentToNull (FieldAccessor fieldAccessor, Object value)
     throws OverlayException {
 
@@ -144,6 +189,17 @@ public interface Overlay<O extends Overlay<O>> {
     return false;
   }
 
+  /**
+   * Invokes the validator referenced by the {@link OverlayNullifier} annotation.
+   *
+   * @param overlayNullifier the meta-annotation describing the validator
+   * @param annotation       the concrete annotation instance placed on the field
+   * @param object           the value to evaluate
+   * @param <A>              the annotation type
+   * @param <T>              the field value type
+   * @return {@code true} if the value should be treated as {@code null}
+   * @throws OverlayException if the validator cannot be constructed or invoked
+   */
   private <A extends Annotation, T> boolean internalEquivalentToNull (OverlayNullifier overlayNullifier, A annotation, T object)
     throws OverlayException {
 

@@ -34,11 +34,24 @@ package org.smallmind.nutsnbolts.layout;
 
 import java.util.List;
 
+/**
+ * Computes baseline positions and ascent/descent pairs for a set of {@link ParaboxElement}s
+ * within a container. Useful for aligning elements sharing a common baseline.
+ */
 public class BaselineCalculations {
 
   private final Pair[] elementAscentsDescents;
   private final double idealizedBaseline;
 
+  /**
+   * Calculates ascents/descents for each element and determines an idealized baseline position.
+   *
+   * @param bias                       the measurement axis
+   * @param maximumOverrideMeasurement optional cap on element size along the axis
+   * @param containerMeasurement       the available space along the axis
+   * @param elements                   the elements to measure
+   * @param tailor                     layout tailor used for element measurement
+   */
   public BaselineCalculations (Bias bias, Double maximumOverrideMeasurement, double containerMeasurement, List<ParaboxElement<?>> elements, LayoutTailor tailor) {
 
     elementAscentsDescents = new Pair[elements.size()];
@@ -70,6 +83,11 @@ public class BaselineCalculations {
     return idealizedBaseline;
   }
 
+  /**
+   * Returns the ascent/descent pair computed for each element in order.
+   *
+   * @return array of ascent/descent values
+   */
   public Pair[] getElementAscentsDescents () {
 
     return elementAscentsDescents;

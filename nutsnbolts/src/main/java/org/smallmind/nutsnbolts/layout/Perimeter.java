@@ -32,37 +32,55 @@
  */
 package org.smallmind.nutsnbolts.layout;
 
-public class Perimeter {
+/**
+ * Represents four-sided insets around a container.
+ */
+public record Perimeter(double top, double left, double bottom, double right) {
 
-  private final double top;
-  private final double left;
-  private final double bottom;
-  private final double right;
+  /**
+   * Creates a perimeter with explicit side measurements.
+   *
+   * @param top    inset at the top
+   * @param left   inset on the left
+   * @param bottom inset at the bottom
+   * @param right  inset on the right
+   */
+  public Perimeter {
 
-  public Perimeter (double top, double left, double bottom, double right) {
-
-    this.top = top;
-    this.left = left;
-    this.bottom = bottom;
-    this.right = right;
   }
 
-  public double getTop () {
+  /**
+   * @return the top inset
+   */
+  @Override
+  public double top () {
 
     return top;
   }
 
-  public double getLeft () {
+  /**
+   * @return the left inset
+   */
+  @Override
+  public double left () {
 
     return left;
   }
 
-  public double getBottom () {
+  /**
+   * @return the bottom inset
+   */
+  @Override
+  public double bottom () {
 
     return bottom;
   }
 
-  public double getRight () {
+  /**
+   * @return the right inset
+   */
+  @Override
+  public double right () {
 
     return right;
   }

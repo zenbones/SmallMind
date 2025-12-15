@@ -34,22 +34,46 @@ package org.smallmind.nutsnbolts.validation;
 
 import jakarta.validation.ValidationException;
 
+/**
+ * Validation exception that supports {@link String#format(String, Object...)} style messages.
+ */
 public class FormattedValidationException extends ValidationException {
 
+  /**
+   * Creates an exception with no detail message.
+   */
   public FormattedValidationException () {
 
   }
 
+  /**
+   * Creates an exception with a formatted message.
+   *
+   * @param message message pattern, may be {@code null}
+   * @param args    arguments for the pattern
+   */
   public FormattedValidationException (String message, Object... args) {
 
     super(message == null ? null : String.format(message, args));
   }
 
+  /**
+   * Creates an exception with a cause and formatted message.
+   *
+   * @param cause   underlying cause
+   * @param message message pattern, may be {@code null}
+   * @param args    arguments for the pattern
+   */
   public FormattedValidationException (Throwable cause, String message, Object... args) {
 
     super(message == null ? null : String.format(message, args), cause);
   }
 
+  /**
+   * Creates an exception that wraps a cause.
+   *
+   * @param cause underlying cause
+   */
   public FormattedValidationException (Throwable cause) {
 
     super(cause);

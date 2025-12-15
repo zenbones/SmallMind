@@ -32,23 +32,47 @@
  */
 package org.smallmind.nutsnbolts.lang;
 
+/**
+ * {@link IllegalArgumentException} that supports formatted messages.
+ */
 public class FormattedIllegalArgumentException extends IllegalArgumentException {
 
+  /**
+   * Creates an exception with no message.
+   */
   public FormattedIllegalArgumentException () {
 
     super();
   }
 
+  /**
+   * Creates an exception with a formatted message.
+   *
+   * @param message the format string, or {@code null}
+   * @param args    arguments applied to the format string
+   */
   public FormattedIllegalArgumentException (String message, Object... args) {
 
     super(message == null ? null : String.format(message, args));
   }
 
+  /**
+   * Creates an exception with a cause and formatted message.
+   *
+   * @param throwable the underlying cause
+   * @param message   the format string, or {@code null}
+   * @param args      arguments applied to the format string
+   */
   public FormattedIllegalArgumentException (Throwable throwable, String message, Object... args) {
 
     super(message == null ? null : String.format(message, args), throwable);
   }
 
+  /**
+   * Creates an exception with the supplied cause.
+   *
+   * @param throwable the underlying cause
+   */
   public FormattedIllegalArgumentException (Throwable throwable) {
 
     super(throwable);

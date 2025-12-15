@@ -39,6 +39,11 @@ import java.util.BitSet;
 import java.util.Collection;
 import org.smallmind.nutsnbolts.security.HashAlgorithm;
 
+/**
+ * Bloom filter implementation backed by a {@link BitSet}. Supports configurable density and hash count.
+ *
+ * @param <E> element type providing bytes for hashing
+ */
 public class BloomFilter<E extends BloomFilterElement> implements Serializable {
 
   private final MessageDigest messageDigest;
@@ -49,6 +54,12 @@ public class BloomFilter<E extends BloomFilterElement> implements Serializable {
   private final int length;
   private int size;
 
+  /**
+   * @param bitsPerElement target bits per element
+   * @param maxElements    maximum number of elements expected
+   * @param hashCount      number of hash functions to apply
+   * @throws NoSuchAlgorithmException if the SHA-1 digest cannot be instantiated
+   */
   public BloomFilter (double bitsPerElement, int maxElements, int hashCount)
     throws NoSuchAlgorithmException {
 
@@ -63,12 +74,18 @@ public class BloomFilter<E extends BloomFilterElement> implements Serializable {
     messageDigest = MessageDigest.getInstance(HashAlgorithm.SHA_1.getAlgorithmName());
   }
 
+  /**
+   * Convenience constructor that computes bits-per-element and hash count from a fixed bit length and capacity.
+   */
   public BloomFilter (int length, int maxElements)
     throws NoSuchAlgorithmException {
 
     this(length / (double)maxElements, maxElements, (int)Math.round((length / (double)maxElements) * Math.log(2.0)));
   }
 
+  /**
+   * Convenience constructor that derives sizing from a desired false-positive probability and capacity.
+   */
   public BloomFilter (double falsePositiveProbability, int maxElements)
     throws NoSuchAlgorithmException {
 
@@ -80,31 +97,49 @@ public class BloomFilter<E extends BloomFilterElement> implements Serializable {
     return this.bitsPerElement;
   }
 
+  /**
+   * @return configured maximum element count
+   */
   public int getMaxElements () {
 
     return maxElements;
   }
 
+  /**
+   * @return number of hash functions in use
+   */
   public int getHashCount () {
 
     return hashCount;
   }
 
+  /**
+   * @return underlying bitset length
+   */
   public int length () {
 
     return length;
   }
 
+  /**
+   * @return number of elements added
+   */
   public synchronized int size () {
 
     return this.size;
   }
 
+  /**
+   * Computes the current bits-per-element ratio based on {@link #size()} and length.
+   */
   public double calculateCurrentBitsPerElement () {
 
     return this.length / (double)size;
   }
 
+  /**
+   * Estimates the current false-positive probability.
+   */
   public double calculateFalsePositiveProbability () {
 
     // (1 - e^(-hashCount * maxElements / length)) ^ hashCount
@@ -148,6 +183,11 @@ public class BloomFilter<E extends BloomFilterElement> implements Serializable {
     add(element.getBytes());
   }
 
+  /**
+   * Adds an element expressed as bytes to the filter.
+   *
+   * @param bytes element representation
+   */
   public void add (byte[] bytes) {
 
     for (int hash : createHashes(bytes)) {
@@ -157,6 +197,11 @@ public class BloomFilter<E extends BloomFilterElement> implements Serializable {
     size++;
   }
 
+  /**
+   * Adds all elements from the provided collection.
+   *
+   * @param c collection of elements to add
+   */
   public void addAll (Collection<? extends E> c) {
 
     for (E element : c) {
@@ -164,11 +209,23 @@ public class BloomFilter<E extends BloomFilterElement> implements Serializable {
     }
   }
 
+  /**
+   * Checks membership of an element.
+   *
+   * @param element element to test
+   * @return {@code false} if definitely not present; {@code true} if possibly present
+   */
   public boolean contains (E element) {
 
     return contains(element.getBytes());
   }
 
+  /**
+   * Checks membership of an element given its byte representation.
+   *
+   * @param bytes element representation
+   * @return {@code false} if definitely not present; {@code true} if possibly present
+   */
   public boolean contains (byte[] bytes) {
 
     for (int hash : createHashes(bytes)) {
@@ -193,6 +250,9 @@ public class BloomFilter<E extends BloomFilterElement> implements Serializable {
     return true;
   }
 
+  /**
+   * Clears all bits and resets the size to zero.
+   */
   public void clear () {
 
     bitset.clear();

@@ -35,6 +35,9 @@ package org.smallmind.nutsnbolts.email;
 import jakarta.mail.Authenticator;
 import jakarta.mail.PasswordAuthentication;
 
+/**
+ * Enumerates supported mail server authentication mechanisms.
+ */
 public enum AuthType {
 
   NONE {
@@ -58,5 +61,11 @@ public enum AuthType {
     }
   };
 
+  /**
+   * Creates an {@link Authenticator} appropriate for the authentication strategy.
+   *
+   * @param data credentials required by the strategy (username then password for {@link #LOGIN})
+   * @return authenticator or {@code null} if authentication is not needed
+   */
   public abstract Authenticator getAuthenticator (String... data);
 }

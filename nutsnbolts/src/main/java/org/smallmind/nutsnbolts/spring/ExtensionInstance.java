@@ -32,9 +32,20 @@
  */
 package org.smallmind.nutsnbolts.spring;
 
+/**
+ * Represents an extension declaration that supplies classpath segments to load.
+ */
 public interface ExtensionInstance {
 
+  /**
+   * @return classpath elements required by the extension
+   */
   String[] getClasspathComponents ();
 
+  /**
+   * Sets the classpath elements for this extension.
+   *
+   * @param classpathComponents the classpath segments to apply
+   */
   void setClasspathComponents (String[] classpathComponents);
 }

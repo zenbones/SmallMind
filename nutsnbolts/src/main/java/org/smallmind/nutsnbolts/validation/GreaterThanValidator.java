@@ -37,16 +37,31 @@ import java.math.BigInteger;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
+/**
+ * Validator backing the {@link GreaterThan} constraint for numeric types.
+ */
 public class GreaterThanValidator implements ConstraintValidator<GreaterThan, Number> {
 
   private GreaterThan constraintAnnotation;
 
+  /**
+   * Captures the constraint annotation for later threshold access.
+   *
+   * @param constraintAnnotation annotation instance
+   */
   @Override
   public void initialize (GreaterThan constraintAnnotation) {
 
     this.constraintAnnotation = constraintAnnotation;
   }
 
+  /**
+   * Checks whether the supplied number exceeds the configured threshold.
+   *
+   * @param value   candidate number; {@code null} is considered valid
+   * @param context validation context (unused)
+   * @return {@code true} if the value is greater than the threshold
+   */
   @Override
   public boolean isValid (Number value, ConstraintValidatorContext context) {
 

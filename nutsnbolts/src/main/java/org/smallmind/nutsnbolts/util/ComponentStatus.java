@@ -32,22 +32,37 @@
  */
 package org.smallmind.nutsnbolts.util;
 
+/**
+ * Lifecycle status values with a numeric priority for ordering.
+ */
 public enum ComponentStatus {
 
   INITIALIZING(4), INITIALIZED(5), STARTING(8), STARTED(9), STOPPING(7), STOPPED(6), TERMINATING(2), TERMINATED(1), UNINITIALIZED(3), UNKNOWN(0);
 
   private final int priority;
 
+  /**
+   * @param priority priority value used for ordering
+   */
   ComponentStatus (int priority) {
 
     this.priority = priority;
   }
 
+  /**
+   * @return priority value
+   */
   public int getPriority () {
 
     return priority;
   }
 
+  /**
+   * Tests whether this status is one of the provided values.
+   *
+   * @param matchingStatuses statuses to compare against
+   * @return {@code true} if this status is contained in the list
+   */
   public boolean in (ComponentStatus... matchingStatuses) {
 
     if (matchingStatuses != null) {

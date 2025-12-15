@@ -70,6 +70,10 @@ import org.springframework.beans.factory.support.BeanDefinitionValidationExcepti
 import org.springframework.beans.factory.support.ManagedList;
 import org.springframework.core.PriorityOrdered;
 
+/**
+ * Bean factory post-processor that loads property resources, performs expansion (optionally with decryption), and applies values to bean definitions.
+ * Supports debug logging of selected keys and honoring system property resolution rules.
+ */
 public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, BeanFactoryAware, BeanNameAware, PriorityOrdered {
 
   private final TreeMap<String, String> debugMap = new TreeMap<>(new DotNotationComparator());
@@ -85,79 +89,136 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
   private boolean searchSystemEnvironment = true;
   private int order;
 
+  /**
+   * @return unmodifiable view of debug keys and resolved values
+   */
   public SortedMap<String, String> getDebugMap () {
 
     return Collections.unmodifiableSortedMap(debugMap);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public void setBeanFactory (BeanFactory beanFactory) {
 
     this.beanFactory = beanFactory;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public void setBeanName (String beanName) {
 
     this.beanName = beanName;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int getOrder () {
 
     return order;
   }
 
+  /**
+   * Sets ordering priority.
+   *
+   * @param order priority value
+   */
   public void setOrder (int order) {
 
     this.order = order;
   }
 
+  /**
+   * Configures a decryptor for encrypted property values.
+   *
+   * @param decryptor decryptor implementation
+   */
   public void setDecryptor (Decryptor decryptor) {
 
     this.decryptor = decryptor;
   }
 
+  /**
+   * Sets the system property resolution mode.
+   *
+   * @param systemPropertyMode mode to use when expanding properties
+   */
   public void setSystemPropertyMode (SystemPropertyMode systemPropertyMode) {
 
     this.systemPropertyMode = systemPropertyMode;
   }
 
+  /**
+   * Whether to ignore missing resources when loading property files.
+   *
+   * @param ignoreResourceNotFound flag controlling missing resource behavior
+   */
   public void setIgnoreResourceNotFound (boolean ignoreResourceNotFound) {
 
     this.ignoreResourceNotFound = ignoreResourceNotFound;
   }
 
+  /**
+   * Whether unresolved placeholders should be ignored.
+   *
+   * @param ignoreUnresolvableProperties flag controlling unresolved placeholder handling
+   */
   public void setIgnoreUnresolvableProperties (boolean ignoreUnresolvableProperties) {
 
     this.ignoreUnresolvableProperties = ignoreUnresolvableProperties;
   }
 
+  /**
+   * Whether system environment variables should be searched.
+   *
+   * @param searchSystemEnvironment flag indicating environment search
+   */
   public void setSearchSystemEnvironment (boolean searchSystemEnvironment) {
 
     this.searchSystemEnvironment = searchSystemEnvironment;
   }
 
+  /**
+   * Adds property resource locations to load.
+   *
+   * @param locations resource locations
+   */
   public void setLocations (List<String> locations) {
 
     this.locations.addAll(locations);
   }
 
+  /**
+   * Enables debug logging for matched property keys.
+   *
+   * @param debugPatterns include/exclude patterns
+   * @throws DotNotationException if a pattern is invalid
+   */
   public void setDebugKeys (String[] debugPatterns)
     throws DotNotationException {
 
     keyDebugger = new KeyDebugger(debugPatterns);
   }
 
+  /**
+   * Loads property resources, resolves placeholders, and applies resolved values to bean definitions.
+   *
+   * @param beanFactoryToProcess the bean factory being processed
+   * @throws BeansException if property expansion fails
+   */
   @Override
   public void postProcessBeanFactory (ConfigurableListableBeanFactory beanFactoryToProcess)
     throws BeansException {
 
     PropertyPlaceholderStringValueResolver valueResolver;
     Map<String, Object> propertyMap = new HashMap<>();
-    ResourceParser resourceParser;
+    ResourceParser resourceParser = new ResourceParser(new ResourceTypeResourceGenerator());
     PropertyExpander locationExpander;
     BeanDefinitionVisitor beanDefinitionVisitor;
-
-    resourceParser = new ResourceParser(new ResourceTypeResourceGenerator());
 
     try {
       locationExpander = new PropertyExpander(new PropertyClosure(), true, SystemPropertyMode.OVERRIDE, true);
@@ -259,6 +320,15 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
     beanFactoryToProcess.resolveAliases(valueResolver);
   }
 
+  /**
+   * Loads properties from a single resource location and merges them into the provided map.
+   *
+   * @param resourceParser   parser used to obtain the resource
+   * @param locationExpander expander used on the location string
+   * @param propertyMap      destination map for loaded properties
+   * @param location         resource location string
+   * @throws RuntimeBeansException wrapping any non-ignored failures
+   */
   private void extractProperties (ResourceParser resourceParser, PropertyExpander locationExpander, Map<String, Object> propertyMap, String location) {
 
     Resource locationResource;

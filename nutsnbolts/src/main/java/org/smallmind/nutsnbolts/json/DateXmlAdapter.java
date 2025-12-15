@@ -38,8 +38,17 @@ import java.util.Date;
 import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 import org.smallmind.nutsnbolts.time.TimeUtility;
 
+/**
+ * JAXB adapter converting {@link Date} values to and from ISO-8601 formatted strings in the system default time zone.
+ */
 public class DateXmlAdapter extends XmlAdapter<String, Date> {
 
+  /**
+   * Parses a textual date/time into a {@link Date}.
+   *
+   * @param value the ISO-8601 formatted date/time
+   * @return the parsed {@link Date}, or {@code null} if the value is {@code null} or cannot be parsed
+   */
   @Override
   public Date unmarshal (String value) {
 
@@ -54,6 +63,12 @@ public class DateXmlAdapter extends XmlAdapter<String, Date> {
     }
   }
 
+  /**
+   * Formats a {@link Date} into an ISO-8601 string.
+   *
+   * @param date the date to format
+   * @return the formatted representation, or {@code null} when the input is {@code null}
+   */
   @Override
   public String marshal (Date date) {
 

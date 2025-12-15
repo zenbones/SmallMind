@@ -34,8 +34,17 @@ package org.smallmind.nutsnbolts.reflection;
 
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
+/**
+ * Raised when a required annotation cannot be found during reflection processing.
+ */
 public class MissingAnnotationException extends FormattedRuntimeException {
 
+  /**
+   * Creates the exception with a formatted detail message.
+   *
+   * @param message a {@link java.util.Formatter}-style message
+   * @param args    values interpolated into the message
+   */
   public MissingAnnotationException (String message, Object... args) {
 
     super(message, args);

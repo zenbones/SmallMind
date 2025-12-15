@@ -36,11 +36,20 @@ import java.util.LinkedList;
 import org.smallmind.nutsnbolts.util.DotNotation;
 import org.smallmind.nutsnbolts.util.DotNotationException;
 
+/**
+ * Utility for matching property keys against include/exclude dot-notation patterns to decide whether to emit debug logging.
+ */
 public class KeyDebugger {
 
   private final LinkedList<DebugMatcher> matcherList;
   boolean debug = false;
 
+  /**
+   * Builds a matcher set from the supplied patterns. Patterns beginning with '-' are exclusions; all others are inclusions.
+   *
+   * @param patterns dot-notation patterns to include/exclude
+   * @throws DotNotationException if a pattern cannot be parsed
+   */
   public KeyDebugger (String[] patterns)
     throws DotNotationException {
 
@@ -55,11 +64,20 @@ public class KeyDebugger {
     }
   }
 
+  /**
+   * @return {@code true} if any inclusion pattern was provided
+   */
   public boolean willDebug () {
 
     return debug;
   }
 
+  /**
+   * Tests whether the given key should be debugged based on include/exclude patterns.
+   *
+   * @param key the property key to test
+   * @return {@code true} if an inclusion matches and no exclusion overrides it
+   */
   public boolean matches (String key) {
 
     boolean match = false;
@@ -78,11 +96,18 @@ public class KeyDebugger {
     return match;
   }
 
+  /**
+   * Internal matcher that wraps a {@link DotNotation} pattern and tracks whether it represents an exclusion.
+   */
   private static class DebugMatcher {
 
     private final DotNotation dotNotation;
     private boolean exclusion = false;
 
+    /**
+     * @param pattern the include/exclude pattern; prefixed with '-' to indicate exclusion
+     * @throws DotNotationException if the pattern is invalid
+     */
     public DebugMatcher (String pattern)
       throws DotNotationException {
 
@@ -94,11 +119,20 @@ public class KeyDebugger {
       }
     }
 
+    /**
+     * @return {@code true} if this matcher represents an exclusion
+     */
     public boolean isExclusion () {
 
       return exclusion;
     }
 
+    /**
+     * Tests whether the matcher pattern applies to the supplied key.
+     *
+     * @param key the key to evaluate
+     * @return {@code true} if the key matches this pattern
+     */
     public boolean matches (String key) {
 
       return dotNotation.getPattern().matcher(key).matches();

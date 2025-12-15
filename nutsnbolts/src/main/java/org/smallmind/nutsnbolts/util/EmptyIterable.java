@@ -35,8 +35,16 @@ package org.smallmind.nutsnbolts.util;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+/**
+ * {@link Iterable} with no elements; always returns an empty iterator.
+ *
+ * @param <T> element type
+ */
 public class EmptyIterable<T> implements Iterable<T> {
 
+  /**
+   * @return iterator that yields no elements
+   */
   public Iterator<T> iterator () {
 
     return new EmptyIterator<T>();
@@ -44,16 +52,29 @@ public class EmptyIterable<T> implements Iterable<T> {
 
   private static class EmptyIterator<T> implements Iterator<T> {
 
+    /**
+     * Always indicates no remaining elements.
+     */
     public synchronized boolean hasNext () {
 
       return false;
     }
 
+    /**
+     * Always throws because the iterator is empty.
+     *
+     * @throws NoSuchElementException always
+     */
     public synchronized T next () {
 
       throw new NoSuchElementException();
     }
 
+    /**
+     * Removal is unsupported.
+     *
+     * @throws UnsupportedOperationException always
+     */
     public void remove () {
 
       throw new UnsupportedOperationException();

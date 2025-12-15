@@ -34,23 +34,47 @@ package org.smallmind.nutsnbolts.property;
 
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
+/**
+ * Exception thrown when property expansion fails due to parsing errors, missing mappings, or decryption issues.
+ */
 public class PropertyExpanderException extends FormattedException {
 
+  /**
+   * Creates the exception without a message.
+   */
   public PropertyExpanderException () {
 
     super();
   }
 
+  /**
+   * Creates the exception with a formatted message.
+   *
+   * @param message the format string
+   * @param args    arguments applied to the format string
+   */
   public PropertyExpanderException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * Creates the exception with a cause and formatted message.
+   *
+   * @param throwable the underlying cause
+   * @param message   the format string
+   * @param args      arguments applied to the format string
+   */
   public PropertyExpanderException (Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);
   }
 
+  /**
+   * Creates the exception with the supplied cause.
+   *
+   * @param throwable the underlying cause
+   */
   public PropertyExpanderException (Throwable throwable) {
 
     super(throwable);

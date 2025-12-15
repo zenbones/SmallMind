@@ -36,6 +36,9 @@ import java.io.UnsupportedEncodingException;
 import java.util.BitSet;
 import java.util.HashMap;
 
+/**
+ * URL percent-encoding/decoding utility implementing RFC 3986 rules.
+ */
 public class URLCodec {
 
   private static final BitSet UNRESERVED_BITSET = new BitSet(256);
@@ -74,6 +77,13 @@ public class URLCodec {
     HEX_VALUE_MAP.put('f', 15);
   }
 
+  /**
+   * Decodes a percent-encoded string, converting '+' to space.
+   *
+   * @param encoded percent-encoded string
+   * @return decoded text
+   * @throws UnsupportedEncodingException if encoding is invalid
+   */
   public static String urlDecode (String encoded)
     throws UnsupportedEncodingException {
 
@@ -151,6 +161,14 @@ public class URLCodec {
     return (decodedBuilder == null) ? encoded : decodedBuilder.toString();
   }
 
+  /**
+   * Converts two hex characters to a byte value.
+   *
+   * @param highHexNumber high-order hex digit
+   * @param lowHexNumber  low-order hex digit
+   * @return byte value represented by the two digits
+   * @throws UnsupportedEncodingException if either digit is invalid
+   */
   private static int getByte (char highHexNumber, char lowHexNumber)
     throws UnsupportedEncodingException {
 
@@ -165,12 +183,27 @@ public class URLCodec {
     }
   }
 
+  /**
+   * Encodes a string as application/x-www-form-urlencoded.
+   *
+   * @param original text to encode
+   * @return percent-encoded string
+   * @throws UnsupportedEncodingException if input contains invalid surrogate pairs
+   */
   public static String urlEncode (String original)
     throws UnsupportedEncodingException {
 
     return urlEncode(original, true);
   }
 
+  /**
+   * Encodes a string as application/x-www-form-urlencoded.
+   *
+   * @param original       text to encode
+   * @param spacesAsPluses {@code true} to emit spaces as '+', {@code false} to percent-encode
+   * @return percent-encoded string
+   * @throws UnsupportedEncodingException if input contains invalid surrogate pairs
+   */
   public static String urlEncode (String original, boolean spacesAsPluses)
     throws UnsupportedEncodingException {
 
@@ -229,6 +262,12 @@ public class URLCodec {
     return (encodedBuilder == null) ? original : encodedBuilder.toString();
   }
 
+  /**
+   * Writes a single byte as {@code %HH} to the builder.
+   *
+   * @param encodedBuilder destination builder
+   * @param singleByte     byte value to encode
+   */
   private static void writeHexString (StringBuilder encodedBuilder, int singleByte) {
 
     encodedBuilder.append('%');

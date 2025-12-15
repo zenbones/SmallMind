@@ -34,14 +34,39 @@ package org.smallmind.nutsnbolts.resource;
 
 import java.io.InputStream;
 
+/**
+ * A uniform abstraction over addressable content that can be resolved to a readable {@link InputStream}.
+ * Implementations typically wrap different backing stores (filesystem, classpath, jar, URL, etc.).
+ */
 public interface Resource {
 
+  /**
+   * Returns the unique identifier for this resource, usually of the form {@code scheme:path}.
+   *
+   * @return identifier string suitable for logging or comparison
+   */
   String getIdentifier ();
 
+  /**
+   * Returns the scheme portion of the resource identifier (e.g. {@code file}, {@code classpath}).
+   *
+   * @return scheme name used to locate the resource
+   */
   String getScheme ();
 
+  /**
+   * Returns the raw path portion of the resource identifier.
+   *
+   * @return path string supplied when the resource was created
+   */
   String getPath ();
 
+  /**
+   * Opens the underlying content for reading.
+   *
+   * @return an input stream positioned at the start of the resource content; may be {@code null} if the content cannot be found
+   * @throws ResourceException if the resource cannot be opened or resolved
+   */
   InputStream getInputStream ()
     throws ResourceException;
 }

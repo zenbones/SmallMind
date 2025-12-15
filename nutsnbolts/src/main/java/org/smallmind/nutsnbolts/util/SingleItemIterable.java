@@ -35,15 +35,26 @@ package org.smallmind.nutsnbolts.util;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+/**
+ * {@link Iterable} that yields at most one element.
+ *
+ * @param <T> element type
+ */
 public class SingleItemIterable<T> implements Iterable<T> {
 
   private final T item;
 
+  /**
+   * @param item element to expose; if {@code null}, iteration is empty
+   */
   public SingleItemIterable (T item) {
 
     this.item = item;
   }
 
+  /**
+   * @return iterator that will yield the single item at most once
+   */
   public Iterator<T> iterator () {
 
     return new SingleItemIterator();
@@ -53,16 +64,25 @@ public class SingleItemIterable<T> implements Iterable<T> {
 
     private boolean taken;
 
+    /**
+     * Constructs an iterator marking the item consumed when the element is {@code null}.
+     */
     public SingleItemIterator () {
 
       taken = (item == null);
     }
 
+    /**
+     * @return {@code true} until the single item has been consumed
+     */
     public synchronized boolean hasNext () {
 
       return !taken;
     }
 
+    /**
+     * Returns the single item, throwing {@link NoSuchElementException} if already consumed.
+     */
     public synchronized T next () {
 
       if (taken) {
@@ -74,6 +94,11 @@ public class SingleItemIterable<T> implements Iterable<T> {
       return item;
     }
 
+    /**
+     * Removal is not supported for this iterator.
+     *
+     * @throws UnsupportedOperationException always
+     */
     public void remove () {
 
       throw new UnsupportedOperationException();

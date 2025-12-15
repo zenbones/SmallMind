@@ -45,23 +45,41 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+/**
+ * Bean Validation constraint requiring a string to contain at least one non-whitespace character.
+ */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({FIELD, PARAMETER, METHOD, LOCAL_VARIABLE})
 @Constraint(validatedBy = NotBlankValidator.class)
 public @interface NotBlank {
 
+  /**
+   * Allows multiple {@link NotBlank} annotations on the same element.
+   */
   @Target({FIELD, PARAMETER, METHOD, LOCAL_VARIABLE})
   @Retention(RUNTIME)
   @Documented
   @interface List {
 
+    /**
+     * @return array of {@link NotBlank} constraints
+     */
     NotBlank[] value ();
   }
 
+  /**
+   * @return message used when the value is blank
+   */
   String message () default "must be not be blank";
 
+  /**
+   * @return validation groups this constraint belongs to
+   */
   Class<?>[] groups () default {};
 
+  /**
+   * @return custom payloads for Bean Validation clients
+   */
   Class<? extends Payload>[] payload () default {};
 }

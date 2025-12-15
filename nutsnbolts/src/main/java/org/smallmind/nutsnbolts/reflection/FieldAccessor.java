@@ -37,12 +37,22 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
+/**
+ * Convenient wrapper for a field and its associated getter/setter, if present.
+ */
 public class FieldAccessor {
 
   private final Method getterMethod;
   private final Method setterMethod;
   private final Field field;
 
+  /**
+   * Creates an accessor for the supplied field and companion methods.
+   *
+   * @param field        the backing field
+   * @param getterMethod the resolved getter, or {@code null} if access should go through the field
+   * @param setterMethod the resolved setter, or {@code null} if access should go through the field
+   */
   public FieldAccessor (Field field, Method getterMethod, Method setterMethod) {
 
     this.field = field;
@@ -50,32 +60,60 @@ public class FieldAccessor {
     this.setterMethod = setterMethod;
   }
 
+  /**
+   * @return the field name
+   */
   public String getName () {
 
     return field.getName();
   }
 
+  /**
+   * @return the raw field type
+   */
   public Class<?> getType () {
 
     return field.getType();
   }
 
+  /**
+   * @return the generic field type
+   */
   public Type getGenericType () {
 
     return field.getGenericType();
   }
 
+  /**
+   * @return the backing {@link Field}
+   */
   public Field getField () {
 
     return field;
   }
 
+  /**
+   * Reads the field value from the supplied target via getter when possible.
+   *
+   * @param target the instance to read from
+   * @return the field value
+   * @throws IllegalAccessException    if access to the field or method is denied
+   * @throws InvocationTargetException if the getter throws an exception
+   */
   public Object get (Object target)
     throws IllegalAccessException, InvocationTargetException {
 
     return (getterMethod != null) ? getterMethod.invoke(target) : field.get(target);
   }
 
+  /**
+   * Writes a value to the supplied target, preferring the setter when available.
+   *
+   * @param target the instance to mutate
+   * @param value  the value to apply
+   * @throws IllegalAccessException    if access to the field or method is denied
+   * @throws InvocationTargetException if the setter throws an exception
+   */
   public void set (Object target, Object value)
     throws IllegalAccessException, InvocationTargetException {
 

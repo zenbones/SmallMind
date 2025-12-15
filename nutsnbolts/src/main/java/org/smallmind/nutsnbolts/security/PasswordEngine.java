@@ -43,6 +43,9 @@ import javax.crypto.spec.PBEKeySpec;
 import org.smallmind.nutsnbolts.http.Base64Codec;
 import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 
+/**
+ * PBKDF2-based password hashing/verification utility.
+ */
 public class PasswordEngine {
 
   private static final SecureRandom SECURE_RANDOM;
@@ -64,16 +67,31 @@ public class PasswordEngine {
     SECURE_RANDOM.nextBytes(new byte[256]);
   }
 
+  /**
+   * Creates an engine with default settings (50,000 iterations, 32-byte salt, 256-bit key).
+   */
   public PasswordEngine () {
 
     this(50000, 32, 256);
   }
 
+  /**
+   * Creates an engine with custom iterations and default salt/key lengths.
+   *
+   * @param iterations number of PBKDF2 iterations
+   */
   public PasswordEngine (int iterations) {
 
     this(iterations, 32, 256);
   }
 
+  /**
+   * Creates an engine with custom parameters.
+   *
+   * @param iterations       number of PBKDF2 iterations
+   * @param saltLength       bytes of random salt to prepend to stored hashes
+   * @param desiredKeyLength desired derived key length in bits
+   */
   public PasswordEngine (int iterations, int saltLength, int desiredKeyLength) {
 
     this.iterations = iterations;
@@ -81,6 +99,16 @@ public class PasswordEngine {
     this.desiredKeyLength = desiredKeyLength;
   }
 
+  /**
+   * Hashes the password with a random salt and returns the salt+hash encoded as Base64.
+   *
+   * @param password the plain-text password
+   * @return Base64 string containing salt concatenated with derived key
+   * @throws IOException              if encoding fails
+   * @throws NoSuchAlgorithmException if PBKDF2 algorithm is unavailable
+   * @throws InvalidKeySpecException  if key derivation parameters are invalid
+   * @throws InvalidPasswordException if the password is {@code null} or empty
+   */
   public String encrypt (String password)
     throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, InvalidPasswordException {
 
@@ -103,6 +131,16 @@ public class PasswordEngine {
     }
   }
 
+  /**
+   * Checks whether the supplied password matches a stored salt+hash.
+   *
+   * @param password candidate password
+   * @param stored   Base64 salt+hash string produced by {@link #encrypt(String)}
+   * @return {@code true} if the password matches
+   * @throws IOException              if decoding fails
+   * @throws NoSuchAlgorithmException if PBKDF2 algorithm is unavailable
+   * @throws InvalidKeySpecException  if key derivation parameters are invalid
+   */
   public boolean match (String password, String stored)
     throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
 
@@ -122,6 +160,15 @@ public class PasswordEngine {
     }
   }
 
+  /**
+   * Derives a key from the supplied salt and password.
+   *
+   * @param salt     random salt bytes
+   * @param password the password
+   * @return derived key bytes
+   * @throws NoSuchAlgorithmException if PBKDF2 algorithm is unavailable
+   * @throws InvalidKeySpecException  if key derivation parameters are invalid
+   */
   private byte[] hash (byte[] salt, String password)
     throws NoSuchAlgorithmException, InvalidKeySpecException {
 

@@ -34,23 +34,47 @@ package org.smallmind.nutsnbolts.reflection.bean;
 
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
+/**
+ * Indicates that a bean property could not be accessed or resolved.
+ */
 public class BeanAccessException extends FormattedException {
 
+  /**
+   * Creates an exception with no detail message.
+   */
   public BeanAccessException () {
 
     super();
   }
 
+  /**
+   * Creates an exception with a formatted detail message.
+   *
+   * @param message a {@link java.util.Formatter}-style message describing the access error
+   * @param args    values interpolated into the message
+   */
   public BeanAccessException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * Creates an exception with a formatted detail message and a cause.
+   *
+   * @param throwable the underlying reflection problem
+   * @param message   a {@link java.util.Formatter}-style message describing the access error
+   * @param args      values interpolated into the message
+   */
   public BeanAccessException (Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);
   }
 
+  /**
+   * Creates an exception with a cause and no detail message.
+   *
+   * @param throwable the underlying reflection problem
+   */
   public BeanAccessException (Throwable throwable) {
 
     super(throwable);

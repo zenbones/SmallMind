@@ -32,7 +32,18 @@
  */
 package org.smallmind.nutsnbolts.util;
 
+/**
+ * Strategy for converting a value to its alphanumeric representation used by {@link AlphaNumericComparator}.
+ *
+ * @param <T> value type
+ */
 public interface AlphaNumericConverter<T> {
 
+  /**
+   * Converts the supplied value into a string representation for comparison.
+   *
+   * @param object value to convert
+   * @return string form used by the comparator
+   */
   String toString (T object);
 }

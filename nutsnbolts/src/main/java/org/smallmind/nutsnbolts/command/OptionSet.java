@@ -36,11 +36,19 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
+/**
+ * Captures parsed options and their associated arguments.
+ */
 public class OptionSet {
 
   private final HashMap<String, LinkedList<String>> optionMap = new HashMap<>();
   private final LinkedList<String> remainingList = new LinkedList<>();
 
+  /**
+   * Adds an option without arguments if it has not been recorded yet.
+   *
+   * @param option option name or flag (as a string)
+   */
   public synchronized void addOption (String option) {
 
     if (!optionMap.containsKey(option)) {
@@ -48,52 +56,95 @@ public class OptionSet {
     }
   }
 
+  /**
+   * Adds an argument to an option, creating the option entry if needed.
+   *
+   * @param option   option name or flag
+   * @param argument argument value
+   */
   public synchronized void addArgument (String option, String argument) {
 
     addOption(option);
     (optionMap.get(option)).add(argument);
   }
 
+  /**
+   * Records an undeclared trailing argument.
+   *
+   * @param argument free-form argument
+   */
   public synchronized void addRemaining (String argument) {
 
     remainingList.add(argument);
   }
 
+  /**
+   * @return remaining undeclared arguments in encounter order
+   */
   public synchronized String[] getRemaining () {
 
     return remainingList.toArray(new String[0]);
   }
 
+  /**
+   * @return options that were provided
+   */
   public synchronized String[] getOptions () {
 
     return optionMap.keySet().toArray(new String[0]);
   }
 
+  /**
+   * Tests whether an option with the given long name was provided.
+   */
   public synchronized boolean containsOption (String name) {
 
     return containsOption(name, null);
   }
 
+  /**
+   * Tests whether an option with the given flag was provided.
+   */
   public synchronized boolean containsOption (Character flag) {
 
     return containsOption(null, flag);
   }
 
+  /**
+   * Tests whether an option was provided by name or flag.
+   *
+   * @param name long option name
+   * @param flag single-character flag
+   * @return {@code true} if the option exists
+   */
   public synchronized boolean containsOption (String name, Character flag) {
 
     return optionMap.containsKey(name) || optionMap.containsKey((flag == null) ? null : flag.toString());
   }
 
+  /**
+   * Returns the first argument for a named option, or {@code null} if none exist.
+   */
   public synchronized String getArgument (String name) {
 
     return getArgument(name, null);
   }
 
+  /**
+   * Returns the first argument for a flagged option, or {@code null} if none exist.
+   */
   public synchronized String getArgument (char flag) {
 
     return getArgument(null, flag);
   }
 
+  /**
+   * Retrieves the first argument for an option referenced by name or flag.
+   *
+   * @param name long option name
+   * @param flag single-character flag
+   * @return first argument value or {@code null} if absent
+   */
   public synchronized String getArgument (String name, Character flag) {
 
     LinkedList<String> argumentList;
@@ -111,16 +162,29 @@ public class OptionSet {
     return null;
   }
 
+  /**
+   * Returns all arguments for a named option or {@code null} if the option was not provided.
+   */
   public synchronized String[] getArguments (String name) {
 
     return getArguments(name, null);
   }
 
+  /**
+   * Returns all arguments for a flagged option or {@code null} if the option was not provided.
+   */
   public synchronized String[] getArguments (char flag) {
 
     return getArguments(null, flag);
   }
 
+  /**
+   * Retrieves all arguments for an option referenced by name or flag.
+   *
+   * @param name long option name
+   * @param flag single-character flag
+   * @return array of arguments or {@code null} if the option was not present
+   */
   public synchronized String[] getArguments (String name, Character flag) {
 
     LinkedList<String> argumentList;
@@ -138,6 +202,9 @@ public class OptionSet {
     return arguments;
   }
 
+  /**
+   * Formats the options and their arguments for debugging.
+   */
   public String toString () {
 
     StringBuilder lineBuilder = new StringBuilder("[");

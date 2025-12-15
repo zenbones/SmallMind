@@ -35,11 +35,26 @@ package org.smallmind.nutsnbolts.io;
 import java.io.IOException;
 import java.nio.file.Path;
 
+/**
+ * Strategy interface for custom file and directory operations used during tree walks.
+ */
 public interface FileManipulation {
 
+  /**
+   * Performs an operation on a file.
+   *
+   * @param path file path
+   * @throws IOException if manipulation fails
+   */
   void manipulateFile (Path path)
     throws IOException;
 
+  /**
+   * Performs an operation on a directory.
+   *
+   * @param path directory path
+   * @throws IOException if manipulation fails
+   */
   void manipulateDirectory (Path path)
     throws IOException;
 }

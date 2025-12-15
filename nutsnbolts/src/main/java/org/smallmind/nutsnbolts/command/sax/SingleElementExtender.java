@@ -36,21 +36,33 @@ import org.smallmind.nutsnbolts.command.template.Argument;
 import org.smallmind.nutsnbolts.command.template.SingleArgument;
 import org.smallmind.nutsnbolts.xml.sax.AbstractElementExtender;
 
+/**
+ * Parses a {@code <single>} argument element into a {@link SingleArgument}.
+ */
 public class SingleElementExtender extends AbstractElementExtender implements ArgumentCompiler {
 
   private SingleArgument singleArgument;
 
+  /**
+   * @return compiled {@link SingleArgument}
+   */
   @Override
   public Argument getArgument () {
 
     return getSingleArgument();
   }
 
+  /**
+   * @return single argument built from the element content
+   */
   public SingleArgument getSingleArgument () {
 
     return singleArgument;
   }
 
+  /**
+   * Finalizes the single argument using the content of the element.
+   */
   @Override
   public void endElement (String namespaceURI, String localName, String qName, StringBuilder contentBuilder) {
 

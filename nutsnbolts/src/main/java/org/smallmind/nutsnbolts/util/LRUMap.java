@@ -35,20 +35,37 @@ package org.smallmind.nutsnbolts.util;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * LRU cache map backed by {@link LinkedHashMap}, evicting the eldest entry when the maximum size is exceeded.
+ */
 public class LRUMap<K, V> extends LinkedHashMap<K, V> {
 
   private final int maximumSize;
 
+  /**
+   * Constructs an LRU map with insertion order and a default initial capacity/load factor.
+   *
+   * @param maximumSize maximum entries to retain before evicting eldest
+   */
   public LRUMap (int maximumSize) {
 
     this(100, .75F, false, maximumSize);
   }
 
+  /**
+   * Constructs an LRU map allowing access-order iteration.
+   *
+   * @param accessOrder {@code true} for access order, {@code false} for insertion order
+   * @param maximumSize maximum entries to retain
+   */
   public LRUMap (boolean accessOrder, int maximumSize) {
 
     this(100, .75F, accessOrder, maximumSize);
   }
 
+  /**
+   * Full constructor delegating to {@link LinkedHashMap}.
+   */
   public LRUMap (int initialCapacity, float loadFactor, boolean accessOrder, int maximumSize) {
 
     super(initialCapacity, loadFactor, accessOrder);
@@ -56,6 +73,9 @@ public class LRUMap<K, V> extends LinkedHashMap<K, V> {
     this.maximumSize = maximumSize;
   }
 
+  /**
+   * Evicts when the current size exceeds {@code maximumSize}.
+   */
   protected boolean removeEldestEntry (Map.Entry<K, V> eldest) {
 
     return size() > maximumSize;

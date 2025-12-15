@@ -32,17 +32,26 @@
  */
 package org.smallmind.nutsnbolts.security;
 
+/**
+ * RSA signature algorithms supported by the library.
+ */
 public enum RSASigningAlgorithm implements AsymmetricSigningAlgorithm {
 
   SHA_256_WITH_RSA("SHA256withRSA");
 
   private final String algorithmName;
 
+  /**
+   * @param algorithmName the JCA signature algorithm name
+   */
   RSASigningAlgorithm (String algorithmName) {
 
     this.algorithmName = algorithmName;
   }
 
+  /**
+   * @return the JCA algorithm name used when creating {@link java.security.Signature} instances
+   */
   public String getAlgorithmName () {
 
     return algorithmName;

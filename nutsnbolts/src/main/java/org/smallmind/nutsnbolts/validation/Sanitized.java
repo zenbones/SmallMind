@@ -40,23 +40,41 @@ import java.lang.annotation.Target;
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 
+/**
+ * Bean Validation constraint that ensures a string is non-empty and contains only letters, digits, hyphens, or underscores.
+ */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD})
 @Constraint(validatedBy = SanitizedValidator.class)
 public @interface Sanitized {
 
+  /**
+   * Allows multiple {@link Sanitized} annotations on the same element.
+   */
   @Retention(RetentionPolicy.RUNTIME)
   @Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD})
   @Documented
   @interface List {
 
+    /**
+     * @return array of {@link Sanitized} constraints
+     */
     Sanitized[] value ();
   }
 
+  /**
+   * @return validation message used when the value is invalid
+   */
   String message () default "Must not be empty or contain illegal characters";
 
+  /**
+   * @return validation groups this constraint belongs to
+   */
   Class<?>[] groups () default {};
 
+  /**
+   * @return payload for Bean Validation clients
+   */
   Class<? extends Payload>[] payload () default {};
 }

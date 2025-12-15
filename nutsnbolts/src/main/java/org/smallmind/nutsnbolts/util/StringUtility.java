@@ -32,13 +32,29 @@
  */
 package org.smallmind.nutsnbolts.util;
 
+/**
+ * Case and identifier helpers for strings.
+ */
 public class StringUtility {
 
+  /**
+   * Converts a string to display case, capitalizing the first character of each word and lowercasing the rest.
+   *
+   * @param anyCase source string
+   * @return display-cased string
+   */
   public static String toDisplayCase (String anyCase) {
 
     return toDisplayCase(anyCase, '\0');
   }
 
+  /**
+   * Converts a string to display case using a custom word separator character that will be replaced by spaces.
+   *
+   * @param anyCase    source string
+   * @param wordMarker character that separates words
+   * @return display-cased string with separators replaced by spaces
+   */
   public static String toDisplayCase (String anyCase, char wordMarker) {
 
     StringBuilder displayBuilder;
@@ -61,11 +77,26 @@ public class StringUtility {
     return displayBuilder.toString();
   }
 
+  /**
+   * Converts a word-delimited string to camel case, capitalizing each word after the first.
+   *
+   * @param anyCase    source string
+   * @param wordMarker delimiter separating words
+   * @return camel-cased string starting with an uppercase letter
+   */
   public static String toCamelCase (String anyCase, char wordMarker) {
 
     return toCamelCase(anyCase, wordMarker, true);
   }
 
+  /**
+   * Converts a word-delimited string to camel case.
+   *
+   * @param anyCase    source string
+   * @param wordMarker delimiter separating words
+   * @param startUpper whether the first character should be uppercase
+   * @return camel-cased string
+   */
   public static String toCamelCase (String anyCase, char wordMarker, boolean startUpper) {
 
     StringBuilder camelBuilder;
@@ -87,6 +118,13 @@ public class StringUtility {
     return camelBuilder.toString();
   }
 
+  /**
+   * Converts a word-delimited string to an uppercase-with-underscores constant name.
+   *
+   * @param anyCase    source string
+   * @param wordMarker delimiter separating words
+   * @return uppercase string with underscores replacing delimiters
+   */
   public static String toStaticFieldName (String anyCase, char wordMarker) {
 
     StringBuilder fieldBuilder;
@@ -104,6 +142,14 @@ public class StringUtility {
     return fieldBuilder.toString();
   }
 
+  /**
+   * Trims a string to a maximum length, appending "..." when truncated.
+   *
+   * @param text      source text
+   * @param maxLength maximum allowed length (must be at least 4)
+   * @return original text if short enough; otherwise truncated with ellipses
+   * @throws IllegalArgumentException if {@code maxLength < 4}
+   */
   public static String trimWithElipses (String text, int maxLength) {
 
     int length = text.length();
@@ -119,6 +165,12 @@ public class StringUtility {
     }
   }
 
+  /**
+   * Validates whether a string is a legal Java identifier.
+   *
+   * @param anyName string to check
+   * @return {@code true} if the name is a valid identifier
+   */
   public static boolean isJavaIdentifier (String anyName) {
 
     for (int count = 0; count < anyName.length(); count++) {
@@ -134,6 +186,14 @@ public class StringUtility {
     return true;
   }
 
+  /**
+   * Tests whether a given substring exists in the template starting at the provided index.
+   *
+   * @param template full string
+   * @param match    substring to test
+   * @param index    starting offset in the template
+   * @return {@code true} if the substring fully matches starting at the index
+   */
   public static boolean hasNext (String template, String match, int index) {
 
     int matchIndex = 0;

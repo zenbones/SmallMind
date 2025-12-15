@@ -34,22 +34,40 @@ package org.smallmind.nutsnbolts.util;
 
 import java.util.Comparator;
 
+/**
+ * Comparator that orders dotted strings segment-by-segment using {@link AlphaNumericComparator}.
+ * Can optionally reverse the segment order (compare from the rightmost segment).
+ */
 public class DotNotationComparator implements Comparator<String> {
 
   private static final AlphaNumericComparator<String> ALPHA_NUMERIC_COMPARATOR = new AlphaNumericComparator<String>();
 
   private final boolean reversed;
 
+  /**
+   * Compares from left-to-right by default.
+   */
   public DotNotationComparator () {
 
     this(false);
   }
 
+  /**
+   * @param reversed when {@code true}, compares segments from the rightmost side first
+   */
   public DotNotationComparator (boolean reversed) {
 
     this.reversed = reversed;
   }
 
+  /**
+   * Splits both strings on dots and compares each segment alphanumerically; if all common segments match,
+   * the string with more segments sorts after the shorter one.
+   *
+   * @param string1 first dotted string
+   * @param string2 second dotted string
+   * @return comparison result per {@link Comparator} contract
+   */
   @Override
   public int compare (String string1, String string2) {
 

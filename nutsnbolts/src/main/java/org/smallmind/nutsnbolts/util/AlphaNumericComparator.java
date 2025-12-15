@@ -34,20 +34,39 @@ package org.smallmind.nutsnbolts.util;
 
 import java.util.Comparator;
 
+/**
+ * Comparator that orders values by an alphanumeric rule: digits sort before letters at the same position,
+ * digits compare numerically, and letters compare case-insensitively.
+ *
+ * @param <T> value type
+ */
 public class AlphaNumericComparator<T> implements Comparator<T> {
 
   private final AlphaNumericConverter<T> alphaNumConverter;
 
+  /**
+   * Uses the {@link DefaultAlphaNumericConverter}.
+   */
   public AlphaNumericComparator () {
 
     this(new DefaultAlphaNumericConverter<T>());
   }
 
+  /**
+   * @param alphaNumConverter converter to obtain string representations for comparison
+   */
   public AlphaNumericComparator (AlphaNumericConverter<T> alphaNumConverter) {
 
     this.alphaNumConverter = alphaNumConverter;
   }
 
+  /**
+   * Compares two values using the configured alphanumeric semantics.
+   *
+   * @param obj1 first value (nulls sort first)
+   * @param obj2 second value (nulls sort last relative to non-null)
+   * @return negative, zero, or positive per {@link Comparator} contract
+   */
   public int compare (T obj1, T obj2) {
 
     String first;

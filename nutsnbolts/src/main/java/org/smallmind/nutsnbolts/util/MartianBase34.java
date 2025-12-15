@@ -32,6 +32,9 @@
  */
 package org.smallmind.nutsnbolts.util;
 
+/**
+ * Utility for converting between base-10 longs and a custom base-34 encoding with a per-group mix constant.
+ */
 public class MartianBase34 {
 
   public enum Group {
@@ -40,11 +43,17 @@ public class MartianBase34 {
 
     private final long mixConstant;
 
+    /**
+     * @param mixConstant additive constant applied to obscure values per group
+     */
     Group (long mixConstant) {
 
       this.mixConstant = mixConstant;
     }
 
+    /**
+     * @return group-specific mix constant
+     */
     public long getMixConstant () {
 
       return mixConstant;
@@ -58,6 +67,14 @@ public class MartianBase34 {
     return (long)Math.pow(34, digits);
   }
 
+  /**
+   * Converts a base-10 number into Martian base-34 using the minimal digits up to 13.
+   *
+   * @param base10 decimal value; must be non-negative
+   * @param group  group whose mix constant is applied
+   * @return encoded base-34 string
+   * @throws IllegalArgumentException if the value is negative or cannot be represented in 13 digits
+   */
   public static String base10To34 (long base10, Group group) {
 
     if (base10 < 0) {
@@ -73,6 +90,15 @@ public class MartianBase34 {
     throw new IllegalArgumentException("Base 10 number(" + base10 + ") must be no greater than a long value - what language are we speaking here?");
   }
 
+  /**
+   * Converts a base-10 number into Martian base-34 using a fixed number of digits.
+   *
+   * @param base10 decimal value; must be in range [0, 34^digits)
+   * @param digits number of output digits (padding with leading zero character as needed)
+   * @param group  group whose mix constant is applied
+   * @return encoded base-34 string of the requested length
+   * @throws IllegalArgumentException if the value is out of range
+   */
   public static String base10To34 (long base10, int digits, Group group) {
 
     StringBuilder martianBuilder = new StringBuilder();
@@ -100,6 +126,14 @@ public class MartianBase34 {
     return martianBuilder.toString();
   }
 
+  /**
+   * Decodes a Martian base-34 string back into a base-10 number using the group's mix constant.
+   *
+   * @param base34 encoded string
+   * @param group  group whose mix constant was applied
+   * @return decoded decimal value
+   * @throws IllegalArgumentException if the string contains invalid characters
+   */
   public static long base34To10 (String base34, Group group) {
 
     long base10 = 0;
@@ -123,4 +157,3 @@ public class MartianBase34 {
     return (base10 >= 0) ? base10 : (Long.MAX_VALUE + base10 + 1) * -1;
   }
 }
-

@@ -32,36 +32,71 @@
  */
 package org.smallmind.nutsnbolts.resource;
 
+/**
+ * Base {@link Resource} implementation that handles common identifier and equality logic
+ * using a simple {@code scheme:path} convention.
+ */
 public abstract class AbstractResource implements Resource {
 
   private final String path;
 
+  /**
+   * Creates a resource with the supplied path component.
+   *
+   * @param path raw path portion of the resource identifier
+   */
   public AbstractResource (String path) {
 
     this.path = path;
   }
 
+  /**
+   * Composes a unique identifier from the scheme and path in {@code scheme:path} format.
+   *
+   * @return unique identifier string
+   */
   public String getIdentifier () {
 
     return getScheme() + ":" + getPath();
   }
 
+  /**
+   * Returns the raw path supplied when constructing the resource.
+   *
+   * @return resource path component
+   */
   public String getPath () {
 
     return path;
   }
 
+  /**
+   * Returns the {@link #getIdentifier()} for convenience.
+   *
+   * @return resource identifier
+   */
   public String toString () {
 
     return getIdentifier();
   }
 
+  /**
+   * Computes a hash code based on the scheme and path to allow map/set usage.
+   *
+   * @return hash code derived from scheme and path
+   */
   @Override
   public int hashCode () {
 
     return (getScheme().hashCode() * 31) + path.hashCode();
   }
 
+  /**
+   * Equality is based on both scheme and path values.
+   *
+   * @param obj object to compare
+   * @return {@code true} if the other object is an {@link AbstractResource} with equal scheme and path; otherwise {@code false}
+   */
   @Override
   public boolean equals (Object obj) {
 

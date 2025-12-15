@@ -38,10 +38,20 @@ import org.smallmind.nutsnbolts.resource.ResourceParser;
 import org.smallmind.nutsnbolts.resource.ResourceTypeResourceGenerator;
 import org.springframework.core.convert.converter.Converter;
 
+/**
+ * Spring converter that turns a String into a {@link Resource} using the Nutsnbolts resource parser.
+ */
 public class ResourceConverter implements Converter<String, Resource> {
 
   private static final ResourceParser RESOURCE_PARSER = new ResourceParser(new ResourceTypeResourceGenerator());
 
+  /**
+   * Parses the supplied string into a {@link Resource}.
+   *
+   * @param s resource location
+   * @return the parsed resource
+   * @throws RuntimeBeansException if the resource cannot be parsed
+   */
   public Resource convert (String s) {
 
     try {

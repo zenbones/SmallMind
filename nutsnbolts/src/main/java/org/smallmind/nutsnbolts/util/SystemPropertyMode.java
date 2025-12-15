@@ -32,6 +32,9 @@
  */
 package org.smallmind.nutsnbolts.util;
 
+/**
+ * Modes for resolving configuration properties from system/environment sources.
+ */
 public enum SystemPropertyMode {
 
   NEVER, // If no config property is set, none will be

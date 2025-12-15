@@ -37,48 +37,89 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 
+/**
+ * Streaming CSV parser that delegates each parsed row to a {@link CSVLineHandler}.
+ */
 public class CSVParser {
 
   private CSVLineHandler lineHandler;
   private boolean skipHeader = false;
   private boolean trimFields = false;
 
+  /**
+   * @return handler invoked for each parsed line
+   */
   public synchronized CSVLineHandler getLineHandler () {
 
     return lineHandler;
   }
 
+  /**
+   * Sets the handler invoked for each parsed line.
+   *
+   * @param lineHandler consumer for parsed rows
+   */
   public synchronized void setLineHandler (CSVLineHandler lineHandler) {
 
     this.lineHandler = lineHandler;
   }
 
+  /**
+   * @return {@code true} when the first line should be treated as a header and skipped
+   */
   public synchronized boolean isSkipHeader () {
 
     return skipHeader;
   }
 
+  /**
+   * Indicates whether to skip the first line of the input.
+   *
+   * @param skipHeader {@code true} to ignore the header row
+   */
   public synchronized void setSkipHeader (boolean skipHeader) {
 
     this.skipHeader = skipHeader;
   }
 
+  /**
+   * @return {@code true} when parsed fields should be trimmed
+   */
   public synchronized boolean isTrimFields () {
 
     return trimFields;
   }
 
+  /**
+   * Configures whether surrounding whitespace is removed from fields.
+   *
+   * @param trimFields {@code true} to trim field values
+   */
   public synchronized void setTrimFields (boolean trimFields) {
 
     this.trimFields = trimFields;
   }
 
+  /**
+   * Parses CSV from an input stream using the current settings.
+   *
+   * @param inputStream stream of CSV data
+   * @throws IOException       if reading fails
+   * @throws CSVParseException if parsing fails
+   */
   public synchronized void parse (InputStream inputStream)
     throws IOException, CSVParseException {
 
     parse(new InputStreamReader(inputStream));
   }
 
+  /**
+   * Parses CSV from a reader using the current settings.
+   *
+   * @param reader source of CSV data
+   * @throws IOException       if reading fails
+   * @throws CSVParseException if parsing fails
+   */
   public synchronized void parse (Reader reader)
     throws IOException, CSVParseException {
 

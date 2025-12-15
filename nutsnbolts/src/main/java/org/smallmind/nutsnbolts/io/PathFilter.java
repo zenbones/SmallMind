@@ -35,8 +35,18 @@ package org.smallmind.nutsnbolts.io;
 import java.io.IOException;
 import java.nio.file.Path;
 
+/**
+ * Predicate interface for filtering paths during traversal operations.
+ */
 public interface PathFilter {
 
+  /**
+   * Determines whether the given path should be included.
+   *
+   * @param path path under consideration
+   * @return {@code true} to include
+   * @throws IOException if evaluation fails
+   */
   boolean accept (Path path)
     throws IOException;
 }

@@ -34,13 +34,23 @@ package org.smallmind.nutsnbolts.util;
 
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
+/**
+ * Signals invalid syntax while parsing a spread expression.
+ */
 public class SpreadParserException extends FormattedException {
 
+  /**
+   * @param message descriptive error message
+   * @param args    optional message arguments
+   */
   public SpreadParserException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * @param throwable underlying cause
+   */
   public SpreadParserException (Throwable throwable) {
 
     super(throwable);

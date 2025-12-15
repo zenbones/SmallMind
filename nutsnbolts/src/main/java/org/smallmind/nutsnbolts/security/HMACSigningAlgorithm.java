@@ -35,22 +35,37 @@ package org.smallmind.nutsnbolts.security;
 import java.security.Key;
 import javax.crypto.spec.SecretKeySpec;
 
+/**
+ * HMAC-based symmetric signing algorithms.
+ */
 public enum HMACSigningAlgorithm implements SymmetricSigningAlgorithm {
 
   HMAC_MD5("HmacMD5"), HMAC_SHA_1("HmacSHA1"), HMAC_SHA_256("HmacSHA256");
 
   private final String algorithmName;
 
+  /**
+   * @param algorithmName the JCA MAC algorithm name
+   */
   HMACSigningAlgorithm (String algorithmName) {
 
     this.algorithmName = algorithmName;
   }
 
+  /**
+   * @return the JCA algorithm name used with {@link javax.crypto.Mac}
+   */
   public String getAlgorithmName () {
 
     return algorithmName;
   }
 
+  /**
+   * Constructs a key suitable for the chosen HMAC algorithm from a raw secret.
+   *
+   * @param secret the raw key bytes
+   * @return a {@link Key} for HMAC operations
+   */
   public Key generateKey (byte[] secret) {
 
     return new SecretKeySpec(secret, this.getAlgorithmName());

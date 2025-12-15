@@ -39,17 +39,31 @@ import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+/**
+ * SAX {@link EntityResolver} that delegates URI handling to a {@link ProtocolResolver} and streams resolved resources.
+ * Provides a singleton configured with {@link SmallMindProtocolResolver} for convenience.
+ */
 public class XMLEntityResolver implements EntityResolver {
 
   private static XMLEntityResolver ENTITY_RESOLVER;
 
   private final ProtocolResolver protocolResolver;
 
+  /**
+   * Creates a resolver that delegates to the supplied protocol resolver.
+   *
+   * @param protocolResolver protocol resolver used to resolve system identifiers
+   */
   public XMLEntityResolver (ProtocolResolver protocolResolver) {
 
     this.protocolResolver = protocolResolver;
   }
 
+  /**
+   * Returns a lazily created singleton configured with {@link SmallMindProtocolResolver}.
+   *
+   * @return shared {@link XMLEntityResolver}
+   */
   public synchronized static XMLEntityResolver getInstance () {
 
     if (ENTITY_RESOLVER == null) {
@@ -59,6 +73,15 @@ public class XMLEntityResolver implements EntityResolver {
     return ENTITY_RESOLVER;
   }
 
+  /**
+   * Attempts to resolve an external entity using the configured protocol resolver.
+   *
+   * @param publicId public identifier, unused
+   * @param systemId system identifier to resolve
+   * @return an {@link InputSource} for the resolved resource, or {@code null} to fall back to default resolution
+   * @throws SAXException if resolution fails
+   * @throws IOException  if the resolved resource cannot be opened
+   */
   public InputSource resolveEntity (String publicId, String systemId)
     throws SAXException, IOException {
 

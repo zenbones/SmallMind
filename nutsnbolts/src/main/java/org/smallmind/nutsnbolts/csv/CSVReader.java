@@ -39,6 +39,9 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.LinkedList;
 
+/**
+ * Reads comma-separated values from a stream, handling quoted fields and optional headers.
+ */
 public class CSVReader implements AutoCloseable {
 
   private enum State {
@@ -52,24 +55,54 @@ public class CSVReader implements AutoCloseable {
   private String[] headers;
   private boolean trimFields;
 
+  /**
+   * Creates a reader over an input stream without headers.
+   *
+   * @param stream CSV byte stream
+   * @throws IOException       if the stream cannot be read
+   * @throws CSVParseException if parsing fails
+   */
   public CSVReader (InputStream stream)
     throws IOException, CSVParseException {
 
     this(new InputStreamReader(stream), false);
   }
 
+  /**
+   * Creates a reader over an input stream, optionally using the first line as headers.
+   *
+   * @param stream     CSV byte stream
+   * @param useHeaders whether to read the first line as headers
+   * @throws IOException       if the stream cannot be read
+   * @throws CSVParseException if parsing fails
+   */
   public CSVReader (InputStream stream, boolean useHeaders)
     throws IOException, CSVParseException {
 
     this(new InputStreamReader(stream), useHeaders);
   }
 
+  /**
+   * Creates a reader over a character reader without headers.
+   *
+   * @param reader CSV character stream
+   * @throws IOException       if the stream cannot be read
+   * @throws CSVParseException if parsing fails
+   */
   public CSVReader (Reader reader)
     throws IOException, CSVParseException {
 
     this(reader, false);
   }
 
+  /**
+   * Creates a reader over a character reader, optionally using the first line as headers.
+   *
+   * @param reader     CSV character stream
+   * @param useHeaders whether to read the first line as headers
+   * @throws IOException       if the stream cannot be read
+   * @throws CSVParseException if parsing fails
+   */
   public CSVReader (Reader reader, boolean useHeaders)
     throws IOException, CSVParseException {
 
@@ -84,6 +117,12 @@ public class CSVReader implements AutoCloseable {
     }
   }
 
+  /**
+   * Controls whether returned field values are trimmed.
+   *
+   * @param trimFields {@code true} to trim whitespace
+   * @return this reader for chaining
+   */
   public synchronized CSVReader setTrimFields (boolean trimFields) {
 
     this.trimFields = trimFields;
@@ -91,11 +130,21 @@ public class CSVReader implements AutoCloseable {
     return this;
   }
 
+  /**
+   * @return header fields or {@code null} if headers were not requested
+   */
   public synchronized String[] getHeaders () {
 
     return headers;
   }
 
+  /**
+   * Retrieves a field by header name from a parsed row.
+   *
+   * @param header header name to look up
+   * @param fields parsed row fields
+   * @return field value or {@code null} if the header is not present
+   */
   public synchronized String getField (String header, String[] fields) {
 
     if (headers == null) {
@@ -111,12 +160,27 @@ public class CSVReader implements AutoCloseable {
     return null;
   }
 
+  /**
+   * Reads the next record from the stream using the configured trim setting.
+   *
+   * @return array of fields or {@code null} at end of stream
+   * @throws IOException       if reading fails
+   * @throws CSVParseException if the CSV is malformed
+   */
   public synchronized String[] readLine ()
     throws IOException, CSVParseException {
 
     return readLine(trimFields);
   }
 
+  /**
+   * Internal line reader that respects the supplied trimming preference.
+   *
+   * @param trimFields whether to strip whitespace from fields
+   * @return parsed fields or {@code null} at end of stream
+   * @throws IOException       if reading fails
+   * @throws CSVParseException if CSV structure is invalid
+   */
   private synchronized String[] readLine (boolean trimFields)
     throws IOException, CSVParseException {
 
@@ -183,6 +247,9 @@ public class CSVReader implements AutoCloseable {
     }
   }
 
+  /**
+   * Adds the current field buffer to the accumulating list, trimming if configured.
+   */
   private void appendField (LinkedList<String> fieldList, boolean trimFields) {
 
     fieldList.add((trimFields) ? fieldBuilder.toString().strip() : fieldBuilder.toString());

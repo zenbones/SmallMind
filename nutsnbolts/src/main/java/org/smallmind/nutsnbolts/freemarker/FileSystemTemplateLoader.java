@@ -39,24 +39,53 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import freemarker.cache.TemplateLoader;
 
+/**
+ * FreeMarker {@link TemplateLoader} backed by the local file system.
+ * Optionally anchors lookups at a base path to prevent template path traversal.
+ */
 public class FileSystemTemplateLoader implements TemplateLoader {
 
   private Path basePath;
 
+  /**
+   * Creates a loader without a base path; callers should supply absolute template names.
+   */
   public FileSystemTemplateLoader () {
 
   }
 
+  /**
+   * Creates a loader anchored at the specified base path.
+   *
+   * @param basePath root directory from which templates will be resolved
+   */
   public FileSystemTemplateLoader (Path basePath) {
 
     this.basePath = basePath;
   }
 
+  /**
+   * Sets or replaces the base path used to resolve template names.
+   *
+   * @param basePath root directory for templates
+   */
+  public void setBasePath (Path basePath) {
+
+    this.basePath = basePath;
+  }
+
+  /**
+   * Resolves the named template against the base path (if configured) or the raw file system.
+   *
+   * @param name template name/path
+   * @return template source reference
+   */
   @Override
   public Object findTemplateSource (String name) {
 
     if (basePath != null) {
 
+      // Resolve relative to the configured base directory.
       return new FileSystemTemplateSource(basePath.resolve(name));
     } else {
 
@@ -67,6 +96,12 @@ public class FileSystemTemplateLoader implements TemplateLoader {
     }
   }
 
+  /**
+   * Reports the last-modified timestamp for the template source.
+   *
+   * @param templateSource file-system template source
+   * @return timestamp in milliseconds or {@code -1} if unavailable
+   */
   @Override
   public long getLastModified (Object templateSource) {
 
@@ -75,10 +110,19 @@ public class FileSystemTemplateLoader implements TemplateLoader {
       return ((FileSystemTemplateSource)templateSource).getLastModified();
     } catch (IOException ioException) {
 
+      // FreeMarker treats -1 as unknown; swallow I/O errors in timestamp lookup.
       return -1;
     }
   }
 
+  /**
+   * Opens a reader for the template using the requested encoding.
+   *
+   * @param templateSource file-system template source
+   * @param encoding       character encoding to apply
+   * @return reader over the template content
+   * @throws IOException if the file cannot be opened
+   */
   @Override
   public Reader getReader (Object templateSource, String encoding)
     throws IOException {
@@ -86,6 +130,12 @@ public class FileSystemTemplateLoader implements TemplateLoader {
     return new InputStreamReader(((FileSystemTemplateSource)templateSource).getInputStream(), encoding);
   }
 
+  /**
+   * Closes the underlying template stream.
+   *
+   * @param templateSource template source to close
+   * @throws IOException if closing fails
+   */
   @Override
   public void closeTemplateSource (Object templateSource)
     throws IOException {

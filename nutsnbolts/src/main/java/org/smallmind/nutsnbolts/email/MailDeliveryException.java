@@ -34,26 +34,49 @@ package org.smallmind.nutsnbolts.email;
 
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
+/**
+ * Exception thrown when a message cannot be sent.
+ */
 public class MailDeliveryException extends FormattedException {
 
+  /**
+   * Creates an exception with no detail message.
+   */
   public MailDeliveryException () {
 
     super();
   }
 
+  /**
+   * Creates an exception with a formatted message.
+   *
+   * @param message message pattern
+   * @param args    pattern arguments
+   */
   public MailDeliveryException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * Creates an exception with a cause and formatted message.
+   *
+   * @param throwable underlying cause
+   * @param message   message pattern
+   * @param args      pattern arguments
+   */
   public MailDeliveryException (Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);
   }
 
+  /**
+   * Creates an exception wrapping another throwable.
+   *
+   * @param throwable underlying cause
+   */
   public MailDeliveryException (Throwable throwable) {
 
     super(throwable);
   }
 }
-

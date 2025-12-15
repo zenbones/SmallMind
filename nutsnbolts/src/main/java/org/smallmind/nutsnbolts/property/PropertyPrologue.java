@@ -34,12 +34,23 @@ package org.smallmind.nutsnbolts.property;
 
 import org.smallmind.nutsnbolts.security.kms.Decryptor;
 
+/**
+ * Represents a discovered property prologue within an expression, capturing its position,
+ * prefix, and optional decryptor to apply to resolved values.
+ */
 public class PropertyPrologue {
 
   private final Decryptor decryptor;
   private final String prefix;
   private final int pos;
 
+  /**
+   * Creates a prologue descriptor.
+   *
+   * @param decryptor decryptor to apply if the property is encrypted; {@code null} for plain properties
+   * @param prefix    the matched prefix text
+   * @param pos       the index of the prefix in the expression
+   */
   public PropertyPrologue (Decryptor decryptor, String prefix, int pos) {
 
     this.decryptor = decryptor;
@@ -47,16 +58,25 @@ public class PropertyPrologue {
     this.pos = pos;
   }
 
+  /**
+   * @return decryptor to apply, or {@code null} when not encrypted
+   */
   public Decryptor getDecryptor () {
 
     return decryptor;
   }
 
+  /**
+   * @return the matched prefix text
+   */
   public String getPrefix () {
 
     return prefix;
   }
 
+  /**
+   * @return the position of the prefix within the expression
+   */
   public int getPos () {
 
     return pos;

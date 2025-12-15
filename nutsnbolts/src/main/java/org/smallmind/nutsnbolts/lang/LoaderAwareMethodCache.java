@@ -38,16 +38,35 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.reflect.Method;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Cache keyed by {@link Method}, segmented by the defining class's {@link ClassLoader}. Segments are
+ * cleaned up automatically when the associated loader is collected.
+ *
+ * @param <T> value type stored for each method
+ */
 public class LoaderAwareMethodCache<T> {
 
   private final ReferenceQueue<ClassLoader> referenceQueue = new ReferenceQueue<>();
   private final ConcurrentHashMap<LoaderKey, ConcurrentHashMap<Method, T>> loaderMap = new ConcurrentHashMap<>();
 
+  /**
+   * Retrieves a cached value for the given method in its class loader segment.
+   *
+   * @param method the method key
+   * @return the cached value, or {@code null} if absent
+   */
   public T get (Method method) {
 
     return getMethodMap(method).get(method);
   }
 
+  /**
+   * Adds or replaces a value for the supplied method within its loader segment.
+   *
+   * @param method the method key
+   * @param value  the value to store
+   * @return the prior value associated with the method, or {@code null} if none
+   */
   public T put (Method method, T value) {
 
     clearExpiredReferences();
@@ -55,6 +74,13 @@ public class LoaderAwareMethodCache<T> {
     return getMethodMap(method).put(method, value);
   }
 
+  /**
+   * Adds a value for the supplied method only if one is not already present.
+   *
+   * @param method the method key
+   * @param value  the value to store if absent
+   * @return the existing value if present; otherwise {@code null}
+   */
   public T putIfAbsent (Method method, T value) {
 
     clearExpiredReferences();
@@ -62,6 +88,12 @@ public class LoaderAwareMethodCache<T> {
     return getMethodMap(method).putIfAbsent(method, value);
   }
 
+  /**
+   * Retrieves the map corresponding to the method's defining class loader, creating it if absent.
+   *
+   * @param method the method whose loader determines the segment
+   * @return a concurrent map for the loader
+   */
   private ConcurrentHashMap<Method, T> getMethodMap (Method method) {
 
     ConcurrentHashMap<Method, T> methodMap;
@@ -79,6 +111,9 @@ public class LoaderAwareMethodCache<T> {
     return methodMap;
   }
 
+  /**
+   * Removes loader segments whose associated class loaders have been collected.
+   */
   private void clearExpiredReferences () {
 
     Reference<?> reference;
@@ -90,10 +125,18 @@ public class LoaderAwareMethodCache<T> {
     }
   }
 
+  /**
+   * Phantom reference keyed by loader identity to support cleanup when loaders are collected.
+   */
   private class LoaderKey extends PhantomReference<ClassLoader> {
 
     private final int identityHashCode;
 
+    /**
+     * Creates a key that tracks the supplied loader for cleanup.
+     *
+     * @param classLoader the loader to monitor
+     */
     public LoaderKey (ClassLoader classLoader) {
 
       super(classLoader, referenceQueue);
@@ -101,12 +144,23 @@ public class LoaderAwareMethodCache<T> {
       identityHashCode = System.identityHashCode(classLoader);
     }
 
+    /**
+     * Uses the loader's identity hash code for stable hashing.
+     *
+     * @return the identity hash code of the tracked loader
+     */
     @Override
     public int hashCode () {
 
       return identityHashCode;
     }
 
+    /**
+     * Compares loader keys by stored identity hash code.
+     *
+     * @param obj the object to compare
+     * @return {@code true} when the identity hash codes match
+     */
     @Override
     public boolean equals (Object obj) {
 

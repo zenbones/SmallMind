@@ -34,12 +34,21 @@ package org.smallmind.nutsnbolts.lang;
 
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Holds application-scoped data in an {@link InheritableThreadLocal} map keyed by a
+ * {@link PerApplicationDataManager} type. Allows threads to share application-level context
+ * safely across child threads.
+ */
 public class PerApplicationContext {
 
   private static final InheritableThreadLocal<ConcurrentHashMap<Class<? extends PerApplicationDataManager>, Object>> PER_APPLICATION_MAP_LOCAL = new InheritableThreadLocal<>();
 
   private ConcurrentHashMap<Class<? extends PerApplicationDataManager>, Object> perApplicationMap;
 
+  /**
+   * Initializes the context, creating the per-application map if one has not already been attached
+   * to the current thread.
+   */
   public PerApplicationContext () {
 
     if ((perApplicationMap = PER_APPLICATION_MAP_LOCAL.get()) == null) {
@@ -47,6 +56,13 @@ public class PerApplicationContext {
     }
   }
 
+  /**
+   * Stores per-application data under the manager type for the current thread.
+   *
+   * @param clazz the manager key
+   * @param data  the data to associate with the manager
+   * @throws MissingPerApplicationContextException if the context has not been initialized on this thread
+   */
   public static void setPerApplicationData (Class<? extends PerApplicationDataManager> clazz, Object data) {
 
     ConcurrentHashMap<Class<? extends PerApplicationDataManager>, Object> perApplicationMap;
@@ -59,6 +75,16 @@ public class PerApplicationContext {
     }
   }
 
+  /**
+   * Retrieves per-application data for the given manager type.
+   *
+   * @param clazz the manager key
+   * @param type  the expected data type
+   * @param <K>   the generic type of the returned object
+   * @return the data associated with the manager, or {@code null} if none
+   * @throws MissingPerApplicationContextException if the context has not been initialized on this thread
+   * @throws ClassCastException                    if the stored value cannot be cast to the expected type
+   */
   public static <K> K getPerApplicationData (Class<? extends PerApplicationDataManager> clazz, Class<K> type) {
 
     ConcurrentHashMap<Class<? extends PerApplicationDataManager>, Object> perApplicationMap;
@@ -71,6 +97,9 @@ public class PerApplicationContext {
     }
   }
 
+  /**
+   * Attaches the current per-application map to the thread, making it available to child threads.
+   */
   public void prepareThread () {
 
     PER_APPLICATION_MAP_LOCAL.set(perApplicationMap);

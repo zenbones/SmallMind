@@ -35,8 +35,19 @@ package org.smallmind.nutsnbolts.http;
 import java.io.UnsupportedEncodingException;
 import org.smallmind.nutsnbolts.util.Tuple;
 
+/**
+ * Utility for encoding Tuples as query strings and parsing query strings back to Tuples.
+ */
 public class HTTPCodec {
 
+  /**
+   * Builds an application/x-www-form-urlencoded query string from a tuple.
+   *
+   * @param tuple       ordered key/value pairs to encode
+   * @param ignoredKeys optional keys that should be emitted verbatim without encoding
+   * @return encoded query string
+   * @throws UnsupportedEncodingException if encoding fails
+   */
   public static String urlEncode (Tuple<String, String> tuple, String... ignoredKeys)
     throws UnsupportedEncodingException {
 
@@ -57,6 +68,13 @@ public class HTTPCodec {
     return dataBuilder.toString();
   }
 
+  /**
+   * Determines whether a tuple key should bypass encoding.
+   *
+   * @param key         key to test
+   * @param ignoredKeys optional array of unencoded keys
+   * @return {@code true} if the key should be emitted verbatim
+   */
   private static boolean isIgnoredKey (String key, String[] ignoredKeys) {
 
     if ((ignoredKeys != null) && (ignoredKeys.length > 0)) {
@@ -71,6 +89,13 @@ public class HTTPCodec {
     return false;
   }
 
+  /**
+   * Parses an application/x-www-form-urlencoded query string into a tuple.
+   *
+   * @param queryString query portion of a URL
+   * @return tuple containing decoded keys and values (in order)
+   * @throws UnsupportedEncodingException if the input is not valid percent-encoding
+   */
   public static Tuple<String, String> urlDecode (String queryString)
     throws UnsupportedEncodingException {
 
@@ -94,6 +119,13 @@ public class HTTPCodec {
     return tuple;
   }
 
+  /**
+   * Decodes an individual {@code key=value} pair and appends it to the tuple.
+   *
+   * @param tuple       destination tuple
+   * @param pairBuilder buffer containing the pair
+   * @throws UnsupportedEncodingException if the pair is malformed or not encoded
+   */
   private static void decodeTuple (Tuple<String, String> tuple, StringBuilder pairBuilder)
     throws UnsupportedEncodingException {
 
@@ -106,4 +138,3 @@ public class HTTPCodec {
     tuple.addPair(URLCodec.urlDecode(pairBuilder.substring(0, equalsPos)), URLCodec.urlDecode(pairBuilder.substring(equalsPos + 1)));
   }
 }
-

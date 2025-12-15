@@ -32,6 +32,9 @@
  */
 package org.smallmind.nutsnbolts.layout;
 
+/**
+ * Governs how space is distributed when laying out children along an axis.
+ */
 public enum Justification {
 
   LEADING, TRAILING, FIRST, LAST, CENTER

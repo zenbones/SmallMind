@@ -34,23 +34,41 @@ package org.smallmind.nutsnbolts.context;
 
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
+/**
+ * Indicates an error while managing contextual data.
+ */
 public class ContextException extends FormattedRuntimeException {
 
+  /**
+   * Constructs an empty exception.
+   */
   public ContextException () {
 
     super();
   }
 
+  /**
+   * @param message formatted error message
+   * @param args    message parameters
+   */
   public ContextException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * @param throwable underlying cause
+   * @param message   formatted error message
+   * @param args      message parameters
+   */
   public ContextException (Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);
   }
 
+  /**
+   * @param throwable underlying cause
+   */
   public ContextException (Throwable throwable) {
 
     super(throwable);

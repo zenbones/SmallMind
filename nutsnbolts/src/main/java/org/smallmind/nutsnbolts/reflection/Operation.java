@@ -34,11 +34,19 @@ package org.smallmind.nutsnbolts.reflection;
 
 import java.lang.reflect.Method;
 
+/**
+ * Represents a method signature by name and parameter type names.
+ */
 public class Operation {
 
   private final String operationName;
   private final String[] signatureNames;
 
+  /**
+   * Creates an operation representation from a reflected method.
+   *
+   * @param method the method to describe
+   */
   public Operation (Method method) {
 
     Class[] signature;
@@ -52,22 +60,39 @@ public class Operation {
     }
   }
 
+  /**
+   * Creates an operation representation from explicit values.
+   *
+   * @param operationName  the method name
+   * @param signatureNames fully qualified parameter type names in declaration order
+   */
   public Operation (String operationName, String[] signatureNames) {
 
     this.operationName = operationName;
     this.signatureNames = signatureNames;
   }
 
+  /**
+   * @return the name of the operation
+   */
   public String getOperationName () {
 
     return operationName;
   }
 
+  /**
+   * @return the parameter type names for this operation
+   */
   public String[] getSignatureNames () {
 
     return signatureNames;
   }
 
+  /**
+   * Computes a hash over the operation name and signature for use in hash collections.
+   *
+   * @return a hash code for this operation
+   */
   public int hashCode () {
 
     int hashCode;
@@ -80,6 +105,12 @@ public class Operation {
     return hashCode;
   }
 
+  /**
+   * Compares operations by name and ordered parameter type names.
+   *
+   * @param o the object to compare
+   * @return {@code true} if the operations represent the same signature
+   */
   public boolean equals (Object o) {
 
     if (o instanceof Operation) {

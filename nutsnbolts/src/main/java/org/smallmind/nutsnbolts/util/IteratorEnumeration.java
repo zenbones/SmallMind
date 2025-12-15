@@ -35,21 +35,35 @@ package org.smallmind.nutsnbolts.util;
 import java.util.Enumeration;
 import java.util.Iterator;
 
+/**
+ * Adapts an {@link Iterator} to the {@link Enumeration} API.
+ *
+ * @param <T> element type
+ */
 public class IteratorEnumeration<T> implements Enumeration<T> {
 
   private final Iterator<T> internalIterator;
 
+  /**
+   * @param internalIterator iterator to expose as an enumeration
+   */
   public IteratorEnumeration (Iterator<T> internalIterator) {
 
     this.internalIterator = internalIterator;
   }
 
+  /**
+   * @return {@code true} if the wrapped iterator has more elements
+   */
   @Override
   public boolean hasMoreElements () {
 
     return internalIterator.hasNext();
   }
 
+  /**
+   * Returns the next element from the wrapped iterator.
+   */
   @Override
   public T nextElement () {
 

@@ -34,17 +34,33 @@ package org.smallmind.nutsnbolts.util;
 
 import org.smallmind.nutsnbolts.time.Stint;
 
+/**
+ * Wrapper around a map key carrying an expiration time for self-destruction.
+ *
+ * @param <K> comparable key type
+ */
 public class SelfDestructiveKey<K extends Comparable<K>> implements Comparable<SelfDestructiveKey<K>> {
 
   private final K mapKey;
   private final Stint timeoutStint;
   private final long ignitionTime;
 
+  /**
+   * Constructs a key without an underlying map key, using the provided timeout.
+   *
+   * @param timeoutStint timeout before destruction
+   */
   public SelfDestructiveKey (Stint timeoutStint) {
 
     this(null, timeoutStint);
   }
 
+  /**
+   * Constructs a key associated with a map key and timeout.
+   *
+   * @param mapKey       underlying key
+   * @param timeoutStint timeout before destruction
+   */
   public SelfDestructiveKey (K mapKey, Stint timeoutStint) {
 
     this.mapKey = mapKey;
@@ -53,21 +69,33 @@ public class SelfDestructiveKey<K extends Comparable<K>> implements Comparable<S
     ignitionTime = System.currentTimeMillis() + timeoutStint.toMilliseconds();
   }
 
+  /**
+   * @return underlying map key
+   */
   public K getMapKey () {
 
     return mapKey;
   }
 
+  /**
+   * @return timeout stint used when this key was created
+   */
   public Stint getTimeoutStint () {
 
     return timeoutStint;
   }
 
+  /**
+   * @return absolute expiration time in milliseconds since epoch
+   */
   public long getIgnitionTime () {
 
     return ignitionTime;
   }
 
+  /**
+   * Orders keys by ignition time, then by underlying key when present.
+   */
   @Override
   public int compareTo (SelfDestructiveKey<K> key) {
 
@@ -81,12 +109,18 @@ public class SelfDestructiveKey<K extends Comparable<K>> implements Comparable<S
     return comparison;
   }
 
+  /**
+   * Hashes based on the underlying map key.
+   */
   @Override
   public int hashCode () {
 
     return mapKey.hashCode();
   }
 
+  /**
+   * Equality is based on the underlying map key value.
+   */
   @Override
   public boolean equals (Object obj) {
 

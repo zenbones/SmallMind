@@ -32,21 +32,33 @@
  */
 package org.smallmind.nutsnbolts.command.template;
 
+/**
+ * Argument that accepts a single value.
+ */
 public class SingleArgument extends Argument {
 
   private final String description;
 
+  /**
+   * @param description hint describing the expected value
+   */
   public SingleArgument (String description) {
 
     this.description = description;
   }
 
+  /**
+   * @return {@link ArgumentType#SINGLE}
+   */
   @Override
   public ArgumentType getType () {
 
     return ArgumentType.SINGLE;
   }
 
+  /**
+   * @return description string for help output
+   */
   public String getDescription () {
 
     return description;

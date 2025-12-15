@@ -32,24 +32,9 @@
  */
 package org.smallmind.nutsnbolts.layout;
 
-public class Pair {
+/**
+ * Simple immutable pair of doubles used to represent two-dimensional values.
+ */
+public record Pair(double first, double second) {
 
-  private final double first;
-  private final double second;
-
-  public Pair (double first, double second) {
-
-    this.first = first;
-    this.second = second;
-  }
-
-  public double getFirst () {
-
-    return first;
-  }
-
-  public double getSecond () {
-
-    return second;
-  }
 }

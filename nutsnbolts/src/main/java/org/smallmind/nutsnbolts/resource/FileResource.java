@@ -38,18 +38,33 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
+/**
+ * {@link Resource} implementation that reads directly from the local filesystem.
+ */
 public class FileResource extends AbstractResource {
 
+  /**
+   * @param path file system path to the target resource
+   */
   public FileResource (String path) {
 
     super(path);
   }
 
+  /**
+   * @return {@code file}
+   */
   public String getScheme () {
 
     return "file";
   }
 
+  /**
+   * Opens the referenced file for reading.
+   *
+   * @return input stream for the file contents
+   * @throws ResourceException if the file cannot be opened
+   */
   public InputStream getInputStream ()
     throws ResourceException {
 

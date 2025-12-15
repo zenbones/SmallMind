@@ -32,6 +32,9 @@
  */
 package org.smallmind.nutsnbolts.util;
 
+/**
+ * UUID version numbers, including custom extensions.
+ */
 public enum UUIDVersion {
 
   DATE_TIME_MAC(1),
@@ -44,11 +47,17 @@ public enum UUIDVersion {
 
   private final int version;
 
+  /**
+   * @param version numeric version code
+   */
   UUIDVersion (int version) {
 
     this.version = version;
   }
 
+  /**
+   * @return version field integer value
+   */
   public int getVersion () {
 
     return version;

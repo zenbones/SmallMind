@@ -123,6 +123,6 @@ public class JavaFxParaboxElement extends ComponentParaboxElement<Node> {
   @Override
   public void applyLayout (Pair location, Pair size) {
 
-    getPart().resizeRelocate(location.getFirst(), location.getSecond(), size.getFirst(), size.getSecond());
+    getPart().resizeRelocate(location.first(), location.second(), size.first(), size.second());
   }
 }

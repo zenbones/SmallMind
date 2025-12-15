@@ -36,11 +36,21 @@ import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Expands comma-delimited alphabetic ranges (e.g. {@code a..c,z}) into arrays of characters.
+ */
 public class AlphaSpread {
 
   private static final Pattern LETTER_PATTERN = Pattern.compile("[a-z]");
   private static final Pattern SPREAD_PATTERN = Pattern.compile("([a-z])\\.\\.([a-z])");
 
+  /**
+   * Parses and expands the supplied alpha spread expression.
+   *
+   * @param letters comma-separated list of single letters or ranges
+   * @return ordered array of characters represented by the spread
+   * @throws SpreadParserException if parsing fails or an element is empty/invalid
+   */
   public static char[] calculate (String letters)
     throws SpreadParserException {
 
@@ -56,7 +66,7 @@ public class AlphaSpread {
       int index = 0;
 
       for (String zone : zones) {
-        if (zone.strip().isEmpty()) {
+        if (zone.isBlank()) {
           throw new SpreadParserException("Empty elements are not allowed");
         }
 

@@ -35,16 +35,31 @@ package org.smallmind.nutsnbolts.json;
 import java.util.Date;
 import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 
+/**
+ * JAXB adapter converting milliseconds-since-epoch timestamps to ISO-8601 strings and back.
+ */
 public class TimestampXmlAdapter extends XmlAdapter<String, Long> {
 
   private static final DateXmlAdapter DATE_XML_ADAPTER = new DateXmlAdapter();
 
+  /**
+   * Parses an ISO-8601 string into a millisecond timestamp.
+   *
+   * @param value formatted date/time text
+   * @return timestamp in milliseconds, or {@code null} when the input is {@code null}
+   */
   @Override
   public Long unmarshal (String value) {
 
     return (value == null) ? null : DATE_XML_ADAPTER.unmarshal(value).getTime();
   }
 
+  /**
+   * Formats a timestamp into an ISO-8601 string.
+   *
+   * @param timestamp milliseconds since the epoch
+   * @return formatted date/time, or {@code null} when the input is {@code null}
+   */
   @Override
   public String marshal (Long timestamp) {
 

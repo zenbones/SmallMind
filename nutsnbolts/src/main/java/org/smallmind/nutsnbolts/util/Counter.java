@@ -32,20 +32,37 @@
  */
 package org.smallmind.nutsnbolts.util;
 
+/**
+ * Simple mutable integer counter with increment/decrement helpers.
+ */
 public class Counter {
 
   private int count;
 
+  /**
+   * Initializes the counter to zero.
+   */
   public Counter () {
 
     count = 0;
   }
 
+  /**
+   * Initializes the counter to the provided value.
+   *
+   * @param count starting value
+   */
   public Counter (int count) {
 
     this.count = count;
   }
 
+  /**
+   * Adds the delta and returns the updated value.
+   *
+   * @param delta amount to add
+   * @return new counter value
+   */
   public int addAndGet (int delta) {
 
     count += delta;
@@ -53,6 +70,12 @@ public class Counter {
     return count;
   }
 
+  /**
+   * Returns the current value, then adds the delta.
+   *
+   * @param delta amount to add
+   * @return value before increment
+   */
   public int getAndAdd (int delta) {
 
     int current = count;
@@ -62,6 +85,12 @@ public class Counter {
     return current;
   }
 
+  /**
+   * Subtracts the delta and returns the updated value.
+   *
+   * @param delta amount to subtract
+   * @return new counter value
+   */
   public int subtractAndGet (int delta) {
 
     count -= delta;
@@ -69,6 +98,12 @@ public class Counter {
     return count;
   }
 
+  /**
+   * Returns the current value, then subtracts the delta.
+   *
+   * @param delta amount to subtract
+   * @return value before decrement
+   */
   public int getAndSubtract (int delta) {
 
     int current = count;
@@ -78,26 +113,49 @@ public class Counter {
     return current;
   }
 
+  /**
+   * Increments and returns the updated value.
+   *
+   * @return incremented value
+   */
   public int incAndGet () {
 
     return ++count;
   }
 
+  /**
+   * Returns the current value, then increments.
+   *
+   * @return value before increment
+   */
   public int getAndInc () {
 
     return count++;
   }
 
+  /**
+   * Decrements and returns the updated value.
+   *
+   * @return decremented value
+   */
   public int decAndGet () {
 
     return --count;
   }
 
+  /**
+   * Returns the current value, then decrements.
+   *
+   * @return value before decrement
+   */
   public int getAndDec () {
 
     return count--;
   }
 
+  /**
+   * @return current counter value
+   */
   public int get () {
 
     return count;

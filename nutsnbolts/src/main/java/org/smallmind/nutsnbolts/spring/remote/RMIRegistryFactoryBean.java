@@ -42,6 +42,9 @@ import java.rmi.server.RMIServerSocketFactory;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
+/**
+ * Creates or retrieves an RMI registry, optionally using custom socket factories, and exposes it as a singleton bean.
+ */
 public class RMIRegistryFactoryBean implements FactoryBean<Registry>, InitializingBean {
 
   private Registry registry;
@@ -50,26 +53,52 @@ public class RMIRegistryFactoryBean implements FactoryBean<Registry>, Initializi
   private String host;
   private int port;
 
+  /**
+   * Sets the host name or address where the registry should be located or created.
+   *
+   * @param host the host of the registry to locate or create (optional)
+   */
   public void setHost (String host) {
 
     this.host = host;
   }
 
+  /**
+   * Sets the port on which the registry is expected to listen.
+   *
+   * @param port the registry port
+   */
   public void setPort (int port) {
 
     this.port = port;
   }
 
+  /**
+   * Supplies an optional client socket factory to use when connecting to or creating the registry.
+   *
+   * @param clientSocketFactory optional client socket factory
+   */
   public void setClientSocketFactory (RMIClientSocketFactory clientSocketFactory) {
 
     this.clientSocketFactory = clientSocketFactory;
   }
 
+  /**
+   * Supplies an optional server socket factory to use when creating the registry.
+   *
+   * @param serverSocketFactory optional server socket factory
+   */
   public void setServerSocketFactory (RMIServerSocketFactory serverSocketFactory) {
 
     this.serverSocketFactory = serverSocketFactory;
   }
 
+  /**
+   * Returns the RMI registry instance created or discovered during initialization.
+   *
+   * @return the resolved {@link Registry} instance
+   * @throws Exception if the registry cannot be supplied
+   */
   @Override
   public Registry getObject ()
     throws Exception {
@@ -77,18 +106,34 @@ public class RMIRegistryFactoryBean implements FactoryBean<Registry>, Initializi
     return registry;
   }
 
+  /**
+   * Returns the factory product type.
+   *
+   * @return the {@link Registry} class
+   */
   @Override
   public Class<?> getObjectType () {
 
     return Registry.class;
   }
 
+  /**
+   * Indicates that this factory always exposes a singleton instance.
+   *
+   * @return {@code true} always
+   */
   @Override
   public boolean isSingleton () {
 
     return true;
   }
 
+  /**
+   * Locates an existing RMI registry or creates a new one using the configured host, port, and optional socket factories.
+   *
+   * @throws UnknownHostException if the configured host cannot be resolved
+   * @throws RemoteException      if the registry cannot be reached or created remotely
+   */
   @Override
   public void afterPropertiesSet ()
     throws UnknownHostException, RemoteException {

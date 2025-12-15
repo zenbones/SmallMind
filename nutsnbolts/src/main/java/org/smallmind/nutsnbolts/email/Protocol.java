@@ -36,6 +36,9 @@ import java.util.Properties;
 import jakarta.mail.Authenticator;
 import jakarta.mail.Session;
 
+/**
+ * Supported mail transport protocols and factory for preconfigured {@link Session}s.
+ */
 public enum Protocol {
 
   SMTP("smtp", "smtp", false), SMTPS("smtps", "smtp", true);
@@ -51,6 +54,14 @@ public enum Protocol {
     this.secure = secure;
   }
 
+  /**
+   * Creates a Jakarta Mail {@link Session} configured for this protocol.
+   *
+   * @param host           mail server host
+   * @param port           mail server port
+   * @param authentication authentication strategy and credentials
+   * @return configured mail session
+   */
   public Session getSession (String host, int port, Authentication authentication) {
 
     Properties properties = new Properties();

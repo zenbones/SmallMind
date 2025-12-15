@@ -34,23 +34,47 @@ package org.smallmind.nutsnbolts.servlet;
 
 import jakarta.servlet.ServletException;
 
+/**
+ * {@link ServletException} variant that supports formatted messages.
+ */
 public class FormattedServletException extends ServletException {
 
+  /**
+   * Creates an exception with no detail message.
+   */
   public FormattedServletException () {
 
     super();
   }
 
+  /**
+   * Creates an exception with a formatted detail message.
+   *
+   * @param message a {@link java.util.Formatter}-style message
+   * @param args    values interpolated into the message
+   */
   public FormattedServletException (String message, Object... args) {
 
     super(message == null ? null : String.format(message, args));
   }
 
+  /**
+   * Creates an exception with a formatted detail message and a cause.
+   *
+   * @param throwable the underlying cause
+   * @param message   a {@link java.util.Formatter}-style message
+   * @param args      values interpolated into the message
+   */
   public FormattedServletException (Throwable throwable, String message, Object... args) {
 
     super(message == null ? null : String.format(message, args), throwable);
   }
 
+  /**
+   * Creates an exception with a cause and no detail message.
+   *
+   * @param throwable the underlying cause
+   */
   public FormattedServletException (Throwable throwable) {
 
     super(throwable);

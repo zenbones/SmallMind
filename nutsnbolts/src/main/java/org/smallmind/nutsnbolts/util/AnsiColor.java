@@ -32,6 +32,9 @@
  */
 package org.smallmind.nutsnbolts.util;
 
+/**
+ * ANSI escape codes for text colors (including bright variants) plus reset/default.
+ */
 public enum AnsiColor {
 
   DEFAULT("\u001B[39m"),
@@ -55,11 +58,17 @@ public enum AnsiColor {
 
   private final String code;
 
+  /**
+   * @param code ANSI escape sequence
+   */
   AnsiColor (String code) {
 
     this.code = code;
   }
 
+  /**
+   * @return the ANSI escape sequence for this color
+   */
   public String getCode () {
 
     return code;

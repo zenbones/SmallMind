@@ -34,18 +34,31 @@ package org.smallmind.nutsnbolts.xml.sax;
 
 import org.xml.sax.SAXException;
 
+/**
+ * No-op base implementation of {@link DocumentExtender} to simplify subclasses.
+ * Subclasses can override only the callbacks they need.
+ */
 public abstract class AbstractDocumentExtender implements DocumentExtender {
 
+  /**
+   * {@inheritDoc}
+   */
   public void startDocument ()
     throws SAXException {
 
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public void endDocument ()
     throws SAXException {
 
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public void completedChildElement (ElementExtender elementExtender)
     throws SAXException {
 

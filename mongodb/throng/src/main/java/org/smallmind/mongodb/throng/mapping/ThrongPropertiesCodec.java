@@ -60,10 +60,10 @@ public class ThrongPropertiesCodec<T> implements Codec<T>, IndexProvider {
     this.throngProperties = throngProperties;
   }
 
-  @Override
   /**
    * {@inheritDoc}
    */
+  @Override
   public Class<T> getEncoderClass () {
 
     return throngProperties.getEntityClass();
@@ -77,21 +77,21 @@ public class ThrongPropertiesCodec<T> implements Codec<T>, IndexProvider {
     return throngProperties.isStoreNulls();
   }
 
-  @Override
   /**
    * {@inheritDoc}
    */
+  @Override
   public ThrongIndexes provideIndexes () {
 
     return throngProperties.provideIndexes();
   }
 
-  @Override
   /**
    * Decodes a BSON document into an instance of the mapped class using configured property codecs.
    *
    * @throws ThrongRuntimeException if the instance cannot be constructed or fields cannot be set
    */
+  @Override
   public T decode (BsonReader reader, DecoderContext decoderContext) {
 
     if (BsonType.NULL.equals(reader.getCurrentBsonType())) {
@@ -124,12 +124,12 @@ public class ThrongPropertiesCodec<T> implements Codec<T>, IndexProvider {
     }
   }
 
-  @Override
   /**
    * Encodes an object by iterating its mapped properties and writing names/values to the writer.
    *
    * @throws ThrongRuntimeException if property values cannot be accessed
    */
+  @Override
   public void encode (BsonWriter writer, T value, EncoderContext encoderContext) {
 
     for (ThrongProperty throngProperty : throngProperties.values()) {

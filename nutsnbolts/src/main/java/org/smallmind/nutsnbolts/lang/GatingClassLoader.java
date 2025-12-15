@@ -65,6 +65,12 @@ import org.smallmind.nutsnbolts.util.IteratorEnumeration;
       }
 */
 
+/**
+ * {@link SecureClassLoader} that loads classes from one or more {@link ClassGate}s and can detect
+ * stale classes based on last-modified timestamps. A grace period governs how long a loaded class
+ * remains valid before its source is checked for updates, throwing {@link StaleClassLoaderException}
+ * when newer bytes are detected.
+ */
 public class GatingClassLoader extends SecureClassLoader {
 
   private final HashMap<String, ClassGateTicket> ticketMap;
@@ -77,11 +83,24 @@ public class GatingClassLoader extends SecureClassLoader {
     ClassLoader.registerAsParallelCapable();
   }
 
+  /**
+   * Constructs a loader with no explicit parent using the supplied grace period and class gates.
+   *
+   * @param gracePeriodSeconds number of seconds before checking for class staleness; negative to disable checks
+   * @param classGates         the gates used to resolve classes and resources
+   */
   public GatingClassLoader (int gracePeriodSeconds, ClassGate... classGates) {
 
     this(null, gracePeriodSeconds, classGates);
   }
 
+  /**
+   * Constructs a loader with the given parent, grace period, and class gates.
+   *
+   * @param parent             the parent class loader, or {@code null} to use the bootstrap/system loaders
+   * @param gracePeriodSeconds number of seconds before checking for class staleness; negative to disable checks
+   * @param classGates         the gates used to resolve classes and resources
+   */
   public GatingClassLoader (ClassLoader parent, int gracePeriodSeconds, ClassGate... classGates) {
 
     super(parent);
@@ -98,17 +117,30 @@ public class GatingClassLoader extends SecureClassLoader {
     ticketMap = new HashMap<>();
   }
 
+  /**
+   * Returns the set of gates this loader consults.
+   *
+   * @return the configured class gates
+   */
   public ClassGate[] getClassGates () {
 
     return classGates;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   protected PermissionCollection getPermissions (CodeSource codesource) {
 
     return super.getPermissions(codesource);
   }
 
+  /**
+   * {@inheritDoc}
+   * <p>
+   * After loading a class, optionally checks for staleness once the configured grace period has elapsed.
+   */
   @Override
   public synchronized Class<?> loadClass (String name, boolean resolve)
     throws ClassNotFoundException {
@@ -162,6 +194,12 @@ public class GatingClassLoader extends SecureClassLoader {
     return gatedClass;
   }
 
+  /**
+   * {@inheritDoc}
+   * <p>
+   * Iterates through configured gates to locate and define the requested class. Updates the ticket map
+   * when staleness detection is enabled.
+   */
   @Override
   public synchronized Class<?> findClass (String name)
     throws ClassNotFoundException {
@@ -200,6 +238,11 @@ public class GatingClassLoader extends SecureClassLoader {
     throw new ClassNotFoundException(name);
   }
 
+  /**
+   * Defines a package for the supplied class name if it has not been defined already.
+   *
+   * @param name the fully qualified class name
+   */
   private void definePackage (String name) {
 
     String packageName;
@@ -211,6 +254,13 @@ public class GatingClassLoader extends SecureClassLoader {
     }
   }
 
+  /**
+   * Reads class bytes from an input stream into a byte array.
+   *
+   * @param classInputStream the stream containing class data
+   * @return the class bytes
+   * @throws IOException if reading fails
+   */
   private byte[] getClassData (InputStream classInputStream)
     throws IOException {
 
@@ -227,6 +277,11 @@ public class GatingClassLoader extends SecureClassLoader {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   * <p>
+   * Falls back to configured gates when the parent loader cannot supply the resource.
+   */
   @Override
   public InputStream getResourceAsStream (String name) {
 
@@ -250,6 +305,11 @@ public class GatingClassLoader extends SecureClassLoader {
     return null;
   }
 
+  /**
+   * {@inheritDoc}
+   * <p>
+   * Attempts to locate a resource via the configured gates when not found by the parent loader.
+   */
   @Override
   public URL findResource (String name) {
 
@@ -268,6 +328,11 @@ public class GatingClassLoader extends SecureClassLoader {
     return null;
   }
 
+  /**
+   * {@inheritDoc}
+   * <p>
+   * Aggregates resource URLs from all configured gates.
+   */
   @Override
   protected Enumeration<URL> findResources (String name) {
 

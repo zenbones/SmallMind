@@ -37,15 +37,26 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
+/**
+ * Adapts a {@link ByteBuffer} to an {@link InputStream} reading from the buffer's current position.
+ */
 public class ByteBufferInputStream extends InputStream {
 
   private final ByteBuffer buffer;
 
+  /**
+   * @param buffer buffer to read; consumed from current position up to its limit
+   */
   public ByteBufferInputStream (ByteBuffer buffer) {
 
     this.buffer = buffer;
   }
 
+  /**
+   * Reads a single byte or -1 when the buffer is exhausted.
+   *
+   * @throws IOException never thrown; declared for signature compatibility
+   */
   @Override
   public int read ()
     throws IOException {
@@ -53,6 +64,13 @@ public class ByteBufferInputStream extends InputStream {
     return (buffer.position() < buffer.limit()) ? buffer.get() & 0xFF : -1;
   }
 
+  /**
+   * Reads up to {@code len} bytes into the array starting at {@code off}.
+   *
+   * @return number of bytes read or -1 if no bytes remain
+   * @throws IOException               never thrown; declared for signature compatibility
+   * @throws IndexOutOfBoundsException if the offset/length are invalid
+   */
   @Override
   public int read (byte[] b, int off, int len)
     throws IOException {

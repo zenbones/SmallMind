@@ -32,6 +32,9 @@
  */
 package org.smallmind.nutsnbolts.reflection;
 
+/**
+ * Indicates whether a filter should include only listed items or exclude them.
+ */
 public enum PassType {
 
   INCLUDE, EXCLUDE

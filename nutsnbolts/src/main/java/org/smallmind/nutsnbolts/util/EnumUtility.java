@@ -32,15 +32,31 @@
  */
 package org.smallmind.nutsnbolts.util;
 
+/**
+ * Helpers for transforming arbitrary strings into enum constant names.
+ */
 public class EnumUtility {
 
   private enum LetterState {NONE, DIGIT, UPPER_LETTER, LOWER_LETTER, WHITESPACE, OTHER}
 
+  /**
+   * Converts an arbitrary string into an upper snake-case enum name, prefixing digits as needed.
+   *
+   * @param anyCase source text
+   * @return enum-friendly name
+   */
   public static String toEnumName (String anyCase) {
 
     return toEnumName(anyCase, true);
   }
 
+  /**
+   * Converts an arbitrary string into an upper snake-case enum name.
+   *
+   * @param anyCase      source text
+   * @param prefixDigits whether to separate transitions into digit sequences with underscores
+   * @return enum-friendly name
+   */
   public static String toEnumName (String anyCase, boolean prefixDigits) {
 
     StringBuilder fieldBuilder = new StringBuilder();

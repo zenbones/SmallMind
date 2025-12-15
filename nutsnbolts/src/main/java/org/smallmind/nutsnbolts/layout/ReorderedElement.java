@@ -32,23 +32,35 @@
  */
 package org.smallmind.nutsnbolts.layout;
 
-public class ReorderedElement {
+/**
+ * Associates a {@link ParaboxElement} with its original index for reordering operations.
+ */
+public record ReorderedElement(ParaboxElement<?> reorderedElement, int originalIndex) {
 
-  private final ParaboxElement<?> reorderedElement;
-  private final int originalIndex;
+  /**
+   * Creates a record of an element and its original position.
+   *
+   * @param reorderedElement the element that was reordered
+   * @param originalIndex    the index prior to reordering
+   */
+  public ReorderedElement {
 
-  public ReorderedElement (ParaboxElement<?> reorderedElement, int originalIndex) {
-
-    this.reorderedElement = reorderedElement;
-    this.originalIndex = originalIndex;
   }
 
-  public ParaboxElement<?> getReorderedElement () {
+  /**
+   * @return the element after reordering
+   */
+  @Override
+  public ParaboxElement<?> reorderedElement () {
 
     return reorderedElement;
   }
 
-  public int getOriginalIndex () {
+  /**
+   * @return the element's original index
+   */
+  @Override
+  public int originalIndex () {
 
     return originalIndex;
   }

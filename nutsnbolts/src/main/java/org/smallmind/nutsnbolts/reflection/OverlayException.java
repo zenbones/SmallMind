@@ -34,8 +34,16 @@ package org.smallmind.nutsnbolts.reflection;
 
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
+/**
+ * Runtime exception thrown when overlay processing fails.
+ */
 public class OverlayException extends FormattedRuntimeException {
 
+  /**
+   * Constructs an exception wrapping the underlying failure.
+   *
+   * @param throwable the cause of the overlay failure
+   */
   public OverlayException (Throwable throwable) {
 
     super(throwable);

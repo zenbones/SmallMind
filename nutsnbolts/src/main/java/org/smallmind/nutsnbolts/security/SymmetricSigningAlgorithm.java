@@ -40,14 +40,38 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SignatureException;
 import org.smallmind.nutsnbolts.http.Base64Codec;
 
+/**
+ * Marker for symmetric signing algorithms that can generate and verify MACs.
+ */
 public interface SymmetricSigningAlgorithm extends SecurityAlgorithm {
 
+  /**
+   * Produces a MAC over the provided data using the given key.
+   *
+   * @param key  the secret key
+   * @param data the data to sign
+   * @return the MAC bytes
+   * @throws NoSuchAlgorithmException if the algorithm is unavailable
+   * @throws InvalidKeyException      if the key is invalid for the algorithm
+   */
   default byte[] sign (Key key, byte[] data)
     throws NoSuchAlgorithmException, InvalidKeyException {
 
     return EncryptionUtility.sign(this, key, data);
   }
 
+  /**
+   * Verifies a JWT-like three-part structure using this algorithm.
+   *
+   * @param key     the secret key
+   * @param parts   the token sections (header, payload, signature)
+   * @param urlSafe whether the signature is URL-safe Base64 encoded
+   * @return {@code true} if the signature is valid
+   * @throws IOException              if the signature cannot be decoded
+   * @throws NoSuchAlgorithmException if the algorithm is unavailable
+   * @throws InvalidKeyException      if the key is invalid for the algorithm
+   * @throws SignatureException       if verification fails
+   */
   default boolean verify (Key key, String[] parts, boolean urlSafe)
     throws IOException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
 

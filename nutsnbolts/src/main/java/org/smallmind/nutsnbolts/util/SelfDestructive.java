@@ -34,7 +34,15 @@ package org.smallmind.nutsnbolts.util;
 
 import org.smallmind.nutsnbolts.time.Stint;
 
+/**
+ * Contract for values that can destroy/release themselves when a timeout expires.
+ */
 public interface SelfDestructive {
 
+  /**
+   * Invoked when the owning {@link SelfDestructiveMap} decides the item has expired.
+   *
+   * @param timeoutStint stint that triggered destruction
+   */
   void destroy (Stint timeoutStint);
 }

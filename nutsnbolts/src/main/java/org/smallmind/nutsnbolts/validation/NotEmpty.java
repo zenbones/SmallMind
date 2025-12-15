@@ -45,23 +45,41 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+/**
+ * Bean Validation constraint that requires a collection, array, map, or string to have at least one element/character.
+ */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({FIELD, PARAMETER, METHOD, LOCAL_VARIABLE})
 @Constraint(validatedBy = NotEmptyValidator.class)
 public @interface NotEmpty {
 
+  /**
+   * Allows multiple {@link NotEmpty} annotations on the same element.
+   */
   @Target({FIELD, PARAMETER, METHOD, LOCAL_VARIABLE})
   @Retention(RUNTIME)
   @Documented
   @interface List {
 
+    /**
+     * @return array of {@link NotEmpty} constraints
+     */
     NotEmpty[] value ();
   }
 
+  /**
+   * @return validation message used when the value is empty
+   */
   String message () default "must be not be empty";
 
+  /**
+   * @return validation groups this constraint belongs to
+   */
   Class<?>[] groups () default {};
 
+  /**
+   * @return payload for clients of the Bean Validation API
+   */
   Class<? extends Payload>[] payload () default {};
 }

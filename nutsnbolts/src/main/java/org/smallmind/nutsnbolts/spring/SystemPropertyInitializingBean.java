@@ -42,6 +42,9 @@ import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.core.PriorityOrdered;
 
+/**
+ * Initializes JVM system properties early in the Spring lifecycle, with optional override and debug logging.
+ */
 public class SystemPropertyInitializingBean implements BeanFactoryPostProcessor, PriorityOrdered {
 
   private final TreeMap<String, String> debugMap = new TreeMap<>(new AlphaNumericComparator<String>());
@@ -50,27 +53,51 @@ public class SystemPropertyInitializingBean implements BeanFactoryPostProcessor,
   private boolean override = false;
   private int order;
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int getOrder () {
 
     return order;
   }
 
+  /**
+   * Sets the priority order.
+   *
+   * @param order priority value
+   */
   public void setOrder (int order) {
 
     this.order = order;
   }
 
+  /**
+   * Controls whether configured properties override existing system or environment values.
+   *
+   * @param override {@code true} to override existing values
+   */
   public void setOverride (boolean override) {
 
     this.override = override;
   }
 
+  /**
+   * Adds properties to be applied as system properties.
+   *
+   * @param propertyMap properties to set
+   */
   public void setPropertyMap (Map<String, String> propertyMap) {
 
     this.propertyMap.putAll(propertyMap);
   }
 
+  /**
+   * Enables debug logging for keys matching the supplied patterns.
+   *
+   * @param debugPatterns include/exclude patterns
+   * @throws DotNotationException if a pattern is invalid
+   */
   public void setDebugKeys (String[] debugPatterns)
     throws DotNotationException {
 
@@ -79,6 +106,12 @@ public class SystemPropertyInitializingBean implements BeanFactoryPostProcessor,
 
   @Override
   // We exist as a post processor merely to get into the first 'special' initialization phase
+  /**
+   * Applies configured system properties and logs selected keys when enabled.
+   *
+   * @param beanFactory the bean factory (unused)
+   * @throws BeansException if property setting fails
+   */
   public void postProcessBeanFactory (ConfigurableListableBeanFactory beanFactory)
     throws BeansException {
 

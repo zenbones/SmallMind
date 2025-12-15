@@ -75,10 +75,10 @@ public class ThrongIterable<T> implements Iterable<T> {
     return list;
   }
 
-  @Override
   /**
    * {@inheritDoc}
    */
+  @Override
   public Iterator<T> iterator () {
 
     return new ThrongIterator(findIterable.iterator());
@@ -101,19 +101,19 @@ public class ThrongIterable<T> implements Iterable<T> {
       this.mongoCursor = mongoCursor;
     }
 
-    @Override
     /**
      * {@inheritDoc}
      */
+    @Override
     public boolean hasNext () {
 
       return mongoCursor.hasNext();
     }
 
-    @Override
     /**
      * {@inheritDoc}
      */
+    @Override
     public T next () {
 
       return TranslationUtility.fromBson(codec, mongoCursor.next().getBsonDocument());

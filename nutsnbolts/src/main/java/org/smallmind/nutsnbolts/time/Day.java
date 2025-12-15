@@ -34,10 +34,18 @@ package org.smallmind.nutsnbolts.time;
 
 import org.smallmind.nutsnbolts.util.StringUtility;
 
+/**
+ * Weekday enumeration with display formatting support.
+ */
 public enum Day {
 
   SUNDAY, MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY;
 
+  /**
+   * Returns a capitalized display form of the enum constant name.
+   *
+   * @return human-friendly day name
+   */
   public String getDisplayName () {
 
     return StringUtility.toDisplayCase(this.name());

@@ -34,6 +34,10 @@ package org.smallmind.nutsnbolts.util;
 
 import java.util.regex.Pattern;
 
+/**
+ * Parses glob-like dot notation patterns (with '.' separators, '*' and '?' wildcards) into regexes and assigns bitmask values per segment.
+ * Useful for matching hierarchical names such as package-like identifiers.
+ */
 public class DotNotation {
 
   private enum TranslationState {
@@ -49,10 +53,19 @@ public class DotNotation {
   private Pattern pattern;
   private int value;
 
+  /**
+   * Creates an uninitialized instance. Call {@link #setNotation(String)} before use.
+   */
   public DotNotation () {
 
   }
 
+  /**
+   * Parses the provided pattern on construction.
+   *
+   * @param notation dot-notation pattern to translate
+   * @throws DotNotationException if the pattern is invalid
+   */
   public DotNotation (String notation)
     throws DotNotationException {
 
@@ -64,19 +77,29 @@ public class DotNotation {
     return pattern;
   }
 
+  /**
+   * @return bitmask value accumulated while parsing the pattern
+   */
   public int getValue () {
 
     return value;
   }
 
+  /**
+   * Parses and compiles a dot-notation pattern into an internal {@link Pattern}.
+   *
+   * @param notation pattern containing identifiers, '.' separators, and wildcards
+   * @return this for chaining
+   * @throws DotNotationException if the pattern is malformed
+   */
   public DotNotation setNotation (String notation)
     throws DotNotationException {
 
     RegexConversion conversion;
 
     conversion = createRegex(notation);
-    pattern = Pattern.compile(conversion.getRegex());
-    value = conversion.getValue();
+    pattern = Pattern.compile(conversion.regex());
+    value = conversion.value();
 
     return this;
   }
@@ -86,6 +109,13 @@ public class DotNotation {
     return (pattern == null) ? initial : pattern.matcher(name).matches() ? value : initial;
   }
 
+  /**
+   * Converts dot notation into a regex string and accompanying bitmask value.
+   *
+   * @param notation pattern containing '.', '*', and '?' wildcards
+   * @return regex conversion results
+   * @throws DotNotationException if validation fails
+   */
   private RegexConversion createRegex (String notation)
     throws DotNotationException {
 
@@ -180,23 +210,21 @@ public class DotNotation {
     return new RegexConversion(patternBuilder.toString(), value);
   }
 
-  private static class RegexConversion {
+  private record RegexConversion(String regex, int value) {
 
-    private final String regex;
-    private final int value;
+    /**
+     * @param regex compiled regex string
+     * @param value bitmask value associated with the parsed segments
+     */
+    private RegexConversion {
 
-    public RegexConversion (String regex, int value) {
-
-      this.regex = regex;
-      this.value = value;
     }
 
-    public String getRegex () {
-
-      return regex;
-    }
-
-    public int getValue () {
+    /**
+     * @return bitmask value representing matched segments
+     */
+    @Override
+    public int value () {
 
       return value;
     }

@@ -36,16 +36,29 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+/**
+ * Chains multiple iterators into a single iterator/iterable, advancing to the next when one is exhausted.
+ *
+ * @param <T> element type
+ */
 public class MultipleIterator<T> implements Iterator<T>, Iterable<T> {
 
   private final ArrayList<Iterator<T>> iteratorList = new ArrayList<>();
   private int index = 0;
 
+  /**
+   * Adds an iterator to the chain.
+   *
+   * @param iterator iterator to append
+   */
   public void add (Iterator<T> iterator) {
 
     iteratorList.add(iterator);
   }
 
+  /**
+   * Advances past any empty iterators at the current position.
+   */
   public void done () {
 
     moveIndex();
@@ -58,16 +71,27 @@ public class MultipleIterator<T> implements Iterator<T>, Iterable<T> {
     }
   }
 
+  /**
+   * @return this iterator to allow enhanced-for usage
+   */
   public Iterator<T> iterator () {
 
     return this;
   }
 
+  /**
+   * @return {@code true} if any remaining iterator has elements
+   */
   public boolean hasNext () {
 
     return index < iteratorList.size();
   }
 
+  /**
+   * Returns the next element from the current iterator, moving to the next iterator as needed.
+   *
+   * @throws NoSuchElementException if no elements remain
+   */
   public T next () {
 
     if (!hasNext()) {
@@ -81,6 +105,11 @@ public class MultipleIterator<T> implements Iterator<T>, Iterable<T> {
     }
   }
 
+  /**
+   * Removes the last element returned by {@link #next()} from the current iterator.
+   *
+   * @throws IllegalStateException if {@link #next()} has not been called or the chain is exhausted
+   */
   public void remove () {
 
     if (!(index < iteratorList.size())) {

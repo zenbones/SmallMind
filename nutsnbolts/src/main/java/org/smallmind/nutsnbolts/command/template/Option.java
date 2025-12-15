@@ -35,6 +35,9 @@ package org.smallmind.nutsnbolts.command.template;
 import java.util.Arrays;
 import java.util.LinkedList;
 
+/**
+ * Describes a command line option including its name/flag, required status, children, and argument definition.
+ */
 public class Option {
 
   private final String name;
@@ -44,6 +47,14 @@ public class Option {
   private Option parent;
   private Argument argument;
 
+  /**
+   * Creates an option with no parent and optional child options.
+   *
+   * @param name     long option name (may be {@code null})
+   * @param flag     single-character flag (may be {@code null})
+   * @param required whether the option must be provided
+   * @param children child options that depend on this option
+   */
   public Option (String name, Character flag, boolean required, Option... children) {
 
     this.name = name;
@@ -59,6 +70,15 @@ public class Option {
     }
   }
 
+  /**
+   * Creates an option with an argument definition and optional children.
+   *
+   * @param name     long option name (may be {@code null})
+   * @param flag     single-character flag (may be {@code null})
+   * @param required whether the option must be provided
+   * @param argument argument definition for the option
+   * @param children child options that depend on this option
+   */
   public Option (String name, Character flag, boolean required, Argument argument, Option... children) {
 
     this(name, flag, required, children);
@@ -66,6 +86,15 @@ public class Option {
     this.argument = argument;
   }
 
+  /**
+   * Creates a child option linked to a parent.
+   *
+   * @param parent   parent option that must be present
+   * @param name     long option name
+   * @param flag     single-character flag
+   * @param required whether the option must be provided
+   * @param children nested dependent options
+   */
   public Option (Option parent, String name, Character flag, boolean required, Option... children) {
 
     this(name, flag, required, children);
@@ -73,6 +102,16 @@ public class Option {
     this.parent = parent;
   }
 
+  /**
+   * Creates a child option with an argument definition.
+   *
+   * @param parent   parent option that must be present
+   * @param name     long option name
+   * @param flag     single-character flag
+   * @param required whether the option must be provided
+   * @param argument argument definition
+   * @param children nested dependent options
+   */
   public Option (Option parent, String name, Character flag, boolean required, Argument argument, Option... children) {
 
     this(name, flag, required, argument, children);
@@ -80,46 +119,79 @@ public class Option {
     this.parent = parent;
   }
 
+  /**
+   * @return long option name or {@code null}
+   */
   public String getName () {
 
     return name;
   }
 
+  /**
+   * @return flag character or {@code null}
+   */
   public Character getFlag () {
 
     return flag;
   }
 
+  /**
+   * @return {@code true} if the option is required
+   */
   public boolean isRequired () {
 
     return required;
   }
 
+  /**
+   * @return parent option or {@code null} if root
+   */
   public Option getParent () {
 
     return parent;
   }
 
+  /**
+   * Sets the parent option dependency.
+   *
+   * @param parent parent option
+   */
   public void setParent (Option parent) {
 
     this.parent = parent;
   }
 
+  /**
+   * @return child options that depend on this option
+   */
   public LinkedList<Option> getChildren () {
 
     return children;
   }
 
+  /**
+   * Defines child options, replacing any existing list.
+   *
+   * @param children new child option list
+   */
   public void setChildren (LinkedList<Option> children) {
 
     this.children = children;
   }
 
+  /**
+   * @return argument definition or {@code null} if the option accepts none
+   */
   public Argument getArgument () {
 
     return argument;
   }
 
+  /**
+   * Assigns the argument definition for the option.
+   *
+   * @param argument argument model
+   */
   public void setArgument (Argument argument) {
 
     this.argument = argument;

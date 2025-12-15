@@ -41,20 +41,38 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import org.smallmind.nutsnbolts.lang.PerApplicationContext;
 
+/**
+ * Servlet {@link Filter} that initializes and propagates a {@link PerApplicationContext} into
+ * each request thread. Optionally suppresses noisy connection-closed exceptions.
+ */
 public class PerApplicationContextFilter implements Filter {
 
   private PerApplicationContext perApplicationContext;
   private boolean suppressConnectionClosedException;
 
+  /**
+   * Creates a filter with default behavior (connection closed exceptions are propagated).
+   */
   public PerApplicationContextFilter () {
 
   }
 
+  /**
+   * Creates a filter with control over connection-closed exception suppression.
+   *
+   * @param suppressConnectionClosedException {@code true} to swallow "Connection is closed" IOExceptions
+   */
   public PerApplicationContextFilter (boolean suppressConnectionClosedException) {
 
     this.suppressConnectionClosedException = suppressConnectionClosedException;
   }
 
+  /**
+   * Configures suppression of "Connection is closed" IOExceptions thrown from the filter chain.
+   *
+   * @param suppressConnectionClosedException whether to suppress the exception
+   * @return this filter for chaining
+   */
   public PerApplicationContextFilter setSuppressConnectionClosedException (boolean suppressConnectionClosedException) {
 
     this.suppressConnectionClosedException = suppressConnectionClosedException;
@@ -62,6 +80,11 @@ public class PerApplicationContextFilter implements Filter {
     return this;
   }
 
+  /**
+   * Initializes the filter, ensuring a {@link PerApplicationContext} is present on the servlet context.
+   *
+   * @param filterConfig the filter configuration supplied by the container
+   */
   @Override
   public void init (FilterConfig filterConfig) {
 
@@ -70,6 +93,16 @@ public class PerApplicationContextFilter implements Filter {
     }
   }
 
+  /**
+   * Prepares the per-application context for the current thread and delegates the request.
+   * Optionally suppresses benign connection-closed IOExceptions from downstream filters.
+   *
+   * @param request  the incoming request
+   * @param response the outgoing response
+   * @param chain    the filter chain
+   * @throws IOException      if an I/O error occurs and suppression is disabled
+   * @throws ServletException if a downstream filter or servlet fails
+   */
   @Override
   public void doFilter (ServletRequest request, ServletResponse response, FilterChain chain)
     throws IOException, ServletException {
@@ -84,6 +117,9 @@ public class PerApplicationContextFilter implements Filter {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void destroy () {
 

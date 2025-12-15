@@ -32,30 +32,45 @@
  */
 package org.smallmind.nutsnbolts.layout;
 
-public class Sizing {
+/**
+ * Composite key for caching measurements by part, axis, and {@link TapeMeasure} type.
+ */
+public record Sizing(Object part, Bias bias, TapeMeasure tapeMeasure) {
 
-  private final Object part;
-  private final Bias bias;
-  private final TapeMeasure tapeMeasure;
+  /**
+   * Creates a sizing key.
+   *
+   * @param part        the part being measured
+   * @param bias        the axis of measurement
+   * @param tapeMeasure the measurement type
+   */
+  public Sizing {
 
-  public Sizing (Object part, Bias bias, TapeMeasure tapeMeasure) {
-
-    this.part = part;
-    this.bias = bias;
-    this.tapeMeasure = tapeMeasure;
   }
 
-  public Object getPart () {
+  /**
+   * @return the part being measured
+   */
+  @Override
+  public Object part () {
 
     return part;
   }
 
-  public Bias getBias () {
+  /**
+   * @return the measurement axis
+   */
+  @Override
+  public Bias bias () {
 
     return bias;
   }
 
-  public TapeMeasure getTapeMeasure () {
+  /**
+   * @return the measurement type
+   */
+  @Override
+  public TapeMeasure tapeMeasure () {
 
     return tapeMeasure;
   }
@@ -69,6 +84,6 @@ public class Sizing {
   @Override
   public boolean equals (Object obj) {
 
-    return (obj instanceof Sizing) && ((Sizing)obj).getPart().equals(part) && ((Sizing)obj).getBias().equals(bias) && ((Sizing)obj).getTapeMeasure().equals(tapeMeasure);
+    return (obj instanceof Sizing) && ((Sizing)obj).part().equals(part) && ((Sizing)obj).bias().equals(bias) && ((Sizing)obj).tapeMeasure().equals(tapeMeasure);
   }
 }

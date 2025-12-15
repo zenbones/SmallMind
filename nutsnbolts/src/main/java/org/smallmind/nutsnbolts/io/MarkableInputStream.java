@@ -35,6 +35,9 @@ package org.smallmind.nutsnbolts.io;
 import java.io.IOException;
 import java.io.InputStream;
 
+/**
+ * InputStream wrapper that supports marking by buffering up to a configured limit of read bytes.
+ */
 public class MarkableInputStream extends InputStream {
 
   private final InputStream inputStream;
@@ -43,11 +46,19 @@ public class MarkableInputStream extends InputStream {
   private int readPos = -1;
   private int writePos = 0;
 
+  /**
+   * @param inputStream underlying stream to read from
+   */
   public MarkableInputStream (InputStream inputStream) {
 
     this.inputStream = inputStream;
   }
 
+  /**
+   * Reads a single byte, honoring buffered data after a mark.
+   *
+   * @throws IOException if closed
+   */
   @Override
   public synchronized int read ()
     throws IOException {
@@ -73,6 +84,11 @@ public class MarkableInputStream extends InputStream {
     }
   }
 
+  /**
+   * Reads into a byte array.
+   *
+   * @throws IOException if closed or bounds invalid
+   */
   @Override
   public int read (byte[] b)
     throws IOException {
@@ -80,6 +96,12 @@ public class MarkableInputStream extends InputStream {
     return read(b, 0, b.length);
   }
 
+  /**
+   * Reads up to {@code len} bytes into {@code b} starting at {@code off}, combining buffered and fresh bytes.
+   *
+   * @return total bytes read or -1 on EOF
+   * @throws IOException if closed or bounds invalid
+   */
   @Override
   public synchronized int read (byte[] b, int off, int len)
     throws IOException {
@@ -118,6 +140,11 @@ public class MarkableInputStream extends InputStream {
     }
   }
 
+  /**
+   * Skips bytes, buffering skipped data when within the mark window.
+   *
+   * @throws IOException if closed
+   */
   @Override
   public synchronized long skip (long n)
     throws IOException {
@@ -138,6 +165,10 @@ public class MarkableInputStream extends InputStream {
     }
   }
 
+  /**
+   * @return available bytes accounting for buffered content after mark
+   * @throws IOException if closed
+   */
   @Override
   public synchronized int available ()
     throws IOException {
@@ -156,6 +187,9 @@ public class MarkableInputStream extends InputStream {
     }
   }
 
+  /**
+   * Closes the stream and discards the buffer.
+   */
   @Override
   public synchronized void close ()
     throws IOException {
@@ -167,6 +201,9 @@ public class MarkableInputStream extends InputStream {
     }
   }
 
+  /**
+   * Marks the current position, allocating a buffer up to {@code readLimit}.
+   */
   @Override
   public synchronized void mark (int readLimit) {
 
@@ -187,6 +224,11 @@ public class MarkableInputStream extends InputStream {
     }
   }
 
+  /**
+   * Resets to the last marked position.
+   *
+   * @throws IOException if no mark exists or the stream is closed
+   */
   @Override
   public synchronized void reset ()
     throws IOException {
@@ -200,6 +242,9 @@ public class MarkableInputStream extends InputStream {
     readPos = 0;
   }
 
+  /**
+   * @return {@code true}; marking is supported
+   */
   @Override
   public boolean markSupported () {
 

@@ -36,8 +36,20 @@ import java.io.IOException;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 
+/**
+ * Simple command-line utility that prints generated key pairs in common formats.
+ */
 public class AsymmetricKeyGenerator {
 
+  /**
+   * Generates a key pair for the supplied algorithm and writes the public key in OpenSSH format and
+   * the private key in PKCS8 PEM format to standard out.
+   *
+   * @param args expects a single argument containing the asymmetric algorithm name (e.g., {@code RSA})
+   * @throws IOException                   if key encoding fails
+   * @throws NoSuchAlgorithmException      if the requested algorithm is not available
+   * @throws InappropriateKeySpecException if the key cannot be serialized using the expected spec
+   */
   public static void main (String... args)
     throws IOException, NoSuchAlgorithmException, InappropriateKeySpecException {
 

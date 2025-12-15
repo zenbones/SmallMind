@@ -35,6 +35,10 @@ package org.smallmind.nutsnbolts.resource;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
+/**
+ * Spring {@link FactoryBean} that parses a resource identifier into a {@link Resource}.
+ * Supports singleton semantics and lazy parsing during {@link #afterPropertiesSet()}.
+ */
 public class ResourceFactory implements FactoryBean<Resource>, InitializingBean {
 
   private static final ResourceParser RESOURCE_PARSER = new ResourceParser(new ResourceTypeResourceGenerator());
@@ -42,23 +46,44 @@ public class ResourceFactory implements FactoryBean<Resource>, InitializingBean 
   private Resource resource;
   private String name;
 
+  /**
+   * Sets the resource identifier to be parsed (e.g. {@code file:/tmp/data.txt}).
+   *
+   * @param name resource identifier string
+   */
   public void setName (String name) {
 
     this.name = name;
   }
 
+  /**
+   * A single instance is created and cached.
+   *
+   * @return {@code true}
+   */
   @Override
   public boolean isSingleton () {
 
     return true;
   }
 
+  /**
+   * Declares the produced object type for Spring.
+   *
+   * @return {@link Resource}.class
+   */
   @Override
   public Class<?> getObjectType () {
 
     return Resource.class;
   }
 
+  /**
+   * Returns the parsed resource instance.
+   *
+   * @return resolved {@link Resource}, or {@code null} if no name was provided
+   * @throws Exception if parsing failed during initialization
+   */
   @Override
   public Resource getObject ()
     throws Exception {
@@ -66,6 +91,11 @@ public class ResourceFactory implements FactoryBean<Resource>, InitializingBean 
     return resource;
   }
 
+  /**
+   * Parses the configured {@code name} into a {@link Resource} instance.
+   *
+   * @throws Exception if parsing fails
+   */
   @Override
   public void afterPropertiesSet ()
     throws Exception {

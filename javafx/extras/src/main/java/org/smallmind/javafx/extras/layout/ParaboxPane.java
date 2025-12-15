@@ -209,7 +209,7 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
   /**
    * @return the root horizontal box driving layout calculations
    */
-  public Box<?> getHorizontalBox () {
+  public Box getHorizontalBox () {
 
     return paraboxLayout.getHorizontalBox();
   }
@@ -220,7 +220,7 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
    * @param horizontalBox the horizontal box definition
    * @return this pane for chaining
    */
-  public ParaboxPane setHorizontalBox (Box<?> horizontalBox) {
+  public ParaboxPane setHorizontalBox (Box horizontalBox) {
 
     paraboxLayout.setHorizontalBox(horizontalBox);
 
@@ -230,7 +230,7 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
   /**
    * @return the root vertical box driving layout calculations
    */
-  public Box<?> getVerticalBox () {
+  public Box getVerticalBox () {
 
     return paraboxLayout.getVerticalBox();
   }
@@ -241,7 +241,7 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
    * @param verticalBox the vertical box definition
    * @return this pane for chaining
    */
-  public ParaboxPane setVerticalBox (Box<?> verticalBox) {
+  public ParaboxPane setVerticalBox (Box verticalBox) {
 
     paraboxLayout.setVerticalBox(verticalBox);
 

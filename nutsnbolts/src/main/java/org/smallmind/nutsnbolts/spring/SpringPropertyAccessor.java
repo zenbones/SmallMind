@@ -35,11 +35,17 @@ package org.smallmind.nutsnbolts.spring;
 import java.util.Set;
 import org.smallmind.nutsnbolts.util.Option;
 
+/**
+ * Provides typed access to resolved Spring property placeholders.
+ */
 public class SpringPropertyAccessor {
 
   private final Set<String> keySet;
   private final PropertyPlaceholderStringValueResolver stringValueResolver;
 
+  /**
+   * @param stringValueResolver resolver used to expand property placeholders
+   */
   public SpringPropertyAccessor (PropertyPlaceholderStringValueResolver stringValueResolver) {
 
     this.stringValueResolver = stringValueResolver;
@@ -47,11 +53,20 @@ public class SpringPropertyAccessor {
     keySet = stringValueResolver.getKeySet();
   }
 
+  /**
+   * @return the set of available property keys
+   */
   public Set<String> getKeySet () {
 
     return keySet;
   }
 
+  /**
+   * Resolves the property as a string.
+   *
+   * @param key the property key
+   * @return the resolved value or {@code null} if absent
+   */
   public String asString (String key) {
 
     if (!keySet.contains(key)) {
@@ -62,6 +77,12 @@ public class SpringPropertyAccessor {
     return stringValueResolver.resolveStringValue("${" + key + "}");
   }
 
+  /**
+   * Resolves the property as a boolean.
+   *
+   * @param key the property key
+   * @return an {@link Option} containing the value when present
+   */
   public Option<Boolean> asBoolean (String key) {
 
     String stringValue;
@@ -74,6 +95,13 @@ public class SpringPropertyAccessor {
     return Option.of(Boolean.parseBoolean(stringValue));
   }
 
+  /**
+   * Resolves the property as a {@code long}.
+   *
+   * @param key the property key
+   * @return an {@link Option} containing the parsed value
+   * @throws RuntimeBeansException if the value cannot be parsed as a long
+   */
   public Option<Long> asLong (String key) {
 
     String stringValue;
@@ -90,6 +118,13 @@ public class SpringPropertyAccessor {
     }
   }
 
+  /**
+   * Resolves the property as an {@code int}.
+   *
+   * @param key the property key
+   * @return an {@link Option} containing the parsed value
+   * @throws RuntimeBeansException if the value cannot be parsed as an int
+   */
   public Option<Integer> asInt (String key) {
 
     String stringValue;

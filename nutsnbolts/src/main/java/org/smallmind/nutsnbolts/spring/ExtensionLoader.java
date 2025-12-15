@@ -40,11 +40,23 @@ import org.smallmind.nutsnbolts.lang.ClasspathClassGate;
 import org.smallmind.nutsnbolts.lang.GatingClassLoader;
 import org.springframework.context.support.FileSystemXmlApplicationContext;
 
+/**
+ * Loads an extension Spring context and optionally sets a gated classloader based on classpath components declared by the extension.
+ *
+ * @param <E> the extension instance type
+ */
 public class ExtensionLoader<E extends ExtensionInstance> {
 
   private E extensionInstance;
   private GatingClassLoader classLoader;
 
+  /**
+   * Constructs an extension loader that reads a Spring context and initializes the extension instance.
+   *
+   * @param extensionInstanceClass the bean type to retrieve from the Spring context
+   * @param springFileName         the path to the Spring XML configuration file
+   * @throws ExtensionLoaderException if the extension cannot be constructed or initialized
+   */
   public ExtensionLoader (Class<E> extensionInstanceClass, String springFileName)
     throws ExtensionLoaderException {
 
@@ -76,11 +88,17 @@ public class ExtensionLoader<E extends ExtensionInstance> {
     }
   }
 
+  /**
+   * @return the initialized extension instance, or {@code null} if no configuration was loaded
+   */
   protected E getExtensionInstance () {
 
     return extensionInstance;
   }
 
+  /**
+   * @return the gated classloader installed for the extension, or {@code null} if none was set
+   */
   public GatingClassLoader getClassLoader () {
 
     return classLoader;

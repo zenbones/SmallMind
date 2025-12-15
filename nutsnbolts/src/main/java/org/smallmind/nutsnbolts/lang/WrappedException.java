@@ -32,13 +32,29 @@
  */
 package org.smallmind.nutsnbolts.lang;
 
+/**
+ * Runtime wrapper that stores a checked exception and allows retrieval as a specific type.
+ */
 public class WrappedException extends RuntimeException {
 
+  /**
+   * Wraps the provided exception.
+   *
+   * @param exception the exception to wrap
+   */
   public WrappedException (Exception exception) {
 
     super(exception);
   }
 
+  /**
+   * Returns the wrapped cause cast to the requested type.
+   *
+   * @param exceptionClass the expected exception type
+   * @param <E>            the generic exception type
+   * @return the cause cast to the provided type
+   * @throws ClassCastException if the cause cannot be cast
+   */
   public <E extends Exception> E convert (Class<E> exceptionClass) {
 
     return exceptionClass.cast(getCause());

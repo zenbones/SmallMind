@@ -38,8 +38,17 @@ import java.time.ZonedDateTime;
 import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 import org.smallmind.nutsnbolts.time.TimeUtility;
 
+/**
+ * JAXB adapter converting {@link LocalDateTime} values to and from ISO-8601 formatted strings.
+ */
 public class LocalDateTimeXmlAdapter extends XmlAdapter<String, LocalDateTime> {
 
+  /**
+   * Parses a date/time string into a {@link LocalDateTime}.
+   *
+   * @param value ISO-8601 date/time text
+   * @return parsed {@link LocalDateTime}, or {@code null} when parsing fails or the input is {@code null}
+   */
   @Override
   public LocalDateTime unmarshal (String value) {
 
@@ -54,6 +63,12 @@ public class LocalDateTimeXmlAdapter extends XmlAdapter<String, LocalDateTime> {
     }
   }
 
+  /**
+   * Formats a {@link LocalDateTime} into an ISO-8601 string.
+   *
+   * @param localDateTime the value to format
+   * @return formatted string, or {@code null} when the input is {@code null}
+   */
   @Override
   public String marshal (LocalDateTime localDateTime) {
 

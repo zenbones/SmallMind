@@ -40,22 +40,36 @@ import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.core.PriorityOrdered;
 
+/**
+ * Sets JMX/RMI host system property early in Spring initialization, choosing either host name or IP address.
+ */
 public class JMXPropertyInitializingBean implements BeanFactoryPostProcessor, PriorityOrdered {
 
   private int order;
   private RMIHost rmiHost = RMIHost.HOST_NAME;
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int getOrder () {
 
     return order;
   }
 
+  /**
+   * @param order priority order
+   */
   public void setOrder (int order) {
 
     this.order = order;
   }
 
+  /**
+   * Configures whether to use host name or IP address for the RMI host property.
+   *
+   * @param rmiHost selector for host value
+   */
   public void setRmiHost (RMIHost rmiHost) {
 
     if (rmiHost != null) {
@@ -63,6 +77,12 @@ public class JMXPropertyInitializingBean implements BeanFactoryPostProcessor, Pr
     }
   }
 
+  /**
+   * Sets {@code java.rmi.server.hostname} based on the configured {@link RMIHost}.
+   *
+   * @param beanFactory the bean factory (unused)
+   * @throws FatalBeanException if the host cannot be determined
+   */
   @Override
   public void postProcessBeanFactory (ConfigurableListableBeanFactory beanFactory)
     throws BeansException {

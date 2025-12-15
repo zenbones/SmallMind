@@ -43,8 +43,19 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 
+/**
+ * Helper methods for common annotation-processing operations such as locating annotations and extracting typed values.
+ */
 public class AptUtility {
 
+  /**
+   * Finds the annotation mirror of the specified type on an element.
+   *
+   * @param processingEnv        processing environment providing type utilities
+   * @param element              element being inspected
+   * @param annotationTypeMirror annotation type to match
+   * @return matching annotation mirror or {@code null} if absent
+   */
   public static AnnotationMirror extractAnnotationMirror (ProcessingEnvironment processingEnv, Element element, TypeMirror annotationTypeMirror) {
 
     for (AnnotationMirror annotationMirror : element.getAnnotationMirrors()) {
@@ -57,6 +68,14 @@ public class AptUtility {
     return null;
   }
 
+  /**
+   * Locates an annotation whose own annotation type is annotated by the supplied annotation type.
+   *
+   * @param processingEnv        processing environment providing type utilities
+   * @param element              element being inspected
+   * @param annotationTypeMirror annotation type that must be present on the candidate annotation
+   * @return first matching annotation mirror or {@code null} if none
+   */
   public static AnnotationMirror extractAnnotationMirrorAnnotatedBy (ProcessingEnvironment processingEnv, Element element, TypeMirror annotationTypeMirror) {
 
     for (AnnotationMirror annotationMirror : element.getAnnotationMirrors()) {
@@ -71,6 +90,16 @@ public class AptUtility {
     return null;
   }
 
+  /**
+   * Extracts a named value from an annotation, returning a default if the value is not present.
+   *
+   * @param annotationMirror annotation to inspect
+   * @param valueName        name of the value to retrieve
+   * @param clazz            expected value type; if an enum the value is resolved by name
+   * @param defaultValue     fallback when the value is not set
+   * @param <T>              value type
+   * @return extracted value or {@code defaultValue} when missing
+   */
   public static <T> T extractAnnotationValue (AnnotationMirror annotationMirror, String valueName, Class<T> clazz, T defaultValue) {
 
     for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> valueEntry : annotationMirror.getElementValues().entrySet()) {
@@ -89,6 +118,16 @@ public class AptUtility {
     return defaultValue;
   }
 
+  /**
+   * Extracts a named value from an annotation, consulting default values from the processing environment.
+   *
+   * @param processingEnvironment processing utilities used to materialize defaults
+   * @param annotationMirror      annotation to inspect
+   * @param valueName             name of the value to retrieve
+   * @param clazz                 expected value type; if an enum the value is resolved by name
+   * @param <T>                   value type
+   * @return extracted value or {@code null} when the value is unavailable
+   */
   public static <T> T extractAnnotationValueWithDefault (ProcessingEnvironment processingEnvironment, AnnotationMirror annotationMirror, String valueName, Class<T> clazz) {
 
     for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> valueEntry : processingEnvironment.getElementUtils().getElementValuesWithDefaults(annotationMirror).entrySet()) {
@@ -107,6 +146,15 @@ public class AptUtility {
     return null;
   }
 
+  /**
+   * Reads a list-typed annotation value into a strongly typed list.
+   *
+   * @param annotationMirror annotation to inspect
+   * @param valueName        name of the value to retrieve
+   * @param itemClass        expected class of each list element
+   * @param <T>              list element type
+   * @return list of extracted values (empty if the value is not present)
+   */
   public static <T> List<T> extractAnnotationValueAsList (AnnotationMirror annotationMirror, String valueName, Class<T> itemClass) {
 
     List<T> extractedList = new LinkedList<>();
@@ -121,6 +169,13 @@ public class AptUtility {
     return extractedList;
   }
 
+  /**
+   * Converts a list of {@link TypeMirror}s to their corresponding {@link TypeElement}s.
+   *
+   * @param processingEnv  processing environment providing type utilities
+   * @param typeMirrorList list of type mirrors, possibly {@code null}
+   * @return list of concrete type elements in the same order as the input
+   */
   public static List<TypeElement> toConcreteList (ProcessingEnvironment processingEnv, List<TypeMirror> typeMirrorList) {
 
     LinkedList<TypeElement> typeElementList = new LinkedList<>();

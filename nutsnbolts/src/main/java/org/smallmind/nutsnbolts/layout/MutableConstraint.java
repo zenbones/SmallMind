@@ -32,17 +32,34 @@
  */
 package org.smallmind.nutsnbolts.layout;
 
+/**
+ * Mutable variant of {@link Constraint} that allows fluent adjustment of grow and shrink weights.
+ */
 public class MutableConstraint extends Constraint {
 
+  /**
+   * Constructs a mutable constraint with default weights.
+   */
   protected MutableConstraint () {
 
   }
 
+  /**
+   * Convenience to enable growth using a default weight.
+   *
+   * @return this constraint for chaining
+   */
   public MutableConstraint mayGrow () {
 
     return setGrow(0.5D);
   }
 
+  /**
+   * Sets the grow weight.
+   *
+   * @param grow the grow factor
+   * @return this constraint for chaining
+   */
   public MutableConstraint setGrow (double grow) {
 
     setGrow(grow);
@@ -50,11 +67,22 @@ public class MutableConstraint extends Constraint {
     return this;
   }
 
+  /**
+   * Convenience to enable shrinkage using a default weight.
+   *
+   * @return this constraint for chaining
+   */
   public MutableConstraint mayShrink () {
 
     return mayShrink();
   }
 
+  /**
+   * Sets the shrink weight.
+   *
+   * @param shrink the shrink factor
+   * @return this constraint for chaining
+   */
   public MutableConstraint setShrink (double shrink) {
 
     return setShrink(shrink);

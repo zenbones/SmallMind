@@ -32,23 +32,47 @@
  */
 package org.smallmind.nutsnbolts.lang;
 
+/**
+ * {@link Error} that formats its message using {@link String#format(String, Object...)}.
+ */
 public class FormattedError extends Error {
 
+  /**
+   * Creates an error without a detail message.
+   */
   public FormattedError () {
 
     super();
   }
 
+  /**
+   * Creates an error with a formatted message.
+   *
+   * @param message the format string, or {@code null}
+   * @param args    arguments applied to the format string
+   */
   public FormattedError (String message, Object... args) {
 
     super(message == null ? null : String.format(message, args));
   }
 
+  /**
+   * Creates an error with a cause and a formatted message.
+   *
+   * @param throwable the underlying cause
+   * @param message   the format string, or {@code null}
+   * @param args      arguments applied to the format string
+   */
   public FormattedError (Throwable throwable, String message, Object... args) {
 
     super(message == null ? null : String.format(message, args), throwable);
   }
 
+  /**
+   * Creates an error with the supplied cause.
+   *
+   * @param throwable the underlying cause
+   */
   public FormattedError (Throwable throwable) {
 
     super(throwable);

@@ -32,23 +32,42 @@
  */
 package org.smallmind.nutsnbolts.resource;
 
+/**
+ * Enumerates the built-in resource types and their scheme identifiers.
+ */
 public enum ResourceType {
 
   CLASSPATH("classpath", ClasspathResource.class), FILE("file", FileResource.class), JAR("jar", JarResource.class), URL("url", URLResource.class);
   private final String resourceScheme;
   private final Class<? extends Resource> resourceClass;
 
+  /**
+   * Associates a scheme string with the implementing {@link Resource} class.
+   *
+   * @param resourceScheme scheme name
+   * @param resourceClass  concrete resource implementation
+   */
   ResourceType (String resourceScheme, Class<? extends Resource> resourceClass) {
 
     this.resourceScheme = resourceScheme;
     this.resourceClass = resourceClass;
   }
 
+  /**
+   * Returns the scheme string (e.g. {@code file}).
+   *
+   * @return resource scheme identifier
+   */
   public String getResourceScheme () {
 
     return resourceScheme;
   }
 
+  /**
+   * Returns the implementing class for the resource type.
+   *
+   * @return concrete resource class
+   */
   public Class<? extends Resource> getResourceClass () {
 
     return resourceClass;

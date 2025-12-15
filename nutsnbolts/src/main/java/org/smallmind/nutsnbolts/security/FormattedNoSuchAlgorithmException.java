@@ -34,23 +34,47 @@ package org.smallmind.nutsnbolts.security;
 
 import java.security.NoSuchAlgorithmException;
 
+/**
+ * {@link NoSuchAlgorithmException} variant supporting formatted messages.
+ */
 public class FormattedNoSuchAlgorithmException extends NoSuchAlgorithmException {
 
+  /**
+   * Creates an exception with no detail message.
+   */
   public FormattedNoSuchAlgorithmException () {
 
     super();
   }
 
+  /**
+   * Creates an exception with a formatted detail message.
+   *
+   * @param message a {@link java.util.Formatter}-style message
+   * @param args    values interpolated into the message
+   */
   public FormattedNoSuchAlgorithmException (String message, Object... args) {
 
     super(message == null ? null : String.format(message, args));
   }
 
+  /**
+   * Creates an exception with a formatted detail message and a cause.
+   *
+   * @param throwable the underlying cause
+   * @param message   a {@link java.util.Formatter}-style message
+   * @param args      values interpolated into the message
+   */
   public FormattedNoSuchAlgorithmException (Throwable throwable, String message, Object... args) {
 
     super(message == null ? null : String.format(message, args), throwable);
   }
 
+  /**
+   * Creates an exception with a cause and no detail message.
+   *
+   * @param throwable the underlying cause
+   */
   public FormattedNoSuchAlgorithmException (Throwable throwable) {
 
     super(throwable);

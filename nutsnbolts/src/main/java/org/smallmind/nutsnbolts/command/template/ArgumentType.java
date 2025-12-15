@@ -32,6 +32,9 @@
  */
 package org.smallmind.nutsnbolts.command.template;
 
+/**
+ * Cardinality of an option's arguments.
+ */
 public enum ArgumentType {
 
   NONE, SINGLE, LIST, MULTIPLE, ENUMERATED

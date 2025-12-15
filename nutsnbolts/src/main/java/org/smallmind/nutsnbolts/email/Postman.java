@@ -56,31 +56,66 @@ import freemarker.template.Template;
 import org.smallmind.nutsnbolts.security.EncryptionUtility;
 import org.smallmind.nutsnbolts.security.HashAlgorithm;
 
+/**
+ * Service that converts {@link Mail} descriptors into Jakarta Mail messages and delivers them.
+ * Supports plain SMTP and SMTPS, optional authentication, FreeMarker interpolation, and attachments.
+ */
 public class Postman {
 
   private final HashMap<SHA256Key, Template> templateMap = new HashMap<>();
   private Session session;
   private Configuration freemarkerConf;
 
+  /**
+   * Creates an unconfigured postman. Callers must set up a {@link Session} manually before sending.
+   */
   public Postman () {
 
   }
 
+  /**
+   * Creates a postman configured for unsecured SMTP without authentication.
+   *
+   * @param host smtp host
+   * @param port smtp port
+   */
   public Postman (String host, int port) {
 
     this(host, port, Authentication.NONE, false);
   }
 
+  /**
+   * Creates a postman configured for unsecured SMTP with authentication.
+   *
+   * @param host           smtp host
+   * @param port           smtp port
+   * @param authentication authentication strategy and credentials
+   */
   public Postman (String host, int port, Authentication authentication) {
 
     this(host, port, authentication, false);
   }
 
+  /**
+   * Creates a postman configured for SMTP, optionally enabling STARTTLS, without authentication.
+   *
+   * @param host   smtp host
+   * @param port   smtp port
+   * @param secure {@code true} to enable TLS
+   */
   public Postman (String host, int port, boolean secure) {
 
     this(host, port, Authentication.NONE, secure);
   }
 
+  /**
+   * Creates a postman configured for SMTP/SMTPS with optional authentication.
+   *
+   * @param host           smtp host
+   * @param port           smtp port
+   * @param authentication authentication strategy and credentials
+   * @param secure         {@code true} to enable TLS
+   */
   public Postman (String host, int port, Authentication authentication, boolean secure) {
 
     session = (!secure) ? Protocol.SMTP.getSession(host, port, authentication) : Protocol.SMTPS.getSession(host, port, authentication);
@@ -88,12 +123,25 @@ public class Postman {
     freemarkerConf.setTagSyntax(freemarker.template.Configuration.SQUARE_BRACKET_TAG_SYNTAX);
   }
 
+  /**
+   * Sends a mail message without template interpolation.
+   *
+   * @param mail message to send
+   * @throws MailDeliveryException if creation or transport fails
+   */
   public void send (Mail mail)
     throws MailDeliveryException {
 
     send(mail, null);
   }
 
+  /**
+   * Sends a mail message, optionally interpolating FreeMarker expressions in the body.
+   *
+   * @param mail             message to send
+   * @param interpolationMap values available to the template engine; {@code null} disables templating
+   * @throws MailDeliveryException if message creation or transport fails
+   */
   public void send (Mail mail, HashMap<String, Object> interpolationMap)
     throws MailDeliveryException {
 
@@ -176,6 +224,14 @@ public class Postman {
     }
   }
 
+  /**
+   * Adds recipients parsed from a comma-separated string to the message.
+   *
+   * @param message   message being composed
+   * @param type      recipient type
+   * @param addresses comma-separated addresses
+   * @throws MessagingException if addresses are invalid or cannot be added
+   */
   private void addRecipients (Message message, Message.RecipientType type, String addresses)
     throws MessagingException {
 
@@ -184,26 +240,46 @@ public class Postman {
     }
   }
 
+  /**
+   * Wrapper key used to cache templates by the SHA-256 hash of their source.
+   */
   private static class SHA256Key {
 
     private final byte[] hash;
 
+    /**
+     * @param hash SHA-256 digest of the template text
+     */
     public SHA256Key (byte[] hash) {
 
       this.hash = hash;
     }
 
+    /**
+     * @return raw hash bytes
+     */
     public byte[] getHash () {
 
       return hash;
     }
 
+    /**
+     * Generates a hash code based on the underlying digest.
+     *
+     * @return hash value for map use
+     */
     @Override
     public int hashCode () {
 
       return Arrays.hashCode(hash);
     }
 
+    /**
+     * Compares keys by hash content.
+     *
+     * @param obj other key
+     * @return {@code true} when hashes match
+     */
     @Override
     public boolean equals (Object obj) {
 

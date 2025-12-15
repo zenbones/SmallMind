@@ -34,20 +34,48 @@ package org.smallmind.nutsnbolts.util;
 
 import java.io.Serializable;
 
+/**
+ * Minimal optional value abstraction with {@link Some} and {@link None} implementations.
+ *
+ * @param <T> element type
+ */
 public interface Option<T> extends Serializable {
 
   @SuppressWarnings("unchecked")
+  /**
+   * Returns the singleton empty option.
+   *
+   * @param <T> element type
+   * @return shared {@link None} instance
+   */
   static <T> None<T> none () {
 
     return (None<T>)None.NONE;
   }
 
+  /**
+   * Wraps a non-null value in a {@link Some}.
+   *
+   * @param value value to wrap; may be {@code null} if the caller chooses to allow it
+   * @param <T>   element type
+   * @return option containing the provided value
+   */
   static <T> Some<T> of (T value) {
 
     return new Some<>(value);
   }
 
+  /**
+   * Indicates whether this option is empty.
+   *
+   * @return {@code true} when no value is present
+   */
   boolean isNone ();
 
+  /**
+   * Returns the contained value or {@code null} when empty.
+   *
+   * @return underlying value, or {@code null} for {@link None}
+   */
   T get ();
 }

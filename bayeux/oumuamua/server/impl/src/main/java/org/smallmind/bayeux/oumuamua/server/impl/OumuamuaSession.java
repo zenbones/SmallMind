@@ -340,7 +340,7 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
           longPollQueueSize.decrementAndGet();
 
           // No need to re-freeze these packets, as they were frozen upon entering this session, and will be seen only by this connection
-          return onProcessing(enqueuedPair.getFirst(), enqueuedPair.getSecond());
+          return onProcessing(enqueuedPair.first(), enqueuedPair.second());
         }
       } while (remainingNanoseconds > 0);
 

@@ -36,6 +36,9 @@ import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+/**
+ * Represents a JavaBean-style getter method and exposes its attribute metadata.
+ */
 public class Getter implements Serializable {
 
   private static final Object[] NO_PARAMETERS = new Object[0];
@@ -46,6 +49,12 @@ public class Getter implements Serializable {
   private final boolean is;
   private Boolean bob;
 
+  /**
+   * Validates and wraps a getter method.
+   *
+   * @param method the reflected getter
+   * @throws ReflectionContractException if the method name or signature does not conform to getter rules
+   */
   public Getter (Method method)
     throws ReflectionContractException {
 
@@ -72,21 +81,39 @@ public class Getter implements Serializable {
     }
   }
 
+  /**
+   * @return {@code true} if the getter uses the {@code isXxx} boolean convention
+   */
   public boolean isIs () {
 
     return is;
   }
 
+  /**
+   * @return the bean property name derived from the method
+   */
   public String getAttributeName () {
 
     return attributeName;
   }
 
+  /**
+   * @return the return type declared by the getter
+   */
   public Class getAttributeClass () {
 
     return attributeClass;
   }
 
+  /**
+   * Invokes the getter on a target instance.
+   *
+   * @param target the object to query
+   * @return the attribute value
+   * @throws IllegalAccessException    if the method is inaccessible
+   * @throws IllegalArgumentException  if the invocation arguments are invalid
+   * @throws InvocationTargetException if the getter throws an exception
+   */
   public Object invoke (Object target)
     throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 

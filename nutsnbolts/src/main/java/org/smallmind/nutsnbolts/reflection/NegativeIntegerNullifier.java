@@ -39,11 +39,17 @@ import java.lang.annotation.Target;
 import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+/**
+ * Declares that negative integer values should be coerced to {@code null} during overlay operations.
+ */
 @Documented
 @Retention(RUNTIME)
 @Target(FIELD)
 @OverlayNullifier(validatedBy = NegativeIntegerNullifierValidator.class)
 public @interface NegativeIntegerNullifier {
 
+  /**
+   * @return the validation message used when a negative value is encountered
+   */
   String message () default "< 0";
 }

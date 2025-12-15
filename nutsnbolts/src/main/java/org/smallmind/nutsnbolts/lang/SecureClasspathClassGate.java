@@ -37,22 +37,43 @@ import java.net.URI;
 import java.security.CodeSource;
 import java.security.cert.Certificate;
 
+/**
+ * {@link ClasspathClassGate} that associates a {@link CodeSource} spanning the provided classpath
+ * entries for use in secure class loading.
+ */
 public class SecureClasspathClassGate extends ClasspathClassGate {
 
   private final CodeSource codeSource;
 
+  /**
+   * Builds a gate using the JVM class path and a corresponding code source.
+   *
+   * @throws MalformedURLException if the generated code source URL is invalid
+   */
   public SecureClasspathClassGate ()
     throws MalformedURLException {
 
     this(System.getProperty("java.class.path"));
   }
 
+  /**
+   * Builds a gate from a class path string using the platform path separator.
+   *
+   * @param classPath the class path to secure
+   * @throws MalformedURLException if the generated code source URL is invalid
+   */
   public SecureClasspathClassGate (String classPath)
     throws MalformedURLException {
 
     this(classPath.split(System.getProperty("path.separator"), -1));
   }
 
+  /**
+   * Builds a gate from explicit path components and prepares a code source that references them.
+   *
+   * @param pathComponents the class path components
+   * @throws MalformedURLException if the generated code source URL is invalid
+   */
   public SecureClasspathClassGate (String... pathComponents)
     throws MalformedURLException {
 
@@ -71,6 +92,9 @@ public class SecureClasspathClassGate extends ClasspathClassGate {
     codeSource = new CodeSource(URI.create(urlSpecBuilder.toString()).toURL(), (Certificate[])null);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public CodeSource getCodeSource () {
 

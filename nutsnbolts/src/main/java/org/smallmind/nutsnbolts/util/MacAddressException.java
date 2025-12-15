@@ -34,8 +34,15 @@ package org.smallmind.nutsnbolts.util;
 
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
+/**
+ * Indicates failure while resolving a MAC address.
+ */
 public class MacAddressException extends FormattedException {
 
+  /**
+   * @param message formatted error message
+   * @param args    message arguments
+   */
   public MacAddressException (String message, Object... args) {
 
     super(message, args);

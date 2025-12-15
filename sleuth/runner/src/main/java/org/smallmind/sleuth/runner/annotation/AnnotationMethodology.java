@@ -62,23 +62,23 @@ public class AnnotationMethodology<A extends Annotation> implements Iterable<Pai
   public Culprit invoke (SleuthRunner sleuthRunner, Culprit culprit, Class<?> clazz, Object instance) {
 
     for (Pair<Method, A> pair : pairList) {
-      sleuthRunner.fire(new StartSleuthEvent(clazz.getName(), pair.getFirst().getName()));
+      sleuthRunner.fire(new StartSleuthEvent(clazz.getName(), pair.first().getName()));
 
       if (culprit != null) {
-        sleuthRunner.fire(new SkippedSleuthEvent(clazz.getName(), pair.getFirst().getName(), 0, "Skipped due to prior error[" + culprit + "]"));
+        sleuthRunner.fire(new SkippedSleuthEvent(clazz.getName(), pair.first().getName(), 0, "Skipped due to prior error[" + culprit + "]"));
       } else {
 
         long startMilliseconds = System.currentTimeMillis();
 
         try {
-          pair.getFirst().invoke(instance);
-          sleuthRunner.fire(new SuccessSleuthEvent(clazz.getName(), pair.getFirst().getName(), System.currentTimeMillis() - startMilliseconds));
+          pair.first().invoke(instance);
+          sleuthRunner.fire(new SuccessSleuthEvent(clazz.getName(), pair.first().getName(), System.currentTimeMillis() - startMilliseconds));
         } catch (InvocationTargetException invocationTargetException) {
-          culprit = new Culprit(clazz.getName(), pair.getFirst().getName(), invocationTargetException.getCause());
-          sleuthRunner.fire(new ErrorSleuthEvent(clazz.getName(), pair.getFirst().getName(), System.currentTimeMillis() - startMilliseconds, invocationTargetException.getCause()));
+          culprit = new Culprit(clazz.getName(), pair.first().getName(), invocationTargetException.getCause());
+          sleuthRunner.fire(new ErrorSleuthEvent(clazz.getName(), pair.first().getName(), System.currentTimeMillis() - startMilliseconds, invocationTargetException.getCause()));
         } catch (Exception exception) {
-          culprit = new Culprit(clazz.getName(), pair.getFirst().getName(), exception);
-          sleuthRunner.fire(new ErrorSleuthEvent(clazz.getName(), pair.getFirst().getName(), System.currentTimeMillis() - startMilliseconds, exception));
+          culprit = new Culprit(clazz.getName(), pair.first().getName(), exception);
+          sleuthRunner.fire(new ErrorSleuthEvent(clazz.getName(), pair.first().getName(), System.currentTimeMillis() - startMilliseconds, exception));
         }
       }
     }

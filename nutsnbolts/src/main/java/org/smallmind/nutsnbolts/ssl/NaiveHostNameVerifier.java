@@ -35,8 +35,21 @@ package org.smallmind.nutsnbolts.ssl;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSession;
 
+/**
+ * A permissive {@link HostnameVerifier} that accepts any host name presented
+ * in an SSL session. This should only be used in testing scenarios where
+ * hostname verification is intentionally disabled.
+ */
 public class NaiveHostNameVerifier implements HostnameVerifier {
 
+  /**
+   * Always returns {@code true}, allowing the SSL handshake to proceed regardless
+   * of the peer's presented host name.
+   *
+   * @param hostname the peer host name
+   * @param session  the active SSL session
+   * @return always {@code true}
+   */
   public boolean verify (String hostname, SSLSession session) {
 
     return true;

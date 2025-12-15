@@ -43,14 +43,35 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Bulk transformation helpers that apply {@link Mutation} logic across collections/arrays/iterators into various output forms.
+ */
 public class MutationUtility {
 
+  /**
+   * Transforms an array to another typed array by applying a mutation to each element.
+   *
+   * @param array    source array; may be {@code null}
+   * @param outType  component class of the output array
+   * @param mutation transformation to apply
+   * @return array of transformed values or {@code null} if the source was null
+   * @throws MutationException if the mutation throws
+   */
   public static <T, U> U[] toArray (T[] array, Class<U> outType, Mutation<? super T, U> mutation)
     throws MutationException {
 
     return toArray((array == null) ? null : Arrays.asList(array), outType, mutation);
   }
 
+  /**
+   * Applies a mutation to each element of an iterator, returning an array of the specified component type.
+   *
+   * @param iterator source iterator; may be {@code null}
+   * @param outType  component class of the output array
+   * @param mutation transformation to apply
+   * @return array of transformed values or {@code null} if the iterator was null
+   * @throws MutationException if the mutation throws
+   */
   public static <T, U> U[] toArray (Iterator<T> iterator, Class<U> outType, Mutation<? super T, U> mutation)
     throws MutationException {
 
@@ -67,6 +88,17 @@ public class MutationUtility {
     }
   }
 
+  /**
+   * Applies a mutation to each element of a collection, returning an array of the specified component type.
+   *
+   * @param collection source collection; may be {@code null}
+   * @param outType    component class of the output array
+   * @param mutation   transformation to apply
+   * @param <T>        input type
+   * @param <U>        output type
+   * @return array of transformed values or {@code null} if the collection was null
+   * @throws MutationException if the mutation throws
+   */
   public static <T, U> U[] toArray (Collection<T> collection, Class<U> outType, Mutation<? super T, U> mutation)
     throws MutationException {
 
@@ -90,18 +122,39 @@ public class MutationUtility {
     }
   }
 
+  /**
+   * Transforms elements from an array into a {@link List}.
+   *
+   * @param array    source array; may be {@code null}
+   * @param mutation transformation to apply
+   * @param <T>      input type
+   * @param <U>      output type
+   * @return list of transformed values or {@code null} if the array was null
+   * @throws MutationException if the mutation throws
+   */
   public static <T, U> List<U> toList (T[] array, Mutation<? super T, U> mutation)
     throws MutationException {
 
     return toList((array == null) ? null : Arrays.asList(array), mutation);
   }
 
+  /**
+   * Transforms elements from an iterator into a {@link List}.
+   */
   public static <T, U> List<U> toList (Iterator<T> iterator, Mutation<? super T, U> mutation)
     throws MutationException {
 
     return (iterator == null) ? null : toList((Iterable<T>)new IterableIterator<>(iterator), mutation);
   }
 
+  /**
+   * Transforms elements from an iterable into a {@link List}.
+   *
+   * @param iterable source iterable; may be {@code null}
+   * @param mutation transformation to apply
+   * @return list of transformed values or {@code null} if the iterable was null
+   * @throws MutationException if the mutation throws
+   */
   public static <T, U> List<U> toList (Iterable<T> iterable, Mutation<? super T, U> mutation)
     throws MutationException {
 
@@ -124,18 +177,48 @@ public class MutationUtility {
     }
   }
 
+  /**
+   * Transforms elements from an array into a {@link Set}.
+   *
+   * @param array    source array; may be {@code null}
+   * @param mutation transformation to apply
+   * @param <T>      input type
+   * @param <U>      output type
+   * @return set of transformed values or {@code null} if the array was null
+   * @throws MutationException if the mutation throws
+   */
   public static <T, U> Set<U> toSet (T[] array, Mutation<? super T, U> mutation)
     throws MutationException {
 
     return toSet((array == null) ? null : Arrays.asList(array), mutation);
   }
 
+  /**
+   * Transforms elements from an iterator into a {@link Set}.
+   *
+   * @param iterator source iterator; may be {@code null}
+   * @param mutation transformation to apply
+   * @param <T>      input type
+   * @param <U>      output type
+   * @return set of transformed values or {@code null} if the iterator was null
+   * @throws MutationException if the mutation throws
+   */
   public static <T, U> Set<U> toSet (Iterator<T> iterator, Mutation<? super T, U> mutation)
     throws MutationException {
 
     return (iterator == null) ? null : toSet((Iterable<T>)new IterableIterator<>(iterator), mutation);
   }
 
+  /**
+   * Transforms elements from an iterable into a {@link Set}.
+   *
+   * @param iterable source iterable; may be {@code null}
+   * @param mutation transformation to apply
+   * @param <T>      input type
+   * @param <U>      output type
+   * @return set of transformed values or {@code null} if the iterable was null
+   * @throws MutationException if the mutation throws
+   */
   public static <T, U> Set<U> toSet (Iterable<T> iterable, Mutation<? super T, U> mutation)
     throws MutationException {
 
@@ -158,18 +241,51 @@ public class MutationUtility {
     }
   }
 
+  /**
+   * Transforms elements from an array into a {@link Map} by applying separate key and value mutations.
+   *
+   * @param array         source array; may be {@code null}
+   * @param keyMutation   transformation for keys
+   * @param valueMutation transformation for values
+   * @param <T>           input type
+   * @param <K>           key type
+   * @param <U>           value type
+   * @return map of transformed entries or {@code null} if the array was null
+   * @throws MutationException if either mutation throws
+   */
   public static <T, K, U> Map<K, U> toMap (T[] array, Mutation<T, K> keyMutation, Mutation<? super T, U> valueMutation)
     throws MutationException {
 
     return toMap((array == null) ? null : Arrays.asList(array), keyMutation, valueMutation);
   }
 
+  /**
+   * Transforms elements from an iterator into a {@link Map} by applying separate key and value mutations.
+   *
+   * @param iterator      source iterator; may be {@code null}
+   * @param keyMutation   transformation for keys
+   * @param valueMutation transformation for values
+   * @param <T>           input type
+   * @param <K>           key type
+   * @param <U>           value type
+   * @return map of transformed entries or {@code null} if the iterator was null
+   * @throws MutationException if either mutation throws
+   */
   public static <T, K, U> Map<K, U> toMap (Iterator<T> iterator, Mutation<T, K> keyMutation, Mutation<? super T, U> valueMutation)
     throws MutationException {
 
     return (iterator == null) ? null : toMap((Iterable<T>)new IterableIterator<>(iterator), keyMutation, valueMutation);
   }
 
+  /**
+   * Transforms elements from an iterable into a {@link Map} by applying separate key and value mutations.
+   *
+   * @param iterable      source iterable; may be {@code null}
+   * @param keyMutation   transformation for keys
+   * @param valueMutation transformation for values
+   * @return map of transformed entries or {@code null} if the iterable was null
+   * @throws MutationException if either mutation throws
+   */
   public static <T, K, U> Map<K, U> toMap (Iterable<T> iterable, Mutation<T, K> keyMutation, Mutation<? super T, U> valueMutation)
     throws MutationException {
 
@@ -192,18 +308,39 @@ public class MutationUtility {
     }
   }
 
+  /**
+   * Transforms elements from an array into a {@link Bag} (multiset).
+   *
+   * @param array    source array; may be {@code null}
+   * @param mutation transformation to apply
+   * @param <T>      input type
+   * @param <U>      output type
+   * @return bag of transformed values or {@code null} if the array was null
+   * @throws MutationException if the mutation throws
+   */
   public static <T, U> Bag<U> toBag (T[] array, Mutation<? super T, U> mutation)
     throws MutationException {
 
     return toBag((array == null) ? null : Arrays.asList(array), mutation);
   }
 
+  /**
+   * Transforms elements from an iterator into a {@link Bag} (multiset).
+   */
   public static <T, U> Bag<U> toBag (Iterator<T> iterator, Mutation<? super T, U> mutation)
     throws MutationException {
 
     return (iterator == null) ? null : toBag((Iterable<T>)new IterableIterator<>(iterator), mutation);
   }
 
+  /**
+   * Transforms elements from an iterable into a {@link Bag} (multiset).
+   *
+   * @param iterable source iterable; may be {@code null}
+   * @param mutation transformation to apply
+   * @return bag of transformed values or {@code null} if the iterable was null
+   * @throws MutationException if the mutation throws
+   */
   public static <T, U> Bag<U> toBag (Iterable<T> iterable, Mutation<? super T, U> mutation)
     throws MutationException {
 

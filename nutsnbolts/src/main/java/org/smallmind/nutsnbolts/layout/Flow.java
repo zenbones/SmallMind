@@ -32,6 +32,9 @@
  */
 package org.smallmind.nutsnbolts.layout;
 
+/**
+ * Describes the direction in which children are laid out.
+ */
 public enum Flow {
 
   FIRST_TO_LAST, LAST_TO_FIRST

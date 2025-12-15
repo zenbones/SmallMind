@@ -36,27 +36,52 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 
+/**
+ * Wraps an {@link InputStream} representing class bytes along with their modification timestamp.
+ * Implements {@link Closeable} so callers can ensure the stream is released.
+ */
 public class ClassStreamTicket implements Closeable {
 
   private final InputStream inputStream;
   private final long timeStamp;
 
+  /**
+   * Creates a ticket for a class stream.
+   *
+   * @param inputStream the stream to the class bytes
+   * @param timeStamp   the associated modification timestamp
+   */
   public ClassStreamTicket (InputStream inputStream, long timeStamp) {
 
     this.inputStream = inputStream;
     this.timeStamp = timeStamp;
   }
 
+  /**
+   * Returns the underlying class byte stream.
+   *
+   * @return the open input stream
+   */
   public InputStream getInputStream () {
 
     return inputStream;
   }
 
+  /**
+   * Returns the modification time associated with the stream.
+   *
+   * @return the timestamp in milliseconds
+   */
   public long getTimeStamp () {
 
     return timeStamp;
   }
 
+  /**
+   * Closes the underlying stream.
+   *
+   * @throws IOException if the stream cannot be closed
+   */
   @Override
   public void close ()
     throws IOException {

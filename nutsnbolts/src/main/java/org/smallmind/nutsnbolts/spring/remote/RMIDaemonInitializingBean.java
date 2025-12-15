@@ -37,6 +37,9 @@ import java.rmi.RemoteException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.springframework.beans.factory.InitializingBean;
 
+/**
+ * Starts an external {@code rmid} process during Spring initialization and can stop it on demand.
+ */
 public class RMIDaemonInitializingBean implements InitializingBean {
 
   private final AtomicBoolean stopped = new AtomicBoolean(false);
@@ -49,6 +52,11 @@ public class RMIDaemonInitializingBean implements InitializingBean {
     rmidProcess = Runtime.getRuntime().exec("rmid");
   }
 
+  /**
+   * Stops the {@code rmid} process if it is running.
+   *
+   * @throws RemoteException if a communication error occurs while stopping
+   */
   public void stop ()
     throws RemoteException {
 

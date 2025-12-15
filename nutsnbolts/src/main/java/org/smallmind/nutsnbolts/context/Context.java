@@ -34,6 +34,9 @@ package org.smallmind.nutsnbolts.context;
 
 import java.io.Serializable;
 
+/**
+ * Marker for thread-associated contextual data objects.
+ */
 public interface Context extends Serializable {
 
 }

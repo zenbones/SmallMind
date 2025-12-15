@@ -36,15 +36,32 @@ import java.io.Serializable;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 
+/**
+ * Simple {@link InvocationHandler} that forwards method invocations to a target instance.
+ */
 public class OffloadingInvocationHandler implements Serializable, InvocationHandler {
 
   private final Object target;
 
+  /**
+   * Creates a handler that forwards invocations to the supplied target.
+   *
+   * @param target the object that should receive invoked methods
+   */
   public OffloadingInvocationHandler (Object target) {
 
     this.target = target;
   }
 
+  /**
+   * Invokes the same method on the target object.
+   *
+   * @param proxy  the generated proxy instance
+   * @param method the method to invoke
+   * @param args   invocation arguments
+   * @return the result of invoking the method on the target
+   * @throws Throwable propagated from the target invocation
+   */
   @Override
   public Object invoke (Object proxy, Method method, Object[] args)
     throws Throwable {

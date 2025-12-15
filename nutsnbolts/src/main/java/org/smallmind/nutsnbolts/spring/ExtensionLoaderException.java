@@ -34,23 +34,47 @@ package org.smallmind.nutsnbolts.spring;
 
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
+/**
+ * Thrown when an extension context cannot be loaded or initialized.
+ */
 public class ExtensionLoaderException extends FormattedException {
 
+  /**
+   * Creates an exception with no detail message.
+   */
   public ExtensionLoaderException () {
 
     super();
   }
 
+  /**
+   * Creates an exception with a formatted detail message.
+   *
+   * @param message a {@link java.util.Formatter}-style message
+   * @param args    values interpolated into the message
+   */
   public ExtensionLoaderException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * Creates an exception with a formatted detail message and a cause.
+   *
+   * @param throwable the underlying failure
+   * @param message   a {@link java.util.Formatter}-style message
+   * @param args      values interpolated into the message
+   */
   public ExtensionLoaderException (Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);
   }
 
+  /**
+   * Creates an exception with a cause and no detail message.
+   *
+   * @param throwable the underlying failure
+   */
   public ExtensionLoaderException (Throwable throwable) {
 
     super(throwable);

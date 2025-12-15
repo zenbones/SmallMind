@@ -35,6 +35,9 @@ package org.smallmind.nutsnbolts.util;
 import java.util.HashMap;
 import java.util.Locale;
 
+/**
+ * Helpers for working with {@link Locale} instances.
+ */
 public class LocaleUtility {
 
   private static final HashMap<String, Locale> COUNTRY_ISO_3_CODE_MAP = new HashMap<>();
@@ -49,6 +52,12 @@ public class LocaleUtility {
     }
   }
 
+  /**
+   * Looks up a locale by 3-letter ISO country code.
+   *
+   * @param countryISO3Code ISO 3166-1 alpha-3 country code
+   * @return matching locale or {@code null} if none is registered
+   */
   public static Locale forCountryISO3Code (String countryISO3Code) {
 
     return COUNTRY_ISO_3_CODE_MAP.get(countryISO3Code);

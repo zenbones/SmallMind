@@ -36,15 +36,24 @@ import java.io.File;
 import java.io.FileFilter;
 import java.util.regex.Pattern;
 
+/**
+ * File filter that matches file names against a wildcard pattern (no path separators).
+ */
 public class WildcardFileNameFileFilter implements FileFilter {
 
   private final Pattern namePattern;
 
+  /**
+   * @param name glob-like pattern (supports '*' and '?')
+   */
   public WildcardFileNameFileFilter (String name) {
 
     namePattern = Pattern.compile(RegExTranslator.translate(name));
   }
 
+  /**
+   * Accepts files whose names match the supplied pattern.
+   */
   public boolean accept (File file) {
 
     return namePattern.matcher(file.getName()).matches();

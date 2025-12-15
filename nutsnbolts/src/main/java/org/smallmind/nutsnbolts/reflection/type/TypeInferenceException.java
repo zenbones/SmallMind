@@ -34,23 +34,47 @@ package org.smallmind.nutsnbolts.reflection.type;
 
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
+/**
+ * Thrown when generic type inference cannot determine a unique result.
+ */
 public class TypeInferenceException extends FormattedRuntimeException {
 
+  /**
+   * Creates an exception with no detail message.
+   */
   public TypeInferenceException () {
 
     super();
   }
 
+  /**
+   * Creates an exception with a formatted detail message.
+   *
+   * @param message a {@link java.util.Formatter}-style message describing the failure
+   * @param args    values interpolated into the message
+   */
   public TypeInferenceException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * Creates an exception with a formatted detail message and a cause.
+   *
+   * @param throwable the underlying problem
+   * @param message   a {@link java.util.Formatter}-style message describing the failure
+   * @param args      values interpolated into the message
+   */
   public TypeInferenceException (Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);
   }
 
+  /**
+   * Creates an exception with a cause and no detail message.
+   *
+   * @param throwable the underlying problem
+   */
   public TypeInferenceException (Throwable throwable) {
 
     super(throwable);

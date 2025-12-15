@@ -35,12 +35,21 @@ package org.smallmind.nutsnbolts.freemarker;
 import java.io.IOException;
 import java.io.InputStream;
 
+/**
+ * Represents a classpath-based FreeMarker template source and its underlying stream.
+ */
 public class ClassPathTemplateSource {
 
   private final InputStream inputStream;
   private final ClassLoader classLoader;
   private final String name;
 
+  /**
+   * Creates a template source for a classpath resource.
+   *
+   * @param classLoader loader used to resolve the resource
+   * @param name        resource path within the classpath
+   */
   public ClassPathTemplateSource (ClassLoader classLoader, String name) {
 
     this.classLoader = classLoader;
@@ -49,26 +58,43 @@ public class ClassPathTemplateSource {
     inputStream = classLoader.getResourceAsStream(name);
   }
 
+  /**
+   * @return {@code true} if the resource exists
+   */
   public boolean exists () {
 
     return inputStream != null;
   }
 
+  /**
+   * @return class loader used to locate the resource
+   */
   public ClassLoader getClassLoader () {
 
     return classLoader;
   }
 
+  /**
+   * @return resource name/path
+   */
   public String getName () {
 
     return name;
   }
 
+  /**
+   * @return input stream for reading the template; may be {@code null} if resource absent
+   */
   public synchronized InputStream getInputStream () {
 
     return inputStream;
   }
 
+  /**
+   * Closes the underlying input stream, if present.
+   *
+   * @throws IOException if closure fails
+   */
   public synchronized void close ()
     throws IOException {
 
@@ -77,12 +103,23 @@ public class ClassPathTemplateSource {
     }
   }
 
+  /**
+   * Computes a hash combining class loader and resource name.
+   *
+   * @return hash code for map/set usage
+   */
   @Override
   public int hashCode () {
 
     return classLoader.hashCode() ^ name.hashCode();
   }
 
+  /**
+   * Considers two sources equal when both class loader and resource name match.
+   *
+   * @param obj object to compare
+   * @return {@code true} when equivalent
+   */
   @Override
   public boolean equals (Object obj) {
 

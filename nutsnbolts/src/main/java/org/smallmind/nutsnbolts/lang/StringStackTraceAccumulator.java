@@ -32,21 +32,37 @@
  */
 package org.smallmind.nutsnbolts.lang;
 
+/**
+ * {@link StackTraceAccumulator} that collects trace lines into a single {@link StringBuilder}.
+ */
 public class StringStackTraceAccumulator implements StackTraceAccumulator {
 
   private final StringBuilder traceBuilder;
 
+  /**
+   * Constructs an empty accumulator.
+   */
   public StringStackTraceAccumulator () {
 
     traceBuilder = new StringBuilder();
   }
 
+  /**
+   * Appends a line of text, adding the platform line separator.
+   *
+   * @param charSequence the text to append
+   */
   @Override
   public void append (CharSequence charSequence) {
 
     traceBuilder.append(charSequence).append(System.getProperty("line.separator"));
   }
 
+  /**
+   * Returns the collected trace text.
+   *
+   * @return accumulated trace content
+   */
   @Override
   public String toString () {
 

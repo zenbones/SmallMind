@@ -34,15 +34,24 @@ package org.smallmind.nutsnbolts.command.sax;
 
 import org.smallmind.nutsnbolts.xml.sax.AbstractElementExtender;
 
+/**
+ * Captures the raw text content of a {@code <value>} element for use by parent extenders.
+ */
 public class ValueElementExtender extends AbstractElementExtender {
 
   public String value;
 
+  /**
+   * @return text contained within the value element
+   */
   public String getValue () {
 
     return value;
   }
 
+  /**
+   * Stores the content text when the element ends.
+   */
   @Override
   public void endElement (String namespaceURI, String localName, String qName, StringBuilder contentBuilder) {
 

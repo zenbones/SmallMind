@@ -39,12 +39,21 @@ import java.util.List;
 import java.util.Map;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
+/**
+ * Coordinates measurement caching and two-dimensional layout application across horizontal and vertical boxes.
+ * Ensures components are constrained along both axes and prevents reuse of the same box/component in multiple parents.
+ */
 public class LayoutTailor {
 
   private final HashMap<Sizing, Double> measurementMap = new HashMap<Sizing, Double>();
   private final HashMap<Object, PartialSolution> solutionMap = new HashMap<Object, PartialSolution>();
   private final HashSet<Object> completedSet = new HashSet<Object>();
 
+  /**
+   * Initializes the tailor with the set of components expected to be laid out.
+   *
+   * @param componentList the components participating in layout
+   */
   public LayoutTailor (List<?> componentList) {
 
     for (Object component : componentList) {
@@ -52,16 +61,42 @@ public class LayoutTailor {
     }
   }
 
+  /**
+   * Stores a measurement for a part on a given axis and tape measure type.
+   *
+   * @param part        the part being measured
+   * @param bias        the axis of measurement
+   * @param tapeMeasure the measurement type
+   * @param measurement the measured value
+   */
   public void store (Object part, Bias bias, TapeMeasure tapeMeasure, double measurement) {
 
     measurementMap.put(new Sizing(part, bias, tapeMeasure), measurement);
   }
 
+  /**
+   * Looks up a previously stored measurement for a part.
+   *
+   * @param part        the part being measured
+   * @param bias        the axis of measurement
+   * @param tapeMeasure the measurement type
+   * @return the cached measurement or {@code null} if not stored
+   */
   public Double lookup (Object part, Bias bias, TapeMeasure tapeMeasure) {
 
     return measurementMap.get(new Sizing(part, bias, tapeMeasure));
   }
 
+  /**
+   * Applies layout to an element, coordinating between linear and planar parts. Enforces that planar parts
+   * receive constraints along both axes before final layout is applied.
+   *
+   * @param bias        the axis being laid out
+   * @param position    the position along that axis
+   * @param measurement the measurement along that axis
+   * @param element     the element to lay out
+   * @throws LayoutException if elements are reused improperly or missing constraints
+   */
   public void applyLayout (Bias bias, double position, double measurement, ParaboxElement<?> element) {
 
     switch (element.getDimensionality()) {
@@ -84,15 +119,15 @@ public class LayoutTailor {
 
         if ((partialSolution = solutionMap.remove(element.getPart())) == null) {
           solutionMap.put(element.getPart(), new PartialSolution(bias, position, measurement));
-        } else if (partialSolution.getBias().equals(bias)) {
+        } else if (partialSolution.bias().equals(bias)) {
           throw new LayoutException("The layout component (%s) must be added to a single horizontal and a single vertical box, and no more", element.getPart());
         } else {
           switch (bias) {
             case HORIZONTAL:
-              ((PlanarPart)element).applyLayout(new Pair(position, partialSolution.getPosition()), new Pair(measurement, partialSolution.getMeasurement()));
+              ((PlanarPart)element).applyLayout(new Pair(position, partialSolution.position()), new Pair(measurement, partialSolution.measurement()));
               break;
             case VERTICAL:
-              ((PlanarPart)element).applyLayout(new Pair(partialSolution.getPosition(), position), new Pair(partialSolution.getMeasurement(), measurement));
+              ((PlanarPart)element).applyLayout(new Pair(partialSolution.position(), position), new Pair(partialSolution.measurement(), measurement));
               break;
             default:
               throw new UnknownSwitchCaseException(bias.name());
@@ -106,6 +141,12 @@ public class LayoutTailor {
     }
   }
 
+  /**
+   * Verifies that all components have been fully constrained and laid out, throwing when any are missing
+   * a corresponding horizontal or vertical placement.
+   *
+   * @throws LayoutException if any component is missing required constraints
+   */
   public void cleanup () {
 
     if (!solutionMap.isEmpty()) {
@@ -119,7 +160,7 @@ public class LayoutTailor {
         if (solutionEntry.getValue() == null) {
           throw new LayoutException("The layout component (%s) must be added to a single horizontal and a single vertical box", solutionEntry.getKey());
         } else {
-          throw new LayoutException("The layout component (%s) was only added to a %s box, and must be constrained in both directions", solutionEntry.getKey(), solutionEntry.getValue().getBias());
+          throw new LayoutException("The layout component (%s) was only added to a %s box, and must be constrained in both directions", solutionEntry.getKey(), solutionEntry.getValue().bias());
         }
       }
     }

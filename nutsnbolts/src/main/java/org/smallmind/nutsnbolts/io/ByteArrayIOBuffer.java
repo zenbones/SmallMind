@@ -35,12 +35,20 @@ package org.smallmind.nutsnbolts.io;
 import java.io.IOException;
 import java.util.ArrayList;
 
+/**
+ * Segmented byte array storage used by {@link ByteArrayIOStream}, tracking a moving limit bookmark.
+ */
 public class ByteArrayIOBuffer {
 
   private final ArrayList<byte[]> segmentList = new ArrayList<>();
   private final ByteArrayIOBookmark limitBookmark;
   private final int allocation;
 
+  /**
+   * Creates an empty buffer with the specified segment allocation size.
+   *
+   * @param allocation number of bytes per segment
+   */
   public ByteArrayIOBuffer (int allocation) {
 
     this.allocation = allocation;
@@ -48,6 +56,11 @@ public class ByteArrayIOBuffer {
     limitBookmark = new ByteArrayIOBookmark(allocation);
   }
 
+  /**
+   * Copy constructor that deep copies segment data and bookmarks.
+   *
+   * @param segmentBuffer buffer to clone
+   */
   public ByteArrayIOBuffer (ByteArrayIOBuffer segmentBuffer) {
 
     allocation = segmentBuffer.getAllocation();
@@ -62,21 +75,35 @@ public class ByteArrayIOBuffer {
     }
   }
 
+  /**
+   * @return allocation (segment size) in bytes
+   */
   public int getAllocation () {
 
     return allocation;
   }
 
+  /**
+   * @return list of byte-array segments comprising the buffer
+   */
   public ArrayList<byte[]> getSegmentList () {
 
     return segmentList;
   }
 
+  /**
+   * @return bookmark representing the logical end-of-stream
+   */
   public ByteArrayIOBookmark getLimitBookmark () {
 
     return limitBookmark;
   }
 
+  /**
+   * Clears all segments and rewinds the limit bookmark.
+   *
+   * @throws IOException not thrown currently; kept for interface symmetry
+   */
   public void clear ()
     throws IOException {
 

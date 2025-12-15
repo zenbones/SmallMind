@@ -41,14 +41,39 @@ import java.security.PublicKey;
 import java.security.SignatureException;
 import org.smallmind.nutsnbolts.http.Base64Codec;
 
+/**
+ * Marker for asymmetric signing algorithms that can generate and verify signatures.
+ */
 public interface AsymmetricSigningAlgorithm extends SecurityAlgorithm {
 
+  /**
+   * Signs the provided data with the given private key.
+   *
+   * @param privateKey the key used to sign
+   * @param data       the data to sign
+   * @return the signature bytes
+   * @throws NoSuchAlgorithmException if the algorithm is unavailable
+   * @throws InvalidKeyException      if the key is invalid for the algorithm
+   * @throws SignatureException       if signing fails
+   */
   default byte[] sign (PrivateKey privateKey, byte[] data)
     throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
 
     return EncryptionUtility.sign(this, privateKey, data);
   }
 
+  /**
+   * Verifies a JWT-like three-part structure using this algorithm.
+   *
+   * @param key     the public key to verify with
+   * @param parts   the token sections (header, payload, signature)
+   * @param urlSafe whether the signature is URL-safe Base64 encoded
+   * @return {@code true} if the signature is valid
+   * @throws IOException              if the signature cannot be decoded
+   * @throws NoSuchAlgorithmException if the algorithm is unavailable
+   * @throws InvalidKeyException      if the key is invalid for the algorithm
+   * @throws SignatureException       if verification fails
+   */
   default boolean verify (PublicKey key, String[] parts, boolean urlSafe)
     throws IOException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
 

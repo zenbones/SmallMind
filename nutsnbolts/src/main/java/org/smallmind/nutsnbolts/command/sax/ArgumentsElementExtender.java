@@ -36,15 +36,24 @@ import org.smallmind.nutsnbolts.command.template.Argument;
 import org.smallmind.nutsnbolts.xml.sax.AbstractElementExtender;
 import org.smallmind.nutsnbolts.xml.sax.ElementExtender;
 
+/**
+ * SAX element extender that captures a nested {@link Argument} contributed by child extenders.
+ */
 public class ArgumentsElementExtender extends AbstractElementExtender {
 
   private Argument argument;
 
+  /**
+   * @return compiled argument supplied by a child element
+   */
   public Argument getArgument () {
 
     return argument;
   }
 
+  /**
+   * Records the argument produced by child {@link ArgumentCompiler} elements.
+   */
   @Override
   public void completedChildElement (ElementExtender elementExtender) {
 

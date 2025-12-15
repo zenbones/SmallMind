@@ -32,6 +32,11 @@
  */
 package org.smallmind.nutsnbolts.reflection;
 
+/**
+ * Marker for types that can produce a strongly typed copy of themselves during proxying.
+ *
+ * @param <D> the concrete differentiable subtype
+ */
 public interface Differentiable<D extends Differentiable<D>> {
 
 }

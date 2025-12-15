@@ -34,23 +34,47 @@ package org.smallmind.nutsnbolts.resource;
 
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
+/**
+ * Exception raised when a {@link Resource} cannot be located, opened, or parsed.
+ */
 public class ResourceException extends FormattedException {
 
+  /**
+   * Constructs a {@link ResourceException} with no message or cause.
+   */
   public ResourceException () {
 
     super();
   }
 
+  /**
+   * Constructs a {@link ResourceException} with a formatted message.
+   *
+   * @param message message template
+   * @param args    message template arguments
+   */
   public ResourceException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * Constructs a {@link ResourceException} with a cause and formatted message.
+   *
+   * @param throwable underlying cause
+   * @param message   message template
+   * @param args      message template arguments
+   */
   public ResourceException (Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);
   }
 
+  /**
+   * Constructs a {@link ResourceException} with a cause.
+   *
+   * @param throwable underlying cause
+   */
   public ResourceException (Throwable throwable) {
 
     super(throwable);

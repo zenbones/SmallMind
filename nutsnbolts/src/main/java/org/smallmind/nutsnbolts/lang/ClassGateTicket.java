@@ -32,22 +32,42 @@
  */
 package org.smallmind.nutsnbolts.lang;
 
+/**
+ * Bundles a {@link ClassGate} with a timestamp to describe when a class was last modified.
+ * Used by loaders to determine staleness or freshness of class resources.
+ */
 public class ClassGateTicket {
 
   private final ClassGate classGate;
   private final long timeStamp;
 
+  /**
+   * Creates a ticket capturing a gate and its associated modification timestamp.
+   *
+   * @param classGate the gate providing access to the class resource
+   * @param timeStamp the modification time of the class bytes
+   */
   public ClassGateTicket (ClassGate classGate, long timeStamp) {
 
     this.classGate = classGate;
     this.timeStamp = timeStamp;
   }
 
+  /**
+   * Returns the gate used to load the class data.
+   *
+   * @return the originating {@link ClassGate}
+   */
   public ClassGate getClassGate () {
 
     return classGate;
   }
 
+  /**
+   * Returns the last modification time of the associated class resource.
+   *
+   * @return the modification timestamp
+   */
   public long getTimeStamp () {
 
     return timeStamp;

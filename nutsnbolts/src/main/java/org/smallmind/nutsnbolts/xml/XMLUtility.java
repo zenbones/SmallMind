@@ -39,13 +39,29 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+/**
+ * DOM helper utilities for serializing nodes and encoding text for XML.
+ */
 public class XMLUtility {
 
+  /**
+   * Serializes a DOM node without indentation.
+   *
+   * @param node node to render
+   * @return XML string for the node
+   */
   public static String toString (Node node) {
 
     return toString(node, false);
   }
 
+  /**
+   * Serializes a DOM node with optional indentation.
+   *
+   * @param node   node to render
+   * @param indent whether to indent child elements and add newlines
+   * @return XML string for the node
+   */
   public static String toString (Node node, boolean indent) {
 
     return toString(node, 0, indent);
@@ -124,6 +140,12 @@ public class XMLUtility {
     return nodeBuilder.toString();
   }
 
+  /**
+   * Creates an indentation string for the requested level.
+   *
+   * @param level depth within the document
+   * @return spaces representing the indent
+   */
   private static String setIndent (int level) {
 
     StringBuilder spaceBuilder = new StringBuilder();
@@ -135,6 +157,12 @@ public class XMLUtility {
     return spaceBuilder.toString();
   }
 
+  /**
+   * Escapes the characters {@code &}, {@code <}, and {@code >} in a text value for safe XML embedding.
+   *
+   * @param unencodedValue raw value
+   * @return encoded string safe for XML content
+   */
   public static String encode (String unencodedValue) {
 
     CharacterIterator charIterator;

@@ -34,22 +34,35 @@ package org.smallmind.nutsnbolts.security.x509;
 
 import java.math.BigInteger;
 
+/**
+ * Holds the modulus and exponent extracted from an RSA key.
+ */
 public class RSAKeyFactors {
 
   private final BigInteger modulus;
   private final BigInteger exponent;
 
+  /**
+   * @param modulus  the RSA modulus
+   * @param exponent the public or private exponent
+   */
   public RSAKeyFactors (BigInteger modulus, BigInteger exponent) {
 
     this.modulus = modulus;
     this.exponent = exponent;
   }
 
+  /**
+   * @return the modulus component
+   */
   public BigInteger getModulus () {
 
     return this.modulus;
   }
 
+  /**
+   * @return the exponent component
+   */
   public BigInteger getExponent () {
 
     return this.exponent;

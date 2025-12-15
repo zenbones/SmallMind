@@ -32,6 +32,9 @@
  */
 package org.smallmind.nutsnbolts.layout;
 
+/**
+ * Describes whether layout is linear (one-dimensional) or planar (two-dimensional).
+ */
 public enum Dimensionality {
 
   LINE, PLANE

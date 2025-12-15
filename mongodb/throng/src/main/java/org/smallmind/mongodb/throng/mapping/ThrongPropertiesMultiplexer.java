@@ -128,10 +128,10 @@ public class ThrongPropertiesMultiplexer<T> implements IndexProvider {
     }
   }
 
-  @Override
   /**
    * Combines index definitions from all registered subtype codecs.
    */
+  @Override
   public ThrongIndexes provideIndexes () {
 
     ThrongIndexes throngIndexes = new ThrongIndexes();

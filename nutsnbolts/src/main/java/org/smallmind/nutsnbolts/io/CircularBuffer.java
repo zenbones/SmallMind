@@ -37,6 +37,10 @@ import java.io.IOException;
 import java.nio.channels.AsynchronousCloseException;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
+/**
+ * Thread-safe circular byte buffer supporting blocking reads/writes with optional timeouts.
+ * Tracks state to distinguish full vs empty when read/write positions coincide.
+ */
 public class CircularBuffer implements Closeable {
 
   private enum Operation {
@@ -50,16 +54,25 @@ public class CircularBuffer implements Closeable {
   private int writePos = 0;
   private byte[] buffer;
 
+  /**
+   * @param size capacity of the buffer in bytes
+   */
   public CircularBuffer (int size) {
 
     buffer = new byte[size];
   }
 
+  /**
+   * @return {@code true} if the buffer has been closed
+   */
   public synchronized boolean isClosed () {
 
     return closed;
   }
 
+  /**
+   * Closes the buffer, waking any waiting threads.
+   */
   public synchronized void close () {
 
     if (!closed) {
@@ -70,6 +83,10 @@ public class CircularBuffer implements Closeable {
     }
   }
 
+  /**
+   * @return number of bytes currently readable without blocking
+   * @throws IOException if closed
+   */
   public synchronized int readAvailable ()
     throws IOException {
 
@@ -87,6 +104,10 @@ public class CircularBuffer implements Closeable {
     }
   }
 
+  /**
+   * @return number of bytes writable without blocking
+   * @throws IOException if closed
+   */
   public synchronized int writeAvailable ()
     throws IOException {
 
@@ -104,60 +125,133 @@ public class CircularBuffer implements Closeable {
     }
   }
 
+  /**
+   * Reads exactly {@code data.length} bytes, blocking indefinitely if needed.
+   *
+   * @param data destination buffer
+   * @return bytes read
+   * @throws IOException          if closed
+   * @throws InterruptedException if interrupted while waiting
+   */
   public int read (byte[] data)
     throws IOException, InterruptedException {
 
     return read(data, 0, data.length, 0);
   }
 
+  /**
+   * Reads exactly {@code data.length} bytes, waiting up to {@code timeout} ms between availability checks.
+   *
+   * @param data    destination buffer
+   * @param timeout wait time in milliseconds (0 for indefinite)
+   * @return bytes read (may be less than requested if timeout elapses)
+   * @throws IOException          if closed
+   * @throws InterruptedException if interrupted while waiting
+   */
   public int read (byte[] data, long timeout)
     throws IOException, InterruptedException {
 
     return read(data, 0, data.length, timeout);
   }
 
+  /**
+   * Reads up to {@code len} bytes into {@code data} starting at {@code off}, blocking as needed.
+   */
   public int read (byte[] data, int off, int len)
     throws IOException, InterruptedException {
 
     return read(data, off, len, 0);
   }
 
+  /**
+   * Reads up to {@code len} bytes into {@code data} starting at {@code off}, waiting up to {@code timeout} ms.
+   *
+   * @param data    destination buffer
+   * @param off     offset into destination
+   * @param len     requested byte count
+   * @param timeout maximum wait time in ms (0 for indefinite)
+   * @return bytes read (<= len)
+   * @throws IOException          if closed
+   * @throws InterruptedException if interrupted
+   */
   public int read (byte[] data, int off, int len, long timeout)
     throws IOException, InterruptedException {
 
     return transfer(data, off, len, timeout, Operation.READ);
   }
 
+  /**
+   * Writes all bytes from {@code data}, blocking indefinitely if necessary.
+   *
+   * @param data source data
+   * @return bytes written
+   * @throws IOException          if closed
+   * @throws InterruptedException if interrupted
+   */
   public int write (byte[] data)
     throws IOException, InterruptedException {
 
     return write(data, 0, data.length, 0);
   }
 
+  /**
+   * Writes all bytes from {@code data}, waiting up to {@code timeout} ms between availability checks.
+   */
   public int write (byte[] data, long timeout)
     throws IOException, InterruptedException {
 
     return write(data, 0, data.length, timeout);
   }
 
+  /**
+   * Writes up to {@code len} bytes from {@code data} starting at {@code off}, blocking as needed.
+   */
   public int write (byte[] data, int off, int len)
     throws IOException, InterruptedException {
 
     return write(data, off, len, 0);
   }
 
+  /**
+   * Writes up to {@code len} bytes, waiting up to {@code timeout} ms.
+   *
+   * @param data    source buffer
+   * @param off     offset into source
+   * @param len     byte count to write
+   * @param timeout maximum wait time in ms (0 for indefinite)
+   * @return bytes written (<= len)
+   * @throws IOException          if closed
+   * @throws InterruptedException if interrupted
+   */
   public int write (byte[] data, int off, int len, long timeout)
     throws IOException, InterruptedException {
 
     return transfer(data, off, len, timeout, Operation.WRITE);
   }
 
+  /**
+   * Skips (discards) up to {@code len} bytes, blocking as needed.
+   *
+   * @param len bytes to skip
+   * @return number of bytes skipped
+   * @throws IOException          if closed
+   * @throws InterruptedException if interrupted
+   */
   public long skip (long len)
     throws IOException, InterruptedException {
 
     return skip(len, 0);
   }
 
+  /**
+   * Skips (discards) up to {@code len} bytes, waiting up to {@code timeout} ms.
+   *
+   * @param len     bytes to skip
+   * @param timeout maximum wait time in ms (0 for indefinite)
+   * @return number of bytes skipped
+   * @throws IOException          if closed
+   * @throws InterruptedException if interrupted
+   */
   public synchronized long skip (long len, long timeout)
     throws IOException, InterruptedException {
 
@@ -198,6 +292,9 @@ public class CircularBuffer implements Closeable {
     }
   }
 
+  /**
+   * Transfers bytes to/from the circular buffer depending on the operation type.
+   */
   private synchronized int transfer (byte[] data, int off, int len, long timeout, Operation operation)
     throws IOException, InterruptedException {
 

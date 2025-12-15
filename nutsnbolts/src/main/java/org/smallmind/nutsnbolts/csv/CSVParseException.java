@@ -34,23 +34,41 @@ package org.smallmind.nutsnbolts.csv;
 
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
+/**
+ * Indicates a failure while parsing or writing CSV content.
+ */
 public class CSVParseException extends FormattedException {
 
+  /**
+   * Constructs an empty exception.
+   */
   public CSVParseException () {
 
     super();
   }
 
+  /**
+   * @param message formatted error message
+   * @param args    message parameters
+   */
   public CSVParseException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * @param throwable underlying cause
+   * @param message   formatted error message
+   * @param args      message parameters
+   */
   public CSVParseException (Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);
   }
 
+  /**
+   * @param throwable underlying cause
+   */
   public CSVParseException (Throwable throwable) {
 
     super(throwable);

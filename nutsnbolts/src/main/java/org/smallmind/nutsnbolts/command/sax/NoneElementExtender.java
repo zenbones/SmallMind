@@ -36,21 +36,33 @@ import org.smallmind.nutsnbolts.command.template.Argument;
 import org.smallmind.nutsnbolts.command.template.NoneArgument;
 import org.smallmind.nutsnbolts.xml.sax.AbstractElementExtender;
 
+/**
+ * Builds a {@link NoneArgument} representing an option that takes no arguments.
+ */
 public class NoneElementExtender extends AbstractElementExtender implements ArgumentCompiler {
 
   private NoneArgument noneArgument;
 
+  /**
+   * @return singleton {@link NoneArgument}
+   */
   @Override
   public Argument getArgument () {
 
     return getNoneArgument();
   }
 
+  /**
+   * @return cached {@link NoneArgument} instance
+   */
   public NoneArgument getNoneArgument () {
 
     return noneArgument;
   }
 
+  /**
+   * Produces the none-argument value at the end of the element.
+   */
   @Override
   public void endElement (String namespaceURI, String localName, String qName, StringBuilder contentBuilder) {
 

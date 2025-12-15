@@ -32,6 +32,9 @@
  */
 package org.smallmind.nutsnbolts.layout;
 
+/**
+ * Defines how child elements should align within their available space.
+ */
 public enum Alignment {
 
   LEADING, TRAILING, FIRST, LAST, CENTER, BASELINE

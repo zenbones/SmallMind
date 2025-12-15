@@ -32,30 +32,52 @@
  */
 package org.smallmind.nutsnbolts.util;
 
+/**
+ * Mutable boolean switch with convenience toggling.
+ */
 public class Switch {
 
   private boolean state;
 
+  /**
+   * Constructs a switch initialized to {@code false}.
+   */
   public Switch () {
 
     this(false);
   }
 
+  /**
+   * Constructs a switch with the provided initial state.
+   *
+   * @param state initial on/off value
+   */
   public Switch (boolean state) {
 
     this.state = state;
   }
 
+  /**
+   * Inverts the current state.
+   */
   public void flip () {
 
     state = !state;
   }
 
+  /**
+   * Sets the current state explicitly.
+   *
+   * @param state new on/off value
+   */
   public void setState (boolean state) {
 
     this.state = state;
   }
 
+  /**
+   * @return {@code true} if the switch is on
+   */
   public boolean isOn () {
 
     return state;

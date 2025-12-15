@@ -41,20 +41,34 @@ import org.smallmind.nutsnbolts.xml.sax.SAXExtender;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
+/**
+ * Document-level SAX extender that constructs a {@link Template} from an options XML description.
+ */
 public class OptionsDocumentExtender extends AbstractDocumentExtender {
 
   private final Template template;
 
+  /**
+   * @param template template to populate from the parsed document
+   */
   public OptionsDocumentExtender (Template template) {
 
     this.template = template;
   }
 
+  /**
+   * @return template being populated
+   */
   public Template getTemplate () {
 
     return template;
   }
 
+  /**
+   * Creates the appropriate element extender based on the incoming element name.
+   *
+   * @throws Exception if the extender class cannot be located or constructed
+   */
   @Override
   public ElementExtender getElementExtender (SAXExtender parent, String namespaceURI, String localName, String qName, Attributes atts)
     throws Exception {
@@ -62,6 +76,11 @@ public class OptionsDocumentExtender extends AbstractDocumentExtender {
     return (ElementExtender)Class.forName(OptionsDocumentExtender.class.getPackage().getName() + "." + StringUtility.toCamelCase(qName, '-') + "ElementExtender").getConstructor().newInstance();
   }
 
+  /**
+   * Adds parsed options to the template once a child {@link OptionsElementExtender} completes.
+   *
+   * @throws SAXException wrapping {@link CommandLineException} if template population fails
+   */
   @Override
   public void completedChildElement (ElementExtender elementExtender)
     throws SAXException {

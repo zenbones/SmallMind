@@ -34,27 +34,44 @@ package org.smallmind.nutsnbolts.spring;
 
 import org.springframework.core.PriorityOrdered;
 
+/**
+ * Configuration holder for property source locations with ordering support.
+ */
 public class PropertyConfiguration implements PriorityOrdered {
 
   private String[] locations;
   private int order;
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int getOrder () {
 
     return order;
   }
 
+  /**
+   * Sets the ordering value used by Spring.
+   *
+   * @param order the priority order
+   */
   public void setOrder (int order) {
 
     this.order = order;
   }
 
+  /**
+   * @return the property resource locations
+   */
   public String[] getLocations () {
 
     return locations;
   }
 
+  /**
+   * @param locations property resource locations to load
+   */
   public void setLocations (String[] locations) {
 
     this.locations = locations;

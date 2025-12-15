@@ -91,12 +91,12 @@ public class ThrongEntityCodec<T> extends ThrongPropertiesCodec<T> {
     return lifecycle;
   }
 
-  @Override
   /**
    * Decodes a BSON document into an entity, ensuring the id field appears first and is applied to the instance.
    *
    * @throws ThrongRuntimeException if the id field is missing or mismatched, or reflection fails
    */
+  @Override
   public T decode (BsonReader reader, DecoderContext decoderContext) {
 
     T instance;
@@ -124,12 +124,12 @@ public class ThrongEntityCodec<T> extends ThrongPropertiesCodec<T> {
     }
   }
 
-  @Override
   /**
    * Encodes an entity into a BSON document, writing its id before the remaining properties.
    *
    * @throws ThrongRuntimeException if the id value cannot be accessed
    */
+  @Override
   public void encode (BsonWriter writer, T value, EncoderContext encoderContext) {
 
     if (value != null) {

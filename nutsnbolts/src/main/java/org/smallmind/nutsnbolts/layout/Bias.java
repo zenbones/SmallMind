@@ -32,6 +32,9 @@
  */
 package org.smallmind.nutsnbolts.layout;
 
+/**
+ * Indicates which axis a measurement or alignment operation applies to.
+ */
 public enum Bias {
 
   HORIZONTAL, VERTICAL

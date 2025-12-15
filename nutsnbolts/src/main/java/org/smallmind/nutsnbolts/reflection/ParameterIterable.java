@@ -48,29 +48,52 @@ import java.util.NoSuchElementException;
  * object L;
  * type T;
  */
+
+/**
+ * Iterates over a JVM method descriptor string and yields parameter type descriptors one at a time.
+ */
 public class ParameterIterable implements Iterable<String> {
 
   private final String encrypted;
 
+  /**
+   * @param encrypted the substring of a method descriptor containing only parameter descriptors
+   */
   public ParameterIterable (String encrypted) {
 
     this.encrypted = encrypted;
   }
 
+  /**
+   * @return a new iterator that walks the descriptor
+   */
   public Iterator<String> iterator () {
 
     return new ParameterIterator();
   }
 
+  /**
+   * Iterator that parses the parameter descriptor incrementally.
+   */
   private class ParameterIterator implements Iterator<String> {
 
     private int index = 0;
 
+    /**
+     * @return {@code true} if additional parameter descriptors remain
+     */
     public boolean hasNext () {
 
       return index < encrypted.length();
     }
 
+    /**
+     * Parses and returns the next parameter descriptor.
+     *
+     * @return the next descriptor (e.g., {@code I}, {@code [Ljava/lang/String;})
+     * @throws NoSuchElementException        if no parameters remain
+     * @throws ByteCodeManipulationException if the descriptor contains unsupported syntax
+     */
     public String next () {
 
       if (!hasNext()) {
@@ -122,6 +145,13 @@ public class ParameterIterable implements Iterable<String> {
       throw new ByteCodeManipulationException("Unknown format for parameter encrypted(%s)", encrypted);
     }
 
+    /**
+     * Builds an array descriptor given the base type and depth.
+     *
+     * @param baseType   the primitive or object descriptor
+     * @param arrayDepth the number of array dimensions
+     * @return the fully formed descriptor
+     */
     private String assembleType (String baseType, int arrayDepth) {
 
       if (arrayDepth == 0) {
@@ -139,6 +169,11 @@ public class ParameterIterable implements Iterable<String> {
       return arrayBuilder.toString();
     }
 
+    /**
+     * Removal is not supported.
+     *
+     * @throws UnsupportedOperationException always
+     */
     public void remove () {
 
       throw new UnsupportedOperationException();

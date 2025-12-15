@@ -37,9 +37,15 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Marks a method whose return value should be cached into the specified field on first invocation.
+ */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface LazyField {
 
+  /**
+   * @return name of the field to populate lazily
+   */
   String value ();
 }

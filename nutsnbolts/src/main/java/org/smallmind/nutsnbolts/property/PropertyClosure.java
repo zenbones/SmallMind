@@ -34,36 +34,75 @@ package org.smallmind.nutsnbolts.property;
 
 import org.smallmind.nutsnbolts.security.kms.Decryptor;
 
+/**
+ * Encapsulates the delimiters used for property expansion and optional handling of encrypted values.
+ * Supports locating the next property prologue within an expression string.
+ */
 public class PropertyClosure {
 
   private final EncryptedVariation encryptedVariation;
   private final String prefix;
   private final String suffix;
 
+  /**
+   * Creates a closure using default delimiters {@code ${} } and no encrypted variation.
+   *
+   * @throws PropertyExpanderException if delimiters are invalid
+   */
   public PropertyClosure ()
     throws PropertyExpanderException {
 
     this(null, "${", "}");
   }
 
+  /**
+   * Creates a closure with custom delimiters and no encrypted variation.
+   *
+   * @param prefix the prefix marking the start of a property
+   * @param suffix the suffix marking the end of a property
+   * @throws PropertyExpanderException if delimiters are invalid
+   */
   public PropertyClosure (String prefix, String suffix)
     throws PropertyExpanderException {
 
     this(null, prefix, suffix);
   }
 
+  /**
+   * Creates a closure with default delimiters and an encrypted variation using the provided decryptor.
+   *
+   * @param decryptor decryptor used for encrypted values
+   * @throws PropertyExpanderException if delimiters are invalid
+   */
   public PropertyClosure (Decryptor decryptor)
     throws PropertyExpanderException {
 
     this(new EncryptedVariation(decryptor), "${", "}");
   }
 
+  /**
+   * Creates a closure with default property delimiters and a custom encrypted prefix.
+   *
+   * @param decryptor       decryptor used for encrypted values
+   * @param encryptedPrefix prefix denoting encrypted property values
+   * @param prefix          property prefix delimiter
+   * @param suffix          property suffix delimiter
+   * @throws PropertyExpanderException if delimiters are invalid
+   */
   public PropertyClosure (Decryptor decryptor, String encryptedPrefix, String prefix, String suffix)
     throws PropertyExpanderException {
 
     this(new EncryptedVariation(decryptor, encryptedPrefix), "${", "}");
   }
 
+  /**
+   * Internal constructor for fully-specified closure and encrypted variation data.
+   *
+   * @param encryptedVariation optional encrypted variation configuration
+   * @param prefix             property prefix delimiter
+   * @param suffix             property suffix delimiter
+   * @throws PropertyExpanderException if delimiters are invalid or overlap
+   */
   private PropertyClosure (EncryptedVariation encryptedVariation, String prefix, String suffix)
     throws PropertyExpanderException {
 
@@ -91,11 +130,21 @@ public class PropertyClosure {
     }
   }
 
+  /**
+   * @return the property suffix delimiter
+   */
   public String getSuffix () {
 
     return suffix;
   }
 
+  /**
+   * Finds the next property prologue (either encrypted or plain) starting at {@code parsePos}.
+   *
+   * @param expansionBuilder the expression being parsed
+   * @param parsePos         the index to begin searching
+   * @return a {@link PropertyPrologue} describing the next property occurrence
+   */
   public PropertyPrologue findPrologue (StringBuilder expansionBuilder, int parsePos) {
 
     int prefixPos = expansionBuilder.indexOf(prefix, parsePos);

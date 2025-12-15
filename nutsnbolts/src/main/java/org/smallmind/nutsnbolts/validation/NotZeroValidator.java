@@ -37,13 +37,26 @@ import java.math.BigInteger;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
+/**
+ * Validator backing the {@link NotZero} constraint for numeric values.
+ */
 public class NotZeroValidator implements ConstraintValidator<NotZero, Number> {
 
+  /**
+   * No-op initializer; present for interface compliance.
+   */
   @Override
   public void initialize (NotZero constraintAnnotation) {
 
   }
 
+  /**
+   * Checks that the number is non-zero; {@code null} is treated as valid.
+   *
+   * @param value   candidate number
+   * @param context validation context (unused)
+   * @return {@code true} when the value is null or non-zero
+   */
   @Override
   public boolean isValid (Number value, ConstraintValidatorContext context) {
 

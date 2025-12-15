@@ -32,7 +32,16 @@
  */
 package org.smallmind.nutsnbolts.layout;
 
+/**
+ * Represents a part that requires layout along two axes simultaneously.
+ */
 public interface PlanarPart {
 
+  /**
+   * Applies layout using the provided location and size pairs.
+   *
+   * @param location the x/y position pair
+   * @param size     the width/height pair
+   */
   void applyLayout (Pair location, Pair size);
 }

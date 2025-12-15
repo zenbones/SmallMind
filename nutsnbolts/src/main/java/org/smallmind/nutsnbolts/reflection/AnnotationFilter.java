@@ -34,11 +34,22 @@ package org.smallmind.nutsnbolts.reflection;
 
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
+/**
+ * Filters annotation descriptors as they are encountered during byte code parsing.
+ * The filter can either include only a configured set of annotations or exclude them,
+ * depending on the configured {@link PassType}.
+ */
 public class AnnotationFilter {
 
   private final PassType passType;
   private String[] annotationSignatures = null;
 
+  /**
+   * Constructs a filter that either allows only the supplied annotations or blocks them.
+   *
+   * @param passType          determines whether the supplied annotations are included or excluded
+   * @param annotationClasses annotation classes expressed as {@link Class} objects; when omitted, all descriptors pass
+   */
   public AnnotationFilter (PassType passType, Class... annotationClasses) {
 
     this.passType = passType;
@@ -51,6 +62,13 @@ public class AnnotationFilter {
     }
   }
 
+  /**
+   * Tests whether the supplied annotation descriptor should be allowed based on the configured mode.
+   *
+   * @param desc the JVM descriptor of the annotation (for example {@code Ljava/lang/Deprecated;})
+   * @return {@code true} if the descriptor is allowed for the current mode
+   * @throws UnknownSwitchCaseException if the configured {@link PassType} is not recognized
+   */
   public boolean isAllowed (String desc) {
 
     switch (passType) {

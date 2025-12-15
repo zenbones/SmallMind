@@ -43,8 +43,18 @@ import java.nio.file.attribute.UserPrincipal;
 import java.nio.file.attribute.UserPrincipalLookupService;
 import java.util.List;
 
+/**
+ * Grants the current user read/execute/delete permissions and ownership to files on Windows.
+ * Directory manipulation is a no-op.
+ */
 public class WindowsGrantUserPermissionsFileManipulation implements FileManipulation {
 
+  /**
+   * Sets ACLs on a file to allow the current user broad read/execute/delete permissions and sets ownership.
+   *
+   * @param path file to adjust
+   * @throws IOException if ACLs or ownership cannot be updated
+   */
   @Override
   public void manipulateFile (Path path)
     throws IOException {
@@ -64,6 +74,9 @@ public class WindowsGrantUserPermissionsFileManipulation implements FileManipula
     aclAttrView.setAcl(acl);
   }
 
+  /**
+   * No-op for directories.
+   */
   @Override
   public void manipulateDirectory (Path path) {
 

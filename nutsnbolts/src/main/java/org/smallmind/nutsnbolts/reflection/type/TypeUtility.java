@@ -32,10 +32,19 @@
  */
 package org.smallmind.nutsnbolts.reflection.type;
 
+/**
+ * Convenience methods for comparing {@link Class} objects, especially primitives and their wrappers.
+ */
 public class TypeUtility {
 
   private static final Class[] PRIMITIVES = new Class[] {Long.class, Boolean.class, Integer.class, Double.class, Float.class, Character.class, Short.class, Byte.class};
 
+  /**
+   * Determines whether the supplied type is a primitive or primitive wrapper.
+   *
+   * @param aClass the class to evaluate
+   * @return {@code true} if the class is a primitive or wrapper
+   */
   public static boolean isEssentiallyPrimitive (Class<?> aClass) {
 
     if (!aClass.isPrimitive()) {
@@ -52,6 +61,13 @@ public class TypeUtility {
     return true;
   }
 
+  /**
+   * Compares two classes, considering primitive-wrapper equivalence.
+   *
+   * @param expectedClass the expected class
+   * @param actualClass   the actual class
+   * @return {@code true} if the types are assignable or represent the same primitive/wrapper
+   */
   public static boolean isEssentiallyTheSameAs (Class<?> expectedClass, Class<?> actualClass) {
 
     if (actualClass.isPrimitive() || expectedClass.isPrimitive()) {
@@ -92,6 +108,12 @@ public class TypeUtility {
     return expectedClass.isAssignableFrom(actualClass);
   }
 
+  /**
+   * Provides the default value for the supplied primitive or wrapper type.
+   *
+   * @param actualClass the class whose default should be returned
+   * @return zero-equivalent values for primitives/wrappers or {@code null} otherwise
+   */
   public static Object getDefaultValue (Class actualClass) {
 
     if (isEssentiallyPrimitive(actualClass)) {

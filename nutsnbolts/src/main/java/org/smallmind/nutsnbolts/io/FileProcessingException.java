@@ -34,23 +34,47 @@ package org.smallmind.nutsnbolts.io;
 
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
+/**
+ * Exception raised when file processing steps fail in utility routines.
+ */
 public class FileProcessingException extends FormattedException {
 
+  /**
+   * Creates an exception with no detail message.
+   */
   public FileProcessingException () {
 
     super();
   }
 
+  /**
+   * Creates an exception with a formatted message.
+   *
+   * @param message message pattern
+   * @param args    message arguments
+   */
   public FileProcessingException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * Creates an exception with a cause and formatted message.
+   *
+   * @param throwable underlying cause
+   * @param message   message pattern
+   * @param args      message arguments
+   */
   public FileProcessingException (Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);
   }
 
+  /**
+   * Creates an exception wrapping another throwable.
+   *
+   * @param throwable underlying cause
+   */
   public FileProcessingException (Throwable throwable) {
 
     super(throwable);

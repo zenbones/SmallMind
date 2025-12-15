@@ -34,23 +34,47 @@ package org.smallmind.nutsnbolts.reflection.bean;
 
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
+/**
+ * Wraps exceptions thrown while invoking bean methods.
+ */
 public class BeanInvocationException extends FormattedException {
 
+  /**
+   * Creates an exception with no detail message.
+   */
   public BeanInvocationException () {
 
     super();
   }
 
+  /**
+   * Creates an exception with a formatted detail message.
+   *
+   * @param message a {@link java.util.Formatter}-style message describing the invocation error
+   * @param args    values interpolated into the message
+   */
   public BeanInvocationException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * Creates an exception with a formatted detail message and a cause.
+   *
+   * @param throwable the underlying problem
+   * @param message   a {@link java.util.Formatter}-style message describing the invocation error
+   * @param args      values interpolated into the message
+   */
   public BeanInvocationException (Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);
   }
 
+  /**
+   * Creates an exception with a cause and no detail message.
+   *
+   * @param throwable the underlying problem
+   */
   public BeanInvocationException (Throwable throwable) {
 
     super(throwable);

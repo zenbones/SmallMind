@@ -55,46 +55,46 @@ public class MongoClientFactoryBean implements FactoryBean<MongoClient>, Initial
     this.clientSettings = clientSettings;
   }
 
-  @Override
   /**
    * {@inheritDoc}
    */
+  @Override
   public void afterPropertiesSet () {
 
     mongoClient = MongoClients.create(clientSettings);
   }
 
-  @Override
   /**
    * {@inheritDoc}
    */
+  @Override
   public boolean isSingleton () {
 
     return true;
   }
 
-  @Override
   /**
    * {@inheritDoc}
    */
+  @Override
   public Class<?> getObjectType () {
 
     return MongoClient.class;
   }
 
-  @Override
   /**
    * {@inheritDoc}
    */
+  @Override
   public MongoClient getObject () {
 
     return mongoClient;
   }
 
-  @Override
   /**
    * Closes the created client when the bean is destroyed.
    */
+  @Override
   public void destroy () {
 
     if (mongoClient != null) {

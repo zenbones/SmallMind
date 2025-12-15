@@ -39,18 +39,33 @@ import org.smallmind.nutsnbolts.reflection.bean.BeanInvocationException;
 import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
 import org.smallmind.nutsnbolts.util.NumberComparator;
 
+/**
+ * Validator implementing the {@link LowerBound} constraint by comparing two numeric bean properties.
+ */
 public class LowerBoundValidator implements ConstraintValidator<LowerBound, Object> {
 
   private static final NumberComparator NUMBER_COMPARATOR = new NumberComparator();
 
   private LowerBound constraintAnnotation;
 
+  /**
+   * Saves the annotation to access configured property names and offsets.
+   *
+   * @param constraintAnnotation annotation instance
+   */
   @Override
   public void initialize (LowerBound constraintAnnotation) {
 
     this.constraintAnnotation = constraintAnnotation;
   }
 
+  /**
+   * Validates that the first property is greater than or equal to the second property plus the configured offset.
+   *
+   * @param value   bean instance; {@code null} is considered valid
+   * @param context validation context (unused)
+   * @return {@code true} if the constraint holds, or both values are null when {@code notNull} is false
+   */
   @Override
   public boolean isValid (Object value, ConstraintValidatorContext context) {
 

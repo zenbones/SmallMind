@@ -40,11 +40,18 @@ import org.smallmind.nutsnbolts.property.PropertyExpanderException;
 import org.springframework.beans.BeansException;
 import org.springframework.util.StringValueResolver;
 
+/**
+ * Resolves String placeholders using a {@link PropertyExpander} and a backing property map.
+ */
 public class PropertyPlaceholderStringValueResolver implements StringValueResolver {
 
   private final PropertyExpander propertyExpander;
   private final Map<String, Object> propertyMap;
 
+  /**
+   * @param propertyExpander the expander to apply
+   * @param propertyMap      the backing properties for resolution
+   */
   public PropertyPlaceholderStringValueResolver (PropertyExpander propertyExpander, Map<String, Object> propertyMap)
     throws BeansException {
 
@@ -52,11 +59,21 @@ public class PropertyPlaceholderStringValueResolver implements StringValueResolv
     this.propertyMap = propertyMap;
   }
 
+  /**
+   * @return the set of known property keys
+   */
   public Set<String> getKeySet () {
 
     return Collections.unmodifiableSet(propertyMap.keySet());
   }
 
+  /**
+   * Resolves the supplied string value by expanding placeholders.
+   *
+   * @param property the string to resolve
+   * @return the expanded string
+   * @throws BeansException if expansion fails
+   */
   public String resolveStringValue (String property)
     throws BeansException {
 

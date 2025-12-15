@@ -32,9 +32,20 @@
  */
 package org.smallmind.nutsnbolts.util;
 
+/**
+ * Functional contract for executing work that returns a value and may throw any {@link Throwable}.
+ *
+ * @param <T> result type
+ */
 @FunctionalInterface
 public interface WithResultExecutable<T> {
 
+  /**
+   * Executes the work.
+   *
+   * @return result of the execution
+   * @throws Throwable any exception thrown by the underlying work
+   */
   T execute ()
     throws Throwable;
 }

@@ -38,6 +38,10 @@ import java.util.Map;
 import org.smallmind.nutsnbolts.security.kms.Decryptor;
 import org.smallmind.nutsnbolts.util.SystemPropertyMode;
 
+/**
+ * Expands property placeholders in strings, optionally decrypting values and consulting system properties
+ * and environment variables based on configured resolution modes.
+ */
 public class PropertyExpander {
 
   private final PropertyClosure propertyClosure;
@@ -45,12 +49,26 @@ public class PropertyExpander {
   private final boolean ignoreUnresolvableProperties;
   private final boolean searchSystemEnvironment;
 
+  /**
+   * Creates an expander with default closure, resolves using {@link SystemPropertyMode#FALLBACK},
+   * searches the system environment, and fails on unresolved properties.
+   *
+   * @throws PropertyExpanderException if the default closure cannot be created
+   */
   public PropertyExpander ()
     throws PropertyExpanderException {
 
     this(new PropertyClosure(), false, SystemPropertyMode.FALLBACK, true);
   }
 
+  /**
+   * Creates a configurable expander.
+   *
+   * @param propertyClosure              delimiters and encrypted variation handling
+   * @param ignoreUnresolvableProperties whether to leave unresolved placeholders intact rather than throwing
+   * @param systemPropertyMode           how to resolve against system properties/environment relative to the provided map
+   * @param searchSystemEnvironment      whether to consult environment variables in addition to system properties
+   */
   public PropertyExpander (PropertyClosure propertyClosure, boolean ignoreUnresolvableProperties, SystemPropertyMode systemPropertyMode, boolean searchSystemEnvironment) {
 
     this.propertyClosure = propertyClosure;
@@ -59,18 +77,43 @@ public class PropertyExpander {
     this.searchSystemEnvironment = searchSystemEnvironment;
   }
 
+  /**
+   * Expands placeholders within the provided string using the configured resolution rules and no additional map.
+   *
+   * @param expansion the string containing property placeholders
+   * @return the expanded string
+   * @throws PropertyExpanderException if a placeholder cannot be resolved and ignoring is disabled, or parsing fails
+   */
   public String expand (String expansion)
     throws PropertyExpanderException {
 
     return expand(expansion, new StringBuilder(expansion), Collections.emptyMap()).toString();
   }
 
+  /**
+   * Expands placeholders within the provided string using the supplied map before falling back to system sources.
+   *
+   * @param expansion    the string containing property placeholders
+   * @param expansionMap map of property names to values
+   * @return the expanded string
+   * @throws PropertyExpanderException if a placeholder cannot be resolved and ignoring is disabled, or parsing fails
+   */
   public String expand (String expansion, Map<String, Object> expansionMap)
     throws PropertyExpanderException {
 
     return expand(expansion, new StringBuilder(expansion), expansionMap).toString();
   }
 
+  /**
+   * Recursive expansion implementation that walks the string, resolves placeholders, and replaces them with
+   * concrete values. Detects circular references and applies decryption when configured.
+   *
+   * @param originalExpansion the full original expression, used for error context
+   * @param expansionBuilder  mutable builder containing the current expression being expanded
+   * @param expansionMap      user-supplied property map
+   * @return the builder after expansion
+   * @throws PropertyExpanderException if resolution fails, circular references are detected, or parsing errors occur
+   */
   private StringBuilder expand (String originalExpansion, StringBuilder expansionBuilder, Map<String, Object> expansionMap)
     throws PropertyExpanderException {
 

@@ -53,10 +53,10 @@ public class ThrongPolymorphicEmbeddedCodec<T> extends ThrongPropertiesMultiplex
     super(throngPropertiesMultiplexer);
   }
 
-  @Override
   /**
    * Decodes a polymorphic embedded document or {@code null}.
    */
+  @Override
   public T decode (BsonReader reader, DecoderContext decoderContext) {
 
     if (BsonType.NULL.equals(reader.getCurrentBsonType())) {
@@ -75,10 +75,10 @@ public class ThrongPolymorphicEmbeddedCodec<T> extends ThrongPropertiesMultiplex
     }
   }
 
-  @Override
   /**
    * Encodes the polymorphic embedded value, or {@code null} when permitted.
    */
+  @Override
   public void encode (BsonWriter writer, T value, EncoderContext encoderContext) {
 
     if (value != null) {

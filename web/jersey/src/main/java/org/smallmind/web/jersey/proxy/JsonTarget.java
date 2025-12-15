@@ -200,7 +200,7 @@ public class JsonTarget {
         if (!first) {
           queryBuilder.append('&');
         }
-        queryBuilder.append(queryPair.getFirst()).append('=').append(queryPair.getSecond());
+        queryBuilder.append(queryPair.first()).append('=').append(queryPair.second());
         first = false;
       }
 
@@ -229,7 +229,7 @@ public class JsonTarget {
 
     if (headers != null) {
       for (Pair<String, String> headerPair : headers) {
-        httpRequest.addHeader(headerPair.getFirst(), headerPair.getSecond());
+        httpRequest.addHeader(headerPair.first(), headerPair.second());
       }
     }
 

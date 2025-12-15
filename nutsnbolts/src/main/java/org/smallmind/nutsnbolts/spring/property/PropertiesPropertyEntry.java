@@ -34,10 +34,16 @@ package org.smallmind.nutsnbolts.spring.property;
 
 import java.util.Map;
 
+/**
+ * {@link PropertyEntry} backed by a {@link Map.Entry} from a {@link java.util.Properties} object.
+ */
 public class PropertiesPropertyEntry implements PropertyEntry {
 
   private final Map.Entry<Object, Object> entry;
 
+  /**
+   * @param entry the underlying map entry
+   */
   public PropertiesPropertyEntry (Map.Entry<Object, Object> entry) {
 
     this.entry = entry;

@@ -41,6 +41,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.StampedLock;
 import org.smallmind.nutsnbolts.security.HexCodec;
 
+/**
+ * Generates 18-byte Snowflake-like identifiers that encode time, MAC address (or random), JVM process id, and a counter.
+ * Provides multiple string encodings (hex, compact base64-like, dotted template).
+ */
 public class SnowflakeId implements Comparable<SnowflakeId> {
 
   private static final StampedLock LOCK = new StampedLock();
@@ -66,21 +70,35 @@ public class SnowflakeId implements Comparable<SnowflakeId> {
   private static long TIME = System.currentTimeMillis();
   private final byte[] uniqueArray;
 
+  /**
+   * Creates a new id using the current time and generated machine/JVM identifiers.
+   */
   public SnowflakeId () {
 
     uniqueArray = generateByteArray();
   }
 
+  /**
+   * Wraps an existing 18-byte id.
+   *
+   * @param uniqueArray raw id bytes
+   */
   public SnowflakeId (byte[] uniqueArray) {
 
     this.uniqueArray = uniqueArray;
   }
 
+  /**
+   * @return fixed byte size of this id
+   */
   public static int byteSize () {
 
     return 18;
   }
 
+  /**
+   * Factory for generating a new id.
+   */
   public static SnowflakeId newInstance () {
 
     return new SnowflakeId();
@@ -170,26 +188,41 @@ public class SnowflakeId implements Comparable<SnowflakeId> {
     return bytes;
   }
 
+  /**
+   * @return raw identifier bytes
+   */
   public byte[] asByteArray () {
 
     return uniqueArray;
   }
 
+  /**
+   * @return {@link BigInteger} representation of the id
+   */
   public BigInteger generateBigInteger () {
 
     return new BigInteger(uniqueArray);
   }
 
+  /**
+   * @return hex-encoded representation of the id
+   */
   public String generateHexEncoding () {
 
     return HexCodec.hexEncode(uniqueArray);
   }
 
+  /**
+   * @return compact string using a 64-character template
+   */
   public String generateCompactString () {
 
     return generateTemplateString(COMPACT_CODE_TEMPLATE, COMPACT_CODE_TEMPLATE_BITS).toString();
   }
 
+  /**
+   * @return dotted string using a 32-character template with evenly spaced dots
+   */
   public String generateDottedString () {
 
     StringBuilder dottedIdBuilder = generateTemplateString(CODE_TEMPLATE, CODE_TEMPLATE_BITS);
@@ -245,18 +278,30 @@ public class SnowflakeId implements Comparable<SnowflakeId> {
     return uniqueIdBuilder;
   }
 
+  /**
+   * Hashes based on underlying bytes.
+   */
   @Override
   public int hashCode () {
 
     return Arrays.hashCode(uniqueArray);
   }
 
+  /**
+   * Equality based on byte-for-byte match.
+   */
   @Override
   public boolean equals (Object obj) {
 
     return (obj instanceof SnowflakeId) && Arrays.equals(uniqueArray, ((SnowflakeId)obj).asByteArray());
   }
 
+  /**
+   * Orders ids by time, then counter, then MAC bytes, then JVM bytes.
+   *
+   * @param snowflakeId other id to compare
+   * @return comparison result per {@link Comparable} contract
+   */
   public int compareTo (SnowflakeId snowflakeId) {
 
     int comparison;

@@ -39,6 +39,12 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.smallmind.nutsnbolts.time.Stint;
 
+/**
+ * Concurrent map whose entries self-destruct after a timeout, invoking {@link SelfDestructive#destroy(Stint)} on removal.
+ *
+ * @param <K> key type (comparable)
+ * @param <S> value type implementing {@link SelfDestructive}
+ */
 public class SelfDestructiveMap<K extends Comparable<K>, S extends SelfDestructive> {
 
   private final ConcurrentHashMap<K, S> internalMap = new ConcurrentHashMap<K, S>();
@@ -47,11 +53,22 @@ public class SelfDestructiveMap<K extends Comparable<K>, S extends SelfDestructi
   private final Stint pulseTimeStint;
   private final IgnitionWorker ignitionWorker;
 
+  /**
+   * Creates a map with the given default timeout and a 1-second pulse for cleanup.
+   *
+   * @param defaultTimeoutStint timeout applied to entries without an explicit value
+   */
   public SelfDestructiveMap (Stint defaultTimeoutStint) {
 
     this(defaultTimeoutStint, new Stint(1, TimeUnit.SECONDS));
   }
 
+  /**
+   * Creates a map with custom default timeout and cleanup pulse interval.
+   *
+   * @param defaultTimeoutStint timeout applied to entries without an explicit value
+   * @param pulseTimeStint      interval between expiry scans
+   */
   public SelfDestructiveMap (Stint defaultTimeoutStint, Stint pulseTimeStint) {
 
     Thread ignitionThread;
@@ -64,16 +81,37 @@ public class SelfDestructiveMap<K extends Comparable<K>, S extends SelfDestructi
     ignitionThread.start();
   }
 
+  /**
+   * Retrieves a value by key without affecting its timeout.
+   *
+   * @param key lookup key
+   * @return mapped value or {@code null} if absent
+   */
   public S get (K key) {
 
     return internalMap.get(key);
   }
 
+  /**
+   * Inserts a value if absent using the default timeout.
+   *
+   * @param key   key to insert
+   * @param value value to insert
+   * @return existing value if present; otherwise {@code null}
+   */
   public S putIfAbsent (K key, S value) {
 
     return putIfAbsent(key, value, defaultTimeoutStint);
   }
 
+  /**
+   * Inserts a value if absent using the provided timeout.
+   *
+   * @param key          key to insert
+   * @param value        value to insert
+   * @param timeoutStint optional timeout; if {@code null} uses default timeout
+   * @return existing value if present; otherwise {@code null}
+   */
   public S putIfAbsent (K key, S value, Stint timeoutStint) {
 
     S previousValue;
@@ -85,6 +123,11 @@ public class SelfDestructiveMap<K extends Comparable<K>, S extends SelfDestructi
     return previousValue;
   }
 
+  /**
+   * Stops the background cleanup worker.
+   *
+   * @throws InterruptedException if interrupted while waiting for shutdown
+   */
   public void shutdown ()
     throws InterruptedException {
 
@@ -97,6 +140,9 @@ public class SelfDestructiveMap<K extends Comparable<K>, S extends SelfDestructi
     private final CountDownLatch exitLatch = new CountDownLatch(1);
     private Thread runnableThread;
 
+    /**
+     * Signals the worker to terminate and waits for completion.
+     */
     public void shutdown ()
       throws InterruptedException {
 
@@ -109,6 +155,9 @@ public class SelfDestructiveMap<K extends Comparable<K>, S extends SelfDestructi
       exitLatch.await();
     }
 
+    /**
+     * Periodically scans for expired keys and destroys corresponding values.
+     */
     @Override
     public void run () {
 

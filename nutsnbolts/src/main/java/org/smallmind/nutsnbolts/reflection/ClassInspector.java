@@ -38,8 +38,17 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.util.ASMifier;
 import org.objectweb.asm.util.TraceClassVisitor;
 
+/**
+ * Utilities that dump the byte code of a class using ASM's tracing helpers.
+ */
 public class ClassInspector {
 
+  /**
+   * Prints a human readable trace of the supplied class to {@link System#out}.
+   *
+   * @param parseClass the class to inspect
+   * @throws ByteCodeManipulationException if the class bytes cannot be loaded
+   */
   public static void trace (Class parseClass) {
 
     ClassReader classReader;
@@ -55,6 +64,12 @@ public class ClassInspector {
     classReader.accept(classVisitor, 0);
   }
 
+  /**
+   * Emits an ASMifier script for the supplied class to {@link System#out}.
+   *
+   * @param parseClass the class to inspect
+   * @throws ByteCodeManipulationException if the class bytes cannot be loaded
+   */
   public static void asmify (Class parseClass) {
 
     ClassReader classReader;

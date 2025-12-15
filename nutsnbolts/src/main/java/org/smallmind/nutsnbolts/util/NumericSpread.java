@@ -36,11 +36,21 @@ import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Expands comma-delimited numeric ranges (e.g. {@code 1..3,7}) into arrays of integers.
+ */
 public class NumericSpread {
 
   private static final Pattern NUMBER_PATTERN = Pattern.compile("\\d+");
   private static final Pattern SPREAD_PATTERN = Pattern.compile("(\\d+)\\.\\.(\\d+)");
 
+  /**
+   * Parses and expands the supplied numeric spread expression.
+   *
+   * @param numbers comma-separated list of numbers or ranges
+   * @return ordered array of ints represented by the spread
+   * @throws SpreadParserException if parsing fails or an element is empty/invalid
+   */
   public static int[] calculate (String numbers)
     throws SpreadParserException {
 
@@ -56,7 +66,7 @@ public class NumericSpread {
       int index = 0;
 
       for (String zone : zones) {
-        if (zone.strip().isEmpty()) {
+        if (zone.isBlank()) {
           throw new SpreadParserException("Empty elements are not allowed");
         }
 

@@ -32,28 +32,52 @@
  */
 package org.smallmind.nutsnbolts.util;
 
-public class Pair<K, V> {
+/**
+ * Simple two-element container.
+ *
+ * @param <K> first element type
+ * @param <V> second element type
+ */
+public record Pair<K, V>(K first, V second) {
 
-  private final K first;
-  private final V second;
+  /**
+   * Creates a new pair.
+   *
+   * @param first  first element
+   * @param second second element
+   */
+  public Pair {
 
-  public Pair (K first, V second) {
-
-    this.first = first;
-    this.second = second;
   }
 
+  /**
+   * Factory method mirroring the constructor.
+   *
+   * @param first  first element
+   * @param second second element
+   * @param <K>    first element type
+   * @param <V>    second element type
+   * @return new pair containing the supplied elements
+   */
   public static <K, V> Pair<K, V> of (K first, V second) {
 
     return new Pair<>(first, second);
   }
 
-  public K getFirst () {
+  /**
+   * @return first element
+   */
+  @Override
+  public K first () {
 
     return first;
   }
 
-  public V getSecond () {
+  /**
+   * @return second element
+   */
+  @Override
+  public V second () {
 
     return second;
   }

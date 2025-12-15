@@ -37,9 +37,19 @@ import java.io.InputStream;
 import java.util.Properties;
 import org.yaml.snakeyaml.Yaml;
 
+/**
+ * Supported property file types and their handlers.
+ */
 public enum PropertyFileType {
 
   PROPERTIES(new String[] {"properties"}) {
+    /**
+     * Loads Java properties files.
+     *
+     * @param inputStream the source stream
+     * @return handler over the parsed properties
+     * @throws IOException if loading fails
+     */
     @Override
     public PropertyHandler<?> getPropertyHandler (InputStream inputStream)
       throws IOException {
@@ -52,6 +62,12 @@ public enum PropertyFileType {
     }
   },
   YAML(new String[] {"yaml", "yml"}) {
+    /**
+     * Loads YAML property files.
+     *
+     * @param inputStream the source stream
+     * @return handler over the parsed YAML content
+     */
     @Override
     public PropertyHandler<?> getPropertyHandler (InputStream inputStream) {
 
@@ -62,11 +78,20 @@ public enum PropertyFileType {
   };
   private final String[] extensions;
 
+  /**
+   * @param extensions file extensions associated with this type
+   */
   PropertyFileType (String[] extensions) {
 
     this.extensions = extensions;
   }
 
+  /**
+   * Resolves the file type for a given extension.
+   *
+   * @param extension file extension without dot
+   * @return matching type or {@code null} if none
+   */
   public static PropertyFileType forExtension (String extension) {
 
     for (PropertyFileType propertyFileType : PropertyFileType.values()) {
@@ -81,9 +106,19 @@ public enum PropertyFileType {
     return null;
   }
 
+  /**
+   * Creates a handler capable of reading this file type from the given stream.
+   *
+   * @param inputStream the source stream
+   * @return property handler
+   * @throws IOException if reading fails
+   */
   public abstract PropertyHandler<?> getPropertyHandler (InputStream inputStream)
     throws IOException;
 
+  /**
+   * @return the extensions associated with this file type
+   */
   public String[] getExtensions () {
 
     return extensions;

@@ -32,8 +32,17 @@
  */
 package org.smallmind.nutsnbolts.util;
 
+/**
+ * Utility for further mixing 32-bit hash codes to reduce collisions.
+ */
 public class MagicHash {
 
+  /**
+   * Applies a series of XOR shifts to the input hash.
+   *
+   * @param hash initial hash code
+   * @return mixed hash code
+   */
   public static int rehash (int hash) {
 
     hash ^= (hash >>> 20) ^ (hash >>> 12);

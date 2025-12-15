@@ -34,8 +34,15 @@ package org.smallmind.nutsnbolts.util;
 
 import java.nio.ByteBuffer;
 
+/**
+ * Utilities for encoding/decoding primitive integer types to and from byte arrays using big-endian {@link ByteBuffer}.
+ */
 public class Bytes {
 
+  /**
+   * @param l long value
+   * @return 8-byte array representation
+   */
   public static byte[] getBytes (long l) {
 
     ByteBuffer translationBuffer;
@@ -46,6 +53,10 @@ public class Bytes {
     return byteArray;
   }
 
+  /**
+   * @param i int value
+   * @return 4-byte array representation
+   */
   public static byte[] getBytes (int i) {
 
     ByteBuffer translationBuffer;
@@ -56,6 +67,10 @@ public class Bytes {
     return byteArray;
   }
 
+  /**
+   * @param s short value
+   * @return 2-byte array representation
+   */
   public static byte[] getBytes (short s) {
 
     ByteBuffer translationBuffer;
@@ -66,6 +81,10 @@ public class Bytes {
     return byteArray;
   }
 
+  /**
+   * @param byteArray 8-byte array
+   * @return decoded long
+   */
   public static long getLong (byte[] byteArray) {
 
     ByteBuffer translationBuffer;
@@ -74,6 +93,10 @@ public class Bytes {
     return translationBuffer.getLong();
   }
 
+  /**
+   * @param byteArray 4-byte array
+   * @return decoded int
+   */
   public static int getInt (byte[] byteArray) {
 
     ByteBuffer translationBuffer;
@@ -82,6 +105,10 @@ public class Bytes {
     return translationBuffer.getInt();
   }
 
+  /**
+   * @param byteArray 2-byte array
+   * @return decoded short
+   */
   public static short getShort (byte[] byteArray) {
 
     ByteBuffer translationBuffer;

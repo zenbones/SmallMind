@@ -34,6 +34,11 @@ package org.smallmind.nutsnbolts.util;
 
 import java.util.Comparator;
 
+/**
+ * Comparator base that captures an ordering direction.
+ *
+ * @param <T> value type
+ */
 public abstract class DirectionalComparator<T> implements Comparator<T> {
 
   public enum Direction {
@@ -43,11 +48,17 @@ public abstract class DirectionalComparator<T> implements Comparator<T> {
 
   private final Direction direction;
 
+  /**
+   * @param direction sort direction to apply
+   */
   public DirectionalComparator (Direction direction) {
 
     this.direction = direction;
   }
 
+  /**
+   * @return configured sort direction
+   */
   public Direction getDirection () {
 
     return direction;

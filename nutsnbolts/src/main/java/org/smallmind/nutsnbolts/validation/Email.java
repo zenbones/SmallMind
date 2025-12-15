@@ -44,25 +44,46 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+/**
+ * Bean Validation constraint indicating a field or parameter must contain a valid email address.
+ */
 @Documented
 @Retention(RUNTIME)
 @Target({FIELD, PARAMETER, METHOD, LOCAL_VARIABLE})
 @Constraint(validatedBy = EmailValidator.class)
 public @interface Email {
 
+  /**
+   * Allows multiple {@link Email} annotations on the same element.
+   */
   @Target({FIELD, PARAMETER, METHOD, LOCAL_VARIABLE})
   @Retention(RUNTIME)
   @Documented
   @interface List {
 
+    /**
+     * @return array of {@link Email} constraints
+     */
     Email[] value ();
   }
 
+  /**
+   * @return validation message when the value is not a valid email
+   */
   String message () default "must be an email address";
 
+  /**
+   * @return validation groups this constraint belongs to
+   */
   Class<?>[] groups () default {};
 
+  /**
+   * @return custom payload objects for clients of the Bean Validation API
+   */
   Class<? extends Payload>[] payload () default {};
 
+  /**
+   * @return separator used when multiple emails are present in a single string; {@code '\0'} disables splitting
+   */
   char separator () default '\0';
 }

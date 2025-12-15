@@ -32,9 +32,15 @@
  */
 package org.smallmind.nutsnbolts.layout;
 
+/**
+ * Standard gap sizes used by the layout system, resolved via a {@link ParaboxPlatform}.
+ */
 public enum Gap {
 
   NONE {
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public double getGap (ParaboxPlatform platform) {
 
@@ -42,6 +48,9 @@ public enum Gap {
     }
   },
   RELATED {
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public double getGap (ParaboxPlatform platform) {
 
@@ -49,6 +58,9 @@ public enum Gap {
     }
   },
   UNRELATED {
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public double getGap (ParaboxPlatform platform) {
 
@@ -56,5 +68,11 @@ public enum Gap {
     }
   };
 
+  /**
+   * Returns the actual gap size for this gap type on the given platform.
+   *
+   * @param platform platform abstraction that supplies gap sizes
+   * @return the gap value in platform units
+   */
   public abstract double getGap (ParaboxPlatform platform);
 }

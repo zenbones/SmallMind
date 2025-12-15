@@ -36,12 +36,21 @@ import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+/**
+ * Represents a JavaBean-style setter method and exposes its attribute metadata.
+ */
 public class Setter implements Serializable {
 
   private final Class attributeClass;
   private final Method method;
   private final String attributeName;
 
+  /**
+   * Validates and wraps a setter method.
+   *
+   * @param method the reflected setter
+   * @throws ReflectionContractException if the method name or signature does not conform to setter rules
+   */
   public Setter (Method method)
     throws ReflectionContractException {
 
@@ -63,16 +72,32 @@ public class Setter implements Serializable {
     attributeClass = method.getParameterTypes()[0];
   }
 
+  /**
+   * @return the bean property name derived from the method
+   */
   public String getAttributeName () {
 
     return attributeName;
   }
 
+  /**
+   * @return the setter parameter type
+   */
   public Class getAttributeClass () {
 
     return attributeClass;
   }
 
+  /**
+   * Invokes the setter on a target instance.
+   *
+   * @param target the object to mutate
+   * @param value  the value to set
+   * @return the return value of the setter (typically {@code null})
+   * @throws IllegalAccessException    if the method is inaccessible
+   * @throws IllegalArgumentException  if the value is incompatible
+   * @throws InvocationTargetException if the setter throws an exception
+   */
   public Object invoke (Object target, Object value)
     throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 

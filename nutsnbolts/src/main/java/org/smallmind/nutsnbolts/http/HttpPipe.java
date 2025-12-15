@@ -39,6 +39,10 @@ import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
+/**
+ * Thin wrapper around {@link HttpURLConnection} that enforces read/write sequencing.
+ * Allows chaining writes and reads while managing connection state transitions.
+ */
 public class HttpPipe {
 
   private enum State {DISCONNECTED, WRITE, READ, TERMINATED}
@@ -48,12 +52,25 @@ public class HttpPipe {
   private InputStream httpInput;
   private State state = State.DISCONNECTED;
 
+  /**
+   * Wraps an existing {@link HttpURLConnection}.
+   *
+   * @param urlConnection connection to manage
+   * @throws IOException unused but retained for compatibility
+   */
   public HttpPipe (HttpURLConnection urlConnection)
     throws IOException {
 
     this.urlConnection = urlConnection;
   }
 
+  /**
+   * Sets a request header on the underlying connection.
+   *
+   * @param key   header name
+   * @param value header value
+   * @return this pipe for chaining
+   */
   public synchronized HttpPipe setRequestHeader (String key, String value) {
 
     urlConnection.setRequestProperty(key, value);
@@ -61,6 +78,14 @@ public class HttpPipe {
     return this;
   }
 
+  /**
+   * Opens the connection and prepares for write or read depending on configured I/O flags.
+   *
+   * @return this pipe for chaining
+   * @throws IOException                if the connection cannot be opened
+   * @throws IllegalStateException      if called in an invalid state
+   * @throws UnknownSwitchCaseException if an unexpected state is reached
+   */
   public synchronized HttpPipe connect ()
     throws IOException {
 
@@ -91,6 +116,14 @@ public class HttpPipe {
     return this;
   }
 
+  /**
+   * Writes a UTF-8 body to the connection output stream.
+   *
+   * @param body content to send
+   * @return this pipe for chaining
+   * @throws IOException           if writing fails
+   * @throws IllegalStateException if the pipe is not in write mode
+   */
   public synchronized HttpPipe write (String body)
     throws IOException {
 
@@ -104,6 +137,12 @@ public class HttpPipe {
     return this;
   }
 
+  /**
+   * Signals end-of-stream for writing, transitioning to read or termination.
+   *
+   * @throws IOException           if closing fails
+   * @throws IllegalStateException if the pipe is not in write mode
+   */
   public synchronized void doneWriting ()
     throws IOException {
 
@@ -122,6 +161,14 @@ public class HttpPipe {
     }
   }
 
+  /**
+   * Reads bytes into the provided buffer.
+   *
+   * @param buffer destination buffer
+   * @return number of bytes read or -1 on EOF
+   * @throws IOException           if reading fails
+   * @throws IllegalStateException if the pipe is not in read mode
+   */
   public synchronized int read (byte[] buffer)
     throws IOException {
 
@@ -140,6 +187,12 @@ public class HttpPipe {
     }
   }
 
+  /**
+   * Finishes reading and closes the connection.
+   *
+   * @throws IOException           if closing fails
+   * @throws IllegalStateException if the pipe is not in read mode
+   */
   public synchronized void doneReading ()
     throws IOException {
 

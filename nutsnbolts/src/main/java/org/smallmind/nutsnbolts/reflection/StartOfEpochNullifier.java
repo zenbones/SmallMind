@@ -39,11 +39,17 @@ import java.lang.annotation.Target;
 import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+/**
+ * Declares that epoch start timestamps should be treated as {@code null} during overlays.
+ */
 @Documented
 @Retention(RUNTIME)
 @Target(FIELD)
 @OverlayNullifier(validatedBy = StartOfEpochNullifierValidator.class)
 public @interface StartOfEpochNullifier {
 
+  /**
+   * @return the validation message used when the epoch start is encountered
+   */
   String message () default "1970-01-01T00:00:00.000Z";
 }

@@ -39,17 +39,31 @@ import javax.xml.transform.URIResolver;
 import javax.xml.transform.stream.StreamSource;
 import org.smallmind.nutsnbolts.resource.Resource;
 
+/**
+ * JAXP {@link URIResolver} that uses a {@link ProtocolResolver} to locate external resources and expose them as {@link StreamSource}s.
+ * A singleton configured with {@link SmallMindProtocolResolver} is provided for convenience.
+ */
 public class XMLURIResolver implements URIResolver {
 
   private static XMLURIResolver URI_RESOLVER;
 
   private final ProtocolResolver protocolResolver;
 
+  /**
+   * Creates a resolver that delegates to the supplied protocol resolver.
+   *
+   * @param protocolResolver resolver used to locate URIs
+   */
   public XMLURIResolver (ProtocolResolver protocolResolver) {
 
     this.protocolResolver = protocolResolver;
   }
 
+  /**
+   * Returns a lazily constructed singleton backed by {@link SmallMindProtocolResolver}.
+   *
+   * @return shared {@link XMLURIResolver}
+   */
   public synchronized static XMLURIResolver getInstance () {
 
     if (URI_RESOLVER == null) {
@@ -59,6 +73,14 @@ public class XMLURIResolver implements URIResolver {
     return URI_RESOLVER;
   }
 
+  /**
+   * Resolves a URI encountered during XSLT or other JAXP processing.
+   *
+   * @param href     the href value to resolve
+   * @param baseHref base URI from the processor (ignored)
+   * @return a {@link Source} for the resolved resource, or {@code null} to fall back to default resolution
+   * @throws TransformerException if resolution fails
+   */
   public Source resolve (String href, String baseHref)
     throws TransformerException {
 

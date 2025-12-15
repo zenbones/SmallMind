@@ -43,8 +43,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Helpers for resolving generic type arguments at runtime.
+ */
 public class GenericUtility {
 
+  /**
+   * Attempts to reify a concrete class bound for the supplied type variable within an inheritance chain.
+   *
+   * @param objectClass  the concrete class being inspected
+   * @param typeVariable the type variable to resolve
+   * @return the resolved class or {@code null} if it cannot be determined
+   */
   public static Class<?> findTypeArgument (Class<?> objectClass, TypeVariable<?> typeVariable) {
 
     Class<?> currentClass = objectClass;
@@ -80,6 +90,15 @@ public class GenericUtility {
     return null;
   }
 
+  /**
+   * Resolves the raw classes for the generic type parameters of a subclass relative to a base class.
+   *
+   * @param baseClass  the base class declaring the type parameters
+   * @param childClass the subclass providing concrete arguments
+   * @return a list of resolved classes in parameter order
+   * @throws TypeInferenceException       if the classes are not related
+   * @throws UnexpectedGenericDeclaration if a parameter cannot be resolved to a concrete class
+   */
   public static List<Class<?>> getTypeArgumentsOfSubclass (Class<?> baseClass, Class<?> childClass) {
 
     Map<Type, Type> resolvedTypes = new HashMap<>();
@@ -135,6 +154,15 @@ public class GenericUtility {
     return typeArgumentsAsClasses;
   }
 
+  /**
+   * Resolves the raw classes for the generic type parameters of an implemented interface.
+   *
+   * @param objectClass     the implementing class
+   * @param targetInterface the interface whose parameters should be resolved
+   * @return a list of resolved classes in parameter order
+   * @throws TypeInferenceException       if the interface is not implemented
+   * @throws UnexpectedGenericDeclaration if a parameter cannot be resolved to a concrete class
+   */
   public static List<Class<?>> getTypeArgumentsOfImplementation (Class<?> objectClass, Class<?> targetInterface) {
 
     Class<?> currentClass = objectClass;
@@ -175,6 +203,12 @@ public class GenericUtility {
     throw new TypeInferenceException("The class(%s) does not implement the interface(%s)", objectClass.getName(), targetInterface.getName());
   }
 
+  /**
+   * Attempts to convert a {@link Type} into a concrete {@link Class}.
+   *
+   * @param type the type to inspect
+   * @return the corresponding class or {@code null} if it cannot be determined
+   */
   public static Class<?> getClass (Type type) {
 
     if (type instanceof Class) {

@@ -35,8 +35,19 @@ package org.smallmind.nutsnbolts.util;
 import java.lang.reflect.Array;
 import java.util.Objects;
 
+/**
+ * Utilities for working with generic arrays.
+ */
 public class ArrayUtility {
 
+  /**
+   * Clones the provided array into a new array of the same length and type.
+   *
+   * @param clazz    component class
+   * @param original array to clone; may be {@code null}
+   * @param <T>      component type
+   * @return cloned array or {@code null} when original is {@code null}
+   */
   public static <T> T[] clone (Class<T> clazz, T[] original) {
 
     if (original == null) {
@@ -52,6 +63,15 @@ public class ArrayUtility {
     }
   }
 
+  /**
+   * Concatenates two arrays, creating a new array of the combined length.
+   *
+   * @param clazz  component class
+   * @param first  first array; may be {@code null} or empty
+   * @param second second array; may be {@code null} or empty
+   * @param <T>    component type
+   * @return concatenated array (or empty array if both inputs are null/empty)
+   */
   public static <T> T[] concatenate (Class<T> clazz, T[] first, T... second) {
 
     if ((first == null) || (first.length == 0)) {
@@ -71,6 +91,14 @@ public class ArrayUtility {
     }
   }
 
+  /**
+   * Performs a linear search for a key within an array.
+   *
+   * @param array array to scan; may be {@code null}
+   * @param key   element to match (via {@link Objects#equals(Object, Object)})
+   * @param <T>   component type
+   * @return index of the first match, or -1 if not found
+   */
   public static <T> int linearSearch (T[] array, T key) {
 
     if ((array != null) && (array.length > 0)) {

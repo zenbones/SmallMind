@@ -32,17 +32,26 @@
  */
 package org.smallmind.nutsnbolts.util;
 
+/**
+ * Versions of Snowflake-inspired identifiers.
+ */
 public enum SnowflakeVersion {
 
   TIME_MAC_ADDRESS((byte)0x0), RANDOM((byte)0x6), CUSTOM((byte)0x7);
 
   private final byte code;
 
+  /**
+   * @param code version code stored in the id
+   */
   SnowflakeVersion (byte code) {
 
     this.code = code;
   }
 
+  /**
+   * @return version code byte
+   */
   public byte getCode () {
 
     return code;

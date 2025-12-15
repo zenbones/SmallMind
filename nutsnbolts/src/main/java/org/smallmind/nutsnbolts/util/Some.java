@@ -32,20 +32,40 @@
  */
 package org.smallmind.nutsnbolts.util;
 
+/**
+ * Present-value {@link Option}.
+ *
+ * @param <T> element type
+ */
 public class Some<T> implements Option<T> {
 
   private final T value;
 
+  /**
+   * Creates an option containing the supplied value.
+   *
+   * @param value value to wrap; may be {@code null} if desired
+   */
   protected Some (T value) {
 
     this.value = value;
   }
 
+  /**
+   * Always present.
+   *
+   * @return {@code false}
+   */
   public boolean isNone () {
 
     return false;
   }
 
+  /**
+   * Returns the contained value (may be {@code null}).
+   *
+   * @return wrapped value
+   */
   public T get () {
 
     return value;

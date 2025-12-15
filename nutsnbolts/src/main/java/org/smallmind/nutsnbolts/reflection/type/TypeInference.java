@@ -34,10 +34,18 @@ package org.smallmind.nutsnbolts.reflection.type;
 
 import java.util.Arrays;
 
+/**
+ * Collects candidate types discovered during generic resolution and enforces a single inference.
+ */
 public class TypeInference {
 
   Class[] possibilities;
 
+  /**
+   * Adds another possible concrete class for the inferred type.
+   *
+   * @param clazz the candidate class
+   */
   public void addPossibility (Class clazz) {
 
     if (possibilities == null) {
@@ -53,6 +61,12 @@ public class TypeInference {
     }
   }
 
+  /**
+   * Returns the inferred class once collection is complete.
+   *
+   * @return the inferred class
+   * @throws TypeInferenceException if no or multiple possibilities were collected
+   */
   public Class getInference () {
 
     if (possibilities == null) {

@@ -47,6 +47,9 @@ import org.smallmind.nutsnbolts.xml.XMLEntityResolver;
 import org.smallmind.nutsnbolts.xml.sax.ExtensibleSAXParser;
 import org.xml.sax.InputSource;
 
+/**
+ * Defines the complete set of allowable command line options for an application.
+ */
 public class Template {
 
   private static final XMLEntityResolver SMALL_MIND_ENTITY_RESOLVER = new XMLEntityResolver(SmallMindProtocolResolver.getInstance());
@@ -56,11 +59,23 @@ public class Template {
   private final HashSet<String> nameAndFlagSet = new HashSet<>();
   private final String shortName;
 
+  /**
+   * Creates a template whose default short name is derived from the entry class.
+   *
+   * @param entryClass class representing the entry point
+   */
   public Template (Class<?> entryClass) {
 
     shortName = entryClass.getSimpleName();
   }
 
+  /**
+   * Creates a template with the given short name and optional root options.
+   *
+   * @param shortName short name of the command (used in help)
+   * @param options   root options to register
+   * @throws CommandLineException if validation of the options fails
+   */
   public Template (String shortName, Option... options)
     throws CommandLineException {
 
@@ -69,6 +84,13 @@ public class Template {
     addOptions(options);
   }
 
+  /**
+   * Loads a template from an XML descriptor named after the entry class with suffix ".arguments.xml".
+   *
+   * @param entryClass class representing the entry point
+   * @return populated template
+   * @throws CommandLineException if the resource is missing or parsing fails
+   */
   public static Template createTemplate (Class<?> entryClass)
     throws CommandLineException {
 
@@ -91,27 +113,49 @@ public class Template {
     return template;
   }
 
+  /**
+   * @return short name for the command
+   */
   public String getShortName () {
 
     return shortName;
   }
 
+  /**
+   * @return immutable view of the root option list
+   */
   public synchronized List<Option> getRootOptionList () {
 
     return Collections.unmodifiableList(optionList);
   }
 
+  /**
+   * @return immutable view of all options, including nested children
+   */
   public synchronized Set<Option> getOptionSet () {
 
     return Collections.unmodifiableSet(optionSet);
   }
 
+  /**
+   * Adds one or more root options to the template.
+   *
+   * @param options options to register
+   * @throws CommandLineException if validation fails
+   */
   public synchronized void addOptions (Option... options)
     throws CommandLineException {
 
     addOptions(Arrays.asList(options), false);
   }
 
+  /**
+   * Adds options to the template, optionally indicating that the list is a nested child list.
+   *
+   * @param optionList options to register
+   * @param sublist    {@code true} when the list represents child options
+   * @throws CommandLineException if names or flags are missing or not unique
+   */
   public synchronized void addOptions (List<Option> optionList, boolean sublist)
     throws CommandLineException {
 
@@ -148,6 +192,9 @@ public class Template {
     }
   }
 
+  /**
+   * Renders the template as a nested textual representation.
+   */
   public synchronized String toString () {
 
     StringBuilder lineBuilder = new StringBuilder();
@@ -157,6 +204,12 @@ public class Template {
     return lineBuilder.toString();
   }
 
+  /**
+   * Recursive helper to append options to a string builder in readable form.
+   *
+   * @param lineBuilder builder receiving the formatted options
+   * @param optionList  options to render
+   */
   private void stringifyOptions (StringBuilder lineBuilder, List<Option> optionList) {
 
     boolean first = true;

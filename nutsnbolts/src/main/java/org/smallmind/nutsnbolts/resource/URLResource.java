@@ -37,18 +37,33 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 
+/**
+ * {@link Resource} that streams content from a remote or local URL.
+ */
 public class URLResource extends AbstractResource {
 
+  /**
+   * @param path valid URL string
+   */
   public URLResource (String path) {
 
     super(path);
   }
 
+  /**
+   * @return {@code url}
+   */
   public String getScheme () {
 
     return "url";
   }
 
+  /**
+   * Opens the URL for reading.
+   *
+   * @return buffered input stream for the URL content
+   * @throws ResourceException if the URL cannot be opened
+   */
   public InputStream getInputStream ()
     throws ResourceException {
 

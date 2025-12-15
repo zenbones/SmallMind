@@ -32,23 +32,47 @@
  */
 package org.smallmind.nutsnbolts.lang;
 
+/**
+ * {@link Exception} variant that formats its message using {@link String#format(String, Object...)}.
+ */
 public class FormattedException extends Exception {
 
+  /**
+   * Creates an exception without a detail message.
+   */
   public FormattedException () {
 
     super();
   }
 
+  /**
+   * Creates an exception with a formatted message.
+   *
+   * @param message the format string, or {@code null}
+   * @param args    arguments applied to the format string
+   */
   public FormattedException (String message, Object... args) {
 
     super(message == null ? null : String.format(message, args));
   }
 
+  /**
+   * Creates an exception with a cause and a formatted message.
+   *
+   * @param throwable the underlying cause
+   * @param message   the format string, or {@code null}
+   * @param args      arguments applied to the format string
+   */
   public FormattedException (Throwable throwable, String message, Object... args) {
 
     super(message == null ? null : String.format(message, args), throwable);
   }
 
+  /**
+   * Creates an exception with the supplied cause.
+   *
+   * @param throwable the underlying cause
+   */
   public FormattedException (Throwable throwable) {
 
     super(throwable);

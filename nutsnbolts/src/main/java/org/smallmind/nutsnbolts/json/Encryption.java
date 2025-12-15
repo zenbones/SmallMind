@@ -42,12 +42,16 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import org.smallmind.nutsnbolts.security.EncryptionUtility;
 
+/**
+ * Encryption algorithms supported for securing {@link BinaryData} payloads.
+ */
 public enum Encryption {
 
   AES {
 
     private final byte[] iv = new byte[] {0x47, 0x6C, 0x75, 0x20, 0x4D, 0x6F, 0x62, 0x69, 0x6C, 0x65, 0x20, 0x47, 0x61, 0x6D, 0x65, 0x73};
 
+    /** {@inheritDoc} */
     @Override
     public byte[] encrypt (Key key, byte[] toBeEncrypted)
       throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
@@ -55,6 +59,7 @@ public enum Encryption {
       return EncryptionUtility.encrypt(key, "AES/CBC/PKCS5Padding", toBeEncrypted, new IvParameterSpec(iv));
     }
 
+    /** {@inheritDoc} */
     @Override
     public byte[] decrypt (Key key, byte[] encrypted)
       throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
@@ -63,9 +68,25 @@ public enum Encryption {
     }
   };
 
+  /**
+   * Encrypts the provided bytes with the supplied key.
+   *
+   * @param key           the key required by the algorithm
+   * @param toBeEncrypted clear-text bytes to encrypt
+   * @return the encrypted payload
+   * @throws Exception if the algorithm, padding, key, or input are invalid
+   */
   public abstract byte[] encrypt (Key key, byte[] toBeEncrypted)
     throws Exception;
 
+  /**
+   * Decrypts bytes produced by the matching {@link #encrypt(Key, byte[])} method.
+   *
+   * @param key       the key used to decrypt
+   * @param encrypted encrypted payload
+   * @return decrypted clear-text bytes
+   * @throws Exception if decryption fails or the key/algorithm are invalid
+   */
   public abstract byte[] decrypt (Key key, byte[] encrypted)
     throws Exception;
 }

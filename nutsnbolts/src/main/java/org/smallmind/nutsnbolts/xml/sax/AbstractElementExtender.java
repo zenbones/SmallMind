@@ -35,41 +35,69 @@ package org.smallmind.nutsnbolts.xml.sax;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
+/**
+ * Convenience base class for {@link ElementExtender} implementations providing storage for parent/document references.
+ */
 public abstract class AbstractElementExtender implements ElementExtender {
 
   private DocumentExtender documentExtender;
   private SAXExtender parent;
 
+  /**
+   * @return enclosing document extender
+   */
   public DocumentExtender getDocumentExtender () {
 
     return documentExtender;
   }
 
+  /**
+   * Assigns the enclosing document extender.
+   *
+   * @param documentExtender document extender managing the parse
+   */
   public void setDocumentExtender (DocumentExtender documentExtender) {
 
     this.documentExtender = documentExtender;
   }
 
+  /**
+   * @return parent extender in the element stack
+   */
   public SAXExtender getParent () {
 
     return parent;
   }
 
+  /**
+   * Sets the parent extender.
+   *
+   * @param parent parent extender for the current element
+   */
   public void setParent (SAXExtender parent) {
 
     this.parent = parent;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public void startElement (String namespaceURI, String localName, String qName, Attributes atts)
     throws SAXException {
 
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public void endElement (String namespaceURI, String localName, String qName, StringBuilder contentBuilder)
     throws SAXException {
 
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public void completedChildElement (ElementExtender elementExtender)
     throws SAXException {
 

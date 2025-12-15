@@ -32,6 +32,9 @@
  */
 package org.smallmind.nutsnbolts.util;
 
+/**
+ * UUID variant values as defined by RFC 4122.
+ */
 public enum UUIDVariant {
 
   APOLLO_NETWORK_COMPUTING(0),
@@ -41,11 +44,17 @@ public enum UUIDVariant {
 
   private final int variant;
 
+  /**
+   * @param variant numeric variant bits
+   */
   UUIDVariant (int variant) {
 
     this.variant = variant;
   }
 
+  /**
+   * @return variant field integer value
+   */
   public int getVariant () {
 
     return variant;

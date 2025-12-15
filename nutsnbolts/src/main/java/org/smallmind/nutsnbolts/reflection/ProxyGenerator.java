@@ -49,6 +49,9 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.util.CheckClassAdapter;
 
+/**
+ * Generates byte code proxies using ASM for classes and interfaces, optionally filtering annotations.
+ */
 public class ProxyGenerator {
 
   private static final HashMap<String, String> OBJECT_METHOD_MAP = new HashMap<>();
@@ -62,11 +65,30 @@ public class ProxyGenerator {
     OBJECT_METHOD_MAP.put("toString", "()Ljava/lang/String;");
   }
 
+  /**
+   * Creates a proxy instance that delegates to the supplied invocation handler.
+   *
+   * @param toBeProxiedClass the interface or class to proxy
+   * @param handler          the handler that receives invocations
+   * @param <T>              the proxied type
+   * @return a new proxy instance
+   * @throws ByteCodeManipulationException if proxy generation or construction fails
+   */
   public static <T> T createProxy (Class<T> toBeProxiedClass, InvocationHandler handler) {
 
     return createProxy(toBeProxiedClass, handler, null);
   }
 
+  /**
+   * Creates a proxy instance that delegates to the supplied invocation handler while optionally filtering annotations.
+   *
+   * @param toBeProxiedClass the interface or class to proxy
+   * @param handler          the handler that receives invocations
+   * @param annotationFilter optional filter controlling which annotations are copied to the proxy
+   * @param <T>              the proxied type
+   * @return a new proxy instance
+   * @throws ByteCodeManipulationException if proxy generation or construction fails
+   */
   public static <T> T createProxy (Class<T> toBeProxiedClass, InvocationHandler handler, AnnotationFilter annotationFilter) {
 
     Class<?> extractedClass;
@@ -139,6 +161,9 @@ public class ProxyGenerator {
     }
   }
 
+  /**
+   * Tracks visited methods by name and descriptor to avoid duplicate generation.
+   */
   private static class MethodTracker {
 
     private final String name;
@@ -150,22 +175,37 @@ public class ProxyGenerator {
       this.description = description;
     }
 
+    /**
+     * @return the method name
+     */
     public String getName () {
 
       return name;
     }
 
+    /**
+     * @return the JVM method descriptor
+     */
     public String getDescription () {
 
       return description;
     }
 
+    /**
+     * @return a hash code based on the method name and descriptor
+     */
     @Override
     public int hashCode () {
 
       return name.hashCode() ^ ((description == null) ? 0 : description.hashCode());
     }
 
+    /**
+     * Compares trackers by name and descriptor.
+     *
+     * @param obj the object to compare
+     * @return {@code true} if both refer to the same method signature
+     */
     @Override
     public boolean equals (Object obj) {
 
@@ -173,19 +213,35 @@ public class ProxyGenerator {
     }
   }
 
+  /**
+   * Class loader used to define generated proxy classes.
+   */
   private static class ProxyClassLoader extends ClassLoader {
 
+    /**
+     * @param parent the parent loader
+     */
     public ProxyClassLoader (ClassLoader parent) {
 
       super(parent);
     }
 
+    /**
+     * Defines a generated class from byte array data.
+     *
+     * @param name the generated class name
+     * @param b    the class byte code
+     * @return the defined class
+     */
     public Class<?> extractInterface (String name, byte[] b) {
 
       return defineClass(name, b, 0, b.length);
     }
   }
 
+  /**
+   * ASM class visitor that constructs the proxy subclass or interface implementation.
+   */
   private static class ProxyClassVisitor extends ClassVisitor {
 
     private final ClassVisitor nextClassVisitor;
@@ -196,6 +252,14 @@ public class ProxyGenerator {
     private final boolean initialized;
     private boolean constructed = false;
 
+    /**
+     * @param nextClassVisitor downstream visitor that writes the class
+     * @param toBeProxiedClass the original type being proxied
+     * @param currentClass     the class whose members are currently being copied
+     * @param annotationFilter optional filter controlling annotation copying
+     * @param methodTrackerSet signatures that have already been emitted
+     * @param initialized      whether the class header has already been emitted
+     */
     public ProxyClassVisitor (ClassVisitor nextClassVisitor, Class<?> toBeProxiedClass, Class<?> currentClass, AnnotationFilter annotationFilter, HashSet<MethodTracker> methodTrackerSet, boolean initialized) {
 
       super(Opcodes.ASM8);
@@ -208,6 +272,9 @@ public class ProxyGenerator {
       this.initialized = initialized;
     }
 
+    /**
+     * Writes the proxy class header the first time a class is visited.
+     */
     @Override
     public void visit (int version, int access, String name, String signature, String superName, String[] interfaces) {
 
@@ -222,6 +289,12 @@ public class ProxyGenerator {
       }
     }
 
+    /**
+     * Emits a simple constructor that accepts an {@link InvocationHandler}.
+     *
+     * @param signature  the generic signature of the constructor
+     * @param exceptions checked exceptions declared by the original constructor
+     */
     private void createConstructor (String signature, String[] exceptions) {
 
       if (!(initialized || constructed)) {
@@ -255,6 +328,9 @@ public class ProxyGenerator {
       }
     }
 
+    /**
+     * Visits methods and emits proxy dispatchers for eligible ones.
+     */
     @Override
     public MethodVisitor visitMethod (int access, String name, String desc, String signature, String[] exceptions) {
 
@@ -521,12 +597,21 @@ public class ProxyGenerator {
       return null;
     }
 
+    /**
+     * Ensures a constructor is generated even if no suitable constructor was encountered.
+     */
     @Override
     public void visitEnd () {
 
       createConstructor(null, null);
     }
 
+    /**
+     * Inserts a constant integer into the method byte code using the smallest opcode available.
+     *
+     * @param methodVisitor the visitor to emit instructions to
+     * @param number        the integer to place on the stack
+     */
     private void insertNumber (MethodVisitor methodVisitor, int number) {
 
       switch (number) {
@@ -559,11 +644,18 @@ public class ProxyGenerator {
     }
   }
 
+  /**
+   * Filters annotations while copying method bodies to the generated proxy.
+   */
   private static class ProxyMethodVisitor extends MethodVisitor {
 
     private final MethodVisitor nextMethodVisitor;
     private final AnnotationFilter annotationFilter;
 
+    /**
+     * @param nextMethodVisitor downstream visitor that writes the method
+     * @param annotationFilter  optional filter controlling annotation copying
+     */
     public ProxyMethodVisitor (MethodVisitor nextMethodVisitor, AnnotationFilter annotationFilter) {
 
       super(Opcodes.ASM8);
@@ -572,12 +664,18 @@ public class ProxyGenerator {
       this.annotationFilter = annotationFilter;
     }
 
+    /**
+     * @return the default annotation visitor
+     */
     @Override
     public AnnotationVisitor visitAnnotationDefault () {
 
       return nextMethodVisitor.visitAnnotationDefault();
     }
 
+    /**
+     * Copies method-level annotations when the filter allows them.
+     */
     @Override
     public AnnotationVisitor visitAnnotation (String desc, boolean visible) {
 
@@ -589,6 +687,9 @@ public class ProxyGenerator {
       return null;
     }
 
+    /**
+     * Copies parameter annotations when the filter allows them.
+     */
     @Override
     public AnnotationVisitor visitParameterAnnotation (int parameter, String desc, boolean visible) {
 
@@ -600,6 +701,9 @@ public class ProxyGenerator {
       return null;
     }
 
+    /**
+     * Finishes the method copy.
+     */
     @Override
     public void visitEnd () {
 

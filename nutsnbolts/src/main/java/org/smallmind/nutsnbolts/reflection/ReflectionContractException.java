@@ -34,26 +34,49 @@ package org.smallmind.nutsnbolts.reflection;
 
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
+/**
+ * Signals that a reflected element violates an expected naming or signature contract.
+ */
 public class ReflectionContractException extends FormattedException {
 
+  /**
+   * Creates an exception with no detail message.
+   */
   public ReflectionContractException () {
 
     super();
   }
 
+  /**
+   * Creates an exception with a formatted detail message.
+   *
+   * @param message a {@link java.util.Formatter}-style message describing the contract violation
+   * @param args    values interpolated into the message
+   */
   public ReflectionContractException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * Creates an exception with a formatted detail message and a cause.
+   *
+   * @param throwable the underlying problem
+   * @param message   a {@link java.util.Formatter}-style message describing the contract violation
+   * @param args      values interpolated into the message
+   */
   public ReflectionContractException (Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);
   }
 
+  /**
+   * Creates an exception with a cause and no detail message.
+   *
+   * @param throwable the underlying problem
+   */
   public ReflectionContractException (Throwable throwable) {
 
     super(throwable);
   }
 }
-

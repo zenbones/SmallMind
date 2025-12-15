@@ -37,67 +37,152 @@ import java.util.LinkedList;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 // Lays out items one after another, in the Bias direction, with growth/shrink values also in the bias direction
+
+/**
+ * Box that lays out elements sequentially along the specified {@link Bias}, honoring grow/shrink constraints
+ * and optional gaps and justification settings.
+ */
 public class SerialBox extends Box<SerialBox> {
 
   private Justification justification;
   private double gap;
   private boolean greedy;
 
+  /**
+   * Creates a serial box with default unrelated gap and leading justification.
+   *
+   * @param layout the owning layout
+   */
   protected SerialBox (ParaboxLayout layout) {
 
     this(layout, Gap.UNRELATED);
   }
 
+  /**
+   * Creates a serial box with default gap and a greediness flag.
+   *
+   * @param layout the owning layout
+   * @param greedy whether the box may grow indefinitely
+   */
   protected SerialBox (ParaboxLayout layout, boolean greedy) {
 
     this(layout, Gap.UNRELATED, greedy);
   }
 
+  /**
+   * Creates a serial box with the given gap.
+   *
+   * @param layout the owning layout
+   * @param gap    the gap type between elements
+   */
   protected SerialBox (ParaboxLayout layout, Gap gap) {
 
     this(layout, gap.getGap(layout.getContainer().getPlatform()));
   }
 
+  /**
+   * Creates a serial box with a gap and greediness flag.
+   *
+   * @param layout the owning layout
+   * @param gap    the gap type between elements
+   * @param greedy whether the box may grow indefinitely
+   */
   protected SerialBox (ParaboxLayout layout, Gap gap, boolean greedy) {
 
     this(layout, gap.getGap(layout.getContainer().getPlatform()), greedy);
   }
 
+  /**
+   * Creates a serial box with a fixed gap.
+   *
+   * @param layout the owning layout
+   * @param gap    the fixed gap value
+   */
   protected SerialBox (ParaboxLayout layout, double gap) {
 
     this(layout, gap, Justification.LEADING);
   }
 
+  /**
+   * Creates a serial box with a fixed gap and greediness flag.
+   *
+   * @param layout the owning layout
+   * @param gap    the fixed gap value
+   * @param greedy whether the box may grow indefinitely
+   */
   protected SerialBox (ParaboxLayout layout, double gap, boolean greedy) {
 
     this(layout, gap, Justification.LEADING, greedy);
   }
 
+  /**
+   * Creates a serial box with justification and default gap.
+   *
+   * @param layout        the owning layout
+   * @param justification justification used when distributing extra space
+   */
   protected SerialBox (ParaboxLayout layout, Justification justification) {
 
     this(layout, Gap.UNRELATED, justification);
   }
 
+  /**
+   * Creates a serial box with justification, default gap, and greediness flag.
+   *
+   * @param layout        the owning layout
+   * @param justification justification used when distributing extra space
+   * @param greedy        whether the box may grow indefinitely
+   */
   protected SerialBox (ParaboxLayout layout, Justification justification, boolean greedy) {
 
     this(layout, Gap.UNRELATED, justification, greedy);
   }
 
+  /**
+   * Creates a serial box with a gap type and justification.
+   *
+   * @param layout        the owning layout
+   * @param gap           the gap type between elements
+   * @param justification justification used when distributing extra space
+   */
   protected SerialBox (ParaboxLayout layout, Gap gap, Justification justification) {
 
     this(layout, gap.getGap(layout.getContainer().getPlatform()), justification);
   }
 
+  /**
+   * Creates a serial box with a gap type, justification, and greediness flag.
+   *
+   * @param layout        the owning layout
+   * @param gap           the gap type between elements
+   * @param justification justification used when distributing extra space
+   * @param greedy        whether the box may grow indefinitely
+   */
   protected SerialBox (ParaboxLayout layout, Gap gap, Justification justification, boolean greedy) {
 
     this(layout, gap.getGap(layout.getContainer().getPlatform()), justification, greedy);
   }
 
+  /**
+   * Creates a serial box with a fixed gap and justification.
+   *
+   * @param layout        the owning layout
+   * @param gap           the fixed gap value
+   * @param justification justification used when distributing extra space
+   */
   protected SerialBox (ParaboxLayout layout, double gap, Justification justification) {
 
     this(layout, gap, justification, false);
   }
 
+  /**
+   * Creates a serial box with a fixed gap, justification, and greediness flag.
+   *
+   * @param layout        the owning layout
+   * @param gap           the fixed gap value
+   * @param justification justification used when distributing extra space
+   * @param greedy        whether the box may grow indefinitely
+   */
   protected SerialBox (ParaboxLayout layout, double gap, Justification justification, boolean greedy) {
 
     super(SerialBox.class, layout);
@@ -107,16 +192,31 @@ public class SerialBox extends Box<SerialBox> {
     this.greedy = greedy;
   }
 
+  /**
+   * @return the gap between elements
+   */
   public double getGap () {
 
     return gap;
   }
 
+  /**
+   * Sets the gap using a predefined gap type.
+   *
+   * @param gap the gap type
+   * @return this box for chaining
+   */
   public SerialBox setGap (Gap gap) {
 
     return setGap(gap.getGap(getLayout().getContainer().getPlatform()));
   }
 
+  /**
+   * Sets the fixed gap value.
+   *
+   * @param gap the fixed gap
+   * @return this box for chaining
+   */
   public SerialBox setGap (double gap) {
 
     this.gap = gap;
@@ -124,11 +224,20 @@ public class SerialBox extends Box<SerialBox> {
     return this;
   }
 
+  /**
+   * @return the justification used when distributing extra space
+   */
   public Justification getJustification () {
 
     return justification;
   }
 
+  /**
+   * Sets the justification strategy.
+   *
+   * @param justification the justification to use
+   * @return this box for chaining
+   */
   public SerialBox setJustification (Justification justification) {
 
     this.justification = justification;
@@ -136,11 +245,20 @@ public class SerialBox extends Box<SerialBox> {
     return this;
   }
 
+  /**
+   * @return whether this box may grow without bound
+   */
   public boolean isGreedy () {
 
     return greedy;
   }
 
+  /**
+   * Sets whether this box may grow without bound.
+   *
+   * @param greedy {@code true} to allow unbounded growth
+   * @return this box for chaining
+   */
   public SerialBox setGreedy (boolean greedy) {
 
     this.greedy = greedy;
@@ -148,24 +266,41 @@ public class SerialBox extends Box<SerialBox> {
     return this;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public double calculateMinimumMeasurement (Bias bias, LayoutTailor tailor) {
 
     return calculateMeasurement(bias, TapeMeasure.MINIMUM, tailor);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public double calculatePreferredMeasurement (Bias bias, LayoutTailor tailor) {
 
     return calculateMeasurement(bias, TapeMeasure.PREFERRED, tailor);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public double calculateMaximumMeasurement (Bias bias, LayoutTailor tailor) {
 
     return greedy ? Integer.MAX_VALUE : calculateMeasurement(bias, TapeMeasure.MAXIMUM, tailor);
   }
 
+  /**
+   * Computes the aggregate measurement of all children along the specified axis, including gaps.
+   *
+   * @param bias        the axis of measurement
+   * @param tapeMeasure which measurement to compute
+   * @param tailor      layout tailor for caching
+   * @return the total measurement
+   */
   private synchronized double calculateMeasurement (Bias bias, TapeMeasure tapeMeasure, LayoutTailor tailor) {
 
     double total = 0.0D;
@@ -186,6 +321,9 @@ public class SerialBox extends Box<SerialBox> {
     return total;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public synchronized void doLayout (Bias bias, double containerPosition, double containerMeasurement, LayoutTailor tailor) {
 
@@ -262,12 +400,12 @@ public class SerialBox extends Box<SerialBox> {
               double currentUnused;
               double currentGrow;
 
-              if ((tentativeMeasurements[reorderedElement.getOriginalIndex()] + (currentUnused = ((currentGrow = reorderedElement.getReorderedElement().getConstraint().getGrow()) / totalGrow * unused))) < maximumMeasurements[reorderedElement.getOriginalIndex()]) {
+              if ((tentativeMeasurements[reorderedElement.originalIndex()] + (currentUnused = ((currentGrow = reorderedElement.reorderedElement().getConstraint().getGrow()) / totalGrow * unused))) < maximumMeasurements[reorderedElement.originalIndex()]) {
                 used += currentUnused;
-                tentativeMeasurements[reorderedElement.getOriginalIndex()] += currentUnused;
+                tentativeMeasurements[reorderedElement.originalIndex()] += currentUnused;
               } else {
-                used += maximumMeasurements[reorderedElement.getOriginalIndex()] - tentativeMeasurements[reorderedElement.getOriginalIndex()];
-                tentativeMeasurements[reorderedElement.getOriginalIndex()] = maximumMeasurements[reorderedElement.getOriginalIndex()];
+                used += maximumMeasurements[reorderedElement.originalIndex()] - tentativeMeasurements[reorderedElement.originalIndex()];
+                tentativeMeasurements[reorderedElement.originalIndex()] = maximumMeasurements[reorderedElement.originalIndex()];
                 spentGrowth += currentGrow;
                 reorderedElementIter.remove();
               }
@@ -286,10 +424,10 @@ public class SerialBox extends Box<SerialBox> {
             applyLayouts(bias, containerPosition + containerMeasurement, false, tentativeMeasurements, tailor);
             break;
           case LEADING:
-            if (!bias.equals(getLayout().getContainer().getPlatform().getOrientation().getBias())) {
+            if (!bias.equals(getLayout().getContainer().getPlatform().getOrientation().bias())) {
               applyLayouts(bias, containerPosition, true, tentativeMeasurements, tailor);
             } else {
-              switch (getLayout().getContainer().getPlatform().getOrientation().getFlow()) {
+              switch (getLayout().getContainer().getPlatform().getOrientation().flow()) {
                 case FIRST_TO_LAST:
                   applyLayouts(bias, containerPosition, true, tentativeMeasurements, tailor);
                   break;
@@ -297,15 +435,15 @@ public class SerialBox extends Box<SerialBox> {
                   applyLayouts(bias, containerPosition + containerMeasurement, false, tentativeMeasurements, tailor);
                   break;
                 default:
-                  throw new UnknownSwitchCaseException(getLayout().getContainer().getPlatform().getOrientation().getFlow().name());
+                  throw new UnknownSwitchCaseException(getLayout().getContainer().getPlatform().getOrientation().flow().name());
               }
             }
             break;
           case TRAILING:
-            if (!bias.equals(getLayout().getContainer().getPlatform().getOrientation().getBias())) {
+            if (!bias.equals(getLayout().getContainer().getPlatform().getOrientation().bias())) {
               applyLayouts(bias, containerPosition + containerMeasurement, false, tentativeMeasurements, tailor);
             } else {
-              switch (getLayout().getContainer().getPlatform().getOrientation().getFlow()) {
+              switch (getLayout().getContainer().getPlatform().getOrientation().flow()) {
                 case FIRST_TO_LAST:
                   applyLayouts(bias, containerPosition + containerMeasurement, false, tentativeMeasurements, tailor);
                   break;
@@ -313,7 +451,7 @@ public class SerialBox extends Box<SerialBox> {
                   applyLayouts(bias, containerPosition, true, tentativeMeasurements, tailor);
                   break;
                 default:
-                  throw new UnknownSwitchCaseException(getLayout().getContainer().getPlatform().getOrientation().getFlow().name());
+                  throw new UnknownSwitchCaseException(getLayout().getContainer().getPlatform().getOrientation().flow().name());
               }
             }
             break;
@@ -327,6 +465,15 @@ public class SerialBox extends Box<SerialBox> {
     }
   }
 
+  /**
+   * Applies layouts to each element using precomputed tentative measurements and justification direction.
+   *
+   * @param bias                  the axis of layout
+   * @param top                   the starting position along the axis
+   * @param forward               {@code true} to lay out forward, {@code false} to lay out in reverse
+   * @param tentativeMeasurements the measurement allocated to each element
+   * @param tailor                layout tailor coordinating multi-axis layout
+   */
   private void applyLayouts (Bias bias, double top, Boolean forward, double[] tentativeMeasurements, LayoutTailor tailor) {
 
     int index = 0;

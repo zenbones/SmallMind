@@ -34,10 +34,18 @@ package org.smallmind.nutsnbolts.time;
 
 import org.smallmind.nutsnbolts.util.StringUtility;
 
+/**
+ * Lightweight month enumeration with display formatting support.
+ */
 public enum Month {
 
   JANUARY, FEBRUARY, MARCH, APRIL, MAY, JUNE, JULY, AUGUST, SEPTEMBER, OCTOBER, NOVEMBER, DECEMBER;
 
+  /**
+   * Returns a capitalized display form of the enum constant name.
+   *
+   * @return human-friendly month name
+   */
   public String getDisplayName () {
 
     return StringUtility.toDisplayCase(this.name());

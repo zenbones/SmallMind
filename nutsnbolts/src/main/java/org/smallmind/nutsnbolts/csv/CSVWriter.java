@@ -36,6 +36,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
+/**
+ * Writes rows of comma-separated values, handling quoting and escaping.
+ */
 public class CSVWriter implements AutoCloseable {
 
   private static final char[] ESCAPED_CHARS = {'"', ',', '\n', '\r', '\f'};
@@ -43,6 +46,14 @@ public class CSVWriter implements AutoCloseable {
   private final OutputStream outputStream;
   private final int lineLength;
 
+  /**
+   * Creates a writer that immediately emits the header row.
+   *
+   * @param outputStream destination stream
+   * @param headers      header values (establishing the expected field count)
+   * @throws IOException       if writing fails
+   * @throws CSVParseException if header count is invalid
+   */
   public CSVWriter (OutputStream outputStream, String... headers)
     throws IOException, CSVParseException {
 
@@ -52,12 +63,25 @@ public class CSVWriter implements AutoCloseable {
     write(headers);
   }
 
+  /**
+   * Creates a writer expecting a fixed number of fields per row.
+   *
+   * @param outputStream destination stream
+   * @param lineLength   required number of fields
+   */
   public CSVWriter (OutputStream outputStream, int lineLength) {
 
     this.outputStream = outputStream;
     this.lineLength = lineLength;
   }
 
+  /**
+   * Writes a single CSV record.
+   *
+   * @param fields field values to write
+   * @throws IOException       if writing fails
+   * @throws CSVParseException if the number of fields does not match {@code lineLength}
+   */
   public void write (String... fields)
     throws IOException, CSVParseException {
 
@@ -86,6 +110,12 @@ public class CSVWriter implements AutoCloseable {
     outputStream.write('\n');
   }
 
+  /**
+   * Doubles any embedded quotes within a field.
+   *
+   * @param field field to escape
+   * @return field with quotes escaped
+   */
   private String doubleAllQuotes (String field) {
 
     if (field.indexOf("\"") >= 0) {
@@ -95,6 +125,12 @@ public class CSVWriter implements AutoCloseable {
     return field;
   }
 
+  /**
+   * Determines if a field must be surrounded by quotes when written.
+   *
+   * @param field field to examine
+   * @return {@code true} if the field contains a special character
+   */
   private boolean mustBeQuoted (String field) {
 
     for (char escapeChar : ESCAPED_CHARS) {
@@ -106,6 +142,9 @@ public class CSVWriter implements AutoCloseable {
     return false;
   }
 
+  /**
+   * Closes the underlying stream.
+   */
   public void close ()
     throws IOException {
 

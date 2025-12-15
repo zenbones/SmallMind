@@ -36,21 +36,41 @@ import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
 import org.smallmind.nutsnbolts.util.EnumUtility;
 
+/**
+ * Base JAXB adapter that marshals enum values to their string form and unmarshals from human readable text.
+ *
+ * @param <E> concrete enum type
+ */
 public abstract class EnumXmlAdapter<E extends Enum<E>> extends XmlAdapter<String, E> {
 
   private final Class<E> enumClass;
 
+  /**
+   * Resolves the enum type parameter for use during unmarshalling.
+   */
   public EnumXmlAdapter () {
 
     enumClass = (Class<E>)GenericUtility.getTypeArgumentsOfSubclass(EnumXmlAdapter.class, this.getClass()).get(0);
   }
 
+  /**
+   * Converts text to the target enum type, applying {@link EnumUtility#toEnumName(String)} normalization.
+   *
+   * @param value the textual representation
+   * @return the matching enum, or {@code null} when {@code value} is {@code null}
+   */
   @Override
   public E unmarshal (String value) {
 
     return (value == null) ? null : Enum.valueOf(enumClass, EnumUtility.toEnumName(value));
   }
 
+  /**
+   * Marshals an enum to its string representation.
+   *
+   * @param enumeration the enum instance
+   * @return the enum name, or {@code null} when {@code enumeration} is {@code null}
+   */
   @Override
   public String marshal (E enumeration) {
 

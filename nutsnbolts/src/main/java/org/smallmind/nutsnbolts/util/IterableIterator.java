@@ -34,30 +34,52 @@ package org.smallmind.nutsnbolts.util;
 
 import java.util.Iterator;
 
+/**
+ * Adapter that makes an {@link Iterator} also implement {@link Iterable}.
+ *
+ * @param <T> element type
+ */
 public class IterableIterator<T> implements Iterator<T>, Iterable<T> {
 
   private final Iterator<T> internalIterator;
 
+  /**
+   * @param internalIterator iterator to wrap; must not be {@code null}
+   */
   public IterableIterator (Iterator<T> internalIterator) {
 
     this.internalIterator = internalIterator;
   }
 
+  /**
+   * Delegates to the wrapped iterator.
+   */
   public boolean hasNext () {
 
     return internalIterator.hasNext();
   }
 
+  /**
+   * Delegates to the wrapped iterator.
+   */
   public T next () {
 
     return internalIterator.next();
   }
 
+  /**
+   * Removal is not supported by this adapter.
+   *
+   * @throws UnsupportedOperationException always
+   */
   public void remove () {
 
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * @return the wrapped iterator itself
+   */
   public Iterator<T> iterator () {
 
     return internalIterator;

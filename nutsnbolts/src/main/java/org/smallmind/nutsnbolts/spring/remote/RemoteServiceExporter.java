@@ -38,22 +38,34 @@ import java.rmi.RemoteException;
 import java.rmi.registry.Registry;
 import org.springframework.beans.factory.InitializingBean;
 
+/**
+ * Binds a remote service into an RMI registry and provides an explicit unbind hook.
+ */
 public class RemoteServiceExporter implements InitializingBean {
 
   private Registry registry;
   private Remote service;
   private String name;
 
+  /**
+   * @param registry the registry to bind into
+   */
   public void setRegistry (Registry registry) {
 
     this.registry = registry;
   }
 
+  /**
+   * @param service the remote service implementation
+   */
   public void setService (Remote service) {
 
     this.service = service;
   }
 
+  /**
+   * @param name the registry name under which to bind
+   */
   public void setName (String name) {
 
     this.name = name;
@@ -66,6 +78,12 @@ public class RemoteServiceExporter implements InitializingBean {
     registry.rebind(name, service);
   }
 
+  /**
+   * Unbinds the service from the registry.
+   *
+   * @throws RemoteException   if unbinding fails
+   * @throws NotBoundException if no binding exists
+   */
   public void unbind ()
     throws RemoteException, NotBoundException {
 

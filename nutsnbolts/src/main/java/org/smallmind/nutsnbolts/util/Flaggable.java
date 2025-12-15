@@ -32,28 +32,45 @@
  */
 package org.smallmind.nutsnbolts.util;
 
-public class Flaggable<T> {
+/**
+ * Simple wrapper combining a boolean flag with an associated value.
+ *
+ * @param <T> value type
+ */
+public record Flaggable<T>(boolean flagged, T value) {
 
-  private final boolean flagged;
-  private final T value;
+  /**
+   * @param flagged indicator value
+   * @param value   wrapped value
+   */
+  public Flaggable {
 
-  public Flaggable (boolean flag, T value) {
-
-    this.flagged = flag;
-    this.value = value;
   }
 
+  /**
+   * Creates an unflagged instance with the provided value.
+   *
+   * @param value wrapped value
+   */
   public Flaggable (T value) {
 
     this(false, value);
   }
 
-  public boolean isFlagged () {
+  /**
+   * @return flag indicator
+   */
+  @Override
+  public boolean flagged () {
 
     return flagged;
   }
 
-  public T getValue () {
+  /**
+   * @return wrapped value
+   */
+  @Override
+  public T value () {
 
     return value;
   }

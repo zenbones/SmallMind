@@ -32,7 +32,15 @@
  */
 package org.smallmind.nutsnbolts.lang;
 
+/**
+ * Collects stack trace text incrementally.
+ */
 public interface StackTraceAccumulator {
 
+  /**
+   * Appends a line or fragment of stack trace text.
+   *
+   * @param charSequence the text to add
+   */
   void append (CharSequence charSequence);
 }

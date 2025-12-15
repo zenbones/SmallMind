@@ -35,16 +35,37 @@ package org.smallmind.nutsnbolts.ssl;
 import java.security.cert.X509Certificate;
 import javax.net.ssl.X509TrustManager;
 
+/**
+ * {@link X509TrustManager} implementation that blindly trusts all certificates.
+ * Intended solely for development and testing where certificate validation is disabled.
+ */
 public class NaiveTrustManager implements X509TrustManager {
 
+  /**
+   * Accepts any presented client certificates without validation.
+   *
+   * @param cert     the client certificate chain
+   * @param authType the key exchange algorithm used
+   */
   public void checkClientTrusted (X509Certificate[] cert, String authType) {
 
   }
 
+  /**
+   * Accepts any presented server certificates without validation.
+   *
+   * @param cert     the server certificate chain
+   * @param authType the key exchange algorithm used
+   */
   public void checkServerTrusted (X509Certificate[] cert, String authType) {
 
   }
 
+  /**
+   * Returns an empty array indicating no specific trusted issuers.
+   *
+   * @return an empty certificate array
+   */
   public X509Certificate[] getAcceptedIssuers () {
 
     return new X509Certificate[0];

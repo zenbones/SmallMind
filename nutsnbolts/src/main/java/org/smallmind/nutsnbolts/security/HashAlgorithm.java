@@ -32,17 +32,26 @@
  */
 package org.smallmind.nutsnbolts.security;
 
+/**
+ * Supported message digest algorithms.
+ */
 public enum HashAlgorithm implements SecurityAlgorithm {
 
   MD5("MD5"), SHA_1("SHA-1"), SHA_256("SHA-256"), SHA_384("SHA-384"), SHA_512("SHA-512"), SHA3_256("SHA3-256"), SHA3_384("SHA3-384"), SHA3_512("SHA3-512");
 
   private final String algorithmName;
 
+  /**
+   * @param algorithmName the JCA digest name
+   */
   HashAlgorithm (String algorithmName) {
 
     this.algorithmName = algorithmName;
   }
 
+  /**
+   * @return the JCA name used when instantiating {@link java.security.MessageDigest}
+   */
   public String getAlgorithmName () {
 
     return algorithmName;

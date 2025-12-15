@@ -32,11 +32,18 @@
  */
 package org.smallmind.nutsnbolts.spring.property;
 
+/**
+ * {@link PropertyEntry} for YAML-sourced properties.
+ */
 public class YamlPropertyEntry implements PropertyEntry {
 
   private final String key;
   private final Object value;
 
+  /**
+   * @param key   property key
+   * @param value property value
+   */
   public YamlPropertyEntry (String key, Object value) {
 
     this.key = key;

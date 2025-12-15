@@ -35,6 +35,9 @@ package org.smallmind.nutsnbolts.io;
 import java.io.IOException;
 import java.nio.file.Path;
 
+/**
+ * Fluent builder for configuring recursive deletion via {@link FileUtility#deleteTree}.
+ */
 public class DeleteTreeConfigurationBuilder {
 
   private final Path target;
@@ -42,11 +45,20 @@ public class DeleteTreeConfigurationBuilder {
   private boolean includeTargetDirectory = true;
   private boolean throwErrorOnDirectoryNotEmpty = true;
 
+  /**
+   * @param target root directory or file to delete
+   */
   public DeleteTreeConfigurationBuilder (Path target) {
 
     this.target = target;
   }
 
+  /**
+   * Sets filters to control which paths are deleted.
+   *
+   * @param pathFilters optional filters; all must accept for deletion
+   * @return this builder
+   */
   public DeleteTreeConfigurationBuilder filter (PathFilter... pathFilters) {
 
     this.pathFilters = pathFilters;
@@ -54,6 +66,12 @@ public class DeleteTreeConfigurationBuilder {
     return this;
   }
 
+  /**
+   * Configures whether the target directory itself is removed.
+   *
+   * @param includeTargetDirectory {@code true} to delete the root directory
+   * @return this builder
+   */
   public DeleteTreeConfigurationBuilder includeTargetDirectory (boolean includeTargetDirectory) {
 
     this.includeTargetDirectory = includeTargetDirectory;
@@ -61,6 +79,12 @@ public class DeleteTreeConfigurationBuilder {
     return this;
   }
 
+  /**
+   * Determines whether a non-empty directory raises an error.
+   *
+   * @param throwErrorOnDirectoryNotEmpty {@code true} to fail when a directory isn't empty
+   * @return this builder
+   */
   public DeleteTreeConfigurationBuilder throwErrorOnDirectoryNotEmpty (boolean throwErrorOnDirectoryNotEmpty) {
 
     this.throwErrorOnDirectoryNotEmpty = throwErrorOnDirectoryNotEmpty;
@@ -68,6 +92,11 @@ public class DeleteTreeConfigurationBuilder {
     return this;
   }
 
+  /**
+   * Performs the configured deletion.
+   *
+   * @throws IOException if deletion fails
+   */
   public void build ()
     throws IOException {
 

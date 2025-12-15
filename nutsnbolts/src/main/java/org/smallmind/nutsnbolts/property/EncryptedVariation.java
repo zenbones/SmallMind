@@ -34,17 +34,36 @@ package org.smallmind.nutsnbolts.property;
 
 import org.smallmind.nutsnbolts.security.kms.Decryptor;
 
+/**
+ * Variation handler that marks property values requiring decryption. Uses a prefix to detect encrypted
+ * values and supplies the {@link Decryptor} to perform decryption.
+ */
 public class EncryptedVariation {
 
   private final Decryptor decryptor;
   private final String prefix;
 
+  /**
+   * Creates an encrypted variation using the default prefix {@code "!{"}.
+   *
+   * @param decryptor the decryptor used to decrypt property values
+   * @throws PropertyExpanderException if the prefix is invalid
+   * @throws NullPointerException      if decryptor is {@code null}
+   */
   public EncryptedVariation (Decryptor decryptor)
     throws PropertyExpanderException {
 
     this(decryptor, "!{");
   }
 
+  /**
+   * Creates an encrypted variation with a custom prefix.
+   *
+   * @param decryptor the decryptor used to decrypt property values
+   * @param prefix    the prefix that indicates encrypted text
+   * @throws PropertyExpanderException if the prefix is blank
+   * @throws NullPointerException      if decryptor or prefix is {@code null}
+   */
   public EncryptedVariation (Decryptor decryptor, String prefix)
     throws PropertyExpanderException {
 
@@ -58,11 +77,17 @@ public class EncryptedVariation {
     this.prefix = prefix;
   }
 
+  /**
+   * @return the decryptor used for encrypted values
+   */
   public Decryptor getDecryptor () {
 
     return decryptor;
   }
 
+  /**
+   * @return the prefix that denotes encrypted property values
+   */
   public String getPrefix () {
 
     return prefix;

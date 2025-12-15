@@ -34,7 +34,15 @@ package org.smallmind.nutsnbolts.io;
 
 import java.util.EventListener;
 
+/**
+ * Listener notified when {@link StenographWriter} flushes output.
+ */
 public interface StenographEventListener extends EventListener {
 
+  /**
+   * Called when buffered output is flushed.
+   *
+   * @param stenographEvent event containing flushed text
+   */
   void flush (StenographEvent stenographEvent);
 }

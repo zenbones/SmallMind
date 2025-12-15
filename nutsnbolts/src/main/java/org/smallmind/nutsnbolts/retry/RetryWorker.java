@@ -32,26 +32,43 @@
  */
 package org.smallmind.nutsnbolts.retry;
 
+/**
+ * Runnable wrapper that executes a {@link RetryCall} and captures any thrown errors.
+ */
 public class RetryWorker implements Runnable {
 
   private final RetryCall retryCall;
   private Throwable throwable;
 
+  /**
+   * @param retryCall the operation to execute
+   */
   public RetryWorker (RetryCall retryCall) {
 
     this.retryCall = retryCall;
   }
 
+  /**
+   * Clears the previously captured throwable before another attempt.
+   */
   public void reset () {
 
     throwable = null;
   }
 
+  /**
+   * Indicates whether the last execution completed successfully.
+   *
+   * @return {@code true} when no throwable was captured
+   */
   public boolean isSuccess () {
 
     return throwable == null;
   }
 
+  /**
+   * Executes the retry call, capturing any thrown {@link Throwable} for later inspection.
+   */
   @Override
   public void run () {
 
@@ -62,4 +79,3 @@ public class RetryWorker implements Runnable {
     }
   }
 }
-

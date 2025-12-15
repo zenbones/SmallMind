@@ -34,15 +34,27 @@ package org.smallmind.nutsnbolts.lang;
 
 import java.util.LinkedList;
 
+/**
+ * {@link StackTraceAccumulator} backed by an in-memory {@link LinkedList} of message lines.
+ * Provides the collected trace as an array in insertion order.
+ */
 public class ArrayStackTraceAccumulator implements StackTraceAccumulator {
 
   private final LinkedList<String> traceList;
 
+  /**
+   * Constructs an empty accumulator.
+   */
   public ArrayStackTraceAccumulator () {
 
     traceList = new LinkedList<String>();
   }
 
+  /**
+   * Returns the accumulated stack trace lines as an array.
+   *
+   * @return a snapshot of collected trace lines in insertion order
+   */
   public String[] asArray () {
 
     String[] trace;
@@ -53,6 +65,11 @@ public class ArrayStackTraceAccumulator implements StackTraceAccumulator {
     return trace;
   }
 
+  /**
+   * Appends a new line of stack trace text.
+   *
+   * @param charSequence the text to add
+   */
   @Override
   public void append (CharSequence charSequence) {
 

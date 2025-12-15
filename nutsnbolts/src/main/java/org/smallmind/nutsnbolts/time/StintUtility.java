@@ -34,8 +34,19 @@ package org.smallmind.nutsnbolts.time;
 
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Helper for converting durations between {@link TimeUnit}s while preserving precision in double form.
+ */
 public class StintUtility {
 
+  /**
+   * Converts a time quantity into another {@link TimeUnit}, yielding a double to retain fractional units.
+   *
+   * @param fromTime     source duration
+   * @param fromTimeUnit source time unit
+   * @param toTimeUnit   target time unit
+   * @return converted value expressed in the target unit
+   */
   public static double convertToDouble (long fromTime, TimeUnit fromTimeUnit, TimeUnit toTimeUnit) {
 
     return (fromTimeUnit.ordinal() >= toTimeUnit.ordinal()) ? (double)toTimeUnit.convert(fromTime, fromTimeUnit) : ((double)fromTime) / fromTimeUnit.convert(1, toTimeUnit);

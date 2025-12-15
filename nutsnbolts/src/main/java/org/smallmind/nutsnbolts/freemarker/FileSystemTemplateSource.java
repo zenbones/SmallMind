@@ -37,32 +37,54 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+/**
+ * Represents a file-system-based FreeMarker template source, deferring stream creation until requested.
+ */
 public class FileSystemTemplateSource {
 
   private final Path templatePath;
   private InputStream inputStream;
 
+  /**
+   * @param templatePath path to the template file
+   */
   public FileSystemTemplateSource (Path templatePath) {
 
     this.templatePath = templatePath;
   }
 
+  /**
+   * @return path to the underlying template file
+   */
   public Path getTemplatePath () {
 
     return templatePath;
   }
 
+  /**
+   * @return last-modified timestamp in milliseconds
+   * @throws IOException if file metadata cannot be read
+   */
   public long getLastModified ()
     throws IOException {
 
     return Files.getLastModifiedTime(templatePath).toMillis();
   }
 
+  /**
+   * @return {@code true} if the path points to a regular file
+   */
   public boolean exists () {
 
     return Files.isRegularFile(templatePath);
   }
 
+  /**
+   * Opens or returns a cached input stream to the template.
+   *
+   * @return input stream positioned at the start of the file
+   * @throws IOException if the file cannot be opened
+   */
   public synchronized InputStream getInputStream ()
     throws IOException {
 
@@ -73,6 +95,11 @@ public class FileSystemTemplateSource {
     return inputStream;
   }
 
+  /**
+   * Closes the input stream if it was opened.
+   *
+   * @throws IOException if closure fails
+   */
   public synchronized void close ()
     throws IOException {
 
@@ -81,12 +108,23 @@ public class FileSystemTemplateSource {
     }
   }
 
+  /**
+   * Computes a hash based on the underlying file path.
+   *
+   * @return hash value for collections
+   */
   @Override
   public int hashCode () {
 
     return templatePath.hashCode();
   }
 
+  /**
+   * Compares sources by underlying path.
+   *
+   * @param obj object to compare
+   * @return {@code true} when the template paths match
+   */
   @Override
   public boolean equals (Object obj) {
 

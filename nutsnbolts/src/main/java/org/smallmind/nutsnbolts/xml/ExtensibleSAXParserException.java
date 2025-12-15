@@ -34,26 +34,50 @@ package org.smallmind.nutsnbolts.xml;
 
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
+/**
+ * Exception thrown when the {@link org.smallmind.nutsnbolts.xml.sax.ExtensibleSAXParser} encounters configuration or parsing problems.
+ * Carries formatted messages for consistent diagnostics.
+ */
 public class ExtensibleSAXParserException extends FormattedException {
 
+  /**
+   * Creates an exception with no message or cause.
+   */
   public ExtensibleSAXParserException () {
 
     super();
   }
 
+  /**
+   * Creates an exception with a formatted message.
+   *
+   * @param message message pattern
+   * @param args    pattern arguments
+   */
   public ExtensibleSAXParserException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * Creates an exception with both a cause and a formatted message.
+   *
+   * @param throwable underlying cause
+   * @param message   message pattern
+   * @param args      pattern arguments
+   */
   public ExtensibleSAXParserException (Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);
   }
 
+  /**
+   * Creates an exception that wraps an underlying cause.
+   *
+   * @param throwable underlying cause
+   */
   public ExtensibleSAXParserException (Throwable throwable) {
 
     super(throwable);
   }
 }
-

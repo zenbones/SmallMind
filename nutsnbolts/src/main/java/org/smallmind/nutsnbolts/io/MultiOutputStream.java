@@ -35,15 +35,24 @@ package org.smallmind.nutsnbolts.io;
 import java.io.IOException;
 import java.io.OutputStream;
 
+/**
+ * OutputStream that forwards all writes to a set of delegate streams.
+ */
 public class MultiOutputStream extends OutputStream {
 
   private final OutputStream[] streams;
 
+  /**
+   * @param streams delegate output streams
+   */
   public MultiOutputStream (OutputStream[] streams) {
 
     this.streams = streams;
   }
 
+  /**
+   * Writes a single byte to each delegate.
+   */
   public void write (int b)
     throws IOException {
 
@@ -52,6 +61,9 @@ public class MultiOutputStream extends OutputStream {
     }
   }
 
+  /**
+   * Writes the entire buffer to each delegate.
+   */
   public void write (byte[] buffer)
     throws IOException {
 
@@ -60,6 +72,9 @@ public class MultiOutputStream extends OutputStream {
     }
   }
 
+  /**
+   * Writes a slice of the buffer to each delegate.
+   */
   public void write (byte[] buffer, int off, int len)
     throws IOException {
 

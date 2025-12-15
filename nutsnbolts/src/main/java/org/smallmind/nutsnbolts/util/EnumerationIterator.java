@@ -35,30 +35,52 @@ package org.smallmind.nutsnbolts.util;
 import java.util.Enumeration;
 import java.util.Iterator;
 
+/**
+ * Adapts an {@link Enumeration} to both {@link Iterator} and {@link Iterable}.
+ *
+ * @param <T> element type
+ */
 public class EnumerationIterator<T> implements Iterator<T>, Iterable<T> {
 
   private final Enumeration<T> internalEnumeration;
 
+  /**
+   * @param internalEnumeration enumeration to wrap
+   */
   public EnumerationIterator (Enumeration<T> internalEnumeration) {
 
     this.internalEnumeration = internalEnumeration;
   }
 
+  /**
+   * @return {@code true} if the wrapped enumeration has remaining elements
+   */
   public boolean hasNext () {
 
     return internalEnumeration.hasMoreElements();
   }
 
+  /**
+   * Returns the next element from the wrapped enumeration.
+   */
   public T next () {
 
     return internalEnumeration.nextElement();
   }
 
+  /**
+   * Removal is unsupported for enumeration-backed iteration.
+   *
+   * @throws UnsupportedOperationException always
+   */
   public void remove () {
 
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * @return this instance, allowing use in enhanced for-loops
+   */
   public Iterator<T> iterator () {
 
     return this;

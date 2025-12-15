@@ -36,8 +36,16 @@ import jakarta.servlet.ServletContextEvent;
 import org.smallmind.nutsnbolts.lang.PerApplicationContext;
 import org.springframework.web.context.ContextLoaderListener;
 
+/**
+ * Ensures a {@link PerApplicationContext} is available in the servlet context before delegating to Spring.
+ */
 public class WebContextLoaderListener extends ContextLoaderListener {
 
+  /**
+   * Initializes the per-application context and then the Spring web context.
+   *
+   * @param servletContextEvent the servlet context event
+   */
   public void contextInitialized (ServletContextEvent servletContextEvent) {
 
     if (servletContextEvent.getServletContext().getAttribute(PerApplicationContext.class.getName()) == null) {

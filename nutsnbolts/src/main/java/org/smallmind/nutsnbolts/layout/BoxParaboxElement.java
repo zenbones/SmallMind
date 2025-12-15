@@ -32,49 +32,85 @@
  */
 package org.smallmind.nutsnbolts.layout;
 
+/**
+ * {@link ParaboxElement} wrapper around another {@link Box}, enabling nested layouts to be treated
+ * as linear parts.
+ */
 public class BoxParaboxElement extends ParaboxElement<Box<?>> implements LinearPart {
 
+  /**
+   * Creates a new wrapper for the given box and constraint.
+   *
+   * @param box        the nested box
+   * @param constraint the constraint governing the box's sizing and alignment
+   */
   public BoxParaboxElement (Box<?> box, Constraint constraint) {
 
     super(box, constraint);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean isNativeComponent () {
 
     return false;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Dimensionality getDimensionality () {
 
     return Dimensionality.LINE;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public double getPartMinimumMeasurement (Bias bias, LayoutTailor tailor) {
 
     return getPart().calculateMinimumMeasurement(bias, tailor);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public double getPartPreferredMeasurement (Bias bias, LayoutTailor tailor) {
 
     return getPart().calculatePreferredMeasurement(bias, tailor);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public double getPartMaximumMeasurement (Bias bias, LayoutTailor tailor) {
 
     return getPart().calculateMaximumMeasurement(bias, tailor);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public double getBaseline (Bias bias, double measurement) {
 
     return measurement;
   }
 
+  /**
+   * Lays out the nested box along the provided axis using the supplied space.
+   *
+   * @param bias        the axis being laid out
+   * @param position    the start position along the axis
+   * @param measurement the available measurement along the axis
+   * @param tailor      the layout tailor used to size contained elements
+   */
   @Override
   public void applyLayout (Bias bias, double position, double measurement, LayoutTailor tailor) {
 

@@ -32,6 +32,9 @@
  */
 package org.smallmind.nutsnbolts.util;
 
+/**
+ * Binary on/off state indicator.
+ */
 public enum OnOrOff {
 
   ON, OFF

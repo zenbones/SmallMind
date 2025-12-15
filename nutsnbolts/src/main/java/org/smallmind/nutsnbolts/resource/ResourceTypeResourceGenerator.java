@@ -35,6 +35,9 @@ package org.smallmind.nutsnbolts.resource;
 import java.lang.reflect.Constructor;
 import java.util.LinkedList;
 
+/**
+ * Default {@link ResourceGenerator} that creates resources based on the built-in {@link ResourceType} enum values.
+ */
 public class ResourceTypeResourceGenerator implements ResourceGenerator {
 
   private static final Class[] SIGNATURE = new Class[] {String.class};
@@ -56,11 +59,24 @@ public class ResourceTypeResourceGenerator implements ResourceGenerator {
     VALID_SCHEMES = new ResourceSchemes(schemes);
   }
 
+  /**
+   * Returns the schemes supported by the built-in {@link ResourceType} values.
+   *
+   * @return supported scheme collection
+   */
   public ResourceSchemes getValidSchemes () {
 
     return VALID_SCHEMES;
   }
 
+  /**
+   * Instantiates a {@link Resource} corresponding to the supplied scheme using reflection.
+   *
+   * @param scheme resource scheme requested
+   * @param path   raw path component
+   * @return newly constructed resource
+   * @throws ResourceException if instantiation fails or the scheme is unsupported
+   */
   public Resource createResource (String scheme, String path)
     throws ResourceException {
 

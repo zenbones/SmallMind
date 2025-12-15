@@ -40,27 +40,53 @@ import org.smallmind.nutsnbolts.resource.ResourceException;
 import org.smallmind.nutsnbolts.resource.ResourceParser;
 import org.smallmind.nutsnbolts.resource.ResourceTypeResourceGenerator;
 
+/**
+ * FreeMarker {@link TemplateLoader} that resolves templates via the {@code Resource} abstraction.
+ * Supports URLs, files, classpath, and other schemes recognized by {@link ResourceParser}.
+ */
 public class ResourceTemplateLoader implements TemplateLoader {
 
   private static final ResourceParser RESOURCE_PARSER = new ResourceParser(new ResourceTypeResourceGenerator());
 
+  /**
+   * Resolves a template using the {@link ResourceParser}, allowing URLs, classpath, and other schemes.
+   *
+   * @param name template resource identifier
+   * @return template source when found
+   * @throws IOException if the name cannot be parsed or the resource cannot be accessed
+   */
   @Override
   public Object findTemplateSource (String name)
     throws IOException {
 
     try {
+      // Leverage ResourceParser so template names can be URLs, classpath refs, etc.
       return new ResourceTemplateSource(RESOURCE_PARSER.parseResource(name));
     } catch (ResourceException resourceException) {
       throw new IOException(resourceException);
     }
   }
 
+  /**
+   * Resource abstraction does not expose modification time; returns {@code -1}.
+   *
+   * @param templateSource ignored
+   * @return {@code -1} to indicate unknown modification time
+   */
   @Override
   public long getLastModified (Object templateSource) {
 
     return -1;
   }
 
+  /**
+   * Opens a reader for the supplied template source using the requested encoding.
+   *
+   * @param templateSource resource-backed template source
+   * @param encoding       character encoding to apply
+   * @return reader over the template content
+   * @throws IOException if the resource cannot be opened
+   */
   @Override
   public Reader getReader (Object templateSource, String encoding)
     throws IOException {
@@ -72,6 +98,12 @@ public class ResourceTemplateLoader implements TemplateLoader {
     }
   }
 
+  /**
+   * Closes the underlying resource stream if it was opened.
+   *
+   * @param templateSource template source to close
+   * @throws IOException if closing fails
+   */
   @Override
   public void closeTemplateSource (Object templateSource)
     throws IOException {

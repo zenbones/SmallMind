@@ -32,6 +32,9 @@
  */
 package org.smallmind.nutsnbolts.http;
 
+/**
+ * Standard HTTP verbs supported by the lightweight transmitter utilities.
+ */
 public enum HttpMethod {
 
   CONNECT, DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT, TRACE

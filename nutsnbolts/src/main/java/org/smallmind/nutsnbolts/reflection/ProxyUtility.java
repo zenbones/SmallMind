@@ -37,11 +37,28 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.LinkedList;
 
+/**
+ * Runtime helpers used by generated proxy classes to invoke target methods.
+ */
 public class ProxyUtility {
 
   private static final HashMap<String, Method> METHOD_MAP = new HashMap<>();
   private static final HashMap<String, Class<?>> SIGNATURE_MAP = new HashMap<>();
 
+  /**
+   * Invokes a proxied method through the supplied {@link InvocationHandler}.
+   *
+   * @param proxy             the proxy instance
+   * @param invocationHandler the handler responsible for dispatching calls
+   * @param isSubclass        whether the proxy extends a class ({@code true}) or implements an interface ({@code false})
+   * @param methodCode        a unique key for caching the reflected method
+   * @param methodName        the name of the method being invoked
+   * @param resultSignature   the JVM descriptor of the return type
+   * @param signatures        JVM descriptors of the parameter types
+   * @param args              invocation arguments
+   * @return the invocation result or default primitive values when no handler is provided
+   * @throws Throwable propagated from the handler invocation
+   */
   public static Object invoke (Object proxy, InvocationHandler invocationHandler, boolean isSubclass, String methodCode, String methodName, String resultSignature, String[] signatures, Object... args)
     throws Throwable {
 
@@ -78,6 +95,12 @@ public class ProxyUtility {
     return invocationHandler.invoke(proxy, proxyMethod, args);
   }
 
+  /**
+   * Converts JVM type descriptors into a reflective {@link Class} array.
+   *
+   * @param signatures parameter type descriptors
+   * @return the resolved parameter classes
+   */
   private static Class[] assembleSignature (String[] signatures) {
 
     Class[] parsedSignature;
@@ -127,6 +150,13 @@ public class ProxyUtility {
     return parsedSignature;
   }
 
+  /**
+   * Resolves a class for the supplied type name, caching results for reuse.
+   *
+   * @param type the fully qualified class name or array descriptor
+   * @return the resolved class
+   * @throws ByteCodeManipulationException if the class cannot be loaded
+   */
   private static Class<?> getObjectType (String type) {
 
     Class<?> objectType;

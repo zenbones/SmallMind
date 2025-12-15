@@ -32,26 +32,49 @@
  */
 package org.smallmind.nutsnbolts.lang;
 
+/**
+ * Indicates that an object does not conform to an expected type.
+ */
 public class TypeMismatchException extends FormattedRuntimeException {
 
+  /**
+   * Creates the exception without a message.
+   */
   public TypeMismatchException () {
 
     super();
   }
 
+  /**
+   * Creates the exception with a formatted message.
+   *
+   * @param message the format string describing the mismatch
+   * @param args    arguments applied to the format string
+   */
   public TypeMismatchException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * Creates the exception with a cause and formatted message.
+   *
+   * @param throwable the underlying cause
+   * @param message   the format string, or {@code null}
+   * @param args      arguments applied to the format string
+   */
   public TypeMismatchException (Throwable throwable, String message, Object... args) {
 
     super(message, args, throwable);
   }
 
+  /**
+   * Creates the exception with the supplied cause.
+   *
+   * @param throwable the underlying cause
+   */
   public TypeMismatchException (Throwable throwable) {
 
     super(throwable);
   }
 }
-

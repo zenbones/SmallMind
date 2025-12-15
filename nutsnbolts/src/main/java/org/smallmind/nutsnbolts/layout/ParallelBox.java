@@ -34,6 +34,10 @@ package org.smallmind.nutsnbolts.layout;
 
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
+/**
+ * Box that stacks elements in parallel along the axis opposite the provided {@link Bias}, aligning them
+ * according to the specified {@link Alignment}. Growth and shrink factors still apply along the original bias.
+ */
 public class ParallelBox extends Box<ParallelBox> {
 
   private Alignment alignment;
@@ -42,11 +46,23 @@ public class ParallelBox extends Box<ParallelBox> {
   private Double maximumOverrideMeasurement;
 
   // Lays out items one after another, in the direction *opposite* to the Bias, but with growth/shrink values still in the bias direction
+
+  /**
+   * Creates a parallel box with default leading alignment.
+   *
+   * @param layout the owning layout
+   */
   protected ParallelBox (ParaboxLayout layout) {
 
     this(layout, Alignment.LEADING);
   }
 
+  /**
+   * Creates a parallel box with the given alignment.
+   *
+   * @param layout    the owning layout
+   * @param alignment alignment applied when distributing elements
+   */
   protected ParallelBox (ParaboxLayout layout, Alignment alignment) {
 
     super(ParallelBox.class, layout);
@@ -54,11 +70,22 @@ public class ParallelBox extends Box<ParallelBox> {
     this.alignment = alignment;
   }
 
+  /**
+   * Returns the alignment for this box.
+   *
+   * @return the alignment
+   */
   public Alignment getAlignment () {
 
     return alignment;
   }
 
+  /**
+   * Sets the alignment for this box.
+   *
+   * @param alignment the alignment to use
+   * @return this box for chaining
+   */
   public ParallelBox setAlignment (Alignment alignment) {
 
     this.alignment = alignment;
@@ -66,11 +93,20 @@ public class ParallelBox extends Box<ParallelBox> {
     return this;
   }
 
+  /**
+   * @return override for minimum measurement, if any
+   */
   public Double getMinimumOverrideMeasurement () {
 
     return minimumOverrideMeasurement;
   }
 
+  /**
+   * Sets an override for the minimum measurement applied to all children.
+   *
+   * @param minimumOverrideMeasurement override value, or {@code null} to use child minimums
+   * @return this box for chaining
+   */
   public ParallelBox setMinimumOverrideMeasurement (Double minimumOverrideMeasurement) {
 
     this.minimumOverrideMeasurement = minimumOverrideMeasurement;
@@ -78,11 +114,20 @@ public class ParallelBox extends Box<ParallelBox> {
     return this;
   }
 
+  /**
+   * @return override for preferred measurement, if any
+   */
   public Double getPreferredOverrideMeasurement () {
 
     return preferredOverrideMeasurement;
   }
 
+  /**
+   * Sets an override for the preferred measurement applied to all children.
+   *
+   * @param preferredOverrideMeasurement override value, or {@code null} to use child preferred measurements
+   * @return this box for chaining
+   */
   public ParallelBox setPreferredOverrideMeasurement (Double preferredOverrideMeasurement) {
 
     this.preferredOverrideMeasurement = preferredOverrideMeasurement;
@@ -90,11 +135,20 @@ public class ParallelBox extends Box<ParallelBox> {
     return this;
   }
 
+  /**
+   * @return override for maximum measurement, if any
+   */
   public Double getMaximumOverrideMeasurement () {
 
     return maximumOverrideMeasurement;
   }
 
+  /**
+   * Sets an override for the maximum measurement applied to all children.
+   *
+   * @param maximumOverrideMeasurement override value, or {@code null} to use child maximums
+   * @return this box for chaining
+   */
   public ParallelBox setMaximumOverrideMeasurement (Double maximumOverrideMeasurement) {
 
     this.maximumOverrideMeasurement = maximumOverrideMeasurement;
@@ -102,24 +156,42 @@ public class ParallelBox extends Box<ParallelBox> {
     return this;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public double calculateMinimumMeasurement (Bias bias, LayoutTailor tailor) {
 
     return calculateMeasurement(bias, TapeMeasure.MINIMUM, minimumOverrideMeasurement, tailor);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public double calculatePreferredMeasurement (Bias bias, LayoutTailor tailor) {
 
     return calculateMeasurement(bias, TapeMeasure.PREFERRED, preferredOverrideMeasurement, tailor);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public double calculateMaximumMeasurement (Bias bias, LayoutTailor tailor) {
 
     return calculateMeasurement(bias, TapeMeasure.MAXIMUM, maximumOverrideMeasurement, tailor);
   }
 
+  /**
+   * Computes the measurement along the specified axis, taking into account optional overrides and baseline alignment.
+   *
+   * @param bias                        the axis along which to measure
+   * @param tapeMeasure                 which measurement to compute
+   * @param unbiasedMeasurementOverride optional override applied uniformly
+   * @param tailor                      layout tailor used for caching
+   * @return the required measurement
+   */
   private synchronized double calculateMeasurement (Bias bias, TapeMeasure tapeMeasure, Double unbiasedMeasurementOverride, LayoutTailor tailor) {
 
     double maxAscent = 0;
@@ -144,6 +216,9 @@ public class ParallelBox extends Box<ParallelBox> {
     return maxAscent + maxDescent;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public synchronized void doLayout (Bias bias, double containerPosition, double containerMeasurement, LayoutTailor tailor) {
 
@@ -167,10 +242,10 @@ public class ParallelBox extends Box<ParallelBox> {
               tailor.applyLayout(bias, containerPosition + containerMeasurement - elementMeasurement, elementMeasurement, element);
               break;
             case LEADING:
-              if (!bias.equals(getLayout().getContainer().getPlatform().getOrientation().getBias())) {
+              if (!bias.equals(getLayout().getContainer().getPlatform().getOrientation().bias())) {
                 tailor.applyLayout(bias, containerPosition, elementMeasurement, element);
               } else {
-                switch (getLayout().getContainer().getPlatform().getOrientation().getFlow()) {
+                switch (getLayout().getContainer().getPlatform().getOrientation().flow()) {
                   case FIRST_TO_LAST:
                     tailor.applyLayout(bias, containerPosition, elementMeasurement, element);
                     break;
@@ -178,15 +253,15 @@ public class ParallelBox extends Box<ParallelBox> {
                     tailor.applyLayout(bias, containerPosition + containerMeasurement - elementMeasurement, elementMeasurement, element);
                     break;
                   default:
-                    throw new UnknownSwitchCaseException(getLayout().getContainer().getPlatform().getOrientation().getFlow().name());
+                    throw new UnknownSwitchCaseException(getLayout().getContainer().getPlatform().getOrientation().flow().name());
                 }
               }
               break;
             case TRAILING:
-              if (!bias.equals(getLayout().getContainer().getPlatform().getOrientation().getBias())) {
+              if (!bias.equals(getLayout().getContainer().getPlatform().getOrientation().bias())) {
                 tailor.applyLayout(bias, containerPosition + containerMeasurement - elementMeasurement, elementMeasurement, element);
               } else {
-                switch (getLayout().getContainer().getPlatform().getOrientation().getFlow()) {
+                switch (getLayout().getContainer().getPlatform().getOrientation().flow()) {
                   case FIRST_TO_LAST:
                     tailor.applyLayout(bias, containerPosition + containerMeasurement - elementMeasurement, elementMeasurement, element);
                     break;
@@ -194,7 +269,7 @@ public class ParallelBox extends Box<ParallelBox> {
                     tailor.applyLayout(bias, containerPosition, elementMeasurement, element);
                     break;
                   default:
-                    throw new UnknownSwitchCaseException(getLayout().getContainer().getPlatform().getOrientation().getFlow().name());
+                    throw new UnknownSwitchCaseException(getLayout().getContainer().getPlatform().getOrientation().flow().name());
                 }
               }
               break;
@@ -209,7 +284,7 @@ public class ParallelBox extends Box<ParallelBox> {
 
               double top;
 
-              if ((top = baselineCalculations.getIdealizedBaseline() - baselineCalculations.getElementAscentsDescents()[index].getFirst()) < 0) {
+              if ((top = baselineCalculations.getIdealizedBaseline() - baselineCalculations.getElementAscentsDescents()[index].first()) < 0) {
                 top = 0;
               } else if (top + elementMeasurement > containerMeasurement) {
                 top = containerMeasurement - elementMeasurement;

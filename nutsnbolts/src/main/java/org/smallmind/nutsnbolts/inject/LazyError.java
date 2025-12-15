@@ -34,8 +34,15 @@ package org.smallmind.nutsnbolts.inject;
 
 import org.smallmind.nutsnbolts.lang.FormattedError;
 
+/**
+ * Error thrown when lazy field injection fails during aspect processing.
+ */
 public class LazyError extends FormattedError {
 
+  /**
+   * @param message formatted error message
+   * @param args    message arguments
+   */
   public LazyError (String message, Object... args) {
 
     super(message, args);

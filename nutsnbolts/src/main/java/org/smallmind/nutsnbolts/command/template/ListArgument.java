@@ -32,21 +32,33 @@
  */
 package org.smallmind.nutsnbolts.command.template;
 
+/**
+ * Argument that accepts multiple values in a delimited list.
+ */
 public class ListArgument extends Argument {
 
   private final String description;
 
+  /**
+   * @param description hint describing the expected list format
+   */
   public ListArgument (String description) {
 
     this.description = description;
   }
 
+  /**
+   * @return {@link ArgumentType#LIST}
+   */
   @Override
   public ArgumentType getType () {
 
     return ArgumentType.LIST;
   }
 
+  /**
+   * @return description string for help output
+   */
   public String getDescription () {
 
     return description;

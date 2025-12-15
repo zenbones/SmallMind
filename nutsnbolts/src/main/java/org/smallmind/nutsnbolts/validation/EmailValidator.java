@@ -36,18 +36,34 @@ import java.util.regex.Pattern;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
+/**
+ * Bean Validation validator that checks strings against a basic email pattern.
+ * Supports validating a single address or multiple addresses separated by a configured delimiter.
+ */
 public class EmailValidator implements ConstraintValidator<Email, String> {
 
   private static final Pattern EMAIL_PATTERN = Pattern.compile("([a-zA-Z0-9_\\-\\.']+)@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.)|(([a-zA-Z0-9\\-]+\\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\\]?)");
 
   private Email constraintAnnotation;
 
+  /**
+   * Stores the constraint annotation for later use (separator configuration).
+   *
+   * @param constraintAnnotation annotation instance being used for validation
+   */
   @Override
   public void initialize (Email constraintAnnotation) {
 
     this.constraintAnnotation = constraintAnnotation;
   }
 
+  /**
+   * Validates that the value is a properly formatted email address (or list of addresses when a separator is defined).
+   *
+   * @param value   candidate string; {@code null} is considered valid
+   * @param context validation context (unused)
+   * @return {@code true} when the value meets the email format requirements
+   */
   @Override
   public boolean isValid (String value, ConstraintValidatorContext context) {
 
@@ -77,6 +93,12 @@ public class EmailValidator implements ConstraintValidator<Email, String> {
     }
   }
 
+  /**
+   * Tests a single string against the email pattern.
+   *
+   * @param possibility candidate email
+   * @return {@code true} when the pattern matches
+   */
   private boolean isAnEmail (String possibility) {
 
     return EMAIL_PATTERN.matcher(possibility).matches();

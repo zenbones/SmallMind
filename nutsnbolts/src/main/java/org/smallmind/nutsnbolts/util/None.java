@@ -32,6 +32,11 @@
  */
 package org.smallmind.nutsnbolts.util;
 
+/**
+ * Empty {@link Option} sentinel.
+ *
+ * @param <T> element type
+ */
 public class None<T> implements Option<T> {
 
   protected static None<?> NONE = new None();
@@ -40,11 +45,21 @@ public class None<T> implements Option<T> {
 
   }
 
+  /**
+   * Always empty.
+   *
+   * @return {@code true}
+   */
   public boolean isNone () {
 
     return true;
   }
 
+  /**
+   * Always returns {@code null}; callers should check {@link #isNone()} before dereferencing.
+   *
+   * @return {@code null}
+   */
   public T get () {
 
     return null;

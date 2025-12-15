@@ -41,22 +41,42 @@ import java.lang.reflect.Type;
 import java.security.PrivilegedAction;
 import java.util.Arrays;
 
+/**
+ * Base class for programmatic annotation literals similar to CDI's {@code AnnotationLiteral}.
+ * Subclasses declare their annotation type via a generic parameter and can implement annotation
+ * methods directly while inheriting the default {@link Annotation} contract implementations.
+ *
+ * @param <A> the annotation type represented by the literal
+ */
 public abstract class AnnotationLiteral<A extends Annotation> implements Annotation, Serializable {
 
   private static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
 
   private final Class<A> annotationType;
 
+  /**
+   * Determines and stores the annotation type from the concrete subclass' generic signature.
+   */
   protected AnnotationLiteral () {
 
     this.annotationType = getAnnotationType(getClass());
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public Class<? extends Annotation> annotationType () {
 
     return annotationType;
   }
 
+  /**
+   * Walks the inheritance hierarchy to discover the concrete annotation type parameter.
+   *
+   * @param definedClazz the subclass from which to start discovery
+   * @return the resolved annotation type
+   * @throws RuntimeException if the annotation type cannot be determined
+   */
   private Class<A> getAnnotationType (Class<?> definedClazz) {
 
     Type superClazz = definedClazz.getGenericSuperclass();
@@ -85,6 +105,11 @@ public abstract class AnnotationLiteral<A extends Annotation> implements Annotat
     }
   }
 
+  /**
+   * {@inheritDoc}
+   * <p>
+   * Compares annotation members for equality according to the {@link Annotation} contract.
+   */
   @Override
   public boolean equals (Object obj) {
 
@@ -174,6 +199,14 @@ public abstract class AnnotationLiteral<A extends Annotation> implements Annotat
     return false;
   }
 
+  /**
+   * Invokes an annotation member method using privileged access when necessary.
+   *
+   * @param instance the annotation instance
+   * @param method   the method to invoke
+   * @return the returned value
+   * @throws RuntimeException if the method cannot be invoked
+   */
   private Object callMethod (Object instance, Method method) {
 
     boolean access = method.canAccess(instance);
@@ -191,6 +224,9 @@ public abstract class AnnotationLiteral<A extends Annotation> implements Annotat
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int hashCode () {
 
@@ -236,6 +272,9 @@ public abstract class AnnotationLiteral<A extends Annotation> implements Annotat
     return hashCode;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String toString () {
 
@@ -262,12 +301,21 @@ public abstract class AnnotationLiteral<A extends Annotation> implements Annotat
     AccessibleObject object;
     boolean flag;
 
+    /**
+     * Adjusts accessibility on an {@link AccessibleObject} under a privileged action.
+     *
+     * @param object the reflective object to modify
+     * @param flag   whether the object should be accessible
+     */
     private PrivilegedActionForAccessibleObject (AccessibleObject object, boolean flag) {
 
       this.object = object;
       this.flag = flag;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public Object run () {
 
       object.setAccessible(flag);

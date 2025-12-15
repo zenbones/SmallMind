@@ -59,10 +59,10 @@ public class ThrongPropertiesMultiplexerCodec<T> implements Codec<T>, IndexProvi
     this.throngPropertiesMultiplexer = throngPropertiesMultiplexer;
   }
 
-  @Override
   /**
    * {@inheritDoc}
    */
+  @Override
   public Class<T> getEncoderClass () {
 
     return throngPropertiesMultiplexer.getEntityClass();
@@ -76,21 +76,21 @@ public class ThrongPropertiesMultiplexerCodec<T> implements Codec<T>, IndexProvi
     return throngPropertiesMultiplexer.isStoreNulls();
   }
 
-  @Override
   /**
    * {@inheritDoc}
    */
+  @Override
   public ThrongIndexes provideIndexes () {
 
     return throngPropertiesMultiplexer.provideIndexes();
   }
 
-  @Override
   /**
    * Decodes a polymorphic value by reading the discriminator key and delegating to the subtype codec.
    *
    * @throws ThrongRuntimeException if the discriminator field is missing or unknown
    */
+  @Override
   public T decode (BsonReader reader, DecoderContext decoderContext) {
 
     if (BsonType.NULL.equals(reader.getCurrentBsonType())) {
@@ -114,10 +114,10 @@ public class ThrongPropertiesMultiplexerCodec<T> implements Codec<T>, IndexProvi
     }
   }
 
-  @Override
   /**
    * Encodes a polymorphic value by writing the discriminator key and delegating to the subtype codec.
    */
+  @Override
   public void encode (BsonWriter writer, T value, EncoderContext encoderContext) {
 
     if ((value != null) || throngPropertiesMultiplexer.isStoreNulls()) {

@@ -32,17 +32,26 @@
  */
 package org.smallmind.nutsnbolts.security;
 
+/**
+ * ECDSA signing algorithms supported by the library.
+ */
 public enum ECDSASigningAlgorithm implements AsymmetricSigningAlgorithm {
 
   ECDSA_USING_SHA_ALGORITHM("EcdsaUsingShaAlgorithm");
 
   private final String algorithmName;
 
+  /**
+   * @param algorithmName the JCA signature algorithm name
+   */
   ECDSASigningAlgorithm (String algorithmName) {
 
     this.algorithmName = algorithmName;
   }
 
+  /**
+   * @return the JCA algorithm name used when creating {@link java.security.Signature} instances
+   */
   public String getAlgorithmName () {
 
     return algorithmName;

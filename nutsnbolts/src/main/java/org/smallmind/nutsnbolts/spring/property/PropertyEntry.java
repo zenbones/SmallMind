@@ -32,9 +32,18 @@
  */
 package org.smallmind.nutsnbolts.spring.property;
 
+/**
+ * Represents a single property key/value pair.
+ */
 public interface PropertyEntry {
 
+  /**
+   * @return the property key
+   */
   String getKey ();
 
+  /**
+   * @return the property value (raw form)
+   */
   Object getValue ();
 }

@@ -46,8 +46,24 @@ import javax.net.ssl.TrustManagerFactory;
 import org.smallmind.nutsnbolts.resource.Resource;
 import org.smallmind.nutsnbolts.resource.ResourceException;
 
+/**
+ * Helper utilities for constructing {@link TrustManager} arrays from certificate resources.
+ * Supports loading a single certificate into an in-memory keystore for use in SSL contexts.
+ */
 public class TrustManagerUtility {
 
+  /**
+   * Loads a certificate resource into a temporary keystore and returns the initialized trust managers.
+   *
+   * @param alias        the alias under which to store the certificate
+   * @param certResource the resource supplying the X509 certificate data
+   * @return an array of trust managers ready for SSL context initialization
+   * @throws IOException              if the certificate data cannot be read
+   * @throws ResourceException        if the resource cannot be opened
+   * @throws CertificateException     if the certificate cannot be parsed
+   * @throws KeyStoreException        if the keystore cannot be created or populated
+   * @throws NoSuchAlgorithmException if the default trust manager algorithm is unavailable
+   */
   public static TrustManager[] load (String alias, Resource certResource)
     throws IOException, ResourceException, CertificateException, KeyStoreException, NoSuchAlgorithmException {
 

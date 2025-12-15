@@ -32,17 +32,26 @@
  */
 package org.smallmind.nutsnbolts.util;
 
+/**
+ * Variants for Snowflake-inspired identifiers.
+ */
 public enum SnowflakeVariant {
 
   ORIGINAL((byte)0x0), CUSTOM((byte)0x3);
 
   private final byte code;
 
+  /**
+   * @param code variant code stored in the id
+   */
   SnowflakeVariant (byte code) {
 
     this.code = code;
   }
 
+  /**
+   * @return variant code byte
+   */
   public byte getCode () {
 
     return code;

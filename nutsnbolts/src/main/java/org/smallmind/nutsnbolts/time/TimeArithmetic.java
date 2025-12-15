@@ -35,27 +35,48 @@ package org.smallmind.nutsnbolts.time;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 
+/**
+ * Encapsulates a date and {@link TimeOperation} for reusable comparisons against instants.
+ */
 public class TimeArithmetic {
 
   private final ZonedDateTime date;
   private final TimeOperation operation;
 
+  /**
+   * Constructs a comparison helper for a specific date and operation.
+   *
+   * @param date      reference date-time
+   * @param operation comparison operation to apply
+   */
   public TimeArithmetic (ZonedDateTime date, TimeOperation operation) {
 
     this.date = date;
     this.operation = operation;
   }
 
+  /**
+   * @return reference date-time
+   */
   public ZonedDateTime getDate () {
 
     return date;
   }
 
+  /**
+   * @return comparison operation
+   */
   public TimeOperation getOperation () {
 
     return operation;
   }
 
+  /**
+   * Evaluates the configured operation against the supplied instant.
+   *
+   * @param instant instant to compare with the reference date
+   * @return {@code true} if the operation accepts the instant
+   */
   public boolean accept (Instant instant) {
 
     return operation.accept(date, instant);

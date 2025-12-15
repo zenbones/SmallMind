@@ -32,12 +32,27 @@
  */
 package org.smallmind.nutsnbolts.csv;
 
+/**
+ * Callback interface for streaming CSV parsing events.
+ */
 public interface CSVLineHandler {
 
+  /**
+   * Invoked before the first row is read.
+   */
   void startDocument ();
 
+  /**
+   * Processes a parsed record.
+   *
+   * @param fields fields for the current row
+   * @throws CSVParseException if the row cannot be consumed
+   */
   void handleFields (String[] fields)
     throws CSVParseException;
 
+  /**
+   * Invoked after the last row has been processed.
+   */
   void endDocument ();
 }

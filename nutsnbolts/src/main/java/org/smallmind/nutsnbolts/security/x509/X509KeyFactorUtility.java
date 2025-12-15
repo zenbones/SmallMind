@@ -42,8 +42,19 @@ import org.bouncycastle.asn1.DEROctetString;
 import org.smallmind.nutsnbolts.http.Base64Codec;
 import org.smallmind.nutsnbolts.security.KeyParsingException;
 
+/**
+ * Utility for extracting RSA key factors from X.509 encoded keys.
+ */
 public class X509KeyFactorUtility {
 
+  /**
+   * Extracts modulus and exponent from an X.509 encoded RSA key.
+   *
+   * @param raw the raw PEM or Base64 encoded key text
+   * @return parsed RSA key factors
+   * @throws IOException         if the key cannot be decoded
+   * @throws KeyParsingException if the ASN.1 structure is invalid
+   */
   public static RSAKeyFactors extractKeyFactor (String raw)
     throws IOException, KeyParsingException {
 

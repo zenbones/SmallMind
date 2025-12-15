@@ -45,6 +45,9 @@ import org.smallmind.nutsnbolts.security.SecurityProvider;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
+/**
+ * Spring {@link FactoryBean} that constructs an asymmetric key from raw text and stores it as a singleton.
+ */
 public class AsymmetricKeyFactoryBean implements FactoryBean<Key>, InitializingBean {
 
   private Key key;
@@ -54,43 +57,73 @@ public class AsymmetricKeyFactoryBean implements FactoryBean<Key>, InitializingB
   private AsymmetricKeyType keyType;
   private String raw;
 
+  /**
+   * @param algorithm asymmetric algorithm of the supplied key
+   */
   public void setAlgorithm (AsymmetricAlgorithm algorithm) {
 
     this.algorithm = algorithm;
   }
 
+  /**
+   * @param spec the encoding of the supplied key material
+   */
   public void setSpec (AsymmetricKeySpec spec) {
 
     this.spec = spec;
   }
 
+  /**
+   * @param provider the security provider to use, or {@code null} for default
+   */
   public void setProvider (SecurityProvider provider) {
 
     this.provider = provider;
   }
 
+  /**
+   * @param keyType whether the key is public or private
+   */
   public void setKeyType (AsymmetricKeyType keyType) {
 
     this.keyType = keyType;
   }
 
+  /**
+   * @param raw the raw text of the key
+   */
   public void setRaw (String raw) {
 
     this.raw = raw;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean isSingleton () {
 
     return true;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Class<?> getObjectType () {
 
     return Key.class;
   }
 
+  /**
+   * Builds the key using the configured parameters once properties are set.
+   *
+   * @throws IOException                   if the raw key cannot be parsed
+   * @throws NoSuchProviderException       if the provider is unknown
+   * @throws NoSuchAlgorithmException      if the algorithm is unavailable
+   * @throws InvalidKeySpecException       if the key spec is invalid
+   * @throws InappropriateKeySpecException if the key spec cannot represent the key type
+   */
   @Override
   public void afterPropertiesSet ()
     throws IOException, NoSuchProviderException, NoSuchAlgorithmException, InvalidKeySpecException, InappropriateKeySpecException {
@@ -98,6 +131,9 @@ public class AsymmetricKeyFactoryBean implements FactoryBean<Key>, InitializingB
     key = keyType.constructKey(algorithm, spec, provider, raw);
   }
 
+  /**
+   * @return the constructed key
+   */
   @Override
   public Key getObject () {
 

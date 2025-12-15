@@ -34,8 +34,17 @@ package org.smallmind.nutsnbolts.security;
 
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
+/**
+ * Indicates that a supplied password fails validation rules.
+ */
 public class InvalidPasswordException extends FormattedException {
 
+  /**
+   * Creates an exception with a formatted detail message.
+   *
+   * @param message a {@link java.util.Formatter}-style message
+   * @param args    values interpolated into the message
+   */
   public InvalidPasswordException (String message, Object... args) {
 
     super(message, args);

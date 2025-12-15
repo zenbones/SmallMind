@@ -32,8 +32,18 @@
  */
 package org.smallmind.nutsnbolts.lang;
 
+/**
+ * Utility methods for working with {@link Throwable} chains.
+ */
 public class ThrowableUtility {
 
+  /**
+   * Appends one throwable onto another's cause chain, returning the head of the chain.
+   *
+   * @param headThrowable the throwable to which the tail should be attached; may be {@code null}
+   * @param tailThrowable the throwable to append; may be {@code null}
+   * @return the head throwable with the tail attached, or whichever is non-null
+   */
   public static Throwable attach (Throwable headThrowable, Throwable tailThrowable) {
 
     if (headThrowable == null) {

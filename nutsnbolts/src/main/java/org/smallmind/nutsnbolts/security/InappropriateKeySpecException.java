@@ -34,8 +34,17 @@ package org.smallmind.nutsnbolts.security;
 
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
+/**
+ * Thrown when a key cannot be represented by the requested specification.
+ */
 public class InappropriateKeySpecException extends FormattedException {
 
+  /**
+   * Creates an exception with a formatted detail message.
+   *
+   * @param message a {@link java.util.Formatter}-style message
+   * @param args    values interpolated into the message
+   */
   public InappropriateKeySpecException (String message, Object... args) {
 
     super(message, args);

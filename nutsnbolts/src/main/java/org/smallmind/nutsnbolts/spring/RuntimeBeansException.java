@@ -34,18 +34,39 @@ package org.smallmind.nutsnbolts.spring;
 
 import org.springframework.beans.BeansException;
 
+/**
+ * Runtime wrapper for {@link BeansException} supporting formatted messages.
+ */
 public class RuntimeBeansException extends BeansException {
 
+  /**
+   * Creates an exception with a formatted detail message.
+   *
+   * @param message a {@link java.util.Formatter}-style message
+   * @param args    values interpolated into the message
+   */
   public RuntimeBeansException (String message, Object... args) {
 
     super(message == null ? null : String.format(message, args));
   }
 
+  /**
+   * Creates an exception with a formatted detail message and a cause.
+   *
+   * @param throwable the underlying cause
+   * @param message   a {@link java.util.Formatter}-style message
+   * @param args      values interpolated into the message
+   */
   public RuntimeBeansException (Throwable throwable, String message, Object... args) {
 
     super(message == null ? null : String.format(message, args), throwable);
   }
 
+  /**
+   * Creates an exception with a cause and its message.
+   *
+   * @param throwable the underlying cause
+   */
   public RuntimeBeansException (Throwable throwable) {
 
     super(throwable.getMessage(), throwable);

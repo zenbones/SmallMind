@@ -34,15 +34,29 @@ package org.smallmind.nutsnbolts.resource;
 
 import java.util.Arrays;
 
+/**
+ * Immutable wrapper around a set of schemes supported by a {@link ResourceGenerator}.
+ */
 public class ResourceSchemes {
 
   private final String[] schemes;
 
+  /**
+   * Creates a wrapper for the supplied scheme names.
+   *
+   * @param schemes array of supported scheme identifiers
+   */
   public ResourceSchemes (String[] schemes) {
 
     this.schemes = schemes;
   }
 
+  /**
+   * Checks whether this collection contains the provided scheme.
+   *
+   * @param scheme scheme name to look for
+   * @return {@code true} if the scheme is supported; otherwise {@code false}
+   */
   public boolean containsScheme (String scheme) {
 
     for (String matchingScheme : schemes) {
@@ -54,11 +68,22 @@ public class ResourceSchemes {
     return false;
   }
 
+  /**
+   * Computes a hash code based on the underlying scheme array.
+   *
+   * @return hash code for use in maps/sets
+   */
   public int hashCode () {
 
     return Arrays.hashCode(schemes);
   }
 
+  /**
+   * Compares the underlying scheme array for equality.
+   *
+   * @param obj object to compare
+   * @return {@code true} if the other object holds the same scheme array; otherwise {@code false}
+   */
   public boolean equals (Object obj) {
 
     return (obj instanceof String[]) && Arrays.equals(schemes, (String[])obj);

@@ -43,31 +43,61 @@ import static java.lang.annotation.ElementType.ANNOTATION_TYPE;
 import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+/**
+ * Class-level constraint ensuring one numeric field is greater than or equal to another, optionally offset.
+ */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({TYPE, ANNOTATION_TYPE})
 @Constraint(validatedBy = LowerBoundValidator.class)
 public @interface LowerBound {
 
+  /**
+   * Allows multiple {@link LowerBound} constraints on the same type.
+   */
   @Target({TYPE, ANNOTATION_TYPE})
   @Retention(RUNTIME)
   @Documented
   @interface List {
 
+    /**
+     * @return array of {@link LowerBound} constraints
+     */
     LowerBound[] value ();
   }
 
+  /**
+   * @return validation message template
+   */
   String message () default "The '{first}' field must be >= '{second}' field offset by {value}";
 
+  /**
+   * @return validation groups this constraint belongs to
+   */
   Class<?>[] groups () default {};
 
+  /**
+   * @return custom payloads for Bean Validation clients
+   */
   Class<? extends Payload>[] payload () default {};
 
+  /**
+   * @return name of the field that must be greater than or equal to {@link #second()} plus {@link #value()}
+   */
   String first ();
 
+  /**
+   * @return name of the reference field to compare against
+   */
   String second ();
 
+  /**
+   * @return whether both fields must be non-null to be considered valid
+   */
   boolean notNull () default false;
 
+  /**
+   * @return offset added to {@link #second()} when performing the comparison
+   */
   int value () default 0;
 }

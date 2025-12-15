@@ -35,8 +35,20 @@ package org.smallmind.nutsnbolts.net;
 import java.net.InetAddress;
 import java.util.Comparator;
 
+/**
+ * Compares {@link InetAddress} instances lexicographically by their raw octets, normalizing
+ * differing address lengths (IPv4 vs IPv6) by left-padding with zeros.
+ */
 public class InetAddressComparator implements Comparator<InetAddress> {
 
+  /**
+   * Compares two addresses by iterating through their octets (most significant first), padding
+   * the shorter address with leading zeros so IPv4 and IPv6 can be compared consistently.
+   *
+   * @param a first address
+   * @param b second address
+   * @return negative if {@code a} is less than {@code b}, positive if greater, zero if equal
+   */
   @Override
   public int compare (InetAddress a, InetAddress b) {
 

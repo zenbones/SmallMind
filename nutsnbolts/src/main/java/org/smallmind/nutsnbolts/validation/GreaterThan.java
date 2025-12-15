@@ -45,25 +45,46 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+/**
+ * Bean Validation constraint that enforces a numeric value to be strictly greater than the configured bound.
+ */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({FIELD, PARAMETER, METHOD, LOCAL_VARIABLE})
 @Constraint(validatedBy = GreaterThanValidator.class)
 public @interface GreaterThan {
 
+  /**
+   * Allows multiple {@link GreaterThan} annotations on the same element.
+   */
   @Target({FIELD, PARAMETER, METHOD, LOCAL_VARIABLE})
   @Retention(RUNTIME)
   @Documented
   @interface List {
 
+    /**
+     * @return array of {@link GreaterThan} constraints
+     */
     GreaterThan[] value ();
   }
 
+  /**
+   * @return validation failure message
+   */
   String message () default "must be greater than {value}";
 
+  /**
+   * @return validation groups this constraint belongs to
+   */
   Class<?>[] groups () default {};
 
+  /**
+   * @return payload for clients of the Bean Validation API
+   */
   Class<? extends Payload>[] payload () default {};
 
+  /**
+   * @return threshold that the value must exceed
+   */
   long value ();
 }

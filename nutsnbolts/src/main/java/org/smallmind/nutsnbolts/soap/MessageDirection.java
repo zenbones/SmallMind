@@ -32,6 +32,9 @@
  */
 package org.smallmind.nutsnbolts.soap;
 
+/**
+ * Indicates whether a SOAP handler processes inbound, outbound, or both directions.
+ */
 public enum MessageDirection {
 
   IN, OUT, BOTH

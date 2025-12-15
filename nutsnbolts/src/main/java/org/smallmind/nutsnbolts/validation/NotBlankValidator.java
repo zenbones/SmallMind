@@ -35,16 +35,31 @@ package org.smallmind.nutsnbolts.validation;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
+/**
+ * Validator for {@link NotBlank} ensuring the string is either null or contains non-whitespace characters.
+ */
 public class NotBlankValidator implements ConstraintValidator<NotBlank, String> {
 
   private NotBlank constraintAnnotation;
 
+  /**
+   * Stores the constraint annotation (currently unused).
+   *
+   * @param constraintAnnotation annotation instance
+   */
   @Override
   public void initialize (NotBlank constraintAnnotation) {
 
     this.constraintAnnotation = constraintAnnotation;
   }
 
+  /**
+   * Validates that the string is not blank; {@code null} values are treated as valid.
+   *
+   * @param value   candidate string
+   * @param context validation context (unused)
+   * @return {@code true} if value is null or contains non-whitespace characters
+   */
   @Override
   public boolean isValid (String value, ConstraintValidatorContext context) {
 

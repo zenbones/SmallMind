@@ -54,6 +54,11 @@ import java.util.LinkedList;
 import org.smallmind.nutsnbolts.resource.Resource;
 import org.smallmind.nutsnbolts.resource.ResourceException;
 
+/**
+ * Utility helpers for building Java {@link KeyStore} instances from externally supplied
+ * key and certificate resources. Methods handle key conversion, certificate chain loading,
+ * and persisting the keystore to disk using sensible defaults when values are omitted.
+ */
 public class KeyStoreUtility {
 
   /*
@@ -77,6 +82,25 @@ public class KeyStoreUtility {
    * 7) Run this utility which will generate a JKS format keystore file
    */
 
+  /**
+   * Generates a JKS keystore containing the provided private key and certificate chain.
+   * The resulting keystore is written to the user's home directory using the supplied
+   * or defaulted file name and alias.
+   *
+   * @param keystoreName     the target keystore file name; defaults to {@code keystore.jks} and appends a {@code .jks} extension when missing
+   * @param keystoreAlias    the alias under which the key and certificate chain are stored; defaults to {@code mykeystore}
+   * @param keystorePassword the password protecting the keystore; defaults to {@code changeit} when blank
+   * @param keyResource      the resource containing the PKCS8 encoded private key
+   * @param certResources    ordered resources containing the X509 certificate chain
+   * @return a descriptor containing the populated keystore path, name, alias and password
+   * @throws IOException              if reading or writing keystore or key material fails
+   * @throws ResourceException        if a provided resource cannot be opened
+   * @throws KeyStoreException        if keystore initialization fails
+   * @throws NoSuchProviderException  if the requested keystore provider is unavailable
+   * @throws NoSuchAlgorithmException if the required cryptographic algorithms are missing
+   * @throws CertificateException     if certificate parsing or storage fails
+   * @throws InvalidKeySpecException  if the private key cannot be reconstructed from the provided data
+   */
   public static KeyStoreInfo construct (String keystoreName, String keystoreAlias, String keystorePassword, Resource keyResource, Resource... certResources)
     throws IOException, ResourceException, KeyStoreException, NoSuchProviderException, NoSuchAlgorithmException, CertificateException, InvalidKeySpecException {
 
@@ -97,6 +121,14 @@ public class KeyStoreUtility {
     return keyStoreInfo;
   }
 
+  /**
+   * Validates the supplied keystore password and converts it to a character array while
+   * persisting the chosen value on the {@link KeyStoreInfo} descriptor.
+   *
+   * @param keystorePassword the requested password, or {@code null}/empty for a default
+   * @param keyStoreInfo     the descriptor to update with the resolved password
+   * @return a character array form of the validated password
+   */
   private static char[] generatePasswordArray (String keystorePassword, KeyStoreInfo keyStoreInfo) {
 
     String validatedPassword = ((keystorePassword == null) || keystorePassword.isEmpty()) ? "changeit" : keystorePassword;
@@ -106,6 +138,18 @@ public class KeyStoreUtility {
     return validatedPassword.toCharArray();
   }
 
+  /**
+   * Creates a new empty JKS keystore on disk and loads it for further modification.
+   *
+   * @param keystorePath  the path where the keystore should be stored
+   * @param passwordArray the password protecting the keystore
+   * @return a loaded, writable {@link KeyStore} instance
+   * @throws IOException              if the keystore file cannot be created or opened
+   * @throws KeyStoreException        if the keystore type cannot be instantiated
+   * @throws NoSuchProviderException  if the JKS provider is unavailable
+   * @throws NoSuchAlgorithmException if the keystore integrity algorithm is missing
+   * @throws CertificateException     if the keystore cannot be loaded
+   */
   private static KeyStore initializeKeystore (Path keystorePath, char[] passwordArray)
     throws IOException, KeyStoreException, NoSuchProviderException, NoSuchAlgorithmException, CertificateException {
 
@@ -118,6 +162,16 @@ public class KeyStoreUtility {
     return keyStore;
   }
 
+  /**
+   * Reads an RSA private key from the supplied resource and recreates it from PKCS8 bytes.
+   *
+   * @param keyResource the resource containing the DER-encoded PKCS8 private key
+   * @return the reconstructed {@link PrivateKey}
+   * @throws IOException              if the key bytes cannot be read
+   * @throws ResourceException        if the resource cannot be opened
+   * @throws NoSuchAlgorithmException if the RSA algorithm is unavailable
+   * @throws InvalidKeySpecException  if the key specification cannot be parsed
+   */
   private static PrivateKey generatePrivateKey (Resource keyResource)
     throws IOException, ResourceException, NoSuchAlgorithmException, InvalidKeySpecException {
 
@@ -139,6 +193,17 @@ public class KeyStoreUtility {
     return keyFactory.generatePrivate(keySpec);
   }
 
+  /**
+   * Loads certificates from the supplied resources, stores them individually in the keystore,
+   * and returns a certificate chain preserving the provided order.
+   *
+   * @param keyStore      the keystore to populate with certificate entries
+   * @param certResources the resources containing X509 certificates in DER format
+   * @return the ordered certificate chain extracted from the resources
+   * @throws ResourceException    if a certificate resource cannot be read
+   * @throws CertificateException if certificate parsing fails
+   * @throws KeyStoreException    if a certificate entry cannot be stored in the keystore
+   */
   private static Certificate[] linkCertificateChain (KeyStore keyStore, Resource... certResources)
     throws ResourceException, CertificateException, KeyStoreException {
 

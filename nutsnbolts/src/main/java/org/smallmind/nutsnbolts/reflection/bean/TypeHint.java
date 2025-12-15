@@ -37,9 +37,15 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Provides an explicit class for a method parameter when reflection alone cannot infer it.
+ */
 @Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface TypeHint {
 
+  /**
+   * @return the concrete class the parameter should be treated as
+   */
   Class value ();
 }

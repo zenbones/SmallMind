@@ -44,6 +44,11 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 
+/**
+ * {@link SSLSocketFactory} implementation that accepts all certificates using a {@link NaiveTrustManager}.
+ * Useful for testing against servers with self-signed or otherwise untrusted certificates. Do not use
+ * in production where peer verification is required.
+ */
 public class NaiveSSLSocketFactory extends SSLSocketFactory {
 
   private static final NaiveSSLSocketFactory INSTANCE;
@@ -58,6 +63,12 @@ public class NaiveSSLSocketFactory extends SSLSocketFactory {
     }
   }
 
+  /**
+   * Builds an SSL socket factory that trusts all certificates using the JVM's SSL context.
+   *
+   * @throws KeyManagementException   if SSL context initialization fails
+   * @throws NoSuchAlgorithmException if the SSL algorithm is unavailable
+   */
   private NaiveSSLSocketFactory ()
     throws KeyManagementException, NoSuchAlgorithmException {
 
@@ -68,23 +79,37 @@ public class NaiveSSLSocketFactory extends SSLSocketFactory {
     internalSSLSocketFactory = context.getSocketFactory();
   }
 
+  /**
+   * Returns the shared singleton instance to avoid repeated insecure context creation.
+   *
+   * @return the reusable insecure socket factory
+   */
   public static NaiveSSLSocketFactory getDefault () {
 
     return INSTANCE;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String[] getDefaultCipherSuites () {
 
     return internalSSLSocketFactory.getDefaultCipherSuites();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String[] getSupportedCipherSuites () {
 
     return internalSSLSocketFactory.getSupportedCipherSuites();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Socket createSocket ()
     throws IOException {
@@ -92,6 +117,9 @@ public class NaiveSSLSocketFactory extends SSLSocketFactory {
     return internalSSLSocketFactory.createSocket();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Socket createSocket (Socket s, String host, int port, boolean autoClose)
     throws IOException {
@@ -99,6 +127,9 @@ public class NaiveSSLSocketFactory extends SSLSocketFactory {
     return internalSSLSocketFactory.createSocket(s, host, port, autoClose);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Socket createSocket (String host, int port)
     throws IOException {
@@ -106,6 +137,9 @@ public class NaiveSSLSocketFactory extends SSLSocketFactory {
     return internalSSLSocketFactory.createSocket(host, port);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Socket createSocket (String host, int port, InetAddress localHost, int localPort)
     throws IOException {
@@ -113,6 +147,9 @@ public class NaiveSSLSocketFactory extends SSLSocketFactory {
     return internalSSLSocketFactory.createSocket(host, port, localHost, localPort);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Socket createSocket (InetAddress host, int port)
     throws IOException {
@@ -120,6 +157,9 @@ public class NaiveSSLSocketFactory extends SSLSocketFactory {
     return internalSSLSocketFactory.createSocket(host, port);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Socket createSocket (InetAddress address, int port, InetAddress localAddress, int localPort)
     throws IOException {

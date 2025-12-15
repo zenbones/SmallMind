@@ -32,18 +32,37 @@
  */
 package org.smallmind.nutsnbolts.reflection;
 
+/**
+ * Placeholder used when proxying {@link Object} to ensure base methods can be overridden.
+ */
 public class ObjectImpersonator {
 
+  /**
+   * Delegates to {@link Object#hashCode()}.
+   *
+   * @return the object's hash code
+   */
   public int hashCode () {
 
     return super.hashCode();
   }
 
+  /**
+   * Delegates to {@link Object#equals(Object)}.
+   *
+   * @param obj the object to compare
+   * @return {@code true} if the objects are equal
+   */
   public boolean equals (Object obj) {
 
     return super.equals(obj);
   }
 
+  /**
+   * Delegates to {@link Object#toString()}.
+   *
+   * @return a string representation of the object
+   */
   public String toString () {
 
     return super.toString();

@@ -37,21 +37,36 @@ import java.io.InputStream;
 import org.smallmind.nutsnbolts.resource.Resource;
 import org.smallmind.nutsnbolts.resource.ResourceException;
 
+/**
+ * Wraps a {@link Resource} for use as a FreeMarker template source.
+ */
 public class ResourceTemplateSource {
 
   private final Resource resource;
   private InputStream inputStream;
 
+  /**
+   * @param resource resource supplying template content
+   */
   public ResourceTemplateSource (Resource resource) {
 
     this.resource = resource;
   }
 
+  /**
+   * @return underlying resource
+   */
   public Resource getResource () {
 
     return resource;
   }
 
+  /**
+   * Lazily obtains an input stream from the underlying resource.
+   *
+   * @return input stream ready for reading
+   * @throws ResourceException if the stream cannot be opened
+   */
   public synchronized InputStream getInputStream ()
     throws ResourceException {
 
@@ -62,6 +77,11 @@ public class ResourceTemplateSource {
     return inputStream;
   }
 
+  /**
+   * Closes the resource stream if it was opened.
+   *
+   * @throws IOException if closure fails
+   */
   public synchronized void close ()
     throws IOException {
 
@@ -70,12 +90,23 @@ public class ResourceTemplateSource {
     }
   }
 
+  /**
+   * Computes a hash based on the wrapped resource.
+   *
+   * @return hash value for collections
+   */
   @Override
   public int hashCode () {
 
     return resource.hashCode();
   }
 
+  /**
+   * Compares sources by their underlying resource.
+   *
+   * @param obj object to compare
+   * @return {@code true} when resources match
+   */
   @Override
   public boolean equals (Object obj) {
 

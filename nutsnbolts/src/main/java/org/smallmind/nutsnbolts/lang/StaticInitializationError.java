@@ -32,23 +32,47 @@
  */
 package org.smallmind.nutsnbolts.lang;
 
+/**
+ * {@link Error} used to wrap failures that occur during static initialization.
+ */
 public class StaticInitializationError extends FormattedError {
 
+  /**
+   * Creates the error without a message.
+   */
   public StaticInitializationError () {
 
     super();
   }
 
+  /**
+   * Creates the error with a formatted message.
+   *
+   * @param message the format string, or {@code null}
+   * @param args    arguments applied to the format string
+   */
   public StaticInitializationError (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * Creates the error with a cause and formatted message.
+   *
+   * @param throwable the underlying cause
+   * @param message   the format string, or {@code null}
+   * @param args      arguments applied to the format string
+   */
   public StaticInitializationError (Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);
   }
 
+  /**
+   * Creates the error with the supplied cause.
+   *
+   * @param throwable the underlying cause
+   */
   public StaticInitializationError (Throwable throwable) {
 
     super(throwable);

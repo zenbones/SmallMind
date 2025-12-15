@@ -32,8 +32,17 @@
  */
 package org.smallmind.nutsnbolts.io;
 
+/**
+ * Translates simple glob-like patterns into regular expressions.
+ */
 public class RegExTranslator {
 
+  /**
+   * Converts a glob pattern using '*' and '?' into a regex that avoids matching path separators.
+   *
+   * @param pattern glob pattern
+   * @return regex string
+   */
   public static String translate (String pattern) {
 
     StringBuilder patternBuilder = new StringBuilder();

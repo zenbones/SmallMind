@@ -34,8 +34,17 @@ package org.smallmind.nutsnbolts.xml.sax;
 
 import org.xml.sax.SAXException;
 
+/**
+ * Marker interface for extensible SAX components that can be notified of completed child elements.
+ */
 public interface SAXExtender {
 
+  /**
+   * Notifies that a child element extender has completed processing.
+   *
+   * @param elementExtender completed child extender
+   * @throws SAXException if post-processing fails
+   */
   void completedChildElement (ElementExtender elementExtender)
     throws SAXException;
 }

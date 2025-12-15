@@ -32,18 +32,42 @@
  */
 package org.smallmind.nutsnbolts.lang;
 
+/**
+ * Utility helpers for rendering {@link Throwable} stack traces to strings or arrays while
+ * collapsing repeated frames across causes in a human-readable format.
+ */
 public class StackTraceUtility {
 
+  /**
+   * Returns a stack trace rendered into an array of lines.
+   *
+   * @param throwable the throwable whose trace should be rendered
+   * @return stack trace lines
+   */
   public static String[] obtainStackTraceAsArray (Throwable throwable) {
 
     return obtainStackTrace(new ArrayStackTraceAccumulator(), throwable).asArray();
   }
 
+  /**
+   * Returns a stack trace rendered into a single string with newline separators.
+   *
+   * @param throwable the throwable whose trace should be rendered
+   * @return stack trace as text
+   */
   public static String obtainStackTraceAsString (Throwable throwable) {
 
     return obtainStackTrace(new StringStackTraceAccumulator(), throwable).toString();
   }
 
+  /**
+   * Renders a stack trace using the supplied accumulator implementation.
+   *
+   * @param accumulator the accumulator that collects the trace lines
+   * @param throwable   the throwable to render
+   * @param <S>         accumulator type
+   * @return the populated accumulator
+   */
   private static <S extends StackTraceAccumulator> S obtainStackTrace (S accumulator, Throwable throwable) {
 
     StackTraceElement[] prevStackTrace = null;
@@ -84,6 +108,13 @@ public class StackTraceUtility {
     return accumulator;
   }
 
+  /**
+   * Identifies repeated stack frames between the current element and a previous trace.
+   *
+   * @param singleElement  the current stack frame
+   * @param prevStackTrace the previous stack trace to compare against
+   * @return the number of repeated frames from the previous trace, or {@code -1} if none
+   */
   private static int findRepeatedStackElements (StackTraceElement singleElement, StackTraceElement[] prevStackTrace) {
 
     for (int count = 0; count < prevStackTrace.length; count++) {

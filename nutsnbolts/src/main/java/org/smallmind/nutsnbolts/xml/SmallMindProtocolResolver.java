@@ -35,11 +35,20 @@ package org.smallmind.nutsnbolts.xml;
 import org.smallmind.nutsnbolts.resource.ClasspathResource;
 import org.smallmind.nutsnbolts.resource.Resource;
 
+/**
+ * Resolves SmallMind schema URIs to classpath resources under {@code org/smallmind/...}.
+ * Supports a singleton accessor for reuse across XML utilities.
+ */
 public class SmallMindProtocolResolver implements ProtocolResolver {
 
   private static final String INTERNAL_PROTOCOL = "http://www.smallmind.org/schema/";
   private static SmallMindProtocolResolver PROTOCOL_RESOLVER;
 
+  /**
+   * Returns a lazily created singleton instance.
+   *
+   * @return shared resolver
+   */
   public synchronized static SmallMindProtocolResolver getInstance () {
 
     if (PROTOCOL_RESOLVER == null) {
@@ -48,6 +57,13 @@ public class SmallMindProtocolResolver implements ProtocolResolver {
     return PROTOCOL_RESOLVER;
   }
 
+  /**
+   * Resolves schema URLs pointing at {@code http://www.smallmind.org/schema/...} into classpath resources.
+   *
+   * @param systemId system identifier from the XML parser
+   * @return classpath-backed resource or {@code null} if the protocol is not recognized
+   * @throws ProtocolResolutionException never thrown by this implementation
+   */
   public Resource resolve (String systemId)
     throws ProtocolResolutionException {
 
@@ -58,4 +74,3 @@ public class SmallMindProtocolResolver implements ProtocolResolver {
     return null;
   }
 }
-

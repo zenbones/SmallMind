@@ -36,21 +36,33 @@ import org.smallmind.nutsnbolts.command.template.Argument;
 import org.smallmind.nutsnbolts.command.template.ListArgument;
 import org.smallmind.nutsnbolts.xml.sax.AbstractElementExtender;
 
+/**
+ * Parses a {@code <list>} argument element into a {@link ListArgument}.
+ */
 public class ListElementExtender extends AbstractElementExtender implements ArgumentCompiler {
 
   private ListArgument listArgument;
 
+  /**
+   * @return compiled {@link ListArgument}
+   */
   @Override
   public Argument getArgument () {
 
     return getListArgument();
   }
 
+  /**
+   * @return list argument captured from the element content
+   */
   public ListArgument getListArgument () {
 
     return listArgument;
   }
 
+  /**
+   * Finalizes the argument value using the element content.
+   */
   @Override
   public void endElement (String namespaceURI, String localName, String qName, StringBuilder contentBuilder) {
 

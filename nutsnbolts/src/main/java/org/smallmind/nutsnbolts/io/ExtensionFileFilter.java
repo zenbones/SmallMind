@@ -36,17 +36,29 @@ import java.io.File;
 import java.util.LinkedList;
 import java.util.regex.Pattern;
 
+/**
+ * File filter that accepts directories or files matching one of the configured extensions.
+ */
 public final class ExtensionFileFilter implements java.io.FileFilter {
 
   private final LinkedList<Pattern> regExpList;
   private final LinkedList<String> extensionList;
   private String description;
 
+  /**
+   * Creates a filter with no description and no extensions.
+   */
   public ExtensionFileFilter () {
 
     this("");
   }
 
+  /**
+   * Creates a filter with a description and initial extensions.
+   *
+   * @param description description used by {@link #getDescription()}
+   * @param extensions  extensions without the dot (e.g., "txt")
+   */
   public ExtensionFileFilter (String description, String... extensions) {
 
     this.description = description;
@@ -61,6 +73,11 @@ public final class ExtensionFileFilter implements java.io.FileFilter {
     }
   }
 
+  /**
+   * Adds an accepted extension.
+   *
+   * @param extension extension without the dot
+   */
   public void addExtension (String extension) {
 
     Pattern parsedPattern;
@@ -70,11 +87,17 @@ public final class ExtensionFileFilter implements java.io.FileFilter {
     extensionList.add(extension);
   }
 
+  /**
+   * @return first configured extension, or {@code null} if none
+   */
   public String getExtension () {
 
     return extensionList.getFirst();
   }
 
+  /**
+   * Accepts directories and files whose names match any configured extension.
+   */
   public boolean accept (File file) {
 
     if (file.isDirectory()) {
@@ -92,6 +115,9 @@ public final class ExtensionFileFilter implements java.io.FileFilter {
     return false;
   }
 
+  /**
+   * @return description including the extensions pattern list
+   */
   public String getDescription () {
 
     StringBuilder fullDescription = new StringBuilder();
@@ -116,6 +142,11 @@ public final class ExtensionFileFilter implements java.io.FileFilter {
     return fullDescription.toString();
   }
 
+  /**
+   * Sets a user-facing description to be prefixed to the extensions list.
+   *
+   * @param description description text
+   */
   public void setDescription (String description) {
 
     this.description = description;

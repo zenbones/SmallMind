@@ -34,20 +34,33 @@ package org.smallmind.nutsnbolts.xml.sax;
 
 import org.xml.sax.Attributes;
 
+/**
+ * Minimal element extender that records the element local name and text content.
+ */
 public class BasicElementExtender extends AbstractElementExtender {
 
   private String localName;
   private StringBuilder contentBuilder;
 
+  /**
+   * @return local name of the processed element
+   */
   public String getLocalName () {
 
     return localName;
   }
 
+  /**
+   * @return accumulated character content
+   */
   public String getContent () {
 
     return contentBuilder.toString();
   }
+
+  /**
+   * Captures the element local name.
+   */
 
   @Override
   public void startElement (String namespaceURI, String localName, String qName, Attributes atts) {
@@ -55,6 +68,9 @@ public class BasicElementExtender extends AbstractElementExtender {
     this.localName = localName;
   }
 
+  /**
+   * Stores the character content gathered for the element.
+   */
   @Override
   public void endElement (String namespaceURI, String localName, String qName, StringBuilder contentBuilder) {
 

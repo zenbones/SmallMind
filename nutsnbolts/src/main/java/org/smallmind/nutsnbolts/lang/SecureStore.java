@@ -39,6 +39,10 @@ import org.smallmind.nutsnbolts.resource.ResourceException;
 import org.smallmind.nutsnbolts.resource.ResourceParser;
 import org.smallmind.nutsnbolts.resource.ResourceTypeResourceGenerator;
 
+/**
+ * Encapsulates access to keystore material stored as a {@link Resource}. Provides helpers
+ * to retrieve the raw bytes and manage the associated password.
+ */
 public class SecureStore {
 
   private static final ResourceParser RESOURCE_PARSER = new ResourceParser(new ResourceTypeResourceGenerator());
@@ -46,6 +50,13 @@ public class SecureStore {
   private String resource;
   private String password;
 
+  /**
+   * Loads the referenced resource and returns its contents as a byte array.
+   *
+   * @return the resource contents
+   * @throws IOException       if the resource cannot be read
+   * @throws ResourceException if the resource reference is invalid
+   */
   public byte[] getBytes ()
     throws IOException, ResourceException {
 
@@ -65,21 +76,41 @@ public class SecureStore {
     return resourceBuffer;
   }
 
+  /**
+   * Returns the resource specification used to locate the keystore.
+   *
+   * @return the resource location string
+   */
   public String getResource () {
 
     return resource;
   }
 
+  /**
+   * Sets the resource specification used to locate the keystore.
+   *
+   * @param resource the resource location string
+   */
   public void setResource (String resource) {
 
     this.resource = resource;
   }
 
+  /**
+   * Returns the password protecting the keystore.
+   *
+   * @return the password text
+   */
   public String getPassword () {
 
     return password;
   }
 
+  /**
+   * Sets the password protecting the keystore.
+   *
+   * @param password the password text
+   */
   public void setPassword (String password) {
 
     this.password = password;

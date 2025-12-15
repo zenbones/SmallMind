@@ -32,21 +32,33 @@
  */
 package org.smallmind.nutsnbolts.command.template;
 
+/**
+ * Argument allowing repeated occurrences, each providing a single value.
+ */
 public class MultipleArgument extends Argument {
 
   private final String description;
 
+  /**
+   * @param description hint describing the expected value
+   */
   public MultipleArgument (String description) {
 
     this.description = description;
   }
 
+  /**
+   * @return {@link ArgumentType#MULTIPLE}
+   */
   @Override
   public ArgumentType getType () {
 
     return ArgumentType.MULTIPLE;
   }
 
+  /**
+   * @return description string for help output
+   */
   public String getDescription () {
 
     return description;

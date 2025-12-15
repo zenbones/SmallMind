@@ -32,7 +32,13 @@
  */
 package org.smallmind.nutsnbolts.command.template;
 
+/**
+ * Base class for command line argument definitions.
+ */
 public abstract class Argument {
 
+  /**
+   * @return argument cardinality/type
+   */
   public abstract ArgumentType getType ();
 }

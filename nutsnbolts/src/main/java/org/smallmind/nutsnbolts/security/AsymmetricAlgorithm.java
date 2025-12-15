@@ -32,17 +32,26 @@
  */
 package org.smallmind.nutsnbolts.security;
 
+/**
+ * Supported asymmetric key algorithms and their JCA names.
+ */
 public enum AsymmetricAlgorithm implements SecurityAlgorithm {
 
   RSA("RSA"), ED25519("ED25519");
 
   private final String algorithmName;
 
+  /**
+   * @param algorithmName the JCA algorithm name
+   */
   AsymmetricAlgorithm (String algorithmName) {
 
     this.algorithmName = algorithmName;
   }
 
+  /**
+   * @return the JCA name used to create crypto primitives
+   */
   public String getAlgorithmName () {
 
     return algorithmName;

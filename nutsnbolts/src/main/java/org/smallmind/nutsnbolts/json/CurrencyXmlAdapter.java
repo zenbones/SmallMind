@@ -35,14 +35,29 @@ package org.smallmind.nutsnbolts.json;
 import java.util.Currency;
 import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 
+/**
+ * JAXB adapter that marshals {@link Currency} values to ISO currency codes and back.
+ */
 public class CurrencyXmlAdapter extends XmlAdapter<String, Currency> {
 
+  /**
+   * Converts an ISO currency code into a {@link Currency} instance.
+   *
+   * @param code the textual currency code, case-insensitive
+   * @return the matching currency, or {@code null} when the code is {@code null}
+   */
   @Override
   public Currency unmarshal (String code) {
 
     return (code == null) ? null : Currency.getInstance(code.toUpperCase());
   }
 
+  /**
+   * Marshals a {@link Currency} into its ISO currency code.
+   *
+   * @param currency the currency to marshal
+   * @return the ISO code, or {@code null} when the currency is {@code null}
+   */
   @Override
   public String marshal (Currency currency) {
 

@@ -35,9 +35,18 @@ package org.smallmind.nutsnbolts.zip;
 import java.io.IOException;
 import java.util.zip.ZipEntry;
 
+/**
+ * Callback invoked for each {@link ZipEntry} during archive traversal or extraction.
+ */
 @FunctionalInterface
 public interface ZipEntryConsumer {
 
+  /**
+   * Handles a single archive entry.
+   *
+   * @param entry entry being processed
+   * @throws IOException if the consumer cannot process the entry
+   */
   void accept (ZipEntry entry)
     throws IOException;
 }

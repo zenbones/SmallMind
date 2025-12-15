@@ -34,8 +34,17 @@ package org.smallmind.nutsnbolts.reflection;
 
 import java.util.Date;
 
+/**
+ * Validator that treats dates at the epoch start as {@code null}.
+ */
 public class StartOfEpochNullifierValidator implements OverlayNullifierValidator<EmptyStringNullifier, Date> {
 
+  /**
+   * Returns {@code true} when the supplied date represents the start of the Unix epoch.
+   *
+   * @param date the value being evaluated
+   * @return {@code true} if the value should be treated as {@code null}
+   */
   @Override
   public boolean equivalentToNull (Date date) {
 

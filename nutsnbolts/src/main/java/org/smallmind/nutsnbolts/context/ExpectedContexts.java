@@ -38,10 +38,16 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Declares the contexts that must be present when invoking the annotated method.
+ */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
 public @interface ExpectedContexts {
 
+  /**
+   * @return required context types
+   */
   Class<? extends Context>[] value ();
 }

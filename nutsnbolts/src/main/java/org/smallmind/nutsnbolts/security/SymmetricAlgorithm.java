@@ -32,17 +32,26 @@
  */
 package org.smallmind.nutsnbolts.security;
 
+/**
+ * Supported symmetric key algorithms and their JCA names.
+ */
 public enum SymmetricAlgorithm implements SecurityAlgorithm {
 
   AES("AES"), DES("DES"), TRIPLE_DES("DESede"), RC4("ARCFOUR"), BLOWFISH("blowfish");
 
   private final String algorithmName;
 
+  /**
+   * @param algorithmName the JCA algorithm name
+   */
   SymmetricAlgorithm (String algorithmName) {
 
     this.algorithmName = algorithmName;
   }
 
+  /**
+   * @return the JCA name used when creating ciphers or key generators
+   */
   public String getAlgorithmName () {
 
     return algorithmName;

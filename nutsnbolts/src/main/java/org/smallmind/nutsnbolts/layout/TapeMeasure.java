@@ -32,9 +32,15 @@
  */
 package org.smallmind.nutsnbolts.layout;
 
+/**
+ * Enum representing the type of measurement requested from a {@link ParaboxElement}.
+ */
 public enum TapeMeasure {
 
   MINIMUM {
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public double getMeasure (Bias bias, ParaboxElement<?> element, LayoutTailor tailor) {
 
@@ -42,6 +48,9 @@ public enum TapeMeasure {
     }
   },
   PREFERRED {
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public double getMeasure (Bias bias, ParaboxElement<?> element, LayoutTailor tailor) {
 
@@ -49,6 +58,9 @@ public enum TapeMeasure {
     }
   },
   MAXIMUM {
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public double getMeasure (Bias bias, ParaboxElement<?> element, LayoutTailor tailor) {
 
@@ -56,5 +68,13 @@ public enum TapeMeasure {
     }
   };
 
+  /**
+   * Retrieves the specified measurement from the element along the given axis.
+   *
+   * @param bias    the axis of measurement
+   * @param element the element to measure
+   * @param tailor  the layout tailor to use for caching
+   * @return the measured size
+   */
   public abstract double getMeasure (Bias bias, ParaboxElement<?> element, LayoutTailor tailor);
 }

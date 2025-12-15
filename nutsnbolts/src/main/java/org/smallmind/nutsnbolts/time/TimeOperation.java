@@ -35,15 +35,24 @@ package org.smallmind.nutsnbolts.time;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 
+/**
+ * Binary comparison operations between a {@link ZonedDateTime} and an {@link Instant}.
+ */
 public enum TimeOperation {
 
   BEFORE {
+    /**
+     * @return {@code true} when {@code date} is strictly after the provided instant
+     */
     @Override
     public boolean accept (ZonedDateTime date, Instant instant) {
 
       return date.toInstant().isAfter(instant);
     }
   }, BEFORE_OR_ON {
+    /**
+     * @return {@code true} when {@code date} is after or equal to the provided instant
+     */
     @Override
     public boolean accept (ZonedDateTime date, Instant instant) {
 
@@ -52,6 +61,9 @@ public enum TimeOperation {
       return (dateInstant = date.toInstant()).equals(instant) || dateInstant.isAfter(instant);
     }
   }, ON_OR_AFTER {
+    /**
+     * @return {@code true} when {@code date} is before or equal to the provided instant
+     */
     @Override
     public boolean accept (ZonedDateTime date, Instant instant) {
 
@@ -60,6 +72,9 @@ public enum TimeOperation {
       return (dateInstant = date.toInstant()).isBefore(instant) || dateInstant.equals(instant);
     }
   }, AFTER {
+    /**
+     * @return {@code true} when {@code date} is strictly before the provided instant
+     */
     @Override
     public boolean accept (ZonedDateTime date, Instant instant) {
 
@@ -67,5 +82,12 @@ public enum TimeOperation {
     }
   };
 
+  /**
+   * Evaluates the comparison represented by this operation.
+   *
+   * @param date    reference date-time
+   * @param instant instant to compare against
+   * @return result of the comparison
+   */
   public abstract boolean accept (ZonedDateTime date, Instant instant);
 }

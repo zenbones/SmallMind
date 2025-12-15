@@ -32,23 +32,47 @@
  */
 package org.smallmind.nutsnbolts.lang;
 
+/**
+ * {@link RuntimeException} that supports formatted messages.
+ */
 public class FormattedRuntimeException extends RuntimeException {
 
+  /**
+   * Creates an exception without a message.
+   */
   public FormattedRuntimeException () {
 
     super();
   }
 
+  /**
+   * Creates an exception with a formatted message.
+   *
+   * @param message the format string, or {@code null}
+   * @param args    arguments applied to the format string
+   */
   public FormattedRuntimeException (String message, Object... args) {
 
     super(message == null ? null : String.format(message, args));
   }
 
+  /**
+   * Creates an exception with a cause and formatted message.
+   *
+   * @param throwable the underlying cause
+   * @param message   the format string, or {@code null}
+   * @param args      arguments applied to the format string
+   */
   public FormattedRuntimeException (Throwable throwable, String message, Object... args) {
 
     super(message == null ? null : String.format(message, args), throwable);
   }
 
+  /**
+   * Creates an exception with the supplied cause.
+   *
+   * @param throwable the underlying cause
+   */
   public FormattedRuntimeException (Throwable throwable) {
 
     super(throwable);

@@ -38,8 +38,22 @@ import org.smallmind.nutsnbolts.reflection.bean.BeanAccessException;
 import org.smallmind.nutsnbolts.reflection.bean.BeanInvocationException;
 import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
 
+/**
+ * Helper methods used by AspectJ advice to access method parameters reflectively.
+ */
 public class AOPUtility {
 
+  /**
+   * Retrieves a method argument (or nested property) by name from a {@link JoinPoint}.
+   *
+   * @param joinPoint     the join point being advised
+   * @param parameterName the parameter to resolve, optionally using dotted notation for nested getters
+   * @param nullable      whether a {@code null} value is acceptable
+   * @return the resolved argument or nested property value
+   * @throws BeanAccessException     if the parameter cannot be found or accessed
+   * @throws BeanInvocationException if a getter invocation fails
+   * @throws NullPointerException    if a nested value is {@code null} when {@code nullable} is false
+   */
   public static Object getParameterValue (JoinPoint joinPoint, String parameterName, boolean nullable)
     throws BeanAccessException, BeanInvocationException {
 

@@ -35,15 +35,26 @@ package org.smallmind.nutsnbolts.spring;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 
+/**
+ * Simple listener that logs when the Spring context has been refreshed/initialized.
+ */
 public class SpringContextRefreshedAnnouncer implements ApplicationListener<ContextRefreshedEvent> {
 
   private String applicationName;
 
+  /**
+   * @param applicationName optional name to include in the log message
+   */
   public void setApplicationName (String applicationName) {
 
     this.applicationName = applicationName;
   }
 
+  /**
+   * Logs a message indicating the application context has been initialized.
+   *
+   * @param event the context refreshed event
+   */
   @Override
   public void onApplicationEvent (ContextRefreshedEvent event) {
 

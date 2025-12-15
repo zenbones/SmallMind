@@ -39,15 +39,24 @@ import org.smallmind.nutsnbolts.xml.sax.ElementExtender;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
+/**
+ * Builds an {@link Option} and wires up nested options/arguments while SAX-parsing the template.
+ */
 public class OptionElementExtender extends AbstractElementExtender {
 
   private Option option;
 
+  /**
+   * @return option created from the current element
+   */
   public Option getOption () {
 
     return option;
   }
 
+  /**
+   * Creates the {@link Option} instance using element attributes.
+   */
   @Override
   public void startElement (String namespaceURI, String localName, String qName, Attributes atts) {
 
@@ -56,6 +65,11 @@ public class OptionElementExtender extends AbstractElementExtender {
     option = new Option(atts.getValue("name"), (((flag = atts.getValue("flag")) == null) || flag.isEmpty()) ? null : flag.charAt(0), Boolean.parseBoolean(atts.getValue("required")));
   }
 
+  /**
+   * Receives child option groups and argument definitions, wiring up parent/child relationships.
+   *
+   * @throws SAXException if child processing fails
+   */
   @Override
   public void completedChildElement (ElementExtender elementExtender)
     throws SAXException {

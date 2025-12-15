@@ -34,7 +34,15 @@ package org.smallmind.nutsnbolts.io;
 
 import java.util.EventListener;
 
+/**
+ * Listener notified when a closeable is closed via {@link CloseableProxyFactory}.
+ */
 public interface CloseListener extends EventListener {
 
+  /**
+   * Invoked after the proxied closeable completes {@code close()}.
+   *
+   * @param event close event containing the source object
+   */
   void postClose (CloseEvent event);
 }

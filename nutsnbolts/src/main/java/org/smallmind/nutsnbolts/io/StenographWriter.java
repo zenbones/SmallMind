@@ -36,12 +36,18 @@ import java.io.IOException;
 import java.io.Writer;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 
+/**
+ * Writer that buffers text and notifies listeners when flushed or closed.
+ */
 public class StenographWriter extends Writer {
 
   private final WeakEventListenerList<StenographEventListener> listenerList = new WeakEventListenerList<StenographEventListener>();
 
   private final StringBuilder stenographBuilder = new StringBuilder();
 
+  /**
+   * Appends characters to the internal buffer.
+   */
   @Override
   public synchronized void write (char[] cbuf, int off, int len)
     throws IOException {
@@ -49,6 +55,9 @@ public class StenographWriter extends Writer {
     stenographBuilder.append(cbuf, off, len);
   }
 
+  /**
+   * Flushes buffered text and notifies listeners.
+   */
   @Override
   public synchronized void flush ()
     throws IOException {
@@ -56,6 +65,9 @@ public class StenographWriter extends Writer {
     fireFlush();
   }
 
+  /**
+   * Flushes buffered text and notifies listeners, leaving the writer closed.
+   */
   @Override
   public synchronized void close ()
     throws IOException {
@@ -63,6 +75,9 @@ public class StenographWriter extends Writer {
     fireFlush();
   }
 
+  /**
+   * Dispatches a flush event to listeners and clears the buffer.
+   */
   private void fireFlush () {
 
     StenographEvent event = new StenographEvent(this, stenographBuilder.toString());
@@ -74,11 +89,21 @@ public class StenographWriter extends Writer {
     stenographBuilder.delete(0, stenographBuilder.length());
   }
 
+  /**
+   * Registers a listener for flush events.
+   *
+   * @param stenographEventListener listener to add
+   */
   public synchronized void addStenographListener (StenographEventListener stenographEventListener) {
 
     listenerList.addListener(stenographEventListener);
   }
 
+  /**
+   * Removes a previously registered listener.
+   *
+   * @param stenographEventListener listener to remove
+   */
   public synchronized void removeStenographListener (StenographEventListener stenographEventListener) {
 
     listenerList.removeListener(stenographEventListener);

@@ -35,15 +35,24 @@ package org.smallmind.nutsnbolts.io;
 import java.nio.file.Path;
 import java.util.regex.Pattern;
 
+/**
+ * Path filter that matches file names (not directories) using a glob-like pattern.
+ */
 public class WildcardFileNamePathFilter implements PathFilter {
 
   private final Pattern namePattern;
 
+  /**
+   * @param name glob-like pattern (supports '*' and '?')
+   */
   public WildcardFileNamePathFilter (String name) {
 
     namePattern = Pattern.compile(RegExTranslator.translate(name));
   }
 
+  /**
+   * Accepts paths whose file names match the supplied pattern.
+   */
   @Override
   public boolean accept (Path path) {
 

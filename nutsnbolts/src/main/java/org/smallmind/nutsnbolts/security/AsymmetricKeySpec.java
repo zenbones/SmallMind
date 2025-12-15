@@ -51,9 +51,20 @@ import org.bouncycastle.util.io.pem.PemReader;
 import org.bouncycastle.util.io.pem.PemWriter;
 import org.smallmind.nutsnbolts.http.Base64Codec;
 
+/**
+ * Supported encodings for asymmetric keys along with helpers to serialize and construct {@link java.security.spec.KeySpec}s.
+ */
 public enum AsymmetricKeySpec {
 
   OPENSSH {
+    /**
+     * Encodes a public key in the OpenSSH authorized_keys format.
+     *
+     * @param key the key to encode
+     * @return an OpenSSH formatted key string
+     * @throws IOException if the key bytes cannot be encoded
+     * @throws InappropriateKeySpecException if the key type is unsupported
+     */
     @Override
     public String fromKey (Key key)
       throws IOException, InappropriateKeySpecException {
@@ -69,6 +80,15 @@ public enum AsymmetricKeySpec {
       }
     }
 
+    /**
+     * Builds an {@link OpenSSHPublicKeySpec} from an SSH or Base64 encoded public key string.
+     *
+     * @param type must be {@link AsymmetricKeyType#PUBLIC}
+     * @param raw the raw key text, optionally including SSH prologue/epilogue
+     * @return a key spec suitable for generating a public key
+     * @throws IOException if the raw text is malformed
+     * @throws InappropriateKeySpecException if the key type does not match
+     */
     @Override
     public KeySpec constructKeySpec (AsymmetricKeyType type, String raw)
       throws IOException, InappropriateKeySpecException {
@@ -100,6 +120,14 @@ public enum AsymmetricKeySpec {
     }
   },
   PKCS8 {
+    /**
+     * Encodes a private key to a PKCS8 PEM block.
+     *
+     * @param key the private key
+     * @return the PEM formatted key
+     * @throws IOException if encoding fails
+     * @throws InappropriateKeySpecException if the key is not a private key
+     */
     @Override
     public String fromKey (Key key)
       throws IOException, InappropriateKeySpecException {
@@ -118,6 +146,15 @@ public enum AsymmetricKeySpec {
       }
     }
 
+    /**
+     * Parses a PKCS8 PEM string and builds a {@link PKCS8EncodedKeySpec}.
+     *
+     * @param type must be {@link AsymmetricKeyType#PRIVATE}
+     * @param raw PEM encoded private key, with or without headers
+     * @return the constructed key spec
+     * @throws IOException if the raw text is malformed
+     * @throws InappropriateKeySpecException if the key type does not match
+     */
     @Override
     public KeySpec constructKeySpec (AsymmetricKeyType type, String raw)
       throws IOException, InappropriateKeySpecException {
@@ -146,6 +183,13 @@ public enum AsymmetricKeySpec {
     }
   },
   X509 {
+    /**
+     * X509 public key encoding is not supported for serialization by this enum.
+     *
+     * @param key the key to encode
+     * @return never returns normally
+     * @throws InappropriateKeySpecException always thrown for unsupported key type
+     */
     @Override
     public String fromKey (Key key)
       throws InappropriateKeySpecException {
@@ -157,6 +201,15 @@ public enum AsymmetricKeySpec {
       }
     }
 
+    /**
+     * Parses an X509 public key from PEM or Base64 and builds an {@link X509EncodedKeySpec}.
+     *
+     * @param type must be {@link AsymmetricKeyType#PUBLIC}
+     * @param raw the encoded public key text
+     * @return the constructed key spec
+     * @throws IOException if the raw text is malformed
+     * @throws InappropriateKeySpecException if the key type does not match
+     */
     @Override
     public KeySpec constructKeySpec (AsymmetricKeyType type, String raw)
       throws IOException, InappropriateKeySpecException {
@@ -195,9 +248,26 @@ public enum AsymmetricKeySpec {
   private static final Pattern PKCS8_PROLOG_PATTERN = Pattern.compile("^-----BEGIN PRIVATE KEY-----\\s+");
   private static final Pattern PKCS8_EPILOG_PATTERN = Pattern.compile("\\s+-----END PRIVATE KEY-----$");
 
+  /**
+   * Builds a {@link KeySpec} for the provided encoding and key type from raw text.
+   *
+   * @param type whether a public or private key is expected
+   * @param raw  the encoded key text
+   * @return a {@link KeySpec} suitable for {@link java.security.KeyFactory}
+   * @throws IOException                   if the raw text cannot be parsed
+   * @throws InappropriateKeySpecException if the requested spec is not compatible with the key type
+   */
   public abstract KeySpec constructKeySpec (AsymmetricKeyType type, String raw)
     throws IOException, InappropriateKeySpecException;
 
+  /**
+   * Serializes a key into the current encoding format.
+   *
+   * @param key the key to serialize
+   * @return the encoded key text
+   * @throws IOException                   if the key cannot be encoded
+   * @throws InappropriateKeySpecException if the key type is unsupported
+   */
   public abstract String fromKey (Key key)
     throws IOException, InappropriateKeySpecException;
 }

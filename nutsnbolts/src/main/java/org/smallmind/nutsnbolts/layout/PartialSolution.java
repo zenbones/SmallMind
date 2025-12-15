@@ -32,30 +32,46 @@
  */
 package org.smallmind.nutsnbolts.layout;
 
-public class PartialSolution {
+/**
+ * Holds the partial layout position and measurement for a component along a single axis.
+ * Used until both axes have been resolved.
+ */
+public record PartialSolution(Bias bias, double position, double measurement) {
 
-  private final Bias bias;
-  private final double position;
-  private final double measurement;
+  /**
+   * Creates a partial solution for the specified axis.
+   *
+   * @param bias        the axis captured
+   * @param position    the position along the axis
+   * @param measurement the measurement along the axis
+   */
+  public PartialSolution {
 
-  public PartialSolution (Bias bias, double position, double measurement) {
-
-    this.bias = bias;
-    this.position = position;
-    this.measurement = measurement;
   }
 
-  public Bias getBias () {
+  /**
+   * @return the axis captured by this partial solution
+   */
+  @Override
+  public Bias bias () {
 
     return bias;
   }
 
-  public double getPosition () {
+  /**
+   * @return the position along the captured axis
+   */
+  @Override
+  public double position () {
 
     return position;
   }
 
-  public double getMeasurement () {
+  /**
+   * @return the measurement along the captured axis
+   */
+  @Override
+  public double measurement () {
 
     return measurement;
   }

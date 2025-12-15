@@ -48,6 +48,11 @@ import java.util.Set;
     Policy.setPolicy(new SandboxSecurityPolicy(<White Listed ClassLoader(s)>));
     System.setSecurityManager(new SecurityManager());
 */
+
+/**
+ * {@link Policy} implementation that grants {@link AllPermission} only to whitelisted class loaders.
+ * All other code sources receive a configurable base permission set.
+ */
 public class SandboxSecurityPolicy extends Policy {
 
   private static final PermissionCollection ALL_PERMISSION_COLLECTION;
@@ -68,12 +73,24 @@ public class SandboxSecurityPolicy extends Policy {
     this(null, whiteListedCompiledClassLoaders);
   }
 
+  /**
+   * Creates a policy that whitelists both compiled and runtime class loader identities.
+   *
+   * @param whiteListedRuntimeClassLoaders  class names of runtime-generated loaders that should receive all permissions
+   * @param whiteListedCompiledClassLoaders loader instances that should receive all permissions
+   */
   public SandboxSecurityPolicy (String[] whiteListedRuntimeClassLoaders, ClassLoader... whiteListedCompiledClassLoaders) {
 
     whiteListedCompiledClassLoaderSet = ((whiteListedCompiledClassLoaders == null) || (whiteListedCompiledClassLoaders.length == 0)) ? Collections.emptySet() : new HashSet<>(Arrays.asList(whiteListedCompiledClassLoaders));
     whiteListedRuntimeClassLoaderSet = ((whiteListedRuntimeClassLoaders == null) || (whiteListedRuntimeClassLoaders.length == 0)) ? Collections.emptySet() : new HashSet<>(Arrays.asList(whiteListedRuntimeClassLoaders));
   }
 
+  /**
+   * Adds additional permissions to the base permission collection applied to non-whitelisted loaders.
+   *
+   * @param permissions permissions to add; ignored when {@code null} or empty
+   * @return this policy instance for chaining
+   */
   public SandboxSecurityPolicy addPermissions (Permission... permissions) {
 
     if ((permissions != null) && (permissions.length > 0)) {
@@ -91,6 +108,12 @@ public class SandboxSecurityPolicy extends Policy {
     return new Permissions();
   }
 
+  /**
+   * Grants full permissions to whitelisted loaders and a shared base collection to all others.
+   *
+   * @param domain the protection domain being evaluated
+   * @return the permission collection to apply
+   */
   @Override
   public PermissionCollection getPermissions (ProtectionDomain domain) {
 

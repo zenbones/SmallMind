@@ -32,6 +32,9 @@
  */
 package org.smallmind.nutsnbolts.spring.jmx;
 
+/**
+ * Determines whether the RMI hostname should use the machine's IP address or host name.
+ */
 public enum RMIHost {
 
   IP_ADDRESS, HOST_NAME

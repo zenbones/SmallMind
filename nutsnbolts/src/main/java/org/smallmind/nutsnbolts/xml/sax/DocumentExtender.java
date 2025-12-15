@@ -35,14 +35,38 @@ package org.smallmind.nutsnbolts.xml.sax;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
+/**
+ * Extends SAX document-level callbacks with support for creating element extenders dynamically.
+ */
 public interface DocumentExtender extends SAXExtender {
 
+  /**
+   * Notifies the start of the document.
+   *
+   * @throws SAXException if processing fails
+   */
   void startDocument ()
     throws SAXException;
 
+  /**
+   * Notifies the end of the document.
+   *
+   * @throws SAXException if processing fails
+   */
   void endDocument ()
     throws SAXException;
 
+  /**
+   * Factory for creating an {@link ElementExtender} for the encountered element.
+   *
+   * @param parent       current parent extender
+   * @param namespaceURI element namespace URI
+   * @param localName    element local name
+   * @param qName        qualified element name
+   * @param atts         element attributes
+   * @return a non-null extender able to process the element
+   * @throws Exception if instantiation or configuration fails
+   */
   ElementExtender getElementExtender (SAXExtender parent, String namespaceURI, String localName, String qName, Attributes atts)
     throws Exception;
 }

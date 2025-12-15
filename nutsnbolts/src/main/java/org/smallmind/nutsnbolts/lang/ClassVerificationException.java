@@ -32,8 +32,17 @@
  */
 package org.smallmind.nutsnbolts.lang;
 
+/**
+ * Indicates that a class failed verification against required conditions.
+ */
 public class ClassVerificationException extends FormattedException {
 
+  /**
+   * Constructs the exception with a formatted message.
+   *
+   * @param message the message format string
+   * @param args    arguments to substitute into the message
+   */
   public ClassVerificationException (String message, Object... args) {
 
     super(message, args);

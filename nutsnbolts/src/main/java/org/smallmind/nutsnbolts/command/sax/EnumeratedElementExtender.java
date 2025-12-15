@@ -38,22 +38,34 @@ import org.smallmind.nutsnbolts.command.template.EnumeratedArgument;
 import org.smallmind.nutsnbolts.xml.sax.AbstractElementExtender;
 import org.smallmind.nutsnbolts.xml.sax.ElementExtender;
 
+/**
+ * Builds an {@link EnumeratedArgument} from nested {@code <value>} elements while parsing the command template.
+ */
 public class EnumeratedElementExtender extends AbstractElementExtender implements ArgumentCompiler {
 
   private final LinkedList<String> valueList = new LinkedList<>();
   private EnumeratedArgument enumeratedArgument;
 
+  /**
+   * @return compiled {@link EnumeratedArgument}
+   */
   @Override
   public Argument getArgument () {
 
     return getEnumeratedArgument();
   }
 
+  /**
+   * @return enumerated argument built from collected values
+   */
   public EnumeratedArgument getEnumeratedArgument () {
 
     return enumeratedArgument;
   }
 
+  /**
+   * Finalizes the enumerated argument at the end of the element.
+   */
   @Override
   public void endElement (String namespaceURI, String localName, String qName, StringBuilder contentBuilder) {
 
@@ -63,6 +75,9 @@ public class EnumeratedElementExtender extends AbstractElementExtender implement
     enumeratedArgument = new EnumeratedArgument(values);
   }
 
+  /**
+   * Collects each nested {@link ValueElementExtender} contribution.
+   */
   @Override
   public void completedChildElement (ElementExtender elementExtender) {
 

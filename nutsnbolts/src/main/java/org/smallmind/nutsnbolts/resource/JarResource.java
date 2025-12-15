@@ -38,19 +38,34 @@ import java.util.Enumeration;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+/**
+ * {@link Resource} backed by an entry inside a jar file (path format {@code /path/to.jar!/entry/name}).
+ */
 public class JarResource extends AbstractResource {
 
+  /**
+   * @param path jar path including {@code !} entry separator
+   */
   public JarResource (String path) {
 
     super(path);
   }
 
+  /**
+   * @return {@code jar}
+   */
   @Override
   public String getScheme () {
 
     return "jar";
   }
 
+  /**
+   * Opens the jar entry for reading.
+   *
+   * @return input stream for the jar entry, or {@code null} if the entry is not found
+   * @throws ResourceException if the jar cannot be opened
+   */
   @Override
   public InputStream getInputStream ()
     throws ResourceException {

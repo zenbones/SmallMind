@@ -34,23 +34,47 @@ package org.smallmind.nutsnbolts.lang;
 
 import java.io.IOException;
 
+/**
+ * {@link IOException} that formats its message using {@link String#format(String, Object...)}.
+ */
 public class FormattedIOException extends IOException {
 
+  /**
+   * Creates an exception without a message.
+   */
   public FormattedIOException () {
 
     super();
   }
 
+  /**
+   * Creates an exception with a formatted message.
+   *
+   * @param message the format string, or {@code null}
+   * @param args    arguments applied to the format string
+   */
   public FormattedIOException (String message, Object... args) {
 
     super(message == null ? null : String.format(message, args));
   }
 
+  /**
+   * Creates an exception with a cause and formatted message.
+   *
+   * @param throwable the underlying cause
+   * @param message   the format string, or {@code null}
+   * @param args      arguments applied to the format string
+   */
   public FormattedIOException (Throwable throwable, String message, Object... args) {
 
     super(message == null ? null : String.format(message, args), throwable);
   }
 
+  /**
+   * Creates an exception with the supplied cause.
+   *
+   * @param throwable the underlying cause
+   */
   public FormattedIOException (Throwable throwable) {
 
     super(throwable);

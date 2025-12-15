@@ -60,28 +60,28 @@ public class MongoWriteConcern implements FactoryBean<WriteConcern> {
     this.journaled = journaled;
   }
 
-  @Override
   /**
    * {@inheritDoc}
    */
+  @Override
   public boolean isSingleton () {
 
     return false;
   }
 
-  @Override
   /**
    * {@inheritDoc}
    */
+  @Override
   public Class<?> getObjectType () {
 
     return WriteConcern.class;
   }
 
-  @Override
   /**
    * Builds the {@link WriteConcern} based on the configured acknowledgment and journaling flag.
    */
+  @Override
   public WriteConcern getObject () {
 
     WriteConcern writeConcern = acknowledgment.getWriteConcern();

@@ -38,16 +38,46 @@ import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
 
+/**
+ * Multiset-like collection supporting multiplicity for elements.
+ *
+ * @param <E> element type
+ */
 public interface Bag<E> extends Collection<E> {
 
+  /**
+   * Adds an element with the given multiplicity.
+   *
+   * @param e        element to add
+   * @param multiple number of occurrences to add
+   * @return {@code true} if the bag changed
+   */
   boolean add (E e, int multiple);
 
+  /**
+   * Removes up to the specified multiplicity of the element.
+   *
+   * @param e        element to remove
+   * @param multiple number of occurrences to remove
+   * @return {@code true} if the bag changed
+   */
   boolean remove (E e, int multiple);
 
+  /**
+   * @return set of distinct elements contained in the bag
+   */
   Set<E> keySet ();
 
+  /**
+   * @return set of entries mapping element to multiplicity
+   */
   Set<Map.Entry<E, Integer>> entrySet ();
 
+  /**
+   * Creates a spliterator reporting the {@link Spliterator#DISTINCT} characteristic over the bag's elements.
+   *
+   * @return spliterator traversing unique elements
+   */
   @Override
   default Spliterator<E> spliterator () {
 

@@ -35,17 +35,26 @@ package org.smallmind.nutsnbolts.reflection;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.Type;
 import java.util.LinkedList;
 import java.util.concurrent.ConcurrentHashMap;
 import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
 import org.smallmind.nutsnbolts.util.AlphaNumericComparator;
 
+/**
+ * Utilities for discovering bean-like fields and their accessors, with simple caching.
+ */
 public class FieldUtility {
 
   private static final AlphaNumericComparator<FieldAccessor> ALPHA_NUMERIC_COMPARATOR = new AlphaNumericComparator<>(FieldAccessor::getName);
   private static final ConcurrentHashMap<Class<?>, FieldAccessor[]> FIELD_ACCESSOR_MAP = new ConcurrentHashMap<>();
 
+  /**
+   * Retrieves a cached accessor for the named field on the given class.
+   *
+   * @param clazz the class to inspect
+   * @param name  the field name
+   * @return the accessor or {@code null} if no matching field exists
+   */
   public static FieldAccessor getFieldAccessor (Class<?> clazz, String name) {
 
     for (FieldAccessor fieldAccessor : getFieldAccessors(clazz)) {
@@ -58,6 +67,13 @@ public class FieldUtility {
     return null;
   }
 
+  /**
+   * Returns all mutable, non-static, non-transient field accessors for the given class and its superclasses.
+   * Accessors are cached and returned in alpha-numeric order.
+   *
+   * @param clazz the class to inspect
+   * @return an array of accessors for discovered fields
+   */
   public static FieldAccessor[] getFieldAccessors (final Class<?> clazz) {
 
     FieldAccessor[] fieldAccessors;
@@ -74,7 +90,6 @@ public class FieldUtility {
               if (!(field.isSynthetic() || Modifier.isStatic(field.getModifiers()) || Modifier.isTransient(field.getModifiers()))) {
 
                 field.setAccessible(true);
-                Type t;
                 fieldAccessorList.add(new FieldAccessor(field, locateGetter(clazz, field), locateSetter(clazz, field)));
               }
             }
@@ -91,6 +106,13 @@ public class FieldUtility {
     return fieldAccessors;
   }
 
+  /**
+   * Attempts to locate a getter method for the supplied field on the provided class.
+   *
+   * @param clazz the class owning the field
+   * @param field the field being accessed
+   * @return the getter method or {@code null} if none is found
+   */
   private static Method locateGetter (Class<?> clazz, Field field) {
 
     try {
@@ -110,6 +132,13 @@ public class FieldUtility {
     }
   }
 
+  /**
+   * Attempts to locate a setter method for the supplied field on the provided class.
+   *
+   * @param clazz the class owning the field
+   * @param field the field being accessed
+   * @return the setter method or {@code null} if none is found
+   */
   private static Method locateSetter (Class<?> clazz, Field field) {
 
     try {

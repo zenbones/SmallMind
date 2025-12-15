@@ -34,7 +34,13 @@ package org.smallmind.nutsnbolts.command.sax;
 
 import org.smallmind.nutsnbolts.command.template.Argument;
 
+/**
+ * Produces an {@link Argument} instance during SAX parsing.
+ */
 public interface ArgumentCompiler {
 
+  /**
+   * @return compiled argument instance
+   */
   Argument getArgument ();
 }

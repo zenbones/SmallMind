@@ -36,10 +36,16 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 
+/**
+ * Iterates over entries in a {@link Properties} object as {@link PropertiesPropertyEntry} instances.
+ */
 public class PropertiesPropertyHandler implements PropertyHandler<PropertiesPropertyEntry> {
 
   private final Properties properties;
 
+  /**
+   * @param properties properties source
+   */
   public PropertiesPropertyHandler (Properties properties) {
 
     this.properties = properties;
@@ -51,10 +57,16 @@ public class PropertiesPropertyHandler implements PropertyHandler<PropertiesProp
     return new PropertiesPropertyEntryIterator(properties);
   }
 
+  /**
+   * Iterator wrapping underlying map entries of a {@link Properties} instance.
+   */
   private static class PropertiesPropertyEntryIterator implements Iterator<PropertiesPropertyEntry> {
 
     private final Iterator<Map.Entry<Object, Object>> mapEntryIter;
 
+    /**
+     * @param properties source properties
+     */
     private PropertiesPropertyEntryIterator (Properties properties) {
 
       mapEntryIter = properties.entrySet().iterator();

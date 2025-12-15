@@ -35,23 +35,54 @@ package org.smallmind.nutsnbolts.util;
 import java.util.Objects;
 import java.util.function.Function;
 
+/**
+ * Functional interface for transformations that can throw checked exceptions.
+ *
+ * @param <T> input type
+ * @param <R> result type
+ */
 @FunctionalInterface
 public interface Mutation<T, R> {
 
+  /**
+   * @param <T> element type
+   * @return identity function returning its input
+   */
   static <T> Function<T, T> identity () {
 
     return t -> t;
   }
 
+  /**
+   * Applies the transformation.
+   *
+   * @param t input value
+   * @return transformed result
+   * @throws Exception if the transformation fails
+   */
   R apply (T t)
     throws Exception;
 
+  /**
+   * Composes this mutation after another.
+   *
+   * @param before mutation to apply first
+   * @param <V>    input type of the composed mutation
+   * @return composed mutation applying {@code before} then this
+   */
   default <V> Mutation<V, R> compose (Mutation<? super V, ? extends T> before) {
 
     Objects.requireNonNull(before);
     return (V v) -> apply(before.apply(v));
   }
 
+  /**
+   * Chains another mutation after this one.
+   *
+   * @param after mutation to apply after this
+   * @param <V>   output type of the composed mutation
+   * @return composed mutation applying this then {@code after}
+   */
   default <V> Mutation<T, V> andThen (Mutation<? super R, ? extends V> after) {
 
     Objects.requireNonNull(after);

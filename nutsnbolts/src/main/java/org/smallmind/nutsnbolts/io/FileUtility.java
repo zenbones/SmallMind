@@ -43,20 +43,39 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 
+/**
+ * File system utilities for copying and deleting directory trees with filtering.
+ */
 public class FileUtility {
 
   private static final FileAttribute<?>[] NO_FILE_ATTRIBUTES = new FileAttribute[0];
 
+  /**
+   * @param source      source path to copy
+   * @param destination destination path
+   * @return builder for configuring a copy operation
+   */
   public static CopyTreeConfigurationBuilder copyBuilder (Path source, Path destination) {
 
     return new CopyTreeConfigurationBuilder(source, destination);
   }
 
+  /**
+   * @param target root path to delete
+   * @return builder for configuring a delete operation
+   */
   public static DeleteTreeConfigurationBuilder deleteBuilder (Path target) {
 
     return new DeleteTreeConfigurationBuilder(target);
   }
 
+  /**
+   * Determines if a directory contains any entries.
+   *
+   * @param directory path to check
+   * @return {@code true} if no children are present
+   * @throws IOException if the directory cannot be read
+   */
   public static boolean isDirectoryEmpty (Path directory)
     throws IOException {
 
@@ -66,12 +85,31 @@ public class FileUtility {
     }
   }
 
+  /**
+   * Recursively copies a path to a destination with optional filters and inclusion of the source root.
+   *
+   * @param source                 source file or directory
+   * @param destination            destination path
+   * @param includeSourceDirectory {@code true} to retain the source directory name under destination
+   * @param pathFilters            optional filters applied to each visited path
+   * @throws IOException if copying fails
+   */
   public static void copyTree (Path source, Path destination, boolean includeSourceDirectory, PathFilter... pathFilters)
     throws IOException {
 
     copyTree(source, destination, includeSourceDirectory, pathFilters, NO_FILE_ATTRIBUTES);
   }
 
+  /**
+   * Recursively copies a path to a destination applying filters and file attributes for created dirs/files.
+   *
+   * @param source                 source file or directory
+   * @param destination            destination path
+   * @param includeSourceDirectory {@code true} to retain the source directory name under destination
+   * @param pathFilters            optional filters applied to each visited path
+   * @param directoryAttributes    attributes to apply when creating directories
+   * @throws IOException if copying fails
+   */
   public static void copyTree (Path source, Path destination, boolean includeSourceDirectory, PathFilter[] pathFilters, FileAttribute<?>... directoryAttributes)
     throws IOException {
 
@@ -133,6 +171,15 @@ public class FileUtility {
     }
   }
 
+  /**
+   * Recursively deletes a path, optionally retaining the root and optionally failing on non-empty directories.
+   *
+   * @param target                        root to delete
+   * @param includeTargetDirectory        {@code true} to delete the root directory itself
+   * @param throwErrorOnDirectoryNotEmpty {@code true} to raise when a directory is not empty
+   * @param pathFilters                   optional filters applied to paths before deletion
+   * @throws IOException if deletion fails
+   */
   public static void deleteTree (Path target, boolean includeTargetDirectory, boolean throwErrorOnDirectoryNotEmpty, PathFilter... pathFilters)
     throws IOException {
 
@@ -174,6 +221,13 @@ public class FileUtility {
     }
   }
 
+  /**
+   * Ensures the directory hierarchy exists, guarding against null attribute arrays.
+   *
+   * @param path           directory path to create
+   * @param fileAttributes optional attributes to apply
+   * @throws IOException if creation fails
+   */
   private static void createDirectories (Path path, FileAttribute<?>... fileAttributes)
     throws IOException {
 
@@ -185,6 +239,14 @@ public class FileUtility {
     }
   }
 
+  /**
+   * Applies all provided filters to the path.
+   *
+   * @param path        path to test
+   * @param pathFilters filters to evaluate
+   * @return {@code true} if all filters accept or none provided
+   * @throws IOException if a filter fails
+   */
   private static boolean filter (Path path, PathFilter... pathFilters)
     throws IOException {
 

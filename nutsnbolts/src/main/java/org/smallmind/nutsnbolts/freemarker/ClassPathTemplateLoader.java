@@ -37,17 +37,29 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import freemarker.cache.TemplateLoader;
 
+/**
+ * FreeMarker {@link TemplateLoader} that resolves templates from the classpath.
+ * Supports loading relative to an anchor class/package or directly from a class loader.
+ */
 public class ClassPathTemplateLoader implements TemplateLoader {
 
   private final ClassLoader classLoader;
   private final boolean relative;
   private Class<?> anchorClass;
 
+  /**
+   * Creates a loader using the thread context class loader.
+   */
   public ClassPathTemplateLoader () {
 
     this(Thread.currentThread().getContextClassLoader());
   }
 
+  /**
+   * Creates a loader using the supplied class loader and absolute template names.
+   *
+   * @param classLoader class loader used to resolve resources
+   */
   public ClassPathTemplateLoader (ClassLoader classLoader) {
 
     this.classLoader = classLoader;
@@ -55,11 +67,22 @@ public class ClassPathTemplateLoader implements TemplateLoader {
     relative = false;
   }
 
+  /**
+   * Creates a loader that resolves templates relative to the package of an anchor class.
+   *
+   * @param anchorClass class whose package provides the base path
+   */
   public ClassPathTemplateLoader (Class<?> anchorClass) {
 
     this(anchorClass, false);
   }
 
+  /**
+   * Creates a loader that resolves templates relative to the package of an anchor class.
+   *
+   * @param anchorClass class whose package provides the base path
+   * @param relative    if {@code true}, prepend the anchor package path to template names
+   */
   public ClassPathTemplateLoader (Class<?> anchorClass, boolean relative) {
 
     this.anchorClass = anchorClass;
@@ -68,21 +91,34 @@ public class ClassPathTemplateLoader implements TemplateLoader {
     classLoader = anchorClass.getClassLoader();
   }
 
+  /**
+   * @return class whose package is used for relative template resolution, or {@code null}
+   */
   public Class<?> getAnchorClass () {
 
     return anchorClass;
   }
 
+  /**
+   * @return class loader used to locate classpath resources
+   */
   public ClassLoader getClassLoader () {
 
     return classLoader;
   }
 
+  /**
+   * Locates a template resource by name, optionally resolving relative to the anchor package.
+   *
+   * @param name template name/path
+   * @return template source handle or {@code null} if not found
+   */
   @Override
   public Object findTemplateSource (String name) {
 
     ClassPathTemplateSource source;
 
+    // Resolve relative to the anchor package when configured, otherwise treat as absolute classpath resource.
     if (relative && (anchorClass != null)) {
 
       StringBuilder pathBuilder = new StringBuilder(anchorClass.getPackage().getName().replace('.', '/'));
@@ -96,12 +132,27 @@ public class ClassPathTemplateLoader implements TemplateLoader {
     return (source.exists()) ? source : null;
   }
 
+  /**
+   * Classpath resources do not expose modification times; returns {@code -1}.
+   *
+   * @param templateSource ignored
+   * @return {@code -1} to indicate unknown modification time
+   */
   @Override
   public long getLastModified (Object templateSource) {
 
+    // Classpath resources generally don't expose last-modified timestamps.
     return -1;
   }
 
+  /**
+   * Opens a reader for the supplied template source using the requested encoding.
+   *
+   * @param templateSource classpath template source
+   * @param encoding       character encoding to apply
+   * @return reader over the template content
+   * @throws IOException if the stream cannot be opened
+   */
   @Override
   public Reader getReader (Object templateSource, String encoding)
     throws IOException {
@@ -109,6 +160,12 @@ public class ClassPathTemplateLoader implements TemplateLoader {
     return new InputStreamReader(((ClassPathTemplateSource)templateSource).getInputStream(), encoding);
   }
 
+  /**
+   * Closes the underlying template source stream.
+   *
+   * @param templateSource template source to close
+   * @throws IOException if closing fails
+   */
   @Override
   public void closeTemplateSource (Object templateSource)
     throws IOException {

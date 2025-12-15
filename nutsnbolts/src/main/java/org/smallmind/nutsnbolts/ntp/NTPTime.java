@@ -40,10 +40,19 @@ import java.util.concurrent.ThreadLocalRandom;
 import org.apache.commons.net.ntp.NTPUDPClient;
 import org.apache.commons.net.ntp.TimeInfo;
 
+/**
+ * Lightweight NTP client that computes the clock offset against one of a set of configured NTP hosts.
+ */
 public final class NTPTime {
 
   private final String[] hostNames;
 
+  /**
+   * Creates an NTP time helper using the provided host names. At least one host is required.
+   *
+   * @param hostNames array of NTP host names to query
+   * @throws IllegalArgumentException if no host names are provided
+   */
   public NTPTime (String[] hostNames) {
 
     if ((hostNames == null) || (hostNames.length == 0)) {
@@ -53,6 +62,14 @@ public final class NTPTime {
     this.hostNames = hostNames;
   }
 
+  /**
+   * Queries a random NTP host from the configured list and returns the computed clock offset
+   * relative to the local system clock.
+   *
+   * @param timeoutMillis socket timeout in milliseconds for the NTP request
+   * @return the offset in milliseconds; positive indicates server time is ahead of local time
+   * @throws IOException if the NTP query fails
+   */
   public long getOffset (int timeoutMillis)
     throws IOException {
 

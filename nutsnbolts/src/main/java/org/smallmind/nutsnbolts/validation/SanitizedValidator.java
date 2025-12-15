@@ -35,10 +35,20 @@ package org.smallmind.nutsnbolts.validation;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
+/**
+ * Validator for {@link Sanitized} ensuring the string is non-empty and contains no disallowed characters.
+ */
 public class SanitizedValidator implements ConstraintValidator<Sanitized, String> {
 
   private static final String ILLEGAL_CHARACTERS = "`$%^*()+={}[]|;\"<>?";
 
+  /**
+   * Checks that the string is non-empty and does not include any characters from {@link #ILLEGAL_CHARACTERS}; {@code null} is valid.
+   *
+   * @param value   candidate string
+   * @param context validation context (unused)
+   * @return {@code true} when the value passes sanitization rules
+   */
   @Override
   public boolean isValid (String value, ConstraintValidatorContext context) {
 

@@ -38,6 +38,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.function.Supplier;
 
+/**
+ * Pair of connected input/output streams backed by a {@link CircularBuffer}.
+ * Allows producer/consumer communication with optional external availability hints.
+ */
 public class CircularBufferIOStream implements Closeable {
 
   private static final int DEFAULT_SIZE = 1024;
@@ -49,21 +53,40 @@ public class CircularBufferIOStream implements Closeable {
   private boolean inputClosed = false;
   private boolean outputClosed = false;
 
+  /**
+   * Creates a stream with default buffer size and no availability supplier.
+   */
   public CircularBufferIOStream () {
 
     this(DEFAULT_SIZE, null);
   }
 
+  /**
+   * Creates a stream with the given buffer size.
+   *
+   * @param size buffer capacity
+   */
   public CircularBufferIOStream (int size) {
 
     this(size, null);
   }
 
+  /**
+   * Creates a stream with default buffer size and an availability supplier.
+   *
+   * @param availableSupplier optional supplier indicating readable bytes; {@code null} for unlimited
+   */
   public CircularBufferIOStream (Supplier<Integer> availableSupplier) {
 
     this(DEFAULT_SIZE, availableSupplier);
   }
 
+  /**
+   * Creates a stream with the given buffer size and availability supplier.
+   *
+   * @param size              buffer capacity
+   * @param availableSupplier optional supplier indicating readable bytes; {@code null} for unlimited
+   */
   public CircularBufferIOStream (int size, Supplier<Integer> availableSupplier) {
 
     this.availableSupplier = availableSupplier;
@@ -71,17 +94,26 @@ public class CircularBufferIOStream implements Closeable {
     circularBuffer = new CircularBuffer(size);
   }
 
+  /**
+   * Closes the underlying buffer immediately.
+   */
   @Override
   public void close () {
 
     circularBuffer.close();
   }
 
+  /**
+   * @return input stream end of the pipe
+   */
   public InputStream asInputStream () {
 
     return inputStream;
   }
 
+  /**
+   * @return output stream end of the pipe
+   */
   public OutputStream asOutputStream () {
 
     return outputStream;
@@ -89,6 +121,11 @@ public class CircularBufferIOStream implements Closeable {
 
   public class CircularBufferInputStream extends InputStream {
 
+    /**
+     * Reads one byte or returns -1 on EOF.
+     *
+     * @throws IOException if closed or interrupted
+     */
     @Override
     public synchronized int read ()
       throws IOException {
@@ -109,6 +146,12 @@ public class CircularBufferIOStream implements Closeable {
       }
     }
 
+    /**
+     * Reads up to {@code len} bytes into {@code data} starting at {@code off}.
+     *
+     * @return bytes read (may block) or -1 on EOF
+     * @throws IOException if closed or interrupted
+     */
     @Override
     public synchronized int read (byte[] data, int off, int len)
       throws IOException {
@@ -125,6 +168,11 @@ public class CircularBufferIOStream implements Closeable {
       }
     }
 
+    /**
+     * Skips (discards) up to {@code n} bytes.
+     *
+     * @throws IOException if closed or interrupted
+     */
     @Override
     public synchronized long skip (long n)
       throws IOException {
@@ -141,6 +189,9 @@ public class CircularBufferIOStream implements Closeable {
       }
     }
 
+    /**
+     * Returns either a supplied available hint or {@link Integer#MAX_VALUE} when none is provided.
+     */
     @Override
     public synchronized int available ()
       throws IOException {
@@ -173,6 +224,9 @@ public class CircularBufferIOStream implements Closeable {
       return false;
     }
 
+    /**
+     * Closes the input side; closes the buffer when both ends are closed.
+     */
     @Override
     public synchronized void close () {
 
@@ -190,6 +244,11 @@ public class CircularBufferIOStream implements Closeable {
 
   public class CircularBufferOutputStream extends OutputStream {
 
+    /**
+     * Writes a single byte to the buffer, blocking as needed.
+     *
+     * @throws IOException if closed or interrupted
+     */
     @Override
     public synchronized void write (int singleByte)
       throws IOException {
@@ -205,6 +264,11 @@ public class CircularBufferIOStream implements Closeable {
       }
     }
 
+    /**
+     * Writes up to {@code len} bytes from {@code data} starting at {@code off}, blocking as needed.
+     *
+     * @throws IOException if closed or interrupted
+     */
     @Override
     public synchronized void write (byte[] data, int off, int len)
       throws IOException {
@@ -220,6 +284,9 @@ public class CircularBufferIOStream implements Closeable {
       }
     }
 
+    /**
+     * Closes the output side; closes the buffer when both ends are closed.
+     */
     @Override
     public synchronized void close () {
 

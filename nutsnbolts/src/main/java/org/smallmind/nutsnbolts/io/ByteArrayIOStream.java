@@ -38,6 +38,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
+/**
+ * In-memory segmented stream supporting random read/write, truncation, and rewind semantics.
+ * Provides paired input/output views that operate over shared backing segments.
+ */
 public class ByteArrayIOStream implements Closeable {
 
   private final ByteArrayInputStream inputStream = new ByteArrayInputStream();
@@ -47,11 +51,19 @@ public class ByteArrayIOStream implements Closeable {
   private final ByteArrayIOBookmark writeBookmark;
   private boolean closed = false;
 
+  /**
+   * Constructs a stream with default 1KB segment allocation.
+   */
   public ByteArrayIOStream () {
 
     this(1024);
   }
 
+  /**
+   * Constructs a stream with the given segment allocation size.
+   *
+   * @param allocation bytes per segment
+   */
   public ByteArrayIOStream (int allocation) {
 
     segmentBuffer = new ByteArrayIOBuffer(allocation);
@@ -59,6 +71,11 @@ public class ByteArrayIOStream implements Closeable {
     writeBookmark = new ByteArrayIOBookmark(allocation);
   }
 
+  /**
+   * Constructs a stream backed by an existing buffer.
+   *
+   * @param segmentBuffer preexisting segmented buffer
+   */
   public ByteArrayIOStream (ByteArrayIOBuffer segmentBuffer) {
 
     this.segmentBuffer = segmentBuffer;
@@ -67,17 +84,27 @@ public class ByteArrayIOStream implements Closeable {
     writeBookmark = new ByteArrayIOBookmark(segmentBuffer.getAllocation());
   }
 
+  /**
+   * @return {@code true} if the stream has been closed
+   */
   public synchronized boolean isClosed () {
 
     return closed;
   }
 
+  /**
+   * Closes the stream; further operations will fail.
+   */
   @Override
   public synchronized void close () {
 
     closed = true;
   }
 
+  /**
+   * @return current logical size of the stream in bytes
+   * @throws IOException if the stream is closed
+   */
   public synchronized long size ()
     throws IOException {
 
@@ -89,6 +116,11 @@ public class ByteArrayIOStream implements Closeable {
     }
   }
 
+  /**
+   * Clears all data and resets bookmarks to the start.
+   *
+   * @throws IOException if the stream is closed
+   */
   public synchronized void clear ()
     throws IOException {
 
@@ -102,6 +134,12 @@ public class ByteArrayIOStream implements Closeable {
     }
   }
 
+  /**
+   * Truncates the stream to the specified size, zeroing remainder of the last segment.
+   *
+   * @param size new logical size
+   * @throws IOException if closed
+   */
   public synchronized void truncate (long size)
     throws IOException {
 
@@ -136,16 +174,25 @@ public class ByteArrayIOStream implements Closeable {
     }
   }
 
+  /**
+   * @return input-view of this stream
+   */
   public ByteArrayInputStream asInputStream () {
 
     return inputStream;
   }
 
+  /**
+   * @return output-view of this stream
+   */
   public ByteArrayOutputStream asOutputStream () {
 
     return outputStream;
   }
 
+  /**
+   * Converts buffered bytes to a UTF-8 string up to the logical end-of-stream.
+   */
   public synchronized String toString () {
 
     StringBuilder builder = new StringBuilder();
@@ -165,6 +212,10 @@ public class ByteArrayIOStream implements Closeable {
 
     private ByteArrayIOBookmark markBookmark;
 
+    /**
+     * @return current read position
+     * @throws IOException if stream closed
+     */
     public long position ()
       throws IOException {
 
@@ -178,6 +229,12 @@ public class ByteArrayIOStream implements Closeable {
       }
     }
 
+    /**
+     * Sets the read position, clamped to end-of-stream.
+     *
+     * @param position desired absolute position
+     * @throws IOException if stream closed or position negative
+     */
     public void position (long position)
       throws IOException {
 
@@ -194,6 +251,14 @@ public class ByteArrayIOStream implements Closeable {
       }
     }
 
+    /**
+     * Reads a byte at the given offset from the current position without advancing.
+     *
+     * @param index zero-based offset from current position
+     * @return byte value
+     * @throws IOException               if closed
+     * @throws IndexOutOfBoundsException if index exceeds available bytes
+     */
     public byte peek (int index)
       throws IOException {
 
@@ -211,6 +276,12 @@ public class ByteArrayIOStream implements Closeable {
       }
     }
 
+    /**
+     * Reads all available bytes into a new array.
+     *
+     * @return remaining bytes
+     * @throws IOException if closed
+     */
     public byte[] readAvailable ()
       throws IOException {
 
@@ -228,6 +299,11 @@ public class ByteArrayIOStream implements Closeable {
       }
     }
 
+    /**
+     * Reads a single byte or returns -1 on end-of-stream.
+     *
+     * @throws IOException if closed
+     */
     @Override
     public int read ()
       throws IOException {
@@ -250,6 +326,12 @@ public class ByteArrayIOStream implements Closeable {
       }
     }
 
+    /**
+     * Reads up to {@code len} bytes into {@code bytes} starting at {@code off}.
+     *
+     * @return number of bytes read or -1 on end-of-stream
+     * @throws IOException if closed or bounds invalid
+     */
     @Override
     public int read (byte[] bytes, int off, int len)
       throws IOException {
@@ -286,6 +368,11 @@ public class ByteArrayIOStream implements Closeable {
       }
     }
 
+    /**
+     * Skips up to {@code n} bytes and returns the number actually skipped.
+     *
+     * @throws IOException if closed
+     */
     @Override
     public long skip (long n)
       throws IOException {
@@ -309,6 +396,10 @@ public class ByteArrayIOStream implements Closeable {
       }
     }
 
+    /**
+     * @return number of bytes remaining to read
+     * @throws IOException if closed
+     */
     @Override
     public int available ()
       throws IOException {
@@ -322,6 +413,9 @@ public class ByteArrayIOStream implements Closeable {
       }
     }
 
+    /**
+     * Marks the current position for subsequent {@link #reset()}.
+     */
     @Override
     public void mark (int readLimit) {
 
@@ -332,6 +426,11 @@ public class ByteArrayIOStream implements Closeable {
       }
     }
 
+    /**
+     * Resets the read position to the last mark.
+     *
+     * @throws IOException if closed
+     */
     @Override
     public void reset ()
       throws IOException {
@@ -345,6 +444,11 @@ public class ByteArrayIOStream implements Closeable {
       }
     }
 
+    /**
+     * Rewinds the read position to the beginning.
+     *
+     * @throws IOException if closed
+     */
     public void rewind ()
       throws IOException {
 
@@ -357,6 +461,9 @@ public class ByteArrayIOStream implements Closeable {
       }
     }
 
+    /**
+     * Closes the stream, clearing marks and closing the parent stream.
+     */
     @Override
     public void close () {
 
@@ -367,6 +474,9 @@ public class ByteArrayIOStream implements Closeable {
       }
     }
 
+    /**
+     * @return {@code true}; marking is supported
+     */
     @Override
     public boolean markSupported () {
 
@@ -376,6 +486,10 @@ public class ByteArrayIOStream implements Closeable {
 
   public class ByteArrayOutputStream extends OutputStream {
 
+    /**
+     * @return current write position
+     * @throws IOException if closed
+     */
     public long position ()
       throws IOException {
 
@@ -389,6 +503,12 @@ public class ByteArrayIOStream implements Closeable {
       }
     }
 
+    /**
+     * Sets the write position, clamped to the logical end.
+     *
+     * @param position desired position
+     * @throws IOException if closed or position negative
+     */
     public void position (long position)
       throws IOException {
 
@@ -405,6 +525,11 @@ public class ByteArrayIOStream implements Closeable {
       }
     }
 
+    /**
+     * Writes a single byte, expanding segments as needed.
+     *
+     * @throws IOException if closed
+     */
     @Override
     public void write (int b)
       throws IOException {
@@ -427,6 +552,11 @@ public class ByteArrayIOStream implements Closeable {
       }
     }
 
+    /**
+     * Writes {@code len} bytes from the array starting at {@code off}.
+     *
+     * @throws IOException if closed or bounds invalid
+     */
     @Override
     public void write (byte[] bytes, int off, int len)
       throws IOException {
@@ -447,6 +577,11 @@ public class ByteArrayIOStream implements Closeable {
       }
     }
 
+    /**
+     * Rewinds the write position to the beginning without truncating.
+     *
+     * @throws IOException if closed
+     */
     public void rewind ()
       throws IOException {
 
@@ -459,6 +594,11 @@ public class ByteArrayIOStream implements Closeable {
       }
     }
 
+    /**
+     * Advances the write bookmark to the logical end-of-stream.
+     *
+     * @throws IOException if closed
+     */
     public void advance ()
       throws IOException {
 
@@ -471,6 +611,9 @@ public class ByteArrayIOStream implements Closeable {
       }
     }
 
+    /**
+     * Closes the parent stream.
+     */
     @Override
     public void close () {
 
