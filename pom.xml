@@ -48,7 +48,7 @@
           <plugin>
             <groupId>org.sonatype.central</groupId>
             <artifactId>central-publishing-maven-plugin</artifactId>
-            <version>0.8.0</version>
+            <version>0.9.0</version>
             <extensions>true</extensions>
             <configuration>
               <publishingServerId>central</publishingServerId>
@@ -117,7 +117,7 @@
     <jakarta.xml.bind.version>4.0.2</jakarta.xml.bind.version>
     <jakarta.xml.soap.version>3.0.2</jakarta.xml.soap.version>
     <jakarta.xml.ws.version>4.0.2</jakarta.xml.ws.version>
-    <jersey.version>3.1.10</jersey.version>
+    <jersey.version>4.0.0</jersey.version>
     <jetty.version>12.0.23</jetty.version>
     <jfextras.labs.version>9.0-r1</jfextras.labs.version>
     <jose4j.version>0.9.6</jose4j.version>
@@ -675,11 +675,6 @@
       <dependency>
         <groupId>org.glassfish.jersey.containers</groupId>
         <artifactId>jersey-container-servlet</artifactId>
-        <version>${jersey.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.glassfish.jersey.containers</groupId>
-        <artifactId>jersey-container-servlet-core</artifactId>
         <version>${jersey.version}</version>
       </dependency>
       <dependency>

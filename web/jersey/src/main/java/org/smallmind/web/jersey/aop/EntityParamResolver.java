@@ -36,7 +36,7 @@ import java.util.function.Function;
 import jakarta.inject.Singleton;
 import jakarta.ws.rs.core.Feature;
 import jakarta.ws.rs.core.FeatureContext;
-import org.glassfish.jersey.internal.inject.AbstractBinder;
+import org.glassfish.jersey.innate.inject.InternalBinder;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.glassfish.jersey.server.model.Parameter;
 import org.glassfish.jersey.server.spi.internal.ValueParamProvider;
@@ -71,7 +71,7 @@ public class EntityParamResolver {
     @Override
     public boolean configure (FeatureContext context) {
 
-      context.register(new AbstractBinder() {
+      context.register(new InternalBinder() {
 
         @Override
         protected void configure () {
