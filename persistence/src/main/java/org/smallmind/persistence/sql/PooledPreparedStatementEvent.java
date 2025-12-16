@@ -37,10 +37,21 @@ import java.sql.SQLException;
 import javax.sql.PooledConnection;
 import javax.sql.StatementEvent;
 
+/**
+ * Extension of {@link StatementEvent} that carries a unique identifier for a pooled prepared
+ * statement so the cache can correlate close and error notifications.
+ */
 public class PooledPreparedStatementEvent extends StatementEvent {
 
   private final String statementId;
 
+  /**
+   * Constructs a close event for a pooled statement.
+   *
+   * @param connection  the pooled connection that owns the statement
+   * @param statement   the JDBC prepared statement
+   * @param statementId unique identifier of the pooled statement
+   */
   public PooledPreparedStatementEvent (PooledConnection connection, PreparedStatement statement, String statementId) {
 
     super(connection, statement);
@@ -48,6 +59,14 @@ public class PooledPreparedStatementEvent extends StatementEvent {
     this.statementId = statementId;
   }
 
+  /**
+   * Constructs an error event for a pooled statement.
+   *
+   * @param connection  the pooled connection that owns the statement
+   * @param statement   the JDBC prepared statement
+   * @param exception   the SQL error that occurred
+   * @param statementId unique identifier of the pooled statement
+   */
   public PooledPreparedStatementEvent (PooledConnection connection, PreparedStatement statement, SQLException exception, String statementId) {
 
     super(connection, statement, exception);
@@ -55,6 +74,9 @@ public class PooledPreparedStatementEvent extends StatementEvent {
     this.statementId = statementId;
   }
 
+  /**
+   * @return the unique id associated with the pooled statement
+   */
   public String getStatementId () {
 
     return statementId;

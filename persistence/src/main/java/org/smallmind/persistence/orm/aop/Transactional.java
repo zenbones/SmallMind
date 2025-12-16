@@ -37,15 +37,38 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Declares that the annotated element must execute within a transactional boundary.
+ */
 @Target({ElementType.TYPE, ElementType.CONSTRUCTOR, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Transactional {
 
+  /**
+   * Optional list of data source keys this applies to; empty means all.
+   *
+   * @return data source identifiers
+   */
   String[] dataSources () default {};
 
+  /**
+   * When true, transactional boundaries are applied implicitly without explicit boundary setup.
+   *
+   * @return whether the annotation implies boundary setup
+   */
   boolean implicit () default true;
 
+  /**
+   * When true, marks the transaction as rollback-only.
+   *
+   * @return whether to force rollback
+   */
   boolean rollbackOnly () default false;
 
+  /**
+   * When true, exceptions trigger automatic rollback.
+   *
+   * @return whether to rollback on exception
+   */
   boolean rollbackOnException () default true;
 }

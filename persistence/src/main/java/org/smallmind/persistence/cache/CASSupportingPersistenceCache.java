@@ -32,12 +32,37 @@
  */
 package org.smallmind.persistence.cache;
 
+/**
+ * Persistence cache that supports compare-and-swap (CAS) semantics.
+ */
 public interface CASSupportingPersistenceCache<K, V> extends PersistenceCache<K, V> {
 
+  /**
+   * Indicates whether CAS operations require copies to be made to avoid shared-state issues.
+   *
+   * @return true if caller should copy values before CAS
+   */
   boolean requiresCopyOnDistributedCASOperation ();
 
+  /**
+   * Retrieves a value along with its CAS version.
+   *
+   * @param key cache key
+   * @return CAS wrapper containing value and version
+   */
   CASValue<V> getViaCas (K key);
 
+  /**
+   * Attempts to update the value if the supplied version matches.
+   *
+   * @param key               cache key
+   * @param oldValue          previous value (may be used by implementations)
+   * @param value             new value to store
+   * @param version           expected version
+   * @param timeToLiveSeconds TTL in seconds
+   * @return true if updated
+   * @throws CacheOperationException on cache error
+   */
   boolean putViaCas (K key, V oldValue, V value, long version, int timeToLiveSeconds)
     throws CacheOperationException;
 }

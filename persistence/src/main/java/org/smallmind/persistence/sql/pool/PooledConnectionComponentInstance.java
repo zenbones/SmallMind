@@ -43,6 +43,11 @@ import org.smallmind.quorum.pool.complex.ComponentInstance;
 import org.smallmind.quorum.pool.complex.ComponentPool;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * {@link ComponentInstance} wrapper for {@link PooledConnection}s that participates in the pool
+ * lifecycle, performs optional validation, and listens for connection events to return or
+ * terminate instances.
+ */
 public class PooledConnectionComponentInstance<P extends PooledConnection> implements ComponentInstance<P>, ConnectionEventListener {
 
   private final ComponentPool<P> componentPool;
@@ -52,6 +57,12 @@ public class PooledConnectionComponentInstance<P extends PooledConnection> imple
 
   private PreparedStatement validationStatement;
 
+  /**
+   * Creates an instance that returns the pooled connection to the pool when closed.
+   *
+   * @param componentPool    pool managing this instance
+   * @param pooledConnection pooled connection being wrapped
+   */
   public PooledConnectionComponentInstance (ComponentPool<P> componentPool, P pooledConnection) {
 
     this.componentPool = componentPool;
@@ -60,6 +71,14 @@ public class PooledConnectionComponentInstance<P extends PooledConnection> imple
     pooledConnection.addConnectionEventListener(this);
   }
 
+  /**
+   * Creates an instance with an optional validation query executed on {@link #validate()}.
+   *
+   * @param componentPool    pool managing this instance
+   * @param pooledConnection pooled connection being wrapped
+   * @param validationQuery  SQL used to validate the connection; if null or empty validation is skipped
+   * @throws SQLException if preparing the validation statement fails
+   */
   public PooledConnectionComponentInstance (ComponentPool<P> componentPool, P pooledConnection, String validationQuery)
     throws SQLException {
 
@@ -72,11 +91,21 @@ public class PooledConnectionComponentInstance<P extends PooledConnection> imple
     }
   }
 
+  /**
+   * Returns the stack trace captured when the instance was served, if existential awareness is enabled.
+   *
+   * @return recorded stack trace or {@code null} if not captured
+   */
   public StackTraceElement[] getExistentialStackTrace () {
 
     return stackTraceReference.get();
   }
 
+  /**
+   * Validates the connection by executing the configured validation query if present.
+   *
+   * @return {@code true} if validation succeeds or is not configured; {@code false} otherwise
+   */
   public boolean validate () {
 
     if (validationStatement != null) {
@@ -90,6 +119,11 @@ public class PooledConnectionComponentInstance<P extends PooledConnection> imple
     return true;
   }
 
+  /**
+   * Returns the connection to the pool when the proxy reports a close.
+   *
+   * @param connectionEvent connection close event
+   */
   public void connectionClosed (ConnectionEvent connectionEvent) {
 
     try {
@@ -99,6 +133,11 @@ public class PooledConnectionComponentInstance<P extends PooledConnection> imple
     }
   }
 
+  /**
+   * Handles connection errors by reporting to the pool and terminating the instance.
+   *
+   * @param connectionEvent event carrying the {@link SQLException}
+   */
   public void connectionErrorOccurred (ConnectionEvent connectionEvent) {
 
     Exception reportedException = connectionEvent.getSQLException();
@@ -122,6 +161,11 @@ public class PooledConnectionComponentInstance<P extends PooledConnection> imple
     }
   }
 
+  /**
+   * Serves the wrapped pooled connection, recording the current stack trace when existential tracking is enabled.
+   *
+   * @return pooled connection ready for client use
+   */
   public P serve () {
 
     if (componentPool.getComplexPoolConfig().isExistentiallyAware()) {
@@ -131,6 +175,11 @@ public class PooledConnectionComponentInstance<P extends PooledConnection> imple
     return pooledConnection;
   }
 
+  /**
+   * Closes the pooled connection instance, cleaning up validation statement and removing listeners.
+   *
+   * @throws SQLException if closing the pooled connection or validation statement fails
+   */
   public void close ()
     throws SQLException {
 

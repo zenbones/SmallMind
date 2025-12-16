@@ -35,11 +35,22 @@ package org.smallmind.persistence.orm.aop;
 import java.util.HashSet;
 import org.smallmind.persistence.orm.ProxySession;
 
+/**
+ * Tracks a set of session-aware resources within a boundary, enforcing allowed data sources.
+ *
+ * @param <T> the resource type tracked in the boundary
+ */
 public class BoundarySet<T> extends HashSet<T> {
 
   private final String[] sessionSourceKeys;
   private final boolean implicit;
 
+  /**
+   * Creates a boundary set with the given allowed session sources and implicit flag.
+   *
+   * @param sessionSourceKeys allowed session source keys; empty means all
+   * @param implicit          whether the boundary was implicitly established
+   */
   public BoundarySet (String[] sessionSourceKeys, boolean implicit) {
 
     super();
@@ -48,16 +59,34 @@ public class BoundarySet<T> extends HashSet<T> {
     this.implicit = implicit;
   }
 
+  /**
+   * Indicates whether the boundary is implicit and unconstrained by explicit session sources.
+   *
+   * @return {@code true} when no specific session sources are declared and the boundary is implicit
+   */
   public boolean isImplicit () {
 
     return implicit && (sessionSourceKeys.length == 0);
   }
 
+  /**
+   * Determines whether the provided session is permitted by this boundary.
+   *
+   * @param proxySession the session to check
+   * @return {@code true} if allowed
+   */
   public boolean allows (ProxySession<?, ?> proxySession) {
 
     return allows(proxySession.getSessionSourceKey());
   }
 
+  /**
+   * Determines whether the provided session source key is permitted by this boundary.
+   *
+   * @param sessionSourceKey the session source key to check
+   * @return {@code true} if allowed
+   * @throws IllegalArgumentException if implicit is true while sources are explicitly listed
+   */
   public boolean allows (String sessionSourceKey) {
 
     if (sessionSourceKeys.length == 0) {

@@ -40,6 +40,12 @@ import org.smallmind.persistence.cache.CASSupportingPersistenceCache;
 import org.smallmind.persistence.cache.CASValue;
 import org.smallmind.persistence.cache.CacheOperationException;
 
+/**
+ * {@link org.smallmind.persistence.cache.PersistenceCache} backed by a {@link ProxyMemcachedClient}.
+ * Keys are namespaced with a discriminator to avoid collisions and optional CAS operations are supported.
+ *
+ * @param <V> value type stored in the cache
+ */
 public class MemcachedCache<V> implements CASSupportingPersistenceCache<String, V> {
 
   private final ProxyMemcachedClient memcachedClient;
@@ -47,6 +53,14 @@ public class MemcachedCache<V> implements CASSupportingPersistenceCache<String, 
   private final String discriminator;
   private final int timeToLiveSeconds;
 
+  /**
+   * Creates a memcached-backed cache instance.
+   *
+   * @param memcachedClient   client used to interact with the memcached cluster
+   * @param discriminator     namespace applied to keys to avoid collisions
+   * @param valueClass        class used to safely cast returned values
+   * @param timeToLiveSeconds default time-to-live used when none is specified
+   */
   public MemcachedCache (ProxyMemcachedClient memcachedClient, String discriminator, Class<V> valueClass, int timeToLiveSeconds) {
 
     this.valueClass = valueClass;
@@ -55,23 +69,39 @@ public class MemcachedCache<V> implements CASSupportingPersistenceCache<String, 
     this.timeToLiveSeconds = timeToLiveSeconds;
   }
 
+  /**
+   * @return underlying memcached client
+   */
   public ProxyMemcachedClient getMemcachedClient () {
 
     return memcachedClient;
   }
 
+  /**
+   * @return {@code false} because memcached CAS operations do not require copying values
+   */
   @Override
   public boolean requiresCopyOnDistributedCASOperation () {
 
     return false;
   }
 
+  /**
+   * @return default TTL in seconds applied to cache entries
+   */
   @Override
   public int getDefaultTimeToLiveSeconds () {
 
     return timeToLiveSeconds;
   }
 
+  /**
+   * Fetches a value from memcached.
+   *
+   * @param key cache key without discriminator prefix
+   * @return cached value or {@code null} when missing
+   * @throws CacheOperationException if the client interaction fails
+   */
   @Override
   public V get (String key)
     throws CacheOperationException {
@@ -84,6 +114,13 @@ public class MemcachedCache<V> implements CASSupportingPersistenceCache<String, 
     }
   }
 
+  /**
+   * Fetches multiple values from memcached.
+   *
+   * @param keys cache keys without discriminator prefix
+   * @return map of keys to cached values; missing entries are absent
+   * @throws CacheOperationException if the client interaction fails
+   */
   @Override
   public Map<String, V> get (String[] keys)
     throws CacheOperationException {
@@ -102,6 +139,14 @@ public class MemcachedCache<V> implements CASSupportingPersistenceCache<String, 
     }
   }
 
+  /**
+   * Stores a value with an optional custom TTL.
+   *
+   * @param key               cache key without discriminator prefix
+   * @param value             value to cache
+   * @param timeToLiveSeconds TTL in seconds; non-positive values fall back to the default TTL
+   * @throws CacheOperationException if the client interaction fails
+   */
   @Override
   public void set (String key, V value, int timeToLiveSeconds) {
 
@@ -112,6 +157,15 @@ public class MemcachedCache<V> implements CASSupportingPersistenceCache<String, 
     }
   }
 
+  /**
+   * Stores a value only when no existing entry is found, retrying with CAS for safety.
+   *
+   * @param key               cache key without discriminator prefix
+   * @param value             value to cache
+   * @param timeToLiveSeconds TTL in seconds; non-positive values fall back to the default TTL
+   * @return existing value when present; {@code null} when the new value was inserted
+   * @throws CacheOperationException if the client interaction fails
+   */
   @Override
   public V putIfAbsent (String key, V value, int timeToLiveSeconds) {
 
@@ -138,6 +192,13 @@ public class MemcachedCache<V> implements CASSupportingPersistenceCache<String, 
     }
   }
 
+  /**
+   * Retrieves a value and CAS token for optimistic updates.
+   *
+   * @param key cache key without discriminator prefix
+   * @return CAS-wrapped value; {@link CASValue#nullInstance()} when missing
+   * @throws CacheOperationException if the client interaction fails
+   */
   @Override
   public CASValue<V> getViaCas (String key) {
 
@@ -155,6 +216,17 @@ public class MemcachedCache<V> implements CASSupportingPersistenceCache<String, 
     }
   }
 
+  /**
+   * Attempts a CAS-based update of a cache entry.
+   *
+   * @param key               cache key without discriminator prefix
+   * @param oldValue          ignored by the memcached client but included for interface parity
+   * @param value             new value to store
+   * @param version           CAS token obtained from {@link #getViaCas(String)}
+   * @param timeToLiveSeconds TTL in seconds; non-positive values fall back to the default TTL
+   * @return {@code true} when the CAS update succeeds
+   * @throws CacheOperationException if the client interaction fails
+   */
   @Override
   public boolean putViaCas (String key, V oldValue, V value, long version, int timeToLiveSeconds) {
 
@@ -166,6 +238,12 @@ public class MemcachedCache<V> implements CASSupportingPersistenceCache<String, 
     }
   }
 
+  /**
+   * Deletes a cache entry.
+   *
+   * @param key cache key without discriminator prefix
+   * @throws CacheOperationException if the client interaction fails
+   */
   @Override
   public void remove (String key) {
 
@@ -176,6 +254,12 @@ public class MemcachedCache<V> implements CASSupportingPersistenceCache<String, 
     }
   }
 
+  /**
+   * Builds a fully qualified memcached key by applying the configured discriminator.
+   *
+   * @param key local cache key
+   * @return discriminator-prefixed key used with the memcached client
+   */
   private String getDiscriminatedKey (String key) {
 
     return new StringBuilder(discriminator).append('[').append(key).append(']').toString();

@@ -34,23 +34,41 @@ package org.smallmind.persistence.cache;
 
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
+/**
+ * Runtime exception indicating a failure interacting with the underlying cache implementation.
+ */
 public class CacheOperationException extends FormattedRuntimeException {
 
+  /**
+   * Creates an empty exception.
+   */
   public CacheOperationException () {
 
     super();
   }
 
+  /**
+   * @param message formatted message
+   * @param args    message parameters
+   */
   public CacheOperationException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * @param throwable root cause
+   * @param message   formatted message
+   * @param args      message parameters
+   */
   public CacheOperationException (Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);
   }
 
+  /**
+   * @param throwable root cause
+   */
   public CacheOperationException (Throwable throwable) {
 
     super(throwable);

@@ -42,11 +42,24 @@ import org.smallmind.persistence.sql.pool.AbstractPooledDataSource;
 import org.smallmind.quorum.pool.ComponentPoolException;
 import org.smallmind.quorum.pool.complex.ComponentPool;
 
+/**
+ * {@link DataSource} that routes connection requests to one of several component pools based on the
+ * current {@link PooledDataSourceContext}. This enables per-context connection pools sharing a base
+ * name.
+ */
 public class ContextualPooledDataSource extends AbstractPooledDataSource<DataSource, PooledConnection> implements DataSource {
 
   private final HashMap<String, ComponentPool> componentPoolMap = new HashMap<>();
   private final String baseName;
 
+  /**
+   * Builds a contextual data source from an array of component pools, mapping them by context name
+   * using the provided translator.
+   *
+   * @param poolNameTranslator translator used to map between pool names and context identifiers
+   * @param componentPools     component pools to expose
+   * @throws ComponentPoolException if a pool name cannot be parsed
+   */
   public ContextualPooledDataSource (ContextualPoolNameTranslator poolNameTranslator, ComponentPool... componentPools)
     throws ComponentPoolException {
 
@@ -58,6 +71,12 @@ public class ContextualPooledDataSource extends AbstractPooledDataSource<DataSou
     }
   }
 
+  /**
+   * Routes the connection request to the pool matching the current {@link PooledDataSourceContext}.
+   *
+   * @return JDBC connection from the contextual pool
+   * @throws SQLException if no matching pool exists or acquisition fails
+   */
   @Override
   public Connection getConnection ()
     throws SQLException {
@@ -78,11 +97,19 @@ public class ContextualPooledDataSource extends AbstractPooledDataSource<DataSou
     }
   }
 
+  /**
+   * Unsupported; credentials are determined by the configured pools.
+   *
+   * @throws UnsupportedOperationException always
+   */
   public Connection getConnection (String username, String password) {
 
     throw new UnsupportedOperationException("Please properly configure the underlying resource managed by the pool which is represented by this DataSource");
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void startup ()
     throws ComponentPoolException {
@@ -92,6 +119,9 @@ public class ContextualPooledDataSource extends AbstractPooledDataSource<DataSou
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void shutdown ()
     throws ComponentPoolException {

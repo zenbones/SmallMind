@@ -35,7 +35,19 @@ package org.smallmind.persistence.orm.jpa;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaDelete;
 
+/**
+ * Supplies details to build a {@link CriteriaDelete}.
+ *
+ * @param <T> entity type to delete
+ */
 public abstract class CriteriaDeleteDetails<T> {
 
+  /**
+   * Completes a criteria delete definition for the provided entity class.
+   *
+   * @param criteriaClass   the entity class to delete from
+   * @param criteriaBuilder the JPA criteria builder
+   * @return the fully defined criteria delete
+   */
   public abstract CriteriaDelete<T> completeCriteria (Class<T> criteriaClass, CriteriaBuilder criteriaBuilder);
 }

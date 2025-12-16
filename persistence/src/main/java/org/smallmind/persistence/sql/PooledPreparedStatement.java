@@ -43,6 +43,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.sql.StatementEvent;
 import javax.sql.StatementEventListener;
 
+/**
+ * Proxy wrapper around a JDBC {@link PreparedStatement} that notifies the owning pooled connection
+ * when the statement is closed or errors occur, enabling reuse via {@link PooledPreparedStatementCache}.
+ */
 public class PooledPreparedStatement implements InvocationHandler {
 
   private final AbstractPooledConnection<?> pooledConnection;
@@ -51,6 +55,12 @@ public class PooledPreparedStatement implements InvocationHandler {
   private final String statementId;
   private final AtomicBoolean closed = new AtomicBoolean(false);
 
+  /**
+   * Wraps a prepared statement originating from a pooled connection.
+   *
+   * @param pooledConnection connection that owns the statement
+   * @param actualStatement  underlying JDBC prepared statement
+   */
   public PooledPreparedStatement (AbstractPooledConnection<?> pooledConnection, PreparedStatement actualStatement) {
 
     this.pooledConnection = pooledConnection;
@@ -60,6 +70,17 @@ public class PooledPreparedStatement implements InvocationHandler {
     proxyStatement = (PreparedStatement)(Proxy.newProxyInstance(PooledPreparedStatement.class.getClassLoader(), new Class[] {PreparedStatement.class}, this));
   }
 
+  /**
+   * Intercepts {@code close()} to fire a {@link StatementEvent} instead of closing the underlying
+   * statement, allowing it to be recycled. Other methods delegate to the wrapped statement and
+   * propagate statement error events on {@link SQLException}s.
+   *
+   * @param proxy  the proxy instance
+   * @param method invoked method
+   * @param args   method arguments
+   * @return result of the underlying method call
+   * @throws Throwable the wrapped exception from the target method
+   */
   public Object invoke (Object proxy, Method method, Object[] args)
     throws Throwable {
 
@@ -90,22 +111,41 @@ public class PooledPreparedStatement implements InvocationHandler {
     }
   }
 
+  /**
+   * Unique identifier used by the cache and statement events.
+   *
+   * @return generated statement id
+   */
   public String getStatementId () {
 
     return statementId;
   }
 
+  /**
+   * @return proxied statement that will publish events on close and error
+   */
   public PreparedStatement getPreparedStatement () {
 
     return proxyStatement;
   }
 
+  /**
+   * Delegates to the pooled connection's log writer.
+   *
+   * @return configured {@link PrintWriter} or {@code null}
+   * @throws SQLException if the pooled connection cannot supply a writer
+   */
   public PrintWriter getLogWriter ()
     throws SQLException {
 
     return pooledConnection.getLogWriter();
   }
 
+  /**
+   * Permanently closes the underlying statement exactly once, bypassing the reuse proxy.
+   *
+   * @throws SQLException if the underlying statement fails to close
+   */
   public void close ()
     throws SQLException {
 

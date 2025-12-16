@@ -34,23 +34,47 @@ package org.smallmind.persistence.orm;
 
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
+/**
+ * Raised when an ORM operation fails at runtime.
+ */
 public class ORMOperationException extends FormattedRuntimeException {
 
+  /**
+   * Creates an ORM operation exception with no message.
+   */
   public ORMOperationException () {
 
     super();
   }
 
+  /**
+   * Creates an ORM operation exception with a formatted message.
+   *
+   * @param message the message template
+   * @param args    arguments referenced by the format specifiers in the message
+   */
   public ORMOperationException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * Creates an ORM operation exception with a cause and formatted message.
+   *
+   * @param throwable the underlying cause
+   * @param message   the message template
+   * @param args      arguments referenced by the format specifiers in the message
+   */
   public ORMOperationException (Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);
   }
 
+  /**
+   * Creates an ORM operation exception with a cause.
+   *
+   * @param throwable the underlying cause
+   */
   public ORMOperationException (Throwable throwable) {
 
     super(throwable);

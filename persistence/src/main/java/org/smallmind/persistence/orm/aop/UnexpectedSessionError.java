@@ -32,23 +32,52 @@
  */
 package org.smallmind.persistence.orm.aop;
 
+/**
+ * Indicates an unexpected error occurred while closing or managing sessions within a boundary.
+ */
 public class UnexpectedSessionError extends SessionError {
 
+  /**
+   * Creates an unexpected session error with no message.
+   *
+   * @param closure remaining boundary depth
+   */
   public UnexpectedSessionError (int closure) {
 
     super(closure);
   }
 
+  /**
+   * Creates an unexpected session error with a formatted message.
+   *
+   * @param closure remaining boundary depth
+   * @param message the message template
+   * @param args    arguments referenced by the format specifiers in the message
+   */
   public UnexpectedSessionError (int closure, String message, Object... args) {
 
     super(closure, message, args);
   }
 
+  /**
+   * Creates an unexpected session error with a cause and formatted message.
+   *
+   * @param closure   remaining boundary depth
+   * @param throwable the cause
+   * @param message   the message template
+   * @param args      arguments referenced by the format specifiers in the message
+   */
   public UnexpectedSessionError (int closure, Throwable throwable, String message, Object... args) {
 
     super(closure, throwable, message, args);
   }
 
+  /**
+   * Creates an unexpected session error with a cause.
+   *
+   * @param closure   remaining boundary depth
+   * @param throwable the cause
+   */
   public UnexpectedSessionError (int closure, Throwable throwable) {
 
     super(closure, throwable);

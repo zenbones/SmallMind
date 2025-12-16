@@ -39,8 +39,22 @@ import org.smallmind.persistence.orm.ProxyTransactionException;
 import org.smallmind.persistence.orm.TransactionEndState;
 import org.smallmind.persistence.orm.aop.TransactionalState;
 
+/**
+ * Creates dynamic proxies that register post-processing callbacks on the current transaction.
+ */
 public class PostProcessProxyFactory {
 
+  /**
+   * Generates a proxy around the target using the transaction associated with the given session key.
+   *
+   * @param sessionSourceKey session key whose current transaction should be used
+   * @param proxyInterface   interface to proxy
+   * @param target           target instance to delegate to
+   * @param endState         transaction end state that should trigger the post-process
+   * @param priority         execution priority for the post-process
+   * @return the proxy instance
+   * @throws ProxyTransactionException if no transaction is active for the session
+   */
   public static Proxy generatePostProcessProxy (String sessionSourceKey, Class proxyInterface, Object target, TransactionEndState endState, ProcessPriority priority) {
 
     ProxyTransaction proxyTransaction;
@@ -52,9 +66,18 @@ public class PostProcessProxyFactory {
     return generatePostProcessProxy(proxyTransaction, proxyInterface, target, endState, priority);
   }
 
+  /**
+   * Generates a proxy around the target using the supplied transaction.
+   *
+   * @param proxyTransaction transaction to attach the post-process to
+   * @param proxyInterface   interface to proxy
+   * @param target           target instance to delegate to
+   * @param endState         transaction end state that should trigger the post-process
+   * @param priority         execution priority for the post-process
+   * @return the proxy instance
+   */
   public static Proxy generatePostProcessProxy (ProxyTransaction proxyTransaction, Class proxyInterface, Object target, TransactionEndState endState, ProcessPriority priority) {
 
     return (Proxy)Proxy.newProxyInstance(proxyInterface.getClassLoader(), new Class[] {proxyInterface}, new PostProcessInvocationHandler(proxyTransaction, target, endState, priority));
   }
 }
-

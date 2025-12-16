@@ -34,23 +34,47 @@ package org.smallmind.persistence;
 
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
+/**
+ * Thrown when a requested durable identifier cannot be located in the persistence store.
+ */
 public class IdentifierNotFoundException extends FormattedRuntimeException {
 
+  /**
+   * Creates an exception indicating a missing identifier with no message.
+   */
   public IdentifierNotFoundException () {
 
     super();
   }
 
+  /**
+   * Creates an exception indicating a missing identifier with a formatted message.
+   *
+   * @param message the message template
+   * @param args    arguments referenced by the format specifiers in the message
+   */
   public IdentifierNotFoundException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * Creates an exception indicating a missing identifier with a cause and formatted message.
+   *
+   * @param throwable the underlying cause
+   * @param message   the message template
+   * @param args      arguments referenced by the format specifiers in the message
+   */
   public IdentifierNotFoundException (Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);
   }
 
+  /**
+   * Creates an exception indicating a missing identifier with a cause.
+   *
+   * @param throwable the underlying cause
+   */
   public IdentifierNotFoundException (Throwable throwable) {
 
     super(throwable);

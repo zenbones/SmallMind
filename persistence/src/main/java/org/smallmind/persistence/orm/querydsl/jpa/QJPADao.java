@@ -58,18 +58,42 @@ import org.smallmind.persistence.orm.ORMDao;
 import org.smallmind.persistence.orm.ProxySession;
 import org.smallmind.persistence.orm.jpa.JPADurable;
 
+/**
+ * JPA DAO implementation using QueryDSL for query construction, with optional vector cache integration.
+ *
+ * @param <I> identifier type
+ * @param <D> durable entity type
+ */
 public class QJPADao<I extends Serializable & Comparable<I>, D extends JPADurable<I, D>> extends ORMDao<I, D, EntityManagerFactory, EntityManager> {
 
+  /**
+   * Constructs a QueryDSL JPA DAO without cache integration.
+   *
+   * @param proxySession the JPA proxy session
+   */
   public QJPADao (ProxySession<EntityManagerFactory, EntityManager> proxySession) {
 
     super(proxySession, null);
   }
 
+  /**
+   * Constructs a QueryDSL JPA DAO with optional cache integration.
+   *
+   * @param proxySession the JPA proxy session
+   * @param vectoredDao  cache-backed delegate used when caching is enabled
+   */
   public QJPADao (ProxySession<EntityManagerFactory, EntityManager> proxySession, VectoredDao<I, D> vectoredDao) {
 
     super(proxySession, vectoredDao);
   }
 
+  /**
+   * Retrieves a durable by id, consulting cache first when available.
+   *
+   * @param durableClass the entity class
+   * @param id           the identifier to find
+   * @return the durable instance or {@code null} if not found
+   */
   @Override
   public D get (Class<D> durableClass, I id) {
 
@@ -99,12 +123,26 @@ public class QJPADao<I extends Serializable & Comparable<I>, D extends JPADurabl
     return null;
   }
 
+  /**
+   * Fetches a durable directly from the EntityManager by id.
+   *
+   * @param durableClass entity class
+   * @param id           identifier to locate
+   * @return managed durable or {@code null} if id is null or not found
+   */
   @Override
   public D acquire (Class<D> durableClass, I id) {
 
     return (id == null) ? null : durableClass.cast(getSession().getNativeSession().find(durableClass, id));
   }
 
+  /**
+   * Persists the durable via JPA and updates cache if configured.
+   *
+   * @param durableClass entity class
+   * @param durable      durable to persist
+   * @return managed durable or {@code null} when input is null
+   */
   @Override
   public D persist (Class<D> durableClass, D durable) {
 
@@ -131,6 +169,12 @@ public class QJPADao<I extends Serializable & Comparable<I>, D extends JPADurabl
     return null;
   }
 
+  /**
+   * Deletes a durable via the EntityManager and clears it from cache if present.
+   *
+   * @param durableClass entity class
+   * @param durable      instance to delete
+   */
   @Override
   public void delete (Class<D> durableClass, D durable) {
 
@@ -157,17 +201,35 @@ public class QJPADao<I extends Serializable & Comparable<I>, D extends JPADurabl
     }
   }
 
+  /**
+   * Unsupported for JPA; detaching is managed by the persistence context.
+   *
+   * @param object durable to detach
+   * @return never returns; always throws
+   * @throws UnsupportedOperationException always
+   */
   @Override
   public D detach (D object) {
 
     throw new UnsupportedOperationException("JPA has no explicit detached state");
   }
 
+  /**
+   * Counts all entities of the managed type.
+   *
+   * @return total count
+   */
   @Override
   public long size () {
 
     return countByQuery(new JPAQueryDetails<D>() {
 
+      /**
+       * Builds a QueryDSL query that selects all managed entities for counting.
+       *
+       * @param query base query to complete
+       * @return query selecting every managed entity
+       */
       @Override
       public JPAQuery<D> completeQuery (JPAQuery<D> query) {
 
@@ -176,11 +238,22 @@ public class QJPADao<I extends Serializable & Comparable<I>, D extends JPADurabl
     });
   }
 
+  /**
+   * Lists all entities of the managed type.
+   *
+   * @return list of all durables
+   */
   @Override
   public List<D> list () {
 
     return listByQuery(new JPAQueryDetails<D>() {
 
+      /**
+       * Builds a QueryDSL query that selects all managed entities.
+       *
+       * @param query base query to complete
+       * @return query selecting every managed entity
+       */
       @Override
       public JPAQuery<D> completeQuery (JPAQuery<D> query) {
 
@@ -189,11 +262,23 @@ public class QJPADao<I extends Serializable & Comparable<I>, D extends JPADurabl
     });
   }
 
+  /**
+   * Lists a limited number of entities.
+   *
+   * @param fetchSize maximum results to return
+   * @return limited result list
+   */
   @Override
   public List<D> list (int fetchSize) {
 
     return listByQuery(new JPAQueryDetails<D>() {
 
+      /**
+       * Builds a QueryDSL query that selects all managed entities with a limit.
+       *
+       * @param query base query to complete
+       * @return query selecting every managed entity with a fetch size cap
+       */
       @Override
       public JPAQuery<D> completeQuery (JPAQuery<D> query) {
 
@@ -202,11 +287,24 @@ public class QJPADao<I extends Serializable & Comparable<I>, D extends JPADurabl
     });
   }
 
+  /**
+   * Lists durables with id greater than the supplied lower bound.
+   *
+   * @param greaterThan exclusive lower bound id
+   * @param fetchSize   maximum results to return
+   * @return list of durables beyond the supplied id
+   */
   @Override
   public List<D> list (I greaterThan, int fetchSize) {
 
     return listByQuery(new JPAQueryDetails<D>() {
 
+      /**
+       * Builds a QueryDSL query selecting entities whose ids are greater than the supplied bound.
+       *
+       * @param query base query to complete
+       * @return query filtered and ordered by id with an optional limit
+       */
       @Override
       public JPAQuery<D> completeQuery (JPAQuery<D> query) {
 
@@ -218,6 +316,12 @@ public class QJPADao<I extends Serializable & Comparable<I>, D extends JPADurabl
     });
   }
 
+  /**
+   * Lists durables whose ids are contained in the provided collection.
+   *
+   * @param idCollection identifiers to fetch
+   * @return matching durables, or empty list when input is null/empty
+   */
   @Override
   public List<D> list (Collection<I> idCollection) {
 
@@ -228,6 +332,12 @@ public class QJPADao<I extends Serializable & Comparable<I>, D extends JPADurabl
 
       return listByQuery(new JPAQueryDetails<D>() {
 
+        /**
+         * Builds a QueryDSL query selecting entities whose ids are contained in the provided collection.
+         *
+         * @param query base query to complete
+         * @return query filtered by the id collection
+         */
         @Override
         public JPAQuery<D> completeQuery (JPAQuery<D> query) {
 
@@ -246,11 +356,22 @@ public class QJPADao<I extends Serializable & Comparable<I>, D extends JPADurabl
     }
   }
 
+  /**
+   * Streams all entities using a QueryDSL query with lazy iteration.
+   *
+   * @return iterable over all durables
+   */
   @Override
   public Iterable<D> scroll () {
 
     return scrollByQuery(new JPAQueryDetails<D>() {
 
+      /**
+       * Builds a QueryDSL query that selects all managed entities for scrolling.
+       *
+       * @param query base query to complete
+       * @return query selecting every managed entity
+       */
       @Override
       public JPAQuery<D> completeQuery (JPAQuery<D> query) {
 
@@ -259,11 +380,23 @@ public class QJPADao<I extends Serializable & Comparable<I>, D extends JPADurabl
     });
   }
 
+  /**
+   * Streams entities in batches of the given size.
+   *
+   * @param fetchSize batch size hint
+   * @return iterable over durables
+   */
   @Override
   public Iterable<D> scroll (int fetchSize) {
 
     return scrollByQuery(new JPAQueryDetails<D>() {
 
+      /**
+       * Builds a QueryDSL query selecting all managed entities with a limit for scrolling.
+       *
+       * @param query base query to complete
+       * @return query selecting every managed entity with a fetch size cap
+       */
       @Override
       public JPAQuery<D> completeQuery (JPAQuery<D> query) {
 
@@ -272,11 +405,24 @@ public class QJPADao<I extends Serializable & Comparable<I>, D extends JPADurabl
     });
   }
 
+  /**
+   * Streams entities whose ids are greater than the supplied value.
+   *
+   * @param greaterThan lower bound id (exclusive)
+   * @param fetchSize   batch size hint
+   * @return iterable over durables beyond the supplied id
+   */
   @Override
   public Iterable<D> scrollById (I greaterThan, int fetchSize) {
 
     return scrollByQuery(new JPAQueryDetails<D>() {
 
+      /**
+       * Builds a QueryDSL query selecting entities whose ids exceed the provided lower bound.
+       *
+       * @param query base query to complete
+       * @return query filtered and ordered by id with an optional limit
+       */
       @Override
       public JPAQuery<D> completeQuery (JPAQuery<D> query) {
 
@@ -288,6 +434,13 @@ public class QJPADao<I extends Serializable & Comparable<I>, D extends JPADurabl
     });
   }
 
+  /**
+   * Counts results for the provided QueryDSL query details.
+   *
+   * @param queryDetails query specification
+   * @param <T>          result type
+   * @return count of matching rows
+   */
   public <T> long countByQuery (JPAQueryDetails<T> queryDetails) {
 
     JPAQuery<T> constructedQuery;
@@ -295,6 +448,12 @@ public class QJPADao<I extends Serializable & Comparable<I>, D extends JPADurabl
     return ((constructedQuery = constructQuery(queryDetails)) == null) ? 0 : constructedQuery.fetchCount();
   }
 
+  /**
+   * Executes a QueryDSL query and returns a single managed durable.
+   *
+   * @param queryDetails query specification
+   * @return fetched durable or {@code null} if none
+   */
   public D findByQuery (JPAQueryDetails<D> queryDetails) {
 
     JPAQuery<D> constructedQuery;
@@ -302,6 +461,14 @@ public class QJPADao<I extends Serializable & Comparable<I>, D extends JPADurabl
     return ((constructedQuery = constructQuery(queryDetails)) == null) ? null : getManagedClass().cast(constructedQuery.fetchOne());
   }
 
+  /**
+   * Executes a QueryDSL query and returns a single result cast to the provided type.
+   *
+   * @param returnType   expected return type
+   * @param queryDetails query specification
+   * @param <T>          result type
+   * @return fetched value or {@code null} if none
+   */
   public <T> T findByQuery (Class<T> returnType, JPAQueryDetails<T> queryDetails) {
 
     JPAQuery<T> constructedQuery;
@@ -309,6 +476,12 @@ public class QJPADao<I extends Serializable & Comparable<I>, D extends JPADurabl
     return ((constructedQuery = constructQuery(queryDetails)) == null) ? null : returnType.cast(constructedQuery.fetchOne());
   }
 
+  /**
+   * Executes a QueryDSL query and returns results as managed type durables.
+   *
+   * @param queryDetails query specification
+   * @return checked list of results
+   */
   public List<D> listByQuery (JPAQueryDetails<D> queryDetails) {
 
     JPAQuery<D> constructedQuery;
@@ -316,6 +489,14 @@ public class QJPADao<I extends Serializable & Comparable<I>, D extends JPADurabl
     return ((constructedQuery = constructQuery(queryDetails)) == null) ? Collections.emptyList() : Collections.checkedList(constructedQuery.fetch(), getManagedClass());
   }
 
+  /**
+   * Executes a QueryDSL query and returns results as the requested type.
+   *
+   * @param returnType   expected element type
+   * @param queryDetails query specification
+   * @param <T>          element type
+   * @return checked list of results
+   */
   public <T> List<T> listByQuery (Class<T> returnType, JPAQueryDetails<T> queryDetails) {
 
     JPAQuery<T> constructedQuery;
@@ -323,6 +504,13 @@ public class QJPADao<I extends Serializable & Comparable<I>, D extends JPADurabl
     return ((constructedQuery = constructQuery(queryDetails)) == null) ? Collections.emptyList() : Collections.checkedList(constructedQuery.fetch(), returnType);
   }
 
+  /**
+   * Streams results of a QueryDSL query using iterator semantics.
+   *
+   * @param queryDetails query specification
+   * @param <T>          element type
+   * @return iterable over the query results
+   */
   public <T> Iterable<T> scrollByQuery (JPAQueryDetails<T> queryDetails) {
 
     JPAQuery<T> constructedQuery;
@@ -330,6 +518,12 @@ public class QJPADao<I extends Serializable & Comparable<I>, D extends JPADurabl
     return ((constructedQuery = constructQuery(queryDetails)) == null) ? new EmptyIterable<>() : new IterableIterator<>(constructedQuery.iterate());
   }
 
+  /**
+   * Executes a QueryDSL update statement.
+   *
+   * @param updateDetails update specification
+   * @return number of rows affected
+   */
   public Long updateWithQuery (JPAUpdateDetails<D> updateDetails) {
 
     JPAUpdateClause updateClause;
@@ -337,6 +531,12 @@ public class QJPADao<I extends Serializable & Comparable<I>, D extends JPADurabl
     return ((updateClause = constructUpdate(updateDetails)) == null) ? 0 : updateClause.execute();
   }
 
+  /**
+   * Executes a QueryDSL delete statement.
+   *
+   * @param deleteDetails delete specification
+   * @return number of rows deleted
+   */
   public Long deleteWithQuery (JPADeleteDetails<D> deleteDetails) {
 
     JPADeleteClause deleteClause;
@@ -344,6 +544,13 @@ public class QJPADao<I extends Serializable & Comparable<I>, D extends JPADurabl
     return ((deleteClause = constructDelete(deleteDetails)) == null) ? 0 : deleteClause.execute();
   }
 
+  /**
+   * Builds a QueryDSL query from the provided details, applying any fetch graphs.
+   *
+   * @param queryDetails query specification
+   * @param <T>          result type
+   * @return constructed query ready for execution
+   */
   private <T> JPAQuery<T> constructQuery (JPAQueryDetails<T> queryDetails) {
 
     EntityManager entityManager = getSession().getNativeSession();
@@ -357,6 +564,13 @@ public class QJPADao<I extends Serializable & Comparable<I>, D extends JPADurabl
     return queryDetails.completeQuery(query);
   }
 
+  /**
+   * Builds a QueryDSL update clause using the managed EntityManager.
+   *
+   * @param updateDetails update specification
+   * @param <T>           entity type
+   * @return populated update clause
+   */
   private <T> JPAUpdateClause constructUpdate (JPAUpdateDetails<T> updateDetails) {
 
     JPAUpdateClause updateClause = new JPAUpdateClause(getSession().getNativeSession(), updateDetails.getEntityPath());
@@ -364,6 +578,13 @@ public class QJPADao<I extends Serializable & Comparable<I>, D extends JPADurabl
     return updateDetails.completeUpdate(updateClause);
   }
 
+  /**
+   * Builds a QueryDSL delete clause using the managed EntityManager.
+   *
+   * @param deleteDetails delete specification
+   * @param <T>           entity type
+   * @return populated delete clause
+   */
   private <T> JPADeleteClause constructDelete (JPADeleteDetails<T> deleteDetails) {
 
     JPADeleteClause deleteClause = new JPADeleteClause(getSession().getNativeSession(), deleteDetails.getEntityPath());

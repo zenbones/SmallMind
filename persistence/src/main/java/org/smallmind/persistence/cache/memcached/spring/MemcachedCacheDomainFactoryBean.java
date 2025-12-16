@@ -39,6 +39,9 @@ import org.smallmind.persistence.cache.memcached.MemcachedCacheDomain;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
+/**
+ * Spring factory bean that constructs {@link MemcachedCacheDomain} instances for DAO configuration.
+ */
 public class MemcachedCacheDomainFactoryBean implements FactoryBean<MemcachedCacheDomain<?, ?>>, InitializingBean {
 
   private MemcachedCacheDomain<?, ?> memcachedCacheDomain;
@@ -47,26 +50,51 @@ public class MemcachedCacheDomainFactoryBean implements FactoryBean<MemcachedCac
   private String discriminator;
   private int timeToLiveSeconds;
 
+  /**
+   * Sets the memcached client used by the domain.
+   *
+   * @param memcachedClient configured memcached client
+   */
   public void setMemcachedClient (ProxyMemcachedClient memcachedClient) {
 
     this.memcachedClient = memcachedClient;
   }
 
+  /**
+   * Sets the discriminator applied to all keys created by the domain.
+   *
+   * @param discriminator namespace prefix for cache keys
+   */
   public void setDiscriminator (String discriminator) {
 
     this.discriminator = discriminator;
   }
 
+  /**
+   * Sets the default TTL applied to cached entries.
+   *
+   * @param timeToLiveSeconds TTL in seconds
+   */
   public void setTimeToLiveSeconds (int timeToLiveSeconds) {
 
     this.timeToLiveSeconds = timeToLiveSeconds;
   }
 
+  /**
+   * Sets optional per-class TTL overrides.
+   *
+   * @param timeToLiveOverrideMap map of managed class to TTL override
+   */
   public void setTimeToLiveOverrideMap (Map<Class<?>, Integer> timeToLiveOverrideMap) {
 
     this.timeToLiveOverrideMap = timeToLiveOverrideMap;
   }
 
+  /**
+   * Instantiates the cache domain once required properties are present.
+   *
+   * @throws IOException if initialization fails
+   */
   @Override
   public void afterPropertiesSet ()
     throws IOException {
@@ -76,18 +104,27 @@ public class MemcachedCacheDomainFactoryBean implements FactoryBean<MemcachedCac
     }
   }
 
+  /**
+   * @return the constructed memcached cache domain
+   */
   @Override
   public MemcachedCacheDomain<?, ?> getObject () {
 
     return memcachedCacheDomain;
   }
 
+  /**
+   * @return type exposed by this factory bean
+   */
   @Override
   public Class<?> getObjectType () {
 
     return MemcachedCacheDomain.class;
   }
 
+  /**
+   * @return {@code true} to indicate the factory is singleton-scoped
+   */
   @Override
   public boolean isSingleton () {
 

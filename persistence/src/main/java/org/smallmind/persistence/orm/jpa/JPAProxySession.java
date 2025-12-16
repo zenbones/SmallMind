@@ -42,6 +42,10 @@ import org.smallmind.persistence.orm.aop.NonTransactionalState;
 import org.smallmind.persistence.orm.aop.RollbackAwareBoundarySet;
 import org.smallmind.persistence.orm.aop.TransactionalState;
 
+/**
+ * {@link ProxySession} implementation backed by a JPA {@link EntityManagerFactory}/{@link EntityManager}.
+ * Manages per-thread entity managers and transactions while honoring transactional boundaries enforced by AOP.
+ */
 public class JPAProxySession extends ProxySession<EntityManagerFactory, EntityManager> {
 
   private final ThreadLocal<EntityManager> managerThreadLocal = new ThreadLocal<>();
@@ -49,6 +53,15 @@ public class JPAProxySession extends ProxySession<EntityManagerFactory, EntityMa
 
   private final EntityManagerFactory entityManagerFactory;
 
+  /**
+   * Creates a JPA proxy session.
+   *
+   * @param dataSourceType       descriptive data source name for metrics
+   * @param sessionSourceKey     key used to register this session
+   * @param entityManagerFactory factory for creating entity managers
+   * @param boundaryEnforced     whether boundary enforcement is enabled by default
+   * @param cacheEnabled         whether cache usage is enabled by default
+   */
   public JPAProxySession (String dataSourceType, String sessionSourceKey, EntityManagerFactory entityManagerFactory, boolean boundaryEnforced, boolean cacheEnabled) {
 
     super(dataSourceType, sessionSourceKey, boundaryEnforced, cacheEnabled);
@@ -56,6 +69,11 @@ public class JPAProxySession extends ProxySession<EntityManagerFactory, EntityMa
     this.entityManagerFactory = entityManagerFactory;
   }
 
+  /**
+   * Begins or returns the existing transaction bound to the current thread.
+   *
+   * @return the proxy transaction
+   */
   public JPAProxyTransaction beginTransaction () {
 
     JPAProxyTransaction proxyTransaction;
@@ -73,21 +91,35 @@ public class JPAProxySession extends ProxySession<EntityManagerFactory, EntityMa
     return proxyTransaction;
   }
 
+  /**
+   * Retrieves the current thread-bound transaction without creating a new one.
+   *
+   * @return current transaction or {@code null} if none begun
+   */
   public JPAProxyTransaction currentTransaction () {
 
     return transactionThreadLocal.get();
   }
 
+  /**
+   * Flushes the current entity manager.
+   */
   public void flush () {
 
     getEntityManager().flush();
   }
 
+  /**
+   * Clears the current entity manager.
+   */
   public void clear () {
 
     getEntityManager().clear();
   }
 
+  /**
+   * @return whether the current entity manager is missing or closed
+   */
   public boolean isClosed () {
 
     EntityManager entityManager;
@@ -95,18 +127,33 @@ public class JPAProxySession extends ProxySession<EntityManagerFactory, EntityMa
     return ((entityManager = managerThreadLocal.get()) == null) || (!entityManager.isOpen());
   }
 
+  /**
+   * @return the underlying {@link EntityManagerFactory} backing this proxy
+   */
   @Override
   public EntityManagerFactory getNativeSessionFactory () {
 
     return entityManagerFactory;
   }
 
+  /**
+   * Obtains the current native {@link EntityManager}, creating one if necessary.
+   *
+   * @return active entity manager
+   * @throws SessionEnforcementException if boundary enforcement rules are violated
+   */
   @Override
   public EntityManager getNativeSession () {
 
     return getEntityManager();
   }
 
+  /**
+   * Obtains the thread-local entity manager, creating and registering one if necessary while enforcing transactional boundaries.
+   *
+   * @return active entity manager for the current thread
+   * @throws SessionEnforcementException if boundary enforcement rules are violated
+   */
   public EntityManager getEntityManager () {
 
     EntityManager entityManager;
@@ -145,6 +192,9 @@ public class JPAProxySession extends ProxySession<EntityManagerFactory, EntityMa
     return entityManager;
   }
 
+  /**
+   * Closes and removes the thread-local entity manager and transaction.
+   */
   public void close () {
 
     EntityManager entityManager;

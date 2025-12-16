@@ -41,8 +41,25 @@ import org.smallmind.persistence.sql.pool.DataSourceFactory;
 import org.smallmind.quorum.pool.complex.ComplexPoolConfig;
 import org.smallmind.quorum.pool.complex.ComponentPool;
 
+/**
+ * Utility for constructing {@link ComponentPool}s of pooled connections using Spring-friendly
+ * {@link DatabaseConnection} descriptors.
+ */
 public class PooledConnectionComponentPoolFactory {
 
+  /**
+   * Creates a component pool configured with the provided connection endpoints and pooling options.
+   *
+   * @param poolName          name of the pool
+   * @param dataSourceFactory factory used to create concrete data sources
+   * @param validationQuery   optional validation SQL
+   * @param maxStatements     maximum prepared statements to cache per connection
+   * @param poolConfig        pool behavior configuration
+   * @param connections       database connection definitions
+   * @param <D>               data source type
+   * @return initialized component pool ready for startup
+   * @throws SQLException if data source or pool setup fails
+   */
   public static <D extends CommonDataSource> ComponentPool<? extends PooledConnection> constructComponentPool (String poolName, DataSourceFactory<D, ? extends PooledConnection> dataSourceFactory, String validationQuery, int maxStatements, ComplexPoolConfig poolConfig, DatabaseConnection... connections)
     throws SQLException {
 
@@ -55,6 +72,12 @@ public class PooledConnectionComponentPoolFactory {
     return new ComponentPool<>(poolName, connectionInstanceFactory).setComplexPoolConfig(poolConfig);
   }
 
+  /**
+   * Converts Spring {@link DatabaseConnection} descriptors into {@link ConnectionEndpoint}s.
+   *
+   * @param databaseConnections database connection definitions
+   * @return array of connection endpoints (empty if none provided)
+   */
   private static ConnectionEndpoint[] createConnectionEndpoints (DatabaseConnection... databaseConnections) {
 
     if (databaseConnections == null) {

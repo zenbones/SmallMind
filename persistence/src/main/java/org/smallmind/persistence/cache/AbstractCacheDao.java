@@ -38,30 +38,59 @@ import java.util.List;
 import java.util.Map;
 import org.smallmind.persistence.Durable;
 
+/**
+ * Convenience base implementation of {@link CacheDao} that performs common cache lookups and
+ * deletions for durables and vectors.
+ */
 public abstract class AbstractCacheDao<I extends Serializable & Comparable<I>, D extends Durable<I>> implements CacheDao<I, D> {
 
   private final CacheDomain<I, D> cacheDomain;
 
+  /**
+   * @param cacheDomain grouping of caches for a particular durable type
+   */
   public AbstractCacheDao (CacheDomain<I, D> cacheDomain) {
 
     this.cacheDomain = cacheDomain;
   }
 
+  /**
+   * @return identifier used when emitting cache metrics
+   */
   public String getMetricSource () {
 
     return cacheDomain.getMetricSource();
   }
 
+  /**
+   * Provides the instance cache for the managed durable class.
+   *
+   * @param durableClass durable type
+   * @return persistence cache keyed by durable id
+   */
   public PersistenceCache<String, D> getInstanceCache (Class<D> durableClass) {
 
     return cacheDomain.getInstanceCache(durableClass);
   }
 
+  /**
+   * Provides the vector cache for the managed durable class.
+   *
+   * @param durableClass durable type
+   * @return persistence cache storing durable vectors
+   */
   public PersistenceCache<String, DurableVector<I, D>> getVectorCache (Class<D> durableClass) {
 
     return cacheDomain.getVectorCache(durableClass);
   }
 
+  /**
+   * Retrieves a durable from the instance cache by id.
+   *
+   * @param durableClass durable class
+   * @param id           durable id
+   * @return cached durable or {@code null}
+   */
   public D get (Class<D> durableClass, I id) {
 
     DurableKey<I, D> durableKey = new DurableKey<>(durableClass, id);
@@ -69,6 +98,13 @@ public abstract class AbstractCacheDao<I extends Serializable & Comparable<I>, D
     return getInstanceCache(durableClass).get(durableKey.getKey());
   }
 
+  /**
+   * Bulk fetch of durables from the instance cache.
+   *
+   * @param durableClass durable type
+   * @param durableKeys  keys representing requested durables
+   * @return map of keys to cached durables; missing entries are omitted
+   */
   public Map<DurableKey<I, D>, D> get (Class<D> durableClass, List<DurableKey<I, D>> durableKeys) {
 
     Map<DurableKey<I, D>, D> resultMap = new HashMap<>();
@@ -95,6 +131,12 @@ public abstract class AbstractCacheDao<I extends Serializable & Comparable<I>, D
     return resultMap;
   }
 
+  /**
+   * Removes a durable entry from the cache.
+   *
+   * @param durableClass durable type
+   * @param durable      durable instance to delete
+   */
   public void delete (Class<D> durableClass, D durable) {
 
     if (durable != null) {
@@ -105,11 +147,24 @@ public abstract class AbstractCacheDao<I extends Serializable & Comparable<I>, D
     }
   }
 
+  /**
+   * Retrieves a durable vector from the cache.
+   *
+   * @param vectorKey key identifying the vector
+   * @return cached vector or {@code null} when missing
+   */
   public DurableVector<I, D> getVector (VectorKey<D> vectorKey) {
 
     return getVectorCache(vectorKey.getElementClass()).get(vectorKey.getKey());
   }
 
+  /**
+   * Persists a vector into the cache, migrating it to the expected implementation when needed.
+   *
+   * @param vectorKey key identifying the vector
+   * @param vector    vector to store
+   * @return existing cached vector when one was present, otherwise the supplied vector
+   */
   public DurableVector<I, D> persistVector (VectorKey<D> vectorKey, DurableVector<I, D> vector) {
 
     DurableVector<I, D> migratedVector;
@@ -120,6 +175,11 @@ public abstract class AbstractCacheDao<I extends Serializable & Comparable<I>, D
     return ((cachedVector = getVectorCache(vectorKey.getElementClass()).putIfAbsent(vectorKey.getKey(), migratedVector, migratedVector.getTimeToLiveSeconds())) != null) ? cachedVector : vector;
   }
 
+  /**
+   * Deletes a cached vector.
+   *
+   * @param vectorKey key identifying the vector to remove
+   */
   public void deleteVector (VectorKey<D> vectorKey) {
 
     getVectorCache(vectorKey.getElementClass()).remove(vectorKey.getKey());

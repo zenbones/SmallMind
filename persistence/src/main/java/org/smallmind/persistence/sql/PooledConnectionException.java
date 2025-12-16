@@ -34,8 +34,19 @@ package org.smallmind.persistence.sql;
 
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
+/**
+ * Runtime wrapper used to surface exceptions encountered by pooled connections while tracking how
+ * long the connection was in use.
+ */
 public class PooledConnectionException extends FormattedException {
 
+  /**
+   * Creates a new pooled connection exception with a formatted message.
+   *
+   * @param throwable root cause
+   * @param message   message format string
+   * @param args      format arguments
+   */
   public PooledConnectionException (Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);

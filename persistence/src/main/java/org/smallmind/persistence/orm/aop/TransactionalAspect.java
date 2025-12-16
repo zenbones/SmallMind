@@ -38,34 +38,52 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.DeclarePrecedence;
 
+/**
+ * Aspect that establishes and completes transactional boundaries around annotated types and methods.
+ */
 @Aspect
 @DeclarePrecedence("org.smallmind.nutsnbolts.inject.LazyFieldAspect, org.smallmind.persistence.orm.aop.TransactionalAspect")
 public class TransactionalAspect {
 
+  /**
+   * Starts a transactional boundary for any execution within a @Transactional class (unless overridden on the method).
+   */
   @Before(value = "@within(transactional) && (execution(* * (..)) || initialization(new(..))) && !@annotation(Transactional)", argNames = "transactional")
   public void beforeTransactionalClass (Transactional transactional) {
 
     TransactionalState.startBoundary(transactional);
   }
 
+  /**
+   * Starts a transactional boundary for an explicitly annotated constructor or method.
+   */
   @Before(value = "(execution(@Transactional * * (..)) || initialization(@Transactional new(..))) && @annotation(transactional)", argNames = "transactional")
   public void beforeTransactionalMethod (Transactional transactional) {
 
     TransactionalState.startBoundary(transactional);
   }
 
+  /**
+   * Commits the boundary after successful execution within a @Transactional class.
+   */
   @AfterReturning(pointcut = "@within(transactional) && (execution(* * (..)) || initialization(new(..))) && !@annotation(Transactional)", argNames = "transactional")
   public void afterReturnFromTransactionalClass (Transactional transactional) {
 
     TransactionalState.commitBoundary();
   }
 
+  /**
+   * Commits the boundary after successful execution of an explicitly annotated member.
+   */
   @AfterReturning(pointcut = "(execution(@Transactional * * (..)) || initialization(@Transactional new(..))) && @annotation(transactional)", argNames = "transactional")
   public void afterReturnFromTransactionalMethod (Transactional transactional) {
 
     TransactionalState.commitBoundary();
   }
 
+  /**
+   * Ends the boundary after an exception from a @Transactional class, rolling back if configured.
+   */
   @AfterThrowing(pointcut = "@within(transactional) && (execution(* * (..)) || initialization(new(..)))  && !@annotation(Transactional)", throwing = "throwable", argNames = "transactional, throwable")
   public void afterThrowFromTransactionalClass (Transactional transactional, Throwable throwable) {
 
@@ -76,6 +94,9 @@ public class TransactionalAspect {
     }
   }
 
+  /**
+   * Ends the boundary after an exception from an explicitly annotated member, rolling back if configured.
+   */
   @AfterThrowing(pointcut = "(execution(@Transactional * * (..)) || initialization(@Transactional new(..))) && @annotation(transactional)", throwing = "throwable", argNames = "transactional, throwable")
   public void afterThrowFromTransactionalMethod (Transactional transactional, Throwable throwable) {
 

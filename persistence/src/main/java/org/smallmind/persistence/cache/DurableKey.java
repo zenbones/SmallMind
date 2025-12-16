@@ -35,11 +35,21 @@ package org.smallmind.persistence.cache;
 import java.io.Serializable;
 import org.smallmind.persistence.Durable;
 
+/**
+ * Cache key wrapper that combines a durable class name with its identifier to form a unique string
+ * key.
+ */
 public class DurableKey<I extends Serializable & Comparable<I>, D extends Durable<I>> implements Serializable {
 
   private final Class<D> durableClass;
   private final String key;
 
+  /**
+   * Builds a key string from the durable's simple class name and identifier.
+   *
+   * @param durableClass durable type
+   * @param id           durable identifier
+   */
   public DurableKey (Class<D> durableClass, I id) {
 
     this.durableClass = durableClass;
@@ -47,31 +57,59 @@ public class DurableKey<I extends Serializable & Comparable<I>, D extends Durabl
     key = durableClass.getSimpleName() + "=" + id;
   }
 
+  /**
+   * @return durable class this key refers to
+   */
   public Class<D> getDurableClass () {
 
     return durableClass;
   }
 
+  /**
+   * @return cacheable key string combining class and id
+   */
   public String getKey () {
 
     return key;
   }
 
+  /**
+   * @return id portion of the key as a string
+   */
   public String getIdAsString () {
 
     return key.substring(key.indexOf('=') + 1);
   }
 
+  /**
+   * Returns the cache key string.
+   *
+   * @return string representation of this durable key
+   */
+  @Override
   public String toString () {
 
     return key;
   }
 
+  /**
+   * Hashes based on the generated key string.
+   *
+   * @return hash code of the key
+   */
+  @Override
   public int hashCode () {
 
     return key.hashCode();
   }
 
+  /**
+   * Compares by key string to determine equality.
+   *
+   * @param obj object to compare
+   * @return {@code true} when the other object is a {@link DurableKey} with the same key
+   */
+  @Override
   public boolean equals (Object obj) {
 
     return (obj instanceof DurableKey) && key.equals(((DurableKey<?, ?>)obj).getKey());

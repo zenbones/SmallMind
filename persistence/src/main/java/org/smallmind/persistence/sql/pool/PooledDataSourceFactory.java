@@ -42,8 +42,25 @@ import org.smallmind.persistence.sql.pool.spring.PooledConnectionComponentPoolFa
 import org.smallmind.quorum.pool.complex.ComplexPoolConfig;
 import org.smallmind.quorum.pool.complex.ComponentPool;
 
+/**
+ * Factory helper that builds either {@link PooledDataSource} or {@link PooledXADataSource} based on
+ * the provided {@link DataSourceFactory} type.
+ */
 public class PooledDataSourceFactory {
 
+  /**
+   * Creates a pooled data source configured with the given pool parameters and database connections.
+   *
+   * @param poolName          name for the underlying component pool
+   * @param dataSourceFactory factory for concrete data sources
+   * @param validationQuery   optional validation SQL to run on checkout
+   * @param maxStatements     maximum prepared statements to cache per connection
+   * @param poolConfig        configuration for the component pool
+   * @param connections       one or more database connection definitions
+   * @param <D>               data source type
+   * @return pooled data source matching XA or non-XA capabilities
+   * @throws SQLException if pool construction fails
+   */
   public static <D extends CommonDataSource> AbstractPooledDataSource createPooledDataSource (String poolName, DataSourceFactory<D, ? extends PooledConnection> dataSourceFactory, String validationQuery, int maxStatements, ComplexPoolConfig poolConfig, DatabaseConnection[] connections)
     throws SQLException {
 

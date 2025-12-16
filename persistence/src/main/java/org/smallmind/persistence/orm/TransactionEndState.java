@@ -32,7 +32,21 @@
  */
 package org.smallmind.persistence.orm;
 
+/**
+ * Indicates whether a transaction completed successfully or rolled back.
+ */
 public enum TransactionEndState {
 
-  COMMIT, ROLLBACK, ANY
+  /**
+   * Transaction completed normally.
+   */
+  COMMIT,
+  /**
+   * Transaction was rolled back.
+   */
+  ROLLBACK,
+  /**
+   * Post-process applies in either case.
+   */
+  ANY
 }

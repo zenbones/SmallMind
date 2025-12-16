@@ -36,12 +36,34 @@ import java.sql.SQLException;
 import javax.sql.CommonDataSource;
 import javax.sql.PooledConnection;
 
+/**
+ * Factory contract for creating data source instances and describing the pooled connection type
+ * they produce.
+ *
+ * @param <D> concrete data source type
+ * @param <P> pooled connection type
+ */
 public interface DataSourceFactory<D extends CommonDataSource, P extends PooledConnection> {
 
+  /**
+   * @return pooled connection class supplied by the data source
+   */
   Class<P> getPooledConnectionClass ();
 
+  /**
+   * @return data source class that can be constructed
+   */
   Class<D> getDataSourceClass ();
 
+  /**
+   * Creates a data source configured for the provided JDBC endpoint.
+   *
+   * @param jdbcUrl  JDBC URL
+   * @param user     user name
+   * @param password password
+   * @return configured data source
+   * @throws SQLException if construction or driver loading fails
+   */
   D constructDataSource (String jdbcUrl, String user, String password)
     throws SQLException;
 }

@@ -52,9 +52,22 @@ import org.smallmind.persistence.cache.VectoredDao;
 import org.smallmind.persistence.cache.praxis.intrinsic.IntrinsicRoster;
 import org.smallmind.persistence.orm.aop.Timed;
 
+/**
+ * Aspect that enforces cache coherence for methods annotated with {@link CacheCoherent}.
+ * The advice ensures returned durables and collections are persisted into a vector cache,
+ * maintaining alignment between the database and cached representations.
+ */
 @Aspect
 public class CacheCoherentAspect {
 
+  /**
+   * Wraps {@link CacheCoherent} methods to persist returned durables into a {@link VectoredDao} when available.
+   *
+   * @param thisJoinPoint the intercepted method invocation
+   * @param durableDao    the DAO supplying persistence and vector access
+   * @return the original return value, potentially replaced with a cache-coherent proxy or collection
+   * @throws Throwable propagated from the underlying method or configuration errors
+   */
   @Around(value = "execution(@CacheCoherent * * (..)) && this(durableDao)", argNames = "thisJoinPoint, durableDao")
   public Object aroundCacheCoherentMethod (ProceedingJoinPoint thisJoinPoint, AbstractVectorAwareManagedDao durableDao)
     throws Throwable {

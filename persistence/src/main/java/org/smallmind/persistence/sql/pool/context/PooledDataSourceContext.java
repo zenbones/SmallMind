@@ -34,15 +34,25 @@ package org.smallmind.persistence.sql.pool.context;
 
 import org.smallmind.nutsnbolts.context.Context;
 
+/**
+ * Context object representing the current contextual part used to select a specific pooled data
+ * source.
+ */
 public class PooledDataSourceContext implements Context {
 
   private final String contextualPart;
 
+  /**
+   * @param contextualPart context identifier to apply to pool selection
+   */
   public PooledDataSourceContext (String contextualPart) {
 
     this.contextualPart = contextualPart;
   }
 
+  /**
+   * @return context identifier (may be null)
+   */
   public String getContextualPart () {
 
     return contextualPart;

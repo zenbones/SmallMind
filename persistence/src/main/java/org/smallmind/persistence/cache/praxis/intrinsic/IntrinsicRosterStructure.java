@@ -32,6 +32,12 @@
  */
 package org.smallmind.persistence.cache.praxis.intrinsic;
 
+/**
+ * Mutable structure that tracks the head, tail, and size metadata for {@link IntrinsicRoster} instances.
+ * Structures may chain to a parent to keep sublists synchronized with the original roster.
+ *
+ * @param <T> element type stored in the roster
+ */
 public class IntrinsicRosterStructure<T> {
 
   private IntrinsicRosterStructure<T> parent;
@@ -39,11 +45,22 @@ public class IntrinsicRosterStructure<T> {
   private IntrinsicRosterNode<T> tail;
   int size;
 
+  /**
+   * Creates an empty roster structure with no parent.
+   */
   public IntrinsicRosterStructure () {
 
     size = 0;
   }
 
+  /**
+   * Creates a roster structure with explicitly supplied state and optional parent linkage.
+   *
+   * @param parent parent structure to keep synchronized
+   * @param head   head node of the roster
+   * @param tail   tail node of the roster
+   * @param size   current element count
+   */
   public IntrinsicRosterStructure (IntrinsicRosterStructure<T> parent, IntrinsicRosterNode<T> head, IntrinsicRosterNode<T> tail, int size) {
 
     this.parent = parent;
@@ -52,11 +69,19 @@ public class IntrinsicRosterStructure<T> {
     this.size = size;
   }
 
+  /**
+   * @return head node of the roster
+   */
   public IntrinsicRosterNode<T> getHead () {
 
     return head;
   }
 
+  /**
+   * Updates the head node, propagating to the parent when necessary.
+   *
+   * @param head new head node
+   */
   public void setHead (IntrinsicRosterNode<T> head) {
 
     if ((parent != null) && parent.isHead(this.head)) {
@@ -66,16 +91,30 @@ public class IntrinsicRosterStructure<T> {
     this.head = head;
   }
 
+  /**
+   * Tests whether the supplied node is the current head.
+   *
+   * @param node node to test
+   * @return {@code true} when the node is the head
+   */
   public boolean isHead (IntrinsicRosterNode<T> node) {
 
     return (head != null) && (node == head);
   }
 
+  /**
+   * @return tail node of the roster
+   */
   public IntrinsicRosterNode<T> getTail () {
 
     return tail;
   }
 
+  /**
+   * Updates the tail node, propagating to the parent when necessary.
+   *
+   * @param tail new tail node
+   */
   public void setTail (IntrinsicRosterNode<T> tail) {
 
     if ((parent != null) && parent.isTail(this.tail)) {
@@ -85,11 +124,24 @@ public class IntrinsicRosterStructure<T> {
     this.tail = tail;
   }
 
+  /**
+   * Tests whether the supplied node is the current tail.
+   *
+   * @param node node to test
+   * @return {@code true} when the node is the tail
+   */
   public boolean isTail (IntrinsicRosterNode<T> node) {
 
     return (tail != null) && (node == tail);
   }
 
+  /**
+   * Removes a node from the structure, adjusting head and tail references.
+   *
+   * @param prev    previous node
+   * @param current node being removed
+   * @param next    next node
+   */
   public void evaporate (IntrinsicRosterNode<T> prev, IntrinsicRosterNode<T> current, IntrinsicRosterNode<T> next) {
 
     if (parent != null) {
@@ -106,6 +158,11 @@ public class IntrinsicRosterStructure<T> {
     }
   }
 
+  /**
+   * Initializes the structure as a circular list containing a single element.
+   *
+   * @param element element to insert
+   */
   public void ouroboros (T element) {
 
     IntrinsicRosterNode<T> added = new IntrinsicRosterNode<>(element, head, tail);
@@ -125,6 +182,13 @@ public class IntrinsicRosterStructure<T> {
     size = 1;
   }
 
+  /**
+   * Reconstitutes head and tail links when inserting into an existing structure, cascading to the parent if present.
+   *
+   * @param added newly added node
+   * @param head  head prior to insertion
+   * @param tail  tail prior to insertion
+   */
   public void reconstitute (IntrinsicRosterNode<T> added, IntrinsicRosterNode<T> head, IntrinsicRosterNode<T> tail) {
 
     if (parent != null) {
@@ -141,6 +205,9 @@ public class IntrinsicRosterStructure<T> {
     size++;
   }
 
+  /**
+   * Clears the roster, severing links and resetting sizes in this structure and its parent.
+   */
   public void clear () {
 
     if (size > 0) {
@@ -158,11 +225,19 @@ public class IntrinsicRosterStructure<T> {
     }
   }
 
+  /**
+   * @return current roster size
+   */
   public int getSize () {
 
     return size;
   }
 
+  /**
+   * Adds to the tracked size and propagates the change to the parent.
+   *
+   * @param delta number of elements added
+   */
   public void addSize (int delta) {
 
     if (parent != null) {
@@ -172,6 +247,11 @@ public class IntrinsicRosterStructure<T> {
     size += delta;
   }
 
+  /**
+   * Subtracts from the tracked size and propagates the change to the parent.
+   *
+   * @param delta number of elements removed
+   */
   public void subtractSize (int delta) {
 
     if (parent != null) {
@@ -181,6 +261,9 @@ public class IntrinsicRosterStructure<T> {
     size -= delta;
   }
 
+  /**
+   * Increments the size and propagates the change to the parent.
+   */
   public void incSize () {
 
     if (parent != null) {
@@ -190,6 +273,9 @@ public class IntrinsicRosterStructure<T> {
     size++;
   }
 
+  /**
+   * Decrements the size and propagates the change to the parent.
+   */
   public void decSize () {
 
     if (parent != null) {

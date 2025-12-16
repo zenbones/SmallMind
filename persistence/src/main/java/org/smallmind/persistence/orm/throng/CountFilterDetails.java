@@ -32,6 +32,9 @@
  */
 package org.smallmind.persistence.orm.throng;
 
+/**
+ * Marker for filter details used in count operations.
+ */
 public abstract class CountFilterDetails extends FilterDetails {
 
 }

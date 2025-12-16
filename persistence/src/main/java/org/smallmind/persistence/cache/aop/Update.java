@@ -36,22 +36,45 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Declares how a cache vector should be updated when a durable instance changes.
+ */
 @Target({})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Update {
 
-  // the vector upon which this annotation acts
+  /**
+   * Vector definition identifying the cached entry to mutate.
+   *
+   * @return vector descriptor that supplies the cache key
+   */
   Vector value ();
 
-  // a method which takes a single parameter of durable type and returns boolean, if the filter is false then the annotation action is skipped
+  /**
+   * Optional DAO method used to gate execution of this update.
+   *
+   * @return filter method name returning a boolean value
+   */
   String filter () default "";
 
-  // a method which takes a single parameter of durable type and returns an OnPersist enum which dictates the action to take on new entity creation
+  /**
+   * Optional DAO method that determines how the durable should be applied to the vector.
+   *
+   * @return method name that yields an {@link OnPersist} result
+   */
   String onPersist () default "";
 
-  // a method which locates the entity or entities upon which to act, takes a single parameter of durable type and returns a durable type or Iterator of durable type
+  /**
+   * Finder that supplies the durable instances to add to or remove from the vector.
+   *
+   * @return finder configuration for related entities
+   */
   Finder finder () default @Finder();
 
-  // a method which takes a single parameter of durable type and returns a durable type, for proxying the action on one entity type to a (supposedly) related but different type
+  /**
+   * Optional proxy that transforms the target durable before computing cache keys.
+   *
+   * @return proxy configuration to apply to each durable
+   */
   Proxy proxy () default @Proxy();
 }

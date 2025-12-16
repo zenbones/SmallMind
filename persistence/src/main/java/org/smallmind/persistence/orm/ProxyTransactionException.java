@@ -34,23 +34,47 @@ package org.smallmind.persistence.orm;
 
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
+/**
+ * Indicates an error while manipulating a proxy transaction.
+ */
 public class ProxyTransactionException extends FormattedRuntimeException {
 
+  /**
+   * Creates a proxy transaction exception with no message.
+   */
   public ProxyTransactionException () {
 
     super();
   }
 
+  /**
+   * Creates a proxy transaction exception with a formatted message.
+   *
+   * @param message the message template
+   * @param args    arguments referenced by the format specifiers in the message
+   */
   public ProxyTransactionException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * Creates a proxy transaction exception with a cause and formatted message.
+   *
+   * @param throwable the underlying cause
+   * @param message   the message template
+   * @param args      arguments referenced by the format specifiers in the message
+   */
   public ProxyTransactionException (Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);
   }
 
+  /**
+   * Creates a proxy transaction exception with a cause.
+   *
+   * @param throwable the underlying cause
+   */
   public ProxyTransactionException (Throwable throwable) {
 
     super(throwable);

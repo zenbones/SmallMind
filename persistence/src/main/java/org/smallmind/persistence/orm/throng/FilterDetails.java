@@ -32,7 +32,16 @@
  */
 package org.smallmind.persistence.orm.throng;
 
+/**
+ * Describes how to complete a Throng filter chain.
+ */
 public abstract class FilterDetails {
 
+  /**
+   * Applies filter criteria to the given {@link Filters} builder.
+   *
+   * @param filters filter builder to complete
+   * @return the completed filters instance
+   */
   public abstract Filters completeFilter (Filters filters);
 }

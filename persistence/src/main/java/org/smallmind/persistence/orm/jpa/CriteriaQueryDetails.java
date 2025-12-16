@@ -35,7 +35,19 @@ package org.smallmind.persistence.orm.jpa;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 
+/**
+ * Supplies details to build a {@link CriteriaQuery}.
+ *
+ * @param <T> result type of the query
+ */
 public abstract class CriteriaQueryDetails<T> {
 
+  /**
+   * Completes a criteria query definition for the provided entity class.
+   *
+   * @param criteriaClass   the entity or result class
+   * @param criteriaBuilder the JPA criteria builder
+   * @return the fully defined criteria query
+   */
   public abstract CriteriaQuery<T> completeCriteria (Class<T> criteriaClass, CriteriaBuilder criteriaBuilder);
 }

@@ -37,27 +37,50 @@ import javax.sql.DataSource;
 import javax.sql.PooledConnection;
 import org.smallmind.persistence.sql.pool.DataSourceFactory;
 
+/**
+ * {@link DataSourceFactory} that builds {@link DriverManagerDataSource} instances.
+ */
 public class DriverManagerDataSourceFactory implements DataSourceFactory<DataSource, PooledConnection> {
 
   private String driverClassName;
 
+  /**
+   * Configures the JDBC driver class to load before creating connections.
+   *
+   * @param driverClassName fully qualified driver class name
+   */
   public void setDriverClassName (String driverClassName) {
 
     this.driverClassName = driverClassName;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Class<PooledConnection> getPooledConnectionClass () {
 
     return PooledConnection.class;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Class<DataSource> getDataSourceClass () {
 
     return DataSource.class;
   }
 
+  /**
+   * Creates a new {@link DriverManagerDataSource} using the configured driver class.
+   *
+   * @param jdbcUrl  JDBC URL
+   * @param user     user name
+   * @param password password
+   * @return fresh data source instance
+   * @throws SQLException if driver loading or validation fails
+   */
   @Override
   public DataSource constructDataSource (String jdbcUrl, String user, String password)
     throws SQLException {

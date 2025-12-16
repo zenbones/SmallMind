@@ -39,11 +39,20 @@ import org.smallmind.persistence.orm.ProxyTransactionException;
 import org.smallmind.persistence.orm.TransactionEndState;
 import org.smallmind.persistence.orm.TransactionPostProcessException;
 
+/**
+ * Transaction wrapper around JPA {@link EntityTransaction}, adding post-processing support.
+ */
 public class JPAProxyTransaction extends ProxyTransaction<JPAProxySession> {
 
   private final EntityTransaction transaction;
   private boolean rolledBack = false;
 
+  /**
+   * Creates a JPA proxy transaction bound to the given session and entity transaction, beginning it when necessary.
+   *
+   * @param proxySession owning session
+   * @param transaction  native transaction
+   */
   public JPAProxyTransaction (JPAProxySession proxySession, EntityTransaction transaction) {
 
     super(proxySession);
@@ -53,16 +62,30 @@ public class JPAProxyTransaction extends ProxyTransaction<JPAProxySession> {
     }
   }
 
+  /**
+   * Indicates whether the underlying transaction is no longer active.
+   *
+   * @return {@code true} when the transaction has completed
+   */
+  @Override
   public boolean isCompleted () {
 
     return !transaction.isActive();
   }
 
+  /**
+   * Flushes the session.
+   */
   public void flush () {
 
     getSession().flush();
   }
 
+  /**
+   * Commits the transaction, applying post-process callbacks on success. Rolls back when marked rollback-only.
+   *
+   * @throws ProxyTransactionException if commit fails or the session is closed
+   */
   public void commit () {
 
     if (isRollbackOnly()) {
@@ -89,11 +112,21 @@ public class JPAProxyTransaction extends ProxyTransaction<JPAProxySession> {
     }
   }
 
+  /**
+   * Rolls back the transaction and applies rollback post-processors.
+   */
+  @Override
   public void rollback () {
 
     rollback(null);
   }
 
+  /**
+   * Rolls back the transaction, capturing commit/rollback exceptions and applying post-process callbacks for rollback.
+   *
+   * @param thrownDuringCommit optional throwable encountered during commit
+   * @throws ProxyTransactionException if rollback or post-processing fails
+   */
   private void rollback (Throwable thrownDuringCommit) {
 
     Throwable thrownDuringRollback = thrownDuringCommit;

@@ -44,11 +44,19 @@ import org.smallmind.nutsnbolts.reflection.FieldAccessor;
 import org.smallmind.nutsnbolts.reflection.FieldUtility;
 import org.smallmind.persistence.Durable;
 
+/**
+ * JPA durable that automatically tracks creation and update timestamps and excludes those
+ * fields from mirror comparisons.
+ */
 @MappedSuperclass
 public abstract class TimestampedJPADurable<I extends Serializable & Comparable<I>, D extends TimestampedJPADurable<I, D>> extends JPADurable<I, D> {
 
   private Date created;
   private Date lastUpdated;
+
+  /**
+   * @return the creation timestamp set by the persistence provider
+   */
 
   @CreationTimestamp
   @Temporal(TemporalType.TIMESTAMP)
@@ -58,12 +66,22 @@ public abstract class TimestampedJPADurable<I extends Serializable & Comparable<
     return created;
   }
 
+  /**
+   * Sets the creation timestamp.
+   *
+   * @param created the timestamp to set
+   * @return this instance for chaining
+   */
   public synchronized D setCreated (Date created) {
 
     this.created = created;
 
     return (D)this;
   }
+
+  /**
+   * @return the last update timestamp set by the persistence provider
+   */
 
   @UpdateTimestamp
   @Temporal(TemporalType.TIMESTAMP)
@@ -73,6 +91,12 @@ public abstract class TimestampedJPADurable<I extends Serializable & Comparable<
     return lastUpdated;
   }
 
+  /**
+   * Sets the last update timestamp.
+   *
+   * @param lastUpdated the timestamp to set
+   * @return this instance for chaining
+   */
   public synchronized D setLastUpdated (Date lastUpdated) {
 
     this.lastUpdated = lastUpdated;
@@ -80,6 +104,12 @@ public abstract class TimestampedJPADurable<I extends Serializable & Comparable<
     return (D)this;
   }
 
+  /**
+   * Compares this durable to another, ignoring id and timestamp fields.
+   *
+   * @param durable the durable to compare
+   * @return {@code true} when all other fields mirror
+   */
   @Override
   public boolean mirrors (Durable durable) {
 

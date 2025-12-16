@@ -32,7 +32,45 @@
  */
 package org.smallmind.persistence.orm;
 
+/**
+ * Provides fine-grained ordering hints for transactional processing steps.
+ */
 public enum ProcessPriority {
 
-  ABSOLUTELY_FIRST, VERY_VERY_FIRST, VERY_FIRST, FIRST, MIDDLE, LAST, VERY_LAST, VERY_VERY_LAST, ABSOLUTELY_LAST
+  /**
+   * Highest possible priority.
+   */
+  ABSOLUTELY_FIRST,
+  /**
+   * Extremely high priority.
+   */
+  VERY_VERY_FIRST,
+  /**
+   * Very high priority.
+   */
+  VERY_FIRST,
+  /**
+   * High priority.
+   */
+  FIRST,
+  /**
+   * Middle/default priority.
+   */
+  MIDDLE,
+  /**
+   * Low priority.
+   */
+  LAST,
+  /**
+   * Very low priority.
+   */
+  VERY_LAST,
+  /**
+   * Extremely low priority.
+   */
+  VERY_VERY_LAST,
+  /**
+   * Lowest possible priority.
+   */
+  ABSOLUTELY_LAST
 }

@@ -39,13 +39,35 @@ import org.smallmind.persistence.cache.AbstractWideCacheDao;
 import org.smallmind.persistence.cache.CacheDomain;
 import org.smallmind.persistence.cache.WideDurableKey;
 
+/**
+ * Wide cache DAO for extrinsic caches that store lists of durables keyed by parent identifiers.
+ *
+ * @param <W> parent identifier type
+ * @param <I> durable identifier type
+ * @param <D> durable type
+ */
 public class WideExtrinsicCacheDao<W extends Serializable & Comparable<W>, I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractWideCacheDao<W, I, D> {
 
+  /**
+   * Creates a wide extrinsic cache DAO for the given cache domain.
+   *
+   * @param cacheDomain cache domain supplying wide instance caches
+   */
   public WideExtrinsicCacheDao (CacheDomain<I, D> cacheDomain) {
 
     super(cacheDomain);
   }
 
+  /**
+   * Stores a list of durables under a wide key composed of the parent context and identifier.
+   *
+   * @param context      logical grouping of the wide reference
+   * @param parentClass  class of the parent durable
+   * @param parentId     identifier of the parent durable
+   * @param durableClass class of the child durable
+   * @param durables     collection to cache
+   * @return the provided list after caching
+   */
   @Override
   public List<D> persist (String context, Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass, List<D> durables) {
 

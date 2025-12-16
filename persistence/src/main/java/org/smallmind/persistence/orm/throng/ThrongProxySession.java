@@ -35,11 +35,23 @@ package org.smallmind.persistence.orm.throng;
 import org.smallmind.mongodb.throng.ThrongClient;
 import org.smallmind.persistence.orm.ProxySession;
 
+/**
+ * Throng implementation of {@link ProxySession}, providing a singleton transaction wrapper per thread.
+ */
 public class ThrongProxySession extends ProxySession<ThrongClientFactory, ThrongClient> {
 
   private final ThrongClientFactory throngClientFactory;
   private final ThrongProxyTransaction proxyTransaction;
 
+  /**
+   * Creates a Throng proxy session.
+   *
+   * @param dataSourceType      descriptive data source name for metrics
+   * @param sessionSourceKey    key used to register this session
+   * @param throngClientFactory factory for creating {@link ThrongClient} instances
+   * @param boundaryEnforced    whether boundary enforcement is enabled by default
+   * @param cacheEnabled        whether cache usage is enabled by default
+   */
   public ThrongProxySession (String dataSourceType, String sessionSourceKey, ThrongClientFactory throngClientFactory, boolean boundaryEnforced, boolean cacheEnabled) {
 
     super(dataSourceType, sessionSourceKey, boundaryEnforced, cacheEnabled);
@@ -49,48 +61,74 @@ public class ThrongProxySession extends ProxySession<ThrongClientFactory, Throng
     proxyTransaction = new ThrongProxyTransaction(this);
   }
 
+  /**
+   * @return the current transaction wrapper
+   */
   @Override
   public ThrongProxyTransaction currentTransaction () {
 
     return proxyTransaction;
   }
 
+  /**
+   * Begins (returns) the singleton transaction wrapper.
+   *
+   * @return the transaction wrapper
+   */
   @Override
   public ThrongProxyTransaction beginTransaction () {
 
     return proxyTransaction;
   }
 
+  /**
+   * Unsupported in Throng.
+   */
   @Override
   public void flush () {
 
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * Unsupported in Throng.
+   */
   @Override
   public void clear () {
 
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * Unsupported in Throng.
+   */
   @Override
   public void close () {
 
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * Unsupported in Throng.
+   */
   @Override
   public boolean isClosed () {
 
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * @return the Throng client factory
+   */
   @Override
   public ThrongClientFactory getNativeSessionFactory () {
 
     return throngClientFactory;
   }
 
+  /**
+   * @return a Throng client from the factory
+   */
   @Override
   public ThrongClient getNativeSession () {
 

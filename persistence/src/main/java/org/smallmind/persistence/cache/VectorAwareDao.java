@@ -35,7 +35,13 @@ package org.smallmind.persistence.cache;
 import java.io.Serializable;
 import org.smallmind.persistence.Durable;
 
+/**
+ * Exposes access to the underlying {@link VectoredDao} for vector operations.
+ */
 public interface VectorAwareDao<I extends Serializable & Comparable<I>, D extends Durable<I>> {
 
+  /**
+   * @return vectored DAO implementation
+   */
   VectoredDao<I, D> getVectoredDao ();
 }

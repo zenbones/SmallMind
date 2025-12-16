@@ -32,23 +32,52 @@
  */
 package org.smallmind.persistence.orm.aop;
 
+/**
+ * Indicates an inconsistency or misuse of session boundaries.
+ */
 public class SessionBoundaryError extends SessionError {
 
+  /**
+   * Creates a session boundary error with no message.
+   *
+   * @param closure remaining boundary depth
+   */
   public SessionBoundaryError (int closure) {
 
     super(closure);
   }
 
+  /**
+   * Creates a session boundary error with a formatted message.
+   *
+   * @param closure remaining boundary depth
+   * @param message the message template
+   * @param args    arguments referenced by the format specifiers in the message
+   */
   public SessionBoundaryError (int closure, String message, Object... args) {
 
     super(closure, message, args);
   }
 
+  /**
+   * Creates a session boundary error with a cause and formatted message.
+   *
+   * @param closure   remaining boundary depth
+   * @param throwable the cause
+   * @param message   the message template
+   * @param args      arguments referenced by the format specifiers in the message
+   */
   public SessionBoundaryError (int closure, Throwable throwable, String message, Object... args) {
 
     super(closure, throwable, message, args);
   }
 
+  /**
+   * Creates a session boundary error with a cause.
+   *
+   * @param closure   remaining boundary depth
+   * @param throwable the cause
+   */
   public SessionBoundaryError (int closure, Throwable throwable) {
 
     super(closure, throwable);

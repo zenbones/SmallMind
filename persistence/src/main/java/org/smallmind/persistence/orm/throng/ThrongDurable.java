@@ -38,23 +38,42 @@ import org.smallmind.mongodb.throng.lifecycle.annotation.PostPersist;
 import org.smallmind.mongodb.throng.mapping.annotation.Id;
 import org.smallmind.persistence.AbstractDurable;
 
+/**
+ * Base durable for Throng (MongoDB) entities, exposing an {@code id} property and removing overlay metadata on persist.
+ *
+ * @param <I> identifier type
+ * @param <D> durable subclass type
+ */
 public class ThrongDurable<I extends Serializable & Comparable<I>, D extends ThrongDurable<I, D>> extends AbstractDurable<I, D> {
 
   @Id
   private I id;
 
+  /**
+   * @return the identifier
+   */
   @Override
   public I getId () {
 
     return id;
   }
 
+  /**
+   * Sets the identifier.
+   *
+   * @param id identifier value
+   */
   @Override
   public void setId (I id) {
 
     this.id = id;
   }
 
+  /**
+   * Removes overlay-specific class metadata before persisting to Mongo.
+   *
+   * @param bsonDocument document about to be persisted
+   */
   @PostPersist
   public void preSave (BsonDocument bsonDocument) {
 

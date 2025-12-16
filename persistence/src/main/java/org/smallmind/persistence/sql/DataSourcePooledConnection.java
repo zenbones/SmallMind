@@ -37,20 +37,42 @@ import javax.sql.ConnectionEvent;
 import javax.sql.DataSource;
 import javax.sql.PooledConnection;
 
+/**
+ * {@link PooledConnection} implementation for standard {@link DataSource} instances.
+ */
 public class DataSourcePooledConnection extends AbstractPooledConnection<DataSource> implements PooledConnection {
 
+  /**
+   * Wraps a physical connection obtained from the data source with statement caching.
+   *
+   * @param dataSource    owning data source
+   * @param maxStatements maximum prepared statements to cache
+   * @throws SQLException if acquiring the connection or validating parameters fails
+   */
   public DataSourcePooledConnection (DataSource dataSource, int maxStatements)
     throws SQLException {
 
     super(dataSource, dataSource.getConnection(), maxStatements);
   }
 
+  /**
+   * Same as {@link #DataSourcePooledConnection(DataSource, int)} but uses explicit credentials.
+   *
+   * @param dataSource    owning data source
+   * @param user          user name
+   * @param password      password
+   * @param maxStatements maximum prepared statements to cache
+   * @throws SQLException if acquiring the connection or validating parameters fails
+   */
   public DataSourcePooledConnection (DataSource dataSource, String user, String password, int maxStatements)
     throws SQLException {
 
     super(dataSource, dataSource.getConnection(user, password), maxStatements);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public ConnectionEvent getConnectionEvent (SQLException sqlException) {
 

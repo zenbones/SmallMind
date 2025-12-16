@@ -34,23 +34,47 @@ package org.smallmind.persistence.orm;
 
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
+/**
+ * Thrown when ORM infrastructure cannot be initialized correctly.
+ */
 public class ORMInitializationException extends FormattedRuntimeException {
 
+  /**
+   * Creates an initialization exception with no message.
+   */
   public ORMInitializationException () {
 
     super();
   }
 
+  /**
+   * Creates an initialization exception with a formatted message.
+   *
+   * @param message the message template
+   * @param args    arguments referenced by the format specifiers in the message
+   */
   public ORMInitializationException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * Creates an initialization exception with a cause and formatted message.
+   *
+   * @param throwable the underlying cause
+   * @param message   the message template
+   * @param args      arguments referenced by the format specifiers in the message
+   */
   public ORMInitializationException (Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);
   }
 
+  /**
+   * Creates an initialization exception with a cause.
+   *
+   * @param throwable the underlying cause
+   */
   public ORMInitializationException (Throwable throwable) {
 
     super(throwable);

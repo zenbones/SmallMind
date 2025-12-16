@@ -36,10 +36,23 @@ import java.io.Serializable;
 import org.smallmind.persistence.cache.VectorAwareDao;
 import org.smallmind.persistence.cache.VectoredDao;
 
+/**
+ * Managed DAO variant that is aware of a cache-backed {@link VectoredDao}. Subclasses
+ * decide at runtime whether caching should be enabled.
+ *
+ * @param <I> identifier type of the durable
+ * @param <D> durable type managed by the DAO
+ */
 public abstract class AbstractVectorAwareManagedDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractManagedDao<I, D> implements VectorAwareDao<I, D> {
 
   private final VectoredDao<I, D> vectoredDao;
 
+  /**
+   * Constructs a managed DAO with optional cache support.
+   *
+   * @param metricSource the metric source name for this DAO
+   * @param vectoredDao  the cache-enabled delegate used when caching is turned on
+   */
   public AbstractVectorAwareManagedDao (String metricSource, VectoredDao<I, D> vectoredDao) {
 
     super(metricSource);
@@ -47,8 +60,18 @@ public abstract class AbstractVectorAwareManagedDao<I extends Serializable & Com
     this.vectoredDao = vectoredDao;
   }
 
+  /**
+   * Indicates whether cache access should be used for DAO operations.
+   *
+   * @return {@code true} when cache lookups should be attempted
+   */
   public abstract boolean isCacheEnabled ();
 
+  /**
+   * Returns the cache-aware delegate when caching is enabled.
+   *
+   * @return the configured {@link VectoredDao} or {@code null} when caching is disabled
+   */
   @Override
   public VectoredDao<I, D> getVectoredDao () {
 

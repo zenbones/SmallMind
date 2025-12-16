@@ -43,6 +43,13 @@ import org.smallmind.persistence.cache.CacheDomain;
 import org.smallmind.persistence.cache.DurableVector;
 import org.smallmind.persistence.cache.PersistenceCache;
 
+/**
+ * {@link CacheDomain} implementation that provisions memcached-backed caches for durables, collections,
+ * and vectors. Instances are scoped by a discriminator to avoid key collisions across domains.
+ *
+ * @param <I> identifier type of the durable
+ * @param <D> durable entity type
+ */
 public class MemcachedCacheDomain<I extends Serializable & Comparable<I>, D extends Durable<I>> implements CacheDomain<I, D> {
 
   private final ProxyMemcachedClient memcachedClient;
@@ -53,11 +60,26 @@ public class MemcachedCacheDomain<I extends Serializable & Comparable<I>, D exte
   private final String discriminator;
   private final int timeToLiveSeconds;
 
+  /**
+   * Constructs a cache domain with a shared TTL for all managed classes.
+   *
+   * @param memcachedClient   memcached client used to create caches
+   * @param discriminator     namespace applied to every key
+   * @param timeToLiveSeconds default TTL in seconds for cached entries
+   */
   public MemcachedCacheDomain (ProxyMemcachedClient memcachedClient, String discriminator, int timeToLiveSeconds) {
 
     this(memcachedClient, discriminator, timeToLiveSeconds, null);
   }
 
+  /**
+   * Constructs a cache domain with optional per-class TTL overrides.
+   *
+   * @param memcachedClient       memcached client used to create caches
+   * @param discriminator         namespace applied to every key
+   * @param timeToLiveSeconds     default TTL in seconds for cached entries
+   * @param timeTiLiveOverrideMap optional mapping from managed class to override TTL
+   */
   public MemcachedCacheDomain (ProxyMemcachedClient memcachedClient, String discriminator, int timeToLiveSeconds, Map<Class<D>, Integer> timeTiLiveOverrideMap) {
 
     this.memcachedClient = memcachedClient;
@@ -66,12 +88,21 @@ public class MemcachedCacheDomain<I extends Serializable & Comparable<I>, D exte
     this.timeTiLiveOverrideMap = timeTiLiveOverrideMap;
   }
 
+  /**
+   * @return metric source identifier for memcached-backed caches
+   */
   @Override
   public String getMetricSource () {
 
     return EntitySource.MEMCACHED.getDisplay();
   }
 
+  /**
+   * Supplies a cache for singular durable instances, creating it lazily.
+   *
+   * @param managedClass durable type for which the cache is required
+   * @return persistence cache keyed by discriminator-prefixed string ids
+   */
   @Override
   public PersistenceCache<String, D> getInstanceCache (Class<D> managedClass) {
 
@@ -88,6 +119,12 @@ public class MemcachedCacheDomain<I extends Serializable & Comparable<I>, D exte
     return instanceCache;
   }
 
+  /**
+   * Supplies a cache for lists of durables, creating it lazily.
+   *
+   * @param managedClass durable type for which the cache is required
+   * @return persistence cache keyed by discriminator-prefixed string ids for wide results
+   */
   @Override
   public PersistenceCache<String, List<D>> getWideInstanceCache (Class<D> managedClass) {
 
@@ -104,6 +141,12 @@ public class MemcachedCacheDomain<I extends Serializable & Comparable<I>, D exte
     return wideInstanceCache;
   }
 
+  /**
+   * Supplies a cache for durable vectors, creating it lazily.
+   *
+   * @param managedClass durable type for which the cache is required
+   * @return persistence cache keyed by discriminator-prefixed string ids for vector entries
+   */
   @Override
   public PersistenceCache<String, DurableVector<I, D>> getVectorCache (Class<D> managedClass) {
 
@@ -120,6 +163,12 @@ public class MemcachedCacheDomain<I extends Serializable & Comparable<I>, D exte
     return vectorCache;
   }
 
+  /**
+   * Resolves the time-to-live for a specific managed class, applying overrides when available.
+   *
+   * @param managedClass durable type
+   * @return TTL in seconds for cache entries representing the class
+   */
   private int getTimeToLiveSeconds (Class<D> managedClass) {
 
     Integer timeToLiveOverrideSeconds;

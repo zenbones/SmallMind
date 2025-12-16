@@ -37,8 +37,14 @@ import javax.sql.PooledConnection;
 import org.smallmind.quorum.juggler.JugglingPin;
 import org.smallmind.quorum.juggler.JugglingPinFactory;
 
+/**
+ * Factory producing {@link PooledConnectionJugglingPin}s for connection pool data sources.
+ */
 public class PooledConnectionJugglingPinFactory<P extends PooledConnection> implements JugglingPinFactory<ConnectionPoolDataSource, P> {
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public JugglingPin<P> createJugglingPin (ConnectionPoolDataSource dataSource, Class<P> pooledConnectionClass) {
 

@@ -32,11 +32,23 @@
  */
 package org.smallmind.persistence.cache.aop;
 
+/**
+ * Declares a classifier value applied to cache vector keys, either as a literal or derived from
+ * a method parameter.
+ */
 public @interface Classifier {
 
-  // the classification value or parameter name to use as the classification value (see below)
+  /**
+   * Literal classifier value or parameter name depending on {@link #asParameter()}.
+   *
+   * @return classifier string or parameter identifier
+   */
   String value ();
 
-  // treat the value of this annotation as a parameter name
+  /**
+   * Indicates whether {@link #value()} refers to a method parameter rather than a constant string.
+   *
+   * @return {@code true} when the classifier should be read from an argument
+   */
   boolean asParameter () default false;
 }

@@ -34,23 +34,47 @@ package org.smallmind.persistence;
 
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
+/**
+ * Signals that persistent data has been corrupted or violates integrity constraints.
+ */
 public class DataIntegrityException extends FormattedRuntimeException {
 
+  /**
+   * Creates a data integrity exception with no message.
+   */
   public DataIntegrityException () {
 
     super();
   }
 
+  /**
+   * Creates a data integrity exception with a formatted message.
+   *
+   * @param message the message template
+   * @param args    arguments referenced by the format specifiers in the message
+   */
   public DataIntegrityException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * Creates a data integrity exception with a cause and formatted message.
+   *
+   * @param throwable the underlying cause
+   * @param message   the message template
+   * @param args      arguments referenced by the format specifiers in the message
+   */
   public DataIntegrityException (Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);
   }
 
+  /**
+   * Creates a data integrity exception with a cause.
+   *
+   * @param throwable the underlying cause
+   */
   public DataIntegrityException (Throwable throwable) {
 
     super(throwable);

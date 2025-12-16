@@ -35,19 +35,38 @@ package org.smallmind.persistence.orm.querydsl.jpa;
 import com.querydsl.core.types.EntityPath;
 import com.querydsl.jpa.impl.JPADeleteClause;
 
+/**
+ * Encapsulates a QueryDSL JPA delete definition for a specific entity path.
+ *
+ * @param <T> entity type
+ */
 public abstract class JPADeleteDetails<T> {
 
   private final EntityPath<T> entityPath;
 
+  /**
+   * Creates delete details for the given entity path.
+   *
+   * @param entityPath the QueryDSL entity path
+   */
   public JPADeleteDetails (EntityPath<T> entityPath) {
 
     this.entityPath = entityPath;
   }
 
+  /**
+   * @return the entity path this delete targets
+   */
   public EntityPath<T> getEntityPath () {
 
     return entityPath;
   }
 
+  /**
+   * Applies predicates to the supplied delete clause.
+   *
+   * @param delete the base delete clause
+   * @return the completed delete clause
+   */
   public abstract JPADeleteClause completeDelete (JPADeleteClause delete);
 }

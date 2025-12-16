@@ -38,12 +38,24 @@ import org.smallmind.persistence.orm.ProcessPriority;
 import org.smallmind.persistence.orm.TransactionEndState;
 import org.smallmind.persistence.orm.TransactionPostProcess;
 
+/**
+ * Transaction post-process that invokes a captured method on a target after transaction completion.
+ */
 public class DelayedInvocationPostProcess extends TransactionPostProcess {
 
   private final Object delayedTarget;
   private final Method delayedMethod;
   private final Object[] delayedArguments;
 
+  /**
+   * Creates a delayed invocation to run at a specific transaction end state with a given priority.
+   *
+   * @param endState         when to invoke (commit/rollback/any)
+   * @param priority         execution priority among other post-processes
+   * @param delayedTarget    target object on which to invoke the method
+   * @param delayedMethod    method to invoke
+   * @param delayedArguments arguments to pass to the method
+   */
   public DelayedInvocationPostProcess (TransactionEndState endState, ProcessPriority priority, Object delayedTarget, Method delayedMethod, Object... delayedArguments) {
 
     super(endState, priority);
@@ -53,6 +65,12 @@ public class DelayedInvocationPostProcess extends TransactionPostProcess {
     this.delayedArguments = delayedArguments;
   }
 
+  /**
+   * Invokes the delayed method on the target, propagating any checked exception thrown by the invocation.
+   *
+   * @throws Exception wrapped or direct exception from the invoked method
+   */
+  @Override
   public void process ()
     throws Exception {
 
@@ -67,4 +85,3 @@ public class DelayedInvocationPostProcess extends TransactionPostProcess {
     }
   }
 }
-

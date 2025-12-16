@@ -38,10 +38,18 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Declares the session source key associated with an ORM-managed type.
+ */
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
 public @interface SessionSource {
 
+  /**
+   * The session source key.
+   *
+   * @return the session source identifier
+   */
   String value ();
 }

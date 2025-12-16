@@ -34,7 +34,16 @@ package org.smallmind.persistence.orm.throng;
 
 import org.smallmind.mongodb.throng.query.Query;
 
+/**
+ * Describes how to complete a Throng query.
+ */
 public abstract class QueryDetails {
 
+  /**
+   * Applies filters and options to the supplied query.
+   *
+   * @param query base query
+   * @return the completed query
+   */
   public abstract Query completeQuery (Query query);
 }

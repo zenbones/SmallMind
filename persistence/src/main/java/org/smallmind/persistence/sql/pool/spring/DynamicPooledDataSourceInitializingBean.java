@@ -52,6 +52,12 @@ import org.smallmind.quorum.pool.complex.ComponentPool;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 
+/**
+ * Initializes one or more pooled data sources by reading configuration properties (e.g.
+ * {@code <prefix>.jdbc.url.<pool>.<context>.<index>}) from the Spring
+ * {@link SpringPropertyAccessor}. Pools are created on startup and shut down when the bean is
+ * destroyed. Also acts as a {@link DataSourceLocator} for dynamic lookup by key.
+ */
 public class DynamicPooledDataSourceInitializingBean implements InitializingBean, DisposableBean, DataSourceLocator {
 
   /*
@@ -80,16 +86,33 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
   private Map<String, DataSourceFactory<?, ?>> factoryMap;
   private String prefix;
 
+  /**
+   * Maps pool names to factories capable of constructing the appropriate data source type.
+   *
+   * @param factoryMap map of pool name to data source factory
+   */
   public void setFactoryMap (Map<String, DataSourceFactory<?, ?>> factoryMap) {
 
     this.factoryMap = factoryMap;
   }
 
+  /**
+   * Sets the property key prefix to search when parsing pool definitions.
+   *
+   * @param prefix property prefix (may be null/blank)
+   */
   public void setPrefix (String prefix) {
 
     this.prefix = (prefix == null) ? null : prefix.strip();
   }
 
+  /**
+   * Resolves a data source by key using the previously parsed pool definitions.
+   *
+   * @param dataSourceKey key configured under {@code <prefix>.jdbc.mapping.*}
+   * @return matching data source
+   * @throws RuntimeBeansException if no mapping or pool exists for the key
+   */
   public CommonDataSource getDataSource (String dataSourceKey) {
 
     CommonDataSource dataSource;
@@ -105,6 +128,12 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
     return dataSource;
   }
 
+  /**
+   * Parses property-based pool definitions, constructs pooled data sources, and starts them.
+   *
+   * @throws SQLException           if a data source cannot be created
+   * @throws ComponentPoolException if startup fails
+   */
   @Override
   public void afterPropertiesSet ()
     throws SQLException, ComponentPoolException {
@@ -137,6 +166,11 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
     }
   }
 
+  /**
+   * Shuts down all constructed pools.
+   *
+   * @throws ComponentPoolException if shutdown fails
+   */
   @Override
   public void destroy ()
     throws ComponentPoolException {
@@ -146,6 +180,16 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
     }
   }
 
+  /**
+   * Parses configuration for a single pool name, constructing either a contextual or standard
+   * pooled data source based on whether multiple contexts are defined.
+   *
+   * @param springPropertyAccessor accessor used to read configuration
+   * @param poolName               logical pool name being configured
+   * @return initialized (but not yet started) pooled data source
+   * @throws SQLException           if data source creation fails
+   * @throws ComponentPoolException if pool construction fails
+   */
   private AbstractPooledDataSource<?, ?> parsePoolDefinition (SpringPropertyAccessor springPropertyAccessor, String poolName)
     throws SQLException, ComponentPoolException {
 
@@ -276,6 +320,13 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
     }
   }
 
+  /**
+   * Parses a key suffix into a {@link ContextIndex}, where the context is optional and separated
+   * from the numeric index by a period.
+   *
+   * @param subKey suffix of a configuration key
+   * @return parsed context/index pair
+   */
   private ContextIndex getContextIndex (String subKey) {
 
     int periodPos;
@@ -288,6 +339,13 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
     return new ContextIndex(subKey.substring(0, periodPos), Integer.parseInt(subKey.substring(periodPos + 1)));
   }
 
+  /**
+   * Retrieves or creates a {@link DatabaseConnection} slot for the given context/index.
+   *
+   * @param contextMap   map of context to index->connection
+   * @param contextIndex parsed context/index
+   * @return connection placeholder for the slot
+   */
   private DatabaseConnection getDatabaseConnection (HashMap<String, HashMap<Integer, DatabaseConnection>> contextMap, ContextIndex contextIndex) {
 
     HashMap<Integer, DatabaseConnection> connectionMap;

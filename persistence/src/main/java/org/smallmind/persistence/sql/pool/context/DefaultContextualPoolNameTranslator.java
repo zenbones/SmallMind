@@ -34,29 +34,46 @@ package org.smallmind.persistence.sql.pool.context;
 
 import org.smallmind.quorum.pool.ComponentPoolException;
 
+/**
+ * Default implementation that concatenates the base pool name, a separator, and the contextual part
+ * to form unique pool names.
+ */
 public class DefaultContextualPoolNameTranslator implements ContextualPoolNameTranslator {
 
   private final String baseName;
   private final char separator;
 
+  /**
+   * @param baseName  shared base pool name
+   * @param separator separator character placed between base and context
+   */
   public DefaultContextualPoolNameTranslator (String baseName, char separator) {
 
     this.baseName = baseName;
     this.separator = separator;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String getBaseName () {
 
     return baseName;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String getPoolName (String contextualPart) {
 
     return baseName + separator + contextualPart;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String getContextualPartFromPoolName (String poolName)
     throws ComponentPoolException {

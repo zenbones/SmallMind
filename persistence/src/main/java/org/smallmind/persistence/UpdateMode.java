@@ -32,7 +32,17 @@
  */
 package org.smallmind.persistence;
 
+/**
+ * Controls how updates are applied to persistent state.
+ */
 public enum UpdateMode {
 
-  SOFT, HARD
+  /**
+   * Update without overwriting existing values when possible.
+   */
+  SOFT,
+  /**
+   * Update forcibly writing all provided values.
+   */
+  HARD
 }

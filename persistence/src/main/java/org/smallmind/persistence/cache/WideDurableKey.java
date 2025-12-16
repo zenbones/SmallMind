@@ -35,11 +35,22 @@ package org.smallmind.persistence.cache;
 import java.io.Serializable;
 import org.smallmind.persistence.Durable;
 
+/**
+ * Cache key for wide vectors combining context, parent durable type/id, and child durable type.
+ */
 public class WideDurableKey<W extends Serializable & Comparable<W>, D extends Durable<?>> implements Serializable {
 
   private final Class<D> durableClass;
   private final String key;
 
+  /**
+   * Constructs a composite key tying a parent durable to its child durable type within a context.
+   *
+   * @param context      optional context string
+   * @param parentClass  parent durable class
+   * @param parentId     parent identifier
+   * @param durableClass child durable class
+   */
   public WideDurableKey (String context, Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass) {
 
     this.durableClass = durableClass;
@@ -47,31 +58,56 @@ public class WideDurableKey<W extends Serializable & Comparable<W>, D extends Du
     key = context + '.' + (parentClass.getSimpleName()) + '[' + durableClass.getSimpleName() + ']' + '=' + parentId;
   }
 
+  /**
+   * @return child durable class
+   */
   public Class<D> getDurableClass () {
 
     return durableClass;
   }
 
+  /**
+   * @return composite cache key string
+   */
   public String getKey () {
 
     return key;
   }
 
+  /**
+   * @return parent id portion of the key as string
+   */
   public String getParentIdAsString () {
 
     return key.substring(key.indexOf('=') + 1);
   }
 
+  /**
+   * Returns the composed key string.
+   *
+   * @return string representation of this wide durable key
+   */
   public String toString () {
 
     return key;
   }
 
+  /**
+   * Hashes based on the composite key string.
+   *
+   * @return hash code for this key
+   */
   public int hashCode () {
 
     return key.hashCode();
   }
 
+  /**
+   * Keys are equal when their composite key strings match.
+   *
+   * @param obj object to compare
+   * @return {@code true} when keys match
+   */
   public boolean equals (Object obj) {
 
     return (obj instanceof WideDurableKey) && key.equals(((WideDurableKey)obj).getKey());

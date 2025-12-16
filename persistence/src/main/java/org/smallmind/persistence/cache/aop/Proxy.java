@@ -37,13 +37,24 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import org.smallmind.persistence.Durable;
 
+/**
+ * Identifies a proxy method that transforms a durable before it is used in cache key construction.
+ */
 @Target({})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Proxy {
 
-  // the return type of the method
+  /**
+   * Expected durable type returned by the proxy method.
+   *
+   * @return durable subtype that replaces the original entity for caching
+   */
   Class<? extends Durable> with () default Durable.class;
 
-  // the name of the method
+  /**
+   * Name of the proxy method on the DAO.
+   *
+   * @return method name that accepts the original durable
+   */
   String method () default "";
 }

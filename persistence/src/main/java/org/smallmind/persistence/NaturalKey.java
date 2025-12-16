@@ -39,6 +39,13 @@ import org.smallmind.nutsnbolts.reflection.FieldAccessor;
 import org.smallmind.nutsnbolts.reflection.FieldUtility;
 import org.smallmind.nutsnbolts.reflection.type.TypeUtility;
 
+/**
+ * Represents the natural (business) key of a {@link Durable} using the fields declared
+ * in its {@link NaturalKeys} annotation. Instances cache resolved fields for efficient
+ * key extraction and comparison.
+ *
+ * @param <D> the durable type that owns the natural key
+ */
 public class NaturalKey<D extends Durable<? extends Comparable>> {
 
   private static final ConcurrentHashMap<Class<? extends Durable>, Field[]> NATURAL_KEY_MAP = new ConcurrentHashMap<>();
@@ -47,6 +54,12 @@ public class NaturalKey<D extends Durable<? extends Comparable>> {
   private final Class<? extends Durable> durableClass;
   private final Object[] naturalKeyFieldValues;
 
+  /**
+   * Builds a natural key by extracting the annotated fields from the supplied durable.
+   *
+   * @param durable the durable instance from which to read key values
+   * @throws RuntimeException if the fields cannot be accessed reflectively
+   */
   public NaturalKey (D durable) {
 
     Field[] naturalKeyFields;
@@ -64,6 +77,14 @@ public class NaturalKey<D extends Durable<? extends Comparable>> {
     }
   }
 
+  /**
+   * Builds a natural key from explicit values, validating the order and type against the
+   * {@link NaturalKeys} definition on the durable class.
+   *
+   * @param durableClass          the durable class that defines the natural key fields
+   * @param naturalKeyFieldValues the values of the natural key fields, in declaration order
+   * @throws PersistenceException if the supplied values do not match the expected types
+   */
   public NaturalKey (Class<D> durableClass, Object... naturalKeyFieldValues) {
 
     this.durableClass = durableClass;
@@ -78,6 +99,12 @@ public class NaturalKey<D extends Durable<? extends Comparable>> {
     }
   }
 
+  /**
+   * Returns the fields of a durable that are not part of the natural key.
+   *
+   * @param durableClass the durable class to inspect
+   * @return an array of non-key fields, possibly empty
+   */
   public static Field[] getNonKeyFields (Class<? extends Durable> durableClass) {
 
     Field[] nonKeyFields;
@@ -116,6 +143,13 @@ public class NaturalKey<D extends Durable<? extends Comparable>> {
     return nonKeyFields;
   }
 
+  /**
+   * Resolves the fields that make up the natural key for the supplied durable class.
+   *
+   * @param durableClass the durable class to inspect
+   * @return an array of key fields in the order declared by {@link NaturalKeys}
+   * @throws PersistenceException if the annotation is missing or references unknown fields
+   */
   public static Field[] getNaturalKeyFields (Class<? extends Durable> durableClass) {
 
     Field[] naturalKeyFields;
@@ -159,16 +193,31 @@ public class NaturalKey<D extends Durable<? extends Comparable>> {
     return naturalKeyFields;
   }
 
+  /**
+   * Returns the durable class that owns this natural key.
+   *
+   * @return the durable class
+   */
   public Class<? extends Durable> getDurableClass () {
 
     return durableClass;
   }
 
+  /**
+   * Returns the natural key field values captured for this key.
+   *
+   * @return the field values in declaration order
+   */
   public Object[] getNaturalKeyFieldValues () {
 
     return naturalKeyFieldValues;
   }
 
+  /**
+   * Computes a hash code by XOR-ing the hash codes of the individual key field values.
+   *
+   * @return the hash code for this natural key
+   */
   @Override
   public int hashCode () {
 
@@ -181,6 +230,12 @@ public class NaturalKey<D extends Durable<? extends Comparable>> {
     return hashCode;
   }
 
+  /**
+   * Compares this natural key to another for equality based on durable class and field values.
+   *
+   * @param obj the object to compare
+   * @return {@code true} when both represent the same durable natural key
+   */
   @Override
   public boolean equals (Object obj) {
 

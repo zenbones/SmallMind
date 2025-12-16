@@ -36,8 +36,19 @@ import java.lang.annotation.Annotation;
 import org.aspectj.lang.JoinPoint;
 import org.smallmind.nutsnbolts.reflection.aop.AOPUtility;
 
+/**
+ * Utility for deriving classifier strings used to partition cache vectors.
+ */
 public class Classifications {
 
+  /**
+   * Resolves a classifier value based on annotation configuration and the current join point.
+   *
+   * @param annotationType the annotation driving the cache operation
+   * @param joinPoint      the intercepted invocation supplying parameter values when needed
+   * @param vector         the vector metadata containing classifier information
+   * @return classifier string applied to the cache key
+   */
   public static String get (Class<? extends Annotation> annotationType, JoinPoint joinPoint, Vector vector) {
 
     if (!vector.classifier().asParameter()) {

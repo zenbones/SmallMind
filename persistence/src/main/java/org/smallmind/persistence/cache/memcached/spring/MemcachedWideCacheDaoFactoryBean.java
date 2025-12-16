@@ -37,16 +37,27 @@ import org.smallmind.persistence.cache.praxis.extrinsic.WideExtrinsicCacheDao;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
+/**
+ * Spring factory bean that produces a {@link WideExtrinsicCacheDao} backed by memcached caches.
+ */
 public class MemcachedWideCacheDaoFactoryBean implements FactoryBean<WideExtrinsicCacheDao<?, ?, ?>>, InitializingBean {
 
   private WideExtrinsicCacheDao<?, ?, ?> memcachedWideCacheDao;
   private MemcachedCacheDomain<?, ?> memcachedCacheDomain;
 
+  /**
+   * Injects the memcached cache domain required to construct the DAO.
+   *
+   * @param memcachedCacheDomain configured cache domain
+   */
   public void setMemcachedCacheDomain (MemcachedCacheDomain<?, ?> memcachedCacheDomain) {
 
     this.memcachedCacheDomain = memcachedCacheDomain;
   }
 
+  /**
+   * Initializes the factory after dependency injection.
+   */
   @Override
   public void afterPropertiesSet () {
 
@@ -55,18 +66,27 @@ public class MemcachedWideCacheDaoFactoryBean implements FactoryBean<WideExtrins
     }
   }
 
+  /**
+   * @return the constructed wide cache DAO
+   */
   @Override
   public WideExtrinsicCacheDao<?, ?, ?> getObject () {
 
     return memcachedWideCacheDao;
   }
 
+  /**
+   * @return type exposed by the factory
+   */
   @Override
   public Class<?> getObjectType () {
 
     return WideExtrinsicCacheDao.class;
   }
 
+  /**
+   * @return {@code true} because the factory returns a singleton instance
+   */
   @Override
   public boolean isSingleton () {
 

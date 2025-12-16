@@ -34,29 +34,54 @@ package org.smallmind.persistence.orm.throng;
 
 import org.smallmind.persistence.orm.ProxyTransaction;
 
+/**
+ * Proxy transaction placeholder used by {@link ThrongProxySession}. The Throng client currently does
+ * not expose transactional semantics, so this implementation fulfills the contract while deferring
+ * any real work to the caller.
+ */
 public class ThrongProxyTransaction extends ProxyTransaction<ThrongProxySession> {
 
+  /**
+   * Creates a proxy transaction tied to the given session wrapper.
+   *
+   * @param proxySession the session that originated the transaction wrapper
+   */
   public ThrongProxyTransaction (ThrongProxySession proxySession) {
 
     super(proxySession);
   }
 
+  /**
+   * Transactions are not supported by the Throng implementation.
+   *
+   * @return never returns normally
+   * @throws UnsupportedOperationException always thrown because transactions are unavailable
+   */
   @Override
   public boolean isCompleted () {
 
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * No-op flush because the underlying Throng session does not provide transactional state to clear.
+   */
   @Override
   public void flush () {
 
   }
 
+  /**
+   * No-op commit because Throng operations are executed immediately without transactional boundaries.
+   */
   @Override
   public void commit () {
 
   }
 
+  /**
+   * No-op rollback because Throng operations do not participate in transactions.
+   */
   @Override
   public void rollback () {
 

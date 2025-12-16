@@ -35,6 +35,11 @@ package org.smallmind.persistence.cache.praxis.intrinsic;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 
+/**
+ * {@link ListIterator} implementation that traverses an {@link IntrinsicRoster} while respecting concurrent modifications.
+ *
+ * @param <T> element type
+ */
 public class IntrinsicRosterIterator<T> implements ListIterator<T> {
 
   private final IntrinsicRoster<T> concurrentList;
@@ -43,6 +48,14 @@ public class IntrinsicRosterIterator<T> implements ListIterator<T> {
   private IntrinsicRosterNode<T> current;
   private int index;
 
+  /**
+   * Constructs an iterator positioned between the supplied nodes.
+   *
+   * @param concurrentList backing roster
+   * @param prev           node immediately before the iterator
+   * @param next           node immediately after the iterator
+   * @param index          initial index position
+   */
   public IntrinsicRosterIterator (IntrinsicRoster<T> concurrentList, IntrinsicRosterNode<T> prev, IntrinsicRosterNode<T> next, int index) {
 
     this.concurrentList = concurrentList;
@@ -51,11 +64,20 @@ public class IntrinsicRosterIterator<T> implements ListIterator<T> {
     this.index = index;
   }
 
+  /**
+   * @return {@code true} when another element is available forward
+   */
   public boolean hasNext () {
 
     return next != null;
   }
 
+  /**
+   * Returns the next element in the roster.
+   *
+   * @return next element
+   * @throws NoSuchElementException when no further elements exist
+   */
   public T next () {
 
     if (!hasNext()) {
@@ -73,11 +95,20 @@ public class IntrinsicRosterIterator<T> implements ListIterator<T> {
     }
   }
 
+  /**
+   * @return {@code true} when another element is available backward
+   */
   public boolean hasPrevious () {
 
     return prev != null;
   }
 
+  /**
+   * Returns the previous element in the roster.
+   *
+   * @return previous element
+   * @throws NoSuchElementException when no previous element exists
+   */
   public T previous () {
 
     if (!hasPrevious()) {
@@ -95,16 +126,27 @@ public class IntrinsicRosterIterator<T> implements ListIterator<T> {
     }
   }
 
+  /**
+   * @return index of the element that would be returned by {@link #next()}
+   */
   public int nextIndex () {
 
     return index;
   }
 
+  /**
+   * @return index of the element that would be returned by {@link #previous()}
+   */
   public int previousIndex () {
 
     return index - 1;
   }
 
+  /**
+   * Replaces the last returned element with the supplied value.
+   *
+   * @param obj replacement value
+   */
   public void set (T obj) {
 
     if (current == null) {
@@ -114,6 +156,9 @@ public class IntrinsicRosterIterator<T> implements ListIterator<T> {
     current.setObj(obj);
   }
 
+  /**
+   * Removes the last returned element from the roster.
+   */
   public void remove () {
 
     if (current == null) {
@@ -130,6 +175,11 @@ public class IntrinsicRosterIterator<T> implements ListIterator<T> {
     current = null;
   }
 
+  /**
+   * Inserts a new element adjacent to the last returned element.
+   *
+   * @param t element to add
+   */
   public void add (T t) {
 
     if (current == null) {

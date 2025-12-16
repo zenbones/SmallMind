@@ -34,8 +34,19 @@ package org.smallmind.persistence.orm;
 
 import java.util.Comparator;
 
+/**
+ * Orders {@link TransactionPostProcess} instances by their declared {@link ProcessPriority}.
+ */
 public class ProcessPriorityComparator implements Comparator<TransactionPostProcess> {
 
+  /**
+   * Compares two post-processors by priority.
+   *
+   * @param postProcess1 first post process
+   * @param postProcess2 second post process
+   * @return negative if {@code postProcess1} should execute before {@code postProcess2}, positive if after, zero if equal
+   */
+  @Override
   public int compare (TransactionPostProcess postProcess1, TransactionPostProcess postProcess2) {
 
     return postProcess1.getPriority().compareTo(postProcess2.getPriority());

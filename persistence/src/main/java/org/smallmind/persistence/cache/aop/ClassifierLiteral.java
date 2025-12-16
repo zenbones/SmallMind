@@ -34,28 +34,48 @@ package org.smallmind.persistence.cache.aop;
 
 import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
 
+/**
+ * Concrete {@link Classifier} implementation usable in code to synthesize classifier metadata.
+ */
 public class ClassifierLiteral extends AnnotationLiteral<Classifier> implements Classifier {
 
   private final String value;
   private final boolean asParameter;
 
+  /**
+   * Creates a literal classifier with a fixed value.
+   *
+   * @param value classifier text
+   */
   public ClassifierLiteral (String value) {
 
     this(value, false);
   }
 
+  /**
+   * Creates a classifier literal, optionally marked as a parameter reference.
+   *
+   * @param value       classifier text or parameter name
+   * @param asParameter {@code true} when {@code value} denotes a method parameter
+   */
   public ClassifierLiteral (String value, boolean asParameter) {
 
     this.value = value;
     this.asParameter = asParameter;
   }
 
+  /**
+   * @return classifier value or parameter name
+   */
   @Override
   public String value () {
 
     return value;
   }
 
+  /**
+   * @return {@code true} when the classifier should be obtained from a method parameter
+   */
   @Override
   public boolean asParameter () {
 

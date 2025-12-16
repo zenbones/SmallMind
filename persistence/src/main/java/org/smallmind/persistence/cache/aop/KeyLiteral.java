@@ -34,6 +34,9 @@ package org.smallmind.persistence.cache.aop;
 
 import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
 
+/**
+ * Concrete {@link Key} implementation that can be instantiated programmatically.
+ */
 public class KeyLiteral extends AnnotationLiteral<Key> implements Key {
 
   private final String value;
@@ -41,21 +44,47 @@ public class KeyLiteral extends AnnotationLiteral<Key> implements Key {
   private final boolean constant;
   private final boolean nullable;
 
+  /**
+   * Creates a key literal using the default alias and flags.
+   *
+   * @param value parameter or field name for the key component
+   */
   public KeyLiteral (String value) {
 
     this(value, "", false, false);
   }
 
+  /**
+   * Creates a key literal with a custom alias.
+   *
+   * @param value parameter or field name for the key component
+   * @param alias alternate label used in the cache key
+   */
   public KeyLiteral (String value, String alias) {
 
     this(value, alias, false, false);
   }
 
+  /**
+   * Creates a key literal, optionally marking the component as constant.
+   *
+   * @param value    parameter or field name for the key component
+   * @param alias    alternate label used in the cache key
+   * @param constant {@code true} when the value should be treated as a literal constant
+   */
   public KeyLiteral (String value, String alias, boolean constant) {
 
     this(value, alias, constant, false);
   }
 
+  /**
+   * Creates a key literal with full control over flags and alias.
+   *
+   * @param value    parameter or field name for the key component
+   * @param alias    alternate label used in the cache key
+   * @param constant {@code true} when the value should be treated as a constant
+   * @param nullable {@code true} if a null value is permitted
+   */
   public KeyLiteral (String value, String alias, boolean constant, boolean nullable) {
 
     this.value = value;
@@ -64,24 +93,36 @@ public class KeyLiteral extends AnnotationLiteral<Key> implements Key {
     this.nullable = nullable;
   }
 
+  /**
+   * @return parameter or field name for the key component
+   */
   @Override
   public String value () {
 
     return value;
   }
 
+  /**
+   * @return alternate label used in the cache key
+   */
   @Override
   public String alias () {
 
     return alias;
   }
 
+  /**
+   * @return {@code true} when the value should be treated as a constant
+   */
   @Override
   public boolean constant () {
 
     return constant;
   }
 
+  /**
+   * @return {@code true} if the component is allowed to be null
+   */
   @Override
   public boolean nullable () {
 

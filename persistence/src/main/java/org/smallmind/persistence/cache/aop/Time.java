@@ -37,16 +37,31 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Describes a duration used for cache entry expiration.
+ */
 @Target({})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Time {
 
-  // the number of time units to use as the ttl for the entry
+  /**
+   * Number of units comprising the duration.
+   *
+   * @return base length before any stochastic adjustment
+   */
   long value ();
 
-  // a value to treat as a random limit around the ttl (plus or minus)
+  /**
+   * Randomized amount applied to the base duration to avoid stampeding.
+   *
+   * @return stochastic range in the same {@link #unit()} as the base value
+   */
   int stochastic () default 0;
 
-  // the time unit for the ttl
+  /**
+   * Unit for both {@link #value()} and {@link #stochastic()}.
+   *
+   * @return time unit of the configured duration
+   */
   TimeUnit unit () default TimeUnit.SECONDS;
 }

@@ -38,12 +38,25 @@ import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.UpdateMode;
 import org.smallmind.persistence.cache.VectoredDao;
 
+/**
+ * Iterable wrapper that persists each durable element into the cache before returning it.
+ *
+ * @param <I> identifier type of the durable
+ * @param <D> durable entity type
+ */
 public class CacheCoherentIterable<I extends Serializable & Comparable<I>, D extends Durable<I>> implements Iterable<D> {
 
   private final Iterable<D> durableIterable;
   private final VectoredDao<I, D> vectoredDao;
   private final Class<D> durableClass;
 
+  /**
+   * Creates an iterable that ensures every iterated element is cached.
+   *
+   * @param durableIterable source iterable of durables
+   * @param durableClass    class of the managed durable
+   * @param vectoredDao     cache-aware DAO that will persist elements
+   */
   public CacheCoherentIterable (Iterable<D> durableIterable, Class<D> durableClass, VectoredDao<I, D> vectoredDao) {
 
     this.durableIterable = durableIterable;
@@ -51,31 +64,57 @@ public class CacheCoherentIterable<I extends Serializable & Comparable<I>, D ext
     this.vectoredDao = vectoredDao;
   }
 
+  /**
+   * @return an iterator that caches elements on access
+   */
   @Override
   public Iterator<D> iterator () {
 
     return new CacheCoherentIterator(durableIterable.iterator());
   }
 
+  /**
+   * Iterator that routes elements through the {@link VectoredDao} to enforce cache coherence.
+   */
   private class CacheCoherentIterator implements Iterator<D> {
 
     private final Iterator<D> durableIter;
 
+    /**
+     * @param durableIter underlying iterator of durable elements
+     */
     public CacheCoherentIterator (Iterator<D> durableIter) {
 
       this.durableIter = durableIter;
     }
 
+    /**
+     * @return {@code true} when additional cached elements are available
+     */
+    /**
+     * @return {@code true} when additional cached elements are available
+     */
+    @Override
     public boolean hasNext () {
 
       return durableIter.hasNext();
     }
 
+    /**
+     * Returns the next durable, persisting it into the cache before handing it off.
+     *
+     * @return cached durable instance
+     */
+    @Override
     public D next () {
 
       return vectoredDao.persist(durableClass, durableIter.next(), UpdateMode.SOFT);
     }
 
+    /**
+     * Removes the current element from the underlying iterator.
+     */
+    @Override
     public void remove () {
 
       durableIter.remove();

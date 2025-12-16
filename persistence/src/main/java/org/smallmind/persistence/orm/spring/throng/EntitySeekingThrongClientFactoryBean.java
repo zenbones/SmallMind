@@ -41,6 +41,12 @@ import org.smallmind.persistence.orm.throng.ThrongClientFactory;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
+/**
+ * Spring {@link FactoryBean} that constructs a {@link ThrongClientFactory}. It gathers MongoDB
+ * entity classes discovered by {@link AnnotationSeekingBeanFactoryPostProcessor}, creates a
+ * {@link ThrongClient} with the supplied {@link MongoClient} and options, and exposes it as a
+ * singleton factory.
+ */
 public class EntitySeekingThrongClientFactoryBean implements FactoryBean<ThrongClientFactory>, InitializingBean {
 
   private ThrongClientFactory throngClientFactory;
@@ -50,43 +56,80 @@ public class EntitySeekingThrongClientFactoryBean implements FactoryBean<ThrongC
   private String sessionSourceKey;
   private String databaseName;
 
+  /**
+   * Sets the helper responsible for collecting Throng-mapped classes.
+   *
+   * @param annotationSeekingBeanFactoryPostProcessor post-processor used to look up entity classes
+   */
   public void setAnnotationSeekingBeanFactoryPostProcessor (AnnotationSeekingBeanFactoryPostProcessor annotationSeekingBeanFactoryPostProcessor) {
 
     this.annotationSeekingBeanFactoryPostProcessor = annotationSeekingBeanFactoryPostProcessor;
   }
 
+  /**
+   * Supplies the Mongo client to back the Throng client.
+   *
+   * @param mongoClient configured Mongo client
+   */
   public void setMongoClient (MongoClient mongoClient) {
 
     this.mongoClient = mongoClient;
   }
 
+  /**
+   * Sets optional Throng configuration.
+   *
+   * @param throngOptions Throng options to apply when creating the client
+   */
   public void setThrongOptions (ThrongOptions throngOptions) {
 
     this.throngOptions = throngOptions;
   }
 
+  /**
+   * Sets the MongoDB database name to use.
+   *
+   * @param databaseName database name
+   */
   public void setDatabaseName (String databaseName) {
 
     this.databaseName = databaseName;
   }
 
+  /**
+   * Narrows the entity scan to a specific session source.
+   *
+   * @param sessionSourceKey session source key or {@code null} for default
+   */
   public void setSessionSourceKey (String sessionSourceKey) {
 
     this.sessionSourceKey = sessionSourceKey;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean isSingleton () {
 
     return true;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Class<?> getObjectType () {
 
     return ThrongClientFactory.class;
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * @return singleton {@link ThrongClientFactory}
+   * @throws Exception if the factory has not been initialized
+   */
   @Override
   public ThrongClientFactory getObject ()
     throws Exception {
@@ -94,6 +137,16 @@ public class EntitySeekingThrongClientFactoryBean implements FactoryBean<ThrongC
     return throngClientFactory;
   }
 
+  /**
+   * Instantiates the {@link ThrongClient} using discovered entity classes and wraps it in a
+   * {@link ThrongClientFactory}.
+   *
+   * @throws ThrongMappingException    if entity mapping fails
+   * @throws NoSuchMethodException     if an expected constructor is missing
+   * @throws InstantiationException    if the client cannot be instantiated
+   * @throws IllegalAccessException    if the constructor is not accessible
+   * @throws InvocationTargetException if the constructor throws an exception
+   */
   @Override
   public void afterPropertiesSet ()
     throws ThrongMappingException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {

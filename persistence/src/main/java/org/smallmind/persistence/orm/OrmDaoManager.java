@@ -38,8 +38,19 @@ import org.smallmind.nutsnbolts.lang.PerApplicationContext;
 import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
 import org.smallmind.persistence.Durable;
 
+/**
+ * Application-wide registry for {@link ORMDao} instances keyed by their durable classes.
+ * Provides lookup by class or class name to help wire DAOs in environments that cannot
+ * rely on injection alone.
+ */
 public class OrmDaoManager implements PerApplicationDataManager {
 
+  /**
+   * Registers an ORM DAO for a durable class in the current application context.
+   *
+   * @param durableClass the durable class the DAO manages
+   * @param ormDao       the DAO instance to register
+   */
   public static void register (Class<? extends Durable> durableClass, ORMDao ormDao) {
 
     ConcurrentHashMap<Class<? extends Durable>, ORMDao> ormDaoMap;
@@ -50,6 +61,12 @@ public class OrmDaoManager implements PerApplicationDataManager {
     ormDaoMap.put(durableClass, ormDao);
   }
 
+  /**
+   * Resolves a durable class by its simple or fully qualified name among registered DAOs.
+   *
+   * @param name simple or fully qualified class name
+   * @return the matching durable class, or {@code null} if none match
+   */
   public static Class<? extends Durable> findDurableClass (String name) {
 
     boolean isSimple = name.indexOf('.') < 0;
@@ -64,6 +81,12 @@ public class OrmDaoManager implements PerApplicationDataManager {
     return null;
   }
 
+  /**
+   * Retrieves a registered DAO by the name of its durable class.
+   *
+   * @param name simple or fully qualified class name
+   * @return the DAO instance, or {@code null} if none is registered
+   */
   public static ORMDao get (String name) {
 
     Class<? extends Durable> durableClass;
@@ -76,6 +99,14 @@ public class OrmDaoManager implements PerApplicationDataManager {
     return null;
   }
 
+  /**
+   * Retrieves a registered DAO by durable class.
+   *
+   * @param durableClass the class managed by the DAO
+   * @param <I>          identifier type
+   * @param <D>          durable type
+   * @return the DAO instance, or {@code null} if none is registered
+   */
   public static <I extends Serializable & Comparable<I>, D extends Durable<I>> ORMDao<I, D, ?, ?> get (Class<D> durableClass) {
 
     return (ORMDao)PerApplicationContext.getPerApplicationData(OrmDaoManager.class, ConcurrentHashMap.class).get(durableClass);

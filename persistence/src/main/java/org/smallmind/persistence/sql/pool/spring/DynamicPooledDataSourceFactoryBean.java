@@ -35,33 +35,52 @@ package org.smallmind.persistence.sql.pool.spring;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.FactoryBean;
 
+/**
+ * Spring {@link FactoryBean} that looks up a pooled {@link DataSource} at runtime via a
+ * {@link DataSourceLocator}. Useful when pools are registered dynamically.
+ */
 public class DynamicPooledDataSourceFactoryBean implements FactoryBean<DataSource> {
 
   private DataSourceLocator dataSourceLocator;
   private String dataSourceKey;
 
+  /**
+   * @param dataSourceKey key used to locate the data source
+   */
   public void setDataSourceKey (String dataSourceKey) {
 
     this.dataSourceKey = dataSourceKey;
   }
 
+  /**
+   * @param dataSourceLocator locator used to resolve the data source
+   */
   public void setDataSourceLocator (DataSourceLocator dataSourceLocator) {
 
     this.dataSourceLocator = dataSourceLocator;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean isSingleton () {
 
     return true;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Class<?> getObjectType () {
 
     return DataSource.class;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public DataSource getObject () {
 

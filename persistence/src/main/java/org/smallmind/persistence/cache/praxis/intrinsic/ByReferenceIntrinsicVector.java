@@ -41,10 +41,25 @@ import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.cache.DurableVector;
 import org.smallmind.persistence.cache.praxis.AbstractDurableVector;
 
+/**
+ * Durable vector that stores direct references to durables in an {@link IntrinsicRoster}, suitable for thread-safe in-memory caches.
+ *
+ * @param <I> identifier type
+ * @param <D> durable type
+ */
 public class ByReferenceIntrinsicVector<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractDurableVector<I, D> {
 
   private final IntrinsicRoster<D> roster;
 
+  /**
+   * Creates an intrinsic vector backed by the provided roster.
+   *
+   * @param roster            roster containing durables
+   * @param comparator        comparator used for ordering; {@code null} for natural order
+   * @param maxSize           maximum number of elements to retain
+   * @param timeToLiveSeconds TTL for the vector
+   * @param ordered           whether the vector should maintain sorted order
+   */
   public ByReferenceIntrinsicVector (IntrinsicRoster<D> roster, Comparator<D> comparator, int maxSize, int timeToLiveSeconds, boolean ordered) {
 
     super(comparator, maxSize, timeToLiveSeconds, ordered);
@@ -57,22 +72,36 @@ public class ByReferenceIntrinsicVector<I extends Serializable & Comparable<I>, 
     }
   }
 
+  /**
+   * @return backing roster for this vector
+   */
   @Override
   public IntrinsicRoster<D> getRoster () {
 
     return roster;
   }
 
+  /**
+   * Creates a copy of this vector with a cloned roster.
+   *
+   * @return copied vector
+   */
   public DurableVector<I, D> copy () {
 
     return new ByReferenceIntrinsicVector<>(new IntrinsicRoster<D>(roster), getComparator(), getMaxSize(), getTimeToLiveSeconds(), isOrdered());
   }
 
+  /**
+   * @return unmodifiable view of the current roster without prefetching
+   */
   public synchronized List<D> asBestEffortLazyList () {
 
     return Collections.unmodifiableList(getRoster());
   }
 
+  /**
+   * @return iterator over an unmodifiable snapshot of the roster
+   */
   public synchronized Iterator<D> iterator () {
 
     return Collections.unmodifiableList(getRoster()).iterator();

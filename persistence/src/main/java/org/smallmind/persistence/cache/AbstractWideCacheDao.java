@@ -36,27 +36,52 @@ import java.io.Serializable;
 import java.util.List;
 import org.smallmind.persistence.Durable;
 
+/**
+ * Base implementation of {@link WideCacheDao} that delegates wide-instance caching to a
+ * {@link CacheDomain}.
+ */
 public abstract class AbstractWideCacheDao<W extends Serializable & Comparable<W>, I extends Serializable & Comparable<I>, D extends Durable<I>> implements WideCacheDao<W, I, D> {
 
   private final CacheDomain<I, D> cacheDomain;
 
+  /**
+   * @param cacheDomain cache group providing wide-instance caches
+   */
   public AbstractWideCacheDao (CacheDomain<I, D> cacheDomain) {
 
     this.cacheDomain = cacheDomain;
   }
 
+  /**
+   * @return identifier used to tag metrics emitted by this cache domain
+   */
   @Override
   public String getMetricSource () {
 
     return cacheDomain.getMetricSource();
   }
 
+  /**
+   * Retrieves the cache used for wide queries of the provided durable class.
+   *
+   * @param durableClass durable type for which a wide-instance cache is desired
+   * @return persistence cache storing lists of durables
+   */
   @Override
   public PersistenceCache<String, List<D>> getWideInstanceCache (Class<D> durableClass) {
 
     return cacheDomain.getWideInstanceCache(durableClass);
   }
 
+  /**
+   * Retrieves a wide list of child durables from the cache using a composite key.
+   *
+   * @param context      contextual namespace for the cache entry
+   * @param parentClass  parent durable type
+   * @param parentId     identifier of the parent durable
+   * @param durableClass child durable type
+   * @return cached list of durables or {@code null} when absent
+   */
   @Override
   public List<D> get (String context, Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass) {
 
@@ -65,6 +90,14 @@ public abstract class AbstractWideCacheDao<W extends Serializable & Comparable<W
     return getWideInstanceCache(durableClass).get(wideDurableKey.getKey());
   }
 
+  /**
+   * Removes the cached wide list for the given composite key.
+   *
+   * @param context      contextual namespace for the cache entry
+   * @param parentClass  parent durable type
+   * @param parentId     identifier of the parent durable
+   * @param durableClass child durable type
+   */
   @Override
   public void delete (String context, Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass) {
 

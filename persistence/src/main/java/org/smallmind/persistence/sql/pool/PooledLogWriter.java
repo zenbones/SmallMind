@@ -37,30 +37,56 @@ import java.io.Writer;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * {@link Writer} implementation that routes output to the SmallMind logging system at a specified
+ * {@link Level}. Used by pooled data sources for logging JDBC messages.
+ */
 public class PooledLogWriter extends Writer {
 
   private final Level level;
 
+  /**
+   * Creates a log writer that logs at {@link Level#INFO}.
+   */
   public PooledLogWriter () {
 
     this(Level.INFO);
   }
 
+  /**
+   * Creates a log writer at the given log level.
+   *
+   * @param level logging level to use
+   */
   public PooledLogWriter (Level level) {
 
     this.level = level;
   }
 
+  /**
+   * Writes characters by emitting a log entry.
+   *
+   * @param cbuf buffer
+   * @param off  offset
+   * @param len  length
+   * @throws IOException never thrown; required by signature
+   */
   public void write (char[] cbuf, int off, int len)
     throws IOException {
 
     LoggerManager.getLogger(PooledLogWriter.class).log(level, new String(cbuf, off, len));
   }
 
+  /**
+   * No-op flush since logging is immediate.
+   */
   public void flush () {
 
   }
 
+  /**
+   * No-op close.
+   */
   public void close () {
 
   }

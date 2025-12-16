@@ -32,12 +32,25 @@
  */
 package org.smallmind.persistence.database;
 
+/**
+ * Base abstraction for sequence number generators that can be registered with the
+ * {@link SequenceManager}.
+ */
 public abstract class Sequence {
 
+  /**
+   * Registers this sequence instance as the active generator in the {@link SequenceManager}.
+   */
   public void register () {
 
     SequenceManager.register(this);
   }
 
+  /**
+   * Returns the next long value for the named sequence.
+   *
+   * @param name logical sequence name
+   * @return next generated value
+   */
   public abstract long nextLong (String name);
 }

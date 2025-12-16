@@ -34,23 +34,45 @@ package org.smallmind.persistence.orm.querydsl.jpa;
 
 import com.querydsl.jpa.impl.JPAQuery;
 
+/**
+ * Encapsulates a QueryDSL JPA query definition with an optional entity graph hint.
+ *
+ * @param <T> result type
+ */
 public abstract class JPAQueryDetails<T> {
 
   private String graph;
 
+  /**
+   * Creates query details without specifying an entity graph.
+   */
   public JPAQueryDetails () {
 
   }
 
+  /**
+   * Creates query details with an entity graph to apply.
+   *
+   * @param graph JPA entity graph name
+   */
   public JPAQueryDetails (String graph) {
 
     this.graph = graph;
   }
 
+  /**
+   * @return the configured entity graph name, or {@code null} if none
+   */
   public String getGraph () {
 
     return graph;
   }
 
+  /**
+   * Applies predicates, projections, and hints to the supplied QueryDSL query.
+   *
+   * @param query base query
+   * @return the completed query ready to execute
+   */
   public abstract JPAQuery<T> completeQuery (JPAQuery<T> query);
 }

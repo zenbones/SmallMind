@@ -55,11 +55,26 @@ import org.smallmind.persistence.cache.VectoredDao;
 import org.smallmind.persistence.orm.ORMDao;
 import org.smallmind.persistence.orm.aop.Timed;
 
+/**
+ * Aspect that intercepts methods annotated with {@link CacheAs} to populate and consult a vector cache.
+ * The advice coordinates with {@link org.smallmind.persistence.orm.ORMDao} instances to either serve cached
+ * durable objects or persist fresh results, while tracking metrics when enabled.
+ */
 @Aspect
 public class CacheAsAspect {
 
   private static final Random RANDOM = new SecureRandom();
 
+  /**
+   * Wraps execution of a {@link CacheAs}-annotated method, consulting an attached {@link VectoredDao}
+   * for cached entries or persisting a new vector when missing.
+   *
+   * @param thisJoinPoint the intercepted invocation
+   * @param cacheAs       the cache configuration declared on the method
+   * @param ormDao        the DAO supplying persistence and vector access
+   * @return the durable instance or iterable returned by the intercepted method, potentially retrieved from cache
+   * @throws Throwable propagated from the underlying method or validation failures
+   */
   @Around(value = "execution(@CacheAs * * (..)) && @annotation(cacheAs) && this(ormDao)", argNames = "thisJoinPoint, cacheAs, ormDao")
   public Object aroundCacheAsMethod (ProceedingJoinPoint thisJoinPoint, CacheAs cacheAs, ORMDao ormDao)
     throws Throwable {
@@ -197,6 +212,12 @@ public class CacheAsAspect {
     }
   }
 
+  /**
+   * Calculates the effective time-to-live in seconds for a cache entry, including stochastic jitter when configured.
+   *
+   * @param cacheAs the annotation supplying base duration and optional randomness
+   * @return computed TTL in seconds; zero indicates the cache domain default
+   */
   private int getTimeToLiveSeconds (CacheAs cacheAs) {
 
     if ((cacheAs.time().value() == 0) && (cacheAs.time().stochastic() == 0)) {

@@ -39,21 +39,46 @@ import org.smallmind.persistence.cache.aop.Classifications;
 import org.smallmind.persistence.cache.aop.Vector;
 import org.smallmind.persistence.cache.aop.VectorCalculator;
 
+/**
+ * Key used to cache vectors, derived from {@link Vector} metadata, the durable instance, and
+ * optional classification.
+ */
 public class VectorKey<D extends Durable<?>> implements Serializable {
 
   private final Class<D> elementClass;
   private final String key;
 
+  /**
+   * Builds a key from the vector annotation, durable instance, and classification derived from
+   * {@link CachedWith}.
+   *
+   * @param vector       vector annotation
+   * @param durable      durable instance providing index values
+   * @param elementClass vector element class
+   */
   public VectorKey (Vector vector, D durable, Class<D> elementClass) {
 
     this(VectorCalculator.getVectorArtifact(vector, durable), elementClass, Classifications.get(CachedWith.class, null, vector));
   }
 
+  /**
+   * Builds a key from a precomputed {@link VectorArtifact}.
+   *
+   * @param vectorArtifact vector details
+   * @param elementClass   vector element class
+   */
   public VectorKey (VectorArtifact vectorArtifact, Class<D> elementClass) {
 
     this(vectorArtifact, elementClass, null);
   }
 
+  /**
+   * Builds a key from a vector artifact and optional classification suffix.
+   *
+   * @param vectorArtifact vector details
+   * @param elementClass   vector element class
+   * @param classification optional classification string
+   */
   public VectorKey (VectorArtifact vectorArtifact, Class<D> elementClass, String classification) {
 
     this.elementClass = elementClass;
@@ -61,16 +86,29 @@ public class VectorKey<D extends Durable<?>> implements Serializable {
     key = buildKey(vectorArtifact, classification);
   }
 
+  /**
+   * @return cacheable vector key string
+   */
   public String getKey () {
 
     return key;
   }
 
+  /**
+   * @return vector element class
+   */
   public Class<D> getElementClass () {
 
     return elementClass;
   }
 
+  /**
+   * Builds the string form of the vector key using namespace, indices, and optional classification.
+   *
+   * @param vectorArtifact artifact describing vector indices and namespace
+   * @param classification optional classification suffix
+   * @return composed key string
+   */
   private String buildKey (VectorArtifact vectorArtifact, String classification) {
 
     StringBuilder keyBuilder;
@@ -98,16 +136,32 @@ public class VectorKey<D extends Durable<?>> implements Serializable {
     return keyBuilder.toString();
   }
 
+  /**
+   * Returns the cache key string.
+   *
+   * @return string representation of this vector key
+   */
   public String toString () {
 
     return key;
   }
 
+  /**
+   * Hashes based on the generated key string.
+   *
+   * @return hash code for this key
+   */
   public int hashCode () {
 
     return key.hashCode();
   }
 
+  /**
+   * Keys are equal when their underlying key strings match.
+   *
+   * @param obj other object
+   * @return equality result
+   */
   public boolean equals (Object obj) {
 
     return (obj instanceof VectorKey) && key.equals(((VectorKey<?>)obj).getKey());

@@ -34,15 +34,29 @@ package org.smallmind.persistence.orm.throng;
 
 import org.smallmind.mongodb.throng.ThrongClient;
 
+/**
+ * Simple holder for a {@link ThrongClient} built elsewhere (e.g. via Spring), used so DAOs can
+ * inject and share a configured client instance.
+ */
 public class ThrongClientFactory {
 
   private final ThrongClient throngClient;
 
+  /**
+   * Creates a factory that will hand out the supplied client instance.
+   *
+   * @param throngClient the fully configured Throng client to expose
+   */
   public ThrongClientFactory (ThrongClient throngClient) {
 
     this.throngClient = throngClient;
   }
 
+  /**
+   * Returns the configured {@link ThrongClient}.
+   *
+   * @return the backing Throng client
+   */
   public ThrongClient getThrongClient () {
 
     return throngClient;

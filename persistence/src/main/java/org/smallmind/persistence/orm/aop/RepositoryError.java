@@ -34,8 +34,17 @@ package org.smallmind.persistence.orm.aop;
 
 import org.smallmind.nutsnbolts.lang.FormattedError;
 
+/**
+ * Error raised when repository injection or lookup fails.
+ */
 public class RepositoryError extends FormattedError {
 
+  /**
+   * Creates a repository error with a formatted message.
+   *
+   * @param message the message template
+   * @param args    arguments referenced by the format specifiers in the message
+   */
   public RepositoryError (String message, Object... args) {
 
     super(message, args);

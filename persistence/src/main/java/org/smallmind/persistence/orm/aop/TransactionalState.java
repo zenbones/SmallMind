@@ -36,20 +36,40 @@ import java.util.LinkedList;
 import org.smallmind.persistence.orm.ProxySession;
 import org.smallmind.persistence.orm.ProxyTransaction;
 
+/**
+ * Thread-local tracker for transactional boundaries and the proxy transactions they contain.
+ * Supports nested boundaries and enforces allowed session sources, rollback-only semantics,
+ * and coordination with non-transactional boundaries.
+ */
 public class TransactionalState {
 
   private static final ThreadLocal<LinkedList<RollbackAwareBoundarySet<ProxyTransaction<?>>>> TRANSACTION_SET_STACK_LOCAL = new ThreadLocal<>();
 
+  /**
+   * @return true when any transaction is active in the current thread
+   */
   public static boolean isInTransaction () {
 
     return isInTransaction(null);
   }
 
+  /**
+   * Determines whether a transaction for the given session source key is active.
+   *
+   * @param sessionSourceKey session key to check; {@code null} checks the default
+   * @return true when active
+   */
   public static boolean isInTransaction (String sessionSourceKey) {
 
     return currentTransaction(sessionSourceKey) != null;
   }
 
+  /**
+   * Returns the current transaction for the given session source key.
+   *
+   * @param sessionSourceKey session key to find; {@code null} finds the default
+   * @return the matching transaction or {@code null} if none
+   */
   public static ProxyTransaction<?> currentTransaction (String sessionSourceKey) {
 
     LinkedList<RollbackAwareBoundarySet<ProxyTransaction<?>>> transactionSetStack;
@@ -73,11 +93,23 @@ public class TransactionalState {
     return null;
   }
 
+  /**
+   * Checks whether the given session is inside any transactional boundary.
+   *
+   * @param proxySession session to test
+   * @return true when within a boundary that allows the session
+   */
   public static boolean withinBoundary (ProxySession<?, ?> proxySession) {
 
     return withinBoundary(proxySession.getSessionSourceKey());
   }
 
+  /**
+   * Checks whether a session source key is inside any transactional boundary.
+   *
+   * @param sessionSourceKey session key to test
+   * @return true when within a boundary that allows the session
+   */
   public static boolean withinBoundary (String sessionSourceKey) {
 
     LinkedList<RollbackAwareBoundarySet<ProxyTransaction<?>>> transactionSetStack;
@@ -93,6 +125,13 @@ public class TransactionalState {
     return false;
   }
 
+  /**
+   * Finds the active boundary set that allows the given session.
+   *
+   * @param proxySession session to locate
+   * @return the boundary set or {@code null} if none
+   * @throws StolenTransactionError if a non-transactional boundary already claims the session
+   */
   public static RollbackAwareBoundarySet<ProxyTransaction<?>> obtainBoundary (ProxySession<?, ?> proxySession) {
 
     LinkedList<RollbackAwareBoundarySet<ProxyTransaction<?>>> transactionSetStack;
@@ -112,6 +151,11 @@ public class TransactionalState {
     return null;
   }
 
+  /**
+   * Begins a new transactional boundary for the given annotation configuration.
+   *
+   * @param transactional the annotation describing the boundary
+   */
   protected static void startBoundary (Transactional transactional) {
 
     LinkedList<RollbackAwareBoundarySet<ProxyTransaction<?>>> transactionSetStack;
@@ -129,18 +173,37 @@ public class TransactionalState {
     endBoundary(null, false);
   }
 
+  /**
+   * Ends the current transactional boundary, committing unless the supplied throwable indicates otherwise.
+   *
+   * @param throwable throwable captured during boundary execution; may be {@code null}
+   * @throws TransactionError when commit processing fails
+   */
   protected static void commitBoundary (Throwable throwable)
     throws TransactionError {
 
     endBoundary(throwable, false);
   }
 
+  /**
+   * Ends the current transactional boundary with an explicit rollback.
+   *
+   * @param throwable throwable captured during boundary execution; may be {@code null}
+   * @throws TransactionError when rollback processing fails
+   */
   protected static void rollbackBoundary (Throwable throwable)
     throws TransactionError {
 
     endBoundary(throwable, true);
   }
 
+  /**
+   * Processes the end of a transactional boundary, committing or rolling back transactions and cleaning up the stack.
+   *
+   * @param throwable    throwable propagated from the boundary, if any
+   * @param rollbackOnly whether to force rollback
+   * @throws TransactionError if boundary state is invalid or commit/rollback fails
+   */
   private static void endBoundary (Throwable throwable, boolean rollbackOnly)
     throws TransactionError {
 

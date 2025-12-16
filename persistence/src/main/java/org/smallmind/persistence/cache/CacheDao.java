@@ -35,9 +35,27 @@ package org.smallmind.persistence.cache;
 import java.io.Serializable;
 import org.smallmind.persistence.Durable;
 
+/**
+ * Base DAO contract for cache-backed access to durable instances and their vectors.
+ *
+ * @param <I> durable identifier type
+ * @param <D> durable type
+ */
 public interface CacheDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends VectoredDao<I, D> {
 
+  /**
+   * Returns the cache storing individual durable instances.
+   *
+   * @param durableClass durable class
+   * @return cache keyed by durable id strings
+   */
   PersistenceCache<String, D> getInstanceCache (Class<D> durableClass);
 
+  /**
+   * Returns the cache storing durable vectors for the given type.
+   *
+   * @param durableClass durable class
+   * @return cache of vectors keyed by vector keys
+   */
   PersistenceCache<String, ? extends DurableVector<I, D>> getVectorCache (Class<D> durableClass);
 }

@@ -41,16 +41,31 @@ import org.smallmind.persistence.sql.DataSourceManager;
 import org.smallmind.quorum.pool.ComponentPoolException;
 import org.smallmind.quorum.pool.complex.ComponentPool;
 
+/**
+ * {@link DataSource} implementation backed by a {@link ComponentPool} of {@link PooledConnection}s.
+ * Provides integration with {@link DataSourceManager} for keyed lookup.
+ */
 public class PooledDataSource extends AbstractPooledDataSource<DataSource, PooledConnection> implements DataSource {
 
   private final ComponentPool<PooledConnection> componentPool;
   private final String key;
 
+  /**
+   * Constructs a pooled data source using the pool name as the registration key.
+   *
+   * @param componentPool pool that manages pooled connections
+   */
   public PooledDataSource (ComponentPool<PooledConnection> componentPool) {
 
     this(componentPool.getPoolName(), componentPool);
   }
 
+  /**
+   * Constructs a pooled data source with an explicit registry key.
+   *
+   * @param key           name used when registering with {@link DataSourceManager}
+   * @param componentPool pool that manages pooled connections
+   */
   public PooledDataSource (String key, ComponentPool<PooledConnection> componentPool) {
 
     super(DataSource.class, PooledConnection.class);
@@ -59,16 +74,28 @@ public class PooledDataSource extends AbstractPooledDataSource<DataSource, Poole
     this.componentPool = componentPool;
   }
 
+  /**
+   * Registers this data source in the {@link DataSourceManager} under its key.
+   */
   public void register () {
 
     DataSourceManager.register(key, this);
   }
 
+  /**
+   * @return registry key for this data source
+   */
   public String getKey () {
 
     return key;
   }
 
+  /**
+   * Borrows a connection from the pool and returns its logical {@link Connection}.
+   *
+   * @return a pooled connection wrapper
+   * @throws SQLException if the pool cannot provide a connection
+   */
   public Connection getConnection ()
     throws SQLException {
 
@@ -79,21 +106,40 @@ public class PooledDataSource extends AbstractPooledDataSource<DataSource, Poole
     }
   }
 
+  /**
+   * Unsupported variant; the pool is configured with credentials externally.
+   *
+   * @param username unused
+   * @param password unused
+   * @return never returns
+   * @throws UnsupportedOperationException always
+   */
   public Connection getConnection (String username, String password) {
 
     throw new UnsupportedOperationException("Please properly configure the underlying resource managed by the pool which is represented by this DataSource");
   }
 
+  /**
+   * Exposes stack traces for components currently checked out of the pool (diagnostics).
+   *
+   * @return array of stack traces for active components
+   */
   public StackTrace[] getExistentialStackTraces () {
 
     return componentPool.getExistentialStackTraces();
   }
 
+  /**
+   * Forcibly terminates all in-flight processing in the connection pool.
+   */
   public void killAllProcessing () {
 
     componentPool.killAllProcessing();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void startup ()
     throws ComponentPoolException {
@@ -101,6 +147,9 @@ public class PooledDataSource extends AbstractPooledDataSource<DataSource, Poole
     componentPool.startup();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void shutdown ()
     throws ComponentPoolException {

@@ -36,19 +36,62 @@ import java.io.Serializable;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.DurableDao;
 
+/**
+ * DAO contract for relationally managed durables with access to the underlying session.
+ *
+ * @param <I> identifier type
+ * @param <D> durable type
+ * @param <F> native session factory type
+ * @param <N> native session type
+ */
 public interface RelationalDao<I extends Serializable & Comparable<I>, D extends Durable<I>, F, N> extends DurableDao<I, D> {
 
+  /**
+   * @return the session source key that identifies the backing session
+   */
   String getSessionSourceKey ();
 
+  /**
+   * @return the proxy session backing this DAO
+   */
   ProxySession<F, N> getSession ();
 
+  /**
+   * Detaches the supplied durable from the current session.
+   *
+   * @param durable the durable to detach
+   * @return the detached durable
+   */
   D detach (D durable);
 
+  /**
+   * Streams all durables using a scrollable cursor.
+   *
+   * @return iterable over all durables
+   */
   Iterable<D> scroll ();
 
+  /**
+   * Streams durables with a fetch size hint.
+   *
+   * @param fetchSize the desired batch size
+   * @return iterable over durables
+   */
   Iterable<D> scroll (int fetchSize);
 
+  /**
+   * Streams durables by identifier starting after the provided value.
+   *
+   * @param greaterThan id lower bound (exclusive)
+   * @param fetchSize   the desired batch size
+   * @return iterable over durables beyond the supplied id
+   */
   Iterable<D> scrollById (I greaterThan, int fetchSize);
 
+  /**
+   * Counts the number of durables.
+   *
+   * @return total number of durables
+   */
   long size ();
 }

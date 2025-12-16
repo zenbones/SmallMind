@@ -37,9 +37,17 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Enables timing for all methods within the annotated type, unless disabled.
+ */
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Timed {
 
+  /**
+   * Whether timing is enabled.
+   *
+   * @return {@code true} to enable timing
+   */
   boolean value () default true;
 }

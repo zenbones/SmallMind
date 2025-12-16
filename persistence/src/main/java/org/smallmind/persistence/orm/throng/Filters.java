@@ -36,15 +36,29 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import org.smallmind.mongodb.throng.query.Filter;
 
+/**
+ * Builder for composing Throng {@link Filter} instances using AND semantics.
+ */
 public class Filters {
 
   private final LinkedList<Filter> filterList = new LinkedList<>();
 
+  /**
+   * Starts a new empty filter composition.
+   *
+   * @return a fresh {@code Filters} builder
+   */
   public static Filters on () {
 
     return new Filters();
   }
 
+  /**
+   * Adds all filters from another builder.
+   *
+   * @param filters filters to append
+   * @return this builder for chaining
+   */
   public Filters and (Filters filters) {
 
     filterList.addAll(filters.filterList);
@@ -52,6 +66,12 @@ public class Filters {
     return this;
   }
 
+  /**
+   * Adds the provided filters.
+   *
+   * @param filters filters to append
+   * @return this builder for chaining
+   */
   public Filters and (Filter... filters) {
 
     filterList.addAll(Arrays.asList(filters));
@@ -59,6 +79,11 @@ public class Filters {
     return this;
   }
 
+  /**
+   * Combines all added filters into a single filter expression, returning empty/first when appropriate.
+   *
+   * @return the combined filter
+   */
   public Filter combine () {
 
     if (filterList.isEmpty()) {

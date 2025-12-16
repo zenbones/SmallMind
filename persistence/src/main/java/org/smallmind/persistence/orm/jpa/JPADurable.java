@@ -42,12 +42,23 @@ import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
 import org.smallmind.persistence.AbstractDurable;
 
+/**
+ * JPA-mapped durable base that exposes an {@code id} property with identity generation.
+ *
+ * @param <I> identifier type
+ * @param <D> durable subclass type
+ */
 @MappedSuperclass
 @Access(AccessType.PROPERTY)
 public abstract class JPADurable<I extends Serializable & Comparable<I>, D extends JPADurable<I, D>> extends AbstractDurable<I, D> {
 
   private I id;
 
+  /**
+   * Returns the generated identifier for this durable.
+   *
+   * @return the identifier value
+   */
   @Override
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -57,6 +68,11 @@ public abstract class JPADurable<I extends Serializable & Comparable<I>, D exten
     return id;
   }
 
+  /**
+   * Assigns the identifier (usually by JPA on persist).
+   *
+   * @param id identifier to set
+   */
   @Override
   public synchronized void setId (I id) {
 

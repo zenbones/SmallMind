@@ -36,20 +36,39 @@ import java.util.LinkedList;
 import org.smallmind.persistence.orm.ProxySession;
 import org.smallmind.persistence.orm.ProxyTransaction;
 
+/**
+ * Thread-local tracker for non-transactional session boundaries, coordinating with transactional state
+ * to prevent session stealing and ensure proper closure.
+ */
 public class NonTransactionalState {
 
   private static final ThreadLocal<LinkedList<BoundarySet<ProxySession<?, ?>>>> SESSION_SET_STACK_LOCAL = new ThreadLocal<>();
 
+  /**
+   * @return true when any non-transactional session is active in the current thread
+   */
   public static boolean isInSession () {
 
     return isInSession(null);
   }
 
+  /**
+   * Determines whether a non-transactional session for the given source key is active.
+   *
+   * @param sessionSourceKey the session key to check; {@code null} checks the default
+   * @return true when active
+   */
   public static boolean isInSession (String sessionSourceKey) {
 
     return currentSession(sessionSourceKey) != null;
   }
 
+  /**
+   * Returns the current session for the given source key, preferring any active transactional session.
+   *
+   * @param sessionSourceKey session key to find; {@code null} finds the default
+   * @return the matching session or {@code null} if none
+   */
   public static ProxySession<?, ?> currentSession (String sessionSourceKey) {
 
     LinkedList<BoundarySet<ProxySession<?, ?>>> sessionSetStack;
@@ -79,6 +98,12 @@ public class NonTransactionalState {
     return null;
   }
 
+  /**
+   * Checks whether the provided session is present in any active non-transactional boundary for the current thread.
+   *
+   * @param proxySession session to search for
+   * @return {@code true} if the session is in scope
+   */
   protected static boolean containsSession (ProxySession<?, ?> proxySession) {
 
     LinkedList<BoundarySet<ProxySession<?, ?>>> sessionSetStack;
@@ -94,6 +119,12 @@ public class NonTransactionalState {
     return false;
   }
 
+  /**
+   * Finds the active non-transactional boundary that allows the given session.
+   *
+   * @param proxySession session to locate
+   * @return the boundary set or {@code null} if none
+   */
   public static BoundarySet<ProxySession<?, ?>> obtainBoundary (ProxySession<?, ?> proxySession) {
 
     LinkedList<BoundarySet<ProxySession<?, ?>>> sessionSetStack;
@@ -110,6 +141,11 @@ public class NonTransactionalState {
     return null;
   }
 
+  /**
+   * Begins a new non-transactional boundary for the provided annotation configuration.
+   *
+   * @param nonTransactional the annotation describing the boundary
+   */
   protected static void startBoundary (NonTransactional nonTransactional) {
 
     LinkedList<BoundarySet<ProxySession<?, ?>>> sessionSetStack;
@@ -121,6 +157,12 @@ public class NonTransactionalState {
     sessionSetStack.addLast(new BoundarySet<>(nonTransactional.dataSources(), nonTransactional.implicit()));
   }
 
+  /**
+   * Ends the most recent non-transactional boundary, closing any sessions and handling errors appropriately.
+   *
+   * @param throwable any throwable propagated from the boundary body
+   * @throws SessionError when boundary closure fails or ordering is violated
+   */
   protected static void endBoundary (Throwable throwable)
     throws SessionError {
 

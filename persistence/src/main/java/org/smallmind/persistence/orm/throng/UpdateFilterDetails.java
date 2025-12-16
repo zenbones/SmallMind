@@ -35,17 +35,32 @@ package org.smallmind.persistence.orm.throng;
 import com.mongodb.client.model.UpdateOptions;
 import org.smallmind.mongodb.throng.query.Updates;
 
+/**
+ * Filter details for update operations, carrying MongoDB update options and update builder logic.
+ */
 public abstract class UpdateFilterDetails extends FilterDetails {
 
   private final UpdateOptions updateOptions;
 
+  /**
+   * @param updateOptions MongoDB update options to apply
+   */
   public UpdateFilterDetails (UpdateOptions updateOptions) {
 
     this.updateOptions = updateOptions;
   }
 
+  /**
+   * Applies update expressions to the supplied builder.
+   *
+   * @param updates builder to complete
+   * @return the completed updates
+   */
   public abstract Updates completeUpdates (Updates updates);
 
+  /**
+   * @return the configured update options
+   */
   public UpdateOptions getUpdateOptions () {
 
     return updateOptions;

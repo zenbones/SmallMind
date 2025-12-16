@@ -39,17 +39,28 @@ import org.smallmind.persistence.ManagedDao;
 import org.smallmind.persistence.orm.spring.AbstractAnnotationSeekingBeanFactoryPostProcessor;
 import org.smallmind.persistence.orm.throng.ThrongDao;
 
+/**
+ * Bean factory post-processor that locates classes annotated for Throng MongoDB mapping by scanning
+ * beans that implement {@link ThrongDao}. Entity and embedded document classes are collected for
+ * later registration with the Throng client.
+ */
 public class AnnotationSeekingBeanFactoryPostProcessor extends AbstractAnnotationSeekingBeanFactoryPostProcessor {
 
   private static final Class<? extends ManagedDao<?, ?>>[] DAO_IMPLEMENTATIONS = new Class[] {ThrongDao.class};
   private static final Class<? extends Annotation>[] TARGET_ANNOTATIONS = new Class[] {Entity.class, Embedded.class};
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Class<? extends ManagedDao<?, ?>>[] getDaoImplementations () {
 
     return DAO_IMPLEMENTATIONS;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Class<? extends Annotation>[] getTargetAnnotations () {
 

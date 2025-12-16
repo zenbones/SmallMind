@@ -32,18 +32,37 @@
  */
 package org.smallmind.persistence.orm.aop;
 
+/**
+ * Signals a fatal inconsistency while managing transactional boundaries.
+ */
 public class TransactionBoundaryError extends TransactionError {
 
+  /**
+   * Creates a boundary error with a formatted message.
+   *
+   * @param message the message template
+   * @param args    arguments referenced by the format specifiers in the message
+   */
   public TransactionBoundaryError (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * Creates a boundary error with a cause and formatted message.
+   *
+   * @param throwable the cause
+   * @param message   the message template
+   * @param args      arguments referenced by the format specifiers in the message
+   */
   public TransactionBoundaryError (Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);
   }
 
+  /**
+   * @return true to stop further boundary processing
+   */
   @Override
   public boolean isTerminal () {
 

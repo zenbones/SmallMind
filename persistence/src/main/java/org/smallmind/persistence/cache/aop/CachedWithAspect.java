@@ -46,11 +46,24 @@ import org.smallmind.persistence.cache.VectorKey;
 import org.smallmind.persistence.cache.VectoredDao;
 import org.smallmind.persistence.orm.ORMDao;
 
+/**
+ * Aspect that applies {@link CachedWith} directives to keep cache vectors coherent with persistence mutations.
+ * The advice intercepts persist and delete operations to insert, remove, or invalidate cached vectors according
+ * to finder and filter metadata declared on the managing DAO.
+ */
 @Aspect
 public class CachedWithAspect {
 
   private static final ConcurrentHashMap<MethodKey, Method> METHOD_MAP = new ConcurrentHashMap<>();
 
+  /**
+   * Intercepts persistence operations to propagate cache updates for the managed durable type.
+   *
+   * @param thisJoinPoint the join point representing the persist call
+   * @param ormDao        the DAO performing the persistence
+   * @return the durable instance returned by the persist call
+   * @throws Throwable propagated from the intercepted method or cache automation errors
+   */
   @Around(value = "(execution(* persist (org.smallmind.persistence.Durable+)) || execution(@Persist * * (org.smallmind.persistence.Durable+))) && @within(CachedWith) && this(ormDao)", argNames = "thisJoinPoint, ormDao")
   public Object aroundPersistMethod (ProceedingJoinPoint thisJoinPoint, ORMDao ormDao)
     throws Throwable {
@@ -112,6 +125,14 @@ public class CachedWithAspect {
     }
   }
 
+  /**
+   * Intercepts delete operations to remove or invalidate cached vectors associated with the durable instance.
+   *
+   * @param thisJoinPoint the join point representing the delete call
+   * @param ormDao        the DAO performing the delete
+   * @param durable       the durable being deleted
+   * @throws Throwable propagated from the intercepted method or cache automation errors
+   */
   @Around(value = "(execution(void delete (..)) || execution(@Delete * * (..))) && @within(CachedWith) && args(durable) && this(ormDao)", argNames = "thisJoinPoint, ormDao, durable")
   public void aroundDeleteMethod (ProceedingJoinPoint thisJoinPoint, ORMDao ormDao, Durable durable)
     throws Throwable {
@@ -155,6 +176,14 @@ public class CachedWithAspect {
     }
   }
 
+  /**
+   * Executes an optional filter method declared on {@link CachedWith#updates()} or {@link CachedWith#invalidates()}.
+   *
+   * @param filterMethodName name of the filter method on the DAO
+   * @param ormDao           the DAO that owns the filter implementation
+   * @param durable          the durable being processed
+   * @return {@code true} if the cache operation should continue; {@code false} otherwise
+   */
   private boolean executeFilter (String filterMethodName, ORMDao ormDao, Durable durable) {
 
     Method filterMethod;
@@ -180,6 +209,14 @@ public class CachedWithAspect {
     return true;
   }
 
+  /**
+   * Resolves the {@link OnPersist} strategy to apply for a cache update.
+   *
+   * @param onPersistMethodName optional method name that supplies a custom strategy
+   * @param ormDao              the DAO that owns the strategy implementation
+   * @param durable             the durable being persisted
+   * @return the strategy to apply when writing to the cache
+   */
   private OnPersist executeOnPersist (String onPersistMethodName, ORMDao ormDao, Durable durable) {
 
     Method onPersistMethod;
@@ -205,6 +242,14 @@ public class CachedWithAspect {
     return OnPersist.INSERT;
   }
 
+  /**
+   * Optionally proxies the durable to another type before using it for cache key construction.
+   *
+   * @param proxy   the proxy configuration declared on an update or invalidation
+   * @param ormDao  the DAO hosting the proxy method
+   * @param durable the durable to transform
+   * @return an operand that encapsulates the managed class and transformed durable
+   */
   private Operand executeProxy (Proxy proxy, ORMDao ormDao, Durable durable) {
 
     Method proxyMethod;
@@ -230,6 +275,14 @@ public class CachedWithAspect {
     }
   }
 
+  /**
+   * Executes a finder method to produce the set of durables used for vector updates.
+   *
+   * @param finder  the finder annotation configuration
+   * @param ormDao  the DAO hosting the finder method
+   * @param durable the durable supplied to the finder invocation
+   * @return an iterable of durables that will be inserted into or removed from vectors
+   */
   private Iterable<Durable> executeFinder (Finder finder, ORMDao ormDao, Durable durable) {
 
     Method finderMethod;
@@ -268,6 +321,14 @@ public class CachedWithAspect {
     }
   }
 
+  /**
+   * Locates a single-parameter method on the DAO matching the supplied name and compatible parameter type.
+   *
+   * @param ormDao        the DAO to inspect
+   * @param methodName    the name of the method to locate
+   * @param parameterType the expected parameter type
+   * @return the resolved method, or {@code null} when no match is found
+   */
   private Method locateMethod (ORMDao ormDao, String methodName, Class parameterType) {
 
     Method aspectMethod;
@@ -286,55 +347,96 @@ public class CachedWithAspect {
     return aspectMethod;
   }
 
+  /**
+   * Encapsulates a durable instance alongside its declared managed class when produced by a proxy operation.
+   */
   public class Operand {
 
     private final Class<? extends Durable> managedClass;
     private final Durable durable;
 
+    /**
+     * Constructs an operand wrapper.
+     *
+     * @param managedClass the class of the durable that will participate in vector operations
+     * @param durable      the durable instance to cache or remove
+     */
     private Operand (Class<? extends Durable> managedClass, Durable durable) {
 
       this.managedClass = managedClass;
       this.durable = durable;
     }
 
+    /**
+     * @return the managed durable class associated with this operand
+     */
     public Class<? extends Durable> getManagedClass () {
 
       return managedClass;
     }
 
+    /**
+     * @return the durable instance that will be written to or removed from a vector
+     */
     public Durable getDurable () {
 
       return durable;
     }
   }
 
+  /**
+   * Compound key used to cache resolved {@link Method} instances by owning class and name.
+   */
   public class MethodKey {
 
     private final Class methodClass;
     private final String methodName;
 
+    /**
+     * Creates a composite method identifier.
+     *
+     * @param methodClass the class that declares the method
+     * @param methodName  the method name
+     */
     private MethodKey (Class methodClass, String methodName) {
 
       this.methodClass = methodClass;
       this.methodName = methodName;
     }
 
+    /**
+     * @return the class that owns the method
+     */
     public Class getMethodClass () {
 
       return methodClass;
     }
 
+    /**
+     * @return the name of the method
+     */
     public String getMethodName () {
 
       return methodName;
     }
 
+    /**
+     * Computes the hash for map caching of resolved methods.
+     *
+     * @return combined hash of declaring class and method name
+     */
     @Override
     public int hashCode () {
 
       return methodClass.hashCode() ^ methodName.hashCode();
     }
 
+    /**
+     * Compares method keys by declaring class and name.
+     *
+     * @param obj the object to compare
+     * @return {@code true} when the target represents the same method signature
+     */
     @Override
     public boolean equals (Object obj) {
 

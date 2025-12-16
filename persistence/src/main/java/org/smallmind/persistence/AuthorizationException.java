@@ -34,23 +34,47 @@ package org.smallmind.persistence;
 
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
+/**
+ * Indicates that an operation failed because the caller is not authorized to perform it.
+ */
 public class AuthorizationException extends FormattedRuntimeException {
 
+  /**
+   * Creates an authorization exception with no message.
+   */
   public AuthorizationException () {
 
     super();
   }
 
+  /**
+   * Creates an authorization exception with a formatted message.
+   *
+   * @param message the message template
+   * @param args    arguments referenced by the format specifiers in the message
+   */
   public AuthorizationException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * Creates an authorization exception with a cause and formatted message.
+   *
+   * @param throwable the underlying cause
+   * @param message   the message template
+   * @param args      arguments referenced by the format specifiers in the message
+   */
   public AuthorizationException (Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);
   }
 
+  /**
+   * Creates an authorization exception with a cause.
+   *
+   * @param throwable the underlying cause
+   */
   public AuthorizationException (Throwable throwable) {
 
     super(throwable);

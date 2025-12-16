@@ -43,6 +43,10 @@ import org.smallmind.persistence.database.Sequence;
 import org.smallmind.persistence.database.SequenceManager;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Sequence implementation that simulates database sequences for MySQL by maintaining a row per
+ * sequence name in a table and using {@code LAST_INSERT_ID} to obtain atomic increments.
+ */
 public class SimulatedSequence extends Sequence {
 
   private final ConcurrentHashMap<String, SequenceData> DATA_MAP = new ConcurrentHashMap<>();
@@ -50,6 +54,11 @@ public class SimulatedSequence extends Sequence {
   private final String tableName;
   private final int incrementBy;
 
+  /**
+   * @param dataSource  data source used to execute sequence update statements
+   * @param tableName   table that holds sequence names and next values
+   * @param incrementBy step size to reserve per update (supports allocation blocks > 1)
+   */
   public SimulatedSequence (DataSource dataSource, String tableName, int incrementBy) {
 
     this.dataSource = dataSource;
@@ -57,17 +66,29 @@ public class SimulatedSequence extends Sequence {
     this.incrementBy = incrementBy;
   }
 
+  /**
+   * Registers this sequence implementation with the {@link SequenceManager}.
+   */
   public void register () {
 
     SequenceManager.register(this);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public long nextLong (String name) {
 
     return getSequenceData(name).nextLong();
   }
 
+  /**
+   * Retrieves or initializes the sequence data for the given name.
+   *
+   * @param name sequence identifier
+   * @return data holder used to allocate sequence values
+   */
   private SequenceData getSequenceData (String name) {
 
     SequenceData sequenceData;
@@ -91,6 +112,11 @@ public class SimulatedSequence extends Sequence {
     private final String insertSql;
     private final String updateSql;
 
+    /**
+     * Initializes the sequence row for the given name and primes the local boundary cache.
+     *
+     * @param name sequence name
+     */
     public SequenceData (String name) {
 
       this.name = name;
@@ -102,6 +128,11 @@ public class SimulatedSequence extends Sequence {
       atomicBoundary = new AtomicLong(getLastInsertId());
     }
 
+    /**
+     * Returns the next sequence value, optionally using a cached block of values when incrementing by more than one.
+     *
+     * @return next sequence value
+     */
     public long nextLong () {
 
       long nextValue = 0;
@@ -135,6 +166,11 @@ public class SimulatedSequence extends Sequence {
       return nextValue;
     }
 
+    /**
+     * Executes an insert to ensure a row exists for the sequence name.
+     *
+     * @throws SimulatedSequenceDisasterException if the insert fails
+     */
     private void insertName () {
 
       try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)) {
@@ -145,6 +181,13 @@ public class SimulatedSequence extends Sequence {
       }
     }
 
+    /**
+     * Issues an update against the backing table to atomically advance the sequence and returns the
+     * new boundary value using {@code LAST_INSERT_ID()}.
+     *
+     * @return newly allocated upper boundary for the sequence
+     * @throws SimulatedSequenceDisasterException if SQL execution fails or no key is returned
+     */
     private long getLastInsertId () {
 
       try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)) {

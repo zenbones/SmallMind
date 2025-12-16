@@ -37,9 +37,17 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Declares concrete subclasses mapped for a given durable base type.
+ */
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface MappedSubClasses {
 
+  /**
+   * The mapped subclasses.
+   *
+   * @return the subclass types
+   */
   Class[] value ();
 }

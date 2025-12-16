@@ -32,25 +32,45 @@
  */
 package org.smallmind.persistence.orm;
 
+/**
+ * Defines a callback to be invoked after a transaction completes.
+ */
 public abstract class TransactionPostProcess {
 
   private final TransactionEndState endState;
   private final ProcessPriority priority;
 
+  /**
+   * Creates a post-process callback with an end-state filter and priority.
+   *
+   * @param endState the transaction completion state in which this callback should run
+   * @param priority the ordering priority for execution
+   */
   public TransactionPostProcess (TransactionEndState endState, ProcessPriority priority) {
 
     this.endState = endState;
     this.priority = priority;
   }
 
+  /**
+   * Executes the post-process logic.
+   *
+   * @throws Exception if the callback fails
+   */
   public abstract void process ()
     throws Exception;
 
+  /**
+   * @return the transaction end state for which this callback is applicable
+   */
   public TransactionEndState getEndState () {
 
     return endState;
   }
 
+  /**
+   * @return the execution priority for this callback
+   */
   public ProcessPriority getPriority () {
 
     return priority;

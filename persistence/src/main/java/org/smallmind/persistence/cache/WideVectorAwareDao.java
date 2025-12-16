@@ -35,7 +35,13 @@ package org.smallmind.persistence.cache;
 import java.io.Serializable;
 import org.smallmind.persistence.Durable;
 
+/**
+ * Exposes the underlying {@link WideVectoredDao} for wide vector operations.
+ */
 public interface WideVectorAwareDao<W extends Serializable & Comparable<W>, I extends Serializable & Comparable<I>, D extends Durable<I>> {
 
+  /**
+   * @return wide vectored DAO implementation
+   */
   WideVectoredDao<W, I, D> getWideVectoredDao ();
 }

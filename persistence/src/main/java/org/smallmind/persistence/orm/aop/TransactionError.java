@@ -34,22 +34,46 @@ package org.smallmind.persistence.orm.aop;
 
 import org.smallmind.nutsnbolts.lang.FormattedError;
 
+/**
+ * Base error type for transactional boundary failures, indicating whether processing should stop.
+ */
 public abstract class TransactionError extends FormattedError {
 
+  /**
+   * Creates a transaction error with a formatted message.
+   *
+   * @param message the message template
+   * @param args    arguments referenced by the format specifiers in the message
+   */
   public TransactionError (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * Creates a transaction error with a cause and formatted message.
+   *
+   * @param throwable the cause
+   * @param message   the message template
+   * @param args      arguments referenced by the format specifiers in the message
+   */
   public TransactionError (Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);
   }
 
+  /**
+   * Creates a transaction error with a cause.
+   *
+   * @param throwable the cause
+   */
   public TransactionError (Throwable throwable) {
 
     super(throwable);
   }
 
+  /**
+   * @return true when no further processing should occur in the boundary handler
+   */
   public abstract boolean isTerminal ();
 }

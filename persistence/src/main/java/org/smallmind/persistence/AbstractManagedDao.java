@@ -41,6 +41,13 @@ import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
 import org.smallmind.nutsnbolts.reflection.type.TypeInference;
 import org.smallmind.persistence.orm.ORMInitializationException;
 
+/**
+ * Base {@link ManagedDao} implementation that captures generic id and durable types at
+ * construction time and supplies helpers for id conversion and metric identification.
+ *
+ * @param <I> the identifier type handled by the DAO
+ * @param <D> the managed durable entity type
+ */
 public abstract class AbstractManagedDao<I extends Serializable & Comparable<I>, D extends Durable<I>> implements ManagedDao<I, D> {
 
   private final TypeInference idTypeInference = new TypeInference();
@@ -48,6 +55,11 @@ public abstract class AbstractManagedDao<I extends Serializable & Comparable<I>,
   private final AtomicReference<Method> fromStringMethodRef = new AtomicReference<>();
   private final String metricSource;
 
+  /**
+   * Creates a managed DAO base instance and records type information from the subclass.
+   *
+   * @param metricSource a name used to attribute metrics emitted by this DAO
+   */
   public AbstractManagedDao (String metricSource) {
 
     this.metricSource = metricSource;
@@ -64,26 +76,56 @@ public abstract class AbstractManagedDao<I extends Serializable & Comparable<I>,
     }
   }
 
+  /**
+   * Provides the metric source name specified for this DAO.
+   *
+   * @return the metric source identifier
+   */
   public String getMetricSource () {
 
     return metricSource;
   }
 
+  /**
+   * Retrieves the durable class captured from the subclass' generic parameters.
+   *
+   * @return the managed durable type
+   */
   public Class<D> getManagedClass () {
 
     return durableTypeInference.getInference();
   }
 
+  /**
+   * Retrieves the identifier class captured from the subclass' generic parameters.
+   *
+   * @return the managed identifier type
+   */
   public Class<I> getIdClass () {
 
     return idTypeInference.getInference();
   }
 
+  /**
+   * Extracts the identifier from a durable instance.
+   *
+   * @param durable the durable whose id should be returned
+   * @return the durable id, which may be {@code null} for transient instances
+   */
   public I getId (D durable) {
 
     return durable.getId();
   }
 
+  /**
+   * Converts a string representation to the appropriate identifier type. Primitive types,
+   * their boxed equivalents, enums and {@link Identifier} implementations are supported
+   * out of the box. Override when custom parsing is required.
+   *
+   * @param value the string containing the identifier
+   * @return the parsed identifier value
+   * @throws ORMInitializationException if the identifier cannot be parsed or no conversion strategy exists
+   */
   public I getIdFromString (String value) {
 
     Class<I> idClass = getIdClass();

@@ -38,22 +38,47 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.Comparator;
 
+/**
+ * Marks a data access method whose return value should be cached under a calculated vector key.
+ * Methods annotated with {@link CacheAs} will have their results stored in a cache so subsequent
+ * invocations can reuse the materialized durable instances when available.
+ */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface CacheAs {
 
-  // the vector upon which this annotation acts
+  /**
+   * Identifies the cache vector that the annotated method should populate or read.
+   *
+   * @return vector metadata describing how the cache key should be constructed
+   */
   Vector value ();
 
-  // the comparator to be used on an ordered cache entry
+  /**
+   * Defines the comparator used to order cached collections.
+   *
+   * @return comparator class applied when the vector is ordered
+   */
   Class<? extends Comparator> comparator () default Comparator.class;
 
-  // the maximum number of entries to cache (where 0 or or less indicates no limit)
+  /**
+   * Maximum number of elements retained in the cached vector.
+   *
+   * @return upper bound for cached results, or zero for no limit
+   */
   int max () default 0;
 
-  // the number of seconds for the cache entry's ttl (where 0 or less will indicates the cache domain's default)
+  /**
+   * Time-to-live configuration for the cache entry.
+   *
+   * @return duration descriptor; zero delegates to the cache domain default
+   */
   Time time () default @Time(0);
 
-  // allows ordering to be applied to the resulting cache entry
+  /**
+   * Indicates whether the resulting vector should be stored in sorted order.
+   *
+   * @return {@code true} to keep cached results ordered using the provided comparator
+   */
   boolean ordered () default false;
 }

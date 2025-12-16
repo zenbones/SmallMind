@@ -37,13 +37,26 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import org.smallmind.persistence.Durable;
 
+/**
+ * Describes a finder method that locates related durable instances for cache updates.
+ * Finder methods may return a single durable or an {@link Iterable} of durables used to
+ * populate or invalidate cache vectors.
+ */
 @Target({})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Finder {
 
-  // the return type of the method
+  /**
+   * Explicit durable type expected from the finder.
+   *
+   * @return durable subtype produced by the finder; defaults to the managed type
+   */
   Class<? extends Durable> with () default Durable.class;
 
-  // the name of the method
+  /**
+   * Name of the finder method on the DAO.
+   *
+   * @return method name, or empty to use the durable from the join point
+   */
   String method () default "";
 }

@@ -34,7 +34,17 @@ package org.smallmind.persistence.sql.pool.spring;
 
 import javax.sql.CommonDataSource;
 
+/**
+ * Contract for looking up {@link CommonDataSource} instances by key, typically implemented for
+ * Spring wiring.
+ */
 public interface DataSourceLocator {
 
+  /**
+   * Resolves a data source by key.
+   *
+   * @param dataSourceKey lookup key
+   * @return matching data source or {@code null} if none
+   */
   CommonDataSource getDataSource (String dataSourceKey);
 }

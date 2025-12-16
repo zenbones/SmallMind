@@ -32,12 +32,24 @@
  */
 package org.smallmind.persistence.cache.praxis.intrinsic;
 
+/**
+ * Doubly linked node used by {@link IntrinsicRoster} to store elements and their neighbors.
+ *
+ * @param <T> element type
+ */
 public class IntrinsicRosterNode<T> {
 
   private IntrinsicRosterNode<T> prev;
   private IntrinsicRosterNode<T> next;
   private T obj;
 
+  /**
+   * Creates a node containing the supplied element with links to adjacent nodes.
+   *
+   * @param obj  stored element
+   * @param prev previous node
+   * @param next next node
+   */
   public IntrinsicRosterNode (T obj, IntrinsicRosterNode<T> prev, IntrinsicRosterNode<T> next) {
 
     this.obj = obj;
@@ -45,36 +57,66 @@ public class IntrinsicRosterNode<T> {
     this.next = next;
   }
 
+  /**
+   * @return stored element
+   */
   public synchronized T getObj () {
 
     return obj;
   }
 
+  /**
+   * Updates the stored element.
+   *
+   * @param obj new element
+   */
   public synchronized void setObj (T obj) {
 
     this.obj = obj;
   }
 
+  /**
+   * Compares the stored element with the supplied object.
+   *
+   * @param something object to compare
+   * @return {@code true} when the element matches
+   */
   public synchronized boolean objEquals (Object something) {
 
     return (obj == something) || ((obj != null) && obj.equals(something));
   }
 
+  /**
+   * @return previous node in the list
+   */
   public IntrinsicRosterNode<T> getPrev () {
 
     return prev;
   }
 
+  /**
+   * Sets the previous node reference.
+   *
+   * @param prev previous node
+   */
   public void setPrev (IntrinsicRosterNode<T> prev) {
 
     this.prev = prev;
   }
 
+  /**
+   * @return next node in the list
+   */
   public IntrinsicRosterNode<T> getNext () {
 
     return next;
   }
 
+  /**
+   * Sets the next node reference.
+   *
+   * @param next next node
+   */
   public void setNext (IntrinsicRosterNode<T> next) {
 
     this.next = next;

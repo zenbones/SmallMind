@@ -35,19 +35,38 @@ package org.smallmind.persistence.orm.querydsl.jpa;
 import com.querydsl.core.types.EntityPath;
 import com.querydsl.jpa.impl.JPAUpdateClause;
 
+/**
+ * Encapsulates a QueryDSL JPA update definition for a specific entity path.
+ *
+ * @param <T> entity type
+ */
 public abstract class JPAUpdateDetails<T> {
 
   private final EntityPath<T> entityPath;
 
+  /**
+   * Creates update details for the given entity path.
+   *
+   * @param entityPath the QueryDSL entity path
+   */
   public JPAUpdateDetails (EntityPath<T> entityPath) {
 
     this.entityPath = entityPath;
   }
 
+  /**
+   * @return the entity path this update targets
+   */
   public EntityPath<T> getEntityPath () {
 
     return entityPath;
   }
 
+  /**
+   * Applies predicates and set clauses to the supplied update.
+   *
+   * @param update the base update clause
+   * @return the completed update clause
+   */
   public abstract JPAUpdateClause completeUpdate (JPAUpdateClause update);
 }

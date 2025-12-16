@@ -38,17 +38,28 @@ import javax.sql.PooledConnection;
 import org.smallmind.quorum.juggler.AbstractJugglingPin;
 import org.smallmind.quorum.juggler.JugglerResourceException;
 
+/**
+ * Juggling pin that obtains pooled connections from a {@link ConnectionPoolDataSource} for use by a
+ * {@link org.smallmind.quorum.juggler.Juggler}.
+ */
 public class PooledConnectionJugglingPin<P extends PooledConnection> extends AbstractJugglingPin<P> {
 
   private final ConnectionPoolDataSource dataSource;
   private final Class<P> pooledConnectionClass;
 
+  /**
+   * @param dataSource            source of pooled connections
+   * @param pooledConnectionClass expected pooled connection type
+   */
   public PooledConnectionJugglingPin (ConnectionPoolDataSource dataSource, Class<P> pooledConnectionClass) {
 
     this.dataSource = dataSource;
     this.pooledConnectionClass = pooledConnectionClass;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public P obtain ()
     throws JugglerResourceException {
@@ -61,6 +72,9 @@ public class PooledConnectionJugglingPin<P extends PooledConnection> extends Abs
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean recover () {
 
@@ -74,6 +88,9 @@ public class PooledConnectionJugglingPin<P extends PooledConnection> extends Abs
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String describe () {
 

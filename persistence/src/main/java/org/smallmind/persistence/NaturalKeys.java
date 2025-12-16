@@ -37,9 +37,17 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Declares the set of fields that uniquely identify a {@link Durable} by business key.
+ */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface NaturalKeys {
 
+  /**
+   * The ordered list of field names that comprise the natural key.
+   *
+   * @return the field names in declaration order
+   */
   String[] value ();
 }

@@ -41,9 +41,19 @@ import org.smallmind.persistence.ManagedDao;
 import org.smallmind.persistence.orm.ORMDao;
 import org.smallmind.persistence.orm.OrmDaoManager;
 
+/**
+ * Injects registered ORM DAOs into fields annotated with {@link Repository} on service classes.
+ */
 @Aspect
 public class RepositoryAspect {
 
+  /**
+   * After a service is constructed, scans its fields for @Repository and injects the matching ORMDao from the registry.
+   *
+   * @param constructed the newly constructed service instance
+   * @throws IllegalAccessException    if a field cannot be set
+   * @throws InvocationTargetException if reflection fails while accessing fields
+   */
   @AfterReturning(value = "@within(org.smallmind.nutsnbolts.inject.Service) && initialization(new(..)) && this(constructed)", argNames = "constructed")
   public void afterInitializationOfService (Object constructed)
     throws IllegalAccessException, InvocationTargetException {

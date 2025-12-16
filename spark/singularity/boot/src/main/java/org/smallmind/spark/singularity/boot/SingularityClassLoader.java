@@ -296,7 +296,6 @@ public class SingularityClassLoader extends ClassLoader {
     return super.findResource(moduleName, name);
   }
   */
-
   @Override
   protected Enumeration<URL> findResources (String name) {
 

@@ -34,15 +34,48 @@ package org.smallmind.persistence;
 
 import java.io.Serializable;
 
+/**
+ * Exposes metadata and id conversion helpers for DAOs that manage {@link Durable} entities.
+ *
+ * @param <I> identifier type
+ * @param <D> durable type
+ */
 public interface ManagedDao<I extends Serializable & Comparable<I>, D extends Durable<I>> {
 
+  /**
+   * Provides a name that identifies the source of metrics emitted by this DAO.
+   *
+   * @return the metric source name
+   */
   String getMetricSource ();
 
+  /**
+   * Returns the durable class managed by this DAO.
+   *
+   * @return the durable type
+   */
   Class<D> getManagedClass ();
 
+  /**
+   * Returns the identifier class used by the managed durable.
+   *
+   * @return the identifier type
+   */
   Class<I> getIdClass ();
 
+  /**
+   * Parses the supplied string into an identifier instance appropriate for this DAO.
+   *
+   * @param value the string representation of the id
+   * @return the parsed identifier value
+   */
   I getIdFromString (String value);
 
+  /**
+   * Extracts the identifier from a durable instance.
+   *
+   * @param durable the durable to inspect
+   * @return the identifier value, possibly {@code null} for transient objects
+   */
   I getId (D durable);
 }

@@ -36,19 +36,40 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Declares a cache vector that should be removed when a durable instance changes.
+ * The annotation can filter which updates trigger invalidation and control which
+ * related entities provide the cache key.
+ */
 @Target({})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Invalidate {
 
-  // the vector upon which this annotation acts
+  /**
+   * Vector definition identifying the cached entry to invalidate.
+   *
+   * @return vector descriptor that supplies the cache key
+   */
   Vector value ();
 
-  // a method which takes a single parameter of durable type and returns boolean, if the filter is false then the annotation action is skipped
+  /**
+   * Optional DAO method invoked to determine whether invalidation should occur.
+   *
+   * @return filter method name that returns a boolean result
+   */
   String filter () default "";
 
-  // a method which locates the entity or entities upon which to act, takes a single parameter of durable type and return a durable type or Iterator of durable type
+  /**
+   * Finder that supplies the durable instances used to compose the cache key.
+   *
+   * @return finder configuration for locating affected entities
+   */
   Finder finder () default @Finder();
 
-  // a method which takes a single parameter of durable type and returns a durable type, for proxying the action on one entity type to a (supposedly) related but different type
+  /**
+   * Optional proxy used to substitute a related durable when computing the cache key.
+   *
+   * @return proxy configuration that transforms the durable prior to invalidation
+   */
   Proxy proxy () default @Proxy();
 }

@@ -44,6 +44,9 @@ import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
+/**
+ * Spring {@link FactoryBean} that builds, starts, and eventually shuts down a pooled data source.
+ */
 public class PooledDataSourceFactoryBean<D extends CommonDataSource, P extends PooledConnection> implements FactoryBean<CommonDataSource>, InitializingBean, DisposableBean {
 
   private AbstractPooledDataSource dataSource;
@@ -54,36 +57,120 @@ public class PooledDataSourceFactoryBean<D extends CommonDataSource, P extends P
   private String validationQuery;
   private int maxStatements;
 
+  /**
+   * @return configured pool name
+   */
+  public String getPoolName () {
+
+    return poolName;
+  }
+
+  /**
+   * Sets the pool name used for the underlying component pool.
+   *
+   * @param poolName name assigned to the pool
+   */
   public void setPoolName (String poolName) {
 
     this.poolName = poolName;
   }
 
+  /**
+   * @return current data source factory
+   */
+  public DataSourceFactory<D, P> getDataSourceFactory () {
+
+    return dataSourceFactory;
+  }
+
+  /**
+   * Sets the data source factory used to create concrete connections.
+   *
+   * @param dataSourceFactory factory that builds data sources
+   */
   public void setDataSourceFactory (DataSourceFactory<D, P> dataSourceFactory) {
 
     this.dataSourceFactory = dataSourceFactory;
   }
 
+  /**
+   * @return configured connection definitions
+   */
+  public DatabaseConnection[] getConnections () {
+
+    return connections;
+  }
+
+  /**
+   * Supplies the JDBC connection definitions to populate the pool.
+   *
+   * @param connections connection definitions
+   */
   public void setConnections (DatabaseConnection[] connections) {
 
     this.connections = connections;
   }
 
+  /**
+   * @return validation query configured for pooled connections
+   */
+  public String getValidationQuery () {
+
+    return validationQuery;
+  }
+
+  /**
+   * Sets an optional validation query executed when borrowing a connection.
+   *
+   * @param validationQuery SQL used for validation; null/empty disables validation
+   */
   public void setValidationQuery (String validationQuery) {
 
     this.validationQuery = validationQuery;
   }
 
+  /**
+   * @return prepared statement cache size per connection
+   */
+  public int getMaxStatements () {
+
+    return maxStatements;
+  }
+
+  /**
+   * Sets the maximum number of prepared statements cached per connection.
+   *
+   * @param maxStatements cache size for prepared statements
+   */
   public void setMaxStatements (int maxStatements) {
 
     this.maxStatements = maxStatements;
   }
 
+  /**
+   * @return configuration of the component pool
+   */
+  public ComplexPoolConfig getPoolConfig () {
+
+    return poolConfig;
+  }
+
+  /**
+   * Applies configuration for the component pool.
+   *
+   * @param poolConfig pool configuration
+   */
   public void setPoolConfig (ComplexPoolConfig poolConfig) {
 
     this.poolConfig = poolConfig;
   }
 
+  /**
+   * Builds and starts the pooled data source using the configured parameters.
+   *
+   * @throws SQLException           if creation fails
+   * @throws ComponentPoolException if pool startup fails
+   */
   @Override
   public void afterPropertiesSet ()
     throws SQLException, ComponentPoolException {
@@ -92,6 +179,11 @@ public class PooledDataSourceFactoryBean<D extends CommonDataSource, P extends P
     dataSource.startup();
   }
 
+  /**
+   * Shuts down the pooled data source, releasing all pooled resources.
+   *
+   * @throws ComponentPoolException if shutdown fails
+   */
   @Override
   public void destroy ()
     throws ComponentPoolException {
@@ -99,18 +191,33 @@ public class PooledDataSourceFactoryBean<D extends CommonDataSource, P extends P
     dataSource.shutdown();
   }
 
+  /**
+   * Factory produces a singleton data source.
+   *
+   * @return always {@code true}
+   */
   @Override
   public boolean isSingleton () {
 
     return true;
   }
 
+  /**
+   * Declares the produced object type.
+   *
+   * @return {@link CommonDataSource}.class
+   */
   @Override
   public Class<?> getObjectType () {
 
     return CommonDataSource.class;
   }
 
+  /**
+   * Returns the initialized pooled data source.
+   *
+   * @return pooled data source instance
+   */
   @Override
   public CommonDataSource getObject () {
 

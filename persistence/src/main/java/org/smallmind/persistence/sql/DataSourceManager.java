@@ -39,8 +39,18 @@ import org.smallmind.nutsnbolts.lang.PerApplicationContext;
 import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
 import org.smallmind.persistence.orm.ORMInitializationException;
 
+/**
+ * Simple application-scoped registry mapping string keys to {@link CommonDataSource} instances.
+ * Intended for frameworks that need to look up named data sources at runtime.
+ */
 public class DataSourceManager implements PerApplicationDataManager {
 
+  /**
+   * Registers a data source under the given key in the per-application context.
+   *
+   * @param key        lookup key
+   * @param dataSource data source to store
+   */
   public static void register (String key, CommonDataSource dataSource) {
 
     ConcurrentHashMap<String, CommonDataSource> dataSourceMap;
@@ -51,6 +61,13 @@ public class DataSourceManager implements PerApplicationDataManager {
     dataSourceMap.put(key, dataSource);
   }
 
+  /**
+   * Retrieves a data source for the provided key.
+   *
+   * @param key lookup key
+   * @return registered {@link CommonDataSource}
+   * @throws ORMInitializationException if no data source is registered for the key
+   */
   public static CommonDataSource getDataSource (String key) {
 
     CommonDataSource dataSource;

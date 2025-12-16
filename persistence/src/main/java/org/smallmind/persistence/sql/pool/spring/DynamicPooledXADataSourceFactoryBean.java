@@ -35,33 +35,52 @@ package org.smallmind.persistence.sql.pool.spring;
 import javax.sql.XADataSource;
 import org.springframework.beans.factory.FactoryBean;
 
+/**
+ * Spring {@link FactoryBean} that resolves a pooled {@link XADataSource} by key at runtime via a
+ * {@link DataSourceLocator}.
+ */
 public class DynamicPooledXADataSourceFactoryBean implements FactoryBean<XADataSource> {
 
   private DataSourceLocator dataSourceLocator;
   private String dataSourceKey;
 
+  /**
+   * @param dataSourceKey key used to look up the XA data source
+   */
   public void setDataSourceKey (String dataSourceKey) {
 
     this.dataSourceKey = dataSourceKey;
   }
 
+  /**
+   * @param dataSourceLocator locator used to resolve the data source
+   */
   public void setDataSourceLocator (DataSourceLocator dataSourceLocator) {
 
     this.dataSourceLocator = dataSourceLocator;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean isSingleton () {
 
     return true;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Class<?> getObjectType () {
 
     return XADataSource.class;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public XADataSource getObject () {
 

@@ -32,12 +32,20 @@
  */
 package org.smallmind.persistence.sql.pool;
 
+/**
+ * Simple value object holding JDBC connection endpoint information.
+ */
 public class ConnectionEndpoint {
 
   private final String jdbcUrl;
   private final String user;
   private final String password;
 
+  /**
+   * @param jdbcUrl  JDBC URL for the connection
+   * @param user     user name (may be null)
+   * @param password password (may be null)
+   */
   public ConnectionEndpoint (String jdbcUrl, String user, String password) {
 
     this.jdbcUrl = jdbcUrl;
@@ -45,16 +53,25 @@ public class ConnectionEndpoint {
     this.password = password;
   }
 
+  /**
+   * @return configured JDBC URL
+   */
   public String getJdbcUrl () {
 
     return jdbcUrl;
   }
 
+  /**
+   * @return configured user name, or {@code null}
+   */
   public String getUser () {
 
     return user;
   }
 
+  /**
+   * @return configured password, or {@code null}
+   */
   public String getPassword () {
 
     return password;

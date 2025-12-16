@@ -34,23 +34,47 @@ package org.smallmind.persistence.orm.aop;
 
 import org.smallmind.nutsnbolts.lang.FormattedError;
 
+/**
+ * Thrown when a transactional session is improperly claimed by a non-transactional boundary.
+ */
 public class StolenTransactionError extends FormattedError {
 
+  /**
+   * Creates a stolen-transaction error with no message.
+   */
   public StolenTransactionError () {
 
     super();
   }
 
+  /**
+   * Creates a stolen-transaction error with a formatted message.
+   *
+   * @param message the message template
+   * @param args    arguments referenced by the format specifiers in the message
+   */
   public StolenTransactionError (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * Creates a stolen-transaction error with a cause and formatted message.
+   *
+   * @param throwable the cause
+   * @param message   the message template
+   * @param args      arguments referenced by the format specifiers in the message
+   */
   public StolenTransactionError (Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);
   }
 
+  /**
+   * Creates a stolen-transaction error with a cause.
+   *
+   * @param throwable the cause
+   */
   public StolenTransactionError (Throwable throwable) {
 
     super(throwable);

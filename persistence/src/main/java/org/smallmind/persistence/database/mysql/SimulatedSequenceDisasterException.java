@@ -34,13 +34,25 @@ package org.smallmind.persistence.database.mysql;
 
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
+/**
+ * Runtime exception used to signal failures interacting with the simulated MySQL sequence table.
+ */
 public class SimulatedSequenceDisasterException extends FormattedRuntimeException {
 
+  /**
+   * @param message formatted message
+   * @param args    message arguments
+   */
   public SimulatedSequenceDisasterException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * @param throwable root cause
+   * @param message   formatted message
+   * @param args      message arguments
+   */
   public SimulatedSequenceDisasterException (Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);

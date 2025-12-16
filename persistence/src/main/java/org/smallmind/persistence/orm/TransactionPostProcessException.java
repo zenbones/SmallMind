@@ -35,40 +35,75 @@ package org.smallmind.persistence.orm;
 import java.util.LinkedList;
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
+/**
+ * Captures one or more exceptions thrown during transaction post-processing.
+ */
 public class TransactionPostProcessException extends FormattedException {
 
   LinkedList<Throwable> subsequentList = new LinkedList<Throwable>();
 
+  /**
+   * Creates a post-process exception with no message.
+   */
   public TransactionPostProcessException () {
 
     super();
   }
 
+  /**
+   * Creates a post-process exception with a formatted message.
+   *
+   * @param message the message template
+   * @param args    arguments referenced by the format specifiers in the message
+   */
   public TransactionPostProcessException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * Creates a post-process exception with a cause and formatted message.
+   *
+   * @param throwable the first cause
+   * @param message   the message template
+   * @param args      arguments referenced by the format specifiers in the message
+   */
   public TransactionPostProcessException (Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);
   }
 
+  /**
+   * Creates a post-process exception with a cause.
+   *
+   * @param throwable the first cause
+   */
   public TransactionPostProcessException (Throwable throwable) {
 
     super(throwable);
   }
 
+  /**
+   * @return the first cause of this exception
+   */
   public Throwable getFirstCause () {
 
     return getCause();
   }
 
+  /**
+   * Adds an additional cause captured during post-processing.
+   *
+   * @param throwable the subsequent failure
+   */
   public synchronized void addSubsequentCause (Throwable throwable) {
 
     subsequentList.add(throwable);
   }
 
+  /**
+   * @return an array of subsequent causes in the order recorded
+   */
   public synchronized Throwable[] getSubsequentCauses () {
 
     Throwable[] throwables;

@@ -47,6 +47,11 @@ import org.springframework.orm.jpa.persistenceunit.MutablePersistenceUnitInfo;
 import org.springframework.orm.jpa.persistenceunit.PersistenceUnitPostProcessor;
 import org.springframework.util.ClassUtils;
 
+/**
+ * {@link AbstractEntityManagerFactoryBean} that populates a {@link MutablePersistenceUnitInfo} with
+ * entity classes discovered by {@link AnnotationSeekingBeanFactoryPostProcessor}. This allows
+ * programmatic configuration of a JPA {@link EntityManagerFactory} without a persistence.xml file.
+ */
 public class EntitySeekingEntityManagerFactoryBean extends AbstractEntityManagerFactoryBean {
 
   private AnnotationSeekingBeanFactoryPostProcessor annotationSeekingBeanFactoryPostProcessor;
@@ -61,61 +66,124 @@ public class EntitySeekingEntityManagerFactoryBean extends AbstractEntityManager
   private String sessionSourceKey;
   private boolean excludeUnlistedClasses = false;
 
+  /**
+   * Supplies the helper that collects annotated entity classes from DAO definitions.
+   *
+   * @param annotationSeekingBeanFactoryPostProcessor the post-processor that caches discovered entities
+   */
   public void setAnnotationSeekingBeanFactoryPostProcessor (AnnotationSeekingBeanFactoryPostProcessor annotationSeekingBeanFactoryPostProcessor) {
 
     this.annotationSeekingBeanFactoryPostProcessor = annotationSeekingBeanFactoryPostProcessor;
   }
 
+  /**
+   * Restricts discovery to entities associated with a specific {@link org.smallmind.persistence.orm.SessionSource}.
+   *
+   * @param sessionSourceKey session source key or {@code null} for the default set
+   */
   public void setSessionSourceKey (String sessionSourceKey) {
 
     this.sessionSourceKey = sessionSourceKey;
   }
 
+  /**
+   * Sets the non-JTA {@link DataSource} for RESOURCE_LOCAL transactions.
+   *
+   * @param dataSource JDBC data source
+   */
   public void setDataSource (DataSource dataSource) {
 
     this.dataSource = dataSource;
   }
 
+  /**
+   * Sets the JTA {@link DataSource} for container-managed transactions.
+   *
+   * @param jtaDataSource JTA data source
+   */
   public void setJtaDataSource (DataSource jtaDataSource) {
 
     this.jtaDataSource = jtaDataSource;
   }
 
+  /**
+   * Sets the shared cache mode applied to the persistence unit.
+   *
+   * @param sharedCacheMode shared cache mode value
+   */
   public void setSharedCacheMode (SharedCacheMode sharedCacheMode) {
 
     this.sharedCacheMode = sharedCacheMode;
   }
 
+  /**
+   * Configures the default cache store mode for the persistence unit.
+   *
+   * @param cacheStoreMode cache store mode
+   */
   public void setCacheStoreMode (CacheStoreMode cacheStoreMode) {
 
     this.cacheStoreMode = cacheStoreMode;
   }
 
+  /**
+   * Configures the default cache retrieve mode for the persistence unit.
+   *
+   * @param cacheRetrieveMode cache retrieve mode
+   */
   public void setCacheRetrieveMode (CacheRetrieveMode cacheRetrieveMode) {
 
     this.cacheRetrieveMode = cacheRetrieveMode;
   }
 
+  /**
+   * Sets the bean validation mode.
+   *
+   * @param validationMode validation mode
+   */
   public void setValidationMode (ValidationMode validationMode) {
 
     this.validationMode = validationMode;
   }
 
+  /**
+   * Provides a pre-built {@link MutablePersistenceUnitInfo} to populate. If not set one is
+   * created during initialization.
+   *
+   * @param persistenceUnitInfo mutable persistence unit descriptor
+   */
   public void setPersistenceUnitInfo (MutablePersistenceUnitInfo persistenceUnitInfo) {
 
     this.persistenceUnitInfo = persistenceUnitInfo;
   }
 
+  /**
+   * Indicates whether to ignore classes found on the classpath that are not explicitly listed.
+   *
+   * @param excludeUnlistedClasses flag matching the persistence.xml attribute
+   */
   public void setExcludeUnlistedClasses (boolean excludeUnlistedClasses) {
 
     this.excludeUnlistedClasses = excludeUnlistedClasses;
   }
 
+  /**
+   * Registers additional {@link PersistenceUnitPostProcessor}s to customize the persistence unit.
+   *
+   * @param persistenceUnitPostProcessors post-processors to apply
+   */
   public void setPersistenceUnitPostProcessors (PersistenceUnitPostProcessor... persistenceUnitPostProcessors) {
 
     this.persistenceUnitPostProcessors = persistenceUnitPostProcessors;
   }
 
+  /**
+   * Builds the {@link EntityManagerFactory}, enriching the persistence unit with discovered entity
+   * classes and supplied configuration such as data sources, cache settings, and validation mode.
+   *
+   * @return the initialized entity manager factory
+   * @throws PersistenceException if creation fails or no provider can be resolved
+   */
   @Override
   protected EntityManagerFactory createNativeEntityManagerFactory ()
     throws PersistenceException {

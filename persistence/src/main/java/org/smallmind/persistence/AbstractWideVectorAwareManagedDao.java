@@ -36,10 +36,23 @@ import java.io.Serializable;
 import org.smallmind.persistence.cache.WideVectorAwareDao;
 import org.smallmind.persistence.cache.WideVectoredDao;
 
+/**
+ * Managed DAO variant that works with wide-vector caches keyed by a parent identifier.
+ *
+ * @param <W> parent identifier type
+ * @param <I> durable identifier type
+ * @param <D> durable type managed by the DAO
+ */
 public abstract class AbstractWideVectorAwareManagedDao<W extends Serializable & Comparable<W>, I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractManagedDao<I, D> implements WideVectorAwareDao<W, I, D> {
 
   private final WideVectoredDao<W, I, D> wideVectoredDao;
 
+  /**
+   * Constructs a managed DAO with a cache delegate for wide vectors.
+   *
+   * @param metricSource    the metric source name for this DAO
+   * @param wideVectoredDao the cache-backed delegate used when caching is enabled
+   */
   public AbstractWideVectorAwareManagedDao (String metricSource, WideVectoredDao<W, I, D> wideVectoredDao) {
 
     super(metricSource);
@@ -47,8 +60,18 @@ public abstract class AbstractWideVectorAwareManagedDao<W extends Serializable &
     this.wideVectoredDao = wideVectoredDao;
   }
 
+  /**
+   * Indicates whether caching should be used when accessing wide vectors.
+   *
+   * @return {@code true} when cache lookups are enabled
+   */
   public abstract boolean isCacheEnabled ();
 
+  /**
+   * Returns the cache-aware wide vector delegate when caching is enabled.
+   *
+   * @return the configured {@link WideVectoredDao} or {@code null} when caching is disabled
+   */
   @Override
   public WideVectoredDao<W, I, D> getWideVectoredDao () {
 

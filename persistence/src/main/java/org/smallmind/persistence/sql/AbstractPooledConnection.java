@@ -50,6 +50,13 @@ import javax.sql.StatementEventListener;
 import org.smallmind.nutsnbolts.lang.Existential;
 import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 
+/**
+ * Base {@link PooledConnection} implementation that wraps a real JDBC {@link Connection} with a
+ * proxy to intercept close events, manage statement caching, and dispatch connection/statement
+ * events to listeners.
+ *
+ * @param <D> the concrete {@link CommonDataSource} type that owns this connection
+ */
 public abstract class AbstractPooledConnection<D extends CommonDataSource> implements PooledConnection, InvocationHandler {
 
   private static final Method CLOSE_METHOD;
@@ -73,6 +80,14 @@ public abstract class AbstractPooledConnection<D extends CommonDataSource> imple
     }
   }
 
+  /**
+   * Wraps a physical JDBC connection with pooling behavior and optional prepared statement cache.
+   *
+   * @param dataSource       owning data source
+   * @param actualConnection physical JDBC connection being wrapped
+   * @param maxStatements    maximum number of prepared statements to cache (0 to disable)
+   * @throws SQLException if the max statements value is negative
+   */
   public AbstractPooledConnection (D dataSource, Connection actualConnection, int maxStatements)
     throws SQLException {
 
@@ -96,8 +111,26 @@ public abstract class AbstractPooledConnection<D extends CommonDataSource> imple
     }
   }
 
+  /**
+   * Creates a {@link ConnectionEvent} representing either a normal close or error condition for
+   * this connection.
+   *
+   * @param sqlException optional SQL error (null for normal close)
+   * @return constructed connection event
+   */
   public abstract ConnectionEvent getConnectionEvent (SQLException sqlException);
 
+  /**
+   * Delegates JDBC calls to the underlying connection while intercepting close calls and wrapping
+   * prepared statements in the cache if enabled. Errors trigger a {@link PooledConnectionException}
+   * and fire {@link ConnectionEventListener#connectionErrorOccurred(ConnectionEvent)}.
+   *
+   * @param proxy  the proxy instance
+   * @param method invoked method
+   * @param args   arguments to the method
+   * @return result of the underlying call or cached prepared statement
+   * @throws Throwable propagated underlying exception wrapped when needed
+   */
   public Object invoke (Object proxy, Method method, Object[] args)
     throws Throwable {
 
@@ -147,17 +180,31 @@ public abstract class AbstractPooledConnection<D extends CommonDataSource> imple
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public PrintWriter getLogWriter ()
     throws SQLException {
 
     return dataSource.getLogWriter();
   }
 
+  /**
+   * Returns a proxy connection that defers {@code close()} and optionally caches prepared
+   * statements.
+   *
+   * @return connection proxy exposed to clients
+   */
   public Connection getConnection () {
 
     return proxyConnection;
   }
 
+  /**
+   * Closes the pooled connection once, cleaning up cached statements and the underlying connection.
+   *
+   * @throws SQLException if closing the real connection or statements fails
+   */
   public void close ()
     throws SQLException {
 
@@ -176,26 +223,53 @@ public abstract class AbstractPooledConnection<D extends CommonDataSource> imple
     }
   }
 
+  /**
+   * Registers a listener to receive connection lifecycle events.
+   *
+   * @param listener listener to add
+   */
+  @Override
   public void addConnectionEventListener (ConnectionEventListener listener) {
 
     connectionEventListenerQueue.add(listener);
   }
 
+  /**
+   * Removes the given connection event listener.
+   *
+   * @param listener listener to remove
+   */
+  @Override
   public void removeConnectionEventListener (ConnectionEventListener listener) {
 
     connectionEventListenerQueue.remove(listener);
   }
 
+  /**
+   * Provides access to the registered statement event listeners.
+   *
+   * @return iterable of statement listeners currently registered
+   */
   protected Iterable<StatementEventListener> getStatementEventListeners () {
 
     return statementEventListenerQueue;
   }
 
+  /**
+   * Registers a statement event listener (often the statement cache).
+   *
+   * @param listener listener to add
+   */
   public void addStatementEventListener (StatementEventListener listener) {
 
     statementEventListenerQueue.add(listener);
   }
 
+  /**
+   * Removes a previously added statement event listener.
+   *
+   * @param listener listener to remove
+   */
   public void removeStatementEventListener (StatementEventListener listener) {
 
     statementEventListenerQueue.remove(listener);

@@ -37,6 +37,10 @@ import java.util.Comparator;
 import java.util.List;
 import org.smallmind.persistence.Durable;
 
+/**
+ * Base representation of a cached vector of durables with optional ordering, TTL, and size
+ * constraints.
+ */
 public abstract class DurableVector<I extends Serializable & Comparable<I>, D extends Durable<I>> implements Serializable, Iterable<D> {
 
   private final Comparator<D> comparator;
@@ -45,6 +49,12 @@ public abstract class DurableVector<I extends Serializable & Comparable<I>, D ex
   private final int timeToLiveSeconds;
   private final int maxSize;
 
+  /**
+   * @param comparator        optional comparator for ordering
+   * @param maxSize           maximum number of elements (0 for unlimited)
+   * @param timeToLiveSeconds TTL in seconds (0 or less for infinite)
+   * @param ordered           whether ordering matters for this vector
+   */
   public DurableVector (Comparator<D> comparator, int maxSize, int timeToLiveSeconds, boolean ordered) {
 
     this.comparator = comparator;
@@ -55,43 +65,91 @@ public abstract class DurableVector<I extends Serializable & Comparable<I>, D ex
     creationTimeMilliseconds = System.currentTimeMillis();
   }
 
+  /**
+   * Creates a defensive copy of this vector, preserving ordering and TTL semantics.
+   *
+   * @return duplicated vector instance
+   */
   public abstract DurableVector<I, D> copy ();
 
+  /**
+   * Indicates whether the vector contains exactly one element.
+   *
+   * @return {@code true} when only a single durable is present
+   */
   public abstract boolean isSingular ();
 
+  /**
+   * Adds the durable to the vector respecting ordering/size semantics.
+   *
+   * @param durable durable to add
+   * @return true if the vector changed
+   */
   public abstract boolean add (D durable);
 
+  /**
+   * Removes the durable from the vector.
+   *
+   * @param durable durable to remove
+   * @return true if removed
+   */
   public abstract boolean remove (D durable);
 
+  /**
+   * @return head element of the vector or {@code null}
+   */
   public abstract D head ();
 
+  /**
+   * @return list view of the vector; may fetch lazily
+   */
   public abstract List<D> asBestEffortLazyList ();
 
+  /**
+   * @return eagerly fetched list view of the vector when supported
+   */
   public List<D> asBestEffortPreFetchedList () {
 
     return asBestEffortLazyList();
   }
 
+  /**
+   * @return comparator used for ordering (may be null)
+   */
   public Comparator<D> getComparator () {
 
     return comparator;
   }
 
+  /**
+   * @return maximum size of the vector (0 for unbounded)
+   */
   public int getMaxSize () {
 
     return maxSize;
   }
 
+  /**
+   * @return TTL in seconds
+   */
   public int getTimeToLiveSeconds () {
 
     return timeToLiveSeconds;
   }
 
+  /**
+   * @return whether ordering is meaningful for this vector
+   */
   public boolean isOrdered () {
 
     return ordered;
   }
 
+  /**
+   * Determines if the vector has expired based on its TTL.
+   *
+   * @return true if still valid
+   */
   public boolean isAlive () {
 
     return (timeToLiveSeconds <= 0) || ((System.currentTimeMillis() - creationTimeMilliseconds) / 1000 <= timeToLiveSeconds);

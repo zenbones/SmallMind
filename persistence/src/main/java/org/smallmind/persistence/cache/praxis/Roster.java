@@ -35,9 +35,24 @@ package org.smallmind.persistence.cache.praxis;
 import java.io.Serializable;
 import java.util.List;
 
+/**
+ * Serializable list-like structure used as the backing store for cached vectors.
+ *
+ * @param <T> element type
+ */
 public interface Roster<T> extends Serializable, List<T> {
 
+  /**
+   * Inserts an element at the beginning of the roster.
+   *
+   * @param element element to add
+   */
   void addFirst (T element);
 
+  /**
+   * Removes and returns the last element in the roster.
+   *
+   * @return removed element
+   */
   T removeLast ();
 }

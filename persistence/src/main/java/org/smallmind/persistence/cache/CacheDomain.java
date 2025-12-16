@@ -36,13 +36,35 @@ import java.io.Serializable;
 import java.util.List;
 import org.smallmind.persistence.Durable;
 
+/**
+ * Groups the caches associated with a particular durable type, including instance, wide-instance,
+ * and vector caches.
+ *
+ * @param <I> durable identifier type
+ * @param <D> durable type
+ */
 public interface CacheDomain<I extends Serializable & Comparable<I>, D extends Durable<I>> {
 
+  /**
+   * @return identifier used for metrics reporting
+   */
   String getMetricSource ();
 
+  /**
+   * @param managedClass durable class
+   * @return cache of individual durables keyed by id string
+   */
   PersistenceCache<String, D> getInstanceCache (Class<D> managedClass);
 
+  /**
+   * @param managedClass durable class
+   * @return cache of lists of durables (wide cache) keyed by vector key
+   */
   PersistenceCache<String, List<D>> getWideInstanceCache (Class<D> managedClass);
 
+  /**
+   * @param managedClass durable class
+   * @return cache of durable vectors keyed by vector key
+   */
   PersistenceCache<String, DurableVector<I, D>> getVectorCache (Class<D> managedClass);
 }

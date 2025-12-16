@@ -42,10 +42,27 @@ import org.smallmind.nutsnbolts.reflection.FieldAccessor;
 import org.smallmind.nutsnbolts.reflection.FieldUtility;
 import org.smallmind.nutsnbolts.reflection.Overlay;
 
+/**
+ * Base implementation of a persistent {@link Durable} that supplies common comparison,
+ * identity and debugging helpers. Equality and ordering are based on the durable id
+ * when it is present, and fall back to object identity when no id has been assigned.
+ * Reflection is used to provide mirror comparisons and a descriptive {@code toString()}.
+ *
+ * @param <I> the identifier type, which must be comparable and serializable
+ * @param <D> the concrete durable type
+ */
 public abstract class AbstractDurable<I extends Serializable & Comparable<I>, D extends AbstractDurable<I, D>> implements Overlay<D>, Durable<I> {
 
   private static final ThreadLocal<Set<Durable>> IN_USE_SET_LOCAL = ThreadLocal.withInitial(HashSet::new);
 
+  /**
+   * Compares this durable to another, ordering by identifier when both ids are populated.
+   * A durable with a {@code null} id is considered less than one with an id.
+   *
+   * @param durable the other durable instance
+   * @return a negative value when {@code this} should sort before {@code durable}, a positive value when after, and zero when equal
+   * @throws TypeMismatchException if the provided durable is not of a compatible type
+   */
   public int compareTo (Durable<I> durable) {
 
     if (!this.getClass().isAssignableFrom(durable.getClass())) {
@@ -70,6 +87,12 @@ public abstract class AbstractDurable<I extends Serializable & Comparable<I>, D 
     return durable.getId().compareTo(getId());
   }
 
+  /**
+   * Computes a hash code based on the durable id when available, or falls back to the
+   * default object hash code when the id has not yet been set.
+   *
+   * @return the hash code for this durable
+   */
   @Override
   public int hashCode () {
 
@@ -85,6 +108,13 @@ public abstract class AbstractDurable<I extends Serializable & Comparable<I>, D 
     return h ^ (h >>> 7) ^ (h >>> 4);
   }
 
+  /**
+   * Tests equality based on the durable id when both sides have an id; otherwise defaults
+   * to the inherited {@link Object#equals(Object)} behavior.
+   *
+   * @param obj the object to compare
+   * @return {@code true} when the two objects represent the same durable record
+   */
   @Override
   public boolean equals (Object obj) {
 
@@ -99,11 +129,25 @@ public abstract class AbstractDurable<I extends Serializable & Comparable<I>, D 
     return false;
   }
 
+  /**
+   * Determines whether all non-id fields mirror those of the supplied durable.
+   *
+   * @param durable the durable to compare against
+   * @return {@code true} when all properties except the id match, otherwise {@code false}
+   */
   public boolean mirrors (Durable durable) {
 
     return mirrors(durable, FieldUtility.getFieldAccessor(this.getClass(), "id").getField());
   }
 
+  /**
+   * Determines whether all fields other than the supplied exclusions mirror those of the provided durable.
+   *
+   * @param durable    the durable to compare against
+   * @param exclusions optional fields to omit from the comparison
+   * @return {@code true} when the two objects match on all non-excluded fields
+   * @throws PersistenceException if an exclusion does not belong to this durable type
+   */
   public boolean mirrors (Durable durable, Field... exclusions) {
 
     if (this.getClass().isAssignableFrom(durable.getClass())) {
@@ -154,10 +198,18 @@ public abstract class AbstractDurable<I extends Serializable & Comparable<I>, D 
     return false;
   }
 
+  /**
+   * Builds a reflective string representation of the durable, listing each field name and value.
+   * Recursion is guarded by a per-thread set so that cyclical graphs degrade gracefully.
+   *
+   * @return the string form of this durable
+   */
+  @Override
   public String toString () {
 
     StringBuilder displayBuilder = new StringBuilder();
 
+    // Prevent recursive invocations when traversing graphs of durables
     if (IN_USE_SET_LOCAL.get().contains(this)) {
       displayBuilder.append(this.getClass().getSimpleName()).append("[id=").append(getId()).append(",...]");
     } else {

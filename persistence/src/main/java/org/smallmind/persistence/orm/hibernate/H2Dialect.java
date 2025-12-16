@@ -43,8 +43,17 @@ import org.hibernate.type.spi.TypeConfiguration;
 import static org.hibernate.query.sqm.produce.function.FunctionParameterType.DATE;
 import static org.hibernate.query.sqm.produce.function.FunctionParameterType.INTEGER;
 
+/**
+ * Custom H2 dialect that registers helper functions used by SmallMind queries (e.g. date
+ * difference and subtract minutes).
+ */
 public class H2Dialect extends org.hibernate.dialect.H2Dialect {
 
+  /**
+   * Registers custom SQL function patterns with Hibernate's function registry.
+   *
+   * @param functionContributions function utilities provided by Hibernate during boot
+   */
   @Override
   public void initializeFunctionRegistry (FunctionContributions functionContributions) {
 

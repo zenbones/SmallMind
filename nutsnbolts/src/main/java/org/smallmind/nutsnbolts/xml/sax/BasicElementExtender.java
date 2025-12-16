@@ -61,7 +61,6 @@ public class BasicElementExtender extends AbstractElementExtender {
   /**
    * Captures the element local name.
    */
-
   @Override
   public void startElement (String namespaceURI, String localName, String qName, Attributes atts) {
 

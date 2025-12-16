@@ -42,6 +42,10 @@ import java.util.TreeMap;
 import javax.sql.StatementEvent;
 import javax.sql.StatementEventListener;
 
+/**
+ * LRU cache of {@link PooledPreparedStatement}s keyed by the arguments used to prepare them. It
+ * implements {@link StatementEventListener} to track statement lifecycle events from the pool.
+ */
 public class PooledPreparedStatementCache implements StatementEventListener {
 
   private final TreeMap<TimeKey, String> timeMap;
@@ -49,6 +53,11 @@ public class PooledPreparedStatementCache implements StatementEventListener {
   private final HashMap<String, StatementWrapper> statementMap;
   private final int maxStatements;
 
+  /**
+   * Builds a cache with the supplied maximum number of prepared statements.
+   *
+   * @param maxStatements maximum cached statements; eviction occurs when the limit is reached
+   */
   public PooledPreparedStatementCache (int maxStatements) {
 
     this.maxStatements = maxStatements;
@@ -58,6 +67,14 @@ public class PooledPreparedStatementCache implements StatementEventListener {
     statementMap = new HashMap<>();
   }
 
+  /**
+   * Adds a new prepared statement to the cache, evicting the least-recently-used entry if the cache
+   * is full. The statement is indexed by its creation arguments for later lookup.
+   *
+   * @param args            arguments used to create the statement (SQL plus JDBC options)
+   * @param pooledStatement pooled statement wrapper to cache
+   * @return the wrapped {@link PreparedStatement} ready for use
+   */
   public synchronized PreparedStatement cachePreparedStatement (Object[] args, PooledPreparedStatement pooledStatement) {
 
     TimeKey timeKey;
@@ -88,6 +105,12 @@ public class PooledPreparedStatementCache implements StatementEventListener {
     return pooledStatement.getPreparedStatement();
   }
 
+  /**
+   * Attempts to retrieve a free prepared statement matching the argument signature from the cache.
+   *
+   * @param args method arguments used to create the statement (SQL plus options)
+   * @return cached {@link PreparedStatement} if available, otherwise {@code null}
+   */
   public synchronized PreparedStatement getPreparedStatement (Object[] args) {
 
     ArgumentKey argumentKey;
@@ -106,6 +129,11 @@ public class PooledPreparedStatementCache implements StatementEventListener {
     return null;
   }
 
+  /**
+   * Marks a statement as returned to the cache when the pool signals it has been closed.
+   *
+   * @param event statement close event
+   */
   public synchronized void statementClosed (StatementEvent event) {
 
     StatementWrapper statementWrapper;
@@ -115,6 +143,11 @@ public class PooledPreparedStatementCache implements StatementEventListener {
     }
   }
 
+  /**
+   * Removes a statement from the cache upon error, closes it, and cleans up index structures.
+   *
+   * @param event statement error event from the pool
+   */
   public synchronized void statementErrorOccurred (StatementEvent event) {
 
     StatementWrapper statementWrapper;
@@ -136,6 +169,9 @@ public class PooledPreparedStatementCache implements StatementEventListener {
     }
   }
 
+  /**
+   * Closes all cached statements, logging but ignoring secondary exceptions.
+   */
   public synchronized void close () {
 
     for (StatementWrapper statementWrapper : statementMap.values()) {
@@ -147,6 +183,13 @@ public class PooledPreparedStatementCache implements StatementEventListener {
     }
   }
 
+  /**
+   * Attempts to print the exception to the pooled statement's log writer, swallowing any secondary
+   * JDBC errors during logging.
+   *
+   * @param statementWrapper wrapper containing the failed statement
+   * @param sqlException     exception to report
+   */
   private void logException (StatementWrapper statementWrapper, SQLException sqlException) {
 
     PrintWriter logWriter;
@@ -163,16 +206,27 @@ public class PooledPreparedStatementCache implements StatementEventListener {
 
     private long lastAccesssTime;
 
+    /**
+     * Constructs a time key using the current time.
+     */
     public TimeKey () {
 
       lastAccesssTime = System.currentTimeMillis();
     }
 
+    /**
+     * @return timestamp when the statement was last accessed
+     */
     public long getLastAccessTime () {
 
       return lastAccesssTime;
     }
 
+    /**
+     * Updates the access time to now.
+     *
+     * @return this key for chaining
+     */
     public TimeKey update () {
 
       lastAccesssTime = System.currentTimeMillis();
@@ -180,6 +234,12 @@ public class PooledPreparedStatementCache implements StatementEventListener {
       return this;
     }
 
+    /**
+     * Orders time keys by last access time for LRU eviction.
+     *
+     * @param timeKey other key to compare
+     * @return comparison of timestamps
+     */
     public int compareTo (TimeKey timeKey) {
 
       return Long.compare(lastAccesssTime, timeKey.getLastAccessTime());
@@ -190,21 +250,42 @@ public class PooledPreparedStatementCache implements StatementEventListener {
 
     private final Object[] args;
 
+    /**
+     * Wrapper for prepared-statement arguments to support map lookups.
+     *
+     * @param args argument array used to create the statement
+     */
     public ArgumentKey (Object[] args) {
 
       this.args = args;
     }
 
+    /**
+     * @return backing argument array
+     */
     public Object[] getArgs () {
 
       return args;
     }
+
+    /**
+     * Hashes using deep array semantics so nested arrays are handled.
+     *
+     * @return hash code for the argument signature
+     */
 
     @Override
     public int hashCode () {
 
       return Arrays.deepHashCode(args);
     }
+
+    /**
+     * Compares argument keys using deep array equality.
+     *
+     * @param obj candidate key
+     * @return {@code true} if argument arrays match
+     */
 
     @Override
     public boolean equals (Object obj) {
@@ -220,6 +301,13 @@ public class PooledPreparedStatementCache implements StatementEventListener {
     private final PooledPreparedStatement pooledStatement;
     private boolean inUse;
 
+    /**
+     * Wraps a pooled statement along with its keys and usage flag.
+     *
+     * @param timeKey         eviction key tracking access time
+     * @param argumentKey     lookup key based on creation arguments
+     * @param pooledStatement pooled statement being tracked
+     */
     public StatementWrapper (TimeKey timeKey, ArgumentKey argumentKey, PooledPreparedStatement pooledStatement) {
 
       this.timeKey = timeKey;
@@ -229,31 +317,51 @@ public class PooledPreparedStatementCache implements StatementEventListener {
       inUse = true;
     }
 
+    /**
+     * @return the time key for eviction ordering
+     */
     public TimeKey getTimeKey () {
 
       return timeKey;
     }
 
+    /**
+     * @return argument key for lookup
+     */
     public ArgumentKey getArgumentKey () {
 
       return argumentKey;
     }
 
+    /**
+     * @return the pooled statement being cached
+     */
     public PooledPreparedStatement getPooledStatement () {
 
       return pooledStatement;
     }
 
+    /**
+     * @return whether the statement is currently handed out
+     */
     public boolean isInUse () {
 
       return inUse;
     }
 
+    /**
+     * Marks the statement as available for reuse.
+     */
     public void free () {
 
       inUse = false;
     }
 
+    /**
+     * Acquires the statement for use, updating its access time and returning the JDBC handle.
+     *
+     * @return wrapped {@link PreparedStatement}
+     */
     public PreparedStatement acquire () {
 
       inUse = true;

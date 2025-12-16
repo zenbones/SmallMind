@@ -45,20 +45,48 @@ import org.springframework.beans.FatalBeanException;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 
+/**
+ * Base {@link BeanFactoryPostProcessor} that discovers DAO beans in the Spring context, inspects
+ * their durable entity types, and records any classes annotated with a configured set of metadata
+ * annotations. Subclasses specify which DAO implementations to consider and which annotations mark
+ * persistent classes. The collected classes can then be reused later (e.g. to build persistence
+ * units or mapping registries).
+ */
 public abstract class AbstractAnnotationSeekingBeanFactoryPostProcessor implements BeanFactoryPostProcessor {
 
   private static final Class[] NO_CLASSES = new Class[0];
   private final HashMap<String, HashSet<Class<?>>> annotatedClassMap = new HashMap<>();
 
+  /**
+   * DAO interfaces or base classes that identify beans participating in the scan.
+   *
+   * @return managed DAO types that should trigger entity discovery
+   */
   public abstract Class<? extends ManagedDao<?, ?>>[] getDaoImplementations ();
 
+  /**
+   * Annotations that mark classes as persistent entities.
+   *
+   * @return annotation types to search for
+   */
   public abstract Class<? extends Annotation>[] getTargetAnnotations ();
 
+  /**
+   * Returns all discovered annotated classes regardless of {@link SessionSource} key.
+   *
+   * @return array of discovered classes, possibly empty
+   */
   public Class[] getAnnotatedClasses () {
 
     return getAnnotatedClasses(null);
   }
 
+  /**
+   * Returns discovered classes associated with a particular session source key.
+   *
+   * @param sessionSourceKey {@link SessionSource#value()} associated with the DAO, or {@code null}
+   * @return array of classes for the key, or empty array if none were found
+   */
   public Class[] getAnnotatedClasses (String sessionSourceKey) {
 
     Class[] annotatedClasses;
@@ -74,6 +102,14 @@ public abstract class AbstractAnnotationSeekingBeanFactoryPostProcessor implemen
     return annotatedClasses;
   }
 
+  /**
+   * Scans bean definitions for known DAO types, infers their durable entity class, and records any
+   * entities annotated with the configured target annotations. Also walks mapped subclasses and
+   * relationships to ensure all related entity types are captured.
+   *
+   * @param configurableListableBeanFactory the bean factory to scan
+   * @throws BeansException when DAO metadata cannot be resolved or a mapping is invalid
+   */
   public void postProcessBeanFactory (ConfigurableListableBeanFactory configurableListableBeanFactory)
     throws BeansException {
 
@@ -109,6 +145,13 @@ public abstract class AbstractAnnotationSeekingBeanFactoryPostProcessor implemen
     }
   }
 
+  /**
+   * Recursively records the persistent class and any mapped subclasses or relationships if they
+   * carry target annotations.
+   *
+   * @param persistentClass   entity class to process
+   * @param annotatedClassSet set tracking classes for a given session source
+   */
   private void processClass (Class<?> persistentClass, HashSet<Class<?>> annotatedClassSet) {
 
     if (hasTargetAnnotation(persistentClass)) {
@@ -136,6 +179,12 @@ public abstract class AbstractAnnotationSeekingBeanFactoryPostProcessor implemen
     }
   }
 
+  /**
+   * Determines whether the bean class is one of the configured DAO implementations.
+   *
+   * @param beanClass candidate bean class
+   * @return {@code true} if the bean should trigger entity discovery
+   */
   private boolean isDaoImplementation (Class<?> beanClass) {
 
     for (Class<? extends ManagedDao<?, ?>> daoImplementation : getDaoImplementations()) {
@@ -148,6 +197,12 @@ public abstract class AbstractAnnotationSeekingBeanFactoryPostProcessor implemen
     return false;
   }
 
+  /**
+   * Checks whether the persistent class is annotated with any of the target annotations.
+   *
+   * @param persistentClass class to inspect
+   * @return {@code true} when at least one target annotation is present
+   */
   private boolean hasTargetAnnotation (Class<?> persistentClass) {
 
     for (Class<? extends Annotation> targetAnnotation : getTargetAnnotations()) {

@@ -41,17 +41,28 @@ import org.smallmind.persistence.orm.jpa.JPADao;
 import org.smallmind.persistence.orm.querydsl.jpa.QJPADao;
 import org.smallmind.persistence.orm.spring.AbstractAnnotationSeekingBeanFactoryPostProcessor;
 
+/**
+ * Bean factory post-processor that discovers JPA entity classes by inspecting beans implementing
+ * {@link JPADao} or {@link QJPADao} and collecting classes annotated as JPA entities, embeddables,
+ * or mapped superclasses.
+ */
 public class AnnotationSeekingBeanFactoryPostProcessor extends AbstractAnnotationSeekingBeanFactoryPostProcessor {
 
   private static final Class<? extends ManagedDao<?, ?>>[] DAO_IMPLEMENTATIONS = new Class[] {JPADao.class, QJPADao.class};
   private static final Class<? extends Annotation>[] TARGET_ANNOTATIONS = new Class[] {Entity.class, Embeddable.class, MappedSuperclass.class};
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Class<? extends ManagedDao<?, ?>>[] getDaoImplementations () {
 
     return DAO_IMPLEMENTATIONS;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Class<? extends Annotation>[] getTargetAnnotations () {
 

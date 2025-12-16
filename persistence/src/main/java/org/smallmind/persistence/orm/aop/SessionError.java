@@ -34,10 +34,18 @@ package org.smallmind.persistence.orm.aop;
 
 import org.smallmind.nutsnbolts.lang.FormattedError;
 
+/**
+ * Base error type for session boundary failures, tracking how many boundaries remain to close.
+ */
 public abstract class SessionError extends FormattedError {
 
   private final int closure;
 
+  /**
+   * Creates a session error with no message.
+   *
+   * @param closure number of remaining boundaries to close
+   */
   public SessionError (int closure) {
 
     super();
@@ -45,6 +53,13 @@ public abstract class SessionError extends FormattedError {
     this.closure = closure;
   }
 
+  /**
+   * Creates a session error with a formatted message.
+   *
+   * @param closure number of remaining boundaries to close
+   * @param message error message format
+   * @param args    message arguments
+   */
   public SessionError (int closure, String message, Object... args) {
 
     super(message, args);
@@ -52,6 +67,14 @@ public abstract class SessionError extends FormattedError {
     this.closure = closure;
   }
 
+  /**
+   * Creates a session error wrapping another throwable with a formatted message.
+   *
+   * @param closure   number of remaining boundaries to close
+   * @param throwable underlying cause
+   * @param message   error message format
+   * @param args      message arguments
+   */
   public SessionError (int closure, Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);
@@ -59,6 +82,12 @@ public abstract class SessionError extends FormattedError {
     this.closure = closure;
   }
 
+  /**
+   * Creates a session error wrapping another throwable.
+   *
+   * @param closure   number of remaining boundaries to close
+   * @param throwable underlying cause
+   */
   public SessionError (int closure, Throwable throwable) {
 
     super(throwable);
@@ -66,6 +95,9 @@ public abstract class SessionError extends FormattedError {
     this.closure = closure;
   }
 
+  /**
+   * @return the remaining boundary depth expected when this error was raised
+   */
   public int getClosure () {
 
     return closure;

@@ -32,9 +32,29 @@
  */
 package org.smallmind.persistence;
 
+/**
+ * Minimal DAO contract for retrieving and deleting persistent entities.
+ *
+ * @param <I> the identifier type
+ * @param <P> the persistent entity type
+ */
 public interface Dao<I, P> {
 
+  /**
+   * Retrieves a persistent entity by its identifier.
+   *
+   * @param persistentClass the class that declares the persistent entity
+   * @param id              the identifier to search for
+   * @return the matching persistent instance, or {@code null} when not found
+   */
   P get (Class<P> persistentClass, I id);
 
+  /**
+   * Deletes a persistent entity instance.
+   *
+   * @param persistentClass the class that declares the persistent entity
+   * @param persistent      the entity instance to remove
+   * @throws PersistenceException if the delete cannot be completed
+   */
   void delete (Class<P> persistentClass, P persistent);
 }

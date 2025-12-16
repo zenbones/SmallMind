@@ -36,13 +36,26 @@ import java.util.Collection;
 import java.util.LinkedList;
 import org.smallmind.persistence.cache.praxis.Roster;
 
+/**
+ * {@link Roster} implementation backed by a {@link LinkedList} for use with extrinsic cache vectors.
+ *
+ * @param <T> element type
+ */
 public class ExtrinsicRoster<T> extends LinkedList<T> implements Roster<T> {
 
+  /**
+   * Creates an empty roster.
+   */
   public ExtrinsicRoster () {
 
     super();
   }
 
+  /**
+   * Creates a roster initialized with the provided elements.
+   *
+   * @param c initial elements to copy
+   */
   public ExtrinsicRoster (Collection<? extends T> c) {
 
     super(c);

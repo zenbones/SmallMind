@@ -43,15 +43,29 @@ import org.smallmind.persistence.cache.DurableVector;
 import org.smallmind.persistence.cache.VectorKey;
 import org.smallmind.persistence.cache.praxis.ByReferenceSingularVector;
 
-// The cache supports thread-safe operations
-// The vector cache references the instance by a JVM object handle
+/**
+ * Cache DAO for thread-safe, in-process caches where vectors hold direct references to cached instances.
+ */
 public class ByReferenceIntrinsicCacheDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractCacheDao<I, D> {
 
+  /**
+   * Creates an intrinsic cache DAO using the provided cache domain.
+   *
+   * @param cacheDomain cache domain supplying instance and vector caches
+   */
   public ByReferenceIntrinsicCacheDao (CacheDomain<I, D> cacheDomain) {
 
     super(cacheDomain);
   }
 
+  /**
+   * Persists a durable into the instance cache, returning any existing value.
+   *
+   * @param durableClass managed durable class
+   * @param durable      durable to cache
+   * @param mode         ignored for intrinsic caches; kept for interface compatibility
+   * @return cached durable or {@code null} when input is null
+   */
   public D persist (Class<D> durableClass, D durable, UpdateMode mode) {
 
     if (durable != null) {
@@ -65,6 +79,12 @@ public class ByReferenceIntrinsicCacheDao<I extends Serializable & Comparable<I>
     return null;
   }
 
+  /**
+   * Adds a durable to a cached vector if the vector exists.
+   *
+   * @param vectorKey cache key describing the vector
+   * @param durable   durable to add
+   */
   public void updateInVector (VectorKey<D> vectorKey, D durable) {
 
     if (durable != null) {
@@ -77,6 +97,12 @@ public class ByReferenceIntrinsicCacheDao<I extends Serializable & Comparable<I>
     }
   }
 
+  /**
+   * Removes a durable from a cached vector, deleting the vector when it becomes singular.
+   *
+   * @param vectorKey cache key describing the vector
+   * @param durable   durable to remove
+   */
   public void removeFromVector (VectorKey<D> vectorKey, D durable) {
 
     if (durable != null) {
@@ -93,6 +119,13 @@ public class ByReferenceIntrinsicCacheDao<I extends Serializable & Comparable<I>
     }
   }
 
+  /**
+   * Converts an arbitrary vector into an intrinsic reference-based vector compatible with this DAO.
+   *
+   * @param managedClass durable class stored in the vector
+   * @param vector       vector to migrate
+   * @return migrated vector
+   */
   public DurableVector<I, D> migrateVector (Class<D> managedClass, DurableVector<I, D> vector) {
 
     if (vector.isSingular()) {
@@ -112,6 +145,14 @@ public class ByReferenceIntrinsicCacheDao<I extends Serializable & Comparable<I>
     }
   }
 
+  /**
+   * Creates a singular vector containing a cached reference to the supplied durable.
+   *
+   * @param vectorKey         cache key describing the vector
+   * @param durable           durable to cache
+   * @param timeToLiveSeconds TTL for the vector
+   * @return singular vector referencing a cached durable instance
+   */
   public DurableVector<I, D> createSingularVector (VectorKey<D> vectorKey, D durable, int timeToLiveSeconds) {
 
     DurableKey<I, D> durableKey;
@@ -126,6 +167,17 @@ public class ByReferenceIntrinsicCacheDao<I extends Serializable & Comparable<I>
     return new ByReferenceSingularVector<>(durable, timeToLiveSeconds);
   }
 
+  /**
+   * Creates a vector containing cached references to the supplied durables.
+   *
+   * @param vectorKey         cache key describing the vector
+   * @param elementIter       iterable of durables to include
+   * @param comparator        comparator used for ordering; {@code null} for natural order
+   * @param maxSize           maximum number of elements to retain
+   * @param timeToLiveSeconds TTL for the vector
+   * @param ordered           whether to maintain sorted order
+   * @return new intrinsic vector
+   */
   public DurableVector<I, D> createVector (VectorKey<D> vectorKey, Iterable<D> elementIter, Comparator<D> comparator, int maxSize, int timeToLiveSeconds, boolean ordered) {
 
     IntrinsicRoster<D> cacheConsistentElements;

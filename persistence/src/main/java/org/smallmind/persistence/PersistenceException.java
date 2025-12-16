@@ -34,23 +34,47 @@ package org.smallmind.persistence;
 
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
+/**
+ * Base unchecked exception for persistence layer failures.
+ */
 public class PersistenceException extends FormattedRuntimeException {
 
+  /**
+   * Creates a persistence exception with no message.
+   */
   public PersistenceException () {
 
     super();
   }
 
+  /**
+   * Creates a persistence exception with a formatted message.
+   *
+   * @param message the message template
+   * @param args    arguments referenced by the format specifiers in the message
+   */
   public PersistenceException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * Creates a persistence exception with a cause and formatted message.
+   *
+   * @param throwable the underlying cause
+   * @param message   the message template
+   * @param args      arguments referenced by the format specifiers in the message
+   */
   public PersistenceException (Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);
   }
 
+  /**
+   * Creates a persistence exception with a cause.
+   *
+   * @param throwable the underlying cause
+   */
   public PersistenceException (Throwable throwable) {
 
     super(throwable);

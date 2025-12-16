@@ -38,9 +38,17 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import org.smallmind.persistence.Durable;
 
+/**
+ * Marks a field to be injected with a repository/DAO managing the specified durable type.
+ */
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Repository {
 
+  /**
+   * The durable type managed by the injected repository.
+   *
+   * @return the durable class
+   */
   Class<Durable> value ();
 }

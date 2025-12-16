@@ -36,13 +36,50 @@ import java.io.Serializable;
 import java.util.List;
 import org.smallmind.persistence.Durable;
 
+/**
+ * DAO contract for handling wide (list) vectors keyed by a parent durable and optional context.
+ *
+ * @param <W> parent durable identifier type
+ * @param <I> child durable identifier type
+ * @param <D> child durable type
+ */
 public interface WideVectoredDao<W extends Serializable & Comparable<W>, I extends Serializable & Comparable<I>, D extends Durable<I>> {
 
+  /**
+   * @return identifier used for metrics
+   */
   String getMetricSource ();
 
+  /**
+   * Retrieves a wide list of child durables from storage/cache.
+   *
+   * @param context      optional context key
+   * @param parentClass  parent durable class
+   * @param parentId     parent identifier
+   * @param durableClass child durable class
+   * @return list of children or {@code null}
+   */
   List<D> get (String context, Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass);
 
+  /**
+   * Persists the provided list of child durables for the given parent/context.
+   *
+   * @param context      optional context key
+   * @param parentClass  parent durable class
+   * @param parentId     parent identifier
+   * @param durableClass child durable class
+   * @param durables     children to persist
+   * @return persisted list (may be cached version)
+   */
   List<D> persist (String context, Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass, List<D> durables);
 
+  /**
+   * Deletes the cached/managed wide list for the given composite key.
+   *
+   * @param context      optional context key
+   * @param parentClass  parent durable class
+   * @param parentId     parent identifier
+   * @param durableClass child durable class
+   */
   void delete (String context, Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass);
 }

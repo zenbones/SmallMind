@@ -40,6 +40,10 @@ import java.sql.SQLFeatureNotSupportedException;
 import java.util.logging.Logger;
 import javax.sql.DataSource;
 
+/**
+ * Minimal {@link DataSource} backed by {@link DriverManager}, useful for simple configurations
+ * without connection pooling.
+ */
 public class DriverManagerDataSource implements DataSource {
 
   private final String jdbcUrl;
@@ -47,6 +51,15 @@ public class DriverManagerDataSource implements DataSource {
   private final String password;
   private PrintWriter logWriter;
 
+  /**
+   * Creates a data source using the supplied JDBC driver, url, and credentials.
+   *
+   * @param driverClassName fully-qualified driver class to load
+   * @param jdbcUrl         JDBC connection URL
+   * @param user            username
+   * @param password        password
+   * @throws SQLException if the driver class cannot be loaded
+   */
   public DriverManagerDataSource (String driverClassName, String jdbcUrl, String user, String password)
     throws SQLException {
 
@@ -67,6 +80,9 @@ public class DriverManagerDataSource implements DataSource {
     return DriverManager.getConnection(jdbcUrl, user, password);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public Connection getConnection (String user, String password)
     throws SQLException {
 
@@ -79,31 +95,54 @@ public class DriverManagerDataSource implements DataSource {
     throw new SQLFeatureNotSupportedException();
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  @Override
   public PrintWriter getLogWriter () {
 
     return logWriter;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public void setLogWriter (PrintWriter logWriter) {
 
     this.logWriter = logWriter;
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  @Override
   public int getLoginTimeout () {
 
     return 0;
   }
 
+  /**
+   * Login timeout configuration is not supported.
+   *
+   * @param timeoutSeconds ignored
+   * @throws UnsupportedOperationException always
+   */
   public void setLoginTimeout (int timeoutSeconds) {
 
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public boolean isWrapperFor (Class<?> iface) {
 
     return false;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public <T> T unwrap (Class<T> iface) {
 
     return null;

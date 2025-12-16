@@ -32,7 +32,17 @@
  */
 package org.smallmind.persistence.cache.aop;
 
+/**
+ * Cache update strategy describing how a durable should affect a vector upon persistence.
+ */
 public enum OnPersist {
 
-  INSERT, REMOVE
+  /**
+   * Insert or upsert the durable into the target vector.
+   */
+  INSERT,
+  /**
+   * Remove the durable from the target vector.
+   */
+  REMOVE
 }

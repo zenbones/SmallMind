@@ -42,21 +42,41 @@ import org.smallmind.quorum.pool.complex.ComponentInstance;
 import org.smallmind.quorum.pool.complex.ComponentInstanceFactory;
 import org.smallmind.quorum.pool.complex.ComponentPool;
 
+/**
+ * {@link ComponentInstanceFactory} that produces {@link PooledConnectionComponentInstance}s using a
+ * {@link Juggler} of {@link ConnectionPoolDataSource}s.
+ */
 public class PooledConnectionComponentInstanceFactory<P extends PooledConnection> implements ComponentInstanceFactory<P> {
 
   private final Juggler<ConnectionPoolDataSource, P> pooledConnectionJuggler;
   private String validationQuery = "select 1";
 
+  /**
+   * Creates a factory with default recovery check interval.
+   *
+   * @param pooledConnectionClass expected pooled connection type
+   * @param dataSources           connection pool data sources to juggle between
+   */
   public PooledConnectionComponentInstanceFactory (Class<P> pooledConnectionClass, ConnectionPoolDataSource... dataSources) {
 
     this(0, pooledConnectionClass, dataSources);
   }
 
+  /**
+   * Creates a factory specifying the juggler's recovery check interval.
+   *
+   * @param recoveryCheckSeconds  seconds between recovery checks
+   * @param pooledConnectionClass expected pooled connection type
+   * @param dataSources           connection pool data sources to juggle between
+   */
   public PooledConnectionComponentInstanceFactory (int recoveryCheckSeconds, Class<P> pooledConnectionClass, ConnectionPoolDataSource... dataSources) {
 
     pooledConnectionJuggler = new Juggler<>(ConnectionPoolDataSource.class, pooledConnectionClass, recoveryCheckSeconds, new PooledConnectionJugglingPinFactory<>(), dataSources);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void initialize ()
     throws JugglerResourceCreationException {
@@ -64,34 +84,59 @@ public class PooledConnectionComponentInstanceFactory<P extends PooledConnection
     pooledConnectionJuggler.initialize();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void startup () {
 
     pooledConnectionJuggler.startup();
   }
 
+  /**
+   * @return SQL used to validate connections created by this factory
+   */
   public String getValidationQuery () {
 
     return validationQuery;
   }
 
+  /**
+   * Sets the SQL used to validate connections. Set to {@code null} or empty to disable validation.
+   *
+   * @param validationQuery validation SQL
+   */
   public void setValidationQuery (String validationQuery) {
 
     this.validationQuery = validationQuery;
   }
 
+  /**
+   * Creates a new pooled connection component instance using the juggler to obtain a data source.
+   *
+   * @param componentPool pool that will manage the created instance
+   * @return wrapped pooled connection component
+   * @throws NoAvailableJugglerResourceException if no data source is available
+   * @throws SQLException                        if the pooled connection cannot be created or validated
+   */
   public ComponentInstance<P> createInstance (ComponentPool<P> componentPool)
     throws NoAvailableJugglerResourceException, SQLException {
 
     return new PooledConnectionComponentInstance<>(componentPool, pooledConnectionJuggler.pickResource(), validationQuery);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void shutdown () {
 
     pooledConnectionJuggler.shutdown();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void deconstruct () {
 

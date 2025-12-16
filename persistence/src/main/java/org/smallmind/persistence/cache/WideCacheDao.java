@@ -36,7 +36,19 @@ import java.io.Serializable;
 import java.util.List;
 import org.smallmind.persistence.Durable;
 
+/**
+ * DAO contract for caches storing wide (list) results keyed by a parent durable and optional
+ * context.
+ *
+ * @param <W> parent durable identifier type
+ * @param <I> child durable identifier type
+ * @param <D> child durable type
+ */
 public interface WideCacheDao<W extends Serializable & Comparable<W>, I extends Serializable & Comparable<I>, D extends Durable<I>> extends WideVectoredDao<W, I, D> {
 
+  /**
+   * @param durableClass durable class
+   * @return cache of wide instance lists keyed by wide durable keys
+   */
   PersistenceCache<String, List<D>> getWideInstanceCache (Class<D> durableClass);
 }

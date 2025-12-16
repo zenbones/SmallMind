@@ -34,12 +34,31 @@ package org.smallmind.persistence.sql.pool.context;
 
 import org.smallmind.quorum.pool.ComponentPoolException;
 
+/**
+ * Translates between a base pool name and context-specific pool names.
+ */
 public interface ContextualPoolNameTranslator {
 
+  /**
+   * @return base name used for all contextual pools
+   */
   String getBaseName ();
 
+  /**
+   * Constructs a full pool name for a given context portion.
+   *
+   * @param contextualPart context identifier (may be null for default)
+   * @return full pool name
+   */
   String getPoolName (String contextualPart);
 
+  /**
+   * Extracts the context portion from a full pool name.
+   *
+   * @param poolName pool name to parse
+   * @return extracted context or {@code null} if none
+   * @throws ComponentPoolException if the pool name does not match the expected format
+   */
   String getContextualPartFromPoolName (String poolName)
     throws ComponentPoolException;
 }

@@ -34,22 +34,68 @@ package org.smallmind.persistence.cache;
 
 import java.util.Map;
 
+/**
+ * Abstraction over a persistence cache used by the cache DAOs.
+ *
+ * @param <K> key type
+ * @param <V> value type
+ */
 public interface PersistenceCache<K, V> {
 
+  /**
+   * @return default TTL in seconds applied when none is specified
+   */
   int getDefaultTimeToLiveSeconds ();
 
+  /**
+   * Retrieves a value by key.
+   *
+   * @param key cache key
+   * @return cached value or {@code null}
+   * @throws CacheOperationException on cache access failure
+   */
   V get (K key)
     throws CacheOperationException;
 
+  /**
+   * Retrieves a map of values for the provided keys.
+   *
+   * @param keys keys to fetch
+   * @return map of found entries (may be empty)
+   * @throws CacheOperationException on cache access failure
+   */
   Map<K, V> get (K[] keys)
     throws CacheOperationException;
 
+  /**
+   * Unconditionally sets a value with the specified TTL.
+   *
+   * @param key               cache key
+   * @param value             value to store
+   * @param timeToLiveSeconds TTL in seconds
+   * @throws CacheOperationException on cache write failure
+   */
   void set (K key, V value, int timeToLiveSeconds)
     throws CacheOperationException;
 
+  /**
+   * Stores the value only if no entry exists.
+   *
+   * @param key               cache key
+   * @param value             value to store
+   * @param timeToLiveSeconds TTL in seconds
+   * @return existing value if present, otherwise {@code null} and the new value is stored
+   * @throws CacheOperationException on cache write failure
+   */
   V putIfAbsent (K key, V value, int timeToLiveSeconds)
     throws CacheOperationException;
 
+  /**
+   * Removes the entry for the given key.
+   *
+   * @param key key to evict
+   * @throws CacheOperationException on cache removal failure
+   */
   void remove (K key)
     throws CacheOperationException;
 }

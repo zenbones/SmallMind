@@ -34,9 +34,21 @@ package org.smallmind.persistence.orm.jpa;
 
 import jakarta.persistence.Query;
 
+/**
+ * Describes a JPA query string and allows final parameterization of a {@link Query}.
+ */
 public abstract class QueryDetails {
 
+  /**
+   * @return the JPQL query string to execute
+   */
   public abstract String getQueryString ();
 
+  /**
+   * Applies parameters or hints to the supplied query before execution.
+   *
+   * @param query the query to complete
+   * @return the same query instance for chaining
+   */
   public abstract Query completeQuery (Query query);
 }

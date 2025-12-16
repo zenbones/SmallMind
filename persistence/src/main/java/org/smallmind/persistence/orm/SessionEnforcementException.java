@@ -34,23 +34,47 @@ package org.smallmind.persistence.orm;
 
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
+/**
+ * Thrown when session boundary enforcement rules are violated.
+ */
 public class SessionEnforcementException extends FormattedRuntimeException {
 
+  /**
+   * Creates a session enforcement exception with no message.
+   */
   public SessionEnforcementException () {
 
     super();
   }
 
+  /**
+   * Creates a session enforcement exception with a formatted message.
+   *
+   * @param message the message template
+   * @param args    arguments referenced by the format specifiers in the message
+   */
   public SessionEnforcementException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * Creates a session enforcement exception with a cause and formatted message.
+   *
+   * @param throwable the underlying cause
+   * @param message   the message template
+   * @param args      arguments referenced by the format specifiers in the message
+   */
   public SessionEnforcementException (Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);
   }
 
+  /**
+   * Creates a session enforcement exception with a cause.
+   *
+   * @param throwable the underlying cause
+   */
   public SessionEnforcementException (Throwable throwable) {
 
     super(throwable);

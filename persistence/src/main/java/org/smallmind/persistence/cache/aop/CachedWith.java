@@ -37,13 +37,26 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Declares cache-coherency rules for an {@link org.smallmind.persistence.orm.ORMDao}.
+ * The annotation provides metadata about vectors that should be updated or invalidated
+ * when a durable entity is persisted or deleted.
+ */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface CachedWith {
 
-  // The updates to apply based on durable entity changes
+  /**
+   * Cache vector modifications to perform when the managed durable changes.
+   *
+   * @return array of update operations applied on persist or delete
+   */
   Update[] updates () default {};
 
-  // The vectors to invalidate based on durable entity changes
+  /**
+   * Cache vectors that should be completely removed when the managed durable changes.
+   *
+   * @return array of invalidations to perform
+   */
   Invalidate[] invalidates () default {};
 }

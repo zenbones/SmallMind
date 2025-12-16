@@ -35,10 +35,19 @@ package org.smallmind.persistence.sql;
 import java.math.BigInteger;
 import java.util.Date;
 
+/**
+ * Utility for identifying primitive wrapper types and other JDBC-friendly values.
+ */
 public class SqlType {
 
   private static final Class[] KNOWN_TYPES = new Class[] {Long.class, Boolean.class, Integer.class, Double.class, Float.class, Character.class, Short.class, Byte.class, String.class, BigInteger.class, Date.class};
 
+  /**
+   * Determines whether the supplied class is a primitive or one of the known JDBC compatible types.
+   *
+   * @param aClass candidate class to test
+   * @return {@code true} if the type is primitive or explicitly listed, otherwise {@code false}
+   */
   public static boolean isKnownType (Class aClass) {
 
     if (!aClass.isPrimitive()) {

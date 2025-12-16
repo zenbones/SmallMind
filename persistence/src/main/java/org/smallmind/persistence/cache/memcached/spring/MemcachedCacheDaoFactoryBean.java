@@ -38,16 +38,29 @@ import org.smallmind.persistence.cache.praxis.extrinsic.ByKeyExtrinsicCacheDao;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
+/**
+ * Spring factory bean that produces a {@link ByKeyExtrinsicCacheDao} backed by memcached caches.
+ */
 public class MemcachedCacheDaoFactoryBean implements FactoryBean<ByKeyExtrinsicCacheDao<?, ?>>, InitializingBean {
 
   private ByKeyExtrinsicCacheDao<?, ?> memcachedCacheDao;
   private MemcachedCacheDomain<?, ?> memcachedCacheDomain;
 
+  /**
+   * Injects the memcached cache domain required to build the DAO.
+   *
+   * @param memcachedCacheDomain configured cache domain
+   */
   public void setMemcachedCacheDomain (MemcachedCacheDomain<?, ?> memcachedCacheDomain) {
 
     this.memcachedCacheDomain = memcachedCacheDomain;
   }
 
+  /**
+   * Initializes the factory by constructing the DAO after dependencies are set.
+   *
+   * @throws IOException if the DAO cannot be created
+   */
   @Override
   public void afterPropertiesSet ()
     throws IOException {
@@ -57,18 +70,27 @@ public class MemcachedCacheDaoFactoryBean implements FactoryBean<ByKeyExtrinsicC
     }
   }
 
+  /**
+   * @return the created DAO instance
+   */
   @Override
   public ByKeyExtrinsicCacheDao<?, ?> getObject () {
 
     return memcachedCacheDao;
   }
 
+  /**
+   * @return type exposed by the factory
+   */
   @Override
   public Class<?> getObjectType () {
 
     return ByKeyExtrinsicCacheDao.class;
   }
 
+  /**
+   * @return {@code true} because the factory always returns the same DAO
+   */
   @Override
   public boolean isSingleton () {
 

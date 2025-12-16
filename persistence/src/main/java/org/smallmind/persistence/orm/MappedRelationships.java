@@ -37,9 +37,17 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Declares the set of relationship classes mapped to a durable entity.
+ */
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface MappedRelationships {
 
+  /**
+   * Relationship classes related to the annotated durable.
+   *
+   * @return the related classes
+   */
   Class[] value ();
 }

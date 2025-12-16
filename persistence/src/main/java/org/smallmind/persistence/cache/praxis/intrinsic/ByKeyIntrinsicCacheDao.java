@@ -43,15 +43,29 @@ import org.smallmind.persistence.cache.DurableVector;
 import org.smallmind.persistence.cache.VectorKey;
 import org.smallmind.persistence.cache.praxis.ByKeySingularVector;
 
-// The cache supports thread-safe operations
-// The vector cache references the instance cache by a unique key
+/**
+ * Cache DAO for thread-safe intrinsic caches where vectors reference instances by durable key.
+ */
 public class ByKeyIntrinsicCacheDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractCacheDao<I, D> {
 
+  /**
+   * Creates an intrinsic key-based cache DAO.
+   *
+   * @param cacheDomain cache domain supplying instance and vector caches
+   */
   public ByKeyIntrinsicCacheDao (CacheDomain<I, D> cacheDomain) {
 
     super(cacheDomain);
   }
 
+  /**
+   * Persists a durable into the instance cache, returning any existing value.
+   *
+   * @param durableClass managed durable class
+   * @param durable      durable to cache
+   * @param mode         update mode (ignored for intrinsic caches)
+   * @return cached durable or {@code null} when input is null
+   */
   public D persist (Class<D> durableClass, D durable, UpdateMode mode) {
 
     if (durable != null) {
@@ -65,6 +79,12 @@ public class ByKeyIntrinsicCacheDao<I extends Serializable & Comparable<I>, D ex
     return null;
   }
 
+  /**
+   * Adds a durable to a cached vector if present.
+   *
+   * @param vectorKey cache key describing the vector
+   * @param durable   durable to add
+   */
   public void updateInVector (VectorKey<D> vectorKey, D durable) {
 
     if (durable != null) {
@@ -77,6 +97,12 @@ public class ByKeyIntrinsicCacheDao<I extends Serializable & Comparable<I>, D ex
     }
   }
 
+  /**
+   * Removes a durable from a cached vector, deleting the vector when it is singular.
+   *
+   * @param vectorKey cache key describing the vector
+   * @param durable   durable to remove
+   */
   public void removeFromVector (VectorKey<D> vectorKey, D durable) {
 
     if (durable != null) {
@@ -93,6 +119,13 @@ public class ByKeyIntrinsicCacheDao<I extends Serializable & Comparable<I>, D ex
     }
   }
 
+  /**
+   * Migrates a vector into the intrinsic key-based format expected by this DAO.
+   *
+   * @param managedClass durable class stored in the vector
+   * @param vector       vector to migrate
+   * @return migrated vector
+   */
   public DurableVector<I, D> migrateVector (Class<D> managedClass, DurableVector<I, D> vector) {
 
     if (vector.isSingular()) {
@@ -112,11 +145,30 @@ public class ByKeyIntrinsicCacheDao<I extends Serializable & Comparable<I>, D ex
     }
   }
 
+  /**
+   * Creates a single-element vector backed by a durable key.
+   *
+   * @param vectorKey         cache key describing the vector
+   * @param durable           durable to reference
+   * @param timeToLiveSeconds TTL for the vector
+   * @return new singular vector
+   */
   public DurableVector<I, D> createSingularVector (VectorKey<D> vectorKey, D durable, int timeToLiveSeconds) {
 
     return new ByKeySingularVector<>(new DurableKey<>(vectorKey.getElementClass(), durable.getId()), timeToLiveSeconds);
   }
 
+  /**
+   * Creates a vector backed by durable keys for the supplied elements.
+   *
+   * @param vectorKey         cache key describing the vector
+   * @param elementIter       iterable of durables to include
+   * @param comparator        comparator used for ordering; {@code null} for natural order
+   * @param maxSize           maximum number of elements to retain
+   * @param timeToLiveSeconds TTL for the vector
+   * @param ordered           whether to maintain sorted order
+   * @return new intrinsic vector
+   */
   public DurableVector<I, D> createVector (VectorKey<D> vectorKey, Iterable<D> elementIter, Comparator<D> comparator, int maxSize, int timeToLiveSeconds, boolean ordered) {
 
     return new ByKeyIntrinsicVector<>(vectorKey.getElementClass(), elementIter, comparator, maxSize, timeToLiveSeconds, ordered);

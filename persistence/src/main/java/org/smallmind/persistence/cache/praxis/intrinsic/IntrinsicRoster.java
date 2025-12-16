@@ -42,17 +42,31 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.smallmind.persistence.cache.praxis.Roster;
 
+/**
+ * Thread-safe roster implementation backed by a doubly linked list structure. Supports efficient
+ * sub-list views that remain synchronized via shared {@link IntrinsicRosterStructure} metadata.
+ *
+ * @param <T> element type
+ */
 public class IntrinsicRoster<T> implements Roster<T> {
 
   private final ReentrantReadWriteLock lock;
 
   private final IntrinsicRosterStructure<T> structure;
 
+  /**
+   * Creates an empty roster.
+   */
   public IntrinsicRoster () {
 
     this(new ReentrantReadWriteLock(), new IntrinsicRosterStructure<T>());
   }
 
+  /**
+   * Creates a roster initialized with the contents of the provided collection.
+   *
+   * @param c initial elements
+   */
   public IntrinsicRoster (Collection<? extends T> c) {
 
     this(new ReentrantReadWriteLock(), new IntrinsicRosterStructure<T>());
@@ -75,17 +89,32 @@ public class IntrinsicRoster<T> implements Roster<T> {
     }
   }
 
+  /**
+   * Internal constructor used to build shared roster views backed by the same structure and lock.
+   *
+   * @param lock      shared read/write lock guarding structural changes
+   * @param structure shared structure defining the view bounds
+   */
   private IntrinsicRoster (ReentrantReadWriteLock lock, IntrinsicRosterStructure<T> structure) {
 
     this.lock = lock;
     this.structure = structure;
   }
 
+  /**
+   * @return read/write lock guarding roster mutations
+   */
   protected ReentrantReadWriteLock getLock () {
 
     return lock;
   }
 
+  /**
+   * Retrieves the next node relative to the supplied node while honoring tail boundaries.
+   *
+   * @param current node currently in view
+   * @return next node or {@code null} when at the tail
+   */
   protected IntrinsicRosterNode<T> getNextInView (IntrinsicRosterNode<T> current) {
 
     lock.readLock().lock();
@@ -97,6 +126,12 @@ public class IntrinsicRoster<T> implements Roster<T> {
     }
   }
 
+  /**
+   * Retrieves the previous node relative to the supplied node while honoring head boundaries.
+   *
+   * @param current node currently in view
+   * @return previous node or {@code null} when at the head
+   */
   protected IntrinsicRosterNode<T> getPrevInView (IntrinsicRosterNode<T> current) {
 
     lock.readLock().lock();
@@ -108,6 +143,9 @@ public class IntrinsicRoster<T> implements Roster<T> {
     }
   }
 
+  /**
+   * @return number of elements in the roster
+   */
   public int size () {
 
     lock.readLock().lock();
@@ -119,6 +157,9 @@ public class IntrinsicRoster<T> implements Roster<T> {
     }
   }
 
+  /**
+   * @return {@code true} when the roster has no elements
+   */
   public boolean isEmpty () {
 
     lock.readLock().lock();
@@ -130,6 +171,12 @@ public class IntrinsicRoster<T> implements Roster<T> {
     }
   }
 
+  /**
+   * Checks whether the roster contains an element equal to the supplied object.
+   *
+   * @param obj object to locate
+   * @return {@code true} when found
+   */
   public boolean contains (Object obj) {
 
     lock.readLock().lock();
@@ -149,12 +196,22 @@ public class IntrinsicRoster<T> implements Roster<T> {
     }
   }
 
+  /**
+   * @return array containing roster elements in order
+   */
   @Override
   public Object[] toArray () {
 
     return toArray((Object[])null);
   }
 
+  /**
+   * Copies roster elements into the provided array, allocating as needed.
+   *
+   * @param a   destination array or {@code null} to allocate
+   * @param <U> element type
+   * @return populated array containing the roster elements
+   */
   @Override
   public <U> U[] toArray (U[] a) {
 
@@ -182,6 +239,12 @@ public class IntrinsicRoster<T> implements Roster<T> {
     }
   }
 
+  /**
+   * Locates the node at the specified index, traversing from the nearest end.
+   *
+   * @param index position to resolve
+   * @return node at the requested index
+   */
   private IntrinsicRosterNode<T> getNode (int index) {
 
     if ((index < 0) || (index >= structure.getSize())) {
@@ -207,6 +270,12 @@ public class IntrinsicRoster<T> implements Roster<T> {
     }
   }
 
+  /**
+   * Retrieves the first element.
+   *
+   * @return head element
+   * @throws NoSuchElementException when roster is empty
+   */
   public T getFirst () {
 
     lock.readLock().lock();
@@ -221,6 +290,12 @@ public class IntrinsicRoster<T> implements Roster<T> {
     }
   }
 
+  /**
+   * Retrieves the last element.
+   *
+   * @return tail element
+   * @throws NoSuchElementException when roster is empty
+   */
   public T getLast () {
 
     lock.readLock().lock();
@@ -235,6 +310,12 @@ public class IntrinsicRoster<T> implements Roster<T> {
     }
   }
 
+  /**
+   * Returns the element at the specified index.
+   *
+   * @param index position to retrieve
+   * @return element at the index
+   */
   public T get (int index) {
 
     lock.readLock().lock();
@@ -246,6 +327,13 @@ public class IntrinsicRoster<T> implements Roster<T> {
     }
   }
 
+  /**
+   * Replaces the element at the specified index.
+   *
+   * @param index   position to replace
+   * @param element new element
+   * @return previous element
+   */
   public T set (int index, T element) {
 
     lock.readLock().lock();
@@ -263,6 +351,12 @@ public class IntrinsicRoster<T> implements Roster<T> {
     }
   }
 
+  /**
+   * Inserts a new element before the supplied node, updating head references and tracked size.
+   *
+   * @param next    node that will follow the inserted element
+   * @param element element to insert
+   */
   protected void add (IntrinsicRosterNode<T> next, T element) {
 
     IntrinsicRosterNode<T> prev = next.getPrev();
@@ -279,6 +373,11 @@ public class IntrinsicRoster<T> implements Roster<T> {
     structure.incSize();
   }
 
+  /**
+   * Inserts an element at the front of the roster.
+   *
+   * @param element element to add
+   */
   public void addFirst (T element) {
 
     lock.writeLock().lock();
@@ -293,6 +392,11 @@ public class IntrinsicRoster<T> implements Roster<T> {
     }
   }
 
+  /**
+   * Appends an element to the end of the roster.
+   *
+   * @param element element to add
+   */
   public void addLast (T element) {
 
     lock.writeLock().lock();
@@ -317,6 +421,12 @@ public class IntrinsicRoster<T> implements Roster<T> {
     }
   }
 
+  /**
+   * Adds an element to the end of the roster.
+   *
+   * @param element element to add
+   * @return always {@code true}
+   */
   public boolean add (T element) {
 
     addLast(element);
@@ -324,6 +434,12 @@ public class IntrinsicRoster<T> implements Roster<T> {
     return true;
   }
 
+  /**
+   * Inserts an element at the specified index.
+   *
+   * @param index   insertion position
+   * @param element element to add
+   */
   public void add (int index, T element) {
 
     lock.writeLock().lock();
@@ -338,6 +454,11 @@ public class IntrinsicRoster<T> implements Roster<T> {
     }
   }
 
+  /**
+   * Unlinks the provided node from the roster and adjusts boundary pointers and size.
+   *
+   * @param current node to remove
+   */
   protected void removeNode (IntrinsicRosterNode<T> current) {
 
     IntrinsicRosterNode<T> prev = current.getPrev();
@@ -354,6 +475,12 @@ public class IntrinsicRoster<T> implements Roster<T> {
     structure.evaporate(prev, current, next);
   }
 
+  /**
+   * Removes and returns the first element.
+   *
+   * @return removed element
+   * @throws NoSuchElementException when roster is empty
+   */
   public T removeFirst () {
 
     lock.writeLock().lock();
@@ -373,6 +500,12 @@ public class IntrinsicRoster<T> implements Roster<T> {
     }
   }
 
+  /**
+   * Removes and returns the last element.
+   *
+   * @return removed element
+   * @throws NoSuchElementException when roster is empty
+   */
   public T removeLast () {
 
     lock.writeLock().lock();
@@ -392,6 +525,12 @@ public class IntrinsicRoster<T> implements Roster<T> {
     }
   }
 
+  /**
+   * Removes the first occurrence of the specified object.
+   *
+   * @param o object to remove
+   * @return {@code true} when an element was removed
+   */
   public boolean remove (Object o) {
 
     lock.writeLock().lock();
@@ -410,6 +549,12 @@ public class IntrinsicRoster<T> implements Roster<T> {
     }
   }
 
+  /**
+   * Removes and returns the element at the given index.
+   *
+   * @param index index of the element to remove
+   * @return removed element
+   */
   public T remove (int index) {
 
     lock.writeLock().lock();
@@ -425,6 +570,12 @@ public class IntrinsicRoster<T> implements Roster<T> {
     }
   }
 
+  /**
+   * Determines whether all elements of the provided collection are present.
+   *
+   * @param c collection to check
+   * @return {@code true} when every element exists in the roster
+   */
   public boolean containsAll (Collection<?> c) {
 
     if (c.isEmpty()) {
@@ -449,6 +600,12 @@ public class IntrinsicRoster<T> implements Roster<T> {
     }
   }
 
+  /**
+   * Appends all elements from the provided collection.
+   *
+   * @param c elements to add
+   * @return {@code true} when the roster changes
+   */
   public boolean addAll (Collection<? extends T> c) {
 
     if (!c.isEmpty()) {
@@ -467,6 +624,13 @@ public class IntrinsicRoster<T> implements Roster<T> {
     return false;
   }
 
+  /**
+   * Inserts all elements from the collection starting at the given index.
+   *
+   * @param index insertion position
+   * @param c     elements to add
+   * @return {@code true} when the roster changes
+   */
   public boolean addAll (int index, Collection<? extends T> c) {
 
     if (!c.isEmpty()) {
@@ -488,6 +652,12 @@ public class IntrinsicRoster<T> implements Roster<T> {
     return false;
   }
 
+  /**
+   * Removes all elements contained in the provided collection.
+   *
+   * @param c elements to remove
+   * @return {@code true} when the roster changes
+   */
   public boolean removeAll (Collection<?> c) {
 
     if (c.isEmpty()) {
@@ -513,6 +683,12 @@ public class IntrinsicRoster<T> implements Roster<T> {
     }
   }
 
+  /**
+   * Retains only elements contained in the provided collection.
+   *
+   * @param c elements to retain
+   * @return {@code true} when the roster changes
+   */
   public boolean retainAll (Collection<?> c) {
 
     if (c.isEmpty()) {
@@ -538,6 +714,9 @@ public class IntrinsicRoster<T> implements Roster<T> {
     }
   }
 
+  /**
+   * Removes all elements from the roster.
+   */
   public void clear () {
 
     lock.writeLock().lock();
@@ -548,6 +727,12 @@ public class IntrinsicRoster<T> implements Roster<T> {
     }
   }
 
+  /**
+   * Finds the index of the first occurrence of the given object.
+   *
+   * @param o object to locate
+   * @return index or {@code -1} when not found
+   */
   public int indexOf (Object o) {
 
     lock.readLock().lock();
@@ -570,6 +755,12 @@ public class IntrinsicRoster<T> implements Roster<T> {
     }
   }
 
+  /**
+   * Finds the index of the last occurrence of the given object.
+   *
+   * @param o object to locate
+   * @return index or {@code -1} when not found
+   */
   public int lastIndexOf (Object o) {
 
     lock.readLock().lock();
@@ -592,11 +783,17 @@ public class IntrinsicRoster<T> implements Roster<T> {
     }
   }
 
+  /**
+   * @return iterator over the roster elements
+   */
   public Iterator<T> iterator () {
 
     return listIterator();
   }
 
+  /**
+   * @return list iterator starting at the head of the roster
+   */
   public ListIterator<T> listIterator () {
 
     lock.readLock().lock();
@@ -608,6 +805,12 @@ public class IntrinsicRoster<T> implements Roster<T> {
     }
   }
 
+  /**
+   * Returns a list iterator starting at the given index.
+   *
+   * @param index starting position
+   * @return positioned list iterator
+   */
   public ListIterator<T> listIterator (int index) {
 
     lock.readLock().lock();
@@ -627,6 +830,13 @@ public class IntrinsicRoster<T> implements Roster<T> {
     }
   }
 
+  /**
+   * Creates a sublist view backed by the same underlying structure.
+   *
+   * @param fromIndex start index inclusive
+   * @param toIndex   end index exclusive
+   * @return roster representing the requested range
+   */
   public List<T> subList (int fromIndex, int toIndex) {
 
     if (fromIndex > toIndex) {

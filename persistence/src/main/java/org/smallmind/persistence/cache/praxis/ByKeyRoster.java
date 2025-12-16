@@ -49,18 +49,37 @@ import org.smallmind.persistence.cache.praxis.intrinsic.IntrinsicRoster;
 import org.smallmind.persistence.orm.ORMDao;
 import org.smallmind.persistence.orm.OrmDaoManager;
 
+/**
+ * Roster implementation that stores {@link DurableKey} instances but exposes the corresponding
+ * {@link Durable} objects on access. Elements are resolved lazily via an {@link ORMDao} to keep
+ * cache payloads small while still supporting list semantics.
+ *
+ * @param <I> identifier type
+ * @param <D> durable type
+ */
 public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durable<I>> implements Roster<D> {
 
   private final Roster<DurableKey<I, D>> keyRoster;
   private final Class<D> durableClass;
   private transient volatile ORMDao<I, D, ?, ?> ormDao;
 
+  /**
+   * Creates a roster that wraps a backing key roster for the provided durable class.
+   *
+   * @param durableClass durable type represented by the keys
+   * @param keyRoster    underlying roster of keys
+   */
   public ByKeyRoster (Class<D> durableClass, Roster<DurableKey<I, D>> keyRoster) {
 
     this.durableClass = durableClass;
     this.keyRoster = keyRoster;
   }
 
+  /**
+   * Lazily resolves the {@link ORMDao} used to hydrate durable instances.
+   *
+   * @return ORM DAO for the managed durable
+   */
   private ORMDao<I, D, ?, ?> getORMDao () {
 
     if (ormDao == null) {
@@ -72,6 +91,11 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
     return ormDao;
   }
 
+  /**
+   * Retrieves each durable referenced by the roster keys, preferring the {@link VectoredDao} cache when present.
+   *
+   * @return list of hydrated durables in roster order
+   */
   public List<D> prefetch () {
 
     ORMDao<I, D, ?, ?> ormDao;
@@ -99,6 +123,12 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
     return new LinkedList<>(this);
   }
 
+  /**
+   * Resolves a durable instance for the given key.
+   *
+   * @param durableKey key identifying the durable
+   * @return durable instance or {@code null} when the key is null
+   */
   private D getDurable (DurableKey<I, D> durableKey) {
 
     if (durableKey == null) {
@@ -115,37 +145,65 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
     return durable;
   }
 
+  /**
+   * @return class of the durables represented by this roster
+   */
   public Class<D> getDurableClass () {
 
     return durableClass;
   }
 
+  /**
+   * @return underlying roster of durable keys
+   */
   public Roster<DurableKey<I, D>> getInternalRoster () {
 
     return keyRoster;
   }
 
+  /**
+   * @return number of elements in the roster
+   */
   public int size () {
 
     return keyRoster.size();
   }
 
+  /**
+   * @return {@code true} when the roster contains no elements
+   */
   public boolean isEmpty () {
 
     return keyRoster.isEmpty();
   }
 
+  /**
+   * Determines whether the roster contains the supplied durable.
+   *
+   * @param obj candidate durable
+   * @return {@code true} when the corresponding key exists
+   */
   public boolean contains (Object obj) {
 
     return durableClass.isAssignableFrom(obj.getClass()) && keyRoster.contains(new DurableKey<I, D>(durableClass, durableClass.cast(obj).getId()));
   }
 
+  /**
+   * @return array of hydrated durables in roster order
+   */
   @Override
   public Object[] toArray () {
 
     return toArray((Object[])null);
   }
 
+  /**
+   * Copies roster contents into the provided array, hydrating durables from their keys.
+   *
+   * @param a   destination array or {@code null} to allocate a new one
+   * @param <T> array element type
+   * @return populated array containing the roster durables
+   */
   @Override
   public <T> T[] toArray (T[] a) {
 
@@ -164,46 +222,99 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
     return (T[])elements;
   }
 
+  /**
+   * Retrieves the durable at the specified position.
+   *
+   * @param index position of the element to return
+   * @return hydrated durable at the index
+   */
   public D get (int index) {
 
     return getDurable(keyRoster.get(index));
   }
 
+  /**
+   * Replaces the durable at the given index and returns the previous value.
+   *
+   * @param index   position of the element to replace
+   * @param durable new durable value
+   * @return previously stored durable
+   */
   public D set (int index, D durable) {
 
     return getDurable(keyRoster.set(index, new DurableKey<>(durableClass, durable.getId())));
   }
 
+  /**
+   * Inserts a durable at the beginning of the roster.
+   *
+   * @param durable durable to add
+   */
   public void addFirst (D durable) {
 
     keyRoster.addFirst(new DurableKey<>(durableClass, durable.getId()));
   }
 
+  /**
+   * Appends a durable to the roster.
+   *
+   * @param durable durable to add
+   * @return {@code true} when the roster changes
+   */
   public boolean add (D durable) {
 
     return keyRoster.add(new DurableKey<>(durableClass, durable.getId()));
   }
 
+  /**
+   * Inserts a durable at the specified index.
+   *
+   * @param index   insertion index
+   * @param durable durable to add
+   */
   public void add (int index, D durable) {
 
     keyRoster.add(index, new DurableKey<>(durableClass, durable.getId()));
   }
 
+  /**
+   * Removes the first occurrence of the supplied durable.
+   *
+   * @param obj durable to remove
+   * @return {@code true} when an element was removed
+   */
   public boolean remove (Object obj) {
 
     return durableClass.isAssignableFrom(obj.getClass()) && keyRoster.remove(new DurableKey<>(durableClass, durableClass.cast(obj).getId()));
   }
 
+  /**
+   * Removes and returns the last durable in the roster.
+   *
+   * @return removed durable
+   */
   public D removeLast () {
 
     return getDurable(keyRoster.removeLast());
   }
 
+  /**
+   * Removes and returns the durable at the given index.
+   *
+   * @param index index of the element to remove
+   * @return removed durable
+   */
   public D remove (int index) {
 
     return getDurable(keyRoster.remove(index));
   }
 
+  /**
+   * Tests whether all supplied durables are present in the roster.
+   *
+   * @param c collection of durables
+   * @return {@code true} when every durable exists
+   */
   public boolean containsAll (Collection<?> c) {
 
     HashSet<DurableKey<I, D>> keySet = new HashSet<>();
@@ -220,6 +331,12 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
     return keySet.containsAll(keySet);
   }
 
+  /**
+   * Adds every durable in the provided collection.
+   *
+   * @param c collection of durables to add
+   * @return {@code true} when the roster changes
+   */
   public boolean addAll (Collection<? extends D> c) {
 
     HashSet<DurableKey<I, D>> keySet = new HashSet<>();
@@ -233,6 +350,13 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
     return keyRoster.addAll(keySet);
   }
 
+  /**
+   * Inserts all durables from the provided collection starting at the given index.
+   *
+   * @param index insertion point
+   * @param c     collection of durables to add
+   * @return {@code true} when the roster changes
+   */
   public boolean addAll (int index, Collection<? extends D> c) {
 
     HashSet<DurableKey<I, D>> keySet = new HashSet<>();
@@ -246,6 +370,12 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
     return keyRoster.addAll(index, keySet);
   }
 
+  /**
+   * Removes all durables contained in the provided collection.
+   *
+   * @param c collection of durables to remove
+   * @return {@code true} when the roster changes
+   */
   public boolean removeAll (Collection<?> c) {
 
     HashSet<DurableKey<I, D>> keySet = new HashSet<>();
@@ -259,6 +389,12 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
     return keyRoster.removeAll(keySet);
   }
 
+  /**
+   * Retains only the durables contained in the provided collection.
+   *
+   * @param c collection of durables to retain
+   * @return {@code true} when the roster changes
+   */
   public boolean retainAll (Collection<?> c) {
 
     HashSet<DurableKey<I, D>> keySet = new HashSet<>();
@@ -272,36 +408,68 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
     return keyRoster.retainAll(keySet);
   }
 
+  /**
+   * Clears all elements from the roster.
+   */
   public void clear () {
 
     keyRoster.clear();
   }
 
+  /**
+   * Finds the index of the first occurrence of a durable.
+   *
+   * @param obj durable to locate
+   * @return index or {@code -1} when not found
+   */
   public int indexOf (Object obj) {
 
     return durableClass.isAssignableFrom(obj.getClass()) ? keyRoster.indexOf(new DurableKey<>(durableClass, durableClass.cast(obj).getId())) : -1;
   }
 
+  /**
+   * Finds the index of the last occurrence of a durable.
+   *
+   * @param obj durable to locate
+   * @return index or {@code -1} when not found
+   */
   public int lastIndexOf (Object obj) {
 
     return durableClass.isAssignableFrom(obj.getClass()) ? keyRoster.lastIndexOf(new DurableKey<>(durableClass, durableClass.cast(obj).getId())) : -1;
   }
 
+  /**
+   * @return iterator that hydrates durables from stored keys
+   */
   public Iterator<D> iterator () {
 
     return new ByKeyRosterIterator<>(getORMDao(), keyRoster.listIterator());
   }
 
+  /**
+   * @return list iterator that hydrates durables from stored keys
+   */
   public ListIterator<D> listIterator () {
 
     return new ByKeyRosterIterator<>(getORMDao(), keyRoster.listIterator());
   }
 
+  /**
+   * @param index starting position for the iterator
+   * @return list iterator beginning at the supplied index
+   */
   public ListIterator<D> listIterator (int index) {
 
     return new ByKeyRosterIterator<>(getORMDao(), keyRoster.listIterator(index));
   }
 
+  /**
+   * Creates a new roster representing the requested slice of this roster.
+   *
+   * @param fromIndex start index inclusive
+   * @param toIndex   end index exclusive
+   * @return sub roster containing the specified range
+   */
   public List<D> subList (int fromIndex, int toIndex) {
 
     return new ByKeyRoster<>(durableClass, (IntrinsicRoster<DurableKey<I, D>>)keyRoster.subList(fromIndex, toIndex));

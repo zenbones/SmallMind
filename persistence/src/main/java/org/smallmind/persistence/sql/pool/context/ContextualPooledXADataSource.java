@@ -41,11 +41,22 @@ import org.smallmind.persistence.sql.pool.AbstractPooledDataSource;
 import org.smallmind.quorum.pool.ComponentPoolException;
 import org.smallmind.quorum.pool.complex.ComponentPool;
 
+/**
+ * Context-aware {@link XADataSource} that dispatches requests to context-specific component pools
+ * using {@link PooledDataSourceContext} to resolve the current context.
+ */
 public class ContextualPooledXADataSource extends AbstractPooledDataSource<XADataSource, XAConnection> implements XADataSource {
 
   private final HashMap<String, ComponentPool<XAConnection>> componentPoolMap = new HashMap<>();
   private final String baseName;
 
+  /**
+   * Builds a contextual XA data source that delegates to the provided pools keyed by contextual name fragments.
+   *
+   * @param poolNameTranslator translator mapping between pool names and contexts
+   * @param componentPools     component pools representing each context
+   * @throws ComponentPoolException if a pool name cannot be parsed
+   */
   public ContextualPooledXADataSource (ContextualPoolNameTranslator poolNameTranslator, ComponentPool<XAConnection>... componentPools)
     throws ComponentPoolException {
 
@@ -57,6 +68,12 @@ public class ContextualPooledXADataSource extends AbstractPooledDataSource<XADat
     }
   }
 
+  /**
+   * Routes the XA connection request to the pool matching the current {@link PooledDataSourceContext}.
+   *
+   * @return XA connection from the contextual pool
+   * @throws SQLException if no matching pool exists or acquisition fails
+   */
   @Override
   public XAConnection getXAConnection ()
     throws SQLException {
@@ -77,6 +94,14 @@ public class ContextualPooledXADataSource extends AbstractPooledDataSource<XADat
     }
   }
 
+  /**
+   * Unsupported; credentials are fixed per configured pool.
+   *
+   * @param user     ignored user name
+   * @param password ignored password
+   * @throws SQLException                  declared for interface compliance; not thrown by this implementation
+   * @throws UnsupportedOperationException always
+   */
   @Override
   public XAConnection getXAConnection (String user, String password)
     throws SQLException {
@@ -84,6 +109,11 @@ public class ContextualPooledXADataSource extends AbstractPooledDataSource<XADat
     throw new UnsupportedOperationException("Please properly configure the underlying resource managed by the pool which is represented by this DataSource");
   }
 
+  /**
+   * Starts every managed component pool to ensure connections are available before usage.
+   *
+   * @throws ComponentPoolException if any pool fails to start
+   */
   @Override
   public void startup ()
     throws ComponentPoolException {
@@ -93,6 +123,11 @@ public class ContextualPooledXADataSource extends AbstractPooledDataSource<XADat
     }
   }
 
+  /**
+   * Shuts down all component pools, releasing pooled XA connections and related resources.
+   *
+   * @throws ComponentPoolException if any pool fails to close cleanly
+   */
   @Override
   public void shutdown ()
     throws ComponentPoolException {

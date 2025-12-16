@@ -32,6 +32,9 @@
  */
 package org.smallmind.persistence.orm.throng;
 
+/**
+ * Marker for query details used in find operations.
+ */
 public abstract class FindQueryDetails extends QueryDetails {
 
 }

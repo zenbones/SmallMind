@@ -32,22 +32,35 @@
  */
 package org.smallmind.persistence.cache;
 
+/**
+ * Encapsulates the components of a vector key: namespace and indices.
+ */
 public class VectorArtifact {
 
   private final String vectorNamespace;
   private final VectorIndex[] vectorIndices;
 
+  /**
+   * @param vectorNamespace namespace for the vector (often derived from annotation)
+   * @param vectorIndices   indices composing the vector key
+   */
   public VectorArtifact (String vectorNamespace, VectorIndex[] vectorIndices) {
 
     this.vectorNamespace = vectorNamespace;
     this.vectorIndices = vectorIndices;
   }
 
+  /**
+   * @return vector namespace
+   */
   public String getVectorNamespace () {
 
     return vectorNamespace;
   }
 
+  /**
+   * @return indices used to build the key
+   */
   public VectorIndex[] getVectorIndices () {
 
     return vectorIndices;

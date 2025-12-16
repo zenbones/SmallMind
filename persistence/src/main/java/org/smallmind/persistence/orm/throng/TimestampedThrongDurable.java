@@ -39,6 +39,12 @@ import org.smallmind.mongodb.throng.index.annotation.Indexed;
 import org.smallmind.mongodb.throng.lifecycle.annotation.PrePersist;
 import org.smallmind.mongodb.throng.mapping.annotation.Property;
 
+/**
+ * Throng durable that tracks creation and update timestamps and maintains an index on lastUpdated.
+ *
+ * @param <I> identifier type
+ * @param <D> durable subclass type
+ */
 public abstract class TimestampedThrongDurable<I extends Serializable & Comparable<I>, D extends TimestampedThrongDurable<I, D>> extends ThrongDurable<I, D> {
 
   @Property("created")
@@ -47,26 +53,45 @@ public abstract class TimestampedThrongDurable<I extends Serializable & Comparab
   @Indexed(IndexType.DESCENDING)
   private Date lastUpdated;
 
+  /**
+   * @return the creation timestamp
+   */
   public Date getCreated () {
 
     return created;
   }
 
+  /**
+   * Sets the creation timestamp.
+   *
+   * @param created timestamp
+   */
   public void setCreated (Date created) {
 
     this.created = created;
   }
 
+  /**
+   * @return the last update timestamp
+   */
   public Date getLastUpdated () {
 
     return lastUpdated;
   }
 
+  /**
+   * Sets the last update timestamp.
+   *
+   * @param lastUpdated timestamp
+   */
   public void setLastUpdated (Date lastUpdated) {
 
     this.lastUpdated = lastUpdated;
   }
 
+  /**
+   * Populates timestamps prior to persistence.
+   */
   @PrePersist
   public void prePersist () {
 

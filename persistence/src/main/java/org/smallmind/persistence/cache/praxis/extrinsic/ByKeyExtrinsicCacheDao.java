@@ -46,15 +46,30 @@ import org.smallmind.persistence.cache.DurableVector;
 import org.smallmind.persistence.cache.VectorKey;
 import org.smallmind.persistence.cache.praxis.ByKeySingularVector;
 
-// The cache is external to the JVM, or lacks thread-safe operations, and requires CAS operations
-// The vector cache references the instance cache by a unique key
+/**
+ * Cache DAO for external caches that require CAS semantics and store vectors by durable key.
+ * Vectors reference instances through their keys to minimize payload size across processes.
+ */
 public class ByKeyExtrinsicCacheDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractCacheDao<I, D> {
 
+  /**
+   * Creates an extrinsic cache DAO using the provided cache domain.
+   *
+   * @param cacheDomain cache domain supplying instance and vector caches
+   */
   public ByKeyExtrinsicCacheDao (CacheDomain<I, D> cacheDomain) {
 
     super(cacheDomain);
   }
 
+  /**
+   * Persists a durable to the instance cache according to the requested update mode.
+   *
+   * @param durableClass managed durable class
+   * @param durable      durable instance to cache
+   * @param mode         update mode that controls overwrite behavior
+   * @return cached durable (existing or provided) or {@code null} when durable is null
+   */
   public D persist (Class<D> durableClass, D durable, UpdateMode mode) {
 
     if (durable != null) {
@@ -78,6 +93,12 @@ public class ByKeyExtrinsicCacheDao<I extends Serializable & Comparable<I>, D ex
     return null;
   }
 
+  /**
+   * Adds or updates a durable within a cached vector using CAS operations.
+   *
+   * @param vectorKey cache key describing the vector
+   * @param durable   durable to insert or update
+   */
   public void updateInVector (VectorKey<D> vectorKey, D durable) {
 
     if (durable != null) {
@@ -99,6 +120,12 @@ public class ByKeyExtrinsicCacheDao<I extends Serializable & Comparable<I>, D ex
     }
   }
 
+  /**
+   * Removes a durable from a cached vector using CAS, deleting the vector when it becomes empty or singular.
+   *
+   * @param vectorKey cache key describing the vector
+   * @param durable   durable to remove
+   */
   public void removeFromVector (VectorKey<D> vectorKey, D durable) {
 
     if (durable != null) {
@@ -123,6 +150,13 @@ public class ByKeyExtrinsicCacheDao<I extends Serializable & Comparable<I>, D ex
     }
   }
 
+  /**
+   * Converts an arbitrary vector implementation into the ByKey-based extrinsic form expected by this DAO.
+   *
+   * @param managedClass durable class stored in the vector
+   * @param vector       incoming vector to migrate
+   * @return vector compatible with this DAO's storage expectations
+   */
   public DurableVector<I, D> migrateVector (Class<D> managedClass, DurableVector<I, D> vector) {
 
     if (vector.isSingular()) {
@@ -142,11 +176,30 @@ public class ByKeyExtrinsicCacheDao<I extends Serializable & Comparable<I>, D ex
     }
   }
 
+  /**
+   * Creates a single-element vector backed by a durable key.
+   *
+   * @param vectorKey         cache key describing the target vector
+   * @param durable           durable to reference
+   * @param timeToLiveSeconds TTL for the vector
+   * @return new singular vector
+   */
   public DurableVector<I, D> createSingularVector (VectorKey<D> vectorKey, D durable, int timeToLiveSeconds) {
 
     return new ByKeySingularVector<>(new DurableKey<>(vectorKey.getElementClass(), durable.getId()), timeToLiveSeconds);
   }
 
+  /**
+   * Creates a multi-element vector backed by durable keys.
+   *
+   * @param vectorKey         cache key describing the target vector
+   * @param elementIter       iterable of durables to include
+   * @param comparator        comparator used for ordered vectors; {@code null} for natural ordering
+   * @param maxSize           maximum number of elements to retain
+   * @param timeToLiveSeconds TTL for the vector
+   * @param ordered           whether to maintain sorted order
+   * @return new extrinsic vector
+   */
   public DurableVector<I, D> createVector (VectorKey<D> vectorKey, Iterable<D> elementIter, Comparator<D> comparator, int maxSize, int timeToLiveSeconds, boolean ordered) {
 
     return new ByKeyExtrinsicVector<>(vectorKey.getElementClass(), elementIter, comparator, maxSize, timeToLiveSeconds, ordered);

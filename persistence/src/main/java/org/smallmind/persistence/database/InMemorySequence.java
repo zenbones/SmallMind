@@ -35,15 +35,24 @@ package org.smallmind.persistence.database;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * Simple {@link Sequence} backed by in-memory counters for each named sequence.
+ */
 public class InMemorySequence extends Sequence {
 
   private final HashMap<String, AtomicLong> counterMap = new HashMap<>();
 
+  /**
+   * Registers this sequence implementation as the global {@link SequenceManager} provider.
+   */
   public void register () {
 
     SequenceManager.register(this);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public synchronized long nextLong (String name) {
 

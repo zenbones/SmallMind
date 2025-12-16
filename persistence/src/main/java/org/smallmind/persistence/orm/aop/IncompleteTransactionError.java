@@ -32,13 +32,24 @@
  */
 package org.smallmind.persistence.orm.aop;
 
+/**
+ * Indicates that one or more transactional operations failed, but processing may continue to unwind boundaries.
+ */
 public class IncompleteTransactionError extends TransactionError {
 
+  /**
+   * Creates an error wrapping the underlying transactional failure.
+   *
+   * @param throwable the cause
+   */
   public IncompleteTransactionError (Throwable throwable) {
 
     super(throwable);
   }
 
+  /**
+   * @return false to signal the boundary logic to continue processing
+   */
   @Override
   public boolean isTerminal () {
 

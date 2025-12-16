@@ -36,21 +36,83 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * DAO contract tailored to {@link Durable} entities, providing CRUD and batch retrieval helpers.
+ *
+ * @param <I> the durable identifier type
+ * @param <D> the durable type
+ */
 public interface DurableDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends Dao<I, D> {
 
+  /**
+   * Finds a durable by id.
+   *
+   * @param id the identifier of the durable
+   * @return the matching durable instance, or {@code null} when not found
+   * @throws PersistenceException if the lookup fails
+   */
   D get (I id);
 
+  /**
+   * Persists the given durable, updating it if already present or inserting it otherwise.
+   *
+   * @param durable the durable to persist
+   * @return the stored durable (potentially a different instance depending on the implementation)
+   * @throws PersistenceException if the persist operation fails
+   */
   D persist (D durable);
 
+  /**
+   * Persists the given durable, explicitly providing the durable class.
+   *
+   * @param durableClass the declared durable class
+   * @param durable      the durable to persist
+   * @return the stored durable
+   * @throws PersistenceException if the persist operation fails
+   */
   D persist (Class<D> durableClass, D durable);
 
+  /**
+   * Deletes the supplied durable.
+   *
+   * @param durable the durable to remove
+   * @throws PersistenceException if the delete operation fails
+   */
   void delete (D durable);
 
+  /**
+   * Lists all durable instances.
+   *
+   * @return the full collection of durables
+   * @throws PersistenceException if retrieval fails
+   */
   List<D> list ();
 
+  /**
+   * Lists durable instances, capped by the given fetch size.
+   *
+   * @param fetchSize the maximum number of records to return
+   * @return a limited list of durables
+   * @throws PersistenceException if retrieval fails
+   */
   List<D> list (int fetchSize);
 
+  /**
+   * Lists durable instances with identifiers greater than the supplied value, up to the fetch size.
+   *
+   * @param greaterThan the lower bound identifier (exclusive)
+   * @param fetchSize   the maximum number of records to return
+   * @return a limited list of durables beyond the supplied id
+   * @throws PersistenceException if retrieval fails
+   */
   List<D> list (I greaterThan, int fetchSize);
 
+  /**
+   * Retrieves a collection of durables whose identifiers are included in the provided set.
+   *
+   * @param idCollection identifiers to search for
+   * @return the durables that match the requested identifiers
+   * @throws PersistenceException if retrieval fails
+   */
   List<D> list (Collection<I> idCollection);
 }

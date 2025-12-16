@@ -44,12 +44,25 @@ import org.smallmind.persistence.cache.DurableVector;
 import org.smallmind.persistence.orm.ORMDao;
 import org.smallmind.persistence.orm.OrmDaoManager;
 
+/**
+ * {@link DurableVector} implementation that represents a single durable referenced by a {@link DurableKey}.
+ * The durable is loaded lazily from the backing {@link ORMDao} whenever accessed.
+ *
+ * @param <I> identifier type
+ * @param <D> durable type
+ */
 public class ByKeySingularVector<I extends Serializable & Comparable<I>, D extends Durable<I>> extends DurableVector<I, D> {
 
   private transient volatile ORMDao<I, D, ?, ?> ormDao;
 
   private DurableKey<I, D> durableKey;
 
+  /**
+   * Creates a singular vector pointing at the supplied durable key.
+   *
+   * @param durableKey        key referencing the durable
+   * @param timeToLiveSeconds TTL for the vector
+   */
   public ByKeySingularVector (DurableKey<I, D> durableKey, int timeToLiveSeconds) {
 
     super(null, 1, timeToLiveSeconds, false);
@@ -57,6 +70,11 @@ public class ByKeySingularVector<I extends Serializable & Comparable<I>, D exten
     this.durableKey = durableKey;
   }
 
+  /**
+   * Lazily resolves the {@link ORMDao} used to load the durable.
+   *
+   * @return ORM DAO for the managed durable
+   */
   private ORMDao<I, D, ?, ?> getORMDao () {
 
     if (ormDao == null) {
@@ -68,6 +86,11 @@ public class ByKeySingularVector<I extends Serializable & Comparable<I>, D exten
     return ormDao;
   }
 
+  /**
+   * Hydrates the durable instance from its key.
+   *
+   * @return durable referenced by this vector
+   */
   private D getDurable () {
 
     D durable;
@@ -80,16 +103,30 @@ public class ByKeySingularVector<I extends Serializable & Comparable<I>, D exten
     return durable;
   }
 
+  /**
+   * Creates a copy of this singular vector, preserving the referenced key and TTL.
+   *
+   * @return copied singular vector
+   */
   public DurableVector<I, D> copy () {
 
     return new ByKeySingularVector<>(durableKey, getTimeToLiveSeconds());
   }
 
+  /**
+   * @return {@code true} because this vector always contains a single element
+   */
   public boolean isSingular () {
 
     return true;
   }
 
+  /**
+   * Replaces the referenced durable when it differs from the current entry.
+   *
+   * @param durable durable to store
+   * @return {@code true} when the reference changes
+   */
   public synchronized boolean add (D durable) {
 
     if (!getDurable().equals(durable)) {
@@ -101,21 +138,38 @@ public class ByKeySingularVector<I extends Serializable & Comparable<I>, D exten
     return false;
   }
 
+  /**
+   * Removal is unsupported for singular vectors because they always reference one durable.
+   *
+   * @param durable unused
+   * @return never returns; always throws {@link UnsupportedOperationException}
+   */
   public boolean remove (D durable) {
 
     throw new UnsupportedOperationException("Attempted removal from a 'singular' vector");
   }
 
+  /**
+   * Returns the referenced durable.
+   *
+   * @return hydrated durable
+   */
   public synchronized D head () {
 
     return getDurable();
   }
 
+  /**
+   * @return singleton list containing the referenced durable
+   */
   public synchronized List<D> asBestEffortLazyList () {
 
     return Collections.singletonList(getDurable());
   }
 
+  /**
+   * @return iterator that yields the referenced durable once
+   */
   public synchronized Iterator<D> iterator () {
 
     return new SingleItemIterable<>(getDurable()).iterator();

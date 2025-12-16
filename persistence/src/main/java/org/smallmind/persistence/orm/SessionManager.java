@@ -39,8 +39,17 @@ import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
+/**
+ * Application-scoped registry for {@link ProxySession} instances keyed by a session source.
+ */
 public class SessionManager implements PerApplicationDataManager, ApplicationContextAware {
 
+  /**
+   * Registers a proxy session for the given key.
+   *
+   * @param sessionSourceKey the key that identifies the session
+   * @param proxySession     the session instance
+   */
   public static void register (String sessionSourceKey, ProxySession proxySession) {
 
     ConcurrentHashMap<String, ProxySession> sessionMap;
@@ -51,11 +60,35 @@ public class SessionManager implements PerApplicationDataManager, ApplicationCon
     sessionMap.put(sessionSourceKey, proxySession);
   }
 
+  /**
+   * Retrieves the default proxy session.
+   *
+   * @return proxy session registered under the default key
+   * @throws ORMInitializationException if no default session is registered
+   */
   public static ProxySession getSession () {
 
     return getSession(null);
   }
 
+  /**
+   * Retrieves the registered proxy session for the default key.
+   *
+   * @return default proxy session
+   * @throws ORMInitializationException if no session is registered
+   */
+  public static ProxySession getDefaultSession () {
+
+    return getSession(null);
+  }
+
+  /**
+   * Retrieves a proxy session by key.
+   *
+   * @param sessionSourceKey the key used during registration; may be {@code null} for default
+   * @return the matching proxy session
+   * @throws ORMInitializationException if no session is registered for the key
+   */
   public static ProxySession getSession (String sessionSourceKey) {
 
     ProxySession proxySession;
@@ -67,16 +100,30 @@ public class SessionManager implements PerApplicationDataManager, ApplicationCon
     return proxySession;
   }
 
+  /**
+   * Closes the default proxy session.
+   */
   public static void closeSession () {
 
     closeSession(null);
   }
 
+  /**
+   * Closes the session registered for the provided key.
+   *
+   * @param sessionSourceKey the key identifying the session to close; may be {@code null} for default
+   */
   public static void closeSession (String sessionSourceKey) {
 
     getSession(sessionSourceKey).close();
   }
 
+  /**
+   * Initializes the per-application session map when the Spring context is set.
+   *
+   * @param applicationContext the Spring context
+   * @throws BeansException if initialization fails
+   */
   @Override
   public void setApplicationContext (ApplicationContext applicationContext)
     throws BeansException {

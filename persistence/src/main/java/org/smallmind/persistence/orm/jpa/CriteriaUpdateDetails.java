@@ -35,7 +35,19 @@ package org.smallmind.persistence.orm.jpa;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaUpdate;
 
+/**
+ * Supplies details to build a {@link CriteriaUpdate}.
+ *
+ * @param <T> entity type to update
+ */
 public abstract class CriteriaUpdateDetails<T> {
 
+  /**
+   * Completes a criteria update definition for the provided entity class.
+   *
+   * @param criteriaClass   the entity class to update
+   * @param criteriaBuilder the JPA criteria builder
+   * @return the fully defined criteria update
+   */
   public abstract CriteriaUpdate<T> completeCriteria (Class<T> criteriaClass, CriteriaBuilder criteriaBuilder);
 }

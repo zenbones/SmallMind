@@ -44,9 +44,21 @@ import org.smallmind.claxon.registry.meter.MeterFactory;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.persistence.AbstractVectorAwareManagedDao;
 
+/**
+ * Times methods annotated with {@link Timer} on classes annotated with {@link Timed}, recording metrics via Claxon.
+ */
 @Aspect
 public class TimerAspect {
 
+  /**
+   * Wraps timed methods, measuring execution duration and publishing to a speedometer meter tagged with durable and method name.
+   *
+   * @param thisJoinPoint join point representing the invocation
+   * @param timed         type-level timing configuration
+   * @param durableDao    the DAO instance to derive metric source and durable class
+   * @return the method result
+   * @throws Throwable if the underlying method throws
+   */
   @Around(value = "@within(timed) && execution(@Timer * * (..)) && this(durableDao)", argNames = "thisJoinPoint, timed, durableDao")
   public Object aroundTimerMethod (ProceedingJoinPoint thisJoinPoint, Timed timed, AbstractVectorAwareManagedDao durableDao)
     throws Throwable {

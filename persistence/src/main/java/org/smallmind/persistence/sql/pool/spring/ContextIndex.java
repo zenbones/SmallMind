@@ -32,22 +32,35 @@
  */
 package org.smallmind.persistence.sql.pool.spring;
 
+/**
+ * Simple pairing of a context identifier with an index, used to correlate context-specific pools.
+ */
 public class ContextIndex {
 
   private final String context;
   private final int index;
 
+  /**
+   * @param context context key
+   * @param index   numeric index within that context
+   */
   public ContextIndex (String context, int index) {
 
     this.context = context;
     this.index = index;
   }
 
+  /**
+   * @return context identifier
+   */
   public String getContext () {
 
     return context;
   }
 
+  /**
+   * @return index value
+   */
   public int getIndex () {
 
     return index;

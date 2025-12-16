@@ -34,15 +34,24 @@ package org.smallmind.persistence.orm.throng;
 
 import com.mongodb.client.model.DeleteOptions;
 
+/**
+ * Filter details for delete operations, carrying MongoDB delete options.
+ */
 public abstract class DeleteFilterDetails extends FilterDetails {
 
   private final DeleteOptions deleteOptions;
 
+  /**
+   * @param deleteOptions MongoDB delete options to apply
+   */
   public DeleteFilterDetails (DeleteOptions deleteOptions) {
 
     this.deleteOptions = deleteOptions;
   }
 
+  /**
+   * @return the configured delete options
+   */
   public DeleteOptions getDeleteOptions () {
 
     return deleteOptions;

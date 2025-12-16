@@ -32,17 +32,30 @@
  */
 package org.smallmind.persistence;
 
+/**
+ * Indicates the persistence backing technology for an entity.
+ */
 public enum EntitySource {
 
   MYSQL("MySql"), MONGO("MongoDB"), MEMCACHED("Memcached"), EHCACHE("Ehcache"), CASSANDRA("Cassandra");
 
   private final String display;
 
+  /**
+   * Constructs an entity source enum value with a friendly display label.
+   *
+   * @param display the human readable name
+   */
   EntitySource (String display) {
 
     this.display = display;
   }
 
+  /**
+   * Returns the human readable display value for this source.
+   *
+   * @return the display label
+   */
   public String getDisplay () {
 
     return display;

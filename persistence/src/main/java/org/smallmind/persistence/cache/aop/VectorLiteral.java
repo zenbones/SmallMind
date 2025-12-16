@@ -34,17 +34,33 @@ package org.smallmind.persistence.cache.aop;
 
 import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
 
+/**
+ * Programmatic implementation of {@link Vector} for constructing vector metadata at runtime.
+ */
 public class VectorLiteral extends AnnotationLiteral<Vector> implements Vector {
 
   private final String namespace;
   private final Key[] keys;
   private final Classifier classifier;
 
+  /**
+   * Creates a vector literal without a classifier.
+   *
+   * @param namespace namespace used in the cache key
+   * @param keys      key definitions that compose the vector
+   */
   public VectorLiteral (String namespace, Key[] keys) {
 
     this(namespace, keys, new ClassifierLiteral(""));
   }
 
+  /**
+   * Creates a vector literal with explicit classifier.
+   *
+   * @param namespace  namespace used in the cache key
+   * @param keys       key definitions that compose the vector
+   * @param classifier classifier appended to the key
+   */
   public VectorLiteral (String namespace, Key[] keys, Classifier classifier) {
 
     this.namespace = namespace;
@@ -52,18 +68,27 @@ public class VectorLiteral extends AnnotationLiteral<Vector> implements Vector {
     this.classifier = classifier;
   }
 
+  /**
+   * @return namespace used in the cache key
+   */
   @Override
   public String namespace () {
 
     return namespace;
   }
 
+  /**
+   * @return key definitions that compose the vector
+   */
   @Override
   public Key[] value () {
 
     return keys;
   }
 
+  /**
+   * @return classifier appended to the key
+   */
   @Override
   public Classifier classifier () {
 

@@ -34,7 +34,18 @@ package org.smallmind.persistence.orm.jpa;
 
 import jakarta.persistence.criteria.Root;
 
+/**
+ * Allows callers to configure a criteria query root for a given entity.
+ *
+ * @param <T> entity type
+ */
 public interface CriteriaDetails<T> {
 
+  /**
+   * Defines the root for a criteria query.
+   *
+   * @param entityClass the entity class to query
+   * @return the configured root
+   */
   Root<T> from (Class<T> entityClass);
 }

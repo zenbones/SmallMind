@@ -38,8 +38,21 @@ import javax.sql.DataSource;
 import javax.sql.PooledConnection;
 import javax.sql.XADataSource;
 
+/**
+ * Factory helpers that choose the correct pooled connection wrapper based on whether the supplied
+ * data source is XA-capable.
+ */
 public class PooledConnectionFactory {
 
+  /**
+   * Creates a pooled connection without credentials using the provided data source.
+   *
+   * @param dataSource    {@link DataSource} or {@link XADataSource} instance
+   * @param maxStatements maximum prepared statements to cache
+   * @param <D>           data source type
+   * @return pooled connection wrapper
+   * @throws SQLException if connection acquisition fails
+   */
   public static <D extends CommonDataSource> PooledConnection createPooledConnection (D dataSource, int maxStatements)
     throws SQLException {
 
@@ -50,6 +63,17 @@ public class PooledConnectionFactory {
     return new DataSourcePooledConnection((DataSource)dataSource, maxStatements);
   }
 
+  /**
+   * Creates a pooled connection using explicit credentials.
+   *
+   * @param dataSource    {@link DataSource} or {@link XADataSource} instance
+   * @param user          user name
+   * @param password      password
+   * @param maxStatements maximum prepared statements to cache
+   * @param <D>           data source type
+   * @return pooled connection wrapper
+   * @throws SQLException if connection acquisition fails
+   */
   public static <D extends CommonDataSource> PooledConnection createPooledConnection (D dataSource, String user, String password, int maxStatements)
     throws SQLException {
 

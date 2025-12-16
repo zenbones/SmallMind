@@ -40,6 +40,9 @@ import org.smallmind.persistence.orm.ProxyTransaction;
 import org.smallmind.persistence.orm.ProxyTransactionException;
 import org.smallmind.persistence.orm.TransactionEndState;
 
+/**
+ * Invocation handler that records a method call to be executed as a transaction post-process.
+ */
 public class PostProcessInvocationHandler implements Serializable, InvocationHandler {
 
   private final ProxyTransaction proxyTransaction;
@@ -47,6 +50,14 @@ public class PostProcessInvocationHandler implements Serializable, InvocationHan
   private final ProcessPriority priority;
   private final Object proxyTarget;
 
+  /**
+   * Creates an invocation handler that will schedule invocations on the target for post-processing.
+   *
+   * @param proxyTransaction the transaction to attach post-processes to
+   *                         * @param proxyTarget the underlying target object to invoke
+   * @param endState         transaction end state that should trigger the invocation
+   * @param priority         execution priority for the invocation
+   */
   public PostProcessInvocationHandler (ProxyTransaction proxyTransaction, Object proxyTarget, TransactionEndState endState, ProcessPriority priority) {
 
     this.proxyTransaction = proxyTransaction;
@@ -55,6 +66,15 @@ public class PostProcessInvocationHandler implements Serializable, InvocationHan
     this.priority = priority;
   }
 
+  /**
+   * Intercepts a void-returning method call and registers it as a post-process on the transaction.
+   *
+   * @param proxy  the proxy instance
+   * @param method method being invoked
+   * @param args   arguments supplied to the method
+   * @return always {@code null}
+   * @throws ProxyTransactionException if the method is not void-returning
+   */
   public Object invoke (Object proxy, Method method, Object[] args)
     throws Throwable {
 

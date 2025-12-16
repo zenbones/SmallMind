@@ -35,6 +35,11 @@ package org.smallmind.persistence.orm;
 import java.util.LinkedList;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 
+/**
+ * Wraps a native transaction, managing post-process hooks and rollback-only state.
+ *
+ * @param <S> the proxy session type that created this transaction
+ */
 public abstract class ProxyTransaction<S extends ProxySession<?, ?>> {
 
   private static final ProcessPriorityComparator PROCESS_PRIORITY_COMPARATOR = new ProcessPriorityComparator();
@@ -44,6 +49,11 @@ public abstract class ProxyTransaction<S extends ProxySession<?, ?>> {
   private LinkedList<TransactionPostProcess> postProcessList;
   private boolean rollbackOnly = false;
 
+  /**
+   * Creates a transaction wrapper bound to a session and assigns a unique id.
+   *
+   * @param proxySession the owning session
+   */
   public ProxyTransaction (S proxySession) {
 
     this.proxySession = proxySession;
@@ -51,44 +61,86 @@ public abstract class ProxyTransaction<S extends ProxySession<?, ?>> {
     uuid = SnowflakeId.newInstance().generateHexEncoding();
   }
 
+  /**
+   * Flushes the underlying session to persist any pending changes without committing.
+   */
   public abstract void flush ();
 
+  /**
+   * Commits the underlying transaction.
+   */
   public abstract void commit ();
 
+  /**
+   * Rolls back the underlying transaction.
+   */
   public abstract void rollback ();
 
+  /**
+   * Indicates whether the transaction has completed.
+   *
+   * @return {@code true} if committed or rolled back
+   */
   public abstract boolean isCompleted ();
 
+  /**
+   * @return the unique identifier for this transaction
+   */
   public String getUniqueId () {
 
     return uuid;
   }
 
+  /**
+   * @return the owning proxy session
+   */
   public S getSession () {
 
     return proxySession;
   }
 
+  /**
+   * Marks the transaction as rollback-only.
+   */
   public void setRollbackOnly () {
 
     rollbackOnly = true;
   }
 
+  /**
+   * @return whether the transaction is flagged for rollback
+   */
   public boolean isRollbackOnly () {
 
     return rollbackOnly;
   }
 
+  /**
+   * Lazily initializes the post-process list used to hold callbacks.
+   *
+   * @return list of post-process handlers
+   */
   private LinkedList<TransactionPostProcess> getPostProcessList () {
 
     return (postProcessList == null) ? postProcessList = new LinkedList<>() : postProcessList;
   }
 
+  /**
+   * Adds a post-processing callback to run after completion.
+   *
+   * @param postProcess the callback to register
+   */
   public void addPostProcess (TransactionPostProcess postProcess) {
 
     getPostProcessList().add(postProcess);
   }
 
+  /**
+   * Executes registered post-process callbacks appropriate for the end state.
+   *
+   * @param endState the transaction completion state
+   * @throws TransactionPostProcessException if one or more callbacks fail
+   */
   protected void applyPostProcesses (TransactionEndState endState)
     throws TransactionPostProcessException {
 
@@ -114,11 +166,24 @@ public abstract class ProxyTransaction<S extends ProxySession<?, ?>> {
     }
   }
 
+  /**
+   * Generates a hash code based on the unique transaction id.
+   *
+   * @return hash code for this transaction wrapper
+   */
+  @Override
   public int hashCode () {
 
     return uuid.hashCode();
   }
 
+  /**
+   * Equality is based on the unique transaction id.
+   *
+   * @param obj object to compare
+   * @return {@code true} when the ids match
+   */
+  @Override
   public boolean equals (Object obj) {
 
     return (obj instanceof ProxyTransaction) && uuid.equals(((ProxyTransaction<?>)obj).getUniqueId());

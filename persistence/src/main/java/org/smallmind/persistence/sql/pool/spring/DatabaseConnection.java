@@ -32,16 +32,27 @@
  */
 package org.smallmind.persistence.sql.pool.spring;
 
+/**
+ * Spring-friendly bean capturing JDBC connection details.
+ */
 public class DatabaseConnection {
 
   private String jdbcUrl;
   private String user;
   private String password;
 
+  /**
+   * Creates an empty connection descriptor to be populated via setters.
+   */
   public DatabaseConnection () {
 
   }
 
+  /**
+   * @param jdbcUrl  JDBC URL
+   * @param user     user name
+   * @param password password
+   */
   public DatabaseConnection (String jdbcUrl, String user, String password) {
 
     this.jdbcUrl = jdbcUrl;
@@ -49,36 +60,57 @@ public class DatabaseConnection {
     this.password = password;
   }
 
+  /**
+   * @return configured JDBC URL
+   */
   public String getJdbcUrl () {
 
     return jdbcUrl;
   }
 
+  /**
+   * @param jdbcUrl JDBC URL to set
+   */
   public void setJdbcUrl (String jdbcUrl) {
 
     this.jdbcUrl = jdbcUrl;
   }
 
+  /**
+   * @return configured user name
+   */
   public String getUser () {
 
     return user;
   }
 
+  /**
+   * @param user user name to set
+   */
   public void setUser (String user) {
 
     this.user = user;
   }
 
+  /**
+   * @return configured password
+   */
   public String getPassword () {
 
     return password;
   }
 
+  /**
+   * @param password password to set
+   */
   public void setPassword (String password) {
 
     this.password = password;
   }
 
+  /**
+   * @return {@code true} when URL, user, and password are all populated
+   */
   public boolean isComplete () {
 
     return (jdbcUrl != null) && (user != null) && (password != null);

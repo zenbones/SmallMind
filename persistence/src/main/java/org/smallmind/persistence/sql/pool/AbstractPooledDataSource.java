@@ -39,12 +39,25 @@ import javax.sql.CommonDataSource;
 import javax.sql.PooledConnection;
 import org.smallmind.quorum.pool.ComponentPoolException;
 
+/**
+ * Base class for data sources backed by a component pool. It exposes minimal {@link CommonDataSource}
+ * functionality while deferring actual connection creation to subclasses.
+ *
+ * @param <D> concrete data source type managed by the pool
+ * @param <P> pooled connection type returned by the pool
+ */
 public abstract class AbstractPooledDataSource<D extends CommonDataSource, P extends PooledConnection> implements CommonDataSource {
 
   private final Class<D> dataSourceClass;
   private final Class<P> pooledConnectionClass;
   private final PrintWriter logWriter;
 
+  /**
+   * Creates a pooled data source descriptor.
+   *
+   * @param dataSourceClass       underlying data source class
+   * @param pooledConnectionClass pooled connection class produced by the pool
+   */
   public AbstractPooledDataSource (Class<D> dataSourceClass, Class<P> pooledConnectionClass) {
 
     this.dataSourceClass = dataSourceClass;
@@ -53,17 +66,33 @@ public abstract class AbstractPooledDataSource<D extends CommonDataSource, P ext
     logWriter = new PrintWriter(new PooledLogWriter());
   }
 
+  /**
+   * Initializes the underlying pool; must be called before use.
+   *
+   * @throws ComponentPoolException if startup fails
+   */
   public abstract void startup ()
     throws ComponentPoolException;
 
+  /**
+   * Shuts down the underlying pool and releases resources.
+   *
+   * @throws ComponentPoolException if shutdown fails
+   */
   public abstract void shutdown ()
     throws ComponentPoolException;
 
+  /**
+   * @return class of the wrapped data source
+   */
   public Class<D> getDataSourceClass () {
 
     return dataSourceClass;
   }
 
+  /**
+   * @return class of the pooled connection returned to callers
+   */
   public Class<P> getPooledConnectionClass () {
 
     return pooledConnectionClass;
@@ -75,31 +104,50 @@ public abstract class AbstractPooledDataSource<D extends CommonDataSource, P ext
     throw new SQLFeatureNotSupportedException();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public PrintWriter getLogWriter () {
 
     return logWriter;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public void setLogWriter (PrintWriter out) {
 
     throw new UnsupportedOperationException("Please properly configure the underlying pool which is represented by this DataSource");
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  @Override
   public int getLoginTimeout () {
 
     throw new UnsupportedOperationException("Please properly configure the underlying resource managed by the pool which is represented by this DataSource");
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public void setLoginTimeout (int seconds) {
 
     throw new UnsupportedOperationException("Please properly configure the underlying resource managed by the pool which is represented by this DataSource");
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public boolean isWrapperFor (Class<?> clazz) {
 
     return false;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public <T> T unwrap (Class<T> clazz) {
 
     throw new UnsupportedOperationException("This DataSource represents a connection pool");

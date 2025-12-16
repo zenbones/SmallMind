@@ -32,6 +32,11 @@
  */
 package org.smallmind.persistence.cache;
 
+/**
+ * Holder for a cached value and its CAS version token.
+ *
+ * @param <V> value type
+ */
 public class CASValue<V> {
 
   private static final CASValue<?> NULL_CAS_VALUE = new CASValue<Object>(null, 0);
@@ -39,22 +44,36 @@ public class CASValue<V> {
   private final V value;
   private final long version;
 
+  /**
+   * @param value   cached value
+   * @param version CAS version token
+   */
   public CASValue (V value, long version) {
 
     this.value = value;
     this.version = version;
   }
 
+  /**
+   * @param <V> inferred type
+   * @return shared null instance representing a missing value
+   */
   public static <V> CASValue<V> nullInstance () {
 
     return (CASValue<V>)NULL_CAS_VALUE;
   }
 
+  /**
+   * @return CAS version token
+   */
   public long getVersion () {
 
     return version;
   }
 
+  /**
+   * @return cached value (may be null)
+   */
   public V getValue () {
 
     return value;

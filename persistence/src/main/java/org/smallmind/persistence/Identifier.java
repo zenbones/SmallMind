@@ -34,6 +34,11 @@ package org.smallmind.persistence;
 
 import java.io.Serializable;
 
+/**
+ * Marker interface for strongly typed identifiers used by durables.
+ *
+ * @param <I> the identifier value type
+ */
 public interface Identifier<I> extends Serializable, Comparable<I> {
 
 }

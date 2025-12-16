@@ -38,22 +38,50 @@ import javax.sql.XAConnection;
 import javax.sql.XADataSource;
 import javax.transaction.xa.XAResource;
 
+/**
+ * {@link XAConnection} wrapper that layers pooled connection behavior and statement caching on top
+ * of an {@link XADataSource}-provided connection.
+ */
 public class XADataSourcePooledConnection extends AbstractPooledConnection<XADataSource> implements XAConnection {
 
   private final XAConnection xaConnection;
 
+  /**
+   * Acquires an XA connection from the data source and wraps it with pooling logic.
+   *
+   * @param dataSource    XA data source
+   * @param maxStatements maximum prepared statements to cache
+   * @throws SQLException if obtaining the connection fails
+   */
   public XADataSourcePooledConnection (XADataSource dataSource, int maxStatements)
     throws SQLException {
 
     this(dataSource, dataSource.getXAConnection(), maxStatements);
   }
 
+  /**
+   * Same as {@link #XADataSourcePooledConnection(XADataSource, int)} but uses explicit credentials.
+   *
+   * @param dataSource    XA data source
+   * @param user          user name
+   * @param password      password
+   * @param maxStatements maximum prepared statements to cache
+   * @throws SQLException if obtaining the connection fails
+   */
   public XADataSourcePooledConnection (XADataSource dataSource, String user, String password, int maxStatements)
     throws SQLException {
 
     this(dataSource, dataSource.getXAConnection(user, password), maxStatements);
   }
 
+  /**
+   * Internal constructor used by public overloads after obtaining an {@link XAConnection}.
+   *
+   * @param dataSource    XA data source
+   * @param xaConnection  underlying XA connection to wrap
+   * @param maxStatements maximum prepared statements to cache
+   * @throws SQLException if initializing the pooled connection fails
+   */
   private XADataSourcePooledConnection (XADataSource dataSource, XAConnection xaConnection, int maxStatements)
     throws SQLException {
 
@@ -62,12 +90,24 @@ public class XADataSourcePooledConnection extends AbstractPooledConnection<XADat
     this.xaConnection = xaConnection;
   }
 
+  /**
+   * Wraps the XA connection in a connection event when reporting errors or closure to listeners.
+   *
+   * @param sqlException optional exception that triggered the event
+   * @return constructed connection event
+   */
   @Override
   public ConnectionEvent getConnectionEvent (SQLException sqlException) {
 
     return (sqlException == null) ? new ConnectionEvent(this) : new ConnectionEvent(this, sqlException);
   }
 
+  /**
+   * Delegates to the underlying XA connection to obtain the {@link XAResource}.
+   *
+   * @return XA resource for transaction enlistment
+   * @throws SQLException if the resource cannot be retrieved
+   */
   @Override
   public XAResource getXAResource ()
     throws SQLException {
