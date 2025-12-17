@@ -59,14 +59,14 @@ public class SuiteRunner implements TestController {
   private final boolean stopOnFailure;
 
   /**
-   * @param sleuthRunner             runner used for event dispatch and cancellation
-   * @param suiteCompletedLatch      latch decremented when the suite is finished
-   * @param suiteDependency          dependency metadata for the suite
-   * @param suiteDependencyQueue     queue managing inter-suite dependencies
-   * @param annotationProcessor      processor translating annotations into executable metadata
-   * @param threadPool               thread pool used to execute test tiers
-   * @param stopOnError              whether errors should halt execution of remaining suites/tests
-   * @param stopOnFailure            whether assertion failures should halt execution of remaining suites/tests
+   * @param sleuthRunner         runner used for event dispatch and cancellation
+   * @param suiteCompletedLatch  latch decremented when the suite is finished
+   * @param suiteDependency      dependency metadata for the suite
+   * @param suiteDependencyQueue queue managing inter-suite dependencies
+   * @param annotationProcessor  processor translating annotations into executable metadata
+   * @param threadPool           thread pool used to execute test tiers
+   * @param stopOnError          whether errors should halt execution of remaining suites/tests
+   * @param stopOnFailure        whether assertion failures should halt execution of remaining suites/tests
    */
   public SuiteRunner (SleuthRunner sleuthRunner, CountDownLatch suiteCompletedLatch, Dependency<Suite, Class<?>> suiteDependency, DependencyQueue<Suite, Class<?>> suiteDependencyQueue, AnnotationProcessor annotationProcessor, SleuthThreadPool threadPool, boolean stopOnError, boolean stopOnFailure) {
 

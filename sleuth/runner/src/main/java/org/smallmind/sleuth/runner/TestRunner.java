@@ -65,17 +65,17 @@ public class TestRunner implements TestController {
   private Culprit culprit;
 
   /**
-   * @param sleuthRunner               runner used for event dispatch and cancellation checks
-   * @param testCompletedLatch         latch decremented when the test finishes
-   * @param culprit                    prior failure that should cause this test to be skipped; may be {@code null}
-   * @param clazz                      test class
-   * @param instance                   instance of the test class
-   * @param testMethodDependency       dependency metadata for the test method
-   * @param testMethodDependencyQueue  queue managing inter-test dependencies
-   * @param annotationProcessor        processor translating annotations into executable metadata
-   * @param threadPool                 thread pool used to execute test tiers
-   * @param stopOnError                whether unexpected errors halt further execution
-   * @param stopOnFailure              whether assertion failures halt further execution
+   * @param sleuthRunner              runner used for event dispatch and cancellation checks
+   * @param testCompletedLatch        latch decremented when the test finishes
+   * @param culprit                   prior failure that should cause this test to be skipped; may be {@code null}
+   * @param clazz                     test class
+   * @param instance                  instance of the test class
+   * @param testMethodDependency      dependency metadata for the test method
+   * @param testMethodDependencyQueue queue managing inter-test dependencies
+   * @param annotationProcessor       processor translating annotations into executable metadata
+   * @param threadPool                thread pool used to execute test tiers
+   * @param stopOnError               whether unexpected errors halt further execution
+   * @param stopOnFailure             whether assertion failures halt further execution
    */
   public TestRunner (SleuthRunner sleuthRunner, CountDownLatch testCompletedLatch, Culprit culprit, Class<?> clazz, Object instance, Dependency<Test, Method> testMethodDependency, DependencyQueue<Test, Method> testMethodDependencyQueue, AnnotationProcessor annotationProcessor, SleuthThreadPool threadPool, boolean stopOnError, boolean stopOnFailure) {
 

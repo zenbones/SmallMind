@@ -139,8 +139,8 @@ public class AnnotationMethodology<A extends Annotation> implements Iterable<Pai
     }
 
     /**
-    * @return parameter types associated with the method
-    */
+     * @return parameter types associated with the method
+     */
     public Class[] getParameters () {
 
       return parameters;

@@ -40,10 +40,10 @@ import org.smallmind.nutsnbolts.util.AnsiColor;
 public class FailureSleuthEvent extends ThrowableSleuthEvent {
 
   /**
-   * @param className originating class
+   * @param className  originating class
    * @param methodName originating method
-   * @param elapsed elapsed execution time in milliseconds
-   * @param throwable assertion failure
+   * @param elapsed    elapsed execution time in milliseconds
+   * @param throwable  assertion failure
    */
   public FailureSleuthEvent (String className, String methodName, long elapsed, Throwable throwable) {
 

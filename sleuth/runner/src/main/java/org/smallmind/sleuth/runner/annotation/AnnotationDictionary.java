@@ -78,8 +78,8 @@ public class AnnotationDictionary {
   /**
    * Adds a {@link BeforeSuite} method to the methodology.
    *
-   * @param method       reflected method
-   * @param beforeSuite  annotation instance
+   * @param method      reflected method
+   * @param beforeSuite annotation instance
    */
   public void addBeforeSuiteMethod (Method method, BeforeSuite beforeSuite) {
 
@@ -100,8 +100,8 @@ public class AnnotationDictionary {
   /**
    * Adds an {@link AfterSuite} method to the methodology.
    *
-   * @param method      reflected method
-   * @param afterSuite  annotation instance
+   * @param method     reflected method
+   * @param afterSuite annotation instance
    */
   public void addAfterSuiteMethod (Method method, AfterSuite afterSuite) {
 
@@ -122,8 +122,8 @@ public class AnnotationDictionary {
   /**
    * Adds a {@link BeforeTest} method to the methodology.
    *
-   * @param method      reflected method
-   * @param beforeTest  annotation instance
+   * @param method     reflected method
+   * @param beforeTest annotation instance
    */
   public void addBeforeTestMethod (Method method, BeforeTest beforeTest) {
 
@@ -144,8 +144,8 @@ public class AnnotationDictionary {
   /**
    * Adds an {@link AfterTest} method to the methodology.
    *
-   * @param method     reflected method
-   * @param afterTest  annotation instance
+   * @param method    reflected method
+   * @param afterTest annotation instance
    */
   public void addAfterTestMethod (Method method, AfterTest afterTest) {
 

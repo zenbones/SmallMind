@@ -40,10 +40,10 @@ import org.smallmind.nutsnbolts.util.AnsiColor;
 public class SkippedSleuthEvent extends MessageSleuthEvent {
 
   /**
-   * @param className originating class
+   * @param className  originating class
    * @param methodName originating method
-   * @param elapsed elapsed execution time in milliseconds before skipping
-   * @param message reason for the skip
+   * @param elapsed    elapsed execution time in milliseconds before skipping
+   * @param message    reason for the skip
    */
   public SkippedSleuthEvent (String className, String methodName, long elapsed, String message) {
 

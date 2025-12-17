@@ -40,10 +40,10 @@ import org.smallmind.nutsnbolts.util.AnsiColor;
 public class FatalSleuthEvent extends ThrowableSleuthEvent {
 
   /**
-   * @param className originating class
+   * @param className  originating class
    * @param methodName originating method
-   * @param elapsed elapsed execution time in milliseconds
-   * @param throwable fatal throwable
+   * @param elapsed    elapsed execution time in milliseconds
+   * @param throwable  fatal throwable
    */
   public FatalSleuthEvent (String className, String methodName, long elapsed, Throwable throwable) {
 

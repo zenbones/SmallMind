@@ -43,7 +43,7 @@ public abstract class SleuthEvent {
   private final String methodName;
 
   /**
-   * @param className originating class
+   * @param className  originating class
    * @param methodName originating method
    */
   public SleuthEvent (String className, String methodName) {

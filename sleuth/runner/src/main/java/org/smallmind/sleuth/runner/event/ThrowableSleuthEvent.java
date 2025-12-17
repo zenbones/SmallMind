@@ -42,10 +42,10 @@ public abstract class ThrowableSleuthEvent extends TimedSleuthEvent {
   private final Throwable throwable;
 
   /**
-   * @param className originating class
+   * @param className  originating class
    * @param methodName originating method
-   * @param elapsed elapsed execution time in milliseconds
-   * @param throwable associated throwable
+   * @param elapsed    elapsed execution time in milliseconds
+   * @param throwable  associated throwable
    */
   public ThrowableSleuthEvent (String className, String methodName, long elapsed, Throwable throwable) {
 

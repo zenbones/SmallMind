@@ -54,10 +54,10 @@ public class ExceptionSuppressingLogInitializingBean implements InitializingBean
     suppressedThrowableClassList.addAll(Arrays.asList(suppressedThrowableClasses));
   }
 
-  @Override
   /**
    * Registers the configured suppressed throwable classes with the filter.
    */
+  @Override
   public void afterPropertiesSet () {
 
     ExceptionSuppressingLogFilter.addSuppressedThrowableClasses(suppressedThrowableClassList);

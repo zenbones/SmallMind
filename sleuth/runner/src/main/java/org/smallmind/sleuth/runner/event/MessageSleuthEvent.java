@@ -42,10 +42,10 @@ public abstract class MessageSleuthEvent extends TimedSleuthEvent {
   private final String message;
 
   /**
-   * @param className originating class
+   * @param className  originating class
    * @param methodName originating method
-   * @param elapsed elapsed execution time in milliseconds
-   * @param message descriptive message
+   * @param elapsed    elapsed execution time in milliseconds
+   * @param message    descriptive message
    */
   public MessageSleuthEvent (String className, String methodName, long elapsed, String message) {
 

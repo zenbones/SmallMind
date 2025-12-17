@@ -47,9 +47,9 @@ public class Culprit {
   /**
    * Creates a culprit representation for a failure in the given test location.
    *
-   * @param className fully qualified class name of the test
+   * @param className  fully qualified class name of the test
    * @param methodName method name of the failing test or lifecycle method
-   * @param throwable cause to inspect for matching stack frames
+   * @param throwable  cause to inspect for matching stack frames
    */
   public Culprit (String className, String methodName, Throwable throwable) {
 
@@ -110,7 +110,7 @@ public class Culprit {
     private final StackTraceElement stackTraceElement;
 
     /**
-     * @param throwable throwable that owns the matching frame
+     * @param throwable         throwable that owns the matching frame
      * @param stackTraceElement stack trace element that matches the target class; may be {@code null} if none match
      */
     public Topmost (Throwable throwable, StackTraceElement stackTraceElement) {

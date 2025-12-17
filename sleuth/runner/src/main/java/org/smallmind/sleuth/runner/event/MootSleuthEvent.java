@@ -40,10 +40,10 @@ import org.smallmind.nutsnbolts.util.AnsiColor;
 public class MootSleuthEvent extends ThrowableSleuthEvent {
 
   /**
-   * @param className originating class
+   * @param className  originating class
    * @param methodName originating method
-   * @param elapsed elapsed execution time in milliseconds
-   * @param throwable cause of the moot state
+   * @param elapsed    elapsed execution time in milliseconds
+   * @param throwable  cause of the moot state
    */
   public MootSleuthEvent (String className, String methodName, long elapsed, Throwable throwable) {
 

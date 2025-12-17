@@ -40,9 +40,9 @@ import org.smallmind.nutsnbolts.util.AnsiColor;
 public class SuccessSleuthEvent extends TimedSleuthEvent {
 
   /**
-   * @param className originating class
+   * @param className  originating class
    * @param methodName originating method
-   * @param elapsed elapsed execution time in milliseconds
+   * @param elapsed    elapsed execution time in milliseconds
    */
   public SuccessSleuthEvent (String className, String methodName, long elapsed) {
 

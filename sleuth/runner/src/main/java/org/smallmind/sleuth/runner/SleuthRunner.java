@@ -107,11 +107,11 @@ public class SleuthRunner {
   /**
    * Executes the supplied classes as test suites.
    *
-   * @param groups       optional list of groups to include; {@code null} runs suites honoring annotation defaults, empty array means all
-   * @param threadCount  number of threads to permit; values <= 0 map to unbounded
-   * @param stopOnError  whether to halt on unexpected errors
+   * @param groups        optional list of groups to include; {@code null} runs suites honoring annotation defaults, empty array means all
+   * @param threadCount   number of threads to permit; values <= 0 map to unbounded
+   * @param stopOnError   whether to halt on unexpected errors
    * @param stopOnFailure whether to halt on assertion failures
-   * @param classes      classes to execute
+   * @param classes       classes to execute
    */
   public void execute (String[] groups, int threadCount, boolean stopOnError, boolean stopOnFailure, Class<?>... classes) {
 

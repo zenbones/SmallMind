@@ -42,9 +42,9 @@ public abstract class TimedSleuthEvent extends SleuthEvent {
   private final long elapsed;
 
   /**
-   * @param className originating class
+   * @param className  originating class
    * @param methodName originating method
-   * @param elapsed elapsed execution time in milliseconds
+   * @param elapsed    elapsed execution time in milliseconds
    */
   public TimedSleuthEvent (String className, String methodName, long elapsed) {
 

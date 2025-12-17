@@ -40,7 +40,7 @@ import org.smallmind.nutsnbolts.util.AnsiColor;
 public class CancelledSleuthEvent extends SleuthEvent {
 
   /**
-   * @param className originating class
+   * @param className  originating class
    * @param methodName originating method
    */
   public CancelledSleuthEvent (String className, String methodName) {
