@@ -42,6 +42,12 @@ import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.nutsnbolts.util.ComponentStatus;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Coordinates a set of worker instances, handling lifecycle and queuing of work items.
+ *
+ * @param <W> concrete worker type that will process items
+ * @param <T> type of work accepted by the queue
+ */
 public class WorkManager<W extends Worker<T>, T> {
 
   private final AtomicReference<ComponentStatus> statusRef = new AtomicReference<>(ComponentStatus.STOPPED);
@@ -50,11 +56,24 @@ public class WorkManager<W extends Worker<T>, T> {
   private final int concurrencyLimit;
   private W[] workers;
 
+  /**
+   * Creates a manager with a default transferring work queue.
+   *
+   * @param workerClass      class of the worker to instantiate
+   * @param concurrencyLimit maximum number of concurrently running workers
+   */
   public WorkManager (Class<W> workerClass, int concurrencyLimit) {
 
     this(workerClass, concurrencyLimit, new TransferringWorkQueue<>());
   }
 
+  /**
+   * Creates a manager with the supplied queue implementation.
+   *
+   * @param workerClass      class of the worker to instantiate
+   * @param concurrencyLimit maximum number of concurrently running workers
+   * @param workQueue        queue used to hand off work items to workers
+   */
   public WorkManager (Class<W> workerClass, int concurrencyLimit, WorkQueue<T> workQueue) {
 
     this.workerClass = workerClass;
@@ -62,11 +81,22 @@ public class WorkManager<W extends Worker<T>, T> {
     this.workQueue = workQueue;
   }
 
+  /**
+   * Returns the configured concurrency cap for this manager.
+   *
+   * @return maximum worker count
+   */
   public int getConcurrencyLimit () {
 
     return concurrencyLimit;
   }
 
+  /**
+   * Starts the worker pool if not already running.
+   *
+   * @param workerFactory factory used to construct worker instances
+   * @throws InterruptedException if the thread is interrupted while waiting on startup
+   */
   public void startUp (WorkerFactory<W, T> workerFactory)
     throws InterruptedException {
 
@@ -89,6 +119,12 @@ public class WorkManager<W extends Worker<T>, T> {
     }
   }
 
+  /**
+   * Enqueues work for processing, blocking until a worker accepts it.
+   *
+   * @param work the item to process
+   * @throws Throwable if the manager is not started or enqueueing fails
+   */
   public void execute (final T work)
     throws Throwable {
 
@@ -106,6 +142,11 @@ public class WorkManager<W extends Worker<T>, T> {
     });
   }
 
+  /**
+   * Stops all workers and transitions the manager to the stopped state.
+   *
+   * @throws InterruptedException if interrupted while waiting for stop completion
+   */
   public void shutDown ()
     throws InterruptedException {
 

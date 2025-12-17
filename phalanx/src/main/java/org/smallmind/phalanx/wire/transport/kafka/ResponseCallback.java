@@ -42,15 +42,28 @@ import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.phalanx.wire.transport.ClaxonTag;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Callback invoked for inbound invocation requests to trigger execution.
+ */
 public class ResponseCallback implements Consumer<ConsumerRecord<Long, byte[]>> {
 
   private final KafkaResponseTransport transport;
 
+  /**
+   * Creates a callback that forwards incoming requests to the response transport.
+   *
+   * @param transport response transport used to execute incoming requests.
+   */
   public ResponseCallback (KafkaResponseTransport transport) {
 
     this.transport = transport;
   }
 
+  /**
+   * Logs transit timing and forwards the record to the response transport for execution.
+   *
+   * @param record the Kafka record containing an invocation request.
+   */
   @Override
   public void accept (ConsumerRecord<Long, byte[]> record) {
 

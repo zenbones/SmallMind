@@ -44,12 +44,23 @@ import org.smallmind.phalanx.wire.transport.WireInvocationCircuit;
 import org.smallmind.phalanx.worker.WorkQueue;
 import org.smallmind.phalanx.worker.Worker;
 
+/**
+ * Worker that decodes invocation signals consumed from Kafka and forwards them through the invocation circuit.
+ */
 public class InvocationWorker extends Worker<ConsumerRecord<Long, byte[]>> {
 
   private final ResponseTransmitter responseTransmitter;
   private final WireInvocationCircuit invocationCircuit;
   private final SignalCodec signalCodec;
 
+  /**
+   * Creates a worker capable of handling a single Kafka record at a time.
+   *
+   * @param workQueue           queue providing Kafka records to process.
+   * @param responseTransmitter transport used to publish responses.
+   * @param invocationCircuit   circuit responsible for invoking the target service.
+   * @param signalCodec         codec used to encode and decode signals.
+   */
   public InvocationWorker (WorkQueue<ConsumerRecord<Long, byte[]>> workQueue, ResponseTransmitter responseTransmitter, WireInvocationCircuit invocationCircuit, SignalCodec signalCodec) {
 
     super(workQueue);
@@ -59,6 +70,12 @@ public class InvocationWorker extends Worker<ConsumerRecord<Long, byte[]>> {
     this.signalCodec = signalCodec;
   }
 
+  /**
+   * Decodes the invocation signal contained in the record and invokes the target method.
+   *
+   * @param record the Kafka record containing an invocation message.
+   * @throws Throwable if the downstream invocation or decoding fails.
+   */
   @Override
   public void engageWork (final ConsumerRecord<Long, byte[]> record)
     throws Throwable {
@@ -70,6 +87,9 @@ public class InvocationWorker extends Worker<ConsumerRecord<Long, byte[]>> {
     );
   }
 
+  /**
+   * Closes any resources owned by the worker. No-op because resources are managed externally.
+   */
   @Override
   public void close () {
 

@@ -32,17 +32,45 @@
  */
 package org.smallmind.phalanx.wire;
 
+/**
+ * Adapter that marshals between transported values and business objects.
+ *
+ * @param <V> transport representation type
+ * @param <B> business object type
+ */
 public abstract class WireAdapter<V, B> {
 
+  /**
+   * Protected constructor to limit instantiation to subclasses.
+   */
   protected WireAdapter () {
 
   }
 
+  /**
+   * Returns the transport value type this adapter handles.
+   *
+   * @return class of the serialized form
+   */
   public abstract Class<V> getValueType ();
 
+  /**
+   * Converts the transported value into the business object.
+   *
+   * @param obj serialized value
+   * @return unmarshalled business object
+   * @throws Exception if conversion fails
+   */
   public abstract B unmarshal (V obj)
     throws Exception;
 
+  /**
+   * Converts the business object into the transport value representation.
+   *
+   * @param obj business object to marshal
+   * @return serialized value
+   * @throws Exception if conversion fails
+   */
   public abstract V marshal (B obj)
     throws Exception;
 }

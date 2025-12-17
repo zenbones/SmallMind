@@ -42,6 +42,9 @@ import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @XmlRootElement(name = "invocation", namespace = "http://org.smallmind/phalanx/wire")
 @XmlAccessorType(XmlAccessType.PROPERTY)
+/**
+ * Signal carrying a request invocation, including routing information, arguments, and contexts.
+ */
 public class InvocationSignal implements Signal {
 
   private Route route;
@@ -49,10 +52,21 @@ public class InvocationSignal implements Signal {
   private WireContext[] contexts;
   private boolean inOnly;
 
+  /**
+   * Default constructor for JAXB.
+   */
   public InvocationSignal () {
 
   }
 
+  /**
+   * Creates an invocation signal populated with route, arguments, and contexts.
+   *
+   * @param inOnly    whether the invocation is one-way
+   * @param route     destination route
+   * @param arguments argument map keyed by name
+   * @param contexts  optional wire contexts to propagate
+   */
   public InvocationSignal (boolean inOnly, Route route, Map<String, Object> arguments, WireContext... contexts) {
 
     this.inOnly = inOnly;
@@ -61,28 +75,53 @@ public class InvocationSignal implements Signal {
     this.contexts = contexts;
   }
 
+  /**
+   * Indicates whether the invocation expects no response.
+   *
+   * @return {@code true} for one-way calls
+   */
   @XmlElement(name = "inOnly")
   public boolean isInOnly () {
 
     return inOnly;
   }
 
+  /**
+   * Sets the one-way flag for the invocation.
+   *
+   * @param inOnly {@code true} when no response is expected
+   */
   public void setInOnly (boolean inOnly) {
 
     this.inOnly = inOnly;
   }
 
+  /**
+   * Returns the target route.
+   *
+   * @return route information
+   */
   @XmlElementRef
   public Route getRoute () {
 
     return route;
   }
 
+  /**
+   * Updates the target route for the signal.
+   *
+   * @param route new route
+   */
   public void setRoute (Route route) {
 
     this.route = route;
   }
 
+  /**
+   * Returns the propagated wire contexts.
+   *
+   * @return array of contexts or {@code null}
+   */
   @XmlJavaTypeAdapter(WireContextXmlAdapter.class)
   @XmlElement(name = "contexts")
   public WireContext[] getContexts () {
@@ -90,17 +129,32 @@ public class InvocationSignal implements Signal {
     return contexts;
   }
 
+  /**
+   * Sets the wire contexts associated with the invocation.
+   *
+   * @param contexts contexts to attach
+   */
   public void setContexts (WireContext[] contexts) {
 
     this.contexts = contexts;
   }
 
+  /**
+   * Returns the argument payload keyed by name.
+   *
+   * @return argument map
+   */
   @XmlElement(name = "arguments")
   public Map<String, Object> getArguments () {
 
     return arguments;
   }
 
+  /**
+   * Sets the argument payload keyed by name.
+   *
+   * @param arguments argument map
+   */
   public void setArguments (Map<String, Object> arguments) {
 
     this.arguments = arguments;

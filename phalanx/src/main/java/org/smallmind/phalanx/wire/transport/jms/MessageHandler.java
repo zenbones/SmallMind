@@ -36,11 +36,26 @@ import jakarta.jms.BytesMessage;
 import jakarta.jms.JMSException;
 import jakarta.jms.Message;
 
+/**
+ * Handles creation and sending of JMS messages.
+ */
 public interface MessageHandler {
 
+  /**
+   * Creates a bytes message ready for population.
+   *
+   * @return new {@link BytesMessage}
+   * @throws JMSException if creation fails
+   */
   BytesMessage createMessage ()
     throws JMSException;
 
+  /**
+   * Sends the provided message.
+   *
+   * @param message message to send
+   * @throws JMSException if sending fails
+   */
   void send (Message message)
     throws JMSException;
 }

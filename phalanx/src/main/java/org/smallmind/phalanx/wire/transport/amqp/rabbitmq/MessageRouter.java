@@ -44,6 +44,9 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Base class for routing AMQP messages, handling connection/channel lifecycle, binding queues, and publishing.
+ */
 public abstract class MessageRouter {
 
   private final AtomicBoolean closed = new AtomicBoolean(false);
@@ -54,6 +57,12 @@ public abstract class MessageRouter {
   private final PublisherConfirmationHandler publisherConfirmationHandler;
   private final String prefix;
 
+  /**
+   * @param connector                    provider for AMQP connections.
+   * @param prefix                       prefix applied to exchange/queue names.
+   * @param nameConfiguration            configuration of exchange/queue suffixes.
+   * @param publisherConfirmationHandler handler for publisher confirms, or {@code null} if not used.
+   */
   public MessageRouter (RabbitMQConnector connector, String prefix, NameConfiguration nameConfiguration, PublisherConfirmationHandler publisherConfirmationHandler) {
 
     this.connector = connector;
@@ -68,42 +77,73 @@ public abstract class MessageRouter {
   public abstract void installConsumer ()
     throws IOException;
 
+  /**
+   * Initializes the router by creating channel, exchanges, queues, and consumers.
+   *
+   * @throws IOException      if AMQP operations fail.
+   * @throws TimeoutException if creating a channel times out.
+   */
   public void initialize ()
     throws IOException, TimeoutException {
 
     ensureChannel(0);
   }
 
+  /**
+   * @return fully qualified request exchange name.
+   */
   public String getRequestExchangeName () {
 
     return prefix + "-" + nameConfiguration.getRequestExchange();
   }
 
+  /**
+   * @return fully qualified response exchange name.
+   */
   public String getResponseExchangeName () {
 
     return prefix + "-" + nameConfiguration.getResponseExchange();
   }
 
+  /**
+   * @return fully qualified response queue name.
+   */
   public String getResponseQueueName () {
 
     return prefix + "-" + nameConfiguration.getResponseQueue();
   }
 
+  /**
+   * @return fully qualified shout queue name.
+   */
   public String getShoutQueueName () {
 
     return prefix + "-" + nameConfiguration.getShoutQueue();
   }
 
+  /**
+   * @return fully qualified talk queue name.
+   */
   public String getTalkQueueName () {
 
     return prefix + "-" + nameConfiguration.getTalkQueue();
   }
 
+  /**
+   * @return fully qualified whisper queue name.
+   */
   public String getWhisperQueueName () {
 
     return prefix + "-" + nameConfiguration.getWhisperQueue();
   }
 
+  /**
+   * Ensures there is an open channel/connection pair, replacing it if needed.
+   *
+   * @param stamp expected version stamp for the current channel.
+   * @throws IOException      if AMQP operations fail.
+   * @throws TimeoutException if channel creation times out.
+   */
   private void ensureChannel (int stamp)
     throws IOException, TimeoutException {
 
@@ -159,6 +199,12 @@ public abstract class MessageRouter {
     }
   }
 
+  /**
+   * Runs a channel operation while holding the channel lock to prevent concurrent modification.
+   *
+   * @param channelOperation operation to execute with the current channel.
+   * @throws IOException if the channel operation throws.
+   */
   public void operate (ChannelOperation channelOperation)
     throws IOException {
 
@@ -168,6 +214,16 @@ public abstract class MessageRouter {
     }
   }
 
+  /**
+   * Publishes a message with the provided routing key, retrying if the channel closes.
+   *
+   * @param routingKey   binding key for the target queue.
+   * @param exchangeName exchange to publish to.
+   * @param properties   message properties.
+   * @param body         message payload.
+   * @throws IOException      if publish fails.
+   * @throws TimeoutException if establishing a new channel times out.
+   */
   public void send (String routingKey, String exchangeName, AMQP.BasicProperties properties, byte[] body)
     throws IOException, TimeoutException {
 
@@ -190,6 +246,12 @@ public abstract class MessageRouter {
     }
   }
 
+  /**
+   * Extracts the timestamp property as milliseconds since epoch, or {@link Long#MAX_VALUE} when absent.
+   *
+   * @param properties message properties to examine.
+   * @return milliseconds since epoch of the timestamp header, or {@link Long#MAX_VALUE} if missing.
+   */
   public long getTimestamp (AMQP.BasicProperties properties) {
 
     Date date;
@@ -202,6 +264,12 @@ public abstract class MessageRouter {
     return Long.MAX_VALUE;
   }
 
+  /**
+   * Closes the channel and connection if open, preventing further routing.
+   *
+   * @throws IOException      if closing the connection fails.
+   * @throws TimeoutException if closing the channel times out.
+   */
   public void close ()
     throws IOException, TimeoutException {
 
@@ -222,22 +290,37 @@ public abstract class MessageRouter {
     private final Connection connection;
     private final Channel channel;
 
+    /**
+     * @param connection the owning AMQP connection.
+     * @param channel    channel created from the connection.
+     */
     public ConnectionAndChannel (Connection connection, Channel channel) {
 
       this.connection = connection;
       this.channel = channel;
     }
 
+    /**
+     * @return the owning AMQP connection.
+     */
     public Connection getConnection () {
 
       return connection;
     }
 
+    /**
+     * @return the channel created from the connection.
+     */
     public Channel getChannel () {
 
       return channel;
     }
 
+    /**
+     * Closes the underlying connection (and channel with it).
+     *
+     * @throws IOException if the connection cannot be closed cleanly.
+     */
     public void close ()
       throws IOException {
 

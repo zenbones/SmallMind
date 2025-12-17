@@ -35,6 +35,9 @@ package org.smallmind.phalanx.wire.transport.jms;
 import jakarta.jms.JMSException;
 import jakarta.jms.MessageProducer;
 
+/**
+ * Configures per-message settings applied to JMS producers.
+ */
 public class MessagePolicy {
 
   private AcknowledgeMode acknowledgeMode = JmsAcknowledgeMode.AUTO_ACKNOWLEDGE;
@@ -44,41 +47,82 @@ public class MessagePolicy {
   private int timeToLiveSeconds = 0;
   private int priority = 4;
 
+  /**
+   * Returns the acknowledge mode to use when creating sessions.
+   *
+   * @return acknowledge mode
+   */
   public AcknowledgeMode getAcknowledgeMode () {
 
     return acknowledgeMode;
   }
 
+  /**
+   * Sets the acknowledge mode to use when creating sessions.
+   *
+   * @param acknowledgeMode acknowledge strategy
+   */
   public void setAcknowledgeMode (AcknowledgeMode acknowledgeMode) {
 
     this.acknowledgeMode = acknowledgeMode;
   }
 
+  /**
+   * Sets the delivery mode for produced messages.
+   *
+   * @param deliveryMode JMS delivery mode
+   */
   public void setDeliveryMode (DeliveryMode deliveryMode) {
 
     this.deliveryMode = deliveryMode;
   }
 
+  /**
+   * Enables or disables JMS message ID generation.
+   *
+   * @param disableMessageID {@code true} to disable IDs
+   */
   public void setDisableMessageID (boolean disableMessageID) {
 
     this.disableMessageID = disableMessageID;
   }
 
+  /**
+   * Enables or disables JMS timestamp generation.
+   *
+   * @param disableMessageTimestamp {@code true} to disable timestamps
+   */
   public void setDisableMessageTimestamp (boolean disableMessageTimestamp) {
 
     this.disableMessageTimestamp = disableMessageTimestamp;
   }
 
+  /**
+   * Sets message time-to-live in seconds.
+   *
+   * @param timeToLiveSeconds TTL in seconds
+   */
   public void setTimeToLiveSeconds (int timeToLiveSeconds) {
 
     this.timeToLiveSeconds = timeToLiveSeconds;
   }
 
+  /**
+   * Sets message priority.
+   *
+   * @param priority JMS priority 0-9
+   */
   public void setPriority (int priority) {
 
     this.priority = priority;
   }
 
+  /**
+   * Applies the configured policy to a JMS {@link MessageProducer}.
+   *
+   * @param producer producer to configure
+   * @throws JMSException if the producer cannot be updated
+   */
   public void apply (MessageProducer producer)
     throws JMSException {
 

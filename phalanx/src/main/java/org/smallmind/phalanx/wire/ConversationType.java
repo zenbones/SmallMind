@@ -32,6 +32,9 @@
  */
 package org.smallmind.phalanx.wire;
 
+/**
+ * Enumerates whether a conversation expects a response or is fire-and-forget.
+ */
 public enum ConversationType {
 
   IN_OUT, IN_ONLY

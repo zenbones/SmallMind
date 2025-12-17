@@ -32,17 +32,30 @@
  */
 package org.smallmind.phalanx.wire;
 
+/**
+ * Defines the routing style for a request voice.
+ */
 public enum VocalMode {
 
   WHISPER("whisper"), TALK("talk"), SHOUT("shout");
 
   private final String name;
 
+  /**
+   * Creates a vocal mode with a human-readable name.
+   *
+   * @param name display name
+   */
   VocalMode (String name) {
 
     this.name = name;
   }
 
+  /**
+   * Returns the human-readable name of the mode.
+   *
+   * @return mode name
+   */
   public String getName () {
 
     return name;

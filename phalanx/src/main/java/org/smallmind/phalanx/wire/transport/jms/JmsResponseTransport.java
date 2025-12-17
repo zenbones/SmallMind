@@ -59,6 +59,9 @@ import org.smallmind.phalanx.worker.WorkManager;
 import org.smallmind.phalanx.worker.WorkQueue;
 import org.smallmind.phalanx.worker.WorkerFactory;
 
+/**
+ * JMS response transport that consumes invocation requests and sends results back over topics.
+ */
 public class JmsResponseTransport extends WorkManager<InvocationWorker, Message> implements WorkerFactory<InvocationWorker, Message>, ResponseTransport, ResponseTransmitter {
 
   private final AtomicBoolean closed = new AtomicBoolean(false);
@@ -73,6 +76,21 @@ public class JmsResponseTransport extends WorkManager<InvocationWorker, Message>
   private final String instanceId = SnowflakeId.newInstance().generateDottedString();
   private final int maximumMessageLength;
 
+  /**
+   * Constructs the response transport, wiring request listeners for shout/talk/whisper patterns and response publishers.
+   *
+   * @param routingFactories     factories supplying JMS destinations and connection factories
+   * @param messagePolicy        producer configuration
+   * @param reconnectionPolicy   reconnection behavior
+   * @param signalCodec          codec used to decode requests and encode results
+   * @param serviceGroup         service group identifier to listen on
+   * @param clusterSize          number of listener/connection sets to create
+   * @param concurrencyLimit     worker concurrency limit
+   * @param maximumMessageLength maximum size of inbound messages to buffer
+   * @throws InterruptedException if startup is interrupted
+   * @throws JMSException         if JMS resources cannot be created
+   * @throws TransportException   if initialization fails
+   */
   public JmsResponseTransport (RoutingFactories routingFactories, MessagePolicy messagePolicy, ReconnectionPolicy reconnectionPolicy, SignalCodec signalCodec, String serviceGroup, int clusterSize, int concurrencyLimit, int maximumMessageLength)
     throws InterruptedException, JMSException, TransportException {
 
@@ -112,12 +130,18 @@ public class JmsResponseTransport extends WorkManager<InvocationWorker, Message>
     startUp(this);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String getInstanceId () {
 
     return instanceId;
   }
 
+  /**
+   * Registers a service implementation with the invocation circuit.
+   */
   @Override
   public String register (Class<?> serviceInterface, WiredService targetService)
     throws NoSuchMethodException, ServiceDefinitionException {
@@ -127,18 +151,27 @@ public class JmsResponseTransport extends WorkManager<InvocationWorker, Message>
     return instanceId;
   }
 
+  /**
+   * Creates workers that pull JMS messages and execute invocations.
+   */
   @Override
   public InvocationWorker createWorker (WorkQueue<Message> workQueue) {
 
     return new InvocationWorker(workQueue, this, invocationCircuit, signalCodec, maximumMessageLength);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public TransportState getState () {
 
     return transportStateRef.get();
   }
 
+  /**
+   * Resumes consumption from all request listeners.
+   */
   @Override
   public void play ()
     throws JMSException {
@@ -158,6 +191,9 @@ public class JmsResponseTransport extends WorkManager<InvocationWorker, Message>
     }
   }
 
+  /**
+   * Pauses consumption from all request listeners.
+   */
   @Override
   public void pause ()
     throws JMSException {
@@ -177,6 +213,9 @@ public class JmsResponseTransport extends WorkManager<InvocationWorker, Message>
     }
   }
 
+  /**
+   * Sends a result signal back to the caller over the response topic.
+   */
   @Override
   public void transmit (String callerId, String correlationId, boolean error, String nativeType, Object result)
     throws Throwable {
@@ -191,6 +230,9 @@ public class JmsResponseTransport extends WorkManager<InvocationWorker, Message>
     responseQueue.add(topicOperator);
   }
 
+  /**
+   * Builds a JMS response message with the encoded result signal and correlation headers.
+   */
   private Message constructMessage (final String callerId, final String correlationId, final TopicOperator topicOperator, final ResultSignal resultSignal)
     throws Throwable {
 
@@ -211,6 +253,9 @@ public class JmsResponseTransport extends WorkManager<InvocationWorker, Message>
     });
   }
 
+  /**
+   * Stops listeners, closes resources, and shuts down worker threads.
+   */
   @Override
   public void close ()
     throws JMSException, InterruptedException {

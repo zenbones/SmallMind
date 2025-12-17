@@ -42,10 +42,23 @@ import org.smallmind.phalanx.wire.signal.InvocationSignal;
 import org.smallmind.phalanx.wire.signal.SignalCodec;
 import org.smallmind.phalanx.wire.transport.ArgumentInfo;
 
+/**
+ * Utility that converts invocation arguments between their wire representations and local types.
+ */
 public class ArgumentRectifier {
 
   private static final ConcurrentHashMap<Class<? extends WireAdapter<?, ?>>, WireAdapter<?, ?>> ADAPTER_INSTANCE_MAP = new ConcurrentHashMap<>();
 
+  /**
+   * Lazily instantiates or retrieves a cached adapter for the given class.
+   *
+   * @param adapterClass adapter implementation class
+   * @return adapter instance
+   * @throws NoSuchMethodException     if a default constructor is missing
+   * @throws IllegalAccessException    if construction is not accessible
+   * @throws InvocationTargetException if construction throws an exception
+   * @throws InstantiationException    if the adapter cannot be instantiated
+   */
   private static WireAdapter<?, ?> getAdapter (Class<? extends WireAdapter<?, ?>> adapterClass)
     throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
 
@@ -62,18 +75,42 @@ public class ArgumentRectifier {
     return adapter;
   }
 
+  /**
+   * Marshals an object using the provided adapter.
+   *
+   * @param adapter  adapter to apply
+   * @param boundObj object to marshal
+   * @return serialized representation
+   * @throws Exception if the adapter fails to marshal the value
+   */
   private static Object marshal (WireAdapter adapter, Object boundObj)
     throws Exception {
 
     return adapter.marshal(boundObj);
   }
 
+  /**
+   * Unmarshals an object using the provided adapter.
+   *
+   * @param adapter  adapter to apply
+   * @param valueObj serialized value
+   * @return reconstructed business object
+   * @throws Exception if unmarshalling fails
+   */
   private static Object unmarshal (WireAdapter adapter, Object valueObj)
     throws Exception {
 
     return adapter.unmarshal(valueObj);
   }
 
+  /**
+   * Builds an argument map keyed by argument name while enforcing serializability and wire adapters.
+   *
+   * @param argumentNames names derived from the service definition
+   * @param args          invocation argument values
+   * @return map of argument names to serialized values or {@code null} when no arguments exist
+   * @throws TransportException if an argument cannot be serialized or mapped
+   */
   public static HashMap<String, Object> induceMap (String[] argumentNames, Object[] args)
     throws TransportException {
 
@@ -117,6 +154,16 @@ public class ArgumentRectifier {
     }
   }
 
+  /**
+   * Reconstructs the argument array for invocation from a signal payload.
+   *
+   * @param signalCodec        codec used to extract values from the signal
+   * @param invocationSignal   incoming invocation signal
+   * @param invocationFunction function definition for the call
+   * @param methodology        metadata mapping argument names to positions and types
+   * @return array of arguments aligned to the target method signature
+   * @throws TransportException if arguments cannot be matched or unmarshalled
+   */
   public static Object[] constructArray (SignalCodec signalCodec, InvocationSignal invocationSignal, Function invocationFunction, Methodology methodology)
     throws TransportException {
 

@@ -32,8 +32,17 @@
  */
 package org.smallmind.phalanx.wire;
 
+/**
+ * Indicates invalid or incomplete metadata while defining a wire service.
+ */
 public class ServiceDefinitionException extends TransportException {
 
+  /**
+   * Creates the exception with a formatted description.
+   *
+   * @param message format string describing the definition issue
+   * @param args    arguments applied to the format string
+   */
   public ServiceDefinitionException (String message, Object... args) {
 
     super(message, args);

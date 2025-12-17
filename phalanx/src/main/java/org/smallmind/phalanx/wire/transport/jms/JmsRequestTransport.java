@@ -58,6 +58,9 @@ import org.smallmind.phalanx.wire.transport.AbstractRequestTransport;
 import org.smallmind.phalanx.wire.transport.ClaxonTag;
 import org.smallmind.phalanx.wire.transport.WireProperty;
 
+/**
+ * JMS implementation of {@link org.smallmind.phalanx.wire.transport.RequestTransport} supporting talk, whisper, and shout semantics.
+ */
 public class JmsRequestTransport extends AbstractRequestTransport {
 
   private final AtomicBoolean closed = new AtomicBoolean(false);
@@ -69,6 +72,20 @@ public class JmsRequestTransport extends AbstractRequestTransport {
   private final ResponseListener[] responseListeners;
   private final String callerId = SnowflakeId.newInstance().generateDottedString();
 
+  /**
+   * Builds a JMS request transport with clustered request/response resources.
+   *
+   * @param routingFactories      factories supplying JMS destinations and connection factories
+   * @param messagePolicy         producer configuration
+   * @param reconnectionPolicy    reconnection behavior for JMS connections
+   * @param signalCodec           codec used to encode requests and decode responses
+   * @param clusterSize           number of connection sets to create
+   * @param concurrencyLimit      maximum concurrent message handlers per queue/topic
+   * @param maximumMessageLength  maximum response size to buffer
+   * @param defaultTimeoutSeconds fallback timeout for request/response calls
+   * @throws JMSException       if JMS resources cannot be created
+   * @throws TransportException if transport setup fails
+   */
   public JmsRequestTransport (RoutingFactories routingFactories, MessagePolicy messagePolicy, ReconnectionPolicy reconnectionPolicy, SignalCodec signalCodec, int clusterSize, int concurrencyLimit, int maximumMessageLength, long defaultTimeoutSeconds)
     throws JMSException, TransportException {
 
@@ -109,12 +126,18 @@ public class JmsRequestTransport extends AbstractRequestTransport {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String getCallerId () {
 
     return callerId;
   }
 
+  /**
+   * Encodes and transmits an invocation via queue (talk) or topic (whisper/shout), returning results when applicable.
+   */
   @Override
   public Object transmit (Voice<?, ?> voice, Route route, Map<String, Object> arguments, WireContext... contexts)
     throws Throwable {
@@ -139,6 +162,9 @@ public class JmsRequestTransport extends AbstractRequestTransport {
     }
   }
 
+  /**
+   * Borrows a message handler from the supplied pool, waiting until available or transport is closed.
+   */
   private MessageHandler acquireMessageHandler (final LinkedBlockingQueue<MessageHandler> messageHandlerQueue)
     throws Throwable {
 
@@ -158,6 +184,9 @@ public class JmsRequestTransport extends AbstractRequestTransport {
     });
   }
 
+  /**
+   * Constructs and populates a JMS message for the invocation.
+   */
   private Message constructMessage (final MessageHandler messageHandler, final boolean inOnly, final String serviceGroup, final String instanceId, final Route route, final Map<String, Object> arguments, final WireContext... contexts)
     throws Throwable {
 
@@ -185,6 +214,9 @@ public class JmsRequestTransport extends AbstractRequestTransport {
     });
   }
 
+  /**
+   * Closes all JMS resources and listeners.
+   */
   @Override
   public void close ()
     throws Exception {

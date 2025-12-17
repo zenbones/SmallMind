@@ -32,6 +32,9 @@
  */
 package org.smallmind.phalanx.wire.transport.jms.spring;
 
+/**
+ * Spring reference for a JMS connection factory.
+ */
 public class ConnectionFactoryReference extends ManagedObjectReference {
 
 }

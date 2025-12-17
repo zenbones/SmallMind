@@ -35,20 +35,36 @@ package org.smallmind.phalanx.worker;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * {@link WorkQueue} implementation backed by a {@link LinkedBlockingQueue}.
+ *
+ * @param <E> type of work items stored
+ */
 public class BlockingWorkQueue<E> implements WorkQueue<E> {
 
   private final LinkedBlockingQueue<E> linkedBlockingQueue;
 
+  /**
+   * Builds an unbounded blocking queue.
+   */
   public BlockingWorkQueue () {
 
     linkedBlockingQueue = new LinkedBlockingQueue<>();
   }
 
+  /**
+   * Builds a bounded blocking queue with the given capacity.
+   *
+   * @param capacity maximum number of elements allowed in the queue
+   */
   public BlockingWorkQueue (int capacity) {
 
     linkedBlockingQueue = new LinkedBlockingQueue<>(capacity);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean offer (E e, long timeout, TimeUnit unit)
     throws InterruptedException {
@@ -56,6 +72,9 @@ public class BlockingWorkQueue<E> implements WorkQueue<E> {
     return linkedBlockingQueue.offer(e, timeout, unit);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public E poll (long timeout, TimeUnit unit)
     throws InterruptedException {

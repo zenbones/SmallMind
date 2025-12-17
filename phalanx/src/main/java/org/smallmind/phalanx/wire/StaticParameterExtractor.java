@@ -36,15 +36,28 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import org.smallmind.phalanx.wire.signal.WireContext;
 
+/**
+ * Simple {@link ParameterExtractor} that always returns a constant value.
+ *
+ * @param <T> extracted parameter type
+ */
 public class StaticParameterExtractor<T> implements ParameterExtractor<T> {
 
   private final T parameter;
 
+  /**
+   * Creates the extractor with the provided static value.
+   *
+   * @param parameter value to return for every extraction
+   */
   public StaticParameterExtractor (T parameter) {
 
     this.parameter = parameter;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public T getParameter (Method method, HashMap<String, Object> argumentMap, WireContext... wireContexts)
     throws MissingInstanceIdException {

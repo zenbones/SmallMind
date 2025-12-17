@@ -32,6 +32,9 @@
  */
 package org.smallmind.phalanx.wire.transport.amqp.rabbitmq;
 
+/**
+ * Holds queue and exchange names for RabbitMQ transports.
+ */
 public class NameConfiguration {
 
   private String requestExchange = "requestExchange";
@@ -41,61 +44,97 @@ public class NameConfiguration {
   private String talkQueue = "talkQueue";
   private String whisperQueue = "whisperQueue";
 
+  /**
+   * @return name of the request exchange.
+   */
   public String getRequestExchange () {
 
     return requestExchange;
   }
 
+  /**
+   * @param requestExchange name of the request exchange.
+   */
   public void setRequestExchange (String requestExchange) {
 
     this.requestExchange = requestExchange;
   }
 
+  /**
+   * @return name of the response exchange.
+   */
   public String getResponseExchange () {
 
     return responseExchange;
   }
 
+  /**
+   * @param responseExchange name of the response exchange.
+   */
   public void setResponseExchange (String responseExchange) {
 
     this.responseExchange = responseExchange;
   }
 
+  /**
+   * @return name of the response queue.
+   */
   public String getResponseQueue () {
 
     return responseQueue;
   }
 
+  /**
+   * @param responseQueue name of the response queue.
+   */
   public void setResponseQueue (String responseQueue) {
 
     this.responseQueue = responseQueue;
   }
 
+  /**
+   * @return name of the shout queue.
+   */
   public String getShoutQueue () {
 
     return shoutQueue;
   }
 
+  /**
+   * @param shoutQueue name of the shout queue.
+   */
   public void setShoutQueue (String shoutQueue) {
 
     this.shoutQueue = shoutQueue;
   }
 
+  /**
+   * @return name of the talk queue.
+   */
   public String getTalkQueue () {
 
     return talkQueue;
   }
 
+  /**
+   * @param talkQueue name of the talk queue.
+   */
   public void setTalkQueue (String talkQueue) {
 
     this.talkQueue = talkQueue;
   }
 
+  /**
+   * @return name of the whisper queue.
+   */
   public String getWhisperQueue () {
 
     return whisperQueue;
   }
 
+  /**
+   * @param whisperQueue name of the whisper queue.
+   */
   public void setWhisperQueue (String whisperQueue) {
 
     this.whisperQueue = whisperQueue;

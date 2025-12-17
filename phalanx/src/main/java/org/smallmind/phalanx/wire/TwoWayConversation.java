@@ -32,20 +32,34 @@
  */
 package org.smallmind.phalanx.wire;
 
+/**
+ * Conversation describing a request/response interaction with an optional timeout override.
+ */
 public class TwoWayConversation implements Conversation<Long> {
 
   Long timeout;
 
+  /**
+   * Creates a two-way conversation with no custom timeout.
+   */
   public TwoWayConversation () {
 
     this(0L);
   }
 
+  /**
+   * Creates a two-way conversation with the supplied timeout.
+   *
+   * @param timeout timeout in seconds to apply when greater than zero
+   */
   public TwoWayConversation (Long timeout) {
 
     this.timeout = timeout;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public ConversationType getConversationType () {
 
@@ -53,6 +67,10 @@ public class TwoWayConversation implements Conversation<Long> {
   }
 
   // Any positive value (> 0) will override the default service timeout seconds
+
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Long getTimeout () {
 

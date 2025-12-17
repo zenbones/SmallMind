@@ -37,6 +37,9 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Simple in-memory queue that distributes messages round-robin to registered listeners.
+ */
 public class MockQueue {
 
   private final AtomicBoolean closed = new AtomicBoolean(false);
@@ -46,6 +49,9 @@ public class MockQueue {
   private final ArrayList<MockMessageListener> listenerList = new ArrayList<>();
   private int listenerIndex = 0;
 
+  /**
+   * Starts the worker thread that drives message dispatch.
+   */
   public MockQueue () {
 
     Thread thread = new Thread(worker = new QueueWorker());
@@ -54,6 +60,11 @@ public class MockQueue {
     thread.start();
   }
 
+  /**
+   * Registers a listener to receive messages.
+   *
+   * @param listener listener to add.
+   */
   public void addListener (MockMessageListener listener) {
 
     synchronized (listenerList) {
@@ -61,6 +72,11 @@ public class MockQueue {
     }
   }
 
+  /**
+   * Unregisters a listener.
+   *
+   * @param listener listener to remove.
+   */
   public void removeListener (MockMessageListener listener) {
 
     synchronized (listenerList) {
@@ -68,28 +84,48 @@ public class MockQueue {
     }
   }
 
+  /**
+   * Resumes message dispatch.
+   */
   public void play () {
 
     active.set(true);
   }
 
+  /**
+   * Temporarily pauses message dispatch without clearing the queue.
+   */
   public void pause () {
 
     active.set(false);
   }
 
+  /**
+   * Enqueues a message for delivery.
+   *
+   * @param message message to enqueue.
+   */
   public void send (MockMessage message) {
 
     messageQueue.add(message);
   }
 
+  /**
+   * Worker that drains the queue and dispatches messages to listeners.
+   */
   private class QueueWorker implements Runnable {
 
+    /**
+     * Stops the worker loop.
+     */
     public void close () {
 
       closed.set(true);
     }
 
+    /**
+     * Drains the queue and dispatches messages while active.
+     */
     @Override
     public void run () {
 

@@ -32,16 +32,26 @@
  */
 package org.smallmind.phalanx.wire.transport.amqp.rabbitmq.spring;
 
+/**
+ * Holds host/port information for a RabbitMQ broker.
+ */
 public class RabbitMQServer {
 
   private String host;
   private int port = 5672;
 
+  /**
+   * @param host broker hostname.
+   */
   public RabbitMQServer (String host) {
 
     this.host = host;
   }
 
+  /**
+   * @param host broker hostname.
+   * @param port broker port.
+   */
   public RabbitMQServer (String host, int port) {
 
     this(host);
@@ -49,21 +59,33 @@ public class RabbitMQServer {
     this.port = port;
   }
 
+  /**
+   * @return broker hostname.
+   */
   public String getHost () {
 
     return host;
   }
 
+  /**
+   * @param host broker hostname.
+   */
   public void setHost (String host) {
 
     this.host = host;
   }
 
+  /**
+   * @return broker port.
+   */
   public int getPort () {
 
     return port;
   }
 
+  /**
+   * @param port broker port.
+   */
   public void setPort (int port) {
 
     this.port = port;

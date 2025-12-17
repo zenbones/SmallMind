@@ -38,17 +38,31 @@ import com.rabbitmq.client.Address;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 
+/**
+ * Creates RabbitMQ connections using a preconfigured {@link ConnectionFactory}.
+ */
 public class RabbitMQConnector {
 
   private final ConnectionFactory connectionFactory;
   private final Address[] addresses;
 
+  /**
+   * @param connectionFactory factory preloaded with connection settings.
+   * @param addresses         target broker addresses for the connection.
+   */
   public RabbitMQConnector (ConnectionFactory connectionFactory, Address... addresses) {
 
     this.connectionFactory = connectionFactory;
     this.addresses = addresses;
   }
 
+  /**
+   * Opens a new RabbitMQ connection.
+   *
+   * @return an open connection to the cluster.
+   * @throws IOException      if the connection cannot be established.
+   * @throws TimeoutException if the connection attempt times out.
+   */
   public Connection getConnection ()
     throws IOException, TimeoutException {
 

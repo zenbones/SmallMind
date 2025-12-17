@@ -34,13 +34,31 @@ package org.smallmind.phalanx.wire.jmx;
 
 import org.smallmind.phalanx.wire.transport.TransportState;
 
+/**
+ * JMX view of a response transport allowing state inspection and control.
+ */
 public interface ResponseTransportMXBean {
 
+  /**
+   * Returns the current state of the transport.
+   *
+   * @return transport state
+   */
   TransportState getState ();
 
+  /**
+   * Starts processing requests.
+   *
+   * @throws Exception if the transport cannot start
+   */
   void play ()
     throws Exception;
 
+  /**
+   * Pauses request processing.
+   *
+   * @throws Exception if the transport cannot pause
+   */
   void pause ()
     throws Exception;
 }

@@ -32,17 +32,30 @@
  */
 package org.smallmind.phalanx.wire.transport.jms;
 
+/**
+ * Delivery modes supported for JMS message production.
+ */
 public enum DeliveryMode {
 
   PERSISTENT(jakarta.jms.DeliveryMode.PERSISTENT), NON_PERSISTENT(jakarta.jms.DeliveryMode.NON_PERSISTENT);
 
   private final int jmsValue;
 
+  /**
+   * Associates the JMS delivery mode value.
+   *
+   * @param jmsValue JMS constant value
+   */
   DeliveryMode (int jmsValue) {
 
     this.jmsValue = jmsValue;
   }
 
+  /**
+   * Returns the JMS delivery mode value.
+   *
+   * @return JMS delivery mode
+   */
   public int getJmsValue () {
 
     return jmsValue;

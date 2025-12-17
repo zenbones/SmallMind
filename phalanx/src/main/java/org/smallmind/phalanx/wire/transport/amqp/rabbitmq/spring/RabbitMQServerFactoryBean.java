@@ -38,22 +38,43 @@ import org.smallmind.nutsnbolts.util.SpreadParserException;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
+/**
+ * Spring factory bean that expands a server pattern/spread into an array of {@link RabbitMQServer} instances.
+ */
 public class RabbitMQServerFactoryBean implements FactoryBean<RabbitMQServer[]>, InitializingBean {
 
   private RabbitMQServer[] serverArray;
   private String serverPattern;
   private String serverSpread;
 
+  /**
+   * Pattern describing hosts (and optional ports). Use '#' as a placeholder to be replaced by spread values.
+   * <p>
+   * Examples:
+   * host-#.example.com:5672 with spread "1-3" yields host-1.example.com:5672 ... host-3.example.com:5672
+   *
+   * @param serverPattern host/port pattern.
+   */
   public void setServerPattern (String serverPattern) {
 
     this.serverPattern = serverPattern;
   }
 
+  /**
+   * Spread string parsed by {@link Spread#calculate(String)} to generate placeholder substitutions.
+   *
+   * @param serverSpread spread definition (e.g., "1-3,5").
+   */
   public void setServerSpread (String serverSpread) {
 
     this.serverSpread = serverSpread;
   }
 
+  /**
+   * Parses the pattern/spread and creates the server array.
+   *
+   * @throws SpreadParserException if the spread cannot be parsed.
+   */
   @Override
   public void afterPropertiesSet ()
     throws SpreadParserException {
@@ -85,18 +106,27 @@ public class RabbitMQServerFactoryBean implements FactoryBean<RabbitMQServer[]>,
     }
   }
 
+  /**
+   * @return generated array of {@link RabbitMQServer} entries.
+   */
   @Override
   public RabbitMQServer[] getObject () {
 
     return serverArray;
   }
 
+  /**
+   * @return the object type produced by this factory.
+   */
   @Override
   public Class<?> getObjectType () {
 
     return RabbitMQServer[].class;
   }
 
+  /**
+   * @return true because this factory produces a singleton array instance.
+   */
   @Override
   public boolean isSingleton () {
 

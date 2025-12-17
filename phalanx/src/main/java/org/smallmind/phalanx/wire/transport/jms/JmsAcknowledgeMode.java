@@ -34,17 +34,30 @@ package org.smallmind.phalanx.wire.transport.jms;
 
 import jakarta.jms.Session;
 
+/**
+ * JMS-specific acknowledge modes backed by {@link Session} constants.
+ */
 public enum JmsAcknowledgeMode implements AcknowledgeMode {
 
   AUTO_ACKNOWLEDGE(Session.AUTO_ACKNOWLEDGE), CLIENT_ACKNOWLEDGE(Session.CLIENT_ACKNOWLEDGE), DUPS_OK_ACKNOWLEDGE(Session.DUPS_OK_ACKNOWLEDGE);
 
   private final int jmsValue;
 
+  /**
+   * Associates the JMS acknowledge mode value.
+   *
+   * @param jmsValue JMS constant value
+   */
   JmsAcknowledgeMode (int jmsValue) {
 
     this.jmsValue = jmsValue;
   }
 
+  /**
+   * Returns the JMS acknowledge mode value.
+   *
+   * @return JMS acknowledge mode
+   */
   public int getJmsValue () {
 
     return jmsValue;

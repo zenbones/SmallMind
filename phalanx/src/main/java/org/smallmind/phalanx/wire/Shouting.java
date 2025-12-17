@@ -32,34 +32,56 @@
  */
 package org.smallmind.phalanx.wire;
 
+/**
+ * Voice representing a broadcast shout to all listeners in a service group.
+ */
 public class Shouting implements Voice<String, Void> {
 
   private static final OneWayConversation ONE_WAY_CONVERSATION = new OneWayConversation();
 
   private final String serviceGroup;
 
+  /**
+   * Creates a shouting voice that targets the given service group.
+   *
+   * @param serviceGroup destination group for the broadcast
+   */
   public Shouting (String serviceGroup) {
 
     this.serviceGroup = serviceGroup;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public VocalMode getMode () {
 
     return VocalMode.SHOUT;
   }
 
+  /**
+   * Returns the one-way conversation definition used for shouts.
+   *
+   * @return conversation indicating fire-and-forget
+   */
   public Conversation getConversation () {
 
     return ONE_WAY_CONVERSATION;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String getServiceGroup () {
 
     return serviceGroup;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Void getInstanceId () {
 

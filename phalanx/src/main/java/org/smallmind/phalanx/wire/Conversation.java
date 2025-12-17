@@ -32,9 +32,24 @@
  */
 package org.smallmind.phalanx.wire;
 
+/**
+ * Describes the interaction pattern and timeout behavior for a request.
+ *
+ * @param <T> timeout type (e.g., seconds as {@link Long})
+ */
 public interface Conversation<T> {
 
+  /**
+   * Conversation mode indicating whether a response is expected.
+   *
+   * @return conversation type
+   */
   ConversationType getConversationType ();
 
+  /**
+   * Timeout associated with the conversation, or {@code null} when not applicable.
+   *
+   * @return timeout value
+   */
   T getTimeout ();
 }

@@ -43,6 +43,9 @@ import org.smallmind.phalanx.wire.signal.Route;
 import org.smallmind.phalanx.wire.signal.WireContext;
 import org.smallmind.phalanx.wire.transport.RequestTransport;
 
+/**
+ * Invocation handler that converts local interface calls into wire transports with contextual metadata.
+ */
 public class WireInvocationHandler implements InvocationHandler {
 
   private static final Class[] EMPTY_SIGNATURE = new Class[0];
@@ -59,6 +62,18 @@ public class WireInvocationHandler implements InvocationHandler {
   private final String serviceName;
   private final int version;
 
+  /**
+   * Creates a handler that marshals method calls into wire transmissions using the provided parameter extractors.
+   *
+   * @param transport             transport used to send requests
+   * @param version               protocol version to include in the route
+   * @param serviceName           logical service name
+   * @param serviceInterface      service interface implemented by the proxy
+   * @param serviceGroupExtractor extractor for the destination service group
+   * @param instanceIdExtractor   extractor for a specific instance id, required for whispers
+   * @param timeoutExtractor      extractor for dynamic timeout values
+   * @throws Exception if the service interface is improperly annotated
+   */
   public WireInvocationHandler (RequestTransport transport, int version, String serviceName, Class<?> serviceInterface, ParameterExtractor<String> serviceGroupExtractor, ParameterExtractor<String> instanceIdExtractor, ParameterExtractor<Long> timeoutExtractor)
     throws Exception {
 
@@ -112,6 +127,15 @@ public class WireInvocationHandler implements InvocationHandler {
     }
   }
 
+  /**
+   * Converts a proxy method invocation into a transport request or synchronous shout/whisper conversation.
+   *
+   * @param proxy  the proxy instance
+   * @param method method being invoked
+   * @param args   arguments passed to the call
+   * @return method result, potentially a remote return value
+   * @throws Throwable if invocation cannot be mapped or the transport reports an error
+   */
   public Object invoke (Object proxy, final Method method, final Object[] args)
     throws Throwable {
 

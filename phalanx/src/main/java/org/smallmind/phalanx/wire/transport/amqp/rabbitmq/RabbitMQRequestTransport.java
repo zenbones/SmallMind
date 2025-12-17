@@ -52,6 +52,9 @@ import org.smallmind.phalanx.wire.signal.WireContext;
 import org.smallmind.phalanx.wire.transport.AbstractRequestTransport;
 import org.smallmind.phalanx.wire.transport.ClaxonTag;
 
+/**
+ * RabbitMQ-backed request transport that publishes invocation messages and waits for correlated responses.
+ */
 public class RabbitMQRequestTransport extends AbstractRequestTransport {
 
   private final AtomicBoolean closed = new AtomicBoolean(false);
@@ -60,6 +63,22 @@ public class RabbitMQRequestTransport extends AbstractRequestTransport {
   private final RequestMessageRouter[] requestMessageRouters;
   private final String callerId = SnowflakeId.newInstance().generateDottedString();
 
+  /**
+   * Creates a request transport and spins up a cluster of request routers.
+   *
+   * @param rabbitMQConnector            connector for creating channels.
+   * @param ephemeralQueueContractor     contractor used for ephemeral queues (responses).
+   * @param nameConfiguration            exchange/queue naming scheme.
+   * @param signalCodec                  codec for serialization.
+   * @param clusterSize                  number of routers to create.
+   * @param concurrencyLimit             concurrency hint for router pooling.
+   * @param defaultTimeoutSeconds        default timeout when awaiting responses.
+   * @param messageTTLSeconds            message time-to-live in seconds.
+   * @param autoAcknowledge              whether to auto-ack response deliveries.
+   * @param publisherConfirmationHandler optional handler for publisher confirms, may be null.
+   * @throws IOException      if router initialization fails.
+   * @throws TimeoutException if router initialization times out.
+   */
   public RabbitMQRequestTransport (RabbitMQConnector rabbitMQConnector, QueueContractor ephemeralQueueContractor, NameConfiguration nameConfiguration, SignalCodec signalCodec, int clusterSize, int concurrencyLimit, long defaultTimeoutSeconds, int messageTTLSeconds, boolean autoAcknowledge, PublisherConfirmationHandler publisherConfirmationHandler)
     throws IOException, TimeoutException {
 
@@ -84,12 +103,25 @@ public class RabbitMQRequestTransport extends AbstractRequestTransport {
     }
   }
 
+  /**
+   * @return caller id used by responders to direct replies.
+   */
   @Override
   public String getCallerId () {
 
     return callerId;
   }
 
+  /**
+   * Publishes an invocation and waits for a response unless the conversation is IN_ONLY.
+   *
+   * @param voice     invocation metadata.
+   * @param route     route to the target method.
+   * @param arguments arguments to encode.
+   * @param contexts  optional contexts.
+   * @return decoded result for two-way conversations, or {@code null} for IN_ONLY.
+   * @throws Throwable if publishing fails or awaiting a result errors or times out.
+   */
   @Override
   public Object transmit (Voice<?, ?> voice, Route route, Map<String, Object> arguments, WireContext... contexts)
     throws Throwable {
@@ -111,6 +143,12 @@ public class RabbitMQRequestTransport extends AbstractRequestTransport {
     }
   }
 
+  /**
+   * Takes a router from the pool, waiting briefly if none are available.
+   *
+   * @return an available {@link RequestMessageRouter}.
+   * @throws Throwable if the transport is closed while waiting.
+   */
   private RequestMessageRouter acquireRequestMessageRouter ()
     throws Throwable {
 
@@ -130,6 +168,11 @@ public class RabbitMQRequestTransport extends AbstractRequestTransport {
     });
   }
 
+  /**
+   * Closes all routers and prevents further transmission.
+   *
+   * @throws Exception if closing routers fails.
+   */
   @Override
   public void close ()
     throws Exception {

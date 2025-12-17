@@ -47,6 +47,9 @@ import org.smallmind.phalanx.wire.transport.WireProperty;
 import org.smallmind.phalanx.worker.WorkQueue;
 import org.smallmind.phalanx.worker.Worker;
 
+/**
+ * Worker that processes incoming JMS invocation messages and delegates to the invocation circuit.
+ */
 public class InvocationWorker extends Worker<Message> {
 
   private final ResponseTransmitter responseTransmitter;
@@ -55,6 +58,15 @@ public class InvocationWorker extends Worker<Message> {
 
   private final byte[] buffer;
 
+  /**
+   * Creates a worker with the resources needed to decode and dispatch invocation messages.
+   *
+   * @param workQueue            queue supplying JMS messages
+   * @param responseTransmitter  transmitter used to return results
+   * @param invocationCircuit    circuit that routes invocations to services
+   * @param signalCodec          codec used to decode invocation signals
+   * @param maximumMessageLength maximum length of message payloads
+   */
   public InvocationWorker (WorkQueue<Message> workQueue, ResponseTransmitter responseTransmitter, WireInvocationCircuit invocationCircuit, SignalCodec signalCodec, int maximumMessageLength) {
 
     super(workQueue);
@@ -66,6 +78,9 @@ public class InvocationWorker extends Worker<Message> {
     buffer = new byte[maximumMessageLength];
   }
 
+  /**
+   * Decodes the invocation signal from the message and executes it via the invocation circuit.
+   */
   @Override
   public void engageWork (final Message message)
     throws Throwable {
@@ -85,6 +100,9 @@ public class InvocationWorker extends Worker<Message> {
     }
   }
 
+  /**
+   * No-op close for this worker.
+   */
   @Override
   public void close () {
 

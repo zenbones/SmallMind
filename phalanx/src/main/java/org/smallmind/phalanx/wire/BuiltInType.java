@@ -32,17 +32,30 @@
  */
 package org.smallmind.phalanx.wire;
 
+/**
+ * Enumeration of built-in types with compact signature codes.
+ */
 public enum BuiltInType {
 
   BOOLEAN("Z"), BYTE("B"), U_BYTE("Y"), SHORT("S"), U_SHORT("H"), INTEGER("I"), U_INTEGER("N"), LONG("L"), U_LONG("U"), FLOAT("F"), DOUBLE("D"), CHARACTER("C"), STRING("G"), DATE("T"), VOID("V"), FAULT("A"), OBJECT("O");
 
   private final String code;
 
+  /**
+   * Associates the signature code for the type.
+   *
+   * @param code signature code used in wire encoding
+   */
   BuiltInType (String code) {
 
     this.code = code;
   }
 
+  /**
+   * Returns the encoded representation of the type.
+   *
+   * @return signature code
+   */
   public String getCode () {
 
     return code;

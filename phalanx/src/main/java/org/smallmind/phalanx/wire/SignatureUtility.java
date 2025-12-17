@@ -36,10 +36,19 @@ import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 import org.smallmind.web.json.scaffold.fault.Fault;
 
+/**
+ * Utility methods for encoding and decoding Java types into neutral or JVM-native signature formats.
+ */
 public class SignatureUtility {
 
   private static final ConcurrentHashMap<String, Class<?>> SIGNATURE_MAP = new ConcurrentHashMap<>();
 
+  /**
+   * Encodes the supplied class into a portable signature string that can be compared across JVM boundaries.
+   *
+   * @param clazz class to encode; {@code null} maps to void
+   * @return neutral signature representing the type
+   */
   public static String neutralEncode (Class<?> clazz) {
 
     if ((clazz == null) || void.class.equals(clazz) || Void.class.equals(clazz)) {
@@ -97,6 +106,12 @@ public class SignatureUtility {
     }
   }
 
+  /**
+   * Encodes the supplied class into the JVM descriptor format.
+   *
+   * @param clazz class to encode; {@code null} maps to void
+   * @return native descriptor string such as {@code I} or {@code [Ljava/lang/String;}
+   */
   public static String nativeEncode (Class<?> clazz) {
 
     if ((clazz == null) || void.class.equals(clazz) || Void.class.equals(clazz)) {
@@ -137,6 +152,13 @@ public class SignatureUtility {
     }
   }
 
+  /**
+   * Decodes a JVM descriptor into a {@link Class} instance, caching lookups for repeated types.
+   *
+   * @param type descriptor string as produced by {@link #nativeEncode(Class)}
+   * @return resolved class
+   * @throws ClassNotFoundException if the type cannot be resolved
+   */
   public static Class<?> nativeDecode (String type)
     throws ClassNotFoundException {
 
@@ -156,6 +178,13 @@ public class SignatureUtility {
     };
   }
 
+  /**
+   * Resolves or loads an object type by name, caching results to avoid repeated class loading.
+   *
+   * @param type fully qualified class name or array descriptor
+   * @return resolved class
+   * @throws ClassNotFoundException if the class cannot be found
+   */
   private static Class<?> getObjectType (String type)
     throws ClassNotFoundException {
 

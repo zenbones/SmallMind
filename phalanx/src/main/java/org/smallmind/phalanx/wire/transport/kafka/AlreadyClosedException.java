@@ -32,6 +32,9 @@
  */
 package org.smallmind.phalanx.wire.transport.kafka;
 
+/**
+ * Signals that an operation attempted to use a Kafka transport that has already been closed.
+ */
 public class AlreadyClosedException extends Exception {
 
 }

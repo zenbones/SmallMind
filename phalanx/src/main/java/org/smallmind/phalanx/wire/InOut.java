@@ -37,10 +37,19 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Marks a method as a request/response interaction, optionally supplying a timeout override.
+ */
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface InOut {
 
   // Any positive value (> 0) will override the default service timeout seconds
+
+  /**
+   * Timeout in seconds to apply to the conversation when greater than zero.
+   *
+   * @return custom timeout duration
+   */
   long timeoutSeconds ();
 }

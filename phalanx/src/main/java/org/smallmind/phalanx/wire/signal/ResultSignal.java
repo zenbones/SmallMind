@@ -37,6 +37,9 @@ import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
 
+/**
+ * Signal that carries a return value or error indicator back to the caller.
+ */
 @XmlRootElement(name = "result", namespace = "http://org.smallmind/phalanx/wire")
 @XmlAccessorType(XmlAccessType.PROPERTY)
 public class ResultSignal implements Signal {
@@ -45,10 +48,20 @@ public class ResultSignal implements Signal {
   private String nativeType;
   private boolean error;
 
+  /**
+   * Default constructor for JAXB.
+   */
   public ResultSignal () {
 
   }
 
+  /**
+   * Creates a populated result signal.
+   *
+   * @param error      {@code true} when the result represents an error payload
+   * @param nativeType JVM descriptor for the result type
+   * @param result     result object or error value
+   */
   public ResultSignal (boolean error, String nativeType, Object result) {
 
     this.error = error;
@@ -56,34 +69,64 @@ public class ResultSignal implements Signal {
     this.result = result;
   }
 
+  /**
+   * Indicates whether the result represents an error.
+   *
+   * @return {@code true} when the invocation failed
+   */
   @XmlElement(name = "error", required = true)
   public boolean isError () {
 
     return error;
   }
 
+  /**
+   * Sets the error flag.
+   *
+   * @param error {@code true} if the payload is an error
+   */
   public void setError (boolean error) {
 
     this.error = error;
   }
 
+  /**
+   * Returns the JVM descriptor for the result type.
+   *
+   * @return native type descriptor
+   */
   @XmlElement(name = "nativeType", required = true)
   public String getNativeType () {
 
     return nativeType;
   }
 
+  /**
+   * Sets the JVM descriptor for the result type.
+   *
+   * @param nativeType native type descriptor
+   */
   public void setNativeType (String nativeType) {
 
     this.nativeType = nativeType;
   }
 
+  /**
+   * Returns the result value or error payload.
+   *
+   * @return result object
+   */
   @XmlElement(name = "result", required = true)
   public Object getResult () {
 
     return result;
   }
 
+  /**
+   * Sets the result value or error payload.
+   *
+   * @param result result object
+   */
   public void setResult (Object result) {
 
     this.result = result;

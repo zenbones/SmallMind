@@ -39,29 +39,47 @@ import jakarta.jms.Message;
 import jakarta.jms.Queue;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Session employer and message handler for sending messages to a JMS queue.
+ */
 public class QueueOperator implements SessionEmployer, MessageHandler {
 
   private final ConnectionManager connectionManager;
   private final Queue requestQueue;
 
+  /**
+   * Creates an operator bound to the given queue using the shared connection manager.
+   *
+   * @param connectionManager manager providing sessions and producers
+   * @param queue             queue destination for outbound messages
+   */
   public QueueOperator (ConnectionManager connectionManager, Queue queue) {
 
     this.connectionManager = connectionManager;
     this.requestQueue = queue;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Destination getDestination () {
 
     return requestQueue;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String getMessageSelector () {
 
     return null;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public BytesMessage createMessage ()
     throws JMSException {
@@ -69,6 +87,9 @@ public class QueueOperator implements SessionEmployer, MessageHandler {
     return connectionManager.getSession(this).createBytesMessage();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void send (Message message)
     throws JMSException {

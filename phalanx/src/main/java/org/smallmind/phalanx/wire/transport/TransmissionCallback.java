@@ -41,11 +41,29 @@ import org.smallmind.web.json.scaffold.fault.FaultWrappingException;
 import org.smallmind.web.json.scaffold.fault.NativeLanguage;
 import org.smallmind.web.json.scaffold.fault.NativeObject;
 
+/**
+ * Base callback for awaiting or processing transmission results.
+ */
 public abstract class TransmissionCallback {
 
+  /**
+   * Retrieves the result, potentially blocking until available or timeout.
+   *
+   * @param signalCodec    codec used to decode results
+   * @param timeoutSeconds maximum time to wait
+   * @return decoded result object
+   * @throws Throwable if waiting fails or the remote side reports an error
+   */
   public abstract Object getResult (SignalCodec signalCodec, long timeoutSeconds)
     throws Throwable;
 
+  /**
+   * Processes an error-bearing result signal and rethrows the underlying cause when possible.
+   *
+   * @param signalCodec  codec used to decode the fault
+   * @param resultSignal signal containing the error payload
+   * @throws Throwable the decoded throwable or a {@link FaultWrappingException}
+   */
   public void handleError (SignalCodec signalCodec, ResultSignal resultSignal)
     throws Throwable {
 

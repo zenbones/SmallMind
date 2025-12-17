@@ -32,12 +32,22 @@
  */
 package org.smallmind.phalanx.wire.transport.jms;
 
+/**
+ * Encapsulates the set of JMS managed object factories required for request/response routing.
+ */
 public class RoutingFactories {
 
   private final ManagedObjectFactory requestQueueFactory;
   private final ManagedObjectFactory requestTopicFactory;
   private final ManagedObjectFactory responseTopicFactory;
 
+  /**
+   * Creates the routing factories bundle.
+   *
+   * @param requestQueueFactory  factory for request queues
+   * @param requestTopicFactory  factory for request topics (shout/whisper)
+   * @param responseTopicFactory factory for response topics
+   */
   public RoutingFactories (ManagedObjectFactory requestQueueFactory, ManagedObjectFactory requestTopicFactory, ManagedObjectFactory responseTopicFactory) {
 
     this.requestQueueFactory = requestQueueFactory;
@@ -45,16 +55,27 @@ public class RoutingFactories {
     this.responseTopicFactory = responseTopicFactory;
   }
 
+  /**
+   * Factory for request queues (talk mode).
+   *
+   * @return managed object factory for request queues.
+   */
   public ManagedObjectFactory getRequestQueueFactory () {
 
     return requestQueueFactory;
   }
 
+  /**
+   * Factory for request topics (used by whisper/shout).
+   */
   public ManagedObjectFactory getRequestTopicFactory () {
 
     return requestTopicFactory;
   }
 
+  /**
+   * Factory for response topics.
+   */
   public ManagedObjectFactory getResponseTopicFactory () {
 
     return responseTopicFactory;

@@ -35,8 +35,17 @@ package org.smallmind.phalanx.wire.transport.amqp.rabbitmq;
 import java.io.IOException;
 import com.rabbitmq.client.Channel;
 
+/**
+ * Encapsulates a unit of work to perform against a RabbitMQ {@link Channel}.
+ */
 public interface ChannelOperation {
 
+  /**
+   * Execute the operation.
+   *
+   * @param channel open channel to operate on.
+   * @throws IOException if the underlying AMQP call fails.
+   */
   void execute (Channel channel)
     throws IOException;
 }

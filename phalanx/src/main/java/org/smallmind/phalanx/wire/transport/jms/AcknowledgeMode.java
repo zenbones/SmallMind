@@ -32,7 +32,15 @@
  */
 package org.smallmind.phalanx.wire.transport.jms;
 
+/**
+ * Abstraction over JMS acknowledge modes to allow pluggable implementations.
+ */
 public interface AcknowledgeMode {
 
+  /**
+   * Returns the JMS-specific acknowledge mode value.
+   *
+   * @return JMS acknowledge constant
+   */
   int getJmsValue ();
 }

@@ -35,6 +35,9 @@ package org.smallmind.phalanx.wire.transport.jms.jndi;
 import javax.naming.Context;
 import org.smallmind.quorum.pool.complex.ComponentPool;
 
+/**
+ * Encapsulates JNDI connection parameters and a pooled context provider for JMS lookups.
+ */
 public class JmsConnectionDetails {
 
   private final ComponentPool<Context> contextPool;
@@ -43,6 +46,15 @@ public class JmsConnectionDetails {
   private final String userName;
   private final String password;
 
+  /**
+   * Creates connection details for JNDI lookups.
+   *
+   * @param contextPool           pool providing JNDI contexts
+   * @param destinationName       JNDI name of the destination
+   * @param connectionFactoryName JNDI name of the connection factory
+   * @param userName              user name for connection authentication
+   * @param password              password for connection authentication
+   */
   public JmsConnectionDetails (ComponentPool<Context> contextPool, String destinationName, String connectionFactoryName, String userName, String password) {
 
     this.contextPool = contextPool;
@@ -52,26 +64,41 @@ public class JmsConnectionDetails {
     this.password = password;
   }
 
+  /**
+   * @return pool used to obtain JNDI contexts.
+   */
   public ComponentPool<Context> getContextPool () {
 
     return contextPool;
   }
 
+  /**
+   * Destination JNDI name.
+   */
   public String getDestinationName () {
 
     return destinationName;
   }
 
+  /**
+   * Connection factory JNDI name.
+   */
   public String getConnectionFactoryName () {
 
     return connectionFactoryName;
   }
 
+  /**
+   * Username used for connections.
+   */
   public String getUserName () {
 
     return userName;
   }
 
+  /**
+   * Password used for connections.
+   */
   public String getPassword () {
 
     return password;

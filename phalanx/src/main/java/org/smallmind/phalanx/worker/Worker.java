@@ -41,6 +41,11 @@ import org.smallmind.claxon.registry.meter.MeterFactory;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Base runnable that pulls work items from a {@link WorkQueue} and processes them.
+ *
+ * @param <T> type of work handled
+ */
 public abstract class Worker<T> implements Runnable {
 
   private static final long MINIMUM_REPORTED_IDLE_TIME = 0;
@@ -50,17 +55,38 @@ public abstract class Worker<T> implements Runnable {
   private final WorkQueue<T> workQueue;
   private Thread runnableThread;
 
+  /**
+   * Creates a worker bound to the provided work queue.
+   *
+   * @param workQueue queue supplying work items
+   */
   public Worker (WorkQueue<T> workQueue) {
 
     this.workQueue = workQueue;
   }
 
+  /**
+   * Executes the unit of work received from the queue.
+   *
+   * @param transfer the queued item to process
+   * @throws Throwable if processing fails
+   */
   public abstract void engageWork (T transfer)
     throws Throwable;
 
+  /**
+   * Cleans up any resources held by the worker before shutdown.
+   *
+   * @throws Exception if cleanup fails
+   */
   public abstract void close ()
     throws Exception;
 
+  /**
+   * Requests cooperative termination of the worker thread and waits for exit.
+   *
+   * @throws Exception if closing resources fails
+   */
   public void stop ()
     throws Exception {
 
@@ -74,6 +100,9 @@ public abstract class Worker<T> implements Runnable {
     exitLatch.await();
   }
 
+  /**
+   * Continuously polls the queue for work until stopped, tracking idle time metrics and forwarding errors to the logger.
+   */
   @Override
   public void run () {
 

@@ -38,10 +38,18 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Declares a type as adaptable for wire transport using a specific {@link WireAdapter}.
+ */
 @Inherited
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Wire {
 
+  /**
+   * Adapter class that can marshal and unmarshal the annotated type.
+   *
+   * @return adapter implementation class
+   */
   Class<? extends WireAdapter<?, ?>> adapter ();
 }

@@ -37,10 +37,19 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Marks a method as a whisper, targeting a specific instance and optionally overriding timeouts.
+ */
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Whisper {
 
   // Any positive value (> 0) will override the default service timeout seconds
+
+  /**
+   * Timeout in seconds for the whisper conversation; values greater than zero override defaults.
+   *
+   * @return whisper timeout seconds
+   */
   long timeoutSeconds () default 0;
 }

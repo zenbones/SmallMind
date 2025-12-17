@@ -32,17 +32,30 @@
  */
 package org.smallmind.phalanx.worker;
 
+/**
+ * Metering tags used when recording worker-related metrics.
+ */
 public enum ClaxonTag {
 
   ACQUIRE_WORKER("Acquire Worker"), WORKER_IDLE("Worker Idle");
 
   private final String display;
 
+  /**
+   * Associates a human readable value for the tag.
+   *
+   * @param display label to emit to the metrics system
+   */
   ClaxonTag (String display) {
 
     this.display = display;
   }
 
+  /**
+   * Returns the display label for the tag.
+   *
+   * @return label text
+   */
   public String getDisplay () {
 
     return display;

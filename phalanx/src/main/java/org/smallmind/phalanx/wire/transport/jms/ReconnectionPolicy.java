@@ -32,26 +32,49 @@
  */
 package org.smallmind.phalanx.wire.transport.jms;
 
+/**
+ * Configuration for handling JMS reconnection attempts after failures.
+ */
 public class ReconnectionPolicy {
 
   private long reconnectionDelayMilliseconds = 500;
   private int reconnectionAttempts = -1;
 
+  /**
+   * Returns the maximum number of reconnection attempts (-1 for unlimited).
+   *
+   * @return attempt count
+   */
   public int getReconnectionAttempts () {
 
     return reconnectionAttempts;
   }
 
+  /**
+   * Sets the maximum reconnection attempts (-1 for unlimited).
+   *
+   * @param reconnectionAttempts attempt count
+   */
   public void setReconnectionAttempts (int reconnectionAttempts) {
 
     this.reconnectionAttempts = reconnectionAttempts;
   }
 
+  /**
+   * Returns the delay between reconnection attempts in milliseconds.
+   *
+   * @return delay in ms
+   */
   public long getReconnectionDelayMilliseconds () {
 
     return reconnectionDelayMilliseconds;
   }
 
+  /**
+   * Sets the delay between reconnection attempts in milliseconds.
+   *
+   * @param reconnectionDelayMilliseconds delay in ms
+   */
   public void setReconnectionDelayMilliseconds (long reconnectionDelayMilliseconds) {
 
     this.reconnectionDelayMilliseconds = reconnectionDelayMilliseconds;

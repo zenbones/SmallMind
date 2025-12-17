@@ -34,29 +34,64 @@ package org.smallmind.phalanx.wire.transport.kafka;
 
 public class TopicNames {
 
+  /**
+   * Creates topic names for the wire protocol using a common prefix.
+   *
+   * @param prefix prefix applied to every topic name segment.
+   */
   // prefix = "wire"
   private final String prefix;
 
+  /**
+   * Creates a new helper for composing topic names.
+   *
+   * @param prefix the shared prefix that identifies the system on the broker.
+   */
   public TopicNames (String prefix) {
 
     this.prefix = prefix;
   }
 
+  /**
+   * Builds the shout topic for the supplied service group.
+   *
+   * @param serviceGroup the logical service grouping key.
+   * @return the shout topic name.
+   */
   public String getShoutTopicName (String serviceGroup) {
 
     return prefix + "-shout-" + serviceGroup;
   }
 
+  /**
+   * Builds the talk topic for the supplied service group.
+   *
+   * @param serviceGroup the logical service grouping key.
+   * @return the talk topic name.
+   */
   public String getTalkTopicName (String serviceGroup) {
 
     return prefix + "-talk-" + serviceGroup;
   }
 
+  /**
+   * Builds the whisper topic for the supplied service group and target instance.
+   *
+   * @param serviceGroup the logical service grouping key.
+   * @param instanceId   the specific service instance identifier.
+   * @return the whisper topic name.
+   */
   public String getWhisperTopicName (String serviceGroup, String instanceId) {
 
     return prefix + "-whisper-" + serviceGroup + "-" + instanceId;
   }
 
+  /**
+   * Builds the response topic for the calling instance.
+   *
+   * @param instanceId the caller's unique identifier.
+   * @return the response topic name.
+   */
   public String getResponseTopicName (String instanceId) {
 
     return prefix + "-response-" + instanceId;

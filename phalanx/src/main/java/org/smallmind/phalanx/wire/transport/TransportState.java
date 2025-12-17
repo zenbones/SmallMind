@@ -32,6 +32,9 @@
  */
 package org.smallmind.phalanx.wire.transport;
 
+/**
+ * States for a response transport lifecycle.
+ */
 public enum TransportState {
 
   PLAYING, PAUSED, CLOSED

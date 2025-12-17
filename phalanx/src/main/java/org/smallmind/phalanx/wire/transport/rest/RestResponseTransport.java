@@ -47,6 +47,7 @@ import org.smallmind.claxon.registry.meter.MeterFactory;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.signal.InvocationSignal;
+import org.smallmind.phalanx.wire.signal.ResultSignal;
 import org.smallmind.phalanx.wire.signal.SignalCodec;
 import org.smallmind.phalanx.wire.transport.ResponseTransport;
 import org.smallmind.phalanx.wire.transport.TransportState;
@@ -55,6 +56,9 @@ import org.smallmind.phalanx.wire.transport.WiredService;
 import org.smallmind.web.jersey.aop.Validated;
 
 @Path("/org/smallmind/wire/transport/response")
+/**
+ * RESTful response transport that accepts invocation signals and returns results synchronously.
+ */
 public class RestResponseTransport implements ResponseTransport {
 
   private final AtomicReference<TransportState> stateRef = new AtomicReference<>(TransportState.PLAYING);
@@ -63,17 +67,28 @@ public class RestResponseTransport implements ResponseTransport {
 
   private SignalCodec signalCodec;
 
+  /**
+   * Injects the signal codec used to deserialize requests and serialize responses.
+   *
+   * @param signalCodec codec implementation
+   */
   public void setSignalCodec (SignalCodec signalCodec) {
 
     this.signalCodec = signalCodec;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String getInstanceId () {
 
     return instanceId;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String register (Class<?> serviceInterface, WiredService targetService)
     throws Exception {
@@ -83,17 +98,28 @@ public class RestResponseTransport implements ResponseTransport {
     return instanceId;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public TransportState getState () {
 
     return stateRef.get();
   }
 
+  /**
+   * Resumes request processing (no-op for this implementation).
+   */
   @Override
   public void play () {
 
   }
 
+  /**
+   * Pauses request processing (unsupported for this implementation).
+   *
+   * @throws Exception always thrown as unsupported
+   */
   @Override
   public void pause ()
     throws Exception {
@@ -101,6 +127,15 @@ public class RestResponseTransport implements ResponseTransport {
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * Receives invocation signals over HTTP and returns the resulting {@link ResultSignal} payload.
+   *
+   * @param callerId         caller identifier supplied via header
+   * @param messageId        correlation id supplied via header
+   * @param invocationSignal invocation signal body
+   * @return HTTP response containing the result signal
+   * @throws Throwable if invocation or transport handling fails
+   */
   @POST
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
@@ -124,6 +159,9 @@ public class RestResponseTransport implements ResponseTransport {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void close () {
 

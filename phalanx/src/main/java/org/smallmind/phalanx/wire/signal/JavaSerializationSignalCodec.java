@@ -39,14 +39,23 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import jakarta.ws.rs.core.MediaType;
 
+/**
+ * {@link SignalCodec} implementation that uses built-in Java serialization.
+ */
 public class JavaSerializationSignalCodec implements SignalCodec {
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String getContentType () {
 
     return MediaType.APPLICATION_OCTET_STREAM;
   }
 
+  /**
+   * Serializes the signal using {@link ObjectOutputStream}.
+   */
   @Override
   public byte[] encode (Signal signal)
     throws IOException {
@@ -59,6 +68,9 @@ public class JavaSerializationSignalCodec implements SignalCodec {
     }
   }
 
+  /**
+   * Deserializes the signal using {@link ObjectInputStream}.
+   */
   @Override
   public <S extends Signal> S decode (byte[] buffer, int offset, int len, Class<S> signalClass)
     throws IOException, ClassNotFoundException {
@@ -69,6 +81,9 @@ public class JavaSerializationSignalCodec implements SignalCodec {
     }
   }
 
+  /**
+   * Performs a type-safe cast of the decoded value.
+   */
   @Override
   public <T> T extractObject (Object value, Class<T> clazz) {
 

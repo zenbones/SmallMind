@@ -32,12 +32,31 @@
  */
 package org.smallmind.phalanx.wire.transport;
 
+/**
+ * Abstraction for a service bound to a response transport.
+ */
 public interface WiredService {
 
+  /**
+   * Returns the service version.
+   *
+   * @return version number
+   */
   int getVersion ();
 
+  /**
+   * Returns the logical service name.
+   *
+   * @return service name
+   */
   String getServiceName ();
 
+  /**
+   * Injects the response transport used to send results.
+   *
+   * @param responseTransport transport to use
+   * @throws Exception if initialization fails
+   */
   void setResponseTransport (ResponseTransport responseTransport)
     throws Exception;
 }

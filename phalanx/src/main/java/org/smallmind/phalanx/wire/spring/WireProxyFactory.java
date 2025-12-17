@@ -37,8 +37,24 @@ import org.smallmind.phalanx.wire.ParameterExtractor;
 import org.smallmind.phalanx.wire.WireInvocationHandler;
 import org.smallmind.phalanx.wire.transport.RequestTransport;
 
+/**
+ * Utility for creating client proxies that route calls through the wire transport.
+ */
 public class WireProxyFactory {
 
+  /**
+   * Creates a proxy implementing the supplied service interface and delegating to a {@link WireInvocationHandler}.
+   *
+   * @param transport             request transport used for outbound calls.
+   * @param version               service version.
+   * @param serviceName           logical service name.
+   * @param serviceInterface      interface the proxy should implement.
+   * @param serviceGroupExtractor extractor for resolving service group at invocation time (may be {@code null}).
+   * @param instanceIdExtractor   extractor for resolving instance id for whisper calls (may be {@code null}).
+   * @param timeoutExtractor      extractor for per-invocation timeouts (may be {@code null}).
+   * @return proxy implementing the service interface.
+   * @throws Exception if proxy creation or handler initialization fails.
+   */
   public static Proxy generateProxy (RequestTransport transport, int version, String serviceName, Class<?> serviceInterface, ParameterExtractor<String> serviceGroupExtractor, ParameterExtractor<String> instanceIdExtractor, ParameterExtractor<Long> timeoutExtractor)
     throws Exception {
 

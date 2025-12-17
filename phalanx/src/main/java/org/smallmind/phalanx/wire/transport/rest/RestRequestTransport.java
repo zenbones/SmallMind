@@ -38,19 +38,33 @@ import org.smallmind.phalanx.wire.signal.Route;
 import org.smallmind.phalanx.wire.signal.WireContext;
 import org.smallmind.phalanx.wire.transport.AbstractRequestTransport;
 
+/**
+ * Placeholder REST request transport; currently unimplemented.
+ */
 public class RestRequestTransport extends AbstractRequestTransport {
 
+  /**
+   * Creates the transport with a default timeout for responses.
+   *
+   * @param defaultTimeoutSeconds default timeout for in/out calls
+   */
   public RestRequestTransport (long defaultTimeoutSeconds) {
 
     super(defaultTimeoutSeconds);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String getCallerId () {
 
     return null;
   }
 
+  /**
+   * Transmits a REST request (not yet implemented).
+   */
   @Override
   public Object transmit (Voice<?, ?> voice, Route route, Map<String, Object> arguments, WireContext... contexts)
     throws Throwable {
@@ -58,6 +72,9 @@ public class RestRequestTransport extends AbstractRequestTransport {
     return null;
   }
 
+  /**
+   * Closes the transport (no-op for placeholder implementation).
+   */
   @Override
   public void close () {
 

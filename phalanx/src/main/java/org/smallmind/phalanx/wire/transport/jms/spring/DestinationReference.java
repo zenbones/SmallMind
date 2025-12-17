@@ -32,28 +32,48 @@
  */
 package org.smallmind.phalanx.wire.transport.jms.spring;
 
+/**
+ * Spring reference bean for JMS destinations, capturing selector and durability settings.
+ */
 public abstract class DestinationReference extends ManagedObjectReference {
 
   private String selector;
   private boolean durable = false;
 
+  /**
+   * Returns the destination type (queue or topic).
+   */
   public abstract DestinationType getDestinationType ();
 
+  /**
+   * Message selector expression, if any.
+   *
+   * @return selector string
+   */
   public String getSelector () {
 
     return selector;
   }
 
+  /**
+   * Sets the message selector expression.
+   */
   public void setSelector (String selector) {
 
     this.selector = selector;
   }
 
+  /**
+   * Indicates whether the destination should be durable (relevant for topics).
+   */
   public boolean isDurable () {
 
     return durable;
   }
 
+  /**
+   * Sets destination durability flag.
+   */
   public void setDurable (boolean durable) {
 
     this.durable = durable;

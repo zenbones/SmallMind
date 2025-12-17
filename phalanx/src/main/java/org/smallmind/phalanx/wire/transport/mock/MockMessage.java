@@ -32,21 +32,33 @@
  */
 package org.smallmind.phalanx.wire.transport.mock;
 
+/**
+ * Simple in-memory message used by the mock transport.
+ */
 public class MockMessage {
 
   private final MockMessageProperties properties = new MockMessageProperties();
   private final byte[] bytes;
 
+  /**
+   * @param bytes payload bytes.
+   */
   public MockMessage (byte[] bytes) {
 
     this.bytes = bytes;
   }
 
+  /**
+   * @return mutable properties for the message.
+   */
   public MockMessageProperties getProperties () {
 
     return properties;
   }
 
+  /**
+   * @return raw payload.
+   */
   public byte[] getBytes () {
 
     return bytes;

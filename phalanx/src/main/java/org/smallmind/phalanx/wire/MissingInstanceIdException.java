@@ -34,18 +34,39 @@ package org.smallmind.phalanx.wire;
 
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
+/**
+ * Exception thrown when a required instance id cannot be resolved for a whisper.
+ */
 public class MissingInstanceIdException extends FormattedException {
 
+  /**
+   * Creates the exception with a formatted message.
+   *
+   * @param message format string describing the missing identifier
+   * @param args    arguments applied to the format string
+   */
   public MissingInstanceIdException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * Creates the exception with a cause and formatted message.
+   *
+   * @param throwable root cause
+   * @param message   format string describing the missing identifier
+   * @param args      arguments applied to the format string
+   */
   public MissingInstanceIdException (Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);
   }
 
+  /**
+   * Creates the exception with a cause and no message formatting.
+   *
+   * @param throwable root cause
+   */
   public MissingInstanceIdException (Throwable throwable) {
 
     super(throwable);

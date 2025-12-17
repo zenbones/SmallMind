@@ -32,16 +32,29 @@
  */
 package org.smallmind.phalanx.wire.transport;
 
+/**
+ * Standard message property keys used across wire transports.
+ */
 public enum WireProperty {
 
   CALLER_ID("callerId"), CONTENT_TYPE("contentType"), CLOCK("clock"), SERVICE_GROUP("serviceGroup"), INSTANCE_ID("instanceId");
   private final String key;
 
+  /**
+   * Associates an enum constant with its property key.
+   *
+   * @param key property name
+   */
   WireProperty (String key) {
 
     this.key = key;
   }
 
+  /**
+   * Returns the property key.
+   *
+   * @return property name
+   */
   public String getKey () {
 
     return key;

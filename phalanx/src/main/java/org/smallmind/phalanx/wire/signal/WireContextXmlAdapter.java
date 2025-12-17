@@ -45,8 +45,17 @@ import org.smallmind.nutsnbolts.util.IterableIterator;
 import org.smallmind.phalanx.wire.WireContextManager;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
+/**
+ * JAXB adapter that marshals and unmarshals {@link WireContext} arrays as JSON payloads.
+ */
 public class WireContextXmlAdapter extends XmlAdapter<JsonNode, WireContext[]> {
 
+  /**
+   * Converts a JSON array representation into concrete {@link WireContext} instances.
+   *
+   * @param node JSON array node containing encoded contexts
+   * @return array of reconstructed contexts or empty when none are present
+   */
   @Override
   public WireContext[] unmarshal (JsonNode node) {
 
@@ -75,6 +84,13 @@ public class WireContextXmlAdapter extends XmlAdapter<JsonNode, WireContext[]> {
     return contexts;
   }
 
+  /**
+   * Serializes an array of {@link WireContext} objects into a JSON array node.
+   *
+   * @param wireContexts contexts to serialize
+   * @return JSON representation or {@code null} when none are provided
+   * @throws JsonProcessingException if serialization fails
+   */
   @Override
   public JsonNode marshal (WireContext[] wireContexts)
     throws JsonProcessingException {

@@ -36,21 +36,38 @@ import java.io.IOException;
 import java.util.Map;
 import com.rabbitmq.client.Channel;
 
+/**
+ * Declares quorum queues with a fixed replication count.
+ */
 public class QuorumQueueContractor implements QueueContractor {
 
   private final int replicationCount;
 
+  /**
+   * @param replicationCount number of quorum replicas to request.
+   */
   public QuorumQueueContractor (int replicationCount) {
 
     this.replicationCount = replicationCount;
   }
 
+  /**
+   * @return {@link QueueType#QUORUM}.
+   */
   @Override
   public QueueType getQueueType () {
 
     return QueueType.QUORUM;
   }
 
+  /**
+   * Declares a durable quorum queue with the configured replication count.
+   *
+   * @param channel    channel to declare on.
+   * @param queueName  queue name.
+   * @param autoDelete ignored for quorum queues (always false).
+   * @throws IOException if the broker rejects the declaration.
+   */
   @Override
   public void declare (Channel channel, String queueName, boolean autoDelete)
     throws IOException {

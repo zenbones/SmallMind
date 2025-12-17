@@ -48,6 +48,10 @@ import org.smallmind.kafka.utility.KafkaConnector;
 import org.smallmind.nutsnbolts.util.ComponentStatus;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Manages a configurable set of Kafka consumers used to ingest messages for a single topic.
+ * Each {@link ConsumerWorker} pulls from Kafka and dispatches records to the provided callback.
+ */
 public class KafkaMessageIngester {
 
   private final AtomicReference<ComponentStatus> statusRef = new AtomicReference<>(ComponentStatus.STOPPED);
@@ -59,6 +63,16 @@ public class KafkaMessageIngester {
   private final int concurrencyLimit;
   private ConsumerWorker[] workers;
 
+  /**
+   * Builds an ingester for the supplied topic.
+   *
+   * @param nodeName         identifier appended to consumer names for diagnostics.
+   * @param groupId          Kafka consumer group id.
+   * @param topicName        topic to subscribe to when playing.
+   * @param connector        factory used to create Kafka clients.
+   * @param callback         consumer invoked for each received record.
+   * @param concurrencyLimit number of parallel consumer workers.
+   */
   public KafkaMessageIngester (String nodeName, String groupId, String topicName, KafkaConnector connector, java.util.function.Consumer<ConsumerRecord<Long, byte[]>> callback, int concurrencyLimit) {
 
     this.nodeName = nodeName;
@@ -69,11 +83,24 @@ public class KafkaMessageIngester {
     this.concurrencyLimit = concurrencyLimit;
   }
 
+  /**
+   * Creates a new consumer for this topic.
+   *
+   * @param index  the worker index used for naming.
+   * @param paused whether the consumer should initially be unsubscribed.
+   * @return a configured consumer for the topic.
+   */
   private Consumer<Long, byte[]> createConsumer (int index, boolean paused) {
 
     return connector.createConsumer("wire-consumer-" + index + "-" + topicName + "-" + nodeName, groupId, paused ? null : topicName);
   }
 
+  /**
+   * Starts the worker threads if not already running.
+   *
+   * @return this ingester for chaining.
+   * @throws InterruptedException if interrupted while waiting for another thread to finish starting.
+   */
   public synchronized KafkaMessageIngester startUp ()
     throws InterruptedException {
 
@@ -93,6 +120,9 @@ public class KafkaMessageIngester {
     return this;
   }
 
+  /**
+   * Subscribes all workers to the target topic if currently started.
+   */
   public synchronized void play () {
 
     if (ComponentStatus.STARTED.equals(statusRef.get())) {
@@ -102,6 +132,9 @@ public class KafkaMessageIngester {
     }
   }
 
+  /**
+   * Unsubscribes all workers from the topic while keeping them alive.
+   */
   public synchronized void pause () {
 
     if (ComponentStatus.STARTED.equals(statusRef.get())) {
@@ -111,6 +144,11 @@ public class KafkaMessageIngester {
     }
   }
 
+  /**
+   * Stops all workers and waits for them to exit.
+   *
+   * @throws InterruptedException if interrupted while waiting for worker shutdown.
+   */
   public synchronized void shutDown ()
     throws InterruptedException {
 
@@ -126,6 +164,9 @@ public class KafkaMessageIngester {
     }
   }
 
+  /**
+   * Runnable responsible for consuming Kafka records in a single thread.
+   */
   private class ConsumerWorker implements Runnable {
 
     private final CountDownLatch exitLatch = new CountDownLatch(1);
@@ -134,6 +175,11 @@ public class KafkaMessageIngester {
     private Consumer<Long, byte[]> consumer;
     private boolean paused = false;
 
+    /**
+     * Creates a worker tied to the given index.
+     *
+     * @param index numeric worker identifier for logging and client naming.
+     */
     public ConsumerWorker (int index) {
 
       this.index = index;
@@ -141,6 +187,11 @@ public class KafkaMessageIngester {
       consumer = createConsumer(index, false);
     }
 
+    /**
+     * Requests the worker to stop and waits until the run loop exits.
+     *
+     * @throws InterruptedException if waiting for the worker to exit is interrupted.
+     */
     private void stop ()
       throws InterruptedException {
 
@@ -151,18 +202,28 @@ public class KafkaMessageIngester {
       }
     }
 
+    /**
+     * Subscribes the worker to the configured topic.
+     */
     public synchronized void play () {
 
       consumer.subscribe(Collections.singleton(topicName));
       paused = false;
     }
 
+    /**
+     * Unsubscribes the worker from the topic to temporarily halt consumption.
+     */
     public synchronized void pause () {
 
       consumer.unsubscribe();
       paused = true;
     }
 
+    /**
+     * Main consumer loop that polls Kafka and dispatches records to the callback.
+     * Errors during callback execution are logged and offsets are still committed.
+     */
     @Override
     public void run () {
 

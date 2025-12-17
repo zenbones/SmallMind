@@ -32,7 +32,19 @@
  */
 package org.smallmind.phalanx.worker;
 
+/**
+ * Factory for creating worker instances tied to a queue.
+ *
+ * @param <W> worker implementation type
+ * @param <T> type of work items consumed by workers
+ */
 public interface WorkerFactory<W extends Worker<T>, T> {
 
+  /**
+   * Produces a new worker bound to the supplied work queue.
+   *
+   * @param workQueue queue from which the worker will read work items
+   * @return new worker instance
+   */
   W createWorker (WorkQueue<T> workQueue);
 }

@@ -32,17 +32,33 @@
  */
 package org.smallmind.phalanx.wire;
 
+/**
+ * Voice implementation representing a targeted whisper request to a specific service instance.
+ */
 public class Whispering implements Voice<String, String> {
 
   private final TwoWayConversation twoWayConversation;
   private final String serviceGroup;
   private final String instanceId;
 
+  /**
+   * Creates a whisper with no custom timeout.
+   *
+   * @param serviceGroup destination service group
+   * @param instanceId   specific instance identifier
+   */
   public Whispering (String serviceGroup, String instanceId) {
 
     this(serviceGroup, instanceId, 0L);
   }
 
+  /**
+   * Creates a whisper with an optional timeout.
+   *
+   * @param serviceGroup destination service group
+   * @param instanceId   specific instance identifier
+   * @param timeout      timeout in seconds for the two-way conversation
+   */
   public Whispering (String serviceGroup, String instanceId, Long timeout) {
 
     this.serviceGroup = serviceGroup;
@@ -51,23 +67,37 @@ public class Whispering implements Voice<String, String> {
     twoWayConversation = new TwoWayConversation(timeout);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public VocalMode getMode () {
 
     return VocalMode.WHISPER;
   }
 
+  /**
+   * Returns the two-way conversation associated with this whisper.
+   *
+   * @return conversation including timeout behavior
+   */
   public Conversation<?> getConversation () {
 
     return twoWayConversation;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String getServiceGroup () {
 
     return serviceGroup;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String getInstanceId () {
 

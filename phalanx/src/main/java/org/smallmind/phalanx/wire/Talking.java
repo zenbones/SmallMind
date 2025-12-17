@@ -32,35 +32,56 @@
  */
 package org.smallmind.phalanx.wire;
 
+/**
+ * Voice representing a standard request directed at a service group.
+ */
 public class Talking implements Voice<String, Void> {
 
   private final Conversation<?> conversation;
   private final String serviceGroup;
 
+  /**
+   * Creates a talking voice with the given conversation semantics.
+   *
+   * @param conversation conversation definition describing timeout and request/response style
+   * @param serviceGroup destination service group
+   */
   public Talking (Conversation<?> conversation, String serviceGroup) {
 
     this.conversation = conversation;
     this.serviceGroup = serviceGroup;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public VocalMode getMode () {
 
     return VocalMode.TALK;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Conversation getConversation () {
 
     return conversation;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String getServiceGroup () {
 
     return serviceGroup;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Void getInstanceId () {
 

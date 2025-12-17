@@ -32,8 +32,10 @@
  */
 package org.smallmind.phalanx.wire.transport.jms.spring;
 
+/**
+ * Identifies whether a JMS destination is a queue or topic.
+ */
 public enum DestinationType {
 
   QUEUE, TOPIC
 }
-

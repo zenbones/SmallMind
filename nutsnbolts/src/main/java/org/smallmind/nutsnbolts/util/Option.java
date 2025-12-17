@@ -41,13 +41,13 @@ import java.io.Serializable;
  */
 public interface Option<T> extends Serializable {
 
-  @SuppressWarnings("unchecked")
   /**
    * Returns the singleton empty option.
    *
    * @param <T> element type
    * @return shared {@link None} instance
    */
+  @SuppressWarnings("unchecked")
   static <T> None<T> none () {
 
     return (None<T>)None.NONE;

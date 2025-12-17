@@ -44,6 +44,9 @@ import jakarta.jms.Session;
 import org.smallmind.phalanx.wire.TransportException;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Manages a single JMS {@link Connection} and caches sessions/producers/consumers for {@link SessionEmployer}s.
+ */
 public class ConnectionManager implements ExceptionListener {
 
   private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
@@ -56,6 +59,15 @@ public class ConnectionManager implements ExceptionListener {
 
   private Connection connection;
 
+  /**
+   * Creates the connection manager and establishes an initial connection.
+   *
+   * @param managedObjectFactory factory used to create JMS connections/sessions
+   * @param messagePolicy        policy to apply to message producers
+   * @param reconnectionPolicy   reconnection behavior after failures
+   * @throws TransportException if the connection cannot be established
+   * @throws JMSException       if JMS resources cannot be created
+   */
   public ConnectionManager (ManagedObjectFactory managedObjectFactory, MessagePolicy messagePolicy, ReconnectionPolicy reconnectionPolicy)
     throws TransportException, JMSException {
 
@@ -82,6 +94,13 @@ public class ConnectionManager implements ExceptionListener {
     connection.setExceptionListener(this);
   }
 
+  /**
+   * Returns a session for the given employer, creating and caching it if necessary.
+   *
+   * @param sessionEmployer destination/employer requesting a session
+   * @return JMS session
+   * @throws JMSException if session creation fails
+   */
   public Session getSession (SessionEmployer sessionEmployer)
     throws JMSException {
 
@@ -99,6 +118,13 @@ public class ConnectionManager implements ExceptionListener {
     return session;
   }
 
+  /**
+   * Returns a message producer for the given employer, creating one if absent.
+   *
+   * @param sessionEmployer destination/employer requesting a producer
+   * @return JMS producer
+   * @throws JMSException if producer creation fails
+   */
   public MessageProducer getProducer (SessionEmployer sessionEmployer)
     throws JMSException {
 
@@ -117,6 +143,12 @@ public class ConnectionManager implements ExceptionListener {
     return producer;
   }
 
+  /**
+   * Creates and registers a consumer for the given employer, attaching the employer as the listener.
+   *
+   * @param sessionEmployer employer providing destination and selector
+   * @throws JMSException if consumer creation fails
+   */
   public void createConsumer (SessionEmployer sessionEmployer)
     throws JMSException {
 
@@ -134,6 +166,11 @@ public class ConnectionManager implements ExceptionListener {
     }
   }
 
+  /**
+   * Starts message delivery on the managed connection.
+   *
+   * @throws JMSException if the connection cannot be started
+   */
   public void start ()
     throws JMSException {
 
@@ -142,6 +179,11 @@ public class ConnectionManager implements ExceptionListener {
     }
   }
 
+  /**
+   * Stops message delivery on the managed connection.
+   *
+   * @throws JMSException if the connection cannot be stopped
+   */
   public void stop ()
     throws JMSException {
 
@@ -150,6 +192,11 @@ public class ConnectionManager implements ExceptionListener {
     }
   }
 
+  /**
+   * Closes all producers, consumers, sessions, and the underlying connection.
+   *
+   * @throws JMSException if closing any resource fails
+   */
   public void close ()
     throws JMSException {
 
@@ -168,6 +215,9 @@ public class ConnectionManager implements ExceptionListener {
     }
   }
 
+  /**
+   * Handles JMS connection exceptions by attempting reconnection according to the policy.
+   */
   @Override
   public void onException (JMSException jmsException) {
 

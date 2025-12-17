@@ -34,9 +34,22 @@ package org.smallmind.phalanx.wire.transport.jms;
 
 import jakarta.jms.Destination;
 
+/**
+ * Provides destination details for obtaining JMS sessions, producers, and consumers.
+ */
 public interface SessionEmployer {
 
+  /**
+   * Destination (queue or topic) associated with this employer.
+   *
+   * @return JMS destination
+   */
   Destination getDestination ();
 
+  /**
+   * Optional message selector to use when creating consumers.
+   *
+   * @return JMS selector string or {@code null}
+   */
   String getMessageSelector ();
 }

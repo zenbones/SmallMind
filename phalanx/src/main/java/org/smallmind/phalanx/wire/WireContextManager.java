@@ -37,8 +37,17 @@ import org.smallmind.nutsnbolts.lang.PerApplicationContext;
 import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
 import org.smallmind.phalanx.wire.signal.WireContext;
 
+/**
+ * Per-application registry for mapping wire context handles to their concrete classes.
+ */
 public class WireContextManager implements PerApplicationDataManager {
 
+  /**
+   * Registers a wire context class for the given handle.
+   *
+   * @param handle       key used to reference the context in signals
+   * @param contextClass class implementing the context
+   */
   public static void register (String handle, Class<? extends WireContext> contextClass) {
 
     ConcurrentHashMap<String, Class<? extends WireContext>> wireContextMap;
@@ -50,6 +59,12 @@ public class WireContextManager implements PerApplicationDataManager {
     wireContextMap.put(handle, contextClass);
   }
 
+  /**
+   * Looks up a registered wire context class by handle.
+   *
+   * @param handle context identifier
+   * @return matching context class or {@code null} if none is registered
+   */
   public static Class<? extends WireContext> getContextClass (String handle) {
 
     ConcurrentHashMap<String, Class<? extends WireContext>> wireContextMap;

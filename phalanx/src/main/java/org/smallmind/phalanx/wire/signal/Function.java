@@ -48,6 +48,9 @@ import org.smallmind.phalanx.wire.SignatureUtility;
 
 @XmlRootElement(name = "function", namespace = "http://org.smallmind/phalanx/wire")
 @XmlAccessorType(XmlAccessType.PROPERTY)
+/**
+ * Serializable description of a callable function, including its signature and result type.
+ */
 public class Function implements Serializable {
 
   private String name;
@@ -55,21 +58,40 @@ public class Function implements Serializable {
   private String nativeType;
   private String[] signature;
 
+  /**
+   * Default constructor for JAXB.
+   */
   public Function () {
 
   }
 
+  /**
+   * Constructs a function descriptor with a name only.
+   *
+   * @param name function name
+   */
   public Function (String name) {
 
     this.name = name;
   }
 
+  /**
+   * Constructs a function descriptor with name and native return type encoding.
+   *
+   * @param name       function name
+   * @param nativeType JVM descriptor for the return type
+   */
   public Function (String name, String nativeType) {
 
     this.name = name;
     this.nativeType = nativeType;
   }
 
+  /**
+   * Builds a descriptor from a reflected method, inspecting annotations to determine names and types.
+   *
+   * @param method reflected method to describe
+   */
   public Function (Method method) {
 
     Class[] parameterClasses;
@@ -108,56 +130,106 @@ public class Function implements Serializable {
     nativeType = SignatureUtility.nativeEncode(method.getReturnType());
   }
 
+  /**
+   * Indicates whether this descriptor is missing signature or result details.
+   *
+   * @return {@code true} when any component is null
+   */
   @XmlTransient
   public boolean isPartial () {
 
     return (signature == null) || (resultType == null);
   }
 
+  /**
+   * Returns the function name.
+   *
+   * @return function name
+   */
   @XmlElement(name = "name", required = true)
   public String getName () {
 
     return name;
   }
 
+  /**
+   * Sets the function name.
+   *
+   * @param name new function name
+   */
   public void setName (String name) {
 
     this.name = name;
   }
 
+  /**
+   * Returns the JVM descriptor for the return type.
+   *
+   * @return native type descriptor
+   */
   @XmlElement(name = "nativeType")
   public String getNativeType () {
 
     return nativeType;
   }
 
+  /**
+   * Sets the JVM descriptor for the return type.
+   *
+   * @param nativeType native descriptor string
+   */
   public void setNativeType (String nativeType) {
 
     this.nativeType = nativeType;
   }
 
+  /**
+   * Returns the neutral or named result type.
+   *
+   * @return result type encoding
+   */
   @XmlElement(name = "resultType")
   public String getResultType () {
 
     return resultType;
   }
 
+  /**
+   * Sets the result type encoding.
+   *
+   * @param resultType result type encoding
+   */
   public void setResultType (String resultType) {
 
     this.resultType = resultType;
   }
 
+  /**
+   * Returns the encoded parameter signature.
+   *
+   * @return signature array
+   */
   @XmlElement(name = "signature")
   public String[] getSignature () {
 
     return signature;
   }
 
+  /**
+   * Sets the encoded parameter signature.
+   *
+   * @param signature signature array
+   */
   public void setSignature (String[] signature) {
 
     this.signature = signature;
   }
 
+  /**
+   * Computes a hash code based on name, result type, and signature entries.
+   *
+   * @return hash code for the descriptor
+   */
   public int hashCode () {
 
     int hashCode;
@@ -177,6 +249,12 @@ public class Function implements Serializable {
     return hashCode;
   }
 
+  /**
+   * Compares descriptors by name, result type, and signature contents.
+   *
+   * @param obj other object
+   * @return {@code true} when equivalent
+   */
   public boolean equals (Object obj) {
 
     return (obj instanceof Function) && name.equals(((Function)obj).getName()) && ((resultType == null) ? ((Function)obj).getResultType() == null : resultType.equals(((Function)obj).getResultType())) && Arrays.equals(signature, ((Function)obj).getSignature());

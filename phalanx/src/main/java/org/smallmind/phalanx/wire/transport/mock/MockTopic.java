@@ -37,6 +37,9 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Simple in-memory topic that delivers messages to all listeners matching the message headers.
+ */
 public class MockTopic {
 
   private final AtomicBoolean closed = new AtomicBoolean(false);
@@ -44,6 +47,9 @@ public class MockTopic {
   private final ConcurrentLinkedQueue<MockMessage> messageQueue = new ConcurrentLinkedQueue<>();
   private final ArrayList<MockMessageListener> listenerList = new ArrayList<>();
 
+  /**
+   * Starts the worker thread that dispatches messages to listeners.
+   */
   public MockTopic () {
 
     Thread thread = new Thread(worker = new QueueWorker());
@@ -52,6 +58,11 @@ public class MockTopic {
     thread.start();
   }
 
+  /**
+   * Registers a listener that will be evaluated for every published message.
+   *
+   * @param listener listener to add.
+   */
   public void addListener (MockMessageListener listener) {
 
     synchronized (listenerList) {
@@ -59,6 +70,11 @@ public class MockTopic {
     }
   }
 
+  /**
+   * Removes a listener from the topic.
+   *
+   * @param listener listener to remove.
+   */
   public void removeListener (MockMessageListener listener) {
 
     synchronized (listenerList) {
@@ -66,18 +82,32 @@ public class MockTopic {
     }
   }
 
+  /**
+   * Publishes a message to the topic for fan-out delivery.
+   *
+   * @param message message to broadcast.
+   */
   public void send (MockMessage message) {
 
     messageQueue.add(message);
   }
 
+  /**
+   * Worker that drains the topic queue and delivers messages to matching listeners.
+   */
   private class QueueWorker implements Runnable {
 
+    /**
+     * Stops the worker loop.
+     */
     public void close () {
 
       closed.set(true);
     }
 
+    /**
+     * Drains the queue and dispatches to each matching listener.
+     */
     @Override
     public void run () {
 

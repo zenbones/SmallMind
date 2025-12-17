@@ -32,9 +32,22 @@
  */
 package org.smallmind.phalanx.wire;
 
+/**
+ * Describes a wire-exposed service with name and version metadata.
+ */
 public interface Service {
 
+  /**
+   * Returns the logical service name advertised on the wire.
+   *
+   * @return service name
+   */
   String getServiceName ();
 
+  /**
+   * Returns the protocol or API version for the service.
+   *
+   * @return version number
+   */
   int getVersion ();
 }

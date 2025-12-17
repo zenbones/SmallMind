@@ -32,8 +32,14 @@
  */
 package org.smallmind.phalanx.wire.transport.jms.spring;
 
+/**
+ * Spring reference for a JMS topic destination.
+ */
 public class TopicReference extends DestinationReference {
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public DestinationType getDestinationType () {
 

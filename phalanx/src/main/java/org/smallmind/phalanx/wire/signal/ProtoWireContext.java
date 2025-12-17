@@ -32,22 +32,41 @@
  */
 package org.smallmind.phalanx.wire.signal;
 
+/**
+ * Wire context used when the concrete type is unknown, carrying raw JSON payload and the original tag.
+ */
 public class ProtoWireContext extends WireContext {
 
   private final Object guts;
   private final String skin;
 
+  /**
+   * Creates a proto context with a tag and raw content.
+   *
+   * @param skin name identifying the context type
+   * @param guts payload to be deserialized later
+   */
   public ProtoWireContext (String skin, Object guts) {
 
     this.skin = skin;
     this.guts = guts;
   }
 
+  /**
+   * Returns the raw payload.
+   *
+   * @return untyped context contents
+   */
   public Object getGuts () {
 
     return guts;
   }
 
+  /**
+   * Returns the tag used to identify the context type.
+   *
+   * @return context name
+   */
   public String getSkin () {
 
     return skin;

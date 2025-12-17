@@ -32,22 +32,41 @@
  */
 package org.smallmind.phalanx.wire.transport;
 
+/**
+ * Represents an argument definition supplied programmatically rather than via annotation.
+ */
 public class SyntheticArgument {
 
   private final Class<?> parameterType;
   private final String name;
 
+  /**
+   * Creates a synthetic argument declaration.
+   *
+   * @param name          logical argument name
+   * @param parameterType parameter type
+   */
   public SyntheticArgument (String name, Class<?> parameterType) {
 
     this.name = name;
     this.parameterType = parameterType;
   }
 
+  /**
+   * Returns the argument name.
+   *
+   * @return name of the parameter
+   */
   public String getName () {
 
     return name;
   }
 
+  /**
+   * Returns the parameter type.
+   *
+   * @return class of the parameter
+   */
   public Class<?> getParameterType () {
 
     return parameterType;

@@ -35,10 +35,18 @@ package org.smallmind.phalanx.worker;
 import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * {@link WorkQueue} backed by a {@link LinkedTransferQueue}, favoring direct hand-offs to consumers.
+ *
+ * @param <E> type of work items stored
+ */
 public class TransferringWorkQueue<E> implements WorkQueue<E> {
 
   private final LinkedTransferQueue<E> linkedTransferQueue = new LinkedTransferQueue<>();
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean offer (E e, long timeout, TimeUnit unit)
     throws InterruptedException {
@@ -46,6 +54,9 @@ public class TransferringWorkQueue<E> implements WorkQueue<E> {
     return linkedTransferQueue.tryTransfer(e, timeout, unit);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public E poll (long timeout, TimeUnit unit)
     throws InterruptedException {

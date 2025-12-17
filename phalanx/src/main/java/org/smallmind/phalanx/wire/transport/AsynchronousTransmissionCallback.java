@@ -40,6 +40,9 @@ import org.smallmind.phalanx.wire.TransportTimeoutException;
 import org.smallmind.phalanx.wire.signal.ResultSignal;
 import org.smallmind.phalanx.wire.signal.SignalCodec;
 
+/**
+ * Callback that waits asynchronously for a response signal, enforcing a timeout.
+ */
 public class AsynchronousTransmissionCallback extends TransmissionCallback {
 
   private final CountDownLatch resultLatch = new CountDownLatch(1);
@@ -47,12 +50,21 @@ public class AsynchronousTransmissionCallback extends TransmissionCallback {
   private final String serviceName;
   private final String functionName;
 
+  /**
+   * Constructs a callback for the given service/function, used in timeout messaging.
+   *
+   * @param serviceName  service name associated with the call
+   * @param functionName function name associated with the call
+   */
   public AsynchronousTransmissionCallback (String serviceName, String functionName) {
 
     this.serviceName = serviceName;
     this.functionName = functionName;
   }
 
+  /**
+   * Waits for the result or throws when the timeout expires.
+   */
   public Object getResult (SignalCodec signalCodec, long timeoutSeconds)
     throws Throwable {
 
@@ -73,6 +85,11 @@ public class AsynchronousTransmissionCallback extends TransmissionCallback {
     }
   }
 
+  /**
+   * Supplies the received result signal and releases any waiting callers.
+   *
+   * @param resultSignal result to provide
+   */
   public void setResultSignal (ResultSignal resultSignal) {
 
     resultSignalRef.set(resultSignal);

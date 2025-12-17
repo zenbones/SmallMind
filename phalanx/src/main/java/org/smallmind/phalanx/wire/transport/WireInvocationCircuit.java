@@ -47,16 +47,36 @@ import org.smallmind.web.json.scaffold.fault.Fault;
 import org.smallmind.web.json.scaffold.fault.FaultElement;
 import org.smallmind.web.json.scaffold.fault.FaultWrappingException;
 
+/**
+ * Routes incoming invocation signals to registered service implementations and returns results.
+ */
 public class WireInvocationCircuit {
 
   private final ConcurrentHashMap<ServiceKey, MethodInvoker> invokerMap = new ConcurrentHashMap<>();
 
+  /**
+   * Registers a service interface and implementation for handling incoming calls.
+   *
+   * @param serviceInterface interface describing remote methods
+   * @param targetService    wrapper containing the implementation instance and version
+   * @throws NoSuchMethodException      if a method cannot be reflected
+   * @throws ServiceDefinitionException if annotation metadata is invalid
+   */
   public void register (Class<?> serviceInterface, WiredService targetService)
     throws NoSuchMethodException, ServiceDefinitionException {
 
     invokerMap.putIfAbsent(new ServiceKey(targetService.getVersion(), targetService.getServiceName()), new MethodInvoker(targetService, serviceInterface));
   }
 
+  /**
+   * Handles an invocation by locating the target method, invoking it, and transmitting the outcome.
+   *
+   * @param transmitter      transmitter used to send responses
+   * @param signalCodec      codec used to decode and encode payloads
+   * @param callerId         identifier for the caller
+   * @param messageId        correlation id for the invocation
+   * @param invocationSignal incoming invocation signal
+   */
   public void handle (ResponseTransmitter transmitter, SignalCodec signalCodec, String callerId, String messageId, InvocationSignal invocationSignal) {
 
     MethodInvoker methodInvoker;
@@ -114,28 +134,43 @@ public class WireInvocationCircuit {
     private final String service;
     private final int version;
 
+    /**
+     * Composite key for locating a service implementation by version and name.
+     */
     private ServiceKey (int version, String service) {
 
       this.version = version;
       this.service = service;
     }
 
+    /**
+     * @return service name represented by this key.
+     */
     public String getService () {
 
       return service;
     }
 
+    /**
+     * @return service version represented by this key.
+     */
     public int getVersion () {
 
       return version;
     }
 
+    /**
+     * Generates a hash combining service and version to support map lookups.
+     */
     @Override
     public int hashCode () {
 
       return service.hashCode() ^ version;
     }
 
+    /**
+     * Keys are equal when both service name and version match.
+     */
     @Override
     public boolean equals (Object obj) {
 

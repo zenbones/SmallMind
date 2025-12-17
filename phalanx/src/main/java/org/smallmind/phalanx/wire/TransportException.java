@@ -34,23 +34,47 @@ package org.smallmind.phalanx.wire;
 
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
+/**
+ * Base exception for transport-level errors while invoking or serving wire calls.
+ */
 public class TransportException extends FormattedException {
 
+  /**
+   * Creates an empty transport exception.
+   */
   public TransportException () {
 
     super();
   }
 
+  /**
+   * Creates the exception with a formatted message.
+   *
+   * @param message format string describing the transport issue
+   * @param args    arguments applied to the format string
+   */
   public TransportException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * Creates the exception with a cause and formatted message.
+   *
+   * @param throwable root cause
+   * @param message   format string describing the transport issue
+   * @param args      arguments applied to the format string
+   */
   public TransportException (Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);
   }
 
+  /**
+   * Creates the exception with a cause only.
+   *
+   * @param throwable root cause
+   */
   public TransportException (Throwable throwable) {
 
     super(throwable);

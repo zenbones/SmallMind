@@ -32,8 +32,17 @@
  */
 package org.smallmind.phalanx.wire;
 
+/**
+ * Exception indicating a request exceeded its allotted transport timeout.
+ */
 public class TransportTimeoutException extends TransportException {
 
+  /**
+   * Creates the exception with a formatted timeout message.
+   *
+   * @param message format string describing the timeout
+   * @param args    arguments applied to the format string
+   */
   public TransportTimeoutException (String message, Object... args) {
 
     super(message, args);

@@ -37,9 +37,17 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Marks the argument name that should receive a method's return value on the receiving side.
+ */
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Result {
 
+  /**
+   * Logical name that corresponds to the result payload.
+   *
+   * @return name of the result parameter
+   */
   String value ();
 }

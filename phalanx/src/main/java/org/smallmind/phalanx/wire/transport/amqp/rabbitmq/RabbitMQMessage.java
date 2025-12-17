@@ -34,25 +34,37 @@ package org.smallmind.phalanx.wire.transport.amqp.rabbitmq;
 
 import com.rabbitmq.client.AMQP;
 
+/**
+ * Wrapper for AMQP message properties and payload.
+ */
 public class RabbitMQMessage {
 
   private final AMQP.BasicProperties properties;
   private final byte[] body;
 
+  /**
+   * @param properties AMQP properties associated with the message.
+   * @param body       message payload bytes.
+   */
   public RabbitMQMessage (AMQP.BasicProperties properties, byte[] body) {
 
     this.properties = properties;
     this.body = body;
   }
 
+  /**
+   * @return AMQP properties for the message.
+   */
   public AMQP.BasicProperties getProperties () {
 
     return properties;
   }
 
+  /**
+   * @return raw message payload.
+   */
   public byte[] getBody () {
 
     return body;
   }
 }
-

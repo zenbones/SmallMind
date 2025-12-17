@@ -38,11 +38,19 @@ import org.smallmind.phalanx.wire.signal.ResultSignal;
 import org.smallmind.phalanx.wire.signal.Route;
 import org.smallmind.phalanx.wire.signal.SignalCodec;
 
+/**
+ * Base implementation for request transports that manages synchronous and asynchronous callbacks.
+ */
 public abstract class AbstractRequestTransport implements RequestTransport {
 
   private final ConcurrentHashMap<String, TransmissionCallback> callbackMap;
   private final long defaultTimeoutSeconds;
 
+  /**
+   * Constructs the transport with a default timeout applied when none is supplied in the conversation.
+   *
+   * @param defaultTimeoutSeconds fallback timeout in seconds for request/response calls
+   */
   public AbstractRequestTransport (long defaultTimeoutSeconds) {
 
     this.defaultTimeoutSeconds = defaultTimeoutSeconds;
@@ -50,6 +58,17 @@ public abstract class AbstractRequestTransport implements RequestTransport {
     callbackMap = new ConcurrentHashMap<>();
   }
 
+  /**
+   * Retrieves a result for a request, optionally blocking for completion based on the conversation type.
+   *
+   * @param signalCodec codec used to decode the result payload
+   * @param route       destination route of the request
+   * @param voice       voice describing the conversation
+   * @param messageId   correlation id for the request
+   * @param inOnly      whether the request is fire-and-forget
+   * @return decoded result object or {@code null} for in-only calls
+   * @throws Throwable if result retrieval fails or the remote side raises an error
+   */
   public Object acquireResult (SignalCodec signalCodec, Route route, Voice<?, ?> voice, String messageId, boolean inOnly)
     throws Throwable {
 
@@ -77,6 +96,12 @@ public abstract class AbstractRequestTransport implements RequestTransport {
     return null;
   }
 
+  /**
+   * Completes a pending callback by providing the received result signal.
+   *
+   * @param correlationId correlation id of the original request
+   * @param resultSignal  signal received from the remote side
+   */
   public void completeCallback (String correlationId, ResultSignal resultSignal) {
 
     TransmissionCallback previousCallback;

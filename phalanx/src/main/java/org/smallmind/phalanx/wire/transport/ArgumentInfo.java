@@ -32,22 +32,41 @@
  */
 package org.smallmind.phalanx.wire.transport;
 
+/**
+ * Stores the parameter index and type for an invocation argument.
+ */
 public class ArgumentInfo {
 
   private final Class<?> parameterType;
   private final int index;
 
+  /**
+   * Creates argument metadata with position and type.
+   *
+   * @param index         zero-based position in the parameter list
+   * @param parameterType parameter type
+   */
   public ArgumentInfo (int index, Class<?> parameterType) {
 
     this.index = index;
     this.parameterType = parameterType;
   }
 
+  /**
+   * Returns the zero-based index of the argument.
+   *
+   * @return argument position
+   */
   public int getIndex () {
 
     return index;
   }
 
+  /**
+   * Returns the parameter type.
+   *
+   * @return argument class
+   */
   public Class<?> getParameterType () {
 
     return parameterType;

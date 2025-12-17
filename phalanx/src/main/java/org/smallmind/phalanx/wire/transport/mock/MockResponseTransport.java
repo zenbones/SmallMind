@@ -48,6 +48,9 @@ import org.smallmind.phalanx.wire.transport.WireProperty;
 import org.smallmind.phalanx.wire.transport.WiredService;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * In-memory response transport that consumes mock requests and publishes results.
+ */
 public class MockResponseTransport implements ResponseTransport, ResponseTransmitter {
 
   private final AtomicReference<TransportState> transportStateRef = new AtomicReference<>(TransportState.PLAYING);
@@ -56,6 +59,10 @@ public class MockResponseTransport implements ResponseTransport, ResponseTransmi
   private final SignalCodec signalCodec;
   private final String instanceId = UUID.randomUUID().toString();
 
+  /**
+   * @param messageRouter router providing request/response channels.
+   * @param signalCodec   codec for serialization.
+   */
   public MockResponseTransport (MockMessageRouter messageRouter, final SignalCodec signalCodec) {
 
     this.messageRouter = messageRouter;
@@ -63,12 +70,18 @@ public class MockResponseTransport implements ResponseTransport, ResponseTransmi
 
     messageRouter.getTalkRequestQueue().addListener(new MockMessageListener() {
 
+      /**
+       * Accepts all talk-mode requests.
+       */
       @Override
       public boolean match (MockMessageProperties properties) {
 
         return true;
       }
 
+      /**
+       * Decodes and routes talk-mode invocations to the service circuit.
+       */
       @Override
       public void handle (MockMessage message) {
 
@@ -82,12 +95,18 @@ public class MockResponseTransport implements ResponseTransport, ResponseTransmi
 
     messageRouter.getWhisperRequestTopic().addListener(new MockMessageListener() {
 
+      /**
+       * Accepts whisper requests targeted to this instance id.
+       */
       @Override
       public boolean match (MockMessageProperties properties) {
 
         return properties.getHeader(WireProperty.INSTANCE_ID.getKey()).equals(instanceId);
       }
 
+      /**
+       * Decodes and routes whisper-mode invocations to the service circuit.
+       */
       @Override
       public void handle (MockMessage message) {
 
@@ -100,12 +119,24 @@ public class MockResponseTransport implements ResponseTransport, ResponseTransmi
     });
   }
 
+  /**
+   * @return unique id used for whisper routing.
+   */
   @Override
   public String getInstanceId () {
 
     return instanceId;
   }
 
+  /**
+   * Registers a service with the invocation circuit.
+   *
+   * @param serviceInterface interface of the service being registered.
+   * @param targetService    service implementation metadata.
+   * @return this responder's instance id.
+   * @throws NoSuchMethodException      if a method is missing on the target.
+   * @throws ServiceDefinitionException if registration fails.
+   */
   @Override
   public String register (Class<?> serviceInterface, WiredService targetService)
     throws NoSuchMethodException, ServiceDefinitionException {
@@ -115,12 +146,18 @@ public class MockResponseTransport implements ResponseTransport, ResponseTransmi
     return instanceId;
   }
 
+  /**
+   * @return current transport state.
+   */
   @Override
   public TransportState getState () {
 
     return transportStateRef.get();
   }
 
+  /**
+   * Resumes handling of talk requests.
+   */
   @Override
   public void play () {
 
@@ -131,6 +168,9 @@ public class MockResponseTransport implements ResponseTransport, ResponseTransmi
     }
   }
 
+  /**
+   * Pauses handling of talk requests.
+   */
   @Override
   public void pause () {
 
@@ -141,6 +181,16 @@ public class MockResponseTransport implements ResponseTransport, ResponseTransmi
     }
   }
 
+  /**
+   * Publishes a response message to the mock response topic.
+   *
+   * @param callerId      caller to deliver the result to.
+   * @param correlationId correlation id from the request.
+   * @param error         whether the payload is an error.
+   * @param nativeType    native type information.
+   * @param result        payload to return.
+   * @throws Exception if encoding fails.
+   */
   @Override
   public void transmit (String callerId, String correlationId, boolean error, String nativeType, Object result)
     throws Exception {
@@ -156,6 +206,11 @@ public class MockResponseTransport implements ResponseTransport, ResponseTransmi
     messageRouter.getResponseTopic().send(message);
   }
 
+  /**
+   * Closes the transport by marking it closed. No additional resources to release.
+   *
+   * @throws Exception never thrown.
+   */
   @Override
   public void close ()
     throws Exception {

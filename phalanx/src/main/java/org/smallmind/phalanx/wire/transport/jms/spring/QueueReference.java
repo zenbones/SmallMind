@@ -32,8 +32,14 @@
  */
 package org.smallmind.phalanx.wire.transport.jms.spring;
 
+/**
+ * Spring reference for a JMS queue destination.
+ */
 public class QueueReference extends DestinationReference {
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public DestinationType getDestinationType () {
 

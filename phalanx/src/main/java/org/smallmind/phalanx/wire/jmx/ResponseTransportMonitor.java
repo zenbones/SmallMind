@@ -36,10 +36,18 @@ import javax.management.StandardMBean;
 import org.smallmind.phalanx.wire.transport.ResponseTransport;
 import org.smallmind.phalanx.wire.transport.TransportState;
 
+/**
+ * Exposes a {@link ResponseTransport} via JMX, delegating control operations.
+ */
 public class ResponseTransportMonitor extends StandardMBean implements ResponseTransportMXBean {
 
   private final ResponseTransport responseTransport;
 
+  /**
+   * Registers the monitor for the given response transport.
+   *
+   * @param responseTransport transport to monitor
+   */
   public ResponseTransportMonitor (ResponseTransport responseTransport) {
 
     super(ResponseTransportMXBean.class, true);
@@ -47,12 +55,18 @@ public class ResponseTransportMonitor extends StandardMBean implements ResponseT
     this.responseTransport = responseTransport;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public TransportState getState () {
 
     return responseTransport.getState();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void play ()
     throws Exception {
@@ -60,6 +74,9 @@ public class ResponseTransportMonitor extends StandardMBean implements ResponseT
     responseTransport.play();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void pause ()
     throws Exception {

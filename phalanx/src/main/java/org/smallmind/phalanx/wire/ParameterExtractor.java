@@ -36,8 +36,22 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import org.smallmind.phalanx.wire.signal.WireContext;
 
+/**
+ * Strategy interface for deriving contextual parameters from a service invocation.
+ *
+ * @param <T> parameter type produced
+ */
 public interface ParameterExtractor<T> {
 
+  /**
+   * Extracts a parameter value based on the invoked method, its arguments, and any supplied wire contexts.
+   *
+   * @param method       invoked method
+   * @param argumentMap  map of argument names to values for the invocation
+   * @param wireContexts optional wire contexts that may influence extraction
+   * @return extracted parameter
+   * @throws Exception if extraction fails
+   */
   T getParameter (Method method, HashMap<String, Object> argumentMap, WireContext... wireContexts)
     throws Exception;
 }

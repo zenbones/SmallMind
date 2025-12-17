@@ -45,6 +45,9 @@ import org.smallmind.phalanx.wire.transport.WireProperty;
 import org.smallmind.phalanx.worker.WorkQueue;
 import org.smallmind.phalanx.worker.Worker;
 
+/**
+ * Worker that decodes RabbitMQ invocation messages and dispatches them through the invocation circuit.
+ */
 public class InvocationWorker extends Worker<RabbitMQMessage> {
 
   private static final String CALLER_ID_AMQP_KEY = "x-opt-" + WireProperty.CALLER_ID.getKey();
@@ -53,6 +56,12 @@ public class InvocationWorker extends Worker<RabbitMQMessage> {
   private final WireInvocationCircuit invocationCircuit;
   private final SignalCodec signalCodec;
 
+  /**
+   * @param workQueue           queue supplying incoming RabbitMQ messages.
+   * @param responseTransmitter transport used to publish responses.
+   * @param invocationCircuit   circuit that invokes target services.
+   * @param signalCodec         codec for decoding invocation signals.
+   */
   public InvocationWorker (WorkQueue<RabbitMQMessage> workQueue, ResponseTransmitter responseTransmitter, WireInvocationCircuit invocationCircuit, SignalCodec signalCodec) {
 
     super(workQueue);
@@ -62,6 +71,12 @@ public class InvocationWorker extends Worker<RabbitMQMessage> {
     this.signalCodec = signalCodec;
   }
 
+  /**
+   * Decodes the invocation payload and performs the invocation using the circuit.
+   *
+   * @param message RabbitMQ message containing an invocation.
+   * @throws Throwable if decoding or invocation fails.
+   */
   @Override
   public void engageWork (final RabbitMQMessage message)
     throws Throwable {
@@ -73,6 +88,12 @@ public class InvocationWorker extends Worker<RabbitMQMessage> {
     );
   }
 
+  /**
+   * Extracts the caller id from AMQP headers if present.
+   *
+   * @param headers message headers.
+   * @return caller id string or {@code null} when absent.
+   */
   private String getCallerId (Map<String, Object> headers) {
 
     if ((headers != null) && (headers.containsKey(CALLER_ID_AMQP_KEY))) {
@@ -83,6 +104,9 @@ public class InvocationWorker extends Worker<RabbitMQMessage> {
     return null;
   }
 
+  /**
+   * Closes any resources owned by the worker. No-op because resources are managed externally.
+   */
   @Override
   public void close () {
 

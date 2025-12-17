@@ -49,6 +49,9 @@ import org.smallmind.phalanx.worker.WorkManager;
 import org.smallmind.phalanx.worker.WorkQueue;
 import org.smallmind.phalanx.worker.WorkerFactory;
 
+/**
+ * RabbitMQ-based response transport that consumes requests and publishes results.
+ */
 public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, RabbitMQMessage> implements WorkerFactory<InvocationWorker, RabbitMQMessage>, ResponseTransport, ResponseTransmitter {
 
   private final AtomicBoolean closed = new AtomicBoolean(false);
@@ -59,6 +62,23 @@ public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, Rab
   private final ResponseMessageRouter[] responseMessageRouters;
   private final String instanceId = SnowflakeId.newInstance().generateDottedString();
 
+  /**
+   * @param rabbitMQConnector            connector for creating channels.
+   * @param enduringQueueContractor      contractor for durable queues (talk).
+   * @param ephemeralQueueContractor     contractor for ephemeral queues (shout/whisper).
+   * @param nameConfiguration            exchange/queue naming scheme.
+   * @param workerClass                  worker implementation for invocation handling.
+   * @param signalCodec                  codec for serialization.
+   * @param serviceGroup                 service group name used in routing keys.
+   * @param clusterSize                  number of routers to create.
+   * @param concurrencyLimit             worker concurrency limit.
+   * @param messageTTLSeconds            message time-to-live in seconds.
+   * @param autoAcknowledge              whether consumers should auto-ack.
+   * @param publisherConfirmationHandler optional handler for publisher confirms, may be null.
+   * @throws IOException          if router initialization fails.
+   * @throws InterruptedException if initialization is interrupted.
+   * @throws TimeoutException     if initialization times out.
+   */
   public RabbitMQResponseTransport (RabbitMQConnector rabbitMQConnector, QueueContractor enduringQueueContractor, QueueContractor ephemeralQueueContractor, NameConfiguration nameConfiguration, Class<InvocationWorker> workerClass, SignalCodec signalCodec, String serviceGroup, int clusterSize, int concurrencyLimit, int messageTTLSeconds, boolean autoAcknowledge, PublisherConfirmationHandler publisherConfirmationHandler)
     throws IOException, InterruptedException, TimeoutException {
 
@@ -85,12 +105,25 @@ public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, Rab
     startUp(this);
   }
 
+  /**
+   * Unique instance id used for whisper routing responses.
+   *
+   * @return responder instance id.
+   */
   @Override
   public String getInstanceId () {
 
     return instanceId;
   }
 
+  /**
+   * Registers a service implementation with the invocation circuit.
+   *
+   * @param serviceInterface interface class for the service.
+   * @param targetService    target implementation metadata.
+   * @return this responder's instance id for whisper routing.
+   * @throws Exception if registration fails.
+   */
   @Override
   public String register (Class<?> serviceInterface, WiredService targetService)
     throws Exception {
@@ -100,18 +133,32 @@ public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, Rab
     return instanceId;
   }
 
+  /**
+   * Creates a worker to handle incoming invocation messages.
+   *
+   * @param transferQueue queue supplying RabbitMQ messages.
+   * @return new {@link InvocationWorker}.
+   */
   @Override
   public InvocationWorker createWorker (WorkQueue<RabbitMQMessage> transferQueue) {
 
     return new InvocationWorker(transferQueue, this, invocationCircuit, signalCodec);
   }
 
+  /**
+   * @return current transport state.
+   */
   @Override
   public TransportState getState () {
 
     return transportStateRef.get();
   }
 
+  /**
+   * Resumes message consumption across routers.
+   *
+   * @throws Exception if a router cannot be started.
+   */
   @Override
   public void play ()
     throws Exception {
@@ -125,6 +172,11 @@ public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, Rab
     }
   }
 
+  /**
+   * Pauses message consumption across routers.
+   *
+   * @throws Exception if a router cannot be paused.
+   */
   @Override
   public void pause ()
     throws Exception {
@@ -138,6 +190,16 @@ public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, Rab
     }
   }
 
+  /**
+   * Serializes and publishes a result to the caller's response queue.
+   *
+   * @param callerId      caller identifier.
+   * @param correlationId correlation id matching the request.
+   * @param error         whether the result represents an error.
+   * @param nativeType    native type information.
+   * @param result        payload to send.
+   * @throws Throwable if publishing fails or the router pool is exhausted.
+   */
   @Override
   public void transmit (String callerId, String correlationId, boolean error, String nativeType, Object result)
     throws Throwable {
@@ -152,6 +214,13 @@ public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, Rab
     responseQueue.add(responseMessageRouter);
   }
 
+  /**
+   * Closes routers and worker pool, preventing further message handling.
+   *
+   * @throws IOException          if closing a router fails.
+   * @throws InterruptedException if shutdown is interrupted.
+   * @throws TimeoutException     if closing a router times out.
+   */
   @Override
   public void close ()
     throws IOException, InterruptedException, TimeoutException {

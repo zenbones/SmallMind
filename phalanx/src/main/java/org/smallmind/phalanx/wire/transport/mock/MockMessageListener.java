@@ -32,9 +32,23 @@
  */
 package org.smallmind.phalanx.wire.transport.mock;
 
+/**
+ * Listener that can filter and handle mock messages.
+ */
 public interface MockMessageListener {
 
+  /**
+   * Determines whether the listener should receive the message with these properties.
+   *
+   * @param properties message properties.
+   * @return true to accept the message.
+   */
   boolean match (MockMessageProperties properties);
 
+  /**
+   * Handles an accepted message.
+   *
+   * @param message message to process.
+   */
   void handle (MockMessage message);
 }

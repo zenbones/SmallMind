@@ -39,29 +39,47 @@ import jakarta.jms.Message;
 import jakarta.jms.Topic;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Session employer and message handler for publishing JMS messages to a topic.
+ */
 public class TopicOperator implements SessionEmployer, MessageHandler {
 
   private final ConnectionManager connectionManager;
   private final Topic topic;
 
+  /**
+   * Creates an operator bound to the provided topic using the shared connection manager.
+   *
+   * @param connectionManager manager providing sessions and producers
+   * @param topic             topic destination for outbound messages
+   */
   public TopicOperator (ConnectionManager connectionManager, Topic topic) {
 
     this.connectionManager = connectionManager;
     this.topic = topic;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Destination getDestination () {
 
     return topic;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String getMessageSelector () {
 
     return null;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public BytesMessage createMessage ()
     throws JMSException {
@@ -69,6 +87,9 @@ public class TopicOperator implements SessionEmployer, MessageHandler {
     return connectionManager.getSession(this).createBytesMessage();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void send (Message message)
     throws JMSException {

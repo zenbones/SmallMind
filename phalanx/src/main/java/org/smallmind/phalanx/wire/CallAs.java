@@ -37,9 +37,17 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Overrides the wire-level function name for a method invocation.
+ */
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface CallAs {
 
+  /**
+   * Name to use when transmitting the call over the wire.
+   *
+   * @return alternate function name
+   */
   String value ();
 }

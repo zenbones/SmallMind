@@ -61,6 +61,10 @@ import org.smallmind.phalanx.wire.transport.AbstractRequestTransport;
 import org.smallmind.phalanx.wire.transport.ClaxonTag;
 import org.smallmind.phalanx.wire.transport.amqp.rabbitmq.RequestMessageRouter;
 
+/**
+ * Kafka-backed implementation of {@link org.smallmind.phalanx.wire.transport.RequestTransport} that publishes invocation
+ * messages and waits for correlated responses on a dedicated response topic.
+ */
 public class KafkaRequestTransport extends AbstractRequestTransport {
 
   private final ExecutorService executorService = new ThreadPoolExecutor(1, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(), new ThreadPoolExecutor.CallerRunsPolicy());
@@ -74,6 +78,18 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
   private final String nodeName;
   private final String callerId = SnowflakeId.newInstance().generateDottedString();
 
+  /**
+   * Builds a transport that sends requests to service group topics and awaits responses.
+   *
+   * @param nodeName                  identifier appended to client names for diagnostics.
+   * @param signalCodec               codec used to serialize/deserialize signals.
+   * @param concurrencyLimit          number of concurrent response consumers.
+   * @param defaultTimeoutSeconds     default timeout while awaiting responses.
+   * @param startupGracePeriodSeconds grace period while waiting for brokers to become available.
+   * @param servers                   Kafka bootstrap servers.
+   * @throws KafkaConnectionException if the connector cannot reach Kafka.
+   * @throws InterruptedException     if interrupted while waiting for connector startup.
+   */
   public KafkaRequestTransport (String nodeName, SignalCodec signalCodec, int concurrencyLimit, long defaultTimeoutSeconds, int startupGracePeriodSeconds, KafkaServer... servers)
     throws KafkaConnectionException, InterruptedException {
 
@@ -88,12 +104,23 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
     responseMessageIngester = new KafkaMessageIngester(nodeName, callerId, topicNames.getResponseTopicName(callerId), connector, new RequestCallback(this, signalCodec), concurrencyLimit).startUp();
   }
 
+  /**
+   * Unique identifier used by downstream responders to target the caller-specific response topic.
+   *
+   * @return the transport caller id.
+   */
   @Override
   public String getCallerId () {
 
     return callerId;
   }
 
+  /**
+   * Retrieves or creates a producer for the given topic while respecting the closed state.
+   *
+   * @param topic topic name for which to acquire a producer.
+   * @return a producer ready to publish to the topic, or {@code null} if already closed.
+   */
   private Producer<Long, byte[]> getProducer (String topic) {
 
     producerLock.readLock().lock();
@@ -104,6 +131,16 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
     }
   }
 
+  /**
+   * Serializes and publishes an invocation signal to the appropriate topic, waiting for a response unless IN_ONLY.
+   *
+   * @param voice     invocation metadata describing conversation type and routing.
+   * @param route     route to the target service/method/version.
+   * @param arguments invocation arguments to encode.
+   * @param contexts  optional wire contexts to include.
+   * @return the decoded result for two-way conversations, or {@code null} for IN_ONLY calls.
+   * @throws Throwable if message publication fails or awaiting a response raises an error.
+   */
   @Override
   public Object transmit (Voice<?, ?> voice, Route route, Map<String, Object> arguments, WireContext... contexts)
     throws Throwable {
@@ -137,6 +174,11 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
     }
   }
 
+  /**
+   * Closes producers and shuts down the response ingester.
+   *
+   * @throws Exception if closing resources fails.
+   */
   @Override
   public void close ()
     throws Exception {

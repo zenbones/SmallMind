@@ -36,20 +36,54 @@ import jakarta.jms.ConnectionFactory;
 import jakarta.jms.Queue;
 import jakarta.jms.Topic;
 
+/**
+ * Abstraction for locating JMS resources and managing the broker lifecycle.
+ */
 public interface MessageBroker {
 
+  /**
+   * Looks up a JMS connection factory.
+   *
+   * @param path identifier or JNDI path
+   * @return connection factory
+   * @throws Exception if lookup fails
+   */
   ConnectionFactory lookupConnectionFactory (String path)
     throws Exception;
 
+  /**
+   * Looks up a JMS queue.
+   *
+   * @param path identifier or JNDI path
+   * @return queue instance
+   * @throws Exception if lookup fails
+   */
   Queue lookupQueue (String path)
     throws Exception;
 
+  /**
+   * Looks up a JMS topic.
+   *
+   * @param path identifier or JNDI path
+   * @return topic instance
+   * @throws Exception if lookup fails
+   */
   Topic lookupTopic (String path)
     throws Exception;
 
+  /**
+   * Starts the broker session or underlying resources.
+   *
+   * @throws Exception if startup fails
+   */
   void start ()
     throws Exception;
 
+  /**
+   * Stops the broker session or underlying resources.
+   *
+   * @throws Exception if shutdown fails
+   */
   void stop ()
     throws Exception;
 }

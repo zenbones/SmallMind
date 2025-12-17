@@ -43,6 +43,9 @@ import org.smallmind.phalanx.wire.ServiceDefinitionException;
 import org.smallmind.phalanx.wire.signal.Function;
 import org.smallmind.phalanx.wire.signal.WireContext;
 
+/**
+ * Invokes target service methods based on incoming function descriptors and manages context propagation.
+ */
 public class MethodInvoker {
 
   private static final Class[] EMPTY_SIGNATURE = new Class[0];
@@ -51,6 +54,14 @@ public class MethodInvoker {
   private final Class<?> serviceInterface;
   private final Object targetObject;
 
+  /**
+   * Builds an invoker for the specified service implementation and interface.
+   *
+   * @param targetObject     service implementation instance
+   * @param serviceInterface interface exposing wire methods
+   * @throws NoSuchMethodException      if object methods cannot be reflected
+   * @throws ServiceDefinitionException if method annotations are invalid
+   */
   public MethodInvoker (Object targetObject, Class<?> serviceInterface)
     throws NoSuchMethodException, ServiceDefinitionException {
 
@@ -78,6 +89,12 @@ public class MethodInvoker {
     methodMap.put(new Function(equalsMethod), new Methodology(serviceInterface, equalsMethod, new SyntheticArgument("obj", Object.class)));
   }
 
+  /**
+   * Attempts to complete a partial function (missing signature or result) by matching name and available metadata.
+   *
+   * @param partialFunction function with potentially incomplete details
+   * @return full function definition or {@code null} if not found
+   */
   public Function match (Function partialFunction) {
 
     for (Function function : methodMap.keySet()) {
@@ -92,6 +109,13 @@ public class MethodInvoker {
     return null;
   }
 
+  /**
+   * Retrieves the methodology associated with the given function descriptor.
+   *
+   * @param function function descriptor
+   * @return methodology mapping argument names to positions
+   * @throws MissingInvocationException if the function is unknown
+   */
   public Methodology getMethodology (Function function)
     throws MissingInvocationException {
 
@@ -104,6 +128,15 @@ public class MethodInvoker {
     return methodology;
   }
 
+  /**
+   * Invokes the target service method using the supplied arguments and manages pushing/popping wire contexts.
+   *
+   * @param contexts  contexts to push onto the {@link ContextFactory}
+   * @param function  function descriptor to execute
+   * @param arguments arguments aligned with the function signature
+   * @return result of the invocation
+   * @throws Exception if invocation fails or the target method throws an exception
+   */
   public Object remoteInvocation (WireContext[] contexts, Function function, Object... arguments)
     throws Exception {
 

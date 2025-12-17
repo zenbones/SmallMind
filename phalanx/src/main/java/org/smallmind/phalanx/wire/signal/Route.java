@@ -39,6 +39,9 @@ import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlElementRef;
 import jakarta.xml.bind.annotation.XmlRootElement;
 
+/**
+ * Routing information that identifies the target service, version, and function.
+ */
 @XmlRootElement(name = "address", namespace = "http://org.smallmind/phalanx/wire")
 @XmlAccessorType(XmlAccessType.PROPERTY)
 public class Route implements Serializable {
@@ -47,10 +50,20 @@ public class Route implements Serializable {
   private String service;
   private int version;
 
+  /**
+   * Default constructor for JAXB.
+   */
   public Route () {
 
   }
 
+  /**
+   * Creates a populated route.
+   *
+   * @param version  service version
+   * @param service  service name
+   * @param function function identifier
+   */
   public Route (int version, String service, Function function) {
 
     this.version = version;
@@ -58,34 +71,64 @@ public class Route implements Serializable {
     this.function = function;
   }
 
+  /**
+   * Returns the target service version.
+   *
+   * @return version number
+   */
   @XmlElement(name = "version", required = true)
   public int getVersion () {
 
     return version;
   }
 
+  /**
+   * Sets the target service version.
+   *
+   * @param version version number
+   */
   public void setVersion (int version) {
 
     this.version = version;
   }
 
+  /**
+   * Returns the service name.
+   *
+   * @return service name
+   */
   @XmlElement(name = "service", required = true)
   public String getService () {
 
     return service;
   }
 
+  /**
+   * Sets the service name.
+   *
+   * @param service service name
+   */
   public void setService (String service) {
 
     this.service = service;
   }
 
+  /**
+   * Returns the function descriptor.
+   *
+   * @return function
+   */
   @XmlElementRef
   public Function getFunction () {
 
     return function;
   }
 
+  /**
+   * Sets the function descriptor.
+   *
+   * @param function function to route
+   */
   public void setFunction (Function function) {
 
     this.function = function;

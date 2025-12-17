@@ -40,15 +40,26 @@ import jakarta.jms.QueueConnectionFactory;
 import org.smallmind.phalanx.wire.TransportException;
 import org.smallmind.phalanx.wire.transport.jms.ManagedObjectFactory;
 
+/**
+ * JNDI-backed {@link ManagedObjectFactory} that resolves JMS connections and destinations via environment lookups.
+ */
 public class JndiManagedObjectFactory implements ManagedObjectFactory {
 
   private final JmsConnectionDetails messageConnectionDetails;
 
+  /**
+   * Creates the factory using the supplied connection details and context pool.
+   *
+   * @param jmsConnectionDetails JNDI connection parameters and pooling
+   */
   public JndiManagedObjectFactory (JmsConnectionDetails jmsConnectionDetails) {
 
     this.messageConnectionDetails = jmsConnectionDetails;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Connection createConnection ()
     throws TransportException {
@@ -71,6 +82,9 @@ public class JndiManagedObjectFactory implements ManagedObjectFactory {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Destination getDestination ()
     throws TransportException {

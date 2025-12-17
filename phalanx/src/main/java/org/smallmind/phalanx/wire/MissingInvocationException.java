@@ -32,8 +32,17 @@
  */
 package org.smallmind.phalanx.wire;
 
+/**
+ * Thrown when an invocation cannot be mapped to a known service method.
+ */
 public class MissingInvocationException extends TransportException {
 
+  /**
+   * Creates the exception with a formatted description of the missing invocation.
+   *
+   * @param message format string describing the missing method
+   * @param args    arguments applied to the format string
+   */
   public MissingInvocationException (String message, Object... args) {
 
     super(message, args);

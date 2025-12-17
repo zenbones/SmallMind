@@ -35,14 +35,28 @@ package org.smallmind.phalanx.wire.transport.amqp.rabbitmq;
 import java.io.IOException;
 import com.rabbitmq.client.Channel;
 
+/**
+ * Declares classic (non-quorum) queues.
+ */
 public class ClassicQueueContractor implements QueueContractor {
 
+  /**
+   * @return {@link QueueType#CLASSIC}.
+   */
   @Override
   public QueueType getQueueType () {
 
     return QueueType.CLASSIC;
   }
 
+  /**
+   * Declares a non-durable, non-exclusive classic queue with optional auto-delete.
+   *
+   * @param channel    channel to declare on.
+   * @param queueName  queue name.
+   * @param autoDelete whether the queue should auto-delete when unused.
+   * @throws IOException if RabbitMQ rejects the declaration.
+   */
   @Override
   public void declare (Channel channel, String queueName, boolean autoDelete)
     throws IOException {

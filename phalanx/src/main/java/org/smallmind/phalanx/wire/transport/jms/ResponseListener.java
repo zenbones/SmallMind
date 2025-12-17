@@ -51,6 +51,9 @@ import org.smallmind.phalanx.wire.transport.ClaxonTag;
 import org.smallmind.phalanx.wire.transport.WireProperty;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * JMS listener that consumes response messages, decodes them, and completes pending callbacks.
+ */
 public class ResponseListener implements SessionEmployer, MessageListener {
 
   private final AtomicBoolean closed = new AtomicBoolean(false);
@@ -61,6 +64,17 @@ public class ResponseListener implements SessionEmployer, MessageListener {
   private final String selector;
   private final byte[] buffer;
 
+  /**
+   * Creates a response listener subscribed to responses for the given caller id.
+   *
+   * @param requestTransport          owning request transport to complete callbacks
+   * @param responseConnectionManager connection manager for the response topic
+   * @param responseTopic             topic on which responses are published
+   * @param signalCodec               codec used to decode {@link ResultSignal} payloads
+   * @param callerId                  caller id selector to filter responses
+   * @param maximumMessageLength      maximum allowed message payload size
+   * @throws JMSException if consumer creation fails
+   */
   public ResponseListener (JmsRequestTransport requestTransport, ConnectionManager responseConnectionManager, Topic responseTopic, SignalCodec signalCodec, String callerId, int maximumMessageLength)
     throws JMSException {
 
@@ -75,18 +89,29 @@ public class ResponseListener implements SessionEmployer, MessageListener {
     responseConnectionManager.createConsumer(this);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Destination getDestination () {
 
     return responseTopic;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String getMessageSelector () {
 
     return selector;
   }
 
+  /**
+   * Closes the listener and underlying connection resources.
+   *
+   * @throws JMSException if shutdown fails
+   */
   public void close ()
     throws JMSException {
 
@@ -96,6 +121,9 @@ public class ResponseListener implements SessionEmployer, MessageListener {
     }
   }
 
+  /**
+   * Handles incoming response messages, updating transit metrics and completing callbacks.
+   */
   @Override
   public void onMessage (final Message message) {
 

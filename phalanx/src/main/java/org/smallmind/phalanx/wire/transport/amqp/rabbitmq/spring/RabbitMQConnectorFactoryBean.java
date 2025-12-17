@@ -38,6 +38,9 @@ import org.smallmind.phalanx.wire.transport.amqp.rabbitmq.RabbitMQConnector;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
+/**
+ * Spring factory bean that builds a {@link RabbitMQConnector} from configured servers and credentials.
+ */
 public class RabbitMQConnectorFactoryBean implements FactoryBean<RabbitMQConnector>, InitializingBean {
 
   private RabbitMQConnector rabbitMQConnector;
@@ -46,44 +49,71 @@ public class RabbitMQConnectorFactoryBean implements FactoryBean<RabbitMQConnect
   private String password;
   private int heartbeatSeconds;
 
+  /**
+   * @param servers array of broker endpoints.
+   */
   public void setServers (RabbitMQServer[] servers) {
 
     this.servers = servers;
   }
 
+  /**
+   * @param username username for broker authentication.
+   */
   public void setUsername (String username) {
 
     this.username = username;
   }
 
+  /**
+   * @param password password for broker authentication.
+   */
   public void setPassword (String password) {
 
     this.password = password;
   }
 
+  /**
+   * @param heartbeatSeconds desired heartbeat interval in seconds.
+   */
   public void setHeartbeatSeconds (int heartbeatSeconds) {
 
     this.heartbeatSeconds = heartbeatSeconds;
   }
 
+  /**
+   * @return the connector type produced by this factory.
+   */
   @Override
   public Class<?> getObjectType () {
 
     return RabbitMQConnector.class;
   }
 
+  /**
+   * @return the connector type produced by this factory.
+   */
+  /**
+   * @return true because the connector is shared.
+   */
   @Override
   public boolean isSingleton () {
 
     return true;
   }
 
+  /**
+   * @return the constructed {@link RabbitMQConnector}.
+   */
   @Override
   public RabbitMQConnector getObject () {
 
     return rabbitMQConnector;
   }
 
+  /**
+   * Initializes the connector after properties are set by building the connection factory and address list.
+   */
   @Override
   public void afterPropertiesSet () {
 

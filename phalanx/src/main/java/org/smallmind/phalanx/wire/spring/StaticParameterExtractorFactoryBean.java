@@ -36,35 +36,53 @@ import org.smallmind.phalanx.wire.StaticParameterExtractor;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
-public class StaticParameterExtractorFactoryBean implements InitializingBean, FactoryBean<StaticParameterExtractor> {
+/**
+ * Spring factory bean that creates a {@link StaticParameterExtractor} with a configured static value.
+ */
+public class StaticParameterExtractorFactoryBean implements InitializingBean, FactoryBean<StaticParameterExtractor<?>> {
 
-  private StaticParameterExtractor staticParameterExtractor;
+  private StaticParameterExtractor<?> staticParameterExtractor;
   private String parameter;
 
+  /**
+   * @param parameter constant value returned by the extractor.
+   */
   public void setParameter (String parameter) {
 
     this.parameter = parameter;
   }
 
+  /**
+   * Builds the extractor after properties have been set.
+   */
   @Override
   public void afterPropertiesSet ()
     throws Exception {
 
-    staticParameterExtractor = new StaticParameterExtractor(parameter);
+    staticParameterExtractor = new StaticParameterExtractor<>(parameter);
   }
 
+  /**
+   * @return the configured {@link StaticParameterExtractor}.
+   */
   @Override
-  public StaticParameterExtractor getObject () {
+  public StaticParameterExtractor<?> getObject () {
 
     return staticParameterExtractor;
   }
 
+  /**
+   * @return extractor type.
+   */
   @Override
   public Class<?> getObjectType () {
 
     return StaticParameterExtractor.class;
   }
 
+  /**
+   * @return always true; the extractor is a singleton.
+   */
   @Override
   public boolean isSingleton () {
 

@@ -64,6 +64,10 @@ import org.smallmind.phalanx.worker.WorkManager;
 import org.smallmind.phalanx.worker.WorkQueue;
 import org.smallmind.phalanx.worker.WorkerFactory;
 
+/**
+ * Kafka-based response transport that consumes invocation requests and publishes corresponding results.
+ * Manages separate ingesters for whisper, talk, and shout conversations and routes messages through the invocation circuit.
+ */
 public class KafkaResponseTransport extends WorkManager<InvocationWorker, ConsumerRecord<Long, byte[]>> implements WorkerFactory<InvocationWorker, ConsumerRecord<Long, byte[]>>, ResponseTransport, ResponseTransmitter {
 
   private final ExecutorService executorService = new ThreadPoolExecutor(1, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(), new ThreadPoolExecutor.CallerRunsPolicy());
@@ -81,6 +85,19 @@ public class KafkaResponseTransport extends WorkManager<InvocationWorker, Consum
   private final String nodeName;
   private final String instanceId = SnowflakeId.newInstance().generateDottedString();
 
+  /**
+   * Creates a response transport for the provided service group.
+   *
+   * @param nodeName                  identifier appended to client names for diagnostics.
+   * @param serviceGroup              logical grouping used to derive request topics.
+   * @param workerClass               worker implementation for processing invocations.
+   * @param signalCodec               codec used to encode and decode wire signals.
+   * @param concurrencyLimit          number of worker threads for both ingestion and invocation.
+   * @param startupGracePeriodSeconds grace period while waiting for Kafka to become available.
+   * @param servers                   Kafka bootstrap servers.
+   * @throws KafkaConnectionException if the connector cannot reach Kafka.
+   * @throws InterruptedException     if interrupted while waiting for connector startup.
+   */
   public KafkaResponseTransport (String nodeName, String serviceGroup, Class<InvocationWorker> workerClass, SignalCodec signalCodec, int concurrencyLimit, int startupGracePeriodSeconds, KafkaServer... servers)
     throws KafkaConnectionException, InterruptedException {
 
@@ -99,6 +116,14 @@ public class KafkaResponseTransport extends WorkManager<InvocationWorker, Consum
     shoutMessageIngester = new KafkaMessageIngester(nodeName, instanceId, topicNames.getShoutTopicName(serviceGroup), connector, responseCallback, concurrencyLimit).startUp();
   }
 
+  /**
+   * Registers a service implementation with the invocation circuit.
+   *
+   * @param serviceInterface the service interface class that defines invokable methods.
+   * @param targetService    the target service instance and metadata.
+   * @return the instance id that callers should use when whispering.
+   * @throws Exception if registration of the service fails.
+   */
   @Override
   public String register (Class<?> serviceInterface, WiredService targetService)
     throws Exception {
@@ -108,24 +133,45 @@ public class KafkaResponseTransport extends WorkManager<InvocationWorker, Consum
     return instanceId;
   }
 
+  /**
+   * Unique instance identifier used for whisper routing.
+   *
+   * @return this responder's instance id.
+   */
   @Override
   public String getInstanceId () {
 
     return instanceId;
   }
 
+  /**
+   * Creates a worker that delegates to the shared invocation circuit.
+   *
+   * @param workQueue queue supplying Kafka records to the worker.
+   * @return a new {@link InvocationWorker}.
+   */
   @Override
   public InvocationWorker createWorker (WorkQueue<ConsumerRecord<Long, byte[]>> workQueue) {
 
     return new InvocationWorker(workQueue, this, invocationCircuit, signalCodec);
   }
 
+  /**
+   * Current lifecycle state of the transport.
+   *
+   * @return playing, paused, or closed state.
+   */
   @Override
   public TransportState getState () {
 
     return transportStateRef.get();
   }
 
+  /**
+   * Resumes message ingestion if previously paused.
+   *
+   * @throws Exception if resuming fails.
+   */
   @Override
   public synchronized void play ()
     throws Exception {
@@ -137,6 +183,11 @@ public class KafkaResponseTransport extends WorkManager<InvocationWorker, Consum
     }
   }
 
+  /**
+   * Temporarily halts message ingestion without shutting down the transport.
+   *
+   * @throws Exception if pausing fails.
+   */
   @Override
   public synchronized void pause ()
     throws Exception {
@@ -148,6 +199,12 @@ public class KafkaResponseTransport extends WorkManager<InvocationWorker, Consum
     }
   }
 
+  /**
+   * Retrieves or creates a response producer for the given topic while respecting closed state.
+   *
+   * @param topic topic name for which to acquire a producer.
+   * @return a producer ready to publish responses, or {@code null} when closed.
+   */
   private Producer<Long, byte[]> getProducer (String topic) {
 
     producerLock.readLock().lock();
@@ -158,6 +215,16 @@ public class KafkaResponseTransport extends WorkManager<InvocationWorker, Consum
     }
   }
 
+  /**
+   * Serializes and publishes a result signal back to the caller's response topic.
+   *
+   * @param callerId      id of the caller expecting the response.
+   * @param correlationId correlation identifier tying the response to a request.
+   * @param error         whether the result represents an error.
+   * @param nativeType    native type information for the result payload.
+   * @param result        the result object or error payload.
+   * @throws Throwable if the transport is closed or message publication fails.
+   */
   @Override
   public void transmit (String callerId, String correlationId, boolean error, String nativeType, Object result)
     throws Throwable {
@@ -181,6 +248,11 @@ public class KafkaResponseTransport extends WorkManager<InvocationWorker, Consum
     }
   }
 
+  /**
+   * Closes all ingesters and producers, preventing further message exchange.
+   *
+   * @throws Exception if a close operation fails.
+   */
   @Override
   public synchronized void close ()
     throws Exception {

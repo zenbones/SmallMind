@@ -38,12 +38,25 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Declares the logical name (and optional explicit type) for a service method parameter.
+ */
 @Inherited
 @Target({ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Argument {
 
+  /**
+   * Name to associate with the parameter on the wire.
+   *
+   * @return argument name
+   */
   String value ();
 
+  /**
+   * Optional explicit type hint to use during signature encoding.
+   *
+   * @return custom type name or empty for inference
+   */
   String type () default "";
 }

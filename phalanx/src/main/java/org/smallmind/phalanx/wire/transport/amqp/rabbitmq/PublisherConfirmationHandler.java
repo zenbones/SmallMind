@@ -34,7 +34,13 @@ package org.smallmind.phalanx.wire.transport.amqp.rabbitmq;
 
 import com.rabbitmq.client.ConfirmListener;
 
+/**
+ * Factory for RabbitMQ {@link ConfirmListener} instances used to handle publisher confirms.
+ */
 public interface PublisherConfirmationHandler {
 
+  /**
+   * @return a listener to attach to the channel for publisher confirmations.
+   */
   ConfirmListener generateConfirmListener ();
 }

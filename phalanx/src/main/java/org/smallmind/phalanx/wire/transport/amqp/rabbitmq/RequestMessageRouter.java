@@ -56,6 +56,9 @@ import org.smallmind.phalanx.wire.transport.ClaxonTag;
 import org.smallmind.phalanx.wire.transport.WireProperty;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Routes request/response messages for callers over RabbitMQ, including consumer setup and message construction.
+ */
 public class RequestMessageRouter extends MessageRouter {
 
   private static final String CALLER_ID_AMQP_KEY = "x-opt-" + WireProperty.CALLER_ID.getKey();
@@ -68,6 +71,18 @@ public class RequestMessageRouter extends MessageRouter {
   private final int index;
   private final int ttlSeconds;
 
+  /**
+   * @param connector                    connector for creating channels.
+   * @param ephemeralQueueContractor     contractor for ephemeral response queues.
+   * @param nameConfiguration            exchange/queue naming scheme.
+   * @param requestTransport             owning request transport for callback completion.
+   * @param signalCodec                  codec for serialization.
+   * @param callerId                     id of the caller; used for queue names and headers.
+   * @param index                        router index for consumer tags.
+   * @param ttlSeconds                   message TTL in seconds.
+   * @param autoAcknowledge              whether to auto-ack responses.
+   * @param publisherConfirmationHandler optional handler for publisher confirms, may be null.
+   */
   public RequestMessageRouter (RabbitMQConnector connector, QueueContractor ephemeralQueueContractor, NameConfiguration nameConfiguration, RabbitMQRequestTransport requestTransport, SignalCodec signalCodec, String callerId, int index, int ttlSeconds, boolean autoAcknowledge, PublisherConfirmationHandler publisherConfirmationHandler) {
 
     super(connector, "wire", nameConfiguration, publisherConfirmationHandler);
@@ -81,6 +96,11 @@ public class RequestMessageRouter extends MessageRouter {
     this.autoAcknowledge = autoAcknowledge;
   }
 
+  /**
+   * Declares and binds the caller-specific response queue.
+   *
+   * @throws IOException if queue declaration/binding fails.
+   */
   @Override
   public final void bindQueues ()
     throws IOException {
@@ -94,6 +114,11 @@ public class RequestMessageRouter extends MessageRouter {
     });
   }
 
+  /**
+   * Installs a consumer on the caller response queue to process result messages.
+   *
+   * @throws IOException if consumer installation fails.
+   */
   @Override
   public void installConsumer ()
     throws IOException {
@@ -102,6 +127,9 @@ public class RequestMessageRouter extends MessageRouter {
 
       channel.basicConsume(getResponseQueueName() + "-" + callerId, autoAcknowledge, getResponseQueueName() + "-" + callerId + "[" + index + "]", false, false, null, new DefaultConsumer(channel) {
 
+        /**
+         * Processes a response message, decoding the result and completing the pending callback.
+         */
         @Override
         public synchronized void handleDelivery (String consumerTag, Envelope envelope, final AMQP.BasicProperties properties, final byte[] body) {
 
@@ -131,6 +159,18 @@ public class RequestMessageRouter extends MessageRouter {
     });
   }
 
+  /**
+   * Publishes an invocation message using a routing key derived from the vocal mode and service group.
+   *
+   * @param inOnly       whether the conversation expects a reply.
+   * @param serviceGroup target service group.
+   * @param voice        invocation metadata including mode and instance id.
+   * @param route        route to the target method.
+   * @param arguments    invocation arguments.
+   * @param contexts     optional contexts.
+   * @return generated message id.
+   * @throws Throwable if message construction or publishing fails.
+   */
   public String publish (final boolean inOnly, final String serviceGroup, final Voice<?, ?> voice, final Route route, final Map<String, Object> arguments, final WireContext... contexts)
     throws Throwable {
 
@@ -146,6 +186,16 @@ public class RequestMessageRouter extends MessageRouter {
     return rabbitMQMessage.getProperties().getMessageId();
   }
 
+  /**
+   * Creates an invocation message with headers and encoded payload.
+   *
+   * @param inOnly    whether the conversation expects a response.
+   * @param route     route to the target method.
+   * @param arguments invocation arguments.
+   * @param contexts  optional contexts.
+   * @return message ready for publication.
+   * @throws Throwable if encoding fails.
+   */
   private RabbitMQMessage constructMessage (final boolean inOnly, final Route route, final Map<String, Object> arguments, final WireContext... contexts)
     throws Throwable {
 

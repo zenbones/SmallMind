@@ -36,15 +36,26 @@ import org.smallmind.phalanx.wire.SignatureUtility;
 import org.smallmind.phalanx.wire.signal.ResultSignal;
 import org.smallmind.phalanx.wire.signal.SignalCodec;
 
+/**
+ * Callback for cases where the result signal is already available at invocation time.
+ */
 public class SynchronousTransmissionCallback extends TransmissionCallback {
 
   private final ResultSignal resultSignal;
 
+  /**
+   * Wraps a pre-existing result signal.
+   *
+   * @param resultSignal the completed result
+   */
   public SynchronousTransmissionCallback (ResultSignal resultSignal) {
 
     this.resultSignal = resultSignal;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public synchronized Object getResult (SignalCodec signalCodec, long timoueSeconds)
     throws Throwable {

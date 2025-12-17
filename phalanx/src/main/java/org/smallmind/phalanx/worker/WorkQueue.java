@@ -34,11 +34,33 @@ package org.smallmind.phalanx.worker;
 
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Contract for queue implementations that accept work items and allow timed retrieval.
+ *
+ * @param <E> type of work items stored in the queue
+ */
 public interface WorkQueue<E> {
 
+  /**
+   * Attempts to enqueue the supplied work item within the provided timeout window.
+   *
+   * @param e       the work item to enqueue
+   * @param timeout maximum time to wait before giving up
+   * @param unit    unit for the timeout argument
+   * @return {@code true} if the work was accepted, {@code false} if timed out before enqueueing
+   * @throws InterruptedException if the calling thread is interrupted while waiting
+   */
   boolean offer (E e, long timeout, TimeUnit unit)
     throws InterruptedException;
 
+  /**
+   * Attempts to retrieve a work item, waiting up to the supplied timeout.
+   *
+   * @param timeout maximum time to wait before returning
+   * @param unit    unit for the timeout argument
+   * @return the dequeued work item, or {@code null} if the timeout elapsed before one was available
+   * @throws InterruptedException if the calling thread is interrupted while waiting
+   */
   E poll (long timeout, TimeUnit unit)
     throws InterruptedException;
 }

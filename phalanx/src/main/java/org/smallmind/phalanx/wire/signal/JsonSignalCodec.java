@@ -40,27 +40,46 @@ import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
+/**
+ * JSON-based implementation of {@link SignalCodec} with optional verbose logging of payloads.
+ */
 public class JsonSignalCodec implements SignalCodec {
 
   private Level verboseLogLevel = Level.DEBUG;
   private boolean verbose = false;
 
+  /**
+   * Enables or disables verbose logging of encoded/decoded payloads.
+   *
+   * @param verbose {@code true} to log payloads
+   */
   public void setVerbose (boolean verbose) {
 
     this.verbose = verbose;
   }
 
+  /**
+   * Sets the log level used when verbose logging is enabled.
+   *
+   * @param verboseLogLevel log level for payload output
+   */
   public void setVerboseLogLevel (Level verboseLogLevel) {
 
     this.verboseLogLevel = verboseLogLevel;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String getContentType () {
 
     return MediaType.APPLICATION_JSON;
   }
 
+  /**
+   * Encodes the signal to JSON bytes and optionally logs the result.
+   */
   @Override
   public byte[] encode (Signal signal)
     throws JsonProcessingException {
@@ -74,6 +93,9 @@ public class JsonSignalCodec implements SignalCodec {
     return bytes;
   }
 
+  /**
+   * Decodes JSON bytes into a signal instance, with optional logging of the payload.
+   */
   @Override
   public <S extends Signal> S decode (byte[] buffer, int offset, int len, Class<S> signalClass)
     throws IOException {
@@ -85,23 +107,41 @@ public class JsonSignalCodec implements SignalCodec {
     return JsonCodec.read(buffer, offset, len, signalClass);
   }
 
+  /**
+   * Converts a decoded JSON value into the requested type.
+   */
   @Override
   public <T> T extractObject (Object value, Class<T> clazz) {
 
     return JsonCodec.convert(value, clazz);
   }
 
+  /**
+   * Utility wrapper to log byte arrays as UTF-8 strings.
+   */
   private static class StringConverter {
 
     private final byte[] buffer;
     private final int offset;
     private final int len;
 
+    /**
+     * Wraps an entire byte array for conversion.
+     *
+     * @param buffer byte array to convert
+     */
     public StringConverter (byte[] buffer) {
 
       this(buffer, 0, buffer.length);
     }
 
+    /**
+     * Wraps a subsection of a byte array for conversion.
+     *
+     * @param buffer byte array containing the data
+     * @param offset start offset
+     * @param len    number of bytes to include
+     */
     public StringConverter (byte[] buffer, int offset, int len) {
 
       this.buffer = buffer;
@@ -109,6 +149,9 @@ public class JsonSignalCodec implements SignalCodec {
       this.len = len;
     }
 
+    /**
+     * Returns the wrapped bytes as a UTF-8 string.
+     */
     @Override
     public String toString () {
 

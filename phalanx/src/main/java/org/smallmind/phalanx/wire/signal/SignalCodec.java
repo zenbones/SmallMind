@@ -32,15 +32,49 @@
  */
 package org.smallmind.phalanx.wire.signal;
 
+/**
+ * Codec abstraction for serializing and deserializing wire signals.
+ */
 public interface SignalCodec {
 
+  /**
+   * Returns the MIME content type produced by this codec.
+   *
+   * @return content type string
+   */
   String getContentType ();
 
+  /**
+   * Encodes the provided signal into a byte array.
+   *
+   * @param signal signal to encode
+   * @return serialized bytes
+   * @throws Exception if encoding fails
+   */
   byte[] encode (Signal signal)
     throws Exception;
 
+  /**
+   * Decodes the supplied byte buffer into a signal of the given class.
+   *
+   * @param buffer      byte buffer containing the encoded signal
+   * @param offset      offset into the buffer to start decoding
+   * @param len         length of the payload to decode
+   * @param signalClass target signal class
+   * @param <S>         signal type
+   * @return decoded signal instance
+   * @throws Exception if decoding fails
+   */
   <S extends Signal> S decode (byte[] buffer, int offset, int len, Class<S> signalClass)
     throws Exception;
 
+  /**
+   * Extracts a typed object from a decoded value when an adapter or converter is required.
+   *
+   * @param value decoded value
+   * @param clazz target type
+   * @param <T>   target type parameter
+   * @return converted object instance
+   */
   <T> T extractObject (Object value, Class<T> clazz);
 }

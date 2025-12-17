@@ -34,6 +34,9 @@ package org.smallmind.phalanx.wire.signal;
 
 import java.io.Serializable;
 
+/**
+ * Marker interface for signals exchanged between wire endpoints.
+ */
 public interface Signal extends Serializable {
 
 }

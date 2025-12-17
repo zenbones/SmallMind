@@ -46,6 +46,9 @@ import org.smallmind.phalanx.wire.transport.ClaxonTag;
 import org.smallmind.phalanx.wire.transport.WireProperty;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * JMS message listener that dispatches incoming requests to a {@link JmsResponseTransport}.
+ */
 public class RequestListener implements SessionEmployer, MessageListener {
 
   private final AtomicBoolean closed = new AtomicBoolean(false);
@@ -54,6 +57,16 @@ public class RequestListener implements SessionEmployer, MessageListener {
   private final Destination requestDestination;
   private final String selector;
 
+  /**
+   * Creates a request listener subscribed to the given destination and service/instance selector.
+   *
+   * @param jmsResponseTransport     response transport used to execute requests
+   * @param requestConnectionManager connection manager providing sessions/consumers
+   * @param requestDestination       destination to consume from
+   * @param serviceGroup             service group filter
+   * @param instanceId               optional instance id filter
+   * @throws JMSException if consumer creation fails
+   */
   public RequestListener (JmsResponseTransport jmsResponseTransport, ConnectionManager requestConnectionManager, Destination requestDestination, String serviceGroup, String instanceId)
     throws JMSException {
 
@@ -66,30 +79,51 @@ public class RequestListener implements SessionEmployer, MessageListener {
     requestConnectionManager.createConsumer(this);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Destination getDestination () {
 
     return requestDestination;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String getMessageSelector () {
 
     return selector;
   }
 
+  /**
+   * Starts message consumption.
+   *
+   * @throws JMSException if start fails
+   */
   public void play ()
     throws JMSException {
 
     requestConnectionManager.start();
   }
 
+  /**
+   * Stops message consumption without closing resources.
+   *
+   * @throws JMSException if stop fails
+   */
   public void pause ()
     throws JMSException {
 
     requestConnectionManager.stop();
   }
 
+  /**
+   * Stops and closes the listener, ensuring it is only performed once.
+   *
+   * @throws JMSException if shutdown fails
+   */
   public void close ()
     throws JMSException {
 
@@ -99,6 +133,9 @@ public class RequestListener implements SessionEmployer, MessageListener {
     }
   }
 
+  /**
+   * Handles inbound JMS messages, recording queue transit time and delegating to the response transport.
+   */
   @Override
   public void onMessage (final Message message) {
 

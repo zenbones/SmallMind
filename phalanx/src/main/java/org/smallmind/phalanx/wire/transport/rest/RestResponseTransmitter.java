@@ -37,15 +37,26 @@ import jakarta.ws.rs.core.Response;
 import org.smallmind.phalanx.wire.signal.ResultSignal;
 import org.smallmind.phalanx.wire.transport.ResponseTransmitter;
 
+/**
+ * Transmitter that translates result signals into HTTP responses for REST transports.
+ */
 public class RestResponseTransmitter implements ResponseTransmitter {
 
   private Response.ResponseBuilder responseBuilder;
 
+  /**
+   * Builds the final HTTP response containing the result signal, or 204 when none was set.
+   *
+   * @return HTTP response
+   */
   public Response getResultSignal () {
 
     return (responseBuilder != null) ? responseBuilder.build() : Response.noContent().build();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void transmit (String callerId, String correlationId, boolean error, String nativeType, Object result) {
 

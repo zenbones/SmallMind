@@ -50,6 +50,9 @@ import org.smallmind.phalanx.wire.signal.SignalCodec;
 import org.smallmind.phalanx.wire.transport.ClaxonTag;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Routes incoming requests to invocation workers and publishes responses over RabbitMQ.
+ */
 public class ResponseMessageRouter extends MessageRouter {
 
   private final QueueContractor enduringQueueContractor;
@@ -62,6 +65,20 @@ public class ResponseMessageRouter extends MessageRouter {
   private final int index;
   private final int ttlSeconds;
 
+  /**
+   * @param connector                    connector for creating channels.
+   * @param enduringQueueContractor      contractor for durable talk queues.
+   * @param ephemeralQueueContractor     contractor for ephemeral whisper/shout queues.
+   * @param nameConfiguration            exchange/queue naming scheme.
+   * @param responseTransport            owning response transport.
+   * @param signalCodec                  codec for serialization.
+   * @param serviceGroup                 service group name used in routing keys.
+   * @param instanceId                   unique id for whisper routing.
+   * @param index                        router index for consumer tags.
+   * @param ttlSeconds                   message TTL in seconds.
+   * @param autoAcknowledge              whether consumers should auto-ack messages.
+   * @param publisherConfirmationHandler optional handler for publisher confirms, may be null.
+   */
   public ResponseMessageRouter (RabbitMQConnector connector, QueueContractor enduringQueueContractor, QueueContractor ephemeralQueueContractor, NameConfiguration nameConfiguration, RabbitMQResponseTransport responseTransport, SignalCodec signalCodec, String serviceGroup, String instanceId, int index, int ttlSeconds, boolean autoAcknowledge, PublisherConfirmationHandler publisherConfirmationHandler) {
 
     super(connector, "wire", nameConfiguration, publisherConfirmationHandler);
@@ -77,6 +94,11 @@ public class ResponseMessageRouter extends MessageRouter {
     this.autoAcknowledge = autoAcknowledge;
   }
 
+  /**
+   * Declares and binds the shout, talk, and whisper request queues handled by this router.
+   *
+   * @throws IOException if queue declaration or binding fails.
+   */
   @Override
   public void bindQueues ()
     throws IOException {
@@ -98,18 +120,33 @@ public class ResponseMessageRouter extends MessageRouter {
     });
   }
 
+  /**
+   * Starts consumption on all routing queues.
+   *
+   * @throws IOException if installing a consumer fails.
+   */
   public void play ()
     throws IOException {
 
     installConsumer();
   }
 
+  /**
+   * Stops consumption on all queues by canceling consumers.
+   *
+   * @throws IOException if canceling a consumer fails.
+   */
   public void pause ()
     throws IOException {
 
     unInstallConsumer();
   }
 
+  /**
+   * Installs consumers for shout, talk, and whisper queues.
+   *
+   * @throws IOException if consumer installation fails.
+   */
   @Override
   public void installConsumer ()
     throws IOException {
@@ -124,6 +161,11 @@ public class ResponseMessageRouter extends MessageRouter {
     });
   }
 
+  /**
+   * Cancels consumers for shout, talk, and whisper queues to stop message flow.
+   *
+   * @throws IOException if canceling consumers fails.
+   */
   public void unInstallConsumer ()
     throws IOException {
 
@@ -135,11 +177,21 @@ public class ResponseMessageRouter extends MessageRouter {
     });
   }
 
+  /**
+   * Installs a consumer on the supplied queue and wires it to execute responses.
+   *
+   * @param channel   channel used to install the consumer.
+   * @param queueName queue to consume from.
+   * @throws IOException if consumer installation fails.
+   */
   private void installConsumerInternal (Channel channel, String queueName)
     throws IOException {
 
     channel.basicConsume(queueName, autoAcknowledge, queueName + "[" + index + "]", false, false, null, new DefaultConsumer(channel) {
 
+      /**
+       * Processes an inbound invocation request and forwards it for execution.
+       */
       @Override
       public synchronized void handleDelivery (String consumerTag, Envelope envelope, final AMQP.BasicProperties properties, final byte[] body) {
 
@@ -166,6 +218,16 @@ public class ResponseMessageRouter extends MessageRouter {
     });
   }
 
+  /**
+   * Publishes a response message back to the caller over RabbitMQ.
+   *
+   * @param callerId      identifier of the requesting caller.
+   * @param correlationId correlation id to match the originating request.
+   * @param error         true if the result represents an error payload.
+   * @param nativeType    native return type of the result payload.
+   * @param result        encoded result payload.
+   * @throws Throwable if message construction or publication fails.
+   */
   public void publish (String callerId, String correlationId, boolean error, String nativeType, Object result)
     throws Throwable {
 
@@ -174,6 +236,16 @@ public class ResponseMessageRouter extends MessageRouter {
     send("response-" + callerId, getResponseExchangeName(), rabbitMQMessage.getProperties(), rabbitMQMessage.getBody());
   }
 
+  /**
+   * Creates a response message with correlation and payload metadata.
+   *
+   * @param correlationId correlation id tying the response to the request.
+   * @param error         whether the payload represents an error.
+   * @param nativeType    result native type.
+   * @param result        result payload.
+   * @return response message ready for publication.
+   * @throws Throwable if encoding fails.
+   */
   private RabbitMQMessage constructMessage (final String correlationId, final boolean error, final String nativeType, final Object result)
     throws Throwable {
 

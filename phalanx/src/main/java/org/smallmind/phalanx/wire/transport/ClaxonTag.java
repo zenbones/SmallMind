@@ -32,17 +32,52 @@
  */
 package org.smallmind.phalanx.wire.transport;
 
+/**
+ * Enumerates metric tags used by Claxon instrumentation within the wire transports.
+ * Each value exposes a human-readable display string for emitted measurements.
+ */
 public enum ClaxonTag {
 
-  ACQUIRE_REQUEST_TRANSPORT("Acquire Request Transport"), CONSTRUCT_MESSAGE("Construct Message"), REQUEST_TRANSIT_TIME("Request Transit Time"), RESPONSE_TRANSIT_TIME("Response Transit Time"), COMPLETE_CALLBACK("Complete Callback"), ACQUIRE_RESULT("Acquire Result");
+  /**
+   * Measures time taken to acquire a request transport.
+   */
+  ACQUIRE_REQUEST_TRANSPORT("Acquire Request Transport"),
+  /**
+   * Marks the construction of a transport message payload.
+   */
+  CONSTRUCT_MESSAGE("Construct Message"),
+  /**
+   * Captures time spent by a request in transit to a responder.
+   */
+  REQUEST_TRANSIT_TIME("Request Transit Time"),
+  /**
+   * Captures time spent by a response returning to the caller.
+   */
+  RESPONSE_TRANSIT_TIME("Response Transit Time"),
+  /**
+   * Marks completion of a response callback.
+   */
+  COMPLETE_CALLBACK("Complete Callback"),
+  /**
+   * Measures time spent waiting for a result to be delivered.
+   */
+  ACQUIRE_RESULT("Acquire Result");
 
   private final String display;
 
+  /**
+   * @param display human-readable text for the tag when emitted.
+   */
   ClaxonTag (String display) {
 
     this.display = display;
   }
 
+  /**
+   * Human-readable tag value suitable for metrics output.
+   *
+   * @return the display string for the tag.
+   */
   public String getDisplay () {
 
     return display;

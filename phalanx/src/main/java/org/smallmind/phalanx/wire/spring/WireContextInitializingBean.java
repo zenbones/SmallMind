@@ -36,21 +36,35 @@ import org.smallmind.phalanx.wire.WireContextManager;
 import org.smallmind.phalanx.wire.signal.WireContext;
 import org.springframework.beans.factory.InitializingBean;
 
+/**
+ * Registers a {@link WireContext} implementation with the {@link WireContextManager} when the bean is initialized.
+ */
 public class WireContextInitializingBean implements InitializingBean {
 
   private Class<? extends WireContext> contextClass;
   private String handle;
 
+  /**
+   * @param handle unique handle under which the context is registered.
+   */
   public void setHandle (String handle) {
 
     this.handle = handle;
   }
 
+  /**
+   * @param contextClass concrete context implementation to register.
+   */
   public void setContextClass (Class<? extends WireContext> contextClass) {
 
     this.contextClass = contextClass;
   }
 
+  /**
+   * Registers the context class with the manager.
+   *
+   * @throws Exception if registration fails.
+   */
   @Override
   public void afterPropertiesSet ()
     throws Exception {

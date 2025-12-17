@@ -32,6 +32,9 @@
  */
 package org.smallmind.phalanx.wire.transport.amqp.rabbitmq;
 
+/**
+ * RabbitMQ queue types supported by the transport.
+ */
 public enum QueueType {
 
   CLASSIC, QUORUM

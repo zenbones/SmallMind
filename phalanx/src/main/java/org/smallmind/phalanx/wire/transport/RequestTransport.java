@@ -38,15 +38,44 @@ import org.smallmind.phalanx.wire.signal.ResultSignal;
 import org.smallmind.phalanx.wire.signal.Route;
 import org.smallmind.phalanx.wire.signal.WireContext;
 
+/**
+ * Transport interface for sending invocation requests over a chosen medium.
+ */
 public interface RequestTransport {
 
+  /**
+   * Returns an identifier for the caller, used to correlate responses.
+   *
+   * @return caller id string
+   */
   String getCallerId ();
 
+  /**
+   * Transmits an invocation with routing information, arguments, and contexts.
+   *
+   * @param voice     voice describing destination and conversation style
+   * @param route     route identifying the service and function
+   * @param arguments serialized argument map
+   * @param contexts  wire contexts to propagate
+   * @return result of the call, or {@code null} for in-only conversations
+   * @throws Throwable if transport submission fails or the remote call raises an error
+   */
   Object transmit (Voice<?, ?> voice, Route route, Map<String, Object> arguments, WireContext... contexts)
     throws Throwable;
 
+  /**
+   * Completes a previously issued asynchronous invocation by delivering a result.
+   *
+   * @param correlationId id correlating the result to the original request
+   * @param resultSignal  signal containing the outcome
+   */
   void completeCallback (String correlationId, ResultSignal resultSignal);
 
+  /**
+   * Releases any resources held by the transport.
+   *
+   * @throws Exception if shutdown fails
+   */
   void close ()
     throws Exception;
 }

@@ -32,21 +32,57 @@
  */
 package org.smallmind.phalanx.wire.transport;
 
+/**
+ * Transport responsible for receiving requests and returning results.
+ */
 public interface ResponseTransport {
 
+  /**
+   * Returns the instance id this transport represents.
+   *
+   * @return unique instance identifier
+   */
   String getInstanceId ();
 
+  /**
+   * Registers a target service for invocation handling.
+   *
+   * @param serviceInterface service interface exposed by the transport
+   * @param targetService    service implementation wrapper
+   * @return correlation id or registration token
+   * @throws Exception if registration fails
+   */
   String register (Class<?> serviceInterface, WiredService targetService)
     throws Exception;
 
+  /**
+   * Retrieves the current transport state.
+   *
+   * @return current state
+   */
   TransportState getState ();
 
+  /**
+   * Starts consuming and processing requests.
+   *
+   * @throws Exception if activation fails
+   */
   void play ()
     throws Exception;
 
+  /**
+   * Temporarily suspends request handling.
+   *
+   * @throws Exception if suspension fails
+   */
   void pause ()
     throws Exception;
 
+  /**
+   * Shuts down the transport and releases resources.
+   *
+   * @throws Exception if shutdown fails
+   */
   void close ()
     throws Exception;
 }

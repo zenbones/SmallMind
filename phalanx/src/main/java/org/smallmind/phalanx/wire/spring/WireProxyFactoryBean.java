@@ -38,6 +38,9 @@ import org.smallmind.phalanx.wire.transport.RequestTransport;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
+/**
+ * Spring factory bean that creates a wire client proxy for a service interface.
+ */
 public class WireProxyFactoryBean implements InitializingBean, FactoryBean<Proxy> {
 
   private Proxy serviceProxy;
@@ -49,41 +52,67 @@ public class WireProxyFactoryBean implements InitializingBean, FactoryBean<Proxy
   private String serviceName;
   private int version;
 
+  /**
+   * @param serviceInterface interface the proxy should implement.
+   */
   public void setServiceInterface (Class<?> serviceInterface) {
 
     this.serviceInterface = serviceInterface;
   }
 
+  /**
+   * @param requestTransport transport used for outbound calls.
+   */
   public void setRequestTransport (RequestTransport requestTransport) {
 
     this.requestTransport = requestTransport;
   }
 
+  /**
+   * @param serviceName logical service name.
+   */
   public void setServiceName (String serviceName) {
 
     this.serviceName = serviceName;
   }
 
+  /**
+   * @param version service version.
+   */
   public void setVersion (int version) {
 
     this.version = version;
   }
 
+  /**
+   * @param serviceGroupExtractor extractor resolving service group per invocation.
+   */
   public void setServiceGroupExtractor (ParameterExtractor<String> serviceGroupExtractor) {
 
     this.serviceGroupExtractor = serviceGroupExtractor;
   }
 
+  /**
+   * @param instanceIdExtractor extractor resolving instance id for whispers.
+   */
   public void setInstanceIdExtractor (ParameterExtractor<String> instanceIdExtractor) {
 
     this.instanceIdExtractor = instanceIdExtractor;
   }
 
+  /**
+   * @param timeoutExtractor extractor resolving per-call timeout.
+   */
   public void setTimeoutExtractor (ParameterExtractor<Long> timeoutExtractor) {
 
     this.timeoutExtractor = timeoutExtractor;
   }
 
+  /**
+   * Builds the proxy once all properties are set.
+   *
+   * @throws Exception if proxy creation fails.
+   */
   @Override
   public void afterPropertiesSet ()
     throws Exception {
@@ -91,18 +120,27 @@ public class WireProxyFactoryBean implements InitializingBean, FactoryBean<Proxy
     serviceProxy = WireProxyFactory.generateProxy(requestTransport, version, serviceName, serviceInterface, serviceGroupExtractor, instanceIdExtractor, timeoutExtractor);
   }
 
+  /**
+   * @return the created proxy.
+   */
   @Override
   public Proxy getObject () {
 
     return serviceProxy;
   }
 
+  /**
+   * @return the service interface type.
+   */
   @Override
   public Class<?> getObjectType () {
 
     return serviceInterface;
   }
 
+  /**
+   * @return always true; proxy is a singleton.
+   */
   @Override
   public boolean isSingleton () {
 

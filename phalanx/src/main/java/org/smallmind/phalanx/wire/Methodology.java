@@ -38,11 +38,22 @@ import java.util.HashMap;
 import org.smallmind.phalanx.wire.transport.ArgumentInfo;
 import org.smallmind.phalanx.wire.transport.SyntheticArgument;
 
+/**
+ * Captures metadata about a service method, including the mapping of argument names to parameter positions and types.
+ */
 public class Methodology {
 
   private final Method method;
   private final HashMap<String, ArgumentInfo> argumentInfoMap = new HashMap<>();
 
+  /**
+   * Builds the method metadata by inspecting declared @Argument annotations or synthetic argument definitions.
+   *
+   * @param serviceInterface   interface that declares the method
+   * @param method             service method being described
+   * @param syntheticArguments optional synthetic arguments to apply instead of inspecting annotations
+   * @throws ServiceDefinitionException if the method parameters cannot be fully resolved to argument names
+   */
   public Methodology (Class<?> serviceInterface, Method method, SyntheticArgument... syntheticArguments)
     throws ServiceDefinitionException {
 
@@ -70,11 +81,22 @@ public class Methodology {
     }
   }
 
+  /**
+   * Returns the reflected method this instance describes.
+   *
+   * @return the service method
+   */
   public Method getMethod () {
 
     return method;
   }
 
+  /**
+   * Resolves the argument metadata by its declared name.
+   *
+   * @param name logical argument name
+   * @return argument metadata or {@code null} if no such argument is registered
+   */
   public ArgumentInfo getArgumentInfo (String name) {
 
     return argumentInfoMap.get(name);

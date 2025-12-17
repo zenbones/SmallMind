@@ -45,17 +45,31 @@ import org.smallmind.phalanx.wire.transport.ClaxonTag;
 import org.smallmind.phalanx.wire.transport.amqp.rabbitmq.RequestMessageRouter;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Callback invoked by the response ingester to complete pending requests.
+ */
 public class RequestCallback implements Consumer<ConsumerRecord<Long, byte[]>> {
 
   private final KafkaRequestTransport transport;
   private final SignalCodec signalCodec;
 
+  /**
+   * Creates a callback that hands decoded responses back to the request transport.
+   *
+   * @param transport   request transport used to match responses to pending calls.
+   * @param signalCodec codec for decoding result signals.
+   */
   public RequestCallback (KafkaRequestTransport transport, SignalCodec signalCodec) {
 
     this.transport = transport;
     this.signalCodec = signalCodec;
   }
 
+  /**
+   * Decodes the result signal and hands it off to the transport's callback completion.
+   *
+   * @param record the Kafka record containing a serialized {@link ResultSignal}.
+   */
   @Override
   public void accept (ConsumerRecord<Long, byte[]> record) {
 

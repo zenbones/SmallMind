@@ -35,10 +35,24 @@ package org.smallmind.phalanx.wire.transport.amqp.rabbitmq;
 import java.io.IOException;
 import com.rabbitmq.client.Channel;
 
+/**
+ * Strategy for declaring queues of a particular type.
+ */
 public interface QueueContractor {
 
+  /**
+   * @return the type of queue this contractor declares.
+   */
   QueueType getQueueType ();
 
+  /**
+   * Declares a queue using the provided channel.
+   *
+   * @param channel    channel to declare on.
+   * @param queueName  queue name.
+   * @param autoDelete whether the queue should auto-delete when unused.
+   * @throws IOException if the broker rejects the declaration.
+   */
   void declare (Channel channel, String queueName, boolean autoDelete)
     throws IOException;
 }

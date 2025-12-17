@@ -32,13 +32,39 @@
  */
 package org.smallmind.phalanx.wire;
 
+/**
+ * Represents the routing and conversational intent for a transport request.
+ *
+ * @param <G> service group identifier type
+ * @param <I> instance identifier type
+ */
 public interface Voice<G, I> {
 
+  /**
+   * Mode indicating how the voice should be routed (e.g., whisper vs. shout).
+   *
+   * @return mode enum
+   */
   VocalMode getMode ();
 
+  /**
+   * Conversation metadata associated with the voice.
+   *
+   * @return conversation definition
+   */
   Conversation<?> getConversation ();
 
+  /**
+   * Returns the target service group.
+   *
+   * @return service group identifier
+   */
   G getServiceGroup ();
 
+  /**
+   * Returns the specific instance id if applicable.
+   *
+   * @return instance identifier or {@code null} for broadcast shouts
+   */
   I getInstanceId ();
 }
