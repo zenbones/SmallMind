@@ -34,8 +34,15 @@ package org.smallmind.sleuth.runner;
 
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
+/**
+ * Runtime exception indicating configuration errors in test dependencies.
+ */
 public class TestDependencyException extends FormattedRuntimeException {
 
+  /**
+   * @param message formatted error message
+   * @param args    format arguments
+   */
   public TestDependencyException (String message, Object... args) {
 
     super(message, args);

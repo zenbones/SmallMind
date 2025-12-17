@@ -32,6 +32,9 @@
  */
 package org.smallmind.sleuth.runner.event;
 
+/**
+ * Enumeration of all Sleuth event types.
+ */
 public enum SleuthEventType {
 
   SETUP, START, SUCCESS, FAILURE, ERROR, SKIPPED, MOOT, FATAL, CANCELLED

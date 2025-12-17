@@ -34,17 +34,33 @@ package org.smallmind.sleuth.maven.surefire;
 
 import org.apache.maven.surefire.api.report.OutputReportEntry;
 
+/**
+ * Simple output entry implementation used to stream test output through Surefire.
+ */
 public class SleuthReportEntry implements OutputReportEntry {
 
   private final String message;
   private final boolean stdOut;
   private final boolean newLine;
 
+  /**
+   * Creates a report entry without forcing a trailing newline flag.
+   *
+   * @param message message contents
+   * @param stdOut  {@code true} if the message originated on stdout, {@code false} for stderr
+   */
   public SleuthReportEntry (String message, boolean stdOut) {
 
     this(message, stdOut, false);
   }
 
+  /**
+   * Creates a report entry with explicit newline handling.
+   *
+   * @param message message contents
+   * @param stdOut  {@code true} if the message originated on stdout, {@code false} for stderr
+   * @param newLine {@code true} if the message already ends with a newline
+   */
   public SleuthReportEntry (String message, boolean stdOut, boolean newLine) {
 
     this.message = message;
@@ -52,18 +68,27 @@ public class SleuthReportEntry implements OutputReportEntry {
     this.newLine = newLine;
   }
 
+  /**
+   * @return the full log message
+   */
   @Override
   public String getLog () {
 
     return message;
   }
 
+  /**
+   * @return {@code true} if the log is stdout, {@code false} otherwise
+   */
   @Override
   public boolean isStdOut () {
 
     return stdOut;
   }
 
+  /**
+   * @return {@code true} if the message already contains a trailing newline
+   */
   @Override
   public boolean isNewLine () {
 

@@ -37,17 +37,35 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Declares a test suite and its dependency metadata.
+ */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Suite {
 
+  /**
+   * @return groups the suite belongs to; empty array means all groups
+   */
   String[] groups ();
 
+  /**
+   * @return priority used to order suite execution; higher numbers run later
+   */
   int priority () default 0;
 
+  /**
+   * @return suites that must complete before this one executes, without implying dependency failure propagation
+   */
   String[] executeAfter () default {};
 
+  /**
+   * @return suites that must succeed before this one executes
+   */
   String[] dependsOn () default {};
 
+  /**
+   * @return whether the suite is enabled
+   */
   boolean enabled () default true;
 }

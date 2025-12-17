@@ -34,19 +34,34 @@ package org.smallmind.sleuth.runner.event;
 
 import org.smallmind.nutsnbolts.util.AnsiColor;
 
+/**
+ * Event emitted when a test is skipped.
+ */
 public class SkippedSleuthEvent extends MessageSleuthEvent {
 
+  /**
+   * @param className originating class
+   * @param methodName originating method
+   * @param elapsed elapsed execution time in milliseconds before skipping
+   * @param message reason for the skip
+   */
   public SkippedSleuthEvent (String className, String methodName, long elapsed, String message) {
 
     super(className, methodName, elapsed, message);
   }
 
+  /**
+   * @return {@link SleuthEventType#SKIPPED}
+   */
   @Override
   public SleuthEventType getType () {
 
     return SleuthEventType.SKIPPED;
   }
 
+  /**
+   * @return yellow to indicate a skipped test
+   */
   @Override
   public AnsiColor getColor () {
 

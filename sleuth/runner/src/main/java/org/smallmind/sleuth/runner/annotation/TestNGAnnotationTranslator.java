@@ -40,8 +40,17 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+/**
+ * Translates TestNG annotations into Sleuth {@link AnnotationDictionary} metadata.
+ */
 public class TestNGAnnotationTranslator implements AnnotationTranslator {
 
+  /**
+   * Maps TestNG suite/test annotations onto Sleuth equivalents.
+   *
+   * @param clazz class to inspect
+   * @return populated annotation dictionary (may be empty)
+   */
   @Override
   public AnnotationDictionary process (Class<?> clazz) {
 

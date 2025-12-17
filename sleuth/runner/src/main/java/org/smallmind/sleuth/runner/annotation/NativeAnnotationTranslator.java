@@ -35,8 +35,17 @@ package org.smallmind.sleuth.runner.annotation;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 
+/**
+ * Translates Sleuth's native annotations into an {@link AnnotationDictionary}.
+ */
 public class NativeAnnotationTranslator implements AnnotationTranslator {
 
+  /**
+   * Scans the class and its methods for Sleuth annotations and builds a dictionary.
+   *
+   * @param clazz class to inspect
+   * @return populated dictionary (possibly empty when no annotations are present)
+   */
   @Override
   public AnnotationDictionary process (Class<?> clazz) {
 

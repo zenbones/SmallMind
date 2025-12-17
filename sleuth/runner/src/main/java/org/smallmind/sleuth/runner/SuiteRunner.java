@@ -44,6 +44,9 @@ import org.smallmind.sleuth.runner.annotation.Suite;
 import org.smallmind.sleuth.runner.annotation.Test;
 import org.smallmind.sleuth.runner.event.FatalSleuthEvent;
 
+/**
+ * Coordinates execution of a single test suite, including lifecycle hooks and contained test methods.
+ */
 public class SuiteRunner implements TestController {
 
   private final SleuthRunner sleuthRunner;
@@ -55,6 +58,16 @@ public class SuiteRunner implements TestController {
   private final boolean stopOnError;
   private final boolean stopOnFailure;
 
+  /**
+   * @param sleuthRunner             runner used for event dispatch and cancellation
+   * @param suiteCompletedLatch      latch decremented when the suite is finished
+   * @param suiteDependency          dependency metadata for the suite
+   * @param suiteDependencyQueue     queue managing inter-suite dependencies
+   * @param annotationProcessor      processor translating annotations into executable metadata
+   * @param threadPool               thread pool used to execute test tiers
+   * @param stopOnError              whether errors should halt execution of remaining suites/tests
+   * @param stopOnFailure            whether assertion failures should halt execution of remaining suites/tests
+   */
   public SuiteRunner (SleuthRunner sleuthRunner, CountDownLatch suiteCompletedLatch, Dependency<Suite, Class<?>> suiteDependency, DependencyQueue<Suite, Class<?>> suiteDependencyQueue, AnnotationProcessor annotationProcessor, SleuthThreadPool threadPool, boolean stopOnError, boolean stopOnFailure) {
 
     this.sleuthRunner = sleuthRunner;
@@ -67,6 +80,10 @@ public class SuiteRunner implements TestController {
     this.stopOnFailure = stopOnFailure;
   }
 
+  /**
+   * Executes suite-level lifecycle hooks and schedules contained tests while honoring dependencies.
+   * Propagates any culprit produced by lifecycle or test execution.
+   */
   @Override
   public void run () {
 
@@ -135,6 +152,9 @@ public class SuiteRunner implements TestController {
     }
   }
 
+  /**
+   * Marks the suite as complete, releases its semaphore slot, and notifies dependent suites.
+   */
   @Override
   public void complete () {
 

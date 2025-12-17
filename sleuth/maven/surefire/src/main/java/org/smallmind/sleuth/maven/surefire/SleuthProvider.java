@@ -50,17 +50,32 @@ import org.smallmind.sleuth.runner.SleuthRunner;
 import static java.lang.System.setErr;
 import static java.lang.System.setOut;
 
+/**
+ * Surefire {@link org.apache.maven.surefire.api.provider.SurefireProvider} implementation that drives the Sleuth runner.
+ * <p>
+ * It discovers test suites, configures the {@link SleuthRunner}, and forwards events/output back to the Surefire reporting infrastructure.
+ */
 public class SleuthProvider extends AbstractProvider {
 
   private final ProviderParameters providerParameters;
   private final SleuthRunner sleuthRunner = new SleuthRunner();
   private TestsToRun testsToRun;
 
+  /**
+   * Builds the provider with the Maven-provided execution parameters.
+   *
+   * @param providerParameters Surefire parameters including scan results, classloaders, and reporter factories
+   */
   public SleuthProvider (ProviderParameters providerParameters) {
 
     this.providerParameters = providerParameters;
   }
 
+  /**
+   * Scans the classpath for test suites recognized by Sleuth.
+   *
+   * @return iterable of suites to execute
+   */
   @Override
   public Iterable<Class<?>> getSuites () {
 
@@ -69,12 +84,23 @@ public class SleuthProvider extends AbstractProvider {
     return testsToRun;
   }
 
+  /**
+   * Requests cancellation of the currently running suite set.
+   */
   @Override
   public void cancel () {
 
     sleuthRunner.cancel();
   }
 
+  /**
+   * Executes the discovered suites and reports results back to Surefire.
+   *
+   * @param forkTestSet optional set supplied by the forked VM
+   * @return aggregated {@link RunResult}
+   * @throws TestSetFailedException when a fatal failure halts execution
+   * @throws ReporterException      when a reporter cannot be created or accepts output
+   */
   @Override
   public RunResult invoke (Object forkTestSet)
     throws TestSetFailedException, ReporterException {
@@ -153,6 +179,12 @@ public class SleuthProvider extends AbstractProvider {
     return runResult;
   }
 
+  /**
+   * Parses a comma-separated list of groups, honoring {@code all} as a sentinel.
+   *
+   * @param groupsParameter raw groups string
+   * @return {@code null} when no value is provided, empty array for {@code all}, otherwise the parsed group names
+   */
   private String[] parseGroups (String groupsParameter) {
 
     if ((groupsParameter != null) && (!groupsParameter.isEmpty())) {

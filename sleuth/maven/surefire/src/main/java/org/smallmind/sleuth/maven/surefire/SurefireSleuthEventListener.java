@@ -47,23 +47,43 @@ import org.smallmind.sleuth.runner.event.SleuthEvent;
 import org.smallmind.sleuth.runner.event.SleuthEventListener;
 import org.smallmind.sleuth.runner.event.SuccessSleuthEvent;
 
+/**
+ * Adapts Sleuth runner events to Surefire {@link RunListener} callbacks.
+ * <p>
+ * The listener converts each Sleuth event into the appropriate Surefire report entry and tracks fatal
+ * throwables so they can be rethrown to Maven after execution completes.
+ */
 public class SurefireSleuthEventListener implements SleuthEventListener {
 
   private final RunListener runListener;
   private final RunMode runMode;
   private Throwable throwable;
 
+  /**
+   * Creates a new listener bound to the provided Surefire listener and run mode.
+   *
+   * @param runListener destination for translated events
+   * @param runMode     execution mode used in report entries
+   */
   public SurefireSleuthEventListener (RunListener runListener, RunMode runMode) {
 
     this.runListener = runListener;
     this.runMode = runMode;
   }
 
+  /**
+   * @return any fatal throwable captured during execution, otherwise {@code null}
+   */
   public Throwable getThrowable () {
 
     return throwable;
   }
 
+  /**
+   * Translates a Sleuth event into a Surefire notification, recording fatal errors for later propagation.
+   *
+   * @param event event emitted by the Sleuth runner
+   */
   @Override
   public void handle (SleuthEvent event) {
 

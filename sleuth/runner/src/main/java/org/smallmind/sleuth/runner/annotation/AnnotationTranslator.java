@@ -32,7 +32,14 @@
  */
 package org.smallmind.sleuth.runner.annotation;
 
+/**
+ * Strategy for translating a specific annotation model into Sleuth {@link AnnotationDictionary} metadata.
+ */
 public interface AnnotationTranslator {
 
+  /**
+   * @param clazz class to inspect
+   * @return populated annotation dictionary (may be empty but non-null)
+   */
   AnnotationDictionary process (Class<?> clazz);
 }

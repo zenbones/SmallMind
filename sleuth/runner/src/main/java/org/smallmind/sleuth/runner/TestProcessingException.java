@@ -34,17 +34,28 @@ package org.smallmind.sleuth.runner;
 
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
+/**
+ * Indicates errors while preparing or invoking tests (e.g., missing constructors or reflection failures).
+ */
 public class TestProcessingException extends FormattedRuntimeException {
 
+  /**
+   * @param message formatted error message
+   * @param args    message parameters
+   */
   public TestProcessingException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * Wraps a caught exception.
+   *
+   * @param throwable underlying cause
+   */
   public TestProcessingException (Throwable throwable) {
 
     super(throwable);
   }
 }
-
 

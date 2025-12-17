@@ -32,7 +32,13 @@
  */
 package org.smallmind.sleuth.runner;
 
+/**
+ * Contract for runnable controllers that execute a test tier unit of work.
+ */
 public interface TestController extends Runnable {
 
+  /**
+   * Invoked after run completion to release resources and notify dependents.
+   */
   void complete ();
 }

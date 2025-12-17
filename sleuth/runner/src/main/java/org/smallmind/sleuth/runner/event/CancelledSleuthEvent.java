@@ -34,19 +34,32 @@ package org.smallmind.sleuth.runner.event;
 
 import org.smallmind.nutsnbolts.util.AnsiColor;
 
+/**
+ * Event emitted when suite execution is cancelled.
+ */
 public class CancelledSleuthEvent extends SleuthEvent {
 
+  /**
+   * @param className originating class
+   * @param methodName originating method
+   */
   public CancelledSleuthEvent (String className, String methodName) {
 
     super(className, methodName);
   }
 
+  /**
+   * @return {@link SleuthEventType#CANCELLED}
+   */
   @Override
   public SleuthEventType getType () {
 
     return SleuthEventType.CANCELLED;
   }
 
+  /**
+   * @return bright red to indicate cancellation
+   */
   @Override
   public AnsiColor getColor () {
 

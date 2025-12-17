@@ -39,17 +39,34 @@ import org.apache.maven.surefire.api.report.TestOutputReportEntry;
 import org.apache.maven.surefire.api.report.TestReportListener;
 import org.smallmind.sleuth.runner.TestIdentifier;
 
+/**
+ * Bridges raw test output from the Sleuth runner into Surefire's reporting API.
+ * <p>
+ * Each message is re-wrapped with the current {@link RunMode} and the active {@link TestIdentifier}
+ * so Surefire can attribute stdout/stderr to the correct test case.
+ */
 public class SleuthOutputReceiver implements TestOutputReceiver<OutputReportEntry> {
 
   private final TestReportListener<TestOutputReportEntry> reportListener;
   private final RunMode runMode;
 
+  /**
+   * Creates a receiver that forwards to the given Surefire report listener.
+   *
+   * @param reportListener target listener that handles test output entries
+   * @param runMode        execution mode of the current run (normal/forked)
+   */
   public SleuthOutputReceiver (TestReportListener<TestOutputReportEntry> reportListener, RunMode runMode) {
 
     this.reportListener = reportListener;
     this.runMode = runMode;
   }
 
+  /**
+   * Wraps and forwards the output entry including the current run mode and test id.
+   *
+   * @param reportEntry raw output entry emitted by Sleuth
+   */
   @Override
   public void writeTestOutput (OutputReportEntry reportEntry) {
 

@@ -34,6 +34,9 @@ package org.smallmind.sleuth.runner.annotation;
 
 import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
 
+/**
+ * Runtime literal implementation of {@link AfterSuite} for frameworks that need annotation instances.
+ */
 public class AfterSuiteLiteral extends AnnotationLiteral<AfterSuite> implements AfterSuite {
 
 }

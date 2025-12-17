@@ -34,19 +34,34 @@ package org.smallmind.sleuth.runner.event;
 
 import org.smallmind.nutsnbolts.util.AnsiColor;
 
+/**
+ * Event emitted when a test becomes moot due to unmet assumptions or prerequisites.
+ */
 public class MootSleuthEvent extends ThrowableSleuthEvent {
 
+  /**
+   * @param className originating class
+   * @param methodName originating method
+   * @param elapsed elapsed execution time in milliseconds
+   * @param throwable cause of the moot state
+   */
   public MootSleuthEvent (String className, String methodName, long elapsed, Throwable throwable) {
 
     super(className, methodName, elapsed, throwable);
   }
 
+  /**
+   * @return {@link SleuthEventType#MOOT}
+   */
   @Override
   public SleuthEventType getType () {
 
     return SleuthEventType.MOOT;
   }
 
+  /**
+   * @return yellow to indicate a non-fatal skip
+   */
   @Override
   public AnsiColor getColor () {
 

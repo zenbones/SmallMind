@@ -35,6 +35,12 @@ package org.smallmind.sleuth.runner;
 import java.lang.annotation.Annotation;
 import java.util.HashSet;
 
+/**
+ * Represents a unit of work with dependency and priority metadata used by the Sleuth scheduler.
+ *
+ * @param <A> annotation type that describes the dependency
+ * @param <T> payload represented by the dependency (class, method, etc.)
+ */
 public class Dependency<A extends Annotation, T> {
 
   private final HashSet<Dependency<A, T>> children = new HashSet<>();
@@ -50,6 +56,11 @@ public class Dependency<A extends Annotation, T> {
   private boolean completed;
   private int priority;
 
+  /**
+   * Creates an incomplete placeholder dependency that can later be aligned with details.
+   *
+   * @param name unique name of the dependency node
+   */
   public Dependency (String name) {
 
     this.name = name;
@@ -57,6 +68,16 @@ public class Dependency<A extends Annotation, T> {
     completed = false;
   }
 
+  /**
+   * Creates a fully specified dependency node.
+   *
+   * @param name         unique name of the dependency node
+   * @param annotation   annotation that configured the dependency
+   * @param value        payload value associated with the dependency
+   * @param priority     ordering priority; higher values run later
+   * @param executeAfter optional list of dependencies that must finish before execution
+   * @param dependsOn    optional list of hard dependencies that must succeed first
+   */
   public Dependency (String name, A annotation, T value, int priority, String[] executeAfter, String[] dependsOn) {
 
     this.name = name;
@@ -69,6 +90,11 @@ public class Dependency<A extends Annotation, T> {
     completed = true;
   }
 
+  /**
+   * Copies dependency details from another node with the same name.
+   *
+   * @param dependency fully defined dependency to align with
+   */
   public void align (Dependency<A, T> dependency) {
 
     this.annotation = dependency.getAnnotation();
@@ -79,102 +105,171 @@ public class Dependency<A extends Annotation, T> {
     completed = true;
   }
 
+  /**
+   * @return the unique dependency name
+   */
   public String getName () {
 
     return name;
   }
 
+  /**
+   * @return the annotation that describes this dependency, or {@code null} if not yet aligned
+   */
   public A getAnnotation () {
 
     return annotation;
   }
 
+  /**
+   * @return the payload value associated with the dependency
+   */
   public T getValue () {
 
     return value;
   }
 
+  /**
+   * @return execution priority; larger numbers are scheduled later
+   */
   public int getPriority () {
 
     return priority;
   }
 
+  /**
+   * @return names of dependencies that must be completed when this node has lower priority
+   */
   public String[] getPriorityOn () {
 
     return priorityOn;
   }
 
+  /**
+   * Sets dependencies imposed by a higher-priority tier.
+   *
+   * @param priorityOn dependency names that must be complete before this one executes
+   */
   public void setPriorityOn (String[] priorityOn) {
 
     this.priorityOn = priorityOn;
   }
 
+  /**
+   * @return dependencies that must complete before this node executes when in the same tier
+   */
   public String[] getExecuteAfter () {
 
     return executeAfter;
   }
 
+  /**
+   * @return required dependencies that must succeed prior to execution
+   */
   public String[] getDependsOn () {
 
     return dependsOn;
   }
 
+  /**
+   * Registers a child dependency that is downstream of this node.
+   *
+   * @param dependency child node
+   */
   public void addChild (Dependency<A, T> dependency) {
 
     children.add(dependency);
   }
 
+  /**
+   * @return current child dependencies
+   */
   public HashSet<Dependency<A, T>> getChildren () {
 
     return children;
   }
 
+  /**
+   * @return {@code true} when the node has been fully defined/aligned
+   */
   public boolean isCompleted () {
 
     return completed;
   }
 
+  /**
+   * @return recorded culprit propagated from a failed prerequisite, if any
+   */
   public Culprit getCulprit () {
 
     return culprit;
   }
 
+  /**
+   * Propagates a culprit from an upstream dependency.
+   *
+   * @param culprit failure to record
+   */
   public void setCulprit (Culprit culprit) {
 
     this.culprit = culprit;
   }
 
+  /**
+   * @return whether this node is currently being visited in dependency resolution
+   */
   public boolean isTemporary () {
 
     return temporary;
   }
 
+  /**
+   * Marks the node as temporarily visited to detect cycles.
+   */
   public void setTemporary () {
 
     temporary = true;
   }
 
+  /**
+   * Clears the temporary visit marker.
+   */
   public void unsetTemporary () {
 
     temporary = false;
   }
 
+  /**
+   * @return whether this node has been fully processed in dependency resolution
+   */
   public boolean isPermanent () {
 
     return permanent;
   }
 
+  /**
+   * Marks the node as permanently processed.
+   */
   public void setPermanent () {
 
     permanent = true;
   }
 
+  /**
+   * @return hash code derived from the dependency name
+   */
   @Override
   public int hashCode () {
 
     return name.hashCode();
   }
 
+  /**
+   * Dependencies are considered equal when their names match.
+   *
+   * @param obj object to compare
+   * @return {@code true} if names are equal
+   */
   @Override
   public boolean equals (Object obj) {
 

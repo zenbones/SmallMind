@@ -34,19 +34,34 @@ package org.smallmind.sleuth.runner.event;
 
 import org.smallmind.nutsnbolts.util.AnsiColor;
 
+/**
+ * Event emitted for assertion failures within a test.
+ */
 public class FailureSleuthEvent extends ThrowableSleuthEvent {
 
+  /**
+   * @param className originating class
+   * @param methodName originating method
+   * @param elapsed elapsed execution time in milliseconds
+   * @param throwable assertion failure
+   */
   public FailureSleuthEvent (String className, String methodName, long elapsed, Throwable throwable) {
 
     super(className, methodName, elapsed, throwable);
   }
 
+  /**
+   * @return {@link SleuthEventType#FAILURE}
+   */
   @Override
   public SleuthEventType getType () {
 
     return SleuthEventType.FAILURE;
   }
 
+  /**
+   * @return bright red to indicate failure
+   */
   @Override
   public AnsiColor getColor () {
 

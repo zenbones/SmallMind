@@ -34,34 +34,56 @@ package org.smallmind.sleuth.runner.event;
 
 import org.smallmind.nutsnbolts.util.AnsiColor;
 
+/**
+ * Base class for all Sleuth events emitted during test execution.
+ */
 public abstract class SleuthEvent {
 
   private final String className;
   private final String methodName;
 
+  /**
+   * @param className originating class
+   * @param methodName originating method
+   */
   public SleuthEvent (String className, String methodName) {
 
     this.className = className;
     this.methodName = methodName;
   }
 
+  /**
+   * @return specific event type
+   */
   public abstract SleuthEventType getType ();
 
+  /**
+   * @return color to use when rendering the event
+   */
   public AnsiColor getColor () {
 
     return AnsiColor.DEFAULT;
   }
 
+  /**
+   * @return originating class name
+   */
   public String getClassName () {
 
     return className;
   }
 
+  /**
+   * @return originating method name
+   */
   public String getMethodName () {
 
     return methodName;
   }
 
+  /**
+   * @return colored string representation of the event
+   */
   @Override
   public String toString () {
 

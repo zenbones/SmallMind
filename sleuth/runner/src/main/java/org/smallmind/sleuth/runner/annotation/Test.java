@@ -37,15 +37,30 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Declares a test method and its dependency metadata.
+ */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Test {
 
+  /**
+   * @return execution priority within the suite; higher numbers run later
+   */
   int priority () default 0;
 
+  /**
+   * @return methods that should complete before this test executes, without propagating failure
+   */
   String[] executeAfter () default {};
 
+  /**
+   * @return methods that must succeed before this test executes
+   */
   String[] dependsOn () default {};
 
+  /**
+   * @return whether the test is enabled
+   */
   boolean enabled () default true;
 }

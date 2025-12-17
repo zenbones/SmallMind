@@ -47,6 +47,9 @@ import org.smallmind.sleuth.runner.event.SkippedSleuthEvent;
 import org.smallmind.sleuth.runner.event.StartSleuthEvent;
 import org.smallmind.sleuth.runner.event.SuccessSleuthEvent;
 
+/**
+ * Executes a single test method along with its per-test lifecycle hooks.
+ */
 public class TestRunner implements TestController {
 
   private final SleuthRunner sleuthRunner;
@@ -61,6 +64,19 @@ public class TestRunner implements TestController {
   private final boolean stopOnFailure;
   private Culprit culprit;
 
+  /**
+   * @param sleuthRunner               runner used for event dispatch and cancellation checks
+   * @param testCompletedLatch         latch decremented when the test finishes
+   * @param culprit                    prior failure that should cause this test to be skipped; may be {@code null}
+   * @param clazz                      test class
+   * @param instance                   instance of the test class
+   * @param testMethodDependency       dependency metadata for the test method
+   * @param testMethodDependencyQueue  queue managing inter-test dependencies
+   * @param annotationProcessor        processor translating annotations into executable metadata
+   * @param threadPool                 thread pool used to execute test tiers
+   * @param stopOnError                whether unexpected errors halt further execution
+   * @param stopOnFailure              whether assertion failures halt further execution
+   */
   public TestRunner (SleuthRunner sleuthRunner, CountDownLatch testCompletedLatch, Culprit culprit, Class<?> clazz, Object instance, Dependency<Test, Method> testMethodDependency, DependencyQueue<Test, Method> testMethodDependencyQueue, AnnotationProcessor annotationProcessor, SleuthThreadPool threadPool, boolean stopOnError, boolean stopOnFailure) {
 
     this.sleuthRunner = sleuthRunner;
@@ -76,6 +92,9 @@ public class TestRunner implements TestController {
     this.stopOnFailure = stopOnFailure;
   }
 
+  /**
+   * Executes before/after test hooks and the target test method, emitting Sleuth events for each stage.
+   */
   @Override
   public void run () {
 
@@ -134,6 +153,9 @@ public class TestRunner implements TestController {
     }
   }
 
+  /**
+   * Releases the semaphore slot, marks the dependency complete, and counts down the latch.
+   */
   @Override
   public void complete () {
 

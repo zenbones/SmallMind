@@ -34,6 +34,9 @@ package org.smallmind.sleuth.runner;
 
 import java.util.HashMap;
 
+/**
+ * Thread-local context map shared across test executions within a thread and its children.
+ */
 public class TestContext {
 
   private static final InheritableThreadLocal<HashMap<String, Object>> CONTEXT_MAP = new InheritableThreadLocal<>() {
@@ -45,21 +48,48 @@ public class TestContext {
     }
   };
 
+  /**
+   * Retrieves a value by key without casting.
+   *
+   * @param key context key
+   * @return stored value or {@code null} if absent
+   */
   public static Object get (String key) {
 
     return CONTEXT_MAP.get().get(key);
   }
 
+  /**
+   * Retrieves and casts a value by key.
+   *
+   * @param key   context key
+   * @param clazz expected type
+   * @param <T>   inferred type parameter
+   * @return value cast to the requested type or {@code null} if absent
+   * @throws ClassCastException if the value is not of the expected type
+   */
   public static <T> T get (String key, Class<T> clazz) {
 
     return clazz.cast(CONTEXT_MAP.get().get(key));
   }
 
+  /**
+   * Stores or replaces a context value.
+   *
+   * @param key   context key
+   * @param value value to associate
+   */
   public static void put (String key, Object value) {
 
     CONTEXT_MAP.get().put(key, value);
   }
 
+  /**
+   * Stores a context value only if the key is not already present.
+   *
+   * @param key   context key
+   * @param value value to associate when absent
+   */
   public static void putIfAbsent (String key, Object value) {
 
     CONTEXT_MAP.get().putIfAbsent(key, value);

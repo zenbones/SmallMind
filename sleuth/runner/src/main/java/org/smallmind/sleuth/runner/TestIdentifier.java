@@ -35,6 +35,11 @@ package org.smallmind.sleuth.runner;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * Generates stable numeric identifiers for test class/method combinations.
+ * <p>
+ * Identifiers are stored in an inheritable thread-local to ensure child threads report under the correct test id.
+ */
 public class TestIdentifier {
 
   private static final InheritableThreadLocal<Long> IDENTIFIER_LOCAL = new InheritableThreadLocal<>() {
@@ -49,6 +54,12 @@ public class TestIdentifier {
   private static final HashMap<TestKey, Long> IDENTIFIER_MAP = new HashMap<>();
   private static final AtomicLong IDENTIFIER_COUNTER = new AtomicLong(0);
 
+  /**
+   * Updates the current thread's identifier to the value associated with the given class/method, creating one if needed.
+   *
+   * @param className  fully qualified class name
+   * @param methodName method name; may be {@code null} for suite-level identifiers
+   */
   public static void updateIdentifier (String className, String methodName) {
 
     TestKey testKey = new TestKey(className, methodName);
@@ -65,16 +76,26 @@ public class TestIdentifier {
     IDENTIFIER_LOCAL.set(fixedIdentifier);
   }
 
+  /**
+   * @return identifier assigned to the current thread's active test
+   */
   public static long getTestIdentifier () {
 
     return IDENTIFIER_LOCAL.get();
   }
 
+  /**
+   * Composite key for identifier lookup.
+   */
   private static class TestKey {
 
     private final String className;
     private final String methodName;
 
+    /**
+     * @param className  fully qualified class name
+     * @param methodName method name; may be {@code null}
+     */
     public TestKey (String className, String methodName) {
 
       this.className = className;
@@ -86,17 +107,29 @@ public class TestIdentifier {
       return className;
     }
 
+    /**
+     * @return method name component; may be {@code null}
+     */
     public String getMethodName () {
 
       return methodName;
     }
 
+    /**
+     * @return combined hash of class and method names
+     */
     @Override
     public int hashCode () {
 
       return (((className == null) ? 0 : className.hashCode()) * 31) + ((methodName == null) ? 0 : methodName.hashCode());
     }
 
+    /**
+     * Equality is based on both class and method name.
+     *
+     * @param obj object to compare
+     * @return {@code true} when both parts match
+     */
     @Override
     public boolean equals (Object obj) {
 

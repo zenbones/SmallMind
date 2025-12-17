@@ -34,19 +34,32 @@ package org.smallmind.sleuth.runner.event;
 
 import org.smallmind.nutsnbolts.util.AnsiColor;
 
+/**
+ * Event emitted when a test or lifecycle method begins.
+ */
 public class StartSleuthEvent extends SleuthEvent {
 
+  /**
+   * @param className originating class
+   * @param methodName originating method
+   */
   public StartSleuthEvent (String className, String methodName) {
 
     super(className, methodName);
   }
 
+  /**
+   * @return {@link SleuthEventType#START}
+   */
   @Override
   public SleuthEventType getType () {
 
     return SleuthEventType.START;
   }
 
+  /**
+   * @return bright blue to indicate start
+   */
   @Override
   public AnsiColor getColor () {
 

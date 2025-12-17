@@ -34,6 +34,9 @@ package org.smallmind.sleuth.runner.annotation;
 
 import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
 
+/**
+ * Runtime literal implementation of {@link Test}.
+ */
 public class TestLiteral extends AnnotationLiteral<Test> implements Test {
 
   private final String[] executeAfter;
@@ -41,6 +44,12 @@ public class TestLiteral extends AnnotationLiteral<Test> implements Test {
   private final boolean enabled;
   private final int priority;
 
+  /**
+   * @param priority     execution priority
+   * @param executeAfter methods that should complete before this one
+   * @param dependsOn    methods that must succeed before this one
+   * @param enabled      whether the test is enabled
+   */
   public TestLiteral (int priority, String[] executeAfter, String[] dependsOn, boolean enabled) {
 
     this.priority = priority;
@@ -49,24 +58,36 @@ public class TestLiteral extends AnnotationLiteral<Test> implements Test {
     this.enabled = enabled;
   }
 
+  /**
+   * @return priority value used for ordering
+   */
   @Override
   public int priority () {
 
     return priority;
   }
 
+  /**
+   * @return methods that should complete before this one
+   */
   @Override
   public String[] executeAfter () {
 
     return executeAfter;
   }
 
+  /**
+   * @return methods that must succeed before this one
+   */
   @Override
   public String[] dependsOn () {
 
     return dependsOn;
   }
 
+  /**
+   * @return whether the test is enabled
+   */
   @Override
   public boolean enabled () {
 

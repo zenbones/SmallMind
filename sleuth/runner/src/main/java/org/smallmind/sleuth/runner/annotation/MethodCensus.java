@@ -37,27 +37,42 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.NoSuchElementException;
 
+/**
+ * Iterates over all declared methods in a class hierarchy starting from the highest ancestor.
+ */
 public class MethodCensus implements Iterable<Method> {
 
   private final Class<?> clazz;
 
+  /**
+   * @param clazz root class whose methods will be enumerated
+   */
   public MethodCensus (Class<?> clazz) {
 
     this.clazz = clazz;
   }
 
+  /**
+   * @return iterator over the class hierarchy's declared methods
+   */
   @Override
   public Iterator<Method> iterator () {
 
     return new MethodCensusIterator(clazz);
   }
 
+  /**
+   * Iterator that walks the class hierarchy breadth-first from base class to leaf.
+   */
   private static class MethodCensusIterator implements Iterator<Method> {
 
     private final LinkedList<Class<?>> classList = new LinkedList<>();
     private Method[] methods = new Method[0];
     private int methodIndex = 0;
 
+    /**
+     * @param clazz starting class
+     */
     private MethodCensusIterator (Class<?> clazz) {
 
       do {
@@ -65,6 +80,9 @@ public class MethodCensus implements Iterable<Method> {
       } while ((clazz = clazz.getSuperclass()) != null);
     }
 
+    /**
+     * @return {@code true} if a further method exists
+     */
     @Override
     public boolean hasNext () {
 
@@ -81,6 +99,10 @@ public class MethodCensus implements Iterable<Method> {
       return true;
     }
 
+    /**
+     * @return next method in the hierarchy
+     * @throws NoSuchElementException if no more methods are available
+     */
     @Override
     public Method next () {
 
@@ -91,6 +113,11 @@ public class MethodCensus implements Iterable<Method> {
       return methods[methodIndex++];
     }
 
+    /**
+     * Unsupported to avoid mutating reflection results.
+     *
+     * @throws UnsupportedOperationException always
+     */
     @Override
     public void remove () {
 

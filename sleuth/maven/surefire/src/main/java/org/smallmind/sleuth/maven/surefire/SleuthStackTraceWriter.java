@@ -37,6 +37,12 @@ import org.apache.maven.surefire.api.report.StackTraceWriter;
 import org.smallmind.nutsnbolts.lang.StackTraceUtility;
 import org.smallmind.sleuth.runner.Culprit;
 
+/**
+ * {@link StackTraceWriter} that defers to Sleuth's trimmed stack trace representation.
+ * <p>
+ * It provides Surefire with safe and trimmed stack traces while also exposing a condensed culprit string
+ * that includes the originating class, method, and line number when available.
+ */
 public class SleuthStackTraceWriter
   implements StackTraceWriter {
 
@@ -44,6 +50,13 @@ public class SleuthStackTraceWriter
   private final String testClass;
   private final String testMethod;
 
+  /**
+   * Creates a writer for the provided throwable context.
+   *
+   * @param testClass  class where the failure occurred
+   * @param testMethod method where the failure occurred
+   * @param throwable  failure cause; may be {@code null} to indicate no stack trace
+   */
   public SleuthStackTraceWriter (String testClass, String testMethod, Throwable throwable) {
 
     this.testClass = testClass;
@@ -51,24 +64,36 @@ public class SleuthStackTraceWriter
     this.throwable = throwable;
   }
 
+  /**
+   * @return a {@link SafeThrowable} wrapper or {@code null} when no throwable is present
+   */
   @Override
   public SafeThrowable getThrowable () {
 
     return (throwable == null) ? null : new SafeThrowable(throwable);
   }
 
+  /**
+   * @return the full stack trace text or an empty string if no throwable is present
+   */
   @Override
   public String writeTraceToString () {
 
     return (throwable == null) ? "" : StackTraceUtility.obtainStackTraceAsString(throwable);
   }
 
+  /**
+   * @return the trimmed stack trace; delegates to {@link #writeTraceToString()}
+   */
   @Override
   public String writeTrimmedTraceToString () {
 
     return writeTraceToString();
   }
 
+  /**
+   * @return a concise culprit string including class, method, line, and message, or an empty string when no throwable exists
+   */
   @Override
   public String smartTrimmedStackTrace () {
 

@@ -34,10 +34,18 @@ package org.smallmind.sleuth.runner.event;
 
 import org.smallmind.nutsnbolts.util.AnsiColor;
 
+/**
+ * Base event type that carries elapsed execution time.
+ */
 public abstract class TimedSleuthEvent extends SleuthEvent {
 
   private final long elapsed;
 
+  /**
+   * @param className originating class
+   * @param methodName originating method
+   * @param elapsed elapsed execution time in milliseconds
+   */
   public TimedSleuthEvent (String className, String methodName, long elapsed) {
 
     super(className, methodName);
@@ -45,11 +53,17 @@ public abstract class TimedSleuthEvent extends SleuthEvent {
     this.elapsed = elapsed;
   }
 
+  /**
+   * @return elapsed time in milliseconds
+   */
   public long getElapsed () {
 
     return elapsed;
   }
 
+  /**
+   * @return colored string representation including the elapsed time
+   */
   @Override
   public String toString () {
 

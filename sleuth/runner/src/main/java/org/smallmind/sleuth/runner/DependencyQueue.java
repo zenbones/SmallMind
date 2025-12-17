@@ -38,6 +38,12 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 
+/**
+ * Thread-safe queue that releases dependency nodes only when their prerequisites are complete.
+ *
+ * @param <A> annotation type describing the dependency
+ * @param <T> payload type represented by the dependency node
+ */
 public class DependencyQueue<A extends Annotation, T> {
 
   private final LinkedList<Dependency<A, T>> dependencyList;
@@ -45,6 +51,11 @@ public class DependencyQueue<A extends Annotation, T> {
   private final HashSet<String> completedSet = new HashSet<>();
   private final int size;
 
+  /**
+   * Creates a queue seeded with the ordered dependency list.
+   *
+   * @param dependencyList topologically sorted dependencies
+   */
   public DependencyQueue (LinkedList<Dependency<A, T>> dependencyList) {
 
     this.dependencyList = dependencyList;
@@ -55,11 +66,19 @@ public class DependencyQueue<A extends Annotation, T> {
     }
   }
 
+  /**
+   * @return total number of dependencies in the queue
+   */
   public int size () {
 
     return size;
   }
 
+  /**
+   * Retrieves the next executable dependency, blocking until one becomes available or the queue empties.
+   *
+   * @return the next dependency ready for execution, or {@code null} when the queue is empty
+   */
   public synchronized Dependency<A, T> poll () {
 
     while (!dependencyList.isEmpty()) {
@@ -87,12 +106,23 @@ public class DependencyQueue<A extends Annotation, T> {
     return null;
   }
 
+  /**
+   * Marks a dependency as complete and notifies waiting threads.
+   *
+   * @param dependency dependency that has finished executing
+   */
   public synchronized void complete (Dependency<A, T> dependency) {
 
     completedSet.add(dependency.getName());
     notifyAll();
   }
 
+  /**
+   * Determines whether all prerequisites for a dependency have been completed.
+   *
+   * @param dependency dependency to evaluate
+   * @return {@code true} if the dependency can execute
+   */
   private boolean isComplete (Dependency<A, T> dependency) {
 
     if (dependency.getDependsOn() != null) {

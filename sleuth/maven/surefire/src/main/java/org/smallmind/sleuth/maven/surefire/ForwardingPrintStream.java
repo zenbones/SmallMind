@@ -38,6 +38,12 @@ import java.nio.charset.StandardCharsets;
 import org.apache.maven.surefire.api.report.OutputReportEntry;
 import org.apache.maven.surefire.api.report.TestOutputReceiver;
 
+/**
+ * PrintStream that forwards every write to the Surefire {@link TestOutputReceiver}.
+ * <p>
+ * It captures output written by tests and relays it as {@link SleuthReportEntry} instances so that
+ * Surefire can associate the messages with the currently executing test and stream them to the build log.
+ */
 public class ForwardingPrintStream extends PrintStream {
 
   private static final String LINE_SEPARATOR = System.lineSeparator();
@@ -45,6 +51,12 @@ public class ForwardingPrintStream extends PrintStream {
   private final TestOutputReceiver<OutputReportEntry> testOutputReceiver;
   private final boolean stdOut;
 
+  /**
+   * Constructs a forwarding stream.
+   *
+   * @param testOutputReceiver receiver that accepts transformed {@link OutputReportEntry} objects
+   * @param stdOut             {@code true} when this stream represents stdout, {@code false} for stderr
+   */
   ForwardingPrintStream (TestOutputReceiver<OutputReportEntry> testOutputReceiver, boolean stdOut) {
 
     super(new ByteArrayOutputStream());
@@ -53,24 +65,46 @@ public class ForwardingPrintStream extends PrintStream {
     this.stdOut = stdOut;
   }
 
+  /**
+   * Forwards a byte buffer slice as a test output entry.
+   *
+   * @param buf source buffer
+   * @param off offset of the first byte to write
+   * @param len number of bytes to write
+   */
   @Override
   public void write (byte[] buf, int off, int len) {
 
     testOutputReceiver.writeTestOutput(new SleuthReportEntry(new String(buf, off, len), stdOut));
   }
 
+  /**
+   * Forwards an entire byte buffer as a test output entry.
+   *
+   * @param buf source buffer to forward
+   */
   @Override
   public void write (byte[] buf) {
 
     testOutputReceiver.writeTestOutput(new SleuthReportEntry(new String(buf), stdOut));
   }
 
+  /**
+   * Forwards a single byte as a test output entry.
+   *
+   * @param b byte to forward
+   */
   @Override
   public void write (int b) {
 
     testOutputReceiver.writeTestOutput(new SleuthReportEntry(new String(new byte[] {(byte)b}), stdOut));
   }
 
+  /**
+   * Forwards a full line, ensuring a platform line separator is appended.
+   *
+   * @param s string value; {@code null} is converted to the literal {@code "null"}
+   */
   @Override
   public void println (String s) {
 
@@ -79,11 +113,17 @@ public class ForwardingPrintStream extends PrintStream {
     testOutputReceiver.writeTestOutput(new SleuthReportEntry(new String(bytes), stdOut));
   }
 
+  /**
+   * No-op to avoid closing the underlying receiver-managed streams.
+   */
   @Override
   public void close () {
 
   }
 
+  /**
+   * No-op to avoid flushing the wrapped {@link ByteArrayOutputStream}; the receiver consumes output immediately.
+   */
   @Override
   public void flush () {
 

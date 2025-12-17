@@ -34,19 +34,34 @@ package org.smallmind.sleuth.runner.event;
 
 import org.smallmind.nutsnbolts.util.AnsiColor;
 
+/**
+ * Event emitted for unexpected errors thrown by a test.
+ */
 public class ErrorSleuthEvent extends ThrowableSleuthEvent {
 
+  /**
+   * @param className originating class
+   * @param methodName originating method
+   * @param elapsed elapsed execution time in milliseconds
+   * @param throwable underlying error
+   */
   public ErrorSleuthEvent (String className, String methodName, long elapsed, Throwable throwable) {
 
     super(className, methodName, elapsed, throwable);
   }
 
+  /**
+   * @return {@link SleuthEventType#ERROR}
+   */
   @Override
   public SleuthEventType getType () {
 
     return SleuthEventType.ERROR;
   }
 
+  /**
+   * @return bright red to indicate error
+   */
   @Override
   public AnsiColor getColor () {
 

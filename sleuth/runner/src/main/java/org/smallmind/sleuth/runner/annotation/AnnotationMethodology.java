@@ -47,11 +47,22 @@ import org.smallmind.sleuth.runner.event.SkippedSleuthEvent;
 import org.smallmind.sleuth.runner.event.StartSleuthEvent;
 import org.smallmind.sleuth.runner.event.SuccessSleuthEvent;
 
+/**
+ * Maintains an ordered collection of methods annotated with a specific lifecycle annotation and provides invocation support.
+ *
+ * @param <A> annotation type represented by this methodology
+ */
 public class AnnotationMethodology<A extends Annotation> implements Iterable<Pair<Method, A>> {
 
   private final HashSet<MethodKey> methodSet = new HashSet<>();
   private final LinkedList<Pair<Method, A>> pairList = new LinkedList<>();
 
+  /**
+   * Adds a method/annotation pair if it has not already been registered.
+   *
+   * @param method     reflected method
+   * @param annotation associated annotation
+   */
   public void add (Method method, A annotation) {
 
     if (methodSet.add(new MethodKey(method.getName(), method.getParameterTypes()))) {
@@ -59,6 +70,15 @@ public class AnnotationMethodology<A extends Annotation> implements Iterable<Pai
     }
   }
 
+  /**
+   * Executes each annotated method in order, emitting Sleuth events and capturing any resulting culprit.
+   *
+   * @param sleuthRunner runner used for event dispatch
+   * @param culprit      prior culprit that should cause remaining methods to be skipped; may be {@code null}
+   * @param clazz        declaring class
+   * @param instance     instance to invoke methods on
+   * @return updated culprit after invocation
+   */
   public Culprit invoke (SleuthRunner sleuthRunner, Culprit culprit, Class<?> clazz, Object instance) {
 
     for (Pair<Method, A> pair : pairList) {
@@ -86,17 +106,27 @@ public class AnnotationMethodology<A extends Annotation> implements Iterable<Pai
     return culprit;
   }
 
+  /**
+   * @return iterator over the registered method/annotation pairs
+   */
   @Override
   public Iterator<Pair<Method, A>> iterator () {
 
     return pairList.iterator();
   }
 
+  /**
+   * Uniquely identifies a method by name and parameter signature.
+   */
   private static class MethodKey {
 
     private final String name;
     private final Class[] parameters;
 
+    /**
+     * @param name       method name
+     * @param parameters parameter types
+     */
     public MethodKey (String name, Class[] parameters) {
 
       this.name = name;
@@ -108,11 +138,17 @@ public class AnnotationMethodology<A extends Annotation> implements Iterable<Pai
       return name;
     }
 
+    /**
+    * @return parameter types associated with the method
+    */
     public Class[] getParameters () {
 
       return parameters;
     }
 
+    /**
+     * @return hash combining method name and parameter types
+     */
     @Override
     public int hashCode () {
 

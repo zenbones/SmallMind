@@ -32,6 +32,9 @@
  */
 package org.smallmind.sleuth.runner;
 
+/**
+ * Execution tiers used to separate suite-level and test-level work.
+ */
 public enum TestTier {
 
   SUITE, TEST

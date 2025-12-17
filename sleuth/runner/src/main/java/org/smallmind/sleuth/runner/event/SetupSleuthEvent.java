@@ -34,19 +34,32 @@ package org.smallmind.sleuth.runner.event;
 
 import org.smallmind.nutsnbolts.util.AnsiColor;
 
+/**
+ * Event emitted when test setup is starting.
+ */
 public class SetupSleuthEvent extends SleuthEvent {
 
+  /**
+   * @param className originating class
+   * @param methodName originating method
+   */
   public SetupSleuthEvent (String className, String methodName) {
 
     super(className, methodName);
   }
 
+  /**
+   * @return {@link SleuthEventType#SETUP}
+   */
   @Override
   public SleuthEventType getType () {
 
     return SleuthEventType.SETUP;
   }
 
+  /**
+   * @return bright magenta to indicate setup
+   */
   @Override
   public AnsiColor getColor () {
 

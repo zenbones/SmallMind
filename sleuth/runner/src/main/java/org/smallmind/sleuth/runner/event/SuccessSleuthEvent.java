@@ -34,19 +34,33 @@ package org.smallmind.sleuth.runner.event;
 
 import org.smallmind.nutsnbolts.util.AnsiColor;
 
+/**
+ * Event emitted when a test completes successfully.
+ */
 public class SuccessSleuthEvent extends TimedSleuthEvent {
 
+  /**
+   * @param className originating class
+   * @param methodName originating method
+   * @param elapsed elapsed execution time in milliseconds
+   */
   public SuccessSleuthEvent (String className, String methodName, long elapsed) {
 
     super(className, methodName, elapsed);
   }
 
+  /**
+   * @return {@link SleuthEventType#SUCCESS}
+   */
   @Override
   public SleuthEventType getType () {
 
     return SleuthEventType.SUCCESS;
   }
 
+  /**
+   * @return bright green to indicate success
+   */
   @Override
   public AnsiColor getColor () {
 

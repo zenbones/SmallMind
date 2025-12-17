@@ -34,6 +34,9 @@ package org.smallmind.sleuth.runner.annotation;
 
 import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
 
+/**
+ * Runtime literal implementation of {@link BeforeTest}.
+ */
 public class BeforeTestLiteral extends AnnotationLiteral<BeforeTest> implements BeforeTest {
 
 }

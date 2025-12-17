@@ -34,10 +34,19 @@ package org.smallmind.sleuth.runner.event;
 
 import org.smallmind.nutsnbolts.util.AnsiColor;
 
+/**
+ * Base class for Sleuth events that include a throwable cause.
+ */
 public abstract class ThrowableSleuthEvent extends TimedSleuthEvent {
 
   private final Throwable throwable;
 
+  /**
+   * @param className originating class
+   * @param methodName originating method
+   * @param elapsed elapsed execution time in milliseconds
+   * @param throwable associated throwable
+   */
   public ThrowableSleuthEvent (String className, String methodName, long elapsed, Throwable throwable) {
 
     super(className, methodName, elapsed);
@@ -45,11 +54,17 @@ public abstract class ThrowableSleuthEvent extends TimedSleuthEvent {
     this.throwable = throwable;
   }
 
+  /**
+   * @return throwable that caused the event
+   */
   public Throwable getThrowable () {
 
     return throwable;
   }
 
+  /**
+   * @return colored string representation including the throwable
+   */
   @Override
   public String toString () {
 

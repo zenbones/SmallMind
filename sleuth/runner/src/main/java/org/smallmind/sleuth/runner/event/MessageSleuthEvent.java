@@ -34,10 +34,19 @@ package org.smallmind.sleuth.runner.event;
 
 import org.smallmind.nutsnbolts.util.AnsiColor;
 
+/**
+ * Base class for events that include a descriptive message.
+ */
 public abstract class MessageSleuthEvent extends TimedSleuthEvent {
 
   private final String message;
 
+  /**
+   * @param className originating class
+   * @param methodName originating method
+   * @param elapsed elapsed execution time in milliseconds
+   * @param message descriptive message
+   */
   public MessageSleuthEvent (String className, String methodName, long elapsed, String message) {
 
     super(className, methodName, elapsed);
@@ -45,11 +54,17 @@ public abstract class MessageSleuthEvent extends TimedSleuthEvent {
     this.message = message;
   }
 
+  /**
+   * @return descriptive message carried by the event
+   */
   public String getMessage () {
 
     return message;
   }
 
+  /**
+   * @return colored string representation including the message payload
+   */
   @Override
   public String toString () {
 

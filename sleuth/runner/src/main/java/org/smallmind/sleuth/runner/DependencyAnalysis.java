@@ -39,17 +39,34 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.TreeMap;
 
+/**
+ * Builds and validates a dependency graph for annotated elements.
+ * <p>
+ * Dependencies are ordered by priority and explicit parent/child relationships and are converted into
+ * a {@link DependencyQueue} suitable for concurrent execution while respecting dependencies.
+ *
+ * @param <A> annotation type describing a dependency
+ * @param <T> payload type represented by the dependency node
+ */
 public class DependencyAnalysis<A extends Annotation, T> {
 
   private final HashMap<String, Dependency<A, T>> dependencyMap = new HashMap<>();
   private final TreeMap<Integer, HashSet<Dependency<A, T>>> priorityMap = new TreeMap<>();
   private final Class<A> annotationClass;
 
+  /**
+   * @param annotationClass annotation type used when reporting dependency errors
+   */
   public DependencyAnalysis (Class<A> annotationClass) {
 
     this.annotationClass = annotationClass;
   }
 
+  /**
+   * Adds a dependency node to the graph, linking children to parents and recording priority.
+   *
+   * @param dependency dependency node to add or merge
+   */
   public void add (Dependency<A, T> dependency) {
 
     Dependency<A, T> mappedDependency;
@@ -79,6 +96,12 @@ public class DependencyAnalysis<A extends Annotation, T> {
     }
   }
 
+  /**
+   * Performs dependency analysis and returns an executable queue.
+   *
+   * @return a queue ordered for execution that respects dependency constraints
+   * @throws TestDependencyException when missing or cyclic dependencies are detected
+   */
   public DependencyQueue<A, T> calculate () {
 
     LinkedList<Dependency<A, T>> calculatedDependencyList = new LinkedList<>();
@@ -125,6 +148,13 @@ public class DependencyAnalysis<A extends Annotation, T> {
     return new DependencyQueue<>(calculatedDependencyList);
   }
 
+  /**
+   * Depth-first traversal used to detect cycles and build a topologically sorted list.
+   *
+   * @param dependency     current node
+   * @param dependencyList ordered dependency list being built
+   * @param completedSet   names of nodes already finalized and removed from the map
+   */
   private void visit (Dependency<A, T> dependency, LinkedList<Dependency<A, T>> dependencyList, HashSet<String> completedSet) {
 
     if (dependency.isTemporary()) {

@@ -34,11 +34,20 @@ package org.smallmind.sleuth.runner;
 
 import java.util.concurrent.Semaphore;
 
+/**
+ * Concurrency gate that limits parallel execution per {@link TestTier}.
+ */
 public class SleuthThreadPool {
 
   private final SleuthRunner sleuthRunner;
   private final Semaphore[] semaphores;
 
+  /**
+   * Creates semaphores for each test tier.
+   *
+   * @param sleuthRunner runner used to check cancellation
+   * @param threadCount  permits allowed per tier
+   */
   public SleuthThreadPool (SleuthRunner sleuthRunner, int threadCount) {
 
     this.sleuthRunner = sleuthRunner;
@@ -50,6 +59,13 @@ public class SleuthThreadPool {
     }
   }
 
+  /**
+   * Attempts to execute a controller in its tier, blocking until a slot is available.
+   *
+   * @param testTier   tier controlling which semaphore to use
+   * @param controller runnable controller to execute
+   * @throws InterruptedException if interrupted while waiting for a permit
+   */
   public void execute (TestTier testTier, TestController controller)
     throws InterruptedException {
 
@@ -68,6 +84,11 @@ public class SleuthThreadPool {
     }
   }
 
+  /**
+   * Releases a permit for the given tier.
+   *
+   * @param testTier tier to release
+   */
   public void release (TestTier testTier) {
 
     semaphores[testTier.ordinal()].release();

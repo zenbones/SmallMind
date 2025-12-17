@@ -34,7 +34,15 @@ package org.smallmind.sleuth.runner.event;
 
 import java.util.EventListener;
 
+/**
+ * Listener for Sleuth events emitted during execution.
+ */
 public interface SleuthEventListener extends EventListener {
 
+  /**
+   * Handles the supplied Sleuth event.
+   *
+   * @param event event to handle
+   */
   void handle (SleuthEvent event);
 }

@@ -34,19 +34,34 @@ package org.smallmind.sleuth.runner.event;
 
 import org.smallmind.nutsnbolts.util.AnsiColor;
 
+/**
+ * Event emitted when an unrecoverable error halts execution.
+ */
 public class FatalSleuthEvent extends ThrowableSleuthEvent {
 
+  /**
+   * @param className originating class
+   * @param methodName originating method
+   * @param elapsed elapsed execution time in milliseconds
+   * @param throwable fatal throwable
+   */
   public FatalSleuthEvent (String className, String methodName, long elapsed, Throwable throwable) {
 
     super(className, methodName, elapsed, throwable);
   }
 
+  /**
+   * @return {@link SleuthEventType#FATAL}
+   */
   @Override
   public SleuthEventType getType () {
 
     return SleuthEventType.FATAL;
   }
 
+  /**
+   * @return bright red to indicate fatality
+   */
   @Override
   public AnsiColor getColor () {
 

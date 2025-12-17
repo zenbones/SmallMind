@@ -34,16 +34,28 @@ package org.smallmind.sleuth.runner.annotation;
 
 import java.util.HashMap;
 
+/**
+ * Applies one or more {@link AnnotationTranslator}s to build {@link AnnotationDictionary} instances for test classes.
+ */
 public class AnnotationProcessor {
 
   private final AnnotationTranslator[] annotationTranslators;
   private final HashMap<Class<?>, AnnotationDictionary> dictionaryMap = new HashMap<>();
 
+  /**
+   * @param annotationTranslators translators that understand different annotation dialects
+   */
   public AnnotationProcessor (AnnotationTranslator... annotationTranslators) {
 
     this.annotationTranslators = annotationTranslators;
   }
 
+  /**
+   * Processes the given class with all translators, caching the resulting dictionary.
+   *
+   * @param clazz class to analyze
+   * @return populated annotation dictionary or {@code null} if no supported annotations are present
+   */
   public synchronized AnnotationDictionary process (Class<?> clazz) {
 
     AnnotationDictionary annotationDictionary;

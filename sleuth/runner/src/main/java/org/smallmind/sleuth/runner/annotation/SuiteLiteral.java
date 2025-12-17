@@ -34,6 +34,9 @@ package org.smallmind.sleuth.runner.annotation;
 
 import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
 
+/**
+ * Runtime literal implementation of {@link Suite}.
+ */
 public class SuiteLiteral extends AnnotationLiteral<Suite> implements Suite {
 
   private final String[] dependsOn;
@@ -42,6 +45,9 @@ public class SuiteLiteral extends AnnotationLiteral<Suite> implements Suite {
   private String[] executeAfter;
   private String[] groups;
 
+  /**
+   * Constructs a default enabled suite with no dependencies.
+   */
   public SuiteLiteral () {
 
     priority = 0;
@@ -49,6 +55,13 @@ public class SuiteLiteral extends AnnotationLiteral<Suite> implements Suite {
     enabled = true;
   }
 
+  /**
+   * @param groups       groups the suite belongs to
+   * @param priority     execution priority
+   * @param executeAfter suites to execute after (soft requirement)
+   * @param dependsOn    suites this suite depends on
+   * @param enabled      whether the suite should run
+   */
   public SuiteLiteral (String[] groups, int priority, String[] executeAfter, String[] dependsOn, boolean enabled) {
 
     this.groups = groups;
@@ -58,30 +71,45 @@ public class SuiteLiteral extends AnnotationLiteral<Suite> implements Suite {
     this.enabled = enabled;
   }
 
+  /**
+   * @return configured group names
+   */
   @Override
   public String[] groups () {
 
     return groups;
   }
 
+  /**
+   * @return priority value used for ordering
+   */
   @Override
   public int priority () {
 
     return priority;
   }
 
+  /**
+   * @return suite names that must complete before this one
+   */
   @Override
   public String[] executeAfter () {
 
     return executeAfter;
   }
 
+  /**
+   * @return suite names that must succeed before this one
+   */
   @Override
   public String[] dependsOn () {
 
     return dependsOn;
   }
 
+  /**
+   * @return whether the suite is enabled
+   */
   @Override
   public boolean enabled () {
 

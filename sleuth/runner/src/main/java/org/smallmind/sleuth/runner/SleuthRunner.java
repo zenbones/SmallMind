@@ -46,21 +46,41 @@ import org.smallmind.sleuth.runner.event.FatalSleuthEvent;
 import org.smallmind.sleuth.runner.event.SleuthEvent;
 import org.smallmind.sleuth.runner.event.SleuthEventListener;
 
+/**
+ * Coordinates discovery and execution of Sleuth test suites and methods.
+ * <p>
+ * The runner manages event listeners, cancellation, and orchestrates suite/test execution across a thread pool.
+ */
 public class SleuthRunner {
 
   private final LinkedList<SleuthEventListener> eventListenerList = new LinkedList<>();
   private final AtomicBoolean cancelled = new AtomicBoolean(false);
 
+  /**
+   * Registers a listener to receive Sleuth events.
+   *
+   * @param listener listener to add
+   */
   public void addListener (SleuthEventListener listener) {
 
     eventListenerList.add(listener);
   }
 
+  /**
+   * Removes a previously registered listener.
+   *
+   * @param listener listener to remove
+   */
   public void removeListener (SleuthEventListener listener) {
 
     eventListenerList.remove(listener);
   }
 
+  /**
+   * Fires an event to all registered listeners.
+   *
+   * @param sleuthEvent event to dispatch
+   */
   public void fire (SleuthEvent sleuthEvent) {
 
     for (SleuthEventListener listener : eventListenerList) {
@@ -68,21 +88,45 @@ public class SleuthRunner {
     }
   }
 
+  /**
+   * Requests cancellation of the currently running test run.
+   */
   public void cancel () {
 
     cancelled.set(true);
   }
 
+  /**
+   * @return {@code true} while execution has not been cancelled
+   */
   public boolean isRunning () {
 
     return !cancelled.get();
   }
 
+  /**
+   * Executes the supplied classes as test suites.
+   *
+   * @param groups       optional list of groups to include; {@code null} runs suites honoring annotation defaults, empty array means all
+   * @param threadCount  number of threads to permit; values <= 0 map to unbounded
+   * @param stopOnError  whether to halt on unexpected errors
+   * @param stopOnFailure whether to halt on assertion failures
+   * @param classes      classes to execute
+   */
   public void execute (String[] groups, int threadCount, boolean stopOnError, boolean stopOnFailure, Class<?>... classes) {
 
     execute(groups, threadCount, stopOnError, stopOnFailure, Arrays.asList(classes));
   }
 
+  /**
+   * Executes the supplied iterable of suite classes.
+   *
+   * @param groups        optional list of groups to include; {@code null} uses defaults, empty array means all
+   * @param threadCount   number of threads to permit; values <= 0 map to unbounded
+   * @param stopOnError   whether to halt on unexpected errors
+   * @param stopOnFailure whether to halt on assertion failures
+   * @param classIterable classes to execute
+   */
   public void execute (String[] groups, int threadCount, boolean stopOnError, boolean stopOnFailure, Iterable<Class<?>> classIterable) {
 
     if (classIterable != null) {
@@ -128,6 +172,13 @@ public class SleuthRunner {
     }
   }
 
+  /**
+   * Checks whether any of our configured groups intersect with the requested set.
+   *
+   * @param ours   groups defined on the suite or test
+   * @param theirs requested groups from the command line/configuration
+   * @return {@code true} if execution should proceed
+   */
   private boolean inGroups (String[] ours, String[] theirs) {
 
     if ((theirs == null) || (theirs.length == 0)) {
