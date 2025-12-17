@@ -34,22 +34,41 @@ package org.smallmind.scribe.pen;
 
 import java.io.Serializable;
 
+/**
+ * Immutable key/value pair used to carry contextual logging data.
+ */
 public class Parameter implements Serializable {
 
   private final String key;
   private final Serializable value;
 
+  /**
+   * Creates a parameter instance.
+   *
+   * @param key   parameter name
+   * @param value value to associate
+   */
   public Parameter (String key, Serializable value) {
 
     this.key = key;
     this.value = value;
   }
 
+  /**
+   * Returns the parameter key.
+   *
+   * @return key
+   */
   public String getKey () {
 
     return key;
   }
 
+  /**
+   * Returns the parameter value.
+   *
+   * @return value
+   */
   public Serializable getValue () {
 
     return value;

@@ -32,18 +32,33 @@
  */
 package org.smallmind.scribe.pen;
 
+/**
+ * Base record implementation that carries contextual parameters.
+ *
+ * @param <N> native record type
+ */
 public abstract class ParameterAwareRecord<N> implements Record<N> {
 
   private static final Parameter[] NO_PARAMETERS = new Parameter[0];
 
   private Parameter[] parameters;
 
+  /**
+   * Returns the contextual parameters associated with this record.
+   *
+   * @return parameters or an empty array if none
+   */
   @Override
   public Parameter[] getParameters () {
 
     return (parameters == null) ? NO_PARAMETERS : parameters;
   }
 
+  /**
+   * Sets the contextual parameters associated with this record.
+   *
+   * @param parameters parameters to attach
+   */
   public void setParameters (Parameter... parameters) {
 
     this.parameters = parameters;

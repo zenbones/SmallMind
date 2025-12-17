@@ -34,7 +34,16 @@ package org.smallmind.scribe.pen;
 
 import java.util.Date;
 
+/**
+ * Converts a {@link Date} into a timestamp string for log output.
+ */
 public interface Timestamp {
 
+  /**
+   * Formats the supplied date.
+   *
+   * @param date date to format
+   * @return timestamp string
+   */
   String getTimestamp (Date date);
 }

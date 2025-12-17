@@ -34,8 +34,17 @@ package org.smallmind.scribe.pen;
 
 import java.util.Date;
 
+/**
+ * Timestamp implementation that always returns an empty string.
+ */
 public class NullTimestamp implements Timestamp {
 
+  /**
+   * Returns an empty string for any date.
+   *
+   * @param date ignored
+   * @return empty string
+   */
   public String getTimestamp (Date date) {
 
     return "";

@@ -35,8 +35,18 @@ package org.smallmind.scribe.ink.log4j;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.scribe.pen.Level;
 
+/**
+ * Utility for translating between scribe {@link Level} values and Log4j2 {@link org.apache.logging.log4j.Level}.
+ */
 public class Log4JLevelTranslator {
 
+  /**
+   * Converts a Log4j2 level into the corresponding scribe level.
+   *
+   * @param level Log4j2 level value
+   * @return the matching scribe level, or {@code null} if none provided
+   * @throws UnknownSwitchCaseException if the level is not recognized
+   */
   public static Level getLevel (org.apache.logging.log4j.Level level) {
 
     if (level == null) {
@@ -60,6 +70,13 @@ public class Log4JLevelTranslator {
     }
   }
 
+  /**
+   * Converts a scribe level into the corresponding Log4j2 level.
+   *
+   * @param level scribe level value
+   * @return the matching Log4j2 level
+   * @throws UnknownSwitchCaseException if the level is not recognized
+   */
   public static org.apache.logging.log4j.Level getLog4JLevel (Level level) {
 
     switch (level) {

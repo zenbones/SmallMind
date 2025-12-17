@@ -35,8 +35,19 @@ package org.smallmind.scribe.pen;
 import java.util.Arrays;
 import java.util.IllegalFormatException;
 
+/**
+ * Utility for formatting messages with defensive error handling.
+ */
 public class MessageTranslator {
 
+  /**
+   * Formats a message with optional arguments using {@link String#format(String, Object...)}.
+   *
+   * @param message message template (may be {@code null})
+   * @param args    optional substitution arguments
+   * @return formatted message, or {@code null} when the template is {@code null} and no args are provided
+   * @throws MessageFormattingException when formatting fails or args are supplied for a null template
+   */
   public static String translateMessage (String message, Object... args) {
 
     if (message == null) {

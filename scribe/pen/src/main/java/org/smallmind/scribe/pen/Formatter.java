@@ -32,8 +32,18 @@
  */
 package org.smallmind.scribe.pen;
 
+/**
+ * Formats a record into a string representation.
+ */
 public interface Formatter {
 
+  /**
+   * Formats the supplied record.
+   *
+   * @param record record to format
+   * @return formatted representation
+   * @throws Exception if formatting fails
+   */
   String format (Record<?> record)
     throws Exception;
 }

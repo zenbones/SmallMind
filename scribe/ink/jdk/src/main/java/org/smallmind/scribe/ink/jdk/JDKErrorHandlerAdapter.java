@@ -37,20 +37,41 @@ import org.smallmind.scribe.pen.ErrorHandler;
 import org.smallmind.scribe.pen.MessageTranslator;
 import org.smallmind.scribe.pen.Record;
 
+/**
+ * Adapts a JUL {@link ErrorManager} to the scribe {@link ErrorHandler} contract.
+ */
 public class JDKErrorHandlerAdapter implements ErrorHandler {
 
   private final ErrorManager errorManager;
 
+  /**
+   * Creates an adapter around the provided JUL error manager.
+   *
+   * @param errorManager native error manager
+   */
   public JDKErrorHandlerAdapter (ErrorManager errorManager) {
 
     this.errorManager = errorManager;
   }
 
+  /**
+   * Returns the wrapped JUL error manager.
+   *
+   * @return the native error manager
+   */
   public ErrorManager getNativeErrorManager () {
 
     return errorManager;
   }
 
+  /**
+   * Handles an error originating from a logger.
+   *
+   * @param loggerName   name of the logger that produced the error
+   * @param throwable    throwable to report
+   * @param errorMessage message template describing the error
+   * @param args         arguments applied to the message template
+   */
   @Override
   public void process (String loggerName, Throwable throwable, String errorMessage, Object... args) {
 
@@ -61,6 +82,14 @@ public class JDKErrorHandlerAdapter implements ErrorHandler {
     }
   }
 
+  /**
+   * Handles an error originating from a record, delegating to the logger-based handler.
+   *
+   * @param record       record that triggered the error handling
+   * @param throwable    throwable to report
+   * @param errorMessage message template describing the error
+   * @param args         arguments applied to the message template
+   */
   @Override
   public void process (Record<?> record, Throwable throwable, String errorMessage, Object... args) {
 

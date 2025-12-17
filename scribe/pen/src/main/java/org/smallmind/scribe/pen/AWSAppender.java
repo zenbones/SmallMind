@@ -43,6 +43,10 @@ import software.amazon.awssdk.services.cloudwatchlogs.model.PutLogEventsRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.PutLogEventsResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.RejectedLogEventsInfo;
 
+/**
+ * Appender that publishes formatted records to AWS CloudWatch Logs.
+ * This appender must be singleton per JVM per stream because sequence tokens are serialized.
+ */
 public class AWSAppender extends AbstractAppender {
 
   private final CloudWatchLogsClient client;
@@ -51,6 +55,15 @@ public class AWSAppender extends AbstractAppender {
   private final String streamName;
   private String sequenceToken;
 
+  /**
+   * Creates an AWS CloudWatch Logs appender.
+   *
+   * @param formatter    formatter to render records
+   * @param errorHandler handler to use on failures
+   * @param client       CloudWatch Logs client
+   * @param groupName    log group name
+   * @param streamName   log stream name (auto-generated if {@code null})
+   */
   public AWSAppender (Formatter formatter, ErrorHandler errorHandler, CloudWatchLogsClient client, String groupName, String streamName) {
 
     super(errorHandler);
@@ -76,9 +89,15 @@ public class AWSAppender extends AbstractAppender {
     }
   }
 
+  /**
+   * Formats and submits a record to AWS CloudWatch Logs. Invocation is synchronized to
+   * maintain sequence token ordering required by the service. This appender must be a singleton
+   * per JVM instance and the {@code streamName} must be unique so that sequence tokens remain serialized.
+   *
+   * @param record log record to publish
+   * @throws Exception if formatting fails or the CloudWatch Logs API returns an error
+   */
   @Override
-  // We must synchronize in order to serialize the sequence token, which also means this Appender must be a *singleton*
-  // and the streamName must be unique to this JVM instance.
   public synchronized void handleOutput (Record<?> record)
     throws Exception {
 

@@ -32,17 +32,28 @@
  */
 package org.smallmind.scribe.pen;
 
+/**
+ * Units used by {@link FileSizeRolloverRule} to express size thresholds.
+ */
 public enum FileSizeQuantifier {
 
   BYTES(1), MEGABYTES(1048576);
 
   private final int multiplier;
 
+  /**
+   * @param multiplier number of bytes represented by this unit
+   */
   FileSizeQuantifier (int multiplier) {
 
     this.multiplier = multiplier;
   }
 
+  /**
+   * Returns the multiplier in bytes.
+   *
+   * @return byte multiplier
+   */
   public int getMultiplier () {
 
     return multiplier;

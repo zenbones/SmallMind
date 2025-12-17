@@ -34,7 +34,17 @@ package org.smallmind.scribe.pen.adapter;
 
 import org.smallmind.scribe.pen.Record;
 
+/**
+ * Marker interface for native backend records that carry a scribe {@link Record} view.
+ *
+ * @param <N> native record type
+ */
 public interface RecordWrapper<N> {
 
+  /**
+   * Returns the scribe record view.
+   *
+   * @return wrapped record
+   */
   Record<N> getRecord ();
 }

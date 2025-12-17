@@ -38,65 +38,117 @@ import org.apache.logging.log4j.core.LogEvent;
 import org.smallmind.scribe.pen.Appender;
 import org.smallmind.scribe.pen.adapter.RecordWrapper;
 
+/**
+ * Wraps a scribe {@link Appender} as a Log4j2 {@link org.apache.logging.log4j.core.Appender}.
+ */
 public class Log4JAppenderWrapper implements org.apache.logging.log4j.core.Appender {
 
   private final Appender appender;
 
+  /**
+   * Creates a wrapper that delegates Log4j2 appender calls to the provided scribe appender.
+   *
+   * @param appender appender to wrap
+   */
   public Log4JAppenderWrapper (Appender appender) {
 
     this.appender = appender;
   }
 
+  /**
+   * Returns the wrapped scribe appender.
+   *
+   * @return the underlying appender
+   */
   protected Appender getInnerAppender () {
 
     return appender;
   }
 
+  /**
+   * Returns the name of the wrapped appender.
+   *
+   * @return appender name
+   */
   @Override
   public String getName () {
 
     return appender.getName();
   }
 
+  /**
+   * Indicates whether the adapter ignores exceptions (it does not).
+   *
+   * @return {@code false} to let exceptions propagate
+   */
   @Override
   public boolean ignoreExceptions () {
 
     return false;
   }
 
+  /**
+   * Returns a started state since the wrapped appender is managed externally.
+   *
+   * @return {@link State#STARTED}
+   */
   @Override
   public State getState () {
 
     return State.STARTED;
   }
 
+  /**
+   * No-op initialization.
+   */
   @Override
   public void initialize () {
 
   }
 
+  /**
+   * No-op start; lifecycle is managed by the wrapped appender.
+   */
   @Override
   public void start () {
 
   }
 
+  /**
+   * No-op stop; lifecycle is managed by the wrapped appender.
+   */
   @Override
   public void stop () {
 
   }
 
+  /**
+   * Indicates that this adapter is considered started.
+   *
+   * @return {@code true}
+   */
   @Override
   public boolean isStarted () {
 
     return true;
   }
 
+  /**
+   * Indicates that this adapter is never considered stopped.
+   *
+   * @return {@code false}
+   */
   @Override
   public boolean isStopped () {
 
     return false;
   }
 
+  /**
+   * Publishes a log event to the wrapped appender when active.
+   *
+   * @param logEvent native Log4j2 event carrying the scribe record wrapper
+   */
   @Override
   public void append (LogEvent logEvent) {
 
@@ -105,30 +157,58 @@ public class Log4JAppenderWrapper implements org.apache.logging.log4j.core.Appen
     }
   }
 
+  /**
+   * Unsupported in this adapter; handlers are set on the wrapped appender.
+   *
+   * @return never returns normally
+   * @throws UnsupportedOperationException always thrown
+   */
   @Override
   public ErrorHandler getHandler () {
 
     throw new UnsupportedOperationException("Unsupported native Log4J method");
   }
 
+  /**
+   * Installs a Log4j2 error handler by wrapping it in a scribe adapter.
+   *
+   * @param errorHandler Log4j2 error handler to use
+   */
   @Override
   public void setHandler (ErrorHandler errorHandler) {
 
     appender.setErrorHandler(new Log4JErrorHandlerAdapter(errorHandler));
   }
 
+  /**
+   * Unsupported in this adapter; layout is configured on the wrapped appender.
+   *
+   * @return never returns normally
+   * @throws UnsupportedOperationException always thrown
+   */
   @Override
   public Layout<?> getLayout () {
 
     throw new UnsupportedOperationException("Unsupported native Log4J method");
   }
 
+  /**
+   * Computes the hash code based on the wrapped appender.
+   *
+   * @return hash code
+   */
   @Override
   public int hashCode () {
 
     return appender.hashCode();
   }
 
+  /**
+   * Compares this wrapper to another object based on the underlying appender.
+   *
+   * @param obj object to compare against
+   * @return {@code true} if the wrapped appenders are equal
+   */
   @Override
   public boolean equals (Object obj) {
 

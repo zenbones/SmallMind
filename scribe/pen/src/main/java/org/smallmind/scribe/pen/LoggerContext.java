@@ -34,19 +34,55 @@ package org.smallmind.scribe.pen;
 
 import java.io.Serializable;
 
+/**
+ * Captures source-context information for a logging event.
+ */
 public interface LoggerContext extends Serializable {
 
+  /**
+   * Indicates whether the context fields have been populated.
+   *
+   * @return {@code true} if filled
+   */
   boolean isFilled ();
 
+  /**
+   * Populates the context fields, typically by inspecting the call stack.
+   */
   void fillIn ();
 
+  /**
+   * Returns the class name where logging originated.
+   *
+   * @return class name or {@code null}
+   */
   String getClassName ();
 
+  /**
+   * Returns the method name where logging originated.
+   *
+   * @return method name or {@code null}
+   */
   String getMethodName ();
 
+  /**
+   * Returns the file name where logging originated.
+   *
+   * @return file name or {@code null}
+   */
   String getFileName ();
 
+  /**
+   * Indicates whether the call originated from a native method.
+   *
+   * @return {@code true} if native
+   */
   boolean isNativeMethod ();
 
+  /**
+   * Returns the source line number where logging originated.
+   *
+   * @return line number, or -1 if unknown
+   */
   int getLineNumber ();
 }

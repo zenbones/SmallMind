@@ -36,6 +36,10 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
+/**
+ * Configurable template describing how loggers should behave (level, context, filters, appenders, enhancers).
+ * Implementations decide which loggers they match and can be registered with {@link LoggerManager}.
+ */
 public abstract class Template {
 
   public enum Change {
@@ -52,6 +56,9 @@ public abstract class Template {
   private boolean autoFillLoggerContext = false;
   private boolean registered = false;
 
+  /**
+   * Constructs an empty template with default INFO level and no context auto-fill.
+   */
   public Template () {
 
     filterList = new LinkedList<>();
@@ -59,6 +66,12 @@ public abstract class Template {
     enhancerList = new LinkedList<>();
   }
 
+  /**
+   * Constructs a template with level and context auto-fill options.
+   *
+   * @param level                 default level
+   * @param autoFillLoggerContext {@code true} to automatically capture context
+   */
   public Template (Level level, boolean autoFillLoggerContext) {
 
     this();
@@ -67,6 +80,13 @@ public abstract class Template {
     this.autoFillLoggerContext = autoFillLoggerContext;
   }
 
+  /**
+   * Constructs a template with level, context auto-fill, and initial appenders.
+   *
+   * @param level                 default level
+   * @param autoFillLoggerContext {@code true} to automatically capture context
+   * @param appenders             appenders to attach
+   */
   public Template (Level level, boolean autoFillLoggerContext, Appender... appenders) {
 
     this();
@@ -79,6 +99,15 @@ public abstract class Template {
     }
   }
 
+  /**
+   * Constructs a template with full component lists and level/context options.
+   *
+   * @param filters               filters to apply
+   * @param appenders             appenders to attach
+   * @param enhancers             enhancers to run
+   * @param level                 default level
+   * @param autoFillLoggerContext {@code true} to automatically capture context
+   */
   public Template (Filter[] filters, Appender[] appenders, Enhancer[] enhancers, Level level, boolean autoFillLoggerContext) {
 
     this();
@@ -97,19 +126,39 @@ public abstract class Template {
     this.autoFillLoggerContext = autoFillLoggerContext;
   }
 
+  /**
+   * Calculates a match score for a logger name. Higher values indicate better matches; {@link #NO_MATCH} means no match.
+   *
+   * @param loggerName logger name under consideration
+   * @return integer priority or {@link #NO_MATCH}
+   */
   public abstract int matchLogger (String loggerName);
 
+  /**
+   * Registers this template with {@link LoggerManager}, applying it to matching loggers and enabling change propagation.
+   */
   public synchronized void register () {
 
     LoggerManager.addTemplate(this);
     registered = true;
   }
 
+  /**
+   * Returns the default level for loggers matched by this template.
+   *
+   * @return default level
+   */
   public synchronized Level getLevel () {
 
     return level;
   }
 
+  /**
+   * Sets the default level for loggers matched by this template and propagates the change when registered.
+   *
+   * @param level default level; must not be {@code null}
+   * @throws IllegalArgumentException if level is {@code null}
+   */
   public synchronized void setLevel (Level level) {
 
     if (level == null) {
@@ -123,11 +172,21 @@ public abstract class Template {
     }
   }
 
+  /**
+   * Indicates whether logger context should be auto-filled for matched loggers.
+   *
+   * @return {@code true} when context auto-fill is enabled
+   */
   public synchronized boolean isAutoFillLoggerContext () {
 
     return autoFillLoggerContext;
   }
 
+  /**
+   * Enables or disables automatic context population for matched loggers, propagating the change when registered.
+   *
+   * @param autoFillLoggerContext {@code true} to capture context data automatically
+   */
   public synchronized void setAutoFillLoggerContext (boolean autoFillLoggerContext) {
 
     this.autoFillLoggerContext = autoFillLoggerContext;
@@ -137,11 +196,21 @@ public abstract class Template {
     }
   }
 
+  /**
+   * Convenience setter for a single filter.
+   *
+   * @param filter filter to install
+   */
   public void setFilter (Filter filter) {
 
     setFilters(new Filter[] {filter});
   }
 
+  /**
+   * Returns the configured filters.
+   *
+   * @return array of filters
+   */
   public synchronized Filter[] getFilters () {
 
     Filter[] filters;
@@ -152,6 +221,11 @@ public abstract class Template {
     return filters;
   }
 
+  /**
+   * Replaces all filters and propagates the change when registered.
+   *
+   * @param filters filters to install
+   */
   public synchronized void setFilters (Filter[] filters) {
 
     filterList.clear();
@@ -162,6 +236,11 @@ public abstract class Template {
     }
   }
 
+  /**
+   * Adds a single filter and propagates the change when registered.
+   *
+   * @param filter filter to add
+   */
   public synchronized void addFilter (Filter filter) {
 
     filterList.add(filter);
@@ -171,6 +250,11 @@ public abstract class Template {
     }
   }
 
+  /**
+   * Removes a filter and propagates the change when registered.
+   *
+   * @param filter filter to remove
+   */
   public synchronized void removeFilter (Filter filter) {
 
     if (filterList.remove(filter) && registered) {
@@ -178,11 +262,21 @@ public abstract class Template {
     }
   }
 
+  /**
+   * Convenience setter for a single appender.
+   *
+   * @param appender appender to install
+   */
   public void setAppender (Appender appender) {
 
     setAppenders(new Appender[] {appender});
   }
 
+  /**
+   * Returns the configured appenders.
+   *
+   * @return array of appenders
+   */
   public synchronized Appender[] getAppenders () {
 
     Appender[] appenders;
@@ -193,6 +287,11 @@ public abstract class Template {
     return appenders;
   }
 
+  /**
+   * Replaces all appenders and propagates the change when registered.
+   *
+   * @param appenders appenders to install
+   */
   public synchronized void setAppenders (Appender[] appenders) {
 
     appenderList.clear();
@@ -203,6 +302,11 @@ public abstract class Template {
     }
   }
 
+  /**
+   * Adds an appender and propagates the change when registered.
+   *
+   * @param appender appender to add
+   */
   public synchronized void addAppender (Appender appender) {
 
     appenderList.add(appender);
@@ -212,6 +316,11 @@ public abstract class Template {
     }
   }
 
+  /**
+   * Removes an appender and propagates the change when registered.
+   *
+   * @param appender appender to remove
+   */
   public synchronized void removeAppender (Appender appender) {
 
     if (appenderList.remove(appender) && registered) {
@@ -219,11 +328,21 @@ public abstract class Template {
     }
   }
 
+  /**
+   * Convenience setter for a single enhancer.
+   *
+   * @param enhancer enhancer to install
+   */
   public void setEnhancer (Enhancer enhancer) {
 
     setEnhancers(new Enhancer[] {enhancer});
   }
 
+  /**
+   * Returns the configured enhancers.
+   *
+   * @return array of enhancers
+   */
   public synchronized Enhancer[] getEnhancers () {
 
     Enhancer[] enhancers;
@@ -234,6 +353,11 @@ public abstract class Template {
     return enhancers;
   }
 
+  /**
+   * Replaces all enhancers and propagates the change when registered.
+   *
+   * @param enhancers enhancers to install
+   */
   public synchronized void setEnhancers (Enhancer[] enhancers) {
 
     enhancerList.clear();
@@ -244,6 +368,11 @@ public abstract class Template {
     }
   }
 
+  /**
+   * Adds an enhancer and propagates the change when registered.
+   *
+   * @param enhancer enhancer to add
+   */
   public synchronized void addEnhancer (Enhancer enhancer) {
 
     enhancerList.add(enhancer);
@@ -253,6 +382,11 @@ public abstract class Template {
     }
   }
 
+  /**
+   * Removes an enhancer and propagates the change when registered.
+   *
+   * @param enhancer enhancer to remove
+   */
   public synchronized void removeEnhancer (Enhancer enhancer) {
 
     if (enhancerList.remove(enhancer) && registered) {
@@ -260,6 +394,11 @@ public abstract class Template {
     }
   }
 
+  /**
+   * Applies all template settings to the provided logger.
+   *
+   * @param logger logger to configure
+   */
   protected synchronized void apply (Logger logger) {
 
     for (Change change : Change.values()) {
@@ -267,6 +406,12 @@ public abstract class Template {
     }
   }
 
+  /**
+   * Applies a single template change to the provided logger.
+   *
+   * @param change change to apply
+   * @param logger logger to configure
+   */
   protected synchronized void applyChange (Change change, Logger logger) {
 
     switch (change) {

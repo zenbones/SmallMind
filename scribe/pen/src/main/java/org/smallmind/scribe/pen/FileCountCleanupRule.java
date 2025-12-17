@@ -39,36 +39,61 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 
+/**
+ * Cleanup rule that enforces a maximum number of rollover files by deleting the oldest.
+ */
 public class FileCountCleanupRule implements CleanupRule<FileCountCleanupRule> {
 
   private final LinkedList<Path> pathList = new LinkedList<>();
   private int maximum;
 
-  public FileCountCleanupRule () {
-
-  }
-
+  /**
+   * Creates a rule that retains up to {@code maximum} files.
+   *
+   * @param maximum maximum files to retain
+   */
   public FileCountCleanupRule (int maximum) {
 
     this.maximum = maximum;
   }
 
+  /**
+   * Retrieves the maximum number of rollover files to retain.
+   *
+   * @return configured retention count
+   */
   public int getMaximum () {
 
     return maximum;
   }
 
+  /**
+   * Sets the maximum number of files to retain.
+   *
+   * @param maximum retain threshold
+   */
   public void setMaximum (int maximum) {
 
     this.maximum = maximum;
   }
 
+  /**
+   * Produces a copy of this rule with the same maximum retention.
+   *
+   * @return duplicated rule
+   */
   @Override
   public FileCountCleanupRule copy () {
 
     return new FileCountCleanupRule(maximum);
   }
 
+  /**
+   * Collects potential paths for later evaluation; never deletes during iteration.
+   *
+   * @param possiblePath candidate rollover file
+   * @return always {@code false} so cleanup occurs during {@link #finish()}
+   */
   @Override
   public boolean willCleanup (Path possiblePath) {
 
@@ -77,6 +102,11 @@ public class FileCountCleanupRule implements CleanupRule<FileCountCleanupRule> {
     return false;
   }
 
+  /**
+   * Deletes the oldest files until the retained count is within the maximum.
+   *
+   * @throws IOException if deletion fails or modification times cannot be read
+   */
   @Override
   public void finish ()
     throws IOException {
@@ -97,22 +127,43 @@ public class FileCountCleanupRule implements CleanupRule<FileCountCleanupRule> {
     }
   }
 
-  private class ModificationTimeComparator implements Comparator<Path> {
+  /**
+   * Comparator that orders files by last modified time.
+   */
+  private static class ModificationTimeComparator implements Comparator<Path> {
 
     private final HashMap<Path, Long> timeMap = new HashMap<>();
     private IOException ioException;
 
+    /**
+     * Returns any I/O exception encountered while reading modification times.
+     *
+     * @return stored exception or {@code null} if none
+     */
     public IOException getIoException () {
 
       return ioException;
     }
 
+    /**
+     * Orders paths by last modified time to identify oldest files.
+     *
+     * @param path1 first path
+     * @param path2 second path
+     * @return comparison of modification times
+     */
     @Override
     public int compare (Path path1, Path path2) {
 
       return getModificationTime(path1).compareTo(getModificationTime(path2));
     }
 
+    /**
+     * Returns the cached or computed last modified time for the path.
+     *
+     * @param path path to inspect
+     * @return modification time in milliseconds
+     */
     private Long getModificationTime (Path path) {
 
       Long time;

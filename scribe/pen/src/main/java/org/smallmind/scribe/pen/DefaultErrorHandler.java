@@ -34,31 +34,63 @@ package org.smallmind.scribe.pen;
 
 import org.smallmind.scribe.pen.adapter.LoggingBlueprintFactory;
 
+/**
+ * Default {@link ErrorHandler} that writes errors through a backup appender (console/XML by default).
+ */
 public class DefaultErrorHandler implements ErrorHandler {
 
   private Appender appender;
 
+  /**
+   * Creates a handler that logs errors to console using {@link XMLFormatter}.
+   */
   public DefaultErrorHandler () {
 
     appender = new ConsoleAppender(new XMLFormatter());
   }
 
+  /**
+   * Creates a handler that logs errors to the provided backup appender.
+   *
+   * @param appender backup appender to use
+   */
   public DefaultErrorHandler (Appender appender) {
 
     this.appender = appender;
   }
 
+  /**
+   * Sets the backup appender used for error reporting.
+   *
+   * @param appender backup appender
+   */
   public void setBackupAppender (Appender appender) {
 
     this.appender = appender;
   }
 
+  /**
+   * Logs an error using the backup appender by creating a new record from the given details.
+   *
+   * @param loggerName   name of the logger that failed
+   * @param throwable    exception encountered, may be {@code null}
+   * @param errorMessage error message template
+   * @param args         optional template arguments
+   */
   @Override
   public void process (String loggerName, Throwable throwable, String errorMessage, Object... args) {
 
     appender.publish(LoggingBlueprintFactory.getLoggingBlueprint().errorRecord(loggerName, throwable, errorMessage, args));
   }
 
+  /**
+   * Logs an error related to an existing record and republishes that record via the backup appender.
+   *
+   * @param record       the record associated with the failure
+   * @param throwable    exception encountered, may be {@code null}
+   * @param errorMessage error message template
+   * @param args         optional template arguments
+   */
   @Override
   public void process (Record<?> record, Throwable throwable, String errorMessage, Object... args) {
 

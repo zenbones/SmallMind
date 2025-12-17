@@ -32,24 +32,46 @@
  */
 package org.smallmind.scribe.pen;
 
+/**
+ * Filter that permits records at or above a configured level.
+ */
 public class LevelFilter implements Filter {
 
   private Level level = Level.TRACE;
 
+  /**
+   * Creates a filter with the lowest threshold (TRACE).
+   */
   public LevelFilter () {
 
   }
 
+  /**
+   * Creates a filter with the specified threshold.
+   *
+   * @param level minimum level to allow
+   */
   public LevelFilter (Level level) {
 
     this.level = level;
   }
 
+  /**
+   * Sets the minimum level to allow.
+   *
+   * @param level threshold level
+   */
   public void setLevel (Level level) {
 
     this.level = level;
   }
 
+  /**
+   * Evaluates whether the record meets the configured level threshold.
+   *
+   * @param record record to evaluate
+   * @return {@code true} if the record's level is at least the threshold
+   */
   public boolean willLog (Record<?> record) {
 
     return record.getLevel().atLeast(level);

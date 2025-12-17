@@ -34,23 +34,47 @@ package org.smallmind.scribe.pen;
 
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
+/**
+ * Checked exception representing failures within the logging subsystem.
+ */
 public class LoggerException extends FormattedException {
 
+  /**
+   * Creates an exception without message or cause.
+   */
   public LoggerException () {
 
     super();
   }
 
+  /**
+   * Creates an exception with a formatted message.
+   *
+   * @param message message template
+   * @param args    message arguments
+   */
   public LoggerException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * Creates an exception with a cause and formatted message.
+   *
+   * @param throwable cause of the failure
+   * @param message   message template
+   * @param args      message arguments
+   */
   public LoggerException (Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);
   }
 
+  /**
+   * Creates an exception with only a cause.
+   *
+   * @param exception underlying exception
+   */
   public LoggerException (Throwable exception) {
 
     super(exception);

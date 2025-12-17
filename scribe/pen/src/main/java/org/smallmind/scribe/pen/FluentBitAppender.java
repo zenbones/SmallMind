@@ -48,6 +48,9 @@ import org.msgpack.jackson.dataformat.MessagePackFactory;
 import org.smallmind.nutsnbolts.http.Base64Codec;
 import org.springframework.beans.factory.InitializingBean;
 
+/**
+ * Appender that batches records and ships them to Fluent Bit over TCP using MessagePack.
+ */
 public class FluentBitAppender extends AbstractAppender implements InitializingBean {
 
   private final AtomicBoolean closed = new AtomicBoolean(false);
@@ -66,66 +69,130 @@ public class FluentBitAppender extends AbstractAppender implements InitializingB
   private int concurrencyLimit = 1;
   private int batchSize = 1;
 
+  /**
+   * Creates an appender with the given name.
+   *
+   * @param name logger/appender name
+   */
   public FluentBitAppender (String name) {
 
     this(name, null);
   }
 
+  /**
+   * Creates an appender with a name and error handler.
+   *
+   * @param name         logger/appender name
+   * @param errorHandler error handler to use
+   */
   public FluentBitAppender (String name, ErrorHandler errorHandler) {
 
     super(name, errorHandler);
   }
 
+  /**
+   * Sets the Fluent Bit host to connect to.
+   *
+   * @param host target host name or address
+   */
   public void setHost (String host) {
 
     this.host = host;
   }
 
+  /**
+   * Sets the Fluent Bit TCP port.
+   *
+   * @param port target port
+   */
   public void setPort (int port) {
 
     this.port = port;
   }
 
+  /**
+   * Configures the timestamp provider for serialized events.
+   *
+   * @param timestamp timestamp implementation
+   */
   public void setTimestamp (Timestamp timestamp) {
 
     this.timestamp = timestamp;
   }
 
+  /**
+   * Chooses which record elements to include in serialized messages.
+   *
+   * @param recordElements record fields to emit
+   */
   public void setRecordElements (RecordElement[] recordElements) {
 
     this.recordElements = recordElements;
   }
 
+  /**
+   * Overrides the newline sequence inserted between stack trace lines.
+   *
+   * @param newLine newline text
+   */
   public void setNewLine (String newLine) {
 
     this.newLine = newLine;
   }
 
+  /**
+   * Adds static key/value pairs to every event sent.
+   *
+   * @param additionalEventData map of additional fields
+   */
   public void setAdditionalEventData (Map<String, String> additionalEventData) {
 
     this.additionalEventData = additionalEventData;
   }
 
+  /**
+   * Sets the number of reconnection attempts before failing.
+   *
+   * @param retryAttempts retry count (minimum 1)
+   */
   public void setRetryAttempts (int retryAttempts) {
 
     this.retryAttempts = Math.max(1, retryAttempts);
   }
 
+  /**
+   * Sets the number of concurrent sender threads.
+   *
+   * @param concurrencyLimit thread count (minimum 1)
+   */
   public void setConcurrencyLimit (int concurrencyLimit) {
 
     this.concurrencyLimit = Math.max(1, concurrencyLimit);
   }
 
+  /**
+   * Sets the batch size for grouping records before transmission.
+   *
+   * @param batchSize number of records per batch (minimum 1)
+   */
   public void setBatchSize (int batchSize) {
 
     this.batchSize = Math.max(1, batchSize);
   }
 
+  /**
+   * Sets the maximum time to wait before sending a partially filled batch.
+   *
+   * @param batchGracePeriodMilliseconds grace period in milliseconds (minimum 1000)
+   */
   public void setBatchGracePeriodMilliseconds (long batchGracePeriodMilliseconds) {
 
     this.batchGracePeriodMilliseconds = Math.max(1000L, batchGracePeriodMilliseconds);
   }
 
+  /**
+   * Initializes the formatter and starts worker threads after Spring properties are set.
+   */
   @Override
   public void afterPropertiesSet () {
 
@@ -137,6 +204,13 @@ public class FluentBitAppender extends AbstractAppender implements InitializingB
     }
   }
 
+  /**
+   * Queues the record for asynchronous delivery to Fluent Bit.
+   *
+   * @param record record to publish
+   * @throws LoggerException      if the appender has been closed
+   * @throws InterruptedException if interrupted while enqueuing
+   */
   @Override
   public synchronized void handleOutput (Record<?> record)
     throws LoggerException, InterruptedException {
@@ -148,6 +222,11 @@ public class FluentBitAppender extends AbstractAppender implements InitializingB
     }
   }
 
+  /**
+   * Signals workers to finish processing and waits for completion.
+   *
+   * @throws LoggerException if interrupted while waiting
+   */
   @Override
   public synchronized void close ()
     throws LoggerException {
@@ -167,11 +246,17 @@ public class FluentBitAppender extends AbstractAppender implements InitializingB
     private Socket socket;
     private ArrayNode entriesNode = JsonNodeFactory.instance.arrayNode(batchSize);
 
+    /**
+     * Worker that drains the record queue and sends batches to Fluent Bit.
+     */
     public FluentBitWorker (CountDownLatch finishedLatch) {
 
       this.finishedLatch = finishedLatch;
     }
 
+    /**
+     * Consumes records from the queue, batches them, and sends to Fluent Bit until shutdown.
+     */
     @Override
     public void run () {
 
@@ -228,6 +313,9 @@ public class FluentBitAppender extends AbstractAppender implements InitializingB
       }
     }
 
+    /**
+     * Sends the current batch to Fluent Bit, reconnecting as needed.
+     */
     private void send () {
 
       try {
@@ -268,6 +356,11 @@ public class FluentBitAppender extends AbstractAppender implements InitializingB
       }
     }
 
+    /**
+     * Opens a TCP connection to the configured Fluent Bit host.
+     *
+     * @throws IOException if the socket cannot be created
+     */
     private void connect ()
       throws IOException {
 

@@ -40,6 +40,10 @@ import org.smallmind.scribe.pen.Record;
 import org.smallmind.scribe.pen.SequenceGenerator;
 import org.smallmind.scribe.pen.adapter.RecordWrapper;
 
+/**
+ * Native record implementation used by the indigenous logger backend.
+ * Captures message details, context, and sequence metadata for a log event.
+ */
 public class IndigenousRecord extends ParameterAwareRecord<IndigenousRecord> implements RecordWrapper<IndigenousRecord> {
 
   private final Level level;
@@ -53,6 +57,15 @@ public class IndigenousRecord extends ParameterAwareRecord<IndigenousRecord> imp
   private final long sequenceNumber;
   private LoggerContext loggerContext;
 
+  /**
+   * Constructs a new record representing a log event.
+   *
+   * @param loggerName name of the logger emitting the record
+   * @param level      severity level
+   * @param throwable  optional throwable to attach
+   * @param message    message template
+   * @param args       message arguments
+   */
   public IndigenousRecord (String loggerName, Level level, Throwable throwable, String message, Object... args) {
 
     this.loggerName = loggerName;
@@ -68,71 +81,131 @@ public class IndigenousRecord extends ParameterAwareRecord<IndigenousRecord> imp
     sequenceNumber = SequenceGenerator.next();
   }
 
+  /**
+   * Returns this record for compatibility with downstream handlers.
+   *
+   * @return this record instance
+   */
   @Override
   public Record<IndigenousRecord> getRecord () {
 
     return this;
   }
 
+  /**
+   * Returns the native representation of the log entry.
+   *
+   * @return this record instance
+   */
   @Override
   public IndigenousRecord getNativeLogEntry () {
 
     return this;
   }
 
+  /**
+   * Returns the logger name that produced the record.
+   *
+   * @return the logger name
+   */
   @Override
   public String getLoggerName () {
 
     return loggerName;
   }
 
+  /**
+   * Returns the severity level for this record.
+   *
+   * @return the log level
+   */
   @Override
   public Level getLevel () {
 
     return level;
   }
 
+  /**
+   * Returns the throwable attached to this record, if any.
+   *
+   * @return the throwable or {@code null}
+   */
   @Override
   public Throwable getThrown () {
 
     return throwable;
   }
 
+  /**
+   * Returns the translated message string after applying arguments.
+   *
+   * @return the formatted message
+   */
   @Override
   public String getMessage () {
 
     return MessageTranslator.translateMessage(message, args);
   }
 
+  /**
+   * Returns logger context data if populated.
+   *
+   * @return the logger context, or {@code null} if none was provided
+   */
   @Override
   public LoggerContext getLoggerContext () {
 
     return loggerContext;
   }
 
+  /**
+   * Assigns context captured at log time.
+   *
+   * @param loggerContext context to associate with the record
+   */
   public void setLoggerContext (LoggerContext loggerContext) {
 
     this.loggerContext = loggerContext;
   }
 
+  /**
+   * Returns the identifier of the thread that produced the record.
+   *
+   * @return the thread id
+   */
   @Override
   public long getThreadID () {
 
     return threadId;
   }
 
+  /**
+   * Returns the name of the thread that produced the record.
+   *
+   * @return the thread name
+   */
   @Override
   public String getThreadName () {
 
     return threadName;
   }
 
+  /**
+   * Returns the monotonically increasing sequence number assigned to the event.
+   *
+   * @return the sequence number
+   */
   @Override
   public long getSequenceNumber () {
 
     return sequenceNumber;
   }
 
+  /**
+   * Returns the timestamp in milliseconds when the record was created.
+   *
+   * @return the epoch millis of the record
+   */
   @Override
   public long getMillis () {
 

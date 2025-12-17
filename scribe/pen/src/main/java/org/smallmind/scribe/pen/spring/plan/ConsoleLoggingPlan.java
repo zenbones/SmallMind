@@ -38,15 +38,28 @@ import org.smallmind.scribe.pen.ConsoleAppender;
 import org.smallmind.scribe.pen.DateFormatTimestamp;
 import org.smallmind.scribe.pen.PatternFormatter;
 
+/**
+ * Logging plan that writes to console using a pattern formatter.
+ */
 public class ConsoleLoggingPlan extends LoggingPlan {
 
   private DateFormatTimestamp fullTimestamp = new DateFormatTimestamp(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ"));
 
+  /**
+   * Overrides the timestamp format for the console pattern.
+   *
+   * @param fullTimestamp timestamp implementation to use in pattern formatting
+   */
   public void setFullTimestamp (DateFormatTimestamp fullTimestamp) {
 
     this.fullTimestamp = fullTimestamp;
   }
 
+  /**
+   * Builds the console appender configured with the current timestamp formatter and pattern.
+   *
+   * @return configured {@link ConsoleAppender}
+   */
   @Override
   public Appender getAppender () {
 

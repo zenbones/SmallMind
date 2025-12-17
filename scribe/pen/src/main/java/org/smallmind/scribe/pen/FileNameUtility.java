@@ -37,8 +37,20 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.smallmind.nutsnbolts.io.PathUtility;
 
+/**
+ * Utility for generating unique rollover file names with timestamp and index suffixes.
+ */
 public class FileNameUtility {
 
+  /**
+   * Calculates a non-colliding path for a rolled log file.
+   *
+   * @param desiredPath     base path of the active log file
+   * @param separator       separator character used in rollover names
+   * @param timestampSuffix timestamp or other suffix to append
+   * @param alwaysUseIndex  true to always append an index, even on the first rollover
+   * @return a unique path that does not currently exist
+   */
   public static Path calculateUniquePath (Path desiredPath, char separator, String timestampSuffix, boolean alwaysUseIndex) {
 
     Path calculatedPath;

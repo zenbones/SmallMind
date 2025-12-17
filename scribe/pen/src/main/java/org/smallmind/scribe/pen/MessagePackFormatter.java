@@ -37,12 +37,22 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
+/**
+ * Serializes records into a MessagePack-friendly JSON structure for Fluent Bit.
+ */
 public class MessagePackFormatter {
 
   private final Timestamp timestamp;
   private final RecordElement[] recordElements;
   private final String newLine;
 
+  /**
+   * Constructs a formatter with the requested record elements and newline style.
+   *
+   * @param timestamp      timestamp provider
+   * @param recordElements fields to include
+   * @param newLine        newline delimiter to use in stack traces
+   */
   public MessagePackFormatter (Timestamp timestamp, RecordElement[] recordElements, String newLine) {
 
     this.timestamp = timestamp;
@@ -50,6 +60,12 @@ public class MessagePackFormatter {
     this.newLine = newLine;
   }
 
+  /**
+   * Formats a record into a JSON object suitable for MessagePack encoding.
+   *
+   * @param record record to format
+   * @return JSON node representing the record
+   */
   public ObjectNode format (Record<?> record) {
 
     ObjectNode messageNode = JsonNodeFactory.instance.objectNode();
@@ -103,6 +119,13 @@ public class MessagePackFormatter {
     return messageNode;
   }
 
+  /**
+   * Adds thread name and id to the message node when available.
+   *
+   * @param messageNode node to augment
+   * @param threadName  thread name, may be {@code null}
+   * @param threadId    thread id, or non-positive if unavailable
+   */
   private void appendThreadInfo (ObjectNode messageNode, String threadName, long threadId) {
 
     if ((threadName != null) || (threadId > 0)) {
@@ -120,6 +143,12 @@ public class MessagePackFormatter {
     }
   }
 
+  /**
+   * Adds logger context information when it has been captured.
+   *
+   * @param messageNode   node to augment
+   * @param loggerContext logger context containing caller details
+   */
   private void appendLoggerContext (ObjectNode messageNode, LoggerContext loggerContext) {
 
     if ((loggerContext != null) && (loggerContext.isFilled())) {
@@ -138,6 +167,12 @@ public class MessagePackFormatter {
     }
   }
 
+  /**
+   * Adds parameters as a nested object keyed by parameter names.
+   *
+   * @param messageNode node to augment
+   * @param parameters  parameters from the record
+   */
   private void appendParameters (ObjectNode messageNode, Parameter[] parameters) {
 
     if (parameters.length > 0) {
@@ -163,6 +198,12 @@ public class MessagePackFormatter {
     }
   }
 
+  /**
+   * Serializes a throwable stack trace with elided repeated frames.
+   *
+   * @param messageNode node to augment
+   * @param throwable   throwable to render, may be {@code null}
+   */
   private void appendStackTrace (ObjectNode messageNode, Throwable throwable) {
 
     StackTraceElement[] prevStackTrace = null;
@@ -211,6 +252,13 @@ public class MessagePackFormatter {
     }
   }
 
+  /**
+   * Determines the number of repeated stack frames compared to the previous trace.
+   *
+   * @param singleElement  current stack frame
+   * @param prevStackTrace previous stack trace to compare
+   * @return count of overlapping frames from the end of the previous trace, or -1 if none
+   */
   private int findRepeatedStackElements (StackTraceElement singleElement, StackTraceElement[] prevStackTrace) {
 
     for (int count = 0; count < prevStackTrace.length; count++) {

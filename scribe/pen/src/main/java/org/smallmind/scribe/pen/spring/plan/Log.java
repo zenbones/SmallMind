@@ -34,36 +34,68 @@ package org.smallmind.scribe.pen.spring.plan;
 
 import org.smallmind.scribe.pen.Level;
 
+/**
+ * DTO representing a logger pattern and level within a logging plan.
+ */
 public class Log {
 
   private Level level;
   private String pattern;
 
+  /**
+   * Creates an empty log mapping.
+   */
   public Log () {
 
   }
 
+  /**
+   * Creates a log mapping with level and pattern.
+   *
+   * @param level   log level to apply
+   * @param pattern logger name pattern
+   */
   public Log (Level level, String String) {
 
     this.level = level;
     this.pattern = String;
   }
 
+  /**
+   * Returns the configured level.
+   *
+   * @return log level
+   */
   public Level getLevel () {
 
     return level;
   }
 
+  /**
+   * Sets the log level to apply.
+   *
+   * @param level log level
+   */
   public void setLevel (Level level) {
 
     this.level = level;
   }
 
+  /**
+   * Returns the logger pattern.
+   *
+   * @return pattern string
+   */
   public String getPattern () {
 
     return pattern;
   }
 
+  /**
+   * Sets the logger name pattern.
+   *
+   * @param pattern pattern string
+   */
   public void setPattern (String pattern) {
 
     this.pattern = pattern;

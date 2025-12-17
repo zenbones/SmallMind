@@ -34,27 +34,51 @@ package org.smallmind.scribe.pen;
 
 import java.util.Date;
 
+/**
+ * Aggregates rollover rules and timestamp formatting for naming rolled log files.
+ */
 public class Rollover {
 
   private RolloverRule[] rules;
   private Timestamp timestamp = DateFormatTimestamp.getDefaultInstance();
   private char separator = '-';
 
+  /**
+   * Creates a rollover configuration with default timestamp and separator.
+   */
   public Rollover () {
 
   }
 
+  /**
+   * Creates a rollover configuration with the given rules.
+   *
+   * @param rules rollover rules to apply
+   */
   public Rollover (RolloverRule... rules) {
 
     this.rules = rules;
   }
 
+  /**
+   * Creates a rollover configuration with a timestamp provider and rules.
+   *
+   * @param timestamp timestamp provider
+   * @param rules     rollover rules to apply
+   */
   public Rollover (Timestamp timestamp, RolloverRule... rules) {
 
     this.timestamp = timestamp;
     this.rules = rules;
   }
 
+  /**
+   * Creates a rollover configuration with timestamp provider, separator, and rules.
+   *
+   * @param timestamp timestamp provider
+   * @param separator separator used in rolled file names
+   * @param rules     rollover rules to apply
+   */
   public Rollover (Timestamp timestamp, char separator, RolloverRule... rules) {
 
     this.timestamp = timestamp;
@@ -62,31 +86,65 @@ public class Rollover {
     this.rules = rules;
   }
 
+  /**
+   * Sets the timestamp formatter used when naming rolled files.
+   *
+   * @param timestamp timestamp provider
+   */
   public void setTimestamp (Timestamp timestamp) {
 
     this.timestamp = timestamp;
   }
 
+  /**
+   * Retrieves the separator used between name segments when rolling files.
+   *
+   * @return separator character
+   */
   public char getSeparator () {
 
     return separator;
   }
 
+  /**
+   * Sets the separator inserted between base name, timestamp, and index.
+   *
+   * @param separator separator character
+   */
   public void setSeparator (char separator) {
 
     this.separator = separator;
   }
 
+  /**
+   * Formats the supplied date into a suffix for rolled file names.
+   *
+   * @param date date to format
+   * @return formatted timestamp suffix
+   */
   public String getTimestampSuffix (Date date) {
 
     return timestamp.getTimestamp(date);
   }
 
+  /**
+   * Sets the rollover rules evaluated for each log write.
+   *
+   * @param rules rules to install
+   */
   public void setRules (RolloverRule[] rules) {
 
     this.rules = rules;
   }
 
+  /**
+   * Evaluates whether any configured rule triggers rollover.
+   *
+   * @param fileSize         current file size
+   * @param lastModified     last modification time
+   * @param bytesToBeWritten pending bytes
+   * @return {@code true} if rollover should occur
+   */
   public boolean willRollover (long fileSize, long lastModified, long bytesToBeWritten) {
 
     for (RolloverRule rule : rules) {

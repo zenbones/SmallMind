@@ -39,15 +39,26 @@ import java.time.temporal.ChronoField;
 import java.time.temporal.IsoFields;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
+/**
+ * Rollover rule that triggers when the current time crosses a configured boundary (minute/hour/day/etc.).
+ */
 public class TimestampRolloverRule implements RolloverRule {
 
   private TimestampQuantifier timestampQuantifier;
 
+  /**
+   * Creates a rule that rolls at the top of each day.
+   */
   public TimestampRolloverRule () {
 
     this(TimestampQuantifier.TOP_OF_DAY);
   }
 
+  /**
+   * Creates a rule with the specified time boundary.
+   *
+   * @param timestampQuantifier boundary quantifier
+   */
   public TimestampRolloverRule (TimestampQuantifier timestampQuantifier) {
 
     super();
@@ -55,16 +66,34 @@ public class TimestampRolloverRule implements RolloverRule {
     this.timestampQuantifier = timestampQuantifier;
   }
 
+  /**
+   * Returns the configured time boundary that triggers rollover.
+   *
+   * @return timestamp quantifier
+   */
   public TimestampQuantifier getTimestampQuantifier () {
 
     return timestampQuantifier;
   }
 
+  /**
+   * Sets the time boundary that triggers rollover.
+   *
+   * @param timestampQuantifier boundary quantifier
+   */
   public void setTimestampQuantifier (TimestampQuantifier timestampQuantifier) {
 
     this.timestampQuantifier = timestampQuantifier;
   }
 
+  /**
+   * Determines whether the file should roll based on the last modification time.
+   *
+   * @param fileSize              current file size (ignored)
+   * @param lastModifiedTimeified last modified timestamp in milliseconds
+   * @param bytesToBeWritten      pending bytes (ignored)
+   * @return {@code true} if the current time has crossed the configured boundary
+   */
   public boolean willRollover (long fileSize, long lastModifiedTimeified, long bytesToBeWritten) {
 
     ZonedDateTime lastModifiedTime = ZonedDateTime.ofInstant(Instant.ofEpochMilli(lastModifiedTimeified), ZoneId.systemDefault());

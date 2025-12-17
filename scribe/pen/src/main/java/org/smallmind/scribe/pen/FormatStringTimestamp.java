@@ -34,30 +34,57 @@ package org.smallmind.scribe.pen;
 
 import java.util.Date;
 
+/**
+ * Timestamp implementation that uses {@link String#format(String, Object...)} with a format string.
+ */
 public class FormatStringTimestamp implements Timestamp {
 
   private String format;
 
+  /**
+   * Constructs a timestamp with a default date-only format.
+   */
   public FormatStringTimestamp () {
 
     this("%tY-%tm-%td");
   }
 
+  /**
+   * Constructs a timestamp with the supplied format string.
+   *
+   * @param format format string compatible with {@link String#format(String, Object...)}
+   */
   public FormatStringTimestamp (String format) {
 
     this.format = format;
   }
 
+  /**
+   * Retrieves the current format string.
+   *
+   * @return format string used for timestamp rendering
+   */
   public String getFormat () {
 
     return format;
   }
 
+  /**
+   * Sets the format string.
+   *
+   * @param format format string compatible with {@link String#format(String, Object...)}
+   */
   public void setFormat (String format) {
 
     this.format = format;
   }
 
+  /**
+   * Formats the supplied date using {@link String#format(String, Object...)}.
+   *
+   * @param date date to format
+   * @return formatted timestamp
+   */
   public String getTimestamp (Date date) {
 
     return String.format(format, date);

@@ -35,22 +35,39 @@ package org.slf4j.impl;
 import org.slf4j.spi.MDCAdapter;
 import org.smallmind.scribe.slf4j.ScribeMDCAdapter;
 
+/**
+ * SLF4J service binder that exposes the scribe-backed {@link MDCAdapter} implementation.
+ * This class mirrors the standard SLF4J lookup contract to supply MDC support at runtime.
+ */
 public class StaticMDCBinder {
 
   public static final StaticMDCBinder SINGLETON = new StaticMDCBinder();
 
   private final MDCAdapter mdcAdapter;
 
+  /**
+   * Creates a binder with a singleton {@link ScribeMDCAdapter} instance.
+   */
   public StaticMDCBinder () {
 
     mdcAdapter = new ScribeMDCAdapter();
   }
 
+  /**
+   * Provides the singleton binder instance expected by SLF4J.
+   *
+   * @return the static binder
+   */
   public static StaticMDCBinder getSingleton () {
 
     return SINGLETON;
   }
 
+  /**
+   * Returns the MDC adapter bound to this logger implementation.
+   *
+   * @return the MDC adapter to use for contextual logging
+   */
   public MDCAdapter getMDCA () {
 
     return mdcAdapter;

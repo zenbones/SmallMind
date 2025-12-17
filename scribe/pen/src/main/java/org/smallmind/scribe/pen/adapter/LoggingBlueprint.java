@@ -34,9 +34,29 @@ package org.smallmind.scribe.pen.adapter;
 
 import org.smallmind.scribe.pen.Record;
 
+/**
+ * SPI for integrating scribe with a concrete logging backend.
+ *
+ * @param <N> native record type produced by the backend
+ */
 public abstract class LoggingBlueprint<N> {
 
+  /**
+   * Produces a logger adapter for the given logger name.
+   *
+   * @param name logger name
+   * @return adapter that emits backend-native records
+   */
   public abstract LoggerAdapter getLoggingAdapter (String name);
 
+  /**
+   * Builds a backend-native record representing an error condition.
+   *
+   * @param loggerName originating logger name
+   * @param throwable  throwable to attach
+   * @param message    message template
+   * @param args       message arguments
+   * @return constructed record
+   */
   public abstract Record<N> errorRecord (String loggerName, Throwable throwable, String message, Object... args);
 }

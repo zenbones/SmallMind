@@ -32,11 +32,31 @@
  */
 package org.smallmind.scribe.pen;
 
+/**
+ * Rule used by pattern-based formatters to render portions of a record.
+ */
 public interface PatternRule {
 
+  /**
+   * Returns optional header text emitted before the converted fragment.
+   *
+   * @return header string or {@code null}
+   */
   String getHeader ();
 
+  /**
+   * Returns optional footer text emitted after the converted fragment.
+   *
+   * @return footer string or {@code null}
+   */
   String getFooter ();
 
+  /**
+   * Converts the record and timestamp into a formatted fragment.
+   *
+   * @param record    log record
+   * @param timestamp timestamp helper
+   * @return formatted fragment
+   */
   String convert (Record<?> record, Timestamp timestamp);
 }

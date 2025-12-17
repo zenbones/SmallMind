@@ -38,6 +38,9 @@ import java.util.LinkedList;
 import java.util.ServiceLoader;
 import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 
+/**
+ * Discovers and exposes the single available {@link LoggingBlueprint} via Java SPI.
+ */
 public class LoggingBlueprintFactory {
 
   private static final LoggingBlueprint LOGGING_BLUEPRINT;
@@ -69,6 +72,11 @@ public class LoggingBlueprintFactory {
     }
   }
 
+  /**
+   * Returns the discovered logging blueprint implementation.
+   *
+   * @return the active {@link LoggingBlueprint}
+   */
   public static LoggingBlueprint getLoggingBlueprint () {
 
     return LOGGING_BLUEPRINT;

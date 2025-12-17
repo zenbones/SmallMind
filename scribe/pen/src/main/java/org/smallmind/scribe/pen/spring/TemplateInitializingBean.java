@@ -37,20 +37,34 @@ import java.util.List;
 import org.smallmind.scribe.pen.Template;
 import org.springframework.beans.factory.InitializingBean;
 
+/**
+ * Spring helper that registers a list of templates on initialization.
+ */
 public class TemplateInitializingBean implements InitializingBean {
 
   private final LinkedList<Template> initialTemplates;
 
+  /**
+   * Creates a bean ready to collect templates for later registration.
+   */
   public TemplateInitializingBean () {
 
     initialTemplates = new LinkedList<>();
   }
 
+  /**
+   * Sets the templates to register during initialization.
+   *
+   * @param initialTemplates templates to register
+   */
   public void setInitialTemplates (List<Template> initialTemplates) {
 
     this.initialTemplates.addAll(initialTemplates);
   }
 
+  /**
+   * Registers all configured templates.
+   */
   public void afterPropertiesSet () {
 
     for (Template template : initialTemplates) {

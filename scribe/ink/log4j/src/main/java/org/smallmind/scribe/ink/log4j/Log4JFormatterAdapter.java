@@ -38,15 +38,29 @@ import org.apache.logging.log4j.core.LogEvent;
 import org.smallmind.scribe.pen.Formatter;
 import org.smallmind.scribe.pen.Record;
 
+/**
+ * Adapts a Log4j2 {@link Layout} to the scribe {@link Formatter} interface.
+ */
 public class Log4JFormatterAdapter implements Formatter {
 
   private final Layout<LogEvent> layout;
 
+  /**
+   * Creates an adapter around the provided Log4j2 layout.
+   *
+   * @param layout the native layout
+   */
   public Log4JFormatterAdapter (Layout<LogEvent> layout) {
 
     this.layout = layout;
   }
 
+  /**
+   * Formats a record by delegating to the Log4j2 layout, including header and footer.
+   *
+   * @param record record to format
+   * @return the formatted string
+   */
   public String format (Record<?> record) {
 
     StringBuilder formatBuilder = new StringBuilder();

@@ -35,15 +35,27 @@ package org.smallmind.scribe.pen;
 import org.smallmind.nutsnbolts.util.DotNotation;
 import org.smallmind.nutsnbolts.util.DotNotationException;
 
+/**
+ * Template that matches loggers by class-name pattern using dot-notation.
+ */
 public class ClassNameTemplate extends Template {
 
   private DotNotation notation;
 
+  /**
+   * Creates an empty template; configure with {@link #setPattern(String)} before use.
+   */
   public ClassNameTemplate () {
 
     super();
   }
 
+  /**
+   * Creates a template with the supplied class-name pattern.
+   *
+   * @param pattern dot-notation pattern used to match logger names
+   * @throws LoggerException if the pattern is invalid
+   */
   public ClassNameTemplate (String pattern)
     throws LoggerException {
 
@@ -52,6 +64,14 @@ public class ClassNameTemplate extends Template {
     setPattern(pattern);
   }
 
+  /**
+   * Creates a template with level, context behavior, and class-name pattern.
+   *
+   * @param level                 default log level
+   * @param autoFillLoggerContext whether to auto-fill logger context
+   * @param pattern               dot-notation pattern used to match logger names
+   * @throws LoggerException if the pattern is invalid
+   */
   public ClassNameTemplate (Level level, boolean autoFillLoggerContext, String pattern)
     throws LoggerException {
 
@@ -60,6 +80,15 @@ public class ClassNameTemplate extends Template {
     setPattern(pattern);
   }
 
+  /**
+   * Creates a template with level, context behavior, appenders, and class-name pattern.
+   *
+   * @param level                 default log level
+   * @param autoFillLoggerContext whether to auto-fill logger context
+   * @param pattern               dot-notation pattern used to match logger names
+   * @param appenders             appenders to attach when matched
+   * @throws LoggerException if the pattern is invalid
+   */
   public ClassNameTemplate (Level level, boolean autoFillLoggerContext, String pattern, Appender... appenders)
     throws LoggerException {
 
@@ -68,6 +97,17 @@ public class ClassNameTemplate extends Template {
     setPattern(pattern);
   }
 
+  /**
+   * Creates a template with filters, appenders, enhancers, level, context behavior, and class-name pattern.
+   *
+   * @param filters               filters to apply
+   * @param appenders             appenders to attach
+   * @param enhancers             enhancers to apply
+   * @param level                 default log level
+   * @param autoFillLoggerContext whether to auto-fill logger context
+   * @param pattern               dot-notation pattern used to match logger names
+   * @throws LoggerException if the pattern is invalid
+   */
   public ClassNameTemplate (Filter[] filters, Appender[] appenders, Enhancer[] enhancers, Level level, boolean autoFillLoggerContext, String pattern)
     throws LoggerException {
 
@@ -76,6 +116,12 @@ public class ClassNameTemplate extends Template {
     setPattern(pattern);
   }
 
+  /**
+   * Sets the dot-notation pattern used for matching logger names.
+   *
+   * @param pattern pattern to evaluate against logger names
+   * @throws LoggerException if the pattern cannot be parsed
+   */
   public void setPattern (String pattern)
     throws LoggerException {
 
@@ -86,6 +132,12 @@ public class ClassNameTemplate extends Template {
     }
   }
 
+  /**
+   * Computes the match score for the provided logger name.
+   *
+   * @param loggerName logger name to evaluate
+   * @return match value or {@link Template#NO_MATCH} if not matched
+   */
   @Override
   public int matchLogger (String loggerName) {
 

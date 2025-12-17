@@ -41,14 +41,31 @@ import org.slf4j.spi.MDCAdapter;
 import org.smallmind.scribe.pen.Parameter;
 import org.smallmind.scribe.pen.adapter.Parameters;
 
+/**
+ * SLF4J {@link MDCAdapter} backed by the scribe {@link Parameters} holder.
+ * This adapter maps MDC operations to the parameter store used by scribe to
+ * capture per-thread contextual information.
+ */
 public class ScribeMDCAdapter implements MDCAdapter {
 
+  /**
+   * Adds or replaces an MDC value for the current thread.
+   *
+   * @param key the MDC key
+   * @param val the string value to associate
+   */
   @Override
   public void put (String key, String val) {
 
     Parameters.getInstance().put(key, val);
   }
 
+  /**
+   * Pushes a value onto the MDC deque for the given key, creating a deque if none exists.
+   *
+   * @param key the MDC key
+   * @param val the value to push
+   */
   @Override
   public void pushByKey (String key, String val) {
 
@@ -65,6 +82,12 @@ public class ScribeMDCAdapter implements MDCAdapter {
     }
   }
 
+  /**
+   * Pops the most recent value from the MDC deque for the given key.
+   *
+   * @param key the MDC key
+   * @return the popped value, or {@code null} if none are present
+   */
   @Override
   public String popByKey (String key) {
 
@@ -91,12 +114,23 @@ public class ScribeMDCAdapter implements MDCAdapter {
     }
   }
 
+  /**
+   * Clears the deque tracked for the supplied key, replacing it with an empty deque.
+   *
+   * @param key the MDC key
+   */
   @Override
   public void clearDequeByKey (String key) {
 
     Parameters.getInstance().put(key, new LinkedList<Serializable>());
   }
 
+  /**
+   * Returns a copy of the deque for the supplied key.
+   *
+   * @param key the MDC key
+   * @return a copy of the deque, or {@code null} if no deque exists
+   */
   @Override
   public Deque<String> getCopyOfDequeByKey (String key) {
 
@@ -117,6 +151,12 @@ public class ScribeMDCAdapter implements MDCAdapter {
     }
   }
 
+  /**
+   * Retrieves a single MDC value for the supplied key.
+   *
+   * @param key the MDC key
+   * @return the string value, or {@code null} if none exists
+   */
   @Override
   public String get (String key) {
 
@@ -125,18 +165,31 @@ public class ScribeMDCAdapter implements MDCAdapter {
     return ((value = Parameters.getInstance().get(key)) == null) ? null : value.toString();
   }
 
+  /**
+   * Removes the MDC value associated with the supplied key.
+   *
+   * @param key the MDC key to clear
+   */
   @Override
   public void remove (String key) {
 
     Parameters.getInstance().remove(key);
   }
 
+  /**
+   * Clears all MDC entries for the current thread.
+   */
   @Override
   public void clear () {
 
     Parameters.getInstance().clear();
   }
 
+  /**
+   * Produces a copy of the current MDC map.
+   *
+   * @return a defensive copy of the context map
+   */
   @Override
   public Map<String, String> getCopyOfContextMap () {
 
@@ -149,6 +202,11 @@ public class ScribeMDCAdapter implements MDCAdapter {
     return map;
   }
 
+  /**
+   * Replaces the current MDC map with the provided entries.
+   *
+   * @param contextMap the context entries to install for the current thread
+   */
   @Override
   public void setContextMap (Map<String, String> contextMap) {
 

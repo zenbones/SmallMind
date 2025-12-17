@@ -34,8 +34,14 @@ package org.smallmind.scribe.pen;
 
 import java.text.SimpleDateFormat;
 
+/**
+ * Convenience configuration for tests to bootstrap a console logger with pattern formatting.
+ */
 public class TestLoggerConfiguration {
 
+  /**
+   * Installs a default template with DEBUG level and pattern formatter to console.
+   */
   public static void setup () {
 
     DateFormatTimestamp fullTimeStamp = new DateFormatTimestamp(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ"));

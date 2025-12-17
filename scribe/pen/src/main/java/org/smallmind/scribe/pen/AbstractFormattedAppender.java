@@ -32,14 +32,27 @@
  */
 package org.smallmind.scribe.pen;
 
+/**
+ * Base {@link AbstractAppender} that formats records to strings before output.
+ * Subclasses implement {@link #handleOutput(String)} to emit the formatted text.
+ */
 public abstract class AbstractFormattedAppender extends AbstractAppender implements FormattedAppender {
 
   private Formatter formatter;
 
+  /**
+   * Constructs a formatted appender without formatter or error handler.
+   */
   public AbstractFormattedAppender () {
 
   }
 
+  /**
+   * Constructs a formatted appender with a formatter and error handler.
+   *
+   * @param formatter    formatter to apply
+   * @param errorHandler handler to invoke on failures
+   */
   public AbstractFormattedAppender (Formatter formatter, ErrorHandler errorHandler) {
 
     super(errorHandler);
@@ -47,6 +60,13 @@ public abstract class AbstractFormattedAppender extends AbstractAppender impleme
     this.formatter = formatter;
   }
 
+  /**
+   * Constructs a formatted appender with name, formatter, and error handler.
+   *
+   * @param name         appender name
+   * @param formatter    formatter to apply
+   * @param errorHandler handler to invoke on failures
+   */
   public AbstractFormattedAppender (String name, Formatter formatter, ErrorHandler errorHandler) {
 
     super(name, errorHandler);
@@ -54,19 +74,41 @@ public abstract class AbstractFormattedAppender extends AbstractAppender impleme
     this.formatter = formatter;
   }
 
+  /**
+   * Retrieves the formatter used to render records.
+   *
+   * @return configured formatter, or {@code null} if none set
+   */
   public Formatter getFormatter () {
 
     return formatter;
   }
 
+  /**
+   * Sets the formatter used to render records.
+   *
+   * @param formatter formatter to install
+   */
   public void setFormatter (Formatter formatter) {
 
     this.formatter = formatter;
   }
 
+  /**
+   * Emits the formatted string to the concrete output target.
+   *
+   * @param string formatted record text
+   * @throws Exception if writing fails
+   */
   public abstract void handleOutput (String string)
     throws Exception;
 
+  /**
+   * Formats the record to a string and delegates to the string output handler.
+   *
+   * @param record record to publish
+   * @throws Exception if formatting or output fails
+   */
   @Override
   public void handleOutput (Record<?> record)
     throws Exception {

@@ -32,7 +32,18 @@
  */
 package org.smallmind.scribe.pen;
 
+/**
+ * Determines whether a log file should be rolled over based on size/time/other criteria.
+ */
 public interface RolloverRule {
 
+  /**
+   * Evaluates whether rollover should occur given the current state.
+   *
+   * @param fileSize         current file size in bytes
+   * @param lastModified     last modification time in epoch millis
+   * @param bytesToBeWritten pending bytes to write
+   * @return {@code true} if rollover should occur
+   */
   boolean willRollover (long fileSize, long lastModified, long bytesToBeWritten);
 }

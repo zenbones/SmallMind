@@ -39,14 +39,33 @@ import org.smallmind.scribe.pen.Record;
 import org.smallmind.scribe.pen.adapter.LoggerAdapter;
 import org.smallmind.scribe.pen.adapter.LoggingBlueprint;
 
+/**
+ * Logging blueprint for the built-in indigenous logging implementation.
+ * Provides adapters and error record construction compatible with the scribe core APIs.
+ */
 public class IndigenousLoggingBlueprint extends LoggingBlueprint<IndigenousRecord> {
 
+  /**
+   * Creates a logger adapter for the specified logger name.
+   *
+   * @param name the logger name
+   * @return an adapter that emits indigenous records
+   */
   @Override
   public LoggerAdapter getLoggingAdapter (String name) {
 
     return new IndigenousLoggerAdapter(name);
   }
 
+  /**
+   * Builds an error {@link Record} for the indigenous logger, enriching it with context.
+   *
+   * @param loggerName the originating logger name
+   * @param throwable  the throwable to attach
+   * @param message    formatted message string
+   * @param args       substitution arguments
+   * @return a fully constructed record suitable for downstream appenders
+   */
   @Override
   public Record<IndigenousRecord> errorRecord (String loggerName, Throwable throwable, String message, Object... args) {
 

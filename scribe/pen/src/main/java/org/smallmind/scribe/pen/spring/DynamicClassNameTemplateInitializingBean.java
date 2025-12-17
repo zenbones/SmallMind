@@ -43,6 +43,10 @@ import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerException;
 import org.springframework.beans.factory.InitializingBean;
 
+/**
+ * Spring helper that creates and registers {@link ClassNameTemplate} instances from properties
+ * of the form `log.pattern.<key>` and `log.level.<key>`.
+ */
 public class DynamicClassNameTemplateInitializingBean implements InitializingBean {
 
   private Filter[] filters = new Filter[0];
@@ -50,26 +54,43 @@ public class DynamicClassNameTemplateInitializingBean implements InitializingBea
   private Enhancer[] enhancers = new Enhancer[0];
   private boolean autoFillLoggerContext = false;
 
+  /**
+   * Sets filters to apply to each generated template.
+   */
   public void setFilters (Filter[] filters) {
 
     this.filters = filters;
   }
 
+  /**
+   * Sets appenders to apply to each generated template.
+   */
   public void setAppenders (Appender[] appenders) {
 
     this.appenders = appenders;
   }
 
+  /**
+   * Sets enhancers to apply to each generated template.
+   */
   public void setEnhancers (Enhancer[] enhancers) {
 
     this.enhancers = enhancers;
   }
 
+  /**
+   * Enables or disables automatic logger context capture for generated templates.
+   */
   public void setAutoFillLoggerContext (boolean autoFillLoggerContext) {
 
     this.autoFillLoggerContext = autoFillLoggerContext;
   }
 
+  /**
+   * Reads logging pattern and level properties, constructs templates, and registers them.
+   *
+   * @throws Exception if required properties are missing or template creation fails
+   */
   @Override
   public void afterPropertiesSet ()
     throws Exception {

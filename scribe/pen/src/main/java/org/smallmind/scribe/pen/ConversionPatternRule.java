@@ -35,6 +35,9 @@ package org.smallmind.scribe.pen;
 import java.util.Date;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
+/**
+ * Implements a single conversion token for {@link PatternFormatter}, handling padding, precision, and multi-line options.
+ */
 public class ConversionPatternRule implements PatternRule {
 
   private enum Padding {
@@ -51,11 +54,35 @@ public class ConversionPatternRule implements PatternRule {
   private final int width;
   private final int precision;
 
+  /**
+   * Creates a rule from the parsed pattern components.
+   *
+   * @param header           optional header text
+   * @param paddingString    padding flag (+/-) or {@code null}
+   * @param widthString      width specifier or {@code null}
+   * @param precisionString  precision specifier or {@code null}
+   * @param firstLineString  flag for multi-line prefixing of first line
+   * @param multiLinePrefix  prefix to apply to multi-line fields
+   * @param conversionString conversion character as string
+   * @param footer           optional footer text
+   */
   public ConversionPatternRule (String header, String paddingString, String widthString, String precisionString, String firstLineString, String multiLinePrefix, String conversionString, String footer) {
 
     this(header, (paddingString == null) ? Padding.NONE : (paddingString.equals("+") ? Padding.RIGHT : Padding.LEFT), (widthString == null) ? -1 : Integer.parseInt(widthString), (precisionString == null) ? -1 : Integer.parseInt(precisionString), !("-".equals(firstLineString)), (multiLinePrefix == null) ? System.getProperty("line.separator") + '\t' : multiLinePrefix, conversionString.charAt(0), footer);
   }
 
+  /**
+   * Creates a rule with explicit padding, width, precision, and conversion token.
+   *
+   * @param header          optional header text
+   * @param padding         padding direction
+   * @param width           fixed width or -1 if unrestricted
+   * @param precision       precision for dot-separated fields or -1 if unrestricted
+   * @param prefixFirstLine whether to prefix the first line for multi-line fields
+   * @param multiLinePrefix prefix to apply to multi-line output
+   * @param conversion      conversion character to render
+   * @param footer          optional footer text
+   */
   public ConversionPatternRule (String header, Padding padding, int width, int precision, boolean prefixFirstLine, String multiLinePrefix, char conversion, String footer) {
 
     this.header = stripSlashes(header);
@@ -68,6 +95,13 @@ public class ConversionPatternRule implements PatternRule {
     this.footer = stripSlashes(footer);
   }
 
+  /**
+   * Finds the number of repeated elements between the current and previous stack traces.
+   *
+   * @param singleElement  element from the current stack trace
+   * @param prevStackTrace previous stack trace to compare
+   * @return count of remaining repeated elements, or -1 if none
+   */
   private static int findRepeatedStackElements (StackTraceElement singleElement, StackTraceElement[] prevStackTrace) {
 
     for (int count = 0; count < prevStackTrace.length; count++) {
@@ -79,16 +113,32 @@ public class ConversionPatternRule implements PatternRule {
     return -1;
   }
 
+  /**
+   * Returns the header text for this rule.
+   *
+   * @return header text, possibly {@code null}
+   */
   public String getHeader () {
 
     return header;
   }
 
+  /**
+   * Returns the footer text for this rule.
+   *
+   * @return footer text, possibly {@code null}
+   */
   public String getFooter () {
 
     return footer;
   }
 
+  /**
+   * Unescapes common slash-escaped sequences within the provided string.
+   *
+   * @param slashedString string containing escape sequences
+   * @return unescaped string, or {@code null} if input was {@code null}
+   */
   private String stripSlashes (String slashedString) {
 
     if (slashedString == null) {
@@ -135,6 +185,13 @@ public class ConversionPatternRule implements PatternRule {
     return strippedBuffer.toString();
   }
 
+  /**
+   * Renders the requested conversion value from the record using the provided timestamp.
+   *
+   * @param record    record to format
+   * @param timestamp timestamp renderer used for date conversions
+   * @return formatted value or {@code null} when no value is available
+   */
   public String convert (Record<?> record, Timestamp timestamp) {
 
     LoggerContext loggerContext;
@@ -280,6 +337,12 @@ public class ConversionPatternRule implements PatternRule {
     }
   }
 
+  /**
+   * Trims a dot-delimited field to the configured precision.
+   *
+   * @param field dot-delimited value
+   * @return field truncated to the last {@code precision} segments, or original value when precision is unset
+   */
   private String trimToDotPrecision (String field) {
 
     if (field == null) {
@@ -308,6 +371,12 @@ public class ConversionPatternRule implements PatternRule {
     return field;
   }
 
+  /**
+   * Applies width and padding rules to the provided field.
+   *
+   * @param field value to pad or trim
+   * @return adjusted value respecting width and padding settings
+   */
   private String trimToWidthAndPad (String field) {
 
     if (field == null) {

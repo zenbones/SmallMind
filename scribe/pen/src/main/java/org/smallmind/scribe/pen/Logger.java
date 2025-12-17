@@ -37,65 +37,128 @@ import java.util.function.Supplier;
 import org.smallmind.scribe.pen.adapter.LoggerAdapter;
 import org.smallmind.scribe.pen.adapter.LoggingBlueprintFactory;
 
+/**
+ * Primary logging façade for emitting scribe records at various levels.
+ * Instances delegate to a {@link LoggerAdapter} created by the active {@link org.smallmind.scribe.pen.adapter.LoggingBlueprint}.
+ */
 public class Logger {
 
   private final LoggerAdapter loggerAdapter;
 
+  /**
+   * Constructs a logger using the canonical name of the supplied class.
+   *
+   * @param loggableClass class whose name identifies the logger
+   */
   public Logger (Class loggableClass) {
 
     this(loggableClass.getCanonicalName());
   }
 
+  /**
+   * Constructs a logger with the given name.
+   *
+   * @param name the logger name
+   */
   public Logger (String name) {
 
     loggerAdapter = LoggingBlueprintFactory.getLoggingBlueprint().getLoggingAdapter(name);
   }
 
+  /**
+   * Convenience constant for an unknown logger name.
+   *
+   * @return the string {@code "unknown"}
+   */
   public static String unknown () {
 
     return "unknown";
   }
 
+  /**
+   * Returns the logger name.
+   *
+   * @return logger name
+   */
   public String getName () {
 
     return loggerAdapter.getName();
   }
 
+  /**
+   * Returns the template currently associated with this logger.
+   *
+   * @return active {@link Template}
+   */
   public Template getTemplate () {
 
     return LoggerManager.getTemplate(this);
   }
 
+  /**
+   * Adds or replaces a contextual parameter.
+   *
+   * @param key   parameter key
+   * @param value serializable value to attach
+   */
   public void putParameter (String key, Serializable value) {
 
     loggerAdapter.getParameterAdapter().put(key, value);
   }
 
+  /**
+   * Removes a contextual parameter.
+   *
+   * @param key parameter key to remove
+   */
   public void removeParameter (String key) {
 
     loggerAdapter.getParameterAdapter().remove(key);
   }
 
+  /**
+   * Clears all contextual parameters.
+   */
   public void clearParameters () {
 
     loggerAdapter.getParameterAdapter().clear();
   }
 
+  /**
+   * Returns the current contextual parameters.
+   *
+   * @return array of parameters, possibly empty
+   */
   public Parameter[] getParameters () {
 
     return loggerAdapter.getParameterAdapter().getParameters();
   }
 
+  /**
+   * Indicates whether logger context is automatically populated.
+   *
+   * @return {@code true} when context auto-fill is enabled
+   */
   public boolean getAutoFillLoggerContext () {
 
     return loggerAdapter.getAutoFillLoggerContext();
   }
 
+  /**
+   * Enables or disables automatic population of logger context data.
+   *
+   * @param autoFillLoggerContext {@code true} to capture context data automatically
+   */
   public void setAutoFillLoggerContext (boolean autoFillLoggerContext) {
 
     loggerAdapter.setAutoFillLoggerContext(autoFillLoggerContext);
   }
 
+  /**
+   * Adds multiple filters to this logger.
+   *
+   * @param filters filters to add
+   */
   public void addFilters (Filter[] filters) {
 
     for (Filter filter : filters) {
@@ -103,16 +166,29 @@ public class Logger {
     }
   }
 
+  /**
+   * Adds a single filter to this logger.
+   *
+   * @param filter filter to add
+   */
   public void addFilter (Filter filter) {
 
     loggerAdapter.addFilter(filter);
   }
 
+  /**
+   * Removes all configured filters.
+   */
   public void clearFilters () {
 
     loggerAdapter.clearFilters();
   }
 
+  /**
+   * Adds multiple appenders to this logger.
+   *
+   * @param appenders appenders to register
+   */
   public void addAppenders (Appender[] appenders) {
 
     for (Appender appender : appenders) {
@@ -120,31 +196,58 @@ public class Logger {
     }
   }
 
+  /**
+   * Adds a single appender to this logger.
+   *
+   * @param appender appender to register
+   */
   public void addAppender (Appender appender) {
 
     loggerAdapter.addAppender(appender);
   }
 
+  /**
+   * Removes all configured appenders.
+   */
   public void clearAppenders () {
 
     loggerAdapter.clearAppenders();
   }
 
+  /**
+   * Adds an enhancer that mutates records prior to publishing.
+   *
+   * @param enhancer enhancer to add
+   */
   public void addEnhancer (Enhancer enhancer) {
 
     loggerAdapter.addEnhancer(enhancer);
   }
 
+  /**
+   * Removes all configured enhancers.
+   */
   public void clearEnhancers () {
 
     loggerAdapter.clearEnhancers();
   }
 
+  /**
+   * Returns the current level threshold.
+   *
+   * @return active level
+   */
   public Level getLevel () {
 
     return loggerAdapter.getLevel();
   }
 
+  /**
+   * Sets the level threshold for this logger.
+   *
+   * @param level new level; must not be {@code null}
+   * @throws IllegalArgumentException if the level is {@code null}
+   */
   public void setLevel (Level level) {
 
     if (level == null) {
@@ -154,246 +257,533 @@ public class Logger {
     loggerAdapter.setLevel(level);
   }
 
+  /**
+   * Logs a throwable at TRACE level.
+   *
+   * @param throwable throwable to attach
+   */
   public void trace (Throwable throwable) {
 
     log(Level.TRACE, throwable);
   }
 
+  /**
+   * Logs a formatted message at TRACE level.
+   *
+   * @param message message template
+   * @param args    message arguments
+   */
   public void trace (String message, Object... args) {
 
     log(Level.TRACE, message, args);
   }
 
+  /**
+   * Logs a formatted message with a throwable at TRACE level.
+   *
+   * @param throwable throwable to attach
+   * @param message   message template
+   * @param args      message arguments
+   */
   public void trace (Throwable throwable, String message, Object... args) {
 
     log(Level.TRACE, throwable, message, args);
   }
 
+  /**
+   * Logs an object's string representation at TRACE level.
+   *
+   * @param object object to log
+   */
   public void trace (Object object) {
 
     log(Level.TRACE, object);
   }
 
+  /**
+   * Logs a lazily supplied message at TRACE level.
+   *
+   * @param supplier supplier that produces the message
+   */
   public void trace (Supplier<String> supplier) {
 
     log(Level.TRACE, supplier);
   }
 
+  /**
+   * Logs an object with a throwable at TRACE level.
+   *
+   * @param throwable throwable to attach
+   * @param object    object to log
+   */
   public void trace (Throwable throwable, Object object) {
 
     log(Level.TRACE, throwable, object);
   }
 
+  /**
+   * Logs a lazily supplied message with a throwable at TRACE level.
+   *
+   * @param throwable throwable to attach
+   * @param supplier  supplier that produces the message
+   */
   public void trace (Throwable throwable, Supplier<String> supplier) {
 
     log(Level.TRACE, throwable, supplier);
   }
 
+  /**
+   * Logs a throwable at DEBUG level.
+   *
+   * @param throwable throwable to attach
+   */
   public void debug (Throwable throwable) {
 
     log(Level.DEBUG, throwable);
   }
 
+  /**
+   * Logs a formatted message at DEBUG level.
+   *
+   * @param message message template
+   * @param args    message arguments
+   */
   public void debug (String message, Object... args) {
 
     log(Level.DEBUG, message, args);
   }
 
+  /**
+   * Logs a formatted message with a throwable at DEBUG level.
+   *
+   * @param throwable throwable to attach
+   * @param message   message template
+   * @param args      message arguments
+   */
   public void debug (Throwable throwable, String message, Object... args) {
 
     log(Level.DEBUG, throwable, message, args);
   }
 
+  /**
+   * Logs an object's string representation at DEBUG level.
+   *
+   * @param object object to log
+   */
   public void debug (Object object) {
 
     log(Level.DEBUG, object);
   }
 
+  /**
+   * Logs a lazily supplied message at DEBUG level.
+   *
+   * @param supplier supplier that produces the message
+   */
   public void debug (Supplier<String> supplier) {
 
     log(Level.DEBUG, supplier);
   }
 
+  /**
+   * Logs an object with a throwable at DEBUG level.
+   *
+   * @param throwable throwable to attach
+   * @param object    object to log
+   */
   public void debug (Throwable throwable, Object object) {
 
     log(Level.DEBUG, throwable, object);
   }
 
+  /**
+   * Logs a lazily supplied message with a throwable at DEBUG level.
+   *
+   * @param throwable throwable to attach
+   * @param supplier  supplier that produces the message
+   */
   public void debug (Throwable throwable, Supplier<String> supplier) {
 
     log(Level.DEBUG, throwable, supplier);
   }
 
+  /**
+   * Logs a throwable at INFO level.
+   *
+   * @param throwable throwable to attach
+   */
   public void info (Throwable throwable) {
 
     log(Level.INFO, throwable);
   }
 
+  /**
+   * Logs a formatted message at INFO level.
+   *
+   * @param message message template
+   * @param args    message arguments
+   */
   public void info (String message, Object... args) {
 
     log(Level.INFO, message, args);
   }
 
+  /**
+   * Logs a formatted message with a throwable at INFO level.
+   *
+   * @param throwable throwable to attach
+   * @param message   message template
+   * @param args      message arguments
+   */
   public void info (Throwable throwable, String message, Object... args) {
 
     log(Level.INFO, throwable, message, args);
   }
 
+  /**
+   * Logs an object's string representation at INFO level.
+   *
+   * @param object object to log
+   */
   public void info (Object object) {
 
     log(Level.INFO, object);
   }
 
+  /**
+   * Logs a lazily supplied message at INFO level.
+   *
+   * @param supplier supplier that produces the message
+   */
   public void info (Supplier<String> supplier) {
 
     log(Level.INFO, supplier);
   }
 
+  /**
+   * Logs an object with a throwable at INFO level.
+   *
+   * @param throwable throwable to attach
+   * @param object    object to log
+   */
   public void info (Throwable throwable, Object object) {
 
     log(Level.INFO, throwable, object);
   }
 
+  /**
+   * Logs a lazily supplied message with a throwable at INFO level.
+   *
+   * @param throwable throwable to attach
+   * @param supplier  supplier that produces the message
+   */
   public void info (Throwable throwable, Supplier<String> supplier) {
 
     log(Level.INFO, throwable, supplier);
   }
 
+  /**
+   * Logs a throwable at WARN level.
+   *
+   * @param throwable throwable to attach
+   */
   public void warn (Throwable throwable) {
 
     log(Level.WARN, throwable);
   }
 
+  /**
+   * Logs a formatted message at WARN level.
+   *
+   * @param message message template
+   * @param args    message arguments
+   */
   public void warn (String message, Object... args) {
 
     log(Level.WARN, message, args);
   }
 
+  /**
+   * Logs a formatted message with a throwable at WARN level.
+   *
+   * @param throwable throwable to attach
+   * @param message   message template
+   * @param args      message arguments
+   */
   public void warn (Throwable throwable, String message, Object... args) {
 
     log(Level.WARN, throwable, message, args);
   }
 
+  /**
+   * Logs an object's string representation at WARN level.
+   *
+   * @param object object to log
+   */
   public void warn (Object object) {
 
     log(Level.WARN, object);
   }
 
+  /**
+   * Logs a lazily supplied message at WARN level.
+   *
+   * @param supplier supplier that produces the message
+   */
   public void warn (Supplier<String> supplier) {
 
     log(Level.WARN, supplier);
   }
 
+  /**
+   * Logs an object with a throwable at WARN level.
+   *
+   * @param throwable throwable to attach
+   * @param object    object to log
+   */
   public void warn (Throwable throwable, Object object) {
 
     log(Level.WARN, throwable, object);
   }
 
+  /**
+   * Logs a lazily supplied message with a throwable at WARN level.
+   *
+   * @param throwable throwable to attach
+   * @param supplier  supplier that produces the message
+   */
   public void warn (Throwable throwable, Supplier<String> supplier) {
 
     log(Level.WARN, throwable, supplier);
   }
 
+  /**
+   * Logs a throwable at ERROR level.
+   *
+   * @param throwable throwable to attach
+   */
   public void error (Throwable throwable) {
 
     log(Level.ERROR, throwable);
   }
 
+  /**
+   * Logs a formatted message at ERROR level.
+   *
+   * @param message message template
+   * @param args    message arguments
+   */
   public void error (String message, Object... args) {
 
     log(Level.ERROR, message, args);
   }
 
+  /**
+   * Logs a formatted message with a throwable at ERROR level.
+   *
+   * @param throwable throwable to attach
+   * @param message   message template
+   * @param args      message arguments
+   */
   public void error (Throwable throwable, String message, Object... args) {
 
     log(Level.ERROR, throwable, message, args);
   }
 
+  /**
+   * Logs an object's string representation at ERROR level.
+   *
+   * @param object object to log
+   */
   public void error (Object object) {
 
     log(Level.ERROR, object);
   }
 
+  /**
+   * Logs a lazily supplied message at ERROR level.
+   *
+   * @param supplier supplier that produces the message
+   */
   public void error (Supplier<String> supplier) {
 
     log(Level.ERROR, supplier);
   }
 
+  /**
+   * Logs an object with a throwable at ERROR level.
+   *
+   * @param throwable throwable to attach
+   * @param object    object to log
+   */
   public void error (Throwable throwable, Object object) {
 
     log(Level.ERROR, throwable, object);
   }
 
+  /**
+   * Logs a lazily supplied message with a throwable at ERROR level.
+   *
+   * @param throwable throwable to attach
+   * @param supplier  supplier that produces the message
+   */
   public void error (Throwable throwable, Supplier<String> supplier) {
 
     log(Level.ERROR, throwable, supplier);
   }
 
+  /**
+   * Logs a throwable at FATAL level.
+   *
+   * @param throwable throwable to attach
+   */
   public void fatal (Throwable throwable) {
 
     log(Level.FATAL, throwable);
   }
 
+  /**
+   * Logs a formatted message at FATAL level.
+   *
+   * @param message message template
+   * @param args    message arguments
+   */
   public void fatal (String message, Object... args) {
 
     log(Level.FATAL, message, args);
   }
 
+  /**
+   * Logs a formatted message with a throwable at FATAL level.
+   *
+   * @param throwable throwable to attach
+   * @param message   message template
+   * @param args      message arguments
+   */
   public void fatal (Throwable throwable, String message, Object... args) {
 
     log(Level.FATAL, throwable, message, args);
   }
 
+  /**
+   * Logs an object's string representation at FATAL level.
+   *
+   * @param object object to log
+   */
   public void fatal (Object object) {
 
     log(Level.FATAL, object);
   }
 
+  /**
+   * Logs a lazily supplied message at FATAL level.
+   *
+   * @param supplier supplier that produces the message
+   */
   public void fatal (Supplier<String> supplier) {
 
     log(Level.FATAL, supplier);
   }
 
+  /**
+   * Logs an object with a throwable at FATAL level.
+   *
+   * @param throwable throwable to attach
+   * @param object    object to log
+   */
   public void fatal (Throwable throwable, Object object) {
 
     log(Level.FATAL, throwable, object);
   }
 
+  /**
+   * Logs a lazily supplied message with a throwable at FATAL level.
+   *
+   * @param throwable throwable to attach
+   * @param supplier  supplier that produces the message
+   */
   public void fatal (Throwable throwable, Supplier<String> supplier) {
 
     log(Level.FATAL, throwable, supplier);
   }
 
+  /**
+   * Logs a throwable at the specified level, or the logger's default level if {@code null}.
+   *
+   * @param level     level to log at; falls back to current level when {@code null}
+   * @param throwable throwable to attach
+   */
   public void log (Level level, Throwable throwable) {
 
     loggerAdapter.logMessage((level == null) ? getLevel() : level, throwable, null);
   }
 
+  /**
+   * Logs a formatted message at the specified level, or the logger's default level if {@code null}.
+   *
+   * @param level   level to log at; falls back to current level when {@code null}
+   * @param message message template
+   * @param args    message arguments
+   */
   public void log (Level level, String message, Object... args) {
 
     loggerAdapter.logMessage((level == null) ? getLevel() : level, null, message, args);
   }
 
+  /**
+   * Logs a formatted message with a throwable at the specified level, or the logger's default level if {@code null}.
+   *
+   * @param level     level to log at; falls back to current level when {@code null}
+   * @param throwable throwable to attach
+   * @param message   message template
+   * @param args      message arguments
+   */
   public void log (Level level, Throwable throwable, String message, Object... args) {
 
     loggerAdapter.logMessage((level == null) ? getLevel() : level, throwable, message, args);
   }
 
+  /**
+   * Logs an object's string representation at the specified level, or the logger's default level if {@code null}.
+   *
+   * @param level  level to log at; falls back to current level when {@code null}
+   * @param object object to log
+   */
   public void log (Level level, Object object) {
 
     loggerAdapter.logMessage((level == null) ? getLevel() : level, null, object);
   }
 
+  /**
+   * Logs a lazily supplied message at the specified level, or the logger's default level if {@code null}.
+   *
+   * @param level    level to log at; falls back to current level when {@code null}
+   * @param supplier supplier that produces the message
+   */
   public void log (Level level, Supplier<String> supplier) {
 
     loggerAdapter.logMessage((level == null) ? getLevel() : level, null, supplier);
   }
 
+  /**
+   * Logs an object with a throwable at the specified level, or the logger's default level if {@code null}.
+   *
+   * @param level     level to log at; falls back to current level when {@code null}
+   * @param throwable throwable to attach
+   * @param object    object to log
+   */
   public void log (Level level, Throwable throwable, Object object) {
 
     loggerAdapter.logMessage((level == null) ? getLevel() : level, throwable, object);
   }
 
+  /**
+   * Logs a lazily supplied message with a throwable at the specified level, or the logger's default level if {@code null}.
+   *
+   * @param level     level to log at; falls back to current level when {@code null}
+   * @param throwable throwable to attach
+   * @param supplier  supplier that produces the message
+   */
   public void log (Level level, Throwable throwable, Supplier<String> supplier) {
 
     loggerAdapter.logMessage((level == null) ? getLevel() : level, throwable, supplier);

@@ -42,6 +42,10 @@ import org.smallmind.scribe.pen.Record;
 import org.smallmind.scribe.pen.adapter.LoggerAdapter;
 import org.smallmind.scribe.pen.adapter.LoggingBlueprint;
 
+/**
+ * Logging blueprint that adapts the scribe API to Java Util Logging.
+ * Provides logger adapters and error record handling for JUL integration.
+ */
 public class JDKLoggingBlueprint extends LoggingBlueprint<LogRecord> {
 
   static {
@@ -49,12 +53,27 @@ public class JDKLoggingBlueprint extends LoggingBlueprint<LogRecord> {
     LoggerManager.addLoggingPackagePrefix("java.util.logging.");
   }
 
+  /**
+   * Creates a logger adapter backed by a JUL logger.
+   *
+   * @param name the logger name
+   * @return a {@link LoggerAdapter} that delegates to JUL
+   */
   @Override
   public LoggerAdapter getLoggingAdapter (String name) {
 
     return new JDKLoggerAdapter(Logger.getLogger(name));
   }
 
+  /**
+   * Builds a JUL record representing an error condition.
+   *
+   * @param loggerName the logger name
+   * @param throwable  throwable to attach
+   * @param message    message template
+   * @param args       message arguments
+   * @return the constructed record
+   */
   @Override
   public Record<LogRecord> errorRecord (String loggerName, Throwable throwable, String message, Object... args) {
 

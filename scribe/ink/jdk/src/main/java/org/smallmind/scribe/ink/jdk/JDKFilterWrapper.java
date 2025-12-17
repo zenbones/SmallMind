@@ -36,30 +36,60 @@ import java.util.logging.LogRecord;
 import org.smallmind.scribe.pen.Filter;
 import org.smallmind.scribe.pen.adapter.RecordWrapper;
 
+/**
+ * Wraps a scribe {@link Filter} so it can be installed as a JUL {@link java.util.logging.Filter}.
+ */
 public class JDKFilterWrapper implements java.util.logging.Filter {
 
   private final Filter filter;
 
+  /**
+   * Creates a wrapper around the given scribe filter.
+   *
+   * @param filter the filter to wrap
+   */
   public JDKFilterWrapper (Filter filter) {
 
     this.filter = filter;
   }
 
+  /**
+   * Returns the wrapped scribe filter.
+   *
+   * @return the underlying filter
+   */
   public Filter getInnerFilter () {
 
     return filter;
   }
 
+  /**
+   * Applies the wrapped filter to the supplied JUL record.
+   *
+   * @param record JUL record carrying the scribe record wrapper
+   * @return {@code true} if logging should proceed
+   */
   public boolean isLoggable (LogRecord record) {
 
     return filter.willLog(((RecordWrapper)record).getRecord());
   }
 
+  /**
+   * Delegates hash code computation to the wrapped filter.
+   *
+   * @return the hash code of the underlying filter
+   */
   public int hashCode () {
 
     return filter.hashCode();
   }
 
+  /**
+   * Compares this wrapper to another object based on the wrapped filter.
+   *
+   * @param obj object to compare against
+   * @return {@code true} if the wrapped filters are equal
+   */
   public boolean equals (Object obj) {
 
     if (obj instanceof JDKFilterWrapper) {

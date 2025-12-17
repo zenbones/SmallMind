@@ -35,8 +35,18 @@ package org.smallmind.scribe.ink.jdk;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.scribe.pen.Level;
 
+/**
+ * Utility for translating between scribe {@link Level} values and JUL {@link java.util.logging.Level}.
+ */
 public class JDKLevelTranslator {
 
+  /**
+   * Converts a JUL level into the corresponding scribe level.
+   *
+   * @param level JUL level value
+   * @return the matching scribe level, or {@code null} if none provided
+   * @throws UnknownSwitchCaseException if the level is not recognized
+   */
   public static Level getLevel (java.util.logging.Level level) {
 
     if (level == null) {
@@ -64,6 +74,13 @@ public class JDKLevelTranslator {
     }
   }
 
+  /**
+   * Converts a scribe level into the corresponding JUL level.
+   *
+   * @param level scribe level value
+   * @return the matching JUL level
+   * @throws UnknownSwitchCaseException if the level is not recognized
+   */
   public static java.util.logging.Level getJDKLevel (Level level) {
 
     switch (level) {

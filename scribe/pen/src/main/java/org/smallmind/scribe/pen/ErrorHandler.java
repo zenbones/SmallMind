@@ -32,9 +32,28 @@
  */
 package org.smallmind.scribe.pen;
 
+/**
+ * Handles errors that occur during logging.
+ */
 public interface ErrorHandler {
 
+  /**
+   * Processes an error reported by a logger.
+   *
+   * @param loggerName   name of the logger that encountered the error
+   * @param throwable    the failure cause
+   * @param errorMessage message template describing the error
+   * @param args         arguments applied to the message template
+   */
   void process (String loggerName, Throwable throwable, String errorMessage, Object... args);
 
+  /**
+   * Processes an error reported while handling a specific record.
+   *
+   * @param record       record being processed
+   * @param throwable    the failure cause
+   * @param errorMessage message template describing the error
+   * @param args         arguments applied to the message template
+   */
   void process (Record<?> record, Throwable throwable, String errorMessage, Object... args);
 }

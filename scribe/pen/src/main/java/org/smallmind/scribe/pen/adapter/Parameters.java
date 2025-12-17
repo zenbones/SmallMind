@@ -35,12 +35,23 @@ package org.smallmind.scribe.pen.adapter;
 import java.io.Serializable;
 import org.smallmind.scribe.pen.Parameter;
 
+/**
+ * Thread-local implementation of {@link ParameterAdapter} using inheritable thread storage.
+ */
 public class Parameters implements ParameterAdapter {
 
   private static final Parameters INSTANCE = new Parameters();
 
+  /**
+   * Thread-local storage for parameters, inherited by child threads.
+   */
   private static final InheritableThreadLocal<RecordParameters> RECORD_PARAMETERS_LOCAL = new InheritableThreadLocal<>() {
 
+    /**
+     * Initializes thread-local storage with an empty parameter set.
+     *
+     * @return new {@link RecordParameters} instance
+     */
     @Override
     protected RecordParameters initialValue () {
 
@@ -48,35 +59,65 @@ public class Parameters implements ParameterAdapter {
     }
   };
 
+  /**
+   * Returns the singleton parameter adapter instance.
+   *
+   * @return shared {@link Parameters} instance
+   */
   public static Parameters getInstance () {
 
     return INSTANCE;
   }
 
+  /**
+   * Adds or replaces a parameter value for the current thread.
+   *
+   * @param key   parameter key
+   * @param value serializable value
+   */
   @Override
   public void put (String key, Serializable value) {
 
     RECORD_PARAMETERS_LOCAL.get().put(key, value);
   }
 
+  /**
+   * Removes a parameter for the current thread.
+   *
+   * @param key key to remove
+   */
   @Override
   public void remove (String key) {
 
     RECORD_PARAMETERS_LOCAL.get().remove(key);
   }
 
+  /**
+   * Clears all parameters for the current thread.
+   */
   @Override
   public void clear () {
 
     RECORD_PARAMETERS_LOCAL.get().clear();
   }
 
+  /**
+   * Retrieves a parameter for the current thread.
+   *
+   * @param key key to look up
+   * @return value or {@code null} if absent
+   */
   @Override
   public Serializable get (String key) {
 
     return RECORD_PARAMETERS_LOCAL.get().get(key);
   }
 
+  /**
+   * Returns all parameters for the current thread.
+   *
+   * @return array of parameters
+   */
   @Override
   public Parameter[] getParameters () {
 

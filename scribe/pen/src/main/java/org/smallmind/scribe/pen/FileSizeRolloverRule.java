@@ -32,16 +32,28 @@
  */
 package org.smallmind.scribe.pen;
 
+/**
+ * Rollover rule that triggers when the log file exceeds a maximum size.
+ */
 public class FileSizeRolloverRule implements RolloverRule {
 
   private FileSizeQuantifier fileSizeQuantifier;
   private long maxSize;
 
+  /**
+   * Creates a rollover rule with the default threshold of 10 megabytes.
+   */
   public FileSizeRolloverRule () {
 
     this(10, FileSizeQuantifier.MEGABYTES);
   }
 
+  /**
+   * Creates a rollover rule with the provided size and quantifier.
+   *
+   * @param maxSize            size threshold before rollover
+   * @param fileSizeQuantifier unit multiplier for the size
+   */
   public FileSizeRolloverRule (long maxSize, FileSizeQuantifier fileSizeQuantifier) {
 
     super();
@@ -50,26 +62,54 @@ public class FileSizeRolloverRule implements RolloverRule {
     this.fileSizeQuantifier = fileSizeQuantifier;
   }
 
+  /**
+   * Retrieves the configured maximum file size threshold.
+   *
+   * @return maximum size before rollover
+   */
   public long getMaxSize () {
 
     return maxSize;
   }
 
+  /**
+   * Sets the maximum file size before rollover.
+   *
+   * @param maxSize size threshold in units of {@link FileSizeQuantifier}
+   */
   public void setMaxSize (long maxSize) {
 
     this.maxSize = maxSize;
   }
 
+  /**
+   * Returns the quantifier used to interpret the maximum size.
+   *
+   * @return size quantifier
+   */
   public FileSizeQuantifier getFileSizeQuantifier () {
 
     return fileSizeQuantifier;
   }
 
+  /**
+   * Sets the size quantifier multiplier.
+   *
+   * @param fileSizeQuantifier quantifier to use
+   */
   public void setFileSizeQuantifier (FileSizeQuantifier fileSizeQuantifier) {
 
     this.fileSizeQuantifier = fileSizeQuantifier;
   }
 
+  /**
+   * Determines whether writing the pending bytes would exceed the configured threshold.
+   *
+   * @param fileSize         current file size in bytes
+   * @param lastModified     last modification time (ignored)
+   * @param bytesToBeWritten bytes about to be written
+   * @return {@code true} if rollover should occur
+   */
   public boolean willRollover (long fileSize, long lastModified, long bytesToBeWritten) {
 
     return (fileSize + bytesToBeWritten) > (maxSize * fileSizeQuantifier.getMultiplier());

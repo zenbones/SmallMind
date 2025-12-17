@@ -35,15 +35,26 @@ package org.smallmind.scribe.pen;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
+/**
+ * Template that matches logger names using a regular expression.
+ */
 public class RegExTemplate extends Template {
 
   private final AtomicReference<Pattern> loggerPatternRef = new AtomicReference<Pattern>();
 
+  /**
+   * Creates an uninitialized regex template; set the expression before use.
+   */
   public RegExTemplate () {
 
     super();
   }
 
+  /**
+   * Creates a template with a specific regex expression.
+   *
+   * @param expression regular expression used to match logger names
+   */
   public RegExTemplate (String expression) {
 
     super();
@@ -51,6 +62,14 @@ public class RegExTemplate extends Template {
     loggerPatternRef.set(Pattern.compile(expression));
   }
 
+  /**
+   * Creates a template with level, context behavior, and regex expression.
+   *
+   * @param level                 default level
+   * @param autoFillLoggerContext whether to auto-fill logger context
+   * @param expression            regular expression used to match logger names
+   * @throws LoggerException if initialization fails
+   */
   public RegExTemplate (Level level, boolean autoFillLoggerContext, String expression)
     throws LoggerException {
 
@@ -59,6 +78,17 @@ public class RegExTemplate extends Template {
     loggerPatternRef.set(Pattern.compile(expression));
   }
 
+  /**
+   * Creates a template with filters, appenders, enhancers, level, context behavior, and regex expression.
+   *
+   * @param filters               filters to apply
+   * @param appenders             appenders to attach
+   * @param enhancers             enhancers to apply
+   * @param level                 default level
+   * @param autoFillLoggerContext whether to auto-fill logger context
+   * @param expression            regular expression used to match logger names
+   * @throws LoggerException if initialization fails
+   */
   public RegExTemplate (Filter[] filters, Appender[] appenders, Enhancer[] enhancers, Level level, boolean autoFillLoggerContext, String expression)
     throws LoggerException {
 
@@ -67,6 +97,12 @@ public class RegExTemplate extends Template {
     loggerPatternRef.set(Pattern.compile(expression));
   }
 
+  /**
+   * Sets the regex expression to match logger names, only if not already initialized.
+   *
+   * @param expression regular expression used to match logger names
+   * @throws LoggerRuntimeException if the pattern was already set
+   */
   public void setExpression (String expression) {
 
     if (!loggerPatternRef.compareAndSet(null, Pattern.compile(expression))) {
@@ -74,6 +110,13 @@ public class RegExTemplate extends Template {
     }
   }
 
+  /**
+   * Matches the provided logger name against the configured regex.
+   *
+   * @param loggerName logger name to evaluate
+   * @return {@code Integer.MAX_VALUE} for a match, otherwise {@link Template#NO_MATCH}
+   * @throws LoggerRuntimeException if the pattern was never initialized
+   */
   public int matchLogger (String loggerName) {
 
     if (loggerPatternRef.get() == null) {

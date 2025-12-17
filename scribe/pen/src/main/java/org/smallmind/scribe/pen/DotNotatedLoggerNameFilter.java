@@ -41,6 +41,9 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.smallmind.nutsnbolts.util.DotNotation;
 import org.smallmind.nutsnbolts.util.DotNotationException;
 
+/**
+ * Filter that enables logging for specific logger names matched via dot-notation patterns, while passing through higher-level events.
+ */
 public class DotNotatedLoggerNameFilter implements Filter {
 
   private final HashMap<String, DotNotation> patternMap = new HashMap<>();
@@ -50,18 +53,36 @@ public class DotNotatedLoggerNameFilter implements Filter {
   private final Lock patternWriteLock;
   private Level passThroughLevel;
 
+  /**
+   * Creates a filter with default pass-through level INFO.
+   *
+   * @throws LoggerException if pattern initialization fails
+   */
   public DotNotatedLoggerNameFilter ()
     throws LoggerException {
 
     this(Level.INFO, null);
   }
 
+  /**
+   * Creates a filter with a specific pass-through level.
+   *
+   * @param passThroughLevel minimum level that always passes
+   * @throws LoggerException if pattern initialization fails
+   */
   public DotNotatedLoggerNameFilter (Level passThroughLevel)
     throws LoggerException {
 
     this(passThroughLevel, null);
   }
 
+  /**
+   * Creates a filter with a pass-through level and initial patterns.
+   *
+   * @param passThroughLevel minimum level that always passes
+   * @param patterns         logger name patterns to enable
+   * @throws LoggerException if pattern initialization fails
+   */
   public DotNotatedLoggerNameFilter (Level passThroughLevel, List<String> patterns)
     throws LoggerException {
 
@@ -78,16 +99,32 @@ public class DotNotatedLoggerNameFilter implements Filter {
     patternWriteLock = patternReadWriteLock.writeLock();
   }
 
+  /**
+   * Retrieves the configured pass-through level.
+   *
+   * @return minimum level that always passes
+   */
   public synchronized Level getPassThroughLevel () {
 
     return passThroughLevel;
   }
 
+  /**
+   * Sets the level at which records automatically pass through the filter.
+   *
+   * @param passThroughLevel minimum level that always passes
+   */
   public synchronized void setPassThroughLevel (Level passThroughLevel) {
 
     this.passThroughLevel = passThroughLevel;
   }
 
+  /**
+   * Replaces all patterns used to enable logging for matching class names.
+   *
+   * @param patterns dot-notation patterns
+   * @throws LoggerException if any pattern is invalid
+   */
   public synchronized void setPatterns (List<String> patterns)
     throws LoggerException {
 
@@ -102,11 +139,24 @@ public class DotNotatedLoggerNameFilter implements Filter {
     }
   }
 
+  /**
+   * Determines whether logging is enabled for the given class name.
+   *
+   * @param className logger name to test
+   * @return {@code true} if matched or previously cached, otherwise {@code false}
+   */
   public boolean isClassNameOn (String className) {
 
     return (className != null) && (classList.contains(className) || noCachedMatch(className, true));
   }
 
+  /**
+   * Searches for a pattern match, optionally caching successful matches.
+   *
+   * @param className  logger name to test
+   * @param addIfFound whether to cache the match
+   * @return {@code true} if a pattern matches; otherwise {@code false}
+   */
   private boolean noCachedMatch (String className, boolean addIfFound) {
 
     patternReadLock.lock();
@@ -131,6 +181,13 @@ public class DotNotatedLoggerNameFilter implements Filter {
     }
   }
 
+  /**
+   * Adds or removes a pattern at runtime and updates cached matches accordingly.
+   *
+   * @param protoPattern pattern to add or remove
+   * @param isOn         {@code true} to add, {@code false} to remove
+   * @throws LoggerException if the pattern cannot be parsed when adding
+   */
   public void setDebugCategory (String protoPattern, boolean isOn)
     throws LoggerException {
 
@@ -152,6 +209,12 @@ public class DotNotatedLoggerNameFilter implements Filter {
     }
   }
 
+  /**
+   * Evaluates whether the record should be logged based on level and pattern matches.
+   *
+   * @param record record to evaluate
+   * @return {@code true} if the record passes the level threshold or matches a configured pattern
+   */
   public boolean willLog (Record<?> record) {
 
     return record.getLevel().atLeast(passThroughLevel) || isClassNameOn(record.getLoggerName());

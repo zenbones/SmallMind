@@ -32,28 +32,63 @@
  */
 package org.smallmind.scribe.pen;
 
+/**
+ * Template that matches all loggers with a baseline priority.
+ */
 public class DefaultTemplate extends Template {
 
+  /**
+   * Creates a template with default level and context settings.
+   */
   public DefaultTemplate () {
 
     super();
   }
 
+  /**
+   * Creates a template with the given level and context behavior.
+   *
+   * @param level                 default log level
+   * @param autoFillLoggerContext whether to auto-fill logger context
+   */
   public DefaultTemplate (Level level, boolean autoFillLoggerContext) {
 
     super(level, autoFillLoggerContext);
   }
 
+  /**
+   * Creates a template with level, context behavior, and appenders.
+   *
+   * @param level                 default log level
+   * @param autoFillLoggerContext whether to auto-fill logger context
+   * @param appenders             appenders to attach
+   */
   public DefaultTemplate (Level level, boolean autoFillLoggerContext, Appender... appenders) {
 
     super(level, autoFillLoggerContext, appenders);
   }
 
+  /**
+   * Creates a template with filters, appenders, enhancers, level, and context behavior.
+   *
+   * @param filters               filters to apply
+   * @param appenders             appenders to attach
+   * @param enhancers             enhancers to apply
+   * @param level                 default log level
+   * @param autoFillLoggerContext whether to auto-fill logger context
+   */
   public DefaultTemplate (Filter[] filters, Appender[] appenders, Enhancer[] enhancers, Level level, boolean autoFillLoggerContext) {
 
     super(filters, appenders, enhancers, level, autoFillLoggerContext);
   }
 
+  /**
+   * Matches any logger name with a minimal priority.
+   *
+   * @param loggerName logger name
+   * @return {@code NO_MATCH + 1} for all loggers
+   */
+  @Override
   public int matchLogger (String loggerName) {
 
     return NO_MATCH + 1;

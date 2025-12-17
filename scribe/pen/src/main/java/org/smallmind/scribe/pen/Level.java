@@ -32,15 +32,30 @@
  */
 package org.smallmind.scribe.pen;
 
+/**
+ * Severity levels recognized by the scribe logging system.
+ */
 public enum Level {
 
   TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF;
 
+  /**
+   * Indicates whether this level is at least as severe as the supplied level.
+   *
+   * @param level comparison level
+   * @return {@code true} if this level's ordinal is greater than or equal to the supplied level
+   */
   public boolean atLeast (Level level) {
 
     return this.ordinal() >= level.ordinal();
   }
 
+  /**
+   * Indicates whether this level is no greater (i.e., less severe or equal) than the supplied level.
+   *
+   * @param level comparison level
+   * @return {@code true} if this level's ordinal is less than or equal to the supplied level
+   */
   public boolean noGreater (Level level) {
 
     return this.ordinal() <= level.ordinal();

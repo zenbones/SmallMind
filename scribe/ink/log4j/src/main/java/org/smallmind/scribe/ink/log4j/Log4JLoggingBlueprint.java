@@ -43,6 +43,9 @@ import org.smallmind.scribe.pen.Record;
 import org.smallmind.scribe.pen.adapter.LoggerAdapter;
 import org.smallmind.scribe.pen.adapter.LoggingBlueprint;
 
+/**
+ * Logging blueprint that connects the scribe API to Log4j2.
+ */
 public class Log4JLoggingBlueprint extends LoggingBlueprint<LogEvent> {
 
   static {
@@ -50,12 +53,27 @@ public class Log4JLoggingBlueprint extends LoggingBlueprint<LogEvent> {
     LoggerManager.addLoggingPackagePrefix("org.apache.log4j.");
   }
 
+  /**
+   * Creates a logger adapter backed by a Log4j2 logger.
+   *
+   * @param name the logger name
+   * @return a {@link LoggerAdapter} using Log4j2
+   */
   @Override
   public LoggerAdapter getLoggingAdapter (String name) {
 
     return new Log4JLoggerAdapter((Logger)LogManager.getLogger(name));
   }
 
+  /**
+   * Builds a Log4j2 record representing an error condition.
+   *
+   * @param loggerName the logger name
+   * @param throwable  throwable to attach
+   * @param message    message template
+   * @param args       message arguments
+   * @return the constructed record
+   */
   @Override
   public Record<LogEvent> errorRecord (String loggerName, Throwable throwable, String message, Object... args) {
 

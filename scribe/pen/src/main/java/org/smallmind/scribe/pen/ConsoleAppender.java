@@ -32,23 +32,46 @@
  */
 package org.smallmind.scribe.pen;
 
+/**
+ * Appender that writes formatted output to standard out.
+ */
 public class ConsoleAppender extends AbstractFormattedAppender {
 
+  /**
+   * Creates a console appender with no formatter or error handler.
+   */
   public ConsoleAppender () {
 
     this(null, null);
   }
 
+  /**
+   * Creates a console appender with a formatter.
+   *
+   * @param formatter formatter to apply to records
+   */
   public ConsoleAppender (Formatter formatter) {
 
     this(formatter, null);
   }
 
+  /**
+   * Creates a console appender with formatter and error handler.
+   *
+   * @param formatter    formatter to apply to records
+   * @param errorHandler handler to invoke on failures
+   */
   public ConsoleAppender (Formatter formatter, ErrorHandler errorHandler) {
 
     super(formatter, errorHandler);
   }
 
+  /**
+   * Writes the formatted output to standard out.
+   *
+   * @param formattedOutput text to emit
+   * @throws RuntimeException if console output fails
+   */
   public synchronized void handleOutput (String formattedOutput) {
 
     System.out.print(formattedOutput);

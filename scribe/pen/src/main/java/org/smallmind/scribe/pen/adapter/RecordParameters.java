@@ -37,8 +37,16 @@ import java.util.HashMap;
 import java.util.Map;
 import org.smallmind.scribe.pen.Parameter;
 
+/**
+ * Simple map of parameters with a helper to expose them as {@link Parameter} objects.
+ */
 public class RecordParameters extends HashMap<String, Serializable> {
 
+  /**
+   * Converts the stored entries into an array of {@link Parameter}s.
+   *
+   * @return parameters array
+   */
   public Parameter[] asParameters () {
 
     Parameter[] parameters = new Parameter[size()];

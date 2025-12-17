@@ -36,30 +36,60 @@ import org.apache.logging.log4j.core.LogEvent;
 import org.smallmind.scribe.pen.Filter;
 import org.smallmind.scribe.pen.Record;
 
+/**
+ * Adapts a Log4j2 {@link org.apache.logging.log4j.core.Filter} to the scribe {@link Filter} interface.
+ */
 public class Log4JFilterAdapter implements Filter {
 
   private final org.apache.logging.log4j.core.Filter filter;
 
+  /**
+   * Creates an adapter around the provided Log4j2 filter.
+   *
+   * @param filter the native filter
+   */
   public Log4JFilterAdapter (org.apache.logging.log4j.core.Filter filter) {
 
     this.filter = filter;
   }
 
+  /**
+   * Returns the wrapped Log4j2 filter.
+   *
+   * @return the native filter
+   */
   protected org.apache.logging.log4j.core.Filter getNativeFilter () {
 
     return filter;
   }
 
+  /**
+   * Determines whether the supplied record should be logged by delegating to the Log4j2 filter.
+   *
+   * @param record candidate record
+   * @return {@code true} if logging should proceed
+   */
   public boolean willLog (Record<?> record) {
 
     return filter.filter((LogEvent)record.getNativeLogEntry()) != org.apache.logging.log4j.core.Filter.Result.DENY;
   }
 
+  /**
+   * Computes the hash code based on the wrapped filter.
+   *
+   * @return the filter hash code
+   */
   public int hashCode () {
 
     return filter.hashCode();
   }
 
+  /**
+   * Compares this adapter to another object based on the underlying filter.
+   *
+   * @param obj object to compare against
+   * @return {@code true} if the wrapped filters are equal
+   */
   public boolean equals (Object obj) {
 
     if (obj instanceof Log4JFilterAdapter) {

@@ -32,25 +32,46 @@
  */
 package org.smallmind.scribe.pen;
 
+/**
+ * Pattern rule that emits a static literal string.
+ */
 public class StaticPatternRule implements PatternRule {
 
   private final String staticField;
 
+  /**
+   * Creates a rule that always returns the given literal.
+   *
+   * @param staticField literal text to emit
+   */
   public StaticPatternRule (String staticField) {
 
     this.staticField = staticField;
   }
 
+  /**
+   * Static rules do not produce headers.
+   *
+   * @return always {@code null}
+   */
   public String getHeader () {
 
     return null;
   }
 
+  /**
+   * Static rules do not produce footers.
+   *
+   * @return always {@code null}
+   */
   public String getFooter () {
 
     return null;
   }
 
+  /**
+   * Returns the static literal regardless of record contents.
+   */
   public String convert (Record<?> record, Timestamp timestamp) {
 
     return staticField;

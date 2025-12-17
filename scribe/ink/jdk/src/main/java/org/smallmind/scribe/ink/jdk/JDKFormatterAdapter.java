@@ -36,20 +36,39 @@ import java.util.logging.Formatter;
 import java.util.logging.LogRecord;
 import org.smallmind.scribe.pen.Record;
 
+/**
+ * Adapts a JUL {@link Formatter} to the scribe {@link org.smallmind.scribe.pen.Formatter} interface.
+ */
 public class JDKFormatterAdapter implements org.smallmind.scribe.pen.Formatter {
 
   private final Formatter formatter;
 
+  /**
+   * Creates an adapter around the provided JUL formatter.
+   *
+   * @param formatter the native formatter
+   */
   public JDKFormatterAdapter (Formatter formatter) {
 
     this.formatter = formatter;
   }
 
+  /**
+   * Exposes the underlying JUL formatter.
+   *
+   * @return the wrapped formatter
+   */
   public java.util.logging.Formatter getNativeFormatter () {
 
     return formatter;
   }
 
+  /**
+   * Formats a record by delegating to the JUL formatter, including header and footer.
+   *
+   * @param record record to format
+   * @return the formatted string
+   */
   public String format (Record<?> record) {
 
     StringBuilder formatBuilder = new StringBuilder();

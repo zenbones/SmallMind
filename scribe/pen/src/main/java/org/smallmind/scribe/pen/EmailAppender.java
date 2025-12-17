@@ -36,6 +36,9 @@ import org.smallmind.nutsnbolts.email.Authentication;
 import org.smallmind.nutsnbolts.email.Mail;
 import org.smallmind.nutsnbolts.email.Postman;
 
+/**
+ * Appender that sends formatted log output via SMTP email.
+ */
 public class EmailAppender extends AbstractFormattedAppender {
 
   private final Postman postman;
@@ -43,26 +46,63 @@ public class EmailAppender extends AbstractFormattedAppender {
   private String to;
   private String subject;
 
+  /**
+   * Creates a non-authenticated, non-secure email appender.
+   *
+   * @param smtpServer SMTP host
+   * @param smtpPort   SMTP port
+   */
   public EmailAppender (String smtpServer, int smtpPort) {
 
     this(smtpServer, smtpPort, Authentication.NONE, false);
   }
 
+  /**
+   * Creates an email appender with authentication.
+   *
+   * @param smtpServer     SMTP host
+   * @param smtpPort       SMTP port
+   * @param authentication auth mode
+   */
   public EmailAppender (String smtpServer, int smtpPort, Authentication authentication) {
 
     this(smtpServer, smtpPort, authentication, false);
   }
 
+  /**
+   * Creates a non-authenticated email appender with TLS/SSL toggle.
+   *
+   * @param smtpServer SMTP host
+   * @param smtpPort   SMTP port
+   * @param secure     true to enable security
+   */
   public EmailAppender (String smtpServer, int smtpPort, boolean secure) {
 
     this(smtpServer, smtpPort, Authentication.NONE, secure);
   }
 
+  /**
+   * Creates an email appender with full transport settings.
+   *
+   * @param smtpServer     SMTP host
+   * @param smtpPort       SMTP port
+   * @param authentication auth mode
+   * @param secure         true to enable security
+   */
   public EmailAppender (String smtpServer, int smtpPort, Authentication authentication, boolean secure) {
 
     postman = new Postman(smtpServer, smtpPort, authentication, secure);
   }
 
+  /**
+   * Creates an email appender with envelope and subject preconfigured.
+   *
+   * @param smtpServer SMTP host
+   * @param smtpPort   SMTP port
+   * @param from       from address
+   * @param to         destination address
+   * @param subject    subject line
+   */
   public EmailAppender (String smtpServer, int smtpPort, String from, String to, String subject) {
 
     this(smtpServer, smtpPort);
@@ -72,21 +112,33 @@ public class EmailAppender extends AbstractFormattedAppender {
     this.subject = subject;
   }
 
+  /**
+   * Sets the from address.
+   */
   public void setFrom (String from) {
 
     this.from = from;
   }
 
+  /**
+   * Sets the destination address.
+   */
   public void setTo (String to) {
 
     this.to = to;
   }
 
+  /**
+   * Sets the subject line.
+   */
   public void setSubject (String subject) {
 
     this.subject = subject;
   }
 
+  /**
+   * Sends the formatted output as an email body.
+   */
   public void handleOutput (String output)
     throws Exception {
 

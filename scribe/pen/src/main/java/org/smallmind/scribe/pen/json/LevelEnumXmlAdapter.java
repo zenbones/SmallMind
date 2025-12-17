@@ -35,6 +35,9 @@ package org.smallmind.scribe.pen.json;
 import org.smallmind.nutsnbolts.json.EnumXmlAdapter;
 import org.smallmind.scribe.pen.Level;
 
+/**
+ * JAXB adapter for the {@link Level} enum.
+ */
 public class LevelEnumXmlAdapter extends EnumXmlAdapter<Level> {
 
 }

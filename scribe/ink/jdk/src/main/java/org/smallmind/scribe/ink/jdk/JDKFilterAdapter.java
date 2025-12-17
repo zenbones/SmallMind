@@ -36,30 +36,60 @@ import java.util.logging.LogRecord;
 import org.smallmind.scribe.pen.Filter;
 import org.smallmind.scribe.pen.Record;
 
+/**
+ * Adapts a JUL {@link java.util.logging.Filter} to the scribe {@link Filter} interface.
+ */
 public class JDKFilterAdapter implements Filter {
 
   private final java.util.logging.Filter filter;
 
+  /**
+   * Creates an adapter around the provided JUL filter.
+   *
+   * @param filter the native filter
+   */
   public JDKFilterAdapter (java.util.logging.Filter filter) {
 
     this.filter = filter;
   }
 
+  /**
+   * Returns the wrapped JUL filter.
+   *
+   * @return the native filter
+   */
   protected java.util.logging.Filter getNativeFilter () {
 
     return filter;
   }
 
+  /**
+   * Determines whether the supplied record should be logged by delegating to the JUL filter.
+   *
+   * @param record candidate record
+   * @return {@code true} if logging should proceed
+   */
   public boolean willLog (Record<?> record) {
 
     return filter.isLoggable((LogRecord)record.getNativeLogEntry());
   }
 
+  /**
+   * Computes the hash code of the adapter, delegating to the native filter.
+   *
+   * @return the filter hash code
+   */
   public int hashCode () {
 
     return filter.hashCode();
   }
 
+  /**
+   * Compares this adapter to another object based on the underlying filter.
+   *
+   * @param obj object to compare against
+   * @return {@code true} if the wrapped filters are equal
+   */
   public boolean equals (Object obj) {
 
     if (obj instanceof JDKFilterAdapter) {

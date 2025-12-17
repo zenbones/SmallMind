@@ -37,6 +37,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * Decorator that buffers and publishes records asynchronously to a wrapped appender.
+ */
 public class AsynchronousAppender extends AbstractWrappedAppender {
 
   private final AtomicBoolean finished = new AtomicBoolean(false);
@@ -44,11 +47,23 @@ public class AsynchronousAppender extends AbstractWrappedAppender {
   private final PublishWorker[] publishWorkers;
   private final int bufferSize;
 
+  /**
+   * Creates an asynchronous wrapper with defaults of buffer size 1 and single worker.
+   *
+   * @param internalAppender appender to delegate to
+   */
   public AsynchronousAppender (Appender internalAppender) {
 
     this(internalAppender, 1, 1);
   }
 
+  /**
+   * Creates an asynchronous wrapper with configurable buffer and concurrency.
+   *
+   * @param internalAppender appender to delegate to
+   * @param bufferSize       max buffered records before rejecting
+   * @param concurrencyLimit number of worker threads
+   */
   public AsynchronousAppender (Appender internalAppender, int bufferSize, int concurrencyLimit) {
 
     super(internalAppender);
@@ -68,6 +83,12 @@ public class AsynchronousAppender extends AbstractWrappedAppender {
     }
   }
 
+  /**
+   * Enqueues the record for asynchronous publication. If the appender has been
+   * closed or the buffer is full, the record is rejected and routed to the error handler.
+   *
+   * @param record record to publish asynchronously
+   */
   @Override
   public void publish (Record<?> record) {
 
@@ -82,6 +103,13 @@ public class AsynchronousAppender extends AbstractWrappedAppender {
     }
   }
 
+  /**
+   * Stops worker threads and closes the wrapped appender once queues are drained.
+   *
+   * @throws InterruptedException if interrupted while waiting for workers to exit
+   * @throws LoggerException      if the wrapped appender fails to close
+   */
+  @Override
   public void close ()
     throws InterruptedException, LoggerException {
 
@@ -97,6 +125,11 @@ public class AsynchronousAppender extends AbstractWrappedAppender {
     private final CountDownLatch exitLatch = new CountDownLatch(1);
     private Thread runnableThread;
 
+    /**
+     * Signals the worker to finish and waits for it to exit.
+     *
+     * @throws InterruptedException if interrupted while waiting
+     */
     private void finish ()
       throws InterruptedException {
 
@@ -106,6 +139,10 @@ public class AsynchronousAppender extends AbstractWrappedAppender {
       exitLatch.await();
     }
 
+    /**
+     * Continuously drains the queue and forwards records to the wrapped appender
+     * until signaled to stop. Errors are routed to the configured error handler.
+     */
     public void run () {
 
       try {

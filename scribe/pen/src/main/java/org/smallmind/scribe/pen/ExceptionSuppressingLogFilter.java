@@ -36,11 +36,19 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+/**
+ * Filter that prevents logging of specific throwable types.
+ */
 public class ExceptionSuppressingLogFilter implements Filter {
 
   private static final HashSet<Class<? extends Throwable>> SUPPRESSED_THROWABLE_SET = new HashSet<>();
   private static final ReentrantReadWriteLock UPDATE_LOCK = new ReentrantReadWriteLock();
 
+  /**
+   * Adds throwable classes to the suppressed set. Future logs containing these throwables will be filtered out.
+   *
+   * @param suppressedThrowableClasses list of throwable classes to suppress
+   */
   public static void addSuppressedThrowableClasses (List<Class<? extends Throwable>> suppressedThrowableClasses) {
 
     if (suppressedThrowableClasses != null) {
@@ -53,6 +61,12 @@ public class ExceptionSuppressingLogFilter implements Filter {
     }
   }
 
+  /**
+   * Determines whether the record should be logged, rejecting records that carry suppressed throwable types.
+   *
+   * @param record record under evaluation
+   * @return {@code true} if no throwable is present or it is not suppressed
+   */
   @Override
   public boolean willLog (Record<?> record) {
 

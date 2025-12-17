@@ -37,26 +37,55 @@ import org.smallmind.scribe.pen.ErrorHandler;
 import org.smallmind.scribe.pen.MessageTranslator;
 import org.smallmind.scribe.pen.Record;
 
+/**
+ * Adapts a Log4j2 {@link org.apache.logging.log4j.core.ErrorHandler} to the scribe {@link ErrorHandler} contract.
+ */
 public class Log4JErrorHandlerAdapter implements ErrorHandler {
 
   private final org.apache.logging.log4j.core.ErrorHandler errorHandler;
 
+  /**
+   * Creates an adapter around the provided Log4j2 error handler.
+   *
+   * @param errorHandler native error handler
+   */
   public Log4JErrorHandlerAdapter (org.apache.logging.log4j.core.ErrorHandler errorHandler) {
 
     this.errorHandler = errorHandler;
   }
 
+  /**
+   * Returns the wrapped Log4j2 error handler.
+   *
+   * @return the native error handler
+   */
   public org.apache.logging.log4j.core.ErrorHandler getNativeErrorHandler () {
 
     return errorHandler;
   }
 
+  /**
+   * Handles an error originating from a logger.
+   *
+   * @param loggerName   name of the logger that produced the error
+   * @param throwable    throwable to report
+   * @param errorMessage message template describing the error
+   * @param args         arguments applied to the message template
+   */
   @Override
   public void process (String loggerName, Throwable throwable, String errorMessage, Object... args) {
 
     errorHandler.error(MessageTranslator.translateMessage(errorMessage, args), null, throwable);
   }
 
+  /**
+   * Handles an error originating from a record, delegating to the Log4j2 handler with the native event.
+   *
+   * @param record       record that triggered the error handling
+   * @param throwable    throwable to report
+   * @param errorMessage message template describing the error
+   * @param args         arguments applied to the message template
+   */
   @Override
   public void process (Record<?> record, Throwable throwable, String errorMessage, Object... args) {
 

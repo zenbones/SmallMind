@@ -40,6 +40,9 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 
+/**
+ * Spring factory bean for constructing an AWS CloudWatch Logs client with static credentials.
+ */
 public class CloudWatchLogsClientFactory implements FactoryBean<CloudWatchLogsClient>, InitializingBean {
 
   private CloudWatchLogsClient client;
@@ -47,39 +50,74 @@ public class CloudWatchLogsClientFactory implements FactoryBean<CloudWatchLogsCl
   private String awsAccessKey;
   private String awsSecretKey;
 
+  /**
+   * Sets the AWS access key.
+   *
+   * @param awsAccessKey access key id
+   */
   public void setAwsAccessKey (String awsAccessKey) {
 
     this.awsAccessKey = awsAccessKey;
   }
 
+  /**
+   * Sets the AWS secret key.
+   *
+   * @param awsSecretKey secret access key
+   */
   public void setAwsSecretKey (String awsSecretKey) {
 
     this.awsSecretKey = awsSecretKey;
   }
 
+  /**
+   * Sets the AWS region.
+   *
+   * @param region AWS region
+   */
   public void setRegion (Region region) {
 
     this.region = region;
   }
 
+  /**
+   * Indicates the factory produces a singleton instance.
+   *
+   * @return always {@code true}
+   */
   @Override
   public boolean isSingleton () {
 
     return true;
   }
 
+  /**
+   * Returns the type of object produced by this factory.
+   *
+   * @return {@link CloudWatchLogsClient} class
+   */
   @Override
   public Class<?> getObjectType () {
 
     return CloudWatchLogsClient.class;
   }
 
+  /**
+   * Provides the created {@link CloudWatchLogsClient} instance.
+   *
+   * @return configured client
+   */
   @Override
   public CloudWatchLogsClient getObject () {
 
     return client;
   }
 
+  /**
+   * Builds the CloudWatch Logs client after required properties are set.
+   *
+   * @throws Exception if client construction fails
+   */
   @Override
   public void afterPropertiesSet ()
     throws Exception {

@@ -32,7 +32,16 @@
  */
 package org.smallmind.scribe.pen;
 
+/**
+ * Evaluates whether a record should be logged.
+ */
 public interface Filter {
 
+  /**
+   * Determines if the given record is eligible for logging.
+   *
+   * @param record candidate record
+   * @return {@code true} if logging should proceed
+   */
   boolean willLog (Record<?> record);
 }

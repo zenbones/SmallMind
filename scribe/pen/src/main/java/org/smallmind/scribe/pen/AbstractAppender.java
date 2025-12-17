@@ -35,6 +35,10 @@ package org.smallmind.scribe.pen;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+/**
+ * Base implementation of an {@link Appender} that manages filters, error handling, and active state.
+ * Subclasses need only implement {@link #handleOutput(Record)} to emit records.
+ */
 public abstract class AbstractAppender implements Appender {
 
   private final ConcurrentLinkedQueue<Filter> filterList;
@@ -42,16 +46,30 @@ public abstract class AbstractAppender implements Appender {
   private String name;
   private boolean active = true;
 
+  /**
+   * Constructs an appender without a name or error handler.
+   */
   public AbstractAppender () {
 
     this(null, null);
   }
 
+  /**
+   * Constructs an appender with the given error handler.
+   *
+   * @param errorHandler handler to invoke on failures
+   */
   public AbstractAppender (ErrorHandler errorHandler) {
 
     this(null, errorHandler);
   }
 
+  /**
+   * Constructs an appender with a name and error handler.
+   *
+   * @param name         appender name
+   * @param errorHandler handler to invoke on failures
+   */
   public AbstractAppender (String name, ErrorHandler errorHandler) {
 
     this.name = name;
@@ -60,27 +78,51 @@ public abstract class AbstractAppender implements Appender {
     filterList = new ConcurrentLinkedQueue<>();
   }
 
+  /**
+   * Emits the record to the concrete output target.
+   *
+   * @param record record to output
+   * @throws Exception if writing fails
+   */
   public abstract void handleOutput (Record<?> record)
     throws Exception;
 
+  /**
+   * Retrieves the configured name of this appender.
+   *
+   * @return appender name, or {@code null} if unnamed
+   */
   @Override
   public String getName () {
 
     return name;
   }
 
+  /**
+   * Assigns a name to the appender for identification in logs or configuration.
+   *
+   * @param name new appender name, may be {@code null}
+   */
   @Override
   public void setName (String name) {
 
     this.name = name;
   }
 
+  /**
+   * Removes all configured filters, allowing all records to proceed to output.
+   */
   @Override
   public synchronized void clearFilters () {
 
     filterList.clear();
   }
 
+  /**
+   * Replaces existing filters with a single filter.
+   *
+   * @param filter filter that must approve records before output
+   */
   @Override
   public synchronized void setFilter (Filter filter) {
 
@@ -88,12 +130,22 @@ public abstract class AbstractAppender implements Appender {
     filterList.add(filter);
   }
 
+  /**
+   * Adds an additional filter that must approve records before output.
+   *
+   * @param filter filter to append to the evaluation chain
+   */
   @Override
   public synchronized void addFilter (Filter filter) {
 
     filterList.add(filter);
   }
 
+  /**
+   * Returns the filters currently applied to records.
+   *
+   * @return array of configured filters in evaluation order
+   */
   @Override
   public synchronized Filter[] getFilters () {
 
@@ -105,6 +157,11 @@ public abstract class AbstractAppender implements Appender {
     return filters;
   }
 
+  /**
+   * Replaces all configured filters with the supplied list.
+   *
+   * @param replacementFilterList filters to evaluate in order
+   */
   @Override
   public synchronized void setFilters (List<Filter> replacementFilterList) {
 
@@ -112,30 +169,57 @@ public abstract class AbstractAppender implements Appender {
     filterList.addAll(replacementFilterList);
   }
 
+  /**
+   * Retrieves the error handler invoked when output fails.
+   *
+   * @return configured error handler, or {@code null} if none
+   */
   @Override
   public ErrorHandler getErrorHandler () {
 
     return errorHandler;
   }
 
+  /**
+   * Sets the error handler to use when publishing fails.
+   *
+   * @param errorHandler handler to receive failures, may be {@code null}
+   */
   @Override
   public void setErrorHandler (ErrorHandler errorHandler) {
 
     this.errorHandler = errorHandler;
   }
 
+  /**
+   * Indicates whether this appender currently accepts records.
+   *
+   * @return {@code true} if active and publishing, otherwise {@code false}
+   */
   @Override
   public boolean isActive () {
 
     return active;
   }
 
+  /**
+   * Enables or disables this appender.
+   *
+   * @param active {@code true} to allow publishing, {@code false} to ignore records
+   */
   @Override
   public void setActive (boolean active) {
 
     this.active = active;
   }
 
+  /**
+   * Processes a record by applying filters and delegating output.
+   * If any filter vetoes the record, output is skipped. Exceptions during output
+   * are forwarded to the configured error handler.
+   *
+   * @param record record to publish
+   */
   @Override
   public void publish (Record<?> record) {
 
@@ -152,6 +236,12 @@ public abstract class AbstractAppender implements Appender {
     }
   }
 
+  /**
+   * Closes the appender. Default implementation is a no-op; subclasses may override
+   * to release resources.
+   *
+   * @throws LoggerException if closing fails
+   */
   @Override
   public void close ()
     throws LoggerException {

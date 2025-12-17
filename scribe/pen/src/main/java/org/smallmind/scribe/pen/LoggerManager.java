@@ -36,6 +36,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.concurrent.CopyOnWriteArraySet;
 
+/**
+ * Central registry responsible for creating and managing {@link Logger} instances and their {@link Template} associations.
+ */
 public class LoggerManager {
 
   private static final HashMap<String, Logger> LOGGER_MAP = new HashMap<String, Logger>();
@@ -48,11 +51,22 @@ public class LoggerManager {
     LOGGING_PACKAGE_PREFIX_QUEUE.add("org.smallmind.scribe.");
   }
 
+  /**
+   * Registers a package prefix that denotes logging infrastructure classes (used to avoid capturing them in call stacks).
+   *
+   * @param packageName package prefix to register
+   */
   public static void addLoggingPackagePrefix (String packageName) {
 
     LOGGING_PACKAGE_PREFIX_QUEUE.add(packageName);
   }
 
+  /**
+   * Determines whether the supplied class name belongs to a logging implementation package.
+   *
+   * @param className fully qualified class name
+   * @return {@code true} if the class is part of the logging infrastructure
+   */
   public static boolean isLoggingClass (String className) {
 
     for (String packagePrefix : LOGGING_PACKAGE_PREFIX_QUEUE) {
@@ -64,6 +78,11 @@ public class LoggerManager {
     return false;
   }
 
+  /**
+   * Adds a template to the set of available logger templates and reassociates all loggers.
+   *
+   * @param template template to add
+   */
   public static void addTemplate (Template template) {
 
     synchronized (LoggerManager.class) {
@@ -74,6 +93,11 @@ public class LoggerManager {
     }
   }
 
+  /**
+   * Removes a template and reassociates all loggers.
+   *
+   * @param template template to remove
+   */
   public static void removeTemplate (Template template) {
 
     synchronized (LoggerManager.class) {
@@ -83,6 +107,12 @@ public class LoggerManager {
     }
   }
 
+  /**
+   * Retrieves the template currently associated with the provided logger.
+   *
+   * @param logger target logger
+   * @return the associated template, or {@code null} if none matched
+   */
   public static Template getTemplate (Logger logger) {
 
     synchronized (LoggerManager.class) {
@@ -90,11 +120,23 @@ public class LoggerManager {
     }
   }
 
+  /**
+   * Returns or creates a logger keyed by the canonical name of the supplied class.
+   *
+   * @param loggableClass class whose name identifies the logger
+   * @return logger instance
+   */
   public static Logger getLogger (Class<?> loggableClass) {
 
     return getLogger(loggableClass.getCanonicalName());
   }
 
+  /**
+   * Returns or creates a logger for the supplied name. Newly created loggers are immediately associated with a template.
+   *
+   * @param name logger name
+   * @return logger instance
+   */
   public static Logger getLogger (String name) {
 
     Logger logger;
@@ -112,6 +154,12 @@ public class LoggerManager {
     return logger;
   }
 
+  /**
+   * Propagates a template change event to all loggers currently associated with the template.
+   *
+   * @param change   the change that occurred
+   * @param template the template that changed
+   */
   protected static void commitTemplateChanges (Template.Change change, Template template) {
 
     synchronized (LoggerManager.class) {
@@ -123,6 +171,9 @@ public class LoggerManager {
     }
   }
 
+  /**
+   * Reassociates every logger with the best matching template.
+   */
   private static void reAssociateAllLoggers () {
 
     for (Logger logger : LOGGER_MAP.values()) {
@@ -130,6 +181,11 @@ public class LoggerManager {
     }
   }
 
+  /**
+   * Associates the given logger with the highest priority matching template, applying the template if changed.
+   *
+   * @param logger logger to associate
+   */
   private static void associateTemplate (Logger logger) {
 
     Template matchingTemplate = null;

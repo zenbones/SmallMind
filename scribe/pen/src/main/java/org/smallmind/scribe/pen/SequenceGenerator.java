@@ -34,10 +34,18 @@ package org.smallmind.scribe.pen;
 
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * Generates monotonically increasing sequence numbers for log records.
+ */
 public class SequenceGenerator {
 
   private static final AtomicLong count = new AtomicLong(0);
 
+  /**
+   * Returns the next sequence number.
+   *
+   * @return incremented sequence value
+   */
   public static long next () {
 
     return count.incrementAndGet();

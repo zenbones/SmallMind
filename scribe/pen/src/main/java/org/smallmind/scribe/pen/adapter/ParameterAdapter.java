@@ -35,15 +35,43 @@ package org.smallmind.scribe.pen.adapter;
 import java.io.Serializable;
 import org.smallmind.scribe.pen.Parameter;
 
+/**
+ * Interface for managing contextual logging parameters (MDC-like storage).
+ */
 public interface ParameterAdapter {
 
+  /**
+   * Adds or replaces a parameter value.
+   *
+   * @param key   parameter key
+   * @param value serializable value
+   */
   void put (String key, Serializable value);
 
+  /**
+   * Removes a parameter.
+   *
+   * @param key key to remove
+   */
   void remove (String key);
 
+  /**
+   * Clears all parameters.
+   */
   void clear ();
 
+  /**
+   * Retrieves a parameter value.
+   *
+   * @param key key to look up
+   * @return value or {@code null} if absent
+   */
   Serializable get (String key);
 
+  /**
+   * Returns all parameters as an array.
+   *
+   * @return array of parameters
+   */
   Parameter[] getParameters ();
 }

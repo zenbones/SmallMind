@@ -44,6 +44,9 @@ import org.smallmind.nutsnbolts.lang.StackTraceUtility;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.springframework.beans.factory.InitializingBean;
 
+/**
+ * Appender that publishes structured syslog messages using syslog4j.
+ */
 public class SyslogAppender extends AbstractAppender implements InitializingBean {
 
   private SyslogIF syslog;
@@ -52,46 +55,81 @@ public class SyslogAppender extends AbstractAppender implements InitializingBean
   private boolean base64EncodeStackTraces = false;
   private int syslogPort = 514;
 
+  /**
+   * Hostname or IP of the syslog server.
+   */
   public String getSyslogHost () {
 
     return syslogHost;
   }
 
+  /**
+   * Sets the hostname or IP of the syslog server.
+   *
+   * @param syslogHost syslog host
+   */
   public void setSyslogHost (String syslogHost) {
 
     this.syslogHost = syslogHost;
   }
 
+  /**
+   * Syslog port.
+   */
   public int getSyslogPort () {
 
     return syslogPort;
   }
 
+  /**
+   * Sets the syslog port.
+   *
+   * @param syslogPort port number
+   */
   public void setSyslogPort (int syslogPort) {
 
     this.syslogPort = syslogPort;
   }
 
+  /**
+   * Syslog facility code (e.g., LOCAL7).
+   */
   public String getFacility () {
 
     return facility;
   }
 
+  /**
+   * Sets the syslog facility code (e.g., LOCAL7).
+   *
+   * @param facility facility name
+   */
   public void setFacility (String facility) {
 
     this.facility = facility;
   }
 
+  /**
+   * Whether to base64 encode stack traces before sending.
+   */
   public boolean isBase64EncodeStackTraces () {
 
     return base64EncodeStackTraces;
   }
 
+  /**
+   * Enables or disables base64 encoding of stack traces.
+   *
+   * @param base64EncodeStackTraces {@code true} to base64 encode stack traces
+   */
   public void setBase64EncodeStackTraces (boolean base64EncodeStackTraces) {
 
     this.base64EncodeStackTraces = base64EncodeStackTraces;
   }
 
+  /**
+   * Initializes the syslog client after Spring properties are set.
+   */
   @Override
   public void afterPropertiesSet () {
 
@@ -105,6 +143,12 @@ public class SyslogAppender extends AbstractAppender implements InitializingBean
     syslog = Syslog.createInstance("logging", config);
   }
 
+  /**
+   * Renders the record as a structured syslog message and dispatches it.
+   *
+   * @param record record to publish
+   * @throws IOException if syslog transmission fails
+   */
   @Override
   public void handleOutput (Record<?> record)
     throws IOException {

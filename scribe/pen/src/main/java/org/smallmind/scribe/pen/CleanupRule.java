@@ -35,13 +35,37 @@ package org.smallmind.scribe.pen;
 import java.io.IOException;
 import java.nio.file.Path;
 
+/**
+ * Rule that determines whether a rollover file should be cleaned up.
+ *
+ * @param <C> concrete type for copying
+ */
 public interface CleanupRule<C extends CleanupRule<C>> {
 
+  /**
+   * Creates a copy of the rule for reuse in a cleanup run.
+   *
+   * @return copy of this rule
+   */
   C copy ();
 
+  /**
+   * Evaluates whether the given file should be deleted.
+   *
+   * @param possiblePath candidate file
+   * @return {@code true} if the file should be cleaned up
+   * @throws IOException     on IO failure
+   * @throws LoggerException on rule evaluation error
+   */
   boolean willCleanup (Path possiblePath)
     throws IOException, LoggerException;
 
+  /**
+   * Finalizes state after a cleanup run.
+   *
+   * @throws IOException     on IO failure
+   * @throws LoggerException on rule cleanup error
+   */
   void finish ()
     throws IOException, LoggerException;
 }

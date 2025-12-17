@@ -61,6 +61,9 @@ import org.smallmind.scribe.pen.PatternFormatter;
           </bean>
  */
 
+/**
+ * Logging plan that configures a {@link FluentBitAppender} with optional extra event data and console error fallback.
+ */
 public class FluentBitLoggingPlan extends LoggingPlan {
 
   private DateFormatTimestamp fullTimestamp = new DateFormatTimestamp(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ"));
@@ -69,31 +72,49 @@ public class FluentBitLoggingPlan extends LoggingPlan {
   private String host;
   private int port;
 
+  /**
+   * Sets the timestamp format used in the Fluent Bit message formatter.
+   */
   public void setFullTimestamp (DateFormatTimestamp fullTimestamp) {
 
     this.fullTimestamp = fullTimestamp;
   }
 
+  /**
+   * Sets additional key/value pairs to include in each Fluent Bit record.
+   */
   public void setAdditionalEventData (Map<String, String> additionalEventData) {
 
     this.additionalEventData = additionalEventData;
   }
 
+  /**
+   * Sets the appender/stream name to send to Fluent Bit.
+   */
   public void setName (String name) {
 
     this.name = name;
   }
 
+  /**
+   * Sets the Fluent Bit host.
+   */
   public void setHost (String host) {
 
     this.host = host;
   }
 
+  /**
+   * Sets the Fluent Bit port.
+   */
   public void setPort (int port) {
 
     this.port = port;
   }
 
+  /**
+   * Builds and initializes the Fluent Bit appender, wrapping with a console error handler.
+   */
   @Override
   public Appender getAppender () {
 

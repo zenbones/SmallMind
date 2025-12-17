@@ -32,9 +32,22 @@
  */
 package org.smallmind.scribe.pen;
 
+/**
+ * Appender that renders records via a {@link Formatter} before publishing.
+ */
 public interface FormattedAppender extends Appender {
 
+  /**
+   * Returns the formatter in use.
+   *
+   * @return formatter or {@code null}
+   */
   Formatter getFormatter ();
 
+  /**
+   * Sets the formatter to use for rendering records.
+   *
+   * @param formatter formatter to install
+   */
   void setFormatter (Formatter formatter);
 }

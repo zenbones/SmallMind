@@ -37,16 +37,27 @@ import java.util.LinkedList;
 import org.smallmind.scribe.pen.ExceptionSuppressingLogFilter;
 import org.springframework.beans.factory.InitializingBean;
 
+/**
+ * Spring helper that registers suppressed throwable classes for {@link ExceptionSuppressingLogFilter}.
+ */
 public class ExceptionSuppressingLogInitializingBean implements InitializingBean {
 
   private final LinkedList<Class<? extends Throwable>> suppressedThrowableClassList = new LinkedList<>();
 
+  /**
+   * Configures throwable classes to suppress in logging.
+   *
+   * @param suppressedThrowableClasses array of throwable types to filter out
+   */
   public void setSuppressedThrowableClasses (Class<? extends Throwable>[] suppressedThrowableClasses) {
 
     suppressedThrowableClassList.addAll(Arrays.asList(suppressedThrowableClasses));
   }
 
   @Override
+  /**
+   * Registers the configured suppressed throwable classes with the filter.
+   */
   public void afterPropertiesSet () {
 
     ExceptionSuppressingLogFilter.addSuppressedThrowableClasses(suppressedThrowableClassList);

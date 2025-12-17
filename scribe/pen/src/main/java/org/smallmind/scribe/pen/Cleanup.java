@@ -39,36 +39,70 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.smallmind.nutsnbolts.io.PathUtility;
 
+/**
+ * Applies cleanup rules to rollover log files to manage disk usage.
+ */
 public class Cleanup {
 
   private CleanupRule<?>[] rules;
   private char separator = '-';
 
+  /**
+   * Creates a cleanup manager with no rules and default separator.
+   */
   public Cleanup () {
 
   }
 
+  /**
+   * Creates a cleanup manager with the supplied rules.
+   *
+   * @param rules rules to enforce during cleanup
+   */
   public Cleanup (CleanupRule<?>... rules) {
 
     this.rules = rules;
   }
 
+  /**
+   * Creates a cleanup manager with a custom separator and rules.
+   *
+   * @param separator separator between base name and rollover suffix
+   * @param rules     rules to enforce during cleanup
+   */
   public Cleanup (char separator, CleanupRule<?>... rules) {
 
     this.separator = separator;
     this.rules = rules;
   }
 
+  /**
+   * Sets the separator used to split base names from rollover suffixes.
+   *
+   * @param separator separator character
+   */
   public void setSeparator (char separator) {
 
     this.separator = separator;
   }
 
+  /**
+   * Sets the cleanup rules to apply.
+   *
+   * @param rules rules to enforce
+   */
   public void setRules (CleanupRule<?>[] rules) {
 
     this.rules = rules;
   }
 
+  /**
+   * Executes cleanup rules against rollover files adjacent to the given log file.
+   *
+   * @param logPath active log file path
+   * @throws IOException     if file operations fail
+   * @throws LoggerException if a rule signals an error
+   */
   public void vacuum (Path logPath)
     throws IOException, LoggerException {
 

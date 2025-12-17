@@ -54,6 +54,9 @@ import org.smallmind.scribe.pen.Rollover;
 import org.smallmind.scribe.pen.TimestampQuantifier;
 import org.smallmind.scribe.pen.TimestampRolloverRule;
 
+/**
+ * Logging plan that writes to a rolling file with cleanup and a console fallback for errors.
+ */
 public class FileLoggingPlan extends LoggingPlan {
 
   private Path logPath = Paths.get("/var/log");
@@ -63,36 +66,60 @@ public class FileLoggingPlan extends LoggingPlan {
   private long retentionDays = 31;
   private long rolloverMegabyteLimit = 100;
 
+  /**
+   * Sets the root log path.
+   */
   public void setLogPath (Path logPath) {
 
     this.logPath = logPath;
   }
 
+  /**
+   * Sets the timestamp format used in rollover file names.
+   */
   public void setShortTimestamp (DateFormatTimestamp shortTimestamp) {
 
     this.shortTimestamp = shortTimestamp;
   }
 
+  /**
+   * Sets the timestamp format used in log contents.
+   */
   public void setFullTimestamp (DateFormatTimestamp fullTimestamp) {
 
     this.fullTimestamp = fullTimestamp;
   }
 
+  /**
+   * Sets the time-based rollover period.
+   */
   public void setRolloverPeriod (TimestampQuantifier rolloverPeriod) {
 
     this.rolloverPeriod = rolloverPeriod;
   }
 
+  /**
+   * Sets how many days to retain rolled files.
+   */
   public void setRetentionDays (long retentionDays) {
 
     this.retentionDays = retentionDays;
   }
 
+  /**
+   * Sets the size threshold (in MB) for rolling the log file.
+   */
   public void setRolloverMegabyteLimit (long rolloverMegabyteLimit) {
 
     this.rolloverMegabyteLimit = rolloverMegabyteLimit;
   }
 
+  /**
+   * Builds the file appender configured with rollover, cleanup, formatter, and console error handler.
+   *
+   * @return configured file appender
+   * @throws IOException if any file path cannot be created or opened
+   */
   @Override
   public Appender getAppender ()
     throws IOException {

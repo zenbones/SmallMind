@@ -36,6 +36,9 @@ import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Formatter that renders records according to a flexible pattern syntax.
+ */
 public class PatternFormatter implements Formatter {
 
   /*
@@ -90,16 +93,30 @@ public class PatternFormatter implements Formatter {
   private PatternRule[] patternRules;
   private Timestamp timestamp;
 
+  /**
+   * Creates a formatter with the default timestamp and pattern.
+   */
   public PatternFormatter () {
 
     this(DateFormatTimestamp.getDefaultInstance(), "%d %n %+5l [%T] - %m");
   }
 
+  /**
+   * Creates a formatter with the default timestamp and supplied pattern.
+   *
+   * @param format pattern format string
+   */
   public PatternFormatter (String format) {
 
     this(DateFormatTimestamp.getDefaultInstance(), format);
   }
 
+  /**
+   * Creates a formatter with the provided timestamp strategy and pattern.
+   *
+   * @param timestamp timestamp provider
+   * @param format    pattern format string
+   */
   public PatternFormatter (Timestamp timestamp, String format) {
 
     this.timestamp = timestamp;
@@ -109,16 +126,31 @@ public class PatternFormatter implements Formatter {
     }
   }
 
+  /**
+   * Returns the timestamp provider used for date/time conversions.
+   *
+   * @return timestamp provider
+   */
   public Timestamp getTimestamp () {
 
     return timestamp;
   }
 
+  /**
+   * Sets the timestamp strategy used for date/time conversions.
+   *
+   * @param timestamp timestamp provider
+   */
   public void setTimestamp (Timestamp timestamp) {
 
     this.timestamp = timestamp;
   }
 
+  /**
+   * Parses and installs a new pattern format string.
+   *
+   * @param format pattern format string
+   */
   public void setFormat (String format) {
 
     Matcher conversionMatcher = CONVERSION_PATTERN.matcher(format);
@@ -148,6 +180,12 @@ public class PatternFormatter implements Formatter {
     ruleList.toArray(patternRules);
   }
 
+  /**
+   * Formats the record according to the configured pattern.
+   *
+   * @param record record to format
+   * @return formatted text including trailing line separator
+   */
   public String format (Record<?> record) {
 
     StringBuilder formatBuilder = new StringBuilder();

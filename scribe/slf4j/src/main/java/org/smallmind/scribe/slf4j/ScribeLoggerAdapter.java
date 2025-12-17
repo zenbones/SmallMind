@@ -39,27 +39,52 @@ import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.Logger;
 
+/**
+ * SLF4J {@link org.slf4j.Logger} implementation that delegates to a scribe {@link Logger}.
+ * This adapter translates SLF4J-style formatting and levels into the scribe API.
+ */
 public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationAwareLogger {
 
   private enum TranslatorState {CHAR, ESCAPE, VAR}
 
   private final Logger logger;
 
+  /**
+   * Constructs an adapter around the provided scribe logger.
+   *
+   * @param logger the underlying scribe logger to delegate to
+   */
   public ScribeLoggerAdapter (Logger logger) {
 
     this.logger = logger;
   }
 
+  /**
+   * Returns the logger name.
+   *
+   * @return the name of the underlying logger
+   */
   public String getName () {
 
     return logger.getName();
   }
 
+  /**
+   * Indicates whether TRACE level logging is enabled.
+   *
+   * @return {@code true} if TRACE messages should be emitted
+   */
   public boolean isTraceEnabled () {
 
     return logger.getLevel().noGreater(Level.TRACE);
   }
 
+  /**
+   * Translates SLF4J brace-style message formats into {@link java.util.Formatter} style.
+   *
+   * @param format the SLF4J format string
+   * @return a format string using {@code %s} placeholders
+   */
   private String translateFormat (String format) {
 
     StringBuilder formatBuilder = new StringBuilder();
@@ -103,156 +128,346 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
     return formatBuilder.toString();
   }
 
+  /**
+   * Logs a TRACE message.
+   *
+   * @param msg the message to log
+   */
   public void trace (String msg) {
 
     logger.trace(msg);
   }
 
+  /**
+   * Logs a TRACE message with a single argument.
+   *
+   * @param format SLF4J-style format string
+   * @param arg1   argument to interpolate
+   */
   public void trace (String format, Object arg1) {
 
     logger.trace(translateFormat(format), arg1);
   }
 
+  /**
+   * Logs a TRACE message with two arguments.
+   *
+   * @param format SLF4J-style format string
+   * @param arg1   first argument to interpolate
+   * @param arg2   second argument to interpolate
+   */
   public void trace (String format, Object arg1, Object arg2) {
 
     logger.trace(translateFormat(format), arg1, arg2);
   }
 
+  /**
+   * Logs a TRACE message with an argument array.
+   *
+   * @param format SLF4J-style format string
+   * @param args   arguments to interpolate
+   */
   public void trace (String format, Object[] args) {
 
     logger.trace(translateFormat(format), args);
   }
 
+  /**
+   * Logs a TRACE message with an associated throwable.
+   *
+   * @param msg       the message to log
+   * @param throwable throwable to attach
+   */
   public void trace (String msg, Throwable throwable) {
 
     logger.trace(throwable, msg);
   }
 
+  /**
+   * Indicates whether DEBUG level logging is enabled.
+   *
+   * @return {@code true} if DEBUG messages should be emitted
+   */
   public boolean isDebugEnabled () {
 
     return logger.getLevel().noGreater(Level.DEBUG);
   }
 
+  /**
+   * Logs a DEBUG message.
+   *
+   * @param msg the message to log
+   */
   public void debug (String msg) {
 
     logger.debug(msg);
   }
 
+  /**
+   * Logs a DEBUG message with a single argument.
+   *
+   * @param format SLF4J-style format string
+   * @param arg1   argument to interpolate
+   */
   public void debug (String format, Object arg1) {
 
     logger.debug(translateFormat(format), arg1);
   }
 
+  /**
+   * Logs a DEBUG message with two arguments.
+   *
+   * @param format SLF4J-style format string
+   * @param arg1   first argument to interpolate
+   * @param arg2   second argument to interpolate
+   */
   public void debug (String format, Object arg1, Object arg2) {
 
     logger.debug(translateFormat(format), arg1, arg2);
   }
 
+  /**
+   * Logs a DEBUG message with an argument array.
+   *
+   * @param format SLF4J-style format string
+   * @param args   arguments to interpolate
+   */
   public void debug (String format, Object[] args) {
 
     logger.debug(translateFormat(format), args);
   }
 
+  /**
+   * Logs a DEBUG message with an associated throwable.
+   *
+   * @param msg       the message to log
+   * @param throwable throwable to attach
+   */
   public void debug (String msg, Throwable throwable) {
 
     logger.debug(throwable, msg);
   }
 
+  /**
+   * Logs an INFO message.
+   *
+   * @param msg the message to log
+   */
   public void info (String msg) {
 
     logger.info(msg);
   }
 
+  /**
+   * Logs an INFO message with a single argument.
+   *
+   * @param format SLF4J-style format string
+   * @param arg1   argument to interpolate
+   */
   public void info (String format, Object arg1) {
 
     logger.info(translateFormat(format), arg1);
   }
 
+  /**
+   * Logs an INFO message with two arguments.
+   *
+   * @param format SLF4J-style format string
+   * @param arg1   first argument to interpolate
+   * @param arg2   second argument to interpolate
+   */
   public void info (String format, Object arg1, Object arg2) {
 
     logger.info(translateFormat(format), arg1, arg2);
   }
 
+  /**
+   * Logs an INFO message with an argument array.
+   *
+   * @param format SLF4J-style format string
+   * @param args   arguments to interpolate
+   */
   public void info (String format, Object[] args) {
 
     logger.info(translateFormat(format), args);
   }
 
+  /**
+   * Logs an INFO message with an associated throwable.
+   *
+   * @param msg       the message to log
+   * @param throwable throwable to attach
+   */
   public void info (String msg, Throwable throwable) {
 
     logger.info(throwable, msg);
   }
 
+  /**
+   * Indicates whether WARN level logging is enabled.
+   *
+   * @return {@code true} if WARN messages should be emitted
+   */
   public boolean isWarnEnabled () {
 
     return logger.getLevel().noGreater(Level.WARN);
   }
 
+  /**
+   * Logs a WARN message.
+   *
+   * @param msg the message to log
+   */
   public void warn (String msg) {
 
     logger.warn(msg);
   }
 
+  /**
+   * Logs a WARN message with a single argument.
+   *
+   * @param format SLF4J-style format string
+   * @param arg1   argument to interpolate
+   */
   public void warn (String format, Object arg1) {
 
     logger.warn(translateFormat(format), arg1);
   }
 
+  /**
+   * Logs a WARN message with two arguments.
+   *
+   * @param format SLF4J-style format string
+   * @param arg1   first argument to interpolate
+   * @param arg2   second argument to interpolate
+   */
   public void warn (String format, Object arg1, Object arg2) {
 
     logger.warn(translateFormat(format), arg1, arg2);
   }
 
+  /**
+   * Logs a WARN message with an argument array.
+   *
+   * @param format SLF4J-style format string
+   * @param args   arguments to interpolate
+   */
   public void warn (String format, Object[] args) {
 
     logger.warn(translateFormat(format), args);
   }
 
+  /**
+   * Logs a WARN message with an associated throwable.
+   *
+   * @param msg       the message to log
+   * @param throwable throwable to attach
+   */
   public void warn (String msg, Throwable throwable) {
 
     logger.warn(throwable, msg);
   }
 
+  /**
+   * Indicates whether ERROR level logging is enabled.
+   *
+   * @return {@code true} if ERROR messages should be emitted
+   */
   public boolean isErrorEnabled () {
 
     return logger.getLevel().noGreater(Level.ERROR);
   }
 
+  /**
+   * Logs an ERROR message.
+   *
+   * @param msg the message to log
+   */
   public void error (String msg) {
 
     logger.error(msg);
   }
 
+  /**
+   * Logs an ERROR message with a single argument.
+   *
+   * @param format SLF4J-style format string
+   * @param arg1   argument to interpolate
+   */
   public void error (String format, Object arg1) {
 
     logger.error(translateFormat(format), arg1);
   }
 
+  /**
+   * Logs an ERROR message with two arguments.
+   *
+   * @param format SLF4J-style format string
+   * @param arg1   first argument to interpolate
+   * @param arg2   second argument to interpolate
+   */
   public void error (String format, Object arg1, Object arg2) {
 
     logger.error(translateFormat(format), arg1, arg2);
   }
 
+  /**
+   * Logs an ERROR message with an argument array.
+   *
+   * @param format SLF4J-style format string
+   * @param args   arguments to interpolate
+   */
   public void error (String format, Object[] args) {
 
     logger.error(translateFormat(format), args);
   }
 
+  /**
+   * Logs an ERROR message with an associated throwable.
+   *
+   * @param msg       the message to log
+   * @param throwable throwable to attach
+   */
   public void error (String msg, Throwable throwable) {
 
     logger.error(throwable, msg);
   }
 
+  /**
+   * Indicates whether INFO level logging is enabled.
+   *
+   * @return {@code true} if INFO messages should be emitted
+   */
   public boolean isInfoEnabled () {
 
     return logger.getLevel().noGreater(Level.INFO);
   }
 
+  /**
+   * Logs a message through the location-aware SLF4J API without an argument array.
+   *
+   * @param marker    unused marker
+   * @param fqcn      fully qualified class name of the caller
+   * @param level     SLF4J level constant
+   * @param msg       message to log
+   * @param throwable throwable to attach
+   */
   public void log (Marker marker, String fqcn, int level, String msg, Throwable throwable) {
 
     log(marker, fqcn, level, msg, null, throwable);
   }
 
+  /**
+   * Logs a message through the location-aware SLF4J API.
+   *
+   * @param marker    unused marker
+   * @param fqcn      fully qualified class name of the caller
+   * @param level     SLF4J level constant
+   * @param msg       message to log
+   * @param objects   optional arguments to interpolate
+   * @param throwable throwable to attach
+   * @throws UnknownSwitchCaseException if the level cannot be translated
+   */
   public void log (Marker marker, String fqcn, int level, String msg, Object[] objects, Throwable throwable) {
 
     Level scribeLevel;

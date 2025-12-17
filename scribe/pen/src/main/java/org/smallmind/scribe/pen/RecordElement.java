@@ -32,6 +32,9 @@
  */
 package org.smallmind.scribe.pen;
 
+/**
+ * Elements of a log record that can be included when formatting.
+ */
 public enum RecordElement {
 
   DATE, MILLISECONDS, LOGGER_NAME, LEVEL, MESSAGE, THREAD, LOGGER_CONTEXT, PARAMETERS, STACK_TRACE

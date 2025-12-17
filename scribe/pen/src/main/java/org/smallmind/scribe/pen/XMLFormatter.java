@@ -35,6 +35,9 @@ package org.smallmind.scribe.pen;
 import java.util.Date;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
+/**
+ * Formats records into an XML representation with configurable elements and CDATA handling.
+ */
 public class XMLFormatter implements Formatter {
 
   private Timestamp timestamp = DateFormatTimestamp.getDefaultInstance();
@@ -43,10 +46,22 @@ public class XMLFormatter implements Formatter {
   private boolean cdata = false;
   private int indent = 3;
 
+  /**
+   * Creates an XML formatter with default timestamp, newline, indent, and record elements.
+   */
   public XMLFormatter () {
 
   }
 
+  /**
+   * Constructs an XML formatter with all options specified.
+   *
+   * @param timestamp      timestamp provider
+   * @param newLine        newline delimiter
+   * @param indent         indent spaces per level
+   * @param cdata          true to wrap message fields in CDATA
+   * @param recordElements elements to include
+   */
   public XMLFormatter (Timestamp timestamp, String newLine, int indent, boolean cdata, RecordElement... recordElements) {
 
     this.timestamp = timestamp;
@@ -56,6 +71,13 @@ public class XMLFormatter implements Formatter {
     this.recordElements = recordElements;
   }
 
+  /**
+   * Finds the number of repeated stack frames compared to the previous trace.
+   *
+   * @param singleElement  current stack frame
+   * @param prevStackTrace previous stack trace to compare
+   * @return count of remaining repeated elements or -1 if none
+   */
   private static int findRepeatedStackElements (StackTraceElement singleElement, StackTraceElement[] prevStackTrace) {
 
     for (int count = 0; count < prevStackTrace.length; count++) {
@@ -67,6 +89,12 @@ public class XMLFormatter implements Formatter {
     return -1;
   }
 
+  /**
+   * Selects the record elements to include when formatting.
+   *
+   * @param recordElements elements to output
+   * @return this formatter
+   */
   public XMLFormatter setRecordElements (RecordElement[] recordElements) {
 
     this.recordElements = recordElements;
@@ -74,6 +102,12 @@ public class XMLFormatter implements Formatter {
     return this;
   }
 
+  /**
+   * Sets the timestamp provider.
+   *
+   * @param timestamp provider
+   * @return this formatter
+   */
   public XMLFormatter setTimestamp (Timestamp timestamp) {
 
     this.timestamp = timestamp;
@@ -81,6 +115,12 @@ public class XMLFormatter implements Formatter {
     return this;
   }
 
+  /**
+   * Sets the newline delimiter.
+   *
+   * @param newLine newline string
+   * @return this formatter
+   */
   public XMLFormatter setNewLine (String newLine) {
 
     this.newLine = newLine;
@@ -88,6 +128,12 @@ public class XMLFormatter implements Formatter {
     return this;
   }
 
+  /**
+   * Enables or disables CDATA wrapping for message/parameter content.
+   *
+   * @param cdata whether to use CDATA
+   * @return this formatter
+   */
   public XMLFormatter setCdata (boolean cdata) {
 
     this.cdata = cdata;
@@ -95,6 +141,12 @@ public class XMLFormatter implements Formatter {
     return this;
   }
 
+  /**
+   * Sets the indent size in spaces.
+   *
+   * @param indent indent size
+   * @return this formatter
+   */
   public XMLFormatter setIndent (int indent) {
 
     this.indent = indent;
@@ -102,6 +154,12 @@ public class XMLFormatter implements Formatter {
     return this;
   }
 
+  /**
+   * Formats the supplied record into XML.
+   *
+   * @param record record to format
+   * @return XML string
+   */
   public String format (Record<?> record) {
 
     StringBuilder formatBuilder = new StringBuilder();
@@ -159,6 +217,14 @@ public class XMLFormatter implements Formatter {
     return formatBuilder.toString();
   }
 
+  /**
+   * Adds thread details to the XML output.
+   *
+   * @param formatBuilder buffer to append to
+   * @param threadName    thread name, may be {@code null}
+   * @param threadId      thread id, or non-positive if unavailable
+   * @param level         indent level
+   */
   private void appendThreadInfo (StringBuilder formatBuilder, String threadName, long threadId, int level) {
 
     if ((threadName != null) || (threadId > 0)) {
@@ -169,6 +235,13 @@ public class XMLFormatter implements Formatter {
     }
   }
 
+  /**
+   * Adds logger context information to the XML output.
+   *
+   * @param formatBuilder buffer to append to
+   * @param loggerContext logger context details
+   * @param level         indent level
+   */
   private void appendLoggerContext (StringBuilder formatBuilder, LoggerContext loggerContext, int level) {
 
     if ((loggerContext != null) && (loggerContext.isFilled())) {
@@ -182,6 +255,13 @@ public class XMLFormatter implements Formatter {
     }
   }
 
+  /**
+   * Adds parameters as child elements to the XML output.
+   *
+   * @param formatBuilder buffer to append to
+   * @param parameters    parameters to include
+   * @param level         indent level
+   */
   private void appendParameters (StringBuilder formatBuilder, Parameter[] parameters, int level) {
 
     if (parameters.length > 0) {
@@ -197,6 +277,13 @@ public class XMLFormatter implements Formatter {
     }
   }
 
+  /**
+   * Renders a throwable stack trace, honoring CDATA preferences.
+   *
+   * @param formatBuilder buffer to append to
+   * @param throwable     throwable to render, may be {@code null}
+   * @param level         indent level
+   */
   private void appendStackTrace (StringBuilder formatBuilder, Throwable throwable, int level) {
 
     StackTraceElement[] prevStackTrace = null;
@@ -245,6 +332,15 @@ public class XMLFormatter implements Formatter {
     }
   }
 
+  /**
+   * Appends an individual XML element if a value is present.
+   *
+   * @param formatBuilder buffer to append to
+   * @param tagName       element name
+   * @param value         element value, may be {@code null}
+   * @param includeCDATA  whether to wrap value in CDATA
+   * @param level         indent level
+   */
   private void appendElement (StringBuilder formatBuilder, String tagName, String value, boolean includeCDATA, int level) {
 
     if (value != null) {
@@ -270,6 +366,13 @@ public class XMLFormatter implements Formatter {
     }
   }
 
+  /**
+   * Appends a full line with indentation and newline.
+   *
+   * @param formatBuilder buffer to append to
+   * @param content       content to append
+   * @param level         indent level
+   */
   private void appendLine (StringBuilder formatBuilder, String content, int level) {
 
     appendIndent(formatBuilder, level);
@@ -277,6 +380,13 @@ public class XMLFormatter implements Formatter {
     formatBuilder.append(newLine);
   }
 
+  /**
+   * Appends the final line, using the system line separator.
+   *
+   * @param formatBuilder buffer to append to
+   * @param content       content to append
+   * @param level         indent level
+   */
   private void appendFinalLine (StringBuilder formatBuilder, String content, int level) {
 
     appendIndent(formatBuilder, level);
@@ -284,6 +394,12 @@ public class XMLFormatter implements Formatter {
     formatBuilder.append(System.getProperty("line.separator"));
   }
 
+  /**
+   * Appends indentation spaces for the given level.
+   *
+   * @param formatBuilder buffer to append to
+   * @param level         indent level
+   */
   private void appendIndent (StringBuilder formatBuilder, int level) {
 
     formatBuilder.append(" ".repeat(level * indent));

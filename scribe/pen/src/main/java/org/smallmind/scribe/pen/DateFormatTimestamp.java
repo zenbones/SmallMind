@@ -36,37 +36,70 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+/**
+ * Timestamp implementation that formats dates using a {@link DateFormat}.
+ */
 public class DateFormatTimestamp implements Timestamp {
 
   private static final DateFormatTimestamp STANDARD_TIMESTAMP = new DateFormatTimestamp();
 
   private DateFormat dateFormat;
 
+  /**
+   * Constructs a timestamp using the default ISO-like pattern.
+   */
   public DateFormatTimestamp () {
 
     this(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ"));
   }
 
+  /**
+   * Constructs a timestamp using the supplied {@link DateFormat}.
+   *
+   * @param dateFormat formatter to use
+   */
   public DateFormatTimestamp (DateFormat dateFormat) {
 
     this.dateFormat = dateFormat;
   }
 
+  /**
+   * Returns the shared default timestamp instance.
+   *
+   * @return default {@link DateFormatTimestamp}
+   */
   public static DateFormatTimestamp getDefaultInstance () {
 
     return STANDARD_TIMESTAMP;
   }
 
+  /**
+   * Retrieves the configured {@link DateFormat}.
+   *
+   * @return current date formatter
+   */
   public DateFormat getDateFormat () {
 
     return dateFormat;
   }
 
+  /**
+   * Sets the {@link DateFormat} used to render timestamps.
+   *
+   * @param dateFormat formatter to use
+   */
   public void setDateFormat (DateFormat dateFormat) {
 
     this.dateFormat = dateFormat;
   }
 
+  /**
+   * Formats the supplied date into a timestamp string.
+   *
+   * @param date date to format
+   * @return formatted timestamp
+   * @throws RuntimeException if the underlying {@link DateFormat} fails
+   */
   public synchronized String getTimestamp (Date date) {
 
     return dateFormat.format(date);

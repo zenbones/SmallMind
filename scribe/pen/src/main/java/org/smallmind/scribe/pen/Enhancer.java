@@ -32,7 +32,15 @@
  */
 package org.smallmind.scribe.pen;
 
+/**
+ * Mutates or enriches a record prior to publication.
+ */
 public interface Enhancer {
 
+  /**
+   * Applies enhancements to the supplied record.
+   *
+   * @param record record to enhance
+   */
   void enhance (Record<?> record);
 }

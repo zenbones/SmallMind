@@ -34,23 +34,47 @@ package org.smallmind.scribe.pen;
 
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
+/**
+ * Unchecked exception representing failures within the logging subsystem.
+ */
 public class LoggerRuntimeException extends FormattedRuntimeException {
 
+  /**
+   * Creates an exception without message or cause.
+   */
   public LoggerRuntimeException () {
 
     super();
   }
 
+  /**
+   * Creates an exception with a formatted message.
+   *
+   * @param message message template
+   * @param args    message arguments
+   */
   public LoggerRuntimeException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * Creates an exception with a cause and formatted message.
+   *
+   * @param throwable cause of the failure
+   * @param message   message template
+   * @param args      message arguments
+   */
   public LoggerRuntimeException (Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);
   }
 
+  /**
+   * Creates an exception with only a cause.
+   *
+   * @param exception underlying exception
+   */
   public LoggerRuntimeException (Throwable exception) {
 
     super(exception);

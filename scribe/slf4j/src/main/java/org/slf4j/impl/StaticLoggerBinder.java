@@ -37,6 +37,10 @@ import org.slf4j.spi.LoggerFactoryBinder;
 import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.scribe.slf4j.ScribeLoggerFactory;
 
+/**
+ * SLF4J binder that exposes the scribe-based {@link ILoggerFactory}.
+ * This integrates the scribe logger implementation into the SLF4J discovery mechanism.
+ */
 public class StaticLoggerBinder implements LoggerFactoryBinder {
 
   public static final StaticLoggerBinder SINGLETON = new StaticLoggerBinder();
@@ -48,21 +52,39 @@ public class StaticLoggerBinder implements LoggerFactoryBinder {
     LoggerManager.addLoggingPackagePrefix("org.slf4j.");
   }
 
+  /**
+   * Creates a binder that delegates logger creation to {@link ScribeLoggerFactory}.
+   */
   public StaticLoggerBinder () {
 
     loggerFactory = new ScribeLoggerFactory();
   }
 
+  /**
+   * Provides the singleton binder instance expected by SLF4J.
+   *
+   * @return the static binder
+   */
   public static StaticLoggerBinder getSingleton () {
 
     return SINGLETON;
   }
 
+  /**
+   * Returns the factory that produces scribe-backed SLF4J loggers.
+   *
+   * @return the logger factory instance
+   */
   public ILoggerFactory getLoggerFactory () {
 
     return loggerFactory;
   }
 
+  /**
+   * Returns the fully qualified class name of the bound logger factory.
+   *
+   * @return the logger factory class name
+   */
   public String getLoggerFactoryClassStr () {
 
     return ScribeLoggerFactory.class.getName();

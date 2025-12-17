@@ -34,8 +34,18 @@ package org.smallmind.scribe.pen;
 
 import org.smallmind.nutsnbolts.lang.FormattedIOException;
 
+/**
+ * IOException thrown when a Fluent Bit connection cannot be established or maintained.
+ */
 public class FluentBitConnectionException extends FormattedIOException {
 
+  /**
+   * Creates the exception with a cause and formatted message.
+   *
+   * @param throwable cause of the connection failure
+   * @param message   message template
+   * @param args      message arguments
+   */
   public FluentBitConnectionException (Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);

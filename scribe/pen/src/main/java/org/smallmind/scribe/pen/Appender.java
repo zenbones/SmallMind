@@ -34,32 +34,99 @@ package org.smallmind.scribe.pen;
 
 import java.util.List;
 
+/**
+ * Destination for publishing log records.
+ */
 public interface Appender {
 
+  /**
+   * Returns the appender name.
+   *
+   * @return name or {@code null}
+   */
   String getName ();
 
+  /**
+   * Sets the appender name.
+   *
+   * @param name name to assign
+   */
   void setName (String name);
 
+  /**
+   * Convenience setter for a single filter.
+   *
+   * @param filter filter to install
+   */
   void setFilter (Filter filter);
 
+  /**
+   * Clears all configured filters.
+   */
   void clearFilters ();
 
+  /**
+   * Adds a filter that can veto records.
+   *
+   * @param filter filter to add
+   */
   void addFilter (Filter filter);
 
+  /**
+   * Returns the current filters.
+   *
+   * @return array of filters
+   */
   Filter[] getFilters ();
 
+  /**
+   * Replaces all filters with the supplied list.
+   *
+   * @param filterList filters to install
+   */
   void setFilters (List<Filter> filterList);
 
+  /**
+   * Returns the configured error handler.
+   *
+   * @return error handler or {@code null}
+   */
   ErrorHandler getErrorHandler ();
 
+  /**
+   * Sets the error handler invoked when publishing fails.
+   *
+   * @param errorHandler handler to use
+   */
   void setErrorHandler (ErrorHandler errorHandler);
 
+  /**
+   * Indicates whether the appender will accept records.
+   *
+   * @return {@code true} when active
+   */
   boolean isActive ();
 
+  /**
+   * Activates or deactivates the appender.
+   *
+   * @param active {@code true} to activate
+   */
   void setActive (boolean active);
 
+  /**
+   * Publishes the supplied record.
+   *
+   * @param record record to publish
+   */
   void publish (Record<?> record);
 
+  /**
+   * Handles an error using the configured error handler, if present.
+   *
+   * @param loggerName origin logger name
+   * @param throwable  throwable to report
+   */
   default void handleError (String loggerName, Throwable throwable) {
 
     ErrorHandler errorHandler;
@@ -71,6 +138,12 @@ public interface Appender {
     }
   }
 
+  /**
+   * Handles an error using the configured error handler, if present.
+   *
+   * @param record    origin record
+   * @param throwable throwable to report
+   */
   default void handleError (Record<?> record, Throwable throwable) {
 
     ErrorHandler errorHandler;
@@ -82,6 +155,12 @@ public interface Appender {
     }
   }
 
+  /**
+   * Closes the appender and releases resources.
+   *
+   * @throws InterruptedException if shutdown is interrupted
+   * @throws LoggerException      if closure fails
+   */
   void close ()
     throws InterruptedException, LoggerException;
 }

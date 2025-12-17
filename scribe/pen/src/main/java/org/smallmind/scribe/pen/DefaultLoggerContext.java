@@ -34,26 +34,51 @@ package org.smallmind.scribe.pen;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * Default implementation that derives logger context information from the current thread stack.
+ */
 public class DefaultLoggerContext implements LoggerContext {
 
   private final AtomicBoolean filled = new AtomicBoolean(false);
   private StackTraceElement contextElement;
 
+  /**
+   * Determines whether the given class name belongs to the logging infrastructure.
+   *
+   * @param className class name to test
+   * @return {@code true} if the class is part of the logging stack
+   */
   private static boolean willPrime (String className) {
 
     return LoggerManager.isLoggingClass(className);
   }
 
+  /**
+   * Indicates whether the context has been captured.
+   *
+   * @return {@code true} if filled
+   */
   public boolean isFilled () {
 
     return filled.get();
   }
 
+  /**
+   * Captures context information from the current call stack if not already filled.
+   *
+   * @throws IllegalStateException if a logging context frame cannot be found
+   */
   public void fillIn () {
 
     setContextElement();
   }
 
+  /**
+   * Returns the originating class name.
+   *
+   * @return class name
+   * @throws IllegalStateException if the logging call context cannot be determined
+   */
   public String getClassName () {
 
     setContextElement();
@@ -61,6 +86,12 @@ public class DefaultLoggerContext implements LoggerContext {
     return contextElement.getClassName();
   }
 
+  /**
+   * Returns the originating method name.
+   *
+   * @return method name
+   * @throws IllegalStateException if the logging call context cannot be determined
+   */
   public String getMethodName () {
 
     setContextElement();
@@ -68,6 +99,12 @@ public class DefaultLoggerContext implements LoggerContext {
     return contextElement.getMethodName();
   }
 
+  /**
+   * Returns the originating file name.
+   *
+   * @return file name
+   * @throws IllegalStateException if the logging call context cannot be determined
+   */
   public String getFileName () {
 
     setContextElement();
@@ -75,6 +112,12 @@ public class DefaultLoggerContext implements LoggerContext {
     return contextElement.getFileName();
   }
 
+  /**
+   * Indicates whether the originating frame is native.
+   *
+   * @return {@code true} if native
+   * @throws IllegalStateException if the logging call context cannot be determined
+   */
   public boolean isNativeMethod () {
 
     setContextElement();
@@ -82,6 +125,12 @@ public class DefaultLoggerContext implements LoggerContext {
     return contextElement.isNativeMethod();
   }
 
+  /**
+   * Returns the originating line number.
+   *
+   * @return line number
+   * @throws IllegalStateException if the logging call context cannot be determined
+   */
   public int getLineNumber () {
 
     setContextElement();
@@ -89,6 +138,11 @@ public class DefaultLoggerContext implements LoggerContext {
     return contextElement.getLineNumber();
   }
 
+  /**
+   * Captures the first stack frame outside the logging infrastructure.
+   *
+   * @throws IllegalStateException if the caller frame cannot be determined
+   */
   public void setContextElement () {
 
     if (!filled.get()) {
