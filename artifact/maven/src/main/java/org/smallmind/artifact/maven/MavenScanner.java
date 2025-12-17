@@ -66,9 +66,9 @@ public class MavenScanner {
   /**
    * Creates a scanner using the default settings directory.
    *
-   * @param repositoryId identifier for outbound repository requests.
-   * @param offline whether remote repositories should be contacted.
-   * @param cycleStint interval between scans.
+   * @param repositoryId     identifier for outbound repository requests.
+   * @param offline          whether remote repositories should be contacted.
+   * @param cycleStint       interval between scans.
    * @param mavenCoordinates coordinates to monitor for updates.
    * @throws SettingsBuildingException if settings cannot be loaded.
    */
@@ -82,10 +82,10 @@ public class MavenScanner {
    * Creates a scanner with an explicit settings directory.
    *
    * @param settingsDirectory directory containing {@code settings.xml}; defaults to {@code ~/.m2} when null or empty.
-   * @param repositoryId identifier for outbound repository requests.
-   * @param offline whether remote repositories should be contacted.
-   * @param cycleStint interval between scans.
-   * @param mavenCoordinates coordinates to monitor for updates.
+   * @param repositoryId      identifier for outbound repository requests.
+   * @param offline           whether remote repositories should be contacted.
+   * @param cycleStint        interval between scans.
+   * @param mavenCoordinates  coordinates to monitor for updates.
    * @throws SettingsBuildingException if settings cannot be loaded.
    */
   public MavenScanner (String settingsDirectory, String repositoryId, boolean offline, Stint cycleStint, MavenCoordinate... mavenCoordinates)
@@ -97,8 +97,8 @@ public class MavenScanner {
   /**
    * Internal constructor used by public variants.
    *
-   * @param mavenRepository backing repository used for resolution.
-   * @param cycleStint interval between scans.
+   * @param mavenRepository  backing repository used for resolution.
+   * @param cycleStint       interval between scans.
    * @param mavenCoordinates coordinates to monitor for updates.
    * @throws IllegalArgumentException if stint or coordinates are missing.
    */
@@ -143,7 +143,7 @@ public class MavenScanner {
    *
    * @throws DependencyCollectionException if dependency metadata cannot be collected.
    * @throws DependencyResolutionException if any dependency fails to resolve during the initial scan.
-   * @throws ArtifactResolutionException if any monitored artifact cannot be resolved during the initial scan.
+   * @throws ArtifactResolutionException   if any monitored artifact cannot be resolved during the initial scan.
    */
   public synchronized void start ()
     throws DependencyCollectionException, DependencyResolutionException, ArtifactResolutionException {
@@ -184,7 +184,7 @@ public class MavenScanner {
    *
    * @throws DependencyCollectionException if dependency metadata cannot be collected.
    * @throws DependencyResolutionException if any dependency fails to resolve.
-   * @throws ArtifactResolutionException if a monitored artifact fails to resolve.
+   * @throws ArtifactResolutionException   if a monitored artifact fails to resolve.
    */
   private synchronized void updateArtifact ()
     throws DependencyCollectionException, DependencyResolutionException, ArtifactResolutionException {

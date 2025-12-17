@@ -34,6 +34,10 @@ package org.smallmind.nutsnbolts.layout;
 
 /**
  * Composite key for caching measurements by part, axis, and {@link TapeMeasure} type.
+ *
+ * @param part        layout component being measured
+ * @param bias        axis along which the measurement applies
+ * @param tapeMeasure measurement type (minimum/preferred)
  */
 public record Sizing(Object part, Bias bias, TapeMeasure tapeMeasure) {
 

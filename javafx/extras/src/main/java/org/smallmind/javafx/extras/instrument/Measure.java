@@ -34,6 +34,11 @@ package org.smallmind.javafx.extras.instrument;
 
 /**
  * Represents averaged rate measurements for a meter over multiple rolling windows.
+ *
+ * @param avgRate    lifetime average rate
+ * @param avgRate_1  one-minute rolling average rate
+ * @param avgRate_5  five-minute rolling average rate
+ * @param avgRate_15 fifteen-minute rolling average rate
  */
 public record Measure(double avgRate, double avgRate_1, double avgRate_5, double avgRate_15) {
 

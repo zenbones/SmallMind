@@ -42,9 +42,9 @@ public class TaskletUtility {
   /**
    * Reads a boolean job parameter from the chunk context.
    *
-   * @param chunkContext the current chunk context
+   * @param chunkContext  the current chunk context
    * @param parameterName the job parameter name
-   * @param defaultValue value to return when the parameter is absent
+   * @param defaultValue  value to return when the parameter is absent
    * @return the parsed boolean value or the default when not present
    */
   public static boolean asBoolean (ChunkContext chunkContext, String parameterName, boolean defaultValue) {

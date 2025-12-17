@@ -34,6 +34,9 @@ package org.smallmind.nutsnbolts.layout;
 
 /**
  * Describes the orientation of a layout using a {@link Bias} axis and {@link Flow} direction.
+ *
+ * @param bias axis along which layout is evaluated
+ * @param flow ordering direction along the axis
  */
 public record Orientation(Bias bias, Flow flow) {
 

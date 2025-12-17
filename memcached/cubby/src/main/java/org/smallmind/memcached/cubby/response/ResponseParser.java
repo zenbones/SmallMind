@@ -100,7 +100,7 @@ public class ResponseParser {
    * Determines whether the current buffer window represents an ERROR response.
    *
    * @param joinedBuffer buffer positioned at response start
-   * @param length length of the response line
+   * @param length       length of the response line
    * @return {@code true} if the line is exactly "ERROR"
    */
   private static boolean isError (JoinedBuffer joinedBuffer, int length) {

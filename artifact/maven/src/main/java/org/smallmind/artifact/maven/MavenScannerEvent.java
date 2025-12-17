@@ -49,10 +49,10 @@ public class MavenScannerEvent extends EventObject {
   /**
    * Constructs a new event with the changed artifacts and associated class loader.
    *
-   * @param source scanner that produced the event.
+   * @param source           scanner that produced the event.
    * @param artifactDeltaMap mapping of newly resolved artifacts to their previous versions (value is {@code null} on first discovery).
-   * @param artifactTags current tags for each monitored coordinate.
-   * @param classLoader class loader that can load the updated artifacts and their dependencies.
+   * @param artifactTags     current tags for each monitored coordinate.
+   * @param classLoader      class loader that can load the updated artifacts and their dependencies.
    */
   public MavenScannerEvent (Object source, Map<Artifact, Artifact> artifactDeltaMap, ArtifactTag[] artifactTags, ClassLoader classLoader) {
 

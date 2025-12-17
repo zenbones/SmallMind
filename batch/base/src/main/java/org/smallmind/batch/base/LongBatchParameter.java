@@ -40,7 +40,7 @@ public class LongBatchParameter extends BatchParameter<Long> {
   /**
    * Creates a long parameter wrapper.
    *
-   * @param value the numeric value to pass to the batch job
+   * @param value       the numeric value to pass to the batch job
    * @param identifying whether the value should contribute to job identity
    */
   public LongBatchParameter (Long value, boolean identifying) {

@@ -40,7 +40,7 @@ public class StringBatchParameter extends BatchParameter<String> {
   /**
    * Creates a string parameter wrapper.
    *
-   * @param value the string to pass to the batch job
+   * @param value       the string to pass to the batch job
    * @param identifying whether the value should contribute to job identity
    */
   public StringBatchParameter (String value, boolean identifying) {

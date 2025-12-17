@@ -78,7 +78,7 @@ public class VaultTumbler {
    * Constructs a tumbler using the provided salt.
    *
    * @param password vault password
-   * @param salt 32-byte salt used for PBKDF2 key derivation
+   * @param salt     32-byte salt used for PBKDF2 key derivation
    * @throws VaultCodecException if key derivation fails
    */
   public VaultTumbler (String password, byte[] salt)
@@ -149,11 +149,11 @@ public class VaultTumbler {
   /**
    * Decrypts ciphertext after verifying the provided HMAC.
    *
-   * @param hmac expected HMAC for the encrypted payload
+   * @param hmac      expected HMAC for the encrypted payload
    * @param encrypted encrypted payload bytes
    * @return decrypted plaintext bytes
    * @throws VaultPasswordException if the supplied password does not validate against the HMAC
-   * @throws VaultCodecException if decryption fails for other reasons
+   * @throws VaultCodecException    if decryption fails for other reasons
    */
   public byte[] decrypt (byte[] hmac, byte[] encrypted)
     throws VaultCodecException {

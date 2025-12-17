@@ -34,6 +34,11 @@ package org.smallmind.javafx.extras.instrument;
 
 /**
  * Represents velocity averages across multiple rolling windows.
+ *
+ * @param avgVelocity    lifetime average velocity
+ * @param avgVelocity_1  one-minute rolling average velocity
+ * @param avgVelocity_5  five-minute rolling average velocity
+ * @param avgVelocity_15 fifteen-minute rolling average velocity
  */
 public record Blur(double avgVelocity, double avgVelocity_1, double avgVelocity_5, double avgVelocity_15) {
 

@@ -199,7 +199,7 @@ public class MaglevKeyLocator implements KeyLocator {
    * <p>Uses SipHash for fast, well-distributed hashing of the key before consulting the Maglev table.</p>
    *
    * @param serverPool pool for looking up host details
-   * @param key cache key to route
+   * @param key        cache key to route
    * @return active host for the key
    * @throws IOException if no host is available
    */

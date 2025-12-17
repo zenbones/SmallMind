@@ -35,7 +35,9 @@ package org.smallmind.nutsnbolts.util;
 /**
  * Simple wrapper combining a boolean flag with an associated value.
  *
- * @param <T> value type
+ * @param <T>     value type
+ * @param flagged whether the flag is set
+ * @param value   associated payload
  */
 public record Flaggable<T>(boolean flagged, T value) {
 

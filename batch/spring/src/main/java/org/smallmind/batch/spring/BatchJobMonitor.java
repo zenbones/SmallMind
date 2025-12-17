@@ -49,7 +49,7 @@ public class BatchJobMonitor {
    * Creates a monitor for a specific job id.
    *
    * @param jobExplorer explorer used to query job executions
-   * @param jobId the job id to monitor
+   * @param jobId       the job id to monitor
    */
   public BatchJobMonitor (JobExplorer jobExplorer, Long jobId) {
 
@@ -60,12 +60,12 @@ public class BatchJobMonitor {
   /**
    * Waits for the job to reach any of the supplied exit statuses within the timeout.
    *
-   * @param timeout the maximum time to wait
-   * @param timeUnit the time unit for the timeout value
+   * @param timeout      the maximum time to wait
+   * @param timeUnit     the time unit for the timeout value
    * @param exitStatuses acceptable terminal statuses; if none are provided the method returns immediately
    * @return {@code true} if an acceptable exit status was reached before timing out, otherwise {@code false}
    * @throws InterruptedException if the monitoring thread is interrupted while waiting
-   * @throws MissingJobException if the job execution cannot be found
+   * @throws MissingJobException  if the job execution cannot be found
    */
   public boolean await (long timeout, TimeUnit timeUnit, ExitStatus... exitStatuses)
     throws InterruptedException {

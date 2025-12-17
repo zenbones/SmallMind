@@ -45,8 +45,8 @@ public class VaultCake {
   /**
    * Creates a new vault payload container.
    *
-   * @param salt the random salt used to derive encryption and HMAC keys
-   * @param hmac the calculated HMAC for the encrypted content
+   * @param salt      the random salt used to derive encryption and HMAC keys
+   * @param hmac      the calculated HMAC for the encrypted content
    * @param encrypted the encrypted payload bytes
    */
   public VaultCake (byte[] salt, byte[] hmac, byte[] encrypted) {

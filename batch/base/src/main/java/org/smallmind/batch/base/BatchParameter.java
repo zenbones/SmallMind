@@ -40,7 +40,7 @@ public abstract class BatchParameter<T> {
   /**
    * Constructs a batch parameter wrapper.
    *
-   * @param value the parameter value to be supplied to a job
+   * @param value       the parameter value to be supplied to a job
    * @param identifying {@code true} if the parameter participates in the identity of a job instance
    */
   public BatchParameter (T value, boolean identifying) {

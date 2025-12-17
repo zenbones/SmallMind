@@ -34,6 +34,9 @@ package org.smallmind.nutsnbolts.layout;
 
 /**
  * Simple immutable pair of doubles used to represent two-dimensional values.
+ *
+ * @param first  first value (e.g., width)
+ * @param second second value (e.g., height)
  */
 public record Pair(double first, double second) {
 

@@ -35,7 +35,9 @@ package org.smallmind.javafx.extras.instrument;
 /**
  * Simple container for a low/high value pair.
  *
- * @param <T> value type
+ * @param <T>  value type
+ * @param low  lower endpoint
+ * @param high upper endpoint
  */
 public record EndPoints<T>(T low, T high) {
 

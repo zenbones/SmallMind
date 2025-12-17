@@ -109,14 +109,14 @@ public class BatchJobFactory implements JobFactory {
   /**
    * Launches a job while logging the invocation reason and parameters.
    *
-   * @param logicalName the logical job name
+   * @param logicalName  the logical job name
    * @param parameterMap parameters supplied to the job
-   * @param reason optional text describing why the job is starting (used only for logging)
+   * @param reason       optional text describing why the job is starting (used only for logging)
    * @return the id of the resulting job execution
-   * @throws NoSuchJobException if the logical name cannot be resolved
-   * @throws JobParametersInvalidException if required parameters are missing or invalid
+   * @throws NoSuchJobException                  if the logical name cannot be resolved
+   * @throws JobParametersInvalidException       if required parameters are missing or invalid
    * @throws JobExecutionAlreadyRunningException if an execution of the job is already running and cannot overlap
-   * @throws JobRestartException if a restartable job cannot be restarted
+   * @throws JobRestartException                 if a restartable job cannot be restarted
    * @throws JobInstanceAlreadyCompleteException if the specified parameters map to a job instance that already completed
    */
   @Override
@@ -160,10 +160,10 @@ public class BatchJobFactory implements JobFactory {
    * Restarts a previously executed job by id.
    *
    * @param executionId the job execution id
-   * @throws NoSuchJobException if the job cannot be found
-   * @throws NoSuchJobExecutionException if the execution id does not exist
-   * @throws JobParametersInvalidException if stored parameters are invalid for restart
-   * @throws JobRestartException if the job cannot be restarted
+   * @throws NoSuchJobException                  if the job cannot be found
+   * @throws NoSuchJobExecutionException         if the execution id does not exist
+   * @throws JobParametersInvalidException       if stored parameters are invalid for restart
+   * @throws JobRestartException                 if the job cannot be restarted
    * @throws JobInstanceAlreadyCompleteException if the execution corresponds to a completed instance
    */
   @Override
@@ -213,13 +213,13 @@ public class BatchJobFactory implements JobFactory {
   /**
    * Launches a job with the supplied parameters.
    *
-   * @param logicalName the logical job name to resolve
+   * @param logicalName  the logical job name to resolve
    * @param parameterMap the parameters to pass to the job
    * @return the id of the created job execution
-   * @throws NoSuchJobException if the job name cannot be resolved
-   * @throws JobParametersInvalidException if the parameter map fails Spring Batch validation
+   * @throws NoSuchJobException                  if the job name cannot be resolved
+   * @throws JobParametersInvalidException       if the parameter map fails Spring Batch validation
    * @throws JobExecutionAlreadyRunningException if the job is already running with the same parameters
-   * @throws JobRestartException if the job cannot be restarted with the provided parameters
+   * @throws JobRestartException                 if the job cannot be restarted with the provided parameters
    * @throws JobInstanceAlreadyCompleteException if the parameters map to a completed job instance
    */
   public Long start (String logicalName, Map<String, BatchParameter<?>> parameterMap)

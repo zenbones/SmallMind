@@ -42,7 +42,7 @@ public class DateBatchParameter extends BatchParameter<Date> {
   /**
    * Creates a date parameter wrapper.
    *
-   * @param value the date to pass to the batch job
+   * @param value       the date to pass to the batch job
    * @param identifying whether the value should contribute to job identity
    */
   public DateBatchParameter (Date value, boolean identifying) {

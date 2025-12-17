@@ -34,6 +34,11 @@ package org.smallmind.nutsnbolts.layout;
 
 /**
  * Represents four-sided insets around a container.
+ *
+ * @param top    inset on the top edge
+ * @param left   inset on the left edge
+ * @param bottom inset on the bottom edge
+ * @param right  inset on the right edge
  */
 public record Perimeter(double top, double left, double bottom, double right) {
 

@@ -48,9 +48,9 @@ public class VaultCodec {
    * Encrypts the supplied stream into an Ansible vault string using the supplied password.
    *
    * @param inputStream stream containing the plaintext to encrypt; the stream is fully read but not closed
-   * @param password vault password used for PBKDF2 key derivation
+   * @param password    vault password used for PBKDF2 key derivation
    * @return vault-formatted text containing headers and hex-encoded content
-   * @throws IOException if reading from the input stream fails
+   * @throws IOException         if reading from the input stream fails
    * @throws VaultCodecException if encryption fails
    */
   public static String encrypt (InputStream inputStream, String password)
@@ -63,10 +63,10 @@ public class VaultCodec {
    * Encrypts the supplied stream into an Ansible vault string using the supplied password and optional id.
    *
    * @param inputStream stream containing the plaintext to encrypt; the stream is fully read but not closed
-   * @param password vault password used for PBKDF2 key derivation
-   * @param id optional vault id inserted into the header when using format 1.2
+   * @param password    vault password used for PBKDF2 key derivation
+   * @param id          optional vault id inserted into the header when using format 1.2
    * @return vault-formatted text containing headers and hex-encoded content
-   * @throws IOException if reading from the input stream fails
+   * @throws IOException         if reading from the input stream fails
    * @throws VaultCodecException if encryption fails
    */
   public static String encrypt (InputStream inputStream, String password, String id)
@@ -110,9 +110,9 @@ public class VaultCodec {
    * Decrypts an Ansible vault stream using the supplied password.
    *
    * @param inputStream stream containing the vault text; the stream is fully read but not closed
-   * @param password vault password used for PBKDF2 key derivation
+   * @param password    vault password used for PBKDF2 key derivation
    * @return decrypted plaintext bytes
-   * @throws IOException if reading from the input stream fails
+   * @throws IOException         if reading from the input stream fails
    * @throws VaultCodecException if the header is unrecognized, the cipher is unsupported, or password validation fails
    */
   public static byte[] decrypt (InputStream inputStream, String password)
@@ -137,7 +137,7 @@ public class VaultCodec {
    * Consumes the expected line separator marker ("0a") from the encoded stream.
    *
    * @param inputStream encoded stream positioned at the start of a line separator token
-   * @throws IOException if reading fails
+   * @throws IOException         if reading fails
    * @throws VaultCodecException if the expected token is not present
    */
   private static void skip0A (InputStream inputStream)
@@ -152,9 +152,9 @@ public class VaultCodec {
    * Reads a fixed number of bytes from the encoded stream, consuming the trailing line separator.
    *
    * @param inputStream encoded stream positioned at the start of a block
-   * @param length number of decoded bytes expected
+   * @param length      number of decoded bytes expected
    * @return decoded bytes after reversing the double-hex encoding
-   * @throws IOException if reading fails
+   * @throws IOException         if reading fails
    * @throws VaultCodecException if insufficient bytes are available or the separator is missing
    */
   private static byte[] readBytes (InputStream inputStream, int length)

@@ -40,7 +40,7 @@ public class DoubleBatchParameter extends BatchParameter<Double> {
   /**
    * Creates a double parameter wrapper.
    *
-   * @param value the numeric value to pass to the batch job
+   * @param value       the numeric value to pass to the batch job
    * @param identifying whether the value should contribute to job identity
    */
   public DoubleBatchParameter (Double value, boolean identifying) {

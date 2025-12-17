@@ -54,9 +54,9 @@ public class MavenCoordinate {
   /**
    * Constructs coordinates for a standard jar artifact.
    *
-   * @param groupId the group identifier.
+   * @param groupId    the group identifier.
    * @param artifactId the artifact identifier.
-   * @param version the version string.
+   * @param version    the version string.
    */
   public MavenCoordinate (String groupId, String artifactId, String version) {
 
@@ -68,10 +68,10 @@ public class MavenCoordinate {
   /**
    * Constructs coordinates including a classifier.
    *
-   * @param groupId the group identifier.
+   * @param groupId    the group identifier.
    * @param artifactId the artifact identifier.
    * @param classifier optional classifier for the artifact.
-   * @param version the version string.
+   * @param version    the version string.
    */
   public MavenCoordinate (String groupId, String artifactId, String classifier, String version) {
 
@@ -83,11 +83,11 @@ public class MavenCoordinate {
   /**
    * Constructs fully specified coordinates including classifier and extension.
    *
-   * @param groupId the group identifier.
+   * @param groupId    the group identifier.
    * @param artifactId the artifact identifier.
    * @param classifier optional classifier for the artifact.
-   * @param extension artifact packaging/extension (defaults to {@code jar}).
-   * @param version the version string.
+   * @param extension  artifact packaging/extension (defaults to {@code jar}).
+   * @param version    the version string.
    */
   public MavenCoordinate (String groupId, String artifactId, String classifier, String extension, String version) {
 

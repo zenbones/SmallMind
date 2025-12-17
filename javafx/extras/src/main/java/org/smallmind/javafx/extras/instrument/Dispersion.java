@@ -34,6 +34,13 @@ package org.smallmind.javafx.extras.instrument;
 
 /**
  * Represents latency distribution percentiles captured at a point in time.
+ *
+ * @param median         median latency
+ * @param percentile_75  75th percentile latency
+ * @param percentile_95  95th percentile latency
+ * @param percentile_98  98th percentile latency
+ * @param percentile_99  99th percentile latency
+ * @param percentile_999 99.9th percentile latency
  */
 public record Dispersion(double median, double percentile_75, double percentile_95, double percentile_98, double percentile_99, double percentile_999) {
 

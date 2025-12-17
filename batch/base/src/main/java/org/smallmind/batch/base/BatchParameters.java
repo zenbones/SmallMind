@@ -43,8 +43,8 @@ public class BatchParameters extends HashMap<String, BatchParameter<?>> {
   /**
    * Adds a {@link Date} parameter.
    *
-   * @param key the parameter name expected by the job
-   * @param aDate the date value to supply
+   * @param key         the parameter name expected by the job
+   * @param aDate       the date value to supply
    * @param identifying whether the value helps identify the job instance
    */
   public void putDate (String key, Date aDate, boolean identifying) {
@@ -55,8 +55,8 @@ public class BatchParameters extends HashMap<String, BatchParameter<?>> {
   /**
    * Adds a {@link Double} parameter.
    *
-   * @param key the parameter name expected by the job
-   * @param aDouble the numeric value to supply
+   * @param key         the parameter name expected by the job
+   * @param aDouble     the numeric value to supply
    * @param identifying whether the value helps identify the job instance
    */
   public void putDouble (String key, Double aDouble, boolean identifying) {
@@ -67,8 +67,8 @@ public class BatchParameters extends HashMap<String, BatchParameter<?>> {
   /**
    * Adds a {@link Long} parameter.
    *
-   * @param key the parameter name expected by the job
-   * @param aLong the numeric value to supply
+   * @param key         the parameter name expected by the job
+   * @param aLong       the numeric value to supply
    * @param identifying whether the value helps identify the job instance
    */
   public void putLong (String key, Long aLong, boolean identifying) {
@@ -79,8 +79,8 @@ public class BatchParameters extends HashMap<String, BatchParameter<?>> {
   /**
    * Adds a {@link String} parameter.
    *
-   * @param key the parameter name expected by the job
-   * @param aString the string value to supply
+   * @param key         the parameter name expected by the job
+   * @param aString     the string value to supply
    * @param identifying whether the value helps identify the job instance
    */
   public void putString (String key, String aString, boolean identifying) {

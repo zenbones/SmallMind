@@ -34,6 +34,9 @@ package org.smallmind.nutsnbolts.layout;
 
 /**
  * Associates a {@link ParaboxElement} with its original index for reordering operations.
+ *
+ * @param reorderedElement element after reordering
+ * @param originalIndex    position the element occupied before reordering
  */
 public record ReorderedElement(ParaboxElement<?> reorderedElement, int originalIndex) {
 

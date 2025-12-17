@@ -82,7 +82,7 @@ public class ArrayCodec<T> implements Codec<T> {
   /**
    * Decodes a BSON array into a Java array of the configured component type.
    *
-   * @param reader source reader positioned at the array
+   * @param reader         source reader positioned at the array
    * @param decoderContext decoder context
    * @return decoded Java array or {@code null} when the BSON value is {@code null}
    */
@@ -116,8 +116,8 @@ public class ArrayCodec<T> implements Codec<T> {
   /**
    * Encodes a Java array into a BSON array using the configured element codec.
    *
-   * @param writer destination writer
-   * @param value array to encode
+   * @param writer         destination writer
+   * @param value          array to encode
    * @param encoderContext encoder context
    */
   @Override

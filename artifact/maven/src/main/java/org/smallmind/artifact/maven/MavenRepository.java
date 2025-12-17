@@ -118,7 +118,7 @@ public class MavenRepository {
    * Builds a repository instance using the default {@code ~/.m2/settings.xml}.
    *
    * @param repositoryId identifier used in the generated User-Agent header.
-   * @param offline whether resolution should avoid remote access.
+   * @param offline      whether resolution should avoid remote access.
    * @throws SettingsBuildingException if the settings file cannot be read or is invalid.
    */
   public MavenRepository (String repositoryId, boolean offline)
@@ -131,8 +131,8 @@ public class MavenRepository {
    * Builds a repository instance using the supplied settings directory.
    *
    * @param settingsDirectory directory that contains {@code settings.xml}; defaults to {@code ~/.m2} when {@code null} or empty.
-   * @param repositoryId identifier used in the generated User-Agent header.
-   * @param offline whether resolution should avoid remote access.
+   * @param repositoryId      identifier used in the generated User-Agent header.
+   * @param offline           whether resolution should avoid remote access.
    * @throws SettingsBuildingException if the settings file cannot be read or is invalid.
    */
   public MavenRepository (String settingsDirectory, String repositoryId, boolean offline)
@@ -188,7 +188,7 @@ public class MavenRepository {
   /**
    * Resolves the artifact described by the provided coordinates.
    *
-   * @param session a repository session created by {@link #generateSession()}.
+   * @param session         a repository session created by {@link #generateSession()}.
    * @param mavenCoordinate coordinates describing the target artifact.
    * @return the resolved artifact with file reference.
    * @throws ArtifactResolutionException if the artifact cannot be resolved from configured repositories.
@@ -202,7 +202,7 @@ public class MavenRepository {
   /**
    * Resolves the supplied artifact descriptor against configured repositories.
    *
-   * @param session a repository session created by {@link #generateSession()}.
+   * @param session  a repository session created by {@link #generateSession()}.
    * @param artifact the artifact to resolve.
    * @return the resolved artifact including its downloaded file.
    * @throws ArtifactResolutionException if resolution fails or no repository provides the artifact.
@@ -221,7 +221,7 @@ public class MavenRepository {
   /**
    * Resolves an artifact and its transitive compile-time dependencies.
    *
-   * @param session a repository session created by {@link #generateSession()}.
+   * @param session  a repository session created by {@link #generateSession()}.
    * @param artifact the root artifact to resolve (must include coordinates and optionally a file).
    * @return array of resolved artifacts including the root and dependencies.
    * @throws DependencyCollectionException if dependency metadata cannot be collected.
@@ -306,8 +306,8 @@ public class MavenRepository {
    * Builds the remote repository list from active profiles and applies mirrors/authentication.
    *
    * @param authenticationSelector selector that supplies credentials per repository.
-   * @param mirrorSelector selector used to coerce repositories to configured mirrors.
-   * @param settings effective Maven settings.
+   * @param mirrorSelector         selector used to coerce repositories to configured mirrors.
+   * @param settings               effective Maven settings.
    * @return list of remote repositories used for resolution.
    */
   private List<RemoteRepository> initRepositories (AuthenticationSelector authenticationSelector, MirrorSelector mirrorSelector, Settings settings) {
@@ -332,7 +332,7 @@ public class MavenRepository {
    * Determines if a settings profile is active based on explicit activation or defaults.
    *
    * @param settings effective Maven settings.
-   * @param profile profile under consideration.
+   * @param profile  profile under consideration.
    * @return {@code true} when the profile is active.
    */
   private boolean isProfileActive (Settings settings, Profile profile) {
@@ -345,9 +345,9 @@ public class MavenRepository {
    * Creates a remote repository instance (or its mirror) and adds it to the supplied list with authentication applied.
    *
    * @param authenticationSelector selector that supplies credentials per repository.
-   * @param mirrorSelector selector used to coerce repositories to configured mirrors.
-   * @param remoteRepositoryList collection being populated.
-   * @param repository repository settings entry to translate.
+   * @param mirrorSelector         selector used to coerce repositories to configured mirrors.
+   * @param remoteRepositoryList   collection being populated.
+   * @param repository             repository settings entry to translate.
    */
   private void constructRemoteRepository (AuthenticationSelector authenticationSelector, MirrorSelector mirrorSelector, List<RemoteRepository> remoteRepositoryList, Repository repository) {
 
@@ -421,8 +421,8 @@ public class MavenRepository {
   /**
    * Creates a local repository manager anchored at the configured local repository directory.
    *
-   * @param settings effective Maven settings.
-   * @param repositorySystem repository system used to create the manager.
+   * @param settings                effective Maven settings.
+   * @param repositorySystem        repository system used to create the manager.
    * @param repositorySystemSession the session associated with the manager.
    * @return local repository manager for caching artifacts.
    */

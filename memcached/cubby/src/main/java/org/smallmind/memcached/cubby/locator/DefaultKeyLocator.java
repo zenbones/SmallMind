@@ -119,7 +119,7 @@ public class DefaultKeyLocator implements KeyLocator {
    * <p>The routing array is read under a shared lock and the key hash is used to choose an active host.</p>
    *
    * @param serverPool pool that provides host lookups by name
-   * @param key cache key to route
+   * @param key        cache key to route
    * @return active {@link MemcachedHost} that should service the key
    * @throws IOException if no active host is available
    */

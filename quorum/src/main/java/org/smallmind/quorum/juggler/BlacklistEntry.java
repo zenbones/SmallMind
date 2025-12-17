@@ -35,7 +35,7 @@ package org.smallmind.quorum.juggler;
 /**
  * Immutable description of a blacklisted pin and the reason it failed.
  *
- * @param <R> resource type associated with the pin
+ * @param <R>         resource type associated with the pin
  * @param jugglingPin pin that has been blacklisted
  * @param throwable   cause of the blacklist entry
  */

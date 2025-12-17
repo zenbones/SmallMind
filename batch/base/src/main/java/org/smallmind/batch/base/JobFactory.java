@@ -42,9 +42,9 @@ public interface JobFactory {
   /**
    * Creates and launches a batch job.
    *
-   * @param logicalName the job name used to locate the definition
+   * @param logicalName  the job name used to locate the definition
    * @param parameterMap parameters to pass to the job, keyed by name
-   * @param reason optional description of why the job is being started (for logging/auditing)
+   * @param reason       optional description of why the job is being started (for logging/auditing)
    * @return the unique job execution id
    * @throws Exception if the job cannot be located or started
    */

@@ -244,48 +244,13 @@ public class ConsolidatingChangeListener<T> implements ChangeListener<T>, Compar
   }
 
   /**
-     * Encapsulates the change state captured for consolidation.
-     *
-     * @param <U> the observed value type
-     */
-    private record LooseChange<U>(ObservableValue<? extends U> observableValue, U initialValue, U currentValue) {
-
-    /**
-     * Captures a single change instance.
-     *
-     * @param observableValue the observable that triggered the change
-     * @param initialValue    the prior value
-     * @param currentValue    the updated value
-     */
-    private LooseChange {
-
-    }
-
-      /**
-       * @return the observable associated with the change
-       */
-      @Override
-      public ObservableValue<? extends U> observableValue () {
-
-        return observableValue;
-      }
-
-      /**
-       * @return the value prior to the change
-       */
-      @Override
-      public U initialValue () {
-
-        return initialValue;
-      }
-
-      /**
-       * @return the latest value captured
-       */
-      @Override
-      public U currentValue () {
-
-        return currentValue;
-      }
-    }
+   * Encapsulates the change state captured for consolidation.
+   *
+   * @param <U> the observed value type
+   * @param observableValue the observed value source
+   * @param initialValue    the previous value
+   * @param currentValue    the new value
+   */
+  private record LooseChange<U>(ObservableValue<? extends U> observableValue, U initialValue, U currentValue) {
+  }
 }

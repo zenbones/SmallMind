@@ -43,7 +43,7 @@ public class VaultCodecException extends FormattedException {
    * Creates an exception with a formatted message.
    *
    * @param message message template
-   * @param args message arguments
+   * @param args    message arguments
    */
   public VaultCodecException (String message, Object... args) {
 
