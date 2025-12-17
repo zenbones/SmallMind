@@ -32,26 +32,41 @@
  */
 package org.smallmind.spark.tanukisoft.maven;
 
+/**
+ * Represents an environment variable name/value pair to be injected into wrapper scripts.
+ */
 public class EnvironmentArgument {
 
   private String name;
   private String value;
 
+  /**
+   * @return environment variable name
+   */
   public String getName () {
 
     return name;
   }
 
+  /**
+   * @param name environment variable name
+   */
   public void setName (String name) {
 
     this.name = name;
   }
 
+  /**
+   * @return environment variable value
+   */
   public String getValue () {
 
     return value;
   }
 
+  /**
+   * @param value environment variable value
+   */
   public void setValue (String value) {
 
     this.value = value;

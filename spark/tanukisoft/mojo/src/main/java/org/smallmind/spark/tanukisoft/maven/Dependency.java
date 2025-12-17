@@ -34,31 +34,50 @@ package org.smallmind.spark.tanukisoft.maven;
 
 import org.apache.maven.artifact.Artifact;
 
+/**
+ * Declares an additional dependency that should be bundled into the Tanuki wrapper distribution.
+ */
 public class Dependency {
 
   private String groupId;
   private String artifactId;
 
+  /**
+   * @return dependency groupId
+   */
   public String getGroupId () {
 
     return groupId;
   }
 
+  /**
+   * @param groupId dependency groupId
+   */
   public void setGroupId (String groupId) {
 
     this.groupId = groupId;
   }
 
+  /**
+   * @return dependency artifactId
+   */
   public String getArtifactId () {
 
     return artifactId;
   }
 
+  /**
+   * @param artifactId dependency artifactId
+   */
   public void setArtifactId (String artifactId) {
 
     this.artifactId = artifactId;
   }
 
+  /**
+   * @param artifact artifact to test
+   * @return {@code true} when the artifact matches the configured coordinates
+   */
   public boolean matchesArtifact (Artifact artifact) {
 
     return groupId.equals(artifact.getGroupId()) && artifactId.equals(artifact.getArtifactId());

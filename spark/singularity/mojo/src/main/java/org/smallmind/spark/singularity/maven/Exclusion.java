@@ -34,31 +34,52 @@ package org.smallmind.spark.singularity.maven;
 
 import org.apache.maven.artifact.Artifact;
 
+/**
+ * Maven dependency descriptor used to exclude specific artifacts from the generated Singularity bundle.
+ */
 public class Exclusion {
 
   private String groupId;
   private String artifactId;
 
+  /**
+   * @return the groupId of the dependency to exclude
+   */
   public String getGroupId () {
 
     return groupId;
   }
 
+  /**
+   * @param groupId groupId of the dependency to exclude
+   */
   public void setGroupId (String groupId) {
 
     this.groupId = groupId;
   }
 
+  /**
+   * @return the artifactId of the dependency to exclude
+   */
   public String getArtifactId () {
 
     return artifactId;
   }
 
+  /**
+   * @param artifactId artifactId of the dependency to exclude
+   */
   public void setArtifactId (String artifactId) {
 
     this.artifactId = artifactId;
   }
 
+  /**
+   * Checks whether the given artifact matches this exclusion.
+   *
+   * @param artifact artifact to test
+   * @return {@code true} when the groupId and artifactId match
+   */
   public boolean matchesArtifact (Artifact artifact) {
 
     return groupId.equals(artifact.getGroupId()) && artifactId.equals(artifact.getArtifactId());

@@ -62,7 +62,10 @@ import org.smallmind.nutsnbolts.freemarker.ClassPathTemplateLoader;
 import org.smallmind.nutsnbolts.io.PathUtility;
 import org.smallmind.nutsnbolts.zip.CompressionType;
 
-// Generates Tanukisoft based os service wrappers
+/**
+ * Generates Tanuki Software wrapper distributions for the current project, assembling binaries, configs, and dependencies
+ * into an installable package and optionally creating an artifact for deployment.
+ */
 @Mojo(name = "generate-wrapper", defaultPhase = LifecyclePhase.PACKAGE, requiresDependencyResolution = ResolutionScope.RUNTIME, threadSafe = true)
 public class GenerateWrapperMojo extends AbstractMojo {
 
@@ -131,6 +134,11 @@ public class GenerateWrapperMojo extends AbstractMojo {
   @Parameter(defaultValue = "false")
   private boolean skip;
 
+  /**
+   * Aggregates project artifacts, dependencies, configuration, and wrapper binaries into a packaged distribution.
+   *
+   * @throws MojoExecutionException if any generation step fails
+   */
   public void execute ()
     throws MojoExecutionException {
 
@@ -408,6 +416,13 @@ public class GenerateWrapperMojo extends AbstractMojo {
     }
   }
 
+  /**
+   * Constructs the base application directory/artifact name.
+   *
+   * @param includeVersion    whether to append the project version
+   * @param aggregateArtifact whether the name represents the aggregate packaged artifact
+   * @return constructed name without an extension
+   */
   private String constructArtifactName (boolean includeVersion, boolean aggregateArtifact) {
 
     StringBuilder nameBuilder;
@@ -429,11 +444,28 @@ public class GenerateWrapperMojo extends AbstractMojo {
     return nameBuilder.toString();
   }
 
+  /**
+   * Calculates the full path to the compressed artifact to be produced.
+   *
+   * @param outputDir               base build directory
+   * @param artifactCompressionType compression type to use
+   * @param aggregateArtifact       whether this artifact represents the full application
+   * @return path for the resulting archive
+   */
   private Path constructCompressedArtifactPath (String outputDir, CompressionType artifactCompressionType, boolean aggregateArtifact) {
 
     return Paths.get(outputDir, constructArtifactName(true, aggregateArtifact) + '.' + artifactCompressionType.getExtension());
   }
 
+  /**
+   * Processes a Freemarker template and writes the rendered file to the provided destination.
+   *
+   * @param templatePath        classpath-relative template path
+   * @param outputPath          directory where the rendered file will be written
+   * @param destinationFileName output filename
+   * @param interpolationMap    model containing replacement values
+   * @throws MojoExecutionException if the template cannot be loaded, processed, or written
+   */
   private void processFreemarkerTemplate (Path templatePath, Path outputPath, String destinationFileName, HashMap<String, Object> interpolationMap)
     throws MojoExecutionException {
 
@@ -470,6 +502,13 @@ public class GenerateWrapperMojo extends AbstractMojo {
     }
   }
 
+  /**
+   * Ensures the given directory exists, raising a {@link MojoExecutionException} on failure.
+   *
+   * @param dirType label used in error messages
+   * @param dirPath directory path to create
+   * @throws MojoExecutionException if the directory cannot be created
+   */
   private void createDirectory (String dirType, Path dirPath)
     throws MojoExecutionException {
 
@@ -480,11 +519,23 @@ public class GenerateWrapperMojo extends AbstractMojo {
     }
   }
 
+  /**
+   * @param dirType  directory category (bin/lib/conf)
+   * @param fileName file within the wrapper resources
+   * @return resolved resource path for the requested wrapper component
+   */
   private Path getWrapperPath (String dirType, String fileName) {
 
     return Paths.get(RESOURCE_BASE_PATH, dirType, fileName);
   }
 
+  /**
+   * Loads a resource stream from the wrapper bundle.
+   *
+   * @param path resource path to resolve
+   * @return an open input stream for the resource
+   * @throws MojoExecutionException if the resource cannot be found
+   */
   private InputStream getResourceAsStream (Path path)
     throws MojoExecutionException {
 
@@ -497,6 +548,14 @@ public class GenerateWrapperMojo extends AbstractMojo {
     return inputStream;
   }
 
+  /**
+   * Copies a file from disk into the destination directory under a specific name.
+   *
+   * @param sourcePath          path to the source file
+   * @param destinationPath     destination directory
+   * @param destinationFileName resulting filename
+   * @throws IOException if reading or writing fails
+   */
   private void copyToDestination (Path sourcePath, Path destinationPath, String destinationFileName)
     throws IOException {
 
@@ -514,6 +573,14 @@ public class GenerateWrapperMojo extends AbstractMojo {
     readChannel.close();
   }
 
+  /**
+   * Copies a standard {@link File} into the destination directory under a specific name.
+   *
+   * @param file                source file to copy
+   * @param destinationPath     destination directory
+   * @param destinationFileName resulting filename
+   * @throws IOException if reading or writing fails
+   */
   private void copyToDestination (File file, Path destinationPath, String destinationFileName)
     throws IOException {
 
@@ -522,6 +589,14 @@ public class GenerateWrapperMojo extends AbstractMojo {
     }
   }
 
+  /**
+   * Copies data from an {@link InputStream} into the destination directory under a specific name.
+   *
+   * @param inputStream         source stream
+   * @param destinationPath     destination directory
+   * @param destinationFileName resulting filename
+   * @throws IOException if reading or writing fails
+   */
   private void copyToDestination (InputStream inputStream, Path destinationPath, String destinationFileName)
     throws IOException {
 

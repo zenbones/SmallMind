@@ -42,26 +42,53 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 
+/**
+ * Serializable index of all files included in a Singularity bundle along with mappings that connect nested jar entries to their source jars.
+ * The index is written into the assembled jar and consumed by {@link SingularityClassLoader} to resolve resources.
+ */
 public class SingularityIndex implements Serializable {
 
   private final HashMap<String, String> inverseEntryMap = new HashMap<>();
   private final HashSet<String> fileNameSet = new HashSet<>();
 
+  /**
+   * Records that a specific nested entry originated from a particular jar file.
+   *
+   * @param entryName the nested entry name inside the jar
+   * @param jarName   the jar file that contains the entry
+   */
   public void addInverseJarEntry (String entryName, String jarName) {
 
     inverseEntryMap.put(entryName, jarName);
   }
 
+  /**
+   * Adds the path for a file that should be exposed directly from the assembled archive.
+   *
+   * @param fileName normalized file path within the bundle
+   */
   public void addFileName (String fileName) {
 
     fileNameSet.add(fileName);
   }
 
+  /**
+   * Produces an iterable that yields {@link URLEntry} instances for direct jar-based resource URLs.
+   *
+   * @param parentJarUrlPart the outer jar URL used as the base for the generated resource URLs
+   * @return an iterable over URL entries pointing to conventional jar URLs
+   */
   public Iterable<URLEntry> getJarURLEntryIterable (String parentJarUrlPart) {
 
     return new JarURLIterator(parentJarUrlPart);
   }
 
+  /**
+   * Produces an iterable that yields {@link URLEntry} instances for nested jar URLs using the {@code singularity:} protocol.
+   *
+   * @param parentJarUrlPart the outer jar URL used as the base for the generated nested URLs
+   * @return an iterable over URL entries pointing to nested jars via the custom protocol
+   */
   public Iterable<URLEntry> getSingularityURLEntryIterable (String parentJarUrlPart) {
 
     return new SingularityURLIterator(parentJarUrlPart);
@@ -72,23 +99,40 @@ public class SingularityIndex implements Serializable {
     private final Iterator<String> fileNameIter = fileNameSet.iterator();
     private final String parentJarUrlPart;
 
+    /**
+     * Creates an iterator that resolves stored file names to standard jar URLs using the provided parent jar prefix.
+     *
+     * @param parentJarUrlPart the base jar URL used to build resource locations
+     */
     public JarURLIterator (String parentJarUrlPart) {
 
       this.parentJarUrlPart = parentJarUrlPart;
     }
 
+    /**
+     * @return this iterator instance
+     */
     @Override
     public Iterator<URLEntry> iterator () {
 
       return this;
     }
 
+    /**
+     * @return {@code true} when additional entries remain
+     */
     @Override
     public boolean hasNext () {
 
       return fileNameIter.hasNext();
     }
 
+    /**
+     * Builds the next {@link URLEntry} addressing the current file via a jar URL.
+     *
+     * @return the next URL entry
+     * @throws RuntimeException if the generated URL is malformed
+     */
     @Override
     public URLEntry next () {
 
@@ -102,6 +146,11 @@ public class SingularityIndex implements Serializable {
       }
     }
 
+    /**
+     * Unsupported remove operation because the backing collection is immutable for iteration purposes.
+     *
+     * @throws UnsupportedOperationException always
+     */
     @Override
     public void remove () {
 
@@ -114,23 +163,40 @@ public class SingularityIndex implements Serializable {
     private final Iterator<Map.Entry<String, String>> inverseEntryIter = inverseEntryMap.entrySet().iterator();
     private final String parentJarUrlPart;
 
+    /**
+     * Creates an iterator that resolves inverse entry mappings to {@code singularity:} URLs.
+     *
+     * @param parentJarUrlPart the base jar URL used to build nested resource locations
+     */
     public SingularityURLIterator (String parentJarUrlPart) {
 
       this.parentJarUrlPart = parentJarUrlPart;
     }
 
+    /**
+     * @return this iterator instance
+     */
     @Override
     public Iterator<URLEntry> iterator () {
 
       return this;
     }
 
+    /**
+     * @return {@code true} when further nested entries remain
+     */
     @Override
     public boolean hasNext () {
 
       return inverseEntryIter.hasNext();
     }
 
+    /**
+     * Builds the next {@link URLEntry} addressing an inner entry via the {@code singularity:} protocol.
+     *
+     * @return the next nested URL entry
+     * @throws RuntimeException if the generated URL is malformed
+     */
     @Override
     public URLEntry next () {
 
@@ -144,6 +210,11 @@ public class SingularityIndex implements Serializable {
       }
     }
 
+    /**
+     * Unsupported remove operation because the backing collection is immutable for iteration purposes.
+     *
+     * @throws UnsupportedOperationException always
+     */
     @Override
     public void remove () {
 
@@ -151,6 +222,9 @@ public class SingularityIndex implements Serializable {
     }
   }
 
+  /**
+   * Simple pair that associates an entry name with its resolved {@link URL}.
+   */
   public record URLEntry(String entryName, URL entryURL) {
 
   }

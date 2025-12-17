@@ -35,8 +35,17 @@ package org.smallmind.spark.tanukisoft.integration.spring;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
+/**
+ * Concrete {@link SpringContextWrapperListener} that loads contexts from classpath XML configuration files.
+ */
 public class ClassPathXmlSpringContextWrapperListener extends SpringContextWrapperListener {
 
+  /**
+   * Creates a {@link ClassPathXmlApplicationContext} from the supplied XML locations.
+   *
+   * @param args classpath resource names containing Spring XML configuration
+   * @return the loaded application context
+   */
   public ConfigurableApplicationContext loadApplicationContext (String[] args) {
 
     return new ClassPathXmlApplicationContext(args);

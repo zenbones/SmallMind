@@ -36,8 +36,17 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
 
+/**
+ * Custom {@link URLStreamHandler} capable of opening {@code singularity:} URLs produced by the boot loader.
+ */
 public class SingularityJarURLStreamHandler extends URLStreamHandler {
 
+  /**
+   * Creates a {@link URLConnection} that can read nested entries addressed by a {@code singularity:} URL.
+   *
+   * @param url the URL representing a nested entry
+   * @return a connection capable of streaming the addressed entry
+   */
   @Override
   protected URLConnection openConnection (URL url) {
 

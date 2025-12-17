@@ -42,11 +42,21 @@ import java.util.jar.JarInputStream;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
 
+/**
+ * Lightweight jar cache that stores compressed entry data from an embedded jar to accelerate repeat lookups.
+ */
 public class CachedJarFile {
 
   private final HashMap<String, byte[]> entryMap = new HashMap<>();
   private final String entryName;
 
+  /**
+   * Reads each entry from the supplied inner jar stream and stores a compressed copy for later retrieval.
+   *
+   * @param entryName      name of the enclosing jar entry being cached
+   * @param jarInputStream stream of the nested jar content positioned at its first entry
+   * @throws IOException if any entry cannot be read or buffered
+   */
   public CachedJarFile (String entryName, JarInputStream jarInputStream)
     throws IOException {
 
@@ -71,11 +81,20 @@ public class CachedJarFile {
     }
   }
 
+  /**
+   * @return the name of the jar entry that produced this cache
+   */
   public String getEntryName () {
 
     return entryName;
   }
 
+  /**
+   * Returns an {@link InputStream} for a previously cached entry or {@code null} if the name is unknown.
+   *
+   * @param name the inner entry name to resolve
+   * @return an inflated stream for the cached entry or {@code null} when not cached
+   */
   public InputStream getInputStream (String name) {
 
     byte[] contents;

@@ -64,7 +64,9 @@ import org.smallmind.nutsnbolts.zip.CompressionType;
 import org.smallmind.spark.singularity.boot.SingularityEntryPoint;
 import org.smallmind.spark.singularity.boot.SingularityIndex;
 
-// Generates Singularity based one jar applications
+/**
+ * Generates Singularity-based executable jars by aggregating runtime dependencies, application classes, and bootstrapping metadata.
+ */
 @Mojo(name = "generate-singularity", defaultPhase = LifecyclePhase.PACKAGE, requiresDependencyResolution = ResolutionScope.RUNTIME, threadSafe = true)
 public class GenerateSingularityMojo extends AbstractMojo {
 
@@ -85,6 +87,11 @@ public class GenerateSingularityMojo extends AbstractMojo {
   @Parameter(readonly = true, property = "plugin.artifacts")
   protected List<Artifact> pluginArtifacts;
 
+  /**
+   * Builds the Singularity jar, copying boot classes, runtime dependencies, and application classes before writing the index and manifest.
+   *
+   * @throws MojoExecutionException if any build step fails
+   */
   public void execute ()
     throws MojoExecutionException {
 
@@ -216,6 +223,11 @@ public class GenerateSingularityMojo extends AbstractMojo {
     }
   }
 
+  /**
+   * Constructs the standard jar filename for the current project and classifier.
+   *
+   * @return artifact filename ending in .jar
+   */
   private String constructArtifactName () {
 
     StringBuilder nameBuilder = new StringBuilder(project.getArtifactId()).append('-').append(project.getVersion());
@@ -227,6 +239,13 @@ public class GenerateSingularityMojo extends AbstractMojo {
     return nameBuilder.append(".jar").toString();
   }
 
+  /**
+   * Copies a file to a destination path using NIO channels for efficiency.
+   *
+   * @param file            source file to copy
+   * @param destinationPath destination location
+   * @throws IOException if reading or writing fails
+   */
   private void copyToDestination (File file, Path destinationPath)
     throws IOException {
 
@@ -246,6 +265,14 @@ public class GenerateSingularityMojo extends AbstractMojo {
     inputStream.close();
   }
 
+  /**
+   * Extracts boot classes from the supplied jar into the Singularity build path while recording them in the index.
+   *
+   * @param singularityIndex index to update
+   * @param jarFile          jar that contains the boot classes
+   * @param destinationPath  target directory for extracted classes
+   * @throws IOException if extraction fails
+   */
   private void copyBootClasses (SingularityIndex singularityIndex, File jarFile, Path destinationPath)
     throws IOException {
 

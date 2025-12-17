@@ -32,17 +32,26 @@
  */
 package org.smallmind.spark.tanukisoft.maven;
 
+/**
+ * Distinguishes wrapper behavior between Windows and Unix-like operating systems.
+ */
 public enum OSStyle {
 
   WINDOWS("wrapper.dll"), UNIX("libwrapper.so");
 
   private final String library;
 
+  /**
+   * @param library default library name used by this style
+   */
   OSStyle (String library) {
 
     this.library = library;
   }
 
+  /**
+   * @return the default native library name for this OS style
+   */
   public String getLibrary () {
 
     return library;

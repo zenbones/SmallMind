@@ -57,6 +57,10 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
 
+/**
+ * Custom class loader capable of resolving classes and resources from a Singularity bundle that packages nested jars and
+ * class files using the {@code singularity:} URL scheme.
+ */
 public class SingularityClassLoader extends ClassLoader {
 
   private static final PermissionCollection ALL_PERMISSION_COLLECTION;
@@ -83,6 +87,16 @@ public class SingularityClassLoader extends ClassLoader {
     URL.setURLStreamHandlerFactory(new SingularityJarURLStreamHandlerFactory());
   }
 
+  /**
+   * Creates a class loader pre-populated with URLs derived from the provided manifest and Singularity index.
+   *
+   * @param parent         optional parent class loader
+   * @param manifest       manifest from the enclosing jar
+   * @param jarURL         URL of the enclosing jar file
+   * @param jarInputStream stream of the jar content positioned at the beginning
+   * @throws IOException            if the Singularity index cannot be found or read
+   * @throws ClassNotFoundException if required classes cannot be loaded while bootstrapping
+   */
   public SingularityClassLoader (ClassLoader parent, Manifest manifest, URL jarURL, JarInputStream jarInputStream)
     throws IOException, ClassNotFoundException {
 
@@ -145,6 +159,14 @@ public class SingularityClassLoader extends ClassLoader {
     urlMap = Collections.unmodifiableMap(underConstructionMap);
   }
 
+  /**
+   * Attempts to load the requested class from the Singularity bundle before delegating to the parent/system loader.
+   *
+   * @param name    fully qualified class name
+   * @param resolve whether the class should be linked after loading
+   * @return the resolved {@link Class}
+   * @throws ClassNotFoundException if the class cannot be located by this loader or its parents
+   */
   @Override
   protected synchronized Class<?> loadClass (String name, boolean resolve)
     throws ClassNotFoundException {
@@ -170,6 +192,13 @@ public class SingularityClassLoader extends ClassLoader {
     return singularityClass;
   }
 
+  /**
+   * Locates and defines a class from the mapped Singularity resources if the namespace is operable.
+   *
+   * @param name fully qualified class name
+   * @return the defined class
+   * @throws ClassNotFoundException if the class data cannot be located or defined
+   */
   @Override
   protected Class<?> findClass (String name)
     throws ClassNotFoundException {
@@ -234,6 +263,12 @@ public class SingularityClassLoader extends ClassLoader {
   }
   */
 
+  /**
+   * Determines whether the class should be resolved by this loader based on allow and deny namespace lists.
+   *
+   * @param name fully qualified class name
+   * @return {@code true} if the namespace can be handled, {@code false} otherwise
+   */
   private boolean isOperableNamespace (String name) {
 
     for (String operableNamespace : OPERABLE_NAMESPACES) {
@@ -252,6 +287,11 @@ public class SingularityClassLoader extends ClassLoader {
     return true;
   }
 
+  /**
+   * Ensures that the package for the specified class is defined with the correct manifest metadata and sealing.
+   *
+   * @param name fully qualified class name
+   */
   private synchronized void definePackage (String name) {
 
     String packageName;
@@ -263,6 +303,13 @@ public class SingularityClassLoader extends ClassLoader {
     }
   }
 
+  /**
+   * Reads an entire class stream into a byte array.
+   *
+   * @param classInputStream stream containing the class bytes
+   * @return the class data as a byte array
+   * @throws IOException if the stream cannot be read completely
+   */
   private byte[] getClassData (InputStream classInputStream)
     throws IOException {
 
@@ -276,6 +323,12 @@ public class SingularityClassLoader extends ClassLoader {
     return classDataOutputStream.toByteArray();
   }
 
+  /**
+   * Resolves a single resource from the Singularity URL map.
+   *
+   * @param name resource name, optionally prefixed with a slash
+   * @return the resource URL or {@code null} if not found
+   */
   @Override
   protected URL findResource (String name) {
 
@@ -296,6 +349,13 @@ public class SingularityClassLoader extends ClassLoader {
     return super.findResource(moduleName, name);
   }
   */
+
+  /**
+   * Resolves all matching resources from the Singularity URL map.
+   *
+   * @param name resource name or directory prefix
+   * @return an enumeration of matching resource URLs, possibly empty
+   */
   @Override
   protected Enumeration<URL> findResources (String name) {
 
@@ -336,22 +396,37 @@ public class SingularityClassLoader extends ClassLoader {
     }
   }
 
+  /**
+   * Enumeration wrapper used when a single value must be exposed as an {@link Enumeration}.
+   *
+   * @param <T> value type
+   */
   private static class SingleEnumeration<T> implements Enumeration<T> {
 
     private final T value;
     private boolean used = false;
 
+    /**
+     * @param value the sole element to enumerate
+     */
     private SingleEnumeration (T value) {
 
       this.value = value;
     }
 
+    /**
+     * @return {@code true} until the value has been consumed
+     */
     @Override
     public synchronized boolean hasMoreElements () {
 
       return !used;
     }
 
+    /**
+     * @return the single value
+     * @throws NoSuchElementException if the value has already been returned
+     */
     @Override
     public synchronized T nextElement () {
 
@@ -365,22 +440,36 @@ public class SingularityClassLoader extends ClassLoader {
     }
   }
 
+  /**
+   * Simple {@link Enumeration} backed by an array.
+   *
+   * @param <T> value type
+   */
   private static class ArrayEnumeration<T> implements Enumeration<T> {
 
     private final T[] values;
     private int index = 0;
 
+    /**
+     * @param values array backing the enumeration
+     */
     private ArrayEnumeration (T[] values) {
 
       this.values = values;
     }
 
+    /**
+     * @return {@code true} while unread elements remain
+     */
     @Override
     public boolean hasMoreElements () {
 
       return index < values.length;
     }
 
+    /**
+     * @return the next element in sequence
+     */
     @Override
     public T nextElement () {
 

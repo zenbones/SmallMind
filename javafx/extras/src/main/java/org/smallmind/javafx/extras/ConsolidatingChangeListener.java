@@ -246,11 +246,12 @@ public class ConsolidatingChangeListener<T> implements ChangeListener<T>, Compar
   /**
    * Encapsulates the change state captured for consolidation.
    *
-   * @param <U> the observed value type
+   * @param <U>             the observed value type
    * @param observableValue the observed value source
    * @param initialValue    the previous value
    * @param currentValue    the new value
    */
   private record LooseChange<U>(ObservableValue<? extends U> observableValue, U initialValue, U currentValue) {
+
   }
 }

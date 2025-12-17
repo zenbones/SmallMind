@@ -35,12 +35,26 @@ package org.smallmind.spark.tanukisoft.integration.spring;
 import org.smallmind.spark.tanukisoft.integration.AbstractWrapperListener;
 import org.springframework.context.ConfigurableApplicationContext;
 
+/**
+ * {@link AbstractWrapperListener} that bootstraps and manages a Spring {@link ConfigurableApplicationContext}.
+ */
 public abstract class SpringContextWrapperListener extends AbstractWrapperListener {
 
   private ConfigurableApplicationContext applicationContext;
 
+  /**
+   * Loads the Spring application context for this listener.
+   *
+   * @param args configuration locations or other bootstrap arguments
+   * @return the newly created application context
+   */
   public abstract ConfigurableApplicationContext loadApplicationContext (String[] args);
 
+  /**
+   * Loads or refreshes the application context as part of wrapper startup.
+   *
+   * @param args arguments forwarded from the wrapper
+   */
   public void startup (String[] args) {
 
     if (applicationContext == null) {
@@ -51,6 +65,9 @@ public abstract class SpringContextWrapperListener extends AbstractWrapperListen
     }
   }
 
+  /**
+   * Closes the application context if it is active.
+   */
   public void shutdown () {
 
     if ((applicationContext != null) && applicationContext.isActive()) {

@@ -35,8 +35,18 @@ package org.smallmind.spark.singularity.boot;
 import java.net.URLStreamHandler;
 import java.net.URLStreamHandlerFactory;
 
+/**
+ * {@link URLStreamHandlerFactory} that recognizes the {@code singularity} protocol and supplies the custom handler used
+ * by the boot class loader to load nested jar content.
+ */
 public class SingularityJarURLStreamHandlerFactory implements URLStreamHandlerFactory {
 
+  /**
+   * Creates a {@link URLStreamHandler} when the {@code singularity} protocol is requested.
+   *
+   * @param protocol the protocol requested by the URL construction
+   * @return the {@link SingularityJarURLStreamHandler} for the protocol or {@code null} for all other protocols
+   */
   @Override
   public URLStreamHandler createURLStreamHandler (String protocol) {
 

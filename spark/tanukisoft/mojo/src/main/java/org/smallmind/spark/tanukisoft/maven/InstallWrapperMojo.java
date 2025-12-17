@@ -48,7 +48,9 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.smallmind.nutsnbolts.zip.CompressionType;
 
-// Installs Tanukisoft based os service wrappers
+/**
+ * Installs the packaged Tanuki wrapper application artifact into the local Maven repository.
+ */
 @Mojo(name = "install-wrapper", defaultPhase = LifecyclePhase.INSTALL, threadSafe = true)
 public class InstallWrapperMojo extends AbstractMojo {
 
@@ -69,6 +71,11 @@ public class InstallWrapperMojo extends AbstractMojo {
   @Component
   private ArtifactInstaller artifactInstaller;
 
+  /**
+   * Installs the assembled wrapper archive unless skipped.
+   *
+   * @throws MojoExecutionException if installation fails or configuration is invalid
+   */
   public void execute ()
     throws MojoExecutionException {
 

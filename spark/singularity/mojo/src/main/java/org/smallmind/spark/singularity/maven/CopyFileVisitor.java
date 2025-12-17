@@ -42,18 +42,33 @@ import java.nio.file.attribute.BasicFileAttributes;
 import org.smallmind.nutsnbolts.io.PathUtility;
 import org.smallmind.spark.singularity.boot.SingularityIndex;
 
+/**
+ * File visitor used to copy compiled classes into the Singularity build directory while recording entries in the index.
+ */
 public class CopyFileVisitor extends SimpleFileVisitor<Path> {
 
   private final SingularityIndex singularityIndex;
   private final Path targetPath;
   private Path sourcePath;
 
+  /**
+   * @param singularityIndex index that should be populated with visited files
+   * @param targetPath       destination directory for the copied files
+   */
   public CopyFileVisitor (SingularityIndex singularityIndex, Path targetPath) {
 
     this.singularityIndex = singularityIndex;
     this.targetPath = targetPath;
   }
 
+  /**
+   * Creates the target directory structure before descending further.
+   *
+   * @param dir   current directory being visited
+   * @param attrs attributes for the directory
+   * @return continue traversal
+   * @throws IOException if directories cannot be created
+   */
   @Override
   public FileVisitResult preVisitDirectory (final Path dir, final BasicFileAttributes attrs)
     throws IOException {
@@ -67,6 +82,14 @@ public class CopyFileVisitor extends SimpleFileVisitor<Path> {
     return FileVisitResult.CONTINUE;
   }
 
+  /**
+   * Copies a single file into the target path and records it in the Singularity index.
+   *
+   * @param file  file being visited
+   * @param attrs attributes for the file
+   * @return continue traversal
+   * @throws IOException if the file cannot be copied
+   */
   @Override
   public FileVisitResult visitFile (final Path file, final BasicFileAttributes attrs)
     throws IOException {

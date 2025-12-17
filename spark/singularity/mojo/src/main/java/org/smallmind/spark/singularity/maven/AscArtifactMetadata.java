@@ -43,12 +43,19 @@ import org.apache.maven.artifact.metadata.ArtifactMetadata;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.repository.metadata.RepositoryMetadataStoreException;
 
+/**
+ * Metadata wrapper that allows a detached GPG signature (.asc) file to be deployed or installed alongside the primary artifact.
+ */
 public class AscArtifactMetadata extends AbstractArtifactMetadata {
 
   private final Artifact artifact;
   private final Path path;
   private final String fileName;
 
+  /**
+   * @param artifact artifact being signed
+   * @param path     location of the ASC signature file
+   */
   public AscArtifactMetadata (Artifact artifact, Path path) {
 
     super(artifact);
@@ -59,41 +66,67 @@ public class AscArtifactMetadata extends AbstractArtifactMetadata {
     fileName = getFilename();
   }
 
+  /**
+   * @return path to the signature file
+   */
   public Path getPath () {
 
     return path;
   }
 
+  /**
+   * @return unique metadata key describing this signature
+   */
   @Override
   public Object getKey () {
 
     return "gpg signature " + artifact.getGroupId() + ":" + artifact.getArtifactId() + ":" + artifact.getType() + ":" + artifact.getClassifier();
   }
 
+  /**
+   * @return base version of the signed artifact
+   */
   @Override
   public String getBaseVersion () {
 
     return artifact.getBaseVersion();
   }
 
+  /**
+   * @param repository target local repository
+   * @return local filename for the signature
+   */
   @Override
   public String getLocalFilename (ArtifactRepository repository) {
 
     return fileName;
   }
 
+  /**
+   * @return remote filename for the signature
+   */
   @Override
   public String getRemoteFilename () {
 
     return fileName;
   }
 
+  /**
+   * @return {@code true} because the signature lives alongside a specific artifact version
+   */
   @Override
   public boolean storedInArtifactVersionDirectory () {
 
     return true;
   }
 
+  /**
+   * Copies the signature into the local repository location calculated by Maven.
+   *
+   * @param localRepository  destination repository
+   * @param remoteRepository origin repository used for path calculation
+   * @throws RepositoryMetadataStoreException if the copy fails
+   */
   @Override
   public void storeInLocalRepository (ArtifactRepository localRepository, ArtifactRepository remoteRepository)
     throws RepositoryMetadataStoreException {
@@ -107,6 +140,11 @@ public class AscArtifactMetadata extends AbstractArtifactMetadata {
     }
   }
 
+  /**
+   * Ensures only a single signature file is associated with a given artifact key.
+   *
+   * @param metadata other metadata instance
+   */
   @Override
   public void merge (ArtifactMetadata metadata) {
 
@@ -115,6 +153,11 @@ public class AscArtifactMetadata extends AbstractArtifactMetadata {
     }
   }
 
+  /**
+   * Ensures only a single signature file is associated with a given artifact key (legacy metadata interface).
+   *
+   * @param metadata other metadata instance
+   */
   @Override
   public void merge (org.apache.maven.repository.legacy.metadata.ArtifactMetadata metadata) {
 
@@ -123,6 +166,11 @@ public class AscArtifactMetadata extends AbstractArtifactMetadata {
     }
   }
 
+  /**
+   * Builds the canonical signature filename for the wrapped artifact.
+   *
+   * @return calculated asc filename
+   */
   private String getFilename () {
 
     StringBuilder nameBuilder = new StringBuilder(getArtifactId()).append("-").append(artifact.getVersion());

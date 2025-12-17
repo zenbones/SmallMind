@@ -45,20 +45,38 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
 
+/**
+ * {@link URLConnection} implementation that can stream nested jar entries referenced by the {@code singularity:} protocol.
+ * The connection is effectively stateless; the actual content retrieval happens when {@link #getInputStream()} is called.
+ */
 public class SingularityJarURLConnection extends URLConnection {
 
   private static final ConcurrentHashMap<String, SoftReference<CachedJarFile>> CACHED_JAR_FILE_MAP = new ConcurrentHashMap<>();
 
+  /**
+   * Creates a connection bound to the supplied {@code singularity:} URL.
+   *
+   * @param url the nested-jar URL being resolved
+   */
   public SingularityJarURLConnection (URL url) {
 
     super(url);
   }
 
+  /**
+   * No-op connect implementation because the stream is opened lazily via {@link #getInputStream()}.
+   */
   @Override
   public void connect () {
 
   }
 
+  /**
+   * Streams the entry referenced by this {@code singularity:} URL, optionally using a cached nested jar for repeated access.
+   *
+   * @return an {@link InputStream} over the referenced entry
+   * @throws IOException if the URL cannot be parsed, the nested jar cannot be opened, or the entry does not exist
+   */
   @Override
   public InputStream getInputStream ()
     throws IOException {
@@ -112,6 +130,11 @@ public class SingularityJarURLConnection extends URLConnection {
     }
   }
 
+  /**
+   * Returns zero because the length cannot be efficiently determined without loading the entry.
+   *
+   * @return always {@code 0}
+   */
   @Override
   public int getContentLength () {
 

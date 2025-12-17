@@ -32,6 +32,9 @@
  */
 package org.smallmind.spark.tanukisoft.maven;
 
+/**
+ * Enumerates supported operating system distributions for the Tanuki wrapper along with their executable and library names.
+ */
 public enum OSType {
 
   AIX_PPC_32(OSStyle.UNIX, "wrapper-aix-ppc-32", "libwrapper-aix-ppc-32.a"),
@@ -58,6 +61,11 @@ public enum OSType {
   private final String executable;
   private final String library;
 
+  /**
+   * @param osStyle    wrapper style (Windows vs Unix)
+   * @param executable platform-specific wrapper executable
+   * @param library    platform-specific native library
+   */
   OSType (OSStyle osStyle, String executable, String library) {
 
     this.osStyle = osStyle;
@@ -65,16 +73,25 @@ public enum OSType {
     this.library = library;
   }
 
+  /**
+   * @return the wrapper style associated with this OS
+   */
   public OSStyle getOsStyle () {
 
     return osStyle;
   }
 
+  /**
+   * @return filename of the wrapper executable for this OS
+   */
   public String getExecutable () {
 
     return executable;
   }
 
+  /**
+   * @return filename of the native library for this OS
+   */
   public String getLibrary () {
 
     return library;

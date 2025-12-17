@@ -41,8 +41,22 @@ import java.util.jar.Attributes;
 import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
 
+/**
+ * Entry point used by Singularity bundles to bootstrap the nested class loader and delegate to the real application main.
+ */
 public class SingularityEntryPoint {
 
+  /**
+   * Initializes the {@link SingularityClassLoader} from the enclosing jar, then locates and invokes the application main
+   * defined by the {@code Singularity-Class} manifest attribute.
+   *
+   * @param args arguments passed to the application
+   * @throws IOException               if the jar cannot be read
+   * @throws ClassNotFoundException    if the target main class cannot be resolved
+   * @throws NoSuchMethodException     if the target class does not expose a {@code main(String[])} method
+   * @throws IllegalAccessException    if the main method is not accessible
+   * @throws InvocationTargetException if the main method throws an exception
+   */
   public static void main (String... args)
     throws IOException, ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
 

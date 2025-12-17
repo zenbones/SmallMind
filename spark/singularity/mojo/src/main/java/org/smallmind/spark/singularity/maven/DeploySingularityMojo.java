@@ -49,7 +49,9 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 
-// Deploys Singularity based one jar applications
+/**
+ * Deploys Singularity-based single-jar applications and optional asc signatures to the configured distribution repository.
+ */
 @Mojo(name = "deploy-singularity", defaultPhase = LifecyclePhase.INSTALL, threadSafe = true)
 public class DeploySingularityMojo extends AbstractMojo {
 
@@ -66,6 +68,11 @@ public class DeploySingularityMojo extends AbstractMojo {
   @Component
   ArtifactDeployer artifactDeployer;
 
+  /**
+   * Performs the deployment unless skipping is requested.
+   *
+   * @throws MojoExecutionException if deployment fails or artifacts cannot be resolved
+   */
   public void execute ()
     throws MojoExecutionException {
 
