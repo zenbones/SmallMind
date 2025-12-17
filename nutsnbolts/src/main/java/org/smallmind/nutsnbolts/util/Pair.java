@@ -41,16 +41,6 @@ package org.smallmind.nutsnbolts.util;
 public record Pair<K, V>(K first, V second) {
 
   /**
-   * Creates a new pair.
-   *
-   * @param first  first element
-   * @param second second element
-   */
-  public Pair {
-
-  }
-
-  /**
    * Factory method mirroring the constructor.
    *
    * @param first  first element
@@ -62,23 +52,5 @@ public record Pair<K, V>(K first, V second) {
   public static <K, V> Pair<K, V> of (K first, V second) {
 
     return new Pair<>(first, second);
-  }
-
-  /**
-   * @return first element
-   */
-  @Override
-  public K first () {
-
-    return first;
-  }
-
-  /**
-   * @return second element
-   */
-  @Override
-  public V second () {
-
-    return second;
   }
 }

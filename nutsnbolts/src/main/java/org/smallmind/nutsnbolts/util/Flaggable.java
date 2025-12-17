@@ -40,14 +40,6 @@ package org.smallmind.nutsnbolts.util;
 public record Flaggable<T>(boolean flagged, T value) {
 
   /**
-   * @param flagged indicator value
-   * @param value   wrapped value
-   */
-  public Flaggable {
-
-  }
-
-  /**
    * Creates an unflagged instance with the provided value.
    *
    * @param value wrapped value
@@ -55,23 +47,5 @@ public record Flaggable<T>(boolean flagged, T value) {
   public Flaggable (T value) {
 
     this(false, value);
-  }
-
-  /**
-   * @return flag indicator
-   */
-  @Override
-  public boolean flagged () {
-
-    return flagged;
-  }
-
-  /**
-   * @return wrapped value
-   */
-  @Override
-  public T value () {
-
-    return value;
   }
 }
