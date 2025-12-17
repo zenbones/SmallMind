@@ -32,7 +32,17 @@
  */
 package org.smallmind.quorum.bucket;
 
+/**
+ * Factory for constructing bucket instances on demand.
+ *
+ * @param <T> type governed by the bucket
+ */
 public interface BucketFactory<T> {
 
+  /**
+   * Creates a new bucket instance.
+   *
+   * @return the constructed bucket
+   */
   TokenBucket<T> create ();
 }

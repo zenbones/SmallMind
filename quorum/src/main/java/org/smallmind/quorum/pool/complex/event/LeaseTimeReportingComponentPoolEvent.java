@@ -34,10 +34,21 @@ package org.smallmind.quorum.pool.complex.event;
 
 import org.smallmind.quorum.pool.complex.ComponentPool;
 
+/**
+ * Event carrying the lease duration for a component that was returned to the pool.
+ *
+ * @param <C> component type managed by the pool
+ */
 public class LeaseTimeReportingComponentPoolEvent<C> extends ComponentPoolEvent<C> {
 
   private final long leaseTimeNanos;
 
+  /**
+   * Creates the event with the originating pool and lease duration.
+   *
+   * @param componentPool  pool reporting the lease
+   * @param leaseTimeNanos lease duration in nanoseconds
+   */
   public LeaseTimeReportingComponentPoolEvent (ComponentPool<C> componentPool, long leaseTimeNanos) {
 
     super(componentPool);
@@ -45,6 +56,11 @@ public class LeaseTimeReportingComponentPoolEvent<C> extends ComponentPoolEvent<
     this.leaseTimeNanos = leaseTimeNanos;
   }
 
+  /**
+   * Returns the lease duration in nanoseconds.
+   *
+   * @return lease time
+   */
   public long getLeaseTimeNanos () {
 
     return leaseTimeNanos;

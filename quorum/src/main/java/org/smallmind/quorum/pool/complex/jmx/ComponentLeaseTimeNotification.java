@@ -35,12 +35,21 @@ package org.smallmind.quorum.pool.complex.jmx;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.management.Notification;
 
+/**
+ * JMX notification reporting the lease time of a component.
+ */
 public class ComponentLeaseTimeNotification extends Notification {
 
   private static final AtomicLong SEQUNCE_NUMBER = new AtomicLong(0);
   public static final String TYPE = "LEASE_TIME";
   private final long leaseTimeNanos;
 
+  /**
+   * Creates the notification with the lease duration.
+   *
+   * @param source         MBean source
+   * @param leaseTimeNanos lease duration in nanoseconds
+   */
   public ComponentLeaseTimeNotification (Object source, long leaseTimeNanos) {
 
     super(TYPE, source, SEQUNCE_NUMBER.incrementAndGet(), System.currentTimeMillis());
@@ -48,6 +57,11 @@ public class ComponentLeaseTimeNotification extends Notification {
     this.leaseTimeNanos = leaseTimeNanos;
   }
 
+  /**
+   * Returns the lease duration in nanoseconds.
+   *
+   * @return lease time
+   */
   public long getLeaseTimeNanos () {
 
     return leaseTimeNanos;

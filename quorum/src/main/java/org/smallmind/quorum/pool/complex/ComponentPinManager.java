@@ -51,6 +51,12 @@ import org.smallmind.nutsnbolts.util.ComponentStatus;
 import org.smallmind.quorum.pool.ComponentPoolException;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Manages the lifecycle of {@link ComponentPin}s, including creation, validation, leasing,
+ * and deconstruction scheduling for the complex pool.
+ *
+ * @param <C> component type managed
+ */
 public class ComponentPinManager<C> {
 
   private final ComponentPool<C> componentPool;
@@ -61,11 +67,21 @@ public class ComponentPinManager<C> {
   private final AtomicReference<ComponentStatus> statusRef = new AtomicReference<>(ComponentStatus.STOPPED);
   private final AtomicInteger size = new AtomicInteger(0);
 
+  /**
+   * Creates a manager for the given pool.
+   *
+   * @param componentPool owning pool
+   */
   public ComponentPinManager (ComponentPool<C> componentPool) {
 
     this.componentPool = componentPool;
   }
 
+  /**
+   * Starts the manager by creating initial pins and enabling deconstruction scheduling.
+   *
+   * @throws ComponentPoolException if initialization fails
+   */
   public void startup ()
     throws ComponentPoolException {
 
@@ -108,6 +124,12 @@ public class ComponentPinManager<C> {
     }
   }
 
+  /**
+   * Serves a pin to a caller, validating on acquire and respecting size/wait constraints.
+   *
+   * @return a component pin ready for use
+   * @throws ComponentPoolException if the pool is not started, validation fails, or waits timeout
+   */
   public ComponentPin<C> serve ()
     throws ComponentPoolException {
 
@@ -158,6 +180,14 @@ public class ComponentPinManager<C> {
     throw new ComponentPoolException("Exceeded the maximum acquire wait time(%d)", componentPool.getComplexPoolConfig().getAcquireWaitTimeMillis());
   }
 
+  /**
+   * Attempts to add a new pin, honoring min/max limits. May force creation.
+   *
+   * @param forced whether creation should bypass the minimum size check
+   * @return newly created pin or {@code null} if limits prevent creation
+   * @throws ComponentCreationException   if creation fails
+   * @throws ComponentValidationException if validation fails
+   */
   private ComponentPin<C> addComponentPin (boolean forced)
     throws ComponentCreationException, ComponentValidationException {
 
@@ -192,6 +222,13 @@ public class ComponentPinManager<C> {
     return null;
   }
 
+  /**
+   * Creates and validates a new component instance, optionally enforcing a timeout.
+   *
+   * @return new component instance
+   * @throws ComponentCreationException   if creation fails or times out
+   * @throws ComponentValidationException if validation fails
+   */
   private ComponentInstance<C> manufactureComponentInstance ()
     throws ComponentCreationException, ComponentValidationException {
 
@@ -230,6 +267,14 @@ public class ComponentPinManager<C> {
     return componentInstance;
   }
 
+  /**
+   * Removes a pin from service, optionally terminating with prejudice and tracking metrics.
+   *
+   * @param componentPin    pin to remove
+   * @param alreadyAcquired whether the pin has been removed from the free queue already
+   * @param withPrejudice   whether to terminate regardless of queue state
+   * @param track           whether to update metrics after removal
+   */
   public void remove (ComponentPin<C> componentPin, boolean alreadyAcquired, boolean withPrejudice, boolean track) {
 
     // order here matters as alreadyAcquired means it's been removed from the queue, otherwise we try to remove,
@@ -245,6 +290,9 @@ public class ComponentPinManager<C> {
     }
   }
 
+  /**
+   * Terminates all components currently processing (i.e., checked out).
+   */
   public void killAllProcessing () {
 
     backingLock.writeLock().lock();
@@ -261,6 +309,12 @@ public class ComponentPinManager<C> {
     trackSize();
   }
 
+  /**
+   * Processes the return of a component instance, re-queuing or terminating as necessary.
+   *
+   * @param componentInstance instance being returned
+   * @param track             whether to update metrics
+   */
   public void process (ComponentInstance<C> componentInstance, boolean track) {
 
     try {
@@ -296,6 +350,13 @@ public class ComponentPinManager<C> {
     }
   }
 
+  /**
+   * Terminates a component instance and optionally replaces it with a new one.
+   *
+   * @param componentInstance instance to terminate
+   * @param allowReplacement  whether to create a replacement
+   * @param track             whether to update metrics
+   */
   public void terminate (ComponentInstance<C> componentInstance, boolean allowReplacement, boolean track) {
 
     try {
@@ -339,6 +400,11 @@ public class ComponentPinManager<C> {
     }
   }
 
+  /**
+   * Stops the manager, terminating all components and shutting down deconstruction.
+   *
+   * @throws ComponentPoolException if shutdown is interrupted
+   */
   public void shutdown ()
     throws ComponentPoolException {
 
@@ -385,21 +451,39 @@ public class ComponentPinManager<C> {
     }
   }
 
+  /**
+   * Current total pool size (free + processing).
+   *
+   * @return pool size
+   */
   public int getPoolSize () {
 
     return size.get();
   }
 
+  /**
+   * Current number of free pins.
+   *
+   * @return number of available pins
+   */
   public int getFreeSize () {
 
     return freeQueue.size();
   }
 
+  /**
+   * Current number of pins in processing state.
+   *
+   * @return processing count
+   */
   public int getProcessingSize () {
 
     return getPoolSize() - getFreeSize();
   }
 
+  /**
+   * Updates Claxon metrics for pool size and processing counts.
+   */
   private void trackSize () {
 
     int freeSize;
@@ -408,11 +492,19 @@ public class ComponentPinManager<C> {
     Instrument.with(ComponentPinManager.class, MeterFactory.instance(SpeedometerBuilder::new), new Tag("pool", componentPool.getPoolName()), new Tag("size", ClaxonTag.PROCESSING.getDisplay())).update(getPoolSize() - freeSize);
   }
 
+  /**
+   * Updates the timeout metric when acquisition waits are exceeded.
+   */
   private void trackTimeout () {
 
     Instrument.with(ComponentPinManager.class, new TachometerBuilder(), new Tag("pool", componentPool.getPoolName()), new Tag("event", ClaxonTag.TIMEOUT.getDisplay())).update(1);
   }
 
+  /**
+   * Returns stack traces for components currently in processing state when existential tracking is enabled.
+   *
+   * @return array of stack traces for borrowed components
+   */
   public StackTrace[] getExistentialStackTraces () {
 
     LinkedList<StackTrace> stackTraceList = new LinkedList<>();

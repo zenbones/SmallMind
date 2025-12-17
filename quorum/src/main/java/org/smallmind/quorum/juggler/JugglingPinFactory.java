@@ -32,8 +32,22 @@
  */
 package org.smallmind.quorum.juggler;
 
+/**
+ * Factory interface for creating {@link JugglingPin} instances tied to providers.
+ *
+ * @param <P> provider type
+ * @param <R> resource type served by the pin
+ */
 public interface JugglingPinFactory<P, R> {
 
+  /**
+   * Builds a pin from the supplied provider.
+   *
+   * @param provider      provider used to create or access the resource
+   * @param resourceClass class of the resource the pin will manage
+   * @return a new juggling pin
+   * @throws JugglerResourceCreationException if the pin or resource cannot be created
+   */
   JugglingPin<R> createJugglingPin (P provider, Class<R> resourceClass)
     throws JugglerResourceCreationException;
 }

@@ -35,8 +35,18 @@ package org.smallmind.quorum.pool.complex.event;
 import java.util.EventObject;
 import org.smallmind.quorum.pool.complex.ComponentPool;
 
+/**
+ * Base event carrying a reference to the originating {@link ComponentPool}.
+ *
+ * @param <C> component type managed by the pool
+ */
 public abstract class ComponentPoolEvent<C> extends EventObject {
 
+  /**
+   * Creates an event for the given pool source.
+   *
+   * @param componentPool pool that generated the event
+   */
   public ComponentPoolEvent (ComponentPool<C> componentPool) {
 
     super(componentPool);

@@ -34,9 +34,22 @@ package org.smallmind.quorum.namespace.event;
 
 import java.util.EventListener;
 
+/**
+ * Listener notified when a {@link org.smallmind.quorum.namespace.JavaContext} is closed or aborted.
+ */
 public interface JavaContextListener extends EventListener {
 
+  /**
+   * Invoked when the context is intentionally closed.
+   *
+   * @param javaContextEvent event describing the closure
+   */
   void contextClosed (JavaContextEvent javaContextEvent);
 
+  /**
+   * Invoked when the context is aborted due to a communication failure.
+   *
+   * @param javaContextEvent event describing the abort
+   */
   void contextAborted (JavaContextEvent javaContextEvent);
 }

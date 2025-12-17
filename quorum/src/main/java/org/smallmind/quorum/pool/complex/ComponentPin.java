@@ -39,6 +39,11 @@ import org.smallmind.claxon.registry.Tag;
 import org.smallmind.claxon.registry.meter.MeterFactory;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 
+/**
+ * Wraps a {@link ComponentInstance} and tracks lease timing, deconstruction, and termination state.
+ *
+ * @param <C> component type managed
+ */
 public class ComponentPin<C> {
 
   private final ComponentPool<C> componentPool;
@@ -47,6 +52,13 @@ public class ComponentPin<C> {
   private DeconstructionCoordinator deconstructionCoordinator;
   private long leaseStartNanos;
 
+  /**
+   * Creates a pin for the given component instance and sets up deconstruction if required.
+   *
+   * @param componentPool       owning pool
+   * @param deconstructionQueue queue used for deconstruction scheduling
+   * @param componentInstance   underlying component instance
+   */
   protected ComponentPin (ComponentPool<C> componentPool, DeconstructionQueue deconstructionQueue, ComponentInstance<C> componentInstance) {
 
     this.componentPool = componentPool;
@@ -58,11 +70,22 @@ public class ComponentPin<C> {
     }
   }
 
+  /**
+   * Returns the underlying component instance.
+   *
+   * @return component instance
+   */
   protected ComponentInstance<C> getComponentInstance () {
 
     return componentInstance;
   }
 
+  /**
+   * Serves the wrapped component, scheduling deconstruction and recording lease start.
+   *
+   * @return the component
+   * @throws Exception if the component cannot be served
+   */
   protected C serve ()
     throws Exception {
 
@@ -78,6 +101,9 @@ public class ComponentPin<C> {
     }
   }
 
+  /**
+   * Releases the component back to the pool, updating metrics and resetting deconstruction timers.
+   */
   protected void free () {
 
     long leaseTime = System.nanoTime() - leaseStartNanos;
@@ -93,11 +119,19 @@ public class ComponentPin<C> {
     }
   }
 
+  /**
+   * Indicates whether this pin has been terminated.
+   *
+   * @return {@code true} if terminated
+   */
   protected boolean isTerminated () {
 
     return terminated.get();
   }
 
+  /**
+   * Marks the pin as terminated and aborts any deconstruction scheduling.
+   */
   protected void fizzle () {
 
     if (terminated.compareAndSet(false, true)) {
@@ -107,6 +141,11 @@ public class ComponentPin<C> {
     }
   }
 
+  /**
+   * Requests removal of the pin from the pool, optionally with prejudice (forced termination).
+   *
+   * @param withPrejudice whether the removal should be forced
+   */
   protected void kaboom (boolean withPrejudice) {
 
     if (terminated.compareAndSet(false, true)) {
@@ -114,6 +153,11 @@ public class ComponentPin<C> {
     }
   }
 
+  /**
+   * Returns a stack trace identifying where the component was leased, if tracked.
+   *
+   * @return stack trace elements or {@code null} if not tracked
+   */
   public StackTraceElement[] getExistentialStackTrace () {
 
     return componentInstance.getExistentialStackTrace();

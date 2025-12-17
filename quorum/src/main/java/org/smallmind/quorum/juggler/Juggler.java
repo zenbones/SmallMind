@@ -45,6 +45,14 @@ import java.util.concurrent.TimeUnit;
 import org.smallmind.nutsnbolts.util.ComponentStatus;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Coordinates a pool of {@link JugglingPin}s that each wrap a provider-specific resource. The class shuffles
+ * access evenly across the available pins, blacklisting failed ones and optionally attempting recovery after
+ * a configurable delay.
+ *
+ * @param <P> provider type used to create resources
+ * @param <R> type of resource being served
+ */
 public class Juggler<P, R> implements BlackList<R> {
 
   private final SecureRandom random = new SecureRandom();
@@ -59,11 +67,30 @@ public class Juggler<P, R> implements BlackList<R> {
   private ConcurrentSkipListMap<Long, BlacklistEntry<R>> blacklistMap;
   private ComponentStatus status = ComponentStatus.UNINITIALIZED;
 
+  /**
+   * Creates a juggler with a single provider replicated to the given size.
+   *
+   * @param providerClass        class of the provider instances
+   * @param resourceClass        class of the resources produced by pins
+   * @param recoveryCheckSeconds period in seconds to check for blacklisted resource recovery (0 disables recovery)
+   * @param jugglingPinFactory   factory that constructs pins for providers
+   * @param provider             provider instance to clone for each slot
+   * @param size                 number of resources to manage
+   */
   public Juggler (Class<P> providerClass, Class<R> resourceClass, int recoveryCheckSeconds, JugglingPinFactory<P, R> jugglingPinFactory, P provider, int size) {
 
     this(providerClass, resourceClass, recoveryCheckSeconds, jugglingPinFactory, generateArray(provider, providerClass, size));
   }
 
+  /**
+   * Creates a juggler with explicit providers.
+   *
+   * @param providerClass        class of the provider instances
+   * @param resourceClass        class of the resources produced by pins
+   * @param recoveryCheckSeconds period in seconds to check for blacklisted resource recovery (0 disables recovery)
+   * @param jugglingPinFactory   factory that constructs pins for providers
+   * @param providers            provider instances to wrap
+   */
   public Juggler (Class<P> providerClass, Class<R> resourceClass, int recoveryCheckSeconds, JugglingPinFactory<P, R> jugglingPinFactory, P... providers) {
 
     this.providerClass = providerClass;
@@ -73,6 +100,15 @@ public class Juggler<P, R> implements BlackList<R> {
     this.providers = providers;
   }
 
+  /**
+   * Utility to create an array filled with the provided provider instance.
+   *
+   * @param provider      provider to repeat
+   * @param providerClass provider class used for array creation
+   * @param size          desired array length
+   * @param <P>           provider type
+   * @return populated provider array
+   */
   private static <P> P[] generateArray (P provider, Class<P> providerClass, int size) {
 
     P[] array = (P[])Array.newInstance(providerClass, size);
@@ -82,6 +118,11 @@ public class Juggler<P, R> implements BlackList<R> {
     return array;
   }
 
+  /**
+   * Initializes pin collections and constructs pins from the configured providers.
+   *
+   * @throws JugglerResourceCreationException if pin creation fails
+   */
   public synchronized void initialize ()
     throws JugglerResourceCreationException {
 
@@ -102,11 +143,21 @@ public class Juggler<P, R> implements BlackList<R> {
     }
   }
 
+  /**
+   * Starts all pins without invoking any lifecycle hook.
+   */
   public synchronized void startup () {
 
     startup(null);
   }
 
+  /**
+   * Starts all pins, optionally invoking a supplied lifecycle method with arguments on each resource.
+   * Failed pins are blacklisted and removed from circulation.
+   *
+   * @param method lifecycle method to invoke on each resource prior to becoming available; may be {@code null}
+   * @param args   arguments for the lifecycle method
+   */
   public synchronized void startup (Method method, Object... args) {
 
     if (status.equals(ComponentStatus.INITIALIZED)) {
@@ -140,6 +191,14 @@ public class Juggler<P, R> implements BlackList<R> {
     }
   }
 
+  /**
+   * Selects and obtains a resource from the available pins. Failed resources are blacklisted and suppressed
+   * exceptions are accumulated before eventually throwing when no resources remain.
+   *
+   * @return an available resource
+   * @throws NoAvailableJugglerResourceException if every resource is unavailable or blacklisted
+   * @throws IllegalStateException               if the juggler has not been initialized or started
+   */
   public synchronized R pickResource ()
     throws NoAvailableJugglerResourceException {
 
@@ -178,6 +237,11 @@ public class Juggler<P, R> implements BlackList<R> {
     throw generateTerminatingException();
   }
 
+  /**
+   * Builds a terminating exception that aggregates all suppressed blacklist causes.
+   *
+   * @return aggregated exception detailing resource failures
+   */
   private NoAvailableJugglerResourceException generateTerminatingException () {
 
     NoAvailableJugglerResourceException noAvailableJugglerResourceException = null;
@@ -185,9 +249,9 @@ public class Juggler<P, R> implements BlackList<R> {
 
     for (BlacklistEntry<R> blacklistEntry : blacklistMap.descendingMap().values()) {
       if (first) {
-        noAvailableJugglerResourceException = new NoAvailableJugglerResourceException(blacklistEntry.getThrowable(), "All available resources(%s) have been black listed", providerClass.getSimpleName());
+        noAvailableJugglerResourceException = new NoAvailableJugglerResourceException(blacklistEntry.throwable(), "All available resources(%s) have been black listed", providerClass.getSimpleName());
       } else {
-        noAvailableJugglerResourceException.addSuppressed(blacklistEntry.getThrowable());
+        noAvailableJugglerResourceException.addSuppressed(blacklistEntry.throwable());
       }
       first = false;
     }
@@ -195,23 +259,37 @@ public class Juggler<P, R> implements BlackList<R> {
     return noAvailableJugglerResourceException;
   }
 
+  /**
+   * Adds the supplied entry to the blacklist, removing the pin from active circulation.
+   *
+   * @param blacklistEntry entry describing the failed pin and cause
+   */
   @Override
   public synchronized void addToBlackList (BlacklistEntry<R> blacklistEntry) {
 
-    if (sourcePins.remove(blacklistEntry.getJugglingPin())) {
+    if (sourcePins.remove(blacklistEntry.jugglingPin())) {
       blacklistMap.put(System.currentTimeMillis(), blacklistEntry);
-      LoggerManager.getLogger(Juggler.class).info("Added resource(%s) to black list", blacklistEntry.getJugglingPin().describe());
-    } else if (targetPins.remove(blacklistEntry.getJugglingPin())) {
+      LoggerManager.getLogger(Juggler.class).info("Added resource(%s) to black list", blacklistEntry.jugglingPin().describe());
+    } else if (targetPins.remove(blacklistEntry.jugglingPin())) {
       blacklistMap.put(System.currentTimeMillis(), blacklistEntry);
-      LoggerManager.getLogger(Juggler.class).info("Added resource(%s) to black list", blacklistEntry.getJugglingPin().describe());
+      LoggerManager.getLogger(Juggler.class).info("Added resource(%s) to black list", blacklistEntry.jugglingPin().describe());
     }
   }
 
+  /**
+   * Stops all pins without invoking any lifecycle hook.
+   */
   public synchronized void shutdown () {
 
     shutdown(null);
   }
 
+  /**
+   * Stops all pins, optionally invoking a supplied lifecycle method with arguments. Recovery worker is aborted first.
+   *
+   * @param method lifecycle method to invoke on each pin
+   * @param args   arguments for the lifecycle method invocation
+   */
   public synchronized void shutdown (Method method, Object... args) {
 
     if (status.equals(ComponentStatus.STARTED)) {
@@ -247,11 +325,20 @@ public class Juggler<P, R> implements BlackList<R> {
     }
   }
 
+  /**
+   * Closes all pins without invoking any lifecycle hook.
+   */
   public synchronized void deconstruct () {
 
     deconstruct(null);
   }
 
+  /**
+   * Closes all pins, optionally invoking a supplied lifecycle method with arguments.
+   *
+   * @param method lifecycle method to invoke during close
+   * @param args   arguments for the lifecycle method
+   */
   public synchronized void deconstruct (Method method, Object... args) {
 
     if (status.equals(ComponentStatus.STOPPED)) {
@@ -267,12 +354,20 @@ public class Juggler<P, R> implements BlackList<R> {
     }
   }
 
+  /**
+   * Worker that periodically attempts to recover blacklisted pins after the configured interval.
+   */
   private class ProviderRecoveryWorker implements Runnable {
 
     private final CountDownLatch terminationLatch;
     private final CountDownLatch exitLatch;
     private final long recoveryCheckMillis;
 
+    /**
+     * Constructs a worker that will check for recovery every supplied number of seconds.
+     *
+     * @param recoveryCheckSeconds interval in seconds to wait between blacklist scans
+     */
     public ProviderRecoveryWorker (int recoveryCheckSeconds) {
 
       terminationLatch = new CountDownLatch(1);
@@ -280,6 +375,11 @@ public class Juggler<P, R> implements BlackList<R> {
       recoveryCheckMillis = recoveryCheckSeconds * 1000L;
     }
 
+    /**
+     * Signals the worker to exit and waits for the thread to terminate.
+     *
+     * @throws InterruptedException if interrupted while waiting for termination
+     */
     public void abort ()
       throws InterruptedException {
 
@@ -287,6 +387,9 @@ public class Juggler<P, R> implements BlackList<R> {
       exitLatch.await();
     }
 
+    /**
+     * Periodically scans the blacklist and attempts to recover pins whose delay has expired.
+     */
     @Override
     public void run () {
 
@@ -296,12 +399,12 @@ public class Juggler<P, R> implements BlackList<R> {
           Map.Entry<Long, BlacklistEntry<R>> firstEntry;
 
           while (((firstEntry = blacklistMap.firstEntry()) != null) && ((firstEntry.getKey() + recoveryCheckMillis) <= System.currentTimeMillis())) {
-            if (firstEntry.getValue().getJugglingPin().recover()) {
+            if (firstEntry.getValue().jugglingPin().recover()) {
               synchronized (Juggler.this) {
 
                 JugglingPin<R> recoveredPin;
 
-                if ((recoveredPin = blacklistMap.remove(firstEntry.getKey()).getJugglingPin()) != null) {
+                if ((recoveredPin = blacklistMap.remove(firstEntry.getKey()).jugglingPin()) != null) {
                   targetPins.add(recoveredPin);
                   LoggerManager.getLogger(Juggler.class).warn("Recovered resource(%s) from black list", recoveredPin.describe());
                 } else {

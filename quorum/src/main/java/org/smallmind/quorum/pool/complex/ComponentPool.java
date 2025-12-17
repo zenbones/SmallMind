@@ -44,6 +44,11 @@ import org.smallmind.quorum.pool.complex.event.ComponentPoolEventListener;
 import org.smallmind.quorum.pool.complex.event.ErrorReportingComponentPoolEvent;
 import org.smallmind.quorum.pool.complex.event.LeaseTimeReportingComponentPoolEvent;
 
+/**
+ * Pool implementation that coordinates {@link ComponentInstance}s using pins and emits events/metrics.
+ *
+ * @param <C> component type managed by the pool
+ */
 public class ComponentPool<C> extends Pool {
 
   private final ConcurrentLinkedQueue<ComponentPoolEventListener> componentPoolEventListenerQueue = new ConcurrentLinkedQueue<ComponentPoolEventListener>();
@@ -52,6 +57,12 @@ public class ComponentPool<C> extends Pool {
   private final String name;
   private ComplexPoolConfig complexPoolConfig = new ComplexPoolConfig();
 
+  /**
+   * Constructs a pool with the provided name and instance factory using default configuration.
+   *
+   * @param name                     pool name for metrics and identification
+   * @param componentInstanceFactory factory used to create new component instances
+   */
   public ComponentPool (String name, ComponentInstanceFactory<C> componentInstanceFactory) {
 
     this.name = name;
@@ -60,6 +71,13 @@ public class ComponentPool<C> extends Pool {
     componentPinManager = new ComponentPinManager<C>(this);
   }
 
+  /**
+   * Constructs a pool with the provided name, instance factory, and configuration.
+   *
+   * @param name                     pool name for metrics and identification
+   * @param componentInstanceFactory factory used to create new component instances
+   * @param complexPoolConfig        configuration to apply
+   */
   public ComponentPool (String name, ComponentInstanceFactory<C> componentInstanceFactory, ComplexPoolConfig complexPoolConfig) {
 
     this(name, componentInstanceFactory);
@@ -67,21 +85,42 @@ public class ComponentPool<C> extends Pool {
     this.complexPoolConfig = complexPoolConfig;
   }
 
+  /**
+   * Returns the name of the pool.
+   *
+   * @return pool name
+   */
   public String getPoolName () {
 
     return name;
   }
 
+  /**
+   * Accessor for the instance factory.
+   *
+   * @return factory used to build component instances
+   */
   public ComponentInstanceFactory<C> getComponentInstanceFactory () {
 
     return componentInstanceFactory;
   }
 
+  /**
+   * Returns the current pool configuration.
+   *
+   * @return configuration
+   */
   public ComplexPoolConfig getComplexPoolConfig () {
 
     return complexPoolConfig;
   }
 
+  /**
+   * Updates the pool configuration.
+   *
+   * @param complexPoolConfig new configuration
+   * @return this pool
+   */
   public ComponentPool<C> setComplexPoolConfig (ComplexPoolConfig complexPoolConfig) {
 
     this.complexPoolConfig = complexPoolConfig;
@@ -89,21 +128,41 @@ public class ComponentPool<C> extends Pool {
     return this;
   }
 
+  /**
+   * Returns stack traces for components currently checked out when existential tracking is enabled.
+   *
+   * @return array of stack traces
+   */
   public StackTrace[] getExistentialStackTraces () {
 
     return componentPinManager.getExistentialStackTraces();
   }
 
+  /**
+   * Adds a listener for pool events.
+   *
+   * @param listener listener to register
+   */
   public void addComponentPoolEventListener (ComponentPoolEventListener listener) {
 
     componentPoolEventListenerQueue.add(listener);
   }
 
+  /**
+   * Removes a previously registered pool event listener.
+   *
+   * @param listener listener to remove
+   */
   public void removeComponentPoolEventListener (ComponentPoolEventListener listener) {
 
     componentPoolEventListenerQueue.remove(listener);
   }
 
+  /**
+   * Notifies listeners of an error that occurred within the pool.
+   *
+   * @param exception exception that occurred
+   */
   public void reportErrorOccurred (Exception exception) {
 
     ErrorReportingComponentPoolEvent<?> poolEvent = new ErrorReportingComponentPoolEvent<C>(this, exception);
@@ -113,6 +172,11 @@ public class ComponentPool<C> extends Pool {
     }
   }
 
+  /**
+   * Notifies listeners of the lease time for a component.
+   *
+   * @param leaseTimeNanos lease duration in nanoseconds
+   */
   public void reportLeaseTimeNanos (long leaseTimeNanos) {
 
     LeaseTimeReportingComponentPoolEvent<?> poolEvent = new LeaseTimeReportingComponentPoolEvent<C>(this, leaseTimeNanos);
@@ -122,6 +186,11 @@ public class ComponentPool<C> extends Pool {
     }
   }
 
+  /**
+   * Starts the pool by initializing factories and pin manager.
+   *
+   * @throws ComponentPoolException if initialization fails
+   */
   public void startup ()
     throws ComponentPoolException {
 
@@ -140,6 +209,11 @@ public class ComponentPool<C> extends Pool {
     }
   }
 
+  /**
+   * Shuts down the pool and deconstructs all resources.
+   *
+   * @throws ComponentPoolException if shutdown fails
+   */
   public void shutdown ()
     throws ComponentPoolException {
 
@@ -158,6 +232,12 @@ public class ComponentPool<C> extends Pool {
     }
   }
 
+  /**
+   * Obtains a component from the pool, instrumenting wait times.
+   *
+   * @return component instance
+   * @throws ComponentPoolException if acquisition fails
+   */
   public C getComponent ()
     throws ComponentPoolException {
 
@@ -171,36 +251,70 @@ public class ComponentPool<C> extends Pool {
     }
   }
 
+  /**
+   * Returns an instance to the pool, marking it for reuse.
+   *
+   * @param componentInstance component instance to return
+   */
   public void returnInstance (ComponentInstance<C> componentInstance) {
 
     componentPinManager.process(componentInstance, true);
   }
 
+  /**
+   * Terminates an instance and optionally replaces it.
+   *
+   * @param componentInstance instance to terminate
+   */
   public void terminateInstance (ComponentInstance<C> componentInstance) {
 
     componentPinManager.terminate(componentInstance, true, true);
   }
 
+  /**
+   * Removes the provided pin from service.
+   *
+   * @param componentPin  pin to remove
+   * @param withPrejudice whether removal should force termination
+   */
   public void removePin (ComponentPin<C> componentPin, boolean withPrejudice) {
 
     componentPinManager.remove(componentPin, false, withPrejudice, true);
   }
 
+  /**
+   * Terminates all components currently processing.
+   */
   public void killAllProcessing () {
 
     componentPinManager.killAllProcessing();
   }
 
+  /**
+   * Returns the total size of the pool.
+   *
+   * @return number of managed components
+   */
   public int getPoolSize () {
 
     return componentPinManager.getPoolSize();
   }
 
+  /**
+   * Returns the number of free components.
+   *
+   * @return number of available components
+   */
   public int getFreeSize () {
 
     return componentPinManager.getFreeSize();
   }
 
+  /**
+   * Returns the number of components currently checked out.
+   *
+   * @return number of processing components
+   */
   public int getProcessingSize () {
 
     return componentPinManager.getProcessingSize();

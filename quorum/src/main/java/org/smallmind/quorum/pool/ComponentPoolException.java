@@ -34,23 +34,47 @@ package org.smallmind.quorum.pool;
 
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
+/**
+ * Indicates a problem while working with a component pool.
+ */
 public class ComponentPoolException extends FormattedException {
 
+  /**
+   * Creates the exception without additional context.
+   */
   public ComponentPoolException () {
 
     super();
   }
 
+  /**
+   * Creates the exception with a formatted message.
+   *
+   * @param message message template
+   * @param args    template parameters
+   */
   public ComponentPoolException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * Creates the exception with a cause and formatted message.
+   *
+   * @param throwable underlying problem
+   * @param message   message template
+   * @param args      template parameters
+   */
   public ComponentPoolException (Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);
   }
 
+  /**
+   * Creates the exception with a cause.
+   *
+   * @param throwable underlying problem
+   */
   public ComponentPoolException (Throwable throwable) {
 
     super(throwable);

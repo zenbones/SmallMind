@@ -32,7 +32,13 @@
  */
 package org.smallmind.quorum.pool.simple;
 
+/**
+ * Marker for objects that can be pooled and terminated by the simple pool.
+ */
 public interface PooledComponent {
 
+  /**
+   * Releases any resources held by the component.
+   */
   void terminate ();
 }

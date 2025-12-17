@@ -32,7 +32,17 @@
  */
 package org.smallmind.quorum.juggler;
 
+/**
+ * Callback interface allowing pins to be added to a blacklist when they fail.
+ *
+ * @param <R> resource type associated with the pins
+ */
 public interface BlackList<R> {
 
+  /**
+   * Adds a pin to the blacklist so it is no longer served.
+   *
+   * @param blacklistEntry entry describing the pin and the cause for removal
+   */
   void addToBlackList (BlacklistEntry<R> blacklistEntry);
 }

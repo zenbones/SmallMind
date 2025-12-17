@@ -38,15 +38,30 @@ import org.smallmind.quorum.namespace.JavaName;
 import org.smallmind.quorum.namespace.backingStore.ContextCreator;
 import org.smallmind.quorum.namespace.backingStore.NameTranslator;
 
+/**
+ * Translates between internal names and LDAP distinguished names.
+ */
 public class LdapNameTranslator extends NameTranslator {
 
   private static final String LDAP_NODE_PREFIX = "cn=";
 
+  /**
+   * Creates the translator with the provided context creator.
+   *
+   * @param contextCreator creator for LDAP contexts
+   */
   public LdapNameTranslator (ContextCreator contextCreator) {
 
     super(contextCreator);
   }
 
+  /**
+   * Converts an internal name into an external LDAP {@link JavaName} using common-name prefixes.
+   *
+   * @param internalName internal name to convert
+   * @return external name
+   * @throws InvalidNameException if conversion fails
+   */
   public JavaName fromInternalNameToExternalName (Name internalName)
     throws InvalidNameException {
 
@@ -60,6 +75,12 @@ public class LdapNameTranslator extends NameTranslator {
     return translatedName;
   }
 
+  /**
+   * Converts an external LDAP name to a distinguished name string.
+   *
+   * @param externalName external name
+   * @return DN string
+   */
   public String fromExternalNameToExternalString (JavaName externalName) {
 
     StringBuilder externalBuilder;
@@ -75,18 +96,40 @@ public class LdapNameTranslator extends NameTranslator {
     return externalBuilder.toString();
   }
 
+  /**
+   * Converts an absolute distinguished name string to an internal path string.
+   *
+   * @param externalName absolute DN
+   * @return internal path string
+   * @throws InvalidNameException if conversion fails
+   */
   public String fromAbsoluteExternalStringToInternalString (String externalName)
     throws InvalidNameException {
 
     return getInternalString(externalName, true);
   }
 
+  /**
+   * Converts a distinguished name string to an internal path string.
+   *
+   * @param externalName DN string
+   * @return internal path string
+   * @throws InvalidNameException if conversion fails
+   */
   public String fromExternalStringToInternalString (String externalName)
     throws InvalidNameException {
 
     return getInternalString(externalName, false);
   }
 
+  /**
+   * Helper to convert DNs into internal paths, optionally enforcing presence of the root.
+   *
+   * @param externalName DN string
+   * @param absolute     whether the DN must contain the configured root
+   * @return internal path string
+   * @throws InvalidNameException if the DN is invalid
+   */
   private String getInternalString (String externalName, boolean absolute)
     throws InvalidNameException {
 

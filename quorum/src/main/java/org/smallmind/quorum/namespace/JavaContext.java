@@ -49,6 +49,10 @@ import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
 import org.smallmind.quorum.namespace.backingStore.NameTranslator;
 
+/**
+ * JNDI {@link DirContext} wrapper that translates names between internal and external representations
+ * and optionally wraps nested contexts. Supports pooled and modifiable configurations.
+ */
 public class JavaContext implements DirContext {
 
   public static final String CONNECTION_DETAILS = "org.smallmind.quorum.namespace.java.connection details";
@@ -63,6 +67,14 @@ public class JavaContext implements DirContext {
   private final boolean modifiable;
   private final boolean pooled;
 
+  /**
+   * Constructs a top-level JavaContext without an existing internal context.
+   *
+   * @param nameTranslator translator for converting names
+   * @param environment    JNDI environment
+   * @param modifiable     whether the backing store allows mutations
+   * @param pooled         whether created child contexts should be pooled
+   */
   protected JavaContext (NameTranslator nameTranslator, Hashtable<String, Object> environment, boolean modifiable, boolean pooled) {
 
     this.nameTranslator = nameTranslator;
@@ -74,6 +86,15 @@ public class JavaContext implements DirContext {
     nameParser = new JavaNameParser(nameTranslator);
   }
 
+  /**
+   * Constructs a JavaContext that wraps an existing internal {@link DirContext}.
+   *
+   * @param environment     JNDI environment
+   * @param internalContext backing context
+   * @param nameTranslator  translator used for name conversions
+   * @param nameParser      parser to use for string names
+   * @param modifiable      whether the backing store allows mutations
+   */
   protected JavaContext (Hashtable<String, Object> environment, DirContext internalContext, NameTranslator nameTranslator, JavaNameParser nameParser, boolean modifiable) {
 
     this.environment = environment;
@@ -85,6 +106,14 @@ public class JavaContext implements DirContext {
     pooled = false;
   }
 
+  /**
+   * Ensures that each element of the path exists by creating subcontexts when necessary.
+   *
+   * @param javaContext context used to resolve/create the path
+   * @param namingPath  slash-delimited path
+   * @return the deepest existing/created context
+   * @throws NamingException if lookup or creation fails
+   */
   public static JavaContext insureContext (JavaContext javaContext, String namingPath)
     throws NamingException {
 
@@ -109,6 +138,13 @@ public class JavaContext implements DirContext {
     return lastContext;
   }
 
+  /**
+   * Looks up an object using a {@link Name}, converting to the underlying context.
+   *
+   * @param name name to resolve
+   * @return located object or wrapped context
+   * @throws NamingException if lookup fails
+   */
   public Object lookup (Name name)
     throws NamingException {
 
@@ -128,12 +164,26 @@ public class JavaContext implements DirContext {
     return lookupObject;
   }
 
+  /**
+   * Looks up an object using a string name.
+   *
+   * @param name string representation of the name
+   * @return located object or wrapped context
+   * @throws NamingException if lookup fails
+   */
   public Object lookup (String name)
     throws NamingException {
 
     return lookup(nameParser.parse(name));
   }
 
+  /**
+   * Binds an object to a name.
+   *
+   * @param name name to bind
+   * @param obj  object to bind
+   * @throws NamingException if binding fails or store is not modifiable
+   */
   public void bind (Name name, Object obj)
     throws NamingException {
 
@@ -147,12 +197,26 @@ public class JavaContext implements DirContext {
     contextNamePair.getContext().bind(contextNamePair.getName(), obj);
   }
 
+  /**
+   * Binds an object to a string name.
+   *
+   * @param name name to bind
+   * @param obj  object to bind
+   * @throws NamingException if binding fails or store is not modifiable
+   */
   public void bind (String name, Object obj)
     throws NamingException {
 
     bind(nameParser.parse(name), obj);
   }
 
+  /**
+   * Rebinds an object to a name, replacing any existing binding.
+   *
+   * @param name name to bind
+   * @param obj  object to bind
+   * @throws NamingException if rebinding fails or store is not modifiable
+   */
   public void rebind (Name name, Object obj)
     throws NamingException {
 
@@ -166,12 +230,25 @@ public class JavaContext implements DirContext {
     contextNamePair.getContext().rebind(contextNamePair.getName(), obj);
   }
 
+  /**
+   * Rebinds an object to a string name, replacing any existing binding.
+   *
+   * @param name name to bind
+   * @param obj  object to bind
+   * @throws NamingException if rebinding fails or store is not modifiable
+   */
   public void rebind (String name, Object obj)
     throws NamingException {
 
     rebind(nameParser.parse(name), obj);
   }
 
+  /**
+   * Unbinds an object from the provided name.
+   *
+   * @param name name to unbind
+   * @throws NamingException if unbinding fails or store is not modifiable
+   */
   public void unbind (Name name)
     throws NamingException {
 
@@ -185,12 +262,25 @@ public class JavaContext implements DirContext {
     contextNamePair.getContext().unbind(contextNamePair.getName());
   }
 
+  /**
+   * Unbinds an object from the provided string name.
+   *
+   * @param name name to unbind
+   * @throws NamingException if unbinding fails or store is not modifiable
+   */
   public void unbind (String name)
     throws NamingException {
 
     unbind(nameParser.parse(name));
   }
 
+  /**
+   * Renames an entry.
+   *
+   * @param oldName existing name
+   * @param newName new name
+   * @throws NamingException if renaming fails or store is not modifiable
+   */
   public void rename (Name oldName, Name newName)
     throws NamingException {
 
@@ -204,12 +294,26 @@ public class JavaContext implements DirContext {
     contextNamePair.getContext().rename(contextNamePair.getName(), nameTranslator.fromInternalNameToExternalName(newName));
   }
 
+  /**
+   * Renames an entry using string names.
+   *
+   * @param oldName existing name
+   * @param newName new name
+   * @throws NamingException if renaming fails or store is not modifiable
+   */
   public void rename (String oldName, String newName)
     throws NamingException {
 
     rename(nameParser.parse(oldName), nameParser.parse(newName));
   }
 
+  /**
+   * Lists name/class pairs beneath the supplied name.
+   *
+   * @param name base name
+   * @return enumeration of name/class pairs or {@code null}
+   * @throws NamingException if listing fails
+   */
   public NamingEnumeration<NameClassPair> list (Name name)
     throws NamingException {
 
@@ -225,12 +329,26 @@ public class JavaContext implements DirContext {
     return null;
   }
 
+  /**
+   * Lists name/class pairs beneath a string name.
+   *
+   * @param name base name
+   * @return enumeration of name/class pairs or {@code null}
+   * @throws NamingException if listing fails
+   */
   public NamingEnumeration<NameClassPair> list (String name)
     throws NamingException {
 
     return list(nameParser.parse(name));
   }
 
+  /**
+   * Lists bindings beneath the supplied name.
+   *
+   * @param name base name
+   * @return enumeration of bindings or {@code null}
+   * @throws NamingException if listing fails
+   */
   public NamingEnumeration<Binding> listBindings (Name name)
     throws NamingException {
 
@@ -246,12 +364,25 @@ public class JavaContext implements DirContext {
     return null;
   }
 
+  /**
+   * Lists bindings beneath the supplied string name.
+   *
+   * @param name base name
+   * @return enumeration of bindings or {@code null}
+   * @throws NamingException if listing fails
+   */
   public NamingEnumeration<Binding> listBindings (String name)
     throws NamingException {
 
     return listBindings(nameParser.parse(name));
   }
 
+  /**
+   * Destroys a subcontext.
+   *
+   * @param name name of subcontext to destroy
+   * @throws NamingException if destruction fails or store is not modifiable
+   */
   public void destroySubcontext (Name name)
     throws NamingException {
 
@@ -265,12 +396,25 @@ public class JavaContext implements DirContext {
     contextNamePair.getContext().destroySubcontext(contextNamePair.getName());
   }
 
+  /**
+   * Destroys a subcontext referenced by string name.
+   *
+   * @param name name of subcontext to destroy
+   * @throws NamingException if destruction fails or store is not modifiable
+   */
   public void destroySubcontext (String name)
     throws NamingException {
 
     destroySubcontext(nameParser.parse(name));
   }
 
+  /**
+   * Creates a subcontext.
+   *
+   * @param name name of subcontext to create
+   * @return created context wrapped in {@link JavaContext}
+   * @throws NamingException if creation fails or store is not modifiable
+   */
   public Context createSubcontext (Name name)
     throws NamingException {
 
@@ -287,12 +431,26 @@ public class JavaContext implements DirContext {
     return new JavaContext(environment, (DirContext)createdContext, nameTranslator, nameParser, modifiable);
   }
 
+  /**
+   * Creates a subcontext using a string name.
+   *
+   * @param name name of subcontext to create
+   * @return created context wrapped in {@link JavaContext}
+   * @throws NamingException if creation fails or store is not modifiable
+   */
   public Context createSubcontext (String name)
     throws NamingException {
 
     return createSubcontext(nameParser.parse(name));
   }
 
+  /**
+   * Looks up a link reference.
+   *
+   * @param name name to resolve
+   * @return linked object or wrapped context
+   * @throws NamingException if lookup fails
+   */
   public Object lookupLink (Name name)
     throws NamingException {
 
@@ -310,36 +468,81 @@ public class JavaContext implements DirContext {
     return lookupObject;
   }
 
+  /**
+   * Looks up a link reference using a string name.
+   *
+   * @param name name to resolve
+   * @return linked object or wrapped context
+   * @throws NamingException if lookup fails
+   */
   public Object lookupLink (String name)
     throws NamingException {
 
     return lookupLink(nameParser.parse(name));
   }
 
+  /**
+   * Returns the parser used for this context.
+   *
+   * @param name name whose parser is requested
+   * @return name parser
+   * @throws NamingException if retrieval fails
+   */
   public NameParser getNameParser (Name name)
     throws NamingException {
 
     return nameParser;
   }
 
+  /**
+   * Returns the parser used for this context using a string name.
+   *
+   * @param name name whose parser is requested
+   * @return name parser
+   * @throws NamingException if retrieval fails
+   */
   public NameParser getNameParser (String name)
     throws NamingException {
 
     return getNameParser(nameParser.parse(name));
   }
 
+  /**
+   * Composes two names.
+   *
+   * @param name   name to add
+   * @param prefix prefix to prepend
+   * @return composed name
+   * @throws NamingException if composition fails
+   */
   public Name composeName (Name name, Name prefix)
     throws NamingException {
 
     return ((Name)prefix.clone()).addAll(name);
   }
 
+  /**
+   * Composes two string names.
+   *
+   * @param name   name to add
+   * @param prefix prefix to prepend
+   * @return composed name string
+   * @throws NamingException if composition fails
+   */
   public String composeName (String name, String prefix)
     throws NamingException {
 
     return nameParser.unparse(composeName(nameParser.parse(name), nameParser.parse(prefix)));
   }
 
+  /**
+   * Adds a property to the environment.
+   *
+   * @param propName property name
+   * @param propVal  property value
+   * @return previous value associated with the property
+   * @throws NamingException if the store is not modifiable
+   */
   public Object addToEnvironment (String propName, Object propVal)
     throws NamingException {
 
@@ -353,6 +556,13 @@ public class JavaContext implements DirContext {
     return prevObject;
   }
 
+  /**
+   * Removes a property from the environment.
+   *
+   * @param propName property name
+   * @return previous value associated with the property
+   * @throws NamingException if the store is not modifiable
+   */
   public Object removeFromEnvironment (String propName)
     throws NamingException {
 
@@ -362,12 +572,23 @@ public class JavaContext implements DirContext {
     return environment.remove(propName);
   }
 
+  /**
+   * Returns the backing environment hashtable.
+   *
+   * @return environment
+   * @throws NamingException never thrown
+   */
   public Hashtable getEnvironment ()
     throws NamingException {
 
     return environment;
   }
 
+  /**
+   * Closes the internal context if present.
+   *
+   * @throws NamingException if close fails
+   */
   public void close ()
     throws NamingException {
 
@@ -376,12 +597,25 @@ public class JavaContext implements DirContext {
     }
   }
 
+  /**
+   * Returns the fully qualified name of this context in the namespace.
+   *
+   * @return full name
+   * @throws NamingException if retrieval fails
+   */
   public String getNameInNamespace ()
     throws NamingException {
 
     return nameTranslator.fromAbsoluteExternalStringToInternalString(internalContext.getNameInNamespace());
   }
 
+  /**
+   * Retrieves attributes associated with a name.
+   *
+   * @param name name whose attributes to fetch
+   * @return attributes
+   * @throws NamingException if retrieval fails
+   */
   public Attributes getAttributes (Name name)
     throws NamingException {
 
@@ -392,12 +626,27 @@ public class JavaContext implements DirContext {
     return contextNamePair.getContext().getAttributes(contextNamePair.getName());
   }
 
+  /**
+   * Retrieves attributes associated with a string name.
+   *
+   * @param name name whose attributes to fetch
+   * @return attributes
+   * @throws NamingException if retrieval fails
+   */
   public Attributes getAttributes (String name)
     throws NamingException {
 
     return getAttributes(nameParser.parse(name));
   }
 
+  /**
+   * Retrieves specific attributes associated with a name.
+   *
+   * @param name    name whose attributes to fetch
+   * @param attrIds attribute identifiers to return
+   * @return attributes
+   * @throws NamingException if retrieval fails
+   */
   public Attributes getAttributes (Name name, String[] attrIds)
     throws NamingException {
 
@@ -408,12 +657,28 @@ public class JavaContext implements DirContext {
     return contextNamePair.getContext().getAttributes(contextNamePair.getName(), attrIds);
   }
 
+  /**
+   * Retrieves specific attributes associated with a string name.
+   *
+   * @param name    name whose attributes to fetch
+   * @param attrIds attribute identifiers to return
+   * @return attributes
+   * @throws NamingException if retrieval fails
+   */
   public Attributes getAttributes (String name, String[] attrIds)
     throws NamingException {
 
     return getAttributes(nameParser.parse(name), attrIds);
   }
 
+  /**
+   * Modifies attributes using the supplied operation.
+   *
+   * @param name   name whose attributes to modify
+   * @param mod_op modification operation
+   * @param attrs  attributes to apply
+   * @throws NamingException if modification fails or store is not modifiable
+   */
   public void modifyAttributes (Name name, int mod_op, Attributes attrs)
     throws NamingException {
 
@@ -427,12 +692,27 @@ public class JavaContext implements DirContext {
     contextNamePair.getContext().modifyAttributes(contextNamePair.getName(), mod_op, attrs);
   }
 
+  /**
+   * Modifies attributes using the supplied operation.
+   *
+   * @param name   name whose attributes to modify
+   * @param mod_op modification operation
+   * @param attrs  attributes to apply
+   * @throws NamingException if modification fails or store is not modifiable
+   */
   public void modifyAttributes (String name, int mod_op, Attributes attrs)
     throws NamingException {
 
     modifyAttributes(nameParser.parse(name), mod_op, attrs);
   }
 
+  /**
+   * Applies an array of modifications to attributes.
+   *
+   * @param name name whose attributes to modify
+   * @param mods modifications to apply
+   * @throws NamingException if modification fails or store is not modifiable
+   */
   public void modifyAttributes (Name name, ModificationItem[] mods)
     throws NamingException {
 
@@ -446,12 +726,27 @@ public class JavaContext implements DirContext {
     contextNamePair.getContext().modifyAttributes(contextNamePair.getName(), mods);
   }
 
+  /**
+   * Applies an array of modifications to attributes using a string name.
+   *
+   * @param name name whose attributes to modify
+   * @param mods modifications to apply
+   * @throws NamingException if modification fails or store is not modifiable
+   */
   public void modifyAttributes (String name, ModificationItem[] mods)
     throws NamingException {
 
     modifyAttributes(nameParser.parse(name), mods);
   }
 
+  /**
+   * Binds an object with attributes to a name.
+   *
+   * @param name  name to bind
+   * @param obj   object to bind
+   * @param attrs attributes to associate
+   * @throws NamingException if binding fails or store is not modifiable
+   */
   public void bind (Name name, Object obj, Attributes attrs)
     throws NamingException {
 
@@ -465,12 +760,28 @@ public class JavaContext implements DirContext {
     contextNamePair.getContext().bind(contextNamePair.getName(), obj, attrs);
   }
 
+  /**
+   * Binds an object with attributes to a string name.
+   *
+   * @param name  name to bind
+   * @param obj   object to bind
+   * @param attrs attributes to associate
+   * @throws NamingException if binding fails or store is not modifiable
+   */
   public void bind (String name, Object obj, Attributes attrs)
     throws NamingException {
 
     bind(nameParser.parse(name), obj, attrs);
   }
 
+  /**
+   * Rebinds an object with attributes to a name.
+   *
+   * @param name  name to bind
+   * @param obj   object to bind
+   * @param attrs attributes to associate
+   * @throws NamingException if rebinding fails or store is not modifiable
+   */
   public void rebind (Name name, Object obj, Attributes attrs)
     throws NamingException {
 
@@ -484,12 +795,28 @@ public class JavaContext implements DirContext {
     contextNamePair.getContext().rebind(contextNamePair.getName(), obj, attrs);
   }
 
+  /**
+   * Rebinds an object with attributes to a string name.
+   *
+   * @param name  name to bind
+   * @param obj   object to bind
+   * @param attrs attributes to associate
+   * @throws NamingException if rebinding fails or store is not modifiable
+   */
   public void rebind (String name, Object obj, Attributes attrs)
     throws NamingException {
 
     rebind(nameParser.parse(name), obj, attrs);
   }
 
+  /**
+   * Creates a subcontext with attributes.
+   *
+   * @param name  name of subcontext
+   * @param attrs attributes to apply
+   * @return created context wrapped in {@link JavaContext}
+   * @throws NamingException if creation fails or store is not modifiable
+   */
   public DirContext createSubcontext (Name name, Attributes attrs)
     throws NamingException {
 
@@ -506,12 +833,27 @@ public class JavaContext implements DirContext {
     return new JavaContext(environment, (DirContext)createdContext, nameTranslator, nameParser, modifiable);
   }
 
+  /**
+   * Creates a subcontext with attributes using a string name.
+   *
+   * @param name  name of subcontext
+   * @param attrs attributes to apply
+   * @return created context wrapped in {@link JavaContext}
+   * @throws NamingException if creation fails or store is not modifiable
+   */
   public DirContext createSubcontext (String name, Attributes attrs)
     throws NamingException {
 
     return createSubcontext(nameParser.parse(name), attrs);
   }
 
+  /**
+   * Retrieves schema information for a name.
+   *
+   * @param name name whose schema to fetch
+   * @return schema context
+   * @throws NamingException if retrieval fails
+   */
   public DirContext getSchema (Name name)
     throws NamingException {
 
@@ -522,12 +864,26 @@ public class JavaContext implements DirContext {
     return contextNamePair.getContext().getSchema(contextNamePair.getName());
   }
 
+  /**
+   * Retrieves schema information for a string name.
+   *
+   * @param name name whose schema to fetch
+   * @return schema context
+   * @throws NamingException if retrieval fails
+   */
   public DirContext getSchema (String name)
     throws NamingException {
 
     return getSchema(nameParser.parse(name));
   }
 
+  /**
+   * Retrieves schema class definition for a name.
+   *
+   * @param name name whose class definition to fetch
+   * @return schema class definition context
+   * @throws NamingException if retrieval fails
+   */
   public DirContext getSchemaClassDefinition (Name name)
     throws NamingException {
 
@@ -538,12 +894,28 @@ public class JavaContext implements DirContext {
     return contextNamePair.getContext().getSchemaClassDefinition(contextNamePair.getName());
   }
 
+  /**
+   * Retrieves schema class definition for a string name.
+   *
+   * @param name name whose class definition to fetch
+   * @return schema class definition context
+   * @throws NamingException if retrieval fails
+   */
   public DirContext getSchemaClassDefinition (String name)
     throws NamingException {
 
     return getSchemaClassDefinition(nameParser.parse(name));
   }
 
+  /**
+   * Searches the directory with attributes and an attribute filter.
+   *
+   * @param name               base name
+   * @param matchingAttributes attributes to match
+   * @param attributesToReturn attributes to return
+   * @return search results
+   * @throws NamingException if search fails
+   */
   public NamingEnumeration<SearchResult> search (Name name, Attributes matchingAttributes, String[] attributesToReturn)
     throws NamingException {
 
@@ -559,12 +931,29 @@ public class JavaContext implements DirContext {
     return null;
   }
 
+  /**
+   * Searches the directory with attributes and an attribute filter using a string name.
+   *
+   * @param name               base name
+   * @param matchingAttributes attributes to match
+   * @param attributesToReturn attributes to return
+   * @return search results
+   * @throws NamingException if search fails
+   */
   public NamingEnumeration<SearchResult> search (String name, Attributes matchingAttributes, String[] attributesToReturn)
     throws NamingException {
 
     return search(nameParser.parse(name), matchingAttributes, attributesToReturn);
   }
 
+  /**
+   * Searches the directory with attributes.
+   *
+   * @param name               base name
+   * @param matchingAttributes attributes to match
+   * @return search results
+   * @throws NamingException if search fails
+   */
   public NamingEnumeration<SearchResult> search (Name name, Attributes matchingAttributes)
     throws NamingException {
 
@@ -580,12 +969,29 @@ public class JavaContext implements DirContext {
     return null;
   }
 
+  /**
+   * Searches the directory with attributes using a string name.
+   *
+   * @param name               base name
+   * @param matchingAttributes attributes to match
+   * @return search results
+   * @throws NamingException if search fails
+   */
   public NamingEnumeration<SearchResult> search (String name, Attributes matchingAttributes)
     throws NamingException {
 
     return search(nameParser.parse(name), matchingAttributes);
   }
 
+  /**
+   * Searches the directory using a filter expression.
+   *
+   * @param name   base name
+   * @param filter search filter
+   * @param cons   search controls
+   * @return search results
+   * @throws NamingException if search fails
+   */
   public NamingEnumeration<SearchResult> search (Name name, String filter, SearchControls cons)
     throws NamingException {
 
@@ -601,12 +1007,31 @@ public class JavaContext implements DirContext {
     return null;
   }
 
+  /**
+   * Searches the directory using a filter expression and string name.
+   *
+   * @param name   base name
+   * @param filter search filter
+   * @param cons   search controls
+   * @return search results
+   * @throws NamingException if search fails
+   */
   public NamingEnumeration<SearchResult> search (String name, String filter, SearchControls cons)
     throws NamingException {
 
     return search(nameParser.parse(name), filter, cons);
   }
 
+  /**
+   * Searches the directory using a filter expression with parameters.
+   *
+   * @param name       base name
+   * @param filterExpr filter expression
+   * @param filterArgs filter arguments
+   * @param cons       search controls
+   * @return search results
+   * @throws NamingException if search fails
+   */
   public NamingEnumeration<SearchResult> search (Name name, String filterExpr, Object[] filterArgs, SearchControls cons)
     throws NamingException {
 
@@ -623,6 +1048,16 @@ public class JavaContext implements DirContext {
     return null;
   }
 
+  /**
+   * Searches the directory using a filter expression with parameters and string name.
+   *
+   * @param name       base name
+   * @param filterExpr filter expression
+   * @param filterArgs filter arguments
+   * @param cons       search controls
+   * @return search results
+   * @throws NamingException if search fails
+   */
   public NamingEnumeration<SearchResult> search (String name, String filterExpr, Object[] filterArgs, SearchControls cons)
     throws NamingException {
 

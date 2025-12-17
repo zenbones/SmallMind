@@ -37,31 +37,4 @@ package org.smallmind.nutsnbolts.layout;
  */
 public record ReorderedElement(ParaboxElement<?> reorderedElement, int originalIndex) {
 
-  /**
-   * Creates a record of an element and its original position.
-   *
-   * @param reorderedElement the element that was reordered
-   * @param originalIndex    the index prior to reordering
-   */
-  public ReorderedElement {
-
-  }
-
-  /**
-   * @return the element after reordering
-   */
-  @Override
-  public ParaboxElement<?> reorderedElement () {
-
-    return reorderedElement;
-  }
-
-  /**
-   * @return the element's original index
-   */
-  @Override
-  public int originalIndex () {
-
-    return originalIndex;
-  }
 }

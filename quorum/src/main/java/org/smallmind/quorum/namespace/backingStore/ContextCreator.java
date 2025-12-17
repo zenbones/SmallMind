@@ -35,20 +35,39 @@ package org.smallmind.quorum.namespace.backingStore;
 import javax.naming.NamingException;
 import javax.naming.directory.DirContext;
 
+/**
+ * Factory responsible for creating initial {@link DirContext} instances for a backing store.
+ */
 public abstract class ContextCreator {
 
   private final NamingConnectionDetails connectionDetails;
 
+  /**
+   * Constructs the creator with connection details.
+   *
+   * @param connectionDetails backing store connection parameters
+   */
   public ContextCreator (NamingConnectionDetails connectionDetails) {
 
     this.connectionDetails = connectionDetails;
   }
 
+  /**
+   * Returns the connection details.
+   *
+   * @return connection details
+   */
   public NamingConnectionDetails getConnectionDetails () {
 
     return connectionDetails;
   }
 
+  /**
+   * Builds the initial directory context for the backing store.
+   *
+   * @return directory context
+   * @throws NamingException if creation fails
+   */
   public abstract DirContext getInitialContext ()
     throws NamingException;
 }

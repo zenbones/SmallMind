@@ -41,13 +41,28 @@ import javax.naming.directory.InitialDirContext;
 import org.smallmind.quorum.namespace.backingStore.ContextCreator;
 import org.smallmind.quorum.namespace.backingStore.NamingConnectionDetails;
 
+/**
+ * Creates LDAP {@link DirContext} instances and utilities for ensuring LDAP contexts exist.
+ */
 public class LdapContextCreator extends ContextCreator {
 
+  /**
+   * Constructs the creator with LDAP connection details.
+   *
+   * @param connectionDetails LDAP connection parameters
+   */
   public LdapContextCreator (NamingConnectionDetails connectionDetails) {
 
     super(connectionDetails);
   }
 
+  /**
+   * Ensures that a full LDAP DN path exists by creating intermediate subcontexts if necessary.
+   *
+   * @param dirContext directory context to use
+   * @param namingPath DN to ensure exists
+   * @throws NamingException if creation fails
+   */
   public static void insureContext (DirContext dirContext, String namingPath)
     throws NamingException {
 
@@ -69,11 +84,22 @@ public class LdapContextCreator extends ContextCreator {
     }
   }
 
+  /**
+   * Returns the configured LDAP root namespace.
+   *
+   * @return root DN
+   */
   public String getRoot () {
 
     return getConnectionDetails().getRootNamespace();
   }
 
+  /**
+   * Builds the initial LDAP directory context using the configured connection settings.
+   *
+   * @return initialized {@link DirContext}
+   * @throws NamingException if connection fails
+   */
   public DirContext getInitialContext ()
     throws NamingException {
 

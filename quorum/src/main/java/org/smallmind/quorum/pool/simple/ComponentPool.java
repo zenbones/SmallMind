@@ -38,6 +38,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.smallmind.quorum.pool.ComponentPoolException;
 import org.smallmind.quorum.pool.Pool;
 
+/**
+ * Simple synchronized pool implementation backed by linked lists. Components can be bounded by size and
+ * optionally block while waiting for availability.
+ *
+ * @param <T> component type managed by the pool
+ */
 public class ComponentPool<T extends PooledComponent> extends Pool {
 
   private final CountDownLatch exitLatch = new CountDownLatch(1);
@@ -49,6 +55,11 @@ public class ComponentPool<T extends PooledComponent> extends Pool {
 
   private SimplePoolConfig simplePoolConfig = new SimplePoolConfig();
 
+  /**
+   * Creates a pool using the provided factory and default configuration.
+   *
+   * @param componentFactory factory that produces components
+   */
   public ComponentPool (ComponentFactory<T> componentFactory) {
 
     this.componentFactory = componentFactory;
@@ -57,6 +68,12 @@ public class ComponentPool<T extends PooledComponent> extends Pool {
     freeList = new LinkedList<T>();
   }
 
+  /**
+   * Creates a pool using the provided factory and configuration.
+   *
+   * @param componentFactory factory that produces components
+   * @param simplePoolConfig configuration for bounds and wait behavior
+   */
   public ComponentPool (ComponentFactory<T> componentFactory, SimplePoolConfig simplePoolConfig) {
 
     this(componentFactory);
@@ -64,6 +81,12 @@ public class ComponentPool<T extends PooledComponent> extends Pool {
     this.simplePoolConfig = simplePoolConfig;
   }
 
+  /**
+   * Obtains a component from the pool, creating one if capacity allows or blocking according to the configuration.
+   *
+   * @return pooled component instance
+   * @throws ComponentPoolException if the pool is closed, construction fails, or waiting times out
+   */
   public synchronized T getComponent ()
     throws ComponentPoolException {
 
@@ -106,6 +129,11 @@ public class ComponentPool<T extends PooledComponent> extends Pool {
     return component;
   }
 
+  /**
+   * Returns a component to the pool or terminates it if the pool is at capacity.
+   *
+   * @param component component to return
+   */
   public synchronized void returnComponent (T component) {
 
     usedList.remove(component);
@@ -125,16 +153,31 @@ public class ComponentPool<T extends PooledComponent> extends Pool {
     }
   }
 
+  /**
+   * Current total number of components both in use and free.
+   *
+   * @return size of the pool
+   */
   public synchronized int poolSize () {
 
     return freeList.size() + usedList.size();
   }
 
+  /**
+   * Number of currently free components.
+   *
+   * @return free component count
+   */
   public synchronized int freeSize () {
 
     return freeList.size();
   }
 
+  /**
+   * Closes the pool, waiting for borrowed components to return and terminating free ones.
+   *
+   * @throws InterruptedException if interrupted while waiting for components to be returned
+   */
   public void close ()
     throws InterruptedException {
 

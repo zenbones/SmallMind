@@ -32,6 +32,11 @@
  */
 package org.smallmind.quorum.bucket;
 
+/**
+ * Marker interface describing keys that identify child buckets.
+ *
+ * @param <T> type associated with the bucket hierarchy
+ */
 public interface BucketKey<T> {
 
 }

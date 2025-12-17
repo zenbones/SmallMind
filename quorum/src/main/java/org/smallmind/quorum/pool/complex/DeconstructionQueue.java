@@ -39,6 +39,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Priority queue that schedules {@link DeconstructionFuse} ignition based on time and registration order.
+ */
 public class DeconstructionQueue {
 
   private final ConcurrentSkipListMap<IgnitionKey, DeconstructionFuse> fuseMap = new ConcurrentSkipListMap<IgnitionKey, DeconstructionFuse>();
@@ -46,6 +49,9 @@ public class DeconstructionQueue {
 
   private IgnitionWorker ignitionWorker;
 
+  /**
+   * Starts the background worker that monitors fuses.
+   */
   public void startup () {
 
     Thread ignitionThread;
@@ -55,32 +61,60 @@ public class DeconstructionQueue {
     ignitionThread.start();
   }
 
+  /**
+   * Returns the next ordinal used to order fuses registered at the same time.
+   *
+   * @return incrementing ordinal
+   */
   public int nextOrdinal () {
 
     return ordinal.incrementAndGet();
   }
 
+  /**
+   * Adds a fuse to the queue for ignition.
+   *
+   * @param deconstructionFuse fuse to schedule
+   */
   public void add (DeconstructionFuse deconstructionFuse) {
 
     fuseMap.put(new IgnitionKey(deconstructionFuse), deconstructionFuse);
   }
 
+  /**
+   * Removes a fuse from the queue, cancelling its ignition.
+   *
+   * @param deconstructionFuse fuse to remove
+   */
   public void remove (DeconstructionFuse deconstructionFuse) {
 
     fuseMap.remove(new IgnitionKey(deconstructionFuse));
   }
 
+  /**
+   * Shuts down the background worker, waiting for exit.
+   *
+   * @throws InterruptedException if interrupted while waiting
+   */
   public void shutdown ()
     throws InterruptedException {
 
     ignitionWorker.shutdown();
   }
 
+  /**
+   * Worker that periodically checks for expired fuses and ignites them.
+   */
   private class IgnitionWorker implements Runnable {
 
     private final CountDownLatch terminationLatch = new CountDownLatch(1);
     private final CountDownLatch exitLatch = new CountDownLatch(1);
 
+    /**
+     * Requests shutdown and waits for the worker to exit.
+     *
+     * @throws InterruptedException if interrupted while waiting
+     */
     public void shutdown ()
       throws InterruptedException {
 
@@ -88,6 +122,9 @@ public class DeconstructionQueue {
       exitLatch.await();
     }
 
+    /**
+     * Runs the polling loop to fire due fuses.
+     */
     @Override
     public void run () {
 
@@ -118,6 +155,9 @@ public class DeconstructionQueue {
     }
   }
 
+  /**
+   * Sort key combining ignition time and ordinal to guarantee deterministic ordering.
+   */
   private static class IgnitionKey implements Comparable<IgnitionKey> {
 
     private final long ignitionTime;
@@ -144,6 +184,9 @@ public class DeconstructionQueue {
       return ignitionTime;
     }
 
+    /**
+     * Orders keys first by ignition time then by ordinal.
+     */
     @Override
     public int compareTo (IgnitionKey key) {
 
@@ -157,12 +200,18 @@ public class DeconstructionQueue {
       return comparison;
     }
 
+    /**
+     * Hash code based on ordinal for map usage.
+     */
     @Override
     public int hashCode () {
 
       return ordinal;
     }
 
+    /**
+     * Equality based on ordinal.
+     */
     @Override
     public boolean equals (Object obj) {
 

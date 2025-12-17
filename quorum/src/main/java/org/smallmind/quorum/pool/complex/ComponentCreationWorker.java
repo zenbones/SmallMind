@@ -36,6 +36,11 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Helper runnable that creates a component instance on a worker thread while allowing timeout aborts.
+ *
+ * @param <C> component type
+ */
 public class ComponentCreationWorker<C> implements Runnable {
 
   private enum State {COMPLETED, ABORTED, TERMINATED}
@@ -47,16 +52,32 @@ public class ComponentCreationWorker<C> implements Runnable {
   private ComponentInstance<C> componentInstance;
   private Exception exception;
 
+  /**
+   * Creates a worker tied to the provided pool.
+   *
+   * @param componentPool owning pool
+   */
   public ComponentCreationWorker (ComponentPool<C> componentPool) {
 
     this.componentPool = componentPool;
   }
 
+  /**
+   * Returns the component instance created by the worker, or {@code null} if none.
+   *
+   * @return created component instance
+   */
   public ComponentInstance<C> getComponentInstance () {
 
     return componentInstance;
   }
 
+  /**
+   * Requests abortion of the creation process. If work already finished and failed, the cause is thrown.
+   *
+   * @return {@code true} if the creation was aborted before completion, {@code false} otherwise
+   * @throws Exception if the worker terminated with an exception before aborting
+   */
   public boolean abort ()
     throws Exception {
 
@@ -73,6 +94,9 @@ public class ComponentCreationWorker<C> implements Runnable {
     return true;
   }
 
+  /**
+   * Performs creation using the pool's factory and records completion/abort state.
+   */
   public void run () {
 
     try {

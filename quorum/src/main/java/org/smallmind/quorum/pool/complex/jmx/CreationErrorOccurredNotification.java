@@ -35,12 +35,21 @@ package org.smallmind.quorum.pool.complex.jmx;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.management.Notification;
 
+/**
+ * JMX notification indicating an error occurred while creating or managing a component.
+ */
 public class CreationErrorOccurredNotification extends Notification {
 
   private static final AtomicLong SEQUNCE_NUMBER = new AtomicLong(0);
   public static final String TYPE = "ERROR_OCCURRED";
   private final Exception exception;
 
+  /**
+   * Creates the notification with the emitting source and cause.
+   *
+   * @param source    MBean source
+   * @param exception underlying exception
+   */
   public CreationErrorOccurredNotification (Object source, Exception exception) {
 
     super(TYPE, source, SEQUNCE_NUMBER.incrementAndGet(), System.currentTimeMillis());
@@ -48,6 +57,11 @@ public class CreationErrorOccurredNotification extends Notification {
     this.exception = exception;
   }
 
+  /**
+   * Returns the exception associated with the error event.
+   *
+   * @return exception
+   */
   public Exception getException () {
 
     return exception;

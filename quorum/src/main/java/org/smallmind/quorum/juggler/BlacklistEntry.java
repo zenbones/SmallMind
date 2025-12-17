@@ -32,24 +32,13 @@
  */
 package org.smallmind.quorum.juggler;
 
-public class BlacklistEntry<R> {
+/**
+ * Immutable description of a blacklisted pin and the reason it failed.
+ *
+ * @param <R> resource type associated with the pin
+ * @param jugglingPin pin that has been blacklisted
+ * @param throwable   cause of the blacklist entry
+ */
+public record BlacklistEntry<R>(JugglingPin<R> jugglingPin, Throwable throwable) {
 
-  private final JugglingPin<R> jugglingPin;
-  private final Throwable throwable;
-
-  public BlacklistEntry (JugglingPin<R> jugglingPin, Throwable throwable) {
-
-    this.jugglingPin = jugglingPin;
-    this.throwable = throwable;
-  }
-
-  public JugglingPin<R> getJugglingPin () {
-
-    return jugglingPin;
-  }
-
-  public Throwable getThrowable () {
-
-    return throwable;
-  }
 }

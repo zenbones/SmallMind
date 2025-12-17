@@ -34,13 +34,34 @@ package org.smallmind.quorum.pool.complex;
 
 import org.smallmind.nutsnbolts.lang.Existential;
 
+/**
+ * Represents a pooled component instance with validation and lifecycle hooks.
+ *
+ * @param <C> component type provided
+ */
 public interface ComponentInstance<C> extends Existential {
 
+  /**
+   * Validates the instance for continued use.
+   *
+   * @return {@code true} if the instance is healthy
+   */
   boolean validate ();
 
+  /**
+   * Provides the underlying component for use.
+   *
+   * @return component instance
+   * @throws Exception if the component cannot be served
+   */
   C serve ()
     throws Exception;
 
+  /**
+   * Closes and cleans up the instance.
+   *
+   * @throws Exception if cleanup fails
+   */
   void close ()
     throws Exception;
 }

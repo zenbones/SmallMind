@@ -32,8 +32,16 @@
  */
 package org.smallmind.quorum.juggler;
 
+/**
+ * Indicates a failure while constructing a juggling resource.
+ */
 public class JugglerResourceCreationException extends JugglerResourceException {
 
+  /**
+   * Creates the exception with a cause.
+   *
+   * @param throwable underlying creation problem
+   */
   public JugglerResourceCreationException (Throwable throwable) {
 
     super(throwable);

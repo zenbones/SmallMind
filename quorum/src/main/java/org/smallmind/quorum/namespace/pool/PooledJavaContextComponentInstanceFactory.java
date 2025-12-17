@@ -43,6 +43,9 @@ import org.smallmind.quorum.pool.complex.AbstractComponentInstanceFactory;
 import org.smallmind.quorum.pool.complex.ComponentInstance;
 import org.smallmind.quorum.pool.complex.ComponentPool;
 
+/**
+ * Factory that produces pooled {@link PooledJavaContext} instances for use with the complex pool.
+ */
 public class PooledJavaContextComponentInstanceFactory extends AbstractComponentInstanceFactory<PooledJavaContext> {
 
   private final StorageType storageType;
@@ -54,6 +57,18 @@ public class PooledJavaContextComponentInstanceFactory extends AbstractComponent
   private final boolean tls;
   private final int port;
 
+  /**
+   * Constructs the factory with connection details for the backing store.
+   *
+   * @param storageType   backing store type (e.g., LDAP)
+   * @param contextPath   JNDI path to look up
+   * @param host          host name
+   * @param port          port number
+   * @param tls           whether to use TLS
+   * @param rootNamespace root namespace for the store
+   * @param userContext   user DN for authentication
+   * @param password      password for authentication
+   */
   public PooledJavaContextComponentInstanceFactory (StorageType storageType, String contextPath, String host, int port, boolean tls, String rootNamespace, String userContext, String password) {
 
     this.storageType = storageType;
@@ -66,6 +81,13 @@ public class PooledJavaContextComponentInstanceFactory extends AbstractComponent
     this.password = password;
   }
 
+  /**
+   * Creates a pooled JavaContext component instance configured for the backing store.
+   *
+   * @param componentPool owning pool
+   * @return component instance wrapping a {@link PooledJavaContext}
+   * @throws Exception if JNDI lookup or context creation fails
+   */
   public ComponentInstance<PooledJavaContext> createInstance (ComponentPool<PooledJavaContext> componentPool)
     throws Exception {
 

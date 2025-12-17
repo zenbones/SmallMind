@@ -32,23 +32,40 @@
  */
 package org.smallmind.quorum.pool.complex;
 
+/**
+ * Convenience base class for component instance factories with no-op lifecycle methods.
+ *
+ * @param <C> component type
+ */
 public abstract class AbstractComponentInstanceFactory<C> implements ComponentInstanceFactory<C> {
 
+  /**
+   * No-op initialization; subclasses may override for setup.
+   */
   @Override
   public void initialize () {
 
   }
 
+  /**
+   * No-op startup; subclasses may override for startup hooks.
+   */
   @Override
   public void startup () {
 
   }
 
+  /**
+   * No-op shutdown; subclasses may override for shutdown hooks.
+   */
   @Override
   public void shutdown () {
 
   }
 
+  /**
+   * No-op deconstruction; subclasses may override for cleanup.
+   */
   @Override
   public void deconstruct () {
 

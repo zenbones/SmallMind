@@ -37,12 +37,22 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Fuse that ignites when a component has been processing longer than the configured maximum.
+ */
 public class MaxProcessingTimeDeconstructionFuse extends DeconstructionFuse {
 
   private final ComponentPool<?> componentPool;
   private final AtomicInteger generation = new AtomicInteger(0);
   private final AtomicInteger generationServed = new AtomicInteger(0);
 
+  /**
+   * Creates the fuse for the specified pool and coordinator.
+   *
+   * @param componentPool             owning pool
+   * @param deconstructionQueue       queue for scheduling ignition
+   * @param deconstructionCoordinator coordinator invoked on ignition
+   */
   protected MaxProcessingTimeDeconstructionFuse (ComponentPool<?> componentPool, DeconstructionQueue deconstructionQueue, DeconstructionCoordinator deconstructionCoordinator) {
 
     super(deconstructionQueue, deconstructionCoordinator);
@@ -50,12 +60,18 @@ public class MaxProcessingTimeDeconstructionFuse extends DeconstructionFuse {
     this.componentPool = componentPool;
   }
 
+  /**
+   * Processing timeout is prejudicial because the component is hung.
+   */
   @Override
   public boolean isPrejudicial () {
 
     return true;
   }
 
+  /**
+   * Cancels any pending ignition by advancing generation and aborting.
+   */
   @Override
   public synchronized void free () {
 
@@ -63,6 +79,9 @@ public class MaxProcessingTimeDeconstructionFuse extends DeconstructionFuse {
     abort();
   }
 
+  /**
+   * Schedules ignition based on the maximum processing time.
+   */
   @Override
   public void serve () {
 
@@ -70,6 +89,9 @@ public class MaxProcessingTimeDeconstructionFuse extends DeconstructionFuse {
     setIgnitionTime(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(componentPool.getComplexPoolConfig().getMaxProcessingTimeSeconds()));
   }
 
+  /**
+   * Ignites only if the same generation was served, logging stack traces when available.
+   */
   @Override
   public synchronized void ignite () {
 

@@ -37,14 +37,32 @@ import javax.naming.InvalidNameException;
 import javax.naming.directory.DirContext;
 import org.smallmind.quorum.namespace.backingStore.NameTranslator;
 
+/**
+ * Helper methods for converting naming enumeration elements between internal and external forms.
+ */
 public class NamingEnumerationUtility {
 
+  /**
+   * Converts an external string name to its internal representation using the translator.
+   *
+   * @param name           external string form
+   * @param nameTranslator translator to apply
+   * @return internal string form
+   * @throws InvalidNameException if the name cannot be converted
+   */
   protected static String convertName (String name, NameTranslator nameTranslator)
     throws InvalidNameException {
 
     return nameTranslator.fromExternalStringToInternalString(name);
   }
 
+  /**
+   * Converts a class name, swapping internal directory context types for the external {@link JavaContext}.
+   *
+   * @param className               class name to convert
+   * @param internalDirContextClass backing directory context class
+   * @return converted class name
+   */
   protected static String convertClassName (String className, Class internalDirContextClass) {
 
     if (className != null) {
@@ -57,6 +75,17 @@ public class NamingEnumerationUtility {
     return className;
   }
 
+  /**
+   * Converts a bound object, wrapping directory contexts in {@link JavaContext} instances.
+   *
+   * @param boundObject             object bound in the naming enumeration
+   * @param internalDirContextClass internal directory context class
+   * @param environment             JNDI environment
+   * @param nameTranslator          translator for names
+   * @param nameParser              parser for names
+   * @param modifiable              whether the context is modifiable
+   * @return converted object
+   */
   protected static Object convertObject (Object boundObject, Class internalDirContextClass, Hashtable<String, Object> environment, NameTranslator nameTranslator, JavaNameParser nameParser, boolean modifiable) {
 
     if (boundObject != null) {

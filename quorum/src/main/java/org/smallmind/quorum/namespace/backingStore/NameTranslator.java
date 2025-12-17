@@ -39,20 +39,42 @@ import javax.naming.directory.DirContext;
 import org.smallmind.quorum.namespace.ContextNamePair;
 import org.smallmind.quorum.namespace.JavaName;
 
+/**
+ * Translates names between external representations and internal directory-specific formats.
+ * Implementations are specific to the backing store type.
+ */
 public abstract class NameTranslator {
 
   private final ContextCreator contextCreator;
 
+  /**
+   * Creates a translator using the provided context creator.
+   *
+   * @param contextCreator factory for backing contexts
+   */
   public NameTranslator (ContextCreator contextCreator) {
 
     this.contextCreator = contextCreator;
   }
 
+  /**
+   * Returns the backing {@link ContextCreator}.
+   *
+   * @return context creator
+   */
   public ContextCreator getContextCreator () {
 
     return contextCreator;
   }
 
+  /**
+   * Converts an internal name into a pair of external context and name.
+   *
+   * @param internalContext current internal context (may be {@code null} for root)
+   * @param internalName    internal name to translate
+   * @return external context/name pair
+   * @throws NamingException if translation fails or no base context exists
+   */
   public ContextNamePair fromInternalNameToExternalContext (DirContext internalContext, Name internalName)
     throws NamingException {
 
@@ -79,14 +101,41 @@ public abstract class NameTranslator {
     }
   }
 
+  /**
+   * Converts an internal name to an external {@link JavaName}.
+   *
+   * @param internalName internal representation
+   * @return external name
+   * @throws InvalidNameException if conversion fails
+   */
   public abstract JavaName fromInternalNameToExternalName (Name internalName)
     throws InvalidNameException;
 
+  /**
+   * Renders an external name to a string form.
+   *
+   * @param internalName external name
+   * @return external string form
+   */
   public abstract String fromExternalNameToExternalString (JavaName internalName);
 
+  /**
+   * Converts an absolute external string into an internal string form.
+   *
+   * @param externalName absolute external name
+   * @return internal string form
+   * @throws InvalidNameException if conversion fails
+   */
   public abstract String fromAbsoluteExternalStringToInternalString (String externalName)
     throws InvalidNameException;
 
+  /**
+   * Converts an external string into an internal string form.
+   *
+   * @param externalName external name
+   * @return internal string form
+   * @throws InvalidNameException if conversion fails
+   */
   public abstract String fromExternalStringToInternalString (String externalName)
     throws InvalidNameException;
 }

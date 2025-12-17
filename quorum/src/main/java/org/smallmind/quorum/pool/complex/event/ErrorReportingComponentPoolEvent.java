@@ -34,10 +34,21 @@ package org.smallmind.quorum.pool.complex.event;
 
 import org.smallmind.quorum.pool.complex.ComponentPool;
 
+/**
+ * Event indicating an error occurred within a component pool.
+ *
+ * @param <C> component type managed by the pool
+ */
 public class ErrorReportingComponentPoolEvent<C> extends ComponentPoolEvent<C> {
 
   private final Exception exception;
 
+  /**
+   * Creates the event with the originating pool and error.
+   *
+   * @param componentPool pool that experienced the error
+   * @param exception     encountered exception
+   */
   public ErrorReportingComponentPoolEvent (ComponentPool<C> componentPool, Exception exception) {
 
     super(componentPool);
@@ -45,6 +56,11 @@ public class ErrorReportingComponentPoolEvent<C> extends ComponentPoolEvent<C> {
     this.exception = exception;
   }
 
+  /**
+   * Returns the exception that triggered the event.
+   *
+   * @return exception
+   */
   public Exception getException () {
 
     return exception;

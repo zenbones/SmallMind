@@ -43,6 +43,12 @@ import javax.naming.directory.Attributes;
 import javax.naming.directory.SearchResult;
 import org.smallmind.quorum.namespace.backingStore.NameTranslator;
 
+/**
+ * Wrapper around a {@link NamingEnumeration} that converts names, classes, and bound objects
+ * into external representations expected by {@link JavaContext}.
+ *
+ * @param <T> enumeration element type
+ */
 public class JavaNamingEnumeration<T> implements NamingEnumeration<T> {
 
   private static final Class[] SEARCH_RESULT_SIGNATURE = new Class[] {String.class, String.class, Object.class, Attributes.class, Boolean.class};
@@ -57,6 +63,17 @@ public class JavaNamingEnumeration<T> implements NamingEnumeration<T> {
   private final JavaNameParser nameParser;
   private final boolean modifiable;
 
+  /**
+   * Creates a converting enumeration.
+   *
+   * @param typeClass               expected type of elements returned
+   * @param internalEnumeration     underlying enumeration from the backing store
+   * @param internalDirContextClass backing directory context class for conversions
+   * @param environment             JNDI environment
+   * @param nameTranslator          translator used for name conversions
+   * @param nameParser              parser used for names
+   * @param modifiable              whether the backing store is modifiable
+   */
   public JavaNamingEnumeration (Class<T> typeClass, NamingEnumeration<T> internalEnumeration, Class internalDirContextClass, Hashtable<String, Object> environment, NameTranslator nameTranslator, JavaNameParser nameParser, boolean modifiable) {
 
     this.typeClass = typeClass;
@@ -68,6 +85,11 @@ public class JavaNamingEnumeration<T> implements NamingEnumeration<T> {
     this.modifiable = modifiable;
   }
 
+  /**
+   * Indicates whether additional elements exist, swallowing {@link NamingException}s.
+   *
+   * @return {@code true} if more elements are available
+   */
   public boolean hasMoreElements () {
 
     try {
@@ -77,6 +99,12 @@ public class JavaNamingEnumeration<T> implements NamingEnumeration<T> {
     }
   }
 
+  /**
+   * Returns the next element, converting any {@link NamingException} into {@link NoSuchElementException}.
+   *
+   * @return next element
+   * @throws NoSuchElementException if no more elements are available
+   */
   public T nextElement () {
 
     try {
@@ -86,6 +114,12 @@ public class JavaNamingEnumeration<T> implements NamingEnumeration<T> {
     }
   }
 
+  /**
+   * Retrieves the next element, converting naming structures to the external form.
+   *
+   * @return next element
+   * @throws NamingException if the underlying enumeration fails
+   */
   public T next ()
     throws NamingException {
 
@@ -132,12 +166,23 @@ public class JavaNamingEnumeration<T> implements NamingEnumeration<T> {
     return typeClass.cast(enumObject);
   }
 
+  /**
+   * Indicates whether additional elements exist.
+   *
+   * @return {@code true} if more elements are available
+   * @throws NamingException if the underlying enumeration fails
+   */
   public boolean hasMore ()
     throws NamingException {
 
     return internalEnumeration.hasMore();
   }
 
+  /**
+   * Closes the underlying enumeration.
+   *
+   * @throws NamingException if closing fails
+   */
   public void close ()
     throws NamingException {
 

@@ -32,17 +32,30 @@
  */
 package org.smallmind.quorum.namespace.backingStore;
 
+/**
+ * Supported backing store types for {@link org.smallmind.quorum.namespace.JavaContext} creation.
+ */
 public enum StorageType {
 
   LDAP("ldap");
 
   private final String backingStore;
 
+  /**
+   * Maps the enum to its configuration string.
+   *
+   * @param backingStore identifier used in environment configuration
+   */
   StorageType (String backingStore) {
 
     this.backingStore = backingStore;
   }
 
+  /**
+   * Returns the backing store identifier.
+   *
+   * @return backing store name
+   */
   public String getBackingStore () {
 
     return backingStore;

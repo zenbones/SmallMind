@@ -32,8 +32,19 @@
  */
 package org.smallmind.quorum.pool.simple;
 
+/**
+ * Factory interface used by the simple pool to create pooled components.
+ *
+ * @param <T> component type
+ */
 public interface ComponentFactory<T extends PooledComponent> {
 
+  /**
+   * Builds a new pooled component instance.
+   *
+   * @return new component
+   * @throws Exception if creation fails
+   */
   T createComponent ()
     throws Exception;
 }

@@ -35,13 +35,26 @@ package org.smallmind.quorum.pool;
 import org.smallmind.nutsnbolts.lang.PerApplicationContext;
 import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
 
+/**
+ * Application scoped holder for a single {@link Pool} instance.
+ */
 public class PoolManager implements PerApplicationDataManager {
 
+  /**
+   * Registers a pool with the per-application context.
+   *
+   * @param pool pool to register
+   */
   public static void register (Pool pool) {
 
     PerApplicationContext.setPerApplicationData(PoolManager.class, pool);
   }
 
+  /**
+   * Retrieves the registered pool from the per-application context.
+   *
+   * @return registered pool, or {@code null} if none was registered
+   */
   public static Pool getPool () {
 
     return PerApplicationContext.getPerApplicationData(PoolManager.class, Pool.class);

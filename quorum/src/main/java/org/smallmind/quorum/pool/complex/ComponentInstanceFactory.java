@@ -32,20 +32,52 @@
  */
 package org.smallmind.quorum.pool.complex;
 
+/**
+ * Factory for producing and lifecycle-managing component instances used in the complex pool.
+ *
+ * @param <C> component type
+ */
 public interface ComponentInstanceFactory<C> {
 
+  /**
+   * Creates a new component instance associated with the provided pool.
+   *
+   * @param componentPool owning pool
+   * @return new component instance
+   * @throws Exception if creation fails
+   */
   ComponentInstance<C> createInstance (ComponentPool<C> componentPool)
     throws Exception;
 
+  /**
+   * Performs one-time factory initialization.
+   *
+   * @throws Exception if initialization fails
+   */
   void initialize ()
     throws Exception;
 
+  /**
+   * Starts the factory after initialization.
+   *
+   * @throws Exception if startup fails
+   */
   void startup ()
     throws Exception;
 
+  /**
+   * Shuts down the factory before deconstruction.
+   *
+   * @throws Exception if shutdown fails
+   */
   void shutdown ()
     throws Exception;
 
+  /**
+   * Deconstructs any resources held by the factory.
+   *
+   * @throws Exception if cleanup fails
+   */
   void deconstruct ()
     throws Exception;
 }

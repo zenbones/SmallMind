@@ -34,17 +34,31 @@ package org.smallmind.quorum.pool.simple;
 
 import org.smallmind.quorum.pool.PoolConfig;
 
+/**
+ * Concrete pool configuration used by the simple pooling implementation.
+ */
 public class SimplePoolConfig extends PoolConfig<SimplePoolConfig> {
 
+  /**
+   * Constructs a configuration with default limits.
+   */
   public SimplePoolConfig () {
 
   }
 
+  /**
+   * Copy constructor.
+   *
+   * @param poolConfig source configuration
+   */
   public SimplePoolConfig (PoolConfig<?> poolConfig) {
 
     super(poolConfig);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Class<SimplePoolConfig> getConfigurationClass () {
 

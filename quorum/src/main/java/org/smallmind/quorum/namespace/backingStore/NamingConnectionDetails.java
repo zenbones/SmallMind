@@ -32,6 +32,9 @@
  */
 package org.smallmind.quorum.namespace.backingStore;
 
+/**
+ * Connection parameters used to build backing store contexts (e.g., LDAP).
+ */
 public class NamingConnectionDetails {
 
   private final String host;
@@ -41,6 +44,16 @@ public class NamingConnectionDetails {
   private final int port;
   private boolean tls = false;
 
+  /**
+   * Constructs connection details.
+   *
+   * @param host          server host
+   * @param port          server port
+   * @param tls           whether TLS should be used
+   * @param rootNamespace root namespace for lookups
+   * @param userName      user name for authentication
+   * @param password      password for authentication
+   */
   public NamingConnectionDetails (String host, int port, boolean tls, String rootNamespace, String userName, String password) {
 
     this.host = host;
@@ -51,31 +64,61 @@ public class NamingConnectionDetails {
     this.password = password;
   }
 
+  /**
+   * Returns the server host.
+   *
+   * @return host
+   */
   public String getHost () {
 
     return host;
   }
 
+  /**
+   * Returns the server port.
+   *
+   * @return port
+   */
   public int getPort () {
 
     return port;
   }
 
+  /**
+   * Indicates whether TLS should be used.
+   *
+   * @return {@code true} if TLS is enabled
+   */
   public boolean useTLS () {
 
     return tls;
   }
 
+  /**
+   * Returns the root namespace for lookups.
+   *
+   * @return root namespace
+   */
   public String getRootNamespace () {
 
     return rootNamespace;
   }
 
+  /**
+   * Returns the user name for authentication.
+   *
+   * @return user name
+   */
   public String getUserName () {
 
     return userName;
   }
 
+  /**
+   * Returns the password for authentication.
+   *
+   * @return password
+   */
   public String getPassword () {
 
     return password;

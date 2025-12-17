@@ -34,9 +34,22 @@ package org.smallmind.quorum.pool.complex.event;
 
 import java.util.EventListener;
 
+/**
+ * Listener for receiving component pool events.
+ */
 public interface ComponentPoolEventListener extends EventListener {
 
+  /**
+   * Invoked when the pool encounters an error.
+   *
+   * @param event error event details
+   */
   void reportErrorOccurred (ErrorReportingComponentPoolEvent<?> event);
 
+  /**
+   * Invoked when a component lease time is reported.
+   *
+   * @param event lease time event details
+   */
   void reportLeaseTime (LeaseTimeReportingComponentPoolEvent<?> event);
 }

@@ -35,22 +35,41 @@ package org.smallmind.quorum.namespace;
 import javax.naming.Name;
 import javax.naming.directory.DirContext;
 
+/**
+ * Simple tuple of a {@link DirContext} and a {@link Name} within that context.
+ */
 public class ContextNamePair {
 
   private final DirContext dirContext;
   private final Name name;
 
+  /**
+   * Constructs the pair.
+   *
+   * @param dirContext context containing the name
+   * @param name       name within the context
+   */
   public ContextNamePair (DirContext dirContext, Name name) {
 
     this.dirContext = dirContext;
     this.name = name;
   }
 
+  /**
+   * Returns the context for this pair.
+   *
+   * @return directory context
+   */
   public DirContext getContext () {
 
     return dirContext;
   }
 
+  /**
+   * Returns the name within the context.
+   *
+   * @return name
+   */
   public Name getName () {
 
     return name;

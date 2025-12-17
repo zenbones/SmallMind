@@ -34,23 +34,47 @@ package org.smallmind.quorum.pool.complex;
 
 import org.smallmind.quorum.pool.ComponentPoolException;
 
+/**
+ * Indicates a failure occurred while creating a pooled component instance.
+ */
 public class ComponentCreationException extends ComponentPoolException {
 
+  /**
+   * Creates the exception with no additional context.
+   */
   public ComponentCreationException () {
 
     super();
   }
 
+  /**
+   * Creates the exception with a formatted message.
+   *
+   * @param message message template
+   * @param args    template arguments
+   */
   public ComponentCreationException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * Creates the exception with a cause and formatted message.
+   *
+   * @param throwable underlying issue
+   * @param message   message template
+   * @param args      template arguments
+   */
   public ComponentCreationException (Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);
   }
 
+  /**
+   * Creates the exception with a cause.
+   *
+   * @param throwable underlying issue
+   */
   public ComponentCreationException (Throwable throwable) {
 
     super(throwable);

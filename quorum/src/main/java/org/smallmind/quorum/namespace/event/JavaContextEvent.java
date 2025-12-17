@@ -35,15 +35,29 @@ package org.smallmind.quorum.namespace.event;
 import java.util.EventObject;
 import javax.naming.CommunicationException;
 
+/**
+ * Event describing the closure or abort of a {@link org.smallmind.quorum.namespace.JavaContext}.
+ */
 public class JavaContextEvent extends EventObject {
 
   private final CommunicationException communicationException;
 
+  /**
+   * Creates an event without an associated communication exception.
+   *
+   * @param source context source
+   */
   public JavaContextEvent (Object source) {
 
     this(source, null);
   }
 
+  /**
+   * Creates an event with an optional communication exception.
+   *
+   * @param source                 context source
+   * @param communicationException underlying communication error, or {@code null}
+   */
   public JavaContextEvent (Object source, CommunicationException communicationException) {
 
     super(source);
@@ -51,11 +65,21 @@ public class JavaContextEvent extends EventObject {
     this.communicationException = communicationException;
   }
 
+  /**
+   * Indicates whether the event carries a communication exception.
+   *
+   * @return {@code true} if a communication error is present
+   */
   public boolean containsCommunicationException () {
 
     return communicationException != null;
   }
 
+  /**
+   * Returns the associated communication exception, if any.
+   *
+   * @return communication exception or {@code null}
+   */
   public CommunicationException getCommunicationException () {
 
     return communicationException;

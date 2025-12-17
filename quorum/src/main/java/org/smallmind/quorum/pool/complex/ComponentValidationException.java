@@ -34,23 +34,47 @@ package org.smallmind.quorum.pool.complex;
 
 import org.smallmind.quorum.pool.ComponentPoolException;
 
+/**
+ * Thrown when a pooled component fails validation checks.
+ */
 public class ComponentValidationException extends ComponentPoolException {
 
+  /**
+   * Creates the exception without extra context.
+   */
   public ComponentValidationException () {
 
     super();
   }
 
+  /**
+   * Creates the exception with a formatted message.
+   *
+   * @param message message template
+   * @param args    template arguments
+   */
   public ComponentValidationException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * Creates the exception with a cause and formatted message.
+   *
+   * @param throwable underlying issue
+   * @param message   message template
+   * @param args      template arguments
+   */
   public ComponentValidationException (Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);
   }
 
+  /**
+   * Creates the exception with a cause.
+   *
+   * @param throwable underlying issue
+   */
   public ComponentValidationException (Throwable throwable) {
 
     super(throwable);

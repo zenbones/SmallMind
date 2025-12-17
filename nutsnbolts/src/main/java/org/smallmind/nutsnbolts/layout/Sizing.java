@@ -37,44 +37,6 @@ package org.smallmind.nutsnbolts.layout;
  */
 public record Sizing(Object part, Bias bias, TapeMeasure tapeMeasure) {
 
-  /**
-   * Creates a sizing key.
-   *
-   * @param part        the part being measured
-   * @param bias        the axis of measurement
-   * @param tapeMeasure the measurement type
-   */
-  public Sizing {
-
-  }
-
-  /**
-   * @return the part being measured
-   */
-  @Override
-  public Object part () {
-
-    return part;
-  }
-
-  /**
-   * @return the measurement axis
-   */
-  @Override
-  public Bias bias () {
-
-    return bias;
-  }
-
-  /**
-   * @return the measurement type
-   */
-  @Override
-  public TapeMeasure tapeMeasure () {
-
-    return tapeMeasure;
-  }
-
   @Override
   public int hashCode () {
 

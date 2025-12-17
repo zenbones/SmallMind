@@ -35,6 +35,12 @@ package org.smallmind.quorum.bucket;
 import java.util.HashMap;
 import org.smallmind.nutsnbolts.time.Stint;
 
+/**
+ * Implements a hierarchical token bucket. A bucket tracks its own capacity and optional child buckets so
+ * callers can rate limit both a global flow and arbitrary partitions selected from the input stream.
+ *
+ * @param <T> the type of object being rate limited
+ */
 public class TokenBucket<T> {
 
   private final BucketQuantifier<T> quantifier;
@@ -45,6 +51,16 @@ public class TokenBucket<T> {
   private double capacity;
   private long timestamp;
 
+  /**
+   * Creates a bucket with a capacity limit and a refill rate. A selector and factory allow optional child buckets
+   * keyed by data derived from the input.
+   *
+   * @param quantifier     strategy that converts inputs into token quantities
+   * @param selector       strategy that selects the child bucket key for an input
+   * @param limit          maximum capacity of this bucket
+   * @param refillQuantity number of tokens refilled per {@code refillRate}
+   * @param refillRate     time unit used to calculate the refill rate
+   */
   public TokenBucket (BucketQuantifier<T> quantifier, BucketSelector<T> selector, double limit, double refillQuantity, Stint refillRate) {
 
     this.quantifier = quantifier;
@@ -58,6 +74,12 @@ public class TokenBucket<T> {
     timestamp = System.nanoTime();
   }
 
+  /**
+   * Adds a lazily-created child bucket keyed by the supplied identifier using the provided factory.
+   *
+   * @param key     key for the child bucket
+   * @param factory supplier used to construct the child bucket if it is missing
+   */
   public synchronized void add (BucketKey<T> key, BucketFactory<T> factory) {
 
     if (children == null) {
@@ -69,12 +91,26 @@ public class TokenBucket<T> {
     }
   }
 
+  /**
+   * Determines whether the supplied input is allowed at the current time according to the token budget.
+   *
+   * @param input input to evaluate
+   * @return {@code true} if sufficient capacity exists (including any child bucket constraints), otherwise {@code false}
+   */
   public synchronized boolean allowed (T input) {
 
     return allowed(System.nanoTime(), input);
   }
 
   // synchronized in the case where a child might be shared between two bucket hierarchies
+
+  /**
+   * Shared implementation that advances refill state to the supplied timestamp and checks the requested quantity.
+   *
+   * @param current current time in nanoseconds
+   * @param input   input to evaluate
+   * @return {@code true} if the input can be consumed, {@code false} otherwise
+   */
   private synchronized boolean allowed (long current, T input) {
 
     double quantity;

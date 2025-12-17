@@ -34,6 +34,9 @@ package org.smallmind.quorum.pool.complex.jmx;
 
 import org.smallmind.quorum.pool.complex.ComponentPoolSurface;
 
+/**
+ * JMX MXBean interface exposing {@link ComponentPoolSurface} management operations.
+ */
 public interface ComponentPoolMonitorMXBean extends ComponentPoolSurface {
 
 }

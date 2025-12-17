@@ -39,31 +39,4 @@ package org.smallmind.javafx.extras.instrument;
  */
 public record EndPoints<T>(T low, T high) {
 
-  /**
-   * Creates an endpoint pair.
-   *
-   * @param low  the lower bound
-   * @param high the upper bound
-   */
-  public EndPoints {
-
-  }
-
-  /**
-   * @return the lower endpoint
-   */
-  @Override
-  public T low () {
-
-    return low;
-  }
-
-  /**
-   * @return the upper endpoint
-   */
-  @Override
-  public T high () {
-
-    return high;
-  }
 }

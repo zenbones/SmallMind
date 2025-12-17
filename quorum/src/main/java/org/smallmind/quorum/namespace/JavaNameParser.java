@@ -37,15 +37,30 @@ import javax.naming.NameParser;
 import javax.naming.NamingException;
 import org.smallmind.quorum.namespace.backingStore.NameTranslator;
 
+/**
+ * Parses and unparses names using {@link JavaName} semantics and a backing {@link NameTranslator}.
+ */
 public class JavaNameParser implements NameParser {
 
   private final NameTranslator nameTranslator;
 
+  /**
+   * Constructs a parser using the provided translator.
+   *
+   * @param nameTranslator translator used to render names
+   */
   public JavaNameParser (NameTranslator nameTranslator) {
 
     this.nameTranslator = nameTranslator;
   }
 
+  /**
+   * Parses a string into a {@link JavaName}, splitting on '/' and handling optional URL prefixes.
+   *
+   * @param name string to parse
+   * @return parsed name
+   * @throws NamingException if parsing fails
+   */
   public Name parse (String name)
     throws NamingException {
 
@@ -78,6 +93,12 @@ public class JavaNameParser implements NameParser {
     return parsedName;
   }
 
+  /**
+   * Converts a {@link Name} back into its string representation using '/' separators.
+   *
+   * @param name name to convert
+   * @return string representation
+   */
   public String unparse (Name name) {
 
     StringBuilder nameBuilder;

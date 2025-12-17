@@ -40,16 +40,6 @@ public record Orientation(Bias bias, Flow flow) {
   private static final Orientation DEFAULT = new Orientation(Bias.HORIZONTAL, Flow.FIRST_TO_LAST);
 
   /**
-   * Creates an orientation from the supplied axis and flow direction.
-   *
-   * @param bias the primary axis
-   * @param flow the direction along that axis
-   */
-  public Orientation {
-
-  }
-
-  /**
    * Returns the default orientation (horizontal, first-to-last).
    *
    * @return the default orientation
@@ -57,27 +47,5 @@ public record Orientation(Bias bias, Flow flow) {
   public static Orientation getDefaultOrientation () {
 
     return DEFAULT;
-  }
-
-  /**
-   * Returns the axis bias.
-   *
-   * @return the bias
-   */
-  @Override
-  public Bias bias () {
-
-    return bias;
-  }
-
-  /**
-   * Returns the flow direction.
-   *
-   * @return the flow
-   */
-  @Override
-  public Flow flow () {
-
-    return flow;
   }
 }

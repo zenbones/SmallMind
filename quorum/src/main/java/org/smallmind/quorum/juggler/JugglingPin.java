@@ -34,21 +34,63 @@ package org.smallmind.quorum.juggler;
 
 import java.lang.reflect.Method;
 
+/**
+ * Represents a handle to a resource that can be started, stopped, closed, and recovered.
+ *
+ * @param <R> resource type
+ */
 public interface JugglingPin<R> {
 
+  /**
+   * Starts the underlying resource optionally invoking a lifecycle method.
+   *
+   * @param method lifecycle method reference, or {@code null} to skip invocation
+   * @param args   arguments to pass into the lifecycle method
+   * @throws JugglerResourceException if start-up fails
+   */
   void start (Method method, Object... args)
     throws JugglerResourceException;
 
+  /**
+   * Stops the underlying resource optionally invoking a lifecycle method.
+   *
+   * @param method lifecycle method reference, or {@code null} to skip invocation
+   * @param args   arguments to pass into the lifecycle method
+   * @throws JugglerResourceException if stop fails
+   */
   void stop (Method method, Object... args)
     throws JugglerResourceException;
 
+  /**
+   * Closes the underlying resource optionally invoking a lifecycle method.
+   *
+   * @param method lifecycle method reference, or {@code null} to skip invocation
+   * @param args   arguments to pass into the lifecycle method
+   * @throws JugglerResourceException if close fails
+   */
   void close (Method method, Object... args)
     throws JugglerResourceException;
 
+  /**
+   * Obtains the resource for use.
+   *
+   * @return the resource instance
+   * @throws JugglerResourceException if the resource cannot be obtained
+   */
   R obtain ()
     throws JugglerResourceException;
 
+  /**
+   * Attempts to recover the resource after failure.
+   *
+   * @return {@code true} if recovery succeeded, {@code false} otherwise
+   */
   boolean recover ();
 
+  /**
+   * Provides a human-readable description of the resource or provider.
+   *
+   * @return description text
+   */
   String describe ();
 }

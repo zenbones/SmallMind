@@ -32,6 +32,10 @@
  */
 package org.smallmind.quorum.pool.complex;
 
+/**
+ * Represents a countdown fuse that coordinates delayed destruction of pooled components.
+ * Each fuse is ordered and can be ignited, aborted, or freed based on pool state.
+ */
 public abstract class DeconstructionFuse {
 
   private final DeconstructionQueue deconstructionQueue;
@@ -40,6 +44,12 @@ public abstract class DeconstructionFuse {
 
   private long ignitionTime;
 
+  /**
+   * Creates a fuse that will register itself with the provided queue and coordinator.
+   *
+   * @param deconstructionQueue       queue tracking pending fuses
+   * @param deconstructionCoordinator coordinator invoked when a fuse ignites
+   */
   public DeconstructionFuse (DeconstructionQueue deconstructionQueue, DeconstructionCoordinator deconstructionCoordinator) {
 
     this.deconstructionQueue = deconstructionQueue;
@@ -48,38 +58,75 @@ public abstract class DeconstructionFuse {
     ordinal = deconstructionQueue.nextOrdinal();
   }
 
+  /**
+   * Indicates whether triggering this fuse should be treated as prejudicial destruction.
+   *
+   * @return {@code true} if the component should be destroyed with prejudice
+   */
   public abstract boolean isPrejudicial ();
 
+  /**
+   * Releases any resources held by the fuse.
+   */
   public abstract void free ();
 
+  /**
+   * Activates the fuse's serve behavior (e.g., check state or schedule).
+   */
   public abstract void serve ();
 
+  /**
+   * Returns the ordering value assigned to the fuse.
+   *
+   * @return ordinal position
+   */
   public int getOrdinal () {
 
     return ordinal;
   }
 
+  /**
+   * Returns the time at which the fuse is scheduled to ignite.
+   *
+   * @return ignition timestamp in milliseconds
+   */
   public long getIgnitionTime () {
 
     return ignitionTime;
   }
 
+  /**
+   * Sets the ignition time and registers the fuse with the queue.
+   *
+   * @param ignitionTime timestamp in milliseconds
+   */
   public void setIgnitionTime (long ignitionTime) {
 
     this.ignitionTime = ignitionTime;
     deconstructionQueue.add(this);
   }
 
+  /**
+   * Cancels the fuse before it ignites.
+   */
   public void abort () {
 
     deconstructionQueue.remove(this);
   }
 
+  /**
+   * Notifies the coordinator that the fuse should ignite.
+   */
   public void ignite () {
 
     deconstructionCoordinator.ignite(this, isPrejudicial());
   }
 
+  /**
+   * Exposes the stack trace associated with the owning component.
+   *
+   * @return stack trace for diagnostic purposes
+   */
   public StackTraceElement[] getExistentialStackTrace () {
 
     return deconstructionCoordinator.getExistentialStackTrace();

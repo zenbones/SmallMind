@@ -32,21 +32,33 @@
  */
 package org.smallmind.quorum.pool.complex;
 
+/**
+ * Tags used for Claxon metrics emitted by the complex component pool.
+ */
 public enum ClaxonTag {
 
   PROCESSING("Processing"), FREE("Free"), TIMEOUT("Timeout"), RELEASED("Released"), WAITED("Waited");
 
   private final String display;
 
+  /**
+   * Creates the tag with a human-readable display value.
+   *
+   * @param display label for metrics
+   */
   ClaxonTag (String display) {
 
     this.display = display;
   }
 
+  /**
+   * Display label for the tag.
+   *
+   * @return display text
+   */
   public String getDisplay () {
 
     return display;
   }
 }
-
 

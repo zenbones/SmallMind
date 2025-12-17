@@ -35,28 +35,58 @@ package org.smallmind.quorum.pool;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * Base configuration for pools providing limits on pool size and wait times.
+ *
+ * @param <P> concrete configuration type for fluent setters
+ */
 public abstract class PoolConfig<P extends PoolConfig> {
 
   private final AtomicLong acquireWaitTimeMillis = new AtomicLong(0);
   private final AtomicInteger maxPoolSize = new AtomicInteger(10);
 
+  /**
+   * Constructs a default configuration.
+   */
   public PoolConfig () {
 
   }
 
+  /**
+   * Copy constructor.
+   *
+   * @param poolConfig source configuration to copy
+   */
   public PoolConfig (PoolConfig<?> poolConfig) {
 
     setAcquireWaitTimeMillis(poolConfig.getAcquireWaitTimeMillis());
     setMaxPoolSize(poolConfig.getMaxPoolSize());
   }
 
+  /**
+   * Returns the concrete configuration class, enabling fluent APIs with generics.
+   *
+   * @return configuration class
+   */
   public abstract Class<P> getConfigurationClass ();
 
+  /**
+   * Gets the maximum number of pooled instances allowed.
+   *
+   * @return pool size limit
+   */
   public int getMaxPoolSize () {
 
     return maxPoolSize.get();
   }
 
+  /**
+   * Sets the maximum number of pooled instances.
+   *
+   * @param maxPoolSize pool size limit, must be non-negative
+   * @return this configuration instance
+   * @throws IllegalArgumentException if {@code maxPoolSize} is negative
+   */
   public P setMaxPoolSize (int maxPoolSize) {
 
     if (maxPoolSize < 0) {
@@ -68,11 +98,23 @@ public abstract class PoolConfig<P extends PoolConfig> {
     return getConfigurationClass().cast(this);
   }
 
+  /**
+   * Gets the maximum time in milliseconds to wait for an instance before giving up.
+   *
+   * @return wait time in milliseconds
+   */
   public long getAcquireWaitTimeMillis () {
 
     return acquireWaitTimeMillis.get();
   }
 
+  /**
+   * Sets the maximum time in milliseconds to wait for an instance before giving up.
+   *
+   * @param acquireWaitTimeMillis wait time in milliseconds, must be non-negative
+   * @return this configuration instance
+   * @throws IllegalArgumentException if {@code acquireWaitTimeMillis} is negative
+   */
   public P setAcquireWaitTimeMillis (long acquireWaitTimeMillis) {
 
     if (acquireWaitTimeMillis < 0) {

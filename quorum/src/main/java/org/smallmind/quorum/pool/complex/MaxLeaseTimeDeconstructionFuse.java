@@ -34,8 +34,18 @@ package org.smallmind.quorum.pool.complex;
 
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Fuse that ignites after the maximum lease time for a component has elapsed.
+ */
 public class MaxLeaseTimeDeconstructionFuse extends DeconstructionFuse {
 
+  /**
+   * Constructs the fuse and immediately schedules ignition based on lease time.
+   *
+   * @param componentPool             owning pool
+   * @param deconstructionQueue       queue for scheduling ignition
+   * @param deconstructionCoordinator coordinator invoked on ignition
+   */
   public MaxLeaseTimeDeconstructionFuse (ComponentPool<?> componentPool, DeconstructionQueue deconstructionQueue, DeconstructionCoordinator deconstructionCoordinator) {
 
     super(deconstructionQueue, deconstructionCoordinator);
@@ -43,17 +53,26 @@ public class MaxLeaseTimeDeconstructionFuse extends DeconstructionFuse {
     setIgnitionTime(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(componentPool.getComplexPoolConfig().getMaxLeaseTimeSeconds()));
   }
 
+  /**
+   * Lease expirations are not prejudicial; they represent natural lease ends.
+   */
   @Override
   public boolean isPrejudicial () {
 
     return false;
   }
 
+  /**
+   * Lease fuse does not require action on free because it ignites based solely on absolute time.
+   */
   @Override
   public void free () {
 
   }
 
+  /**
+   * Lease fuse does not change scheduling on serve because ignition was set at construction.
+   */
   @Override
   public void serve () {
 

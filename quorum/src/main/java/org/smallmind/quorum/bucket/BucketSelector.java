@@ -32,7 +32,18 @@
  */
 package org.smallmind.quorum.bucket;
 
+/**
+ * Strategy interface used to select a bucket key for a given input.
+ *
+ * @param <T> type of value examined by the selector
+ */
 public interface BucketSelector<T> {
 
+  /**
+   * Returns the child bucket key for the provided input.
+   *
+   * @param input incoming value
+   * @return the key representing the bucket that should govern the input
+   */
   BucketKey<T> selection (T input);
 }

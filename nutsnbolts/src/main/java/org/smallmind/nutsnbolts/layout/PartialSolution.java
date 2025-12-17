@@ -38,41 +38,4 @@ package org.smallmind.nutsnbolts.layout;
  */
 public record PartialSolution(Bias bias, double position, double measurement) {
 
-  /**
-   * Creates a partial solution for the specified axis.
-   *
-   * @param bias        the axis captured
-   * @param position    the position along the axis
-   * @param measurement the measurement along the axis
-   */
-  public PartialSolution {
-
-  }
-
-  /**
-   * @return the axis captured by this partial solution
-   */
-  @Override
-  public Bias bias () {
-
-    return bias;
-  }
-
-  /**
-   * @return the position along the captured axis
-   */
-  @Override
-  public double position () {
-
-    return position;
-  }
-
-  /**
-   * @return the measurement along the captured axis
-   */
-  @Override
-  public double measurement () {
-
-    return measurement;
-  }
 }

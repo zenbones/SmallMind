@@ -32,8 +32,14 @@
  */
 package org.smallmind.quorum.pool;
 
+/**
+ * Base class for pools that can be registered with {@link PoolManager} for application-wide access.
+ */
 public abstract class Pool {
 
+  /**
+   * Registers this pool instance in the {@link PoolManager}.
+   */
   public void register () {
 
     PoolManager.register(this);

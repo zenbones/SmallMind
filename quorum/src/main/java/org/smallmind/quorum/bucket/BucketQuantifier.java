@@ -32,7 +32,18 @@
  */
 package org.smallmind.quorum.bucket;
 
+/**
+ * Strategy interface that converts inputs into token quantities for rate limiting.
+ *
+ * @param <T> type of value being quantified
+ */
 public interface BucketQuantifier<T> {
 
+  /**
+   * Calculates how many tokens the supplied input should consume.
+   *
+   * @param input incoming value
+   * @return the number of tokens required to accept the input
+   */
   double quantity (T input);
 }

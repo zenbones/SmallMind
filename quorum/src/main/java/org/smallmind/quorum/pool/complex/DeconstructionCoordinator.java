@@ -37,12 +37,23 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Coordinates multiple {@link DeconstructionFuse} instances attached to a {@link ComponentPin},
+ * handling ignition and abort logic.
+ */
 public class DeconstructionCoordinator {
 
   private final ComponentPin<?> componentPin;
   private final List<DeconstructionFuse> fuseList;
   private final AtomicBoolean terminated = new AtomicBoolean(false);
 
+  /**
+   * Builds fuses based on configuration and attaches them to the pin.
+   *
+   * @param componentPool       owning pool
+   * @param deconstructionQueue queue managing fuse scheduling
+   * @param componentPin        pin whose lifecycle is being guarded
+   */
   public DeconstructionCoordinator (ComponentPool<?> componentPool, DeconstructionQueue deconstructionQueue, ComponentPin<?> componentPin) {
 
     this.componentPin = componentPin;
@@ -60,11 +71,19 @@ public class DeconstructionCoordinator {
     }
   }
 
+  /**
+   * Returns the existential stack trace from the pin.
+   *
+   * @return stack trace elements or {@code null} if not tracked
+   */
   public StackTraceElement[] getExistentialStackTrace () {
 
     return componentPin.getExistentialStackTrace();
   }
 
+  /**
+   * Frees all fuses, typically on component return.
+   */
   public void free () {
 
     for (DeconstructionFuse fuse : fuseList) {
@@ -72,6 +91,9 @@ public class DeconstructionCoordinator {
     }
   }
 
+  /**
+   * Serves all fuses, typically when the component is borrowed.
+   */
   public void serve () {
 
     for (DeconstructionFuse fuse : fuseList) {
@@ -79,6 +101,9 @@ public class DeconstructionCoordinator {
     }
   }
 
+  /**
+   * Aborts all fuses without igniting termination.
+   */
   public void abort () {
 
     if (terminated.compareAndSet(false, true)) {
@@ -86,6 +111,12 @@ public class DeconstructionCoordinator {
     }
   }
 
+  /**
+   * Called when a fuse ignites to terminate the component and cancel other fuses.
+   *
+   * @param ignitionFuse  fuse that triggered ignition
+   * @param withPrejudice whether termination should be forced
+   */
   public void ignite (DeconstructionFuse ignitionFuse, boolean withPrejudice) {
 
     if (terminated.compareAndSet(false, true)) {
@@ -95,6 +126,11 @@ public class DeconstructionCoordinator {
     }
   }
 
+  /**
+   * Cancels all fuses except the one that triggered ignition.
+   *
+   * @param ignitionFuse fuse that ignited, or {@code null} if none
+   */
   private void shutdown (DeconstructionFuse ignitionFuse) {
 
     for (DeconstructionFuse fuse : fuseList) {

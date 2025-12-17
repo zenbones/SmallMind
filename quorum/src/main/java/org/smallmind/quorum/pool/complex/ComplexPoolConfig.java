@@ -37,6 +37,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import org.smallmind.quorum.pool.PoolConfig;
 
+/**
+ * Configuration for the complex component pool, including lifecycle validation, sizing,
+ * and deconstruction timing.
+ */
 public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
 
   private final AtomicBoolean reportLeaseTimeNanos = new AtomicBoolean(false);
@@ -50,10 +54,18 @@ public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
   private final AtomicInteger maxIdleTimeSeconds = new AtomicInteger(0);
   private final AtomicInteger maxProcessingTimeSeconds = new AtomicInteger(0);
 
+  /**
+   * Creates a configuration with default values.
+   */
   public ComplexPoolConfig () {
 
   }
 
+  /**
+   * Copy constructor that pulls values from another pool config.
+   *
+   * @param poolConfig configuration to copy
+   */
   public ComplexPoolConfig (PoolConfig<?> poolConfig) {
 
     super(poolConfig);
@@ -72,22 +84,41 @@ public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Class<ComplexPoolConfig> getConfigurationClass () {
 
     return ComplexPoolConfig.class;
   }
 
+  /**
+   * Indicates whether any deconstruction fuse is required based on configured limits.
+   *
+   * @return {@code true} if lease, idle, or processing limits are set
+   */
   public boolean requiresDeconstruction () {
 
     return (getMaxLeaseTimeSeconds() > 0) || (getMaxIdleTimeSeconds() > 0) || (getMaxProcessingTimeSeconds() > 0);
   }
 
+  /**
+   * Indicates whether lease time reporting is enabled.
+   *
+   * @return {@code true} if lease time metrics are emitted
+   */
   public boolean isReportLeaseTimeNanos () {
 
     return reportLeaseTimeNanos.get();
   }
 
+  /**
+   * Enables or disables reporting of lease times in nanoseconds.
+   *
+   * @param reportLeaseTimeNanos whether to emit lease time metrics
+   * @return this configuration instance
+   */
   public ComplexPoolConfig setReportLeaseTimeNanos (boolean reportLeaseTimeNanos) {
 
     this.reportLeaseTimeNanos.set(reportLeaseTimeNanos);
@@ -95,11 +126,22 @@ public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
     return getConfigurationClass().cast(this);
   }
 
+  /**
+   * Indicates whether existential stack trace capture is enabled.
+   *
+   * @return {@code true} if existential tracking is on
+   */
   public boolean isExistentiallyAware () {
 
     return existentiallyAware.get();
   }
 
+  /**
+   * Enables or disables existential tracking of component stack traces.
+   *
+   * @param existentiallyAware {@code true} to capture stack traces
+   * @return this configuration instance
+   */
   public ComplexPoolConfig setExistentiallyAware (boolean existentiallyAware) {
 
     this.existentiallyAware.set(existentiallyAware);
@@ -107,11 +149,22 @@ public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
     return getConfigurationClass().cast(this);
   }
 
+  /**
+   * Indicates whether components are validated immediately after creation.
+   *
+   * @return {@code true} if validation is enabled on create
+   */
   public boolean isTestOnCreate () {
 
     return testOnCreate.get();
   }
 
+  /**
+   * Sets whether components should be validated immediately after creation.
+   *
+   * @param testOnCreate {@code true} to validate on creation
+   * @return this configuration instance
+   */
   public ComplexPoolConfig setTestOnCreate (boolean testOnCreate) {
 
     this.testOnCreate.set(testOnCreate);
@@ -119,11 +172,22 @@ public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
     return getConfigurationClass().cast(this);
   }
 
+  /**
+   * Indicates whether components are validated when acquired from the pool.
+   *
+   * @return {@code true} if validation is enabled on acquire
+   */
   public boolean isTestOnAcquire () {
 
     return testOnAcquire.get();
   }
 
+  /**
+   * Sets whether components should be validated on acquisition from the pool.
+   *
+   * @param testOnAcquire {@code true} to validate before handing out
+   * @return this configuration instance
+   */
   public ComplexPoolConfig setTestOnAcquire (boolean testOnAcquire) {
 
     this.testOnAcquire.set(testOnAcquire);
@@ -131,11 +195,23 @@ public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
     return getConfigurationClass().cast(this);
   }
 
+  /**
+   * Retrieves the configured initial pool size.
+   *
+   * @return number of instances to pre-create
+   */
   public int getInitialPoolSize () {
 
     return initialPoolSize.get();
   }
 
+  /**
+   * Sets the initial number of components to create during startup.
+   *
+   * @param initialPoolSize number of instances to pre-create; must be non-negative
+   * @return this configuration instance
+   * @throws IllegalArgumentException if the value is negative
+   */
   public ComplexPoolConfig setInitialPoolSize (int initialPoolSize) {
 
     if (initialPoolSize < 0) {
@@ -147,11 +223,23 @@ public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
     return getConfigurationClass().cast(this);
   }
 
+  /**
+   * Retrieves the minimum pool size.
+   *
+   * @return minimum number of components to retain
+   */
   public int getMinPoolSize () {
 
     return minPoolSize.get();
   }
 
+  /**
+   * Sets the minimum number of components to maintain in the pool.
+   *
+   * @param minPoolSize minimum pool size; must be non-negative
+   * @return this configuration instance
+   * @throws IllegalArgumentException if the value is negative
+   */
   public ComplexPoolConfig setMinPoolSize (int minPoolSize) {
 
     if (minPoolSize < 0) {
@@ -163,11 +251,23 @@ public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
     return getConfigurationClass().cast(this);
   }
 
+  /**
+   * Retrieves the creation timeout in milliseconds.
+   *
+   * @return creation timeout
+   */
   public long getCreationTimeoutMillis () {
 
     return creationTimeoutMillis.get();
   }
 
+  /**
+   * Sets the timeout in milliseconds for creating a new component instance.
+   *
+   * @param creationTimeoutMillis timeout in milliseconds; must be non-negative
+   * @return this configuration instance
+   * @throws IllegalArgumentException if the value is negative
+   */
   public ComplexPoolConfig setCreationTimeoutMillis (long creationTimeoutMillis) {
 
     if (creationTimeoutMillis < 0) {
@@ -179,11 +279,23 @@ public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
     return getConfigurationClass().cast(this);
   }
 
+  /**
+   * Retrieves the maximum lease time in seconds.
+   *
+   * @return lease timeout in seconds
+   */
   public int getMaxLeaseTimeSeconds () {
 
     return maxLeaseTimeSeconds.get();
   }
 
+  /**
+   * Sets the maximum lease time (seconds) before a component must be reclaimed.
+   *
+   * @param maxLeaseTimeSeconds max lease in seconds; must be non-negative
+   * @return this configuration instance
+   * @throws IllegalArgumentException if the value is negative
+   */
   public ComplexPoolConfig setMaxLeaseTimeSeconds (int maxLeaseTimeSeconds) {
 
     if (maxLeaseTimeSeconds < 0) {
@@ -195,11 +307,23 @@ public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
     return getConfigurationClass().cast(this);
   }
 
+  /**
+   * Retrieves the maximum idle time in seconds.
+   *
+   * @return idle timeout in seconds
+   */
   public int getMaxIdleTimeSeconds () {
 
     return maxIdleTimeSeconds.get();
   }
 
+  /**
+   * Sets the maximum idle time (seconds) before a component is deconstructed.
+   *
+   * @param maxIdleTimeSeconds max idle in seconds; must be non-negative
+   * @return this configuration instance
+   * @throws IllegalArgumentException if the value is negative
+   */
   public ComplexPoolConfig setMaxIdleTimeSeconds (int maxIdleTimeSeconds) {
 
     if (maxIdleTimeSeconds < 0) {
@@ -211,11 +335,23 @@ public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
     return getConfigurationClass().cast(this);
   }
 
+  /**
+   * Retrieves the maximum processing time in seconds.
+   *
+   * @return processing timeout in seconds
+   */
   public int getMaxProcessingTimeSeconds () {
 
     return maxProcessingTimeSeconds.get();
   }
 
+  /**
+   * Sets the maximum processing time (seconds) an element can be checked out before being timed out.
+   *
+   * @param maxProcessingTimeSeconds max processing time in seconds; must be non-negative
+   * @return this configuration instance
+   * @throws IllegalArgumentException if the value is negative
+   */
   public ComplexPoolConfig setMaxProcessingTimeSeconds (int maxProcessingTimeSeconds) {
 
     if (maxProcessingTimeSeconds < 0) {

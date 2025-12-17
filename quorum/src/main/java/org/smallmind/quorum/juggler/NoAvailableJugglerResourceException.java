@@ -32,8 +32,18 @@
  */
 package org.smallmind.quorum.juggler;
 
+/**
+ * Thrown when all available juggling resources have been exhausted or blacklisted.
+ */
 public class NoAvailableJugglerResourceException extends JugglerResourceException {
 
+  /**
+   * Creates the exception with a root cause and formatted message.
+   *
+   * @param throwable originating cause
+   * @param message   message format string
+   * @param args      optional format arguments
+   */
   public NoAvailableJugglerResourceException (Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);

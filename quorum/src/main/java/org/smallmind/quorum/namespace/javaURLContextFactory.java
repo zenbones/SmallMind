@@ -42,11 +42,25 @@ import org.smallmind.quorum.namespace.backingStore.ContextCreator;
 import org.smallmind.quorum.namespace.backingStore.NameTranslator;
 import org.smallmind.quorum.namespace.backingStore.NamingConnectionDetails;
 
+/**
+ * JNDI URL context factory that builds {@link JavaContext} instances backed by configurable stores.
+ */
 public class javaURLContextFactory implements ObjectFactory {
 
   private static final Class[] CONTEXT_CREATOR_SIGNATURE = new Class[] {NamingConnectionDetails.class};
   private static final Class[] NAME_TRANSLATOR_SIGNATURE = new Class[] {ContextCreator.class};
 
+  /**
+   * Creates a {@link JavaContext} when no existing object is supplied, instantiating the correct
+   * {@link ContextCreator} and {@link NameTranslator} based on environment configuration.
+   *
+   * @param obj         possibly existing object (ignored when {@code null})
+   * @param name        JNDI name (unused)
+   * @param nameCtx     context (unused)
+   * @param environment environment containing connection details and store configuration
+   * @return a new {@link JavaContext} or {@code null} if {@code obj} is non-null
+   * @throws Exception if any reflective construction fails
+   */
   public Object getObjectInstance (Object obj, Name name, Context nameCtx, Hashtable environment)
     throws Exception {
 
