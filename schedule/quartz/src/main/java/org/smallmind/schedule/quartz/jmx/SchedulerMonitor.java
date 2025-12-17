@@ -35,10 +35,20 @@ package org.smallmind.schedule.quartz.jmx;
 import javax.management.StandardMBean;
 import org.quartz.Scheduler;
 
+/**
+ * StandardMBean implementation that bridges a Quartz {@link Scheduler} to the
+ * {@link SchedulerMXBean} management interface, enabling JMX clients to
+ * control and inspect scheduler state.
+ */
 public class SchedulerMonitor extends StandardMBean implements SchedulerMXBean {
 
   private final Scheduler scheduler;
 
+  /**
+   * Creates a monitor for the provided scheduler instance.
+   *
+   * @param scheduler the Quartz scheduler to manage
+   */
   public SchedulerMonitor (Scheduler scheduler) {
 
     super(SchedulerMXBean.class, true);
@@ -46,6 +56,11 @@ public class SchedulerMonitor extends StandardMBean implements SchedulerMXBean {
     this.scheduler = scheduler;
   }
 
+  /**
+   * Start the scheduler.
+   *
+   * @throws Exception if the scheduler cannot be started
+   */
   @Override
   public void start ()
     throws Exception {
@@ -53,6 +68,11 @@ public class SchedulerMonitor extends StandardMBean implements SchedulerMXBean {
     scheduler.start();
   }
 
+  /**
+   * Place the scheduler into standby mode.
+   *
+   * @throws Exception if standby cannot be entered
+   */
   @Override
   public void standby ()
     throws Exception {
@@ -60,6 +80,12 @@ public class SchedulerMonitor extends StandardMBean implements SchedulerMXBean {
     scheduler.standby();
   }
 
+  /**
+   * Determine the current status of the scheduler.
+   *
+   * @return {@link SchedulerStatus} describing current state
+   * @throws Exception if status cannot be determined
+   */
   @Override
   public SchedulerStatus status ()
     throws Exception {

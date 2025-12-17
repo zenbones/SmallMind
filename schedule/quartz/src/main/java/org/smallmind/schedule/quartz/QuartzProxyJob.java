@@ -42,6 +42,12 @@ import org.smallmind.schedule.base.ProxyJob;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Base Quartz job that wraps {@link ProxyJob} semantics with Quartz's
+ * {@link InterruptableJob} lifecycle. The implementation tracks execution
+ * timing, success/failure state, processed count, and any thrown errors,
+ * logging outcomes on completion.
+ */
 public abstract class QuartzProxyJob implements ProxyJob, InterruptableJob {
 
   private final AtomicReference<Thread> threadRef = new AtomicReference<>();
@@ -52,52 +58,96 @@ public abstract class QuartzProxyJob implements ProxyJob, InterruptableJob {
   private Date stopTime;
   private int count = 0;
 
+  /**
+   * Creates a new proxy job with initial success status and empty error
+   * collection.
+   */
   public QuartzProxyJob () {
 
     throwableList = new LinkedList<>();
   }
 
+  /**
+   * Default enabled flag. Subclasses can override to provide conditional
+   * enablement logic.
+   *
+   * @return {@code true} indicating the job should run
+   */
   @Override
   public boolean isEnabled () {
 
     return true;
   }
 
+  /**
+   * Current execution status. Defaults to {@link SuccessOrFailure#SUCCESS}
+   * and is updated when errors or interruptions occur.
+   *
+   * @return the job status for the most recent execution
+   */
   @Override
   public SuccessOrFailure getJobStatus () {
 
     return statusRef.get();
   }
 
+  /**
+   * Timestamp when execution began.
+   *
+   * @return start time, or {@code null} if the job has not run
+   */
   @Override
   public Date getStartTime () {
 
     return startTime;
   }
 
+  /**
+   * Timestamp when execution completed.
+   *
+   * @return stop time, or {@code null} if the job has not run
+   */
   @Override
   public Date getStopTime () {
 
     return stopTime;
   }
 
+  /**
+   * Increment the processed count by one in a thread-safe manner.
+   */
   @Override
   public synchronized void incCount () {
 
     count++;
   }
 
+  /**
+   * Increment the processed count by the provided value.
+   *
+   * @param additional number of units to add to the current count
+   */
   public synchronized void addToCount (int additional) {
 
     count += additional;
   }
 
+  /**
+   * Retrieves the processed count captured for the execution.
+   *
+   * @return current count value
+   */
   @Override
   public synchronized int getCount () {
 
     return count;
   }
 
+  /**
+   * Returns any errors recorded during execution.
+   *
+   * @return array of {@link Throwable}s or {@code null} when none exist
+   */
   @Override
   public synchronized Throwable[] getThrowables () {
 
@@ -114,12 +164,24 @@ public abstract class QuartzProxyJob implements ProxyJob, InterruptableJob {
     return null;
   }
 
+  /**
+   * Records a throwable and marks the job as failed.
+   *
+   * @param throwable the error encountered during execution
+   */
   @Override
   public synchronized void setThrowable (Throwable throwable) {
 
     setThrowable(throwable, true);
   }
 
+  /**
+   * Records a throwable and optionally marks the job as failed. All recorded
+   * errors are logged immediately.
+   *
+   * @param throwable the error encountered during execution
+   * @param isFailure {@code true} to mark job status as {@link SuccessOrFailure#FAILURE}
+   */
   public synchronized void setThrowable (Throwable throwable, boolean isFailure) {
 
     throwableList.add(throwable);
@@ -131,6 +193,10 @@ public abstract class QuartzProxyJob implements ProxyJob, InterruptableJob {
     LoggerManager.getLogger(this.getClass()).error(throwable);
   }
 
+  /**
+   * Attempts to interrupt the executing thread for this job when Quartz
+   * requests cancellation.
+   */
   @Override
   public void interrupt () {
 
@@ -141,6 +207,14 @@ public abstract class QuartzProxyJob implements ProxyJob, InterruptableJob {
     }
   }
 
+  /**
+   * Quartz entry point. Captures start/stop timestamps, tracks the executing
+   * thread to support interruption, delegates to {@link #proceed()}, and logs
+   * outcome information. Errors are recorded via {@link #setThrowable(Throwable)}
+   * and cleanup is attempted in all cases.
+   *
+   * @param jobExecutionContext Quartz execution context for the fired trigger
+   */
   @Override
   public void execute (JobExecutionContext jobExecutionContext) {
 

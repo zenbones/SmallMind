@@ -42,28 +42,59 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 
+/**
+ * FactoryBean that assembles a map of Quartz {@link JobDetail} to
+ * {@link CronTrigger} definitions discovered in the Spring context. Only
+ * {@link CronJob} beans whose identifiers are explicitly allowed are
+ * included.
+ */
 public class CronJobMapFactoryBean implements FactoryBean<Map<JobDetail, List<CronTrigger>>>, BeanPostProcessor {
 
   private final HashMap<JobDetail, List<CronTrigger>> jobMap = new HashMap<>();
   private List<String> allowedJobIds;
 
+  /**
+   * Restrict which jobs should be collected by id of form {@code group.name}.
+   *
+   * @param allowedJobIds list of allowed identifiers
+   */
   public void setAllowedJobIds (List<String> allowedJobIds) {
 
     this.allowedJobIds = allowedJobIds;
   }
 
+  /**
+   * FactoryBean contract indicating the produced map is a singleton.
+   *
+   * @return {@code true}
+   */
   @Override
   public boolean isSingleton () {
 
     return true;
   }
 
+  /**
+   * Declares {@link Map} as the produced object type.
+   *
+   * @return {@code Map.class}
+   */
   @Override
   public Class<?> getObjectType () {
 
     return Map.class;
   }
 
+  /**
+   * Collect {@link CronJob} beans after initialization. Matches only beans
+   * whose {@link JobDetail} key forms an identifier present in
+   * {@link #allowedJobIds}. Matching entries are added to the produced map.
+   *
+   * @param bean     the initialized bean
+   * @param beanName Spring bean name
+   * @return the original bean
+   * @throws BeansException if post-processing fails
+   */
   @Override
   public Object postProcessAfterInitialization (Object bean, String beanName)
     throws BeansException {
@@ -84,10 +115,14 @@ public class CronJobMapFactoryBean implements FactoryBean<Map<JobDetail, List<Cr
     return bean;
   }
 
+  /**
+   * Provide the collected mapping of job details to cron triggers.
+   *
+   * @return map of configured jobs to their triggers
+   */
   @Override
   public Map<JobDetail, List<CronTrigger>> getObject () {
 
     return jobMap;
   }
 }
-

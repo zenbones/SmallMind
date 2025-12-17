@@ -34,23 +34,49 @@ package org.smallmind.schedule.quartz.spring;
 
 import org.quartz.SchedulerException;
 
+/**
+ * {@link SchedulerException} variant that supports {@link String#format(String, Object...)}
+ * style message construction for clearer error reporting when working with
+ * Quartz from Spring components.
+ */
 public class FormattedSchedulerException extends SchedulerException {
 
+  /**
+   * Create an empty exception.
+   */
   public FormattedSchedulerException () {
 
     super();
   }
 
+  /**
+   * Create an exception with a formatted message.
+   *
+   * @param message format string
+   * @param args    arguments referenced by the format specifiers in the message
+   */
   public FormattedSchedulerException (String message, Object... args) {
 
     super(String.format(message, args));
   }
 
+  /**
+   * Create an exception with a formatted message and root cause.
+   *
+   * @param throwable underlying cause
+   * @param message   format string
+   * @param args      arguments referenced by the format specifiers in the message
+   */
   public FormattedSchedulerException (Throwable throwable, String message, Object... args) {
 
     super(String.format(message, args), throwable);
   }
 
+  /**
+   * Create an exception that wraps an underlying cause.
+   *
+   * @param throwable underlying scheduler error
+   */
   public FormattedSchedulerException (Throwable throwable) {
 
     super(throwable);

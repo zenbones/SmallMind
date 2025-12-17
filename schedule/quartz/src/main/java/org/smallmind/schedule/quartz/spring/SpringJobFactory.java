@@ -42,15 +42,31 @@ import org.quartz.spi.JobFactory;
 import org.quartz.spi.TriggerFiredBundle;
 import org.springframework.context.ApplicationContext;
 
+/**
+ * Quartz {@link org.quartz.spi.JobFactory} that retrieves job instances from
+ * a Spring {@link ApplicationContext}. Enforces prototype scope to ensure a
+ * new job instance per trigger execution and supports graceful context close.
+ */
 public class SpringJobFactory implements JobFactory {
 
   private final ApplicationContext applicationContext;
 
+  /**
+   * Create a job factory backed by the given Spring context.
+   *
+   * @param applicationContext context used to resolve job beans
+   */
   public SpringJobFactory (ApplicationContext applicationContext) {
 
     this.applicationContext = applicationContext;
   }
 
+  /**
+   * Close the underlying application context when it is {@link Closeable},
+   * allowing resource cleanup when the scheduler shuts down.
+   *
+   * @throws IOException if the context fails to close
+   */
   public synchronized void close ()
     throws IOException {
 
@@ -59,6 +75,17 @@ public class SpringJobFactory implements JobFactory {
     }
   }
 
+  /**
+   * Resolve a job instance for the fired trigger. Ensures a matching Spring
+   * bean exists, enforces prototype scope, and disambiguates between multiple
+   * beans of the same type.
+   *
+   * @param bundle    trigger bundle containing job metadata
+   * @param scheduler invoking scheduler
+   * @return newly constructed job instance
+   * @throws SchedulerException if no matching bean exists, multiple beans are ambiguous,
+   *                            or the bean is not prototype-scoped
+   */
   @Override
   public synchronized Job newJob (TriggerFiredBundle bundle, Scheduler scheduler)
     throws SchedulerException {

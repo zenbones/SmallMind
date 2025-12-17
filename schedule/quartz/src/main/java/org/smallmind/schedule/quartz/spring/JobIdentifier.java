@@ -32,26 +32,50 @@
  */
 package org.smallmind.schedule.quartz.spring;
 
+/**
+ * Simple value object representing a Quartz job identifier composed of a
+ * name and group.
+ */
 public class JobIdentifier {
 
   private String name;
   private String group;
 
+  /**
+   * Job name component.
+   *
+   * @return job name
+   */
   public String getName () {
 
     return name;
   }
 
+  /**
+   * Set the job name.
+   *
+   * @param name job name
+   */
   public void setName (String name) {
 
     this.name = name;
   }
 
+  /**
+   * Job group component.
+   *
+   * @return job group
+   */
   public String getGroup () {
 
     return group;
   }
 
+  /**
+   * Set the job group.
+   *
+   * @param group job group
+   */
   public void setGroup (String group) {
 
     this.group = group;

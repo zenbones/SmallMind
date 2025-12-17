@@ -32,14 +32,35 @@
  */
 package org.smallmind.schedule.quartz.jmx;
 
+/**
+ * JMX interface exposing a limited set of lifecycle controls for a Quartz
+ * {@code Scheduler}. Implementations allow external management tools to
+ * start, standby, and inspect scheduler state.
+ */
 public interface SchedulerMXBean {
 
+  /**
+   * Start the scheduler, allowing triggers to fire.
+   *
+   * @throws Exception if the scheduler cannot be started
+   */
   void start ()
     throws Exception;
 
+  /**
+   * Place the scheduler into standby mode, pausing trigger execution.
+   *
+   * @throws Exception if standby cannot be entered
+   */
   void standby ()
     throws Exception;
 
+  /**
+   * Determine the current runtime status of the scheduler.
+   *
+   * @return {@link SchedulerStatus} describing scheduler state
+   * @throws Exception if the status cannot be read
+   */
   SchedulerStatus status ()
     throws Exception;
 }

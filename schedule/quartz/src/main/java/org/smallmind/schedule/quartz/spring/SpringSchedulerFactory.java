@@ -46,22 +46,47 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextClosedEvent;
 
+/**
+ * Quartz {@link StdSchedulerFactory} that integrates with Spring lifecycle.
+ * It wires in a {@link SpringJobFactory} for job creation, starts or
+ * suspends the scheduler based on configuration, and shuts down the
+ * scheduler and job factory when the Spring context closes.
+ */
 public class SpringSchedulerFactory extends StdSchedulerFactory implements ApplicationContextAware, ApplicationListener<ContextClosedEvent> {
 
   private SpringJobFactory jobFactory;
   private OnOrOff activeMode = OnOrOff.ON;
 
+  /**
+   * Construct the factory using the provided Quartz properties.
+   *
+   * @param properties scheduler configuration properties
+   * @throws SchedulerException if the scheduler factory cannot be initialized
+   */
   public SpringSchedulerFactory (Properties properties)
     throws SchedulerException {
 
     super(properties);
   }
 
+  /**
+   * Configure whether the scheduler should start immediately ({@link OnOrOff#ON})
+   * or remain in standby ({@link OnOrOff#OFF}) when obtained.
+   *
+   * @param activeMode desired activation mode
+   */
   public void setActiveMode (OnOrOff activeMode) {
 
     this.activeMode = activeMode;
   }
 
+  /**
+   * Capture the application context so that job instances can be created
+   * via {@link SpringJobFactory}.
+   *
+   * @param applicationContext Spring application context
+   * @throws BeansException if the context cannot be applied
+   */
   @Override
   public synchronized void setApplicationContext (ApplicationContext applicationContext)
     throws BeansException {
@@ -69,6 +94,12 @@ public class SpringSchedulerFactory extends StdSchedulerFactory implements Appli
     jobFactory = new SpringJobFactory(applicationContext);
   }
 
+  /**
+   * Respond to Spring context shutdown by stopping the scheduler and closing
+   * the job factory to release resources.
+   *
+   * @param event Spring context closed event
+   */
   @Override
   public synchronized void onApplicationEvent (ContextClosedEvent event) {
 
@@ -91,6 +122,13 @@ public class SpringSchedulerFactory extends StdSchedulerFactory implements Appli
     }
   }
 
+  /**
+   * Obtain a scheduler configured with the Spring-aware job factory. The
+   * scheduler is started or placed in standby based on {@link #activeMode}.
+   *
+   * @return configured {@link Scheduler}
+   * @throws SchedulerException if the scheduler cannot be created or configured
+   */
   @Override
   public synchronized Scheduler getScheduler ()
     throws SchedulerException {

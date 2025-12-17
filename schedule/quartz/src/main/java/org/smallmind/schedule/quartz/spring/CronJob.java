@@ -35,26 +35,50 @@ package org.smallmind.schedule.quartz.spring;
 import org.quartz.CronTrigger;
 import org.quartz.JobDetail;
 
+/**
+ * Simple container that couples a {@link JobDetail} with its associated
+ * {@link CronTrigger}. Useful for Spring wiring of scheduled jobs.
+ */
 public class CronJob {
 
   private JobDetail jobDetail;
   private CronTrigger cronTrigger;
 
+  /**
+   * Job definition to be scheduled.
+   *
+   * @return the configured {@link JobDetail}
+   */
   public JobDetail getJobDetail () {
 
     return jobDetail;
   }
 
+  /**
+   * Configure the job definition to schedule.
+   *
+   * @param jobDetail the {@link JobDetail} to associate
+   */
   public void setJobDetail (JobDetail jobDetail) {
 
     this.jobDetail = jobDetail;
   }
 
+  /**
+   * Cron trigger that controls the job's firing schedule.
+   *
+   * @return the configured {@link CronTrigger}
+   */
   public CronTrigger getCronTrigger () {
 
     return cronTrigger;
   }
 
+  /**
+   * Configure the cron trigger for the job.
+   *
+   * @param cronTrigger the {@link CronTrigger} to associate
+   */
   public void setCronTrigger (CronTrigger cronTrigger) {
 
     this.cronTrigger = cronTrigger;

@@ -32,6 +32,10 @@
  */
 package org.smallmind.schedule.quartz.jmx;
 
+/**
+ * Enumerates high-level states that a Quartz {@code Scheduler} may report
+ * for monitoring purposes.
+ */
 public enum SchedulerStatus {
 
   STARTED, SHUTDOWN, STANDBY, UNKNOWN

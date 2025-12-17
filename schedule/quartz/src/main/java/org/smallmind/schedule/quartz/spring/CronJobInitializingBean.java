@@ -41,26 +41,49 @@ import org.quartz.Scheduler;
 import org.smallmind.scribe.pen.LoggerManager;
 import org.springframework.beans.factory.InitializingBean;
 
+/**
+ * Spring initialization hook that installs configured {@link CronTrigger}
+ * and {@link JobDetail} pairs into a Quartz {@link Scheduler}. Existing jobs
+ * or triggers are compared and updated only when definitions differ.
+ */
 public class CronJobInitializingBean implements InitializingBean {
 
   private final HashMap<JobDetail, List<CronTrigger>> jobMap;
   private Scheduler scheduler;
 
+  /**
+   * Construct with an empty job map ready to receive configured entries.
+   */
   public CronJobInitializingBean () {
 
     jobMap = new HashMap<>();
   }
 
+  /**
+   * Inject the target scheduler that will host the jobs.
+   *
+   * @param scheduler scheduler instance to configure
+   */
   public void setScheduler (Scheduler scheduler) {
 
     this.scheduler = scheduler;
   }
 
+  /**
+   * Provide the jobs and associated cron triggers to install.
+   *
+   * @param jobMap mapping of {@link JobDetail} to one or more {@link CronTrigger}s
+   */
   public void setJobMap (Map<JobDetail, List<CronTrigger>> jobMap) {
 
     this.jobMap.putAll(jobMap);
   }
 
+  /**
+   * Install or update configured jobs and triggers once Spring finishes
+   * property injection. Differences in job configuration or cron expressions
+   * trigger replacement of existing definitions.
+   */
   public void afterPropertiesSet () {
 
     CronTrigger installedCronTrigger;
@@ -87,6 +110,15 @@ public class CronJobInitializingBean implements InitializingBean {
     }
   }
 
+  /**
+   * Compare two {@link JobDetail} instances for configuration equivalence,
+   * including durability, recovery, concurrency, persistence, and job data
+   * content.
+   *
+   * @param jobDetail          desired job definition
+   * @param installedJobDetail job currently installed in the scheduler
+   * @return {@code true} when the definitions match, {@code false} otherwise
+   */
   private boolean isSame (JobDetail jobDetail, JobDetail installedJobDetail) {
 
     if (jobDetail.isDurable() != installedJobDetail.isDurable()) {

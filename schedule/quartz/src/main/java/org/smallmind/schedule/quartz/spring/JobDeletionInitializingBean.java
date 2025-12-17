@@ -39,26 +39,49 @@ import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.springframework.beans.factory.InitializingBean;
 
+/**
+ * Spring initializer that removes specified jobs from a Quartz
+ * {@link Scheduler} during context startup. Useful for pruning obsolete
+ * schedules before new ones are registered.
+ */
 public class JobDeletionInitializingBean implements InitializingBean {
 
   private final LinkedList<JobIdentifier> jobIdentifierList;
   private Scheduler scheduler;
 
+  /**
+   * Construct with an empty list of job identifiers to delete.
+   */
   public JobDeletionInitializingBean () {
 
     jobIdentifierList = new LinkedList<JobIdentifier>();
   }
 
+  /**
+   * Inject the scheduler from which jobs should be deleted.
+   *
+   * @param scheduler target scheduler
+   */
   public void setScheduler (Scheduler scheduler) {
 
     this.scheduler = scheduler;
   }
 
+  /**
+   * Configure the list of job identifiers to remove.
+   *
+   * @param jobIdentifierList identifiers of jobs to delete
+   */
   public void setJobIdentifierList (List<JobIdentifier> jobIdentifierList) {
 
     this.jobIdentifierList.addAll(jobIdentifierList);
   }
 
+  /**
+   * Delete configured jobs after Spring sets all properties.
+   *
+   * @throws SchedulerException if deletion fails for any job
+   */
   public void afterPropertiesSet ()
     throws SchedulerException {
 
