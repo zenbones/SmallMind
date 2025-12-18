@@ -37,8 +37,22 @@ import java.util.HashMap;
 import java.util.List;
 import org.smallmind.nutsnbolts.util.MutationUtility;
 
+/**
+ * Utility functions for converting between lists of view objects and entity objects using
+ * reflection-based factory/instance methods.
+ */
 public class ListMutator {
 
+  /**
+   * Converts a list of view objects into entity instances by invoking a {@code factory()} method
+   * on each view element.
+   *
+   * @param viewList source list of view objects
+   * @param <T>      view type
+   * @param <U>      entity type
+   * @return converted list or {@code null} if the source list is {@code null}
+   * @throws PropertyException if reflection or invocation fails during conversion
+   */
   public static <T, U> List<U> toEntityType (List<? extends T> viewList)
     throws PropertyException {
 
@@ -66,6 +80,18 @@ public class ListMutator {
     }
   }
 
+  /**
+   * Converts a list of entities into view objects using a static {@code instance(entity)} method
+   * on the view class.
+   *
+   * @param entityClass entity class accepted by the view factory method
+   * @param viewClass   view class exposing the static {@code instance} method
+   * @param entityList  source list of entities
+   * @param <T>         entity type
+   * @param <U>         view type
+   * @return converted list or {@code null} if the source list is {@code null}
+   * @throws PropertyException if reflection or invocation fails during conversion
+   */
   public static <T, U> List<U> toViewType (Class<? extends T> entityClass, Class<U> viewClass, List<? extends T> entityList)
     throws PropertyException {
 

@@ -44,31 +44,62 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+/**
+ * Bean Validation constraint that validates a {@link Where} clause against configured rules
+ * such as allowed, required, excluded, and dependent fields.
+ */
 @Documented
 @Retention(RUNTIME)
 @Target({FIELD, PARAMETER, METHOD, LOCAL_VARIABLE})
 @Constraint(validatedBy = WhereValidator.class)
 public @interface WhereConstraint {
 
+  /**
+   * Allows multiple {@link WhereConstraint} annotations on the same element.
+   */
   @Target({FIELD, PARAMETER, METHOD, LOCAL_VARIABLE})
   @Retention(RUNTIME)
   @Documented
   @interface List {
 
+    /**
+     * @return array of {@link WhereConstraint} instances
+     */
     WhereConstraint[] value ();
   }
 
+  /**
+   * @return validation failure message
+   */
   String message () default "Validation failed";
 
+  /**
+   * @return validation groups
+   */
   Class<?>[] groups () default {};
 
+  /**
+   * @return payload for Bean Validation clients
+   */
   Class<? extends Payload>[] payload () default {};
 
+  /**
+   * @return fields that are explicitly allowed
+   */
   Allowed[] allow () default {};
 
+  /**
+   * @return fields that are required to be present
+   */
   Required[] require () default {};
 
+  /**
+   * @return fields that must be excluded
+   */
   Excluded[] exclude () default {};
 
+  /**
+   * @return dependency rules between fields
+   */
   Dependent[] dependencies () default {};
 }

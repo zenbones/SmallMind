@@ -32,6 +32,9 @@
  */
 package org.smallmind.web.json.query;
 
+/**
+ * Logical conjunction types supported in where clauses.
+ */
 public enum ConjunctionType {
 
   AND, OR

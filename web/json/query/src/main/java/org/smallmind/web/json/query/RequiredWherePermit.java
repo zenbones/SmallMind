@@ -34,16 +34,30 @@ package org.smallmind.web.json.query;
 
 public class RequiredWherePermit extends WherePermit {
 
+  /**
+   * Creates a required permit scoped to an entity.
+   *
+   * @param entity entity alias
+   * @param name   field name
+   */
   public RequiredWherePermit (String entity, String name) {
 
     super(entity, name);
   }
 
+  /**
+   * Creates a required permit in the default entity context.
+   *
+   * @param name field name
+   */
   public RequiredWherePermit (String name) {
 
     super(name);
   }
 
+  /**
+   * @return {@link PermitType#REQUIRED}
+   */
   @Override
   public PermitType getType () {
 

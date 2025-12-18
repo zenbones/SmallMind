@@ -34,35 +34,56 @@ package org.smallmind.web.websocket;
 
 import jakarta.websocket.Extension;
 
+/**
+ * Represents a single WebSocket extension parameter as a name/value pair.
+ */
 public class ExtensionParameter implements Extension.Parameter {
 
   private final String name;
   private final String value;
 
+  /**
+   * Constructs a parameter wrapper.
+   *
+   * @param name the parameter name
+   * @param value the parameter value
+   */
   public ExtensionParameter (String name, String value) {
 
     this.name = name;
     this.value = value;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String getName () {
 
     return name;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String getValue () {
 
     return value;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int hashCode () {
 
     return name.hashCode() ^ value.hashCode();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean equals (Object obj) {
 

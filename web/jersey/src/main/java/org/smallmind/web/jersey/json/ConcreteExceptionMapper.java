@@ -34,6 +34,11 @@ package org.smallmind.web.jersey.json;
 
 import jakarta.ws.rs.ext.ExceptionMapper;
 
+/**
+ * Convenience base class for exception mappers that simply fixes the generic type.
+ *
+ * @param <T> exception type being mapped
+ */
 public abstract class ConcreteExceptionMapper<T extends Throwable> implements ExceptionMapper<T> {
 
 }

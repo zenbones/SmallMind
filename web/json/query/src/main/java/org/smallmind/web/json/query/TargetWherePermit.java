@@ -32,26 +32,50 @@
  */
 package org.smallmind.web.json.query;
 
+/**
+ * Represents a requested field encountered in a where clause (the target being validated).
+ */
 public class TargetWherePermit extends WherePermit {
 
+  /**
+   * Creates a target permit scoped to an entity.
+   *
+   * @param entity entity alias
+   * @param name   field name
+   */
   public TargetWherePermit (String entity, String name) {
 
     super(entity, name);
   }
 
+  /**
+   * Creates a target permit in the default entity context.
+   *
+   * @param name field name
+   */
   public TargetWherePermit (String name) {
 
     super(name);
   }
 
+  /**
+   * Convenience factory for a target permit.
+   *
+   * @param entity entity alias
+   * @param name   field name
+   * @return target permit
+   */
   public static TargetWherePermit instance (String entity, String name) {
 
     return new TargetWherePermit(entity, name);
   }
 
+  /**
+   * @return {@link PermitType#ALLOWED} to denote a target field
+   */
   @Override
   public PermitType getType () {
 
-    return null;
+    return PermitType.ALLOWED;
   }
 }

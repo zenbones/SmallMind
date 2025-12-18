@@ -32,6 +32,9 @@
  */
 package org.smallmind.web.jetty.option;
 
+/**
+ * Marker option indicating that Spring-specific request context support should be installed.
+ */
 public class SpringSupportOption {
 
 }

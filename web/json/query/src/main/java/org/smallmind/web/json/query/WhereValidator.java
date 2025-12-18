@@ -36,16 +36,31 @@ import java.util.LinkedList;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
+/**
+ * Bean Validation validator that enforces {@link WhereConstraint} rules against a {@link WherePermissible}.
+ */
 public class WhereValidator implements ConstraintValidator<WhereConstraint, WherePermissible> {
 
   private WhereConstraint constraintAnnotation;
 
+  /**
+   * Stores the constraint annotation for later use when validating.
+   *
+   * @param constraintAnnotation the applied annotation
+   */
   @Override
   public void initialize (WhereConstraint constraintAnnotation) {
 
     this.constraintAnnotation = constraintAnnotation;
   }
 
+  /**
+   * Validates the provided {@link WherePermissible} by building permit rules from the annotation and invoking {@link WherePermissible#validate(WherePermit...)}.
+   *
+   * @param permissible the value to validate
+   * @param context     constraint context used to report violations
+   * @return {@code true} if validation passes; {@code false} if a {@link WhereValidationException} is raised
+   */
   @Override
   public boolean isValid (WherePermissible permissible, ConstraintValidatorContext context) {
 
@@ -59,7 +74,7 @@ public class WhereValidator implements ConstraintValidator<WhereConstraint, Wher
       permitList.add(new RequiredWherePermit(required.entity(), required.field()));
     }
     for (Excluded excluded : constraintAnnotation.exclude()) {
-      permitList.add(new AllowedWherePermit(excluded.entity(), excluded.field()));
+      permitList.add(new ExcludedWherePermit(excluded.entity(), excluded.field()));
     }
     for (Dependent dependent : constraintAnnotation.dependencies()) {
       permitList.add(new DependentWherePermit(dependent.entity(), dependent.field(), new TargetWherePermit(dependent.requirement().entity(), dependent.requirement().field())));
@@ -73,6 +88,7 @@ public class WhereValidator implements ConstraintValidator<WhereConstraint, Wher
 
       return true;
     } catch (WhereValidationException whereValidationException) {
+      // Present the formatted validation message to the caller
       context.disableDefaultConstraintViolation();
       context.buildConstraintViolationWithTemplate(whereValidationException.getMessage()).addConstraintViolation();
 

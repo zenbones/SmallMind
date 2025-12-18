@@ -32,9 +32,22 @@
  */
 package org.smallmind.web.json.query;
 
+/**
+ * Marks a field that may be referenced within a JSON query where clause.
+ */
 public @interface Allowed {
 
+  /**
+   * Specifies the entity alias to which the permitted field belongs.
+   *
+   * @return optional entity name; empty means the default root
+   */
   String entity () default "";
 
+  /**
+   * The name of the field that is allowed to be queried.
+   *
+   * @return the permitted field name
+   */
   String field ();
 }

@@ -37,12 +37,25 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Marks a resource method parameter as being supplied by a proxied JsonEntity, and identifies its key within that entity.
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
 public @interface EntityParam {
 
+  /**
+   * Name or key of the argument within the JsonEntity.
+   *
+   * @return parameter identifier
+   */
   String value ();
 
   // Useful for documentation generating tools
+  /**
+   * Optional descriptive text for documentation tools.
+   *
+   * @return human-readable description of the parameter
+   */
   String comment () default "";
 }

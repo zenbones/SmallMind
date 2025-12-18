@@ -45,15 +45,32 @@ import org.smallmind.nutsnbolts.reflection.PassType;
 import org.smallmind.nutsnbolts.reflection.ProxyGenerator;
 import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
 
+/**
+ * JAXB adapter that serializes polymorphic types by wrapping them in a single-key object whose key
+ * corresponds to {@link XmlRootElement#name()}.
+ *
+ * @param <T> polymorphic base type
+ */
 public abstract class PolymorphicXmlAdapter<T> extends XmlAdapter<JsonNode, T> {
 
   private final Class<?> baseClass;
 
+  /**
+   * Resolves the polymorphic base class from the generic type parameter.
+   */
   public PolymorphicXmlAdapter () {
 
     baseClass = GenericUtility.getTypeArgumentsOfSubclass(PolymorphicXmlAdapter.class, this.getClass()).get(0);
   }
 
+  /**
+   * Deserializes a single-field JSON object into the appropriate subclass, using the field name as
+   * the polymorphic discriminator.
+   *
+   * @param node JSON node representing the polymorphic value
+   * @return instantiated subclass
+   * @throws JAXBProcessingException if the payload is improperly formatted or cannot be resolved
+   */
   @Override
   public T unmarshal (JsonNode node) {
 
@@ -91,6 +108,13 @@ public abstract class PolymorphicXmlAdapter<T> extends XmlAdapter<JsonNode, T> {
     }
   }
 
+  /**
+   * Serializes a subclass instance by wrapping it in an object keyed by its {@link XmlRootElement#name()}.
+   *
+   * @param value value to serialize
+   * @return JSON node containing the wrapped value
+   * @throws JAXBProcessingException if the subclass lacks the required annotation
+   */
   @Override
   public JsonNode marshal (T value) {
 

@@ -38,6 +38,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import jakarta.ws.rs.NameBinding;
 
+/**
+ * Name-binding annotation indicating that responses should include pagination range headers.
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})
 @NameBinding

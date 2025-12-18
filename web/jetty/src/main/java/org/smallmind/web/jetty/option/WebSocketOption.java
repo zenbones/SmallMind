@@ -32,22 +32,40 @@
  */
 package org.smallmind.web.jetty.option;
 
+/**
+ * Configures WebSocket settings for a Jetty context.
+ */
 public class WebSocketOption {
 
   private static final long FIVE_MINUTES = 5 * 60 * 1000;
 
   private long maxSessionIdleTimeout = FIVE_MINUTES;
 
+  /**
+   * Convenience accessor for a five-minute timeout value.
+   *
+   * @return five minutes in milliseconds
+   */
   public static long getFiveMinutes () {
 
     return FIVE_MINUTES;
   }
 
+  /**
+   * Retrieves the maximum idle timeout applied to WebSocket sessions.
+   *
+   * @return idle timeout in milliseconds
+   */
   public long getMaxSessionIdleTimeout () {
 
     return maxSessionIdleTimeout;
   }
 
+  /**
+   * Sets the maximum idle timeout applied to WebSocket sessions.
+   *
+   * @param maxSessionIdleTimeout idle timeout in milliseconds
+   */
   public void setMaxSessionIdleTimeout (long maxSessionIdleTimeout) {
 
     this.maxSessionIdleTimeout = maxSessionIdleTimeout;

@@ -37,11 +37,32 @@ import java.util.HashSet;
 import java.util.Set;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
+/**
+ * Describes an object (typically a {@link Where}) that can expose the set of field permits it references
+ * and validate them against allowed/required/excluded/dependent constraints.
+ *
+ * @param <W> self type for fluent validation
+ */
 public interface WherePermissible<W extends WherePermissible<W>> {
 
+  /**
+   * Returns the set of target permits referenced by this instance.
+   *
+   * @return set of permits
+   * @throws Exception if traversal fails
+   */
   Set<WherePermit> getTargetSet ()
     throws Exception;
 
+  /**
+   * Validates this instance against the provided permit rules.
+   *
+   * @param permits permit rules to enforce
+   * @return {@code this} for chaining
+   * @throws WhereValidationException   if any rule is violated (missing required, present excluded, or failed dependency)
+   * @throws UnknownSwitchCaseException if an unexpected permit type is encountered
+   * @throws Exception                  if computing target permits fails
+   */
   default W validate (WherePermit... permits)
     throws Exception {
 
@@ -55,23 +76,17 @@ public interface WherePermissible<W extends WherePermissible<W>> {
 
       for (WherePermit permit : permits) {
         switch (permit.getType()) {
-          case ALLOWED:
-            allowedSet.add(permit);
-            break;
-          case REQUIRED:
+          case ALLOWED -> allowedSet.add(permit);
+          case REQUIRED -> {
             allowedSet.add(permit);
             requiredSet.add(permit);
-            break;
-          case EXCLUDED:
-            excludedSet.add(permit);
-            break;
-          case DEPENDENT:
+          }
+          case EXCLUDED -> excludedSet.add(permit);
+          case DEPENDENT -> {
             if (requestedSet.contains(permit) && (!requestedSet.contains(((DependentWherePermit)permit).getRequirement()))) {
               failedDependencySet.add(permit);
             }
-            break;
-          default:
-            throw new UnknownSwitchCaseException(permit.getType().name());
+          }
         }
       }
 

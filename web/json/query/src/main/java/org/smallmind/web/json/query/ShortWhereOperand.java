@@ -37,26 +37,46 @@ import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
+/**
+ * Short literal operand.
+ */
 @XmlRootElement(name = "short", namespace = "http://org.smallmind/web/json/query")
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
 public class ShortWhereOperand extends WhereOperand<Short> {
 
   private Short value;
 
+  /**
+   * No-arg constructor for JAXB/Jackson.
+   */
   public ShortWhereOperand () {
 
   }
 
+  /**
+   * Creates an operand with the provided short value.
+   *
+   * @param value short literal
+   */
   public ShortWhereOperand (Short value) {
 
     this.value = value;
   }
 
+  /**
+   * Convenience factory for a short operand.
+   *
+   * @param value short literal
+   * @return operand instance
+   */
   public static ShortWhereOperand instance (Short value) {
 
     return new ShortWhereOperand(value);
   }
 
+  /**
+   * @return {@link ElementType#NUMBER}
+   */
   @Override
   @XmlTransient
   public ElementType getElementType () {
@@ -64,6 +84,9 @@ public class ShortWhereOperand extends WhereOperand<Short> {
     return ElementType.NUMBER;
   }
 
+  /**
+   * @return {@link OperandType#SHORT}
+   */
   @Override
   @XmlTransient
   public OperandType getOperandType () {
@@ -71,6 +94,11 @@ public class ShortWhereOperand extends WhereOperand<Short> {
     return OperandType.SHORT;
   }
 
+  /**
+   * Returns the short value.
+   *
+   * @return short literal or {@code null}
+   */
   @Override
   @XmlTransient
   public Short get () {
@@ -78,12 +106,22 @@ public class ShortWhereOperand extends WhereOperand<Short> {
     return value;
   }
 
+  /**
+   * Returns the serialized short value.
+   *
+   * @return short literal or {@code null}
+   */
   @XmlElement(name = "value", required = true)
   public Short getValue () {
 
     return value;
   }
 
+  /**
+   * Sets the short value.
+   *
+   * @param value short literal
+   */
   public void setValue (Short value) {
 
     this.value = value;

@@ -36,14 +36,25 @@ import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlRootElement;
 
+/**
+ * JAXB-friendly wrapper that exposes a map of named arguments for proxying Jersey resource calls.
+ */
 @XmlRootElement(name = "envelope", namespace = "http://org.smallmind/web/jersey/aop")
 @XmlAccessorType(XmlAccessType.PROPERTY)
 public class Envelope extends AbstractNakedMappedJsonEntity {
 
+  /**
+   * Creates an empty envelope.
+   */
   public Envelope () {
 
   }
 
+  /**
+   * Populates the envelope from the supplied arguments.
+   *
+   * @param arguments ordered arguments to insert
+   */
   public Envelope (Argument... arguments) {
 
     for (Argument argument : arguments) {

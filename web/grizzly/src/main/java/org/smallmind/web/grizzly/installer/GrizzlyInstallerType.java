@@ -32,6 +32,9 @@
  */
 package org.smallmind.web.grizzly.installer;
 
+/**
+ * Identifies the type of installer bean being registered with the Grizzly deployment.
+ */
 public enum GrizzlyInstallerType {
 
   FILTER, LISTENER, SERVLET, WEB_SOCKET_EXTENSION

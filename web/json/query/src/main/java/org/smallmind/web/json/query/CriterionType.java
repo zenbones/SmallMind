@@ -32,6 +32,9 @@
  */
 package org.smallmind.web.json.query;
 
+/**
+ * Discriminates between field criteria and logical conjunction nodes.
+ */
 public enum CriterionType {
 
   FIELD, CONJUNCTION

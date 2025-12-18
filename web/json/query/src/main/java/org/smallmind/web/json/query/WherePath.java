@@ -32,11 +32,26 @@
  */
 package org.smallmind.web.json.query;
 
+/**
+ * Represents a resolved path to a field used in where clauses, along with its root and the translated path type.
+ *
+ * @param <R> type representing the root object (e.g., entity root)
+ * @param <T> type representing the translated path (e.g., criteria path)
+ */
 public abstract class WherePath<R, T> {
 
+  /**
+   * @return the root of the path (e.g., entity root)
+   */
   public abstract R getRoot ();
 
+  /**
+   * @return the translated path representation
+   */
   public abstract T getPath ();
 
+  /**
+   * @return the name of the terminal field
+   */
   public abstract String getField ();
 }

@@ -37,6 +37,9 @@ import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
+/**
+ * Leaf criterion representing a field comparison against an operand using an operator.
+ */
 @XmlRootElement(name = "field", namespace = "http://org.smallmind/web/json/query")
 @XmlJavaTypeAdapter(WhereCriterionPolymorphicXmlAdapter.class)
 public class WhereField extends WhereCriterion {
@@ -46,10 +49,20 @@ public class WhereField extends WhereCriterion {
   private String entity;
   private String name;
 
+  /**
+   * No-arg constructor for JAXB/Jackson.
+   */
   public WhereField () {
 
   }
 
+  /**
+   * Creates a field criterion within the default entity context.
+   *
+   * @param name     field name
+   * @param operator comparison operator
+   * @param operand  operand value
+   */
   public WhereField (String name, WhereOperator operator, WhereOperand operand) {
 
     this.name = name;
@@ -57,22 +70,52 @@ public class WhereField extends WhereCriterion {
     this.operand = operand;
   }
 
+  /**
+   * Creates a field criterion within a specific entity alias.
+   *
+   * @param entity   entity alias
+   * @param name     field name
+   * @param operator comparison operator
+   * @param operand  operand value
+   */
   public WhereField (String entity, String name, WhereOperator operator, WhereOperand operand) {
 
     this(name, operator, operand);
     this.entity = entity;
   }
 
+  /**
+   * Convenience factory for a field in the default entity.
+   *
+   * @param name     field name
+   * @param operator comparison operator
+   * @param operand  operand value
+   * @return configured field criterion
+   */
   public static WhereField instance (String name, WhereOperator operator, WhereOperand operand) {
 
     return new WhereField(name, operator, operand);
   }
 
+  /**
+   * Convenience factory for a field in a specific entity.
+   *
+   * @param entity   entity alias
+   * @param name     field name
+   * @param operator comparison operator
+   * @param operand  operand value
+   * @return configured field criterion
+   */
   public static WhereField instance (String entity, String name, WhereOperator operator, WhereOperand operand) {
 
     return new WhereField(entity, name, operator, operand);
   }
 
+  /**
+   * Identifies this criterion as a field comparison.
+   *
+   * @return {@link CriterionType#FIELD}
+   */
   @Override
   @XmlTransient
   public CriterionType getCriterionType () {
@@ -80,39 +123,74 @@ public class WhereField extends WhereCriterion {
     return CriterionType.FIELD;
   }
 
+  /**
+   * Returns the entity alias, if any, associated with the field.
+   *
+   * @return entity alias or {@code null}
+   */
   @XmlElement(name = "entity")
   public String getEntity () {
 
     return entity;
   }
 
+  /**
+   * Sets the entity alias associated with the field.
+   *
+   * @param entity entity alias
+   */
   public void setEntity (String entity) {
 
     this.entity = entity;
   }
 
+  /**
+   * Returns the field name.
+   *
+   * @return field name
+   */
   @XmlElement(name = "name", required = true)
   public String getName () {
 
     return name;
   }
 
+  /**
+   * Sets the field name.
+   *
+   * @param name field name
+   */
   public void setName (String name) {
 
     this.name = name;
   }
 
+  /**
+   * Returns the operand used in the comparison.
+   *
+   * @return operand value
+   */
   @XmlElement(name = "operand")
   public WhereOperand<?> getOperand () {
 
     return operand;
   }
 
+  /**
+   * Sets the operand used in the comparison.
+   *
+   * @param operand operand value
+   */
   public void setOperand (WhereOperand<?> operand) {
 
     this.operand = operand;
   }
 
+  /**
+   * Returns the operator applied to the field.
+   *
+   * @return comparison operator
+   */
   @XmlElement(name = "operator", required = true)
   @XmlJavaTypeAdapter(WhereOperatorEnumXmlAdapter.class)
   public WhereOperator getOperator () {
@@ -120,6 +198,11 @@ public class WhereField extends WhereCriterion {
     return operator;
   }
 
+  /**
+   * Sets the operator applied to the field.
+   *
+   * @param operator comparison operator
+   */
   public void setOperator (WhereOperator operator) {
 
     this.operator = operator;

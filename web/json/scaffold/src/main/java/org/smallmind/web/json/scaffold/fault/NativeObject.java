@@ -41,6 +41,9 @@ import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
 
+/**
+ * Serializable wrapper for embedding native objects (and their language) inside fault responses.
+ */
 @XmlRootElement(name = "native", namespace = "http://org.smallmind/web/json/scaffold/fault")
 @XmlAccessorType(XmlAccessType.PROPERTY)
 public class NativeObject implements Serializable {
@@ -48,10 +51,19 @@ public class NativeObject implements Serializable {
   private NativeLanguage language;
   private byte[] bytes;
 
+  /**
+   * No-arg constructor for JAXB/Jackson.
+   */
   public NativeObject () {
 
   }
 
+  /**
+   * Serializes the supplied object into bytes and records it as a Java payload.
+   *
+   * @param object object to serialize
+   * @throws IOException if serialization fails
+   */
   public NativeObject (Object object)
     throws IOException {
 
@@ -63,23 +75,39 @@ public class NativeObject implements Serializable {
     language = NativeLanguage.JAVA;
   }
 
+  /**
+   * @return the language associated with the serialized bytes
+   */
   @XmlElement(name = "language", required = true)
   public NativeLanguage getLanguage () {
 
     return language;
   }
 
+  /**
+   * Sets the language associated with the serialized bytes.
+   *
+   * @param language language of the captured payload
+   */
   public void setLanguage (NativeLanguage language) {
 
     this.language = language;
   }
 
+  /**
+   * @return serialized bytes of the native object
+   */
   @XmlElement(name = "bytes", required = true)
   public byte[] getBytes () {
 
     return bytes;
   }
 
+  /**
+   * Sets the serialized bytes of the native object.
+   *
+   * @param bytes serialized payload
+   */
   public void setBytes (byte[] bytes) {
 
     this.bytes = bytes;

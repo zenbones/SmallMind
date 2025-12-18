@@ -34,6 +34,9 @@ package org.smallmind.web.websocket;
 
 import org.smallmind.nutsnbolts.util.Bytes;
 
+/**
+ * Enumerates the standard WebSocket close codes and provides helpers to convert between numeric and binary forms.
+ */
 public enum CloseCode {
 
   NORMAL(1000), GOING_AWAY(1001), PROTOCOL_ERROR(1002), UNKNOWN_DATA_TYPE(1003), RESERVED(1004), NO_STATUS_CODE(1005), CLOSED_ABNORMALLY(1006), DATA_TYPE_CONVERSION_ERROR(1007), POLICY_VIOLATION(1008),
@@ -41,11 +44,22 @@ public enum CloseCode {
 
   private final int code;
 
+  /**
+   * Creates a close code wrapper for the supplied numeric value.
+   *
+   * @param code the numeric close code
+   */
   CloseCode (int code) {
 
     this.code = code;
   }
 
+  /**
+   * Resolves a {@link CloseCode} from its numeric representation.
+   *
+   * @param code the close code value
+   * @return the matching enum value, or {@link #NO_STATUS_CODE} if not found
+   */
   public static CloseCode fromCode (int code) {
 
     for (CloseCode closeCode : CloseCode.values()) {
@@ -57,16 +71,32 @@ public enum CloseCode {
     return CloseCode.NO_STATUS_CODE;
   }
 
+  /**
+   * Resolves a {@link CloseCode} from a two-byte network-order representation.
+   *
+   * @param bytes the two-byte close payload
+   * @return the matching enum value, or {@link #NO_STATUS_CODE} if not found
+   */
   public static CloseCode fromBytes (byte[] bytes) {
 
     return fromCode(Bytes.getShort(bytes));
   }
 
+  /**
+   * Numeric representation of the close code.
+   *
+   * @return the close code value
+   */
   public int getCode () {
 
     return code;
   }
 
+  /**
+   * Returns the close code encoded into a two-byte network-order array.
+   *
+   * @return the two-byte representation
+   */
   public byte[] getCodeAsBytes () {
 
     byte[] out = new byte[2];

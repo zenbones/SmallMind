@@ -33,43 +33,68 @@
 package org.smallmind.web.grizzly.installer;
 
 // @ServicePath(value="/<service Uri>", context="/context")
+/**
+ * Simple descriptor that binds a SOAP service bean to a URI within a specific Grizzly context.
+ */
 public class WebServiceInstaller {
 
   private String path;
   private Object service;
   private Boolean asyncSupported;
 
+  /**
+   * @param path    service URI relative to the SOAP root
+   * @param service service instance to expose
+   */
   public WebServiceInstaller (String path, Object service) {
 
     this.path = path;
     this.service = service;
   }
 
+  /**
+   * @return service URI relative to the SOAP root
+   */
   public String getPath () {
 
     return path;
   }
 
+  /**
+   * @param path service URI relative to the SOAP root
+   */
   public void setPath (String path) {
 
     this.path = path;
   }
 
+  /**
+   * @return service instance to expose
+   */
   public Object getService () {
 
     return service;
   }
 
+  /**
+   * @param service service instance to expose
+   */
   public void setService (Object service) {
 
     this.service = service;
   }
 
+  /**
+   * @return whether the SOAP handler should be marked async supported; {@code null} leaves default
+   */
   public Boolean getAsyncSupported () {
 
     return asyncSupported;
   }
 
+  /**
+   * @param asyncSupported flag indicating async support
+   */
   public void setAsyncSupported (Boolean asyncSupported) {
 
     this.asyncSupported = asyncSupported;

@@ -37,9 +37,15 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Declares the concrete subclasses eligible for polymorphic serialization of the annotated base type.
+ */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface XmlPolymorphicSubClasses {
 
+  /**
+   * @return list of allowed subclasses
+   */
   Class[] value ();
 }

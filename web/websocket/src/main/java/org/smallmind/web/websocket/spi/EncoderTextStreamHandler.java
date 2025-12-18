@@ -38,15 +38,28 @@ import java.io.OutputStreamWriter;
 import jakarta.websocket.EncodeException;
 import jakarta.websocket.Encoder;
 
+/**
+ * Encodes text objects using a streaming {@link Encoder.TextStream}.
+ *
+ * @param <T> encoded object type
+ */
 public class EncoderTextStreamHandler<T> implements EncoderHandler<T> {
 
   private final Encoder.TextStream<T> encoder;
 
+  /**
+   * Wraps the provided stream encoder.
+   *
+   * @param encoder the text stream encoder
+   */
   public EncoderTextStreamHandler (Encoder.TextStream<T> encoder) {
 
     this.encoder = encoder;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public byte[] encode (Object object)
     throws IOException, EncodeException {
 

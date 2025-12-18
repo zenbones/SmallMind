@@ -41,6 +41,9 @@ import jakarta.xml.bind.annotation.XmlTransient;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
+/**
+ * Structured payload conveying a code, template, and argument list for rendering user-facing fault messages.
+ */
 @XmlRootElement(name = "information", namespace = "http://org.smallmind/web/json/scaffold/fault")
 @XmlAccessorType(XmlAccessType.PROPERTY)
 public class FaultInformation implements Serializable {
@@ -49,10 +52,20 @@ public class FaultInformation implements Serializable {
   private String template;
   private int code;
 
+  /**
+   * No-arg constructor for JAXB/Jackson.
+   */
   public FaultInformation () {
 
   }
 
+  /**
+   * Creates a fault information payload with the provided template and arguments.
+   *
+   * @param code      fault code identifier
+   * @param template  message template
+   * @param arguments template arguments
+   */
   public FaultInformation (int code, String template, Object... arguments) {
 
     this.code = code;
@@ -60,28 +73,51 @@ public class FaultInformation implements Serializable {
     this.arguments = (ArrayNode)JsonCodec.writeAsJsonNode(arguments);
   }
 
+  /**
+   * @return numeric fault code
+   */
   @XmlElement(name = "code")
   public int getCode () {
 
     return code;
   }
 
+  /**
+   * Sets the numeric fault code.
+   *
+   * @param code fault code identifier
+   */
   public void setCode (int code) {
 
     this.code = code;
   }
 
+  /**
+   * @return message template string
+   */
   @XmlElement(name = "template")
   public String getTemplate () {
 
     return template;
   }
 
+  /**
+   * Sets the message template.
+   *
+   * @param template message template string
+   */
   public void setTemplate (String template) {
 
     this.template = template;
   }
 
+  /**
+   * Converts the argument list into strongly-typed objects based on the supplied class array.
+   *
+   * @param classes target classes for conversion
+   * @return converted arguments
+   * @throws IllegalArgumentException if the number of classes does not match the number of arguments
+   */
   @XmlTransient
   public Object[] getArgumentsAs (Class<?>[] classes) {
 
@@ -98,6 +134,15 @@ public class FaultInformation implements Serializable {
     return convertedArguments;
   }
 
+  /**
+   * Converts the argument at the specified index into the requested type.
+   *
+   * @param index argument position
+   * @param clazz target class
+   * @param <T>   target type
+   * @return converted argument
+   * @throws IndexOutOfBoundsException if the index is out of range
+   */
   @XmlTransient
   public <T> T getArgumentAs (int index, Class<T> clazz) {
 
@@ -108,12 +153,20 @@ public class FaultInformation implements Serializable {
     return JsonCodec.convert(arguments.get(index), clazz);
   }
 
+  /**
+   * @return raw arguments as a JSON array
+   */
   @XmlElement(name = "arguments")
   public ArrayNode getArguments () {
 
     return arguments;
   }
 
+  /**
+   * Sets the raw argument array.
+   *
+   * @param arguments JSON array of arguments
+   */
   public void setArguments (ArrayNode arguments) {
 
     this.arguments = arguments;

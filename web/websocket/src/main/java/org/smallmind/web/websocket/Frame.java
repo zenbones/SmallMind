@@ -35,20 +35,45 @@ package org.smallmind.web.websocket;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ThreadLocalRandom;
 
+/**
+ * Utility for constructing and decoding WebSocket frames.
+ */
 public class Frame {
 
+  /**
+   * Builds a ping control frame payload.
+   *
+   * @param message the ping payload
+   * @return the encoded frame bytes
+   * @throws WebSocketException if the payload exceeds the control frame limit
+   */
   public static byte[] ping (byte[] message)
     throws WebSocketException {
 
     return control(OpCode.PING, message);
   }
 
+  /**
+   * Builds a pong control frame payload.
+   *
+   * @param message the pong payload
+   * @return the encoded frame bytes
+   * @throws WebSocketException if the payload exceeds the control frame limit
+   */
   public static byte[] pong (byte[] message)
     throws WebSocketException {
 
     return control(OpCode.PONG, message);
   }
 
+  /**
+   * Builds a close control frame with status and optional reason.
+   *
+   * @param status the two-byte close status
+   * @param reason optional reason string
+   * @return the encoded frame bytes
+   * @throws WebSocketException if the payload exceeds the control frame limit
+   */
   public static byte[] close (byte[] status, String reason)
     throws WebSocketException {
 
@@ -68,6 +93,14 @@ public class Frame {
     return control(OpCode.CLOSE, message);
   }
 
+  /**
+   * Constructs a control frame, ensuring payload sizing rules.
+   *
+   * @param opCode the control opcode
+   * @param message the control payload
+   * @return the encoded frame
+   * @throws WebSocketException if the payload exceeds 125 bytes
+   */
   private static byte[] control (OpCode opCode, byte[] message)
     throws WebSocketException {
 
@@ -78,16 +111,35 @@ public class Frame {
     return data(opCode, message);
   }
 
+  /**
+   * Builds a text data frame.
+   *
+   * @param message the UTF-8 text to send
+   * @return the encoded frame bytes
+   */
   public static byte[] text (String message) {
 
     return data(OpCode.TEXT, message.getBytes(StandardCharsets.UTF_8));
   }
 
+  /**
+   * Builds a binary data frame.
+   *
+   * @param message the binary payload
+   * @return the encoded frame bytes
+   */
   public static byte[] binary (byte[] message) {
 
     return data(OpCode.BINARY, message);
   }
 
+  /**
+   * Encodes a masked client data frame for the given opcode.
+   *
+   * @param opCode the data opcode
+   * @param message the payload
+   * @return the encoded frame bytes
+   */
   private static byte[] data (OpCode opCode, byte[] message) {
 
     int start = (message.length < 126) ? 6 : (message.length < 65536) ? 8 : 14;
@@ -130,6 +182,13 @@ public class Frame {
     return out;
   }
 
+  /**
+   * Decodes a received frame into a {@link Fragment}.
+   *
+   * @param buffer the raw frame bytes
+   * @return the decoded fragment
+   * @throws SyntaxException if the buffer cannot be parsed
+   */
   public static Fragment decode (byte[] buffer)
     throws SyntaxException {
 

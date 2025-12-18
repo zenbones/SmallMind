@@ -37,18 +37,40 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.smallmind.web.json.scaffold.fault.Fault;
 
+/**
+ * WebApplicationException that wraps a {@link Fault} and serializes it as JSON.
+ */
 public class FormattedWebApplicationException extends WebApplicationException {
 
+  /**
+   * Builds a fault from a formatted message.
+   *
+   * @param status HTTP status to return
+   * @param message message template
+   * @param args template arguments
+   */
   public FormattedWebApplicationException (Response.Status status, String message, Object... args) {
 
     this(status, new Fault(message == null ? null : String.format(message, args)));
   }
 
+  /**
+   * Builds a fault from an underlying exception.
+   *
+   * @param status HTTP status to return
+   * @param throwable underlying cause
+   */
   public FormattedWebApplicationException (Response.Status status, Throwable throwable) {
 
     this(status, new Fault(throwable, false));
   }
 
+  /**
+   * Builds an exception from a preconstructed {@link Fault}.
+   *
+   * @param status HTTP status to return
+   * @param fault fault payload to send
+   */
   public FormattedWebApplicationException (Response.Status status, Fault fault) {
 
     super(fault.getMessage(), Response.status(status).type(MediaType.APPLICATION_JSON_TYPE).entity(fault).build());

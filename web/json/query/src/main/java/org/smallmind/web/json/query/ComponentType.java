@@ -32,6 +32,9 @@
  */
 package org.smallmind.web.json.query;
 
+/**
+ * Enumerates basic component types for array operands.
+ */
 public enum ComponentType {
 
   BOOLEAN, BYTE, CHARACTER, DATE, DOUBLE, FLOAT, INTEGER, LONG, SHORT, STRING

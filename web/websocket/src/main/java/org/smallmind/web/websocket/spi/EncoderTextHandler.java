@@ -36,15 +36,28 @@ import java.nio.charset.StandardCharsets;
 import jakarta.websocket.EncodeException;
 import jakarta.websocket.Encoder;
 
+/**
+ * Encodes text objects using a {@link Encoder.Text} into UTF-8 bytes.
+ *
+ * @param <T> encoded object type
+ */
 public class EncoderTextHandler<T> implements EncoderHandler<T> {
 
   private final Encoder.Text<T> encoder;
 
+  /**
+   * Creates a handler around the given encoder.
+   *
+   * @param encoder the text encoder
+   */
   public EncoderTextHandler (Encoder.Text<T> encoder) {
 
     this.encoder = encoder;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public byte[] encode (Object object)
     throws EncodeException {
 

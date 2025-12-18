@@ -35,17 +35,32 @@ package org.smallmind.web.websocket;
 import java.util.List;
 import jakarta.websocket.Extension;
 
+/**
+ * Captures the results of the WebSocket handshake, including negotiated protocol and extensions.
+ */
 public class HandshakeResponse {
 
   private final Extension[] extensions;
   private final String protocol;
 
+  /**
+   * Creates a response descriptor.
+   *
+   * @param protocol the negotiated sub-protocol (may be empty)
+   * @param extensions the negotiated extensions
+   */
   public HandshakeResponse (String protocol, Extension... extensions) {
 
     this.protocol = protocol;
     this.extensions = extensions;
   }
 
+  /**
+   * Produces the value for the {@code Sec-WebSocket-Extensions} header.
+   *
+   * @param extensions the extension set
+   * @return a serialized header value or {@code null} if none are present
+   */
   public static String getExtensionsAsString (Extension[] extensions) {
 
     if ((extensions != null) && (extensions.length > 0)) {
@@ -80,11 +95,21 @@ public class HandshakeResponse {
     return null;
   }
 
+  /**
+   * Returns the negotiated sub-protocol.
+   *
+   * @return the sub-protocol name, or empty if none selected
+   */
   public String getProtocol () {
 
     return protocol;
   }
 
+  /**
+   * Returns the negotiated extensions.
+   *
+   * @return the extension array (may be empty)
+   */
   public Extension[] getExtensions () {
 
     return extensions;

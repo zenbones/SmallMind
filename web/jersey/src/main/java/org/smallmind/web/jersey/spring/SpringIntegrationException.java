@@ -34,8 +34,17 @@ package org.smallmind.web.jersey.spring;
 
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
+/**
+ * Runtime exception for errors encountered while integrating Jersey with Spring.
+ */
 public class SpringIntegrationException extends FormattedRuntimeException {
 
+  /**
+   * Creates the exception with a formatted message.
+   *
+   * @param message message template
+   * @param args template arguments
+   */
   public SpringIntegrationException (String message, Object... args) {
 
     super(message, args);

@@ -37,8 +37,17 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.smallmind.nutsnbolts.lang.PerApplicationContext;
 import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
 
+/**
+ * Stores and retrieves generated resource proxies in per-application scope.
+ */
 public class JsonEntityResourceProxyManager implements PerApplicationDataManager {
 
+  /**
+   * Registers a proxy instance for the given resource interface within the current application context.
+   *
+   * @param resourceInterface interface implemented by the proxy
+   * @param proxy proxy instance
+   */
   public static void register (Class<?> resourceInterface, Proxy proxy) {
 
     ConcurrentHashMap<Class<?>, Proxy> proxyMap;
@@ -49,6 +58,13 @@ public class JsonEntityResourceProxyManager implements PerApplicationDataManager
     proxyMap.put(resourceInterface, proxy);
   }
 
+  /**
+   * Fetches the proxy registered for the specified resource interface.
+   *
+   * @param resourceInterface interface used as a key
+   * @param <T> resource type
+   * @return proxy implementing the interface
+   */
   public static <T> T getProxy (Class<T> resourceInterface) {
 
     return resourceInterface.cast(PerApplicationContext.getPerApplicationData(JsonEntityResourceProxyManager.class, ConcurrentHashMap.class).get(resourceInterface));

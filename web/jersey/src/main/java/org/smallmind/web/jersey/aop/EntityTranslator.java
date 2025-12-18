@@ -35,16 +35,37 @@ package org.smallmind.web.jersey.aop;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.smallmind.nutsnbolts.reflection.MissingAnnotationException;
 
+/**
+ * Manages thread-local JsonEntity deserialization and exposes helpers to resolve parameters for resource method invocation.
+ */
 public class EntityTranslator {
 
   private static final ThreadLocal<JsonEntity> JSON_ENTITY_LOCAL = new ThreadLocal<>();
   private static final ThreadLocal<Class<? extends JsonEntity>> JSON_ENTITY_CLASS_LOCAL = new ThreadLocal<>();
 
+  /**
+   * Stores the JsonEntity implementation to deserialize for the current request processing thread.
+   *
+   * @param clazz concrete JsonEntity class
+   */
   public static <E extends JsonEntity> void storeEntityType (Class<E> clazz) {
 
     JSON_ENTITY_CLASS_LOCAL.set(clazz);
   }
 
+  /**
+   * Resolves a parameter by reading the configured JsonEntity from the request, caching it per thread, and delegating
+   * to {@link JsonEntity#getParameter(String, Class, ParameterAnnotations)}.
+   *
+   * @param containerRequest Jersey container request containing the entity body
+   * @param key parameter identifier
+   * @param clazz expected parameter type
+   * @param parameterAnnotations annotations attached to the parameter
+   * @return converted parameter value
+   * @throws MissingAnnotationException if no {@link ResourceMethod} annotation configured the JsonEntity type
+   * @throws ParameterProcessingException if the annotation specifies the interface instead of a concrete type
+   * @throws Throwable if entity extraction or parameter conversion fails
+   */
   public static <T> T getParameter (ContainerRequest containerRequest, String key, Class<T> clazz, ParameterAnnotations parameterAnnotations) {
 
     JsonEntity jsonEntity;
@@ -71,6 +92,9 @@ public class EntityTranslator {
     }
   }
 
+  /**
+   * Clears any cached entity instance and type for the current request.
+   */
   public static void clearEntity () {
 
     JSON_ENTITY_LOCAL.remove();

@@ -37,15 +37,28 @@ import java.io.IOException;
 import jakarta.websocket.EncodeException;
 import jakarta.websocket.Encoder;
 
+/**
+ * Encodes objects to binary using a streaming {@link Encoder.BinaryStream}.
+ *
+ * @param <T> encoded object type
+ */
 public class EncoderBinaryStreamHandler<T> implements EncoderHandler<T> {
 
   private final Encoder.BinaryStream<T> encoder;
 
+  /**
+   * Wraps the provided binary stream encoder.
+   *
+   * @param encoder the encoder instance
+   */
   public EncoderBinaryStreamHandler (Encoder.BinaryStream<T> encoder) {
 
     this.encoder = encoder;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public byte[] encode (Object object)
     throws IOException, EncodeException {
 

@@ -34,8 +34,17 @@ package org.smallmind.web.json.scaffold.fault;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+/**
+ * Convenience {@link JsonProcessingException} that formats its message with the supplied arguments.
+ */
 public class FormattedJsonProcessingException extends JsonProcessingException {
 
+  /**
+   * Creates an exception with a formatted message.
+   *
+   * @param message message template (may be {@code null})
+   * @param args    format arguments
+   */
   public FormattedJsonProcessingException (String message, Object... args) {
 
     super(message == null ? null : String.format(message, args));

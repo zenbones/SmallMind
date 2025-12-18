@@ -34,26 +34,63 @@ package org.smallmind.web.jersey.proxy;
 
 import java.net.URISyntaxException;
 
+/**
+ * Factory methods for creating {@link JsonTarget} instances with varying protocol, host, and context options.
+ */
 public class JsonTargetFactory {
 
+  /**
+   * Creates a target using the HTTP protocol and default port.
+   *
+   * @param host host name
+   * @return configured JsonTarget
+   * @throws URISyntaxException if the URI cannot be built
+   */
   public static JsonTarget manufacture (String host)
     throws URISyntaxException {
 
     return manufacture(HttpProtocol.HTTP, host, 0, null);
   }
 
+  /**
+   * Creates a target using the given protocol and default port.
+   *
+   * @param protocol http or https
+   * @param host host name
+   * @return configured JsonTarget
+   * @throws URISyntaxException if the URI cannot be built
+   */
   public static JsonTarget manufacture (HttpProtocol protocol, String host)
     throws URISyntaxException {
 
     return manufacture(protocol, host, 0, null);
   }
 
+  /**
+   * Creates a target specifying protocol and port.
+   *
+   * @param protocol http or https
+   * @param host host name
+   * @param port port number
+   * @return configured JsonTarget
+   * @throws URISyntaxException if the URI cannot be built
+   */
   public static JsonTarget manufacture (HttpProtocol protocol, String host, int port)
     throws URISyntaxException {
 
     return manufacture(protocol, host, port, null);
   }
 
+  /**
+   * Creates a target specifying protocol, port, and optional context path.
+   *
+   * @param protocol http or https
+   * @param host host name
+   * @param port port number (0 to omit)
+   * @param context optional context path
+   * @return configured JsonTarget
+   * @throws URISyntaxException if the URI cannot be built
+   */
   public static JsonTarget manufacture (HttpProtocol protocol, String host, int port, String context)
     throws URISyntaxException {
 

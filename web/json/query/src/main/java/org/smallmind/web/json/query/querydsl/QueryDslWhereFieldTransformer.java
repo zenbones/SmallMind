@@ -39,13 +39,27 @@ import com.querydsl.core.types.dsl.PathBuilder;
 import org.smallmind.persistence.Durable;
 import org.smallmind.web.json.query.WhereFieldTransformer;
 
+/**
+ * Translates field references into QueryDSL {@link Path} instances suitable for predicate construction.
+ */
 public class QueryDslWhereFieldTransformer extends WhereFieldTransformer<Path<?>, Path<?>> {
 
+  /**
+   * Builds a transformer that appends field names to the given durable root path.
+   *
+   * @param path durable root path
+   */
   public QueryDslWhereFieldTransformer (Path<? extends Durable<?>> path) {
 
     super((String entity, String name) -> new QueryDslWherePath(path, new PathBuilder<>(path.getType(), path.toString()).get(name), name));
   }
 
+  /**
+   * Builds a transformer that first transforms the field name before appending it to the durable root.
+   *
+   * @param path          durable root path
+   * @param nameOperator  function to transform the field name
+   */
   public QueryDslWhereFieldTransformer (Path<? extends Durable<?>> path, UnaryOperator<String> nameOperator) {
 
     super((String entity, String name) -> {
@@ -56,6 +70,12 @@ public class QueryDslWhereFieldTransformer extends WhereFieldTransformer<Path<?>
     });
   }
 
+  /**
+   * Builds a transformer using custom functions to derive both the target path and the final field name.
+   *
+   * @param pathFunction function that produces a durable path from entity/name
+   * @param nameFunction function that produces a possibly transformed name from entity/name
+   */
   public QueryDslWhereFieldTransformer (BiFunction<String, String, Path<? extends Durable<?>>> pathFunction, BiFunction<String, String, String> nameFunction) {
 
     super((String entity, String name) -> {
@@ -67,6 +87,11 @@ public class QueryDslWhereFieldTransformer extends WhereFieldTransformer<Path<?>
     });
   }
 
+  /**
+   * Builds a transformer from a path function that already returns the final QueryDSL path.
+   *
+   * @param pathFunction function producing the path for an entity/name pair
+   */
   public QueryDslWhereFieldTransformer (BiFunction<String, String, Path<?>> pathFunction) {
 
     super((String entity, String name) -> {

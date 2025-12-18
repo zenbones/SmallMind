@@ -38,12 +38,31 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+/**
+ * JAXB adapter for maps with string keys, representing them as JSON objects where {@code null}
+ * keys are encoded as the literal string "null".
+ *
+ * @param <M> concrete map type
+ * @param <V> value type
+ */
 public abstract class SimpleMapXmlAdapter<M extends Map<String, V>, V> extends XmlAdapter<JsonNode, M> {
 
+  /**
+   * @return an empty mutable map of the desired type
+   */
   public abstract M getEmptyMap ();
 
+  /**
+   * @return value class for conversion
+   */
   public abstract Class<V> getValueClass ();
 
+  /**
+   * Deserializes a JSON object into a map, converting "null" keys back to {@code null}.
+   *
+   * @param node JSON node to convert
+   * @return populated map or {@code null} if the node is {@code null}
+   */
   @Override
   public M unmarshal (JsonNode node) {
 
@@ -65,6 +84,13 @@ public abstract class SimpleMapXmlAdapter<M extends Map<String, V>, V> extends X
     return null;
   }
 
+  /**
+   * Serializes a map into a JSON object, encoding {@code null} keys as the literal "null".
+   *
+   * @param map map to serialize
+   * @return JSON representation or {@code null} if the map is {@code null}
+   * @throws Exception if serialization fails
+   */
   @Override
   public JsonNode marshal (M map)
     throws Exception {

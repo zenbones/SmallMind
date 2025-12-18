@@ -35,6 +35,9 @@ package org.smallmind.web.json.query;
 import java.util.Collections;
 import java.util.Set;
 
+/**
+ * Empty query product indicating no value was produced.
+ */
 public class NoneProduct<R, T> implements Product<R, T> {
 
   private static final NoneProduct<?, ?> INSTANCE = new NoneProduct();
@@ -43,22 +46,34 @@ public class NoneProduct<R, T> implements Product<R, T> {
 
   }
 
+  /**
+   * @return singleton instance representing an empty product
+   */
   public static <R, T> NoneProduct<R, T> none () {
 
     return (NoneProduct<R, T>)INSTANCE;
   }
 
+  /**
+   * @return {@code true} because this product is always empty
+   */
   @Override
   public boolean isEmpty () {
 
     return true;
   }
 
+  /**
+   * @return empty set because no roots are involved
+   */
   public Set<R> getRootSet () {
 
     return Collections.emptySet();
   }
 
+  /**
+   * @return {@code null} because no value is present
+   */
   public T getValue () {
 
     return null;

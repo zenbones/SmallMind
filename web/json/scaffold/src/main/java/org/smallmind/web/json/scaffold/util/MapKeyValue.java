@@ -34,38 +34,66 @@ package org.smallmind.web.json.scaffold.util;
 
 import jakarta.xml.bind.annotation.XmlElement;
 
+/**
+ * Simple key/value holder used for marshaling maps through JAXB/Jackson.
+ */
 public class MapKeyValue<K, V> {
 
   private K key;
   private V value;
 
+  /**
+   * No-arg constructor for JAXB/Jackson.
+   */
   public MapKeyValue () {
 
   }
 
+  /**
+   * Creates a map entry with the supplied key and value.
+   *
+   * @param key   entry key
+   * @param value entry value
+   */
   public MapKeyValue (K key, V value) {
 
     this.key = key;
     this.value = value;
   }
 
+  /**
+   * @return entry key
+   */
   @XmlElement(name = "key")
   public K getKey () {
 
     return key;
   }
 
+  /**
+   * Sets the entry key.
+   *
+   * @param key entry key
+   */
   public void setKey (K key) {
 
     this.key = key;
   }
 
+  /**
+   * @return entry value
+   */
   @XmlElement(name = "value")
   public V getValue () {
 
     return value;
   }
 
+  /**
+   * Sets the entry value.
+   *
+   * @param value entry value
+   */
   public void setValue (V value) {
 
     this.value = value;

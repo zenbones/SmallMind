@@ -34,28 +34,49 @@ package org.smallmind.web.json.query;
 
 import java.util.Set;
 
+/**
+ * Non-empty query product wrapping a translated value and its participating roots.
+ *
+ * @param <R> root type
+ * @param <T> translated value type
+ */
 public class SomeProduct<R, T> implements Product<R, T> {
 
   private final Set<R> rootSet;
   private final T value;
 
+  /**
+   * Creates a product containing the given roots and value.
+   *
+   * @param rootSet participating roots
+   * @param value   translated value (e.g., predicate)
+   */
   public SomeProduct (Set<R> rootSet, T value) {
 
     this.rootSet = rootSet;
     this.value = value;
   }
 
+  /**
+   * @return {@code false} because this product is non-empty
+   */
   @Override
   public boolean isEmpty () {
 
     return false;
   }
 
+  /**
+   * @return roots involved in producing the value
+   */
   public Set<R> getRootSet () {
 
     return rootSet;
   }
 
+  /**
+   * @return translated value
+   */
   public T getValue () {
 
     return value;

@@ -32,6 +32,9 @@
  */
 package org.smallmind.web.websocket;
 
+/**
+ * States representing the lifecycle of a WebSocket connection.
+ */
 public enum ConnectionState {
 
   CONNECTING, OPEN, CLOSING, CLOSED

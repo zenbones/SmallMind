@@ -39,8 +39,14 @@ import java.lang.annotation.Target;
 
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
-// a hint for tools that may process classes, to note that a method return value should be wrapped in a transform to the indicated class
+/**
+ * Hint for tools that process classes to indicate a method's return value should be wrapped or
+ * transformed to the specified class.
+ */
 public @interface As {
 
+  /**
+   * @return wrapper/transform class that should be applied to the annotated method's return value
+   */
   Class<?> value ();
 }

@@ -42,8 +42,18 @@ import jakarta.ws.rs.client.ClientBuilder;
 import org.smallmind.nutsnbolts.ssl.NaiveHostNameVerifier;
 import org.smallmind.nutsnbolts.ssl.NaiveTrustManager;
 
+/**
+ * Utility for constructing Jersey client builders that trust all certificates and host names.
+ */
 public class ClientUtility {
 
+  /**
+   * Creates a {@link ClientBuilder} configured with a permissive SSL context and hostname verifier.
+   *
+   * @return configured client builder
+   * @throws NoSuchAlgorithmException if TLS is not available
+   * @throws KeyManagementException if the SSL context cannot be initialized
+   */
   public static ClientBuilder clientBuilder ()
     throws NoSuchAlgorithmException, KeyManagementException {
 

@@ -37,26 +37,46 @@ import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
+/**
+ * Integer literal operand.
+ */
 @XmlRootElement(name = "integer", namespace = "http://org.smallmind/web/json/query")
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
 public class IntegerWhereOperand extends WhereOperand<Integer> {
 
   private Integer value;
 
+  /**
+   * No-arg constructor for JAXB/Jackson.
+   */
   public IntegerWhereOperand () {
 
   }
 
+  /**
+   * Creates an operand with the provided integer value.
+   *
+   * @param value integer literal
+   */
   public IntegerWhereOperand (Integer value) {
 
     this.value = value;
   }
 
+  /**
+   * Convenience factory for an integer operand.
+   *
+   * @param value integer literal
+   * @return operand instance
+   */
   public static IntegerWhereOperand instance (Integer value) {
 
     return new IntegerWhereOperand(value);
   }
 
+  /**
+   * @return {@link ElementType#NUMBER}
+   */
   @Override
   @XmlTransient
   public ElementType getElementType () {
@@ -64,6 +84,9 @@ public class IntegerWhereOperand extends WhereOperand<Integer> {
     return ElementType.NUMBER;
   }
 
+  /**
+   * @return {@link OperandType#INTEGER}
+   */
   @Override
   @XmlTransient
   public OperandType getOperandType () {
@@ -71,6 +94,11 @@ public class IntegerWhereOperand extends WhereOperand<Integer> {
     return OperandType.INTEGER;
   }
 
+  /**
+   * Returns the integer value.
+   *
+   * @return integer literal or {@code null}
+   */
   @Override
   @XmlTransient
   public Integer get () {
@@ -78,12 +106,22 @@ public class IntegerWhereOperand extends WhereOperand<Integer> {
     return value;
   }
 
+  /**
+   * Returns the serialized integer value.
+   *
+   * @return integer literal or {@code null}
+   */
   @XmlElement(name = "value", required = true)
   public Integer getValue () {
 
     return value;
   }
 
+  /**
+   * Sets the integer value.
+   *
+   * @param value integer literal
+   */
   public void setValue (Integer value) {
 
     this.value = value;

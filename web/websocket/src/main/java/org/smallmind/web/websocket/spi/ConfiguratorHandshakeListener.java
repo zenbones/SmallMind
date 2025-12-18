@@ -38,15 +38,26 @@ import jakarta.websocket.ClientEndpointConfig;
 import org.smallmind.nutsnbolts.util.Tuple;
 import org.smallmind.web.websocket.HandshakeListener;
 
+/**
+ * Bridges the websocket handshake to a {@link ClientEndpointConfig.Configurator}.
+ */
 public class ConfiguratorHandshakeListener implements HandshakeListener {
 
   private final ClientEndpointConfig.Configurator configurator;
 
+  /**
+   * Creates a listener that delegates to the provided configurator.
+   *
+   * @param configurator the client configurator
+   */
   public ConfiguratorHandshakeListener (ClientEndpointConfig.Configurator configurator) {
 
     this.configurator = configurator;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void beforeRequest (Tuple<String, String> headerTuple) {
 
@@ -67,6 +78,9 @@ public class ConfiguratorHandshakeListener implements HandshakeListener {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void afterResponse (final Tuple<String, String> headerTuple) {
 

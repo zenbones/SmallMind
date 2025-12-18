@@ -39,11 +39,23 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.smallmind.web.json.scaffold.util.XmlPolymorphicSubClasses;
 
+/**
+ * Base type for operands that can appear on the right-hand side of a where field comparison.
+ *
+ * @param <I> the Java type represented by the operand
+ */
 @XmlAccessorType(XmlAccessType.PROPERTY)
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
 @XmlPolymorphicSubClasses({ArrayWhereOperand.class, BooleanWhereOperand.class, ByteWhereOperand.class, CharacterWhereOperand.class, DateWhereOperand.class, DoubleWhereOperand.class, EnumWhereOperand.class, FloatWhereOperand.class, IntegerWhereOperand.class, LongWhereOperand.class, NullWhereOperand.class, ShortWhereOperand.class, StringWhereOperand.class})
 public abstract class WhereOperand<I> {
 
+  /**
+   * Creates a concrete operand from a generic JSON node by inspecting its node type.
+   *
+   * @param node JSON node representing a literal value
+   * @return the matching operand implementation
+   * @throws QueryProcessingException if the node type cannot be mapped to an operand
+   */
   public static WhereOperand<?> fromJsonNode (JsonNode node) {
 
     switch (node.getNodeType()) {
@@ -83,9 +95,24 @@ public abstract class WhereOperand<I> {
     }
   }
 
+  /**
+   * Returns the semantic element type represented by this operand.
+   *
+   * @return element type enumeration
+   */
   public abstract ElementType getElementType ();
 
+  /**
+   * Returns the operand discriminator used in adapters.
+   *
+   * @return operand type enumeration
+   */
   public abstract OperandType getOperandType ();
 
+  /**
+   * Retrieves the value represented by this operand in its Java form.
+   *
+   * @return the operand value (may be {@code null})
+   */
   public abstract I get ();
 }

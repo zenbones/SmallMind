@@ -34,27 +34,46 @@ package org.smallmind.web.json.query.throng;
 
 import org.smallmind.web.json.query.WherePath;
 
+/**
+ * Throng implementation of {@link WherePath} that only exposes the field name (root/path unsupported).
+ */
 public class ThrongWherePath extends WherePath<Void, Void> {
 
   private final String field;
 
+  /**
+   * @param field the name of the field represented by this path
+   */
   public ThrongWherePath (String field) {
 
     this.field = field;
   }
 
+  /**
+   * Unsupported for Throng queries.
+   *
+   * @throws UnsupportedOperationException always
+   */
   @Override
   public Void getRoot () {
 
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * Unsupported for Throng queries.
+   *
+   * @throws UnsupportedOperationException always
+   */
   @Override
   public Void getPath () {
 
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * @return field name
+   */
   @Override
   public String getField () {
 

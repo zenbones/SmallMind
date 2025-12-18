@@ -42,10 +42,21 @@ import org.springframework.web.context.request.RequestContextListener;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 // Handles some exception cases the Spring's version of the same class would otherwise spew into the log
+/**
+ * Servlet listener that mirrors Spring's {@link RequestContextListener} but avoids noisy failures caused by container
+ * shutdown or non-HTTP requests. It initializes request and locale contexts at the start of a request and safely
+ * clears them at completion.
+ */
 public class GrizzlyRequestContextListener implements ServletRequestListener {
 
   private static final String REQUEST_ATTRIBUTES_ATTRIBUTE = RequestContextListener.class.getName() + ".REQUEST_ATTRIBUTES";
 
+  /**
+   * Initializes Spring request/locale state for the active {@link HttpServletRequest}.
+   *
+   * @param requestEvent servlet lifecycle event wrapping the incoming request
+   * @throws IllegalArgumentException if the request is not HTTP
+   */
   @Override
   public void requestInitialized (ServletRequestEvent requestEvent) {
 
@@ -62,6 +73,11 @@ public class GrizzlyRequestContextListener implements ServletRequestListener {
     RequestContextHolder.setRequestAttributes(attributes);
   }
 
+  /**
+   * Clears request scoped Spring state and completes {@link ServletRequestAttributes}, ignoring cleanup errors.
+   *
+   * @param requestEvent servlet lifecycle event wrapping the completed request
+   */
   @Override
   public void requestDestroyed (ServletRequestEvent requestEvent) {
 

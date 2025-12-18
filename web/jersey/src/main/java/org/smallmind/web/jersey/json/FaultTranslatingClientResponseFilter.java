@@ -47,22 +47,43 @@ import org.smallmind.web.json.scaffold.fault.ObjectInstantiationException;
 import org.smallmind.web.json.scaffold.fault.ResourceInvocationException;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
+/**
+ * Client filter that inspects JSON error responses and rethrows them as application exceptions.
+ * When the remote fault wraps a Java exception, the original exception is deserialized and thrown.
+ */
 public class FaultTranslatingClientResponseFilter implements ClientResponseFilter {
 
   private final int lowerBound;
   private final int upperBound;
 
+  /**
+   * Creates a filter that handles HTTP statuses in the 400-599 range.
+   */
   public FaultTranslatingClientResponseFilter () {
 
     this(400, 600);
   }
 
+  /**
+   * Creates a filter using custom status bounds.
+   *
+   * @param lowerBound inclusive lower HTTP status bound
+   * @param upperBound exclusive upper HTTP status bound
+   */
   public FaultTranslatingClientResponseFilter (int lowerBound, int upperBound) {
 
     this.lowerBound = lowerBound;
     this.upperBound = upperBound;
   }
 
+  /**
+   * Translates fault responses into exceptions. If the payload contains a serialized Java exception it is rethrown,
+   * otherwise a {@link FaultWrappingException} is thrown.
+   *
+   * @param requestContext client request context
+   * @param responseContext client response context
+   * @throws IOException if the entity stream cannot be read or deserialization fails
+   */
   @Override
   public void filter (ClientRequestContext requestContext, ClientResponseContext responseContext)
     throws IOException {

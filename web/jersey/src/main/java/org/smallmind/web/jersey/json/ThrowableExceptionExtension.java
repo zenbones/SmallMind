@@ -36,21 +36,39 @@ import jakarta.ws.rs.ext.ExceptionMapper;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.smallmind.web.jersey.spring.PrioritizedResourceConfigExtension;
 
+/**
+ * Resource configuration extension that installs {@link ThrowableExceptionMapper} with optional custom mappers.
+ */
 public class ThrowableExceptionExtension extends PrioritizedResourceConfigExtension {
 
   private ExceptionMapper[] mappers;
   private boolean logUnclassifiedErrors = false;
 
+  /**
+   * Sets additional exception mappers that should be consulted before the default mapping occurs.
+   *
+   * @param mappers mapper instances
+   */
   public void setMappers (ExceptionMapper[] mappers) {
 
     this.mappers = mappers;
   }
 
+  /**
+   * Controls whether previously unclassified errors should be logged.
+   *
+   * @param logUnclassifiedErrors {@code true} to log unhandled exceptions
+   */
   public void setLogUnclassifiedErrors (boolean logUnclassifiedErrors) {
 
     this.logUnclassifiedErrors = logUnclassifiedErrors;
   }
 
+  /**
+   * Registers the {@link ThrowableExceptionMapper} and sets Jersey properties needed for status handling.
+   *
+   * @param resourceConfig Jersey resource configuration
+   */
   @Override
   public void apply (ResourceConfig resourceConfig) {
 

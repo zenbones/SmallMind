@@ -37,26 +37,46 @@ import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
+/**
+ * Byte literal operand.
+ */
 @XmlRootElement(name = "byte", namespace = "http://org.smallmind/web/json/query")
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
 public class ByteWhereOperand extends WhereOperand<Byte> {
 
   private Byte value;
 
+  /**
+   * No-arg constructor for JAXB/Jackson.
+   */
   public ByteWhereOperand () {
 
   }
 
+  /**
+   * Creates an operand with the provided byte value.
+   *
+   * @param value byte literal
+   */
   public ByteWhereOperand (Byte value) {
 
     this.value = value;
   }
 
+  /**
+   * Convenience factory for a byte operand.
+   *
+   * @param value byte literal
+   * @return the operand instance
+   */
   public static ByteWhereOperand instance (Byte value) {
 
     return new ByteWhereOperand(value);
   }
 
+  /**
+   * @return {@link ElementType#NUMBER}
+   */
   @Override
   @XmlTransient
   public ElementType getElementType () {
@@ -64,6 +84,9 @@ public class ByteWhereOperand extends WhereOperand<Byte> {
     return ElementType.NUMBER;
   }
 
+  /**
+   * @return {@link OperandType#BYTE}
+   */
   @Override
   @XmlTransient
   public OperandType getOperandType () {
@@ -71,6 +94,11 @@ public class ByteWhereOperand extends WhereOperand<Byte> {
     return OperandType.BYTE;
   }
 
+  /**
+   * Returns the byte value.
+   *
+   * @return byte literal or {@code null}
+   */
   @Override
   @XmlTransient
   public Byte get () {
@@ -78,12 +106,22 @@ public class ByteWhereOperand extends WhereOperand<Byte> {
     return value;
   }
 
+  /**
+   * Returns the serialized byte value.
+   *
+   * @return byte literal or {@code null}
+   */
   @XmlElement(name = "value", required = true)
   public Byte getValue () {
 
     return value;
   }
 
+  /**
+   * Sets the byte value.
+   *
+   * @param value byte literal
+   */
   public void setValue (Byte value) {
 
     this.value = value;

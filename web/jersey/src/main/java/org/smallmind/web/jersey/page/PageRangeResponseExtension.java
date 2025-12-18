@@ -35,8 +35,16 @@ package org.smallmind.web.jersey.page;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.smallmind.web.jersey.spring.PrioritizedResourceConfigExtension;
 
+/**
+ * Resource configuration extension that registers {@link PageRangeResponseFilter}.
+ */
 public class PageRangeResponseExtension extends PrioritizedResourceConfigExtension {
 
+  /**
+   * Adds the pagination response filter to the Jersey configuration.
+   *
+   * @param resourceConfig Jersey resource configuration
+   */
   @Override
   public void apply (ResourceConfig resourceConfig) {
 

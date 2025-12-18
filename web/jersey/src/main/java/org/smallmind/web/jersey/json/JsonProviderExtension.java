@@ -35,8 +35,16 @@ package org.smallmind.web.jersey.json;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.smallmind.web.jersey.spring.ResourceConfigExtension;
 
+/**
+ * Resource configuration extension that registers the {@link JsonProvider}.
+ */
 public class JsonProviderExtension extends ResourceConfigExtension {
 
+  /**
+   * Adds {@link JsonProvider} to the supplied Jersey resource configuration.
+   *
+   * @param resourceConfig Jersey resource configuration
+   */
   @Override
   public void apply (ResourceConfig resourceConfig) {
 

@@ -48,6 +48,11 @@ import org.glassfish.grizzly.http.HttpPacket;
 import org.glassfish.grizzly.http.util.HeaderValue;
 import org.glassfish.grizzly.ssl.SSLUtils;
 
+/**
+ * Grizzly filter that attaches SSL client identity headers to requests when mutual TLS is used. When proxy mode is off,
+ * it strips any incoming client-auth headers to avoid spoofing, extracts the peer certificate information from the
+ * {@link SSLEngine}, and injects the subject and issuer DNs along with the originating IP address.
+ */
 public class ClientAuthProxyFilter extends BaseFilter {
 
   //Subject DN
@@ -60,11 +65,22 @@ public class ClientAuthProxyFilter extends BaseFilter {
   static public final String X_FORWARDED_FOR = "X-Forwarded-For";
   protected boolean proxyMode;
 
+  /**
+   * @param proxyMode when {@code true}, headers are left untouched because a trusted proxy is expected to perform
+   * client authentication; when {@code false}, client auth headers are stripped and rebuilt from the peer certificate.
+   */
   public ClientAuthProxyFilter (boolean proxyMode) {
 
     this.proxyMode = proxyMode;
   }
 
+  /**
+   * Propagates SSL client identity headers and the remote address onto the request.
+   *
+   * @param ctx the Grizzly filter context
+   * @return the next action to execute in the filter chain
+   * @throws IOException if the chain cannot proceed
+   */
   public NextAction handleRead (FilterChainContext ctx)
     throws IOException {
 
@@ -122,6 +138,12 @@ public class ClientAuthProxyFilter extends BaseFilter {
     return ctx.getInvokeAction();
   }
 
+  /**
+   * Converts the provided certificate chain into X.509 certificates.
+   *
+   * @param certs the certificates reported by the SSL session
+   * @return the converted X.509 array, or {@code null} if conversion fails
+   */
   private X509Certificate[] extractX509Certs (final Certificate[] certs) {
 
     if (certs == null) {
@@ -145,6 +167,12 @@ public class ClientAuthProxyFilter extends BaseFilter {
     return x509Certs;
   }
 
+  /**
+   * Reads the peer certificates from the SSL engine, swallowing any errors that occur during retrieval.
+   *
+   * @param sslEngine the engine associated with the current connection
+   * @return the peer certificate chain, or {@code null} if unavailable
+   */
   private Certificate[] getPeerCertificates (final SSLEngine sslEngine) {
 
     try {
@@ -154,6 +182,12 @@ public class ClientAuthProxyFilter extends BaseFilter {
     }
   }
 
+  /**
+   * Writes the remote IP address to the {@code X-Forwarded-For} header when available.
+   *
+   * @param peerAddress the socket address of the client
+   * @param httpHeader  the current HTTP header to mutate
+   */
   private void extractIPAddress (InetSocketAddress peerAddress, HttpHeader httpHeader) {
 
     if (peerAddress == null || peerAddress.getAddress() == null) {

@@ -104,14 +104,14 @@ public class SystemPropertyInitializingBean implements BeanFactoryPostProcessor,
     keyDebugger = new KeyDebugger(debugPatterns);
   }
 
-  @Override
-  // We exist as a post processor merely to get into the first 'special' initialization phase
   /**
    * Applies configured system properties and logs selected keys when enabled.
    *
    * @param beanFactory the bean factory (unused)
    * @throws BeansException if property setting fails
    */
+  @Override
+  // We exist as a post processor merely to get into the first 'special' initialization phase
   public void postProcessBeanFactory (ConfigurableListableBeanFactory beanFactory)
     throws BeansException {
 

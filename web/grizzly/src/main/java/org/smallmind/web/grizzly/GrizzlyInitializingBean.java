@@ -76,6 +76,10 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 
+/**
+ * Spring lifecycle bean that bootstraps a Grizzly HTTP/HTTPS server and deploys servlet, JAX-WS, JAX-RS, Spring and
+ * WebSocket components configured via {@link WebApplicationOption} and the various installer beans.
+ */
 public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, InitializingBean, DisposableBean, ApplicationContextAware, ApplicationListener<ContextRefreshedEvent> {
 
   private final HashMap<String, GrizzlyWebAppState> webAppStateMap = new HashMap<>();
@@ -95,76 +99,123 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
   private boolean suppressConnectionClosedException;
   private boolean debug = false;
 
+  /**
+   * @param ioStrategy custom Grizzly IO strategy to apply to the listeners; {@code null} keeps the default
+   */
   public void setIoStrategy (IOStrategy ioStrategy) {
 
     this.ioStrategy = ioStrategy;
   }
 
+  /**
+   * @param threadPoolProbe optional probe for observing worker thread pools
+   */
   public void setThreadPoolProbe (ThreadPoolProbe threadPoolProbe) {
 
     this.threadPoolProbe = threadPoolProbe;
   }
 
+  /**
+   * @param host host name or address Grizzly should bind to; {@code null} binds on all interfaces
+   */
   public void setHost (String host) {
 
     this.host = host;
   }
 
+  /**
+   * @param port HTTP listener port when insecure connections are allowed
+   */
   public void setPort (int port) {
 
     this.port = port;
   }
 
+  /**
+   * @param maxHttpHeaderSize maximum allowed HTTP header size; {@code null} retains Grizzly default
+   */
   public void setMaxHttpHeaderSize (Integer maxHttpHeaderSize) {
 
     this.maxHttpHeaderSize = maxHttpHeaderSize;
   }
 
+  /**
+   * @param initialWorkerPoolSize lower bound for the worker pool
+   */
   public void setInitialWorkerPoolSize (Integer initialWorkerPoolSize) {
 
     this.initialWorkerPoolSize = initialWorkerPoolSize;
   }
 
+  /**
+   * @param maximumWorkerPoolSize upper bound for the worker pool
+   */
   public void setMaximumWorkerPoolSize (Integer maximumWorkerPoolSize) {
 
     this.maximumWorkerPoolSize = maximumWorkerPoolSize;
   }
 
+  /**
+   * @param sslInfo SSL/TLS configuration for secure listeners; {@code null} disables HTTPS
+   */
   public void setSslInfo (SSLInfo sslInfo) {
 
     this.sslInfo = sslInfo;
   }
 
+  /**
+   * @param resourceConfig Jersey resource configuration used for REST deployment
+   */
   public void setResourceConfig (ResourceConfig resourceConfig) {
 
     this.resourceConfig = resourceConfig;
   }
 
+  /**
+   * @param addOns additional Grizzly add-ons to apply to every listener
+   */
   public void setAddOns (AddOn[] addOns) {
 
     this.addOns = addOns;
   }
 
+  /**
+   * @param webApplicationOptions per-context configuration objects describing what should be deployed
+   */
   public void setWebApplicationOptions (WebApplicationOption[] webApplicationOptions) {
 
     this.webApplicationOptions = webApplicationOptions;
   }
 
+  /**
+   * @param allowInsecure whether an HTTP listener should be started alongside HTTPS
+   */
   public void setAllowInsecure (boolean allowInsecure) {
 
     this.allowInsecure = allowInsecure;
   }
 
+  /**
+   * @param suppressConnectionClosedException true to silence broken pipe style exceptions in the request filter
+   */
   public void setSuppressConnectionClosedException (boolean suppressConnectionClosedException) {
 
     this.suppressConnectionClosedException = suppressConnectionClosedException;
   }
 
+  /**
+   * @param debug enables verbose SOAP logging when true
+   */
   public void setDebug (boolean debug) {
 
     this.debug = debug;
   }
 
+  /**
+   * Validates context paths and seeds a {@link GrizzlyWebAppState} for each declared application option.
+   *
+   * @throws GrizzlyInitializationException if context paths are missing or duplicated
+   */
   @Override
   public void afterPropertiesSet () {
 
@@ -177,6 +228,13 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
     }
   }
 
+  /**
+   * Locates the {@link GrizzlyWebAppState} matching the supplied context path.
+   *
+   * @param context servlet context path
+   * @return the registered state for the context
+   * @throws GrizzlyInitializationException when the path is missing or was never registered
+   */
   @Override
   public synchronized GrizzlyWebAppState webAppStateFor (String context) {
 
@@ -195,6 +253,13 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
     }
   }
 
+  /**
+   * Starts the Grizzly server once the Spring context is refreshed, wiring HTTP/HTTPS listeners, REST, SOAP, Spring
+   * listeners, filters, servlets and WebSocket endpoints according to the configured options.
+   *
+   * @param event Spring refreshed event trigger
+   * @throws GrizzlyInitializationException on any startup/configuration failure
+   */
   @Override
   public synchronized void onApplicationEvent (ContextRefreshedEvent event) {
 
@@ -368,6 +433,12 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
     LoggerManager.getLogger(GrizzlyInitializingBean.class).info("Grizzly service started...");
   }
 
+  /**
+   * Normalizes a servlet path to ensure leading slash and remove trailing slash where appropriate.
+   *
+   * @param path raw path fragment which may be {@code null}
+   * @return normalized path or {@code null} if input is {@code null}
+   */
   private String normalizePath (String path) {
 
     if (path != null) {
@@ -386,17 +457,32 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
     return null;
   }
 
+  /**
+   * Concatenates a base context path with an extension path while handling default root representations.
+   *
+   * @param contextPath   the servlet context path
+   * @param extensionPath an additional path fragment to append
+   * @return the normalized combined path
+   */
   private String combinePaths (String contextPath, String extensionPath) {
 
     return ((extensionPath == null) || (extensionPath.isEmpty()) || "/".equals(extensionPath)) ? contextPath : ((contextPath == null) || (contextPath.isEmpty()) || "/".equals(contextPath)) ? extensionPath : contextPath + extensionPath;
   }
 
+  /**
+   * Captures the Spring {@link ApplicationContext} in a globally accessible wrapper for later lookup.
+   *
+   * @param applicationContext active Spring context
+   */
   @Override
   public void setApplicationContext (ApplicationContext applicationContext) {
 
     ExposedApplicationContext.register(applicationContext);
   }
 
+  /**
+   * Stops deployed WebSocket containers and shuts down the Grizzly server.
+   */
   @Override
   public synchronized void destroy () {
 
@@ -416,6 +502,12 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
     }
   }
 
+  /**
+   * Applies optional IO, header size, worker pool and monitoring configuration to the supplied listener.
+   *
+   * @param networkListener the listener to configure
+   * @return the same listener instance for chaining
+   */
   private NetworkListener configureNetworkListener (NetworkListener networkListener) {
 
     if (maxHttpHeaderSize != null) {
@@ -437,6 +529,14 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
     return networkListener;
   }
 
+  /**
+   * Builds an HTTPS {@link NetworkListener} according to the supplied SSL configuration.
+   *
+   * @param sslInfo SSL configuration including keystore and truststore
+   * @return a secure listener instance
+   * @throws IOException        if key material cannot be read
+   * @throws ResourceException  if secure stores cannot supply credential bytes
+   */
   private NetworkListener generateSecureNetworkListener (SSLInfo sslInfo)
     throws IOException, ResourceException {
 

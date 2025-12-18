@@ -39,31 +39,63 @@ import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
+/**
+ * Base JsonEntity implementation that exposes parameters from a named argument map.
+ * Entries are converted on demand, optionally passing through any {@link XmlJavaTypeAdapter} associated with the parameter.
+ */
 public abstract class AbstractMappedJsonEntity implements JsonEntity {
 
   private static final Class[] NO_ARG_SIGNATURE = new Class[0];
 
   private Map<String, Object> arguments;
 
+  /**
+   * Constructs an empty entity with no argument map.
+   */
   public AbstractMappedJsonEntity () {
 
   }
 
+  /**
+   * Constructs an entity that will resolve parameters from the supplied argument map.
+   *
+   * @param arguments map keyed by parameter name holding argument values
+   */
   public AbstractMappedJsonEntity (Map<String, Object> arguments) {
 
     this.arguments = arguments;
   }
 
+  /**
+   * Returns the backing map of parameter values.
+   *
+   * @return map of argument values keyed by name, or {@code null} if none supplied
+   */
   public Map<String, Object> getArguments () {
 
     return arguments;
   }
 
+  /**
+   * Replaces the argument map used for parameter lookup.
+   *
+   * @param arguments map of parameter values keyed by name
+   */
   public void setArguments (Map<String, Object> arguments) {
 
     this.arguments = arguments;
   }
 
+  /**
+   * Resolves a parameter by name from the backing map, converting it to the requested type and honoring any
+   * {@link XmlJavaTypeAdapter} annotation.
+   *
+   * @param key parameter name
+   * @param clazz target type
+   * @param parameterAnnotations annotations present on the parameter definition
+   * @return converted value, or {@code null} if the key is not present
+   * @throws ParameterProcessingException if adapter construction or value conversion fails
+   */
   @Override
   public <T> T getParameter (String key, Class<T> clazz, ParameterAnnotations parameterAnnotations) {
 

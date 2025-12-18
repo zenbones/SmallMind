@@ -35,8 +35,16 @@ package org.smallmind.web.jersey.aop;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.smallmind.web.jersey.spring.PrioritizedResourceConfigExtension;
 
+/**
+ * Resource configuration extension that installs entity parameter handling components for Jersey resources.
+ */
 public class EntityParamExtension extends PrioritizedResourceConfigExtension {
 
+  /**
+   * Registers the filter, context resolver, and feature needed to bind {@link EntityParam}-annotated parameters.
+   *
+   * @param resourceConfig the Jersey resource configuration to update
+   */
   @Override
   public void apply (ResourceConfig resourceConfig) {
 

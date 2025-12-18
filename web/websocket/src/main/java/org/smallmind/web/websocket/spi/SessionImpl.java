@@ -66,6 +66,9 @@ import org.smallmind.web.websocket.ConnectionState;
 import org.smallmind.web.websocket.WebSocket;
 import org.smallmind.web.websocket.WebSocketException;
 
+/**
+ * Client-side {@link Session} backed by {@link WebSocket}, handling message dispatch, decoders, and endpoint callbacks.
+ */
 public class SessionImpl implements Session, CloseListener {
 
   private final WebSocket webSocket;
@@ -78,6 +81,17 @@ public class SessionImpl implements Session, CloseListener {
   private final HashMap<Class<? extends Decoder>, Decoder> decoderInstanceMap = new HashMap<>();
   private final String id = SnowflakeId.newInstance().generateHexEncoding();
 
+  /**
+   * Establishes a client session for the given endpoint and configuration.
+   *
+   * @param container the owning container
+   * @param uri the websocket URI
+   * @param endpoint the endpoint instance to receive callbacks
+   * @param endpointConfig the endpoint configuration
+   * @throws IOException if the socket cannot be opened
+   * @throws NoSuchAlgorithmException if handshake hashing fails
+   * @throws WebSocketException if the handshake or URI is invalid
+   */
   public SessionImpl (WebSocketContainer container, URI uri, final Endpoint endpoint, ClientEndpointConfig endpointConfig)
     throws IOException, NoSuchAlgorithmException, WebSocketException {
 
@@ -151,12 +165,18 @@ public class SessionImpl implements Session, CloseListener {
     endpoint.onOpen(this, endpointConfig);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public WebSocketContainer getContainer () {
 
     return container;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void addMessageHandler (MessageHandler handler)
     throws IllegalStateException {
@@ -169,6 +189,9 @@ public class SessionImpl implements Session, CloseListener {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public synchronized <T> void addMessageHandler (Class<T> clazz, MessageHandler.Whole<T> messageHandler) {
 
@@ -208,6 +231,9 @@ public class SessionImpl implements Session, CloseListener {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public synchronized <T> void addMessageHandler (Class<T> clazz, MessageHandler.Partial<T> messageHandler) {
 
@@ -231,6 +257,16 @@ public class SessionImpl implements Session, CloseListener {
     }
   }
 
+  /**
+   * Attempts to locate and register a decoder capable of handling the given message type.
+   *
+   * @param clazz the desired decoded type
+   * @param messageHandler the handler to receive decoded instances
+   * @param <T> the decoded type
+   * @return {@code true} if a decoder was registered; otherwise {@code false}
+   * @throws IllegalAccessException if a decoder cannot be instantiated
+   * @throws InstantiationException if a decoder cannot be instantiated
+   */
   private <T> boolean assignDecoder (Class<T> clazz, MessageHandler.Whole<T> messageHandler)
     throws IllegalAccessException, InstantiationException {
 
@@ -286,6 +322,13 @@ public class SessionImpl implements Session, CloseListener {
     return assigned;
   }
 
+  /**
+   * Determines the parameter type declared on a handler/decoder implementation.
+   *
+   * @param objectClass the implementation class
+   * @param targetInterface the generic interface implemented
+   * @return the single generic type argument
+   */
   private Class<?> getTypeParameter (Class<?> objectClass, Class<?> targetInterface) {
 
     List<Class<?>> parameterList;
@@ -297,6 +340,11 @@ public class SessionImpl implements Session, CloseListener {
     return parameterList.get(0);
   }
 
+  /**
+   * Assigns a text message handler, enforcing single registration.
+   *
+   * @param messageHandler the handler to register
+   */
   private void assignTextMessageHandler (MessageHandler messageHandler) {
 
     if (!textMessageHandlerRef.compareAndSet(null, messageHandler)) {
@@ -304,6 +352,11 @@ public class SessionImpl implements Session, CloseListener {
     }
   }
 
+  /**
+   * Assigns a binary message handler, enforcing single registration.
+   *
+   * @param messageHandler the handler to register
+   */
   private void assignBinaryMessageHandler (MessageHandler messageHandler) {
 
     if (!binaryMessageHandlerRef.compareAndSet(null, messageHandler)) {
@@ -311,6 +364,11 @@ public class SessionImpl implements Session, CloseListener {
     }
   }
 
+  /**
+   * Assigns a pong message handler, enforcing single registration.
+   *
+   * @param messageHandler the handler to register
+   */
   private void assignPongMessageHandler (MessageHandler messageHandler) {
 
     if (!pongMessageHandlerRef.compareAndSet(null, messageHandler)) {
@@ -318,6 +376,9 @@ public class SessionImpl implements Session, CloseListener {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public synchronized Set<MessageHandler> getMessageHandlers () {
 
@@ -339,6 +400,9 @@ public class SessionImpl implements Session, CloseListener {
     return Collections.unmodifiableSet(handlerSet);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public synchronized void removeMessageHandler (MessageHandler handler) {
 
@@ -349,78 +413,117 @@ public class SessionImpl implements Session, CloseListener {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String getProtocolVersion () {
 
     return String.valueOf(webSocket.getProtocolVersion());
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String getNegotiatedSubprotocol () {
 
     return webSocket.getNegotiatedProtocol();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public List<Extension> getNegotiatedExtensions () {
 
     return null;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean isSecure () {
 
     return webSocket.isSecure();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean isOpen () {
 
     return webSocket.getConnectionState().equals(ConnectionState.OPEN);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public long getMaxIdleTimeout () {
 
     return webSocket.getMaxIdleTimeoutMilliseconds();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void setMaxIdleTimeout (long milliseconds) {
 
     webSocket.setMaxIdleTimeoutMilliseconds(milliseconds);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int getMaxBinaryMessageBufferSize () {
 
     return webSocket.getMaxBinaryBufferSize();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void setMaxBinaryMessageBufferSize (int length) {
 
     webSocket.setMaxBinaryBufferSize(length);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int getMaxTextMessageBufferSize () {
 
     return webSocket.getMaxTextBufferSize();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void setMaxTextMessageBufferSize (int length) {
 
     webSocket.setMaxTextBufferSize(length);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void onClose (int code, String reason) {
 
     endpoint.onClose(this, new CloseReason(jakarta.websocket.CloseReason.CloseCodes.getCloseCode(code), reason));
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void close () {
 
@@ -431,6 +534,9 @@ public class SessionImpl implements Session, CloseListener {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void close (CloseReason closeReason) {
 
@@ -441,18 +547,27 @@ public class SessionImpl implements Session, CloseListener {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public URI getRequestURI () {
 
     return webSocket.getUri();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String getQueryString () {
 
     return webSocket.getUri().getQuery();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Map<String, List<String>> getRequestParameterMap () {
 
@@ -463,24 +578,36 @@ public class SessionImpl implements Session, CloseListener {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Map<String, String> getPathParameters () {
 
     return null;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Map<String, Object> getUserProperties () {
 
     return endpointConfig.getUserProperties();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Principal getUserPrincipal () {
 
     return null;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Set<Session> getOpenSessions () {
 
@@ -491,18 +618,27 @@ public class SessionImpl implements Session, CloseListener {
     return sessionSet;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String getId () {
 
     return id;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public RemoteEndpoint.Async getAsyncRemote () {
 
     return new RemoteEndpointImpl.Async(this, webSocket, endpoint, endpointConfig);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public RemoteEndpoint.Basic getBasicRemote () {
 

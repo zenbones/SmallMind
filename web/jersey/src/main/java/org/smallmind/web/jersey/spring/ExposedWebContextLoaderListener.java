@@ -36,8 +36,17 @@ import jakarta.servlet.ServletContextEvent;
 import org.smallmind.nutsnbolts.spring.web.WebContextLoaderListener;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
+/**
+ * Context loader listener that exposes the created Spring {@link org.springframework.web.context.WebApplicationContext}
+ * via {@link ExposedApplicationContext}.
+ */
 public class ExposedWebContextLoaderListener extends WebContextLoaderListener {
 
+  /**
+   * Initializes the parent context and then registers it for external lookup.
+   *
+   * @param servletContextEvent servlet context lifecycle event
+   */
   @Override
   public void contextInitialized (ServletContextEvent servletContextEvent) {
 

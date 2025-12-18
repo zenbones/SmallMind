@@ -40,11 +40,19 @@ import org.smallmind.nutsnbolts.reflection.OffloadingInvocationHandler;
 import org.smallmind.nutsnbolts.reflection.PassType;
 import org.smallmind.nutsnbolts.reflection.ProxyGenerator;
 
+/**
+ * Value instantiator that ensures Jackson updates the real polymorphic instance by creating a proxy
+ * around the instance placed in a thread-local by {@link AttributedPolymorphicXmlAdapter}.
+ */
 public class PolymorphicValueInstantiator extends StdValueInstantiator {
 
   private static final ThreadLocal<Object> polymorphicInstanceThreadLocal = new ThreadLocal<>();
   private final Class<?> polymorphicSubClass;
 
+  /**
+   * @param src                source instantiator being decorated
+   * @param polymorphicSubClass concrete subclass that should be instantiated
+   */
   public PolymorphicValueInstantiator (StdValueInstantiator src, Class<?> polymorphicSubClass) {
 
     super(src);
@@ -52,17 +60,32 @@ public class PolymorphicValueInstantiator extends StdValueInstantiator {
     this.polymorphicSubClass = polymorphicSubClass;
   }
 
+  /**
+   * Places the target polymorphic instance into a thread-local for later retrieval during creation.
+   *
+   * @param obj polymorphic instance being deserialized into
+   */
   public static void setPolymorphicInstance (Object obj) {
 
     polymorphicInstanceThreadLocal.set(obj);
   }
 
+  /**
+   * @return {@code true}; default creation is supported via the thread-local instance
+   */
   @Override
   public boolean canCreateUsingDefault () {
 
     return true;
   }
 
+  /**
+   * Returns a proxy that forwards to the polymorphic instance set in the thread-local.
+   *
+   * @param ctxt deserialization context
+   * @return proxy instance for the polymorphic type
+   * @throws JAXBProcessingException if no polymorphic instance was provided
+   */
   @Override
   public Object createUsingDefault (DeserializationContext ctxt) {
 

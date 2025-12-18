@@ -41,10 +41,19 @@ import jakarta.ws.rs.ext.ParamConverterProvider;
 import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
+/**
+ * ParamConverterProvider that delegates parameter conversion to JAXB {@link XmlAdapter} implementations.
+ */
 public class XmlAdapterParamConverterProvider implements ParamConverterProvider {
 
   private final ConcurrentHashMap<Class<? extends XmlAdapter>, ParamConverter<?>> CONVERTER_MAP = new ConcurrentHashMap<>();
 
+  /**
+   * Resolves a ParamConverter backed by an {@link XmlJavaTypeAdapter} annotation, caching converters per adapter class.
+   *
+   * @return a converter capable of using the declared adapter, or {@code null} if none is requested
+   * @throws XmlAdapterParamConversionException if the adapter cannot be instantiated
+   */
   @Override
   public <T> ParamConverter<T> getConverter (final Class<T> rawType, final Type genericType, final Annotation[] annotations) {
 
@@ -77,15 +86,32 @@ public class XmlAdapterParamConverterProvider implements ParamConverterProvider 
     return null;
   }
 
+  /**
+   * ParamConverter that delegates to the provided {@link XmlAdapter}.
+   *
+   * @param <T> target type produced by the adapter
+   */
   private static class XmlAdapterParamConverter<T> implements ParamConverter<T> {
 
     private final XmlAdapter<String, T> xmlAdapter;
 
+    /**
+     * Creates a converter that wraps the given adapter.
+     *
+     * @param xmlAdapter adapter that performs conversions
+     */
     public XmlAdapterParamConverter (XmlAdapter<String, T> xmlAdapter) {
 
       this.xmlAdapter = xmlAdapter;
     }
 
+    /**
+     * Converts a string value to the target type using {@link XmlAdapter#unmarshal(Object)}.
+     *
+     * @param value string value to convert
+     * @return converted value
+     * @throws XmlAdapterParamConversionException if unmarshalling fails
+     */
     @Override
     public T fromString (String value) {
 
@@ -96,6 +122,13 @@ public class XmlAdapterParamConverterProvider implements ParamConverterProvider 
       }
     }
 
+    /**
+     * Converts a value to its string representation using {@link XmlAdapter#marshal(Object)}.
+     *
+     * @param value value to convert
+     * @return string form of the value
+     * @throws XmlAdapterParamConversionException if marshalling fails
+     */
     @Override
     public String toString (T value) {
 

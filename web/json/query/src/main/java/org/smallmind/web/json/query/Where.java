@@ -40,26 +40,49 @@ import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlTransient;
 
+/**
+ * Root container for a where clause consisting of a single top-level conjunction.
+ */
 @XmlRootElement(name = "where", namespace = "http://org.smallmind/web/json/query")
 @XmlAccessorType(XmlAccessType.PROPERTY)
 public class Where implements WherePermissible<Where> {
 
   private WhereConjunction rootConjunction;
 
+  /**
+   * No-arg constructor for JAXB/Jackson.
+   */
   public Where () {
 
   }
 
+  /**
+   * Creates a where clause with the given root conjunction.
+   *
+   * @param rootConjunction conjunction forming the root of the predicate tree
+   */
   public Where (WhereConjunction rootConjunction) {
 
     this.rootConjunction = rootConjunction;
   }
 
+  /**
+   * Convenience factory for a where clause.
+   *
+   * @param rootConjunction conjunction forming the root of the predicate tree
+   * @return configured where clause
+   */
   public static Where instance (WhereConjunction rootConjunction) {
 
     return new Where(rootConjunction);
   }
 
+  /**
+   * Gathers all target field permissions implied by this where clause.
+   *
+   * @return set of target permits encountered in the predicate tree
+   * @throws Exception if traversal fails
+   */
   @Override
   @XmlTransient
   public Set<WherePermit> getTargetSet ()
@@ -84,12 +107,22 @@ public class Where implements WherePermissible<Where> {
     return targetSet;
   }
 
+  /**
+   * Returns the root conjunction of this where clause.
+   *
+   * @return root conjunction
+   */
   @XmlElement(name = "root")
   public WhereConjunction getRootConjunction () {
 
     return rootConjunction;
   }
 
+  /**
+   * Sets the root conjunction of this where clause.
+   *
+   * @param rootConjunction root conjunction
+   */
   public void setRootConjunction (WhereConjunction rootConjunction) {
 
     this.rootConjunction = rootConjunction;

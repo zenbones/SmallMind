@@ -34,13 +34,27 @@ package org.smallmind.web.jetty;
 
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
+/**
+ * Unchecked wrapper for errors encountered while initializing Jetty server components.
+ */
 public class JettyInitializationException extends FormattedRuntimeException {
 
+  /**
+   * Creates an exception with a formatted message describing the initialization failure.
+   *
+   * @param message the format string describing the problem
+   * @param args    message arguments inserted into the format string
+   */
   public JettyInitializationException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * Creates an exception that wraps an unexpected cause encountered during setup.
+   *
+   * @param throwable the underlying cause that triggered initialization to fail
+   */
   public JettyInitializationException (Throwable throwable) {
 
     super(throwable);

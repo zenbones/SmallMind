@@ -38,31 +38,64 @@ import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
+/**
+ * Base JsonEntity implementation that resolves parameters by their index within a backing argument array.
+ * Subclasses typically expose ordered method arguments for AOP interception and binding.
+ */
 public abstract class AbstractIndexedJsonEntity implements JsonEntity {
 
   private static final Class[] NO_ARG_SIGNATURE = new Class[0];
 
   private Object[] arguments;
 
+  /**
+   * Constructs an entity with no backing arguments. Parameter lookup will return {@code null}.
+   */
   public AbstractIndexedJsonEntity () {
 
   }
 
+  /**
+   * Constructs an entity with the supplied ordered arguments.
+   *
+   * @param arguments the argument array in invocation order; may be {@code null} if not available
+   */
   public AbstractIndexedJsonEntity (Object[] arguments) {
 
     this.arguments = arguments;
   }
 
+  /**
+   * Retrieves the backing argument array.
+   *
+   * @return the ordered invocation arguments, or {@code null} if not set
+   */
   public Object[] getArguments () {
 
     return arguments;
   }
 
+  /**
+   * Updates the stored invocation arguments.
+   *
+   * @param arguments the ordered invocation arguments to use for parameter extraction
+   */
   public void setArguments (Object[] arguments) {
 
     this.arguments = arguments;
   }
 
+  /**
+   * Resolves a parameter by parsing the supplied key as a zero-based index into the argument array and converting
+   * the value to the requested type, applying any {@link XmlJavaTypeAdapter} present on the parameter.
+   *
+   * @param key the string index of the desired argument
+   * @param clazz the target type to convert to
+   * @param parameterAnnotations annotations present on the parameter being resolved
+   * @return the converted argument value, or {@code null} if the index is out of bounds
+   * @throws ParameterProcessingException if the key cannot be parsed, the index is negative, adapter construction fails,
+   * or conversion fails
+   */
   @Override
   public <T> T getParameter (String key, Class<T> clazz, ParameterAnnotations parameterAnnotations) {
 

@@ -32,17 +32,29 @@
  */
 package org.smallmind.web.grizzly.installer;
 
+/**
+ * Base class for installer beans that describe components to be deployed into a Grizzly web application.
+ */
 public abstract class GrizzlyInstaller {
 
   private String contextPath;
 
+  /**
+   * @return discriminator describing the installer type
+   */
   public abstract GrizzlyInstallerType getOptionType ();
 
+  /**
+   * @return context path the component should be deployed under
+   */
   public String getContextPath () {
 
     return contextPath;
   }
 
+  /**
+   * @param contextPath target context path for deployment
+   */
   public void setContextPath (String contextPath) {
 
     this.contextPath = contextPath;

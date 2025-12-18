@@ -35,13 +35,39 @@ package org.smallmind.web.jersey.proxy;
 import java.lang.reflect.Proxy;
 import org.smallmind.scribe.pen.Level;
 
+/**
+ * Factory for creating dynamic proxies to JSON-backed Jersey resources.
+ */
 public class JsonEntityResourceProxyFactory {
 
+  /**
+   * Generates a proxy using {@link Level#OFF} for debug logging.
+   *
+   * @param target base target endpoint
+   * @param versionPrefix prefix before version in the URI
+   * @param serviceVersion service version number
+   * @param serviceName name of the service
+   * @param resourceInterface interface implemented by the proxy
+   * @param headerInjectors optional header injectors
+   * @return configured proxy instance
+   */
   public static Proxy generateProxy (JsonTarget target, String versionPrefix, int serviceVersion, String serviceName, Class<?> resourceInterface, JsonHeaderInjector... headerInjectors) {
 
     return generateProxy(target, versionPrefix, serviceVersion, serviceName, resourceInterface, Level.OFF, headerInjectors);
   }
 
+  /**
+   * Generates a proxy that posts {@link org.smallmind.web.jersey.aop.Envelope}-wrapped JSON requests to the target.
+   *
+   * @param target base target endpoint
+   * @param versionPrefix prefix before version in the URI
+   * @param serviceVersion service version number
+   * @param serviceName name of the service
+   * @param resourceInterface interface implemented by the proxy
+   * @param level log level for request debugging
+   * @param headerInjectors optional header injectors
+   * @return configured proxy instance
+   */
   public static Proxy generateProxy (JsonTarget target, String versionPrefix, int serviceVersion, String serviceName, Class<?> resourceInterface, Level level, JsonHeaderInjector... headerInjectors) {
 
     Proxy proxy = (Proxy)Proxy.newProxyInstance(resourceInterface.getClassLoader(), new Class[] {resourceInterface}, new JsonEntityInvocationHandler(target, versionPrefix, serviceVersion, serviceName, level, headerInjectors));

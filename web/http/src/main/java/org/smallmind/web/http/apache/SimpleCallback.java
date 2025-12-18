@@ -35,11 +35,20 @@ package org.smallmind.web.http.apache;
 import java.util.concurrent.atomic.AtomicReference;
 import org.apache.hc.client5.http.async.methods.SimpleHttpResponse;
 
+/**
+ * Basic {@link HttpCallback} implementation that captures the response or exception for later retrieval.
+ */
 public class SimpleCallback extends HttpCallback<SimpleHttpResponse> {
 
   private final AtomicReference<SimpleHttpResponse> responseRef = new AtomicReference<>();
   private final AtomicReference<Exception> exceptionRef = new AtomicReference<>();
 
+  /**
+   * Returns the HTTP response if available or rethrows any captured exception.
+   *
+   * @return HTTP response from the async invocation
+   * @throws Exception if the call failed or was cancelled
+   */
   public SimpleHttpResponse getResponse ()
     throws Exception {
 
@@ -52,18 +61,31 @@ public class SimpleCallback extends HttpCallback<SimpleHttpResponse> {
     }
   }
 
+  /**
+   * Stores the received response for later retrieval.
+   *
+   * @param response completed HTTP response
+   */
   @Override
   public void onCompleted (SimpleHttpResponse response) {
 
     responseRef.set(response);
   }
 
+  /**
+   * Records the thrown exception for retrieval in {@link #getResponse()}.
+   *
+   * @param exception failure cause
+   */
   @Override
   public void onFailed (Exception exception) {
 
     exceptionRef.set(exception);
   }
 
+  /**
+   * Records a {@link HttpRequestCancelledException} when the request is cancelled.
+   */
   @Override
   public void onCancelled () {
 

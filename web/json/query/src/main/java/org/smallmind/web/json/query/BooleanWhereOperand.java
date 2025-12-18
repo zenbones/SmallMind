@@ -37,26 +37,46 @@ import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
+/**
+ * Boolean literal operand.
+ */
 @XmlRootElement(name = "boolean", namespace = "http://org.smallmind/web/json/query")
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
 public class BooleanWhereOperand extends WhereOperand<Boolean> {
 
   private Boolean value;
 
+  /**
+   * No-arg constructor for JAXB/Jackson.
+   */
   public BooleanWhereOperand () {
 
   }
 
+  /**
+   * Creates an operand with the provided boolean value.
+   *
+   * @param value boolean literal
+   */
   public BooleanWhereOperand (Boolean value) {
 
     this.value = value;
   }
 
+  /**
+   * Convenience factory for a boolean operand.
+   *
+   * @param value boolean literal
+   * @return the operand instance
+   */
   public static BooleanWhereOperand instance (Boolean value) {
 
     return new BooleanWhereOperand(value);
   }
 
+  /**
+   * @return {@link ElementType#BOOLEAN}
+   */
   @Override
   @XmlTransient
   public ElementType getElementType () {
@@ -64,6 +84,9 @@ public class BooleanWhereOperand extends WhereOperand<Boolean> {
     return ElementType.BOOLEAN;
   }
 
+  /**
+   * @return {@link OperandType#BOOLEAN}
+   */
   @Override
   @XmlTransient
   public OperandType getOperandType () {
@@ -71,6 +94,11 @@ public class BooleanWhereOperand extends WhereOperand<Boolean> {
     return OperandType.BOOLEAN;
   }
 
+  /**
+   * Returns the boolean value.
+   *
+   * @return boolean literal or {@code null}
+   */
   @Override
   @XmlTransient
   public Boolean get () {
@@ -78,12 +106,22 @@ public class BooleanWhereOperand extends WhereOperand<Boolean> {
     return value;
   }
 
+  /**
+   * Returns the serialized boolean value.
+   *
+   * @return boolean literal or {@code null}
+   */
   @XmlElement(name = "value", required = true)
   public Boolean getValue () {
 
     return value;
   }
 
+  /**
+   * Sets the boolean value.
+   *
+   * @param value boolean literal
+   */
   public void setValue (Boolean value) {
 
     this.value = value;

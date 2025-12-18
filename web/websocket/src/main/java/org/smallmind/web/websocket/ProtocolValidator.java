@@ -34,10 +34,19 @@ package org.smallmind.web.websocket;
 
 import java.util.HashSet;
 
+/**
+ * Validates WebSocket sub-protocol names for allowed characters and uniqueness.
+ */
 public class ProtocolValidator {
 
   private static final String SEPARATORS = "()<>@,;:\\\"/[]?={} \t";
 
+  /**
+   * Checks that each supplied protocol token is valid and unique.
+   *
+   * @param protocols the requested sub-protocol names
+   * @return {@code true} if all protocols are valid or none supplied; otherwise {@code false}
+   */
   public static boolean validate (String... protocols) {
 
     if ((protocols != null) && (protocols.length > 0)) {

@@ -34,7 +34,15 @@ package org.smallmind.web.json.scaffold.version;
 
 import java.io.Serializable;
 
+/**
+ * Marks a type as carrying a specific {@link Version} identifier for compatibility management.
+ *
+ * @param <V> version enum that applies to the implementing type
+ */
 public interface Versioned<V extends Enum<V> & Version<V>> extends Serializable {
 
+  /**
+   * @return the version value identifying this instance's schema
+   */
   V getVersion ();
 }

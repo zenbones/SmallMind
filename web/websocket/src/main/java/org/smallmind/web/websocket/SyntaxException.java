@@ -32,8 +32,17 @@
  */
 package org.smallmind.web.websocket;
 
+/**
+ * Indicates malformed WebSocket URIs, headers, or frames detected during handshake or processing.
+ */
 public class SyntaxException extends WebSocketException {
 
+  /**
+   * Creates an exception with a formatted message describing the syntax error.
+   *
+   * @param message the format string
+   * @param args arguments referenced by the format specifiers in the message
+   */
   public SyntaxException (String message, Object... args) {
 
     super(message, args);

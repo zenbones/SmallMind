@@ -40,12 +40,21 @@ import org.glassfish.grizzly.http.server.NetworkListener;
 import org.glassfish.tyrus.spi.ServerContainer;
 import org.smallmind.web.grizzly.GrizzlyInitializationException;
 
+/**
+ * Grizzly {@link AddOn} that inserts the {@link TyrusGrizzlyServerFilter} into the listener filter chain to enable
+ * WebSocket upgrades.
+ */
 public class TyrusWebSocketAddOn implements AddOn {
 
   private final ServerContainer serverContainer;
   private final Map<String, Object> tyrusUpgradeRequestProperties;
   private final String contextPath;
 
+  /**
+   * @param serverContainer               Tyrus server container handling websocket upgrades
+   * @param contextPath                   application context path handled by the filter
+   * @param tyrusUpgradeRequestProperties optional properties forwarded to Tyrus during upgrade
+   */
   public TyrusWebSocketAddOn (ServerContainer serverContainer, String contextPath, Map<String, Object> tyrusUpgradeRequestProperties) {
 
     this.serverContainer = serverContainer;
@@ -53,6 +62,13 @@ public class TyrusWebSocketAddOn implements AddOn {
     this.tyrusUpgradeRequestProperties = tyrusUpgradeRequestProperties;
   }
 
+  /**
+   * Inserts a {@link TyrusGrizzlyServerFilter} into the filter chain immediately before the {@link HttpServerFilter},
+   * failing fast if the HTTP filter cannot be found.
+   *
+   * @param networkListener    listener being configured
+   * @param filterChainBuilder filter chain builder to mutate
+   */
   @Override
   public void setup (NetworkListener networkListener, FilterChainBuilder filterChainBuilder) {
 

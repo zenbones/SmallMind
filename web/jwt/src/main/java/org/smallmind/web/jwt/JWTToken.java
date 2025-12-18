@@ -34,11 +34,31 @@ package org.smallmind.web.jwt;
 
 public interface JWTToken {
 
+  /**
+   * Retrieves the subject (typically a user identifier) encoded into the token.
+   *
+   * @return the subject value
+   */
   String getSub ();
 
+  /**
+   * Assigns the subject (typically a user identifier) that will be embedded within the token.
+   *
+   * @param sub the subject value
+   */
   void setSub (String sub);
 
+  /**
+   * Retrieves the token expiration epoch time in seconds.
+   *
+   * @return the expiration timestamp
+   */
   long getExp ();
 
+  /**
+   * Sets the expiration epoch time (in seconds) after which the token is no longer valid.
+   *
+   * @param exp the expiration timestamp
+   */
   void setExp (long exp);
 }

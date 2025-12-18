@@ -35,17 +35,29 @@ package org.smallmind.web.json.scaffold.util;
 import org.smallmind.nutsnbolts.lang.PerApplicationContext;
 import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
 
+/**
+ * Manages the application-wide attribute name used to store polymorphic type identifiers during
+ * marshaling/unmarshalling.
+ */
 public class PolymorphicAttributeManager implements PerApplicationDataManager {
 
   static {
     PerApplicationContext.setPerApplicationData(PolymorphicAttributeManager.class, AttributedPolymorphicXmlAdapter.getDefaultPolymorphicAttributeName());
   }
 
+  /**
+   * @return the current polymorphic attribute name
+   */
   public static String getPolymorphicAttributeName () {
 
     return PerApplicationContext.getPerApplicationData(PolymorphicAttributeManager.class, String.class);
   }
 
+  /**
+   * Updates the polymorphic attribute name used globally for marshaling.
+   *
+   * @param polymorphicAttributeName attribute name to use
+   */
   public static void setPolymorphicAttributeName (String polymorphicAttributeName) {
 
     PerApplicationContext.setPerApplicationData(PolymorphicAttributeManager.class, polymorphicAttributeName);

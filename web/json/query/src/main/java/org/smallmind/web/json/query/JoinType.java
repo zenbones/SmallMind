@@ -32,6 +32,9 @@
  */
 package org.smallmind.web.json.query;
 
+/**
+ * Join types available when translating queries to joinable data sources.
+ */
 public enum JoinType {
 
   INNER, LEFT, RIGHT

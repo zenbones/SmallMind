@@ -36,33 +36,57 @@ import java.io.IOException;
 import java.util.LinkedList;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
+/**
+ * Represents one parsed segment of a dotted bean path, including optional method arguments
+ * and array subscripts that should be applied after invocation.
+ */
 public class PathComponent {
 
   private final String name;
   private LinkedList<Integer> subscriptList;
   private Object[] arguments;
 
+  /**
+   * @param name name of the property or method represented by this component
+   */
   public PathComponent (String name) {
 
     this.name = name;
   }
 
+  /**
+   * @return component name (property or method)
+   */
   public String getName () {
 
     return name;
   }
 
+  /**
+   * @return parsed argument list or {@code null} if none specified
+   */
   public Object[] getArguments () {
 
     return arguments;
   }
 
+  /**
+   * Parses and stores the argument list from the raw substring of the path.
+   *
+   * @param argumentSubPath text between the parentheses for this component
+   * @throws IOException if the arguments cannot be parsed as JSON
+   */
   public void createArguments (String argumentSubPath)
     throws IOException {
 
     arguments = JsonCodec.read('[' + argumentSubPath.strip() + ']', Object[].class);
   }
 
+  /**
+   * Returns the collected subscripts as a primitive array.
+   *
+   * @return subscripts or {@code null} when none exist
+   */
   public int[] getSubscripts () {
 
     if ((subscriptList == null) || subscriptList.isEmpty()) {
@@ -81,6 +105,11 @@ public class PathComponent {
     }
   }
 
+  /**
+   * Adds an array subscript parsed from the path segment.
+   *
+   * @param subscriptSubPath textual subscript content
+   */
   public void addSubscript (String subscriptSubPath) {
 
     if (subscriptList == null) {

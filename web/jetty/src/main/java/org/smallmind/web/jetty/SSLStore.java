@@ -39,6 +39,9 @@ import org.smallmind.nutsnbolts.resource.ResourceException;
 import org.smallmind.nutsnbolts.resource.ResourceParser;
 import org.smallmind.nutsnbolts.resource.ResourceTypeResourceGenerator;
 
+/**
+ * Describes a keystore or truststore resource and provides access to its bytes for Jetty SSL configuration.
+ */
 public class SSLStore {
 
   private static final ResourceParser RESOURCE_PARSER = new ResourceParser(new ResourceTypeResourceGenerator());
@@ -46,6 +49,13 @@ public class SSLStore {
   private String resource;
   private String password;
 
+  /**
+   * Loads the configured resource and returns its raw bytes.
+   *
+   * @return the contents of the keystore or truststore resource
+   * @throws IOException        if reading the resource fails
+   * @throws ResourceException  if the resource location cannot be resolved
+   */
   public byte[] getBytes ()
     throws IOException, ResourceException {
 
@@ -65,21 +75,41 @@ public class SSLStore {
     return resourceBuffer;
   }
 
+  /**
+   * Retrieves the configured resource location, e.g. a classpath or filesystem path.
+   *
+   * @return the resource identifier
+   */
   public String getResource () {
 
     return resource;
   }
 
+  /**
+   * Sets the location of the keystore or truststore to load.
+   *
+   * @param resource the resource identifier understood by {@link ResourceParser}
+   */
   public void setResource (String resource) {
 
     this.resource = resource;
   }
 
+  /**
+   * Retrieves the password used to unlock the configured store.
+   *
+   * @return the store password
+   */
   public String getPassword () {
 
     return password;
   }
 
+  /**
+   * Sets the password used to open the configured store.
+   *
+   * @param password the keystore or truststore password
+   */
   public void setPassword (String password) {
 
     this.password = password;

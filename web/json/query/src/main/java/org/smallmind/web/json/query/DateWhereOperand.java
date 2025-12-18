@@ -39,26 +39,46 @@ import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.smallmind.nutsnbolts.json.DateXmlAdapter;
 
+/**
+ * Date literal operand.
+ */
 @XmlRootElement(name = "date", namespace = "http://org.smallmind/web/json/query")
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
 public class DateWhereOperand extends WhereOperand<Date> {
 
   private Date value;
 
+  /**
+   * No-arg constructor for JAXB/Jackson.
+   */
   public DateWhereOperand () {
 
   }
 
+  /**
+   * Creates an operand with the provided date value.
+   *
+   * @param value date literal
+   */
   public DateWhereOperand (Date value) {
 
     this.value = value;
   }
 
+  /**
+   * Convenience factory for a date operand.
+   *
+   * @param value date literal
+   * @return operand instance
+   */
   public static DateWhereOperand instance (Date value) {
 
     return new DateWhereOperand(value);
   }
 
+  /**
+   * @return {@link ElementType#DATE}
+   */
   @Override
   @XmlTransient
   public ElementType getElementType () {
@@ -66,6 +86,9 @@ public class DateWhereOperand extends WhereOperand<Date> {
     return ElementType.DATE;
   }
 
+  /**
+   * @return {@link OperandType#DATE}
+   */
   @Override
   @XmlTransient
   public OperandType getOperandType () {
@@ -73,6 +96,11 @@ public class DateWhereOperand extends WhereOperand<Date> {
     return OperandType.DATE;
   }
 
+  /**
+   * Returns the date value.
+   *
+   * @return date literal or {@code null}
+   */
   @Override
   @XmlTransient
   public Date get () {
@@ -80,6 +108,11 @@ public class DateWhereOperand extends WhereOperand<Date> {
     return value;
   }
 
+  /**
+   * Returns the serialized date value.
+   *
+   * @return date literal or {@code null}
+   */
   @XmlElement(name = "value", required = true)
   @XmlJavaTypeAdapter(DateXmlAdapter.class)
   public Date getValue () {
@@ -87,6 +120,11 @@ public class DateWhereOperand extends WhereOperand<Date> {
     return value;
   }
 
+  /**
+   * Sets the date value.
+   *
+   * @param value date literal
+   */
   public void setValue (Date value) {
 
     this.value = value;

@@ -34,13 +34,28 @@ package org.smallmind.web.json.scaffold.property;
 
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
+/**
+ * Runtime exception indicating a failure during reflective property conversion between
+ * view and entity representations.
+ */
 public class PropertyException extends FormattedRuntimeException {
 
+  /**
+   * Creates an exception with a formatted message.
+   *
+   * @param message message template
+   * @param args    template arguments
+   */
   public PropertyException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * Wraps a root cause encountered during property operations.
+   *
+   * @param cause underlying exception
+   */
   public PropertyException (Throwable cause) {
 
     super(cause);

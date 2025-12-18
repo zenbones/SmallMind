@@ -37,9 +37,20 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 
+/**
+ * Aspect that intercepts {@link ResourceMethod}-annotated invocations to optionally perform bean validation.
+ */
 @Aspect
 public class ResourceMethodAspect {
 
+  /**
+   * Surrounds the resource method call to validate parameters and return value when requested.
+   *
+   * @param thisJoinPoint join point for the method invocation
+   * @param resourceMethod annotation describing validation behavior
+   * @return the method's return value
+   * @throws Throwable if validation fails or the target method throws
+   */
   @Around(value = "execution(@org.smallmind.web.jersey.aop.ResourceMethod * * (..)) && @annotation(resourceMethod)", argNames = "thisJoinPoint, resourceMethod")
   public Object aroundEntityTypeMethod (ProceedingJoinPoint thisJoinPoint, ResourceMethod resourceMethod)
     throws Throwable {

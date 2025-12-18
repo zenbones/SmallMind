@@ -34,13 +34,27 @@ package org.smallmind.web.json.query;
 
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
+/**
+ * Unchecked exception used when parsing or translating where clauses fails.
+ */
 public class QueryProcessingException extends FormattedRuntimeException {
 
+  /**
+   * Creates an exception with a formatted message.
+   *
+   * @param message description of the processing error
+   * @param args    message formatting arguments
+   */
   public QueryProcessingException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * Wraps an underlying cause encountered during processing.
+   *
+   * @param throwable underlying cause
+   */
   public QueryProcessingException (Throwable throwable) {
 
     super(throwable);

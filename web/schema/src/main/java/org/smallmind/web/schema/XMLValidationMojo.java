@@ -51,7 +51,9 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
-// Validates XML against W3C XSD
+/**
+ * Maven mojo that validates XML files against W3C XSD schemas declared in project resources.
+ */
 @Mojo(name = "validate-xml", defaultPhase = LifecyclePhase.VALIDATE, requiresDependencyResolution = ResolutionScope.RUNTIME, threadSafe = true)
 public class XMLValidationMojo extends AbstractMojo {
 
@@ -67,6 +69,11 @@ public class XMLValidationMojo extends AbstractMojo {
   @Parameter
   private List<XSD> schemas;
 
+  /**
+   * Executes the validation goal, checking the configured XSDs and XML implementations.
+   *
+   * @throws MojoExecutionException if a schema or XML resource cannot be located or fails validation
+   */
   public void execute ()
     throws MojoExecutionException {
 
@@ -114,6 +121,12 @@ public class XMLValidationMojo extends AbstractMojo {
     }
   }
 
+  /**
+   * Resolves a resource path against the project's configured resource directories.
+   *
+   * @param resourceName the classpath-relative resource path
+   * @return a {@link Path} to the resolved resource, or {@code null} if not found
+   */
   private Path getResourceFile (String resourceName) {
 
     Path schemaFile;
@@ -130,6 +143,12 @@ public class XMLValidationMojo extends AbstractMojo {
 
   private static class ValidationErrorHandler extends DefaultHandler {
 
+    /**
+     * Reports a fatal parsing error and rethrows it to halt validation.
+     *
+     * @param saxException the fatal parsing exception
+     * @throws SAXException always rethrown to stop processing
+     */
     public void fatalError (SAXParseException saxException)
       throws SAXException {
 
@@ -137,6 +156,12 @@ public class XMLValidationMojo extends AbstractMojo {
       throw saxException;
     }
 
+    /**
+     * Reports a non-fatal parsing error and rethrows it to indicate validation failure.
+     *
+     * @param saxException the parsing exception
+     * @throws SAXException always rethrown to stop processing
+     */
     public void error (SAXParseException saxException)
       throws SAXException {
 
@@ -144,6 +169,12 @@ public class XMLValidationMojo extends AbstractMojo {
       throw saxException;
     }
 
+    /**
+     * Reports a validation warning without halting processing.
+     *
+     * @param saxException the warning detail
+     * @throws SAXException if the underlying handler chooses to abort
+     */
     public void warning (SAXParseException saxException)
       throws SAXException {
 

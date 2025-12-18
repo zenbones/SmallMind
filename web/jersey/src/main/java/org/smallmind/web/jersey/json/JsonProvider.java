@@ -48,6 +48,9 @@ import jakarta.ws.rs.ext.MessageBodyReader;
 import jakarta.ws.rs.ext.MessageBodyWriter;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
+/**
+ * Message body reader/writer that delegates JSON serialization and deserialization to {@link JsonCodec}.
+ */
 @Priority(1)
 @Consumes({MediaType.APPLICATION_JSON, "text/json"})
 @Produces({MediaType.APPLICATION_JSON, "text/json"})
@@ -55,12 +58,22 @@ public class JsonProvider implements MessageBodyReader<Object>, MessageBodyWrite
 
   private static final ThreadLocal<ByteArrayOutputStream> WRITE_BUFFER_LOCAL = new ThreadLocal<>();
 
+  /**
+   * Indicates that any type can be read as JSON.
+   *
+   * @return always {@code true}
+   */
   @Override
   public boolean isReadable (Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
 
     return true;
   }
 
+  /**
+   * Deserializes the entity stream into the requested type.
+   *
+   * @throws IOException if the payload cannot be read or parsed
+   */
   @Override
   public Object readFrom (Class<Object> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream)
     throws IOException, WebApplicationException {
@@ -68,12 +81,22 @@ public class JsonProvider implements MessageBodyReader<Object>, MessageBodyWrite
     return JsonCodec.read(entityStream, type);
   }
 
+  /**
+   * Indicates that any type can be written as JSON.
+   *
+   * @return always {@code true}
+   */
   @Override
   public boolean isWriteable (Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
 
     return true;
   }
 
+  /**
+   * Serializes the object to a thread-local buffer and reports its size.
+   *
+   * @throws WebApplicationException if serialization fails
+   */
   @Override
   public long getSize (Object o, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
 
@@ -89,6 +112,12 @@ public class JsonProvider implements MessageBodyReader<Object>, MessageBodyWrite
     }
   }
 
+  /**
+   * Writes the previously buffered JSON to the response output stream.
+   *
+   * @throws IOException if the entity stream cannot be written
+   * @throws WebApplicationException if serialization fails
+   */
   @Override
   public void writeTo (Object o, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream)
     throws IOException, WebApplicationException {

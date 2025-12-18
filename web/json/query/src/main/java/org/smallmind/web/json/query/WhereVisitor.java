@@ -32,11 +32,26 @@
  */
 package org.smallmind.web.json.query;
 
+/**
+ * Visitor for traversing where clause structures.
+ */
 public interface WhereVisitor {
 
+  /**
+   * Called for each conjunction encountered during traversal.
+   *
+   * @param conjunction conjunction node
+   * @throws Exception if processing fails
+   */
   void visitConjunction (WhereConjunction conjunction)
     throws Exception;
 
+  /**
+   * Called for each field criterion encountered during traversal.
+   *
+   * @param field field node
+   * @throws Exception if processing fails
+   */
   void visitField (WhereField field)
     throws Exception;
 }

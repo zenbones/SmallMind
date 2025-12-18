@@ -35,14 +35,36 @@ package org.smallmind.web.json.scaffold.util;
 import java.util.Map;
 import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 
+/**
+ * Base JAXB adapter for serializing/deserializing {@link Map} instances as arrays of {@link MapKeyValue}.
+ *
+ * @param <M> concrete map type
+ * @param <K> key type
+ * @param <V> value type
+ */
 public abstract class MapXmlAdapter<M extends Map<K, V>, K, V> extends XmlAdapter<MapKeyValue<K, V>[], M> {
 
+  /**
+   * @return an empty mutable map of the desired type
+   */
   public abstract M getEmptyMap ();
 
+  /**
+   * @return class used for converting keys
+   */
   public abstract Class<K> getKeyClass ();
 
+  /**
+   * @return class used for converting values
+   */
   public abstract Class<V> getValueClass ();
 
+  /**
+   * Converts an array of key/value pairs into a map instance.
+   *
+   * @param array serialized map entries
+   * @return populated map or {@code null} if the array is {@code null}
+   */
   @Override
   public M unmarshal (MapKeyValue<K, V>[] array) {
 
@@ -60,6 +82,12 @@ public abstract class MapXmlAdapter<M extends Map<K, V>, K, V> extends XmlAdapte
     return null;
   }
 
+  /**
+   * Serializes a map into an array of key/value pairs.
+   *
+   * @param map map to serialize
+   * @return serialized array or {@code null} if the map is {@code null}
+   */
   @Override
   public MapKeyValue<K, V>[] marshal (M map) {
 

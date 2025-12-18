@@ -35,6 +35,9 @@ package org.smallmind.web.grizzly.installer;
 import java.util.Map;
 import jakarta.servlet.Servlet;
 
+/**
+ * Describes a servlet to be installed into a Grizzly web application context.
+ */
 public class ServletInstaller extends GrizzlyInstaller {
 
   private Servlet servlet;
@@ -45,73 +48,119 @@ public class ServletInstaller extends GrizzlyInstaller {
   private Integer loadOnStartup;
   private Boolean asyncSupported;
 
+  /**
+   * @return {@link GrizzlyInstallerType#SERVLET}
+   */
   @Override
   public GrizzlyInstallerType getOptionType () {
 
     return GrizzlyInstallerType.SERVLET;
   }
 
+  /**
+   * @return display name used when registering the servlet
+   */
   public String getDisplayName () {
 
     return displayName;
   }
 
+  /**
+   * @param displayName friendly registration name for the servlet
+   */
   public void setDisplayName (String displayName) {
 
     this.displayName = displayName;
   }
 
+  /**
+   * Instantiates the servlet if only a class was provided, otherwise returns the supplied instance.
+   *
+   * @return servlet instance to deploy
+   * @throws InstantiationException if the servlet cannot be constructed
+   * @throws IllegalAccessException if the constructor is not accessible
+   */
   public Servlet getServlet ()
     throws InstantiationException, IllegalAccessException {
 
     return (servlet != null) ? servlet : servletClass.newInstance();
   }
 
+  /**
+   * @param servlet concrete servlet instance
+   */
   public void setServlet (Servlet servlet) {
 
     this.servlet = servlet;
   }
 
+  /**
+   * @param servletClass servlet implementation class to instantiate
+   */
   public void setServletClass (Class<? extends Servlet> servletClass) {
 
     this.servletClass = servletClass;
   }
 
+  /**
+   * @return init parameters to set on the servlet registration
+   */
   public Map<String, String> getInitParameters () {
 
     return initParameters;
   }
 
+  /**
+   * @param initParameters servlet init parameters
+   */
   public void setInitParameters (Map<String, String> initParameters) {
 
     this.initParameters = initParameters;
   }
 
+  /**
+   * @return mapping pattern to use when registering the servlet
+   */
   public String getUrlPattern () {
 
     return urlPattern;
   }
 
+  /**
+   * @param urlPattern URL mapping for the servlet
+   */
   public void setUrlPattern (String urlPattern) {
 
     this.urlPattern = urlPattern;
   }
 
+  /**
+   * @return desired load-on-startup order; {@code null} leaves it unset
+   */
   public Integer getLoadOnStartup () {
 
     return loadOnStartup;
   }
 
+  /**
+   * @param loadOnStartup servlet load-on-startup order
+   */
   public void setLoadOnStartup (Integer loadOnStartup) {
 
     this.loadOnStartup = loadOnStartup;
   }
 
+  /**
+   * @return whether the servlet supports async; {@code null} leaves container default
+   */
   public Boolean getAsyncSupported () {
 
     return asyncSupported;
   }
 
+  /**
+   * @param asyncSupported flag indicating async support
+   */
   public void setAsyncSupported (Boolean asyncSupported) {
 
     this.asyncSupported = asyncSupported;

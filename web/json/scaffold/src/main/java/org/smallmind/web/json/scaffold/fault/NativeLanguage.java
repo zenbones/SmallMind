@@ -32,6 +32,9 @@
  */
 package org.smallmind.web.json.scaffold.fault;
 
+/**
+ * Identifies the language of a native stack trace or binary payload captured in a {@link NativeObject}.
+ */
 public enum NativeLanguage {
 
   C_SHARP, JAVA, JAVASCRIPT, JULIA, R, PYTHON

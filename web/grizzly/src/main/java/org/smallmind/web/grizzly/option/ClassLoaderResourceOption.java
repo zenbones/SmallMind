@@ -32,26 +32,41 @@
  */
 package org.smallmind.web.grizzly.option;
 
+/**
+ * Configures static resources that should be served from a class loader-backed path.
+ */
 public class ClassLoaderResourceOption {
 
   private ClassLoader staticClassLoader;
   private String staticPath = "/static";
 
+  /**
+   * @return context path from which classloader resources will be served
+   */
   public String getStaticPath () {
 
     return staticPath;
   }
 
+  /**
+   * @param staticPath context path from which classloader resources will be served
+   */
   public void setStaticPath (String staticPath) {
 
     this.staticPath = staticPath;
   }
 
+  /**
+   * @return class loader used to locate static resources
+   */
   public ClassLoader getStaticClassLoader () {
 
     return staticClassLoader;
   }
 
+  /**
+   * @param staticClassLoader class loader used to locate static resources
+   */
   public void setStaticClassLoader (ClassLoader staticClassLoader) {
 
     this.staticClassLoader = staticClassLoader;

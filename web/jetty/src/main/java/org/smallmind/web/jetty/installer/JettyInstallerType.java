@@ -32,6 +32,9 @@
  */
 package org.smallmind.web.jetty.installer;
 
+/**
+ * Enumerates the kinds of installers that can be contributed to a Jetty context.
+ */
 public enum JettyInstallerType {
 
   FILTER, LISTENER, SERVLET

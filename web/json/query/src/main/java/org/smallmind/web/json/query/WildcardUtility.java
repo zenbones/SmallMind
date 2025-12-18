@@ -34,8 +34,19 @@ package org.smallmind.web.json.query;
 
 import org.smallmind.web.json.NonTerminalWildcardException;
 
+/**
+ * Utility methods for transforming wildcard patterns to SQL-friendly forms.
+ */
 public class WildcardUtility {
 
+  /**
+   * Replaces '*' wildcards with '%' for SQL LIKE expressions, optionally disallowing non-terminal wildcards.
+   *
+   * @param original                  the input pattern containing '*' wildcards
+   * @param allowNonTerminalWildcards whether wildcards may appear before the final character
+   * @return the transformed pattern with SQL wildcards
+   * @throws NonTerminalWildcardException if a non-terminal wildcard is found and not allowed
+   */
   public static String swapWithSqlWildcard (String original, boolean allowNonTerminalWildcards) {
 
     StringBuilder transformBuilder = null;

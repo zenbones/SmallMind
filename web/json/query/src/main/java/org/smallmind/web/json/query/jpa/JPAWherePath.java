@@ -36,12 +36,21 @@ import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Root;
 import org.smallmind.web.json.query.WherePath;
 
+/**
+ * JPA Criteria implementation of {@link WherePath}, capturing root and path for a field.
+ */
 public class JPAWherePath extends WherePath<Root<?>, Path<?>> {
 
   private final Root<?> root;
   private final Path<?> path;
   private final String field;
 
+  /**
+   * Builds a path from a root and field name by calling {@link Root#get(String)}.
+   *
+   * @param root  JPA root
+   * @param field field name
+   */
   public JPAWherePath (Root<?> root, String field) {
 
     this.root = root;
@@ -50,18 +59,27 @@ public class JPAWherePath extends WherePath<Root<?>, Path<?>> {
     path = root.get(field);
   }
 
+  /**
+   * @return JPA root
+   */
   @Override
   public Root<?> getRoot () {
 
     return root;
   }
 
+  /**
+   * @return JPA path to the field
+   */
   @Override
   public Path<?> getPath () {
 
     return path;
   }
 
+  /**
+   * @return name of the terminal field
+   */
   @Override
   public String getField () {
 

@@ -36,39 +36,66 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.EventListener;
 import java.util.Map;
 
+/**
+ * Describes a servlet context listener to register within a Grizzly application context.
+ */
 public class ListenerInstaller extends GrizzlyInstaller {
 
   private EventListener eventListener;
   private Class<? extends EventListener> listenerClass;
   private Map<String, String> contextParameters;
 
+  /**
+   * @return {@link GrizzlyInstallerType#LISTENER}
+   */
   @Override
   public GrizzlyInstallerType getOptionType () {
 
     return GrizzlyInstallerType.LISTENER;
   }
 
+  /**
+   * Instantiates or returns the configured listener.
+   *
+   * @return listener to install
+   * @throws NoSuchMethodException     if the default constructor cannot be found
+   * @throws InstantiationException    if the listener cannot be constructed
+   * @throws IllegalAccessException    if the constructor is not accessible
+   * @throws InvocationTargetException if the constructor throws an exception
+   */
   public EventListener getListener ()
     throws NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
 
     return (eventListener != null) ? eventListener : listenerClass.getDeclaredConstructor().newInstance();
   }
 
+  /**
+   * @param eventListener concrete listener instance
+   */
   public void setEventListener (EventListener eventListener) {
 
     this.eventListener = eventListener;
   }
 
+  /**
+   * @param listenerClass listener implementation class to instantiate
+   */
   public void setListenerClass (Class<? extends EventListener> listenerClass) {
 
     this.listenerClass = listenerClass;
   }
 
+  /**
+   * @return context initialization parameters to add when registering the listener
+   */
   public Map<String, String> getContextParameters () {
 
     return contextParameters;
   }
 
+  /**
+   * @param contextParameters additional context parameters for the web application
+   */
   public void setContextParameters (Map<String, String> contextParameters) {
 
     this.contextParameters = contextParameters;

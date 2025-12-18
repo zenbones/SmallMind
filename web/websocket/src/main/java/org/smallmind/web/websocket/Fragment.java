@@ -32,12 +32,22 @@
  */
 package org.smallmind.web.websocket;
 
+/**
+ * Represents a decoded WebSocket frame fragment.
+ */
 public class Fragment {
 
   private final OpCode opCode;
   private final boolean fin;
   private final byte[] message;
 
+  /**
+   * Creates a fragment with final flag, opcode and payload bytes.
+   *
+   * @param fin {@code true} if this is the final fragment in a message
+   * @param opCode the frame opcode
+   * @param message the frame payload
+   */
   public Fragment (boolean fin, OpCode opCode, byte[] message) {
 
     this.fin = fin;
@@ -45,16 +55,31 @@ public class Fragment {
     this.message = message;
   }
 
+  /**
+   * Indicates whether this fragment terminates a message.
+   *
+   * @return {@code true} if this is the final fragment
+   */
   public boolean isFinal () {
 
     return fin;
   }
 
+  /**
+   * Returns the frame opcode.
+   *
+   * @return the opcode of this fragment
+   */
   public OpCode getOpCode () {
 
     return opCode;
   }
 
+  /**
+   * Payload carried by the fragment.
+   *
+   * @return the payload bytes
+   */
   public byte[] getMessage () {
 
     return message;

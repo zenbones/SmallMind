@@ -36,39 +36,76 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.EventListener;
 import java.util.Map;
 
+/**
+ * Describes a servlet {@link EventListener} to register with a Jetty context, along with optional context parameters.
+ */
 public class ListenerInstaller extends JettyInstaller {
 
   private EventListener eventListener;
   private Class<? extends EventListener> listenerClass;
   private Map<String, String> contextParameters;
 
+  /**
+   * Identifies this installer as targeting servlet listeners.
+   *
+   * @return {@link JettyInstallerType#LISTENER}
+   */
   @Override
   public JettyInstallerType getOptionType () {
 
     return JettyInstallerType.LISTENER;
   }
 
+  /**
+   * Instantiates or returns the provided servlet listener.
+   *
+   * @return the listener instance to register
+   * @throws NoSuchMethodException     if the listener class lacks a no-argument constructor
+   * @throws InstantiationException    if the listener cannot be instantiated
+   * @throws IllegalAccessException    if the constructor is inaccessible
+   * @throws InvocationTargetException if the constructor throws an exception
+   */
   public EventListener getListener ()
     throws NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
 
     return (eventListener != null) ? eventListener : listenerClass.getDeclaredConstructor().newInstance();
   }
 
+  /**
+   * Supplies a concrete listener instance.
+   *
+   * @param eventListener the listener to register
+   */
   public void setEventListener (EventListener eventListener) {
 
     this.eventListener = eventListener;
   }
 
+  /**
+   * Supplies the listener class used when an instance is not directly provided.
+   *
+   * @param listenerClass the listener implementation class
+   */
   public void setListenerClass (Class<? extends EventListener> listenerClass) {
 
     this.listenerClass = listenerClass;
   }
 
+  /**
+   * Retrieves the context initialization parameters applied alongside the listener.
+   *
+   * @return map of context parameters or {@code null} if none
+   */
   public Map<String, String> getContextParameters () {
 
     return contextParameters;
   }
 
+  /**
+   * Sets context initialization parameters to accompany this listener.
+   *
+   * @param contextParameters parameters to apply to the servlet context
+   */
   public void setContextParameters (Map<String, String> contextParameters) {
 
     this.contextParameters = contextParameters;

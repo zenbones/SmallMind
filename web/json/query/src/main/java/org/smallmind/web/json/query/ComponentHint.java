@@ -37,21 +37,35 @@ import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
+/**
+ * Hint describing the component type of an array operand.
+ */
 @XmlRootElement(name = "component", namespace = "http://org.smallmind/web/json/query")
 @XmlJavaTypeAdapter(HintPolymorphicXmlAdapter.class)
 public class ComponentHint extends Hint {
 
   private ComponentType type;
 
+  /**
+   * No-arg constructor for JAXB/Jackson.
+   */
   public ComponentHint () {
 
   }
 
+  /**
+   * Creates a component hint for the supplied type.
+   *
+   * @param type component type
+   */
   public ComponentHint (ComponentType type) {
 
     this.type = type;
   }
 
+  /**
+   * @return {@link HintType#COMPONENT}
+   */
   @Override
   @XmlTransient
   public HintType getHintType () {
@@ -59,6 +73,11 @@ public class ComponentHint extends Hint {
     return HintType.COMPONENT;
   }
 
+  /**
+   * Returns the component type represented by this hint.
+   *
+   * @return component type
+   */
   @XmlElement(name = "type", required = true)
   @XmlJavaTypeAdapter(ComponentTypeEnumXmlAdapter.class)
   public ComponentType getType () {
@@ -66,6 +85,11 @@ public class ComponentHint extends Hint {
     return type;
   }
 
+  /**
+   * Sets the component type represented by this hint.
+   *
+   * @param type component type
+   */
   public void setType (ComponentType type) {
 
     this.type = type;

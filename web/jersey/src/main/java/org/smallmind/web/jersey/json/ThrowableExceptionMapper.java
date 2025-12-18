@@ -41,22 +41,44 @@ import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.web.json.scaffold.fault.Fault;
 import org.smallmind.web.json.scaffold.fault.FaultWrappingException;
 
+/**
+ * Global exception mapper that delegates to supplied mappers, preserves WebApplicationException responses,
+ * and converts unhandled errors into JSON {@link Fault} payloads.
+ */
 public class ThrowableExceptionMapper implements ExceptionMapper<Throwable> {
 
   private final ExceptionMapper[] mappers;
   private final boolean logUnclassifiedErrors;
 
+  /**
+   * Constructs a mapper that does not log unclassified errors.
+   *
+   * @param mappers optional mapper overrides to try first
+   */
   public ThrowableExceptionMapper (ExceptionMapper... mappers) {
 
     this(false, mappers);
   }
 
+  /**
+   * Constructs a mapper with control over unclassified error logging.
+   *
+   * @param logUnclassifiedErrors whether to log exceptions that are not handled elsewhere
+   * @param mappers optional mapper overrides to try first
+   */
   public ThrowableExceptionMapper (boolean logUnclassifiedErrors, ExceptionMapper... mappers) {
 
     this.logUnclassifiedErrors = logUnclassifiedErrors;
     this.mappers = mappers;
   }
 
+  /**
+   * Produces a response for the given throwable, consulting custom mappers, honoring WebApplicationException responses,
+   * and falling back to a {@link Fault} payload.
+   *
+   * @param throwable exception thrown during request processing
+   * @return HTTP response representing the error
+   */
   @Override
   public Response toResponse (Throwable throwable) {
 

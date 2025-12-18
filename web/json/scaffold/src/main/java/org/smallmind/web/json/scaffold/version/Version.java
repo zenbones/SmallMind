@@ -36,16 +36,39 @@ import java.io.IOException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
+/**
+ * Represents a semantic version definition that knows how to serialize and deserialize
+ * {@link Versioned} instances of a particular type.
+ *
+ * @param <V> concrete version enum type implementing this contract
+ */
 public interface Version<V extends Enum<V> & Version<V>> {
 
+  /**
+   * @return the class of the {@link Versioned} type governed by this version enum
+   */
   Class<? extends Versioned<V>> getVersionedClass ();
 
+  /**
+   * Deserializes a JSON representation of a {@link Versioned} object that matches this version.
+   *
+   * @param json JSON payload
+   * @return deserialized object
+   * @throws IOException if parsing fails or the JSON cannot be bound to the target type
+   */
   default Versioned<V> fromJson (String json)
     throws IOException {
 
     return JsonCodec.read(json, getVersionedClass());
   }
 
+  /**
+   * Serializes a {@link Versioned} object into JSON.
+   *
+   * @param versioned instance to serialize
+   * @return JSON representation
+   * @throws JsonProcessingException if serialization fails
+   */
   default String toJson (Versioned<V> versioned)
     throws JsonProcessingException {
 

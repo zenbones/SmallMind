@@ -48,10 +48,19 @@ import jakarta.websocket.EndpointConfig;
 import jakarta.websocket.Extension;
 import jakarta.websocket.Session;
 
+/**
+ * Wraps an annotated {@link ClientEndpoint} class into an {@link Endpoint} with derived configuration.
+ */
 public class AnnotatedEndpoint extends Endpoint {
 
   private final AnnotatedClientEndpointConfig endpointConfig;
 
+  /**
+   * Creates an annotated endpoint from a {@link ClientEndpoint}-annotated class.
+   *
+   * @param annotatedClass the class containing websocket annotations
+   * @throws DeploymentException if the class is not annotated or configuration cannot be built
+   */
   public AnnotatedEndpoint (Class<?> annotatedClass)
     throws DeploymentException {
 
@@ -68,22 +77,42 @@ public class AnnotatedEndpoint extends Endpoint {
     }
   }
 
+  /**
+   * Provides the derived configuration for this annotated endpoint.
+   *
+   * @return the endpoint configuration
+   */
   AnnotatedClientEndpointConfig getEndpointConfig () {
 
     return endpointConfig;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void onOpen (Session session, EndpointConfig config) {
 
   }
 
+  /**
+   * Client endpoint config derived from annotations.
+   */
   private static class AnnotatedClientEndpointConfig implements ClientEndpointConfig {
 
     private final ClientEndpoint clientEndpoint;
     private final Configurator configurator;
     private final HashMap<String, Object> userProperties = new HashMap<>();
 
+    /**
+     * Builds configuration based on the {@link ClientEndpoint} annotation values.
+     *
+     * @param clientEndpoint the annotation instance
+     * @throws InstantiationException if the configurator cannot be created
+     * @throws IllegalAccessException if the configurator constructor is inaccessible
+     * @throws NoSuchMethodException if a required constructor is missing
+     * @throws InvocationTargetException if configurator construction fails
+     */
     public AnnotatedClientEndpointConfig (ClientEndpoint clientEndpoint)
       throws InstantiationException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
 
@@ -92,42 +121,63 @@ public class AnnotatedEndpoint extends Endpoint {
       configurator = clientEndpoint.configurator().getConstructor().newInstance();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public SSLContext getSSLContext () {
 
       return null;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<String> getPreferredSubprotocols () {
 
       return Arrays.asList(clientEndpoint.subprotocols());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Extension> getExtensions () {
 
       return null;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Configurator getConfigurator () {
 
       return configurator;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Class<? extends Encoder>> getEncoders () {
 
       return Arrays.asList(clientEndpoint.encoders());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Class<? extends Decoder>> getDecoders () {
 
       return Arrays.asList(clientEndpoint.decoders());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Map<String, Object> getUserProperties () {
 

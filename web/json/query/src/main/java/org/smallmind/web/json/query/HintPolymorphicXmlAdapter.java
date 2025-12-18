@@ -34,6 +34,9 @@ package org.smallmind.web.json.query;
 
 import org.smallmind.web.json.scaffold.util.PolymorphicXmlAdapter;
 
+/**
+ * JAXB adapter enabling polymorphic marshalling/unmarshalling of {@link Hint} subtypes.
+ */
 public class HintPolymorphicXmlAdapter extends PolymorphicXmlAdapter<Hint> {
 
 }

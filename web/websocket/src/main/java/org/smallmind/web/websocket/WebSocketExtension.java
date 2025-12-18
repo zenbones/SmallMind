@@ -37,28 +37,48 @@ import java.util.Collections;
 import java.util.List;
 import jakarta.websocket.Extension;
 
+/**
+ * Simple immutable implementation of a WebSocket extension definition with optional parameters.
+ */
 public class WebSocketExtension implements Extension {
 
   private final String name;
   private final ExtensionParameter[] parameters;
 
+  /**
+   * Builds an extension declaration.
+   *
+   * @param name the extension name
+   * @param parameters optional parameters associated with the extension
+   */
   public WebSocketExtension (String name, ExtensionParameter... parameters) {
 
     this.name = name;
     this.parameters = parameters;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String getName () {
 
     return name;
   }
 
+  /**
+   * Internal helper returning the parameter array.
+   *
+   * @return extension parameters or {@code null}
+   */
   private ExtensionParameter[] getParametersAsArray () {
 
     return parameters;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public List<Parameter> getParameters () {
 
@@ -70,12 +90,18 @@ public class WebSocketExtension implements Extension {
     return Arrays.asList(parameters);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int hashCode () {
 
     return name.hashCode() ^ Arrays.hashCode(parameters);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean equals (Object obj) {
 

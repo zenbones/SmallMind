@@ -32,6 +32,9 @@
  */
 package org.smallmind.web.jersey.multipart;
 
+/**
+ * Known multipart content types keyed by file extension.
+ */
 public enum MultiPartContentType {
 
   IMAGE_PNG("png", "image/png");
@@ -39,12 +42,24 @@ public enum MultiPartContentType {
   private final String extension;
   private final String contentType;
 
+  /**
+   * Associates an extension with a content type string.
+   *
+   * @param extension file extension without dot
+   * @param contentType MIME content type
+   */
   MultiPartContentType (String extension, String contentType) {
 
     this.extension = extension;
     this.contentType = contentType;
   }
 
+  /**
+   * Looks up a content type based on a file extension.
+   *
+   * @param extension extension to match
+   * @return matching {@link MultiPartContentType} or {@code null} if none found
+   */
   public static MultiPartContentType forExtension (String extension) {
 
     for (MultiPartContentType multiPartContentType : MultiPartContentType.values()) {
@@ -62,6 +77,11 @@ public enum MultiPartContentType {
     return extension;
   }
 
+  /**
+   * Returns the MIME content type string.
+   *
+   * @return content type
+   */
   public String getContentType () {
 
     return contentType;

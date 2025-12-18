@@ -36,10 +36,19 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 
+/**
+ * IOException that wraps a {@link Fault}, mirroring its message and stack trace for compatibility
+ * with standard exception handling while preserving fault details.
+ */
 public class FaultWrappingException extends IOException {
 
   private final Fault fault;
 
+  /**
+   * Constructs the wrapper and aligns this exception's stack trace with the provided fault.
+   *
+   * @param fault fault payload being wrapped
+   */
   public FaultWrappingException (Fault fault) {
 
     super(fault.getMessage());
@@ -59,23 +68,39 @@ public class FaultWrappingException extends IOException {
     }
   }
 
+  /**
+   * @return the wrapped {@link Fault}
+   */
   public Fault getFault () {
 
     return fault;
   }
 
+  /**
+   * Prints the fault representation to {@link System#out}.
+   */
   @Override
   public void printStackTrace () {
 
     printStackTrace(System.out);
   }
 
+  /**
+   * Prints the fault representation to the supplied stream.
+   *
+   * @param stream output destination
+   */
   @Override
   public void printStackTrace (PrintStream stream) {
 
     stream.print(fault.toString());
   }
 
+  /**
+   * Prints the fault representation to the supplied writer.
+   *
+   * @param writer output destination
+   */
   @Override
   public void printStackTrace (PrintWriter writer) {
 

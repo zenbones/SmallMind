@@ -34,16 +34,30 @@ package org.smallmind.web.json.query;
 
 public class ExcludedWherePermit extends WherePermit {
 
+  /**
+   * Creates an excluded permit scoped to an entity.
+   *
+   * @param entity entity alias
+   * @param name   field name
+   */
   public ExcludedWherePermit (String entity, String name) {
 
     super(entity, name);
   }
 
+  /**
+   * Creates an excluded permit in the default entity context.
+   *
+   * @param name field name
+   */
   public ExcludedWherePermit (String name) {
 
     super(name);
   }
 
+  /**
+   * @return {@link PermitType#EXCLUDED}
+   */
   @Override
   public PermitType getType () {
 

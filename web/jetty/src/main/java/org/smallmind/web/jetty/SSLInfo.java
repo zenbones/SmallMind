@@ -32,6 +32,9 @@
  */
 package org.smallmind.web.jetty;
 
+/**
+ * Encapsulates SSL configuration for Jetty, including keystore, truststore, and connector settings.
+ */
 public class SSLInfo {
 
   private SSLStore keySSLStore;
@@ -40,51 +43,101 @@ public class SSLInfo {
   private boolean proxyMode = false;
   private int port = 443;
 
+  /**
+   * Retrieves the HTTPS port number Jetty should bind to.
+   *
+   * @return configured HTTPS port
+   */
   public int getPort () {
 
     return port;
   }
 
+  /**
+   * Sets the HTTPS port number Jetty should bind to.
+   *
+   * @param port port to expose for secure connections
+   */
   public void setPort (int port) {
 
     this.port = port;
   }
 
+  /**
+   * Returns the SSL store containing the server's private key and certificate.
+   *
+   * @return keystore configuration
+   */
   public SSLStore getKeySSLStore () {
 
     return keySSLStore;
   }
 
+  /**
+   * Sets the SSL store that contains the server's key material.
+   *
+   * @param keySSLStore keystore configuration
+   */
   public void setKeySSLStore (SSLStore keySSLStore) {
 
     this.keySSLStore = keySSLStore;
   }
 
+  /**
+   * Returns the SSL store containing trusted certificate authorities.
+   *
+   * @return truststore configuration
+   */
   public SSLStore getTrustSSLStore () {
 
     return trustSSLStore;
   }
 
+  /**
+   * Sets the SSL store used to validate client or upstream certificates.
+   *
+   * @param trustSSLStore truststore configuration
+   */
   public void setTrustSSLStore (SSLStore trustSSLStore) {
 
     this.trustSSLStore = trustSSLStore;
   }
 
+  /**
+   * Indicates whether Jetty should require client certificate authentication.
+   *
+   * @return {@code true} if client certificates are required
+   */
   public boolean isRequireClientAuth () {
 
     return requireClientAuth;
   }
 
+  /**
+   * Configures whether client certificates must be presented during SSL handshake.
+   *
+   * @param requireClientAuth {@code true} to enforce client authentication
+   */
   public void setRequireClientAuth (boolean requireClientAuth) {
 
     this.requireClientAuth = requireClientAuth;
   }
 
+  /**
+   * Indicates whether Jetty should operate in proxy mode.
+   *
+   * @return {@code true} if proxy-specific SSL handling should be applied
+   */
   public boolean isProxyMode () {
 
     return proxyMode;
   }
 
+  /**
+   * Configures proxy mode, which may alter SSL behavior when Jetty sits behind another proxy.
+   *
+   * @param proxyMode {@code true} to enable proxy mode
+   */
   public void setProxyMode (boolean proxyMode) {
 
     this.proxyMode = proxyMode;

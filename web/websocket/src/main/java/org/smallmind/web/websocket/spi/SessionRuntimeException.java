@@ -34,8 +34,16 @@ package org.smallmind.web.websocket.spi;
 
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
+/**
+ * Runtime wrapper for exceptions that occur within a websocket session.
+ */
 public class SessionRuntimeException extends FormattedRuntimeException {
 
+  /**
+   * Wraps an underlying throwable.
+   *
+   * @param throwable the cause
+   */
   public SessionRuntimeException (Throwable throwable) {
 
     super(throwable);

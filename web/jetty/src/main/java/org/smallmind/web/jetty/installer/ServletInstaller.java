@@ -35,6 +35,9 @@ package org.smallmind.web.jetty.installer;
 import java.util.Map;
 import jakarta.servlet.Servlet;
 
+/**
+ * Describes a servlet to be deployed into a Jetty context, including mapping, init parameters, and load order.
+ */
 public class ServletInstaller extends JettyInstaller {
 
   private Servlet servlet;
@@ -45,73 +48,145 @@ public class ServletInstaller extends JettyInstaller {
   private Integer loadOnStartup;
   private Boolean asyncSupported;
 
+  /**
+   * Identifies this installer as targeting servlets.
+   *
+   * @return {@link JettyInstallerType#SERVLET}
+   */
   @Override
   public JettyInstallerType getOptionType () {
 
     return JettyInstallerType.SERVLET;
   }
 
+  /**
+   * Retrieves the servlet display name.
+   *
+   * @return display name for the servlet
+   */
   public String getDisplayName () {
 
     return displayName;
   }
 
+  /**
+   * Sets a human-readable display name for the servlet.
+   *
+   * @param displayName the display name
+   */
   public void setDisplayName (String displayName) {
 
     this.displayName = displayName;
   }
 
+  /**
+   * Instantiates or returns the provided servlet instance.
+   *
+   * @return the servlet to register
+   * @throws InstantiationException if the servlet class cannot be instantiated
+   * @throws IllegalAccessException if the servlet class or constructor is not accessible
+   */
   public Servlet getServlet ()
     throws InstantiationException, IllegalAccessException {
 
     return (servlet != null) ? servlet : servletClass.newInstance();
   }
 
+  /**
+   * Supplies a concrete servlet instance.
+   *
+   * @param servlet the servlet instance
+   */
   public void setServlet (Servlet servlet) {
 
     this.servlet = servlet;
   }
 
+  /**
+   * Supplies the servlet class used when no instance is directly provided.
+   *
+   * @param servletClass the servlet implementation class
+   */
   public void setServletClass (Class<? extends Servlet> servletClass) {
 
     this.servletClass = servletClass;
   }
 
+  /**
+   * Retrieves initialization parameters applied to the servlet.
+   *
+   * @return map of initialization parameters or {@code null} if none
+   */
   public Map<String, String> getInitParameters () {
 
     return initParameters;
   }
 
+  /**
+   * Sets initialization parameters for the servlet.
+   *
+   * @param initParameters initialization parameters to apply
+   */
   public void setInitParameters (Map<String, String> initParameters) {
 
     this.initParameters = initParameters;
   }
 
+  /**
+   * Retrieves the URL pattern to which the servlet will be bound.
+   *
+   * @return the URL pattern or {@code null} to use {@code /*} by default
+   */
   public String getUrlPattern () {
 
     return urlPattern;
   }
 
+  /**
+   * Sets the URL pattern that routes requests to the servlet.
+   *
+   * @param urlPattern the servlet mapping pattern
+   */
   public void setUrlPattern (String urlPattern) {
 
     this.urlPattern = urlPattern;
   }
 
+  /**
+   * Retrieves the configured load-on-startup order value.
+   *
+   * @return the load-on-startup value or {@code null} to leave unset
+   */
   public Integer getLoadOnStartup () {
 
     return loadOnStartup;
   }
 
+  /**
+   * Sets the load-on-startup order for the servlet.
+   *
+   * @param loadOnStartup order value; lower values load earlier
+   */
   public void setLoadOnStartup (Integer loadOnStartup) {
 
     this.loadOnStartup = loadOnStartup;
   }
 
+  /**
+   * Indicates whether the servlet supports asynchronous processing.
+   *
+   * @return {@code Boolean.TRUE} if async is supported, {@code Boolean.FALSE} if not, or {@code null} if unspecified
+   */
   public Boolean getAsyncSupported () {
 
     return asyncSupported;
   }
 
+  /**
+   * Configures whether the servlet supports asynchronous processing.
+   *
+   * @param asyncSupported {@code true} to enable async support, {@code false} to disable, {@code null} to leave unset
+   */
   public void setAsyncSupported (Boolean asyncSupported) {
 
     this.asyncSupported = asyncSupported;

@@ -34,11 +34,20 @@ package org.smallmind.web.jwt;
 
 import java.security.Key;
 
+/**
+ * Supplies an asymmetric key master for JWT signing/verification, determining the proper algorithm from the key type.
+ */
 public class AsymmetricJWTKeyMaster implements JWTKeyMaster {
 
   private final JWTEncryptionAlgorithm encryptionAlgorithm;
   private final Key key;
 
+  /**
+   * Creates a key master that supports RSA and Ed25519 keys.
+   *
+   * @param key the private or public key used for signing or verification
+   * @throws UnknownAlgorithmException if the key algorithm is unsupported
+   */
   public AsymmetricJWTKeyMaster (Key key)
     throws UnknownAlgorithmException {
 
@@ -56,12 +65,18 @@ public class AsymmetricJWTKeyMaster implements JWTKeyMaster {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public JWTEncryptionAlgorithm getEncryptionAlgorithm () {
 
     return encryptionAlgorithm;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Key getKey () {
 

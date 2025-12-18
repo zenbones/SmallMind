@@ -37,26 +37,46 @@ import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
+/**
+ * Character literal operand.
+ */
 @XmlRootElement(name = "character", namespace = "http://org.smallmind/web/json/query")
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
 public class CharacterWhereOperand extends WhereOperand<Character> {
 
   private Character value;
 
+  /**
+   * No-arg constructor for JAXB/Jackson.
+   */
   public CharacterWhereOperand () {
 
   }
 
+  /**
+   * Creates an operand with the provided character value.
+   *
+   * @param value character literal
+   */
   public CharacterWhereOperand (Character value) {
 
     this.value = value;
   }
 
+  /**
+   * Convenience factory for a character operand.
+   *
+   * @param value character literal
+   * @return the operand instance
+   */
   public static CharacterWhereOperand instance (Character value) {
 
     return new CharacterWhereOperand(value);
   }
 
+  /**
+   * @return {@link ElementType#STRING}
+   */
   @Override
   @XmlTransient
   public ElementType getElementType () {
@@ -64,6 +84,9 @@ public class CharacterWhereOperand extends WhereOperand<Character> {
     return ElementType.STRING;
   }
 
+  /**
+   * @return {@link OperandType#CHARACTER}
+   */
   @Override
   @XmlTransient
   public OperandType getOperandType () {
@@ -71,6 +94,11 @@ public class CharacterWhereOperand extends WhereOperand<Character> {
     return OperandType.CHARACTER;
   }
 
+  /**
+   * Returns the character value.
+   *
+   * @return character literal or {@code null}
+   */
   @Override
   @XmlTransient
   public Character get () {
@@ -78,12 +106,22 @@ public class CharacterWhereOperand extends WhereOperand<Character> {
     return value;
   }
 
+  /**
+   * Returns the serialized character value.
+   *
+   * @return character literal or {@code null}
+   */
   @XmlElement(name = "value", required = true)
   public Character getValue () {
 
     return value;
   }
 
+  /**
+   * Sets the character value.
+   *
+   * @param value character literal
+   */
   public void setValue (Character value) {
 
     this.value = value;

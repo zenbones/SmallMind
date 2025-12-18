@@ -37,6 +37,11 @@ import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
+/**
+ * Enum literal operand that stores the enum class name and constant value.
+ *
+ * @param <E> enum type
+ */
 @XmlRootElement(name = "enum", namespace = "http://org.smallmind/web/json/query")
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
 public class EnumWhereOperand<E extends Enum<E>> extends WhereOperand<E> {
@@ -44,21 +49,40 @@ public class EnumWhereOperand<E extends Enum<E>> extends WhereOperand<E> {
   private EnumHint hint;
   private String value;
 
+  /**
+   * No-arg constructor for JAXB/Jackson.
+   */
   public EnumWhereOperand () {
 
   }
 
+  /**
+   * Creates an operand for the given enum constant.
+   *
+   * @param enumeration enum constant
+   */
   public EnumWhereOperand (E enumeration) {
 
     hint = new EnumHint(enumeration.getClass());
     this.value = enumeration.name();
   }
 
+  /**
+   * Convenience factory for an enum operand.
+   *
+   * @param enumeration enum constant
+   * @return operand instance
+   */
   public static <E extends Enum<E>> EnumWhereOperand instance (E enumeration) {
 
     return new EnumWhereOperand<E>(enumeration);
   }
 
+  /**
+   * Enums are represented as strings (their names).
+   *
+   * @return {@link ElementType#STRING}
+   */
   @Override
   @XmlTransient
   public ElementType getElementType () {
@@ -66,6 +90,9 @@ public class EnumWhereOperand<E extends Enum<E>> extends WhereOperand<E> {
     return ElementType.STRING;
   }
 
+  /**
+   * @return {@link OperandType#ENUM}
+   */
   @Override
   @XmlTransient
   public OperandType getOperandType () {
@@ -73,6 +100,12 @@ public class EnumWhereOperand<E extends Enum<E>> extends WhereOperand<E> {
     return OperandType.ENUM;
   }
 
+  /**
+   * Resolves the enum constant using the stored class name and value.
+   *
+   * @return enum constant
+   * @throws QueryProcessingException if the enum class cannot be loaded
+   */
   @Override
   @XmlTransient
   public E get () {
@@ -85,23 +118,43 @@ public class EnumWhereOperand<E extends Enum<E>> extends WhereOperand<E> {
     }
   }
 
+  /**
+   * Returns the hint containing the enum class name.
+   *
+   * @return enum hint
+   */
   @XmlElement(name = "hint", required = true)
   public EnumHint getHint () {
 
     return hint;
   }
 
+  /**
+   * Sets the hint containing the enum class name.
+   *
+   * @param hint enum hint
+   */
   public void setHint (EnumHint hint) {
 
     this.hint = hint;
   }
 
+  /**
+   * Returns the enum constant name.
+   *
+   * @return enum name
+   */
   @XmlElement(name = "value", required = true)
   public String getValue () {
 
     return value;
   }
 
+  /**
+   * Sets the enum constant name.
+   *
+   * @param value enum name
+   */
   public void setValue (String value) {
 
     this.value = value;

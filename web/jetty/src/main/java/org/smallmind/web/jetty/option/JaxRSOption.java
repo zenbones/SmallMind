@@ -32,15 +32,28 @@
  */
 package org.smallmind.web.jetty.option;
 
+/**
+ * Captures configuration for exposing a Jersey-based JAX-RS application within Jetty.
+ */
 public class JaxRSOption {
 
   private String restPath = "/rest";
 
+  /**
+   * Retrieves the base path for the REST API.
+   *
+   * @return the REST path relative to the context root
+   */
   public String getRestPath () {
 
     return restPath;
   }
 
+  /**
+   * Sets the base path for the REST API.
+   *
+   * @param restPath the REST path relative to the context root
+   */
   public void setRestPath (String restPath) {
 
     this.restPath = restPath;

@@ -34,14 +34,32 @@ package org.smallmind.web.json.query;
 
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
+/**
+ * Traversal utilities for walking where clause structures with a {@link WhereVisitor}.
+ */
 public class WhereUtility {
 
+  /**
+   * Traverses the root conjunction of a {@link Where} using the supplied visitor.
+   *
+   * @param visitor visitor callback
+   * @param where   where clause to traverse
+   * @throws Exception if the visitor throws or traversal fails
+   */
   public static void walk (WhereVisitor visitor, Where where)
     throws Exception {
 
     walk(visitor, where.getRootConjunction());
   }
 
+  /**
+   * Traverses one or more criteria depth-first, invoking the visitor for each node.
+   *
+   * @param visitor       visitor callback
+   * @param whereCriteria criteria to traverse
+   * @throws UnknownSwitchCaseException if an unknown criterion type is encountered
+   * @throws Exception                  if the visitor throws
+   */
   public static void walk (WhereVisitor visitor, WhereCriterion... whereCriteria)
     throws Exception {
 

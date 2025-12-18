@@ -37,14 +37,34 @@ import org.jose4j.jwx.HeaderParameterNames;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 import org.smallmind.web.jwt.jose4j.JWTConsumer;
 
+/**
+ * Utility methods for encoding and decoding JWTs using provided keys.
+ */
 public class JWTCodec {
 
+  /**
+   * Encodes claims into a compact JWT using the provided key master.
+   *
+   * @param claims the claim object to serialize as the JWT payload
+   * @param keyMaster the signing key provider
+   * @return the signed JWT string
+   * @throws Exception if serialization or signing fails
+   */
   public static String encode (Object claims, JWTKeyMaster keyMaster)
     throws Exception {
 
     return encode(claims, keyMaster, null);
   }
 
+  /**
+   * Encodes claims into a compact JWT using the provided key master and an optional key id.
+   *
+   * @param claims the claim object to serialize as the JWT payload
+   * @param keyMaster the signing key provider
+   * @param keyId an optional key identifier to embed in the JWT header
+   * @return the signed JWT string
+   * @throws Exception if serialization or signing fails
+   */
   public static String encode (Object claims, JWTKeyMaster keyMaster, String keyId)
     throws Exception {
 
@@ -62,12 +82,31 @@ public class JWTCodec {
     return jws.getCompactSerialization();
   }
 
+  /**
+   * Decodes and verifies a JWT using the supplied key master.
+   *
+   * @param jwtToken the compact JWT value
+   * @param keyMaster the verification key provider
+   * @param claimsClass the target class for the payload
+   * @param <T> the claim type
+   * @return the deserialized claim object
+   * @throws Exception if verification or deserialization fails
+   */
   public static <T> T decode (String jwtToken, JWTKeyMaster keyMaster, Class<T> claimsClass)
     throws Exception {
 
     return new JWTConsumer().process(jwtToken, keyMaster.getKey(), claimsClass);
   }
 
+  /**
+   * Deciphers a JWT without verifying its signature.
+   *
+   * @param jwtToken the compact JWT value
+   * @param claimsClass the target class for the payload
+   * @param <T> the claim type
+   * @return the deserialized claim object
+   * @throws Exception if parsing or deserialization fails
+   */
   public static <T> T decipher (String jwtToken, Class<T> claimsClass)
     throws Exception {
 

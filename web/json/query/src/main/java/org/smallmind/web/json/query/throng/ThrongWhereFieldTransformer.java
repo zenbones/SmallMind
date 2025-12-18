@@ -35,8 +35,16 @@ package org.smallmind.web.json.query.throng;
 import org.smallmind.web.json.query.WhereFieldTransform;
 import org.smallmind.web.json.query.WhereFieldTransformer;
 
+/**
+ * Translates field references into Throng {@link ThrongWherePath} instances (field-name only).
+ */
 public class ThrongWhereFieldTransformer extends WhereFieldTransformer<Void, Void> {
 
+  /**
+   * Creates a transformer using the provided transform function.
+   *
+   * @param transform function that produces a {@link ThrongWherePath} from entity/name
+   */
   public ThrongWhereFieldTransformer (WhereFieldTransform<Void, Void> transform) {
 
     super(transform);

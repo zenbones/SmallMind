@@ -39,9 +39,15 @@ import org.smallmind.nutsnbolts.security.ECDSASigningAlgorithm;
 import org.smallmind.nutsnbolts.security.HMACSigningAlgorithm;
 import org.smallmind.nutsnbolts.security.RSASigningAlgorithm;
 
+/**
+ * Supported signing algorithms for JSON Web Tokens, wrapping corresponding implementations and header codes.
+ */
 public enum JWTEncryptionAlgorithm {
 
   HS256("HS256") {
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public byte[] sign (PrivateKey privateKey, String prologue)
       throws Exception {
@@ -49,6 +55,9 @@ public enum JWTEncryptionAlgorithm {
       return HMACSigningAlgorithm.HMAC_SHA_256.sign(privateKey, prologue.getBytes(StandardCharsets.UTF_8));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean verify (PublicKey publicKey, String[] pieces, boolean urlSafe)
       throws Exception {
@@ -57,6 +66,9 @@ public enum JWTEncryptionAlgorithm {
     }
   },
   RS256("RS256") {
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public byte[] sign (PrivateKey privateKey, String prologue)
       throws Exception {
@@ -64,6 +76,9 @@ public enum JWTEncryptionAlgorithm {
       return RSASigningAlgorithm.SHA_256_WITH_RSA.sign(privateKey, prologue.getBytes(StandardCharsets.UTF_8));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean verify (PublicKey publicKey, String[] pieces, boolean urlSafe)
       throws Exception {
@@ -72,6 +87,9 @@ public enum JWTEncryptionAlgorithm {
     }
   },
   EDDSA("EdDSA") {
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public byte[] sign (PrivateKey privateKey, String prologue)
       throws Exception {
@@ -79,6 +97,9 @@ public enum JWTEncryptionAlgorithm {
       return ECDSASigningAlgorithm.ECDSA_USING_SHA_ALGORITHM.sign(privateKey, prologue.getBytes(StandardCharsets.UTF_8));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean verify (PublicKey publicKey, String[] pieces, boolean urlSafe)
       throws Exception {
@@ -94,14 +115,36 @@ public enum JWTEncryptionAlgorithm {
     this.code = code;
   }
 
+  /**
+   * Returns the compact JWT header algorithm code for this algorithm.
+   *
+   * @return the header algorithm code
+   */
   public String getCode () {
 
     return code;
   }
 
+  /**
+   * Signs the supplied prologue string using the provided key.
+   *
+   * @param privateKey the signing key
+   * @param prologue the content to sign
+   * @return the generated signature bytes
+   * @throws Exception if signing fails
+   */
   public abstract byte[] sign (PrivateKey privateKey, String prologue)
     throws Exception;
 
+  /**
+   * Verifies the signature for the provided JWT pieces.
+   *
+   * @param publicKey the verification key
+   * @param pieces the JWT segments required by the underlying verifier
+   * @param urlSafe {@code true} if the JWT uses URL-safe Base64 encoding
+   * @return {@code true} if the signature is valid; otherwise {@code false}
+   * @throws Exception if verification fails
+   */
   public abstract boolean verify (PublicKey publicKey, String[] pieces, boolean urlSafe)
     throws Exception;
 }

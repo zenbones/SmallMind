@@ -55,8 +55,20 @@ import org.smallmind.web.json.query.WhereFieldTransformer;
 import org.smallmind.web.json.query.WherePath;
 import org.smallmind.web.json.query.WildcardUtility;
 
+/**
+ * Utility for translating JSON where/sort structures into JPA Criteria predicates and orders.
+ */
 public class JPAQueryUtility {
 
+  /**
+   * Translates a {@link Where} into a JPA {@link Predicate} wrapped in a product.
+   *
+   * @param criteriaBuilder            JPA criteria builder
+   * @param where                      where clause
+   * @param fieldTransformer           transformer that resolves field names to JPA paths
+   * @param allowNonTerminalWildcards  whether wildcards may appear mid-string in LIKE patterns
+   * @return product containing roots and predicate, or {@link NoneProduct} if no criteria
+   */
   public static Product<Root<?>, Predicate> apply (CriteriaBuilder criteriaBuilder, Where where, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer, boolean allowNonTerminalWildcards) {
 
     if (where == null) {
@@ -76,6 +88,9 @@ public class JPAQueryUtility {
     }
   }
 
+  /**
+   * Recursively walks conjunctions to build nested predicates.
+   */
   private static Predicate walkConjunction (CriteriaBuilder criteriaBuilder, Set<Root<?>> rootSet, WhereConjunction whereConjunction, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer, boolean allowNonTerminalWildcards) {
 
     if ((whereConjunction == null) || whereConjunction.isEmpty()) {
@@ -114,6 +129,9 @@ public class JPAQueryUtility {
     }
   }
 
+  /**
+   * Translates a single field criterion into a JPA predicate, adding its root to the root set.
+   */
   private static Predicate walkField (CriteriaBuilder criteriaBuilder, Set<Root<?>> rootSet, WhereField whereField, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer, boolean allowNonTerminalWildcards) {
 
     Object fieldValue = whereField.getOperand().get();

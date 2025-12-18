@@ -32,6 +32,9 @@
  */
 package org.smallmind.web.json.query;
 
+/**
+ * Discriminator for operand kinds supported in where clauses.
+ */
 public enum OperandType {
 
   ARRAY, BOOLEAN, BYTE, CHARACTER, DATE, DOUBLE, ENUM, FLOAT, INTEGER, LONG, NULL, SHORT, STRING

@@ -39,11 +39,21 @@ import org.smallmind.web.jetty.installer.ServletInstaller;
 import org.smallmind.web.jetty.installer.WebServiceInstaller;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 
+/**
+ * Spring {@link BeanPostProcessor} that wires installer beans into the appropriate
+ * {@link JettyWebAppState} once the locator is available. Beans discovered before the
+ * locator are queued and processed once initialization completes.
+ */
 public class JettyPostProcessor implements BeanPostProcessor {
 
   private final LinkedList<Object> unprocessedBeans = new LinkedList<>();
   private JettyWebAppStateLocator locator;
 
+  /**
+   * Routes a bean to the correct {@link JettyWebAppState} bucket based on its type or {@link ServicePath} annotation.
+   *
+   * @param bean the bean to process
+   */
   private void processBean (Object bean) {
 
     ServicePath servicePath;
@@ -59,6 +69,14 @@ public class JettyPostProcessor implements BeanPostProcessor {
     }
   }
 
+  /**
+   * Collects installer beans until a {@link JettyWebAppStateLocator} is encountered, then forwards
+   * all pending beans to the locator to populate the correct application state.
+   *
+   * @param bean     the bean that has just been initialized
+   * @param beanName the Spring bean name
+   * @return the original bean
+   */
   @Override
   public synchronized Object postProcessAfterInitialization (Object bean, String beanName) {
 

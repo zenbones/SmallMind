@@ -40,26 +40,48 @@ import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlTransient;
 
+/**
+ * Container for a set of sort fields expressed alongside where clauses.
+ */
 @XmlRootElement(name = "sort", namespace = "http://org.smallmind/web/json/query")
 @XmlAccessorType(XmlAccessType.PROPERTY)
 public class Sort implements WherePermissible<Sort> {
 
   private SortField[] fields;
 
+  /**
+   * No-arg constructor for JAXB/Jackson.
+   */
   public Sort () {
 
   }
 
+  /**
+   * Creates a sort definition with the provided fields.
+   *
+   * @param fields sort fields
+   */
   public Sort (SortField... fields) {
 
     this.fields = fields;
   }
 
+  /**
+   * Convenience factory for a sort definition.
+   *
+   * @param fields sort fields
+   * @return sort container
+   */
   public static Sort instance (SortField... fields) {
 
     return new Sort(fields);
   }
 
+  /**
+   * Exposes the set of target permits for validation (each sorted field).
+   *
+   * @return targets derived from sort fields
+   */
   @Override
   @XmlTransient
   public Set<WherePermit> getTargetSet () {
@@ -73,18 +95,33 @@ public class Sort implements WherePermissible<Sort> {
     return targetSet;
   }
 
+  /**
+   * Indicates whether the sort definition contains any fields.
+   *
+   * @return {@code true} if no sort fields were specified
+   */
   @XmlTransient
   public synchronized boolean isEmpty () {
 
     return (fields == null) || (fields.length == 0);
   }
 
+  /**
+   * Returns the sort fields.
+   *
+   * @return array of sort fields or {@code null}
+   */
   @XmlElement(name = "fields")
   public synchronized SortField[] getFields () {
 
     return fields;
   }
 
+  /**
+   * Sets the sort fields.
+   *
+   * @param fields sort fields
+   */
   public synchronized void setFields (SortField... fields) {
 
     this.fields = fields;

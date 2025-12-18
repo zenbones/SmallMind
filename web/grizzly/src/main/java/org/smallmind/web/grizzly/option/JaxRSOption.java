@@ -32,15 +32,24 @@
  */
 package org.smallmind.web.grizzly.option;
 
+/**
+ * Configures the base URI for JAX-RS resources exposed by Jersey.
+ */
 public class JaxRSOption {
 
   private String restPath = "/rest";
 
+  /**
+   * @return base path that Jersey resources should be mapped to
+   */
   public String getRestPath () {
 
     return restPath;
   }
 
+  /**
+   * @param restPath base path that Jersey resources should be mapped to
+   */
   public void setRestPath (String restPath) {
 
     this.restPath = restPath;

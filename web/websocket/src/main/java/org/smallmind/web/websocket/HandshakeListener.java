@@ -34,9 +34,22 @@ package org.smallmind.web.websocket;
 
 import org.smallmind.nutsnbolts.util.Tuple;
 
+/**
+ * Allows inspection and modification of handshake headers before request and after response.
+ */
 public interface HandshakeListener {
 
+  /**
+   * Invoked prior to sending the HTTP upgrade request.
+   *
+   * @param headerTuple the request headers that may be inspected or modified
+   */
   void beforeRequest (Tuple<String, String> headerTuple);
 
+  /**
+   * Invoked after receiving the server upgrade response.
+   *
+   * @param headerTuple the response headers that may be inspected or modified
+   */
   void afterResponse (Tuple<String, String> headerTuple);
 }

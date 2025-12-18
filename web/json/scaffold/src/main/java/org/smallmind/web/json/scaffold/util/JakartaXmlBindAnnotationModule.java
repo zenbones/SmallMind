@@ -38,6 +38,10 @@ import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.module.jakarta.xmlbind.JakartaXmlBindAnnotationIntrospector;
 import com.fasterxml.jackson.module.jakarta.xmlbind.PackageVersion;
 
+/**
+ * Jackson module that registers the Jakarta XML Bind annotation introspector with configurable
+ * priority and inclusion handling for non-nillable properties.
+ */
 public class JakartaXmlBindAnnotationModule extends Module {
 
   public enum Priority {PRIMARY, SECONDARY}
@@ -45,22 +49,36 @@ public class JakartaXmlBindAnnotationModule extends Module {
   protected Priority _priority = Priority.PRIMARY;
   protected JsonInclude.Include _nonNillableInclusion = JsonInclude.Include.ALWAYS;
 
+  /**
+   * Default constructor.
+   */
   public JakartaXmlBindAnnotationModule () {
 
   }
 
+  /**
+   * @return module name for registration
+   */
   @Override
   public String getModuleName () {
 
     return getClass().getSimpleName();
   }
 
+  /**
+   * @return module version
+   */
   @Override
   public Version version () {
 
     return PackageVersion.VERSION;
   }
 
+  /**
+   * Registers the Jakarta XML Bind introspector with the desired priority and inclusion rule.
+   *
+   * @param context Jackson setup context
+   */
   @Override
   public void setupModule (SetupContext context) {
 
@@ -77,22 +95,40 @@ public class JakartaXmlBindAnnotationModule extends Module {
     }
   }
 
+  /**
+   * @return current registration priority
+   */
   public Priority getPriority () {
 
     return _priority;
   }
 
+  /**
+   * Sets the registration priority of the Jakarta introspector.
+   *
+   * @param p priority to apply
+   * @return this module for chaining
+   */
   public JakartaXmlBindAnnotationModule setPriority (Priority p) {
 
     _priority = p;
     return this;
   }
 
+  /**
+   * @return inclusion policy for non-nillable properties
+   */
   public JsonInclude.Include getNonNillableInclusion () {
 
     return _nonNillableInclusion;
   }
 
+  /**
+   * Sets the inclusion policy for non-nillable properties.
+   *
+   * @param nonNillableInclusion inclusion rule
+   * @return this module for chaining
+   */
   public JakartaXmlBindAnnotationModule setNonNillableInclusion (JsonInclude.Include nonNillableInclusion) {
 
     _nonNillableInclusion = nonNillableInclusion;

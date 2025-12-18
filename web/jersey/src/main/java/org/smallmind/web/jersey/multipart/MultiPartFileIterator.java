@@ -39,10 +39,19 @@ import org.glassfish.jersey.media.multipart.BodyPart;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 
+/**
+ * Iterator that yields {@link MultiPartFile} instances from a {@link FormDataMultiPart} request.
+ */
 public class MultiPartFileIterator implements Iterator<MultiPartFile> {
 
   private final Iterator<FormDataBodyPart> bodyPartIter;
 
+  /**
+   * Creates an iterator for the multipart form, expecting parts named {@code file}.
+   *
+   * @param formDataMultiPart multipart form payload
+   * @throws IllegalArgumentException if no file fields are present
+   */
   public MultiPartFileIterator (FormDataMultiPart formDataMultiPart) {
 
     List<FormDataBodyPart> bodyPartList;
@@ -54,12 +63,22 @@ public class MultiPartFileIterator implements Iterator<MultiPartFile> {
     bodyPartIter = bodyPartList.iterator();
   }
 
+  /**
+   * Indicates whether more file parts remain.
+   *
+   * @return {@code true} if additional parts are available
+   */
   @Override
   public boolean hasNext () {
 
     return bodyPartIter.hasNext();
   }
 
+  /**
+   * Returns the next multipart file, inferring content type when missing.
+   *
+   * @return next multipart file
+   */
   @Override
   public MultiPartFile next () {
 
@@ -68,6 +87,12 @@ public class MultiPartFileIterator implements Iterator<MultiPartFile> {
     return new MultiPartFile(bodyPart.getContentDisposition().getFileName(), getContentType(bodyPart), bodyPart.getValueAs(InputStream.class));
   }
 
+  /**
+   * Resolves content type from the body part or infers it from the filename when absent.
+   *
+   * @param bodyPart multipart body part
+   * @return MIME type string
+   */
   private String getContentType (BodyPart bodyPart) {
 
     if (bodyPart.getMediaType() != null) {

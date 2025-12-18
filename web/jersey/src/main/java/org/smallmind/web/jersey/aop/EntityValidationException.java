@@ -37,13 +37,27 @@ import java.util.Set;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Path;
 
+/**
+ * Validation exception that aggregates constraint violations into a readable message for JsonEntity-backed resources.
+ */
 public class EntityValidationException extends jakarta.validation.ValidationException {
 
+  /**
+   * Builds an exception describing all constraint violations.
+   *
+   * @param constraintViolationSet violations collected during validation
+   */
   public <T> EntityValidationException (Set<ConstraintViolation<T>> constraintViolationSet) {
 
     super(convert(constraintViolationSet));
   }
 
+  /**
+   * Formats constraint violations into a concise string array representation.
+   *
+   * @param constraintViolationSet violations to format
+   * @return formatted message text
+   */
   private static <T> String convert (Set<ConstraintViolation<T>> constraintViolationSet) {
 
     Violation[] violations = new Violation[constraintViolationSet.size()];
@@ -61,12 +75,22 @@ public class EntityValidationException extends jakarta.validation.ValidationExce
     private final Path propertyPath;
     private final String message;
 
+    /**
+     * Captures key details from a constraint violation for rendering.
+     *
+     * @param constraintViolation the violation encountered
+     */
     public Violation (ConstraintViolation<?> constraintViolation) {
 
       propertyPath = constraintViolation.getPropertyPath();
       message = constraintViolation.getMessage();
     }
 
+    /**
+     * Returns a simple representation containing property path and message.
+     *
+     * @return formatted violation text
+     */
     @Override
     public String toString () {
 

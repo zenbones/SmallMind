@@ -34,11 +34,20 @@ package org.smallmind.web.json.query;
 
 import java.util.Objects;
 
+/**
+ * Represents a permission rule (allowed, required, excluded, dependent) for a specific field, optionally scoped to an entity.
+ */
 public abstract class WherePermit {
 
   private final String name;
   private String entity;
 
+  /**
+   * Creates a permit scoped to a specific entity.
+   *
+   * @param entity entity alias
+   * @param name   field name
+   */
   public WherePermit (String entity, String name) {
 
     this(name);
@@ -46,38 +55,81 @@ public abstract class WherePermit {
     this.entity = entity;
   }
 
+  /**
+   * Creates a permit for the default entity context.
+   *
+   * @param name field name
+   */
   public WherePermit (String name) {
 
     this.name = name;
   }
 
+  /**
+   * Factory for an allowed permit.
+   *
+   * @param entity entity alias
+   * @param name   field name
+   * @return permit instance
+   */
   public static AllowedWherePermit allowed (String entity, String name) {
 
     return new AllowedWherePermit(entity, name);
   }
 
+  /**
+   * Factory for a required permit.
+   *
+   * @param entity entity alias
+   * @param name   field name
+   * @return permit instance
+   */
   public static RequiredWherePermit required (String entity, String name) {
 
     return new RequiredWherePermit(entity, name);
   }
 
+  /**
+   * Factory for an excluded permit.
+   *
+   * @param entity entity alias
+   * @param name   field name
+   * @return permit instance
+   */
   public static ExcludedWherePermit excluded (String entity, String name) {
 
     return new ExcludedWherePermit(entity, name);
   }
 
+  /**
+   * Factory for a dependent permit requiring another field.
+   *
+   * @param entity       entity alias
+   * @param name         field name
+   * @param requirement  the required target field
+   * @return permit instance
+   */
   public static DependentWherePermit dependent (String entity, String name, TargetWherePermit requirement) {
 
     return new DependentWherePermit(entity, name, requirement);
   }
 
+  /**
+   * @return the permit type discriminator
+   */
   public abstract PermitType getType ();
 
+  /**
+   * @return entity alias or {@code null} for default entity
+   */
   public String getEntity () {
 
     return entity;
   }
 
+  /**
+   * @return field name governed by this permit
+   */
   public String getName () {
 
     return name;

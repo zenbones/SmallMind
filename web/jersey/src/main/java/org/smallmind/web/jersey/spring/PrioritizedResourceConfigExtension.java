@@ -32,15 +32,28 @@
  */
 package org.smallmind.web.jersey.spring;
 
+/**
+ * {@link ResourceConfigExtension} with configurable registration priority.
+ */
 public abstract class PrioritizedResourceConfigExtension extends ResourceConfigExtension {
 
   private int priority;
 
+  /**
+   * Returns the Jersey registration priority.
+   *
+   * @return priority value
+   */
   public int getPriority () {
 
     return priority;
   }
 
+  /**
+   * Sets the Jersey registration priority.
+   *
+   * @param priority priority value
+   */
   public void setPriority (int priority) {
 
     this.priority = priority;

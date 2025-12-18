@@ -32,7 +32,20 @@
  */
 package org.smallmind.web.jersey.aop;
 
+/**
+ * Represents a parameter container that can supply typed values to Jersey resource methods.
+ */
 public interface JsonEntity {
 
+  /**
+   * Resolves a parameter by key and converts it to the requested type, optionally using parameter annotations.
+   *
+   * @param key identifier for the parameter
+   * @param clazz target type to convert to
+   * @param parameterAnnotations annotations present on the consumer parameter
+   * @param <T> desired return type
+   * @return converted parameter value, or {@code null} when not present
+   * @throws ParameterProcessingException if conversion cannot be performed
+   */
   <T> T getParameter (String key, Class<T> clazz, ParameterAnnotations parameterAnnotations);
 }

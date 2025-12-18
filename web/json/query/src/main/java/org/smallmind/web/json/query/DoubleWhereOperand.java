@@ -37,26 +37,46 @@ import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
+/**
+ * Double literal operand.
+ */
 @XmlRootElement(name = "double", namespace = "http://org.smallmind/web/json/query")
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
 public class DoubleWhereOperand extends WhereOperand<Double> {
 
   private Double value;
 
+  /**
+   * No-arg constructor for JAXB/Jackson.
+   */
   public DoubleWhereOperand () {
 
   }
 
+  /**
+   * Creates an operand with the provided double value.
+   *
+   * @param value double literal
+   */
   public DoubleWhereOperand (Double value) {
 
     this.value = value;
   }
 
+  /**
+   * Convenience factory for a double operand.
+   *
+   * @param value double literal
+   * @return operand instance
+   */
   public static DoubleWhereOperand instance (Double value) {
 
     return new DoubleWhereOperand(value);
   }
 
+  /**
+   * @return {@link ElementType#NUMBER}
+   */
   @Override
   @XmlTransient
   public ElementType getElementType () {
@@ -64,6 +84,9 @@ public class DoubleWhereOperand extends WhereOperand<Double> {
     return ElementType.NUMBER;
   }
 
+  /**
+   * @return {@link OperandType#DOUBLE}
+   */
   @Override
   @XmlTransient
   public OperandType getOperandType () {
@@ -71,6 +94,11 @@ public class DoubleWhereOperand extends WhereOperand<Double> {
     return OperandType.DOUBLE;
   }
 
+  /**
+   * Returns the double value.
+   *
+   * @return double literal or {@code null}
+   */
   @Override
   @XmlTransient
   public Double get () {
@@ -78,12 +106,22 @@ public class DoubleWhereOperand extends WhereOperand<Double> {
     return value;
   }
 
+  /**
+   * Returns the serialized double value.
+   *
+   * @return double literal or {@code null}
+   */
   @XmlElement(name = "value", required = true)
   public Double getValue () {
 
     return value;
   }
 
+  /**
+   * Sets the double value.
+   *
+   * @param value double literal
+   */
   public void setValue (Double value) {
 
     this.value = value;

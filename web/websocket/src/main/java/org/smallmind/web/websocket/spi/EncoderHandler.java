@@ -35,8 +35,21 @@ package org.smallmind.web.websocket.spi;
 import java.io.IOException;
 import jakarta.websocket.EncodeException;
 
+/**
+ * Encodes application objects to binary form for transmission.
+ *
+ * @param <T> the encoded type
+ */
 public interface EncoderHandler<T> {
 
+  /**
+   * Encodes the given object instance.
+   *
+   * @param object the object to encode
+   * @return the encoded bytes
+   * @throws IOException if encoding uses IO and fails
+   * @throws EncodeException if the encoder cannot serialize the object
+   */
   byte[] encode (Object object)
     throws IOException, EncodeException;
 }

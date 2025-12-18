@@ -45,6 +45,10 @@ import jakarta.ws.rs.core.Context;
 import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
+/**
+ * Container filter that associates {@link ResourceMethod} metadata with the current request and applies optional
+ * {@link XmlJavaTypeAdapter} marshaling to responses.
+ */
 public class ResourceMethodFilter implements ContainerRequestFilter, ContainerResponseFilter {
 
   private static final ConcurrentHashMap<Class<? extends XmlAdapter>, XmlAdapter> ADAPTER_MAP = new ConcurrentHashMap<>();
@@ -52,6 +56,11 @@ public class ResourceMethodFilter implements ContainerRequestFilter, ContainerRe
   @Context
   ResourceInfo resourceInfo;
 
+  /**
+   * Captures the JsonEntity type from the {@link ResourceMethod} annotation before request processing.
+   *
+   * @param requestContext incoming request context
+   */
   @Override
   public void filter (ContainerRequestContext requestContext) {
 
@@ -62,6 +71,14 @@ public class ResourceMethodFilter implements ContainerRequestFilter, ContainerRe
     }
   }
 
+  /**
+   * Marshals the response entity using any {@link XmlJavaTypeAdapter} declared on the resource method
+   * and clears thread-local entity state.
+   *
+   * @param requestContext request context
+   * @param responseContext response context to potentially modify
+   * @throws IOException if an adapter cannot be instantiated or marshaling fails
+   */
   @Override
   public void filter (ContainerRequestContext requestContext, ContainerResponseContext responseContext)
     throws IOException {

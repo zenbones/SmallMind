@@ -37,8 +37,19 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 
+/**
+ * BeanPostProcessor that auto-registers Jersey resources and {@link ResourceConfigExtension}s with the application ResourceConfig.
+ */
 public class JerseyPostProcessor extends ResourceConfig implements BeanPostProcessor {
 
+  /**
+   * Registers beans annotated with {@link Path} and applies {@link ResourceConfigExtension} instances.
+   *
+   * @param bean bean instance post initialization
+   * @param beanName bean name
+   * @return the original bean
+   * @throws BeansException if an error occurs during registration
+   */
   @Override
   public synchronized Object postProcessAfterInitialization (Object bean, String beanName)
     throws BeansException {

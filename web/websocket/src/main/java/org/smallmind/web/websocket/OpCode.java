@@ -32,16 +32,30 @@
  */
 package org.smallmind.web.websocket;
 
+/**
+ * WebSocket frame operation codes.
+ */
 public enum OpCode {
 
   CONTINUATION((byte)0x0), TEXT((byte)0x1), BINARY((byte)0x2), CLOSE((byte)0x8), PING((byte)0x9), PONG((byte)0xA);
   private final byte code;
 
+  /**
+   * Assigns the numeric code associated with this opcode.
+   *
+   * @param code the opcode value
+   */
   OpCode (byte code) {
 
     this.code = code;
   }
 
+  /**
+   * Converts a raw frame byte into a matching opcode.
+   *
+   * @param singleByte the byte containing the opcode
+   * @return the matching opcode or {@code null} if none found
+   */
   public static OpCode convert (byte singleByte) {
 
     byte maskedValue = (byte)(singleByte & 0xF);
@@ -56,6 +70,11 @@ public enum OpCode {
     return null;
   }
 
+  /**
+   * Returns the numeric opcode value.
+   *
+   * @return the opcode byte
+   */
   public byte getCode () {
 
     return code;

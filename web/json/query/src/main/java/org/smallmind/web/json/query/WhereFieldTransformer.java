@@ -32,15 +32,33 @@
  */
 package org.smallmind.web.json.query;
 
+/**
+ * Base class for components that convert where field references into concrete path representations.
+ *
+ * @param <R> root type
+ * @param <T> path representation type
+ */
 public abstract class WhereFieldTransformer<R, T> {
 
   private final WhereFieldTransform<R, T> transform;
 
+  /**
+   * Creates a transformer that delegates to the provided transform function.
+   *
+   * @param transform strategy that produces a {@link WherePath} from entity/name
+   */
   public WhereFieldTransformer (WhereFieldTransform<R, T> transform) {
 
     this.transform = transform;
   }
 
+  /**
+   * Produces a concrete path for the given field reference.
+   *
+   * @param entity entity alias
+   * @param name   field name
+   * @return generated {@link WherePath}
+   */
   public synchronized WherePath<R, T> transform (String entity, String name) {
 
     return transform.apply(entity, name);

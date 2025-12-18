@@ -34,7 +34,13 @@ package org.smallmind.web.json.scaffold.fault;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+/**
+ * Marker for exceptions that can supply additional structured information beyond the message/stack trace.
+ */
 public interface Informed {
 
+  /**
+   * @return JSON object containing supplemental diagnostic information
+   */
   ObjectNode getInformation ();
 }

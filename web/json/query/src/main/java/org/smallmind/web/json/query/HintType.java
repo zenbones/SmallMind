@@ -32,6 +32,9 @@
  */
 package org.smallmind.web.json.query;
 
+/**
+ * Discriminates hint implementations.
+ */
 public enum HintType {
 
   COMPONENT, ENUM

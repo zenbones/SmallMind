@@ -34,15 +34,30 @@ package org.smallmind.web.jersey.aop;
 
 import java.lang.annotation.Annotation;
 
+/**
+ * Simple wrapper around an array of annotations to simplify lookup by type.
+ */
 public class ParameterAnnotations {
 
   private final Annotation[] annotations;
 
+  /**
+   * Constructs a wrapper for the supplied annotation array.
+   *
+   * @param annotations annotations attached to a parameter
+   */
   public ParameterAnnotations (Annotation[] annotations) {
 
     this.annotations = annotations;
   }
 
+  /**
+   * Returns the annotation of the requested type if present.
+   *
+   * @param clazz annotation type to locate
+   * @param <T> annotation class
+   * @return matching annotation instance or {@code null} when absent
+   */
   public <T> T getAnnotation (Class<T> clazz) {
 
     for (Annotation annotation : annotations) {

@@ -32,15 +32,28 @@
  */
 package org.smallmind.web.jetty.option;
 
+/**
+ * Configuration for exposing static resources loaded from the classpath.
+ */
 public class ClassLoaderResourceOption {
 
   private String staticPath = "/static";
 
+  /**
+   * Retrieves the context path under which classpath resources will be served.
+   *
+   * @return the static resource context path
+   */
   public String getStaticPath () {
 
     return staticPath;
   }
 
+  /**
+   * Sets the context path under which classpath resources will be exposed.
+   *
+   * @param staticPath the static resource context path
+   */
   public void setStaticPath (String staticPath) {
 
     this.staticPath = staticPath;

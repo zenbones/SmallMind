@@ -34,26 +34,49 @@ package org.smallmind.web.schema;
 
 import java.util.List;
 
+/**
+ * Represents a W3C XML Schema (XSD) resource and its associated XML implementations to validate.
+ */
 public class XSD {
 
   private String path;
   private List<String> impls;
 
+  /**
+   * Returns the classpath-relative path to the XSD resource.
+   *
+   * @return the XSD resource path
+   */
   public String getPath () {
 
     return path;
   }
 
+  /**
+   * Sets the classpath-relative path to the XSD resource.
+   *
+   * @param path the XSD resource path
+   */
   public void setPath (String path) {
 
     this.path = path;
   }
 
+  /**
+   * Retrieves the list of XML resource paths that should be validated against this schema.
+   *
+   * @return the XML implementation paths
+   */
   public List<String> getImpls () {
 
     return impls;
   }
 
+  /**
+   * Declares the XML resources that should be validated against this schema.
+   *
+   * @param impls the XML implementation paths
+   */
   public void setImpls (List<String> impls) {
 
     this.impls = impls;

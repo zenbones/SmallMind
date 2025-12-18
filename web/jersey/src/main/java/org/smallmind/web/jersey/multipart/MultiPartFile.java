@@ -36,12 +36,22 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+/**
+ * Represents a multipart file upload with convenience accessors.
+ */
 public class MultiPartFile {
 
   private final InputStream inputStream;
   private final String fileName;
   private final String contentType;
 
+  /**
+   * Creates a new multipart file wrapper.
+   *
+   * @param fileName original filename
+   * @param contentType MIME content type
+   * @param inputStream stream containing the file content
+   */
   public MultiPartFile (String fileName, String contentType, InputStream inputStream) {
 
     this.fileName = fileName;
@@ -49,21 +59,42 @@ public class MultiPartFile {
     this.inputStream = inputStream;
   }
 
+  /**
+   * Returns the uploaded filename.
+   *
+   * @return file name
+   */
   public String getFileName () {
 
     return fileName;
   }
 
+  /**
+   * Returns the MIME type associated with the upload.
+   *
+   * @return content type
+   */
   public String getContentType () {
 
     return contentType;
   }
 
+  /**
+   * Provides raw access to the underlying input stream.
+   *
+   * @return input stream for the file content
+   */
   public InputStream getInputStream () {
 
     return inputStream;
   }
 
+  /**
+   * Reads the full content into memory as a byte array.
+   *
+   * @return file contents
+   * @throws MultiPartFileException if reading fails
+   */
   public byte[] readAllBytes () {
 
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();

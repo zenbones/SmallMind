@@ -49,6 +49,10 @@ import org.apache.hc.core5.ssl.SSLContexts;
 import org.apache.hc.core5.util.Timeout;
 import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 
+/**
+ * Thin wrapper around Apache HttpAsyncClient that configures a pooled HTTP/1 client with permissive TLS and provides a
+ * simple execute helper using {@link HttpCallback} semantics.
+ */
 public class HttpClient {
 
   private static final CloseableHttpAsyncClient HTTP_ASYNC_CLIENT;
@@ -75,6 +79,17 @@ public class HttpClient {
     }
   }
 
+  /**
+   * Executes the given HTTP request asynchronously and waits for completion up to the provided timeout. The callback is
+   * invoked on completion, failure, or cancellation, and this method waits until the callback finishes handling.
+   *
+   * @param httpRequest    request to execute
+   * @param callback       callback that receives the result
+   * @param timeoutSeconds maximum time to wait for the operation
+   * @throws InterruptedException if the waiting thread is interrupted
+   * @throws ExecutionException   if execution fails before callback can handle it
+   * @throws TimeoutException     if the request or callback does not complete within the timeout
+   */
   public static void execute (SimpleHttpRequest httpRequest, HttpCallback<SimpleHttpResponse> callback, int timeoutSeconds)
     throws InterruptedException, ExecutionException, TimeoutException {
 

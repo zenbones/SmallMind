@@ -41,11 +41,20 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.RequestContextListener;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-// Handles some exception cases the Spring's version of the same class would otherwise spew into the log
+/**
+ * Alternative to Spring's {@link RequestContextListener} that guards against noisy logging and
+ * ensures request attributes are initialized and cleaned up for Jetty requests.
+ */
 public class JettyRequestContextListener implements ServletRequestListener {
 
   private static final String REQUEST_ATTRIBUTES_ATTRIBUTE = RequestContextListener.class.getName() + ".REQUEST_ATTRIBUTES";
 
+  /**
+   * Populates thread-local request attributes for an incoming HTTP servlet request.
+   *
+   * @param requestEvent the servlet request lifecycle event
+   * @throws IllegalArgumentException if the request is not an {@link HttpServletRequest}
+   */
   @Override
   public void requestInitialized (ServletRequestEvent requestEvent) {
 
@@ -62,6 +71,12 @@ public class JettyRequestContextListener implements ServletRequestListener {
     RequestContextHolder.setRequestAttributes(attributes);
   }
 
+  /**
+   * Clears thread-local request attributes and notifies the stored {@link ServletRequestAttributes}
+   * that the request has completed.
+   *
+   * @param requestEvent the servlet request lifecycle event
+   */
   @Override
   public void requestDestroyed (ServletRequestEvent requestEvent) {
 

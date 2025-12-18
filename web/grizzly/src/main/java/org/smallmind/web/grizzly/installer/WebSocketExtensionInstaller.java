@@ -34,43 +34,67 @@ package org.smallmind.web.grizzly.installer;
 
 import jakarta.websocket.Extension;
 
+/**
+ * Describes WebSocket extensions to be registered for a specific endpoint within a Grizzly context.
+ */
 public class WebSocketExtensionInstaller extends GrizzlyInstaller {
 
   private Extension[] extensions;
   private Class<?> endpointClass;
   private String path;
 
+  /**
+   * @return {@link GrizzlyInstallerType#WEB_SOCKET_EXTENSION}
+   */
   @Override
   public GrizzlyInstallerType getOptionType () {
 
     return GrizzlyInstallerType.WEB_SOCKET_EXTENSION;
   }
 
+  /**
+   * @return extensions that should be appended to the endpoint configuration
+   */
   public Extension[] getExtensions () {
 
     return extensions;
   }
 
+  /**
+   * @param extensions extensions to register for the endpoint
+   */
   public void setExtensions (Extension[] extensions) {
 
     this.extensions = extensions;
   }
 
+  /**
+   * @return WebSocket endpoint class the extensions target
+   */
   public Class<?> getEndpointClass () {
 
     return endpointClass;
   }
 
+  /**
+   * @param endpointClass WebSocket endpoint class the extensions target
+   */
   public void setEndpointClass (Class<?> endpointClass) {
 
     this.endpointClass = endpointClass;
   }
 
+  /**
+   * @return endpoint path to match when merging extensions
+   */
   public String getPath () {
 
     return path;
   }
 
+  /**
+   * @param path endpoint path to match when merging extensions
+   */
   public void setPath (String path) {
 
     this.path = path;

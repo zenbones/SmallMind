@@ -35,6 +35,9 @@ package org.smallmind.web.jetty.installer;
 import java.util.Map;
 import jakarta.servlet.Filter;
 
+/**
+ * Describes a servlet {@link Filter} to be installed into a Jetty context, including init parameters and URL mapping.
+ */
 public class FilterInstaller extends JettyInstaller {
 
   private Filter filter;
@@ -45,73 +48,145 @@ public class FilterInstaller extends JettyInstaller {
   private Boolean asyncSupported;
   private boolean matchAfter = false;
 
+  /**
+   * Identifies this installer as targeting filters.
+   *
+   * @return {@link JettyInstallerType#FILTER}
+   */
   @Override
   public JettyInstallerType getOptionType () {
 
     return JettyInstallerType.FILTER;
   }
 
+  /**
+   * Retrieves the display name that will appear in Jetty for the filter.
+   *
+   * @return filter display name
+   */
   public String getDisplayName () {
 
     return displayName;
   }
 
+  /**
+   * Sets the display name for the filter.
+   *
+   * @param displayName human-readable name shown in Jetty
+   */
   public void setDisplayName (String displayName) {
 
     this.displayName = displayName;
   }
 
+  /**
+   * Instantiates or returns the provided filter instance.
+   *
+   * @return the filter to register
+   * @throws InstantiationException if the filter class cannot be instantiated
+   * @throws IllegalAccessException if the filter class or its nullary constructor is not accessible
+   */
   public Filter getFilter ()
     throws InstantiationException, IllegalAccessException {
 
     return (filter != null) ? filter : filterClass.newInstance();
   }
 
+  /**
+   * Supplies a concrete filter instance to register.
+   *
+   * @param filter the filter instance
+   */
   public void setFilter (Filter filter) {
 
     this.filter = filter;
   }
 
+  /**
+   * Supplies the filter class to instantiate if an instance is not provided directly.
+   *
+   * @param filterClass the filter implementation class
+   */
   public void setFilterClass (Class<? extends Filter> filterClass) {
 
     this.filterClass = filterClass;
   }
 
+  /**
+   * Retrieves initialization parameters that will be applied to the filter.
+   *
+   * @return map of initialization parameters or {@code null} if none
+   */
   public Map<String, String> getInitParameters () {
 
     return initParameters;
   }
 
+  /**
+   * Sets initialization parameters for the filter.
+   *
+   * @param initParameters parameters to be passed to the filter
+   */
   public void setInitParameters (Map<String, String> initParameters) {
 
     this.initParameters = initParameters;
   }
 
+  /**
+   * Indicates whether this filter should be inserted after existing mappings.
+   *
+   * @return {@code true} if the filter should be matched after current filters
+   */
   public boolean isMatchAfter () {
 
     return matchAfter;
   }
 
+  /**
+   * Configures whether this filter is matched after other filters for the same pattern.
+   *
+   * @param matchAfter {@code true} to append after existing filters
+   */
   public void setMatchAfter (boolean matchAfter) {
 
     this.matchAfter = matchAfter;
   }
 
+  /**
+   * Retrieves the URL pattern that determines where the filter applies.
+   *
+   * @return the URL pattern or {@code null} to default to {@code /*}
+   */
   public String getUrlPattern () {
 
     return urlPattern;
   }
 
+  /**
+   * Sets the URL pattern to which the filter will be mapped.
+   *
+   * @param urlPattern the URL pattern or {@code null} to use the default
+   */
   public void setUrlPattern (String urlPattern) {
 
     this.urlPattern = urlPattern;
   }
 
+  /**
+   * Indicates whether the filter supports asynchronous dispatch.
+   *
+   * @return {@code Boolean.TRUE} if async is supported, {@code Boolean.FALSE} if not, or {@code null} to leave default
+   */
   public Boolean getAsyncSupported () {
 
     return asyncSupported;
   }
 
+  /**
+   * Configures whether the filter supports asynchronous dispatch.
+   *
+   * @param asyncSupported {@code true} to enable async support, {@code false} to disable, {@code null} to leave unset
+   */
   public void setAsyncSupported (Boolean asyncSupported) {
 
     this.asyncSupported = asyncSupported;

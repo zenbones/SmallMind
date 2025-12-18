@@ -37,22 +37,43 @@ import com.querydsl.core.types.dsl.PathBuilder;
 import org.smallmind.persistence.Durable;
 import org.smallmind.web.json.query.WherePath;
 
+/**
+ * QueryDSL implementation of {@link WherePath}, capturing the root and field path for a predicate.
+ */
 public class QueryDslWherePath extends WherePath<Path<?>, Path<?>> {
 
   private final Path<?> root;
   private final Path<?> path;
   private final String field;
 
+  /**
+   * Derives the field name from an existing path and uses its root.
+   *
+   * @param path querydsl path
+   */
   public QueryDslWherePath (Path<?> path) {
 
     this(path.getRoot(), path, path.toString().substring(path.getRoot().toString().length() + 1));
   }
 
+  /**
+   * Constructs a path by appending the given field to the provided durable root path.
+   *
+   * @param path  root durable path
+   * @param field field name to append
+   */
   public QueryDslWherePath (Path<? extends Durable<?>> path, String field) {
 
     this(path, new PathBuilder<>(path.getType(), path.toString()).get(field), field);
   }
 
+  /**
+   * Constructs a path with explicit root, path, and field components.
+   *
+   * @param root  root path
+   * @param path  full path
+   * @param field field name
+   */
   public QueryDslWherePath (Path<?> root, Path<?> path, String field) {
 
     this.root = root;
@@ -60,18 +81,27 @@ public class QueryDslWherePath extends WherePath<Path<?>, Path<?>> {
     this.field = field;
   }
 
+  /**
+   * @return querydsl root path
+   */
   @Override
   public Path<?> getRoot () {
 
     return root;
   }
 
+  /**
+   * @return full querydsl path
+   */
   @Override
   public Path<?> getPath () {
 
     return path;
   }
 
+  /**
+   * @return name of the terminal field
+   */
   @Override
   public String getField () {
 

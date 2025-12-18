@@ -50,6 +50,9 @@ import org.smallmind.web.http.apache.HttpClient;
 import org.smallmind.web.http.apache.SimpleCallback;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
+/**
+ * Fluent HTTP client wrapper that posts JSON payloads to a configured host and converts responses.
+ */
 public class JsonTarget {
 
   private final HttpHost httpHost;
@@ -58,24 +61,50 @@ public class JsonTarget {
   private Level level = Level.OFF;
   private String path;
 
+  /**
+   * Creates a target for the given host URI.
+   *
+   * @param host URI string including scheme and host
+   * @throws URISyntaxException if the host cannot be parsed
+   */
   public JsonTarget (String host)
     throws URISyntaxException {
 
     httpHost = HttpHost.create(host);
   }
 
+  /**
+   * Internal constructor used for path derivation.
+   *
+   * @param httpHost resolved host
+   * @param path request path
+   */
   private JsonTarget (HttpHost httpHost, String path) {
 
     this.httpHost = httpHost;
     this.path = path;
   }
 
+  /**
+   * Produces a new JsonTarget with the supplied path.
+   *
+   * @param path request path
+   * @return new target pointing to the derived path
+   * @throws URISyntaxException if the combined URI is invalid
+   */
   public JsonTarget path (String path)
     throws URISyntaxException {
 
     return new JsonTarget(httpHost, path);
   }
 
+  /**
+   * Adds an HTTP header to subsequent requests.
+   *
+   * @param key header name
+   * @param value header value
+   * @return this for chaining
+   */
   public JsonTarget header (String key, String value) {
 
     if (headers == null) {
@@ -86,6 +115,13 @@ public class JsonTarget {
     return this;
   }
 
+  /**
+   * Adds a query parameter to the request URL.
+   *
+   * @param key parameter name
+   * @param value parameter value
+   * @return this for chaining
+   */
   public JsonTarget query (String key, String value) {
 
     if (queryParameters == null) {
@@ -96,6 +132,12 @@ public class JsonTarget {
     return this;
   }
 
+  /**
+   * Sets the debug log level for request/response tracing.
+   *
+   * @param level log level
+   * @return this for chaining
+   */
   public JsonTarget debug (Level level) {
 
     this.level = level;
@@ -103,6 +145,13 @@ public class JsonTarget {
     return this;
   }
 
+  /**
+   * Issues a GET request and converts the response body to the requested type.
+   *
+   * @param responseClass expected response type
+   * @return deserialized response or {@code null} when no body is returned
+   * @throws Exception if the request fails or conversion fails
+   */
   public <T> T get (Class<T> responseClass)
     throws Exception {
 
@@ -116,6 +165,14 @@ public class JsonTarget {
     return convertEntity(callback.getResponse(), responseClass);
   }
 
+  /**
+   * Issues a PUT request with a JSON body and converts the response.
+   *
+   * @param jsonBody serialized request body
+   * @param responseClass expected response type
+   * @return deserialized response or {@code null} when no body is returned
+   * @throws Exception if the request fails or conversion fails
+   */
   public <T> T put (JsonBody jsonBody, Class<T> responseClass)
     throws Exception {
 
@@ -129,6 +186,14 @@ public class JsonTarget {
     return convertEntity(callback.getResponse(), responseClass);
   }
 
+  /**
+   * Issues a POST request with a JSON body and converts the response.
+   *
+   * @param jsonBody serialized request body
+   * @param responseClass expected response type
+   * @return deserialized response or {@code null} when no body is returned
+   * @throws Exception if the request fails or conversion fails
+   */
   public <T> T post (JsonBody jsonBody, Class<T> responseClass)
     throws Exception {
 
@@ -142,6 +207,14 @@ public class JsonTarget {
     return convertEntity(callback.getResponse(), responseClass);
   }
 
+  /**
+   * Issues a PATCH request with a JSON body and converts the response.
+   *
+   * @param jsonBody serialized request body
+   * @param responseClass expected response type
+   * @return deserialized response or {@code null} when no body is returned
+   * @throws Exception if the request fails or conversion fails
+   */
   public <T> T patch (JsonBody jsonBody, Class<T> responseClass)
     throws Exception {
 
@@ -155,6 +228,13 @@ public class JsonTarget {
     return convertEntity(callback.getResponse(), responseClass);
   }
 
+  /**
+   * Issues a DELETE request and converts the response.
+   *
+   * @param responseClass expected response type
+   * @return deserialized response or {@code null} when no body is returned
+   * @throws Exception if the request fails or conversion fails
+   */
   public <T> T delete (Class<T> responseClass)
     throws Exception {
 
@@ -168,6 +248,14 @@ public class JsonTarget {
     return convertEntity(callback.getResponse(), responseClass);
   }
 
+  /**
+   * Converts a HTTP response into the requested type, throwing {@link WebApplicationException} on error responses.
+   *
+   * @param response HTTP response from the client
+   * @param responseClass class to deserialize into
+   * @return converted entity or {@code null} if the response has no body and is successful
+   * @throws WebApplicationException for non-success responses without bodies
+   */
   private <T> T convertEntity (SimpleHttpResponse response, Class<T> responseClass) {
 
     SimpleBody body;
@@ -187,6 +275,14 @@ public class JsonTarget {
     return JsonCodec.convert(bodyContent, responseClass);
   }
 
+  /**
+   * Builds an HTTP request with headers, query parameters, and optional JSON body.
+   *
+   * @param httpMethod HTTP method to use
+   * @param jsonBody optional JSON body
+   * @return configured {@link SimpleHttpRequest}
+   * @throws UnknownSwitchCaseException if an unsupported method is provided
+   */
   private SimpleHttpRequest createHttpRequest (HttpMethod httpMethod, JsonBody jsonBody) {
 
     SimpleHttpRequest httpRequest;
@@ -240,15 +336,28 @@ public class JsonTarget {
     return httpRequest;
   }
 
+  /**
+   * Formats response debug output for logging.
+   */
   private static class ResponseDebugCollector {
 
     private final SimpleHttpResponse response;
 
+    /**
+     * Creates a collector for the provided response.
+     *
+     * @param response response to format
+     */
     private ResponseDebugCollector (SimpleHttpResponse response) {
 
       this.response = response;
     }
 
+    /**
+     * Returns the response details including status, headers, and body.
+     *
+     * @return formatted response debug text
+     */
     @Override
     public String toString () {
 
@@ -266,15 +375,28 @@ public class JsonTarget {
     }
   }
 
+  /**
+   * Formats request debug output for logging.
+   */
   private static class RequestDebugCollector {
 
     private final SimpleHttpRequest httpRequest;
 
+    /**
+     * Creates a collector for the provided request.
+     *
+     * @param httpRequest request to format
+     */
     private RequestDebugCollector (SimpleHttpRequest httpRequest) {
 
       this.httpRequest = httpRequest;
     }
 
+    /**
+     * Returns the request URI, headers, and body if present.
+     *
+     * @return formatted request debug text
+     */
     @Override
     public String toString () {
 

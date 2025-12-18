@@ -77,6 +77,12 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 
+/**
+ * Spring-managed component that builds and starts a Jetty server using the provided options.
+ * <p>
+ * The bean collects installers for listeners, filters, servlets and web services, wires them into Jetty,
+ * and optionally configures REST, Spring request context handling, WebSocket support, and SSL connectors.
+ */
 public class JettyInitializingBean implements JettyWebAppStateLocator, InitializingBean, DisposableBean, ApplicationContextAware, ApplicationListener<ContextRefreshedEvent> {
 
   private final HashMap<String, JettyWebAppState> webAppStateMap = new HashMap<>();
@@ -93,61 +99,121 @@ public class JettyInitializingBean implements JettyWebAppStateLocator, Initializ
   private boolean suppressConnectionClosedException;
   private boolean debug = false;
 
+  /**
+   * Sets the host name or address Jetty should bind to. A {@code null} value lets Jetty choose the default interface.
+   *
+   * @param host the host interface or {@code null} for all interfaces
+   */
   public void setHost (String host) {
 
     this.host = host;
   }
 
+  /**
+   * Sets the HTTP port used when insecure connections are enabled.
+   *
+   * @param port the port number to listen on for HTTP traffic
+   */
   public void setPort (int port) {
 
     this.port = port;
   }
 
+  /**
+   * Supplies SSL configuration used to create an HTTPS connector.
+   *
+   * @param sslInfo certificate and trust configuration for HTTPS
+   */
   public void setSslInfo (SSLInfo sslInfo) {
 
     this.sslInfo = sslInfo;
   }
 
+  /**
+   * Sets the Jersey {@link ResourceConfig} that drives any JAX-RS servlet created by this bean.
+   *
+   * @param resourceConfig the Jersey resource configuration
+   */
   public void setResourceConfig (ResourceConfig resourceConfig) {
 
     this.resourceConfig = resourceConfig;
   }
 
+  /**
+   * Defines the collection of web application options this bean should install.
+   *
+   * @param webApplicationOptions the contexts and their configuration
+   */
   public void setWebApplicationOptions (WebApplicationOption[] webApplicationOptions) {
 
     this.webApplicationOptions = webApplicationOptions;
   }
 
+  /**
+   * Sets the minimum number of worker threads Jetty should keep available.
+   *
+   * @param initialWorkerPoolSize the minimum thread count or {@code null} to use Jetty defaults
+   */
   public void setInitialWorkerPoolSize (Integer initialWorkerPoolSize) {
 
     this.initialWorkerPoolSize = initialWorkerPoolSize;
   }
 
+  /**
+   * Sets the maximum number of worker threads Jetty can create.
+   *
+   * @param maximumWorkerPoolSize the maximum thread count or {@code null} to use Jetty defaults
+   */
   public void setMaximumWorkerPoolSize (Integer maximumWorkerPoolSize) {
 
     this.maximumWorkerPoolSize = maximumWorkerPoolSize;
   }
 
+  /**
+   * Limits the size of HTTP headers Jetty will accept.
+   *
+   * @param maxHttpHeaderSize the header size in bytes or {@code null} to use Jetty defaults
+   */
   public void setMaxHttpHeaderSize (Integer maxHttpHeaderSize) {
 
     this.maxHttpHeaderSize = maxHttpHeaderSize;
   }
 
+  /**
+   * Enables or disables creation of an insecure HTTP connector.
+   *
+   * @param allowInsecure {@code true} to expose HTTP alongside HTTPS
+   */
   public void setAllowInsecure (boolean allowInsecure) {
 
     this.allowInsecure = allowInsecure;
   }
 
+  /**
+   * Suppresses noisy connection-closed exceptions when wiring the per-application filter.
+   *
+   * @param suppressConnectionClosedException {@code true} to swallow benign connection errors
+   */
   public void setSuppressConnectionClosedException (boolean suppressConnectionClosedException) {
 
     this.suppressConnectionClosedException = suppressConnectionClosedException;
   }
 
+  /**
+   * Enables verbose SOAP request dumping useful during debugging.
+   *
+   * @param debug {@code true} to enable SOAP adapter dump logging
+   */
   public void setDebug (boolean debug) {
 
     this.debug = debug;
   }
 
+  /**
+   * Validates that each declared application option has a unique context path and seeds the state map.
+   *
+   * @throws JettyInitializationException if two options share the same context path
+   */
   @Override
   public void afterPropertiesSet () {
 
@@ -160,6 +226,13 @@ public class JettyInitializingBean implements JettyWebAppStateLocator, Initializ
     }
   }
 
+  /**
+   * Locates the mutable state object for the supplied context path.
+   *
+   * @param context the context path used to look up configuration
+   * @return the state bucket that collects installers for the context
+   * @throws JettyInitializationException if the context path is missing or was never configured
+   */
   @Override
   public JettyWebAppState webAppStateFor (String context) {
 
@@ -178,12 +251,26 @@ public class JettyInitializingBean implements JettyWebAppStateLocator, Initializ
     }
   }
 
+  /**
+   * Registers the supplied Spring application context so it can be exposed to Jersey.
+   *
+   * @param applicationContext the Spring application context received during bootstrapping
+   */
   @Override
   public void setApplicationContext (ApplicationContext applicationContext) {
 
     ExposedApplicationContext.register(applicationContext);
   }
 
+  /**
+   * Builds and starts the Jetty server once the Spring context is fully refreshed.
+   * <p>
+   * The method configures thread pools, connectors (HTTP/HTTPS), static resources, SOAP endpoints,
+   * Jersey servlets, WebSocket support, and Spring request context listeners based on the supplied options.
+   *
+   * @param contextRefreshedEvent the Spring refresh event that triggers initialization
+   * @throws JettyInitializationException if any part of server creation or handler wiring fails
+   */
   @Override
   public void onApplicationEvent (ContextRefreshedEvent contextRefreshedEvent) {
 
@@ -401,6 +488,12 @@ public class JettyInitializingBean implements JettyWebAppStateLocator, Initializ
     }
   }
 
+  /**
+   * Normalizes a context or resource path to ensure a single leading slash and no trailing slash unless root.
+   *
+   * @param path the path to normalize
+   * @return the normalized path or {@code null} if the input was {@code null}
+   */
   private String normalizePath (String path) {
 
     if (path != null) {
@@ -419,11 +512,21 @@ public class JettyInitializingBean implements JettyWebAppStateLocator, Initializ
     return null;
   }
 
+  /**
+   * Concatenates two path fragments, handling empty or root values gracefully.
+   *
+   * @param contextPath    the base context path
+   * @param extensionPath  the path to append to the context
+   * @return the combined path suitable for use as a Jetty context or URL pattern
+   */
   private String combinePaths (String contextPath, String extensionPath) {
 
     return ((extensionPath == null) || (extensionPath.isEmpty()) || "/".equals(extensionPath)) ? contextPath : ((contextPath == null) || (contextPath.isEmpty()) || "/".equals(contextPath)) ? extensionPath : contextPath + extensionPath;
   }
 
+  /**
+   * Stops the Jetty server when the bean is destroyed, logging but ignoring shutdown errors.
+   */
   @Override
   public synchronized void destroy () {
 

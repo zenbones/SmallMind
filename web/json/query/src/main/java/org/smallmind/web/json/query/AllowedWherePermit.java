@@ -32,21 +32,51 @@
  */
 package org.smallmind.web.json.query;
 
+/**
+ * Permission entry indicating that a specific entity field is allowed in a query.
+ */
 public class AllowedWherePermit extends WherePermit {
 
+  /**
+   * Creates an allow permit for the given entity and field name.
+   *
+   * @param entity the entity alias this permit applies to
+   * @param name   the field name that is permitted
+   */
   public AllowedWherePermit (String entity, String name) {
 
     super(entity, name);
   }
 
+  /**
+   * Creates an allow permit for a field in the default entity context.
+   *
+   * @param name the field name that is permitted
+   */
   public AllowedWherePermit (String name) {
 
     super(name);
   }
 
+  /**
+   * Identifies this permit as {@link PermitType#ALLOWED}.
+   *
+   * @return the allowed permit type
+   */
   @Override
   public PermitType getType () {
 
     return PermitType.ALLOWED;
+  }
+
+  /**
+   * Provides a descriptive representation including any entity scope.
+   *
+   * @return string form of the allowed permit
+   */
+  @Override
+  public String toString () {
+
+    return "Allowed " + super.toString();
   }
 }

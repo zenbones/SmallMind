@@ -39,6 +39,9 @@ import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
 
+/**
+ * Represents a single stack trace element within a {@link Fault}.
+ */
 @XmlRootElement(name = "element", namespace = "http://org.smallmind/web/json/scaffold/fault")
 @XmlAccessorType(XmlAccessType.PROPERTY)
 public class FaultElement implements Serializable {
@@ -48,10 +51,19 @@ public class FaultElement implements Serializable {
   private String fileName;
   private int lineNumber;
 
+  /**
+   * No-arg constructor for JAXB/Jackson.
+   */
   public FaultElement () {
 
   }
 
+  /**
+   * Creates an element with a declaring type and function name (no source info).
+   *
+   * @param declaringType fully qualified class name
+   * @param functionName  method/function name
+   */
   public FaultElement (String declaringType, String functionName) {
 
     this.declaringType = declaringType;
@@ -60,6 +72,14 @@ public class FaultElement implements Serializable {
     lineNumber = -1;
   }
 
+  /**
+   * Creates an element with full source information.
+   *
+   * @param declaringType fully qualified class name
+   * @param functionName  method/function name
+   * @param fileName      source file
+   * @param lineNumber    source line (or -1 if unavailable)
+   */
   public FaultElement (String declaringType, String functionName, String fileName, int lineNumber) {
 
     this.declaringType = declaringType;
@@ -68,6 +88,11 @@ public class FaultElement implements Serializable {
     this.lineNumber = lineNumber;
   }
 
+  /**
+   * Builds a fault element from a standard {@link StackTraceElement}.
+   *
+   * @param stackTraceElement source stack trace element
+   */
   public FaultElement (StackTraceElement stackTraceElement) {
 
     declaringType = stackTraceElement.getClassName();
@@ -76,50 +101,87 @@ public class FaultElement implements Serializable {
     lineNumber = stackTraceElement.getLineNumber();
   }
 
+  /**
+   * @return declaring class name
+   */
   @XmlElement(name = "type", required = true)
   public String getDeclaringType () {
 
     return declaringType;
   }
 
+  /**
+   * Sets the declaring class name.
+   *
+   * @param declaringType fully qualified class name
+   */
   public void setDeclaringType (String declaringType) {
 
     this.declaringType = declaringType;
   }
 
+  /**
+   * @return method/function name
+   */
   @XmlElement(name = "function", required = true)
   public String getFunctionName () {
 
     return functionName;
   }
 
+  /**
+   * Sets the method/function name.
+   *
+   * @param functionName method name
+   */
   public void setFunctionName (String functionName) {
 
     this.functionName = functionName;
   }
 
+  /**
+   * @return source file name (may be {@code null})
+   */
   @XmlElement(name = "file", required = true)
   public String getFileName () {
 
     return fileName;
   }
 
+  /**
+   * Sets the source file name.
+   *
+   * @param fileName source file
+   */
   public void setFileName (String fileName) {
 
     this.fileName = fileName;
   }
 
+  /**
+   * @return source line number or -1 if unknown
+   */
   @XmlElement(name = "line", required = true)
   public int getLineNumber () {
 
     return lineNumber;
   }
 
+  /**
+   * Sets the source line number.
+   *
+   * @param lineNumber line number (or -1 if unknown)
+   */
   public void setLineNumber (int lineNumber) {
 
     this.lineNumber = lineNumber;
   }
 
+  /**
+   * Renders a human-readable stack trace element string.
+   *
+   * @return formatted element text
+   */
   public String toString () {
 
     StringBuilder prettyBuilder = new StringBuilder(declaringType);
@@ -136,11 +198,22 @@ public class FaultElement implements Serializable {
     return prettyBuilder.toString();
   }
 
+  /**
+   * Computes a hash based on stack trace element attributes.
+   *
+   * @return hash code
+   */
   public int hashCode () {
 
     return Objects.hash(declaringType, functionName, fileName, lineNumber);
   }
 
+  /**
+   * Compares for equality against another {@link FaultElement}.
+   *
+   * @param obj candidate object
+   * @return {@code true} if all element attributes match
+   */
   public boolean equals (Object obj) {
 
     return (obj == this) || ((obj instanceof FaultElement) && Objects.equals(((FaultElement)obj).getDeclaringType(), declaringType) && Objects.equals(((FaultElement)obj).getFunctionName(), functionName) && Objects.equals(((FaultElement)obj).getFileName(), fileName) && (((FaultElement)obj).getLineNumber() == lineNumber));

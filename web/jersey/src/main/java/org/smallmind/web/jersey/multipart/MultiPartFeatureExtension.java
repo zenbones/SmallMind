@@ -36,8 +36,16 @@ import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.smallmind.web.jersey.spring.PrioritizedResourceConfigExtension;
 
+/**
+ * Registers Jersey's multipart feature with configurable priority.
+ */
 public class MultiPartFeatureExtension extends PrioritizedResourceConfigExtension {
 
+  /**
+   * Adds {@link MultiPartFeature} to the resource configuration.
+   *
+   * @param resourceConfig Jersey resource configuration
+   */
   @Override
   public void apply (ResourceConfig resourceConfig) {
 

@@ -32,36 +32,68 @@
  */
 package org.smallmind.web.jersey.proxy;
 
+/**
+ * Represents an HTTP header key/value pair to be added to proxied requests.
+ */
 public class JsonHeader {
 
   private String key;
   private String value;
 
+  /**
+   * Creates an empty header.
+   */
   public JsonHeader () {
 
   }
 
+  /**
+   * Creates a header with the supplied key and value.
+   *
+   * @param key header name
+   * @param value header value
+   */
   public JsonHeader (String key, String value) {
 
     this.key = key;
     this.value = value;
   }
 
+  /**
+   * Returns the header name.
+   *
+   * @return header key
+   */
   public String getKey () {
 
     return key;
   }
 
+  /**
+   * Updates the header name.
+   *
+   * @param key header key
+   */
   public void setKey (String key) {
 
     this.key = key;
   }
 
+  /**
+   * Returns the header value.
+   *
+   * @return header value
+   */
   public String getValue () {
 
     return value;
   }
 
+  /**
+   * Updates the header value.
+   *
+   * @param value header value
+   */
   public void setValue (String value) {
 
     this.value = value;

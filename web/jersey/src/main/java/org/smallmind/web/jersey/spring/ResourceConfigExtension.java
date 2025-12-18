@@ -34,7 +34,15 @@ package org.smallmind.web.jersey.spring;
 
 import org.glassfish.jersey.server.ResourceConfig;
 
+/**
+ * Extension point for applying additional configuration to a Jersey {@link ResourceConfig}.
+ */
 public abstract class ResourceConfigExtension {
 
+  /**
+   * Applies the extension to the provided configuration.
+   *
+   * @param resourceConfig Jersey resource configuration
+   */
   public abstract void apply (ResourceConfig resourceConfig);
 }

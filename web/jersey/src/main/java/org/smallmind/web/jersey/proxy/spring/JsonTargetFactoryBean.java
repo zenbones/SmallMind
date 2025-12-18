@@ -39,6 +39,9 @@ import org.smallmind.web.jersey.proxy.JsonTargetFactory;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
+/**
+ * Spring FactoryBean that constructs {@link JsonTarget} instances from simple properties.
+ */
 public class JsonTargetFactoryBean implements FactoryBean<JsonTarget>, InitializingBean {
 
   private JsonTarget target;
@@ -47,38 +50,73 @@ public class JsonTargetFactoryBean implements FactoryBean<JsonTarget>, Initializ
   private String context;
   private int port;
 
+  /**
+   * Sets the HTTP protocol to use.
+   *
+   * @param protocol protocol enum
+   */
   public void setProtocol (HttpProtocol protocol) {
 
     this.protocol = protocol;
   }
 
+  /**
+   * Sets the target host name.
+   *
+   * @param host host name
+   */
   public void setHost (String host) {
 
     this.host = host;
   }
 
+  /**
+   * Sets the target port.
+   *
+   * @param port port number
+   */
   public void setPort (int port) {
 
     this.port = port;
   }
 
+  /**
+   * Sets an optional context path.
+   *
+   * @param context context path
+   */
   public void setContext (String context) {
 
     this.context = context;
   }
 
+  /**
+   * Indicates this FactoryBean produces a singleton.
+   *
+   * @return {@code true}
+   */
   @Override
   public boolean isSingleton () {
 
     return true;
   }
 
+  /**
+   * Returns the object type this factory creates.
+   *
+   * @return {@link JsonTarget} class
+   */
   @Override
   public Class<?> getObjectType () {
 
     return JsonTarget.class;
   }
 
+  /**
+   * Builds the {@link JsonTarget} once properties are set.
+   *
+   * @throws URISyntaxException if the URI cannot be built
+   */
   @Override
   public void afterPropertiesSet ()
     throws URISyntaxException {
@@ -86,6 +124,11 @@ public class JsonTargetFactoryBean implements FactoryBean<JsonTarget>, Initializ
     target = JsonTargetFactory.manufacture(protocol, host, port, context);
   }
 
+  /**
+   * Returns the created target instance.
+   *
+   * @return JsonTarget singleton
+   */
   @Override
   public JsonTarget getObject () {
 

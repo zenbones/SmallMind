@@ -32,15 +32,24 @@
  */
 package org.smallmind.web.grizzly.option;
 
+/**
+ * Configures optional WebSocket features for a Grizzly application.
+ */
 public class WebSocketOption {
 
   private boolean includeWsadlSupport = false;
 
+  /**
+   * @return whether the WSADL discovery endpoint should be exposed
+   */
   public boolean isIncludeWsadlSupport () {
 
     return includeWsadlSupport;
   }
 
+  /**
+   * @param includeWsadlSupport flag enabling WSADL discovery exposure
+   */
   public void setIncludeWsadlSupport (boolean includeWsadlSupport) {
 
     this.includeWsadlSupport = includeWsadlSupport;

@@ -34,7 +34,18 @@ package org.smallmind.web.jersey.proxy;
 
 import java.lang.reflect.Method;
 
+/**
+ * Strategy for adding headers to proxied JSON requests based on invocation context.
+ */
 public interface JsonHeaderInjector {
 
+  /**
+   * Produces a header to add to the request about to be invoked.
+   *
+   * @param proxy proxy instance
+   * @param method method being invoked
+   * @param args invocation arguments
+   * @return header to inject, or {@code null} to skip
+   */
   JsonHeader injectOnInvoke (Object proxy, Method method, Object[] args);
 }

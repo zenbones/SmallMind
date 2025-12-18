@@ -34,13 +34,23 @@ package org.smallmind.web.grizzly;
 
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
+/**
+ * Runtime exception used to report failures while wiring or starting the embedded Grizzly server.
+ */
 public class GrizzlyInitializationException extends FormattedRuntimeException {
 
+  /**
+   * @param message error text with optional formatting placeholders
+   * @param args    arguments to be applied to the message template
+   */
   public GrizzlyInitializationException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * @param throwable the underlying cause that triggered initialization failure
+   */
   public GrizzlyInitializationException (Throwable throwable) {
 
     super(throwable);

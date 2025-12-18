@@ -32,6 +32,9 @@
  */
 package org.smallmind.web.jersey.proxy;
 
+/**
+ * Supported HTTP protocols and their default ports.
+ */
 public enum HttpProtocol {
 
   HTTP("http", 80), HTTPS("https", 443);
@@ -39,17 +42,33 @@ public enum HttpProtocol {
   private final String scheme;
   private final int port;
 
+  /**
+   * Associates a URI scheme with its default port.
+   *
+   * @param scheme protocol scheme name
+   * @param port default port number
+   */
   HttpProtocol (String scheme, int port) {
 
     this.scheme = scheme;
     this.port = port;
   }
 
+  /**
+   * Returns the protocol scheme.
+   *
+   * @return scheme string
+   */
   public String getScheme () {
 
     return scheme;
   }
 
+  /**
+   * Returns the default port number.
+   *
+   * @return port
+   */
   public int getPort () {
 
     return port;

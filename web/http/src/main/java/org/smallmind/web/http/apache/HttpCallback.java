@@ -37,16 +37,43 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.apache.hc.core5.concurrent.FutureCallback;
 
+/**
+ * Base {@link FutureCallback} that provides blocking await semantics and defers completion handling to subclasses. The
+ * latch ensures callers can wait for completion while allowing async callbacks to signal results or failures.
+ *
+ * @param <V> result type returned by the HTTP operation
+ */
 public abstract class HttpCallback<V> implements FutureCallback<V> {
 
   private final CountDownLatch executedLatch = new CountDownLatch(1);
 
+  /**
+   * Invoked when the operation completes successfully.
+   *
+   * @param v completed value
+   */
   public abstract void onCompleted (V v);
 
+  /**
+   * Invoked when the operation fails with an exception.
+   *
+   * @param exception failure cause
+   */
   public abstract void onFailed (Exception exception);
 
+  /**
+   * Invoked when the operation is cancelled prior to completion.
+   */
   public abstract void onCancelled ();
 
+  /**
+   * Blocks until the callback executes or a timeout elapses.
+   *
+   * @param timeout  maximum time to wait
+   * @param timeUnit unit for the timeout
+   * @throws InterruptedException if the waiting thread is interrupted
+   * @throws TimeoutException     if the callback does not complete before the timeout
+   */
   public void await (long timeout, TimeUnit timeUnit)
     throws InterruptedException, TimeoutException {
 
@@ -55,6 +82,11 @@ public abstract class HttpCallback<V> implements FutureCallback<V> {
     }
   }
 
+  /**
+   * Signals successful completion to {@link #onCompleted(Object)} and releases any waiters.
+   *
+   * @param v completed value
+   */
   @Override
   public void completed (V v) {
 
@@ -65,6 +97,11 @@ public abstract class HttpCallback<V> implements FutureCallback<V> {
     }
   }
 
+  /**
+   * Signals failure to {@link #onFailed(Exception)} and releases any waiters.
+   *
+   * @param e failure cause
+   */
   @Override
   public void failed (Exception e) {
 
@@ -75,6 +112,9 @@ public abstract class HttpCallback<V> implements FutureCallback<V> {
     }
   }
 
+  /**
+   * Signals cancellation to {@link #onCancelled()} and releases any waiters.
+   */
   @Override
   public void cancelled () {
 

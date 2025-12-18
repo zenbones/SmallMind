@@ -32,22 +32,41 @@
  */
 package org.smallmind.web.jersey.aop;
 
+/**
+ * Simple key/value pair representing an argument to a proxied Jersey resource method.
+ */
 public class Argument {
 
   private final String key;
   private final Object value;
 
+  /**
+   * Creates a new argument entry.
+   *
+   * @param key identifier for the parameter
+   * @param value parameter value
+   */
   public Argument (String key, Object value) {
 
     this.key = key;
     this.value = value;
   }
 
+  /**
+   * Returns the argument key.
+   *
+   * @return parameter name or identifier
+   */
   public String getKey () {
 
     return key;
   }
 
+  /**
+   * Returns the argument value.
+   *
+   * @return parameter value
+   */
   public Object getValue () {
 
     return value;

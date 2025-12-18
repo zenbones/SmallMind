@@ -36,27 +36,51 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.smallmind.web.jersey.cors.CorsFilter;
 import org.smallmind.web.jersey.spring.PrioritizedResourceConfigExtension;
 
+/**
+ * Spring-friendly Jersey extension that configures the {@link CorsFilter} with allowed and exposed headers.
+ */
 public class CorsExtension extends PrioritizedResourceConfigExtension {
 
   private String[] allowedHeaders;
   private String[] exposedHeaders;
 
+  /**
+   * Sets the headers that clients are allowed to send.
+   *
+   * @param allowedHeaders array of header names
+   */
   public void setAllowedHeaders (String[] allowedHeaders) {
 
     this.allowedHeaders = allowedHeaders;
   }
 
+  /**
+   * Sets the headers that should be exposed to clients.
+   *
+   * @param exposedHeaders array of header names
+   */
   public void setExposedHeaders (String[] exposedHeaders) {
 
     this.exposedHeaders = exposedHeaders;
   }
 
+  /**
+   * Registers the configured {@link CorsFilter} with the provided resource configuration.
+   *
+   * @param resourceConfig Jersey resource configuration
+   */
   @Override
   public void apply (ResourceConfig resourceConfig) {
 
     resourceConfig.register(new CorsFilter(concatenateHeaders(allowedHeaders), concatenateHeaders(exposedHeaders)), getPriority());
   }
 
+  /**
+   * Joins header names into a comma-separated list.
+   *
+   * @param headers headers to join
+   * @return comma-separated header string or {@code null} when none provided
+   */
   private String concatenateHeaders (String[] headers) {
 
     if ((headers == null) || (headers.length == 0)) {

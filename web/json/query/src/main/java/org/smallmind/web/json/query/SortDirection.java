@@ -32,6 +32,9 @@
  */
 package org.smallmind.web.json.query;
 
+/**
+ * Direction for sort fields.
+ */
 public enum SortDirection {
 
   ASC, DESC

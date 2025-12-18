@@ -47,6 +47,9 @@ import jakarta.websocket.Session;
 import jakarta.websocket.WebSocketContainer;
 import org.smallmind.web.websocket.WebSocketException;
 
+/**
+ * Minimal client-side {@link WebSocketContainer} implementation backed by {@link org.smallmind.web.websocket.WebSocket}.
+ */
 public class WebSocketContainerImpl implements WebSocketContainer {
 
   private final AtomicLong defaultMaxSessionIdleTimeout = new AtomicLong(-1);
@@ -54,6 +57,9 @@ public class WebSocketContainerImpl implements WebSocketContainer {
   private final AtomicInteger defaultMaxBinaryMessageBufferSize = new AtomicInteger(Integer.MAX_VALUE);
   private final AtomicLong defaultAsyncSendTimeout = new AtomicLong(-1);
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Session connectToServer (Class<?> annotatedEndpointClass, URI path)
     throws DeploymentException, IOException {
@@ -67,6 +73,9 @@ public class WebSocketContainerImpl implements WebSocketContainer {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Session connectToServer (Object annotatedEndpointInstance, URI path)
     throws DeploymentException, IOException {
@@ -80,6 +89,9 @@ public class WebSocketContainerImpl implements WebSocketContainer {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Session connectToServer (Class<? extends Endpoint> endpointClass, ClientEndpointConfig cec, URI path)
     throws DeploymentException, IOException {
@@ -91,6 +103,9 @@ public class WebSocketContainerImpl implements WebSocketContainer {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Session connectToServer (Endpoint endpointInstance, ClientEndpointConfig cec, URI path)
     throws DeploymentException, IOException {
@@ -102,54 +117,81 @@ public class WebSocketContainerImpl implements WebSocketContainer {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public long getDefaultAsyncSendTimeout () {
 
     return defaultAsyncSendTimeout.get();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void setAsyncSendTimeout (long timeoutmillis) {
 
     defaultAsyncSendTimeout.set(timeoutmillis);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public long getDefaultMaxSessionIdleTimeout () {
 
     return defaultMaxSessionIdleTimeout.get();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void setDefaultMaxSessionIdleTimeout (long timeout) {
 
     defaultMaxSessionIdleTimeout.set(timeout);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int getDefaultMaxBinaryMessageBufferSize () {
 
     return defaultMaxBinaryMessageBufferSize.get();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void setDefaultMaxBinaryMessageBufferSize (int max) {
 
     defaultMaxBinaryMessageBufferSize.set(max);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int getDefaultMaxTextMessageBufferSize () {
 
     return defaultMaxTextMessageBufferSize.get();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void setDefaultMaxTextMessageBufferSize (int max) {
 
     defaultMaxTextMessageBufferSize.set(max);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Set<Extension> getInstalledExtensions () {
 

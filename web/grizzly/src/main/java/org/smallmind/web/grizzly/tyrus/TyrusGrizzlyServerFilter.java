@@ -96,11 +96,12 @@ public class TyrusGrizzlyServerFilter extends BaseFilter {
   // ------------------------------------------------------------ Constructors
 
   /**
-   * Constructs a new {@link org.smallmind.web.grizzly.tyrus.TyrusGrizzlyServerFilter}.
+   * Builds a {@link TyrusGrizzlyServerFilter} bound to a specific context path and optional Tyrus upgrade properties.
    *
-   * @param serverContainer server container.
-   * @param contextPath     the context path of the deployed application. If the value is "" or "/", a request URI
-   *                        "/a" will be divided into context path "" and url-pattern "/a".
+   * @param serverContainer               container used to perform upgrades and manage connections
+   * @param contextPath                   the context path of the deployed application. If the value is "" or "/", a
+   *                                      request URI "/a" will be divided into context path "" and url-pattern "/a".
+   * @param tyrusUpgradeRequestProperties optional properties propagated into the Tyrus upgrade request
    */
   public TyrusGrizzlyServerFilter (ServerContainer serverContainer, String contextPath, Map<String, Object> tyrusUpgradeRequestProperties) {
 
@@ -111,6 +112,13 @@ public class TyrusGrizzlyServerFilter extends BaseFilter {
 
   // ----------------------------------------------------- Methods from Filter
 
+  /**
+   * Creates a Tyrus {@link UpgradeRequest} using the Grizzly HTTP content and configured properties.
+   *
+   * @param requestContent HTTP content containing the handshake request
+   * @param propertyMap    additional properties to apply to the request context
+   * @return populated upgrade request
+   */
   private static UpgradeRequest createWebSocketRequest (final HttpContent requestContent, Map<String, Object> propertyMap) {
 
     final HttpRequestPacket requestPacket = (HttpRequestPacket)requestContent.getHttpHeader();
@@ -184,7 +192,7 @@ public class TyrusGrizzlyServerFilter extends BaseFilter {
    *
    * @param ctx {@link FilterChainContext}
    * @return {@link NextAction} instruction for {@link FilterChain}, how it should continue the execution
-   * @throws IOException TODO
+   * @throws IOException if the filter chain processing encounters an I/O error
    */
   @Override
   @SuppressWarnings("unchecked")
@@ -250,6 +258,12 @@ public class TyrusGrizzlyServerFilter extends BaseFilter {
     return ctx.getStopAction();
   }
 
+  /**
+   * Retrieves the Tyrus connection associated with the Grizzly connection.
+   *
+   * @param ctx filter chain context
+   * @return previously stored Tyrus connection or {@code null} when not upgraded
+   */
   private org.glassfish.tyrus.spi.Connection getConnection (FilterChainContext ctx) {
 
     return TYRUS_CONNECTION.get(ctx.getConnection());
@@ -257,6 +271,12 @@ public class TyrusGrizzlyServerFilter extends BaseFilter {
 
   // --------------------------------------------------------- Private Methods
 
+  /**
+   * Retrieves the {@link TaskProcessor} bound to the current connection.
+   *
+   * @param ctx filter chain context
+   * @return previously stored task processor
+   */
   private TaskProcessor getTaskProcessor (FilterChainContext ctx) {
 
     return TASK_PROCESSOR.get(ctx.getConnection());
@@ -314,6 +334,12 @@ public class TyrusGrizzlyServerFilter extends BaseFilter {
     return ctx.getStopAction();
   }
 
+  /**
+   * Writes the HTTP upgrade response back to the client.
+   *
+   * @param ctx       filter chain context
+   * @param response  upgrade response to serialize
+   */
   private void write (FilterChainContext ctx, UpgradeResponse response) {
 
     final HttpResponsePacket responsePacket = ((HttpRequestPacket)((HttpContent)ctx.getMessage()).getHttpHeader()).getResponse();
@@ -333,6 +359,12 @@ public class TyrusGrizzlyServerFilter extends BaseFilter {
     ctx.write(HttpContent.builder(responsePacket).build());
   }
 
+  /**
+   * Copies Tyrus tracing headers to the response when the upgrade attempt was not applicable.
+   *
+   * @param ctx             filter chain context
+   * @param upgradeResponse upgrade response containing trace headers
+   */
   private void writeTraceHeaders (FilterChainContext ctx, UpgradeResponse upgradeResponse) {
 
     final HttpResponsePacket responsePacket = ((HttpRequestPacket)((HttpContent)ctx.getMessage()).getHttpHeader()).getResponse();
@@ -349,6 +381,10 @@ public class TyrusGrizzlyServerFilter extends BaseFilter {
     private final ByteBuffer buffer;
     private final ReadHandler readHandler;
 
+    /**
+     * @param buffer      websocket payload
+     * @param readHandler handler that will process the payload
+     */
     private ProcessTask (ByteBuffer buffer, ReadHandler readHandler) {
 
       this.buffer = buffer;
@@ -356,6 +392,9 @@ public class TyrusGrizzlyServerFilter extends BaseFilter {
     }
 
     @Override
+    /**
+     * Invokes the read handler, logging and swallowing {@link RejectedExecutionException} to avoid killing the chain.
+     */
     public void execute () {
 
       try {
@@ -372,6 +411,11 @@ public class TyrusGrizzlyServerFilter extends BaseFilter {
     private final CloseReason closeReason;
     private final Connection<?> grizzlyConnection;
 
+    /**
+     * @param connection        websocket connection to close
+     * @param closeReason       close reason to propagate
+     * @param grizzlyConnection underlying Grizzly connection for cleanup
+     */
     private CloseTask (org.glassfish.tyrus.spi.Connection connection, CloseReason closeReason, Connection<?> grizzlyConnection) {
 
       this.connection = connection;
@@ -380,6 +424,9 @@ public class TyrusGrizzlyServerFilter extends BaseFilter {
     }
 
     @Override
+    /**
+     * Closes the Tyrus connection and clears connection-scoped attributes.
+     */
     public void execute () {
 
       connection.close(closeReason);

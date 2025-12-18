@@ -37,17 +37,31 @@ import org.apache.hc.core5.http.ContentType;
 import org.smallmind.web.jersey.aop.Envelope;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
+/**
+ * Encapsulates a JSON request body and its content type for proxy invocations.
+ */
 public class JsonBody {
 
   private final byte[] bodyAsBytes;
   private final ContentType contentType;
 
+  /**
+   * Creates a JSON body from a raw JSON string.
+   *
+   * @param json JSON string
+   */
   public JsonBody (String json) {
 
     this.bodyAsBytes = json.getBytes();
     this.contentType = ContentType.APPLICATION_JSON;
   }
 
+  /**
+   * Serializes an {@link Envelope} to JSON.
+   *
+   * @param envelope request envelope to serialize
+   * @throws JsonProcessingException if serialization fails
+   */
   public JsonBody (Envelope envelope)
     throws JsonProcessingException {
 
@@ -55,6 +69,12 @@ public class JsonBody {
     this.contentType = ContentType.APPLICATION_JSON;
   }
 
+  /**
+   * Serializes an arbitrary object using {@link JsonCodec}.
+   *
+   * @param obj object to serialize
+   * @throws JsonProcessingException if serialization fails
+   */
   public JsonBody (Object obj)
     throws JsonProcessingException {
 
@@ -62,11 +82,21 @@ public class JsonBody {
     this.contentType = ContentType.APPLICATION_JSON;
   }
 
+  /**
+   * Returns the content type (always JSON).
+   *
+   * @return content type
+   */
   public ContentType getContentType () {
 
     return contentType;
   }
 
+  /**
+   * Returns the serialized payload.
+   *
+   * @return body bytes
+   */
   public byte[] getBodyAsBytes () {
 
     return bodyAsBytes;

@@ -34,12 +34,26 @@ package org.smallmind.web.json;
 
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
+/**
+ * Raised when a wildcard is encountered in a non-terminal position within a JSON path expression.
+ * Wildcards are expected only at the end of a path; placing them earlier can produce querries that
+ * can't be indexed and may only be resolved via table scans.
+ */
 public class NonTerminalWildcardException extends FormattedRuntimeException {
 
+  /**
+   * Creates the exception without a message, typically used when context supplies details elsewhere.
+   */
   public NonTerminalWildcardException () {
 
   }
 
+  /**
+   * Creates the exception with a formatted message describing the invalid wildcard usage.
+   *
+   * @param message description of the error
+   * @param args    optional message arguments for formatting
+   */
   public NonTerminalWildcardException (String message, Object... args) {
 
     super(message, args);

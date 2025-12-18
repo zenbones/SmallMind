@@ -32,8 +32,21 @@
  */
 package org.smallmind.web.json.query;
 
+/**
+ * Functional interface that translates a field (entity/name) into a platform-specific {@link WherePath}.
+ *
+ * @param <R> root type of the generated path
+ * @param <T> path representation type
+ */
 @FunctionalInterface
 public interface WhereFieldTransform<R, T> {
 
+  /**
+   * Translates a where field reference into a concrete path representation.
+   *
+   * @param entity optional entity alias
+   * @param name   field name
+   * @return generated {@link WherePath}
+   */
   WherePath<R, T> apply (String entity, String name);
 }

@@ -34,31 +34,59 @@ package org.smallmind.web.jersey.spring;
 
 import org.glassfish.jersey.server.ResourceConfig;
 
+/**
+ * ResourceConfigExtension that sets a single Jersey configuration property.
+ */
 public class ResourceConfigProperty extends ResourceConfigExtension {
 
   private String name;
   private Object value;
 
+  /**
+   * Returns the property name to set.
+   *
+   * @return property key
+   */
   public String getName () {
 
     return name;
   }
 
+  /**
+   * Sets the property name to apply.
+   *
+   * @param name property key
+   */
   public void setName (String name) {
 
     this.name = name;
   }
 
+  /**
+   * Returns the property value.
+   *
+   * @return property value
+   */
   public Object getValue () {
 
     return value;
   }
 
+  /**
+   * Sets the property value.
+   *
+   * @param value property value
+   */
   public void setValue (Object value) {
 
     this.value = value;
   }
 
+  /**
+   * Applies the configured property to the resource configuration.
+   *
+   * @param resourceConfig Jersey resource configuration
+   */
   @Override
   public void apply (ResourceConfig resourceConfig) {
 

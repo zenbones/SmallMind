@@ -39,6 +39,9 @@ import jakarta.ws.rs.container.ResourceInfo;
 import jakarta.ws.rs.core.Context;
 import org.smallmind.web.json.scaffold.util.Page;
 
+/**
+ * Adds HTTP Content-Range headers for {@link Page}-returning resource methods annotated with {@link PageRange}.
+ */
 public class PageRangeResponseFilter implements ContainerResponseFilter {
 
   public static int HTTP_DATA_COMPLETE = 200;
@@ -48,6 +51,12 @@ public class PageRangeResponseFilter implements ContainerResponseFilter {
   @Context
   ResourceInfo resourceInfo;
 
+  /**
+   * Populates Content-Range headers based on the {@link Page} metadata and sets an appropriate status code.
+   *
+   * @param requestContext request context (unused)
+   * @param responseContext response context to adjust
+   */
   @Override
   public void filter (ContainerRequestContext requestContext, ContainerResponseContext responseContext) {
 

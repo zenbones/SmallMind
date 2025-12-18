@@ -40,18 +40,33 @@ import jakarta.ws.rs.container.ContainerResponseFilter;
 import jakarta.ws.rs.container.PreMatching;
 import jakarta.ws.rs.core.Response;
 
+/**
+ * Handles CORS preflight and response headers for Jersey resources.
+ */
 @PreMatching
 public class CorsFilter implements ContainerRequestFilter, ContainerResponseFilter {
 
   private final String allowedHeaders;
   private final String exposedHeaders;
 
+  /**
+   * Creates a CORS filter that will advertise the supplied allowed and exposed headers.
+   *
+   * @param allowedHeaders comma-separated headers clients may send
+   * @param exposedHeaders comma-separated headers exposed to clients
+   */
   public CorsFilter (String allowedHeaders, String exposedHeaders) {
 
     this.allowedHeaders = allowedHeaders;
     this.exposedHeaders = exposedHeaders;
   }
 
+  /**
+   * Intercepts preflight requests and returns appropriate CORS headers.
+   *
+   * @param requestContext incoming request
+   * @throws IOException if response creation fails
+   */
   @Override
   public void filter (ContainerRequestContext requestContext)
     throws IOException {
@@ -82,6 +97,12 @@ public class CorsFilter implements ContainerRequestFilter, ContainerResponseFilt
     }
   }
 
+  /**
+   * Appends CORS headers to non-preflight responses.
+   *
+   * @param requestContext incoming request
+   * @param responseContext outgoing response
+   */
   @Override
   public void filter (ContainerRequestContext requestContext, ContainerResponseContext responseContext) {
 

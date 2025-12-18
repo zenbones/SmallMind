@@ -44,20 +44,39 @@ import org.smallmind.nutsnbolts.reflection.PassType;
 import org.smallmind.nutsnbolts.reflection.ProxyGenerator;
 import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
 
+/**
+ * JAXB adapter that marshals/unmarshals polymorphic types by storing a dedicated attribute pointing
+ * to the concrete subclass name defined by {@link XmlRootElement#name()}.
+ *
+ * @param <T> polymorphic base type
+ */
 public abstract class AttributedPolymorphicXmlAdapter<T> extends XmlAdapter<ObjectNode, T> {
 
   private final Class<?> baseClass;
 
+  /**
+   * Resolves the polymorphic base class from the generic type parameter.
+   */
   public AttributedPolymorphicXmlAdapter () {
 
     baseClass = GenericUtility.getTypeArgumentsOfSubclass(AttributedPolymorphicXmlAdapter.class, this.getClass()).get(0);
   }
 
+  /**
+   * @return default attribute name used to hold the polymorphic type key
+   */
   public static String getDefaultPolymorphicAttributeName () {
 
     return "java/object";
   }
 
+  /**
+   * Deserializes an object node into the appropriate subclass instance based on the polymorphic attribute.
+   *
+   * @param objectNode serialized JSON node
+   * @return instantiated subclass
+   * @throws JAXBProcessingException if the polymorphic attribute is missing or cannot be resolved
+   */
   @Override
   public T unmarshal (ObjectNode objectNode) {
 
@@ -99,6 +118,13 @@ public abstract class AttributedPolymorphicXmlAdapter<T> extends XmlAdapter<Obje
     }
   }
 
+  /**
+   * Serializes a subclass instance and injects the polymorphic attribute used during unmarshalling.
+   *
+   * @param value object to serialize
+   * @return JSON node carrying the payload and polymorphic attribute
+   * @throws JsonProcessingException if serialization fails or if the root class is used directly
+   */
   @Override
   public ObjectNode marshal (T value)
     throws JsonProcessingException {

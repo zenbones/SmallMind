@@ -34,13 +34,27 @@ package org.smallmind.web.websocket.spi;
 
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
+/**
+ * Runtime exception thrown when message handlers are configured with unsupported parameter types.
+ */
 public class MalformedMessageHandlerException extends FormattedRuntimeException {
 
+  /**
+   * Creates the exception with a formatted message.
+   *
+   * @param message the format string
+   * @param args arguments referenced by the format specifiers in the message
+   */
   public MalformedMessageHandlerException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * Wraps another throwable as a runtime exception.
+   *
+   * @param throwable the underlying cause
+   */
   public MalformedMessageHandlerException (Throwable throwable) {
 
     super(throwable);

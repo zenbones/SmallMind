@@ -37,9 +37,20 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 
+/**
+ * Aspect that enforces validation on methods annotated with {@link Validated}.
+ */
 @Aspect
 public class ValidatedAspect {
 
+  /**
+   * Validates parameters before invoking the method and the return value afterwards.
+   *
+   * @param thisJoinPoint join point representing the method call
+   * @param validated annotation instance (unused)
+   * @return the method return value
+   * @throws Throwable if validation fails or the method throws
+   */
   @Around(value = "execution(@org.smallmind.web.jersey.aop.Validated * * (..)) && @annotation(validated)", argNames = "thisJoinPoint, validated")
   public Object aroundEntityTypeMethod (ProceedingJoinPoint thisJoinPoint, Validated validated)
     throws Throwable {

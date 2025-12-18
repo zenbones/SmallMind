@@ -41,6 +41,10 @@ import org.smallmind.web.grizzly.installer.WebServiceInstaller;
 import org.smallmind.web.grizzly.installer.WebSocketExtensionInstaller;
 import org.smallmind.web.grizzly.tyrus.TyrusGrizzlyServerContainer;
 
+/**
+ * Holds per-context deployment state for the Grizzly server, including collected installer beans and the backing
+ * {@link WebappContext}.
+ */
 public class GrizzlyWebAppState {
 
   private final LinkedList<WebSocketExtensionInstaller> webSocketExtensionInstallerList = new LinkedList<>();
@@ -51,71 +55,123 @@ public class GrizzlyWebAppState {
   private final WebappContext webAppContext;
   private TyrusGrizzlyServerContainer tyrusGrizzlyServerContainer;
 
+  /**
+   * @param webAppContext the servlet context representing the application
+   */
   public GrizzlyWebAppState (WebappContext webAppContext) {
 
     this.webAppContext = webAppContext;
   }
 
+  /**
+   * @return the underlying Grizzly {@link WebappContext}
+   */
   public WebappContext getWebAppContext () {
 
     return webAppContext;
   }
 
+  /**
+   * Registers WebSocket extensions to apply to endpoints in this context.
+   *
+   * @param webSocketExtensionInstaller installer describing extensions for an endpoint
+   */
   public void addWebSocketExtensionInstaller (WebSocketExtensionInstaller webSocketExtensionInstaller) {
 
     webSocketExtensionInstallerList.add(webSocketExtensionInstaller);
   }
 
+  /**
+   * @return collected WebSocket extension installers
+   */
   public LinkedList<WebSocketExtensionInstaller> getWebSocketExtensionInstallerList () {
 
     return webSocketExtensionInstallerList;
   }
 
+  /**
+   * Registers a SOAP service to expose under this context.
+   *
+   * @param webServiceInstaller installer describing the service instance and path
+   */
   public void addWebServiceInstaller (WebServiceInstaller webServiceInstaller) {
 
     webServiceInstallerList.add(webServiceInstaller);
   }
 
+  /**
+   * @return collected SOAP service installers
+   */
   public LinkedList<WebServiceInstaller> getWebServiceInstallerList () {
 
     return webServiceInstallerList;
   }
 
+  /**
+   * Registers a servlet context listener to install.
+   *
+   * @param listenerInstaller listener installer
+   */
   public void addListenerInstaller (ListenerInstaller listenerInstaller) {
 
     listenerInstallerList.add(listenerInstaller);
   }
 
+  /**
+   * @return collected listener installers
+   */
   public LinkedList<ListenerInstaller> getListenerInstallerList () {
 
     return listenerInstallerList;
   }
 
+  /**
+   * Registers a servlet filter to install.
+   *
+   * @param filterInstaller filter installer
+   */
   public void addFilterInstaller (FilterInstaller filterInstaller) {
 
     filterInstallerList.add(filterInstaller);
   }
 
+  /**
+   * @return collected filter installers
+   */
   public LinkedList<FilterInstaller> getFilterInstallerList () {
 
     return filterInstallerList;
   }
 
+  /**
+   * Registers a servlet to install.
+   *
+   * @param servletInstaller servlet installer
+   */
   public void addServletInstaller (ServletInstaller servletInstaller) {
 
     servletInstallerList.add(servletInstaller);
   }
 
+  /**
+   * @return collected servlet installers
+   */
   public LinkedList<ServletInstaller> getServletInstallerList () {
 
     return servletInstallerList;
   }
 
+  /**
+   * @return the WebSocket server container associated with this context
+   */
   public TyrusGrizzlyServerContainer getTyrusGrizzlyServerContainer () {
 
     return tyrusGrizzlyServerContainer;
   }
 
+  /**
+   * @param tyrusGrizzlyServerContainer initialized WebSocket container to store
+   */
   public void setTyrusGrizzlyServerContainer (TyrusGrizzlyServerContainer tyrusGrizzlyServerContainer) {
 
     this.tyrusGrizzlyServerContainer = tyrusGrizzlyServerContainer;

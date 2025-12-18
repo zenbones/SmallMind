@@ -55,6 +55,10 @@ import org.glassfish.tyrus.server.TyrusServerContainer;
 import org.glassfish.tyrus.spi.WebSocketEngine;
 import org.smallmind.web.grizzly.installer.WebSocketExtensionInstaller;
 
+/**
+ * Grizzly-backed {@link TyrusServerContainer} that wires WebSocket support into the configured {@link NetworkListener}
+ * and optionally serves WSADL for discovery.
+ */
 public class TyrusGrizzlyServerContainer extends TyrusServerContainer {
 
   private final TyrusWebSocketEngine engine;
@@ -63,6 +67,18 @@ public class TyrusGrizzlyServerContainer extends TyrusServerContainer {
   private final Map<String, Object> properties;
   private final String contextPath;
 
+  /**
+   * Creates and configures the Tyrus WebSocket engine and attaches a {@link TyrusWebSocketAddOn} to the provided
+   * listener.
+   *
+   * @param httpServer                  Grizzly HTTP server hosting the application
+   * @param networkListener             listener used to serve WebSocket connections
+   * @param webappContext               web application context for attribute registration
+   * @param properties                  optional container properties passed to Tyrus
+   * @param includeWsadlSupport         whether to expose WSADL discovery
+   * @param staticHttpHandler           optional static handler used to serve WSADL when enabled
+   * @param webSocketExtensionInstallers extension installers applied when merging endpoint configs
+   */
   public TyrusGrizzlyServerContainer (HttpServer httpServer, NetworkListener networkListener, WebappContext webappContext, Map<String, Object> properties, boolean includeWsadlSupport, HttpHandler staticHttpHandler, WebSocketExtensionInstaller... webSocketExtensionInstallers) {
 
     super((Set<Class<?>>)null);
@@ -113,30 +129,51 @@ public class TyrusGrizzlyServerContainer extends TyrusServerContainer {
     webappContext.setAttribute("jakarta.websocket.server.ServerContainer", this);
   }
 
+  /**
+   * Starts the container at the configured context and port.
+   *
+   * @throws IOException          if underlying transport cannot start
+   * @throws DeploymentException  if WebSocket deployment fails
+   */
   public void start ()
     throws IOException, DeploymentException {
 
     super.start(contextPath, getPort());
   }
 
+  /**
+   * @return immutable map of container properties supplied at construction time
+   */
   @Override
   public Map<String, Object> getProperties () {
 
     return properties;
   }
 
+  /**
+   * @return active port of the attached {@link NetworkListener}, or -1 if unavailable
+   */
   @Override
   public int getPort () {
 
     return ((networkListener != null) && (networkListener.getPort() > 0)) ? networkListener.getPort() : -1;
   }
 
+  /**
+   * @return the underlying Tyrus {@link WebSocketEngine}
+   */
   @Override
   public WebSocketEngine getWebSocketEngine () {
 
     return engine;
   }
 
+  /**
+   * Registers an annotated endpoint class against the current context path.
+   *
+   * @param endpointClass endpoint to deploy
+   * @throws DeploymentException if deployment fails
+   */
   @Override
   public void register (Class<?> endpointClass)
     throws DeploymentException {
@@ -144,6 +181,13 @@ public class TyrusGrizzlyServerContainer extends TyrusServerContainer {
     engine.register(endpointClass, contextPath);
   }
 
+  /**
+   * Registers a {@link ServerEndpointConfig}, merging any configured {@link Extension extensions} from installers that
+   * target the same endpoint class and path.
+   *
+   * @param serverEndpointConfig endpoint configuration to deploy
+   * @throws DeploymentException if deployment fails
+   */
   @Override
   public void register (ServerEndpointConfig serverEndpointConfig)
     throws DeploymentException {
@@ -151,6 +195,12 @@ public class TyrusGrizzlyServerContainer extends TyrusServerContainer {
     engine.register(mergeExtensions(serverEndpointConfig), contextPath);
   }
 
+  /**
+   * Merges installer-provided extensions with the supplied endpoint configuration, avoiding duplicates.
+   *
+   * @param serverEndpointConfig original configuration
+   * @return configuration including additional extensions when applicable
+   */
   private ServerEndpointConfig mergeExtensions (ServerEndpointConfig serverEndpointConfig) {
 
     if (webSocketExtensionInstallers != null) {

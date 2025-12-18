@@ -32,6 +32,9 @@
  */
 package org.smallmind.web.json.query;
 
+/**
+ * Categories of where-clause permissions.
+ */
 public enum PermitType {
 
   ALLOWED, REQUIRED, EXCLUDED, DEPENDENT

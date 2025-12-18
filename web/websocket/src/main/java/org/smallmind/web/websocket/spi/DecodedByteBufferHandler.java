@@ -38,6 +38,11 @@ import jakarta.websocket.Decoder;
 import jakarta.websocket.Endpoint;
 import jakarta.websocket.MessageHandler;
 
+/**
+ * Adapter that decodes binary {@link ByteBuffer} messages before delegating to an application handler.
+ *
+ * @param <T> decoded message type
+ */
 public class DecodedByteBufferHandler<T> implements MessageHandler.Whole<ByteBuffer> {
 
   private final SessionImpl session;
@@ -45,6 +50,14 @@ public class DecodedByteBufferHandler<T> implements MessageHandler.Whole<ByteBuf
   private final Decoder.Binary<T> decoder;
   private final MessageHandler.Whole<T> handler;
 
+  /**
+   * Creates the handler adapter.
+   *
+   * @param session the owning session
+   * @param endpoint the endpoint to receive decode errors
+   * @param decoder the decoder for incoming buffers
+   * @param handler the application handler
+   */
   public DecodedByteBufferHandler (SessionImpl session, Endpoint endpoint, Decoder.Binary<T> decoder, MessageHandler.Whole<T> handler) {
 
     this.session = session;
@@ -53,6 +66,11 @@ public class DecodedByteBufferHandler<T> implements MessageHandler.Whole<ByteBuf
     this.handler = handler;
   }
 
+  /**
+   * Decodes the incoming buffer and passes the result to the wrapped handler.
+   *
+   * @param message the incoming buffer
+   */
   @Override
   public void onMessage (ByteBuffer message) {
 

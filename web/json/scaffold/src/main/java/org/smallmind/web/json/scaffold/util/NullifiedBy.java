@@ -39,8 +39,14 @@ import java.lang.annotation.Target;
 
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
-// a hint for tools that may process classes, to note use of an OverlayNullifier on an associated bean conforming field
+/**
+ * Hint for processing tools that the annotated getter is nullified/overridden by the named overlay
+ * nullifier on a related bean field.
+ */
 public @interface NullifiedBy {
 
+  /**
+   * @return name of the nullifier controlling the annotated value
+   */
   String value ();
 }

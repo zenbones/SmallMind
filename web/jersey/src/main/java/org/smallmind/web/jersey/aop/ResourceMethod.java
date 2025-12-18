@@ -38,12 +38,26 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import jakarta.ws.rs.NameBinding;
 
+/**
+ * Marks a Jersey resource method that is invoked through a proxied JsonEntity envelope.
+ * The annotation supplies the entity implementation and whether validation should occur.
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 @NameBinding
 public @interface ResourceMethod {
 
+  /**
+   * Concrete {@link JsonEntity} implementation expected in the request body.
+   *
+   * @return entity class
+   */
   Class<? extends JsonEntity> value () default JsonEntity.class;
 
+  /**
+   * Indicates whether bean validation should be applied to parameters and return values.
+   *
+   * @return {@code true} to trigger validation
+   */
   boolean validate () default false;
 }

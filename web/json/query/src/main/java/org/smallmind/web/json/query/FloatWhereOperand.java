@@ -37,26 +37,46 @@ import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
+/**
+ * Float literal operand.
+ */
 @XmlRootElement(name = "float", namespace = "http://org.smallmind/web/json/query")
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
 public class FloatWhereOperand extends WhereOperand<Float> {
 
   private Float value;
 
+  /**
+   * No-arg constructor for JAXB/Jackson.
+   */
   public FloatWhereOperand () {
 
   }
 
+  /**
+   * Creates an operand with the provided float value.
+   *
+   * @param value float literal
+   */
   public FloatWhereOperand (Float value) {
 
     this.value = value;
   }
 
+  /**
+   * Convenience factory for a float operand.
+   *
+   * @param value float literal
+   * @return operand instance
+   */
   public static FloatWhereOperand instance (Float value) {
 
     return new FloatWhereOperand(value);
   }
 
+  /**
+   * @return {@link ElementType#NUMBER}
+   */
   @Override
   @XmlTransient
   public ElementType getElementType () {
@@ -64,6 +84,9 @@ public class FloatWhereOperand extends WhereOperand<Float> {
     return ElementType.NUMBER;
   }
 
+  /**
+   * @return {@link OperandType#FLOAT}
+   */
   @Override
   @XmlTransient
   public OperandType getOperandType () {
@@ -71,6 +94,11 @@ public class FloatWhereOperand extends WhereOperand<Float> {
     return OperandType.FLOAT;
   }
 
+  /**
+   * Returns the float value.
+   *
+   * @return float literal or {@code null}
+   */
   @Override
   @XmlTransient
   public Float get () {
@@ -78,12 +106,22 @@ public class FloatWhereOperand extends WhereOperand<Float> {
     return value;
   }
 
+  /**
+   * Returns the serialized float value.
+   *
+   * @return float literal or {@code null}
+   */
   @XmlElement(name = "value", required = true)
   public Float getValue () {
 
     return value;
   }
 
+  /**
+   * Sets the float value.
+   *
+   * @param value float literal
+   */
   public void setValue (Float value) {
 
     this.value = value;

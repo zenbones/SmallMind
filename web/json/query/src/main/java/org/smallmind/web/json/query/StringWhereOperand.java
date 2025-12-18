@@ -37,26 +37,46 @@ import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
+/**
+ * String literal operand.
+ */
 @XmlRootElement(name = "string", namespace = "http://org.smallmind/web/json/query")
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
 public class StringWhereOperand extends WhereOperand<String> {
 
   private String value;
 
+  /**
+   * No-arg constructor for JAXB/Jackson.
+   */
   public StringWhereOperand () {
 
   }
 
+  /**
+   * Creates an operand with the provided string value.
+   *
+   * @param value string literal
+   */
   public StringWhereOperand (String value) {
 
     this.value = value;
   }
 
+  /**
+   * Convenience factory for a string operand.
+   *
+   * @param value string literal
+   * @return operand instance
+   */
   public static StringWhereOperand instance (String value) {
 
     return new StringWhereOperand(value);
   }
 
+  /**
+   * @return {@link ElementType#STRING}
+   */
   @Override
   @XmlTransient
   public ElementType getElementType () {
@@ -64,6 +84,9 @@ public class StringWhereOperand extends WhereOperand<String> {
     return ElementType.STRING;
   }
 
+  /**
+   * @return {@link OperandType#STRING}
+   */
   @Override
   @XmlTransient
   public OperandType getOperandType () {
@@ -71,6 +94,11 @@ public class StringWhereOperand extends WhereOperand<String> {
     return OperandType.STRING;
   }
 
+  /**
+   * Returns the string value.
+   *
+   * @return string literal or {@code null}
+   */
   @Override
   @XmlTransient
   public String get () {
@@ -78,12 +106,22 @@ public class StringWhereOperand extends WhereOperand<String> {
     return value;
   }
 
+  /**
+   * Returns the serialized string value.
+   *
+   * @return string literal or {@code null}
+   */
   @XmlElement(name = "value", required = true)
   public String getValue () {
 
     return value;
   }
 
+  /**
+   * Sets the string value.
+   *
+   * @param value string literal
+   */
   public void setValue (String value) {
 
     this.value = value;

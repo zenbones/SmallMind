@@ -36,21 +36,35 @@ import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import org.smallmind.nutsnbolts.security.HMACSigningAlgorithm;
 
+/**
+ * Supplies an HMAC-based key master for JWT signing/verification using a shared secret.
+ */
 public class SymmetricJWTKeyMaster implements JWTKeyMaster {
 
   private final Key key;
 
+  /**
+   * Constructs a key master from a shared secret string.
+   *
+   * @param secret the shared secret text
+   */
   public SymmetricJWTKeyMaster (String secret) {
 
     key = HMACSigningAlgorithm.HMAC_SHA_256.generateKey(secret.getBytes(StandardCharsets.UTF_8));
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public JWTEncryptionAlgorithm getEncryptionAlgorithm () {
 
     return JWTEncryptionAlgorithm.HS256;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Key getKey () {
 

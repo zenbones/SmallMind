@@ -39,10 +39,23 @@ import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
+/**
+ * Map-backed JsonEntity that exposes the map entries directly as parameters.
+ * Subclasses may be populated via deserialization, then used to provide typed access.
+ */
 public abstract class AbstractNakedMappedJsonEntity extends LinkedHashMap<String, Object> implements JsonEntity {
 
   private static final Class[] NO_ARG_SIGNATURE = new Class[0];
 
+  /**
+   * Resolves a parameter value from the current map entry keyed by name and converts it to the requested type.
+   *
+   * @param key map key for the parameter
+   * @param clazz target conversion type
+   * @param parameterAnnotations annotations on the consuming parameter to detect {@link XmlJavaTypeAdapter}
+   * @return converted value, or {@code null} if the key is absent
+   * @throws ParameterProcessingException if adapter construction or conversion fails
+   */
   @Override
   public <T> T getParameter (String key, Class<T> clazz, ParameterAnnotations parameterAnnotations) {
 

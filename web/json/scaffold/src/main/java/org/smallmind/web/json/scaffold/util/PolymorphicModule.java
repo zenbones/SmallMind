@@ -37,20 +37,35 @@ import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.deser.std.StdValueInstantiator;
 import com.fasterxml.jackson.module.jakarta.xmlbind.PackageVersion;
 
+/**
+ * Jackson module that installs {@link PolymorphicValueInstantiator} to ensure proxies resolve to
+ * their underlying polymorphic subclasses during deserialization.
+ */
 public class PolymorphicModule extends Module {
 
+  /**
+   * @return module name for registration
+   */
   @Override
   public String getModuleName () {
 
     return getClass().getName();
   }
 
+  /**
+   * @return module version
+   */
   @Override
   public Version version () {
 
     return PackageVersion.VERSION;
   }
 
+  /**
+   * Registers value instantiators that swap proxies for actual polymorphic subclasses.
+   *
+   * @param context Jackson setup context
+   */
   @Override
   public void setupModule (final SetupContext context) {
 

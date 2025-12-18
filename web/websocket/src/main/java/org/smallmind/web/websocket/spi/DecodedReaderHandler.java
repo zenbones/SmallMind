@@ -39,6 +39,11 @@ import jakarta.websocket.Decoder;
 import jakarta.websocket.Endpoint;
 import jakarta.websocket.MessageHandler;
 
+/**
+ * Adapter that decodes text {@link Reader} messages before delegating to an application handler.
+ *
+ * @param <T> decoded message type
+ */
 public class DecodedReaderHandler<T> implements MessageHandler.Whole<Reader> {
 
   private final SessionImpl session;
@@ -46,6 +51,14 @@ public class DecodedReaderHandler<T> implements MessageHandler.Whole<Reader> {
   private final Decoder.TextStream<T> decoder;
   private final MessageHandler.Whole<T> handler;
 
+  /**
+   * Creates the handler adapter.
+   *
+   * @param session the owning session
+   * @param endpoint the endpoint to receive decode errors
+   * @param decoder the reader-based decoder
+   * @param handler the application handler
+   */
   public DecodedReaderHandler (SessionImpl session, Endpoint endpoint, Decoder.TextStream<T> decoder, MessageHandler.Whole<T> handler) {
 
     this.session = session;
@@ -54,6 +67,11 @@ public class DecodedReaderHandler<T> implements MessageHandler.Whole<Reader> {
     this.handler = handler;
   }
 
+  /**
+   * Decodes the incoming reader content and passes the result to the wrapped handler.
+   *
+   * @param message the incoming reader
+   */
   @Override
   public void onMessage (Reader message) {
 

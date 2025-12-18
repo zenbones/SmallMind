@@ -36,6 +36,13 @@ public class DependentWherePermit extends WherePermit {
 
   private final TargetWherePermit requirement;
 
+  /**
+   * Creates a dependency permit scoped to an entity, indicating the required target field.
+   *
+   * @param entity      entity alias for the dependent field
+   * @param name        dependent field name
+   * @param requirement the required target field
+   */
   public DependentWherePermit (String entity, String name, TargetWherePermit requirement) {
 
     super(entity, name);
@@ -43,6 +50,12 @@ public class DependentWherePermit extends WherePermit {
     this.requirement = requirement;
   }
 
+  /**
+   * Creates a dependency permit in the default entity context.
+   *
+   * @param name        dependent field name
+   * @param requirement the required target field
+   */
   public DependentWherePermit (String name, TargetWherePermit requirement) {
 
     super(name);
@@ -50,17 +63,28 @@ public class DependentWherePermit extends WherePermit {
     this.requirement = requirement;
   }
 
+  /**
+   * @return {@link PermitType#DEPENDENT}
+   */
   @Override
   public PermitType getType () {
 
     return PermitType.DEPENDENT;
   }
 
+  /**
+   * @return the required target that must accompany this dependent field
+   */
   public TargetWherePermit getRequirement () {
 
     return requirement;
   }
 
+  /**
+   * Presents a readable description combining the base permit with its required target.
+   *
+   * @return string in the form "{base} requires {requirement}"
+   */
   @Override
   public String toString () {
 

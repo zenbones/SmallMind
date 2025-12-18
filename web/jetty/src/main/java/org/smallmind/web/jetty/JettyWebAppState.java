@@ -38,6 +38,9 @@ import org.smallmind.web.jetty.installer.ListenerInstaller;
 import org.smallmind.web.jetty.installer.ServletInstaller;
 import org.smallmind.web.jetty.installer.WebServiceInstaller;
 
+/**
+ * Mutable holder for installers that should be applied to a specific Jetty web application context.
+ */
 public class JettyWebAppState {
 
   private final LinkedList<WebServiceInstaller> webServiceInstallerList = new LinkedList<>();
@@ -45,41 +48,81 @@ public class JettyWebAppState {
   private final LinkedList<FilterInstaller> filterInstallerList = new LinkedList<>();
   private final LinkedList<ServletInstaller> servletInstallerList = new LinkedList<>();
 
+  /**
+   * Adds a SOAP web service installer to this context.
+   *
+   * @param webServiceInstaller the installer describing the service to publish
+   */
   public void addWebServiceInstaller (WebServiceInstaller webServiceInstaller) {
 
     webServiceInstallerList.add(webServiceInstaller);
   }
 
+  /**
+   * Retrieves the list of SOAP web service installers for this context.
+   *
+   * @return mutable list of web service installers
+   */
   public LinkedList<WebServiceInstaller> getWebServiceInstallerList () {
 
     return webServiceInstallerList;
   }
 
+  /**
+   * Adds a servlet context listener installer to this context.
+   *
+   * @param listenerInstaller the listener installer to register
+   */
   public void addListenerInstaller (ListenerInstaller listenerInstaller) {
 
     listenerInstallerList.add(listenerInstaller);
   }
 
+  /**
+   * Retrieves all listener installers configured for this context.
+   *
+   * @return mutable list of listener installers
+   */
   public LinkedList<ListenerInstaller> getListenerInstallerList () {
 
     return listenerInstallerList;
   }
 
+  /**
+   * Adds a filter installer to this context.
+   *
+   * @param filterInstaller the filter installer to register
+   */
   public void addFilterInstaller (FilterInstaller filterInstaller) {
 
     filterInstallerList.add(filterInstaller);
   }
 
+  /**
+   * Retrieves the filter installers configured for this context.
+   *
+   * @return mutable list of filter installers
+   */
   public LinkedList<FilterInstaller> getFilterInstallerList () {
 
     return filterInstallerList;
   }
 
+  /**
+   * Adds a servlet installer to this context.
+   *
+   * @param servletInstaller the servlet installer to register
+   */
   public void addServletInstaller (ServletInstaller servletInstaller) {
 
     servletInstallerList.add(servletInstaller);
   }
 
+  /**
+   * Retrieves the servlet installers configured for this context.
+   *
+   * @return mutable list of servlet installers
+   */
   public LinkedList<ServletInstaller> getServletInstallerList () {
 
     return servletInstallerList;

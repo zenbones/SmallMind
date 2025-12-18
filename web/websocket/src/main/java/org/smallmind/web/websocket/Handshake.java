@@ -47,11 +47,25 @@ import org.smallmind.nutsnbolts.security.EncryptionUtility;
 import org.smallmind.nutsnbolts.security.HashAlgorithm;
 import org.smallmind.nutsnbolts.util.Tuple;
 
+/**
+ * Builds and validates the HTTP upgrade handshake for WebSocket connections.
+ */
 public class Handshake {
 
   private static final Pattern HTTP_STATUS_PATTERN = Pattern.compile("HTTP/(\\d+\\.\\d+)\\s(\\d+)\\s(.+)");
   private static final Pattern HTTP_HEADER_PATTERN = Pattern.compile("([^:]+):\\s*(.+)\\s*");
 
+  /**
+   * Constructs the necessary HTTP headers for the handshake request.
+   *
+   * @param protocolVersion the websocket protocol version
+   * @param uri the target URI
+   * @param keyBytes the generated client key
+   * @param extensions requested extensions
+   * @param protocols requested sub-protocols
+   * @return a tuple of header names to values
+   * @throws IOException if header building fails
+   */
   public static Tuple<String, String> constructHeaders (int protocolVersion, URI uri, byte[] keyBytes, Extension[] extensions, String... protocols)
     throws IOException {
 
@@ -86,6 +100,13 @@ public class Handshake {
     return headerTuple;
   }
 
+  /**
+   * Builds the raw HTTP request line and headers.
+   *
+   * @param uri the target websocket URI
+   * @param headerTuple the headers to emit
+   * @return bytes representing the request
+   */
   public static byte[] constructRequest (URI uri, Tuple<String, String> headerTuple) {
 
     StringBuilder handshakeBuilder = new StringBuilder();
@@ -106,6 +127,19 @@ public class Handshake {
     return handshakeBuilder.toString().getBytes(StandardCharsets.UTF_8);
   }
 
+  /**
+   * Validates the server handshake response against the expected challenge and requested parameters.
+   *
+   * @param headerTuple populated header store to receive response headers
+   * @param response the raw response text
+   * @param keyBytes the original challenge key
+   * @param installedExtensions allowed extensions
+   * @param protocols requested sub-protocols
+   * @return a {@link HandshakeResponse} containing negotiated values
+   * @throws IOException on I/O or parsing errors
+   * @throws NoSuchAlgorithmException if hashing is unavailable
+   * @throws SyntaxException if response validation fails
+   */
   public static HandshakeResponse validateResponse (Tuple<String, String> headerTuple, String response, byte[] keyBytes, Extension[] installedExtensions, String... protocols)
     throws IOException, NoSuchAlgorithmException, SyntaxException {
 

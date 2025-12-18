@@ -47,17 +47,35 @@ import org.smallmind.web.json.query.WhereField;
 import org.smallmind.web.json.query.WhereFieldTransformer;
 import org.smallmind.web.json.query.WhereOperator;
 
+/**
+ * Utility for translating JSON where/sort structures into Throng (MongoDB) filters and sorts.
+ */
 public class ThrongQueryUtility {
 
   private static final String SINGLE_WILDCARD = "*";
   private static final String DOUBLE_WILDCARD = SINGLE_WILDCARD + SINGLE_WILDCARD;
   private static final char WILDCARD_CHAR = '*';
 
+  /**
+   * Applies a {@link Where} clause to the provided Throng filters without field transformation.
+   *
+   * @param filters filters to augment
+   * @param where   where clause to translate
+   * @return the same filters instance with additional constraints
+   */
   public static Filters apply (Filters filters, Where where) {
 
     return apply(filters, where, null);
   }
 
+  /**
+   * Applies a {@link Where} clause to the provided Throng filters using an optional field transformer.
+   *
+   * @param filters           filters to augment
+   * @param where             where clause to translate
+   * @param fieldTransformer  transformer that maps entity/name pairs to backend field names (may be {@code null})
+   * @return the same filters instance with additional constraints
+   */
   public static Filters apply (Filters filters, Where where, WhereFieldTransformer<Void, Void> fieldTransformer) {
 
     if (where != null) {
@@ -67,6 +85,9 @@ public class ThrongQueryUtility {
     return filters;
   }
 
+  /**
+   * Recursively walks conjunctions to build MongoDB filters.
+   */
   private static Filter walkConjunction (WhereConjunction whereConjunction, WhereFieldTransformer<Void, Void> fieldTransformer) {
 
     if ((whereConjunction == null) || whereConjunction.isEmpty()) {
@@ -115,6 +136,11 @@ public class ThrongQueryUtility {
     }
   }
 
+  /**
+   * Translates a single field criterion into a Throng filter.
+   *
+   * @throws QueryProcessingException if LIKE/UNLIKE are used with invalid patterns or operand types
+   */
   private static Filter walkField (WhereField whereField, WhereFieldTransformer<Void, Void> fieldTransformer) {
 
     String fieldName = (fieldTransformer == null) ? whereField.getName() : fieldTransformer.transform(whereField.getEntity(), whereField.getName()).getField();
@@ -219,6 +245,13 @@ public class ThrongQueryUtility {
     return apply(sort, null);
   }
 
+  /**
+   * Converts a {@link Sort} into a Throng sort expression using an optional field transformer.
+   *
+   * @param sort             sort definition (may be {@code null})
+   * @param fieldTransformer transformer that maps entity/name pairs to backend field names (may be {@code null})
+   * @return constructed Throng sort specification
+   */
   public static org.smallmind.mongodb.throng.query.Sort apply (Sort sort, WhereFieldTransformer<Void, Void> fieldTransformer) {
 
     org.smallmind.mongodb.throng.query.Sort sorts = org.smallmind.mongodb.throng.query.Sort.on();

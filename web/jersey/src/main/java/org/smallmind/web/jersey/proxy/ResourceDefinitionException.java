@@ -34,8 +34,17 @@ package org.smallmind.web.jersey.proxy;
 
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
+/**
+ * Exception thrown when a resource proxy interface is improperly defined.
+ */
 public class ResourceDefinitionException extends FormattedException {
 
+  /**
+   * Creates the exception with a formatted message.
+   *
+   * @param message message template
+   * @param args template arguments
+   */
   public ResourceDefinitionException (String message, Object... args) {
 
     super(message, args);

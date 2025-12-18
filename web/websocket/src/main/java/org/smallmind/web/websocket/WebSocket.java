@@ -58,6 +58,10 @@ import org.smallmind.nutsnbolts.security.EncryptionUtility;
 import org.smallmind.nutsnbolts.security.HashAlgorithm;
 import org.smallmind.nutsnbolts.util.Tuple;
 
+/**
+ * Lightweight WebSocket client implementing handshake, framing, and message dispatch for text/binary control frames.
+ * Subclasses implement callbacks for received messages and errors.
+ */
 public abstract class WebSocket implements AutoCloseable {
 
   private final Socket socket;
@@ -78,24 +82,64 @@ public abstract class WebSocket implements AutoCloseable {
   private final long soTimeout = 1000;
   private final int protocolVersion = 13;
 
+  /**
+   * Creates a WebSocket client without extensions or custom handshake listener.
+   *
+   * @param uri the target websocket URI
+   * @param protocols optional sub-protocols to negotiate
+   * @throws IOException on I/O errors
+   * @throws NoSuchAlgorithmException if hashing for the handshake fails
+   * @throws WebSocketException if the URI or handshake is invalid
+   */
   public WebSocket (URI uri, String... protocols)
     throws IOException, NoSuchAlgorithmException, WebSocketException {
 
     this(uri, null, null, protocols);
   }
 
+  /**
+   * Creates a WebSocket client with extensions.
+   *
+   * @param uri the target websocket URI
+   * @param extensions requested extensions
+   * @param protocols optional sub-protocols to negotiate
+   * @throws IOException on I/O errors
+   * @throws NoSuchAlgorithmException if hashing for the handshake fails
+   * @throws WebSocketException if the URI or handshake is invalid
+   */
   public WebSocket (URI uri, Extension[] extensions, String... protocols)
     throws IOException, NoSuchAlgorithmException, WebSocketException {
 
     this(uri, null, extensions, protocols);
   }
 
+  /**
+   * Creates a WebSocket client with a handshake listener.
+   *
+   * @param uri the target websocket URI
+   * @param handshakeListener callback to inspect handshake headers
+   * @param protocols optional sub-protocols to negotiate
+   * @throws IOException on I/O errors
+   * @throws NoSuchAlgorithmException if hashing for the handshake fails
+   * @throws WebSocketException if the URI or handshake is invalid
+   */
   public WebSocket (URI uri, HandshakeListener handshakeListener, String... protocols)
     throws IOException, NoSuchAlgorithmException, WebSocketException {
 
     this(uri, handshakeListener, null, protocols);
   }
 
+  /**
+   * Creates a WebSocket client with optional handshake listener and extensions.
+   *
+   * @param uri the target websocket URI
+   * @param handshakeListener callback to inspect handshake headers
+   * @param extensions requested extensions
+   * @param protocols optional sub-protocols to negotiate
+   * @throws IOException on I/O errors
+   * @throws NoSuchAlgorithmException if hashing for the handshake fails
+   * @throws WebSocketException if the URI or handshake is invalid
+   */
   public WebSocket (URI uri, HandshakeListener handshakeListener, Extension[] extensions, String... protocols)
     throws IOException, NoSuchAlgorithmException, WebSocketException {
 
@@ -154,14 +198,41 @@ public abstract class WebSocket implements AutoCloseable {
     workerThread.start();
   }
 
+  /**
+   * Callback for any exception encountered during message processing.
+   *
+   * @param exception the error raised
+   */
   public abstract void onError (Exception exception);
 
+  /**
+   * Callback when a pong is received that matches a previously sent ping.
+   *
+   * @param message the pong payload
+   */
   public abstract void onPong (byte[] message);
 
+  /**
+   * Callback when a text message is received.
+   *
+   * @param message the text payload
+   */
   public abstract void onText (String message);
 
+  /**
+   * Callback when a binary message is received.
+   *
+   * @param message the binary payload
+   */
   public abstract void onBinary (byte[] message);
 
+  /**
+   * Sends a ping frame with the provided payload.
+   *
+   * @param buffer the ping payload
+   * @throws IOException if writing fails
+   * @throws WebSocketException if the socket is closing/closed or validation fails
+   */
   public synchronized void ping (byte[] buffer)
     throws IOException, WebSocketException {
 
@@ -177,6 +248,13 @@ public abstract class WebSocket implements AutoCloseable {
     }
   }
 
+  /**
+   * Sends a text frame.
+   *
+   * @param message the text message to send
+   * @throws IOException if writing fails
+   * @throws WebSocketException if the socket is closing/closed
+   */
   public synchronized void text (String message)
     throws IOException, WebSocketException {
 
@@ -187,6 +265,13 @@ public abstract class WebSocket implements AutoCloseable {
     write(Frame.text(message));
   }
 
+  /**
+   * Sends a binary frame.
+   *
+   * @param buffer the binary payload
+   * @throws IOException if writing fails
+   * @throws WebSocketException if the socket is closing/closed
+   */
   public synchronized void binary (byte[] buffer)
     throws IOException, WebSocketException {
 
@@ -197,6 +282,11 @@ public abstract class WebSocket implements AutoCloseable {
     write(Frame.binary(buffer));
   }
 
+  /**
+   * Registers a close listener to be notified when a close frame is processed.
+   *
+   * @param closeListener the listener implementation
+   */
   public void addCloseListener (CloseListener closeListener) {
 
     closeListenerRef.set(closeListener);
@@ -209,12 +299,29 @@ public abstract class WebSocket implements AutoCloseable {
     close(CloseCode.NORMAL);
   }
 
+  /**
+   * Closes the connection with the supplied close code.
+   *
+   * @param closeCode the close status
+   * @throws IOException on write failures
+   * @throws WebSocketException if already closed/closing
+   * @throws InterruptedException if interrupted while waiting on worker shutdown
+   */
   public void close (CloseCode closeCode)
     throws IOException, WebSocketException, InterruptedException {
 
     close(closeCode, null);
   }
 
+  /**
+   * Closes the connection with a close code and optional reason.
+   *
+   * @param closeCode the close status
+   * @param reason the human-readable reason or {@code null}
+   * @throws IOException on write failures
+   * @throws WebSocketException if already closed/closing
+   * @throws InterruptedException if interrupted while waiting on worker shutdown
+   */
   public void close (CloseCode closeCode, String reason)
     throws IOException, WebSocketException, InterruptedException {
 
@@ -235,6 +342,12 @@ public abstract class WebSocket implements AutoCloseable {
     }
   }
 
+  /**
+   * Writes a frame to the socket, resetting idle state tracking.
+   *
+   * @param buffer the serialized frame
+   * @throws IOException if the write fails
+   */
   private void write (byte[] buffer)
     throws IOException {
 
@@ -242,6 +355,13 @@ public abstract class WebSocket implements AutoCloseable {
     socket.getOutputStream().write(buffer);
   }
 
+  /**
+   * Reads from the socket until a full frame is available.
+   *
+   * @return the next complete frame bytes
+   * @throws IOException if I/O fails
+   * @throws WebSocketException if protocol parsing fails
+   */
   private byte[] read ()
     throws IOException, WebSocketException {
 
@@ -270,6 +390,12 @@ public abstract class WebSocket implements AutoCloseable {
     } while (true);
   }
 
+  /**
+   * Attempts to extract a complete frame from the input buffer.
+   *
+   * @return the next frame bytes or {@code null} if incomplete
+   * @throws IOException if reading from the buffered stream fails
+   */
   private byte[] extractFrame ()
     throws IOException {
 
@@ -306,82 +432,160 @@ public abstract class WebSocket implements AutoCloseable {
     return null;
   }
 
+  /**
+   * Returns the protocol version used.
+   *
+   * @return the websocket protocol version
+   */
   public int getProtocolVersion () {
 
     return protocolVersion;
   }
 
+  /**
+   * Returns the negotiated sub-protocol, if any.
+   *
+   * @return the negotiated protocol string
+   */
   public String getNegotiatedProtocol () {
 
     return handshakeResponse.getProtocol();
   }
 
+  /**
+   * Indicates whether the connection uses TLS.
+   *
+   * @return {@code true} for wss connections
+   */
   public boolean isSecure () {
 
     return secure;
   }
 
+  /**
+   * Returns the target URI.
+   *
+   * @return the websocket URI
+   */
   public URI getUri () {
 
     return uri;
   }
 
+  /**
+   * Returns the full URL used for the connection.
+   *
+   * @return the URL string
+   */
   public String url () {
 
     return url;
   }
 
+  /**
+   * Current connection state.
+   *
+   * @return the state enumeration
+   */
   public ConnectionState getConnectionState () {
 
     return connectionStateRef.get();
   }
 
+  /**
+   * Current connection state ordinal.
+   *
+   * @return the ordinal of the state
+   */
   public int connectionState () {
 
     return connectionStateRef.get().ordinal();
   }
 
+  /**
+   * Returns the negotiated extensions as a header string.
+   *
+   * @return extension description or {@code null}
+   */
   public String extensions () {
 
     return HandshakeResponse.getExtensionsAsString(handshakeResponse.getExtensions());
   }
 
+  /**
+   * Maximum allowed binary buffer size for incoming messages.
+   *
+   * @return the size in bytes
+   */
   public int getMaxBinaryBufferSize () {
 
     return maxBinaryBufferSize.get();
   }
 
+  /**
+   * Sets the maximum allowed binary buffer size for incoming messages.
+   *
+   * @param size the size in bytes
+   */
   public void setMaxBinaryBufferSize (int size) {
 
     maxBinaryBufferSize.set(size);
   }
 
+  /**
+   * Maximum allowed text buffer size for incoming messages.
+   *
+   * @return the size in characters
+   */
   public int getMaxTextBufferSize () {
 
     return maxTextBufferSize.get();
   }
 
+  /**
+   * Sets the maximum allowed text buffer size for incoming messages.
+   *
+   * @param size the size in characters
+   */
   public void setMaxTextBufferSize (int size) {
 
     maxTextBufferSize.set(size);
   }
 
+  /**
+   * Returns the idle timeout configuration in milliseconds.
+   *
+   * @return the timeout value, or -1 for none
+   */
   public long getMaxIdleTimeoutMilliseconds () {
 
     return maxIdleTimeoutMilliseconds.get();
   }
 
+  /**
+   * Sets the idle timeout configuration in milliseconds.
+   *
+   * @param milliseconds the timeout value, or -1 to disable
+   */
   public void setMaxIdleTimeoutMilliseconds (long milliseconds) {
 
     maxIdleTimeoutMilliseconds.set(milliseconds);
   }
 
+  /**
+   * Worker thread that reads frames and dispatches events.
+   */
   private class MessageWorker implements Runnable {
 
     private final CountDownLatch exitLatch = new CountDownLatch(1);
     private final AtomicBoolean aborted = new AtomicBoolean(false);
     private final LinkedList<Fragment> fragmentList = new LinkedList<>();
 
+    /**
+    * Signals the worker to stop and waits for it to exit.
+    *
+    * @throws InterruptedException if interrupted while awaiting shutdown
+    */
     public void abort ()
       throws InterruptedException {
 
@@ -392,6 +596,9 @@ public abstract class WebSocket implements AutoCloseable {
       exitLatch.await();
     }
 
+    /**
+     * Continuously reads frames and dispatches them to the appropriate callbacks until aborted.
+     */
     @Override
     public void run () {
 

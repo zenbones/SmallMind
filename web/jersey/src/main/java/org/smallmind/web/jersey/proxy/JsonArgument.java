@@ -34,22 +34,41 @@ package org.smallmind.web.jersey.proxy;
 
 import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 
+/**
+ * Describes a JSON argument name and optional XML adapter used for conversion.
+ */
 public class JsonArgument {
 
   private final String name;
   private final XmlAdapter xmlAdapter;
 
+  /**
+   * Constructs a new argument descriptor.
+   *
+   * @param name argument name
+   * @param xmlAdapter adapter to convert to/from the on-the-wire representation; may be {@code null}
+   */
   public JsonArgument (String name, XmlAdapter xmlAdapter) {
 
     this.name = name;
     this.xmlAdapter = xmlAdapter;
   }
 
+  /**
+   * Returns the argument name.
+   *
+   * @return argument name
+   */
   public String getName () {
 
     return name;
   }
 
+  /**
+   * Returns the adapter associated with this argument, if any.
+   *
+   * @return XML adapter or {@code null}
+   */
   public XmlAdapter getXmlAdapter () {
 
     return xmlAdapter;

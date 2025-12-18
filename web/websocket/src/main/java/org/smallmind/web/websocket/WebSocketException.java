@@ -34,13 +34,27 @@ package org.smallmind.web.websocket;
 
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
+/**
+ * Base exception for WebSocket protocol and runtime errors.
+ */
 public class WebSocketException extends FormattedException {
 
+  /**
+   * Creates an exception with a formatted message.
+   *
+   * @param message the format string
+   * @param args arguments referenced by the format specifiers in the message
+   */
   public WebSocketException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * Wraps another throwable.
+   *
+   * @param throwable the underlying cause
+   */
   public WebSocketException (Throwable throwable) {
 
     super(throwable);

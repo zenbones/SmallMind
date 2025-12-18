@@ -36,10 +36,21 @@ import java.io.IOException;
 import java.util.LinkedList;
 import org.smallmind.nutsnbolts.reflection.bean.BeanAccessException;
 
+/**
+ * Parses dotted bean/method paths containing optional parameter lists and array subscripts
+ * into {@link PathComponent} elements for reflective execution.
+ */
 public class ComponentParser {
 
   private enum State {START_COMPONENT, START_METHOD_NAME, METHOD_NAME, END_METHOD_NAME, START_PARAMETERS, PARAMETERS, STRING, ESCAPE, END_PARAMETERS, START_SUBSCRIPT, END_SUBSCRIPT}
 
+  /**
+   * Parses a method/property chain into an array of {@link PathComponent} instances.
+   *
+   * @param methodChain expression such as {@code user.getAddress()[0].zipCode}
+   * @return ordered array of path components
+   * @throws BeanAccessException if the chain is syntactically invalid
+   */
   public static PathComponent[] parse (String methodChain)
     throws BeanAccessException {
 

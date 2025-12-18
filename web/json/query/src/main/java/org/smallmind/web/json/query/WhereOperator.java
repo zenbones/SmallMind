@@ -35,6 +35,10 @@ package org.smallmind.web.json.query;
 import java.util.Date;
 import org.smallmind.nutsnbolts.util.NumberComparator;
 
+/**
+ * Supported comparison operators for field predicates. Each constant implements {@link #isTrue(WhereOperand, WhereOperand)}
+ * to evaluate the operator against two operands.
+ */
 public enum WhereOperator {
 
   LT {
@@ -237,5 +241,13 @@ public enum WhereOperator {
   private static final String DOUBLE_WILDCARD = SINGLE_WILDCARD + SINGLE_WILDCARD;
   private static final char WILDCARD_CHAR = '*';
 
+  /**
+   * Evaluates the operator against the supplied operands.
+   *
+   * @param op1 operator-specific left operand
+   * @param op2 operator-specific right operand
+   * @return {@code true} if the comparison succeeds
+   * @throws QueryProcessingException if operand types are incompatible for the operator
+   */
   public abstract boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2);
 }

@@ -39,6 +39,11 @@ import jakarta.websocket.Decoder;
 import jakarta.websocket.Endpoint;
 import jakarta.websocket.MessageHandler;
 
+/**
+ * Adapter that decodes binary {@link InputStream} messages before delegating to an application handler.
+ *
+ * @param <T> decoded message type
+ */
 public class DecodedInputStreamHandler<T> implements MessageHandler.Whole<InputStream> {
 
   private final SessionImpl session;
@@ -46,6 +51,14 @@ public class DecodedInputStreamHandler<T> implements MessageHandler.Whole<InputS
   private final Decoder.BinaryStream<T> decoder;
   private final MessageHandler.Whole<T> handler;
 
+  /**
+   * Creates the handler adapter.
+   *
+   * @param session the owning session
+   * @param endpoint the endpoint to receive decode errors
+   * @param decoder the stream decoder
+   * @param handler the application handler
+   */
   public DecodedInputStreamHandler (SessionImpl session, Endpoint endpoint, Decoder.BinaryStream<T> decoder, MessageHandler.Whole<T> handler) {
 
     this.session = session;
@@ -54,6 +67,11 @@ public class DecodedInputStreamHandler<T> implements MessageHandler.Whole<InputS
     this.handler = handler;
   }
 
+  /**
+   * Decodes the incoming stream and passes the result to the wrapped handler.
+   *
+   * @param message the incoming stream
+   */
   @Override
   public void onMessage (InputStream message) {
 

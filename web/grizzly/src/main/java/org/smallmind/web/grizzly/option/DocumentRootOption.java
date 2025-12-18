@@ -34,26 +34,41 @@ package org.smallmind.web.grizzly.option;
 
 import java.util.Map;
 
+/**
+ * Configures static file system roots that should be exposed under a specific context path.
+ */
 public class DocumentRootOption {
 
   private Map<String, String> documentRoots;
   private String documentPath = "/document";
 
+  /**
+   * @return mapping of URI prefixes to filesystem directories that should be served
+   */
   public Map<String, String> getDocumentRoots () {
 
     return documentRoots;
   }
 
+  /**
+   * @param documentRoots mapping of URI prefixes to filesystem directories that should be served
+   */
   public void setDocumentRoots (Map<String, String> documentRoots) {
 
     this.documentRoots = documentRoots;
   }
 
+  /**
+   * @return base URI path under which document roots will be mounted
+   */
   public String getDocumentPath () {
 
     return documentPath;
   }
 
+  /**
+   * @param documentPath base URI path under which document roots will be mounted
+   */
   public void setDocumentPath (String documentPath) {
 
     this.documentPath = documentPath;

@@ -32,6 +32,10 @@
  */
 package org.smallmind.web.grizzly.option;
 
+/**
+ * Aggregate configuration for a single Grizzly web application context including static resources, REST, SOAP, Spring
+ * and WebSocket options.
+ */
 public class WebApplicationOption {
 
   private ClassLoaderResourceOption classLoaderResourceOption;
@@ -42,71 +46,113 @@ public class WebApplicationOption {
   private String contextPath = "/context";
   private String soapPath = "/soap";
 
+  /**
+   * @return configuration for serving static resources from the classpath
+   */
   public ClassLoaderResourceOption getClassLoaderResourceOption () {
 
     return classLoaderResourceOption;
   }
 
+  /**
+   * @param classLoaderResourceOption configuration for serving static resources from the classpath
+   */
   public void setClassLoaderResourceOption (ClassLoaderResourceOption classLoaderResourceOption) {
 
     this.classLoaderResourceOption = classLoaderResourceOption;
   }
 
+  /**
+   * @return configuration for serving static documents from the filesystem
+   */
   public DocumentRootOption getDocumentRootOption () {
 
     return documentRootOption;
   }
 
+  /**
+   * @param documentRootOption configuration for serving static documents from the filesystem
+   */
   public void setDocumentRootOption (DocumentRootOption documentRootOption) {
 
     this.documentRootOption = documentRootOption;
   }
 
+  /**
+   * @return JAX-RS option defining the REST base path
+   */
   public JaxRSOption getJaxRSOption () {
 
     return jaxRSOption;
   }
 
+  /**
+   * @param jaxRSOption JAX-RS option defining the REST base path
+   */
   public void setJaxRSOption (JaxRSOption jaxRSOption) {
 
     this.jaxRSOption = jaxRSOption;
   }
 
+  /**
+   * @return marker option enabling Spring request context support
+   */
   public SpringSupportOption getSpringSupportOption () {
 
     return springSupportOption;
   }
 
+  /**
+   * @param springSupportOption marker option enabling Spring request context support
+   */
   public void setSpringSupportOption (SpringSupportOption springSupportOption) {
 
     this.springSupportOption = springSupportOption;
   }
 
+  /**
+   * @return WebSocket deployment options
+   */
   public WebSocketOption getWebSocketOption () {
 
     return webSocketOption;
   }
 
+  /**
+   * @param webSocketOption WebSocket deployment options
+   */
   public void setWebSocketOption (WebSocketOption webSocketOption) {
 
     this.webSocketOption = webSocketOption;
   }
 
+  /**
+   * @return servlet context path for the application
+   */
   public String getContextPath () {
 
     return contextPath;
   }
 
+  /**
+   * @param contextPath servlet context path for the application
+   */
   public void setContextPath (String contextPath) {
 
     this.contextPath = contextPath;
   }
 
+  /**
+   * @return base path under which SOAP services will be exposed
+   */
   public String getSoapPath () {
 
     return soapPath;
   }
 
+  /**
+   * @param soapPath base path under which SOAP services will be exposed
+   */
   public void setSoapPath (String soapPath) {
 
     this.soapPath = soapPath;

@@ -35,8 +35,14 @@ package org.smallmind.web.websocket.spi;
 import jakarta.websocket.ContainerProvider;
 import jakarta.websocket.WebSocketContainer;
 
+/**
+ * Service-provider implementation returning the lightweight container.
+ */
 public class ContainerProviderImpl extends ContainerProvider {
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   protected WebSocketContainer getContainer () {
 

@@ -40,6 +40,9 @@ import org.smallmind.web.jersey.proxy.JsonTarget;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
+/**
+ * Spring FactoryBean that produces a JSON resource proxy for a given interface.
+ */
 public class JsonEntityResourceProxyFactoryBean implements FactoryBean<Proxy>, InitializingBean {
 
   private Proxy proxy;
@@ -51,41 +54,81 @@ public class JsonEntityResourceProxyFactoryBean implements FactoryBean<Proxy>, I
   private String serviceName;
   private int serviceVersion;
 
+  /**
+   * Sets the target endpoint to which requests will be sent.
+   *
+   * @param target base {@link JsonTarget}
+   */
   public void setTarget (JsonTarget target) {
 
     this.target = target;
   }
 
+  /**
+   * Sets optional header injectors used for each invocation.
+   *
+   * @param headerInjectors injectors to apply
+   */
   public void setHeaderInjectors (JsonHeaderInjector[] headerInjectors) {
 
     this.headerInjectors = headerInjectors;
   }
 
+  /**
+   * Identifies the resource interface implemented by the proxy.
+   *
+   * @param resourceInterface interface class
+   */
   public void setResourceInterface (Class<?> resourceInterface) {
 
     this.resourceInterface = resourceInterface;
   }
 
+  /**
+   * Sets the logical service name portion of the URL.
+   *
+   * @param serviceName service name
+   */
   public void setServiceName (String serviceName) {
 
     this.serviceName = serviceName;
   }
 
+  /**
+   * Sets the prefix used ahead of the numeric version.
+   *
+   * @param versionPrefix path prefix before the version number
+   */
   public void setVersionPrefix (String versionPrefix) {
 
     this.versionPrefix = versionPrefix;
   }
 
+  /**
+   * Sets the numeric service version.
+   *
+   * @param serviceVersion version number
+   */
   public void setServiceVersion (int serviceVersion) {
 
     this.serviceVersion = serviceVersion;
   }
 
+  /**
+   * Sets the debug log level to use for requests.
+   *
+   * @param level log level
+   */
   public void setLevel (Level level) {
 
     this.level = level;
   }
 
+  /**
+   * Builds the proxy once all properties are configured.
+   *
+   * @throws Exception if proxy creation fails
+   */
   @Override
   public void afterPropertiesSet ()
     throws Exception {
@@ -93,18 +136,34 @@ public class JsonEntityResourceProxyFactoryBean implements FactoryBean<Proxy>, I
     proxy = JsonEntityResourceProxyFactory.generateProxy(target, versionPrefix, serviceVersion, serviceName, resourceInterface, level, headerInjectors);
   }
 
+  /**
+   * Indicates the factory always returns a singleton instance.
+   *
+   * @return {@code true}
+   */
   @Override
   public boolean isSingleton () {
 
     return true;
   }
 
+  /**
+   * Returns the proxy type.
+   *
+   * @return Proxy class
+   */
   @Override
   public Class<?> getObjectType () {
 
     return Proxy.class;
   }
 
+  /**
+   * Returns the created proxy.
+   *
+   * @return proxy instance
+   * @throws Exception if creation failed
+   */
   @Override
   public Proxy getObject ()
     throws Exception {

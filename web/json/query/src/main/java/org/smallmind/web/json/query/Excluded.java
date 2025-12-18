@@ -32,9 +32,18 @@
  */
 package org.smallmind.web.json.query;
 
+/**
+ * Marks a field that must be excluded from a where clause.
+ */
 public @interface Excluded {
 
+  /**
+   * @return entity alias for the excluded field (optional)
+   */
   String entity () default "";
 
+  /**
+   * @return name of the field that must not appear
+   */
   String field ();
 }

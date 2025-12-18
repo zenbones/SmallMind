@@ -36,24 +36,46 @@ import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
+/**
+ * Logical AND grouping of multiple {@link WhereCriterion} elements.
+ */
 @XmlRootElement(name = "and", namespace = "http://org.smallmind/web/json/query")
 @XmlJavaTypeAdapter(WhereCriterionPolymorphicXmlAdapter.class)
 public class AndWhereConjunction extends WhereConjunction {
 
+  /**
+   * Creates an empty conjunction.
+   */
   public AndWhereConjunction () {
 
   }
 
+  /**
+   * Creates a conjunction containing the supplied criteria.
+   *
+   * @param criteria the nested criteria to be combined with AND
+   */
   public AndWhereConjunction (WhereCriterion... criteria) {
 
     super(criteria);
   }
 
+  /**
+   * Convenience factory for an AND conjunction.
+   *
+   * @param criteria the nested criteria to be combined with AND
+   * @return a new {@link AndWhereConjunction} containing the criteria
+   */
   public static AndWhereConjunction instance (WhereCriterion... criteria) {
 
     return new AndWhereConjunction(criteria);
   }
 
+  /**
+   * Identifies this conjunction as an AND operation.
+   *
+   * @return {@link ConjunctionType#AND}
+   */
   @Override
   @XmlTransient
   public ConjunctionType getConjunctionType () {

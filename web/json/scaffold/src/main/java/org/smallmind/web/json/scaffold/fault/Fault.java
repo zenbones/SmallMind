@@ -41,6 +41,10 @@ import jakarta.xml.bind.annotation.XmlRootElement;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Structured fault representation that can be serialized to JSON/XML, carrying stack trace,
+ * nested causes, and optional native/extra information.
+ */
 @XmlRootElement(name = "fault", namespace = "http://org.smallmind/web/json/scaffold/fault")
 @XmlAccessorType(XmlAccessType.PROPERTY)
 public class Fault implements Serializable, Informed {
@@ -53,15 +57,29 @@ public class Fault implements Serializable, Informed {
   private String message;
   private NativeObject nativeObject;
 
+  /**
+   * No-arg constructor for frameworks.
+   */
   public Fault () {
 
   }
 
+  /**
+   * Creates a fault with only a message.
+   *
+   * @param message human-readable message
+   */
   public Fault (String message) {
 
     this.message = message;
   }
 
+  /**
+   * Creates a fault with contextual location and message.
+   *
+   * @param context context element describing where the fault occurred
+   * @param message human-readable message
+   */
   public Fault (FaultElement context, String message) {
 
     this(message);
@@ -69,21 +87,47 @@ public class Fault implements Serializable, Informed {
     this.context = context;
   }
 
+  /**
+   * Creates a fault from a throwable, capturing stack trace and optional native encoding.
+   *
+   * @param throwable               thrown exception
+   * @param includeNativeEncoding   whether to serialize the exception natively
+   */
   public Fault (Throwable throwable) {
 
     this(null, throwable, true);
   }
 
+  /**
+   * Creates a contextual fault from a throwable, capturing stack trace and optional native encoding.
+   *
+   * @param context                 context element describing the call site
+   * @param throwable               thrown exception
+   * @param includeNativeEncoding   whether to serialize the exception natively
+   */
   public Fault (FaultElement context, Throwable throwable) {
 
     this(context, throwable, true);
   }
 
+  /**
+   * Creates a fault from a throwable with control over native encoding.
+   *
+   * @param throwable               thrown exception
+   * @param includeNativeEncoding   whether to serialize the exception natively
+   */
   public Fault (Throwable throwable, boolean includeNativeEncoding) {
 
     this(null, throwable, includeNativeEncoding);
   }
 
+  /**
+   * Creates a contextual fault from a throwable with control over native encoding.
+   *
+   * @param context                 context element describing the call site
+   * @param throwable               thrown exception
+   * @param includeNativeEncoding   whether to serialize the exception natively
+   */
   public Fault (FaultElement context, Throwable throwable, boolean includeNativeEncoding) {
 
     this.context = context;
@@ -118,6 +162,13 @@ public class Fault implements Serializable, Informed {
     }
   }
 
+  /**
+   * Computes how many trailing elements of the previous trace are repeated by the current element.
+   *
+   * @param element   current fault element
+   * @param prevTrace prior stack trace to compare against
+   * @return number of repeated elements from the previous trace, or -1 if none match
+   */
   private static int findRepeatedStackElements (FaultElement element, FaultElement[] prevTrace) {
 
     for (int count = 0; count < prevTrace.length; count++) {
@@ -130,83 +181,144 @@ public class Fault implements Serializable, Informed {
     return -1;
   }
 
+  /**
+   * @return contextual element indicating the origin of the fault
+   */
   @XmlElement(name = "context")
   public FaultElement getContext () {
 
     return context;
   }
 
+  /**
+   * Sets the contextual element indicating the origin of the fault.
+   *
+   * @param context context element
+   */
   public void setContext (FaultElement context) {
 
     this.context = context;
   }
 
+  /**
+   * @return fully qualified throwable type name
+   */
   @XmlElement(name = "type")
   public String getThrowableType () {
 
     return throwableType;
   }
 
+  /**
+   * Sets the fully qualified throwable type name.
+   *
+   * @param throwableType throwable class name
+   */
   public void setThrowableType (String throwableType) {
 
     this.throwableType = throwableType;
   }
 
+  /**
+   * @return fault message
+   */
   @XmlElement(name = "message")
   public String getMessage () {
 
     return message;
   }
 
+  /**
+   * Sets the fault message.
+   *
+   * @param message human-readable message
+   */
   public void setMessage (String message) {
 
     this.message = message;
   }
 
+  /**
+   * @return nested cause fault, if any
+   */
   @XmlElement(name = "cause")
   public Fault getCause () {
 
     return cause;
   }
 
+  /**
+   * Sets the nested cause fault.
+   *
+   * @param cause nested fault
+   */
   public void setCause (Fault cause) {
 
     this.cause = cause;
   }
 
+  /**
+   * @return captured stack trace elements
+   */
   @XmlElement(name = "trace")
   public FaultElement[] getElements () {
 
     return elements;
   }
 
+  /**
+   * Sets the captured stack trace elements.
+   *
+   * @param elements stack trace elements
+   */
   public void setElements (FaultElement[] elements) {
 
     this.elements = elements;
   }
 
+  /**
+   * @return structured auxiliary information (may be {@code null})
+   */
   @XmlElement(name = "information")
   public ObjectNode getInformation () {
 
     return information;
   }
 
+  /**
+   * Sets structured auxiliary information.
+   *
+   * @param information JSON node containing metadata
+   */
   public void setInformation (ObjectNode information) {
 
     this.information = information;
   }
 
+  /**
+   * @return optional native representation of the faulting object
+   */
   @XmlElement(name = "native")
   public NativeObject getNativeObject () {
 
     return nativeObject;
   }
 
+  /**
+   * Sets the native representation of the faulting object.
+   *
+   * @param nativeObject serialized native payload
+   */
   public void setNativeObject (NativeObject nativeObject) {
 
     this.nativeObject = nativeObject;
   }
 
+  /**
+   * Renders the fault and its causes into a multi-line human-readable string.
+   *
+   * @return formatted fault text
+   */
   @Override
   public String toString () {
 

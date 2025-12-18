@@ -37,8 +37,16 @@ import jakarta.persistence.criteria.Root;
 import org.smallmind.web.json.query.WhereFieldTransform;
 import org.smallmind.web.json.query.WhereFieldTransformer;
 
+/**
+ * Translates field references into JPA Criteria {@link Path} objects.
+ */
 public class JPAWhereFieldTransformer extends WhereFieldTransformer<Root<?>, Path<?>> {
 
+  /**
+   * Creates a transformer using the provided transform function.
+   *
+   * @param transform function that produces a {@link JPAWherePath} from entity/name
+   */
   public JPAWhereFieldTransformer (WhereFieldTransform<Root<?>, Path<?>> transform) {
 
     super(transform);

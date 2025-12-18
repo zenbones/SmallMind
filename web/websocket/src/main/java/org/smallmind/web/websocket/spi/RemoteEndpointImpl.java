@@ -56,6 +56,9 @@ import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
 import org.smallmind.web.websocket.WebSocket;
 import org.smallmind.web.websocket.WebSocketException;
 
+/**
+ * Implements both synchronous and asynchronous remote endpoints backed by the {@link WebSocket} client.
+ */
 public class RemoteEndpointImpl implements RemoteEndpoint {
 
   private final SessionImpl session;
@@ -63,6 +66,14 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
   private final Endpoint endpoint;
   private final HashMap<Class<?>, EncoderHandler<?>> encoderHandlerMap = new HashMap<>();
 
+  /**
+   * Creates a remote endpoint capable of encoding messages for the provided endpoint configuration.
+   *
+   * @param session the owning session
+   * @param webSocket the underlying websocket client
+   * @param endpoint the endpoint receiving errors
+   * @param endpointConfig encoder configuration
+   */
   public RemoteEndpointImpl (SessionImpl session, WebSocket webSocket, Endpoint endpoint, EndpointConfig endpointConfig) {
 
     this.session = session;
@@ -142,42 +153,74 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
     return parameterList.get(0);
   }
 
+  /**
+   * Exposes the owning session.
+   *
+   * @return the session instance
+   */
   public SessionImpl getSession () {
 
     return session;
   }
 
+  /**
+   * Exposes the backing websocket.
+   *
+   * @return the websocket client
+   */
   public WebSocket getWebSocket () {
 
     return webSocket;
   }
 
+  /**
+   * Exposes the endpoint that will receive error callbacks.
+   *
+   * @return the endpoint
+   */
   public Endpoint getEndpoint () {
 
     return endpoint;
   }
 
+  /**
+   * Returns the map of encoder handlers keyed by supported types.
+   *
+   * @return encoder handler map
+   */
   public HashMap<Class<?>, EncoderHandler<?>> getEncoderHandlerMap () {
 
     return encoderHandlerMap;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean getBatchingAllowed () {
 
     return false;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void setBatchingAllowed (boolean allowed) {
 
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void flushBatch () {
 
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void sendPing (ByteBuffer applicationData)
     throws IOException {
@@ -189,6 +232,9 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void sendPong (ByteBuffer applicationData)
     throws IOException {
@@ -201,6 +247,11 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
     private final SendRunnable sendRunnable;
     private final Thread sendThread;
 
+    /**
+     * Wraps a background send operation in a {@link Future}.
+     *
+     * @param sendRunnable the task performing the send
+     */
     public SendFuture (SendRunnable sendRunnable) {
 
       this.sendRunnable = sendRunnable;
@@ -208,24 +259,36 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
       (sendThread = new Thread(sendRunnable)).start();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean cancel (boolean mayInterruptIfRunning) {
 
       return false;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean isCancelled () {
 
       return false;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean isDone () {
 
       return !sendThread.isAlive();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Void get ()
       throws InterruptedException, ExecutionException {
@@ -238,6 +301,9 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
       return null;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Void get (long timeout, TimeUnit unit)
       throws InterruptedException, ExecutionException, TimeoutException {
@@ -260,16 +326,29 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
     private final SendExecutable executable;
     private Throwable throwable;
 
+    /**
+     * Runnable wrapper that records any thrown exception.
+     *
+     * @param executable the send logic to run
+     */
     public SendRunnable (SendExecutable executable) {
 
       this.executable = executable;
     }
 
+    /**
+     * Returns any throwable thrown by the execution.
+     *
+     * @return captured throwable or {@code null}
+     */
     public Throwable getThrowable () {
 
       return throwable;
     }
 
+    /**
+     * Executes the wrapped logic, capturing any thrown exception.
+     */
     @Override
     public void run () {
 
@@ -286,24 +365,39 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
     private final RemoteEndpointImpl.Basic basicEndpoint;
     private final AtomicReference<ByteArrayOutputStream> partialStreamRef;
 
+    /**
+     * OutputStream that buffers partial data until closed, then transmits as a binary message.
+     *
+     * @param basicEndpoint the endpoint used to send the final buffer
+     * @param partialStreamRef the shared buffer reference
+     */
     public SendStream (Basic basicEndpoint, AtomicReference<ByteArrayOutputStream> partialStreamRef) {
 
       this.basicEndpoint = basicEndpoint;
       this.partialStreamRef = partialStreamRef;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void write (int b) {
 
       partialStreamRef.get().write(b);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void write (byte[] b, int off, int len) {
 
       partialStreamRef.get().write(b, off, len);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void write (byte[] b)
       throws IOException {
@@ -311,6 +405,11 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
       partialStreamRef.get().write(b);
     }
 
+    /**
+     * Closes the stream and transmits the accumulated binary data.
+     *
+     * @throws IOException if sending fails
+     */
     @Override
     public void close ()
       throws IOException {
@@ -329,23 +428,40 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
     private final RemoteEndpointImpl.Basic basicEndpoint;
     private final AtomicReference<StringBuilder> partialBuilderRef;
 
+    /**
+     * Writer that buffers text until closed, then transmits as a text message.
+     *
+     * @param basicEndpoint the endpoint used to send text
+     * @param partialBuilderRef the shared buffer reference
+     */
     public SendWriter (Basic basicEndpoint, AtomicReference<StringBuilder> partialBuilderRef) {
 
       this.basicEndpoint = basicEndpoint;
       this.partialBuilderRef = partialBuilderRef;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void write (char[] cbuf, int off, int len) {
 
       partialBuilderRef.get().append(cbuf, off, len);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void flush () {
 
     }
 
+    /**
+     * Closes the writer and transmits the accumulated text.
+     *
+     * @throws IOException if sending fails
+     */
     @Override
     public void close ()
       throws IOException {
@@ -359,6 +475,11 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
 
   private static abstract class SendExecutable {
 
+    /**
+     * Executes the send logic, allowing exceptions to bubble.
+     *
+     * @throws Throwable if execution fails
+     */
     public abstract void execute ()
       throws Throwable;
   }
@@ -368,11 +489,22 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
     private final AtomicReference<StringBuilder> partialBuilderRef = new AtomicReference<>();
     private final AtomicReference<ByteArrayOutputStream> partialStreamRef = new AtomicReference<>();
 
+    /**
+     * Creates a basic (blocking) remote endpoint.
+     *
+     * @param session the owning session
+     * @param webSocket the websocket transport
+     * @param endpoint the endpoint for error callbacks
+     * @param endpointConfig encoder configuration
+     */
     public Basic (SessionImpl session, WebSocket webSocket, Endpoint endpoint, EndpointConfig endpointConfig) {
 
       super(session, webSocket, endpoint, endpointConfig);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public synchronized void sendText (String text)
       throws IOException {
@@ -388,6 +520,9 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
       }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public synchronized void sendBinary (ByteBuffer data)
       throws IOException {
@@ -403,6 +538,9 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
       }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public synchronized void sendText (String partialMessage, boolean isLast)
       throws IOException {
@@ -432,6 +570,9 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
       }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public synchronized void sendBinary (ByteBuffer partialByte, boolean isLast)
       throws IOException {
@@ -464,6 +605,9 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
       }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public synchronized OutputStream getSendStream () {
 
@@ -476,6 +620,9 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
       return new SendStream(this, partialStreamRef);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public synchronized Writer getSendWriter () {
 
@@ -488,6 +635,9 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
       return new SendWriter(this, partialBuilderRef);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void sendObject (Object data)
       throws IOException, EncodeException {
@@ -506,6 +656,14 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
 
     private final AtomicLong sendTimeout;
 
+    /**
+     * Creates an asynchronous remote endpoint.
+     *
+     * @param session the owning session
+     * @param webSocket the websocket transport
+     * @param endpoint the endpoint for error callbacks
+     * @param endpointConfig encoder configuration
+     */
     public Async (SessionImpl session, WebSocket webSocket, Endpoint endpoint, EndpointConfig endpointConfig) {
 
       super(session, webSocket, endpoint, endpointConfig);
@@ -513,18 +671,27 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
       sendTimeout = new AtomicLong(session.getContainer().getDefaultAsyncSendTimeout());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public synchronized long getSendTimeout () {
 
       return sendTimeout.get();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public synchronized void setSendTimeout (long timeoutmillis) {
 
       sendTimeout.set(timeoutmillis);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Future<Void> sendText (final String text) {
 
@@ -543,12 +710,18 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
       }));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void sendText (String text, SendHandler handler) {
 
       waitForFuture(sendText(text), handler);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Future<Void> sendBinary (final ByteBuffer data) {
 
@@ -567,12 +740,21 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
       }));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void sendBinary (ByteBuffer data, SendHandler handler) {
 
       waitForFuture(sendBinary(data), handler);
     }
 
+    /**
+     * Sends an object asynchronously using an encoder if available.
+     *
+     * @param data the object to send
+     * @return a future that completes when the send finishes
+     */
     public Future<Void> sendObject (final Object data) {
 
       return new SendFuture(new SendRunnable(new SendExecutable() {
@@ -596,12 +778,21 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
       }));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void sendObject (Object data, SendHandler handler) {
 
       waitForFuture(sendObject(data), handler);
     }
 
+    /**
+     * Waits for a send future to complete and dispatches the result to the handler.
+     *
+     * @param future the pending send
+     * @param handler the callback handler
+     */
     private void waitForFuture (Future<Void> future, SendHandler handler) {
 
       try {

@@ -37,26 +37,46 @@ import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
+/**
+ * Long literal operand.
+ */
 @XmlRootElement(name = "long", namespace = "http://org.smallmind/web/json/query")
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
 public class LongWhereOperand extends WhereOperand<Long> {
 
   private Long value;
 
+  /**
+   * No-arg constructor for JAXB/Jackson.
+   */
   public LongWhereOperand () {
 
   }
 
+  /**
+   * Creates an operand with the provided long value.
+   *
+   * @param value long literal
+   */
   public LongWhereOperand (Long value) {
 
     this.value = value;
   }
 
+  /**
+   * Convenience factory for a long operand.
+   *
+   * @param value long literal
+   * @return operand instance
+   */
   public static LongWhereOperand instance (Long value) {
 
     return new LongWhereOperand(value);
   }
 
+  /**
+   * @return {@link ElementType#NUMBER}
+   */
   @Override
   @XmlTransient
   public ElementType getElementType () {
@@ -64,6 +84,9 @@ public class LongWhereOperand extends WhereOperand<Long> {
     return ElementType.NUMBER;
   }
 
+  /**
+   * @return {@link OperandType#LONG}
+   */
   @Override
   @XmlTransient
   public OperandType getOperandType () {
@@ -71,6 +94,11 @@ public class LongWhereOperand extends WhereOperand<Long> {
     return OperandType.LONG;
   }
 
+  /**
+   * Returns the long value.
+   *
+   * @return long literal or {@code null}
+   */
   @Override
   @XmlTransient
   public Long get () {
@@ -78,12 +106,22 @@ public class LongWhereOperand extends WhereOperand<Long> {
     return value;
   }
 
+  /**
+   * Returns the serialized long value.
+   *
+   * @return long literal or {@code null}
+   */
   @XmlElement(name = "value", required = true)
   public Long getValue () {
 
     return value;
   }
 
+  /**
+   * Sets the long value.
+   *
+   * @param value long literal
+   */
   public void setValue (Long value) {
 
     this.value = value;
