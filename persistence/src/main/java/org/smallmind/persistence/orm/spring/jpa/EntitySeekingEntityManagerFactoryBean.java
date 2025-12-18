@@ -37,10 +37,10 @@ import jakarta.persistence.CacheRetrieveMode;
 import jakarta.persistence.CacheStoreMode;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.PersistenceException;
+import jakarta.persistence.PersistenceUnitTransactionType;
 import jakarta.persistence.SharedCacheMode;
 import jakarta.persistence.ValidationMode;
 import jakarta.persistence.spi.PersistenceProvider;
-import jakarta.persistence.spi.PersistenceUnitTransactionType;
 import org.springframework.beans.BeanUtils;
 import org.springframework.orm.jpa.AbstractEntityManagerFactoryBean;
 import org.springframework.orm.jpa.persistenceunit.MutablePersistenceUnitInfo;
@@ -251,6 +251,6 @@ public class EntitySeekingEntityManagerFactoryBean extends AbstractEntityManager
       logger.info("Building JPA container EntityManagerFactory for persistence unit '" + persistenceUnitInfo.getPersistenceUnitName() + "'");
     }
 
-    return provider.createContainerEntityManagerFactory(persistenceUnitInfo, getJpaPropertyMap());
+    return provider.createContainerEntityManagerFactory(new RealizedPersistenceUnitInfo(persistenceUnitInfo), getJpaPropertyMap());
   }
 }

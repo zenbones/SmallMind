@@ -53,6 +53,11 @@
     </dependency>
     <dependency>
       <groupId>org.apache.maven.resolver</groupId>
+      <artifactId>maven-resolver-supplier</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven.resolver</groupId>
       <artifactId>maven-resolver-transport-file</artifactId>
       <scope>compile</scope>
     </dependency>

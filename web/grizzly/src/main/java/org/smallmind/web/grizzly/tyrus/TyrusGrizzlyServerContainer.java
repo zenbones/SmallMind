@@ -60,6 +60,7 @@ public class TyrusGrizzlyServerContainer extends TyrusServerContainer {
   private final TyrusWebSocketEngine engine;
   private final WebSocketExtensionInstaller[] webSocketExtensionInstallers;
   private final NetworkListener networkListener;
+  private final Map<String, Object> properties;
   private final String contextPath;
 
   public TyrusGrizzlyServerContainer (HttpServer httpServer, NetworkListener networkListener, WebappContext webappContext, Map<String, Object> properties, boolean includeWsadlSupport, HttpHandler staticHttpHandler, WebSocketExtensionInstaller... webSocketExtensionInstallers) {
@@ -69,6 +70,7 @@ public class TyrusGrizzlyServerContainer extends TyrusServerContainer {
     final Map<String, Object> localProperties;
 
     this.networkListener = networkListener;
+    this.properties = properties;
     this.webSocketExtensionInstallers = webSocketExtensionInstallers;
 
     // defensive copy
@@ -115,6 +117,12 @@ public class TyrusGrizzlyServerContainer extends TyrusServerContainer {
     throws IOException, DeploymentException {
 
     super.start(contextPath, getPort());
+  }
+
+  @Override
+  public Map<String, Object> getProperties () {
+
+    return properties;
   }
 
   @Override

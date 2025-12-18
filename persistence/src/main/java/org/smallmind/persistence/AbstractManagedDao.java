@@ -136,7 +136,7 @@ public abstract class AbstractManagedDao<I extends Serializable & Comparable<I>,
     }
     if (idClass.isEnum()) {
 
-      return (I)(Enum.valueOf(idClass.asSubclass(Enum.class), value));
+      return (I)(Enum.valueOf((Class<? extends Enum>)idClass, value));
     }
     if (long.class.equals(idClass) || (Long.class.equals(idClass))) {
 

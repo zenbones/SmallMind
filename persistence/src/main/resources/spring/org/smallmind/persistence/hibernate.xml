@@ -4,22 +4,6 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
   <bean id="jpaAnnotationSeekingBeanFactoryPostProcessor" class="org.smallmind.persistence.orm.spring.jpa.AnnotationSeekingBeanFactoryPostProcessor"/>
-  <bean id="hibernateFileSeekingBeanFactoryPostProcessor" class="org.smallmind.persistence.orm.spring.hibernate.FileSeekingBeanFactoryPostProcessor"/>
-
-  <bean id="sessionFactory" class="org.smallmind.persistence.orm.spring.hibernate.EntitySeekingSessionFactoryBean">
-    <property name="sessionSourceKey" value="sourceKey"/>
-    <property name="dataSource" ref="dataSource"/>
-    <property name="mappingLocations">
-      <bean class="org.smallmind.persistence.orm.spring.hibernate.FileSeekingFactoryBean">
-        <property name="fileSeekingBeanFactoryPostProcessor" ref="hibernateFileSeekingBeanFactoryPostProcessor"/>
-        <property name="sessionSourceKey" value="sourceKey"/>
-      </bean>
-    </property>
-    <property name="hibernateProperties">
-      <value>
-      </value>
-    </property>
-  </bean>
 
   <bean id="entityManagerFactory" class="org.smallmind.persistence.orm.spring.jpa.EntitySeekingEntityManagerFactoryBean">
     <property name="sessionSourceKey" value="sourceKey"/>
@@ -36,5 +20,4 @@
       </bean>
     </property>
   </bean>
-
 </beans>

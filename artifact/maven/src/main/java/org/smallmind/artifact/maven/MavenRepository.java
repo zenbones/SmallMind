@@ -39,8 +39,6 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import org.apache.maven.model.building.DefaultModelBuilderFactory;
-import org.apache.maven.model.building.ModelBuilder;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.apache.maven.settings.Mirror;
 import org.apache.maven.settings.Profile;
@@ -60,11 +58,9 @@ import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.collection.CollectRequest;
 import org.eclipse.aether.collection.DependencyCollectionException;
-import org.eclipse.aether.connector.basic.BasicRepositoryConnectorFactory;
 import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyNode;
 import org.eclipse.aether.graph.DependencyVisitor;
-import org.eclipse.aether.impl.DefaultServiceLocator;
 import org.eclipse.aether.repository.AuthenticationSelector;
 import org.eclipse.aether.repository.LocalRepository;
 import org.eclipse.aether.repository.LocalRepositoryManager;
@@ -76,10 +72,7 @@ import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
 import org.eclipse.aether.resolution.DependencyRequest;
 import org.eclipse.aether.resolution.DependencyResolutionException;
-import org.eclipse.aether.spi.connector.RepositoryConnectorFactory;
-import org.eclipse.aether.spi.connector.transport.TransporterFactory;
-import org.eclipse.aether.transport.file.FileTransporterFactory;
-import org.eclipse.aether.transport.http.HttpTransporterFactory;
+import org.eclipse.aether.supplier.RepositorySystemSupplier;
 import org.eclipse.aether.util.repository.AuthenticationBuilder;
 import org.eclipse.aether.util.repository.ConservativeAuthenticationSelector;
 import org.eclipse.aether.util.repository.DefaultAuthenticationSelector;
@@ -92,7 +85,7 @@ import org.eclipse.aether.util.repository.DefaultProxySelector;
  */
 public class MavenRepository {
 
-  private static final RepositorySystem REPOSITORY_SYSTEM;
+  private final RepositorySystem repositorySystem;
   private final Settings settings;
   private final ProxySelector proxySelector;
   private final MirrorSelector mirrorSelector;
@@ -101,18 +94,6 @@ public class MavenRepository {
   private final List<Profile> profileList;
   private final List<RemoteRepository> remoteRepositoryList;
   private final boolean offline;
-
-  static {
-
-    DefaultServiceLocator locator = MavenRepositorySystemUtils.newServiceLocator();
-
-    locator.setServices(ModelBuilder.class, new DefaultModelBuilderFactory().newInstance());
-    locator.addService(RepositoryConnectorFactory.class, BasicRepositoryConnectorFactory.class);
-    locator.addService(TransporterFactory.class, FileTransporterFactory.class);
-    locator.addService(TransporterFactory.class, HttpTransporterFactory.class);
-
-    REPOSITORY_SYSTEM = locator.getService(RepositorySystem.class);
-  }
 
   /**
    * Builds a repository instance using the default {@code ~/.m2/settings.xml}.
@@ -141,6 +122,8 @@ public class MavenRepository {
     DefaultSettingsBuildingRequest request = new DefaultSettingsBuildingRequest();
 
     this.offline = offline;
+
+    repositorySystem = new RepositorySystemSupplier().get();
 
     request.setGlobalSettingsFile(Paths.get((((settingsDirectory == null) || settingsDirectory.isEmpty()) ? System.getProperty("user.home") + "/.m2" : settingsDirectory) + "/settings.xml").toFile());
     settings = new DefaultSettingsBuilderFactory().newInstance().build(request).getEffectiveSettings();
@@ -180,7 +163,7 @@ public class MavenRepository {
     session.setMirrorSelector(mirrorSelector);
     session.setAuthenticationSelector(authenticationSelector);
 
-    session.setLocalRepositoryManager(getLocalRepoMan(settings, REPOSITORY_SYSTEM, session));
+    session.setLocalRepositoryManager(getLocalRepoMan(settings, repositorySystem, session));
 
     return session;
   }
@@ -215,7 +198,7 @@ public class MavenRepository {
     artifactRequest.setArtifact(artifact);
     artifactRequest.setRepositories(remoteRepositoryList);
 
-    return REPOSITORY_SYSTEM.resolveArtifact(session, artifactRequest).getArtifact();
+    return repositorySystem.resolveArtifact(session, artifactRequest).getArtifact();
   }
 
   /**
@@ -235,7 +218,7 @@ public class MavenRepository {
     Artifact[] artifacts;
     DependencyNode dependencyNode;
 
-    dependencyNode = REPOSITORY_SYSTEM.collectDependencies(session, new CollectRequest().setRoot(new Dependency(artifact, "compile"))).getRoot();
+    dependencyNode = repositorySystem.collectDependencies(session, new CollectRequest().setRoot(new Dependency(artifact, "compile"))).getRoot();
     dependencyNode.accept(new DependencyVisitor() {
 
       @Override
@@ -249,7 +232,7 @@ public class MavenRepository {
 
             Artifact artifact;
 
-            if ((artifact = dependency.getArtifact()).getFile() == null) {
+            if ((artifact = dependency.getArtifact()).getPath() == null) {
               try {
                 artifact = acquireArtifact(session, artifact);
               } catch (ArtifactResolutionException artifactResolutionException) {
@@ -273,7 +256,7 @@ public class MavenRepository {
       }
     });
 
-    REPOSITORY_SYSTEM.resolveDependencies(session, new DependencyRequest().setRoot(dependencyNode));
+    repositorySystem.resolveDependencies(session, new DependencyRequest().setRoot(dependencyNode));
 
     artifacts = new Artifact[artifactSet.size()];
     artifactSet.toArray(artifacts);
@@ -289,17 +272,15 @@ public class MavenRepository {
    */
   private String getUserAgent (String repositoryId) {
 
-    StringBuilder buffer = new StringBuilder();
+    String buffer = "Maven-Repository/" + repositoryId +
+                      " (" +
+                      "Java " + System.getProperty("java.version") +
+                      "; " +
+                      System.getProperty("os.name") + " " + System.getProperty("os.version") +
+                      ")" +
+                      " Aether";
 
-    buffer.append("Maven-Repository/").append(repositoryId);
-    buffer.append(" (");
-    buffer.append("Java ").append(System.getProperty("java.version"));
-    buffer.append("; ");
-    buffer.append(System.getProperty("os.name")).append(" ").append(System.getProperty("os.version"));
-    buffer.append(")");
-    buffer.append(" Aether");
-
-    return buffer.toString();
+    return buffer;
   }
 
   /**
@@ -391,8 +372,7 @@ public class MavenRepository {
     DefaultMirrorSelector selector = new DefaultMirrorSelector();
 
     for (Mirror mirror : settings.getMirrors()) {
-      selector.add(String.valueOf(mirror.getId()), mirror.getUrl(), mirror.getLayout(), false,
-        mirror.getMirrorOf(), mirror.getMirrorOfLayouts());
+      selector.add(String.valueOf(mirror.getId()), mirror.getUrl(), mirror.getLayout(), false, false, mirror.getMirrorOf(), mirror.getMirrorOfLayouts());
     }
 
     return selector;
@@ -428,7 +408,7 @@ public class MavenRepository {
    */
   private LocalRepositoryManager getLocalRepoMan (Settings settings, RepositorySystem repositorySystem, RepositorySystemSession repositorySystemSession) {
 
-    LocalRepository repo = new LocalRepository(getDefaultLocalRepoDir(settings).toFile());
+    LocalRepository repo = new LocalRepository(getDefaultLocalRepoDir(settings));
 
     return repositorySystem.newLocalRepositoryManager(repositorySystemSession, repo);
   }
