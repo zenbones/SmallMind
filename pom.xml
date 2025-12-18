@@ -99,6 +99,7 @@
     <hibernate.enhance.maven.plugin.version>6.6.39.Final</hibernate.enhance.maven.plugin.version>
     <httpcomponents5.client.version>5.5.1</httpcomponents5.client.version>
     <httpcomponents5.core.version>5.3.6</httpcomponents5.core.version>
+    <!-- docker java uses this earlier version internally -->
     <!-- <httpcomponents5.core.version>5.4.0</httpcomponents5.core.version> -->
     <jackson.version>2.20.1</jackson.version>
     <jackson.annotations.version>2.20</jackson.annotations.version>
@@ -131,6 +132,7 @@
     <maven.plugin.annotations.version>3.15.2</maven.plugin.annotations.version>
     <maven.plugin.plugin.version>3.15.2</maven.plugin.plugin.version>
     <maven.resolver.version>1.9.24</maven.resolver.version>
+    <!-- this all needs to upgrade at once I think -->
     <!-- <maven.resolver.version>2.0.14</maven.resolver.version> -->
     <maven.resolver.supplier.version>1.9.24</maven.resolver.supplier.version>
     <!-- <maven.resolver.supplier.version>1.9.25</maven.resolver.supplier.version> -->
@@ -151,6 +153,7 @@
     <snakeyaml.version>2.5</snakeyaml.version>
     <spring.version>7.0.2</spring.version>
     <spring.batch.version>5.2.4</spring.batch.version>
+    <!-- big upgrade, lots to do -->
     <!-- <spring.batch.version>6.0.1</spring.batch.version> -->
     <spring.jcl.version>6.2.15</spring.jcl.version>
     <spring.rabbit.version>4.0.1</spring.rabbit.version>
