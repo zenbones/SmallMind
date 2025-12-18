@@ -98,7 +98,8 @@
     <hibernate.validator.version>9.1.0.Final</hibernate.validator.version>
     <hibernate.enhance.maven.plugin.version>6.6.39.Final</hibernate.enhance.maven.plugin.version>
     <httpcomponents5.client.version>5.5.1</httpcomponents5.client.version>
-    <httpcomponents5.core.version>5.4</httpcomponents5.core.version>
+    <httpcomponents5.core.version>5.3.6</httpcomponents5.core.version>
+    <!-- <httpcomponents5.core.version>5.4.0</httpcomponents5.core.version> -->
     <jackson.version>2.20.1</jackson.version>
     <jackson.annotations.version>2.20</jackson.annotations.version>
     <jakarta.activation.version>2.1.4</jakarta.activation.version>
@@ -129,9 +130,12 @@
     <maven.javadoc.plugin.version>3.6.3</maven.javadoc.plugin.version>
     <maven.plugin.annotations.version>3.15.2</maven.plugin.annotations.version>
     <maven.plugin.plugin.version>3.15.2</maven.plugin.plugin.version>
-    <maven.resolver.version>2.0.14</maven.resolver.version>
-    <maven.resolver.supplier.version>1.9.25</maven.resolver.supplier.version>
-    <maven.resolver.transport.http.version>1.9.25</maven.resolver.transport.http.version>
+    <maven.resolver.version>1.9.24</maven.resolver.version>
+    <!-- <maven.resolver.version>2.0.14</maven.resolver.version> -->
+    <maven.resolver.supplier.version>1.9.24</maven.resolver.supplier.version>
+    <!-- <maven.resolver.supplier.version>1.9.25</maven.resolver.supplier.version> -->
+    <maven.resolver.transport.http.version>1.9.24</maven.resolver.transport.http.version>
+    <!-- <maven.resolver.transport.http.version>1.9.25</maven.resolver.transport.http.version> -->
     <maven.source.plugin.version>3.4.0</maven.source.plugin.version>
     <maven.surefire.plugin.version>3.5.4</maven.surefire.plugin.version>
     <mongodb.driver.version>5.6.2</mongodb.driver.version>

@@ -78,6 +78,9 @@ public class RealizedPersistenceUnitInfo implements PersistenceUnitInfo {
     properties = mutablePersistenceUnitInfo.getProperties();
     persistenceXMLSchemaVersion = mutablePersistenceUnitInfo.getPersistenceXMLSchemaVersion();
     persistenceProviderPackageName = mutablePersistenceUnitInfo.getPersistenceProviderPackageName();
+    jarFileUrls = mutablePersistenceUnitInfo.getJarFileUrls();
+    mappingFileNames = mutablePersistenceUnitInfo.getMappingFileNames();
+    managedClassNames = mutablePersistenceUnitInfo.getManagedClassNames();
   }
 
   @Override

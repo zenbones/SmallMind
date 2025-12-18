@@ -232,7 +232,8 @@ public class MavenRepository {
 
             Artifact artifact;
 
-            if ((artifact = dependency.getArtifact()).getPath() == null) {
+            if ((artifact = dependency.getArtifact()).getFile() == null) {
+//            if ((artifact = dependency.getArtifact()).getPath() == null) {
               try {
                 artifact = acquireArtifact(session, artifact);
               } catch (ArtifactResolutionException artifactResolutionException) {
@@ -408,7 +409,8 @@ public class MavenRepository {
    */
   private LocalRepositoryManager getLocalRepoMan (Settings settings, RepositorySystem repositorySystem, RepositorySystemSession repositorySystemSession) {
 
-    LocalRepository repo = new LocalRepository(getDefaultLocalRepoDir(settings));
+    LocalRepository repo = new LocalRepository(getDefaultLocalRepoDir(settings).toFile());
+//    LocalRepository repo = new LocalRepository(getDefaultLocalRepoDir(settings));
 
     return repositorySystem.newLocalRepositoryManager(repositorySystemSession, repo);
   }
