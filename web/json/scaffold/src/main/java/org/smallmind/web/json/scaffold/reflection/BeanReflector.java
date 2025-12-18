@@ -113,8 +113,8 @@ public class BeanReflector {
   /**
    * Walks through all path components except the last, invoking getters or methods as needed.
    *
-   * @param target      root object
-   * @param components  parsed path components
+   * @param target     root object
+   * @param components parsed path components
    * @return the object that owns the final path component
    * @throws BeanAccessException if any intermediate lookup fails
    */
@@ -133,8 +133,8 @@ public class BeanReflector {
   /**
    * Executes either a getter or an explicit method on the target component, applying subscripts when present.
    *
-   * @param target     object to operate on
-   * @param component  parsed path component
+   * @param target    object to operate on
+   * @param component parsed path component
    * @return resolved value
    * @throws BeanAccessException if invocation fails
    */

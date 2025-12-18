@@ -45,9 +45,9 @@ public class FormattedWebApplicationException extends WebApplicationException {
   /**
    * Builds a fault from a formatted message.
    *
-   * @param status HTTP status to return
+   * @param status  HTTP status to return
    * @param message message template
-   * @param args template arguments
+   * @param args    template arguments
    */
   public FormattedWebApplicationException (Response.Status status, String message, Object... args) {
 
@@ -57,7 +57,7 @@ public class FormattedWebApplicationException extends WebApplicationException {
   /**
    * Builds a fault from an underlying exception.
    *
-   * @param status HTTP status to return
+   * @param status    HTTP status to return
    * @param throwable underlying cause
    */
   public FormattedWebApplicationException (Response.Status status, Throwable throwable) {
@@ -69,7 +69,7 @@ public class FormattedWebApplicationException extends WebApplicationException {
    * Builds an exception from a preconstructed {@link Fault}.
    *
    * @param status HTTP status to return
-   * @param fault fault payload to send
+   * @param fault  fault payload to send
    */
   public FormattedWebApplicationException (Response.Status status, Fault fault) {
 

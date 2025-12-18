@@ -42,9 +42,9 @@ public interface JsonHeaderInjector {
   /**
    * Produces a header to add to the request about to be invoked.
    *
-   * @param proxy proxy instance
+   * @param proxy  proxy instance
    * @param method method being invoked
-   * @param args invocation arguments
+   * @param args   invocation arguments
    * @return header to inject, or {@code null} to skip
    */
   JsonHeader injectOnInvoke (Object proxy, Method method, Object[] args);

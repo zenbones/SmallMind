@@ -100,7 +100,7 @@ public class CorsFilter implements ContainerRequestFilter, ContainerResponseFilt
   /**
    * Appends CORS headers to non-preflight responses.
    *
-   * @param requestContext incoming request
+   * @param requestContext  incoming request
    * @param responseContext outgoing response
    */
   @Override

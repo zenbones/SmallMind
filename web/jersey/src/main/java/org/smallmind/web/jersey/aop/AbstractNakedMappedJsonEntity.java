@@ -50,8 +50,8 @@ public abstract class AbstractNakedMappedJsonEntity extends LinkedHashMap<String
   /**
    * Resolves a parameter value from the current map entry keyed by name and converts it to the requested type.
    *
-   * @param key map key for the parameter
-   * @param clazz target conversion type
+   * @param key                  map key for the parameter
+   * @param clazz                target conversion type
    * @param parameterAnnotations annotations on the consuming parameter to detect {@link XmlJavaTypeAdapter}
    * @return converted value, or {@code null} if the key is absent
    * @throws ParameterProcessingException if adapter construction or conversion fails

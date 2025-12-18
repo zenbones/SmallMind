@@ -64,7 +64,7 @@ public class ThrowableExceptionMapper implements ExceptionMapper<Throwable> {
    * Constructs a mapper with control over unclassified error logging.
    *
    * @param logUnclassifiedErrors whether to log exceptions that are not handled elsewhere
-   * @param mappers optional mapper overrides to try first
+   * @param mappers               optional mapper overrides to try first
    */
   public ThrowableExceptionMapper (boolean logUnclassifiedErrors, ExceptionMapper... mappers) {
 

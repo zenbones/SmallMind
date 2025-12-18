@@ -42,6 +42,7 @@ import org.springframework.web.context.request.RequestContextListener;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 // Handles some exception cases the Spring's version of the same class would otherwise spew into the log
+
 /**
  * Servlet listener that mirrors Spring's {@link RequestContextListener} but avoids noisy failures caused by container
  * shutdown or non-HTTP requests. It initializes request and locale contexts at the start of a request and safely

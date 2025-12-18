@@ -43,7 +43,7 @@ public class InvalidJWTException extends FormattedException {
    * Constructs the exception with a formatted message.
    *
    * @param message the format string describing the validation failure
-   * @param args arguments referenced by the format specifiers in the message
+   * @param args    arguments referenced by the format specifiers in the message
    */
   public InvalidJWTException (String message, Object... args) {
 

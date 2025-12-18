@@ -104,9 +104,9 @@ public abstract class WherePermit {
   /**
    * Factory for a dependent permit requiring another field.
    *
-   * @param entity       entity alias
-   * @param name         field name
-   * @param requirement  the required target field
+   * @param entity      entity alias
+   * @param name        field name
+   * @param requirement the required target field
    * @return permit instance
    */
   public static DependentWherePermit dependent (String entity, String name, TargetWherePermit requirement) {

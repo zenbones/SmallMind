@@ -57,14 +57,14 @@ public class EntityTranslator {
    * Resolves a parameter by reading the configured JsonEntity from the request, caching it per thread, and delegating
    * to {@link JsonEntity#getParameter(String, Class, ParameterAnnotations)}.
    *
-   * @param containerRequest Jersey container request containing the entity body
-   * @param key parameter identifier
-   * @param clazz expected parameter type
+   * @param containerRequest     Jersey container request containing the entity body
+   * @param key                  parameter identifier
+   * @param clazz                expected parameter type
    * @param parameterAnnotations annotations attached to the parameter
    * @return converted parameter value
-   * @throws MissingAnnotationException if no {@link ResourceMethod} annotation configured the JsonEntity type
+   * @throws MissingAnnotationException   if no {@link ResourceMethod} annotation configured the JsonEntity type
    * @throws ParameterProcessingException if the annotation specifies the interface instead of a concrete type
-   * @throws Throwable if entity extraction or parameter conversion fails
+   * @throws Throwable                    if entity extraction or parameter conversion fails
    */
   public static <T> T getParameter (ContainerRequest containerRequest, String key, Class<T> clazz, ParameterAnnotations parameterAnnotations) {
 

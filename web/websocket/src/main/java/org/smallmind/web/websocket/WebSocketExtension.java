@@ -48,7 +48,7 @@ public class WebSocketExtension implements Extension {
   /**
    * Builds an extension declaration.
    *
-   * @param name the extension name
+   * @param name       the extension name
    * @param parameters optional parameters associated with the extension
    */
   public WebSocketExtension (String name, ExtensionParameter... parameters) {

@@ -89,12 +89,12 @@ public abstract class AbstractIndexedJsonEntity implements JsonEntity {
    * Resolves a parameter by parsing the supplied key as a zero-based index into the argument array and converting
    * the value to the requested type, applying any {@link XmlJavaTypeAdapter} present on the parameter.
    *
-   * @param key the string index of the desired argument
-   * @param clazz the target type to convert to
+   * @param key                  the string index of the desired argument
+   * @param clazz                the target type to convert to
    * @param parameterAnnotations annotations present on the parameter being resolved
    * @return the converted argument value, or {@code null} if the index is out of bounds
    * @throws ParameterProcessingException if the key cannot be parsed, the index is negative, adapter construction fails,
-   * or conversion fails
+   *                                      or conversion fails
    */
   @Override
   public <T> T getParameter (String key, Class<T> clazz, ParameterAnnotations parameterAnnotations) {

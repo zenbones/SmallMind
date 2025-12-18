@@ -43,7 +43,7 @@ public class MalformedMessageHandlerException extends FormattedRuntimeException 
    * Creates the exception with a formatted message.
    *
    * @param message the format string
-   * @param args arguments referenced by the format specifiers in the message
+   * @param args    arguments referenced by the format specifiers in the message
    */
   public MalformedMessageHandlerException (String message, Object... args) {
 

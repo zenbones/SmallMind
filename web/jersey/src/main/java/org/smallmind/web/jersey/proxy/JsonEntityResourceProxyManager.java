@@ -46,7 +46,7 @@ public class JsonEntityResourceProxyManager implements PerApplicationDataManager
    * Registers a proxy instance for the given resource interface within the current application context.
    *
    * @param resourceInterface interface implemented by the proxy
-   * @param proxy proxy instance
+   * @param proxy             proxy instance
    */
   public static void register (Class<?> resourceInterface, Proxy proxy) {
 
@@ -62,7 +62,7 @@ public class JsonEntityResourceProxyManager implements PerApplicationDataManager
    * Fetches the proxy registered for the specified resource interface.
    *
    * @param resourceInterface interface used as a key
-   * @param <T> resource type
+   * @param <T>               resource type
    * @return proxy implementing the interface
    */
   public static <T> T getProxy (Class<T> resourceInterface) {

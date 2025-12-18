@@ -62,11 +62,11 @@ public class JsonEntityInvocationHandler implements InvocationHandler {
   /**
    * Creates a handler for a specific service endpoint.
    *
-   * @param target base target used for requests
-   * @param versionPrefix prefix preceding the numeric service version in the path
-   * @param serviceVersion service version number
-   * @param serviceName name of the service
-   * @param level log level used for debug output
+   * @param target          base target used for requests
+   * @param versionPrefix   prefix preceding the numeric service version in the path
+   * @param serviceVersion  service version number
+   * @param serviceName     name of the service
+   * @param level           log level used for debug output
    * @param headerInjectors optional header injectors to apply on each invocation
    */
   public JsonEntityInvocationHandler (JsonTarget target, String versionPrefix, int serviceVersion, String serviceName, Level level, JsonHeaderInjector... headerInjectors) {
@@ -83,9 +83,9 @@ public class JsonEntityInvocationHandler implements InvocationHandler {
   /**
    * Constructs and sends a JSON request for the invoked method, converting annotated parameters and applying headers.
    *
-   * @param proxy proxy instance
+   * @param proxy  proxy instance
    * @param method invoked method
-   * @param args method arguments
+   * @param args   method arguments
    * @return deserialized response
    * @throws Throwable if argument conversion or request execution fails
    */
@@ -133,8 +133,8 @@ public class JsonEntityInvocationHandler implements InvocationHandler {
    * @param method method for which arguments are being constructed
    * @return array of JsonArgument definitions
    * @throws ResourceDefinitionException if a required {@link EntityParam} annotation is missing
-   * @throws IllegalAccessException if an adapter cannot be instantiated
-   * @throws InstantiationException if an adapter cannot be instantiated
+   * @throws IllegalAccessException      if an adapter cannot be instantiated
+   * @throws InstantiationException      if an adapter cannot be instantiated
    */
   private JsonArgument[] constructJsonArguments (Method method)
     throws ResourceDefinitionException, IllegalAccessException, InstantiationException {

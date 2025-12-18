@@ -45,7 +45,7 @@ public enum MultiPartContentType {
   /**
    * Associates an extension with a content type string.
    *
-   * @param extension file extension without dot
+   * @param extension   file extension without dot
    * @param contentType MIME content type
    */
   MultiPartContentType (String extension, String contentType) {

@@ -45,7 +45,7 @@ public class ExtensionParameter implements Extension.Parameter {
   /**
    * Constructs a parameter wrapper.
    *
-   * @param name the parameter name
+   * @param name  the parameter name
    * @param value the parameter value
    */
   public ExtensionParameter (String name, String value) {

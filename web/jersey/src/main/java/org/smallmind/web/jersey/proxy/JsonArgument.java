@@ -45,7 +45,7 @@ public class JsonArgument {
   /**
    * Constructs a new argument descriptor.
    *
-   * @param name argument name
+   * @param name       argument name
    * @param xmlAdapter adapter to convert to/from the on-the-wire representation; may be {@code null}
    */
   public JsonArgument (String name, XmlAdapter xmlAdapter) {

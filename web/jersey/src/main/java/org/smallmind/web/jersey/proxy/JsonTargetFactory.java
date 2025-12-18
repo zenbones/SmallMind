@@ -56,7 +56,7 @@ public class JsonTargetFactory {
    * Creates a target using the given protocol and default port.
    *
    * @param protocol http or https
-   * @param host host name
+   * @param host     host name
    * @return configured JsonTarget
    * @throws URISyntaxException if the URI cannot be built
    */
@@ -70,8 +70,8 @@ public class JsonTargetFactory {
    * Creates a target specifying protocol and port.
    *
    * @param protocol http or https
-   * @param host host name
-   * @param port port number
+   * @param host     host name
+   * @param port     port number
    * @return configured JsonTarget
    * @throws URISyntaxException if the URI cannot be built
    */
@@ -85,9 +85,9 @@ public class JsonTargetFactory {
    * Creates a target specifying protocol, port, and optional context path.
    *
    * @param protocol http or https
-   * @param host host name
-   * @param port port number (0 to omit)
-   * @param context optional context path
+   * @param host     host name
+   * @param port     port number (0 to omit)
+   * @param context  optional context path
    * @return configured JsonTarget
    * @throws URISyntaxException if the URI cannot be built
    */

@@ -80,7 +80,7 @@ public class FaultTranslatingClientResponseFilter implements ClientResponseFilte
    * Translates fault responses into exceptions. If the payload contains a serialized Java exception it is rethrown,
    * otherwise a {@link FaultWrappingException} is thrown.
    *
-   * @param requestContext client request context
+   * @param requestContext  client request context
    * @param responseContext client response context
    * @throws IOException if the entity stream cannot be read or deserialization fails
    */

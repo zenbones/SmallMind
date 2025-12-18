@@ -63,10 +63,10 @@ public class JPAQueryUtility {
   /**
    * Translates a {@link Where} into a JPA {@link Predicate} wrapped in a product.
    *
-   * @param criteriaBuilder            JPA criteria builder
-   * @param where                      where clause
-   * @param fieldTransformer           transformer that resolves field names to JPA paths
-   * @param allowNonTerminalWildcards  whether wildcards may appear mid-string in LIKE patterns
+   * @param criteriaBuilder           JPA criteria builder
+   * @param where                     where clause
+   * @param fieldTransformer          transformer that resolves field names to JPA paths
+   * @param allowNonTerminalWildcards whether wildcards may appear mid-string in LIKE patterns
    * @return product containing roots and predicate, or {@link NoneProduct} if no criteria
    */
   public static Product<Root<?>, Predicate> apply (CriteriaBuilder criteriaBuilder, Where where, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer, boolean allowNonTerminalWildcards) {

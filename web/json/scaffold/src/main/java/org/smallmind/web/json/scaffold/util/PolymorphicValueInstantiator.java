@@ -50,7 +50,7 @@ public class PolymorphicValueInstantiator extends StdValueInstantiator {
   private final Class<?> polymorphicSubClass;
 
   /**
-   * @param src                source instantiator being decorated
+   * @param src                 source instantiator being decorated
    * @param polymorphicSubClass concrete subclass that should be instantiated
    */
   public PolymorphicValueInstantiator (StdValueInstantiator src, Class<?> polymorphicSubClass) {

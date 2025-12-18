@@ -67,7 +67,7 @@ public class ClientAuthProxyFilter extends BaseFilter {
 
   /**
    * @param proxyMode when {@code true}, headers are left untouched because a trusted proxy is expected to perform
-   * client authentication; when {@code false}, client auth headers are stripped and rebuilt from the peer certificate.
+   *                  client authentication; when {@code false}, client auth headers are stripped and rebuilt from the peer certificate.
    */
   public ClientAuthProxyFilter (boolean proxyMode) {
 

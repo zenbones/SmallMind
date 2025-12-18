@@ -46,7 +46,7 @@ public class HandshakeResponse {
   /**
    * Creates a response descriptor.
    *
-   * @param protocol the negotiated sub-protocol (may be empty)
+   * @param protocol   the negotiated sub-protocol (may be empty)
    * @param extensions the negotiated extensions
    */
   public HandshakeResponse (String protocol, Extension... extensions) {

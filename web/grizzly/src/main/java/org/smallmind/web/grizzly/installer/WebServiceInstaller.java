@@ -33,6 +33,7 @@
 package org.smallmind.web.grizzly.installer;
 
 // @ServicePath(value="/<service Uri>", context="/context")
+
 /**
  * Simple descriptor that binds a SOAP service bean to a URI within a specific Grizzly context.
  */

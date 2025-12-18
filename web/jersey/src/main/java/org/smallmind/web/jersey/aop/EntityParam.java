@@ -52,6 +52,7 @@ public @interface EntityParam {
   String value ();
 
   // Useful for documentation generating tools
+
   /**
    * Optional descriptive text for documentation tools.
    *

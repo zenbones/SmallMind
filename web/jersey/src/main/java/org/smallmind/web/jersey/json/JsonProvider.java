@@ -115,7 +115,7 @@ public class JsonProvider implements MessageBodyReader<Object>, MessageBodyWrite
   /**
    * Writes the previously buffered JSON to the response output stream.
    *
-   * @throws IOException if the entity stream cannot be written
+   * @throws IOException             if the entity stream cannot be written
    * @throws WebApplicationException if serialization fails
    */
   @Override

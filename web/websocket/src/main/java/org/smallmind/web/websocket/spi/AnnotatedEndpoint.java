@@ -108,9 +108,9 @@ public class AnnotatedEndpoint extends Endpoint {
      * Builds configuration based on the {@link ClientEndpoint} annotation values.
      *
      * @param clientEndpoint the annotation instance
-     * @throws InstantiationException if the configurator cannot be created
-     * @throws IllegalAccessException if the configurator constructor is inaccessible
-     * @throws NoSuchMethodException if a required constructor is missing
+     * @throws InstantiationException    if the configurator cannot be created
+     * @throws IllegalAccessException    if the configurator constructor is inaccessible
+     * @throws NoSuchMethodException     if a required constructor is missing
      * @throws InvocationTargetException if configurator construction fails
      */
     public AnnotatedClientEndpointConfig (ClientEndpoint clientEndpoint)

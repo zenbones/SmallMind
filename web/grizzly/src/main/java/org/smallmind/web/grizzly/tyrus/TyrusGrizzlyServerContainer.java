@@ -71,12 +71,12 @@ public class TyrusGrizzlyServerContainer extends TyrusServerContainer {
    * Creates and configures the Tyrus WebSocket engine and attaches a {@link TyrusWebSocketAddOn} to the provided
    * listener.
    *
-   * @param httpServer                  Grizzly HTTP server hosting the application
-   * @param networkListener             listener used to serve WebSocket connections
-   * @param webappContext               web application context for attribute registration
-   * @param properties                  optional container properties passed to Tyrus
-   * @param includeWsadlSupport         whether to expose WSADL discovery
-   * @param staticHttpHandler           optional static handler used to serve WSADL when enabled
+   * @param httpServer                   Grizzly HTTP server hosting the application
+   * @param networkListener              listener used to serve WebSocket connections
+   * @param webappContext                web application context for attribute registration
+   * @param properties                   optional container properties passed to Tyrus
+   * @param includeWsadlSupport          whether to expose WSADL discovery
+   * @param staticHttpHandler            optional static handler used to serve WSADL when enabled
    * @param webSocketExtensionInstallers extension installers applied when merging endpoint configs
    */
   public TyrusGrizzlyServerContainer (HttpServer httpServer, NetworkListener networkListener, WebappContext webappContext, Map<String, Object> properties, boolean includeWsadlSupport, HttpHandler staticHttpHandler, WebSocketExtensionInstaller... webSocketExtensionInstallers) {
@@ -132,8 +132,8 @@ public class TyrusGrizzlyServerContainer extends TyrusServerContainer {
   /**
    * Starts the container at the configured context and port.
    *
-   * @throws IOException          if underlying transport cannot start
-   * @throws DeploymentException  if WebSocket deployment fails
+   * @throws IOException         if underlying transport cannot start
+   * @throws DeploymentException if WebSocket deployment fails
    */
   public void start ()
     throws IOException, DeploymentException {

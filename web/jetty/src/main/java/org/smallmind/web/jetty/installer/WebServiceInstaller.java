@@ -33,6 +33,7 @@
 package org.smallmind.web.jetty.installer;
 
 // @ServicePath("/<service Uri>")
+
 /**
  * Captures metadata needed to publish a SOAP web service through Jetty's JAX-WS support.
  */

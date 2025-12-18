@@ -47,7 +47,7 @@ public class ValidatedAspect {
    * Validates parameters before invoking the method and the return value afterwards.
    *
    * @param thisJoinPoint join point representing the method call
-   * @param validated annotation instance (unused)
+   * @param validated     annotation instance (unused)
    * @return the method return value
    * @throws Throwable if validation fails or the method throws
    */

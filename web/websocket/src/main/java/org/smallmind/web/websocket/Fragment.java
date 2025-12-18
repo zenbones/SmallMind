@@ -44,8 +44,8 @@ public class Fragment {
   /**
    * Creates a fragment with final flag, opcode and payload bytes.
    *
-   * @param fin {@code true} if this is the final fragment in a message
-   * @param opCode the frame opcode
+   * @param fin     {@code true} if this is the final fragment in a message
+   * @param opCode  the frame opcode
    * @param message the frame payload
    */
   public Fragment (boolean fin, OpCode opCode, byte[] message) {

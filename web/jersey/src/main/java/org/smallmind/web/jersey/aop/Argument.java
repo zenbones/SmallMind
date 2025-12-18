@@ -43,7 +43,7 @@ public class Argument {
   /**
    * Creates a new argument entry.
    *
-   * @param key identifier for the parameter
+   * @param key   identifier for the parameter
    * @param value parameter value
    */
   public Argument (String key, Object value) {

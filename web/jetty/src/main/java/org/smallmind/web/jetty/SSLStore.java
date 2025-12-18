@@ -53,8 +53,8 @@ public class SSLStore {
    * Loads the configured resource and returns its raw bytes.
    *
    * @return the contents of the keystore or truststore resource
-   * @throws IOException        if reading the resource fails
-   * @throws ResourceException  if the resource location cannot be resolved
+   * @throws IOException       if reading the resource fails
+   * @throws ResourceException if the resource location cannot be resolved
    */
   public byte[] getBytes ()
     throws IOException, ResourceException {

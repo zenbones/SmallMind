@@ -337,8 +337,8 @@ public class TyrusGrizzlyServerFilter extends BaseFilter {
   /**
    * Writes the HTTP upgrade response back to the client.
    *
-   * @param ctx       filter chain context
-   * @param response  upgrade response to serialize
+   * @param ctx      filter chain context
+   * @param response upgrade response to serialize
    */
   private void write (FilterChainContext ctx, UpgradeResponse response) {
 

@@ -47,7 +47,7 @@ public interface EncoderHandler<T> {
    *
    * @param object the object to encode
    * @return the encoded bytes
-   * @throws IOException if encoding uses IO and fails
+   * @throws IOException     if encoding uses IO and fails
    * @throws EncodeException if the encoder cannot serialize the object
    */
   byte[] encode (Object object)

@@ -54,10 +54,10 @@ public class DecodedInputStreamHandler<T> implements MessageHandler.Whole<InputS
   /**
    * Creates the handler adapter.
    *
-   * @param session the owning session
+   * @param session  the owning session
    * @param endpoint the endpoint to receive decode errors
-   * @param decoder the stream decoder
-   * @param handler the application handler
+   * @param decoder  the stream decoder
+   * @param handler  the application handler
    */
   public DecodedInputStreamHandler (SessionImpl session, Endpoint endpoint, Decoder.BinaryStream<T> decoder, MessageHandler.Whole<T> handler) {
 

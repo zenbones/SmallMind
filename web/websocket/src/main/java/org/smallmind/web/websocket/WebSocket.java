@@ -85,11 +85,11 @@ public abstract class WebSocket implements AutoCloseable {
   /**
    * Creates a WebSocket client without extensions or custom handshake listener.
    *
-   * @param uri the target websocket URI
+   * @param uri       the target websocket URI
    * @param protocols optional sub-protocols to negotiate
-   * @throws IOException on I/O errors
+   * @throws IOException              on I/O errors
    * @throws NoSuchAlgorithmException if hashing for the handshake fails
-   * @throws WebSocketException if the URI or handshake is invalid
+   * @throws WebSocketException       if the URI or handshake is invalid
    */
   public WebSocket (URI uri, String... protocols)
     throws IOException, NoSuchAlgorithmException, WebSocketException {
@@ -100,12 +100,12 @@ public abstract class WebSocket implements AutoCloseable {
   /**
    * Creates a WebSocket client with extensions.
    *
-   * @param uri the target websocket URI
+   * @param uri        the target websocket URI
    * @param extensions requested extensions
-   * @param protocols optional sub-protocols to negotiate
-   * @throws IOException on I/O errors
+   * @param protocols  optional sub-protocols to negotiate
+   * @throws IOException              on I/O errors
    * @throws NoSuchAlgorithmException if hashing for the handshake fails
-   * @throws WebSocketException if the URI or handshake is invalid
+   * @throws WebSocketException       if the URI or handshake is invalid
    */
   public WebSocket (URI uri, Extension[] extensions, String... protocols)
     throws IOException, NoSuchAlgorithmException, WebSocketException {
@@ -116,12 +116,12 @@ public abstract class WebSocket implements AutoCloseable {
   /**
    * Creates a WebSocket client with a handshake listener.
    *
-   * @param uri the target websocket URI
+   * @param uri               the target websocket URI
    * @param handshakeListener callback to inspect handshake headers
-   * @param protocols optional sub-protocols to negotiate
-   * @throws IOException on I/O errors
+   * @param protocols         optional sub-protocols to negotiate
+   * @throws IOException              on I/O errors
    * @throws NoSuchAlgorithmException if hashing for the handshake fails
-   * @throws WebSocketException if the URI or handshake is invalid
+   * @throws WebSocketException       if the URI or handshake is invalid
    */
   public WebSocket (URI uri, HandshakeListener handshakeListener, String... protocols)
     throws IOException, NoSuchAlgorithmException, WebSocketException {
@@ -132,13 +132,13 @@ public abstract class WebSocket implements AutoCloseable {
   /**
    * Creates a WebSocket client with optional handshake listener and extensions.
    *
-   * @param uri the target websocket URI
+   * @param uri               the target websocket URI
    * @param handshakeListener callback to inspect handshake headers
-   * @param extensions requested extensions
-   * @param protocols optional sub-protocols to negotiate
-   * @throws IOException on I/O errors
+   * @param extensions        requested extensions
+   * @param protocols         optional sub-protocols to negotiate
+   * @throws IOException              on I/O errors
    * @throws NoSuchAlgorithmException if hashing for the handshake fails
-   * @throws WebSocketException if the URI or handshake is invalid
+   * @throws WebSocketException       if the URI or handshake is invalid
    */
   public WebSocket (URI uri, HandshakeListener handshakeListener, Extension[] extensions, String... protocols)
     throws IOException, NoSuchAlgorithmException, WebSocketException {
@@ -230,7 +230,7 @@ public abstract class WebSocket implements AutoCloseable {
    * Sends a ping frame with the provided payload.
    *
    * @param buffer the ping payload
-   * @throws IOException if writing fails
+   * @throws IOException        if writing fails
    * @throws WebSocketException if the socket is closing/closed or validation fails
    */
   public synchronized void ping (byte[] buffer)
@@ -252,7 +252,7 @@ public abstract class WebSocket implements AutoCloseable {
    * Sends a text frame.
    *
    * @param message the text message to send
-   * @throws IOException if writing fails
+   * @throws IOException        if writing fails
    * @throws WebSocketException if the socket is closing/closed
    */
   public synchronized void text (String message)
@@ -269,7 +269,7 @@ public abstract class WebSocket implements AutoCloseable {
    * Sends a binary frame.
    *
    * @param buffer the binary payload
-   * @throws IOException if writing fails
+   * @throws IOException        if writing fails
    * @throws WebSocketException if the socket is closing/closed
    */
   public synchronized void binary (byte[] buffer)
@@ -303,8 +303,8 @@ public abstract class WebSocket implements AutoCloseable {
    * Closes the connection with the supplied close code.
    *
    * @param closeCode the close status
-   * @throws IOException on write failures
-   * @throws WebSocketException if already closed/closing
+   * @throws IOException          on write failures
+   * @throws WebSocketException   if already closed/closing
    * @throws InterruptedException if interrupted while waiting on worker shutdown
    */
   public void close (CloseCode closeCode)
@@ -317,9 +317,9 @@ public abstract class WebSocket implements AutoCloseable {
    * Closes the connection with a close code and optional reason.
    *
    * @param closeCode the close status
-   * @param reason the human-readable reason or {@code null}
-   * @throws IOException on write failures
-   * @throws WebSocketException if already closed/closing
+   * @param reason    the human-readable reason or {@code null}
+   * @throws IOException          on write failures
+   * @throws WebSocketException   if already closed/closing
    * @throws InterruptedException if interrupted while waiting on worker shutdown
    */
   public void close (CloseCode closeCode, String reason)
@@ -359,7 +359,7 @@ public abstract class WebSocket implements AutoCloseable {
    * Reads from the socket until a full frame is available.
    *
    * @return the next complete frame bytes
-   * @throws IOException if I/O fails
+   * @throws IOException        if I/O fails
    * @throws WebSocketException if protocol parsing fails
    */
   private byte[] read ()
@@ -582,10 +582,10 @@ public abstract class WebSocket implements AutoCloseable {
     private final LinkedList<Fragment> fragmentList = new LinkedList<>();
 
     /**
-    * Signals the worker to stop and waits for it to exit.
-    *
-    * @throws InterruptedException if interrupted while awaiting shutdown
-    */
+     * Signals the worker to stop and waits for it to exit.
+     *
+     * @throws InterruptedException if interrupted while awaiting shutdown
+     */
     public void abort ()
       throws InterruptedException {
 

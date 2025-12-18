@@ -48,7 +48,7 @@ public class MultiPartFile {
   /**
    * Creates a new multipart file wrapper.
    *
-   * @param fileName original filename
+   * @param fileName    original filename
    * @param contentType MIME content type
    * @param inputStream stream containing the file content
    */

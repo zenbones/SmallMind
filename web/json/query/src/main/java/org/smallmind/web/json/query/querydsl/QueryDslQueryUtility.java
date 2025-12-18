@@ -65,9 +65,9 @@ public class QueryDslQueryUtility {
   /**
    * Translates a {@link Where} into a QueryDSL predicate product.
    *
-   * @param where                      where clause
-   * @param fieldTransformer           transformer that resolves field names to QueryDSL paths
-   * @param allowNonTerminalWildcards  whether wildcards may appear mid-string in LIKE patterns
+   * @param where                     where clause
+   * @param fieldTransformer          transformer that resolves field names to QueryDSL paths
+   * @param allowNonTerminalWildcards whether wildcards may appear mid-string in LIKE patterns
    * @return product containing roots and predicate, or {@link NoneProduct} if no criteria
    */
   public static Product<Path<?>, Predicate> apply (Where where, WhereFieldTransformer<Path<?>, Path<?>> fieldTransformer, boolean allowNonTerminalWildcards) {

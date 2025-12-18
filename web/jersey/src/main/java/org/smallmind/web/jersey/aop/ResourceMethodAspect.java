@@ -46,7 +46,7 @@ public class ResourceMethodAspect {
   /**
    * Surrounds the resource method call to validate parameters and return value when requested.
    *
-   * @param thisJoinPoint join point for the method invocation
+   * @param thisJoinPoint  join point for the method invocation
    * @param resourceMethod annotation describing validation behavior
    * @return the method's return value
    * @throws Throwable if validation fails or the target method throws

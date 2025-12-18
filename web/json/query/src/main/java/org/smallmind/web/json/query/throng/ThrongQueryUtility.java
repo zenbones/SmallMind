@@ -71,9 +71,9 @@ public class ThrongQueryUtility {
   /**
    * Applies a {@link Where} clause to the provided Throng filters using an optional field transformer.
    *
-   * @param filters           filters to augment
-   * @param where             where clause to translate
-   * @param fieldTransformer  transformer that maps entity/name pairs to backend field names (may be {@code null})
+   * @param filters          filters to augment
+   * @param where            where clause to translate
+   * @param fieldTransformer transformer that maps entity/name pairs to backend field names (may be {@code null})
    * @return the same filters instance with additional constraints
    */
   public static Filters apply (Filters filters, Where where, WhereFieldTransformer<Void, Void> fieldTransformer) {

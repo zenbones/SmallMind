@@ -59,10 +59,10 @@ public class Handshake {
    * Constructs the necessary HTTP headers for the handshake request.
    *
    * @param protocolVersion the websocket protocol version
-   * @param uri the target URI
-   * @param keyBytes the generated client key
-   * @param extensions requested extensions
-   * @param protocols requested sub-protocols
+   * @param uri             the target URI
+   * @param keyBytes        the generated client key
+   * @param extensions      requested extensions
+   * @param protocols       requested sub-protocols
    * @return a tuple of header names to values
    * @throws IOException if header building fails
    */
@@ -103,7 +103,7 @@ public class Handshake {
   /**
    * Builds the raw HTTP request line and headers.
    *
-   * @param uri the target websocket URI
+   * @param uri         the target websocket URI
    * @param headerTuple the headers to emit
    * @return bytes representing the request
    */
@@ -130,15 +130,15 @@ public class Handshake {
   /**
    * Validates the server handshake response against the expected challenge and requested parameters.
    *
-   * @param headerTuple populated header store to receive response headers
-   * @param response the raw response text
-   * @param keyBytes the original challenge key
+   * @param headerTuple         populated header store to receive response headers
+   * @param response            the raw response text
+   * @param keyBytes            the original challenge key
    * @param installedExtensions allowed extensions
-   * @param protocols requested sub-protocols
+   * @param protocols           requested sub-protocols
    * @return a {@link HandshakeResponse} containing negotiated values
-   * @throws IOException on I/O or parsing errors
+   * @throws IOException              on I/O or parsing errors
    * @throws NoSuchAlgorithmException if hashing is unavailable
-   * @throws SyntaxException if response validation fails
+   * @throws SyntaxException          if response validation fails
    */
   public static HandshakeResponse validateResponse (Tuple<String, String> headerTuple, String response, byte[] keyBytes, Extension[] installedExtensions, String... protocols)
     throws IOException, NoSuchAlgorithmException, SyntaxException {

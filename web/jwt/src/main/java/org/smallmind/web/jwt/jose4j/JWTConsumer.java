@@ -122,10 +122,10 @@ public class JWTConsumer {
   /**
    * Parses and verifies a JWT, automatically handling nested structures and returning the payload as the given type.
    *
-   * @param jwt the compact JWT string
+   * @param jwt           the compact JWT string
    * @param decryptionKey the key to use for signature verification or decryption
-   * @param claimsClass the expected payload type
-   * @param <T> the claim type
+   * @param claimsClass   the expected payload type
+   * @param <T>           the claim type
    * @return the deserialized claims object
    * @throws Exception if parsing, verification, or deserialization fails
    */
@@ -174,9 +174,9 @@ public class JWTConsumer {
   /**
    * Validates the collected JOSE structures against configured requirements.
    *
-   * @param jwt the original token for error reporting
+   * @param jwt             the original token for error reporting
    * @param verificationKey the key used to verify signatures
-   * @param joseObjects the ordered list of JOSE layers (inner-most first)
+   * @param joseObjects     the ordered list of JOSE layers (inner-most first)
    * @throws Exception if verification fails or requirements are not met
    */
   public void processContext (String jwt, Key verificationKey, LinkedList<JsonWebStructure> joseObjects)

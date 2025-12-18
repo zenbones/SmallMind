@@ -50,7 +50,7 @@ public class JsonHeader {
   /**
    * Creates a header with the supplied key and value.
    *
-   * @param key header name
+   * @param key   header name
    * @param value header value
    */
   public JsonHeader (String key, String value) {

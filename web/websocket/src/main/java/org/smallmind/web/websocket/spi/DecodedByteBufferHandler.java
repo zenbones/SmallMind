@@ -53,10 +53,10 @@ public class DecodedByteBufferHandler<T> implements MessageHandler.Whole<ByteBuf
   /**
    * Creates the handler adapter.
    *
-   * @param session the owning session
+   * @param session  the owning session
    * @param endpoint the endpoint to receive decode errors
-   * @param decoder the decoder for incoming buffers
-   * @param handler the application handler
+   * @param decoder  the decoder for incoming buffers
+   * @param handler  the application handler
    */
   public DecodedByteBufferHandler (SessionImpl session, Endpoint endpoint, Decoder.Binary<T> decoder, MessageHandler.Whole<T> handler) {
 

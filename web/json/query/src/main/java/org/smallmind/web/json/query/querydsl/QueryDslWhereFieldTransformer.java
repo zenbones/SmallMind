@@ -57,8 +57,8 @@ public class QueryDslWhereFieldTransformer extends WhereFieldTransformer<Path<?>
   /**
    * Builds a transformer that first transforms the field name before appending it to the durable root.
    *
-   * @param path          durable root path
-   * @param nameOperator  function to transform the field name
+   * @param path         durable root path
+   * @param nameOperator function to transform the field name
    */
   public QueryDslWhereFieldTransformer (Path<? extends Durable<?>> path, UnaryOperator<String> nameOperator) {
 

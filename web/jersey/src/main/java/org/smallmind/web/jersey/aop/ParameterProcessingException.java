@@ -43,7 +43,7 @@ public class ParameterProcessingException extends FormattedRuntimeException {
    * Creates the exception with a formatted message.
    *
    * @param message message template
-   * @param args template arguments
+   * @param args    template arguments
    */
   public ParameterProcessingException (String message, Object... args) {
 
@@ -64,8 +64,8 @@ public class ParameterProcessingException extends FormattedRuntimeException {
    * Creates the exception with a cause and formatted message.
    *
    * @param throwable cause of the failure
-   * @param message message template
-   * @param args template arguments
+   * @param message   message template
+   * @param args      template arguments
    */
   public ParameterProcessingException (Throwable throwable, String message, Object... args) {
 

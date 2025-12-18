@@ -54,10 +54,10 @@ public class DecodedReaderHandler<T> implements MessageHandler.Whole<Reader> {
   /**
    * Creates the handler adapter.
    *
-   * @param session the owning session
+   * @param session  the owning session
    * @param endpoint the endpoint to receive decode errors
-   * @param decoder the reader-based decoder
-   * @param handler the application handler
+   * @param decoder  the reader-based decoder
+   * @param handler  the application handler
    */
   public DecodedReaderHandler (SessionImpl session, Endpoint endpoint, Decoder.TextStream<T> decoder, MessageHandler.Whole<T> handler) {
 

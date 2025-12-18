@@ -43,7 +43,7 @@ public class WebSocketException extends FormattedException {
    * Creates an exception with a formatted message.
    *
    * @param message the format string
-   * @param args arguments referenced by the format specifiers in the message
+   * @param args    arguments referenced by the format specifiers in the message
    */
   public WebSocketException (String message, Object... args) {
 

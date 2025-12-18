@@ -69,9 +69,9 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
   /**
    * Creates a remote endpoint capable of encoding messages for the provided endpoint configuration.
    *
-   * @param session the owning session
-   * @param webSocket the underlying websocket client
-   * @param endpoint the endpoint receiving errors
+   * @param session        the owning session
+   * @param webSocket      the underlying websocket client
+   * @param endpoint       the endpoint receiving errors
    * @param endpointConfig encoder configuration
    */
   public RemoteEndpointImpl (SessionImpl session, WebSocket webSocket, Endpoint endpoint, EndpointConfig endpointConfig) {
@@ -368,7 +368,7 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
     /**
      * OutputStream that buffers partial data until closed, then transmits as a binary message.
      *
-     * @param basicEndpoint the endpoint used to send the final buffer
+     * @param basicEndpoint    the endpoint used to send the final buffer
      * @param partialStreamRef the shared buffer reference
      */
     public SendStream (Basic basicEndpoint, AtomicReference<ByteArrayOutputStream> partialStreamRef) {
@@ -431,7 +431,7 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
     /**
      * Writer that buffers text until closed, then transmits as a text message.
      *
-     * @param basicEndpoint the endpoint used to send text
+     * @param basicEndpoint     the endpoint used to send text
      * @param partialBuilderRef the shared buffer reference
      */
     public SendWriter (Basic basicEndpoint, AtomicReference<StringBuilder> partialBuilderRef) {
@@ -492,9 +492,9 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
     /**
      * Creates a basic (blocking) remote endpoint.
      *
-     * @param session the owning session
-     * @param webSocket the websocket transport
-     * @param endpoint the endpoint for error callbacks
+     * @param session        the owning session
+     * @param webSocket      the websocket transport
+     * @param endpoint       the endpoint for error callbacks
      * @param endpointConfig encoder configuration
      */
     public Basic (SessionImpl session, WebSocket webSocket, Endpoint endpoint, EndpointConfig endpointConfig) {
@@ -659,9 +659,9 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
     /**
      * Creates an asynchronous remote endpoint.
      *
-     * @param session the owning session
-     * @param webSocket the websocket transport
-     * @param endpoint the endpoint for error callbacks
+     * @param session        the owning session
+     * @param webSocket      the websocket transport
+     * @param endpoint       the endpoint for error callbacks
      * @param endpointConfig encoder configuration
      */
     public Async (SessionImpl session, WebSocket webSocket, Endpoint endpoint, EndpointConfig endpointConfig) {
@@ -790,7 +790,7 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
     /**
      * Waits for a send future to complete and dispatches the result to the handler.
      *
-     * @param future the pending send
+     * @param future  the pending send
      * @param handler the callback handler
      */
     private void waitForFuture (Future<Void> future, SendHandler handler) {

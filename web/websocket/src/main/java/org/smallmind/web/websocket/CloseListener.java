@@ -40,7 +40,7 @@ public interface CloseListener {
   /**
    * Invoked when a close frame is processed.
    *
-   * @param code the close status code
+   * @param code   the close status code
    * @param reason the optional close reason
    */
   void onClose (int code, String reason);

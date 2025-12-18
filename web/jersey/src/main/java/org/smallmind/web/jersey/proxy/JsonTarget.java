@@ -77,7 +77,7 @@ public class JsonTarget {
    * Internal constructor used for path derivation.
    *
    * @param httpHost resolved host
-   * @param path request path
+   * @param path     request path
    */
   private JsonTarget (HttpHost httpHost, String path) {
 
@@ -101,7 +101,7 @@ public class JsonTarget {
   /**
    * Adds an HTTP header to subsequent requests.
    *
-   * @param key header name
+   * @param key   header name
    * @param value header value
    * @return this for chaining
    */
@@ -118,7 +118,7 @@ public class JsonTarget {
   /**
    * Adds a query parameter to the request URL.
    *
-   * @param key parameter name
+   * @param key   parameter name
    * @param value parameter value
    * @return this for chaining
    */
@@ -168,7 +168,7 @@ public class JsonTarget {
   /**
    * Issues a PUT request with a JSON body and converts the response.
    *
-   * @param jsonBody serialized request body
+   * @param jsonBody      serialized request body
    * @param responseClass expected response type
    * @return deserialized response or {@code null} when no body is returned
    * @throws Exception if the request fails or conversion fails
@@ -189,7 +189,7 @@ public class JsonTarget {
   /**
    * Issues a POST request with a JSON body and converts the response.
    *
-   * @param jsonBody serialized request body
+   * @param jsonBody      serialized request body
    * @param responseClass expected response type
    * @return deserialized response or {@code null} when no body is returned
    * @throws Exception if the request fails or conversion fails
@@ -210,7 +210,7 @@ public class JsonTarget {
   /**
    * Issues a PATCH request with a JSON body and converts the response.
    *
-   * @param jsonBody serialized request body
+   * @param jsonBody      serialized request body
    * @param responseClass expected response type
    * @return deserialized response or {@code null} when no body is returned
    * @throws Exception if the request fails or conversion fails
@@ -251,7 +251,7 @@ public class JsonTarget {
   /**
    * Converts a HTTP response into the requested type, throwing {@link WebApplicationException} on error responses.
    *
-   * @param response HTTP response from the client
+   * @param response      HTTP response from the client
    * @param responseClass class to deserialize into
    * @return converted entity or {@code null} if the response has no body and is successful
    * @throws WebApplicationException for non-success responses without bodies
@@ -279,7 +279,7 @@ public class JsonTarget {
    * Builds an HTTP request with headers, query parameters, and optional JSON body.
    *
    * @param httpMethod HTTP method to use
-   * @param jsonBody optional JSON body
+   * @param jsonBody   optional JSON body
    * @return configured {@link SimpleHttpRequest}
    * @throws UnknownSwitchCaseException if an unsupported method is provided
    */

@@ -90,8 +90,8 @@ public abstract class AbstractMappedJsonEntity implements JsonEntity {
    * Resolves a parameter by name from the backing map, converting it to the requested type and honoring any
    * {@link XmlJavaTypeAdapter} annotation.
    *
-   * @param key parameter name
-   * @param clazz target type
+   * @param key                  parameter name
+   * @param clazz                target type
    * @param parameterAnnotations annotations present on the parameter definition
    * @return converted value, or {@code null} if the key is not present
    * @throws ParameterProcessingException if adapter construction or value conversion fails

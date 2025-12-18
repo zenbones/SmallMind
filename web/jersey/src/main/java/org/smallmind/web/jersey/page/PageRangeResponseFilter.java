@@ -54,7 +54,7 @@ public class PageRangeResponseFilter implements ContainerResponseFilter {
   /**
    * Populates Content-Range headers based on the {@link Page} metadata and sets an appropriate status code.
    *
-   * @param requestContext request context (unused)
+   * @param requestContext  request context (unused)
    * @param responseContext response context to adjust
    */
   @Override

@@ -55,7 +55,7 @@ public class ParameterAnnotations {
    * Returns the annotation of the requested type if present.
    *
    * @param clazz annotation type to locate
-   * @param <T> annotation class
+   * @param <T>   annotation class
    * @return matching annotation instance or {@code null} when absent
    */
   public <T> T getAnnotation (Class<T> clazz) {

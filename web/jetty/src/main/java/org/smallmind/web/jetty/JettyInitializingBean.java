@@ -515,8 +515,8 @@ public class JettyInitializingBean implements JettyWebAppStateLocator, Initializ
   /**
    * Concatenates two path fragments, handling empty or root values gracefully.
    *
-   * @param contextPath    the base context path
-   * @param extensionPath  the path to append to the context
+   * @param contextPath   the base context path
+   * @param extensionPath the path to append to the context
    * @return the combined path suitable for use as a Jetty context or URL pattern
    */
   private String combinePaths (String contextPath, String extensionPath) {

@@ -534,8 +534,8 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
    *
    * @param sslInfo SSL configuration including keystore and truststore
    * @return a secure listener instance
-   * @throws IOException        if key material cannot be read
-   * @throws ResourceException  if secure stores cannot supply credential bytes
+   * @throws IOException       if key material cannot be read
+   * @throws ResourceException if secure stores cannot supply credential bytes
    */
   private NetworkListener generateSecureNetworkListener (SSLInfo sslInfo)
     throws IOException, ResourceException {

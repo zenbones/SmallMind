@@ -45,7 +45,7 @@ public class JWTCodec {
   /**
    * Encodes claims into a compact JWT using the provided key master.
    *
-   * @param claims the claim object to serialize as the JWT payload
+   * @param claims    the claim object to serialize as the JWT payload
    * @param keyMaster the signing key provider
    * @return the signed JWT string
    * @throws Exception if serialization or signing fails
@@ -59,9 +59,9 @@ public class JWTCodec {
   /**
    * Encodes claims into a compact JWT using the provided key master and an optional key id.
    *
-   * @param claims the claim object to serialize as the JWT payload
+   * @param claims    the claim object to serialize as the JWT payload
    * @param keyMaster the signing key provider
-   * @param keyId an optional key identifier to embed in the JWT header
+   * @param keyId     an optional key identifier to embed in the JWT header
    * @return the signed JWT string
    * @throws Exception if serialization or signing fails
    */
@@ -85,10 +85,10 @@ public class JWTCodec {
   /**
    * Decodes and verifies a JWT using the supplied key master.
    *
-   * @param jwtToken the compact JWT value
-   * @param keyMaster the verification key provider
+   * @param jwtToken    the compact JWT value
+   * @param keyMaster   the verification key provider
    * @param claimsClass the target class for the payload
-   * @param <T> the claim type
+   * @param <T>         the claim type
    * @return the deserialized claim object
    * @throws Exception if verification or deserialization fails
    */
@@ -101,9 +101,9 @@ public class JWTCodec {
   /**
    * Deciphers a JWT without verifying its signature.
    *
-   * @param jwtToken the compact JWT value
+   * @param jwtToken    the compact JWT value
    * @param claimsClass the target class for the payload
-   * @param <T> the claim type
+   * @param <T>         the claim type
    * @return the deserialized claim object
    * @throws Exception if parsing or deserialization fails
    */

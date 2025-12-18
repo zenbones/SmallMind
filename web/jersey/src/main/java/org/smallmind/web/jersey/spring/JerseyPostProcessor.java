@@ -45,7 +45,7 @@ public class JerseyPostProcessor extends ResourceConfig implements BeanPostProce
   /**
    * Registers beans annotated with {@link Path} and applies {@link ResourceConfigExtension} instances.
    *
-   * @param bean bean instance post initialization
+   * @param bean     bean instance post initialization
    * @param beanName bean name
    * @return the original bean
    * @throws BeansException if an error occurs during registration

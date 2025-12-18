@@ -52,10 +52,10 @@ public class DecodedStringHandler<T> implements MessageHandler.Whole<String> {
   /**
    * Creates the handler adapter.
    *
-   * @param session the owning session
+   * @param session  the owning session
    * @param endpoint the endpoint to receive decode errors
-   * @param decoder the text decoder
-   * @param handler the application handler
+   * @param decoder  the text decoder
+   * @param handler  the application handler
    */
   public DecodedStringHandler (SessionImpl session, Endpoint endpoint, Decoder.Text<T> decoder, MessageHandler.Whole<T> handler) {
 

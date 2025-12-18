@@ -43,7 +43,7 @@ public class UnknownAlgorithmException extends FormattedException {
    * Constructs the exception with a formatted message.
    *
    * @param message the format string describing the issue
-   * @param args arguments referenced by the format specifiers in the message
+   * @param args    arguments referenced by the format specifiers in the message
    */
   public UnknownAlgorithmException (String message, Object... args) {
 

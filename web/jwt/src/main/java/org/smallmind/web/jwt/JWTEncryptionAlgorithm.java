@@ -129,7 +129,7 @@ public enum JWTEncryptionAlgorithm {
    * Signs the supplied prologue string using the provided key.
    *
    * @param privateKey the signing key
-   * @param prologue the content to sign
+   * @param prologue   the content to sign
    * @return the generated signature bytes
    * @throws Exception if signing fails
    */
@@ -140,8 +140,8 @@ public enum JWTEncryptionAlgorithm {
    * Verifies the signature for the provided JWT pieces.
    *
    * @param publicKey the verification key
-   * @param pieces the JWT segments required by the underlying verifier
-   * @param urlSafe {@code true} if the JWT uses URL-safe Base64 encoding
+   * @param pieces    the JWT segments required by the underlying verifier
+   * @param urlSafe   {@code true} if the JWT uses URL-safe Base64 encoding
    * @return {@code true} if the signature is valid; otherwise {@code false}
    * @throws Exception if verification fails
    */

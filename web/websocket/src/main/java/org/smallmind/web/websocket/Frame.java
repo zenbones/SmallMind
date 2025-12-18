@@ -96,7 +96,7 @@ public class Frame {
   /**
    * Constructs a control frame, ensuring payload sizing rules.
    *
-   * @param opCode the control opcode
+   * @param opCode  the control opcode
    * @param message the control payload
    * @return the encoded frame
    * @throws WebSocketException if the payload exceeds 125 bytes
@@ -136,7 +136,7 @@ public class Frame {
   /**
    * Encodes a masked client data frame for the given opcode.
    *
-   * @param opCode the data opcode
+   * @param opCode  the data opcode
    * @param message the payload
    * @return the encoded frame bytes
    */

@@ -52,7 +52,7 @@ public class ClientUtility {
    *
    * @return configured client builder
    * @throws NoSuchAlgorithmException if TLS is not available
-   * @throws KeyManagementException if the SSL context cannot be initialized
+   * @throws KeyManagementException   if the SSL context cannot be initialized
    */
   public static ClientBuilder clientBuilder ()
     throws NoSuchAlgorithmException, KeyManagementException {

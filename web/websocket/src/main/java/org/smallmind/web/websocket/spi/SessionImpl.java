@@ -84,13 +84,13 @@ public class SessionImpl implements Session, CloseListener {
   /**
    * Establishes a client session for the given endpoint and configuration.
    *
-   * @param container the owning container
-   * @param uri the websocket URI
-   * @param endpoint the endpoint instance to receive callbacks
+   * @param container      the owning container
+   * @param uri            the websocket URI
+   * @param endpoint       the endpoint instance to receive callbacks
    * @param endpointConfig the endpoint configuration
-   * @throws IOException if the socket cannot be opened
+   * @throws IOException              if the socket cannot be opened
    * @throws NoSuchAlgorithmException if handshake hashing fails
-   * @throws WebSocketException if the handshake or URI is invalid
+   * @throws WebSocketException       if the handshake or URI is invalid
    */
   public SessionImpl (WebSocketContainer container, URI uri, final Endpoint endpoint, ClientEndpointConfig endpointConfig)
     throws IOException, NoSuchAlgorithmException, WebSocketException {
@@ -260,9 +260,9 @@ public class SessionImpl implements Session, CloseListener {
   /**
    * Attempts to locate and register a decoder capable of handling the given message type.
    *
-   * @param clazz the desired decoded type
+   * @param clazz          the desired decoded type
    * @param messageHandler the handler to receive decoded instances
-   * @param <T> the decoded type
+   * @param <T>            the decoded type
    * @return {@code true} if a decoder was registered; otherwise {@code false}
    * @throws IllegalAccessException if a decoder cannot be instantiated
    * @throws InstantiationException if a decoder cannot be instantiated
@@ -325,7 +325,7 @@ public class SessionImpl implements Session, CloseListener {
   /**
    * Determines the parameter type declared on a handler/decoder implementation.
    *
-   * @param objectClass the implementation class
+   * @param objectClass     the implementation class
    * @param targetInterface the generic interface implemented
    * @return the single generic type argument
    */

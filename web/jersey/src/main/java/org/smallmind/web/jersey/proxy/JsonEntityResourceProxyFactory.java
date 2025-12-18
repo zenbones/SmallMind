@@ -43,12 +43,12 @@ public class JsonEntityResourceProxyFactory {
   /**
    * Generates a proxy using {@link Level#OFF} for debug logging.
    *
-   * @param target base target endpoint
-   * @param versionPrefix prefix before version in the URI
-   * @param serviceVersion service version number
-   * @param serviceName name of the service
+   * @param target            base target endpoint
+   * @param versionPrefix     prefix before version in the URI
+   * @param serviceVersion    service version number
+   * @param serviceName       name of the service
    * @param resourceInterface interface implemented by the proxy
-   * @param headerInjectors optional header injectors
+   * @param headerInjectors   optional header injectors
    * @return configured proxy instance
    */
   public static Proxy generateProxy (JsonTarget target, String versionPrefix, int serviceVersion, String serviceName, Class<?> resourceInterface, JsonHeaderInjector... headerInjectors) {
@@ -59,13 +59,13 @@ public class JsonEntityResourceProxyFactory {
   /**
    * Generates a proxy that posts {@link org.smallmind.web.jersey.aop.Envelope}-wrapped JSON requests to the target.
    *
-   * @param target base target endpoint
-   * @param versionPrefix prefix before version in the URI
-   * @param serviceVersion service version number
-   * @param serviceName name of the service
+   * @param target            base target endpoint
+   * @param versionPrefix     prefix before version in the URI
+   * @param serviceVersion    service version number
+   * @param serviceName       name of the service
    * @param resourceInterface interface implemented by the proxy
-   * @param level log level for request debugging
-   * @param headerInjectors optional header injectors
+   * @param level             log level for request debugging
+   * @param headerInjectors   optional header injectors
    * @return configured proxy instance
    */
   public static Proxy generateProxy (JsonTarget target, String versionPrefix, int serviceVersion, String serviceName, Class<?> resourceInterface, Level level, JsonHeaderInjector... headerInjectors) {

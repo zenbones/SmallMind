@@ -75,7 +75,7 @@ public class ResourceMethodFilter implements ContainerRequestFilter, ContainerRe
    * Marshals the response entity using any {@link XmlJavaTypeAdapter} declared on the resource method
    * and clears thread-local entity state.
    *
-   * @param requestContext request context
+   * @param requestContext  request context
    * @param responseContext response context to potentially modify
    * @throws IOException if an adapter cannot be instantiated or marshaling fails
    */

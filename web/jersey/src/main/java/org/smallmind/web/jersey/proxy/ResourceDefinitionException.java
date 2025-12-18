@@ -43,7 +43,7 @@ public class ResourceDefinitionException extends FormattedException {
    * Creates the exception with a formatted message.
    *
    * @param message message template
-   * @param args template arguments
+   * @param args    template arguments
    */
   public ResourceDefinitionException (String message, Object... args) {
 

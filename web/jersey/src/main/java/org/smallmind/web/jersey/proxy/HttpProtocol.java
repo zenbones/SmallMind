@@ -46,7 +46,7 @@ public enum HttpProtocol {
    * Associates a URI scheme with its default port.
    *
    * @param scheme protocol scheme name
-   * @param port default port number
+   * @param port   default port number
    */
   HttpProtocol (String scheme, int port) {
 
