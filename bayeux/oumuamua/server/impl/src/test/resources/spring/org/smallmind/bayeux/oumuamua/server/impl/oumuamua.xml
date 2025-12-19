@@ -41,7 +41,7 @@
             <constructor-arg index="2" name="startupGracePeriodSeconds" value="10"/>
             <constructor-arg index="3" name="topicName" value="oumuamua"/>
             <constructor-arg index="4" name="servers">
-              <bean class="org.smallmind.bayeux.oumuamua.server.spi.backbone.kafka.KafkaServerFactoryBean">
+              <bean class="org.smallmind.kafka.utility.KafkaServerFactoryBean">
                 <property name="serverPattern" value="localhost:9094"/>
                 <property name="serverSpread" value=""/>
               </bean>

@@ -53,4 +53,33 @@
       <null/>
     </constructor-arg>
   </bean>
+
+  <bean id="kafkaRequestTransport" class="org.smallmind.phalanx.wire.transport.kafka.KafkaRequestTransport" destroy-method="close">
+    <constructor-arg index="0" name="nodeName" value="guid/host/pod"/>
+    <constructor-arg index="1" name="signalCodec" ref="jsonSignalCodec"/>
+    <constructor-arg index="2" name="concurrencyLimit" value="${wire.concurrency_limit}"/>
+    <constructor-arg index="3" name="defaultTimeoutSeconds" value="${wire.default_timeout_seconds}"/>
+    <constructor-arg index="4" name="startupGracePeriodSeconds" value="10"/>
+    <constructor-arg index="5" name="servers">
+      <bean class="org.smallmind.kafka.utility.KafkaServerFactoryBean">
+        <property name="serverPattern" value="localhost:9094"/>
+        <property name="serverSpread" value=""/>
+      </bean>
+    </constructor-arg>
+  </bean>
+
+  <bean id="kafkaResponseTransport" class="org.smallmind.phalanx.wire.transport.kafka.KafkaResponseTransport" destroy-method="close">
+    <constructor-arg index="0" name="nodeName" value="guid/host/pod"/>
+    <constructor-arg index="1" name="serviceGroup" value="default"/>
+    <constructor-arg index="2" name="workerClass" value="org.smallmind.phalanx.wire.transport.kafka.InvocationWorker"/>
+    <constructor-arg index="3" name="signalCodec" ref="jsonSignalCodec"/>
+    <constructor-arg index="4" name="concurrencyLimit" value="${wire.concurrency_limit}"/>
+    <constructor-arg index="5" name="startupGracePeriodSeconds" value="10"/>
+    <constructor-arg index="6" name="servers">
+      <bean class="org.smallmind.kafka.utility.KafkaServerFactoryBean">
+        <property name="serverPattern" value="localhost:9094"/>
+        <property name="serverSpread" value=""/>
+      </bean>
+    </constructor-arg>
+  </bean>
 </beans>

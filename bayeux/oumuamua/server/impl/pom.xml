@@ -59,6 +59,11 @@
     </dependency>
     <dependency>
       <groupId>org.smallmind</groupId>
+      <artifactId>kafka-utility</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.smallmind</groupId>
       <artifactId>oumuamua-server-api</artifactId>
       <scope>compile</scope>
     </dependency>
