@@ -114,6 +114,8 @@ public class KafkaResponseTransport extends WorkManager<InvocationWorker, Consum
     whisperMessageIngester = new KafkaMessageIngester(nodeName, instanceId, topicNames.getWhisperTopicName(serviceGroup, instanceId), connector, responseCallback, concurrencyLimit).startUp();
     talkMessageIngester = new KafkaMessageIngester(nodeName, "wire-talk", topicNames.getTalkTopicName(serviceGroup), connector, responseCallback, concurrencyLimit).startUp();
     shoutMessageIngester = new KafkaMessageIngester(nodeName, instanceId, topicNames.getShoutTopicName(serviceGroup), connector, responseCallback, concurrencyLimit).startUp();
+
+    startUp(this);
   }
 
   /**
