@@ -115,7 +115,9 @@ public class WireInvocationCircuit {
           throw new TransportException("The result(%s) of this call is not Serializable", result.getClass().getName());
         }
       } catch (Exception exception) {
-        if (!invocationSignal.isInOnly()) {
+        if (invocationSignal.isInOnly()) {
+          LoggerManager.getLogger(WireInvocationCircuit.class).error(exception);
+        } else {
           error = true;
           result = (exception instanceof FaultWrappingException) ? ((FaultWrappingException)exception).getFault() : new Fault(new FaultElement(invocationSignal.getRoute().getService(), invocationSignal.getRoute().getFunction().getName()), exception);
         }
@@ -129,52 +131,49 @@ public class WireInvocationCircuit {
     }
   }
 
-  private static class ServiceKey {
-
-    private final String service;
-    private final int version;
+  private record ServiceKey(int version, String service) {
 
     /**
      * Composite key for locating a service implementation by version and name.
      */
-    private ServiceKey (int version, String service) {
+    private ServiceKey {
 
-      this.version = version;
-      this.service = service;
     }
 
-    /**
-     * @return service name represented by this key.
-     */
-    public String getService () {
+      /**
+       * @return service name represented by this key.
+       */
+      @Override
+      public String service () {
 
-      return service;
+        return service;
+      }
+
+      /**
+       * @return service version represented by this key.
+       */
+      @Override
+      public int version () {
+
+        return version;
+      }
+
+      /**
+       * Generates a hash combining service and version to support map lookups.
+       */
+      @Override
+      public int hashCode () {
+
+        return service.hashCode() ^ version;
+      }
+
+      /**
+       * Keys are equal when both service name and version match.
+       */
+      @Override
+      public boolean equals (Object obj) {
+
+        return (obj instanceof ServiceKey) && ((ServiceKey)obj).service().equals(service) && (((ServiceKey)obj).version() == version);
+      }
     }
-
-    /**
-     * @return service version represented by this key.
-     */
-    public int getVersion () {
-
-      return version;
-    }
-
-    /**
-     * Generates a hash combining service and version to support map lookups.
-     */
-    @Override
-    public int hashCode () {
-
-      return service.hashCode() ^ version;
-    }
-
-    /**
-     * Keys are equal when both service name and version match.
-     */
-    @Override
-    public boolean equals (Object obj) {
-
-      return (obj instanceof ServiceKey) && ((ServiceKey)obj).getService().equals(service) && (((ServiceKey)obj).getVersion() == version);
-    }
-  }
 }
