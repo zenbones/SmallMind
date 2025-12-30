@@ -42,6 +42,7 @@ import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.LOCAL_VARIABLE;
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.PARAMETER;
+import static java.lang.annotation.ElementType.RECORD_COMPONENT;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
@@ -49,14 +50,14 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  */
 @Documented
 @Retention(RUNTIME)
-@Target({FIELD, PARAMETER, METHOD, LOCAL_VARIABLE})
+@Target({FIELD, PARAMETER, METHOD, LOCAL_VARIABLE, RECORD_COMPONENT})
 @Constraint(validatedBy = EmailValidator.class)
 public @interface Email {
 
   /**
    * Allows multiple {@link Email} annotations on the same element.
    */
-  @Target({FIELD, PARAMETER, METHOD, LOCAL_VARIABLE})
+  @Target({FIELD, PARAMETER, METHOD, LOCAL_VARIABLE, RECORD_COMPONENT})
   @Retention(RUNTIME)
   @Documented
   @interface List {

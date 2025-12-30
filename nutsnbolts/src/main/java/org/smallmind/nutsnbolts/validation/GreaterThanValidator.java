@@ -65,14 +65,11 @@ public class GreaterThanValidator implements ConstraintValidator<GreaterThan, Nu
   @Override
   public boolean isValid (Number value, ConstraintValidatorContext context) {
 
-    if (value == null) {
-      return true;
-    } else if (value instanceof BigDecimal) {
-      return ((BigDecimal)value).compareTo(BigDecimal.valueOf(constraintAnnotation.value())) > 0;
-    } else if (value instanceof BigInteger) {
-      return ((BigInteger)value).compareTo(BigInteger.valueOf(constraintAnnotation.value())) > 0;
-    } else {
-      return value.doubleValue() > constraintAnnotation.value();
-    }
+    return switch (value) {
+      case null -> true;
+      case BigDecimal bigDecimal -> bigDecimal.compareTo(BigDecimal.valueOf(constraintAnnotation.value())) > 0;
+      case BigInteger bigInteger -> bigInteger.compareTo(BigInteger.valueOf(constraintAnnotation.value())) > 0;
+      default -> value.doubleValue() > constraintAnnotation.value();
+    };
   }
 }

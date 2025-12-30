@@ -33,19 +33,23 @@
 package org.smallmind.nutsnbolts.validation;
 
 import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.PARAMETER;
+import static java.lang.annotation.ElementType.RECORD_COMPONENT;
+
 /**
  * Bean Validation constraint that ensures a string is non-empty and contains only letters, digits, hyphens, or underscores.
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD})
+@Target({FIELD, PARAMETER, METHOD, RECORD_COMPONENT})
 @Constraint(validatedBy = SanitizedValidator.class)
 public @interface Sanitized {
 
@@ -53,7 +57,7 @@ public @interface Sanitized {
    * Allows multiple {@link Sanitized} annotations on the same element.
    */
   @Retention(RetentionPolicy.RUNTIME)
-  @Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD})
+  @Target({FIELD, PARAMETER, METHOD, RECORD_COMPONENT})
   @Documented
   @interface List {
 
