@@ -42,9 +42,20 @@ import jakarta.validation.ConstraintValidatorContext;
  */
 public class EmailValidator implements ConstraintValidator<Email, String> {
 
-  private static final Pattern EMAIL_PATTERN = Pattern.compile("([a-zA-Z0-9_\\-.']+)@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.)|(([a-zA-Z0-9\\-]+\\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(]?)");
+  private static final Pattern EMAIL_PATTERN = Pattern.compile("[a-zA-Z0-9._%'+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}");
 
   private Email constraintAnnotation;
+
+  /**
+   * Tests a single string against the email pattern.
+   *
+   * @param possibility candidate email
+   * @return {@code true} when the pattern matches
+   */
+  public static boolean isAnEmail (String possibility) {
+
+    return EMAIL_PATTERN.matcher(possibility).matches();
+  }
 
   /**
    * Stores the constraint annotation for later use (separator configuration).
@@ -91,16 +102,5 @@ public class EmailValidator implements ConstraintValidator<Email, String> {
 
       return isAnEmail(value.substring(lastIndex).strip());
     }
-  }
-
-  /**
-   * Tests a single string against the email pattern.
-   *
-   * @param possibility candidate email
-   * @return {@code true} when the pattern matches
-   */
-  private boolean isAnEmail (String possibility) {
-
-    return EMAIL_PATTERN.matcher(possibility).matches();
   }
 }
