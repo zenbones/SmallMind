@@ -43,8 +43,11 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.bouncycastle.crypto.util.OpenSSHPrivateKeyUtil;
 import org.bouncycastle.crypto.util.OpenSSHPublicKeyUtil;
+import org.bouncycastle.crypto.util.PrivateKeyFactory;
 import org.bouncycastle.crypto.util.PublicKeyFactory;
+import org.bouncycastle.jcajce.spec.OpenSSHPrivateKeySpec;
 import org.bouncycastle.jcajce.spec.OpenSSHPublicKeySpec;
 import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemReader;
@@ -58,7 +61,7 @@ public enum AsymmetricKeySpec {
 
   OPENSSH {
     /**
-     * Encodes a public key in the OpenSSH authorized_keys format.
+     * Encodes a public/private key in the OpenSSH authorized_keys format.
      *
      * @param key the key to encode
      * @return an OpenSSH formatted key string
@@ -76,12 +79,13 @@ public enum AsymmetricKeySpec {
 
         return "ssh-" + sshCode + " " + Base64.getEncoder().encodeToString(OpenSSHPublicKeyUtil.encodePublicKey(PublicKeyFactory.createKey(key.getEncoded())));
       } else {
-        throw new InappropriateKeySpecException(key.getAlgorithm());
+
+        return "-----BEGIN OPENSSH PRIVATE KEY-----\n" + EncryptionUtility.convertToBlock(Base64.getEncoder().encodeToString(OpenSSHPrivateKeyUtil.encodePrivateKey(PrivateKeyFactory.createKey(key.getEncoded()))), 64) + "\n-----END OPENSSH PRIVATE KEY-----";
       }
     }
 
     /**
-     * Builds an {@link OpenSSHPublicKeySpec} from an SSH or Base64 encoded public key string.
+     * Builds an {@link OpenSSHPublicKeySpec} from an SSH or Base64 encoded public/private key string.
      *
      * @param type must be {@link AsymmetricKeyType#PUBLIC}
      * @param raw the raw key text, optionally including SSH prologue/epilogue
@@ -115,7 +119,23 @@ public enum AsymmetricKeySpec {
 
         return new OpenSSHPublicKeySpec(Base64Codec.decode(raw));
       } else {
-        throw new InappropriateKeySpecException(type.name());
+
+        Matcher prologMatcher;
+        Matcher epilogMatcher;
+        int start = 0;
+        int end;
+
+        raw = raw.strip();
+        end = raw.length();
+
+        if ((prologMatcher = OPENSSH_PROLOG_PATTERN.matcher(raw)).find()) {
+          start = prologMatcher.end();
+        }
+        if ((epilogMatcher = OPENSSH_EPILOG_PATTERN.matcher(raw)).find(start)) {
+          end = epilogMatcher.start();
+        }
+
+        return new OpenSSHPrivateKeySpec(Base64Codec.decode(raw.substring(start, end).replaceAll("\\s", "")));
       }
     }
   },
@@ -247,6 +267,8 @@ public enum AsymmetricKeySpec {
 
   private static final Pattern PKCS8_PROLOG_PATTERN = Pattern.compile("^-----BEGIN PRIVATE KEY-----\\s+");
   private static final Pattern PKCS8_EPILOG_PATTERN = Pattern.compile("\\s+-----END PRIVATE KEY-----$");
+  private static final Pattern OPENSSH_PROLOG_PATTERN = Pattern.compile("^-----BEGIN OPENSSH PRIVATE KEY-----\\s+");
+  private static final Pattern OPENSSH_EPILOG_PATTERN = Pattern.compile("\\s+-----END OPENSSH PRIVATE KEY-----$");
 
   /**
    * Builds a {@link KeySpec} for the provided encoding and key type from raw text.

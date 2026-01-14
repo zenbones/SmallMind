@@ -64,6 +64,35 @@ import javax.crypto.NoSuchPaddingException;
 public class EncryptionUtility {
 
   /**
+   * Outputs text as a block of lines with a defined width.
+   *
+   * @param singleLine the single line input string
+   * @param blockWidth the width of the output text block
+   * @return the text block
+   */
+  public static String convertToBlock (String singleLine, int blockWidth) {
+
+    StringBuilder blockBuilder = new StringBuilder();
+    String compressedLine = singleLine.replaceAll("\\s*", "");
+    int index = 0;
+
+    if (blockWidth < 1) {
+      blockWidth = 1;
+    }
+
+    while (index < compressedLine.length()) {
+      if (!blockBuilder.isEmpty()) {
+        blockBuilder.append("\n");
+      }
+
+      blockBuilder.append(compressedLine, index, Math.min(index + blockWidth, compressedLine.length()));
+      index += blockWidth;
+    }
+
+    return blockBuilder.toString();
+  }
+
+  /**
    * Computes a digest for the supplied bytes.
    *
    * @param algorithm  the hash algorithm
