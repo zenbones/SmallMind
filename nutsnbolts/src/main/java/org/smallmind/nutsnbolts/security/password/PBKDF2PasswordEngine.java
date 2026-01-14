@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.security;
+package org.smallmind.nutsnbolts.security.password;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
@@ -42,11 +42,12 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import org.smallmind.nutsnbolts.http.Base64Codec;
 import org.smallmind.nutsnbolts.lang.StaticInitializationError;
+import org.smallmind.nutsnbolts.security.InvalidPasswordException;
 
 /**
  * PBKDF2-based password hashing/verification utility.
  */
-public class PasswordEngine {
+public class PBKDF2PasswordEngine implements PasswordEngine {
 
   private static final SecureRandom SECURE_RANDOM;
 
@@ -70,7 +71,7 @@ public class PasswordEngine {
   /**
    * Creates an engine with default settings (50,000 iterations, 32-byte salt, 256-bit key).
    */
-  public PasswordEngine () {
+  public PBKDF2PasswordEngine () {
 
     this(50000, 32, 256);
   }
@@ -80,7 +81,7 @@ public class PasswordEngine {
    *
    * @param iterations number of PBKDF2 iterations
    */
-  public PasswordEngine (int iterations) {
+  public PBKDF2PasswordEngine (int iterations) {
 
     this(iterations, 32, 256);
   }
@@ -92,7 +93,7 @@ public class PasswordEngine {
    * @param saltLength       bytes of random salt to prepend to stored hashes
    * @param desiredKeyLength desired derived key length in bits
    */
-  public PasswordEngine (int iterations, int saltLength, int desiredKeyLength) {
+  public PBKDF2PasswordEngine (int iterations, int saltLength, int desiredKeyLength) {
 
     this.iterations = iterations;
     this.saltLength = saltLength;
@@ -109,6 +110,7 @@ public class PasswordEngine {
    * @throws InvalidKeySpecException  if key derivation parameters are invalid
    * @throws InvalidPasswordException if the password is {@code null} or empty
    */
+  @Override
   public String encrypt (String password)
     throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, InvalidPasswordException {
 
@@ -141,6 +143,7 @@ public class PasswordEngine {
    * @throws NoSuchAlgorithmException if PBKDF2 algorithm is unavailable
    * @throws InvalidKeySpecException  if key derivation parameters are invalid
    */
+  @Override
   public boolean match (String password, String stored)
     throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
 
