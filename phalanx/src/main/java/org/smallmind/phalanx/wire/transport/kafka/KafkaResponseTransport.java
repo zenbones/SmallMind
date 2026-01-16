@@ -32,6 +32,7 @@
  */
 package org.smallmind.phalanx.wire.transport.kafka;
 
+import java.util.Collections;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -84,6 +85,7 @@ public class KafkaResponseTransport extends WorkManager<InvocationWorker, Consum
   private final ConcurrentHashMap<String, Producer<Long, byte[]>> producerMap = new ConcurrentHashMap<>();
   private final String nodeName;
   private final String instanceId = SnowflakeId.newInstance().generateDottedString();
+  private final String whisperTopicName;
 
   /**
    * Creates a response transport for the provided service group.
@@ -111,7 +113,7 @@ public class KafkaResponseTransport extends WorkManager<InvocationWorker, Consum
     topicNames = new TopicNames("wire");
     connector = new KafkaConnector(servers).check(startupGracePeriodSeconds);
 
-    whisperMessageIngester = new KafkaMessageIngester(nodeName, instanceId, topicNames.getWhisperTopicName(serviceGroup, instanceId), connector, responseCallback, concurrencyLimit).startUp();
+    whisperMessageIngester = new KafkaMessageIngester(nodeName, instanceId, whisperTopicName = topicNames.getWhisperTopicName(serviceGroup, instanceId), connector, responseCallback, concurrencyLimit).startUp();
     talkMessageIngester = new KafkaMessageIngester(nodeName, "wire-talk", topicNames.getTalkTopicName(serviceGroup), connector, responseCallback, concurrencyLimit).startUp();
     shoutMessageIngester = new KafkaMessageIngester(nodeName, instanceId, topicNames.getShoutTopicName(serviceGroup), connector, responseCallback, concurrencyLimit).startUp();
 
@@ -275,5 +277,7 @@ public class KafkaResponseTransport extends WorkManager<InvocationWorker, Consum
     whisperMessageIngester.shutDown();
     talkMessageIngester.shutDown();
     shoutMessageIngester.shutDown();
+
+    connector.invokeAdminClient(client -> client.deleteTopics(Collections.singletonList(whisperTopicName)));
   }
 }
