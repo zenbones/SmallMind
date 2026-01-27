@@ -80,7 +80,7 @@
     <asm.version>9.9.1</asm.version>
     <aspectj.version>1.9.25</aspectj.version>
     <aspectj.maven.plugin.version>1.14.1</aspectj.maven.plugin.version>
-    <aws.version>2.40.10</aws.version>
+    <aws.version>2.41.6</aws.version>
     <bouncycastle.version>1.83</bouncycastle.version>
     <cometd.version>9.0.0</cometd.version>
     <commons.logging.version>1.3.5</commons.logging.version>
@@ -93,12 +93,12 @@
     <grizzly.version>4.0.2</grizzly.version>
     <grizzly.npn.version>2.0.0</grizzly.npn.version>
     <hdrhistogram.version>2.2.2</hdrhistogram.version>
-    <hibernate.version>7.0.2.Final</hibernate.version>
+    <hibernate.version>7.2.0.Final</hibernate.version>
     <hibernate.annotations.version>7.0.3.Final</hibernate.annotations.version>
     <hibernate.validator.version>9.1.0.Final</hibernate.validator.version>
-    <hibernate.enhance.maven.plugin.version>6.6.39.Final</hibernate.enhance.maven.plugin.version>
-    <httpcomponents5.client.version>5.5.1</httpcomponents5.client.version>
-    <httpcomponents5.core.version>5.3.6</httpcomponents5.core.version>
+    <hibernate.enhance.maven.plugin.version>6.6.40.Final</hibernate.enhance.maven.plugin.version>
+    <httpcomponents5.client.version>5.6</httpcomponents5.client.version>
+    <httpcomponents5.core.version>5.4</httpcomponents5.core.version>
     <!-- docker java uses this earlier version internally -->
     <!-- <httpcomponents5.core.version>5.4.0</httpcomponents5.core.version> -->
     <jackson.version>2.20.1</jackson.version>
@@ -131,24 +131,22 @@
     <maven.javadoc.plugin.version>3.6.3</maven.javadoc.plugin.version>
     <maven.plugin.annotations.version>3.15.2</maven.plugin.annotations.version>
     <maven.plugin.plugin.version>3.15.2</maven.plugin.plugin.version>
-    <maven.resolver.version>1.9.24</maven.resolver.version>
+    <maven.resolver.version>1.9.25</maven.resolver.version>
     <!-- this all needs to upgrade at once I think -->
     <!-- <maven.resolver.version>2.0.14</maven.resolver.version> -->
-    <maven.resolver.supplier.version>1.9.24</maven.resolver.supplier.version>
-    <!-- <maven.resolver.supplier.version>1.9.25</maven.resolver.supplier.version> -->
-    <maven.resolver.transport.http.version>1.9.24</maven.resolver.transport.http.version>
-    <!-- <maven.resolver.transport.http.version>1.9.25</maven.resolver.transport.http.version> -->
+    <maven.resolver.supplier.version>1.9.25</maven.resolver.supplier.version>
+    <maven.resolver.transport.http.version>1.9.25</maven.resolver.transport.http.version>
     <maven.source.plugin.version>3.4.0</maven.source.plugin.version>
     <maven.surefire.plugin.version>3.5.4</maven.surefire.plugin.version>
     <mongodb.driver.version>5.6.2</mongodb.driver.version>
     <mongodb.bson.version>5.6.2</mongodb.bson.version>
-    <msgpack.version>0.9.10</msgpack.version>
+    <msgpack.version>0.9.11</msgpack.version>
     <netty.version>4.2.9.Final</netty.version>
     <openjfx.version>25-ea+11</openjfx.version>
     <quartz.version>2.5.2</quartz.version>
     <querydsl.version>5.1.0</querydsl.version>
     <shiro.version>2.0.0</shiro.version>
-    <siphash.version>2.0.0</siphash.version>
+    <siphash.version>3.0.0</siphash.version>
     <slf4j.version>2.0.17</slf4j.version>
     <snakeyaml.version>2.5</snakeyaml.version>
     <spring.version>7.0.2</spring.version>
