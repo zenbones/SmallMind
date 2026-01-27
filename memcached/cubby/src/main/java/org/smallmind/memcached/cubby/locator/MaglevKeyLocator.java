@@ -41,8 +41,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import io.whitfin.siphash.SipHasher;
-import io.whitfin.siphash.SipHasherContainer;
+import io.whitfin.siphash.SipHash;
+import io.whitfin.siphash.SipHashContext;
 import org.smallmind.memcached.cubby.CubbyOperationException;
 import org.smallmind.memcached.cubby.HostControl;
 import org.smallmind.memcached.cubby.MemcachedHost;
@@ -56,7 +56,7 @@ import org.smallmind.nutsnbolts.security.HashAlgorithm;
  */
 public class MaglevKeyLocator implements KeyLocator {
 
-  private static final SipHasherContainer SIPHASH = SipHasher.container("0123456789ABCDEF".getBytes(StandardCharsets.UTF_8));
+  private final SipHashContext SIPHASH_CONTEXT = SipHash.context("0123456789ABCDEF".getBytes(StandardCharsets.UTF_8));
   private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
   private final HashMap<String, int[]> permutationMap = new HashMap<>();
   private final int virtualHostCount;
@@ -214,7 +214,7 @@ public class MaglevKeyLocator implements KeyLocator {
       } else {
 
         // Any hash will do, it just needs to be fast and well distributed, and does not need to be cryptographically safe
-        return serverPool.get(routingMap.get((int)(Math.abs(SIPHASH.hash(key.getBytes(StandardCharsets.UTF_8), 1, 3)) % longerPermutationSize))).getMemcachedHost();
+        return serverPool.get(routingMap.get((int)(Math.abs(SIPHASH_CONTEXT.hash(key.getBytes(StandardCharsets.UTF_8), 1, 3)) % longerPermutationSize))).getMemcachedHost();
       }
     } finally {
       lock.readLock().unlock();
