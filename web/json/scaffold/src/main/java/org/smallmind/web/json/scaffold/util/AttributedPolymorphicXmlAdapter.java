@@ -59,7 +59,7 @@ public abstract class AttributedPolymorphicXmlAdapter<T> extends XmlAdapter<Obje
    */
   public AttributedPolymorphicXmlAdapter () {
 
-    baseClass = GenericUtility.getTypeArgumentsOfSubclass(AttributedPolymorphicXmlAdapter.class, this.getClass()).get(0);
+    baseClass = GenericUtility.getTypeArgumentsOfSubclass(AttributedPolymorphicXmlAdapter.class, this.getClass()).getFirst();
   }
 
   /**
@@ -136,7 +136,7 @@ public abstract class AttributedPolymorphicXmlAdapter<T> extends XmlAdapter<Obje
       XmlRootElement xmlRootElementAnnotation;
 
       if ((xmlRootElementAnnotation = value.getClass().getAnnotation(XmlRootElement.class)) == null) {
-        throw new JAXBProcessingException("The class(%s) is missing a %s annotation", value.getClass().getName(), XmlRootElement.class.getSimpleName());
+        throw new JAXBProcessingException("The class(%s) is missing an %s annotation", value.getClass().getName(), XmlRootElement.class.getSimpleName());
       } else {
 
         ObjectNode objectNode;

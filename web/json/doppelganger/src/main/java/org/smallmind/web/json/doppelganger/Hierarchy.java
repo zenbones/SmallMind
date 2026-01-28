@@ -39,8 +39,10 @@ import java.lang.annotation.Target;
 
 /**
  * Declares a simple inheritance hierarchy for generated views. Unlike {@link Polymorphic},
- * the hierarchy does not produce polymorphic adapters but allows generated subclasses to be
- * referenced in a type-safe way.
+ * used by polymorphic base-classes, the hierarchy does not produce polymorphic adapters but
+ * allows generated subclasses to be referenced in a type-safe way. Intermediate classes in
+ * the inheritance chain, using this annotation, should list all polymorphic *leaf* subclasses
+ * viewable from this class.
  */
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.TYPE)
@@ -49,6 +51,6 @@ public @interface Hierarchy {
   /**
    * @return the subclasses participating in the hierarchy for which views should be generated
    */
-  // the list of subclasses which will be generated with generic types
+  // the list of *leaf* subclasses which will be generated with generic types
   Class[] subClasses () default {};
 }

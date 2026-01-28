@@ -39,7 +39,9 @@ import java.lang.annotation.Target;
 
 /**
  * Declares polymorphic handling for generated views, producing adapters capable of serializing
- * subtypes with discriminator-based resolution.
+ * subtypes with discriminator-based resolution. This annotation should be used by polymorphic
+ * base classes, listing all polymorphic *leaf* subclasses viewable from this base class. Intermediate
+ * classes in the hierarchy should use the Hierarchy annotation {@link Hierarchy} instead.
  */
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.TYPE)
@@ -48,7 +50,7 @@ public @interface Polymorphic {
   /**
    * @return subclasses that participate in the polymorphic graph
    */
-  // the list of subclasses which will be generated with polymorphic annotations
+  // the list of *leaf* subclasses which will be generated with polymorphic annotations
   Class[] subClasses () default {};
 
   /**

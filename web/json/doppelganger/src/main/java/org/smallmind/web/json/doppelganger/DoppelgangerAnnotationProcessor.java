@@ -372,7 +372,7 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
         writer.newLine();
         writer.write("import jakarta.annotation.Generated;");
         writer.newLine();
-        if ((nearestViewSuperclass == null)) {
+        if (nearestViewSuperclass == null) {
           writer.write("import jakarta.xml.bind.annotation.XmlAccessType;");
           writer.newLine();
           writer.write("import jakarta.xml.bind.annotation.XmlAccessorType;");
@@ -454,7 +454,7 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
         }
 
         // XmlAccessorType
-        if ((nearestViewSuperclass == null)) {
+        if (nearestViewSuperclass == null) {
           writer.write("@XmlAccessorType(XmlAccessType.PROPERTY)");
           writer.newLine();
         }
@@ -524,6 +524,8 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
               writer.write(NameUtility.getSimpleName(processingEnv, purpose, direction, classElement));
             }
             writer.write(">");
+          } else if (hasPolymorphicSubclasses || hasHierarchySubclasses) {
+            writer.write("<D>");
           }
         }
 

@@ -65,7 +65,7 @@ public class PolymorphicClassCache {
           XmlPolymorphicSubClasses xmlPolymorphicSubClassesAnnotation;
 
           if ((xmlPolymorphicSubClassesAnnotation = baseClass.getAnnotation(XmlPolymorphicSubClasses.class)) == null) {
-            throw new JAXBProcessingException("The class(%s) is missing a %s annotation", baseClass.getName(), XmlPolymorphicSubClasses.class.getSimpleName());
+            throw new JAXBProcessingException("The class(%s) is missing an %s annotation", baseClass.getName(), XmlPolymorphicSubClasses.class.getSimpleName());
           } else {
 
             XmlRootElement baseClassXmlRootElementAnnotation;
@@ -81,7 +81,7 @@ public class PolymorphicClassCache {
               XmlRootElement subClassXmlRootElementAnnotation;
 
               if ((subClassXmlRootElementAnnotation = polymorphicSubClass.getAnnotation(XmlRootElement.class)) == null) {
-                throw new JAXBProcessingException("The sub-class(%s) is missing a %s annotation", polymorphicSubClass.getName(), XmlRootElement.class.getSimpleName());
+                throw new JAXBProcessingException("The sub-class(%s) is missing an %s annotation", polymorphicSubClass.getName(), XmlRootElement.class.getSimpleName());
               }
 
               polymorphicKeyMap.put(subClassXmlRootElementAnnotation.name(), polymorphicSubClass);

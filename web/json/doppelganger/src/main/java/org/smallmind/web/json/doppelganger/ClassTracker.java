@@ -154,13 +154,13 @@ public class ClassTracker {
   /**
    * Registers a class annotated with {@link Hierarchy} and its subclasses.
    *
-   * @param typeElement         the base of the hierarchy
-   * @param hierachyInformation parsed hierarchy metadata
+   * @param typeElement          the base of the hierarchy
+   * @param hierarchyInformation parsed hierarchy metadata
    */
-  public void addHierarchy (TypeElement typeElement, HierarchyInformation hierachyInformation) {
+  public void addHierarchy (TypeElement typeElement, HierarchyInformation hierarchyInformation) {
 
-    hierarchyInformationMap.put(typeElement, hierachyInformation);
-    for (TypeElement subClassElement : hierachyInformation.getSubClassList()) {
+    hierarchyInformationMap.put(typeElement, hierarchyInformation);
+    for (TypeElement subClassElement : hierarchyInformation.getSubClassList()) {
       hierarchyBaseClassMap.put(subClassElement, typeElement);
     }
   }
