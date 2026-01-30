@@ -64,7 +64,6 @@ public class EntityTranslator {
    * @return converted parameter value
    * @throws MissingAnnotationException   if no {@link ResourceMethod} annotation configured the JsonEntity type
    * @throws ParameterProcessingException if the annotation specifies the interface instead of a concrete type
-   * @throws Throwable                    if entity extraction or parameter conversion fails
    */
   public static <T> T getParameter (ContainerRequest containerRequest, String key, Class<T> clazz, ParameterAnnotations parameterAnnotations) {
 

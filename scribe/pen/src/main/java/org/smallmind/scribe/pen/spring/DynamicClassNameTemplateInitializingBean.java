@@ -45,7 +45,7 @@ import org.springframework.beans.factory.InitializingBean;
 
 /**
  * Spring helper that creates and registers {@link ClassNameTemplate} instances from properties
- * of the form `log.pattern.<key>` and `log.level.<key>`.
+ * of the form `log.pattern.{@literal <}key{@literal >}` and `log.level.{@literal <}key{@literal >}`.
  */
 public class DynamicClassNameTemplateInitializingBean implements InitializingBean {
 

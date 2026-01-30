@@ -44,7 +44,7 @@ public class EncryptedVariation {
   private final String prefix;
 
   /**
-   * Creates an encrypted variation using the default prefix {@code "!{"}.
+   * Creates an encrypted variation using the default prefix {@code "!{@literal {}}"}.
    *
    * @param decryptor the decryptor used to decrypt property values
    * @throws PropertyExpanderException if the prefix is invalid
@@ -62,7 +62,7 @@ public class EncryptedVariation {
    * @param decryptor the decryptor used to decrypt property values
    * @param prefix    the prefix that indicates encrypted text
    * @throws PropertyExpanderException if the prefix is blank
-   * @throws NullPointerException      if decryptor or prefix is {@code null}
+   * @throws NullPointerException      if decryptor or prefix is null
    */
   public EncryptedVariation (Decryptor decryptor, String prefix)
     throws PropertyExpanderException {

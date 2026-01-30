@@ -67,13 +67,13 @@ public class EnumStringConverter<E extends Enum<E>> extends StringConverter<E> {
   /**
    * Parses the provided string to an enum constant using {@link Enum#valueOf(Class, String)}.
    *
-   * @param string the string representation
+   * @param name the string representation
    * @return matching enum constant
    * @throws IllegalArgumentException if the string does not match an enum constant
    */
   @Override
-  public E fromString (String string) {
+  public E fromString (String name) {
 
-    return Enum.valueOf(enumClass, string);
+    return Enum.valueOf(enumClass, name);
   }
 }

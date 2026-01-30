@@ -108,7 +108,7 @@ public class SleuthRunner {
    * Executes the supplied classes as test suites.
    *
    * @param groups        optional list of groups to include; {@code null} runs suites honoring annotation defaults, empty array means all
-   * @param threadCount   number of threads to permit; values <= 0 map to unbounded
+   * @param threadCount   number of threads to permit; values {@literal <}= 0 map to unbounded
    * @param stopOnError   whether to halt on unexpected errors
    * @param stopOnFailure whether to halt on assertion failures
    * @param classes       classes to execute
@@ -122,7 +122,7 @@ public class SleuthRunner {
    * Executes the supplied iterable of suite classes.
    *
    * @param groups        optional list of groups to include; {@code null} uses defaults, empty array means all
-   * @param threadCount   number of threads to permit; values <= 0 map to unbounded
+   * @param threadCount   number of threads to permit; values {@literal <}= 0 map to unbounded
    * @param stopOnError   whether to halt on unexpected errors
    * @param stopOnFailure whether to halt on assertion failures
    * @param classIterable classes to execute

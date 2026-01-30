@@ -97,10 +97,10 @@ public abstract class AbstractFormattedAppender extends AbstractAppender impleme
   /**
    * Emits the formatted string to the concrete output target.
    *
-   * @param string formatted record text
+   * @param output formatted record text
    * @throws Exception if writing fails
    */
-  public abstract void handleOutput (String string)
+  public abstract void handleOutput (String output)
     throws Exception;
 
   /**

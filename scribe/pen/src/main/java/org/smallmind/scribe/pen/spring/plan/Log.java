@@ -55,10 +55,10 @@ public class Log {
    * @param level   log level to apply
    * @param pattern logger name pattern
    */
-  public Log (Level level, String String) {
+  public Log (Level level, String pattern) {
 
     this.level = level;
-    this.pattern = String;
+    this.pattern = pattern;
   }
 
   /**

@@ -170,7 +170,7 @@ public class CircularBuffer implements Closeable {
    * @param off     offset into destination
    * @param len     requested byte count
    * @param timeout maximum wait time in ms (0 for indefinite)
-   * @return bytes read (<= len)
+   * @return bytes read ({@literal <}= len)
    * @throws IOException          if closed
    * @throws InterruptedException if interrupted
    */
@@ -219,7 +219,7 @@ public class CircularBuffer implements Closeable {
    * @param off     offset into source
    * @param len     byte count to write
    * @param timeout maximum wait time in ms (0 for indefinite)
-   * @return bytes written (<= len)
+   * @return bytes written ({@literal <}= len)
    * @throws IOException          if closed
    * @throws InterruptedException if interrupted
    */
