@@ -82,7 +82,6 @@ public abstract class TimestampedJPADurable<I extends Serializable & Comparable<
   /**
    * @return the last update timestamp set by the persistence provider
    */
-
   @UpdateTimestamp
   @Temporal(TemporalType.TIMESTAMP)
   @Column(name = "last_updated")
