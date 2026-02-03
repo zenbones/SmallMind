@@ -56,7 +56,13 @@ public class ContextFactory {
     @Override
     protected Map<Class<? extends Context>, LinkedList<? extends Context>> childValue (Map<Class<? extends Context>, LinkedList<? extends Context>> parentValue) {
 
-      return new HashMap<>(parentValue);
+      HashMap<Class<? extends Context>, LinkedList<? extends Context>> inheritedMap = new HashMap<>();
+
+      for (Map.Entry<Class<? extends Context>, LinkedList<? extends Context>> parentEntry : parentValue.entrySet()) {
+        inheritedMap.put(parentEntry.getKey(), new LinkedList<>(parentEntry.getValue()));
+      }
+
+      return inheritedMap;
     }
   };
 
